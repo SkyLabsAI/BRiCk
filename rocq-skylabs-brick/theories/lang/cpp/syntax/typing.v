@@ -133,6 +133,7 @@ Module decltype.
         | Cbase2derived _ ty => mret ty
         | Cintegral t => mret t
         | Cint2bool => mret Tbool
+        | Cfloat2bool => mret Tbool
         | Cfloat2int t
         | Cint2float t
         | Cfloat t

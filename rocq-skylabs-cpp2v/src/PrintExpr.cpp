@@ -785,6 +785,7 @@ public:
             CASE_NO_TYPE(PointerToBoolean, Cptr2bool)
             CASE_WITH_TYPE(IntegralCast, Cintegral)
             CASE_NO_TYPE(IntegralToBoolean, Cint2bool)
+            CASE_NO_TYPE(FloatingToBoolean, Cfloat2bool)
 
             CASE_WITH_TYPE(NullToPointer, Cnull2ptr)
             CASE_WITH_TYPE(NullToMemberPointer, Cnull2memberptr)

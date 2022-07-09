@@ -200,7 +200,7 @@ Section with_monad.
     | Cnull2ptr t | Cnull2memberptr t
     | Cbuiltin2fun t | Cctor t | Cdynamic t => type t
     | Cderived2base ts t | Cbase2derived ts t => lst type ts <+> type t
-    | Cfloat _ | Cint2float _ | Cfloat2int _ => FAIL "float"
+    | Cfloat _ | Cint2float _ | Cfloat2int _ | Cfloat2bool => FAIL "float"
     | Cl2r_bitcast _ => FAIL "l2r_bitcast"
     | _ => OK
     end.

@@ -578,6 +578,7 @@ with Cast : Set :=
 | Cptr2bool
 | Cintegral (_ : type)
 | Cint2bool
+| Cfloat2bool
 | Cfloat2int (_ : type)
 | Cint2float (_ : type)
 | Cfloat (_ : type) (* conversion between floating point types *)
@@ -655,6 +656,7 @@ Module Cast.
     | Cbase2derived path t => List.existsb T path || T t
     | Cintegral t => T t
     | Cint2bool => false
+    | Cfloat2bool => false
     | Cfloat2int t
     | Cint2float t
     | Cfloat t

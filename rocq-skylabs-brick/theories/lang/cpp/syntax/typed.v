@@ -489,6 +489,9 @@ Module decltype.
             let* _ := require_float base in
             let* _ := require_integral t in
             mret t
+        | Cfloat2bool =>
+            let* _ := require_float base in
+            mret Tbool
         | Cint2float t =>
             let* _ := require_integral base in
             let* _ := require_float t in

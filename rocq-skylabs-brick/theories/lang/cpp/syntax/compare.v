@@ -887,6 +887,7 @@ Module Cast.
       | Cptr2bool => 10
       | Cintegral _ => 11
       | Cint2bool => 12
+      | Cfloat2bool => 27
       | Cfloat2int _ => 13
       | Cint2float _ => 25
       | Cfloat _ => 24
@@ -908,7 +909,7 @@ Module Cast.
       | 5 => type
       | 6 | 7 => unit
       | 8 | 9 => type
-      | 10 | 12 => unit
+      | 10 | 12 | 27 => unit
       | 11 | 13 | 14 | 15 | 16 => type
       | 17 => unit
       | 18 => type
@@ -935,6 +936,7 @@ Module Cast.
       | Cderived2base ns t | Cbase2derived ns t => (ns, t)
       | Cintegral t => t
       | Cint2bool => ()
+      | Cfloat2bool => ()
       | Cfloat2int t
       | Cint2float t
       | Cfloat t
@@ -954,7 +956,7 @@ Module Cast.
       | 5 => compareT
       | 6 | 7 => compare_unit
       | 8 | 9 => compareT
-      | 10 | 12 => compare_unit
+      | 10 | 12 | 27 => compare_unit
       | 11 | 13 | 14 | 15 | 16 => compareT
       | 17 => compare_unit
       | 18 => compareT
@@ -989,6 +991,7 @@ Module Cast.
       | Cbase2derived ns t => COMP (Cbase2derived ns t : Cast)
       | Cintegral t => COMP (Cintegral t : Cast)
       | Cint2bool => compare_tag (Reduce (TAG Cint2bool))
+      | Cfloat2bool => compare_tag (Reduce (TAG Cfloat2bool))
       | Cfloat2int t => COMP (Cfloat2int t : Cast)
       | Cint2float t => COMP (Cint2float t : Cast)
       | Cfloat t => COMP (Cfloat t : Cast)

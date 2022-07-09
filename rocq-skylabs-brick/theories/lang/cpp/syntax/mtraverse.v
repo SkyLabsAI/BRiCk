@@ -357,6 +357,7 @@ Module MTraverse.
       | Cbase2derived path t => Cbase2derived <$> traverse (T:=eta list) traverseT path <*> traverseT t
       | Cintegral t => Cintegral <$> traverseT t
       | Cint2bool => mret Cint2bool
+      | Cfloat2bool => mret Cfloat2bool
       | Cfloat2int t => Cfloat2int <$> traverseT t
       | Cint2float t => Cint2float <$> traverseT t
       | Cfloat t => Cfloat <$> traverseT t
