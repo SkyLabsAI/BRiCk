@@ -26,8 +26,7 @@ Require Import skylabs.lang.cpp.logic.destroy.
 
 (* UPSTREAM. *)
 Lemma wand_frame {PROP : bi} (R Q Q' : PROP) :
-  Q -* Q' |--
-  (R -* Q) -* (R -* Q').
+  Q -* Q' |-- (R -* Q) -* (R -* Q').
 Proof. iIntros "Q W R". iApply ("Q" with "(W R)"). Qed.
 
 #[local] Set Printing Coercions.
