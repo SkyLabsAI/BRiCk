@@ -175,32 +175,6 @@ Section Kreturn.
   Qed.
 End Kreturn.
 
-(* loop with invariant `I` *)
-Definition Kloop_inner `{Σ : cpp_logic} (I : mpred) (Q : Kpred) (rt : ReturnType) : mpred :=
-  match rt with
-  | Break | Normal => Q Normal
-  | Continue => I
-  | ReturnVal _ | ReturnVoid => Q rt
-  end.
-#[global] Arguments Kloop_inner _ _ _ _ _ !rt /.
-
-Definition Kloop `{Σ : cpp_logic} (I : mpred) (Q : Kpred) : Kpred :=
-  KP $ Kloop_inner I Q.
-#[global] Hint Opaque Kloop : typeclass_instances.
-
-Section Kloop.
-  Context `{Σ : cpp_logic}.
-
-  Lemma Kloop_frame (I1 I2 : mpred) (k1 k2 : Kpred) (rt : ReturnType) :
-    <affine> (I1 -* I2) |--
-    <affine> (Forall rt : ReturnType, k1 rt -* k2 rt) -*
-    Kloop I1 k1 rt -* Kloop I2 k2 rt.
-  Proof.
-    iIntros "HI Hk". destruct rt; cbn.
-    all: first [ iExact "Hk" | iApply "HI" ].
-  Qed.
-End Kloop.
-
 Definition Kat_exit `{Σ : cpp_logic} (Q : mpred -> mpred) (k : Kpred) : Kpred :=
   KP $ fun rt => Q (k rt).
 #[global] Hint Opaque Kat_exit : typeclass_instances.
