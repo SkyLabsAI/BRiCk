@@ -35,6 +35,30 @@ Proof. iIntros "Q W R". iApply ("Q" with "(W R)"). Qed.
 #[local] Arguments UNSUPPORTED {_ _} _%_bs.
 #[local] Arguments wpi : simpl never.
 
+Definition Kreturn_inner `{Σ : cpp_logic, σ : genv} (Q : ptr -> mpred) (rt : ReturnType) : mpred :=
+  match rt with
+  | Normal | ReturnVoid => Forall p : ptr, p |-> primR Tvoid (cQp.mut 1) Vvoid -* Q p
+  | ReturnVal p => Q p
+  | _ => False
+  end.
+#[global] Arguments Kreturn_inner _ _ _ _ _ !rt /.
+
+Definition Kreturn `{Σ : cpp_logic, σ : genv} (Q : ptr -> mpred) : Kpred :=
+  KP $ Kreturn_inner Q.
+#[global] Hint Opaque Kreturn : typeclass_instances.
+
+Section Kreturn.
+  Context `{Σ : cpp_logic, σ : genv}.
+
+  Lemma Kreturn_frame (Q Q' : ptr -> mpred) (rt : ReturnType) :
+    Forall p, Q p -* Q' p
+                |-- Kreturn Q rt -* Kreturn Q' rt.
+  Proof.
+    iIntros "HQ". destruct rt; cbn; auto.
+    all: iIntros "HR" (?) "R"; iApply "HQ"; by iApply "HR".
+  Qed.
+End Kreturn.
+
 (** ** Weakest precondition of a constructor: Initial construction step. *)
 (**
 Makes [this] and immediate [members] of [cls] strictly valid, to
