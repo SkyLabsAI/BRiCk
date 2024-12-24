@@ -151,30 +151,6 @@ Section KP.
   Proof. done. Qed.
 End KP.
 
-Definition Kreturn_inner `{Σ : cpp_logic, σ : genv} (Q : ptr -> mpred) (rt : ReturnType) : mpred :=
-  match rt with
-  | Normal | ReturnVoid => Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -* Q p
-  | ReturnVal p => Q p
-  | _ => False
-  end.
-#[global] Arguments Kreturn_inner _ _ _ _ _ !rt /.
-
-Definition Kreturn `{Σ : cpp_logic, σ : genv} (Q : ptr -> mpred) : Kpred :=
-  KP $ Kreturn_inner Q.
-#[global] Hint Opaque Kreturn : typeclass_instances.
-
-Section Kreturn.
-  Context `{Σ : cpp_logic, σ : genv}.
-
-  Lemma Kreturn_frame (Q Q' : ptr -> mpred) (rt : ReturnType) :
-    Forall p, Q p -* Q' p
-    |-- Kreturn Q rt -* Kreturn Q' rt.
-  Proof.
-    iIntros "HQ". destruct rt; cbn; auto.
-    all: iIntros "HR" (?) "R"; iApply "HQ"; by iApply "HR".
-  Qed.
-End Kreturn.
-
 Definition Kat_exit `{Σ : cpp_logic} (Q : mpred -> mpred) (k : Kpred) : Kpred :=
   KP $ fun rt => Q (k rt).
 #[global] Hint Opaque Kat_exit : typeclass_instances.
