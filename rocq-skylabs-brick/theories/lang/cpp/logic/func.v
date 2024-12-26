@@ -59,6 +59,253 @@ Section Kreturn.
   Qed.
 End Kreturn.
 
+(** ** Binding parameters *)
+
+Definition wp_make_mutables `{Σ : cpp_logic, σ : genv} (tu : translation_unit) :=
+  fix wp_make_mutables (args : list (ptr * decltype)) (Q : epred) : mpred :=
+  match args with
+  | nil => Q
+  | p :: args => wp_make_mutables args $ wp_make_mutable tu p.1 p.2 Q
+  end.
+#[global] Hint Opaque wp_make_mutables : typeclass_instances.
+
+Section with_cpp.
+  Context `{Σ : cpp_logic, σ : genv}.
+  Implicit Types (Q : epred).
+
+  Lemma wp_make_mutables_frame tu tu' args Q Q' :
+    sub_module tu tu' ->
+    Q -* Q' |-- wp_make_mutables tu args Q -* wp_make_mutables tu' args Q'.
+  Proof.
+    intros ?%types_compat.
+    move: Q Q'. induction args; intros; first done. cbn. iIntros "HQ".
+    iApply (IHargs with "[HQ]"). by iApply wp_const_frame.
+  Qed.
+End with_cpp.
+
+Definition Kcleanup `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
+    (args : list (ptr * decltype)) (Q : Kpred) : Kpred :=
+  Kat_exit (wp_make_mutables tu args) Q.
+#[global] Hint Opaque Kcleanup : typeclass_instances.
+
+Section with_cpp.
+  Context `{Σ : cpp_logic, σ : genv}.
+  Implicit Types (Q : Kpred).
+
+  Lemma Kcleanup_frame tu tu' args (Q Q' : Kpred) rt :
+    sub_module tu tu' ->
+    Q rt -* Q' rt |-- Kcleanup tu args Q rt -* Kcleanup tu' args Q' rt.
+  Proof.
+    intros. rewrite /Kcleanup. iIntros "?". iApply Kat_exit_frame; [|done].
+    iIntros (??) "?". by iApply wp_make_mutables_frame.
+  Qed.
+End with_cpp.
+
+(**
+[bind_vars tu ar ts args ρ Q] initializes a function's arguments
+[args] according to its arity [ar] and declared parameter types [ts].
+
+NOTE. We make arguments [const] here if necessary and then make them
+mutable again in the second argument to [Q].
+*)
+Definition bind_vars `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ar : function_arity) :=
+  fix bind_vars (ts : list (ident * decltype)) (args : list ptr)
+    (ρ : option ptr -> region) (Q : region -> list (ptr * decltype) -> epred) : mpred :=
+  match ts with
+  | nil =>
+    match ar with
+    | Ar_Definite =>
+      match args with
+      | nil => Q (ρ None) []
+      | _ :: _ => ERROR "bind_vars: extra arguments"
+      end
+    | Ar_Variadic =>
+      match args with
+      | vap :: nil => Q (ρ $ Some vap) []
+      | _ => ERROR "bind_vars: variadic function missing varargs"
+      end
+    end
+  | xty :: ts =>
+    match args with
+    | p :: args =>
+      (*
+      NOTE: We need not gather additional qualifiers from an array's
+      element type as Clang's parser eagerly "decays" a function's
+      array parameter types to pointer types.
+      *)
+      let recurse := bind_vars ts args (fun vap => Rbind xty.1 p $ ρ vap) in
+      let qty := decompose_type xty.2 in
+      let ty := qty.2 in
+      if q_const qty.1 then
+        let* := wp_make_const tu p ty in
+        let* ρ, consts := recurse in
+        Q ρ $ (p,ty) :: consts
+      else
+        recurse Q
+    | nil => ERROR "bind_vars: insufficient arguments"
+    end
+  end.
+#[global] Hint Opaque bind_vars : typeclass_instances.
+
+Section with_cpp.
+  Context `{Σ : cpp_logic, σ : genv}.
+  Implicit Types (Q : region -> list (ptr * decltype) -> epred).
+
+  Lemma bind_vars_frame tu tu' ar ts args ρ Q Q' :
+    sub_module tu tu' ->
+    Forall ρ args', Q ρ args' -* Q' ρ args'
+    |-- bind_vars tu ar ts args ρ Q -* bind_vars tu' ar ts args ρ Q'.
+  Proof.
+    intros Hsub%types_compat. move: args ρ Q Q'. induction ts; intros [] *; cbn.
+    { destruct ar; auto. iIntros "HQ ?". by iApply "HQ". }
+    { destruct ar; auto. case_match; auto. iIntros "HQ ?". by iApply "HQ". }
+    { auto. }
+    { iIntros "HQ". case_match.
+      - iApply wp_const_frame; [done|]. iApply IHts. iIntros (??) "?". by iApply "HQ".
+      - iApply IHts. iIntros (??) "?". by iApply "HQ". }
+  Qed.
+End with_cpp.
+
+(** ** The weakest precondition of a function *)
+
+(**
+NOTE: The fancy updates in `wp_func` and friends are not in the right
+place to support `XX_shift` lemmas. This could be fixed.
+*)
+#[local] Definition wp_func' `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
+    (f : Func) (args : list ptr) (Q : ptr -> epred) : mpred :=
+  match f.(f_body) with
+  | None => ERROR "wp_func: no body"
+  | Some body =>
+    match body with
+    | Impl body =>
+      let ρ vap := Remp None vap f.(f_return) in
+      letI* ρ, cleanup := bind_vars tu f.(f_arity) f.(f_params) args ρ in
+      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn $ fun x => |={top}=>?u |> Q x)
+    | Builtin builtin =>
+      let ts := List.map snd f.(f_params) in
+      wp_builtin_func builtin (Tfunction $ @FunctionType _ f.(f_cc) f.(f_arity) f.(f_return) ts) args Q
+    end
+  end.
+mlock Definition wp_func `{Σ : cpp_logic, σ : genv} :=
+  Cbn (Reduce (wp_func' true)).
+#[global] Arguments wp_func {_ _ _ _} _ _ _ _%_I : assert.	(* mlock bug *)
+
+Definition func_ok `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
+    (f : Func) (spec : function_spec) : mpred :=
+  [| type_of_spec spec = type_of_value (Ofunction f) |] **
+  □ Forall (Q : ptr -> epred) vals,
+  spec.(fs_spec) vals Q -* wp_func tu f vals Q.
+
+Section wp_func.
+  Context `{Σ : cpp_logic, σ : genv}.
+  Implicit Types (Q : ptr -> epred).
+
+  Lemma wp_func_frame tu tu' f args Q Q' :
+    sub_module tu tu' ->
+    Forall p, Q p -* Q' p
+    |-- wp_func tu f args Q -* wp_func tu' f args Q'.
+  Proof.
+    intros. rewrite wp_func.unlock. iIntros "HQ".
+    case_match; last by auto.
+    case_match; last by iApply wp_builtin_func_frame.
+    iApply bind_vars_frame; [done|]. iIntros (??) "wp !>"; iRevert "wp".
+    iApply wp_frame; [done|]. iIntros (?).
+    iApply Kcleanup_frame; [done|].
+    iApply Kreturn_frame. iIntros (?) "Q".
+    iApply ("HQ" with "Q").
+  Qed.
+
+  (** Unsupported *)
+  Lemma wp_func_shift tu f args Q :
+    (|={top}=> wp_func tu f args (fun p => |={top}=> Q p))
+    |-- wp_func tu f args Q.
+  Abort.
+
+  Lemma wp_func_intro tu f args Q :
+    Cbn (Reduce (wp_func' false tu f args Q)) |-- wp_func tu f args Q.
+  Proof.
+    rewrite wp_func.unlock. repeat case_match; auto.
+    iApply bind_vars_frame; [done|]. iIntros (??) "wp !>"; iRevert "wp".
+    iApply wp_frame; [done|]. iIntros (?).
+    iApply Kcleanup_frame; [done|].
+    iApply Kreturn_frame. auto.
+  Qed.
+
+  Lemma wp_func_elim tu f args Q :
+    wp_func tu f args Q |-- Cbn (Reduce (wp_func' true tu f args Q)).
+  Proof. by rewrite wp_func.unlock. Qed.
+End wp_func.
+
+(** ** The weakest precondition of a method *)
+(**
+Note that in the calling convention for methods, the [this] parameter
+is passed directly rather than being materialized like normal
+parameters.
+*)
+#[local] Definition wp_method' `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
+    (m : Method) (args : list ptr) (Q : ptr -> epred) : mpred :=
+  match m.(m_body) with
+  | None => ERROR "wp_method: no body"
+  | Some (UserDefined body) =>
+    match args with
+    | thisp :: rest_vals =>
+      let ρ va := Remp (Some thisp) va m.(m_return) in
+      letI* ρ, cleanup := bind_vars tu m.(m_arity) m.(m_params) rest_vals ρ in
+      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn $ fun x => |={top}=>?u |> Q x)
+    | _ => ERROR "wp_method: no arguments"
+    end
+  | Some _ => UNSUPPORTED "wp_method: defaulted methods"
+  end.
+mlock Definition wp_method `{Σ : cpp_logic, σ : genv} :=
+  Cbn (Reduce (wp_method' true)).
+#[global] Arguments wp_method {_ _ _ _} _ _ _ _%_I : assert.	(* mlock bug *)
+
+Definition method_ok `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
+    (m : Method) (spec : function_spec) : mpred :=
+  [| type_of_spec spec = type_of_value (Omethod m) |] **
+  □ Forall (Q : ptr -> mpred) vals,
+  spec.(fs_spec) vals Q -* wp_method tu m vals Q.
+
+Section wp_method.
+  Context `{Σ : cpp_logic, σ : genv}.
+  Implicit Types (Q : ptr -> epred).
+
+  Lemma wp_method_frame tu tu' m args Q Q' :
+    sub_module tu tu' ->
+    Forall p, Q p -* Q' p
+    |-- wp_method tu m args Q -* wp_method tu' m args Q'.
+  Proof.
+    intros. iIntros "HQ". rewrite wp_method.unlock.
+    repeat case_match; auto.
+    iApply bind_vars_frame; [done|]. iIntros (??) "wp !>"; iRevert "wp".
+    iApply wp_frame; [done|]. iIntros (?).
+    iApply Kcleanup_frame; [done|].
+    iApply Kreturn_frame. iIntros (?) "Q".
+    iApply ("HQ" with "Q").
+  Qed.
+
+  (** Unsupported *)
+  Lemma wp_method_shift tu m args Q :
+    (|={top}=> wp_method tu m args (fun p => |={top}=> Q p))
+    |-- wp_method tu m args Q.
+  Abort.
+
+  Lemma wp_method_intro tu m args Q :
+    Cbn (Reduce (wp_method' false tu m args Q)) |-- wp_method tu m args Q.
+  Proof.
+    rewrite wp_method.unlock. do 3!f_equiv.
+    iApply bind_vars_frame; [done|]. iIntros (??) "wp !>"; iRevert "wp".
+    iApply wp_frame; [done|]. iIntros (?).
+    iApply Kcleanup_frame; [done|].
+    iApply Kreturn_frame. auto.
+  Qed.
+
+  Lemma wp_method_elim tu m args Q :
+    wp_method tu m args Q |-- Cbn (Reduce (wp_method' true tu m args Q)).
+  Proof. by rewrite wp_method.unlock. Qed.
+End wp_method.
+
 (** ** Weakest precondition of a constructor: Initial construction step. *)
 (**
 Makes [this] and immediate [members] of [cls] strictly valid, to
@@ -315,256 +562,6 @@ Section with_cpp.
     iIntros "[$ $] $ $".
   Qed.
 End with_cpp.
-
-(** ** Binding parameters *)
-
-Definition wp_make_mutables `{Σ : cpp_logic, σ : genv} (tu : translation_unit) :=
-  fix wp_make_mutables (args : list (ptr * decltype)) (Q : epred) : mpred :=
-  match args with
-  | nil => Q
-  | p :: args => wp_make_mutables args $ wp_make_mutable tu p.1 p.2 Q
-  end.
-#[global] Hint Opaque wp_make_mutables : typeclass_instances.
-
-Section with_cpp.
-  Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (Q : epred).
-
-  Lemma wp_make_mutables_frame tu tu' args Q Q' :
-    sub_module tu tu' ->
-    Q -* Q' |-- wp_make_mutables tu args Q -* wp_make_mutables tu' args Q'.
-  Proof.
-    intros ?%types_compat.
-    move: Q Q'. induction args; intros; first done. cbn. iIntros "HQ".
-    iApply (IHargs with "[HQ]"). by iApply wp_const_frame.
-  Qed.
-End with_cpp.
-
-Definition Kcleanup `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
-    (args : list (ptr * decltype)) (Q : Kpred) : Kpred :=
-  Kat_exit (wp_make_mutables tu args) Q.
-#[global] Hint Opaque Kcleanup : typeclass_instances.
-
-Section with_cpp.
-  Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (Q : Kpred).
-
-  Lemma Kcleanup_frame tu tu' args (Q Q' : Kpred) rt :
-    sub_module tu tu' ->
-    Q rt -* Q' rt |-- Kcleanup tu args Q rt -* Kcleanup tu' args Q' rt.
-  Proof.
-    intros. rewrite /Kcleanup. iIntros "?". iApply Kat_exit_frame; [|done].
-    iIntros (??) "?". by iApply wp_make_mutables_frame.
-  Qed.
-End with_cpp.
-
-(**
-[bind_vars tu ar ts args ρ Q] initializes a function's arguments
-[args] according to its arity [ar] and declared parameter types [ts].
-
-NOTE. We make arguments [const] here if necessary and then make them
-mutable again in the second argument to [Q].
-*)
-Definition bind_vars `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ar : function_arity) :=
-  fix bind_vars (ts : list (ident * decltype)) (args : list ptr)
-    (ρ : option ptr -> region) (Q : region -> list (ptr * decltype) -> epred) : mpred :=
-  match ts with
-  | nil =>
-    match ar with
-    | Ar_Definite =>
-      match args with
-      | nil => Q (ρ None) []
-      | _ :: _ => ERROR "bind_vars: extra arguments"
-      end
-    | Ar_Variadic =>
-      match args with
-      | vap :: nil => Q (ρ $ Some vap) []
-      | _ => ERROR "bind_vars: variadic function missing varargs"
-      end
-    end
-  | xty :: ts =>
-    match args with
-    | p :: args =>
-      (*
-      NOTE: We need not gather additional qualifiers from an array's
-      element type as Clang's parser eagerly "decays" a function's
-      array parameter types to pointer types.
-      *)
-      let recurse := bind_vars ts args (fun vap => Rbind xty.1 p $ ρ vap) in
-      let qty := decompose_type xty.2 in
-      let ty := qty.2 in
-      if q_const qty.1 then
-        let* := wp_make_const tu p ty in
-        let* ρ, consts := recurse in
-        Q ρ $ (p,ty) :: consts
-      else
-        recurse Q
-    | nil => ERROR "bind_vars: insufficient arguments"
-    end
-  end.
-#[global] Hint Opaque bind_vars : typeclass_instances.
-
-Section with_cpp.
-  Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (Q : region -> list (ptr * decltype) -> epred).
-
-  Lemma bind_vars_frame tu tu' ar ts args ρ Q Q' :
-    sub_module tu tu' ->
-    Forall ρ args', Q ρ args' -* Q' ρ args'
-    |-- bind_vars tu ar ts args ρ Q -* bind_vars tu' ar ts args ρ Q'.
-  Proof.
-    intros Hsub%types_compat. move: args ρ Q Q'. induction ts; intros [] *; cbn.
-    { destruct ar; auto. iIntros "HQ ?". by iApply "HQ". }
-    { destruct ar; auto. case_match; auto. iIntros "HQ ?". by iApply "HQ". }
-    { auto. }
-    { iIntros "HQ". case_match.
-      - iApply wp_const_frame; [done|]. iApply IHts. iIntros (??) "?". by iApply "HQ".
-      - iApply IHts. iIntros (??) "?". by iApply "HQ". }
-  Qed.
-End with_cpp.
-
-(** ** The weakest precondition of a function *)
-
-(**
-NOTE: The fancy updates in `wp_func` and friends are not in the right
-place to support `XX_shift` lemmas. This could be fixed.
-*)
-#[local] Definition wp_func' `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
-    (f : Func) (args : list ptr) (Q : ptr -> epred) : mpred :=
-  match f.(f_body) with
-  | None => ERROR "wp_func: no body"
-  | Some body =>
-    match body with
-    | Impl body =>
-      let ρ vap := Remp None vap f.(f_return) in
-      letI* ρ, cleanup := bind_vars tu f.(f_arity) f.(f_params) args ρ in
-      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn $ fun x => |={top}=>?u |> Q x)
-    | Builtin builtin =>
-      let ts := List.map snd f.(f_params) in
-      wp_builtin_func builtin (Tfunction $ @FunctionType _ f.(f_cc) f.(f_arity) f.(f_return) ts) args Q
-    end
-  end.
-mlock Definition wp_func `{Σ : cpp_logic, σ : genv} :=
-  Cbn (Reduce (wp_func' true)).
-
-Definition func_ok `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
-    (f : Func) (spec : function_spec) : mpred :=
-  [| type_of_spec spec = type_of_value (Ofunction f) |] **
-  □ Forall (Q : ptr -> epred) vals,
-  spec.(fs_spec) vals Q -* wp_func tu f vals Q.
-
-Section wp_func.
-  Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (Q : ptr -> epred).
-
-  Lemma wp_func_frame tu tu' f args Q Q' :
-    sub_module tu tu' ->
-    Forall p, Q p -* Q' p
-    |-- wp_func tu f args Q -* wp_func tu' f args Q'.
-  Proof.
-    intros. rewrite wp_func.unlock. iIntros "HQ".
-    case_match; last by auto.
-    case_match; last by iApply wp_builtin_func_frame.
-    all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
-    all: iApply wp_frame; [done|]; iIntros (?).
-    all: iApply Kcleanup_frame; [done|].
-    all: iApply Kreturn_frame; iIntros (?) "Q".
-    all: iApply ("HQ" with "Q").
-  Qed.
-
-  (** Unsupported *)
-  Lemma wp_func_shift tu f args Q :
-    (|={top}=> wp_func tu f args (fun p => |={top}=> Q p))
-    |-- wp_func tu f args Q.
-  Abort.
-
-  Lemma wp_func_intro tu f args Q :
-    Cbn (Reduce (wp_func' false tu f args Q)) |-- wp_func tu f args Q.
-  Proof.
-    rewrite wp_func.unlock. repeat case_match; auto.
-    iApply bind_vars_frame; [done|]. iIntros (??) "wp !>"; iRevert "wp".
-    iApply wp_frame; [done|]. iIntros (?).
-    iApply Kcleanup_frame; [done|].
-    iApply Kreturn_frame. auto.
-  Qed.
-
-  Lemma wp_func_elim tu f args Q :
-    wp_func tu f args Q |-- Cbn (Reduce (wp_func' true tu f args Q)).
-  Proof. by rewrite wp_func.unlock. Qed.
-End wp_func.
-
-(** ** The weakest precondition of a method *)
-(**
-Note that in the calling convention for methods, the [this] parameter
-is passed directly rather than being materialized like normal
-parameters.
-*)
-#[local] Definition wp_method' `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
-    (m : Method) (args : list ptr) (Q : ptr -> epred) : mpred :=
-  match m.(m_body) with
-  | None => ERROR "wp_method: no body"
-  | Some (UserDefined body | CompilerProvided body) =>
-    match args with
-    | thisp :: rest_vals =>
-      let ρ va := Remp (Some thisp) va m.(m_return) in
-      letI* ρ, cleanup := bind_vars tu m.(m_arity) m.(m_params) rest_vals ρ in
-      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn $ fun x => |={top}=>?u |> Q x)
-    | _ => ERROR "wp_method: no arguments"
-    end
-  | Some _ => UNSUPPORTED "wp_method: defaulted methods"
-  end.
-mlock Definition wp_method `{Σ : cpp_logic, σ : genv} :=
-  Cbn (Reduce (wp_method' true)).
-
-Definition method_ok `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
-    (m : Method) (spec : function_spec) : mpred :=
-  [| type_of_spec spec = type_of_value (Omethod m) |] **
-  □ Forall (Q : ptr -> mpred) vals,
-  spec.(fs_spec) vals Q -* wp_method tu m vals Q.
-
-Section wp_method.
-  Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (Q : ptr -> epred).
-
-  Lemma wp_method_frame tu tu' m args Q Q' :
-    sub_module tu tu' ->
-    Forall p, Q p -* Q' p
-    |-- wp_method tu m args Q -* wp_method tu' m args Q'.
-  Proof.
-    intros. iIntros "HQ". rewrite wp_method.unlock.
-    destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_body]; cbn.
-    destruct m_body as [[|body|body]|]; auto.
-    all: destruct args as [|thisp rest_vals]; auto.
-    all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
-    all: iApply wp_frame; [done|]; iIntros (?).
-    all: iApply Kcleanup_frame; [done|].
-    all: iApply Kreturn_frame; iIntros (?) "Q".
-    all: iApply ("HQ" with "Q").
-  Qed.
-
-  (** Unsupported *)
-  Lemma wp_method_shift tu m args Q :
-    (|={top}=> wp_method tu m args (fun p => |={top}=> Q p))
-    |-- wp_method tu m args Q.
-  Abort.
-
-  Lemma wp_method_intro tu m args Q :
-    Cbn (Reduce (wp_method' false tu m args Q)) |-- wp_method tu m args Q.
-  Proof.
-    rewrite wp_method.unlock.
-    destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_body]; cbn.
-    destruct m_body as [[|body|body]|]; auto.
-    all: destruct args as [|thisp rest_vals]; auto.
-    all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
-    all: iApply wp_frame; [done|]; iIntros (?).
-    all: iApply Kcleanup_frame; [done|].
-    all: iApply Kreturn_frame; auto.
-  Qed.
-
-  Lemma wp_method_elim tu m args Q :
-    wp_method tu m args Q |-- Cbn (Reduce (wp_method' true tu m args Q)).
-  Proof. by rewrite wp_method.unlock. Qed.
-End wp_method.
 
 (** ** Weakest precondition of a constructor *)
 
