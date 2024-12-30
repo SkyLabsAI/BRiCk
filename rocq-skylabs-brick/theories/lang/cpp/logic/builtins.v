@@ -24,12 +24,13 @@ as if they were all evaluated using [wp_operand].
 *)
 Parameter wp_builtin : ∀ `{Σ : cpp_logic, σ : genv}
     (b : BuiltinFn) (fty : functype) (** the type of the builtin *)
-    (args : list val) (Q : val -> epred), mpred.
+    (args : list val), monad.M val.
 
 Section wp_builtin.
   Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (Q : val -> epred).
+  Implicit Types (Q : val -> mpred).
 
+  (*
   Axiom wp_builtin_frame : ∀ b fty args Q Q',
     Forall v, Q v -* Q' v
     |-- wp_builtin b fty args Q -* wp_builtin b fty args Q'.
@@ -162,7 +163,7 @@ Section wp_builtin.
       provides_storage res newp ty ** (provides_storage res newp ty -* Q (Vptr newp))
       |-- wp_builtin "__builtin_launder" (Tfunction (Tptr Tvoid) (Tptr Tvoid :: nil))
           (Vptr res :: nil) Q.
-
+   *)
 End wp_builtin.
 
 (** ** Endianness *)
@@ -202,7 +203,7 @@ End endian_conversion.
 (** ** Builtin functions *)
 
 Definition read_args `{Σ : cpp_logic, σ : genv} :=
-  fix read_args (targs : list decltype) (ls : list ptr) (Q : list val -> epred) : mpred :=
+  fix read_args (targs : list decltype) (ls : list ptr) (Q : list val -> mpred) : mpred :=
   match targs , ls with
   | nil , nil => Q nil
   | t :: ts , p :: ps =>
@@ -214,7 +215,7 @@ Definition read_args `{Σ : cpp_logic, σ : genv} :=
 
 Section with_Σ.
   Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (Q : list val -> epred).
+  Implicit Types (Q : list val -> mpred).
 
   Lemma read_args_frame targs args Q Q' :
     Forall vs, Q vs -* Q' vs
@@ -245,6 +246,8 @@ Section with_Σ.
   Proof. intros * Q1 Q2 HQ. by split'; apply: read_args_mono=>?; rewrite HQ. Qed.
 End with_Σ.
 
+(*
+
 (**
 [wp_builtin_func b fty args Q] captures the semantics of applying
 builtin [b] with type [fty] to arguments [args] in the standard
@@ -252,7 +255,7 @@ calling convention.
 *)
 #[local]
 Definition wp_builtin_func' `{Σ : cpp_logic, σ : genv} (u : bool)
-    (b : BuiltinFn) (fty : functype) (args : list ptr) (Q : ptr -> epred) : mpred :=
+    (b : BuiltinFn) (fty : functype) (args : list ptr) (Q : ptr -> mpred) : mpred :=
   |={top}=>?u
   match fty with
   | Tfunction (FunctionType rty targs) =>
@@ -267,7 +270,7 @@ Definition wp_builtin_func `{Σ : cpp_logic, σ : genv} :=
 
 Section with_Σ.
   Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (Q : ptr -> epred).
+  Implicit Types (Q : ptr -> mpred).
 
   Lemma wp_builtin_func_frame b fty args Q Q' :
     Forall p, Q p -* Q' p
@@ -320,4 +323,6 @@ Section with_Σ.
     wp_builtin_func b fty args Q
     |-- Cbn (Reduce (wp_builtin_func' true b fty args Q)).
   Proof. done. Qed.
+
 End with_Σ.
+*)

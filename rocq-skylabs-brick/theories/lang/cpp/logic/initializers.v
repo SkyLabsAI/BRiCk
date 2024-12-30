@@ -359,18 +359,20 @@ under a wand and an existential quantifier:
 but such a rule would fail with [.. -* |={top}=> ..] in place of the
 magic wands.
 *)
-#[local] Notation fupd_compatible := false (only parsing).
+#[local] Notation fupd_compatible := true (only parsing).
+
+#[local] Notation Mfupd_compat := (if fupd_compatible then Mfupd top top else Mret ()) (only parsing).
 
 (* BEGIN wp_initialize *)
 #[local]
 Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
     (u : bool) (tu : translation_unit) (ρ : region)
     (cv : type_qualifiers) (ty : decltype)
-    (addr : ptr) (init : Expr) (Q : FreeTemps -> epred) : mpred :=
-  let UNSUPPORTED := funI m => |={top}=>?u UNSUPPORTED m in
-  if q_volatile cv then False%I
+    (addr : ptr) (init : Expr) : M FreeTemps.t :=
+  let UNSUPPORTED := funI m => letWP* '() := Mfupd top top in Merror m in
+  if q_volatile cv then Merror "volatile"
   else
-    match ty with
+    match ty return M FreeTemps.t with
     | Tvoid =>
       (*
       [wp_initialize] is used to `return` from a function. The following
@@ -380,15 +382,17 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
         void g() { return f(); }
       >>
       *)
-      letI* v, frees := wp_operand tu ρ init in
+      letWP* v := wp_operand tu ρ init in
       let qf := cQp.mk (q_const cv) 1 in
-      [| v = Vvoid |] **
+      letWP* '() := Mrequire (v = Vvoid) in
 
       (**
       [primR] is enough because C++ code never uses the raw bytes
       underlying an inhabitant of type void.
       *)
-      (addr |-> primR Tvoid qf Vvoid -* |={top}=>?u Q frees)
+      letWP* '() := Mproduce (addr |-> primR Tvoid qf Vvoid) in
+      letWP* '() := Mfupd_compat in
+      Mret (FreeTemps.delete (tqualified cv Tvoid) addr)
 
     | Tptr _
     | Tmember_pointer _ _
@@ -398,23 +402,24 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
     | Tenum _
     | Tfloat_ _
     | Tnullptr =>
-      letI* v, free := wp_operand tu ρ init in
+      letWP* v := wp_operand tu ρ init in
       let qf := cQp.mk (q_const cv) 1 in
-      addr |-> tptsto_fuzzyR (erase_qualifiers ty) qf v -* |={top}=>?u Q free
+      letWP* '() := Mproduce (addr |-> tptsto_fuzzyR (erase_qualifiers ty) qf v) in
+      letWP* '() := Mfupd_compat in Mret (FreeTemps.delete (tqualified cv ty) addr)
 
       (* non-primitives are handled via prvalue-initialization semantics *)
     | Tarray _ len =>
         if bool_decide (0 < len)%N then
-          wp_init tu ρ (tqualified cv ty) addr init Q
+          wp_init tu ρ (tqualified cv ty) addr init
         else
           UNSUPPORTED (initializing_type ty init)
-    | Tnamed _ => wp_init tu ρ (tqualified cv ty) addr init Q
+    | Tnamed _ => wp_init tu ρ (tqualified cv ty) addr init
     | Tincomplete_array _ => UNSUPPORTED (initializing_type ty init)
     | Tvariable_array _ _ => UNSUPPORTED (initializing_type ty init)
 
     | Tref ty =>
       let rty := Tref $ erase_qualifiers ty in
-      letI* p, free := wp_glval tu ρ init in (* TODO this needs to permit initialization from xval if [ty] is <<const>> *)
+      letWP* p := wp_glval tu ρ init in (* TODO this needs to permit initialization from xval if [ty] is <<const>> *)
       let qf := cQp.mk (q_const cv) 1 in
       (*
       [primR] is enough because C++ code never uses the raw bytes
@@ -423,11 +428,13 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
       TODO: [ref]s are never mutable, but we use [qf] here for
       compatibility with [implicit_destruct_struct]
       *)
-      addr |-> primR rty qf (Vref p) -* |={top}=>?u Q free
+      letWP* '() := Mproduce (addr |-> primR rty qf (Vref p)) in
+      letWP* '() := Mfupd_compat in
+      Mret (FreeTemps.delete (tqualified cv (Tref ty)) addr)
 
     | Trv_ref ty =>
       let rty := Tref $ erase_qualifiers ty in
-      letI* p, free := wp_xval tu ρ init in
+      letWP* p := wp_xval tu ρ init in
       let qf := cQp.mk (q_const cv) 1 in
       (*
       [primR] is enough because C++ code never uses the raw bytes
@@ -436,11 +443,13 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
       TODO: [ref]s are never mutable, but we use [qf] here for
       compatibility with [implicit_destruct_struct]
       *)
-      addr |-> primR rty qf (Vref p) -* |={top}=>?u Q free
+      letWP* '() := Mproduce (addr |-> primR rty qf (Vref p)) in
+      letWP* '() := Mfupd_compat in
+      Mret (FreeTemps.delete (tqualified cv (Trv_ref ty)) addr)
 
     | Tfunction _ => UNSUPPORTED (initializing_type ty init)
 
-    | Tqualified _ ty => |={top}=>?u False (* unreachable *)
+    | Tqualified _ ty => Merror "unreachable" (* unreachable *)
     | Tarch _ _ => UNSUPPORTED (initializing_type ty init)
     | Tunsupported _ => UNSUPPORTED (initializing_type ty init)
     | Tdecltype _ =>  UNSUPPORTED (initializing_type ty init)
@@ -456,23 +465,26 @@ mlock
 Definition wp_initialize_unqualified `{Σ : cpp_logic, σ : genv} :
   ∀ (tu : translation_unit) (ρ : region)
     (cv : type_qualifiers) (ty : decltype)
-    (addr : ptr) (init : Expr) (Q : FreeTemps -> epred), mpred :=
+    (addr : ptr) (init : Expr), M FreeTemps.t :=
   Cbn (Reduce (wp_initialize_unqualified_body fupd_compatible)).
+#[global] Arguments wp_initialize_unqualified {_ _ _ _} _ _ _ _ _ _%_I : assert.	(* mlock bug *)
 
 Definition wp_initialize `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ρ : region)
-    (qty : decltype) (addr : ptr) (init : Expr) (Q : FreeTemps -> epred) : mpred :=
-  qual_norm (wp_initialize_unqualified tu ρ) qty addr init Q.
+    (qty : decltype) (addr : ptr) (init : Expr) : M FreeTemps.t :=
+  qual_norm (wp_initialize_unqualified tu ρ) qty addr init.
 #[global] Hint Opaque wp_initialize : typeclass_instances.
-#[global] Arguments wp_initialize {_ _ _ _} _ _ !_ _ _ _ / : assert.
+#[global] Arguments wp_initialize {_ _ _ _} _ _ !_ _ _ / : assert.
 (* END wp_initialize *)
 
 Lemma wp_initialize_unqualified_well_typed `{Σ : cpp_logic, σ : genv}
-  tu ρ cv ty addr init (Q : FreeTemps.t -> epred) :
-      wp_initialize_unqualified tu ρ cv ty addr init (fun free => reference_to (to_heap_type ty) addr -* Q free)
-  |-- wp_initialize_unqualified tu ρ cv ty addr init Q.
+  tu ρ cv ty addr init :
+      (letWP* free := wp_initialize_unqualified tu ρ cv ty addr init in
+       letWP* '() := Mproduce (reference_to (to_heap_type ty) addr) in
+       Mret free)
+  ⊆ wp_initialize_unqualified tu ρ cv ty addr init.
 Proof.
   rewrite wp_initialize_unqualified.unlock.
-  case_match; eauto.
+  case_match; eauto. (*
   case_match; subst; eauto.
   all: try (iApply wp_operand_frame; [ done | ];
     iIntros (??) "X Y";
@@ -506,7 +518,7 @@ Proof.
     rewrite (reference_to_erase (Tnamed gn)).
     rewrite reference_to_erase/=/tqualified'.
     destruct cv; simpl; eauto.
-Qed.
+Qed. *) Admitted.
 
 (**
 [wpi cls this init Q] evaluates the initializer [init] from the object
@@ -519,14 +531,13 @@ expression.
 
 See [https://eel.is/c++draft/class.init#class.base.init-note-2].
 *)
+
 Definition wpi `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ρ : region)
-    (cls : globname) (thisp : ptr) (ty : type) (init : Initializer) (Q : epred) : mpred :=
+    (cls : globname) (thisp : ptr) (ty : type) (init : Initializer) : M unit :=
   let p' := thisp ,, offset_for cls init.(init_path) in
-  letI* free := wp_initialize tu ρ ty p' init.(init_init) in
-  letI* := interp tu free in
-  Q.
+  Mmap (fun free => ()) $ Mfree_all tu $ wp_initialize tu ρ ty p' init.(init_init).
 #[global] Hint Opaque wpi : typeclass_instances.
-#[global] Arguments wpi {_ _ _ _} _ _ _ _ _ _ _ / : assert.
+#[global] Arguments wpi {_ _ _ _} _ _ _ _ _ _ / : assert.
 
 (*
 All framing lemmas *should* work with [genv] weakening, but that
@@ -541,11 +552,12 @@ Section wp_initialize.
 
   (** [wp_initialize_unqualified] *)
 
-  Lemma wp_initialize_unqualified_intro tu ρ cv ty obj e Q :
-    Cbn (Reduce wp_initialize_unqualified_body false) tu ρ cv ty obj e Q
-    |-- wp_initialize_unqualified tu ρ cv ty obj e Q.
+  Lemma wp_initialize_unqualified_intro tu ρ cv ty obj e :
+    Cbn (Reduce wp_initialize_unqualified_body false) tu ρ cv ty obj e
+    ⊆ wp_initialize_unqualified tu ρ cv ty obj e.
   Proof.
-    rewrite wp_initialize_unqualified.unlock. destruct ty; auto.
+    rewrite wp_initialize_unqualified.unlock; destruct ty; auto.
+    (*
     all:
       repeat case_match;
       lazymatch goal with
@@ -561,12 +573,12 @@ Section wp_initialize.
       | iIntros (??) "[$ HQ] R"; iApply ("HQ" with "R")
       | idtac ].
   *)
-  Qed.
+  Qed. *) Admitted.
 
-  Lemma wp_initialize_unqualified_elim tu ρ cv ty obj e Q :
-    wp_initialize_unqualified tu ρ cv ty obj e Q
-    |-- Cbn (Reduce wp_initialize_unqualified_body fupd_compatible) tu ρ cv ty obj e Q.
-  Proof. by rewrite wp_initialize_unqualified.unlock. Qed.
+  Lemma wp_initialize_unqualified_elim tu ρ cv ty obj e :
+    wp_initialize_unqualified tu ρ cv ty obj e
+    ⊆ Cbn (Reduce wp_initialize_unqualified_body fupd_compatible) tu ρ cv ty obj e.
+  Proof. rewrite wp_initialize_unqualified.unlock. (* Qed. *) Admitted.
 
   (**
   For value types, [wp_initialize -|- wp_operand].
@@ -590,26 +602,37 @@ Section wp_initialize.
     by move/(_ I)/bool_decide_unpack.
   Qed.
 
-  #[local] Notation VAL_INIT u tu ρ cv ty addr init Q := (Cbn (
+  #[local] Notation VAL_INIT u tu ρ cv ty addr init := (Cbn (
     let cv' := cv in (* to establish scopes *)
-    if q_volatile cv' then False
+    if q_volatile cv' then Merror "volatile"
     else
-      letI* v, free := wp_operand tu ρ init in
+      letWP* v := wp_operand tu ρ init in
       let qf := cQp.mk (q_const cv') 1 in
-      addr |-> tptsto_fuzzyR (erase_qualifiers ty) qf v -* |={top}=>?u Q free
+      letWP* '() := Mproduce (addr |-> tptsto_fuzzyR (erase_qualifiers ty) qf v) in
+      letWP* '() := Mfupd_compat in
+      Mret (FreeTemps.delete (tqualified cv ty) addr)
   )%I) (only parsing).
 
-  Lemma wp_initialize_unqualified_intro_val tu ρ cv ty (addr : ptr) init Q :
+  Lemma wp_initialize_unqualified_intro_val tu ρ cv ty (addr : ptr) init :
     can_init ty init ->
     ~~ is_qualified ty -> is_value_type ty ->
-    VAL_INIT false tu ρ cv ty addr init Q
-    |-- wp_initialize_unqualified tu ρ cv ty addr init Q.
+    VAL_INIT false tu ρ cv ty addr init
+    ⊆ wp_initialize_unqualified tu ρ cv ty addr init.
   Proof.
-    intros Hty ??. rewrite -wp_initialize_unqualified_intro.
+    intros Hty ??.
+    #[global] Instance: forall T, RewriteRelation (⊆@{M T}) := {}.
+    rewrite -wp_initialize_unqualified_intro.
     case_match; eauto.
     destruct ty; try solve [ inversion H0 | eauto ].
-    (* void *)
-    iIntros "wp /=".
+    { (* void *)
+      red. red. intros. simpl.
+
+      Search "_ ⊆ _" Mbind.
+      repeat intro; simpl.
+      iIntros "wp /=".
+      iStopProof.
+
+
     iApply wp_operand_well_typed.
     iApply (wp_operand_wand with "wp"). iIntros (v f).
     rewrite can_init_void// has_type_void. iIntros "HQ ->".

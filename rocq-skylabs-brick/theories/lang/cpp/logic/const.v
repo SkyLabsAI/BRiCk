@@ -20,7 +20,7 @@ Require Import skylabs.lang.cpp.logic.heap_pred.
 
 Section defs.
   Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (ty : decltype) (Q : epred).
+  Implicit Types (ty : decltype) (Q : mpred).
 
   (*
   [wp_const tu from to addr ty Q] replaces the [from] ownership of
@@ -36,7 +36,7 @@ Section defs.
   [Params], ease the statement of [Proper] instances, and speed up
   setoid rewriting.
   *)
-  Parameter wp_const : forall (tu : translation_unit) {σ : genv} (from to : cQp.t) (addr : ptr) (ty : decltype) (Q : epred), mpred.
+  Parameter wp_const : forall (tu : translation_unit) {σ : genv} (from to : cQp.t) (addr : ptr) (ty : decltype) (Q : mpred), mpred.
 
   Axiom wp_const_frame : forall tu tu' f t a ty Q Q',
     type_table_le tu.(types) tu'.(types) ->
@@ -51,8 +51,8 @@ Section defs.
   then it needs to descend under <<const>>
   *)
   #[local] Notation "|={ E }=> P" := (|={E}=> P)%I (only parsing).
-  #[local] Definition wp_const_body (wp_const : cQp.t -> cQp.t -> ptr -> decltype -> epred -> mpred)
-      (tu : translation_unit) (from to : cQp.t)  (addr : ptr) (ty : decltype) (Q : epred) : mpred :=
+  #[local] Definition wp_const_body (wp_const : cQp.t -> cQp.t -> ptr -> decltype -> mpred -> mpred)
+      (tu : translation_unit) (from to : cQp.t)  (addr : ptr) (ty : decltype) (Q : mpred) : mpred :=
     let '(cv, rty) := decompose_type ty in
     let Q := |={top}=> Q in
     if q_const cv then Q
@@ -217,7 +217,7 @@ Section defs.
   Qed.
 
   (* Sanity check the [_frame] property *)
-  Lemma fold_left_frame : forall B (l : list B) (f f' : epred -> B -> mpred) (Q Q' : epred),
+  Lemma fold_left_frame : forall B (l : list B) (f f' : mpred -> B -> mpred) (Q Q' : mpred),
     (Q -* Q') |-- □ (Forall Q1 Q1' a, (Q1 -* Q1') -* (f Q1 a -* f' Q1' a)) -*  fold_left f l Q -* fold_left f' l Q'.
   Proof.
     move=>B l.
