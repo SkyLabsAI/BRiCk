@@ -1,5 +1,5 @@
 (*
- * Copyright (c) 2020-2024 BlueRock Security, Inc.
+ * Copyright (c) 2024 BlueRock Security, Inc.
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
@@ -17,6 +17,7 @@ Require Import skylabs.lang.cpp.semantics.
 Require Import skylabs.lang.cpp.logic.pred.
 Require Import skylabs.lang.cpp.logic.heap_pred.
 Require Import skylabs.lang.cpp.logic.translation_unit.
+Require Import skylabs.lang.cpp.logic.free_temps.
 Require Import skylabs.iris.extra.bi.errors.
 
 #[local] Set Primitive Projections.
@@ -29,217 +30,7 @@ Definition epred `{cpp_logic} := mpred.
 Notation epredO := mpredO (only parsing).
 Bind Scope bi_scope with epred.
 
-Declare Scope free_scope.
-Delimit Scope free_scope with free.
-Reserved Infix "|*|" (at level 30).
-Reserved Infix ">*>" (at level 30).
-
 Require skylabs.iris.extra.bi.linearity.
-Module FreeTemps.
-
-    (* BEGIN FreeTemps.t *)
-    Inductive t : Set :=
-    | id (* = fun x => x *)
-    | delete (ty : decltype) (p : ptr) (* = delete_val ty p *)
-            (* ^^ this type has qualifiers but is otherwise a runtime type *)
-    | delete_va (va : list (type * ptr)) (p : ptr)
-    | seq (f g : t) (* = fun x => f $ g x *)
-    | par (f g : t) (* = fun x => Exists Qf Qg, f Qf ** g Qg ** (Qf -* Qg -* x) *)
-    .
-    (* END FreeTemps.t *)
-
-    (*
-    Fixpoint seq (f g : t) : t :=
-      match f with
-      | seq_ f f' => seq_ f (seq f' g)
-      | id => g
-      | _ => match g with
-            | id => f
-            | _ => seq_ f g
-            end
-      end.
-    Lemma seq_idL a : seq id a = a.
-    Proof. done. Qed.
-    Lemma seq_idR a : seq a id = a.
-    Proof. induction a; simpl; intros; eauto. rewrite IHa2. done. Qed.
-    Lemma seq_assoc : forall a b c, seq (seq a b) c = seq a (seq b c).
-    Proof.
-      induction a; simpl; intros; eauto.
-    *)
-
-    #[local] Declare Scope free_scope.
-    Module Import notations.
-      Bind Scope free_scope with t.
-      Notation "1" := id : free_scope.
-      Infix ">*>" := seq : free_scope.
-      Infix "|*|" := par : free_scope.
-    End notations.
-    #[local] Open Scope free_scope.
-
-    Inductive t_equiv : Equiv t :=
-    | refl l : l ≡ l
-    | sym l r : l ≡ r -> r ≡ l
-    | trans a b c : a ≡ b -> b ≡ c -> a ≡ c
-
-  (*
-    | delete_ref ty p : delete (Tref ty) p ≡ delete (Trv_ref ty) p
-  *)
-
-    | seqA x y z : x >*> (y >*> z) ≡ (x >*> y) >*> z
-    | seq_id_unitL l : 1 >*> l ≡ l
-    | seq_id_unitR l : l >*> 1 ≡ l
-    | seq_proper_ : ∀ {a b}, a ≡ b -> ∀ {c d}, c ≡ d -> a >*> c ≡ b >*> d
-
-    | parC l r : l |*| r ≡ r |*| l
-    | parA x y z : x |*| (y |*| z) ≡ (x |*| y) |*| z
-    | par_id_unitL l : 1 |*| l ≡ l
-    | par_proper_ : ∀ {a b}, a ≡ b -> ∀ {c d}, c ≡ d -> a |*| c ≡ b |*| d
-    .
-    Notation t_eq := (≡@{t}) (only parsing).
-    Existing Instance t_equiv.
-
-    Fixpoint seq_canon (a b : t) {struct a} : t :=
-      match a , b with
-      | id , b => b
-      | a , id => a
-      | seq x y , b => seq_canon x (seq_canon y b)
-      | _ , _ => seq a b
-      end.
-
-    (* assume that this is canonical *)
-    Parameter ptr_cmp : ptr -> ptr -> comparison.
-    Print comparison.
-
-    Parameter t_cmp : forall (a b : t), comparison.
-    (* This is just the canonical construction
-      match a , b with
-      | id , id => Eq
-      | id , _ => Lt
-      | delete _ _ , id => Gt
-      | delete ty p , delete ty' p' => _
-      | delete _ _ , _ => Lt
-      | delete_va _ _ , (id | delete _ _) => Gt
-      | delete_va tys p , delete_va tys' p' => _
-      | delete_va _ _ , _ => Lt
-      | seq _ _ , (id | delete _ _ | delete_va _ _) => Gt
-      | seq l r , seq l' r' => _
-      | seq _ _ , _ => Lt
-      | par _ _ , (id | delete _ _ | delete_va _ _ | seq _ _) => Lt
-      | par l r , par l' r' => _
-      end.
-      *)
-
-    Fixpoint gather_pars (a : t) : list t :=
-      match a with
-      | id => []
-      | par a b => gather_pars a ++ gather_pars b
-      | _ => [a]
-      end.
-
-    Require stdpp.sorting.
-    Fixpoint list_to_t (ls : list t) : t :=
-      match ls with
-      | nil => id
-      | l :: nil => l
-      | l :: ls => par l (list_to_t ls)
-      end.
-
-    (* NOTE: I can assume that [a] and [b] are canonical, so
-      I need to merge them using the canonical ordering.
-    *)
-    Instance X: forall a b : t, Decision (t_cmp a b = Lt).
-    Admitted.
-    Definition par_canon (a b : t) : t :=
-      list_to_t $ @sorting.merge_sort t (fun a b => t_cmp a b = Lt) _ (gather_pars a ++ gather_pars b).
-
-    Fixpoint canon (a : t) {struct a} : t :=
-      match a with
-      | seq a b => seq_canon (canon a) (canon b)
-      | par a b => par_canon (canon a) (canon b)
-      | _ => a
-      end.
-
-    Lemma seq_canon_unitL a : seq_canon id a = a.
-    Proof. Admitted.
-    Lemma seq_canon_unitR a : seq_canon a id = a.
-    Proof. Admitted.
-
-    Lemma seq_canon_is_id a : forall b, seq_canon a b = id -> a = id /\ b = id.
-    Proof.
-      induction a; simpl; intros.
-      { destruct b; simpl; intros; eauto; try congruence. }
-      { destruct b; congruence. }
-      { destruct b; congruence. }
-      { destruct b; try congruence;
-          apply IHa1 in H; destruct H; apply IHa2 in H0; destruct H0; congruence. }
-      { destruct b; congruence. }
-    Qed.
-
-    Lemma canon_canonical : forall a b : t, a ≡ b -> canon a = canon b.
-    Proof. (*
-      induction 1; simpl; eauto.
-      { (* trans *) etrans; eauto. }
-      { (* seqA *)
-        generalize (canon x), (canon y), (canon z). clear.
-        induction t0; simpl; eauto.
-        { destruct t0; simpl; eauto; solve [ destruct t0; simpl; eauto ]. }
-        { destruct t0; simpl; eauto; solve [ destruct t0; simpl; eauto ]. }
-        { intros.
-          case_match.
-          { apply seq_canon_is_id in H.  destruct H.  subst. rewrite seq_canon_unitR.  done. }
-          { case_match; simpl in *; subst; eauto; rewrite -IHt0_1; f_equal.
-            { destruct t1; inversion H; subst; eauto. rewrite seq_canon_unitR. done. }
-            { destruct t1; inversion H; subst; eauto. }
-            { destruct t1; inversion H; subst; eauto; rewrite -IHt0_2; f_equal. }
-            { destruct t1; inversion H; subst; eauto. } }
-          { destruct t0; simpl in *; subst; eauto; try (rewrite -IHt0_1 -IHt0_2; f_equal; f_equal);
-              destruct t1; inversion H; subst; eauto. }
-          { destruct t0; simpl in *; subst; eauto; try (rewrite -IHt0_1 -IHt0_2; f_equal; f_equal);
-              destruct t1; inversion H; subst; eauto. }
-          { destruct t0; simpl in *; subst; eauto; try (rewrite -IHt0_1 -IHt0_2; f_equal; f_equal);
-              destruct t1; inversion H; subst; eauto. } }
-        admit. }
-      { rewrite seq_canon_unitR. done. }
-      { by f_equal. }
-      { (* parC -- this is problematic because there is no canonical ordering to the unit elements without a total ordering on [ptr] *)
-        admit.
-      }
-      { (* parA *)
-        admit.
-      }
-      { admit. } *)
-    Admitted.
-
-    #[global] Instance t_dec : EqDecision t.
-    Admitted.
-
-    Class IsCanonical (free : t) : Prop :=
-      is_canon : Is_true (bool_decide (free = canon free)).
-
-    #[global] Instance id_IsCanonical : IsCanonical id.
-    Proof. Admitted.
-
-    #[global] Instance canon_IsCanonical free : IsCanonical (canon free).
-    Proof. Admitted.
-
-    #[global] Existing Instance t_equiv.
-    #[global] Instance t_equivalence : Equivalence t_eq :=
-      Build_Equivalence _ refl sym trans.
-
-    #[global] Instance seq_assoc : Assoc equiv seq := seqA.
-    #[global] Instance seq_left_id : LeftId equiv id seq := seq_id_unitL.
-    #[global] Instance seq_right_id : RightId equiv id seq := seq_id_unitR.
-    #[global] Instance seq_proper : Proper (t_eq ==> t_eq ==> t_eq) seq := @seq_proper_.
-
-    #[global] Instance par_comm : Comm equiv par := parC.
-    #[global] Instance par_left_id : LeftId equiv id par := par_id_unitL.
-    #[global] Instance par_right_id : RightId equiv id par.
-    Proof. intros x. by rewrite comm left_id. Qed.
-    #[global] Instance par_proper : Proper (t_eq ==> t_eq ==> t_eq) par := @par_proper_.
-End FreeTemps.
-Export FreeTemps.notations.
-Notation FreeTemps := FreeTemps.t.
-Notation FreeTemp := FreeTemps.t (only parsing).
 
 (* continuations
  * C++ statements can terminate in 4 ways.
@@ -306,12 +97,22 @@ Section with_cpp.
   Context `{Σ : cpp_logic}.
 
   Import linearity.
+
+
+  #[local] Opaque FreeTemps.canon.
+
+  #[local]
+  Lemma K_entails (K : forall free : FreeTemps.t, FreeTemps.IsCanonical free -> mpred)
+    free1 free2 pf1 pf2 :
+    free1 ≡ free2 -> K free1 pf1 |-- K free2 pf2.
+  Proof. intros. rewrite FreeTemps.K_ext; eauto. Qed.
+
   (* the monad for expression evaluation *)
-  Record M {t : Type} :=
-    { _val : (t -> forall free : FreeTemps.t, FreeTemps.IsCanonical free -> mpred) -> mpred
-    ; _ok : forall K1 K2, (Forall x free pf, K1 x free pf -* K2 x free pf) |-- _val K1 -* _val K2 }.
+  Record M {t : Type} := mk
+    { _wp : (t -> forall free : FreeTemps.t, FreeTemps.IsCanonical free -> mpred) -> mpred
+    ; _ok : forall K1 K2, (Forall x free pf, K1 x free pf -* K2 x free pf) |-- _wp K1 -* _wp K2 }.
   #[global] Arguments M _ : clear implicits.
-  #[local] Coercion _val : M >-> Funclass.
+  #[local] Coercion _wp : M >-> Funclass.
 
   (* The canonical notion of equivalence on [M _]
 
@@ -343,77 +144,71 @@ Section with_cpp.
   Qed.
   #[global] Instance M_equiv_trans {T} : Transitive (≡@{M T}).
   Proof.
-    do 3 red; simpl; intros. etrans. eapply H. eapply H1.
+    repeat intro; simpl. etrans. eapply H. eapply H1.
     eapply H0. intros. reflexivity.
   Qed.
 
+  (* The canonical notation of approximation/entailment
+     Effectively, [a ⊆ b] if all behaviors of [a] are included in [b].
+   *)
+  #[global] Instance M_subseteq {T} : SubsetEq (M T) :=
+    fun a b =>
+      forall K1 K2, (forall x y z, K1 x y z ⊢ K2 x y z) -> a K1 ⊢ b K2.
+  #[global] Instance M_subseteq_refl {T} : Reflexive (⊆@{M T}).
+  Proof. repeat intro. iApply _ok; iIntros (???); iApply H. Qed.
+  #[global] Instance M_subseteq_trans {T} : Transitive (⊆@{M T}).
+  Proof.
+    repeat intro. etrans.
+    { iApply H. reflexivity. }
+    { iApply H0. apply H1. }
+  Qed.
+
+  (** The distance metric on [M].
+      Should this be bundled with [M]?
+   *)
+  #[global] Instance M_Dist {T} : Dist (M T) :=
+    fun n a b =>
+      forall K1 K2, (forall x y z, K1 x y z ≡{n}≡ K2 x y z) -> a K1 ≡{n}≡ b K2.
+
+  (** ** Monad Operators *)
+
   #[program]
   Definition Mret {t : Type} (v : t) : M t :=
-    {| _val K := K v FreeTemps.id _ |}.
+    {| _wp K := K v FreeTemps.id _ |}.
   Next Obligation.
     intros; simpl. iIntros "X"; iApply "X".
   Qed.
 
   #[program]
   Definition Mmap {t u : Type} (f : t -> u) (m : M t) : M u :=
-    {| _val K := m.(_val) (fun t => K (f t)) |}.
+    {| _wp K := m.(_wp) (fun t => K (f t)) |}.
   Next Obligation.
     intros; simpl.
     iIntros "X"; iApply _ok.
     iIntros (??); iApply "X".
   Qed.
 
+  (* Question: Should we implement [ap]? *)
+
   #[program] Definition Mbind {T U} (c : M T) (k : T -> M U) : M U :=
-    {| _val K := c (fun v f _ => k v (fun v' f' _ => K v' (FreeTemps.canon $ f' >*> f)%free _)) |}.
+    {| _wp K := c (fun v f _ => k v (fun v' f' _ => K v' (FreeTemps.canon $ f' >*> f)%free _)) |}.
   Next Obligation.
     simpl; intros. iIntros "K"; iApply _ok.
     iIntros (???). iApply _ok. iIntros (???); iApply "K".
   Qed.
   Notation "'letWP*' v := e 'in' k" := (Mbind e (fun v => k)) (at level 0, v binder, k at level 200).
 
-  #[local] Opaque FreeTemps.canon.
-  #[global] Instance canon_proper : Proper ((≡) ==> eq) FreeTemps.canon.
-  Proof. Admitted.
-  Lemma IsCanonical_canonical f : ProofIrrel (FreeTemps.IsCanonical f).
-  Proof. apply Is_true_pi. Qed.
-
-  Lemma K_ext {T} : forall (K : forall x : FreeTemps.t, FreeTemps.IsCanonical x -> T),
-    forall free1 free2 pf1 pf2, free1 ≡ free2 -> K free1 pf1 = K free2 pf2.
-  Proof.
-    clear.
-    intros.
-    assert (free1 = FreeTemps.canon free1).
-    { clear -pf1. eapply bool_decide_unpack. apply pf1. }
-    assert (free2 = FreeTemps.canon free2).
-    { clear -pf2. eapply bool_decide_unpack. apply pf2. }
-    apply FreeTemps.canon_canonical in H.
-    unfold FreeTemps.IsCanonical in *.
-    assert (free1 = free2).
-    { by rewrite H0 H -H1. }
-    revert H1. revert H. revert pf2.
-    destruct H2.
-    intros.
-    by rewrite (Is_true_pi _ pf1 pf2).
-  Qed.
-
-  Lemma K_entails (K : forall free : FreeTemps.t, FreeTemps.IsCanonical free -> mpred)
-                  free1 free2 pf1 pf2 :
-    free1 ≡ free2 -> K free1 pf1 |-- K free2 pf2.
-  Proof. intros. rewrite K_ext; eauto. Qed.
-
-  Lemma canon_equiv f : FreeTemps.canon f ≡ f.
-  Proof. Admitted.
-
+  (**  These operations actually form a monad *)
   Lemma mret_mbind {T U} v (k : T -> M U) : Mbind (Mret v) k ≡ k v.
   Proof.
     red. rewrite /M_equiv/Mbind/Mret/=. red. simpl; intros.
     split'.
     { iApply _ok; iIntros (???) "?"; iStopProof.
       rewrite H; apply K_entails.
-      by rewrite canon_equiv FreeTemps.seq_id_unitR. }
+      by rewrite FreeTemps.canon_equiv FreeTemps.seq_id_unitR. }
     { iApply _ok; iIntros (???) "?"; iStopProof.
       rewrite H; apply K_entails.
-      by rewrite canon_equiv FreeTemps.seq_id_unitR. }
+      by rewrite FreeTemps.canon_equiv FreeTemps.seq_id_unitR. }
   Qed.
 
   Lemma mbind_mret {T} (m : M T) : Mbind m Mret ≡ m.
@@ -421,9 +216,9 @@ Section with_cpp.
     red; rewrite /M_equiv/Mbind/Mret; red; simpl; intros.
     split'.
     { iApply _ok; iIntros (???) "?"; iStopProof.
-      rewrite H; apply K_entails. rewrite canon_equiv FreeTemps.seq_left_id; eauto. }
+      rewrite H; apply K_entails. rewrite FreeTemps.canon_equiv FreeTemps.seq_left_id; eauto. }
     { iApply _ok; iIntros (???) "?"; iStopProof.
-      rewrite H; apply K_entails; rewrite canon_equiv FreeTemps.seq_left_id; eauto. }
+      rewrite H; apply K_entails; rewrite FreeTemps.canon_equiv FreeTemps.seq_left_id; eauto. }
   Qed.
 
   Lemma mbind_mbind {T U V} (m : M T) (k1 : T -> M U) (k2 : U -> M V) :
@@ -433,43 +228,72 @@ Section with_cpp.
     split';
       iApply _ok; iIntros (???); iApply _ok; iIntros (???); iApply _ok; iIntros (???);
       rewrite H; eauto; iIntros; iStopProof; apply K_entails.
-    all: rewrite !canon_equiv FreeTemps.seq_assoc; eauto.
+    all: rewrite !FreeTemps.canon_equiv FreeTemps.seq_assoc; eauto.
   Qed.
 
-  (* The canonical notation of approximation/entailment
-     Effectively, [a ⊆ b] if all behaviors of [a] are included in [b].
+  (** The interpreter for the monad
+      This hides the canonicity proof because that is an implementation detail of the monad.
    *)
-  #[global] Instance M_subseteq {T} : SubsetEq (M T) :=
-    (pointwise_relation _ (pointwise_relation _ (⊢)) ==> (⊢))%signature.
+  Definition WP {T} (m : M T) (Q : T -> FreeTemps.t -> mpred) : mpred :=
+    m (fun x f _ => Q x f).
+
+  Definition Knormal {T U} (k : T -> M U) (Q : U -> FreeTemps.t -> mpred) : T -> FreeTemps.t -> mpred :=
+    fun t free => k t (fun u free' _ => Q u (FreeTemps.canon (free' >*> free))).
+
+  Lemma WP_Mbind {T U} (m : M T) (k : T -> M U) Q :
+    WP m (Knormal k Q) |-- WP (Mbind m k) Q.
+  Proof.
+    rewrite /Mbind/WP/Knormal/=.
+    iApply _ok; iIntros (???). eauto.
+  Qed.
+
+  Lemma WP_ret {T} (v : T) Q :
+    Q v FreeTemps.id |-- WP (Mret v) Q.
+  Proof. by rewrite /WP/Mret/=. Qed.
+
+  (** ** The Effects of the Monad
+
+      These currently follow the "operational logic" style used by tools
+      such as Viper, but these could possibly be re-phrased in an
+      operational but non-logical setup.
+
+      Purely logical features such as fancy updates do not fit naturally
+      into this setup.
+   *)
 
   #[program]
-    Definition Mproduce (P : mpred) : M unit :=
-    {| _val := fun K => P -* K () FreeTemps.id |}.
+  Definition Mproduce (P : mpred) : M unit :=
+    {| _wp := fun K => P -* K () FreeTemps.id _ |}.
   Next Obligation.
     intros; simpl. iIntros "X Y P". iApply "X". iApply "Y". iApply "P".
   Qed.
   #[program]
     Definition Mconsume (P : mpred) : M unit :=
-    {| _val := fun K => P ** K () FreeTemps.id |}.
+    {| _wp := fun K => P ** K () FreeTemps.id _ |}.
   Next Obligation.
     intros; simpl. iIntros "X [$ K]". iApply "X". iApply "K".
   Qed.
 
+  Lemma WP_produce P Q :
+    P -* Q () FreeTemps.id |-- WP (Mproduce P) Q.
+  Proof. reflexivity. Qed.
+  Lemma WP_consume P Q :
+    P ** Q () FreeTemps.id |-- WP (Mconsume P) Q.
+  Proof. reflexivity. Qed.
+
   Definition Massume (P : Prop) : M unit := Mproduce [| P |].
   Definition Mrequire (P : Prop) : M unit := Mconsume [| P |].
 
-
-
   #[program]
   Definition Mnd (t : Type) : M t :=
-    {| _val K := ∀ x : t, K x FreeTemps.id |}%I.
+    {| _wp K := ∀ x : t, K x FreeTemps.id _ |}%I.
   Next Obligation.
     simpl; intros.
     iIntros "K X" (?); iApply "K"; eauto.
   Qed.
   #[program]
   Definition Mangelic (t : Type) : M t :=
-    {| _val K := ∃ x : t, K x FreeTemps.id |}%I.
+    {| _wp K := ∃ x : t, K x FreeTemps.id _ |}%I.
   Next Obligation.
     simpl; intros.
     iIntros "K X"; iDestruct "X" as (?) "X"; iExists _; iApply "K"; eauto.
@@ -477,56 +301,56 @@ Section with_cpp.
 
   #[program]
   Definition Mub {t : Type} : M t :=
-    {| _val _ := False%I |}.
+    {| _wp _ := False%I |}.
   Next Obligation. simpl; intros. iIntros "? []". Qed.
   #[program]
   Definition Many {t : Type} : M t :=
-    {| _val _ := True%I |}.
+    {| _wp _ := True%I |}.
   Next Obligation. simpl; intros; iIntros "? ?". iApply bi.pure_intro; [ trivial | ]. iStopProof. reflexivity. Qed.
 
   #[program]
   Definition Merror {t : Type} {ERR : Type} (err : ERR) : M t :=
-    {| _val _ := ERROR err |}.
+    {| _wp _ := ERROR err |}.
   Next Obligation. simpl; intros. rewrite ERROR_False. iIntros "? []". Qed.
 
   #[program]
   Definition Mpush_free (f : FreeTemps.t) : M () :=
-    {| _val K := K () f |}.
+    {| _wp K := K () (FreeTemps.canon f) _ |}.
   Next Obligation. simpl; intros. iIntros "K"; iApply "K". Qed.
 
   #[program]
   Definition Matomically {t} (m : M t) : M t :=
-    {| _val K := |={top,∅}=> m.(_val) (fun r free => |={∅,top}=> K r free) |}%I.
+    {| _wp K := |={top,∅}=> m.(_wp) (fun r free _ => |={∅,top}=> K r free _) |}%I.
   Next Obligation.
     simpl; intros. iIntros "K >X !>"; iRevert "X".
-    iApply _ok. iIntros (??) ">X !>"; iRevert "X"; iApply "K".
+    iApply _ok. iIntros (???) ">X !>"; iRevert "X"; iApply "K".
   Qed.
 
   #[program]
   Definition Mnon_atomically {t} (m : M t) : M t :=
-    {| _val K := |={top}=> m.(_val) (fun r free => |={top}=> K r free) |}%I.
+    {| _wp K := |={top}=> m.(_wp) (fun r free _ => |={top}=> K r free _) |}%I.
   Next Obligation.
     simpl; intros. iIntros "K >X !>"; iRevert "X".
-    iApply _ok. iIntros (??) ">X !>"; iRevert "X"; iApply "K".
+    iApply _ok. iIntros (???) ">X !>"; iRevert "X"; iApply "K".
   Qed.
 
   #[program]
   Definition Mfupd (E1 E2 : coPset): M unit :=
-    {| _val K := |={E1,E2}=> K () FreeTemps.id |}%I.
+    {| _wp K := |={E1,E2}=> K () FreeTemps.id _ |}%I.
   Next Obligation.
     simpl; intros. iIntros "K >X !>"; iRevert "X"; iApply "K".
   Qed.
 
   #[program]
   Definition Mstable : M unit :=
-    {| _val K := |={top}=> K () FreeTemps.id |}%I.
+    {| _wp K := |={top}=> K () FreeTemps.id _ |}%I.
   Next Obligation.
     simpl; intros. iIntros "K >X !>"; iRevert "X"; iApply "K".
   Qed.
 
   #[program]
   Definition Mboth {t} (a b : M t) : M t :=
-    {| _val K := a K //\\ b K |}.
+    {| _wp K := a K //\\ b K |}.
   Next Obligation.
     simpl; intros. iIntros "K X".
     iSplit; [ iDestruct "X" as "[X _]" | iDestruct "X" as "[_ X]" ]; iRevert "X"; iApply _ok; iIntros (??); iApply "K".
@@ -540,10 +364,8 @@ Section with_cpp.
    *)
 
   Definition Mframe {T} (a b : M T) : mpred :=
-    Forall Q Q', (Forall x y, Q x y -* Q' x y) -* a Q -* b Q'.
+    Forall Q Q', (Forall x y z, Q x y z -* Q' x y z) -* a Q -* b Q'.
 
-  Definition WP {T} (m : M T) (Q : T -> FreeTemps.t -> mpred) : mpred :=
-    m Q.
 
   Definition Mimpl {T} (a b : M T) : mpred :=
     ∀ Q, a Q -* b Q.
@@ -553,7 +375,7 @@ Section with_cpp.
 
   Lemma Mmap_frame_strong {T U} c (f : T -> U) :
     Mframe c c
-    |-- Forall Q Q', (Forall x y, Q (f x) y -* Q' (f x) y) -* Mmap f c Q -* Mmap f c Q'.
+    |-- Forall Q Q', (Forall x y pf, Q (f x) y pf -* Q' (f x) y pf) -* Mmap f c Q -* Mmap f c Q'.
   Proof.
     rewrite /Mframe/Mmap; iIntros "A" (??) "B".
     iApply "A". iIntros (??); iApply "B".
@@ -577,8 +399,8 @@ Section with_cpp.
     Mframe c1 c2 |-- (Forall x, Mframe (k1 x) (k2 x)) -* Mframe (Mbind c1 k1) (Mbind c2 k2).
   Proof.
     rewrite /Mframe/Mbind; iIntros "A B" (??) "C".
-    iApply "A". iIntros (??). iApply "B".
-    iIntros (??); iApply "C".
+    iApply "A". iIntros (???). iApply "B".
+    iIntros (???); iApply "C".
   Qed.
 
   (** *** Indeterminately sequenced computations
@@ -600,8 +422,8 @@ Section with_cpp.
   Proof.
     iIntros "A B" (??) "C D".
     iSplit; [ iDestruct "D" as "[D _]" | iDestruct "D" as "[_ D]" ]; iRevert "D".
-    { iApply "A". iIntros (??). iApply "B"; iIntros (??). iApply "C". }
-    { iApply "B". iIntros (??). iApply "A"; iIntros (??). iApply "C". }
+    { iApply "A". iIntros (???). iApply "B"; iIntros (???). iApply "C". }
+    { iApply "B". iIntros (???). iApply "A"; iIntros (???). iApply "C". }
   Qed.
 
   (* Lifting non-deterministic sequencing to lists.
@@ -781,16 +603,16 @@ Section with_cpp.
 
   Lemma seqs_frame_strong {T} : forall (ls : list (M T)) Q Q',
       ([∗list] m ∈ ls, Mframe m m)%I
-      |-- (Forall x y, [| length x = length ls |] -* Q x y -* Q' x y) -*
+      |-- (Forall x y pf, [| length x = length ls |] -* Q x y pf -* Q' x y pf) -*
           (seqs ls Q) -* (seqs ls Q').
   Proof.
     induction ls; simpl; intros.
     - iIntros "_ X"; iApply "X"; eauto.
     - iIntros "[A AS] K".
       rewrite /Mbind. iApply "A".
-      iIntros (??).
-      iApply (IHls with "AS").
       iIntros (???).
+      iApply (IHls with "AS").
+      iIntros (????).
       iApply "K". simpl. eauto.
   Qed.
 
@@ -803,11 +625,11 @@ Section with_cpp.
    *)
   #[program]
   Definition Mpar {T U} (wp1 : M T) (wp2 : M U) : M (T * U) :=
-    {| _val K := Exists Q1 Q2, wp1 Q1 ** wp2 Q2 ** (Forall v1 v2 f1 f2, Q1 v1 f1 -* Q2 v2 f2 -* K (v1,v2) (f1 |*| f2)%free) |}.
+    {| _wp K := Exists Q1 Q2, wp1 Q1 ** wp2 Q2 ** (Forall v1 v2 f1 f2 pf1 pf2, Q1 v1 f1 pf1 -* Q2 v2 f2 pf2 -* K (v1,v2) (FreeTemps.canon (f1 |*| f2)) _) |}.
   Next Obligation.
     simpl; intros.
     iIntros "K X". iDestruct "X" as (??) "[? [? Q]]".
-    iExists _, _; iFrame. iIntros (????) "Q1 Q2". iApply "K". iApply ("Q" with "Q1 Q2").
+    iExists Q1, Q2; iFrame. iIntros (??????) "Q1 Q2". iApply "K". iApply ("Q" with "Q1 Q2").
   Qed.
 
   Lemma Mpar_frame {T U} wp1 wp2 :
@@ -818,10 +640,10 @@ Section with_cpp.
     iDestruct "D" as (??) "(D1 & D2 & K)".
     iExists _, _.
     iSplitL "D1 A".
-    iApply "A". 2: eauto. iIntros (??) "X"; iApply "X".
+    iApply "A". 2: eauto. iIntros (???) "X"; iApply "X".
     iSplitL "D2 B".
-    iApply "B". 2: eauto. iIntros (??) "X"; iApply "X".
-    iIntros (????) "A B". iApply "C". iApply ("K" with "A B").
+    iApply "B". 2: eauto. iIntros (???) "X"; iApply "X".
+    iIntros (??????) "A B". iApply "C". iApply ("K" with "A B").
   Qed.
 
 
@@ -833,7 +655,7 @@ Section with_cpp.
     end.
 
   Lemma Mpars_frame_strong {T} : forall (ls : list (M T)) Q Q',
-      |-- (Forall x y, [| length x = length ls |] -* Q x y -* Q' x y) -*
+      |-- (Forall x y pf, [| length x = length ls |] -* Q x y pf -* Q' x y pf) -*
           (Mpars ls Q) -* (Mpars ls Q').
   Proof.
     induction ls; simpl; intros.
@@ -846,12 +668,12 @@ Section with_cpp.
       iExists _, _. iFrame "L".
       iDestruct (IHls with "[] R") as "IH".
       2: iFrame "IH".
-      { instantiate (1:=fun x y => [| length x = length ls |] ** Q2 x y).
+      { instantiate (1:=fun x y pf => [| length x = length ls |] ** Q2 x y pf).
         iIntros (???) "$". eauto. }
-      iIntros (????) "? [% ?]".
-      iApply "K".
+      iIntros (??????) "? [% ?]".
+      iApply ("K" $! (v1::v2) (FreeTemps.canon (f1 |*| f2))).
       { simpl. eauto. }
-      iApply ("KK" with "[$] [$]").
+      iApply ("KK" $! v1 v2 f1 f2 pf1 pf2 with "[$] [$]").
   Qed.
 
   (** *** evaluation by a scheme *)
@@ -878,7 +700,7 @@ Section with_cpp.
 
   Lemma eval_frame_strong {T} oe : forall (ls : list (M T)) Q Q',
       ([∗list] m ∈ ls, Mframe m m)%I
-      |-- (Forall x y, [| length x = length ls |] -* Q x y -* Q' x y) -*
+      |-- (Forall x y pf, [| length x = length ls |] -* Q x y pf -* Q' x y pf) -*
           eval oe ls Q -* eval oe ls Q'.
   Proof. (*
     destruct oe; intros.
