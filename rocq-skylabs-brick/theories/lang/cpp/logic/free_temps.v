@@ -5,6 +5,7 @@
  *)
 (** Definitions for the semantics
  *)
+Require stdpp.sorting.
 Require Import skylabs.prelude.base.
 
 Require Import stdpp.coPset.
@@ -127,7 +128,6 @@ Module FreeTemps.
       | _ => [a]
       end.
 
-    Require stdpp.sorting.
     Fixpoint list_to_t (ls : list t) : t :=
       match ls with
       | nil => id
