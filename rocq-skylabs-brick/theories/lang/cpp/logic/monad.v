@@ -164,11 +164,11 @@ Section with_cpp.
   Qed.
 
   (** The distance metric on [M].
-      Should this be bundled with [M]?
+      TODO: will this work?
    *)
   #[global] Instance M_Dist {T} : Dist (M T) :=
     fun n a b =>
-      forall K1 K2, (forall x y z, K1 x y z ≡{n}≡ K2 x y z) -> a K1 ≡{n}≡ b K2.
+      forall K1 K2, (forall m (_ : m <= n) x y z, K1 x y z ≡{m}≡ K2 x y z) -> a K1 ≡{n}≡ b K2.
 
   (** ** Monad Operators *)
 
