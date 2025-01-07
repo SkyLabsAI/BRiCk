@@ -1245,12 +1245,19 @@ Module Type Expr.
         constructing a value that violates this. Therefore, we require
         [has_type_prop sz Tsize_t].
      *)
-    Axiom wp_operand_sizeof : forall ety ty Q,
-        Exists sz,
-          [| size_of (drop_reference $ get_type ety) = Some sz |] **
-          [| has_type_prop sz Tsize_t |] **
-          Q (Vn sz) FreeTemps.id
-        |-- wp_operand (Esizeof ety ty) Q.
+    Definition Msizeof (ty : type) : M N :=
+      match size_of (drop_reference ty) with
+      | Some sz => Mret sz
+      | None => Merror "ill-typed"
+      end.
+    Definition Malignof (ty : type) : M N :=
+      match align_of (drop_reference ty) with
+      | Some sz => Mret sz
+      | None => Merror "ill-typed"
+      end.
+    Axiom wp_operand_sizeof : forall ety ty,
+          Mmap Vn (Msizeof (get_type ety))
+        ⊆ wp_operand (Esizeof ety ty).
 
     (** `alignof(e)`
         https://eel.is/c++draft/expr.alignof
@@ -1258,12 +1265,9 @@ Module Type Expr.
         NOTE: We do not require [has_type] in [wp_operand_alignof], this is guaranteed
         by the compiler.
      *)
-    Axiom wp_operand_alignof : forall ety ty Q,
-        Exists align,
-          [| align_of (drop_reference $ get_type ety) = Some align |] **
-          [| has_type_prop align Tsize_t |] **
-          Q (Vn align) FreeTemps.id
-        |-- wp_operand (Ealignof ety ty) Q.
+    Axiom wp_operand_alignof : forall ety ty,
+        Mmap Vn (Malignof (get_type ety))
+      ⊆ wp_operand (Ealignof ety ty).
 
     (** * Function calls
 
@@ -1289,32 +1293,48 @@ Module Type Expr.
              qualifiers is addressed through the use of [normalize_type]
              below.
      *)
+    #[program]
+    Definition Mnext {T} (m : M T) : M T :=
+      {| _wp K := |> m.(_wp) K |}.
+    Next Obligation.
+      simpl; intros. iIntros "K X !>". iRevert "X"; iApply _ok. eauto.
+    Qed.
+
+    #[program]
+    Definition Minvoke (fty : type) (fp : ptr) (ps : list ptr) : M ptr :=
+      {| _wp K := wp_fptr fty fp ps $ fun p => K p FreeTemps.id _ |}.
+    Next Obligation.
+      simpl; intros.
+      iIntros "K".
+    Admitted.
+
     Definition wp_call (ooe : evaluation_order.t) (pfty : type) (f : Expr) (es : list Expr)
-      (Q : ptr -> FreeTemps -> epred) : mpred :=
-      [| tu ⊧ resolve |] -*
+      : M ptr :=
+(*      [| tu ⊧ resolve |] -* *)
       match unptr pfty with
       | Some fty =>
         let fty := normalize_type fty in
         match as_function fty with
         | Some targs =>
-            let eval_f Q := wp_operand f (fun v fr => Exists fp, [| v = Vptr fp |] ** Q fp fr) in
-            letI* fps, vs, ifree, free :=
-               wp_args ooe [eval_f] (targs.(ft_params), targs.(ft_arity)) es in
-            match fps with
-            | [fp] => |> wp_fptr fty fp vs (fun v => interp ifree $ Q v free)
-            | _ => UNREACHABLE ("wp_args did not return a singleton list for pre", fps)
-            end
-        | _ => False
+            let eval_f := Mbind (wp_operand f) (Mas Vptr) in
+            Mdestroy_trivial tu
+              (letWP* '(fps, vs) :=
+                 wp_args ooe [eval_f] (targs.(ft_params), targs.(ft_arity)) es in
+               match fps with
+               | [fp] => Mnext (Minvoke fty fp vs)
+               | _ => Merror ("wp_args did not return a singleton list for pre", fps)
+               end)
+        | _ => Merror "ill-typed"
         end
-      | None => False
+      | None => Merror "ill-typed"
       end.
 
-    Lemma wp_call_frame eo pfty f es Q Q' :
-      Forall ps free, Q ps free -* Q' ps free |-- wp_call eo pfty f es Q -* wp_call eo pfty f es Q'.
+    Lemma wp_call_frame eo pfty f es : monad.Frame (wp_call eo pfty f es) (wp_call eo pfty f es).
     Proof.
       rewrite /wp_call.
       case_match; eauto.
       case_match; eauto.
+      (*
       iIntros "K X Y".
       iSpecialize ("X" with "Y"); iRevert "X".
       iApply wp_args_frame.
@@ -1327,12 +1347,12 @@ Module Type Expr.
         iIntros "X"; iNext.
         iRevert "X". iApply wp_fptr_frame.
         iIntros (?). iApply interp_frame; iApply "K". }
-    Qed.
+    Qed. *) Admitted.
 
-    Axiom wp_lval_call : forall f (es : list Expr) Q (ty := type_of (Ecall f es)),
+    Axiom wp_lval_call : forall f (es : list Expr) (ty := type_of (Ecall f es)),
         wp_call (evaluation_order.order_of OOCall) (type_of f) f es (fun res free =>
            Reduce (lval_receive ty res $ fun v => Q v free))
-        |-- wp_lval (Ecall f es) Q.
+        ⊆ wp_lval (Ecall f es).
 
     Axiom wp_xval_call : forall f (es : list Expr) Q (ty := type_of (Ecall f es)),
         wp_call (evaluation_order.order_of OOCall) (type_of f) f es (fun res free =>

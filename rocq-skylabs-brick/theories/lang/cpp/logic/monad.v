@@ -363,9 +363,15 @@ Section with_cpp.
     MonPred (I:=M_index TT) (fun K => ∃.. v, tele_app R v ** (tele_app R v -* K v FreeTemps.id))%I _.
    *)
 
+  (** TODO: Probably better as a [Notation] *)
+  Definition Frame {T} (a b : M T) : Prop :=
+    forall Q Q', (Forall x y z, Q x y z -* Q' x y z) ⊢ a Q -* b Q'.
+  Definition FrameWith {T} (P : T -> mpred) (a b : M T) : Prop :=
+    forall Q Q', (Forall x y z, P x -* Q x y z -* Q' x y z) ⊢ a Q -* b Q'.
+  Notation proper_Frame m := (Frame m m) (only parsing).
+
   Definition Mframe {T} (a b : M T) : mpred :=
     Forall Q Q', (Forall x y z, Q x y z -* Q' x y z) -* a Q -* b Q'.
-
 
   Definition Mimpl {T} (a b : M T) : mpred :=
     ∀ Q, a Q -* b Q.

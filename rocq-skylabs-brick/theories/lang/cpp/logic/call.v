@@ -270,41 +270,50 @@ the value category that it is called with.
 We consolidate these definitions here because they are shared between
 all function calls.
 *)
-Definition xval_receive `{Σ : cpp_logic, σ : genv}
-    (ty : exprtype) (res : ptr) (Q : ptr -> epred) : mpred :=
+
+#[program]
+Definition glval_receive `{Σ : cpp_logic, σ : genv}
+  (ty : exprtype) (res : ptr) : M ptr :=
   (**
   [primR] is enough because C++ code never uses the raw bytes
   underlying an inhabitant of a reference type.
-  *)
-  Exists p, res |-> primR (Tref (erase_qualifiers ty)) 1$m (Vref p) ** Q p.
-#[global] Arguments xval_receive {_ _ _ _} _ _ _ / : assert.
+   *)
+  {| _wp K :=
+      Exists p, res |-> primR (Tref (erase_qualifiers ty)) (cQp.mut 1) (Vref p) ** K p FreeTemps.id _ |}.
+Next Obligation.
+  simpl; intros.
+  iIntros "K X"; iDestruct "X" as (p) "[? ?]"; iExists p; iFrame; iApply "K"; eauto.
+Qed.
+#[global] Arguments glval_receive {_ _ _ _} _ _ / : assert.
 
-Definition lval_receive `{Σ : cpp_logic, σ : genv}
-    (ty : exprtype) (res : ptr) (Q : ptr -> epred) : mpred :=
-  (**
-  [primR] is enough because C++ code never uses the raw bytes
-  underlying an inhabitant of a reference type.
-  *)
-  Exists p, res |-> primR (Tref (erase_qualifiers ty)) 1$m (Vref p) ** Q p.
-#[global] Arguments lval_receive {_ _ _ _} _ _ _ / : assert.
+Definition xval_receive `{Σ : cpp_logic, σ : genv} := glval_receive.
+#[global] Arguments xval_receive {_ _ _ _} _ _ / : assert.
+Definition lval_receive `{Σ : cpp_logic, σ : genv} := glval_receive.
+#[global] Arguments lval_receive {_ _ _ _} _ _ / : assert.
 
-mlock Definition operand_receive `{Σ : cpp_logic, σ : genv}
-    (ty : exprtype) (res : ptr) (Q : val -> epred) : mpred :=
-  Exists v,
-  let cv := qual_norm (fun cv _ => cv) ty in
-  res |-> tptsto_fuzzyR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) v **
-  Q v.
+#[program]
+Definition operand_receive `{Σ : cpp_logic, σ : genv}
+    (ty : exprtype) (res : ptr) : M val :=
+  {| _wp K :=
+      Exists v,
+      let cv := qual_norm (fun cv _ => cv) ty in
+      res |-> tptsto_fuzzyR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) v ** K v FreeTemps.id _ |}.
+Next Obligation.
+  simpl; intros.
+  iIntros "K X"; iDestruct "X" as (p) "[? ?]"; iExists p; iFrame; iApply "K"; eauto.
+Qed.
+#[global] Arguments operand_receive {_ _ _ _} _ _ : assert.	(* mlock bug *)
 
 Definition init_receive `{Σ : cpp_logic, σ : genv}
-    (addr res : ptr) (Q : epred) : mpred :=
-  [| addr = res |] -* Q.
-#[global] Arguments init_receive {_ _ _ _} _ _ _ / : assert.
+    (addr res : ptr) : M unit :=
+  Massume (addr = res).
+#[global] Arguments init_receive {_ _ _ _} _ _ / : assert.
 
 Section receive.
   Context `{Σ : cpp_logic, σ : genv}.
 
-  Lemma xval_receive_frame ty res (Q Q' : ptr -> epred) :
-      Forall v, Q v -* Q' v |-- xval_receive ty res Q -* xval_receive ty res Q'.
+  Lemma xval_receive_frame ty res :
+    monad.Frame (xval_receive ty res) (xval_receive ty res).
   Proof.
     rewrite /xval_receive. iIntros "X Y"; iDestruct "Y" as (x) "[? ?]"; iExists x; iFrame; by iApply "X".
   Qed.
