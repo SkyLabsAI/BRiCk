@@ -368,18 +368,18 @@ magic wands.
 *)
 #[local] Notation fupd_compatible := true (only parsing).
 
-#[local] Notation Mfupd_compat := (if fupd_compatible then Mfupd top top else Mret ()) (only parsing).
+#[local] Notation Mfupd_compat := (if fupd_compatible then Mfupd top top else mret ()) (only parsing).
 
 (* BEGIN wp_initialize *)
 #[local]
 Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
     (u : bool) (tu : translation_unit) (ρ : region)
     (cv : type_qualifiers) (ty : decltype)
-    (addr : ptr) (init : Expr) : M FreeTemps.t :=
+    (addr : ptr) (init : Expr) : Mlocal FreeTemps.t :=
   let UNSUPPORTED := funI m => letWP* '() := Mfupd top top in Merror m in
   if q_volatile cv then Merror "volatile"
   else
-    match ty return M FreeTemps.t with
+    match ty return Mlocal FreeTemps.t with
     | Tvoid =>
       (*
       [wp_initialize] is used to `return` from a function. The following
@@ -391,15 +391,15 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
       *)
       letWP* v := wp_operand tu ρ init in
       let qf := cQp.mk (q_const cv) 1 in
-      letWP* '() := Mrequire (v = Vvoid) in
+      letWP* '() := M2local $ Mrequire (v = Vvoid) in
 
       (**
       [primR] is enough because C++ code never uses the raw bytes
       underlying an inhabitant of type void.
       *)
-      letWP* '() := Mproduce (addr |-> primR Tvoid qf Vvoid) in
-      letWP* '() := Mfupd_compat in
-      Mret (FreeTemps.delete (tqualified cv Tvoid) addr)
+      letWP* '() := M2local $ Mproduce (addr |-> primR Tvoid qf Vvoid) in
+      letWP* '() := M2local $ Mfupd_compat in
+      mret (FreeTemps.delete (tqualified cv Tvoid) addr)
 
     | Tptr _
     | Tmember_pointer _ _
@@ -411,8 +411,9 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
     | Tnullptr =>
       letWP* v := wp_operand tu ρ init in
       let qf := cQp.mk (q_const cv) 1 in
-      letWP* '() := Mproduce (addr |-> tptsto_fuzzyR (erase_qualifiers ty) qf v) in
-      letWP* '() := Mfupd_compat in Mret (FreeTemps.delete (tqualified cv ty) addr)
+      letWP* '() := M2local $ Mproduce (addr |-> tptsto_fuzzyR (erase_qualifiers ty) qf v) in
+      letWP* '() := M2local $ Mfupd_compat in
+      mret (FreeTemps.delete (tqualified cv ty) addr)
 
       (* non-primitives are handled via prvalue-initialization semantics *)
     | Tarray _ len =>
@@ -435,9 +436,9 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
       TODO: [ref]s are never mutable, but we use [qf] here for
       compatibility with [implicit_destruct_struct]
       *)
-      letWP* '() := Mproduce (addr |-> primR rty qf (Vref p)) in
-      letWP* '() := Mfupd_compat in
-      Mret (FreeTemps.delete (tqualified cv (Tref ty)) addr)
+      letWP* '() := M2local $ Mproduce (addr |-> primR rty qf (Vref p)) in
+      letWP* '() := M2local Mfupd_compat in
+      mret (FreeTemps.delete (tqualified cv (Tref ty)) addr)
 
     | Trv_ref ty =>
       let rty := Tref $ erase_qualifiers ty in
@@ -450,9 +451,9 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
       TODO: [ref]s are never mutable, but we use [qf] here for
       compatibility with [implicit_destruct_struct]
       *)
-      letWP* '() := Mproduce (addr |-> primR rty qf (Vref p)) in
-      letWP* '() := Mfupd_compat in
-      Mret (FreeTemps.delete (tqualified cv (Trv_ref ty)) addr)
+      letWP* '() := M2local $ Mproduce (addr |-> primR rty qf (Vref p)) in
+      letWP* '() := M2local $ Mfupd_compat in
+      mret (FreeTemps.delete (tqualified cv (Trv_ref ty)) addr)
 
     | Tfunction _ => UNSUPPORTED (initializing_type ty init)
 
@@ -472,12 +473,12 @@ mlock
 Definition wp_initialize_unqualified `{Σ : cpp_logic, σ : genv} :
   ∀ (tu : translation_unit) (ρ : region)
     (cv : type_qualifiers) (ty : decltype)
-    (addr : ptr) (init : Expr), M FreeTemps.t :=
+    (addr : ptr) (init : Expr), Mlocal FreeTemps.t :=
   Cbn (Reduce (wp_initialize_unqualified_body fupd_compatible)).
 #[global] Arguments wp_initialize_unqualified {_ _ _ _} _ _ _ _ _ _%_I : assert.	(* mlock bug *)
 
 Definition wp_initialize `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ρ : region)
-    (qty : decltype) (addr : ptr) (init : Expr) : M FreeTemps.t :=
+    (qty : decltype) (addr : ptr) (init : Expr) : Mlocal FreeTemps.t :=
   qual_norm (wp_initialize_unqualified tu ρ) qty addr init.
 #[global] Hint Opaque wp_initialize : typeclass_instances.
 #[global] Arguments wp_initialize {_ _ _ _} _ _ !_ _ _ / : assert.
@@ -489,149 +490,26 @@ Definition heap_type_of (t : type) : type :=
   | t => t
   end.
 
-Instance equiv_subseteq_subrelation `{Σ : cpp_logic} {T} : @subrelation (M T) (≡) (⊆).
-Proof.
-  red. intros. repeat intro.
-  do 2 red in H. rewrite H. iApply _ok. 2: reflexivity.
-  iIntros (???). iApply H0.
-Qed.
-
-Instance equiv_subseteq_proper `{Σ : cpp_logic} {T} : Proper ((⊆) --> (⊆) ==> Basics.impl) (⊆@{M T}).
-Proof. repeat intro. red in H. Admitted.
-Instance equiv_subseteq_proper_equiv `{Σ : cpp_logic} {T} : Proper ((≡) ==> (≡) ==> Basics.impl) (⊆@{M T}).
-Proof. repeat intro. red in H. Admitted.
-
-Instance equiv_RR `{Σ : cpp_logic} {T} : RewriteRelation (≡@{M T}) := {}.
-Instance subseteq_RR `{Σ : cpp_logic} {T} : RewriteRelation (⊆@{M T}) := {}.
-
-
-Definition WP `{Σ : cpp_logic} {T} (m : M T) := _wp m.
-
-Instance WP_proper `{Σ : cpp_logic} {T}
-  : Proper ((≡) ==> eq ==> flip (⊢)) (WP (T:=T)).
-Proof. Admitted.
-
-Instance Mbind_proper `{Σ : cpp_logic} {T U}
-  : Proper ((⊆@{M T}) ==> pointwise_relation _ (⊆@{M U}) ==> (⊆)) Mbind.
-Proof.
-  repeat intro.
-  rewrite /Mbind/=. apply H. intros. apply H0. intros. apply H1.
-Qed.
-
-Instance WP_subseteq_proper `{Σ : cpp_logic} {T}
-  : Proper ((⊆) ==> eq ==> (⊢)) (WP (T:=T)).
-Proof.
-  repeat intro. subst. rewrite /WP. apply H. eauto.
-Qed.
-Instance WP_subseteq_proper' `{Σ : cpp_logic} {T}
-  : Proper (flip (⊆) ==> eq ==> flip (⊢)) (WP (T:=T)).
-Proof.
-  repeat intro. subst. rewrite /WP. apply H. eauto.
-Qed.
-Instance Mbind_subseteq_proper `{Σ : cpp_logic} {T U}
-  : Proper (flip (⊆@{M T}) ==> pointwise_relation _ (flip (⊆@{M U})) ==> flip (⊆)) Mbind.
-Proof.
-  repeat intro.
-  rewrite /Mbind/=. apply H. intros. apply H0. intros. apply H1.
-Qed.
-
-Definition by_WP `{Σ : cpp_logic} {T} (m1 m2 : M T) :
-  (forall k, WP m1 k |-- WP m2 k) ->
-  m1 ⊆ m2.
-Proof.
-  rewrite /WP. repeat intro.
-  rewrite H. iApply _ok. iIntros (???). iApply H0.
-Qed.
-
-Typeclasses Opaque equiv bi_entails subseteq WP Mbind.
-
-#[local] Opaque FreeTemps.canon.
-Instance: forall `{Σ : cpp_logic} {T} K k P, FromWand (WP (Mbind (Mproduce P) k) K) P (WP (T:=T) (k ()) K).
-Proof.
-  intros. red.
-  rewrite /Mbind/WP/=.
-  f_equiv.
-  iApply _ok. iIntros (???).
-  iApply monad.K_entails.
-  by rewrite FreeTemps.canon_equiv right_id.
-Qed.
-
-Instance: forall `{Σ : cpp_logic} {T} K k P, IntoWand false false (WP (Mbind (Mproduce P) k) K) P (WP (T:=T) (k ()) K).
-Proof.
-  intros. red.
-  rewrite /Mbind/WP/=.
-  f_equiv.
-  iApply _ok. iIntros (???).
-  iApply monad.K_entails.
-  by rewrite FreeTemps.canon_equiv right_id.
-Qed.
-
-Lemma WP_Mbind_Mfupd `{Σ : cpp_logic} {T} E1 E2 k K :
-  WP (Mbind (Mfupd E1 E2) k) K -|- |={E1,E2}=> WP (T:=T) (k ()) K.
-Proof.
-  rewrite /WP/Mfupd/=. f_equiv.
-  iSplit;
-    by iApply _ok; iIntros (???); iApply monad.K_entails; rewrite FreeTemps.canon_equiv right_id.
-Qed.
-Lemma WP_Mret `{Σ : cpp_logic} {T} (v : T) K :
-  WP (Mret v) K -|- K v FreeTemps.id _.
-Proof. rewrite /WP/Mret/=. done. Qed.
-Lemma WP_Mbind_Mret `{Σ : cpp_logic} {T U} (v : T) (k : T -> M U) K :
-  WP (Mbind (Mret v) k) K -|- WP (k v) K.
-Proof.
-  rewrite /WP/Mbind/Mret/=.
-  iSplit;
-    by iApply _ok; iIntros (???); iApply monad.K_entails; rewrite FreeTemps.canon_equiv right_id.
-Qed.
-Lemma WP_Mbind_Mproduce `{Σ : cpp_logic} {T} P k K :
-  WP (Mbind (Mproduce P) k) K -|- P -* WP (T:=T) (k ()) K.
-Proof.
-  rewrite /WP/Mproduce/=. f_equiv.
-  iSplit;
-    by iApply _ok; iIntros (???); iApply monad.K_entails; rewrite FreeTemps.canon_equiv right_id.
-Qed.
-
-Instance Mbind_params : Params (@Mbind) 4 := {}.
-Instance bi_entails_params : Params (@bi_entails) 1 := {}.
-
-Definition Kfree `{Σ : cpp_logic} {T} (free : FreeTemps.t) (K : T -> forall free, FreeTemps.IsCanonical free -> mpred) : T -> forall free, FreeTemps.IsCanonical free -> mpred :=
-  fun x f _ => K x (FreeTemps.canon (f >*> free)) _.
-Lemma WP_Mbind_frame `{Σ : cpp_logic} {T U} (m : M T) (k1 k2 : T -> M U) K1 K2 :
-  (Forall x free, WP (k1 x) (Kfree free K1) -* WP (k2 x) (Kfree free K2))
-    |-- WP (Mbind m k1) K1 -* WP (Mbind m k2) K2.
-Proof.
-  rewrite /WP/Mbind/=.
-  iIntros "k"; iApply _ok; iIntros (???). iApply "k".
-Qed.
-Hint Opaque Kfree : typeclass_instances.
-Lemma WP_Mbind_Mbind `{Σ : cpp_logic} {T U V} m1 (m2 : T -> M U) (m3 : U -> M V) K :
-  WP (Mbind (Mbind m1 m2) m3) K -|- WP (Mbind m1 (fun x => Mbind (m2 x) m3)) K.
-Proof.
-  rewrite /Mbind/WP/=.
-  iSplit;
-    iApply _ok; iIntros (???); iApply _ok; iIntros (???); iApply _ok; iIntros (???);
-    iApply monad.K_entails; by rewrite !FreeTemps.canon_equiv assoc.
-Qed.
-
 Lemma wp_initialize_unqualified_well_typed `{Σ : cpp_logic, σ : genv}
   tu ρ cv ty addr init :
       (letWP* free := wp_initialize_unqualified tu ρ cv ty addr init in
        letWP* '() := Mproduce (reference_to (to_heap_type ty) addr) in
-       Mret free)
+       mret free)
   ⊆ wp_initialize_unqualified tu ρ cv ty addr init.
 Proof.
   rewrite wp_initialize_unqualified.unlock.
   case_match; eauto.
   { red. red. intros. simpl. eauto. }
   case_match; try solve [ do 2 red; simpl; intros; eauto ].
-  { apply by_WP => ?.
+  { apply by_WP => ?. (*
     rewrite -{2}wp_operand_well_typed.
-    rewrite !(WP_Mbind_Mbind, WP_Mbind_Mproduce, WP_Mbind_Mret, WP_Mbind_Mfupd, WP_Mret).
+    rewrite !(WP_Mbind_Mbind, WP_Mbind_Mproduce, WP_Mbind_mret, WP_Mbind_Mfupd, WP_mret).
     iApply WP_Mbind_frame; iIntros (??).
-    rewrite !(WP_Mbind_Mbind, WP_Mbind_Mproduce, WP_Mbind_Mret, WP_Mbind_Mfupd, WP_Mret).
+    rewrite !(WP_Mbind_Mbind, WP_Mbind_Mproduce, WP_Mbind_mret, WP_Mbind_Mfupd, WP_mret).
+    simpl.
     iIntros "X #? OWN".
     iDestruct (observe (reference_to _ _) with "OWN") as "#?".
-    iApply ("X" with "OWN"); eauto. }
+    iApply ("X" with "OWN"); eauto. *) admit. }
 (*
   case_match; subst; eauto.
   all: try (iApply wp_operand_frame; [ done | ];
@@ -681,9 +559,9 @@ See [https://eel.is/c++draft/class.init#class.base.init-note-2].
 *)
 
 Definition wpi `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ρ : region)
-    (cls : globname) (thisp : ptr) (ty : type) (init : Initializer) : M unit :=
+    (cls : globname) (thisp : ptr) (ty : type) (init : Initializer) : Mlocal unit :=
   let p' := thisp ,, offset_for cls init.(init_path) in
-  Mmap (fun free => ()) $ Mfree_all tu $ wp_initialize tu ρ ty p' init.(init_init).
+  Mfree_all tu $ (fun free => ()) <$>  wp_initialize tu ρ ty p' init.(init_init).
 #[global] Hint Opaque wpi : typeclass_instances.
 #[global] Arguments wpi {_ _ _ _} _ _ _ _ _ _ / : assert.
 
@@ -759,7 +637,7 @@ Section wp_initialize.
       let qf := cQp.mk (q_const cv') 1 in
       letWP* '() := Mproduce (addr |-> tptsto_fuzzyR (erase_qualifiers ty) qf v) in
       letWP* '() := Mfupd_compat in
-      Mret (FreeTemps.delete (tqualified cv ty) addr)
+      mret (FreeTemps.delete (tqualified cv ty) addr)
   )%I) (only parsing).
 
   Lemma wp_initialize_unqualified_intro_val tu ρ cv ty (addr : ptr) init :
