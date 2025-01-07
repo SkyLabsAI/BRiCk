@@ -111,19 +111,19 @@ Section with_cpp.
    * with mask [E] and continutation [Q].
    *)
   Parameter wp_lval
-    : forall {resolve:genv}, translation_unit -> region -> Expr -> M ptr.
+    : forall {resolve:genv}, translation_unit -> region -> Expr -> Mlocal ptr.
   (* END wp_lval *)
 
   Notation SupportsFupd x := (Mnon_atomically x ⊆ x) (only parsing).
   Notation RefResult t x :=
     ((letWP* v := x in
-      letWP* '() := Mproduce (reference_to t v) in
-      Mret v) ⊆ x) (only parsing).
+      letWP* '() := M2local $ Mproduce (reference_to t v) in
+      mret v) ⊆ x) (only parsing).
 
   Notation TypedResult t x :=
     ((letWP* v := x in
-        letWP* '() := Mproduce (has_type v t) in
-        Mret v) ⊆ x) (only parsing).
+      letWP* '() := M2local $ Mproduce (has_type v t) in
+      mret v) ⊆ x) (only parsing).
 
 
   (*
@@ -140,7 +140,7 @@ Section with_cpp.
                                                    | Some dt =>
                                                    end) in
 
-                           Mret r) ⊆ wp
+                           mret r) ⊆ wp
     ; well_typed_expr : (letWP* '() := Massume (trace.runO (decltype.of_expr tu e) = Some dt) in wp) ⊆ wp }.
    *)
 
@@ -184,7 +184,7 @@ Section with_cpp.
 
   Class WithCode {σ : genv} {T} (m : translation_unit -> M T) : Prop :=
     { carries_code : forall tu, (letWP* '() := Mproduce (denoteModule (σ:=σ) tu) in m tu) ⊆ m tu
-    ; weakening : forall tu1 tu2, sub_module tu1 tu2 -> |-- Mframe (m tu1) (m tu2)
+    ; weakening : forall tu1 tu2, sub_module tu1 tu2 -> monad.Frame (m tu1) (m tu2)
     }.
 
   Axiom wp_lval_models : forall {σ:genv} ρ e, WithCode (fun tu => wp_lval tu ρ e).
@@ -304,7 +304,7 @@ Section with_cpp.
   Parameter wp_init
     : forall {resolve:genv}, translation_unit -> region ->
                         exprtype -> ptr -> Expr ->
-                        M FreeTemps.t.
+                        Mlocal FreeTemps.t.
   (* END wp_init *)
 
   (*
@@ -399,11 +399,11 @@ Section with_cpp.
 
   (* BEGIN wp_prval *)
   Definition wp_prval {resolve:genv} (tu : translation_unit) (ρ : region)
-             (e : Expr) : M ptr :=
-    letWP* p := Mnd ptr in
+             (e : Expr) : Mlocal ptr :=
+    letWP* p := M2local $ Mnd ptr in
     letWP* free := wp_init tu ρ (type_of e) p e in
-    letWP* '() := Mpush_free free in
-    Mret p.
+    letWP* '() := M2local $ Mpush_free free in
+    mret p.
   (* END wp_prval *)
 
   (*
@@ -417,7 +417,7 @@ Section with_cpp.
   (* BEGIN wp_operand *)
   (* evaluate a prvalue that "computes the value of an operand of an operator"
    *)
-  Parameter wp_operand : forall {resolve:genv}, translation_unit -> region -> Expr -> M val.
+  Parameter wp_operand : forall {resolve:genv}, translation_unit -> region -> Expr -> Mlocal val.
   (* END wp_operand *)
 
   Axiom wp_operand_shift : forall {σ:genv} tu ρ e, SupportsFupd (wp_operand (resolve:=σ) tu ρ e).
@@ -496,10 +496,10 @@ Section with_cpp.
   (** [wp_test ρ e Q] evaluates [e] as an operand converting the value to a
       boolean before passing it to [Q].
    *)
-  Definition wp_test {σ : genv} (tu : translation_unit)  (ρ : region) (e : Expr) : M bool :=
+  Definition wp_test {σ : genv} (tu : translation_unit)  (ρ : region) (e : Expr) : Mlocal bool :=
     letWP* v := wp_operand tu ρ e in
     match is_true v with
-    | Some c => Mret c
+    | Some c => mret c
     | None => Merror (is_true_None v)
     end.
   #[global] Hint Opaque wp_test : sl_opacity.
@@ -510,7 +510,7 @@ Section with_cpp.
   Proof. (* solve_proper. Qed. *) Admitted.
 
   Lemma wp_test_frame {σ : genv} tu ρ test :
-    |-- Mframe (wp_test tu ρ test) (wp_test tu ρ test).
+    monad.Frame (wp_test tu ρ test) (wp_test tu ρ test).
   Proof. (*
     rewrite /wp_test/Mframe.
     iIntros "Q".
@@ -522,7 +522,7 @@ Section with_cpp.
 
   (* evaluate an expression as an xvalue *)
   Parameter wp_xval
-    : forall {resolve:genv}, translation_unit -> region -> Expr -> M ptr.
+    : forall {resolve:genv}, translation_unit -> region -> Expr -> Mlocal ptr.
 
   Axiom wp_xval_shift : forall {σ:genv} tu ρ e, SupportsFupd (wp_xval tu ρ e).
 
@@ -597,7 +597,7 @@ Section with_cpp.
 
   (* Opaque wrapper of [False]: this represents a [False] obtained by a [ValCat] mismatch in [wp_glval]. *)
   Definition wp_glval_mismatch {resolve : genv} (r : region) (vc : ValCat) (e : Expr)
-    : M ptr := Mub.
+    : Mlocal ptr := Mub.
   #[global] Arguments wp_glval_mismatch : simpl never.
 
   (* evaluate an expression as a generalized lvalue *)
@@ -605,7 +605,7 @@ Section with_cpp.
   (* In some cases we need to evaluate a glvalue.
      This makes some weakest pre-condition axioms a bit shorter.
    *)
-  Definition wp_glval {σ} (tu : translation_unit) ρ (e : Expr) : M ptr :=
+  Definition wp_glval {σ} (tu : translation_unit) ρ (e : Expr) : Mlocal ptr :=
     match valcat_of e with
     | Lvalue => wp_lval (resolve:=σ) tu ρ e
     | Xvalue => wp_xval (resolve:=σ) tu ρ e
@@ -631,7 +631,7 @@ Section with_cpp.
 
   Lemma wp_glval_frame {σ : genv} tu1 tu2 r e :
     sub_module tu1 tu2 ->
-    |-- Mframe (wp_glval tu1 r e) (wp_glval tu2 r e).
+    monad.Frame (wp_glval tu1 r e) (wp_glval tu2 r e).
   Proof. (*
     rewrite /wp_glval. case_match.
     - by apply wp_lval_frame.
@@ -720,19 +720,19 @@ Section with_cpp.
     Context {σ : genv} (tu : translation_unit).
     Variable (ρ : region).
 
-    Definition wp_discard (e : Expr) : M unit :=
+    Definition wp_discard (e : Expr) : Mlocal unit :=
       match valcat_of e with
-      | Lvalue => Mmap (fun _ => tt) $ wp_lval tu ρ e
+      | Lvalue => (fun _ => tt) <$> wp_lval tu ρ e
       | Prvalue =>
         let ty := type_of e in
         if is_value_type ty then
-          Mmap (fun _ => tt) $ wp_operand tu ρ e
+          (fun _ => tt) <$> wp_operand tu ρ e
         else
-          letWP* p := Mnd ptr in
+          letWP* p := M2local $ Mnd ptr in
           letWP* free := wp_init tu ρ (type_of e) p e in
-          letWP* '() := Mpush_free free in
-          Mret ()
-      | Xvalue => Mmap (fun _ => tt) $ wp_xval tu ρ e
+          letWP* '() := M2local $ Mpush_free free in
+          mret ()
+      | Xvalue => (fun _ => tt) <$> wp_xval tu ρ e
       end%I.
 
     Lemma fupd_wp_discard e : SupportsFupd (wp_discard e).
@@ -812,8 +812,9 @@ Section with_cpp.
 
   (* evaluate a statement *)
   Parameter wp
-    : forall {resolve:genv}, translation_unit -> region -> Stmt -> KpredI -> mpred.
+    : forall {resolve:genv}, translation_unit -> region -> Stmt -> Mlocal ().
 
+  (*
   #[global] Declare Instance wp_ne : forall σ n,
     Proper (eq ==> eq ==> eq ==> dist n ==> dist n) (@wp σ).
 
@@ -875,6 +876,7 @@ Section with_cpp.
       rewrite/AddModal. by rewrite fupd_frame_r bi.wand_elim_r fupd_wp.
     Qed.
   End wp.
+  *)
 
   (* this is the low-level specification of C++ code blocks.
    *
