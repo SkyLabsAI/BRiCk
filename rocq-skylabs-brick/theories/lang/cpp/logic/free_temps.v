@@ -100,7 +100,6 @@ Module FreeTemps.
 
     (* assume that this is canonical *)
     Parameter ptr_cmp : ptr -> ptr -> comparison.
-    Print comparison.
 
     Parameter t_cmp : forall (a b : t), comparison.
     (* This is just the canonical construction

@@ -40,16 +40,18 @@ Require skylabs.iris.extra.bi.linearity.
  * exceptions, we should be able to add another case,
  * `k_throw : val -> mpred`.
  *)
-Variant ReturnType : Set :=
-| Normal
+Variant ReturnType {T : Type} : Type :=
+| Normal (_ : T)
 | Break
 | Continue
 | ReturnVal (_ : ptr)
 | ReturnVoid
 .
-#[global] Instance ReturnType_ihn : Inhabited ReturnType.
-Proof. repeat constructor. Qed.
+#[global] Arguments ReturnType _ : clear implicits.
+#[global] Instance ReturnType_inh {T} : Inhabited (ReturnType T).
+Proof. constructor; apply Break. Qed.
 
+(*
 Canonical Structure rt_biIndex : biIndex :=
   {| bi_index_type := ReturnType
    ; bi_index_rel := eq
@@ -92,6 +94,7 @@ NOTE KpredI does not embed into mpredI because it doesn't respect
 existentials.
 *)
 #[global] Instance mpred_Kpred_BiEmbed `{Σ : cpp_logic} : BiEmbed mpredI KpredI := _.
+*)
 
 Section with_cpp.
   Context `{Σ : cpp_logic}.
@@ -113,6 +116,13 @@ Section with_cpp.
     ; _ok : forall K1 K2, (Forall x free pf, K1 x free pf -* K2 x free pf) |-- _wp K1 -* _wp K2 }.
   #[global] Arguments M _ : clear implicits.
   #[local] Coercion _wp : M >-> Funclass.
+
+  Definition Mlocal T := M (ReturnType T).
+
+  (* The global monad used for functions.
+     NOTE: this actually does not have [FreeTemps.t]
+   *)
+  Definition Mglobal T := M T.
 
   (* The canonical notion of equivalence on [M _]
 
@@ -172,16 +182,55 @@ Section with_cpp.
 
   (** ** Monad Operators *)
 
-  #[program]
-  Definition Mret {t : Type} (v : t) : M t :=
-    {| _wp K := K v FreeTemps.id _ |}.
+  #[global] Instance ReturnType_fmap : FMap ReturnType :=
+    fun _ _ f x => match x with
+                | Normal x => Normal (f x)
+                | Break => Break
+                | Continue => Continue
+                | ReturnVoid => ReturnVoid
+                | ReturnVal p => ReturnVal p
+                end.
+
+  #[global,program]
+  Instance Mlocal_ret : MRet Mlocal :=
+    fun _ v => {| _wp K := K (Normal v) FreeTemps.id _ |}.
+  Next Obligation.
+    intros; simpl. iIntros "X"; iApply "X".
+  Qed.
+  #[global,program]
+  Instance Mlocal_map : FMap Mlocal :=
+    fun _ _ f m => {| _wp K := m.(_wp) (fun t => K (f <$> t)) |}.
+  Next Obligation.
+    intros; simpl.
+    iIntros "X"; iApply _ok.
+    iIntros (??); iApply "X".
+  Qed.
+  #[global,program]
+  Instance Mlocal_bind : MBind Mlocal :=
+    fun _ _ k c =>
+      {| _wp K := c (fun v f _ => match v with
+                               | Normal v => k v (fun v' f' _ => K v' (FreeTemps.canon $ f' >*> f)%free _)
+                               | Break => K Break f _
+                               | Continue => K Continue f _
+                               | ReturnVal p => K (ReturnVal p) f _
+                               | ReturnVoid => K ReturnVoid f _
+                               end) |}.
+  Next Obligation.
+    simpl; intros. iIntros "K"; iApply _ok.
+    iIntros (???). case_match; try iApply _ok; eauto.
+    iIntros (???); iApply "K".
+  Qed.
+
+  #[global,program]
+  Instance M_ret : MRet M :=
+    fun _ v => {| _wp K := K v FreeTemps.id _ |}.
   Next Obligation.
     intros; simpl. iIntros "X"; iApply "X".
   Qed.
 
-  #[program]
-  Definition Mmap {t u : Type} (f : t -> u) (m : M t) : M u :=
-    {| _wp K := m.(_wp) (fun t => K (f t)) |}.
+  #[global,program]
+  Instance M_map : FMap M :=
+    fun _ _ f m => {| _wp K := m.(_wp) (fun t => K (f t)) |}.
   Next Obligation.
     intros; simpl.
     iIntros "X"; iApply _ok.
@@ -190,18 +239,20 @@ Section with_cpp.
 
   (* Question: Should we implement [ap]? *)
 
-  #[program] Definition Mbind {T U} (c : M T) (k : T -> M U) : M U :=
-    {| _wp K := c (fun v f _ => k v (fun v' f' _ => K v' (FreeTemps.canon $ f' >*> f)%free _)) |}.
+  #[global,program]
+  Instance M_bind : MBind M :=
+    fun _ _ k c =>
+      {| _wp K := c (fun v f _ => k v (fun v' f' _ => K v' (FreeTemps.canon $ f' >*> f)%free _)) |}.
   Next Obligation.
     simpl; intros. iIntros "K"; iApply _ok.
     iIntros (???). iApply _ok. iIntros (???); iApply "K".
   Qed.
-  Notation "'letWP*' v := e 'in' k" := (Mbind e (fun v => k)) (at level 0, v binder, k at level 200).
+  Notation "'letWP*' v := e 'in' k" := (M_bind e (fun v => k)) (at level 0, v binder, k at level 200).
 
   (**  These operations actually form a monad *)
-  Lemma mret_mbind {T U} v (k : T -> M U) : Mbind (Mret v) k ≡ k v.
+  Lemma mret_mbind {T U} v (k : T -> M U) : mbind k (mret v) ≡ k v.
   Proof.
-    red. rewrite /M_equiv/Mbind/Mret/=. red. simpl; intros.
+    red. rewrite /M_equiv/M_bind/M_ret/=. red. simpl; intros.
     split'.
     { iApply _ok; iIntros (???) "?"; iStopProof.
       rewrite H; apply K_entails.
@@ -211,9 +262,9 @@ Section with_cpp.
       by rewrite FreeTemps.canon_equiv FreeTemps.seq_id_unitR. }
   Qed.
 
-  Lemma mbind_mret {T} (m : M T) : Mbind m Mret ≡ m.
+  Lemma mbind_mret {T} (m : M T) : mbind mret m ≡ m.
   Proof.
-    red; rewrite /M_equiv/Mbind/Mret; red; simpl; intros.
+    red; rewrite /M_equiv/M_bind/M_ret; red; simpl; intros.
     split'.
     { iApply _ok; iIntros (???) "?"; iStopProof.
       rewrite H; apply K_entails. rewrite FreeTemps.canon_equiv FreeTemps.seq_left_id; eauto. }
@@ -222,34 +273,46 @@ Section with_cpp.
   Qed.
 
   Lemma mbind_mbind {T U V} (m : M T) (k1 : T -> M U) (k2 : U -> M V) :
-    Mbind m (fun x => Mbind (k1 x) k2) ≡ Mbind (Mbind m k1) k2.
+    mbind (fun x => mbind k2 (k1 x)) m ≡ mbind k2 (mbind k1 m).
   Proof.
-    red; rewrite /M_equiv/Mbind; red; simpl; intros.
+    red; rewrite /M_equiv/M_bind; red; simpl; intros.
     split';
       iApply _ok; iIntros (???); iApply _ok; iIntros (???); iApply _ok; iIntros (???);
       rewrite H; eauto; iIntros; iStopProof; apply K_entails.
     all: rewrite !FreeTemps.canon_equiv FreeTemps.seq_assoc; eauto.
   Qed.
 
-  (** The interpreter for the monad
-      This hides the canonicity proof because that is an implementation detail of the monad.
+  (** Conversions between the monads *)
+  Definition M2local {T} (m : Mglobal T) : Mlocal T :=
+    Normal <$> m.
+
+  (** The interpreter for the monad.
+
+      TODO: confirm whether this is necessary, or make it a notation. This is essentially the compatibility constant
+            for [_wp], but some of the typeclass search didn't seem to work correctly with the constant
+
+      TODO: it would be nice to hide the canonicity proof because it is an implementation detail of the monad, but
+            that break [by_WP].
    *)
+  Definition WP {T} (m : M T) := _wp m.
+(*
   Definition WP {T} (m : M T) (Q : T -> FreeTemps.t -> mpred) : mpred :=
     m (fun x f _ => Q x f).
+ *)
 
-  Definition Knormal {T U} (k : T -> M U) (Q : U -> FreeTemps.t -> mpred) : T -> FreeTemps.t -> mpred :=
-    fun t free => k t (fun u free' _ => Q u (FreeTemps.canon (free' >*> free))).
+  Definition Knormal {T U} (k : T -> M U) (Q : U -> forall f, FreeTemps.IsCanonical f -> mpred) : T -> forall f, FreeTemps.IsCanonical f -> mpred :=
+    fun t free _ => k t (fun u free' _ => Q u (FreeTemps.canon (free' >*> free)) _).
 
   Lemma WP_Mbind {T U} (m : M T) (k : T -> M U) Q :
-    WP m (Knormal k Q) |-- WP (Mbind m k) Q.
+    WP m (Knormal k Q) |-- WP (mbind k m) Q.
   Proof.
-    rewrite /Mbind/WP/Knormal/=.
+    rewrite /M_bind/WP/Knormal/=.
     iApply _ok; iIntros (???). eauto.
   Qed.
 
   Lemma WP_ret {T} (v : T) Q :
-    Q v FreeTemps.id |-- WP (Mret v) Q.
-  Proof. by rewrite /WP/Mret/=. Qed.
+    Q v FreeTemps.id _ |-- WP (mret v) Q.
+  Proof. by rewrite /WP/M_ret/=. Qed.
 
   (** ** The Effects of the Monad
 
@@ -275,10 +338,10 @@ Section with_cpp.
   Qed.
 
   Lemma WP_produce P Q :
-    P -* Q () FreeTemps.id |-- WP (Mproduce P) Q.
+    P -* Q () FreeTemps.id _ |-- WP (Mproduce P) Q.
   Proof. reflexivity. Qed.
   Lemma WP_consume P Q :
-    P ** Q () FreeTemps.id |-- WP (Mconsume P) Q.
+    P ** Q () FreeTemps.id _ |-- WP (Mconsume P) Q.
   Proof. reflexivity. Qed.
 
   Definition Massume (P : Prop) : M unit := Mproduce [| P |].
@@ -370,41 +433,44 @@ Section with_cpp.
     forall Q Q', (Forall x y z, P x -* Q x y z -* Q' x y z) ⊢ a Q -* b Q'.
   Notation proper_Frame m := (Frame m m) (only parsing).
 
-  Definition Mframe {T} (a b : M T) : mpred :=
+  Definition FrameI {T} (a b : M T) : mpred :=
     Forall Q Q', (Forall x y z, Q x y z -* Q' x y z) -* a Q -* b Q'.
+  Definition FrameWithI {T} (P : T -> mpred) (a b : M T) : mpred :=
+    Forall Q Q', (Forall x y z, P x -* Q x y z -* Q' x y z) -* a Q -* b Q'.
 
+  (*
   Definition Mimpl {T} (a b : M T) : mpred :=
     ∀ Q, a Q -* b Q.
 
   Lemma WP_impl {T} (a b : M T) Q : Mimpl a b |-- WP a Q -* WP b Q.
   Proof. rewrite /Mimpl. iIntros "X". iApply "X". Qed.
+  *)
 
   Lemma Mmap_frame_strong {T U} c (f : T -> U) :
-    Mframe c c
-    |-- Forall Q Q', (Forall x y pf, Q (f x) y pf -* Q' (f x) y pf) -* Mmap f c Q -* Mmap f c Q'.
+    FrameI c c
+    |-- Forall Q Q', (Forall x y pf, Q (f x) y pf -* Q' (f x) y pf) -* _wp (f <$> c) Q -* _wp (f <$> c) Q'.
   Proof.
-    rewrite /Mframe/Mmap; iIntros "A" (??) "B".
+    rewrite /FrameI/M_map; iIntros "A" (??) "B".
     iApply "A". iIntros (??); iApply "B".
   Qed.
 
   Lemma Mmap_frame {T U} c1 c2 (f : T -> U) :
-    Mframe c1 c2 |-- Mframe (Mmap f c1) (Mmap f c2).
+    FrameI c1 c2 |-- FrameI (f <$> c1) (f <$> c2).
   Proof.
-    rewrite /Mframe/Mmap; iIntros "A" (??) "B".
+    rewrite /FrameI/M_map; iIntros "A" (??) "B".
     iApply "A". iIntros (??); iApply "B".
   Qed.
 
-
-  Lemma Mframe_refl {T} (m : M T) : |-- Mframe m m.
+  Lemma Mframe_refl {T} (m : M T) : proper_Frame m.
   Proof.
-    rewrite /Mframe. iIntros (??) "X".
+    rewrite /Frame. iIntros (??) "X".
     iApply _ok. eauto.
   Qed.
 
   Lemma Mbind_frame {T U} c1 c2 (k1 k2 : T -> M U) :
-    Mframe c1 c2 |-- (Forall x, Mframe (k1 x) (k2 x)) -* Mframe (Mbind c1 k1) (Mbind c2 k2).
+    FrameI c1 c2 |-- (Forall x, FrameI (k1 x) (k2 x)) -* FrameI (mbind k1 c1) (mbind k2 c2).
   Proof.
-    rewrite /Mframe/Mbind; iIntros "A B" (??) "C".
+    rewrite /FrameI/M_bind; iIntros "A B" (??) "C".
     iApply "A". iIntros (???). iApply "B".
     iIntros (???); iApply "C".
   Qed.
@@ -416,19 +482,19 @@ Section with_cpp.
    *)
   #[program]
   Definition nd_seq {T U} (wp1 : M T) (wp2 : M U) : M (T * U) :=
-    Mboth (letWP* v1 := wp1 in
-           letWP* v2 := wp2 in
-           Mret (v1,v2))
-          (letWP* v2 := wp2 in
-           letWP* v1 := wp1 in
-           Mret (v1,v2)).
+    Mboth (letM* v1 := wp1 in
+           letM* v2 := wp2 in
+           mret (v1,v2))
+          (letM* v2 := wp2 in
+           letM* v1 := wp1 in
+           mret (v1,v2)).
 
   Lemma nd_seq_frame {T U} wp1 wp2 :
-    Mframe wp1 wp1 |-- Mframe wp2 wp2 -* Mframe (@nd_seq T U wp1 wp2) (nd_seq wp1 wp2).
+    FrameI wp1 wp1 |-- FrameI wp2 wp2 -* FrameI (@nd_seq T U wp1 wp2) (nd_seq wp1 wp2).
   Proof.
     iIntros "A B" (??) "C D".
     iSplit; [ iDestruct "D" as "[D _]" | iDestruct "D" as "[_ D]" ]; iRevert "D".
-    { iApply "A". iIntros (???). iApply "B"; iIntros (???). iApply "C". }
+    { rewrite /FrameI. iApply "A". iIntros (???). iApply "B"; iIntros (???). iApply "C". }
     { iApply "B". iIntros (???). iApply "A"; iIntros (???). iApply "C". }
   Qed.
 
@@ -457,7 +523,7 @@ Section with_cpp.
   Lemma nd_seqs'_frame_strong {T} n : forall (ls : list (M T)) Q Q',
       n = length ls ->
       Forall x y, [| length x = length ls |] -* Q x y -* Q' x y
-      |-- ([∗list] m ∈ ls, Mframe m m) -*
+      |-- ([∗list] m ∈ ls, FrameI m m) -*
           nd_seqs' n ls Q -* nd_seqs' n ls Q'.
   Proof.
     induction n; simpl; intros.
@@ -495,8 +561,8 @@ Section with_cpp.
 
   Lemma nd_seqs'_frame {T} n : forall (ls : list (M T)),
       n = length ls ->
-      ([∗list] m ∈ ls, Mframe m m)
-      |-- Mframe (nd_seqs' n ls) (nd_seqs' n ls).
+      ([∗list] m ∈ ls, FrameI m m)
+      |-- FrameI (nd_seqs' n ls) (nd_seqs' n ls).
   Proof.
     induction n; simpl; intros.
     { case_match.
@@ -523,7 +589,7 @@ Section with_cpp.
       iSplitL "a"; eauto. }
   Qed.
   Lemma nd_seqs_frame : forall {T} (ms : list (_ T)),
-      ([∗list] m ∈ ms, Mframe m m) |-- Mframe (nd_seqs ms) (nd_seqs ms).
+      ([∗list] m ∈ ms, FrameI m m) |-- FrameI (nd_seqs ms) (nd_seqs ms).
   Proof. intros. by iApply nd_seqs'_frame. Qed.
 
   (* sanity check on [nd_seq] and [nd_seqs] *)
@@ -589,10 +655,11 @@ Section with_cpp.
 
   (** *** sequencing of monadic compuations *)
   Definition Mseq {T U} (wp1 : M T) (wp2 : M U) : M (T * U) :=
-    Mbind wp1 (fun v => Mmap (fun x => (v, x)) wp2).
+    letM* v := wp1 in
+    (fun x => (v,x)) <$> wp2.
 
   Lemma Mseq_frame {T U} wp1 wp2 :
-    Mframe wp1 wp1 |-- Mframe wp2 wp2 -* Mframe (@Mseq T U wp1 wp2) (Mseq wp1 wp2).
+    FrameI wp1 wp1 |-- FrameI wp2 wp2 -* FrameI (@Mseq T U wp1 wp2) (Mseq wp1 wp2).
   Proof.
     iIntros "A B" (??) "C".
     rewrite /Mseq.
@@ -603,19 +670,19 @@ Section with_cpp.
   (** [seqs es] is sequential evaluation of [es] *)
   Fixpoint seqs {T} (es : list (M T)) : M (list T) :=
     match es with
-    | nil => Mret []
-    | e :: es => Mmap (fun '(a,b) => a:: b) (Mseq e (seqs es))
+    | nil => mret []
+    | e :: es => (fun '(a,b) => a :: b) <$> (Mseq e (seqs es))
     end.
 
   Lemma seqs_frame_strong {T} : forall (ls : list (M T)) Q Q',
-      ([∗list] m ∈ ls, Mframe m m)%I
+      ([∗list] m ∈ ls, FrameI m m)%I
       |-- (Forall x y pf, [| length x = length ls |] -* Q x y pf -* Q' x y pf) -*
           (seqs ls Q) -* (seqs ls Q').
   Proof.
     induction ls; simpl; intros.
     - iIntros "_ X"; iApply "X"; eauto.
     - iIntros "[A AS] K".
-      rewrite /Mbind. iApply "A".
+      rewrite /M_bind. iApply "A".
       iIntros (???).
       iApply (IHls with "AS").
       iIntros (????).
@@ -639,10 +706,10 @@ Section with_cpp.
   Qed.
 
   Lemma Mpar_frame {T U} wp1 wp2 :
-    Mframe wp1 wp1 |-- Mframe wp2 wp2 -* Mframe (@Mpar T U wp1 wp2) (Mpar wp1 wp2).
+    FrameI wp1 wp1 |-- FrameI wp2 wp2 -* FrameI (@Mpar T U wp1 wp2) (Mpar wp1 wp2).
   Proof.
     iIntros "A B" (??) "C D".
-    rewrite /Mpar/Mframe.
+    rewrite /Mpar/FrameI.
     iDestruct "D" as (??) "(D1 & D2 & K)".
     iExists _, _.
     iSplitL "D1 A".
@@ -656,8 +723,8 @@ Section with_cpp.
   (** lifting [Mpar] to homogeneous lists *)
   Fixpoint Mpars {T} (f : list (M T)) : M (list T) :=
     match f with
-    | nil => Mret nil
-    | f :: fs => Mmap (fun '(v, vs) => v :: vs) $ Mpar f (Mpars fs)
+    | nil => mret nil
+    | f :: fs => (fun '(v, vs) => v :: vs) <$> Mpar f (Mpars fs)
     end.
 
   Lemma Mpars_frame_strong {T} : forall (ls : list (M T)) Q Q',
@@ -667,7 +734,7 @@ Section with_cpp.
     induction ls; simpl; intros.
     - iIntros "X"; iApply "X"; eauto.
     - iIntros "K".
-      rewrite /Mmap.
+      rewrite /M_map.
       rewrite /Mpar.
       iIntros "X".
       iDestruct "X" as (??) "(L & R & KK)".
@@ -689,7 +756,7 @@ Section with_cpp.
     match eo with
     | evaluation_order.nd => nd_seq e1 e2
     | evaluation_order.l_nd => Mseq e1 e2
-    | evaluation_order.rl => Mmap (fun '(a,b) => (b,a)) $ Mseq e2 e1
+    | evaluation_order.rl => (fun '(a,b) => (b,a)) <$> Mseq e2 e1
     end.
 
   (** [evals eo es] evaluates [es] according to the evaluation scheme [eo] *)
@@ -698,14 +765,14 @@ Section with_cpp.
     | evaluation_order.nd => nd_seqs es
     | evaluation_order.l_nd =>
         match es with
-        | e :: es => Mbind e (fun v => Mmap (fun vs => v :: vs) (nd_seqs es))
-        | [] => Mret []
+        | e :: es => letM* v := e in (fun vs => v :: vs) <$> (nd_seqs es)
+        | [] => mret []
         end
-    | evaluation_order.rl => Mmap (@rev _) (seqs (rev es))
+    | evaluation_order.rl => (@rev _) <$> (seqs (rev es))
     end.
 
   Lemma eval_frame_strong {T} oe : forall (ls : list (M T)) Q Q',
-      ([∗list] m ∈ ls, Mframe m m)%I
+      ([∗list] m ∈ ls, FrameI m m)%I
       |-- (Forall x y pf, [| length x = length ls |] -* Q x y pf -* Q' x y pf) -*
           eval oe ls Q -* eval oe ls Q'.
   Proof. (*
@@ -731,6 +798,142 @@ Section with_cpp.
         rewrite length_rev. eauto. rewrite -(length_rev ls). eauto. }
   Qed. *) Admitted.
 
+  (** TODO: integrate this *)
+  #[global]
+  Instance equiv_subseteq_subrelation {T} : @subrelation (M T) (≡) (⊆).
+  Proof.
+    red. intros. repeat intro.
+    do 2 red in H. rewrite H. iApply _ok. 2: reflexivity.
+    iIntros (???). iApply H0.
+  Qed.
+
+  #[global]
+  Instance equiv_subseteq_proper {T} : Proper ((⊆) --> (⊆) ==> Basics.impl) (⊆@{M T}).
+  Proof. repeat intro. red in H. Admitted.
+  #[global]
+  Instance equiv_subseteq_proper_equiv {T} : Proper ((≡) ==> (≡) ==> Basics.impl) (⊆@{M T}).
+  Proof. repeat intro. red in H. Admitted.
+
+  #[global]
+  Instance equiv_RR {T} : RewriteRelation (≡@{M T}) := {}.
+  #[global]
+  Instance subseteq_RR {T} : RewriteRelation (⊆@{M T}) := {}.
+
+  #[global] Instance WP_proper {T}
+    : Proper ((≡) ==> eq ==> flip (⊢)) (WP (T:=T)).
+  Proof.
+    repeat intro; simpl; subst. rewrite /WP. red in H. red in H.
+    rewrite H. reflexivity.
+    simpl; intros. reflexivity.
+  Qed.
+
+  #[global]
+  Instance Mbind_proper {T U}
+    : Proper (pointwise_relation _ (⊆@{M U}) ==> (⊆@{M T}) ==> (⊆)) mbind.
+  Proof.
+    repeat intro.
+    rewrite /M_bind/=. apply H0. intros. apply H. intros. apply H1.
+  Qed.
+  #[global]
+  Instance Mbind_subseteq_proper {T U}
+    : Proper (pointwise_relation _ (flip (⊆@{M U})) ==> flip (⊆@{M T}) ==> flip (⊆)) mbind.
+  Proof.
+    repeat intro.
+    rewrite /M_bind/=. apply H0. intros. apply H. intros. apply H1.
+  Qed.
+
+
+  #[global] Instance WP_subseteq_proper {T}
+    : Proper ((⊆) ==> eq ==> (⊢)) (WP (T:=T)).
+  Proof.
+    repeat intro. subst. rewrite /WP. apply H. eauto.
+  Qed.
+  #[global] Instance WP_subseteq_proper' {T}
+    : Proper (flip (⊆) ==> eq ==> flip (⊢)) (WP (T:=T)).
+  Proof.
+    repeat intro. subst. rewrite /WP. apply H. eauto.
+  Qed.
+
+  Definition by_WP {T} (m1 m2 : M T) :
+    (forall k, WP m1 k |-- WP m2 k) ->
+    m1 ⊆ m2.
+  Proof.
+    rewrite /WP. repeat intro.
+    rewrite H. iApply _ok. iIntros (???). iApply H0.
+  Qed.
+
+  #[global] Typeclasses Opaque WP M_bind M_ret M_map.
+
+  #[local] Opaque FreeTemps.canon.
+  Instance: forall {T} k K P, FromWand (WP (mbind k (Mproduce P)) K) P (WP (T:=T) (k ()) K).
+  Proof.
+    intros. red.
+    rewrite /M_bind/WP/=.
+    f_equiv.
+    iApply _ok. iIntros (???).
+    iApply K_entails.
+    by rewrite FreeTemps.canon_equiv right_id.
+  Qed.
+
+  Instance: forall {T} K k P, IntoWand false false (WP (mbind k (Mproduce P)) K) P (WP (T:=T) (k ()) K).
+  Proof.
+    intros. red.
+    rewrite /M_bind/WP/=.
+    f_equiv.
+    iApply _ok. iIntros (???).
+    iApply K_entails.
+    by rewrite FreeTemps.canon_equiv right_id.
+  Qed.
+
+  Lemma WP_Mbind_Mfupd {T} E1 E2 k K :
+    WP (mbind k (Mfupd E1 E2)) K -|- |={E1,E2}=> WP (T:=T) (k ()) K.
+  Proof.
+    rewrite /WP/Mfupd/=. f_equiv.
+    iSplit;
+      by iApply _ok; iIntros (???); iApply K_entails; rewrite FreeTemps.canon_equiv right_id.
+  Qed.
+  Lemma WP_mret {T} (v : T) K :
+    WP (mret v) K -|- K v FreeTemps.id _.
+  Proof. rewrite /WP/M_ret/=. done. Qed.
+  Lemma WP_Mbind_mret {T U} (v : T) (k : T -> M U) K :
+    WP (mbind k (mret v)) K -|- WP (k v) K.
+  Proof.
+    rewrite /WP/M_bind/M_ret/=.
+    iSplit;
+      by iApply _ok; iIntros (???); iApply K_entails; rewrite FreeTemps.canon_equiv right_id.
+  Qed.
+  Lemma WP_Mbind_Mproduce {T} P k K :
+    WP (mbind k (Mproduce P)) K -|- P -* WP (T:=T) (k ()) K.
+  Proof.
+    rewrite /WP/Mproduce/=. f_equiv.
+    iSplit;
+      by iApply _ok; iIntros (???); iApply K_entails; rewrite FreeTemps.canon_equiv right_id.
+  Qed.
+
+  (*
+  Instance Mbind_params : Params (@bind) 4 := {}.
+  Instance bi_entails_params : Params (@bi_entails) 1 := {}.
+  *)
+
+  Definition Kfree {T} (free : FreeTemps.t) (K : T -> forall free, FreeTemps.IsCanonical free -> mpred) : T -> forall free, FreeTemps.IsCanonical free -> mpred :=
+    fun x f _ => K x (FreeTemps.canon (f >*> free)) _.
+  Lemma WP_Mbind_frame {T U} (m : M T) (k1 k2 : T -> M U) K1 K2 :
+    (Forall x free, WP (k1 x) (Kfree free K1) -* WP (k2 x) (Kfree free K2))
+      |-- WP (mbind k1 m) K1 -* WP (mbind k2 m) K2.
+  Proof.
+    rewrite /WP/M_bind/=.
+    iIntros "k"; iApply _ok; iIntros (???). iApply "k".
+  Qed.
+  Hint Opaque Kfree : typeclass_instances.
+  Lemma WP_Mbind_Mbind {T U V} m1 (m2 : T -> M U) (m3 : U -> M V) K :
+    WP (mbind m3 (mbind m2 m1)) K -|- WP (mbind (fun x => mbind m3 (m2 x)) m1) K.
+  Proof.
+    rewrite /M_bind/WP/=.
+    iSplit;
+      iApply _ok; iIntros (???); iApply _ok; iIntros (???); iApply _ok; iIntros (???);
+      iApply K_entails; by rewrite !FreeTemps.canon_equiv assoc.
+  Qed.
+
   Fixpoint tuple (ts : list Type) : Type :=
     match ts return Type with
     | nil => unit
@@ -741,4 +944,4 @@ Section with_cpp.
   Parameter heval : forall (eo : evaluation_order.t) {ts} (x : tuple (M <$> ts)), M (tuple ts).
 End with_cpp.
 
-Notation "'letWP*' v := e 'in' k" := (Mbind e (fun v => k)) (at level 0, v binder, k at level 200).
+Notation "'letWP*' v := e 'in' k" := (mbind (fun v => k) e) (at level 0, v binder, k at level 200, only parsing).

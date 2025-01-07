@@ -86,8 +86,8 @@ Module Type Expr.
     (* integer literals are prvalues *)
     Axiom wp_operand_int : forall n ty,
       (* TODO: promote this to a type-check-time test *)
-                 (letWP* _ := Massume (has_type_prop (Vint n) ty) in
-                  Mret (Vint n))
+        (letWP* _ := Massume (has_type_prop (Vint n) ty) in
+        mret (Vint n))
       ⊆ wp_operand (Eint n ty).
 
     (* NOTE: character literals represented in the AST as 32-bit unsigned integers
@@ -95,12 +95,12 @@ Module Type Expr.
              value here will be well-typed according to the character type.
      *)
     Axiom wp_operand_char : forall c cty,
-         Mret (Vchar c)
+         mret (Vchar c)
       ⊆ wp_operand (Echar c (Tchar_ cty)).
 
     (* boolean literals are prvalues *)
     Axiom wp_operand_bool : forall (b : bool),
-          Mret (Vbool b)
+          mret (Vbool b)
       ⊆ wp_operand (Ebool b).
 
     (* floating-point literals are prvalues *)
@@ -147,7 +147,7 @@ Module Type Expr.
            letWP* q := Mnd Qp in
            letWP* '() := Mproduce (p |-> string_bytesR ct (cQp.c q) chars) in
            letWP* '() := Mproduce (□ (Forall q', (p |-> string_bytesR ct (cQp.c q') chars ={⊤}=∗ emp))) in
-           Mret p)
+           mret p)
       ⊆ wp_lval (Estring chars (Tchar_ ct)).
 
     (** The value for the corresponding character literal.
@@ -200,7 +200,7 @@ Module Type Expr.
     (* `this` is a prvalue *)
     Axiom wp_operand_this : forall ty,
           (letWP* '() := Mconsume (valid_ptr (_this ρ)) in
-           Mret (Vptr $ _this ρ))
+           mret (Vptr $ _this ρ))
       ⊆ wp_operand (Ethis ty).
 
     #[program]
@@ -252,7 +252,7 @@ Module Type Expr.
       | Trv_ref ty =>
           Mread_prim p (Tref $ erase_qualifiers ty) Vref
       | _ =>
-          letWP* '() := Mvalid_ref t p in Mret p
+          letWP* '() := Mvalid_ref t p in mret p
       end.
 
     (* variables and global object references are lvalues *)
@@ -269,7 +269,7 @@ Module Type Expr.
        NOTE: the typing side conditions guarantees that this is ok
      *)
     Axiom wp_operand_global_member : forall ty cls nm,
-          Mret (Vmember_ptr cls $ Some nm)
+          mret (Vmember_ptr cls $ Some nm)
       ⊆ wp_operand (Eglobal_member (Nscoped cls nm) ty).
 
 
@@ -281,7 +281,7 @@ Module Type Expr.
              match base with
              | Vptr p =>
                  letWP* '() := Mconsume (reference_to (erase_qualifiers t) p) in
-                 Mret p
+                 mret p
              | _ => Mub
              end
          | _ => Mub
@@ -333,7 +333,7 @@ Module Type Expr.
         arrow_aggregate_type arrow (decltype_of_expr a) = Some (vc, cv, nm) ->
           (letWP* base := read_arrow arrow a in
            letWP* p := read_decl (base ,, _field (Field nm m)) ty in
-           Mret p)
+           mret p)
       ⊆ wp_lval (Emember arrow a m mut ty).
 
     (* [Emember a m mut ty] is an xvalue if
@@ -345,7 +345,7 @@ Module Type Expr.
           | Prvalue =>
             letWP* base := wp_xval a in
             letWP* p := read_decl (base ,, _field (Field nm m)) ty in
-            Mret p
+            mret p
           | _ => Mub
           end
       ⊆ wp_xval (Emember false a m mut ty).
@@ -360,7 +360,7 @@ Module Type Expr.
      *)
 
     Definition wp_ignore_obj (arrow : bool) (e : Expr) : M unit :=
-      letWP* _ := read_arrow arrow e in Mret ().
+      letWP* _ := read_arrow arrow e in mret ().
 
     Axiom wp_operand_member_ignore : forall arrow obj e,
             (letWP* '() := wp_ignore_obj arrow obj in
@@ -409,7 +409,7 @@ Module Type Expr.
     Definition Mas {T U} (inj : T -> U) (v : U) : M T :=
       letWP* p := Mangelic _ in
       letWP* '() := Mrequire (v = inj p) in
-      Mret p.
+      mret p.
 
     Definition wp_ptr (vc : ValCat) (e : Expr) : M ptr :=
       match vc with
@@ -462,12 +462,12 @@ Module Type Expr.
          letWP* '(base, idx) := nd_seq (wp_ptr vc e) (wp_int i) in
          let p : ptr := base .[ erase_qualifiers t ! idx ] in
          letWP* '() := Mvalid_ref t p in
-         Mret p
+         mret p
        else
          letWP* '(idx, base) := nd_seq (wp_int e) (wp_ptr vc i) in
          let p : ptr := base .[ erase_qualifiers t ! idx ] in
          letWP* '() := Mvalid_ref t p in
-         Mret p)
+         mret p)
       ⊆ wp_lval (Esubscript e i t).
 
     (* [Esubscript e i _] when one operand is an array xvalue
@@ -478,12 +478,12 @@ Module Type Expr.
            letWP* '(base, idx) := nd_seq (wp_xval e) (wp_int i) in
            let p : ptr := base .[ erase_qualifiers t ! idx ] in
            letWP* '() := Mvalid_ref t p in
-           Mret p
+           mret p
          else
            letWP* '(idx, base) := nd_seq (wp_int e) (wp_xval i) in
            let p := base .[ erase_qualifiers t ! idx ] in
            letWP* '() := Mvalid_ref t p in
-           Mret p)
+           mret p)
       ⊆ wp_xval (Esubscript e i t).
 
     (** * Unary Operators
@@ -512,7 +512,7 @@ Module Type Expr.
         (letWP* v := wp_operand e in
          letWP* p := Mas Vptr v in
          letWP* '() := Mvalid_ref ty p in
-         Mret p)
+         mret p)
         ⊆ wp_lval (Ederef e ty).
 
     (** the `&` operator
@@ -526,7 +526,7 @@ Module Type Expr.
     Definition Munop (ty ty' : type) (o : UnOp) (v : val) : M val :=
       letWP* v' := Mangelic _ in
       letWP* '() := Mrequire (eval_unop tu o ty ty' v v') in
-      Mret v'.
+      mret v'.
 
     (** "pure" unary operators on primitives, e.g. `-`, `!`, etc.
 
@@ -566,7 +566,7 @@ Module Type Expr.
              Many)
             (letWP* '() := Mconsume (a |-> primR ety (cQp.mut 1) v) in
              letWP* '() := Mproduce (a |-> primR ety (cQp.mut 1) v') in
-             Mret a).
+             mret a).
 
     (** `++e`
         https://eel.is/c++draft/expr.pre.incr#1
@@ -639,7 +639,7 @@ Module Type Expr.
         (letWP* '(la, rv) :=
            eval2 (evaluation_order.order_of OOEqual) (wp_lval l) (wp_operand r) in
          letWP* '() := Mupdate la ty rv in
-         Mret la)
+         mret la)
         ⊆ wp_lval (Eassign l r ty).
 
     (* TODO: to fix *)
@@ -693,7 +693,7 @@ Module Type Expr.
            always an rvalue *)
            if c
            then Mmap Vbool $ wp_test e2
-           else Mret (Vbool c))
+           else mret (Vbool c))
         ⊆ wp_operand (Eseqand e1 e2).
 
     Axiom wp_operand_seqor : forall e1 e2,
@@ -702,7 +702,7 @@ Module Type Expr.
            otherwise there will be an implicit cast to bool, to it is
            always an rvalue *)
            if c
-           then Mret (Vbool c)
+           then mret (Vbool c)
            else Mmap Vbool $ wp_test e2)
         ⊆ wp_operand (Eseqor e1 e2).
 
@@ -798,9 +798,9 @@ Module Type Expr.
         | Some cst =>
             letWP* free := wp_init from p e in
             match cst with
-            | AddConst ty => letWP* '() := Mconst ty p in Mret free
-            | RemoveConst ty => letWP* '() := Mmutable ty p in Mret free
-            | Nothing => Mret free
+            | AddConst ty => letWP* '() := Mconst ty p in mret free
+            | RemoveConst ty => letWP* '() := Mmutable ty p in mret free
+            | Nothing => mret free
             end
         | None => Merror (unsupported_init_noop_cast e from ty)
         end)
@@ -808,19 +808,19 @@ Module Type Expr.
     Axiom wp_operand_cast_noop : forall ty e,
           (letWP* v := wp_operand e in
            letWP* '() := Mconsume (has_type v ty) in
-           Mret v)
+           mret v)
         ⊆ wp_operand (Ecast (Cnoop ty) e).
 
     Axiom wp_lval_cast_noop : forall ty e,
           (letWP* p := wp_glval e in
            letWP* '() := Mvalid_ref ty p in
-           Mret p)
+           mret p)
       ⊆ wp_lval (Ecast (Cnoop $ Tref ty) e).
 
     Axiom wp_xval_cast_noop : forall ty e,
           (letWP* p := wp_glval e in
            letWP* '() := Mvalid_ref ty p in
-           Mret p)
+           mret p)
       ⊆ wp_xval (Ecast (Cnoop $ Trv_ref ty) e).
 
     Definition int2bool_not_num (v : val) : Set.
@@ -829,7 +829,7 @@ Module Type Expr.
     Axiom wp_operand_cast_int2bool : forall e,
          (letWP* v := wp_operand e in
           match v with
-          | Vint n => Mret (Vbool (bool_decide (n <> 0)))
+          | Vint n => mret (Vbool (bool_decide (n <> 0)))
           | _ => Merror (int2bool_not_num v)
           end)
       ⊆ wp_operand (Ecast Cint2bool e).
@@ -840,7 +840,7 @@ Module Type Expr.
     Axiom wp_operand_cast_ptr2bool : forall e,
          (letWP* v := wp_operand e in
           match v with
-          | Vptr p => Mret (Vbool (bool_decide (p <> nullptr)))
+          | Vptr p => mret (Vbool (bool_decide (p <> nullptr)))
           | _ => Merror (ptr2bool_not_ptr v)
           end)
       ⊆ wp_operand (Ecast Cptr2bool e).
@@ -875,13 +875,13 @@ Module Type Expr.
     Axiom wp_operand_cast_bitcast : forall e ty,
            (letWP* v := wp_operand e in
             letWP* '() := Mrequire_type ty v in
-            Mret v)
+            mret v)
         ⊆ wp_operand (Ecast (Cbitcast ty) e).
 
     Definition Mconv_int (ty_in ty_result : type) (v : val) : M val :=
       letWP* v' := Mangelic _ in
       letWP* '() := Mrequire (conv_int tu ty_in ty_result v v') in
-      Mret v'.
+      mret v'.
 
     (** [Cintegral] casts represent casts between integral types, e.g.
         - <<int>> -> <<short>>
@@ -923,7 +923,7 @@ Module Type Expr.
     Axiom wp_operand_cast_null2memberptr : forall cls e ty,
         type_of e = Tnullptr ->
             (letWP* _ := wp_discard e in
-             Mret (Vmember_ptr cls None))
+             mret (Vmember_ptr cls None))
         ⊆ wp_operand (Ecast (Cnull2memberptr $ Tmember_pointer (Tnamed cls) ty) e).
 
     (* Determine if a 0-constant of this type can be used as a pseudonym
@@ -947,7 +947,7 @@ Module Type Expr.
         is_pointer ty ->
             (letWP* v := wp_operand e in
              letWP* '() := Mas (fun _ => Vint 0) v in
-             Mret (Vptr nullptr))
+             mret (Vptr nullptr))
         ⊆ wp_operand (Ecast (Cnull2ptr ty) e).
 
     (* note(gmm): in the clang AST, the subexpression is the call.
@@ -1113,7 +1113,7 @@ Module Type Expr.
             letWP* p := wp_glval e in
             let p' : ptr := p ,, off in
             letWP* '() := Mvalid_ref ty p' in
-            Mret p'
+            mret p'
           | _ => Merror "ill-typed"
           end
       | _, _ => Merror "ill-typed"
@@ -1128,7 +1128,7 @@ Module Type Expr.
               letWP* p := wp_glval e in
               let p' : ptr := p ,, off in
               letWP* '() := Mvalid_ref ty p' in
-              Mret p'
+              mret p'
           | _ => Merror "ill-typed"
           end
       | _, _ => Merror "ill-typed"
@@ -1143,7 +1143,7 @@ Module Type Expr.
             letWP* p := Mbind (wp_operand e) (Mas Vptr) in
             let p' := p ,, off in
             letWP* '() := Mrequire_type (Tptr ty) (Vptr p') in
-            Mret (Vptr p')
+            mret (Vptr p')
           | _ => Merror "ill-typed"
           end
       | _, _ => Merror "ill-typed"
@@ -1160,7 +1160,7 @@ Module Type Expr.
             letWP* p := wp_glval e in
             let p' := p ,, off in
             letWP* '() := Mvalid_ref ty p' in
-            Mret p'
+            mret p'
           | _ => Merror "ill-typed"
           end
       | _, _ => Merror "ill-typed"
@@ -1175,7 +1175,7 @@ Module Type Expr.
               letWP* p := wp_glval e in
               let p' := p ,, off in
               letWP* '() := Mvalid_ref ty p' in
-              Mret p'
+              mret p'
           | _ => Merror "ill-typed"
           end
       | _, _ => Merror "ill-typed"
@@ -1190,7 +1190,7 @@ Module Type Expr.
                  letWP* p := Mbind (wp_operand e) (Mas Vptr) in
                  let p' := p ,, off in
                  letWP* '() := Mrequire_type (Tptr ty) (Vptr p') in
-                   Mret (Vptr p')
+                   mret (Vptr p')
              | _ => Merror "ill-typed"
              end
          | _, _ => Merror "ill-typed"
@@ -1247,12 +1247,12 @@ Module Type Expr.
      *)
     Definition Msizeof (ty : type) : M N :=
       match size_of (drop_reference ty) with
-      | Some sz => Mret sz
+      | Some sz => mret sz
       | None => Merror "ill-typed"
       end.
     Definition Malignof (ty : type) : M N :=
       match align_of (drop_reference ty) with
-      | Some sz => Mret sz
+      | Some sz => mret sz
       | None => Merror "ill-typed"
       end.
     Axiom wp_operand_sizeof : forall ety ty,
