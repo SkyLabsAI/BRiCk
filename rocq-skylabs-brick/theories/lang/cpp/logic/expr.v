@@ -406,11 +406,6 @@ Module Type Expr.
       | _ , _ => None
       end.
 
-    Definition Mas {T U} (inj : T -> U) (v : U) : M T :=
-      letWP* p := Mangelic _ in
-      letWP* '() := Mrequire (v = inj p) in
-      mret p.
-
     Definition wp_ptr (vc : ValCat) (e : Expr) : M ptr :=
       match vc with
       | Prvalue =>
@@ -1086,8 +1081,8 @@ Module Type Expr.
     Axiom wp_operand_int2ptr : forall e ty,
         match unptr ty with
         | Some ptype =>
-          letWP* v := wp_operand e in
-          Mmap Vptr (Mbind (Mas Vn v) (Mint2ptr ptype))
+          letWP* n := wp_operand e ≫= Mas Vn in
+          Vptr <$> Mint2ptr ptype n
         | _ => Merror "ill-typed term"
         end
         ⊆ wp_operand (Ecast (Cint2ptr ty) e).

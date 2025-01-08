@@ -91,21 +91,34 @@ Module Type Stmt.
       {| _wp K := default_initialize ty p (fun free => interp free $ K (Normal $ FreeTemps.delete ty p) FreeTemps.id _) |}.
     Next Obligation. Admitted. (* TODO *)
 
-    Definition wp_decl_var (ρ : region) (x : ident) (ty : type) (init : option Expr)
-      : Mlocal region :=
-      letWP* p := M2local $ Mnd ptr in
-      letWP* free :=
-          match init with
-          | Some init =>
-              (* In C++ (and in C) the scope of the name begins immediately after
+    #[program]
+    Definition Mopt_initialize (ρ : region) (ty : decltype) (n : localname) (init : option Expr) : Mlocal (region * FreeTemps.t) :=
+      letM* p := Mnd _ in
+      pair (Rbind n p ρ) <$>
+      match init with
+      | Some init =>
+          (* In C++ (and in C) the scope of the name begins immediately after
                the name is declared, before it is initialized.
                See <https://eel.is/c++draft/basic.scope.pdecl#1>
-               *)
-              wp_initialize (Rbind x p ρ) ty p init
-          | None => Mdefault_initialize ty p
-          end
-      in
-      mret (Rbind x p ρ).
+           *)
+          wp_initialize (Rbind n p ρ) ty p init
+      | None => Mdefault_initialize ty p
+      end.
+
+    #[program]
+    Definition Mopt_initialize_anon (ρ : region) (ty : decltype) (init : option Expr) : Mlocal (ptr * FreeTemps.t) :=
+      letM* p := Mnd _ in
+      pair p <$> match init with
+                 | Some init => wp_initialize ρ ty p init
+                 | None => Mdefault_initialize ty p
+                 end.
+
+    Definition wp_decl_var (ρ : region) (x : ident) (ty : type) (init : option Expr)
+      : Mlocal region :=
+      letM* p := M2local $ Mnd ptr in
+      letM* '(ρ, free) := Mfree_all tu $ Mopt_initialize ρ ty x init in
+      letM* _ := Mpush_free free in
+      mret ρ.
 
     (*
     Lemma wp_decl_var_frame : forall x ρ init ty (k k' : region -> FreeTemps -> epred),
@@ -131,7 +144,7 @@ Module Type Stmt.
       | Bvar x ty init :: ds =>
           letWP* p := M2local $ Mnd ptr in
           letWP* free := wp_initialize ρ_init ty p init in
-          letWP* '() := M2local $ Mpush_free free in
+          letWP* '() := Mpush_free free in
           wp_destructure ρ_init ds (Rbind x p ρ)
       | Bbind x _ init :: ds =>
           letWP* p := wp_glval tu ρ_init init in
@@ -201,7 +214,7 @@ Module Type Stmt.
          *)
         letWP* free := Mfree_all tu $ wp_initialize ρ common_type common_p init in
         (* NOTE: [free] is the de-allocation of the initialized value *)
-        letWP* '() := M2local $ Mpush_free free in
+        letWP* '() := Mpush_free free in
            (* NOTE: [free] is used to deallocate temporaries generated in the execution of [init].
               It should not matter if it is destroyed immediately or after the destructuring occurs.
             *)
@@ -535,36 +548,89 @@ Module Type Stmt.
       wp ρ (Sif decl test body Sbreak).
 
     Require Import iris.bi.lib.fixpoint.
-    Print Module fixpoint.
-    About fixpoint.
+
+    Definition M_raw T : ofe :=
+      (ReturnType T -> forall free, FreeTemps.IsCanonical free -> mpred) -d> mpred.
 
     #[program]
-    Definition while_loop (body continue : Mlocal ()) : Mlocal () :=
-      {| _wp K :=
-          body.(_wp) (fun v free _ =>
-                        interp free $
-                          match v with
-                          | Continue | Normal _ => |> continue.(_wp) K
-                          | Break => K (Normal ()) FreeTemps.id _
-                          | rt => K rt FreeTemps.id _
-                          end) |}.
+    Definition Mhandle_loop {U} (m : Mlocal ())
+      (normal_continue : Mlocal U)
+      (break : Mlocal U) : Mlocal U :=
+      {| _wp := funI K =>
+          letI* rt , free , _ := m.(_wp) in
+          let with_free m :=
+            letM* '() := Mpush_free free in
+            m
+          in
+          match rt with
+          | Normal _ | Continue => (with_free normal_continue).(_wp) K
+          | Break => (with_free break).(_wp) K
+          | ReturnVoid => K ReturnVoid free _
+          | ReturnVal p => K (ReturnVal p) free _
+          end |}.
     Next Obligation.
       simpl; intros.
-      iIntros "K"; iApply _ok; iIntros (???).
-      iApply interp_frame.
-      case_match; eauto.
-      all: iIntros "X"; iNext; iRevert "X"; iApply _ok; eauto.
+      iIntros "X".
+      iApply _ok; iIntros (???).
+      case_match; try (iApply _ok; iIntros (???)); iApply "X".
     Qed.
 
-    Definition Mwhile (body : Mlocal ()) : Mlocal ().
+    #[program]
+    Definition Mcontinue {T} : Mlocal T :=
+      {| _wp K := K Continue FreeTemps.id _ |}.
+    Next Obligation. simpl; intros. iIntros "K"; iApply "K". Qed.
+    #[program]
+    Definition Mbreak {T} : Mlocal T :=
+      {| _wp K := K Continue FreeTemps.id _ |}.
+    Next Obligation. simpl; intros. iIntros "K"; iApply "K". Qed.
+
+
+    Definition while_loop (ρ : region)
+      (decl : option VarDecl)
+      (test : Expr)
+      (body : Stmt)
+      : Mlocal () :=
+      Mhandle_loop (letM* ρ :=
+                      match decl with
+                      | None => mret ρ
+                      | Some decl => wp_decl ρ decl
+                      end
+                    in
+                    letM* (c : bool) := Mfree_all tu $ wp_test tu ρ test in
+                    if c
+                    then wp ρ body
+                    else Mbreak)
+           Mcontinue
+           Mbreak.
+
+    #[program]
+    Definition Mloop (body : Mlocal ()) : Mlocal () :=
+      {| _wp :=
+          @fixpoint _ _ _ (funI (continue : M_raw ()) K =>
+                      letI* rt , _ , _ := WP (@Mfree_all _ _ Σ σ tu _ body) in
+                      match rt with
+                      | Normal _ | Continue => |> continue K
+                      | Break => K (Normal ()) FreeTemps.id _
+                      | exc => K exc FreeTemps.id _
+                      end) _ |}.
+    Next Obligation. simpl; intros; refine _. Qed.
+    Next Obligation. simpl; intros; refine _. Qed.
+    Next Obligation. simpl; intros; refine _. Qed.
+    Next Obligation. Admitted.
+    Next Obligation. Admitted.
+
     (*
-      refine
-        {| _wp K := fixpoint (while_loop body) |}.
-     *)
+    #[program]
+    Definition Mloop (f : M_raw () -> M_raw ()) {_ : Contractive f} : Mlocal () :=
+      {| _wp := fixpoint f |}.
+    Next Obligation.
+      simpl; intros.
+      iIntros "K X".
     Admitted.
+    *)
 
     Axiom wp_while_unroll : forall ρ decl test body,
-           Mwhile (while_unroll ρ decl test body)
+           Mloop (while_loop ρ decl test body)
         ⊆ wp ρ (Swhile decl test body).
 
     (*
@@ -597,32 +663,28 @@ Module Type Stmt.
 *)
 
     (** * <<for>> *)
-    Definition Kpost_inner I Q (rt : ReturnType) :=
-      match rt with
-      | Normal | Continue => I
-      | _ => Q rt
-      end.
-    #[global] Arguments Kpost_inner _ _ !rt /.
-
-    Definition Kpost I Q :=
-      KP $ Kpost_inner I Q.
-
-    Definition for_unroll ρ test incr body (Q : Kpred) :=
-      let Kinc :=
-        Kpost (match incr with
-               | None => Q Normal
-               | Some incr => WP (wp_discard tu ρ incr) (Knormal Q)
-               end) Q
+    Definition for_loop (ρ : region) (test : option Expr)
+      (incr : option Expr)
+      (body : Stmt)
+      : Mlocal () :=
+      letM* c := Mfree_all tu $
+        match test with
+        | None => mret true
+        | Some test => wp_test tu ρ test
+        end
       in
-      match test with
-      | None => wp ρ body
-      | Some test => wp ρ (Sif None test body Sbreak)
-      end Kinc.
+      Mhandle_loop (Mfree_all tu $ wp ρ body)
+        (match incr with
+         | None => mret ()
+         | Some incr => wp_discard tu ρ incr
+         end)
+        Mbreak.
 
-    Axiom wp_for_unroll : forall ρ test incr body Q,
-            for_unroll ρ test incr body (Kloop (|> wp ρ (Sfor None test incr body) Q) Q)
-        |-- wp ρ (Sfor None test incr body) Q.
+    Axiom wp_for_unroll : forall ρ test incr body,
+           Mloop (for_loop ρ test incr body)
+        ⊆ wp ρ (Sfor None test incr body).
 
+    (*
     Theorem wp_for_inv I : forall ρ test incr body Q,
         I |-- for_unroll ρ test incr body (Kloop (|> I) Q) ->
         I |-- wp ρ (Sfor None test incr body) Q.
@@ -656,23 +718,32 @@ Module Type Stmt.
       all: try (iApply wp_discard_frame; first reflexivity;
                 iIntros (?); iApply interp_frame).
     Qed.
+    *)
 
     (**
        `for (init; test; incr) body` desugars to `{ init; for (; test; incr) body }`
      *)
-    Axiom wp_for_init : forall ρ init test incr b Q,
-            wp ρ (Sseq (init :: Sfor None test incr b :: nil)) Q
-        |-- wp ρ (Sfor (Some init) test incr b) Q.
+    Axiom wp_for_init : forall ρ init test incr b,
+           wp ρ (Sseq (init :: Sfor None test incr b :: nil))
+        ⊆ wp ρ (Sfor (Some init) test incr b).
 
     (** * <<do>> *)
 
+    Definition do_loop (ρ : region) (s : Stmt) (e : Expr) : Mlocal () :=
+      Mhandle_loop (Mfree_all tu $ wp ρ s)
+                   (letM* (c : bool) := wp_test tu ρ e in
+                    if c then Mcontinue else Mbreak)
+                   Mbreak.
+
+    (*
     Definition do_unroll ρ body test (Q : Kpred) :=
       wp ρ body (Kpost (WP (wp_test tu ρ test) (fun c free _ => interp free $ if c then Q Continue else Q Break)) Q).
+     *)
 
-    Axiom wp_do_unroll : forall ρ body test Q,
-            do_unroll ρ body test (Kloop (|> wp ρ (Sdo body test) Q) Q)
-        |-- wp ρ (Sdo body test) Q.
+    Axiom wp_do_unroll : forall ρ body test,
+            Mloop (do_loop ρ body test) ⊆ wp ρ (Sdo body test).
 
+    (*
     Theorem wp_do_inv I : forall ρ body test Q,
         I |-- do_unroll ρ body test (Kloop (|> I) Q) ->
         I |-- wp ρ (Sdo body test) Q.
@@ -705,23 +776,34 @@ Module Type Stmt.
       (* all: iApply wp_test_frame; iIntros (??).
       all: iApply interp_frame; case_match; eauto.
     Qed. *) Admitted.
+    *)
 
     (** * <<return>> *)
+
+    #[program]
+    Definition Mreturn_void {T} : Mlocal T :=
+      {| _wp K := K ReturnVoid FreeTemps.id _ |}.
+    Next Obligation. simpl; intros; iIntros "K"; iApply "K". Qed.
+    #[program]
+    Definition Mreturn_val {T} (p : ptr) : Mlocal T :=
+      {| _wp K := K (ReturnVal p) FreeTemps.id _ |}.
+    Next Obligation. simpl; intros; iIntros "K"; iApply "K". Qed.
 
     (* the semantics of return is like an initialization
      * expression.
      *)
-    Axiom wp_return_void : forall ρ Q,
-        get_return_type ρ = Tvoid ->
-        |> Q ReturnVoid |-- wp ρ (Sreturn None) Q.
+    Axiom wp_return_void : forall ρ,
+        Mreturn_void ⊆ wp ρ (Sreturn None).
 
-    Axiom wp_return : forall ρ e (Q : Kpred),
+    Axiom wp_return : forall ρ e,
           (let rty := get_return_type ρ in
-           Forall p,
-             WP (wp_initialize ρ rty p e)
-               (fun _ frees _ => interp frees (Q (ReturnVal p))))
-       |-- wp ρ (Sreturn (Some e)) Q.
+           letM* '(p, free) := Mfree_all tu $ Mopt_initialize_anon ρ rty $ Some e in
+           (* TODO: I need to free everything except the top because there is no scope extrusion
+                    in return values *)
+           Mreturn_val p)
+      ⊆ wp ρ (Sreturn (Some e)).
 
+    (*
     Axiom wp_return_frame : forall ρ rv (Q Q' : Kpred),
         match rv with
         | None => Q ReturnVoid -* Q' ReturnVoid
@@ -729,19 +811,24 @@ Module Type Stmt.
           (* NOTE unsound in the presence of exceptions *)
           Forall v, Q (ReturnVal v) -* Q' (ReturnVal v)
         end |-- wp ρ (Sreturn rv) Q -* wp ρ (Sreturn rv) Q'.
+    *)
 
     (** * <<break>> *)
 
-    Axiom wp_break : forall ρ Q,
-        |> Q Break |-- wp ρ Sbreak Q.
+    Axiom wp_break : forall ρ,
+        (letM* '() := M2local Mlater in Mbreak) ⊆ wp ρ Sbreak.
+    (*
     Axiom wp_break_frame : forall ρ (Q Q' : Kpred),
         Q Break -* Q' Break |-- wp ρ Sbreak Q -* wp ρ Sbreak Q'.
+     *)
 
     (** * <<continue>> *)
-    Axiom wp_continue : forall ρ Q,
-        |> Q Continue |-- wp ρ Scontinue Q.
+    Axiom wp_continue : forall ρ,
+        (letM* '() := M2local Mlater in Mcontinue) ⊆ wp ρ Scontinue.
+    (*
     Axiom wp_continue_frame : forall ρ (Q Q' : Kpred),
         Q Continue -* Q' Continue |-- wp ρ Scontinue Q -* wp ρ Scontinue Q'.
+     *)
 
     (** * <<switch>> *)
 
@@ -841,6 +928,7 @@ Module Type Stmt.
         end
       end.
 
+    (*
     Definition Kswitch_inner (k : Kpred) (rt : ReturnType) : mpred :=
       match rt with
       | Break => k Normal
@@ -850,35 +938,49 @@ Module Type Stmt.
 
     Definition Kswitch (k : Kpred) : Kpred :=
       KP $ Kswitch_inner k.
+     *)
 
-    Lemma Kswitch_idemp Q :
-      Kswitch (Kswitch Q) -|- Kswitch Q.
-    Proof. by constructor => -[]. Qed.
-
-    Lemma fupd_Kswitch Q :
-      (|={⊤}=> Kswitch Q)
-     -|- Kswitch (|={⊤}=> Q).
-    Proof.
-      by constructor; case => /= *;
-         rewrite !monPred_at_fupd /=.
-    Qed.
-
-    Axiom wp_switch_decl : forall ρ d e ls Q,
-        wp ρ (Sseq (Sdecl (d :: nil) :: Sswitch None e ls :: nil)) Q
-        |-- wp ρ (Sswitch (Some d) e ls) Q.
+    Axiom wp_switch_decl : forall ρ d e ls,
+        wp ρ (Sseq (Sdecl (d :: nil) :: Sswitch None e ls :: nil))
+        ⊆ wp ρ (Sswitch (Some d) e ls).
 
     (* An error to say that a `switch` block with [body] is not supported *)
     Record switch_block (body : list Stmt) : Prop := {}.
 
+    #[program]
+    Definition Mall {T} (ls : list (M T)) : M T :=
+      {| _wp K := [∧list] x ∈ ls , x.(_wp) K |}%I.
+    Next Obligation.
+      simpl; intros; clear.
+      induction ls; simpl.
+      { iIntros "? ?"; eauto. }
+      { iIntros "K X"; iSplit; [ iDestruct "X" as "[X _]" | iDestruct "X" as "[_ X]" ]; iRevert "X".
+        - iApply _ok; iApply "K".
+        - iApply IHls. eauto. }
+    Qed.
+
+    #[program]
+    Definition Mhandle_break {T} (m : Mlocal T) (break : Mlocal T) : Mlocal T :=
+      let k rt :=
+        match rt with
+        | Break => break
+        | _ => mret rt
+        end
+      in
+      mbind (M:=Mglobal) k m.
+
     Axiom wp_switch : forall ρ e b Q,
         match wp_switch_block (Some $ default_from_cases (get_cases b)) b with
-        | None => UNSUPPORTED (switch_block b)
+        | None => Munsupported (switch_block b)
         | Some cases =>
-          WP (Mfree_all tu $ wp_operand tu ρ e) (fun v _ _ =>
-              Exists vv : Z, [| v = Vint vv |] **
-                [∧list] x ∈ cases, [| x.1 vv |] -* wp_block ρ x.2 (Kswitch Q))
+          letM* v := Mfree_all tu $ wp_operand tu ρ e ≫= Mas Vint in
+          let case c :=
+            letM* _ := M2local $ Massume $ c.1 v in
+            Mhandle_break (wp_block ρ c.2) (mret ())
+          in
+          Mall (case <$> cases)
         end
-        |-- wp ρ (Sswitch None e (Sseq b)) Q.
+        ⊆ wp ρ (Sswitch None e (Sseq b)).
 
     (* note: case and default statements are only meaningful inside of [switch].
      * this is handled by [wp_switch_block].
