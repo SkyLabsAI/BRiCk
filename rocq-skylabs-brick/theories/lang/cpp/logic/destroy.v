@@ -1284,8 +1284,9 @@ Section temps.
     Qed.
   End proofmode.
 End temps.
+
 #[program]
-Definition Mfree_all `{Σ : cpp_logic} {σ : genv} (tu : translation_unit) {t} (m : M t) : M t :=
+Definition Mfree_all `{Σ : cpp_logic} {σ : genv} (tu : translation_unit) {t} (m : Mlocal t) : Mlocal t :=
   {| _wp K := m.(_wp) (fun v free _ => interp tu free $ K v FreeTemps.id _) |}.
 Next Obligation.
   simpl; intros. iIntros "K". iApply _ok. iIntros (???).

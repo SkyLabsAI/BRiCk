@@ -331,7 +331,7 @@ Section with_cpp.
     intros; simpl. iIntros "X Y P". iApply "X". iApply "Y". iApply "P".
   Qed.
   #[program]
-    Definition Mconsume (P : mpred) : M unit :=
+  Definition Mconsume (P : mpred) : M unit :=
     {| _wp := fun K => P ** K () FreeTemps.id _ |}.
   Next Obligation.
     intros; simpl. iIntros "X [$ K]". iApply "X". iApply "K".
@@ -377,8 +377,13 @@ Section with_cpp.
   Next Obligation. simpl; intros. rewrite ERROR_False. iIntros "? []". Qed.
 
   #[program]
-  Definition Mpush_free (f : FreeTemps.t) : M () :=
-    {| _wp K := K () (FreeTemps.canon f) _ |}.
+  Definition Munsupported {t : Type} {ERR : Type} (err : ERR) : M t :=
+    {| _wp _ := ERROR err |}.
+  Next Obligation. simpl; intros. rewrite ERROR_False. iIntros "? []". Qed.
+
+  #[program]
+  Definition Mpush_free (f : FreeTemps.t) : Mlocal () :=
+    {| _wp K := K (Normal ()) (FreeTemps.canon f) _ |}.
   Next Obligation. simpl; intros. iIntros "K"; iApply "K". Qed.
 
   #[program]
@@ -418,6 +423,11 @@ Section with_cpp.
     simpl; intros. iIntros "K X".
     iSplit; [ iDestruct "X" as "[X _]" | iDestruct "X" as "[_ X]" ]; iRevert "X"; iApply _ok; iIntros (??); iApply "K".
   Qed.
+
+  Definition Mas {T U} (inj : T -> U) (v : U) : M T :=
+    letM* p := Mangelic _ in
+    letM* '() := Mrequire (v = inj p) in
+    mret p.
 
   (*
   Definition Mread {t} (R : t -> mpred) : M t :=
