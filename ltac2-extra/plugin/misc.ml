@@ -418,7 +418,7 @@ module RelDecl = struct
             let id = Context.map_annot_relevance_het (EConstr.ERelevance.kind sigma) id in
             let ty = to_constr ty in
             let t  = to_constr t  in
-            LocalDef(id, t, ty)
+            LocalDef(id, ty, t)
       in
       let id = Context.Named.Declaration.get_id assum in
       (EConstr.mkVar id :: subst, Environ.push_named assum env)
