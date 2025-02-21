@@ -23,6 +23,8 @@ Require Import skylabs.iris.extra.bi.errors.
 
 #[local] Set Primitive Projections.
 
+Import UPoly.
+
 (** * Regions
     To model the stack frame in separation logic, we use a notion of regions
     that are threaded through the semantics.
@@ -885,16 +887,16 @@ Section with_cpp.
    *)
   Parameter wp_fptr
     : forall (tt : type_table) (fun_type : type) (* TODO: function type *)
-        (addr : ptr) (ls : list ptr) (Q : ptr -> epred), mpred.
+        (addr : ptr) (ls : list ptr), Mglobal ptr.
 
-  (* (bind [n] last for consistency with [NonExpansive]). *)
-  #[global] Declare Instance wp_fptr_ne :
-    `{forall n, Proper (pointwise_relation _ (dist n) ==> dist n) (@wp_fptr t ft addr ls)}.
+  (* (* (bind [n] last for consistency with [NonExpansive]). *) *)
+  (* #[global] Declare Instance wp_fptr_ne : *)
+  (*   `{forall n, Proper (pointwise_relation _ (dist n) ==> dist n) (@wp_fptr t ft addr ls)}. *)
 
-  Axiom wp_fptr_complete_type : forall te ft a ls Q,
-      wp_fptr te ft a ls Q
-      |-- wp_fptr te ft a ls Q **
-          [| exists cc ar tret targs, ft = Tfunction (@FunctionType _ cc ar tret targs) |].
+  (* Axiom wp_fptr_complete_type : forall te ft a ls Q, *)
+  (*     wp_fptr te ft a ls Q *)
+  (*     |-- wp_fptr te ft a ls Q ** *)
+  (*         [| exists cc ar tret targs, ft = Tfunction (@FunctionType _ cc ar tret targs) |]. *)
 
   (* A type is callable against a type table if all of its arguments and return
      type are [complete_type]s.
@@ -908,75 +910,75 @@ Section with_cpp.
     | _ => False
     end.
 
-  (* this axiom states that the type environment for an [wp_fptr] can be
-     narrowed as long as the new type environment [small]/[tt2] is smaller than
-     the old type environment ([big]/[tt1]), and [ft]
-     is still a *complete type* in the new type environment [small]/[tt2].
+  (* (* this axiom states that the type environment for an [wp_fptr] can be *)
+  (*    narrowed as long as the new type environment [small]/[tt2] is smaller than *)
+  (*    the old type environment ([big]/[tt1]), and [ft] *)
+  (*    is still a *complete type* in the new type environment [small]/[tt2]. *)
 
-     NOTE: This is informally justified by the fact that (in the absence
-     of ODR) the implementation of the function is encapsulated and only
-     the public interface (the type) is needed to know how to call the function.
-   *)
-  Axiom wp_fptr_strengthen : forall tt1 tt2 ft a ls Q,
-      callable_type tt2.(types) ft ->
-      sub_module tt2 tt1 ->
-      wp_fptr tt1.(types) ft a ls Q |-- wp_fptr tt2.(types) ft a ls Q.
+  (*    NOTE: This is informally justified by the fact that (in the absence *)
+  (*    of ODR) the implementation of the function is encapsulated and only *)
+  (*    the public interface (the type) is needed to know how to call the function. *)
+  (*  *) *)
+  (* Axiom wp_fptr_strengthen : forall tt1 tt2 ft a ls Q, *)
+  (*     callable_type tt2.(types) ft -> *)
+  (*     sub_module tt2 tt1 -> *)
+  (*     wp_fptr tt1.(types) ft a ls Q |-- wp_fptr tt2.(types) ft a ls Q. *)
 
-  (* this axiom is the standard rule of consequence for weakest
-     pre-condition.
-   *)
-  Axiom wp_fptr_frame_fupd : forall tt1 tt2 ft a ls Q1 Q2,
-      type_table_le tt1 tt2 ->
-          (Forall v, Q1 v -* |={top}=> Q2 v)
-      |-- @wp_fptr tt1 ft a ls Q1 -* @wp_fptr tt2 ft a ls Q2.
+  (* (* this axiom is the standard rule of consequence for weakest *)
+  (*    pre-condition. *)
+  (*  *) *)
+  (* Axiom wp_fptr_frame_fupd : forall tt1 tt2 ft a ls Q1 Q2, *)
+  (*     type_table_le tt1 tt2 -> *)
+  (*         (Forall v, Q1 v -* |={top}=> Q2 v) *)
+  (*     |-- @wp_fptr tt1 ft a ls Q1 -* @wp_fptr tt2 ft a ls Q2. *)
 
-  Lemma wp_fptr_frame : forall tt ft a ls Q1 Q2,
-    (Forall v, Q1 v -* Q2 v)
-    |-- wp_fptr tt ft a ls Q1 -* wp_fptr tt ft a ls Q2.
-  Proof.
-    intros. iIntros "H". iApply wp_fptr_frame_fupd; first reflexivity.
-    iIntros (v) "? !>". by iApply "H".
-  Qed.
+  (* Lemma wp_fptr_frame : forall tt ft a ls Q1 Q2, *)
+  (*   (Forall v, Q1 v -* Q2 v) *)
+  (*   |-- wp_fptr tt ft a ls Q1 -* wp_fptr tt ft a ls Q2. *)
+  (* Proof. *)
+  (*   intros. iIntros "H". iApply wp_fptr_frame_fupd; first reflexivity. *)
+  (*   iIntros (v) "? !>". by iApply "H". *)
+  (* Qed. *)
 
-  (* the following two axioms say that we can perform fupd's
-     around the weakeast pre-condition. *)
-  Axiom wp_fptr_fupd : forall te ft a ls Q,
-      wp_fptr te ft a ls (λ v, |={top}=> Q v) |-- wp_fptr te ft a ls Q.
-  Axiom fupd_spec : forall te ft a ls Q,
-      (|={top}=> wp_fptr te ft a ls Q) |-- wp_fptr te ft a ls Q.
+  (* (* the following two axioms say that we can perform fupd's *)
+  (*    around the weakeast pre-condition. *) *)
+  (* Axiom wp_fptr_fupd : forall te ft a ls Q, *)
+  (*     wp_fptr te ft a ls (λ v, |={top}=> Q v) |-- wp_fptr te ft a ls Q. *)
+  (* Axiom fupd_spec : forall te ft a ls Q, *)
+  (*     (|={top}=> wp_fptr te ft a ls Q) |-- wp_fptr te ft a ls Q. *)
 
-  Lemma wp_fptr_shift te ft a ls Q :
-    (|={top}=> wp_fptr te ft a ls (λ v, |={top}=> Q v)) |-- wp_fptr te ft a ls Q.
-  Proof.
-    by rewrite fupd_spec wp_fptr_fupd.
-  Qed.
+  (* Lemma wp_fptr_shift te ft a ls Q : *)
+  (*   (|={top}=> wp_fptr te ft a ls (λ v, |={top}=> Q v)) |-- wp_fptr te ft a ls Q. *)
+  (* Proof. *)
+  (*   by rewrite fupd_spec wp_fptr_fupd. *)
+  (* Qed. *)
 
-  #[global] Instance Proper_wp_fptr : forall tt ft a ls,
-      Proper (pointwise_relation _ lentails ==> lentails) (@wp_fptr tt ft a ls).
-  Proof.
-    repeat red; intros.
-    iApply wp_fptr_frame.
-    iIntros (v); iApply H.
-  Qed.
+  (* #[global] Instance Proper_wp_fptr : forall tt ft a ls, *)
+  (*     Proper (pointwise_relation _ lentails ==> lentails) (@wp_fptr tt ft a ls). *)
+  (* Proof. *)
+  (*   repeat red; intros. *)
+  (*   iApply wp_fptr_frame. *)
+  (*   iIntros (v); iApply H. *)
+  (* Qed. *)
 
-  Section wp_fptr.
-    Context {tt : type_table} {tf : type} (addr : ptr) (ls : list ptr).
-    #[local] Notation WP := (wp_fptr tt tf addr ls) (only parsing).
-    Implicit Types Q : ptr → epred.
+  (* Section wp_fptr. *)
+  (*   Context {tt : type_table} {tf : type} (addr : ptr) (ls : list ptr). *)
+  (*   #[local] Notation WP := (wp_fptr tt tf addr ls) (only parsing). *)
+  (*   Implicit Types Q : ptr → epred. *)
 
-    Lemma wp_fptr_wand_fupd Q1 Q2 : WP Q1 |-- (∀ v, Q1 v -* |={top}=> Q2 v) -* WP Q2.
-    Proof.
-      iIntros "Hwp HK".
-      iApply (wp_fptr_frame_fupd with "HK Hwp").
-      reflexivity.
-    Qed.
+  (*   Lemma wp_fptr_wand_fupd Q1 Q2 : WP Q1 |-- (∀ v, Q1 v -* |={top}=> Q2 v) -* WP Q2. *)
+  (*   Proof. *)
+  (*     iIntros "Hwp HK". *)
+  (*     iApply (wp_fptr_frame_fupd with "HK Hwp"). *)
+  (*     reflexivity. *)
+  (*   Qed. *)
 
-    Lemma wp_fptr_wand Q1 Q2 : WP Q1 |-- (∀ v, Q1 v -* Q2 v) -* WP Q2.
-    Proof.
-      iIntros "Hwp HK".
-      iApply (wp_fptr_frame with "HK Hwp").
-    Qed.
-  End wp_fptr.
+  (*   Lemma wp_fptr_wand Q1 Q2 : WP Q1 |-- (∀ v, Q1 v -* Q2 v) -* WP Q2. *)
+  (*   Proof. *)
+  (*     iIntros "Hwp HK". *)
+  (*     iApply (wp_fptr_frame with "HK Hwp"). *)
+  (*   Qed. *)
+  (* End wp_fptr. *)
 
   (** [wp_mfptr tt this_ty fty ..] is the analogue of [wp_fptr] for member functions.
 
@@ -993,32 +995,32 @@ Section with_cpp.
            to an member pointer or vice versa.
    *)
   Definition wp_mfptr (tt : type_table) (this_type : exprtype) (fun_type : functype)
-    : ptr -> list ptr -> (ptr -> epred) -> mpred :=
+    : ptr -> list ptr -> Mglobal ptr :=
     wp_fptr tt (Tmember_func this_type fun_type).
 
-  (* (bind [n] last for consistency with [NonExpansive]). *)
-  #[global] Declare Instance wp_mfptr_ne :
-    `{forall n, Proper (pointwise_relation _ (dist n) ==> dist n) (@wp_mfptr t ft addr this ls)}.
+  (* (* (bind [n] last for consistency with [NonExpansive]). *) *)
+  (* #[global] Declare Instance wp_mfptr_ne : *)
+  (*   `{forall n, Proper (pointwise_relation _ (dist n) ==> dist n) (@wp_mfptr t ft addr this ls)}. *)
 
-  Lemma wp_mfptr_frame_fupd_strong tt1 tt2 t t0 v l Q1 Q2 :
-    type_table_le tt1 tt2 ->
-    (Forall v, Q1 v -* |={top}=> Q2 v)
-    |-- wp_mfptr tt1 t t0 v l Q1 -* wp_mfptr tt2 t t0 v l Q2.
-  Proof. apply wp_fptr_frame_fupd. Qed.
+  (* Lemma wp_mfptr_frame_fupd_strong tt1 tt2 t t0 v l Q1 Q2 : *)
+  (*   type_table_le tt1 tt2 -> *)
+  (*   (Forall v, Q1 v -* |={top}=> Q2 v) *)
+  (*   |-- wp_mfptr tt1 t t0 v l Q1 -* wp_mfptr tt2 t t0 v l Q2. *)
+  (* Proof. apply wp_fptr_frame_fupd. Qed. *)
 
-  Lemma wp_mfptr_shift tt t t0 v l Q :
-    (|={top}=> wp_mfptr tt t t0 v l (λ v, |={top}=> Q v)) |-- wp_mfptr tt t t0 v l Q.
-  Proof. apply wp_fptr_shift. Qed.
+  (* Lemma wp_mfptr_shift tt t t0 v l Q : *)
+  (*   (|={top}=> wp_mfptr tt t t0 v l (λ v, |={top}=> Q v)) |-- wp_mfptr tt t t0 v l Q. *)
+  (* Proof. apply wp_fptr_shift. Qed. *)
 
-  Lemma wp_mfptr_frame:
-    ∀ (t : type) (l : list ptr) (v : ptr) (t0 : type) (t1 : type_table) (Q Q' : ptr -> _),
-      Forall v, Q v -* Q' v |-- wp_mfptr t1 t t0 v l Q -* wp_mfptr t1 t t0 v l Q'.
-  Proof. intros; apply wp_fptr_frame. Qed.
+  (* Lemma wp_mfptr_frame: *)
+  (*   ∀ (t : type) (l : list ptr) (v : ptr) (t0 : type) (t1 : type_table) (Q Q' : ptr -> _), *)
+  (*     Forall v, Q v -* Q' v |-- wp_mfptr t1 t t0 v l Q -* wp_mfptr t1 t t0 v l Q'. *)
+  (* Proof. intros; apply wp_fptr_frame. Qed. *)
 
-  Lemma wp_mfptr_frame_fupd :
-    ∀ (t : type) (l : list ptr) (v : ptr) (t0 : type) (t1 : type_table) (Q Q' : ptr -> _),
-      (Forall v, Q v -* |={top}=> Q' v) |-- wp_mfptr t1 t t0 v l Q -* wp_mfptr t1 t t0 v l Q'.
-  Proof. intros; apply wp_fptr_frame_fupd; reflexivity. Qed.
+  (* Lemma wp_mfptr_frame_fupd : *)
+  (*   ∀ (t : type) (l : list ptr) (v : ptr) (t0 : type) (t1 : type_table) (Q Q' : ptr -> _), *)
+  (*     (Forall v, Q v -* |={top}=> Q' v) |-- wp_mfptr t1 t t0 v l Q -* wp_mfptr t1 t t0 v l Q'. *)
+  (* Proof. intros; apply wp_fptr_frame_fupd; reflexivity. Qed. *)
 
 
 End with_cpp.
@@ -1044,14 +1046,14 @@ TODO: maybe be more uniform in the future. *)
 (* DEPRECATIONS *)
 #[deprecated(since="20241102",note="use [wp_mfptr].")]
 Notation mspec := wp_mfptr (only parsing).
-#[deprecated(since="20241102",note="use [wp_mfptr_frame_fupd_strong].")]
-Notation mspec_frame_fupd_strong := wp_mfptr_frame_fupd_strong (only parsing).
-#[deprecated(since="20241102",note="use [wp_mfptr_shift].")]
-Notation mspec_shift := wp_mfptr_shift (only parsing).
-#[deprecated(since="20241102",note="use [wp_mfptr_frame].")]
-Notation mspec_frame := wp_mfptr_frame (only parsing).
-#[deprecated(since="20241102",note="use [wp_mfptr_frame].")]
-Notation mspec_frame_fupd := wp_mfptr_frame_fupd (only parsing).
+(* #[deprecated(since="20241102",note="use [wp_mfptr_frame_fupd_strong].")] *)
+(* Notation mspec_frame_fupd_strong := wp_mfptr_frame_fupd_strong (only parsing). *)
+(* #[deprecated(since="20241102",note="use [wp_mfptr_shift].")] *)
+(* Notation mspec_shift := wp_mfptr_shift (only parsing). *)
+(* #[deprecated(since="20241102",note="use [wp_mfptr_frame].")] *)
+(* Notation mspec_frame := wp_mfptr_frame (only parsing). *)
+(* #[deprecated(since="20241102",note="use [wp_mfptr_frame].")] *)
+(* Notation mspec_frame_fupd := wp_mfptr_frame_fupd (only parsing). *)
 End EVALUATION.
 
 Declare Module evaluation : EVALUATION.

@@ -6,6 +6,7 @@
 (** Definitions for the semantics
  *)
 Require Import skylabs.prelude.base.
+Require Import skylabs.upoly.base.
 
 Require Import stdpp.coPset.
 Require Import iris.bi.monpred.
@@ -96,11 +97,12 @@ existentials.
 #[global] Instance mpred_Kpred_BiEmbed `{Σ : cpp_logic} : BiEmbed mpredI KpredI := _.
 *)
 
+Import UPoly.
+
 Section with_cpp.
   Context `{Σ : cpp_logic}.
 
   Import linearity.
-
 
   #[local] Opaque FreeTemps.canon.
 
@@ -191,13 +193,13 @@ Section with_cpp.
                 end.
 
   #[global,program]
-  Instance Mlocal_ret : MRet Mlocal :=
+  Instance Mlocal_ret : UPoly.MRet Mlocal :=
     fun _ v => {| _wp K := K (Normal v) FreeTemps.id _ |}.
   Next Obligation.
     intros; simpl. iIntros "X"; iApply "X".
   Qed.
   #[global,program]
-  Instance Mlocal_map : FMap Mlocal :=
+  Instance Mlocal_map : UPoly.FMap Mlocal :=
     fun _ _ f m => {| _wp K := m.(_wp) (fun t => K (f <$> t)) |}.
   Next Obligation.
     intros; simpl.
@@ -205,7 +207,7 @@ Section with_cpp.
     iIntros (??); iApply "X".
   Qed.
   #[global,program]
-  Instance Mlocal_bind : MBind Mlocal :=
+  Instance Mlocal_bind : UPoly.MBind Mlocal :=
     fun _ _ k c =>
       {| _wp K := c (fun v f _ => match v with
                                | Normal v => k v (fun v' f' _ => K v' (FreeTemps.canon $ f' >*> f)%free _)
@@ -221,14 +223,14 @@ Section with_cpp.
   Qed.
 
   #[global,program]
-  Instance M_ret : MRet M :=
+  Instance M_ret : UPoly.MRet M :=
     fun _ v => {| _wp K := K v FreeTemps.id _ |}.
   Next Obligation.
     intros; simpl. iIntros "X"; iApply "X".
   Qed.
 
   #[global,program]
-  Instance M_map : FMap M :=
+  Instance M_map : UPoly.FMap M :=
     fun _ _ f m => {| _wp K := m.(_wp) (fun t => K (f t)) |}.
   Next Obligation.
     intros; simpl.
@@ -239,14 +241,14 @@ Section with_cpp.
   (* Question: Should we implement [ap]? *)
 
   #[global,program]
-  Instance M_bind : MBind M :=
+  Instance M_bind : UPoly.MBind M :=
     fun _ _ k c =>
       {| _wp K := c (fun v f _ => k v (fun v' f' _ => K v' (FreeTemps.canon $ f' >*> f)%free _)) |}.
   Next Obligation.
     simpl; intros. iIntros "K"; iApply _ok.
     iIntros (???). iApply _ok. iIntros (???); iApply "K".
   Qed.
-  Notation "'letWP*' v := e 'in' k" := (M_bind e (fun v => k)) (at level 0, v binder, k at level 200).
+  Notation "'letWP*' v := e 'in' k" := (UPoly.mbind e (fun v => k)) (at level 0, v binder, k at level 200).
 
   (**  These operations actually form a monad *)
   Lemma mret_mbind {T U} v (k : T -> M U) : mbind k (mret v) ≡ k v.
@@ -459,14 +461,14 @@ Section with_cpp.
     FrameI c c
     |-- Forall Q Q', (Forall x y pf, Q (f x) y pf -* Q' (f x) y pf) -* _wp (f <$> c) Q -* _wp (f <$> c) Q'.
   Proof.
-    rewrite /FrameI/M_map; iIntros "A" (??) "B".
+    rewrite /FrameI/M_map/fmap/=; iIntros "A" (??) "B".
     iApply "A". iIntros (??); iApply "B".
   Qed.
 
   Lemma Mmap_frame {T U} c1 c2 (f : T -> U) :
     FrameI c1 c2 |-- FrameI (f <$> c1) (f <$> c2).
   Proof.
-    rewrite /FrameI/M_map; iIntros "A" (??) "B".
+    rewrite /FrameI/M_map/fmap/=; iIntros "A" (??) "B".
     iApply "A". iIntros (??); iApply "B".
   Qed.
 
@@ -479,7 +481,7 @@ Section with_cpp.
   Lemma Mbind_frame {T U} c1 c2 (k1 k2 : T -> M U) :
     FrameI c1 c2 |-- (Forall x, FrameI (k1 x) (k2 x)) -* FrameI (mbind k1 c1) (mbind k2 c2).
   Proof.
-    rewrite /FrameI/M_bind; iIntros "A B" (??) "C".
+    rewrite /FrameI/M_bind/mbind/=; iIntros "A B" (??) "C".
     iApply "A". iIntros (???). iApply "B".
     iIntros (???); iApply "C".
   Qed.
@@ -503,8 +505,8 @@ Section with_cpp.
   Proof.
     iIntros "A B" (??) "C D".
     iSplit; [ iDestruct "D" as "[D _]" | iDestruct "D" as "[_ D]" ]; iRevert "D".
-    { rewrite /FrameI. iApply "A". iIntros (???). iApply "B"; iIntros (???). iApply "C". }
-    { iApply "B". iIntros (???). iApply "A"; iIntros (???). iApply "C". }
+    { rewrite /FrameI/mbind/=. iApply "A". iIntros (???). iApply "B"; iIntros (???). iApply "C". }
+    { rewrite /mbind/=. iApply "B". iIntros (???). iApply "A"; iIntros (???). iApply "C". }
   Qed.
 
   (* Lifting non-deterministic sequencing to lists.
