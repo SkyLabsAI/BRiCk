@@ -34,6 +34,7 @@ Require Import skylabs.lang.cpp.logic.monad.
    - This file seems to replicate some logic that is bad.
  *)
 
+Import UPoly.
 
 
 (**
@@ -129,12 +130,11 @@ End wp_gen.
 (** ** Destroying primitives *)
 
 #[local] Definition wp_destroy_prim_body `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
-    (cv : type_qualifiers) (ty : type) (this : ptr) : Mglobal unit :=
-  letWP* _ := Mstable in
-  Mconsume (Exists v, this |-> tptstoR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) v).
+    (cv : type_qualifiers) (ty : type) (this : ptr) : Mglobal.M unit :=
+  non_atomically $ consume (Exists v, this |-> tptstoR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) v).
 
 mlock Definition wp_destroy_prim `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
-    (cv : type_qualifiers) (ty : type) (this : ptr) : Mglobal unit :=
+    (cv : type_qualifiers) (ty : type) (this : ptr) : Mglobal.M unit :=
   wp_destroy_prim_body tu cv ty this.
 #[global] Arguments wp_destroy_prim {_ _ _ _} _ _ _ _ : assert.	(* mlock bug *)
 
@@ -240,9 +240,9 @@ Section prim.
   *)
 End prim.
 
-Definition void_call `{Σ : cpp_logic} {σ : genv} (wp : Mglobal ptr) : Mglobal unit :=
-  letWP* p := wp in
-  Mconsume (p |-> primR Tvoid (cQp.m 1) Vvoid).
+Definition void_call `{Σ : cpp_logic} {σ : genv} (wp : Mglobal.M ptr) : Mglobal.M unit :=
+  letWP* (p : ptr) := wp in
+  consume (p |-> primR Tvoid (cQp.m 1) Vvoid).
 
 (** ** Invoking destructors *)
 (*
@@ -251,7 +251,7 @@ invoking the destructor [dtor] for type [ty] on [this].
 *)
 Locate "letWP* _ := _ in _".
 #[local] Definition wp_destructor_body `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
-    (ty : type) (dtor : ptr) (this : ptr) : Mglobal unit :=
+    (ty : type) (dtor : ptr) (this : ptr) : Mglobal.M unit :=
   (*
   NOTE: Using [Tfunction Tvoid nil] implicitly requires all
   destructors to have C calling convention. Arguments [this :: nil] is
@@ -261,10 +261,10 @@ Locate "letWP* _ := _ in _".
     void_call $
     wp_mfptr tu.(types) ty (Tfunction $ FunctionType Tvoid nil) dtor [this]
   in
-  Mconsume (this |-> tblockR ty (cQp.mut 1)).
+  consume (this |-> tblockR ty (cQp.mut 1)).
 
 mlock Definition wp_destructor `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
-    (ty : type) (dtor : ptr) (this : ptr) : Mglobal unit :=
+    (ty : type) (dtor : ptr) (this : ptr) : Mglobal.M unit :=
   wp_destructor_body tu ty dtor this.
 #[global] Arguments wp_destructor {_ _ _ _} _ _ _ _ : assert.	(* mlock bug *)
 
@@ -375,8 +375,7 @@ End dtor.
     destructor.
     *)
     wp_destructor tu (Tnamed cls) (_global u.(u_dtor)) this
-  | _ => letWP* _ := Mstable in
-        Merror ("wp_destroy_named: cannot resolve", cls)
+  | _ => non_atomically $ Merror ("wp_destroy_named: cannot resolve", cls)
   end.
 
 mlock Definition wp_destroy_named `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
@@ -582,17 +581,13 @@ Section body.
       wp_destroy_prim tu cv rty this
 
     | Tfunction _ =>
-        letWP* _ := Mstable in
-        Munsupported ("wp_destroy_val: function type", rty)
+        non_atomically $ Munsupported ("wp_destroy_val: function type", rty)
     | Tarch _ _ =>
-        letWP* _ := Mstable in
-        Munsupported ("wp_destroy_val: arch type", rty)
+        non_atomically $ Munsupported ("wp_destroy_val: arch type", rty)
     | Tunsupported msg =>
-        letWP* _ := Mstable in
-        Munsupported ("wp_destroy_val: arch type", msg)
+        non_atomically $ Munsupported ("wp_destroy_val: arch type", msg)
     | _ =>
-        letWP* _ := Mstable in
-        Munsupported ("wp_destroy_val: template type")
+        non_atomically $ Munsupported ("wp_destroy_val: template type")
     end.
 End body.
 
@@ -1068,11 +1063,11 @@ emp] is not provable unless [Q] is affine.
     (interp : translation_unit -> FreeTemps.t -> Mglobal unit)
     (tu : translation_unit) (free : FreeTemps.t) : Mglobal unit :=
   match free with
-  | FreeTemps.id => Mstable
+  | FreeTemps.id => non_atomically $ mret ()
   | FreeTemps.seq f g => letWP* _ := interp tu f in interp tu g
-  | FreeTemps.par f g => letWP* _ := Mstable in letWP* _ := Mpar (interp tu f) (interp tu g) in UPoly.mret ()
+  | FreeTemps.par f g => non_atomically $ letWP* _ := (* Mpar (interp tu f) (interp tu g) *) mret () in UPoly.mret ()
   | FreeTemps.delete ty addr => destroy_val tu ty addr
-  | FreeTemps.delete_va va addr => letWP* _ := Mstable in Mconsume (addr |-> varargsR va)
+  | FreeTemps.delete_va va addr => non_atomically $ consume (addr |-> varargsR va)
   end.
 
 mlock Definition interp `{Σ : cpp_logic, σ : genv}
@@ -1107,9 +1102,9 @@ Section temps.
     match free return Mglobal unit with
     | FreeTemps.id => mret ()
     | FreeTemps.seq f g => letWP* _ := interp tu f in interp tu g
-    | FreeTemps.par f g => letWP* _ := Mpar (interp tu f) (interp tu g) in mret ()
+    | FreeTemps.par f g => letWP* _ := (* Mpar (interp tu f) (interp tu g) *) mret () in mret () (* TODO *)
     | FreeTemps.delete ty addr => destroy_val tu ty addr
-    | FreeTemps.delete_va va addr => Mconsume (addr |-> varargsR va)
+    | FreeTemps.delete_va va addr => consume (addr |-> varargsR va)
     end
     ⊆ interp tu free.
   Proof.
@@ -1119,8 +1114,9 @@ Section temps.
       iApply ("HQ" with "Qf Qg"). }
   Qed. *) Admitted.
 
+  (* TODO
   Lemma interp_intro_id tu : mret () ⊆ interp tu 1.
-  Proof. by rewrite -interp_intro. Qed.
+  Proof. rewrite -interp_intro. Qed.
 
   Lemma interp_intro_seq tu f g :
     (letWP* _ := interp tu f in interp tu g) ⊆ interp tu (f >*> g).
@@ -1140,6 +1136,7 @@ Section temps.
     Mconsume (addr |-> varargsR va)
     ⊆ interp tu (FreeTemps.delete_va va addr).
   Proof. by rewrite -interp_intro. Qed.
+  *)
 
   (** Elimination rules *)
 
@@ -1329,10 +1326,30 @@ End temps.
 
 #[program]
 Definition Mfree_all `{Σ : cpp_logic} {σ : genv} (tu : translation_unit) {t} (m : Mlocal t) : Mlocal t :=
-  {| _wp K := m.(_wp) (fun v free _ => (interp tu free).(_wp) (fun _ _ _ => K v FreeTemps.id _)) |}.
+  Mexpr.mk $ {| M._wp K :=
+                 Mexpr._wp m (fun v => Mglobal._wp (interp tu v.(with_temps._free))
+                                      (fun v' =>
+                                         match v' with
+                                         | Mglobal.Normal () => K v
+                                         | Mglobal.Exception _ _ =>
+                                             match v.(with_temps._result) with
+                                             | Mexpr.Exception _ _ => False%I (* raising an exception during an exception is UB *)
+                                             | _ => K {| with_temps._result := v.(with_temps._result)
+                                                     ; with_temps._free := FreeTemps.id
+                                                     ; with_temps._canon := _ |}
+                                             end
+                                         end)) |}.
 Next Obligation.
-  simpl; intros. iIntros "K". iApply _ok. iIntros (???).
-  iApply _ok. iIntros (???); iApply "K".
+  simpl; intros. iIntros "K". iApply M._frame. iIntros (?).
+  iApply M._frame. iIntros (?).
+  repeat case_match; eauto.
+Qed.
+Next Obligation.
+  simpl; intros. destruct m => /=. apply M._ne => ?.
+  apply M._ne => ?.
+  repeat case_match; eauto.
 Qed.
 
+(*
 #[global] Hint Resolve interp_intro_id : core.
+*)

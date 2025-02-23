@@ -116,15 +116,15 @@ Section with_cpp.
     : forall {resolve:genv}, translation_unit -> region -> Expr -> Mlocal ptr.
   (* END wp_lval *)
 
-  Notation SupportsFupd x := (Mnon_atomically x ⊆ x) (only parsing).
+  Notation SupportsFupd x := (non_atomically x ⊆ x) (only parsing).
   Notation RefResult t x :=
     ((letWP* v := x in
-      letWP* '() := M2local $ Mproduce (reference_to t v) in
+      letWP* '() := produce (reference_to t v) in
       mret v) ⊆ x) (only parsing).
 
   Notation TypedResult t x :=
     ((letWP* v := x in
-      letWP* '() := M2local $ Mproduce (has_type v t) in
+      letWP* '() := produce (has_type v t) in
       mret v) ⊆ x) (only parsing).
 
 
@@ -184,9 +184,9 @@ Section with_cpp.
    *)
   Axiom wp_lval_well_typed : forall {σ:genv} tu ρ e, RefResult (type_of e) (wp_lval tu ρ e).
 
-  Class WithCode {σ : genv} {T} (m : translation_unit -> M T) : Prop :=
-    { carries_code : forall tu, (letWP* '() := Mproduce (denoteModule (σ:=σ) tu) in m tu) ⊆ m tu
-    ; weakening : forall tu1 tu2, sub_module tu1 tu2 -> monad.Frame (m tu1) (m tu2)
+  Class WithCode {σ : genv} {T} (m : translation_unit -> Mlocal T) : Prop :=
+    { carries_code : forall tu, (letWP* '() := produce (denoteModule (σ:=σ) tu) in m tu) ⊆ m tu
+    ; weakening : forall tu1 tu2, sub_module tu1 tu2 -> m tu1 ⊆ m tu2
     }.
 
   Axiom wp_lval_models : forall {σ:genv} ρ e, WithCode (fun tu => wp_lval tu ρ e).
@@ -402,9 +402,9 @@ Section with_cpp.
   (* BEGIN wp_prval *)
   Definition wp_prval {resolve:genv} (tu : translation_unit) (ρ : region)
              (e : Expr) : Mlocal ptr :=
-    letWP* p := M2local $ Mnd ptr in
+    letWP* p := demonic ptr in
     letWP* free := wp_init tu ρ (type_of e) p e in
-    letWP* '() := Mpush_free free in
+    letWP* '() := Mexpr.push_free free in
     mret p.
   (* END wp_prval *)
 
@@ -502,11 +502,12 @@ Section with_cpp.
     letWP* v := wp_operand tu ρ e in
     match is_true v with
     | Some c => mret c
-    | None => Merror (is_true_None v)
+    | None => ub (* is_true_None v *)
     end.
   #[global] Hint Opaque wp_test : sl_opacity.
   #[global] Arguments wp_test /.
 
+  (*
   #[global] Instance wp_test_ne : forall σ n,
     Proper (eq ==> eq ==> eq ==> dist n) (@wp_test σ).
   Proof. (* solve_proper. Qed. *) Admitted.
@@ -519,6 +520,7 @@ Section with_cpp.
     iApply wp_operand_frame; first reflexivity.
     iIntros (??); case_match; eauto.
   Qed. *) Admitted.
+  *)
 
   (** * xvalues *)
 
@@ -599,7 +601,7 @@ Section with_cpp.
 
   (* Opaque wrapper of [False]: this represents a [False] obtained by a [ValCat] mismatch in [wp_glval]. *)
   Definition wp_glval_mismatch {resolve : genv} (r : region) (vc : ValCat) (e : Expr)
-    : Mlocal ptr := Mub.
+    : Mlocal ptr := ub.
   #[global] Arguments wp_glval_mismatch : simpl never.
 
   (* evaluate an expression as a generalized lvalue *)
@@ -614,12 +616,14 @@ Section with_cpp.
     | vc => wp_glval_mismatch ρ vc e
     end%I.
 
+  (*
   #[global] Instance wp_glval_ne σ n :
     Proper (eq ==> eq ==> eq ==> dist n) (@wp_glval σ).
   Proof.
     do 12 intro. rewrite /wp_glval; subst.
     case_match; try solve_proper.
   (* Qed. *) Admitted.
+  *)
 
   (**
   Note:
@@ -629,8 +633,9 @@ Section with_cpp.
 
   - [wp_glval_models] isn't sound without [denoteModule tu] in the
   [Prvalue] case
-  *)
+   *)
 
+  (*
   Lemma wp_glval_frame {σ : genv} tu1 tu2 r e :
     sub_module tu1 tu2 ->
     monad.Frame (wp_glval tu1 r e) (wp_glval tu2 r e).
@@ -646,6 +651,7 @@ Section with_cpp.
   Proof.
     solve_proper_prepare. case_match; try solve_proper.
   (* Qed. *) Admitted.
+  *)
 
   (*
   Section wp_glval.
@@ -730,9 +736,9 @@ Section with_cpp.
         if is_value_type ty then
           (fun _ => tt) <$> wp_operand tu ρ e
         else
-          letWP* p := M2local $ Mnd ptr in
+          letWP* p := demonic ptr in
           letWP* free := wp_init tu ρ (type_of e) p e in
-          letWP* '() := Mpush_free free in
+          letWP* '() := Mexpr.push_free free in
           mret ()
       | Xvalue => (fun _ => tt) <$> wp_xval tu ρ e
       end%I.
@@ -887,7 +893,7 @@ Section with_cpp.
    *)
   Parameter wp_fptr
     : forall (tt : type_table) (fun_type : type) (* TODO: function type *)
-        (addr : ptr) (ls : list ptr), Mglobal ptr.
+        (addr : ptr) (ls : list ptr), Mglobal.M ptr.
 
   (* (* (bind [n] last for consistency with [NonExpansive]). *) *)
   (* #[global] Declare Instance wp_fptr_ne : *)
@@ -995,7 +1001,7 @@ Section with_cpp.
            to an member pointer or vice versa.
    *)
   Definition wp_mfptr (tt : type_table) (this_type : exprtype) (fun_type : functype)
-    : ptr -> list ptr -> Mglobal ptr :=
+    : ptr -> list ptr -> Mglobal.M ptr :=
     wp_fptr tt (Tmember_func this_type fun_type).
 
   (* (* (bind [n] last for consistency with [NonExpansive]). *) *)
