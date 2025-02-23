@@ -61,15 +61,15 @@ guaranteed to have to initialize a value which will result in an
     Mfree_all tu $ default_initialize (p ,, o_sub _ ty (Z.of_N i))
   in
   letWP* _ := traverse folder (seqN 0 len) in
-  letWP* _ := Mproduce (p |-> type_ptrR (Tarray ty len)) in
-  letWP* _ := Mstable in mret ().
+  letWP* _ := produce (p |-> type_ptrR (Tarray ty len)) in
+  non_atomically $ mret ().
 
 mlock
 Definition default_initialize_array `{Σ : cpp_logic, σ : genv} :
-  ∀ (default_initialize : ptr -> (FreeTemps -> epred) -> mpred)
-    (tu : translation_unit) (ty : exprtype) (len : N) (p : ptr)
-    (Q : FreeTemps -> epred), mpred :=
+  ∀ (default_initialize : ptr -> Mlocal ())
+    (tu : translation_unit) (ty : exprtype) (len : N) (p : ptr), Mlocal () :=
   Cbn (Reduce (default_initialize_array_body true)).
+#[global] Arguments default_initialize_array {_ _ _ _} _ _ _ _ _ : assert.	(* mlock bug *)
 
 (**
 [default_initialize tu ty p Q] default initializes the memory at [p]
@@ -94,9 +94,9 @@ described above.
 
 #[local]
 Definition default_initialize_body `{Σ : cpp_logic, σ : genv}
-    (u : bool) (default_initialize : exprtype -> ptr -> (FreeTemps -> epred) -> mpred)
+    (u : bool) (default_initialize : exprtype -> ptr -> Mlocal ())
     (tu : translation_unit)
-    (ty : exprtype) (p : ptr) (Q : FreeTemps -> epred) : mpred :=
+    (ty : exprtype) (p : ptr) : Mlocal () :=
   let ERROR := funI m => |={top}=>?u ERROR m in
   let UNSUPPORTED := funI m => |={top}=>?u UNSUPPORTED m in
   match ty with

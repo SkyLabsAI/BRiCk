@@ -24,7 +24,7 @@ as if they were all evaluated using [wp_operand].
 *)
 Parameter wp_builtin : ∀ `{Σ : cpp_logic, σ : genv}
     (b : BuiltinFn) (fty : functype) (** the type of the builtin *)
-    (args : list val), monad.M val.
+    (args : list val), Mglobal.M val.
 
 Section wp_builtin.
   Context `{Σ : cpp_logic, σ : genv}.

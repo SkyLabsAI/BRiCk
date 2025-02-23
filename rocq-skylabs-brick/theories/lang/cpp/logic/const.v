@@ -40,7 +40,7 @@ Section defs.
   [Params], ease the statement of [Proper] instances, and speed up
   setoid rewriting.
    *)
-  Parameter wp_const : forall (tu : translation_unit) {σ : genv} (from to : cQp.t) (addr : ptr) (ty : decltype), M unit.
+  Parameter wp_const : forall (tu : translation_unit) {σ : genv} (from to : cQp.t) (addr : ptr) (ty : decltype), Mglobal.M unit.
 
   (*
   Axiom wp_const_frame : forall tu tu' f t a ty Q Q',
@@ -53,9 +53,10 @@ Section defs.
    *)
 
 
+  (*
   (* Naviely, this construction would probably provide fancy updates and laters *)
   Definition Mconsume_produce {TT1 TT2 : tele} (P : TT1 -t> mpred) (Q : TT1 -t> TT2 -t> mpred)
-    : M (tele_append TT1 (tele_bind (fun _ => TT2))).
+    : Mglobal.M (tele_append TT1 (tele_bind (fun _ => TT2))).
   Proof. Admitted.
 
   Notation eta F := (fun x => F x).
@@ -63,6 +64,7 @@ Section defs.
   #[universes(polymorphic)] Instance eta_M_FMap : FMap (eta M). Admitted.
   #[universes(polymorphic)] Instance eta_M_Ap : Ap (eta M). Admitted.
   #[universes(polymorphic)] Instance eta_M_MBind : MBind (eta M). Admitted.
+  *)
 
   Instance list_traverse : Traverse (eta list) :=
     fun F _ _ _ _ _ f => fix recurse ls :=
@@ -76,15 +78,14 @@ Section defs.
   then it needs to descend under <<const>>
   *)
   #[local] Notation "|={ E }=> P" := (|={E}=> P)%I (only parsing).
-  #[local] Definition wp_const_body (wp_const : cQp.t -> cQp.t -> ptr -> decltype -> M unit)
-      (tu : translation_unit) (from to : cQp.t)  (addr : ptr) (ty : decltype) : M unit.
-  refine (
+  #[local] Definition wp_const_body (wp_const : cQp.t -> cQp.t -> ptr -> decltype -> Mglobal.M unit)
+      (tu : translation_unit) (from to : cQp.t)  (addr : ptr) (ty : decltype) : Mglobal.M unit :=
     let '(cv, rty) := decompose_type ty in
 (*    let Q := |={top}=> Q in *)
-    if q_const cv then mret (M:=fun t => M t) ()
+    if q_const cv then mret ()
     else
-      let UNSUPPORTED : M unit := wp_const from to addr ty in
-      match rty return M unit with
+      let UNSUPPORTED : Mglobal.M unit := wp_const from to addr ty in
+      match rty return Mglobal.M unit with
       | Tptr _
       | Tnum _ _
       | Tchar_ _
@@ -96,27 +97,26 @@ Section defs.
       | Tvoid =>
         let rty := erase_qualifiers rty in
         letWP* _ :=
-          Mconsume_produce (TT1:=[tele (_ : val)]) (TT2:=[tele])
+          update (TT1:=[tele (_ : val)]) (TT2:=[tele])
             (fun v : val => addr |-> tptstoR rty from v)
             (fun v : val => addr |-> tptstoR rty to v)
-        in mret (M:=eta M) ()
+        in mret ()
 
       | Tref rty
       | Trv_ref rty =>
         let rty := erase_qualifiers rty in
         letWP* _ :=
-          Mconsume_produce (TT1:=[tele (_ : val)]) (TT2:=[tele])
+          update (TT1:=[tele (_ : val)]) (TT2:=[tele])
                           (fun v => addr |-> primR (Tref rty) from v)
                           (fun v => (addr |-> primR (Tref rty) to v))
-        in mret (M:=eta M) ()
+        in mret ()
         (* ^ References must be initialized *)
 
       | Tarray ety sz =>
-          Many (* TODO: fix this
-        (* NOTE the order here is irrelevant because the operation is "atomic" *)
-        fold_left (fun Q i =>
-            wp_const from to (addr .[ erase_qualifiers ety ! Z.of_N i ]) ety Q)
-                    (seqN 0 sz) Q *)
+          letWP* _ :=
+            traverse (fun i => wp_const from to (addr .[ erase_qualifiers ety ! Z.of_N i ]) ety)
+                    (seqN 0 sz)
+            in mret ()
       | Tincomplete_array _ =>
           Merror ("wp_const", ty)
       | Tvariable_array _ _ =>
@@ -128,35 +128,35 @@ Section defs.
               match gd with
               | Gunion u =>
                 letWP* '(TeleArgCons br _) :=
-                  Mconsume_produce (TT1:=[tele (_ : option _)]) (TT2:=[tele])
+                  update (TT1:=[tele (_ : option _)]) (TT2:=[tele])
                                    (fun br => addr |-> unionR cls from br)
                                    (fun br => addr |-> unionR cls to br)
                 in
                 match br with
-                | None => mret (M:=eta M) ()
+                | None => mret ()
                 | Some br => match u.(u_fields) !! br with
-                            | None => Many (* unreachable *)
+                            | None => contra (* unreachable *)
                             | Some m =>
                                 if m.(mem_mutable)
-                                then mret (M:=eta M) ()
+                                then mret ()
                                 else
                                   wp_const from to (addr ,, _field (Field cls m.(mem_name))) m.(mem_type)
                             end
                 end
               | Gstruct st =>
-                  letWP* _ := traverse (T:=eta list) (F:=eta M) (fun '(b, _) => wp_const from to (addr ,, _base cls b) (Tnamed b)) (s_bases st) in
-                  letWP* _ := traverse (T:=eta list) (F:=eta M) (fun m =>
+                  letWP* _ := traverse (T:=eta list) (fun '(b, _) => wp_const from to (addr ,, _base cls b) (Tnamed b)) (s_bases st) in
+                  letWP* _ := traverse (T:=eta list) (fun m =>
                                           if m.(mem_mutable)
                                           then mret ()
                                           else wp_const from to (addr ,, _field (Field cls m.(mem_name))) m.(mem_type))
                                        (s_fields st)
                   in
                   if has_vtable st then
-                    (fun _ => ()) <$> Mconsume_produce (TT1:=[tele (_ : _)]) (TT2:=[tele])
+                    (fun _ => ()) <$> update (TT1:=[tele (_ : _)]) (TT2:=[tele])
                       (fun path => addr |-> structR cls from ** addr |-> derivationR cls path from)
                       (fun path => addr |-> structR cls to ** addr |-> derivationR cls path to)
                   else
-                    (fun _ => ()) <$> Mconsume_produce (TT1:=[tele]) (TT2:=[tele])
+                    (fun _ => ()) <$> update (TT1:=[tele]) (TT2:=[tele])
                       (addr |-> structR cls from)
                       (addr |-> structR cls to)
               | Gtype
@@ -182,8 +182,7 @@ Section defs.
       | Texprtype _
       | Tauto
       | Tresult_parenlist _ _ => Munsupported ("wp_const", rty)
-      end)%I.
-  Defined.
+      end%I.
 
   (* NOTE: we prefer an entailment ([|--]) to a bi-entailment ([-|-]) or an equality
      to be conservative.

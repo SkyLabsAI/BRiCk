@@ -233,7 +233,10 @@ Section defs.
          strict_valid_ptr p **
          □ (Forall vs Q,
          fs.(fs_spec) vs Q -*
-         (wp_fptr resolve.(genv_tu).(types) (type_of_spec fs) p vs).(_wp) (fun x _ _ => Q x))). (* TODO *)
+         Mglobal._wp (wp_fptr resolve.(genv_tu).(types) (type_of_spec fs) p vs) (fun x => match x with
+                                                                                       | Mglobal.Normal p => Q p
+                                                                                       | _ => False
+                                                                                       end))). (* TODO *)
   Definition cptrR_aux : seal (@cptrR_def). Proof. by eexists. Qed.
   Definition cptrR := cptrR_aux.(unseal).
   Definition cptrR_eq : @cptrR = _ := cptrR_aux.(seal_eq).
