@@ -104,6 +104,20 @@ Module Compose.
   #[global] Arguments M _ _ _ : clear implicits.
 End Compose.
 
+Module sumT.
+  Section sumT.
+    Import UPoly.
+
+    Context {ERR : Type}.
+    Context {mM : Type -> Type}.
+
+    Record M {t : Type} : Type :=
+      { prun : mM (ERR + t) }.
+
+  End sumT.
+End sumT.
+
+
 Require Import bedrock.prelude.telescopes.
 
 Class WpMonad (PROP : bi) {F : BiFUpd PROP} (M : Type -> Type) : Type :=
