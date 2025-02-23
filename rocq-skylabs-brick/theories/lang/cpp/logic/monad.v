@@ -103,6 +103,25 @@ Module Compose.
   End Compose.
   #[global] Arguments M _ _ _ : clear implicits.
 End Compose.
+
+Require Import bedrock.prelude.telescopes.
+
+Class WpMonad (PROP : bi) {F : BiFUpd PROP} (M : Type -> Type) : Type :=
+{ angelic : forall T : Type, M T
+; demonic : forall T : Type, M T
+; produce : PROP -> M unit
+; consume : PROP -> M unit
+; read : forall (step : bool) {TT : tele}, (TT -t> PROP) -> M TT
+; update : forall (step : bool) {TT1 TT2 : tele}, (TT1 -t> PROP) -> (TT1 -t> TT2 -t> PROP) ->
+                               M (tele_arg (tele_append TT1 (tele_bind (fun _ : TT1 => TT2))))
+; step : M unit
+; ub : forall {T}, M T
+; contra : forall {T}, M T
+  (* TODO: below this is all that needs Fupd *)
+; atomically : forall {T}, M T -> M T
+; non_atomically : forall {T}, M T -> M T
+}.
+
 Module M.
 Section M.
   Import UPoly.
@@ -201,6 +220,24 @@ Section M.
                      TeleArgCons (tele_arg_head _ x) (tele_arg_append_simple (tele_arg_tail _ x) y)
     end x.
 
+  #[global,program]
+  Instance M_WpMonad `{BiFUpd PROP} : WpMonad PROP M :=
+  { angelic T := {| _wp K := ∃ x : T, K x |}%I
+  ; demonic T := {| _wp K := ∀ x : T, K x |}%I
+  ; produce P := {| _wp K := P -∗ K () |}%I
+  ; consume P := {| _wp K := P ∗ K () |}%I
+  ; read step _ P := {| _wp K := ∃.. x, (tele_app P x ∗ True) ∧ ▷?step K x |}%I
+  ; update step _ _ P Q :=
+      {| _wp K := ∃.. x, tele_app P x ∗
+                           (∀.. y, tele_app (tele_app Q x) y -∗ ▷?step K (tele_arg_append_simple x y)) |}%I
+  ; contra _ := {| _wp _K := True |}%I
+  ; ub _ := {| _wp _K := False |}%I
+  ; step := {| _wp K := ▷ K () |}%I
+  ; non_atomically _ m := {| _wp K := |={top}=> m.(_wp) (fun r => |={top}=> K r) |}%I
+  ; atomically _ m := {| _wp K := |={top,∅}=> m.(_wp) (fun r => |={top,∅}=> K r) |}%I
+  }.
+  Admit Obligations.
+  (*
   #[program]
   Definition non_atomically `{BiFUpd PROP} {T} (m : M T) : M T :=
     {| _wp K := |={top}=> m.(_wp) (fun r => |={top}=> K r) |}%I.
@@ -262,6 +299,7 @@ Section M.
     simpl; intros; iIntros "? ?".
     iApply bi.pure_intro; [ trivial | ]. iStopProof. reflexivity.
   Qed.
+  *)
 
 End M.
 #[global] Arguments M _ _ : clear implicits.
