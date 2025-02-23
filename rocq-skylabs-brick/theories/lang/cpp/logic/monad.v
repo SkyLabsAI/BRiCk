@@ -91,11 +91,11 @@ Module Compose.
     #[global] Arguments mk {_} & _.
     #[global] Arguments M _ : clear implicits.
 
-    Instance _MRet {F_RET : MRet F} {G_RET : MRet G} : MRet M :=
+    #[global] Instance _MRet {F_RET : MRet F} {G_RET : MRet G} : MRet M :=
       fun _ x => mk (mret (M:=F) (mret (M:=G) x)).
-    Instance _FMap {F_FMAP : FMap F} {G_FMAP : FMap G} : FMap M :=
+    #[global] Instance _FMap {F_FMAP : FMap F} {G_FMAP : FMap G} : FMap M :=
       fun _ _ f x => mk (fmap (M:=F) (fmap (M:=G) f) x.(_prun)).
-    Instance _Ap {FMAP : FMap F} {F_AP : Ap F} {G_AP : Ap G} : Ap M :=
+    #[global] Instance _Ap {FMAP : FMap F} {F_AP : Ap F} {G_AP : Ap G} : Ap M :=
       fun _ _ f x => mk ((ap (F:=G)) <$> f.(_prun) <*> x.(_prun)).
 
     (* NOTE: [Compose.M] is not a [Monad] in general *)
@@ -118,15 +118,15 @@ Module sumT.
 End sumT.
 
 
-Require Import bedrock.prelude.telescopes.
+Require Import skylabs.prelude.telescopes.
 
 Class WpMonad (PROP : bi) {F : BiFUpd PROP} (M : Type -> Type) : Type :=
 { angelic : forall T : Type, M T
 ; demonic : forall T : Type, M T
 ; produce : PROP -> M unit
 ; consume : PROP -> M unit
-; read : forall (step : bool) {TT : tele}, (TT -t> PROP) -> M TT
-; update : forall (step : bool) {TT1 TT2 : tele}, (TT1 -t> PROP) -> (TT1 -t> TT2 -t> PROP) ->
+; check : forall {TT : tele}, (TT -t> PROP) -> M TT
+; update : forall {TT1 TT2 : tele}, (TT1 -t> PROP) -> (TT1 -t> TT2 -t> PROP) ->
                                M (tele_arg (tele_append TT1 (tele_bind (fun _ : TT1 => TT2))))
 ; step : M unit
 ; ub : forall {T}, M T
@@ -136,6 +136,22 @@ Class WpMonad (PROP : bi) {F : BiFUpd PROP} (M : Type -> Type) : Type :=
 ; non_atomically : forall {T}, M T -> M T
 }.
 
+mlock
+Definition Munsupported `{WP : @WpMonad PROP F M} {T E} (err : E) : M T :=
+  ub.
+
+mlock
+Definition Merror `{WP : @WpMonad PROP F M} {T E} (err : E) : M T :=
+  ub.
+
+(** [Mglobal] -- normal + exceptions
+      = M ((type * ptr) + t)
+    [Mexpr] -- (normal + exceptions + break + return + continue) * freetemps
+      = M (Result (ReturnType t))
+ *)
+
+
+(** This monad is language agnostic *)
 Module M.
 Section M.
   Import UPoly.
@@ -143,23 +159,13 @@ Section M.
 
   Record M {t : Type} := mk
   { _wp : (t -> PROP) -> PROP
-  ; _ok : forall K1 K2, (Forall x, K1 x -* K2 x) |-- _wp K1 -* _wp K2 }.
+  ; _frame : forall K1 K2, (∀ x, K1 x -∗ K2 x) ⊢ _wp K1 -∗ _wp K2
+  ; _ne : forall n K1 K2, (forall x, K1 x ≡{n}≡ K2 x) -> _wp K1 ≡{n}≡ _wp K2
+  }.
   #[global] Arguments M _ : clear implicits.
   #[local] Coercion _wp : M >-> Funclass.
 
-  (* The canonical notion of equivalence on [M _]
-
-     This definition doesn't work, but it isn't clear how to fix it.
-     The issues:
-     - if you use pointwise equivalence for the [FreeTemps.t], then you
-       lose the monad laws.
-       You can get the bind-ret and ret-bind laws if you reify the unit,
-       but you can not get bind-bind.
-       **Idea**: use smart constructors that can canonicalize the definitions.
-     - if you use the equivalence on [FreeTemps.t], then you can not prove
-       this relation transitive because it requires that all functions satisfy
-       the equivalence.
-   *)
+  (* The canonical notion of equivalence on [M _] *)
   #[global] Instance M_equiv [T] : Equiv (M T) :=
     fun a b =>
       forall K1 K2, (forall x, K1 x ⊣⊢ K2 x) -> a K1 ⊣⊢ b K2.
@@ -167,8 +173,8 @@ Section M.
   Proof.
     repeat red. intros.
     split'.
-    { iApply _ok; iIntros (?). rewrite H; eauto. }
-    { iApply _ok; iIntros (?). rewrite H; eauto. }
+    { iApply _frame; iIntros (?). rewrite H; eauto. }
+    { iApply _frame; iIntros (?). rewrite H; eauto. }
   Qed.
   #[global] Instance M_equiv_sym {T} : Symmetric (≡@{M T}).
   Proof.
@@ -188,7 +194,7 @@ Section M.
     fun a b =>
       forall K1 K2, (forall x, K1 x ⊢ K2 x) -> a K1 ⊢ b K2.
   #[global] Instance M_subseteq_refl {T} : Reflexive (⊆@{M T}).
-  Proof. repeat intro. iApply _ok; iIntros (?); iApply H. Qed.
+  Proof. repeat intro. iApply _frame; iIntros (?); iApply H. Qed.
   #[global] Instance M_subseteq_trans {T} : Transitive (⊆@{M T}).
   Proof.
     repeat intro. etrans.
@@ -196,11 +202,23 @@ Section M.
     { iApply H0. apply H1. }
   Qed.
 
-  (** The distance metric on [M].
-   *)
+  (** The distance metric on [M]. *)
   #[global] Instance M_Dist {T} : Dist (M T) :=
     fun n (a b : M T) =>
       forall K1 K2, (forall x, K1 x ≡{n}≡ K2 x) -> a K1 ≡{n}≡ b K2.
+
+  #[global] Instance M_Dist_refl {T} : forall n, Reflexive (dist (A:=M T) n).
+  Proof. intros; intro. red; red. simpl. apply _ne. Qed.
+  #[global] Instance M_Dist_sym {T} : forall n, Symmetric (dist (A:=M T) n).
+  Proof.
+    intros; intro. red; red. simpl. intros.
+    symmetry. apply H. intros. symmetry. apply H0.
+  Qed.
+  #[global] Instance M_Dist_trans {T} : forall n, Transitive (dist (A:=M T) n).
+  Proof.
+    intros; intro. red; red. simpl. intros.
+    etrans. eapply H. eassumption. eapply H0. done.
+  Qed.
 
   #[global,program]
   Instance M_ret : MRet M :=
@@ -208,21 +226,29 @@ Section M.
   Next Obligation.
     intros; simpl. iIntros "X"; iApply "X".
   Qed.
+  Next Obligation. intros; simpl. auto. Qed.
   #[global,program]
   Instance M_map : FMap M :=
     fun _ _ f m => {| _wp K := m.(_wp) (fun t => K (f t)) |}.
   Next Obligation.
     intros; simpl.
-    iIntros "X"; iApply _ok.
+    iIntros "X"; iApply _frame.
     iIntros (?); iApply "X".
+  Qed.
+  Next Obligation.
+    intros; simpl. apply _ne. eauto.
   Qed.
   #[global,program]
   Instance M_bind : MBind M :=
     fun _ _ k c =>
       {| _wp K := c (fun v => (k v).(_wp) K) |}.
   Next Obligation.
-    simpl; intros. iIntros "K"; iApply _ok.
-    iIntros (?). iApply _ok. done.
+    simpl; intros. iIntros "K"; iApply _frame.
+    iIntros (?). iApply _frame. done.
+  Qed.
+  Next Obligation.
+    simpl; intros. apply _ne. intros.
+    apply _ne. eauto.
   Qed.
 
   (** *** Additional Monad Operators *)
@@ -240,10 +266,10 @@ Section M.
   ; demonic T := {| _wp K := ∀ x : T, K x |}%I
   ; produce P := {| _wp K := P -∗ K () |}%I
   ; consume P := {| _wp K := P ∗ K () |}%I
-  ; read step _ P := {| _wp K := ∃.. x, (tele_app P x ∗ True) ∧ ▷?step K x |}%I
-  ; update step _ _ P Q :=
+  ; check _ P := {| _wp K := ∃.. x, (tele_app P x ∗ True) ∧ K x |}%I
+  ; update _ _ P Q :=
       {| _wp K := ∃.. x, tele_app P x ∗
-                           (∀.. y, tele_app (tele_app Q x) y -∗ ▷?step K (tele_arg_append_simple x y)) |}%I
+                           (∀.. y, tele_app (tele_app Q x) y -∗ K (tele_arg_append_simple x y)) |}%I
   ; contra _ := {| _wp _K := True |}%I
   ; ub _ := {| _wp _K := False |}%I
   ; step := {| _wp K := ▷ K () |}%I
@@ -319,6 +345,7 @@ End M.
 #[global] Arguments M _ _ : clear implicits.
 End M.
 
+(** TODO: End generic, begin C++-specific *)
 
 (* This is effectively [Writer] *)
 Module with_temps.
@@ -353,6 +380,40 @@ Section with_temps.
   Definition M := Compose.M (M.M PROP) Result.
   Definition mk {T} (m : M.M PROP (Result T)) : M T :=
     Compose.mk m.
+  Definition prun {T} (m : M T) : M.M PROP (Result T) :=
+    Compose._prun m.
+
+  Definition _wp {T} (m : M T) := M._wp (prun m).
+
+  (* The canonical notion of equivalence on [M _] *)
+  #[global] Instance M_equiv [T] : Equiv (M T) :=
+    fun a b => Compose._prun a ≡ Compose._prun b.
+  #[global] Instance M_equiv_refl {T} : Reflexive (≡@{M T}).
+  Proof. do 3 red; intros; reflexivity. Qed.
+  #[global] Instance M_equiv_sym {T} : Symmetric (≡@{M T}).
+  Proof. do 3 red; intros; symmetry; done. Qed.
+  #[global] Instance M_equiv_trans {T} : Transitive (≡@{M T}).
+  Proof. do 3 red; intros; etrans; eassumption. Qed.
+
+  (* The canonical notation of approximation/entailment
+     Effectively, [a ⊆ b] if all behaviors of [a] are included in [b].
+   *)
+  #[global] Instance M_subseteq {T} : SubsetEq (M T) :=
+    fun a b => Compose._prun a ⊆ Compose._prun b.
+  #[global] Instance M_subseteq_refl {T} : Reflexive (⊆@{M T}).
+  Proof. do 3 red; intros; reflexivity. Qed.
+  #[global] Instance M_subseteq_trans {T} : Transitive (⊆@{M T}).
+  Proof. do 3 red; intros; etrans; eassumption. Qed.
+
+  (** The distance metric on [M]. *)
+  #[global] Instance M_Dist {T} : Dist (M T) :=
+    fun n (a b : M T) => Compose._prun a ≡{n}≡ Compose._prun b.
+  #[global] Instance M_Dist_refl {T} : forall n, Reflexive (dist (A:=M T) n).
+  Proof. do 3 red; intros; reflexivity. Qed.
+  #[global] Instance M_Dist_sym {T} : forall n, Symmetric (dist (A:=M T) n).
+  Proof. do 3 red; intros; symmetry; done. Qed.
+  #[global] Instance M_Dist_trans {T} : forall n, Transitive (dist (A:=M T) n).
+  Proof. do 3 red; intros; etrans; eassumption. Qed.
 
   #[global]
   Instance M_ret : MRet M := Compose._MRet.
@@ -366,7 +427,13 @@ Section with_temps.
                                 mbind (fun x => mret {| _result := x.(_result)
                                                    ; _free := FreeTemps.canon (x.(_free) >*> r.(_free))
                                                    ; _canon := _ |}) (k r.(_result)).(Compose._prun)) x.(Compose._prun)).
+
   #[global] Typeclasses Opaque M.
+
+  Definition push_free (f : FreeTemps.t) : M () :=
+    Compose.mk $ mret {| _result := ()
+                       ; _free := FreeTemps.canon f
+                       ; _canon := _ |}.
 
 End with_temps.
 #[global] Arguments M _ _ : clear implicits.
@@ -375,7 +442,6 @@ End with_temps.
 Module Mglobal.
 Section Mglobal.
   Import UPoly.
-  Context `{PROP : bi}.
 
   Variant Result {t} : Type :=
   | Normal (_ : t)
@@ -395,8 +461,45 @@ Section Mglobal.
       | Exception t p => Exception t p
       end.
 
-  (* the monad for expression evaluation *)
-  Definition M t := M.M PROP (Result t).
+  #[local] Notation PROP := (mpredI).
+
+  (* the monad for global evaluation *)
+  Definition M `{Σ : cpp_logic} t := M.M PROP (Result t).
+
+  Context `{Σ : cpp_logic}.
+
+  Definition _wp {T} (m : M T) := M._wp m.
+
+  (* The canonical notion of equivalence on [M _] *)
+  #[global] Instance M_equiv [T] : Equiv (M T) :=
+    fun a b => a ≡ b.
+  #[global] Instance M_equiv_refl {T} : Reflexive (≡@{M T}).
+  Proof. do 3 red; intros; reflexivity. Qed.
+  #[global] Instance M_equiv_sym {T} : Symmetric (≡@{M T}).
+  Proof. do 3 red; intros; symmetry; done. Qed.
+  #[global] Instance M_equiv_trans {T} : Transitive (≡@{M T}).
+  Proof. do 3 red; intros; etrans; eassumption. Qed.
+
+  (* The canonical notation of approximation/entailment
+     Effectively, [a ⊆ b] if all behaviors of [a] are included in [b].
+   *)
+  #[global] Instance M_subseteq {T} : SubsetEq (M T) :=
+    fun a b => a ⊆ b.
+  #[global] Instance M_subseteq_refl {T} : Reflexive (⊆@{M T}).
+  Proof. do 3 red; intros; reflexivity. Qed.
+  #[global] Instance M_subseteq_trans {T} : Transitive (⊆@{M T}).
+  Proof. do 3 red; intros; etrans; eassumption. Qed.
+
+  (** The distance metric on [M]. *)
+  #[global] Instance M_Dist {T} : Dist (M T) :=
+    fun n (a b : M T) => a ≡{n}≡ b.
+  #[global] Instance M_Dist_refl {T} : forall n, Reflexive (dist (A:=M T) n).
+  Proof. do 3 red; intros; reflexivity. Qed.
+  #[global] Instance M_Dist_sym {T} : forall n, Symmetric (dist (A:=M T) n).
+  Proof. do 3 red; intros; symmetry; done. Qed.
+  #[global] Instance M_Dist_trans {T} : forall n, Transitive (dist (A:=M T) n).
+  Proof. do 3 red; intros; etrans; eassumption. Qed.
+
 
   #[global]
   Instance M_ret : MRet M :=
@@ -413,10 +516,10 @@ Section Mglobal.
                                 end).
 
   #[global] Typeclasses Opaque M.
-
+  #[global] Declare Instance _WpMonad : WpMonad PROP M.
 End Mglobal.
-#[global] Arguments M _ _ : clear implicits.
 End Mglobal.
+Notation Mglobal := Mglobal.M (only parsing).
 
 (** The monad [Mexpr.M] represents the semantic domain of expressions.
     Expressions can terminate in one of the following ways:
@@ -432,7 +535,6 @@ End Mglobal.
 Module Mexpr.
 Section Mexpr.
   Import UPoly.
-  Context `{PROP : bi}.
 
   (* continuations
    * C++ statements can terminate in 4 ways.
@@ -485,75 +587,87 @@ Section Mexpr.
       | ReturnVoid => ReturnVoid
       end.
 
-  Definition M := Compose.M (with_temps.M PROP) Result.
-  Definition mk {T} (m : with_temps.M PROP (Result T)) : M T :=
-    Compose.mk m.
+  #[local] Notation PROP := mpredI.
+
+  Definition M `{Σ : cpp_logic} := Compose.M (with_temps.M PROP) Result.
+
+  Context `{Σ : cpp_logic}.
+
+  Definition mk {T} (m : M.M PROP (with_temps.Result (Result T))) : M T :=
+    Compose.mk (Compose.mk m).
   Definition prun {T} (m : M T) : M.M PROP (with_temps.Result (Result T)) :=
-    m.(Compose._prun).(Compose._prun).
+    Compose._prun $ Compose._prun m.
+
+  Definition _wp {T} (m : M T) := M._wp (prun m).
+
+  (* The canonical notion of equivalence on [M _] *)
+  #[global] Instance M_equiv [T] : Equiv (M T) :=
+    fun a b => Compose._prun a ≡ Compose._prun b.
+  #[global] Instance M_equiv_refl {T} : Reflexive (≡@{M T}).
+  Proof. do 3 red; intros; reflexivity. Qed.
+  #[global] Instance M_equiv_sym {T} : Symmetric (≡@{M T}).
+  Proof. do 3 red; intros; symmetry; done. Qed.
+  #[global] Instance M_equiv_trans {T} : Transitive (≡@{M T}).
+  Proof. do 3 red; intros; etrans; eassumption. Qed.
+
+  (* The canonical notation of approximation/entailment
+     Effectively, [a ⊆ b] if all behaviors of [a] are included in [b].
+   *)
+  #[global] Instance M_subseteq {T} : SubsetEq (M T) :=
+    fun a b => Compose._prun a ⊆ Compose._prun b.
+  #[global] Instance M_subseteq_refl {T} : Reflexive (⊆@{M T}).
+  Proof. do 3 red; intros; reflexivity. Qed.
+  #[global] Instance M_subseteq_trans {T} : Transitive (⊆@{M T}).
+  Proof. do 3 red; intros; etrans; eassumption. Qed.
+
+  (** The distance metric on [M]. *)
+  #[global] Instance M_Dist {T} : Dist (M T) :=
+    fun n (a b : M T) => Compose._prun a ≡{n}≡ Compose._prun b.
+  #[global] Instance M_Dist_refl {T} : forall n, Reflexive (dist (A:=M T) n).
+  Proof. do 3 red; intros; reflexivity. Qed.
+  #[global] Instance M_Dist_sym {T} : forall n, Symmetric (dist (A:=M T) n).
+  Proof. do 3 red; intros; symmetry; done. Qed.
+  #[global] Instance M_Dist_trans {T} : forall n, Transitive (dist (A:=M T) n).
+  Proof. do 3 red; intros; etrans; eassumption. Qed.
 
   #[global] Instance _MRet : MRet M := Compose._MRet.
   #[global] Instance _FMap : FMap M := Compose._FMap.
   #[global] Instance _Ap : Ap M := Compose._Ap.
   #[global] Instance _MBind : MBind M :=
-    fun _ _ k m => Compose.mk (mbind (fun r => match r with
-                                         | Normal v => (k v).(Compose._prun)
-                                         | Exception ty p => mret (Exception ty p)
-                                         | Break => mret Break
-                                         | Continue => mret Continue
-                                         | ReturnVoid => mret ReturnVoid
-                                         | ReturnVal p => mret $ ReturnVal p
-                                         end) m.(Compose._prun)).
+    fun _ _ k m => Compose.mk $ mbind (M:=with_temps.M PROP)
+                  (fun r =>
+                     match r with
+                     | Normal v => (k v).(Compose._prun)
+                     | Exception ty p => mret (Exception ty p)
+                     | Break => mret Break
+                     | Continue => mret Continue
+                     | ReturnVoid => mret ReturnVoid
+                     | ReturnVal p => mret $ ReturnVal p
+                     end) (Compose._prun m).
+
+  #[global] Declare Instance _WpMonad : WpMonad PROP M.
+
+  Definition push_free (f : FreeTemps.t) : M () :=
+    Compose.mk $ Normal <$> with_temps.push_free f.
+
 End Mexpr.
-#[global] Arguments M _ _ : clear implicits.
 End Mexpr.
+Notation Mlocal := Mexpr.M (only parsing).
 
 Section with_prop.
   Import UPoly.
-  Context {PROP : bi}.
+  Context `{Σ : cpp_logic}.
 
-  Definition to_local {T} (m : Mglobal.M PROP T) : Mexpr.M  PROP T :=
+  Definition to_local {T} (m : Mglobal.M T) : Mexpr.M T :=
     Compose.mk (with_temps.mk ((fun r => mret (M:=with_temps.Result)
                                         match r with
                                         | Mglobal.Normal v => Mexpr.Normal v
                                         | Mglobal.Exception ty p => Mexpr.Exception ty p
                                         end) <$> m)).
+End with_prop.
 
-  #[program]
-  Definition non_atomically `{BiFUpd PROP} {T} (m : Mexpr.M PROP T) : Mexpr.M PROP T :=
-    Mexpr.mk (with_temps.mk {| M._wp K := |={top}=> (Mexpr.prun m).(M._wp) (fun r => |={top}=> K r) |})%I.
-  Next Obligation.
-    simpl. intros. iIntros "K >X !>".
-    iRevert "X"; iApply M._ok. iIntros (?) ">X !>". iRevert "X"; iApply "K".
-  Qed.
-
-  #[program]
-  Definition atomically `{BiFUpd PROP} {T} (m : Mexpr.M PROP T) : Mexpr.M PROP T :=
-    Mexpr.mk (with_temps.mk {| M._wp K := |={top,∅}=> (Mexpr.prun m).(M._wp) (fun r => |={∅,top}=> K r) |})%I.
-  Next Obligation.
-    simpl. intros. iIntros "K >X !>".
-    iRevert "X"; iApply M._ok. iIntros (?) ">X !>". iRevert "X"; iApply "K".
-  Qed.
-
-  Require Import bedrock.prelude.telescopes.
-  Search tele.
-
-  Definition update (step : bool) {TT1 TT2 : tele} (P : TT1 -t> PROP)
-                    (Q : TT1 -t> TT2 -t> PROP)
-    : Mexpr.M PROP (tele_arg (tele_append TT1 (tele_bind (fun _ : TT1 => TT2)))).
-  refine (
-      Mexpr.mk (with_temps.mk {| M._wp K := ∃.. x : TT1, _ |}%I).
-    ).
-
-(** [Mglobal] -- normal + exceptions
-      = M ((type * ptr) + t)
-    [Mexpr] -- (normal + exceptions + break + return + continue) * freetemps
-      = M (Result (ReturnType t))
- *)
-
-
-
-
-
+(***
+(** V1 *)
 
 Module M.
 Section M.
@@ -695,12 +809,8 @@ End Mlocal.
       = M (Result (ReturnType t))
  *)
 
+(** V2 *)
 
-
-
-
-
->>>>>>> theirs
 Section with_cpp.
   Context `{Σ : cpp_logic}.
 
@@ -1561,4 +1671,6 @@ Section with_cpp.
   Parameter heval : forall (eo : evaluation_order.t) {ts} (x : tuple (M <$> ts)), M (tuple ts).
 End with_cpp.
 
-Notation "'letWP*' v := e 'in' k" := (mbind (fun v => k) e) (at level 0, v binder, k at level 200, only parsing).
+*)
+
+Notation "'letWP*' v := e 'in' k" := (UPoly.mbind (fun v => k) e) (at level 0, v binder, k at level 200, only parsing).
