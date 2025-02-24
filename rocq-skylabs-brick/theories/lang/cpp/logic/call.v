@@ -179,7 +179,7 @@ Section with_resolve.
      2. the result of evaluating [es]
      3. the immediate destructions, i.e. the object destructions that should occur immediately
         after the function returns.
-     4. the delayed destructions, i.e. the destructionst that should occur at the end of the
+     4. the delayed destructions, i.e. the destructions that should occur at the end of the
         full expression. The [FreeTemps] accounts for the correct destruction order.
 
      Unlike [es], [pre] is expressed directly as a semantic computation in order to unify the
