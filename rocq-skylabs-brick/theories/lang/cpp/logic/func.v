@@ -64,6 +64,7 @@ End Kreturn.
 (** ** Binding parameters *)
 Import UPoly.
 
+(*
 Definition wp_make_mutables `{Σ : cpp_logic, σ : genv} (tu : translation_unit) :=
   fix wp_make_mutables (args : list (ptr * decltype)) : Mglobal () :=
   match args with
@@ -71,7 +72,7 @@ Definition wp_make_mutables `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
   | p :: args => letWP* '() := wp_make_mutables args in wp_make_mutable tu p.1 p.2
   end.
 #[global] Hint Opaque wp_make_mutables : typeclass_instances.
-
+*)
 (*
 Section with_cpp.
   Context `{Σ : cpp_logic, σ : genv}.
@@ -116,18 +117,18 @@ mutable again in the second argument to [Q].
 *)
 Definition bind_vars `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ar : function_arity) :=
   fix bind_vars (ts : list (ident * decltype)) (args : list ptr)
-    (ρ : option ptr -> region) : Mglobal (region * list (ptr * decltype)) :=
+    (ρ : option ptr -> region) : Mlocal region :=
   match ts with
   | nil =>
     match ar with
     | Ar_Definite =>
       match args with
-      | nil => mret (ρ None, [])
+      | nil => mret (ρ None)
       | _ :: _ => Merror "bind_vars: extra arguments"
       end
     | Ar_Variadic =>
       match args with
-      | vap :: nil => mret ((ρ $ Some vap), [])
+      | vap :: nil => mret (ρ $ Some vap)
       | _ => Merror "bind_vars: variadic function missing varargs"
       end
     end
@@ -142,8 +143,9 @@ Definition bind_vars `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ar : 
       let qty := decompose_type xty.2 in
       let ty := qty.2 in
       if q_const qty.1 then
-        letWP* '() := wp_make_const tu p ty in
-        (fun '(ρ, consts) => (ρ, (p,ty) :: consts)) <$> bind_vars ts args (fun vap => Rbind xty.1 p $ ρ vap)
+        letWP* '() := to_local $ wp_make_const tu p ty in
+        letWP* '() := Mexpr.push_free (FreeTemps.mutable ty p) in
+        bind_vars ts args (fun vap => Rbind xty.1 p $ ρ vap)
       else
         bind_vars ts args (fun vap => Rbind xty.1 p $ ρ vap)
     | nil => Merror "bind_vars: insufficient arguments"
@@ -174,40 +176,58 @@ End with_cpp.
 
 (** ** The weakest precondition of a function *)
 
+Definition Mreturn `{Σ : cpp_logic} {σ : genv} (tu : translation_unit) (m : Mexpr.M ()) : Mglobal.M ptr :=
+  mbind (M:=M.M mpredI) (fun r => match r.(with_temps._result) with
+                               | Mexpr.Exception ty p =>
+                                   mret $ Mglobal.Exception ty p
+                               | Mexpr.ReturnVal p => mret $ Mglobal.Normal p
+                               | Mexpr.ReturnVoid
+                               | Mexpr.Normal () =>
+                                   letWP* (p : ptr) := demonic ptr in
+                                   letWP* '() := produce (p |-> primR "void" (cQp.m 1) Vvoid) in
+                                   mret (M:=M.M mpredI) (Mglobal.Normal p)
+                               | Mexpr.Continue | Mexpr.Break => ub
+                               end) (Mexpr.prun $ Mfree_all tu m).
+
 (**
 NOTE: The fancy updates in `wp_func` and friends are not in the right
 place to support `XX_shift` lemmas. This could be fixed.
 *)
-#[local] Definition wp_func' `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
+#[local] Definition wp_func_body `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
     (f : Func) (args : list ptr) : Mglobal ptr :=
   match f.(f_body) with
-  | None => ERROR "wp_func: no body"
+  | None => Merror "wp_func: no body"
   | Some body =>
     match body with
     | Impl body =>
       let ρ vap := Remp None vap f.(f_return) in
-      letWP* '(ρ, cleanup) := bind_vars tu f.(f_arity) f.(f_params) args ρ in
-      letWP* '() := step in
-      wp tu ρ body (Kcleanup tu cleanup $ Kreturn $ fun x => |={top}=>?u |> Q x)
+      Mreturn tu $ non_atomically $
+        letWP* ρ := bind_vars tu f.(f_arity) f.(f_params) args ρ in
+        letWP* '() := step in
+        wp tu ρ body
+            (* (Kcleanup tu cleanup $ Kreturn $ fun x => |={top}=>?u |> Q x) *)
     | Builtin builtin =>
       let ts := List.map snd f.(f_params) in
-      wp_builtin_func builtin (Tfunction $ @FunctionType _ f.(f_cc) f.(f_arity) f.(f_return) ts) args Q
+      Merror "TODO" (* wp_builtin_func builtin (Tfunction $ @FunctionType _ f.(f_cc) f.(f_arity) f.(f_return) ts) args Q *)
     end
   end.
 mlock Definition wp_func `{Σ : cpp_logic, σ : genv} :=
-  Cbn (Reduce (wp_func' true)).
-#[global] Arguments wp_func {_ _ _ _} _ _ _ _%_I : assert.	(* mlock bug *)
+  Cbn (Reduce (wp_func_body true)).
+#[global] Arguments wp_func {_ _ _ _} _ _ _ : assert.	(* mlock bug *)
 
+(* TODO: About fs_spec. *)
+
+(*
 Definition func_ok `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
     (f : Func) (spec : function_spec) : mpred :=
   [| type_of_spec spec = type_of_value (Ofunction f) |] **
-  □ Forall (Q : ptr -> epred) vals,
-  spec.(fs_spec) vals Q -* wp_func tu f vals Q.
+  □ Forall vals, spec.(fs_spec) vals ⊆ wp_func tu f vals.
+*)
 
 Section wp_func.
   Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (Q : ptr -> epred).
 
+  (*
   Lemma wp_func_frame tu tu' f args Q Q' :
     sub_module tu tu' ->
     Forall p, Q p -* Q' p
@@ -222,25 +242,22 @@ Section wp_func.
     iApply Kreturn_frame. iIntros (?) "Q".
     iApply ("HQ" with "Q").
   Qed.
+  *)
 
+  (*
   (** Unsupported *)
   Lemma wp_func_shift tu f args Q :
     (|={top}=> wp_func tu f args (fun p => |={top}=> Q p))
     |-- wp_func tu f args Q.
   Abort.
+  *)
 
-  Lemma wp_func_intro tu f args Q :
-    Cbn (Reduce (wp_func' false tu f args Q)) |-- wp_func tu f args Q.
-  Proof.
-    rewrite wp_func.unlock. repeat case_match; auto.
-    iApply bind_vars_frame; [done|]. iIntros (??) "wp !>"; iRevert "wp".
-    iApply wp_frame; [done|]. iIntros (?).
-    iApply Kcleanup_frame; [done|].
-    iApply Kreturn_frame. auto.
-  Qed.
+  Lemma wp_func_intro tu f args :
+    Cbn (Reduce (wp_func_body false tu f args)) ⊆ wp_func tu f args.
+  Proof. by rewrite wp_func.unlock. Qed.
 
-  Lemma wp_func_elim tu f args Q :
-    wp_func tu f args Q |-- Cbn (Reduce (wp_func' true tu f args Q)).
+  Lemma wp_func_elim tu f args :
+    wp_func tu f args ⊆ Cbn (Reduce (wp_func_body true tu f args)).
   Proof. by rewrite wp_func.unlock. Qed.
 End wp_func.
 
@@ -250,34 +267,38 @@ Note that in the calling convention for methods, the [this] parameter
 is passed directly rather than being materialized like normal
 parameters.
 *)
-#[local] Definition wp_method' `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
-    (m : Method) (args : list ptr) (Q : ptr -> epred) : mpred :=
+#[local] Definition wp_method_body `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
+    (m : Method) (args : list ptr) : Mglobal ptr :=
   match m.(m_body) with
-  | None => ERROR "wp_method: no body"
+  | None => Merror "wp_method: no body"
   | Some (UserDefined body) =>
     match args with
     | thisp :: rest_vals =>
       let ρ va := Remp (Some thisp) va m.(m_return) in
-      letI* ρ, cleanup := bind_vars tu m.(m_arity) m.(m_params) rest_vals ρ in
-      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn $ fun x => |={top}=>?u |> Q x)
-    | _ => ERROR "wp_method: no arguments"
+      Mreturn tu $ non_atomically $
+        letWP* ρ := bind_vars tu m.(m_arity) m.(m_params) rest_vals ρ in
+        letWP* '() := step in
+        wp tu ρ body
+    | _ => Merror "wp_method: no arguments"
     end
-  | Some _ => UNSUPPORTED "wp_method: defaulted methods"
+  | Some _ => Munsupported "wp_method: defaulted methods"
   end.
 mlock Definition wp_method `{Σ : cpp_logic, σ : genv} :=
-  Cbn (Reduce (wp_method' true)).
-#[global] Arguments wp_method {_ _ _ _} _ _ _ _%_I : assert.	(* mlock bug *)
+  Cbn (Reduce (wp_method_body true)).
+#[global] Arguments wp_method {_ _ _ _} _ _ _ : assert.	(* mlock bug *)
 
+(*
 Definition method_ok `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
     (m : Method) (spec : function_spec) : mpred :=
   [| type_of_spec spec = type_of_value (Omethod m) |] **
   □ Forall (Q : ptr -> mpred) vals,
   spec.(fs_spec) vals Q -* wp_method tu m vals Q.
+*)
 
 Section wp_method.
   Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (Q : ptr -> epred).
 
+  (*
   Lemma wp_method_frame tu tu' m args Q Q' :
     sub_module tu tu' ->
     Forall p, Q p -* Q' p
@@ -291,25 +312,22 @@ Section wp_method.
     iApply Kreturn_frame. iIntros (?) "Q".
     iApply ("HQ" with "Q").
   Qed.
+  *)
 
+  (*
   (** Unsupported *)
   Lemma wp_method_shift tu m args Q :
     (|={top}=> wp_method tu m args (fun p => |={top}=> Q p))
     |-- wp_method tu m args Q.
   Abort.
+  *)
 
-  Lemma wp_method_intro tu m args Q :
-    Cbn (Reduce (wp_method' false tu m args Q)) |-- wp_method tu m args Q.
-  Proof.
-    rewrite wp_method.unlock. do 3!f_equiv.
-    iApply bind_vars_frame; [done|]. iIntros (??) "wp !>"; iRevert "wp".
-    iApply wp_frame; [done|]. iIntros (?).
-    iApply Kcleanup_frame; [done|].
-    iApply Kreturn_frame. auto.
-  Qed.
+  Lemma wp_method_intro tu m args :
+    Cbn (Reduce (wp_method_body false tu m args)) ⊆ wp_method tu m args.
+  Proof. by rewrite wp_method.unlock. Qed.
 
-  Lemma wp_method_elim tu m args Q :
-    wp_method tu m args Q |-- Cbn (Reduce (wp_method' true tu m args Q)).
+  Lemma wp_method_elim tu m args :
+    wp_method tu m args ⊆ Cbn (Reduce (wp_method_body true tu m args)).
   Proof. by rewrite wp_method.unlock. Qed.
 End wp_method.
 
@@ -509,10 +527,12 @@ updating the [derivationR] of all base classes (transitively) and
 producing the new identity for "this".
 *)
 Definition wp_init_identity `{Σ : cpp_logic, σ : genv} (p : ptr) (tu : translation_unit)
-    (cls : globname) (Q : mpred) : mpred :=
-  p |-> derivationsR tu false cls [] 1$m **
-  (p |-> derivationsR tu true cls [cls] 1$m -* Q).
+    (cls : globname) : Mglobal () :=
+  update (TT1:=[tele]) (TT2:=[tele])
+    (p |-> derivationsR tu false cls [] (cQp.mut 1))
+    (p |-> derivationsR tu true cls [cls] (cQp.mut 1)).
 
+(*
 Section wp_init_identity.
   Context `{Σ : cpp_logic, σ : genv}.
   Implicit Types (p : ptr) (Q : mpred).
@@ -530,6 +550,7 @@ Section wp_init_identity.
     iApply derivationsR_ok_supports; eauto.
   Qed.
 End wp_init_identity.
+*)
 
 (**
 [wp_revert_identity this tu cls Q] updates the identities of [this] by
@@ -538,14 +559,16 @@ taking the [identity] of this class and transitively updating the
 class.
 *)
 Definition wp_revert_identity `{Σ : cpp_logic, σ : genv} (p : ptr) (tu : translation_unit)
-    (cls : globname) (Q : mpred) : mpred :=
-  p |-> derivationsR tu true cls [cls] 1$m **
-  (p |-> derivationsR tu false cls [] 1$m -* Q).
+    (cls : globname) : Mglobal () :=
+  update (TT1:=[tele]) (TT2:=[tele])
+    (p |-> derivationsR tu true cls [cls] (cQp.mut 1))
+    (p |-> derivationsR tu false cls [] (cQp.mut 1)).
 
 Section with_cpp.
   Context `{Σ : cpp_logic, σ : genv}.
   Implicit Types (p : ptr) (Q : mpred).
 
+  (*
   Lemma wp_revert_identity_frame p tu tu' cls Q Q' :
     sub_module tu tu' ->
     Q' -* Q |-- wp_revert_identity p tu cls Q' -* wp_revert_identity p tu' cls Q.
@@ -558,7 +581,9 @@ Section with_cpp.
     iApply "Y".
     iApply derivationsR_ok_supports; eauto.
   Qed.
+  *)
 
+  (* TODO: revive
   (** sanity chect that initialization and revert are inverses *)
   Lemma wp_init_revert p tu cls Q :
     let REQ := p |-> derivationsR tu false cls [] 1$m in
@@ -568,6 +593,7 @@ Section with_cpp.
     rewrite /wp_revert_identity/wp_init_identity.
     iIntros "[$ $] $ $".
   Qed.
+  *)
 End with_cpp.
 
 (** ** Weakest precondition of a constructor *)
@@ -577,9 +603,9 @@ Initialization of members in the initializer list
 *)
 Definition wpi_members `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ρ : region)
     (cls : globname) (this : ptr) (inits : list Initializer) :=
-  fix wpi_members (members : list Member) (Q : epred) : mpred :=
+  fix wpi_members (members : list Member) : Mlocal () :=
   match members with
-  | nil => Q
+  | nil => mret ()
   | m :: members =>
     let initializer_for (i : Initializer) :=
       match i.(init_path) with
@@ -592,24 +618,24 @@ Definition wpi_members `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ρ 
     | nil =>
       (*
       there is no initializer for this member, so we "default
-      initialize" it (see https://eel.is/c++draft/dcl.init#general-7 )
+      initialize" it (see <https://eel.is/c++draft/dcl.init#general-7>)
       *)
-      let* frees :=
-        default_initialize tu m.(mem_type)
+      letWP* '() :=
+        Mfree_all tu $ default_initialize tu m.(mem_type)
           (this ,, _field (Field cls m.(mem_name)))
       in
-      let* := interp tu frees in
-      wpi_members members Q
+      wpi_members members
     | i :: is' =>
       match i.(init_path) with
       | InitField _ (* = m.(mem_name) *) =>
         match is' with
         | nil =>
           (* there is a *unique* initializer for this field *)
-          wpi tu ρ cls this m.(mem_type) i (wpi_members members Q)
+          letWP* '() := wpi tu ρ cls this m.(mem_type) i in
+          wpi_members members
         | _ =>
           (* there are multiple initializers for this field *)
-          ERROR ("multiple initializers for field", (cls, m))
+          Merror ("multiple initializers for field", (cls, m))
         end
       | InitIndirect _ _ =>
         (*
@@ -618,8 +644,8 @@ Definition wpi_members `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ρ 
 
         TODO currently not supported
         *)
-        UNSUPPORTED ("indirect initialization", (cls, m))
-      | _ => False%I (* unreachable due to the filter *)
+        Munsupported ("indirect initialization", (cls, m))
+      | _ => Merror "unreachable"(* unreachable due to the filter *)
       end
     end
   end.

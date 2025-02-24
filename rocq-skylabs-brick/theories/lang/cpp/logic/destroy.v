@@ -1066,6 +1066,8 @@ emp] is not provable unless [Q] is affine.
   | FreeTemps.par f g => non_atomically $ letWP* _ := (* Mpar (interp tu f) (interp tu g) *) mret () in UPoly.mret ()
   | FreeTemps.delete ty addr => destroy_val tu ty addr
   | FreeTemps.delete_va va addr => non_atomically $ consume (addr |-> varargsR va)
+  | FreeTemps.const ty p => non_atomically $ wp_make_const tu p ty
+  | FreeTemps.mutable ty p => non_atomically $ wp_make_mutable tu p ty
   end.
 
 mlock Definition interp `{Σ : cpp_logic, σ : genv}
@@ -1103,6 +1105,8 @@ Section temps.
     | FreeTemps.par f g => letWP* _ := (* Mpar (interp tu f) (interp tu g) *) mret () in mret () (* TODO *)
     | FreeTemps.delete ty addr => destroy_val tu ty addr
     | FreeTemps.delete_va va addr => consume (addr |-> varargsR va)
+    | FreeTemps.const ty p => non_atomically $ wp_make_const tu p ty
+    | FreeTemps.mutable ty p => non_atomically $ wp_make_mutable tu p ty
     end
     ⊆ interp tu free.
   Proof.

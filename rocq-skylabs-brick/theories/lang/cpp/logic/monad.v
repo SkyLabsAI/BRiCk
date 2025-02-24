@@ -690,6 +690,7 @@ Notation Mlocal := Mexpr.M (only parsing).
 Section with_prop.
   Import UPoly.
   Context `{Σ : cpp_logic}.
+  #[local] Notation PROP := mpredI (only parsing).
 
   Definition to_local {T} (m : Mglobal.M T) : Mexpr.M T :=
     Compose.mk (with_temps.mk ((fun r => mret (M:=with_temps.Result)
@@ -697,6 +698,7 @@ Section with_prop.
                                         | Mglobal.Normal v => Mexpr.Normal v
                                         | Mglobal.Exception ty p => Mexpr.Exception ty p
                                         end) <$> m)).
+
 End with_prop.
 
 (***
