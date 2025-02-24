@@ -575,9 +575,9 @@ Section Mexpr.
   #[global] Instance Result_inh {T} : Inhabited (Result T).
   Proof. constructor; apply Break. Qed.
 
-  Instance Result_MRet : MRet Result :=
+  #[global] Instance Result_MRet : MRet Result :=
     fun _ => Normal.
-  Instance Result_FMap : FMap Result :=
+  #[global] Instance Result_FMap : FMap Result :=
     fun _ _ f x =>
       match x with
       | Normal x => Normal (f x)
@@ -587,7 +587,7 @@ Section Mexpr.
       | ReturnVal p => ReturnVal p
       | ReturnVoid => ReturnVoid
       end.
-  Instance Result_Ap : Ap Result :=
+  #[global] Instance Result_Ap : Ap Result :=
     fun _ _ f x =>
       match f with
       | Normal f =>

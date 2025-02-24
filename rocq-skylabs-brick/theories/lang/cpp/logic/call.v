@@ -84,6 +84,7 @@ Section with_resolve.
   Context `{Σ : cpp_logic} {σ : genv} (tu : translation_unit).
   Variables (ρ : region).
   Implicit Types (p : ptr).
+  Import UPoly.
 
   (* [wp_arg ty e K] evaluates [e] to initialize a parameter of type [ty].
 
@@ -96,11 +97,11 @@ Section with_resolve.
            not observable.
    *)
   #[local]
-  Definition wp_arg (ty : decltype) e : M ptr :=
-    letWP* p := Mnd ptr in
+  Definition wp_arg (ty : decltype) e : Mlocal ptr :=
+    letWP* p := demonic ptr in
     letWP* free := wp_initialize tu ρ ty p e in
-    letWP* '() := Mpush_free free in
-    Mret p.
+    letWP* '() := Mexpr.push_free free in
+    mret p.
   #[global] Arguments wp_arg _ _ /.
 
   (*
@@ -136,27 +137,39 @@ Section with_resolve.
           (FreeTemps.id, f)
     | FreeTemps.delete_va tys p =>
         (f, FreeTemps.id)
+    | FreeTemps.const ty p => (FreeTemps.const ty p, FreeTemps.id)
+    | FreeTemps.mutable ty p => (FreeTemps.const ty p, FreeTemps.id)
     end%free.
 
   (* destroys trivally destructible objects at the top of the frees *)
-  #[program]
-  Definition Mdestroy_trivial {T} (m : M T) : M T :=
-    {| _wp K := m.(_wp) (fun v free _ =>
-                           let '(tfree, free) := partition_trivial free in
-                           destroy.interp tu tfree $ K v (FreeTemps.canon free) _) |}.
-  Next Obligation.
-    simpl; intros.
-    iIntros "K".
-    iApply _ok; iIntros (???).
-    case_match.
-    iApply destroy.interp_frame.
-    iApply "K".
-  Qed.
+  Definition Mexpr_with {T} (m : Mexpr.M T) : Mexpr.M (FreeTemps.t * T) :=
+    Mexpr.mk $
+      (fun r => mret (M:=with_temps.Result) (fmap (M:=Mexpr.Result) (fun x => (r.(with_temps._free), x)) r.(with_temps._result))) <$> Mexpr.prun m.
 
-  Definition Malloc_va (va_info : list (type * ptr)) : M ptr :=
-    letWP* p := Mnd ptr in
-    letWP* '() := Mproduce (p |-> varargsR va_info) in
-    Mret p.
+  Definition Mdestroy_trivial {T} (m : Mexpr.M T) : Mexpr.M T.
+  refine (
+    Mexpr.mk $
+      letWP* r := Mexpr.prun m in
+      match r.(with_temps._result) return M.M mpredI _ with
+      | Mexpr.Normal v =>
+          let '(tfree, free) := partition_trivial r.(with_temps._free) in
+          Mexpr.prun $
+            (* We push the residual frees **before** running the trivial
+               destructors to simplify the justification that all temporaries
+               are accounted for. Technically, we know that [destroy.Mfree_all]
+               will not raise any exceptions because they all have trivial
+               destructors (guaranteed by [partition_trivial]).
+             *)
+            letWP* '() := Mexpr.push_free free in
+            letWP* '() := destroy.Mfree_all tu (Mexpr.push_free tfree) in
+            mret v
+      | exc => mret (M:=M.M mpredI) r
+      end).
+
+  Definition Malloc_va (va_info : list (type * ptr)) : Mexpr.M ptr :=
+    letWP* p := demonic ptr in
+    letWP* '() := produce (p |-> varargsR va_info) in
+    mret p.
 
   (**
      [wp_args eo pre ts_ar es] evaluates [pre ++ es] according to the evaluation order [eo].
@@ -173,9 +186,9 @@ Section with_resolve.
      different ways that it can be used, e.g. to evaluate the object in [o.f()] (which is evaluated
      as a gl-value) or to evaluate the function in [f()] (which is evaluated as a pointer-typed operand).
    *)
-  Definition wp_args (eo : evaluation_order.t) (pre : list (M ptr))
+  Definition wp_args (eo : evaluation_order.t) (pre : list (Mexpr.M ptr))
       (ts_ar : list decltype * function_arity) (es : list Expr)
-      : M (list ptr * list ptr) :=
+      : Mexpr.M (list ptr * list ptr) :=
     (let '(ts,ar) := ts_ar in
      if check_arity ts ar es then
        let '(tes, va_info) := setup_args ts ar es in
@@ -187,12 +200,12 @@ Section with_resolve.
              let types := map fst $ skipn non_va tes in
              let va_info := zip types vargs in
              letWP* p := Malloc_va va_info in
-             Mret (pre, real ++ [p])
+             mret (pre, real ++ [p])
          | None =>
-             Mret (pre, ps)
+             mret (pre, ps)
          end
      else
-       Mub)%I.
+       ub)%I.
 
   Lemma wp_args_frame_strong : forall eo pres ts_ar es Q Q',
       ([∗list] m ∈ pres, monad.Mframe m m)%I
