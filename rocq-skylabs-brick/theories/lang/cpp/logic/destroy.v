@@ -248,7 +248,6 @@ Definition void_call `{Σ : cpp_logic} {σ : genv} (wp : Mglobal.M ptr) : Mgloba
 [wp_destructor ty dtor this Q] is the weakest pre-condition of
 invoking the destructor [dtor] for type [ty] on [this].
 *)
-Locate "letWP* _ := _ in _".
 #[local] Definition wp_destructor_body `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
     (ty : type) (dtor : ptr) (this : ptr) : Mglobal.M unit :=
   (*

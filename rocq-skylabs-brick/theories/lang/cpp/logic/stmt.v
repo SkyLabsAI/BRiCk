@@ -19,7 +19,8 @@ Require Import skylabs.lang.cpp.logic.initializers.
 Require Import skylabs.iris.extra.bi.errors.
 
 Module Type Stmt.
-  #[local] Arguments wp_test {_ _ _} _ _ _.
+  #[local] Arguments wp_test {_ _ _ _} _ _ _.
+  Import UPoly.
 
   (** weakest pre-condition for statements
    *)
@@ -86,14 +87,14 @@ Module Type Stmt.
 
     (* This definition performs allocation of local variables.
      *)
-    #[program]
     Definition Mdefault_initialize (ty : decltype) (p : ptr) : Mlocal FreeTemps.t :=
-      {| _wp K := default_initialize ty p (fun free => interp free $ K (Normal $ FreeTemps.delete ty p) FreeTemps.id _) |}.
-    Next Obligation. Admitted. (* TODO *)
+      letWP* _ := default_initialize ty p in
+      mret FreeTemps.id.
+      (* {| _wp K := default_initialize ty p (fun free => interp free $ K (Normal $ FreeTemps.delete ty p) FreeTemps.id _) |}. *)
 
     #[program]
     Definition Mopt_initialize (ρ : region) (ty : decltype) (n : localname) (init : option Expr) : Mlocal (region * FreeTemps.t) :=
-      letM* p := Mnd _ in
+      letM* p := demonic ptr in
       pair (Rbind n p ρ) <$>
       match init with
       | Some init =>
@@ -107,7 +108,7 @@ Module Type Stmt.
 
     #[program]
     Definition Mopt_initialize_anon (ρ : region) (ty : decltype) (init : option Expr) : Mlocal (ptr * FreeTemps.t) :=
-      letM* p := Mnd _ in
+      letM* p := demonic ptr in
       pair p <$> match init with
                  | Some init => wp_initialize ρ ty p init
                  | None => Mdefault_initialize ty p
@@ -115,9 +116,9 @@ Module Type Stmt.
 
     Definition wp_decl_var (ρ : region) (x : ident) (ty : type) (init : option Expr)
       : Mlocal region :=
-      letM* p := M2local $ Mnd ptr in
+      letM* p := demonic ptr in
       letM* '(ρ, free) := Mfree_all tu $ Mopt_initialize ρ ty x init in
-      letM* _ := Mpush_free free in
+      letM* _ := Mexpr.push_free free in
       mret ρ.
 
     (*
@@ -142,9 +143,9 @@ Module Type Stmt.
       match ds with
       | nil => mret ρ
       | Bvar x ty init :: ds =>
-          letWP* p := M2local $ Mnd ptr in
+          letWP* p := demonic ptr in
           letWP* free := wp_initialize ρ_init ty p init in
-          letWP* '() := Mpush_free free in
+          letWP* '() := Mexpr.push_free free in
           wp_destructure ρ_init ds (Rbind x p ρ)
       | Bbind x _ init :: ds =>
           letWP* p := wp_glval tu ρ_init init in
@@ -192,29 +193,20 @@ Module Type Stmt.
      *)
     #[global] Declare Instance init_state_agree nm : Agree1 (static_initialized nm).
 
-    Fixpoint tele_append_nd (TT : tele) (TT' : tele) : tele :=
-      match TT with
-      | TeleO => TT'
-      | @TeleS t f => TeleS (fun x : t => tele_append_nd (f x) TT')
-      end.
-    Definition Mac {TT: tele} (Apre : TT -t> mpred) (Eouter Einner : coPset)
-                   {TT' : tele} (Apost : TT -t> TT' -t> mpred) : Mglobal (tele_append_nd TT TT').
-    Proof. Admitted.
-
     Definition wp_decl (ρ : region) (d : VarDecl) : Mlocal region :=
       match d with
       | Dvar x ty init => wp_decl_var ρ x ty init
       | Ddecompose init x ds =>
         (* NOTE: the **declaration type** of the initializer *)
         let common_type := decltype_of_expr init in
-        letWP* common_p := M2local $ Mnd ptr in
+        letWP* common_p := demonic ptr in
         (* unlike for variables (see [wp_decl_var]), the variables in a structured binding
            are not available in the initializer.
            See <https://eel.is/c++draft/dcl.struct.bind#2>
          *)
         letWP* free := Mfree_all tu $ wp_initialize ρ common_type common_p init in
         (* NOTE: [free] is the de-allocation of the initialized value *)
-        letWP* '() := Mpush_free free in
+        letWP* '() := Mexpr.push_free free in
            (* NOTE: [free] is used to deallocate temporaries generated in the execution of [init].
               It should not matter if it is destroyed immediately or after the destructuring occurs.
             *)
@@ -234,8 +226,8 @@ Module Type Stmt.
              2. perform initialization (non-atomically)
              3. mark the state [initialized].
            *)
-          letWP* '(TeleArgCons i tt) := M2local $
-            Mac (TT:=[tele (i : _)])
+          letWP* '(TeleArgCons i tt) :=
+            ac (TT:=[tele (i : _)])
                 (fun i => static_initialized nm i)
                 Mouter Minner
                 (TT':=[tele])
@@ -250,7 +242,7 @@ Module Type Stmt.
           in
           if i is uninitialized then
               letWP* _free := do_init in (* ignore [_free] since we are initiailizing a global *)
-              letWP* _ := M2local $ Mac (TT:=[tele (i : _)])
+              letWP* _ := ac (TT:=[tele (i : _)])
                               (fun i => static_initialized nm i)
                               Mouter Minner
                               (TT':=[tele])
@@ -259,14 +251,14 @@ Module Type Stmt.
           else
             mret ρ
         else
-          letWP* i := M2local $ Mangelic _ in
-          letWP* '() := M2local $ Mconsume (static_initialized nm i) in
+          letWP* i := angelic _ in
+          letWP* '() := consume (static_initialized nm i) in
           if i is uninitialized then
             letWP* _free := do_init in (* ignore [_free] since we are initializing a global *)
-            letWP* '() := M2local $ Mproduce (static_initialized nm initialized) in
+            letWP* '() := produce (static_initialized nm initialized) in
             mret ρ
           else
-            letWP* '() := M2local $ Mproduce (static_initialized nm i) in
+            letWP* '() := produce (static_initialized nm i) in
             mret ρ
       end%I.
 
@@ -310,10 +302,8 @@ Module Type Stmt.
       : Mlocal region :=
       match ds with
       | nil =>
-          letWP* '() := M2local $ Mfupd top top in
-          mret ρ
+          non_atomically $ mret ρ
       | d :: ds =>
-          letWP* '() := M2local $ Mfupd top top in
           letWP* ρ := wp_decl ρ d in
           wp_decls_def ρ ds
       end.
@@ -365,20 +355,20 @@ Module Type Stmt.
     *)
 
     (** * Blocks *)
-    #[program]
-    Definition Mlater `{Σ : cpp_logic} : M () :=
-      {| _wp K := |> K () FreeTemps.id _ |}.
-    Next Obligation.
-      simpl. intros.
-      iIntros "K A"; iNext; iRevert "A"; iApply "K".
-    Qed.
-    #[program]
-    Instance Fupd {T} : FUpd (M T) :=
-      fun E1 E2 m => {| _wp K := |={E1,E2}=> m.(_wp) K |}%I.
-    Next Obligation.
-      simpl; intros.
-      iIntros "A >B !>". iRevert "B"; iApply _ok; iApply "A"; iAssumption.
-    Qed.
+    (* #[program] *)
+    (* Definition Mlater `{Σ : cpp_logic} : M () := *)
+    (*   {| _wp K := |> K () FreeTemps.id _ |}. *)
+    (* Next Obligation. *)
+    (*   simpl. intros. *)
+    (*   iIntros "K A"; iNext; iRevert "A"; iApply "K". *)
+    (* Qed. *)
+    (* #[program] *)
+    (* Instance Fupd {T} : FUpd (M T) := *)
+    (*   fun E1 E2 m => {| _wp K := |={E1,E2}=> m.(_wp) K |}%I. *)
+    (* Next Obligation. *)
+    (*   simpl; intros. *)
+    (*   iIntros "A >B !>". iRevert "B"; iApply _ok; iApply "A"; iAssumption. *)
+    (* Qed. *)
 
     Fixpoint wp_block_def (ρ : region) (ss : list Stmt) : Mlocal unit :=
       match ss with
@@ -408,6 +398,7 @@ Module Type Stmt.
       end)%I.
     Proof. rewrite !wp_block_eq; by destruct ss. Qed.
 
+    (*
     Lemma wp_block_frame : forall ss ρ, monad.Frame (wp_block ρ ss) (wp_block ρ ss).
     Proof.
       rewrite /monad.Frame. (*
@@ -433,7 +424,9 @@ Module Type Stmt.
       iApply (IHss with "[X] H"); iIntros (?).
       iApply Kfree_frame. iApply "X".
     Qed. *) Admitted.
+    *)
 
+    (*
     Lemma wp_block_shift ρ ds (Q : _) :
       (|={top}=> WP (wp_block ρ ds) (fun a b c => |={top}=> Q a b c)) |-- WP (wp_block ρ ds) Q.
     Proof. (*
@@ -502,6 +495,7 @@ Module Type Stmt.
     Proof.
       rewrite/AddModal. by rewrite fupd_frame_r bi.wand_elim_r fupd_wp_block.
     Qed.
+    *)
 
     Axiom wp_seq : forall ρ ss,
         wp_block ρ ss ⊆ wp ρ (Sseq ss).
@@ -548,42 +542,127 @@ Module Type Stmt.
       wp ρ (Sif decl test body Sbreak).
 
     Require Import iris.bi.lib.fixpoint.
-
-    Definition M_raw T : ofe :=
-      (ReturnType T -> forall free, FreeTemps.IsCanonical free -> mpred) -d> mpred.
+    Import UPoly.
 
     #[program]
-    Definition Mhandle_loop {U} (m : Mlocal ())
-      (normal_continue : Mlocal U)
-      (break : Mlocal U) : Mlocal U :=
-      {| _wp := funI K =>
-          letI* rt , free , _ := m.(_wp) in
-          let with_free m :=
-            letM* '() := Mpush_free free in
-            m
-          in
+    Definition Mhandle_loop {U}
+      (body : Mlocal ())
+      (normal_continue : Mlocal U) (* go to the top *)
+      (break : Mlocal U) (* finish the loop *)
+      : Mlocal U :=
+      Compose.mk $
+        letWP* rt := Mexpr.handle (Mfree_all tu body) in
+          Compose._prun
           match rt with
-          | Normal _ | Continue => (with_free normal_continue).(_wp) K
-          | Break => (with_free break).(_wp) K
-          | ReturnVoid => K ReturnVoid free _
-          | ReturnVal p => K (ReturnVal p) free _
-          end |}.
-    Next Obligation.
-      simpl; intros.
-      iIntros "X".
-      iApply _ok; iIntros (???).
-      case_match; try (iApply _ok; iIntros (???)); iApply "X".
+          | Mexpr.Normal _
+          | Mexpr.Continue => normal_continue
+          | Mexpr.Break => Mexpr.break
+          | Mexpr.ReturnVoid => Mexpr.return_void
+          | Mexpr.ReturnVal p => Mexpr.return_val p
+          | Mexpr.Exception ty p => Mexpr.throw ty p
+          end.
+
+    #[program]
+    Definition Mhandle_break {U}
+      (body : Mlocal U)
+      (break : Mlocal U) (* finish the loop *)
+      : Mlocal U :=
+      Compose.mk $
+        letWP* rt := Mexpr.handle (Mfree_all tu body) in
+          Compose._prun
+            match rt return Mexpr.M _ with
+            | Mexpr.Normal v => mret v
+            | Mexpr.Continue => Mexpr.continue
+            | Mexpr.Break => Mexpr.break
+            | Mexpr.ReturnVoid => Mexpr.return_void
+            | Mexpr.ReturnVal p => Mexpr.return_val p
+            | Mexpr.Exception ty p => Mexpr.throw ty p
+            end.
+
+    Definition M_raw T : ofe := (with_temps.Result (Mexpr.Result T) -> mpredI) -d> mpredI.
+
+    Lemma M_raw_dist_ext {T} (x y : M_raw T) n :
+      dist n x y <->
+      forall K, dist n (x K) (y K).
+    Proof.
+      clear. intros.
+      rewrite /M_raw/=.
+      rewrite /discrete_funO /= /ofe_car.
+      simpl. simpl ofe_car.
+      rewrite /discrete_fun/=.
+      rewrite /discrete_fun_dist/=.
+      unfold ofe_car. simpl.
+      unfold ofe_dist. simpl. reflexivity.
     Qed.
 
-    #[program]
-    Definition Mcontinue {T} : Mlocal T :=
-      {| _wp K := K Continue FreeTemps.id _ |}.
-    Next Obligation. simpl; intros. iIntros "K"; iApply "K". Qed.
-    #[program]
-    Definition Mbreak {T} : Mlocal T :=
-      {| _wp K := K Continue FreeTemps.id _ |}.
-    Next Obligation. simpl; intros. iIntros "K"; iApply "K". Qed.
 
+    Lemma M_raw_forall {T} (x y : M_raw T) n :
+      dist_later n x y ->
+      forall K, dist_later n (x K) (y K).
+    Proof.
+      clear. intros.
+      constructor. intros.
+      apply M_raw_dist_ext.
+      by apply H.
+    Qed.
+
+    Lemma Mexpr_frame {T} (a : Mexpr.M T) K1 K2 :
+      (∀ x, K1 x -∗ K2 x) ⊢ Mexpr._wp a K1 -∗ Mexpr._wp a K2.
+    Proof.
+      rewrite /Mexpr._wp. iIntros "X". iApply M._frame.
+      eauto.
+    Qed.
+
+    (* TODO: the fixpoint part of this should hold on [M.M], but
+       the actual handling of the loop needs to happen in [Mexpr.M] *)
+    #[program]
+    Definition Mloop (body : Mlocal ()) : Mlocal () :=
+      Mexpr.mk (
+      {| M._wp :=
+          @fixpoint _ _ _ (funI (continue : M_raw ()) K =>
+                      letI* rt := Mexpr._wp (@Mfree_all _ _ Σ σ tu _ body) in
+                      match rt.(with_temps._result) with
+                      | Mexpr.Normal _ | Mexpr.Continue => |> continue K
+                      | Mexpr.Break => K (mret $ Mexpr.Normal ())
+                      | exc => K (mret exc)
+                      end) _ |}).
+    Next Obligation.
+      (* Contractive *)
+      simpl; intros.
+      red. red. intros.
+      intro; simpl.
+      apply M._ne; intro.
+      case_match; try reflexivity.
+      { apply later_contractive. by apply M_raw_forall. }
+      { apply later_contractive. by apply M_raw_forall. }
+    Qed.
+    Next Obligation.
+      (* _frame *)
+      simpl; intros.
+      iIntros "K".
+      iLöb as "IH".
+      match goal with
+      | |- context [ @fixpoint ?X ?Y ?I ?F ?C _ ] =>
+          generalize C; intro CC;
+          remember F as BODY ;
+          generalize (@fixpoint_unfold X Y I BODY CC)
+      end.
+      match goal with
+      | |- context [ @fixpoint ?X ?Y ?I ?F ?C _ ] =>
+          generalize (@fixpoint X Y I F C)
+      end.
+      intros FIX Hfix.
+      assert (forall K, FIX K ≡ BODY FIX K) by apply Hfix.
+      rewrite {2}(H K1) {2}(H K2).
+      rewrite HeqBODY.
+      iApply Mexpr_frame; iIntros (?).
+      case_match;
+        try solve [ iApply "K" | iIntros "X"; iNext; iRevert "X"; iApply "IH"; iApply "K" ].
+    Qed.
+    Next Obligation.
+      (* _ne *)
+      intros.
+    Admitted.
 
     Definition while_loop (ρ : region)
       (decl : option VarDecl)
@@ -599,35 +678,9 @@ Module Type Stmt.
                     letM* (c : bool) := Mfree_all tu $ wp_test tu ρ test in
                     if c
                     then wp ρ body
-                    else Mbreak)
-           Mcontinue
-           Mbreak.
-
-    #[program]
-    Definition Mloop (body : Mlocal ()) : Mlocal () :=
-      {| _wp :=
-          @fixpoint _ _ _ (funI (continue : M_raw ()) K =>
-                      letI* rt , _ , _ := WP (@Mfree_all _ _ Σ σ tu _ body) in
-                      match rt with
-                      | Normal _ | Continue => |> continue K
-                      | Break => K (Normal ()) FreeTemps.id _
-                      | exc => K exc FreeTemps.id _
-                      end) _ |}.
-    Next Obligation. simpl; intros; refine _. Qed.
-    Next Obligation. simpl; intros; refine _. Qed.
-    Next Obligation. simpl; intros; refine _. Qed.
-    Next Obligation. Admitted.
-    Next Obligation. Admitted.
-
-    (*
-    #[program]
-    Definition Mloop (f : M_raw () -> M_raw ()) {_ : Contractive f} : Mlocal () :=
-      {| _wp := fixpoint f |}.
-    Next Obligation.
-      simpl; intros.
-      iIntros "K X".
-    Admitted.
-    *)
+                    else Mexpr.break)
+        Mexpr.continue
+        Mexpr.break.
 
     Axiom wp_while_unroll : forall ρ decl test body,
            Mloop (while_loop ρ decl test body)
@@ -678,7 +731,7 @@ Module Type Stmt.
          | None => mret ()
          | Some incr => wp_discard tu ρ incr
          end)
-        Mbreak.
+        Mexpr.break.
 
     Axiom wp_for_unroll : forall ρ test incr body,
            Mloop (for_loop ρ test incr body)
@@ -732,8 +785,8 @@ Module Type Stmt.
     Definition do_loop (ρ : region) (s : Stmt) (e : Expr) : Mlocal () :=
       Mhandle_loop (Mfree_all tu $ wp ρ s)
                    (letM* (c : bool) := wp_test tu ρ e in
-                    if c then Mcontinue else Mbreak)
-                   Mbreak.
+                    if c then Mexpr.continue else Mexpr.break)
+                   Mexpr.break.
 
     (*
     Definition do_unroll ρ body test (Q : Kpred) :=
@@ -780,27 +833,18 @@ Module Type Stmt.
 
     (** * <<return>> *)
 
-    #[program]
-    Definition Mreturn_void {T} : Mlocal T :=
-      {| _wp K := K ReturnVoid FreeTemps.id _ |}.
-    Next Obligation. simpl; intros; iIntros "K"; iApply "K". Qed.
-    #[program]
-    Definition Mreturn_val {T} (p : ptr) : Mlocal T :=
-      {| _wp K := K (ReturnVal p) FreeTemps.id _ |}.
-    Next Obligation. simpl; intros; iIntros "K"; iApply "K". Qed.
-
     (* the semantics of return is like an initialization
      * expression.
      *)
     Axiom wp_return_void : forall ρ,
-        Mreturn_void ⊆ wp ρ (Sreturn None).
+        Mexpr.return_void ⊆ wp ρ (Sreturn None).
 
     Axiom wp_return : forall ρ e,
           (let rty := get_return_type ρ in
            letM* '(p, free) := Mfree_all tu $ Mopt_initialize_anon ρ rty $ Some e in
            (* TODO: I need to free everything except the top because there is no scope extrusion
                     in return values *)
-           Mreturn_val p)
+           Mexpr.return_val p)
       ⊆ wp ρ (Sreturn (Some e)).
 
     (*
@@ -816,7 +860,7 @@ Module Type Stmt.
     (** * <<break>> *)
 
     Axiom wp_break : forall ρ,
-        (letM* '() := M2local Mlater in Mbreak) ⊆ wp ρ Sbreak.
+        (letM* '() := step in Mexpr.break) ⊆ wp ρ Sbreak.
     (*
     Axiom wp_break_frame : forall ρ (Q Q' : Kpred),
         Q Break -* Q' Break |-- wp ρ Sbreak Q -* wp ρ Sbreak Q'.
@@ -824,7 +868,7 @@ Module Type Stmt.
 
     (** * <<continue>> *)
     Axiom wp_continue : forall ρ,
-        (letM* '() := M2local Mlater in Mcontinue) ⊆ wp ρ Scontinue.
+        (letM* '() := step in Mexpr.continue) ⊆ wp ρ Scontinue.
     (*
     Axiom wp_continue_frame : forall ρ (Q Q' : Kpred),
         Q Continue -* Q' Continue |-- wp ρ Scontinue Q -* wp ρ Scontinue Q'.
@@ -947,6 +991,7 @@ Module Type Stmt.
     (* An error to say that a `switch` block with [body] is not supported *)
     Record switch_block (body : list Stmt) : Prop := {}.
 
+    (*
     #[program]
     Definition Mall {T} (ls : list (M T)) : M T :=
       {| _wp K := [∧list] x ∈ ls , x.(_wp) K |}%I.
@@ -958,35 +1003,31 @@ Module Type Stmt.
         - iApply _ok; iApply "K".
         - iApply IHls. eauto. }
     Qed.
+    *)
 
-    #[program]
-    Definition Mhandle_break {T} (m : Mlocal T) (break : Mlocal T) : Mlocal T :=
-      let k rt :=
-        match rt with
-        | Break => break
-        | _ => mret rt
-        end
-      in
-      mbind (M:=Mglobal) k m.
+    Import UPoly.
+    Definition Mas `{_ : MBind M} {_ : MRet M}  `{WP : WpMonad PROP M} {T U} (f : T -> U) (x : U) : M T :=
+      letWP* y := angelic T in
+      letWP* '() := consume [| x = f y |] in
+      mret y.
 
-    Axiom wp_switch : forall ρ e b Q,
+    Axiom wp_switch : forall ρ e b,
         match wp_switch_block (Some $ default_from_cases (get_cases b)) b with
         | None => Munsupported (switch_block b)
         | Some cases =>
-          letM* v := Mfree_all tu $ wp_operand tu ρ e ≫= Mas Vint in
-          let case c :=
-            letM* _ := M2local $ Massume $ c.1 v in
-            Mhandle_break (wp_block ρ c.2) (mret ())
-          in
-          Mall (case <$> cases)
+          letM* v := Mfree_all tu $ mbind (Mas Vint) $ wp_operand tu ρ e in
+          letWP* c := demonic _ in
+          letWP* '() := produce [| c ∈ cases |] in
+          letWP* _ := produce [| c.1 v |] in
+          Mhandle_break (wp_block ρ c.2) (mret ())
         end
         ⊆ wp ρ (Sswitch None e (Sseq b)).
 
     (* note: case and default statements are only meaningful inside of [switch].
      * this is handled by [wp_switch_block].
      *)
-    Axiom wp_case : forall ρ sb Q, Q Normal |-- wp ρ (Scase sb) Q.
-    Axiom wp_default : forall ρ Q, Q Normal |-- wp ρ Sdefault Q.
+    Axiom wp_case : forall ρ sb, mret () ⊆ wp ρ (Scase sb).
+    Axiom wp_default : forall ρ, mret () ⊆ wp ρ Sdefault.
 
   End with_resolver.
 
@@ -996,13 +1037,14 @@ Module Type Stmt.
   #[global] Arguments wp_decl_var _ _ _ _ _ _ _ _ _ /.
   #[global] Arguments wp_decl _ _ _ _ _ _ _ /. (* ! should occur on [d] *)
 
-
+(*
   #[global,deprecated(since="20240204",note="use [wp_for_inv_nolater].")]
   Notation wp_for := wp_for_inv_nolater (only parsing).
   #[global,deprecated(since="20240204",note="use [wp_do_inv_nolater].")]
   Notation wp_do := wp_do_inv_nolater (only parsing).
   #[global,deprecated(since="20240204",note="use [wp_while_inv_nolater].")]
   Notation wp_while := wp_while_inv_nolater (only parsing).
+*)
 
 End Stmt.
 

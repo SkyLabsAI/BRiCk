@@ -35,6 +35,7 @@ Proof. iIntros "Q W R". iApply ("Q" with "(W R)"). Qed.
 #[local] Arguments UNSUPPORTED {_ _} _%_bs.
 #[local] Arguments wpi : simpl never.
 
+(*
 Definition Kreturn_inner `{Σ : cpp_logic, σ : genv} (Q : ptr -> mpred) (rt : ReturnType) : mpred :=
   match rt with
   | Normal | ReturnVoid => Forall p : ptr, p |-> primR Tvoid (cQp.mut 1) Vvoid -* Q p
@@ -58,20 +59,22 @@ Section Kreturn.
     all: iIntros "HR" (?) "R"; iApply "HQ"; by iApply "HR".
   Qed.
 End Kreturn.
+*)
 
 (** ** Binding parameters *)
+Import UPoly.
 
 Definition wp_make_mutables `{Σ : cpp_logic, σ : genv} (tu : translation_unit) :=
-  fix wp_make_mutables (args : list (ptr * decltype)) (Q : epred) : mpred :=
+  fix wp_make_mutables (args : list (ptr * decltype)) : Mglobal () :=
   match args with
-  | nil => Q
-  | p :: args => wp_make_mutables args $ wp_make_mutable tu p.1 p.2 Q
+  | nil => mret ()
+  | p :: args => letWP* '() := wp_make_mutables args in wp_make_mutable tu p.1 p.2
   end.
 #[global] Hint Opaque wp_make_mutables : typeclass_instances.
 
+(*
 Section with_cpp.
   Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (Q : epred).
 
   Lemma wp_make_mutables_frame tu tu' args Q Q' :
     sub_module tu tu' ->
@@ -82,7 +85,9 @@ Section with_cpp.
     iApply (IHargs with "[HQ]"). by iApply wp_const_frame.
   Qed.
 End with_cpp.
+*)
 
+(*
 Definition Kcleanup `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
     (args : list (ptr * decltype)) (Q : Kpred) : Kpred :=
   Kat_exit (wp_make_mutables tu args) Q.
@@ -100,6 +105,7 @@ Section with_cpp.
     iIntros (??) "?". by iApply wp_make_mutables_frame.
   Qed.
 End with_cpp.
+*)
 
 (**
 [bind_vars tu ar ts args ρ Q] initializes a function's arguments
@@ -110,19 +116,19 @@ mutable again in the second argument to [Q].
 *)
 Definition bind_vars `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ar : function_arity) :=
   fix bind_vars (ts : list (ident * decltype)) (args : list ptr)
-    (ρ : option ptr -> region) (Q : region -> list (ptr * decltype) -> epred) : mpred :=
+    (ρ : option ptr -> region) : Mglobal (region * list (ptr * decltype)) :=
   match ts with
   | nil =>
     match ar with
     | Ar_Definite =>
       match args with
-      | nil => Q (ρ None) []
-      | _ :: _ => ERROR "bind_vars: extra arguments"
+      | nil => mret (ρ None, [])
+      | _ :: _ => Merror "bind_vars: extra arguments"
       end
     | Ar_Variadic =>
       match args with
-      | vap :: nil => Q (ρ $ Some vap) []
-      | _ => ERROR "bind_vars: variadic function missing varargs"
+      | vap :: nil => mret ((ρ $ Some vap), [])
+      | _ => Merror "bind_vars: variadic function missing varargs"
       end
     end
   | xty :: ts =>
@@ -133,20 +139,19 @@ Definition bind_vars `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ar : 
       element type as Clang's parser eagerly "decays" a function's
       array parameter types to pointer types.
       *)
-      let recurse := bind_vars ts args (fun vap => Rbind xty.1 p $ ρ vap) in
       let qty := decompose_type xty.2 in
       let ty := qty.2 in
       if q_const qty.1 then
-        let* := wp_make_const tu p ty in
-        let* ρ, consts := recurse in
-        Q ρ $ (p,ty) :: consts
+        letWP* '() := wp_make_const tu p ty in
+        (fun '(ρ, consts) => (ρ, (p,ty) :: consts)) <$> bind_vars ts args (fun vap => Rbind xty.1 p $ ρ vap)
       else
-        recurse Q
-    | nil => ERROR "bind_vars: insufficient arguments"
+        bind_vars ts args (fun vap => Rbind xty.1 p $ ρ vap)
+    | nil => Merror "bind_vars: insufficient arguments"
     end
   end.
 #[global] Hint Opaque bind_vars : typeclass_instances.
 
+(*
 Section with_cpp.
   Context `{Σ : cpp_logic, σ : genv}.
   Implicit Types (Q : region -> list (ptr * decltype) -> epred).
@@ -165,6 +170,7 @@ Section with_cpp.
       - iApply IHts. iIntros (??) "?". by iApply "HQ". }
   Qed.
 End with_cpp.
+*)
 
 (** ** The weakest precondition of a function *)
 
@@ -173,15 +179,16 @@ NOTE: The fancy updates in `wp_func` and friends are not in the right
 place to support `XX_shift` lemmas. This could be fixed.
 *)
 #[local] Definition wp_func' `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
-    (f : Func) (args : list ptr) (Q : ptr -> epred) : mpred :=
+    (f : Func) (args : list ptr) : Mglobal ptr :=
   match f.(f_body) with
   | None => ERROR "wp_func: no body"
   | Some body =>
     match body with
     | Impl body =>
       let ρ vap := Remp None vap f.(f_return) in
-      letI* ρ, cleanup := bind_vars tu f.(f_arity) f.(f_params) args ρ in
-      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn $ fun x => |={top}=>?u |> Q x)
+      letWP* '(ρ, cleanup) := bind_vars tu f.(f_arity) f.(f_params) args ρ in
+      letWP* '() := step in
+      wp tu ρ body (Kcleanup tu cleanup $ Kreturn $ fun x => |={top}=>?u |> Q x)
     | Builtin builtin =>
       let ts := List.map snd f.(f_params) in
       wp_builtin_func builtin (Tfunction $ @FunctionType _ f.(f_cc) f.(f_arity) f.(f_return) ts) args Q
