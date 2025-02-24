@@ -120,6 +120,7 @@ End sumT.
 
 Require Import skylabs.prelude.telescopes.
 
+(* TODO: the names here probably need to be in a module *)
 Class WpMonad (PROP : bi) {F : BiFUpd PROP} (M : Type -> Type) : Type :=
 { angelic : forall T : Type, M T
 ; demonic : forall T : Type, M T
@@ -128,6 +129,9 @@ Class WpMonad (PROP : bi) {F : BiFUpd PROP} (M : Type -> Type) : Type :=
 ; check : forall {TT : tele}, (TT -t> PROP) -> M TT
 ; update : forall {TT1 TT2 : tele}, (TT1 -t> PROP) -> (TT1 -t> TT2 -t> PROP) ->
                                M (tele_arg (tele_append TT1 (tele_bind (fun _ : TT1 => TT2))))
+; ac : forall {TT: tele} (Apre : TT -t> PROP) (Eouter Einner : coPset)
+         {TT' : tele} (Apost : TT -t> TT' -t> PROP), M (tele_arg (tele_append TT (tele_bind (fun _ : TT => TT'))))
+
 ; step : M unit
 ; ub : forall {T}, M T
 ; contra : forall {T}, M T
@@ -143,6 +147,21 @@ Definition Munsupported `{WP : @WpMonad PROP F M} {T E} (err : E) : M T :=
 mlock
 Definition Merror `{WP : @WpMonad PROP F M} {T E} (err : E) : M T :=
   ub.
+
+(*
+Fixpoint tele_append_nd (TT : tele) (TT' : tele) : tele :=
+  match TT with
+  | TeleO => TT'
+  | @TeleS t f => TeleS (fun x : t => tele_append_nd (f x) TT')
+  end.
+
+#[program]
+Definition Mac `{_ : @WpMonad PROP FUPD M} {TT: tele} (Apre : TT -t> PROP) (Eouter Einner : coPset)
+  {TT' : tele} (Apost : TT -t> TT' -t> PROP) : M (tele_arg (tele_append TT (tele_bind (fun _ : TT => TT')))) :=
+  {| }
+Proof. Admitted.
+*)
+
 
 (** [Mglobal] -- normal + exceptions
       = M ((type * ptr) + t)
@@ -649,6 +668,20 @@ Section Mexpr.
 
   Definition push_free (f : FreeTemps.t) : M () :=
     Compose.mk $ Normal <$> with_temps.push_free f.
+
+  Definition continue {T} : M T :=
+    mk (mret (M:=M.M PROP) (mret Continue)).
+  Definition break {T} : M T :=
+    mk (mret (M:=M.M PROP) (mret Break)).
+  Definition return_void {T} : M T :=
+    mk (mret (M:=M.M PROP) (mret ReturnVoid)).
+  Definition return_val {T} (p : ptr) : M T :=
+    mk (mret (M:=M.M PROP) (mret (ReturnVal p))).
+  Definition throw {T} (ty : type) (p : ptr) : M T :=
+    mk (mret (M:=M.M PROP) (mret (Exception ty p))).
+
+  Definition handle {T} (m : Mexpr.M T) : with_temps.M mpredI (Result T) :=
+    Compose._prun m.
 
 End Mexpr.
 End Mexpr.

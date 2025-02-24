@@ -97,8 +97,8 @@ Definition default_initialize_body `{Σ : cpp_logic, σ : genv}
     (u : bool) (default_initialize : exprtype -> ptr -> Mlocal ())
     (tu : translation_unit)
     (ty : exprtype) (p : ptr) : Mlocal () :=
-  let ERROR := funI m => |={top}=>?u ERROR m in
-  let UNSUPPORTED := funI m => |={top}=>?u UNSUPPORTED m in
+  let ERROR msg := non_atomically $ Merror msg in
+  let UNSUPPORTED msg := non_atomically $ Munsupported msg in
   match ty with
   | Tnum _ _
   | Tchar_ _
@@ -108,11 +108,12 @@ Definition default_initialize_body `{Σ : cpp_logic, σ : genv}
   | Tnullptr
   | Tenum _ =>
     let rty := erase_qualifiers ty in
-    p |-> uninitR rty 1$m -* |={top}=>?u Q FreeTemps.id
+    letWP* _ := produce (p |-> uninitR rty (cQp.m 1)) in
+    non_atomically $ mret ()
 
   | Tarray ety sz =>
     if bool_decide (0 < sz)%N then
-      default_initialize_array (default_initialize ety) tu ety sz p (fun _ => Q FreeTemps.id)
+      default_initialize_array (default_initialize ety) tu ety sz p
     else
       ERROR "initializing an empty array"
   | Tincomplete_array _ => ERROR "default initialize incomplete array"
@@ -123,13 +124,13 @@ Definition default_initialize_body `{Σ : cpp_logic, σ : genv}
   | Tvoid => ERROR "default initialization of void"
   | Tfunction _ => ERROR "default initialization of functions"
   | Tmember_pointer _ _ => ERROR "default initialization of member pointers"
-  | Tnamed _ => |={top}=>?u False (* default initialization of aggregates is done at elaboration time. *)
+  | Tnamed _ => ERROR "default initialization of aggregates is done at elaboration time"
 
   | Tarch _ _ => UNSUPPORTED "default initialization of architecture type"
   | Tqualified q ty =>
     if q_volatile q then UNSUPPORTED "default initialize volatile"
     else if q_const q then ERROR "default initialize const"
-    else default_initialize ty p Q
+    else default_initialize ty p
   | Tunsupported msg => UNSUPPORTED msg
   | Tdecltype _ => ERROR "default initialization requires a runtime type, got 'decltype(())'"
   | Texprtype _ => ERROR "default initialization requires a runtime type, got 'decltype()'"
@@ -142,23 +143,26 @@ Definition default_initialize_body `{Σ : cpp_logic, σ : genv}
 
 mlock
 Definition default_initialize `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
-  : ∀ (ty : exprtype) (p : ptr) (Q : FreeTemps -> epred), mpred :=
-  fix default_initialize ty p Q {struct ty} :=
-    Cbn (Reduce (default_initialize_body true) default_initialize tu ty p Q).
+  : ∀ (ty : exprtype) (p : ptr), Mlocal () :=
+  fix default_initialize ty p {struct ty} :=
+    Cbn (Reduce (default_initialize_body true) default_initialize tu ty p).
+#[global] Arguments default_initialize {_ _ _ _} _ _ _ : assert.	(* mlock bug *)
 
+(*
 #[program]
-Definition Mdefault_initialize `{Σ : cpp_logic, σ : genv} tu ty p : M FreeTemps.t :=
+Definition Mdefault_initialize `{Σ : cpp_logic, σ : genv} tu ty p : Mlocal FreeTemps.t :=
   {| _wp K := default_initialize tu ty p $ fun free => K free FreeTemps.id _ |}.
 Next Obligation.
   simpl; repeat intro. (* TODO: need [default_initialize_frame] *)
 Admitted.
+*)
 
 Section unfold.
   Context `{Σ : cpp_logic, σ : genv}.
 
   Lemma default_initialize_unfold ty tu :
     default_initialize tu ty =
-    fun p Q => Cbn (Reduce (default_initialize_body true) (default_initialize tu) tu ty p Q).
+    fun p => Cbn (Reduce (default_initialize_body true) (default_initialize tu) tu ty p).
   Proof. rewrite unlock. by destruct ty. Qed.
 End unfold.
 
@@ -171,6 +175,7 @@ Ltac default_initialize_unfold :=
   | _ => fail "[default_initialize] not found"
   end.
 
+(*
 Section default_initialize.
   Context `{Σ : cpp_logic, σ : genv}.
   Implicit Types (Q : FreeTemps -> epred).
@@ -334,6 +339,7 @@ Section default_initialize.
     |-- Cbn (Reduce (default_initialize_body true) (default_initialize tu) tu ty p Q).
   Proof. rewrite default_initialize.unlock. by destruct ty. Qed.
 End default_initialize.
+*)
 
 (** ** Expression initialization *)
 
@@ -370,7 +376,9 @@ magic wands.
 *)
 #[local] Notation fupd_compatible := true (only parsing).
 
+(*
 #[local] Notation Mfupd_compat := (if fupd_compatible then Mfupd top top else mret ()) (only parsing).
+*)
 
 (* BEGIN wp_initialize *)
 #[local]
@@ -378,7 +386,7 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
     (u : bool) (tu : translation_unit) (ρ : region)
     (cv : type_qualifiers) (ty : decltype)
     (addr : ptr) (init : Expr) : Mlocal FreeTemps.t :=
-  let UNSUPPORTED := funI m => letWP* '() := Mfupd top top in Merror m in
+  let UNSUPPORTED msg := non_atomically $ Merror msg in
   if q_volatile cv then Merror "volatile"
   else
     match ty return Mlocal FreeTemps.t with
@@ -393,15 +401,15 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
       *)
       letWP* v := wp_operand tu ρ init in
       let qf := cQp.mk (q_const cv) 1 in
-      letWP* '() := M2local $ Mrequire (v = Vvoid) in
+      letWP* '() := consume [| v = Vvoid |] in
 
       (**
       [primR] is enough because C++ code never uses the raw bytes
       underlying an inhabitant of type void.
       *)
-      letWP* '() := M2local $ Mproduce (addr |-> primR Tvoid qf Vvoid) in
-      letWP* '() := M2local $ Mfupd_compat in
-      mret (FreeTemps.delete (tqualified cv Tvoid) addr)
+      non_atomically $
+        letWP* '() := produce (addr |-> primR Tvoid qf Vvoid) in
+        mret (FreeTemps.delete (tqualified cv Tvoid) addr)
 
     | Tptr _
     | Tmember_pointer _ _
@@ -413,9 +421,9 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
     | Tnullptr =>
       letWP* v := wp_operand tu ρ init in
       let qf := cQp.mk (q_const cv) 1 in
-      letWP* '() := M2local $ Mproduce (addr |-> tptsto_fuzzyR (erase_qualifiers ty) qf v) in
-      letWP* '() := M2local $ Mfupd_compat in
-      mret (FreeTemps.delete (tqualified cv ty) addr)
+      non_atomically $
+        letWP* '() := produce (addr |-> tptsto_fuzzyR (erase_qualifiers ty) qf v) in
+        mret (FreeTemps.delete (tqualified cv ty) addr)
 
       (* non-primitives are handled via prvalue-initialization semantics *)
     | Tarray _ len =>
@@ -438,9 +446,9 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
       TODO: [ref]s are never mutable, but we use [qf] here for
       compatibility with [implicit_destruct_struct]
       *)
-      letWP* '() := M2local $ Mproduce (addr |-> primR rty qf (Vref p)) in
-      letWP* '() := M2local Mfupd_compat in
-      mret (FreeTemps.delete (tqualified cv (Tref ty)) addr)
+      non_atomically $
+        letWP* '() := produce (addr |-> primR rty qf (Vref p)) in
+        mret (FreeTemps.delete (tqualified cv (Tref ty)) addr)
 
     | Trv_ref ty =>
       let rty := Tref $ erase_qualifiers ty in
@@ -453,9 +461,9 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
       TODO: [ref]s are never mutable, but we use [qf] here for
       compatibility with [implicit_destruct_struct]
       *)
-      letWP* '() := M2local $ Mproduce (addr |-> primR rty qf (Vref p)) in
-      letWP* '() := M2local $ Mfupd_compat in
-      mret (FreeTemps.delete (tqualified cv (Trv_ref ty)) addr)
+      non_atomically $
+        letWP* '() := produce (addr |-> primR rty qf (Vref p)) in
+        mret (FreeTemps.delete (tqualified cv (Trv_ref ty)) addr)
 
     | Tfunction _ => UNSUPPORTED (initializing_type ty init)
 
@@ -495,15 +503,16 @@ Definition heap_type_of (t : type) : type :=
 Lemma wp_initialize_unqualified_well_typed `{Σ : cpp_logic, σ : genv}
   tu ρ cv ty addr init :
       (letWP* free := wp_initialize_unqualified tu ρ cv ty addr init in
-       letWP* '() := Mproduce (reference_to (to_heap_type ty) addr) in
+       letWP* '() := produce (reference_to (to_heap_type ty) addr) in
        mret free)
   ⊆ wp_initialize_unqualified tu ρ cv ty addr init.
 Proof.
   rewrite wp_initialize_unqualified.unlock.
+  (*
   case_match; eauto.
-  { red. red. intros. simpl. eauto. }
+  { red. red. intros. simpl. eauto. admit. }
   case_match; try solve [ do 2 red; simpl; intros; eauto ].
-  { apply by_WP => ?. (*
+  { apply by_WP => ?.
     rewrite -{2}wp_operand_well_typed.
     rewrite !(WP_Mbind_Mbind, WP_Mbind_Mproduce, WP_Mbind_mret, WP_Mbind_Mfupd, WP_mret).
     iApply WP_Mbind_frame; iIntros (??).
@@ -511,7 +520,7 @@ Proof.
     simpl.
     iIntros "X #? OWN".
     iDestruct (observe (reference_to _ _) with "OWN") as "#?".
-    iApply ("X" with "OWN"); eauto. *) admit. }
+    iApply ("X" with "OWN"); eauto. admit. } *)
 (*
   case_match; subst; eauto.
   all: try (iApply wp_operand_frame; [ done | ];
