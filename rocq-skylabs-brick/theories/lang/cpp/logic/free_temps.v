@@ -34,6 +34,8 @@ Module FreeTemps.
     | id (* = fun x => x *)
     | delete (ty : decltype) (p : ptr) (* = delete_val ty p *)
             (* ^^ this type has qualifiers but is otherwise a runtime type *)
+    | const (ty : decltype) (p : ptr)    (* = make an object const *)
+    | mutable (ty : decltype) (p : ptr)  (* = make an object mutable *)
     | delete_va (va : list (type * ptr)) (p : ptr)
     | seq (f g : t) (* = fun x => f $ g x *)
     | par (f g : t) (* = fun x => Exists Qf Qg, f Qf ** g Qg ** (Qf -* Qg -* x) *)
@@ -156,13 +158,10 @@ Module FreeTemps.
 
     Lemma seq_canon_is_id a : forall b, seq_canon a b = id -> a = id /\ b = id.
     Proof.
-      induction a; simpl; intros.
-      { destruct b; simpl; intros; eauto; try congruence. }
-      { destruct b; congruence. }
-      { destruct b; congruence. }
-      { destruct b; try congruence;
+      induction a; simpl; intros;
+        try solve [ destruct b; eauto; congruence  ].
+     { destruct b; try congruence;
           apply IHa1 in H; destruct H; apply IHa2 in H0; destruct H0; congruence. }
-      { destruct b; congruence. }
     Qed.
 
     Lemma canon_canonical : forall a b : t, a ≡ b -> canon a = canon b.
