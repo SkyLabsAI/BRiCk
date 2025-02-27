@@ -146,8 +146,7 @@ Section with_resolve.
     Mexpr.mk $
       (fun r => mret (M:=with_temps.Result) (fmap (M:=Mexpr.Result) (fun x => (r.(with_temps._free), x)) r.(with_temps._result))) <$> Mexpr.prun m.
 
-  Definition Mdestroy_trivial {T} (m : Mexpr.M T) : Mexpr.M T.
-  refine (
+  Definition Mdestroy_trivial {T} (m : Mexpr.M T) : Mexpr.M T :=
     Mexpr.mk $
       letWP* r := Mexpr.prun m in
       match r.(with_temps._result) return M.M mpredI _ with
@@ -164,7 +163,7 @@ Section with_resolve.
             letWP* '() := destroy.Mfree_all tu (Mexpr.push_free tfree) in
             mret v
       | exc => mret (M:=M.M mpredI) r
-      end).
+      end.
 
   Definition Malloc_va (va_info : list (type * ptr)) : Mexpr.M ptr :=
     letWP* p := demonic ptr in
@@ -192,7 +191,7 @@ Section with_resolve.
     (let '(ts,ar) := ts_ar in
      if check_arity ts ar es then
        let '(tes, va_info) := setup_args ts ar es in
-       letWP* ps := eval eo (pre ++ map (fun '(t, e) => wp_arg t e) tes) in
+       letWP* ps := Mexpr.eval eo (pre ++ map (fun '(t, e) => wp_arg t e) tes) in
          let (pre, ps) := split_at (length pre) ps in
          match va_info with
          | Some non_va =>
@@ -207,6 +206,7 @@ Section with_resolve.
      else
        ub)%I.
 
+  (*
   Lemma wp_args_frame_strong : forall eo pres ts_ar es Q Q',
       ([∗list] m ∈ pres, monad.Mframe m m)%I
       |-- (Forall ps vs free pf,
@@ -273,7 +273,11 @@ Section with_resolve.
     iApply (wp_args_frame_strong with "X").
     iIntros (??????); iApply "Y".
   Qed.
+  *)
+
 End with_resolve.
+
+Import UPoly.
 
 (*
 The following definitions describe the "return"-convention.
@@ -286,17 +290,14 @@ all function calls.
 
 #[program]
 Definition glval_receive `{Σ : cpp_logic, σ : genv}
-  (ty : exprtype) (res : ptr) : M ptr :=
+  (ty : exprtype) (res : ptr) : Mlocal ptr :=
+  letWP* p := angelic ptr in
+  letWP* '() := consume (res |-> primR (Tref (erase_qualifiers ty)) (cQp.mut 1) (Vref p)) in
+  mret p.
   (**
   [primR] is enough because C++ code never uses the raw bytes
   underlying an inhabitant of a reference type.
    *)
-  {| _wp K :=
-      Exists p, res |-> primR (Tref (erase_qualifiers ty)) (cQp.mut 1) (Vref p) ** K p FreeTemps.id _ |}.
-Next Obligation.
-  simpl; intros.
-  iIntros "K X"; iDestruct "X" as (p) "[? ?]"; iExists p; iFrame; iApply "K"; eauto.
-Qed.
 #[global] Arguments glval_receive {_ _ _ _} _ _ / : assert.
 
 Definition xval_receive `{Σ : cpp_logic, σ : genv} := glval_receive.
@@ -306,22 +307,19 @@ Definition lval_receive `{Σ : cpp_logic, σ : genv} := glval_receive.
 
 #[program]
 Definition operand_receive `{Σ : cpp_logic, σ : genv}
-    (ty : exprtype) (res : ptr) : M val :=
-  {| _wp K :=
-      Exists v,
-      let cv := qual_norm (fun cv _ => cv) ty in
-      res |-> tptsto_fuzzyR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) v ** K v FreeTemps.id _ |}.
-Next Obligation.
-  simpl; intros.
-  iIntros "K X"; iDestruct "X" as (p) "[? ?]"; iExists p; iFrame; iApply "K"; eauto.
-Qed.
+    (ty : exprtype) (res : ptr) : Mlocal val :=
+  letWP* v := angelic val in
+  let cv := qual_norm (fun cv _ => cv) ty in
+  letWP* '() := consume (res |-> tptsto_fuzzyR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) v) in
+  mret v.
 #[global] Arguments operand_receive {_ _ _ _} _ _ : assert.	(* mlock bug *)
 
 Definition init_receive `{Σ : cpp_logic, σ : genv}
-    (addr res : ptr) : M unit :=
-  Massume (addr = res).
+    (addr res : ptr) : Mlocal unit :=
+  produce [| addr = res |].
 #[global] Arguments init_receive {_ _ _ _} _ _ / : assert.
 
+(*
 Section receive.
   Context `{Σ : cpp_logic, σ : genv}.
 
@@ -349,3 +347,4 @@ Section receive.
     rewrite /init_receive. iIntros "X Y Z"; iApply "X"; iApply "Y"; done.
   Qed.
 End receive.
+*)

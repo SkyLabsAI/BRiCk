@@ -148,6 +148,342 @@ mlock
 Definition Merror `{WP : @WpMonad PROP F M} {T E} (err : E) : M T :=
   ub.
 
+
+Section evaluation.
+  Import UPoly.
+  #[local] Set Universe Polymorphism.
+  Context {M : Type -> Type} {RET : MRet M} {BIND : MBind M}.
+  Context (Mforall : forall T, M T).
+
+  Notation Mboth A B := (letM* b := Mforall bool in if b is true then A else B) (only parsing).
+  (** *** Indeterminately sequenced computations
+      Note that [FreeTemps.t] is sequenced in reverse order of construction
+      to encode the stack discipline guaranteed by C++.
+      (CITATION NEEDED)
+   *)
+  #[program]
+  Definition nd_seq {T U} (wp1 : M T) (wp2 : M U) : M (T * U) :=
+    Mboth (letM* v1 := wp1 in
+           letM* v2 := wp2 in
+           mret (v1,v2))
+          (letM* v2 := wp2 in
+           letM* v1 := wp1 in
+           mret (v1,v2)).
+
+  (* Lifting non-deterministic sequencing to lists.
+
+     NOTE: this is like the semantics of argument evaluation in C++.
+   *)
+  Fixpoint nd_seqs' {T} (f : nat) (ms : list (M T)) {struct f} : M (list T) :=
+    match ms with
+    | nil => mret nil
+    | _ :: _ =>
+      match f return M (list T) with
+      | 0 => mret nil
+      | S f =>
+        (* NOTE: this is still a finite choice *)
+        letM* pre := Mforall (list (M T)) in
+        letM* post := Mforall (list (M T)) in
+        letM* (m : M T) := Mforall (M T) in
+        letM* pf := Mforall (ms = pre ++ m :: post) in
+        let lpre := length pre in
+        (fun (t : T) (ts : list T) =>
+           firstn lpre ts ++ t :: skipn lpre ts) <$> m <*> nd_seqs' f (pre ++ post)
+      end
+    end.
+
+  Definition nd_seqs {T} (qs : list (M T)) : M (list T) := @nd_seqs' T (length qs) qs.
+
+  (*
+  Lemma nd_seqs'_frame_strong {T} n : forall (ls : list (M T)) Q Q',
+      n = length ls ->
+      Forall x y, [| length x = length ls |] -* Q x y -* Q' x y
+      |-- ([∗list] m ∈ ls, FrameI m m) -*
+          nd_seqs' n ls Q -* nd_seqs' n ls Q'.
+  Proof.
+    induction n; simpl; intros.
+    { case_match; eauto.
+      subst. simpl.
+      iIntros "X _". iApply "X". eauto. }
+    { destruct ls. exfalso; simpl in *; congruence.
+      inversion H.
+      iIntros "X LS Y" (???) "%P".
+      iSpecialize ("Y" $! pre).
+      iSpecialize ("Y" $! post).
+      iSpecialize ("Y" $! q).
+      iDestruct ("Y" with "[]") as "Y"; first eauto.
+      rewrite P.
+      iDestruct "LS" as "(a&b&c)".
+      iRevert "Y". rewrite /Mbind.
+      iApply "b".
+      iIntros (??).
+      rewrite /Mmap.
+      subst.
+      assert (length ls = length (pre ++ post)).
+      { have: (length (m :: ls) = length (pre ++ q :: post)) by rewrite P.
+        rewrite !length_app /=. lia. }
+      iDestruct (IHn with "[X]") as "X". eassumption.
+      2:{
+      iDestruct ("X" with "[a c]") as "X".
+      iSplitL "a"; eauto.
+      iApply "X". }
+      simpl. iIntros (??) "%". iApply "X".
+      revert H0 H1. rewrite !length_app/=.
+      intros. iPureIntro.
+      rewrite firstn_length_le; last lia.
+      rewrite length_skipn. lia. }
+  Qed.
+
+  Lemma nd_seqs'_frame {T} n : forall (ls : list (M T)),
+      n = length ls ->
+      ([∗list] m ∈ ls, FrameI m m)
+      |-- FrameI (nd_seqs' n ls) (nd_seqs' n ls).
+  Proof.
+    induction n; simpl; intros.
+    { case_match.
+      { subst. simpl.
+        iIntros "_" (??) "X". iApply "X". }
+      { iIntros "?" (??) "? []". } }
+    { destruct ls. exfalso; simpl in *; congruence.
+      inversion H.
+      iIntros "LS" (??) "X Y"; iIntros (???) "%P".
+      iSpecialize ("Y" $! pre).
+      iSpecialize ("Y" $! post).
+      iSpecialize ("Y" $! q).
+      iDestruct ("Y" with "[]") as "Y"; first eauto.
+      rewrite P.
+      iDestruct "LS" as "(a&b&c)".
+      iRevert "Y".
+      iApply (Mbind_frame with "b [a c]"); eauto.
+      iIntros (?).
+      iApply Mmap_frame.
+      rewrite -H1.
+      iApply IHn.
+      { have: (length (m :: ls) = length (pre ++ q :: post)) by rewrite P.
+        rewrite !length_app /=. lia. }
+      iSplitL "a"; eauto. }
+  Qed.
+  Lemma nd_seqs_frame : forall {T} (ms : list (_ T)),
+      ([∗list] m ∈ ms, FrameI m m) |-- FrameI (nd_seqs ms) (nd_seqs ms).
+  Proof. intros. by iApply nd_seqs'_frame. Qed.
+
+  (* sanity check on [nd_seq] and [nd_seqs] *)
+  Example nd_seq_example : forall {T} (a b : M T),
+      Proper (Mrel _) a -> Proper (Mrel _) b ->
+      Mequiv _ (nd_seqs [a;b]) (Mmap (fun '(a,b) => [a;b]) $ nd_seq a b).
+  Proof.
+    rewrite /nd_seqs/=; intros.
+    rewrite /Mmap/nd_seq.
+    repeat intro.
+    iSplit.
+    { iIntros "X".
+      iSplit.
+      { iSpecialize ("X" $! nil [b] a eq_refl).
+        iRevert "X".
+        iApply H. repeat intro; simpl.
+        iIntros "X".
+        iSpecialize ("X" $! nil nil b eq_refl).
+        iRevert "X".
+        iApply H0. repeat intro; simpl.
+        rewrite /Mret.
+        rewrite (H1 _ _ _) => //. by rewrite FreeTemps.seq_id_unitL. }
+      { iSpecialize ("X" $! [a] nil b eq_refl).
+        iRevert "X". iApply H0. repeat intro; simpl.
+        iIntros "X".
+        iSpecialize ("X" $! nil nil a eq_refl).
+        iRevert "X".
+        iApply H. repeat intro; simpl.
+        rewrite /Mret.
+        rewrite H1 => //. by rewrite FreeTemps.seq_id_unitL. } }
+    { iIntros "X" (pre post m Horder).
+      destruct pre.
+      { inversion Horder; subst.
+        iDestruct "X" as "[X _]".
+        rewrite /Mbind. iApply H; last iAssumption.
+        iIntros (??) => /=.
+        iIntros "X" (pre' post' m' Horder').
+        assert (pre' = [] /\ m' = b /\ post' = []) as [?[??]]; last subst.
+        { clear - Horder'.
+          destruct pre'.
+          - inversion Horder'; subst; auto.
+          - destruct pre'; inversion Horder'. }
+        iApply H0; last iAssumption.
+        iIntros (??) => /=; rewrite /Mret/=.
+        rewrite H1 => //. by rewrite FreeTemps.seq_id_unitL. }
+      { assert (a = m0 /\ b = m /\ pre = [] /\ post = []) as [?[?[??]]]; last subst.
+        { clear -Horder.
+          inversion Horder; subst.
+          destruct pre; inversion H1; subst; eauto.
+          destruct pre; inversion H2. }
+        iDestruct "X" as "[_ X]".
+        rewrite /Mbind. iApply H0; last iAssumption.
+        iIntros (??) "H" => /=. iIntros (pre' post' m' Horder')=> /=.
+        assert (m0 = m' /\ pre' = [] /\ post' = []) as [?[??]]; last subst.
+        { destruct pre'; inversion Horder'; subst; eauto.
+          destruct pre'; inversion H4. }
+        iApply H; last iAssumption.
+        iIntros (??). rewrite /=/Mret/=.
+        rewrite H1 => //.
+        by rewrite FreeTemps.seq_id_unitL. } }
+  Qed.
+  *)
+
+  (** *** sequencing of monadic compuations *)
+  Definition Mseq {T U} (wp1 : M T) (wp2 : M U) : M (T * U) :=
+    pair <$> wp1 <*> wp2.
+
+  (*
+  Lemma Mseq_frame {T U} wp1 wp2 :
+    FrameI wp1 wp1 |-- FrameI wp2 wp2 -* FrameI (@Mseq T U wp1 wp2) (Mseq wp1 wp2).
+  Proof.
+    iIntros "A B" (??) "C".
+    rewrite /Mseq.
+    iApply (Mbind_frame with "A [B]"); last iAssumption.
+    iIntros (???) "X". iApply (Mmap_frame with "B"). done.
+  Qed.
+  *)
+
+  (** [seqs es] is sequential evaluation of [es] *)
+  Fixpoint seqs {T} (es : list (M T)) : M (list T) :=
+    match es with
+    | nil => mret []
+    | e :: es => (fun '(a,b) => a :: b) <$> (Mseq e (seqs es))
+    end.
+
+  (*
+  Lemma seqs_frame_strong {T} : forall (ls : list (M T)) Q Q',
+      ([∗list] m ∈ ls, FrameI m m)%I
+      |-- (Forall x y pf, [| length x = length ls |] -* Q x y pf -* Q' x y pf) -*
+          (seqs ls Q) -* (seqs ls Q').
+  Proof.
+    induction ls; simpl; intros.
+    - iIntros "_ X"; iApply "X"; eauto.
+    - iIntros "[A AS] K".
+      rewrite /M_bind. iApply "A".
+      iIntros (???).
+      iApply (IHls with "AS").
+      iIntros (????).
+      iApply "K". simpl. eauto.
+  Qed.
+  *)
+
+  (*
+  (** *** interleaving of monadic values
+
+      We encode interleaving through concurrency which we represent through
+      separable resources.
+
+      NOTE: this is like the semantics of argument evaluation in C
+   *)
+  #[program]
+  Definition Mpar {T U} (wp1 : M T) (wp2 : M U) : M (T * U) :=
+    {| _wp K := Exists Q1 Q2, wp1 Q1 ** wp2 Q2 ** (Forall v1 v2 f1 f2 pf1 pf2, Q1 v1 f1 pf1 -* Q2 v2 f2 pf2 -* K (v1,v2) (FreeTemps.canon (f1 |*| f2)) _) |}.
+  Next Obligation.
+    simpl; intros.
+    iIntros "K X". iDestruct "X" as (??) "[? [? Q]]".
+    iExists Q1, Q2; iFrame. iIntros (??????) "Q1 Q2". iApply "K". iApply ("Q" with "Q1 Q2").
+  Qed.
+
+  Lemma Mpar_frame {T U} wp1 wp2 :
+    FrameI wp1 wp1 |-- FrameI wp2 wp2 -* FrameI (@Mpar T U wp1 wp2) (Mpar wp1 wp2).
+  Proof.
+    iIntros "A B" (??) "C D".
+    rewrite /Mpar/FrameI.
+    iDestruct "D" as (??) "(D1 & D2 & K)".
+    iExists _, _.
+    iSplitL "D1 A".
+    iApply "A". 2: eauto. iIntros (???) "X"; iApply "X".
+    iSplitL "D2 B".
+    iApply "B". 2: eauto. iIntros (???) "X"; iApply "X".
+    iIntros (??????) "A B". iApply "C". iApply ("K" with "A B").
+  Qed.
+
+
+  (** lifting [Mpar] to homogeneous lists *)
+  Fixpoint Mpars {T} (f : list (M T)) : M (list T) :=
+    match f with
+    | nil => mret nil
+    | f :: fs => (fun '(v, vs) => v :: vs) <$> Mpar f (Mpars fs)
+    end.
+
+  Lemma Mpars_frame_strong {T} : forall (ls : list (M T)) Q Q',
+      |-- (Forall x y pf, [| length x = length ls |] -* Q x y pf -* Q' x y pf) -*
+          (Mpars ls Q) -* (Mpars ls Q').
+  Proof.
+    induction ls; simpl; intros.
+    - iIntros "X"; iApply "X"; eauto.
+    - iIntros "K".
+      rewrite /M_map.
+      rewrite /Mpar.
+      iIntros "X".
+      iDestruct "X" as (??) "(L & R & KK)".
+      iExists _, _. iFrame "L".
+      iDestruct (IHls with "[] R") as "IH".
+      2: iFrame "IH".
+      { instantiate (1:=fun x y pf => [| length x = length ls |] ** Q2 x y pf).
+        iIntros (???) "$". eauto. }
+      iIntros (??????) "? [% ?]".
+      iApply ("K" $! (v1::v2) (FreeTemps.canon (f1 |*| f2))).
+      { simpl. eauto. }
+      iApply ("KK" $! v1 v2 f1 f2 pf1 pf2 with "[$] [$]").
+  Qed.
+  *)
+
+  (* TODO: Begin C++ *)
+  (** *** evaluation by a scheme *)
+
+  (** [eval eo e1 e2] evaluates [e1], [e2] according to the evaluation scheme [eo] *)
+  Definition eval2 (eo : evaluation_order.t) {T U} (e1 : M T) (e2 : M U) : M (T * U) :=
+    match eo with
+    | evaluation_order.nd => nd_seq e1 e2
+    | evaluation_order.l_nd => Mseq e1 e2
+    | evaluation_order.rl => (fun '(a,b) => (b,a)) <$> Mseq e2 e1
+    end.
+
+  (** [evals eo es] evaluates [es] according to the evaluation scheme [eo] *)
+  Definition eval (eo : evaluation_order.t) {T} (es : list (M T)) : M (list T) :=
+    match eo with
+    | evaluation_order.nd => nd_seqs es
+    | evaluation_order.l_nd =>
+        match es with
+        | e :: es => letM* v := e in (fun vs => v :: vs) <$> (nd_seqs es)
+        | [] => mret []
+        end
+    | evaluation_order.rl => (@rev _) <$> (seqs (rev es))
+    end.
+
+  (*
+  Lemma eval_frame_strong {T} oe : forall (ls : list (M T)) Q Q',
+      ([∗list] m ∈ ls, FrameI m m)%I
+      |-- (Forall x y pf, [| length x = length ls |] -* Q x y pf -* Q' x y pf) -*
+          eval oe ls Q -* eval oe ls Q'.
+  Proof. (*
+    destruct oe; intros.
+    - rewrite /=/nd_seqs. iIntros "A B".
+      iApply (nd_seqs'_frame_strong with "B A"). done.
+    - simpl.
+      destruct ls; simpl.
+      { iIntros "_ X"; iApply "X". done. }
+      { iIntros "[X Y] K".
+        iApply "X". iIntros (??).
+        iApply (nd_seqs'_frame_strong with "[K] Y"); eauto.
+        iIntros (???).
+        rewrite /Mret.
+        iApply "K". simpl; eauto. }
+    - simpl.
+      iIntros "X K".
+      rewrite /Mmap. iApply (seqs_frame_strong with "[X]").
+      { iStopProof. induction ls; simpl; eauto.
+        iIntros "[$ K]".
+        iDestruct (IHls with "K") as "$". eauto. }
+      { iIntros (???); iApply "K".
+        rewrite length_rev. eauto. rewrite -(length_rev ls). eauto. }
+  Qed. *) Admitted.
+  *)
+End evaluation.
+
+
+
 (*
 Fixpoint tele_append_nd (TT : tele) (TT' : tele) : tele :=
   match TT with
@@ -536,6 +872,12 @@ Section Mglobal.
 
   #[global] Typeclasses Opaque M.
   #[global] Declare Instance _WpMonad : WpMonad PROP M.
+
+  Definition eval : evaluation_order.t -> forall {T}, list (M T) -> M (list T) := @eval M _ _ demonic.
+
+  Definition throw {T} (ty : type) (p : ptr) : M T :=
+    mret (M:=M.M PROP) (Exception ty p).
+
 End Mglobal.
 End Mglobal.
 Notation Mglobal := Mglobal.M (only parsing).
@@ -665,6 +1007,8 @@ Section Mexpr.
                      end) (Compose._prun m).
 
   #[global] Declare Instance _WpMonad : WpMonad PROP M.
+
+  Definition eval : evaluation_order.t -> forall {T}, list (M T) -> M (list T) := @eval M _ _ demonic.
 
   Definition push_free (f : FreeTemps.t) : M () :=
     Compose.mk $ Normal <$> with_temps.push_free f.
