@@ -603,7 +603,7 @@ Initialization of members in the initializer list
 *)
 Definition wpi_members `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ρ : region)
     (cls : globname) (this : ptr) (inits : list Initializer) :=
-  fix wpi_members (members : list Member) : Mlocal () :=
+  fix wpi_members (members : list Member) : Mlocal unit :=
   match members with
   | nil => mret ()
   | m :: members =>
@@ -624,6 +624,7 @@ Definition wpi_members `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ρ 
         Mfree_all tu $ default_initialize tu m.(mem_type)
           (this ,, _field (Field cls m.(mem_name)))
       in
+      letWP* '() := Mexpr.push_free $ FreeTemps.delete m.(mem_type) (this ,, _field (Field cls m.(mem_name))) in
       wpi_members members
     | i :: is' =>
       match i.(init_path) with
@@ -632,6 +633,8 @@ Definition wpi_members `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ρ 
         | nil =>
           (* there is a *unique* initializer for this field *)
           letWP* '() := wpi tu ρ cls this m.(mem_type) i in
+          let fr := FreeTemps.delete m.(mem_type) (this ,, _field (Field cls m.(mem_name))) in
+          letWP* _ := Mexpr.push_free fr in
           wpi_members members
         | _ =>
           (* there are multiple initializers for this field *)
@@ -650,6 +653,7 @@ Definition wpi_members `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ρ 
     end
   end.
 
+(*
 Section with_cpp.
   Context `{Σ : cpp_logic, σ : genv}.
   Implicit Types (p : ptr) (Q : epred).
@@ -670,31 +674,36 @@ Section with_cpp.
       by iApply IHflds. }
   Qed.
 End with_cpp.
+*)
 
 (**
 Initialization of bases in the initializer list
 *)
 Definition wpi_bases `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
     (ρ : region) (cls : globname) (this : ptr) (inits : list Initializer) :=
-  fix wpi_bases (bases : list globname) (Q : epred) : mpred :=
+  fix wpi_bases (bases : list globname) : Mlocal () :=
   match bases with
-  | nil => Q
+  | nil => mret ()
   | b :: bases =>
     match List.filter (fun i => bool_decide (i.(init_path) = InitBase b)) inits with
     | nil =>
       (*
       There is no initializer for this base class.
       *)
-      ERROR ("wpi_bases: missing base class initializer: ", cls)
+      Merror ("wpi_bases: missing base class initializer: ", cls)
     | i :: nil =>
       (* there is an initializer for this class *)
-      wpi tu ρ cls this (Tnamed b) i (wpi_bases bases Q)
+      letWP* '() := wpi tu ρ cls this (Tnamed b) i in
+      let ft := FreeTemps.delete (Tnamed b) (this ,, _base cls b) in
+      letWP* '() := Mexpr.push_free ft in
+      wpi_bases bases
     | _ :: _ :: _ =>
       (* there are multiple initializers for this, so we fail *)
-      ERROR ("wpi_bases: multiple initializers for base: ", cls, b)
+      Merror ("wpi_bases: multiple initializers for base: ", cls, b)
     end
   end.
 
+(*
 Section with_cpp.
   Context `{Σ : cpp_logic, σ : genv}.
   Implicit Types (p : ptr) (Q : epred).
@@ -711,40 +720,49 @@ Section with_cpp.
     by iApply IHbases.
   Qed.
 End with_cpp.
+*)
 
 Definition wp_struct_initializer_list `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
     (s : Struct) (ρ : region) (cls : globname) (this : ptr)
-    (inits : list Initializer) (Q : epred) : mpred :=
+    (inits : list Initializer) : Mlocal () :=
   match List.find (fun i => bool_decide (i.(init_path) = InitThis)) inits with
   | Some {| init_init := e |} =>
     match inits with
     | _ :: nil =>
         (* this is a delegating constructor, simply delegate. *)
-        wp_init tu ρ (Tnamed cls) this e (fun frees => interp tu frees Q)
+        letWP* _ := Mfree_all tu $ wp_init tu ρ (Tnamed cls) this e in
+        letWP* '() := Mexpr.push_free (FreeTemps.delete (Tnamed cls) this) in
+        mret ()
     | _ =>
       (*
       delegating constructors are not allowed to have any other
       initializers
       *)
-      ERROR "wp_struct_initializer_list: delegating constructor has other initializers"
+      Merror "wp_struct_initializer_list: delegating constructor has other initializers"
     end
   | None =>
-    let bases := wpi_bases tu ρ cls this inits (List.map fst s.(s_bases)) in
-    let members := wpi_members tu ρ cls this inits s.(s_fields) in
-    let ident Q := wp_init_identity this tu cls Q in
+    letWP* '() :=
+      produce (this |-> svalid_members cls ((fun m => (m.(mem_name), m.(mem_type))) <$> s.(s_fields))) in
+    letWP* '() := wpi_bases tu ρ cls this inits (List.map fst s.(s_bases)) in
+    letWP* '() := to_local $ wp_init_identity this tu cls in
+    letWP* '() := Mexpr.push_free FreeTemps.id (* TODO *) in
+    letWP* '() := wpi_members tu ρ cls this inits s.(s_fields) in
+    letWP* '() := produce (this |-> structR cls (cQp.m 1)) in
+    letWP* '() := Mexpr.push_free $ FreeTemps.id (* TODO FreeTemps.take_struct cls this *) in
+    mret ()
     (**
     Provide strict validity for [this] and immediate members,
     initialize the bases, then the identity, then initialize the
-    members, following http://eel.is/c++draft/class.base.init#13
+    members, following <http://eel.is/c++draft/class.base.init#13>
     (except virtual base classes, which are unsupported)
 
     NOTE we get the [structR] at the end since [structR 1$m
     cls |-- type_ptrR (Tnamed cls)].
     *)
-    this |-> svalid_members cls ((fun m => (m.(mem_name), m.(mem_type))) <$> s.(s_fields)) -*
-    bases (ident (members (this |-> structR cls 1$m -* Q)))
+    (* bases (ident (members (this |-> structR cls (cQp.mut 1) -* Q))) *)
   end.
 
+(*
 Section with_cpp.
   Context `{Σ : cpp_logic, σ : genv}.
   Implicit Types (p : ptr) (Q : epred).
@@ -769,21 +787,28 @@ Section with_cpp.
       by iApply wand_frame. }
   Qed.
 End with_cpp.
+*)
 
 Definition wp_union_initializer_list `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
     (u : decl.Union) (ρ : region) (cls : globname) (this : ptr)
-    (inits : list Initializer) (Q : epred) : mpred :=
+    (inits : list Initializer) : Mexpr.M () :=
   match inits with
-  | [] => Q
+  | [] => mret ()
   | [{| init_path := InitField f ; init_init := e |} as init] =>
     match list_find (fun m => f = m.(mem_name)) u.(u_fields) with
-    | None => ERROR "wp_union_initializer_list: field not found"
-    | Some (n, m) => wpi tu ρ cls this m.(mem_type) init $ this |-> unionR cls 1$m (Some n) -* Q
+    | None => Merror "wp_union_initializer_list: field not found"
+    | Some (n, m) =>
+        letWP* '() := wpi tu ρ cls this m.(mem_type) init in
+        letWP* '() := Mexpr.push_free (FreeTemps.delete m.(mem_type) (this ,, _field (Field cls m.(mem_name)))) in
+        letWP* '() := produce (this |-> unionR cls (cQp.m 1) (Some n)) in
+        letWP* '() := Mexpr.push_free FreeTemps.id (* TODO *) in
+        mret ()
     end
   | _ =>
-    UNSUPPORTED "wp_union_initializer_list: indirect (or self) union initialization is not currently supported"
+    Munsupported "wp_union_initializer_list: indirect (or self) union initialization is not currently supported"
   end.
 
+(*
 Section with_cpp.
   Context `{Σ : cpp_logic, σ : genv}.
   Implicit Types (p : ptr) (Q : epred).
@@ -799,7 +824,9 @@ Section with_cpp.
     by iApply wand_frame.
   Qed.
 End with_cpp.
+*)
 
+(*
 (**
 A special version of return to match the C++ rule that constructors
 and destructors must not syntactically return a value, e.g. `return
@@ -834,6 +861,7 @@ Section Kreturn_void.
     by case_match; auto using bi.False_elim.
   Qed.
 End Kreturn_void.
+*)
 
 (**
 [wp_ctor tu ctor args Q] is the weakest pre-condition (with
@@ -861,12 +889,22 @@ constructor kinds here
 not initialized (you get an [uninitR]), but you will get something
 that implies [type_ptr].
 *)
+
+Search Mexpr.M.
+
+Definition take_free `{Σ : cpp_logic} {T} (m : Mexpr.M T) : Mexpr.M (FreeTemps.t * T).
+Proof. Admitted.
+
+Definition handle_exception `{Σ : cpp_logic} {T} (m : Mexpr.M T)
+  (exc : type -> ptr -> Mexpr.M T) : Mexpr.M T.
+Proof. Admitted.
+
 #[local] Definition wp_ctor' `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
-    (ctor : Ctor) (args : list ptr) (Q : ptr -> epred) : mpred :=
+    (ctor : Ctor) (args : list ptr) : Mglobal.M ptr :=
   match ctor.(c_body) with
-  | None => ERROR "wp_ctor: no body"
-  | Some Defaulted => UNSUPPORTED "wp_ctor: defaulted constructors"
-  | Some (UserDefined ib | CompilerProvided ib) =>
+  | None => Merror "wp_ctor: no body"
+  | Some Defaulted => Munsupported "wp_ctor: defaulted constructors"
+  | Some (UserDefined ib) =>
     let inits := ib.1 in
     let body := ib.2 in
     match args with
@@ -883,12 +921,16 @@ that implies [type_ptr].
         thisp |-> tblockR ty 1$m **
         |>
         let ρ vap := Remp (Some thisp) vap Tvoid in
-        letI* ρ, cleanup := bind_vars tu ctor.(c_arity) ctor.(c_params) rest_vals ρ in
-        letI* := wp_struct_initializer_list tu cls ρ ctor.(c_class) thisp inits in
-        letI* := wp tu ρ body in
-        letI* := Kcleanup tu cleanup in
-        letI* := Kreturn_void in
-        |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -* Q p
+        letWP* ρ := bind_vars tu ctor.(c_arity) ctor.(c_params) rest_vals ρ in
+        letWP* '(free, ()) := take_free $ wp_struct_initializer_list tu cls ρ ctor.(c_class) thisp inits in
+        letWP* '() :=
+            handle_exception (Mfree_all tu $ wp tu ρ body)
+              (fun ty p =>
+                 letWP* '() := Mfree_all tu $ Mexpr.push_free free in
+                 Mexpr.throw ty p)
+        in
+        letWP* := Kreturn_void in
+        |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid (cQp.mut 1) Vvoid -* Q p
 
       | Some (Gunion union) =>
         (*
@@ -900,12 +942,12 @@ that implies [type_ptr].
         thisp |-> tblockR ty 1$m **
         |>
         let ρ vap := Remp (Some thisp) vap Tvoid in
-        letI* ρ, cleanup := bind_vars tu ctor.(c_arity) ctor.(c_params) rest_vals ρ in
-        letI* := wp_union_initializer_list tu union ρ ctor.(c_class) thisp inits in
-        letI* := wp tu ρ body in
-        letI* := Kcleanup tu cleanup in
-        letI* := Kreturn_void in
-        |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -* Q p
+        letWP* ρ, cleanup := bind_vars tu ctor.(c_arity) ctor.(c_params) rest_vals ρ in
+        letWP* := wp_union_initializer_list tu union ρ ctor.(c_class) thisp inits in
+        letWP* := wp tu ρ body in
+        letWP* := Kcleanup tu cleanup in
+        letWP* := Kreturn_void in
+        |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid (cQp.mut 1) Vvoid -* Q p
 
       | _ => ERROR ("wp_ctor: constructor for non-aggregate", ctor.(c_class))
       end
@@ -1041,8 +1083,8 @@ this resource will be consumed immediately.
       in
       match tu.(types) !! dtor.(d_class) with
       | Some (Gstruct s) =>
-        letI* := wp_body in
-        thisp |-> structR dtor.(d_class) 1$m **
+        letWP* := wp_body in
+        thisp |-> structR dtor.(d_class) (cQp.mut 1) **
         (**
         Destroy fields, object identity, and base classes (reverse
         order).
@@ -1069,8 +1111,8 @@ this resource will be consumed immediately.
         automatically where they can prove the active entry has a
         trivial destructor or is already destroyed.
         *)
-        letI* := wp_body in
-        thisp |-> tblockR ty 1$m **
+        letWP* := wp_body in
+        thisp |-> tblockR ty (cQp.mut 1) **
         (
           thisp |-> tblockR ty 1$m -*
           |={top}=>?upd |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -*
