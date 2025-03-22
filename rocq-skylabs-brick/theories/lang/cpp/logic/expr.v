@@ -29,6 +29,8 @@ Require Import skylabs.lang.cpp.logic.dispatch.
 Require Import skylabs.lang.cpp.logic.func.
 Require Import skylabs.iris.extra.bi.errors.
 
+Import UPoly.
+
 Module Type Expr.
   (* Needed for [Unfold wp_test] *)
   #[local] Open Scope free_scope.
@@ -52,7 +54,7 @@ Module Type Expr.
     Context `{Σ : cpp_logic} {resolve:genv}.
     Variables (tu : translation_unit) (ρ : region).
 
-    #[local] Notation M := (monad.M).
+    #[local] Notation M := (Mexpr.M).
     #[local] Notation wp_lval := (wp_lval tu ρ).
     #[local] Notation wp_xval := (wp_xval tu ρ).
     #[local] Notation wp_init := (wp_init tu ρ).
@@ -86,8 +88,8 @@ Module Type Expr.
     (* integer literals are prvalues *)
     Axiom wp_operand_int : forall n ty,
       (* TODO: promote this to a type-check-time test *)
-        (letWP* _ := Massume (has_type_prop (Vint n) ty) in
-        mret (Vint n))
+        (letWP* _ := produce [| has_type_prop (Vint n) ty |] in
+         mret (Vint n))
       ⊆ wp_operand (Eint n ty).
 
     (* NOTE: character literals represented in the AST as 32-bit unsigned integers
@@ -107,6 +109,14 @@ Module Type Expr.
     Axiom wp_operand_float : forall f (v : float_type.car f) Q,
           Q (Vfloat f v) FreeTemps.id
       |-- wp_operand (Efloat f v) Q.
+
+    (* TODO: lift *)
+    Fixpoint Mproduce {TT : tele} : (TT -t> mpred) -> M TT :=
+      match TT with
+      | TeleO => fun P => produce P
+      | TeleS f => fun P => letWP* x := demonic _ in
+         TeleArgCons x <$> @Mproduce (f x) (P x)
+      end.
 
     (** * String Literals
 
@@ -143,10 +153,9 @@ Module Type Expr.
         machine.
      *)
     Axiom wp_lval_string : forall chars ct,
-          (letWP* p := Mnd ptr in
-           letWP* q := Mnd Qp in
-           letWP* '() := Mproduce (p |-> string_bytesR ct (cQp.c q) chars) in
-           letWP* '() := Mproduce (□ (Forall q', (p |-> string_bytesR ct (cQp.c q') chars ={⊤}=∗ emp))) in
+          (letWP* '(TeleArgCons p _) := Mproduce (TT:=[tele (p:ptr) (q : Qp)])
+                              (fun p q => p |-> string_bytesR ct (cQp.c q) chars **
+                                         (□ (Forall q', (p |-> string_bytesR ct (cQp.c q') chars ={⊤}=∗ emp)))) in
            mret p)
       ⊆ wp_lval (Estring chars (Tchar_ ct)).
 
@@ -199,41 +208,24 @@ Module Type Expr.
 
     (* `this` is a prvalue *)
     Axiom wp_operand_this : forall ty,
-          (letWP* '() := Mconsume (valid_ptr (_this ρ)) in
+          (letWP* '() := consume (valid_ptr (_this ρ)) in
            mret (Vptr $ _this ρ))
       ⊆ wp_operand (Ethis ty).
 
-    #[program]
     Definition Mread_prim {T} (p : ptr) (ty : type) (V : T -> val) : M T :=
-      {| _wp K :=
-          Exists v, (Exists q, p |-> primR ty q (V v) ** True) //\\
-                    K v FreeTemps.id _ |}.
-    Next Obligation.
-      simpl; intros.
-      iIntros "K X".
-      iDestruct "X" as (v) "X"; iExists v.
-      iSplit.
-      { iDestruct "X" as "[X _]". eauto. }
-      { iDestruct "X" as "[_ X]". iRevert "X"; iApply "K". }
-    Qed.
+      letWP* '(TeleArgCons v _) :=
+        check (TT:=[tele (v:T)])
+               (fun v => Exists q, p |-> primR ty q (V v))
+      in mret v.
 
-    #[program]
     Definition Mread {T} (p : ptr) (ty : type) (V : T -> val) : M T :=
-      {| _wp K :=
-          Exists v : T, (Exists q, p |-> initializedR ty q (V v) ** True) //\\
-                      K v FreeTemps.id _ |}.
-    Next Obligation.
-      simpl; intros.
-      iIntros "K X".
-      iDestruct "X" as (v) "X"; iExists v.
-      iSplit.
-      { iDestruct "X" as "[X _]". eauto. }
-      { iDestruct "X" as "[_ X]". iRevert "X"; iApply "K". }
-    Qed.
-
+      letWP* '(TeleArgCons v _) :=
+        check (TT:=[tele (v:T)])
+          (fun v => Exists q, p |-> initializedR ty q (V v))
+      in mret v.
 
     Definition Mvalid_ref (ty : type) (p : ptr) : M unit :=
-      Mconsume (reference_to (erase_qualifiers ty) p).
+      consume (reference_to (erase_qualifiers ty) p).
 
 
     (* [read_decl p t Q] "returns" the reference referred to by
@@ -280,11 +272,11 @@ Module Type Expr.
              letWP* base := wp_operand e in
              match base with
              | Vptr p =>
-                 letWP* '() := Mconsume (reference_to (erase_qualifiers t) p) in
+                 letWP* '() := consume (reference_to (erase_qualifiers t) p) in
                  mret p
-             | _ => Mub
+             | _ => ub
              end
-         | _ => Mub
+         | _ => ub
          end
        else
          wp_glval e)%I.
@@ -346,7 +338,7 @@ Module Type Expr.
             letWP* base := wp_xval a in
             letWP* p := read_decl (base ,, _field (Field nm m)) ty in
             mret p
-          | _ => Mub
+          | _ => ub
           end
       ⊆ wp_xval (Emember false a m mut ty).
     (* <<e->f>> is never an xvalue because <<e>> must be a pointer *)
@@ -406,6 +398,9 @@ Module Type Expr.
       | _ , _ => None
       end.
 
+    Definition Mas {T U : Type} (f : T -> U) (m : U) : M T :=
+      letWP* '(TeleArgCons x _) := check (TT:=[tele (_ : _)]) (fun x => [| f x = m |]) in mret x.
+
     Definition wp_ptr (vc : ValCat) (e : Expr) : M ptr :=
       match vc with
       | Prvalue =>
@@ -454,7 +449,7 @@ Module Type Expr.
     Axiom wp_lval_subscript : forall e side vc i t,
       subscript_scheme e i = Some (side, vc, t) ->
       (if side then
-         letWP* '(base, idx) := nd_seq (wp_ptr vc e) (wp_int i) in
+         letWP* '(base, idx) := Mexpr.nd_seq (wp_ptr vc e) (wp_int i) in
          let p : ptr := base .[ erase_qualifiers t ! idx ] in
          letWP* '() := Mvalid_ref t p in
          mret p

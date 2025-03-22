@@ -117,7 +117,7 @@ mutable again in the second argument to [Q].
 *)
 Definition bind_vars `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ar : function_arity) :=
   fix bind_vars (ts : list (ident * decltype)) (args : list ptr)
-    (ρ : option ptr -> region) : Mlocal region :=
+    (ρ : option ptr -> region) : with_temps.M mpredI region :=
   match ts with
   | nil =>
     match ar with
@@ -144,7 +144,7 @@ Definition bind_vars `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ar : 
       let ty := qty.2 in
       if q_const qty.1 then
         letWP* '() := to_local $ wp_make_const tu p ty in
-        letWP* '() := Mexpr.push_free (FreeTemps.mutable ty p) in
+        letWP* '() := with_temps.push_free (FreeTemps.mutable ty p) in
         bind_vars ts args (fun vap => Rbind xty.1 p $ ρ vap)
       else
         bind_vars ts args (fun vap => Rbind xty.1 p $ ρ vap)
@@ -895,9 +895,13 @@ Search Mexpr.M.
 Definition take_free `{Σ : cpp_logic} {T} (m : Mexpr.M T) : Mexpr.M (FreeTemps.t * T).
 Proof. Admitted.
 
-Definition handle_exception `{Σ : cpp_logic} {T} (m : Mexpr.M T)
-  (exc : type -> ptr -> Mexpr.M T) : Mexpr.M T.
-Proof. Admitted.
+Definition handle `{Σ : cpp_logic} {T U} (m : Mexpr.M T)
+  (normal : T -> Mglobal.M U)
+  (exc : type -> ptr -> Mglobal.M U)
+  (break : Mglobal.M U)
+  (continue : Mglobal.M U)
+  (retn : option ptr -> Mglobal.M U) : Mglobal.M U.
+Admitted.
 
 #[local] Definition wp_ctor' `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
     (ctor : Ctor) (args : list ptr) : Mglobal.M ptr :=
@@ -918,28 +922,42 @@ Proof. Admitted.
         We require that you give up the *entire* block of memory
         [tblockR] that the object will use.
         *)
-        thisp |-> tblockR ty 1$m **
-        |>
+        letWP* '() := consume (thisp |-> tblockR ty (cQp.mut 1)) in
+        letWP* '() := step in
         let ρ vap := Remp (Some thisp) vap Tvoid in
         letWP* ρ := bind_vars tu ctor.(c_arity) ctor.(c_params) rest_vals ρ in
         letWP* '(free, ()) := take_free $ wp_struct_initializer_list tu cls ρ ctor.(c_class) thisp inits in
         letWP* '() :=
-            handle_exception (Mfree_all tu $ wp tu ρ body)
+            handle (Mfree_all tu $ wp tu ρ body)
+              (fun '() => (* return void *) _)
               (fun ty p =>
-                 letWP* '() := Mfree_all tu $ Mexpr.push_free free in
-                 Mexpr.throw ty p)
+                 letWP* '() := handle (Mfree_all tu $ Mexpr.push_free free)
+                                      mret Mglobal.throw
+                                      ub ub (fun _ => ub)
+                 in
+                 Mglobal.throw ty p)
+              ub ub
+              (fun ret =>
+                 match ret with
+                 | None => _
+                 | Some _ => ub
+                 end)
         in
+        Munsupported "TODO"
+             (*
         letWP* := Kreturn_void in
         |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid (cQp.mut 1) Vvoid -* Q p
+*)
 
-      | Some (Gunion union) =>
+      | Some (Gunion union) => Munsupported "unions"
         (*
         this is a union.
 
         We require that you give up the *entire* block of memory
         [tblockR] that the object will use.
         *)
-        thisp |-> tblockR ty 1$m **
+                                          (*
+        thisp |-> tblockR ty (cQp.mut 1) **
         |>
         let ρ vap := Remp (Some thisp) vap Tvoid in
         letWP* ρ, cleanup := bind_vars tu ctor.(c_arity) ctor.(c_params) rest_vals ρ in
@@ -948,10 +966,11 @@ Proof. Admitted.
         letWP* := Kcleanup tu cleanup in
         letWP* := Kreturn_void in
         |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid (cQp.mut 1) Vvoid -* Q p
+        *)
 
-      | _ => ERROR ("wp_ctor: constructor for non-aggregate", ctor.(c_class))
+      | _ => Merror ("wp_ctor: constructor for non-aggregate", ctor.(c_class))
       end
-    | _ => ERROR "wp_ctor: constructor without leading [this] argument"
+    | _ => Merror "wp_ctor: constructor without leading [this] argument"
     end
   end.
 mlock Definition wp_ctor `{Σ : cpp_logic, σ : genv} :=
