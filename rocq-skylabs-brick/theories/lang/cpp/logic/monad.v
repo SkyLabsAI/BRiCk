@@ -1009,6 +1009,7 @@ Section Mexpr.
   #[global] Declare Instance _WpMonad : WpMonad PROP M.
 
   Definition eval : evaluation_order.t -> forall {T}, list (M T) -> M (list T) := @eval M _ _ demonic.
+  Definition nd_seq : forall {T U}, M T -> M U -> M (T * U) := @nd_seq M _ _ demonic.
 
   Definition push_free (f : FreeTemps.t) : M () :=
     Compose.mk $ Normal <$> with_temps.push_free f.
