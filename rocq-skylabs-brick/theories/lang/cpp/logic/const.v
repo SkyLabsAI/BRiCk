@@ -40,7 +40,7 @@ Section defs.
   [Params], ease the statement of [Proper] instances, and speed up
   setoid rewriting.
    *)
-  Parameter wp_const : forall (tu : translation_unit) {σ : genv} (from to : cQp.t) (addr : ptr) (ty : decltype), Mglobal.M unit.
+  Parameter wp_const : forall (tu : translation_unit) {σ : genv} (from to : cQp.t) (addr : ptr) (ty : decltype), M.M mpredI unit.
 
   (*
   Axiom wp_const_frame : forall tu tu' f t a ty Q Q',
@@ -78,14 +78,14 @@ Section defs.
   then it needs to descend under <<const>>
   *)
   #[local] Notation "|={ E }=> P" := (|={E}=> P)%I (only parsing).
-  #[local] Definition wp_const_body (wp_const : cQp.t -> cQp.t -> ptr -> decltype -> Mglobal.M unit)
-      (tu : translation_unit) (from to : cQp.t)  (addr : ptr) (ty : decltype) : Mglobal.M unit :=
+  #[local] Definition wp_const_body (wp_const : cQp.t -> cQp.t -> ptr -> decltype -> M.M mpredI unit)
+      (tu : translation_unit) (from to : cQp.t)  (addr : ptr) (ty : decltype) : M.M mpredI unit :=
     let '(cv, rty) := decompose_type ty in
 (*    let Q := |={top}=> Q in *)
     if q_const cv then mret ()
     else
-      let UNSUPPORTED : Mglobal.M unit := wp_const from to addr ty in
-      match rty return Mglobal.M unit with
+      let UNSUPPORTED : M.M mpredI unit := wp_const from to addr ty in
+      match rty return M.M mpredI unit with
       | Tptr _
       | Tnum _ _
       | Tchar_ _

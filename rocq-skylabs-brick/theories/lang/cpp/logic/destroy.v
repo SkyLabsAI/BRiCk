@@ -551,7 +551,7 @@ Section body.
     | Tqualified q ty => wp_destroy_val tu (merge_tq cv q) ty this
 
     | Tnamed cls =>
-      letWP* _ := if q_const cv then wp_make_mutable tu this rty else mret () in
+      letWP* _ := if q_const cv then Mglobal.from_M $ wp_make_mutable tu this rty else mret () in
       wp_destroy_named tu cls this
 
     | Tarray ety sz =>
@@ -1060,14 +1060,14 @@ emp] is not provable unless [Q] is affine.
 #[local] Definition interp_body `{Σ : cpp_logic, σ : genv}
     (interp : translation_unit -> FreeTemps.t -> Mglobal unit)
     (tu : translation_unit) (free : FreeTemps.t) : Mglobal unit :=
-  match free with
+  match free return Mglobal unit with
   | FreeTemps.id => non_atomically $ mret ()
   | FreeTemps.seq f g => letWP* _ := interp tu f in interp tu g
   | FreeTemps.par f g => non_atomically $ letWP* _ := (* Mpar (interp tu f) (interp tu g) *) mret () in UPoly.mret ()
   | FreeTemps.delete ty addr => destroy_val tu ty addr
   | FreeTemps.delete_va va addr => non_atomically $ consume (addr |-> varargsR va)
-  | FreeTemps.const ty p => non_atomically $ wp_make_const tu p ty
-  | FreeTemps.mutable ty p => non_atomically $ wp_make_mutable tu p ty
+  | FreeTemps.const ty p => non_atomically $ Mglobal.from_M $ wp_make_const tu p ty
+  | FreeTemps.mutable ty p => non_atomically $ Mglobal.from_M $ wp_make_mutable tu p ty
   end.
 
 mlock Definition interp `{Σ : cpp_logic, σ : genv}
@@ -1105,8 +1105,8 @@ Section temps.
     | FreeTemps.par f g => letWP* _ := (* Mpar (interp tu f) (interp tu g) *) mret () in mret () (* TODO *)
     | FreeTemps.delete ty addr => destroy_val tu ty addr
     | FreeTemps.delete_va va addr => consume (addr |-> varargsR va)
-    | FreeTemps.const ty p => non_atomically $ wp_make_const tu p ty
-    | FreeTemps.mutable ty p => non_atomically $ wp_make_mutable tu p ty
+    | FreeTemps.const ty p => non_atomically $ Mglobal.from_M $ wp_make_const tu p ty
+    | FreeTemps.mutable ty p => non_atomically $ Mglobal.from_M $ wp_make_mutable tu p ty
     end
     ⊆ interp tu free.
   Proof.

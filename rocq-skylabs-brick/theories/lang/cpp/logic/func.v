@@ -143,7 +143,7 @@ Definition bind_vars `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ar : 
       let qty := decompose_type xty.2 in
       let ty := qty.2 in
       if q_const qty.1 then
-        letWP* '() := to_local $ wp_make_const tu p ty in
+        letWP* '() := with_temps.from_M $ wp_make_const tu p ty in
         letWP* '() := with_temps.push_free (FreeTemps.mutable ty p) in
         bind_vars ts args (fun vap => Rbind xty.1 p $ ρ vap)
       else
@@ -176,16 +176,19 @@ End with_cpp.
 
 (** ** The weakest precondition of a function *)
 
+Definition Mreturn_void `{Σ : cpp_logic} {σ : genv} : Mglobal.M ptr :=
+  letWP* (p : ptr) := demonic ptr in
+  letWP* '() := produce (p |-> primR "void" (cQp.m 1) Vvoid) in
+  mret (M:=M.M mpredI) (Mglobal.Normal p).
+
+
 Definition Mreturn `{Σ : cpp_logic} {σ : genv} (tu : translation_unit) (m : Mexpr.M ()) : Mglobal.M ptr :=
   mbind (M:=M.M mpredI) (fun r => match r.(with_temps._result) with
                                | Mexpr.Exception ty p =>
                                    mret $ Mglobal.Exception ty p
                                | Mexpr.ReturnVal p => mret $ Mglobal.Normal p
                                | Mexpr.ReturnVoid
-                               | Mexpr.Normal () =>
-                                   letWP* (p : ptr) := demonic ptr in
-                                   letWP* '() := produce (p |-> primR "void" (cQp.m 1) Vvoid) in
-                                   mret (M:=M.M mpredI) (Mglobal.Normal p)
+                               | Mexpr.Normal () => Mreturn_void
                                | Mexpr.Continue | Mexpr.Break => ub
                                end) (Mexpr.prun $ Mfree_all tu m).
 
@@ -201,8 +204,9 @@ place to support `XX_shift` lemmas. This could be fixed.
     match body with
     | Impl body =>
       let ρ vap := Remp None vap f.(f_return) in
+      letWP* '(free, ρ) := Mglobal.from_temps $ bind_vars tu f.(f_arity) f.(f_params) args ρ in
       Mreturn tu $ non_atomically $
-        letWP* ρ := bind_vars tu f.(f_arity) f.(f_params) args ρ in
+        letWP* '() := Mexpr.push_free free in
         letWP* '() := step in
         wp tu ρ body
             (* (Kcleanup tu cleanup $ Kreturn $ fun x => |={top}=>?u |> Q x) *)
@@ -275,8 +279,9 @@ parameters.
     match args with
     | thisp :: rest_vals =>
       let ρ va := Remp (Some thisp) va m.(m_return) in
+      letWP* '(free, ρ) := Mglobal.from_temps $ bind_vars tu m.(m_arity) m.(m_params) rest_vals ρ in
       Mreturn tu $ non_atomically $
-        letWP* ρ := bind_vars tu m.(m_arity) m.(m_params) rest_vals ρ in
+        letWP* '() := Mexpr.push_free free in
         letWP* '() := step in
         wp tu ρ body
     | _ => Merror "wp_method: no arguments"
@@ -596,14 +601,20 @@ Section with_cpp.
   *)
 End with_cpp.
 
+
 (** ** Weakest precondition of a constructor *)
 
 (**
-Initialization of members in the initializer list
+Initialization of members in the initializer list.
+
+This function returns an [Mexpr.M] but the [FreeTemps.t] captures the
+fields that need to be destructed if something raise an exception.
+If nothing raises an exception, then these temporaries will be
+discarded (and reconstructed and executed by the destructor).
 *)
 Definition wpi_members `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ρ : region)
     (cls : globname) (this : ptr) (inits : list Initializer) :=
-  fix wpi_members (members : list Member) : Mlocal unit :=
+  fix wpi_members (members : list Member) : Mexpr.M unit :=
   match members with
   | nil => mret ()
   | m :: members =>
@@ -642,7 +653,7 @@ Definition wpi_members `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ρ 
         end
       | InitIndirect _ _ =>
         (*
-        this is initializing an object via sub-objets using indirect
+        this is initializing an object via sub-objects using indirect
         initialization.
 
         TODO currently not supported
@@ -890,11 +901,10 @@ not initialized (you get an [uninitR]), but you will get something
 that implies [type_ptr].
 *)
 
-Search Mexpr.M.
-
-Definition take_free `{Σ : cpp_logic} {T} (m : Mexpr.M T) : Mexpr.M (FreeTemps.t * T).
-Proof. Admitted.
-
+(** [handle m]
+    - on [Normal v] frees the temporaries and invokes [normal]
+    - on [Throw ]
+ *)
 Definition handle `{Σ : cpp_logic} {T U} (m : Mexpr.M T)
   (normal : T -> Mglobal.M U)
   (exc : type -> ptr -> Mglobal.M U)
@@ -902,8 +912,94 @@ Definition handle `{Σ : cpp_logic} {T U} (m : Mexpr.M T)
   (continue : Mglobal.M U)
   (retn : option ptr -> Mglobal.M U) : Mglobal.M U.
 Admitted.
+Search with_temps.M Mglobal.M.
+About wp_struct_initializer_list.
+Search Mexpr.M.
+Print Mglobal.Result.
+About interp.
 
-#[local] Definition wp_ctor' `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
+Definition Mglobal_mk `{Σ : cpp_logic} {T} (m : M.M mpredI (Mglobal.Result T)) : Mglobal.M T := m.
+Definition Mglobal_prun `{Σ : cpp_logic} {T} (m : Mglobal.M T) : M.M mpredI (Mglobal.Result T) := m.
+
+Definition handle_initializer_list `{Σ : cpp_logic} {σ : genv} {T} (tu : translation_unit) (m : Mexpr.M T) : Mglobal.M (FreeTemps.t * T) :=
+  Mglobal_mk $
+    letWP* r := Mexpr.prun m in
+    match with_temps._result r return M.M mpredI (Mglobal.Result (FreeTemps.t * T)) with
+    | Mexpr.Normal t => Mglobal_prun $ mret (with_temps._free r, t)
+    | Mexpr.Exception ty p =>
+        letWP* r := Mglobal_prun $ interp tu (with_temps._free r) in
+        match r return M.M mpredI _ with
+        | Mglobal.Normal () => Mglobal.throw ty p
+        | Mglobal.Exception _ _ => ub
+        end
+    | Mexpr.Break | Mexpr.Continue
+    | Mexpr.ReturnVal _
+    | Mexpr.ReturnVoid => ub
+    end.
+
+Definition Mfree_on_exit `{Σ : cpp_logic, σ : genv} {T} (tu : translation_unit) (free : FreeTemps.t) (m : Mglobal.M T)
+  : Mglobal.M T :=
+  Mglobal_mk $
+  letWP* r := m in
+  match r with
+  | Mglobal.Normal n =>
+      letWP* r := interp tu free in
+      match r with
+      | Mglobal.Normal () => mret (M:=M.M mpredI) (Mglobal.Normal n)
+      | Mglobal.Exception ty p => mret (M:=M.M mpredI) (Mglobal.Exception ty p)
+      end
+  | Mglobal.Exception ty p =>
+      letWP* r := interp tu free in
+      match r with
+      | Mglobal.Normal () => mret (Mglobal.Exception ty p)
+      | Mglobal.Exception _ _ => ub
+      end
+  end.
+Definition Mfree_on_exception `{Σ : cpp_logic, σ : genv} {T} (tu : translation_unit) (free : FreeTemps.t) (m : Mglobal.M T)
+  : Mglobal.M T :=
+  Mglobal_mk $
+    letWP* r := m in
+      match r with
+      | Mglobal.Normal n =>
+          mret (M:=M.M mpredI) (Mglobal.Normal n)
+      | Mglobal.Exception ty p =>
+          letWP* r := interp tu free in
+          match r with
+          | Mglobal.Normal () => mret (Mglobal.Exception ty p)
+          | Mglobal.Exception _ _ => ub
+          end
+      end.
+Definition Mon_exception `{Σ : cpp_logic, σ : genv} {T} (exc : Mglobal.M ()) (m : Mglobal.M T)
+  : Mglobal.M T :=
+  Mglobal_mk $
+    letWP* r := m in
+      match r with
+      | Mglobal.Normal n =>
+          mret (M:=M.M mpredI) (Mglobal.Normal n)
+      | Mglobal.Exception ty p =>
+          letWP* r := exc in
+          match r with
+          | Mglobal.Normal () => mret (Mglobal.Exception ty p)
+          | Mglobal.Exception _ _ => ub
+          end
+      end.
+Definition Mon_exit `{Σ : cpp_logic} {T} (exc : Mglobal.M ()) (m : Mglobal.M T)
+  : Mglobal.M T :=
+  Mglobal_mk $
+    letWP* r := m in
+      match r return M.M mpredI (Mglobal.Result T) with
+      | Mglobal.Normal n =>
+          Mglobal_prun $ letWP* '() := exc in mret n
+      | Mglobal.Exception ty p =>
+          letWP* r := Mglobal_prun exc in
+          match r return M.M mpredI (Mglobal.Result T) with
+          | Mglobal.Normal () => mret (Mglobal.Exception ty p)
+          | Mglobal.Exception _ _ => ub
+          end
+      end.
+
+#[local]
+Definition wp_ctor' `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
     (ctor : Ctor) (args : list ptr) : Mglobal.M ptr :=
   match ctor.(c_body) with
   | None => Merror "wp_ctor: no body"
@@ -923,65 +1019,67 @@ Admitted.
         [tblockR] that the object will use.
         *)
         letWP* '() := consume (thisp |-> tblockR ty (cQp.mut 1)) in
+        Mon_exception (produce (thisp |-> tblockR ty (cQp.mut 1))) $
         letWP* '() := step in
         let ρ vap := Remp (Some thisp) vap Tvoid in
-        letWP* ρ := bind_vars tu ctor.(c_arity) ctor.(c_params) rest_vals ρ in
-        letWP* '(free, ()) := take_free $ wp_struct_initializer_list tu cls ρ ctor.(c_class) thisp inits in
-        letWP* '() :=
-            handle (Mfree_all tu $ wp tu ρ body)
-              (fun '() => (* return void *) _)
-              (fun ty p =>
-                 letWP* '() := handle (Mfree_all tu $ Mexpr.push_free free)
-                                      mret Mglobal.throw
-                                      ub ub (fun _ => ub)
-                 in
-                 Mglobal.throw ty p)
-              ub ub
-              (fun ret =>
-                 match ret with
-                 | None => _
-                 | Some _ => ub
-                 end)
-        in
-        Munsupported "TODO"
-             (*
-        letWP* := Kreturn_void in
-        |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid (cQp.mut 1) Vvoid -* Q p
-*)
+        letWP* '(free_params, ρ) := Mglobal.from_temps $ bind_vars tu ctor.(c_arity) ctor.(c_params) rest_vals ρ in
+        Mfree_on_exit tu free_params $
+        letWP* '(free_members, ()) :=
+              handle_initializer_list tu (wp_struct_initializer_list tu cls ρ ctor.(c_class) thisp inits) in
+        Mon_exception (interp tu free_members) $
+          handle (Mfree_all tu $ wp tu ρ body)
+            (fun '() => Mreturn_void)
+            Mglobal.throw
+            ub ub
+            (fun ret =>
+               match ret with
+               | None => Mreturn_void
+               | Some _ => ub
+               end)
 
-      | Some (Gunion union) => Munsupported "unions"
+      | Some (Gunion union) =>
         (*
         this is a union.
 
         We require that you give up the *entire* block of memory
         [tblockR] that the object will use.
         *)
-                                          (*
-        thisp |-> tblockR ty (cQp.mut 1) **
-        |>
-        let ρ vap := Remp (Some thisp) vap Tvoid in
-        letWP* ρ, cleanup := bind_vars tu ctor.(c_arity) ctor.(c_params) rest_vals ρ in
-        letWP* := wp_union_initializer_list tu union ρ ctor.(c_class) thisp inits in
-        letWP* := wp tu ρ body in
-        letWP* := Kcleanup tu cleanup in
-        letWP* := Kreturn_void in
-        |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid (cQp.mut 1) Vvoid -* Q p
-        *)
-
+        letWP* '() := consume (thisp |-> tblockR ty (cQp.mut 1)) in
+        Mon_exception (produce (thisp |-> tblockR ty (cQp.mut 1))) $
+          letWP* '() := step in
+          let ρ vap := Remp (Some thisp) vap Tvoid in
+          letWP* '(free_params, ρ) := Mglobal.from_temps $ bind_vars tu ctor.(c_arity) ctor.(c_params) rest_vals ρ in
+          Mfree_on_exit tu free_params $
+            letWP* '(free_members, ()) :=
+              handle_initializer_list tu (wp_union_initializer_list tu union ρ ctor.(c_class) thisp inits) in
+            Mon_exception (interp tu free_members) $
+              handle (Mfree_all tu $ wp tu ρ body)
+              (fun '() => Mreturn_void)
+              Mglobal.throw
+              ub ub
+              (fun ret =>
+                match ret with
+                | None => Mreturn_void
+                | Some _ => ub
+                end)
       | _ => Merror ("wp_ctor: constructor for non-aggregate", ctor.(c_class))
       end
     | _ => Merror "wp_ctor: constructor without leading [this] argument"
     end
   end.
 mlock Definition wp_ctor `{Σ : cpp_logic, σ : genv} :=
-  Cbn (Reduce (wp_ctor' true)).
+  wp_ctor'.
+#[global] Arguments wp_ctor {_ _ _ _} _ _ _ : assert.	(* mlock bug *)
 
+(*
 Definition ctor_ok `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
     (ctor : Ctor) (spec : function_spec) : mpred :=
   [| type_of_spec spec = type_of_value (Oconstructor ctor) |] **
   □ Forall (Q : ptr -> epred) vals,
   spec.(fs_spec) vals Q -* wp_ctor tu ctor vals Q.
+*)
 
+(*
 Section wp_ctor.
   Context `{Σ : cpp_logic, σ : genv}.
   Implicit Types (Q : ptr -> epred).
@@ -1034,11 +1132,15 @@ Section wp_ctor.
     wp_ctor tu c args Q |-- Cbn (Reduce (wp_ctor' true tu c args Q)).
   Proof. by rewrite wp_ctor.unlock. Qed.
 End wp_ctor.
+*)
 
 (** ** Weakest precondition of a destructor *)
 
+(* TODO: what is the semantics of exceptions in destructors? *)
+
+(*
 Definition wpd_bases `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
-    (cls : globname) (this : ptr) (bases : list globname) (Q : epred) : mpred :=
+    (cls : globname) (this : ptr) (bases : list globname) : Mglobal ptr :=
   let del_base base := FreeTemps.delete (Tnamed base) (this ,, _base cls base) in
   interp tu (FreeTemps.seqs_rev (List.map del_base bases)) Q.
 
@@ -1066,6 +1168,7 @@ Section with_cpp.
     Q -* Q' |-- wpd_members tu cls this members Q -* wpd_members tu' cls this members Q'.
   Proof. apply interp_frame_strong. Qed.
 End with_cpp.
+*)
 
 (**
 [wp_dtor tu dtor args Q] defines the semantics of the destructor
@@ -1079,31 +1182,32 @@ the program is destroying this object, e.g. due to stack allocation,
 this resource will be consumed immediately.
 *)
 #[local] Definition wp_dtor' `{Σ : cpp_logic, σ : genv} (upd : bool) (tu : translation_unit)
-    (dtor : Dtor) (args : list ptr) (Q : ptr -> epred) : mpred :=
+    (dtor : Dtor) (args : list ptr) : Mglobal ptr :=
   match dtor.(d_body) with
-  | None => ERROR "wp_dtor: no body"
+  | None => ub (* ERROR "wp_dtor: no body" *)
   | Some body =>
     match args with
     | thisp :: nil =>
       let ty := Tnamed dtor.(d_class) in
-      let wp_body (epilog : epred) : mpred :=
-        (**
-        The function consumes a step
-        *)
-        |>
-        let* :=
-          match body with
-          | Defaulted => fun k : Kpred => |={top}=>?upd k Normal
-          | CompilerProvided body
-          | UserDefined body => wp tu (Remp (Some thisp) None Tvoid) body
-          end%I
-        in
-        Kreturn_void epilog
+      letWP* result :=
+        match body with
+        | Defaulted => Mreturn_void
+        | UserDefined body =>
+            handle (wp tu (Remp (Some thisp) None Tvoid) body)
+              (fun _ => Mreturn_void)
+              (fun _ _ => ub)
+              ub ub
+              (fun ret =>
+                 match ret with
+                 | None => Mreturn_void
+                 | Some _ => ub
+                 end)
+        end
       in
       match tu.(types) !! dtor.(d_class) with
       | Some (Gstruct s) =>
-        letWP* := wp_body in
-        thisp |-> structR dtor.(d_class) (cQp.mut 1) **
+        letWP* '() := consume (thisp |-> structR dtor.(d_class) (cQp.mut 1)) in
+        Mreturn_void (*
         (**
         Destroy fields, object identity, and base classes (reverse
         order).
@@ -1116,9 +1220,9 @@ this resource will be consumed immediately.
         (**
         Return object's memory to the abstract machine.
         *)
-        thisp |-> tblockR ty 1$m -*
-        |={top}=>?upd |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -*
-        Q p
+        thisp |-> tblockR ty (cQp.mut 1) -*
+        |={top}=>?upd |> Forall p : ptr, p |-> primR Tvoid (cQp.mut 1) Vvoid -*
+        Q p *)
       | Some (Gunion u) =>
         (*
         The function epilog of a union destructor doesn't actually
@@ -1130,21 +1234,21 @@ this resource will be consumed immediately.
         automatically where they can prove the active entry has a
         trivial destructor or is already destroyed.
         *)
-        letWP* := wp_body in
-        thisp |-> tblockR ty (cQp.mut 1) **
-        (
-          thisp |-> tblockR ty 1$m -*
-          |={top}=>?upd |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -*
-          Q p
-        )
-      | _ => ERROR ("wp_dtor: not a structure or union")
-      end%I
-    | _ => ERROR "wp_dtor: expected one argument"
+        letWP* '() := consume (thisp |-> tblockR ty (cQp.mut 1)) in
+        letWP* '() := produce (thisp |-> tblockR ty (cQp.mut 1)) in
+        letWP* '() := step in (* TODO *)
+        mret result
+      | _ => ub (* ERROR ("wp_dtor: not a structure or union") *)
+      end
+    | _ => ub (* UNSUPPORTED "wp_dtor: expected one argument" *)
     end
   end.
-mlock Definition wp_dtor `{Σ : cpp_logic, σ : genv} :=
+mlock
+Definition wp_dtor `{Σ : cpp_logic, σ : genv} :=
   Cbn (Reduce (wp_dtor' true)).
+#[global] Arguments wp_dtor {_ _ _ _} _ _ _ : assert.	(* mlock bug *)
 
+(*
 Section wp_dtor.
   Context `{Σ : cpp_logic, σ : genv}.
   Implicit Types (Q : ptr -> epred).
@@ -1198,6 +1302,7 @@ Section wp_dtor.
     wp_dtor tu d args Q |-- Cbn (Reduce (wp_dtor' true tu d args Q)).
   Proof. by rewrite wp_dtor.unlock. Qed.
 End wp_dtor.
+*)
 
 (*
 template<typename T>
