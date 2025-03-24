@@ -912,22 +912,14 @@ Definition handle `{Σ : cpp_logic} {T U} (m : Mexpr.M T)
   (continue : Mglobal.M U)
   (retn : option ptr -> Mglobal.M U) : Mglobal.M U.
 Admitted.
-Search with_temps.M Mglobal.M.
-About wp_struct_initializer_list.
-Search Mexpr.M.
-Print Mglobal.Result.
-About interp.
-
-Definition Mglobal_mk `{Σ : cpp_logic} {T} (m : M.M mpredI (Mglobal.Result T)) : Mglobal.M T := m.
-Definition Mglobal_prun `{Σ : cpp_logic} {T} (m : Mglobal.M T) : M.M mpredI (Mglobal.Result T) := m.
 
 Definition handle_initializer_list `{Σ : cpp_logic} {σ : genv} {T} (tu : translation_unit) (m : Mexpr.M T) : Mglobal.M (FreeTemps.t * T) :=
-  Mglobal_mk $
+  Mglobal.mk $
     letWP* r := Mexpr.prun m in
     match with_temps._result r return M.M mpredI (Mglobal.Result (FreeTemps.t * T)) with
-    | Mexpr.Normal t => Mglobal_prun $ mret (with_temps._free r, t)
+    | Mexpr.Normal t => Mglobal.prun $ mret (with_temps._free r, t)
     | Mexpr.Exception ty p =>
-        letWP* r := Mglobal_prun $ interp tu (with_temps._free r) in
+        letWP* r := Mglobal.prun $ interp tu (with_temps._free r) in
         match r return M.M mpredI _ with
         | Mglobal.Normal () => Mglobal.throw ty p
         | Mglobal.Exception _ _ => ub
@@ -939,7 +931,7 @@ Definition handle_initializer_list `{Σ : cpp_logic} {σ : genv} {T} (tu : trans
 
 Definition Mfree_on_exit `{Σ : cpp_logic, σ : genv} {T} (tu : translation_unit) (free : FreeTemps.t) (m : Mglobal.M T)
   : Mglobal.M T :=
-  Mglobal_mk $
+  Mglobal.mk $
   letWP* r := m in
   match r with
   | Mglobal.Normal n =>
@@ -957,7 +949,7 @@ Definition Mfree_on_exit `{Σ : cpp_logic, σ : genv} {T} (tu : translation_unit
   end.
 Definition Mfree_on_exception `{Σ : cpp_logic, σ : genv} {T} (tu : translation_unit) (free : FreeTemps.t) (m : Mglobal.M T)
   : Mglobal.M T :=
-  Mglobal_mk $
+  Mglobal.mk $
     letWP* r := m in
       match r with
       | Mglobal.Normal n =>
@@ -971,7 +963,7 @@ Definition Mfree_on_exception `{Σ : cpp_logic, σ : genv} {T} (tu : translation
       end.
 Definition Mon_exception `{Σ : cpp_logic, σ : genv} {T} (exc : Mglobal.M ()) (m : Mglobal.M T)
   : Mglobal.M T :=
-  Mglobal_mk $
+  Mglobal.mk $
     letWP* r := m in
       match r with
       | Mglobal.Normal n =>
@@ -985,13 +977,13 @@ Definition Mon_exception `{Σ : cpp_logic, σ : genv} {T} (exc : Mglobal.M ()) (
       end.
 Definition Mon_exit `{Σ : cpp_logic} {T} (exc : Mglobal.M ()) (m : Mglobal.M T)
   : Mglobal.M T :=
-  Mglobal_mk $
+  Mglobal.mk $
     letWP* r := m in
       match r return M.M mpredI (Mglobal.Result T) with
       | Mglobal.Normal n =>
-          Mglobal_prun $ letWP* '() := exc in mret n
+          Mglobal.prun $ letWP* '() := exc in mret n
       | Mglobal.Exception ty p =>
-          letWP* r := Mglobal_prun exc in
+          letWP* r := Mglobal.prun exc in
           match r return M.M mpredI (Mglobal.Result T) with
           | Mglobal.Normal () => mret (Mglobal.Exception ty p)
           | Mglobal.Exception _ _ => ub
@@ -1336,8 +1328,10 @@ union { int x; short y; } u;
       u |-> tblockR "U" 1
 *)
 
+(*
 Definition dtor_ok `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
     (dtor : Dtor) (spec : function_spec) : mpred :=
   [| type_of_spec spec = type_of_value (Odestructor dtor) |] **
-  □ Forall (Q : ptr -> mpred) vals,
-  spec.(fs_spec) vals Q -* wp_dtor tu dtor vals Q.
+  □ Forall vals,
+  spec.(fs_spec) vals ⊆ wp_dtor tu dtor vals.
+*)

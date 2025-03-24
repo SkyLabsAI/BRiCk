@@ -827,6 +827,9 @@ Section Mglobal.
 
   Context `{Σ : cpp_logic}.
 
+  Definition mk {T} (m : M.M mpredI (Mglobal.Result T)) : Mglobal.M T := m.
+  Definition prun {T} (m : Mglobal.M T) : M.M mpredI (Mglobal.Result T) := m.
+
   Definition _wp {T} (m : M T) := M._wp m.
 
   (* The canonical notion of equivalence on [M _] *)

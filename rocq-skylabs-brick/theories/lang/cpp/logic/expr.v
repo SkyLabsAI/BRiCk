@@ -547,7 +547,6 @@ Module Type Expr.
              fun v_result => eval_binop tu op ty Tint ty v (Vint 1) v_result
       else fun _ => UNSUPPORTED "cast-op".
 
-    Print WpMonad.
     Definition pre_op (b : BinOp) (ty : type) (e : Expr) : M ptr :=
       let ety := erase_qualifiers $ type_of e in
       letWP* a := wp_lval e in
