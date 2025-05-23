@@ -12,14 +12,19 @@ let just_query  = Vernacextend.classify_as_query
 
 }
 
+VERNAC ARGUMENT EXTEND dev_log_flag
+| ["Dev" "Log"] -> { true }
+| ["Log"]       -> { false }
+END
+
 VERNAC COMMAND EXTEND Ltac2_log_extension
-| ["Ltac2" "Dev" "Log" "Flag" ident(id) ] => { gram_update } -> {
-    Flags.declare_ltac2_log_flag id true
+| ["Ltac2" dev_log_flag(dev) "Flag" ident(id) ] => { gram_update }
+  SYNTERP AS notation {
+    Flags.declare_ltac2_log_flag id dev
+  } -> {
+    Flags.declare_ltac2_log_flag_interpretation notation
   }
-| ["Ltac2" "Log" "Flag" ident(id)       ] => { gram_update } -> {
-    Flags.declare_ltac2_log_flag id false
-  }
-| ["Print" "Ltac2" "Log" "Flags"        ] => { just_query  }  -> {
+| ["Print" "Ltac2" "Log" "Flags" ] => { just_query } -> {
     Flags.print_ltac2_log_flags ()
   }
 END

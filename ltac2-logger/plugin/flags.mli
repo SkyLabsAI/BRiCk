@@ -1,4 +1,6 @@
-val declare_ltac2_log_flag : Names.Id.t -> bool -> unit
+type notations
+val declare_ltac2_log_flag : Names.Id.t -> bool -> notations
+val declare_ltac2_log_flag_interpretation : notations -> unit
 val print_ltac2_log_flags : unit -> unit
 
 type level = int

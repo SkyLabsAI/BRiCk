@@ -225,7 +225,15 @@ let define_flag_value : string -> int -> unit = fun id hash ->
   Tac2entries.register_ltac false [(tac_name, hash_expr)];
   Msg.info "Ltac2 value \"%s\" is defined.\n%!" tac_name_str
 
-let define_notation : with_level:bool -> string -> int -> unit =
+type notation = {
+  flag: string;
+  with_level: bool;
+  data: Ltac2_plugin.Tac2entries.notation_interpretation_data
+}
+type notations =
+  notation list
+
+let define_notation : with_level:bool -> string -> int -> notation =
     fun ~with_level id hash ->
   let open Ltac2_plugin in
   let sexpr_str s = Tac2expr.SexprStr(CAst.make s) in
@@ -271,12 +279,16 @@ let define_notation : with_level:bool -> string -> int -> unit =
     in
     CAst.make Tac2expr.(CTacApp(log_msg, args))
   in
-  let notation = Tac2entries.register_notation [] tokens None body in
-  Tac2entries.register_notation_interpretation notation;
-  Msg.info "Ltac2 notation \"log[%s%s] <format>\" is defined.\n%!"
-    id (if with_level then ",<level>" else "")
+  let data = Tac2entries.register_notation [] tokens None body in
+  {flag=id; with_level; data}
 
-let declare_ltac2_log_flag : Names.Id.t -> bool -> unit = fun id dev ->
+let define_notation_interpretation {flag; with_level; data} =
+  let open Ltac2_plugin in
+  Tac2entries.register_notation_interpretation data;
+  Msg.info "Ltac2 notation \"log[%s%s] <format>\" is defined.\n%!"
+    flag (if with_level then ",<level>" else "")
+
+let declare_ltac2_log_flag : Names.Id.t -> bool -> notations = fun id dev ->
   let id_str = Names.Id.to_string id in
   let id = FlagId.make id in
   (* Check that no flags was defined with the same name. *)
@@ -293,8 +305,11 @@ let declare_ltac2_log_flag : Names.Id.t -> bool -> unit = fun id dev ->
   (* Define an Ltac2 value for the flag (its hash). *)
   define_flag_value id_str hash;
   (* Define Ltac2 notations for logging with the flag. *)
-  define_notation ~with_level:true  id_str hash;
-  define_notation ~with_level:false id_str hash
+  [define_notation ~with_level:true id_str hash;
+   define_notation ~with_level:false id_str hash]
+
+let declare_ltac2_log_flag_interpretation : notations -> unit = fun notations ->
+  List.iter define_notation_interpretation notations
 
 let print_ltac2_log_flags : unit -> unit = fun _ ->
   let flag_map = State.get () in
