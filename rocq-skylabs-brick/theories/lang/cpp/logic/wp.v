@@ -302,7 +302,18 @@ Section with_cpp.
      C++14, C++17, etc.
 
      NOTE: this is morally [M unit], but we inline the definition of [M] and
-     ellide the [unit] value. *)
+     ellide the [unit] value.
+
+     The return value of [wp_init] captures the scope extruded temporaries that
+     should be deleted after the object that is being constructed. In most cases
+     these will be empty. Scope extrusion kicks in with the semantics of, e.g.
+     <<
+     const int& x = 1;
+     >>
+     In this case, <<x>> is a reference to a location that stores the value <<1>>.
+     This location is created during the initialization of <<x>> and its lifetime
+     extends until after <<x>> is destroyed.
+   *)
   Parameter wp_init
     : forall {resolve:genv}, translation_unit -> region ->
                         exprtype -> ptr -> Expr ->
