@@ -72,7 +72,8 @@ Module Type Stmt.
                the name is declared, before it is initialized.
                See <https://eel.is/c++draft/basic.scope.pdecl#1>
            *)
-          wp_initialize (Rbind n p ρ) ty p init
+          letWP* extruded := wp_initialize (Rbind n p ρ) ty p init in
+          mret extruded
       | None => Mdefault_initialize ty p
       end.
 
@@ -87,8 +88,8 @@ Module Type Stmt.
     Definition wp_decl_var (ρ : region) (x : ident) (ty : type) (init : option Expr)
       : Mlocal region :=
       letM* p := demonic ptr in
-      letM* '(ρ, free) := Mfree_all tu $ Mopt_initialize ρ ty x init in
-      letM* _ := Mexpr.push_free free in
+      letM* '(ρ, extruded) := Mfree_all tu $ Mopt_initialize ρ ty x init in
+      letM* _ := Mexpr.push_free (FreeTemps.delete ty p >*> extruded) in
       mret ρ.
 
     (*
@@ -114,28 +115,13 @@ Module Type Stmt.
       | nil => mret ρ
       | Bvar x ty init :: ds =>
           letWP* p := demonic ptr in
-          letWP* free := wp_initialize ρ_init ty p init in
-          letWP* '() := Mexpr.push_free free in
+          letWP* extruded := wp_initialize ρ_init ty p init in
+          letWP* '() := Mexpr.push_free (FreeTemps.delete ty p >*> extruded)%free in
           wp_destructure ρ_init ds (Rbind x p ρ)
       | Bbind x _ init :: ds =>
           letWP* p := wp_glval tu ρ_init init in
           wp_destructure ρ_init ds (Rbind x p ρ)
       end.
-
-    (*
-    Lemma wp_destructure_frame : forall ds ρ ρ_init m m' free,
-        Forall a b, m a b -* m' a b
-        |-- wp_destructure ρ_init ds ρ m free -* wp_destructure ρ_init ds ρ m' free.
-    Proof.
-      induction ds; simpl; intros.
-      { iIntros "X"; iApply "X". }
-      { iIntros "X H"; case_match.
-        { iIntros (p); iSpecialize ("H" $! p); iRevert "H"; iApply wp_initialize_frame => //.
-          iIntros (?); by iApply IHds. }
-        { iRevert "H"; iApply wp_glval_frame => //.
-          iIntros (??). by iApply IHds. } }
-    Qed.
-    *)
 
     (* [static_initialized gn b] is ownership of the initialization
        state of the global [gn].

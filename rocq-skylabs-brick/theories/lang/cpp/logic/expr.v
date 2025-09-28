@@ -1806,9 +1806,9 @@ Module Type Expr.
                the continuation of the `wp_initialize` statement to
                reflect the fact that the C++ Standard introduces
                sequence-points between all of the elements of an
-               initializer list (c.f. http://eel.is/c++draft/dcl.init.list#4)
+               initializer list (c.f. <http://eel.is/c++draft/dcl.init.list#4>)
            *)
-         letWP* free := Mfree_all tu $ wp_initialize ety (base .[ erase_qualifiers ety ! idx ]) e in
+         letWP* extruded := Mfree_all tu $ wp_initialize ety (base .[ erase_qualifiers ety ! idx ]) e in
          wp_array_init ety base rest (Z.succ idx) (* TODO: revert [free] if this allocation fails *)
       end.
 
@@ -1884,13 +1884,13 @@ Module Type Expr.
       end.
 
     (** Initializing an array using an initializer list.
-        In the clang AST, the types [ty] and [Tarray ety sz] are now always the
+        In the clang AST, the types [ty] and [Tarray ety sz] are not always the
         same, in particular, in the expression `new C[10]{}`. We say that
         the index to [wp_init] is the dynamic type and [type_of (Einitlist ..)]
         is the static type. For santity, we require that the general shape of the
         two types match, but we pull the size of the array from the dynamic type.
      *)
-    Axiom wp_init_initlist_array : forall ls fill ty ety (sz : N) (base : ptr), (* sz' <= sz *)
+    Axiom wp_init_initlist_array : forall ls fill ty ety (sz : N) (base : ptr),
           is_array_of ty ety ->
          wp_array_init_fill ety base ls fill sz
       ⊆ wp_init (Tarray ety sz) base (Einitlist ls fill ty).
