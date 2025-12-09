@@ -1,24 +1,24 @@
-
-
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" data-content_root="./">
+<html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pointers and pointer provenance &mdash; SkyLabs BRiCk alpha documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=03e43079" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
-      <link rel="stylesheet" type="text/css" href="_static/alectryon.css?v=3179997d" />
-      <link rel="stylesheet" type="text/css" href="_static/css/justify.css?v=94af2184" />
-
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/alectryon.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/justify.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
   
-      <script src="_static/jquery.js?v=5d32c60e"></script>
-      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-      <script src="_static/documentation_options.js?v=1f169f65"></script>
-      <script src="_static/doctools.js?v=9bcbadda"></script>
-      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
-      <script src="_static/alectryon.js?v=749f78b6"></script>
+        <script src="_static/jquery.js?v=5d32c60e"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="_static/documentation_options.js?v=1f169f65"></script>
+        <script src="_static/doctools.js?v=9a2dae69"></script>
+        <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+        <script src="_static/alectryon.js?v=749f78b6"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -37,6 +37,9 @@
           <a href="index.html" class="icon icon-home">
             SkyLabs BRiCk
           </a>
+              <div class="version">
+                0.5.0
+              </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -280,7 +283,7 @@ we still assume users use options such as GCC/Clang’s <code class="code highli
 <a class="reference external" href="https://www.ralfj.de/blog/2018/07/24/pointers-and-bytes.html">this blog post by Ralf Jung</a>.</p>
 <p class="rubric">Footnotes</p>
 <aside class="footnote-list brackets">
-<aside class="footnote brackets" id="objects-have-values" role="doc-footnote">
+<aside class="footnote brackets" id="objects-have-values" role="note">
 <span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id3">1</a><span class="fn-bracket">]</span></span>
 <p>This appears to follow from <a class="reference external" href="https://eel.is/c++draft/basic.life#4">intro.object#1
 &lt;https://eel.is/c++draft/intro.object#1&gt;_,
@@ -291,11 +294,11 @@ outside their lifetime even in surprising scenarios; e.g. placement new over
 initialized memory is allowed to discard the initialization, even when the
 constructor is a no-op.</p>
 </aside>
-<aside class="footnote brackets" id="std-ptr-values" role="doc-footnote">
+<aside class="footnote brackets" id="std-ptr-values" role="note">
 <span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id4">2</a><span class="fn-bracket">]</span></span>
 <p>“Values of pointer type” are discussed in <a class="reference external" href="https://eel.is/c++draft/basic.compound#3">basic.compound#3</a>.</p>
 </aside>
-<aside class="footnote brackets" id="invalid-ptr-no-alloc-id" role="doc-footnote">
+<aside class="footnote brackets" id="invalid-ptr-no-alloc-id" role="note">
 <span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id5">3</a><span class="fn-bracket">]</span></span>
 <p>The reason that this function is partial is because invalid pointers do not contain allocation IDs.</p>
 </aside>
