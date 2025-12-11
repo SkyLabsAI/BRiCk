@@ -182,6 +182,7 @@ let to_glob_out : strip_prefix:string -> string -> glob_out option =
 type dune_type =
   | Rocq
   | Cram
+  | Diff
 
 type dune_out = {
   src_file : string;
@@ -192,6 +193,7 @@ type dune_out = {
 let to_dune_out : fname:string -> dune_out list =
   let re_rocq = Str.regexp {|\bcoqc.* \([^ ]+\.v\))$|} in
   let re_cram = Str.regexp {|\bpatdiff.* \([^ ]+\)\.corrected'|} in
+  let re_diff = Str.regexp {|\bpatdiff.* \([^ ]+\) [^ ]+\'|} in
   fun ~fname ->
   let open Yojson.Basic in
   let json = from_file ~fname fname in
@@ -213,6 +215,10 @@ let to_dune_out : fname:string -> dune_out list =
         try
           let _ = Str.search_forward re_cram cmd 0 in
           Some Cram
+        with Not_found ->
+        try
+          let _ = Str.search_forward re_diff cmd 0 in
+          Some Diff
         with Not_found -> None
       in
       Option.bind file_type @@ fun file_type ->
@@ -253,7 +259,7 @@ let analyse fmt ~before_dune ~after_dune ~before_globs ~after_globs =
         let (dangling_lines, w, e) = parse_lines (List.map parse_line output) in
         let dangling = List.map (fun (_, txt) -> dangling_output_warning src_file txt) dangling_lines in
         (List.rev_append w @@ List.rev_append dangling ws, List.rev_append e es)
-      | Cram ->
+      | Cram | Diff ->
         (* The first two lines are just diff output *)
         let output = List.tl @@ List.tl @@ output in
         let (dangling_lines, w, e) = parse_lines ~assume_errors:true (List.map parse_line output) in
