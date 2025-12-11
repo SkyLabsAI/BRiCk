@@ -580,12 +580,12 @@ Module Type Stmt.
      *)
     Axiom wp_return_void : forall ρ Q,
         get_return_type ρ = Tvoid ->
-        Q ReturnVoid |-- wp ρ (Sreturn None) Q.
+        |> Q ReturnVoid |-- wp ρ (Sreturn None) Q.
 
     Axiom wp_return : forall ρ e (Q : Kpred),
           (let rty := get_return_type ρ in
            Forall p, wp_initialize ρ rty p e (fun frees =>
-                                         interp frees (Q (ReturnVal p))))
+                                         interp frees (|> Q (ReturnVal p))))
        |-- wp ρ (Sreturn (Some e)) Q.
 
     Axiom wp_return_frame : forall ρ rv (Q Q' : Kpred),
