@@ -8,11 +8,11 @@ that will checkout this repo and needed dependencies.
 
 ## BRiCk (Program logic for C++)
 
-See [this README.md](rocq-bluerock-brick/README.md).
+See [this README.md](rocq-skylabs-brick/README.md).
 
 ## Code generator for BRiCk
 
-See [this README.md](rocq-bluerock-cpp2v/README.md).
+See [this README.md](rocq-skylabs-cpp2v/README.md).
 
 ## Lens library
 
