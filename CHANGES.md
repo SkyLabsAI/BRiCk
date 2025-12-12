@@ -13,7 +13,7 @@ of the release, and introduce a new heading.
 2025.03.20: Change global prefix `bedrock.xxx` to `bluerock.xxx`
 - See `scripts/fm-refactorings/bedrock-bluerock.sh`
 
-2025.03.17: Split the C++ program logic BRiCk from the BlueRock prelude (`rocq-bluerock-prelude`) and Iris extensions (`rocq-bluerock-iris`).
+2025.03.17: Split the C++ program logic BRiCk from the BlueRock prelude (`rocq-skylabs-prelude`) and Iris extensions (`rocq-skylabs-iris`).
 - See `scripts/fm-refactorings/split-brick.sh`
 
 

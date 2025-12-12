@@ -6,7 +6,7 @@
 
 # Some logic below assumes all paths end in `/`.
 mappings=(
-  "fmdeps/cpp2v-core/rocq-bluerock-brick/tests/ bedrocktest"
+  "fmdeps/cpp2v-core/rocq-skylabs-brick/tests/ bedrocktest"
 )
 # TODO: change cram test setup to generate dune projects in _source_ folder, and
 # delete the entry above.

@@ -28,7 +28,7 @@ BUILD_ROOT=$(dune_build_folder)/default/fmdeps/BRiCk
 # 2. dune caching does _not_ track the dependency on ROCQLIB, so CI won't help
 # you if you break rule 1.
 ROCQLIB=${PWD}/$(dune_build_folder)/install/default/lib/coq
-DOC_PATH = rocq-bluerock-brick/doc
+DOC_PATH = rocq-skylabs-brick/doc
 COQDOC_DIR = $(DOC_PATH)/sphinx/_static/coqdoc
 
 SED = $(shell (which gsed || which sed) 2> /dev/null)
