@@ -2,20 +2,19 @@
 opam-version: "2.0"
 synopsis: "Extension to std++ Rocq library for universe polymorphic monads"
 maintainer: [
-  "David Swasey <david@bluerock.io>"
-  "Gregory Malecha <gregory@bluerock.io>"
-  "Jan-Oliver Kaiser <janno@bluerock.io>"
-  "Rodolphe Lepigre <rodolphe@bluerock.io>"
+  "Gregory Malecha <gregory@skylabs-ai.com>"
+  "Jan-Oliver Kaiser <janno@skylabs-ai.com>"
+  "Rodolphe Lepigre <rodolphe.lepigre@skylabs-ai.com>"
 ]
 authors: [
-  "David Swasey <david@bluerock.io>"
-  "Gregory Malecha <gregory@bluerock.io>"
-  "Jan-Oliver Kaiser <janno@bluerock.io>"
-  "Rodolphe Lepigre <rodolphe@bluerock.io>"
+  "David Swasey"
+  "Gregory Malecha <gregory@skylabs-ai.com>"
+  "Jan-Oliver Kaiser <janno@skylabs-ai.com>"
+  "Rodolphe Lepigre <rodolphe.lepigre@skylabs-ai.com>"
 ]
 license: "LGPL-2.1-only"
-homepage: "https://github.com/bluerock-io/BRiCk"
-bug-reports: "https://github.com/bluerock-io/BRiCk/issues"
+homepage: "https://github.com/SkyLabsAI/BRiCk"
+bug-reports: "https://github.com/SkyLabsAI/BRiCk/issues"
 depends: [
   "dune" {>= "3.14"}
   "coq-stdpp" {>= "dev.2024-02-09.0.cafd7113" | = "dev"}
@@ -34,4 +33,4 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-dev-repo: "git+https://github.com/bluerock-io/BRiCk.git"
+dev-repo: "git+https://github.com/SkyLabsAI/BRiCk.git"

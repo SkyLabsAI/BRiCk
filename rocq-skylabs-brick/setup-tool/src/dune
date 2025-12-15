@@ -1,4 +1,4 @@
 (executable
  (public_name br)
- (package rocq-bluerock-brick)
+ (package rocq-skylabs-brick)
  (libraries cmdliner toml))

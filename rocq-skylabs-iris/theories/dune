@@ -1,16 +1,15 @@
 (include_subdirs qualified)
 (coq.theory
-  (name bluerock.iris.extra)
-  (package rocq-bluerock-iris)
-  (theories
-    ; bluerock.prelude deps
-    Stdlib
-    stdpp
-    bluerock.upoly
-    elpi elpi_elpi elpi.apps.locker elpi.apps.NES
-    Lens Lens.Elpi
-    Ltac2 bluerock.ltac2.extra
-    ; bluerock.prelude deps end
-    bluerock.prelude
-    iris
-    ))
+ (name bluerock.iris.extra)
+ (package rocq-skylabs-iris)
+ (theories
+  ; bluerock.prelude deps
+  Stdlib
+  stdpp
+  bluerock.upoly
+  elpi elpi_elpi elpi.apps.locker elpi.apps.NES
+  Lens Lens.Elpi
+  Ltac2 bluerock.ltac2.extra
+  ; bluerock.prelude deps end
+  bluerock.prelude
+  iris))

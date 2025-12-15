@@ -1,5 +1,5 @@
 (library
  (name rocq_internals)
- (public_name rocq-bluerock-rocq-internals)
+ (public_name rocq-skylabs-rocq-internals)
  (wrapped false)
  (libraries coq-core.pretyping))

@@ -1,21 +1,21 @@
 (lang dune 3.8)
 (using coq 0.8)
-(name rocq-bluerock-rocq-internals)
+(name rocq-skylabs-rocq-internals)
 
 (generate_opam_files)
 
 (maintainers
-  "Jan-Oliver Kaiser <janno@bluerock.io>")
+ "Jan-Oliver Kaiser <janno@skylabs-ai.com>")
 
 (authors
- "Jan-Oliver Kaiser <janno@bluerock.io>")
+ "Jan-Oliver Kaiser <janno@skylabs-ai.com>")
 
-(source (github bluerock-io/BRiCk))
+(source (github SkyLabsAI/BRiCk))
 
 (license LGPL-2.1-only)
 
 (package
- (name rocq-bluerock-rocq-internals)
+ (name rocq-skylabs-rocq-internals)
  (synopsis "Plugin to expose some internals of Rocq")
  (depends coq-core))
 

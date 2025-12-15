@@ -41,7 +41,7 @@
   (target llvm-lib-path.txt)
   (deps
    (universe))
-  (package rocq-bluerock-cpp2v)
+  (package rocq-skylabs-cpp2v)
   (action
    (with-outputs-to %{target}
     (pipe-outputs
@@ -74,7 +74,7 @@
    (env_var CLANG_DIR)
    (env_var BUILD_TYPE)
    (env_var BUILD_ARGS))
-  (package rocq-bluerock-cpp2v)
+  (package rocq-skylabs-cpp2v)
   (action
    (chdir ..
     (bash "make -j8 BUILD_DIR=build-dune &> build-dune/dune.log || { cat build-dune/dune.log; exit 1; }"))))
@@ -82,6 +82,6 @@
  (install
   (section bin)
   (files cpp2v)
-  (package rocq-bluerock-cpp2v)))
+  (package rocq-skylabs-cpp2v)))
 
-(alias (name cpp2v) (deps rocq-bluerock-cpp2v.install))
+(alias (name cpp2v) (deps rocq-skylabs-cpp2v.install))

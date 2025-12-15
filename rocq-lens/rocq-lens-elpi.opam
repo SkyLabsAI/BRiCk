@@ -2,16 +2,16 @@
 opam-version: "2.0"
 synopsis: "Generation of lenses for record datatypes, Elpi backend"
 maintainer: [
-  "Gregory Malecha <gregory@bluerock.io>"
-  "Paolo Giarrusso <paolo@bluerock.io>"
+  "Gregory Malecha <gregory@skylabs-ai.com>"
+  "Paolo Giarrusso <paolo@skylabs-ai.com>"
 ]
 authors: [
-  "Gregory Malecha <gregory@bluerock.io>"
-  "Paolo Giarrusso <paolo@bluerock.io>"
+  "Gregory Malecha <gregory@skylabs-ai.com>"
+  "Paolo Giarrusso <paolo@skylabs-ai.com>"
 ]
 license: "LGPL-2.1-or-later"
-homepage: "https://github.com/bluerock-io/BRiCk"
-bug-reports: "https://github.com/bluerock-io/BRiCk/issues"
+homepage: "https://github.com/SkyLabsAI/BRiCk"
+bug-reports: "https://github.com/SkyLabsAI/BRiCk/issues"
 depends: [
   "dune" {>= "3.14"}
   "rocq-lens"
@@ -31,4 +31,4 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-dev-repo: "git+https://github.com/bluerock-io/BRiCk.git"
+dev-repo: "git+https://github.com/SkyLabsAI/BRiCk.git"

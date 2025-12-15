@@ -1,7 +1,7 @@
 (include_subdirs qualified)
 (coq.theory
  (name bluerock.prelude)
- (package rocq-bluerock-prelude)
+ (package rocq-skylabs-prelude)
  (theories
   Stdlib
   stdpp
@@ -25,4 +25,4 @@
  (files
   (glob_files_rec (elpi/*.elpi with_prefix coq/user-contrib/bluerock/prelude/elpi/)))
  (section lib_root)
- (package rocq-bluerock-prelude))
+ (package rocq-skylabs-prelude))

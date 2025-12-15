@@ -1,42 +1,42 @@
 (lang dune 3.16)
 (using coq 0.8)
-(name rocq-bluerock-iris)
+(name rocq-skylabs-iris)
 
 (generate_opam_files)
 
 (maintainers
-  "Gregory Malecha <gregory@bluerock.io>"
-  "Paolo Giarrusso <paolo@bluerock.io>"
-  "Jan-Oliver Kaiser <janno@bluerock.io>"
-  "Hai Dang <hai@bluerock.io>"
-  "Simon Hudon <simon@bluerock.io>"
-)
+ "Gregory Malecha <gregory@skylabs-ai.com>"
+ "Paolo Giarrusso <paolo@skylabs-ai.com>"
+ "Jan-Oliver Kaiser <janno@skylabs-ai.com>"
+ "Simon Hudon <simon@skylabs-ai.com>"
+ "Rodolphe Lepigre <rodolphe.lepigre@skylabs-ai.com>")
 
 (authors
- "Gregory Malecha <gregory@bluerock.io>"
- "Paolo Giarrusso <paolo@bluerock.io>"
- "Jan-Oliver Kaiser <janno@bluerock.io>"
- "Hai Dang <hai@bluerock.io>"
- "Simon Hudon <simon@bluerock.io>"
+ "Gregory Malecha <gregory@skylabs-ai.com>"
+ "Paolo Giarrusso <paolo@skylabs-ai.com>"
+ "Jan-Oliver Kaiser <janno@skylabs-ai.com>"
+ "Simon Hudon <simon@skylabs-ai.com>"
+ "Rodolphe Lepigre <rodolphe.lepigre@skylabs-ai.com>"
+ "Hai Dang"
  "Abhishek Anand"
  "Gordon Stewart"
  "David Swasey"
- "František Farka"
- "Rodolphe Lepigre")
+ "František Farka")
 
 (license LicenseRef-BedRock)
 
-(source (github bluerock-io/BRiCk))
+(source (github SkyLabsAI/BRiCk))
 
 (package
- (name rocq-bluerock-iris)
- (synopsis "BlueRock's extensions to Iris")
+ (name rocq-skylabs-iris)
+ (synopsis "SkyLabs AI's extensions to Iris")
  (depends
   rocq-upoly
   coq-iris
-  rocq-bluerock-prelude
+  rocq-skylabs-prelude
   rocq-lens
   rocq-lens-elpi
   ltac2-extra
   coq-elpi))
+
 (subst disabled)

@@ -1,13 +1,10 @@
 (library
- (name rocq_bluerock_brick_plugin)
- (public_name rocq-bluerock-brick.plugin)
+ (name rocq_skylabs_brick_plugin)
+ (public_name rocq-skylabs-brick.plugin)
  (synopsis "Rocq plugin for the BRiCk C++ program logic")
-
  (flags :standard -rectypes -w -27)
  (libraries
-   coq-core.vernac
-   coq-core.plugins.ltac
- )
-)
+  coq-core.vernac
+  coq-core.plugins.ltac))
 
 (coq.pp (modules cpp2v_commands))

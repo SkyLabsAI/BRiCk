@@ -5,20 +5,21 @@
 (generate_opam_files)
 
 (maintainers
-  "Jan-Oliver Kaiser <janno@bluerock.io>")
+ "Jan-Oliver Kaiser <janno@skylabs-ai.com>"
+ "Rodolphe Lepigre <rodolphe.lepigre@skylabs-ai.com>")
 
 (authors
- "Jan-Oliver Kaiser <janno@bluerock.io>"
- "Rodolphe Lepigre")
+ "Jan-Oliver Kaiser <janno@skylabs-ai.com>"
+ "Rodolphe Lepigre <rodolphe.lepigre@skylabs-ai.com>")
 
-(source (github bluerock-io/BRiCk))
+(source (github SkyLabsAI/BRiCk))
 
 (license LicenseRef-BedRock)
 
 (package
  (name tc-db-info-plugin)
  (synopsis "Plugin for analyzing hint databases")
- (depends coq-core rocq-bluerock-rocq-internals))
+ (depends coq-core rocq-skylabs-rocq-internals))
 
 (package
  (name tc-db-info)
