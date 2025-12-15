@@ -5,13 +5,14 @@
 (generate_opam_files)
 
 (maintainers
- "Gregory Malecha <gregory@bluerock.io>"
- "Paolo Giarrusso <paolo@bluerock.io>")
-(authors
- "Gregory Malecha <gregory@bluerock.io>"
- "Paolo Giarrusso <paolo@bluerock.io>")
+ "Gregory Malecha <gregory@skylabs-ai.com>"
+ "Paolo Giarrusso <paolo@skylabs-ai.com>")
 
-(source (github bluerock-io/BRiCk))
+(authors
+ "Gregory Malecha <gregory@skylabs-ai.com>"
+ "Paolo Giarrusso <paolo@skylabs-ai.com>")
+
+(source (github SkyLabsAI/BRiCk))
 
 (license LGPL-2.1-or-later)
 
@@ -28,4 +29,5 @@
  (depends
   rocq-lens
   coq-elpi))
+
 (subst disabled)

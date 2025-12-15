@@ -4,15 +4,16 @@
 (generate_opam_files)
 
 (maintainers
- "Jan-Oliver Kaiser <janno@bluerock.io>")
+ "Rodolphe Lepigre <rodolphe.lepigre@skylabs-ai.com>"
+ "Jan-Oliver Kaiser <janno@skylabs-ai.com>")
 
 (authors
- "Jan-Oliver Kaiser <janno@bluerock.io>"
- "Rodolphe Lepigre")
+ "Rodolphe Lepigre <rodolphe.lepigre@skylabs-ai.com>"
+ "Jan-Oliver Kaiser <janno@skylabs-ai.com>")
 
 (license LicenseRef-BedRock)
 
-(source (github bluerock-io/BRiCk))
+(source (github SkyLabsAI/BRiCk))
 
 (package
  (name stdlib-extra)
@@ -20,4 +21,5 @@
  (depends
   (yojson (= 2.2.2))
   (mtime (= 2.1.0))))
+
 (subst disabled)

@@ -3,5 +3,5 @@
  (deps
   (package rocq-core)
   (package rocq-stdlib)
-  (package rocq-bluerock-prelude)
+  (package rocq-skylabs-prelude)
   setup-project.sh))

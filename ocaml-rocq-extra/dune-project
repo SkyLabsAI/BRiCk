@@ -4,15 +4,16 @@
 (generate_opam_files)
 
 (maintainers
- "Jan-Oliver Kaiser <janno@bluerock.io>")
+ "Jan-Oliver Kaiser <janno@skylabs-ai.com>"
+ "Rodolphe Lepigre <rodolphe.lepigre@skylabs-ai.com>")
 
 (authors
- "Jan-Oliver Kaiser <janno@bluerock.io>"
- "Rodolphe Lepigre")
+ "Jan-Oliver Kaiser <janno@skylabs-ai.com>"
+ "Rodolphe Lepigre <rodolphe.lepigre@skylabs-ai.com>")
 
 (license LicenseRef-BedRock)
 
-(source (github bluerock-io/BRiCk))
+(source (github SkyLabsAI/BRiCk))
 
 (package
  (name rocq-extra)
@@ -20,4 +21,5 @@
  (depends
   coq-core
   stdlib-extra))
+
 (subst disabled)

@@ -1,24 +1,25 @@
 (lang dune 3.16)
 (using coq 0.8)
-(name rocq-bluerock-cpp2v)
+(name rocq-skylabs-cpp2v)
 
 (generate_opam_files)
 
 (maintainers
- "Gregory Malecha <gregory@bluerock.io>")
+ "Gregory Malecha <gregory@skylabs-ai.com>")
 
 (authors
- "Gregory Malecha <gregory@bluerock.io>"
+ "Gregory Malecha <gregory@skylabs-ai.com>"
  "David Swasey"
- "Paolo Giarrusso <paolo@bluerock.io>")
+ "Paolo Giarrusso <paolo@skylabs-ai.com>")
 
 (license LicenseRef-BedRock)
 
-(source (github bluerock-io/BRiCk))
+(source (github SkyLabsAI/BRiCk))
 
 (package
- (name rocq-bluerock-cpp2v)
+ (name rocq-skylabs-cpp2v)
  (synopsis "Code generator for BRiCk program logic for C++")
  (depends
   conf-clang))
+
 (subst disabled)

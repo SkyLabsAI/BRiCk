@@ -4,7 +4,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-DECLARE PLUGIN "rocq-bluerock-brick.plugin"
+DECLARE PLUGIN "rocq-skylabs-brick.plugin"
 
 {
 open Stdarg

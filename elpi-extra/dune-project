@@ -5,14 +5,14 @@
 (generate_opam_files)
 
 (maintainers
- "Jan-Oliver Kaiser <janno@bluerock.io>")
+ "Jan-Oliver Kaiser <janno@skylabs-ai.com>")
 
 (authors
- "David Swasey <david@bluerock.io>")
+ "David Swasey")
 
 (license LicenseRef-BedRock)
 
-(source (github bluerock-io/BRiCk))
+(source (github SkyLabsAI/BRiCk))
 
 (package
  (name elpi-extra)
