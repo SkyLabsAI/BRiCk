@@ -114,10 +114,3 @@
  (modules perf_script)
  (package rocq-tools)
  (libraries rocq_tools yojson))
-
-; Filter dune output for cache store error.
-(executable
- (name filter_dune_output)
- (public_name filter-dune-output)
- (modules filter_dune_output)
- (package rocq-tools))
