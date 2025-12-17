@@ -379,7 +379,8 @@ Module Type Stmt.
       apply bi.forall_intro => ?.
       by apply bi.entails_wand.
     Qed.
-
+    #[global] Instance wp_block_flip_mono ρ ls : Proper (flip bi_entails ==> flip bi_entails) (wp_block ρ ls).
+    Proof. solve_proper. Qed.
     #[global] Instance wp_block_proper ρ ls : Proper (equiv ==> equiv) (wp_block ρ ls).
     Proof.
       move => x y /bi.equiv_entails []
