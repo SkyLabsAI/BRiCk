@@ -376,7 +376,7 @@ Module Type Stmt.
       move => x y [Hxy].
       apply bi.wand_entails.
       rewrite -wp_block_frame.
-      apply ChargeCompat.lforallR => ?.
+      apply bi.forall_intro => ?.
       by apply bi.entails_wand.
     Qed.
 
