@@ -11,13 +11,13 @@
 #include "Logging.hpp"
 #include "OpaqueNames.hpp"
 #include "clang/AST/Decl.h"
+#include "clang/AST/DependenceFlags.h"
+#include "clang/AST/Expr.h"
 #include "clang/AST/Mangle.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/Builtins.h"
-#include <clang/AST/DependenceFlags.h>
-#include <clang/AST/Expr.h>
-#include <clang/Basic/Version.inc>
+#include "clang/Basic/Version.inc"
 
 using namespace clang;
 using namespace fmt;
@@ -1588,7 +1588,11 @@ public:
             done(expr);
         } else {
             print.ctor("Ebool");
+#if CLANG_VERSION_MAJOR >= 21
+            print.boolean(expr->getBoolValue());
+#else
             print.boolean(expr->getValue());
+#endif
             print.end_ctor();
         }
     }

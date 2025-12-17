@@ -705,7 +705,7 @@ static fmt::Formatter &printAtomicName(const DeclContext &ctx, const Decl &decl,
     // sometimes ends up with multiple variables with the same name, e.g. due to
     // template parameter pack expansion. This logic aims to find which index we
     // want.
-    auto duplicate_index = [&](const NamedDecl &nd) -> unsigned {
+    auto duplicate_index = [&](const NamedDecl &nd) -> int {
         if (auto dc = decl.getParentFunctionOrMethod()) {
             auto body = dyn_cast<FunctionDecl>(dc)->getBody();
             /* Count declarations with the same name as [nd] in [body] but

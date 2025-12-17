@@ -12,6 +12,7 @@
 #include "Location.hpp"
 #include "Logging.hpp"
 #include "SpecCollector.hpp"
+#include "clang/Basic/Version.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Sema/Sema.h"
 #include <set>
@@ -36,6 +37,7 @@ bool EvaluateRequiresClause(const clang::FunctionDecl *FD,
             // 4. Use CheckInstantiatedFunctionTemplateConstraints to
             // evaluate the constraints
             ConstraintSatisfaction Satisfaction;
+#if CLANG_VERSION_MAJOR < 21
             bool Satisfied =
                 !SemaRef.CheckInstantiatedFunctionTemplateConstraints(
                     Loc, // Location for diagnostics
@@ -43,6 +45,10 @@ bool EvaluateRequiresClause(const clang::FunctionDecl *FD,
                         FD),       // The function declaration
                     TemplateArgs,  // Template arguments
                     Satisfaction); // Will contain unsatisfied constraints
+#else
+            bool Satisfied =
+                !SemaRef.CheckFunctionConstraints(FD, Satisfaction, Loc);
+#endif
 
             return Satisfied && Satisfaction.IsSatisfied;
         };

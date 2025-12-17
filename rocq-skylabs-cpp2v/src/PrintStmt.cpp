@@ -8,11 +8,12 @@
 #include "CoqPrinter.hpp"
 #include "Formatter.hpp"
 #include "Logging.hpp"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/Mangle.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Type.h"
-#include <clang/AST/ASTContext.h>
+#include "clang/Basic/Version.inc"
 
 using namespace clang;
 
@@ -289,7 +290,11 @@ public:
                          ClangPrinter &cprint, ASTContext &) {
         // todo(gmm): more to do here to support assembly
         print.ctor("Sasm");
+#if CLANG_VERSION_MAJOR > 20
+        print.str(stmt->getAsmString()) << fmt::nbsp;
+#else
         print.str(stmt->getAsmString()->getString()) << fmt::nbsp;
+#endif
 
         print.output() << (stmt->isVolatile() ? "true" : "false") << fmt::nbsp;
 
