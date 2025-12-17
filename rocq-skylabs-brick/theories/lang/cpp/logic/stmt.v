@@ -734,6 +734,18 @@ Module Type Stmt.
     Definition Kswitch (k : Kpred) : Kpred :=
       KP $ Kswitch_inner k.
 
+    Lemma Kswitch_idemp Q :
+      Kswitch (Kswitch Q) -|- Kswitch Q.
+    Proof. by constructor => -[]. Qed.
+
+    Lemma fupd_Kswitch Q :
+      (|={⊤}=> Kswitch Q)
+     -|- Kswitch (|={⊤}=> Q).
+    Proof.
+      by constructor; case => /= *;
+         rewrite !monPred_at_fupd /=.
+    Qed.
+
     Axiom wp_switch_decl : forall ρ d e ls Q,
         wp ρ (Sseq (Sdecl (d :: nil) :: Sswitch None e ls :: nil)) Q
         |-- wp ρ (Sswitch (Some d) e ls) Q.
