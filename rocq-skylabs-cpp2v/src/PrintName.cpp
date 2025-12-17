@@ -766,7 +766,7 @@ static fmt::Formatter &printAtomicName(const DeclContext &ctx, const Decl &decl,
 
     auto ident_or_anon = [&](const std::optional<std::string> anon_error =
                                  std::nullopt) -> auto & {
-        if (auto nd = isNamed(decl)) {
+        if (isNamed(decl)) {
             return ident();
         } else if (!anon_error) {
             guard::ctor _(print, "Nanon", false);

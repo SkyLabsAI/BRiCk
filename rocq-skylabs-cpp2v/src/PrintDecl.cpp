@@ -729,36 +729,6 @@ static fmt::Formatter &printInitPath(const CXXConstructorDecl &decl,
         fatal("initializer path of unknown type");
 }
 
-static fmt::Formatter &printInitType(const CXXConstructorDecl &decl,
-                                     const CXXCtorInitializer &init,
-                                     CoqPrinter &print, ClangPrinter &cprint) {
-    // TODO: Print Tunsupported and keep going
-    auto fatal = [&](StringRef msg)
-                     NORETURN { ::fatal(cprint, loc::of(decl), msg); };
-    auto use_type = [&](const Type &type) -> auto & {
-        return cprint.printType(print, type, loc::of(decl));
-    };
-    auto use_qualtype = [&](const QualType qt) -> auto & {
-        return cprint.printQualType(print, qt, loc::of(decl));
-    };
-    if (auto fd = init.getMember())
-        return use_qualtype(fd->getType());
-    else if (auto fd = init.getIndirectMember())
-        return use_qualtype(fd->getType());
-    else if (auto type = init.getBaseClass())
-        return use_type(*type);
-    else if (init.isDelegatingInitializer()) {
-        // getThisType() returns a pointer type.
-        if (const auto *OPT =
-                decl.getThisType().getTypePtr()->getAs<clang::PointerType>())
-            return use_qualtype(OPT->getPointeeType());
-        else
-            fatal("[getThisType] on delegating initializer unexpectedly "
-                  "returned a non-pointer type!");
-    } else
-        fatal("initializer not memeber, base class, or indirect");
-}
-
 static fmt::Formatter &printInitializer(const CXXConstructorDecl &ctor,
                                         const CXXCtorInitializer &init,
                                         CoqPrinter &print,
@@ -947,7 +917,7 @@ static std::optional<EnumConst> crackEnumConst(const EnumConstantDecl &decl,
                                                const ASTContext &ctxt) {
     if (ClangPrinter::debug && cprint.trace(Trace::Decl))
         cprint.trace("crackEnumConst", loc::of(decl));
-    auto fail = [&](const Twine &msg) NODISCARD {
+    auto fail = [&](const Twine &msg) NODISCARD -> std::optional<EnumConst> {
         unsupported(cprint, loc::of(decl),
                     Twine("enumeration constant: ").concat(msg));
         return std::nullopt;
