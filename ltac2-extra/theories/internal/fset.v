@@ -8,7 +8,7 @@
 Require Import bluerock.ltac2.extra.internal.init.
 Require Import bluerock.ltac2.extra.internal.std.
 
-(** Minor extensions to [Ltac2.Char] *)
+(** Minor extensions to [Ltac2.FSet] *)
 Module FSet.
   Import Ltac2 Init.
   Export Ltac2.FSet.
