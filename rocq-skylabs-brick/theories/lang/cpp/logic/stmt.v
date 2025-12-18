@@ -371,6 +371,24 @@ Module Type Stmt.
       wp_block ρ ds Q.
     Proof. iIntros "H". iApply wp_block_shift. by iModIntro. Qed.
 
+    #[global] Instance wp_block_mono ρ ls : Proper (bi_entails ==> bi_entails) (wp_block ρ ls).
+    Proof.
+      move => x y [Hxy].
+      apply bi.wand_entails.
+      rewrite -wp_block_frame.
+      apply bi.forall_intro => ?.
+      by apply bi.entails_wand.
+    Qed.
+    #[global] Instance wp_block_flip_mono ρ ls : Proper (flip bi_entails ==> flip bi_entails) (wp_block ρ ls).
+    Proof. solve_proper. Qed.
+    #[global] Instance wp_block_proper ρ ls : Proper (equiv ==> equiv) (wp_block ρ ls).
+    Proof.
+      move => x y /bi.equiv_entails []
+           => /wp_block_mono Hxy
+           => /wp_block_mono Hyx.
+      by split'.
+    Qed.
+
     (* proof mode *)
     #[global] Instance elim_modal_fupd_wp_block p P ρ body Q :
       ElimModal True p false (|={top}=> P) P (wp_block ρ body Q) (wp_block ρ body Q).
@@ -716,6 +734,18 @@ Module Type Stmt.
 
     Definition Kswitch (k : Kpred) : Kpred :=
       KP $ Kswitch_inner k.
+
+    Lemma Kswitch_idemp Q :
+      Kswitch (Kswitch Q) -|- Kswitch Q.
+    Proof. by constructor => -[]. Qed.
+
+    Lemma fupd_Kswitch Q :
+      (|={⊤}=> Kswitch Q)
+     -|- Kswitch (|={⊤}=> Q).
+    Proof.
+      by constructor; case => /= *;
+         rewrite !monPred_at_fupd /=.
+    Qed.
 
     Axiom wp_switch_decl : forall ρ d e ls Q,
         wp ρ (Sseq (Sdecl (d :: nil) :: Sswitch None e ls :: nil)) Q
