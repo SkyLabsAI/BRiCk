@@ -12,7 +12,7 @@
   >       "-|  File \"./bug.v\", line 45, characters 4-37:",
   >       "+|  File \"./bug.v\", line 43, characters 4-37:", " |  Warning:",
   >       " |  Ill-formed log (Log.collect: span \"arith_solve\" is still open.), using debug mode.",
-  >       " |  [br-ill-formed-log,default]", " |  [1]"
+  >       " |  [sl-ill-formed-log,default]", " |  [1]"
   >     ],
   >     "status": 1
   >   }
@@ -41,7 +41,7 @@
   +|  File "./bug.v", line 43, characters 4-37:
    |  Warning:
    |  Ill-formed log (Log.collect: span "arith_solve" is still open.), using debug mode.
-   |  [br-ill-formed-log,default]
+   |  [sl-ill-formed-log,default]
    |  [1]
   ```
   

@@ -2,12 +2,12 @@
 
   $ cat > before/test.glob.stderr <<EOF
   > File "test.v", line 100, characters 8-25:
-  > Warning: Timeout (2.50s) exceeded: tactic ran for 3.98s [br-work-timeout,br]
+  > Warning: Timeout (2.50s) exceeded: tactic ran for 3.98s [sl-work-timeout,sl]
   > EOF
 
   $ cat > after/test.glob.stderr <<EOF
   > File "test.v", line 100, characters 8-25:
-  > Warning: Timeout (2.50s) exceeded: tactic ran for 3.71s [br-work-timeout,br]
+  > Warning: Timeout (2.50s) exceeded: tactic ran for 3.71s [sl-work-timeout,sl]
   > EOF
 
   $ echo "before/test.glob.stderr" > before-globs

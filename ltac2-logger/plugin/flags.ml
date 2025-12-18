@@ -189,7 +189,7 @@ module Levels = struct
   let get_map : unit -> map =
     let getter =
       Goptions.declare_interpreted_string_option_and_ref
-        ~key:["BR";"Debug"] ~value:IMap.empty of_string to_string ()
+        ~key:["SL";"Debug"] ~value:IMap.empty of_string to_string ()
     in
     getter.Goptions.get
 end

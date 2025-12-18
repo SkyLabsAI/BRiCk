@@ -35,14 +35,15 @@ let evar_tag : _ Tac2core.map_tag =
 
 (* [compare] must be kept in sync with whatever is used in [ConstrSet] and [ConstrMap] *)
 let _ =
-  define Tac2expr.{ mltac_plugin = "br.Constr"; mltac_tactic = "compare" } (valexpr @-> valexpr @-> eret int) @@ fun c1 c2 _ sigma ->
+  define Tac2expr.{ mltac_plugin = "sl.Constr"; mltac_tactic = "compare" }
+    (valexpr @-> valexpr @-> eret int) @@ fun c1 c2 _ sigma ->
     Constr.compare (to_constr sigma c1) (to_constr sigma c2)
 
 module ConstrSet = struct
   include Set.Make(Constr)
 
   let define s =
-    define Tac2expr.{ mltac_plugin = "br.ConstrSet"; mltac_tactic = s }
+    define Tac2expr.{ mltac_plugin = "sl.ConstrSet"; mltac_tactic = s }
 
   let repr : t Tac2ffi.repr =
     Tac2ffi.repr_ext (Tac2dyn.Val.create "ConstrSet.t")
@@ -77,7 +78,7 @@ module ConstrMap = struct
   include Map.Make(Constr)
 
   let define s =
-    define Tac2expr.{ mltac_plugin = "br.ConstrMap"; mltac_tactic = s }
+    define Tac2expr.{ mltac_plugin = "sl.ConstrMap"; mltac_tactic = s }
 
   type vmap = Tac2val.valexpr t
 

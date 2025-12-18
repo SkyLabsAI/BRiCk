@@ -21,5 +21,5 @@ Module CoqOption.
   (** [get ls] returns the value of the Coq option described by [ls] (it can
       for example be [["Default"; "Proof"; "Mode"]]). *)
   Ltac2 @ external get : string list -> t option :=
-    "br.CoqOptions" "get".
+    "sl.CoqOptions" "get".
 End CoqOption.

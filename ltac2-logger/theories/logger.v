@@ -16,16 +16,16 @@ Module Coq_output.
   Ltac2 Type buffer.
 
   Ltac2 @external start_capture : unit -> buffer :=
-    "br.log" "Coq_output.start_capture".
+    "sl.log" "Coq_output.start_capture".
 
   Ltac2 @external contents : buffer -> string :=
-    "br.log" "Coq_output.contents".
+    "sl.log" "Coq_output.contents".
 
   Ltac2 @external clear : buffer -> unit :=
-    "br.log" "Coq_output.clear".
+    "sl.log" "Coq_output.clear".
 
   Ltac2 @external end_capture : buffer -> unit :=
-    "br.log" "Coq_output.end_capture".
+    "sl.log" "Coq_output.end_capture".
 End Coq_output.
 
 (* Noisy tests
@@ -61,12 +61,12 @@ Module Log.
   (** [log_enabled flag level] indicates whether the logging is enabled for a
       message with the given [flag] and [level]. *)
   Ltac2 @ external log_enabled : log_flag -> log_level -> bool :=
-    "br.log" "log_enabled".
+    "sl.log" "log_enabled".
 
   (** [log_level flag] returns the currently set log level for messages with
       the given [flag]. *)
   Ltac2 @ external log_level : log_flag -> log_level :=
-    "br.log" "log_level".
+    "sl.log" "log_level".
 
   (** [log_msg flag level format ...] logs the message described by [fmt] and
       the following arguments, provided that the function is fully applied. A
@@ -74,14 +74,14 @@ Module Log.
       cannot be called directly since a notation is required to recognise the
       [format] argument as a format string. *)
   Ltac2 @ external log_msg : log_flag -> log_level -> ('a, unit, msg, unit) format -> 'a :=
-    "br.log" "log".
+    "sl.log" "log".
 
   (** [msg_msg fmt ...] interprets the given format and arguments as would the
       [log_msg] function, but it returns the [msg] at the end. The aim of this
       function is to be used in combination with the ["%a"] format. NOTE: this
       function cannot be called directly (see [log_msg] above). *)
   Ltac2 @ external msg_msg : ('a, unit, msg, msg) format -> 'a :=
-    "br.log" "msg".
+    "sl.log" "msg".
 
   Module Notations.
     (** Generic notation for calling [log_msg]. *)
@@ -98,16 +98,16 @@ Module Log.
 
   (** Printer for messages. *)
   Ltac2 @ external pp_message : unit -> message -> msg :=
-    "br.log" "pp_message".
+    "sl.log" "pp_message".
 
   Ltac2 @ external pp_err : unit -> err -> msg :=
-    "br.log" "pp_err".
+    "sl.log" "pp_err".
 
   Ltac2 @ external pp_ast : unit -> constr -> msg :=
-    "br.log" "pp_ast".
+    "sl.log" "pp_ast".
 
   Ltac2 @ external pp_list : (unit -> 'a -> msg) -> unit -> 'a list -> msg :=
-    "br.log" "pp_list".
+    "sl.log" "pp_list".
 
   Ltac2 pp_exn (_ : unit) (e : exn) : msg :=
     msg! "%a" pp_message (Message.of_exn (Control.clear_exn_info e)).
@@ -135,23 +135,23 @@ Module Log.
 
     (** [push_span name] opens a new span named [name], and returns it. *)
     Ltac2 @ external push : string -> t :=
-      "br.log" "push_span".
+      "sl.log" "push_span".
 
     (** [try_pop s] closes the span [s], and then returns a boolean indicating
         whether it was successful. If it fails, the state of the logger is
         unchanged. *)
     Ltac2 @ external try_pop : t -> bool :=
-      "br.log" "pop_span".
+      "sl.log" "pop_span".
 
     (** [try_pop_until s] is similar to [try_pop s], but may close other spans
         before [s]. *)
     Ltac2 @ external try_pop_until : t -> bool :=
-      "br.log" "pop_span_until".
+      "sl.log" "pop_span_until".
 
     (** [pop_all ()] closes all open spans. Avoid using this function, as this
         may break compositionality. *)
     Ltac2 @ external pop_all : unit -> unit :=
-      "br.log" "pop_all_spans".
+      "sl.log" "pop_all_spans".
 
     (** Exception raised by [pop] and [pop_until] if they fail. *)
     Ltac2 Type exn ::= [ Pop_error ].
@@ -225,12 +225,12 @@ Module Log.
     (** [add_int_metadata s k v] sets the metadata field [k] of span [s] to be
         the integer value [v]. *)
     Ltac2 @ external add_int_metadata : t -> string -> int -> unit :=
-      "br.log" "add_span_metadata_int".
+      "sl.log" "add_span_metadata_int".
 
     (** [add_string_metadata s k v] sets the metadata field [k] of span [s] to
         be the string value [v]. *)
     Ltac2 @ external add_string_metadata : t -> string -> string -> unit :=
-      "br.log" "add_span_metadata_string".
+      "sl.log" "add_span_metadata_string".
 
     (** [with_status name tac] runs the tactic surrounded by the span and appends
         '+success' or '+failure' to log whether [tac] succeeded or failed. *)
@@ -277,15 +277,15 @@ Module Log.
     Ltac2 Type t.
 
     Ltac2 @ external save : unit -> t :=
-      "br.log" "save_log_state".
+      "sl.log" "save_log_state".
 
     Ltac2 @ external restore : t -> unit :=
-      "br.log" "restore_log_state".
+      "sl.log" "restore_log_state".
   End State.
 
   (** Reset the log state. *)
   Ltac2 @ external reset_log : unit -> unit :=
-    "br.log" "reset_log".
+    "sl.log" "reset_log".
 
   (** [output_log_generic debug file] outputs the accumulated log to the given
       [file], if any. Otherwise the log is printed to the Coq buffer (notice).
@@ -293,13 +293,13 @@ Module Log.
       If [debug] is false, an error is printed instead of the log. If [debug]
       is true, the partial log is printed. *)
   Ltac2 @ external output_log_generic : bool -> string option -> unit :=
-    "br.log" "output_log".
+    "sl.log" "output_log".
 
   (** [output_log_tmp debug ext] outputs the accumulated log to a temporary
       file with extension [ext]. The [debug] argument is handled exactly as in
       function [output_log_generic]. *)
   Ltac2 @ external output_log_tmp : bool -> string -> unit :=
-    "br.log" "output_log_tmp".
+    "sl.log" "output_log_tmp".
 
   Ltac2 output_log () := output_log_generic false None.
   Ltac2 output_log_debug () := output_log_generic true None.
@@ -394,16 +394,16 @@ Module Log.
     (** * Ltac1 Logging tactics *)
 
     (** The following tactics can be used for logging. Note that logging is only
-        recorded according to the value of the [BR Debug] Coq variable. It can be
-        read with [Test BR Debug], set with [Set BR Debug "..."], and reset using
-        [Unset BR Debug]. Here are common examples of values for the option:
-        - [Set BR Debug "@default=1"] is useful for user-level debugging, in case
+        recorded according to the value of the [SL Debug] Coq variable. It can be
+        read with [Test SL Debug], set with [Set SL Debug "..."], and reset using
+        [Unset SL Debug]. Here are common examples of values for the option:
+        - [Set SL Debug "@default=1"] is useful for user-level debugging, in case
           you only care about successful hint applications. You can also use the
           character [_] as a shortcut for [@default].
-        - [Set BR Debug "@default=3"] is similarly useful, but includes failures.
-        - [Set BR Debug "@all=10"] sets all debugging levels to maximum. You can
+        - [Set SL Debug "@default=3"] is similarly useful, but includes failures.
+        - [Set SL Debug "@all=10"] sets all debugging levels to maximum. You can
           also use character [*] as a shortcut for [@all].
-        - [Set BR Debug "@all=3,ocaml=6"] is similar but corrects a level.
+        - [Set SL Debug "@all=3,ocaml=6"] is similar but corrects a level.
 
         Note that when logging is enabled, any run of the above tactics will have
         the side-effect of adding log entries. In particular, if you step back in

@@ -9,7 +9,7 @@ open Tac2ffi
 open Tac2externals
 
 let define s =
-  define Tac2expr.{ mltac_plugin = "br.IntMap"; mltac_tactic = s }
+  define Tac2expr.{ mltac_plugin = "sl.IntMap"; mltac_tactic = s }
 
 module IntMap = struct
   include Map.Make(Int)

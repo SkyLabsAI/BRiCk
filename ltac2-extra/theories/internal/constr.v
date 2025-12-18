@@ -557,7 +557,7 @@ Module Constr.
     (** [compare] is an unsafe comparison operator that is also used in
         [ConstrSet] and [ConstrMap]. Use at your own peril. *)
     Ltac2 @ external compare : constr -> constr -> int :=
-      "br.Constr" "compare".
+      "sl.Constr" "compare".
 
   End Unsafe.
 
@@ -614,31 +614,31 @@ Module Constr.
     Ltac2 Type t.
 
     Ltac2 @ external empty : t :=
-      "br.ConstrSet" "empty".
+      "sl.ConstrSet" "empty".
 
     Ltac2 @ external is_empty : t -> bool :=
-      "br.ConstrSet" "is_empty".
+      "sl.ConstrSet" "is_empty".
 
     Ltac2 @ external diff : t -> t -> t :=
-      "br.ConstrSet" "diff".
+      "sl.ConstrSet" "diff".
 
     Ltac2 @ external union : t -> t -> t :=
-      "br.ConstrSet" "union".
+      "sl.ConstrSet" "union".
 
     Ltac2 @ external of_list : constr list -> t :=
-      "br.ConstrSet" "of_list".
+      "sl.ConstrSet" "of_list".
 
     Ltac2 @ external mem : constr -> t -> bool :=
-      "br.ConstrSet" "mem".
+      "sl.ConstrSet" "mem".
 
     Ltac2 @ external elements : t -> constr list :=
-      "br.ConstrSet" "elements".
+      "sl.ConstrSet" "elements".
 
     Ltac2 @ external add : constr -> t -> t :=
-      "br.ConstrSet" "add".
+      "sl.ConstrSet" "add".
 
     Ltac2 @ external remove : constr -> t -> t :=
-      "br.ConstrSet" "remove".
+      "sl.ConstrSet" "remove".
   End ConstrSet.
 
   (** * Finite maps with [constr] keys. *)
@@ -646,30 +646,30 @@ Module Constr.
     Ltac2 Type 'a t.
 
     Ltac2 @ external empty : 'a t :=
-      "br.ConstrMap" "empty".
+      "sl.ConstrMap" "empty".
 
     Ltac2 @ external is_empty : 'a t -> bool :=
-      "br.ConstrMap" "is_empty".
+      "sl.ConstrMap" "is_empty".
 
     Ltac2 @ external mem : constr -> 'a t -> bool :=
-      "br.ConstrMap" "mem".
+      "sl.ConstrMap" "mem".
 
     Ltac2 @ external add : constr -> 'a -> 'a t -> 'a t :=
-     "br.ConstrMap" "add".
+     "sl.ConstrMap" "add".
 
     Ltac2 @ external singleton : constr -> 'a -> 'a t :=
-      "br.ConstrMap" "singleton".
+      "sl.ConstrMap" "singleton".
 
     Ltac2 @ external remove : constr -> 'a t -> 'a t :=
-      "br.ConstrMap" "remove".
+      "sl.ConstrMap" "remove".
 
     Ltac2 @ external cardinal : 'a t -> int :=
-      "br.ConstrMap" "cardinal".
+      "sl.ConstrMap" "cardinal".
 
     Ltac2 @ external bindings : 'a t -> (constr * 'a) list :=
-      "br.ConstrMap" "bindings".
+      "sl.ConstrMap" "bindings".
 
     Ltac2 @ external find_opt : constr -> 'a t -> 'a option :=
-      "br.ConstrMap" "find_opt".
+      "sl.ConstrMap" "find_opt".
   End ConstrMap.
 End Constr.

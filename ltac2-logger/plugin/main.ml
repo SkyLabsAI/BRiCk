@@ -39,7 +39,7 @@ let _ =
   Span.set_start_span_hook start_hook;
   Span.set_end_span_hook end_hook;
   let get_log_direct_printing : unit -> bool =
-    let key = ["BR"; "Direct"; "Log"] in
+    let key = ["SL"; "Direct"; "Log"] in
     let getter = Goptions.declare_bool_option_and_ref ~key ~value:false () in
     getter.Goptions.get
   in
@@ -53,13 +53,13 @@ let reset_log : unit -> unit =
 let _ =
   let warn_bad_log : Pp.t -> unit =
     let warning : CWarnings.warning =
-      let name = "br-ill-formed-log" in
+      let name = "sl-ill-formed-log" in
       let default = CWarnings.Enabled in
       CWarnings.create_warning ~name ~default ()
     in
     CWarnings.create_in warning (fun x -> x) ?loc:None ?quickfix:None
   in
-  match Sys.getenv_opt "BR_LOG_FILE" with None -> () | Some(file) ->
+  match Sys.getenv_opt "SL_LOG_FILE" with None -> () | Some(file) ->
   let hook () =
     try
       try Log.write file with Failure(msg) ->
@@ -74,7 +74,7 @@ let _ =
   in
   Stdlib.at_exit hook
 
-let define s = define { mltac_plugin = "br.log"; mltac_tactic = s }
+let define s = define { mltac_plugin = "sl.log"; mltac_tactic = s }
 
 let unit_valexpr : Tac2val.valexpr = Tac2ffi.of_unit ()
 

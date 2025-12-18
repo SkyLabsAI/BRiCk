@@ -3,7 +3,7 @@ open Logger_lib.Logger
 
 let no_events_level_0 =
   CWarnings.create
-    ~name:"br-log-empty"
+    ~name:"sl-log-empty"
     ~default:CWarnings.Enabled
     (fun msg -> msg)
 
@@ -18,7 +18,7 @@ let output_log : bool -> string option -> unit = fun debug opath ->
   (* We give a warning if the levels are all 0 and the logs are empty. *)
   if Flags.max_level () = 0 && Log.count_events () = 0 then
     begin
-      let hint = "Did you forget to use [Set BR Debug \"@default=1\".]?" in
+      let hint = "Did you forget to use [Set SL Debug \"@default=1\".]?" in
       let msg = "all levels are 0, and there are no events.\n" ^ hint in
       no_events_level_0 (Pp.str msg)
     end;

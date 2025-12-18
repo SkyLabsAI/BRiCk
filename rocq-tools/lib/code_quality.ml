@@ -33,7 +33,7 @@ module Warning = struct
   }
 
   let is_name_flaky : string -> bool =
-    let re = Str.regexp {re|\b\(br-work-timeout\|dummy\)\b|re} in
+    let re = Str.regexp {re|\b\(sl-work-timeout\|dummy\)\b|re} in
     fun name ->
     try
       let _ = Str.search_forward re name 0 in

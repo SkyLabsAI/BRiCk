@@ -78,7 +78,7 @@ let output : Out_channel.t -> glob_line -> unit = fun oc line ->
   | Standard(s) ->
       Printf.fprintf oc "%s\n" s
   | Field(e) ->
-      Printf.fprintf oc "R%s:%s br.perf <%a> :::'%s' not\n"
+      Printf.fprintf oc "R%s:%s sl.perf <%a> :::'%s' not\n"
         (Key.of_int e.key) Key.max_key output_mode e.mode
         (Base64.to_string e.value)
 
@@ -99,7 +99,7 @@ let input : In_channel.t -> glob_line = fun ic ->
   | None -> Standard(line)
   | Some(ci) ->
   let name = String.sub line (si1 + 1) (si2 - si1 - 1) in
-  if name <> "br.perf" then Standard(line) else
+  if name <> "sl.perf" then Standard(line) else
   match Key.to_int (String.sub line 1 (ci - 1)) with
   | None -> raise Bad_glob_file
   | Some(key) ->

@@ -12,7 +12,7 @@ open Tac2externals
 open Tac2ffi
 
 let define s =
-  define Tac2expr.{ mltac_plugin = "br.CoqOptions"; mltac_tactic = s }
+  define Tac2expr.{ mltac_plugin = "sl.CoqOptions"; mltac_tactic = s }
 
 (** [of_option_state os] converts an option state into the corresponding Ltac2
     type, only covering the [opt_value] field. *)

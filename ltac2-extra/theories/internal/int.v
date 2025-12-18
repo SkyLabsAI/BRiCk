@@ -76,36 +76,36 @@ Module Int.
     Ltac2 Type 'a t.
 
     Ltac2 @ external empty : 'a t :=
-      "br.IntMap" "empty".
+      "sl.IntMap" "empty".
 
     Ltac2 @ external is_empty : 'a t -> bool :=
-      "br.IntMap" "is_empty".
+      "sl.IntMap" "is_empty".
 
     Ltac2 @ external mem : int -> 'a t -> bool :=
-      "br.IntMap" "mem".
+      "sl.IntMap" "mem".
 
     Ltac2 @ external add : int -> 'a -> 'a t -> 'a t :=
-      "br.IntMap" "add".
+      "sl.IntMap" "add".
 
     Ltac2 @ external singleton : int -> 'a -> 'a t :=
-      "br.IntMap" "singleton".
+      "sl.IntMap" "singleton".
 
     Ltac2 @ external remove : int -> 'a t -> 'a t :=
-      "br.IntMap" "remove".
+      "sl.IntMap" "remove".
 
     Ltac2 @ external cardinal : 'a t -> int :=
-      "br.IntMap" "cardinal".
+      "sl.IntMap" "cardinal".
 
     Ltac2 @ external bindings : 'a t -> (int * 'a) list :=
-      "br.IntMap" "bindings".
+      "sl.IntMap" "bindings".
 
     Ltac2 @ external find_opt : int -> 'a t -> 'a option :=
-      "br.IntMap" "find_opt".
+      "sl.IntMap" "find_opt".
 
     Ltac2 @ external min_binding_opt : 'a t -> (int * 'a) option :=
-      "br.IntMap" "min_binding_opt".
+      "sl.IntMap" "min_binding_opt".
 
     Ltac2 @ external max_binding_opt : 'a t -> (int * 'a) option :=
-      "br.IntMap" "max_binding_opt".
+      "sl.IntMap" "max_binding_opt".
   End Map.
 End Int.
