@@ -144,7 +144,7 @@ Section raw_type_ptrs.
   Definition raw_type_ptrsR := raw_type_ptrsR_aux.(unseal).
   Definition raw_type_ptrsR_eq : @raw_type_ptrsR = _ := raw_type_ptrsR_aux.(seal_eq).
 
-  #[global] Hint Opaque raw_type_ptrsR : br_opacity.
+  #[global] Hint Opaque raw_type_ptrsR : sl_opacity.
 
   Lemma type_ptr_raw_type_ptrs :
     forall (ty : type) (p : ptr),

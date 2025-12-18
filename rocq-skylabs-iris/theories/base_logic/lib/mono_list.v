@@ -93,5 +93,5 @@ Module mono_list.
       iDestruct "o" as "[$ $]".
     Qed.
   End with_logic.
-  #[global] Hint Opaque half snap : br_opacity typeclass_instances.
+  #[global] Hint Opaque half snap : sl_opacity typeclass_instances.
 End mono_list.

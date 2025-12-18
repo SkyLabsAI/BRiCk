@@ -45,7 +45,7 @@ Set Suggest Proof Using.
 
 #[global] Hint Opaque
   base_logic.lib.cancelable_invariants.cinv
-  base_logic.lib.cancelable_invariants.cinv_own : br_opacity.
+  base_logic.lib.cancelable_invariants.cinv_own : sl_opacity.
 
 (** Duplicates from cancelable_invariants. This one is not tied to iProp. *)
 (* The statements and (most of) the proofs should stay the same as those of
@@ -172,4 +172,4 @@ Section proofs.
   Qed.
 End proofs.
 
-#[global] Hint Opaque cinv_own cinv : typeclass_instances br_opacity.
+#[global] Hint Opaque cinv_own cinv : typeclass_instances sl_opacity.

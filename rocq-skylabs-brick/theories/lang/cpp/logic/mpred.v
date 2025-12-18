@@ -46,7 +46,7 @@ Module Type CPP_LOGIC_CLASS_MIXIN (Import CC : CPP_LOGIC_CLASS_BASE).
   Proof. constructor. apply _. Qed.
 
   #[global] Hint Opaque cpp_has_inv cpp_has_br_ghost cpp_has_cinv
-  : typeclass_instances br_opacity.
+  : typeclass_instances sl_opacity.
 
 End CPP_LOGIC_CLASS_MIXIN.
 

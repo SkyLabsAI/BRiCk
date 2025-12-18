@@ -1060,7 +1060,7 @@ Section with_cpp.
                       | Some c => Q c free
                       | None => ERROR (is_true_None v)
                       end).
-  #[global] Hint Opaque wp_test : br_opacity.
+  #[global] Hint Opaque wp_test : sl_opacity.
   #[global] Arguments wp_test /.
 
   #[global] Instance wp_test_ne : forall σ n,

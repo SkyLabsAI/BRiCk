@@ -33,7 +33,7 @@ Set Suggest Proof Using.
 
 #[global] Hint Opaque
   base_logic.lib.na_invariants.na_inv
-  base_logic.lib.na_invariants.na_own : br_opacity.
+  base_logic.lib.na_invariants.na_own : sl_opacity.
 
 (** Extraction of non-atomic invariants that is general w.r.t HasOwn,
   and not tied to iProp.
@@ -64,7 +64,7 @@ End defs.
 
 Global Instance: Params (@na_inv) 5 := {}.
 
-#[global] Hint Opaque na_own na_inv : typeclass_instances br_opacity.
+#[global] Hint Opaque na_own na_inv : typeclass_instances sl_opacity.
 
 (* TODO: allocation rules are missing. These rely on the specific model of PROP,
   so the client of this library needs the provide the corresponding model of

@@ -23,7 +23,7 @@ Require Ltac2.Pstring.
  *)
 Definition NamedBinder (A:Type) (name : string) := A.
 #[global] Arguments NamedBinder : simpl never.
-#[global] Hint Opaque NamedBinder : typeclass_instances br_opacity.
+#[global] Hint Opaque NamedBinder : typeclass_instances sl_opacity.
 
 Module Binder.
   Import Ltac2.

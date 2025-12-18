@@ -549,7 +549,7 @@ Module Step.
   #[global] Hint Opaque
     requester committer updater
     gen_requester gen_committer
-  : br_opacity.
+  : sl_opacity.
 End Step.
 
 (*** Satisfiability
@@ -1428,7 +1428,7 @@ Section with_lts.
 End with_lts.
 #[global] Hint Opaque
   gen_transports external_requests external_commits
-: br_opacity typeclass_instances.
+: sl_opacity typeclass_instances.
 
 #[global] Arguments gen_transports {_ _ _} comp {_} _ : rename.
 
@@ -1624,7 +1624,7 @@ Section with_app.
             stepQ acc hd input **
             ctor_requesters_seq γ Ctor f stepQ finalQ indexes' (f acc hd input))
     end.
-  #[global] Hint Opaque ctor_requesters_seq : br_opacity.
+  #[global] Hint Opaque ctor_requesters_seq : sl_opacity.
 
   Fixpoint singleton_requesters_seq (γ : AuthSet.gname) {A I}
       (Singleton : forall (index : I), app.(App.evt)) (* e.g. MemWrite *)
@@ -1639,14 +1639,14 @@ Section with_app.
         (stepQ acc hd **
          singleton_requesters_seq γ Singleton f stepQ finalQ indexes' (f acc hd))
     end.
-  #[global] Hint Opaque singleton_requesters_seq : br_opacity.
+  #[global] Hint Opaque singleton_requesters_seq : sl_opacity.
 
 End with_app.
 
-#[global] Hint Opaque ctor_requester : br_opacity.
-#[global] Hint Opaque singleton_requester : br_opacity.
-#[global] Hint Opaque ctor_committer : br_opacity.
-#[global] Hint Opaque singleton_committer : br_opacity.
+#[global] Hint Opaque ctor_requester : sl_opacity.
+#[global] Hint Opaque singleton_requester : sl_opacity.
+#[global] Hint Opaque ctor_committer : sl_opacity.
+#[global] Hint Opaque singleton_committer : sl_opacity.
 
 Section singleton_with_ref.
   Context `{Ghostly PROP} `{!BiFUpd PROP} `{!BiBUpdFUpd PROP}.

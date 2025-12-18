@@ -375,4 +375,4 @@ Section props.
   *)
 End props.
 
-#[global] Hint Opaque na_own na_inv : typeclass_instances br_opacity.
+#[global] Hint Opaque na_own na_inv : typeclass_instances sl_opacity.

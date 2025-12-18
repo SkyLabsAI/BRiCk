@@ -89,7 +89,7 @@ Class HasOwn {PROP : bi} {A : cmra} : Type := {
 
 Arguments HasOwn : clear implicits.
 Arguments own {_ _ _} _ _.
-#[global] Hint Opaque own : br_opacity.
+#[global] Hint Opaque own : sl_opacity.
 
 #[global] Instance : Params (@own) 4 := {}.
 

@@ -13,7 +13,7 @@ Require Export skylabs.prelude.stdpp_ssreflect.
 Require Export skylabs.prelude.tc_cond_type.
 Require Export skylabs.prelude.notations.
 Require Export skylabs.upoly.upoly.
-Require skylabs.prelude.tactics.base_dbs. (* For [br_opacity]; import not required. *)
+Require skylabs.prelude.tactics.base_dbs. (* For [sl_opacity]; import not required. *)
 
 #[global] Hint Opaque elem_of : typeclass_instances.
 

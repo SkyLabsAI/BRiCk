@@ -162,5 +162,5 @@ Module AuthSet.
   End with_authset.
 
   #[global] Hint Opaque auth frag auth_exact frag_exact
-    : br_opacity typeclass_instances.
+    : sl_opacity typeclass_instances.
 End AuthSet.

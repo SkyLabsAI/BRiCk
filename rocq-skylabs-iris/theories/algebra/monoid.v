@@ -41,7 +41,7 @@ End monoid_instances.
 Definition power `{Monoid M o} (x : M) (n : N) : M := N.iter n (o x) monoid_unit.
 #[global] Arguments power {_ _} o {_} _ !_ / : assert.
 #[global] Instance: Params (@power) 4 := {}.
-#[global] Hint Opaque power : typeclass_instances br_opacity.
+#[global] Hint Opaque power : typeclass_instances sl_opacity.
 
 #[global] Notation "x ^^{ o } n" := (power o x n) : stdpp_scope.
 

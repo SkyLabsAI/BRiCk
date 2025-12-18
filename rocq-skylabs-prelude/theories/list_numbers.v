@@ -1195,9 +1195,9 @@ Section listZ.
       else l.
 
   Definition takeZ {A} (n : Z) := (takeN (A := A) (Z.to_N n)).
-  #[global] Hint Opaque takeZ : typeclass_instances br_opacity.
+  #[global] Hint Opaque takeZ : typeclass_instances sl_opacity.
   Definition dropZ {A} (n : Z) := (dropN (A := A) (Z.to_N n)).
-  #[global] Hint Opaque dropZ : typeclass_instances br_opacity.
+  #[global] Hint Opaque dropZ : typeclass_instances sl_opacity.
 
   Lemma insertZ_eq_insertN {A} (k : Z) x (xs : list A) :
     <[ k := x ]> xs =
@@ -1980,4 +1980,4 @@ Section sliceZ.
 
 End sliceZ.
 
-#[global] Hint Opaque sliceZ : typeclass_instances br_opacity.
+#[global] Hint Opaque sliceZ : typeclass_instances sl_opacity.

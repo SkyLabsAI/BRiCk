@@ -9,9 +9,9 @@
  * This file declares some Dbs for our developments.
  *)
 
-(* [br_opacity] is a database for marking definitions opaque.
+(* [sl_opacity] is a database for marking definitions opaque.
    It is intended to be extended by users of [Hint Opaque] entries.
  *)
-Create HintDb br_opacity discriminated.
+Create HintDb sl_opacity discriminated.
 
 Create HintDb pure discriminated.

@@ -45,7 +45,7 @@ Section defs.
   Local Definition inv_aux : seal (@inv_def). Proof. by eexists. Qed.
   Definition inv := inv_aux.(unseal).
   Definition inv_eq : @inv = @inv_def := inv_aux.(seal_eq).
-  #[global] Hint Opaque inv : br_opacity.
+  #[global] Hint Opaque inv : sl_opacity.
 
   Section instances.
     Context `{CON: BiLaterContractive PROP}.

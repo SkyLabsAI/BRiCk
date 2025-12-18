@@ -150,5 +150,5 @@ Module afrac.
   End defs.
 
   #[global] Opaque gname.
-  #[global] Hint Opaque gname auth frag : br_opacity typeclass_instances.
+  #[global] Hint Opaque gname auth frag : sl_opacity typeclass_instances.
 End afrac.

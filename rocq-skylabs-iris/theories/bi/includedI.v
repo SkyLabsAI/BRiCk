@@ -112,7 +112,7 @@ Lemma embed_includedI `{BiEmbedInternalEq PROP1 PROP2} {A : cmra} (a b : A) :
   embed (a ≼ b) ⊣⊢@{PROP2} a ≼ b.
 Proof. rewrite embed_exist. by setoid_rewrite embed_internal_eq. Qed.
 
-#[global] Hint Opaque includedI : br_opacity typeclass_instances.
+#[global] Hint Opaque includedI : sl_opacity typeclass_instances.
 
 (** Help out IPM proofs. *)
 #[global] Hint Extern 0 (environments.envs_entails _ (_ ≼ _)) =>
