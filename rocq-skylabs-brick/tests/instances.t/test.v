@@ -3,11 +3,11 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.lang.cpp.algebra.cfrac.
-Require Import bluerock.lang.cpp.logic.arr.
-(* Require Import bluerock.lang.cpp.logic.rep_defs. *)
-(* Require Import bluerock.lang.cpp.logic.mpred. *)
-Require Import bluerock.lang.cpp.logic.
+Require Import skylabs.lang.cpp.algebra.cfrac.
+Require Import skylabs.lang.cpp.logic.arr.
+(* Require Import skylabs.lang.cpp.logic.rep_defs. *)
+(* Require Import skylabs.lang.cpp.logic.mpred. *)
+Require Import skylabs.lang.cpp.logic.
 
 Section with_cpp.
   (* Context `{Σ : cpp_logic}. *)

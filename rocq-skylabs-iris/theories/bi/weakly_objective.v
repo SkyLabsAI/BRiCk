@@ -6,10 +6,10 @@
  *)
 
 Require Import iris.bi.monpred.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 Require Import iris.proofmode.monpred.
 
-Require Import bluerock.iris.extra.bi.only_provable.
+Require Import skylabs.iris.extra.bi.only_provable.
 
 Set Default Proof Using "Type".
 Set Suggest Proof Using.

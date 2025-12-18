@@ -1,4 +1,4 @@
 (include_subdirs qualified)
 (coq.theory
- (name bluerock_tests.ltac2.extra)
- (theories Stdlib bluerock.ltac2.extra))
+ (name skylabs_tests.ltac2.extra)
+ (theories Stdlib skylabs.ltac2.extra))

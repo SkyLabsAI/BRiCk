@@ -3,12 +3,12 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.logic.
-Require Import bluerock.lang.cpp.logic.atomics.
-Require Import bluerock.lang.cpp.logic.builtins.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.logic.
+Require Import skylabs.lang.cpp.logic.atomics.
+Require Import skylabs.lang.cpp.logic.builtins.
 
-Require bluerock.lang.cpp.code_notations.
+Require skylabs.lang.cpp.code_notations.
 Import type_notations.TypeNotationsInterface.
 Import expr_notations.ExprNotationsInterface.
 Import stmt_notations.StmtNotationsInterface.

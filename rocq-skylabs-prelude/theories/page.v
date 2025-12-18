@@ -3,9 +3,9 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.addr.
-Require Import bluerock.prelude.numbers.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.addr.
+Require Import skylabs.prelude.numbers.
 
 (** 4KB pages are addressed by 12 bits *)
 Definition PAGE_BITS : N  := 12.

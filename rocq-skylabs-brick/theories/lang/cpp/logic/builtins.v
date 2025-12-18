@@ -3,17 +3,17 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.prelude.base.
-Require Import bluerock.iris.extra.proofmode.proofmode.
-Require Import bluerock.iris.extra.bi.ChargeCompat.
-Require Import bluerock.iris.extra.bi.errors.
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.semantics.
-Require Import bluerock.prelude.arith.builtins.
-Require Import bluerock.lang.cpp.logic.pred.
-Require Import bluerock.lang.cpp.logic.path_pred.
-Require Import bluerock.lang.cpp.logic.heap_pred.
-Require Import bluerock.lang.cpp.logic.wp.
+Require Import skylabs.prelude.base.
+Require Import skylabs.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.bi.ChargeCompat.
+Require Import skylabs.iris.extra.bi.errors.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.semantics.
+Require Import skylabs.prelude.arith.builtins.
+Require Import skylabs.lang.cpp.logic.pred.
+Require Import skylabs.lang.cpp.logic.path_pred.
+Require Import skylabs.lang.cpp.logic.heap_pred.
+Require Import skylabs.lang.cpp.logic.wp.
 
 #[local] Arguments ERROR {_ _} _%_bs : assert.
 

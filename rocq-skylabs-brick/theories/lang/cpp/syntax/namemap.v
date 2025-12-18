@@ -6,11 +6,11 @@
 
 Require Import Stdlib.Structures.OrderedTypeAlt.
 Require Import Stdlib.FSets.FMapAVL.
-Require Import bluerock.prelude.avl.
-Require Import bluerock.prelude.compare.
-Require Import bluerock.lang.cpp.syntax.prelude.
-Require Import bluerock.lang.cpp.syntax.core.
-Require Import bluerock.lang.cpp.syntax.compare.
+Require Import skylabs.prelude.avl.
+Require Import skylabs.prelude.compare.
+Require Import skylabs.lang.cpp.syntax.prelude.
+Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.compare.
 
 (** ** Name maps *)
 

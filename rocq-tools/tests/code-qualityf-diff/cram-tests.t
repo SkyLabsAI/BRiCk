@@ -1,11 +1,11 @@
   $ cat > dune-log.json <<EOF
   > [
   >   {
-  >     "command": "(cd _build/.sandbox/d408abfb52ef45bc73a852a1f418a0a5/default && /usr/bin/sh -c 'patdiff -keep-whitespace -location-style omake -ascii fmdeps/auto/coq-bluerock-auto-cpp/cram/arith_bug.t/run.t fmdeps/auto/coq-bluerock-auto-cpp/cram/arith_bug.t/run.t.corrected')",
+  >     "command": "(cd _build/.sandbox/d408abfb52ef45bc73a852a1f418a0a5/default && /usr/bin/sh -c 'patdiff -keep-whitespace -location-style omake -ascii fmdeps/auto/coq-skylabs-auto-cpp/cram/arith_bug.t/run.t fmdeps/auto/coq-skylabs-auto-cpp/cram/arith_bug.t/run.t.corrected')",
   >     "output": [
-  >       "------ fmdeps/auto/coq-bluerock-auto-cpp/cram/arith_bug.t/run.t",
-  >       "++++++ fmdeps/auto/coq-bluerock-auto-cpp/cram/arith_bug.t/run.t.corrected",
-  >       "File \"fmdeps/auto/coq-bluerock-auto-cpp/cram/arith_bug.t/run.t\", line 5, characters 0-1:",
+  >       "------ fmdeps/auto/coq-skylabs-auto-cpp/cram/arith_bug.t/run.t",
+  >       "++++++ fmdeps/auto/coq-skylabs-auto-cpp/cram/arith_bug.t/run.t.corrected",
+  >       "File \"fmdeps/auto/coq-skylabs-auto-cpp/cram/arith_bug.t/run.t\", line 5, characters 0-1:",
   >       " |  $ DUNE_CACHE=disabled dune build bug.vo 2>&1",
   >       " |  File \"./bug.v\", line 43, characters 4-37:",
   >       " |  Error: Timeout!", " |  ",
@@ -32,7 +32,7 @@
   </summary>
   
   ```
-  File "fmdeps/auto/coq-bluerock-auto-cpp/cram/arith_bug.t/run.t", line 5, characters 0-1:
+  File "fmdeps/auto/coq-skylabs-auto-cpp/cram/arith_bug.t/run.t", line 5, characters 0-1:
    |  $ DUNE_CACHE=disabled dune build bug.vo 2>&1
    |  File "./bug.v", line 43, characters 4-37:
    |  Error: Timeout!

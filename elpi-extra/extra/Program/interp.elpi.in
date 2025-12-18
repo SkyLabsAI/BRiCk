@@ -12,13 +12,13 @@ This file assumes the <<Elpi Program>> template (i.e., any template).
 It works in the interp phase.
 */
 
-accumulate "bluerock.elpi.extra/Program/both".	% both.elpi.in
+accumulate "skylabs.elpi.extra/Program/both".	% both.elpi.in
 
-accumulate "bluerock.elpi.extra/Program/interp/coq".	% interp/coq.elpi
-accumulate "bluerock.elpi.extra/Program/interp/diag".	% interp/diag.elpi
-accumulate "bluerock.elpi.extra/Program/interp/ident".	% interp/ident.elpi
-accumulate "bluerock.elpi.extra/Program/interp/int".	% interp/int.elpi
-accumulate "bluerock.elpi.extra/Program/interp/pair".	% interp/pair.elpi
-accumulate "bluerock.elpi.extra/Program/interp/list".	% interp/list.elpi
-accumulate "bluerock.elpi.extra/Program/interp/option".	% interp/option.elpi
-accumulate "bluerock.elpi.extra/Program/interp/bool".	% interp/bool.elpi
+accumulate "skylabs.elpi.extra/Program/interp/coq".	% interp/coq.elpi
+accumulate "skylabs.elpi.extra/Program/interp/diag".	% interp/diag.elpi
+accumulate "skylabs.elpi.extra/Program/interp/ident".	% interp/ident.elpi
+accumulate "skylabs.elpi.extra/Program/interp/int".	% interp/int.elpi
+accumulate "skylabs.elpi.extra/Program/interp/pair".	% interp/pair.elpi
+accumulate "skylabs.elpi.extra/Program/interp/list".	% interp/list.elpi
+accumulate "skylabs.elpi.extra/Program/interp/option".	% interp/option.elpi
+accumulate "skylabs.elpi.extra/Program/interp/bool".	% interp/bool.elpi

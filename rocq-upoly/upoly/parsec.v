@@ -5,10 +5,10 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import stdpp.decidable.
-Require Import bluerock.upoly.prelude.
-Require Import bluerock.upoly.upoly.
-Require Import bluerock.upoly.optionT.
-Require Import bluerock.upoly.stateT.
+Require Import skylabs.upoly.prelude.
+Require Import skylabs.upoly.upoly.
+Require Import skylabs.upoly.optionT.
+Require Import skylabs.upoly.stateT.
 
 (** ** Universes
 

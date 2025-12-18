@@ -29,7 +29,7 @@
  *)
 
 Require Export stdpp.coGset.
-Require Export bluerock.iris.extra.algebra.base.
+Require Export skylabs.iris.extra.algebra.base.
 
 (** Misplaced: Upstream to [iris.algebra.coGset]? *)
 

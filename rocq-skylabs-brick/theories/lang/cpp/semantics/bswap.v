@@ -1,5 +1,5 @@
-Require Import bluerock.lang.cpp.semantics.values.
-Require Import bluerock.prelude.arith.builtins.
+Require Import skylabs.lang.cpp.semantics.values.
+Require Import skylabs.prelude.arith.builtins.
 
 (* TODO: this file is misplaced *)
 

@@ -7,8 +7,8 @@
 
 Require Export stdpp.propset.
 
-Require Export bluerock.iris.extra.algebra.base.
-Require Import bluerock.iris.extra.algebra.restrict.
+Require Export skylabs.iris.extra.algebra.base.
+Require Import skylabs.iris.extra.algebra.restrict.
 
 Set Default Proof Using "Type".
 

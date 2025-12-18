@@ -6,8 +6,8 @@
 
 Require Import elpi.apps.locker.locker.
 Require Import iris.proofmode.tactics.
-Require Import bluerock.iris.extra.bi.prelude.
-Require Import bluerock.iris.extra.bi.observe.
+Require Import skylabs.iris.extra.bi.prelude.
+Require Import skylabs.iris.extra.bi.observe.
 Import ChargeNotation.
 
 Module Export Errors.	(* <-- historic *)

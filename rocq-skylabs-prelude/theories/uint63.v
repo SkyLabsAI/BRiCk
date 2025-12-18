@@ -3,7 +3,7 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.prelude.base.
+Require Import skylabs.prelude.base.
 Require Stdlib.Numbers.BinNums.
 Require Stdlib.Numbers.Cyclic.Int63.Uint63.
 Require Stdlib.micromega.ZifyUint63.

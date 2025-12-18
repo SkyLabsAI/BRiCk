@@ -6,9 +6,9 @@
  *)
 
 Require Import Stdlib.Strings.PrimString.
-Require Import bluerock.prelude.base.
-Require Export bluerock.prelude.tactics.base_dbs.
-Require bluerock.ltac2.extra.extra.
+Require Import skylabs.prelude.base.
+Require Export skylabs.prelude.tactics.base_dbs.
+Require skylabs.ltac2.extra.extra.
 
 Export PStringNotations.
 
@@ -71,7 +71,7 @@ Module Binder.
 
   Ltac id_of := ltac2:(str |- to_id_fun (Option.get (Ltac1.to_constr str))).
 
-  Import bluerock.ltac2.extra.extra.
+  Import skylabs.ltac2.extra.extra.
   Import Constr.Unsafe.
 
   (* Passing [true] to the first argument will remove occurances of [NamedBinder]

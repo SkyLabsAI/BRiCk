@@ -6,12 +6,12 @@
  *)
 
 Require Import iris.algebra.agree.
-Require Import bluerock.iris.extra.proofmode.proofmode.
-Require Import bluerock.iris.extra.bi.spec.frac_splittable.
-Require Import bluerock.lang.cpp.logic.
-Require Import bluerock.iris.extra.algebra.frac_auth.
-Require Import bluerock.iris.extra.base_logic.own_instances.
-Require Import bluerock.iris.extra.proofmode.own_obs.
+Require Import skylabs.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.bi.spec.frac_splittable.
+Require Import skylabs.lang.cpp.logic.
+Require Import skylabs.iris.extra.algebra.frac_auth.
+Require Import skylabs.iris.extra.base_logic.own_instances.
+Require Import skylabs.iris.extra.proofmode.own_obs.
 
 Set Printing Coercions.
 
@@ -28,7 +28,7 @@ the fragmentative state [x]
 *)
 
 (**
-TODO: unify with [bluerock.algebra.frac_auth_agree].
+TODO: unify with [skylabs.algebra.frac_auth_agree].
 *)
 Module afrac.
 
@@ -89,7 +89,7 @@ Module afrac.
     Proof.
       (**
       TODO (PDS): own_frac_auth_frag_frac_agree_L missing in
-      bluerock.iris.extra.proofmode.own_obs
+      skylabs.iris.extra.proofmode.own_obs
       *)
       rewrite frag.unlock.
       intros. iIntros "F1 F2".

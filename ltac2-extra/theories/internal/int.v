@@ -7,10 +7,10 @@
 
 Require Stdlib.Numbers.BinNums.
 Require Stdlib.PArith.BinPos.
-Require bluerock.ltac2.extra.internal.plugin.
-Require Import bluerock.ltac2.extra.internal.init.
-Require Import bluerock.ltac2.extra.internal.constr.
-Require Import bluerock.ltac2.extra.internal.std.
+Require skylabs.ltac2.extra.internal.plugin.
+Require Import skylabs.ltac2.extra.internal.init.
+Require Import skylabs.ltac2.extra.internal.constr.
+Require Import skylabs.ltac2.extra.internal.std.
 
 (** Minor extensions to [Ltac2.Int] *)
 Module Int.

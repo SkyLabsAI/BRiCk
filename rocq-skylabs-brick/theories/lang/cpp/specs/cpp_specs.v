@@ -3,13 +3,13 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.prelude.telescopes.
-Require Import bluerock.lang.cpp.semantics.values.
-Require Import bluerock.lang.cpp.logic.pred.
-Require Import bluerock.lang.cpp.specs.spec_notations.
-Require Export bluerock.lang.cpp.specs.classy.
+Require Import skylabs.prelude.telescopes.
+Require Import skylabs.lang.cpp.semantics.values.
+Require Import skylabs.lang.cpp.logic.pred.
+Require Import skylabs.lang.cpp.specs.spec_notations.
+Require Export skylabs.lang.cpp.specs.classy.
 
-Require Import bluerock.lang.cpp.specs.wp_spec_compat.
+Require Import skylabs.lang.cpp.specs.wp_spec_compat.
 
 Set Printing Universes.
 
@@ -38,4 +38,4 @@ Notation "'\spec' X" := (\spec@{WpSpec mpredI _ _} X).
 Notation "'\this' this X" := (fun this : ptr => X%pre_spec) (only parsing).
 
 Export classy.
-Export bluerock.lang.cpp.specs.wp_spec_compat.
+Export skylabs.lang.cpp.specs.wp_spec_compat.

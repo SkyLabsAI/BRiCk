@@ -1,5 +1,5 @@
-Require Import bluerock.lang.cpp.parser.
-Require Import bluerock.lang.cpp.parser.plugin.cpp2v.
+Require Import skylabs.lang.cpp.parser.
+Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
 
 Import Stdlib.Strings.String.
 #[local] Open Scope string_scope.

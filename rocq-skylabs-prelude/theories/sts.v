@@ -6,10 +6,10 @@
  *)
 
 Require Import stdpp.propset.
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.finite.
-Require Import bluerock.prelude.functions.
-Require Import bluerock.prelude.lens.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.finite.
+Require Import skylabs.prelude.functions.
+Require Import skylabs.prelude.lens.
 
 Import LensNotations.
 #[local] Open Scope lens_scope.

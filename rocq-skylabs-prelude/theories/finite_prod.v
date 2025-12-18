@@ -5,9 +5,9 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.base.
-Require Export bluerock.prelude.finite.
-Require Import bluerock.prelude.option.
+Require Import skylabs.prelude.base.
+Require Export skylabs.prelude.finite.
+Require Import skylabs.prelude.option.
 
 (**
 Finite product of types coming from a function [A : name -> Type]

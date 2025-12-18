@@ -4,10 +4,10 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import elpi.apps.locker.locker.
-Require Import bluerock.prelude.base.
-Require Export bluerock.prelude.option.
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.semantics.genv.
+Require Import skylabs.prelude.base.
+Require Export skylabs.prelude.option.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.semantics.genv.
 
 Definition GlobDecl_size_of (g : GlobDecl) : option N :=
   match g with

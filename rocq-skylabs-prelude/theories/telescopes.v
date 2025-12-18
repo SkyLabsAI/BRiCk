@@ -5,7 +5,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Export stdpp.telescopes.
-Require Export bluerock.prelude.base.
+Require Export skylabs.prelude.base.
 
 #[local] Set Universe Polymorphism.
 #[local] Set Polymorphic Inductive Cumulativity.

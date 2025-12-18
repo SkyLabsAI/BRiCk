@@ -6,7 +6,7 @@
  *)
 Require Import iris.bi.bi.
 Require Import iris.bi.extensions.
-Require Export bluerock.iris.extra.bi.prelude.
+Require Export skylabs.iris.extra.bi.prelude.
 
 (** * Step-indexed entailment *)
 (** We axiomatize a generalization [P ⊢{n} Q] of Iris entailment that

@@ -7,9 +7,9 @@
 Require Import Stdlib.QArith.QArith.
 Require Import Stdlib.QArith.Qcanon.
 Require Export stdpp.numbers.
-Require Export bluerock.prelude.base.
-Require Import bluerock.prelude.reserved_notation.
-Require Import bluerock.prelude.bool.
+Require Export skylabs.prelude.base.
+Require Import skylabs.prelude.reserved_notation.
+Require Import skylabs.prelude.bool.
 #[local] Set Printing Coercions.	(** Readability *)
 
 (** * Small extensions to [stdpp.numbers]. *)

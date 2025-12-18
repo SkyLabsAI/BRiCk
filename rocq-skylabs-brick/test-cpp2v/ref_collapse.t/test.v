@@ -4,8 +4,8 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.prelude.
-Require Import bluerock.lang.cpp.syntax.types.
+Require Import skylabs.prelude.prelude.
+Require Import skylabs.lang.cpp.syntax.types.
 
 Notation T := (Tnum int_rank.Iint Signed).
 Notation C := (tqualified QC) (only parsing).

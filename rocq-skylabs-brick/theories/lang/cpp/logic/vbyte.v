@@ -3,15 +3,15 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
 Require Import iris.bi.lib.fractional.
 
-Require Import bluerock.lang.cpp.logic.pred.
-Require Import bluerock.lang.cpp.semantics.types.
-Require Import bluerock.lang.cpp.semantics.genv.
-Require Import bluerock.lang.cpp.semantics.values.
-Require Import bluerock.prelude.addr.
+Require Import skylabs.lang.cpp.logic.pred.
+Require Import skylabs.lang.cpp.semantics.types.
+Require Import skylabs.lang.cpp.semantics.genv.
+Require Import skylabs.lang.cpp.semantics.values.
+Require Import skylabs.prelude.addr.
 
 Module Type VBYTE.
   Parameter vbyte_at : forall `{Σ:cpp_logic} (q : Qp) (addr : N) (n : N), mpred.

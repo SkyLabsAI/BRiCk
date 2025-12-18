@@ -4,9 +4,9 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import elpi.apps.locker.locker.
-Require Import bluerock.iris.extra.bi.prelude.
+Require Import skylabs.iris.extra.bi.prelude.
 Require Import iris.bi.bi iris.bi.monpred.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
 (** * Observations *)
 (** We define type classes for making observations and a few instances

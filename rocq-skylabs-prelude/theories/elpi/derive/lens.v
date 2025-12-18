@@ -4,7 +4,7 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Export bluerock.prelude.elpi.derive.common.
+Require Export skylabs.prelude.elpi.derive.common.
 Require Export Lens.Elpi.Elpi.
 Require Lens.Lens.
 

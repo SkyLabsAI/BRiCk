@@ -4,13 +4,13 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.prelude.prelude.
+Require Import skylabs.prelude.prelude.
 Require Import Stdlib.Strings.PrimString.
 Require Import Stdlib.Numbers.Cyclic.Int63.Uint63.
-Require Import bluerock.prelude.pstring.
+Require Import skylabs.prelude.pstring.
 
-Require Export bluerock.upoly.upoly.
-Require Export bluerock.upoly.parsec.
+Require Export skylabs.upoly.upoly.
+Require Export skylabs.upoly.parsec.
 
 #[local] Set Universe Polymorphism.
 #[local] Unset Universe Minimization ToSet.

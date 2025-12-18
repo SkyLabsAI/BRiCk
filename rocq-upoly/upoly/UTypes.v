@@ -5,7 +5,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.upoly.prelude.
+Require Import skylabs.upoly.prelude.
 
 (** * Some universe polymorphic datatypes *)
 

@@ -21,16 +21,16 @@
  *)
 
 
-Require Import bluerock.iris.extra.bi.monpred.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.bi.monpred.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 Require Import iris.proofmode.monpred.
 
-Require Import bluerock.iris.extra.bi.only_provable.
-Require Import bluerock.iris.extra.bi.invariants.
-Require Import bluerock.iris.extra.bi.na_invariants.
-Require Import bluerock.iris.extra.bi.cancelable_invariants.
-Require Import bluerock.iris.extra.bi.weakly_objective.
-Require Import bluerock.iris.extra.base_logic.monpred_own.
+Require Import skylabs.iris.extra.bi.only_provable.
+Require Import skylabs.iris.extra.bi.invariants.
+Require Import skylabs.iris.extra.bi.na_invariants.
+Require Import skylabs.iris.extra.bi.cancelable_invariants.
+Require Import skylabs.iris.extra.bi.weakly_objective.
+Require Import skylabs.iris.extra.base_logic.monpred_own.
 
 (*** Invariants for monPred **)
 

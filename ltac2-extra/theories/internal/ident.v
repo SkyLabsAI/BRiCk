@@ -5,14 +5,14 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.ltac2.extra.internal.plugin.
-Require Import bluerock.ltac2.extra.internal.init.
-Require Import bluerock.ltac2.extra.internal.constr.
-Require Import bluerock.ltac2.extra.internal.std.
+Require Import skylabs.ltac2.extra.internal.plugin.
+Require Import skylabs.ltac2.extra.internal.init.
+Require Import skylabs.ltac2.extra.internal.constr.
+Require Import skylabs.ltac2.extra.internal.std.
 
 (** Minor extensions to [Ltac2.Ident] *)
 (**
-This is part of [bluerock.prelude.tactics.ltac2]. [Require] that,
+This is part of [skylabs.prelude.tactics.ltac2]. [Require] that,
 instead.
 *)
 
@@ -25,8 +25,8 @@ Module Ident.
   *)
   Variant rep : Set := Rep (_ : unit -> unit).
 
-  Register rep as bluerock.ltac2.extra.Ident.rep.type.
-  Register Rep as bluerock.ltac2.extra.Ident.rep.Rep.
+  Register rep as skylabs.ltac2.extra.Ident.rep.type.
+  Register Rep as skylabs.ltac2.extra.Ident.rep.Rep.
 
   Ltac2 invalid_arg (whence : string) (t : constr) : 'a :=
     let m := Message.of_string whence in

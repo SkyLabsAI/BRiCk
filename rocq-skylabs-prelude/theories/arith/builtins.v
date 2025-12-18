@@ -4,9 +4,9 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.arith.types.
-Require Import bluerock.prelude.arith.operator.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.arith.types.
+Require Import skylabs.prelude.arith.operator.
 
 #[local] Open Scope Z_scope.
 (* see

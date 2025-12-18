@@ -12,11 +12,11 @@ All changes to [typeclass_instances] will not propagate to your clients:
 technically, they have [#[export]] visibility.
 *)
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.iris.extra.bi.prelude.
-Require Import bluerock.iris.extra.bi.only_provable.
+Require Import skylabs.prelude.base.
+Require Import skylabs.iris.extra.bi.prelude.
+Require Import skylabs.iris.extra.bi.only_provable.
 Require Import iris.bi.monpred.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 Require Import iris.bi.lib.laterable.
 
 (* Disable [BiAffine uPred] *)

@@ -3,7 +3,7 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.lang.cpp.parser.notation.
+Require Import skylabs.lang.cpp.parser.notation.
 
 (* This file simply sets up notation scopes, in particular,
    those that are needed by <<_names>> files.

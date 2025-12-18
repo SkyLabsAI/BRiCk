@@ -5,8 +5,8 @@
  *)
 
 Require Import Stdlib.NArith.NArith.
-Require Import bluerock.lang.cpp.syntax.prelude.
-Require Export bluerock.lang.cpp.syntax.preliminary.
+Require Import skylabs.lang.cpp.syntax.prelude.
+Require Export skylabs.lang.cpp.syntax.preliminary.
 Import Uint63.
 
 (** [Encoded.t] represents string literals containing characters of arbitrary

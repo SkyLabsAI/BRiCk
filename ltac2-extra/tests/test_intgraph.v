@@ -6,9 +6,9 @@
  *)
 
 Require Import Ltac2.Ltac2.
-Require Import bluerock.ltac2.extra.internal.list.
-Require Import bluerock.ltac2.extra.internal.control.
-Require Import bluerock.ltac2.extra.internal.intgraph.
+Require Import skylabs.ltac2.extra.internal.list.
+Require Import skylabs.ltac2.extra.internal.control.
+Require Import skylabs.ltac2.extra.internal.intgraph.
 
 Module Tests.
   Import IntGraph.

@@ -6,7 +6,7 @@
  *)
 
 Require Import stdpp.base.
-Require Import bluerock.prelude.reserved_notation.
+Require Import skylabs.prelude.reserved_notation.
 
 (** * Syntax for straight-line CPS function calls
 

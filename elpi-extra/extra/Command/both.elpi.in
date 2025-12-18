@@ -13,6 +13,6 @@ under <<Elpi Tactic>> or <<Elpi Program>>.
 It works in both the synterp and interp phases.
 */
 
-accumulate "bluerock.elpi.extra/Program/both".		% ../Program/both.elpi.in
+accumulate "skylabs.elpi.extra/Program/both".		% ../Program/both.elpi.in
 
-accumulate "bluerock.elpi.extra/Command/both/attr".	% ./both/attr.elpi
+accumulate "skylabs.elpi.extra/Command/both/attr".	% ./both/attr.elpi

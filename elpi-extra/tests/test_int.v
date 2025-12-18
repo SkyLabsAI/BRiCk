@@ -4,12 +4,12 @@
  * SPDX-License-Identifier: LGPL-2.1 WITH BedRock Exception for use over network, see repository root for details.
  *)
 
-From bluerock_tests.elpi.extra Extra Dependency "test.elpi" as test.
+From skylabs_tests.elpi.extra Extra Dependency "test.elpi" as test.
 Require Import Stdlib.Init.Byte.
 Require Import Stdlib.PArith.BinPos.
 Require Import Stdlib.NArith.BinNat.
 Require Import Stdlib.ZArith.BinInt.
-Require Import bluerock.elpi.extra.extra.
+Require Import skylabs.elpi.extra.extra.
 
 Elpi Program test lp:{{ }}.
 Elpi Accumulate File extra.Program.

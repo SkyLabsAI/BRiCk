@@ -6,7 +6,7 @@
  *)
 Require Import stdpp.namespaces.
 Require Import iris.bi.derived_laws.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 Require Import iris.proofmode.classes.
 
 Implicit Types (E : coPset).

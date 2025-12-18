@@ -10,11 +10,11 @@
 iProp instances of the PROP constraint bundles defined in
 lang/bi/prop_constraints.v
 
-This is only needed as we instantiate general [bluerock.iris.extra.bi.own] with [iProp].
+This is only needed as we instantiate general [skylabs.iris.extra.bi.own] with [iProp].
 *)
 
-Require Import bluerock.iris.extra.bi.prop_constraints.
-Require Export bluerock.iris.extra.base_logic.iprop_own.
+Require Import skylabs.iris.extra.bi.prop_constraints.
+Require Export skylabs.iris.extra.base_logic.iprop_own.
 
 #[global] Instance iprop_ghostly {Σ : gFunctors} : Ghostly (iPropI Σ) :=
   {| ghostly_bibupd := _

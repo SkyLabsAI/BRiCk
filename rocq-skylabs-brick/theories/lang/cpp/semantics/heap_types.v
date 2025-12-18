@@ -1,4 +1,4 @@
-Require Import bluerock.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.syntax.
 
 (** Heap types (aka 'runtime types') are the subset of types
     that are known at runtime.

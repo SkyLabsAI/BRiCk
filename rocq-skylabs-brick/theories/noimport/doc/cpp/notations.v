@@ -6,7 +6,7 @@
 (**
    Path notations
  *)
-Require Import bluerock.lang.cpp.cpp.
+Require Import skylabs.lang.cpp.cpp.
 
 Section with_env.
 

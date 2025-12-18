@@ -12,7 +12,7 @@ This file defines wrappers:
   - HasUsualOwn PROP T: for MpredLike `bi`s with an `own` operation on CMRA T
 *)
 Require Import iris.algebra.cmra.
-Require Import bluerock.iris.extra.bi.own.
+Require Import skylabs.iris.extra.bi.own.
 
 Class Ghostly (PROP : bi) := {
   #[global] ghostly_bibupd :: BiBUpd PROP;

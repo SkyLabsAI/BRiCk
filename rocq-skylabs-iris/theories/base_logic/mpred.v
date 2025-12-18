@@ -19,11 +19,11 @@ Require Import iris.base_logic.lib.own.
 Require Import iris.base_logic.lib.cancelable_invariants.
 Require Import iris.bi.monpred.
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.iris.extra.bi.prelude.
-Require Import bluerock.iris.extra.bi.entailsN.
-Require Import bluerock.iris.extra.bi.monpred_entailsN.
-Require Import bluerock.iris.extra.base_logic.upred_entailsN.
+Require Import skylabs.prelude.base.
+Require Import skylabs.iris.extra.bi.prelude.
+Require Import skylabs.iris.extra.bi.entailsN.
+Require Import skylabs.iris.extra.bi.monpred_entailsN.
+Require Import skylabs.iris.extra.base_logic.upred_entailsN.
 Import ChargeNotation.
 
 Section mpred.

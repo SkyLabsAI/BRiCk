@@ -3,12 +3,12 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.prelude.elpi.derive.
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.bool.
-Require Import bluerock.prelude.list.
-Require Export bluerock.lang.cpp.syntax.core.
-Require Export bluerock.lang.cpp.syntax.extras.
+Require Import skylabs.prelude.elpi.derive.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.bool.
+Require Import skylabs.prelude.list.
+Require Export skylabs.lang.cpp.syntax.core.
+Require Export skylabs.lang.cpp.syntax.extras.
 
 
 Set Primitive Projections.

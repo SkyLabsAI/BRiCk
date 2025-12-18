@@ -1,4 +1,4 @@
-Require Import bluerock.lang.cpp.semantics.
+Require Import skylabs.lang.cpp.semantics.
 
 Require test.inc_hpp.
 Require test.src_cpp.

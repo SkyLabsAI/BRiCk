@@ -5,10 +5,10 @@
  *)
 
 Require Export stdpp.fin_map_dom.
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.list_numbers.
-Require Import bluerock.prelude.fin_maps.
-Require Import bluerock.prelude.fin_sets.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.list_numbers.
+Require Import skylabs.prelude.fin_maps.
+Require Import skylabs.prelude.fin_sets.
 
 Section fin_map_dom.
   Context `{FMD : FinMapDom K M D}.

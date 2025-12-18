@@ -7,9 +7,9 @@
 Require Import stdpp.coPset.
 Require Import iris.bi.bi.
 Require Import iris.bi.lib.fractional.
-Require Import bluerock.iris.extra.proofmode.proofmode.
-Require Import bluerock.prelude.reserved_notation.
-Require Import bluerock.iris.extra.bi.only_provable.
+Require Import skylabs.iris.extra.proofmode.proofmode.
+Require Import skylabs.prelude.reserved_notation.
+Require Import skylabs.iris.extra.bi.only_provable.
 
 (**
 Derived BI laws, similarly to iris.bi.derived_laws.

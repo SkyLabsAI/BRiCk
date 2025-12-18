@@ -5,10 +5,10 @@
  *)
 Require Import Stdlib.ZArith.ZArith.
 
-Require bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.syntax.type_notations.
-Require Import bluerock.lang.cpp.syntax.expr_notations.
-Require Import bluerock.lang.cpp.syntax.stmt_notations.
+Require skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.syntax.type_notations.
+Require Import skylabs.lang.cpp.syntax.expr_notations.
+Require Import skylabs.lang.cpp.syntax.stmt_notations.
 
 #[local] Open Scope Z_scope.
 #[local] Open Scope bs_scope.

@@ -6,5 +6,5 @@ A universe-polymorphic monad library built on top of stdpp.
 
 To use the library, require via the following command:
 ```coq
-Require Import bluerock.upoly.upoly.
+Require Import skylabs.upoly.upoly.
 ```

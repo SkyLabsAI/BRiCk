@@ -12,18 +12,18 @@ also available.
 *)
 Require Export elpi.apps.NES.NES.
 
-Require Export bluerock.elpi.extra.prelude.
+Require Export skylabs.elpi.extra.prelude.
 
 (** * Bundle NES as databases *)
 (**
 Synopsis:
 
 <<
-Require Import bluerock.elpi.extra.NES.
+Require Import skylabs.elpi.extra.NES.
 
 Elpi Command MyCommand.
 #[phase="both"] Elpi Accumulate Db NES.db.
-#[phase="both"] Elpi Accumulate File bluerock.elpi.extra.NES.code.
+#[phase="both"] Elpi Accumulate File skylabs.elpi.extra.NES.code.
 Elpi Accumulate lp:{{ ⋯ }}.
 Elpi Export MyCommand.
 >>
@@ -33,11 +33,11 @@ From elpi.apps.NES.elpi Extra Dependency "nes_synterp.elpi" as nes_synterp.
 From elpi.apps.NES.elpi Extra Dependency "nes_interp.elpi" as nes_interp.
 
 #[synterp]
-Elpi File bluerock.elpi.extra.NES.code lp:{{
+Elpi File skylabs.elpi.extra.NES.code lp:{{
   accumulate "coq://elpi.apps.NES.elpi/nes_synterp".
 }}.
 
 #[interp]
-Elpi File bluerock.elpi.extra.NES.code lp:{{
+Elpi File skylabs.elpi.extra.NES.code lp:{{
   accumulate "coq://elpi.apps.NES.elpi/nes_interp".
 }}.

@@ -12,9 +12,9 @@ lang/bi/prop_constraints.v
 
 *)
 
-Require Import bluerock.iris.extra.base_logic.own_instances.
-Require Import bluerock.iris.extra.bi.prop_constraints.
-Require Import bluerock.lang.cpp.logic.pred.
+Require Import skylabs.iris.extra.base_logic.own_instances.
+Require Import skylabs.iris.extra.bi.prop_constraints.
+Require Import skylabs.lang.cpp.logic.pred.
 
 #[global] Instance mpred_ghostly `{ cpp_logic } : Ghostly mpredI :=
   {| ghostly_bibupd := _

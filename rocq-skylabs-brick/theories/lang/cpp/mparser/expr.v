@@ -3,11 +3,11 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.lang.cpp.mparser.prelude.
-Require Import bluerock.lang.cpp.syntax.types.
-Require Import bluerock.lang.cpp.syntax.typing. (* TODO: use [typed]? *)
-Require Import bluerock.lang.cpp.syntax.overloadable.
-Require Import bluerock.lang.cpp.parser.expr.
+Require Import skylabs.lang.cpp.mparser.prelude.
+Require Import skylabs.lang.cpp.syntax.types.
+Require Import skylabs.lang.cpp.syntax.typing. (* TODO: use [typed]? *)
+Require Import skylabs.lang.cpp.syntax.overloadable.
+Require Import skylabs.lang.cpp.parser.expr.
 
 Include ParserExpr.
 

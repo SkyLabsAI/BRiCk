@@ -4,12 +4,12 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.lang.cpp.syntax.prelude.
-Require Import bluerock.lang.cpp.syntax.core.
-Require Export bluerock.lang.cpp.syntax.handler.
-Require Import bluerock.lang.cpp.syntax.decl.
-Require bluerock.lang.cpp.syntax.types.
-Require Import bluerock.lang.cpp.syntax.translation_unit.
+Require Import skylabs.lang.cpp.syntax.prelude.
+Require Import skylabs.lang.cpp.syntax.core.
+Require Export skylabs.lang.cpp.syntax.handler.
+Require Import skylabs.lang.cpp.syntax.decl.
+Require skylabs.lang.cpp.syntax.types.
+Require Import skylabs.lang.cpp.syntax.translation_unit.
 
 Import UPoly.
 

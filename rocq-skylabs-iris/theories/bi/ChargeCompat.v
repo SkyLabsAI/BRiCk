@@ -4,8 +4,8 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import iris.bi.bi.
-Require Import bluerock.iris.extra.proofmode.proofmode.
-Require Import bluerock.iris.extra.bi.prelude.
+Require Import skylabs.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.bi.prelude.
 Import ChargeNotation.
 
 (* TODO: move used lemmas that aren't trivial Iris wrappers into derived_laws with new names. *)

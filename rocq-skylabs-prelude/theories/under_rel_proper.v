@@ -4,7 +4,7 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.prelude.base.
+Require Import skylabs.prelude.base.
 
 Section under_proper.
   Context {T} {R : relation T} `{!RewriteRelation R} `{!Transitive R}.

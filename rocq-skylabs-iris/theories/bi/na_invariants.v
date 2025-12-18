@@ -23,10 +23,10 @@ Require Import iris.algebra.gset iris.algebra.coPset.
 Require Export iris.base_logic.lib.na_invariants. (* << exporting [na_inv_pool_name], [na_invG] *)
 Require Import iris.bi.bi.
 
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
-Require Export bluerock.iris.extra.bi.invariants.
-Require Import bluerock.iris.extra.bi.own.
+Require Export skylabs.iris.extra.bi.invariants.
+Require Import skylabs.iris.extra.bi.own.
 
 Set Default Proof Using "Type".
 Set Suggest Proof Using.

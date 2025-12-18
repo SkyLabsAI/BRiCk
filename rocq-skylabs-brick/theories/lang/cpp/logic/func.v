@@ -5,24 +5,24 @@
  *)
 
 Require Import elpi.apps.locker.locker.
-Require Import bluerock.iris.extra.proofmode.proofmode.	(** Early to get the right [ident] *)
-Require Import bluerock.iris.extra.bi.ChargeCompat.
-Require Import bluerock.iris.extra.bi.errors.
-Require Import bluerock.lang.cpp.logic.entailsN.
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.semantics.
-Require Import bluerock.lang.cpp.logic.rep_proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.	(** Early to get the right [ident] *)
+Require Import skylabs.iris.extra.bi.ChargeCompat.
+Require Import skylabs.iris.extra.bi.errors.
+Require Import skylabs.lang.cpp.logic.entailsN.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.semantics.
+Require Import skylabs.lang.cpp.logic.rep_proofmode.
 
-Require Import bluerock.lang.cpp.logic.pred.
-Require Import bluerock.lang.cpp.logic.path_pred.
-Require Import bluerock.lang.cpp.logic.heap_pred.
-Require Import bluerock.lang.cpp.logic.wp.
-Require Import bluerock.lang.cpp.logic.builtins.
-Require Import bluerock.lang.cpp.logic.cptr.
-Require Import bluerock.lang.cpp.logic.const.
-Require Import bluerock.lang.cpp.logic.initializers.
-Require Import bluerock.lang.cpp.logic.translation_unit.
-Require Import bluerock.lang.cpp.logic.destroy.
+Require Import skylabs.lang.cpp.logic.pred.
+Require Import skylabs.lang.cpp.logic.path_pred.
+Require Import skylabs.lang.cpp.logic.heap_pred.
+Require Import skylabs.lang.cpp.logic.wp.
+Require Import skylabs.lang.cpp.logic.builtins.
+Require Import skylabs.lang.cpp.logic.cptr.
+Require Import skylabs.lang.cpp.logic.const.
+Require Import skylabs.lang.cpp.logic.initializers.
+Require Import skylabs.lang.cpp.logic.translation_unit.
+Require Import skylabs.lang.cpp.logic.destroy.
 
 (* UPSTREAM. *)
 Lemma wand_frame {PROP : bi} (R Q Q' : PROP) :

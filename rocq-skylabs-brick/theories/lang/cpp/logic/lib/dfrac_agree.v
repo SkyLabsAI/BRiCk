@@ -5,12 +5,12 @@
  * SPDX-License-Identifier: LGPL-2.1 WITH BedRock Exception for use over network, see repository root for details.
  *)
 
-Require Import bluerock.iris.extra.proofmode.proofmode.
-Require Import bluerock.iris.extra.algebra.dfrac_agree.
-Require Import bluerock.iris.extra.bi.spec.frac_splittable.
-Require Import bluerock.iris.extra.bi.spec.knowledge.
-Require Import bluerock.lang.cpp.logic.
-Require Import bluerock.iris.extra.base_logic.own_instances.
+Require Import skylabs.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.algebra.dfrac_agree.
+Require Import skylabs.iris.extra.bi.spec.frac_splittable.
+Require Import skylabs.iris.extra.bi.spec.knowledge.
+Require Import skylabs.lang.cpp.logic.
+Require Import skylabs.iris.extra.base_logic.own_instances.
 
 Set Printing Coercions.
 

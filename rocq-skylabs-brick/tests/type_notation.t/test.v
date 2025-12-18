@@ -5,9 +5,9 @@
  *)
 Require Import Stdlib.Numbers.BinNums.
 Require Import Stdlib.NArith.BinNat.
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.notations.
-Require Import bluerock.lang.cpp.code_notations.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.notations.
+Require Import skylabs.lang.cpp.code_notations.
 
 Section TestTypeNotations.
   Context (ty rty aty1 aty2 : type) (n : BinNums.N) (nm : name).

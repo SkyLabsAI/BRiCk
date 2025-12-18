@@ -4,9 +4,9 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.bytestring_core.
-Require Import bluerock.lang.cpp.syntax.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.bytestring_core.
+Require Import skylabs.lang.cpp.syntax.
 
 (*
 #[local] Notation Expr := SExpr.

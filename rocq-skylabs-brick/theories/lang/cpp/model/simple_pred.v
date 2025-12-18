@@ -8,21 +8,21 @@ Require Import iris.algebra.gmap.
 Require Import iris.algebra.lib.frac_auth.
 Require Import iris.bi.monpred.
 Require Import iris.bi.lib.fractional.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
-Require Import bluerock.iris.extra.bi.fractional.
-Require Import bluerock.iris.extra.bi.cancelable_invariants.
-Require Import bluerock.lang.cpp.bi.cfractional.
-Require Import bluerock.iris.extra.base_logic.own_instances.
+Require Import skylabs.iris.extra.bi.fractional.
+Require Import skylabs.iris.extra.bi.cancelable_invariants.
+Require Import skylabs.lang.cpp.bi.cfractional.
+Require Import skylabs.iris.extra.base_logic.own_instances.
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.option.
-Require Import bluerock.prelude.arith.z_to_bytes.
-Require Import bluerock.lang.cpp.algebra.cfrac.
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.semantics.
-Require Import bluerock.lang.cpp.logic.mpred.
-Require Import bluerock.lang.cpp.logic.pred.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.option.
+Require Import skylabs.prelude.arith.z_to_bytes.
+Require Import skylabs.lang.cpp.algebra.cfrac.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.semantics.
+Require Import skylabs.lang.cpp.logic.mpred.
+Require Import skylabs.lang.cpp.logic.pred.
 
 #[local] Set Printing Coercions.
 
@@ -81,7 +81,7 @@ Section fractional.
 End fractional.
 #[local] Existing Instance gmap_own_cfrac_valid.
 
-Require Import bluerock.lang.cpp.model.inductive_pointers.
+Require Import skylabs.lang.cpp.model.inductive_pointers.
 (* Stand-in for actual models.
 Ensures that everything needed is properly functorized. *)
 Import PTRS_IMPL.

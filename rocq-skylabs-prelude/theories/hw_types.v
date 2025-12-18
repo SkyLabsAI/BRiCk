@@ -3,9 +3,9 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.numbers.
-Require Export bluerock.prelude.wrap.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.numbers.
+Require Export skylabs.prelude.wrap.
 
 Module int_line.
   Include wrapper.

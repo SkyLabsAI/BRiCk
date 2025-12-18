@@ -29,19 +29,19 @@ Representing Values
 
 .. The C++ standard `talks explicitly about when materialization occurs <https://eel.is/c++draft/class.temporary#2>`_.
 
-In the |project| separation logic, we choose to immediately materialize all aggregates (i.e. aggregates do not have a Coq-value representation), and address the delayed materialization through the fact that not all pointers (|link:bluerock.lang.cpp.semantics.ptrs#PTRS.ptr|) are required to be backed by memory.
+In the |project| separation logic, we choose to immediately materialize all aggregates (i.e. aggregates do not have a Coq-value representation), and address the delayed materialization through the fact that not all pointers (|link:skylabs.lang.cpp.semantics.ptrs#PTRS.ptr|) are required to be backed by memory.
 
 Representing Values in Memory
 -----------------------------------
 
-Given that we materialize all aggregates, we can provide a simple characterization of the different types of Coq values (|link:bluerock.lang.cpp.semantics.values#VAL_MIXIN.val|) which model C++ values; all values are one of:
+Given that we materialize all aggregates, we can provide a simple characterization of the different types of Coq values (|link:skylabs.lang.cpp.semantics.values#VAL_MIXIN.val|) which model C++ values; all values are one of:
 
-- |link:bluerock.lang.cpp.semantics.values#VAL_MIXIN.Vptr| - for C++ pointer and reference values
-- |link:bluerock.lang.cpp.semantics.values#VAL_MIXIN.Vint| - for C++ integral values (excluding floating-point values)
-- |link:bluerock.lang.cpp.semantics.values#VAL_MIXIN.Vraw| - for the low-level representation of C++ objects; refer to :ref:`this section <object_layout.axiomatized_object_model>` for more details
-- |link:bluerock.lang.cpp.semantics.values#VAL_MIXIN.Vundef| - for uninitialized values, upon which all operations yield :ref:`Undefined Behavior <undefined_behavior>`
+- |link:skylabs.lang.cpp.semantics.values#VAL_MIXIN.Vptr| - for C++ pointer and reference values
+- |link:skylabs.lang.cpp.semantics.values#VAL_MIXIN.Vint| - for C++ integral values (excluding floating-point values)
+- |link:skylabs.lang.cpp.semantics.values#VAL_MIXIN.Vraw| - for the low-level representation of C++ objects; refer to :ref:`this section <object_layout.axiomatized_object_model>` for more details
+- |link:skylabs.lang.cpp.semantics.values#VAL_MIXIN.Vundef| - for uninitialized values, upon which all operations yield :ref:`Undefined Behavior <undefined_behavior>`
 
-This characterization enables us to use a single abstraction to model the in-memory representation of C++ values - called |link:bluerock.lang.cpp.logic.heap_pred#primR| `: type -> Qp -> val -> Rep` - which reflects the fractional ownership (`Qp`\ ) of some Coq-model `val`\ ue of a given C++ `type`.
+This characterization enables us to use a single abstraction to model the in-memory representation of C++ values - called |link:skylabs.lang.cpp.logic.heap_pred#primR| `: type -> Qp -> val -> Rep` - which reflects the fractional ownership (`Qp`\ ) of some Coq-model `val`\ ue of a given C++ `type`.
 `Rep ~= ptr -> mpred` models the location agnostic in-memory representation of some resource, and for any given `p : ptr` and `R : Rep`\ , `p |-> R` reflects the materialization of the resource modeled by `R` at the logical pointer `p`.
 
 .. _object_layout.arrays:
@@ -62,10 +62,10 @@ This means that there is no padding between elements of an array.
 How is this reflected in |project|?
 -------------------------------------
 
-The `Axiom` |link:bluerock.lang.cpp.semantics.ptrs#PTRS.eval_o_sub| is defined to compute the the numerical
+The `Axiom` |link:skylabs.lang.cpp.semantics.ptrs#PTRS.eval_o_sub| is defined to compute the the numerical
 offset needed to subscript into an array based on the size of the underlying type and the index which
 is being used for the subscript. Furthermore, none of the definitions and the related theories of
-arrays contained within |link:bluerock.lang.cpp.logic.arr| mention padding in any capacity.
+arrays contained within |link:skylabs.lang.cpp.logic.arr| mention padding in any capacity.
 
 .. _object_layout.structs:
 
@@ -135,19 +135,19 @@ guarantees that:
 How is this reflected in |project|?
 ------------------------------------
 
-The address offset of a |link:bluerock.lang.cpp.semantics.ptrs#PTRS.offset| is determined by |link:bluerock.lang.cpp.semantics.ptrs#PTRS.eval_offset|.
-|project| currently supports reasoning about the layout of (a limited number of) aggregates by embedding the layout information from the Clang front-end into the |project| abstract syntax tree (see |link:bluerock.lang.cpp.syntax.translation_unit#Struct| and |link:bluerock.lang.cpp.syntax.translation_unit#Union|\ ).
+The address offset of a |link:skylabs.lang.cpp.semantics.ptrs#PTRS.offset| is determined by |link:skylabs.lang.cpp.semantics.ptrs#PTRS.eval_offset|.
+|project| currently supports reasoning about the layout of (a limited number of) aggregates by embedding the layout information from the Clang front-end into the |project| abstract syntax tree (see |link:skylabs.lang.cpp.syntax.translation_unit#Struct| and |link:skylabs.lang.cpp.syntax.translation_unit#Union|\ ).
 
-In particular, |link:bluerock.lang.cpp.logic.layout#struct_def| uses the information from the Clang front-end to enumerate the properly-|link:bluerock.lang.cpp.semantics.ptrs#PTRS.offset| bases and fields of a given struct.
-Furthermore, |link:bluerock.lang.cpp.logic.pred#struct_padding| tracks the padding which the compiler (may have) inserted and |link:bluerock.lang.cpp.logic.pred#mdc_path| tracks the most derived class for objects which have a vtable.
-|link:bluerock.lang.cpp.logic.layout#anyR_struct| enables the "shattering" of a (potentially uninitialized) struct into its (potentially uninitialized) constitutent pieces (as well as its |link:bluerock.lang.cpp.logic.pred#struct_padding| and |link:bluerock.lang.cpp.logic.pred#mdc_path|, if necessary).
+In particular, |link:skylabs.lang.cpp.logic.layout#struct_def| uses the information from the Clang front-end to enumerate the properly-|link:skylabs.lang.cpp.semantics.ptrs#PTRS.offset| bases and fields of a given struct.
+Furthermore, |link:skylabs.lang.cpp.logic.pred#struct_padding| tracks the padding which the compiler (may have) inserted and |link:skylabs.lang.cpp.logic.pred#mdc_path| tracks the most derived class for objects which have a vtable.
+|link:skylabs.lang.cpp.logic.layout#anyR_struct| enables the "shattering" of a (potentially uninitialized) struct into its (potentially uninitialized) constitutent pieces (as well as its |link:skylabs.lang.cpp.logic.pred#struct_padding| and |link:skylabs.lang.cpp.logic.pred#mdc_path|, if necessary).
 
-Because the C++ standard only requires portability of the layout of certain types of aggregates, we limit the use of this information in our axioms to POD and standard layout classes (see |link:bluerock.lang.cpp.semantics.ptrs#PTRS.eval_o_field|\ ).
+Because the C++ standard only requires portability of the layout of certain types of aggregates, we limit the use of this information in our axioms to POD and standard layout classes (see |link:skylabs.lang.cpp.semantics.ptrs#PTRS.eval_o_field|\ ).
 
 .. note::
 
    We believe that a good, platform independent way to reason about layout information is to use a combination of :cpp:`static_assert` and :cpp:`offsetof`.
-   |project| does not currently support this level of reasoning about :cpp:`offsetof`, but it is likely to be added in the future by connecting |link:bluerock.lang.cpp.semantics.ptrs#PTRS.eval_offset| to the semantics of :cpp:`offsetof`.
+   |project| does not currently support this level of reasoning about :cpp:`offsetof`, but it is likely to be added in the future by connecting |link:skylabs.lang.cpp.semantics.ptrs#PTRS.eval_offset| to the semantics of :cpp:`offsetof`.
 
 .. _object_layout.unions:
 
@@ -175,19 +175,19 @@ The C++ standard defines the `layout of unions <http://eel.is/c++draft/class.uni
 How is this reflected in |project|?
 ------------------------------------------------------------------------------------------
 
-The virtual address offset of a |link:bluerock.lang.cpp.semantics.ptrs#PTRS.offset| is determined by |link:bluerock.lang.cpp.semantics.ptrs#PTRS.eval_offset|.
-|project| currently supports reasoning about the layout of (a limited number of) aggregates by embedding the layout information from the Clang front-end into the |project| abstract syntax tree (see |link:bluerock.lang.cpp.syntax.translation_unit#Struct| and |link:bluerock.lang.cpp.syntax.translation_unit#Union|\ ).
+The virtual address offset of a |link:skylabs.lang.cpp.semantics.ptrs#PTRS.offset| is determined by |link:skylabs.lang.cpp.semantics.ptrs#PTRS.eval_offset|.
+|project| currently supports reasoning about the layout of (a limited number of) aggregates by embedding the layout information from the Clang front-end into the |project| abstract syntax tree (see |link:skylabs.lang.cpp.syntax.translation_unit#Struct| and |link:skylabs.lang.cpp.syntax.translation_unit#Union|\ ).
 
-In particular, |link:bluerock.lang.cpp.logic.layout#union_def| uses the information from the Clang front-end to provide a disjunction of all of the properly-|link:bluerock.lang.cpp.semantics.ptrs#PTRS.offset| fields of a given union.
-Furthermore, |link:bluerock.lang.cpp.logic.pred#union_padding| tracks the padding which the compiler (may have) inserted *as well as* an identifier which reflects the **active member**.
-|link:bluerock.lang.cpp.logic.layout#anyR_union| enables "translating between" different members of the union.
+In particular, |link:skylabs.lang.cpp.logic.layout#union_def| uses the information from the Clang front-end to provide a disjunction of all of the properly-|link:skylabs.lang.cpp.semantics.ptrs#PTRS.offset| fields of a given union.
+Furthermore, |link:skylabs.lang.cpp.logic.pred#union_padding| tracks the padding which the compiler (may have) inserted *as well as* an identifier which reflects the **active member**.
+|link:skylabs.lang.cpp.logic.layout#anyR_union| enables "translating between" different members of the union.
 
-Because the C++ standard only requires portability of the layout of certain types of aggregates we limit the use of this information in our axioms to POD and standard layout classes (see |link:bluerock.lang.cpp.semantics.ptrs#PTRS.eval_o_field|\ ).
+Because the C++ standard only requires portability of the layout of certain types of aggregates we limit the use of this information in our axioms to POD and standard layout classes (see |link:skylabs.lang.cpp.semantics.ptrs#PTRS.eval_o_field|\ ).
 
 .. note::
 
   |project| does not reflect that all members of the same union have the same address.
-  |link:bluerock.lang.cpp.logic.layout#union_def| uses |link:bluerock.lang.cpp.semantics.ptrs#PTRS_MIXIN._field| which itself uses |link:bluerock.lang.cpp.semantics.types#offset_of|; |link:bluerock.lang.cpp.semantics.types#offset_of| uses opaque offset information from the translation unit.
+  |link:skylabs.lang.cpp.logic.layout#union_def| uses |link:skylabs.lang.cpp.semantics.ptrs#PTRS_MIXIN._field| which itself uses |link:skylabs.lang.cpp.semantics.types#offset_of|; |link:skylabs.lang.cpp.semantics.types#offset_of| uses opaque offset information from the translation unit.
 
   If provers require this level of reasoning in the future we could provide additional assumptions regarding the offset information contained within a given translation unit.
 
@@ -199,17 +199,17 @@ Implicit Destruction
 A :ref:`Trivially Destructible Object <object_layout.concepts.trivially_destructible>` supports **Implicit Destruction** - in which the compiler reclaims the underlying storage of the object *without* running any code.
 The following axioms reflect the current support for **Implicit Destruction** in |project|; please refer to :ref:`this section <object_layout.axiomatized_object_model>` for more details regarding our axiomatization of the C++ memory model:
 
-- Scalars (based on |link:bluerock.lang.cpp.logic.layout#implicit_destruct_ty|)
+- Scalars (based on |link:skylabs.lang.cpp.logic.layout#implicit_destruct_ty|)
 
-  * |link:bluerock.lang.cpp.logic.layout#implicit_destruct_int|
-  * |link:bluerock.lang.cpp.logic.layout#implicit_destruct_bool|
-  * |link:bluerock.lang.cpp.logic.layout#implicit_destruct_nullptr|
-  * |link:bluerock.lang.cpp.logic.layout#implicit_destruct_ptr|
-  * |link:bluerock.lang.cpp.logic.layout#implicit_destruct_member_pointer|
-- Aggregates (based on |link:bluerock.lang.cpp.logic.layout#struct_def| and |link:bluerock.lang.cpp.logic.layout#union_def|, which are discussed in the :ref:`struct <object_layout.structs>` and :ref:`union <object_layout.unions>` sections above)
+  * |link:skylabs.lang.cpp.logic.layout#implicit_destruct_int|
+  * |link:skylabs.lang.cpp.logic.layout#implicit_destruct_bool|
+  * |link:skylabs.lang.cpp.logic.layout#implicit_destruct_nullptr|
+  * |link:skylabs.lang.cpp.logic.layout#implicit_destruct_ptr|
+  * |link:skylabs.lang.cpp.logic.layout#implicit_destruct_member_pointer|
+- Aggregates (based on |link:skylabs.lang.cpp.logic.layout#struct_def| and |link:skylabs.lang.cpp.logic.layout#union_def|, which are discussed in the :ref:`struct <object_layout.structs>` and :ref:`union <object_layout.unions>` sections above)
 
-  * |link:bluerock.lang.cpp.logic.layout#implicit_destruct_struct|
-  * |link:bluerock.lang.cpp.logic.layout#implicit_destruct_union|
+  * |link:skylabs.lang.cpp.logic.layout#implicit_destruct_struct|
+  * |link:skylabs.lang.cpp.logic.layout#implicit_destruct_union|
 
 .. note::
 
@@ -228,12 +228,12 @@ Working with the high-level representation of objects
 --------------------------------------------------------------------------------
 
 C++ programmers are usually concerned with (live) C++ objects rather than the memory in which they are resident.
-To wit, our specifications speak in terms of high-level C++ objects such as |link:bluerock.lang.cpp.logic.heap_pred#primR|.
-Variable declarations (c.f. |link:bluerock.lang.cpp.logic.stmt#wp_decl_var|\ ) similarly yield high-level C++ objects (which our axiomatization directly reclaims when they go out of scope).
+To wit, our specifications speak in terms of high-level C++ objects such as |link:skylabs.lang.cpp.logic.heap_pred#primR|.
+Variable declarations (c.f. |link:skylabs.lang.cpp.logic.stmt#wp_decl_var|\ ) similarly yield high-level C++ objects (which our axiomatization directly reclaims when they go out of scope).
 
 However, the C++ Abstract Machine manages memory in which there are no resident (live) C++ objects.
 Implementers of custom allocators will also need a way to reason about chunks of memory in which there are no resident (live) C++ objects.
-Therefore we define |link:bluerock.lang.cpp.logic.heap_pred#blockR| (c.f. |link:bluerock.lang.cpp.logic.heap_pred#blockR_def|\ ) and axiomatize |link:bluerock.lang.cpp.logic.pred#provides_storage|.
+Therefore we define |link:skylabs.lang.cpp.logic.heap_pred#blockR| (c.f. |link:skylabs.lang.cpp.logic.heap_pred#blockR_def|\ ) and axiomatize |link:skylabs.lang.cpp.logic.pred#provides_storage|.
 This enables us to talk about (untyped) memory which is managed by the C++ Abstract Machine **and** to relate high-level C++ objects to the memory which backs them when necessary, respectively.
 
 .. _object_layout.axiomatized_object_model.high_level.blockR:
@@ -243,12 +243,12 @@ Reasoning about physical memory with `blockR` and `tblockR`
 
 .. note::
 
-   |link:bluerock.lang.cpp.logic.heap_pred#blockR_def| speaks in terms of |link:bluerock.lang.cpp.logic.heap_pred#anyR| which itself relates to |link:bluerock.lang.cpp.logic.heap_pred#primR| and |link:bluerock.lang.cpp.logic.heap_pred#uninitR| (c.f. |link:bluerock.lang.cpp.logic.heap_pred#primR_anyR|\ and |link:bluerock.lang.cpp.logic.heap_pred#uninitR_anyR|\ ).
+   |link:skylabs.lang.cpp.logic.heap_pred#blockR_def| speaks in terms of |link:skylabs.lang.cpp.logic.heap_pred#anyR| which itself relates to |link:skylabs.lang.cpp.logic.heap_pred#primR| and |link:skylabs.lang.cpp.logic.heap_pred#uninitR| (c.f. |link:skylabs.lang.cpp.logic.heap_pred#primR_anyR|\ and |link:skylabs.lang.cpp.logic.heap_pred#uninitR_anyR|\ ).
    While `primR` models initialized C++ values of a given type, we can think of the physical memory managed by the C++ abstract machine as a bunch of character arrays, and indeed this view is sound *and* relevant when dealing with custom allocators (see :ref:`this section <object_layout.axiomatized_object_model.high_level.provides_storage>`\ ).
 
 `blockR (sz : N) (q : Qp) : Rep` is a definition which represents fractional ownership (`Qp`) of a contiguous chunk of `sz` bytes - where each byte is either uninitialized or initialized to contain some concrete value of type `char`.
-`tblockR (ty : type) (q : Qp) : Rep` is a definition which represents fractional ownership (`Qp`) of a contiguous chunk of `size_of ty` bytes (c.f. |link:bluerock.lang.cpp.semantics.types#size_of|\ ) - where each byte is either uninitialized or initialized to contain some concrete value of type `char`, and where the first byte respects `align_of ty` (c.f. |link:bluerock.lang.cpp.semantics.types#align_of|\ ).
-Numerous axioms and definitions within |link:bluerock.lang.cpp.logic| make use of `blockR` and `tblockR` in order to reflect the transfer of physical memory between the C++ Abstract Machine and the executing code (although most of this is hidden from verifiers).
+`tblockR (ty : type) (q : Qp) : Rep` is a definition which represents fractional ownership (`Qp`) of a contiguous chunk of `size_of ty` bytes (c.f. |link:skylabs.lang.cpp.semantics.types#size_of|\ ) - where each byte is either uninitialized or initialized to contain some concrete value of type `char`, and where the first byte respects `align_of ty` (c.f. |link:skylabs.lang.cpp.semantics.types#align_of|\ ).
+Numerous axioms and definitions within |link:skylabs.lang.cpp.logic| make use of `blockR` and `tblockR` in order to reflect the transfer of physical memory between the C++ Abstract Machine and the executing code (although most of this is hidden from verifiers).
 
 .. _object_layout.axiomatized_object_model.high_level.provides_storage:
 
@@ -256,9 +256,9 @@ Relating physical memory to the high-level object which it `provides_storage` fo
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 One place in which verifiers *are* exposed to the `blockR`/\ `tblockR` definitions is when proving the correctness of custom (de)allocation functions.
-In particular, reasoning about C++ dynamic memory management - as axiomatized within |link:bluerock.lang.cpp.logic.new_delete| - requires the explicit tracking of the high-level C++ object which was created *as well as* the physical memory which |link:bluerock.lang.cpp.logic.pred#provides_storage| for the high-level C++ object.
+In particular, reasoning about C++ dynamic memory management - as axiomatized within |link:skylabs.lang.cpp.logic.new_delete| - requires the explicit tracking of the high-level C++ object which was created *as well as* the physical memory which |link:skylabs.lang.cpp.logic.pred#provides_storage| for the high-level C++ object.
 
-When it is used (c.f. |link:bluerock.lang.cpp.logic.new_delete#wp_prval_new|\ ), `provides_storage (storage object : ptr) (storage_type : type) : mpred` relates the physical memory associated with the logical `storage` pointer to the high-level C++ object associated with the logical `object` pointer (and of type `storage_type`).
+When it is used (c.f. |link:skylabs.lang.cpp.logic.new_delete#wp_prval_new|\ ), `provides_storage (storage object : ptr) (storage_type : type) : mpred` relates the physical memory associated with the logical `storage` pointer to the high-level C++ object associated with the logical `object` pointer (and of type `storage_type`).
 This decoupling enables useful high-level reasoning for verifiers after allocation *while also* enabling the sound reclamation of that high-level object and the physical memory in which it resides.
 
 .. _object_layout.axiomatized_object_model.low_level:
@@ -300,14 +300,14 @@ How is this reflected in |project|?
 ------------------------------------
 
 |project| provides access to the low-level view of data via the `Vraw r` value - where `r` represents a "raw byte".
-|project| is parametric in this notion of raw byte, but a simple model would instantiate it with `byte | pointer fragment | poison` (i.e. |link:bluerock.lang.cpp.model.simple_pred#runtime_val'| in |link:bluerock.lang.cpp.model.simple_pred|\ ).
-|link:bluerock.lang.cpp.semantics.values#RAW_BYTES|, |link:bluerock.lang.cpp.semantics.values#RAW_BYTES_VAL| and |link:bluerock.lang.cpp.semantics.values#RAW_BYTES_MIXIN| contain the various axioms and definitions which underly our notion of "raw bytes".
+|project| is parametric in this notion of raw byte, but a simple model would instantiate it with `byte | pointer fragment | poison` (i.e. |link:skylabs.lang.cpp.model.simple_pred#runtime_val'| in |link:skylabs.lang.cpp.model.simple_pred|\ ).
+|link:skylabs.lang.cpp.semantics.values#RAW_BYTES|, |link:skylabs.lang.cpp.semantics.values#RAW_BYTES_VAL| and |link:skylabs.lang.cpp.semantics.values#RAW_BYTES_MIXIN| contain the various axioms and definitions which underly our notion of "raw bytes".
 
-|link:bluerock.lang.cpp.semantics.values#RAW_BYTES_VAL.raw_bytes_of_val| and |link:bluerock.lang.cpp.semantics.values#RAW_BYTES_VAL.raw_bytes_of_struct| represent the core predicates which relate high-level C++ objects to their "raw" representations.
-|link:bluerock.lang.cpp.logic.raw| uses |link:bluerock.lang.cpp.semantics.values#RAW_BYTES_VAL.raw_bytes_of_val| to expose conversions from `primR` to `rawsR` - which is itself an array of `Vraw` values.
-|link:bluerock.lang.cpp.logic.layout| uses |link:bluerock.lang.cpp.semantics.values#RAW_BYTES_VAL.raw_bytes_of_struct| - and the definitions within |link:bluerock.lang.cpp.logic.raw| - to axiomatize |link:bluerock.lang.cpp.logic.layout#struct_to_raw| which allows for verifiers to convert :ref:`Plain Old Data <object_layout.concepts.pod>` structs into their low-level representation.
+|link:skylabs.lang.cpp.semantics.values#RAW_BYTES_VAL.raw_bytes_of_val| and |link:skylabs.lang.cpp.semantics.values#RAW_BYTES_VAL.raw_bytes_of_struct| represent the core predicates which relate high-level C++ objects to their "raw" representations.
+|link:skylabs.lang.cpp.logic.raw| uses |link:skylabs.lang.cpp.semantics.values#RAW_BYTES_VAL.raw_bytes_of_val| to expose conversions from `primR` to `rawsR` - which is itself an array of `Vraw` values.
+|link:skylabs.lang.cpp.logic.layout| uses |link:skylabs.lang.cpp.semantics.values#RAW_BYTES_VAL.raw_bytes_of_struct| - and the definitions within |link:skylabs.lang.cpp.logic.raw| - to axiomatize |link:skylabs.lang.cpp.logic.layout#struct_to_raw| which allows for verifiers to convert :ref:`Plain Old Data <object_layout.concepts.pod>` structs into their low-level representation.
 
-Therefore, the example above can be verified by first converting the struct to raw bytes using |link:bluerock.lang.cpp.logic.layout#struct_to_raw|, copying the raw bytes and then converting the raw bytes back into the struct using |link:bluerock.lang.cpp.logic.layout#struct_to_raw| once again.
+Therefore, the example above can be verified by first converting the struct to raw bytes using |link:skylabs.lang.cpp.logic.layout#struct_to_raw|, copying the raw bytes and then converting the raw bytes back into the struct using |link:skylabs.lang.cpp.logic.layout#struct_to_raw| once again.
 
 Appendix: C++ Standard Concepts
 ================================================================================
@@ -330,7 +330,7 @@ While this concept has been deprecated - and redefined in terms of - the more gr
 :ref:`trivial class <object_layout.concepts.trivial>`
 concepts, it is an easier-to-characterize side-condition as it is stronger than either
 of the previous two concepts. Furthermore, the data which we've encountered while
-reasoning explicitly about the layout of structs within `BlueRock <https://bluerock-io.github.io/formal-methods>`_
+reasoning explicitly about the layout of structs within `BlueRock <https://skylabs-io.github.io/formal-methods>`_
 has fallen into the category of **POD**. In the future we will want to refine the
 C++-concepts which we expose within the semantics and relax our axioms accordingly.
 

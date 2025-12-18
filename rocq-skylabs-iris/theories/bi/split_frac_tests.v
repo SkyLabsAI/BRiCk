@@ -5,7 +5,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.iris.extra.bi.split_frac.
+Require Import skylabs.iris.extra.bi.split_frac.
 
 (**
 [Split q q1 q2] succeeds if [SplitFrac q] outputs [q1], [q2].

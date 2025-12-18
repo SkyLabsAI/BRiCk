@@ -7,16 +7,16 @@
 Require Import stdpp.finite.
 Require Import iris.algebra.dfrac.
 Require Import iris.algebra.lib.gmap_view.
-Require Import bluerock.prelude.base.
-Require Import bluerock.iris.extra.algebra.excl_auth.
-Require Import bluerock.iris.extra.algebra.frac_auth.
-Require Import bluerock.iris.extra.algebra.dfrac_agree.
-Require Import bluerock.iris.extra.bi.prelude.
-Require Import bluerock.iris.extra.si_logic.bi.
-Require Import bluerock.iris.extra.bi.own.
-Require Import bluerock.iris.extra.bi.includedI.
-Require Import bluerock.iris.extra.bi.embedding.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.prelude.base.
+Require Import skylabs.iris.extra.algebra.excl_auth.
+Require Import skylabs.iris.extra.algebra.frac_auth.
+Require Import skylabs.iris.extra.algebra.dfrac_agree.
+Require Import skylabs.iris.extra.bi.prelude.
+Require Import skylabs.iris.extra.si_logic.bi.
+Require Import skylabs.iris.extra.bi.own.
+Require Import skylabs.iris.extra.bi.includedI.
+Require Import skylabs.iris.extra.bi.embedding.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 Set Printing Coercions.
 
 Implicit Types (p q : Qp) (dp dq : dfrac).
@@ -582,7 +582,7 @@ Section theory.
 
   End excl_auth.
 
-  (** iris.algebra.lib.frac_auth, bluerock.algebra.frac_auth *)
+  (** iris.algebra.lib.frac_auth, skylabs.algebra.frac_auth *)
   Section frac_auth.
     Context {A : cmra}.
     Implicit Types a b : A.

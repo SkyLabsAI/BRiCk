@@ -4,9 +4,9 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.lang.cpp.syntax.types(drop_qualifiers).
-Require Import bluerock.lang.cpp.parser.prelude.
-Require Import bluerock.lang.cpp.parser.lang.
+Require Import skylabs.lang.cpp.syntax.types(drop_qualifiers).
+Require Import skylabs.lang.cpp.parser.prelude.
+Require Import skylabs.lang.cpp.parser.lang.
 
 #[local] Arguments force_some _ {_} : assert.	(** TODO: Upstream? *)
 

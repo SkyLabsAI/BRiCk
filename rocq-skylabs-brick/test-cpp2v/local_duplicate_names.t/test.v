@@ -1,6 +1,6 @@
-Require Import bluerock.prelude.base.
-Require Import bluerock.lang.cpp.syntax.
-Require bluerock.lang.cpp.syntax.supported.
+Require Import skylabs.prelude.base.
+Require Import skylabs.lang.cpp.syntax.
+Require skylabs.lang.cpp.syntax.supported.
 
 Require test.test_cpp.
 

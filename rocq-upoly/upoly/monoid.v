@@ -5,12 +5,12 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.upoly.prelude.
+Require Import skylabs.upoly.prelude.
 
 (** * Monoid operations *)
 (**
 NOTE: We do not define this class in base.v or export this module from
-<<bluerock.upoly.upoly>> to minimize conflicts with Iris' monoid class.
+<<skylabs.upoly.upoly>> to minimize conflicts with Iris' monoid class.
 *)
 
 Class Monoid@{*u | } (A : Type@{u}) : Type@{u} := {

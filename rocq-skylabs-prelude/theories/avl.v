@@ -8,8 +8,8 @@ Require Import Stdlib.Structures.OrderedType.
 Require Import Stdlib.FSets.FMapAVL.
 Require Import stdpp.fin_maps.
 Require Import stdpp.strings.
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.bytestring.	(* backwards compatibility *)
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.bytestring.	(* backwards compatibility *)
 
 #[local] Set Printing Coercions.
 

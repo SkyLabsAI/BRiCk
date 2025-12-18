@@ -30,12 +30,12 @@ Require Import iris.bi.monpred.
 Require Import iris.base_logic.lib.na_invariants. (* << [na_inv_pool_name] *)
 Require Import iris.proofmode.monpred.
 
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
-Require Import bluerock.iris.extra.bi.only_provable.
-Require Import bluerock.iris.extra.bi.invariants.
-Require Import bluerock.iris.extra.bi.prop_constraints.
-Require Import bluerock.iris.extra.bi.own.
+Require Import skylabs.iris.extra.bi.only_provable.
+Require Import skylabs.iris.extra.bi.invariants.
+Require Import skylabs.iris.extra.bi.prop_constraints.
+Require Import skylabs.iris.extra.bi.own.
 
 (** * Thread-local NA invariants
 
@@ -46,7 +46,7 @@ while the predicate [na_own] tracks which of those resources are
 currently accessible.
 
 In contrast to Iris' non-atomic invariants, including the BI-generic version
-in [bluerock.iris.extra.bi.na_invariants], these NA invariants are
+in [skylabs.iris.extra.bi.na_invariants], these NA invariants are
 _local_, meaning both [na_inv] and [na_own] depend, implicitly, on
 the current thread.
 
@@ -188,7 +188,7 @@ Section props.
 
   (*
   This lemma is not available for arbitrary monPred.
-  See bluerock.iris.extra.base_logic.monpred_na_invariants for the lemma for
+  See skylabs.iris.extra.base_logic.monpred_na_invariants for the lemma for
   (P : monPred I (iProp Σ)).
 
   Lemma na_inv_alloc p E N P : ▷ P ={E}=∗ na_inv p N P.

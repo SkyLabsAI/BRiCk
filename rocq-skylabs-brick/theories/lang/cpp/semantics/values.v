@@ -8,19 +8,19 @@
 Require Import Stdlib.Strings.Ascii.
 Require Import stdpp.gmap.
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.option.
-Require Import bluerock.prelude.numbers.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.option.
+Require Import skylabs.prelude.numbers.
 
-Require Import bluerock.lang.cpp.reserved_notation. (* TODO *)
-Require Import bluerock.prelude.arith.operator.
-Require Import bluerock.prelude.arith.builtins.
-Require Import bluerock.lang.cpp.syntax.
-Require Export bluerock.lang.cpp.semantics.types.
-Require Export bluerock.lang.cpp.semantics.sub_module.
-Require Export bluerock.lang.cpp.semantics.genv.
-Require Export bluerock.lang.cpp.semantics.ptrs.
-Require Export bluerock.lang.cpp.semantics.heap_types.
+Require Import skylabs.lang.cpp.reserved_notation. (* TODO *)
+Require Import skylabs.prelude.arith.operator.
+Require Import skylabs.prelude.arith.builtins.
+Require Import skylabs.lang.cpp.syntax.
+Require Export skylabs.lang.cpp.semantics.types.
+Require Export skylabs.lang.cpp.semantics.sub_module.
+Require Export skylabs.lang.cpp.semantics.genv.
+Require Export skylabs.lang.cpp.semantics.ptrs.
+Require Export skylabs.lang.cpp.semantics.heap_types.
 
 #[local] Set Printing Coercions.
 #[local] Close Scope nat_scope.

@@ -8,13 +8,13 @@
 Require Import stdpp.propset.
 Require Import iris.base_logic.lib.own. (* for inG *)
 
-Require Export bluerock.iris.extra.algebra.authset.
-Require Import bluerock.iris.extra.bi.observe.
-Require Import bluerock.iris.extra.bi.only_provable.
-Require Import bluerock.iris.extra.bi.own.
-Require Import bluerock.iris.extra.bi.prop_constraints.
+Require Export skylabs.iris.extra.algebra.authset.
+Require Import skylabs.iris.extra.bi.observe.
+Require Import skylabs.iris.extra.bi.only_provable.
+Require Import skylabs.iris.extra.bi.own.
+Require Import skylabs.iris.extra.bi.prop_constraints.
 
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
 
 Set Default Proof Using "Type".

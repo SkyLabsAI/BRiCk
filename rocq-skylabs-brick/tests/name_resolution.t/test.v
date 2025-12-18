@@ -1,4 +1,4 @@
-Require Import bluerock.lang.cpp.parser.plugin.cpp2v.
+Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
 cpp.prog source prog cpp:{{
   namespace X {
     inline namespace Y {
@@ -30,7 +30,7 @@ cpp.prog source prog cpp:{{
   }
 }}.
 
-Require Import bluerock.lang.cpp.syntax.dealias.
+Require Import skylabs.lang.cpp.syntax.dealias.
 
 Notation TEST input output :=
   (trace.runO (resolveValue source input%cpp_name) = Some output%cpp_name) (only parsing).

@@ -1,19 +1,19 @@
 (include_subdirs qualified)
 (coq.theory
- (name bluerock.lang.cpp)
+ (name skylabs.lang.cpp)
  (package rocq-skylabs-brick)
  (plugins rocq-skylabs-brick.plugin)
  (theories
-  ; bluerock.iris.extra deps
+  ; skylabs.iris.extra deps
   Stdlib
   stdpp
-  bluerock.upoly
+  skylabs.upoly
   elpi elpi_elpi elpi.apps.locker elpi.apps.NES
   Lens Lens.Elpi
-  Ltac2 bluerock.ltac2.extra
-  bluerock.prelude
+  Ltac2 skylabs.ltac2.extra
+  skylabs.prelude
   iris
-  ; bluerock.iris.extra deps end
-  bluerock.iris.extra
+  ; skylabs.iris.extra deps end
+  skylabs.iris.extra
   ; Equations
   Equations Equations.Prop Equations.Type))

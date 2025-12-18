@@ -5,18 +5,18 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.upoly.prelude.
-Require bluerock.upoly.list.
-Require bluerock.upoly.id.
-Require bluerock.upoly.reader.
-Require bluerock.upoly.writer.
-Require bluerock.upoly.state.
-Require bluerock.upoly.optionT.
-Require bluerock.upoly.listT.
-Require bluerock.upoly.traceT.
-Require bluerock.upoly.readerT.
-Require bluerock.upoly.writerT.
-Require bluerock.upoly.stateT.
+Require Import skylabs.upoly.prelude.
+Require skylabs.upoly.list.
+Require skylabs.upoly.id.
+Require skylabs.upoly.reader.
+Require skylabs.upoly.writer.
+Require skylabs.upoly.state.
+Require skylabs.upoly.optionT.
+Require skylabs.upoly.listT.
+Require skylabs.upoly.traceT.
+Require skylabs.upoly.readerT.
+Require skylabs.upoly.writerT.
+Require skylabs.upoly.stateT.
 
 Export list.Notations.
 

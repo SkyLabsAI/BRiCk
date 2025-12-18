@@ -13,4 +13,4 @@ under <<Elpi Program>> or <<Elpi Command>>.
 It works in both the synterp and interp phases.
 */
 
-accumulate "bluerock.elpi.extra/Program/both".	% ../Program/both.elpi.in
+accumulate "skylabs.elpi.extra/Program/both".	% ../Program/both.elpi.in

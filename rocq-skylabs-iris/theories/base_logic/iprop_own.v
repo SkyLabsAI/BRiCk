@@ -6,11 +6,11 @@
 
 (** Own instances for iProp **)
 (* TODO: these should be upstreamed to Iris. *)
-Require Export bluerock.iris.extra.si_logic.bi.
+Require Export skylabs.iris.extra.si_logic.bi.
 
 Require Export iris.base_logic.lib.own. (* << exporting [inG] and [gFunctors] *)
 
-Require Export bluerock.iris.extra.bi.own.
+Require Export skylabs.iris.extra.bi.own.
 
 (* Instances for iProp *)
 

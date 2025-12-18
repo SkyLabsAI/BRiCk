@@ -5,8 +5,8 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.ltac2.extra.internal.init.
-Require Import bluerock.ltac2.extra.internal.list.
+Require Import skylabs.ltac2.extra.internal.init.
+Require Import skylabs.ltac2.extra.internal.list.
 
 (** Minor extensions to [Ltac2.Array] *)
 Module Array.

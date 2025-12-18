@@ -4,22 +4,22 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Ltac2.Ltac2.
-Require Export bluerock.prelude.base.	(* for, e.g., <<::>> *)
+Require Export skylabs.prelude.base.	(* for, e.g., <<::>> *)
 Require Import Stdlib.Numbers.Cyclic.Int63.PrimInt63.
-Require Import bluerock.prelude.parray.
-Require Import bluerock.prelude.uint63.
+Require Import skylabs.prelude.parray.
+Require Import skylabs.prelude.uint63.
 Require Export Stdlib.Strings.PrimString.
-Require Import bluerock.prelude.avl.
-Require Export bluerock.lang.cpp.syntax. (* NOTE: too much *)
-Require bluerock.lang.cpp.semantics.sub_module.
-Require Export bluerock.lang.cpp.parser.stmt.
-Require Import bluerock.lang.cpp.parser.lang.
-Require Import bluerock.lang.cpp.parser.type.
-Require Import bluerock.lang.cpp.parser.name.
-Require Import bluerock.lang.cpp.parser.expr.
-Require Import bluerock.lang.cpp.parser.decl.
-Require Import bluerock.lang.cpp.parser.notation.
-Require Import bluerock.lang.cpp.parser.reduction.
+Require Import skylabs.prelude.avl.
+Require Export skylabs.lang.cpp.syntax. (* NOTE: too much *)
+Require skylabs.lang.cpp.semantics.sub_module.
+Require Export skylabs.lang.cpp.parser.stmt.
+Require Import skylabs.lang.cpp.parser.lang.
+Require Import skylabs.lang.cpp.parser.type.
+Require Import skylabs.lang.cpp.parser.name.
+Require Import skylabs.lang.cpp.parser.expr.
+Require Import skylabs.lang.cpp.parser.decl.
+Require Import skylabs.lang.cpp.parser.notation.
+Require Import skylabs.lang.cpp.parser.reduction.
 
 Include ParserName.
 Include ParserType.

@@ -6,9 +6,9 @@
 
 Require Export elpi.apps.locker.locker.
 Require Export elpi.apps.derive.derive.tag.
-Require Export bluerock.prelude.elpi.derive.
-Require Export bluerock.prelude.base.
-Require Export bluerock.prelude.error.
-Require Export bluerock.prelude.option.
-Require Export bluerock.prelude.sum.
-Require Export bluerock.prelude.bytestring.
+Require Export skylabs.prelude.elpi.derive.
+Require Export skylabs.prelude.base.
+Require Export skylabs.prelude.error.
+Require Export skylabs.prelude.option.
+Require Export skylabs.prelude.sum.
+Require Export skylabs.prelude.bytestring.

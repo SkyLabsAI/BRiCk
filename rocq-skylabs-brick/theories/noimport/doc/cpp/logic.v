@@ -17,7 +17,7 @@ in a Coq editor, instead of opening the html output in a web brower.
 In the html, identifiers are hyperlinked to their definition.
 Your Coq editor may also provide a facility to jump to definition (M-. in emacs (company-coq mode))
 *)
-Require Import bluerock.lang.cpp.cpp.
+Require Import skylabs.lang.cpp.cpp.
 Import cQp_compat.
 
 Section with_Sigma.

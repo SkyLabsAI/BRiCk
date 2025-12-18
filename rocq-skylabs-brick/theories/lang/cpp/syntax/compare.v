@@ -4,13 +4,13 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.compare.
-Require Import bluerock.prelude.pstring.
-Require Import bluerock.lang.cpp.syntax.prelude.
-Require Import bluerock.lang.cpp.syntax.preliminary.
-Require Import bluerock.lang.cpp.syntax.overloadable.
-Require Import bluerock.lang.cpp.syntax.literal_string.
-Require Import bluerock.lang.cpp.syntax.core.
+Require Import skylabs.prelude.compare.
+Require Import skylabs.prelude.pstring.
+Require Import skylabs.lang.cpp.syntax.prelude.
+Require Import skylabs.lang.cpp.syntax.preliminary.
+Require Import skylabs.lang.cpp.syntax.overloadable.
+Require Import skylabs.lang.cpp.syntax.literal_string.
+Require Import skylabs.lang.cpp.syntax.core.
 Require Stdlib.Numbers.Cyclic.Int63.PrimInt63.
 
 #[local] Set Primitive Projections.

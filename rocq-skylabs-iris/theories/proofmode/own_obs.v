@@ -5,14 +5,14 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import iris.algebra.lib.gmap_view.
-Require Import bluerock.iris.extra.algebra.gset_bij.
-Require Import bluerock.iris.extra.algebra.coGset.
-Require Import bluerock.iris.extra.si_logic.algebra.
-Require Import bluerock.iris.extra.bi.prelude.
-Require Import bluerock.iris.extra.bi.observe.
-Require Import bluerock.iris.extra.bi.includedI.
-Require Import bluerock.iris.extra.bi.own.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.algebra.gset_bij.
+Require Import skylabs.iris.extra.algebra.coGset.
+Require Import skylabs.iris.extra.si_logic.algebra.
+Require Import skylabs.iris.extra.bi.prelude.
+Require Import skylabs.iris.extra.bi.observe.
+Require Import skylabs.iris.extra.bi.includedI.
+Require Import skylabs.iris.extra.bi.own.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
 Set Printing Coercions.
 
@@ -340,9 +340,9 @@ Section observe.
     Proof. GUARD. rewrite /auth_auth. apply _. Qed.
   End auth.
 
-  (** bluerock.iris.extra.algebra.excl_auth, iris.algebra.lib.excl_auth *)
+  (** skylabs.iris.extra.algebra.excl_auth, iris.algebra.lib.excl_auth *)
   Section excl_auth.
-    Import bluerock.iris.extra.algebra.excl_auth.
+    Import skylabs.iris.extra.algebra.excl_auth.
     Context {A : ofe}. Notation RA := (excl_authR A).
     Context `{!HasOwn RA, !HasOwnValid RA}.
 
@@ -444,9 +444,9 @@ Section observe.
 
   End excl_auth.
 
-  (** bluerock.iris.extra.algebra.frac_auth, iris.algebra.lib.frac_auth *)
+  (** skylabs.iris.extra.algebra.frac_auth, iris.algebra.lib.frac_auth *)
   Section frac_auth.
-    Import bluerock.iris.extra.algebra.frac_auth.
+    Import skylabs.iris.extra.algebra.frac_auth.
     Context {A : cmra}. Notation RA := (frac_authR A).
     Context `{!HasOwn RA, !HasOwnValid RA}.
 
@@ -727,7 +727,7 @@ Section observe.
 
   End gmap_view.
 
-  (** bluerock.iris.extra.algebra.gset_bij, iris.algebra.lib.gset_bij *)
+  (** skylabs.iris.extra.algebra.gset_bij, iris.algebra.lib.gset_bij *)
   Section gset_bij.
     Context `{Countable A, Countable B}. Notation RA := (gset_bijR A B).
     Context `{!HasOwn RA, !HasOwnValid RA}.
@@ -818,7 +818,7 @@ Section observe.
     Qed.
   End gset_bij.
 
-  (** bluerock.iris.extra.algebra.coGset *)
+  (** skylabs.iris.extra.algebra.coGset *)
   Section coGset.
     Context `{Countable A, Infinite A}. Notation RA := (coGset_disjR A).
     Context `{!HasOwn RA, !HasOwnValid RA}.

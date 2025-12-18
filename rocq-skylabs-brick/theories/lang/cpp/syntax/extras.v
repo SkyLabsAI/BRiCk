@@ -3,10 +3,10 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.prelude.compare.
-Require Import bluerock.lang.cpp.syntax.prelude.
-Require Import bluerock.lang.cpp.syntax.core.
-Require Import bluerock.lang.cpp.syntax.compare.
+Require Import skylabs.prelude.compare.
+Require Import skylabs.lang.cpp.syntax.prelude.
+Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.compare.
 
 Definition by_tag_comparison {T} (f : T -> positive)
   : Comparison (fun a b => Pos.compare (f a) (f b)).

@@ -24,13 +24,13 @@ Require Import stdpp.coPset.
 Require Import stdpp.namespaces.
 Require Import iris.bi.lib.fixpoint_mono.
 Require Import iris.proofmode.coq_tactics.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 Require Import iris.proofmode.reduction.
 Require Import iris.prelude.options.
 Require Import iris.bi.lib.atomic.
 
-Require Export bluerock.iris.extra.bi.laterable.
-Require Import bluerock.iris.extra.bi.telescopes.
+Require Export skylabs.iris.extra.bi.laterable.
+Require Import skylabs.iris.extra.bi.telescopes.
 
 (** Conveniently split a conjunction on both assumption and conclusion. *)
 Local Tactic Notation "iSplitWith" constr(H) :=
@@ -594,7 +594,7 @@ End lemmas.
     ) (atomic1_update (PROP:=PROP) Eo Ei).
   Proof. repeat intro. by rewrite -aupd1_mono'. Qed.
 
-  (* TODO: this is duplicated from bluerock.lib.aupd. This should be cleaned up
+  (* TODO: this is duplicated from skylabs.lib.aupd. This should be cleaned up
     once we unify AU/AC with AU1/AC1. *)
   (** Learn from an atomic precondition. (To use the bound variables
     [x], pick [P := ∃ x, P' x].) *)

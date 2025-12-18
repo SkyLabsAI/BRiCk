@@ -6,7 +6,7 @@
 
 /** * Lists */
 
-accumulate "bluerock.elpi.extra/Program/both/list".	% ../both/list.elpi
+accumulate "skylabs.elpi.extra/Program/both/list".	% ../both/list.elpi
 
 namespace list {
 

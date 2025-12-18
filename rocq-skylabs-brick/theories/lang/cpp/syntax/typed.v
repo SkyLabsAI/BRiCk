@@ -4,13 +4,13 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.lang.cpp.syntax.prelude.
-Require Import bluerock.lang.cpp.syntax.core.
-Require Import bluerock.lang.cpp.syntax.types.
-Require Import bluerock.lang.cpp.syntax.typing.
-Require Import bluerock.lang.cpp.syntax.stmt.
-Require Import bluerock.lang.cpp.syntax.namemap.
-Require Import bluerock.lang.cpp.syntax.translation_unit.
+Require Import skylabs.lang.cpp.syntax.prelude.
+Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.types.
+Require Import skylabs.lang.cpp.syntax.typing.
+Require Import skylabs.lang.cpp.syntax.stmt.
+Require Import skylabs.lang.cpp.syntax.namemap.
+Require Import skylabs.lang.cpp.syntax.translation_unit.
 Import UPoly.
 
 #[local] Open Scope monad_scope.

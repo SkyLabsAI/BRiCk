@@ -5,7 +5,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Export stdpp.listset_nodup.
-Require Import bluerock.prelude.base.
+Require Import skylabs.prelude.base.
 
 #[global] Instance listset_nodup_elem_of_dec `{EqDecision A} : RelDecision (∈@{listset_nodup A}).
 Proof.

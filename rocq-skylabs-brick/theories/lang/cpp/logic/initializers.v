@@ -4,18 +4,18 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import Stdlib.Lists.List.
-Require Import bluerock.iris.extra.proofmode.proofmode.
-Require Import bluerock.prelude.numbers.
-Require Import bluerock.prelude.bool.
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.semantics.
-Require Import bluerock.iris.extra.bi.errors.
-Require Import bluerock.lang.cpp.logic.pred.
-Require Import bluerock.lang.cpp.logic.path_pred.
-Require Import bluerock.lang.cpp.logic.heap_pred.
-Require Import bluerock.lang.cpp.logic.wp.
-Require Import bluerock.lang.cpp.logic.destroy.
-Require Import bluerock.lang.cpp.logic.const.
+Require Import skylabs.iris.extra.proofmode.proofmode.
+Require Import skylabs.prelude.numbers.
+Require Import skylabs.prelude.bool.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.semantics.
+Require Import skylabs.iris.extra.bi.errors.
+Require Import skylabs.lang.cpp.logic.pred.
+Require Import skylabs.lang.cpp.logic.path_pred.
+Require Import skylabs.lang.cpp.logic.heap_pred.
+Require Import skylabs.lang.cpp.logic.wp.
+Require Import skylabs.lang.cpp.logic.destroy.
+Require Import skylabs.lang.cpp.logic.const.
 
 #[local] Set Printing Coercions.
 

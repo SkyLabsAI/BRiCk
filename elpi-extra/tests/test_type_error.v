@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: LGPL-2.1 WITH BedRock Exception for use over network, see repository root for details.
  *)
 
-Require bluerock.elpi.extra.extra.
+Require skylabs.elpi.extra.extra.
 
 (** Confirm that we made warnings from <<Elpi Typecheck>> fatal. *)
 

@@ -3,11 +3,11 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.compare.
-Require Import bluerock.lang.cpp.syntax.core.
-Require Import bluerock.lang.cpp.syntax.types.
-Require Import bluerock.lang.cpp.syntax.stmt.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.compare.
+Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.types.
+Require Import skylabs.lang.cpp.syntax.stmt.
 
 #[local] Notation EqDecision1 T := (∀ (A : Set), EqDecision A -> EqDecision (T A)) (only parsing).
 #[local] Notation EqDecision2 T := (∀ (A : Set), EqDecision A -> EqDecision1 (T A)) (only parsing).

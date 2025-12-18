@@ -8,21 +8,21 @@
 For an introduction see
 [fmdeps/cpp2v-core/theories/noimport/doc/cpp/howto_sequential.v]. *)
 
-Require Import bluerock.iris.extra.proofmode.proofmode.
-Require Import bluerock.iris.extra.bi.fractional.
+Require Import skylabs.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.bi.fractional.
 
-Require Import bluerock.iris.extra.bi.prelude.
-Require Import bluerock.iris.extra.bi.only_provable.
-Require Import bluerock.iris.extra.bi.observe.
-Require Import bluerock.iris.extra.bi.laterable.
-Require Export bluerock.iris.extra.bi.monpred.
+Require Import skylabs.iris.extra.bi.prelude.
+Require Import skylabs.iris.extra.bi.only_provable.
+Require Import skylabs.iris.extra.bi.observe.
+Require Import skylabs.iris.extra.bi.laterable.
+Require Export skylabs.iris.extra.bi.monpred.
 (** ^^ Delicate; export canonical structure (CS) for [monPred].
 Export order can affect CS inference. *)
 
-Require Import bluerock.lang.cpp.semantics.values.
-Require Import bluerock.lang.cpp.logic.mpred.
-Require Import bluerock.lang.cpp.bi.cfractional.
-Require Export bluerock.lang.cpp.logic.rep_defs.
+Require Import skylabs.lang.cpp.semantics.values.
+Require Import skylabs.lang.cpp.logic.mpred.
+Require Import skylabs.lang.cpp.bi.cfractional.
+Require Export skylabs.lang.cpp.logic.rep_defs.
 (** ^^ Delicate; export canonical structure (CS) for [Rep].
 Export order can affect CS inference. *)
 

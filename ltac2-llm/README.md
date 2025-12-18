@@ -6,7 +6,7 @@ NOTE: this library is largely a proof-of-concept.
 To use the library, require via the following command:
 
 ```coq
-Require Import bluerock.ltac2.llm.llm.
+Require Import skylabs.ltac2.llm.llm.
 ```
 
 You can now query the LLM using the following vernacular command.

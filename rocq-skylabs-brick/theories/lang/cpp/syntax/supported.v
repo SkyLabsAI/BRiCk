@@ -4,10 +4,10 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.lang.cpp.syntax.core.
-Require Import bluerock.lang.cpp.syntax.translation_unit.
-Require Import bluerock.lang.cpp.syntax.templates.
+Require Import skylabs.prelude.base.
+Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.translation_unit.
+Require Import skylabs.lang.cpp.syntax.templates.
 
 Module check.
 Section with_monad.

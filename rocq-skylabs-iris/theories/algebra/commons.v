@@ -11,8 +11,8 @@ Require Import iris.algebra.lib.mono_nat.
 
 Require Import iris.base_logic.lib.own.
 
-Require Import bluerock.iris.extra.algebra.excl_auth.
-Require Import bluerock.iris.extra.algebra.frac_auth.
+Require Import skylabs.iris.extra.algebra.excl_auth.
+Require Import skylabs.iris.extra.algebra.frac_auth.
 
 (** A collection of commonly used CMRAs that should be available everywhere. *)
 

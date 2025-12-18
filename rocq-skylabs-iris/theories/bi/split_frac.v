@@ -5,9 +5,9 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Export bluerock.iris.extra.bi.fractional.
+Require Export skylabs.iris.extra.bi.fractional.
 
-Require Import bluerock.prelude.numbers.
+Require Import skylabs.prelude.numbers.
 
 (** * Splitting and combining fractions *)
 (**

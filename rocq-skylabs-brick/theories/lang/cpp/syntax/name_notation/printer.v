@@ -3,14 +3,14 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.bytestring_core.
-Require Import bluerock.prelude.bytestring.
-Require Import bluerock.upoly.base.
-Require Import bluerock.upoly.upoly.
-Require Import bluerock.lang.cpp.syntax.core.
-Require Import bluerock.lang.cpp.syntax.types.
-Require Import bluerock.lang.cpp.syntax.pretty.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.bytestring_core.
+Require Import skylabs.prelude.bytestring.
+Require Import skylabs.upoly.base.
+Require Import skylabs.upoly.upoly.
+Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.types.
+Require Import skylabs.lang.cpp.syntax.pretty.
 
 (* UPSTREAM? *)
 Module showN.

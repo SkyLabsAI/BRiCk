@@ -2,7 +2,7 @@
 
 Synopsis:
 ```coq
-Require Import bluerock.elpi.extra.extra.
+Require Import skylabs.elpi.extra.extra.
 (* ... *)
 Elpi Accumulate File extra.{Program,Tactic,Command}.
 ```
@@ -45,7 +45,7 @@ Please try to be consistent!
 
 Example:
 ```coq
-Require Import bluerock.elpi.extra.extra.
+Require Import skylabs.elpi.extra.extra.
 
 Elpi Command example.
 Elpi Accumulate File extra.Command.

@@ -7,9 +7,9 @@
  * Semantics of arithmetic and pointer operators: support operators.
  *)
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.numbers.
-Require Import bluerock.prelude.arith.types.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.numbers.
+Require Import skylabs.prelude.arith.types.
 
 #[local] Open Scope Z_scope.
 

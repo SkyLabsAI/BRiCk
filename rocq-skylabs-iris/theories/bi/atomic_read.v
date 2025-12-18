@@ -6,8 +6,8 @@
 
 Require Import stdpp.coPset stdpp.telescopes.
 Require Import iris.bi.lib.atomic.
-Require Import bluerock.iris.extra.bi.atomic_commit.
-Require Import bluerock.iris.extra.bi.atomic1.
+Require Import skylabs.iris.extra.bi.atomic_commit.
+Require Import skylabs.iris.extra.bi.atomic1.
 
 (** Notation for atomic reads. *)
 

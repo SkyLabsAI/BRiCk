@@ -12,8 +12,8 @@ This file assumes the <<Elpi Program>> template (i.e., any template).
 It works in both the synterp and interp phases.
 */
 
-accumulate "bluerock.elpi.extra/Program/both/coq".	% both/coq.elpi
-accumulate "bluerock.elpi.extra/Program/both/diag".	% both/diag.elpi
-accumulate "bluerock.elpi.extra/Program/both/elpi".	% both/elpi.elpi
-accumulate "bluerock.elpi.extra/Program/both/list".	% both/list.elpi
-accumulate "bluerock.elpi.extra/Program/both/option".	% both/option.elpi
+accumulate "skylabs.elpi.extra/Program/both/coq".	% both/coq.elpi
+accumulate "skylabs.elpi.extra/Program/both/diag".	% both/diag.elpi
+accumulate "skylabs.elpi.extra/Program/both/elpi".	% both/elpi.elpi
+accumulate "skylabs.elpi.extra/Program/both/list".	% both/list.elpi
+accumulate "skylabs.elpi.extra/Program/both/option".	% both/option.elpi

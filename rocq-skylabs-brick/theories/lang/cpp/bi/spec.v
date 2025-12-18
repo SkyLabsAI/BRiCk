@@ -5,7 +5,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Export bluerock.iris.extra.bi.spec.
+Require Export skylabs.iris.extra.bi.spec.
 
-Require Export bluerock.lang.cpp.bi.spec.typed.
-Require Export bluerock.lang.cpp.bi.spec.cfrac_splittable.
+Require Export skylabs.lang.cpp.bi.spec.typed.
+Require Export skylabs.lang.cpp.bi.spec.cfrac_splittable.

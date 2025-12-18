@@ -4,12 +4,12 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 (* Demonstrate paradoxes from alluring but incorrect axioms. *)
-Require Import bluerock.iris.extra.proofmode.proofmode.
-Require Import bluerock.prelude.base.
+Require Import skylabs.iris.extra.proofmode.proofmode.
+Require Import skylabs.prelude.base.
 
-Require Import bluerock.lang.cpp.semantics.
-Require Import bluerock.lang.cpp.logic.pred.
-Require Import bluerock.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.semantics.
+Require Import skylabs.lang.cpp.logic.pred.
+Require Import skylabs.lang.cpp.syntax.
 
 Section with_cpp.
   Context `{Σ : cpp_logic} {σ : genv}.

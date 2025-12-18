@@ -6,9 +6,9 @@
 
 Require Export iris.bi.lib.fractional.
 
-Require Import bluerock.iris.extra.bi.prelude.
-Require Import bluerock.iris.extra.bi.observe.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.bi.prelude.
+Require Import skylabs.iris.extra.bi.observe.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
 (** * Simple extensions to iris.bi.lib.fractional *)
 (**

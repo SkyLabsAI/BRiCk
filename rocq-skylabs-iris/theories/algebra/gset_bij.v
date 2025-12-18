@@ -6,7 +6,7 @@
  *)
 Require Export iris.algebra.lib.gset_bij.
 Require Import iris.algebra.proofmode_classes.
-Require Import bluerock.prelude.base.
+Require Import skylabs.prelude.base.
 
 (** TODO: Upstream to [iris.algebra.lib.gset_bij].
 

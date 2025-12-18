@@ -3,7 +3,7 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.lang.cpp.cpp.
+Require Import skylabs.lang.cpp.cpp.
 Import cQp_compat.
 
 Section with_Sigma.

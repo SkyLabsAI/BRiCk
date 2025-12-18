@@ -4,9 +4,9 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.wrap.
-Require Import bluerock.lang.cpp.semantics.values.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.wrap.
+Require Import skylabs.lang.cpp.semantics.values.
 
 Module Type val_wrapper.
   Include wrapper.

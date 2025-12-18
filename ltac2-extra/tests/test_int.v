@@ -7,8 +7,8 @@
 
 Require Stdlib.Numbers.BinNums.
 Require Stdlib.PArith.BinPos.
-Require Import bluerock.ltac2.extra.internal.init.
-Require Import bluerock.ltac2.extra.internal.int.
+Require Import skylabs.ltac2.extra.internal.init.
+Require Import skylabs.ltac2.extra.internal.int.
 
 Module Type _Tests.
   Import Ltac2.

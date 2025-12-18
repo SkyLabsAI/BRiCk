@@ -5,10 +5,10 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.iris.extra.bi.derived_laws.
-Require Import bluerock.iris.extra.bi.observe.
-Require Import bluerock.iris.extra.bi.fractional.
-Require Import bluerock.iris.extra.bi.monpred.
+Require Import skylabs.iris.extra.bi.derived_laws.
+Require Import skylabs.iris.extra.bi.observe.
+Require Import skylabs.iris.extra.bi.fractional.
+Require Import skylabs.iris.extra.bi.monpred.
 (**
 NOTE: The preceding modules include inner modules "nary" to enable the
 following exports, which in turn keep this module backwards compatible
@@ -21,8 +21,8 @@ test involving two files:
 
 <<
   (* prelude.v *)
-  Require Export bluerock.lang.cpp.logic.pred.
-  Require Export bluerock.iris.extra.bi.spec.nary_classes.
+  Require Export skylabs.lang.cpp.logic.pred.
+  Require Export skylabs.iris.extra.bi.spec.nary_classes.
 
   (** test.v *)
   Require Import prelude.

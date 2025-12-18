@@ -9,7 +9,7 @@ Require Import iris.bi.bi.
 Require Import iris.bi.updates.
 Require Import iris.bi.monpred.
 Require Import iris.proofmode.environments.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 Set Default Proof Using "Type".
 
 (** * Bidirectional fancy updates *)

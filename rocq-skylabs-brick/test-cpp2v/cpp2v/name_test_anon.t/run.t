@@ -2,7 +2,7 @@
   $ name_test test.cpp
   # cpp2v --name-test=test_17_name_test.v test.cpp -- -std=c++17
   # scrub test_17_name_test.v
-  Require Import bluerock.lang.cpp.mparser.
+  Require Import skylabs.lang.cpp.mparser.
   
   #[local] Open Scope pstring_scope.
   

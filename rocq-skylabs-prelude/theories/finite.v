@@ -6,14 +6,14 @@
  *)
 
 Require Export stdpp.finite.
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.bool.
-Require Import bluerock.prelude.numbers.
-Require Import bluerock.prelude.list_numbers.
-Require Import bluerock.prelude.gmap.
-Require Import bluerock.prelude.list.
-Require Import bluerock.prelude.fin_sets.
-Require Import bluerock.prelude.axioms.funext.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.bool.
+Require Import skylabs.prelude.numbers.
+Require Import skylabs.prelude.list_numbers.
+Require Import skylabs.prelude.gmap.
+Require Import skylabs.prelude.list.
+Require Import skylabs.prelude.fin_sets.
+Require Import skylabs.prelude.axioms.funext.
 
 #[local] Open Scope N_scope.
 

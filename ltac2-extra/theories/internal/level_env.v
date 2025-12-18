@@ -5,15 +5,15 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.ltac2.extra.internal.plugin.
-Require Import bluerock.ltac2.extra.internal.misc.
-Require Import bluerock.ltac2.extra.internal.init.
-Require Import bluerock.ltac2.extra.internal.constr.
-Require Import bluerock.ltac2.extra.internal.list.
-Require Import bluerock.ltac2.extra.internal.printf.
-Require Import bluerock.ltac2.extra.internal.fresh.
-Require Import bluerock.ltac2.extra.internal.control.
-Require Import bluerock.ltac2.extra.internal.std.
+Require Import skylabs.ltac2.extra.internal.plugin.
+Require Import skylabs.ltac2.extra.internal.misc.
+Require Import skylabs.ltac2.extra.internal.init.
+Require Import skylabs.ltac2.extra.internal.constr.
+Require Import skylabs.ltac2.extra.internal.list.
+Require Import skylabs.ltac2.extra.internal.printf.
+Require Import skylabs.ltac2.extra.internal.fresh.
+Require Import skylabs.ltac2.extra.internal.control.
+Require Import skylabs.ltac2.extra.internal.std.
 
 (** Environments for de Bruijn levels. *)
 Module LevelEnv.

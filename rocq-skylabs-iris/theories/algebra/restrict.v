@@ -5,8 +5,8 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Export bluerock.prelude.base.
-Require Export bluerock.iris.extra.algebra.base.
+Require Export skylabs.prelude.base.
+Require Export skylabs.iris.extra.algebra.base.
 
 #[local] Definition resource' {SI : sidx} (A : Type) : cmra := exclR (leibnizO A).
 #[global] Notation resource A := (Reduce (resource' A)) (only parsing).

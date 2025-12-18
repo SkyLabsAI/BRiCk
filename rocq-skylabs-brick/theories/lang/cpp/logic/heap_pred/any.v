@@ -3,13 +3,13 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.lang.cpp.logic.heap_pred.prelude.
-Require Import bluerock.lang.cpp.logic.heap_pred.valid.
-Require Import bluerock.lang.cpp.logic.heap_pred.everywhere.
-Require Import bluerock.lang.cpp.logic.heap_pred.tptsto.
-Require Import bluerock.lang.cpp.logic.heap_pred.prim.
-Require Import bluerock.lang.cpp.logic.heap_pred.uninit.
-Require Import bluerock.lang.cpp.logic.heap_pred.null.
+Require Import skylabs.lang.cpp.logic.heap_pred.prelude.
+Require Import skylabs.lang.cpp.logic.heap_pred.valid.
+Require Import skylabs.lang.cpp.logic.heap_pred.everywhere.
+Require Import skylabs.lang.cpp.logic.heap_pred.tptsto.
+Require Import skylabs.lang.cpp.logic.heap_pred.prim.
+Require Import skylabs.lang.cpp.logic.heap_pred.uninit.
+Require Import skylabs.lang.cpp.logic.heap_pred.null.
 
 #[local] Set Printing Coercions.
 Implicit Types (σ : genv) (p : ptr) (o : offset).

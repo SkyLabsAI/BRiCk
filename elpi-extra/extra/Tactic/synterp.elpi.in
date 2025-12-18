@@ -13,6 +13,6 @@ under <<Elpi Program>> or <<Elpi Command>>.
 It works in the synterp phase.
 */
 
-accumulate "bluerock.elpi.extra/Program/synterp".	% ../Program/synterp.elpi.in
+accumulate "skylabs.elpi.extra/Program/synterp".	% ../Program/synterp.elpi.in
 
-accumulate "bluerock.elpi.extra/Tactic/both".	% ./both.elpi.in
+accumulate "skylabs.elpi.extra/Tactic/both".	% ./both.elpi.in

@@ -13,15 +13,15 @@ formalizations of their memory object models (see [doc/sphinx/bibliography.rst])
  *)
 Require Import elpi.apps.locker.locker.
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.addr.
-Require Import bluerock.prelude.option.
-Require Import bluerock.prelude.numbers.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.addr.
+Require Import skylabs.prelude.option.
+Require Import skylabs.prelude.numbers.
 
-Require Import bluerock.lang.cpp.syntax.
-Require Export bluerock.lang.cpp.semantics.types.
-Require Export bluerock.lang.cpp.semantics.genv.
-Require Export bluerock.lang.cpp.semantics.alloc_id.
+Require Import skylabs.lang.cpp.syntax.
+Require Export skylabs.lang.cpp.semantics.types.
+Require Export skylabs.lang.cpp.semantics.genv.
+Require Export skylabs.lang.cpp.semantics.alloc_id.
 
 (* We only load Iris to declare trivial OFEs over pointers via [leibnizO]. *)
 Require Import iris.algebra.ofe.

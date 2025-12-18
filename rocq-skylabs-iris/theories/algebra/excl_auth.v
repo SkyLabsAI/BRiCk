@@ -5,7 +5,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Export iris.algebra.lib.excl_auth.
-Require Export bluerock.prelude.base.
+Require Export skylabs.prelude.base.
 Set Printing Coercions.
 
 (** * Extension to [excl_auth] *)

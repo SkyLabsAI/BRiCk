@@ -5,9 +5,9 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.iris.extra.bi.prelude.
-Require Import bluerock.iris.extra.bi.big_op.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.bi.prelude.
+Require Import skylabs.iris.extra.bi.big_op.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 Import ChargeNotation.
 
 #[local] Set Primitive Projections.

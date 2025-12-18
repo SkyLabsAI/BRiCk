@@ -30,9 +30,9 @@ Require Import iris.algebra.auth.
 Require Import iris.algebra.agree.
 Require Import iris.algebra.gset.
 Require Import iris.algebra.coPset.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 Require Import iris.program_logic.adequacy.
-Require Export bluerock.iris.extra.wp_io.iris.weakestpre.
+Require Export skylabs.iris.extra.wp_io.iris.weakestpre.
 
 (** This file contains the adequacy statements of the Iris program logic. First
 we prove a number of auxilary results. *)

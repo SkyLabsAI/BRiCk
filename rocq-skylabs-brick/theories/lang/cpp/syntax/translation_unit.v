@@ -4,15 +4,15 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import stdpp.fin_maps.
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.avl.
-Require Import bluerock.prelude.lens.
-Require Import bluerock.prelude.elpi.derive.lens.
-Require Import bluerock.prelude.pstring.
-Require Import bluerock.lang.cpp.syntax.core.
-Require Import bluerock.lang.cpp.syntax.types.
-Require Import bluerock.lang.cpp.syntax.decl.
-Require Import bluerock.lang.cpp.syntax.namemap.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.avl.
+Require Import skylabs.prelude.lens.
+Require Import skylabs.prelude.elpi.derive.lens.
+Require Import skylabs.prelude.pstring.
+Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.types.
+Require Import skylabs.lang.cpp.syntax.decl.
+Require Import skylabs.lang.cpp.syntax.namemap.
 Export decl.
 
 #[local] Set Primitive Projections.

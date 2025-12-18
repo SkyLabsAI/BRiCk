@@ -3,9 +3,9 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.prelude.base.
-Require Export bluerock.lang.cpp.syntax.
-Require Export bluerock.lang.cpp.semantics.sub_module.
+Require Import skylabs.prelude.base.
+Require Export skylabs.lang.cpp.syntax.
+Require Export skylabs.lang.cpp.semantics.sub_module.
 
 (* NOTE:
     This constant should be provided by the C++ compiler / runtime.

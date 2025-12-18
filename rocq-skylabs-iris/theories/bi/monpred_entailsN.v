@@ -5,7 +5,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import iris.bi.monpred.
-Require Import bluerock.iris.extra.bi.entailsN.
+Require Import skylabs.iris.extra.bi.entailsN.
 
 (** [monPred I PROP] supports [entailsN] if [PROP] does *)
 Section monPred_entailsN.

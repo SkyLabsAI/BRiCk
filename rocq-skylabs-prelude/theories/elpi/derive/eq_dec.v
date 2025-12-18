@@ -6,11 +6,11 @@
 Require Import stdpp.decidable.
 
 Require Import elpi.elpi.
-Require Export bluerock.prelude.elpi.derive.common.
+Require Export skylabs.prelude.elpi.derive.common.
 
-Require Import bluerock.prelude.elpi.basis.
+Require Import skylabs.prelude.elpi.basis.
 
-Elpi Accumulate derive File bluerock.basis.elpi.
+Elpi Accumulate derive File skylabs.basis.elpi.
 
 (***************************************************
  EqDecision
@@ -22,7 +22,7 @@ Elpi Db derive.stdpp.eq_dec.db lp:{{
   pred eqdec o:gref, o:gref.
   pred eqdec-done o:gref.
 }}.
-#[superglobal] Elpi Accumulate derive.stdpp.eq_dec.db File bluerock.typeclass.elpi.
+#[superglobal] Elpi Accumulate derive.stdpp.eq_dec.db File skylabs.typeclass.elpi.
 #[superglobal] Elpi Accumulate derive.stdpp.eq_dec.db lp:{{
   :name "eqdec-done.typeclass"
   eqdec-done GR :-

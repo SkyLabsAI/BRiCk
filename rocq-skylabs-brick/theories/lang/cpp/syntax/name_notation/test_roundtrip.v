@@ -4,11 +4,11 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.lang.cpp.syntax.prelude.
-Require Import bluerock.lang.cpp.syntax.core.
-Require Import bluerock.lang.cpp.syntax.name_notation.parser.
-Require Import bluerock.lang.cpp.syntax.name_notation.printer.
-Require Import bluerock.lang.cpp.syntax.name_notation.test_cases.
+Require Import skylabs.lang.cpp.syntax.prelude.
+Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.name_notation.parser.
+Require Import skylabs.lang.cpp.syntax.name_notation.printer.
+Require Import skylabs.lang.cpp.syntax.name_notation.test_cases.
 
 Module Type TEST.
   Record RESULT (IN OUT : Set) : Set :=

@@ -1,7 +1,7 @@
-Require Import bluerock.iris.extra.bi.prelude.
-Require Import bluerock.iris.extra.bi.observe.
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.logic.heap_pred.
+Require Import skylabs.iris.extra.bi.prelude.
+Require Import skylabs.iris.extra.bi.observe.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.logic.heap_pred.
 
 (** [Typed cls R] states that [R] is a [Rep] predicate for class [cls].
 Formally, from [Rep] predicate [R] we can observe [type_ptrR (Tnamed cls)] *)

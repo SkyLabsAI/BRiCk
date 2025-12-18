@@ -4,17 +4,17 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.lang.cpp.parser.reduction.
-Require Export bluerock.lang.cpp.syntax.stmt. (* for [Sskip] *)
-Require Import bluerock.lang.cpp.parser.name.
-Require Import bluerock.lang.cpp.parser.type.
-Require Import bluerock.lang.cpp.parser.expr.
-Require Import bluerock.lang.cpp.parser.decl.
-Require Export bluerock.lang.cpp.mparser.prelude.
-Require Export bluerock.lang.cpp.mparser.type.
-Require Export bluerock.lang.cpp.mparser.expr.
-Require Export bluerock.lang.cpp.mparser.stmt.
-Require Export bluerock.lang.cpp.mparser.tu.
+Require Import skylabs.lang.cpp.parser.reduction.
+Require Export skylabs.lang.cpp.syntax.stmt. (* for [Sskip] *)
+Require Import skylabs.lang.cpp.parser.name.
+Require Import skylabs.lang.cpp.parser.type.
+Require Import skylabs.lang.cpp.parser.expr.
+Require Import skylabs.lang.cpp.parser.decl.
+Require Export skylabs.lang.cpp.mparser.prelude.
+Require Export skylabs.lang.cpp.mparser.type.
+Require Export skylabs.lang.cpp.mparser.expr.
+Require Export skylabs.lang.cpp.mparser.stmt.
+Require Export skylabs.lang.cpp.mparser.tu.
 
 Export translation_unit.
 

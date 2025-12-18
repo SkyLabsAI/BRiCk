@@ -4,11 +4,11 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.list_numbers.
-Require Export bluerock.prelude.arith.z_to_bytes.
+Require Import skylabs.prelude.list_numbers.
+Require Export skylabs.prelude.arith.z_to_bytes.
 Require Import stdpp.numbers.
-Require Import bluerock.prelude.arith.types.
-Require Import bluerock.lang.cpp.semantics.values.
+Require Import skylabs.prelude.arith.types.
+Require Import skylabs.lang.cpp.semantics.values.
 
 Lemma N_of_nat_to_nat a b : N.of_nat a = b -> a = N.to_nat b.
 Proof. intros. lia. Qed.

@@ -12,11 +12,11 @@
     be performed. The dynamic semantics of casts is defined in [semantics/cast.v]
  *)
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.numbers.
-Require Export bluerock.prelude.arith.operator.
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.semantics.values.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.numbers.
+Require Export skylabs.prelude.arith.operator.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.semantics.values.
 
 #[local] Open Scope Z_scope.
 

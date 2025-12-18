@@ -6,6 +6,6 @@
  *)
 
 Require Import iris.algebra.ofe.
-Require Export bluerock.prelude.wrap.
+Require Export skylabs.prelude.wrap.
 
 Canonical Structure WrapNO {SI:sidx} {Phant} := leibnizO (WrapN Phant).

@@ -5,10 +5,10 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Export stdpp.fin_sets.
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.sets.
-Require Import bluerock.prelude.list.
-Require Import bluerock.prelude.list_numbers.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.sets.
+Require Import skylabs.prelude.list.
+Require Import skylabs.prelude.list_numbers.
 
 (** * Small extensions to [stdpp.fin_sets]. *)
 #[local] Set Default Proof Using "Type*".

@@ -4,15 +4,15 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.zip_with_index.
-Require Import bluerock.prelude.zip_with_indexN.
+Require Import skylabs.prelude.zip_with_index.
+Require Import skylabs.prelude.zip_with_indexN.
 
-Require Export bluerock.iris.extra.algebra.big_op.
+Require Export skylabs.iris.extra.algebra.big_op.
 Require Export iris.bi.big_op.
 
-Require Import bluerock.iris.extra.bi.prelude.
-Require Import bluerock.iris.extra.bi.observe.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.bi.prelude.
+Require Import skylabs.iris.extra.bi.observe.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 Import ChargeNotation.
 
 (** ** Lists *)

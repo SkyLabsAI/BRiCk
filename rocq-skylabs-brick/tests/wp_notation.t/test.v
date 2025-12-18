@@ -5,10 +5,10 @@
  *)
 Require Import Stdlib.ZArith.ZArith.
 
-Require Import bluerock.lang.cpp.notations.
-Require Import bluerock.lang.cpp.code_notations.
-Require Import bluerock.lang.cpp.logic.
-Require Import bluerock.lang.cpp.logic.builtins.
+Require Import skylabs.lang.cpp.notations.
+Require Import skylabs.lang.cpp.code_notations.
+Require Import skylabs.lang.cpp.logic.
+Require Import skylabs.lang.cpp.logic.builtins.
 
 Module WpTestDefns.
   Section with_args.

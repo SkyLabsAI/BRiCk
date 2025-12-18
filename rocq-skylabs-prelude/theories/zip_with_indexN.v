@@ -6,10 +6,10 @@
  *)
 
 Require Import stdpp.gmap.
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.list_numbers.
-Require Import bluerock.prelude.fin_maps.
-Require Import bluerock.prelude.zip_with_index.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.list_numbers.
+Require Import skylabs.prelude.fin_maps.
+Require Import skylabs.prelude.zip_with_index.
 
 (** [zip_with_indexN_from] is like [zip_with_index_from], but for [N]. *)
 Definition zip_with_indexN_from {A} from (xs : list A) : list (N * A) :=

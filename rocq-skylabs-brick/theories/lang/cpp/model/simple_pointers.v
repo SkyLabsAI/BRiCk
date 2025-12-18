@@ -13,17 +13,17 @@ Unlike [PTRS_IMPL], this model cannot be extended to support
 *)
 
 Require Import stdpp.gmap.
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.addr.
-Require Import bluerock.prelude.avl.
-Require Import bluerock.prelude.bytestring.
-Require Import bluerock.prelude.option.
-Require Import bluerock.prelude.numbers.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.addr.
+Require Import skylabs.prelude.avl.
+Require Import skylabs.prelude.bytestring.
+Require Import skylabs.prelude.option.
+Require Import skylabs.prelude.numbers.
 
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.semantics.sub_module.
-Require Import bluerock.lang.cpp.semantics.values.
-Require Import bluerock.lang.cpp.model.simple_pointers_utils.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.semantics.sub_module.
+Require Import skylabs.lang.cpp.semantics.values.
+Require Import skylabs.lang.cpp.model.simple_pointers_utils.
 
 Implicit Types (σ : genv).
 #[local] Close Scope nat_scope.

@@ -6,10 +6,10 @@
  *)
 
 Require Import iris.algebra.agree.
-Require Import bluerock.iris.extra.bi.spec.knowledge.
-Require Import bluerock.lang.cpp.logic.pred.
-Require Import bluerock.iris.extra.base_logic.own_instances.
-Require Import bluerock.iris.extra.proofmode.own_obs.
+Require Import skylabs.iris.extra.bi.spec.knowledge.
+Require Import skylabs.lang.cpp.logic.pred.
+Require Import skylabs.iris.extra.base_logic.own_instances.
+Require Import skylabs.iris.extra.proofmode.own_obs.
 
 Set Printing Coercions.
 

@@ -9,13 +9,13 @@
    require side conditions on the abstract machine state.
  *)
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.numbers.
-Require Export bluerock.prelude.arith.operator.
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.semantics.values.
-Require Import bluerock.lang.cpp.semantics.promotion.
-Require Import bluerock.lang.cpp.semantics.cast.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.numbers.
+Require Export skylabs.prelude.arith.operator.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.semantics.values.
+Require Import skylabs.lang.cpp.semantics.promotion.
+Require Import skylabs.lang.cpp.semantics.cast.
 
 #[local] Open Scope Z_scope.
 

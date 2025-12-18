@@ -123,8 +123,8 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
     build_module(decl, mod, filter, specs, compiler_, elaborate_, templates);
 
     auto parser = [&](CoqPrinter &print) -> auto & {
-        StringRef coqmod(print.templates() ? "bluerock.lang.cpp.mparser"
-                                           : "bluerock.lang.cpp.parser");
+        StringRef coqmod(print.templates() ? "skylabs.lang.cpp.mparser"
+                                           : "skylabs.lang.cpp.parser");
         return print.output()
                << (interactive_.has_value() ? "Import " : "Require Import ")
                << coqmod << "." << fmt::line << fmt::line;
@@ -179,7 +179,7 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
 
             if (!interactive_.has_value()) {
                 print.output()
-                    << "Require Import bluerock.lang.cpp.parser.plugin.cpp2v."
+                    << "Require Import skylabs.lang.cpp.parser.plugin.cpp2v."
                     << fmt::line;
             }
             if (attributes_.has_value()) {
@@ -233,7 +233,7 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
 
             if (check_types_) {
                 print.output()
-                    << fmt::line << "Require bluerock.lang.cpp.syntax.typed."
+                    << fmt::line << "Require skylabs.lang.cpp.syntax.typed."
                     << fmt::line
                     << "Succeed Example well_typed : "
                        "typed.decltype.check_tu module = trace.Success tt"

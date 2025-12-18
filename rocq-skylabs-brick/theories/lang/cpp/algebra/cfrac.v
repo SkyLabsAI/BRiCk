@@ -7,8 +7,8 @@
 
 Require Import iris.algebra.cmra.
 Require Import iris.algebra.frac.
-Require Import bluerock.prelude.bool.
-Require Import bluerock.iris.extra.bi.split_frac.
+Require Import skylabs.prelude.bool.
+Require Import skylabs.iris.extra.bi.split_frac.
 
 #[local] Set Printing Coercions.
 

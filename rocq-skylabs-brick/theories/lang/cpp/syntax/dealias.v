@@ -4,12 +4,12 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.error.
-Require Import bluerock.prelude.lens.
-Require Import bluerock.upoly.upoly.
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.syntax.mtraverse.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.error.
+Require Import skylabs.prelude.lens.
+Require Import skylabs.upoly.upoly.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.syntax.mtraverse.
 
 #[local] Notation translation_unit := translation_unit.translation_unit.
 

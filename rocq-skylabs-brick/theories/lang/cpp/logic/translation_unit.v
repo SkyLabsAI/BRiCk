@@ -7,13 +7,13 @@
 (** this module provides a denotational/axiomatic semantics to c++ compilation
     units.
  *)
-Require Import bluerock.prelude.base.
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.semantics.
-Require Import bluerock.lang.cpp.logic.pred.
-Require Import bluerock.lang.cpp.logic.path_pred.
-Require Import bluerock.lang.cpp.logic.heap_pred.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.prelude.base.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.semantics.
+Require Import skylabs.lang.cpp.logic.pred.
+Require Import skylabs.lang.cpp.logic.path_pred.
+Require Import skylabs.lang.cpp.logic.heap_pred.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
 Import ChargeNotation.
 

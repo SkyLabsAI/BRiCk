@@ -1,14 +1,14 @@
 (include_subdirs qualified)
 (coq.theory
- (name bluerock.prelude)
+ (name skylabs.prelude)
  (package rocq-skylabs-prelude)
  (theories
   Stdlib
   stdpp
-  bluerock.upoly
+  skylabs.upoly
   elpi elpi_elpi elpi.apps.locker elpi.apps.NES
   Lens Lens.Elpi
-  Ltac2 bluerock.ltac2.extra))
+  Ltac2 skylabs.ltac2.extra))
 
 ; Copy dependencies --- typically Elpi files needed for `From ⋯ Extra
 ; Dependency` --- into dune's build directory. Arrange for the dummy
@@ -23,6 +23,6 @@
 
 (install
  (files
-  (glob_files_rec (elpi/*.elpi with_prefix coq/user-contrib/bluerock/prelude/elpi/)))
+  (glob_files_rec (elpi/*.elpi with_prefix coq/user-contrib/skylabs/prelude/elpi/)))
  (section lib_root)
  (package rocq-skylabs-prelude))

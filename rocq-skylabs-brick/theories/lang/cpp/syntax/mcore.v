@@ -3,8 +3,8 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.lang.cpp.syntax.prelude.
-Require Export bluerock.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.prelude.
+Require Export skylabs.lang.cpp.syntax.core.
 
 #[local] Set Primitive Projections.
 

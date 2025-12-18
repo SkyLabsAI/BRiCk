@@ -6,28 +6,28 @@
  *)
 
 (** Small extensions to stdpp. *)
-Require Export bluerock.prelude.base.
+Require Export skylabs.prelude.base.
 
-Require Export bluerock.prelude.bool.
+Require Export skylabs.prelude.bool.
 
-Require Export bluerock.prelude.fin.
-Require Export bluerock.prelude.fin_map_dom.
-Require Export bluerock.prelude.fin_maps.
-Require Export bluerock.prelude.fin_sets.
+Require Export skylabs.prelude.fin.
+Require Export skylabs.prelude.fin_map_dom.
+Require Export skylabs.prelude.fin_maps.
+Require Export skylabs.prelude.fin_sets.
 
-Require Export bluerock.prelude.gmap.
+Require Export skylabs.prelude.gmap.
 
-Require Export bluerock.prelude.finite.
+Require Export skylabs.prelude.finite.
 
-Require Export bluerock.prelude.list.
-Require Export bluerock.prelude.list_numbers.
+Require Export skylabs.prelude.list.
+Require Export skylabs.prelude.list_numbers.
 
-Require Export bluerock.prelude.numbers.
+Require Export skylabs.prelude.numbers.
 
-Require Export bluerock.prelude.option.
+Require Export skylabs.prelude.option.
 
-Require Export bluerock.prelude.propset.
+Require Export skylabs.prelude.propset.
 
-Require Export bluerock.prelude.sets.
-Require Export bluerock.prelude.relations.
-Require Export bluerock.prelude.under_rel_proper.
+Require Export skylabs.prelude.sets.
+Require Export skylabs.prelude.relations.
+Require Export skylabs.prelude.under_rel_proper.

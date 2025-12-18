@@ -7,9 +7,9 @@
 Require Export stdpp.gmap.
 Require Export stdpp.mapset.
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.fin_sets.
-Require Import bluerock.prelude.list_numbers.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.fin_sets.
+Require Import skylabs.prelude.list_numbers.
 
 (* To upstream to Iris: using [mapseq_eq] directly would unfold a TC opaque
 definition and interfere with TC search. *)

@@ -5,9 +5,9 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.list.
-Require Import bluerock.prelude.fin_maps.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.list.
+Require Import skylabs.prelude.fin_maps.
 
 (** [zip_with_index_from] converts a list [x0; x1; ... xn] to an association
 list [(from, x0); (from + 1, x1); ... (from + n, xn)].

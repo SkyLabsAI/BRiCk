@@ -4,9 +4,9 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.lang.cpp.mparser.prelude.
-Require Export bluerock.lang.cpp.parser.stmt.
-Require Import bluerock.lang.cpp.syntax.typing.
+Require Import skylabs.lang.cpp.mparser.prelude.
+Require Export skylabs.lang.cpp.parser.stmt.
+Require Import skylabs.lang.cpp.syntax.typing.
 
 (** ** Template-only derived variable declarations emitted by cpp2v *)
 

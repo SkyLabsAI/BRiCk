@@ -4,12 +4,12 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.lang.cpp.mparser.prelude.
-Require Import bluerock.lang.cpp.syntax.translation_unit.
-Require Import bluerock.lang.cpp.syntax.namemap.
-Require Import bluerock.lang.cpp.syntax.untemp.
-Require Export bluerock.lang.cpp.syntax.decl.
-Require Export bluerock.lang.cpp.syntax.decl.
+Require Import skylabs.lang.cpp.mparser.prelude.
+Require Import skylabs.lang.cpp.syntax.translation_unit.
+Require Import skylabs.lang.cpp.syntax.namemap.
+Require Import skylabs.lang.cpp.syntax.untemp.
+Require Export skylabs.lang.cpp.syntax.decl.
+Require Export skylabs.lang.cpp.syntax.decl.
 
 
 (** ** Template-only top-level declarations emitted by cpp2v *)

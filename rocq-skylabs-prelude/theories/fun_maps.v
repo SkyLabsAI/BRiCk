@@ -5,9 +5,9 @@
  *)
 
 Require Import Stdlib.Logic.FunctionalExtensionality.
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.finite.
-Require Import bluerock.prelude.gmap.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.finite.
+Require Import skylabs.prelude.gmap.
 
 Notation map_to_fun m := (m !!!.) (only parsing).
 Definition _map_to_fun {M K A} `{LookupTotal K A (M A)} (m : M A) : K -> A :=

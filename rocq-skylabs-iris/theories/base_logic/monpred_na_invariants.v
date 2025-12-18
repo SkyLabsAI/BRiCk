@@ -23,16 +23,16 @@ Require Import iris.bi.monpred.
 Require Import iris.base_logic.lib.invariants. (* << [invGS] *)
 Require Import iris.proofmode.monpred.
 
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
-Require Import bluerock.iris.extra.base_logic.iprop_prop.
-Require Import bluerock.iris.extra.base_logic.iprop_invariants.
-Require Export bluerock.iris.extra.bi.monpred_na_invariants.
+Require Import skylabs.iris.extra.base_logic.iprop_prop.
+Require Import skylabs.iris.extra.base_logic.iprop_invariants.
+Require Export skylabs.iris.extra.bi.monpred_na_invariants.
 
 (* The [monPred I (iProp Σ)] instances for true thread-local non-atomic invariants.
 
 This is strictly stronger than the version in
-bluerock.iris.extra.base_logic.monpred_invariants, as it does not require
+skylabs.iris.extra.base_logic.monpred_invariants, as it does not require
 the [WeaklyObjective] side-condition.
 *)
 

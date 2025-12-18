@@ -5,8 +5,8 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.ltac2.extra.internal.init.
-Require Import bluerock.ltac2.extra.internal.std.
+Require Import skylabs.ltac2.extra.internal.init.
+Require Import skylabs.ltac2.extra.internal.std.
 
 (** Minor extensions to [Ltac2.FSet] *)
 Module FSet.

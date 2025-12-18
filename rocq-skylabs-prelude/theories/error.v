@@ -4,7 +4,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.prelude.
+Require Import skylabs.prelude.prelude.
 
 (** ** Errors *)
 (**

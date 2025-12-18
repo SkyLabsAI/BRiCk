@@ -5,9 +5,9 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.numbers.
-Require bluerock.prelude.uint63.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.numbers.
+Require skylabs.prelude.uint63.
 
 (** ** Generic comparison *)
 (**

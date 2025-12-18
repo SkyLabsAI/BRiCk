@@ -4,7 +4,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  *)
-Require Import bluerock.lang.cpp.cpp.
+Require Import skylabs.lang.cpp.cpp.
 Import cQp_compat.
 #[local] Set Warnings "-non-recursive". (* disable warning about [llistR] *)
 

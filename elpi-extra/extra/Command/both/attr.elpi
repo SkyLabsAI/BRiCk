@@ -69,7 +69,7 @@ carrying a boolean, [s] carrying a non-empty string, and [m(v)]
 carrying an arbitrary string.
 
 <<
-  Require Import bluerock.elpi.extra.extra.
+  Require Import skylabs.elpi.extra.extra.
   Elpi Command TestAttr.
   Elpi Accumulate File extra.Command.
   Elpi Accumulate lp:{{

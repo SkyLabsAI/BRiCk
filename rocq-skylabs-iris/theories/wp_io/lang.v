@@ -8,12 +8,12 @@
 Require Export iris.program_logic.language.
 Require Import iris.algebra.cmra.
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.option.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.option.
 
-Require Export bluerock.prelude.name.
-Require Export bluerock.prelude.finite_prod.
-Require Export bluerock.prelude.sts.
+Require Export skylabs.prelude.name.
+Require Export skylabs.prelude.finite_prod.
+Require Export skylabs.prelude.sts.
 
 Module Component.
 
@@ -74,7 +74,7 @@ Qed.
 End Component.
 
 (**
-This one is similar to [bluerock.prelude.sts.Compose.compose_lts],
+This one is similar to [skylabs.prelude.sts.Compose.compose_lts],
 except that it uses [finite_prod] to create the composed types.
 TODO: unify them.
 *)

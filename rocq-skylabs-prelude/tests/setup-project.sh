@@ -1,7 +1,7 @@
 cat > dune <<EOF
 (coq.theory
  (name test)
- (theories Lens Lens.Elpi elpi elpi_elpi elpi.apps.derive Stdlib stdpp Ltac2 bluerock.ltac2.extra bluerock.upoly bluerock.prelude))
+ (theories Lens Lens.Elpi elpi elpi_elpi elpi.apps.derive Stdlib stdpp Ltac2 skylabs.ltac2.extra skylabs.upoly skylabs.prelude))
 EOF
 
 cat > dune-project <<EOF

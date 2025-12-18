@@ -5,8 +5,8 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.telescopes.
-Require Import bluerock.prelude.tactics.telescopes.
+Require Import skylabs.prelude.telescopes.
+Require Import skylabs.prelude.tactics.telescopes.
 
 (** * Tactics for [Proper] instances *)
 (**

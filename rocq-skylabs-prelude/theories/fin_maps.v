@@ -19,8 +19,8 @@
  *)
 
 Require Export stdpp.fin_maps.
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.list_numbers.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.list_numbers.
 
 (* TODO upstream to stdpp. *)
 Section fin_maps.

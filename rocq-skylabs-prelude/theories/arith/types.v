@@ -4,7 +4,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.base.
+Require Import skylabs.prelude.base.
 
 #[local] Open Scope Z_scope.
 

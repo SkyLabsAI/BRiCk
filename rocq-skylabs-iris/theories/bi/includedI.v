@@ -5,8 +5,8 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import iris.bi.embedding.
-Require Import bluerock.iris.extra.bi.prelude.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.bi.prelude.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 Set Printing Coercions.
 
 (** * Internal inclusion

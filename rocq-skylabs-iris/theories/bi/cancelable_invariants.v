@@ -35,10 +35,10 @@ Require Export iris.base_logic.lib.cancelable_invariants. (* << exporting [cinvG
 Require Import iris.bi.derived_laws.
 Import bi.
 
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
-Require Export bluerock.iris.extra.bi.invariants.
-Require Export bluerock.iris.extra.bi.own.
+Require Export skylabs.iris.extra.bi.invariants.
+Require Export skylabs.iris.extra.bi.own.
 
 Set Default Proof Using "Type".
 Set Suggest Proof Using.

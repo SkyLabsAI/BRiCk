@@ -19,8 +19,8 @@
  *)
 Require Export iris.bi.lib.atomic.
 Require Import iris.bi.lib.fixpoint_mono.
-Require Import bluerock.iris.extra.bi.telescopes.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.bi.telescopes.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 Set Default Proof Using "Type".
 
 (** * Small improvements to atomic updates *)

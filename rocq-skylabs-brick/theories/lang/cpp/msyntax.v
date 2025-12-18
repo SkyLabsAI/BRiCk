@@ -4,6 +4,6 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Export bluerock.lang.cpp.syntax.
-Require Export bluerock.lang.cpp.syntax.mcore.
-Require Export bluerock.lang.cpp.syntax.templates.
+Require Export skylabs.lang.cpp.syntax.
+Require Export skylabs.lang.cpp.syntax.mcore.
+Require Export skylabs.lang.cpp.syntax.templates.

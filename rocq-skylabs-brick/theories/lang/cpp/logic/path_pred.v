@@ -3,12 +3,12 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.prelude.base.
+Require Import skylabs.prelude.base.
 
-Require Import bluerock.iris.extra.proofmode.proofmode.
-Require Import bluerock.lang.cpp.semantics.
-Require Import bluerock.lang.cpp.logic.pred.
-Require Import bluerock.lang.cpp.syntax.
+Require Import skylabs.iris.extra.proofmode.proofmode.
+Require Import skylabs.lang.cpp.semantics.
+Require Import skylabs.lang.cpp.logic.pred.
+Require Import skylabs.lang.cpp.syntax.
 
 #[deprecated(since="20231103",note="use [ptr].")]
 Notation Loc := ptr (only parsing).

@@ -26,8 +26,8 @@
 
   TODO: These should be upstreamed to Iris's code base. **)
 
-Require bluerock.prelude.tactics.base_dbs.
-Require Export bluerock.iris.extra.si_logic.bi.
+Require skylabs.prelude.tactics.base_dbs.
+Require Export skylabs.iris.extra.si_logic.bi.
 
 Require Import iris.algebra.proofmode_classes.
 Require Import iris.proofmode.classes.
@@ -195,7 +195,7 @@ Section own_valid.
 End own_valid.
 
 Import iris.bi.derived_laws.bi.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
 Section update.
   Context `{!BiBUpd PROP} `{!HasOwn PROP A} `{!HasOwnUpd PROP A}.
@@ -322,7 +322,7 @@ Section proofmode_instances.
   Qed.
 End proofmode_instances.
 
-Require Import bluerock.iris.extra.bi.only_provable.
+Require Import skylabs.iris.extra.bi.only_provable.
 
 Section update_only_provable.
   Context `{!BiBUpd PROP} `{!HasOwn PROP A} `{!HasOwnUpd PROP A}.

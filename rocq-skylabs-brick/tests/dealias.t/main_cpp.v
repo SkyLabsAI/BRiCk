@@ -1,4 +1,4 @@
-Require Import bluerock.lang.cpp.parser.plugin.cpp2v.
+Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
 cpp.prog source prog cpp:{{
   using Tr = int&;
   using Trr = int&&;
@@ -14,7 +14,7 @@ cpp.prog source prog cpp:{{
   using cTrr_rr = cTrr&&;
 }}.
 
-Require Import bluerock.lang.cpp.syntax.dealias.
+Require Import skylabs.lang.cpp.syntax.dealias.
 
 Notation TEST input output :=
   (eq_refl : trace.runO (resolveValue source input%cpp_name) = Some output%cpp_name).

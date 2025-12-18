@@ -250,7 +250,7 @@ let define_notation : with_level:bool -> string -> int -> unit =
   in
   let log_msg =
     let mp =
-      let dp = ["bluerock"; "ltac2"; "logger"; "logger"] in
+      let dp = ["skylabs"; "ltac2"; "logger"; "logger"] in
       let dp = List.rev_map Names.Id.of_string dp in
       let mp = Names.ModPath.MPfile(Names.DirPath.make dp) in
       Names.ModPath.MPdot(mp, Names.Label.make "Log")

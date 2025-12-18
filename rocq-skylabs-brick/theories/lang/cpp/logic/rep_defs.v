@@ -4,15 +4,15 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-(** Most clients should import [bluerock.lang.cpp.logic.rep] instead of this file.
+(** Most clients should import [skylabs.lang.cpp.logic.rep] instead of this file.
 This file defines the core type [Rep] of representation predicates.
 TODO: merge back into [rep.v]?
 *)
 Require Import elpi.apps.locker.locker.
-Require Import bluerock.iris.extra.bi.prelude.
-Require Import bluerock.iris.extra.bi.monpred.
-Require Import bluerock.lang.cpp.semantics.values.
-Require Import bluerock.lang.cpp.logic.mpred.
+Require Import skylabs.iris.extra.bi.prelude.
+Require Import skylabs.iris.extra.bi.monpred.
+Require Import skylabs.lang.cpp.semantics.values.
+Require Import skylabs.lang.cpp.logic.mpred.
 
 Import ChargeNotation.
 Implicit Types (σ : genv) (p : ptr) (o : offset).

@@ -107,7 +107,7 @@ last example, `x` might live in a register or be removed altogether by
 optimizations. But since |project| pointer values need not have an address, we can
 reason about `x_ptr` uniformly, irrespective of optimizations.
 
-We use the function |link:bluerock.lang.cpp.semantics.ptrs#PTRS.ptr_vaddr| to compute the
+We use the function |link:skylabs.lang.cpp.semantics.ptrs#PTRS.ptr_vaddr| to compute the
 virtual address of a pointer.
 
 .. code-block:: coq
@@ -150,11 +150,11 @@ To simplify reasoning about pointers, we provide an equational theory of pointer
 equality, which helps us show that C++ snippets such as `p + 2` and `p + 1 + 1`
 produce the same pointer.
 
-Pointer offsets form a *monoid* under concatenation, and |link:bluerock.lang.cpp.semantics.ptrs#PTRS._offset_ptr| represent
+Pointer offsets form a *monoid* under concatenation, and |link:skylabs.lang.cpp.semantics.ptrs#PTRS._offset_ptr| represent
 their *monoid action* over pointers. That is, we can compose offsets (via
-|link:bluerock.lang.cpp.semantics.ptrs#PTRS.o_dot|, also written `.,`), this composition has an identity (|link:bluerock.lang.cpp.semantics.ptrs#PTRS.o_id|) and is
+|link:skylabs.lang.cpp.semantics.ptrs#PTRS.o_dot|, also written `.,`), this composition has an identity (|link:skylabs.lang.cpp.semantics.ptrs#PTRS.o_id|) and is
 associative, and compositions with pointers is well-behaved. Moreover, specific
-axioms allow us to collapse adjacent offsets, such as consecutive |link:bluerock.lang.cpp.semantics.ptrs#PTRS.o_sub| offsets.
+axioms allow us to collapse adjacent offsets, such as consecutive |link:skylabs.lang.cpp.semantics.ptrs#PTRS.o_sub| offsets.
 
 Here are a few of the algebraic equations that apply to pointers and offsets.
 
@@ -170,7 +170,7 @@ Here are a few of the algebraic equations that apply to pointers and offsets.
     o_sub_0 : _sub ty 0 = o_id (* Under side conditions on [ty] *)
     o_dot_sub : _sub T n1 ., _sub T n2 = _sub T (n1 + n2)
 
-This is formalized in Coq in |link:bluerock.lang.cpp.semantics.ptrs|.
+This is formalized in Coq in |link:skylabs.lang.cpp.semantics.ptrs|.
 
 Integer-pointer casts
 ---------------------

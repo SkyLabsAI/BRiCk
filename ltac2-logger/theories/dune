@@ -1,6 +1,6 @@
 (include_subdirs qualified)
 (coq.theory
- (name bluerock.ltac2.logger)
+ (name skylabs.ltac2.logger)
  (package ltac2-logger)
- (theories Ltac2 bluerock.ltac2.extra Stdlib)
+ (theories Ltac2 skylabs.ltac2.extra Stdlib)
  (plugins ltac2-logger.plugin))

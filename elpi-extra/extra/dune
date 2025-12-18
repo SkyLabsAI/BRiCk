@@ -1,12 +1,12 @@
 (include_subdirs qualified)
 
 (coq.theory
- (name bluerock.elpi.extra)
+ (name skylabs.elpi.extra)
  (package elpi-extra)
  (theories
   Stdlib
   elpi elpi_elpi elpi.apps.NES
-  Ltac2 bluerock.ltac2.extra))
+  Ltac2 skylabs.ltac2.extra))
 
 (rule
  (target dummy.v)
@@ -17,7 +17,7 @@
    (run rocq_elpi_shafile %{elpi_files}))))
 
 (install
- (files (glob_files_rec (*.elpi with_prefix coq/user-contrib/bluerock/elpi/extra/)))
+ (files (glob_files_rec (*.elpi with_prefix coq/user-contrib/skylabs/elpi/extra/)))
  (section lib_root)
  (package elpi-extra))
 

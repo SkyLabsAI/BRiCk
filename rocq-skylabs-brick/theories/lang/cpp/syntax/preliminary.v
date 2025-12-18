@@ -5,9 +5,9 @@
  *)
 
 Require Import stdpp.strings.
-Require Export bluerock.prelude.pstring.
-Require Import bluerock.lang.cpp.syntax.prelude.
-Require Export bluerock.prelude.arith.types.
+Require Export skylabs.prelude.pstring.
+Require Import skylabs.lang.cpp.syntax.prelude.
+Require Export skylabs.prelude.arith.types.
 
 
 (* TODO: is this worth its own file? *)

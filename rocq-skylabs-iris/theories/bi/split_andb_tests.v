@@ -5,8 +5,8 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.iris.extra.bi.split_andb.
+Require Import skylabs.prelude.base.
+Require Import skylabs.iris.extra.bi.split_andb.
 
 (**
 [Split b b1 b2] succeeds if [SplitAndB b] outputs [b1], [b2].

@@ -22,7 +22,7 @@ cat > dune <<EOF
  (name test)
  (theories
   Stdlib stdpp iris elpi elpi_elpi Ltac2
-  bluerock.upoly bluerock.prelude bluerock.iris.extra bluerock.ltac2.extra bluerock.lang.cpp Lens Lens.Elpi))
+  skylabs.upoly skylabs.prelude skylabs.iris.extra skylabs.ltac2.extra skylabs.lang.cpp Lens Lens.Elpi))
 EOF
 
 cat > dune-project <<EOF

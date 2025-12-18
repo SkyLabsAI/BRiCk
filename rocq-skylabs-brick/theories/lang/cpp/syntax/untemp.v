@@ -3,11 +3,11 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.prelude.error.
-Require Import bluerock.lang.cpp.syntax.prelude.
-Require Import bluerock.lang.cpp.syntax.core.
-Require Import bluerock.lang.cpp.syntax.templates.
-Require Import bluerock.lang.cpp.syntax.mtraverse.
+Require Import skylabs.prelude.error.
+Require Import skylabs.lang.cpp.syntax.prelude.
+Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.templates.
+Require Import skylabs.lang.cpp.syntax.mtraverse.
 Import UPoly.
 
 (** * Converting untemplated code between [lang.temp] and [lang.cpp] *)

@@ -3,9 +3,9 @@
  * All rights reserved.
  *)
 
-Require Import bluerock.prelude.finite.
+Require Import skylabs.prelude.finite.
 
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
 Section with_prop.
   Context {PROP : bi} `{BiBUpd PROP} .

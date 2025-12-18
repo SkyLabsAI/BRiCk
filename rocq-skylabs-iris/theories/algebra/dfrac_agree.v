@@ -7,7 +7,7 @@
 Require Import iris.algebra.frac.	(** for [fracO] *)
 Require Import iris.algebra.proofmode_classes.	(** for [IsOp] *)
 Require Export iris.algebra.lib.dfrac_agree.
-Require Export bluerock.prelude.base.
+Require Export skylabs.prelude.base.
 Set Printing Coercions.
 
 Lemma qple_dfrac_own_incl {SI : sidx} q1 q2 :

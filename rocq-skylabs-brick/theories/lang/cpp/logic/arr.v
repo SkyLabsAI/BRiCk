@@ -4,19 +4,19 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.iris.extra.algebra.list.
-Require Import bluerock.iris.extra.proofmode.proofmode.
-Require Import bluerock.prelude.numbers.
-Require Import bluerock.iris.extra.bi.observe.
-Require Import bluerock.iris.extra.bi.fractional.
-Require Import bluerock.iris.extra.bi.big_op.
-Require Import bluerock.lang.cpp.bi.cfractional.
-Require Import bluerock.lang.cpp.semantics.types.
-Require Import bluerock.lang.cpp.semantics.genv.
-Require Import bluerock.lang.cpp.logic.pred.
-Require Import bluerock.lang.cpp.logic.path_pred.
-Require Import bluerock.lang.cpp.logic.heap_pred.valid.
-Require Import bluerock.lang.cpp.semantics.values.
+Require Import skylabs.iris.extra.algebra.list.
+Require Import skylabs.iris.extra.proofmode.proofmode.
+Require Import skylabs.prelude.numbers.
+Require Import skylabs.iris.extra.bi.observe.
+Require Import skylabs.iris.extra.bi.fractional.
+Require Import skylabs.iris.extra.bi.big_op.
+Require Import skylabs.lang.cpp.bi.cfractional.
+Require Import skylabs.lang.cpp.semantics.types.
+Require Import skylabs.lang.cpp.semantics.genv.
+Require Import skylabs.lang.cpp.logic.pred.
+Require Import skylabs.lang.cpp.logic.path_pred.
+Require Import skylabs.lang.cpp.logic.heap_pred.valid.
+Require Import skylabs.lang.cpp.semantics.values.
 
 #[local] Set Printing Coercions.	(** Readability *)
 

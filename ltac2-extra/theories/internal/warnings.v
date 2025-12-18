@@ -5,7 +5,7 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.ltac2.extra.internal.init.
+Require Import skylabs.ltac2.extra.internal.init.
 
 (** Emitting Coq warnings. *)
 Module Warnings.

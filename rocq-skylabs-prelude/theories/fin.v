@@ -20,10 +20,10 @@
 Require Import stdpp.base.
 Require Import stdpp.decidable.
 Require Import stdpp.countable.
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.option.
-Require Import bluerock.prelude.list_numbers.
-Require Import bluerock.prelude.finite.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.option.
+Require Import skylabs.prelude.list_numbers.
+Require Import skylabs.prelude.finite.
 
 #[local] Open Scope N_scope.
 

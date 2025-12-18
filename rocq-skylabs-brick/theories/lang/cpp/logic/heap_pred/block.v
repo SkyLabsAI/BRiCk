@@ -3,11 +3,11 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.lang.cpp.logic.heap_pred.prelude.
-Require Import bluerock.lang.cpp.logic.heap_pred.valid.
-Require Import bluerock.lang.cpp.logic.heap_pred.null.
-Require Import bluerock.lang.cpp.logic.heap_pred.simple.
-Require Import bluerock.lang.cpp.logic.heap_pred.any.
+Require Import skylabs.lang.cpp.logic.heap_pred.prelude.
+Require Import skylabs.lang.cpp.logic.heap_pred.valid.
+Require Import skylabs.lang.cpp.logic.heap_pred.null.
+Require Import skylabs.lang.cpp.logic.heap_pred.simple.
+Require Import skylabs.lang.cpp.logic.heap_pred.any.
 
 Import rep_defs.INTERNAL. (* for access to [unfold_at] *)
 

@@ -35,10 +35,10 @@ For the [refine_inv] version :
 TODO: generalize this from using [Compose.config].
 *)
 
-Require Import bluerock.iris.extra.bi.atomic_commit.
-Require Import bluerock.iris.extra.bi.atomic_update.
+Require Import skylabs.iris.extra.bi.atomic_commit.
+Require Import skylabs.iris.extra.bi.atomic_update.
 
-Require Import bluerock.iris.extra.wp_io.refinement.inv.
+Require Import skylabs.iris.extra.wp_io.refinement.inv.
 
 NES.Begin root.
 

@@ -5,7 +5,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.numbers.
+Require Import skylabs.prelude.numbers.
 
 (** * Splitting and combining booleans on [&&] *)
 (**

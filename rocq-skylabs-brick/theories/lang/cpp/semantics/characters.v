@@ -5,11 +5,11 @@
  *)
 Require Import elpi.apps.locker.locker.
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.numbers.
-Require Import bluerock.prelude.arith.operator.
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.semantics.values.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.numbers.
+Require Import skylabs.prelude.arith.operator.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.semantics.values.
 
 #[local] Open Scope Z_scope.
 

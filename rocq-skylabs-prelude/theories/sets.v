@@ -5,7 +5,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Export stdpp.sets.
-Require Import bluerock.prelude.base.
+Require Import skylabs.prelude.base.
 
 (** * Small extensions to [stdpp.sets]. *)
 

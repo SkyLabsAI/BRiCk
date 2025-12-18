@@ -4,23 +4,23 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import iris.bi.lib.fractional.
-Require Import bluerock.iris.extra.proofmode.proofmode.
-Require Import bluerock.iris.extra.bi.errors.
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.semantics.
-Require Import bluerock.iris.extra.bi.spec.frac_splittable.
-Require Import bluerock.iris.extra.bi.spec.nary_classes.
-Require Import bluerock.lang.cpp.logic.pred.
-Require Import bluerock.lang.cpp.logic.path_pred.
-Require Import bluerock.lang.cpp.logic.heap_pred.
-Require Import bluerock.lang.cpp.logic.destroy.
-Require Import bluerock.lang.cpp.logic.initializers.
-Require Import bluerock.lang.cpp.logic.dispatch.
-Require Import bluerock.lang.cpp.logic.wp.
-Require Import bluerock.lang.cpp.logic.call.
-Require Import bluerock.lang.cpp.logic.translation_unit.
+Require Import skylabs.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.bi.errors.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.semantics.
+Require Import skylabs.iris.extra.bi.spec.frac_splittable.
+Require Import skylabs.iris.extra.bi.spec.nary_classes.
+Require Import skylabs.lang.cpp.logic.pred.
+Require Import skylabs.lang.cpp.logic.path_pred.
+Require Import skylabs.lang.cpp.logic.heap_pred.
+Require Import skylabs.lang.cpp.logic.destroy.
+Require Import skylabs.lang.cpp.logic.initializers.
+Require Import skylabs.lang.cpp.logic.dispatch.
+Require Import skylabs.lang.cpp.logic.wp.
+Require Import skylabs.lang.cpp.logic.call.
+Require Import skylabs.lang.cpp.logic.translation_unit.
 
-Require Import bluerock.lang.cpp.logic.const.
+Require Import skylabs.lang.cpp.logic.const.
 
 Notation Talign_val_t := "enum std::align_val_t"%cpp_type.
 Notation Tdestroying_delete_t := "std::destroying_delete_t"%cpp_type.

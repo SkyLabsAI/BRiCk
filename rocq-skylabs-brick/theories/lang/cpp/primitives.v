@@ -3,8 +3,8 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.logic.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.logic.
 
 Notation boolR q v := (primR Tbool q (Vbool v)).
 

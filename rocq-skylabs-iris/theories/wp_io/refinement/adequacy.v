@@ -17,10 +17,10 @@ an refinement invariant.
 Both lemmas apply Iris adequacy [wp_strong_adequacy_gen].
 *)
 
-Require Import bluerock.iris.extra.wp_io.iris.adequacy.
-Require Import bluerock.iris.extra.wp_io.refinement.inv.
+Require Import skylabs.iris.extra.wp_io.iris.adequacy.
+Require Import skylabs.iris.extra.wp_io.refinement.inv.
 
-Require Import bluerock.iris.extra.base_logic.iprop_prop.
+Require Import skylabs.iris.extra.base_logic.iprop_prop.
 
 Module refine_embed.
 
@@ -135,7 +135,7 @@ Section with_lang.
     iMod (root.trace_refine_alloc R s_init INIT) as (γ_abs) "[F RT]".
     iExists γ_con, γ_abs. iFrame.
 
-    (* TODO cleanup : inlining [bluerock.iris.extra.base_logic.iprop_invariants]
+    (* TODO cleanup : inlining [skylabs.iris.extra.base_logic.iprop_invariants]
       because that one is fixed to the default [invGS_gen HasLc] *)
     iMod (own_inv_alloc N E (root.ghost_trace_refine R γ_con γ_abs) with "[-]") as "#INV".
     { iNext. iExists []. by iFrame. }

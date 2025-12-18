@@ -7,11 +7,11 @@
 
 (*** iProp's instance of the Spectra framework *)
 
-Require Import bluerock.iris.extra.base_logic.lib.spectra.
-Require Import bluerock.iris.extra.base_logic.iprop_prop.
+Require Import skylabs.iris.extra.base_logic.lib.spectra.
+Require Import skylabs.iris.extra.base_logic.iprop_prop.
 
-Require Import bluerock.iris.extra.bi.invariants.
-Require Import bluerock.iris.extra.base_logic.iprop_invariants.
+Require Import skylabs.iris.extra.bi.invariants.
+Require Import skylabs.iris.extra.base_logic.iprop_invariants.
 
 (** Conversion from Σ-dependent definitions to BI-dependent ones *)
 #[local] Instance ΣG_G {Σ : gFunctors}

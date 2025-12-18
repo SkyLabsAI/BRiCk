@@ -1,7 +1,7 @@
-Require Import bluerock.prelude.base.
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.syntax.dealias.
-Require Import bluerock.lang.cpp.parser.plugin.cpp2v.
+Require Import skylabs.prelude.base.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.syntax.dealias.
+Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
 
 cpp.prog source prog cpp:{{
     namespace X {

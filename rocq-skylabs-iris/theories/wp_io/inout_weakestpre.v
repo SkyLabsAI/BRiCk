@@ -10,10 +10,10 @@ A variant of WP that has input assumptions / output obligations.
 *)
 
 Require Import iris.proofmode.base.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 Require Import iris.proofmode.classes.
-Require Export bluerock.iris.extra.bi.only_provable.
-Require Export bluerock.iris.extra.wp_io.iris.ghost.
+Require Export skylabs.iris.extra.bi.only_provable.
+Require Export skylabs.iris.extra.wp_io.iris.ghost.
 
 Record PrePost {PROP : bi} := {
   tele_pre  : tele ;
@@ -595,7 +595,7 @@ Section proofmode_classes.
 End proofmode_classes.
 
 
-Require bluerock.iris.extra.wp_io.iris.weakestpre.
+Require skylabs.iris.extra.wp_io.iris.weakestpre.
 
 Section wp_io_elim.
 Context {Λ : language} {PROP : bi} `{!BiFUpd PROP} `{!BiLaterContractive PROP}

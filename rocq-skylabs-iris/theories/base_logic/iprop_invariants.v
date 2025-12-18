@@ -21,12 +21,12 @@
  *)
 
 (* The iProp instances for invariants. *)
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
-Require Import bluerock.iris.extra.bi.na_invariants.
-Require Import bluerock.iris.extra.bi.cancelable_invariants.
-Require Import bluerock.iris.extra.bi.invariants.
-Require Import bluerock.iris.extra.base_logic.iprop_own.
+Require Import skylabs.iris.extra.bi.na_invariants.
+Require Import skylabs.iris.extra.bi.cancelable_invariants.
+Require Import skylabs.iris.extra.bi.invariants.
+Require Import skylabs.iris.extra.base_logic.iprop_own.
 
 (*** Invariants for iProp **)
 (* Copy from

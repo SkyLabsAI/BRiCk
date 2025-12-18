@@ -4,7 +4,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.base.
+Require Import skylabs.prelude.base.
 
 Module sum.
   Definition existsb {A B} (f : A -> bool) (g : B -> bool) (s : A + B) : bool :=

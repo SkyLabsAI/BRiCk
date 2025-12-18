@@ -9,17 +9,17 @@ Require Export stdpp.propset.
 
 Require Export elpi.apps.NES.NES.
 
-Require Export bluerock.iris.extra.bi.prop_constraints.
-Require Export bluerock.iris.extra.base_logic.lib.spectra.
+Require Export skylabs.iris.extra.bi.prop_constraints.
+Require Export skylabs.iris.extra.base_logic.lib.spectra.
 
-Require Export bluerock.iris.extra.base_logic.lib.mono_list.
+Require Export skylabs.iris.extra.base_logic.lib.mono_list.
 
-Require Export bluerock.iris.extra.bi.invariants.
+Require Export skylabs.iris.extra.bi.invariants.
 
-Require Export bluerock.iris.extra.wp_io.iris.weakestpre.
-Require Export bluerock.iris.extra.wp_io.inout_weakestpre.
+Require Export skylabs.iris.extra.wp_io.iris.weakestpre.
+Require Export skylabs.iris.extra.wp_io.inout_weakestpre.
 
-Require Export bluerock.iris.extra.wp_io.lang.
+Require Export skylabs.iris.extra.wp_io.lang.
 Require Export iris.proofmode.tactics.
 
 (**

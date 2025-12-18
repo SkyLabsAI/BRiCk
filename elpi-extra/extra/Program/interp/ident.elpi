@@ -35,7 +35,7 @@ namespace ident {
 
   of_rep_opt T O :- std.do! [
     coq.eval_whd_all T Tred,
-    ( Tred = {{ lib:bluerock.ltac2.extra.Ident.rep.Rep lp:{{ fun N _ _ }} }}, !, of_name N O
+    ( Tred = {{ lib:skylabs.ltac2.extra.Ident.rep.Rep lp:{{ fun N _ _ }} }}, !, of_name N O
     ; coq.error "ident.of_rep_opt: Expected <<Ident.rep>> constructor:" {coq.term->string Tred} ),
   ].
 
@@ -45,7 +45,7 @@ namespace ident {
 
   as_rep Id T :- std.do! [
     coq.string->name Id N,
-    T = {{ lib:bluerock.ltac2.extra.Ident.rep.Rep lp:{{ fun N {{ lib:core.unit.type }} (x\ {{ lib:core.unit.tt }}) }} }},
+    T = {{ lib:skylabs.ltac2.extra.Ident.rep.Rep lp:{{ fun N {{ lib:core.unit.type }} (x\ {{ lib:core.unit.tt }}) }} }},
   ].
 
 }

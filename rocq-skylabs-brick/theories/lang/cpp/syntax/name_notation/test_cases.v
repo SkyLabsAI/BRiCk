@@ -4,8 +4,8 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.lang.cpp.syntax.prelude.
-Require Import bluerock.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.prelude.
+Require Import skylabs.lang.cpp.syntax.core.
 
 (* parsing the left will produce the righ *and* printing the right will produce the left *)
 Definition canonical : list (PrimString.string * name) :=

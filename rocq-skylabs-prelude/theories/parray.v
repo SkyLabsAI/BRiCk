@@ -4,8 +4,8 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.uint63.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.uint63.
 Require Import Stdlib.Numbers.Cyclic.Int63.Uint63.
 Require Import Stdlib.Array.PArray.
 Require Stdlib.Lists.List.

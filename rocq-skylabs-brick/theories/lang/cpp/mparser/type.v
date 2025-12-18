@@ -3,7 +3,7 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.lang.cpp.mparser.prelude.
-Require Import bluerock.lang.cpp.parser.type.
+Require Import skylabs.lang.cpp.mparser.prelude.
+Require Import skylabs.lang.cpp.parser.type.
 
 Include ParserType.

@@ -7,15 +7,15 @@
 
 (** * Extensions of the Elpi standard library *)
 
-Require Export bluerock.elpi.extra.prelude.
-Require Import bluerock.elpi.extra.reification.
-Require Export bluerock.elpi.extra.add_predicate_command.
+Require Export skylabs.elpi.extra.prelude.
+Require Import skylabs.elpi.extra.reification.
+Require Export skylabs.elpi.extra.add_predicate_command.
 
 (** <<Rocqlib>> effects *)
 
 Require Stdlib.Init.Datatypes.	(* e.g., <<core.unit.{type,tt}>> *)
 Require Stdlib.Numbers.BinNums.	(* e.g., <<num.N.{type,N0,Npos}>> *)
-Require bluerock.ltac2.extra.extra.	(* e.g., <<bluerock.ltac2.extra.Ident.rep.{type,Rep}>> *)
+Require skylabs.ltac2.extra.extra.	(* e.g., <<skylabs.ltac2.extra.Ident.rep.{type,Rep}>> *)
 
 (**
 Coq's standard library registers <<Byte.byte>> as <<core.byte.type>>.
@@ -58,20 +58,20 @@ Force recompilation when our Elpi code changes.
 (List all files referenced as <<coq://logpath/file>> below.)
 *)
 
-From bluerock.elpi.extra.Program Extra Dependency "synterp.elpi" as program_synterp.
-From bluerock.elpi.extra.Program Extra Dependency "interp.elpi" as program_interp.
-From bluerock.elpi.extra.Tactic Extra Dependency "synterp.elpi" as tactic_synterp.
-From bluerock.elpi.extra.Tactic Extra Dependency "interp.elpi" as tactic_interp.
-From bluerock.elpi.extra.Command Extra Dependency "synterp.elpi" as command_synterp.
-From bluerock.elpi.extra.Command Extra Dependency "interp.elpi" as command_interp.
+From skylabs.elpi.extra.Program Extra Dependency "synterp.elpi" as program_synterp.
+From skylabs.elpi.extra.Program Extra Dependency "interp.elpi" as program_interp.
+From skylabs.elpi.extra.Tactic Extra Dependency "synterp.elpi" as tactic_synterp.
+From skylabs.elpi.extra.Tactic Extra Dependency "interp.elpi" as tactic_interp.
+From skylabs.elpi.extra.Command Extra Dependency "synterp.elpi" as command_synterp.
+From skylabs.elpi.extra.Command Extra Dependency "interp.elpi" as command_interp.
 
 #[synterp]
 Elpi File extra.Program lp:{{
-  accumulate "coq://bluerock.elpi.extra/Program/synterp".	% Program/synterp.elpi.in
+  accumulate "coq://skylabs.elpi.extra/Program/synterp".	% Program/synterp.elpi.in
 }}.
 #[interp]
 Elpi File extra.Program lp:{{
-  accumulate "coq://bluerock.elpi.extra/Program/interp".	% Program/interp.elpi.in
+  accumulate "coq://skylabs.elpi.extra/Program/interp".	% Program/interp.elpi.in
 }}.
 
 (**
@@ -82,18 +82,18 @@ TODO: Narrow down and report.
 *)
 #[synterp]
 Elpi File extra.Tactic lp:{{
-  accumulate "coq://bluerock.elpi.extra/Tactic/synterp".	% Tactic/synterp.elpi.in
+  accumulate "coq://skylabs.elpi.extra/Tactic/synterp".	% Tactic/synterp.elpi.in
 }}.
 #[interp]
 Elpi File extra.Tactic lp:{{
-  accumulate "coq://bluerock.elpi.extra/Tactic/interp".	% Tactic/interp.elpi.in
+  accumulate "coq://skylabs.elpi.extra/Tactic/interp".	% Tactic/interp.elpi.in
 }}.
 
 #[synterp]
 Elpi File extra.Command lp:{{
-  accumulate "coq://bluerock.elpi.extra/Command/synterp".	% Command/synterp.elpi.in
+  accumulate "coq://skylabs.elpi.extra/Command/synterp".	% Command/synterp.elpi.in
 }}.
 #[interp]
 Elpi File extra.Command lp:{{
-  accumulate "coq://bluerock.elpi.extra/Command/interp".	% Command/interp.elpi.in
+  accumulate "coq://skylabs.elpi.extra/Command/interp".	% Command/interp.elpi.in
 }}.

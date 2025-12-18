@@ -7,9 +7,9 @@
 
 Require Import iris.proofmode.tactics.
 
-Require Import bluerock.iris.extra.wp_io.iris.weakestpre.
-Require Import bluerock.iris.extra.wp_io.iris.adequacy.
-Require Import bluerock.iris.extra.wp_io.lang.
+Require Import skylabs.iris.extra.wp_io.iris.weakestpre.
+Require Import skylabs.iris.extra.wp_io.iris.adequacy.
+Require Import skylabs.iris.extra.wp_io.lang.
 
 (** * Demonstrating adequacy for a trace property.
 - The trace property is [stateI : state Λ → iProp Σ] where

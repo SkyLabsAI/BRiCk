@@ -5,9 +5,9 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.ltac2.extra.internal.plugin.
+Require Import skylabs.ltac2.extra.internal.plugin.
 Require Ltac2.Ltac2.
-Require Export bluerock.ltac2.extra.internal.init.
+Require Export skylabs.ltac2.extra.internal.init.
 
 (** Minor extensions to [Ltac2.Env] *)
 Module Env.

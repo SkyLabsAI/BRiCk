@@ -7,12 +7,12 @@ Require Export iris.bi.bi.
 (* This export ensures that [upredI] is registered as a canonical structure everywhere. *)
 Require Export iris.base_logic.bi.
 Require Import iris.proofmode.classes.
-Require Export bluerock.prelude.base.
-Require Export bluerock.prelude.gmap.
-Require Export bluerock.prelude.letstar.
-Require Export bluerock.prelude.list_numbers.
-Require Export bluerock.iris.extra.bi.only_provable.
-Require Export bluerock.iris.extra.bi.derived_laws.
+Require Export skylabs.prelude.base.
+Require Export skylabs.prelude.gmap.
+Require Export skylabs.prelude.letstar.
+Require Export skylabs.prelude.list_numbers.
+Require Export skylabs.iris.extra.bi.only_provable.
+Require Export skylabs.iris.extra.bi.derived_laws.
 
 #[global] Instance into_pure_emp PROP : IntoPure (PROP := PROP) emp True.
 Proof. by rewrite /IntoPure (bi.pure_intro True emp). Qed.
@@ -30,7 +30,7 @@ Notation "'funI' x .. y => t" := (fun x => .. (fun y => t%I) ..)
   (at level 200, x binder, y binder, right associativity,
   only parsing) : function_scope.
 
-(* Variant of [let*] (from [bluerock.prelude.letstar]) for the Iris scope. *)
+(* Variant of [let*] (from [skylabs.prelude.letstar]) for the Iris scope. *)
 Notation "'letI*' x , .. , z := t 'in' f" :=
   (t (funI x => .. (funI z => f) ..))
     (only parsing, at level 200, x closed binder, z closed binder) : bi_scope.

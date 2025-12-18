@@ -5,7 +5,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Export bluerock.prelude.named_binder.
+Require Export skylabs.prelude.named_binder.
 Require Import iris.proofmode.tactics.
 
 #[global] Instance from_forall_named_binder {PROP:bi} {A} {name} {id}

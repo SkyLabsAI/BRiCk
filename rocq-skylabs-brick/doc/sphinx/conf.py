@@ -82,7 +82,7 @@ alectryon.docutils.AlectryonTransform.SERTOP_ARGS = sertop_args
 # NOTE: Add in other entries here if we want to register coqdoc things which are
 #       compatible with the `:coqid:` role.
 alectryon.docutils.COQ_IDENT_DB_URLS.append(
-    ("bluerock", "https://skylabsai.gitlab.io/cpp2v/$modpath.html#$ident")
+    ("skylabs", "https://skylabsai.gitlab.io/cpp2v/$modpath.html#$ident")
 )
 
 # Add any Sphinx extension module names here, as strings. They can be

@@ -4,9 +4,9 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.lang.cpp.semantics.values.
-Require Import bluerock.lang.cpp.logic.pred.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.lang.cpp.semantics.values.
+Require Import skylabs.lang.cpp.logic.pred.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 Require Import iris.proofmode.classes.
 
 (** * Proof mode instances *)
@@ -24,9 +24,9 @@ proof mode classes. Here's a subset, displayed here for [_at]:
 
 Additional instances are available in
 
-- [bluerock.proofmode.cpp._at_as_Rep]
+- [skylabs.proofmode.cpp._at_as_Rep]
 
-- [bluerock.proofmode.cpp._at_pureR]
+- [skylabs.proofmode.cpp._at_pureR]
 
  *)
 

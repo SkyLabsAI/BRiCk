@@ -10,10 +10,10 @@ Require Import iris.si_logic.bi.
 Require Import iris.bi.monpred.
 Require Import iris.base_logic.lib.own.
 
-Require Import bluerock.iris.extra.bi.embedding.
-Require Import bluerock.iris.extra.bi.own.
-Require Import bluerock.iris.extra.bi.weakly_objective.
-Require Import bluerock.iris.extra.base_logic.iprop_own.
+Require Import skylabs.iris.extra.bi.embedding.
+Require Import skylabs.iris.extra.bi.own.
+Require Import skylabs.iris.extra.bi.weakly_objective.
+Require Import skylabs.iris.extra.base_logic.iprop_own.
 
 (* Instances for monpred *)
 

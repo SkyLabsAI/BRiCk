@@ -4,8 +4,8 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import stdpp.countable.
-Require Import bluerock.prelude.numbers.
-Require Import bluerock.prelude.list_numbers.
+Require Import skylabs.prelude.numbers.
+Require Import skylabs.prelude.list_numbers.
 
 
 Section type.

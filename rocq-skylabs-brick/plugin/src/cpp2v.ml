@@ -22,7 +22,7 @@ let attributes =
     ])
 
 let lib_ref t =
-  Rocqlib.lib_ref ("bluerock.lang.cpp.parser.translation_unit." ^ t)
+  Rocqlib.lib_ref ("skylabs.lang.cpp.parser.translation_unit." ^ t)
 
 let (cpp2v_category, cpp2v_warning) =
   CWarnings.create_hybrid ~name:"cpp2v" ()

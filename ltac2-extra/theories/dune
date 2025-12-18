@@ -1,6 +1,6 @@
 (include_subdirs qualified)
 (coq.theory
- (name bluerock.ltac2.extra)
+ (name skylabs.ltac2.extra)
  (package ltac2-extra)
  (theories
   Ltac2

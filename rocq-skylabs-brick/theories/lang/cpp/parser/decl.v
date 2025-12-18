@@ -4,8 +4,8 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.lang.cpp.parser.prelude.
-Require Import bluerock.lang.cpp.parser.lang.
+Require Import skylabs.lang.cpp.parser.prelude.
+Require Import skylabs.lang.cpp.parser.lang.
 
 (** * Derived declaration helpers emitted by cpp2v *)
 

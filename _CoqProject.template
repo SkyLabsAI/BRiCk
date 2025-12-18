@@ -13,11 +13,11 @@
 
 -Q rocq-lens/Lens Lens
 -Q _build/default/rocq-lens/Lens Lens
--Q rocq-upoly/upoly bluerock.upoly
--Q _build/default/rocq-upoly/upoly bluerock.upoly
--Q rocq-skylabs-brick/theories/prelude bluerock.prelude
--Q _build/default/rocq-skylabs-brick/theories/prelude bluerock.prelude
--Q rocq-skylabs-brick/theories/lang bluerock.lang
--Q _build/default/rocq-skylabs-brick/theories/lang bluerock.lang
--Q rocq-skylabs-brick/theories/noimport bluerock.noimport
--Q _build/default/rocq-skylabs-brick/theories/noimport bluerock.noimport
+-Q rocq-upoly/upoly skylabs.upoly
+-Q _build/default/rocq-upoly/upoly skylabs.upoly
+-Q rocq-skylabs-brick/theories/prelude skylabs.prelude
+-Q _build/default/rocq-skylabs-brick/theories/prelude skylabs.prelude
+-Q rocq-skylabs-brick/theories/lang skylabs.lang
+-Q _build/default/rocq-skylabs-brick/theories/lang skylabs.lang
+-Q rocq-skylabs-brick/theories/noimport skylabs.noimport
+-Q _build/default/rocq-skylabs-brick/theories/noimport skylabs.noimport

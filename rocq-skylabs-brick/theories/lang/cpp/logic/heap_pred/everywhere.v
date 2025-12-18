@@ -3,16 +3,16 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.lang.cpp.logic.heap_pred.prelude.
-Require Import bluerock.lang.cpp.logic.rep_proofmode.
-Require Import bluerock.lang.cpp.logic.arr.
-Require Import bluerock.lang.cpp.logic.heap_pred.valid.
-Require Import bluerock.lang.cpp.logic.heap_pred.null.
-Require Import bluerock.lang.cpp.logic.heap_pred.simple.
-Require Import bluerock.lang.cpp.logic.heap_pred.aggregate.
-Require Import bluerock.lang.cpp.logic.heap_pred.tptsto.
-Require Import bluerock.lang.cpp.logic.heap_pred.uninit.
-Require Import bluerock.lang.cpp.logic.heap_pred.prim.
+Require Import skylabs.lang.cpp.logic.heap_pred.prelude.
+Require Import skylabs.lang.cpp.logic.rep_proofmode.
+Require Import skylabs.lang.cpp.logic.arr.
+Require Import skylabs.lang.cpp.logic.heap_pred.valid.
+Require Import skylabs.lang.cpp.logic.heap_pred.null.
+Require Import skylabs.lang.cpp.logic.heap_pred.simple.
+Require Import skylabs.lang.cpp.logic.heap_pred.aggregate.
+Require Import skylabs.lang.cpp.logic.heap_pred.tptsto.
+Require Import skylabs.lang.cpp.logic.heap_pred.uninit.
+Require Import skylabs.lang.cpp.logic.heap_pred.prim.
 
 Section with_cpp.
   Context `{Σ : cpp_logic} {σ : genv}.

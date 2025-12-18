@@ -7,26 +7,26 @@
  * Semantics of expressions
  * (expressed in weakest pre-condition style)
  *)
-Require Import bluerock.prelude.numbers.
+Require Import skylabs.prelude.numbers.
 Require Import iris.proofmode.tactics.
 
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.semantics.
-Require Import bluerock.lang.cpp.logic.pred.
-Require Import bluerock.lang.cpp.logic.path_pred.
-Require Import bluerock.lang.cpp.logic.heap_pred.
-Require Import bluerock.lang.cpp.logic.raw.
-Require Import bluerock.lang.cpp.logic.const.
-Require Import bluerock.lang.cpp.logic.operator.
-Require Import bluerock.lang.cpp.logic.destroy.
-Require Import bluerock.lang.cpp.logic.initializers.
-Require Import bluerock.lang.cpp.logic.wp.
-Require Import bluerock.lang.cpp.logic.call.
-Require Import bluerock.lang.cpp.logic.core_string.
-Require Import bluerock.lang.cpp.logic.translation_unit.
-Require Import bluerock.lang.cpp.logic.dispatch.
-Require Import bluerock.lang.cpp.logic.func.
-Require Import bluerock.iris.extra.bi.errors.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.semantics.
+Require Import skylabs.lang.cpp.logic.pred.
+Require Import skylabs.lang.cpp.logic.path_pred.
+Require Import skylabs.lang.cpp.logic.heap_pred.
+Require Import skylabs.lang.cpp.logic.raw.
+Require Import skylabs.lang.cpp.logic.const.
+Require Import skylabs.lang.cpp.logic.operator.
+Require Import skylabs.lang.cpp.logic.destroy.
+Require Import skylabs.lang.cpp.logic.initializers.
+Require Import skylabs.lang.cpp.logic.wp.
+Require Import skylabs.lang.cpp.logic.call.
+Require Import skylabs.lang.cpp.logic.core_string.
+Require Import skylabs.lang.cpp.logic.translation_unit.
+Require Import skylabs.lang.cpp.logic.dispatch.
+Require Import skylabs.lang.cpp.logic.func.
+Require Import skylabs.iris.extra.bi.errors.
 
 Module Type Expr.
   (* Needed for [Unfold wp_test] *)

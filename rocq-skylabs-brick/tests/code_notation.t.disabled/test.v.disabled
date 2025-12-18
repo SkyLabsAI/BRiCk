@@ -5,10 +5,10 @@
  *)
 Require Import ZArith.
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.lang.cpp.ast.
-Require Import bluerock.lang.cpp.notations.
-Require Import bluerock.lang.cpp.code_notations.
+Require Import skylabs.prelude.base.
+Require Import skylabs.lang.cpp.ast.
+Require Import skylabs.lang.cpp.notations.
+Require Import skylabs.lang.cpp.code_notations.
 
 (* TODO (JH): Add more examples here (and remove the duplicates) *)
 Section TestCodeNotations.

@@ -4,7 +4,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Export iris.bi.embedding.
-Require Import bluerock.iris.extra.bi.prelude.
+Require Import skylabs.iris.extra.bi.prelude.
 
 (** * Composing embeddings *)
 (** Given embeddings [Embed PROP1 PROP2] and [Embed PROP2 PROP3],

@@ -11,21 +11,21 @@ its components.
 The main theorem is [wp_io_decompose].
 *)
 Require Export stdpp.namespaces.
-Require Import bluerock.prelude.list.
+Require Import skylabs.prelude.list.
 
-Require Export bluerock.iris.extra.bi.spec.exclusive.
-Require Export bluerock.iris.extra.bi.spec.frac_splittable.
-Require Export bluerock.iris.extra.bi.spec.knowledge.
-Require Export bluerock.iris.extra.bi.spec.nary_classes.
-Require Import bluerock.iris.extra.bi.prop_constraints.
-Require Import bluerock.iris.extra.bi.big_op.
+Require Export skylabs.iris.extra.bi.spec.exclusive.
+Require Export skylabs.iris.extra.bi.spec.frac_splittable.
+Require Export skylabs.iris.extra.bi.spec.knowledge.
+Require Export skylabs.iris.extra.bi.spec.nary_classes.
+Require Import skylabs.iris.extra.bi.prop_constraints.
+Require Import skylabs.iris.extra.bi.big_op.
 
-Require Export bluerock.iris.extra.wp_io.inout_weakestpre.
-Require Export bluerock.iris.extra.wp_io.lang.
+Require Export skylabs.iris.extra.wp_io.inout_weakestpre.
+Require Export skylabs.iris.extra.wp_io.lang.
 
-Require Import bluerock.iris.extra.bi.observe.
-Require Import bluerock.iris.extra.bi.only_provable.
-Require Import bluerock.iris.extra.bi.own.
+Require Import skylabs.iris.extra.bi.observe.
+Require Import skylabs.iris.extra.bi.only_provable.
+Require Import skylabs.iris.extra.bi.own.
 
 Require Export iris.proofmode.tactics.
 

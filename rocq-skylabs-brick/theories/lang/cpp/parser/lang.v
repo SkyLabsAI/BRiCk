@@ -4,4 +4,4 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.lang.cpp.parser.prelude.
+Require Import skylabs.lang.cpp.parser.prelude.

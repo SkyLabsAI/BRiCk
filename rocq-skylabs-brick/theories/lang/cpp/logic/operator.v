@@ -3,13 +3,13 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.iris.extra.proofmode.proofmode.
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.option.
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.semantics.values.
-Require Import bluerock.lang.cpp.semantics.operator.
-Require Import bluerock.lang.cpp.logic.pred.
+Require Import skylabs.iris.extra.proofmode.proofmode.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.option.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.semantics.values.
+Require Import skylabs.lang.cpp.semantics.operator.
+Require Import skylabs.lang.cpp.logic.pred.
 
 Implicit Type (σ : genv).
 

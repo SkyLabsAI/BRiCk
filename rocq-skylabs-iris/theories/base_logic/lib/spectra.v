@@ -16,27 +16,27 @@ See the documentation in spectra.md for more details.
 *)
 
 Require Import stdpp.namespaces.
-Require Import bluerock.prelude.base.
-Require Export bluerock.prelude.sts.
-Require Import bluerock.prelude.finite.
-Require Import bluerock.prelude.sets.
-Require Export bluerock.prelude.propset.
-Require Import bluerock.prelude.fin_sets.
-Require Import bluerock.prelude.bytestring.
-Require Import bluerock.prelude.tactics.proper.
+Require Import skylabs.prelude.base.
+Require Export skylabs.prelude.sts.
+Require Import skylabs.prelude.finite.
+Require Import skylabs.prelude.sets.
+Require Export skylabs.prelude.propset.
+Require Import skylabs.prelude.fin_sets.
+Require Import skylabs.prelude.bytestring.
+Require Import skylabs.prelude.tactics.proper.
 
-Require Import bluerock.iris.extra.bi.prelude.
-Require Import bluerock.iris.extra.bi.observe.
-Require Import bluerock.iris.extra.bi.big_op.
-Require Import bluerock.iris.extra.bi.atomic_commit.
-Require Import bluerock.iris.extra.bi.atomic_update_properties.
-Require Import bluerock.iris.extra.bi.spec.knowledge.
-Require Import bluerock.iris.extra.bi.prop_constraints.
-Require Import bluerock.iris.extra.bi.invariants.
+Require Import skylabs.iris.extra.bi.prelude.
+Require Import skylabs.iris.extra.bi.observe.
+Require Import skylabs.iris.extra.bi.big_op.
+Require Import skylabs.iris.extra.bi.atomic_commit.
+Require Import skylabs.iris.extra.bi.atomic_update_properties.
+Require Import skylabs.iris.extra.bi.spec.knowledge.
+Require Import skylabs.iris.extra.bi.prop_constraints.
+Require Import skylabs.iris.extra.bi.invariants.
 
-Require Export bluerock.iris.extra.base_logic.lib.auth_set.
-Require Import bluerock.iris.extra.proofmode.fancy_updates.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Export skylabs.iris.extra.base_logic.lib.auth_set.
+Require Import skylabs.iris.extra.proofmode.fancy_updates.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
 Import ChargeNotation.
 

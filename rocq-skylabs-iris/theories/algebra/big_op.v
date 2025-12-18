@@ -6,11 +6,11 @@
  *)
 
 Require Export iris.algebra.big_op.
-Require Export bluerock.iris.extra.algebra.monoid.
+Require Export skylabs.iris.extra.algebra.monoid.
 
-Require Import bluerock.prelude.numbers.
-Require Import bluerock.prelude.list_numbers.
-Require Import bluerock.prelude.fin_sets.
+Require Import skylabs.prelude.numbers.
+Require Import skylabs.prelude.list_numbers.
+Require Import skylabs.prelude.fin_sets.
 
 (** * Big ops *)
 

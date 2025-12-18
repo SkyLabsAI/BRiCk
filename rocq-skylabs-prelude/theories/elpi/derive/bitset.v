@@ -4,11 +4,11 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import elpi.elpi.
-Require Export bluerock.prelude.elpi.derive.common.
+Require Export skylabs.prelude.elpi.derive.common.
 
-Require Import bluerock.prelude.prelude.
-Require Import bluerock.prelude.elpi.basis.
-Require Export bluerock.prelude.elpi.derive.finite_type.
+Require Import skylabs.prelude.prelude.
+Require Import skylabs.prelude.elpi.basis.
+Require Export skylabs.prelude.elpi.derive.finite_type.
 
 (***************************************************
  Bitsets
@@ -96,7 +96,7 @@ Elpi Accumulate derive lp:{{
   derivation T Prefix (derive "bitset_to_bit" (derive.bitset.main T Prefix tt) (derive.bitset.done T)).
 }}.
 
-Elpi Accumulate derive.bitset.db File bluerock.typeclass.elpi.
+Elpi Accumulate derive.bitset.db File skylabs.typeclass.elpi.
 #[superglobal] Elpi Accumulate derive.bitset.db lp:{{
   namespace derive.bitset {
     pred to-bits i:term, o:term.

@@ -1,8 +1,8 @@
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.error.
-Require Import bluerock.lang.cpp.syntax.core.
-Require Import bluerock.lang.cpp.syntax.mcore.
-Require Export bluerock.lang.cpp.syntax.namemap.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.error.
+Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.mcore.
+Require Export skylabs.lang.cpp.syntax.namemap.
 
 (** ** Template pre-instances *)
 (**
@@ -56,7 +56,7 @@ Add Printing Constructor tinst.
 #[global] Arguments tinst : clear implicits.
 #[global] Arguments TInst {_} _ _ & _ : assert.
 
-Require Import bluerock.lang.cpp.syntax.translation_unit.
+Require Import skylabs.lang.cpp.syntax.translation_unit.
 
 (** ** Templated values *)
 Section template.

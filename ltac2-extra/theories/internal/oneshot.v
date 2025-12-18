@@ -5,8 +5,8 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.ltac2.extra.internal.init.
-Require Import bluerock.ltac2.extra.internal.printf.
+Require Import skylabs.ltac2.extra.internal.init.
+Require Import skylabs.ltac2.extra.internal.printf.
 
 (** Oneshots: a reference cell that can be set at most once. *)
 Module Oneshot.

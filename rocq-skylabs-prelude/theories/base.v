@@ -9,11 +9,11 @@
 Require Import Stdlib.Structures.OrderedType.
 Require Export stdpp.prelude.
 Require Export stdpp.countable.
-Require Export bluerock.prelude.stdpp_ssreflect.
-Require Export bluerock.prelude.tc_cond_type.
-Require Export bluerock.prelude.notations.
-Require Export bluerock.upoly.upoly.
-Require bluerock.prelude.tactics.base_dbs. (* For [br_opacity]; import not required. *)
+Require Export skylabs.prelude.stdpp_ssreflect.
+Require Export skylabs.prelude.tc_cond_type.
+Require Export skylabs.prelude.notations.
+Require Export skylabs.upoly.upoly.
+Require skylabs.prelude.tactics.base_dbs. (* For [br_opacity]; import not required. *)
 
 #[global] Hint Opaque elem_of : typeclass_instances.
 

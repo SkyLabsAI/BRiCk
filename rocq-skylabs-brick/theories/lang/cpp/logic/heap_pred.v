@@ -5,30 +5,30 @@
  *)
 Require Export elpi.apps.locker.locker.
 
-Require Import bluerock.iris.extra.proofmode.proofmode.
-Require Import bluerock.iris.extra.bi.fractional.
+Require Import skylabs.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.bi.fractional.
 
-Require Import bluerock.lang.cpp.bi.cfractional.
-Require Import bluerock.lang.cpp.semantics.
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.logic.pred.
-Require Import bluerock.lang.cpp.logic.path_pred.
+Require Import skylabs.lang.cpp.bi.cfractional.
+Require Import skylabs.lang.cpp.semantics.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.logic.pred.
+Require Import skylabs.lang.cpp.logic.path_pred.
 
-Export bluerock.lang.cpp.logic.pred.
+Export skylabs.lang.cpp.logic.pred.
 (* ^^ Should this be exported? this file is supposed to provide wrappers
    so that clients do not work directly with [pred.v] *)
-Export bluerock.lang.cpp.algebra.cfrac.
+Export skylabs.lang.cpp.algebra.cfrac.
 
-Require Export bluerock.lang.cpp.logic.heap_pred.aggregate.
-Require Export bluerock.lang.cpp.logic.heap_pred.any.
-Require Export bluerock.lang.cpp.logic.heap_pred.block.
-Require Export bluerock.lang.cpp.logic.heap_pred.everywhere.
-Require Export bluerock.lang.cpp.logic.heap_pred.null.
-Require Export bluerock.lang.cpp.logic.heap_pred.prim.
-Require Export bluerock.lang.cpp.logic.heap_pred.simple.
-Require Export bluerock.lang.cpp.logic.heap_pred.tptsto.
-Require Export bluerock.lang.cpp.logic.heap_pred.uninit.
-Require Export bluerock.lang.cpp.logic.heap_pred.valid.
+Require Export skylabs.lang.cpp.logic.heap_pred.aggregate.
+Require Export skylabs.lang.cpp.logic.heap_pred.any.
+Require Export skylabs.lang.cpp.logic.heap_pred.block.
+Require Export skylabs.lang.cpp.logic.heap_pred.everywhere.
+Require Export skylabs.lang.cpp.logic.heap_pred.null.
+Require Export skylabs.lang.cpp.logic.heap_pred.prim.
+Require Export skylabs.lang.cpp.logic.heap_pred.simple.
+Require Export skylabs.lang.cpp.logic.heap_pred.tptsto.
+Require Export skylabs.lang.cpp.logic.heap_pred.uninit.
+Require Export skylabs.lang.cpp.logic.heap_pred.valid.
 
 #[local] Set Printing Coercions.
 

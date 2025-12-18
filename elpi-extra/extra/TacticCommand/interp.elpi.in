@@ -12,6 +12,6 @@ This file assumes the <<Elpi Program>> or <<Elpi Tactic>> template.
 It works in the interp phase.
 */
 
-accumulate "bluerock.elpi.extra/Program/interp".	% ../Program/interp.elpi.in
+accumulate "skylabs.elpi.extra/Program/interp".	% ../Program/interp.elpi.in
 
-accumulate "bluerock.elpi.extra/TacticCommand/interp/coq".	% interp/coq.elpi
+accumulate "skylabs.elpi.extra/TacticCommand/interp/coq".	% interp/coq.elpi

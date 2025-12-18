@@ -28,8 +28,8 @@
 
 Require Export iris.base_logic.lib.invariants. (* << export [invGS] *)
 
-Require bluerock.prelude.tactics.base_dbs.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require skylabs.prelude.tactics.base_dbs.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
 Set Default Proof Using "Type".
 Set Suggest Proof Using.

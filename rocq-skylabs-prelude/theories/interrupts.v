@@ -8,8 +8,8 @@
 
 (* XXX Only temporarily here. *)
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.hw_types.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.hw_types.
 
 (** * Configurations of the interrupt lines attached to devices *)
 

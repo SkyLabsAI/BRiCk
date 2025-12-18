@@ -4,7 +4,7 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Export bluerock.prelude.telescopes.
+Require Export skylabs.prelude.telescopes.
 Require Import iris.algebra.ofe.
 
 (** Support for guarded recursive specs. *)

@@ -12,8 +12,8 @@
  *   http://gallium.inria.fr/~tramanan/cpp/thesis/thesis.pdf
  *)
 Require Import stdpp.fin_maps.
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.semantics.genv.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.semantics.genv.
 
 Section extends.
   Context {σ : genv}.

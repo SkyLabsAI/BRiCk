@@ -4,11 +4,11 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.bool.
-Require Import bluerock.prelude.finite.
-Require Import bluerock.prelude.fin.
-Require Import bluerock.prelude.list_numbers.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.bool.
+Require Import skylabs.prelude.finite.
+Require Import skylabs.prelude.fin.
+Require Import skylabs.prelude.list_numbers.
 #[local] Set Printing Coercions.
 
 (** [get_range_bitsN] *)
@@ -16,7 +16,7 @@ Require Import bluerock.prelude.list_numbers.
 Extract from [val] the [count] lowest bits starting from [from].
 Follows [get_range_bits] but on [N].
 
-TODO: this one generalizes bluerock.prelude.arith.builtins._get_byte. Consider
+TODO: this one generalizes skylabs.prelude.arith.builtins._get_byte. Consider
 unifying them.
 *)
 Definition get_range_bitsN (val from count : N) : N :=

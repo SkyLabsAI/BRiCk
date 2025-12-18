@@ -6,10 +6,10 @@
 
 (** Support code for [inductive_pointers.v]. *)
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.addr.
-Require Import bluerock.prelude.numbers.
-Require Import bluerock.lang.cpp.semantics.values.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.addr.
+Require Import skylabs.prelude.numbers.
+Require Import skylabs.lang.cpp.semantics.values.
 
 Module address_sums.
   Definition offset_vaddr : Z -> vaddr -> option vaddr := λ z pa,

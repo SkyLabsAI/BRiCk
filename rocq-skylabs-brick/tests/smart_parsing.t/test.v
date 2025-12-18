@@ -3,7 +3,7 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.syntax.
 Require test.test_cpp.
 
 (* TODO: this needs to be put in the [_cpp.v] file *)

@@ -6,9 +6,9 @@
 Require Import Stdlib.Strings.String.
 Require Import Corelib.Numbers.Cyclic.Int63.PrimInt63.
 Require Import Stdlib.Strings.PrimString.
-Require Import bluerock.prelude.base.
-Require Import bluerock.prelude.uint63.
-Require Import bluerock.prelude.pstring.
+Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.uint63.
+Require Import skylabs.prelude.pstring.
 
 Definition string_to_pstring (s : String.string) : PrimString.string :=
   let byte_to_char b := Buf.Byte $ Uint63.of_Z $ Z.of_N $ Byte.to_N b in

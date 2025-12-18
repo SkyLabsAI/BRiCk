@@ -4,8 +4,8 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.base.
-Require Import bluerock.lang.cpp.msyntax.
+Require Import skylabs.prelude.base.
+Require Import skylabs.lang.cpp.msyntax.
 Require Import test_17_cpp_templates.
 
 Variant Error :=

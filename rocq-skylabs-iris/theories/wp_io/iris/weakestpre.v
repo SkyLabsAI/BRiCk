@@ -28,10 +28,10 @@ TODO : upstream.
 *)
 
 Require Import iris.proofmode.base.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 Require Import iris.proofmode.classes.
-Require Export bluerock.iris.extra.bi.only_provable.
-Require Export bluerock.iris.extra.wp_io.iris.ghost.
+Require Export skylabs.iris.extra.bi.only_provable.
+Require Export skylabs.iris.extra.wp_io.iris.ghost.
 
 (** The predicate we take the fixpoint of in order to define the WP. *)
 (** In the step case, we both provide [S (num_laters_per_step ns)]

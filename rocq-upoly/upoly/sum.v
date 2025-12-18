@@ -5,9 +5,9 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.upoly.prelude.
-Require Import bluerock.upoly.base.
-Require Import bluerock.upoly.UTypes.
+Require Import skylabs.upoly.prelude.
+Require Import skylabs.upoly.base.
+Require Import skylabs.upoly.UTypes.
 Import UPoly.
 
 (** * Sums *)

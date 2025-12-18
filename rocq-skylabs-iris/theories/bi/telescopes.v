@@ -4,9 +4,9 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *
  *)
-Require Import bluerock.iris.extra.algebra.telescopes.
+Require Import skylabs.iris.extra.algebra.telescopes.
 Require Export iris.bi.telescopes.
-Require Export bluerock.iris.extra.bi.prelude.
+Require Export skylabs.iris.extra.bi.prelude.
 Require iris.proofmode.class_instances.
 Import ChargeNotation.
 

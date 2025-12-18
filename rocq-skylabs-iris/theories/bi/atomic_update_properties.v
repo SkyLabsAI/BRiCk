@@ -7,11 +7,11 @@
 Require Import stdpp.coPset.
 Require Import iris.bi.lib.fixpoint_mono.
 Require Import iris.bi.lib.laterable.
-Require Import bluerock.iris.extra.bi.derived_laws.
-Require Export bluerock.iris.extra.bi.atomic_update.
-Require Import bluerock.iris.extra.bi.telescopes.
-Require Import bluerock.iris.extra.bi.fupd_iff.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.bi.derived_laws.
+Require Export skylabs.iris.extra.bi.atomic_update.
+Require Import skylabs.iris.extra.bi.telescopes.
+Require Import skylabs.iris.extra.bi.fupd_iff.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 Set Default Proof Using "Type".
 
 Local Tactic Notation "iSplit" "?" := repeat iSplit.

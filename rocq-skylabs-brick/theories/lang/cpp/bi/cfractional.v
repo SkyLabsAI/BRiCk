@@ -5,13 +5,13 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Export bluerock.lang.cpp.algebra.cfrac.
+Require Export skylabs.lang.cpp.algebra.cfrac.
 
-Require Import bluerock.iris.extra.bi.prelude.
-Require Import bluerock.iris.extra.bi.observe.
-Require Import bluerock.iris.extra.bi.split_frac.
-Require Import bluerock.lang.cpp.bi.split_cfrac.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.bi.prelude.
+Require Import skylabs.iris.extra.bi.observe.
+Require Import skylabs.iris.extra.bi.split_frac.
+Require Import skylabs.lang.cpp.bi.split_cfrac.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 Import ChargeNotation.
 
 #[local] Set Printing Coercions.

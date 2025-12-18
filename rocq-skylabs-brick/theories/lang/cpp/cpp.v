@@ -4,10 +4,10 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Export
-        bluerock.lang.cpp.syntax
-        bluerock.lang.cpp.semantics
-        bluerock.lang.cpp.parser
-        bluerock.lang.cpp.logic.
+        skylabs.lang.cpp.syntax
+        skylabs.lang.cpp.semantics
+        skylabs.lang.cpp.parser
+        skylabs.lang.cpp.logic.
 Require Export
-        bluerock.lang.cpp.primitives
-        bluerock.lang.cpp.specs.
+        skylabs.lang.cpp.primitives
+        skylabs.lang.cpp.specs.

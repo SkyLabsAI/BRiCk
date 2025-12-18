@@ -10,16 +10,16 @@
     [rawR]/[rawsR] - which are wrappers around [Vraw] [val]ues and lists of them,
     respectively - are used to refer to and manipulate these "object representations".
  *)
-Require Import bluerock.iris.extra.proofmode.proofmode.
-Require Import bluerock.prelude.base.
+Require Import skylabs.iris.extra.proofmode.proofmode.
+Require Import skylabs.prelude.base.
 
-Require Import bluerock.iris.extra.bi.big_op.
-Require Import bluerock.lang.cpp.semantics.
-Require Import bluerock.lang.cpp.logic.arr.
-Require Import bluerock.lang.cpp.logic.pred.
-Require Import bluerock.lang.cpp.logic.heap_pred.
-Require Import bluerock.lang.cpp.logic.layout.
-Require Import bluerock.lang.cpp.logic.raw.
+Require Import skylabs.iris.extra.bi.big_op.
+Require Import skylabs.lang.cpp.semantics.
+Require Import skylabs.lang.cpp.logic.arr.
+Require Import skylabs.lang.cpp.logic.pred.
+Require Import skylabs.lang.cpp.logic.heap_pred.
+Require Import skylabs.lang.cpp.logic.layout.
+Require Import skylabs.lang.cpp.logic.raw.
 
 Section Utilities.
   Context `{Σ : cpp_logic} {σ : genv}.

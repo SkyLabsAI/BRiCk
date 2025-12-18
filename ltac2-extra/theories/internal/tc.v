@@ -5,9 +5,9 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.ltac2.extra.internal.control.
-Require Import bluerock.ltac2.extra.internal.constr.
-Require Import bluerock.ltac2.extra.internal.std.
+Require Import skylabs.ltac2.extra.internal.control.
+Require Import skylabs.ltac2.extra.internal.constr.
+Require Import skylabs.ltac2.extra.internal.std.
 
 (** Typeclasses. *)
 Module TC.

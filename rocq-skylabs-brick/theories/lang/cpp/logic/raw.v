@@ -3,20 +3,20 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
-Require Import bluerock.prelude.base.
-Require Import bluerock.iris.extra.proofmode.proofmode.
+Require Import skylabs.prelude.base.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 Require Import iris.bi.lib.fractional.
 
-Require Import bluerock.lang.cpp.bi.cfractional.
-Require Import bluerock.prelude.arith.z_to_bytes.
-Require Import bluerock.prelude.arith.builtins.
-Require Import bluerock.lang.cpp.syntax.
-Require Import bluerock.lang.cpp.semantics.
-Require Import bluerock.lang.cpp.logic.arr.
-Require Import bluerock.lang.cpp.logic.builtins.
-Require Import bluerock.lang.cpp.logic.heap_pred.
-Require Import bluerock.lang.cpp.logic.pred.
-Require Import bluerock.lang.cpp.logic.z_to_bytes.
+Require Import skylabs.lang.cpp.bi.cfractional.
+Require Import skylabs.prelude.arith.z_to_bytes.
+Require Import skylabs.prelude.arith.builtins.
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.semantics.
+Require Import skylabs.lang.cpp.logic.arr.
+Require Import skylabs.lang.cpp.logic.builtins.
+Require Import skylabs.lang.cpp.logic.heap_pred.
+Require Import skylabs.lang.cpp.logic.pred.
+Require Import skylabs.lang.cpp.logic.z_to_bytes.
 
 (**
 [rawR q r]: the argument pointer points to [r : raw_byte] within the

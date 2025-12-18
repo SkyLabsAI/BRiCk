@@ -6,16 +6,16 @@
 Require Import stdpp.base.
 
 Require Import elpi.elpi.
-Require Export bluerock.prelude.elpi.derive.common.
+Require Export skylabs.prelude.elpi.derive.common.
 
-Require Export bluerock.prelude.elpi.basis.
-Elpi Accumulate derive File bluerock.basis.elpi.
+Require Export skylabs.prelude.elpi.basis.
+Elpi Accumulate derive File skylabs.basis.elpi.
 
 Elpi Db derive.stdpp.inhabited.db lp:{{
   pred inhabited o:gref, o:gref.
   pred inhabited-done o:gref.
 }}.
-Elpi Accumulate derive.stdpp.inhabited.db File bluerock.typeclass.elpi.
+Elpi Accumulate derive.stdpp.inhabited.db File skylabs.typeclass.elpi.
 #[superglobal] Elpi Accumulate derive.stdpp.inhabited.db lp:{{
   :name "inhabited-done.typeclass"
   inhabited-done GR :-

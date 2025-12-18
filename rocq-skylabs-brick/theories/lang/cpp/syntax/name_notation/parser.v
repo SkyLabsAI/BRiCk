@@ -5,17 +5,17 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import stdpp.prelude.
-Require Import bluerock.prelude.base.
-Require Import bluerock.upoly.upoly.
-Require Import bluerock.upoly.option.
-Require Import bluerock.upoly.list.
-Require Import bluerock.prelude.parsec.
-Require Import bluerock.lang.cpp.syntax.core.
-Require Import bluerock.lang.cpp.syntax.types.
+Require Import skylabs.prelude.base.
+Require Import skylabs.upoly.upoly.
+Require Import skylabs.upoly.option.
+Require Import skylabs.upoly.list.
+Require Import skylabs.prelude.parsec.
+Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.types.
 Require Import Stdlib.Strings.PrimString.
-Require Import bluerock.prelude.pstring.
+Require Import skylabs.prelude.pstring.
 Require Import Stdlib.Numbers.Cyclic.Int63.Uint63.
-Require Import bluerock.lang.cpp.syntax.translation_unit.
+Require Import skylabs.lang.cpp.syntax.translation_unit.
 
 (** ** A parser for C++ names.
 

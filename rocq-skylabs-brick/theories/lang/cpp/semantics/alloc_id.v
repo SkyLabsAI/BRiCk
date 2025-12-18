@@ -4,7 +4,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import bluerock.prelude.base.
+Require Import skylabs.prelude.base.
 
 (** ** Allocation IDs.
     We use them to model pointer provenance, following Cerberus.
