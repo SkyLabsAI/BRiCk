@@ -1,4 +1,0 @@
-(executable
- (public_name br)
- (package rocq-skylabs-brick)
- (libraries cmdliner toml))

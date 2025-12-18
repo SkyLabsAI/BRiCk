@@ -1,4 +1,0 @@
-(env
- (_
-  (flags :standard %{read-lines:../flags/ocamlc})
-  (ocamlopt_flags :standard -O3 -unbox-closures)))
