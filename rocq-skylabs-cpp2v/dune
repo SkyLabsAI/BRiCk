@@ -20,7 +20,7 @@
   (env-vars
    (BUILD_TYPE Release)
    (BUILD_ARGS "")))
- (br_timing
+ (sl_timing
   (env-vars
    (BUILD_TYPE Release)
    (BUILD_ARGS "")))

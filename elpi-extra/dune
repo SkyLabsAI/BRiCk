@@ -1,5 +1,5 @@
 (env
- (br_timing
+ (sl_timing
   (binaries
    (../rocq-tools/bin/coqc_perf.exe as coqc))
   (coq
