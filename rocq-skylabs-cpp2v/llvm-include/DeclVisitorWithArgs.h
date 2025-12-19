@@ -21,14 +21,19 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclOpenMP.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/DeclVisitor.h"
 #include "llvm/Support/ErrorHandling.h"
 
 namespace clang {
 
 namespace declvisitor2 {
 
-template <typename T> struct make_ptr { using type = T *; };
-template <typename T> struct make_const_ptr { using type = const T *; };
+template <typename T> struct make_ptr {
+    using type = T *;
+};
+template <typename T> struct make_const_ptr {
+    using type = const T *;
+};
 
 /// \brief A simple visitor class that helps create declaration visitors.
 template <template <typename> class Ptr, typename ImplClass,
@@ -37,29 +42,29 @@ class Base {
 public:
 #define PTR(CLASS) typename Ptr<CLASS>::type
 #define DISPATCH(NAME, CLASS)                                                  \
-  return static_cast<ImplClass *>(this)->Visit##NAME(                          \
-      static_cast<PTR(CLASS)>(D), std::forward<ParamTys>(P)...)
+    return static_cast<ImplClass *>(this)->Visit##NAME(                        \
+        static_cast<PTR(CLASS)>(D), std::forward<ParamTys>(P)...)
 
-  RetTy Visit(PTR(Decl) D, ParamTys... P) {
-    switch (D->getKind()) {
+    RetTy Visit(PTR(Decl) D, ParamTys... P) {
+        switch (D->getKind()) {
 #define DECL(DERIVED, BASE)                                                    \
-  case Decl::DERIVED:                                                          \
-    DISPATCH(DERIVED##Decl, DERIVED##Decl);
+    case Decl::DERIVED:                                                        \
+        DISPATCH(DERIVED##Decl, DERIVED##Decl);
 #define ABSTRACT_DECL(DECL)
 #include "clang/AST/DeclNodes.inc"
+        }
+        llvm_unreachable("Decl that isn't part of DeclNodes.inc!");
     }
-    llvm_unreachable("Decl that isn't part of DeclNodes.inc!");
-  }
 
-  // If the implementation chooses not to implement a certain visit
-  // method, fall back to the parent.
+    // If the implementation chooses not to implement a certain visit
+    // method, fall back to the parent.
 #define DECL(DERIVED, BASE)                                                    \
-  RetTy Visit##DERIVED##Decl(PTR(DERIVED##Decl) D, ParamTys... P) {            \
-    DISPATCH(BASE, BASE);                                                      \
-  }
+    RetTy Visit##DERIVED##Decl(PTR(DERIVED##Decl) D, ParamTys... P) {          \
+        DISPATCH(BASE, BASE);                                                  \
+    }
 #include "clang/AST/DeclNodes.inc"
 
-  RetTy VisitDecl(PTR(Decl) D, ParamTys... P) { return RetTy(); }
+    RetTy VisitDecl(PTR(Decl) D, ParamTys... P) { return RetTy(); }
 
 #undef PTR
 #undef DISPATCH

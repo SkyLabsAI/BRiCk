@@ -705,7 +705,7 @@ static fmt::Formatter &printAtomicName(const DeclContext &ctx, const Decl &decl,
     // sometimes ends up with multiple variables with the same name, e.g. due to
     // template parameter pack expansion. This logic aims to find which index we
     // want.
-    auto duplicate_index = [&](const NamedDecl &nd) -> unsigned {
+    auto duplicate_index = [&](const NamedDecl &nd) -> int {
         if (auto dc = decl.getParentFunctionOrMethod()) {
             auto body = dyn_cast<FunctionDecl>(dc)->getBody();
             /* Count declarations with the same name as [nd] in [body] but
@@ -766,7 +766,7 @@ static fmt::Formatter &printAtomicName(const DeclContext &ctx, const Decl &decl,
 
     auto ident_or_anon = [&](const std::optional<std::string> anon_error =
                                  std::nullopt) -> auto & {
-        if (auto nd = isNamed(decl)) {
+        if (isNamed(decl)) {
             return ident();
         } else if (!anon_error) {
             guard::ctor _(print, "Nanon", false);

@@ -15,6 +15,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Mangle.h"
 #include "clang/AST/Type.h"
+#include "clang/Basic/Version.inc"
 #include <Formatter.hpp>
 
 using namespace clang;
@@ -498,7 +499,19 @@ public:
     void VisitMemberPointerType(const MemberPointerType *type,
                                 CoqPrinter &print, ClangPrinter &cprint) {
         print.ctor("Tmember_pointer", false);
+#if CLANG_VERSION_MAJOR >= 21
+        {
+            const NestedNameSpecifier *NNS = type->getQualifier();
+            if (const Type *classType = NNS->getAsType()) {
+                cprint.printType(print, classType, loc::of(type));
+            } else {
+                unsupported(print, cprint, loc::of(type),
+                            "unresolved class type in MemberPointerType");
+            }
+        }
+#else
         cprint.printType(print, type->getClass(), loc::of(type));
+#endif
         print.output() << fmt::nbsp;
         cprint.printQualType(print, type->getPointeeType(), loc::of(type));
         print.end_ctor();

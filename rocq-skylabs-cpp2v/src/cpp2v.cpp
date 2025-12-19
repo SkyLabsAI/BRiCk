@@ -11,6 +11,7 @@
  */
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/Version.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
@@ -239,8 +240,7 @@ int main(int argc, const char **argv) {
         logging::set_level(logging::NONE);
     }
 
-    llvm::IntrusiveRefCntPtr<DiagnosticOptions> DiagOptions =
-        new DiagnosticOptions();
+    auto DiagOptions = new DiagnosticOptions();
     ClangTool Tool(OptionsParser.getCompilations(),
                    OptionsParser.getSourcePathList());
 
@@ -260,8 +260,13 @@ int main(int argc, const char **argv) {
         }
     }
 
-    Tool.setDiagnosticConsumer(new clang::TextDiagnosticPrinter(
-        llvm::errs(), DiagOptions.get(), false));
+#if CLANG_VERSION_MAJOR > 20
+    Tool.setDiagnosticConsumer(
+        new clang::TextDiagnosticPrinter(llvm::errs(), *DiagOptions, false));
+#else
+    Tool.setDiagnosticConsumer(
+        new clang::TextDiagnosticPrinter(llvm::errs(), DiagOptions, false));
+#endif
 
     return Tool.run(newFrontendActionFactory<ToCoqAction>().get());
 }
