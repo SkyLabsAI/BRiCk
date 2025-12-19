@@ -39,14 +39,16 @@ Running our coqc wrapper
   $ coqc-perf -color on large.v
   $ coqc-perf -color on huge.v
   $ coqc-perf -color on medium_variation.v
-  $ coqc-perf -color on err_out.v 2>&1
-  File "./err_out.v", line 3, characters 6-20:
-  Warning: Unused variable: x. [ltac2-unused-variable,ltac2,default]
+  $ coqc-perf -color on err_out.v > out.txt 2> err.txt
+  $ cat out.txt
   nat : Set
   
   nat is not universe polymorphic
   Expands to: Inductive Corelib.Init.Datatypes.nat
   Declared in library Corelib.Init.Datatypes, line 178, characters 10-13
+  $ cat err.txt
+  File "./err_out.v", line 3, characters 6-20:
+  Warning: Unused variable: x. [ltac2-unused-variable,ltac2,default]
   $ rm *.vos *.vok
 
 Extracting all the data
