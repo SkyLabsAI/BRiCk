@@ -1,0 +1,1083 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<div id="toc">
+<h2><a href="skylabs.lang.cpp.code_notations.html">skylabs.lang.cpp.code_notations</a></h2>
+<h2><a href="skylabs.lang.cpp.compile.html">skylabs.lang.cpp.compile</a></h2>
+<h2><a href="skylabs.lang.cpp.cpp.html">skylabs.lang.cpp.cpp</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.html">skylabs.lang.cpp.logic</a></h2>
+<h2><a href="skylabs.lang.cpp.mparser.html">skylabs.lang.cpp.mparser</a></h2>
+<h2><a href="skylabs.lang.cpp.msyntax.html">skylabs.lang.cpp.msyntax</a></h2>
+<h2><a href="skylabs.lang.cpp.notations.html">skylabs.lang.cpp.notations</a></h2>
+<h2><a href="skylabs.lang.cpp.parser.html">skylabs.lang.cpp.parser</a></h2>
+<h2><a href="skylabs.lang.cpp.primitives.html">skylabs.lang.cpp.primitives</a></h2>
+<h2><a href="skylabs.lang.cpp.reserved_notation.html">skylabs.lang.cpp.reserved_notation</a></h2>
+<h2><a href="skylabs.lang.cpp.semantics.html">skylabs.lang.cpp.semantics</a></h2>
+<h2><a href="skylabs.lang.cpp.specs.html">skylabs.lang.cpp.specs</a></h2>
+<h2><a href="skylabs.lang.cpp.syntax.html">skylabs.lang.cpp.syntax</a></h2>
+<h2><a href="skylabs.lang.cpp.algebra.cfrac.html">skylabs.lang.cpp.algebra.cfrac</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.algebra.cfrac.html#lab1">Const/mutable fractions</a>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.algebra.cfrac.html#lab2">OFE</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.algebra.cfrac.html#lab3">CMRA</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.algebra.cfrac.html#lab4">Backwards compatibility</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.bi.cfractional.html">skylabs.lang.cpp.bi.cfractional</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.bi.cfractional.html#lab5">Fractional predicates at type <span class="inlinecode"><span class="id" title="var">cQp.t</span></span></a>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.bi.cfractional.html#lab6">Properties of <span class="inlinecode"><span class="id" title="var">CFractional</span></span></a>
+
+</li>
+<li><a href="skylabs.lang.cpp.bi.cfractional.html#lab10">Backwards compatibility</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.bi.cfractional.html#lab14">IPM instances</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.bi.cfractional.html#lab15">Observations from validity</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.bi.cfractional_tests.html">skylabs.lang.cpp.bi.cfractional_tests</a></h2>
+<h2><a href="skylabs.lang.cpp.bi.spec.html">skylabs.lang.cpp.bi.spec</a></h2>
+<h2><a href="skylabs.lang.cpp.bi.split_cfrac.html">skylabs.lang.cpp.bi.split_cfrac</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.bi.split_cfrac.html#lab16">Splitting and combining const/mutable fractional things</a>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.bi.split_cfrac.html#lab17">Operations on const/mutable fractions</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.bi.split_cfrac.html#lab18">Splitting const/mutable fractions</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.bi.split_cfrac.html#lab19">Combining const/mutable fractions</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.bi.split_cfrac_tests.html">skylabs.lang.cpp.bi.split_cfrac_tests</a></h2>
+<h2><a href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html">skylabs.lang.cpp.bi.spec.cfrac_splittable</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#lab20">Spec building block: const/mutable fractional ownership</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.bi.spec.typed.html">skylabs.lang.cpp.bi.spec.typed</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.arr.html">skylabs.lang.cpp.logic.arr</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.atomics.html">skylabs.lang.cpp.logic.atomics</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.atomics_derived.html">skylabs.lang.cpp.logic.atomics_derived</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.builtins.html">skylabs.lang.cpp.logic.builtins</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.builtins.html#lab21">Wp Semantics for builtins</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.builtins.html#lab22">Endianness</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.builtins.html#lab23">Builtin functions</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.call.html">skylabs.lang.cpp.logic.call</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.const.html">skylabs.lang.cpp.logic.const</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.core_string.html">skylabs.lang.cpp.logic.core_string</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.cptr.html">skylabs.lang.cpp.logic.cptr</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.cstring.html">skylabs.lang.cpp.logic.cstring</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.cstring.html#lab24"><span class="inlinecode"><span class="id" title="var">cstring</span></span>s</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.destroy.html">skylabs.lang.cpp.logic.destroy</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.destroy.html#lab25">Destroying primitives</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.destroy.html#lab26">Invoking destructors</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.destroy.html#lab27">Destroying structures and unions</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.destroy.html#lab28">Arrays and values</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.destroy.html#lab29">Destroying temporaries</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.dispatch.html">skylabs.lang.cpp.logic.dispatch</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.dispatch.html#lab30">reflecting virtual function dispatch in the logic.</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.dispatch.html#lab31">implementation and the downcast for <span class="inlinecode"><span class="id" title="var">this</span></span> pointer.</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.entailsN.html">skylabs.lang.cpp.logic.entailsN</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.expr.html">skylabs.lang.cpp.logic.expr</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.expr.html#lab32">Semantics of expressions</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.expr.html#lab33">(expressed in weakest pre-condition style)</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.expr.html#lab34">Weakest pre-condition for expressions</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.expr.html#lab35">String Literals</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.expr.html#lab37">Unary Operators</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.expr.html#lab38">Binary Operators</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.expr.html#lab39">Casts</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.expr.html#lab40"><span class="inlinecode"><span class="id" title="var">Cderived2base</span></span></a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.expr.html#lab41">of the "then" and "else" expressions (which must be the same).</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.expr.html#lab42">We express this with 4 rules, one for each of <span class="inlinecode"><span class="id" title="var">wp_lval</span></span>,</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.expr.html#lab43"><span class="inlinecode"><span class="id" title="var">wp_operand</span></span>, <span class="inlinecode"><span class="id" title="var">wp_xval</span></span>, and <span class="inlinecode"><span class="id" title="var">wp_init</span></span>.</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.expr.html#lab44">Function calls</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.expr.html#lab45">Member calls</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.expr.html#lab46">Operator Calls</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.func.html">skylabs.lang.cpp.logic.func</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.func.html#lab47">Weakest precondition of a constructor: Initial construction step.</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.func.html#lab48">Aggregate identity</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.func.html#lab49">Binding parameters</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.func.html#lab50">The weakest precondition of a function</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.func.html#lab51">The weakest precondition of a method</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.func.html#lab52">Weakest precondition of a constructor</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.func.html#lab53">Weakest precondition of a destructor</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.heap_pred.html">skylabs.lang.cpp.logic.heap_pred</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.initializers.html">skylabs.lang.cpp.logic.initializers</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.initializers.html#lab54">Default initilalization</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.initializers.html#lab55">Expression initialization</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.layout.html">skylabs.lang.cpp.logic.layout</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.mpred.html">skylabs.lang.cpp.logic.mpred</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.mpred_prop.html">skylabs.lang.cpp.logic.mpred_prop</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.mpred_prop.html#lab56">Mpred satisfies Ghostly and HasUsualOwn</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.new_delete.html">skylabs.lang.cpp.logic.new_delete</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab57">Weakest pre-condition for <span class="inlinecode"><span class="id" title="var">new</span></span> and <span class="inlinecode"><span class="id" title="var">delete</span></span> expressions</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab58">The semantics of <code>new</code> and <code>delete</code> expressions (including their array forms)</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab59">are *very* complex in C++. This is due to a litany of corner cases such as:</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab60">- the need to pair allocation and de-allocation functions</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab61">- the existance of placement <code>new</code></a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab62">- the need to handle alignment as well as size.</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab63">- the potential for padding bytes.</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab64">- the potential to merge allocations. (BRiCk does not attempt to support this)</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab65">NOTE It is important that these rules are sound, but less important that</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab66">they are complete. When in doubt, we err on the side of caution and under-specify</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab67">the behavior of various constructs.</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab68">If you run into code that requires addditional semantic specification, please file</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab69">an issue.</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab70">&lt;https://eel.is/c++draft/new.delete.placement1>.</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab71">NOTE: placement &lt;new&gt; is more subtle than the rule described here</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab72">because it can be used to construct an object over an existing</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab73">object.</a>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab74"><code>delete</code> and <code>delete[]</code></a>
+
+</li>
+</ul>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab75">the form <code>delete p;</code> - where <code>p</code> is a non-null pointer to an object whose</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.new_delete.html#lab76">most-derived destructor is defined in the current translation unit.</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.object_repr.html">skylabs.lang.cpp.logic.object_repr</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.operator.html">skylabs.lang.cpp.logic.operator</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.operator.html#lab77">Pointer comparison operators</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.path_pred.html">skylabs.lang.cpp.logic.path_pred</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.pred.html">skylabs.lang.cpp.logic.pred</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.pred.html#lab79">Deducing pointer equalities</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.pred_paradoxes.html">skylabs.lang.cpp.logic.pred_paradoxes</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.raw.html">skylabs.lang.cpp.logic.raw</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.rep.html">skylabs.lang.cpp.logic.rep</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.rep_defs.html">skylabs.lang.cpp.logic.rep_defs</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.rep_defs.html#lab81">assert properties of the heap</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.rep_proofmode.html">skylabs.lang.cpp.logic.rep_proofmode</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.rep_proofmode.html#lab82">Proof mode instances</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.rep_proofmode.html#lab83">Instances for <span class="inlinecode"><span class="id" title="var">_at</span></span></a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.rep_proofmode.html#lab84">Instances for <span class="inlinecode"><span class="id" title="var">_offsetR</span></span></a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.rep_proofmode.html#lab85">Instances for <span class="inlinecode"><span class="id" title="var">pureR</span></span></a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.spectra_mpred.html">skylabs.lang.cpp.logic.spectra_mpred</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.spectra_mpred.html#lab86">Top-level theorem for mpred</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.stmt.html">skylabs.lang.cpp.logic.stmt</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.stmt.html#lab87">Attribute Evaluation</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.stmt.html#lab88">Expression Evaluation</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.stmt.html#lab89">Declarations</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.stmt.html#lab90">Blocks</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.stmt.html#lab91"><code>if</code></a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.stmt.html#lab92"><code>while</code></a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.stmt.html#lab93"><code>for</code></a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.stmt.html#lab94"><code>do</code></a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.stmt.html#lab95"><code>return</code></a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.stmt.html#lab96"><code>break</code></a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.stmt.html#lab97"><code>continue</code></a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.stmt.html#lab98"><code>switch</code></a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.string.html">skylabs.lang.cpp.logic.string</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.string.html#lab99"><span class="inlinecode"><span class="id" title="var">cstring</span></span>s and <span class="inlinecode"><span class="id" title="var">zstring</span></span>s</a>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.string.html#lab100">Notes</a>
+
+</li>
+</ul>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.string.html#lab101"><span class="inlinecode"><span class="id" title="var">cstring.t</span></span> and <span class="inlinecode"><span class="id" title="var">cstring.WF</span></span> - Well Formed <span class="inlinecode"><span class="id" title="var">BS.t</span></span>s (bytestrings) as a Carrier Type for C++ Strings</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.string.html#lab102"><span class="inlinecode"><span class="id" title="var">cstring.R</span></span> - Fixed Sized Strings</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.string.html#lab103"><span class="inlinecode"><span class="id" title="var">cstring.bufR</span></span> - Dynamic Sized Strings Backed by Fixed Sized Character Arrays</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.translation_unit.html">skylabs.lang.cpp.logic.translation_unit</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.vbyte.html">skylabs.lang.cpp.logic.vbyte</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.wp.html">skylabs.lang.cpp.logic.wp</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.wp.html#lab104">Regions</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.wp.html#lab109">prvalue</a>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.wp.html#lab110">boolean operands</a>
+
+</li>
+</ul>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.wp.html#lab111">xvalues</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.wp.html#lab112">Statements</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.wp_notations.html">skylabs.lang.cpp.logic.wp_notations</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.z_to_bytes.html">skylabs.lang.cpp.logic.z_to_bytes</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.zstring.html">skylabs.lang.cpp.logic.zstring</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.zstring.html#lab113"><span class="inlinecode"><span class="id" title="var">zstring</span></span>s</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.heap_pred.aggregate.html">skylabs.lang.cpp.logic.heap_pred.aggregate</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.heap_pred.any.html">skylabs.lang.cpp.logic.heap_pred.any</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.heap_pred.block.html">skylabs.lang.cpp.logic.heap_pred.block</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.heap_pred.everywhere.html">skylabs.lang.cpp.logic.heap_pred.everywhere</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.heap_pred.least.html">skylabs.lang.cpp.logic.heap_pred.least</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.heap_pred.null.html">skylabs.lang.cpp.logic.heap_pred.null</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.heap_pred.prelude.html">skylabs.lang.cpp.logic.heap_pred.prelude</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.heap_pred.prim.html">skylabs.lang.cpp.logic.heap_pred.prim</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.heap_pred.prim.html#lab114"><span class="inlinecode"><span class="id" title="var">reference_to</span></span></a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.heap_pred.simple.html">skylabs.lang.cpp.logic.heap_pred.simple</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.heap_pred.simple.html#lab115">Object derivations</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.heap_pred.simple.html#lab116"><span class="inlinecode"><span class="id" title="var">alignedR</span></span></a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.heap_pred.simple.html#lab117"><span class="inlinecode"><span class="id" title="var">derivationR</span></span></a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.heap_pred.tptsto.html">skylabs.lang.cpp.logic.heap_pred.tptsto</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.heap_pred.uninit.html">skylabs.lang.cpp.logic.heap_pred.uninit</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.heap_pred.valid.html">skylabs.lang.cpp.logic.heap_pred.valid</a></h2>
+<h2><a href="skylabs.lang.cpp.logic.lib.agree.html">skylabs.lang.cpp.logic.lib.agree</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.lib.agree.html#lab118">Copyright (C) 2022 BlueRock Security, Inc.</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.lib.agree.html#lab119">All rights reserved.</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.lib.agree.html#lab120">SPDX-License-Identifier: LGPL-2.1 WITH BedRock Exception for use over network, see repository root for details.</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.lib.auth_frac.html">skylabs.lang.cpp.logic.lib.auth_frac</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.lib.auth_frac.html#lab121">Copyright (C) 2022-2025 BlueRock Security, Inc.</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.lib.auth_frac.html#lab122">All rights reserved.</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.lib.auth_frac.html#lab123">SPDX-License-Identifier: LGPL-2.1 WITH BedRock Exception for use over network, see repository root for details.</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.logic.lib.dfrac_agree.html">skylabs.lang.cpp.logic.lib.dfrac_agree</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.logic.lib.dfrac_agree.html#lab124">Copyright (C) 2022 BlueRock Security, Inc.</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.lib.dfrac_agree.html#lab125">All rights reserved.</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.logic.lib.dfrac_agree.html#lab126">SPDX-License-Identifier: LGPL-2.1 WITH BedRock Exception for use over network, see repository root for details.</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.model.inductive_pointers.html">skylabs.lang.cpp.model.inductive_pointers</a></h2>
+<h2><a href="skylabs.lang.cpp.model.inductive_pointers2.html">skylabs.lang.cpp.model.inductive_pointers2</a></h2>
+<h2><a href="skylabs.lang.cpp.model.inductive_pointers_utils.html">skylabs.lang.cpp.model.inductive_pointers_utils</a></h2>
+<h2><a href="skylabs.lang.cpp.model.simple_pointers.html">skylabs.lang.cpp.model.simple_pointers</a></h2>
+<h2><a href="skylabs.lang.cpp.model.simple_pointers_utils.html">skylabs.lang.cpp.model.simple_pointers_utils</a></h2>
+<h2><a href="skylabs.lang.cpp.model.simple_pred.html">skylabs.lang.cpp.model.simple_pred</a></h2>
+<h2><a href="skylabs.lang.cpp.mparser.expr.html">skylabs.lang.cpp.mparser.expr</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.mparser.expr.html#lab128">Template-only derived expressions emitted by cpp2v</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.mparser.expr.html#lab129">Template-only derived variable declarations emitted by cpp2v</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.mparser.prelude.html">skylabs.lang.cpp.mparser.prelude</a></h2>
+<h2><a href="skylabs.lang.cpp.mparser.stmt.html">skylabs.lang.cpp.mparser.stmt</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.mparser.stmt.html#lab130">Template-only derived variable declarations emitted by cpp2v</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.mparser.tu.html">skylabs.lang.cpp.mparser.tu</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.mparser.tu.html#lab131">Template-only top-level declarations emitted by cpp2v</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.mparser.type.html">skylabs.lang.cpp.mparser.type</a></h2>
+<h2><a href="skylabs.lang.cpp.parser.decl.html">skylabs.lang.cpp.parser.decl</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.parser.decl.html#lab132">Derived declaration helpers emitted by cpp2v</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.parser.expr.html">skylabs.lang.cpp.parser.expr</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.parser.expr.html#lab133">Derived expressions emitted by cpp2v</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.parser.lang.html">skylabs.lang.cpp.parser.lang</a></h2>
+<h2><a href="skylabs.lang.cpp.parser.name.html">skylabs.lang.cpp.parser.name</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.parser.name.html#lab134">Derived names emitted by cpp2v</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.parser.notation.html">skylabs.lang.cpp.parser.notation</a></h2>
+<h2><a href="skylabs.lang.cpp.parser.prelude.html">skylabs.lang.cpp.parser.prelude</a></h2>
+<h2><a href="skylabs.lang.cpp.parser.reduction.html">skylabs.lang.cpp.parser.reduction</a></h2>
+<h2><a href="skylabs.lang.cpp.parser.stmt.html">skylabs.lang.cpp.parser.stmt</a></h2>
+<h2><a href="skylabs.lang.cpp.parser.type.html">skylabs.lang.cpp.parser.type</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.parser.type.html#lab135">Derived types emitted by cpp2v</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.parser.plugin.cpp2v.html">skylabs.lang.cpp.parser.plugin.cpp2v</a></h2>
+<h2><a href="skylabs.lang.cpp.semantics.alloc_id.html">skylabs.lang.cpp.semantics.alloc_id</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.semantics.alloc_id.html#lab136">Allocation IDs.</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.semantics.bswap.html">skylabs.lang.cpp.semantics.bswap</a></h2>
+<h2><a href="skylabs.lang.cpp.semantics.builtins.html">skylabs.lang.cpp.semantics.builtins</a></h2>
+<h2><a href="skylabs.lang.cpp.semantics.cast.html">skylabs.lang.cpp.semantics.cast</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.semantics.cast.html#lab137">Primitive Conversions</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.semantics.cast_operator.html">skylabs.lang.cpp.semantics.cast_operator</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.semantics.cast_operator.html#lab138">Binary Operator Static Semantics</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.semantics.characters.html">skylabs.lang.cpp.semantics.characters</a></h2>
+<h2><a href="skylabs.lang.cpp.semantics.dispatch.html">skylabs.lang.cpp.semantics.dispatch</a></h2>
+<h2><a href="skylabs.lang.cpp.semantics.genv.html">skylabs.lang.cpp.semantics.genv</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.semantics.genv.html#lab139">global environments</a>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.semantics.genv.html#lab140">One Definition Rule</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.semantics.heap_types.html">skylabs.lang.cpp.semantics.heap_types</a></h2>
+<h2><a href="skylabs.lang.cpp.semantics.intensional.html">skylabs.lang.cpp.semantics.intensional</a></h2>
+<h2><a href="skylabs.lang.cpp.semantics.operator.html">skylabs.lang.cpp.semantics.operator</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.semantics.operator.html#lab141">Operator semantics</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.semantics.operator.html#lab142">Unary Operators</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.semantics.operator.html#lab143">Binary Operators</a>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.semantics.operator.html#lab144">Arithmetic Operators</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.semantics.operator.html#lab145">bitwise operators</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.semantics.operator.html#lab146">Shifting Operators</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.semantics.operator.html#lab147">comparison operators</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.semantics.promotion.html">skylabs.lang.cpp.semantics.promotion</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.semantics.promotion.html#lab148">Type-level semantics of type promotions</a>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.semantics.promotion.html#lab149">Integral Promotion</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.semantics.promotion.html#lab150">Arithmetic Promotion</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.semantics.ptrs.html">skylabs.lang.cpp.semantics.ptrs</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.semantics.ptrs.html#lab151">Pointers.</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.semantics.ptrs.html#lab152">Pointer offsets.</a>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.semantics.ptrs.html#lab153">Concrete pointer offsets.</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.semantics.ptrs.html#lab154"><span class="inlinecode"><span class="id" title="var">offset</span></span> Congruence</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.semantics.ptrs.html#lab155"><span class="inlinecode"><span class="id" title="var">ptr</span></span> Congruence</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.semantics.ptrs.html#lab156"><span class="inlinecode"><span class="id" title="var">same_address</span></span> lemmas</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.semantics.ptrs.html#lab157"><span class="inlinecode"><span class="id" title="var">same_address_bool</span></span> lemmas</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.semantics.ptrs.html#lab158"><span class="inlinecode"><span class="id" title="var">same_alloc</span></span> lemmas</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.semantics.sub_module.html">skylabs.lang.cpp.semantics.sub_module</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.semantics.sub_module.html#lab159">Sub-module</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.semantics.sub_module.html#lab160">Definitions for decidability</a>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.semantics.sub_module.html#lab161">Inclusion of types (<span class="inlinecode"><span class="id" title="var">GlobDecl</span></span>)</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.semantics.sub_module.html#lab163">Inclusion of <span class="inlinecode"><span class="id" title="var">ObjValue</span></span></a>
+
+</li>
+<li><a href="skylabs.lang.cpp.semantics.sub_module.html#lab165">Inclusion on <span class="inlinecode"><span class="id" title="var">translation_unit</span></span></a>
+
+</li>
+</ul>
+
+</li>
+<li><a href="skylabs.lang.cpp.semantics.sub_module.html#lab166">Decidability</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.semantics.subtyping.html">skylabs.lang.cpp.semantics.subtyping</a></h2>
+<h2><a href="skylabs.lang.cpp.semantics.types.html">skylabs.lang.cpp.semantics.types</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.semantics.types.html#lab167">sizeof</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.semantics.types.html#lab168">alignof</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.semantics.val_wrap.html">skylabs.lang.cpp.semantics.val_wrap</a></h2>
+<h2><a href="skylabs.lang.cpp.semantics.values.html">skylabs.lang.cpp.semantics.values</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.semantics.values.html#lab169">Raw bytes</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.semantics.values.html#lab170">Values</a>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.semantics.values.html#lab171">Notation wrappers for <span class="inlinecode"><span class="id" title="var">val</span></span></a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.specs.arg_errors.html">skylabs.lang.cpp.specs.arg_errors</a></h2>
+<h2><a href="skylabs.lang.cpp.specs.classy.html">skylabs.lang.cpp.specs.classy</a></h2>
+<h2><a href="skylabs.lang.cpp.specs.cpp_specs.html">skylabs.lang.cpp.specs.cpp_specs</a></h2>
+<h2><a href="skylabs.lang.cpp.specs.elaborate.html">skylabs.lang.cpp.specs.elaborate</a></h2>
+<h2><a href="skylabs.lang.cpp.specs.functions.html">skylabs.lang.cpp.specs.functions</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.specs.functions.html#lab173">Wrappers to build <span class="inlinecode"><span class="id" title="var">function_spec</span></span> from a <span class="inlinecode"><span class="id" title="var">WithPrePost</span></span></a>
+
+</li>
+<li><a href="skylabs.lang.cpp.specs.functions.html#lab174"><span class="inlinecode"><span class="id" title="var">this</span></span> pointer needs to be adjusted before a call.</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.specs.spec_notations.html">skylabs.lang.cpp.specs.spec_notations</a></h2>
+<h2><a href="skylabs.lang.cpp.specs.wp_spec_compat.html">skylabs.lang.cpp.specs.wp_spec_compat</a></h2>
+<h2><a href="skylabs.lang.cpp.syntax.compare.html">skylabs.lang.cpp.syntax.compare</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.syntax.compare.html#lab175">Name maps</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.syntax.core.html">skylabs.lang.cpp.syntax.core</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.syntax.core.html#lab176">Function types</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.core.html#lab177">Templates</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.core.html#lab178">Atomic names</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.core.html#lab179">Structured names</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.core.html#lab180">Types</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.core.html#lab181">Expressions</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.core.html#lab182">Casts</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.core.html#lab183">Notations</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.core.html#lab184">C++ with structured names</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.core.html#lab185">Derived forms</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.core.html#lab186">Dependent names, types, and terms</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.syntax.dealias.html">skylabs.lang.cpp.syntax.dealias</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.syntax.dealias.html#lab187">Resolving aliases</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.syntax.decl.html">skylabs.lang.cpp.syntax.decl</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.syntax.decl.html#lab188">Type Declarations</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.decl.html#lab189">Value Declarations</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.syntax.expr_notations.html">skylabs.lang.cpp.syntax.expr_notations</a></h2>
+<h2><a href="skylabs.lang.cpp.syntax.extras.html">skylabs.lang.cpp.syntax.extras</a></h2>
+<h2><a href="skylabs.lang.cpp.syntax.handler.html">skylabs.lang.cpp.syntax.handler</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.syntax.handler.html#lab194">Handlers for simple AST traversals</a>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.syntax.handler.html#lab195">Basic handlers</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.syntax.literal_string.html">skylabs.lang.cpp.syntax.literal_string</a></h2>
+<h2><a href="skylabs.lang.cpp.syntax.mcore.html">skylabs.lang.cpp.syntax.mcore</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.syntax.mcore.html#lab196">C++ with templates</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.syntax.mtraverse.html">skylabs.lang.cpp.syntax.mtraverse</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.syntax.mtraverse.html#lab197">Traversals on template language syntax</a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.syntax.mtyped.html">skylabs.lang.cpp.syntax.mtyped</a></h2>
+<h2><a href="skylabs.lang.cpp.syntax.name_notation.html">skylabs.lang.cpp.syntax.name_notation</a></h2>
+<h2><a href="skylabs.lang.cpp.syntax.namemap.html">skylabs.lang.cpp.syntax.namemap</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.syntax.namemap.html#lab198">Name maps</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.syntax.notations.html">skylabs.lang.cpp.syntax.notations</a></h2>
+<h2><a href="skylabs.lang.cpp.syntax.overloadable.html">skylabs.lang.cpp.syntax.overloadable</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.syntax.overloadable.html#lab199">Unary, dependent expression constructor names</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.overloadable.html#lab200">Binary, dependent expression constructor names</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.syntax.preliminary.html">skylabs.lang.cpp.syntax.preliminary</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.syntax.preliminary.html#lab201">Type Preliminaries</a>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.syntax.preliminary.html#lab202">Type qualifiers</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.preliminary.html#lab203">Calling Conventions</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.preliminary.html#lab204">Function Arities, i.e. variadic functions or not</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.preliminary.html#lab205">Character types</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.preliminary.html#lab206">Integer types</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.preliminary.html#lab207">Floating point types</a>
+
+</li>
+</ul>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.preliminary.html#lab208">Expression Preliminaries</a>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.syntax.preliminary.html#lab209">Evaluation Order</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.preliminary.html#lab210">Atomic Builtins</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.preliminary.html#lab211">Builtins</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.preliminary.html#lab212">Dispatch type, i.e. <code>virtual</code> or <code>static</code></a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.preliminary.html#lab213">Value categories</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.preliminary.html#lab214">The way an operator call is desugared</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.syntax.prelude.html">skylabs.lang.cpp.syntax.prelude</a></h2>
+<h2><a href="skylabs.lang.cpp.syntax.pretty.html">skylabs.lang.cpp.syntax.pretty</a></h2>
+<h2><a href="skylabs.lang.cpp.syntax.stmt.html">skylabs.lang.cpp.syntax.stmt</a></h2>
+<h2><a href="skylabs.lang.cpp.syntax.stmt_notations.html">skylabs.lang.cpp.syntax.stmt_notations</a></h2>
+<h2><a href="skylabs.lang.cpp.syntax.supported.html">skylabs.lang.cpp.syntax.supported</a></h2>
+<h2><a href="skylabs.lang.cpp.syntax.templates.html">skylabs.lang.cpp.syntax.templates</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.syntax.templates.html#lab215">Template pre-instances</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.templates.html#lab216">Template instances</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.templates.html#lab217">Templated values</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.templates.html#lab218">Template TUs</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.syntax.translation_unit.html">skylabs.lang.cpp.syntax.translation_unit</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.syntax.translation_unit.html#lab219">Type Declarations</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.translation_unit.html#lab221">Value Declarations</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.translation_unit.html#lab223">Initializers</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.translation_unit.html#lab224">Aliases</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.translation_unit.html#lab225">Translation units</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.syntax.type_notations.html">skylabs.lang.cpp.syntax.type_notations</a></h2>
+<h2><a href="skylabs.lang.cpp.syntax.typed.html">skylabs.lang.cpp.syntax.typed</a></h2>
+<h2><a href="skylabs.lang.cpp.syntax.types.html">skylabs.lang.cpp.syntax.types</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.syntax.types.html#lab226">Qualifier normalization</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.types.html#lab227">Smart constructors</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.types.html#lab228">Erasing qualifiers</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.types.html#lab229">Qualifier simplification tactic</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.types.html#lab230">Type normalization</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.types.html#lab231">Qualifier-aware type operations</a>
+
+</li>
+<li><a href="skylabs.lang.cpp.syntax.types.html#lab232">Heap Types</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.syntax.typing.html">skylabs.lang.cpp.syntax.typing</a></h2>
+<h2><a href="skylabs.lang.cpp.syntax.untemp.html">skylabs.lang.cpp.syntax.untemp</a></h2>
+<ul class="doclist">
+<li><a href="skylabs.lang.cpp.syntax.untemp.html#lab233">Converting untemplated code between <span class="inlinecode"><span class="id" title="var">lang.temp</span></span> and <span class="inlinecode"><span class="id" title="var">lang.cpp</span></span></a>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.syntax.name_notation.parser.html">skylabs.lang.cpp.syntax.name_notation.parser</a></h2>
+<ul class="doclist">
+<li><ul class="doclist">
+<li><a href="skylabs.lang.cpp.syntax.name_notation.parser.html#lab234">A parser for C++ names.</a>
+
+</li>
+</ul>
+
+</li>
+</ul>
+<h2><a href="skylabs.lang.cpp.syntax.name_notation.printer.html">skylabs.lang.cpp.syntax.name_notation.printer</a></h2>
+<h2><a href="skylabs.lang.cpp.syntax.name_notation.test_cases.html">skylabs.lang.cpp.syntax.name_notation.test_cases</a></h2>
+<h2><a href="skylabs.lang.cpp.syntax.name_notation.test_roundtrip.html">skylabs.lang.cpp.syntax.name_notation.test_roundtrip</a></h2>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

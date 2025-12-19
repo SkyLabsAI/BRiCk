@@ -1,0 +1,224 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.bi.spec.cfrac_splittable</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(C)&nbsp;2023&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.lang.cpp.bi.cfractional.html#"><span class="id" title="library">skylabs.lang.cpp.bi.cfractional</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.bi.prelude</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.bi.observe</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.proofmode.proofmode</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Set</span> <span class="id" title="var">Primitive</span> <span class="id" title="var">Projections</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Set</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Coercions</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Set</span> <span class="id" title="var">Default</span> <span class="id" title="keyword">Proof</span> <span class="id" title="var">Using</span> "Type*".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab20"></a><h1 class="section">Spec building block: const/mutable fractional ownership</h1>
+
+<div class="paragraph"> </div>
+
+Overview:
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> <span class="inlinecode"><span class="id" title="var">CFracSplittable_N</span></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.specs.wp_spec_compat.html#with_AR.R"><span class="id" title="variable">R</span></a></span>
+
+<div class="paragraph"> </div>
+
+
+</li>
+<li> Tactic <span class="inlinecode"><span class="id" title="var">solve_cfrac</span></span> for solving <span class="inlinecode"><span class="id" title="var">CFracSplittable_N</span></span>
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+<span class="inlinecode"><span class="id" title="var">CFracSplittable_N</span></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.specs.wp_spec_compat.html#with_AR.R"><span class="id" title="variable">R</span></a></span>, where <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.handler.html#lens.N"><span class="id" title="variable">N</span></a></span> counts the number of arguments taken
+by <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.specs.wp_spec_compat.html#with_AR.R"><span class="id" title="variable">R</span></a></span> after its const/mutable fraction, is short-hand for:
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.specs.wp_spec_compat.html#with_AR.R"><span class="id" title="variable">R</span></a></span> is <i>timeless</i>, meaning it represents ownership;
+
+<div class="paragraph"> </div>
+
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.specs.wp_spec_compat.html#with_AR.R"><span class="id" title="variable">R</span></a></span> is <i>const/mutable fractional</i>, meaning it can be split and
+
+</li>
+</ul>
+combined using <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#andb"><span class="id" title="definition">andb</span></a></span> on booleans and addition on fractions; and
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> the fraction in <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.specs.wp_spec_compat.html#with_AR.R"><span class="id" title="variable">R</span></a></span> is <i>valid</i>, meaning <span class="inlinecode">≤</span> <span class="inlinecode">1</span>.
+
+</li>
+</ul>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">solve_cfrac</span> := <span class="id" title="tactic">solve</span> [<span class="id" title="tactic">intros</span>; <span class="id" title="tactic">split</span>; [<span class="id" title="tactic">apply</span> <span class="id" title="var">_</span>..|<span class="id" title="var">solve_cfrac_valid</span>]].<br/>
+
+<br/>
+<span class="id" title="keyword">Class</span> <a id="CFracSplittable_0" class="idref" href="#CFracSplittable_0"><span class="id" title="record">CFracSplittable_0</span></a> {<a id="PROP:1" class="idref" href="#PROP:1"><span class="id" title="binder">PROP</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#bi"><span class="id" title="record">bi</span></a>} (<a id="R:2" class="idref" href="#R:2"><span class="id" title="binder">R</span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.t"><span class="id" title="record">cQp.t</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#PROP:1"><span class="id" title="variable">PROP</span></a>) : <span class="id" title="keyword">Prop</span> := {<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="cfrac_splittable_0_fractional" class="idref" href="#cfrac_splittable_0_fractional"><span class="id" title="projection">cfrac_splittable_0_fractional</span></a> :: <a class="idref" href="skylabs.lang.cpp.bi.cfractional.html#CFractional"><span class="id" title="class">CFractional</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:2"><span class="id" title="variable">R</span></a>;<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="cfrac_splittable_0_timeless" class="idref" href="#cfrac_splittable_0_timeless"><span class="id" title="projection">cfrac_splittable_0_timeless</span></a> :: <span class="id" title="abbreviation">Timeless1</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:2"><span class="id" title="variable">R</span></a>;<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="cfrac_splittable_0_frac_valid" class="idref" href="#cfrac_splittable_0_frac_valid"><span class="id" title="projection">cfrac_splittable_0_frac_valid</span></a> :: <a class="idref" href="skylabs.lang.cpp.bi.cfractional.html#CFracValid0"><span class="id" title="class">CFracValid0</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:2"><span class="id" title="variable">R</span></a>;<br/>
+}.<br/>
+<span class="id" title="keyword">Section</span> <a id="cfrac_0" class="idref" href="#cfrac_0"><span class="id" title="section">cfrac_0</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="cfrac_0.PROP" class="idref" href="#cfrac_0.PROP"><span class="id" title="variable">PROP</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#bi"><span class="id" title="record">bi</span></a>} (<a id="cfrac_0.R" class="idref" href="#cfrac_0.R"><span class="id" title="variable">R</span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.t"><span class="id" title="record">cQp.t</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#PROP:7"><span class="id" title="variable">PROP</span></a>) `{!<a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#CFracSplittable_0"><span class="id" title="class">CFracSplittable_0</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:8"><span class="id" title="variable">R</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="cfrac_splittable_0_as_fractional" class="idref" href="#cfrac_splittable_0_as_fractional"><span class="id" title="instance">cfrac_splittable_0_as_fractional</span></a> : <a class="idref" href="skylabs.lang.cpp.bi.cfractional.html#AsCFractional0"><span class="id" title="abbreviation">AsCFractional0</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#cfrac_0.R"><span class="id" title="variable">R</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_as_cfrac</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#cfrac_0"><span class="id" title="section">cfrac_0</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Class</span> <a id="CFracSplittable_1" class="idref" href="#CFracSplittable_1"><span class="id" title="record">CFracSplittable_1</span></a> {<a id="A:10" class="idref" href="#A:10"><span class="id" title="binder">A</span></a>} {<a id="PROP:11" class="idref" href="#PROP:11"><span class="id" title="binder">PROP</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#bi"><span class="id" title="record">bi</span></a>} (<a id="R:12" class="idref" href="#R:12"><span class="id" title="binder">R</span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.t"><span class="id" title="record">cQp.t</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#A:10"><span class="id" title="variable">A</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#PROP:11"><span class="id" title="variable">PROP</span></a>) : <span class="id" title="keyword">Prop</span> := {<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="cfrac_splittable_1_fractional" class="idref" href="#cfrac_splittable_1_fractional"><span class="id" title="projection">cfrac_splittable_1_fractional</span></a> :: <a class="idref" href="skylabs.lang.cpp.bi.cfractional.html#CFractional1"><span class="id" title="abbreviation">CFractional1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:12"><span class="id" title="variable">R</span></a>;<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="cfrac_splittable_1_timeless" class="idref" href="#cfrac_splittable_1_timeless"><span class="id" title="projection">cfrac_splittable_1_timeless</span></a> :: <span class="id" title="abbreviation">Timeless2</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:12"><span class="id" title="variable">R</span></a>;<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="cfrac_splittable_1_frac_valid" class="idref" href="#cfrac_splittable_1_frac_valid"><span class="id" title="projection">cfrac_splittable_1_frac_valid</span></a> :: <a class="idref" href="skylabs.lang.cpp.bi.cfractional.html#CFracValid1"><span class="id" title="class">CFracValid1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:12"><span class="id" title="variable">R</span></a>;<br/>
+}.<br/>
+<span class="id" title="keyword">Section</span> <a id="cfrac_1" class="idref" href="#cfrac_1"><span class="id" title="section">cfrac_1</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="cfrac_1.A" class="idref" href="#cfrac_1.A"><span class="id" title="variable">A</span></a>} {<a id="cfrac_1.PROP" class="idref" href="#cfrac_1.PROP"><span class="id" title="variable">PROP</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#bi"><span class="id" title="record">bi</span></a>} (<a id="cfrac_1.R" class="idref" href="#cfrac_1.R"><span class="id" title="variable">R</span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.t"><span class="id" title="record">cQp.t</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#A:17"><span class="id" title="variable">A</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#PROP:18"><span class="id" title="variable">PROP</span></a>) `{!<a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#CFracSplittable_1"><span class="id" title="class">CFracSplittable_1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:19"><span class="id" title="variable">R</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="cfrac_splittable_1_as_fractional" class="idref" href="#cfrac_splittable_1_as_fractional"><span class="id" title="instance">cfrac_splittable_1_as_fractional</span></a> : <a class="idref" href="skylabs.lang.cpp.bi.cfractional.html#AsCFractional1"><span class="id" title="abbreviation">AsCFractional1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#cfrac_1.R"><span class="id" title="variable">R</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_as_cfrac</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#cfrac_1"><span class="id" title="section">cfrac_1</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Class</span> <a id="CFracSplittable_2" class="idref" href="#CFracSplittable_2"><span class="id" title="record">CFracSplittable_2</span></a> {<a id="A:21" class="idref" href="#A:21"><span class="id" title="binder">A</span></a> <a id="B:22" class="idref" href="#B:22"><span class="id" title="binder">B</span></a>} {<a id="PROP:23" class="idref" href="#PROP:23"><span class="id" title="binder">PROP</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#bi"><span class="id" title="record">bi</span></a>} (<a id="R:24" class="idref" href="#R:24"><span class="id" title="binder">R</span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.t"><span class="id" title="record">cQp.t</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#A:21"><span class="id" title="variable">A</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#B:22"><span class="id" title="variable">B</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#PROP:23"><span class="id" title="variable">PROP</span></a>) : <span class="id" title="keyword">Prop</span> := {<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="cfrac_splittable_2_fractional" class="idref" href="#cfrac_splittable_2_fractional"><span class="id" title="projection">cfrac_splittable_2_fractional</span></a> :: <a class="idref" href="skylabs.lang.cpp.bi.cfractional.html#CFractional2"><span class="id" title="abbreviation">CFractional2</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:24"><span class="id" title="variable">R</span></a>;<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="cfrac_splittable_2_timeless" class="idref" href="#cfrac_splittable_2_timeless"><span class="id" title="projection">cfrac_splittable_2_timeless</span></a> :: <span class="id" title="abbreviation">Timeless3</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:24"><span class="id" title="variable">R</span></a>;<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="cfrac_splittable_2_frac_valid" class="idref" href="#cfrac_splittable_2_frac_valid"><span class="id" title="projection">cfrac_splittable_2_frac_valid</span></a> :: <a class="idref" href="skylabs.lang.cpp.bi.cfractional.html#CFracValid2"><span class="id" title="class">CFracValid2</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:24"><span class="id" title="variable">R</span></a>;<br/>
+}.<br/>
+<span class="id" title="keyword">Section</span> <a id="cfrac_2" class="idref" href="#cfrac_2"><span class="id" title="section">cfrac_2</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="cfrac_2.A" class="idref" href="#cfrac_2.A"><span class="id" title="variable">A</span></a> <a id="cfrac_2.B" class="idref" href="#cfrac_2.B"><span class="id" title="variable">B</span></a>} {<a id="cfrac_2.PROP" class="idref" href="#cfrac_2.PROP"><span class="id" title="variable">PROP</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#bi"><span class="id" title="record">bi</span></a>} (<a id="cfrac_2.R" class="idref" href="#cfrac_2.R"><span class="id" title="variable">R</span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.t"><span class="id" title="record">cQp.t</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#A:29"><span class="id" title="variable">A</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#B:30"><span class="id" title="variable">B</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#PROP:31"><span class="id" title="variable">PROP</span></a>) `{!<a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#CFracSplittable_2"><span class="id" title="class">CFracSplittable_2</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:32"><span class="id" title="variable">R</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="cfrac_splittable_2_as_fractional" class="idref" href="#cfrac_splittable_2_as_fractional"><span class="id" title="instance">cfrac_splittable_2_as_fractional</span></a> : <a class="idref" href="skylabs.lang.cpp.bi.cfractional.html#AsCFractional2"><span class="id" title="abbreviation">AsCFractional2</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#cfrac_2.R"><span class="id" title="variable">R</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_as_cfrac</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#cfrac_2"><span class="id" title="section">cfrac_2</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Class</span> <a id="CFracSplittable_3" class="idref" href="#CFracSplittable_3"><span class="id" title="record">CFracSplittable_3</span></a> {<a id="A:34" class="idref" href="#A:34"><span class="id" title="binder">A</span></a> <a id="B:35" class="idref" href="#B:35"><span class="id" title="binder">B</span></a> <a id="C:36" class="idref" href="#C:36"><span class="id" title="binder">C</span></a>} {<a id="PROP:37" class="idref" href="#PROP:37"><span class="id" title="binder">PROP</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#bi"><span class="id" title="record">bi</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="R:38" class="idref" href="#R:38"><span class="id" title="binder">R</span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.t"><span class="id" title="record">cQp.t</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#A:34"><span class="id" title="variable">A</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#B:35"><span class="id" title="variable">B</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#C:36"><span class="id" title="variable">C</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#PROP:37"><span class="id" title="variable">PROP</span></a>) : <span class="id" title="keyword">Prop</span> := {<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="cfrac_splittable_3_fractional" class="idref" href="#cfrac_splittable_3_fractional"><span class="id" title="projection">cfrac_splittable_3_fractional</span></a> :: <a class="idref" href="skylabs.lang.cpp.bi.cfractional.html#CFractional3"><span class="id" title="abbreviation">CFractional3</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:38"><span class="id" title="variable">R</span></a>;<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="cfrac_splittable_3_timeless" class="idref" href="#cfrac_splittable_3_timeless"><span class="id" title="projection">cfrac_splittable_3_timeless</span></a> :: <span class="id" title="abbreviation">Timeless4</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:38"><span class="id" title="variable">R</span></a>;<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="cfrac_splittable_3_frac_valid" class="idref" href="#cfrac_splittable_3_frac_valid"><span class="id" title="projection">cfrac_splittable_3_frac_valid</span></a> :: <a class="idref" href="skylabs.lang.cpp.bi.cfractional.html#CFracValid3"><span class="id" title="class">CFracValid3</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:38"><span class="id" title="variable">R</span></a>;<br/>
+}.<br/>
+<span class="id" title="keyword">Section</span> <a id="cfrac_3" class="idref" href="#cfrac_3"><span class="id" title="section">cfrac_3</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="cfrac_3.A" class="idref" href="#cfrac_3.A"><span class="id" title="variable">A</span></a> <a id="cfrac_3.B" class="idref" href="#cfrac_3.B"><span class="id" title="variable">B</span></a> <a id="cfrac_3.C" class="idref" href="#cfrac_3.C"><span class="id" title="variable">C</span></a>} {<a id="cfrac_3.PROP" class="idref" href="#cfrac_3.PROP"><span class="id" title="variable">PROP</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#bi"><span class="id" title="record">bi</span></a>} (<a id="cfrac_3.R" class="idref" href="#cfrac_3.R"><span class="id" title="variable">R</span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.t"><span class="id" title="record">cQp.t</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#A:43"><span class="id" title="variable">A</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#B:44"><span class="id" title="variable">B</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#C:45"><span class="id" title="variable">C</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#PROP:46"><span class="id" title="variable">PROP</span></a>) `{!<a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#CFracSplittable_3"><span class="id" title="class">CFracSplittable_3</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:47"><span class="id" title="variable">R</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="cfrac_splittable_3_as_fractional" class="idref" href="#cfrac_splittable_3_as_fractional"><span class="id" title="instance">cfrac_splittable_3_as_fractional</span></a> : <a class="idref" href="skylabs.lang.cpp.bi.cfractional.html#AsCFractional3"><span class="id" title="abbreviation">AsCFractional3</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#cfrac_3.R"><span class="id" title="variable">R</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_as_cfrac</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#cfrac_3"><span class="id" title="section">cfrac_3</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Class</span> <a id="CFracSplittable_4" class="idref" href="#CFracSplittable_4"><span class="id" title="record">CFracSplittable_4</span></a> {<a id="A:49" class="idref" href="#A:49"><span class="id" title="binder">A</span></a> <a id="B:50" class="idref" href="#B:50"><span class="id" title="binder">B</span></a> <a id="C:51" class="idref" href="#C:51"><span class="id" title="binder">C</span></a> <a id="D:52" class="idref" href="#D:52"><span class="id" title="binder">D</span></a>} {<a id="PROP:53" class="idref" href="#PROP:53"><span class="id" title="binder">PROP</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#bi"><span class="id" title="record">bi</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="R:54" class="idref" href="#R:54"><span class="id" title="binder">R</span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.t"><span class="id" title="record">cQp.t</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#A:49"><span class="id" title="variable">A</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#B:50"><span class="id" title="variable">B</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#C:51"><span class="id" title="variable">C</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#D:52"><span class="id" title="variable">D</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#PROP:53"><span class="id" title="variable">PROP</span></a>) : <span class="id" title="keyword">Prop</span> := {<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="cfrac_splittable_4_fractional" class="idref" href="#cfrac_splittable_4_fractional"><span class="id" title="projection">cfrac_splittable_4_fractional</span></a> :: <a class="idref" href="skylabs.lang.cpp.bi.cfractional.html#CFractional4"><span class="id" title="abbreviation">CFractional4</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:54"><span class="id" title="variable">R</span></a>;<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="cfrac_splittable_4_timeless" class="idref" href="#cfrac_splittable_4_timeless"><span class="id" title="projection">cfrac_splittable_4_timeless</span></a> :: <span class="id" title="abbreviation">Timeless5</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:54"><span class="id" title="variable">R</span></a>;<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="cfrac_splittable_4_frac_valid" class="idref" href="#cfrac_splittable_4_frac_valid"><span class="id" title="projection">cfrac_splittable_4_frac_valid</span></a> :: <a class="idref" href="skylabs.lang.cpp.bi.cfractional.html#CFracValid4"><span class="id" title="class">CFracValid4</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:54"><span class="id" title="variable">R</span></a>;<br/>
+}.<br/>
+<span class="id" title="keyword">Section</span> <a id="cfrac_4" class="idref" href="#cfrac_4"><span class="id" title="section">cfrac_4</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="cfrac_4.A" class="idref" href="#cfrac_4.A"><span class="id" title="variable">A</span></a> <a id="cfrac_4.B" class="idref" href="#cfrac_4.B"><span class="id" title="variable">B</span></a> <a id="cfrac_4.C" class="idref" href="#cfrac_4.C"><span class="id" title="variable">C</span></a> <a id="cfrac_4.D" class="idref" href="#cfrac_4.D"><span class="id" title="variable">D</span></a>} {<a id="cfrac_4.PROP" class="idref" href="#cfrac_4.PROP"><span class="id" title="variable">PROP</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#bi"><span class="id" title="record">bi</span></a>} (<a id="cfrac_4.R" class="idref" href="#cfrac_4.R"><span class="id" title="variable">R</span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.t"><span class="id" title="record">cQp.t</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#A:59"><span class="id" title="variable">A</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#B:60"><span class="id" title="variable">B</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#C:61"><span class="id" title="variable">C</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#D:62"><span class="id" title="variable">D</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#PROP:63"><span class="id" title="variable">PROP</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{!<a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#CFracSplittable_4"><span class="id" title="class">CFracSplittable_4</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#cfrac_4.R"><span class="id" title="variable">R</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="cfrac_splittable_4_as_fractional" class="idref" href="#cfrac_splittable_4_as_fractional"><span class="id" title="instance">cfrac_splittable_4_as_fractional</span></a> : <a class="idref" href="skylabs.lang.cpp.bi.cfractional.html#AsCFractional4"><span class="id" title="abbreviation">AsCFractional4</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#cfrac_4.R"><span class="id" title="variable">R</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_as_cfrac</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#cfrac_4"><span class="id" title="section">cfrac_4</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Class</span> <a id="CFracSplittable_5" class="idref" href="#CFracSplittable_5"><span class="id" title="record">CFracSplittable_5</span></a> {<a id="A:66" class="idref" href="#A:66"><span class="id" title="binder">A</span></a> <a id="B:67" class="idref" href="#B:67"><span class="id" title="binder">B</span></a> <a id="C:68" class="idref" href="#C:68"><span class="id" title="binder">C</span></a> <a id="D:69" class="idref" href="#D:69"><span class="id" title="binder">D</span></a> <a id="E:70" class="idref" href="#E:70"><span class="id" title="binder">E</span></a>} {<a id="PROP:71" class="idref" href="#PROP:71"><span class="id" title="binder">PROP</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#bi"><span class="id" title="record">bi</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="R:72" class="idref" href="#R:72"><span class="id" title="binder">R</span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.t"><span class="id" title="record">cQp.t</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#A:66"><span class="id" title="variable">A</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#B:67"><span class="id" title="variable">B</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#C:68"><span class="id" title="variable">C</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#D:69"><span class="id" title="variable">D</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#E:70"><span class="id" title="variable">E</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#PROP:71"><span class="id" title="variable">PROP</span></a>) : <span class="id" title="keyword">Prop</span> := {<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="cfrac_splittable_5_fractional" class="idref" href="#cfrac_splittable_5_fractional"><span class="id" title="projection">cfrac_splittable_5_fractional</span></a> :: <a class="idref" href="skylabs.lang.cpp.bi.cfractional.html#CFractional5"><span class="id" title="abbreviation">CFractional5</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:72"><span class="id" title="variable">R</span></a>;<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="cfrac_splittable_5_timeless" class="idref" href="#cfrac_splittable_5_timeless"><span class="id" title="projection">cfrac_splittable_5_timeless</span></a> :: <span class="id" title="abbreviation">Timeless6</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:72"><span class="id" title="variable">R</span></a>;<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="cfrac_splittable_5_frac_valid" class="idref" href="#cfrac_splittable_5_frac_valid"><span class="id" title="projection">cfrac_splittable_5_frac_valid</span></a> :: <a class="idref" href="skylabs.lang.cpp.bi.cfractional.html#CFracValid5"><span class="id" title="class">CFracValid5</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#R:72"><span class="id" title="variable">R</span></a>;<br/>
+}.<br/>
+<span class="id" title="keyword">Section</span> <a id="cfrac_5" class="idref" href="#cfrac_5"><span class="id" title="section">cfrac_5</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="cfrac_5.A" class="idref" href="#cfrac_5.A"><span class="id" title="variable">A</span></a> <a id="cfrac_5.B" class="idref" href="#cfrac_5.B"><span class="id" title="variable">B</span></a> <a id="cfrac_5.C" class="idref" href="#cfrac_5.C"><span class="id" title="variable">C</span></a> <a id="cfrac_5.D" class="idref" href="#cfrac_5.D"><span class="id" title="variable">D</span></a> <a id="cfrac_5.E" class="idref" href="#cfrac_5.E"><span class="id" title="variable">E</span></a>} {<a id="cfrac_5.PROP" class="idref" href="#cfrac_5.PROP"><span class="id" title="variable">PROP</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#bi"><span class="id" title="record">bi</span></a>} (<a id="cfrac_5.R" class="idref" href="#cfrac_5.R"><span class="id" title="variable">R</span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.t"><span class="id" title="record">cQp.t</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#A:77"><span class="id" title="variable">A</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#B:78"><span class="id" title="variable">B</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#C:79"><span class="id" title="variable">C</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#D:80"><span class="id" title="variable">D</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#E:81"><span class="id" title="variable">E</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#PROP:82"><span class="id" title="variable">PROP</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{!<a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#CFracSplittable_5"><span class="id" title="class">CFracSplittable_5</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#cfrac_5.R"><span class="id" title="variable">R</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="cfrac_splittable_5_as_fractional" class="idref" href="#cfrac_splittable_5_as_fractional"><span class="id" title="instance">cfrac_splittable_5_as_fractional</span></a> : <a class="idref" href="skylabs.lang.cpp.bi.cfractional.html#AsCFractional5"><span class="id" title="abbreviation">AsCFractional5</span></a> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#cfrac_5.R"><span class="id" title="variable">R</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_as_cfrac</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#cfrac_5"><span class="id" title="section">cfrac_5</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

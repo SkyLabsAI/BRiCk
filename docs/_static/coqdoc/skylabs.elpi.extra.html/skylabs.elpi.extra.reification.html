@@ -1,0 +1,94 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>skylabs.elpi.extra.reification</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library skylabs.elpi.extra.reification</h1>
+
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab5"></a><h1 class="section">This file contains helper functions useful for efficient term reification in elpi.</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="library">Stdlib.Numbers.BinNums</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="library">Stdlib.Numbers.Cyclic.Int63.Sint63</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="library">Stdlib.Strings.Byte</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="Numbers" class="idref" href="#Numbers"><span class="id" title="module">Numbers</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">Stdlib.Numbers.BinNums</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">BinInt</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">Stdlib.Numbers.Cyclic.Int63.Uint63</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Numbers.t" class="idref" href="#Numbers.t"><span class="id" title="definition">t</span></a> : <span class="id" title="keyword">Type</span> := <span class="id" title="var">int</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Numbers.of_Z" class="idref" href="#Numbers.of_Z"><span class="id" title="definition">of_Z</span></a> (<a id="z:1" class="idref" href="#z:1"><span class="id" title="binder">z</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">*</span></a> <a class="idref" href="skylabs.elpi.extra.reification.html#Numbers.t"><span class="id" title="definition">t</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.elpi.extra.reification.html#z:1"><span class="id" title="variable">z</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z0"><span class="id" title="constructor">Z0</span></a> | <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Zpos"><span class="id" title="constructor">Zpos</span></a> <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="abbreviation">Uint63.of_Z</span> <a class="idref" href="skylabs.elpi.extra.reification.html#z:1"><span class="id" title="variable">z</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Zneg"><span class="id" title="constructor">Zneg</span></a> <span class="id" title="var">p</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.Cyclic.Int63.Uint63Axioms.html#of_Z"><span class="id" title="definition">of_Z</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Zpos"><span class="id" title="constructor">Zpos</span></a> <span class="id" title="var">p</span>)<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Numbers.of_N" class="idref" href="#Numbers.of_N"><span class="id" title="definition">of_N</span></a> (<a id="n:3" class="idref" href="#n:3"><span class="id" title="binder">n</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a>) : <a class="idref" href="skylabs.elpi.extra.reification.html#Numbers.t"><span class="id" title="definition">t</span></a> := <span class="id" title="abbreviation">Uint63.of_Z</span> (<span class="id" title="definition">Z.of_N</span> <a class="idref" href="skylabs.elpi.extra.reification.html#n:3"><span class="id" title="variable">n</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Numbers.of_pos" class="idref" href="#Numbers.of_pos"><span class="id" title="definition">of_pos</span></a> (<a id="p:4" class="idref" href="#p:4"><span class="id" title="binder">p</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#positive"><span class="id" title="inductive">positive</span></a>) : <a class="idref" href="skylabs.elpi.extra.reification.html#Numbers.t"><span class="id" title="definition">t</span></a> := <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.Cyclic.Int63.Uint63Axioms.html#of_pos"><span class="id" title="definition">of_pos</span></a> <a class="idref" href="skylabs.elpi.extra.reification.html#p:4"><span class="id" title="variable">p</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Numbers.of_nat" class="idref" href="#Numbers.of_nat"><span class="id" title="definition">of_nat</span></a> (<a id="n:5" class="idref" href="#n:5"><span class="id" title="binder">n</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) : <a class="idref" href="skylabs.elpi.extra.reification.html#Numbers.t"><span class="id" title="definition">t</span></a> := <span class="id" title="abbreviation">of_nat</span> <a class="idref" href="skylabs.elpi.extra.reification.html#n:5"><span class="id" title="variable">n</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Numbers.of_byte" class="idref" href="#Numbers.of_byte"><span class="id" title="definition">of_byte</span></a> (<a id="b:6" class="idref" href="#b:6"><span class="id" title="binder">b</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Byte.html#byte"><span class="id" title="inductive">Byte.byte</span></a>) : <a class="idref" href="skylabs.elpi.extra.reification.html#Numbers.t"><span class="id" title="definition">t</span></a> := <a class="idref" href="skylabs.elpi.extra.reification.html#Numbers.of_N"><span class="id" title="definition">of_N</span></a> (<span class="id" title="definition">Byte.to_N</span> <a class="idref" href="skylabs.elpi.extra.reification.html#b:6"><span class="id" title="variable">b</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Numbers.to_pos" class="idref" href="#Numbers.to_pos"><span class="id" title="definition">to_pos</span></a> (<a id="i:7" class="idref" href="#i:7"><span class="id" title="binder">i</span></a> : <a class="idref" href="skylabs.elpi.extra.reification.html#Numbers.t"><span class="id" title="definition">t</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#positive"><span class="id" title="inductive">positive</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.Cyclic.Int63.Uint63Axioms.html#to_Z"><span class="id" title="definition">to_Z</span></a> <a class="idref" href="skylabs.elpi.extra.reification.html#i:7"><span class="id" title="variable">i</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z0"><span class="id" title="constructor">Z0</span></a> | <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Zneg"><span class="id" title="constructor">Zneg</span></a> <span class="id" title="var">_</span> =&gt; 1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Zpos"><span class="id" title="constructor">Zpos</span></a> <span class="id" title="var">p</span> =&gt; <span class="id" title="var">p</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Numbers.to_N" class="idref" href="#Numbers.to_N"><span class="id" title="definition">to_N</span></a> (<a id="i:8" class="idref" href="#i:8"><span class="id" title="binder">i</span></a> : <a class="idref" href="skylabs.elpi.extra.reification.html#Numbers.t"><span class="id" title="definition">t</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.Cyclic.Int63.Uint63Axioms.html#to_Z"><span class="id" title="definition">to_Z</span></a> <a class="idref" href="skylabs.elpi.extra.reification.html#i:8"><span class="id" title="variable">i</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Zneg"><span class="id" title="constructor">Zneg</span></a> <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#N0"><span class="id" title="constructor">N0</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Zpos"><span class="id" title="constructor">Zpos</span></a> <span class="id" title="var">p</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Npos"><span class="id" title="constructor">Npos</span></a> <span class="id" title="var">p</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z0"><span class="id" title="constructor">Z0</span></a> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#N0"><span class="id" title="constructor">N0</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Numbers.to_byte" class="idref" href="#Numbers.to_byte"><span class="id" title="definition">to_byte</span></a> (<a id="i:9" class="idref" href="#i:9"><span class="id" title="binder">i</span></a> : <a class="idref" href="skylabs.elpi.extra.reification.html#Numbers.t"><span class="id" title="definition">t</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Byte.html#byte"><span class="id" title="inductive">Byte.byte</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="definition">Byte.of_N</span> (<a class="idref" href="skylabs.elpi.extra.reification.html#Numbers.to_N"><span class="id" title="definition">to_N</span></a> <a class="idref" href="skylabs.elpi.extra.reification.html#i:9"><span class="id" title="variable">i</span></a>) <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">b</span> =&gt; <span class="id" title="var">b</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Byte.html#x00"><span class="id" title="constructor">Byte.x00</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Numbers.to_nat" class="idref" href="#Numbers.to_nat"><span class="id" title="definition">to_nat</span></a> (<a id="i:10" class="idref" href="#i:10"><span class="id" title="binder">i</span></a> : <a class="idref" href="skylabs.elpi.extra.reification.html#Numbers.t"><span class="id" title="definition">t</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> := <span class="id" title="abbreviation">Uint63.to_nat</span> <a class="idref" href="skylabs.elpi.extra.reification.html#i:10"><span class="id" title="variable">i</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.elpi.extra.reification.html#Numbers"><span class="id" title="module">Numbers</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

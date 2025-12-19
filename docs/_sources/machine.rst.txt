@@ -15,7 +15,7 @@ Compiler Correctness
 =====================
 
 |project|'s strategy for connecting C++ programs to machine programs is to connect the weakest pre-condition of C++ functions to a weakest pre-condition for machine code.
-The relevant definitions can be found in |link:bluerock.lang.cpp.compile|.
+The relevant definitions can be found in |link:skylabs.lang.cpp.compile|.
 
 .. literalinclude:: ../../theories/lang/cpp/compile.v
    :start-after: (* BEGIN COMPILE SNIPPET *)

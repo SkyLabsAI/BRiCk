@@ -1,0 +1,99 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.prelude.tactics.telescopes</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(C)&nbsp;2021-2022&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.prelude.telescopes.html#"><span class="id" title="library">skylabs.prelude.telescopes</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab76"></a><h1 class="section">Telescopes</h1>
+
+<div class="paragraph"> </div>
+
+The tactic <span class="inlinecode"><span class="id" title="var">destruct_tele</span></span> projects bound variables out of every
+<span class="inlinecode"><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.telescopes.html#tele_arg"><span class="id" title="definition">tele_arg</span></a></span> in the Coq context, enabling telescopic function
+applications to reduce. The variant <span class="inlinecode"><span class="id" title="var">destruct_tele</span>/=</span> follows this
+with <span class="inlinecode"><span class="id" title="var">cbn</span></span> <span class="inlinecode"><span class="id" title="tactic">in</span></span> <span class="inlinecode">*</span> to simplify away, e.g., any lingering <span class="inlinecode"><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.telescopes.html#tele_app"><span class="id" title="definition">tele_app</span></a></span>s.
+
+<div class="paragraph"> </div>
+
+THIS CODE IS DEPRECATED: The need for this tactic arose from the
+inductive representation of <span class="inlinecode"><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.telescopes.html#tele_arg"><span class="id" title="definition">tele_arg</span></a></span> which stdpp previously used.
+The current fixpoint representation needs no extra <span class="inlinecode"><span class="id" title="tactic">destruct</span></span>s to
+reduce <span class="inlinecode"><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.telescopes.html#tele_app"><span class="id" title="definition">tele_app</span></a></span>s.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">destruct_tele</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="keyword">lazymatch</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">tx</span> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.telescopes.html#tele_arg"><span class="id" title="definition">tele_arg</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.telescopes.html#TeleS"><span class="id" title="constructor">TeleS</span></a> <span class="id" title="var">_</span>) |- <span class="id" title="var">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">x</span> := <span class="id" title="tactic">fresh</span> <span class="id" title="var">tx</span> <span class="id" title="tactic">in</span> <span class="id" title="keyword">let</span> <span class="id" title="var">t</span> := <span class="id" title="tactic">fresh</span> <span class="id" title="var">tx</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.telescopes.html#tele_arg_inv"><span class="id" title="lemma">tele_arg_inv</span></a> <span class="id" title="var">tx</span>) <span class="id" title="keyword">as</span> (<span class="id" title="var">x</span> &amp; <span class="id" title="var">t</span> &amp; -&gt;); <span class="id" title="tactic">clear</span> <span class="id" title="var">tx</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">t</span> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.telescopes.html#tele_arg"><span class="id" title="definition">tele_arg</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.telescopes.html#TeleO"><span class="id" title="constructor">TeleO</span></a> |- <span class="id" title="var">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">generalize</span> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.telescopes.html#tele_arg_O_inv"><span class="id" title="lemma">tele_arg_O_inv</span></a> <span class="id" title="var">t</span>); <span class="id" title="tactic">intros</span> -&gt;; <span class="id" title="tactic">clear</span> <span class="id" title="var">t</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+<span class="id" title="keyword">Tactic Notation</span> "destruct_tele" "/=" := <span class="id" title="var">destruct_tele</span>; <span class="id" title="var">cbn</span> <span class="id" title="tactic">in</span> *.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

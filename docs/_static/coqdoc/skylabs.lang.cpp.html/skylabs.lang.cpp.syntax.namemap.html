@@ -1,0 +1,125 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.syntax.namemap</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2024-2025&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Stdlib.Structures.OrderedTypeAlt</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Stdlib.FSets.FMapAVL</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.avl</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.compare</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.prelude.html#"><span class="id" title="library">skylabs.lang.cpp.syntax.prelude</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#"><span class="id" title="library">skylabs.lang.cpp.syntax.core</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.compare.html#"><span class="id" title="library">skylabs.lang.cpp.syntax.compare</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab198"></a><h2 class="section">Name maps</h2>
+
+</div>
+<div class="code">
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Declare</span> <span class="id" title="keyword">Instance</span> <a id="name_comparison" class="idref" href="#name_comparison"><span class="id" title="instance">name_comparison</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="class">Comparison</span> (<a class="idref" href="skylabs.lang.cpp.syntax.compare.html#compareN"><span class="id" title="definition">compareN</span></a>). </div>
+
+<div class="doc">
+TODO 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Module</span> <span class="id" title="keyword">Import</span> <a id="internal" class="idref" href="#internal"><span class="id" title="module">internal</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Module</span> <a id="internal.NameMap" class="idref" href="#internal.NameMap"><span class="id" title="module">NameMap</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Module</span> <a id="internal.NameMap.Compare" class="idref" href="#internal.NameMap.Compare"><span class="id" title="module">Compare</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="internal.NameMap.Compare.t" class="idref" href="#internal.NameMap.Compare.t"><span class="id" title="definition">t</span></a> : <span class="id" title="keyword">Type</span> := <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name"><span class="id" title="inductive">name</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="internal.NameMap.Compare.compare" class="idref" href="#internal.NameMap.Compare.compare"><span class="id" title="definition">compare</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#internal.NameMap.Compare.t"><span class="id" title="definition">t</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#internal.NameMap.Compare.t"><span class="id" title="definition">t</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#comparison"><span class="id" title="inductive">comparison</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.compare.html#compareN"><span class="id" title="definition">compareN</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Infix</span> "?=" := <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#internal.NameMap.Compare.compare"><span class="id" title="definition">compare</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Lemma</span> <a id="internal.NameMap.Compare.compare_sym" class="idref" href="#internal.NameMap.Compare.compare_sym"><span class="id" title="lemma">compare_sym</span></a> <a id="x:1" class="idref" href="#x:1"><span class="id" title="binder">x</span></a> <a id="y:2" class="idref" href="#y:2"><span class="id" title="binder">y</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">(</span></a><a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#y:2"><span class="id" title="variable">y</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#e275f42c45d276ac499fdc33cacbe091"><span class="id" title="notation">?=</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#x:1"><span class="id" title="variable">x</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#CompOpp"><span class="id" title="definition">CompOpp</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#x:1"><span class="id" title="variable">x</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#e275f42c45d276ac499fdc33cacbe091"><span class="id" title="notation">?=</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#y:2"><span class="id" title="variable">y</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">exact</span>: <span class="id" title="method">compare_antisym</span>. <span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Lemma</span> <a id="internal.NameMap.Compare.compare_trans" class="idref" href="#internal.NameMap.Compare.compare_trans"><span class="id" title="lemma">compare_trans</span></a> <a id="c:3" class="idref" href="#c:3"><span class="id" title="binder">c</span></a> <a id="x:4" class="idref" href="#x:4"><span class="id" title="binder">x</span></a> <a id="y:5" class="idref" href="#y:5"><span class="id" title="binder">y</span></a> <a id="z:6" class="idref" href="#z:6"><span class="id" title="binder">z</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">(</span></a><a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#x:4"><span class="id" title="variable">x</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#e275f42c45d276ac499fdc33cacbe091"><span class="id" title="notation">?=</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#y:5"><span class="id" title="variable">y</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#c:3"><span class="id" title="variable">c</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">(</span></a><a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#y:5"><span class="id" title="variable">y</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#e275f42c45d276ac499fdc33cacbe091"><span class="id" title="notation">?=</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#z:6"><span class="id" title="variable">z</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#c:3"><span class="id" title="variable">c</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">(</span></a><a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#x:4"><span class="id" title="variable">x</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#e275f42c45d276ac499fdc33cacbe091"><span class="id" title="notation">?=</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#z:6"><span class="id" title="variable">z</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#c:3"><span class="id" title="variable">c</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">exact</span>: <span class="id" title="method">base.compare_trans</span>. <span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#internal.NameMap.Compare"><span class="id" title="module">Compare</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Module</span> <a id="internal.NameMap.Key" class="idref" href="#internal.NameMap.Key"><span class="id" title="module">Key</span></a> := <span class="id" title="module">OrderedType_from_Alt</span> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#internal.NameMap.Compare"><span class="id" title="module">Compare</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="internal.NameMap.eqL" class="idref" href="#internal.NameMap.eqL"><span class="id" title="lemma">eqL</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a id="a:7" class="idref" href="#a:7"><span class="id" title="binder">a</span></a> <a id="b:8" class="idref" href="#b:8"><span class="id" title="binder">b</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">,</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#internal.NameMap.eq"><span class="id" title="definition">Key.eq</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#a:7"><span class="id" title="variable">a</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#b:8"><span class="id" title="variable">b</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> @<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#eq"><span class="id" title="inductive">eq</span></a> <span class="id" title="var">_</span> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#a:7"><span class="id" title="variable">a</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#b:8"><span class="id" title="variable">b</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="definition">LeibnizComparison.cmp_eq</span>; <span class="id" title="tactic">refine</span> <span class="id" title="var">_</span>. <span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Include</span> <span class="id" title="module">FMapAVL.Make</span> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#internal.NameMap.Key"><span class="id" title="module">Key</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Include</span> <span class="id" title="module">FMapExtra.MIXIN</span> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#internal.NameMap.Key"><span class="id" title="module">Key</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Include</span> <span class="id" title="module">FMapExtra.MIXIN_LEIBNIZ</span> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#internal.NameMap.Key"><span class="id" title="module">Key</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#internal.NameMap"><span class="id" title="module">NameMap</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#internal"><span class="id" title="module">internal</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="NM" class="idref" href="#NM"><span class="id" title="module">NM</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Include</span> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#internal.NameMap"><span class="id" title="module">NameMap</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#NM"><span class="id" title="module">NM</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="TM" class="idref" href="#TM"><span class="id" title="module">TM</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Include</span> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#internal.NameMap"><span class="id" title="module">NameMap</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#TM"><span class="id" title="module">TM</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

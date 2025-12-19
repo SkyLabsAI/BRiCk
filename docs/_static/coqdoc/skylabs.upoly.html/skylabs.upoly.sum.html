@@ -1,0 +1,140 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.upoly.sum</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(C)&nbsp;2023-2024&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.upoly.prelude.html#"><span class="id" title="library">skylabs.upoly.prelude</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.upoly.base.html#"><span class="id" title="library">skylabs.upoly.base</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.upoly.UTypes.html#"><span class="id" title="library">skylabs.upoly.UTypes</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.upoly.base.html#UPoly"><span class="id" title="module">UPoly</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab25"></a><h1 class="section">Sums</h1>
+
+<div class="paragraph"> </div>
+
+This module is not meant to be <code>Import</code>ed.
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Module</span> <span class="id" title="keyword">Export</span> <a id="Notations" class="idref" href="#Notations"><span class="id" title="module">Notations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Infix</span> <a id="0fec99d0fa1f2d85feec50c48e59627f" class="idref" href="#0fec99d0fa1f2d85feec50c48e59627f"><span class="id" title="notation">&quot;</span></a>+" := <a class="idref" href="skylabs.upoly.UTypes.html#sum"><span class="id" title="inductive">sum</span></a> : <span class="id" title="var">type_scope</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.upoly.sum.html#Notations"><span class="id" title="module">Notations</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="run" class="idref" href="#run"><span class="id" title="definition">run@</span></a>{<span class="id" title="var">uA</span> <span class="id" title="var">uB</span> | <span class="id" title="var">uA</span> &lt;= <span class="id" title="var">sum.u0</span>, <span class="id" title="var">uB</span> &lt;= <span class="id" title="var">sum.u1</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<a id="A:1" class="idref" href="#A:1"><span class="id" title="binder">A</span></a> : <span class="id" title="var">Type@</span>{<span class="id" title="var">uA</span>}} {<a id="B:2" class="idref" href="#B:2"><span class="id" title="binder">B</span></a> : <span class="id" title="var">Type@</span>{<span class="id" title="var">uB</span>}} (<a id="s:3" class="idref" href="#s:3"><span class="id" title="binder">s</span></a> : <a class="idref" href="skylabs.upoly.sum.html#A:1"><span class="id" title="variable">A</span></a> <a class="idref" href="skylabs.upoly.sum.html#0fec99d0fa1f2d85feec50c48e59627f"><span class="id" title="notation">+</span></a> <a class="idref" href="skylabs.upoly.sum.html#B:2"><span class="id" title="variable">B</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#sum"><span class="id" title="inductive">Datatypes.sum</span></a> <a class="idref" href="skylabs.upoly.sum.html#A:1"><span class="id" title="variable">A</span></a> <a class="idref" href="skylabs.upoly.sum.html#B:2"><span class="id" title="variable">B</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.upoly.sum.html#s:3"><span class="id" title="variable">s</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.UTypes.html#inl"><span class="id" title="constructor">inl</span></a> <span class="id" title="var">a</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#inl"><span class="id" title="constructor">Datatypes.inl</span></a> <span class="id" title="var">a</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.UTypes.html#inr"><span class="id" title="constructor">inr</span></a> <span class="id" title="var">b</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#inr"><span class="id" title="constructor">Datatypes.inr</span></a> <span class="id" title="var">b</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.sum.html#run"><span class="id" title="definition">run</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> &amp; <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="inj" class="idref" href="#inj"><span class="id" title="definition">inj@</span></a>{<span class="id" title="var">uA</span> <span class="id" title="var">uB</span> | <span class="id" title="var">uA</span> &lt;= <span class="id" title="var">sum.u0</span>, <span class="id" title="var">uB</span> &lt;= <span class="id" title="var">sum.u1</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<a id="A:5" class="idref" href="#A:5"><span class="id" title="binder">A</span></a> : <span class="id" title="var">Type@</span>{<span class="id" title="var">uA</span>}} {<a id="B:6" class="idref" href="#B:6"><span class="id" title="binder">B</span></a> : <span class="id" title="var">Type@</span>{<span class="id" title="var">uB</span>}} (<a id="s:7" class="idref" href="#s:7"><span class="id" title="binder">s</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#sum"><span class="id" title="inductive">Datatypes.sum</span></a> <a class="idref" href="skylabs.upoly.sum.html#A:5"><span class="id" title="variable">A</span></a> <a class="idref" href="skylabs.upoly.sum.html#B:6"><span class="id" title="variable">B</span></a>) : <a class="idref" href="skylabs.upoly.sum.html#A:5"><span class="id" title="variable">A</span></a> <a class="idref" href="skylabs.upoly.sum.html#0fec99d0fa1f2d85feec50c48e59627f"><span class="id" title="notation">+</span></a> <a class="idref" href="skylabs.upoly.sum.html#B:6"><span class="id" title="variable">B</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.upoly.sum.html#s:7"><span class="id" title="variable">s</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#inl"><span class="id" title="constructor">Datatypes.inl</span></a> <span class="id" title="var">a</span> =&gt; <a class="idref" href="skylabs.upoly.UTypes.html#inl"><span class="id" title="constructor">inl</span></a> <span class="id" title="var">a</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#inr"><span class="id" title="constructor">Datatypes.inr</span></a> <span class="id" title="var">b</span> =&gt; <a class="idref" href="skylabs.upoly.UTypes.html#inr"><span class="id" title="constructor">inr</span></a> <span class="id" title="var">b</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.sum.html#inj"><span class="id" title="definition">inj</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> &amp; <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="map" class="idref" href="#map"><span class="id" title="section">map</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Universes</span> <span class="id" title="var">uA</span> <span class="id" title="var">uB</span> <span class="id" title="var">uA'</span> <span class="id" title="var">uB'</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="map.A" class="idref" href="#map.A"><span class="id" title="variable">A</span></a> : <span class="id" title="var">Type@</span>{<span class="id" title="var">uA</span>}} {<a id="map.B" class="idref" href="#map.B"><span class="id" title="variable">B</span></a> : <span class="id" title="var">Type@</span>{<span class="id" title="var">uB</span>}} {<a id="map.A'" class="idref" href="#map.A'"><span class="id" title="variable">A'</span></a> : <span class="id" title="var">Type@</span>{<span class="id" title="var">uA'</span>}} {<a id="map.B'" class="idref" href="#map.B'"><span class="id" title="variable">B'</span></a> : <span class="id" title="var">Type@</span>{<span class="id" title="var">uB'</span>}}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="map" class="idref" href="#map"><span class="id" title="definition">map</span></a> (<a id="f:13" class="idref" href="#f:13"><span class="id" title="binder">f</span></a> : <a class="idref" href="skylabs.upoly.sum.html#map.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.upoly.sum.html#map.A'"><span class="id" title="variable">A'</span></a>) (<a id="g:14" class="idref" href="#g:14"><span class="id" title="binder">g</span></a> : <a class="idref" href="skylabs.upoly.sum.html#map.B"><span class="id" title="variable">B</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.upoly.sum.html#map.B'"><span class="id" title="variable">B'</span></a>) (<a id="s:15" class="idref" href="#s:15"><span class="id" title="binder">s</span></a> : <a class="idref" href="skylabs.upoly.sum.html#map.A"><span class="id" title="variable">A</span></a> <a class="idref" href="skylabs.upoly.sum.html#0fec99d0fa1f2d85feec50c48e59627f"><span class="id" title="notation">+</span></a> <a class="idref" href="skylabs.upoly.sum.html#map.B"><span class="id" title="variable">B</span></a>) : <a class="idref" href="skylabs.upoly.sum.html#map.A'"><span class="id" title="variable">A'</span></a> <a class="idref" href="skylabs.upoly.sum.html#0fec99d0fa1f2d85feec50c48e59627f"><span class="id" title="notation">+</span></a> <a class="idref" href="skylabs.upoly.sum.html#map.B'"><span class="id" title="variable">B'</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.upoly.sum.html#s:15"><span class="id" title="variable">s</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.UTypes.html#inl"><span class="id" title="constructor">inl</span></a> <span class="id" title="var">a</span> =&gt; <a class="idref" href="skylabs.upoly.UTypes.html#inl"><span class="id" title="constructor">inl</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#547692780023ef044153bc0c4f871ef7"><span class="id" title="notation">$</span></a> <a class="idref" href="skylabs.upoly.sum.html#f:13"><span class="id" title="variable">f</span></a> <span class="id" title="var">a</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.UTypes.html#inr"><span class="id" title="constructor">inr</span></a> <span class="id" title="var">b</span> =&gt; <a class="idref" href="skylabs.upoly.UTypes.html#inr"><span class="id" title="constructor">inr</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#547692780023ef044153bc0c4f871ef7"><span class="id" title="notation">$</span></a> <a class="idref" href="skylabs.upoly.sum.html#g:14"><span class="id" title="variable">g</span></a> <span class="id" title="var">b</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Opaque</span> <a class="idref" href="skylabs.upoly.sum.html#map"><span class="id" title="definition">map</span></a> : <span class="id" title="var">typeclass_instances</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.sum.html#map"><span class="id" title="definition">map</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> &amp; <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.upoly.sum.html#map"><span class="id" title="section">map</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="traverse" class="idref" href="#traverse"><span class="id" title="section">traverse</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Universes</span> <span class="id" title="var">u1</span> <span class="id" title="var">u2</span> <span class="id" title="var">uS</span> <span class="id" title="var">uA</span> <span class="id" title="var">uB</span> <span class="id" title="var">uA'</span> <span class="id" title="var">uB'</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Constraint</span> <span class="id" title="var">uS</span> &lt;= <span class="id" title="var">u1</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Constraint</span> <span class="id" title="var">uA'</span> &lt;= <span class="id" title="var">uS</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Constraint</span> <span class="id" title="var">uB'</span> &lt;= <span class="id" title="var">uS</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="traverse.F" class="idref" href="#traverse.F"><span class="id" title="variable">F</span></a> : <span class="id" title="var">Type@</span>{<span class="id" title="var">u1</span>} <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="var">Type@</span>{<span class="id" title="var">u2</span>}} `{!<a class="idref" href="skylabs.upoly.base.html#UPoly.FMap"><span class="id" title="class">FMap@</span></a>{<span class="id" title="var">u1</span> <span class="id" title="var">u2</span> <span class="id" title="var">uS</span>} <a class="idref" href="skylabs.upoly.sum.html#F:17"><span class="id" title="variable">F</span></a>}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="traverse.A" class="idref" href="#traverse.A"><span class="id" title="variable">A</span></a> : <span class="id" title="var">Type@</span>{<span class="id" title="var">uA</span>}} {<a id="traverse.B" class="idref" href="#traverse.B"><span class="id" title="variable">B</span></a> : <span class="id" title="var">Type@</span>{<span class="id" title="var">uB</span>}} {<a id="traverse.A'" class="idref" href="#traverse.A'"><span class="id" title="variable">A'</span></a> : <span class="id" title="var">Type@</span>{<span class="id" title="var">uA'</span>}} {<a id="traverse.B'" class="idref" href="#traverse.B'"><span class="id" title="variable">B'</span></a> : <span class="id" title="var">Type@</span>{<span class="id" title="var">uB'</span>}}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="traverse" class="idref" href="#traverse"><span class="id" title="definition">traverse</span></a> (<a id="f:23" class="idref" href="#f:23"><span class="id" title="binder">f</span></a> : <a class="idref" href="skylabs.upoly.sum.html#traverse.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.upoly.sum.html#traverse.F"><span class="id" title="variable">F</span></a> <a class="idref" href="skylabs.upoly.sum.html#traverse.A'"><span class="id" title="variable">A'</span></a>) (<a id="g:24" class="idref" href="#g:24"><span class="id" title="binder">g</span></a> : <a class="idref" href="skylabs.upoly.sum.html#traverse.B"><span class="id" title="variable">B</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.upoly.sum.html#traverse.F"><span class="id" title="variable">F</span></a> <a class="idref" href="skylabs.upoly.sum.html#traverse.B'"><span class="id" title="variable">B'</span></a>) (<a id="s:25" class="idref" href="#s:25"><span class="id" title="binder">s</span></a> : <a class="idref" href="skylabs.upoly.UTypes.html#sum"><span class="id" title="inductive">sum</span></a> <a class="idref" href="skylabs.upoly.sum.html#traverse.A"><span class="id" title="variable">A</span></a> <a class="idref" href="skylabs.upoly.sum.html#traverse.B"><span class="id" title="variable">B</span></a>) : <a class="idref" href="skylabs.upoly.sum.html#traverse.F"><span class="id" title="variable">F</span></a> (<a class="idref" href="skylabs.upoly.UTypes.html#sum"><span class="id" title="inductive">sum</span></a> <a class="idref" href="skylabs.upoly.sum.html#traverse.A'"><span class="id" title="variable">A'</span></a> <a class="idref" href="skylabs.upoly.sum.html#traverse.B'"><span class="id" title="variable">B'</span></a>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.upoly.sum.html#s:25"><span class="id" title="variable">s</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.UTypes.html#inl"><span class="id" title="constructor">inl</span></a> <span class="id" title="var">a</span> =&gt; <a class="idref" href="skylabs.upoly.UTypes.html#inl"><span class="id" title="constructor">inl</span></a> <a class="idref" href="skylabs.upoly.base.html#913d5033cf5660007c77b2d9383f760d"><span class="id" title="notation">&lt;$&gt;</span></a> <a class="idref" href="skylabs.upoly.sum.html#f:23"><span class="id" title="variable">f</span></a> <span class="id" title="var">a</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.UTypes.html#inr"><span class="id" title="constructor">inr</span></a> <span class="id" title="var">b</span> =&gt; <a class="idref" href="skylabs.upoly.UTypes.html#inr"><span class="id" title="constructor">inr</span></a> <a class="idref" href="skylabs.upoly.base.html#913d5033cf5660007c77b2d9383f760d"><span class="id" title="notation">&lt;$&gt;</span></a> <a class="idref" href="skylabs.upoly.sum.html#g:24"><span class="id" title="variable">g</span></a> <span class="id" title="var">b</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Opaque</span> <a class="idref" href="skylabs.upoly.sum.html#traverse"><span class="id" title="definition">traverse</span></a> : <span class="id" title="var">typeclass_instances</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.sum.html#traverse"><span class="id" title="definition">traverse</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> &amp; <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.upoly.sum.html#traverse"><span class="id" title="section">traverse</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

@@ -1,0 +1,520 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.logic.wp_notations</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2019-2023&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.html#"><span class="id" title="library">skylabs.lang.cpp.syntax</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.logic.html#"><span class="id" title="library">skylabs.lang.cpp.logic</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.logic.atomics.html#"><span class="id" title="library">skylabs.lang.cpp.logic.atomics</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.logic.builtins.html#"><span class="id" title="library">skylabs.lang.cpp.logic.builtins</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="skylabs.lang.cpp.code_notations.html#"><span class="id" title="library">skylabs.lang.cpp.code_notations</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.type_notations.html#TypeNotationsInterface"><span class="id" title="module">type_notations.TypeNotationsInterface</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.expr_notations.html#ExprNotationsInterface"><span class="id" title="module">expr_notations.ExprNotationsInterface</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.stmt_notations.html#StmtNotationsInterface"><span class="id" title="module">stmt_notations.StmtNotationsInterface</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <span class="id" title="keyword">Export</span> <a id="RegionNotationsInterface" class="idref" href="#RegionNotationsInterface"><span class="id" title="module">RegionNotationsInterface</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">Declare</span> <span class="id" title="var">Custom</span> <span class="id" title="var">Entry</span> <span class="id" title="var">CPP_region</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Declare Scope</span> <span class="id" title="var">CPP_region_scope</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Delimit</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">CPP_region_scope</span> <span class="id" title="keyword">with</span> <span class="id" title="var">cpp_region</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Bind Scope</span> <span class="id" title="var">CPP_region_scope</span> <span class="id" title="keyword">with</span> <span class="id" title="var">region</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.logic.wp_notations.html#RegionNotationsInterface"><span class="id" title="module">RegionNotationsInterface</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <span class="id" title="keyword">Export</span> <a id="RegionNotations" class="idref" href="#RegionNotations"><span class="id" title="module">RegionNotations</span></a>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Injection&nbsp;into&nbsp;<span class="inlinecode"><span class="id" title="keyword">constr</span></span>&nbsp;in&nbsp;case&nbsp;we're&nbsp;printing&nbsp;this&nbsp;at&nbsp;the&nbsp;top-level&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="f5f20ea68a0187ac5901a57c3f4b4ffd" class="idref" href="#f5f20ea68a0187ac5901a57c3f4b4ffd"><span class="id" title="notation">&quot;</span></a>'[region:' ρ ]"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (ρ)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, ρ <span class="id" title="var">custom</span> <span class="id" title="var">CPP_region</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' [region:  '/' '[' ρ ']' ] ']'")<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;: <span class="id" title="var">CPP_region_scope</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;<span class="inlinecode"><span class="id" title="var">Remp</span></span> <span class="inlinecode"><span class="id" title="var">othisp</span></span> <span class="inlinecode"><span class="id" title="var">ovarargp</span></span> <span class="inlinecode"><span class="id" title="var">rty</span></span>&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="RegionNotations.:CPP_region::'return'_x" class="idref" href="#RegionNotations.:CPP_region::'return'_x"><span class="id" title="notation">&quot;</span></a>'return' rty"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#Remp"><span class="id" title="constructor">Remp</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="var">rty</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_region</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">rty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[  ' return  rty ']'").<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="5176790fbb6288716536cfae06ce92af" class="idref" href="#5176790fbb6288716536cfae06ce92af"><span class="id" title="notation">&quot;</span></a>[ 'this' := thisp ] ; 'return' rty"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#Remp"><span class="id" title="constructor">Remp</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">thisp</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="var">rty</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_region</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">thisp</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">rty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' [ this  :=  thisp ] ']' ;  '/' '[  ' return  '/' rty ']'").<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="bf0b1c6e4ef380edfd2b56e501132cdd" class="idref" href="#bf0b1c6e4ef380edfd2b56e501132cdd"><span class="id" title="notation">&quot;</span></a>[ 'variadic' := varargp ] ; 'return' rty"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#Remp"><span class="id" title="constructor">Remp</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">varargp</span>) <span class="id" title="var">rty</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_region</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">varargp</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">rty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' [ variadic  :=  varargp ] ']' ;  '/' '[  ' return  '/' rty ']'").<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="e3220b8cbd88d409b3ba1dcedeb67dab" class="idref" href="#e3220b8cbd88d409b3ba1dcedeb67dab"><span class="id" title="notation">&quot;</span></a>[ 'this' := thisp ] ; [ 'variadic' := varargp ] ; 'return' rty"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#Remp"><span class="id" title="constructor">Remp</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">thisp</span>) (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">varargp</span>) <span class="id" title="var">rty</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_region</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 20<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">thisp</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">varargp</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">rty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' [ this  :=  thisp ] ']' ;  '/' '[' [ variadic  :=  varargp ] ']' ;  '/' '[  ' return  '/' rty ']'").<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;<span class="inlinecode"><span class="id" title="var">Rbind</span></span> <span class="inlinecode"><span class="id" title="var">nm</span></span> <span class="inlinecode"><span class="id" title="var">p</span></span> <span class="inlinecode">ρ</span>&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="98d99a86ad14a4092dabae74d1e8b498" class="idref" href="#98d99a86ad14a4092dabae74d1e8b498"><span class="id" title="notation">&quot;</span></a>v @ p ';' ρ "<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#Rbind"><span class="id" title="constructor">Rbind</span></a> <span class="id" title="var">v</span> <span class="id" title="var">p</span> ρ)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_region</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">v</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">p</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, ρ <span class="id" title="var">custom</span> <span class="id" title="var">CPP_region</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' v  @  p ']' ;  '/' ρ").<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.logic.wp_notations.html#RegionNotations"><span class="id" title="module">RegionNotations</span></a>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;NOTES&nbsp;(JH):<br/>
+&nbsp;&nbsp;&nbsp;-&nbsp;we&nbsp;intentionally&nbsp;use&nbsp;<span class="inlinecode"><span class="id" title="keyword">constr</span></span>&nbsp;for&nbsp;all&nbsp;<span class="inlinecode"><span class="id" title="var">Compact</span></span>/<span class="inlinecode"><span class="id" title="var">Verbose</span></span>&nbsp;notations&nbsp;to&nbsp;ensure<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;that&nbsp;the&nbsp;<span class="inlinecode"><span class="id" title="var">region</span></span>/<span class="inlinecode"><span class="id" title="var">Expr</span></span>/<span class="inlinecode"><span class="id" title="var">Stmt</span></span>s&nbsp;are&nbsp;printed&nbsp;in&nbsp;the&nbsp;appropriate<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"quotation"&nbsp;(e.g.&nbsp;<span class="inlinecode"><span class="id" title="var">expr</span>:{{...}}</span>,&nbsp;<span class="inlinecode">[<span class="id" title="var">region</span>:</span> <span class="inlinecode">...]</span>,&nbsp;<span class="inlinecode"><span class="id" title="var">stmt</span>:{{...}}</span>.<br/>
+&nbsp;&nbsp;&nbsp;-&nbsp;<span class="inlinecode"><span class="id" title="var">Compact</span></span>/<span class="inlinecode"><span class="id" title="var">Verbose</span></span>&nbsp;alternatives&nbsp;for&nbsp;<span class="inlinecode"><span class="id" title="keyword">type</span></span>/<span class="inlinecode"><span class="id" title="var">Expr</span></span>/<span class="inlinecode"><span class="id" title="var">Stmt</span></span>&nbsp;might&nbsp;provide<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;an&nbsp;ad-hoc&nbsp;way&nbsp;of&nbsp;"disabling"&nbsp;a&nbsp;notation&nbsp;(by&nbsp;importing&nbsp;a&nbsp;new&nbsp;<span class="inlinecode"><span class="id" title="keyword">Module</span></span>&nbsp;which<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fully&nbsp;shadows&nbsp;the&nbsp;notations&nbsp;you&nbsp;wish&nbsp;to&nbsp;"swap&nbsp;out".<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <span class="id" title="keyword">Export</span> <a id="Compact" class="idref" href="#Compact"><span class="id" title="module">Compact</span></a>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;<span class="inlinecode"><span class="id" title="var">Stmt</span></span>&nbsp;WP&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Compact.:::'::wpS'_x_x" class="idref" href="#Compact.:::'::wpS'_x_x"><span class="id" title="notation">&quot;</span></a>'::wpS' ρ s"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.wp"><span class="id" title="axiom">wp</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">s</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">s</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpS  '/' '[hv' ρ  '/' s ']' ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Compact.:::'::wpD'_x_x" class="idref" href="#Compact.:::'::wpD'_x_x"><span class="id" title="notation">&quot;</span></a>'::wpD' ρ decl"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.stmt.html#S.wp_decl"><span class="id" title="definition">wp_decl</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">decl</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">decl</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpD  '/' '[hv' ρ  '/' decl ']' ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Special&nbsp;WPs*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="b4de4166f39255cc6f47f17b367ebda4" class="idref" href="#b4de4166f39255cc6f47f17b367ebda4"><span class="id" title="notation">&quot;</span></a>'::wpAtomic' '(Mask' ↦ M ; 'Type' ↦ ty ) '{e:' atomic '()}'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.atomics.html#wp_atom"><span class="id" title="axiom">wp_atom</span></a> <span class="id" title="var">M</span> <span class="id" title="var">atomic</span> <span class="id" title="var">ty</span>%<span class="id" title="var">cpp_type</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">atomic</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpAtomic  '/' '[hv' '[hv' (Mask  ↦  M ;  '/' Type  ↦  ty )  ']' '/' '[' {e:  atomic ()} ']' ']' ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="2d529c75a20a140240de4277f176be87" class="idref" href="#2d529c75a20a140240de4277f176be87"><span class="id" title="notation">&quot;</span></a>'::wpAtomic' '(Mask' ↦ M ; 'Type' ↦ ty ) '{e:' atomic '(' v1 , .. , v2 ')}'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.atomics.html#wp_atom"><span class="id" title="axiom">wp_atom</span></a> <span class="id" title="var">M</span> <span class="id" title="var">atomic</span> <span class="id" title="var">ty</span>%<span class="id" title="var">cpp_type</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">v1</span> (.. (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">v2</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>) ..)) <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">atomic</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpAtomic  '/' '[hv' '[hv' (Mask  ↦  M ;  '/' Type  ↦  ty )  ']' '/' '[' {e:  atomic ( '[hv' v1 ,  '/' .. ,  '/' v2 ']' )} ']' ']' ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="7fbcbf614496f09bd35886be020b3da9" class="idref" href="#7fbcbf614496f09bd35886be020b3da9"><span class="id" title="notation">&quot;</span></a>'::wpBuiltin' '(Type' ↦ ty ) '{e:' builtin '()}'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.builtins.html#wp_builtin"><span class="id" title="axiom">wp_builtin</span></a> <span class="id" title="var">builtin</span>%<span class="id" title="var">pstring</span> <span class="id" title="var">ty</span>%<span class="id" title="var">cpp_type</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">builtin</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpBuiltin  '/' '[hv' '[hv' (Type  ↦  ty )  ']' '/' '[' {e:  builtin ()} ']' ']' ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="b4ccaa7d3a6f08a1cc9ba39e0ba26ff4" class="idref" href="#b4ccaa7d3a6f08a1cc9ba39e0ba26ff4"><span class="id" title="notation">&quot;</span></a>'::wpBuiltin' '(Type' ↦ ty ) '{e:' builtin '(' v1 , .. , v2 ')}'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.builtins.html#wp_builtin"><span class="id" title="axiom">wp_builtin</span></a> <span class="id" title="var">builtin</span>%<span class="id" title="var">pstring</span> <span class="id" title="var">ty</span>%<span class="id" title="var">cpp_type</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">v1</span> (.. (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">v2</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>) ..)) <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">builtin</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpBuiltin  '/' '[hv' '[hv' (Type  ↦  ty )  ']' '/' '[' {e:  builtin ( '[hv' v1 ,  '/' .. ,  '/' v2 ']' )} ']' ']' ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Destruction/cleanup-interpretation&nbsp;of&nbsp;temporaries&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="b2075ed496b02043e6a97d5213d5df66" class="idref" href="#b2075ed496b02043e6a97d5213d5df66"><span class="id" title="notation">&quot;</span></a>'::destroy_val' '{pointer:' p ';' 'type:' ty '}'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.destroy.html#destroy_val"><span class="id" title="abbreviation">destroy_val</span></a> <span class="id" title="var">_</span> <span class="id" title="var">ty</span>%<span class="id" title="var">cpp_type</span> <span class="id" title="var">p</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::destroy_val  '/' '[hv   ' {pointer:  p ; '/'  type:  ty } ']' ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="b99dee408f86f72672dabc31783fc53d" class="idref" href="#b99dee408f86f72672dabc31783fc53d"><span class="id" title="notation">&quot;</span></a>'::destroy_val' '{pointer:' p ';' 'qualifiers:' cv ';' 'type:' ty '}'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.destroy.html#wp_destroy_val"><span class="id" title="abbreviation">wp_destroy_val</span></a> <span class="id" title="var">_</span> <span class="id" title="var">cv</span>%<span class="id" title="var">cpp_type</span> <span class="id" title="var">ty</span>%<span class="id" title="var">cpp_type</span> <span class="id" title="var">p</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">cv</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::destroy_val  '/' '[hv   ' {pointer:  p ; '/'  qualifiers:  cv ; '/'  type:  ty } ']' ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;NOTE&nbsp;(JH):&nbsp;large&nbsp;<span class="inlinecode"><span class="id" title="var">free</span></span>s&nbsp;are&nbsp;printed&nbsp;a&nbsp;bit&nbsp;strangely&nbsp;(cf.&nbsp;<span class="inlinecode"><span class="id" title="var">NOTATIONS_interp_wrap</span></span>)&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="a5dffc7c4b441366a7303a9bac866dd2" class="idref" href="#a5dffc7c4b441366a7303a9bac866dd2"><span class="id" title="notation">&quot;</span></a>'::interp' { free }"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.destroy.html#interp"><span class="id" title="abbreviation">interp</span></a> <span class="id" title="var">_</span> <span class="id" title="var">free</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::interp  '/' {  free  } ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Expression&nbsp;WPs&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Compact.:::'::wpL'_x_x" class="idref" href="#Compact.:::'::wpL'_x_x"><span class="id" title="notation">&quot;</span></a>'::wpL' ρ e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.wp_lval"><span class="id" title="axiom">wp_lval</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">e</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpL  '/' '[hv' ρ  '/' e ']' ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="60ce0096ea59d89af763890e0e177405" class="idref" href="#60ce0096ea59d89af763890e0e177405"><span class="id" title="notation">&quot;</span></a>'::wpPRᵢ' ρ '(Pointer' ↦ p ) e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.wp_init"><span class="id" title="axiom">wp_init</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">_</span> <span class="id" title="var">p</span> <span class="id" title="var">e</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpPRᵢ  '/' '[hv' ρ  '/' '[' (Pointer  ↦  p )  ']' '/' e ']' ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Compact.:::'::wpPR'_x_x" class="idref" href="#Compact.:::'::wpPR'_x_x"><span class="id" title="notation">&quot;</span></a>'::wpPR' ρ e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.wp_prval"><span class="id" title="definition">wp_prval</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">e</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpPR  '/' '[hv' ρ  '/' e ']' ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Compact.:::'::wpOperand'_x_x" class="idref" href="#Compact.:::'::wpOperand'_x_x"><span class="id" title="notation">&quot;</span></a>'::wpOperand' ρ e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.wp_operand"><span class="id" title="axiom">wp_operand</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">e</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpOperand  '/' '[hv' ρ  '/' e ']' ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Compact.:::'::wpX'_x_x" class="idref" href="#Compact.:::'::wpX'_x_x"><span class="id" title="notation">&quot;</span></a>'::wpX' ρ e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.wp_xval"><span class="id" title="axiom">wp_xval</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">e</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpX  '/' '[hv' ρ  '/' e ']' ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Compact.:::'::wpGL'_x_x" class="idref" href="#Compact.:::'::wpGL'_x_x"><span class="id" title="notation">&quot;</span></a>'::wpGL' ρ e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.wp_glval"><span class="id" title="definition">wp_glval</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">e</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpGL  '/' '[hv' ρ  '/' e ']' ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="0b40c9554063ea458d02888f4b9bea85" class="idref" href="#0b40c9554063ea458d02888f4b9bea85"><span class="id" title="notation">&quot;</span></a>'::wpGLₓ' ρ e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.wp_discard"><span class="id" title="definition">wp_discard</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">e</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpGLₓ  '/' '[hv' ρ  '/' e ']' ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;NOTE&nbsp;(JH):&nbsp;There&nbsp;isn't&nbsp;anything&nbsp;great&nbsp;to&nbsp;print&nbsp;from&nbsp;<span class="inlinecode"><span class="id" title="var">Func</span></span>&nbsp;since&nbsp;the&nbsp;name&nbsp;was&nbsp;erased&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Compact.:::'::wpFunc'" class="idref" href="#Compact.:::'::wpFunc'"><span class="id" title="notation">&quot;</span></a>'::wpFunc'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.func.html#wp_func"><span class="id" title="abbreviation">wp_func</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpFunc ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;NOTE&nbsp;(JH):&nbsp;There&nbsp;isn't&nbsp;anything&nbsp;great&nbsp;to&nbsp;print&nbsp;from&nbsp;<span class="inlinecode"><span class="id" title="var">Method</span></span>&nbsp;since&nbsp;the&nbsp;name&nbsp;was&nbsp;erased&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Compact.:::'::wpMethod'" class="idref" href="#Compact.:::'::wpMethod'"><span class="id" title="notation">&quot;</span></a>'::wpMethod'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.func.html#wp_method"><span class="id" title="abbreviation">wp_method</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpMethod ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;NOTE&nbsp;(JH):&nbsp;There&nbsp;isn't&nbsp;anything&nbsp;great&nbsp;to&nbsp;print&nbsp;from&nbsp;<span class="inlinecode"><span class="id" title="var">Ctor</span></span>&nbsp;since&nbsp;the&nbsp;name&nbsp;is&nbsp;erased&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Compact.:::'::wpCtor'" class="idref" href="#Compact.:::'::wpCtor'"><span class="id" title="notation">&quot;</span></a>'::wpCtor'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.func.html#wp_ctor"><span class="id" title="abbreviation">wp_ctor</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpCtor ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;NOTE&nbsp;(JH):&nbsp;There&nbsp;isn't&nbsp;anything&nbsp;great&nbsp;to&nbsp;print&nbsp;from&nbsp;<span class="inlinecode"><span class="id" title="var">Dtor</span></span>&nbsp;since&nbsp;the&nbsp;name&nbsp;is&nbsp;erased&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Compact.:::'::wpDtor'" class="idref" href="#Compact.:::'::wpDtor'"><span class="id" title="notation">&quot;</span></a>'::wpDtor'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.func.html#wp_dtor"><span class="id" title="abbreviation">wp_dtor</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpDtor ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;TODO&nbsp;(JH):&nbsp;print&nbsp;something&nbsp;more&nbsp;useful&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Compact.:::'::wpArgs'_x" class="idref" href="#Compact.:::'::wpArgs'_x"><span class="id" title="notation">&quot;</span></a>'::wpArgs' ρ"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.call.html#wp_args"><span class="id" title="definition">wp_args</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, ρ <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpArgs  '/' ρ ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="9423f8c4b4ec92518c25e566c1df19b4" class="idref" href="#9423f8c4b4ec92518c25e566c1df19b4"><span class="id" title="notation">&quot;</span></a>'::wpInitialize' ρ ( p '|-&gt;' 'type_ptrR' ty ) e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.initializers.html#wp_initialize"><span class="id" title="definition">wp_initialize</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">ty</span>%<span class="id" title="var">cpp_type</span> <span class="id" title="var">p</span> <span class="id" title="var">e</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpInitialize  '/' ρ  '/' '[hv   ' ( p  |-&gt;  '/' type_ptrR  ty ) ']'  '/' e ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="44aa46c0692fb06e22d257cf487ce839" class="idref" href="#44aa46c0692fb06e22d257cf487ce839"><span class="id" title="notation">&quot;</span></a>'::wpCond' ρ ( T )"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.expr.html#E.wp_cond"><span class="id" title="definition">wp_cond</span></a> <span class="id" title="var">_</span> ρ (<span class="id" title="var">T</span>:=<span class="id" title="var">T</span>) <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpCond  '/' ρ  '/' '[' ( T ) ']' ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;TODO&nbsp;(JH):&nbsp;print&nbsp;something&nbsp;more&nbsp;useful&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Compact.:::'::wpCall'_x" class="idref" href="#Compact.:::'::wpCall'_x"><span class="id" title="notation">&quot;</span></a>'::wpCall' ρ"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.expr.html#E.wp_call"><span class="id" title="definition">wp_call</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, ρ <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpCall  '/' ρ ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;TODO&nbsp;(JH):&nbsp;print&nbsp;something&nbsp;more&nbsp;useful&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Compact.:::'::wpMCall'_x" class="idref" href="#Compact.:::'::wpMCall'_x"><span class="id" title="notation">&quot;</span></a>'::wpMCall' ρ"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.expr.html#E.wp_mcall"><span class="id" title="definition">wp_mcall</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, ρ <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpMCall  '/' ρ ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.logic.wp_notations.html#Compact"><span class="id" title="module">Compact</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="Verbose" class="idref" href="#Verbose"><span class="id" title="module">Verbose</span></a>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;<span class="inlinecode"><span class="id" title="var">Stmt</span></span>&nbsp;WP&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Verbose.:::'::wpS'_x_x_x" class="idref" href="#Verbose.:::'::wpS'_x_x_x"><span class="id" title="notation">&quot;</span></a>'::wpS' ρ s K"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.wp"><span class="id" title="axiom">wp</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">s</span> <span class="id" title="var">K</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">s</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">K</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpS  '/' '[hv' ρ  '/' s ']'  '/' K ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Verbose.:::'::wpD'_x_x_x" class="idref" href="#Verbose.:::'::wpD'_x_x_x"><span class="id" title="notation">&quot;</span></a>'::wpD' ρ decl Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.stmt.html#S.wp_decl"><span class="id" title="definition">wp_decl</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">decl</span> <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, ρ <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">decl</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpD  '/' '[hv' ρ  '/' decl ']'  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Special&nbsp;WPs*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="524010c8224ebf754dba9fd5865297b1" class="idref" href="#524010c8224ebf754dba9fd5865297b1"><span class="id" title="notation">&quot;</span></a>'::wpAtomic' '(Mask' ↦ M ; 'Type' ↦ ty ) '{e:' atomic '()}' Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.atomics.html#wp_atom"><span class="id" title="axiom">wp_atom</span></a> <span class="id" title="var">M</span> <span class="id" title="var">atomic</span> <span class="id" title="var">ty</span>%<span class="id" title="var">cpp_type</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a> <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpAtomic  '/' '[hv' '[hv' (Mask  ↦  M ;  '/' Type  ↦  ty )  ']' '/'  '[' {e:  atomic ()} ']' ']'  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="697302e212ee95bba4364e8b806eea3f" class="idref" href="#697302e212ee95bba4364e8b806eea3f"><span class="id" title="notation">&quot;</span></a>'::wpAtomic' '(Mask' ↦ M ; 'Type' ↦ ty ) '{e:' atomic '(' v1 , .. , v2 ')}' Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.atomics.html#wp_atom"><span class="id" title="axiom">wp_atom</span></a> <span class="id" title="var">M</span> <span class="id" title="var">atomic</span> <span class="id" title="var">ty</span>%<span class="id" title="var">cpp_type</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">v1</span> (.. (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">v2</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>) ..)) <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpAtomic  '/' '[hv' '[hv' (Mask  ↦  M ;  '/' Type  ↦  ty )  ']' '/'  '[' {e:  atomic ( '[hv' v1 ,  '/' .. ,  '/' v2 ']' )} ']' ']'  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="77efb21476e4668b33659f3b3441df15" class="idref" href="#77efb21476e4668b33659f3b3441df15"><span class="id" title="notation">&quot;</span></a>'::wpBuiltin' '(Type' ↦ ty ) '{e:' builtin '()}' Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.builtins.html#wp_builtin"><span class="id" title="axiom">wp_builtin</span></a> <span class="id" title="var">builtin</span>%<span class="id" title="var">cpp_expr</span> <span class="id" title="var">ty</span>%<span class="id" title="var">cpp_type</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a> <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpBuiltin  '/' '[hv' '[hv' (Type  ↦  ty )  ']' '/' '[' {e:  builtin ()} ']' ']'  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="78a8a33ce78c259d87bdb81ade43c9fa" class="idref" href="#78a8a33ce78c259d87bdb81ade43c9fa"><span class="id" title="notation">&quot;</span></a>'::wpBuiltin' '(Type' ↦ ty ) '{e:' builtin '(' v1 , .. , v2 ')}' Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.builtins.html#wp_builtin"><span class="id" title="axiom">wp_builtin</span></a> <span class="id" title="var">builtin</span>%<span class="id" title="var">cpp_expr</span> <span class="id" title="var">ty</span>%<span class="id" title="var">cpp_type</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">v1</span> (.. (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">v2</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>) ..)) <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpBuiltin  '/' '[hv' '[hv' (Type  ↦  ty )  ']' '/' '[' {e:  builtin ( '[hv' v1 ,  '/' .. ,  '/' v2 ']' )} ']' ']'  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Destruction/cleanup-interpretation&nbsp;of&nbsp;temporaries&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="8aed7cb1a0e50e7a13c576ea9beba4a9" class="idref" href="#8aed7cb1a0e50e7a13c576ea9beba4a9"><span class="id" title="notation">&quot;</span></a>'::destroy_val' '{pointer:' p ';' 'type:' ty '}' E"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.destroy.html#destroy_val"><span class="id" title="abbreviation">destroy_val</span></a> <span class="id" title="var">_</span> <span class="id" title="var">ty</span>%<span class="id" title="var">cpp_type</span> <span class="id" title="var">p</span> <span class="id" title="var">E</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">E</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::destroy_val  '/' '[hv   ' {pointer:  p ; '/'  type:  ty } ']'  '/' E ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Destruction/cleanup-interpretation&nbsp;of&nbsp;temporaries&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="fa49d94641562aca2149856563622050" class="idref" href="#fa49d94641562aca2149856563622050"><span class="id" title="notation">&quot;</span></a>'::destroy_val' '{pointer:' p ';' 'qualifiers:' cv ';' 'type:' ty '}' E"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.destroy.html#wp_destroy_val"><span class="id" title="abbreviation">wp_destroy_val</span></a> <span class="id" title="var">_</span> <span class="id" title="var">cv</span>%<span class="id" title="var">cpp_type</span> <span class="id" title="var">ty</span>%<span class="id" title="var">cpp_type</span> <span class="id" title="var">p</span> <span class="id" title="var">E</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">E</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">cv</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::destroy_val  '/' '[hv   ' {pointer:  p ; '/'  qualifiers:  cv ; '/'  type:  ty } ']'  '/' E ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;NOTE&nbsp;(JH):&nbsp;large&nbsp;<span class="inlinecode"><span class="id" title="var">free</span></span>s&nbsp;are&nbsp;printed&nbsp;a&nbsp;bit&nbsp;strangely&nbsp;(cf.&nbsp;<span class="inlinecode"><span class="id" title="var">NOTATIONS_interp_wrap</span></span>)&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="e6b576cd878488dc367da5b5bf7e76a3" class="idref" href="#e6b576cd878488dc367da5b5bf7e76a3"><span class="id" title="notation">&quot;</span></a>'::interp' { free } E"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.destroy.html#interp"><span class="id" title="abbreviation">interp</span></a> <span class="id" title="var">_</span> <span class="id" title="var">free</span> <span class="id" title="var">E</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">E</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::interp  '/' {  free  }   '/' E ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Expression&nbsp;WPs&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Verbose.:::'::wpL'_x_x_x" class="idref" href="#Verbose.:::'::wpL'_x_x_x"><span class="id" title="notation">&quot;</span></a>'::wpL' ρ e Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.wp_lval"><span class="id" title="axiom">wp_lval</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">e</span> <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, ρ <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpL  '/' '[hv' ρ  '/' e ']'  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="627ac8dcd17e8ad0d5c9d836a01f324c" class="idref" href="#627ac8dcd17e8ad0d5c9d836a01f324c"><span class="id" title="notation">&quot;</span></a>'::wpPRᵢ' ρ '(Pointer' ↦ p ) e Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.wp_init"><span class="id" title="axiom">wp_init</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">_</span> <span class="id" title="var">p</span> <span class="id" title="var">e</span> <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, ρ <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpPRᵢ  '/' '[hv' ρ  '/' '[' (Pointer  ↦  p )  ']' '/' e ']'  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Verbose.:::'::wpPR'_x_x_x" class="idref" href="#Verbose.:::'::wpPR'_x_x_x"><span class="id" title="notation">&quot;</span></a>'::wpPR' ρ e Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.wp_prval"><span class="id" title="definition">wp_prval</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">e</span> <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, ρ <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpPR  '/' '[hv' ρ  '/' e ']'  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Verbose.:::'::wpOperand'_x_x_x" class="idref" href="#Verbose.:::'::wpOperand'_x_x_x"><span class="id" title="notation">&quot;</span></a>'::wpOperand' ρ e Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.wp_operand"><span class="id" title="axiom">wp_operand</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">e</span> <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, ρ <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpOperand  '/' '[hv' ρ  '/' e ']'  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Verbose.:::'::wpX'_x_x_x" class="idref" href="#Verbose.:::'::wpX'_x_x_x"><span class="id" title="notation">&quot;</span></a>'::wpX' ρ e Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.wp_xval"><span class="id" title="axiom">wp_xval</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">e</span> <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, ρ <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpX  '/' '[hv' ρ  '/' e ']'  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Verbose.:::'::wpGL'_x_x_x" class="idref" href="#Verbose.:::'::wpGL'_x_x_x"><span class="id" title="notation">&quot;</span></a>'::wpGL' ρ e Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.wp_glval"><span class="id" title="definition">wp_glval</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">e</span> <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, ρ <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpGL  '/' '[hv' ρ  '/' e ']'  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="d30603e00fb0df8af15d23628c3de86e" class="idref" href="#d30603e00fb0df8af15d23628c3de86e"><span class="id" title="notation">&quot;</span></a>'::wpGLₓ' ρ e Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.wp_discard"><span class="id" title="definition">wp_discard</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">e</span> <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, ρ <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpGLₓ  '/' '[hv' ρ  '/' e ']'  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;NOTE&nbsp;(JH):&nbsp;There&nbsp;isn't&nbsp;anything&nbsp;great&nbsp;to&nbsp;print&nbsp;from&nbsp;<span class="inlinecode"><span class="id" title="var">Func</span></span>&nbsp;since&nbsp;the&nbsp;name&nbsp;was&nbsp;erased&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Verbose.:::'::wpFunc'_x" class="idref" href="#Verbose.:::'::wpFunc'_x"><span class="id" title="notation">&quot;</span></a>'::wpFunc' Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.func.html#wp_func"><span class="id" title="abbreviation">wp_func</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpFunc  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;NOTE&nbsp;(JH):&nbsp;There&nbsp;isn't&nbsp;anything&nbsp;great&nbsp;to&nbsp;print&nbsp;from&nbsp;<span class="inlinecode"><span class="id" title="var">Method</span></span>&nbsp;since&nbsp;the&nbsp;name&nbsp;was&nbsp;erased&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Verbose.:::'::wpMethod'_x" class="idref" href="#Verbose.:::'::wpMethod'_x"><span class="id" title="notation">&quot;</span></a>'::wpMethod' Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.func.html#wp_method"><span class="id" title="abbreviation">wp_method</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpMethod  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;NOTE&nbsp;(JH):&nbsp;There&nbsp;isn't&nbsp;anything&nbsp;great&nbsp;to&nbsp;print&nbsp;from&nbsp;<span class="inlinecode"><span class="id" title="var">Ctor</span></span>&nbsp;since&nbsp;the&nbsp;name&nbsp;is&nbsp;erased&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Verbose.:::'::wpCtor'_x" class="idref" href="#Verbose.:::'::wpCtor'_x"><span class="id" title="notation">&quot;</span></a>'::wpCtor' Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.func.html#wp_ctor"><span class="id" title="abbreviation">wp_ctor</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpCtor  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;NOTE&nbsp;(JH):&nbsp;There&nbsp;isn't&nbsp;anything&nbsp;great&nbsp;to&nbsp;print&nbsp;from&nbsp;<span class="inlinecode"><span class="id" title="var">Dtor</span></span>&nbsp;since&nbsp;the&nbsp;name&nbsp;is&nbsp;erased&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Verbose.:::'::wpDtor'_x" class="idref" href="#Verbose.:::'::wpDtor'_x"><span class="id" title="notation">&quot;</span></a>'::wpDtor' Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.func.html#wp_dtor"><span class="id" title="abbreviation">wp_dtor</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpDtor  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;TODO&nbsp;(JH):&nbsp;print&nbsp;something&nbsp;more&nbsp;useful&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Verbose.:::'::wpArgs'_x_x" class="idref" href="#Verbose.:::'::wpArgs'_x_x"><span class="id" title="notation">&quot;</span></a>'::wpArgs' ρ Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.call.html#wp_args"><span class="id" title="definition">wp_args</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, ρ <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpArgs  '/' ρ   '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="b80e3b0833ebbdfa243145588e0e9cb7" class="idref" href="#b80e3b0833ebbdfa243145588e0e9cb7"><span class="id" title="notation">&quot;</span></a>'::wpInitialize' ρ ( p '|-&gt;' 'type_ptrR' ty ) e Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.initializers.html#wp_initialize"><span class="id" title="definition">wp_initialize</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">ty</span>%<span class="id" title="var">cpp_type</span> <span class="id" title="var">p</span> <span class="id" title="var">e</span> <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpInitialize  '/' ρ  '/' '[hv   ' ( p  |-&gt;  '/' type_ptrR  ty ) ']'  '/' e  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="f4f1d1b73c8c32d8149072708cfba4b7" class="idref" href="#f4f1d1b73c8c32d8149072708cfba4b7"><span class="id" title="notation">&quot;</span></a>'::wpCond' ρ ( T ) Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.expr.html#E.wp_cond"><span class="id" title="definition">wp_cond</span></a> <span class="id" title="var">_</span> ρ (<span class="id" title="var">T</span>:=<span class="id" title="var">T</span>) <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, ρ <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpCond  '/' ρ  '/' '[' ( T ) ']'  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;TODO&nbsp;(JH):&nbsp;print&nbsp;something&nbsp;more&nbsp;useful&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Verbose.:::'::wpCall'_x_x" class="idref" href="#Verbose.:::'::wpCall'_x_x"><span class="id" title="notation">&quot;</span></a>'::wpCall' ρ Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.expr.html#E.wp_call"><span class="id" title="definition">wp_call</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, ρ <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpCall  '/' ρ  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;TODO&nbsp;(JH):&nbsp;print&nbsp;something&nbsp;more&nbsp;useful&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Verbose.:::'::wpMCall'_x_x" class="idref" href="#Verbose.:::'::wpMCall'_x_x"><span class="id" title="notation">&quot;</span></a>'::wpMCall' ρ Q"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.logic.expr.html#E.wp_mcall"><span class="id" title="definition">wp_mcall</span></a> <span class="id" title="var">_</span> ρ <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">Q</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, ρ <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">Q</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' ::wpMCall  '/' ρ  '/' Q ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.logic.wp_notations.html#Verbose"><span class="id" title="module">Verbose</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

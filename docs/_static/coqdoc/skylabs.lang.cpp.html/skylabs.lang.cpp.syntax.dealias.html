@@ -1,0 +1,207 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.syntax.dealias</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2024-2025&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.error</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.lens</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.upoly.upoly</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.html#"><span class="id" title="library">skylabs.lang.cpp.syntax</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.mtraverse.html#"><span class="id" title="library">skylabs.lang.cpp.syntax.mtraverse</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Notation</span> <a id="translation_unit" class="idref" href="#translation_unit"><span class="id" title="abbreviation">translation_unit</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#translation_unit"><span class="id" title="record">translation_unit.translation_unit</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab187"></a><h1 class="section">Resolving aliases</h1>
+
+<div class="paragraph"> </div>
+
+Expand type aliases using the alias information stored within a
+<span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#translation_unit"><span class="id" title="record">translation_unit</span></a></span>.
+
+<div class="paragraph"> </div>
+
+NOTE: The current implementation relies on the fact that aliases
+are already removed from definitions, e.g.
+<pre>
+using T = int;
+using U = T;
+</pre>
+will be represented the same way as
+<pre>
+using T = int;
+using U = int;
+</pre>
+This avoids the potential for loops and makes de-aliasing structurally
+recursive. Without this, we would need to rely on fuel (or well-foundedness
+arguments) to fully de-alias a type/name.
+
+</div>
+<div class="code">
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">monad_scope</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Notation</span> <a id="M" class="idref" href="#M"><span class="id" title="abbreviation">M</span></a> := (<span class="id" title="inductive">trace.M</span> <span class="id" title="axiom">Error.t</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="internal" class="idref" href="#internal"><span class="id" title="module">internal</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">UPoly</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Section</span> <a id="internal.resolve" class="idref" href="#internal.resolve"><span class="id" title="section">resolve</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Context</span> (<a id="internal.resolve.tu" class="idref" href="#internal.resolve.tu"><span class="id" title="variable">tu</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#translation_unit"><span class="id" title="abbreviation">translation_unit</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="internal.handle_Tnamed" class="idref" href="#internal.handle_Tnamed"><span class="id" title="definition">handle_Tnamed</span></a> (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name"><span class="id" title="inductive">name</span></a>) (<a id="traverse:2" class="idref" href="#traverse:2"><span class="id" title="binder">traverse</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#M"><span class="id" title="abbreviation">M</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name"><span class="id" title="inductive">name</span></a>) : <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#M"><span class="id" title="abbreviation">M</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">(</span><span class="id" title="keyword">fun</span> <a id="nm:3" class="idref" href="#nm:3"><span class="id" title="binder">nm</span></a> =&gt; <span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#resolve_type"><span class="id" title="definition">translation_unit.resolve_type</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#internal.resolve.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#nm:3"><span class="id" title="variable">nm</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> =&gt; <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tnamed"><span class="id" title="constructor">Tnamed</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#nm:3"><span class="id" title="variable">nm</span></a> <span class="comment">(*&nbsp;this&nbsp;is&nbsp;the&nbsp;best&nbsp;approximation&nbsp;we&nbsp;can&nbsp;make,&nbsp;alternatively,&nbsp;we&nbsp;can&nbsp;fail&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">t</span> =&gt; <span class="id" title="var">t</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><span class="id" title="notation">)</span> <span class="id" title="notation">&lt;$&gt;</span> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#traverse:2"><span class="id" title="variable">traverse</span></a> <span class="id" title="notation">()</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="internal.handle_Tref" class="idref" href="#internal.handle_Tref"><span class="id" title="definition">handle_Tref</span></a> (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a>) (<a id="traverse:4" class="idref" href="#traverse:4"><span class="id" title="binder">traverse</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#M"><span class="id" title="abbreviation">M</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a>) : <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#M"><span class="id" title="abbreviation">M</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.syntax.types.html#tref"><span class="id" title="definition">tref</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#QM"><span class="id" title="constructor">QM</span></a> <span class="id" title="notation">&lt;$&gt;</span> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#traverse:4"><span class="id" title="variable">traverse</span></a> <span class="id" title="notation">()</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="internal.handle_Trv_ref" class="idref" href="#internal.handle_Trv_ref"><span class="id" title="definition">handle_Trv_ref</span></a> (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a>) (<a id="traverse:5" class="idref" href="#traverse:5"><span class="id" title="binder">traverse</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#M"><span class="id" title="abbreviation">M</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a>) : <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#M"><span class="id" title="abbreviation">M</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.syntax.types.html#trv_ref"><span class="id" title="definition">trv_ref</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#QM"><span class="id" title="constructor">QM</span></a> <span class="id" title="notation">&lt;$&gt;</span> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#traverse:5"><span class="id" title="variable">traverse</span></a> <span class="id" title="notation">()</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="internal.handle_type" class="idref" href="#internal.handle_type"><span class="id" title="definition">handle_type</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.handler.html#type_handler"><span class="id" title="abbreviation">type_handler</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#M"><span class="id" title="abbreviation">M</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="skylabs.lang.cpp.syntax.handler.html#handle_type_traverse"><span class="id" title="definition">handle_type_traverse</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">&amp;:</span> <a class="idref" href="skylabs.lang.cpp.syntax.handler.html#_handle_Tnamed"><span class="id" title="definition">_handle_Tnamed</span></a>  <span class="id" title="notation">.=</span> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#internal.handle_Tnamed"><span class="id" title="definition">handle_Tnamed</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">&amp;:</span> <a class="idref" href="skylabs.lang.cpp.syntax.handler.html#_handle_Tref"><span class="id" title="definition">_handle_Tref</span></a>    <span class="id" title="notation">.=</span> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#internal.handle_Tref"><span class="id" title="definition">handle_Tref</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">&amp;:</span> <a class="idref" href="skylabs.lang.cpp.syntax.handler.html#_handle_Trv_ref"><span class="id" title="definition">_handle_Trv_ref</span></a> <span class="id" title="notation">.=</span> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#internal.handle_Trv_ref"><span class="id" title="definition">handle_Trv_ref</span></a>)%<span class="id" title="var">lens</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#internal.resolve"><span class="id" title="section">resolve</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#internal"><span class="id" title="module">internal</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="resolve" class="idref" href="#resolve"><span class="id" title="section">resolve</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.mtraverse.html#MTraverse"><span class="id" title="module">MTraverse</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> (<a id="resolve.tu" class="idref" href="#resolve.tu"><span class="id" title="variable">tu</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#translation_unit"><span class="id" title="abbreviation">translation_unit</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Notation</span> <a id="USE" class="idref" href="#USE"><span class="id" title="abbreviation">USE</span></a> <span class="id" title="var">f</span> := (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">f</span> (<a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#handle_type"><span class="id" title="definition">internal.handle_type</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#resolve.tu"><span class="id" title="variable">tu</span></a>) <a class="idref" href="skylabs.lang.cpp.syntax.handler.html#handle_expr_traverse"><span class="id" title="definition">handle_expr_traverse</span></a><br/>
+&nbsp;&nbsp;) (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="resolveT" class="idref" href="#resolveT"><span class="id" title="definition">resolveT</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#USE"><span class="id" title="abbreviation">USE</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.mtraverse.html#MTraverse.traverseT"><span class="id" title="definition">traverseT</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="resolveE" class="idref" href="#resolveE"><span class="id" title="definition">resolveE</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#USE"><span class="id" title="abbreviation">USE</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.mtraverse.html#MTraverse.traverseE"><span class="id" title="definition">traverseE</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="resolveTA" class="idref" href="#resolveTA"><span class="id" title="definition">resolveTA</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#USE"><span class="id" title="abbreviation">USE</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.mtraverse.html#MTraverse.traverseTA"><span class="id" title="definition">traverseTA</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="resolveS" class="idref" href="#resolveS"><span class="id" title="definition">resolveS</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#USE"><span class="id" title="abbreviation">USE</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.mtraverse.html#MTraverse.traverseS"><span class="id" title="definition">traverseS</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="resolveVD" class="idref" href="#resolveVD"><span class="id" title="definition">resolveVD</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#USE"><span class="id" title="abbreviation">USE</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.mtraverse.html#MTraverse.traverseD"><span class="id" title="definition">traverseD</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="resolveN" class="idref" href="#resolveN"><span class="id" title="definition">resolveN</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#USE"><span class="id" title="abbreviation">USE</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.mtraverse.html#MTraverse.traverseN"><span class="id" title="definition">traverseN</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Resolve a type name in a translation unit. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="resolveTN" class="idref" href="#resolveTN"><span class="id" title="definition">resolveTN</span></a> (<a id="n:7" class="idref" href="#n:7"><span class="id" title="binder">n</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name"><span class="id" title="inductive">name</span></a>) : <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#M"><span class="id" title="abbreviation">M</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#resolveT"><span class="id" title="definition">resolveT</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#547692780023ef044153bc0c4f871ef7"><span class="id" title="notation">$</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tnamed"><span class="id" title="constructor">Tnamed</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#n:7"><span class="id" title="variable">n</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Resolve the name of a **value** in a translation unit.
+      This uses the information in the alias table to attempt to resolve the symbol.
+      If the symbol is not found, then the dealiased symbol is returned but namespace
+      aliases are not resolved, because there is no way to know where the (unfound)
+      definition is supposed to live.
+   
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="resolveValue" class="idref" href="#resolveValue"><span class="id" title="definition">resolveValue</span></a> (<a id="n:8" class="idref" href="#n:8"><span class="id" title="binder">n</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name"><span class="id" title="inductive">name</span></a>) : <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#M"><span class="id" title="abbreviation">M</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name"><span class="id" title="inductive">name</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="instance">trace.map</span> (<span class="id" title="keyword">fun</span> <a id="n:9" class="idref" href="#n:9"><span class="id" title="binder">n</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#resolve_value"><span class="id" title="definition">translation_unit.resolve_value</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#resolve.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#n:9"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> =&gt; <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#n:9"><span class="id" title="variable">n</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">n</span> =&gt; <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#n:9"><span class="id" title="variable">n</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#547692780023ef044153bc0c4f871ef7"><span class="id" title="notation">$</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#resolveN"><span class="id" title="definition">resolveN</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#n:8"><span class="id" title="variable">n</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#resolve"><span class="id" title="section">resolve</span></a>.<br/>
+
+<br/>
+<span class="id" title="var">Succeed</span> <span class="id" title="keyword">Example</span> <a id="_1" class="idref" href="#_1"><span class="id" title="definition">_1</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="tu:10" class="idref" href="#tu:10"><span class="id" title="binder">tu</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#empty_tu"><span class="id" title="definition">empty_tu</span></a> <span class="id" title="constructor">Little</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="definition">trace.runO</span> (<a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#resolveValue"><span class="id" title="definition">resolveValue</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#tu:10"><span class="id" title="variable">tu</span></a> "test(int&amp; &amp;)") <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> ("test(int&amp;)"%<span class="id" title="var">cpp_name</span>) := <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#eq_refl"><span class="id" title="constructor">eq_refl</span></a>.<br/>
+<span class="id" title="var">Succeed</span> <span class="id" title="keyword">Example</span> <a id="_1" class="idref" href="#_1"><span class="id" title="definition">_1</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="tu:11" class="idref" href="#tu:11"><span class="id" title="binder">tu</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#empty_tu"><span class="id" title="definition">empty_tu</span></a> <span class="id" title="constructor">Little</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="definition">trace.runO</span> (<a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#resolveValue"><span class="id" title="definition">resolveValue</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#tu:11"><span class="id" title="variable">tu</span></a> "test(int&amp;&amp; &amp;)") <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> ("test(int&amp;)"%<span class="id" title="var">cpp_name</span>) := <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#eq_refl"><span class="id" title="constructor">eq_refl</span></a>.<br/>
+<span class="id" title="var">Succeed</span> <span class="id" title="keyword">Example</span> <a id="_1" class="idref" href="#_1"><span class="id" title="definition">_1</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="tu:12" class="idref" href="#tu:12"><span class="id" title="binder">tu</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#empty_tu"><span class="id" title="definition">empty_tu</span></a> <span class="id" title="constructor">Little</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="definition">trace.runO</span> (<a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#resolveValue"><span class="id" title="definition">resolveValue</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#tu:12"><span class="id" title="variable">tu</span></a> "test(int&amp; &amp;&amp;)") <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> ("test(int&amp;)"%<span class="id" title="var">cpp_name</span>) := <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#eq_refl"><span class="id" title="constructor">eq_refl</span></a>.<br/>
+<span class="id" title="var">Succeed</span> <span class="id" title="keyword">Example</span> <a id="_1" class="idref" href="#_1"><span class="id" title="definition">_1</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="tu:13" class="idref" href="#tu:13"><span class="id" title="binder">tu</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#empty_tu"><span class="id" title="definition">empty_tu</span></a> <span class="id" title="constructor">Little</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="definition">trace.runO</span> (<a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#resolveValue"><span class="id" title="definition">resolveValue</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#tu:13"><span class="id" title="variable">tu</span></a> "test(int&amp;&amp; &amp;&amp;)") <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> ("test(int&amp;&amp;)"%<span class="id" title="var">cpp_name</span>) := <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#eq_refl"><span class="id" title="constructor">eq_refl</span></a>.<br/>
+<span class="id" title="var">Succeed</span> <span class="id" title="keyword">Example</span> <a id="_1" class="idref" href="#_1"><span class="id" title="definition">_1</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="tu:14" class="idref" href="#tu:14"><span class="id" title="binder">tu</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#empty_tu"><span class="id" title="definition">empty_tu</span></a> <span class="id" title="constructor">Little</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="definition">trace.runO</span> (<a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#resolveValue"><span class="id" title="definition">resolveValue</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#tu:14"><span class="id" title="variable">tu</span></a> "test(const int)") <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> ("test(int)"%<span class="id" title="var">cpp_name</span>) := <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#eq_refl"><span class="id" title="constructor">eq_refl</span></a>.<br/>
+<span class="id" title="var">Succeed</span> <span class="id" title="keyword">Example</span> <a id="_1" class="idref" href="#_1"><span class="id" title="definition">_1</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="tu:15" class="idref" href="#tu:15"><span class="id" title="binder">tu</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#empty_tu"><span class="id" title="definition">empty_tu</span></a> <span class="id" title="constructor">Little</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="definition">trace.runO</span> (<a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#resolveValue"><span class="id" title="definition">resolveValue</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.dealias.html#tu:15"><span class="id" title="variable">tu</span></a> "test(volatile int, const int&amp;)") <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> ("test(int, const int&amp;)"%<span class="id" title="var">cpp_name</span>) := <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#eq_refl"><span class="id" title="constructor">eq_refl</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

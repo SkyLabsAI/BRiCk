@@ -1,0 +1,180 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.iris.extra.bi.monpred</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2021-2022&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#"><span class="id" title="library">iris.bi.monpred</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.iris.extra.bi.prelude.html#"><span class="id" title="library">skylabs.iris.extra.bi.prelude</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.monpred.html#"><span class="id" title="library">iris.proofmode.monpred</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Notation</span> <a id="::stdpp_scope:x_'-mon&gt;'_x" class="idref" href="#::stdpp_scope:x_'-mon&gt;'_x"><span class="id" title="notation">&quot;</span></a>A -mon&gt; B" := (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#monPred"><span class="id" title="record">monPred</span></a> <span class="id" title="var">A</span> <span class="id" title="var">B</span>%<span class="id" title="var">bi_type</span>) : <span class="id" title="var">stdpp_scope</span>.<br/>
+<span class="id" title="keyword">Notation</span> <a id="::bi_type_scope:x_'-mon&gt;'_x" class="idref" href="#::bi_type_scope:x_'-mon&gt;'_x"><span class="id" title="notation">&quot;</span></a>A -mon&gt; B" := (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#monPredI"><span class="id" title="definition">monPredI</span></a> <span class="id" title="var">A</span> <span class="id" title="var">B</span>) : <span class="id" title="var">bi_type_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Do not extend this module. It exists for backwards compatibility.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <span class="id" title="keyword">Export</span> <a id="nary" class="idref" href="#nary"><span class="id" title="module">nary</span></a>.<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">ObjectiveN</span></span> states that predicate <span class="inlinecode"><a class="idref" href="skylabs.iris.extra.bi.spec.contender_token.html#with_contender.P"><span class="id" title="variable">P</span></a></span> taking <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a></span> arguments is <span class="inlinecode"><a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#Objective"><span class="id" title="class">Objective</span></a></span> 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="nary.Objective1" class="idref" href="#nary.Objective1"><span class="id" title="abbreviation">Objective1</span></a> <span class="id" title="var">P</span> := (<span class="id" title="notation">∀</span> <a id="a:1" class="idref" href="#a:1"><span class="id" title="binder">a</span></a><span class="id" title="notation">,</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#Objective"><span class="id" title="class">Objective</span></a> (<span class="id" title="var">P</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#a:1"><span class="id" title="variable">a</span></a>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="nary.Objective2" class="idref" href="#nary.Objective2"><span class="id" title="abbreviation">Objective2</span></a> <span class="id" title="var">P</span> := (<span class="id" title="notation">∀</span> <a id="a:2" class="idref" href="#a:2"><span class="id" title="binder">a</span></a><span class="id" title="notation">,</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#nary.Objective1"><span class="id" title="abbreviation">Objective1</span></a> (<span class="id" title="var">P</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#a:2"><span class="id" title="variable">a</span></a>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="nary.Objective3" class="idref" href="#nary.Objective3"><span class="id" title="abbreviation">Objective3</span></a> <span class="id" title="var">P</span> := (<span class="id" title="notation">∀</span> <a id="a:3" class="idref" href="#a:3"><span class="id" title="binder">a</span></a><span class="id" title="notation">,</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#nary.Objective2"><span class="id" title="abbreviation">Objective2</span></a> (<span class="id" title="var">P</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#a:3"><span class="id" title="variable">a</span></a>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="nary.Objective4" class="idref" href="#nary.Objective4"><span class="id" title="abbreviation">Objective4</span></a> <span class="id" title="var">P</span> := (<span class="id" title="notation">∀</span> <a id="a:4" class="idref" href="#a:4"><span class="id" title="binder">a</span></a><span class="id" title="notation">,</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#nary.Objective3"><span class="id" title="abbreviation">Objective3</span></a> (<span class="id" title="var">P</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#a:4"><span class="id" title="variable">a</span></a>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="nary.Objective5" class="idref" href="#nary.Objective5"><span class="id" title="abbreviation">Objective5</span></a> <span class="id" title="var">P</span> := (<span class="id" title="notation">∀</span> <a id="a:5" class="idref" href="#a:5"><span class="id" title="binder">a</span></a><span class="id" title="notation">,</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#nary.Objective4"><span class="id" title="abbreviation">Objective4</span></a> (<span class="id" title="var">P</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#a:5"><span class="id" title="variable">a</span></a>)).<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#nary"><span class="id" title="module">nary</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span>: <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Classes.Morphisms.html#Params"><span class="id" title="class">Params</span></a> (@<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#Objective"><span class="id" title="class">Objective</span></a>) 2 := {}.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Existing</span> <span class="id" title="keyword">Instance</span> <a class="idref" href="skylabs.iris.extra.bi.only_provable.html#Objective_proper"><span class="id" title="instance">Objective_proper</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="proofmode_monpred" class="idref" href="#proofmode_monpred"><span class="id" title="section">proofmode_monpred</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="proofmode_monpred.I" class="idref" href="#proofmode_monpred.I"><span class="id" title="variable">I</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#biIndex"><span class="id" title="record">biIndex</span></a>} {<a id="proofmode_monpred.PROP" class="idref" href="#proofmode_monpred.PROP"><span class="id" title="variable">PROP</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#bi"><span class="id" title="record">bi</span></a>}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Implicit</span> <span class="id" title="keyword">Types</span> (<span class="id" title="var">P</span> : <a class="idref" href="skylabs.iris.extra.bi.monpred.html#proofmode_monpred.PROP"><span class="id" title="variable">PROP</span></a>) (<span class="id" title="var">i</span> : <a class="idref" href="skylabs.iris.extra.bi.monpred.html#proofmode_monpred.I"><span class="id" title="variable">I</span></a>).<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Notation</span> <a id="MakeMonPredAt" class="idref" href="#MakeMonPredAt"><span class="id" title="abbreviation">MakeMonPredAt</span></a> := (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.monpred.html#MakeMonPredAt"><span class="id" title="class">MakeMonPredAt</span></a> (<span class="id" title="var">PROP</span>:=<a class="idref" href="skylabs.iris.extra.bi.monpred.html#proofmode_monpred.PROP"><span class="id" title="variable">PROP</span></a>)).<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="make_monPred_at_only_provable" class="idref" href="#make_monPred_at_only_provable"><span class="id" title="instance">make_monPred_at_only_provable</span></a> <a id="ff6bfbc9a0c453784b0bcccf32874e12" class="idref" href="#ff6bfbc9a0c453784b0bcccf32874e12"><span class="id" title="binder">φ</span></a> <a id="i:9" class="idref" href="#i:9"><span class="id" title="binder">i</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.iris.extra.bi.monpred.html#MakeMonPredAt"><span class="id" title="abbreviation">MakeMonPredAt</span></a> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#i:9"><span class="id" title="variable">i</span></a> <a class="idref" href="skylabs.iris.extra.bi.only_provable.html#d95ff2fe2904cc1067c71e0d017740c6"><span class="id" title="notation">[|</span></a><a class="idref" href="skylabs.iris.extra.bi.monpred.html#ff6bfbc9a0c453784b0bcccf32874e12"><span class="id" title="variable">φ</span></a><a class="idref" href="skylabs.iris.extra.bi.only_provable.html#d95ff2fe2904cc1067c71e0d017740c6"><span class="id" title="notation">|]</span></a> <a class="idref" href="skylabs.iris.extra.bi.only_provable.html#d95ff2fe2904cc1067c71e0d017740c6"><span class="id" title="notation">[|</span></a><a class="idref" href="skylabs.iris.extra.bi.monpred.html#ff6bfbc9a0c453784b0bcccf32874e12"><span class="id" title="variable">φ</span></a><a class="idref" href="skylabs.iris.extra.bi.only_provable.html#d95ff2fe2904cc1067c71e0d017740c6"><span class="id" title="notation">|]</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">rewrite</span> /<a class="idref" href="skylabs.iris.extra.bi.monpred.html#MakeMonPredAt"><span class="id" title="abbreviation">MakeMonPredAt</span></a>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <a class="idref" href="skylabs.iris.extra.bi.only_provable.html#monPred_at_only_provable"><span class="id" title="lemma">monPred_at_only_provable</span></a>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#proofmode_monpred"><span class="id" title="section">proofmode_monpred</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab55"></a><h2 class="section">Discrete BI indices and discrete BI index elements</h2>
+
+<div class="paragraph"> </div>
+
+We might eventually need to generalize from Leibniz equality to setoid
+equivalence. Should that happen, we might want to (in stdpp),
+generalize so as to use the same typeclasses for these things and
+Iris' <span class="inlinecode"><a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.ofe.html#Discrete"><span class="id" title="class">Discrete</span></a></span>, <span class="inlinecode"><a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.ofe.html#OfeDiscrete"><span class="id" title="class">OfeDiscrete</span></a></span>.
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Class</span> <a id="BiIndexElementDiscrete" class="idref" href="#BiIndexElementDiscrete"><span class="id" title="inductive, record"><span id="BiIndexElementDiscrete" class="id">BiIndexElementDiscrete</span></span></a> {<a id="I:10" class="idref" href="#I:10"><span class="id" title="binder">I</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#biIndex"><span class="id" title="record">biIndex</span></a>} (<a id="i:11" class="idref" href="#i:11"><span class="id" title="binder">i</span></a> : <a class="idref" href="skylabs.iris.extra.bi.monpred.html#I:10"><span class="id" title="variable">I</span></a>) : <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;<a id="bi_index_element_discrete" class="idref" href="#bi_index_element_discrete"><span class="id" title="constructor, projection"><span id="bi_index_element_discrete" class="id">bi_index_element_discrete</span></span></a> <a id="i':13" class="idref" href="#i':13"><span class="id" title="binder">i'</span></a> : <a class="idref" href="skylabs.iris.extra.bi.monpred.html#i:11"><span class="id" title="variable">i</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#df701c570a2112babeefa6296ee609c4"><span class="id" title="notation">⊑</span></a> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#i':13"><span class="id" title="variable">i'</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#i:11"><span class="id" title="variable">i</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#i':13"><span class="id" title="variable">i'</span></a>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="var">Mode</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#BiIndexElementDiscrete"><span class="id" title="class">BiIndexElementDiscrete</span></a> + ! : <span class="id" title="var">typeclass_instances</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Opaque</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#BiIndexElementDiscrete"><span class="id" title="class">BiIndexElementDiscrete</span></a> : <span class="id" title="var">typeclass_instances</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span>: <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Classes.Morphisms.html#Params"><span class="id" title="class">Params</span></a> (@<a class="idref" href="skylabs.iris.extra.bi.monpred.html#BiIndexElementDiscrete"><span class="id" title="class">BiIndexElementDiscrete</span></a>) 1 := {}.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span>: <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Classes.Morphisms.html#Params"><span class="id" title="class">Params</span></a> (@<a class="idref" href="skylabs.iris.extra.bi.monpred.html#bi_index_element_discrete"><span class="id" title="definition">bi_index_element_discrete</span></a>) 4 := {}.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#bi_index_element_discrete"><span class="id" title="definition">bi_index_element_discrete</span></a> {<span class="id" title="var">_</span>} <span class="id" title="var">_</span> {<span class="id" title="var">_</span>} <span class="id" title="var">_</span> <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Class</span> <a id="BiIndexDiscrete" class="idref" href="#BiIndexDiscrete"><span class="id" title="inductive, record"><span id="BiIndexDiscrete" class="id">BiIndexDiscrete</span></span></a> (<a id="I:15" class="idref" href="#I:15"><span class="id" title="binder">I</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#biIndex"><span class="id" title="record">biIndex</span></a>) : <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;<a id="bi_index_discrete" class="idref" href="#bi_index_discrete"><span class="id" title="constructor, projection"><span id="bi_index_discrete" class="id">bi_index_discrete</span></span></a> (<a id="i:17" class="idref" href="#i:17"><span class="id" title="binder">i</span></a> : <a class="idref" href="skylabs.iris.extra.bi.monpred.html#I:15"><span class="id" title="variable">I</span></a>) : <a class="idref" href="skylabs.iris.extra.bi.monpred.html#BiIndexElementDiscrete"><span class="id" title="class">BiIndexElementDiscrete</span></a> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#i:17"><span class="id" title="variable">i</span></a>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Existing</span> <span class="id" title="keyword">Instance</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#bi_index_discrete"><span class="id" title="definition">bi_index_discrete</span></a>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="var">Mode</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#BiIndexDiscrete"><span class="id" title="class">BiIndexDiscrete</span></a> ! : <span class="id" title="var">typeclass_instances</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="bi_index_discrete" class="idref" href="#bi_index_discrete"><span class="id" title="section">bi_index_discrete</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="bi_index_discrete.I" class="idref" href="#bi_index_discrete.I"><span class="id" title="variable">I</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#biIndex"><span class="id" title="record">biIndex</span></a>}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Implicit</span> <span class="id" title="keyword">Type</span> <span class="id" title="var">i</span> : <a class="idref" href="skylabs.iris.extra.bi.monpred.html#bi_index_discrete.I"><span class="id" title="variable">I</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="BiIndexElementDiscrete_mono" class="idref" href="#BiIndexElementDiscrete_mono"><span class="id" title="instance">BiIndexElementDiscrete_mono</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Classes.Morphisms.html#Proper"><span class="id" title="class">Proper</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#be429fe50ea73542f0b44fd217c46169"><span class="id" title="notation">(⊑)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Classes.Morphisms.html#8dc5652698a6e16f72dd37bd17d3b973"><span class="id" title="notation">==&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Program.Basics.html#impl"><span class="id" title="definition">impl</span></a>) (@<a class="idref" href="skylabs.iris.extra.bi.monpred.html#BiIndexElementDiscrete"><span class="id" title="class">BiIndexElementDiscrete</span></a> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#bi_index_discrete.I"><span class="id" title="variable">I</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">i1</span> <span class="id" title="var">i2</span> <span class="id" title="var">Hi</span> ? <span class="id" title="var">i'</span> <span class="id" title="var">Hi'</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">generalize</span> (<a class="idref" href="skylabs.iris.extra.bi.monpred.html#bi_index_element_discrete"><span class="id" title="definition">bi_index_element_discrete</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">Hi</span>). <span class="id" title="tactic">intros</span> -&gt;.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">apply</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#bi_index_element_discrete"><span class="id" title="definition">bi_index_element_discrete</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="BiIndexElementDiscrete_flip_mono" class="idref" href="#BiIndexElementDiscrete_flip_mono"><span class="id" title="instance">BiIndexElementDiscrete_flip_mono</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Classes.Morphisms.html#Proper"><span class="id" title="class">Proper</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Program.Basics.html#flip"><span class="id" title="definition">flip</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#be429fe50ea73542f0b44fd217c46169"><span class="id" title="notation">(⊑)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Classes.Morphisms.html#8dc5652698a6e16f72dd37bd17d3b973"><span class="id" title="notation">==&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Program.Basics.html#flip"><span class="id" title="definition">flip</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Program.Basics.html#impl"><span class="id" title="definition">impl</span></a>) (@<a class="idref" href="skylabs.iris.extra.bi.monpred.html#BiIndexElementDiscrete"><span class="id" title="class">BiIndexElementDiscrete</span></a> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#bi_index_discrete.I"><span class="id" title="variable">I</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">repeat</span> <span class="id" title="tactic">intro</span>. <span class="id" title="tactic">exact</span>: <a class="idref" href="skylabs.iris.extra.bi.monpred.html#BiIndexElementDiscrete_mono"><span class="id" title="instance">BiIndexElementDiscrete_mono</span></a>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="bi_index_element_discrete_iff" class="idref" href="#bi_index_element_discrete_iff"><span class="id" title="lemma">bi_index_element_discrete_iff</span></a> <a id="i:20" class="idref" href="#i:20"><span class="id" title="binder">i</span></a> `{<a id="BiIndexElementDiscrete0:21" class="idref" href="#BiIndexElementDiscrete0:21"><span class="id" title="binder">!</span></a><a id="BiIndexElementDiscrete0:21" class="idref" href="#BiIndexElementDiscrete0:21"><span class="id" title="binder">BiIndexElementDiscrete</span></a> <a id="BiIndexElementDiscrete0:21" class="idref" href="#BiIndexElementDiscrete0:21"><span class="id" title="binder">i</span></a>} <a id="i':22" class="idref" href="#i':22"><span class="id" title="binder">i'</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.iris.extra.bi.monpred.html#i:20"><span class="id" title="variable">i</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#df701c570a2112babeefa6296ee609c4"><span class="id" title="notation">⊑</span></a> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#i':22"><span class="id" title="variable">i'</span></a> <span class="id" title="notation">↔</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#i:20"><span class="id" title="variable">i</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#i':22"><span class="id" title="variable">i'</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">split</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">apply</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#bi_index_element_discrete"><span class="id" title="definition">bi_index_element_discrete</span></a>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">move</span>=&gt;-&gt;. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+  Setting aside typeclass resolution hints, these two are equivalent.
+  
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="subrelation_bi_index_discrete" class="idref" href="#subrelation_bi_index_discrete"><span class="id" title="lemma">subrelation_bi_index_discrete</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Classes.RelationClasses.html#subrelation"><span class="id" title="class">subrelation</span></a> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#bi_index_discrete.I"><span class="id" title="variable">I</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#be429fe50ea73542f0b44fd217c46169"><span class="id" title="notation">(⊑)</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#924fd3758233021bbb7af913c6a625ce"><span class="id" title="notation">(=)</span></a> <span class="id" title="notation">↔</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#BiIndexDiscrete"><span class="id" title="class">BiIndexDiscrete</span></a> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#bi_index_discrete.I"><span class="id" title="variable">I</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.iris.extra.bi.monpred.html#bi_index_discrete"><span class="id" title="section">bi_index_discrete</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

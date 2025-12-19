@@ -1,0 +1,252 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.prelude.elpi.derive.countable</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2023&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#"><span class="id" title="library">ssreflect</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.countable.html#"><span class="id" title="library">stdpp.countable</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">elpi.elpi</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.prelude.elpi.derive.common.html#"><span class="id" title="library">skylabs.prelude.elpi.derive.common</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.prelude.elpi.derive.eq_dec.html#"><span class="id" title="library">skylabs.prelude.elpi.derive.eq_dec</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.prelude.elpi.basis.html#"><span class="id" title="library">skylabs.prelude.elpi.basis</span></a>.<br/>
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">File</span> <span class="id" title="var">skylabs.basis.elpi</span>.<br/>
+
+<br/>
+<span class="comment">(***************************************************<br/>
+&nbsp;Countable<br/>
+&nbsp;***************************************************)</span><br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Db</span> <span class="id" title="var">derive.stdpp.countable.db</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">countable</span> <span class="id" title="var">o</span>:<span class="id" title="var">gref</span>, <span class="id" title="var">o</span>:<span class="id" title="var">gref</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">countable</span>-<span class="id" title="var">done</span> <span class="id" title="var">o</span>:<span class="id" title="var">gref</span>.<br/>
+}}.<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive.stdpp.countable.db</span> <span class="id" title="var">File</span> <span class="id" title="var">skylabs.typeclass.elpi</span>.<br/>
+#[<span class="id" title="var">superglobal</span>] <span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive.stdpp.countable.db</span> <span class="id" title="var">lp</span>:{{<br/>
+<br/>
+&nbsp;&nbsp;:<span class="id" title="var">name</span> "countable-done.typeclass"<br/>
+&nbsp;&nbsp;<span class="id" title="var">countable</span>-<span class="id" title="var">done</span> <span class="id" title="var">GR</span> :-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">typeclass</span> "derive.stdpp.countable.db"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="keyword">before</span> "countable-done.typeclass") (<span class="id" title="var">countable</span>-<span class="id" title="var">done</span> <span class="id" title="var">GR</span>) {{ @<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.countable.html#Countable"><span class="id" title="class">Countable</span></a> <span class="id" title="var">lp</span>:{{<span class="id" title="var">global</span> <span class="id" title="var">GR</span>}} <span class="id" title="var">_</span> }} <span class="id" title="var">Bo_</span>.<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">Db</span> <span class="id" title="var">derive.stdpp.countable.db</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+This Gallina function is used at code generation time (not at runtime) to produce the
+    positive associated to a particular value <span class="inlinecode"><span class="id" title="var">a</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><a class="idref" href="skylabs.prelude.elpi.derive_test.html#Alias.T"><span class="id" title="inductive">T</span></a></span>, given the list of all constructors <span class="inlinecode"><span class="id" title="var">l</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><a class="idref" href="skylabs.prelude.list.html#list"><span class="id" title="section">list</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.prelude.elpi.derive_test.html#Alias.T"><span class="id" title="inductive">T</span></a></span>. 
+</div>
+<div class="code">
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Fixpoint</span> <a id="lookup_from_ctorlist" class="idref" href="#lookup_from_ctorlist"><span class="id" title="definition">lookup_from_ctorlist</span></a> `{<a id="EqDecision0:2" class="idref" href="#EqDecision0:2"><span class="id" title="binder">EqDecision</span></a> <a id="T:1" class="idref" href="#T:1"><span class="id" title="binder"><span id="EqDecision0:2" class="id">T</span></span></a>} (<a id="p:3" class="idref" href="#p:3"><span class="id" title="binder">p</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#positive"><span class="id" title="inductive">positive</span></a>) (<a id="l:4" class="idref" href="#l:4"><span class="id" title="binder">l</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="skylabs.prelude.elpi.derive.countable.html#T:1"><span class="id" title="variable">T</span></a>) (<a id="a:5" class="idref" href="#a:5"><span class="id" title="binder">a</span></a> : <a class="idref" href="skylabs.prelude.elpi.derive.countable.html#T:1"><span class="id" title="variable">T</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#positive"><span class="id" title="inductive">positive</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.prelude.elpi.derive.countable.html#l:4"><span class="id" title="variable">l</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <span class="id" title="notation">[]</span> =&gt; <a class="idref" href="skylabs.prelude.elpi.derive.countable.html#p:3"><span class="id" title="variable">p</span></a><br/>
+&nbsp;&nbsp;| <span class="id" title="var">a'</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <span class="id" title="var">l'</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.decidable.html#bool_decide"><span class="id" title="definition">bool_decide</span></a> (<a class="idref" href="skylabs.prelude.elpi.derive.countable.html#a:5"><span class="id" title="variable">a</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="var">a'</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a> <a class="idref" href="skylabs.prelude.elpi.derive.countable.html#p:3"><span class="id" title="variable">p</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a> <a class="idref" href="skylabs.prelude.elpi.derive.countable.html#lookup_from_ctorlist:6"><span class="id" title="definition">lookup_from_ctorlist</span></a> (<a class="idref" href="skylabs.prelude.elpi.derive.countable.html#p:3"><span class="id" title="variable">p</span></a> <span class="id" title="notation">+</span> 1)%<span class="id" title="var">positive</span> <span class="id" title="var">l'</span> <a class="idref" href="skylabs.prelude.elpi.derive.countable.html#a:5"><span class="id" title="variable">a</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+TODO: This generic decoding function is used in generated <span class="inlinecode"><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.countable.html#Countable"><span class="id" title="class">Countable</span></a></span> instances but isn't efficient.
+    It would be better to replace it by a table that's built at code generation time. 
+</div>
+<div class="code">
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Fixpoint</span> <a id="decode_from_encode" class="idref" href="#decode_from_encode"><span class="id" title="definition">decode_from_encode</span></a> `{<a id="EqDecision0:9" class="idref" href="#EqDecision0:9"><span class="id" title="binder">EqDecision</span></a> <a id="T:8" class="idref" href="#T:8"><span class="id" title="binder"><span id="EqDecision0:9" class="id">T</span></span></a>} (<a id="encode:10" class="idref" href="#encode:10"><span class="id" title="binder">encode</span></a> : <a class="idref" href="skylabs.prelude.elpi.derive.countable.html#T:8"><span class="id" title="variable">T</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#positive"><span class="id" title="inductive">positive</span></a>) (<a id="l:11" class="idref" href="#l:11"><span class="id" title="binder">l</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="skylabs.prelude.elpi.derive.countable.html#T:8"><span class="id" title="variable">T</span></a>) (<a id="x:12" class="idref" href="#x:12"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#positive"><span class="id" title="inductive">positive</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="skylabs.prelude.elpi.derive.countable.html#T:8"><span class="id" title="variable">T</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.prelude.elpi.derive.countable.html#l:11"><span class="id" title="variable">l</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <span class="id" title="notation">[]</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;| <span class="id" title="var">a</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <span class="id" title="var">l'</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.decidable.html#bool_decide"><span class="id" title="definition">bool_decide</span></a> (<a class="idref" href="skylabs.prelude.elpi.derive.countable.html#encode:10"><span class="id" title="variable">encode</span></a> <span class="id" title="var">a</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.prelude.elpi.derive.countable.html#x:12"><span class="id" title="variable">x</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">a</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::boolean_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a> <a class="idref" href="skylabs.prelude.elpi.derive.countable.html#decode_from_encode:13"><span class="id" title="definition">decode_from_encode</span></a> <a class="idref" href="skylabs.prelude.elpi.derive.countable.html#encode:10"><span class="id" title="variable">encode</span></a> <span class="id" title="var">l'</span> <a class="idref" href="skylabs.prelude.elpi.derive.countable.html#x:12"><span class="id" title="variable">x</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+This needs to be exported for use by callers of Deriving but shouldn't be otherwise used outside this module.
+</div>
+<div class="code">
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">derive_solve_countable</span> := <span class="id" title="tactic">by</span> <span class="id" title="tactic">case</span>. </div>
+
+<div class="doc">
+TODO: <span class="inlinecode"><span class="id" title="tactic">abstract</span></span> 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">File</span> <span class="id" title="var">derive.countable.elpi</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">derive.countable</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;/*<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[<span class="id" title="var">mk</span>-<span class="id" title="var">countable</span> <span class="id" title="var">CtorList</span> <span class="id" title="var">Name</span> <span class="id" title="var">T</span>] <span class="id" title="var">assumes</span> <span class="id" title="var">that</span> <span class="id" title="keyword">type</span> [<span class="id" title="var">T</span>] <span class="id" title="var">has</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">constructors</span> [<span class="id" title="var">CtorList</span>] <span class="id" title="var">and</span> <span class="id" title="var">generates</span> <span class="id" title="var">a</span> <span class="id" title="var">global</span> <span class="id" title="var">instance</span> [<span class="id" title="var">Name</span> : <span class="id" title="var">Countable</span> <span class="id" title="var">T</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;*/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">ctor</span>-<span class="id" title="var">to</span>-<span class="id" title="var">positive</span> <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">term</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ctor</span>-<span class="id" title="var">to</span>-<span class="id" title="var">positive</span> <span class="id" title="var">CtorList</span> <span class="id" title="var">K</span> <span class="id" title="var">Pos</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">T</span> = {{ @<a class="idref" href="skylabs.prelude.elpi.derive.countable.html#lookup_from_ctorlist"><span class="id" title="definition">lookup_from_ctorlist</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> 1%<span class="id" title="var">positive</span> <span class="id" title="var">lp</span>:<span class="id" title="var">CtorList</span> <span class="id" title="var">lp</span>:<span class="id" title="var">K</span> }},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">skeleton</span> <span class="id" title="var">T</span> <span class="id" title="var">_</span> <span class="id" title="var">EPos</span>) "asdfasdf",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.reduction.vm.norm</span> <span class="id" title="var">EPos</span> <span class="id" title="var">_</span> <span class="id" title="var">Pos</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">rty</span> <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">term</span>, <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">term</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">rty</span> <span class="id" title="var">RTy</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">RTy</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">to</span>-<span class="id" title="var">positive</span>-<span class="id" title="var">branch</span> <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">term</span>, <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">term</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">to</span>-<span class="id" title="var">positive</span>-<span class="id" title="var">branch</span> <span class="id" title="var">CtorList</span> <span class="id" title="var">K</span> <span class="id" title="var">_Kty</span> <span class="id" title="var">_Vars</span> <span class="id" title="var">_VarsTys</span> <span class="id" title="var">PosEncoding</span> :- <span class="id" title="var">std.do</span>![<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ctor</span>-<span class="id" title="var">to</span>-<span class="id" title="var">positive</span> <span class="id" title="var">CtorList</span> <span class="id" title="var">K</span> <span class="id" title="var">PosEncoding</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">to</span>-<span class="id" title="var">positive</span> <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">term</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">to</span>-<span class="id" title="var">positive</span> <span class="id" title="var">CtorList</span> <span class="id" title="var">S</span> <span class="id" title="var">Ty</span> <span class="id" title="var">RTy</span> <span class="id" title="var">Match</span> :-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.build</span>-<span class="id" title="keyword">match</span> <span class="id" title="var">S</span> <span class="id" title="var">Ty</span> (<span class="id" title="var">rty</span> <span class="id" title="var">RTy</span>) (<span class="id" title="var">to</span>-<span class="id" title="var">positive</span>-<span class="id" title="var">branch</span> <span class="id" title="var">CtorList</span>) <span class="id" title="var">Match</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">func</span> <span class="id" title="var">mk</span>-<span class="id" title="var">countable</span> <span class="id" title="var">list</span> <span class="id" title="var">term</span>, <span class="id" title="var">string</span>, <span class="id" title="var">gref</span>, <span class="id" title="var">gref</span> -&gt; <span class="id" title="var">constant</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="var">countable</span> <span class="id" title="var">Ctors</span> <span class="id" title="var">Name</span> <span class="id" title="var">VariantGR</span> <span class="id" title="var">OrigGR</span> <span class="id" title="var">C</span> :- <span class="id" title="var">std.do</span>![<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">skylabs.elpi</span>-<span class="id" title="var">list</span>-&gt;<span class="id" title="var">list</span> <span class="id" title="var">Ctors</span> <span class="id" title="var">CtorList</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">skeleton</span> <span class="id" title="var">CtorList</span> <span class="id" title="var">_</span> <span class="id" title="var">ECtorList</span>) "[mk-countable] failed to elaborate ctors",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">VariantTy</span> = <span class="id" title="var">global</span> <span class="id" title="var">VariantGR</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Encode</span> = {{ <span class="id" title="keyword">fun</span> (<a id="x:15" class="idref" href="#x:15"><span class="id" title="binder">x</span></a> : <span class="id" title="var">lp</span>:<span class="id" title="var">VariantTy</span>) =&gt; <span class="id" title="var">lp</span>:{{ { <span class="id" title="var">to</span>-<span class="id" title="var">positive</span> <span class="id" title="var">ECtorList</span> {{ <span class="id" title="var">x</span> }} <span class="id" title="var">VariantTy</span> {{ <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#positive"><span class="id" title="inductive">positive</span></a> }} } }} }},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Decode</span> = {{ @<a class="idref" href="skylabs.prelude.elpi.derive.countable.html#decode_from_encode"><span class="id" title="definition">decode_from_encode</span></a> <span class="id" title="var">lp</span>:<span class="id" title="var">VariantTy</span> <span class="id" title="var">_</span> <span class="id" title="var">lp</span>:<span class="id" title="var">Encode</span> <span class="id" title="var">lp</span>:<span class="id" title="var">CtorList</span> }},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Lem</span> = {{ <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a id="x:16" class="idref" href="#x:16"><span class="id" title="binder">x</span></a> : <span class="id" title="var">lp</span>:<span class="id" title="var">VariantTy</span><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">,</span></a> <span class="id" title="var">lp</span>:<span class="id" title="var">Decode</span> (<span class="id" title="var">lp</span>:<span class="id" title="var">Encode</span> <a class="idref" href="skylabs.prelude.elpi.derive.countable.html#x:16"><span class="id" title="variable">x</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="skylabs.prelude.elpi.derive.countable.html#x:16"><span class="id" title="variable">x</span></a> }},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">skeleton</span> <span class="id" title="var">Lem</span> <span class="id" title="var">_</span> <span class="id" title="var">ELem</span>) "[mk-countable] failed to elaborate lem",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.typecheck</span> {{ <span class="id" title="var">lp</span>:<span class="id" title="var">Bo</span> : <span class="id" title="var">lp</span>:<span class="id" title="var">ELem</span> }} <span class="id" title="var">_</span>) "[mk-countable] failed to typecheck lem",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.ltac.collect</span>-<span class="id" title="keyword">goals</span> <span class="id" title="var">Bo</span> [<span class="id" title="var">SealedGoal</span>] [],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.ltac.open</span> (<span class="id" title="var">coq.ltac.call</span> "derive_solve_countable" []) <span class="id" title="var">SealedGoal</span> [],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">eqdec</span> <span class="id" title="var">OrigGR</span> <span class="id" title="var">GrEqdec</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">EqDec</span> = <span class="id" title="var">global</span> <span class="id" title="var">GrEqdec</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Inst</span> = {{ @<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.countable.html#Build_Countable"><span class="id" title="constructor">Build_Countable</span></a> <span class="id" title="var">lp</span>:<span class="id" title="var">VariantTy</span> <span class="id" title="var">lp</span>:<span class="id" title="var">EqDec</span> <span class="id" title="var">lp</span>:<span class="id" title="var">Encode</span> <span class="id" title="var">lp</span>:<span class="id" title="var">Decode</span> <span class="id" title="var">lp</span>:<span class="id" title="var">Bo</span> }},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>!<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">skeleton</span> <span class="id" title="var">Inst</span> <span class="id" title="var">_</span> <span class="id" title="var">EInst</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"[mk-countable] failed to elaborate instance",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.add</span>-<span class="id" title="var">const</span> <span class="id" title="var">Name</span> <span class="id" title="var">EInst</span> {{ @<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.countable.html#Countable"><span class="id" title="class">Countable</span></a> <span class="id" title="var">lp</span>:{{<span class="id" title="var">global</span> <span class="id" title="var">OrigGR</span>}} <span class="id" title="var">lp</span>:<span class="id" title="var">EqDec</span> }} <span class="id" title="var">ff</span> <span class="id" title="var">C</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id" title="var">global</span>! =&gt; <span class="id" title="var">coq.TC.declare</span>-<span class="id" title="var">instance</span> (<span class="id" title="var">const</span> <span class="id" title="var">C</span>) 0, %%<span class="id" title="var">TODO</span>: <span class="id" title="var">previously</span> <span class="id" title="keyword">level</span> 5; <span class="id" title="var">was</span> <span class="id" title="var">there</span> <span class="id" title="var">a</span> <span class="id" title="var">reason</span>?<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+&nbsp;&nbsp;}<br/>
+}}.<br/>
+
+<br/>
+#[<span class="id" title="var">phase</span>="both"] <span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">dep1</span> "countable" "eq_dec".<br/>
+}}.<br/>
+
+<br/>
+#[<span class="id" title="var">synterp</span>] <span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">derivation</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> (<span class="id" title="var">derive</span> "countable" (<span class="id" title="var">cl</span>\ <span class="id" title="var">cl</span> = []) <span class="id" title="var">true</span>).<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">File</span> <span class="id" title="var">derive.countable.elpi</span>.<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">derive.countable</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">func</span> <span class="id" title="var">main</span> <span class="id" title="var">gref</span>, <span class="id" title="var">string</span> -&gt; <span class="id" title="var">list</span> <span class="id" title="var">prop</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">main</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">Prefix</span> <span class="id" title="var">Clauses</span> :-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">skylabs.get</span>-<span class="id" title="var">indt</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">VariantI</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive</span>-<span class="id" title="var">original</span>-<span class="id" title="var">gref</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">OrigGR</span>, !,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.indt</span> <span class="id" title="var">VariantI</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">Ctors</span> <span class="id" title="var">_</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.map</span> <span class="id" title="var">Ctors</span> (<span class="id" title="var">c</span>\ <span class="id" title="var">c'</span>\ <span class="id" title="var">c'</span> = <span class="id" title="var">global</span> (<span class="id" title="var">indc</span> <span class="id" title="var">c</span>)) <span class="id" title="var">CTerms</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">CountableName</span> <span class="id" title="keyword">is</span> <span class="id" title="var">Prefix</span> ^ "countable",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive.countable.mk</span>-<span class="id" title="var">countable</span> <span class="id" title="var">CTerms</span> <span class="id" title="var">CountableName</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">OrigGR</span> <span class="id" title="var">C</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Clauses</span> = [<span class="id" title="var">countable</span>-<span class="id" title="var">done</span> <span class="id" title="var">TyGR</span>, <span class="id" title="var">countable</span> <span class="id" title="var">TyGR</span> (<span class="id" title="var">const</span> <span class="id" title="var">C</span>)],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.forall</span> <span class="id" title="var">Clauses</span> (<span class="id" title="var">x</span>\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.elpi.accumulate</span> <span class="id" title="var">_</span> "derive.stdpp.countable.db" (<span class="id" title="var">clause</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">x</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">main</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> :- <span class="id" title="var">usage</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">func</span> <span class="id" title="var">usage</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">usage</span> :- <span class="id" title="var">coq.error</span><br/>
+"Usage: #[only(countable)] derive T
+where T is an inductive or a definition that unfolds to an inductive.
+
+Example #1:
+ Variant T := A | B | C.
+ #[only(countable)] derive T
+
+Example #2:
+  #[only(countable)] derive
+  Variant T := A | B | C.
+
+Example #3:
+  Variant _T := A | B | C.
+  Definition T := _T.
+  #[only(countable)] derive T.".<br/>
+
+<br/>
+&nbsp;&nbsp;}<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">derivation</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">indt</span> <span class="id" title="var">T</span>) <span class="id" title="var">Prefix</span> <span class="id" title="var">ff</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">derive</span> "countable"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">derive.countable.main</span> (<span class="id" title="var">indt</span> <span class="id" title="var">T</span>) <span class="id" title="var">Prefix</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">countable</span>-<span class="id" title="var">done</span> (<span class="id" title="var">indt</span> <span class="id" title="var">T</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;).<br/>
+}}.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

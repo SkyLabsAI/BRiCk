@@ -1,0 +1,104 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.syntax.extras</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2024-2025&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.compare</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.prelude.html#"><span class="id" title="library">skylabs.lang.cpp.syntax.prelude</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#"><span class="id" title="library">skylabs.lang.cpp.syntax.core</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.compare.html#"><span class="id" title="library">skylabs.lang.cpp.syntax.compare</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="by_tag_comparison" class="idref" href="#by_tag_comparison"><span class="id" title="definition">by_tag_comparison</span></a> {<a id="T:1" class="idref" href="#T:1"><span class="id" title="binder">T</span></a>} (<a id="f:2" class="idref" href="#f:2"><span class="id" title="binder">f</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.extras.html#T:1"><span class="id" title="variable">T</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#positive"><span class="id" title="inductive">positive</span></a>)<br/>
+&nbsp;&nbsp;: <span class="id" title="class">Comparison</span> (<span class="id" title="keyword">fun</span> <a id="a:3" class="idref" href="#a:3"><span class="id" title="binder">a</span></a> <a id="b:4" class="idref" href="#b:4"><span class="id" title="binder">b</span></a> =&gt; <span class="id" title="definition">Pos.compare</span> (<a class="idref" href="skylabs.lang.cpp.syntax.extras.html#f:2"><span class="id" title="variable">f</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.extras.html#a:3"><span class="id" title="variable">a</span></a>) (<a class="idref" href="skylabs.lang.cpp.syntax.extras.html#f:2"><span class="id" title="variable">f</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.extras.html#b:4"><span class="id" title="variable">b</span></a>)).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">intros</span> *; <span class="id" title="tactic">apply</span> <span class="id" title="instance">numbers.positive_comparison</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="by_prim_tag_comparison" class="idref" href="#by_prim_tag_comparison"><span class="id" title="definition">by_prim_tag_comparison</span></a> {<a id="T:5" class="idref" href="#T:5"><span class="id" title="binder">T</span></a>} (<a id="f:6" class="idref" href="#f:6"><span class="id" title="binder">f</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.extras.html#T:5"><span class="id" title="variable">T</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;: <span class="id" title="class">Comparison</span> (<span class="id" title="keyword">fun</span> <a id="a:7" class="idref" href="#a:7"><span class="id" title="binder">a</span></a> <a id="b:8" class="idref" href="#b:8"><span class="id" title="binder">b</span></a> =&gt; <span class="id" title="var">PrimInt63.compare</span> (<a class="idref" href="skylabs.lang.cpp.syntax.extras.html#f:6"><span class="id" title="variable">f</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.extras.html#a:7"><span class="id" title="variable">a</span></a>) (<a class="idref" href="skylabs.lang.cpp.syntax.extras.html#f:6"><span class="id" title="variable">f</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.extras.html#b:8"><span class="id" title="variable">b</span></a>)).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">intros</span> *; [ <span class="id" title="tactic">apply</span> <span class="id" title="lemma">PString.char63_compare_antisym</span> | <span class="id" title="tactic">eapply</span> <span class="id" title="lemma">PString.char63_compare_trans</span> ]. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="by_prim_tag_leibniz" class="idref" href="#by_prim_tag_leibniz"><span class="id" title="lemma">by_prim_tag_leibniz</span></a> : <span class="id" title="notation">∀</span> <span class="id" title="notation">{</span><a id="T:9" class="idref" href="#T:9"><span class="id" title="binder">T</span></a> : <span class="id" title="keyword">Type</span>} (<a id="f:10" class="idref" href="#f:10"><span class="id" title="binder">f</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.extras.html#T:9"><span class="id" title="variable">T</span></a> <span class="id" title="notation">→</span> <span class="id" title="var">_</span><span class="id" title="notation">),</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">(</span><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a id="x:11" class="idref" href="#x:11"><span class="id" title="binder">x</span></a> <a id="y:12" class="idref" href="#y:12"><span class="id" title="binder">y</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">,</span></a> <span class="id" title="keyword">match</span> <span class="id" title="var">PrimInt63.compare</span> (<a class="idref" href="skylabs.lang.cpp.syntax.extras.html#f:10"><span class="id" title="variable">f</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.extras.html#x:11"><span class="id" title="variable">x</span></a>) (<a class="idref" href="skylabs.lang.cpp.syntax.extras.html#f:10"><span class="id" title="variable">f</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.extras.html#y:12"><span class="id" title="variable">y</span></a>) <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Eq"><span class="id" title="constructor">Eq</span></a> =&gt; <a class="idref" href="skylabs.lang.cpp.syntax.extras.html#x:11"><span class="id" title="variable">x</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.extras.html#y:12"><span class="id" title="variable">y</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#::type_scope:'True'"><span class="id" title="notation">True</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><span class="id" title="notation">)</span> <span class="id" title="notation">→</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">LeibnizComparison</span> (<span class="id" title="notation">λ</span> <a id="a:13" class="idref" href="#a:13"><span class="id" title="binder">a</span></a> <a id="b:14" class="idref" href="#b:14"><span class="id" title="binder">b</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.extras.html#T:9"><span class="id" title="variable">T</span></a><span class="id" title="notation">,</span> <span class="id" title="var">PrimInt63.compare</span> (<a class="idref" href="skylabs.lang.cpp.syntax.extras.html#f:10"><span class="id" title="variable">f</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.extras.html#a:13"><span class="id" title="variable">a</span></a>) (<a class="idref" href="skylabs.lang.cpp.syntax.extras.html#f:10"><span class="id" title="variable">f</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.extras.html#b:14"><span class="id" title="variable">b</span></a>)).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">red</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">specialize</span> (<span class="id" title="var">H</span> <span class="id" title="var">a</span> <span class="id" title="var">b</span>). <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H0</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>. <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="function_qualifiers_comparison" class="idref" href="#function_qualifiers_comparison"><span class="id" title="instance">function_qualifiers_comparison</span></a> : <span class="id" title="class">Comparison</span> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#function_qualifiers.compare"><span class="id" title="definition">function_qualifiers.compare</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <a class="idref" href="skylabs.lang.cpp.syntax.extras.html#by_prim_tag_comparison"><span class="id" title="definition">by_prim_tag_comparison</span></a>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="function_qualifiers_leibniz_cmp" class="idref" href="#function_qualifiers_leibniz_cmp"><span class="id" title="instance">function_qualifiers_leibniz_cmp</span></a> : <span class="id" title="abbreviation">LeibnizComparison</span> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#function_qualifiers.compare"><span class="id" title="definition">function_qualifiers.compare</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <a class="idref" href="skylabs.lang.cpp.syntax.extras.html#by_prim_tag_leibniz"><span class="id" title="lemma">by_prim_tag_leibniz</span></a>. <span class="id" title="tactic">compute</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">destruct</span> <span class="id" title="var">x</span>, <span class="id" title="var">y</span>; <span class="id" title="tactic">compute</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="function_quailfiers_eq_dec" class="idref" href="#function_quailfiers_eq_dec"><span class="id" title="instance">function_quailfiers_eq_dec</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#EqDecision"><span class="id" title="abbreviation">EqDecision</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#function_qualifiers.t"><span class="id" title="inductive">function_qualifiers.t</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">LeibnizComparison.from_comparison</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="atomic_name__eq_dec" class="idref" href="#atomic_name__eq_dec"><span class="id" title="instance">atomic_name__eq_dec</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#EqDecision"><span class="id" title="abbreviation">EqDecision</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#atomic_name_"><span class="id" title="inductive">atomic_name_</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">LeibnizComparison.from_comparison</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

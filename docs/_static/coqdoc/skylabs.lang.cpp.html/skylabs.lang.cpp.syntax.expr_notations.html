@@ -1,0 +1,659 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.syntax.expr_notations</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2019-2024&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.prelude.html#"><span class="id" title="library">skylabs.lang.cpp.syntax.prelude</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#"><span class="id" title="library">skylabs.lang.cpp.syntax.core</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.lang.cpp.syntax.type_notations.html#"><span class="id" title="library">skylabs.lang.cpp.syntax.type_notations</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">Z_scope</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <span class="id" title="keyword">Export</span> <a id="ExprNotationsInterface" class="idref" href="#ExprNotationsInterface"><span class="id" title="module">ExprNotationsInterface</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">Declare</span> <span class="id" title="var">Custom</span> <span class="id" title="var">Entry</span> <span class="id" title="var">CPP_expr</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Declare Scope</span> <span class="id" title="var">CPP_expr_scope</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Delimit</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">CPP_expr_scope</span> <span class="id" title="keyword">with</span> <span class="id" title="var">cpp_expr</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Bind Scope</span> <span class="id" title="var">CPP_expr_scope</span> <span class="id" title="keyword">with</span> <span class="id" title="var">Expr</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Bind Scope</span> <span class="id" title="var">CPP_expr_scope</span> <span class="id" title="keyword">with</span> <span class="id" title="var">UnOp</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Bind Scope</span> <span class="id" title="var">CPP_expr_scope</span> <span class="id" title="keyword">with</span> <span class="id" title="var">BinOp</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Bind Scope</span> <span class="id" title="var">CPP_expr_scope</span> <span class="id" title="keyword">with</span> <span class="id" title="var">BuiltinFn</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Injection&nbsp;from&nbsp;<span class="inlinecode"><span class="id" title="keyword">constr</span></span>&nbsp;in&nbsp;case&nbsp;we're&nbsp;printing&nbsp;a&nbsp;subterm&nbsp;we&nbsp;don't&nbsp;recognize&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ecffb9bccb81e2e4407d0d6df30089a9" class="idref" href="#ecffb9bccb81e2e4407d0d6df30089a9"><span class="id" title="notation">&quot;</span></a>'{?:' e '}'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= <span class="id" title="var">e</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv' {?:  e } ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Injection&nbsp;into&nbsp;<span class="inlinecode"><span class="id" title="keyword">constr</span></span>&nbsp;in&nbsp;case&nbsp;we're&nbsp;printing&nbsp;this&nbsp;at&nbsp;the&nbsp;top-level&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="7b7ac354dd3ee342cc6e6bc493e4ce70" class="idref" href="#7b7ac354dd3ee342cc6e6bc493e4ce70"><span class="id" title="notation">&quot;</span></a>'{e:' e '}'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= <span class="id" title="var">e</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv' {e:  e } ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;: <span class="id" title="var">CPP_expr_scope</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.syntax.expr_notations.html#ExprNotationsInterface"><span class="id" title="module">ExprNotationsInterface</span></a>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;TODO&nbsp;(JH):&nbsp;Investigate&nbsp;which&nbsp;(if&nbsp;any)&nbsp;of&nbsp;the&nbsp;subsequent&nbsp;notations&nbsp;we&nbsp;can&nbsp;make<br/>
+&nbsp;&nbsp;&nbsp;printing/parsing<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="ExprNotations" class="idref" href="#ExprNotations"><span class="id" title="module">ExprNotations</span></a>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;NOTE:&nbsp;precedences&nbsp;taken&nbsp;from&nbsp;cppreference<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(cf.&nbsp;https://en.cppreference.com/w/cpp/language/operator_precedence).<br/>
+&nbsp;&nbsp;&nbsp;*)</span><br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="31215ff4c59cedd61e21f222bd43f39f" class="idref" href="#31215ff4c59cedd61e21f222bd43f39f"><span class="id" title="notation">&quot;</span></a>$ v"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Evar"><span class="id" title="constructor">Evar</span></a> <span class="id" title="var">v</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">v</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' $ v ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="77bb0fa964d375343456d94a03fa20b2" class="idref" href="#77bb0fa964d375343456d94a03fa20b2"><span class="id" title="notation">&quot;</span></a>$ :: v"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eglobal"><span class="id" title="constructor">Eglobal</span></a> <span class="id" title="var">v</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">v</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' $ :: v ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="9baaffba461f0af4e2c88c5dc2def31d" class="idref" href="#9baaffba461f0af4e2c88c5dc2def31d"><span class="id" title="notation">&quot;</span></a>$ :: t :: v"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eenum_const"><span class="id" title="constructor">Eenum_const</span></a> <span class="id" title="var">t</span> <span class="id" title="var">v</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">t</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">v</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' $ :: t :: v ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="d8173d31f57bc445c009ada32dd32aef" class="idref" href="#d8173d31f57bc445c009ada32dd32aef"><span class="id" title="notation">&quot;</span></a>'ASCII#' ascii_code"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Echar"><span class="id" title="constructor">Echar</span></a> <span class="id" title="var">ascii_code</span>%<span class="id" title="var">N</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ascii_code</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' ASCII# ascii_code ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+TODO: add an identity inductive type (<span class="inlinecode"><span class="id" title="var">Estring_pretty</span></span>?) which is inserted
+      into the AST and which can serve as an anchor for a <span class="inlinecode"><span class="id" title="constructor">String</span></span> <span class="inlinecode"><span class="id" title="keyword">Notation</span></span>.
+   
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="c599756cbd3f0e59c1fe5e8a5968bfd6" class="idref" href="#c599756cbd3f0e59c1fe5e8a5968bfd6"><span class="id" title="notation">&quot;</span></a>STRING# bytes"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Estring"><span class="id" title="constructor">Estring</span></a> <span class="id" title="var">bytes</span>%<span class="id" title="var">list</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">bytes</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' STRING# bytes ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="a15f198151d8b956a0896521e4b54be9" class="idref" href="#a15f198151d8b956a0896521e4b54be9"><span class="id" title="notation">&quot;</span></a># v"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eint"><span class="id" title="constructor">Eint</span></a> <span class="id" title="var">v</span>%<span class="id" title="var">Z</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">v</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' # v ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="a15f198151d8b956a0896521e4b54be9" class="idref" href="#a15f198151d8b956a0896521e4b54be9"><span class="id" title="notation">&quot;</span></a># v"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Ebool"><span class="id" title="constructor">Ebool</span></a> <span class="id" title="var">v</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">v</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' # v ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ExprNotations.:CPP_expr::'-'" class="idref" href="#ExprNotations.:CPP_expr::'-'"><span class="id" title="notation">&quot;</span></a>'-'" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Uminus"><span class="id" title="constructor">Uminus</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="583d87b364903fc601e9dcd25b174e28" class="idref" href="#583d87b364903fc601e9dcd25b174e28"><span class="id" title="notation">&quot;</span></a>'!'" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Unot"><span class="id" title="constructor">Unot</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="b724ed16da5abcc902f3a736f699f80a" class="idref" href="#b724ed16da5abcc902f3a736f699f80a"><span class="id" title="notation">&quot;</span></a>'~'" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Ubnot"><span class="id" title="constructor">Ubnot</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="f65da824e101ffe973d175e4908807cb" class="idref" href="#f65da824e101ffe973d175e4908807cb"><span class="id" title="notation">&quot;</span></a>'{:unop:UNSUPPORTED:' msg ':}'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Uunsupported"><span class="id" title="constructor">Uunsupported</span></a> <span class="id" title="var">msg</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">msg</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' {:unop:UNSUPPORTED: msg :} ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;QUESTION&nbsp;(JH):&nbsp;Is&nbsp;this&nbsp;the&nbsp;right&nbsp;level?&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ExprNotations.:CPP_expr::x_x" class="idref" href="#ExprNotations.:CPP_expr::x_x"><span class="id" title="notation">&quot;</span></a>op x"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eunop"><span class="id" title="constructor">Eunop</span></a> <span class="id" title="var">op</span> <span class="id" title="var">x</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">x</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">op</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' op x ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="844e76dab701a1a7c1ac2adf62b476f8" class="idref" href="#844e76dab701a1a7c1ac2adf62b476f8"><span class="id" title="notation">&quot;</span></a>'+'" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Badd"><span class="id" title="constructor">Badd</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ExprNotations.:CPP_expr::'&amp;'" class="idref" href="#ExprNotations.:CPP_expr::'&amp;'"><span class="id" title="notation">&quot;</span></a>'&amp;'" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Band"><span class="id" title="constructor">Band</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="e61ab9f4a7acd508c755895abc4ac583" class="idref" href="#e61ab9f4a7acd508c755895abc4ac583"><span class="id" title="notation">&quot;</span></a>'&lt;=&gt;'" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Bcmp"><span class="id" title="constructor">Bcmp</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="244bc7ce8dfd34d6098e92e55250733c" class="idref" href="#244bc7ce8dfd34d6098e92e55250733c"><span class="id" title="notation">&quot;</span></a>'/'" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Bdiv"><span class="id" title="constructor">Bdiv</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="2b3414dcf90e4f7cd5e3836011fcc274" class="idref" href="#2b3414dcf90e4f7cd5e3836011fcc274"><span class="id" title="notation">&quot;</span></a>'=='" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Beq"><span class="id" title="constructor">Beq</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="3b17d9e31662cfa95d6dd3642b877830" class="idref" href="#3b17d9e31662cfa95d6dd3642b877830"><span class="id" title="notation">&quot;</span></a>'&gt;='" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Bge"><span class="id" title="constructor">Bge</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ExprNotations.:CPP_expr::'&gt;'" class="idref" href="#ExprNotations.:CPP_expr::'&gt;'"><span class="id" title="notation">&quot;</span></a>'&gt;'" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Bgt"><span class="id" title="constructor">Bgt</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="da101dc05eaa1ba577739080f2c7950e" class="idref" href="#da101dc05eaa1ba577739080f2c7950e"><span class="id" title="notation">&quot;</span></a>'&lt;='" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Ble"><span class="id" title="constructor">Ble</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ExprNotations.:CPP_expr::'&lt;'" class="idref" href="#ExprNotations.:CPP_expr::'&lt;'"><span class="id" title="notation">&quot;</span></a>'&lt;'" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Blt"><span class="id" title="constructor">Blt</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="81d3f984141d76019f5b55a49697a1ad" class="idref" href="#81d3f984141d76019f5b55a49697a1ad"><span class="id" title="notation">&quot;</span></a>'*'" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Bmul"><span class="id" title="constructor">Bmul</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="a7cc471d581877ac576e10af892769c8" class="idref" href="#a7cc471d581877ac576e10af892769c8"><span class="id" title="notation">&quot;</span></a>'!='" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Bneq"><span class="id" title="constructor">Bneq</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="7bdb82b5b4dc2a303421c1c3d7c40be7" class="idref" href="#7bdb82b5b4dc2a303421c1c3d7c40be7"><span class="id" title="notation">&quot;</span></a>'|'" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Bor"><span class="id" title="constructor">Bor</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="bf0b5a490f1cbbc32cf8c8cfc3b0997b" class="idref" href="#bf0b5a490f1cbbc32cf8c8cfc3b0997b"><span class="id" title="notation">&quot;</span></a>'%'" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Bmod"><span class="id" title="constructor">Bmod</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ExprNotations.:CPP_expr::'&lt;&lt;'" class="idref" href="#ExprNotations.:CPP_expr::'&lt;&lt;'"><span class="id" title="notation">&quot;</span></a>'&lt;&lt;'" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Bshl"><span class="id" title="constructor">Bshl</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;NOTE&nbsp;(JH):&nbsp;The&nbsp;following&nbsp;<span class="inlinecode"><span class="id" title="var">Bshr</span></span>&nbsp;notation&nbsp;conflicts&nbsp;with&nbsp;parsing&nbsp;nested&nbsp;<span class="inlinecode"><span class="id" title="var">ptr</span>&lt;<span class="id" title="var">ptr</span>&lt;...&gt;&gt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="inlinecode"><span class="id" title="keyword">type</span></span>s,&nbsp;so&nbsp;we&nbsp;leave&nbsp;it&nbsp;disabled&nbsp;and&nbsp;provide&nbsp;explicit&nbsp;notations&nbsp;for&nbsp;the&nbsp;<span class="inlinecode"><span class="id" title="var">Ebinop</span></span>&nbsp;and<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="inlinecode"><span class="id" title="var">Eassign_op</span></span>&nbsp;notations.<br/>
+&nbsp;&nbsp;&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Notation&nbsp;"'&gt;&gt;'"&nbsp;:=&nbsp;(Bshr)&nbsp;(in&nbsp;custom&nbsp;CPP_expr&nbsp;at&nbsp;level&nbsp;0,&nbsp;only&nbsp;printing).&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ExprNotations.:CPP_expr::'-'" class="idref" href="#ExprNotations.:CPP_expr::'-'"><span class="id" title="notation">&quot;</span></a>'-'" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Bsub"><span class="id" title="constructor">Bsub</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="304cc38abd5a2f51fec29f12f143097a" class="idref" href="#304cc38abd5a2f51fec29f12f143097a"><span class="id" title="notation">&quot;</span></a>'^'" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Bxor"><span class="id" title="constructor">Bxor</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="4181ca9024af8b14023029b0cb7a84fe" class="idref" href="#4181ca9024af8b14023029b0cb7a84fe"><span class="id" title="notation">&quot;</span></a>'.*'" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Bdotp"><span class="id" title="constructor">Bdotp</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="dbed13aaf65a754ee862745360524098" class="idref" href="#dbed13aaf65a754ee862745360524098"><span class="id" title="notation">&quot;</span></a>'-&gt;*'" := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Bdotip"><span class="id" title="constructor">Bdotip</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="b2237850b0d55aac30eb4cd1d615cff2" class="idref" href="#b2237850b0d55aac30eb4cd1d615cff2"><span class="id" title="notation">&quot;</span></a>'(' x .* y ')'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Ebinop"><span class="id" title="constructor">Ebinop</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Bdotp"><span class="id" title="constructor">Bdotp</span></a> <span class="id" title="var">x</span> <span class="id" title="var">y</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 40<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">x</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">y</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv   ' ( x '/' .* y ) ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="8d0ecbc094bbb8ab3ad3af09a97d29f4" class="idref" href="#8d0ecbc094bbb8ab3ad3af09a97d29f4"><span class="id" title="notation">&quot;</span></a>'(' x -&gt;* y ')'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Ebinop"><span class="id" title="constructor">Ebinop</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Bdotip"><span class="id" title="constructor">Bdotip</span></a> <span class="id" title="var">x</span> <span class="id" title="var">y</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 40<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">x</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">y</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv   ' ( x '/' -&gt;* y ) ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="782671194b7558ca1457350a6ee36951" class="idref" href="#782671194b7558ca1457350a6ee36951"><span class="id" title="notation">&quot;</span></a>'(' x &gt;&gt; y ')'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Ebinop"><span class="id" title="constructor">Ebinop</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Bshr"><span class="id" title="constructor">Bshr</span></a> <span class="id" title="var">x</span> <span class="id" title="var">y</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 70<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">x</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">y</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv   ' ( x  '/' &gt;&gt;  y ) ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;QUESTION&nbsp;(JH):&nbsp;Is&nbsp;this&nbsp;the&nbsp;right&nbsp;level?&nbsp;Do&nbsp;we&nbsp;need&nbsp;to&nbsp;consider&nbsp;the&nbsp;precedences&nbsp;of&nbsp;the<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;different&nbsp;operators?<br/>
+&nbsp;&nbsp;&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="67e94803d6d34c2acef25fa859c8699e" class="idref" href="#67e94803d6d34c2acef25fa859c8699e"><span class="id" title="notation">&quot;</span></a>'(' x bop y ')'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Ebinop"><span class="id" title="constructor">Ebinop</span></a> <span class="id" title="var">bop</span> <span class="id" title="var">x</span> <span class="id" title="var">y</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 160<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">x</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">bop</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">y</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv   ' ( x  '/' bop  y ) ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="8246365a615beacecc6aaacb4ea19c73" class="idref" href="#8246365a615beacecc6aaacb4ea19c73"><span class="id" title="notation">&quot;</span></a>* e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Ederef"><span class="id" title="constructor">Ederef</span></a> <span class="id" title="var">e</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' * e ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ExprNotations.:CPP_expr::'&amp;'_x" class="idref" href="#ExprNotations.:CPP_expr::'&amp;'_x"><span class="id" title="notation">&quot;</span></a>&amp; e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eaddrof"><span class="id" title="constructor">Eaddrof</span></a> <span class="id" title="var">e</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' &amp; e ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="4125ab1e1fa41971d316ac224a5ec62f" class="idref" href="#4125ab1e1fa41971d316ac224a5ec62f"><span class="id" title="notation">&quot;</span></a>v = e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eassign"><span class="id" title="constructor">Eassign</span></a> <span class="id" title="var">v</span> <span class="id" title="var">e</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 160<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">v</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' v  =  '/' e ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="582867988a671a8b1e6a62d23660e15a" class="idref" href="#582867988a671a8b1e6a62d23660e15a"><span class="id" title="notation">&quot;</span></a>v &gt;&gt;= e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eassign_op"><span class="id" title="constructor">Eassign_op</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#Bshr"><span class="id" title="constructor">Bshr</span></a> <span class="id" title="var">v</span> <span class="id" title="var">e</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 159<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">v</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' v  &gt;&gt;=  '/' e ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="3178e4758d775c3f46f0b1ee2ccca3fe" class="idref" href="#3178e4758d775c3f46f0b1ee2ccca3fe"><span class="id" title="notation">&quot;</span></a>v bop = e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eassign_op"><span class="id" title="constructor">Eassign_op</span></a> <span class="id" title="var">bop</span> <span class="id" title="var">v</span> <span class="id" title="var">e</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 160<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">v</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">bop</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv  ' v  bop =  '/' e ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="161db752fcf4a55519c31aeb6c3ad048" class="idref" href="#161db752fcf4a55519c31aeb6c3ad048"><span class="id" title="notation">&quot;</span></a>++ e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Epreinc"><span class="id" title="constructor">Epreinc</span></a> <span class="id" title="var">e</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' ++ e ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="8b0e5cfbe2ee3e88ecab3efb3cf8c145" class="idref" href="#8b0e5cfbe2ee3e88ecab3efb3cf8c145"><span class="id" title="notation">&quot;</span></a>e ++"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Epostinc"><span class="id" title="constructor">Epostinc</span></a> <span class="id" title="var">e</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' e ++ ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ExprNotations.:CPP_expr::'--'_x" class="idref" href="#ExprNotations.:CPP_expr::'--'_x"><span class="id" title="notation">&quot;</span></a>-- e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Epredec"><span class="id" title="constructor">Epredec</span></a> <span class="id" title="var">e</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' -- e ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ExprNotations.:CPP_expr::x_'--'" class="idref" href="#ExprNotations.:CPP_expr::x_'--'"><span class="id" title="notation">&quot;</span></a>e --"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Epostdec"><span class="id" title="constructor">Epostdec</span></a> <span class="id" title="var">e</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' e -- ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="9104da6e3344a7259e649a717c47f3d0" class="idref" href="#9104da6e3344a7259e649a717c47f3d0"><span class="id" title="notation">&quot;</span></a>'(' e1 &amp;&amp; e2 ')'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eseqand"><span class="id" title="constructor">Eseqand</span></a> <span class="id" title="var">e1</span> <span class="id" title="var">e2</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 140<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e1</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e2</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv   ' ( e1  '/' &amp;&amp;  e2 ) ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="1fccc172bcd292b9f7845751ce0c8de8" class="idref" href="#1fccc172bcd292b9f7845751ce0c8de8"><span class="id" title="notation">&quot;</span></a>'(' e1 || e2 ')'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eseqor"><span class="id" title="constructor">Eseqor</span></a> <span class="id" title="var">e1</span> <span class="id" title="var">e2</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 150<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e1</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e2</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv   ' ( e1  '/' ||  e2 ) ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="0391d6722a8eb58d0096f7ae7b1d0a88" class="idref" href="#0391d6722a8eb58d0096f7ae7b1d0a88"><span class="id" title="notation">&quot;</span></a>'{:comma:' e1 , e2 ':}'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Ecomma"><span class="id" title="constructor">Ecomma</span></a> <span class="id" title="var">e1</span> <span class="id" title="var">e2</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 170<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e1</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e2</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv   ' {:comma: e1 ,  e2 :} ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="66362a43ff67717508059b8d0af383de" class="idref" href="#66362a43ff67717508059b8d0af383de"><span class="id" title="notation">&quot;</span></a>e '()'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Ecall"><span class="id" title="constructor">Ecall</span></a> <span class="id" title="var">e</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 20<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' e () ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ed11a570b52e0e2ca0916a14d049d816" class="idref" href="#ed11a570b52e0e2ca0916a14d049d816"><span class="id" title="notation">&quot;</span></a>e ( a1 , .. , a2 )"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Ecall"><span class="id" title="constructor">Ecall</span></a> <span class="id" title="var">e</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">a1</span> (.. (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">a2</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>) .. )) <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 20<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">a1</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">a2</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' e ( '[hv' a1 ,  '/' .. ,  '/' a2 ']' ) ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;TODO&nbsp;(JH):&nbsp;Determine&nbsp;which&nbsp;casts&nbsp;we&nbsp;actually&nbsp;want&nbsp;to&nbsp;print&nbsp;something&nbsp;for&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ExprNotations.:CPP_expr::x" class="idref" href="#ExprNotations.:CPP_expr::x"><span class="id" title="notation">&quot;</span></a>e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Ecast"><span class="id" title="constructor">Ecast</span></a> <span class="id" title="var">_</span> <span class="id" title="var">e</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="7848e13f34510bc133ab33c2c04fe9db" class="idref" href="#7848e13f34510bc133ab33c2c04fe9db"><span class="id" title="notation">&quot;</span></a>( t ) e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eexplicit_cast"><span class="id" title="constructor">Eexplicit_cast</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#cast_style.c"><span class="id" title="constructor">cast_style.c</span></a> <span class="id" title="var">t</span> <span class="id" title="var">e</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="dc3144447e9a6a073efa26aaeb2bb52a" class="idref" href="#dc3144447e9a6a073efa26aaeb2bb52a"><span class="id" title="notation">&quot;</span></a>t ( e )"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eexplicit_cast"><span class="id" title="constructor">Eexplicit_cast</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#cast_style.functional"><span class="id" title="constructor">cast_style.functional</span></a> <span class="id" title="var">t</span> <span class="id" title="var">e</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="f21de78ed5c599dd14f33c24321fcde3" class="idref" href="#f21de78ed5c599dd14f33c24321fcde3"><span class="id" title="notation">&quot;</span></a>'static_cast&lt;' t '&gt;(' e )"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eexplicit_cast"><span class="id" title="constructor">Eexplicit_cast</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#cast_style.static"><span class="id" title="constructor">cast_style.static</span></a> <span class="id" title="var">t</span> <span class="id" title="var">e</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="67f40f46154be10b841fd1e2a2099306" class="idref" href="#67f40f46154be10b841fd1e2a2099306"><span class="id" title="notation">&quot;</span></a>'const_cast&lt;' t '&gt;(' e )"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eexplicit_cast"><span class="id" title="constructor">Eexplicit_cast</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#cast_style.const"><span class="id" title="constructor">cast_style.const</span></a> <span class="id" title="var">t</span> <span class="id" title="var">e</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="81d19d16f68c74082d0da88ac888cc0f" class="idref" href="#81d19d16f68c74082d0da88ac888cc0f"><span class="id" title="notation">&quot;</span></a>'reinterpret_cast&lt;' t '&gt;(' e )"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eexplicit_cast"><span class="id" title="constructor">Eexplicit_cast</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#cast_style.reinterpret"><span class="id" title="constructor">cast_style.reinterpret</span></a> <span class="id" title="var">t</span> <span class="id" title="var">e</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="b1ab35ab4367ee88f7429137753d686a" class="idref" href="#b1ab35ab4367ee88f7429137753d686a"><span class="id" title="notation">&quot;</span></a>'dynamic_cast&lt;' t '&gt;(' e )"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eexplicit_cast"><span class="id" title="constructor">Eexplicit_cast</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#cast_style.dynamic"><span class="id" title="constructor">cast_style.dynamic</span></a> <span class="id" title="var">t</span> <span class="id" title="var">e</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ExprNotations.:CPP_expr::x_'.'_x" class="idref" href="#ExprNotations.:CPP_expr::x_'.'_x"><span class="id" title="notation">&quot;</span></a>e . fld"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Emember"><span class="id" title="constructor">Emember</span></a> <span class="id" title="var">e</span> <span class="id" title="var">fld</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 20<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">fld</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' e . fld ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;NOTE&nbsp;(JH):&nbsp;<span class="inlinecode"><span class="id" title="var">Emember_call</span></span> <span class="inlinecode">(<span class="id" title="var">inr</span></span> <span class="inlinecode">...)</span> <span class="inlinecode">...</span>&nbsp;doesn't&nbsp;seem&nbsp;to&nbsp;be&nbsp;used&nbsp;so&nbsp;we&nbsp;don't<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;include&nbsp;a&nbsp;notation&nbsp;for&nbsp;it.<br/>
+&nbsp;&nbsp;&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="392705f5ed9ec60c02bfd8b9d7c2c7aa" class="idref" href="#392705f5ed9ec60c02bfd8b9d7c2c7aa"><span class="id" title="notation">&quot;</span></a>e . fn ()"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Emember_call"><span class="id" title="constructor">Emember_call</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#inl"><span class="id" title="constructor">inl</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="var">fn</span><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">_</span><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">_</span><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>) <span class="id" title="var">e</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 20<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">fn</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' e . fn () ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="8cae518cf4ee1dd00eba346ff961afae" class="idref" href="#8cae518cf4ee1dd00eba346ff961afae"><span class="id" title="notation">&quot;</span></a>e . fn ( a1 , .. , a2 )"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Emember_call"><span class="id" title="constructor">Emember_call</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#inl"><span class="id" title="constructor">inl</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="var">fn</span><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">_</span><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">_</span><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>) <span class="id" title="var">e</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">a1</span> .. (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">a2</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>) ..) <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 20<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">a1</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">a2</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">fn</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' e . fn ( '[hv' a1 ,  '/' .. ,  '/' a2 ']' ) ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="9d4508479b224df34c4ded7323329832" class="idref" href="#9d4508479b224df34c4ded7323329832"><span class="id" title="notation">&quot;</span></a>e [ n ]"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Esubscript"><span class="id" title="constructor">Esubscript</span></a> <span class="id" title="var">e</span> <span class="id" title="var">n</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 20<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">n</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' e [ n ] ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="d53461fe7814f26441978daa46dc7208" class="idref" href="#d53461fe7814f26441978daa46dc7208"><span class="id" title="notation">&quot;</span></a>'sizeof(ty:' ty )"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Esizeof"><span class="id" title="constructor">Esizeof</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#inl"><span class="id" title="constructor">inl</span></a> <span class="id" title="var">ty</span>) <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' sizeof(ty:  ty ) ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="89f9737ac0b018cfb677a8814672c32a" class="idref" href="#89f9737ac0b018cfb677a8814672c32a"><span class="id" title="notation">&quot;</span></a>'sizeof(expr:' e )"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Esizeof"><span class="id" title="constructor">Esizeof</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#inr"><span class="id" title="constructor">inr</span></a> <span class="id" title="var">e</span>) <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' sizeof(expr:  e ) ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="9e3b476d8a6e15f9ac324520870b23f5" class="idref" href="#9e3b476d8a6e15f9ac324520870b23f5"><span class="id" title="notation">&quot;</span></a>'alignof(ty:' ty )"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Ealignof"><span class="id" title="constructor">Ealignof</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#inl"><span class="id" title="constructor">inl</span></a> <span class="id" title="var">ty</span>) <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' alignof(ty:  ty ) ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="bd2bcc2579e57f53e5618a6795491af0" class="idref" href="#bd2bcc2579e57f53e5618a6795491af0"><span class="id" title="notation">&quot;</span></a>'alignof(expr:' e )"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Ealignof"><span class="id" title="constructor">Ealignof</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#inr"><span class="id" title="constructor">inr</span></a> <span class="id" title="var">e</span>) <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' alignof(expr:  e ) ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="6e0d114ea226163b230d0d85e0f7b27c" class="idref" href="#6e0d114ea226163b230d0d85e0f7b27c"><span class="id" title="notation">&quot;</span></a>'offsetof(' cls , fld ')'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eoffsetof"><span class="id" title="constructor">Eoffsetof</span></a> <span class="id" title="var">cls</span> <span class="id" title="var">fld</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">fld</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' offsetof( cls , fld ) ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="2269008132a50fcc2bcf64c35307fc26" class="idref" href="#2269008132a50fcc2bcf64c35307fc26"><span class="id" title="notation">&quot;</span></a>'#' cls ()"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Econstructor"><span class="id" title="constructor">Econstructor</span></a> <span class="id" title="var">cls</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 20<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">cls</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' # cls () ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="9e093016a52b164c5472a6f8e760aac8" class="idref" href="#9e093016a52b164c5472a6f8e760aac8"><span class="id" title="notation">&quot;</span></a>'#' cls ( a1 , .. , a2 )"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Econstructor"><span class="id" title="constructor">Econstructor</span></a> <span class="id" title="var">cls</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">a1</span> .. (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">a2</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>) ..) <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 20<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">a1</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">a2</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">cls</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' # cls ( '[hv' a1 ,  '/' .. ,  '/' a2 ']' ) ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ExprNotations.:CPP_expr::x" class="idref" href="#ExprNotations.:CPP_expr::x"><span class="id" title="notation">&quot;</span></a>e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eimplicit"><span class="id" title="constructor">Eimplicit</span></a> <span class="id" title="var">e</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="7376e5ff1c86b878806cd91a5117cfc1" class="idref" href="#7376e5ff1c86b878806cd91a5117cfc1"><span class="id" title="notation">&quot;</span></a>ty '{{VALUE' 'INIT}}'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eimplicit_init"><span class="id" title="constructor">Eimplicit_init</span></a> <span class="id" title="var">ty</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' ty {{VALUE  INIT}} ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="b28e30879e2edd6d791a38cdf7df174b" class="idref" href="#b28e30879e2edd6d791a38cdf7df174b"><span class="id" title="notation">&quot;</span></a>c ? t : e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eif"><span class="id" title="constructor">Eif</span></a> <span class="id" title="var">c</span> <span class="id" title="var">t</span> <span class="id" title="var">e</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 160<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">c</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">t</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv   ' c  '/' ?  t  '/' :  e ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ExprNotations.:CPP_expr::'this'" class="idref" href="#ExprNotations.:CPP_expr::'this'"><span class="id" title="notation">&quot;</span></a>'this'" := (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Ethis"><span class="id" title="constructor">Ethis</span></a> <span class="id" title="var">_</span>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ExprNotations.:CPP_expr::'nullptr'" class="idref" href="#ExprNotations.:CPP_expr::'nullptr'"><span class="id" title="notation">&quot;</span></a>'nullptr'" := (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Enull"><span class="id" title="constructor">Enull</span></a>) (<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;NOTE:&nbsp;<span class="inlinecode"><span class="id" title="var">Einitlist</span></span> <span class="inlinecode"><span class="id" title="var">nil</span></span> <span class="inlinecode">(<span class="id" title="var">Some</span></span> <span class="inlinecode"><span class="id" title="var">_</span>)</span> <span class="inlinecode"><span class="id" title="var">_</span></span>&nbsp;corresponds&nbsp;to&nbsp;an&nbsp;ill-formed&nbsp;program<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(cf.&nbsp;the&nbsp;<span class="inlinecode"><span class="id" title="var">Lt</span></span>&nbsp;case&nbsp;of&nbsp;<span class="inlinecode"><span class="id" title="var">wp_array_init_fill</span></span>)<br/>
+&nbsp;&nbsp;&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="b19b08690d58408253f029c53c670f20" class="idref" href="#b19b08690d58408253f029c53c670f20"><span class="id" title="notation">&quot;</span></a>( ty ){}"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Einitlist"><span class="id" title="constructor">Einitlist</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="var">ty</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 100<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' ( ty ){} ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="310099de6b1625a3d9804be1047da074" class="idref" href="#310099de6b1625a3d9804be1047da074"><span class="id" title="notation">&quot;</span></a>( ty ){ e1 , .. , e2 }"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Einitlist"><span class="id" title="constructor">Einitlist</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">e1</span> .. (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">e2</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>) ..) <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="var">ty</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 100<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e1</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e2</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' ( ty ){ '[hv' e1 ,  '/' .. ,  '/' e2 ']' } ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="0ada99cc8399c9ce879b807124bcd55c" class="idref" href="#0ada99cc8399c9ce879b807124bcd55c"><span class="id" title="notation">&quot;</span></a>( ty ){ e1 , .. , e2 '}{default:' edefault '}'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Einitlist"><span class="id" title="constructor">Einitlist</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">e1</span> .. (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">e2</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>) ..) (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">edefault</span>) <span class="id" title="var">ty</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 100<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e1</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e2</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">edefault</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' ( ty ){ '[hv' e1 ,  '/' .. ,  '/' e2 ']' }{default:  '/' edefault } ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ExprNotations.:CPP_expr::'new'_x" class="idref" href="#ExprNotations.:CPP_expr::'new'_x"><span class="id" title="notation">&quot;</span></a>'new' ty"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Enew"><span class="id" title="constructor">Enew</span></a> <span class="id" title="var">_</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a> <span class="id" title="var">_</span> <span class="id" title="var">ty</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' new  ty ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="079be0d7237b7dffa563e6f481bb93df" class="idref" href="#079be0d7237b7dffa563e6f481bb93df"><span class="id" title="notation">&quot;</span></a>'new' ( a1 , .. , a2 ) ty"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Enew"><span class="id" title="constructor">Enew</span></a> <span class="id" title="var">_</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">a1</span> .. (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">a2</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>) ..) <span class="id" title="var">_</span> <span class="id" title="var">ty</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">a1</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">a2</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' new  ( '[hv' a1 ,  '/' .. ,  '/' a2 ']' )  ty ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="53128819a57ff8fac8381364383a1b77" class="idref" href="#53128819a57ff8fac8381364383a1b77"><span class="id" title="notation">&quot;</span></a>'new' ty [ esz ]"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Enew"><span class="id" title="constructor">Enew</span></a> <span class="id" title="var">_</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a> <span class="id" title="var">_</span> <span class="id" title="var">ty</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">esz</span>) <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">esz</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' new  ty [ esz ] ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="d38c2d1d8f51dc7fc55612398a64c023" class="idref" href="#d38c2d1d8f51dc7fc55612398a64c023"><span class="id" title="notation">&quot;</span></a>'new' ( a1 , .. , a2 ) ty [ esz ]"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Enew"><span class="id" title="constructor">Enew</span></a> <span class="id" title="var">_</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">a1</span> .. (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">a2</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>) ..) <span class="id" title="var">_</span> <span class="id" title="var">ty</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">esz</span>) <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">a1</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">a2</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">esz</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' new  ( '[hv' a1 ,  '/' .. ,  '/' a2 ']' )  ty [ esz ] ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ExprNotations.:CPP_expr::'delete'_x" class="idref" href="#ExprNotations.:CPP_expr::'delete'_x"><span class="id" title="notation">&quot;</span></a>'delete' e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Edelete"><span class="id" title="constructor">Edelete</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> <span class="id" title="var">_</span> <span class="id" title="var">e</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' delete  e ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="419bce89208003c038899c4866f0f3e1" class="idref" href="#419bce89208003c038899c4866f0f3e1"><span class="id" title="notation">&quot;</span></a>'delete[]' e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Edelete"><span class="id" title="constructor">Edelete</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a> <span class="id" title="var">_</span> <span class="id" title="var">e</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 30<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' delete[]  e ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;QUESTION&nbsp;(JH):&nbsp;should&nbsp;we&nbsp;have&nbsp;notations&nbsp;which&nbsp;display&nbsp;sequence&nbsp;points?&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ExprNotations.:CPP_expr::x" class="idref" href="#ExprNotations.:CPP_expr::x"><span class="id" title="notation">&quot;</span></a>e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eandclean"><span class="id" title="constructor">Eandclean</span></a> <span class="id" title="var">e</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="ExprNotations.:CPP_expr::x" class="idref" href="#ExprNotations.:CPP_expr::x"><span class="id" title="notation">&quot;</span></a>e"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Ematerialize_temp"><span class="id" title="constructor">Ematerialize_temp</span></a> <span class="id" title="var">e</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;TODO&nbsp;(JH):&nbsp;<span class="inlinecode"><span class="id" title="var">Eatomic</span></span>&nbsp;*)</span><br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="d133e2d1ded2e9e28ae4995c7f274828" class="idref" href="#d133e2d1ded2e9e28ae4995c7f274828"><span class="id" title="notation">&quot;</span></a>'__builtin_vaarg(' e , t )"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eva_arg"><span class="id" title="constructor">Eva_arg</span></a> <span class="id" title="var">e</span> <span class="id" title="var">t</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">t</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' __builtin_vaarg( e ,  t ) ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="98ef336cc51356aaf34b6873e76ccaa0" class="idref" href="#98ef336cc51356aaf34b6873e76ccaa0"><span class="id" title="notation">&quot;</span></a>e -&gt;~ ty ()"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Epseudo_destructor"><span class="id" title="constructor">Epseudo_destructor</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a> <span class="id" title="var">ty</span> <span class="id" title="var">e</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' e -&gt;~ ty () ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="db30e74437673aeb39c71711400e6b9f" class="idref" href="#db30e74437673aeb39c71711400e6b9f"><span class="id" title="notation">&quot;</span></a>e .~ ty ()"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Epseudo_destructor"><span class="id" title="constructor">Epseudo_destructor</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> <span class="id" title="var">ty</span> <span class="id" title="var">e</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">ty</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_type</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">e</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[' e .~ ty () ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;TODO&nbsp;(JH):&nbsp;<span class="inlinecode"><span class="id" title="var">Earrayloop_init</span></span>/<span class="inlinecode"><span class="id" title="var">Earrayloop_index</span></span>/<span class="inlinecode"><span class="id" title="var">Eopaque_ref</span></span>&nbsp;*)</span><br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="09eb9f49b8ab7549cb7ef80bfad45b46" class="idref" href="#09eb9f49b8ab7549cb7ef80bfad45b46"><span class="id" title="notation">&quot;</span></a>'{UNSUPPORTED:' msg '}'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:= (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eunsupported"><span class="id" title="constructor">Eunsupported</span></a> <span class="id" title="var">msg</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( <span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">CPP_expr</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">msg</span> <span class="id" title="keyword">constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">format</span> "'[hv   ' {UNSUPPORTED:  msg } ']'"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;, <span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.syntax.expr_notations.html#ExprNotations"><span class="id" title="module">ExprNotations</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

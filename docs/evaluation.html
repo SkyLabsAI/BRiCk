@@ -105,7 +105,7 @@
 The general form of these rules is the following:</p>
 <p>Note that <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp</span></span></code> is a predicate in our separation logic (the fact that it returns a <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">PROP</span></span></code>).
 Informally you can think of it as capturing the pre-condition to the inputs (one of which is normally an expression) that are sufficient such that the code is safe and if the expression terminates, it terminates in a state in which its outputs satisfy the “continuation” (i.e. the final function argument to <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp</span></span></code>).</p>
-<p>Due to the structure of C++, BRiCk contains a separate weakest pre-condition modality for each syntactic category. These are defined in <a class="reference external" href="_static/coqdoc/bluerock.lang.cpp.logic.wp.html">bluerock.lang.cpp.logic.wp</a>.</p>
+<p>Due to the structure of C++, BRiCk contains a separate weakest pre-condition modality for each syntactic category. These are defined in <a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.logic.wp.html">skylabs.lang.cpp.logic.wp</a>.</p>
 <section id="expressions">
 <h2>Expressions<a class="headerlink" href="#expressions" title="Link to this heading"></a></h2>
 <p>In BRiCk we break expression evaluation down into four weakest pre-condition assertions representing the different <a class="reference external" href="http://eel.is/c++draft/expr.prop#basic.lval-1">value categories</a> of a C++ expression.</p>
@@ -113,7 +113,7 @@ Informally you can think of it as capturing the pre-condition to the inputs (one
 <h3>Modeling Temporaries<a class="headerlink" href="#modeling-temporaries" title="Link to this heading"></a></h3>
 <p>In the course of evaluating C++ programs, the language can construct objects that are later destroyed, this occurs for <a class="reference external" href="https://eel.is/c++draft/basic.stc.auto#1">automatic storage duration</a> variables (i.e. stack allocated variables and temporaries).
 C++ semantics guarantees that the lifetime of temporaries is well-bracketed, meaning that objects will be destroyed in the reverse order that they were constructed.
-In BRiCk we capture the stack of objects to be destroyed using the type <a class="reference external" href="_static/coqdoc/bluerock.lang.cpp.logic.wp.html#FreeTemps.t">t</a>.</p>
+In BRiCk we capture the stack of objects to be destroyed using the type <a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.logic.wp.html#FreeTemps.t">t</a>.</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Inductive t : Set :=
 | id (* = fun x =&gt; x *)
 | delete (ty : decltype) (p : ptr) (* = delete_val ty p *)
@@ -124,13 +124,13 @@ In BRiCk we capture the stack of objects to be destroyed using the type <a class
 .
 </pre></div>
 </div>
-<p>Here <a class="reference external" href="_static/coqdoc/bluerock.lang.cpp.logic.wp.html#FreeTemps.id">id</a> represents the identity, characterizing that nothing needs to be destroyed.
+<p>Here <a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.logic.wp.html#FreeTemps.id">id</a> represents the identity, characterizing that nothing needs to be destroyed.
 <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">delete</span></span> <span class="n"><span class="pre">ty</span></span> <span class="n"><span class="pre">p</span></span></code> represents that the value at pointer <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">p</span></span></code> (which should have type <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">ty</span></span></code>) needs to be destroyed.
 Note that to delete the value, the C++ abstract machine runs the destructor and reclaims the underlying memory.
 Virtual dispatch is <em>not</em> used when invoking the destructor.
 <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">seq</span></span> <span class="n"><span class="pre">a</span></span> <span class="n"><span class="pre">b</span></span></code> means that the temporaries in <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">a</span></span></code> must be destroyed <em>before</em> the temporaries in <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">b</span></span></code>.
 <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">par</span></span> <span class="n"><span class="pre">a</span></span> <span class="n"><span class="pre">b</span></span></code> means that the temporaries in <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">a</span></span></code> and the temporaries in <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">b</span></span></code> are destroyed in an interleaved manner <a class="footnote-reference brackets" href="#parallel-destruction" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.</p>
-<p>The meaning of these constructs is made precise by interpreting the syntax using <a class="reference external" href="_static/coqdoc/bluerock.lang.cpp.logic.destroy.html#interp">interp</a>.</p>
+<p>The meaning of these constructs is made precise by interpreting the syntax using <a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.logic.destroy.html#interp">interp</a>.</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>#[local] Definition interp_body `{Σ : cpp_logic, σ : genv}
     (interp : translation_unit -&gt; FreeTemps -&gt; epred -&gt; mpred)
     (tu : translation_unit) (free : FreeTemps) (Q : epred) : mpred :=
@@ -152,7 +152,7 @@ mlock Definition interp `{Σ : cpp_logic, σ : genv}
 <section id="l-values-x-values">
 <h3>l-values &amp; x-values<a class="headerlink" href="#l-values-x-values" title="Link to this heading"></a></h3>
 <p>l-values and x-values follow the same general structure.
-Their weakest precondition rules are captured by <a class="reference external" href="_static/coqdoc/bluerock.lang.cpp.logic.wp.html#WPE.wp_lval">wp_lval</a> and <a class="reference external" href="_static/coqdoc/bluerock.lang.cpp.logic.wp.html#WPE.wp_xval">wp_xval</a> respectively (we show <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_lval</span></span></code> as our example).</p>
+Their weakest precondition rules are captured by <a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.logic.wp.html#WPE.wp_lval">wp_lval</a> and <a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.logic.wp.html#WPE.wp_xval">wp_xval</a> respectively (we show <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_lval</span></span></code> as our example).</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>(* [wp_lval σ E ρ e Q] evaluates the expression [e] in region [ρ]
  * with mask [E] and continutation [Q].
  *)
@@ -168,19 +168,19 @@ The <a class="reference external" href="http://eel.is/c++draft/expr.prop#basic.l
 <p>These are characterized by two predicate transformers.</p>
 <section id="operands">
 <h4>Operands<a class="headerlink" href="#operands" title="Link to this heading"></a></h4>
-<p><a class="reference external" href="_static/coqdoc/bluerock.lang.cpp.logic.wp.html#WPE.wp_operand">wp_operand</a> is used to evaluate a operand of a primitive operator.
+<p><a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.logic.wp.html#WPE.wp_operand">wp_operand</a> is used to evaluate a operand of a primitive operator.
 These operands are <em>always</em> primitives, since operators that accept aggregates are de-sugared to functions or methods.</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>(* evaluate a prvalue that &quot;computes the value of an operand of an operator&quot;
  *)
 Parameter wp_operand : forall {resolve:genv}, translation_unit -&gt; region -&gt; Expr -&gt; M val.
 </pre></div>
 </div>
-<p>Unlike <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_init</span></span></code> and <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_prval</span></span></code>, operands return <a class="reference external" href="_static/coqdoc/bluerock.lang.cpp.semantics.value.html#val">val</a>s.
+<p>Unlike <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_init</span></span></code> and <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_prval</span></span></code>, operands return <a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.semantics.value.html#val">val</a>s.
 Because the value returned does not have an identity, there is nothing to destroy, so the <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">FreeTemps</span></span></code> returned to the continuation destroys only the temporaries created when evaluating the expression.</p>
 </section>
 <section id="initializing-aggregates">
 <h4>Initializing Aggregates<a class="headerlink" href="#initializing-aggregates" title="Link to this heading"></a></h4>
-<p><a class="reference external" href="_static/coqdoc/bluerock.lang.cpp.logic.wp.html#WPE.wp_init">wp_init</a> handles initialization of aggregates.
+<p><a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.logic.wp.html#WPE.wp_init">wp_init</a> handles initialization of aggregates.
 The parameter is the following:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>(* evaluate a prvalue that &quot;initializes an object&quot;.
 
@@ -227,7 +227,7 @@ Parameter wp_init
                       mpred. (* pre-condition *)
 </pre></div>
 </div>
-<p><code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_init</span></span></code> takes a <a class="reference external" href="_static/coqdoc/bluerock.lang.cpp.semantics.values.html#PTRS.ptr">ptr</a> that represents the location that the object is being constructed into.
+<p><code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_init</span></span></code> takes a <a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.semantics.values.html#PTRS.ptr">ptr</a> that represents the location that the object is being constructed into.
 Because of this, the post-condition does not consume a value but only a <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">FreeTemps</span></span></code> used to destroy temporaries created during the evaluation of the expression.
 To destroy the actual object constructed by <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_init</span></span> <span class="n"><span class="pre">ty</span></span> <span class="n"><span class="pre">into</span></span> <span class="n"><span class="pre">Q</span></span></code>, use <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">FreeTemps.delete</span></span> <span class="n"><span class="pre">ty</span></span> <span class="n"><span class="pre">into</span></span></code>.</p>
 <p>On top of <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_init</span></span></code>, we can <em>define</em> <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_prval</span></span></code> by universally quantifying the pointer that is being initialized and passing it to the continuation.</p>
@@ -358,7 +358,7 @@ The semantics for function calls specifies how to pass arguments to functions an
 <p>BRiCk follows the C++ standard by <a class="reference external" href="https://eel.is/c++draft/expr.call#7">using initialization semantics to pass (and return) data to (and from) functions</a>.
 It is also the style taken by <a class="reference external" href="https://www.cl.cam.ac.uk/~pes20/cerberus/">Cerberus</a>.</p>
 <p>C++ leaves the lifetime of <em>trivially destructible</em> function arguments unspecified, as it is <em>generally</em> not visible to client programs.
-BRiCk follows the Itanium ABI as is documented in <a class="reference external" href="_static/coqdoc/bluerock.lang.cpp.logic.call.html">bluerock.lang.cpp.logic.call</a>.</p>
+BRiCk follows the Itanium ABI as is documented in <a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.logic.call.html">skylabs.lang.cpp.logic.call</a>.</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Destruction of function arguments is left implementation defined
 in C++. See &lt;https://eel.is/c++draft/expr.call#6&gt; which states:
 

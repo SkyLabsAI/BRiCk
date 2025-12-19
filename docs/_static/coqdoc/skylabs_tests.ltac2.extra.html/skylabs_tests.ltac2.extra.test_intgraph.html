@@ -1,0 +1,116 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>skylabs_tests.ltac2.extra.test_intgraph</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library skylabs_tests.ltac2.extra.test_intgraph</h1>
+
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Ltac2.Ltac2</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.ltac2.extra.internal.list</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.ltac2.extra.internal.control</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.ltac2.extra.internal.intgraph</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="Tests" class="idref" href="#Tests"><span class="id" title="module">Tests</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">IntGraph</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">eq</span> <span class="id" title="var">ls1</span> <span class="id" title="var">ls2</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">List.for_all2</span> (<span class="id" title="keyword">fun</span> (<span class="id" title="var">a</span>,<span class="id" title="var">b</span>) (<span class="id" title="var">x</span>,<span class="id" title="var">y</span>) =&gt; <span class="id" title="var">Bool.and</span> (<span class="id" title="var">Int.equal</span> <span class="id" title="var">a</span> <span class="id" title="var">x</span>) (<span class="id" title="var">Int.equal</span> <span class="id" title="var">b</span> <span class="id" title="var">y</span>))) <span class="id" title="var">ls1</span> <span class="id" title="var">ls2</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Goal</span> <a id="Tests.Unnamed_thm" class="idref" href="#Tests.Unnamed_thm"><span class="id" title="definition">True</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">g1</span> := <span class="id" title="var">of_edges</span> [(1,3); (15,1); (-2,-3)] <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">g2</span> := <span class="id" title="var">of_edges</span> [(15,1); (-2,-3); (1,3)] <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">equal</span> <span class="id" title="var">g1</span> <span class="id" title="var">g2</span> <span class="id" title="keyword">then</span> () <span class="id" title="keyword">else</span> <span class="id" title="var">throw_invalid</span>! "test failure".<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">g</span> := <span class="id" title="var">of_edges</span> [(1,3); (15,1); (-2,-3)] <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">path</span> (1,3) <span class="id" title="var">g</span> <span class="id" title="keyword">then</span> () <span class="id" title="keyword">else</span> <span class="id" title="var">throw_invalid</span>! "test failure".<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">ls</span> := <span class="id" title="var">sublists</span> -100 100  (<span class="id" title="var">List.sort</span> <span class="id" title="var">cmp</span> [(1,3); (-2,15); (15,1); (-2,-3)]) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">List.for_all2</span> <span class="id" title="var">eq</span> <span class="id" title="var">ls</span> [[(-2, 15); (-2, -3)]; [(1, 3)]; [(15, 1)]] <span class="id" title="keyword">then</span> ()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">throw_invalid</span>! "test failure".<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">tr</span> := <span class="id" title="var">trans_clos</span> (<span class="id" title="var">of_edges</span> [(1,3); (-2,15); (15,1); (-2,-3)]) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">_</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">eq</span> (<span class="id" title="var">tr</span>.(<span class="id" title="var">edges</span>)) [(-2, -3); (-2, 1); (-2, 3); (-2, 15); (1, 3); (15, 1); (15, 3)] <span class="id" title="keyword">then</span> ()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">throw_invalid</span>! "test failure"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">eq</span> (<span class="id" title="var">tr</span>.(<span class="id" title="var">redges</span>)) [(-3, -2); (1, -2); (1, 15); (3, -2); (3, 1); (3, 15); (15, -2)] <span class="id" title="keyword">then</span> ()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">throw_invalid</span>! "test failure".<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">r</span> := <span class="id" title="var">roots</span> (<span class="id" title="var">trans_clos</span> (<span class="id" title="var">of_edges</span> [(1,3); (-2,15); (15,1); (-2,-3)])) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">List.for_all2</span> <span class="id" title="var">Int.equal</span> <span class="id" title="var">r</span> [-2] <span class="id" title="keyword">then</span> () <span class="id" title="keyword">else</span> <span class="id" title="var">throw_invalid</span>! "test failure".<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">es</span> := <span class="id" title="var">edges_from</span> -2 (<span class="id" title="var">trans_clos</span> (<span class="id" title="var">of_edges</span> [(1,3); (-2,15); (15,1); (-2,-3)])) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">eq</span> <span class="id" title="var">es</span> [(-2, 15); (-2, 3); (-2, 1); (-2, -3)] <span class="id" title="keyword">then</span> ()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">throw_invalid</span>! "test failure".<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">os</span> := <span class="id" title="var">in_order</span> (<span class="id" title="var">trans_clos</span> (<span class="id" title="var">of_edges</span> [(1,3); (-2,15); (15,1); (-2,-3)])) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">List.for_all2</span> <span class="id" title="var">Int.equal</span> <span class="id" title="var">os</span> [-2; -3; 15; 1; 3] <span class="id" title="keyword">then</span> ()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">throw_invalid</span>! "test failure".<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">ls</span> := <span class="id" title="var">leaves</span> ((<span class="id" title="var">of_edges</span> [(1,3); (-2,15); (15,1); (-2,-3)])) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">List.for_all2</span> <span class="id" title="var">Int.equal</span> <span class="id" title="var">ls</span> [-3;3] <span class="id" title="keyword">then</span> ()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">throw_invalid</span>! "test failure".<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">ls</span> := <span class="id" title="var">leaves</span> (<span class="id" title="var">trans_clos</span> (<span class="id" title="var">of_edges</span> [(1,3); (-2,15); (15,1); (-2,-3)])) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">List.for_all2</span> <span class="id" title="var">Int.equal</span> <span class="id" title="var">ls</span> [-3;3] <span class="id" title="keyword">then</span> ()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">throw_invalid</span>! "test failure".<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">os</span> := <span class="id" title="var">in_rev_order</span> (<span class="id" title="var">trans_clos</span> (<span class="id" title="var">of_edges</span> [(1,3); (-2,15); (15,1); (-2,-3)])) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">List.for_all2</span> <span class="id" title="var">Int.equal</span> <span class="id" title="var">os</span> [-3; 3; 1; 15; -2] <span class="id" title="keyword">then</span> ()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">throw_invalid</span>! "test failure".<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">g1</span> := <span class="id" title="var">of_edges</span> [(1,3); (15,1); (-2,-3)] <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">g2</span> := <span class="id" title="var">add</span> (15,1) (<span class="id" title="var">of_edges</span> [(1,3); (15,1); (-2,-3)]) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">equal</span> <span class="id" title="var">g1</span> <span class="id" title="var">g2</span> <span class="id" title="keyword">then</span> () <span class="id" title="keyword">else</span> <span class="id" title="var">throw_invalid</span>! "test failure".<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">g1</span> := <span class="id" title="var">of_edges</span> [(1,3); (15,1); (-2,-3)] <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">g2</span> := <span class="id" title="var">of_edges</span> [(15,1); (3,1)] <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">w</span> := <span class="id" title="var">without</span> <span class="id" title="var">g1</span> <span class="id" title="var">g2</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">eq</span> (<span class="id" title="var">w</span>.(<span class="id" title="var">edges</span>)) [(-2, -3); (1, 3)] <span class="id" title="keyword">then</span> ()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">throw_invalid</span>! "test failure".<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">exact</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#I"><span class="id" title="constructor">I</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_tests.ltac2.extra.test_intgraph.html#Tests"><span class="id" title="module">Tests</span></a>.<br/>
+
+<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.prelude.interrupts</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(C)&nbsp;2020&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;All&nbsp;rights&nbsp;reserved.<br/>
+&nbsp;*<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*&nbsp;XXX&nbsp;Only&nbsp;temporarily&nbsp;here.&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.prelude.base.html#"><span class="id" title="library">skylabs.prelude.base</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.prelude.hw_types.html#"><span class="id" title="library">skylabs.prelude.hw_types</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab12"></a><h1 class="section">Configurations of the interrupt lines attached to devices</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Variant</span> <a id="IntTrigger" class="idref" href="#IntTrigger"><span class="id" title="inductive">IntTrigger</span></a> :=<br/>
+| <a id="TriggerEdge" class="idref" href="#TriggerEdge"><span class="id" title="constructor">TriggerEdge</span></a><br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;^&nbsp;int&nbsp;is&nbsp;edge&nbsp;triggered&nbsp;*)</span><br/>
+| <a id="TriggerLevel" class="idref" href="#TriggerLevel"><span class="id" title="constructor">TriggerLevel</span></a> (<a id="active_low:3" class="idref" href="#active_low:3"><span class="id" title="binder">active_low</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>).<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;^&nbsp;int&nbsp;is&nbsp;low-level&nbsp;triggered&nbsp;<span class="inlinecode"><span class="id" title="var">active_low</span></span> <span class="inlinecode">=</span> <span class="inlinecode"><span class="id" title="var">true</span></span>;&nbsp;otherwise,&nbsp;high-level&nbsp;triggered&nbsp;*)</span><br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="int_trigger_inhabited" class="idref" href="#int_trigger_inhabited"><span class="id" title="instance">int_trigger_inhabited</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#Inhabited"><span class="id" title="class">Inhabited</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#IntTrigger"><span class="id" title="inductive">IntTrigger</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_inhabited</span>. <span class="id" title="keyword">Qed</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="int_trigger_decision" class="idref" href="#int_trigger_decision"><span class="id" title="instance">int_trigger_decision</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#EqDecision"><span class="id" title="abbreviation">EqDecision</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#IntTrigger"><span class="id" title="inductive">IntTrigger</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_decision</span>. <span class="id" title="keyword">Defined</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variant</span> <a id="IntOwner" class="idref" href="#IntOwner"><span class="id" title="inductive">IntOwner</span></a> :=<br/>
+| <a id="HostInt" class="idref" href="#HostInt"><span class="id" title="constructor">HostInt</span></a><br/>
+<span class="comment">(*&nbsp;^&nbsp;int&nbsp;is&nbsp;host&nbsp;owned&nbsp;*)</span><br/>
+| <a id="GuestInt" class="idref" href="#GuestInt"><span class="id" title="constructor">GuestInt</span></a>.<br/>
+<span class="comment">(*&nbsp;^&nbsp;int&nbsp;is&nbsp;guest&nbsp;owned&nbsp;(VM&nbsp;passthrough)&nbsp;*)</span><br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="int_owner_inhabited" class="idref" href="#int_owner_inhabited"><span class="id" title="instance">int_owner_inhabited</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#Inhabited"><span class="id" title="class">Inhabited</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#IntOwner"><span class="id" title="inductive">IntOwner</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_inhabited</span>. <span class="id" title="keyword">Qed</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="int_owner_decision" class="idref" href="#int_owner_decision"><span class="id" title="instance">int_owner_decision</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#EqDecision"><span class="id" title="abbreviation">EqDecision</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#IntOwner"><span class="id" title="inductive">IntOwner</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_decision</span>. <span class="id" title="keyword">Defined</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variant</span> <a id="IntStatus" class="idref" href="#IntStatus"><span class="id" title="inductive">IntStatus</span></a> : <span class="id" title="keyword">Set</span> := <a id="IntMasked" class="idref" href="#IntMasked"><span class="id" title="constructor">IntMasked</span></a> | <a id="IntEnabled" class="idref" href="#IntEnabled"><span class="id" title="constructor">IntEnabled</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="int_status_inhabited" class="idref" href="#int_status_inhabited"><span class="id" title="instance">int_status_inhabited</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#Inhabited"><span class="id" title="class">Inhabited</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#IntStatus"><span class="id" title="inductive">IntStatus</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_inhabited</span>. <span class="id" title="keyword">Qed</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="int_status_decision" class="idref" href="#int_status_decision"><span class="id" title="instance">int_status_decision</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#EqDecision"><span class="id" title="abbreviation">EqDecision</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#IntStatus"><span class="id" title="inductive">IntStatus</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_decision</span>. <span class="id" title="keyword">Defined</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Record</span> <a id="IntConfig" class="idref" href="#IntConfig"><span class="id" title="record">IntConfig</span></a> : <span class="id" title="keyword">Set</span> :=<br/>
+&nbsp;&nbsp;{ <a id="int_cpu" class="idref" href="#int_cpu"><span class="id" title="projection">int_cpu</span></a> : <a class="idref" href="skylabs.prelude.hw_types.html#types.cpu"><span class="id" title="abbreviation">cpu</span></a><br/>
+&nbsp;&nbsp;; <a id="int_trigger" class="idref" href="#int_trigger"><span class="id" title="projection">int_trigger</span></a> : <a class="idref" href="skylabs.prelude.interrupts.html#IntTrigger"><span class="id" title="inductive">IntTrigger</span></a><br/>
+&nbsp;&nbsp;; <a id="int_owner" class="idref" href="#int_owner"><span class="id" title="projection">int_owner</span></a> : <a class="idref" href="skylabs.prelude.interrupts.html#IntOwner"><span class="id" title="inductive">IntOwner</span></a><br/>
+&nbsp;&nbsp;; <a id="int_status" class="idref" href="#int_status"><span class="id" title="projection">int_status</span></a> : <a class="idref" href="skylabs.prelude.interrupts.html#IntStatus"><span class="id" title="inductive">IntStatus</span></a> }.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab13"></a><h1 class="section">The IntConfig value before the first assign_int</h1>
+
+
+<div class="paragraph"> </div>
+
+From NOVA IFSPEC 5.5.2 (assign_int): other than <span class="inlinecode"><a class="idref" href="skylabs.prelude.interrupts.html#int_status"><span class="id" title="projection">int_status</span></a></span> <span class="inlinecode">:=</span> <span class="inlinecode"><a class="idref" href="skylabs.prelude.interrupts.html#IntMasked"><span class="id" title="constructor">IntMasked</span></a></span>, other
+values (CPU, trigger) are undefined for the initial interrupts. Furthermore,
+when the interrupt is masked, other values do not matter much, except when
+an EC requests a ctrl_sm DOWN on the interrupt sm, then NOVA checks that the
+EC's CPU matches the config's CPU.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="initialIntConfig" class="idref" href="#initialIntConfig"><span class="id" title="definition">initialIntConfig</span></a> :=<br/>
+&nbsp;&nbsp;{| <a class="idref" href="skylabs.prelude.interrupts.html#int_cpu"><span class="id" title="projection">int_cpu</span></a> := <a class="idref" href="skylabs.prelude.hw_types.html#cpu.of_N"><span class="id" title="definition">cpu.of_N</span></a> 0<br/>
+&nbsp;&nbsp;;  <a class="idref" href="skylabs.prelude.interrupts.html#int_trigger"><span class="id" title="projection">int_trigger</span></a> := <a class="idref" href="skylabs.prelude.interrupts.html#TriggerEdge"><span class="id" title="constructor">TriggerEdge</span></a><br/>
+&nbsp;&nbsp;;  <a class="idref" href="skylabs.prelude.interrupts.html#int_owner"><span class="id" title="projection">int_owner</span></a> := <a class="idref" href="skylabs.prelude.interrupts.html#HostInt"><span class="id" title="constructor">HostInt</span></a><br/>
+&nbsp;&nbsp;;  <a class="idref" href="skylabs.prelude.interrupts.html#int_status"><span class="id" title="projection">int_status</span></a> := <a class="idref" href="skylabs.prelude.interrupts.html#IntMasked"><span class="id" title="constructor">IntMasked</span></a><br/>
+&nbsp;&nbsp;|}.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="INT_config_of" class="idref" href="#INT_config_of"><span class="id" title="definition">INT_config_of</span></a> (<a id="c:13" class="idref" href="#c:13"><span class="id" title="binder">c</span></a> : <a class="idref" href="skylabs.prelude.hw_types.html#cpuT"><span class="id" title="abbreviation">cpuT</span></a>) (<a id="edge:14" class="idref" href="#edge:14"><span class="id" title="binder">edge</span></a> <a id="active_low:15" class="idref" href="#active_low:15"><span class="id" title="binder">active_low</span></a> <a id="is_guest:16" class="idref" href="#is_guest:16"><span class="id" title="binder">is_guest</span></a> <a id="masked:17" class="idref" href="#masked:17"><span class="id" title="binder">masked</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;: <a class="idref" href="skylabs.prelude.interrupts.html#IntConfig"><span class="id" title="record">IntConfig</span></a> :=<br/>
+&nbsp;&nbsp;{| <a class="idref" href="skylabs.prelude.interrupts.html#int_cpu"><span class="id" title="projection">int_cpu</span></a> := <a class="idref" href="skylabs.prelude.interrupts.html#c:13"><span class="id" title="variable">c</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;; <a class="idref" href="skylabs.prelude.interrupts.html#int_trigger"><span class="id" title="projection">int_trigger</span></a> := <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#edge:14"><span class="id" title="variable">edge</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#TriggerEdge"><span class="id" title="constructor">TriggerEdge</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#TriggerLevel"><span class="id" title="constructor">TriggerLevel</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#active_low:15"><span class="id" title="variable">active_low</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;; <a class="idref" href="skylabs.prelude.interrupts.html#int_owner"><span class="id" title="projection">int_owner</span></a> := <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#is_guest:16"><span class="id" title="variable">is_guest</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#GuestInt"><span class="id" title="constructor">GuestInt</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#HostInt"><span class="id" title="constructor">HostInt</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;; <a class="idref" href="skylabs.prelude.interrupts.html#int_status"><span class="id" title="projection">int_status</span></a> := <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#masked:17"><span class="id" title="variable">masked</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#IntMasked"><span class="id" title="constructor">IntMasked</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#IntEnabled"><span class="id" title="constructor">IntEnabled</span></a> |}.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="int_config_inhabited" class="idref" href="#int_config_inhabited"><span class="id" title="instance">int_config_inhabited</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#Inhabited"><span class="id" title="class">Inhabited</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#IntConfig"><span class="id" title="record">IntConfig</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_inhabited</span>. <span class="id" title="keyword">Qed</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="int_cfg_decision" class="idref" href="#int_cfg_decision"><span class="id" title="instance">int_cfg_decision</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#EqDecision"><span class="id" title="abbreviation">EqDecision</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#IntConfig"><span class="id" title="record">IntConfig</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_decision</span>. <span class="id" title="keyword">Defined</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="skylabs.prelude.interrupts.html#intline_of"><span class="id" title="projection">intline_of</span></a></span> <span class="inlinecode">(<a class="idref" href="skylabs.prelude.elpi.derive_test.html#Deriving2Test.test.x"><span class="id" title="variable">x</span></a></span> <span class="inlinecode">:</span> <span class="inlinecode"><a class="idref" href="skylabs.prelude.elpi.derive_test.html#Alias.T"><span class="id" title="inductive">T</span></a>)</span>: The interrupt line attached to some value <span class="inlinecode"><a class="idref" href="skylabs.prelude.elpi.derive_test.html#Deriving2Test.test.x"><span class="id" title="variable">x</span></a></span> <span class="inlinecode">:</span> <span class="inlinecode"><a class="idref" href="skylabs.prelude.elpi.derive_test.html#Alias.T"><span class="id" title="inductive">T</span></a></span> 
+</div>
+<div class="code">
+<span class="id" title="keyword">Class</span> <a id="IntLines" class="idref" href="#IntLines"><span class="id" title="inductive, record"><span id="IntLines" class="id">IntLines</span></span></a> (<a id="T:18" class="idref" href="#T:18"><span class="id" title="binder">T</span></a> : <span class="id" title="keyword">Type</span>) := <a id="intline_of" class="idref" href="#intline_of"><span class="id" title="constructor, projection"><span id="intline_of" class="id">intline_of</span></span></a> : <a class="idref" href="skylabs.prelude.interrupts.html#T:18"><span class="id" title="variable">T</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.prelude.hw_types.html#types.int_line"><span class="id" title="abbreviation">int_line</span></a>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="var">Mode</span> <a class="idref" href="skylabs.prelude.interrupts.html#IntLines"><span class="id" title="class">IntLines</span></a> + : <span class="id" title="var">typeclass_instances</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab14"></a><h1 class="section">Interrupt signals generated by devices</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Variant</span> <a id="InterruptSignal" class="idref" href="#InterruptSignal"><span class="id" title="inductive">InterruptSignal</span></a> : <span class="id" title="keyword">Set</span> :=<br/>
+| <a id="LevelSig" class="idref" href="#LevelSig"><span class="id" title="constructor">LevelSig</span></a> (<span class="id" title="var">_</span> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>)<br/>
+| <a id="EdgeSig" class="idref" href="#EdgeSig"><span class="id" title="constructor">EdgeSig</span></a>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;^&nbsp;note(gmm):&nbsp;it&nbsp;might&nbsp;not&nbsp;be&nbsp;possible&nbsp;to&nbsp;implement&nbsp;<span class="inlinecode"><span class="id" title="var">EdgeSig</span></span>&nbsp;as&nbsp;successive<br/>
+&nbsp;&nbsp;&nbsp;*&nbsp;<span class="inlinecode"><span class="id" title="var">LevelSig</span></span> <span class="inlinecode"><span class="id" title="var">true</span>,</span> <span class="inlinecode"><span class="id" title="var">LevelSig</span></span> <span class="inlinecode"><span class="id" title="var">false</span></span>&nbsp;because&nbsp;arbitrary&nbsp;scheduling&nbsp;can&nbsp;occur&nbsp;between<br/>
+&nbsp;&nbsp;&nbsp;*&nbsp;two&nbsp;events,&nbsp;so&nbsp;the&nbsp;<span class="inlinecode"><span class="id" title="var">LevelSig</span></span> <span class="inlinecode"><span class="id" title="var">true</span></span>&nbsp;might&nbsp;hide&nbsp;other&nbsp;interrupts.<br/>
+&nbsp;&nbsp;&nbsp;*)</span><br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="InterruptSignal_inhabited" class="idref" href="#InterruptSignal_inhabited"><span class="id" title="instance">InterruptSignal_inhabited</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#Inhabited"><span class="id" title="class">Inhabited</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#InterruptSignal"><span class="id" title="inductive">InterruptSignal</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_inhabited</span>. <span class="id" title="keyword">Qed</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="InterruptSignal_eq_dec" class="idref" href="#InterruptSignal_eq_dec"><span class="id" title="instance">InterruptSignal_eq_dec</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#EqDecision"><span class="id" title="abbreviation">EqDecision</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#InterruptSignal"><span class="id" title="inductive">InterruptSignal</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_decision</span>. <span class="id" title="keyword">Defined</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="int_trigger_match" class="idref" href="#int_trigger_match"><span class="id" title="definition">int_trigger_match</span></a> (<a id="sig:23" class="idref" href="#sig:23"><span class="id" title="binder">sig</span></a> : <a class="idref" href="skylabs.prelude.interrupts.html#InterruptSignal"><span class="id" title="inductive">InterruptSignal</span></a>) (<a id="trg:24" class="idref" href="#trg:24"><span class="id" title="binder">trg</span></a> : <a class="idref" href="skylabs.prelude.interrupts.html#IntTrigger"><span class="id" title="inductive">IntTrigger</span></a>) : <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.prelude.interrupts.html#sig:23"><span class="id" title="variable">sig</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.prelude.interrupts.html#LevelSig"><span class="id" title="constructor">LevelSig</span></a> <span class="id" title="var">high</span> =&gt; <a class="idref" href="skylabs.prelude.interrupts.html#trg:24"><span class="id" title="variable">trg</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#TriggerLevel"><span class="id" title="constructor">TriggerLevel</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#negb"><span class="id" title="definition">negb</span></a> <span class="id" title="var">high</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;^&nbsp;<span class="inlinecode"><span class="id" title="var">high</span></span> <span class="inlinecode">=</span> <span class="inlinecode"><span class="id" title="var">true</span></span>&nbsp;is&nbsp;a&nbsp;valid&nbsp;level&nbsp;trigger&nbsp;only&nbsp;if<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="inlinecode"><span class="id" title="var">TriggerLevel</span></span> <span class="inlinecode"><span class="id" title="var">false</span></span> <span class="inlinecode">=&nbsp;active_low*)</span></span>.&nbsp;*)</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.prelude.interrupts.html#EdgeSig"><span class="id" title="constructor">EdgeSig</span></a> =&gt; <a class="idref" href="skylabs.prelude.interrupts.html#trg:24"><span class="id" title="variable">trg</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#TriggerEdge"><span class="id" title="constructor">TriggerEdge</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="int_trigger_match_dec" class="idref" href="#int_trigger_match_dec"><span class="id" title="instance">int_trigger_match_dec</span></a> <a id="sig:26" class="idref" href="#sig:26"><span class="id" title="binder">sig</span></a> <a id="trg:27" class="idref" href="#trg:27"><span class="id" title="binder">trg</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#Decision"><span class="id" title="class">Decision</span></a> (<a class="idref" href="skylabs.prelude.interrupts.html#int_trigger_match"><span class="id" title="definition">int_trigger_match</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#sig:26"><span class="id" title="variable">sig</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#trg:27"><span class="id" title="variable">trg</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">case</span>: <span class="id" title="var">sig</span> =&gt; /=; <span class="id" title="tactic">by</span> <span class="id" title="tactic">apply</span>: <span class="id" title="var">_</span>. <span class="id" title="keyword">Defined</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="int_types_match" class="idref" href="#int_types_match"><span class="id" title="definition">int_types_match</span></a> (<a id="sig:28" class="idref" href="#sig:28"><span class="id" title="binder">sig</span></a> : <a class="idref" href="skylabs.prelude.interrupts.html#InterruptSignal"><span class="id" title="inductive">InterruptSignal</span></a>) (<a id="ty:29" class="idref" href="#ty:29"><span class="id" title="binder">ty</span></a> : <a class="idref" href="skylabs.prelude.interrupts.html#IntConfig"><span class="id" title="record">IntConfig</span></a>) : <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs.prelude.interrupts.html#int_trigger_match"><span class="id" title="definition">int_trigger_match</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#sig:28"><span class="id" title="variable">sig</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#ty:29"><span class="id" title="variable">ty</span></a>.(<a class="idref" href="skylabs.prelude.interrupts.html#int_trigger"><span class="id" title="projection">int_trigger</span></a>).<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="int_types_match_decision" class="idref" href="#int_types_match_decision"><span class="id" title="instance">int_types_match_decision</span></a> <a id="sig:30" class="idref" href="#sig:30"><span class="id" title="binder">sig</span></a> <a id="cfg:31" class="idref" href="#cfg:31"><span class="id" title="binder">cfg</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#Decision"><span class="id" title="class">Decision</span></a> (<a class="idref" href="skylabs.prelude.interrupts.html#int_types_match"><span class="id" title="definition">int_types_match</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#sig:30"><span class="id" title="variable">sig</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#cfg:31"><span class="id" title="variable">cfg</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">case</span>: <span class="id" title="var">cfg</span> =&gt; ?; <span class="id" title="tactic">by</span> <span class="id" title="tactic">apply</span>: <span class="id" title="var">_</span>. <span class="id" title="keyword">Defined</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="skylabs.prelude.interrupts.html#intcfg_valid"><span class="id" title="definition">intcfg_valid</span></a></span> <span class="inlinecode"><span class="id" title="var">cfg</span></span> <span class="inlinecode"><span class="id" title="var">own</span></span> <span class="inlinecode"><span class="id" title="var">sig</span></span> means that <span class="inlinecode"><span class="id" title="var">cfg</span></span> matches <span class="inlinecode"><span class="id" title="var">sig</span></span>, the interrupt line was
+    configured <span class="inlinecode"><a class="idref" href="skylabs.prelude.interrupts.html#IntEnabled"><span class="id" title="constructor">IntEnabled</span></a></span>, and the owner is <span class="inlinecode"><span class="id" title="var">own</span></span> (guest or host). 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="intcfg_valid" class="idref" href="#intcfg_valid"><span class="id" title="definition">intcfg_valid</span></a> (<a id="cfg:32" class="idref" href="#cfg:32"><span class="id" title="binder">cfg</span></a> : <a class="idref" href="skylabs.prelude.interrupts.html#IntConfig"><span class="id" title="record">IntConfig</span></a>) (<a id="own:33" class="idref" href="#own:33"><span class="id" title="binder">own</span></a> : <a class="idref" href="skylabs.prelude.interrupts.html#IntOwner"><span class="id" title="inductive">IntOwner</span></a>) (<a id="sig:34" class="idref" href="#sig:34"><span class="id" title="binder">sig</span></a> : <a class="idref" href="skylabs.prelude.interrupts.html#InterruptSignal"><span class="id" title="inductive">InterruptSignal</span></a>) : <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.prelude.interrupts.html#int_types_match"><span class="id" title="definition">int_types_match</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#sig:34"><span class="id" title="variable">sig</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#cfg:32"><span class="id" title="variable">cfg</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.prelude.interrupts.html#cfg:32"><span class="id" title="variable">cfg</span></a>.(<a class="idref" href="skylabs.prelude.interrupts.html#int_owner"><span class="id" title="projection">int_owner</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#own:33"><span class="id" title="variable">own</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.prelude.interrupts.html#cfg:32"><span class="id" title="variable">cfg</span></a>.(<a class="idref" href="skylabs.prelude.interrupts.html#int_status"><span class="id" title="projection">int_status</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#IntEnabled"><span class="id" title="constructor">IntEnabled</span></a>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;Confirm&nbsp;these&nbsp;instances&nbsp;are&nbsp;already&nbsp;derivable.&nbsp;*)</span><br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="intline_elem_of_dec" class="idref" href="#intline_elem_of_dec"><span class="id" title="instance">intline_elem_of_dec</span></a> :<br/>
+&nbsp;&nbsp;@<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#RelDecision"><span class="id" title="class">RelDecision</span></a> (<a class="idref" href="skylabs.prelude.hw_types.html#types.int_line"><span class="id" title="abbreviation">int_line</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">*</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#IntConfig"><span class="id" title="record">IntConfig</span></a>) (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<a class="idref" href="skylabs.prelude.hw_types.html#types.int_line"><span class="id" title="abbreviation">int_line</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">*</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#IntConfig"><span class="id" title="record">IntConfig</span></a>)) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#elem_of"><span class="id" title="definition">elem_of</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">_</span>. <span class="id" title="keyword">Abort</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="intcfg_valid_decision" class="idref" href="#intcfg_valid_decision"><span class="id" title="instance">intcfg_valid_decision</span></a> <a id="cfg:35" class="idref" href="#cfg:35"><span class="id" title="binder">cfg</span></a> <a id="own:36" class="idref" href="#own:36"><span class="id" title="binder">own</span></a> <a id="sig:37" class="idref" href="#sig:37"><span class="id" title="binder">sig</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#Decision"><span class="id" title="class">Decision</span></a> (<a class="idref" href="skylabs.prelude.interrupts.html#intcfg_valid"><span class="id" title="definition">intcfg_valid</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#cfg:35"><span class="id" title="variable">cfg</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#own:36"><span class="id" title="variable">own</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#sig:37"><span class="id" title="variable">sig</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">_</span>. <span class="id" title="keyword">Abort</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Record</span> <a id="IntAction" class="idref" href="#IntAction"><span class="id" title="record">IntAction</span></a> :=<br/>
+{ <a id="line" class="idref" href="#line"><span class="id" title="projection">line</span></a> : <a class="idref" href="skylabs.prelude.hw_types.html#types.int_line"><span class="id" title="abbreviation">int_line</span></a><br/>
+; <a id="to" class="idref" href="#to"><span class="id" title="projection">to</span></a> : <a class="idref" href="skylabs.prelude.interrupts.html#InterruptSignal"><span class="id" title="inductive">InterruptSignal</span></a><br/>
+}.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="IntAction_inhabited" class="idref" href="#IntAction_inhabited"><span class="id" title="instance">IntAction_inhabited</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#Inhabited"><span class="id" title="class">Inhabited</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#IntAction"><span class="id" title="record">IntAction</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_inhabited</span>. <span class="id" title="keyword">Defined</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="IntAction_eq_dec" class="idref" href="#IntAction_eq_dec"><span class="id" title="instance">IntAction_eq_dec</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#EqDecision"><span class="id" title="abbreviation">EqDecision</span></a> <a class="idref" href="skylabs.prelude.interrupts.html#IntAction"><span class="id" title="record">IntAction</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_decision</span>. <span class="id" title="keyword">Defined</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

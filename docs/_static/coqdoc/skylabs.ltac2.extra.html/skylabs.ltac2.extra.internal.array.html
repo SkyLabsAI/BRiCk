@@ -1,0 +1,163 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>skylabs.ltac2.extra.internal.array</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library skylabs.ltac2.extra.internal.array</h1>
+
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.ltac2.extra.internal.init.html#"><span class="id" title="library">skylabs.ltac2.extra.internal.init</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.ltac2.extra.internal.list.html#"><span class="id" title="library">skylabs.ltac2.extra.internal.list</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Minor extensions to <span class="inlinecode"><span class="id" title="var">Ltac2.Array</span></span> 
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="Array" class="idref" href="#Array"><span class="id" title="module">Array</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">Ltac2</span> <a class="idref" href="skylabs.ltac2.extra.internal.init.html#Init"><span class="id" title="module">Init</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Export</span> <span class="id" title="module">Ltac2.Array</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">make1</span> (<span class="id" title="var">elem</span> : '<span class="id" title="var">a</span>) : '<span class="id" title="var">a</span> <span class="id" title="var">array</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">elems</span> := <span class="id" title="var">Array.make</span> 1 <span class="id" title="var">elem</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">elems</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">make2</span> (<span class="id" title="var">elem0</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem1</span> : '<span class="id" title="var">a</span>) : '<span class="id" title="var">a</span> <span class="id" title="var">array</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">elems</span> := <span class="id" title="var">Array.make</span> 2 <span class="id" title="var">elem0</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 1 <span class="id" title="var">elem1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">elems</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">make3</span> (<span class="id" title="var">elem0</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem1</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem2</span> : '<span class="id" title="var">a</span>) : '<span class="id" title="var">a</span> <span class="id" title="var">array</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">elems</span> := <span class="id" title="var">Array.make</span> 3 <span class="id" title="var">elem0</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 1 <span class="id" title="var">elem1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 2 <span class="id" title="var">elem2</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">elems</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">make4</span> (<span class="id" title="var">elem0</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem1</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem2</span> : '<span class="id" title="var">a</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">elem3</span> : '<span class="id" title="var">a</span>) : '<span class="id" title="var">a</span> <span class="id" title="var">array</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">elems</span> := <span class="id" title="var">Array.make</span> 4 <span class="id" title="var">elem0</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 1 <span class="id" title="var">elem1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 2 <span class="id" title="var">elem2</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 3 <span class="id" title="var">elem3</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">elems</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">make5</span> (<span class="id" title="var">elem0</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem1</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem2</span> : '<span class="id" title="var">a</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">elem3</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem4</span> : '<span class="id" title="var">a</span>) : '<span class="id" title="var">a</span> <span class="id" title="var">array</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">elems</span> := <span class="id" title="var">Array.make</span> 5 <span class="id" title="var">elem0</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 1 <span class="id" title="var">elem1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 2 <span class="id" title="var">elem2</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 3 <span class="id" title="var">elem3</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 4 <span class="id" title="var">elem4</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">elems</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">make6</span> (<span class="id" title="var">elem0</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem1</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem2</span> : '<span class="id" title="var">a</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">elem3</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem4</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem5</span> : '<span class="id" title="var">a</span>) : '<span class="id" title="var">a</span> <span class="id" title="var">array</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">elems</span> := <span class="id" title="var">Array.make</span> 6 <span class="id" title="var">elem0</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 1 <span class="id" title="var">elem1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 2 <span class="id" title="var">elem2</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 3 <span class="id" title="var">elem3</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 4 <span class="id" title="var">elem4</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 5 <span class="id" title="var">elem5</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">elems</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">make7</span> (<span class="id" title="var">elem0</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem1</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem2</span> : '<span class="id" title="var">a</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">elem3</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem4</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem5</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem6</span> : '<span class="id" title="var">a</span>) : '<span class="id" title="var">a</span> <span class="id" title="var">array</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">elems</span> := <span class="id" title="var">Array.make</span> 7 <span class="id" title="var">elem0</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 1 <span class="id" title="var">elem1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 2 <span class="id" title="var">elem2</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 3 <span class="id" title="var">elem3</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 4 <span class="id" title="var">elem4</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 5 <span class="id" title="var">elem5</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 6 <span class="id" title="var">elem6</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">elems</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">make8</span> (<span class="id" title="var">elem0</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem1</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem2</span> : '<span class="id" title="var">a</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">elem3</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem4</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem5</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem6</span> : '<span class="id" title="var">a</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">elem7</span> : '<span class="id" title="var">a</span>) : '<span class="id" title="var">a</span> <span class="id" title="var">array</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">elems</span> := <span class="id" title="var">Array.make</span> 8 <span class="id" title="var">elem0</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 1 <span class="id" title="var">elem1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 2 <span class="id" title="var">elem2</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 3 <span class="id" title="var">elem3</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 4 <span class="id" title="var">elem4</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 5 <span class="id" title="var">elem5</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 6 <span class="id" title="var">elem6</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 7 <span class="id" title="var">elem7</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">elems</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">make9</span> (<span class="id" title="var">elem0</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem1</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem2</span> : '<span class="id" title="var">a</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">elem3</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem4</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem5</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem6</span> : '<span class="id" title="var">a</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">elem7</span> : '<span class="id" title="var">a</span>) (<span class="id" title="var">elem8</span> : '<span class="id" title="var">a</span>) : '<span class="id" title="var">a</span> <span class="id" title="var">array</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">elems</span> := <span class="id" title="var">Array.make</span> 9 <span class="id" title="var">elem0</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 1 <span class="id" title="var">elem1</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 2 <span class="id" title="var">elem2</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 3 <span class="id" title="var">elem3</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 4 <span class="id" title="var">elem4</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 5 <span class="id" title="var">elem5</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 6 <span class="id" title="var">elem6</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 7 <span class="id" title="var">elem7</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.set</span> <span class="id" title="var">elems</span> 8 <span class="id" title="var">elem8</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">elems</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">of_list_map</span> (<span class="id" title="var">f</span> : '<span class="id" title="var">a</span> -&gt; '<span class="id" title="var">b</span>) (<span class="id" title="var">ls</span> : '<span class="id" title="var">a</span> <span class="id" title="var">list</span>) : '<span class="id" title="var">b</span> <span class="id" title="var">array</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">len</span> := <span class="id" title="var">List.length</span> <span class="id" title="var">ls</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">arr</span>, <span class="id" title="var">ls_tail</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">ls</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| []      =&gt; (<span class="id" title="var">Array.empty</span>, [])<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">h</span> :: <span class="id" title="var">ls</span> =&gt; (<span class="id" title="var">Array.make</span> <span class="id" title="var">len</span> (<span class="id" title="var">f</span> <span class="id" title="var">h</span>), <span class="id" title="var">ls</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">add</span> <span class="id" title="var">i</span> <span class="id" title="var">v</span> := <span class="id" title="var">Array.set</span> <span class="id" title="var">arr</span> (<span class="id" title="var">Int.add</span> <span class="id" title="var">i</span> 1) (<span class="id" title="var">f</span> <span class="id" title="var">v</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">List.iteri</span> <span class="id" title="var">add</span> <span class="id" title="var">ls_tail</span>; <span class="id" title="var">arr</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">of_list_map2</span> (<span class="id" title="var">f</span> : '<span class="id" title="var">a</span> -&gt; '<span class="id" title="var">b</span> -&gt; '<span class="id" title="var">c</span>) (<span class="id" title="var">ls1</span> : '<span class="id" title="var">a</span> <span class="id" title="var">list</span>) (<span class="id" title="var">ls2</span> : '<span class="id" title="var">b</span> <span class="id" title="var">list</span>) : '<span class="id" title="var">c</span> <span class="id" title="var">array</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">len</span> := <span class="id" title="var">List.length</span> <span class="id" title="var">ls1</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">arr</span>, <span class="id" title="var">ls1_tail</span>, <span class="id" title="var">ls2_tail</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> (<span class="id" title="var">ls1</span>, <span class="id" title="var">ls2</span>) <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| ([]       , []       ) =&gt; (<span class="id" title="var">Array.empty</span>, [], [])<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| (<span class="id" title="var">_</span>        , []       ) =&gt; <span class="id" title="var">Control.throw</span> (<span class="id" title="var">Invalid_argument</span> <span class="id" title="var">None</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| ([]       , <span class="id" title="var">_</span>        ) =&gt; <span class="id" title="var">Control.throw</span> (<span class="id" title="var">Invalid_argument</span> <span class="id" title="var">None</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| (<span class="id" title="var">h1</span> :: <span class="id" title="var">ls1</span>, <span class="id" title="var">h2</span> :: <span class="id" title="var">ls2</span>) =&gt; (<span class="id" title="var">Array.make</span> <span class="id" title="var">len</span> (<span class="id" title="var">f</span> <span class="id" title="var">h1</span> <span class="id" title="var">h2</span>), <span class="id" title="var">ls1</span>, <span class="id" title="var">ls2</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">add</span> <span class="id" title="var">i</span> <span class="id" title="var">v1</span> <span class="id" title="var">v2</span> := <span class="id" title="var">Array.set</span> <span class="id" title="var">arr</span> (<span class="id" title="var">Int.add</span> <span class="id" title="var">i</span> 1) (<span class="id" title="var">f</span> <span class="id" title="var">v1</span> <span class="id" title="var">v2</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">List.iteri2</span> <span class="id" title="var">add</span> <span class="id" title="var">ls1_tail</span> <span class="id" title="var">ls2_tail</span>; <span class="id" title="var">arr</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.extra.internal.array.html#Array"><span class="id" title="module">Array</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

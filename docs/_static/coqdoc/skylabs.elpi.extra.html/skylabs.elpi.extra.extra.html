@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>skylabs.elpi.extra.extra</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library skylabs.elpi.extra.extra</h1>
+
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab2"></a><h1 class="section">Extensions of the Elpi standard library</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.elpi.extra.prelude.html#"><span class="id" title="library">skylabs.elpi.extra.prelude</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.elpi.extra.reification.html#"><span class="id" title="library">skylabs.elpi.extra.reification</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.elpi.extra.add_predicate_command.html#"><span class="id" title="library">skylabs.elpi.extra.add_predicate_command</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<code>Rocqlib</code> effects 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="library">Stdlib.Init.Datatypes</span>. <span class="id" title="keyword">Require</span> <span class="id" title="library">Stdlib.Numbers.BinNums</span>. <span class="id" title="keyword">Require</span> <span class="id" title="library">skylabs.ltac2.extra.extra</span>. 
+<br/>
+</div>
+
+<div class="doc">
+Coq's standard library registers <code>Byte.byte</code> as <code>core.byte.type</code>.
+It does not register the following.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="library">Stdlib.Strings.Byte</span>.<br/>
+<span class="id" title="keyword">Register</span> <span class="id" title="var">Stdlib.Strings.Byte.of_N</span> <span class="id" title="keyword">as</span> <span class="id" title="var">core.byte.of_N</span>.<br/>
+<span class="id" title="keyword">Register</span> <span class="id" title="var">Stdlib.Strings.Byte.to_N</span> <span class="id" title="keyword">as</span> <span class="id" title="var">core.byte.to_N</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Register</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">true</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">as</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">core.bool.true</span></a>.<br/>
+<span class="id" title="keyword">Register</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#pair"><span class="id" title="constructor">false</span></a> <span class="id" title="keyword">as</span> <span class="id" title="var">core.bool.false</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Register</span> <span class="id" title="var">Numbers.of_Z</span> <span class="id" title="keyword">as</span> <span class="id" title="var">reif.numbers.of_Z</span>.<br/>
+<span class="id" title="keyword">Register</span> <span class="id" title="var">Numbers.of_N</span> <span class="id" title="keyword">as</span> <span class="id" title="var">reif.numbers.of_N</span>.<br/>
+<span class="id" title="keyword">Register</span> <span class="id" title="var">Numbers.of_pos</span> <span class="id" title="keyword">as</span> <span class="id" title="var">reif.numbers.of_pos</span>.<br/>
+<span class="id" title="keyword">Register</span> <span class="id" title="var">Numbers.of_nat</span> <span class="id" title="constructor">as</span> <span class="id" title="constructor">reif.numbers.of_nat</span>.<br/>
+<span class="id" title="keyword">Register</span> <span class="id" title="var">Numbers.of_byte</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#unit"><span class="id" title="inductive">as</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#unit"><span class="id" title="inductive">reif.numbers.of_byte</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Register</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#tt"><span class="id" title="constructor">Numbers.to_N</span></a> <span class="id" title="keyword">as</span> <span class="id" title="var">reif.numbers.to_N</span>.<br/>
+<span class="id" title="keyword">Register</span> <span class="id" title="var">Numbers.to_pos</span> <span class="id" title="keyword">as</span> <span class="id" title="var">reif.numbers.to_pos</span>.<br/>
+<span class="id" title="keyword">Register</span> <span class="id" title="var">Numbers.to_nat</span> <span class="id" title="keyword">as</span> <span class="id" title="var">reif.numbers.to_nat</span>.<br/>
+<span class="id" title="keyword">Register</span> <span class="id" title="var">Numbers.to_byte</span> <span class="id" title="keyword">as</span> <span class="id" title="var">reif.numbers.to_byte</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab3"></a><h2 class="section">Tactics</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="tactics" class="idref" href="#tactics"><span class="id" title="module">tactics</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="tactics.anchor" class="idref" href="#tactics.anchor"><span class="id" title="definition">anchor</span></a> := <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#tt"><span class="id" title="constructor">tt</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac</span> <span class="id" title="var">solve_typeclasses_eauto</span> := <span class="id" title="tactic">first</span> [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">solve</span> [ <span class="id" title="var">once</span> (<span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>) ] |<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">lazymatch</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| |- ?<span class="id" title="var">G</span> =&gt; <span class="id" title="tactic">fail</span> 2 "coq.typeclasses_eauto: cannot solve" <span class="id" title="var">G</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;].<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac</span> <span class="id" title="var">solve_cbn</span> <span class="id" title="var">T</span> := <span class="id" title="keyword">let</span> <span class="id" title="var">Tred</span> := <span class="id" title="tactic">eval</span> <span class="id" title="var">cbn</span> <span class="id" title="tactic">in</span> <span class="id" title="var">T</span> <span class="id" title="tactic">in</span> <span class="id" title="tactic">exact</span> <span class="id" title="var">Tred</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.elpi.extra.extra.html#tactics"><span class="id" title="module">tactics</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab4"></a><h2 class="section">User-facing databases</h2>
+
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+Force recompilation when our Elpi code changes.
+(List all files referenced as <code>coq://logpath/file</code> below.)
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">skylabs.elpi.extra.Program</span> <span class="id" title="var">Extra</span> <span class="id" title="var">Dependency</span> "synterp.elpi" <span class="id" title="keyword">as</span> <span class="id" title="var">program_synterp</span>.<br/>
+<span class="id" title="keyword">From</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#pair"><span class="id" title="constructor">skylabs.elpi.extra.Program</span></a> <span class="id" title="var">Extra</span> <span class="id" title="var">Dependency</span> "interp.elpi" <span class="id" title="keyword">as</span> <span class="id" title="var">program_interp</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">skylabs.elpi.extra.Tactic</span> <span class="id" title="var">Extra</span> <span class="id" title="var">Dependency</span> "synterp.elpi" <span class="id" title="keyword">as</span> <span class="id" title="var">tactic_synterp</span>.<br/>
+<span class="id" title="keyword">From</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">skylabs.elpi.extra.Tactic</span></a> <span class="id" title="var">Extra</span> <span class="id" title="var">Dependency</span> "interp.elpi" <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">as</span></a> <span class="id" title="var">tactic_interp</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">skylabs.elpi.extra.Command</span> <span class="id" title="var">Extra</span> <span class="id" title="var">Dependency</span> "synterp.elpi" <span class="id" title="keyword">as</span> <span class="id" title="var">command_synterp</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">skylabs.elpi.extra.Command</span> <span class="id" title="var">Extra</span> <span class="id" title="var">Dependency</span> "interp.elpi" <span class="id" title="keyword">as</span> <span class="id" title="var">command_interp</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">synterp</span>]<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">File</span> <span class="id" title="var">extra.Program</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">accumulate</span> "coq://skylabs.elpi.extra/Program/synterp". <a class="idref" href="skylabs.elpi.extra.reification.html#Numbers.of_pos"><span class="id" title="definition">%</span></a> <a class="idref" href="skylabs.elpi.extra.reification.html#Numbers.of_pos"><span class="id" title="definition">Program</span></a>/<span class="id" title="var">synterp.elpi.in</span><br/>
+}}.<br/>
+#[<span class="id" title="var">interp</span>]<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">File</span> <span class="id" title="var">extra.Program</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">accumulate</span> "coq://skylabs.elpi.extra/Program/interp". % <span class="id" title="var">Program</span>/<span class="id" title="var">interp.elpi.in</span><br/>
+}}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+WARNING: Accumulating <code>extra.Tactic</code> in the synterp phase fails. See
+../tests/tc_tactic.v for workaround.
+
+<div class="paragraph"> </div>
+
+TODO: Narrow down and report.
+
+</div>
+<div class="code">
+#[<span class="id" title="var">synterp</span>]<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">File</span> <span class="id" title="var">extra.Tactic</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">accumulate</span> "coq://skylabs.elpi.extra/Tactic/synterp". % <span class="id" title="keyword">Tactic</span>/<span class="id" title="var">synterp.elpi.in</span><br/>
+}}.<br/>
+#[<span class="id" title="var">interp</span>]<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">File</span> <span class="id" title="var">extra.Tactic</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">accumulate</span> "coq://skylabs.elpi.extra/Tactic/interp". % <span class="id" title="keyword">Tactic</span>/<span class="id" title="var">interp.elpi.in</span><br/>
+}}.<br/>
+
+<br/>
+#[<span class="id" title="var">synterp</span>]<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">File</span> <a class="idref" href="skylabs.elpi.extra.reification.html#Numbers.of_Z"><span class="id" title="definition">extra.Command</span></a> <a class="idref" href="skylabs.elpi.extra.reification.html#Numbers.of_Z"><span class="id" title="definition">lp</span></a>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">accumulate</span> "coq://skylabs.elpi.extra/Command/synterp". <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z0"><span class="id" title="constructor">%</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z0"><span class="id" title="constructor">Command</span></a>/<span class="id" title="var">synterp.elpi.in</span><br/>
+}}.<br/>
+#[<span class="id" title="var">interp</span>]<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">File</span> <span class="id" title="var">extra.Command</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Zpos"><span class="id" title="constructor">accumulate</span></a> "coq://skylabs.elpi.extra/Command/interp". % <span class="id" title="var">Command</span><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Zneg"><span class="id" title="constructor">/</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Zneg"><span class="id" title="constructor">interp.elpi.in</span></a><br/>
+}}.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

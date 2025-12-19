@@ -1,0 +1,138 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.iris.extra.algebra.commons</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2025&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.excl.html#"><span class="id" title="library">iris.algebra.excl</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.frac.html#"><span class="id" title="library">iris.algebra.frac</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.numbers.html#"><span class="id" title="library">iris.algebra.numbers</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.lib.mono_nat.html#"><span class="id" title="library">iris.algebra.lib.mono_nat</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.own.html#"><span class="id" title="library">iris.base_logic.lib.own</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.iris.extra.algebra.excl_auth.html#"><span class="id" title="library">skylabs.iris.extra.algebra.excl_auth</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.iris.extra.algebra.frac_auth.html#"><span class="id" title="library">skylabs.iris.extra.algebra.frac_auth</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+A collection of commonly used CMRAs that should be available everywhere. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="br" class="idref" href="#br"><span class="id" title="module">br</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Module</span> <a id="br.ghost" class="idref" href="#br.ghost"><span class="id" title="module">ghost</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Class</span> <a id="br.ghost.G" class="idref" href="#br.ghost.G"><span class="id" title="record">G</span></a> (<a id="0101b9beac487b383a5ba2a8f6922788" class="idref" href="#0101b9beac487b383a5ba2a8f6922788"><span class="id" title="binder">Σ</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#gFunctors"><span class="id" title="record">gFunctors</span></a>) : <span class="id" title="keyword">Set</span> := <span class="id" title="var">brG</span> {<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="br.ghost.excl_inG" class="idref" href="#br.ghost.excl_inG"><span class="id" title="projection">excl_inG</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.own.html#inG"><span class="id" title="class">inG</span></a> <a class="idref" href="skylabs.iris.extra.algebra.commons.html#0101b9beac487b383a5ba2a8f6922788"><span class="id" title="variable">Σ</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.excl.html#exclR"><span class="id" title="definition">exclR</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.ofe.html#unitO"><span class="id" title="definition">unitO</span></a>)<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;; <a id="br.ghost.frac_inG" class="idref" href="#br.ghost.frac_inG"><span class="id" title="projection">frac_inG</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.own.html#inG"><span class="id" title="class">inG</span></a> <a class="idref" href="skylabs.iris.extra.algebra.commons.html#0101b9beac487b383a5ba2a8f6922788"><span class="id" title="variable">Σ</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.frac.html#fracR"><span class="id" title="definition">fracR</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;; <a id="br.ghost.nat_inG" class="idref" href="#br.ghost.nat_inG"><span class="id" title="projection">nat_inG</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.own.html#inG"><span class="id" title="class">inG</span></a> <a class="idref" href="skylabs.iris.extra.algebra.commons.html#0101b9beac487b383a5ba2a8f6922788"><span class="id" title="variable">Σ</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.numbers.html#natR"><span class="id" title="definition">natR</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;; <a id="br.ghost.mono_nat_inG" class="idref" href="#br.ghost.mono_nat_inG"><span class="id" title="projection">mono_nat_inG</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.own.html#inG"><span class="id" title="class">inG</span></a> <a class="idref" href="skylabs.iris.extra.algebra.commons.html#0101b9beac487b383a5ba2a8f6922788"><span class="id" title="variable">Σ</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.lib.mono_nat.html#mono_natR"><span class="id" title="definition">mono_natR</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;; <a id="br.ghost.auth_nat_inG" class="idref" href="#br.ghost.auth_nat_inG"><span class="id" title="projection">auth_nat_inG</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.own.html#inG"><span class="id" title="class">inG</span></a> <a class="idref" href="skylabs.iris.extra.algebra.commons.html#0101b9beac487b383a5ba2a8f6922788"><span class="id" title="variable">Σ</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.auth.html#authR"><span class="id" title="definition">authR</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.numbers.html#natUR"><span class="id" title="definition">natUR</span></a>)<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;; <a id="br.ghost.excl_auth_unit_inG" class="idref" href="#br.ghost.excl_auth_unit_inG"><span class="id" title="projection">excl_auth_unit_inG</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.own.html#inG"><span class="id" title="class">inG</span></a> <a class="idref" href="skylabs.iris.extra.algebra.commons.html#0101b9beac487b383a5ba2a8f6922788"><span class="id" title="variable">Σ</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.lib.excl_auth.html#excl_authR"><span class="id" title="definition">excl_authR</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.ofe.html#unitO"><span class="id" title="definition">unitO</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;; <a id="br.ghost.excl_auth_bool_inG" class="idref" href="#br.ghost.excl_auth_bool_inG"><span class="id" title="projection">excl_auth_bool_inG</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.own.html#inG"><span class="id" title="class">inG</span></a> <a class="idref" href="skylabs.iris.extra.algebra.commons.html#0101b9beac487b383a5ba2a8f6922788"><span class="id" title="variable">Σ</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.lib.excl_auth.html#excl_authR"><span class="id" title="definition">excl_authR</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.ofe.html#boolO"><span class="id" title="definition">boolO</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;; <a id="br.ghost.excl_auth_nat_inG" class="idref" href="#br.ghost.excl_auth_nat_inG"><span class="id" title="projection">excl_auth_nat_inG</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.own.html#inG"><span class="id" title="class">inG</span></a> <a class="idref" href="skylabs.iris.extra.algebra.commons.html#0101b9beac487b383a5ba2a8f6922788"><span class="id" title="variable">Σ</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.lib.excl_auth.html#excl_authR"><span class="id" title="definition">excl_authR</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.ofe.html#natO"><span class="id" title="definition">natO</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;; <a id="br.ghost.excl_auth_N_inG" class="idref" href="#br.ghost.excl_auth_N_inG"><span class="id" title="projection">excl_auth_N_inG</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.own.html#inG"><span class="id" title="class">inG</span></a> <a class="idref" href="skylabs.iris.extra.algebra.commons.html#0101b9beac487b383a5ba2a8f6922788"><span class="id" title="variable">Σ</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.lib.excl_auth.html#excl_authR"><span class="id" title="definition">excl_authR</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.ofe.html#NO"><span class="id" title="definition">NO</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;; <a id="br.ghost.excl_auth_Z_inG" class="idref" href="#br.ghost.excl_auth_Z_inG"><span class="id" title="projection">excl_auth_Z_inG</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.own.html#inG"><span class="id" title="class">inG</span></a> <a class="idref" href="skylabs.iris.extra.algebra.commons.html#0101b9beac487b383a5ba2a8f6922788"><span class="id" title="variable">Σ</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.lib.excl_auth.html#excl_authR"><span class="id" title="definition">excl_authR</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.ofe.html#ZO"><span class="id" title="definition">ZO</span></a>)<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;; <a id="br.ghost.frac_auth_agree_N_inG" class="idref" href="#br.ghost.frac_auth_agree_N_inG"><span class="id" title="projection">frac_auth_agree_N_inG</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.own.html#inG"><span class="id" title="class">inG</span></a> <a class="idref" href="skylabs.iris.extra.algebra.commons.html#0101b9beac487b383a5ba2a8f6922788"><span class="id" title="variable">Σ</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.lib.frac_auth.html#frac_authR"><span class="id" title="definition">frac_authR</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.agree.html#agreeR"><span class="id" title="definition">agreeR</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.ofe.html#NO"><span class="id" title="definition">NO</span></a>))<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="ff2601b6cd753284486ab4d292ecec9c" class="idref" href="#ff2601b6cd753284486ab4d292ecec9c"><span class="id" title="definition">Σ</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#gFunctors"><span class="id" title="record">gFunctors</span></a> := <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#8ed86267cb76025deed5ef60f2c33991"><span class="id" title="notation">#[</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#GFunctor"><span class="id" title="constructor">GFunctor</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.excl.html#exclR"><span class="id" title="definition">exclR</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.ofe.html#unitO"><span class="id" title="definition">unitO</span></a>)<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#8ed86267cb76025deed5ef60f2c33991"><span class="id" title="notation">;</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#GFunctor"><span class="id" title="constructor">GFunctor</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.frac.html#fracR"><span class="id" title="definition">fracR</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#8ed86267cb76025deed5ef60f2c33991"><span class="id" title="notation">;</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#GFunctor"><span class="id" title="constructor">GFunctor</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.numbers.html#natR"><span class="id" title="definition">natR</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#8ed86267cb76025deed5ef60f2c33991"><span class="id" title="notation">;</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#GFunctor"><span class="id" title="constructor">GFunctor</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.lib.mono_nat.html#mono_natR"><span class="id" title="definition">mono_natR</span></a><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#8ed86267cb76025deed5ef60f2c33991"><span class="id" title="notation">;</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#GFunctor"><span class="id" title="constructor">GFunctor</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.auth.html#authR"><span class="id" title="definition">authR</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.numbers.html#natUR"><span class="id" title="definition">natUR</span></a>)<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#8ed86267cb76025deed5ef60f2c33991"><span class="id" title="notation">;</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#GFunctor"><span class="id" title="constructor">GFunctor</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.lib.excl_auth.html#excl_authR"><span class="id" title="definition">excl_authR</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.ofe.html#unitO"><span class="id" title="definition">unitO</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#8ed86267cb76025deed5ef60f2c33991"><span class="id" title="notation">;</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#GFunctor"><span class="id" title="constructor">GFunctor</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.lib.excl_auth.html#excl_authR"><span class="id" title="definition">excl_authR</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.ofe.html#boolO"><span class="id" title="definition">boolO</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#8ed86267cb76025deed5ef60f2c33991"><span class="id" title="notation">;</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#GFunctor"><span class="id" title="constructor">GFunctor</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.lib.excl_auth.html#excl_authR"><span class="id" title="definition">excl_authR</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.ofe.html#natO"><span class="id" title="definition">natO</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#8ed86267cb76025deed5ef60f2c33991"><span class="id" title="notation">;</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#GFunctor"><span class="id" title="constructor">GFunctor</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.lib.excl_auth.html#excl_authR"><span class="id" title="definition">excl_authR</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.ofe.html#NO"><span class="id" title="definition">NO</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#8ed86267cb76025deed5ef60f2c33991"><span class="id" title="notation">;</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#GFunctor"><span class="id" title="constructor">GFunctor</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.lib.excl_auth.html#excl_authR"><span class="id" title="definition">excl_authR</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.ofe.html#ZO"><span class="id" title="definition">ZO</span></a>)<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#8ed86267cb76025deed5ef60f2c33991"><span class="id" title="notation">;</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#GFunctor"><span class="id" title="constructor">GFunctor</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.lib.frac_auth.html#frac_authR"><span class="id" title="definition">frac_authR</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.agree.html#agreeR"><span class="id" title="definition">agreeR</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.ofe.html#NO"><span class="id" title="definition">NO</span></a>))<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#8ed86267cb76025deed5ef60f2c33991"><span class="id" title="notation">]</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="br.ghost.subG" class="idref" href="#br.ghost.subG"><span class="id" title="instance">subG</span></a> {<a id="129bace80fdde2061481386cb5ffe02d" class="idref" href="#129bace80fdde2061481386cb5ffe02d"><span class="id" title="binder">Σ'</span></a>} : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#subG"><span class="id" title="class">subG</span></a> <a class="idref" href="skylabs.iris.extra.algebra.commons.html#ff2601b6cd753284486ab4d292ecec9c"><span class="id" title="definition">Σ</span></a> <a class="idref" href="skylabs.iris.extra.algebra.commons.html#129bace80fdde2061481386cb5ffe02d"><span class="id" title="variable">Σ'</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.iris.extra.algebra.commons.html#br.ghost.G"><span class="id" title="class">G</span></a> <a class="idref" href="skylabs.iris.extra.algebra.commons.html#129bace80fdde2061481386cb5ffe02d"><span class="id" title="variable">Σ'</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_inG</span>. <span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.iris.extra.algebra.commons.html#br.ghost"><span class="id" title="module">ghost</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.iris.extra.algebra.commons.html#br"><span class="id" title="module">br</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

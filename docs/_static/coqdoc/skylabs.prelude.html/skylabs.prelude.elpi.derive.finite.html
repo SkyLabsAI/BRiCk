@@ -1,0 +1,255 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.prelude.elpi.derive.finite</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2023&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.finite.html#"><span class="id" title="library">stdpp.finite</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">elpi.elpi</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.prelude.elpi.derive.common.html#"><span class="id" title="library">skylabs.prelude.elpi.derive.common</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.prelude.prelude.html#"><span class="id" title="library">skylabs.prelude.prelude</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.prelude.elpi.basis.html#"><span class="id" title="library">skylabs.prelude.elpi.basis</span></a>.<br/>
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">File</span> <span class="id" title="var">skylabs.basis.elpi</span>.<br/>
+
+<br/>
+<span class="comment">(***************************************************<br/>
+&nbsp;Finite<br/>
+&nbsp;***************************************************)</span><br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Db</span> <span class="id" title="var">derive.stdpp.finite.db</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">finite</span> <span class="id" title="var">o</span>:<span class="id" title="var">gref</span>, <span class="id" title="var">o</span>:<span class="id" title="var">gref</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">finite</span>-<span class="id" title="var">done</span> <span class="id" title="var">o</span>:<span class="id" title="var">gref</span>.<br/>
+}}.<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive.stdpp.finite.db</span> <span class="id" title="var">File</span> <span class="id" title="var">skylabs.typeclass.elpi</span>.<br/>
+#[<span class="id" title="var">superglobal</span>] <span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive.stdpp.finite.db</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;:<span class="id" title="var">name</span> "finite-done.typeclass"<br/>
+&nbsp;&nbsp;<span class="id" title="var">finite</span>-<span class="id" title="var">done</span> <span class="id" title="var">GR</span> :-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">typeclass</span> "derive.stdpp.finite.db"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="keyword">before</span> "finite-done.typeclass") (<span class="id" title="var">finite</span>-<span class="id" title="var">done</span> <span class="id" title="var">GR</span>) {{ @<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.finite.html#Finite"><span class="id" title="class">Finite</span></a> <span class="id" title="var">lp</span>:{{<span class="id" title="var">global</span> <span class="id" title="var">GR</span>}} <span class="id" title="var">_</span> }} <span class="id" title="var">Bo_</span>.<br/>
+
+<br/>
+}}.<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">Db</span> <span class="id" title="var">derive.stdpp.finite.db</span>.<br/>
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">File</span> <span class="id" title="var">derive.finite.elpi</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">derive.finite</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/* <span class="id" title="var">We</span> <span class="id" title="var">want</span> <span class="id" title="var">to</span> <span class="id" title="var">process</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* [<span class="id" title="keyword">Variant</span> <span class="id" title="var">ResType</span> : <span class="id" title="keyword">Set</span> := <span class="id" title="var">A</span> | <span class="id" title="var">B</span> | <span class="id" title="var">C</span> (<span class="id" title="var">_</span> : <span class="id" title="var">option</span> <span class="id" title="var">bool</span>) | <span class="id" title="var">D</span> (<span class="id" title="var">_</span> : <span class="id" title="var">bool</span>) (<span class="id" title="var">_</span> : <span class="id" title="var">bool</span>).]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" title="var">into</span> [<span class="id" title="var">A</span> :: <span class="id" title="var">B</span> :: (<span class="id" title="var">C</span> &lt;$&gt; <span class="id" title="var">enum</span> (<span class="id" title="var">option</span> <span class="id" title="var">bool</span>)) ++ (<span class="id" title="var">D</span> &lt;$&gt; <span class="id" title="var">enum</span> <span class="id" title="var">bool</span> &lt;*&gt; <span class="id" title="var">enum</span> <span class="id" title="var">bool</span>).]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* [<span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">constructor.aux</span> <span class="id" title="var">Constructor</span> <span class="id" title="var">ConstrType</span> <span class="id" title="var">InputList</span> <span class="id" title="var">ResType</span> <span class="id" title="var">OutputTerm</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" title="var">will</span> <span class="id" title="keyword">return</span> <span class="id" title="tactic">in</span> [<span class="id" title="var">OutputTerm</span>] <span class="id" title="var">the</span> <span class="id" title="var">list</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* [(<span class="id" title="var">Constructor</span> &lt;$&gt; <span class="id" title="var">enum</span> <span class="id" title="var">_</span> &lt;*&gt; <span class="id" title="var">enum</span> <span class="id" title="var">_</span>) ++ <span class="id" title="var">InputList</span>], <span class="id" title="var">passing</span> <span class="id" title="keyword">as</span> <span class="id" title="var">many</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* <span class="id" title="var">arguments</span> <span class="id" title="var">to</span> [<span class="id" title="var">Constructor</span>] <span class="id" title="keyword">as</span> <span class="id" title="var">needed</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* - [<span class="id" title="var">Constructor</span>] <span class="id" title="var">must</span> <span class="id" title="var">have</span> <span class="id" title="keyword">type</span> [<span class="id" title="var">ConstrType</span>] = [<span class="id" title="var">A1</span> -&gt; <span class="id" title="var">A2</span> -&gt; ... -&gt; <span class="id" title="var">An</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*   -&gt; <span class="id" title="var">ResType</span>] (<span class="id" title="keyword">where</span> [<span class="id" title="var">n</span>] <span class="id" title="var">can</span> <span class="id" title="var">be</span> 0).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* [<span class="id" title="var">A1</span> ... <span class="id" title="var">An</span>] <span class="id" title="var">are</span> [<span class="id" title="var">Finite</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;* - [<span class="id" title="var">InputList</span>] <span class="id" title="var">must</span> <span class="id" title="var">have</span> <span class="id" title="keyword">type</span> [<span class="id" title="var">list</span> <span class="id" title="var">ResType</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">constructor.aux</span> <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">term</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">constructor.aux</span> <span class="id" title="var">C</span> {{ <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">lp</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">:</span></a>{{<span class="id" title="var">ArgTy</span>}} <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">lp</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">:</span></a>{{<span class="id" title="var">ResType</span>}} }} <span class="id" title="var">IL</span> <span class="id" title="var">Ty</span> <span class="id" title="var">OTm</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">skeleton</span> {{ <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">lp</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">:</span></a>{{<span class="id" title="var">C</span>}} <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">&lt;$&gt;</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.finite.html#enum"><span class="id" title="method">enum</span></a> <span class="id" title="var">lp</span>:{{<span class="id" title="var">ArgTy</span>}} }} <span class="id" title="var">_</span> <span class="id" title="var">EC</span>) "",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">constructor.aux</span> <span class="id" title="var">EC</span> {{ <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="var">lp</span>:{{<span class="id" title="var">ResType</span>}} }} <span class="id" title="var">IL</span> <span class="id" title="var">Ty</span> <span class="id" title="var">OTm</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">constructor.aux</span> <span class="id" title="var">C</span> {{ <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">lp</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">:</span></a>{{<span class="id" title="var">ArgTy</span>}} <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">lp</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">:</span></a>{{<span class="id" title="var">ResType</span>}}) }} <span class="id" title="var">IL</span> <span class="id" title="var">Ty</span> <span class="id" title="var">OTm</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">skeleton</span> {{ <a class="idref" href="skylabs.prelude.base.html#1973deab42eb012651434cb03ab14e15"><span class="id" title="notation">lp</span></a><a class="idref" href="skylabs.prelude.base.html#1973deab42eb012651434cb03ab14e15"><span class="id" title="notation">:</span></a>{{<span class="id" title="var">C</span>}} <a class="idref" href="skylabs.prelude.base.html#1973deab42eb012651434cb03ab14e15"><span class="id" title="notation">&lt;*&gt;</span></a> <a class="idref" href="skylabs.prelude.base.html#1973deab42eb012651434cb03ab14e15"><span class="id" title="notation">(</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.finite.html#enum"><span class="id" title="method">enum</span></a> <span class="id" title="var">lp</span>:{{<span class="id" title="var">ArgTy</span>}}<a class="idref" href="skylabs.prelude.base.html#1973deab42eb012651434cb03ab14e15"><span class="id" title="notation">)</span></a> }} <span class="id" title="var">_</span> <span class="id" title="var">EC</span>) "",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">constructor.aux</span> <span class="id" title="var">EC</span> {{<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="var">lp</span>:{{<span class="id" title="var">ResType</span>}} }} <span class="id" title="var">IL</span> <span class="id" title="var">Ty</span> <span class="id" title="var">OTm</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">Use</span> "foo" <span class="id" title="var">instead</span> <span class="id" title="keyword">of</span> "foo ++ nil"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">constructor.aux</span> <span class="id" title="var">C</span> {{ <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="var">lp</span>:{{<span class="id" title="var">ResTy</span>}} }} {{ <span class="id" title="notation">[]</span> }} <span class="id" title="var">ResTy'</span> <span class="id" title="var">C</span> :-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.unify</span>-<span class="id" title="var">leq</span> <span class="id" title="var">ResTy</span> <span class="id" title="var">ResTy'</span>) "".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">constructor.aux</span> <span class="id" title="var">C</span> {{ <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="var">lp</span>:{{<span class="id" title="var">ResTy</span>}} }} <span class="id" title="var">IL</span> <span class="id" title="var">ResTy'</span> {{ <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">lp</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">:</span></a>{{<span class="id" title="var">C</span>}} <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">++</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">lp</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">:</span></a>{{<span class="id" title="var">IL</span>}} }} :-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.unify</span>-<span class="id" title="var">leq</span> <span class="id" title="var">ResTy</span> <span class="id" title="var">ResTy'</span>) "".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">constructor.aux</span> <span class="id" title="var">C</span> <span class="id" title="var">ResTy</span> <span class="id" title="var">IL</span> <span class="id" title="var">ResTy'</span> {{ <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">lp</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">:</span></a>{{<span class="id" title="var">C</span>}} <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">lp</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">:</span></a>{{<span class="id" title="var">IL</span>}} }} :-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.unify</span>-<span class="id" title="var">leq</span> <span class="id" title="var">ResTy</span> <span class="id" title="var">ResTy'</span>) "".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">constructor.aux</span> <span class="id" title="var">C</span> <span class="id" title="var">ResTy</span> <span class="id" title="var">IL</span> <span class="id" title="var">ResTy'</span> <span class="id" title="var">_foo</span> :-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.error</span> "mk-finite-constructor.aux failed on C = " <span class="id" title="var">C</span> ", ResTy =" <span class="id" title="var">ResTy</span> ", IL =" <span class="id" title="var">IL</span> ", ResTy' = " <span class="id" title="var">ResTy'</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="tactic">constructor</span> <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">term</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="tactic">constructor</span> <span class="id" title="var">Ctor</span> <span class="id" title="var">InputList</span> <span class="id" title="var">ResType</span> <span class="id" title="var">OutTm</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">skeleton</span> <span class="id" title="var">Ctor</span> <span class="id" title="var">OTy</span> <span class="id" title="var">ECtor</span>) "[mk-finite-constructor] failed to elaborate ctor",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">constructor.aux</span> <span class="id" title="var">ECtor</span> <span class="id" title="var">OTy</span> <span class="id" title="var">InputList</span> <span class="id" title="var">ResType</span> <span class="id" title="var">OutTm</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">constructors</span> <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">term</span>, <span class="id" title="var">i</span>: <span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">term</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">constructors</span> <span class="id" title="var">L</span> <span class="id" title="var">T</span> <span class="id" title="var">EL</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">constructors.aux</span> <span class="id" title="var">L</span> <span class="id" title="var">T</span> <span class="id" title="var">L'</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">skeleton</span> <span class="id" title="var">L'</span> {{<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="var">lp</span>:{{<span class="id" title="var">T</span>}}}} <span class="id" title="var">EL</span>) "[mk-finite-constructors] failed to typecheck",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">constructors.aux</span> <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">term</span>, <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">term</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">constructors.aux</span> [] <span class="id" title="var">_</span> {{ <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a> }}.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">constructors.aux</span> (<span class="id" title="var">Ctor</span> :: <span class="id" title="var">RestCtors</span>) <span class="id" title="var">T</span> <span class="id" title="var">CtorsValues</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">constructors.aux</span> <span class="id" title="var">RestCtors</span> <span class="id" title="var">T</span> <span class="id" title="var">RestValues</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="tactic">constructor</span> <span class="id" title="var">Ctor</span> <span class="id" title="var">RestValues</span> <span class="id" title="var">T</span> <span class="id" title="var">CtorsValues</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">func</span> <span class="id" title="var">mk</span>-<span class="id" title="var">finite</span> <span class="id" title="var">string</span>, <span class="id" title="var">list</span> <span class="id" title="var">term</span>, <span class="id" title="var">gref</span>, <span class="id" title="var">gref</span> -&gt; <span class="id" title="var">constant</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="var">finite</span> <span class="id" title="var">InstanceName</span> <span class="id" title="var">Ctors</span> <span class="id" title="var">VariantGR</span> <span class="id" title="var">OrigGR</span> <span class="id" title="var">C</span> :- <span class="id" title="var">std.do</span>![<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">VariantTy</span> = <span class="id" title="var">global</span> <span class="id" title="var">VariantGR</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">OriginalTy</span> = <span class="id" title="var">global</span> <span class="id" title="var">OrigGR</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive.finite.mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">constructors</span> <span class="id" title="var">Ctors</span> <span class="id" title="var">VariantTy</span> <span class="id" title="var">CtorList</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">skeleton</span> <span class="id" title="var">CtorList</span> <span class="id" title="var">_</span> <span class="id" title="var">ECtorList</span>) "[mk-finite] failed to elaborate ctors",<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">The</span> <span class="id" title="var">Finite</span> <span class="id" title="var">instance</span> <span class="id" title="var">must</span> <span class="id" title="var">be</span> <span class="id" title="var">transparent</span>, <span class="id" title="var">but</span> <span class="id" title="var">proof</span> <span class="id" title="var">obligations</span> <span class="id" title="var">must</span> <span class="id" title="var">be</span> <span class="id" title="keyword">Qed</span>-<span class="id" title="var">opaque</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">Since</span> `<span class="id" title="tactic">abstract</span>` <span class="id" title="keyword">is</span> <span class="id" title="var">not</span> <span class="id" title="var">supported</span> (<span class="id" title="var">https</span>://<span class="id" title="var">github.com</span>/<span class="id" title="var">LPCIC</span>/<span class="id" title="var">coq</span>-<span class="id" title="var">elpi</span>/<span class="id" title="var">issues</span>/376),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">we</span> <span class="id" title="var">create</span> <span class="id" title="var">separate</span> <span class="id" title="keyword">goals</span> <span class="id" title="tactic">by</span> <span class="id" title="var">hand</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">skeleton</span> {{ <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#NoDup"><span class="id" title="inductive">NoDup</span></a> <span class="id" title="var">lp</span>:{{<span class="id" title="var">ECtorList</span>}} }} <span class="id" title="var">_</span> <span class="id" title="var">ETyNoDup</span>) "[mk-finite] [TyNoDup]",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.typecheck</span> {{ <span class="id" title="var">lp</span>:{{<span class="id" title="var">BoNoDup</span>}} : <span class="id" title="var">lp</span>:{{<span class="id" title="var">ETyNoDup</span>}} }} <span class="id" title="var">_</span>) "typechecking [NoDup] failed",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.ltac.collect</span>-<span class="id" title="keyword">goals</span> <span class="id" title="var">BoNoDup</span> [<span class="id" title="var">SealedGoalNoDup</span>] [],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">TODO</span> <span class="id" title="var">AUTO</span> (<span class="id" title="var">FM</span>-2732) : <span class="id" title="var">Elpi</span> <span class="id" title="var">disables</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="var">here</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.ltac.open</span> (<span class="id" title="var">coq.ltac.call</span> "solve_finite_nodup" []) <span class="id" title="var">SealedGoalNoDup</span> [],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id" title="keyword">using</span>! "Type" =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.add</span>-<span class="id" title="var">const</span> {<span class="id" title="var">calc</span> (<span class="id" title="var">InstanceName</span> ^ "_subproof_nodup")} <span class="id" title="var">BoNoDup</span> <span class="id" title="var">ETyNoDup</span> @<span class="id" title="var">opaque</span>! <span class="id" title="var">CNoDup</span>,<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">skeleton</span> {{ <span class="id" title="notation">∀</span> <a id="x:1" class="idref" href="#x:1"><span class="id" title="binder">x</span></a> : <span class="id" title="var">lp</span>:{{<span class="id" title="var">OriginalTy</span>}}<span class="id" title="notation">,</span> <a class="idref" href="skylabs.prelude.elpi.derive.finite.html#x:1"><span class="id" title="variable">x</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2a78afea1eeed082be084d2a55e1605c"><span class="id" title="notation">∈</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2a78afea1eeed082be084d2a55e1605c"><span class="id" title="notation">lp</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2a78afea1eeed082be084d2a55e1605c"><span class="id" title="notation">:</span></a>{{<span class="id" title="var">ECtorList</span>}} }} <span class="id" title="var">_</span> <span class="id" title="var">ETyElemOf</span>) "[mk-finite] [TyElemOf]",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.typecheck</span> {{ <span class="id" title="var">lp</span>:{{<span class="id" title="var">BoElemOf</span>}} : <span class="id" title="var">lp</span>:{{<span class="id" title="var">ETyElemOf</span>}} }} <span class="id" title="var">_</span>) "typechecking [ElemOf] failed",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.ltac.collect</span>-<span class="id" title="keyword">goals</span> <span class="id" title="var">BoElemOf</span> [<span class="id" title="var">SealedGoalElemOf</span>] [],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">TODO</span> <span class="id" title="var">AUTO</span> (<span class="id" title="var">FM</span>-2732) : <span class="id" title="var">Elpi</span> <span class="id" title="var">disables</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="var">here</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.ltac.open</span> (<span class="id" title="var">coq.ltac.call</span> "solve_finite_total" []) <span class="id" title="var">SealedGoalElemOf</span> [],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id" title="keyword">using</span>! "Type" =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.add</span>-<span class="id" title="var">const</span> {<span class="id" title="var">calc</span> (<span class="id" title="var">InstanceName</span> ^ "_subproof_elem_of")} <span class="id" title="var">BoElemOf</span> <span class="id" title="var">ETyElemOf</span> @<span class="id" title="var">opaque</span>! <span class="id" title="var">CElemOf</span>,<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">skeleton</span> {{ <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.finite.html#Finite"><span class="id" title="class">Finite</span></a> <span class="id" title="var">lp</span>:{{<span class="id" title="var">OriginalTy</span>}} }} <span class="id" title="var">_</span> <span class="id" title="var">ETyFinite</span>) "[mk-finite] [TyFinite]",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">skeleton</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{{ @<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.finite.html#Build_Finite"><span class="id" title="constructor">Build_Finite</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">lp</span>:{{<span class="id" title="var">ECtorList</span>}}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">lp</span>:{{ <span class="id" title="var">global</span> (<span class="id" title="var">const</span> <span class="id" title="var">CNoDup</span>) }} <span class="id" title="var">lp</span>:{{ <span class="id" title="var">global</span> (<span class="id" title="var">const</span> <span class="id" title="var">CElemOf</span>) }}}}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">_</span> <span class="id" title="var">EFiniteBody</span>) "[mk-finite] [TyFinite]",<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.add</span>-<span class="id" title="var">const</span> <span class="id" title="var">InstanceName</span> <span class="id" title="var">EFiniteBody</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ETyFinite</span> @<span class="id" title="var">transparent</span>! <span class="id" title="var">C</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id" title="var">global</span>! =&gt; <span class="id" title="var">coq.TC.declare</span>-<span class="id" title="var">instance</span> (<span class="id" title="var">const</span> <span class="id" title="var">C</span>) 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+&nbsp;&nbsp;}<br/>
+}}.<br/>
+
+<br/>
+#[<span class="id" title="var">phase</span>="both"] <span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">dep1</span> "finite" "eq_dec".<br/>
+}}.<br/>
+
+<br/>
+#[<span class="id" title="var">synterp</span>] <span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">derivation</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> (<span class="id" title="var">derive</span> "finite" (<span class="id" title="var">cl</span>\ <span class="id" title="var">cl</span> = []) <span class="id" title="var">true</span>).<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">File</span> <span class="id" title="var">derive.finite.elpi</span>.<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">derive.finite</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">func</span> <span class="id" title="var">main</span> <span class="id" title="var">gref</span>, <span class="id" title="var">string</span> -&gt; <span class="id" title="var">list</span> <span class="id" title="var">prop</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">main</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">Prefix</span> <span class="id" title="var">Clauses</span> :-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">skylabs.get</span>-<span class="id" title="var">indt</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">VariantI</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive</span>-<span class="id" title="var">original</span>-<span class="id" title="var">gref</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">OrigGR</span>, !,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.indt</span> <span class="id" title="var">VariantI</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">Ctors</span> <span class="id" title="var">_</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.map</span> <span class="id" title="var">Ctors</span> (<span class="id" title="var">c</span>\ <span class="id" title="var">c'</span>\ <span class="id" title="var">c'</span> = <span class="id" title="var">global</span> (<span class="id" title="var">indc</span> <span class="id" title="var">c</span>)) <span class="id" title="var">CTerms</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">FiniteName</span> <span class="id" title="keyword">is</span> <span class="id" title="var">Prefix</span> ^ "finite",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive.finite.mk</span>-<span class="id" title="var">finite</span> <span class="id" title="var">FiniteName</span> <span class="id" title="var">CTerms</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">OrigGR</span> <span class="id" title="var">C</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Clauses</span> = [<span class="id" title="var">finite</span>-<span class="id" title="var">done</span> <span class="id" title="var">OrigGR</span>, <span class="id" title="var">finite</span> <span class="id" title="var">OrigGR</span> (<span class="id" title="var">const</span> <span class="id" title="var">C</span>)],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.forall</span> <span class="id" title="var">Clauses</span> (<span class="id" title="var">x</span>\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.elpi.accumulate</span> <span class="id" title="var">_</span> "derive.stdpp.finite.db" (<span class="id" title="var">clause</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">x</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">main</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> :- <span class="id" title="var">usage</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">func</span> <span class="id" title="var">usage</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">usage</span> :- <span class="id" title="var">coq.error</span><br/>
+"Usage: #[only(finite)] derive T
+where T is an inductive or a definition that unfolds to an inductive.
+
+Example #1:
+ Variant T := A | B | C.
+ #[only(finite)] derive T
+
+Example #2:
+  #[only(finite)] derive
+  Variant T := A | B | C.
+
+Example #3:
+  Variant _T := A | B | C.
+  Definition T := _T.
+  #[only(finite)] derive T.".<br/>
+
+<br/>
+&nbsp;&nbsp;}<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">derivation</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">indt</span> <span class="id" title="var">T</span>) <span class="id" title="var">Prefix</span> <span class="id" title="var">ff</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">derive</span> "finite"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">derive.finite.main</span> (<span class="id" title="var">indt</span> <span class="id" title="var">T</span>) <span class="id" title="var">Prefix</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">finite</span>-<span class="id" title="var">done</span> (<span class="id" title="var">indt</span> <span class="id" title="var">T</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;).<br/>
+}}.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

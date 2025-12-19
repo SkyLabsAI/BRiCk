@@ -1,0 +1,98 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.prelude.notations</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2020&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Alternative ASCII notations for stdpp. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Require</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">Import</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#"><span class="id" title="library">stdpp.base</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">Export</span></a> <a class="idref" href="skylabs.prelude.reserved_notation.html#"><span class="id" title="library">skylabs.prelude.reserved_notation</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Infix</span> <a id="2fcdcbfabe0ca4eb39015191d8ef08b6" class="idref" href="#2fcdcbfabe0ca4eb39015191d8ef08b6"><span class="id" title="notation">&quot;</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">==</span></a>" <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">:=</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">(≡)</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">(</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">at</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">level</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">70,</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">no</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">associativity</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">,</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">only</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">parsing</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">)</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">:</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">stdpp_scope</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Infix</span> <a id="82ce3c6cfe2395ff2d5730d3b1dc78ed" class="idref" href="#82ce3c6cfe2395ff2d5730d3b1dc78ed"><span class="id" title="notation">&quot;</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">==@{ A }</span></a>" <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">:=</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">(≡@{</span></a><span class="id" title="var">A</span>})<br/>
+&nbsp;&nbsp;(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 70, <span class="id" title="var">only</span> <span class="id" title="var">parsing</span>, <span class="id" title="keyword">no</span> <span class="id" title="keyword">associativity</span>) : <span class="id" title="var">stdpp_scope</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Notation</span> <a id="81ac4f211530302e49890641efb701dd" class="idref" href="#81ac4f211530302e49890641efb701dd"><span class="id" title="notation">&quot;</span></a>(==)" := <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#31928d49993c0fabf8f2b2af4d6f7e4f"><span class="id" title="notation">(≡)</span></a> (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>) : <span class="id" title="var">stdpp_scope</span>.<br/>
+<span class="id" title="keyword">Notation</span> <a id="152cfeebb0674ef3b4268bc33987a32e" class="idref" href="#152cfeebb0674ef3b4268bc33987a32e"><span class="id" title="notation">&quot;</span></a>( X ==.)" := <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#d067cb5a6be23bd62acf9ea3cdb00038"><span class="id" title="notation">(</span></a> <span class="id" title="var">X</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#d067cb5a6be23bd62acf9ea3cdb00038"><span class="id" title="notation">≡.)</span></a> (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>) : <span class="id" title="var">stdpp_scope</span>.<br/>
+<span class="id" title="keyword">Notation</span> <a id="a5b6874e02ad74b7e9c879b5e9c596d8" class="idref" href="#a5b6874e02ad74b7e9c879b5e9c596d8"><span class="id" title="notation">&quot;</span></a>(.== X )" := <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#77310842e80b41c9d76e5fb0794e0c8e"><span class="id" title="notation">(.≡</span></a> <span class="id" title="var">X</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#77310842e80b41c9d76e5fb0794e0c8e"><span class="id" title="notation">)</span></a> (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>) : <span class="id" title="var">stdpp_scope</span>.<br/>
+<span class="id" title="keyword">Notation</span> <a id="45a932e3d91942ce5b68523adc51748e" class="idref" href="#45a932e3d91942ce5b68523adc51748e"><span class="id" title="notation">&quot;</span></a>(==@{ A } )" := <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">(≡@{</span></a> <span class="id" title="var">A</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">}</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6683688d633b27b778b4c0268f608b66"><span class="id" title="notation">)</span></a> (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>) : <span class="id" title="var">stdpp_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+For now, no ASCII notation for <span class="inlinecode">≢</span>. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Infix</span> <a id="6fa969a5703669b9015488eb9949c7f4" class="idref" href="#6fa969a5703669b9015488eb9949c7f4"><span class="id" title="notation">&quot;</span></a>∖" := <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#difference"><span class="id" title="definition">difference</span></a> (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>) : <span class="id" title="var">stdpp_scope</span>.<br/>
+<span class="id" title="keyword">Infix</span> <a id="19467f994a37fb132f8eca5421934066" class="idref" href="#19467f994a37fb132f8eca5421934066"><span class="id" title="notation">&quot;</span></a>\" := <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#difference"><span class="id" title="definition">difference</span></a> : <span class="id" title="var">stdpp_scope</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

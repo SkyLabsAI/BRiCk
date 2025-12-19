@@ -1,0 +1,394 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>skylabs.ltac2.extra.internal.control</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library skylabs.ltac2.extra.internal.control</h1>
+
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.ltac2.extra.internal.init.html#"><span class="id" title="library">skylabs.ltac2.extra.internal.init</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.ltac2.extra.internal.constr.html#"><span class="id" title="library">skylabs.ltac2.extra.internal.constr</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.ltac2.extra.internal.printf.html#"><span class="id" title="library">skylabs.ltac2.extra.internal.printf</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Minor extensions to <span class="inlinecode"><span class="id" title="var">Ltac2.Control</span></span> 
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="Control" class="idref" href="#Control"><span class="id" title="module">Control</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">Ltac2</span> <a class="idref" href="skylabs.ltac2.extra.internal.init.html#Init"><span class="id" title="module">Init</span></a> <a class="idref" href="skylabs.ltac2.extra.internal.printf.html#Printf"><span class="id" title="module">Printf</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Export</span> <span class="id" title="module">Ltac2.Control</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab7"></a><h2 class="section">Backtracking control</h2>
+
+<div class="paragraph"> </div>
+
+ <span class="inlinecode"><span class="id" title="var">nobacktrack</span></span> <span class="inlinecode"><span class="id" title="var">f</span></span> runs <span class="inlinecode"><span class="id" title="var">f</span></span> and panic if it backtracks. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">nobacktrack</span> (<span class="id" title="var">f</span> : <span class="id" title="var">unit</span> -&gt; '<span class="id" title="var">a</span>) : '<span class="id" title="var">a</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.plus</span> <span class="id" title="var">f</span> <span class="id" title="var">Control.throw</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">once_nobacktrack</span> (<span class="id" title="var">f</span> : <span class="id" title="var">unit</span> -&gt; '<span class="id" title="var">a</span>) : '<span class="id" title="var">a</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.once</span> (<span class="id" title="keyword">fun</span> () =&gt; <span class="id" title="var">nobacktrack</span> <span class="id" title="var">f</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab8"></a><h2 class="section">Backtrace primitives</h2>
+
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Type</span> '<span class="id" title="var">a</span> <span class="id" title="var">result_bt</span> := [ <span class="id" title="var">Val_bt</span> ('<span class="id" title="var">a</span>) | <span class="id" title="var">Err_bt</span> (<span class="id" title="var">exn</span>, <span class="id" title="var">exninfo</span>) ].<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">case_bt</span> : (<span class="id" title="var">unit</span> -&gt; '<span class="id" title="var">a</span>) -&gt; ('<span class="id" title="var">a</span> * (<span class="id" title="var">exn</span> -&gt; '<span class="id" title="var">a</span>)) <span class="id" title="var">result_bt</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"ltac2_extensions" "case_bt".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab9"></a><h2 class="section">Running side-effecting computations</h2>
+
+<div class="paragraph"> </div>
+
+ <span class="inlinecode"><span class="id" title="var">without_focus</span></span> <span class="inlinecode"><span class="id" title="var">f</span></span> runs <span class="inlinecode"><span class="id" title="var">f</span></span> <span class="inlinecode">()</span> once, independently of how many goals
+      there are. This function is meant for running side-effecting code that
+     is independent from the goal. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">without_focus</span> (<span class="id" title="var">f</span> : <span class="id" title="var">unit</span> -&gt; '<span class="id" title="var">a</span>) : '<span class="id" title="var">a</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.focus</span> 1 0 <span class="id" title="var">f</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab10"></a><h2 class="section">Proof state</h2>
+
+<div class="paragraph"> </div>
+
+ <span class="inlinecode"><span class="id" title="var">new_goals_w_state</span></span> <span class="inlinecode"><span class="id" title="var">evs</span></span> copies the current goal's state into the new
+      goals. The function fails if there is not a single focused goal. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">new_goals_w_state</span> : <span class="id" title="tactic">evar</span> <span class="id" title="var">list</span> -&gt; <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"ltac2_extensions" "new_goals_w_state".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">focus_new_goal</span></span> <span class="inlinecode"><span class="id" title="var">c</span></span> <span class="inlinecode"><span class="id" title="var">cnt</span></span> extends the proof state with a new last goal of
+      type <span class="inlinecode"><span class="id" title="var">c</span></span>, focuses on it, and invokes <span class="inlinecode"><span class="id" title="var">cnt</span></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">focus_new_goal</span> (<span class="id" title="var">c</span> : <span class="id" title="keyword">constr</span>) (<span class="id" title="var">cnt</span> : <span class="id" title="var">unit</span> -&gt; <span class="id" title="var">unit</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="tactic">evar</span> * <span class="id" title="keyword">constr</span> <span class="id" title="var">array</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="tactic">evar</span>, <span class="id" title="var">inst</span>) := <span class="id" title="var">Constr.Evar.of_constr</span> (<span class="id" title="var">Constr.Evar.make</span> <span class="id" title="var">c</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.enter</span> (<span class="id" title="keyword">fun</span> () =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.new_goal</span> <span class="id" title="tactic">evar</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.extend</span> [] (<span class="id" title="keyword">fun</span> () =&gt; ()) [<span class="id" title="var">cnt</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="tactic">evar</span>, <span class="id" title="var">inst</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">remove_future_goal</span></span> removes a goal from the list of future goals. This is
+      necessary to work around https://github.com/coq/coq/issues/19138. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">remove_future_goal</span> : <span class="id" title="tactic">evar</span> -&gt; <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"ltac2_extensions" "remove_future_goal".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab11"></a><h2 class="section">Goal inspection</h2>
+
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Type</span> <span class="id" title="var">hyp</span> := <span class="id" title="var">ident</span> * <span class="id" title="keyword">constr</span> <span class="id" title="var">option</span> * <span class="id" title="keyword">constr</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">pp_hyp</span> : <span class="id" title="var">hyp</span> <span class="id" title="var">pp</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <span class="id" title="var">hyp</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">id</span>, <span class="id" title="var">mdef</span>, <span class="id" title="var">ty</span>) := <span class="id" title="var">hyp</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">mdef</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">None</span> =&gt; <span class="id" title="var">fprintf</span> "%a : %t" <span class="id" title="var">pp_ident</span> <span class="id" title="var">id</span> <span class="id" title="var">ty</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Some</span> <span class="id" title="var">def</span> =&gt; <span class="id" title="var">fprintf</span> "%a : %t := %t" <span class="id" title="var">pp_ident</span> <span class="id" title="var">id</span> <span class="id" title="var">ty</span> <span class="id" title="var">def</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">iter_hyps</span> : (<span class="id" title="var">hyp</span> -&gt; <span class="id" title="var">unit</span>) -&gt; <span class="id" title="var">unit</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">f</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.enter</span> (<span class="id" title="keyword">fun</span> () =&gt; <span class="id" title="var">List.iter</span> <span class="id" title="var">f</span> (<span class="id" title="var">Control.hyps</span> ())).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">is_section_variable</span></span> <span class="inlinecode"><span class="id" title="var">id</span></span> returns <span class="inlinecode"><span class="id" title="var">true</span></span> if <span class="inlinecode"><span class="id" title="var">id</span></span> is not a variable in the
+      current environment. This seems to mean "being a section variable". 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">is_section_variable</span> : <span class="id" title="var">ident</span> -&gt; <span class="id" title="var">bool</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"ltac2_extensions" "is_section_variable".<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Type</span> <span class="id" title="var">exn</span> ::= [ <span class="id" title="var">Multi_exn</span> (<span class="id" title="var">exn</span> <span class="id" title="var">list</span>) ].<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+This is a variant of <span class="inlinecode"><span class="id" title="var">first0</span></span> (<span class="inlinecode"><span class="id" title="tactic">first</span></span> <span class="inlinecode">[</span> <span class="inlinecode">..</span> <span class="inlinecode">|</span> <span class="inlinecode">..</span> <span class="inlinecode">]</span>) which does not
+      perform <span class="inlinecode"><span class="id" title="var">Control.enter</span></span>. This is necessary to allow it to return a
+      value: <span class="inlinecode"><span class="id" title="var">Control.enter</span></span> forces a <span class="inlinecode"><span class="id" title="var">unit</span></span> return type. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">first_of_impl</span> (<span class="id" title="var">ls</span> : (<span class="id" title="var">unit</span> -&gt; '<span class="id" title="var">a</span>) <span class="id" title="var">list</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="keyword">rec</span> <span class="id" title="var">go</span> <span class="id" title="var">ls</span> <span class="id" title="var">errs</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">ls</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">t</span> :: <span class="id" title="var">ls</span> =&gt; <span class="id" title="var">orelse</span> <span class="id" title="var">t</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">e</span> =&gt; <span class="id" title="var">go</span> <span class="id" title="var">ls</span> (<span class="id" title="var">e</span> :: <span class="id" title="var">errs</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| []      =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">errs</span> := <span class="id" title="var">List.rev</span> <span class="id" title="var">errs</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.zero</span> (<span class="id" title="var">Multi_exn</span> <span class="id" title="var">errs</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.once</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> =&gt; <span class="id" title="var">go</span> <span class="id" title="var">ls</span> []).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab12"></a><h2 class="section">Goal evar</h2>
+
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">goal_evar</span> : <span class="id" title="var">unit</span> -&gt; <span class="id" title="tactic">evar</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"ltac2_extensions" "goal_evar".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab13"></a><h2 class="section">Throws</h2>
+
+<div class="paragraph"> </div>
+
+ <span class="inlinecode"><span class="id" title="var">throw_invalid</span></span> <span class="inlinecode"><span class="id" title="var">fmt</span></span> throws <span class="inlinecode"><span class="id" title="var">Invalid_argument</span></span> with a formatted message.
+      It must be used via the <span class="inlinecode"><span class="id" title="var">throw_invalid</span>!</span> <span class="inlinecode"><span class="id" title="var">fmt</span></span> <span class="inlinecode">...</span> notation. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">throw_invalid</span> : ('<span class="id" title="var">a</span>,'<span class="id" title="var">r</span>) <span class="id" title="var">kprintf</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">fmt</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Message.Format.kfprintf</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">msg</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.throw</span> (<span class="id" title="var">Invalid_argument</span> (<span class="id" title="var">Some</span> <span class="id" title="var">msg</span>))) <span class="id" title="var">fmt</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">zero_invalid</span> : ('<span class="id" title="var">a</span>,'<span class="id" title="var">r</span>) <span class="id" title="var">kprintf</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">fmt</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Message.Format.kfprintf</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">msg</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.zero</span> (<span class="id" title="var">Invalid_argument</span> (<span class="id" title="var">Some</span> <span class="id" title="var">msg</span>))) <span class="id" title="var">fmt</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">user_err</span> : <span class="id" title="var">message</span> -&gt; '<span class="id" title="var">a</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"ltac2_extensions" "user_err".<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">user_err_format</span> : ('<span class="id" title="var">a</span>,'<span class="id" title="var">r</span>) <span class="id" title="var">kprintf</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">fmt</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Message.Format.kfprintf</span> <span class="id" title="var">user_err</span> <span class="id" title="var">fmt</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Module</span> <a id="Control.Notations" class="idref" href="#Control.Notations"><span class="id" title="module">Notations</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Notation</span> "throw_invalid!" <span class="id" title="var">fmt</span>(<span class="id" title="var">format</span>) := <span class="id" title="var">throw_invalid</span> <span class="id" title="var">fmt</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Notation</span> "zero_invalid!"  <span class="id" title="var">fmt</span>(<span class="id" title="var">format</span>) := <span class="id" title="var">zero_invalid</span>  <span class="id" title="var">fmt</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Notation</span> "user_err!"  <span class="id" title="var">fmt</span>(<span class="id" title="var">format</span>) := <span class="id" title="var">user_err_format</span> <span class="id" title="var">fmt</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Notation</span> "first_of" "[" <span class="id" title="var">ls</span>(<span class="id" title="var">list0</span>(<span class="id" title="var">thunk</span>(<span class="id" title="var">tactic</span>(6)), "|")) "]" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">first_of_impl</span> <span class="id" title="var">ls</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.extra.internal.control.html#Control.Notations"><span class="id" title="module">Notations</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Access to the <span class="inlinecode"><span class="id" title="var">ProofView</span></span> goal state capabilities. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Module</span> <a id="Control.State" class="idref" href="#Control.State"><span class="id" title="module">State</span></a>.<br/>
+</div>
+
+<div class="doc">
+Extensible type of fields in the goal state, meant to be populated by
+        variants <i>_without_</i> arguments. The type parameter indicates what type
+        can be stored in the corresponding field. Clients should define local
+        aliases of the constructors they add to <span class="inlinecode"><span class="id" title="var">t</span></span>, since there is not way to
+        make new constructors non-polymorphic. Accessing a field at different
+        types leads to undefined behaviour. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Type</span> '<span class="id" title="var">a</span> <span class="id" title="var">t</span> := [..].<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">get_state</span></span> <span class="inlinecode"><span class="id" title="var">k</span></span> returns the value of type <span class="inlinecode">'<span class="id" title="var">a</span></span> stored in field <span class="inlinecode"><span class="id" title="var">k</span></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">get_state</span> : '<span class="id" title="var">a</span> <span class="id" title="var">t</span> -&gt; '<span class="id" title="var">a</span> <span class="id" title="var">option</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"ltac2_extensions" "get_goal_state".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">set_state</span></span> <span class="inlinecode"><span class="id" title="var">k</span></span> <span class="inlinecode"><span class="id" title="var">v</span></span> will set the state at field <span class="inlinecode"><span class="id" title="var">k</span></span> to value <span class="inlinecode"><span class="id" title="var">v</span></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">set_state</span> : '<span class="id" title="var">a</span> <span class="id" title="var">t</span> -&gt; '<span class="id" title="var">a</span> -&gt; <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"ltac2_extensions" "set_goal_state".<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.extra.internal.control.html#Control.State"><span class="id" title="module">State</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Variable renaming / shadowing. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Module</span> <a id="Control.Shadow" class="idref" href="#Control.Shadow"><span class="id" title="module">Shadow</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Type</span> <span class="id" title="var">exn</span> ::= [ <span class="id" title="var">CannotRenameSectionVariable</span> (<span class="id" title="var">ident</span>) ].<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">rename1</span></span> <span class="inlinecode"><span class="id" title="var">old</span></span> <span class="inlinecode"><span class="id" title="var">new</span></span> renames <span class="inlinecode"><span class="id" title="var">old</span></span> to <span class="inlinecode"><span class="id" title="var">new</span></span>, shadowing any preexisting
+        binding for <span class="inlinecode"><span class="id" title="var">new</span></span>. It returns the list of renamings as a list of pairs
+        of <span class="inlinecode">(<span class="id" title="var">old_id</span>,</span> <span class="inlinecode"><span class="id" title="var">new_id</span>)</span>. The list includes the original identifiers
+        <span class="inlinecode">(<span class="id" title="var">old</span>,</span> <span class="inlinecode"><span class="id" title="var">new</span>)</span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">rename1</span> (<span class="id" title="var">old</span> : <span class="id" title="var">Ident.t</span>) (<span class="id" title="var">new</span> : <span class="id" title="var">Ident.t</span>) : ((<span class="id" title="var">ident</span> * <span class="id" title="var">ident</span>) <span class="id" title="var">list</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">Ident.equal</span> <span class="id" title="var">old</span> <span class="id" title="var">new</span> <span class="id" title="keyword">then</span> [] <span class="id" title="keyword">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">ren</span> := [(<span class="id" title="var">old</span>, <span class="id" title="var">new</span>)] <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">ren</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">ids</span> := <span class="id" title="var">List.map</span> (<span class="id" title="keyword">fun</span> (<span class="id" title="var">id</span>, <span class="id" title="var">_</span>, <span class="id" title="var">_</span>) =&gt; <span class="id" title="var">id</span>) (<span class="id" title="var">Control.hyps</span> ()) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">List.exist</span> (<span class="id" title="var">Ident.equal</span> <span class="id" title="var">new</span>) <span class="id" title="var">ids</span> <span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">base</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+            TODO: Ideally, we would always pick a reserved identifier of
+            the form <span class="inlinecode"><span class="id" title="var">_new_</span></span> or <span class="inlinecode"><span class="id" title="var">_newN_</span></span> but this code can pick
+            <span class="inlinecode"><span class="id" title="var">_new_N</span></span>.
+
+<div class="paragraph"> </div>
+
+            Example: If <span class="inlinecode"><span class="id" title="var">new</span></span> = <span class="inlinecode"><span class="id" title="var">Hyp</span></span> and SSR has introduced <span class="inlinecode"><span class="id" title="var">_Hyp_</span></span>,
+            this code can pick <span class="inlinecode"><span class="id" title="var">_Hyp_0</span></span>.
+            <code>
+</code>            Goal forall a b, a = b -&gt; a + b = b + a.
+            Proof.
+              move=&gt;a Hyp ?. shadow_rename a into Hyp.
+            &gt;&gt;
+            
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">s</span> := <span class="id" title="var">String.concat</span> "" ["_"; <span class="id" title="var">Ident.to_string</span> <span class="id" title="var">new</span>; "_"] <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Option.get</span> (<span class="id" title="var">Ident.of_string</span> <span class="id" title="var">s</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">n</span> := <span class="id" title="var">Fresh.fresh</span> (<span class="id" title="var">Fresh.Free.of_ids</span> <span class="id" title="var">ids</span>) <span class="id" title="var">base</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">new</span>, <span class="id" title="var">n</span>) :: <span class="id" title="var">ren</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">ren</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">List.iter</span> (<span class="id" title="keyword">fun</span> (<span class="id" title="var">old</span>,<span class="id" title="var">_</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">is_section_variable</span> <span class="id" title="var">old</span> <span class="id" title="keyword">then</span> <span class="id" title="var">throw</span> (<span class="id" title="var">CannotRenameSectionVariable</span> <span class="id" title="var">old</span>) <span class="id" title="keyword">else</span> ()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;) <span class="id" title="var">ren</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Std.rename</span> <span class="id" title="var">ren</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ren</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="tactic">rename</span></span> <span class="inlinecode"><span class="id" title="var">old</span></span> <span class="inlinecode"><span class="id" title="var">new</span></span> renames <span class="inlinecode"><span class="id" title="var">old</span></span> to <span class="inlinecode"><span class="id" title="var">new</span></span>, shadowing any preexisting
+        binding for <span class="inlinecode"><span class="id" title="var">new</span></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="tactic">rename</span> <span class="id" title="var">old</span> <span class="id" title="var">new</span> := <span class="id" title="keyword">let</span> <span class="id" title="var">_</span> := <span class="id" title="var">rename1</span> <span class="id" title="var">old</span> <span class="id" title="var">new</span> <span class="id" title="tactic">in</span> ().<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">rename_many</span></span> <span class="inlinecode"><span class="id" title="var">ren</span></span> renames all pairs <span class="inlinecode">(<span class="id" title="var">old</span>,<span class="id" title="var">new</span>)</span> in the list <span class="inlinecode"><span class="id" title="var">ren</span></span>.
+        It takes care to update <span class="inlinecode"><span class="id" title="var">old</span></span> idents in <span class="inlinecode"><span class="id" title="var">rens</span></span> whenever a renaming
+        operation renamed <span class="inlinecode"><span class="id" title="var">old</span></span> into something else. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">rename_many</span> (<span class="id" title="var">rens</span> : (<span class="id" title="var">ident</span> * <span class="id" title="var">ident</span>) <span class="id" title="var">list</span>) : <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">rens</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| [] =&gt; ()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| [(<span class="id" title="var">old</span>, <span class="id" title="var">new</span>)] =&gt; <span class="id" title="tactic">rename</span> <span class="id" title="var">old</span> <span class="id" title="var">new</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">rens</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="keyword">rec</span> <span class="id" title="var">go</span> <span class="id" title="var">rens</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">rens</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| [] =&gt; ()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| (<span class="id" title="var">old</span>, <span class="id" title="var">new</span>) :: <span class="id" title="var">rens</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">ren</span> := <span class="id" title="var">rename1</span> <span class="id" title="var">old</span> <span class="id" title="var">new</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">fixup</span> ((<span class="id" title="var">old</span>, <span class="id" title="var">new</span>) <span class="id" title="keyword">as</span> <span class="id" title="var">p</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">List.find_opt</span> (<span class="id" title="keyword">fun</span> (<span class="id" title="var">old_id</span>, <span class="id" title="var">_</span>) =&gt; <span class="id" title="var">Ident.equal</span> <span class="id" title="var">old</span> <span class="id" title="var">old_id</span>) <span class="id" title="var">ren</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Some</span> (<span class="id" title="var">_</span>, <span class="id" title="var">new_id</span>) =&gt; (<span class="id" title="var">new_id</span>, <span class="id" title="var">new</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">None</span> =&gt; <span class="id" title="var">p</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">rens</span> := <span class="id" title="var">List.map</span> <span class="id" title="var">fixup</span> <span class="id" title="var">rens</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">go</span> <span class="id" title="var">rens</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">go</span> <span class="id" title="var">rens</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.extra.internal.control.html#Control.Shadow"><span class="id" title="module">Shadow</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.extra.internal.control.html#Control"><span class="id" title="module">Control</span></a>.<br/>
+<span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.ltac2.extra.internal.control.html#Control.Notations"><span class="id" title="module">Control.Notations</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

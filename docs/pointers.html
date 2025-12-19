@@ -184,7 +184,7 @@ of the variable used for the pointer is not important.</p>
 last example, <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">x</span></span></code> might live in a register or be removed altogether by
 optimizations. But since BRiCk pointer values need not have an address, we can
 reason about <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">x_ptr</span></span></code> uniformly, irrespective of optimizations.</p>
-<p>We use the function <a class="reference external" href="_static/coqdoc/bluerock.lang.cpp.semantics.ptrs.html#PTRS.ptr_vaddr">ptr_vaddr</a> to compute the
+<p>We use the function <a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.semantics.ptrs.html#PTRS.ptr_vaddr">ptr_vaddr</a> to compute the
 virtual address of a pointer.</p>
 <div class="highlight-coq notranslate"><div class="highlight"><pre><span></span><span class="kn">Parameter</span> <span class="n">ptr_vaddr</span> <span class="o">:</span> <span class="n">ptr</span> <span class="o">-&gt;</span> <span class="n">option</span> <span class="n">vaddr</span><span class="o">.</span>
 </pre></div>
@@ -219,11 +219,11 @@ to the pointer <code class="code highlight coq docutils literal notranslate"><sp
 To simplify reasoning about pointers, we provide an equational theory of pointer
 equality, which helps us show that C++ snippets such as <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">p</span></span> <span class="o"><span class="pre">+</span></span> <span class="mi"><span class="pre">2</span></span></code> and <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">p</span></span> <span class="o"><span class="pre">+</span></span> <span class="mi"><span class="pre">1</span></span> <span class="o"><span class="pre">+</span></span> <span class="mi"><span class="pre">1</span></span></code>
 produce the same pointer.</p>
-<p>Pointer offsets form a <em>monoid</em> under concatenation, and <a class="reference external" href="_static/coqdoc/bluerock.lang.cpp.semantics.ptrs.html#PTRS._offset_ptr">_offset_ptr</a> represent
+<p>Pointer offsets form a <em>monoid</em> under concatenation, and <a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.semantics.ptrs.html#PTRS._offset_ptr">_offset_ptr</a> represent
 their <em>monoid action</em> over pointers. That is, we can compose offsets (via
-<a class="reference external" href="_static/coqdoc/bluerock.lang.cpp.semantics.ptrs.html#PTRS.o_dot">o_dot</a>, also written <code class="code highlight coq docutils literal notranslate"><span class="o"><span class="pre">.,</span></span></code>), this composition has an identity (<a class="reference external" href="_static/coqdoc/bluerock.lang.cpp.semantics.ptrs.html#PTRS.o_id">o_id</a>) and is
+<a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.semantics.ptrs.html#PTRS.o_dot">o_dot</a>, also written <code class="code highlight coq docutils literal notranslate"><span class="o"><span class="pre">.,</span></span></code>), this composition has an identity (<a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.semantics.ptrs.html#PTRS.o_id">o_id</a>) and is
 associative, and compositions with pointers is well-behaved. Moreover, specific
-axioms allow us to collapse adjacent offsets, such as consecutive <a class="reference external" href="_static/coqdoc/bluerock.lang.cpp.semantics.ptrs.html#PTRS.o_sub">o_sub</a> offsets.</p>
+axioms allow us to collapse adjacent offsets, such as consecutive <a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.semantics.ptrs.html#PTRS.o_sub">o_sub</a> offsets.</p>
 <p>Here are a few of the algebraic equations that apply to pointers and offsets.</p>
 <div class="highlight-coq notranslate"><div class="highlight"><pre><span></span><span class="n">offset_ptr_id</span> <span class="o">:</span> <span class="n">p</span> <span class="o">.,</span> <span class="n">o_id</span> <span class="o">=</span> <span class="n">p</span>
 <span class="n">offset_ptr_dot</span> <span class="o">:</span> <span class="n">p</span> <span class="o">.,</span> <span class="n">o1</span> <span class="o">.,</span> <span class="n">o2</span> <span class="o">=</span> <span class="n">p</span> <span class="o">.,</span> <span class="o">(</span><span class="n">o1</span> <span class="o">.,</span> <span class="n">o2</span><span class="o">)</span>
@@ -236,7 +236,7 @@ axioms allow us to collapse adjacent offsets, such as consecutive <a class="refe
 <span class="n">o_dot_sub</span> <span class="o">:</span> <span class="o">_</span><span class="n">sub</span> <span class="n">T</span> <span class="n">n1</span> <span class="o">.,</span> <span class="o">_</span><span class="n">sub</span> <span class="n">T</span> <span class="n">n2</span> <span class="o">=</span> <span class="o">_</span><span class="n">sub</span> <span class="n">T</span> <span class="o">(</span><span class="n">n1</span> <span class="o">+</span> <span class="n">n2</span><span class="o">)</span>
 </pre></div>
 </div>
-<p>This is formalized in Coq in <a class="reference external" href="_static/coqdoc/bluerock.lang.cpp.semantics.ptrs.html">bluerock.lang.cpp.semantics.ptrs</a>.</p>
+<p>This is formalized in Coq in <a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.semantics.ptrs.html">skylabs.lang.cpp.semantics.ptrs</a>.</p>
 </section>
 <section id="integer-pointer-casts">
 <h3>Integer-pointer casts<a class="headerlink" href="#integer-pointer-casts" title="Link to this heading"></a></h3>

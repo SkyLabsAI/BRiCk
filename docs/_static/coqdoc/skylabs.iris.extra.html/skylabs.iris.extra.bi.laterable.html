@@ -1,0 +1,149 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.iris.extra.bi.laterable</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(C)&nbsp;2020-21&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*<br/>
+*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.lib.laterable.html#"><span class="id" title="library">iris.bi.lib.laterable</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#"><span class="id" title="library">iris.bi.monpred</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.iris.extra.proofmode.proofmode.html#"><span class="id" title="library">skylabs.iris.extra.proofmode.proofmode</span></a>.<br/>
+<span class="id" title="keyword">Set</span> <span class="id" title="var">Default</span> <span class="id" title="keyword">Proof</span> <span class="id" title="var">Using</span> "Type".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Replace the TC instance <span class="inlinecode"><a class="idref" href="skylabs.iris.extra.bi.laterable.html#big_sepL_laterable"><span class="id" title="instance">big_sepL_laterable</span></a></span> with a version that
+    does not assume <span class="inlinecode"><a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.derived_connectives.html#Timeless"><span class="id" title="class">Timeless</span></a></span> <span class="inlinecode"><span class="id" title="var">emp</span></span> when the list is empty. 
+</div>
+<div class="code">
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Remove</span> <span class="id" title="var">Hints</span> <span class="id" title="var">big_sepL_laterable</span> : <span class="id" title="var">typeclass_instances</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Class</span> <a id="ListNonEmpty" class="idref" href="#ListNonEmpty"><span class="id" title="inductive, record"><span id="ListNonEmpty" class="id">ListNonEmpty</span></span></a> {<a id="A:1" class="idref" href="#A:1"><span class="id" title="binder">A</span></a>} (<a id="l:2" class="idref" href="#l:2"><span class="id" title="binder">l</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="skylabs.iris.extra.bi.laterable.html#A:1"><span class="id" title="variable">A</span></a>) : <span class="id" title="keyword">Prop</span> := <a id="list_non_empty" class="idref" href="#list_non_empty"><span class="id" title="constructor, projection"><span id="list_non_empty" class="id">list_non_empty</span></span></a> : <a class="idref" href="skylabs.iris.extra.bi.laterable.html#l:2"><span class="id" title="variable">l</span></a> <span class="id" title="notation">≠</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="var">Mode</span> <a class="idref" href="skylabs.iris.extra.bi.laterable.html#ListNonEmpty"><span class="id" title="class">ListNonEmpty</span></a> - ! : <span class="id" title="var">typeclass_instances</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="cons_non_empty" class="idref" href="#cons_non_empty"><span class="id" title="instance">cons_non_empty</span></a> {<a id="A:5" class="idref" href="#A:5"><span class="id" title="binder">A</span></a>} (<a id="x:6" class="idref" href="#x:6"><span class="id" title="binder">x</span></a> : <a class="idref" href="skylabs.iris.extra.bi.laterable.html#A:5"><span class="id" title="variable">A</span></a>) <a id="l:7" class="idref" href="#l:7"><span class="id" title="binder">l</span></a> : <a class="idref" href="skylabs.iris.extra.bi.laterable.html#ListNonEmpty"><span class="id" title="class">ListNonEmpty</span></a> (<a class="idref" href="skylabs.iris.extra.bi.laterable.html#x:6"><span class="id" title="variable">x</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <a class="idref" href="skylabs.iris.extra.bi.laterable.html#l:7"><span class="id" title="variable">l</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="laterable" class="idref" href="#laterable"><span class="id" title="section">laterable</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="laterable.PROP" class="idref" href="#laterable.PROP"><span class="id" title="variable">PROP</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#bi"><span class="id" title="record">bi</span></a>}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Implicit</span> <span class="id" title="keyword">Types</span> <span class="id" title="var">P</span> : <a class="idref" href="skylabs.iris.extra.bi.laterable.html#laterable.PROP"><span class="id" title="variable">PROP</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Implicit</span> <span class="id" title="keyword">Types</span> <span class="id" title="var">Ps</span> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="skylabs.iris.extra.bi.laterable.html#laterable.PROP"><span class="id" title="variable">PROP</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="big_sepL_laterable" class="idref" href="#big_sepL_laterable"><span class="id" title="instance">big_sepL_laterable</span></a> <a id="Ps:9" class="idref" href="#Ps:9"><span class="id" title="binder">Ps</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#TCOr"><span class="id" title="class">TCOr</span></a> (<a class="idref" href="skylabs.iris.extra.bi.laterable.html#ListNonEmpty"><span class="id" title="class">ListNonEmpty</span></a> <a class="idref" href="skylabs.iris.extra.bi.laterable.html#Ps:9"><span class="id" title="variable">Ps</span></a>) (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.derived_connectives.html#Timeless"><span class="id" title="class">Timeless</span></a> (<span class="id" title="var">PROP</span>:=<a class="idref" href="skylabs.iris.extra.bi.laterable.html#laterable.PROP"><span class="id" title="variable">PROP</span></a>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#::bi_scope:'emp'"><span class="id" title="notation">emp</span></a>) <span class="id" title="notation">→</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#TCForall"><span class="id" title="class">TCForall</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.lib.laterable.html#Laterable"><span class="id" title="class">Laterable</span></a> <a class="idref" href="skylabs.iris.extra.bi.laterable.html#Ps:9"><span class="id" title="variable">Ps</span></a> <span class="id" title="notation">→</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.lib.laterable.html#Laterable"><span class="id" title="class">Laterable</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.big_op.html#1859b5662eed98e4f5050c0ba3bbcb6b"><span class="id" title="notation">[∗]</span></a> <a class="idref" href="skylabs.iris.extra.bi.laterable.html#Ps:9"><span class="id" title="variable">Ps</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> 1; <span class="id" title="var">last</span> <span class="id" title="tactic">exact</span>: <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.lib.laterable.html#big_sepL_laterable"><span class="id" title="instance">big_sepL_laterable</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">induction</span> 1 <span class="id" title="keyword">as</span> [|<span class="id" title="var">P</span> <span class="id" title="var">Ps</span>]; <span class="id" title="tactic">first</span> <span class="id" title="var">done</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">destruct</span> <span class="id" title="var">Ps</span> <span class="id" title="keyword">as</span> [|<span class="id" title="var">Ps</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">rewrite</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.big_op.html#big_sepL_nil"><span class="id" title="lemma">big_sepL_nil</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#right_id"><span class="id" title="definition">right_id</span></a>. <span class="id" title="tactic">apply</span> <span class="id" title="var">_</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <span class="id" title="var">_</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.iris.extra.bi.laterable.html#laterable"><span class="id" title="section">laterable</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Some <span class="inlinecode"><a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.lib.laterable.html#Laterable"><span class="id" title="class">Laterable</span></a></span> instances 
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="laterable" class="idref" href="#laterable"><span class="id" title="section">laterable</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="laterable.PROP" class="idref" href="#laterable.PROP"><span class="id" title="variable">PROP</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#bi"><span class="id" title="record">bi</span></a>}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Implicit</span> <span class="id" title="keyword">Types</span> <span class="id" title="var">P</span> <span class="id" title="var">Q</span> : <a class="idref" href="skylabs.iris.extra.bi.laterable.html#laterable.PROP"><span class="id" title="variable">PROP</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="or_laterable" class="idref" href="#or_laterable"><span class="id" title="instance">or_laterable</span></a> <a id="P:11" class="idref" href="#P:11"><span class="id" title="binder">P</span></a> <a id="Q:12" class="idref" href="#Q:12"><span class="id" title="binder">Q</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.lib.laterable.html#Laterable"><span class="id" title="class">Laterable</span></a> <a class="idref" href="skylabs.iris.extra.bi.laterable.html#P:11"><span class="id" title="variable">P</span></a> <span class="id" title="notation">→</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.lib.laterable.html#Laterable"><span class="id" title="class">Laterable</span></a> <a class="idref" href="skylabs.iris.extra.bi.laterable.html#Q:12"><span class="id" title="variable">Q</span></a> <span class="id" title="notation">→</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.lib.laterable.html#Laterable"><span class="id" title="class">Laterable</span></a> (<a class="idref" href="skylabs.iris.extra.bi.laterable.html#P:11"><span class="id" title="variable">P</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#df8727fb8673700193f111b03d29db4e"><span class="id" title="notation">∨</span></a> <a class="idref" href="skylabs.iris.extra.bi.laterable.html#Q:12"><span class="id" title="variable">Q</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span>/<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.lib.laterable.html#Laterable"><span class="id" title="class">Laterable</span></a>=&gt;<span class="id" title="var">HP</span> <span class="id" title="var">HQ</span>. <span class="id" title="var">iDestruct</span> 1 <span class="id" title="keyword">as</span> "[P|Q]".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">iDestruct</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">(</span></a><span class="id" title="var">HP</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">with</span></a> "P"<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">)</span></a> <span class="id" title="keyword">as</span> (<span class="id" title="var">P'</span>) "[P' #close]".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iExists</span> <span class="id" title="var">P'</span>. <span class="id" title="var">iFrame</span> "P'". <span class="id" title="var">iIntros</span> "!&gt; P'". <span class="id" title="var">iLeft</span>. <span class="id" title="var">iApply</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">(</span></a>"close" <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">with</span></a> "P'"<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">)</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">iDestruct</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">(</span></a><span class="id" title="var">HQ</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">with</span></a> "Q"<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">)</span></a> <span class="id" title="keyword">as</span> (<span class="id" title="var">Q'</span>) "[Q' #close]".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iExists</span> <span class="id" title="var">Q'</span>. <span class="id" title="var">iFrame</span> "Q'". <span class="id" title="var">iIntros</span> "!&gt; Q'". <span class="id" title="var">iRight</span>. <span class="id" title="var">iApply</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">(</span></a>"close" <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">with</span></a> "Q'"<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">)</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.iris.extra.bi.laterable.html#laterable"><span class="id" title="section">laterable</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="monpred" class="idref" href="#monpred"><span class="id" title="section">monpred</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="monpred.I" class="idref" href="#monpred.I"><span class="id" title="variable">I</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#biIndex"><span class="id" title="record">biIndex</span></a>} {<a id="monpred.PROP" class="idref" href="#monpred.PROP"><span class="id" title="variable">PROP</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#bi"><span class="id" title="record">bi</span></a>}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Local Notation</span> <a id="monPred" class="idref" href="#monPred"><span class="id" title="abbreviation">monPred</span></a> := (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#monPred"><span class="id" title="record">monPred</span></a> <a class="idref" href="skylabs.iris.extra.bi.laterable.html#monpred.I"><span class="id" title="variable">I</span></a> <a class="idref" href="skylabs.iris.extra.bi.laterable.html#monpred.PROP"><span class="id" title="variable">PROP</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Implicit</span> <span class="id" title="keyword">Types</span> <span class="id" title="var">i</span> : <a class="idref" href="skylabs.iris.extra.bi.laterable.html#monpred.I"><span class="id" title="variable">I</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Implicit</span> <span class="id" title="keyword">Types</span> <span class="id" title="var">P</span> : <a class="idref" href="skylabs.iris.extra.bi.laterable.html#monPred"><span class="id" title="abbreviation">monPred</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="monPred_at_laterable" class="idref" href="#monPred_at_laterable"><span class="id" title="instance">monPred_at_laterable</span></a> <a id="p:15" class="idref" href="#p:15"><span class="id" title="binder">p</span></a> <a id="P:16" class="idref" href="#P:16"><span class="id" title="binder">P</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.lib.laterable.html#Laterable"><span class="id" title="class">Laterable</span></a> <a class="idref" href="skylabs.iris.extra.bi.laterable.html#P:16"><span class="id" title="variable">P</span></a> <span class="id" title="notation">→</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.lib.laterable.html#Laterable"><span class="id" title="class">Laterable</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#monPred_at"><span class="id" title="projection">monPred_at</span></a> <a class="idref" href="skylabs.iris.extra.bi.laterable.html#P:16"><span class="id" title="variable">P</span></a> <a class="idref" href="skylabs.iris.extra.bi.laterable.html#p:15"><span class="id" title="variable">p</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span>/<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.lib.laterable.html#Laterable"><span class="id" title="class">Laterable</span></a>=&gt;-[<span class="id" title="var">HP</span>]. <span class="id" title="tactic">rewrite</span> -&gt;(<span class="id" title="var">HP</span> <span class="id" title="var">p</span>). <span class="id" title="tactic">clear</span> <span class="id" title="var">HP</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#monPred_at_exist"><span class="id" title="lemma">monPred_at_exist</span></a>. <span class="id" title="var">iDestruct</span> 1 <span class="id" title="keyword">as</span> (<span class="id" title="var">P'</span>) "P".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#monPred_at_sep"><span class="id" title="lemma">monPred_at_sep</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#monPred_at_intuitionistically"><span class="id" title="lemma">monPred_at_intuitionistically</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iDestruct</span> "P" <span class="id" title="keyword">as</span> "[P #close]".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iExists</span> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#monPred_at"><span class="id" title="projection">monPred_at</span></a> <span class="id" title="var">P'</span> <span class="id" title="var">p</span>). <span class="id" title="tactic">rewrite</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#monPred_at_later"><span class="id" title="lemma">monPred_at_later</span></a>. <span class="id" title="var">iFrame</span> "P".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#monPred_wand_force"><span class="id" title="lemma">monPred_wand_force</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#monPred_at_later"><span class="id" title="lemma">monPred_at_later</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#monPred_at_except_0"><span class="id" title="lemma">monPred_at_except_0</span></a>. <span class="id" title="var">iFrame</span> "close".<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.iris.extra.bi.laterable.html#monpred"><span class="id" title="section">monpred</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

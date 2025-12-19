@@ -1,0 +1,199 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.upoly.trace</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(C)&nbsp;2023-2024&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.upoly.prelude.html#"><span class="id" title="library">skylabs.upoly.prelude</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.upoly.base.html#"><span class="id" title="library">skylabs.upoly.base</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.upoly.UTypes.html#"><span class="id" title="library">skylabs.upoly.UTypes</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.upoly.list.html#"><span class="id" title="library">skylabs.upoly.list</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.upoly.base.html#UPoly"><span class="id" title="module">UPoly</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab26"></a><h1 class="section">Trace monad</h1>
+
+<div class="paragraph"> </div>
+
+This module is not meant to be <code>Import</code>ed.
+
+<div class="paragraph"> </div>
+
+<code>trace.M</code> is a variation on <code>result E A := Val (_ : A) | Err (_ :
+</code>E)&gt;&gt; with backtraces.
+
+<div class="paragraph"> </div>
+
+We tend to use a fixed, inhabited type <code>E : Set</code> and to lock errors
+and backtrace entries. Example (using the Elpi locker): <code>mlock
+</code>Definition My_error : E := inhabitant.&gt;&gt;
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Variant</span> <a id="M" class="idref" href="#M"><span class="id" title="inductive">M@</span></a>{*<span class="id" title="var">uE</span> *<span class="id" title="var">uA</span> | } {<a id="E:1" class="idref" href="#E:1"><span class="id" title="binder">E</span></a> : <span class="id" title="var">Type@</span>{<span class="id" title="var">uE</span>}} {<a id="A:2" class="idref" href="#A:2"><span class="id" title="binder">A</span></a> : <span class="id" title="var">Type@</span>{<span class="id" title="var">uA</span>}} : <span class="id" title="keyword">Type</span> :=<br/>
+| <a id="Success" class="idref" href="#Success"><span class="id" title="constructor">Success</span></a> (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.upoly.trace.html#A:2"><span class="id" title="variable">A</span></a>)<br/>
+| <a id="Backtrace" class="idref" href="#Backtrace"><span class="id" title="constructor">Backtrace</span></a> (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.upoly.UTypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="skylabs.upoly.trace.html#E:1"><span class="id" title="variable">E</span></a>).<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.trace.html#M"><span class="id" title="inductive">M</span></a> : <span class="id" title="tactic">clear</span> <span class="id" title="var">implicits</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="run" class="idref" href="#run"><span class="id" title="definition">run</span></a> {<a id="E:5" class="idref" href="#E:5"><span class="id" title="binder">E</span></a> <a id="A:6" class="idref" href="#A:6"><span class="id" title="binder">A</span></a>} (<a id="m:7" class="idref" href="#m:7"><span class="id" title="binder">m</span></a> : <a class="idref" href="skylabs.upoly.trace.html#M"><span class="id" title="inductive">M</span></a> <a class="idref" href="skylabs.upoly.trace.html#E:5"><span class="id" title="variable">E</span></a> <a class="idref" href="skylabs.upoly.trace.html#A:6"><span class="id" title="variable">A</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#sum"><span class="id" title="inductive">Datatypes.sum</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">Datatypes.list</span></a> <a class="idref" href="skylabs.upoly.trace.html#E:5"><span class="id" title="variable">E</span></a>) <a class="idref" href="skylabs.upoly.trace.html#A:6"><span class="id" title="variable">A</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.upoly.trace.html#m:7"><span class="id" title="variable">m</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.trace.html#Success"><span class="id" title="constructor">Success</span></a> <span class="id" title="var">a</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#inr"><span class="id" title="constructor">Datatypes.inr</span></a> <span class="id" title="var">a</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.trace.html#Backtrace"><span class="id" title="constructor">Backtrace</span></a> <span class="id" title="var">t</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#inl"><span class="id" title="constructor">Datatypes.inl</span></a> (<a class="idref" href="skylabs.upoly.list.html#run"><span class="id" title="definition">list.run</span></a> <span class="id" title="var">t</span>)<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.trace.html#run"><span class="id" title="definition">run</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> &amp; <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="runO" class="idref" href="#runO"><span class="id" title="definition">runO</span></a> {<a id="E:9" class="idref" href="#E:9"><span class="id" title="binder">E</span></a> <a id="A:10" class="idref" href="#A:10"><span class="id" title="binder">A</span></a>} (<a id="m:11" class="idref" href="#m:11"><span class="id" title="binder">m</span></a> : <a class="idref" href="skylabs.upoly.trace.html#M"><span class="id" title="inductive">M</span></a> <a class="idref" href="skylabs.upoly.trace.html#E:9"><span class="id" title="variable">E</span></a> <a class="idref" href="skylabs.upoly.trace.html#A:10"><span class="id" title="variable">A</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">Datatypes.option</span></a> <a class="idref" href="skylabs.upoly.trace.html#A:10"><span class="id" title="variable">A</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.upoly.trace.html#m:11"><span class="id" title="variable">m</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.trace.html#Success"><span class="id" title="constructor">Success</span></a> <span class="id" title="var">a</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Datatypes.Some</span></a> <span class="id" title="var">a</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.trace.html#Backtrace"><span class="id" title="constructor">Backtrace</span></a> <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">Datatypes.None</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.trace.html#runO"><span class="id" title="definition">runO</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> &amp; <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="trace" class="idref" href="#trace"><span class="id" title="section">trace</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Universes</span> <span class="id" title="var">uE</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="trace.E" class="idref" href="#trace.E"><span class="id" title="variable">E</span></a> : <span class="id" title="var">Type@</span>{<span class="id" title="var">uE</span>}}.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Notation</span> <a id="M" class="idref" href="#M"><span class="id" title="abbreviation">M</span></a> := (<a class="idref" href="skylabs.upoly.trace.html#M"><span class="id" title="inductive">M</span></a> <a class="idref" href="skylabs.upoly.trace.html#trace.E"><span class="id" title="variable">E</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="map" class="idref" href="#map"><span class="id" title="instance">map</span></a> : <a class="idref" href="skylabs.upoly.base.html#UPoly.FMap"><span class="id" title="class">FMap</span></a> <a class="idref" href="skylabs.upoly.trace.html#M"><span class="id" title="abbreviation">M</span></a> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <a id="f:14" class="idref" href="#f:14"><span class="id" title="binder">f</span></a> <a id="m:15" class="idref" href="#m:15"><span class="id" title="binder">m</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.upoly.trace.html#m:15"><span class="id" title="variable">m</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.trace.html#Success"><span class="id" title="constructor">Success</span></a> <span class="id" title="var">a</span> =&gt; <a class="idref" href="skylabs.upoly.trace.html#Success"><span class="id" title="constructor">Success</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#547692780023ef044153bc0c4f871ef7"><span class="id" title="notation">$</span></a> <a class="idref" href="skylabs.upoly.trace.html#f:14"><span class="id" title="variable">f</span></a> <span class="id" title="var">a</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.trace.html#Backtrace"><span class="id" title="constructor">Backtrace</span></a> <span class="id" title="var">t</span> =&gt; <a class="idref" href="skylabs.upoly.trace.html#Backtrace"><span class="id" title="constructor">Backtrace</span></a> <span class="id" title="var">t</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.trace.html#map"><span class="id" title="instance">map</span></a> {<span class="id" title="var">_</span> <span class="id" title="var">_</span>} <span class="id" title="var">_</span> &amp; <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="ret" class="idref" href="#ret"><span class="id" title="instance">ret</span></a> : <a class="idref" href="skylabs.upoly.base.html#UPoly.MRet"><span class="id" title="class">MRet</span></a> <a class="idref" href="skylabs.upoly.trace.html#M"><span class="id" title="abbreviation">M</span></a> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> =&gt; <a class="idref" href="skylabs.upoly.trace.html#Success"><span class="id" title="constructor">Success</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.trace.html#ret"><span class="id" title="instance">ret</span></a> {<span class="id" title="var">_</span>} &amp; <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="bind" class="idref" href="#bind"><span class="id" title="instance">bind</span></a> : <a class="idref" href="skylabs.upoly.base.html#UPoly.MBind"><span class="id" title="class">MBind</span></a> <a class="idref" href="skylabs.upoly.trace.html#M"><span class="id" title="abbreviation">M</span></a> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <a id="f:17" class="idref" href="#f:17"><span class="id" title="binder">f</span></a> <a id="m:18" class="idref" href="#m:18"><span class="id" title="binder">m</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.upoly.trace.html#m:18"><span class="id" title="variable">m</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.trace.html#Success"><span class="id" title="constructor">Success</span></a> <span class="id" title="var">a</span> =&gt; <a class="idref" href="skylabs.upoly.trace.html#f:17"><span class="id" title="variable">f</span></a> <span class="id" title="var">a</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.trace.html#Backtrace"><span class="id" title="constructor">Backtrace</span></a> <span class="id" title="var">t</span> =&gt; <a class="idref" href="skylabs.upoly.trace.html#Backtrace"><span class="id" title="constructor">Backtrace</span></a> <span class="id" title="var">t</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.trace.html#bind"><span class="id" title="instance">bind</span></a> {<span class="id" title="var">_</span> <span class="id" title="var">_</span>} <span class="id" title="var">_</span> &amp; <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="join" class="idref" href="#join"><span class="id" title="instance">join</span></a> : <a class="idref" href="skylabs.upoly.base.html#UPoly.MJoin"><span class="id" title="class">MJoin</span></a> <a class="idref" href="skylabs.upoly.trace.html#M"><span class="id" title="abbreviation">M</span></a> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <a id="m:20" class="idref" href="#m:20"><span class="id" title="binder">m</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.upoly.trace.html#m:20"><span class="id" title="variable">m</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.trace.html#Success"><span class="id" title="constructor">Success</span></a> (<a class="idref" href="skylabs.upoly.trace.html#Success"><span class="id" title="constructor">Success</span></a> <span class="id" title="var">_</span> <span class="id" title="keyword">as</span> <span class="id" title="var">c</span>) =&gt; <span class="id" title="var">c</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.trace.html#Backtrace"><span class="id" title="constructor">Backtrace</span></a> <span class="id" title="var">t</span> | <a class="idref" href="skylabs.upoly.trace.html#Success"><span class="id" title="constructor">Success</span></a> (<a class="idref" href="skylabs.upoly.trace.html#Backtrace"><span class="id" title="constructor">Backtrace</span></a> <span class="id" title="var">t</span>) =&gt; <a class="idref" href="skylabs.upoly.trace.html#Backtrace"><span class="id" title="constructor">Backtrace</span></a> <span class="id" title="var">t</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.trace.html#join"><span class="id" title="instance">join</span></a> {<span class="id" title="var">_</span>} &amp; <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="ap" class="idref" href="#ap"><span class="id" title="definition">ap</span></a> : <a class="idref" href="skylabs.upoly.base.html#UPoly.Ap"><span class="id" title="class">Ap</span></a> <a class="idref" href="skylabs.upoly.trace.html#M"><span class="id" title="abbreviation">M</span></a> := <span class="id" title="var">_</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.trace.html#ap"><span class="id" title="definition">ap</span></a> {<span class="id" title="var">_</span> <span class="id" title="var">_</span>} &amp; <span class="id" title="var">_</span> <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="traverse" class="idref" href="#traverse"><span class="id" title="instance">traverse</span></a> : <a class="idref" href="skylabs.upoly.base.html#UPoly.Traverse"><span class="id" title="class">Traverse</span></a> <a class="idref" href="skylabs.upoly.trace.html#M"><span class="id" title="abbreviation">M</span></a> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <a id="f:22" class="idref" href="#f:22"><span class="id" title="binder">f</span></a> <a id="s:23" class="idref" href="#s:23"><span class="id" title="binder">s</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.upoly.trace.html#s:23"><span class="id" title="variable">s</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.trace.html#Success"><span class="id" title="constructor">Success</span></a> <span class="id" title="var">a</span> =&gt; <a class="idref" href="skylabs.upoly.trace.html#Success"><span class="id" title="constructor">Success</span></a> <a class="idref" href="skylabs.upoly.base.html#913d5033cf5660007c77b2d9383f760d"><span class="id" title="notation">&lt;$&gt;</span></a> <a class="idref" href="skylabs.upoly.trace.html#f:22"><span class="id" title="variable">f</span></a> <span class="id" title="var">a</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.trace.html#Backtrace"><span class="id" title="constructor">Backtrace</span></a> <span class="id" title="var">t</span> =&gt; <a class="idref" href="skylabs.upoly.base.html#UPoly.mret"><span class="id" title="definition">mret</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#547692780023ef044153bc0c4f871ef7"><span class="id" title="notation">$</span></a> <a class="idref" href="skylabs.upoly.trace.html#Backtrace"><span class="id" title="constructor">Backtrace</span></a> <span class="id" title="var">t</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.trace.html#traverse"><span class="id" title="instance">traverse</span></a> {<span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>} &amp; <span class="id" title="var">_</span> <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="fail" class="idref" href="#fail"><span class="id" title="instance">fail</span></a> : <a class="idref" href="skylabs.upoly.base.html#UPoly.MFail"><span class="id" title="abbreviation">MFail</span></a> <a class="idref" href="skylabs.upoly.trace.html#M"><span class="id" title="abbreviation">M</span></a> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> =&gt; <a class="idref" href="skylabs.upoly.trace.html#Backtrace"><span class="id" title="constructor">Backtrace</span></a> <a class="idref" href="skylabs.upoly.list.html#15cd9a6e6290438f5aba50fc5c697d0c"><span class="id" title="notation">[]</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.trace.html#fail"><span class="id" title="instance">fail</span></a> {<span class="id" title="var">_</span>} <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="trace" class="idref" href="#trace"><span class="id" title="instance">trace</span></a> : <a class="idref" href="skylabs.upoly.base.html#UPoly.Trace"><span class="id" title="class">Trace</span></a> <a class="idref" href="skylabs.upoly.trace.html#trace.E"><span class="id" title="variable">E</span></a> <a class="idref" href="skylabs.upoly.trace.html#M"><span class="id" title="abbreviation">M</span></a> := <span class="id" title="keyword">fun</span> <a id="e:25" class="idref" href="#e:25"><span class="id" title="binder">e</span></a> <span class="id" title="var">_</span> <a id="m:26" class="idref" href="#m:26"><span class="id" title="binder">m</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.upoly.trace.html#m:26"><span class="id" title="variable">m</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.trace.html#Success"><span class="id" title="constructor">Success</span></a> <span class="id" title="var">v</span> =&gt; <a class="idref" href="skylabs.upoly.trace.html#Success"><span class="id" title="constructor">Success</span></a> <span class="id" title="var">v</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.trace.html#Backtrace"><span class="id" title="constructor">Backtrace</span></a> <span class="id" title="var">t</span> =&gt; <a class="idref" href="skylabs.upoly.trace.html#Backtrace"><span class="id" title="constructor">Backtrace</span></a> (<a class="idref" href="skylabs.upoly.trace.html#e:25"><span class="id" title="variable">e</span></a> <a class="idref" href="skylabs.upoly.list.html#Notations.::ulist_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <span class="id" title="var">t</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.trace.html#trace"><span class="id" title="instance">trace</span></a> <span class="id" title="var">_</span> {<span class="id" title="var">_</span>} &amp; <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="throw" class="idref" href="#throw"><span class="id" title="instance">throw</span></a> : <a class="idref" href="skylabs.upoly.base.html#UPoly.MThrow"><span class="id" title="class">MThrow</span></a> <a class="idref" href="skylabs.upoly.trace.html#trace.E"><span class="id" title="variable">E</span></a> <a class="idref" href="skylabs.upoly.trace.html#M"><span class="id" title="abbreviation">M</span></a> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <a id="e:28" class="idref" href="#e:28"><span class="id" title="binder">e</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.upoly.trace.html#trace"><span class="id" title="instance">trace</span></a> <a class="idref" href="skylabs.upoly.trace.html#e:28"><span class="id" title="variable">e</span></a> <a class="idref" href="skylabs.upoly.base.html#UPoly.mfail"><span class="id" title="abbreviation">mfail</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.trace.html#throw"><span class="id" title="instance">throw</span></a> {<span class="id" title="var">_</span>} <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="catch" class="idref" href="#catch"><span class="id" title="instance">catch</span></a> : <a class="idref" href="skylabs.upoly.base.html#UPoly.MCatch"><span class="id" title="class">MCatch</span></a> (<a class="idref" href="skylabs.upoly.UTypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="skylabs.upoly.trace.html#trace.E"><span class="id" title="variable">E</span></a>) <a class="idref" href="skylabs.upoly.trace.html#M"><span class="id" title="abbreviation">M</span></a> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <a id="m:29" class="idref" href="#m:29"><span class="id" title="binder">m</span></a> <a id="h:30" class="idref" href="#h:30"><span class="id" title="binder">h</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.upoly.trace.html#m:29"><span class="id" title="variable">m</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.trace.html#Success"><span class="id" title="constructor">Success</span></a> <span class="id" title="var">v</span> =&gt; <a class="idref" href="skylabs.upoly.trace.html#Success"><span class="id" title="constructor">Success</span></a> <span class="id" title="var">v</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.upoly.trace.html#Backtrace"><span class="id" title="constructor">Backtrace</span></a> <span class="id" title="var">t</span> =&gt; <a class="idref" href="skylabs.upoly.trace.html#h:30"><span class="id" title="variable">h</span></a> <span class="id" title="var">t</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.trace.html#catch"><span class="id" title="instance">catch</span></a> {<span class="id" title="var">_</span>} &amp; <span class="id" title="var">_</span> <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="alternative" class="idref" href="#alternative"><span class="id" title="definition">alternative</span></a> : <a class="idref" href="skylabs.upoly.base.html#UPoly.Alternative"><span class="id" title="class">Alternative</span></a> <a class="idref" href="skylabs.upoly.trace.html#M"><span class="id" title="abbreviation">M</span></a> := <span class="id" title="var">_</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.trace.html#alternative"><span class="id" title="definition">alternative</span></a> {<span class="id" title="var">_</span>} &amp; <span class="id" title="var">_</span> <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="lift_optionp" class="idref" href="#lift_optionp"><span class="id" title="instance">lift_optionp</span></a> : <a class="idref" href="skylabs.upoly.base.html#UPoly.MLift"><span class="id" title="class">MLift</span></a> <a class="idref" href="skylabs.upoly.UTypes.html#option"><span class="id" title="inductive">UTypes.option</span></a> <a class="idref" href="skylabs.upoly.trace.html#M"><span class="id" title="abbreviation">M</span></a> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <a id="m:32" class="idref" href="#m:32"><span class="id" title="binder">m</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <a class="idref" href="skylabs.upoly.trace.html#m:32"><span class="id" title="variable">m</span></a> <span class="id" title="keyword">is</span> <a class="idref" href="skylabs.upoly.UTypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">a</span> <span class="id" title="keyword">then</span> <a class="idref" href="skylabs.upoly.trace.html#Success"><span class="id" title="constructor">Success</span></a> <span class="id" title="var">a</span> <span class="id" title="keyword">else</span> <a class="idref" href="skylabs.upoly.trace.html#Backtrace"><span class="id" title="constructor">Backtrace</span></a> <a class="idref" href="skylabs.upoly.list.html#15cd9a6e6290438f5aba50fc5c697d0c"><span class="id" title="notation">[]</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="lift_option" class="idref" href="#lift_option"><span class="id" title="instance">lift_option</span></a> : <a class="idref" href="skylabs.upoly.base.html#UPoly.MLift"><span class="id" title="class">MLift</span></a> (<a class="idref" href="skylabs.upoly.base.html#UPoly.eta"><span class="id" title="abbreviation">eta</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">Datatypes.option</span></a>) <a class="idref" href="skylabs.upoly.trace.html#M"><span class="id" title="abbreviation">M</span></a> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <a id="m:34" class="idref" href="#m:34"><span class="id" title="binder">m</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <a class="idref" href="skylabs.upoly.trace.html#m:34"><span class="id" title="variable">m</span></a> <span class="id" title="keyword">is</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Datatypes.Some</span></a> <span class="id" title="var">a</span> <span class="id" title="keyword">then</span> <a class="idref" href="skylabs.upoly.trace.html#Success"><span class="id" title="constructor">Success</span></a> <span class="id" title="var">a</span> <span class="id" title="keyword">else</span> <a class="idref" href="skylabs.upoly.trace.html#Backtrace"><span class="id" title="constructor">Backtrace</span></a> <a class="idref" href="skylabs.upoly.list.html#15cd9a6e6290438f5aba50fc5c697d0c"><span class="id" title="notation">[]</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.upoly.trace.html#trace"><span class="id" title="section">trace</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

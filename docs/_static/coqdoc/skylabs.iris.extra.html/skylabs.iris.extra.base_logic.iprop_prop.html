@@ -1,0 +1,99 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.iris.extra.base_logic.iprop_prop</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(C)&nbsp;2023&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab16"></a><h1 class="section">iProp satisfies Ghostly and HasUsualOwn</h1>
+
+
+<div class="paragraph"> </div>
+
+iProp instances of the PROP constraint bundles defined in
+lang/bi/prop_constraints.v
+
+<div class="paragraph"> </div>
+
+This is only needed as we instantiate general <span class="inlinecode"><a class="idref" href="skylabs.iris.extra.bi.own.html#"><span class="id" title="library">skylabs.iris.extra.bi.own</span></a></span> with <span class="inlinecode"><a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#iProp_solution.iProp"><span class="id" title="abbreviation">iProp</span></a></span>.
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.iris.extra.bi.prop_constraints.html#"><span class="id" title="library">skylabs.iris.extra.bi.prop_constraints</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.iris.extra.base_logic.iprop_own.html#"><span class="id" title="library">skylabs.iris.extra.base_logic.iprop_own</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="iprop_ghostly" class="idref" href="#iprop_ghostly"><span class="id" title="instance">iprop_ghostly</span></a> {<a id="0101b9beac487b383a5ba2a8f6922788" class="idref" href="#0101b9beac487b383a5ba2a8f6922788"><span class="id" title="binder">Σ</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#gFunctors"><span class="id" title="record">gFunctors</span></a>} : <a class="idref" href="skylabs.iris.extra.bi.prop_constraints.html#Ghostly"><span class="id" title="class">Ghostly</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#iProp_solution.iPropI"><span class="id" title="abbreviation">iPropI</span></a> <a class="idref" href="skylabs.iris.extra.base_logic.iprop_prop.html#0101b9beac487b383a5ba2a8f6922788"><span class="id" title="variable">Σ</span></a>) :=<br/>
+&nbsp;&nbsp;{| <a class="idref" href="skylabs.iris.extra.bi.prop_constraints.html#ghostly_bibupd"><span class="id" title="method">ghostly_bibupd</span></a> := <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;; <a class="idref" href="skylabs.iris.extra.bi.prop_constraints.html#ghostly_embed"><span class="id" title="method">ghostly_embed</span></a> := <span class="id" title="var">_</span> |}.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="iprop_has_usual_own" class="idref" href="#iprop_has_usual_own"><span class="id" title="instance">iprop_has_usual_own</span></a> `{<a id="ebf069dbc779b42a15c441a6d39d5f83" class="idref" href="#ebf069dbc779b42a15c441a6d39d5f83"><span class="id" title="binder">Σ</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#gFunctors"><span class="id" title="record">gFunctors</span></a>, <a id="T:3" class="idref" href="#T:3"><span class="id" title="binder">T</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.cmra.html#cmra"><span class="id" title="record">cmra</span></a>, <a id="inG0:4" class="idref" href="#inG0:4"><span class="id" title="binder">!</span></a><a id="inG0:4" class="idref" href="#inG0:4"><span class="id" title="binder">inG</span></a> <a id="inG0:4" class="idref" href="#inG0:4"><span class="id" title="binder">Σ</span></a> <a id="inG0:4" class="idref" href="#inG0:4"><span class="id" title="binder">T</span></a> }<br/>
+&nbsp;&nbsp;: <a class="idref" href="skylabs.iris.extra.bi.prop_constraints.html#HasUsualOwn"><span class="id" title="class">HasUsualOwn</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#iProp_solution.iPropI"><span class="id" title="abbreviation">iPropI</span></a> <a class="idref" href="skylabs.iris.extra.base_logic.iprop_prop.html#ebf069dbc779b42a15c441a6d39d5f83"><span class="id" title="variable">Σ</span></a>) <a class="idref" href="skylabs.iris.extra.base_logic.iprop_prop.html#T:3"><span class="id" title="variable">T</span></a> :=<br/>
+&nbsp;&nbsp;{| <a class="idref" href="skylabs.iris.extra.bi.prop_constraints.html#has_usual_own_own"><span class="id" title="method">has_usual_own_own</span></a> := <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;; <a class="idref" href="skylabs.iris.extra.bi.prop_constraints.html#has_usual_own_upd"><span class="id" title="method">has_usual_own_upd</span></a> := <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;; <a class="idref" href="skylabs.iris.extra.bi.prop_constraints.html#has_usual_own_valid"><span class="id" title="method">has_usual_own_valid</span></a> := <span class="id" title="var">_</span> |}.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

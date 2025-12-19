@@ -1,0 +1,898 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.noimport.doc.cpp.howto_sequential</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(C)&nbsp;2020-2024&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;All&nbsp;rights&nbsp;reserved.<br/>
+&nbsp;*<br/>
+&nbsp;*&nbsp;SPDX-License-Identifier:&nbsp;Apache-2.0<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.cpp</span>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">cQp_compat</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Set</span> <span class="id" title="var">Warnings</span> "-non-recursive". <span class="comment">(*&nbsp;disable&nbsp;warning&nbsp;about&nbsp;<span class="inlinecode"><span class="id" title="var">llistR</span></span>&nbsp;*)</span><br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">Z_scope</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">bs_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab4"></a><h1 class="section">Sequential Specs</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="with_Sigma" class="idref" href="#with_Sigma"><span class="id" title="section">with_Sigma</span></a>.<br/>
+<span class="id" title="keyword">Context</span> `{<a id="with_Sigma.Sigma" class="idref" href="#with_Sigma.Sigma"><span class="id" title="variable">Sigma</span></a>:<span class="id" title="class">cpp_logic</span>} {<a id="with_Sigma.CU" class="idref" href="#with_Sigma.CU"><span class="id" title="variable">CU</span></a>: <span class="id" title="class">genv</span>}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab5"></a><h2 class="section">Range</h2>
+
+
+<div class="paragraph"> </div>
+
+Consider the following stub
+
+<div class="paragraph"> </div>
+
+<br/>
+<span class="inlinecode"><span class="id" title="var">class</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a> {<br/>
+<span class="id" title="var">private</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unsigned</span> <span class="id" title="var">long</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_begin"><span class="id" title="definition">_begin</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">size_t</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_size"><span class="id" title="definition">_size</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;...<br/>
+};
+<div class="paragraph"> </div>
+
+</span>
+<div class="paragraph"> </div>
+
+of a <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a></span> class in C++ implementing contiguous address sets as intervals.
+To write specs for C++ functions that operate on <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a></span>s, we:
+
+<div class="paragraph"> </div>
+
+(1) Implement a Coq model of the <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a></span> class;
+
+<div class="paragraph"> </div>
+
+(2) Write a representation predicate that connects Coq <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a></span>s to the
+    representation of C++ Ranges in memory.
+
+<div class="paragraph"> </div>
+
+<a id="lab6"></a><h3 class="section">Coq Model of <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a></span></h3>
+
+
+<div class="paragraph"> </div>
+
+Let's consider the Coq model first. We build it as a Coq <span class="inlinecode"><span class="id" title="keyword">Record</span></span> with
+two fields, <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#begin"><span class="id" title="projection">begin</span></a></span> and <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#size"><span class="id" title="projection">size</span></a></span>, corresponding the the fields of the C++
+struct. In our model, we represent both values as <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a></span>; our representation
+predicate will impose additional nonnegativity constraints.
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Record</span> <a id="Range" class="idref" href="#Range"><span class="id" title="record">Range</span></a> := { <a id="begin" class="idref" href="#begin"><span class="id" title="projection">begin</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>; <a id="size" class="idref" href="#size"><span class="id" title="projection">size</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> }.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+An example <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a></span>, the interval (inclusive 10, 13), is built as:
+ 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="range_ex" class="idref" href="#range_ex"><span class="id" title="definition">range_ex</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a> := {| <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#begin"><span class="id" title="projection">begin</span></a> := 10; <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#size"><span class="id" title="projection">size</span></a> := 3 |}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+To extract the <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#begin"><span class="id" title="projection">begin</span></a></span> and <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#size"><span class="id" title="projection">size</span></a></span> of a <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a></span> like
+<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#range_ex"><span class="id" title="definition">range_ex</span></a></span>, one can use projections corresponding to the fields:
+ 
+<div class="paragraph"> </div>
+
+Compute range_ex.(begin).
+<div class="paragraph"> </div>
+
+     = 10
+     : Z
+
+<div class="paragraph"> </div>
+
+Compute range_ex.(size).
+<div class="paragraph"> </div>
+
+     = 3
+     : Z
+ 
+<div class="paragraph"> </div>
+
+<a id="lab7"></a><h3 class="section"><span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a></span>: Representation Predicate</h3>
+
+
+<div class="paragraph"> </div>
+
+Now let's write the representation predicate. It will refer to the
+<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_begin"><span class="id" title="definition">_begin</span></a></span> and <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_size"><span class="id" title="definition">_size</span></a></span> fields of the C++ struct, which are autogenerated
+by cpp2v as:
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Notation</span> <a id="with_Sigma.:cppglobal::'::Range::_begin'" class="idref" href="#with_Sigma.:cppglobal::'::Range::_begin'"><span class="id" title="notation">&quot;</span></a>'::Range::_begin'" := (<span class="id" title="constructor">Nscoped</span> (<span class="id" title="constructor">Nglobal</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#547692780023ef044153bc0c4f871ef7"><span class="id" title="notation">$</span></a> <span class="id" title="constructor">Nid</span> "Range") (<span class="id" title="constructor">Nid</span> "_begin"))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">cppglobal</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0).<br/>
+<span class="id" title="keyword">Notation</span> <a id="with_Sigma.:cppglobal::'::Range::_size'" class="idref" href="#with_Sigma.:cppglobal::'::Range::_size'"><span class="id" title="notation">&quot;</span></a>'::Range::_size'" := (<span class="id" title="constructor">Nscoped</span> (<span class="id" title="constructor">Nglobal</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#547692780023ef044153bc0c4f871ef7"><span class="id" title="notation">$</span></a> <span class="id" title="constructor">Nid</span> "Range") (<span class="id" title="constructor">Nid</span> "_size"))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="tactic">in</span> <span class="id" title="var">custom</span> <span class="id" title="var">cppglobal</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0).<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="_begin" class="idref" href="#_begin"><span class="id" title="definition">_begin</span></a> := <span class="id" title="abbreviation">_field</span> "Range::_begin".<br/>
+<span class="id" title="keyword">Definition</span> <a id="_size" class="idref" href="#_size"><span class="id" title="definition">_size</span></a> := <span class="id" title="abbreviation">_field</span> "Range::_size".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Here's the first version, which follows the style
+discussed in the first chapter.
+It's a <span class="inlinecode"><span class="id" title="keyword">Definition</span></span> in Coq that takes two
+parameters, the fractional permission <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a></span> (which could be 1, indicating
+write permission), and <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a></span> <span class="inlinecode">:</span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a></span>, the Coq model of the range.
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="RangeR3" class="idref" href="#RangeR3"><span class="id" title="definition">RangeR3</span></a> (<a id="q:8" class="idref" href="#q:8"><span class="id" title="binder">q</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a>) (<a id="r:9" class="idref" href="#r:9"><span class="id" title="binder">r</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a>) : <span class="id" title="definition">Rep</span> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_begin"><span class="id" title="definition">_begin</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">ulongR</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:8"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#r:9"><span class="id" title="variable">r</span></a>.(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#begin"><span class="id" title="projection">begin</span></a>) <span class="id" title="notation">**</span> <span class="comment">(*rep&nbsp;star*)</span><br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_size"><span class="id" title="definition">_size</span></a>  <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">ulongR</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:8"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#r:9"><span class="id" title="variable">r</span></a>.(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#size"><span class="id" title="projection">size</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#RangeR3"><span class="id" title="definition">RangeR3</span></a></span> is a function (predicate), which when applied to a start address ("this"),
+will assert the memory representation starting at that address.
+This function nature can be made explicit using <span class="inlinecode"><span class="id" title="definition">as_Rep</span></span>, which gives
+us explicit access to the this pointer as a function argument.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="RangeR2" class="idref" href="#RangeR2"><span class="id" title="definition">RangeR2</span></a> (<a id="q:10" class="idref" href="#q:10"><span class="id" title="binder">q</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a>) (<a id="r:11" class="idref" href="#r:11"><span class="id" title="binder">r</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a>) : <span class="id" title="definition">Rep</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">as_Rep</span> (<span class="id" title="keyword">fun</span> <a id="this:12" class="idref" href="#this:12"><span class="id" title="binder">this</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#this:12"><span class="id" title="variable">this</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="notation">(</span><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_begin"><span class="id" title="definition">_begin</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">ulongR</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:10"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#r:11"><span class="id" title="variable">r</span></a>.(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#begin"><span class="id" title="projection">begin</span></a>) <span class="id" title="notation">**</span> <span class="comment">(*rep&nbsp;star*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_size"><span class="id" title="definition">_size</span></a>  <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">ulongR</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:10"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#r:11"><span class="id" title="variable">r</span></a>.(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#size"><span class="id" title="projection">size</span></a>)<span class="id" title="notation">)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+To make thigs even more explicit, we can distribute the
+ <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.this"><span class="id" title="variable">this</span></a></span> <span class="inlinecode">|-&gt;</span> over the <span class="inlinecode">**</span>: 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="RangeR1" class="idref" href="#RangeR1"><span class="id" title="definition">RangeR1</span></a> (<a id="q:13" class="idref" href="#q:13"><span class="id" title="binder">q</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a>) (<a id="r:14" class="idref" href="#r:14"><span class="id" title="binder">r</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a>) : <span class="id" title="definition">Rep</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">as_Rep</span> (<span class="id" title="keyword">fun</span> <a id="this:15" class="idref" href="#this:15"><span class="id" title="binder">this</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#this:15"><span class="id" title="variable">this</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="notation">(</span><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_begin"><span class="id" title="definition">_begin</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">ulongR</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:13"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#r:14"><span class="id" title="variable">r</span></a>.(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#begin"><span class="id" title="projection">begin</span></a>)<span class="id" title="notation">)</span> <span class="id" title="notation">**</span> <span class="comment">(*mpred&nbsp;star*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#this:15"><span class="id" title="variable">this</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="notation">(</span><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_begin"><span class="id" title="definition">_begin</span></a>  <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">ulongR</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:13"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#r:14"><span class="id" title="variable">r</span></a>.(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#size"><span class="id" title="projection">size</span></a>)<span class="id" title="notation">)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<br/>
+<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.this"><span class="id" title="variable">this</span></a> |-&gt; (<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_begin"><span class="id" title="definition">_begin</span></a> |-&gt; <span class="id" title="abbreviation">ulongR</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a>.(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#begin"><span class="id" title="projection">begin</span></a>))
+<div class="paragraph"> </div>
+
+</span>
+<div class="paragraph"> </div>
+
+means "at the address <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.this"><span class="id" title="variable">this</span></a></span> <span class="inlinecode">+</span> <span class="inlinecode"><span class="id" title="var">offset_of</span>(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_begin"><span class="id" title="definition">_begin</span></a>)</span>", there's an
+unsigned integer r.(begin) held with permission <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a></span>.
+
+<div class="paragraph"> </div>
+
+Access to the "this" pointer is usually not necessary and only adds verbosity.
+However, at some places, e.g. in doubly linked lists, it is necessary:
+for example, the next node of a doubly linked list stores
+the "this" pointer in its prev field.
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="RangeR" class="idref" href="#RangeR"><span class="id" title="definition">RangeR</span></a> := <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#RangeR2"><span class="id" title="definition">RangeR2</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab8"></a><h2 class="section">Binary Search Trees</h2>
+
+
+<div class="paragraph"> </div>
+
+In this section, we implement the representation predicate for binary search trees
+corresponding to the following C++ struct:
+
+<div class="paragraph"> </div>
+
+<br/>
+<span class="inlinecode"><span class="id" title="var">template</span> &lt;<span class="id" title="var">typename</span> <span class="id" title="var">T</span> = <span class="id" title="var">int</span>&gt;<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">Tree</span> {<br/>
+&nbsp;&nbsp;<span class="id" title="var">T</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma._data"><span class="id" title="variable">_data</span></a>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">Tree</span>&lt;<span class="id" title="var">T</span>&gt;* <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma._left"><span class="id" title="variable">_left</span></a>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">Tree</span>&lt;<span class="id" title="var">T</span>&gt;* <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma._right"><span class="id" title="variable">_right</span></a>;<br/>
+};
+<div class="paragraph"> </div>
+
+</span>
+<div class="paragraph"> </div>
+
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Parameter</span> <a id="with_Sigma._data" class="idref" href="#with_Sigma._data"><span class="id" title="variable">_data</span></a> : <span class="id" title="abbreviation">field</span>.<br/>
+<span class="id" title="keyword">Parameter</span> <a id="with_Sigma._left" class="idref" href="#with_Sigma._left"><span class="id" title="variable">_left</span></a> : <span class="id" title="abbreviation">field</span>.<br/>
+<span class="id" title="keyword">Parameter</span> <a id="with_Sigma._right" class="idref" href="#with_Sigma._right"><span class="id" title="variable">_right</span></a> : <span class="id" title="abbreviation">field</span>.<br/>
+<span class="id" title="keyword">Parameter</span> <a id="with_Sigma._Tree" class="idref" href="#with_Sigma._Tree"><span class="id" title="variable">_Tree</span></a> : <span class="id" title="inductive">type</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab9"></a><h3 class="section">Unsorted Binary Trees</h3>
+
+
+<div class="paragraph"> </div>
+
+Following our recipe, we first define a Coq model of (unsorted) trees: 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="tree" class="idref" href="#tree"><span class="id" title="definition, inductive"><span id="tree_rect" class="id"><span id="tree_ind" class="id"><span id="tree_rec" class="id"><span id="tree_sind" class="id">tree</span></span></span></span></span></a> (<a id="A:24" class="idref" href="#A:24"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span>) : <span class="id" title="keyword">Type</span> :=<br/>
+| <a id="leaf" class="idref" href="#leaf"><span class="id" title="constructor">leaf</span></a><br/>
+| <a id="node" class="idref" href="#node"><span class="id" title="constructor">node</span></a> (<a id="data:27" class="idref" href="#data:27"><span class="id" title="binder">data</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#A:24"><span class="id" title="variable">A</span></a>) (<a id="left:28" class="idref" href="#left:28"><span class="id" title="binder">left</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree:25"><span class="id" title="inductive">tree</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#A:24"><span class="id" title="variable">A</span></a>) (<a id="right:29" class="idref" href="#right:29"><span class="id" title="binder">right</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree:25"><span class="id" title="inductive">tree</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#A:24"><span class="id" title="variable">A</span></a>).<br/>
+<span class="id" title="keyword">Arguments</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#leaf"><span class="id" title="constructor">leaf</span></a> {<span class="id" title="var">_</span>}.<br/>
+<span class="id" title="keyword">Arguments</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#node"><span class="id" title="constructor">node</span></a> {<span class="id" title="var">_</span>} <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#leaf"><span class="id" title="constructor">leaf</span></a></span> is the empty tree. <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#node"><span class="id" title="constructor">node</span></a></span> <span class="inlinecode"><span class="id" title="var">d</span></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a></span> is the tree node containing
+data <span class="inlinecode"><span class="id" title="var">d</span></span>, left subtree <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a></span> and right subtree <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a></span>. <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a></span> is polymorphic;
+it contains data <span class="inlinecode"><span class="id" title="var">d</span></span> of type <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma.sorted.A"><span class="id" title="variable">A</span></a></span> for any type <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma.sorted.A"><span class="id" title="variable">A</span></a></span>. Below, we'll instantiate
+<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a></span> to <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma.sorted.A"><span class="id" title="variable">A</span></a></span> <span class="inlinecode">:=</span> <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a></span> and to other types.
+
+<div class="paragraph"> </div>
+
+ For example, here's the tree with root <span class="inlinecode">3</span>, left child <span class="inlinecode">1</span>, and right
+child <span class="inlinecode">5</span>. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="ex_tree" class="idref" href="#ex_tree"><span class="id" title="definition">ex_tree</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#node"><span class="id" title="constructor">node</span></a> 3 (<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#node"><span class="id" title="constructor">node</span></a> 1 <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#leaf"><span class="id" title="constructor">leaf</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#leaf"><span class="id" title="constructor">leaf</span></a>) (<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#node"><span class="id" title="constructor">node</span></a> 5 <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#leaf"><span class="id" title="constructor">leaf</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#leaf"><span class="id" title="constructor">leaf</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+We can define pure Coq functions on <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a></span> for use in specs. For example,
+<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#in_tree"><span class="id" title="definition">in_tree</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a></span> <span class="inlinecode"><span class="id" title="var">t</span></span> is the proposition that reads "tree <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a></span> contains key <span class="inlinecode"><span class="id" title="var">t</span></span>".
+It's defined by recursion on <span class="inlinecode"><span class="id" title="var">t</span></span>.
+
+<div class="paragraph"> </div>
+
+A leaf never contains a key (represented by <span class="inlinecode"><span class="id" title="var">False</span></span>).
+
+<div class="paragraph"> </div>
+
+Key <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a></span> is <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#in_tree"><span class="id" title="definition">in_tree</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#node"><span class="id" title="constructor">node</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.y"><span class="id" title="variable">y</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a></span> when:
+
+<div class="paragraph"> </div>
+
+(1) <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a></span> <span class="inlinecode">=</span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.y"><span class="id" title="variable">y</span></a></span>; or
+
+<div class="paragraph"> </div>
+
+(2) <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a></span> is in the left subtree <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a></span>; or
+
+<div class="paragraph"> </div>
+
+(3) <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a></span> is in the right subtree <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a></span>.
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Fixpoint</span> <a id="in_tree" class="idref" href="#in_tree"><span class="id" title="definition">in_tree</span></a> {<a id="A:30" class="idref" href="#A:30"><span class="id" title="binder">A</span></a>:<span class="id" title="keyword">Type</span>} (<a id="x:31" class="idref" href="#x:31"><span class="id" title="binder">x</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#A:30"><span class="id" title="variable">A</span></a>) (<a id="t:32" class="idref" href="#t:32"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#A:30"><span class="id" title="variable">A</span></a>) : <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:32"><span class="id" title="variable">t</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#leaf"><span class="id" title="constructor">leaf</span></a> =&gt; <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#::type_scope:'False'"><span class="id" title="notation">False</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#node"><span class="id" title="constructor">node</span></a> <span class="id" title="var">y</span> <span class="id" title="var">l</span> <span class="id" title="var">r</span> =&gt; <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:31"><span class="id" title="variable">x</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><span class="id" title="var">y</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">\/</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#in_tree:33"><span class="id" title="definition">in_tree</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:31"><span class="id" title="variable">x</span></a> <span class="id" title="var">l</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">\/</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#in_tree:33"><span class="id" title="definition">in_tree</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:31"><span class="id" title="variable">x</span></a> <span class="id" title="var">r</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Now we define the representation predicate <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#treeR"><span class="id" title="definition">treeR</span></a></span> for <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a></span>s.
+<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#treeR"><span class="id" title="definition">treeR</span></a></span> is parameterized inside a <span class="inlinecode"><span class="id" title="keyword">Section</span></span> by:
+
+<div class="paragraph"> </div>
+
+(1) <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma.sorted.A"><span class="id" title="variable">A</span></a></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="keyword">Type</span></span>, the type of data stored in the trees; and
+
+<div class="paragraph"> </div>
+
+(2) <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a></span> <span class="inlinecode">:</span> <span class="inlinecode"><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a></span> <span class="inlinecode">-&gt;</span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma.sorted.A"><span class="id" title="variable">A</span></a></span> <span class="inlinecode">-&gt;</span> <span class="inlinecode"><span class="id" title="definition">Rep</span></span>, a representation predicate for <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma.sorted.A"><span class="id" title="variable">A</span></a></span>.
+
+<div class="paragraph"> </div>
+
+We'll use <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a></span> to define how that data stored in the tree is represented
+in memory.
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="with_Sigma.treeR" class="idref" href="#with_Sigma.treeR"><span class="id" title="section">treeR</span></a>.<br/>
+<span class="id" title="keyword">Context</span> {<a id="with_Sigma.treeR.A" class="idref" href="#with_Sigma.treeR.A"><span class="id" title="variable">A</span></a> : <span class="id" title="keyword">Type</span>} (<a id="with_Sigma.treeR.R" class="idref" href="#with_Sigma.treeR.R"><span class="id" title="variable">R</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#A:35"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">Rep</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">Fixpoint</span> <a id="treeR" class="idref" href="#treeR"><span class="id" title="definition">treeR</span></a> (<a id="q:37" class="idref" href="#q:37"><span class="id" title="binder">q</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a>) (<a id="t:38" class="idref" href="#t:38"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma.treeR.A"><span class="id" title="variable">A</span></a>) : <span class="id" title="definition">Rep</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">as_Rep</span> (<span class="id" title="keyword">fun</span> <a id="this:40" class="idref" href="#this:40"><span class="id" title="binder">this</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:38"><span class="id" title="variable">t</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#leaf"><span class="id" title="constructor">leaf</span></a> =&gt; <span class="id" title="notation">[|</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#this:40"><span class="id" title="variable">this</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="axiom">nullptr</span> <span class="id" title="notation">|]</span> <span class="comment">(*this&nbsp;|-&gt;&nbsp;nullR*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#node"><span class="id" title="constructor">node</span></a> <span class="id" title="var">d</span> <span class="id" title="var">l</span> <span class="id" title="var">r</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">Exists</span> <span class="id" title="notation">(</span><a id="lp:42" class="idref" href="#lp:42"><span class="id" title="binder">lp</span></a> : <span class="id" title="axiom">ptr</span>) (<a id="rp:43" class="idref" href="#rp:43"><span class="id" title="binder">rp</span></a> : <span class="id" title="axiom">ptr</span><span class="id" title="notation">),</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#lp:42"><span class="id" title="variable">lp</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#treeR:39"><span class="id" title="definition">treeR</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:37"><span class="id" title="variable">q</span></a> <span class="id" title="var">l</span> <span class="id" title="notation">**</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#rp:43"><span class="id" title="variable">rp</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#treeR:39"><span class="id" title="definition">treeR</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:37"><span class="id" title="variable">q</span></a> <span class="id" title="var">r</span> <span class="id" title="notation">**</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#this:40"><span class="id" title="variable">this</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="notation">(</span><span class="id" title="abbreviation">_field</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_data"><span class="id" title="axiom">_data</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma.treeR.R"><span class="id" title="variable">R</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:37"><span class="id" title="variable">q</span></a> <span class="id" title="var">d</span> <span class="id" title="notation">**</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">_field</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_left"><span class="id" title="axiom">_left</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="notation">ptrR</span><span class="id" title="notation">&lt;</span><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_Tree"><span class="id" title="axiom">_Tree</span></a><span class="id" title="notation">&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:37"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#lp:42"><span class="id" title="variable">lp</span></a> <span class="id" title="notation">**</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">_field</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_right"><span class="id" title="axiom">_right</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="notation">ptrR</span><span class="id" title="notation">&lt;</span><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_Tree"><span class="id" title="axiom">_Tree</span></a><span class="id" title="notation">&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:37"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#rp:43"><span class="id" title="variable">rp</span></a><span class="id" title="notation">)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#treeR"><span class="id" title="definition">treeR</span></a></span> predicate is defined by recursion on the Coq
+tree <span class="inlinecode"><span class="id" title="var">t</span></span>. Leaves are represented by the <span class="inlinecode"><span class="id" title="axiom">nullptr</span></span>, which we write as:
+<br/>
+<span class="inlinecode">[| <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.this"><span class="id" title="variable">this</span></a> = <span class="id" title="axiom">nullptr</span> |]
+<div class="paragraph"> </div>
+
+</span>
+<div class="paragraph"> </div>
+
+When the tree is a <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#node"><span class="id" title="constructor">node</span></a></span> <span class="inlinecode"><span class="id" title="var">d</span></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a></span>, we assert that field <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma._data"><span class="id" title="variable">_data</span></a></span> contains
+<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode"><span class="id" title="var">d</span></span> (representation of <span class="inlinecode"><span class="id" title="var">d</span></span> with permission <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a></span>) and that there exist
+pointers <span class="inlinecode"><span class="id" title="var">lp</span></span> and <span class="inlinecode"><span class="id" title="var">rp</span></span> stored at the <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma._left"><span class="id" title="variable">_left</span></a></span> and <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma._right"><span class="id" title="variable">_right</span></a></span> fields.
+
+<div class="paragraph"> </div>
+
+We separately assert that:
+
+<div class="paragraph"> </div>
+
+(1) At <span class="inlinecode"><span class="id" title="var">lp</span></span>, there's a <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#treeR"><span class="id" title="definition">treeR</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a></span>, memory implementing the left subtree; and
+
+<div class="paragraph"> </div>
+
+(2) At <span class="inlinecode"><span class="id" title="var">rp</span></span>, there's a <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#treeR"><span class="id" title="definition">treeR</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a></span>, memory implementing the right subtree.
+
+<div class="paragraph"> </div>
+
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma.treeR"><span class="id" title="section">treeR</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab10"></a><h3 class="section">Sorted Binary Trees</h3>
+
+
+<div class="paragraph"> </div>
+
+To build sorted trees from unsorted ones, we define a Coq predicate, <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#sorted"><span class="id" title="definition">sorted</span></a></span> <span class="inlinecode"><span class="id" title="var">t</span></span>.
+A <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#leaf"><span class="id" title="constructor">leaf</span></a></span> is always sorted. A <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#node"><span class="id" title="constructor">node</span></a></span> <span class="inlinecode"><span class="id" title="var">d</span></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a></span> when <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a></span> is sorted, <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a></span> is sorted,
+all the values in <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a></span> are less than <span class="inlinecode"><span class="id" title="var">d</span></span>, and all the values in <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a></span> are greater
+than <span class="inlinecode"><span class="id" title="var">d</span></span>. This definition additionally implies that the tree contains no duplicate
+keys.
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="with_Sigma.sorted" class="idref" href="#with_Sigma.sorted"><span class="id" title="section">sorted</span></a>.<br/>
+<span class="id" title="keyword">Context</span> {<a id="with_Sigma.sorted.A" class="idref" href="#with_Sigma.sorted.A"><span class="id" title="variable">A</span></a>} (<a id="with_Sigma.sorted.lt" class="idref" href="#with_Sigma.sorted.lt"><span class="id" title="variable">lt</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#A:44"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#A:44"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Prop</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">Fixpoint</span> <a id="sorted" class="idref" href="#sorted"><span class="id" title="definition">sorted</span></a> (<a id="t:46" class="idref" href="#t:46"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma.sorted.A"><span class="id" title="variable">A</span></a>) : <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:46"><span class="id" title="variable">t</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#leaf"><span class="id" title="constructor">leaf</span></a> =&gt; <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#::type_scope:'True'"><span class="id" title="notation">True</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#node"><span class="id" title="constructor">node</span></a> <span class="id" title="var">d</span> <span class="id" title="var">l</span> <span class="id" title="var">r</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#sorted:47"><span class="id" title="definition">sorted</span></a> <span class="id" title="var">l</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#sorted:47"><span class="id" title="definition">sorted</span></a> <span class="id" title="var">r</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">(</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a id="x:49" class="idref" href="#x:49"><span class="id" title="binder">x</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">,</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#in_tree"><span class="id" title="definition">in_tree</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:49"><span class="id" title="variable">x</span></a> <span class="id" title="var">l</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma.sorted.lt"><span class="id" title="variable">lt</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:49"><span class="id" title="variable">x</span></a> <span class="id" title="var">d</span><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">(</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a id="y:50" class="idref" href="#y:50"><span class="id" title="binder">y</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">,</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#in_tree"><span class="id" title="definition">in_tree</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#y:50"><span class="id" title="variable">y</span></a> <span class="id" title="var">r</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma.sorted.lt"><span class="id" title="variable">lt</span></a> <span class="id" title="var">d</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#y:50"><span class="id" title="variable">y</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma.sorted"><span class="id" title="section">sorted</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The representation predicate <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#ZbstR"><span class="id" title="definition">ZbstR</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode"><span class="id" title="var">t</span></span> uses <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#sorted"><span class="id" title="definition">sorted</span></a></span> to lift
+<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#treeR"><span class="id" title="definition">treeR</span></a></span> to sorted trees of <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a></span>s. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="ZbstR" class="idref" href="#ZbstR"><span class="id" title="definition">ZbstR</span></a> (<a id="q:51" class="idref" href="#q:51"><span class="id" title="binder">q</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a>) (<a id="t:52" class="idref" href="#t:52"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>) : <span class="id" title="definition">Rep</span> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#treeR"><span class="id" title="definition">treeR</span></a> (<span class="id" title="keyword">fun</span> <a id="q:53" class="idref" href="#q:53"><span class="id" title="binder">q</span></a> <a id="z:54" class="idref" href="#z:54"><span class="id" title="binder">z</span></a> =&gt; <span class="id" title="abbreviation">uintR</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:53"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#z:54"><span class="id" title="variable">z</span></a>) <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:51"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:52"><span class="id" title="variable">t</span></a> <span class="id" title="notation">**</span> <span class="id" title="notation">[|</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#sorted"><span class="id" title="definition">sorted</span></a> <span class="id" title="definition">Z.lt</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:52"><span class="id" title="variable">t</span></a> <span class="id" title="notation">|]</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode">(<span class="id" title="keyword">fun</span></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.z"><span class="id" title="variable">z</span></a></span> <span class="inlinecode">=&gt;</span> <span class="inlinecode"><span class="id" title="abbreviation">uintR</span></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.z"><span class="id" title="variable">z</span></a>)</span> instantiates <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#treeR"><span class="id" title="definition">treeR</span></a></span>'s parameter <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a></span> to the
+representation predicate of unsigned integers. 
+<div class="paragraph"> </div>
+
+<a id="lab11"></a><h3 class="section">Count</h3>
+
+
+<div class="paragraph"> </div>
+
+<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#count"><span class="id" title="definition">count</span></a></span> is a Coq function that computes the number of nodes in a <span class="inlinecode"><span class="id" title="var">Coq</span></span> tree. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Fixpoint</span> <a id="count" class="idref" href="#count"><span class="id" title="definition">count</span></a> (<a id="t:55" class="idref" href="#t:55"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:55"><span class="id" title="variable">t</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#leaf"><span class="id" title="constructor">leaf</span></a> =&gt; 0<br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#node"><span class="id" title="constructor">node</span></a> <span class="id" title="var">d</span> <span class="id" title="var">l</span> <span class="id" title="var">r</span> =&gt; 1 <span class="id" title="notation">+</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#count:56"><span class="id" title="definition">count</span></a> <span class="id" title="var">l</span> <span class="id" title="notation">+</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#count:56"><span class="id" title="definition">count</span></a> <span class="id" title="var">r</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="comment">(**Compute&nbsp;count&nbsp;leaf.*)</span><br/>
+</div>
+
+<div class="doc">
+    = 0
+        : Z Compute count ex_tree.     = 3
+        : Z 
+<div class="paragraph"> </div>
+
+ <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#count_spec"><span class="id" title="definition">count_spec</span></a></span> uses Coq <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#count"><span class="id" title="definition">count</span></a></span> to specify a C++ function that counts the
+number of nodes in a BST:
+
+<div class="paragraph"> </div>
+
+<br/>
+<span class="inlinecode"><span class="id" title="var">unsigned</span> <span class="id" title="var">int</span> <span class="id" title="var">Tree</span>::<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#count"><span class="id" title="definition">count</span></a>() <span class="id" title="var">const</span>;
+<div class="paragraph"> </div>
+
+</span> 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="count_spec" class="idref" href="#count_spec"><span class="id" title="definition">count_spec</span></a> (<a id="this:58" class="idref" href="#this:58"><span class="id" title="binder">this</span></a> : <span class="id" title="axiom">ptr</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">cpp_spec</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">[]</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#547692780023ef044153bc0c4f871ef7"><span class="id" title="notation">$</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">with</span> <span class="id" title="notation">(</span><a id="q:59" class="idref" href="#q:59"><span class="id" title="binder">q</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a>) (<a id="t:60" class="idref" href="#t:60"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a><span class="id" title="notation">)</span><br/>
+&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">prepost</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#this:58"><span class="id" title="variable">this</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#treeR"><span class="id" title="definition">treeR</span></a> (<span class="id" title="keyword">fun</span> <a id="q:61" class="idref" href="#q:61"><span class="id" title="binder">q</span></a> <a id="z:62" class="idref" href="#z:62"><span class="id" title="binder">z</span></a> =&gt; <span class="id" title="abbreviation">uintR</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:61"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#z:62"><span class="id" title="variable">z</span></a>) <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:59"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:60"><span class="id" title="variable">t</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">post</span><span class="id" title="notation">[</span><span class="id" title="constructor">Vint</span> (<span class="id" title="definition">trim</span> 32 (<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#count"><span class="id" title="definition">count</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:60"><span class="id" title="variable">t</span></a>))<span class="id" title="notation">]</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#::bi_scope:'emp'"><span class="id" title="notation">emp</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+For more details the syntax/notations for writing the specifications of functions,
+please refer to <a href="https://gitlab.com/bedrocksystems/cpp2v/-/blob/master/doc/specs.md">cpp2v/doc/specs.md</a>.
+
+<div class="paragraph"> </div>
+
+We <span class="inlinecode"><span class="id" title="definition">trim</span></span> the count in the postcondition since it might overflow.
+Alternatively, we could impose a bounds condition in the precondition:
+
+<div class="paragraph"> </div>
+
+<br/>
+<span class="inlinecode">&nbsp;&nbsp;\<span class="id" title="var">pre</span> [| <span class="id" title="var">bound</span> <span class="id" title="var">W64</span> <span class="id" title="var">Unsigned</span> (<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#count"><span class="id" title="definition">count</span></a> <span class="id" title="var">t</span>) |]
+<div class="paragraph"> </div>
+
+</span>
+<div class="paragraph"> </div>
+
+<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#count"><span class="id" title="definition">count</span></a></span> doesn't require that <span class="inlinecode"><span class="id" title="var">t</span></span> be sorted so the prepost uses just
+<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#treeR"><span class="id" title="definition">treeR</span></a></span>, not <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#ZbstR"><span class="id" title="definition">ZbstR</span></a></span>.
+
+<div class="paragraph"> </div>
+
+<a id="lab12"></a><h3 class="section">Insert</h3>
+
+<div class="paragraph"> </div>
+
+ Here's the spec for a function that inserts a key into a tree:
+
+<div class="paragraph"> </div>
+
+<br/>
+<span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> <span class="id" title="var">Tree</span>::<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#insert"><span class="id" title="definition">insert</span></a>(<span class="id" title="var">int</span>);
+<div class="paragraph"> </div>
+
+</span>
+<div class="paragraph"> </div>
+
+On duplicate keys, <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#insert"><span class="id" title="definition">insert</span></a></span> does nothing (we treat the tree as a set rather
+than a multiset).
+ 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="insert_spec" class="idref" href="#insert_spec"><span class="id" title="definition">insert_spec</span></a> (<a id="this:63" class="idref" href="#this:63"><span class="id" title="binder">this</span></a> : <span class="id" title="axiom">ptr</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">cpp_spec</span> <span class="id" title="constructor">Tbool</span> <span class="id" title="notation">[</span><span class="id" title="abbreviation">Tint</span><span class="id" title="notation">]</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#547692780023ef044153bc0c4f871ef7"><span class="id" title="notation">$</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">with</span> <span class="id" title="notation">(</span><a id="t:64" class="idref" href="#t:64"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a><span class="id" title="notation">)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">arg</span><span class="id" title="notation">{</span><a id="x:65" class="idref" href="#x:65"><span class="id" title="binder">x</span></a><span class="id" title="notation">}</span> "x" <span class="id" title="notation">(</span><span class="id" title="constructor">Vint</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:65"><span class="id" title="variable">x</span></a><span class="id" title="notation">)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">pre</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#this:63"><span class="id" title="variable">this</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#ZbstR"><span class="id" title="definition">ZbstR</span></a> 1 <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:64"><span class="id" title="variable">t</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">post</span> <span class="id" title="notation">Exists</span> <a id="t':66" class="idref" href="#t':66"><span class="id" title="binder">t'</span></a><span class="id" title="notation">,</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#this:63"><span class="id" title="variable">this</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#ZbstR"><span class="id" title="definition">ZbstR</span></a> 1 <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t':66"><span class="id" title="variable">t'</span></a> <span class="id" title="notation">**</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">[|</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a id="y:67" class="idref" href="#y:67"><span class="id" title="binder">y</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">,</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#in_tree"><span class="id" title="definition">in_tree</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#y:67"><span class="id" title="variable">y</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t':66"><span class="id" title="variable">t'</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#y:67"><span class="id" title="variable">y</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:65"><span class="id" title="variable">x</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#f031fe1957c4a4a8e217aa46af2b4e25"><span class="id" title="notation">\/</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#in_tree"><span class="id" title="definition">in_tree</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#y:67"><span class="id" title="variable">y</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:64"><span class="id" title="variable">t</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">)</span></a> <span class="id" title="notation">|]</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+More intensionally, we could write this spec using a Coq implementation of
+<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#insert"><span class="id" title="definition">insert</span></a></span>:
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Fixpoint</span> <a id="insert" class="idref" href="#insert"><span class="id" title="definition">insert</span></a> <a id="x:68" class="idref" href="#x:68"><span class="id" title="binder">x</span></a> (<a id="t:69" class="idref" href="#t:69"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>) : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:69"><span class="id" title="variable">t</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#leaf"><span class="id" title="constructor">leaf</span></a> =&gt; <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#node"><span class="id" title="constructor">node</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:68"><span class="id" title="variable">x</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#leaf"><span class="id" title="constructor">leaf</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#leaf"><span class="id" title="constructor">leaf</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#node"><span class="id" title="constructor">node</span></a> <span class="id" title="var">y</span> <span class="id" title="var">l</span> <span class="id" title="var">r</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <span class="id" title="definition">Z.ltb</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:68"><span class="id" title="variable">x</span></a> <span class="id" title="var">y</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#node"><span class="id" title="constructor">node</span></a> <span class="id" title="var">y</span> (<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#insert:70"><span class="id" title="definition">insert</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:68"><span class="id" title="variable">x</span></a> <span class="id" title="var">l</span>) <span class="id" title="var">r</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <span class="id" title="definition">Z.ltb</span> <span class="id" title="var">y</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:68"><span class="id" title="variable">x</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#node"><span class="id" title="constructor">node</span></a> <span class="id" title="var">y</span> <span class="id" title="var">l</span> (<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#insert:70"><span class="id" title="definition">insert</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:68"><span class="id" title="variable">x</span></a> <span class="id" title="var">r</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:69"><span class="id" title="variable">t</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="insert_spec'" class="idref" href="#insert_spec'"><span class="id" title="definition">insert_spec'</span></a> (<a id="this:72" class="idref" href="#this:72"><span class="id" title="binder">this</span></a> : <span class="id" title="axiom">ptr</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">cpp_spec</span> <span class="id" title="constructor">Tbool</span> <span class="id" title="notation">[</span><span class="id" title="abbreviation">Tint</span><span class="id" title="notation">]</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#547692780023ef044153bc0c4f871ef7"><span class="id" title="notation">$</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">with</span> <span class="id" title="notation">(</span><a id="t:73" class="idref" href="#t:73"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a><span class="id" title="notation">)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">arg</span><span class="id" title="notation">{</span><a id="x:74" class="idref" href="#x:74"><span class="id" title="binder">x</span></a><span class="id" title="notation">}</span> "x" <span class="id" title="notation">(</span><span class="id" title="constructor">Vint</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:74"><span class="id" title="variable">x</span></a><span class="id" title="notation">)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">pre</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#this:72"><span class="id" title="variable">this</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#ZbstR"><span class="id" title="definition">ZbstR</span></a> 1 <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:73"><span class="id" title="variable">t</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">post</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#this:72"><span class="id" title="variable">this</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#ZbstR"><span class="id" title="definition">ZbstR</span></a> 1 (<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#insert"><span class="id" title="definition">insert</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:74"><span class="id" title="variable">x</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:73"><span class="id" title="variable">t</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab13"></a><h2 class="section">EXERCISE: Linked Lists</h2>
+
+
+<div class="paragraph"> </div>
+
+<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma.FILL_IN"><span class="id" title="variable">FILL_IN</span></a></span> in the representation predicate for linked lists, represented in
+Coq by the datatype <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#llist"><span class="id" title="inductive">llist</span></a></span> and in C++ by the struct:
+
+<div class="paragraph"> </div>
+
+<br/>
+<span class="inlinecode"><span class="id" title="keyword">struct</span> <span class="id" title="library">List</span> {<br/>
+&nbsp;&nbsp;<span class="id" title="var">int</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma._data"><span class="id" title="variable">_data</span></a>;<br/>
+&nbsp;&nbsp;<span class="id" title="library">List</span>* <span class="id" title="var">next</span>;<br/>
+};
+<div class="paragraph"> </div>
+
+</span>
+<div class="paragraph"> </div>
+
+The empty linked list is represented by <span class="inlinecode"><span class="id" title="axiom">nullptr</span></span>.
+
+<div class="paragraph"> </div>
+
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Parameter</span> <a id="with_Sigma._List" class="idref" href="#with_Sigma._List"><span class="id" title="variable">_List</span></a> : <span class="id" title="inductive">type</span>.<br/>
+<span class="id" title="keyword">Parameter</span> <a id="with_Sigma._next" class="idref" href="#with_Sigma._next"><span class="id" title="variable">_next</span></a> : <span class="id" title="abbreviation">field</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="llist" class="idref" href="#llist"><span class="id" title="definition, inductive"><span id="llist_rect" class="id"><span id="llist_ind" class="id"><span id="llist_rec" class="id"><span id="llist_sind" class="id">llist</span></span></span></span></span></a> : <span class="id" title="keyword">Type</span> :=<br/>
+| <a id="nil" class="idref" href="#nil"><span class="id" title="constructor">nil</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#llist:79"><span class="id" title="inductive">llist</span></a><br/>
+| <a id="cons" class="idref" href="#cons"><span class="id" title="constructor">cons</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#llist:79"><span class="id" title="inductive">llist</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#llist:79"><span class="id" title="inductive">llist</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Axiom</span> <a id="with_Sigma.FILL_IN" class="idref" href="#with_Sigma.FILL_IN"><span class="id" title="variable">FILL_IN</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> {<a id="T:81" class="idref" href="#T:81"><span class="id" title="binder">T</span></a>}<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">,</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#T:81"><span class="id" title="variable">T</span></a>. <span class="comment">(*&nbsp;Used&nbsp;to&nbsp;mark&nbsp;exercises&nbsp;in&nbsp;this&nbsp;file&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Fixpoint</span> <a id="llistR" class="idref" href="#llistR"><span class="id" title="definition">llistR</span></a> (<a id="q:84" class="idref" href="#q:84"><span class="id" title="binder">q</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a>) (<a id="l:85" class="idref" href="#l:85"><span class="id" title="binder">l</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#llist"><span class="id" title="inductive">llist</span></a>) : <span class="id" title="definition">Rep</span> := <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#FILL_IN"><span class="id" title="axiom">FILL_IN</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab14"></a><h2 class="section">Range Maps</h2>
+
+
+<div class="paragraph"> </div>
+
+Here's a Coq model and representation predicate for "Range Maps", binary
+trees of <span class="inlinecode"><span class="id" title="var">Entries</span></span> that associate ranges of addresses to payloads.
+
+<div class="paragraph"> </div>
+
+<br/>
+<span class="inlinecode">&nbsp;&nbsp;<span class="id" title="var">template</span>&lt;<span class="id" title="var">typename</span> <span class="id" title="var">T</span>&gt;<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry"><span class="id" title="record">Entry</span></a> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma._range"><span class="id" title="variable">_range</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">T</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma._payload"><span class="id" title="variable">_payload</span></a>;<br/>
+&nbsp;&nbsp;};<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">template</span>&lt;<span class="id" title="var">typename</span> <span class="id" title="var">T</span>&gt;<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">using</span> <span class="id" title="var">EntryTree</span> = <span class="id" title="var">Tree</span>&lt;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry"><span class="id" title="record">Entry</span></a>&lt;<span class="id" title="var">T</span>&gt;&gt;;
+<div class="paragraph"> </div>
+
+</span>
+<div class="paragraph"> </div>
+
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Parameter</span> <a id="with_Sigma._Entry" class="idref" href="#with_Sigma._Entry"><span class="id" title="variable">_Entry</span></a> : <span class="id" title="definition">globname</span>.<br/>
+<span class="id" title="keyword">Parameter</span> <a id="with_Sigma._range" class="idref" href="#with_Sigma._range"><span class="id" title="variable">_range</span></a> : <span class="id" title="abbreviation">field</span>.<br/>
+<span class="id" title="keyword">Parameter</span> <a id="with_Sigma._payload" class="idref" href="#with_Sigma._payload"><span class="id" title="variable">_payload</span></a> : <span class="id" title="abbreviation">field</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The Coq model of an <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry"><span class="id" title="record">Entry</span></a></span> tracks <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a></span>s and payloads of type <span class="inlinecode"><span class="id" title="var">T</span></span>. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Record</span> <a id="Entry" class="idref" href="#Entry"><span class="id" title="record">Entry</span></a> {<a id="T:93" class="idref" href="#T:93"><span class="id" title="binder">T</span></a> : <span class="id" title="keyword">Type</span>} :=<br/>
+&nbsp;&nbsp;{ <a id="range" class="idref" href="#range"><span class="id" title="projection">range</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="payload" class="idref" href="#payload"><span class="id" title="projection">payload</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#T:93"><span class="id" title="variable">T</span></a> }.<br/>
+<span class="id" title="keyword">Arguments</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry"><span class="id" title="record">Entry</span></a> <span class="id" title="var">_</span> : <span class="id" title="tactic">clear</span> <span class="id" title="var">implicits</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Here's the corresponding representation predicate: 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="EntryR" class="idref" href="#EntryR"><span class="id" title="definition">EntryR</span></a> (<a id="q:97" class="idref" href="#q:97"><span class="id" title="binder">q</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a>) (<a id="e:98" class="idref" href="#e:98"><span class="id" title="binder">e</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry"><span class="id" title="record">Entry</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>) : <span class="id" title="definition">Rep</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="abbreviation">_field</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_range"><span class="id" title="axiom">_range</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#RangeR"><span class="id" title="definition">RangeR</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:97"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#e:98"><span class="id" title="variable">e</span></a>.(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#range"><span class="id" title="projection">range</span></a>) <span class="id" title="notation">**</span><br/>
+&nbsp;&nbsp;<span class="id" title="abbreviation">_field</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_payload"><span class="id" title="axiom">_payload</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">intR</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:97"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#e:98"><span class="id" title="variable">e</span></a>.(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#payload"><span class="id" title="projection">payload</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+One range is less than another if its <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#begin"><span class="id" title="projection">begin</span></a></span> value is less-than. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="Range_lt" class="idref" href="#Range_lt"><span class="id" title="definition">Range_lt</span></a> (<a id="r1:99" class="idref" href="#r1:99"><span class="id" title="binder">r1</span></a> <a id="r2:100" class="idref" href="#r2:100"><span class="id" title="binder">r2</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a>) : <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#r1:99"><span class="id" title="variable">r1</span></a>.(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#begin"><span class="id" title="projection">begin</span></a>) <span class="id" title="notation">&lt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#r2:100"><span class="id" title="variable">r2</span></a>.(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#begin"><span class="id" title="projection">begin</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">Entries</span></span> are less-than when their <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a></span>s are less-than. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="Entry_lt" class="idref" href="#Entry_lt"><span class="id" title="definition">Entry_lt</span></a> {<a id="A:101" class="idref" href="#A:101"><span class="id" title="binder">A</span></a>} (<a id="e1:102" class="idref" href="#e1:102"><span class="id" title="binder">e1</span></a> <a id="e2:103" class="idref" href="#e2:103"><span class="id" title="binder">e2</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry"><span class="id" title="record">Entry</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#A:101"><span class="id" title="variable">A</span></a>) : <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range_lt"><span class="id" title="definition">Range_lt</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#e1:102"><span class="id" title="variable">e1</span></a>.(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#range"><span class="id" title="projection">range</span></a>) <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#e2:103"><span class="id" title="variable">e2</span></a>.(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#range"><span class="id" title="projection">range</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+A <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a></span> of <span class="inlinecode"><span class="id" title="var">Entries</span></span> is sorted if the <span class="inlinecode"><span class="id" title="var">Entries</span></span> are sorted by <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry_lt"><span class="id" title="definition">Entry_lt</span></a></span>. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="Entry_sorted" class="idref" href="#Entry_sorted"><span class="id" title="definition">Entry_sorted</span></a> {<a id="T:104" class="idref" href="#T:104"><span class="id" title="binder">T</span></a>} (<a id="t:105" class="idref" href="#t:105"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a> (<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry"><span class="id" title="record">Entry</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#T:104"><span class="id" title="variable">T</span></a>)) :=<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#sorted"><span class="id" title="definition">sorted</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry_lt"><span class="id" title="definition">Entry_lt</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:105"><span class="id" title="variable">t</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The representation predicate of an <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry"><span class="id" title="record">Entry</span></a></span> <span class="inlinecode"><span class="id" title="var">BST</span></span>: 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="Entry_bstR" class="idref" href="#Entry_bstR"><span class="id" title="definition">Entry_bstR</span></a> (<a id="q:106" class="idref" href="#q:106"><span class="id" title="binder">q</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a>) (<a id="t:107" class="idref" href="#t:107"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a> (<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry"><span class="id" title="record">Entry</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>)) : <span class="id" title="definition">Rep</span> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#treeR"><span class="id" title="definition">treeR</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#EntryR"><span class="id" title="definition">EntryR</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:106"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:107"><span class="id" title="variable">t</span></a> <span class="id" title="notation">**</span> <span class="id" title="notation">[|</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry_sorted"><span class="id" title="definition">Entry_sorted</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:107"><span class="id" title="variable">t</span></a> <span class="id" title="notation">|]</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Putting the pieces together, here's the function spec for
+<span class="inlinecode"><span class="id" title="var">lookup</span></span>, which maps an address <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a></span> in a <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a></span>s of <span class="inlinecode"><span class="id" title="var">Entries</span></span> to the
+corresponding <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry"><span class="id" title="record">Entry</span></a></span>, if any.  
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="in_range" class="idref" href="#in_range"><span class="id" title="definition">in_range</span></a> (<a id="r:108" class="idref" href="#r:108"><span class="id" title="binder">r</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a>) (<a id="x:109" class="idref" href="#x:109"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>) :=<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#r:108"><span class="id" title="variable">r</span></a>.(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#begin"><span class="id" title="projection">begin</span></a>) <span class="id" title="notation">&lt;=</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:109"><span class="id" title="variable">x</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:109"><span class="id" title="variable">x</span></a> <span class="id" title="notation">&lt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#r:108"><span class="id" title="variable">r</span></a>.(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#begin"><span class="id" title="projection">begin</span></a>) <span class="id" title="notation">+</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#r:108"><span class="id" title="variable">r</span></a>.(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#size"><span class="id" title="projection">size</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="payload_of_address" class="idref" href="#payload_of_address"><span class="id" title="definition">payload_of_address</span></a> (<a id="t:110" class="idref" href="#t:110"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a> (<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry"><span class="id" title="record">Entry</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>)) (<a id="x:111" class="idref" href="#x:111"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>) (<a id="p:112" class="idref" href="#p:112"><span class="id" title="binder">p</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>) : <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">exists</span></a> <a id="e:113" class="idref" href="#e:113"><span class="id" title="binder">e</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry"><span class="id" title="record">Entry</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a><br/>
+&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#in_tree"><span class="id" title="definition">in_tree</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#e:113"><span class="id" title="variable">e</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:110"><span class="id" title="variable">t</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#in_range"><span class="id" title="definition">in_range</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#e:113"><span class="id" title="variable">e</span></a>.(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#range"><span class="id" title="projection">range</span></a>) <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:111"><span class="id" title="variable">x</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#p:112"><span class="id" title="variable">p</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#e:113"><span class="id" title="variable">e</span></a>.(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#payload"><span class="id" title="projection">payload</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#borrow_from"><span class="id" title="definition">borrow_from</span></a></span> <span class="inlinecode"><span class="id" title="var">all</span></span> <span class="inlinecode"><span class="id" title="var">borrow</span></span>, which is used in <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#lookup_spec"><span class="id" title="definition">lookup_spec</span></a></span> below, encapsulates
+a pattern for "borrowing" the resources <span class="inlinecode"><span class="id" title="var">borrow</span></span> from a larger world <span class="inlinecode"><span class="id" title="var">all</span></span>.
+
+<div class="paragraph"> </div>
+
+With <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#borrow_from"><span class="id" title="definition">borrow_from</span></a></span> you get access to two disjoint resources:
+
+<div class="paragraph"> </div>
+
+(1) You have access to <span class="inlinecode"><span class="id" title="var">borrow</span></span>; and
+
+<div class="paragraph"> </div>
+
+(2) If you give up <span class="inlinecode"><span class="id" title="var">borrow</span></span>, you get back <span class="inlinecode"><span class="id" title="var">all</span></span>.
+ 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="borrow_from" class="idref" href="#borrow_from"><span class="id" title="definition">borrow_from</span></a> (<a id="all:114" class="idref" href="#all:114"><span class="id" title="binder">all</span></a> <a id="borrow:115" class="idref" href="#borrow:115"><span class="id" title="binder">borrow</span></a> : <span class="id" title="definition">mpred</span>) : <span class="id" title="definition">mpred</span> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#borrow:115"><span class="id" title="variable">borrow</span></a> <span class="id" title="notation">**</span> <span class="id" title="notation">(</span><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#borrow:115"><span class="id" title="variable">borrow</span></a> <span class="id" title="notation">-*</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#all:114"><span class="id" title="variable">all</span></a><span class="id" title="notation">)</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Using borrow, we can write the specification for <span class="inlinecode"><span class="id" title="var">lookup</span></span>:
+ 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="lookup_spec" class="idref" href="#lookup_spec"><span class="id" title="definition">lookup_spec</span></a> (<a id="this:116" class="idref" href="#this:116"><span class="id" title="binder">this</span></a> : <span class="id" title="axiom">ptr</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">cpp_spec</span> <span class="id" title="constructor">Tbool</span> <span class="id" title="notation">[</span><span class="id" title="abbreviation">Tint</span><span class="id" title="notation">;</span> <span class="id" title="constructor">Tptr</span> <span class="id" title="abbreviation">Tint</span><span class="id" title="notation">]</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#547692780023ef044153bc0c4f871ef7"><span class="id" title="notation">$</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">arg</span><span class="id" title="notation">{</span><a id="x:117" class="idref" href="#x:117"><span class="id" title="binder">x</span></a><span class="id" title="notation">}</span> "x" <span class="id" title="notation">(</span><span class="id" title="constructor">Vint</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:117"><span class="id" title="variable">x</span></a><span class="id" title="notation">)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">arg</span><span class="id" title="notation">{</span><a id="out:118" class="idref" href="#out:118"><span class="id" title="binder">out</span></a><span class="id" title="notation">}</span> "out" <span class="id" title="notation">(</span><span class="id" title="constructor">Vptr</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#out:118"><span class="id" title="variable">out</span></a><span class="id" title="notation">)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">with</span> <span class="id" title="notation">(</span><a id="q:119" class="idref" href="#q:119"><span class="id" title="binder">q</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a>) (<a id="t:120" class="idref" href="#t:120"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#tree"><span class="id" title="inductive">tree</span></a> (<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry"><span class="id" title="record">Entry</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>)<span class="id" title="notation">)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">pre</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#out:118"><span class="id" title="variable">out</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">anyR</span> (<span class="id" title="constructor">Tptr</span> (<span class="id" title="constructor">Tnamed</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_Entry"><span class="id" title="axiom">_Entry</span></a>)) 1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">prepost</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#this:116"><span class="id" title="variable">this</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry_bstR"><span class="id" title="definition">Entry_bstR</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:119"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:120"><span class="id" title="variable">t</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">\</span><span class="id" title="notation">post</span><span class="id" title="notation">{</span><a id="r:121" class="idref" href="#r:121"><span class="id" title="binder">r</span></a><span class="id" title="notation">}[</span><span class="id" title="definition">Vbool</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#r:121"><span class="id" title="variable">r</span></a><span class="id" title="notation">]</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+The postcondition is keyed on the Boolean result <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a></span>, with <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a>=<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a></span>
+      indicating a successful lookup.
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#r:121"><span class="id" title="variable">r</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">(</span></a><span class="id" title="notation">Exists</span> <a id="e:123" class="idref" href="#e:123"><span class="id" title="binder">e</span></a><span class="id" title="notation">,</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">[|</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#in_tree"><span class="id" title="definition">in_tree</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#e:123"><span class="id" title="variable">e</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:120"><span class="id" title="variable">t</span></a> <span class="id" title="notation">|]</span> <span class="id" title="notation">**</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">[|</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#in_range"><span class="id" title="definition">in_range</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#e:123"><span class="id" title="variable">e</span></a>.(<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#range"><span class="id" title="projection">range</span></a>) <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:117"><span class="id" title="variable">x</span></a> <span class="id" title="notation">|]</span> <span class="id" title="notation">**</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">Exists</span> <a id="p:124" class="idref" href="#p:124"><span class="id" title="binder">p</span></a><span class="id" title="notation">,</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+A pointer to the looked-up entry is passed in the
+            out parameter <span class="inlinecode"><span class="id" title="var">out</span></span>.
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#out:118"><span class="id" title="variable">out</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="notation">ptrR</span><span class="id" title="notation">&lt;</span><span class="id" title="constructor">Tnamed</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#_Entry"><span class="id" title="axiom">_Entry</span></a><span class="id" title="notation">&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:119"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#p:124"><span class="id" title="variable">p</span></a> <span class="id" title="notation">**</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+We also return a "borrow" from the <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry_bstR"><span class="id" title="definition">Entry_bstR</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode"><span class="id" title="var">t</span></span>, the fact
+            that at <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.p"><span class="id" title="variable">p</span></a></span> there's an <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#EntryR"><span class="id" title="definition">EntryR</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode"><span class="id" title="var">e</span></span> with a matching <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Range"><span class="id" title="record">Range</span></a></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#borrow_from"><span class="id" title="definition">borrow_from</span></a> (<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#this:116"><span class="id" title="variable">this</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry_bstR"><span class="id" title="definition">Entry_bstR</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:119"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:120"><span class="id" title="variable">t</span></a>) (<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#p:124"><span class="id" title="variable">p</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#EntryR"><span class="id" title="definition">EntryR</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:119"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#e:123"><span class="id" title="variable">e</span></a>)<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+When <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a>=<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a></span>, we assert that there was no payload <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.p"><span class="id" title="variable">p</span></a></span> corresponding
+        to the looked-up value <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">[|</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#63a68285c81db8f9bc456233bb9ed181"><span class="id" title="notation">~</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">exists</span></a> <a id="p:122" class="idref" href="#p:122"><span class="id" title="binder">p</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#a883bdd010993579f99d60b3775bcf54"><span class="id" title="notation">,</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#payload_of_address"><span class="id" title="definition">payload_of_address</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:120"><span class="id" title="variable">t</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#x:117"><span class="id" title="variable">x</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#p:122"><span class="id" title="variable">p</span></a> <span class="id" title="notation">|]</span> <span class="id" title="notation">**</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+(Note: This spec allows the implementation to change the <span class="inlinecode"><span class="id" title="var">out</span></span> parameter
+        arbitrarily in the <span class="inlinecode"><span class="id" title="var">error</span></span> case.) 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#out:118"><span class="id" title="variable">out</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">anyR</span> <span class="id" title="abbreviation">Tint</span> 1 <span class="id" title="notation">**</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#this:116"><span class="id" title="variable">this</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#Entry_bstR"><span class="id" title="definition">Entry_bstR</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#q:119"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#t:120"><span class="id" title="variable">t</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.noimport.doc.cpp.howto_sequential.html#with_Sigma"><span class="id" title="section">with_Sigma</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

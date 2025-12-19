@@ -1,0 +1,460 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.bi.split_cfrac</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2022&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#"><span class="id" title="library">skylabs.lang.cpp.algebra.cfrac</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.bi.prelude</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.bi.split_andb</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.bi.split_frac</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.proofmode.proofmode</span>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">ChargeNotation</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Set</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Coercions</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab16"></a><h1 class="section">Splitting and combining const/mutable fractional things</h1>
+
+<div class="paragraph"> </div>
+
+Overview:
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> <span class="inlinecode"><span class="id" title="var">cQpTC.IsConst</span></span>, <span class="inlinecode"><span class="id" title="var">cQpTC.Frac</span></span> normalizing projections from
+
+</li>
+</ul>
+const/mutable fractions
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#SplitCFrac"><span class="id" title="record">SplitCFrac</span></a></span>, <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#CombineCFrac"><span class="id" title="record">CombineCFrac</span></a></span> split and combine terms of type <span class="inlinecode"><span class="id" title="var">cQp.t</span></span>
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+Our rules are syntactic: All operations appearing in input positions
+should be opaque for typeclass resolution.
+
+<div class="paragraph"> </div>
+
+Most rules key on <span class="inlinecode"><span class="id" title="var">cQp.add</span></span> and <span class="inlinecode"><span class="id" title="var">cQp.scale</span></span> which are opaque. Rule
+<span class="inlinecode"><span class="id" title="var">combine_frac.fold_add</span></span> keys on <span class="inlinecode"><span class="id" title="var">Qp.add</span></span> and <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#andb"><span class="id" title="definition">andb</span></a></span>. The former is
+opaque. (We choose not to touch the opacity of <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#andb"><span class="id" title="definition">andb</span></a></span>. See
+../../bi/split_andb.v.)
+
+</div>
+<div class="code">
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Notation</span> <a id="Cut" class="idref" href="#Cut"><span class="id" title="abbreviation">Cut</span></a> := <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#TCNoBackTrack"><span class="id" title="class">TCNoBackTrack</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">cQp_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab17"></a><h2 class="section">Operations on const/mutable fractions</h2>
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="cQpTC" class="idref" href="#cQpTC"><span class="id" title="module">cQpTC</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.IsConst"><span class="id" title="record">IsConst</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode"><span class="id" title="var">b</span></span> sets <span class="inlinecode"><span class="id" title="var">b</span></span> <span class="inlinecode">:=</span> <span class="inlinecode"><span class="id" title="var">cQp.is_const</span></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> with simplifications. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Class</span> <a id="cQpTC.IsConst" class="idref" href="#cQpTC.IsConst"><span class="id" title="inductive, record"><span id="cQpTC.IsConst" class="id">IsConst</span></span></a> (<a id="q:1" class="idref" href="#q:1"><span class="id" title="binder">q</span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.t"><span class="id" title="record">cQp.t</span></a>) (<a id="b:2" class="idref" href="#b:2"><span class="id" title="binder">b</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>) : <span class="id" title="keyword">Prop</span> := <a id="cQpTC.is_const" class="idref" href="#cQpTC.is_const"><span class="id" title="constructor, projection"><span id="cQpTC.is_const" class="id">is_const</span></span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.is_const"><span class="id" title="projection">cQp.is_const</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:1"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#b:2"><span class="id" title="variable">b</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="var">Mode</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.IsConst"><span class="id" title="class">IsConst</span></a> + - : <span class="id" title="var">typeclass_instances</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.IsConst"><span class="id" title="class">IsConst</span></a> : <span class="id" title="tactic">simpl</span> <span class="id" title="var">never</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.is_const"><span class="id" title="definition">is_const</span></a> <span class="id" title="var">_</span> {<span class="id" title="var">_</span> <span class="id" title="var">_</span>} : <span class="id" title="tactic">assert</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="cQpTC.IS_CONST" class="idref" href="#cQpTC.IS_CONST"><span class="id" title="abbreviation">IS_CONST</span></a> <span class="id" title="var">q</span> <span class="id" title="var">b</span> := (<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#Cut"><span class="id" title="abbreviation">Cut</span></a> (<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.IsConst"><span class="id" title="class">IsConst</span></a> <span class="id" title="var">q</span> <span class="id" title="var">b</span>)) (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.Frac"><span class="id" title="record">Frac</span></a></span> <span class="inlinecode"><span class="id" title="var">cq</span></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> sets <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode">:=</span> <span class="inlinecode"><span class="id" title="var">cQp.frac</span></span> <span class="inlinecode"><span class="id" title="var">cq</span></span> with simplifications. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Class</span> <a id="cQpTC.Frac" class="idref" href="#cQpTC.Frac"><span class="id" title="inductive, record"><span id="cQpTC.Frac" class="id">Frac</span></span></a> (<a id="cq:5" class="idref" href="#cq:5"><span class="id" title="binder">cq</span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.t"><span class="id" title="record">cQp.t</span></a>) (<a id="q:6" class="idref" href="#q:6"><span class="id" title="binder">q</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a>) : <span class="id" title="keyword">Prop</span> := <a id="cQpTC.frac" class="idref" href="#cQpTC.frac"><span class="id" title="constructor, projection"><span id="cQpTC.frac" class="id">frac</span></span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.frac"><span class="id" title="projection">cQp.frac</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq:5"><span class="id" title="variable">cq</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:6"><span class="id" title="variable">q</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="var">Mode</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.Frac"><span class="id" title="class">Frac</span></a> + - : <span class="id" title="var">typeclass_instances</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.Frac"><span class="id" title="class">Frac</span></a> : <span class="id" title="tactic">simpl</span> <span class="id" title="var">never</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.frac"><span class="id" title="definition">frac</span></a> <span class="id" title="var">_</span> {<span class="id" title="var">_</span> <span class="id" title="var">_</span>} : <span class="id" title="tactic">assert</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="cQpTC.FRAC" class="idref" href="#cQpTC.FRAC"><span class="id" title="abbreviation">FRAC</span></a> <span class="id" title="var">q</span> <span class="id" title="var">b</span> := (<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#Cut"><span class="id" title="abbreviation">Cut</span></a> (<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.Frac"><span class="id" title="class">Frac</span></a> <span class="id" title="var">q</span> <span class="id" title="var">b</span>)) (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.IsConst"><span class="id" title="record">IsConst</span></a></span> 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="cQpTC.is_const_mk" class="idref" href="#cQpTC.is_const_mk"><span class="id" title="instance">is_const_mk</span></a> <a id="c:9" class="idref" href="#c:9"><span class="id" title="binder">c</span></a> <a id="q:10" class="idref" href="#q:10"><span class="id" title="binder">q</span></a> : <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.IsConst"><span class="id" title="class">IsConst</span></a> (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.mk"><span class="id" title="constructor">cQp.mk</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c:9"><span class="id" title="variable">c</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:10"><span class="id" title="variable">q</span></a>) <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c:9"><span class="id" title="variable">c</span></a> | 10.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="cQpTC.is_const_scale" class="idref" href="#cQpTC.is_const_scale"><span class="id" title="instance">is_const_scale</span></a> <a id="q:11" class="idref" href="#q:11"><span class="id" title="binder">q</span></a> <a id="cq:12" class="idref" href="#cq:12"><span class="id" title="binder">cq</span></a> <a id="c:13" class="idref" href="#c:13"><span class="id" title="binder">c</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.IS_CONST"><span class="id" title="abbreviation">IS_CONST</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq:12"><span class="id" title="variable">cq</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c:13"><span class="id" title="variable">c</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.IsConst"><span class="id" title="class">IsConst</span></a> (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.scale"><span class="id" title="definition">cQp.scale</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:11"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq:12"><span class="id" title="variable">cq</span></a>) <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c:13"><span class="id" title="variable">c</span></a> | 20.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> [?]. <span class="id" title="tactic">rewrite</span> /<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.IsConst"><span class="id" title="class">IsConst</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.is_const_scale"><span class="id" title="lemma">cQp.is_const_scale</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.is_const"><span class="id" title="definition">is_const</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="cQpTC.is_const_add" class="idref" href="#cQpTC.is_const_add"><span class="id" title="instance">is_const_add</span></a> <a id="cq1:14" class="idref" href="#cq1:14"><span class="id" title="binder">cq1</span></a> <a id="cq2:15" class="idref" href="#cq2:15"><span class="id" title="binder">cq2</span></a> <a id="c1:16" class="idref" href="#c1:16"><span class="id" title="binder">c1</span></a> <a id="c2:17" class="idref" href="#c2:17"><span class="id" title="binder">c2</span></a> <a id="c:18" class="idref" href="#c:18"><span class="id" title="binder">c</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.IS_CONST"><span class="id" title="abbreviation">IS_CONST</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq1:14"><span class="id" title="variable">cq1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c1:16"><span class="id" title="variable">c1</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.IS_CONST"><span class="id" title="abbreviation">IS_CONST</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq2:15"><span class="id" title="variable">cq2</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c2:17"><span class="id" title="variable">c2</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="class">CombineAndB</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c1:16"><span class="id" title="variable">c1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c2:17"><span class="id" title="variable">c2</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c:18"><span class="id" title="variable">c</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.IsConst"><span class="id" title="class">IsConst</span></a> (<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq1:14"><span class="id" title="variable">cq1</span></a> <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#d21a600f3f025f1a4c3b0cf7196136ed"><span class="id" title="notation">+</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq2:15"><span class="id" title="variable">cq2</span></a>) <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c:18"><span class="id" title="variable">c</span></a> | 20.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> [?] [?] ?. <span class="id" title="tactic">rewrite</span> /<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.IsConst"><span class="id" title="class">IsConst</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.is_const_add"><span class="id" title="lemma">cQp.is_const_add</span></a> !<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.is_const"><span class="id" title="definition">is_const</span></a> <span class="id" title="definition">combine_andb</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="cQpTC.is_const_var" class="idref" href="#cQpTC.is_const_var"><span class="id" title="instance">is_const_var</span></a> <a id="q:19" class="idref" href="#q:19"><span class="id" title="binder">q</span></a> : <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.IsConst"><span class="id" title="class">IsConst</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:19"><span class="id" title="variable">q</span></a> (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.is_const"><span class="id" title="projection">cQp.is_const</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:19"><span class="id" title="variable">q</span></a>) | 50.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.Frac"><span class="id" title="record">Frac</span></a></span> 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="cQpTC.frac_mk" class="idref" href="#cQpTC.frac_mk"><span class="id" title="instance">frac_mk</span></a> <a id="c:20" class="idref" href="#c:20"><span class="id" title="binder">c</span></a> <a id="q:21" class="idref" href="#q:21"><span class="id" title="binder">q</span></a> : <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.Frac"><span class="id" title="class">Frac</span></a> (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.mk"><span class="id" title="constructor">cQp.mk</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c:20"><span class="id" title="variable">c</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:21"><span class="id" title="variable">q</span></a>) <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:21"><span class="id" title="variable">q</span></a> | 10.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="cQpTC.frac_scale" class="idref" href="#cQpTC.frac_scale"><span class="id" title="instance">frac_scale</span></a> <a id="q1:22" class="idref" href="#q1:22"><span class="id" title="binder">q1</span></a> <a id="q2:23" class="idref" href="#q2:23"><span class="id" title="binder">q2</span></a> <a id="q:24" class="idref" href="#q:24"><span class="id" title="binder">q</span></a> <a id="cq:25" class="idref" href="#cq:25"><span class="id" title="binder">cq</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.FRAC"><span class="id" title="abbreviation">FRAC</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq:25"><span class="id" title="variable">cq</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q2:23"><span class="id" title="variable">q2</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="abbreviation">QpTC.MUL</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q1:22"><span class="id" title="variable">q1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q2:23"><span class="id" title="variable">q2</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:24"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.Frac"><span class="id" title="class">Frac</span></a> (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.scale"><span class="id" title="definition">cQp.scale</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q1:22"><span class="id" title="variable">q1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq:25"><span class="id" title="variable">cq</span></a>) <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:24"><span class="id" title="variable">q</span></a> | 20.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> [?] [?]. <span class="id" title="tactic">rewrite</span> /<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.Frac"><span class="id" title="class">Frac</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.frac_scale"><span class="id" title="lemma">cQp.frac_scale</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.frac"><span class="id" title="definition">frac</span></a> <span class="id" title="definition">QpTC.mul</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="cQpTC.frac_add" class="idref" href="#cQpTC.frac_add"><span class="id" title="instance">frac_add</span></a> <a id="cq1:26" class="idref" href="#cq1:26"><span class="id" title="binder">cq1</span></a> <a id="cq2:27" class="idref" href="#cq2:27"><span class="id" title="binder">cq2</span></a> <a id="q1:28" class="idref" href="#q1:28"><span class="id" title="binder">q1</span></a> <a id="q2:29" class="idref" href="#q2:29"><span class="id" title="binder">q2</span></a> <a id="q:30" class="idref" href="#q:30"><span class="id" title="binder">q</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.FRAC"><span class="id" title="abbreviation">FRAC</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq1:26"><span class="id" title="variable">cq1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q1:28"><span class="id" title="variable">q1</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.FRAC"><span class="id" title="abbreviation">FRAC</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq2:27"><span class="id" title="variable">cq2</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q2:29"><span class="id" title="variable">q2</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="abbreviation">QpTC.ADD</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q1:28"><span class="id" title="variable">q1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q2:29"><span class="id" title="variable">q2</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:30"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.Frac"><span class="id" title="class">Frac</span></a> (<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq1:26"><span class="id" title="variable">cq1</span></a> <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#d21a600f3f025f1a4c3b0cf7196136ed"><span class="id" title="notation">+</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq2:27"><span class="id" title="variable">cq2</span></a>) <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:30"><span class="id" title="variable">q</span></a> | 20.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> [?] [?] [?]. <span class="id" title="tactic">rewrite</span> /<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.Frac"><span class="id" title="class">Frac</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.frac_add"><span class="id" title="lemma">cQp.frac_add</span></a> !<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.frac"><span class="id" title="definition">frac</span></a> <span class="id" title="definition">QpTC.add</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="cQpTC.frac_var" class="idref" href="#cQpTC.frac_var"><span class="id" title="instance">frac_var</span></a> <a id="cq:31" class="idref" href="#cq:31"><span class="id" title="binder">cq</span></a> : <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.Frac"><span class="id" title="class">Frac</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq:31"><span class="id" title="variable">cq</span></a> (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.frac"><span class="id" title="projection">cQp.frac</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq:31"><span class="id" title="variable">cq</span></a>) | 50.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC"><span class="id" title="module">cQpTC</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab18"></a><h2 class="section">Splitting const/mutable fractions</h2>
+
+<div class="paragraph"> </div>
+
+<span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#SplitCFrac"><span class="id" title="record">SplitCFrac</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode"><span class="id" title="var">q1</span></span> <span class="inlinecode"><span class="id" title="var">q2</span></span> splits <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">cQp.t</span></span> into <span class="inlinecode"><span class="id" title="var">q1</span></span>, <span class="inlinecode"><span class="id" title="var">q2</span></span> s.t. <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode">=</span> <span class="inlinecode"><span class="id" title="var">q1</span></span> <span class="inlinecode">+</span>
+<span class="inlinecode"><span class="id" title="var">q2</span></span>, adjusting the outputs <span class="inlinecode"><span class="id" title="var">q1</span></span>, <span class="inlinecode"><span class="id" title="var">q2</span></span> for readabilty.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Class</span> <a id="SplitCFrac" class="idref" href="#SplitCFrac"><span class="id" title="inductive, record"><span id="SplitCFrac" class="id">SplitCFrac</span></span></a> (<a id="cv:32" class="idref" href="#cv:32"><span class="id" title="binder">cv</span></a> <a id="cv1:33" class="idref" href="#cv1:33"><span class="id" title="binder">cv1</span></a> <a id="cv2:34" class="idref" href="#cv2:34"><span class="id" title="binder">cv2</span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.t"><span class="id" title="record">cQp.t</span></a>) : <span class="id" title="keyword">Prop</span> := <a id="split_cfrac" class="idref" href="#split_cfrac"><span class="id" title="constructor, projection"><span id="split_cfrac" class="id">split_cfrac</span></span></a> : <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cv:32"><span class="id" title="variable">cv</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cv1:33"><span class="id" title="variable">cv1</span></a> <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#d21a600f3f025f1a4c3b0cf7196136ed"><span class="id" title="notation">+</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cv2:34"><span class="id" title="variable">cv2</span></a>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="var">Mode</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#SplitCFrac"><span class="id" title="class">SplitCFrac</span></a> + - - : <span class="id" title="var">typeclass_instances</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#SplitCFrac"><span class="id" title="class">SplitCFrac</span></a> : <span class="id" title="tactic">simpl</span> <span class="id" title="var">never</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#split_cfrac"><span class="id" title="definition">split_cfrac</span></a> <span class="id" title="var">_</span> {<span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>} : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="split_cfrac" class="idref" href="#split_cfrac"><span class="id" title="module">split_cfrac</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+  We use this auxiliary judgment to <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#Cut"><span class="id" title="abbreviation">Cut</span></a></span> in <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#SplitCFrac"><span class="id" title="record">SplitCFrac</span></a></span>.
+  
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Class</span> <a id="split_cfrac.Split" class="idref" href="#split_cfrac.Split"><span class="id" title="inductive, record"><span id="split_cfrac.Split" class="id">Split</span></span></a> (<a id="q:37" class="idref" href="#q:37"><span class="id" title="binder">q</span></a> <a id="q1:38" class="idref" href="#q1:38"><span class="id" title="binder">q1</span></a> <a id="q2:39" class="idref" href="#q2:39"><span class="id" title="binder">q2</span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.t"><span class="id" title="record">cQp.t</span></a>) : <span class="id" title="keyword">Prop</span> := <a id="split_cfrac.split" class="idref" href="#split_cfrac.split"><span class="id" title="constructor, projection"><span id="split_cfrac.split" class="id">split</span></span></a> : <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:37"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q1:38"><span class="id" title="variable">q1</span></a> <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#d21a600f3f025f1a4c3b0cf7196136ed"><span class="id" title="notation">+</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q2:39"><span class="id" title="variable">q2</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="var">Mode</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#split_cfrac.Split"><span class="id" title="class">Split</span></a> + - - : <span class="id" title="var">typeclass_instances</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#split_cfrac.Split"><span class="id" title="class">Split</span></a> : <span class="id" title="tactic">simpl</span> <span class="id" title="var">never</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#split_cfrac.split"><span class="id" title="definition">split</span></a> <span class="id" title="var">_</span> {<span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>} : <span class="id" title="tactic">assert</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="split_cfrac.SPLIT" class="idref" href="#split_cfrac.SPLIT"><span class="id" title="abbreviation">SPLIT</span></a> <span class="id" title="var">q</span> <span class="id" title="var">q1</span> <span class="id" title="var">q2</span> := (<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#Cut"><span class="id" title="abbreviation">Cut</span></a> (<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#split_cfrac.Split"><span class="id" title="class">Split</span></a> <span class="id" title="var">q</span> <span class="id" title="var">q1</span> <span class="id" title="var">q2</span>)) (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Splitting on <span class="inlinecode"><span class="id" title="var">cQp.add</span></span> is immediate 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="split_cfrac.split_add" class="idref" href="#split_cfrac.split_add"><span class="id" title="instance">split_add</span></a> <a id="q1:42" class="idref" href="#q1:42"><span class="id" title="binder">q1</span></a> <a id="q2:43" class="idref" href="#q2:43"><span class="id" title="binder">q2</span></a> : <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#split_cfrac.Split"><span class="id" title="class">Split</span></a> (<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q1:42"><span class="id" title="variable">q1</span></a> <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#d21a600f3f025f1a4c3b0cf7196136ed"><span class="id" title="notation">+</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q2:43"><span class="id" title="variable">q2</span></a>) <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q1:42"><span class="id" title="variable">q1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q2:43"><span class="id" title="variable">q2</span></a> | 10.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Goal</span> <a id="split_cfrac.Unnamed_thm" class="idref" href="#split_cfrac.Unnamed_thm"><span class="id" title="definition">forall</span></a> <a id="split_cfrac.Unnamed_thm" class="idref" href="#split_cfrac.Unnamed_thm"><span class="id" title="binder, definition"><span id="q1:44" class="id">q1</span></span></a> <a id="split_cfrac.Unnamed_thm" class="idref" href="#split_cfrac.Unnamed_thm"><span class="id" title="binder, definition"><span id="q2:45" class="id">q2</span></span></a><a id="split_cfrac.Unnamed_thm" class="idref" href="#split_cfrac.Unnamed_thm"><span class="id" title="definition">,</span></a> <a id="split_cfrac.Unnamed_thm" class="idref" href="#split_cfrac.Unnamed_thm"><span class="id" title="definition">Split</span></a> <a id="split_cfrac.Unnamed_thm" class="idref" href="#split_cfrac.Unnamed_thm"><span class="id" title="definition">(</span></a><a id="split_cfrac.Unnamed_thm" class="idref" href="#split_cfrac.Unnamed_thm"><span class="id" title="definition">q1</span></a> <a id="split_cfrac.Unnamed_thm" class="idref" href="#split_cfrac.Unnamed_thm"><span class="id" title="definition">⋅</span></a> <a id="split_cfrac.Unnamed_thm" class="idref" href="#split_cfrac.Unnamed_thm"><span class="id" title="definition">q2</span></a><a id="split_cfrac.Unnamed_thm" class="idref" href="#split_cfrac.Unnamed_thm"><span class="id" title="definition">)</span></a> <a id="split_cfrac.Unnamed_thm" class="idref" href="#split_cfrac.Unnamed_thm"><span class="id" title="definition">q1</span></a> <a id="split_cfrac.Unnamed_thm" class="idref" href="#split_cfrac.Unnamed_thm"><span class="id" title="definition">q2</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">_</span>. <span class="id" title="keyword">Abort</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Splitting on <span class="inlinecode"><span class="id" title="var">cQp.scale</span></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> preserves the factor <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="split_cfrac.split_scale" class="idref" href="#split_cfrac.split_scale"><span class="id" title="instance">split_scale</span></a> <a id="q:46" class="idref" href="#q:46"><span class="id" title="binder">q</span></a> <a id="cv:47" class="idref" href="#cv:47"><span class="id" title="binder">cv</span></a> <a id="cv1:48" class="idref" href="#cv1:48"><span class="id" title="binder">cv1</span></a> <a id="cv2:49" class="idref" href="#cv2:49"><span class="id" title="binder">cv2</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#split_cfrac.SPLIT"><span class="id" title="abbreviation">SPLIT</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cv:47"><span class="id" title="variable">cv</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cv1:48"><span class="id" title="variable">cv1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cv2:49"><span class="id" title="variable">cv2</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#split_cfrac.Split"><span class="id" title="class">Split</span></a> (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.scale"><span class="id" title="definition">cQp.scale</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:46"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cv:47"><span class="id" title="variable">cv</span></a>) (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.scale"><span class="id" title="definition">cQp.scale</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:46"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cv1:48"><span class="id" title="variable">cv1</span></a>) (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.scale"><span class="id" title="definition">cQp.scale</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:46"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cv2:49"><span class="id" title="variable">cv2</span></a>) | 20.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> [?]. <span class="id" title="tactic">rewrite</span> /<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#split_cfrac.Split"><span class="id" title="class">Split</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> (<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#split_cfrac.split"><span class="id" title="definition">split</span></a> <span class="id" title="var">cv</span>) <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.scale_add_r"><span class="id" title="lemma">cQp.scale_add_r</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Default: Split componentwise 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="split_cfrac.split_parts" class="idref" href="#split_cfrac.split_parts"><span class="id" title="instance">split_parts</span></a> <a id="cq:50" class="idref" href="#cq:50"><span class="id" title="binder">cq</span></a> <a id="c:51" class="idref" href="#c:51"><span class="id" title="binder">c</span></a> <a id="c1:52" class="idref" href="#c1:52"><span class="id" title="binder">c1</span></a> <a id="c2:53" class="idref" href="#c2:53"><span class="id" title="binder">c2</span></a> <a id="q:54" class="idref" href="#q:54"><span class="id" title="binder">q</span></a> <a id="q1:55" class="idref" href="#q1:55"><span class="id" title="binder">q1</span></a> <a id="q2:56" class="idref" href="#q2:56"><span class="id" title="binder">q2</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.IS_CONST"><span class="id" title="abbreviation">cQpTC.IS_CONST</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq:50"><span class="id" title="variable">cq</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c:51"><span class="id" title="variable">c</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.FRAC"><span class="id" title="abbreviation">cQpTC.FRAC</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq:50"><span class="id" title="variable">cq</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:54"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="class">SplitAndB</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c:51"><span class="id" title="variable">c</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c1:52"><span class="id" title="variable">c1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c2:53"><span class="id" title="variable">c2</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="class">SplitFrac</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:54"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q1:55"><span class="id" title="variable">q1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q2:56"><span class="id" title="variable">q2</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#split_cfrac.Split"><span class="id" title="class">Split</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq:50"><span class="id" title="variable">cq</span></a> (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.mk"><span class="id" title="constructor">cQp.mk</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c1:52"><span class="id" title="variable">c1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q1:55"><span class="id" title="variable">q1</span></a>) (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.mk"><span class="id" title="constructor">cQp.mk</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c2:53"><span class="id" title="variable">c2</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q2:56"><span class="id" title="variable">q2</span></a>) | 50.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> [?] [?] ??. <span class="id" title="tactic">rewrite</span> /<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#split_cfrac.Split"><span class="id" title="class">Split</span></a> <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.add_eq"><span class="id" title="lemma">cQp.add_eq</span></a>/=.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.eta"><span class="id" title="lemma">cQp.eta</span></a> <span class="id" title="var">cq</span>) <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.is_const"><span class="id" title="definition">cQpTC.is_const</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.frac"><span class="id" title="definition">cQpTC.frac</span></a>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">f_equal</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#split_cfrac"><span class="id" title="module">split_cfrac</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="split_cfrac_split" class="idref" href="#split_cfrac_split"><span class="id" title="instance">split_cfrac_split</span></a> <a id="cv:57" class="idref" href="#cv:57"><span class="id" title="binder">cv</span></a> <a id="cv1:58" class="idref" href="#cv1:58"><span class="id" title="binder">cv1</span></a> <a id="cv2:59" class="idref" href="#cv2:59"><span class="id" title="binder">cv2</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#SPLIT"><span class="id" title="abbreviation">split_cfrac.SPLIT</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cv:57"><span class="id" title="variable">cv</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cv1:58"><span class="id" title="variable">cv1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cv2:59"><span class="id" title="variable">cv2</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#SplitCFrac"><span class="id" title="class">SplitCFrac</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cv:57"><span class="id" title="variable">cv</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cv1:58"><span class="id" title="variable">cv1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cv2:59"><span class="id" title="variable">cv2</span></a> | 10.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">case</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab19"></a><h2 class="section">Combining const/mutable fractions</h2>
+
+<div class="paragraph"> </div>
+
+<span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#CombineCFrac"><span class="id" title="record">CombineCFrac</span></a></span> <span class="inlinecode"><span class="id" title="var">q1</span></span> <span class="inlinecode"><span class="id" title="var">q2</span></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> combine <span class="inlinecode"><span class="id" title="var">q1</span>,</span> <span class="inlinecode"><span class="id" title="var">q2</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">cQp.t</span></span> into <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode">=</span> <span class="inlinecode"><span class="id" title="var">q1</span></span> <span class="inlinecode">+</span> <span class="inlinecode"><span class="id" title="var">q2</span></span>,
+adjusting the output <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> for readability.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Class</span> <a id="CombineCFrac" class="idref" href="#CombineCFrac"><span class="id" title="inductive, record"><span id="CombineCFrac" class="id">CombineCFrac</span></span></a> (<a id="q1:60" class="idref" href="#q1:60"><span class="id" title="binder">q1</span></a> <a id="q2:61" class="idref" href="#q2:61"><span class="id" title="binder">q2</span></a> <a id="q:62" class="idref" href="#q:62"><span class="id" title="binder">q</span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.t"><span class="id" title="record">cQp.t</span></a>) : <span class="id" title="keyword">Prop</span> := <a id="combine_cfrac" class="idref" href="#combine_cfrac"><span class="id" title="constructor, projection"><span id="combine_cfrac" class="id">combine_cfrac</span></span></a> : <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q1:60"><span class="id" title="variable">q1</span></a> <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#d21a600f3f025f1a4c3b0cf7196136ed"><span class="id" title="notation">+</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q2:61"><span class="id" title="variable">q2</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:62"><span class="id" title="variable">q</span></a>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="var">Mode</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#CombineCFrac"><span class="id" title="class">CombineCFrac</span></a> + + - : <span class="id" title="var">typeclass_instances</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#CombineCFrac"><span class="id" title="class">CombineCFrac</span></a> : <span class="id" title="tactic">simpl</span> <span class="id" title="var">never</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac"><span class="id" title="definition">combine_cfrac</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> {<span class="id" title="var">_</span> <span class="id" title="var">_</span>} : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="combine_cfrac" class="idref" href="#combine_cfrac"><span class="id" title="module">combine_cfrac</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+  <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.Fold"><span class="id" title="record">Fold</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.heap_pred.prim.html#with_cpp.TEST.p"><span class="id" title="variable">p</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> folds occurrences of <span class="inlinecode"><span class="id" title="var">cQp.add</span></span> and eliminates occurrences
+  of eta-expanded <span class="inlinecode"><span class="id" title="var">cQp.mk</span></span> in <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.heap_pred.prim.html#with_cpp.TEST.p"><span class="id" title="variable">p</span></a></span> to produce <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span>.
+  
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Class</span> <a id="combine_cfrac.Fold" class="idref" href="#combine_cfrac.Fold"><span class="id" title="inductive, record"><span id="combine_cfrac.Fold" class="id">Fold</span></span></a> (<a id="p:65" class="idref" href="#p:65"><span class="id" title="binder">p</span></a> <a id="q:66" class="idref" href="#q:66"><span class="id" title="binder">q</span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.t"><span class="id" title="record">cQp.t</span></a>) : <span class="id" title="keyword">Prop</span> := <a id="combine_cfrac.fold" class="idref" href="#combine_cfrac.fold"><span class="id" title="constructor, projection"><span id="combine_cfrac.fold" class="id">fold</span></span></a> : <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#p:65"><span class="id" title="variable">p</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:66"><span class="id" title="variable">q</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="var">Mode</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.Fold"><span class="id" title="class">Fold</span></a> + - : <span class="id" title="var">typeclass_instances</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.Fold"><span class="id" title="class">Fold</span></a> : <span class="id" title="tactic">simpl</span> <span class="id" title="var">never</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.fold"><span class="id" title="definition">fold</span></a> <span class="id" title="var">_</span> {<span class="id" title="var">_</span> <span class="id" title="var">_</span>} : <span class="id" title="tactic">assert</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="combine_cfrac.FOLD" class="idref" href="#combine_cfrac.FOLD"><span class="id" title="abbreviation">FOLD</span></a> <span class="id" title="var">p</span> <span class="id" title="var">q</span> := (<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#Cut"><span class="id" title="abbreviation">Cut</span></a> (<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.Fold"><span class="id" title="class">Fold</span></a> <span class="id" title="var">p</span> <span class="id" title="var">q</span>)) (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="combine_cfrac.fold_eta" class="idref" href="#combine_cfrac.fold_eta"><span class="id" title="instance">fold_eta</span></a> <a id="q:69" class="idref" href="#q:69"><span class="id" title="binder">q</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.Fold"><span class="id" title="class">Fold</span></a> (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.mk"><span class="id" title="constructor">cQp.mk</span></a> (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.is_const"><span class="id" title="projection">cQp.is_const</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:69"><span class="id" title="variable">q</span></a>) (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.frac"><span class="id" title="projection">cQp.frac</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:69"><span class="id" title="variable">q</span></a>)) <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:69"><span class="id" title="variable">q</span></a> | 10.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Account for <span class="inlinecode"><span class="id" title="var">Qp.Add</span></span>'s <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode">+</span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode">--&gt;</span> <span class="inlinecode">2<a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> 
+</div>
+<div class="code">
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="combine_cfrac.fold_add_diag" class="idref" href="#combine_cfrac.fold_add_diag"><span class="id" title="instance">fold_add_diag</span></a> <a id="q:70" class="idref" href="#q:70"><span class="id" title="binder">q</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.Fold"><span class="id" title="class">Fold</span></a> (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.mk"><span class="id" title="constructor">cQp.mk</span></a> (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.is_const"><span class="id" title="projection">cQp.is_const</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:70"><span class="id" title="variable">q</span></a>) (2 <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#d24f45113fecb7662e23cf3f9cafeb48"><span class="id" title="notation">*</span></a> <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.frac"><span class="id" title="projection">cQp.frac</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:70"><span class="id" title="variable">q</span></a>)) (<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:70"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#d21a600f3f025f1a4c3b0cf7196136ed"><span class="id" title="notation">+</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:70"><span class="id" title="variable">q</span></a>) | 10.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> /<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.Fold"><span class="id" title="class">Fold</span></a> <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.add_eq"><span class="id" title="lemma">cQp.add_eq</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">andb_diag</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp.add_diag"><span class="id" title="lemma">Qp.add_diag</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="combine_cfrac.fold_scale" class="idref" href="#combine_cfrac.fold_scale"><span class="id" title="instance">fold_scale</span></a> <a id="p:71" class="idref" href="#p:71"><span class="id" title="binder">p</span></a> <a id="q':72" class="idref" href="#q':72"><span class="id" title="binder">q'</span></a> <a id="q:73" class="idref" href="#q:73"><span class="id" title="binder">q</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.FOLD"><span class="id" title="abbreviation">FOLD</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q':72"><span class="id" title="variable">q'</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:73"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.Fold"><span class="id" title="class">Fold</span></a> (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.scale"><span class="id" title="definition">cQp.scale</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#p:71"><span class="id" title="variable">p</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q':72"><span class="id" title="variable">q'</span></a>) (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.scale"><span class="id" title="definition">cQp.scale</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#p:71"><span class="id" title="variable">p</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:73"><span class="id" title="variable">q</span></a>) | 20.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> [?]. <span class="id" title="tactic">rewrite</span> /<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.Fold"><span class="id" title="class">Fold</span></a>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> (<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.fold"><span class="id" title="definition">fold</span></a> <span class="id" title="var">q'</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="combine_cfrac.fold_add" class="idref" href="#combine_cfrac.fold_add"><span class="id" title="instance">fold_add</span></a> <a id="p1:74" class="idref" href="#p1:74"><span class="id" title="binder">p1</span></a> <a id="p2:75" class="idref" href="#p2:75"><span class="id" title="binder">p2</span></a> <a id="q1:76" class="idref" href="#q1:76"><span class="id" title="binder">q1</span></a> <a id="q2:77" class="idref" href="#q2:77"><span class="id" title="binder">q2</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.FOLD"><span class="id" title="abbreviation">FOLD</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#p1:74"><span class="id" title="variable">p1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q1:76"><span class="id" title="variable">q1</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.FOLD"><span class="id" title="abbreviation">FOLD</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#p2:75"><span class="id" title="variable">p2</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q2:77"><span class="id" title="variable">q2</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.Fold"><span class="id" title="class">Fold</span></a> (<span class="id" title="abbreviation">Reduce</span> (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.add"><span class="id" title="definition">cQp.add</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#p1:74"><span class="id" title="variable">p1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#p2:75"><span class="id" title="variable">p2</span></a>)) (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.add"><span class="id" title="definition">cQp.add</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q1:76"><span class="id" title="variable">q1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q2:77"><span class="id" title="variable">q2</span></a>) | 20.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> [?] [?]. <span class="id" title="tactic">rewrite</span> /<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.Fold"><span class="id" title="class">Fold</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> (<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.fold"><span class="id" title="definition">fold</span></a> <span class="id" title="var">p1</span>) (<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.fold"><span class="id" title="definition">fold</span></a> <span class="id" title="var">p2</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="combine_cfrac.fold_skip" class="idref" href="#combine_cfrac.fold_skip"><span class="id" title="instance">fold_skip</span></a> <a id="q:78" class="idref" href="#q:78"><span class="id" title="binder">q</span></a> : <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.Fold"><span class="id" title="class">Fold</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:78"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:78"><span class="id" title="variable">q</span></a> | 50.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+  We use this auxiliary judgment to <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#Cut"><span class="id" title="abbreviation">Cut</span></a></span> in <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#CombineCFrac"><span class="id" title="record">CombineCFrac</span></a></span>.
+  
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Class</span> <a id="combine_cfrac.Combine" class="idref" href="#combine_cfrac.Combine"><span class="id" title="inductive, record"><span id="combine_cfrac.Combine" class="id">Combine</span></span></a> (<a id="q1:79" class="idref" href="#q1:79"><span class="id" title="binder">q1</span></a> <a id="q2:80" class="idref" href="#q2:80"><span class="id" title="binder">q2</span></a> <a id="q:81" class="idref" href="#q:81"><span class="id" title="binder">q</span></a> : <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.t"><span class="id" title="record">cQp.t</span></a>) : <span class="id" title="keyword">Prop</span> := <a id="combine_cfrac.combine" class="idref" href="#combine_cfrac.combine"><span class="id" title="constructor, projection"><span id="combine_cfrac.combine" class="id">combine</span></span></a> : <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q1:79"><span class="id" title="variable">q1</span></a> <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#d21a600f3f025f1a4c3b0cf7196136ed"><span class="id" title="notation">+</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q2:80"><span class="id" title="variable">q2</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:81"><span class="id" title="variable">q</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="var">Mode</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.Combine"><span class="id" title="class">Combine</span></a> + + - : <span class="id" title="var">typeclass_instances</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.Combine"><span class="id" title="class">Combine</span></a> : <span class="id" title="tactic">simpl</span> <span class="id" title="var">never</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.combine"><span class="id" title="definition">combine</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> {<span class="id" title="var">_</span> <span class="id" title="var">_</span>} : <span class="id" title="tactic">assert</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="combine_cfrac.COMBINE" class="idref" href="#combine_cfrac.COMBINE"><span class="id" title="abbreviation">COMBINE</span></a> <span class="id" title="var">q1</span> <span class="id" title="var">q2</span> <span class="id" title="var">q</span> := (<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#Cut"><span class="id" title="abbreviation">Cut</span></a> (<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.Combine"><span class="id" title="class">Combine</span></a> <span class="id" title="var">q1</span> <span class="id" title="var">q2</span> <span class="id" title="var">q</span>)) (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Combining terms of the form <span class="inlinecode"><span class="id" title="var">cQp.scale</span></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.heap_pred.prim.html#with_cpp.TEST.p"><span class="id" title="variable">p</span></a></span> preserves that structure 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="combine_cfrac.combine_scale" class="idref" href="#combine_cfrac.combine_scale"><span class="id" title="instance">combine_scale</span></a> <a id="p:84" class="idref" href="#p:84"><span class="id" title="binder">p</span></a> <a id="q1:85" class="idref" href="#q1:85"><span class="id" title="binder">q1</span></a> <a id="q2:86" class="idref" href="#q2:86"><span class="id" title="binder">q2</span></a> <a id="q:87" class="idref" href="#q:87"><span class="id" title="binder">q</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.COMBINE"><span class="id" title="abbreviation">COMBINE</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q1:85"><span class="id" title="variable">q1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q2:86"><span class="id" title="variable">q2</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:87"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.Combine"><span class="id" title="class">Combine</span></a> (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.scale"><span class="id" title="definition">cQp.scale</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#p:84"><span class="id" title="variable">p</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q1:85"><span class="id" title="variable">q1</span></a>) (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.scale"><span class="id" title="definition">cQp.scale</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#p:84"><span class="id" title="variable">p</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q2:86"><span class="id" title="variable">q2</span></a>) (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.scale"><span class="id" title="definition">cQp.scale</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#p:84"><span class="id" title="variable">p</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:87"><span class="id" title="variable">q</span></a>) | 20.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> [?]. <span class="id" title="tactic">rewrite</span> /<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.Combine"><span class="id" title="class">Combine</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> -<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.scale_add_r"><span class="id" title="lemma">cQp.scale_add_r</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.combine"><span class="id" title="definition">combine</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Default: Combine componentwise 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="combine_cfrac.combine_parts" class="idref" href="#combine_cfrac.combine_parts"><span class="id" title="instance">combine_parts</span></a> <a id="cq1:88" class="idref" href="#cq1:88"><span class="id" title="binder">cq1</span></a> <a id="cq2:89" class="idref" href="#cq2:89"><span class="id" title="binder">cq2</span></a> <a id="cq:90" class="idref" href="#cq:90"><span class="id" title="binder">cq</span></a> <a id="c1:91" class="idref" href="#c1:91"><span class="id" title="binder">c1</span></a> <a id="c2:92" class="idref" href="#c2:92"><span class="id" title="binder">c2</span></a> <a id="c:93" class="idref" href="#c:93"><span class="id" title="binder">c</span></a> <a id="q1:94" class="idref" href="#q1:94"><span class="id" title="binder">q1</span></a> <a id="q2:95" class="idref" href="#q2:95"><span class="id" title="binder">q2</span></a> <a id="q:96" class="idref" href="#q:96"><span class="id" title="binder">q</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.IS_CONST"><span class="id" title="abbreviation">cQpTC.IS_CONST</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq1:88"><span class="id" title="variable">cq1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c1:91"><span class="id" title="variable">c1</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.FRAC"><span class="id" title="abbreviation">cQpTC.FRAC</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq1:88"><span class="id" title="variable">cq1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q1:94"><span class="id" title="variable">q1</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.IS_CONST"><span class="id" title="abbreviation">cQpTC.IS_CONST</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq2:89"><span class="id" title="variable">cq2</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c2:92"><span class="id" title="variable">c2</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.FRAC"><span class="id" title="abbreviation">cQpTC.FRAC</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq2:89"><span class="id" title="variable">cq2</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q2:95"><span class="id" title="variable">q2</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="class">CombineAndB</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c1:91"><span class="id" title="variable">c1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c2:92"><span class="id" title="variable">c2</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c:93"><span class="id" title="variable">c</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="class">CombineFrac</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q1:94"><span class="id" title="variable">q1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q2:95"><span class="id" title="variable">q2</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:96"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.FOLD"><span class="id" title="abbreviation">FOLD</span></a> (<a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.mk"><span class="id" title="constructor">cQp.mk</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#c:93"><span class="id" title="variable">c</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:96"><span class="id" title="variable">q</span></a>) <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq:90"><span class="id" title="variable">cq</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.Combine"><span class="id" title="class">Combine</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq1:88"><span class="id" title="variable">cq1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq2:89"><span class="id" title="variable">cq2</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cq:90"><span class="id" title="variable">cq</span></a> | 50.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> [?] [?] [?] [?] ?? [&lt;-]. <span class="id" title="tactic">rewrite</span> /<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac.Combine"><span class="id" title="class">Combine</span></a> <a class="idref" href="skylabs.lang.cpp.algebra.cfrac.html#cQp.add_eq"><span class="id" title="lemma">cQp.add_eq</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> !<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.is_const"><span class="id" title="definition">cQpTC.is_const</span></a> !<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#cQpTC.frac"><span class="id" title="definition">cQpTC.frac</span></a>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">f_equal</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#combine_cfrac"><span class="id" title="module">combine_cfrac</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="combine_cfrac_add" class="idref" href="#combine_cfrac_add"><span class="id" title="instance">combine_cfrac_add</span></a> <a id="q1:97" class="idref" href="#q1:97"><span class="id" title="binder">q1</span></a> <a id="q2:98" class="idref" href="#q2:98"><span class="id" title="binder">q2</span></a> <a id="q:99" class="idref" href="#q:99"><span class="id" title="binder">q</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#COMBINE"><span class="id" title="abbreviation">combine_cfrac.COMBINE</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q1:97"><span class="id" title="variable">q1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q2:98"><span class="id" title="variable">q2</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:99"><span class="id" title="variable">q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#CombineCFrac"><span class="id" title="class">CombineCFrac</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q1:97"><span class="id" title="variable">q1</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q2:98"><span class="id" title="variable">q2</span></a> <a class="idref" href="skylabs.lang.cpp.bi.split_cfrac.html#q:99"><span class="id" title="variable">q</span></a> | 10.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">case</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

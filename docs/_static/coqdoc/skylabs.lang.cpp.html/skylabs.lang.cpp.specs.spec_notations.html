@@ -1,0 +1,101 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.specs.spec_notations</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2020-21&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <span class="id" title="library">skylabs.iris.extra.spec.notations</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.bytestring</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Member Functions 
+</div>
+<div class="code">
+<span class="id" title="keyword">Reserved Notation</span> &quot;'\this' this wpp"<br/>
+&nbsp;&nbsp;(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10, <span class="id" title="var">this</span> <span class="id" title="var">ident</span>, <span class="id" title="var">wpp</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Arguments 
+</div>
+<div class="code">
+<span class="id" title="keyword">Reserved Notation</span> &quot;'\args' ls X"<br/>
+&nbsp;&nbsp;(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10, <span class="id" title="var">X</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200, <span class="id" title="tactic">right</span> <span class="id" title="keyword">associativity</span>,<br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="var">format</span> "'[v' '[hv  ' '\args'     '/' ls  ']' '//' X ']'").<br/>
+
+<br/>
+<span class="id" title="keyword">Reserved Notation</span> &quot;'\args{' x .. y '}' ls X"<br/>
+&nbsp;&nbsp;(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10, <span class="id" title="var">x</span> <span class="id" title="var">binder</span>, <span class="id" title="var">y</span> <span class="id" title="var">binder</span>, <span class="id" title="var">X</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200, <span class="id" title="tactic">right</span> <span class="id" title="keyword">associativity</span>,<br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="var">format</span> "'[v' '[hv  ' '\args{' x  ..  y '}'  '/' ls  ']' '//' X ']'").<br/>
+
+<br/>
+<span class="id" title="keyword">Reserved Notation</span> &quot;'\arg' nm v X"<br/>
+&nbsp;&nbsp;(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10, <span class="id" title="var">nm</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">v</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">X</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200, <span class="id" title="tactic">right</span> <span class="id" title="keyword">associativity</span>,<br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="var">format</span> "'[v' '\arg'  nm  v  '//' X ']'").<br/>
+
+<br/>
+<span class="id" title="keyword">Reserved Notation</span> &quot;'\arg{' x .. y } nm v X"<br/>
+&nbsp;&nbsp;(<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 10, <span class="id" title="var">nm</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">v</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">x</span> <span class="id" title="var">binder</span>, <span class="id" title="var">y</span> <span class="id" title="var">binder</span>, <span class="id" title="var">X</span> <span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 200, <span class="id" title="tactic">right</span> <span class="id" title="keyword">associativity</span>,<br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="var">format</span> "'[v' '\arg{' x  ..  y '}'  nm  v  '//' X ']'").<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

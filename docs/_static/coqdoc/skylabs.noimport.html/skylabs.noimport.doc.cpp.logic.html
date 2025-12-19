@@ -1,0 +1,500 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.noimport.doc.cpp.logic</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2020&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+</div>
+
+<div class="doc">
+This tutorial assumes basic understanding of functional programming and logic.
+A good way to revise these concepts is to read the first 5 chapters
+(Preface,..., Polymorphism and Higher order functions) of the
+<a href=https://softwarefoundations.cis.upenn.edu/lf-current/deps.html>Software Foundations</a> book
+
+<div class="paragraph"> </div>
+
+Just like that book, this tutorial is produced from Coq .v files, which can be found in <i>cpp2v/doc</i>.
+If you want to play with the Coq code in this tutorial, you may want to open the .v source file
+in a Coq editor, instead of opening the html output in a web brower.
+In the html, identifiers are hyperlinked to their definition.
+Your Coq editor may also provide a facility to jump to definition (M-. in emacs (company-coq mode))
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.cpp</span>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">cQp_compat</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="with_Sigma" class="idref" href="#with_Sigma"><span class="id" title="section">with_Sigma</span></a>.<br/>
+<span class="id" title="keyword">Context</span> `{<a id="with_Sigma.Sigma" class="idref" href="#with_Sigma.Sigma"><span class="id" title="variable">Sigma</span></a>: <span class="id" title="class">cpp_logic</span>} {<a id="with_Sigma.CU" class="idref" href="#with_Sigma.CU"><span class="id" title="variable">CU</span></a>:<span class="id" title="class">genv</span>}.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">primitives</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Variable</span> <a id="with_Sigma.x" class="idref" href="#with_Sigma.x"><span class="id" title="variable">x</span></a>:<span class="id" title="axiom">ptr</span>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="with_Sigma.y" class="idref" href="#with_Sigma.y"><span class="id" title="variable">y</span></a>:<span class="id" title="axiom">ptr</span>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="with_Sigma.r" class="idref" href="#with_Sigma.r"><span class="id" title="variable">r</span></a>:<span class="id" title="definition">Rep</span>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="with_Sigma.q" class="idref" href="#with_Sigma.q"><span class="id" title="variable">q</span></a>:<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab15"></a><h1 class="section">|-&gt;</h1>
+
+
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+Separation logic assertions are of type <span class="inlinecode"><span class="id" title="library">mpred</span></span>.
+The main assertion is of the form:
+ 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="ex" class="idref" href="#ex"><span class="id" title="definition">ex</span></a>: <span class="id" title="definition">mpred</span> := <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+As declared above, <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a></span> is a pointer (memory location)
+and <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a></span> is a memory representation. <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#ex"><span class="id" title="definition">ex</span></a></span> asserts that x is a valid location and that location contains
+the memory representation r.
+
+<div class="paragraph"> </div>
+
+As an example, <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#ex2"><span class="id" title="definition">ex2</span></a></span> below asserts that the memory location <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a></span> contains
+the long value 2. <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#ex2"><span class="id" title="definition">ex2</span></a></span> also asserts ownership fraction q
+ ownership over the memory location <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a></span>.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="ex2" class="idref" href="#ex2"><span class="id" title="definition">ex2</span></a> : <span class="id" title="definition">mpred</span> := <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="notation">(</span><span class="id" title="abbreviation">longR</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a> 2<span class="id" title="notation">)</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+the right hand side of <span class="inlinecode"><span class="id" title="var">_</span></span> <span class="inlinecode">|-&gt;</span> <span class="inlinecode"><span class="id" title="var">_</span></span> has type <span class="inlinecode"><span class="id" title="definition">Rep</span></span> which stands for
+memory representations. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="ex3" class="idref" href="#ex3"><span class="id" title="definition">ex3</span></a> : <span class="id" title="definition">Rep</span> :=  <span class="id" title="abbreviation">longR</span> 1 2.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a></span> of type <span class="inlinecode"><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a></span> is a positive rational number.
+In our context, it must be in range (0,1].
+<span class="inlinecode">1</span> implies full ownership, which can be used to update or delete
+the memory location. lesser ownership can be used to read the location. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="eFrac1" class="idref" href="#eFrac1"><span class="id" title="definition">eFrac1</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a> := 1.<br/>
+<span class="id" title="keyword">Example</span> <a id="eFrac2" class="idref" href="#eFrac2"><span class="id" title="definition">eFrac2</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a> := 2<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#b4302126e6945f3aa85374697a12ab80"><span class="id" title="notation">/</span></a>4.<br/>
+
+<br/>
+<span class="id" title="keyword">Variable</span> <a id="with_Sigma.z" class="idref" href="#with_Sigma.z"><span class="id" title="variable">z</span></a>:<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>.<br/>
+</div>
+
+<div class="doc">
+There are similar primitives for other primitive types as well: 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="e_schar" class="idref" href="#e_schar"><span class="id" title="definition">e_schar</span></a> : <span class="id" title="definition">Rep</span> := <span class="id" title="abbreviation">scharR</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.z"><span class="id" title="variable">z</span></a>. </div>
+
+<div class="doc">
+similarly, <span class="inlinecode"><span class="id" title="var">ucharR</span></span> for unsigned 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="e_int" class="idref" href="#e_int"><span class="id" title="definition">e_int</span></a> : <span class="id" title="definition">Rep</span> := <span class="id" title="abbreviation">intR</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.z"><span class="id" title="variable">z</span></a>. </div>
+
+<div class="doc">
+similarly, <span class="inlinecode"><span class="id" title="var">sintR</span></span> and <span class="inlinecode"><span class="id" title="var">uingR</span></span> 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="e_short" class="idref" href="#e_short"><span class="id" title="definition">e_short</span></a> : <span class="id" title="definition">Rep</span> := <span class="id" title="abbreviation">shortR</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.z"><span class="id" title="variable">z</span></a>. </div>
+
+<div class="doc">
+similarly, <span class="inlinecode"><span class="id" title="var">ushortR</span></span> and <span class="inlinecode"><span class="id" title="var">sshortR</span></span> 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="e_long" class="idref" href="#e_long"><span class="id" title="definition">e_long</span></a> : <span class="id" title="definition">Rep</span> := <span class="id" title="abbreviation">longR</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.z"><span class="id" title="variable">z</span></a>. </div>
+
+<div class="doc">
+similarly, <span class="inlinecode"><span class="id" title="abbreviation">ulongR</span></span> and <span class="inlinecode"><span class="id" title="var">slongR</span></span> 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="e_longlong" class="idref" href="#e_longlong"><span class="id" title="definition">e_longlong</span></a> : <span class="id" title="definition">Rep</span> := <span class="id" title="abbreviation">longlongR</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.z"><span class="id" title="variable">z</span></a>. </div>
+
+<div class="doc">
+similarly, <span class="inlinecode"><span class="id" title="var">ulonglongR</span></span> and <span class="inlinecode"><span class="id" title="var">slonglongR</span></span> 
+<div class="paragraph"> </div>
+
+ Character types work a little bit differently because they are represented
+    in an architecture-indepenent way as *unsigned* numbers 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="e_char" class="idref" href="#e_char"><span class="id" title="definition">e_char</span></a> : <span class="id" title="definition">Rep</span> := <span class="id" title="abbreviation">charR</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a> 10.<br/>
+<span class="id" title="keyword">Example</span> <a id="e_wchar" class="idref" href="#e_wchar"><span class="id" title="definition">e_wchar</span></a> : <span class="id" title="definition">Rep</span> := <span class="id" title="abbreviation">wcharR</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a> 10.<br/>
+<span class="id" title="keyword">Example</span> <a id="e_char32" class="idref" href="#e_char32"><span class="id" title="definition">e_char32</span></a> : <span class="id" title="definition">Rep</span> := <span class="id" title="abbreviation">char32R</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a> 10.<br/>
+<span class="id" title="keyword">Example</span> <a id="e_char16" class="idref" href="#e_char16"><span class="id" title="definition">e_char16</span></a> : <span class="id" title="definition">Rep</span> := <span class="id" title="abbreviation">char16R</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a> 10.<br/>
+<span class="id" title="keyword">Example</span> <a id="e_char8" class="idref" href="#e_char8"><span class="id" title="definition">e_char8</span></a> : <span class="id" title="definition">Rep</span> := <span class="id" title="abbreviation">char8R</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a> 10.<br/>
+
+<br/>
+<span class="id" title="keyword">Variable</span> <a id="with_Sigma.b" class="idref" href="#with_Sigma.b"><span class="id" title="variable">b</span></a>: <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>.<br/>
+<span class="id" title="keyword">Example</span> <a id="e11" class="idref" href="#e11"><span class="id" title="definition">e11</span></a>: <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>:=<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Example</span> <a id="e10" class="idref" href="#e10"><span class="id" title="definition">e10</span></a> : <span class="id" title="definition">Rep</span> := <span class="id" title="abbreviation">boolR</span> <span class="id" title="notation">(</span>1<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#b4302126e6945f3aa85374697a12ab80"><span class="id" title="notation">/</span></a>2<span class="id" title="notation">)$</span><span class="id" title="notation">m</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.b"><span class="id" title="variable">b</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Some locations (e.g. the "next" field of linked list) store pointers.
+<span class="inlinecode"><span class="id" title="var">ptrR</span></span> can be used to describe the memory representation of pointers.
+ 
+</div>
+<div class="code">
+<span class="id" title="keyword">Variable</span> <a id="with_Sigma.ctype" class="idref" href="#with_Sigma.ctype"><span class="id" title="variable">ctype</span></a>:<span class="id" title="inductive">type</span>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="with_Sigma.p" class="idref" href="#with_Sigma.p"><span class="id" title="variable">p</span></a>:<span class="id" title="axiom">ptr</span>.<br/>
+<span class="id" title="keyword">Example</span> <a id="eptr" class="idref" href="#eptr"><span class="id" title="definition">eptr</span></a> : <span class="id" title="definition">Rep</span> := <span class="id" title="notation">ptrR</span><span class="id" title="notation">&lt;</span><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.ctype"><span class="id" title="variable">ctype</span></a><span class="id" title="notation">&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.p"><span class="id" title="variable">p</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.ctype"><span class="id" title="variable">ctype</span></a></span> is the C++ type of the pointer.
+Click at <span class="inlinecode"><span class="id" title="keyword">type</span></span> to see the current definition of C++ types.
+For example, below, we are saying that the pointer is of type
+<code>long*</code> 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="eptr2" class="idref" href="#eptr2"><span class="id" title="definition">eptr2</span></a> : <span class="id" title="definition">Rep</span> := <span class="id" title="notation">ptrR</span><span class="id" title="notation">&lt;</span><span class="id" title="abbreviation">Tlong</span><span class="id" title="notation">&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.p"><span class="id" title="variable">p</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+To refer to (named) struct types, use the <span class="inlinecode"><span class="id" title="constructor">Tnamed</span></span> constructor,
+which takes as argument the mangled name of the class/struct.
+We can use the notations defined in the names file to write
+unmangled names. More about this in the next chapters.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="eptr3" class="idref" href="#eptr3"><span class="id" title="definition">eptr3</span></a> : <span class="id" title="definition">Rep</span> := <span class="id" title="notation">ptrR</span><span class="id" title="notation">&lt;</span><span class="id" title="constructor">Tnamed</span> "list"<span class="id" title="notation">&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.q"><span class="id" title="variable">q</span></a> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.p"><span class="id" title="variable">p</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab16"></a><h1 class="section">Separation</h1>
+
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Variable</span> <a id="with_Sigma.pl" class="idref" href="#with_Sigma.pl"><span class="id" title="variable">pl</span></a>: <span class="id" title="definition">mpred</span>.<br/>
+<span class="id" title="keyword">Variable</span> <a id="with_Sigma.pr" class="idref" href="#with_Sigma.pr"><span class="id" title="variable">pr</span></a>: <span class="id" title="definition">mpred</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Any two <span class="inlinecode"><span class="id" title="library">mpred</span></span>s can be combined together using the infix operator <span class="inlinecode">**</span>
+to get an <span class="inlinecode"><span class="id" title="library">mpred</span></span>:
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="e12" class="idref" href="#e12"><span class="id" title="definition">e12</span></a>: <span class="id" title="definition">mpred</span> := <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.pl"><span class="id" title="variable">pl</span></a> <span class="id" title="notation">**</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.pr"><span class="id" title="variable">pr</span></a>.<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#e12"><span class="id" title="definition">e12</span></a></span> asserts that <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.pl"><span class="id" title="variable">pl</span></a></span> and <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.pr"><span class="id" title="variable">pr</span></a></span> hold *separately*, meaning that their ownership
+of resources is disjoint. For example, the following assertion is invalid because
+both the left side and the right side talk about the same (1) ownership of <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a></span>.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="e13" class="idref" href="#e13"><span class="id" title="definition">e13</span></a> : <span class="id" title="definition">mpred</span> := <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="notation">(</span><span class="id" title="abbreviation">intR</span> 1 4<span class="id" title="notation">)</span> <span class="id" title="notation">**</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="notation">(</span><span class="id" title="abbreviation">intR</span> 1 4<span class="id" title="notation">)</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+We can prove that <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#e13"><span class="id" title="definition">e13</span></a></span> implies <span class="inlinecode"><span class="id" title="var">False</span></span> (<span class="inlinecode"><span class="id" title="var">_</span></span> <span class="inlinecode">|--</span> <span class="inlinecode"><span class="id" title="var">_</span></span> should be read as "entails" ("implies")):
+</div>
+<div class="code">
+<span class="id" title="keyword">Lemma</span> <a id="l1" class="idref" href="#l1"><span class="id" title="lemma">l1</span></a>: <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#e13"><span class="id" title="definition">e13</span></a> <span class="id" title="notation">|--</span> <span class="id" title="notation">[|</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#::type_scope:'False'"><span class="id" title="notation">False</span></a> <span class="id" title="notation">|]</span>.<br/>
+<span class="id" title="keyword">Abort</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+However, the following is fine: 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="e14" class="idref" href="#e14"><span class="id" title="definition">e14</span></a> : <span class="id" title="definition">mpred</span> := <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">intR</span> <span class="id" title="notation">(</span>1<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#b4302126e6945f3aa85374697a12ab80"><span class="id" title="notation">/</span></a>2<span class="id" title="notation">)$</span><span class="id" title="notation">m</span> 4 <span class="id" title="notation">**</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">intR</span> <span class="id" title="notation">(</span>1<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#b4302126e6945f3aa85374697a12ab80"><span class="id" title="notation">/</span></a>2<span class="id" title="notation">)$</span><span class="id" title="notation">m</span> 4.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+if <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a></span> and <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.y"><span class="id" title="variable">y</span></a></span> are different locations, the following is also fine 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="e15" class="idref" href="#e15"><span class="id" title="definition">e15</span></a> : <span class="id" title="definition">mpred</span> := <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">intR</span> 1 4 <span class="id" title="notation">**</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.y"><span class="id" title="variable">y</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">intR</span> <span class="id" title="notation">(</span>1<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#b4302126e6945f3aa85374697a12ab80"><span class="id" title="notation">/</span></a>2<span class="id" title="notation">)$</span><span class="id" title="notation">m</span> 4.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+This separateness part of the <span class="inlinecode">**</span> (instead of vanilla conjunction) gives the main modularity properties of separation logic.
+For example, if a thread <span class="inlinecode"><span class="id" title="var">t1</span></span> has precondition <span class="inlinecode"><span class="id" title="var">P1</span></span> and postcondition <span class="inlinecode"><span class="id" title="var">Q2</span></span>,
+and a thread <span class="inlinecode"><span class="id" title="var">t2</span></span> has precondition <span class="inlinecode"><span class="id" title="var">P2</span></span> and postcondition <span class="inlinecode"><span class="id" title="var">Q2</span></span>,
+the thread <span class="inlinecode"><span class="id" title="var">t1</span></span> <span class="inlinecode">||</span> <span class="inlinecode"><span class="id" title="var">t2</span></span> (<span class="inlinecode"><span class="id" title="var">t1</span></span> and <span class="inlinecode"><span class="id" title="var">t2</span></span> running in parallel) has precondition
+<span class="inlinecode"><span class="id" title="var">P1</span>**<span class="id" title="var">P2</span></span> and postcondition <span class="inlinecode"><span class="id" title="var">Q1</span>**<span class="id" title="var">Q2</span></span>.
+Also, separation logic has the frame property: if we can prove a precondition <span class="inlinecode"><span class="id" title="var">P</span></span> and postcondition <span class="inlinecode"><span class="id" title="var">Q</span></span> for a function <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a></span>,
+then for any assertion <span class="inlinecode"><span class="id" title="var">H</span></span> separate from <span class="inlinecode"><span class="id" title="var">P</span></span> and <span class="inlinecode"><span class="id" title="var">Q</span></span>, the <span class="inlinecode"><span class="id" title="var">P</span>**<span class="id" title="var">H</span></span> and <span class="inlinecode"><span class="id" title="var">Q</span>**<span class="id" title="var">H</span></span>
+are also valid pre- and post- conditions respectively.
+
+<div class="paragraph"> </div>
+
+<a id="lab17"></a><h1 class="section">Structured Reps</h1>
+
+
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+In the examples above (e.g. <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#ex"><span class="id" title="definition">ex</span></a></span>), in the <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a></span> <span class="inlinecode">|-&gt;</span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a></span> notation, the LHS (<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a></span>) must be an *absolute* location,
+RHS is a <span class="inlinecode"><span class="id" title="definition">Rep</span></span> and the whole term (<span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a></span> <span class="inlinecode">|-&gt;</span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a></span>) has type <span class="inlinecode"><span class="id" title="library">mpred</span></span>.
+We have also overloaded the same notation to the case where <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.x"><span class="id" title="variable">x</span></a></span> is *relative* location, e.g. an offset
+defined by a field or an array index and type (size of elements) of array.
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Variable</span> <a id="with_Sigma.struct_field" class="idref" href="#with_Sigma.struct_field"><span class="id" title="variable">struct_field</span></a> <a id="with_Sigma.struct_field2" class="idref" href="#with_Sigma.struct_field2"><span class="id" title="variable">struct_field2</span></a> : <span class="id" title="abbreviation">field</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="structRep1" class="idref" href="#structRep1"><span class="id" title="definition">structRep1</span></a> : <span class="id" title="definition">Rep</span> := <span class="id" title="abbreviation">_field</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.struct_field"><span class="id" title="variable">struct_field</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Note that in this case, the whole term <span class="inlinecode"><span class="id" title="var">structRep</span></span> has type <span class="inlinecode"><span class="id" title="definition">Rep</span></span> (memory representation) instead of <span class="inlinecode"><span class="id" title="library">mpred</span></span>.
+Such <span class="inlinecode"><span class="id" title="definition">Rep</span></span>s typically describe the memory representation of some (yet to be plugged in) *absolute* location holding structured data, e.g. structs, arrays, classes.
+
+<div class="paragraph"> </div>
+
+Note that a <span class="inlinecode"><span class="id" title="definition">Rep</span></span> is like "Even", it isn't meaningful to say "Even is true",
+it is only meaningful to say "Even n" is true. Similarly, it isn't meaningful
+to say that a <span class="inlinecode"><span class="id" title="definition">Rep</span></span> holds, until you say what location it holds on.
+ 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Variable</span> <a id="with_Sigma.this" class="idref" href="#with_Sigma.this"><span class="id" title="variable">this</span></a>:<span class="id" title="axiom">ptr</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="e17" class="idref" href="#e17"><span class="id" title="definition">e17</span></a> : <span class="id" title="definition">mpred</span> := <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.this"><span class="id" title="variable">this</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#structRep1"><span class="id" title="definition">structRep1</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+we can also unfold <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#structRep1"><span class="id" title="definition">structRep1</span></a></span> above and write 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="e18" class="idref" href="#e18"><span class="id" title="definition">e18</span></a> : <span class="id" title="definition">mpred</span> := <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.this"><span class="id" title="variable">this</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="notation">(</span><span class="id" title="abbreviation">_field</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.struct_field"><span class="id" title="variable">struct_field</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a><span class="id" title="notation">)</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Because the notation <span class="inlinecode"><span class="id" title="var">_</span></span> <span class="inlinecode">|-&gt;</span> <span class="inlinecode"><span class="id" title="var">_</span></span> is declared right associative, we can drop the parens: 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="e19" class="idref" href="#e19"><span class="id" title="definition">e19</span></a> : <span class="id" title="definition">mpred</span> := <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.this"><span class="id" title="variable">this</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">_field</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.struct_field"><span class="id" title="variable">struct_field</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Note that the <span class="inlinecode">**</span> notation is overloaded to work on <span class="inlinecode"><span class="id" title="definition">Rep</span></span>s as well as <span class="inlinecode"><span class="id" title="library">mpred</span></span>s;
+however, the meaning is intuitively the same. That is, the following <span class="inlinecode"><span class="id" title="definition">Rep</span></span>
+states that the relative locations are disjoint (i.e. for any *single* absolute
+location <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a></span>, <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a></span> <span class="inlinecode">.,</span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.struct_field"><span class="id" title="variable">struct_field</span></a></span> <span class="inlinecode">|-&gt;</span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a></span> <span class="inlinecode">**</span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a></span> <span class="inlinecode">.,</span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.struct_field2"><span class="id" title="variable">struct_field2</span></a></span> <span class="inlinecode">|-&gt;</span> <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a></span>).
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="e20" class="idref" href="#e20"><span class="id" title="definition">e20</span></a> : <span class="id" title="definition">Rep</span> := <span class="id" title="notation">(</span><span class="id" title="abbreviation">_field</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.struct_field"><span class="id" title="variable">struct_field</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a><span class="id" title="notation">)</span> <span class="id" title="notation">**</span> <span class="id" title="notation">(</span><span class="id" title="abbreviation">_field</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.struct_field2"><span class="id" title="variable">struct_field2</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.r"><span class="id" title="variable">r</span></a><span class="id" title="notation">)</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+More examples in the next two chapters. Parentheses are optional above because
+the precedence between <span class="inlinecode"><span class="id" title="var">_</span></span> <span class="inlinecode">**</span> <span class="inlinecode"><span class="id" title="var">_</span></span> and <span class="inlinecode"><span class="id" title="var">_</span></span> <span class="inlinecode">|-&gt;</span> <span class="inlinecode"><span class="id" title="var">_</span></span> has been defined appropriately. 
+<div class="paragraph"> </div>
+
+<a id="lab18"></a><h1 class="section">Magic Wand</h1>
+
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+The following assertion asserts that
+you have the resources
+of <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.pr"><span class="id" title="variable">pr</span></a></span> "minus" the resources in <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.pl"><span class="id" title="variable">pl</span></a></span>.
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="wand1" class="idref" href="#wand1"><span class="id" title="definition">wand1</span></a> : <span class="id" title="definition">mpred</span> := <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.pl"><span class="id" title="variable">pl</span></a> <span class="id" title="notation">-*</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma.pr"><span class="id" title="variable">pr</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The main reasoning rule for this construct is the following, which says that once you separately get the missing piece, you get the whole thing back: <span class="inlinecode">∀</span> <span class="inlinecode"><span class="id" title="var">P</span></span> <span class="inlinecode"><span class="id" title="var">Q</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">mpredI</span>,</span> <span class="inlinecode"><span class="id" title="var">P</span></span> <span class="inlinecode">∗</span> <span class="inlinecode">(<span class="id" title="var">P</span></span> <span class="inlinecode">-∗</span> <span class="inlinecode"><span class="id" title="var">Q</span>)</span> <span class="inlinecode">⊢</span> <span class="inlinecode"><span class="id" title="var">Q</span></span>, which corresponds to <span class="inlinecode"><span class="id" title="var">bi.wand_elim_r</span></span> <span class="inlinecode"><span class="id" title="var">mpredI</span></span>.
+
+</div>
+<div class="code">
+
+<br/>
+<span class="comment">(*Check&nbsp;@bi.wand_elim_r&nbsp;mpredI.*)</span><br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab19"></a><h1 class="section">Pure Assertions</h1>
+
+
+<div class="paragraph"> </div>
+
+
+<div class="paragraph"> </div>
+
+Some assertions are pure in the sense that they
+are not asserting anything about the current state
+of memory or devices. Examples:
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="pure1" class="idref" href="#pure1"><span class="id" title="definition">pure1</span></a> : <span class="id" title="keyword">Prop</span> := 1<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a>1.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+the following is a false assertion, but a valid assertion nevertheless 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="pure2" class="idref" href="#pure2"><span class="id" title="definition">pure2</span></a> : <span class="id" title="keyword">Prop</span> := 1<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a>2.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+In Coq, pure assertions have type <span class="inlinecode"><span class="id" title="keyword">Prop</span></span>. However, in function specs, pre and post conditions have type <span class="inlinecode"><span class="id" title="library">mpred</span></span>. To convert an <span class="inlinecode"><span class="id" title="keyword">Prop</span></span> to an <span class="inlinecode"><span class="id" title="library">mpred</span></span>, we put them inside <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="var">_</span></span> <span class="inlinecode">|</span> 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="pureMpred" class="idref" href="#pureMpred"><span class="id" title="definition">pureMpred</span></a> : <span class="id" title="definition">mpred</span> := <span class="id" title="notation">[|</span> 1<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a>1 <span class="id" title="notation">|]</span>.<br/>
+
+<br/>
+<span class="comment">(*<br/>
+TO&nbsp;Add:<br/>
+<br/>
+Exists<br/>
+<br/>
+Forall<br/>
+<br/>
+Best&nbsp;practices:<br/>
+think&nbsp;about&nbsp;finiteness&nbsp;of&nbsp;words<br/>
+pattern&nbsp;match&nbsp;on&nbsp;return&nbsp;value<br/>
+<br/>
+*)</span><br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.noimport.doc.cpp.logic.html#with_Sigma"><span class="id" title="section">with_Sigma</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.semantics.alloc_id</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2020-2025&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab136"></a><h2 class="section">Allocation IDs.</h2>
+
+    We use them to model pointer provenance, following Cerberus.
+ 
+</div>
+<div class="code">
+<span class="id" title="keyword">Record</span> <a id="alloc_id" class="idref" href="#alloc_id"><span class="id" title="record">alloc_id</span></a> := <span class="id" title="var">MkAllocId</span> { <a id="alloc_id_car" class="idref" href="#alloc_id_car"><span class="id" title="projection">alloc_id_car</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a> }.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="MkAllocId_inj" class="idref" href="#MkAllocId_inj"><span class="id" title="instance">MkAllocId_inj</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#Inj"><span class="id" title="class">Inj</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#924fd3758233021bbb7af913c6a625ce"><span class="id" title="notation">(=)</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#924fd3758233021bbb7af913c6a625ce"><span class="id" title="notation">(=)</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.alloc_id.html#MkAllocId"><span class="id" title="constructor">MkAllocId</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">intros</span> ?? [=]. <span class="id" title="keyword">Qed</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="alloc_id_eq_dec" class="idref" href="#alloc_id_eq_dec"><span class="id" title="instance">alloc_id_eq_dec</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#EqDecision"><span class="id" title="abbreviation">EqDecision</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.alloc_id.html#alloc_id"><span class="id" title="record">alloc_id</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_decision</span>. <span class="id" title="keyword">Qed</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="alloc_id_countable" class="idref" href="#alloc_id_countable"><span class="id" title="instance">alloc_id_countable</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.countable.html#Countable"><span class="id" title="class">Countable</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.alloc_id.html#alloc_id"><span class="id" title="record">alloc_id</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">apply</span>: (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.countable.html#inj_countable'"><span class="id" title="definition">inj_countable'</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.alloc_id.html#alloc_id_car"><span class="id" title="projection">alloc_id_car</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.alloc_id.html#MkAllocId"><span class="id" title="constructor">MkAllocId</span></a>) =&gt; -[?]. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

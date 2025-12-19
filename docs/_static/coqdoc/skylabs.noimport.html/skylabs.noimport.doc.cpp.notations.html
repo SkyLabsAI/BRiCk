@@ -1,0 +1,331 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.noimport.doc.cpp.notations</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2020&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+</div>
+
+<div class="doc">
+   Path notations
+ 
+</div>
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.cpp</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="with_env" class="idref" href="#with_env"><span class="id" title="section">with_env</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="76ffb81254d2c09e9f09e371a8a83b6e" class="idref" href="#76ffb81254d2c09e9f09e371a8a83b6e"><span class="id" title="variable">σ</span></a> : <span class="id" title="class">genv</span>} `{<a id="d6b82c2bda5b3a311077e036299675f7" class="idref" href="#d6b82c2bda5b3a311077e036299675f7"><span class="id" title="variable">Σ</span></a> : <span class="id" title="class">cpp_logic</span>}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab20"></a><h2 class="section">State Predicates</h2>
+
+      <span class="inlinecode"><span class="id" title="library">mpred</span></span> is the type of predicates that hold on the (system) state.
+   
+<div class="paragraph"> </div>
+
+<a id="lab21"></a><h2 class="section">Representation Predicates</h2>
+
+      <span class="inlinecode"><span class="id" title="definition">Rep</span></span> is the type of predicates that hold "at a location".
+      Note that <span class="inlinecode"><span class="id" title="definition">Rep</span></span> is essentially <span class="inlinecode"><span class="id" title="axiom">ptr</span></span> <span class="inlinecode">-&gt;</span> <span class="inlinecode"><span class="id" title="library">mpred</span></span>.
+   
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> (<a id="with_env.R" class="idref" href="#with_env.R"><span class="id" title="variable">R</span></a> : <span class="id" title="definition">Rep</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab22"></a><h2 class="section">Locations</h2>
+
+<div class="paragraph"> </div>
+
+<a id="lab23"></a><h3 class="section">Absolute Locations</h3>
+
+      these types, i.e. <span class="inlinecode"><span class="id" title="axiom">ptr</span></span>, <span class="inlinecode"><span class="id" title="inductive">val</span></span>, <span class="inlinecode"><span class="id" title="axiom">ptr</span></span>, act like locations 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> (<a id="with_env.p" class="idref" href="#with_env.p"><span class="id" title="variable">p</span></a> : <span class="id" title="axiom">ptr</span>) (<a id="with_env.v" class="idref" href="#with_env.v"><span class="id" title="variable">v</span></a> : <span class="id" title="inductive">val</span>) (<a id="with_env.l" class="idref" href="#with_env.l"><span class="id" title="variable">l</span></a> : <span class="id" title="axiom">ptr</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab24"></a><h3 class="section">Relative Locations</h3>
+
+      these types act like offsets, i.e. relative locations 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> (<a id="with_env.f" class="idref" href="#with_env.f"><span class="id" title="variable">f</span></a> : <span class="id" title="abbreviation">field</span>) (<a id="with_env.o" class="idref" href="#with_env.o"><span class="id" title="variable">o</span></a> : <span class="id" title="axiom">offset</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+to state that a representation predicates <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a></span> holds at a location <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a></span>,
+      you use the <span class="inlinecode">|-&gt;</span> operator. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_1" class="idref" href="#_1"><span class="id" title="definition">_1</span></a> : <span class="id" title="definition">mpred</span> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+because <span class="inlinecode"><span class="id" title="axiom">ptr</span></span> and <span class="inlinecode"><span class="id" title="inductive">val</span></span> are also "location"-like, representation predicates
+      can also hold at them.
+   
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_2" class="idref" href="#_2"><span class="id" title="definition">_2</span></a> : <span class="id" title="definition">mpred</span> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.p"><span class="id" title="variable">p</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_3" class="idref" href="#_3"><span class="id" title="definition">_3</span></a> : <span class="id" title="definition">mpred</span> := <span class="id" title="definition">_eqv</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.v"><span class="id" title="variable">v</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+all of these mean that the location is valid, i.e. it is a valid C/C++
+      pointer, but do not (necessarily) imply that the pointer is non-null.
+   
+<div class="paragraph"> </div>
+
+ when the location is a relative location, the predicate itself becomes
+      relative, i.e. the type changes from <span class="inlinecode"><span class="id" title="library">mpred</span></span> to <span class="inlinecode"><span class="id" title="definition">Rep</span></span>.
+   
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_4" class="idref" href="#_4"><span class="id" title="definition">_4</span></a> : <span class="id" title="definition">Rep</span> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.o"><span class="id" title="variable">o</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+because <span class="inlinecode"><span class="id" title="tactic">field</span></span> is also "offset"-like, they can be used as well. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_5" class="idref" href="#_5"><span class="id" title="definition">_5</span></a> : <span class="id" title="definition">Rep</span> := <span class="id" title="abbreviation">_field</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+note: the value to the right of a <span class="inlinecode"><span class="id" title="var">_</span></span> <span class="inlinecode">|-&gt;</span> <span class="inlinecode"><span class="id" title="var">_</span></span> is *always* a <span class="inlinecode"><span class="id" title="definition">Rep</span></span> regardless
+      of whether the left-side is a <span class="inlinecode"><span class="id" title="axiom">ptr</span></span> or an <span class="inlinecode"><span class="id" title="axiom">offset</span></span>
+   
+<div class="paragraph"> </div>
+
+ locations can be chained together with offsets to produce new locations.
+      the following represents the location <span class="inlinecode"><span class="id" title="var">l.f</span></span>
+   
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_6" class="idref" href="#_6"><span class="id" title="definition">_6</span></a> : <span class="id" title="axiom">ptr</span> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a> <span class="id" title="notation">.,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+note that this also works for offsets, but with slightly different syntax: 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_7" class="idref" href="#_7"><span class="id" title="definition">_7</span></a> : <span class="id" title="axiom">ptr</span> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a> <span class="id" title="notation">,,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.o"><span class="id" title="variable">o</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">_</span></span> <span class="inlinecode">,,</span> <span class="inlinecode"><span class="id" title="var">_</span></span> can also be used to combine <span class="inlinecode"><span class="id" title="axiom">offset</span></span>s into larger <span class="inlinecode"><span class="id" title="axiom">offset</span></span>s 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_8" class="idref" href="#_8"><span class="id" title="definition">_8</span></a> : <span class="id" title="axiom">offset</span> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.o"><span class="id" title="variable">o</span></a> <span class="id" title="notation">,,</span> <span class="id" title="abbreviation">_field</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_9" class="idref" href="#_9"><span class="id" title="definition">_9</span></a> : <span class="id" title="axiom">offset</span> := <span class="id" title="abbreviation">_field</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">,,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.o"><span class="id" title="variable">o</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_10" class="idref" href="#_10"><span class="id" title="definition">_10</span></a> : <span class="id" title="axiom">offset</span> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.o"><span class="id" title="variable">o</span></a> <span class="id" title="notation">,,</span> <span class="id" title="abbreviation">_field</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">,,</span> <span class="id" title="abbreviation">_field</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a>. <span class="comment">(*&nbsp;is&nbsp;parsed&nbsp;as&nbsp;<span class="inlinecode">(<span class="id" title="var">o</span></span> <span class="inlinecode">,,</span> <span class="inlinecode"><span class="id" title="var">f</span>)</span> <span class="inlinecode">,,</span> <span class="inlinecode"><span class="id" title="var">f</span></span>&nbsp;*)</span><br/>
+
+<br/>
+</div>
+
+<div class="doc">
+using this notation, you can also assert that a <span class="inlinecode"><span class="id" title="definition">Rep</span></span> holds at a compound
+      location, e.g. the following means that <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a></span> holds at the location `l.f`.
+   
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_11" class="idref" href="#_11"><span class="id" title="definition">_11</span></a> : <span class="id" title="definition">mpred</span> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a> <span class="id" title="notation">.,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+note that there is no difference between a compound location and a "basic"
+      location, they can be used interchangably
+   
+<div class="paragraph"> </div>
+
+ for uniformity, arbitrary <span class="inlinecode"><span class="id" title="definition">Rep</span></span>s can be positioned, allowing us to write
+      predicates such as the following, which is logically equivalent to <span class="inlinecode"><a class="idref" href="skylabs.noimport.doc.cpp.notations.html#_11"><span class="id" title="definition">_11</span></a></span>.
+   
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_11'" class="idref" href="#_11'"><span class="id" title="definition">_11'</span></a> : <span class="id" title="definition">mpred</span> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">_field</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+a benefit to the nested style is that it allows us to factor repeated paths
+      out, e.g.
+   
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_12" class="idref" href="#_12"><span class="id" title="definition">_12</span></a> : <span class="id" title="definition">mpred</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a> <span class="id" title="notation">.,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="notation">(</span><span class="id" title="abbreviation">_field</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a> <span class="id" title="notation">**</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.o"><span class="id" title="variable">o</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a> <span class="id" title="notation">**</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a><span class="id" title="notation">)</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+which is logically equivalent to the following 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_12'" class="idref" href="#_12'"><span class="id" title="definition">_12'</span></a> : <span class="id" title="definition">mpred</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a> <span class="id" title="notation">.,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">.,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a> <span class="id" title="notation">**</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a> <span class="id" title="notation">.,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">,,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.o"><span class="id" title="variable">o</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a> <span class="id" title="notation">**</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a> <span class="id" title="notation">.,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+in addition to fields, we can also use array subscripts 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_13" class="idref" href="#_13"><span class="id" title="definition">_13</span></a> : <span class="id" title="axiom">ptr</span> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a> <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> 5 <span class="id" title="notation">]</span>. <span class="comment">(*&nbsp;l<span class="inlinecode">[5]</span>&nbsp;(when&nbsp;<span class="inlinecode"><span class="id" title="var">l</span></span>&nbsp;is&nbsp;an&nbsp;`int&nbsp;*`)&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_14" class="idref" href="#_14"><span class="id" title="definition">_14</span></a> : <span class="id" title="axiom">ptr</span> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a> <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tuchar</span> <span class="id" title="notation">!</span> 5 <span class="id" title="notation">]</span>. <span class="comment">(*&nbsp;l<span class="inlinecode">[5]</span>&nbsp;(when&nbsp;<span class="inlinecode"><span class="id" title="var">l</span></span>&nbsp;is&nbsp;an&nbsp;`unsigned&nbsp;char&nbsp;*`)&nbsp;*)</span><br/>
+
+<br/>
+</div>
+
+<div class="doc">
+since these are locations, we can use them to position representation
+      predicates 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_15" class="idref" href="#_15"><span class="id" title="definition">_15</span></a> : <span class="id" title="definition">mpred</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a> <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> 5 <span class="id" title="notation">]</span> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+similarly, they can be used with <span class="inlinecode"><span class="id" title="axiom">offset</span></span>s and <span class="inlinecode"><span class="id" title="definition">Rep</span></span>s 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_16" class="idref" href="#_16"><span class="id" title="definition">_16</span></a> : <span class="id" title="definition">Rep</span> := <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> 3 <span class="id" title="notation">]</span> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_17" class="idref" href="#_17"><span class="id" title="definition">_17</span></a> : <span class="id" title="definition">Rep</span> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.o"><span class="id" title="variable">o</span></a> <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> -20 <span class="id" title="notation">]</span> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+paths can be chained arbitrarily 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_20" class="idref" href="#_20"><span class="id" title="definition">_20</span></a> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">_field</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> 0 <span class="id" title="notation">]</span> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_21" class="idref" href="#_21"><span class="id" title="definition">_21</span></a> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a> <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> 0 <span class="id" title="notation">]</span> <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> 3 <span class="id" title="notation">]</span> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_22" class="idref" href="#_22"><span class="id" title="definition">_22</span></a> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a> <span class="id" title="notation">.,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> 0 <span class="id" title="notation">]</span> <span class="id" title="notation">.,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_23" class="idref" href="#_23"><span class="id" title="definition">_23</span></a> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.l"><span class="id" title="variable">l</span></a> <span class="id" title="notation">.,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> 1 <span class="id" title="notation">]</span> <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> 0 <span class="id" title="notation">]</span> <span class="id" title="notation">.,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_24" class="idref" href="#_24"><span class="id" title="definition">_24</span></a> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.p"><span class="id" title="variable">p</span></a> <span class="id" title="notation">.,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> 1 <span class="id" title="notation">]</span> <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> 0 <span class="id" title="notation">]</span> <span class="id" title="notation">.,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_25" class="idref" href="#_25"><span class="id" title="definition">_25</span></a> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.o"><span class="id" title="variable">o</span></a> <span class="id" title="notation">.,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> 1 <span class="id" title="notation">]</span> <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> 0 <span class="id" title="notation">]</span> <span class="id" title="notation">.,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_26" class="idref" href="#_26"><span class="id" title="definition">_26</span></a> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.o"><span class="id" title="variable">o</span></a> <span class="id" title="notation">.,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> 1 <span class="id" title="notation">]</span> <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> 0 <span class="id" title="notation">]</span> <span class="id" title="notation">.,</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_27" class="idref" href="#_27"><span class="id" title="definition">_27</span></a> := <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> 1 <span class="id" title="notation">]</span> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_28" class="idref" href="#_28"><span class="id" title="definition">_28</span></a> := <span class="id" title="abbreviation">_field</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.f"><span class="id" title="variable">f</span></a> <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> 1 <span class="id" title="notation">]</span> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_29" class="idref" href="#_29"><span class="id" title="definition">_29</span></a> := <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.p"><span class="id" title="variable">p</span></a> <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> 1 <span class="id" title="notation">]</span> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="_30" class="idref" href="#_30"><span class="id" title="definition">_30</span></a> := <span class="id" title="definition">_eqv</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.v"><span class="id" title="variable">v</span></a> <span class="id" title="notation">.[</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="notation">!</span> 1 <span class="id" title="notation">]</span> <span class="id" title="notation">|-&gt;</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env.R"><span class="id" title="variable">R</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.noimport.doc.cpp.notations.html#with_env"><span class="id" title="section">with_env</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

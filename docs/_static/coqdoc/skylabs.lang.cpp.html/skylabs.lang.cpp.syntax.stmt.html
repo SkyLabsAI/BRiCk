@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.syntax.stmt</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2020-2024&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#"><span class="id" title="library">skylabs.lang.cpp.syntax.core</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.bytestring</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set</span> <span class="id" title="var">Primitive</span> <span class="id" title="var">Projections</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#"><span class="id" title="module">core</span></a>(<span class="id" title="var">Stmt</span>(..)).<br/>
+<span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#"><span class="id" title="module">core</span></a>(<span class="id" title="var">VarDecl</span>(..)).<br/>
+
+<br/>
+<span class="id" title="keyword">Notation</span> <a id="Stmt" class="idref" href="#Stmt"><span class="id" title="abbreviation">Stmt</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Stmt"><span class="id" title="inductive">Stmt</span></a>.<br/>
+<span class="id" title="keyword">Notation</span> <a id="MStmt" class="idref" href="#MStmt"><span class="id" title="abbreviation">MStmt</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.stmt.html#Stmt"><span class="id" title="abbreviation">Stmt</span></a> (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">Notation</span> <a id="VarDecl" class="idref" href="#VarDecl"><span class="id" title="abbreviation">VarDecl</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.core.html#VarDecl"><span class="id" title="inductive">VarDecl</span></a>.<br/>
+<span class="id" title="keyword">Notation</span> <a id="MVarDecl" class="idref" href="#MVarDecl"><span class="id" title="abbreviation">MVarDecl</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.stmt.html#VarDecl"><span class="id" title="abbreviation">VarDecl</span></a> (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="Sskip" class="idref" href="#Sskip"><span class="id" title="definition">Sskip</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.stmt.html#Stmt"><span class="id" title="abbreviation">Stmt</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Sseq"><span class="id" title="constructor">Sseq</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>.<br/>
+
+<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

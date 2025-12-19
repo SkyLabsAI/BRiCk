@@ -1,0 +1,81 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>skylabs_tests.elpi.extra.test_diag</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library skylabs_tests.elpi.extra.test_diag</h1>
+
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">skylabs_tests.elpi.extra</span> <span class="id" title="var">Extra</span> <span class="id" title="var">Dependency</span> "test.elpi" <span class="id" title="keyword">as</span> <span class="id" title="var">test</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Stdlib.Lists.List</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Stdlib.NArith.BinNat</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.elpi.extra.extra</span>.<br/>
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Program</span> <span class="id" title="var">test</span> <span class="id" title="var">lp</span>:{{ }}.<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">File</span> <span class="id" title="var">extra.Program</span>.<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">File</span> <span class="id" title="var">test</span>.<br/>
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">no_diag</span> <span class="id" title="var">o</span>:<span class="id" title="var">diag</span>. % <span class="id" title="var">Fails</span><br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">no_msg.msg</span> <span class="id" title="var">o</span>:<span class="id" title="var">string</span>. % <span class="id" title="var">Fails</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">no_msg</span> <span class="id" title="var">o</span>:<span class="id" title="var">diag</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">no_msg</span> (<span class="id" title="var">diag.error</span> <span class="id" title="var">no_msg.msg</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">some_message</span> <span class="id" title="var">o</span>:<span class="id" title="var">diag</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">some_message</span> (<span class="id" title="var">diag.error</span> ((=) "Some message")).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">u.diag</span> <span class="id" title="var">i</span>:<span class="id" title="var">any</span>, <span class="id" title="var">i</span>:<span class="id" title="var">any</span>, <span class="id" title="var">o</span>:<span class="id" title="var">diag</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">u.diag</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">diag.ok</span> :- <span class="id" title="var">A</span> = <span class="id" title="var">B</span>, !.<br/>
+&nbsp;&nbsp;<span class="id" title="var">u.diag</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> (<span class="id" title="var">diag.error</span> ((=) "not equal")).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">u.diagnostic</span> <span class="id" title="var">i</span>:<span class="id" title="var">any</span>, <span class="id" title="var">i</span>:<span class="id" title="var">any</span>, <span class="id" title="var">o</span>:<span class="id" title="var">diagnostic</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">u.diagnostic</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">ok</span> :- <span class="id" title="var">A</span> = <span class="id" title="var">B</span>, !.<br/>
+&nbsp;&nbsp;<span class="id" title="var">u.diagnostic</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> (<span class="id" title="var">error</span> "not equal").<br/>
+}}.<br/>
+
+<br/>
+
+<br/>
+<span class="id" title="var">Fail</span> <span class="id" title="var">Elpi</span> <span class="id" title="var">Query</span> <span class="id" title="var">lp</span>:{{ <span class="id" title="var">diag.asserts</span>! <span class="id" title="var">no_diag</span> "Expect no diagnostic" }}.<br/>
+<span class="id" title="var">Fail</span> <span class="id" title="var">Elpi</span> <span class="id" title="var">Query</span> <span class="id" title="var">lp</span>:{{ <span class="id" title="var">diag.asserts</span>! <span class="id" title="var">no_msg</span> "Expect no message" }}.<br/>
+<span class="id" title="var">Fail</span> <span class="id" title="var">Elpi</span> <span class="id" title="var">Query</span> <span class="id" title="var">lp</span>:{{ <span class="id" title="var">diag.asserts</span>! <span class="id" title="var">some_message</span> "Expect some message" }}.<br/>
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Query</span> <span class="id" title="var">lp</span>:{{ <span class="id" title="var">diag.asserts</span>! (<span class="id" title="var">diag.lift</span>! (<span class="id" title="var">u.diagnostic</span> 1 1)) "test" }}.<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Query</span> <span class="id" title="var">lp</span>:{{ <span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">diag.lower</span>! (<span class="id" title="var">u.diag</span> 1 1)) "test" }}.<br/>
+
+<br/>
+<span class="id" title="var">Fail</span> <span class="id" title="var">Elpi</span> <span class="id" title="var">Query</span> <span class="id" title="var">lp</span>:{{ <span class="id" title="var">diag.asserts</span>! (<span class="id" title="var">diag.lift</span>! (<span class="id" title="var">u.diagnostic</span> 1 2)) "Expect not equal" }}.<br/>
+<span class="id" title="var">Fail</span> <span class="id" title="var">Elpi</span> <span class="id" title="var">Query</span> <span class="id" title="var">lp</span>:{{ <span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">diag.lower</span>! (<span class="id" title="var">u.diag</span> 1 2)) "Expect not equal" }}.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

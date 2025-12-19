@@ -1,0 +1,314 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.logic.lib.agree</h1>
+
+<div class="code">
+</div>
+
+<div class="doc">
+<a id="lab118"></a><h1 class="section">Copyright (C) 2022 BlueRock Security, Inc.</h1>
+
+<a id="lab119"></a><h1 class="section">All rights reserved.</h1>
+
+ *
+<a id="lab120"></a><h1 class="section">SPDX-License-Identifier: LGPL-2.1 WITH BedRock Exception for use over network, see repository root for details.</h1>
+
+ 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.agree.html#"><span class="id" title="library">iris.algebra.agree</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.bi.spec.knowledge</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.logic.pred.html#"><span class="id" title="library">skylabs.lang.cpp.logic.pred</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.base_logic.own_instances</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.proofmode.own_obs</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set Printing Coercions</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Well-typed ghost resources:
+
+<div class="paragraph"> </div>
+
+<ul class="doclist">
+<li> <span class="inlinecode"><span class="id" title="var">agree.own</span></span> <span class="inlinecode">(<span class="id" title="var">g</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">agree.gname</span></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.types.html#with_lang.as_ref'.A"><span class="id" title="variable">A</span></a>)</span> <span class="inlinecode">(<a class="idref" href="skylabs.lang.cpp.syntax.types.html#with_lang.as_ref'.x"><span class="id" title="variable">x</span></a></span> <span class="inlinecode">:</span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.types.html#with_lang.as_ref'.A"><span class="id" title="variable">A</span></a>)</span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="library">mpred</span></span>
+
+</li>
+</ul>
+represents knowledge of ghost cell <span class="inlinecode"><span class="id" title="var">g</span></span> currently containing <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.types.html#with_lang.as_ref'.x"><span class="id" title="variable">x</span></a></span>
+
+<div class="paragraph"> </div>
+
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <span class="id" title="keyword">Type</span> <a id="AGREE" class="idref" href="#AGREE"><span class="id" title="module">AGREE</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+CMRA 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="AGREE.G" class="idref" href="#AGREE.G"><span class="id" title="axiom">G</span></a> : <span class="id" title="notation">∀</span> <span class="id" title="notation">(</span><a id="A:1" class="idref" href="#A:1"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span>) (<a id="ebf069dbc779b42a15c441a6d39d5f83" class="idref" href="#ebf069dbc779b42a15c441a6d39d5f83"><span class="id" title="binder">Σ</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#gFunctors"><span class="id" title="class">gFunctors</span></a><span class="id" title="notation">),</span> <span class="id" title="keyword">Set</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Existing Class</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.G"><span class="id" title="axiom">G</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="a748c672987f2f1aa5fbd7f32dcbff98" class="idref" href="#a748c672987f2f1aa5fbd7f32dcbff98"><span class="id" title="axiom">Σ</span></a> : <span class="id" title="notation">∀</span> <span class="id" title="notation">(</span><a id="A:5" class="idref" href="#A:5"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span><span class="id" title="notation">),</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#gFunctors"><span class="id" title="class">gFunctors</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Declare</span> <span class="id" title="keyword">Instance</span> <a id="AGREE.subG" class="idref" href="#AGREE.subG"><span class="id" title="instance">subG</span></a> {<a id="A:8" class="idref" href="#A:8"><span class="id" title="binder">A</span></a> <a id="2ff76d4cddec082cd899c55bae9fabf3" class="idref" href="#2ff76d4cddec082cd899c55bae9fabf3"><span class="id" title="binder">Σ</span></a>} : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#subG"><span class="id" title="class">subG</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#a748c672987f2f1aa5fbd7f32dcbff98"><span class="id" title="axiom">AGREE.Σ</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#A:8"><span class="id" title="variable">A</span></a>) <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#2ff76d4cddec082cd899c55bae9fabf3"><span class="id" title="variable">Σ</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.G"><span class="id" title="class">G</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#A:8"><span class="id" title="variable">A</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#2ff76d4cddec082cd899c55bae9fabf3"><span class="id" title="variable">Σ</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Ghosts 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="AGREE.gname" class="idref" href="#AGREE.gname"><span class="id" title="axiom">gname</span></a> : <span class="id" title="notation">∀</span> <span class="id" title="notation">(</span><a id="A:10" class="idref" href="#A:10"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span><span class="id" title="notation">),</span> <span class="id" title="keyword">Set</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Declare</span> <span class="id" title="keyword">Instance</span> <a id="AGREE.gname_inhabited" class="idref" href="#AGREE.gname_inhabited"><span class="id" title="instance">gname_inhabited</span></a> <a id="A:13" class="idref" href="#A:13"><span class="id" title="binder">A</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#Inhabited"><span class="id" title="class">Inhabited</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.gname"><span class="id" title="axiom">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#A:13"><span class="id" title="variable">A</span></a>).<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Declare</span> <span class="id" title="keyword">Instance</span> <a id="AGREE.gname_eq_dec" class="idref" href="#AGREE.gname_eq_dec"><span class="id" title="instance">gname_eq_dec</span></a> <a id="A:14" class="idref" href="#A:14"><span class="id" title="binder">A</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#EqDecision"><span class="id" title="abbreviation">EqDecision</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.gname"><span class="id" title="axiom">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#A:14"><span class="id" title="variable">A</span></a>).<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Declare</span> <span class="id" title="keyword">Instance</span> <a id="AGREE.gname_countable" class="idref" href="#AGREE.gname_countable"><span class="id" title="instance">gname_countable</span></a> <a id="A:15" class="idref" href="#A:15"><span class="id" title="binder">A</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.countable.html#Countable"><span class="id" title="class">Countable</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.gname"><span class="id" title="axiom">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#A:15"><span class="id" title="variable">A</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Predicates 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="AGREE.own" class="idref" href="#AGREE.own"><span class="id" title="axiom">own</span></a> : <span class="id" title="notation">∀</span> {<a id="A:16" class="idref" href="#A:16"><span class="id" title="binder">A</span></a>} {<a id="thread_info:17" class="idref" href="#thread_info:17"><span class="id" title="binder">thread_info</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#biIndex"><span class="id" title="class">biIndex</span></a>} {<a id="8b13b958e79b112c1b4fdea541acbd8a" class="idref" href="#8b13b958e79b112c1b4fdea541acbd8a"><span class="id" title="binder">Σ</span></a>} `{<a id="H:19" class="idref" href="#H:19"><span class="id" title="binder">!</span></a><a id="H:19" class="idref" href="#H:19"><span class="id" title="binder">AGREE.G</span></a> <a id="H:19" class="idref" href="#H:19"><span class="id" title="binder">A</span></a> <a id="H:19" class="idref" href="#H:19"><span class="id" title="binder">Σ</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="g:20" class="idref" href="#g:20"><span class="id" title="binder">g</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.gname"><span class="id" title="axiom">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#A:16"><span class="id" title="variable">A</span></a>) (<a id="x:21" class="idref" href="#x:21"><span class="id" title="binder">x</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#A:16"><span class="id" title="variable">A</span></a><span class="id" title="notation">),</span> <span class="id" title="definition">mpred</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Section</span> <a id="AGREE.properties" class="idref" href="#AGREE.properties"><span class="id" title="section">properties</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="AGREE.properties.A" class="idref" href="#AGREE.properties.A"><span class="id" title="variable">A</span></a>} {<a id="AGREE.properties.thread_info" class="idref" href="#AGREE.properties.thread_info"><span class="id" title="variable">thread_info</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#biIndex"><span class="id" title="class">biIndex</span></a>} {<a id="a5ee35d89a3bf6756f87ea696ad62a0d" class="idref" href="#a5ee35d89a3bf6756f87ea696ad62a0d"><span class="id" title="variable">Σ</span></a>} `{!<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.G"><span class="id" title="class">AGREE.G</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#A:24"><span class="id" title="variable">A</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#e023703f3460855264e8fbe327a7ed6a"><span class="id" title="variable">Σ</span></a>}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Structure 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Declare</span> <span class="id" title="keyword">Instance</span> <a id="AGREE.own_objective" class="idref" href="#AGREE.own_objective"><span class="id" title="instance">own_objective</span></a> : <span class="id" title="abbreviation">Objective2</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.own"><span class="id" title="axiom">own</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Declare</span> <span class="id" title="keyword">Instance</span> <a id="AGREE.own_timeless" class="idref" href="#AGREE.own_timeless"><span class="id" title="instance">own_timeless</span></a> : <span class="id" title="abbreviation">Timeless2</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.own"><span class="id" title="axiom">own</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Declare</span> <span class="id" title="keyword">Instance</span> <a id="AGREE.own_knowledge" class="idref" href="#AGREE.own_knowledge"><span class="id" title="instance">own_knowledge</span></a> : <span class="id" title="abbreviation">Knowledge2</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.own"><span class="id" title="axiom">own</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Declare</span> <span class="id" title="keyword">Instance</span> <a id="AGREE.own_agree" class="idref" href="#AGREE.own_agree"><span class="id" title="instance">own_agree</span></a> <a id="g:28" class="idref" href="#g:28"><span class="id" title="binder">g</span></a> : <span class="id" title="abbreviation">Agree1</span> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.own"><span class="id" title="axiom">own</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:28"><span class="id" title="variable">g</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Allocation 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Axiom</span> <a id="AGREE.properties.alloc_strong_dep" class="idref" href="#AGREE.properties.alloc_strong_dep"><span class="id" title="variable">alloc_strong_dep</span></a> : <span class="id" title="notation">∀</span> <span class="id" title="notation">(</span><a id="f:29" class="idref" href="#f:29"><span class="id" title="binder">f</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.gname"><span class="id" title="axiom">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.properties.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.properties.A"><span class="id" title="variable">A</span></a>) (<a id="P:30" class="idref" href="#P:30"><span class="id" title="binder">P</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.gname"><span class="id" title="axiom">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.properties.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Prop</span><span class="id" title="notation">),</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.sets.html#pred_infinite"><span class="id" title="definition">pred_infinite</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#P:30"><span class="id" title="variable">P</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#be9a2343da4fe37e3ed47c88e1c47b1e"><span class="id" title="notation">|==&gt;</span></a> <span class="id" title="notation">Exists</span> <a id="g:31" class="idref" href="#g:31"><span class="id" title="binder">g</span></a><span class="id" title="notation">,</span> <span class="id" title="notation">[|</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#P:30"><span class="id" title="variable">P</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:31"><span class="id" title="variable">g</span></a> <span class="id" title="notation">|]</span> <span class="id" title="notation">**</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.own"><span class="id" title="axiom">own</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:31"><span class="id" title="variable">g</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#f:29"><span class="id" title="variable">f</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:31"><span class="id" title="variable">g</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Axiom</span> <a id="AGREE.properties.alloc_cofinite_dep" class="idref" href="#AGREE.properties.alloc_cofinite_dep"><span class="id" title="variable">alloc_cofinite_dep</span></a> : <span class="id" title="notation">∀</span> <span class="id" title="notation">(</span><a id="f:34" class="idref" href="#f:34"><span class="id" title="binder">f</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.gname"><span class="id" title="axiom">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.properties.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.properties.A"><span class="id" title="variable">A</span></a>) (<a id="G:35" class="idref" href="#G:35"><span class="id" title="binder">G</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.gmap.html#gset"><span class="id" title="definition">gset</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.gname"><span class="id" title="axiom">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.properties.A"><span class="id" title="variable">A</span></a>)<span class="id" title="notation">),</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#be9a2343da4fe37e3ed47c88e1c47b1e"><span class="id" title="notation">|==&gt;</span></a> <span class="id" title="notation">Exists</span> <a id="g:36" class="idref" href="#g:36"><span class="id" title="binder">g</span></a><span class="id" title="notation">,</span> <span class="id" title="notation">[|</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:36"><span class="id" title="variable">g</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4291a6e02d5eff431051107aaf15194c"><span class="id" title="notation">∉</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#G:35"><span class="id" title="variable">G</span></a> <span class="id" title="notation">|]</span> <span class="id" title="notation">**</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.own"><span class="id" title="axiom">own</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:36"><span class="id" title="variable">g</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#f:34"><span class="id" title="variable">f</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:36"><span class="id" title="variable">g</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Axiom</span> <a id="AGREE.properties.alloc_dep" class="idref" href="#AGREE.properties.alloc_dep"><span class="id" title="variable">alloc_dep</span></a> : <span class="id" title="notation">∀</span> <span class="id" title="notation">(</span><a id="f:39" class="idref" href="#f:39"><span class="id" title="binder">f</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.gname"><span class="id" title="axiom">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.properties.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.properties.A"><span class="id" title="variable">A</span></a><span class="id" title="notation">),</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#be9a2343da4fe37e3ed47c88e1c47b1e"><span class="id" title="notation">|==&gt;</span></a> <span class="id" title="notation">Exists</span> <a id="g:40" class="idref" href="#g:40"><span class="id" title="binder">g</span></a><span class="id" title="notation">,</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.own"><span class="id" title="axiom">own</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:40"><span class="id" title="variable">g</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#f:39"><span class="id" title="variable">f</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:40"><span class="id" title="variable">g</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Axiom</span> <a id="AGREE.properties.alloc_strong" class="idref" href="#AGREE.properties.alloc_strong"><span class="id" title="variable">alloc_strong</span></a> : <span class="id" title="notation">∀</span> <span class="id" title="notation">(</span><a id="P:43" class="idref" href="#P:43"><span class="id" title="binder">P</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.gname"><span class="id" title="axiom">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.properties.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Prop</span>) <a id="x:44" class="idref" href="#x:44"><span class="id" title="binder">x</span></a><span class="id" title="notation">,</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.sets.html#pred_infinite"><span class="id" title="definition">pred_infinite</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#P:43"><span class="id" title="variable">P</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#be9a2343da4fe37e3ed47c88e1c47b1e"><span class="id" title="notation">|==&gt;</span></a> <span class="id" title="notation">Exists</span> <a id="g:45" class="idref" href="#g:45"><span class="id" title="binder">g</span></a><span class="id" title="notation">,</span> <span class="id" title="notation">[|</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#P:43"><span class="id" title="variable">P</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:45"><span class="id" title="variable">g</span></a> <span class="id" title="notation">|]</span> <span class="id" title="notation">**</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.own"><span class="id" title="axiom">own</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:45"><span class="id" title="variable">g</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#x:44"><span class="id" title="variable">x</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Axiom</span> <a id="AGREE.properties.alloc_cofinite" class="idref" href="#AGREE.properties.alloc_cofinite"><span class="id" title="variable">alloc_cofinite</span></a> : <span class="id" title="notation">∀</span> <span class="id" title="notation">(</span><a id="G:48" class="idref" href="#G:48"><span class="id" title="binder">G</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.gmap.html#gset"><span class="id" title="definition">gset</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.gname"><span class="id" title="axiom">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.properties.A"><span class="id" title="variable">A</span></a>)) <a id="x:49" class="idref" href="#x:49"><span class="id" title="binder">x</span></a><span class="id" title="notation">,</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#be9a2343da4fe37e3ed47c88e1c47b1e"><span class="id" title="notation">|==&gt;</span></a> <span class="id" title="notation">Exists</span> <a id="g:50" class="idref" href="#g:50"><span class="id" title="binder">g</span></a><span class="id" title="notation">,</span> <span class="id" title="notation">[|</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:50"><span class="id" title="variable">g</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4291a6e02d5eff431051107aaf15194c"><span class="id" title="notation">∉</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#G:48"><span class="id" title="variable">G</span></a> <span class="id" title="notation">|]</span> <span class="id" title="notation">**</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.own"><span class="id" title="axiom">own</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:50"><span class="id" title="variable">g</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#x:49"><span class="id" title="variable">x</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Axiom</span> <a id="AGREE.properties.alloc" class="idref" href="#AGREE.properties.alloc"><span class="id" title="variable">alloc</span></a> : <span class="id" title="notation">∀</span> <a id="x:53" class="idref" href="#x:53"><span class="id" title="binder">x</span></a><span class="id" title="notation">,</span> <span class="id" title="notation">|--</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#be9a2343da4fe37e3ed47c88e1c47b1e"><span class="id" title="notation">|==&gt;</span></a> <span class="id" title="notation">Exists</span> <a id="g:54" class="idref" href="#g:54"><span class="id" title="binder">g</span></a><span class="id" title="notation">,</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.own"><span class="id" title="axiom">own</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:54"><span class="id" title="variable">g</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#x:53"><span class="id" title="variable">x</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+TODO: Automation (generically derivable) 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE.properties"><span class="id" title="section">properties</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE"><span class="id" title="module">AGREE</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="agree" class="idref" href="#agree"><span class="id" title="module">agree</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#AGREE"><span class="id" title="module">AGREE</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+CMRA 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Notation</span> <a id="agree.RA" class="idref" href="#agree.RA"><span class="id" title="abbreviation">RA</span></a> <span class="id" title="var">A</span> := (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.agree.html#agreeR"><span class="id" title="definition">agreeR</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.ofe.html#leibnizO"><span class="id" title="abbreviation">leibnizO</span></a> <span class="id" title="var">A</span>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Class</span> <a id="agree.G" class="idref" href="#agree.G"><span class="id" title="inductive, record"><span id="agree.G" class="id">G</span></span></a> (<a id="A:57" class="idref" href="#A:57"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span>) (<a id="fe1b904099dfeab72f9743c2bf233c57" class="idref" href="#fe1b904099dfeab72f9743c2bf233c57"><span class="id" title="binder">Σ</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#gFunctors"><span class="id" title="class">gFunctors</span></a>) : <span class="id" title="keyword">Set</span> := <a id="agree.G_inG" class="idref" href="#agree.G_inG"><span class="id" title="constructor, projection"><span id="agree.G_inG" class="id">G_inG</span></span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.own.html#inG"><span class="id" title="class">inG</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#fe1b904099dfeab72f9743c2bf233c57"><span class="id" title="variable">Σ</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.RA"><span class="id" title="abbreviation">RA</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#A:57"><span class="id" title="variable">A</span></a>).<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Existing</span> <span class="id" title="keyword">Instance</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.G_inG"><span class="id" title="definition">G_inG</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="1c1706b0174c560d31a9f159186cdb41" class="idref" href="#1c1706b0174c560d31a9f159186cdb41"><span class="id" title="definition">Σ</span></a> (<a id="A:61" class="idref" href="#A:61"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span>) : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#gFunctors"><span class="id" title="class">gFunctors</span></a> := <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#8ed86267cb76025deed5ef60f2c33991"><span class="id" title="notation">#[</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#GFunctor"><span class="id" title="constructor">GFunctor</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.RA"><span class="id" title="abbreviation">RA</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#A:61"><span class="id" title="variable">A</span></a>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#8ed86267cb76025deed5ef60f2c33991"><span class="id" title="notation">]</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="agree.subG" class="idref" href="#agree.subG"><span class="id" title="lemma">subG</span></a> {<a id="A:62" class="idref" href="#A:62"><span class="id" title="binder">A</span></a> <a id="45eeb0a1cf4691796472cadbc1cb66fd" class="idref" href="#45eeb0a1cf4691796472cadbc1cb66fd"><span class="id" title="binder">Σ</span></a>} : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#subG"><span class="id" title="class">subG</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#1c1706b0174c560d31a9f159186cdb41"><span class="id" title="definition">agree.Σ</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#A:62"><span class="id" title="variable">A</span></a>) <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#45eeb0a1cf4691796472cadbc1cb66fd"><span class="id" title="variable">Σ</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.G"><span class="id" title="class">G</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#A:62"><span class="id" title="variable">A</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#45eeb0a1cf4691796472cadbc1cb66fd"><span class="id" title="variable">Σ</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_inG</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Ghosts 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="agree.gname" class="idref" href="#agree.gname"><span class="id" title="definition">gname</span></a> (<a id="A:64" class="idref" href="#A:64"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span>) : <span class="id" title="keyword">Set</span> := <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#gname"><span class="id" title="definition">iprop.gname</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Instance</span> <a id="agree.gname_inhabited" class="idref" href="#agree.gname_inhabited"><span class="id" title="instance">gname_inhabited</span></a> <a id="A:65" class="idref" href="#A:65"><span class="id" title="binder">A</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#Inhabited"><span class="id" title="class">Inhabited</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.gname"><span class="id" title="definition">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#A:65"><span class="id" title="variable">A</span></a>) := <span class="id" title="var">_</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Instance</span> <a id="agree.gname_eq_dec" class="idref" href="#agree.gname_eq_dec"><span class="id" title="instance">gname_eq_dec</span></a> <a id="A:66" class="idref" href="#A:66"><span class="id" title="binder">A</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#EqDecision"><span class="id" title="abbreviation">EqDecision</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.gname"><span class="id" title="definition">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#A:66"><span class="id" title="variable">A</span></a>) := <span class="id" title="var">_</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Instance</span> <a id="agree.gname_countable" class="idref" href="#agree.gname_countable"><span class="id" title="instance">gname_countable</span></a> <a id="A:67" class="idref" href="#A:67"><span class="id" title="binder">A</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.countable.html#Countable"><span class="id" title="class">Countable</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.gname"><span class="id" title="definition">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#A:67"><span class="id" title="variable">A</span></a>) := <span class="id" title="var">_</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Predicates 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Section</span> <a id="agree.defs" class="idref" href="#agree.defs"><span class="id" title="section">defs</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="agree.defs.A" class="idref" href="#agree.defs.A"><span class="id" title="variable">A</span></a>} {<a id="agree.defs.thread_info" class="idref" href="#agree.defs.thread_info"><span class="id" title="variable">thread_info</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#biIndex"><span class="id" title="class">biIndex</span></a>} {<a id="6979381fa1ac3ee99c65758f7fe83d3f" class="idref" href="#6979381fa1ac3ee99c65758f7fe83d3f"><span class="id" title="variable">Σ</span></a>} `{!<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.G"><span class="id" title="class">agree.G</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#A:68"><span class="id" title="variable">A</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#ac713e2c58df9c0a01be9ad130d8ea1a"><span class="id" title="variable">Σ</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Notation</span> <a id="agree.to_agree" class="idref" href="#agree.to_agree"><span class="id" title="abbreviation">to_agree</span></a> := (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.agree.html#to_agree"><span class="id" title="definition">to_agree</span></a> (<span class="id" title="var">A</span>:=<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.ofe.html#leibnizO"><span class="id" title="abbreviation">leibnizO</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.defs.A"><span class="id" title="variable">A</span></a>)).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="agree.own" class="idref" href="#agree.own"><span class="id" title="definition">own</span></a> (<a id="g:72" class="idref" href="#g:72"><span class="id" title="binder">g</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.gname"><span class="id" title="definition">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.defs.A"><span class="id" title="variable">A</span></a>) (<a id="x:73" class="idref" href="#x:73"><span class="id" title="binder">x</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.defs.A"><span class="id" title="variable">A</span></a>) : <span class="id" title="definition">mpred</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="method">own</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:72"><span class="id" title="variable">g</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.to_agree"><span class="id" title="abbreviation">to_agree</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#x:73"><span class="id" title="variable">x</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Instance</span> <a id="agree.own_objective" class="idref" href="#agree.own_objective"><span class="id" title="instance">own_objective</span></a> : <span class="id" title="abbreviation">Objective2</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.own"><span class="id" title="definition">own</span></a> := <span class="id" title="var">_</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Instance</span> <a id="agree.own_timeless" class="idref" href="#agree.own_timeless"><span class="id" title="instance">own_timeless</span></a> : <span class="id" title="abbreviation">Timeless2</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.own"><span class="id" title="definition">own</span></a> := <span class="id" title="var">_</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Instance</span> <a id="agree.own_knowledge" class="idref" href="#agree.own_knowledge"><span class="id" title="instance">own_knowledge</span></a> : <span class="id" title="abbreviation">Knowledge2</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.own"><span class="id" title="definition">own</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_knowledge</span>. <span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Instance</span> <a id="agree.own_agree" class="idref" href="#agree.own_agree"><span class="id" title="instance">own_agree</span></a> <a id="g:74" class="idref" href="#g:74"><span class="id" title="binder">g</span></a> : <span class="id" title="abbreviation">Agree1</span> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.own"><span class="id" title="definition">own</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:74"><span class="id" title="variable">g</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+</div>
+
+<div class="doc">
+      TODO (PDS): Shouldn't need to expose <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.lib.auth_frac.html#afrac.to_agree"><span class="id" title="abbreviation">to_agree</span></a></span>.
+      
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>. <span class="id" title="tactic">rewrite</span> -(<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#inj_iff"><span class="id" title="lemma">inj_iff</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.to_agree"><span class="id" title="abbreviation">to_agree</span></a>). <span class="id" title="tactic">apply</span> <span class="id" title="var">_</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="agree.alloc_strong_dep" class="idref" href="#agree.alloc_strong_dep"><span class="id" title="lemma">alloc_strong_dep</span></a> : <span class="id" title="notation">∀</span> <span class="id" title="notation">(</span><a id="f:75" class="idref" href="#f:75"><span class="id" title="binder">f</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.gname"><span class="id" title="definition">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.defs.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.defs.A"><span class="id" title="variable">A</span></a>) (<a id="P:76" class="idref" href="#P:76"><span class="id" title="binder">P</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.gname"><span class="id" title="definition">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.defs.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Prop</span><span class="id" title="notation">),</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.sets.html#pred_infinite"><span class="id" title="definition">pred_infinite</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#P:76"><span class="id" title="variable">P</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#be9a2343da4fe37e3ed47c88e1c47b1e"><span class="id" title="notation">|==&gt;</span></a> <span class="id" title="notation">Exists</span> <a id="g:77" class="idref" href="#g:77"><span class="id" title="binder">g</span></a><span class="id" title="notation">,</span> <span class="id" title="notation">[|</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#P:76"><span class="id" title="variable">P</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:77"><span class="id" title="variable">g</span></a> <span class="id" title="notation">|]</span> <span class="id" title="notation">**</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.own"><span class="id" title="definition">own</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:77"><span class="id" title="variable">g</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#f:75"><span class="id" title="variable">f</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:77"><span class="id" title="variable">g</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">apply</span>: <span class="id" title="lemma">own_alloc_strong_dep'</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="agree.alloc_cofinite_dep" class="idref" href="#agree.alloc_cofinite_dep"><span class="id" title="lemma">alloc_cofinite_dep</span></a> : <span class="id" title="notation">∀</span> <span class="id" title="notation">(</span><a id="f:78" class="idref" href="#f:78"><span class="id" title="binder">f</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.gname"><span class="id" title="definition">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.defs.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.defs.A"><span class="id" title="variable">A</span></a>) (<a id="G:79" class="idref" href="#G:79"><span class="id" title="binder">G</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.gmap.html#gset"><span class="id" title="definition">gset</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.gname"><span class="id" title="definition">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.defs.A"><span class="id" title="variable">A</span></a>)<span class="id" title="notation">),</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#be9a2343da4fe37e3ed47c88e1c47b1e"><span class="id" title="notation">|==&gt;</span></a> <span class="id" title="notation">Exists</span> <a id="g:80" class="idref" href="#g:80"><span class="id" title="binder">g</span></a><span class="id" title="notation">,</span> <span class="id" title="notation">[|</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:80"><span class="id" title="variable">g</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4291a6e02d5eff431051107aaf15194c"><span class="id" title="notation">∉</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#G:79"><span class="id" title="variable">G</span></a> <span class="id" title="notation">|]</span> <span class="id" title="notation">**</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.own"><span class="id" title="definition">own</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:80"><span class="id" title="variable">g</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#f:78"><span class="id" title="variable">f</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:80"><span class="id" title="variable">g</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">apply</span>: <span class="id" title="lemma">own_alloc_cofinite_dep'</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="agree.alloc_dep" class="idref" href="#agree.alloc_dep"><span class="id" title="lemma">alloc_dep</span></a> : <span class="id" title="notation">∀</span> <span class="id" title="notation">(</span><a id="f:81" class="idref" href="#f:81"><span class="id" title="binder">f</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.gname"><span class="id" title="definition">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.defs.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.defs.A"><span class="id" title="variable">A</span></a><span class="id" title="notation">),</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#be9a2343da4fe37e3ed47c88e1c47b1e"><span class="id" title="notation">|==&gt;</span></a> <span class="id" title="notation">Exists</span> <a id="g:82" class="idref" href="#g:82"><span class="id" title="binder">g</span></a><span class="id" title="notation">,</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.own"><span class="id" title="definition">own</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:82"><span class="id" title="variable">g</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#f:81"><span class="id" title="variable">f</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:82"><span class="id" title="variable">g</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">apply</span>: <span class="id" title="lemma">own_alloc_dep</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="agree.alloc_strong" class="idref" href="#agree.alloc_strong"><span class="id" title="lemma">alloc_strong</span></a> : <span class="id" title="notation">∀</span> <span class="id" title="notation">(</span><a id="P:83" class="idref" href="#P:83"><span class="id" title="binder">P</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.gname"><span class="id" title="definition">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.defs.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Prop</span>) <a id="x:84" class="idref" href="#x:84"><span class="id" title="binder">x</span></a><span class="id" title="notation">,</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.sets.html#pred_infinite"><span class="id" title="definition">pred_infinite</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#P:83"><span class="id" title="variable">P</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#be9a2343da4fe37e3ed47c88e1c47b1e"><span class="id" title="notation">|==&gt;</span></a> <span class="id" title="notation">Exists</span> <a id="g:85" class="idref" href="#g:85"><span class="id" title="binder">g</span></a><span class="id" title="notation">,</span> <span class="id" title="notation">[|</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#P:83"><span class="id" title="variable">P</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:85"><span class="id" title="variable">g</span></a> <span class="id" title="notation">|]</span> <span class="id" title="notation">**</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.own"><span class="id" title="definition">own</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:85"><span class="id" title="variable">g</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#x:84"><span class="id" title="variable">x</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">apply</span>: <span class="id" title="lemma">own_alloc_strong'</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="agree.alloc_cofinite" class="idref" href="#agree.alloc_cofinite"><span class="id" title="lemma">alloc_cofinite</span></a> : <span class="id" title="notation">∀</span> <span class="id" title="notation">(</span><a id="G:86" class="idref" href="#G:86"><span class="id" title="binder">G</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.gmap.html#gset"><span class="id" title="definition">gset</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.gname"><span class="id" title="definition">gname</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.defs.A"><span class="id" title="variable">A</span></a>)) <a id="x:87" class="idref" href="#x:87"><span class="id" title="binder">x</span></a><span class="id" title="notation">,</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#be9a2343da4fe37e3ed47c88e1c47b1e"><span class="id" title="notation">|==&gt;</span></a> <span class="id" title="notation">Exists</span> <a id="g:88" class="idref" href="#g:88"><span class="id" title="binder">g</span></a><span class="id" title="notation">,</span> <span class="id" title="notation">[|</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:88"><span class="id" title="variable">g</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4291a6e02d5eff431051107aaf15194c"><span class="id" title="notation">∉</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#G:86"><span class="id" title="variable">G</span></a> <span class="id" title="notation">|]</span> <span class="id" title="notation">**</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.own"><span class="id" title="definition">own</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:88"><span class="id" title="variable">g</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#x:87"><span class="id" title="variable">x</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">apply</span>: <span class="id" title="lemma">own_alloc_cofinite'</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="agree.alloc" class="idref" href="#agree.alloc"><span class="id" title="lemma">alloc</span></a> <a id="x:89" class="idref" href="#x:89"><span class="id" title="binder">x</span></a> : <span class="id" title="notation">|--</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#be9a2343da4fe37e3ed47c88e1c47b1e"><span class="id" title="notation">|==&gt;</span></a> <span class="id" title="notation">Exists</span> <a id="g:90" class="idref" href="#g:90"><span class="id" title="binder">g</span></a><span class="id" title="notation">,</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.own"><span class="id" title="definition">own</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#g:90"><span class="id" title="variable">g</span></a> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#x:89"><span class="id" title="variable">x</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">apply</span> <span class="id" title="lemma">own_alloc</span>. <span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree.defs"><span class="id" title="section">defs</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.logic.lib.agree.html#agree"><span class="id" title="module">agree</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

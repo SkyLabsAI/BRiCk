@@ -1,0 +1,213 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.logic.string</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(C)&nbsp;2019-2021&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.lang.cpp.logic.core_string.html#"><span class="id" title="library">skylabs.lang.cpp.logic.core_string</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.lang.cpp.logic.cstring.html#"><span class="id" title="library">skylabs.lang.cpp.logic.cstring</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.lang.cpp.logic.zstring.html#"><span class="id" title="library">skylabs.lang.cpp.logic.zstring</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab99"></a><h1 class="section"><span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.cstring.html#cstring"><span class="id" title="module">cstring</span></a></span>s and <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.zstring.html#zstring"><span class="id" title="module">zstring</span></a></span>s</h1>
+
+
+<div class="paragraph"> </div>
+
+    In C++, strings are backed by character arrays; it is easiest to bootstrap our
+    string theory by using *null-terminated* <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.mtraverse.html#list"><span class="id" title="section">list</span></a></span> <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a></span>s as the Coq model type - which
+    is what the <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.zstring.html#zstring"><span class="id" title="module">zstring</span></a></span> module does. Atop these <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.zstring.html#zstring"><span class="id" title="module">zstring</span></a></span>s we can derive the
+    concept of <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.cstring.html#cstring"><span class="id" title="module">cstring</span></a></span>s which re-express the same <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.zstring.html#zstring"><span class="id" title="module">zstring</span></a></span> representation predicates,
+    utilities and theory in terms of a <span class="inlinecode"><span class="id" title="var">BS.t</span></span> (bytestring) Coq model carrier type. You
+    should *almost always* use a <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.cstring.html#cstring"><span class="id" title="module">cstring</span></a></span> concept instead of a <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.zstring.html#zstring"><span class="id" title="module">zstring</span></a></span> concept
+    if possible, as the automation has been tuned to work best for the former; there are
+    sufficient reasoning principles for converting between the two if necessary.
+ <a id="lab100"></a><h2 class="section">Notes</h2>
+
+<ul class="doclist">
+<li> We omit discussion of <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.zstring.html#zstring"><span class="id" title="module">zstring</span></a></span>s from here on out due to their aforementioned
+      subsumption by <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.cstring.html#cstring"><span class="id" title="module">cstring</span></a></span>s.
+
+</li>
+<li> Whereas <span class="inlinecode"><span class="id" title="var">cstring.t</span></span> <span class="inlinecode">:=</span> <span class="inlinecode"><span class="id" title="var">BS.t</span></span> *does not* contain a null-terminator,
+      <span class="inlinecode"><span class="id" title="var">zstring.t</span></span> <span class="inlinecode">:=</span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.mtraverse.html#list"><span class="id" title="section">list</span></a></span> <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a></span> *does* contain a null-terminator; the conversion
+      utilities deal with appropriately inserting/stripping this null-terminator.
+
+</li>
+<li> The `'` variant of the <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.zstring.html#zstring.WF"><span class="id" title="abbreviation">WF</span></a></span> predicate uses an alternative formulation which
+      was more useful during a previous iteration of some downstream proofs.
+      We retain this alternative formulation so that we can avoid re-proving that
+      code, but you should *always* prefer to use <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.zstring.html#zstring.WF"><span class="id" title="abbreviation">WF</span></a></span> over <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.zstring.html#zstring.WF'"><span class="id" title="abbreviation">WF'</span></a></span>. However, there
+      are sufficient reasoning principles for seamlessly switching between the two.
+
+</li>
+<li> Due to scope complexities, some definitions are actually notations which
+      wrap an identically-named term which is prefixed by an underscore; use this
+      underscore-prefixed version if Coq complains about a notation not being
+      fully applied.
+
+</li>
+</ul>
+ <a id="lab101"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">cstring.t</span></span> and <span class="inlinecode"><span class="id" title="var">cstring.WF</span></span> - Well Formed <span class="inlinecode"><span class="id" title="var">BS.t</span></span>s (bytestrings) as a Carrier Type for C++ Strings</h1>
+
+
+<div class="paragraph"> </div>
+
+    While it is useful to take advantage of Coq's bytestrings to model C++ strings,
+    this is not quite strong enough. In particular, C++ strings are null-terminated
+    and thus cannot contain any intervening zeros. While we could've bundled
+    this well-formedness side-condition into the carrier type, we decide instead
+    to separate it out into a predicate <span class="inlinecode"><span class="id" title="var">cstring.WF</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">cstring.t</span></span> <span class="inlinecode">-&gt;</span> <span class="inlinecode"><span class="id" title="keyword">Prop</span></span>. This has
+    the added benefit of easing the proof of the core <span class="inlinecode"><span class="id" title="var">cstring.t</span></span> theory since we
+    avoid the use of dependent records.
+
+<div class="paragraph"> </div>
+
+    The following is a rough enumeration of the definitions and theory related to
+    <span class="inlinecode"><span class="id" title="var">cstring.t</span></span> and <span class="inlinecode"><span class="id" title="var">cstring.WF</span></span>:
+<ul class="doclist">
+<li> <span class="inlinecode"><span class="id" title="var">cstring.t</span></span> <span class="inlinecode">:=</span> <span class="inlinecode"><span class="id" title="var">BS.t</span></span>: bytestrings as a carrier type for C++ strings
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="var">cstring.WF</span></span> <span class="inlinecode">(<span class="id" title="var">cstr</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">cstring.t</span>)</span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="keyword">Prop</span></span> <span class="inlinecode">:=</span> <span class="inlinecode">&lt;<span class="id" title="var">cstr</span></span> <span class="inlinecode"><span class="id" title="var">doesn't</span></span> <span class="inlinecode"><span class="id" title="var">contain</span></span> <span class="inlinecode"><span class="id" title="var">the</span></span> <span class="inlinecode"><span class="id" title="var">zero</span>-<a class="idref" href="skylabs.lang.cpp.model.simple_pred.html#SimpleCPP_BASE.byte"><span class="id" title="definition">byte</span></a>&gt;</span>:
+      well-formedness of <span class="inlinecode"><span class="id" title="var">cstring.t</span></span>s.
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="var">cstring.size</span></span> <span class="inlinecode">(<span class="id" title="var">cstr</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">cstring.t</span>)</span> <span class="inlinecode">:</span> <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a></span>
+         <span class="inlinecode">:=</span> <span class="inlinecode">&lt;<span class="id" title="abbreviation">length</span></span> <span class="inlinecode"><span class="id" title="keyword">of</span></span> <span class="inlinecode"><span class="id" title="var">the</span></span> <span class="inlinecode"><span class="id" title="var">string</span></span> <span class="inlinecode">*<span class="id" title="var">including</span>*</span> <span class="inlinecode"><span class="id" title="var">the</span></span> <span class="inlinecode"><span class="id" title="library">null</span>-<span class="id" title="var">terminator</span>&gt;</span>
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="var">cstring.strlen</span></span> <span class="inlinecode">(<span class="id" title="var">cstr</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">cstring.t</span>)</span> <span class="inlinecode">:</span> <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a></span>
+         <span class="inlinecode">:=</span> <span class="inlinecode">&lt;<span class="id" title="abbreviation">length</span></span> <span class="inlinecode"><span class="id" title="keyword">of</span></span> <span class="inlinecode"><span class="id" title="var">the</span></span> <span class="inlinecode"><span class="id" title="var">string</span></span> <span class="inlinecode">*<span class="id" title="var">excluding</span>*</span> <span class="inlinecode"><span class="id" title="var">the</span></span> <span class="inlinecode"><span class="id" title="library">null</span>-<span class="id" title="var">terminator</span>&gt;</span>
+<ul class="doclist">
+<li> This function mirrors the behavior of `std::strlen` in C++
+
+</li>
+</ul>
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="var">cstring.from_zstring</span></span>/<span class="inlinecode"><span class="id" title="var">cstring.to_zstring</span></span>: utilities for converting back and
+      forth between <span class="inlinecode"><span class="id" title="var">cstring.t</span></span>s and <span class="inlinecode"><span class="id" title="var">zstring.t</span></span>s while appropriately inserting/
+      stripping the null-terminator to accomodate the fact that we exlude it for
+      <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.cstring.html#cstring"><span class="id" title="module">cstring</span></a></span>s.
+
+</li>
+</ul>
+ <a id="lab102"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">cstring.R</span></span> - Fixed Sized Strings</h1>
+
+
+<div class="paragraph"> </div>
+
+    Very often we are interested in dealing with a string as a fixed(-size) value,
+    and <span class="inlinecode"><span class="id" title="var">cstring.R</span></span> <span class="inlinecode">(<a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode">:</span> <span class="inlinecode"><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a>)</span> <span class="inlinecode">(<span class="id" title="var">cstr</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">cstring.t</span>)</span> <span class="inlinecode">:</span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.rep_defs.html#Rep"><span class="id" title="definition">Rep</span></a></span> reflects <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span>-ownership of the
+    null-terminated character-array which contains the *non-null-terminated* and
+    <span class="inlinecode"><span class="id" title="var">cstring.WF</span></span> bytestring <span class="inlinecode"><span class="id" title="var">cstr</span></span>. This rep is useful for dealing with string constants
+    that are inserted by the compiler and passed around/read during execution;
+    while it would be reasonably straightforward to add theory for modifying characters
+    in a random-access way, the <span class="inlinecode"><span class="id" title="var">BS.t</span></span> theory for this is somewhat lacking and so
+    the use-case languishes for now.
+ <a id="lab103"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">cstring.bufR</span></span> - Dynamic Sized Strings Backed by Fixed Sized Character Arrays</h1>
+
+
+<div class="paragraph"> </div>
+
+    String constants read into a fixed-sized buffer present a slightly different use
+    case. If the buffer has size <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.object_repr.html#with_rawable.sz"><span class="id" title="variable">sz</span></a></span>, it contains some <span class="inlinecode"><span class="id" title="var">cstring.t</span></span> <span class="inlinecode"><span class="id" title="var">cstr</span></span> which is
+    <span class="inlinecode"><span class="id" title="var">cstring.WF</span></span>, and <span class="inlinecode"><span class="id" title="var">cstring.size</span></span> <span class="inlinecode"><span class="id" title="var">cstr</span></span> <span class="inlinecode">&lt;=</span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.object_repr.html#with_rawable.sz"><span class="id" title="variable">sz</span></a></span> then the "weakest" valid representation
+    is:
+
+<div class="paragraph"> </div>
+
+       ```
+       cstring.R q cstr **
+       Exists l,
+         .<span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tuchar"><span class="id" title="abbreviation">Tuchar</span></a></span> <span class="inlinecode">!</span> <span class="inlinecode"><span class="id" title="var">cstring.size</span></span> <span class="inlinecode"><span class="id" title="var">cstr</span></span> |-&gt; arrayR Tuchar (fun _ =&gt; anyR q Tuchar) l **
+         <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="var">cstring.size</span></span> <span class="inlinecode"><span class="id" title="var">cstr</span></span> <span class="inlinecode">+</span> <span class="inlinecode"><span class="id" title="abbreviation">length</span></span> <span class="inlinecode"><span class="id" title="var">l</span></span> <span class="inlinecode">=</span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.object_repr.html#with_rawable.sz"><span class="id" title="variable">sz</span></a></span> <span class="inlinecode">|</span>
+       ```
+
+<div class="paragraph"> </div>
+
+    However, we want to be able to easily add new characters to our buffer and -
+    ideally - remove them in a disciplined way. Given that our existing definitions
+    require our string to be null-terminated in memory, it is not obvious how we would
+    justify such `push_back`/`pop_back` reasoning principles while avoiding an explicit
+    binding and characterization of the tail of the buffer. To address this we we
+    restrict our definition of <span class="inlinecode"><span class="id" title="var">cstring.bufR</span></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.object_repr.html#with_rawable.sz"><span class="id" title="variable">sz</span></a></span> <span class="inlinecode"><span class="id" title="var">cstr</span></span> to use <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.heap_pred.prim.html#primR"><span class="id" title="module">primR</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tuchar"><span class="id" title="abbreviation">Tuchar</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode">0</span>
+    instead of <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.heap_pred.any.html#anyR"><span class="id" title="module">anyR</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tuchar"><span class="id" title="abbreviation">Tuchar</span></a></span>.
+
+<div class="paragraph"> </div>
+
+    With this approach, a <span class="inlinecode"><span class="id" title="var">cstring.bufR</span></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.pred_paradoxes.html#with_cpp.type_ptr_object_representation_full_is_unsound.q"><span class="id" title="variable">q</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.object_repr.html#with_rawable.sz"><span class="id" title="variable">sz</span></a></span> <span class="inlinecode"><span class="id" title="var">cstr</span></span> fact allows you to `push_back` a new
+    character to the <span class="inlinecode"><span class="id" title="var">cstring.t</span></span> model by writing it to the <span class="inlinecode"><span class="id" title="var">cstring.bufR</span></span>
+    at position <span class="inlinecode">.[<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tuchar"><span class="id" title="abbreviation">Tuchar</span></a></span> <span class="inlinecode">!</span> <span class="inlinecode"><span class="id" title="var">cstring.size</span></span> <span class="inlinecode"><span class="id" title="var">cstr</span>]</span>. Furthermore, the tail of the
+    <span class="inlinecode"><span class="id" title="var">cstring.t</span></span> model can be removed by zeroing that portion of the <span class="inlinecode"><span class="id" title="var">cstring.bufR</span></span>.
+
+<div class="paragraph"> </div>
+
+    Note: at the moment the theory supporting this `push_back`/`pop_back` use-case
+    is not fully fleshed out, but ongoing verification efforts will allow us
+    to backfill the needed things.
+ 
+</div>
+<div class="code">
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

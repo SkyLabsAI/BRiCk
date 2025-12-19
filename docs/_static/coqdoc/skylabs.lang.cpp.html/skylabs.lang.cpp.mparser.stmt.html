@@ -1,0 +1,98 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.mparser.stmt</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2023-2024&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.mparser.prelude.html#"><span class="id" title="library">skylabs.lang.cpp.mparser.prelude</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.lang.cpp.parser.stmt.html#"><span class="id" title="library">skylabs.lang.cpp.parser.stmt</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.typing.html#"><span class="id" title="library">skylabs.lang.cpp.syntax.typing</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab130"></a><h2 class="section">Template-only derived variable declarations emitted by cpp2v</h2>
+
+</div>
+<div class="code">
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="set_declared_type" class="idref" href="#set_declared_type"><span class="id" title="definition">set_declared_type</span></a> (<a id="t:1" class="idref" href="#t:1"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.mcore.html#Mdecltype"><span class="id" title="abbreviation">Mdecltype</span></a>) (<a id="e:2" class="idref" href="#e:2"><span class="id" title="binder">e</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.mcore.html#MExpr"><span class="id" title="abbreviation">MExpr</span></a>) : <a class="idref" href="skylabs.lang.cpp.syntax.mcore.html#MExpr"><span class="id" title="abbreviation">MExpr</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.mparser.stmt.html#e:2"><span class="id" title="variable">e</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eunresolved_parenlist"><span class="id" title="constructor">Eunresolved_parenlist</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="var">es</span> =&gt; <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eunresolved_parenlist"><span class="id" title="constructor">Eunresolved_parenlist</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="skylabs.lang.cpp.mparser.stmt.html#t:1"><span class="id" title="variable">t</span></a>) <span class="id" title="var">es</span><br/>
+&nbsp;&nbsp;</div>
+
+<div class="doc">
+  TODO: The same treatment for other direct initialization
+  expressions.
+  
+</div>
+<div class="code">
+&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="skylabs.lang.cpp.mparser.stmt.html#e:2"><span class="id" title="variable">e</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="Dvar" class="idref" href="#Dvar"><span class="id" title="definition">Dvar</span></a> (<a id="name:4" class="idref" href="#name:4"><span class="id" title="binder">name</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#localname"><span class="id" title="abbreviation">localname</span></a>) (<a id="t:5" class="idref" href="#t:5"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.mcore.html#Mdecltype"><span class="id" title="abbreviation">Mdecltype</span></a>) (<a id="init:6" class="idref" href="#init:6"><span class="id" title="binder">init</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.mcore.html#MExpr"><span class="id" title="abbreviation">MExpr</span></a>) : <a class="idref" href="skylabs.lang.cpp.syntax.mcore.html#MVarDecl"><span class="id" title="abbreviation">MVarDecl</span></a> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Dvar"><span class="id" title="constructor">Dvar</span></a> <a class="idref" href="skylabs.lang.cpp.mparser.stmt.html#name:4"><span class="id" title="variable">name</span></a> <a class="idref" href="skylabs.lang.cpp.mparser.stmt.html#t:5"><span class="id" title="variable">t</span></a> (<a class="idref" href="skylabs.lang.cpp.mparser.stmt.html#set_declared_type"><span class="id" title="definition">set_declared_type</span></a> <a class="idref" href="skylabs.lang.cpp.mparser.stmt.html#t:5"><span class="id" title="variable">t</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">&lt;$&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.mparser.stmt.html#init:6"><span class="id" title="variable">init</span></a>).<br/>
+
+<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

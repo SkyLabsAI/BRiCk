@@ -1,0 +1,152 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.logic.path_pred</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2020-2024&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.proofmode.proofmode</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.semantics.html#"><span class="id" title="library">skylabs.lang.cpp.semantics</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.logic.pred.html#"><span class="id" title="library">skylabs.lang.cpp.logic.pred</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.html#"><span class="id" title="library">skylabs.lang.cpp.syntax</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">deprecated</span>(<span class="id" title="var">since</span>="20231103",<span class="id" title="var">note</span>="use [ptr].")]<br/>
+<span class="id" title="keyword">Notation</span> <a id="Loc" class="idref" href="#Loc"><span class="id" title="abbreviation">Loc</span></a> := <a class="idref" href="skylabs.lang.cpp.semantics.values.html#PTRS_INTF_AXIOM.ptr"><span class="id" title="axiom">ptr</span></a> (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="106674b72acf13fb9e22a04f2639dc9f" class="idref" href="#106674b72acf13fb9e22a04f2639dc9f"><span class="id" title="section">with_Σ</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{<a id="917dfa942f2145f7b77c338f4835f9a5" class="idref" href="#917dfa942f2145f7b77c338f4835f9a5"><span class="id" title="variable">has_cpp</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#LC.cpp_logic"><span class="id" title="class">cpp_logic</span></a>}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+absolute locations  <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#_eqv"><span class="id" title="definition">_eqv</span></a></span> <span class="inlinecode"><span class="id" title="var">v</span></span> represents the pointer of a <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.semantics.values.html#VAL_MIXIN.val"><span class="id" title="inductive">val</span></a></span>. The resulting pointer
+      is invalid if <span class="inlinecode"><span class="id" title="var">v</span></span> is not a <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.semantics.ptrs.html#PTRS.ptr"><span class="id" title="axiom">ptr</span></a></span>.
+
+<div class="paragraph"> </div>
+
+      NOTE this does *not* do things like converting integers to pointers.
+   
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="_eqv" class="idref" href="#_eqv"><span class="id" title="definition">_eqv</span></a> (<a id="a:4" class="idref" href="#a:4"><span class="id" title="binder">a</span></a> : <a class="idref" href="skylabs.lang.cpp.semantics.values.html#VALUES_INTF_AXIOM.val"><span class="id" title="inductive">val</span></a>) : <a class="idref" href="skylabs.lang.cpp.semantics.values.html#PTRS_INTF_AXIOM.ptr"><span class="id" title="axiom">ptr</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#a:4"><span class="id" title="variable">a</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.semantics.values.html#VALUES_INTF_AXIOM.Vptr"><span class="id" title="constructor">Vptr</span></a> <span class="id" title="var">p</span> =&gt; <span class="id" title="var">p</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="skylabs.lang.cpp.semantics.values.html#PTRS_INTF_AXIOM.invalid_ptr"><span class="id" title="axiom">invalid_ptr</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="_eqv_eq" class="idref" href="#_eqv_eq"><span class="id" title="lemma">_eqv_eq</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a id="p:6" class="idref" href="#p:6"><span class="id" title="binder">p</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">,</span></a> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#_eqv"><span class="id" title="definition">_eqv</span></a> (<a class="idref" href="skylabs.lang.cpp.semantics.values.html#VALUES_INTF_AXIOM.Vptr"><span class="id" title="constructor">Vptr</span></a> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#p:6"><span class="id" title="variable">p</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#p:6"><span class="id" title="variable">p</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="_global_def" class="idref" href="#_global_def"><span class="id" title="definition">_global_def</span></a> (<a id="resolve:7" class="idref" href="#resolve:7"><span class="id" title="binder">resolve</span></a> : <a class="idref" href="skylabs.lang.cpp.semantics.genv.html#genv"><span class="id" title="class">genv</span></a>) (<a id="x:8" class="idref" href="#x:8"><span class="id" title="binder">x</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#obj_name"><span class="id" title="definition">obj_name</span></a>) : <a class="idref" href="skylabs.lang.cpp.semantics.values.html#PTRS_INTF_AXIOM.ptr"><span class="id" title="axiom">ptr</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.semantics.values.html#PTRS_INTF_AXIOM.global_ptr"><span class="id" title="axiom">global_ptr</span></a> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#resolve:7"><span class="id" title="variable">resolve</span></a>.(<a class="idref" href="skylabs.lang.cpp.semantics.genv.html#genv_tu"><span class="id" title="projection">genv_tu</span></a>) <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#x:8"><span class="id" title="variable">x</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="_global_aux" class="idref" href="#_global_aux"><span class="id" title="definition">_global_aux</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#seal"><span class="id" title="record">seal</span></a> (@<a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#_global_def"><span class="id" title="definition">_global_def</span></a>). <span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">eexists</span>. <span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="_global" class="idref" href="#_global"><span class="id" title="definition">_global</span></a> := <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#_global_aux"><span class="id" title="definition">_global_aux</span></a>.(<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#unseal"><span class="id" title="projection">unseal</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="_global_eq" class="idref" href="#_global_eq"><span class="id" title="definition">_global_eq</span></a> : @<a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#_global"><span class="id" title="definition">_global</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="var">_</span> := <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#_global_aux"><span class="id" title="definition">_global_aux</span></a>.(<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#seal_eq"><span class="id" title="projection">seal_eq</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="_global_inj" class="idref" href="#_global_inj"><span class="id" title="instance">_global_inj</span></a> {<a id="resolve:9" class="idref" href="#resolve:9"><span class="id" title="binder">resolve</span></a> : <a class="idref" href="skylabs.lang.cpp.semantics.genv.html#genv"><span class="id" title="class">genv</span></a>} : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#Inj"><span class="id" title="class">Inj</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#924fd3758233021bbb7af913c6a625ce"><span class="id" title="notation">(=)</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#924fd3758233021bbb7af913c6a625ce"><span class="id" title="notation">(=)</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#_global"><span class="id" title="definition">_global</span></a> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#resolve:9"><span class="id" title="variable">resolve</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">rewrite</span> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#_global_eq"><span class="id" title="definition">_global_eq</span></a>. <span class="id" title="tactic">apply</span> <span class="id" title="var">_</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="_global_nonnull" class="idref" href="#_global_nonnull"><span class="id" title="lemma">_global_nonnull</span></a> <a id="resolve:10" class="idref" href="#resolve:10"><span class="id" title="binder">resolve</span></a> <a id="n:11" class="idref" href="#n:11"><span class="id" title="binder">n</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#_global"><span class="id" title="definition">_global</span></a> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#resolve:10"><span class="id" title="variable">resolve</span></a> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#n:11"><span class="id" title="variable">n</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'&lt;&gt;'_x"><span class="id" title="notation">&lt;&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.values.html#PTRS_INTF_AXIOM.nullptr"><span class="id" title="axiom">nullptr</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">rewrite</span> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#_global_eq"><span class="id" title="definition">_global_eq</span></a> /<a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#_global_def"><span class="id" title="definition">_global_def</span></a>. <span class="id" title="tactic">apply</span> <a class="idref" href="skylabs.lang.cpp.semantics.values.html#PTRS_INTF_AXIOM.global_ptr_nonnull"><span class="id" title="axiom">global_ptr_nonnull</span></a>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#106674b72acf13fb9e22a04f2639dc9f"><span class="id" title="section">with_Σ</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Arguments</span> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#_global"><span class="id" title="definition">_global</span></a> {<span class="id" title="var">resolve</span>} <span class="id" title="var">_</span> : <span class="id" title="tactic">rename</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;this&nbsp;is&nbsp;for&nbsp;`Indirect`&nbsp;field&nbsp;references&nbsp;*)</span><br/>
+<span class="id" title="keyword">Fixpoint</span> <a id="path_to_Offset" class="idref" href="#path_to_Offset"><span class="id" title="definition">path_to_Offset</span></a> {<a id="feb34c1ba9419896b17e3d09a5a7adde" class="idref" href="#feb34c1ba9419896b17e3d09a5a7adde"><span class="id" title="binder">σ</span></a>:<a class="idref" href="skylabs.lang.cpp.semantics.genv.html#genv"><span class="id" title="class">genv</span></a>} (<a id="from:13" class="idref" href="#from:13"><span class="id" title="binder">from</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#globname"><span class="id" title="definition">globname</span></a>) (<a id="final:14" class="idref" href="#final:14"><span class="id" title="binder">final</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#field_name.t"><span class="id" title="definition">field_name.t</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a id="ls:15" class="idref" href="#ls:15"><span class="id" title="binder">ls</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#field_name.t"><span class="id" title="definition">field_name.t</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">*</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#globname"><span class="id" title="definition">globname</span></a>))<br/>
+&nbsp;&nbsp;: <a class="idref" href="skylabs.lang.cpp.semantics.values.html#PTRS_INTF_AXIOM.offset"><span class="id" title="axiom">offset</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#ls:15"><span class="id" title="variable">ls</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <span class="id" title="notation">[]</span> =&gt; <a class="idref" href="skylabs.lang.cpp.semantics.values.html#PTRS_INTF_AXIOM.o_field"><span class="id" title="axiom">o_field</span></a> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#feb34c1ba9419896b17e3d09a5a7adde"><span class="id" title="variable">σ</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Field"><span class="id" title="abbreviation">Field</span></a> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#from:13"><span class="id" title="variable">from</span></a> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#final:14"><span class="id" title="variable">final</span></a>)<br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="var">i</span><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="var">c</span><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <span class="id" title="var">ls</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.semantics.values.html#PTRS_INTF_AXIOM.o_field"><span class="id" title="axiom">o_field</span></a> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#feb34c1ba9419896b17e3d09a5a7adde"><span class="id" title="variable">σ</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Field"><span class="id" title="abbreviation">Field</span></a> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#from:13"><span class="id" title="variable">from</span></a> <span class="id" title="var">i</span>) <a class="idref" href="skylabs.lang.cpp.semantics.ptrs.html#b9e497c99ddaa35509f86113be739391"><span class="id" title="notation">,,</span></a> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#path_to_Offset:16"><span class="id" title="definition">path_to_Offset</span></a> <span class="id" title="var">c</span> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#final:14"><span class="id" title="variable">final</span></a> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#ls:15"><span class="id" title="variable">ls</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#offset_for"><span class="id" title="definition">offset_for</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.heap_pred.aggregate.html#aggregate.cls"><span class="id" title="variable">cls</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.name_notation.parser.html#internal.with_lang.body.mfold_left.f"><span class="id" title="variable">f</span></a></span> returns the <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.semantics.ptrs.html#PTRS.offset"><span class="id" title="axiom">offset</span></a></span> of <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.name_notation.parser.html#internal.with_lang.body.mfold_left.f"><span class="id" title="variable">f</span></a></span> where the base is <span class="inlinecode"><span class="id" title="var">this</span></span> and has type
+    <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tnamed"><span class="id" title="constructor">Tnamed</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.heap_pred.aggregate.html#aggregate.cls"><span class="id" title="variable">cls</span></a></span>.
+
+<div class="paragraph"> </div>
+
+    NOTE this function assumes that <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.name_notation.parser.html#internal.with_lang.body.mfold_left.f"><span class="id" title="variable">f</span></a></span> is well-typed.
+ 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="offset_for" class="idref" href="#offset_for"><span class="id" title="definition">offset_for</span></a> {<a id="afb2f45ff79aed8fbb6b6cf08ccf3841" class="idref" href="#afb2f45ff79aed8fbb6b6cf08ccf3841"><span class="id" title="binder">σ</span></a>:<a class="idref" href="skylabs.lang.cpp.semantics.genv.html#genv"><span class="id" title="class">genv</span></a>} (<a id="cls:19" class="idref" href="#cls:19"><span class="id" title="binder">cls</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#globname"><span class="id" title="definition">globname</span></a>) (<a id="f:20" class="idref" href="#f:20"><span class="id" title="binder">f</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.decl.html#InitPath"><span class="id" title="abbreviation">InitPath</span></a>) : <a class="idref" href="skylabs.lang.cpp.semantics.values.html#PTRS_INTF_AXIOM.offset"><span class="id" title="axiom">offset</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#f:20"><span class="id" title="variable">f</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.decl.html#InitBase"><span class="id" title="constructor">InitBase</span></a> <span class="id" title="var">parent</span> =&gt; <a class="idref" href="skylabs.lang.cpp.semantics.values.html#PTRS_INTF_AXIOM.o_base"><span class="id" title="axiom">o_base</span></a> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#afb2f45ff79aed8fbb6b6cf08ccf3841"><span class="id" title="variable">σ</span></a> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#cls:19"><span class="id" title="variable">cls</span></a> <span class="id" title="var">parent</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.decl.html#InitField"><span class="id" title="constructor">InitField</span></a> <span class="id" title="var">i</span> =&gt; <a class="idref" href="skylabs.lang.cpp.semantics.values.html#PTRS_INTF_AXIOM.o_field"><span class="id" title="axiom">o_field</span></a> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#afb2f45ff79aed8fbb6b6cf08ccf3841"><span class="id" title="variable">σ</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#547692780023ef044153bc0c4f871ef7"><span class="id" title="notation">$</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Field"><span class="id" title="abbreviation">Field</span></a> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#cls:19"><span class="id" title="variable">cls</span></a> <span class="id" title="var">i</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.decl.html#InitIndirect"><span class="id" title="constructor">InitIndirect</span></a> <span class="id" title="var">ls</span> <span class="id" title="var">final</span> =&gt; <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#path_to_Offset"><span class="id" title="definition">path_to_Offset</span></a> <a class="idref" href="skylabs.lang.cpp.logic.path_pred.html#cls:19"><span class="id" title="variable">cls</span></a> <span class="id" title="var">final</span> <span class="id" title="var">ls</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.decl.html#InitThis"><span class="id" title="constructor">InitThis</span></a> =&gt; <a class="idref" href="skylabs.lang.cpp.semantics.values.html#PTRS_INTF_AXIOM.o_id"><span class="id" title="axiom">o_id</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

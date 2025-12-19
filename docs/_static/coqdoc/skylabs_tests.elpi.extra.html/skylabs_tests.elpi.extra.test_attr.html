@@ -1,0 +1,201 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>skylabs_tests.elpi.extra.test_attr</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library skylabs_tests.elpi.extra.test_attr</h1>
+
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.elpi.extra.extra</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Test Elpi attribute parsing 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Command</span> <span class="id" title="var">TestAttr</span>.<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">File</span> <span class="id" title="var">extra.Command</span>.<br/>
+
+<br/>
+<span class="id" title="var">Fail</span> <span class="id" title="var">Elpi</span> <span class="id" title="var">Query</span> <span class="id" title="var">lp</span>:{{ <span class="id" title="var">attr.get</span>-<span class="id" title="var">error</span> <span class="id" title="var">E</span> }}. </div>
+
+<div class="doc">
+Not running 
+</div>
+<div class="code">
+<span class="id" title="var">Fail</span> <span class="id" title="var">Elpi</span> <span class="id" title="var">Query</span> <span class="id" title="var">lp</span>:{{ <span class="id" title="var">attr.get</span>-<span class="id" title="var">value</span> <span class="id" title="var">V</span> }}. </div>
+
+<div class="doc">
+Not running 
+</div>
+<div class="code">
+<span class="id" title="var">Fail</span> <span class="id" title="var">Elpi</span> <span class="id" title="var">Query</span> <span class="id" title="var">lp</span>:{{ <span class="id" title="var">attr.get</span>-<span class="id" title="var">name</span> <span class="id" title="var">N</span> }}. </div>
+
+<div class="doc">
+Not running 
+</div>
+<div class="code">
+<span class="id" title="var">Fail</span> <span class="id" title="var">Elpi</span> <span class="id" title="var">Query</span> <span class="id" title="var">lp</span>:{{ <span class="id" title="var">attr.get</span>-<span class="id" title="var">path</span> <span class="id" title="var">P</span> }}. </div>
+
+<div class="doc">
+Not running 
+</div>
+<div class="code">
+<span class="id" title="var">Fail</span> <span class="id" title="var">Elpi</span> <span class="id" title="var">Query</span> <span class="id" title="var">lp</span>:{{ <span class="id" title="var">attr.continue</span>-<span class="id" title="var">parsing</span> <span class="id" title="var">A</span> <span class="id" title="var">F</span> <span class="id" title="var">O</span> }}. </div>
+
+<div class="doc">
+Not running 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">lp</span>:{{<br/>
+<br/>
+&nbsp;&nbsp;% <span class="id" title="var">Defaults</span><br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">flage</span> <span class="id" title="var">o</span>:<span class="id" title="var">bool</span>. <span class="id" title="var">flage</span> <span class="id" title="var">ff</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">flagb</span> <span class="id" title="var">o</span>:<span class="id" title="var">bool</span>. <span class="id" title="var">flagb</span> <span class="id" title="var">ff</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">flags</span> <span class="id" title="var">o</span>:<span class="id" title="var">string</span>. <span class="id" title="var">flags</span> "S".<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">flagm</span> <span class="id" title="var">o</span>:<span class="id" title="var">option</span> <span class="id" title="var">string</span>. <span class="id" title="var">flagm</span> <span class="id" title="var">none</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;% <span class="id" title="var">Attribute</span> <span class="id" title="var">parsers</span><br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">parse</span> <span class="id" title="var">i</span>:<span class="id" title="var">string</span>, <span class="id" title="var">o</span>:<span class="id" title="var">list</span> <span class="id" title="var">prop</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">parse</span> "e" [<span class="id" title="var">flage</span> <span class="id" title="var">tt</span>] :- <span class="id" title="var">attr.is</span>-<span class="id" title="keyword">no</span>-<span class="id" title="var">value</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">parse</span> "b" [<span class="id" title="var">flagb</span> <span class="id" title="var">B</span>] :- <span class="id" title="var">attr.is</span>-<span class="id" title="var">bool</span> <span class="id" title="var">B</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">parse</span> "s" [<span class="id" title="var">flags</span> <span class="id" title="var">S</span>] :- <span class="id" title="var">attr.is</span>-<span class="id" title="var">nonempty</span>-<span class="id" title="var">string</span> <span class="id" title="var">S</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">parse</span> "m" <span class="id" title="var">O</span> :- <span class="id" title="var">attr.is</span>-<span class="id" title="var">map</span> <span class="id" title="var">parsem</span> <span class="id" title="var">O</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">parsem</span> <span class="id" title="var">i</span>:<span class="id" title="var">string</span>, <span class="id" title="var">o</span>:<span class="id" title="var">list</span> <span class="id" title="var">prop</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">parsem</span> "v" [<span class="id" title="var">flagm</span> (<span class="id" title="var">some</span> <span class="id" title="var">S</span>)] :- <span class="id" title="var">attr.is</span>-<span class="id" title="var">string</span> <span class="id" title="var">S</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;% <span class="id" title="var">Test</span> <span class="id" title="var">harness</span><br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">kind</span> <span class="id" title="var">val</span> <span class="id" title="keyword">type</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">type</span> <span class="id" title="var">val</span> <span class="id" title="var">bool</span> -&gt; <span class="id" title="var">bool</span> -&gt; <span class="id" title="var">string</span> -&gt; <span class="id" title="var">option</span> <span class="id" title="var">string</span> -&gt; <span class="id" title="var">val</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">have</span> <span class="id" title="var">o</span>:<span class="id" title="var">val</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">have</span> (<span class="id" title="var">val</span> <span class="id" title="var">E</span> <span class="id" title="var">B</span> <span class="id" title="var">S</span> <span class="id" title="var">M</span>) :- <span class="id" title="var">flage</span> <span class="id" title="var">E</span>, <span class="id" title="var">flagb</span> <span class="id" title="var">B</span>, <span class="id" title="var">flags</span> <span class="id" title="var">S</span>, <span class="id" title="var">flagm</span> <span class="id" title="var">M</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">want</span> <span class="id" title="var">i</span>:<span class="id" title="var">int</span>, <span class="id" title="var">o</span>:<span class="id" title="var">val</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">want</span> 0 (<span class="id" title="var">val</span> <span class="id" title="var">ff</span> <span class="id" title="var">ff</span> "S" <span class="id" title="var">none</span>). % <span class="id" title="var">defaults</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">want</span> 1 (<span class="id" title="var">val</span> <span class="id" title="var">tt</span> <span class="id" title="var">tt</span> "X" (<span class="id" title="var">some</span> "Y")). % <span class="id" title="var">some</span> <span class="id" title="var">options</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">want</span> 2 (<span class="id" title="var">val</span> <span class="id" title="var">ff</span> <span class="id" title="var">ff</span> "S2" <span class="id" title="var">none</span>). % <span class="id" title="var">shadowing</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">want</span> 3 (<span class="id" title="var">val</span> <span class="id" title="var">ff</span> <span class="id" title="var">ff</span> "S" (<span class="id" title="var">some</span> "V2")). % <span class="id" title="var">shadowing</span><br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">main</span> [<span class="id" title="var">int</span> <span class="id" title="var">N</span>] :-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">attr.parse</span> (<span class="id" title="var">msg</span>\ <span class="id" title="var">coq.error</span> <span class="id" title="var">msg</span>) <span class="id" title="var">parse</span> <span class="id" title="var">_</span> <span class="id" title="var">Opts</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Opts</span> =&gt; <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">want</span> <span class="id" title="var">N</span> <span class="id" title="var">Want</span>; <span class="id" title="var">coq.error</span> <span class="id" title="var">N</span> "out of range"), <span class="id" title="var">have</span> <span class="id" title="var">Have</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> (<span class="id" title="var">Want</span> = <span class="id" title="var">Have</span>) <span class="id" title="var">true</span> (<span class="id" title="var">coq.error</span> "want" <span class="id" title="var">Want</span> "have" <span class="id" title="var">Have</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+&nbsp;&nbsp;<span class="id" title="var">main</span> <span class="id" title="var">_</span> :- <span class="id" title="var">coq.error</span> "usage: TestAttr n".<br/>
+
+<br/>
+}}.<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="keyword">Export</span> <span class="id" title="var">TestAttr</span>.<br/>
+
+<br/>
+<span class="id" title="var">Fail</span> #[<span class="id" title="var">e</span>=<span class="id" title="var">cats</span>] <span class="id" title="var">TestAttr</span> -1. </div>
+
+<div class="doc">
+expects no value 
+</div>
+<div class="code">
+<span class="id" title="var">Fail</span> #[<span class="id" title="var">b</span>=<span class="id" title="var">cats</span>] <span class="id" title="var">TestAttr</span> -1. </div>
+
+<div class="doc">
+expects boolean 
+</div>
+<div class="code">
+<span class="id" title="var">Fail</span> #[<span class="id" title="var">cats</span>=<span class="id" title="var">dogs</span>] <span class="id" title="var">TestAttr</span> -1. </div>
+
+<div class="doc">
+unexpected 
+</div>
+<div class="code">
+<span class="id" title="var">Fail</span> #[<span class="id" title="var">m</span>(<span class="id" title="var">cats</span>=<span class="id" title="var">dogs</span>)] <span class="id" title="var">TestAttr</span> -1. </div>
+
+<div class="doc">
+unexpected 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="var">TestAttr</span> 0. </div>
+
+<div class="doc">
+test defaults 
+</div>
+<div class="code">
+#[<span class="id" title="var">e</span>, <span class="id" title="var">b</span>, <span class="id" title="var">s</span>="X", <span class="id" title="var">m</span>(<span class="id" title="var">v</span>=<span class="id" title="var">Y</span>)] <span class="id" title="var">TestAttr</span> 1. </div>
+
+<div class="doc">
+test setting options 
+</div>
+<div class="code">
+#[<span class="id" title="var">s</span>="S1", <span class="id" title="var">s</span>="S2"] <span class="id" title="var">TestAttr</span> 2. </div>
+
+<div class="doc">
+test shadowing: rightmost wins 
+</div>
+<div class="code">
+#[<span class="id" title="var">m</span>(<span class="id" title="var">v</span>=<span class="id" title="var">V1</span>), <span class="id" title="var">m</span>(<span class="id" title="var">v</span>=<span class="id" title="var">V2</span>)] <span class="id" title="var">TestAttr</span> 3. </div>
+
+<div class="doc">
+test shadowing: rightmost wins 
+</div>
+<div class="code">
+#[<span class="id" title="var">m</span>(<span class="id" title="var">v</span>=<span class="id" title="var">V1</span>, <span class="id" title="var">v</span>=<span class="id" title="var">V2</span>)] <span class="id" title="var">TestAttr</span> 3. </div>
+
+<div class="doc">
+test shadowing: rightmost wins 
+</div>
+<div class="code">
+#[<span class="id" title="var">m</span>(<span class="id" title="var">v</span>=<span class="id" title="var">V0</span>), <span class="id" title="var">m</span>(<span class="id" title="var">v</span>=<span class="id" title="var">V1</span>, <span class="id" title="var">v</span>=<span class="id" title="var">V2</span>)] <span class="id" title="var">TestAttr</span> 3. </div>
+
+<div class="doc">
+test shadowing: rightmost wins 
+</div>
+<div class="code">
+#[<span class="id" title="var">m</span>(<span class="id" title="var">v</span>=<span class="id" title="var">V0</span>, <span class="id" title="var">v</span>=<span class="id" title="var">V1</span>), <span class="id" title="var">m</span>(<span class="id" title="var">v</span>=<span class="id" title="var">V2</span>)] <span class="id" title="var">TestAttr</span> 3. </div>
+
+<div class="doc">
+test shadowing: rightmost wins 
+</div>
+<div class="code">
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,804 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>skylabs.ltac2.logger.logger</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library skylabs.ltac2.logger.logger</h1>
+
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.ltac2.extra.extra</span>.<br/>
+
+<br/>
+<span class="id" title="var">Declare</span> <span class="id" title="var">ML</span> <span class="id" title="keyword">Module</span> "ltac2-logger.plugin".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Capturing the default Coq output into a buffer. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="Coq_output" class="idref" href="#Coq_output"><span class="id" title="module">Coq_output</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">Ltac2</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Type</span> <span class="id" title="var">buffer</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @<span class="id" title="var">external</span> <span class="id" title="var">start_capture</span> : <span class="id" title="var">unit</span> -&gt; <span class="id" title="var">buffer</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "Coq_output.start_capture".<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @<span class="id" title="var">external</span> <span class="id" title="var">contents</span> : <span class="id" title="var">buffer</span> -&gt; <span class="id" title="var">string</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "Coq_output.contents".<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @<span class="id" title="var">external</span> <span class="id" title="tactic">clear</span> : <span class="id" title="var">buffer</span> -&gt; <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "Coq_output.clear".<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @<span class="id" title="var">external</span> <span class="id" title="var">end_capture</span> : <span class="id" title="var">buffer</span> -&gt; <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "Coq_output.end_capture".<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.logger.logger.html#Coq_output"><span class="id" title="module">Coq_output</span></a>.<br/>
+
+<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Logging support. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="Log" class="idref" href="#Log"><span class="id" title="module">Log</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">Ltac2</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Type of a raw (not yet rendered) log message in OCaml 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Type</span> <span class="id" title="var">msg</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Flag attached to a log entry: should morally be abstract, so don't
+      construct values yourself. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Type</span> <span class="id" title="var">log_flag</span> := <span class="id" title="var">int</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Log level for a log entry. A log entry with level 0 or less is always
+      added to the log, irrespective of the currently set logging level. It
+      cannot be disabled. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Type</span> <span class="id" title="var">log_level</span> := <span class="id" title="var">int</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">log_enabled</span></span> <span class="inlinecode"><span class="id" title="var">flag</span></span> <span class="inlinecode"><span class="id" title="keyword">level</span></span> indicates whether the logging is enabled for a
+      message with the given <span class="inlinecode"><span class="id" title="var">flag</span></span> and <span class="inlinecode"><span class="id" title="keyword">level</span></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">log_enabled</span> : <span class="id" title="var">log_flag</span> -&gt; <span class="id" title="var">log_level</span> -&gt; <span class="id" title="var">bool</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "log_enabled".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">log_level</span></span> <span class="inlinecode"><span class="id" title="var">flag</span></span> returns the currently set log level for messages with
+      the given <span class="inlinecode"><span class="id" title="var">flag</span></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">log_level</span> : <span class="id" title="var">log_flag</span> -&gt; <span class="id" title="var">log_level</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "log_level".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">log_msg</span></span> <span class="inlinecode"><span class="id" title="var">flag</span></span> <span class="inlinecode"><span class="id" title="keyword">level</span></span> <span class="inlinecode"><span class="id" title="var">format</span></span> <span class="inlinecode">...</span> logs the message described by <span class="inlinecode"><span class="id" title="var">fmt</span></span> and
+      the following arguments, provided that the function is fully applied. A
+      <span class="inlinecode"><span class="id" title="var">flag</span></span> and <span class="inlinecode"><span class="id" title="keyword">level</span></span> are attached to the log entry. NOTE: this function
+      cannot be called directly since a notation is required to recognise the
+      <span class="inlinecode"><span class="id" title="var">format</span></span> argument as a format string. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">log_msg</span> : <span class="id" title="var">log_flag</span> -&gt; <span class="id" title="var">log_level</span> -&gt; ('<span class="id" title="var">a</span>, <span class="id" title="var">unit</span>, <span class="id" title="var">msg</span>, <span class="id" title="var">unit</span>) <span class="id" title="var">format</span> -&gt; '<span class="id" title="var">a</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "log".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">msg_msg</span></span> <span class="inlinecode"><span class="id" title="var">fmt</span></span> <span class="inlinecode">...</span> interprets the given format and arguments as would the
+      <span class="inlinecode"><span class="id" title="var">log_msg</span></span> function, but it returns the <span class="inlinecode"><span class="id" title="var">msg</span></span> at the end. The aim of this
+      function is to be used in combination with the <span class="inlinecode">&quot;%<span class="id" title="var">a</span>&quot;</span> format. NOTE: this
+      function cannot be called directly (see <span class="inlinecode"><span class="id" title="var">log_msg</span></span> above). 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">msg_msg</span> : ('<span class="id" title="var">a</span>, <span class="id" title="var">unit</span>, <span class="id" title="var">msg</span>, <span class="id" title="var">msg</span>) <span class="id" title="var">format</span> -&gt; '<span class="id" title="var">a</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "msg".<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Module</span> <a id="Log.Notations" class="idref" href="#Log.Notations"><span class="id" title="module">Notations</span></a>.<br/>
+</div>
+
+<div class="doc">
+Generic notation for calling <span class="inlinecode"><span class="id" title="var">log_msg</span></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Notation</span> "log[" <span class="id" title="var">flag</span>(<span class="id" title="var">tactic</span>(0)) "," <span class="id" title="keyword">level</span>(<span class="id" title="var">tactic</span>(0)) "]" <span class="id" title="var">fmt</span>(<span class="id" title="var">format</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">log_msg</span> <span class="id" title="var">flag</span> <span class="id" title="keyword">level</span> <span class="id" title="var">fmt</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Notation for calling <span class="inlinecode"><span class="id" title="var">msg_msg</span></span> to create a message using a format. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Notation</span> "msg!" <span class="id" title="var">fmt</span>(<span class="id" title="var">format</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">msg_msg</span> <span class="id" title="var">fmt</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">Dev</span> <span class="id" title="var">Log</span> <span class="id" title="var">Flag</span> <span class="id" title="var">tac</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.logger.logger.html#Log.Notations"><span class="id" title="module">Notations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.ltac2.logger.logger.html#Log.Notations"><span class="id" title="module">Notations</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Printer for messages. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">pp_message</span> : <span class="id" title="var">unit</span> -&gt; <span class="id" title="var">message</span> -&gt; <span class="id" title="var">msg</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "pp_message".<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">pp_err</span> : <span class="id" title="var">unit</span> -&gt; <span class="id" title="var">err</span> -&gt; <span class="id" title="var">msg</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "pp_err".<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">pp_ast</span> : <span class="id" title="var">unit</span> -&gt; <span class="id" title="keyword">constr</span> -&gt; <span class="id" title="var">msg</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "pp_ast".<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">pp_list</span> : (<span class="id" title="var">unit</span> -&gt; '<span class="id" title="var">a</span> -&gt; <span class="id" title="var">msg</span>) -&gt; <span class="id" title="var">unit</span> -&gt; '<span class="id" title="var">a</span> <span class="id" title="var">list</span> -&gt; <span class="id" title="var">msg</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "pp_list".<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">pp_exn</span> (<span class="id" title="var">_</span> : <span class="id" title="var">unit</span>) (<span class="id" title="var">e</span> : <span class="id" title="var">exn</span>) : <span class="id" title="var">msg</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">msg</span>! "%a" <span class="id" title="var">pp_message</span> (<span class="id" title="var">Message.of_exn</span> (<span class="id" title="var">Control.clear_exn_info</span> <span class="id" title="var">e</span>)).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">pp_bool</span> : <span class="id" title="var">unit</span> -&gt; <span class="id" title="var">bool</span> -&gt; <span class="id" title="var">msg</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <span class="id" title="var">b</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">b</span> <span class="id" title="keyword">then</span> <span class="id" title="var">msg</span>! "true" <span class="id" title="keyword">else</span> <span class="id" title="var">msg</span>! "false".<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">pp_int</span> : <span class="id" title="var">unit</span> -&gt; <span class="id" title="var">int</span> -&gt; <span class="id" title="var">msg</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <span class="id" title="var">i</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">msg</span>! "%i" <span class="id" title="var">i</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">pp_option</span> : (<span class="id" title="var">unit</span> -&gt; '<span class="id" title="var">a</span> -&gt; <span class="id" title="var">msg</span>) -&gt; <span class="id" title="var">unit</span> -&gt; '<span class="id" title="var">a</span> <span class="id" title="var">option</span> -&gt; <span class="id" title="var">msg</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">f</span> <span class="id" title="var">_</span> <span class="id" title="var">o</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">o</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">None</span>   =&gt; <span class="id" title="var">msg</span>! "None"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Some</span> <span class="id" title="var">v</span> =&gt; <span class="id" title="var">msg</span>! "Some(%a)" <span class="id" title="var">f</span> <span class="id" title="var">v</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Notation</span> "if!" <span class="id" title="var">cond</span>(<span class="id" title="var">self</span>) "then" <span class="id" title="var">run</span>(<span class="id" title="var">thunk</span>(<span class="id" title="var">tactic</span>(5))) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">cond</span> <span class="id" title="keyword">then</span> <span class="id" title="var">run</span> () <span class="id" title="keyword">else</span> ().<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Log spans. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Module</span> <a id="Log.Span" class="idref" href="#Log.Span"><span class="id" title="module">Span</span></a>.<br/>
+</div>
+
+<div class="doc">
+Type of a span. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Type</span> <span class="id" title="var">t</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">push_span</span></span> <span class="inlinecode"><span class="id" title="var">name</span></span> opens a new span named <span class="inlinecode"><span class="id" title="var">name</span></span>, and returns it. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">push</span> : <span class="id" title="var">string</span> -&gt; <span class="id" title="var">t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "push_span".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">try_pop</span></span> <span class="inlinecode"><span class="id" title="var">s</span></span> closes the span <span class="inlinecode"><span class="id" title="var">s</span></span>, and then returns a boolean indicating
+        whether it was successful. If it fails, the state of the logger is
+        unchanged. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">try_pop</span> : <span class="id" title="var">t</span> -&gt; <span class="id" title="var">bool</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "pop_span".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">try_pop_until</span></span> <span class="inlinecode"><span class="id" title="var">s</span></span> is similar to <span class="inlinecode"><span class="id" title="var">try_pop</span></span> <span class="inlinecode"><span class="id" title="var">s</span></span>, but may close other spans
+        before <span class="inlinecode"><span class="id" title="var">s</span></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">try_pop_until</span> : <span class="id" title="var">t</span> -&gt; <span class="id" title="var">bool</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "pop_span_until".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">pop_all</span></span> <span class="inlinecode">()</span> closes all open spans. Avoid using this function, as this
+        may break compositionality. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">pop_all</span> : <span class="id" title="var">unit</span> -&gt; <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "pop_all_spans".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Exception raised by <span class="inlinecode"><span class="id" title="var">pop</span></span> and <span class="inlinecode"><span class="id" title="var">pop_until</span></span> if they fail. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Type</span> <span class="id" title="var">exn</span> ::= [ <span class="id" title="var">Pop_error</span> ].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">pop</span> : <span class="id" title="var">t</span> -&gt; <span class="id" title="var">unit</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">try_pop</span> <span class="id" title="var">s</span> <span class="id" title="keyword">then</span> () <span class="id" title="keyword">else</span> <span class="id" title="var">Control.zero</span> <span class="id" title="var">Pop_error</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">pop_until</span> : <span class="id" title="var">t</span> -&gt; <span class="id" title="var">unit</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">s</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">try_pop_until</span> <span class="id" title="var">s</span> <span class="id" title="keyword">then</span> () <span class="id" title="keyword">else</span> <span class="id" title="var">Control.zero</span> <span class="id" title="var">Pop_error</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">mpush</span></span> <span class="inlinecode"><span class="id" title="var">name</span></span> is similar to <span class="inlinecode"><span class="id" title="var">push</span></span> <span class="inlinecode"><span class="id" title="var">name</span></span>, but it also works when there
+        are several (or no) focused goals. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">mpush</span> <span class="id" title="var">name</span> := <span class="id" title="var">Control.without_focus</span> (<span class="id" title="keyword">fun</span> () =&gt; <span class="id" title="var">push</span> <span class="id" title="var">name</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">mpop</span></span> <span class="inlinecode"><span class="id" title="var">span</span></span> is similar to <span class="inlinecode"><span class="id" title="var">pop</span></span> <span class="inlinecode"><span class="id" title="var">span</span></span>, but it also works when there are
+        several (or no) focused goals. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">mpop</span> <span class="id" title="var">span</span> := <span class="id" title="var">Control.without_focus</span> (<span class="id" title="keyword">fun</span> () =&gt; <span class="id" title="var">pop</span> <span class="id" title="var">span</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">mpop_until</span></span> <span class="inlinecode"><span class="id" title="var">span</span></span> is similar to <span class="inlinecode"><span class="id" title="var">pop_until</span></span> <span class="inlinecode"><span class="id" title="var">span</span></span>, but it also works
+        when there are several (or no) focused goals. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">mpop_until</span> <span class="id" title="var">span</span> := <span class="id" title="var">Control.without_focus</span> (<span class="id" title="keyword">fun</span> () =&gt; <span class="id" title="var">pop_until</span> <span class="id" title="var">span</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">with_span_aux</span> (<span class="id" title="var">notify</span> : <span class="id" title="var">bool</span>) (<span class="id" title="var">name</span> : <span class="id" title="var">string</span>) (<span class="id" title="var">tac</span> : <span class="id" title="var">unit</span> -&gt; '<span class="id" title="var">a</span>) : '<span class="id" title="var">a</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="keyword">rec</span> <span class="id" title="var">go</span> <span class="id" title="var">tac</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">span</span> := <span class="id" title="var">push</span> <span class="id" title="var">name</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">Control.case_bt</span> <span class="id" title="var">tac</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Control.Val_bt</span> (<span class="id" title="var">res</span>, <span class="id" title="var">handle</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pop</span> <span class="id" title="var">span</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.plus</span> (<span class="id" title="keyword">fun</span> () =&gt; <span class="id" title="var">res</span>) (<span class="id" title="keyword">fun</span> <span class="id" title="var">e</span> =&gt; <span class="id" title="var">go</span> (<span class="id" title="keyword">fun</span> () =&gt; <span class="id" title="var">handle</span> <span class="id" title="var">e</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Control.Err_bt</span> <span class="id" title="var">e</span> <span class="id" title="var">bt</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span>! <span class="id" title="var">notify</span> <span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">tac</span>] "Exception caught by [with_span '%s']" <span class="id" title="var">name</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pop_until</span> <span class="id" title="var">span</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span>! <span class="id" title="var">notify</span> <span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">tac</span>] "[with_span '%s'] raised an exception:\n%a" <span class="id" title="var">name</span> <span class="id" title="var">pp_exn</span> <span class="id" title="var">e</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.zero_bt</span> <span class="id" title="var">e</span> <span class="id" title="var">bt</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">go</span> <span class="id" title="var">tac</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">with_span_</span> <span class="id" title="var">notify</span> <span class="id" title="var">name</span> <span class="id" title="var">tac</span> := <span class="id" title="var">once</span> (<span class="id" title="var">with_span_aux</span> <span class="id" title="var">notify</span> <span class="id" title="var">name</span> <span class="id" title="var">tac</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">with_span</span> <span class="id" title="var">name</span> <span class="id" title="var">tac</span> := <span class="id" title="var">once</span> (<span class="id" title="var">with_span_</span> <span class="id" title="var">true</span> <span class="id" title="var">name</span> <span class="id" title="var">tac</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">mwith_span_aux</span> (<span class="id" title="var">notify</span> : <span class="id" title="var">bool</span>) (<span class="id" title="var">name</span> : <span class="id" title="var">string</span>) (<span class="id" title="var">tac</span> : <span class="id" title="var">unit</span> -&gt; '<span class="id" title="var">a</span>) : '<span class="id" title="var">a</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="keyword">rec</span> <span class="id" title="var">go</span> <span class="id" title="var">tac</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">span</span> := <span class="id" title="var">push</span> <span class="id" title="var">name</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">Control.case_bt</span> <span class="id" title="var">tac</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Control.Val_bt</span> (<span class="id" title="var">res</span>, <span class="id" title="var">handle</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mpop</span> <span class="id" title="var">span</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.plus</span> (<span class="id" title="keyword">fun</span> () =&gt; <span class="id" title="var">res</span>) (<span class="id" title="keyword">fun</span> <span class="id" title="var">e</span> =&gt; <span class="id" title="var">go</span> (<span class="id" title="keyword">fun</span> () =&gt; <span class="id" title="var">handle</span> <span class="id" title="var">e</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Control.Err_bt</span> <span class="id" title="var">e</span> <span class="id" title="var">bt</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">log_and_pop</span> () :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span>! <span class="id" title="var">notify</span> <span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">tac</span>] "Exception caught by [mwith_span '%s']" <span class="id" title="var">name</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mpop_until</span> <span class="id" title="var">span</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span>! <span class="id" title="var">notify</span> <span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">tac</span>] "[mwith_span '%s'] raised an exception:\n%a" <span class="id" title="var">name</span> <span class="id" title="var">pp_exn</span> <span class="id" title="var">e</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.without_focus</span> <span class="id" title="var">log_and_pop</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.zero</span> <span class="id" title="var">e</span> <span class="id" title="var">bt</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">go</span> <span class="id" title="var">tac</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">mwith_span</span></span> <span class="inlinecode"><span class="id" title="var">name</span></span> <span class="inlinecode"><span class="id" title="var">tac</span></span> is similar to <span class="inlinecode"><span class="id" title="var">with_span</span></span> <span class="inlinecode"><span class="id" title="var">name</span></span> <span class="inlinecode"><span class="id" title="var">tac</span></span>, but it also
+        works when there are several (or no) focused goals. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">mwith_span_</span> <span class="id" title="var">notify</span> <span class="id" title="var">name</span> <span class="id" title="var">tac</span> := <span class="id" title="var">once</span> (<span class="id" title="var">mwith_span_aux</span> <span class="id" title="var">notify</span> <span class="id" title="var">name</span> <span class="id" title="var">tac</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">mwith_span</span> <span class="id" title="var">name</span> <span class="id" title="var">tac</span> := <span class="id" title="var">once</span> (<span class="id" title="var">mwith_span_</span> <span class="id" title="var">true</span> <span class="id" title="var">name</span> <span class="id" title="var">tac</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">mwith_span_backtracking</span> <span class="id" title="var">name</span> <span class="id" title="var">tac</span> := <span class="id" title="var">mwith_span_</span> <span class="id" title="var">true</span> <span class="id" title="var">name</span> <span class="id" title="var">tac</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">add_int_metadata</span></span> <span class="inlinecode"><span class="id" title="var">s</span></span> <span class="inlinecode"><span class="id" title="var">k</span></span> <span class="inlinecode"><span class="id" title="var">v</span></span> sets the metadata field <span class="inlinecode"><span class="id" title="var">k</span></span> of span <span class="inlinecode"><span class="id" title="var">s</span></span> to be
+        the integer value <span class="inlinecode"><span class="id" title="var">v</span></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">add_int_metadata</span> : <span class="id" title="var">t</span> -&gt; <span class="id" title="var">string</span> -&gt; <span class="id" title="var">int</span> -&gt; <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "add_span_metadata_int".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">add_string_metadata</span></span> <span class="inlinecode"><span class="id" title="var">s</span></span> <span class="inlinecode"><span class="id" title="var">k</span></span> <span class="inlinecode"><span class="id" title="var">v</span></span> sets the metadata field <span class="inlinecode"><span class="id" title="var">k</span></span> of span <span class="inlinecode"><span class="id" title="var">s</span></span> to
+        be the string value <span class="inlinecode"><span class="id" title="var">v</span></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">add_string_metadata</span> : <span class="id" title="var">t</span> -&gt; <span class="id" title="var">string</span> -&gt; <span class="id" title="var">string</span> -&gt; <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "add_span_metadata_string".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">with_status</span></span> <span class="inlinecode"><span class="id" title="var">name</span></span> <span class="inlinecode"><span class="id" title="var">tac</span></span> runs the tactic surrounded by the span and appends
+        '+success' or '+failure' to log whether <span class="inlinecode"><span class="id" title="var">tac</span></span> succeeded or failed. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">with_status</span> <span class="id" title="var">name</span> <span class="id" title="var">tac</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">span</span> := <span class="id" title="var">Log.Span.push</span> <span class="id" title="var">name</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">run</span> () :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">res</span> := <span class="id" title="var">tac</span> () <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Log.Span.add_string_metadata</span> <span class="id" title="var">span</span> "status" "success";<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Log.Span.pop</span> <span class="id" title="var">span</span>; <span class="id" title="var">res</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">handle</span> <span class="id" title="var">e</span> <span class="id" title="var">bt</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">log_and_pop</span> () :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Log.Span.add_string_metadata</span> <span class="id" title="var">span</span> "status" "failure";<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">tac</span>] "[mwith_span '%s'] raised an exception:\n%a" <span class="id" title="var">name</span> <span class="id" title="var">Log.pp_exn</span> <span class="id" title="var">e</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Log.Span.pop_until</span> <span class="id" title="var">span</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.without_focus</span> <span class="id" title="var">log_and_pop</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.zero_bt</span> <span class="id" title="var">e</span> <span class="id" title="var">bt</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.once_plus_bt</span> <span class="id" title="var">run</span> <span class="id" title="var">handle</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+same as <span class="inlinecode"><span class="id" title="var">with_status</span></span> but supports multiple goals. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">mwith_status</span> <span class="id" title="var">name</span> <span class="id" title="var">tac</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">span</span> := <span class="id" title="var">Log.Span.mpush</span> <span class="id" title="var">name</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">run</span> () :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">res</span> := <span class="id" title="var">tac</span> () <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Log.Span.add_string_metadata</span> <span class="id" title="var">span</span> "status" "success";<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Log.Span.mpop</span> <span class="id" title="var">span</span>; <span class="id" title="var">res</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">handle</span> <span class="id" title="var">e</span> <span class="id" title="var">bt</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">log_and_pop</span> () :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Log.Span.add_string_metadata</span> <span class="id" title="var">span</span> "status" "failure";<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">tac</span>] "[mwith_span '%s'] raised an exception:\n%a" <span class="id" title="var">name</span> <span class="id" title="var">Log.pp_exn</span> <span class="id" title="var">e</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Log.Span.mpop_until</span> <span class="id" title="var">span</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.without_focus</span> <span class="id" title="var">log_and_pop</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.zero_bt</span> <span class="id" title="var">e</span> <span class="id" title="var">bt</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.once_plus_bt</span> <span class="id" title="var">run</span> <span class="id" title="var">handle</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.logger.logger.html#Log.Span"><span class="id" title="module">Span</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Internal logger state manipulation. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Module</span> <a id="Log.State" class="idref" href="#Log.State"><span class="id" title="module">State</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Type</span> <span class="id" title="var">t</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">save</span> : <span class="id" title="var">unit</span> -&gt; <span class="id" title="var">t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "save_log_state".<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">restore</span> : <span class="id" title="var">t</span> -&gt; <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "restore_log_state".<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.logger.logger.html#Log.State"><span class="id" title="module">State</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Reset the log state. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">reset_log</span> : <span class="id" title="var">unit</span> -&gt; <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "reset_log".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">output_log_generic</span></span> <span class="inlinecode"><span class="id" title="tactic">debug</span></span> <span class="inlinecode"><span class="id" title="var">file</span></span> outputs the accumulated log to the given
+      <span class="inlinecode"><span class="id" title="var">file</span></span>, if any. Otherwise the log is printed to the Coq buffer (notice).
+      The <span class="inlinecode"><span class="id" title="tactic">debug</span></span> flag controls the behavior on logs that have unclosed spans.
+      If <span class="inlinecode"><span class="id" title="tactic">debug</span></span> is false, an error is printed instead of the log. If <span class="inlinecode"><span class="id" title="tactic">debug</span></span>
+      is true, the partial log is printed. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">output_log_generic</span> : <span class="id" title="var">bool</span> -&gt; <span class="id" title="var">string</span> <span class="id" title="var">option</span> -&gt; <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "output_log".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">output_log_tmp</span></span> <span class="inlinecode"><span class="id" title="tactic">debug</span></span> <span class="inlinecode"><span class="id" title="var">ext</span></span> outputs the accumulated log to a temporary
+      file with extension <span class="inlinecode"><span class="id" title="var">ext</span></span>. The <span class="inlinecode"><span class="id" title="tactic">debug</span></span> argument is handled exactly as in
+      function <span class="inlinecode"><span class="id" title="var">output_log_generic</span></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">output_log_tmp</span> : <span class="id" title="var">bool</span> -&gt; <span class="id" title="var">string</span> -&gt; <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"sl.log" "output_log_tmp".<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">output_log</span> () := <span class="id" title="var">output_log_generic</span> <span class="id" title="var">false</span> <span class="id" title="var">None</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">output_log_debug</span> () := <span class="id" title="var">output_log_generic</span> <span class="id" title="var">true</span> <span class="id" title="var">None</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">output_log_file</span> <span class="id" title="var">file</span> := <span class="id" title="var">output_log_generic</span> <span class="id" title="var">false</span> (<span class="id" title="var">Some</span> <span class="id" title="var">file</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">output_log_file_debug</span> <span class="id" title="var">file</span> := <span class="id" title="var">output_log_generic</span> <span class="id" title="var">true</span> (<span class="id" title="var">Some</span> <span class="id" title="var">file</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Type</span> <span class="id" title="var">exn</span> ::= [ <span class="id" title="var">WithLogError</span>(<span class="id" title="var">string</span>, <span class="id" title="var">exn</span>) ].<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">with_log</span> (<span class="id" title="tactic">debug</span> : <span class="id" title="var">bool</span>) (<span class="id" title="var">file</span> : <span class="id" title="var">string</span> <span class="id" title="var">option</span>) (<span class="id" title="var">tac</span> : <span class="id" title="var">unit</span> -&gt; <span class="id" title="var">unit</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.without_focus</span> <span class="id" title="var">reset_log</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">run</span> () :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.enter</span> <span class="id" title="var">tac</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.without_focus</span> (<span class="id" title="keyword">fun</span> () =&gt; <span class="id" title="var">output_log_generic</span> <span class="id" title="tactic">debug</span> <span class="id" title="var">file</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">handle</span> <span class="id" title="var">e</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">log_and_output</span> () :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">tac</span>] "Exception caught by 'with_log':\n%a" <span class="id" title="var">pp_exn</span> <span class="id" title="var">e</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span>! <span class="id" title="var">Bool.neg</span> <span class="id" title="tactic">debug</span> <span class="id" title="keyword">then</span> <span class="id" title="var">log</span>[<span class="id" title="var">tac</span>] "Forcing debug mode for 'with_log'";<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">output_log_generic</span> <span class="id" title="var">true</span> <span class="id" title="var">file</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.without_focus</span> <span class="id" title="var">log_and_output</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">msg</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">file</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">None</span>   =&gt; "PREFIX YOUR TACTIC WITH 'Fail' TO SEE LOG OUTPUT"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Some</span> <span class="id" title="var">_</span> =&gt; "YOUR FILE WAS WRITTEN"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.zero</span> (<span class="id" title="var">WithLogError</span> <span class="id" title="var">msg</span> <span class="id" title="var">e</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.plus</span> <span class="id" title="var">run</span> <span class="id" title="var">handle</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">with_log_tmp</span> (<span class="id" title="tactic">debug</span> : <span class="id" title="var">bool</span>) (<span class="id" title="var">ext</span> : <span class="id" title="var">string</span>) (<span class="id" title="var">tac</span> : <span class="id" title="var">unit</span> -&gt; <span class="id" title="var">unit</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.without_focus</span> <span class="id" title="var">reset_log</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">run</span> () :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.enter</span> <span class="id" title="var">tac</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.without_focus</span> (<span class="id" title="keyword">fun</span> () =&gt; <span class="id" title="var">output_log_tmp</span> <span class="id" title="tactic">debug</span> <span class="id" title="var">ext</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">handle</span> <span class="id" title="var">e</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">log_and_output</span> () :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">tac</span>] "Exception caught by 'with_log':\n%a" <span class="id" title="var">pp_exn</span> <span class="id" title="var">e</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span>! <span class="id" title="var">Bool.neg</span> <span class="id" title="tactic">debug</span> <span class="id" title="keyword">then</span> <span class="id" title="var">log</span>[<span class="id" title="var">tac</span>] "Forcing debug mode for 'with_log'";<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">output_log_tmp</span> <span class="id" title="var">true</span> <span class="id" title="var">ext</span> <br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.without_focus</span> <span class="id" title="var">log_and_output</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">msg</span> := "PREFIX YOUR TACTIC WITH 'Fail' TO SEE LOG OUTPUT" <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.zero</span> (<span class="id" title="var">WithLogError</span> <span class="id" title="var">msg</span> <span class="id" title="var">e</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.plus</span> <span class="id" title="var">run</span> <span class="id" title="var">handle</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Module</span> <a id="Log.Ltac1" class="idref" href="#Log.Ltac1"><span class="id" title="module">Ltac1</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">parse_debug</span> (<span class="id" title="tactic">debug</span> : <span class="id" title="var">Ltac1.t</span>) : <span class="id" title="var">bool</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">Ltac1.to_bool</span> <span class="id" title="tactic">debug</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Some</span> <span class="id" title="tactic">debug</span> =&gt; <span class="id" title="tactic">debug</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">None</span>       =&gt; <span class="id" title="var">throw_invalid</span>! "not a concrete [bool]"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">parse_ofile</span> (<span class="id" title="var">ofile</span> : <span class="id" title="var">Ltac1.t</span>) : <span class="id" title="var">string</span> <span class="id" title="var">option</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">Ltac1.to_option</span> <span class="id" title="var">String.of_string_constr</span> <span class="id" title="var">ofile</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Some</span> <span class="id" title="var">ofile</span> =&gt; <span class="id" title="var">ofile</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">None</span>       =&gt; <span class="id" title="var">throw_invalid</span>! "not a concrete [option string]"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">parse_ext</span> (<span class="id" title="var">ext</span> : <span class="id" title="var">Ltac1.t</span>) : <span class="id" title="var">string</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">Ltac1.to_string</span> <span class="id" title="var">ext</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Some</span> <span class="id" title="var">ext</span> =&gt; <span class="id" title="var">ext</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">None</span>     =&gt; <span class="id" title="var">throw_invalid</span>! "not a concrete [string]"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">output_log_generic</span> (<span class="id" title="tactic">debug</span> : <span class="id" title="var">Ltac1.t</span>) (<span class="id" title="var">ofile</span> : <span class="id" title="var">Ltac1.t</span>) : <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="tactic">debug</span> := <span class="id" title="var">parse_debug</span> <span class="id" title="tactic">debug</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">ofile</span> := <span class="id" title="var">parse_ofile</span> <span class="id" title="var">ofile</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">output_log_generic</span> <span class="id" title="tactic">debug</span> <span class="id" title="var">ofile</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">with_log</span> (<span class="id" title="tactic">debug</span> : <span class="id" title="var">Ltac1.t</span>) (<span class="id" title="var">ofile</span> : <span class="id" title="var">Ltac1.t</span>) (<span class="id" title="var">tac</span> : <span class="id" title="var">Ltac1.t</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="tactic">debug</span> := <span class="id" title="var">parse_debug</span> <span class="id" title="tactic">debug</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">ofile</span> := <span class="id" title="var">parse_ofile</span> <span class="id" title="var">ofile</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">with_log</span> <span class="id" title="tactic">debug</span> <span class="id" title="var">ofile</span> (<span class="id" title="keyword">fun</span> () =&gt; <span class="id" title="var">Ltac1.run</span> <span class="id" title="var">tac</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">output_log_tmp</span> (<span class="id" title="tactic">debug</span> : <span class="id" title="var">Ltac1.t</span>) (<span class="id" title="var">ext</span> : <span class="id" title="var">Ltac1.t</span>) : <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="tactic">debug</span> := <span class="id" title="var">parse_debug</span> <span class="id" title="tactic">debug</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">ext</span> := <span class="id" title="var">parse_ext</span> <span class="id" title="var">ext</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">output_log_tmp</span> <span class="id" title="tactic">debug</span> <span class="id" title="var">ext</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">with_log_tmp</span> (<span class="id" title="tactic">debug</span> : <span class="id" title="var">Ltac1.t</span>) (<span class="id" title="var">ext</span> : <span class="id" title="var">Ltac1.t</span>) (<span class="id" title="var">tac</span> : <span class="id" title="var">Ltac1.t</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="tactic">debug</span> := <span class="id" title="var">parse_debug</span> <span class="id" title="tactic">debug</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">ext</span> := <span class="id" title="var">parse_ext</span> <span class="id" title="var">ext</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">with_log_tmp</span> <span class="id" title="tactic">debug</span> <span class="id" title="var">ext</span> (<span class="id" title="keyword">fun</span> () =&gt; <span class="id" title="var">Ltac1.run</span> <span class="id" title="var">tac</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.logger.logger.html#Log.Ltac1"><span class="id" title="module">Ltac1</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Module</span> <a id="Log.Ltac1Notations" class="idref" href="#Log.Ltac1Notations"><span class="id" title="module">Ltac1Notations</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.ltac2.logger.logger.html#Log.Ltac1"><span class="id" title="module">Ltac1</span></a>.<br/>
+</div>
+
+<div class="doc">
+<a id="lab1"></a><h1 class="section">Ltac1 Logging tactics</h1>
+
+<div class="paragraph"> </div>
+
+ The following tactics can be used for logging. Note that logging is only
+        recorded according to the value of the <span class="inlinecode"><span class="id" title="var">SL</span></span> <span class="inlinecode"><span class="id" title="keyword">Debug</span></span> Coq variable. It can be
+        read with <span class="inlinecode"><span class="id" title="var">Test</span></span> <span class="inlinecode"><span class="id" title="var">SL</span></span> <span class="inlinecode"><span class="id" title="keyword">Debug</span></span>, set with <span class="inlinecode"><span class="id" title="keyword">Set</span></span> <span class="inlinecode"><span class="id" title="var">SL</span></span> <span class="inlinecode"><span class="id" title="keyword">Debug</span></span> <span class="inlinecode">&quot;...&quot;</span>, and reset using
+        <span class="inlinecode"><span class="id" title="keyword">Unset</span></span> <span class="inlinecode"><span class="id" title="var">SL</span></span> <span class="inlinecode"><span class="id" title="keyword">Debug</span></span>. Here are common examples of values for the option:
+<ul class="doclist">
+<li> <span class="inlinecode"><span class="id" title="keyword">Set</span></span> <span class="inlinecode"><span class="id" title="var">SL</span></span> <span class="inlinecode"><span class="id" title="keyword">Debug</span></span> <span class="inlinecode">&quot;@<span class="id" title="var">default</span>=1&quot;</span> is useful for user-level debugging, in case
+          you only care about successful hint applications. You can also use the
+          character <span class="inlinecode"><span class="id" title="var">_</span></span> as a shortcut for <span class="inlinecode">@<span class="id" title="var">default</span></span>.
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="keyword">Set</span></span> <span class="inlinecode"><span class="id" title="var">SL</span></span> <span class="inlinecode"><span class="id" title="keyword">Debug</span></span> <span class="inlinecode">&quot;@<span class="id" title="var">default</span>=3&quot;</span> is similarly useful, but includes failures.
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="keyword">Set</span></span> <span class="inlinecode"><span class="id" title="var">SL</span></span> <span class="inlinecode"><span class="id" title="keyword">Debug</span></span> <span class="inlinecode">&quot;@<span class="id" title="var">all</span>=10&quot;</span> sets all debugging levels to maximum. You can
+          also use character <span class="inlinecode">*</span> as a shortcut for <span class="inlinecode">@<span class="id" title="var">all</span></span>.
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="keyword">Set</span></span> <span class="inlinecode"><span class="id" title="var">SL</span></span> <span class="inlinecode"><span class="id" title="keyword">Debug</span></span> <span class="inlinecode">&quot;@<span class="id" title="var">all</span>=3,<span class="id" title="var">ocaml</span>=6&quot;</span> is similar but corrects a level.
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+        Note that when logging is enabled, any run of the above tactics will have
+        the side-effect of adding log entries. In particular, if you step back in
+        a proof, and re-run a tactic, then the logging will be registered twice.
+
+<div class="paragraph"> </div>
+
+        To mitigate this issue, we provide the <span class="inlinecode"><span class="id" title="var">with_log</span>*</span> <span class="inlinecode"><span class="id" title="var">tac</span></span> family of tactics,
+        that can be used to generate a log for the given tactic <span class="inlinecode"><span class="id" title="var">tac</span></span>. This means
+        that you can use <span class="inlinecode"><span class="id" title="var">with_log</span></span> <span class="inlinecode"><span class="id" title="var">go</span></span> to generate the log for a single call to
+        the <span class="inlinecode"><span class="id" title="var">go</span></span> tactic.
+
+<div class="paragraph"> </div>
+
+        LIMITATION: the <span class="inlinecode"><span class="id" title="var">output_log</span>*</span> tactics won't work right before a <span class="inlinecode"><span class="id" title="keyword">Qed</span></span>, at
+        the end of the proof (i.e., when there are no goals). As a workaround you
+        can use <span class="inlinecode"><span class="id" title="var">all</span>:</span> <span class="inlinecode"><span class="id" title="var">output_log</span>.</span>, or similarly for other variants. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">Strings.String</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">reset_log</span></span> resets the state of the logger. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Tactic</span> <span class="id" title="keyword">Notation</span> "reset_log" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac2</span>:(<span class="id" title="var">Log.reset_log</span> ()).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">pop_all_spans</span></span> closes all currently open spans. This is useful when a
+        function doing logging is interrupted by, e.g., <span class="inlinecode"><span class="id" title="var">Timeout</span></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Tactic</span> <span class="id" title="keyword">Notation</span> "pop_all_spans" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac2</span>:(<span class="id" title="var">Log.Span.pop_all</span> ()).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">output_log_generic</span></span> <span class="inlinecode"><span class="id" title="tactic">debug</span></span> <span class="inlinecode"><span class="id" title="var">ofile</span></span> outputs the accumulated log messages. The
+        <span class="inlinecode"><span class="id" title="tactic">debug</span></span> parameter is expected to be a concrete Coq boolean, and it decides
+        whether the log should be printed when incomplete (i.e., if not all spans
+        are closed). The <span class="inlinecode"><span class="id" title="var">ofile</span></span> parameter is expected to be a Coq option holding
+        a Coq string, and it gives an optional (absolute) file path where to write
+        the log. If no file is specified (<span class="inlinecode"><span class="id" title="var">None</span></span> constructor), then the output is
+        sent to the Coq buffer at the "notice" level. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Tactic</span> <span class="id" title="keyword">Notation</span> "output_log_generic" <span class="id" title="keyword">constr</span>(<span class="id" title="tactic">debug</span>) <span class="id" title="keyword">constr</span>(<span class="id" title="var">ofile</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">run</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac2</span>:(<span class="id" title="tactic">debug</span> <span class="id" title="var">ofile</span> |- <span class="id" title="var">Log.Ltac1.output_log_generic</span> <span class="id" title="tactic">debug</span> <span class="id" title="var">ofile</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">run</span> <span class="id" title="tactic">debug</span> <span class="id" title="var">ofile</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Tactic</span> <span class="id" title="keyword">Notation</span> "output_log"  :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">output_log_generic</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> (@<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="inductive">string</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Tactic</span> <span class="id" title="keyword">Notation</span> "output_log!" :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">output_log_generic</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>  (@<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="inductive">string</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Tactic</span> <span class="id" title="keyword">Notation</span> "output_log_file"  <span class="id" title="keyword">constr</span>(<span class="id" title="var">file</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">output_log_generic</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> (@<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="inductive">string</span> <span class="id" title="var">file</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Tactic</span> <span class="id" title="keyword">Notation</span> "output_log_file!" <span class="id" title="keyword">constr</span>(<span class="id" title="var">file</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">output_log_generic</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>  (@<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="inductive">string</span> <span class="id" title="var">file</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">with_log_generic</span></span> <span class="inlinecode"><span class="id" title="tactic">debug</span></span> <span class="inlinecode"><span class="id" title="var">ofile</span></span> <span class="inlinecode"><span class="id" title="var">tac</span></span> resets the logger, runs <span class="inlinecode"><span class="id" title="var">tac</span></span>, and then
+        outputs the log as if <span class="inlinecode"><span class="id" title="var">output_log_generic</span></span> <span class="inlinecode"><span class="id" title="tactic">debug</span></span> <span class="inlinecode"><span class="id" title="var">ofile</span></span> was called. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Tactic</span> <span class="id" title="keyword">Notation</span> "with_log_generic" <span class="id" title="keyword">constr</span>(<span class="id" title="tactic">debug</span>) <span class="id" title="keyword">constr</span>(<span class="id" title="var">ofile</span>) <span class="id" title="var">tactic</span>(<span class="id" title="var">tac</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">run</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac2</span>:(<span class="id" title="tactic">debug</span> <span class="id" title="var">ofile</span> <span class="id" title="var">tac</span> |- <span class="id" title="var">Log.Ltac1.with_log</span> <span class="id" title="tactic">debug</span> <span class="id" title="var">ofile</span> <span class="id" title="var">tac</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">run</span> <span class="id" title="tactic">debug</span> <span class="id" title="var">ofile</span> <span class="id" title="var">tac</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Tactic</span> <span class="id" title="keyword">Notation</span> "with_log"  <span class="id" title="var">tactic</span>(<span class="id" title="var">tac</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">with_log_generic</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> (@<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="inductive">string</span>) <span class="id" title="var">tac</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Tactic</span> <span class="id" title="keyword">Notation</span> "with_log!" <span class="id" title="var">tactic</span>(<span class="id" title="var">tac</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">with_log_generic</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>  (@<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="inductive">string</span>) <span class="id" title="var">tac</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Tactic</span> <span class="id" title="keyword">Notation</span> "with_log_file"  <span class="id" title="keyword">constr</span>(<span class="id" title="var">file</span>) <span class="id" title="var">tactic</span>(<span class="id" title="var">tac</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">with_log_generic</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> (@<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="inductive">string</span> <span class="id" title="var">file</span>) <span class="id" title="var">tac</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Tactic</span> <span class="id" title="keyword">Notation</span> "with_log_file!" <span class="id" title="keyword">constr</span>(<span class="id" title="var">file</span>) <span class="id" title="var">tactic</span>(<span class="id" title="var">tac</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">with_log_generic</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>  (@<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="inductive">string</span> <span class="id" title="var">file</span>) <span class="id" title="var">tac</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">output_log_generic</span></span> <span class="inlinecode"><span class="id" title="tactic">debug</span></span> <span class="inlinecode"><span class="id" title="var">ofile</span></span> outputs the accumulated log messages. The
+        <span class="inlinecode"><span class="id" title="tactic">debug</span></span> parameter is expected to be a concrete Coq boolean, and it decides
+        whether the log should be printed when incomplete (i.e., if not all spans
+        are closed). The <span class="inlinecode"><span class="id" title="var">ext</span></span> parameter is expected to be a concrete Coq string,
+        and it specifies the extension of the temporary file that the log will be
+        written to. The name of the used temporary file is sent to the Coq buffer
+        at the "notice" level. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Tactic</span> <span class="id" title="keyword">Notation</span> "output_log_tmp" <span class="id" title="keyword">constr</span>(<span class="id" title="tactic">debug</span>) <span class="id" title="keyword">constr</span>(<span class="id" title="var">ext</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">run</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac2</span>:(<span class="id" title="tactic">debug</span> <span class="id" title="var">ext</span> |- <span class="id" title="var">Log.Ltac1.output_log_tmp</span> <span class="id" title="tactic">debug</span> <span class="id" title="var">ext</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">run</span> <span class="id" title="tactic">debug</span> <span class="id" title="var">ext</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Tactic</span> <span class="id" title="keyword">Notation</span> "output_log_tmp_file"  <span class="id" title="keyword">constr</span>(<span class="id" title="var">ext</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">output_log_tmp</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> <span class="id" title="var">ext</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Tactic</span> <span class="id" title="keyword">Notation</span> "output_log_tmp_file!" <span class="id" title="keyword">constr</span>(<span class="id" title="var">ext</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">output_log_tmp</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>  <span class="id" title="var">ext</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">with_log_tmp</span></span> <span class="inlinecode"><span class="id" title="tactic">debug</span></span> <span class="inlinecode"><span class="id" title="var">ext</span></span> <span class="inlinecode"><span class="id" title="var">tac</span></span> resets the logger, runs <span class="inlinecode"><span class="id" title="var">tac</span></span>, and then
+        outputs the log as if <span class="inlinecode"><span class="id" title="var">output_log_tmp</span></span> <span class="inlinecode"><span class="id" title="tactic">debug</span></span> <span class="inlinecode"><span class="id" title="var">ext</span></span> was called. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Tactic</span> <span class="id" title="keyword">Notation</span> "with_log_tmp" <span class="id" title="keyword">constr</span>(<span class="id" title="tactic">debug</span>) <span class="id" title="keyword">constr</span>(<span class="id" title="var">ext</span>) <span class="id" title="var">tactic</span>(<span class="id" title="var">tac</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">run</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac2</span>:(<span class="id" title="tactic">debug</span> <span class="id" title="var">ext</span> <span class="id" title="var">tac</span> |- <span class="id" title="var">Log.Ltac1.with_log_tmp</span> <span class="id" title="tactic">debug</span> <span class="id" title="var">ext</span> <span class="id" title="var">tac</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">run</span> <span class="id" title="tactic">debug</span> <span class="id" title="var">ext</span> <span class="id" title="var">tac</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Tactic</span> <span class="id" title="keyword">Notation</span> "with_log_tmp_file"  <span class="id" title="keyword">constr</span>(<span class="id" title="var">ext</span>) <span class="id" title="var">tactic</span>(<span class="id" title="var">tac</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">with_log_tmp</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> <span class="id" title="var">ext</span> <span class="id" title="var">tac</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Tactic</span> <span class="id" title="keyword">Notation</span> "with_log_tmp_file!" <span class="id" title="keyword">constr</span>(<span class="id" title="var">ext</span>) <span class="id" title="var">tactic</span>(<span class="id" title="var">tac</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">with_log_tmp</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>  <span class="id" title="var">ext</span> <span class="id" title="var">tac</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.logger.logger.html#Log.Ltac1Notations"><span class="id" title="module">Ltac1Notations</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.logger.logger.html#Log"><span class="id" title="module">Log</span></a>.<br/>
+<span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.ltac2.logger.logger.html#Log.Notations"><span class="id" title="module">Log.Notations</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

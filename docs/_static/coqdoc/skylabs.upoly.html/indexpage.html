@@ -1,0 +1,2243 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<table>
+<tr>
+<td>Global Index</td>
+<td><a href="indexpage.html#global_A">A</a></td>
+<td><a href="indexpage.html#global_B">B</a></td>
+<td><a href="indexpage.html#global_C">C</a></td>
+<td><a href="indexpage.html#global_D">D</a></td>
+<td><a href="indexpage.html#global_E">E</a></td>
+<td><a href="indexpage.html#global_F">F</a></td>
+<td><a href="indexpage.html#global_G">G</a></td>
+<td>H</td>
+<td><a href="indexpage.html#global_I">I</a></td>
+<td><a href="indexpage.html#global_J">J</a></td>
+<td>K</td>
+<td><a href="indexpage.html#global_L">L</a></td>
+<td><a href="indexpage.html#global_M">M</a></td>
+<td><a href="indexpage.html#global_N">N</a></td>
+<td><a href="indexpage.html#global_O">O</a></td>
+<td><a href="indexpage.html#global_P">P</a></td>
+<td>Q</td>
+<td><a href="indexpage.html#global_R">R</a></td>
+<td><a href="indexpage.html#global_S">S</a></td>
+<td><a href="indexpage.html#global_T">T</a></td>
+<td><a href="indexpage.html#global_U">U</a></td>
+<td><a href="indexpage.html#global_V">V</a></td>
+<td><a href="indexpage.html#global_W">W</a></td>
+<td>X</td>
+<td>Y</td>
+<td><a href="indexpage.html#global_Z">Z</a></td>
+<td>_</td>
+<td>other</td>
+<td>(574 entries)</td>
+</tr>
+<tr>
+<td>Notation Index</td>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+<td>D</td>
+<td>E</td>
+<td>F</td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td>J</td>
+<td>K</td>
+<td>L</td>
+<td>M</td>
+<td><a href="indexpage.html#notation_N">N</a></td>
+<td>O</td>
+<td>P</td>
+<td>Q</td>
+<td>R</td>
+<td>S</td>
+<td>T</td>
+<td><a href="indexpage.html#notation_U">U</a></td>
+<td>V</td>
+<td>W</td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(36 entries)</td>
+</tr>
+<tr>
+<td>Module Index</td>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+<td>D</td>
+<td>E</td>
+<td>F</td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td>J</td>
+<td>K</td>
+<td>L</td>
+<td>M</td>
+<td><a href="indexpage.html#module_N">N</a></td>
+<td>O</td>
+<td>P</td>
+<td>Q</td>
+<td>R</td>
+<td>S</td>
+<td>T</td>
+<td><a href="indexpage.html#module_U">U</a></td>
+<td>V</td>
+<td>W</td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(5 entries)</td>
+</tr>
+<tr>
+<td>Variable Index</td>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+<td>D</td>
+<td>E</td>
+<td>F</td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td>J</td>
+<td>K</td>
+<td><a href="indexpage.html#variable_L">L</a></td>
+<td><a href="indexpage.html#variable_M">M</a></td>
+<td>N</td>
+<td><a href="indexpage.html#variable_O">O</a></td>
+<td><a href="indexpage.html#variable_P">P</a></td>
+<td>Q</td>
+<td><a href="indexpage.html#variable_R">R</a></td>
+<td><a href="indexpage.html#variable_S">S</a></td>
+<td><a href="indexpage.html#variable_T">T</a></td>
+<td><a href="indexpage.html#variable_U">U</a></td>
+<td>V</td>
+<td><a href="indexpage.html#variable_W">W</a></td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(66 entries)</td>
+</tr>
+<tr>
+<td>Library Index</td>
+<td>A</td>
+<td><a href="indexpage.html#library_B">B</a></td>
+<td>C</td>
+<td>D</td>
+<td><a href="indexpage.html#library_E">E</a></td>
+<td>F</td>
+<td>G</td>
+<td>H</td>
+<td><a href="indexpage.html#library_I">I</a></td>
+<td>J</td>
+<td>K</td>
+<td><a href="indexpage.html#library_L">L</a></td>
+<td><a href="indexpage.html#library_M">M</a></td>
+<td>N</td>
+<td><a href="indexpage.html#library_O">O</a></td>
+<td><a href="indexpage.html#library_P">P</a></td>
+<td>Q</td>
+<td><a href="indexpage.html#library_R">R</a></td>
+<td><a href="indexpage.html#library_S">S</a></td>
+<td><a href="indexpage.html#library_T">T</a></td>
+<td><a href="indexpage.html#library_U">U</a></td>
+<td>V</td>
+<td><a href="indexpage.html#library_W">W</a></td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(22 entries)</td>
+</tr>
+<tr>
+<td>Constructor Index</td>
+<td>A</td>
+<td><a href="indexpage.html#constructor_B">B</a></td>
+<td><a href="indexpage.html#constructor_C">C</a></td>
+<td>D</td>
+<td>E</td>
+<td>F</td>
+<td>G</td>
+<td>H</td>
+<td><a href="indexpage.html#constructor_I">I</a></td>
+<td>J</td>
+<td>K</td>
+<td>L</td>
+<td>M</td>
+<td><a href="indexpage.html#constructor_N">N</a></td>
+<td>O</td>
+<td>P</td>
+<td>Q</td>
+<td>R</td>
+<td><a href="indexpage.html#constructor_S">S</a></td>
+<td>T</td>
+<td><a href="indexpage.html#constructor_U">U</a></td>
+<td>V</td>
+<td>W</td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(19 entries)</td>
+</tr>
+<tr>
+<td>Lemma Index</td>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+<td>D</td>
+<td>E</td>
+<td><a href="indexpage.html#lemma_F">F</a></td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td>J</td>
+<td>K</td>
+<td><a href="indexpage.html#lemma_L">L</a></td>
+<td><a href="indexpage.html#lemma_M">M</a></td>
+<td>N</td>
+<td>O</td>
+<td>P</td>
+<td>Q</td>
+<td>R</td>
+<td>S</td>
+<td><a href="indexpage.html#lemma_T">T</a></td>
+<td>U</td>
+<td>V</td>
+<td>W</td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(10 entries)</td>
+</tr>
+<tr>
+<td>Projection Index</td>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+<td>D</td>
+<td>E</td>
+<td><a href="indexpage.html#projection_F">F</a></td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td>J</td>
+<td>K</td>
+<td>L</td>
+<td><a href="indexpage.html#projection_M">M</a></td>
+<td><a href="indexpage.html#projection_N">N</a></td>
+<td>O</td>
+<td><a href="indexpage.html#projection_P">P</a></td>
+<td>Q</td>
+<td><a href="indexpage.html#projection_R">R</a></td>
+<td><a href="indexpage.html#projection_S">S</a></td>
+<td>T</td>
+<td><a href="indexpage.html#projection_U">U</a></td>
+<td><a href="indexpage.html#projection_V">V</a></td>
+<td>W</td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(28 entries)</td>
+</tr>
+<tr>
+<td>Inductive Index</td>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+<td>D</td>
+<td>E</td>
+<td>F</td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td>J</td>
+<td>K</td>
+<td><a href="indexpage.html#inductive_L">L</a></td>
+<td><a href="indexpage.html#inductive_M">M</a></td>
+<td>N</td>
+<td><a href="indexpage.html#inductive_O">O</a></td>
+<td>P</td>
+<td>Q</td>
+<td>R</td>
+<td><a href="indexpage.html#inductive_S">S</a></td>
+<td>T</td>
+<td><a href="indexpage.html#inductive_U">U</a></td>
+<td>V</td>
+<td>W</td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(15 entries)</td>
+</tr>
+<tr>
+<td>Instance Index</td>
+<td><a href="indexpage.html#instance_A">A</a></td>
+<td><a href="indexpage.html#instance_B">B</a></td>
+<td><a href="indexpage.html#instance_C">C</a></td>
+<td><a href="indexpage.html#instance_D">D</a></td>
+<td>E</td>
+<td><a href="indexpage.html#instance_F">F</a></td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td><a href="indexpage.html#instance_J">J</a></td>
+<td>K</td>
+<td><a href="indexpage.html#instance_L">L</a></td>
+<td><a href="indexpage.html#instance_M">M</a></td>
+<td>N</td>
+<td>O</td>
+<td>P</td>
+<td>Q</td>
+<td><a href="indexpage.html#instance_R">R</a></td>
+<td>S</td>
+<td><a href="indexpage.html#instance_T">T</a></td>
+<td><a href="indexpage.html#instance_U">U</a></td>
+<td>V</td>
+<td>W</td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(169 entries)</td>
+</tr>
+<tr>
+<td>Section Index</td>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+<td>D</td>
+<td>E</td>
+<td>F</td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td>J</td>
+<td>K</td>
+<td><a href="indexpage.html#section_L">L</a></td>
+<td><a href="indexpage.html#section_M">M</a></td>
+<td>N</td>
+<td><a href="indexpage.html#section_O">O</a></td>
+<td><a href="indexpage.html#section_P">P</a></td>
+<td>Q</td>
+<td><a href="indexpage.html#section_R">R</a></td>
+<td><a href="indexpage.html#section_S">S</a></td>
+<td><a href="indexpage.html#section_T">T</a></td>
+<td><a href="indexpage.html#section_U">U</a></td>
+<td>V</td>
+<td><a href="indexpage.html#section_W">W</a></td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(27 entries)</td>
+</tr>
+<tr>
+<td>Abbreviation Index</td>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+<td>D</td>
+<td>E</td>
+<td>F</td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td>J</td>
+<td>K</td>
+<td>L</td>
+<td><a href="indexpage.html#abbreviation_M">M</a></td>
+<td>N</td>
+<td>O</td>
+<td>P</td>
+<td>Q</td>
+<td>R</td>
+<td>S</td>
+<td>T</td>
+<td><a href="indexpage.html#abbreviation_U">U</a></td>
+<td>V</td>
+<td>W</td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(26 entries)</td>
+</tr>
+<tr>
+<td>Definition Index</td>
+<td><a href="indexpage.html#definition_A">A</a></td>
+<td>B</td>
+<td><a href="indexpage.html#definition_C">C</a></td>
+<td><a href="indexpage.html#definition_D">D</a></td>
+<td><a href="indexpage.html#definition_E">E</a></td>
+<td><a href="indexpage.html#definition_F">F</a></td>
+<td><a href="indexpage.html#definition_G">G</a></td>
+<td>H</td>
+<td><a href="indexpage.html#definition_I">I</a></td>
+<td>J</td>
+<td>K</td>
+<td><a href="indexpage.html#definition_L">L</a></td>
+<td><a href="indexpage.html#definition_M">M</a></td>
+<td><a href="indexpage.html#definition_N">N</a></td>
+<td><a href="indexpage.html#definition_O">O</a></td>
+<td><a href="indexpage.html#definition_P">P</a></td>
+<td>Q</td>
+<td><a href="indexpage.html#definition_R">R</a></td>
+<td><a href="indexpage.html#definition_S">S</a></td>
+<td><a href="indexpage.html#definition_T">T</a></td>
+<td><a href="indexpage.html#definition_U">U</a></td>
+<td>V</td>
+<td><a href="indexpage.html#definition_W">W</a></td>
+<td>X</td>
+<td>Y</td>
+<td><a href="indexpage.html#definition_Z">Z</a></td>
+<td>_</td>
+<td>other</td>
+<td>(126 entries)</td>
+</tr>
+<tr>
+<td>Record Index</td>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+<td>D</td>
+<td>E</td>
+<td>F</td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td>J</td>
+<td>K</td>
+<td>L</td>
+<td><a href="indexpage.html#record_M">M</a></td>
+<td><a href="indexpage.html#record_N">N</a></td>
+<td>O</td>
+<td><a href="indexpage.html#record_P">P</a></td>
+<td>Q</td>
+<td>R</td>
+<td>S</td>
+<td>T</td>
+<td><a href="indexpage.html#record_U">U</a></td>
+<td>V</td>
+<td>W</td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(25 entries)</td>
+</tr>
+</table>
+<hr/>
+<h1>Global Index</h1>
+<a id="global_A"></a><h2>A </h2>
+<a href="skylabs.upoly.readerT.html#alternative">alternative</a> [instance, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.option.html#alternative">alternative</a> [definition, in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.listT.html#alternative">alternative</a> [definition, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#alternative">alternative</a> [definition, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#alternative">alternative</a> [instance, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#alternative">alternative</a> [definition, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.list.html#alternative">alternative</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#alternative">alternative</a> [definition, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.listT.html#alternative_not_lazy">alternative_not_lazy</a> [definition, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#alternative_not_lazy">alternative_not_lazy</a> [definition, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#alternative_not_lazy">alternative_not_lazy</a> [definition, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.parsec.html#any">any</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#anyOf">anyOf</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.readerT.html#ap">ap</a> [instance, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.writer.html#ap">ap</a> [instance, in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.option.html#ap">ap</a> [definition, in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.writerT.html#ap">ap</a> [instance, in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#ap">ap</a> [instance, in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.listT.html#ap">ap</a> [instance, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#ap">ap</a> [instance, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#ap">ap</a> [definition, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#ap">ap</a> [instance, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.list.html#ap">ap</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#ap">ap</a> [definition, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.state.html#ap">ap</a> [definition, in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.id.html#ap">ap</a> [definition, in <a href="skylabs.upoly.id.html">skylabs.upoly.id</a>]<br/>
+<a href="skylabs.upoly.list.html#app">app</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#app'">app'</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.parsec.html#Ap_M">Ap_M</a> [instance, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.readerT.html#ask">ask</a> [definition, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#ask">ask</a> [definition, in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.readerT.html#asks">asks</a> [definition, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#asks">asks</a> [definition, in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.readerT.html#asksM">asksM</a> [definition, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<br/><br/><a id="global_B"></a><h2>B </h2>
+<a href="skylabs.upoly.trace.html#Backtrace">Backtrace</a> [constructor, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.base.html">base</a> [library]<br/>
+<a href="skylabs.upoly.readerT.html#bind">bind</a> [instance, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.writer.html#bind">bind</a> [instance, in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.option.html#bind">bind</a> [instance, in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.writerT.html#bind">bind</a> [instance, in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#bind">bind</a> [instance, in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.listT.html#bind">bind</a> [instance, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#bind">bind</a> [instance, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#bind">bind</a> [instance, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#bind">bind</a> [instance, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.list.html#bind">bind</a> [instance, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#bind">bind</a> [instance, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.state.html#bind">bind</a> [instance, in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.id.html#bind">bind</a> [instance, in <a href="skylabs.upoly.id.html">skylabs.upoly.id</a>]<br/>
+<br/><br/><a id="global_C"></a><h2>C </h2>
+<a href="skylabs.upoly.readerT.html#catch">catch</a> [instance, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.option.html#catch">catch</a> [instance, in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.listT.html#catch">catch</a> [instance, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#catch">catch</a> [instance, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#catch">catch</a> [instance, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#catch">catch</a> [instance, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.list.html#catch">catch</a> [instance, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#catch">catch</a> [instance, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.traceT.html#catch'">catch'</a> [instance, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#catch'">catch'</a> [instance, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.parsec.html#char">char</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#charP">charP</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#cons">cons</a> [constructor, in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<br/><br/><a id="global_D"></a><h2>D </h2>
+<a href="skylabs.upoly.option.html#default">default</a> [definition, in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.option.html#default_params">default_params</a> [instance, in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.list.html#drop">drop</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<br/><br/><a id="global_E"></a><h2>E </h2>
+<a href="skylabs.upoly.effects.html">effects</a> [library]<br/>
+<a href="skylabs.upoly.parsec.html#eos">eos</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#epsilon">epsilon</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#exact">exact</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#exact_">exact_</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<br/><br/><a id="global_F"></a><h2>F </h2>
+<a href="skylabs.upoly.readerT.html#fail">fail</a> [instance, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.option.html#fail">fail</a> [instance, in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.listT.html#fail">fail</a> [instance, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#fail">fail</a> [instance, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#fail">fail</a> [instance, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#fail">fail</a> [instance, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.list.html#fail">fail</a> [instance, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#fail">fail</a> [instance, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.base.html#first">first</a> [definition, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.prod.html#first">first</a> [definition, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.parsec.html#FMap_M">FMap_M</a> [instance, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.list.html#foldl">foldl</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#foldr">foldr</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_map_ko">force_map_ko</a> [lemma, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_map_ok">force_map_ok</a> [lemma, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_app_correct">force_app_correct</a> [lemma, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_app_dep_correct">force_app_dep_correct</a> [lemma, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_list_correct">force_list_correct</a> [lemma, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_list_dep_correct">force_list_dep_correct</a> [lemma, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_map">force_map</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_app">force_app</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_app_dep">force_app_dep</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_list">force_list</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_list_dep">force_list_dep</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.option.html#from_option_params">from_option_params</a> [instance, in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.option.html#from_option">from_option</a> [definition, in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#fst">fst</a> [projection, in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<br/><br/><a id="global_G"></a><h2>G </h2>
+<a href="skylabs.upoly.stateT.html#get">get</a> [definition, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.state.html#get">get</a> [definition, in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.stateT.html#gets">gets</a> [definition, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.state.html#gets">gets</a> [definition, in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.stateT.html#getsM">getsM</a> [definition, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<br/><br/><a id="global_I"></a><h2>I </h2>
+<a href="skylabs.upoly.id.html">id</a> [library]<br/>
+<a href="skylabs.upoly.option.html#inj">inj</a> [definition, in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.sum.html#inj">inj</a> [definition, in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.list.html#inj">inj</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.prod.html#inj">inj</a> [definition, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#inl">inl</a> [constructor, in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#inr">inr</a> [constructor, in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<br/><br/><a id="global_J"></a><h2>J </h2>
+<a href="skylabs.upoly.readerT.html#join">join</a> [instance, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.writer.html#join">join</a> [instance, in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.option.html#join">join</a> [instance, in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.writerT.html#join">join</a> [instance, in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#join">join</a> [instance, in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.listT.html#join">join</a> [instance, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#join">join</a> [instance, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#join">join</a> [instance, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#join">join</a> [instance, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.list.html#join">join</a> [instance, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#join">join</a> [instance, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.state.html#join">join</a> [instance, in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.id.html#join">join</a> [instance, in <a href="skylabs.upoly.id.html">skylabs.upoly.id</a>]<br/>
+<br/><br/><a id="global_L"></a><h2>L </h2>
+<a href="skylabs.upoly.list.html#length">length</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#length_map">length_map</a> [lemma, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.readerT.html#lift">lift</a> [instance, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.writerT.html#lift">lift</a> [instance, in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.listT.html#lift">lift</a> [instance, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#lift">lift</a> [instance, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#lift">lift</a> [instance, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#lift">lift</a> [instance, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.readerT.html#lift_over">lift_over</a> [instance, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.option.html#lift_option">lift_option</a> [instance, in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.listT.html#lift_option">lift_option</a> [instance, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.listT.html#lift_optionp">lift_optionp</a> [instance, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.listT.html#lift_list">lift_list</a> [instance, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.listT.html#lift_listp">lift_listp</a> [instance, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.listT.html#lift_over">lift_over</a> [instance, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#lift_option">lift_option</a> [instance, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#lift_optionp">lift_optionp</a> [instance, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#lift_trace">lift_trace</a> [instance, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#lift_over">lift_over</a> [instance, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#lift_reader">lift_reader</a> [instance, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#lift_over">lift_over</a> [instance, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#lift_option">lift_option</a> [instance, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#lift_optionp">lift_optionp</a> [instance, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#lift_over">lift_over</a> [instance, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.list.html#lift_option">lift_option</a> [instance, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#lift_optionp">lift_optionp</a> [instance, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#lift_list">lift_list</a> [instance, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#lift_option">lift_option</a> [instance, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.trace.html#lift_optionp">lift_optionp</a> [instance, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#list">list</a> [inductive, in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.list.html#list">list</a> [section, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html">list</a> [library]<br/>
+<a href="skylabs.upoly.writer.html#listen">listen</a> [definition, in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.writerT.html#listen">listen</a> [definition, in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.listT.html#listT">listT</a> [section, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.listT.html">listT</a> [library]<br/>
+<a href="skylabs.upoly.listT.html#listT.lift">listT.lift</a> [section, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.listT.html#listT.lift.m'">listT.lift.m'</a> [variable, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.listT.html#listT.m">listT.m</a> [variable, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#list_sind">list_sind</a> [definition, in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#list_rec">list_rec</a> [definition, in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#list_ind">list_ind</a> [definition, in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#list_rect">list_rect</a> [definition, in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.list.html#list.A">list.A</a> [variable, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.readerT.html#local">local</a> [definition, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#local">local</a> [definition, in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.readerT.html#localM">localM</a> [definition, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.list.html#lookup">lookup</a> [instance, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<br/><br/><a id="global_M"></a><h2>M </h2>
+<a href="skylabs.upoly.readerT.html#M">M</a> [abbreviation, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.readerT.html#M">M</a> [record, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.writer.html#M">M</a> [abbreviation, in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.writer.html#M">M</a> [record, in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.parsec.html#M">M</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.writerT.html#M">M</a> [abbreviation, in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.writerT.html#M">M</a> [record, in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#M">M</a> [abbreviation, in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.reader.html#M">M</a> [record, in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.listT.html#M">M</a> [abbreviation, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.listT.html#M">M</a> [record, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#M">M</a> [abbreviation, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#M">M</a> [record, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#M">M</a> [abbreviation, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#M">M</a> [record, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#M">M</a> [abbreviation, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#M">M</a> [record, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.trace.html#M">M</a> [abbreviation, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.trace.html#M">M</a> [inductive, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.state.html#M">M</a> [abbreviation, in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.state.html#M">M</a> [record, in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.id.html#M">M</a> [record, in <a href="skylabs.upoly.id.html">skylabs.upoly.id</a>]<br/>
+<a href="skylabs.upoly.readerT.html#map">map</a> [instance, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.writer.html#map">map</a> [instance, in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.option.html#map">map</a> [instance, in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.writerT.html#map">map</a> [instance, in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#map">map</a> [instance, in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.listT.html#map">map</a> [instance, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#map">map</a> [instance, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#map">map</a> [instance, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#map">map</a> [instance, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.sum.html#map">map</a> [definition, in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.sum.html#map">map</a> [section, in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.list.html#map">map</a> [instance, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#map">map</a> [instance, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.state.html#map">map</a> [instance, in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.id.html#map">map</a> [instance, in <a href="skylabs.upoly.id.html">skylabs.upoly.id</a>]<br/>
+<a href="skylabs.upoly.prod.html#map">map</a> [definition, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.prod.html#map">map</a> [section, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.list.html#map_app">map_app</a> [lemma, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#map_id">map_id</a> [lemma, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#map_filter">map_filter</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.sum.html#map.A">map.A</a> [variable, in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#map.A">map.A</a> [variable, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.sum.html#map.A'">map.A'</a> [variable, in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#map.A'">map.A'</a> [variable, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.sum.html#map.B">map.B</a> [variable, in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#map.B">map.B</a> [variable, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.sum.html#map.B'">map.B'</a> [variable, in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#map.B'">map.B'</a> [variable, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.parsec.html#MBind_M">MBind_M</a> [instance, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#MFail_M">MFail_M</a> [instance, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#MLift_M">MLift_M</a> [instance, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.stateT.html#modify">modify</a> [definition, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.state.html#modify">modify</a> [definition, in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.stateT.html#modifyM">modifyM</a> [definition, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.monoid.html#Monoid">Monoid</a> [record, in <a href="skylabs.upoly.monoid.html">skylabs.upoly.monoid</a>]<br/>
+<a href="skylabs.upoly.monoid.html">monoid</a> [library]<br/>
+<a href="skylabs.upoly.monoid.html#monoid_op_params">monoid_op_params</a> [instance, in <a href="skylabs.upoly.monoid.html">skylabs.upoly.monoid</a>]<br/>
+<a href="skylabs.upoly.monoid.html#monoid_unit_params">monoid_unit_params</a> [instance, in <a href="skylabs.upoly.monoid.html">skylabs.upoly.monoid</a>]<br/>
+<a href="skylabs.upoly.monoid.html#monoid_op">monoid_op</a> [projection, in <a href="skylabs.upoly.monoid.html">skylabs.upoly.monoid</a>]<br/>
+<a href="skylabs.upoly.monoid.html#monoid_unit">monoid_unit</a> [projection, in <a href="skylabs.upoly.monoid.html">skylabs.upoly.monoid</a>]<br/>
+<a href="skylabs.upoly.parsec.html#MRet_M">MRet_M</a> [instance, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#M_Alternative">M_Alternative</a> [instance, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<br/><br/><a id="global_N"></a><h2>N </h2>
+<a href="skylabs.upoly.parsec.html#Next">Next</a> [record, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#next_token">next_token</a> [projection, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#nil">nil</a> [constructor, in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#None">None</a> [constructor, in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.parsec.html#not">not</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.sum.html#Notations">Notations</a> [module, in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.list.html#Notations">Notations</a> [module, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.prod.html#Notations">Notations</a> [module, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.prod.html#90c3c7191c2d065a2a312ec105f78f2a">( _ , _ , .. , _ ) (core_scope)</a> [notation, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.prod.html#bb3585d649bb2d786996f19dc8830c4b">( _ ,.) (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.prod.html#32e30a910f97145e90a71ff18238eeb3">(., _ ) (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.sum.html#0fec99d0fa1f2d85feec50c48e59627f">_ + _ (type_scope)</a> [notation, in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#d1bad5ee21ac00bd480dc052f28f8fb8">_ * _ (type_scope)</a> [notation, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.list.html#559cacb65085d4c6d70cce9e60c7a7fc">_ ++ _ (ulist_scope)</a> [notation, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#a7ed680bb0add059233b68ee0e0a3ecb">[ _ ; _ ; .. ; _ ] (ulist_scope)</a> [notation, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#8c0dfb4f0dcd0f57bbf591d901254fd4">[ _ ] (ulist_scope)</a> [notation, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#15cd9a6e6290438f5aba50fc5c697d0c">[ ] (ulist_scope)</a> [notation, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#Notations.::ulist_scope:x_'::'_x">_ :: _ (ulist_scope)</a> [notation, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.prod.html#fc4431c50f6aa0e3d9e3cfced677bf65">_ .*2</a> [notation, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.prod.html#b6ade9721b0786c4414559bbe1c0eedb">_ .*1</a> [notation, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.prod.html#Notations.:::x_'.2'">_ .2</a> [notation, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.prod.html#Notations.:::x_'.1'">_ .1</a> [notation, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.list.html#nth_def">nth_def</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<br/><br/><a id="global_O"></a><h2>O </h2>
+<a href="skylabs.upoly.UTypes.html#option">option</a> [inductive, in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.option.html">option</a> [library]<br/>
+<a href="skylabs.upoly.parsec.html#optional">optional</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.optionT.html#optionT">optionT</a> [section, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.optionT.html">optionT</a> [library]<br/>
+<a href="skylabs.upoly.optionT.html#optionT.lift">optionT.lift</a> [section, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#optionT.lift.m'">optionT.lift.m'</a> [variable, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#optionT.m">optionT.m</a> [variable, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.parsec.html#or">or</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<br/><br/><a id="global_P"></a><h2>P </h2>
+<a href="skylabs.upoly.parsec.html#parsec">parsec</a> [section, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html">parsec</a> [library]<br/>
+<a href="skylabs.upoly.parsec.html#parsec.F">parsec.F</a> [variable, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#parsec.FM">parsec.FM</a> [variable, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#parsec.MB">parsec.MB</a> [variable, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#parsec.MR">parsec.MR</a> [variable, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#parsec.N">parsec.N</a> [variable, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#parsec.P">parsec.P</a> [variable, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#ParseString">ParseString</a> [record, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#parse_string">parse_string</a> [projection, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.writer.html#pass">pass</a> [definition, in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.writerT.html#pass">pass</a> [definition, in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.parsec.html#peek">peek</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#plus">plus</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.prelude.html">prelude</a> [library]<br/>
+<a href="skylabs.upoly.UTypes.html#prod">prod</a> [record, in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.prod.html">prod</a> [library]<br/>
+<a href="skylabs.upoly.stateT.html#put">put</a> [definition, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.state.html#put">put</a> [definition, in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.stateT.html#putM">putM</a> [definition, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<br/><br/><a id="global_R"></a><h2>R </h2>
+<a href="skylabs.upoly.reader.html#reader">reader</a> [section, in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.reader.html">reader</a> [library]<br/>
+<a href="skylabs.upoly.readerT.html#readerT">readerT</a> [section, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.readerT.html">readerT</a> [library]<br/>
+<a href="skylabs.upoly.readerT.html#readerT.errors">readerT.errors</a> [section, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.readerT.html#readerT.errors.E">readerT.errors.E</a> [variable, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.readerT.html#readerT.lift">readerT.lift</a> [section, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.readerT.html#readerT.lift.m'">readerT.lift.m'</a> [variable, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.readerT.html#readerT.m">readerT.m</a> [variable, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.readerT.html#readerT.S">readerT.S</a> [variable, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#reader.S">reader.S</a> [variable, in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.writer.html#result">result</a> [projection, in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.readerT.html#ret">ret</a> [instance, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.writer.html#ret">ret</a> [instance, in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.option.html#ret">ret</a> [instance, in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.writerT.html#ret">ret</a> [instance, in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#ret">ret</a> [instance, in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.listT.html#ret">ret</a> [instance, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#ret">ret</a> [instance, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#ret">ret</a> [instance, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#ret">ret</a> [instance, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.list.html#ret">ret</a> [instance, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#ret">ret</a> [instance, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.state.html#ret">ret</a> [instance, in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.id.html#ret">ret</a> [instance, in <a href="skylabs.upoly.id.html">skylabs.upoly.id</a>]<br/>
+<a href="skylabs.upoly.list.html#rev">rev</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#rev_app">rev_app</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.readerT.html#run">run</a> [projection, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.writer.html#run">run</a> [definition, in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.parsec.html#run">run</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.option.html#run">run</a> [definition, in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.writerT.html#run">run</a> [definition, in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#run">run</a> [projection, in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.listT.html#run">run</a> [definition, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#run">run</a> [definition, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#run">run</a> [definition, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#run">run</a> [definition, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.sum.html#run">run</a> [definition, in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.list.html#run">run</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#run">run</a> [definition, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.state.html#run">run</a> [definition, in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.id.html#run">run</a> [projection, in <a href="skylabs.upoly.id.html">skylabs.upoly.id</a>]<br/>
+<a href="skylabs.upoly.prod.html#run">run</a> [definition, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.traceT.html#runO">runO</a> [definition, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.trace.html#runO">runO</a> [definition, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.writer.html#runp">runp</a> [definition, in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.writerT.html#runp">runp</a> [projection, in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.listT.html#runp">runp</a> [projection, in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#runp">runp</a> [projection, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#runp">runp</a> [projection, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#runp">runp</a> [projection, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.state.html#runp">runp</a> [projection, in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.parsec.html#run_full">run_full</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<br/><br/><a id="global_S"></a><h2>S </h2>
+<a href="skylabs.upoly.base.html#second">second</a> [definition, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.prod.html#second">second</a> [definition, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.list.html#select">select</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.parsec.html#sepBy">sepBy</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#seqs">seqs</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#snd">snd</a> [projection, in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#Some">Some</a> [constructor, in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.parsec.html#star">star</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#star_">star_</a> [definition, in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.stateT.html#state">state</a> [definition, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.state.html#state">state</a> [definition, in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.state.html#state">state</a> [section, in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.state.html">state</a> [library]<br/>
+<a href="skylabs.upoly.stateT.html#stateM">stateM</a> [definition, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#stateT">stateT</a> [section, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.stateT.html">stateT</a> [library]<br/>
+<a href="skylabs.upoly.stateT.html#stateT.errors">stateT.errors</a> [section, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#stateT.errors.E">stateT.errors.E</a> [variable, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#stateT.lift">stateT.lift</a> [section, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#stateT.lift.m'">stateT.lift.m'</a> [variable, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#stateT.m">stateT.m</a> [variable, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#stateT.S">stateT.S</a> [variable, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.state.html#state.S">state.S</a> [variable, in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.trace.html#Success">Success</a> [constructor, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#sum">sum</a> [inductive, in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.sum.html">sum</a> [library]<br/>
+<br/><br/><a id="global_T"></a><h2>T </h2>
+<a href="skylabs.upoly.list.html#take">take</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#take_drop">take_drop</a> [lemma, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.writer.html#tell">tell</a> [definition, in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.writerT.html#tell">tell</a> [definition, in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.readerT.html#throw">throw</a> [instance, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#throw">throw</a> [instance, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#throw">throw</a> [instance, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#throw">throw</a> [instance, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.trace.html#throw">throw</a> [instance, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.traceT.html#throw'">throw'</a> [instance, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.readerT.html#trace">trace</a> [instance, in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#trace">trace</a> [instance, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#trace">trace</a> [instance, in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#trace">trace</a> [instance, in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.trace.html#trace">trace</a> [instance, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.trace.html#trace">trace</a> [section, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.trace.html">trace</a> [library]<br/>
+<a href="skylabs.upoly.traceT.html#traceT">traceT</a> [section, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.traceT.html">traceT</a> [library]<br/>
+<a href="skylabs.upoly.traceT.html#traceT.E">traceT.E</a> [variable, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#traceT.lift">traceT.lift</a> [section, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#traceT.lift.m'">traceT.lift.m'</a> [variable, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#traceT.m">traceT.m</a> [variable, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.trace.html#trace.E">trace.E</a> [variable, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.writer.html#traverse">traverse</a> [instance, in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.option.html#traverse">traverse</a> [instance, in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.sum.html#traverse">traverse</a> [definition, in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.sum.html#traverse">traverse</a> [section, in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.list.html#traverse">traverse</a> [instance, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#traverse">traverse</a> [instance, in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.id.html#traverse">traverse</a> [instance, in <a href="skylabs.upoly.id.html">skylabs.upoly.id</a>]<br/>
+<a href="skylabs.upoly.prod.html#traverse">traverse</a> [definition, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.prod.html#traverse">traverse</a> [section, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.sum.html#traverse.A">traverse.A</a> [variable, in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#traverse.A">traverse.A</a> [variable, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.prod.html#traverse.AP">traverse.AP</a> [variable, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.sum.html#traverse.A'">traverse.A'</a> [variable, in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#traverse.A'">traverse.A'</a> [variable, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.sum.html#traverse.B">traverse.B</a> [variable, in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#traverse.B">traverse.B</a> [variable, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.sum.html#traverse.B'">traverse.B'</a> [variable, in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#traverse.B'">traverse.B'</a> [variable, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.sum.html#traverse.F">traverse.F</a> [variable, in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#traverse.F">traverse.F</a> [variable, in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<br/><br/><a id="global_U"></a><h2>U </h2>
+<a href="skylabs.upoly.traceT.html#U">U</a> [abbreviation, in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly">UPoly</a> [module, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.upoly.html">upoly</a> [library]<br/>
+<a href="skylabs.upoly.base.html#UPoly.alternative">UPoly.alternative</a> [projection, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.Alternative">UPoly.Alternative</a> [record, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.alternative">UPoly.alternative</a> [constructor, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.Alternative">UPoly.Alternative</a> [inductive, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.alternative_params">UPoly.alternative_params</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.ap">UPoly.ap</a> [projection, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.Ap">UPoly.Ap</a> [record, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.ap">UPoly.ap</a> [constructor, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.Ap">UPoly.Ap</a> [inductive, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.applicative_fmap">UPoly.applicative_fmap</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.bind_params">UPoly.bind_params</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.catch_alternative">UPoly.catch_alternative</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.compose">UPoly.compose</a> [definition, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.const">UPoly.const</a> [abbreviation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.const1">UPoly.const1</a> [abbreviation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.const2">UPoly.const2</a> [abbreviation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.const3">UPoly.const3</a> [abbreviation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.const4">UPoly.const4</a> [abbreviation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.const5">UPoly.const5</a> [abbreviation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.const6">UPoly.const6</a> [abbreviation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.const7">UPoly.const7</a> [abbreviation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.eta">UPoly.eta</a> [abbreviation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.fmap">UPoly.fmap</a> [projection, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.FMap">UPoly.FMap</a> [record, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.fmap">UPoly.fmap</a> [constructor, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.FMap">UPoly.FMap</a> [inductive, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.fmap_params">UPoly.fmap_params</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.guard">UPoly.guard</a> [abbreviation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.guard_or_params">UPoly.guard_or_params</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.guard_or">UPoly.guard_or</a> [definition, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.id">UPoly.id</a> [abbreviation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.join_params">UPoly.join_params</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.lift_params">UPoly.lift_params</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.list_alternative">UPoly.list_alternative</a> [definition, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.list_catch">UPoly.list_catch</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.list_fail">UPoly.list_fail</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.list_traverse">UPoly.list_traverse</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.list_ap">UPoly.list_ap</a> [definition, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.list_join">UPoly.list_join</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.list_bind">UPoly.list_bind</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.list_ret">UPoly.list_ret</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.list_fmap">UPoly.list_fmap</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mbind">UPoly.mbind</a> [projection, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MBind">UPoly.MBind</a> [record, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mbind">UPoly.mbind</a> [constructor, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MBind">UPoly.MBind</a> [inductive, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mcatch">UPoly.mcatch</a> [projection, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MCatch">UPoly.MCatch</a> [record, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mcatch">UPoly.mcatch</a> [constructor, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MCatch">UPoly.MCatch</a> [inductive, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mcatch_params">UPoly.mcatch_params</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mfail">UPoly.mfail</a> [abbreviation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MFail">UPoly.MFail</a> [abbreviation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mjoin">UPoly.mjoin</a> [projection, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MJoin">UPoly.MJoin</a> [record, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mjoin">UPoly.mjoin</a> [constructor, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MJoin">UPoly.MJoin</a> [inductive, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mlift">UPoly.mlift</a> [projection, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MLift">UPoly.MLift</a> [record, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mlift">UPoly.mlift</a> [constructor, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MLift">UPoly.MLift</a> [inductive, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.monad_ap">UPoly.monad_ap</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.monad_fmap">UPoly.monad_fmap</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mret">UPoly.mret</a> [projection, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MRet">UPoly.MRet</a> [record, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mret">UPoly.mret</a> [constructor, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MRet">UPoly.MRet</a> [inductive, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mthrow">UPoly.mthrow</a> [projection, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MThrow">UPoly.MThrow</a> [record, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mthrow">UPoly.mthrow</a> [constructor, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MThrow">UPoly.MThrow</a> [inductive, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mthrow_params">UPoly.mthrow_params</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.Notations">UPoly.Notations</a> [module, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#eda3775fa1f87123f444b2cf5c4dcef8">funM _ .. _ =&gt; _ (function_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#e01e530d578efd50ee4b9331c60cb932">let* := _ in _ (monad_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#6494c011650d8ea47e9324c52a2a214f">let* _ , .. , _ := _ in _ (monad_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#af9aab39e76ae602a1fccf670a83e86a">_ `catch` _ (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#8c8e84c982082c259045ad615555e9d3">_ ← _ ; _ (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#1d62379f394f587ea9537a3c1b02d233">_ ;; _ (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#19bc80380de232b7835d937895d37cc8">(&gt;&gt;=) (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#1472a224b3448217375e6e51fdb0fe3c">(.&gt;&gt;= _ ) (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#daf28ce1870d2935f84bbc3e2dbe78f8">( _ &gt;&gt;=.) (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#b213f77e6d907447b87538639aad073d">_ &gt;&gt;=@{ _ } _ (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#c8c14829cc6649dcdfef686a46e2df7c">_ &gt;&gt;= _ (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#13c6eac41c0d81a5c3bd3f5ab04cb21e">_ &lt;|&gt;@{ _ } _ (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#b389a8dc0c48113709f0c4b2a35d8bb7">_ &lt;|&gt; _ (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#3a62f1082808cb8431bdfe2236fd519c">_ *&gt; _ (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#8b3f205c97aa3b079977fa724f2a69ae">_ &lt;* _ (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#7babf60e98c75ea0af71e77352950846">_ &lt;*&gt;@{ _ } _ (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#2c8d5df69935f8b8b79fa5ae6a02b9e5">_ &lt;*&gt; _ (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#913d5033cf5660007c77b2d9383f760d">_ &lt;$&gt; _ (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#80e9863987b3d2abf63164c6c65561af">letM* := _ in _ (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#a99855d53c3fdb0dc83d6a53c5b1a8a9">letM* _ , .. , _ := _ in _ (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.option_alternative">UPoly.option_alternative</a> [definition, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.option_catch">UPoly.option_catch</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.option_fail">UPoly.option_fail</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.option_traverse">UPoly.option_traverse</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.option_ap">UPoly.option_ap</a> [definition, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.option_join">UPoly.option_join</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.option_bind">UPoly.option_bind</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.option_ret">UPoly.option_ret</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.option_fmap">UPoly.option_fmap</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.pair_traverse_right">UPoly.pair_traverse_right</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_traverse">UPoly.prod_traverse</a> [definition, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_traverse.B'">UPoly.prod_traverse.B'</a> [variable, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_traverse.A'">UPoly.prod_traverse.A'</a> [variable, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_traverse.B">UPoly.prod_traverse.B</a> [variable, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_traverse.A">UPoly.prod_traverse.A</a> [variable, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_traverse.AP">UPoly.prod_traverse.AP</a> [variable, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_traverse.F">UPoly.prod_traverse.F</a> [variable, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_traverse">UPoly.prod_traverse</a> [section, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_fmap">UPoly.prod_fmap</a> [definition, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_fmap.B'">UPoly.prod_fmap.B'</a> [variable, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_fmap.A'">UPoly.prod_fmap.A'</a> [variable, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_fmap.B">UPoly.prod_fmap.B</a> [variable, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_fmap.A">UPoly.prod_fmap.A</a> [variable, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_fmap">UPoly.prod_fmap</a> [section, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.relation">UPoly.relation</a> [abbreviation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.ret_params">UPoly.ret_params</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sequence">UPoly.sequence</a> [abbreviation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_traverse_right">UPoly.sum_traverse_right</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_join_right">UPoly.sum_join_right</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_bind_right">UPoly.sum_bind_right</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_fmap_right">UPoly.sum_fmap_right</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_ret_right">UPoly.sum_ret_right</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_traverse">UPoly.sum_traverse</a> [definition, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_traverse.B'">UPoly.sum_traverse.B'</a> [variable, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_traverse.A'">UPoly.sum_traverse.A'</a> [variable, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_traverse.B">UPoly.sum_traverse.B</a> [variable, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_traverse.A">UPoly.sum_traverse.A</a> [variable, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_traverse.F">UPoly.sum_traverse.F</a> [variable, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_traverse">UPoly.sum_traverse</a> [section, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_fmap">UPoly.sum_fmap</a> [definition, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_fmap.B'">UPoly.sum_fmap.B'</a> [variable, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_fmap.A'">UPoly.sum_fmap.A'</a> [variable, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_fmap.B">UPoly.sum_fmap.B</a> [variable, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_fmap.A">UPoly.sum_fmap.A</a> [variable, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_fmap">UPoly.sum_fmap</a> [section, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.trace">UPoly.trace</a> [projection, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.Trace">UPoly.Trace</a> [record, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.trace">UPoly.trace</a> [constructor, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.Trace">UPoly.Trace</a> [inductive, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.trace_params">UPoly.trace_params</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.traverse">UPoly.traverse</a> [projection, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.Traverse">UPoly.Traverse</a> [record, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.traverse">UPoly.traverse</a> [constructor, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.Traverse">UPoly.Traverse</a> [inductive, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.traverse_params">UPoly.traverse_params</a> [instance, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#8d3a08c21baa28cef83cd928b608c3f0">_ \o _ (stdpp_scope)</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#9aa41be0b74b192f6181d27337e67198">sequence@{ _ }</a> [notation, in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.UTypes.html">UTypes</a> [library]<br/>
+<br/><br/><a id="global_V"></a><h2>V </h2>
+<a href="skylabs.upoly.writer.html#value">value</a> [projection, in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<br/><br/><a id="global_W"></a><h2>W </h2>
+<a href="skylabs.upoly.writer.html#writer">writer</a> [definition, in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.writer.html#writer">writer</a> [section, in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.writerT.html#writer">writer</a> [definition, in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.writerT.html#writer">writer</a> [section, in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.writer.html">writer</a> [library]<br/>
+<a href="skylabs.upoly.writerT.html">writerT</a> [library]<br/>
+<a href="skylabs.upoly.writerT.html#writer.m">writer.m</a> [variable, in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.writer.html#writer.V">writer.V</a> [variable, in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.writerT.html#writer.V">writer.V</a> [variable, in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<br/><br/><a id="global_Z"></a><h2>Z </h2>
+<a href="skylabs.upoly.list.html#zip_with">zip_with</a> [definition, in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<br/><br/><hr/>
+<h1>Notation Index</h1>
+<a id="notation_N"></a><h2>N </h2>
+<a href="skylabs.upoly.prod.html#90c3c7191c2d065a2a312ec105f78f2a">( _ , _ , .. , _ ) (core_scope)</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.prod.html#bb3585d649bb2d786996f19dc8830c4b">( _ ,.) (stdpp_scope)</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.prod.html#32e30a910f97145e90a71ff18238eeb3">(., _ ) (stdpp_scope)</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.sum.html#0fec99d0fa1f2d85feec50c48e59627f">_ + _ (type_scope)</a> [in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#d1bad5ee21ac00bd480dc052f28f8fb8">_ * _ (type_scope)</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.list.html#559cacb65085d4c6d70cce9e60c7a7fc">_ ++ _ (ulist_scope)</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#a7ed680bb0add059233b68ee0e0a3ecb">[ _ ; _ ; .. ; _ ] (ulist_scope)</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#8c0dfb4f0dcd0f57bbf591d901254fd4">[ _ ] (ulist_scope)</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#15cd9a6e6290438f5aba50fc5c697d0c">[ ] (ulist_scope)</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#Notations.::ulist_scope:x_'::'_x">_ :: _ (ulist_scope)</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.prod.html#fc4431c50f6aa0e3d9e3cfced677bf65">_ .*2</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.prod.html#b6ade9721b0786c4414559bbe1c0eedb">_ .*1</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.prod.html#Notations.:::x_'.2'">_ .2</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.prod.html#Notations.:::x_'.1'">_ .1</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<br/><br/><a id="notation_U"></a><h2>U </h2>
+<a href="skylabs.upoly.base.html#eda3775fa1f87123f444b2cf5c4dcef8">funM _ .. _ =&gt; _ (function_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#e01e530d578efd50ee4b9331c60cb932">let* := _ in _ (monad_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#6494c011650d8ea47e9324c52a2a214f">let* _ , .. , _ := _ in _ (monad_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#af9aab39e76ae602a1fccf670a83e86a">_ `catch` _ (stdpp_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#8c8e84c982082c259045ad615555e9d3">_ ← _ ; _ (stdpp_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#1d62379f394f587ea9537a3c1b02d233">_ ;; _ (stdpp_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#19bc80380de232b7835d937895d37cc8">(&gt;&gt;=) (stdpp_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#1472a224b3448217375e6e51fdb0fe3c">(.&gt;&gt;= _ ) (stdpp_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#daf28ce1870d2935f84bbc3e2dbe78f8">( _ &gt;&gt;=.) (stdpp_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#b213f77e6d907447b87538639aad073d">_ &gt;&gt;=@{ _ } _ (stdpp_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#c8c14829cc6649dcdfef686a46e2df7c">_ &gt;&gt;= _ (stdpp_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#13c6eac41c0d81a5c3bd3f5ab04cb21e">_ &lt;|&gt;@{ _ } _ (stdpp_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#b389a8dc0c48113709f0c4b2a35d8bb7">_ &lt;|&gt; _ (stdpp_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#3a62f1082808cb8431bdfe2236fd519c">_ *&gt; _ (stdpp_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#8b3f205c97aa3b079977fa724f2a69ae">_ &lt;* _ (stdpp_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#7babf60e98c75ea0af71e77352950846">_ &lt;*&gt;@{ _ } _ (stdpp_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#2c8d5df69935f8b8b79fa5ae6a02b9e5">_ &lt;*&gt; _ (stdpp_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#913d5033cf5660007c77b2d9383f760d">_ &lt;$&gt; _ (stdpp_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#80e9863987b3d2abf63164c6c65561af">letM* := _ in _ (stdpp_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#a99855d53c3fdb0dc83d6a53c5b1a8a9">letM* _ , .. , _ := _ in _ (stdpp_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#8d3a08c21baa28cef83cd928b608c3f0">_ \o _ (stdpp_scope)</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#9aa41be0b74b192f6181d27337e67198">sequence@{ _ }</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<br/><br/><hr/>
+<h1>Module Index</h1>
+<a id="module_N"></a><h2>N </h2>
+<a href="skylabs.upoly.sum.html#Notations">Notations</a> [in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.list.html#Notations">Notations</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.prod.html#Notations">Notations</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<br/><br/><a id="module_U"></a><h2>U </h2>
+<a href="skylabs.upoly.base.html#UPoly">UPoly</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.Notations">UPoly.Notations</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<br/><br/><hr/>
+<h1>Variable Index</h1>
+<a id="variable_L"></a><h2>L </h2>
+<a href="skylabs.upoly.listT.html#listT.lift.m'">listT.lift.m'</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.listT.html#listT.m">listT.m</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.list.html#list.A">list.A</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<br/><br/><a id="variable_M"></a><h2>M </h2>
+<a href="skylabs.upoly.sum.html#map.A">map.A</a> [in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#map.A">map.A</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.sum.html#map.A'">map.A'</a> [in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#map.A'">map.A'</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.sum.html#map.B">map.B</a> [in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#map.B">map.B</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.sum.html#map.B'">map.B'</a> [in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#map.B'">map.B'</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<br/><br/><a id="variable_O"></a><h2>O </h2>
+<a href="skylabs.upoly.optionT.html#optionT.lift.m'">optionT.lift.m'</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#optionT.m">optionT.m</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<br/><br/><a id="variable_P"></a><h2>P </h2>
+<a href="skylabs.upoly.parsec.html#parsec.F">parsec.F</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#parsec.FM">parsec.FM</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#parsec.MB">parsec.MB</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#parsec.MR">parsec.MR</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#parsec.N">parsec.N</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#parsec.P">parsec.P</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<br/><br/><a id="variable_R"></a><h2>R </h2>
+<a href="skylabs.upoly.readerT.html#readerT.errors.E">readerT.errors.E</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.readerT.html#readerT.lift.m'">readerT.lift.m'</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.readerT.html#readerT.m">readerT.m</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.readerT.html#readerT.S">readerT.S</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#reader.S">reader.S</a> [in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<br/><br/><a id="variable_S"></a><h2>S </h2>
+<a href="skylabs.upoly.stateT.html#stateT.errors.E">stateT.errors.E</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#stateT.lift.m'">stateT.lift.m'</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#stateT.m">stateT.m</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#stateT.S">stateT.S</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.state.html#state.S">state.S</a> [in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<br/><br/><a id="variable_T"></a><h2>T </h2>
+<a href="skylabs.upoly.traceT.html#traceT.E">traceT.E</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#traceT.lift.m'">traceT.lift.m'</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#traceT.m">traceT.m</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.trace.html#trace.E">trace.E</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.sum.html#traverse.A">traverse.A</a> [in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#traverse.A">traverse.A</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.prod.html#traverse.AP">traverse.AP</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.sum.html#traverse.A'">traverse.A'</a> [in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#traverse.A'">traverse.A'</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.sum.html#traverse.B">traverse.B</a> [in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#traverse.B">traverse.B</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.sum.html#traverse.B'">traverse.B'</a> [in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#traverse.B'">traverse.B'</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.sum.html#traverse.F">traverse.F</a> [in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#traverse.F">traverse.F</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<br/><br/><a id="variable_U"></a><h2>U </h2>
+<a href="skylabs.upoly.base.html#UPoly.prod_traverse.B'">UPoly.prod_traverse.B'</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_traverse.A'">UPoly.prod_traverse.A'</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_traverse.B">UPoly.prod_traverse.B</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_traverse.A">UPoly.prod_traverse.A</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_traverse.AP">UPoly.prod_traverse.AP</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_traverse.F">UPoly.prod_traverse.F</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_fmap.B'">UPoly.prod_fmap.B'</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_fmap.A'">UPoly.prod_fmap.A'</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_fmap.B">UPoly.prod_fmap.B</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_fmap.A">UPoly.prod_fmap.A</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_traverse.B'">UPoly.sum_traverse.B'</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_traverse.A'">UPoly.sum_traverse.A'</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_traverse.B">UPoly.sum_traverse.B</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_traverse.A">UPoly.sum_traverse.A</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_traverse.F">UPoly.sum_traverse.F</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_fmap.B'">UPoly.sum_fmap.B'</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_fmap.A'">UPoly.sum_fmap.A'</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_fmap.B">UPoly.sum_fmap.B</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_fmap.A">UPoly.sum_fmap.A</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<br/><br/><a id="variable_W"></a><h2>W </h2>
+<a href="skylabs.upoly.writerT.html#writer.m">writer.m</a> [in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.writer.html#writer.V">writer.V</a> [in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.writerT.html#writer.V">writer.V</a> [in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<br/><br/><hr/>
+<h1>Library Index</h1>
+<a id="library_B"></a><h2>B </h2>
+<a href="skylabs.upoly.base.html">base</a> <br/>
+<br/><br/><a id="library_E"></a><h2>E </h2>
+<a href="skylabs.upoly.effects.html">effects</a> <br/>
+<br/><br/><a id="library_I"></a><h2>I </h2>
+<a href="skylabs.upoly.id.html">id</a> <br/>
+<br/><br/><a id="library_L"></a><h2>L </h2>
+<a href="skylabs.upoly.list.html">list</a> <br/>
+<a href="skylabs.upoly.listT.html">listT</a> <br/>
+<br/><br/><a id="library_M"></a><h2>M </h2>
+<a href="skylabs.upoly.monoid.html">monoid</a> <br/>
+<br/><br/><a id="library_O"></a><h2>O </h2>
+<a href="skylabs.upoly.option.html">option</a> <br/>
+<a href="skylabs.upoly.optionT.html">optionT</a> <br/>
+<br/><br/><a id="library_P"></a><h2>P </h2>
+<a href="skylabs.upoly.parsec.html">parsec</a> <br/>
+<a href="skylabs.upoly.prelude.html">prelude</a> <br/>
+<a href="skylabs.upoly.prod.html">prod</a> <br/>
+<br/><br/><a id="library_R"></a><h2>R </h2>
+<a href="skylabs.upoly.reader.html">reader</a> <br/>
+<a href="skylabs.upoly.readerT.html">readerT</a> <br/>
+<br/><br/><a id="library_S"></a><h2>S </h2>
+<a href="skylabs.upoly.state.html">state</a> <br/>
+<a href="skylabs.upoly.stateT.html">stateT</a> <br/>
+<a href="skylabs.upoly.sum.html">sum</a> <br/>
+<br/><br/><a id="library_T"></a><h2>T </h2>
+<a href="skylabs.upoly.trace.html">trace</a> <br/>
+<a href="skylabs.upoly.traceT.html">traceT</a> <br/>
+<br/><br/><a id="library_U"></a><h2>U </h2>
+<a href="skylabs.upoly.upoly.html">upoly</a> <br/>
+<a href="skylabs.upoly.UTypes.html">UTypes</a> <br/>
+<br/><br/><a id="library_W"></a><h2>W </h2>
+<a href="skylabs.upoly.writer.html">writer</a> <br/>
+<a href="skylabs.upoly.writerT.html">writerT</a> <br/>
+<br/><br/><hr/>
+<h1>Constructor Index</h1>
+<a id="constructor_B"></a><h2>B </h2>
+<a href="skylabs.upoly.trace.html#Backtrace">Backtrace</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<br/><br/><a id="constructor_C"></a><h2>C </h2>
+<a href="skylabs.upoly.UTypes.html#cons">cons</a> [in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<br/><br/><a id="constructor_I"></a><h2>I </h2>
+<a href="skylabs.upoly.UTypes.html#inl">inl</a> [in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#inr">inr</a> [in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<br/><br/><a id="constructor_N"></a><h2>N </h2>
+<a href="skylabs.upoly.UTypes.html#nil">nil</a> [in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#None">None</a> [in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<br/><br/><a id="constructor_S"></a><h2>S </h2>
+<a href="skylabs.upoly.UTypes.html#Some">Some</a> [in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.trace.html#Success">Success</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<br/><br/><a id="constructor_U"></a><h2>U </h2>
+<a href="skylabs.upoly.base.html#UPoly.alternative">UPoly.alternative</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.ap">UPoly.ap</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.fmap">UPoly.fmap</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mbind">UPoly.mbind</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mcatch">UPoly.mcatch</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mjoin">UPoly.mjoin</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mlift">UPoly.mlift</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mret">UPoly.mret</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mthrow">UPoly.mthrow</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.trace">UPoly.trace</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.traverse">UPoly.traverse</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<br/><br/><hr/>
+<h1>Lemma Index</h1>
+<a id="lemma_F"></a><h2>F </h2>
+<a href="skylabs.upoly.list.html#force_map_ko">force_map_ko</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_map_ok">force_map_ok</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_app_correct">force_app_correct</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_app_dep_correct">force_app_dep_correct</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_list_correct">force_list_correct</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_list_dep_correct">force_list_dep_correct</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<br/><br/><a id="lemma_L"></a><h2>L </h2>
+<a href="skylabs.upoly.list.html#length_map">length_map</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<br/><br/><a id="lemma_M"></a><h2>M </h2>
+<a href="skylabs.upoly.list.html#map_app">map_app</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#map_id">map_id</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<br/><br/><a id="lemma_T"></a><h2>T </h2>
+<a href="skylabs.upoly.list.html#take_drop">take_drop</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<br/><br/><hr/>
+<h1>Projection Index</h1>
+<a id="projection_F"></a><h2>F </h2>
+<a href="skylabs.upoly.UTypes.html#fst">fst</a> [in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<br/><br/><a id="projection_M"></a><h2>M </h2>
+<a href="skylabs.upoly.monoid.html#monoid_op">monoid_op</a> [in <a href="skylabs.upoly.monoid.html">skylabs.upoly.monoid</a>]<br/>
+<a href="skylabs.upoly.monoid.html#monoid_unit">monoid_unit</a> [in <a href="skylabs.upoly.monoid.html">skylabs.upoly.monoid</a>]<br/>
+<br/><br/><a id="projection_N"></a><h2>N </h2>
+<a href="skylabs.upoly.parsec.html#next_token">next_token</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<br/><br/><a id="projection_P"></a><h2>P </h2>
+<a href="skylabs.upoly.parsec.html#parse_string">parse_string</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<br/><br/><a id="projection_R"></a><h2>R </h2>
+<a href="skylabs.upoly.writer.html#result">result</a> [in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.readerT.html#run">run</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#run">run</a> [in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.id.html#run">run</a> [in <a href="skylabs.upoly.id.html">skylabs.upoly.id</a>]<br/>
+<a href="skylabs.upoly.writerT.html#runp">runp</a> [in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.listT.html#runp">runp</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#runp">runp</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#runp">runp</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#runp">runp</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.state.html#runp">runp</a> [in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<br/><br/><a id="projection_S"></a><h2>S </h2>
+<a href="skylabs.upoly.UTypes.html#snd">snd</a> [in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<br/><br/><a id="projection_U"></a><h2>U </h2>
+<a href="skylabs.upoly.base.html#UPoly.alternative">UPoly.alternative</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.ap">UPoly.ap</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.fmap">UPoly.fmap</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mbind">UPoly.mbind</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mcatch">UPoly.mcatch</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mjoin">UPoly.mjoin</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mlift">UPoly.mlift</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mret">UPoly.mret</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mthrow">UPoly.mthrow</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.trace">UPoly.trace</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.traverse">UPoly.traverse</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<br/><br/><a id="projection_V"></a><h2>V </h2>
+<a href="skylabs.upoly.writer.html#value">value</a> [in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<br/><br/><hr/>
+<h1>Inductive Index</h1>
+<a id="inductive_L"></a><h2>L </h2>
+<a href="skylabs.upoly.UTypes.html#list">list</a> [in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<br/><br/><a id="inductive_M"></a><h2>M </h2>
+<a href="skylabs.upoly.trace.html#M">M</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<br/><br/><a id="inductive_O"></a><h2>O </h2>
+<a href="skylabs.upoly.UTypes.html#option">option</a> [in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<br/><br/><a id="inductive_S"></a><h2>S </h2>
+<a href="skylabs.upoly.UTypes.html#sum">sum</a> [in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<br/><br/><a id="inductive_U"></a><h2>U </h2>
+<a href="skylabs.upoly.base.html#UPoly.Alternative">UPoly.Alternative</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.Ap">UPoly.Ap</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.FMap">UPoly.FMap</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MBind">UPoly.MBind</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MCatch">UPoly.MCatch</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MJoin">UPoly.MJoin</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MLift">UPoly.MLift</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MRet">UPoly.MRet</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MThrow">UPoly.MThrow</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.Trace">UPoly.Trace</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.Traverse">UPoly.Traverse</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<br/><br/><hr/>
+<h1>Instance Index</h1>
+<a id="instance_A"></a><h2>A </h2>
+<a href="skylabs.upoly.readerT.html#alternative">alternative</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#alternative">alternative</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.readerT.html#ap">ap</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.writer.html#ap">ap</a> [in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.writerT.html#ap">ap</a> [in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#ap">ap</a> [in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.listT.html#ap">ap</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#ap">ap</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#ap">ap</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.parsec.html#Ap_M">Ap_M</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<br/><br/><a id="instance_B"></a><h2>B </h2>
+<a href="skylabs.upoly.readerT.html#bind">bind</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.writer.html#bind">bind</a> [in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.option.html#bind">bind</a> [in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.writerT.html#bind">bind</a> [in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#bind">bind</a> [in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.listT.html#bind">bind</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#bind">bind</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#bind">bind</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#bind">bind</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.list.html#bind">bind</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#bind">bind</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.state.html#bind">bind</a> [in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.id.html#bind">bind</a> [in <a href="skylabs.upoly.id.html">skylabs.upoly.id</a>]<br/>
+<br/><br/><a id="instance_C"></a><h2>C </h2>
+<a href="skylabs.upoly.readerT.html#catch">catch</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.option.html#catch">catch</a> [in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.listT.html#catch">catch</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#catch">catch</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#catch">catch</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#catch">catch</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.list.html#catch">catch</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#catch">catch</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.traceT.html#catch'">catch'</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#catch'">catch'</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<br/><br/><a id="instance_D"></a><h2>D </h2>
+<a href="skylabs.upoly.option.html#default_params">default_params</a> [in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<br/><br/><a id="instance_F"></a><h2>F </h2>
+<a href="skylabs.upoly.readerT.html#fail">fail</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.option.html#fail">fail</a> [in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.listT.html#fail">fail</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#fail">fail</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#fail">fail</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#fail">fail</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.list.html#fail">fail</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#fail">fail</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.parsec.html#FMap_M">FMap_M</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.option.html#from_option_params">from_option_params</a> [in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<br/><br/><a id="instance_J"></a><h2>J </h2>
+<a href="skylabs.upoly.readerT.html#join">join</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.writer.html#join">join</a> [in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.option.html#join">join</a> [in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.writerT.html#join">join</a> [in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#join">join</a> [in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.listT.html#join">join</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#join">join</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#join">join</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#join">join</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.list.html#join">join</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#join">join</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.state.html#join">join</a> [in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.id.html#join">join</a> [in <a href="skylabs.upoly.id.html">skylabs.upoly.id</a>]<br/>
+<br/><br/><a id="instance_L"></a><h2>L </h2>
+<a href="skylabs.upoly.readerT.html#lift">lift</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.writerT.html#lift">lift</a> [in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.listT.html#lift">lift</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#lift">lift</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#lift">lift</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#lift">lift</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.readerT.html#lift_over">lift_over</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.option.html#lift_option">lift_option</a> [in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.listT.html#lift_option">lift_option</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.listT.html#lift_optionp">lift_optionp</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.listT.html#lift_list">lift_list</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.listT.html#lift_listp">lift_listp</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.listT.html#lift_over">lift_over</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#lift_option">lift_option</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#lift_optionp">lift_optionp</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#lift_trace">lift_trace</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#lift_over">lift_over</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#lift_reader">lift_reader</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#lift_over">lift_over</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#lift_option">lift_option</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#lift_optionp">lift_optionp</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#lift_over">lift_over</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.list.html#lift_option">lift_option</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#lift_optionp">lift_optionp</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#lift_list">lift_list</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#lift_option">lift_option</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.trace.html#lift_optionp">lift_optionp</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.list.html#lookup">lookup</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<br/><br/><a id="instance_M"></a><h2>M </h2>
+<a href="skylabs.upoly.readerT.html#map">map</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.writer.html#map">map</a> [in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.option.html#map">map</a> [in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.writerT.html#map">map</a> [in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#map">map</a> [in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.listT.html#map">map</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#map">map</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#map">map</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#map">map</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.list.html#map">map</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#map">map</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.state.html#map">map</a> [in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.id.html#map">map</a> [in <a href="skylabs.upoly.id.html">skylabs.upoly.id</a>]<br/>
+<a href="skylabs.upoly.parsec.html#MBind_M">MBind_M</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#MFail_M">MFail_M</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#MLift_M">MLift_M</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.monoid.html#monoid_op_params">monoid_op_params</a> [in <a href="skylabs.upoly.monoid.html">skylabs.upoly.monoid</a>]<br/>
+<a href="skylabs.upoly.monoid.html#monoid_unit_params">monoid_unit_params</a> [in <a href="skylabs.upoly.monoid.html">skylabs.upoly.monoid</a>]<br/>
+<a href="skylabs.upoly.parsec.html#MRet_M">MRet_M</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#M_Alternative">M_Alternative</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<br/><br/><a id="instance_R"></a><h2>R </h2>
+<a href="skylabs.upoly.readerT.html#ret">ret</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.writer.html#ret">ret</a> [in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.option.html#ret">ret</a> [in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.writerT.html#ret">ret</a> [in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#ret">ret</a> [in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.listT.html#ret">ret</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#ret">ret</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#ret">ret</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#ret">ret</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.list.html#ret">ret</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#ret">ret</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.state.html#ret">ret</a> [in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.id.html#ret">ret</a> [in <a href="skylabs.upoly.id.html">skylabs.upoly.id</a>]<br/>
+<br/><br/><a id="instance_T"></a><h2>T </h2>
+<a href="skylabs.upoly.readerT.html#throw">throw</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#throw">throw</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#throw">throw</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#throw">throw</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.trace.html#throw">throw</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.traceT.html#throw'">throw'</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.readerT.html#trace">trace</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#trace">trace</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#trace">trace</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#trace">trace</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.trace.html#trace">trace</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.writer.html#traverse">traverse</a> [in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.option.html#traverse">traverse</a> [in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.list.html#traverse">traverse</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#traverse">traverse</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.id.html#traverse">traverse</a> [in <a href="skylabs.upoly.id.html">skylabs.upoly.id</a>]<br/>
+<br/><br/><a id="instance_U"></a><h2>U </h2>
+<a href="skylabs.upoly.base.html#UPoly.alternative_params">UPoly.alternative_params</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.applicative_fmap">UPoly.applicative_fmap</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.bind_params">UPoly.bind_params</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.catch_alternative">UPoly.catch_alternative</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.fmap_params">UPoly.fmap_params</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.guard_or_params">UPoly.guard_or_params</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.join_params">UPoly.join_params</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.lift_params">UPoly.lift_params</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.list_catch">UPoly.list_catch</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.list_fail">UPoly.list_fail</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.list_traverse">UPoly.list_traverse</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.list_join">UPoly.list_join</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.list_bind">UPoly.list_bind</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.list_ret">UPoly.list_ret</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.list_fmap">UPoly.list_fmap</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mcatch_params">UPoly.mcatch_params</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.monad_ap">UPoly.monad_ap</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.monad_fmap">UPoly.monad_fmap</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mthrow_params">UPoly.mthrow_params</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.option_catch">UPoly.option_catch</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.option_fail">UPoly.option_fail</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.option_traverse">UPoly.option_traverse</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.option_join">UPoly.option_join</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.option_bind">UPoly.option_bind</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.option_ret">UPoly.option_ret</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.option_fmap">UPoly.option_fmap</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.pair_traverse_right">UPoly.pair_traverse_right</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.ret_params">UPoly.ret_params</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_traverse_right">UPoly.sum_traverse_right</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_join_right">UPoly.sum_join_right</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_bind_right">UPoly.sum_bind_right</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_fmap_right">UPoly.sum_fmap_right</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_ret_right">UPoly.sum_ret_right</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.trace_params">UPoly.trace_params</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.traverse_params">UPoly.traverse_params</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<br/><br/><hr/>
+<h1>Section Index</h1>
+<a id="section_L"></a><h2>L </h2>
+<a href="skylabs.upoly.list.html#list">list</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.listT.html#listT">listT</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.listT.html#listT.lift">listT.lift</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<br/><br/><a id="section_M"></a><h2>M </h2>
+<a href="skylabs.upoly.sum.html#map">map</a> [in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#map">map</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<br/><br/><a id="section_O"></a><h2>O </h2>
+<a href="skylabs.upoly.optionT.html#optionT">optionT</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#optionT.lift">optionT.lift</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<br/><br/><a id="section_P"></a><h2>P </h2>
+<a href="skylabs.upoly.parsec.html#parsec">parsec</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<br/><br/><a id="section_R"></a><h2>R </h2>
+<a href="skylabs.upoly.reader.html#reader">reader</a> [in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.readerT.html#readerT">readerT</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.readerT.html#readerT.errors">readerT.errors</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.readerT.html#readerT.lift">readerT.lift</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<br/><br/><a id="section_S"></a><h2>S </h2>
+<a href="skylabs.upoly.state.html#state">state</a> [in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.stateT.html#stateT">stateT</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#stateT.errors">stateT.errors</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#stateT.lift">stateT.lift</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<br/><br/><a id="section_T"></a><h2>T </h2>
+<a href="skylabs.upoly.trace.html#trace">trace</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.traceT.html#traceT">traceT</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#traceT.lift">traceT.lift</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.sum.html#traverse">traverse</a> [in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#traverse">traverse</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<br/><br/><a id="section_U"></a><h2>U </h2>
+<a href="skylabs.upoly.base.html#UPoly.prod_traverse">UPoly.prod_traverse</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_fmap">UPoly.prod_fmap</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_traverse">UPoly.sum_traverse</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_fmap">UPoly.sum_fmap</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<br/><br/><a id="section_W"></a><h2>W </h2>
+<a href="skylabs.upoly.writer.html#writer">writer</a> [in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.writerT.html#writer">writer</a> [in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<br/><br/><hr/>
+<h1>Abbreviation Index</h1>
+<a id="abbreviation_M"></a><h2>M </h2>
+<a href="skylabs.upoly.readerT.html#M">M</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.writer.html#M">M</a> [in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.writerT.html#M">M</a> [in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#M">M</a> [in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.listT.html#M">M</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#M">M</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#M">M</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#M">M</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.trace.html#M">M</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.state.html#M">M</a> [in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<br/><br/><a id="abbreviation_U"></a><h2>U </h2>
+<a href="skylabs.upoly.traceT.html#U">U</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.const">UPoly.const</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.const1">UPoly.const1</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.const2">UPoly.const2</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.const3">UPoly.const3</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.const4">UPoly.const4</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.const5">UPoly.const5</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.const6">UPoly.const6</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.const7">UPoly.const7</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.eta">UPoly.eta</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.guard">UPoly.guard</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.id">UPoly.id</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.mfail">UPoly.mfail</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MFail">UPoly.MFail</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.relation">UPoly.relation</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sequence">UPoly.sequence</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<br/><br/><hr/>
+<h1>Definition Index</h1>
+<a id="definition_A"></a><h2>A </h2>
+<a href="skylabs.upoly.option.html#alternative">alternative</a> [in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.listT.html#alternative">alternative</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#alternative">alternative</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#alternative">alternative</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.list.html#alternative">alternative</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#alternative">alternative</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.listT.html#alternative_not_lazy">alternative_not_lazy</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#alternative_not_lazy">alternative_not_lazy</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#alternative_not_lazy">alternative_not_lazy</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.parsec.html#any">any</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#anyOf">anyOf</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.option.html#ap">ap</a> [in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.stateT.html#ap">ap</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.list.html#ap">ap</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#ap">ap</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.state.html#ap">ap</a> [in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.id.html#ap">ap</a> [in <a href="skylabs.upoly.id.html">skylabs.upoly.id</a>]<br/>
+<a href="skylabs.upoly.list.html#app">app</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#app'">app'</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.readerT.html#ask">ask</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#ask">ask</a> [in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.readerT.html#asks">asks</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#asks">asks</a> [in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.readerT.html#asksM">asksM</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<br/><br/><a id="definition_C"></a><h2>C </h2>
+<a href="skylabs.upoly.parsec.html#char">char</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#charP">charP</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<br/><br/><a id="definition_D"></a><h2>D </h2>
+<a href="skylabs.upoly.option.html#default">default</a> [in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.list.html#drop">drop</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<br/><br/><a id="definition_E"></a><h2>E </h2>
+<a href="skylabs.upoly.parsec.html#eos">eos</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#epsilon">epsilon</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#exact">exact</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#exact_">exact_</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<br/><br/><a id="definition_F"></a><h2>F </h2>
+<a href="skylabs.upoly.base.html#first">first</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.prod.html#first">first</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.list.html#foldl">foldl</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#foldr">foldr</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_map">force_map</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_app">force_app</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_app_dep">force_app_dep</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_list">force_list</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#force_list_dep">force_list_dep</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.option.html#from_option">from_option</a> [in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<br/><br/><a id="definition_G"></a><h2>G </h2>
+<a href="skylabs.upoly.stateT.html#get">get</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.state.html#get">get</a> [in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.stateT.html#gets">gets</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.state.html#gets">gets</a> [in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.stateT.html#getsM">getsM</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<br/><br/><a id="definition_I"></a><h2>I </h2>
+<a href="skylabs.upoly.option.html#inj">inj</a> [in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.sum.html#inj">inj</a> [in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.list.html#inj">inj</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.prod.html#inj">inj</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<br/><br/><a id="definition_L"></a><h2>L </h2>
+<a href="skylabs.upoly.list.html#length">length</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.writer.html#listen">listen</a> [in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.writerT.html#listen">listen</a> [in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#list_sind">list_sind</a> [in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#list_rec">list_rec</a> [in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#list_ind">list_ind</a> [in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#list_rect">list_rect</a> [in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<a href="skylabs.upoly.readerT.html#local">local</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#local">local</a> [in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.readerT.html#localM">localM</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<br/><br/><a id="definition_M"></a><h2>M </h2>
+<a href="skylabs.upoly.parsec.html#M">M</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.sum.html#map">map</a> [in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#map">map</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.list.html#map_filter">map_filter</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.stateT.html#modify">modify</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.state.html#modify">modify</a> [in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.stateT.html#modifyM">modifyM</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<br/><br/><a id="definition_N"></a><h2>N </h2>
+<a href="skylabs.upoly.parsec.html#not">not</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.list.html#nth_def">nth_def</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<br/><br/><a id="definition_O"></a><h2>O </h2>
+<a href="skylabs.upoly.parsec.html#optional">optional</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#or">or</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<br/><br/><a id="definition_P"></a><h2>P </h2>
+<a href="skylabs.upoly.writer.html#pass">pass</a> [in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.writerT.html#pass">pass</a> [in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.parsec.html#peek">peek</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#plus">plus</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.stateT.html#put">put</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.state.html#put">put</a> [in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.stateT.html#putM">putM</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<br/><br/><a id="definition_R"></a><h2>R </h2>
+<a href="skylabs.upoly.list.html#rev">rev</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.list.html#rev_app">rev_app</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.writer.html#run">run</a> [in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.parsec.html#run">run</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.option.html#run">run</a> [in <a href="skylabs.upoly.option.html">skylabs.upoly.option</a>]<br/>
+<a href="skylabs.upoly.writerT.html#run">run</a> [in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.listT.html#run">run</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#run">run</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#run">run</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#run">run</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.sum.html#run">run</a> [in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.list.html#run">run</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.trace.html#run">run</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.state.html#run">run</a> [in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.prod.html#run">run</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.traceT.html#runO">runO</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.trace.html#runO">runO</a> [in <a href="skylabs.upoly.trace.html">skylabs.upoly.trace</a>]<br/>
+<a href="skylabs.upoly.writer.html#runp">runp</a> [in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.parsec.html#run_full">run_full</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<br/><br/><a id="definition_S"></a><h2>S </h2>
+<a href="skylabs.upoly.base.html#second">second</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.prod.html#second">second</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<a href="skylabs.upoly.list.html#select">select</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.parsec.html#sepBy">sepBy</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#seqs">seqs</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#star">star</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.parsec.html#star_">star_</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.stateT.html#state">state</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.state.html#state">state</a> [in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.stateT.html#stateM">stateM</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<br/><br/><a id="definition_T"></a><h2>T </h2>
+<a href="skylabs.upoly.list.html#take">take</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<a href="skylabs.upoly.writer.html#tell">tell</a> [in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.writerT.html#tell">tell</a> [in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.sum.html#traverse">traverse</a> [in <a href="skylabs.upoly.sum.html">skylabs.upoly.sum</a>]<br/>
+<a href="skylabs.upoly.prod.html#traverse">traverse</a> [in <a href="skylabs.upoly.prod.html">skylabs.upoly.prod</a>]<br/>
+<br/><br/><a id="definition_U"></a><h2>U </h2>
+<a href="skylabs.upoly.base.html#UPoly.compose">UPoly.compose</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.guard_or">UPoly.guard_or</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.list_alternative">UPoly.list_alternative</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.list_ap">UPoly.list_ap</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.option_alternative">UPoly.option_alternative</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.option_ap">UPoly.option_ap</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_traverse">UPoly.prod_traverse</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.prod_fmap">UPoly.prod_fmap</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_traverse">UPoly.sum_traverse</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.sum_fmap">UPoly.sum_fmap</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<br/><br/><a id="definition_W"></a><h2>W </h2>
+<a href="skylabs.upoly.writer.html#writer">writer</a> [in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.writerT.html#writer">writer</a> [in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<br/><br/><a id="definition_Z"></a><h2>Z </h2>
+<a href="skylabs.upoly.list.html#zip_with">zip_with</a> [in <a href="skylabs.upoly.list.html">skylabs.upoly.list</a>]<br/>
+<br/><br/><hr/>
+<h1>Record Index</h1>
+<a id="record_M"></a><h2>M </h2>
+<a href="skylabs.upoly.readerT.html#M">M</a> [in <a href="skylabs.upoly.readerT.html">skylabs.upoly.readerT</a>]<br/>
+<a href="skylabs.upoly.writer.html#M">M</a> [in <a href="skylabs.upoly.writer.html">skylabs.upoly.writer</a>]<br/>
+<a href="skylabs.upoly.writerT.html#M">M</a> [in <a href="skylabs.upoly.writerT.html">skylabs.upoly.writerT</a>]<br/>
+<a href="skylabs.upoly.reader.html#M">M</a> [in <a href="skylabs.upoly.reader.html">skylabs.upoly.reader</a>]<br/>
+<a href="skylabs.upoly.listT.html#M">M</a> [in <a href="skylabs.upoly.listT.html">skylabs.upoly.listT</a>]<br/>
+<a href="skylabs.upoly.traceT.html#M">M</a> [in <a href="skylabs.upoly.traceT.html">skylabs.upoly.traceT</a>]<br/>
+<a href="skylabs.upoly.stateT.html#M">M</a> [in <a href="skylabs.upoly.stateT.html">skylabs.upoly.stateT</a>]<br/>
+<a href="skylabs.upoly.optionT.html#M">M</a> [in <a href="skylabs.upoly.optionT.html">skylabs.upoly.optionT</a>]<br/>
+<a href="skylabs.upoly.state.html#M">M</a> [in <a href="skylabs.upoly.state.html">skylabs.upoly.state</a>]<br/>
+<a href="skylabs.upoly.id.html#M">M</a> [in <a href="skylabs.upoly.id.html">skylabs.upoly.id</a>]<br/>
+<a href="skylabs.upoly.monoid.html#Monoid">Monoid</a> [in <a href="skylabs.upoly.monoid.html">skylabs.upoly.monoid</a>]<br/>
+<br/><br/><a id="record_N"></a><h2>N </h2>
+<a href="skylabs.upoly.parsec.html#Next">Next</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<br/><br/><a id="record_P"></a><h2>P </h2>
+<a href="skylabs.upoly.parsec.html#ParseString">ParseString</a> [in <a href="skylabs.upoly.parsec.html">skylabs.upoly.parsec</a>]<br/>
+<a href="skylabs.upoly.UTypes.html#prod">prod</a> [in <a href="skylabs.upoly.UTypes.html">skylabs.upoly.UTypes</a>]<br/>
+<br/><br/><a id="record_U"></a><h2>U </h2>
+<a href="skylabs.upoly.base.html#UPoly.Alternative">UPoly.Alternative</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.Ap">UPoly.Ap</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.FMap">UPoly.FMap</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MBind">UPoly.MBind</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MCatch">UPoly.MCatch</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MJoin">UPoly.MJoin</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MLift">UPoly.MLift</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MRet">UPoly.MRet</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.MThrow">UPoly.MThrow</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.Trace">UPoly.Trace</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<a href="skylabs.upoly.base.html#UPoly.Traverse">UPoly.Traverse</a> [in <a href="skylabs.upoly.base.html">skylabs.upoly.base</a>]<br/>
+<br/><br/><hr/><table>
+<tr>
+<td>Global Index</td>
+<td><a href="indexpage.html#global_A">A</a></td>
+<td><a href="indexpage.html#global_B">B</a></td>
+<td><a href="indexpage.html#global_C">C</a></td>
+<td><a href="indexpage.html#global_D">D</a></td>
+<td><a href="indexpage.html#global_E">E</a></td>
+<td><a href="indexpage.html#global_F">F</a></td>
+<td><a href="indexpage.html#global_G">G</a></td>
+<td>H</td>
+<td><a href="indexpage.html#global_I">I</a></td>
+<td><a href="indexpage.html#global_J">J</a></td>
+<td>K</td>
+<td><a href="indexpage.html#global_L">L</a></td>
+<td><a href="indexpage.html#global_M">M</a></td>
+<td><a href="indexpage.html#global_N">N</a></td>
+<td><a href="indexpage.html#global_O">O</a></td>
+<td><a href="indexpage.html#global_P">P</a></td>
+<td>Q</td>
+<td><a href="indexpage.html#global_R">R</a></td>
+<td><a href="indexpage.html#global_S">S</a></td>
+<td><a href="indexpage.html#global_T">T</a></td>
+<td><a href="indexpage.html#global_U">U</a></td>
+<td><a href="indexpage.html#global_V">V</a></td>
+<td><a href="indexpage.html#global_W">W</a></td>
+<td>X</td>
+<td>Y</td>
+<td><a href="indexpage.html#global_Z">Z</a></td>
+<td>_</td>
+<td>other</td>
+<td>(574 entries)</td>
+</tr>
+<tr>
+<td>Notation Index</td>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+<td>D</td>
+<td>E</td>
+<td>F</td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td>J</td>
+<td>K</td>
+<td>L</td>
+<td>M</td>
+<td><a href="indexpage.html#notation_N">N</a></td>
+<td>O</td>
+<td>P</td>
+<td>Q</td>
+<td>R</td>
+<td>S</td>
+<td>T</td>
+<td><a href="indexpage.html#notation_U">U</a></td>
+<td>V</td>
+<td>W</td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(36 entries)</td>
+</tr>
+<tr>
+<td>Module Index</td>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+<td>D</td>
+<td>E</td>
+<td>F</td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td>J</td>
+<td>K</td>
+<td>L</td>
+<td>M</td>
+<td><a href="indexpage.html#module_N">N</a></td>
+<td>O</td>
+<td>P</td>
+<td>Q</td>
+<td>R</td>
+<td>S</td>
+<td>T</td>
+<td><a href="indexpage.html#module_U">U</a></td>
+<td>V</td>
+<td>W</td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(5 entries)</td>
+</tr>
+<tr>
+<td>Variable Index</td>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+<td>D</td>
+<td>E</td>
+<td>F</td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td>J</td>
+<td>K</td>
+<td><a href="indexpage.html#variable_L">L</a></td>
+<td><a href="indexpage.html#variable_M">M</a></td>
+<td>N</td>
+<td><a href="indexpage.html#variable_O">O</a></td>
+<td><a href="indexpage.html#variable_P">P</a></td>
+<td>Q</td>
+<td><a href="indexpage.html#variable_R">R</a></td>
+<td><a href="indexpage.html#variable_S">S</a></td>
+<td><a href="indexpage.html#variable_T">T</a></td>
+<td><a href="indexpage.html#variable_U">U</a></td>
+<td>V</td>
+<td><a href="indexpage.html#variable_W">W</a></td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(66 entries)</td>
+</tr>
+<tr>
+<td>Library Index</td>
+<td>A</td>
+<td><a href="indexpage.html#library_B">B</a></td>
+<td>C</td>
+<td>D</td>
+<td><a href="indexpage.html#library_E">E</a></td>
+<td>F</td>
+<td>G</td>
+<td>H</td>
+<td><a href="indexpage.html#library_I">I</a></td>
+<td>J</td>
+<td>K</td>
+<td><a href="indexpage.html#library_L">L</a></td>
+<td><a href="indexpage.html#library_M">M</a></td>
+<td>N</td>
+<td><a href="indexpage.html#library_O">O</a></td>
+<td><a href="indexpage.html#library_P">P</a></td>
+<td>Q</td>
+<td><a href="indexpage.html#library_R">R</a></td>
+<td><a href="indexpage.html#library_S">S</a></td>
+<td><a href="indexpage.html#library_T">T</a></td>
+<td><a href="indexpage.html#library_U">U</a></td>
+<td>V</td>
+<td><a href="indexpage.html#library_W">W</a></td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(22 entries)</td>
+</tr>
+<tr>
+<td>Constructor Index</td>
+<td>A</td>
+<td><a href="indexpage.html#constructor_B">B</a></td>
+<td><a href="indexpage.html#constructor_C">C</a></td>
+<td>D</td>
+<td>E</td>
+<td>F</td>
+<td>G</td>
+<td>H</td>
+<td><a href="indexpage.html#constructor_I">I</a></td>
+<td>J</td>
+<td>K</td>
+<td>L</td>
+<td>M</td>
+<td><a href="indexpage.html#constructor_N">N</a></td>
+<td>O</td>
+<td>P</td>
+<td>Q</td>
+<td>R</td>
+<td><a href="indexpage.html#constructor_S">S</a></td>
+<td>T</td>
+<td><a href="indexpage.html#constructor_U">U</a></td>
+<td>V</td>
+<td>W</td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(19 entries)</td>
+</tr>
+<tr>
+<td>Lemma Index</td>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+<td>D</td>
+<td>E</td>
+<td><a href="indexpage.html#lemma_F">F</a></td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td>J</td>
+<td>K</td>
+<td><a href="indexpage.html#lemma_L">L</a></td>
+<td><a href="indexpage.html#lemma_M">M</a></td>
+<td>N</td>
+<td>O</td>
+<td>P</td>
+<td>Q</td>
+<td>R</td>
+<td>S</td>
+<td><a href="indexpage.html#lemma_T">T</a></td>
+<td>U</td>
+<td>V</td>
+<td>W</td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(10 entries)</td>
+</tr>
+<tr>
+<td>Projection Index</td>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+<td>D</td>
+<td>E</td>
+<td><a href="indexpage.html#projection_F">F</a></td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td>J</td>
+<td>K</td>
+<td>L</td>
+<td><a href="indexpage.html#projection_M">M</a></td>
+<td><a href="indexpage.html#projection_N">N</a></td>
+<td>O</td>
+<td><a href="indexpage.html#projection_P">P</a></td>
+<td>Q</td>
+<td><a href="indexpage.html#projection_R">R</a></td>
+<td><a href="indexpage.html#projection_S">S</a></td>
+<td>T</td>
+<td><a href="indexpage.html#projection_U">U</a></td>
+<td><a href="indexpage.html#projection_V">V</a></td>
+<td>W</td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(28 entries)</td>
+</tr>
+<tr>
+<td>Inductive Index</td>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+<td>D</td>
+<td>E</td>
+<td>F</td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td>J</td>
+<td>K</td>
+<td><a href="indexpage.html#inductive_L">L</a></td>
+<td><a href="indexpage.html#inductive_M">M</a></td>
+<td>N</td>
+<td><a href="indexpage.html#inductive_O">O</a></td>
+<td>P</td>
+<td>Q</td>
+<td>R</td>
+<td><a href="indexpage.html#inductive_S">S</a></td>
+<td>T</td>
+<td><a href="indexpage.html#inductive_U">U</a></td>
+<td>V</td>
+<td>W</td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(15 entries)</td>
+</tr>
+<tr>
+<td>Instance Index</td>
+<td><a href="indexpage.html#instance_A">A</a></td>
+<td><a href="indexpage.html#instance_B">B</a></td>
+<td><a href="indexpage.html#instance_C">C</a></td>
+<td><a href="indexpage.html#instance_D">D</a></td>
+<td>E</td>
+<td><a href="indexpage.html#instance_F">F</a></td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td><a href="indexpage.html#instance_J">J</a></td>
+<td>K</td>
+<td><a href="indexpage.html#instance_L">L</a></td>
+<td><a href="indexpage.html#instance_M">M</a></td>
+<td>N</td>
+<td>O</td>
+<td>P</td>
+<td>Q</td>
+<td><a href="indexpage.html#instance_R">R</a></td>
+<td>S</td>
+<td><a href="indexpage.html#instance_T">T</a></td>
+<td><a href="indexpage.html#instance_U">U</a></td>
+<td>V</td>
+<td>W</td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(169 entries)</td>
+</tr>
+<tr>
+<td>Section Index</td>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+<td>D</td>
+<td>E</td>
+<td>F</td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td>J</td>
+<td>K</td>
+<td><a href="indexpage.html#section_L">L</a></td>
+<td><a href="indexpage.html#section_M">M</a></td>
+<td>N</td>
+<td><a href="indexpage.html#section_O">O</a></td>
+<td><a href="indexpage.html#section_P">P</a></td>
+<td>Q</td>
+<td><a href="indexpage.html#section_R">R</a></td>
+<td><a href="indexpage.html#section_S">S</a></td>
+<td><a href="indexpage.html#section_T">T</a></td>
+<td><a href="indexpage.html#section_U">U</a></td>
+<td>V</td>
+<td><a href="indexpage.html#section_W">W</a></td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(27 entries)</td>
+</tr>
+<tr>
+<td>Abbreviation Index</td>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+<td>D</td>
+<td>E</td>
+<td>F</td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td>J</td>
+<td>K</td>
+<td>L</td>
+<td><a href="indexpage.html#abbreviation_M">M</a></td>
+<td>N</td>
+<td>O</td>
+<td>P</td>
+<td>Q</td>
+<td>R</td>
+<td>S</td>
+<td>T</td>
+<td><a href="indexpage.html#abbreviation_U">U</a></td>
+<td>V</td>
+<td>W</td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(26 entries)</td>
+</tr>
+<tr>
+<td>Definition Index</td>
+<td><a href="indexpage.html#definition_A">A</a></td>
+<td>B</td>
+<td><a href="indexpage.html#definition_C">C</a></td>
+<td><a href="indexpage.html#definition_D">D</a></td>
+<td><a href="indexpage.html#definition_E">E</a></td>
+<td><a href="indexpage.html#definition_F">F</a></td>
+<td><a href="indexpage.html#definition_G">G</a></td>
+<td>H</td>
+<td><a href="indexpage.html#definition_I">I</a></td>
+<td>J</td>
+<td>K</td>
+<td><a href="indexpage.html#definition_L">L</a></td>
+<td><a href="indexpage.html#definition_M">M</a></td>
+<td><a href="indexpage.html#definition_N">N</a></td>
+<td><a href="indexpage.html#definition_O">O</a></td>
+<td><a href="indexpage.html#definition_P">P</a></td>
+<td>Q</td>
+<td><a href="indexpage.html#definition_R">R</a></td>
+<td><a href="indexpage.html#definition_S">S</a></td>
+<td><a href="indexpage.html#definition_T">T</a></td>
+<td><a href="indexpage.html#definition_U">U</a></td>
+<td>V</td>
+<td><a href="indexpage.html#definition_W">W</a></td>
+<td>X</td>
+<td>Y</td>
+<td><a href="indexpage.html#definition_Z">Z</a></td>
+<td>_</td>
+<td>other</td>
+<td>(126 entries)</td>
+</tr>
+<tr>
+<td>Record Index</td>
+<td>A</td>
+<td>B</td>
+<td>C</td>
+<td>D</td>
+<td>E</td>
+<td>F</td>
+<td>G</td>
+<td>H</td>
+<td>I</td>
+<td>J</td>
+<td>K</td>
+<td>L</td>
+<td><a href="indexpage.html#record_M">M</a></td>
+<td><a href="indexpage.html#record_N">N</a></td>
+<td>O</td>
+<td><a href="indexpage.html#record_P">P</a></td>
+<td>Q</td>
+<td>R</td>
+<td>S</td>
+<td>T</td>
+<td><a href="indexpage.html#record_U">U</a></td>
+<td>V</td>
+<td>W</td>
+<td>X</td>
+<td>Y</td>
+<td>Z</td>
+<td>_</td>
+<td>other</td>
+<td>(25 entries)</td>
+</tr>
+</table>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

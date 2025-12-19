@@ -1,0 +1,136 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.prelude.uint63</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2025&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.prelude.base.html#"><span class="id" title="library">skylabs.prelude.base</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="library">Stdlib.Numbers.BinNums</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="library">Stdlib.Numbers.Cyclic.Int63.Uint63</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="library">Stdlib.micromega.ZifyUint63</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">Z_scope</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.Cyclic.Int63.Uint63Axioms.html#to_Z"><span class="id" title="definition">Uint63.to_Z</span></a> : <span class="id" title="tactic">simpl</span> <span class="id" title="var">nomatch</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="Uint63" class="idref" href="#Uint63"><span class="id" title="module">Uint63</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Export</span> <span class="id" title="module">Uint63</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Uint63.max_intZ" class="idref" href="#Uint63.max_intZ"><span class="id" title="abbreviation">max_intZ</span></a> := 9223372036854775807%<span class="id" title="var">Z</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Notation</span> <a id="Uint63.sup_intZ" class="idref" href="#Uint63.sup_intZ"><span class="id" title="abbreviation">sup_intZ</span></a> := 9223372036854775808%<span class="id" title="var">Z</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Returns a sequence of <span class="inlinecode"><a class="idref" href="skylabs.prelude.bitsN.html#get_range_bitsN.get_range_bitsN_bounded_elim.n"><span class="id" title="variable">n</span></a></span> integers, from <span class="inlinecode"><span class="id" title="var">start</span></span> to <span class="inlinecode"><span class="id" title="var">start</span></span> <span class="inlinecode">+</span> <span class="inlinecode"><a class="idref" href="skylabs.prelude.bitsN.html#get_range_bitsN.get_range_bitsN_bounded_elim.n"><span class="id" title="variable">n</span></a></span> <span class="inlinecode">-</span> <span class="inlinecode">1</span> (up to conversions). 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Fixpoint</span> <a id="Uint63.seq_int" class="idref" href="#Uint63.seq_int"><span class="id" title="definition">seq_int</span></a> (<a id="start:1" class="idref" href="#start:1"><span class="id" title="binder">start</span></a> : <span class="id" title="var">int</span>) (<a id="n:2" class="idref" href="#n:2"><span class="id" title="binder">n</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="var">int</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.prelude.uint63.html#n:2"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| 0 =&gt; <span class="id" title="notation">[]</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#S"><span class="id" title="constructor">S</span></a> <span class="id" title="var">n</span> =&gt; <a class="idref" href="skylabs.prelude.uint63.html#start:1"><span class="id" title="variable">start</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <a class="idref" href="skylabs.prelude.uint63.html#seq_int:3"><span class="id" title="definition">seq_int</span></a> (<span class="id" title="definition">Uint63.succ</span> <a class="idref" href="skylabs.prelude.uint63.html#start:1"><span class="id" title="variable">start</span></a>) <a class="idref" href="skylabs.prelude.uint63.html#n:2"><span class="id" title="variable">n</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>%<span class="id" title="var">nat</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="Uint63.seq_int_length" class="idref" href="#Uint63.seq_int_length"><span class="id" title="lemma">seq_int_length</span></a> <a id="start:5" class="idref" href="#start:5"><span class="id" title="binder">start</span></a> <a id="n:6" class="idref" href="#n:6"><span class="id" title="binder">n</span></a> : <span class="id" title="abbreviation">List.length</span> (<a class="idref" href="skylabs.prelude.uint63.html#Uint63.seq_int"><span class="id" title="definition">seq_int</span></a> <a class="idref" href="skylabs.prelude.uint63.html#start:5"><span class="id" title="variable">start</span></a> <a class="idref" href="skylabs.prelude.uint63.html#n:6"><span class="id" title="variable">n</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.prelude.uint63.html#n:6"><span class="id" title="variable">n</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">elim</span>: <span class="id" title="var">n</span> <span class="id" title="var">start</span> =&gt; [|<span class="id" title="var">n</span> <span class="id" title="var">IHn</span>] <span class="id" title="var">start</span> //.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> /= <span class="id" title="var">IHn</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="Uint63.seq_int_nth" class="idref" href="#Uint63.seq_int_nth"><span class="id" title="lemma">seq_int_nth</span></a> <a id="start:7" class="idref" href="#start:7"><span class="id" title="binder">start</span></a> <a id="n:8" class="idref" href="#n:8"><span class="id" title="binder">n</span></a> <a id="k:9" class="idref" href="#k:9"><span class="id" title="binder">k</span></a> <a id="d:10" class="idref" href="#d:10"><span class="id" title="binder">d</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Lists.ListDef.html#nth"><span class="id" title="definition">nth</span></a> <a class="idref" href="skylabs.prelude.uint63.html#k:9"><span class="id" title="variable">k</span></a> (<a class="idref" href="skylabs.prelude.uint63.html#Uint63.seq_int"><span class="id" title="definition">seq_int</span></a> <a class="idref" href="skylabs.prelude.uint63.html#start:7"><span class="id" title="variable">start</span></a> <a class="idref" href="skylabs.prelude.uint63.html#n:8"><span class="id" title="variable">n</span></a>) <a class="idref" href="skylabs.prelude.uint63.html#d:10"><span class="id" title="variable">d</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#decide"><span class="id" title="definition">decide</span></a> (<a class="idref" href="skylabs.prelude.uint63.html#k:9"><span class="id" title="variable">k</span></a> <span class="id" title="notation">&lt;</span> <a class="idref" href="skylabs.prelude.uint63.html#n:8"><span class="id" title="variable">n</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="skylabs.prelude.uint63.html#start:7"><span class="id" title="variable">start</span></a> <span class="id" title="notation">+</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.Cyclic.Int63.Uint63Axioms.html#of_Z"><span class="id" title="definition">of_Z</span></a> <a class="idref" href="skylabs.prelude.uint63.html#k:9"><span class="id" title="variable">k</span></a>)%<span class="id" title="var">uint63</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.prelude.uint63.html#d:10"><span class="id" title="variable">d</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">elim</span>: <span class="id" title="var">n</span> <span class="id" title="var">start</span> <span class="id" title="var">k</span> <span class="id" title="var">d</span> =&gt; [|<span class="id" title="var">n</span> <span class="id" title="var">IHn</span>] <span class="id" title="var">start</span> <span class="id" title="var">k</span> <span class="id" title="var">d</span> //.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">case_decide</span> =&gt; //.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="var">lia</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">nth_overflow</span> // <a class="idref" href="skylabs.prelude.uint63.html#Uint63.seq_int_length"><span class="id" title="lemma">seq_int_length</span></a>. <span class="id" title="var">lia</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">case</span>: <span class="id" title="var">k</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="var">cbn</span>; <span class="id" title="var">case_decide</span>; <span class="id" title="var">lia</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;+ <span class="id" title="tactic">intros</span>. <span class="id" title="var">cbn</span>. <span class="id" title="tactic">rewrite</span> {}<span class="id" title="var">IHn</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">repeat</span> <span class="id" title="var">case_decide</span>; [..|<span class="id" title="var">lia</span>|<span class="id" title="var">lia</span>|<span class="id" title="tactic">reflexivity</span>]. <span class="id" title="var">lia</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="Uint63.Uint63_EqDec" class="idref" href="#Uint63.Uint63_EqDec"><span class="id" title="instance">Uint63_EqDec</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#EqDecision"><span class="id" title="abbreviation">EqDecision</span></a> <span class="id" title="abbreviation">Uint63.int</span> := <span class="id" title="definition">Uint63.eqs</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>, <span class="id" title="var">program</span>] <span class="id" title="keyword">Instance</span> <a id="Uint63.Uint63_Coountable" class="idref" href="#Uint63.Uint63_Coountable"><span class="id" title="instance">Uint63_Coountable</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.countable.html#Countable"><span class="id" title="class">Countable</span></a> <span class="id" title="abbreviation">Uint63.int</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.countable.html#encode"><span class="id" title="method">encode</span></a> <a id="i:11" class="idref" href="#i:11"><span class="id" title="binder">i</span></a> := <span class="id" title="definition">Z.to_pos</span> (1 <span class="id" title="notation">+</span> <span class="id" title="notation">(</span><span class="id" title="abbreviation">Uint63.to_Z</span> <a class="idref" href="skylabs.prelude.uint63.html#i:11"><span class="id" title="variable">i</span></a><span class="id" title="notation">)</span>)%<span class="id" title="var">Z</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.countable.html#decode"><span class="id" title="method">decode</span></a> <a id="p:12" class="idref" href="#p:12"><span class="id" title="binder">p</span></a> := <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="abbreviation">Uint63.of_Z</span> (<span class="id" title="abbreviation">Z.pos</span> <a class="idref" href="skylabs.prelude.uint63.html#p:12"><span class="id" title="variable">p</span></a> <span class="id" title="notation">-</span> 1)%<span class="id" title="var">Z</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Next</span> <span class="id" title="keyword">Obligation</span>. <span class="id" title="tactic">intros</span>. <span class="id" title="tactic">simpl</span>. <span class="id" title="tactic">f_equal</span>. <span class="id" title="tactic">rewrite</span> -[<span class="id" title="var">x</span> <span class="id" title="tactic">in</span> <span class="id" title="var">_</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.prelude.uint63.html#x:13"><span class="id" title="variable">x</span></a>]<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.Cyclic.Int63.Uint63Axioms.html#of_to_Z"><span class="id" title="axiom">of_to_Z</span></a>. <span class="id" title="var">lia</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Uint63.compare_spec_Z" class="idref" href="#Uint63.compare_spec_Z"><span class="id" title="definition">compare_spec_Z</span></a> <a id="x:14" class="idref" href="#x:14"><span class="id" title="binder">x</span></a> <a id="y:15" class="idref" href="#y:15"><span class="id" title="binder">y</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#CompareSpec"><span class="id" title="inductive">CompareSpec</span></a> (<a class="idref" href="skylabs.prelude.uint63.html#x:14"><span class="id" title="variable">x</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.prelude.uint63.html#y:15"><span class="id" title="variable">y</span></a>) (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.Cyclic.Int63.Uint63Axioms.html#to_Z"><span class="id" title="definition">to_Z</span></a> <a class="idref" href="skylabs.prelude.uint63.html#x:14"><span class="id" title="variable">x</span></a> <span class="id" title="notation">&lt;</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.Cyclic.Int63.Uint63Axioms.html#to_Z"><span class="id" title="definition">to_Z</span></a> <a class="idref" href="skylabs.prelude.uint63.html#y:15"><span class="id" title="variable">y</span></a>) (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.Cyclic.Int63.Uint63Axioms.html#to_Z"><span class="id" title="definition">to_Z</span></a> <a class="idref" href="skylabs.prelude.uint63.html#x:14"><span class="id" title="variable">x</span></a> <span class="id" title="notation">&gt;</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.Cyclic.Int63.Uint63Axioms.html#to_Z"><span class="id" title="definition">to_Z</span></a> <a class="idref" href="skylabs.prelude.uint63.html#y:15"><span class="id" title="variable">y</span></a>) (<a class="idref" href="skylabs.prelude.uint63.html#x:14"><span class="id" title="variable">x</span></a> <span class="id" title="notation">?=</span> <a class="idref" href="skylabs.prelude.uint63.html#y:15"><span class="id" title="variable">y</span></a>)%<span class="id" title="var">uint63</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">Uint63.compare_spec</span>. <span class="id" title="tactic">case</span>: <span class="id" title="lemma">Z.compare_spec</span>; <span class="id" title="tactic">constructor</span>; <span class="id" title="var">lia</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.prelude.uint63.html#Uint63"><span class="id" title="module">Uint63</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.upoly.effects</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(C)&nbsp;2024&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.upoly.prelude.html#"><span class="id" title="library">skylabs.upoly.prelude</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="skylabs.upoly.list.html#"><span class="id" title="library">skylabs.upoly.list</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="skylabs.upoly.id.html#"><span class="id" title="library">skylabs.upoly.id</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="skylabs.upoly.reader.html#"><span class="id" title="library">skylabs.upoly.reader</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="skylabs.upoly.writer.html#"><span class="id" title="library">skylabs.upoly.writer</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="skylabs.upoly.state.html#"><span class="id" title="library">skylabs.upoly.state</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="skylabs.upoly.optionT.html#"><span class="id" title="library">skylabs.upoly.optionT</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="skylabs.upoly.listT.html#"><span class="id" title="library">skylabs.upoly.listT</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="skylabs.upoly.traceT.html#"><span class="id" title="library">skylabs.upoly.traceT</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="skylabs.upoly.readerT.html#"><span class="id" title="library">skylabs.upoly.readerT</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="skylabs.upoly.writerT.html#"><span class="id" title="library">skylabs.upoly.writerT</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="skylabs.upoly.stateT.html#"><span class="id" title="library">skylabs.upoly.stateT</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.upoly.list.html#Notations"><span class="id" title="module">list.Notations</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Add</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Constructor</span> <span class="id" title="var">id.M</span>.<br/>
+<span class="id" title="keyword">Add</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Constructor</span> <span class="id" title="var">reader.M</span>.<br/>
+<span class="id" title="keyword">Add</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Constructor</span> <span class="id" title="var">writer.M</span>.<br/>
+<span class="id" title="keyword">Add</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Constructor</span> <span class="id" title="var">state.M</span>.<br/>
+<span class="id" title="keyword">Add</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Constructor</span> <span class="id" title="var">optionT.M</span>.<br/>
+<span class="id" title="keyword">Add</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Constructor</span> <span class="id" title="var">listT.M</span>.<br/>
+<span class="id" title="keyword">Add</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Constructor</span> <span class="id" title="var">traceT.M</span>.<br/>
+<span class="id" title="keyword">Add</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Constructor</span> <span class="id" title="var">readerT.M</span>.<br/>
+<span class="id" title="keyword">Add</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Constructor</span> <span class="id" title="var">writerT.M</span>.<br/>
+<span class="id" title="keyword">Add</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Constructor</span> <span class="id" title="var">stateT.M</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

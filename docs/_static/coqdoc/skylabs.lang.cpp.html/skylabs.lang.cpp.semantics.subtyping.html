@@ -1,0 +1,204 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.semantics.subtyping</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(C)&nbsp;2020&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*<br/>
+&nbsp;*&nbsp;SPDX-License-Identifier:AGPL-3.0-or-later<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;This&nbsp;file&nbsp;defines&nbsp;various&nbsp;class&nbsp;relationships&nbsp;that&nbsp;are&nbsp;used&nbsp;in&nbsp;C++,<br/>
+&nbsp;*&nbsp;mostly&nbsp;around&nbsp;sub-typing&nbsp;and&nbsp;virtual&nbsp;dispatch.<br/>
+&nbsp;*<br/>
+&nbsp;*&nbsp;todo:&nbsp;this&nbsp;should&nbsp;build&nbsp;on&nbsp;Tahina's&nbsp;work<br/>
+&nbsp;*&nbsp;&nbsp;&nbsp;http://gallium.inria.fr/~tramanan/cpp/thesis/thesis.pdf<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.fin_maps.html#"><span class="id" title="library">stdpp.fin_maps</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.html#"><span class="id" title="library">skylabs.lang.cpp.syntax</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.semantics.genv.html#"><span class="id" title="library">skylabs.lang.cpp.semantics.genv</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="extends" class="idref" href="#extends"><span class="id" title="section">extends</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="583445052392e0b9d39567e0ac1f0ae1" class="idref" href="#583445052392e0b9d39567e0ac1f0ae1"><span class="id" title="variable">σ</span></a> : <a class="idref" href="skylabs.lang.cpp.semantics.genv.html#genv"><span class="id" title="class">genv</span></a>}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#class_derives"><span class="id" title="inductive">class_derives</span></a></span> <span class="inlinecode">σ</span> <span class="inlinecode"><span class="id" title="var">derived</span></span> <span class="inlinecode"><span class="id" title="var">path</span></span>
+<ul class="doclist">
+<li> <span class="inlinecode"><span class="id" title="var">derived</span></span> is the derived class name
+
+</li>
+<li> <span class="inlinecode"><span class="id" title="var">path</span></span> is the path from the derived class (head of the list)
+        to the base class (end of the list)
+
+</li>
+</ul>
+      An example,
+      ```c++
+      class A {};
+      class B : public A {};
+      class C : public B {};
+      ```
+      the following hold:
+<ul class="doclist">
+<li> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#class_derives"><span class="id" title="inductive">class_derives</span></a></span> <span class="inlinecode">&quot;::<a class="idref" href="skylabs.lang.cpp.syntax.types.html#with_lang.as_ref'.A"><span class="id" title="variable">A</span></a>&quot;</span> <span class="inlinecode">[]</span>, <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#class_derives"><span class="id" title="inductive">class_derives</span></a></span> <span class="inlinecode">&quot;::<a class="idref" href="skylabs.lang.cpp.syntax.compare.html#prod.compare.B"><span class="id" title="variable">B</span></a>&quot;</span> <span class="inlinecode">[]</span>, <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#class_derives"><span class="id" title="inductive">class_derives</span></a></span> <span class="inlinecode">&quot;::<a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#cfrac_5.C"><span class="id" title="variable">C</span></a>&quot;</span> <span class="inlinecode">[]</span>
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#class_derives"><span class="id" title="inductive">class_derives</span></a></span> <span class="inlinecode">&quot;::<a class="idref" href="skylabs.lang.cpp.syntax.compare.html#prod.compare.B"><span class="id" title="variable">B</span></a>&quot;</span> <span class="inlinecode">[&quot;::<a class="idref" href="skylabs.lang.cpp.syntax.types.html#with_lang.as_ref'.A"><span class="id" title="variable">A</span></a>&quot;]</span>, <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#class_derives"><span class="id" title="inductive">class_derives</span></a></span> <span class="inlinecode">&quot;::<a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#cfrac_5.C"><span class="id" title="variable">C</span></a>&quot;</span> <span class="inlinecode">[&quot;::<a class="idref" href="skylabs.lang.cpp.syntax.compare.html#prod.compare.B"><span class="id" title="variable">B</span></a>&quot;]</span>
+
+</li>
+<li> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#class_derives"><span class="id" title="inductive">class_derives</span></a></span> <span class="inlinecode">&quot;::<a class="idref" href="skylabs.lang.cpp.bi.spec.cfrac_splittable.html#cfrac_5.C"><span class="id" title="variable">C</span></a>&quot;</span> <span class="inlinecode">[&quot;::<a class="idref" href="skylabs.lang.cpp.syntax.compare.html#prod.compare.B"><span class="id" title="variable">B</span></a>&quot;,&quot;::<a class="idref" href="skylabs.lang.cpp.syntax.types.html#with_lang.as_ref'.A"><span class="id" title="variable">A</span></a>&quot;]</span>
+
+</li>
+</ul>
+   
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="class_derives" class="idref" href="#class_derives"><span class="id" title="definition, inductive"><span id="class_derives_ind" class="id"><span id="class_derives_sind" class="id">class_derives</span></span></span></a> (<a id="derived:2" class="idref" href="#derived:2"><span class="id" title="binder">derived</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name"><span class="id" title="inductive">name</span></a>) : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">(</span></a><a id="path:3" class="idref" href="#path:3"><span class="id" title="binder">path</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name"><span class="id" title="inductive">name</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">),</span></a> <span class="id" title="keyword">Prop</span> :=<br/>
+&nbsp;&nbsp;| <a id="Derives_here" class="idref" href="#Derives_here"><span class="id" title="constructor">Derives_here</span></a> {<a id="st:6" class="idref" href="#st:6"><span class="id" title="binder">st</span></a>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#583445052392e0b9d39567e0ac1f0ae1"><span class="id" title="variable">σ</span></a>.(<a class="idref" href="skylabs.lang.cpp.semantics.genv.html#genv_tu"><span class="id" title="projection">genv_tu</span></a>).(<a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#types"><span class="id" title="projection">types</span></a>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#derived:2"><span class="id" title="variable">derived</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#Gstruct"><span class="id" title="constructor">Gstruct</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#st:6"><span class="id" title="variable">st</span></a>)}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;: <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#class_derives:4"><span class="id" title="inductive">class_derives</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#derived:2"><span class="id" title="variable">derived</span></a> <span class="id" title="notation">[]</span><br/>
+<br/>
+&nbsp;&nbsp;| <a id="Derives_base" class="idref" href="#Derives_base"><span class="id" title="constructor">Derives_base</span></a> <a id="base:7" class="idref" href="#base:7"><span class="id" title="binder">base</span></a> <a id="st:8" class="idref" href="#st:8"><span class="id" title="binder">st</span></a> <a id="li:9" class="idref" href="#li:9"><span class="id" title="binder">li</span></a> <a id="rest:10" class="idref" href="#rest:10"><span class="id" title="binder">rest</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#583445052392e0b9d39567e0ac1f0ae1"><span class="id" title="variable">σ</span></a>.(<a class="idref" href="skylabs.lang.cpp.semantics.genv.html#genv_tu"><span class="id" title="projection">genv_tu</span></a>).(<a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#types"><span class="id" title="projection">types</span></a>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#derived:2"><span class="id" title="variable">derived</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#Gstruct"><span class="id" title="constructor">Gstruct</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#st:8"><span class="id" title="variable">st</span></a>)}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id" title="var">_</span> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#base:7"><span class="id" title="variable">base</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#li:9"><span class="id" title="variable">li</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2a78afea1eeed082be084d2a55e1605c"><span class="id" title="notation">∈</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#st:8"><span class="id" title="variable">st</span></a>.(<a class="idref" href="skylabs.lang.cpp.syntax.decl.html#s_bases"><span class="id" title="projection">s_bases</span></a>)}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#class_derives:4"><span class="id" title="inductive">class_derives</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#base:7"><span class="id" title="variable">base</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#rest:10"><span class="id" title="variable">rest</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;: <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#class_derives:4"><span class="id" title="inductive">class_derives</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#derived:2"><span class="id" title="variable">derived</span></a> (<a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#base:7"><span class="id" title="variable">base</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#rest:10"><span class="id" title="variable">rest</span></a>)<br/>
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;this&nbsp;does&nbsp;not&nbsp;currently&nbsp;support&nbsp;`virtual`&nbsp;inheritence.&nbsp;*)</span><br/>
+&nbsp;&nbsp;.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#class_derives"><span class="id" title="inductive">class_derives</span></a></span> is closed under prefixes. 
+</div>
+<div class="code">
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>]<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="class_derives_drop" class="idref" href="#class_derives_drop"><span class="id" title="lemma">class_derives_drop</span></a> <a id="path1:11" class="idref" href="#path1:11"><span class="id" title="binder">path1</span></a> <a id="path2:12" class="idref" href="#path2:12"><span class="id" title="binder">path2</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a id="derived:13" class="idref" href="#derived:13"><span class="id" title="binder">derived</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">,</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#class_derives"><span class="id" title="inductive">class_derives</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#derived:13"><span class="id" title="variable">derived</span></a> (<a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#path1:11"><span class="id" title="variable">path1</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">++</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#path2:12"><span class="id" title="variable">path2</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#class_derives"><span class="id" title="inductive">class_derives</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#derived:13"><span class="id" title="variable">derived</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#path1:11"><span class="id" title="variable">path1</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">path1</span> =&gt; /= ? <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="tactic">inversion</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">subst</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">econstructor</span>; <span class="id" title="tactic">eauto</span>. }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="tactic">inversion</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">subst</span>. <span class="id" title="tactic">econstructor</span>; <span class="id" title="tactic">eauto</span>. }<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#extends"><span class="id" title="section">extends</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The following instance enables TC resolution to prove
+<span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#class_derives"><span class="id" title="inductive">class_derives</span></a></span> <span class="inlinecode">σ</span> <span class="inlinecode"><span class="id" title="var">derived</span></span> <span class="inlinecode"><span class="id" title="library">base</span></span> when the translation unit <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.typed.html#exprtype.exprtype.tu"><span class="id" title="variable">tu</span></a></span> and
+class names <span class="inlinecode"><span class="id" title="var">derived</span></span>, <span class="inlinecode"><span class="id" title="library">base</span></span> are ground.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Existing Class</span> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#class_derives"><span class="id" title="inductive">class_derives</span></a>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="var">Mode</span> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#class_derives"><span class="id" title="class">class_derives</span></a> - + + : <span class="id" title="var">typeclass_instances</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="tu" class="idref" href="#tu"><span class="id" title="section">tu</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Variable</span> <a id="tu.tu" class="idref" href="#tu.tu"><span class="id" title="variable">tu</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#translation_unit"><span class="id" title="record">translation_unit</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Fixpoint</span> <a id="tu_class_derives" class="idref" href="#tu_class_derives"><span class="id" title="definition">tu_class_derives</span></a> (<a id="derived:16" class="idref" href="#derived:16"><span class="id" title="binder">derived</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name"><span class="id" title="inductive">name</span></a>) (<a id="path:17" class="idref" href="#path:17"><span class="id" title="binder">path</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name"><span class="id" title="inductive">name</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#tu.tu"><span class="id" title="variable">tu</span></a>.(<a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#types"><span class="id" title="projection">types</span></a>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#derived:16"><span class="id" title="variable">derived</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#Gstruct"><span class="id" title="constructor">Gstruct</span></a> <span class="id" title="var">st</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#path:17"><span class="id" title="variable">path</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">base</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <span class="id" title="var">rest</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.decidable.html#bool_decide"><span class="id" title="definition">bool_decide</span></a> (<span class="id" title="var">base</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2a78afea1eeed082be084d2a55e1605c"><span class="id" title="notation">∈</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2a78afea1eeed082be084d2a55e1605c"><span class="id" title="notation">(</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#fst"><span class="id" title="definition">fst</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">&lt;$&gt;</span></a> <span class="id" title="var">st</span>.(<a class="idref" href="skylabs.lang.cpp.syntax.decl.html#s_bases"><span class="id" title="projection">s_bases</span></a>)<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2a78afea1eeed082be084d2a55e1605c"><span class="id" title="notation">)</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#tu_class_derives:18"><span class="id" title="definition">tu_class_derives</span></a> <span class="id" title="var">base</span> <span class="id" title="var">rest</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="8f93ca55454d38cf5b24f61687791e14" class="idref" href="#8f93ca55454d38cf5b24f61687791e14"><span class="id" title="variable">σ</span></a> : <a class="idref" href="skylabs.lang.cpp.semantics.genv.html#genv"><span class="id" title="class">genv</span></a>} {<a id="tu.M" class="idref" href="#tu.M"><span class="id" title="variable">M</span></a> : <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#tu.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.genv.html#f0256880c5e17791a18a195b1af6d27f"><span class="id" title="notation">⊧</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#73037d305ae1b6028b521cda53a3cc2f"><span class="id" title="variable">σ</span></a>}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Theorem</span> <a id="tu_class_derives_sound" class="idref" href="#tu_class_derives_sound"><span class="id" title="lemma">tu_class_derives_sound</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a id="path:22" class="idref" href="#path:22"><span class="id" title="binder">path</span></a> <a id="derived:23" class="idref" href="#derived:23"><span class="id" title="binder">derived</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">,</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#tu_class_derives"><span class="id" title="definition">tu_class_derives</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#derived:23"><span class="id" title="variable">derived</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#path:22"><span class="id" title="variable">path</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#class_derives"><span class="id" title="class">class_derives</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#derived:23"><span class="id" title="variable">derived</span></a> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#path:22"><span class="id" title="variable">path</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span> <span class="id" title="keyword">using</span> <span class="id" title="var">M</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">induction</span> <span class="id" title="var">path</span> =&gt;///=.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="tactic">intros</span>; <span class="id" title="var">case_match</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="tactic">repeat</span> <span class="id" title="var">case_match</span> =&gt; //.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">revert</span> <span class="id" title="var">select</span> (<span class="id" title="var">_</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <span class="id" title="var">_</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="var">_</span>) =&gt; /<a class="idref" href="skylabs.lang.cpp.semantics.genv.html#glob_def_genv_compat_struct"><span class="id" title="lemma">glob_def_genv_compat_struct</span></a> ?.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">econstructor</span>. <span class="id" title="var">eassumption</span>. }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="tactic">inversion</span> <span class="id" title="var">H</span>. } }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="tactic">intros</span>; <span class="id" title="tactic">repeat</span> (<span class="id" title="var">case_bool_decide</span> || <span class="id" title="var">case_match</span>) =&gt;//.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">revert</span> <span class="id" title="var">select</span> (<span class="id" title="var">_</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <span class="id" title="var">_</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="var">_</span>) =&gt; /<a class="idref" href="skylabs.lang.cpp.semantics.genv.html#glob_def_genv_compat_struct"><span class="id" title="lemma">glob_def_genv_compat_struct</span></a> ?.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">revert</span> <span class="id" title="var">select</span> (<span class="id" title="var">_</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2a78afea1eeed082be084d2a55e1605c"><span class="id" title="notation">∈</span></a> <span class="id" title="var">_</span>) =&gt; <span class="id" title="var">Helem</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.list_monad.html#elem_of_list_fmap_2"><span class="id" title="lemma">elem_of_list_fmap_2</span></a> <span class="id" title="tactic">in</span> <span class="id" title="var">Helem</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">Helem</span> <span class="id" title="keyword">as</span> [[??][??]]. <span class="id" title="var">simplify_eq</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">econstructor</span>; <span class="id" title="tactic">try</span> <span class="id" title="var">eassumption</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">apply</span> <span class="id" title="var">IHpath</span>. }<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#tu"><span class="id" title="section">tu</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Extern</span> 0 (<a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#class_derives"><span class="id" title="class">class_derives</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span>) =&gt;<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">eapply</span> <a class="idref" href="skylabs.lang.cpp.semantics.subtyping.html#tu_class_derives_sound"><span class="id" title="lemma">tu_class_derives_sound</span></a>; [ <span class="id" title="var">eassumption</span> | <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">exact</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#I"><span class="id" title="constructor">I</span></a> ] : <span class="id" title="var">typeclass_instances</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

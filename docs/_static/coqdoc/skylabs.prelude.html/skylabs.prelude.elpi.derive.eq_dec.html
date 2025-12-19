@@ -1,0 +1,156 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.prelude.elpi.derive.eq_dec</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2023&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.decidable.html#"><span class="id" title="library">stdpp.decidable</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">elpi.elpi</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.prelude.elpi.derive.common.html#"><span class="id" title="library">skylabs.prelude.elpi.derive.common</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.prelude.elpi.basis.html#"><span class="id" title="library">skylabs.prelude.elpi.basis</span></a>.<br/>
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">File</span> <span class="id" title="var">skylabs.basis.elpi</span>.<br/>
+
+<br/>
+<span class="comment">(***************************************************<br/>
+&nbsp;EqDecision<br/>
+&nbsp;***************************************************)</span><br/>
+<span class="comment">(*For&nbsp;each&nbsp;supported&nbsp;derivation,&nbsp;two&nbsp;predicates:<br/>
+&nbsp;&nbsp;&nbsp;-&nbsp;<span class="inlinecode"><span class="id" title="var">myderiv</span></span> <span class="inlinecode"><span class="id" title="var">TyGR</span></span> <span class="inlinecode"><span class="id" title="var">DerivGR</span></span>&nbsp;Maps&nbsp;<span class="inlinecode"><span class="id" title="var">TyGR</span></span>&nbsp;to&nbsp;its&nbsp;generated&nbsp;derivation<br/>
+&nbsp;&nbsp;&nbsp;-&nbsp;<span class="inlinecode"><span class="id" title="var">myderiv</span>-<span class="id" title="var">done</span></span> <span class="inlinecode"><span class="id" title="var">TyGR</span></span>&nbsp;We're&nbsp;done&nbsp;deriving&nbsp;<span class="inlinecode"><span class="id" title="var">myderiv</span></span>&nbsp;for&nbsp;<span class="inlinecode"><span class="id" title="var">TyGR</span></span>.*)</span><br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Db</span> <span class="id" title="var">derive.stdpp.eq_dec.db</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">eqdec</span> <span class="id" title="var">o</span>:<span class="id" title="var">gref</span>, <span class="id" title="var">o</span>:<span class="id" title="var">gref</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">eqdec</span>-<span class="id" title="var">done</span> <span class="id" title="var">o</span>:<span class="id" title="var">gref</span>.<br/>
+}}.<br/>
+#[<span class="id" title="var">superglobal</span>] <span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive.stdpp.eq_dec.db</span> <span class="id" title="var">File</span> <span class="id" title="var">skylabs.typeclass.elpi</span>.<br/>
+#[<span class="id" title="var">superglobal</span>] <span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive.stdpp.eq_dec.db</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;:<span class="id" title="var">name</span> "eqdec-done.typeclass"<br/>
+&nbsp;&nbsp;<span class="id" title="var">eqdec</span>-<span class="id" title="var">done</span> <span class="id" title="var">GR</span> :-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">typeclass</span> "derive.stdpp.eq_dec.db" (<span class="id" title="keyword">before</span> "eqdec-done.typeclass") (<span class="id" title="var">eqdec</span>-<span class="id" title="var">done</span> <span class="id" title="var">GR</span>) {{ @<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#EqDecision"><span class="id" title="abbreviation">EqDecision</span></a> <span class="id" title="var">lp</span>:{{<span class="id" title="var">global</span> <span class="id" title="var">GR</span>}} }} <span class="id" title="var">Bo_</span>.<br/>
+}}.<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">Db</span> <span class="id" title="var">derive.stdpp.eq_dec.db</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">synterp</span>] <span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">derivation</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> (<span class="id" title="var">derive</span> "eq_dec" (<span class="id" title="var">cl</span>\ <span class="id" title="var">cl</span> = []) <span class="id" title="var">true</span>).<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;/* [<span class="id" title="var">derive.eqdec.main</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">Prefix</span> <span class="id" title="var">Clauses</span>] <span class="id" title="var">creates</span> <span class="id" title="var">a</span> <span class="id" title="var">global</span> <span class="id" title="var">instance</span><br/>
+&nbsp;&nbsp;&nbsp;* <span class="id" title="keyword">of</span> <span class="id" title="keyword">type</span> [<span class="id" title="var">EqDecision</span> <span class="id" title="var">lp</span>:{{<span class="id" title="var">global</span> <span class="id" title="var">TyGR</span>}}].<br/>
+&nbsp;&nbsp;&nbsp;* <span class="id" title="var">It</span> <span class="id" title="var">works</span> <span class="id" title="keyword">with</span> <span class="id" title="var">any</span> <span class="id" title="keyword">type</span> <span class="id" title="var">supported</span> <span class="id" title="tactic">by</span> [<span class="id" title="var">solve_decision</span>].<br/>
+&nbsp;&nbsp;&nbsp;*<br/>
+&nbsp;&nbsp;&nbsp;* <span class="id" title="keyword">Example</span> <span class="id" title="keyword">of</span> <span class="id" title="var">the</span> <span class="id" title="var">generated</span> <span class="id" title="var">Coq</span> <span class="id" title="var">code</span>:<br/>
+&nbsp;&nbsp;&nbsp;* | <span class="comment">(*&nbsp;Inductive&nbsp;C&nbsp;:&nbsp;Set&nbsp;:=&nbsp;FOO&nbsp;|&nbsp;BAR&nbsp;|&nbsp;BAZ.&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;* | #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <span class="id" title="var">C_eq_dec</span> : <span class="id" title="var">EqDecision</span> <span class="id" title="var">C</span>. <span class="id" title="keyword">Proof</span>. ... <span class="id" title="keyword">Defined</span>.<br/>
+&nbsp;&nbsp;&nbsp;*/<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">derive.eqdec</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">func</span> <span class="id" title="var">main</span> <span class="id" title="var">gref</span>, <span class="id" title="var">string</span> -&gt; <span class="id" title="var">list</span> <span class="id" title="var">prop</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">main</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">Prefix</span> <span class="id" title="var">Clauses</span> :-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">InstanceName</span> <span class="id" title="keyword">is</span> <span class="id" title="var">Prefix</span> ^ "eq_dec",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive</span>-<span class="id" title="var">original</span>-<span class="id" title="var">gref</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">OrigGR</span>, !,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">TyEqDecision</span> = {{ <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#EqDecision"><span class="id" title="abbreviation">EqDecision</span></a> <span class="id" title="var">lp</span>:{{<span class="id" title="var">global</span> <span class="id" title="var">OrigGR</span>}} }},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">skeleton</span> <span class="id" title="var">TyEqDecision</span> <span class="id" title="var">_</span> <span class="id" title="var">ETyEqDecision</span>) "[derive.eqdec] [TyEqDecision]",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.typecheck</span> {{ <span class="id" title="var">lp</span>:<span class="id" title="var">BoEqDecision</span> : <span class="id" title="var">lp</span>:<span class="id" title="var">ETyEqDecision</span> }} <span class="id" title="var">_</span>) "typechecking the [EqDecision t] instance failed",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.ltac.collect</span>-<span class="id" title="keyword">goals</span> <span class="id" title="var">BoEqDecision</span> [<span class="id" title="var">SealedGoal</span>] [],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.ltac.open</span> (<span class="id" title="var">coq.ltac.call</span> "solve_decision" []) <span class="id" title="var">SealedGoal</span> [],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.add</span>-<span class="id" title="var">const</span> <span class="id" title="var">InstanceName</span> <span class="id" title="var">BoEqDecision</span> <span class="id" title="var">ETyEqDecision</span> @<span class="id" title="var">transparent</span>! <span class="id" title="var">C</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id" title="var">global</span>! =&gt; <span class="id" title="var">coq.TC.declare</span>-<span class="id" title="var">instance</span> (<span class="id" title="var">const</span> <span class="id" title="var">C</span>) 0,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Clauses</span> = [<span class="id" title="var">eqdec</span>-<span class="id" title="var">done</span> <span class="id" title="var">OrigGR</span>, <span class="id" title="var">eqdec</span> <span class="id" title="var">OrigGR</span> (<span class="id" title="var">const</span> <span class="id" title="var">C</span>)],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.forall</span> <span class="id" title="var">Clauses</span> (<span class="id" title="var">x</span>\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.elpi.accumulate</span> <span class="id" title="var">_</span> "derive.stdpp.eq_dec.db" (<span class="id" title="var">clause</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">x</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">main</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> :- <span class="id" title="var">usage</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">func</span> <span class="id" title="var">usage</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">usage</span> :- <span class="id" title="var">coq.error</span><br/>
+"Usage: #[only(eq_dec)] derive T
+where T is an inductive or a definition that unfolds to an inductive.
+
+Example #1:
+ Variant T := A | B | C.
+ #[only(eq_dec)] derive T
+
+Example #2:
+  #[only(eq_dec)] derive
+  Variant T := A | B | C.
+
+Example #3:
+  Variant _T := A | B | C.
+  Definition T := _T.
+  #[only(eq_dec)] derive T.".<br/>
+
+<br/>
+&nbsp;&nbsp;}<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">derivation</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">indt</span> <span class="id" title="var">T</span>) <span class="id" title="var">Prefix</span> <span class="id" title="var">ff</span>                      % <span class="id" title="var">inputs</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">derive</span> "eq_dec"                        % <span class="id" title="var">name</span> (<span class="id" title="keyword">for</span> <span class="id" title="var">dep1</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">derive.eqdec.main</span> (<span class="id" title="var">indt</span> <span class="id" title="var">T</span>) <span class="id" title="var">Prefix</span>)  % <span class="id" title="var">code</span> <span class="id" title="var">to</span> <span class="id" title="var">run</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">eqdec</span>-<span class="id" title="var">done</span> (<span class="id" title="var">indt</span> <span class="id" title="var">T</span>))                % <span class="id" title="var">idempotency</span> <span class="id" title="var">test</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;).<br/>
+}}.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

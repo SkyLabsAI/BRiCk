@@ -1,0 +1,130 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.logic.mpred</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2020-2025&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+</div>
+
+<div class="doc">
+This file axiomatizes and instantiates <span class="inlinecode"><span class="id" title="library">mpred</span></span> with the ghost types of the logic
+that we use for C++.
+The core C++ logic is defined in <span class="inlinecode"><span class="id" title="var">pred.v</span></span>. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.own.html#"><span class="id" title="library">iris.base_logic.lib.own</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.cancelable_invariants.html#"><span class="id" title="library">iris.base_logic.lib.cancelable_invariants</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#"><span class="id" title="library">iris.bi.monpred</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.bi.prelude</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <span class="id" title="library">skylabs.iris.extra.base_logic.mpred</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <span class="id" title="library">skylabs.iris.extra.algebra.commons</span>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">ChargeNotation</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <span class="id" title="keyword">Type</span> <a id="CPP_LOGIC_CLASS_BASE" class="idref" href="#CPP_LOGIC_CLASS_BASE"><span class="id" title="module">CPP_LOGIC_CLASS_BASE</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="CPP_LOGIC_CLASS_BASE.cppPreG" class="idref" href="#CPP_LOGIC_CLASS_BASE.cppPreG"><span class="id" title="axiom">cppPreG</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#gFunctors"><span class="id" title="class">gFunctors</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Type</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Axiom</span> <a id="CPP_LOGIC_CLASS_BASE.has_inv" class="idref" href="#CPP_LOGIC_CLASS_BASE.has_inv"><span class="id" title="axiom">has_inv</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a id="eb9571817dd417966f307c3a9de8fe7f" class="idref" href="#eb9571817dd417966f307c3a9de8fe7f"><span class="id" title="binder">Σ</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">,</span></a> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#CPP_LOGIC_CLASS_BASE.cppPreG"><span class="id" title="axiom">cppPreG</span></a> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#eb9571817dd417966f307c3a9de8fe7f"><span class="id" title="variable">Σ</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.fancy_updates.html#invGS"><span class="id" title="abbreviation">invGS</span></a> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#eb9571817dd417966f307c3a9de8fe7f"><span class="id" title="variable">Σ</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Axiom</span> <a id="CPP_LOGIC_CLASS_BASE.has_brG" class="idref" href="#CPP_LOGIC_CLASS_BASE.has_brG"><span class="id" title="axiom">has_brG</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a id="f525610baade8c1419220d275a93fff0" class="idref" href="#f525610baade8c1419220d275a93fff0"><span class="id" title="binder">Σ</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">,</span></a> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#CPP_LOGIC_CLASS_BASE.cppPreG"><span class="id" title="axiom">cppPreG</span></a> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#f525610baade8c1419220d275a93fff0"><span class="id" title="variable">Σ</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="class">br.ghost.G</span> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#f525610baade8c1419220d275a93fff0"><span class="id" title="variable">Σ</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="CPP_LOGIC_CLASS_BASE._cpp_ghost" class="idref" href="#CPP_LOGIC_CLASS_BASE._cpp_ghost"><span class="id" title="axiom">_cpp_ghost</span></a> : <span class="id" title="keyword">Type</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#CPP_LOGIC_CLASS_BASE"><span class="id" title="module">CPP_LOGIC_CLASS_BASE</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <span class="id" title="keyword">Type</span> <a id="CPP_LOGIC_CLASS_MIXIN" class="idref" href="#CPP_LOGIC_CLASS_MIXIN"><span class="id" title="module">CPP_LOGIC_CLASS_MIXIN</span></a> (<span class="id" title="keyword">Import</span> <span class="id" title="var">CC</span> : <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#CPP_LOGIC_CLASS_BASE"><span class="id" title="module">CPP_LOGIC_CLASS_BASE</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;In&nbsp;Iris&nbsp;idiom,&nbsp;this&nbsp;corresponds&nbsp;to&nbsp;a&nbsp;cppG&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Class</span> <a id="CPP_LOGIC_CLASS_MIXIN.cpp_logic" class="idref" href="#CPP_LOGIC_CLASS_MIXIN.cpp_logic"><span class="id" title="record">cpp_logic</span></a> {<a id="thread_info:11" class="idref" href="#thread_info:11"><span class="id" title="binder">thread_info</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#biIndex"><span class="id" title="class">biIndex</span></a>} {<a id="4d7b907d906f0d21b522874187c68347" class="idref" href="#4d7b907d906f0d21b522874187c68347"><span class="id" title="binder">_Σ</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#gFunctors"><span class="id" title="class">gFunctors</span></a>} : <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;{ <a id="CPP_LOGIC_CLASS_MIXIN.cpp_ghost" class="idref" href="#CPP_LOGIC_CLASS_MIXIN.cpp_ghost"><span class="id" title="projection">cpp_ghost</span></a>    : <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#CC._cpp_ghost"><span class="id" title="axiom">_cpp_ghost</span></a><br/>
+&nbsp;&nbsp;; <a id="CPP_LOGIC_CLASS_MIXIN.cpp_has_cppG" class="idref" href="#CPP_LOGIC_CLASS_MIXIN.cpp_has_cppG"><span class="id" title="projection">cpp_has_cppG</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#CC.cppPreG"><span class="id" title="axiom">cppPreG</span></a> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#4d7b907d906f0d21b522874187c68347"><span class="id" title="variable">_Σ</span></a><br/>
+&nbsp;&nbsp;}.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#CPP_LOGIC_CLASS_MIXIN.cpp_logic"><span class="id" title="class">cpp_logic</span></a> : <span class="id" title="tactic">clear</span> <span class="id" title="var">implicits</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="var">Mode</span> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#CPP_LOGIC_CLASS_MIXIN.cpp_logic"><span class="id" title="class">cpp_logic</span></a> - - : <span class="id" title="var">cpp_logic</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="CPP_LOGIC_CLASS_MIXIN.cpp_has_inv" class="idref" href="#CPP_LOGIC_CLASS_MIXIN.cpp_has_inv"><span class="id" title="instance">cpp_has_inv</span></a> `{<a id="cpp_logic0:18" class="idref" href="#cpp_logic0:18"><span class="id" title="binder">!</span></a><a id="cpp_logic0:18" class="idref" href="#cpp_logic0:18"><span class="id" title="binder">cpp_logic</span></a> <a id="thread_info:16" class="idref" href="#thread_info:16"><span class="id" title="binder"><span id="cpp_logic0:18" class="id">thread_info</span></span></a> <a id="66600ff182849357e392de9f869cf317" class="idref" href="#66600ff182849357e392de9f869cf317"><span class="id" title="binder"><span id="cpp_logic0:18" class="id">_Σ</span></span></a>} : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.fancy_updates.html#invGS"><span class="id" title="abbreviation">invGS</span></a> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#66600ff182849357e392de9f869cf317"><span class="id" title="variable">_Σ</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;:= <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#CC.has_inv"><span class="id" title="axiom">has_inv</span></a> <span class="id" title="var">_Σ</span> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#CPP_LOGIC_CLASS_MIXIN.cpp_has_cppG"><span class="id" title="method">cpp_has_cppG</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="CPP_LOGIC_CLASS_MIXIN.cpp_has_br_ghost" class="idref" href="#CPP_LOGIC_CLASS_MIXIN.cpp_has_br_ghost"><span class="id" title="instance">cpp_has_br_ghost</span></a> `{<a id="cpp_logic0:21" class="idref" href="#cpp_logic0:21"><span class="id" title="binder">!</span></a><a id="cpp_logic0:21" class="idref" href="#cpp_logic0:21"><span class="id" title="binder">cpp_logic</span></a> <a id="thread_info:19" class="idref" href="#thread_info:19"><span class="id" title="binder"><span id="cpp_logic0:21" class="id">thread_info</span></span></a> <a id="b2e484568d6bdb4d1da3995882c68e05" class="idref" href="#b2e484568d6bdb4d1da3995882c68e05"><span class="id" title="binder"><span id="cpp_logic0:21" class="id">_Σ</span></span></a>} : <span class="id" title="class">br.ghost.G</span> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#b2e484568d6bdb4d1da3995882c68e05"><span class="id" title="variable">_Σ</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;:= <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#CC.has_brG"><span class="id" title="axiom">has_brG</span></a> <span class="id" title="var">_Σ</span> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#CPP_LOGIC_CLASS_MIXIN.cpp_has_cppG"><span class="id" title="method">cpp_has_cppG</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="var">Existing</span> <span class="id" title="keyword">Instance</span> <span class="id" title="method">br.ghost.frac_inG</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="CPP_LOGIC_CLASS_MIXIN.cpp_has_cinv" class="idref" href="#CPP_LOGIC_CLASS_MIXIN.cpp_has_cinv"><span class="id" title="instance">cpp_has_cinv</span></a> `{<a id="cpp_logic0:24" class="idref" href="#cpp_logic0:24"><span class="id" title="binder">!</span></a><a id="cpp_logic0:24" class="idref" href="#cpp_logic0:24"><span class="id" title="binder">cpp_logic</span></a> <a id="thread_info:22" class="idref" href="#thread_info:22"><span class="id" title="binder"><span id="cpp_logic0:24" class="id">thread_info</span></span></a> <a id="e006ed58fa1a831f07d67cee20a8d608" class="idref" href="#e006ed58fa1a831f07d67cee20a8d608"><span class="id" title="binder"><span id="cpp_logic0:24" class="id">_Σ</span></span></a>} : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.cancelable_invariants.html#cinvG"><span class="id" title="class">cinvG</span></a> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#e006ed58fa1a831f07d67cee20a8d608"><span class="id" title="variable">_Σ</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">constructor</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">_</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Opaque</span> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#CPP_LOGIC_CLASS_MIXIN.cpp_has_inv"><span class="id" title="instance">cpp_has_inv</span></a> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#CPP_LOGIC_CLASS_MIXIN.cpp_has_br_ghost"><span class="id" title="instance">cpp_has_br_ghost</span></a> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#CPP_LOGIC_CLASS_MIXIN.cpp_has_cinv"><span class="id" title="instance">cpp_has_cinv</span></a><br/>
+&nbsp;&nbsp;: <span class="id" title="var">typeclass_instances</span> <span class="id" title="var">sl_opacity</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#CPP_LOGIC_CLASS_MIXIN"><span class="id" title="module">CPP_LOGIC_CLASS_MIXIN</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <span class="id" title="keyword">Type</span> <a id="CPP_LOGIC_CLASS" class="idref" href="#CPP_LOGIC_CLASS"><span class="id" title="module">CPP_LOGIC_CLASS</span></a> := <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#CPP_LOGIC_CLASS_BASE"><span class="id" title="module">CPP_LOGIC_CLASS_BASE</span></a> &lt;+ <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#CPP_LOGIC_CLASS_MIXIN"><span class="id" title="module">CPP_LOGIC_CLASS_MIXIN</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Declare Module</span> <a id="LC" class="idref" href="#LC"><span class="id" title="module">LC</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#CPP_LOGIC_CLASS"><span class="id" title="module">CPP_LOGIC_CLASS</span></a>.<br/>
+<span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#LC"><span class="id" title="module">LC</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

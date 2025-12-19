@@ -1,0 +1,113 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.upoly.id</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(C)&nbsp;2023-2024&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.upoly.prelude.html#"><span class="id" title="library">skylabs.upoly.prelude</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.upoly.base.html#"><span class="id" title="library">skylabs.upoly.base</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.upoly.base.html#UPoly"><span class="id" title="module">UPoly</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab12"></a><h2 class="section">Identity monad</h2>
+
+<div class="paragraph"> </div>
+
+This module is not meant to be <code>Import</code>ed.
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Record</span> <a id="M" class="idref" href="#M"><span class="id" title="record">M@</span></a>{*<span class="id" title="var">u</span> | } {<a id="A:1" class="idref" href="#A:1"><span class="id" title="binder">A</span></a> : <span class="id" title="var">Type@</span>{<span class="id" title="var">u</span>}} := <span class="id" title="var">mk</span> { <a id="run" class="idref" href="#run"><span class="id" title="projection">run</span></a> : <a class="idref" href="skylabs.upoly.id.html#A:1"><span class="id" title="variable">A</span></a> }.<br/>
+<span class="id" title="keyword">Add</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Constructor</span> <span class="id" title="var">M</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.id.html#M"><span class="id" title="record">M</span></a> <span class="id" title="var">_</span> : <span class="id" title="tactic">clear</span> <span class="id" title="var">implicits</span>, <span class="id" title="tactic">assert</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.id.html#mk"><span class="id" title="constructor">mk</span></a> {<span class="id" title="var">_</span>} <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.id.html#run"><span class="id" title="projection">run</span></a> {<span class="id" title="var">_</span>} &amp; <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="map" class="idref" href="#map"><span class="id" title="instance">map</span></a> : <a class="idref" href="skylabs.upoly.base.html#UPoly.FMap"><span class="id" title="class">FMap</span></a> <a class="idref" href="skylabs.upoly.id.html#M"><span class="id" title="record">M</span></a> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <a id="f:4" class="idref" href="#f:4"><span class="id" title="binder">f</span></a> <a id="a:5" class="idref" href="#a:5"><span class="id" title="binder">a</span></a> =&gt; <a class="idref" href="skylabs.upoly.id.html#mk"><span class="id" title="constructor">mk</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#547692780023ef044153bc0c4f871ef7"><span class="id" title="notation">$</span></a> <a class="idref" href="skylabs.upoly.id.html#f:4"><span class="id" title="variable">f</span></a> (<a class="idref" href="skylabs.upoly.id.html#run"><span class="id" title="projection">run</span></a> <a class="idref" href="skylabs.upoly.id.html#a:5"><span class="id" title="variable">a</span></a>).<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.id.html#map"><span class="id" title="instance">map</span></a> {<span class="id" title="var">_</span> <span class="id" title="var">_</span>} <span class="id" title="var">_</span> &amp; <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="ret" class="idref" href="#ret"><span class="id" title="instance">ret</span></a> : <a class="idref" href="skylabs.upoly.base.html#UPoly.MRet"><span class="id" title="class">MRet</span></a> <a class="idref" href="skylabs.upoly.id.html#M"><span class="id" title="record">M</span></a> := @<a class="idref" href="skylabs.upoly.id.html#mk"><span class="id" title="constructor">mk</span></a>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.id.html#ret"><span class="id" title="instance">ret</span></a> {<span class="id" title="var">_</span>} &amp; <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="bind" class="idref" href="#bind"><span class="id" title="instance">bind</span></a> : <a class="idref" href="skylabs.upoly.base.html#UPoly.MBind"><span class="id" title="class">MBind</span></a> <a class="idref" href="skylabs.upoly.id.html#M"><span class="id" title="record">M</span></a> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <a id="f:6" class="idref" href="#f:6"><span class="id" title="binder">f</span></a> <a id="a:7" class="idref" href="#a:7"><span class="id" title="binder">a</span></a> =&gt; <a class="idref" href="skylabs.upoly.id.html#f:6"><span class="id" title="variable">f</span></a> (<a class="idref" href="skylabs.upoly.id.html#run"><span class="id" title="projection">run</span></a> <a class="idref" href="skylabs.upoly.id.html#a:7"><span class="id" title="variable">a</span></a>).<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.id.html#bind"><span class="id" title="instance">bind</span></a> {<span class="id" title="var">_</span> <span class="id" title="var">_</span>} <span class="id" title="var">_</span> &amp; <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="join" class="idref" href="#join"><span class="id" title="instance">join</span></a> : <a class="idref" href="skylabs.upoly.base.html#UPoly.MJoin"><span class="id" title="class">MJoin</span></a> <a class="idref" href="skylabs.upoly.id.html#M"><span class="id" title="record">M</span></a> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <a id="a:8" class="idref" href="#a:8"><span class="id" title="binder">a</span></a> =&gt; <a class="idref" href="skylabs.upoly.id.html#run"><span class="id" title="projection">run</span></a> <a class="idref" href="skylabs.upoly.id.html#a:8"><span class="id" title="variable">a</span></a>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.id.html#join"><span class="id" title="instance">join</span></a> {<span class="id" title="var">_</span>} &amp; <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="ap" class="idref" href="#ap"><span class="id" title="definition">ap</span></a> : <a class="idref" href="skylabs.upoly.base.html#UPoly.Ap"><span class="id" title="class">Ap</span></a> <a class="idref" href="skylabs.upoly.id.html#M"><span class="id" title="record">M</span></a> := <span class="id" title="var">_</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.id.html#ap"><span class="id" title="definition">ap</span></a> {<span class="id" title="var">_</span> <span class="id" title="var">_</span>} &amp; <span class="id" title="var">_</span> <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="traverse" class="idref" href="#traverse"><span class="id" title="instance">traverse</span></a> : <a class="idref" href="skylabs.upoly.base.html#UPoly.Traverse"><span class="id" title="class">Traverse</span></a> <a class="idref" href="skylabs.upoly.id.html#M"><span class="id" title="record">M</span></a> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <a id="f:9" class="idref" href="#f:9"><span class="id" title="binder">f</span></a> <a id="a:10" class="idref" href="#a:10"><span class="id" title="binder">a</span></a> =&gt; <a class="idref" href="skylabs.upoly.id.html#mk"><span class="id" title="constructor">mk</span></a> <a class="idref" href="skylabs.upoly.base.html#913d5033cf5660007c77b2d9383f760d"><span class="id" title="notation">&lt;$&gt;</span></a> <a class="idref" href="skylabs.upoly.id.html#f:9"><span class="id" title="variable">f</span></a> (<a class="idref" href="skylabs.upoly.id.html#run"><span class="id" title="projection">run</span></a> <a class="idref" href="skylabs.upoly.id.html#a:10"><span class="id" title="variable">a</span></a>).<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.upoly.id.html#traverse"><span class="id" title="instance">traverse</span></a> {<span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span>} &amp; <span class="id" title="var">_</span> <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.iris.extra.bi.spec.constant</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(C)&nbsp;2020-2022&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.iris.extra.bi.prelude.html#"><span class="id" title="library">skylabs.iris.extra.bi.prelude</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.iris.extra.bi.observe.html#"><span class="id" title="library">skylabs.iris.extra.bi.observe</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.iris.extra.bi.spec.knowledge.html#"><span class="id" title="library">skylabs.iris.extra.bi.spec.knowledge</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.iris.extra.bi.prelude.html#ChargeNotation"><span class="id" title="module">ChargeNotation</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Set</span> <span class="id" title="var">Primitive</span> <span class="id" title="var">Projections</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab85"></a><h1 class="section">Spec building block: logical constants</h1>
+
+<div class="paragraph"> </div>
+
+The judgment <span class="inlinecode"><a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#Constant"><span class="id" title="record">Constant</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.iris.extra.bi.spec.frac_splittable.html#frac_9.I"><span class="id" title="variable">I</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.iris.extra.bi.spec.contender_token.html#with_contender.P"><span class="id" title="variable">P</span></a></span> means "under invariant <span class="inlinecode"><a class="idref" href="skylabs.iris.extra.bi.spec.frac_splittable.html#frac_9.I"><span class="id" title="variable">I</span></a></span>, <span class="inlinecode"><a class="idref" href="skylabs.iris.extra.bi.spec.contender_token.html#with_contender.P"><span class="id" title="variable">P</span></a></span> is a
+logical constant"; specifically, there exists a unique <span class="inlinecode"><a class="idref" href="skylabs.iris.extra.wp_io.refinement.wp_io.html#root_aux_1.root.with_app.x"><span class="id" title="variable">x</span></a></span> <span class="inlinecode">:</span> <span class="inlinecode"><a class="idref" href="skylabs.iris.extra.si_logic.algebra.html#theory.frac_auth.A"><span class="id" title="variable">A</span></a></span> such
+that <span class="inlinecode"><a class="idref" href="skylabs.iris.extra.bi.spec.contender_token.html#with_contender.P"><span class="id" title="variable">P</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.iris.extra.wp_io.refinement.wp_io.html#root_aux_1.root.with_app.x"><span class="id" title="variable">x</span></a></span>, where <span class="inlinecode"><a class="idref" href="skylabs.iris.extra.bi.spec.contender_token.html#with_contender.P"><span class="id" title="variable">P</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.iris.extra.wp_io.refinement.wp_io.html#root_aux_1.root.with_app.x"><span class="id" title="variable">x</span></a></span> itself is timeless, affine, and persistent.
+
+<div class="paragraph"> </div>
+
+Warning: <span class="inlinecode"><a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#Constant"><span class="id" title="record">Constant</span></a></span> should be avoided when simpler things work. It
+exists to track values that arise <i>dynamically</i>.
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Class</span> <a id="Constant" class="idref" href="#Constant"><span class="id" title="record">Constant</span></a> {<a id="A:1" class="idref" href="#A:1"><span class="id" title="binder">A</span></a>} {<a id="PROP:2" class="idref" href="#PROP:2"><span class="id" title="binder">PROP</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#bi"><span class="id" title="record">bi</span></a>} (<a id="I:3" class="idref" href="#I:3"><span class="id" title="binder">I</span></a> : <a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#PROP:2"><span class="id" title="variable">PROP</span></a>) (<a id="P:4" class="idref" href="#P:4"><span class="id" title="binder">P</span></a> : <a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#A:1"><span class="id" title="variable">A</span></a> <span class="id" title="notation">→</span> <a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#PROP:2"><span class="id" title="variable">PROP</span></a>) : <span class="id" title="keyword">Prop</span> := {<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="constant_inv_knowledge" class="idref" href="#constant_inv_knowledge"><span class="id" title="projection">constant_inv_knowledge</span></a> :: <a class="idref" href="skylabs.iris.extra.bi.spec.knowledge.html#Knowledge"><span class="id" title="class">Knowledge</span></a> <a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#I:3"><span class="id" title="variable">I</span></a>;<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="constant_exist" class="idref" href="#constant_exist"><span class="id" title="projection">constant_exist</span></a> :: <a class="idref" href="skylabs.iris.extra.bi.observe.html#Observe"><span class="id" title="class">Observe</span></a> (<a class="idref" href="skylabs.iris.extra.bi.prelude.html#3ad7164693adfb9816edb0160af074a6"><span class="id" title="notation">Exists</span></a> <a id="x:7" class="idref" href="#x:7"><span class="id" title="binder">x</span></a><a class="idref" href="skylabs.iris.extra.bi.prelude.html#3ad7164693adfb9816edb0160af074a6"><span class="id" title="notation">,</span></a> <a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#P:4"><span class="id" title="variable">P</span></a> <a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#x:7"><span class="id" title="variable">x</span></a>) <a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#I:3"><span class="id" title="variable">I</span></a>;<br/>
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="constant_unique" class="idref" href="#constant_unique"><span class="id" title="projection">constant_unique</span></a> <a id="x:9" class="idref" href="#x:9"><span class="id" title="binder">x</span></a> <a id="y:10" class="idref" href="#y:10"><span class="id" title="binder">y</span></a> :: <a class="idref" href="skylabs.iris.extra.bi.observe.html#Observe2"><span class="id" title="class">Observe2</span></a> <a class="idref" href="skylabs.iris.extra.bi.only_provable.html#d95ff2fe2904cc1067c71e0d017740c6"><span class="id" title="notation">[|</span></a> <a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#x:9"><span class="id" title="variable">x</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#y:10"><span class="id" title="variable">y</span></a> <a class="idref" href="skylabs.iris.extra.bi.only_provable.html#d95ff2fe2904cc1067c71e0d017740c6"><span class="id" title="notation">|]</span></a> (<a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#P:4"><span class="id" title="variable">P</span></a> <a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#x:9"><span class="id" title="variable">x</span></a>) (<a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#P:4"><span class="id" title="variable">P</span></a> <a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#y:10"><span class="id" title="variable">y</span></a>);<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="constant_knowledge" class="idref" href="#constant_knowledge"><span class="id" title="projection">constant_knowledge</span></a> <a id="x:12" class="idref" href="#x:12"><span class="id" title="binder">x</span></a> :: <a class="idref" href="skylabs.iris.extra.bi.spec.knowledge.html#Knowledge"><span class="id" title="class">Knowledge</span></a> (<a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#P:4"><span class="id" title="variable">P</span></a> <a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#x:12"><span class="id" title="variable">x</span></a>);<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="constant_timeless" class="idref" href="#constant_timeless"><span class="id" title="projection">constant_timeless</span></a> <a id="x:14" class="idref" href="#x:14"><span class="id" title="binder">x</span></a> :: <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.derived_connectives.html#Timeless"><span class="id" title="class">Timeless</span></a> (<a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#P:4"><span class="id" title="variable">P</span></a> <a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#x:14"><span class="id" title="variable">x</span></a>);<br/>
+}.<br/>
+<span class="id" title="keyword">Arguments</span> <a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#constant_exist"><span class="id" title="method">constant_exist</span></a> {<span class="id" title="var">_</span> <span class="id" title="var">_</span>} (<span class="id" title="var">_</span> <span class="id" title="var">_</span>)%<span class="id" title="var">_I</span> {<span class="id" title="var">_</span>} : <span class="id" title="tactic">assert</span>.<br/>
+<span class="id" title="keyword">Arguments</span> <a class="idref" href="skylabs.iris.extra.bi.spec.constant.html#constant_unique"><span class="id" title="method">constant_unique</span></a> {<span class="id" title="var">_</span> <span class="id" title="var">_</span>} (<span class="id" title="var">_</span> <span class="id" title="var">_</span>)%<span class="id" title="var">_I</span> {<span class="id" title="var">_</span>} <span class="id" title="var">_</span> <span class="id" title="var">_</span> : <span class="id" title="tactic">assert</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

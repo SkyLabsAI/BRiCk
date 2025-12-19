@@ -1,0 +1,115 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.prelude.letstar</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(C)&nbsp;2021-2024&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#"><span class="id" title="library">stdpp.base</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.prelude.reserved_notation.html#"><span class="id" title="library">skylabs.prelude.reserved_notation</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab15"></a><h1 class="section">Syntax for straight-line CPS function calls</h1>
+
+
+<div class="paragraph"> </div>
+
+   <span class="inlinecode"><span class="id" title="keyword">let</span>*</span> <span class="inlinecode"><a class="idref" href="skylabs.prelude.elpi.derive_test.html#Deriving2Test.test.x"><span class="id" title="variable">x</span></a>,</span> <span class="inlinecode"><span class="id" title="var">y</span>,</span> <span class="inlinecode"><span class="id" title="var">z</span></span> <span class="inlinecode">:=</span> <span class="inlinecode"><a class="idref" href="skylabs.prelude.elpi.derive_test.html#BitsetTest.feature.t"><span class="id" title="definition">t</span></a></span> <span class="inlinecode"><span class="id" title="tactic">in</span></span> <span class="inlinecode"><a class="idref" href="skylabs.prelude.sts.html#Sts.map.f"><span class="id" title="variable">f</span></a></span> is short for <span class="inlinecode"><a class="idref" href="skylabs.prelude.elpi.derive_test.html#BitsetTest.feature.t"><span class="id" title="definition">t</span></a></span> <span class="inlinecode">$</span> <span class="inlinecode"><span class="id" title="keyword">fun</span></span> <span class="inlinecode"><a class="idref" href="skylabs.prelude.elpi.derive_test.html#Deriving2Test.test.x"><span class="id" title="variable">x</span></a></span> <span class="inlinecode"><span class="id" title="var">y</span></span> <span class="inlinecode"><span class="id" title="var">z</span></span> <span class="inlinecode">=&gt;</span> <span class="inlinecode"><a class="idref" href="skylabs.prelude.sts.html#Sts.map.f"><span class="id" title="variable">f</span></a></span>.
+   This corresponds to the bind operator of the CPS monad.
+
+<div class="paragraph"> </div>
+
+   It is best used for code that calls CPS functions which do not mess with the
+   control flow.
+
+<div class="paragraph"> </div>
+
+   For example, instead of writing
+
+<div class="paragraph"> </div>
+
+   <span class="inlinecode"><span class="id" title="var">force_app</span></span> <span class="inlinecode"><span class="id" title="var">list1</span></span> <span class="inlinecode"><span class="id" title="var">list2</span></span> <span class="inlinecode">$</span> <span class="inlinecode"><span class="id" title="keyword">fun</span></span> <span class="inlinecode"><span class="id" title="var">result</span></span> <span class="inlinecode">=&gt;</span> <span class="inlinecode">..</span>
+
+<div class="paragraph"> </div>
+
+   we can instead write
+   <span class="inlinecode"><span class="id" title="keyword">let</span>*</span> <span class="inlinecode"><span class="id" title="var">result</span></span> <span class="inlinecode">:=</span> <span class="inlinecode"><span class="id" title="var">force_app</span></span> <span class="inlinecode"><span class="id" title="var">list1</span></span> <span class="inlinecode"><span class="id" title="var">list2</span></span> <span class="inlinecode"><span class="id" title="tactic">in</span></span> <span class="inlinecode">...</span>
+
+<div class="paragraph"> </div>
+
+   This will also avoid a right-ward drift in function code
+   multiple CPS functions.
+
+<div class="paragraph"> </div>
+
+   The notation supports arbitrary numbers of binders, patterns,
+   as well as type annotations in parentheses:
+   <span class="inlinecode"><span class="id" title="keyword">let</span>*</span> <span class="inlinecode">(<span class="id" title="var">a</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a>),</span> <span class="inlinecode">'(<span class="id" title="var">existT</span></span> <span class="inlinecode"><span class="id" title="var">_</span></span> <span class="inlinecode"><span class="id" title="var">_</span></span> <span class="inlinecode"><span class="id" title="var">_</span>),</span> <span class="inlinecode"><span class="id" title="var">b</span></span> <span class="inlinecode">:=</span> <span class="inlinecode">...</span> <span class="inlinecode"><span class="id" title="tactic">in</span></span> <span class="inlinecode">...</span>
+ 
+</div>
+<div class="code">
+<span class="id" title="keyword">Notation</span> <a id="7e43868488940523381f6830a2653370" class="idref" href="#7e43868488940523381f6830a2653370"><span class="id" title="notation">&quot;</span></a>'let*' x , .. , z := t 'in' f" :=<br/>
+&nbsp;&nbsp;(<span class="id" title="var">t</span> (<span class="id" title="keyword">fun</span> <a id="x:1" class="idref" href="#x:1"><span class="id" title="binder">x</span></a> =&gt; .. (<span class="id" title="keyword">fun</span> <a id="z:2" class="idref" href="#z:2"><span class="id" title="binder">z</span></a> =&gt; <span class="id" title="var">f</span>) ..)) (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>) : <span class="id" title="var">stdpp_scope</span>.<br/>
+<span class="id" title="keyword">Notation</span> <a id="aad7974d94eeb9f4888bd4d959a09966" class="idref" href="#aad7974d94eeb9f4888bd4d959a09966"><span class="id" title="notation">&quot;</span></a>'let*' := t 'in' f" := (<span class="id" title="var">t</span> <span class="id" title="var">f</span>) (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>) : <span class="id" title="var">stdpp_scope</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

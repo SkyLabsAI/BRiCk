@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.prelude.elpi.derive.bitset</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2023&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">elpi.elpi</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.prelude.elpi.derive.common.html#"><span class="id" title="library">skylabs.prelude.elpi.derive.common</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.prelude.prelude.html#"><span class="id" title="library">skylabs.prelude.prelude</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.prelude.elpi.basis.html#"><span class="id" title="library">skylabs.prelude.elpi.basis</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.prelude.elpi.derive.finite_type.html#"><span class="id" title="library">skylabs.prelude.elpi.derive.finite_type</span></a>.<br/>
+
+<br/>
+<span class="comment">(***************************************************<br/>
+&nbsp;Bitsets<br/>
+&nbsp;-&nbsp;<span class="inlinecode">[</span> <span class="inlinecode">#[<span class="id" title="var">only</span>(<span class="id" title="var">bitset</span>)]</span> <span class="inlinecode"><span class="id" title="var">derive</span></span> <span class="inlinecode"><span class="id" title="var">VariantType</span></span> <span class="inlinecode">]</span><br/>
+&nbsp;&nbsp;&nbsp;Assembles&nbsp;pieces&nbsp;from&nbsp;finite.v&nbsp;to&nbsp;expose&nbsp;`to_bits`,&nbsp;together&nbsp;with&nbsp;laws,&nbsp;on&nbsp;<span class="inlinecode"><span class="id" title="var">gset</span></span> <span class="inlinecode"><span class="id" title="var">VariantType</span></span>.<br/>
+&nbsp;&nbsp;&nbsp;The&nbsp;encoding&nbsp;into&nbsp;bit&nbsp;indices&nbsp;is&nbsp;derived&nbsp;automatically&nbsp;from&nbsp;the&nbsp;order&nbsp;of&nbsp;constructors&nbsp;of&nbsp;`VariantType`<br/>
+&nbsp;&nbsp;&nbsp;(0&nbsp;for&nbsp;the&nbsp;first&nbsp;constructor,&nbsp;1&nbsp;for&nbsp;the&nbsp;second,&nbsp;etc.).<br/>
+&nbsp;&nbsp;&nbsp;Add&nbsp;an&nbsp;instance&nbsp;of&nbsp;`ToBit`&nbsp;to&nbsp;override&nbsp;the&nbsp;default&nbsp;behavior.<br/>
+&nbsp;***************************************************)</span><br/>
+<span class="id" title="keyword">Class</span> <a id="ToBit" class="idref" href="#ToBit"><span class="id" title="record">ToBit</span></a> (<a id="T:1" class="idref" href="#T:1"><span class="id" title="binder">T</span></a> : <span class="id" title="keyword">Type</span>) (<a id="to_bit:2" class="idref" href="#to_bit:2"><span class="id" title="binder">to_bit</span></a> : <a class="idref" href="skylabs.prelude.elpi.derive.bitset.html#T:1"><span class="id" title="variable">T</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a>) : <span class="id" title="keyword">Prop</span> := {}.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="var">Mode</span> <a class="idref" href="skylabs.prelude.elpi.derive.bitset.html#ToBit"><span class="id" title="class">ToBit</span></a> + - : <span class="id" title="var">typeclass_instances</span>.<br/>
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Db</span> <span class="id" title="var">derive.bitset.db</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">finite</span>-<span class="id" title="keyword">type</span>-<span class="id" title="var">done</span> <span class="id" title="var">o</span>:<span class="id" title="var">gref</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">bitset</span>-<span class="id" title="var">done</span> <span class="id" title="var">o</span>:<span class="id" title="var">gref</span>.<br/>
+}}.<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">derive.bitset</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">mk</span>-<span class="id" title="tactic">simple</span>-<span class="id" title="var">bitset</span> <span class="id" title="var">i</span>:<span class="id" title="var">string</span>, <span class="id" title="var">i</span>:<span class="id" title="var">gref</span>, <span class="id" title="var">i</span>:<span class="id" title="var">gref</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="tactic">simple</span>-<span class="id" title="var">bitset</span> <span class="id" title="var">Prefix</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">OrigGR</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive.finite_type.mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">prelim</span> <span class="id" title="var">Prefix</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">OrigGR</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.include</span>-<span class="id" title="var">module</span>-<span class="id" title="keyword">type</span> {<span class="id" title="var">coq.locate</span>-<span class="id" title="var">module</span>-<span class="id" title="keyword">type</span> "simple_finite_bitmask_type_mixin"} <span class="id" title="var">coq.inline.default</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.end</span>-<span class="id" title="var">module</span> <span class="id" title="var">MP</span>,<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%<span class="id" title="var">TODO</span>: <span class="id" title="tactic">at</span> <span class="id" title="var">this</span> <span class="id" title="var">point</span>, <span class="id" title="var">remove</span> <span class="id" title="var">the</span> `<span class="id" title="var">TypeName_finite</span>` <span class="id" title="var">instance</span>, <span class="id" title="var">etc</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%<span class="id" title="var">But</span> <span class="id" title="var">coq</span>-<span class="id" title="var">elpi</span> <span class="id" title="var">doesn't</span> <span class="id" title="var">seem</span> <span class="id" title="var">to</span> <span class="id" title="var">have</span> <span class="id" title="var">an</span> <span class="id" title="var">API</span> <span class="id" title="keyword">for</span> <span class="id" title="var">Remove</span> <span class="id" title="var">Hints</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%(<span class="id" title="var">cf</span>. <span class="id" title="var">https</span>://<span class="id" title="var">bedrocksystems.atlassian.net</span>/<span class="id" title="var">browse</span>/<span class="id" title="var">FM</span>-3019).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%<span class="id" title="keyword">Module</span> <span class="id" title="var">Prefix_set</span> := <span class="id" title="var">simple_finite_bits</span> <span class="id" title="var">TyGR</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ModName</span> <span class="id" title="keyword">is</span> <span class="id" title="var">Prefix</span> ^ "_set",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.apply</span>-<span class="id" title="var">module</span>-<span class="id" title="var">functor</span> <span class="id" title="var">ModName</span> <span class="id" title="var">none</span> {<span class="id" title="var">coq.locate</span>-<span class="id" title="var">module</span> "simple_finite_bits"} [<span class="id" title="var">MP</span>] <span class="id" title="var">coq.inline.default</span> <span class="id" title="var">_</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">mk</span>-<span class="id" title="var">bitset</span> <span class="id" title="var">i</span>:<span class="id" title="var">string</span>, <span class="id" title="var">i</span>:<span class="id" title="var">gref</span>, <span class="id" title="var">i</span>:<span class="id" title="var">gref</span>, <span class="id" title="var">i</span>:<span class="id" title="var">term</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk</span>-<span class="id" title="var">bitset</span> <span class="id" title="var">Prefix</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">OrigGR</span> <span class="id" title="var">ToBit</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive.finite_type.mk</span>-<span class="id" title="var">finite</span>-<span class="id" title="var">prelim</span> <span class="id" title="var">Prefix</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">OrigGR</span>,<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">locating</span> "t" <span class="id" title="var">seems</span> <span class="id" title="var">like</span> <span class="id" title="var">a</span> <span class="id" title="var">very</span> <span class="id" title="var">bad</span> <span class="id" title="var">idea</span>. <span class="id" title="var">We</span> <span class="id" title="var">could</span> <span class="id" title="var">find</span> <span class="id" title="var">literally</span> <span class="id" title="var">anything</span> <span class="id" title="keyword">if</span> <span class="id" title="var">something</span> <span class="id" title="var">goes</span> <span class="id" title="var">wrong</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.locate</span> "t" <span class="id" title="var">GRTy</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Ty</span> <span class="id" title="keyword">is</span> <span class="id" title="var">global</span> <span class="id" title="var">GRTy</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.add</span>-<span class="id" title="var">const</span> "to_bit" <span class="id" title="var">ToBit</span> {{ <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">lp</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">:</span></a><span class="id" title="var">Ty</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a> }} @<span class="id" title="var">transparent</span>! <span class="id" title="var">CToBit_</span>,<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.include</span>-<span class="id" title="var">module</span>-<span class="id" title="keyword">type</span> {<span class="id" title="var">coq.locate</span>-<span class="id" title="var">module</span>-<span class="id" title="keyword">type</span> "finite_bitmask_type_mixin"} <span class="id" title="var">coq.inline.default</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.end</span>-<span class="id" title="var">module</span> <span class="id" title="var">MP</span>,<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ModName</span> <span class="id" title="keyword">is</span> <span class="id" title="var">Prefix</span> ^ "_set",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.apply</span>-<span class="id" title="var">module</span>-<span class="id" title="var">functor</span> <span class="id" title="var">ModName</span> <span class="id" title="var">none</span> {<span class="id" title="var">coq.locate</span>-<span class="id" title="var">module</span> "finite_bits"} [<span class="id" title="var">MP</span>] <span class="id" title="var">coq.inline.default</span> <span class="id" title="var">_</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+&nbsp;&nbsp;}<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">Db</span> <span class="id" title="var">derive.finite_type.db</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">phase</span>="both"]<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">dep1</span> "bitset" "finite". %<span class="id" title="var">finite</span> <span class="id" title="var">implies</span> <span class="id" title="var">eq_dec</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">dep1</span> "bitset_to_bit" "finite". %<span class="id" title="var">finite</span> <span class="id" title="var">implies</span> <span class="id" title="var">eq_dec</span><br/>
+}}.<br/>
+
+<br/>
+#[<span class="id" title="var">synterp</span>] <span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">derive.bitset</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">func</span> <span class="id" title="var">main</span> <span class="id" title="var">string</span>, <span class="id" title="var">string</span>, <span class="id" title="var">bool</span> -&gt; <span class="id" title="var">list</span> <span class="id" title="var">prop</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">main</span> <span class="id" title="var">TypeName</span> <span class="id" title="var">_</span> <span class="id" title="var">UseToBit</span> <span class="id" title="var">CL</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.begin</span>-<span class="id" title="var">module</span> <span class="id" title="var">TypeName</span> <span class="id" title="var">none</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> (<span class="id" title="var">UseToBit</span> <span class="id" title="keyword">is</span> <span class="id" title="var">tt</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.include</span>-<span class="id" title="var">module</span>-<span class="id" title="keyword">type</span> {<span class="id" title="var">coq.locate</span>-<span class="id" title="var">module</span>-<span class="id" title="keyword">type</span> "finite_bitmask_type_mixin"} <span class="id" title="var">coq.inline.default</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.end</span>-<span class="id" title="var">module</span> <span class="id" title="var">MP</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ModName</span> <span class="id" title="keyword">is</span> <span class="id" title="var">TypeName</span> ^ "_set",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.apply</span>-<span class="id" title="var">module</span>-<span class="id" title="var">functor</span> <span class="id" title="var">ModName</span> <span class="id" title="var">none</span> {<span class="id" title="var">coq.locate</span>-<span class="id" title="var">module</span> "finite_bits"} [<span class="id" title="var">MP</span>] <span class="id" title="var">coq.inline.default</span> <span class="id" title="var">_</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;])<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.include</span>-<span class="id" title="var">module</span>-<span class="id" title="keyword">type</span> {<span class="id" title="var">coq.locate</span>-<span class="id" title="var">module</span>-<span class="id" title="keyword">type</span> "simple_finite_bitmask_type_mixin"} <span class="id" title="var">coq.inline.default</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.end</span>-<span class="id" title="var">module</span> <span class="id" title="var">MP</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ModName</span> <span class="id" title="keyword">is</span> <span class="id" title="var">TypeName</span> ^ "_set",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.apply</span>-<span class="id" title="var">module</span>-<span class="id" title="var">functor</span> <span class="id" title="var">ModName</span> <span class="id" title="var">none</span> {<span class="id" title="var">coq.locate</span>-<span class="id" title="var">module</span> "simple_finite_bits"} [<span class="id" title="var">MP</span>] <span class="id" title="var">coq.inline.default</span> <span class="id" title="var">_</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;]),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">CL</span> = [<span class="id" title="var">done</span> <span class="id" title="var">TypeName</span>],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">done</span> <span class="id" title="var">i</span>:<span class="id" title="var">string</span>.<br/>
+&nbsp;&nbsp;}<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">derivation</span> <span class="id" title="var">T</span> <span class="id" title="var">Prefix</span> (<span class="id" title="var">derive</span> "bitset" (<span class="id" title="var">derive.bitset.main</span> <span class="id" title="var">T</span> <span class="id" title="var">Prefix</span> <span class="id" title="var">ff</span>) (<span class="id" title="var">derive.bitset.done</span> <span class="id" title="var">T</span>)).<br/>
+&nbsp;&nbsp;<span class="id" title="var">derivation</span> <span class="id" title="var">T</span> <span class="id" title="var">Prefix</span> (<span class="id" title="var">derive</span> "bitset_to_bit" (<span class="id" title="var">derive.bitset.main</span> <span class="id" title="var">T</span> <span class="id" title="var">Prefix</span> <span class="id" title="var">tt</span>) (<span class="id" title="var">derive.bitset.done</span> <span class="id" title="var">T</span>)).<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive.bitset.db</span> <span class="id" title="var">File</span> <span class="id" title="var">skylabs.typeclass.elpi</span>.<br/>
+#[<span class="id" title="var">superglobal</span>] <span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive.bitset.db</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">derive.bitset</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">to</span>-<span class="id" title="var">bits</span> <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">term</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;:<span class="id" title="var">name</span> "to-bits.typeclass"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">to</span>-<span class="id" title="var">bits</span> <span class="id" title="var">T</span> <span class="id" title="var">F</span> :- <span class="id" title="var">typeclass</span> "derive.bitset.db"  (<span class="id" title="keyword">before</span> "to-bits.typeclass") (<span class="id" title="var">to</span>-<span class="id" title="var">bits</span> <span class="id" title="var">T</span> <span class="id" title="var">F</span>) {{ @<a class="idref" href="skylabs.prelude.elpi.derive.bitset.html#ToBit"><span class="id" title="class">ToBit</span></a> <span class="id" title="var">lp</span>:<span class="id" title="var">T</span> <span class="id" title="var">lp</span>:<span class="id" title="var">F</span> }} <span class="id" title="var">Bo_</span>.<br/>
+&nbsp;&nbsp;}<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">Db</span> <span class="id" title="var">derive.bitset.db</span>.<br/>
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">derive.finset</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">func</span> <span class="id" title="var">main</span> <span class="id" title="var">gref</span>, <span class="id" title="var">string</span>, <span class="id" title="var">bool</span> -&gt; <span class="id" title="var">list</span> <span class="id" title="var">prop</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">main</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">_Prefix</span> <span class="id" title="var">UseToBit</span> <span class="id" title="var">Clauses</span> :-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive</span>-<span class="id" title="var">original</span>-<span class="id" title="var">gref</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">OrigGR</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.gref</span>-&gt;<span class="id" title="var">id</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">TypeName</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> (<span class="id" title="var">UseToBit</span> <span class="id" title="keyword">is</span> <span class="id" title="var">tt</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive.bitset.to</span>-<span class="id" title="var">bits</span> (<span class="id" title="var">global</span> <span class="id" title="var">TyGR</span>) <span class="id" title="var">ToBit</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive.bitset.mk</span>-<span class="id" title="var">bitset</span> <span class="id" title="var">TypeName</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">OrigGR</span> <span class="id" title="var">ToBit</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;])<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">derive.bitset.mk</span>-<span class="id" title="tactic">simple</span>-<span class="id" title="var">bitset</span> <span class="id" title="var">TypeName</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">OrigGR</span>), !,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Clauses</span> = [<span class="id" title="var">bitset</span>-<span class="id" title="var">done</span> <span class="id" title="var">TyGR</span>],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.forall</span> <span class="id" title="var">Clauses</span> (<span class="id" title="var">x</span>\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.elpi.accumulate</span> <span class="id" title="var">_</span> "derive.bitset.db" (<span class="id" title="var">clause</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">x</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">main</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> :- <span class="id" title="var">usage</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">func</span> <span class="id" title="var">usage</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">usage</span> :- <span class="id" title="var">coq.error</span><br/>
+"Usage: #[only(bitset)] derive T
+where T is an inductive or a definition that unfolds to an inductive.
+
+Assembles pieces from finite.v to expose `to_bits`, together with laws, on [gset VariantType].
+The encoding into bit indices is derived automatically from the order of constructors of `VariantType`
+(0 for the first constructor, 1 for the second, etc.).
+Add an instance of `ToBit` and use #[only(bitset_to_bit)] instead to override the default behavior.
+".<br/>
+&nbsp;&nbsp;}<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">derivation</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">indt</span> <span class="id" title="var">T</span>) <span class="id" title="var">Prefix</span> <span class="id" title="var">tt</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">derive</span> "bitset"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">derive.finset.main</span> (<span class="id" title="var">indt</span> <span class="id" title="var">T</span>) <span class="id" title="var">Prefix</span> <span class="id" title="var">ff</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">bitset</span>-<span class="id" title="var">done</span> (<span class="id" title="var">indt</span> <span class="id" title="var">T</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">derivation</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">indt</span> <span class="id" title="var">T</span>) <span class="id" title="var">Prefix</span> <span class="id" title="var">tt</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">derive</span> "bitset_to_bit"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">derive.finset.main</span> (<span class="id" title="var">indt</span> <span class="id" title="var">T</span>) <span class="id" title="var">Prefix</span> <span class="id" title="var">tt</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">bitset</span>-<span class="id" title="var">done</span> (<span class="id" title="var">indt</span> <span class="id" title="var">T</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;).<br/>
+
+<br/>
+}}.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

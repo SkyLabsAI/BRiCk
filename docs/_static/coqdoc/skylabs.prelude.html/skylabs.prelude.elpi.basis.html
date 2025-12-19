@@ -1,0 +1,396 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.prelude.elpi.basis</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(C)&nbsp;2022-2023&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*<br/>
+&nbsp;*&nbsp;SPDX-License-Identifier:&nbsp;LGPL-2.1&nbsp;WITH&nbsp;BedRock&nbsp;Exception&nbsp;for&nbsp;use&nbsp;over&nbsp;network,&nbsp;see&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">elpi.elpi</span>.<br/>
+
+<br/>
+<span class="comment">(*Export&nbsp;this&nbsp;tactic&nbsp;to&nbsp;<span class="inlinecode"><span class="id" title="var">typeclass</span></span>&nbsp;use&nbsp;sites.*)</span><br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">try_typeclasses_eauto</span> := <span class="id" title="tactic">try</span> <span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>.<br/>
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">File</span> <span class="id" title="var">skylabs.typeclass.elpi</span> <span class="id" title="var">lp</span>:{{<br/>
+<br/>
+&nbsp;&nbsp;%% <span class="id" title="var">typeclass</span> <span class="id" title="var">Db</span> <span class="id" title="var">Grafting</span> <span class="id" title="var">Done</span> <span class="id" title="var">Typeclass</span> <span class="id" title="var">Bo</span><br/>
+&nbsp;&nbsp;%% <span class="id" title="keyword">Solve</span> <span class="id" title="keyword">for</span> <span class="id" title="var">Bo</span> <span class="id" title="tactic">in</span> (<span class="id" title="var">Bo</span> : <span class="id" title="var">Typeclass</span>), <span class="id" title="var">accumulating</span> <span class="id" title="var">Done</span> <span class="id" title="var">into</span> <span class="id" title="var">Db</span> <span class="id" title="tactic">at</span> <span class="id" title="var">Grafting</span> <span class="id" title="keyword">if</span> <span class="id" title="var">successful</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">typeclass</span> <span class="id" title="var">i</span>:<span class="id" title="var">string</span>, <span class="id" title="var">i</span>:<span class="id" title="var">grafting</span>, <span class="id" title="var">i</span>:<span class="id" title="var">prop</span>, <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">term</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">typeclass</span> <span class="id" title="var">Db</span> <span class="id" title="var">Grafting</span> <span class="id" title="var">Done</span> <span class="id" title="var">Typeclass</span> <span class="id" title="var">Bo</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.typecheck</span> {{ <span class="id" title="var">lp</span>:<span class="id" title="var">Bo</span> : <span class="id" title="var">lp</span>:<span class="id" title="var">Typeclass</span> }} <span class="id" title="var">_</span>) "[typeclass] typechecking an instance failed",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.ltac.collect</span>-<span class="id" title="keyword">goals</span> <span class="id" title="var">Bo</span> [<span class="id" title="var">SealedGoal</span>] [],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.ltac.open</span> (<span class="id" title="var">coq.ltac.call</span> "try_typeclasses_eauto" []) <span class="id" title="var">SealedGoal</span> [],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.elpi.accumulate</span> <span class="id" title="var">library</span> <span class="id" title="var">Db</span> (<span class="id" title="var">clause</span> <span class="id" title="var">_</span> <span class="id" title="var">Grafting</span> <span class="id" title="var">Done</span>),<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">File</span> <span class="id" title="var">skylabs.basis.elpi</span> <span class="id" title="var">lp</span>:{{<br/>
+<br/>
+&nbsp;&nbsp;%%% <span class="id" title="var">Option</span> <span class="id" title="var">utilities</span><br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">option.app</span>! <span class="id" title="var">i</span>:<span class="id" title="var">option</span> <span class="id" title="var">A</span>, <span class="id" title="var">i</span>:<span class="id" title="var">A</span> -&gt; <span class="id" title="var">prop</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">option.app</span>! <span class="id" title="var">O</span> <span class="id" title="var">F</span> :- <span class="id" title="var">std.omap</span> <span class="id" title="var">O</span> (<span class="id" title="var">x</span>\ <span class="id" title="var">_</span>\ <span class="id" title="var">F</span> <span class="id" title="var">x</span>, !) <span class="id" title="var">_</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;%%% <span class="id" title="var">List</span> <span class="id" title="var">utilities</span><br/>
+<br/>
+&nbsp;&nbsp;:<span class="id" title="var">index</span> (1 1 1)<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">list.map3</span> <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">A</span>, <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">B</span>, <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">C</span>, <span class="id" title="var">i</span>:(<span class="id" title="var">A</span> -&gt; <span class="id" title="var">B</span> -&gt; <span class="id" title="var">C</span> -&gt; <span class="id" title="var">D</span> -&gt; <span class="id" title="var">prop</span>), <span class="id" title="var">o</span>:<span class="id" title="var">list</span> <span class="id" title="var">D</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">list.map3</span> [<span class="id" title="var">_</span>|<span class="id" title="var">_</span>] [] <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> :- <span class="id" title="var">list.map3.aux</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">list.map3</span> [<span class="id" title="var">_</span>|<span class="id" title="var">_</span>] <span class="id" title="var">_</span> [] <span class="id" title="var">_</span> <span class="id" title="var">_</span> :- <span class="id" title="var">list.map3.aux</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">list.map3</span> [] [<span class="id" title="var">_</span>|<span class="id" title="var">_</span>] <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> :- <span class="id" title="var">list.map3.aux</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">list.map3</span> <span class="id" title="var">_</span> [<span class="id" title="var">_</span>|<span class="id" title="var">_</span>] [] <span class="id" title="var">_</span> <span class="id" title="var">_</span> :- <span class="id" title="var">list.map3.aux</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">list.map3</span> [] <span class="id" title="var">_</span> [<span class="id" title="var">_</span>|<span class="id" title="var">_</span>] <span class="id" title="var">_</span> <span class="id" title="var">_</span> :- <span class="id" title="var">list.map3.aux</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">list.map3</span> <span class="id" title="var">_</span> [] [<span class="id" title="var">_</span>|<span class="id" title="var">_</span>] <span class="id" title="var">_</span> <span class="id" title="var">_</span> :- <span class="id" title="var">list.map3.aux</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">list.map3</span> [] [] [] <span class="id" title="var">_</span> [].<br/>
+&nbsp;&nbsp;<span class="id" title="var">list.map3</span> [<span class="id" title="var">A</span>|<span class="id" title="var">AS</span>] [<span class="id" title="var">B</span>|<span class="id" title="var">BS</span>] [<span class="id" title="var">C</span>|<span class="id" title="var">CS</span>] <span class="id" title="var">F</span> [<span class="id" title="var">D</span>|<span class="id" title="var">DS</span>] :- <span class="id" title="var">F</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">C</span> <span class="id" title="var">D</span>, <span class="id" title="var">list.map3</span> <span class="id" title="var">AS</span> <span class="id" title="var">BS</span> <span class="id" title="var">CS</span> <span class="id" title="var">F</span> <span class="id" title="var">DS</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">list.map3.aux</span> :- <span class="id" title="var">coq.error</span> "list.map3 lengths don't agree".<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">list.app</span>! <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">A</span>, <span class="id" title="var">i</span>:(<span class="id" title="var">pred</span> <span class="id" title="var">i</span>:<span class="id" title="var">A</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="var">list.app</span>! <span class="id" title="var">L</span> <span class="id" title="var">F</span> :- <span class="id" title="var">std.map</span> <span class="id" title="var">L</span> (<span class="id" title="var">x</span>\ <span class="id" title="var">_</span>\ <span class="id" title="var">F</span> <span class="id" title="var">x</span>, !) <span class="id" title="var">_</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">list.app2</span>! <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">A</span>, <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">B</span>, <span class="id" title="var">i</span>:(<span class="id" title="var">pred</span> <span class="id" title="var">i</span>:<span class="id" title="var">A</span>, <span class="id" title="var">i</span>:<span class="id" title="var">B</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="var">list.app2</span>! <span class="id" title="var">L1</span> <span class="id" title="var">L2</span> <span class="id" title="var">F</span> :- <span class="id" title="var">std.map2</span> <span class="id" title="var">L1</span> <span class="id" title="var">L2</span> (<span class="id" title="var">x</span>\ <span class="id" title="var">y</span>\ <span class="id" title="var">_</span>\ <span class="id" title="var">F</span> <span class="id" title="var">x</span> <span class="id" title="var">y</span>, !) <span class="id" title="var">_</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;%%% <span class="id" title="var">Coq</span> <span class="id" title="var">options</span><br/>
+<br/>
+&nbsp;&nbsp;/*<br/>
+&nbsp;&nbsp;[<span class="id" title="var">coq.do</span>-<span class="id" title="keyword">with</span>-<span class="id" title="var">option</span>! <span class="id" title="var">Option</span> <span class="id" title="var">Val</span> <span class="id" title="var">Ps</span>] <span class="id" title="var">runs</span> [<span class="id" title="var">Ps</span>] <span class="id" title="var">under</span> <span class="id" title="var">Coq</span> <span class="id" title="var">option</span><br/>
+&nbsp;&nbsp;[<span class="id" title="var">Option</span> := <span class="id" title="var">Val</span>], <span class="id" title="var">and</span> <span class="id" title="keyword">then</span> <span class="id" title="var">restores</span> <span class="id" title="var">the</span> <span class="id" title="var">option's</span> <span class="id" title="var">original</span> <span class="id" title="var">value</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">Panics</span> <span class="id" title="keyword">if</span> <span class="id" title="var">the</span> <span class="id" title="var">option</span> <span class="id" title="var">does</span> <span class="id" title="var">not</span> <span class="id" title="var">exist</span> <span class="id" title="var">or</span> <span class="id" title="keyword">is</span> <span class="id" title="var">incompatible</span> <span class="id" title="keyword">with</span> [<span class="id" title="var">Val</span>].<br/>
+&nbsp;&nbsp;*/<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">coq.with</span>-<span class="id" title="var">option</span>! <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">string</span>, <span class="id" title="var">i</span>:<span class="id" title="var">coq.option</span>, <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">prop</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">coq.with</span>-<span class="id" title="var">option</span>! <span class="id" title="var">O</span> <span class="id" title="var">V</span> <span class="id" title="var">Ps</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.option.get</span> <span class="id" title="var">O</span> <span class="id" title="var">W</span>, !,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.option.set</span> <span class="id" title="var">O</span> <span class="id" title="var">V</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.do</span>! <span class="id" title="var">Ps</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.option.set</span> <span class="id" title="var">O</span> <span class="id" title="var">W</span>,<br/>
+&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;/*<br/>
+&nbsp;&nbsp;[<span class="id" title="var">coq.with</span>-<span class="id" title="var">option</span>-<span class="id" title="var">unset</span>! <span class="id" title="var">Option</span> <span class="id" title="var">Ps</span>] <span class="id" title="var">runs</span> [<span class="id" title="var">Ps</span>] <span class="id" title="keyword">with</span> <span class="id" title="var">the</span> <span class="id" title="var">Coq</span> <span class="id" title="var">boolean</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">option</span> [<span class="id" title="var">Option</span>] <span class="id" title="var">unset</span>, <span class="id" title="var">and</span> <span class="id" title="keyword">then</span> <span class="id" title="var">restures</span> <span class="id" title="var">the</span> <span class="id" title="var">option's</span> <span class="id" title="var">original</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">value</span>. <span class="id" title="var">Panics</span> <span class="id" title="keyword">if</span> <span class="id" title="var">the</span> <span class="id" title="var">option</span> <span class="id" title="var">does</span> <span class="id" title="var">not</span> <span class="id" title="var">exist</span> <span class="id" title="var">or</span> <span class="id" title="var">isn't</span> <span class="id" title="var">boolean</span>.<br/>
+&nbsp;&nbsp;*/<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">coq.with</span>-<span class="id" title="var">option</span>-<span class="id" title="var">unset</span>! <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">string</span>, <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">prop</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">coq.with</span>-<span class="id" title="var">option</span>-<span class="id" title="var">unset</span>! <span class="id" title="var">O</span> <span class="id" title="var">Ps</span> :- <span class="id" title="var">coq.with</span>-<span class="id" title="var">option</span>! <span class="id" title="var">O</span> (<span class="id" title="var">coq.option.bool</span> <span class="id" title="var">ff</span>) <span class="id" title="var">Ps</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;%%% <span class="id" title="var">Elaboration</span><br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">br.check</span>-<span class="id" title="tactic">evar</span>-<span class="id" title="var">free</span> <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">diagnostic</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">br.check</span>-<span class="id" title="tactic">evar</span>-<span class="id" title="var">free</span> <span class="id" title="var">T</span> <span class="id" title="var">D</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.ltac.collect</span>-<span class="id" title="keyword">goals</span> <span class="id" title="var">T</span> <span class="id" title="var">Goals</span> <span class="id" title="var">Shelved</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> (<span class="id" title="var">Goals</span> = [], <span class="id" title="var">Shelved</span> = []) (<span class="id" title="var">D</span> = <span class="id" title="var">ok</span>) (<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">D</span> = <span class="id" title="var">error</span> {<span class="id" title="var">check</span>-<span class="id" title="tactic">evar</span>-<span class="id" title="var">free.msg</span> <span class="id" title="var">T</span> <span class="id" title="var">Goals</span> <span class="id" title="var">Shelved</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;),<br/>
+&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;/*<br/>
+&nbsp;&nbsp;[<span class="id" title="var">check</span>-<span class="id" title="tactic">evar</span>-<span class="id" title="var">free.msg</span> <span class="id" title="var">T</span> <span class="id" title="var">Goals</span> <span class="id" title="var">Shelved</span> <span class="id" title="var">Msg</span>] <span class="id" title="var">constructs</span> <span class="id" title="var">a</span> <span class="id" title="var">more</span> <span class="id" title="var">or</span> <span class="id" title="var">less</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">readable</span> <span class="id" title="var">error</span> <span class="id" title="var">message</span> [<span class="id" title="var">Msg</span>] <span class="id" title="keyword">for</span> <span class="id" title="var">a</span> <span class="id" title="var">term</span> [<span class="id" title="var">T</span>] <span class="id" title="keyword">with</span> <span class="id" title="var">uninstantiated</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">EVars</span> [<span class="id" title="var">Goals</span>], [<span class="id" title="var">Shelved</span>].<br/>
+&nbsp;&nbsp;*/<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">check</span>-<span class="id" title="tactic">evar</span>-<span class="id" title="var">free</span> {<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">A</span> <span class="id" title="var">Coq</span> <span class="id" title="var">name</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">pp</span>-<span class="id" title="var">name</span> <span class="id" title="var">i</span>:<span class="id" title="var">name</span>, <span class="id" title="var">o</span>:<span class="id" title="var">coq.pp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="var">name</span> <span class="id" title="var">Name</span> <span class="id" title="var">PP</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">PP</span> = <span class="id" title="var">coq.pp.str</span> {<span class="id" title="var">coq.name</span>-&gt;<span class="id" title="var">id</span> <span class="id" title="var">Name</span>},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">Any</span> <span class="id" title="var">Elpi</span> <span class="id" title="var">term</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">pp</span>-<span class="id" title="var">any</span> <span class="id" title="var">i</span>:<span class="id" title="var">any</span>, <span class="id" title="var">o</span>:<span class="id" title="var">coq.pp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="var">any</span> <span class="id" title="var">Any</span> <span class="id" title="var">PP</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">PP</span> = <span class="id" title="var">coq.pp.str</span> {<span class="id" title="var">term_to_string</span> <span class="id" title="var">Any</span>},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">Any</span> <span class="id" title="var">Elpi</span> <span class="id" title="var">term</span> (<span class="id" title="keyword">with</span> <span class="id" title="var">marker</span> "Oops!" <span class="id" title="var">meaning</span> <span class="id" title="keyword">fix</span> <span class="id" title="var">these</span> <span class="id" title="var">pretty</span>-<span class="id" title="var">printers</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">pp</span>-<span class="id" title="var">oops</span> <span class="id" title="var">i</span>:<span class="id" title="var">any</span>, <span class="id" title="var">o</span>:<span class="id" title="var">coq.pp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="var">oops</span> <span class="id" title="var">Any</span> <span class="id" title="var">PP</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">PP</span> = <span class="id" title="var">coq.pp.glue</span> [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.pp.str</span> "Oops!", <span class="id" title="var">coq.pp.spc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id" title="var">pp</span>-<span class="id" title="var">any</span> <span class="id" title="var">Any</span>},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">A</span> <span class="id" title="keyword">context</span> <span class="id" title="var">entry</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">pp</span>-<span class="id" title="keyword">goal</span>-<span class="id" title="var">ctx</span>-<span class="id" title="var">entry</span> <span class="id" title="var">i</span>:<span class="id" title="var">prop</span>, <span class="id" title="var">o</span>:<span class="id" title="var">coq.pp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="keyword">goal</span>-<span class="id" title="var">ctx</span>-<span class="id" title="var">entry</span> (<span class="id" title="var">decl</span> <span class="id" title="var">_</span> <span class="id" title="var">Name</span> <span class="id" title="var">Ty</span>) <span class="id" title="var">PP</span> :- !, <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="keyword">goal</span>-<span class="id" title="var">ctx</span>-<span class="id" title="var">entry.box</span> [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id" title="var">pp</span>-<span class="id" title="var">name</span> <span class="id" title="var">Name</span>}, <span class="id" title="var">coq.pp.str</span> " :", <span class="id" title="var">coq.pp.spc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id" title="var">coq.term</span>-&gt;<span class="id" title="var">pp</span> <span class="id" title="var">Ty</span>},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;] <span class="id" title="var">PP</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="keyword">goal</span>-<span class="id" title="var">ctx</span>-<span class="id" title="var">entry</span> (<span class="id" title="var">def</span> <span class="id" title="var">_</span> <span class="id" title="var">Name</span> <span class="id" title="var">Ty</span> <span class="id" title="var">Body</span>) <span class="id" title="var">PP</span> :- !, <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="keyword">goal</span>-<span class="id" title="var">ctx</span>-<span class="id" title="var">entry.box</span> [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id" title="var">pp</span>-<span class="id" title="var">name</span> <span class="id" title="var">Name</span>}, <span class="id" title="var">coq.pp.str</span> " :", <span class="id" title="var">coq.pp.spc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id" title="var">coq.term</span>-&gt;<span class="id" title="var">pp</span> <span class="id" title="var">Ty</span>}, <span class="id" title="var">coq.pp.str</span> " :=", <span class="id" title="var">coq.pp.spc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id" title="var">coq.term</span>-&gt;<span class="id" title="var">pp</span> <span class="id" title="var">Body</span>}<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;] <span class="id" title="var">PP</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="keyword">goal</span>-<span class="id" title="var">ctx</span>-<span class="id" title="var">entry</span> <span class="id" title="var">Entry</span> <span class="id" title="var">PP</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="keyword">goal</span>-<span class="id" title="var">ctx</span>-<span class="id" title="var">entry.box</span> [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id" title="var">pp</span>-<span class="id" title="var">oops</span> <span class="id" title="var">Entry</span>},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;] <span class="id" title="var">PP</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">pp</span>-<span class="id" title="keyword">goal</span>-<span class="id" title="var">ctx</span>-<span class="id" title="var">entry.box</span> <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">coq.pp</span>, <span class="id" title="var">o</span>:<span class="id" title="var">coq.pp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="keyword">goal</span>-<span class="id" title="var">ctx</span>-<span class="id" title="var">entry.box</span> <span class="id" title="var">PPs</span> <span class="id" title="var">PP</span> :- <span class="id" title="var">PP</span> = <span class="id" title="var">coq.pp.box</span> (<span class="id" title="var">coq.pp.hov</span> 2) <span class="id" title="var">PPs</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">A</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">context</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">pp</span>-<span class="id" title="keyword">goal</span>-<span class="id" title="var">ctx</span> <span class="id" title="var">i</span>:<span class="id" title="keyword">goal</span>-<span class="id" title="var">ctx</span>, <span class="id" title="var">o</span>:<span class="id" title="var">coq.pp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="keyword">goal</span>-<span class="id" title="var">ctx</span> <span class="id" title="var">Ctx</span> <span class="id" title="var">PP</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/*<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Undocumented</span> (<span class="id" title="var">but</span> <span class="id" title="var">consistent</span> <span class="id" title="keyword">with</span> <span class="id" title="var">Coq</span> <span class="id" title="var">contexts</span>): <span class="id" title="var">The</span> <span class="id" title="keyword">context</span> <span class="id" title="keyword">is</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">backwards</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*/<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.rev</span> <span class="id" title="var">Ctx</span> <span class="id" title="var">Decls</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Sep</span> = <span class="id" title="var">coq.pp.glue</span> [<span class="id" title="var">coq.pp.str</span> ",", <span class="id" title="var">coq.pp.spc</span>],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.intersperse</span> <span class="id" title="var">Sep</span> {<span class="id" title="var">std.map</span> <span class="id" title="var">Decls</span> <span class="id" title="var">pp</span>-<span class="id" title="keyword">goal</span>-<span class="id" title="var">ctx</span>-<span class="id" title="var">entry</span>} <span class="id" title="var">PPs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">PP</span> = <span class="id" title="var">coq.pp.box</span> (<span class="id" title="var">coq.pp.hov</span> 0) <span class="id" title="var">PPs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">An</span> <span class="id" title="var">EVar</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">pp</span>-<span class="id" title="tactic">evar</span> <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">coq.pp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="tactic">evar</span> <span class="id" title="var">EVar</span> <span class="id" title="var">Ty</span> <span class="id" title="var">PP</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">PP</span> = <span class="id" title="var">coq.pp.glue</span> [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id" title="var">coq.term</span>-&gt;<span class="id" title="var">pp</span> <span class="id" title="var">EVar</span>}, <span class="id" title="var">coq.pp.str</span> ": uninstantiated with type", <span class="id" title="var">coq.pp.spc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id" title="var">coq.term</span>-&gt;<span class="id" title="var">pp</span> <span class="id" title="var">Ty</span>},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">A</span> <span class="id" title="keyword">goal</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">pp</span>-<span class="id" title="keyword">goal</span> <span class="id" title="var">i</span>:<span class="id" title="keyword">goal</span>, <span class="id" title="var">o</span>:<span class="id" title="var">coq.pp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="keyword">goal</span> (<span class="id" title="keyword">goal</span> [] <span class="id" title="var">_Raw</span> <span class="id" title="var">Ty</span> <span class="id" title="var">Evar</span> <span class="id" title="var">_Args</span>) <span class="id" title="var">PP</span> :- !, <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="var">goal.box</span> [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id" title="var">pp</span>-<span class="id" title="tactic">evar</span> <span class="id" title="var">Evar</span> <span class="id" title="var">Ty</span>},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;] <span class="id" title="var">PP</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="keyword">goal</span> (<span class="id" title="keyword">goal</span> <span class="id" title="var">Ctx</span> <span class="id" title="var">_Raw</span> <span class="id" title="var">Ty</span> <span class="id" title="var">EVar</span> <span class="id" title="var">_Args</span>) <span class="id" title="var">PP</span> :- !, <span class="id" title="var">Ctx</span> =&gt; <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="var">goal.box</span> [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id" title="var">pp</span>-<span class="id" title="tactic">evar</span> <span class="id" title="var">EVar</span> <span class="id" title="var">Ty</span>}, <span class="id" title="var">coq.pp.spc</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.pp.str</span> "in context", <span class="id" title="var">coq.pp.brk</span> 1 2,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id" title="var">pp</span>-<span class="id" title="keyword">goal</span>-<span class="id" title="var">ctx</span> <span class="id" title="var">Ctx</span>},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;] <span class="id" title="var">PP</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="keyword">goal</span> <span class="id" title="keyword">Goal</span> <span class="id" title="var">PP</span> :- <span class="id" title="var">pp</span>-<span class="id" title="var">goal.fallback</span> <span class="id" title="keyword">Goal</span> <span class="id" title="var">PP</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">pp</span>-<span class="id" title="var">goal.box</span> <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">coq.pp</span>, <span class="id" title="var">o</span>:<span class="id" title="var">coq.pp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="var">goal.box</span> <span class="id" title="var">PPs</span> <span class="id" title="var">PP</span> :-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">PP</span> = <span class="id" title="var">coq.pp.box</span> (<span class="id" title="var">coq.pp.hov</span> 2) [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.pp.str</span> "- ",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.pp.glue</span> <span class="id" title="var">PPs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">pp</span>-<span class="id" title="var">goal.fallback</span> <span class="id" title="var">i</span>:<span class="id" title="var">any</span>, <span class="id" title="var">o</span>:<span class="id" title="var">coq.pp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="var">goal.fallback</span> <span class="id" title="var">ElpiTerm</span> <span class="id" title="var">PP</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="var">goal.box</span> [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id" title="var">pp</span>-<span class="id" title="var">oops</span> <span class="id" title="var">ElpiTerm</span>},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;] <span class="id" title="var">PP</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">A</span> <span class="id" title="var">sealed</span> <span class="id" title="keyword">goal</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">pp</span>-<span class="id" title="var">sealed</span>-<span class="id" title="keyword">goal</span> <span class="id" title="var">i</span>:<span class="id" title="var">sealed</span>-<span class="id" title="keyword">goal</span>, <span class="id" title="var">o</span>:<span class="id" title="var">coq.pp</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="var">sealed</span>-<span class="id" title="keyword">goal</span> (<span class="id" title="var">nabla</span> <span class="id" title="var">G</span>) <span class="id" title="var">PP</span> :- !, (<span class="id" title="var">pi</span> <span class="id" title="var">x</span>\ <span class="id" title="var">pp</span>-<span class="id" title="var">sealed</span>-<span class="id" title="keyword">goal</span> (<span class="id" title="var">G</span> <span class="id" title="var">x</span>) <span class="id" title="var">PP</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="var">sealed</span>-<span class="id" title="keyword">goal</span> (<span class="id" title="var">seal</span> <span class="id" title="var">G</span>) <span class="id" title="var">PP</span> :- !, <span class="id" title="var">pp</span>-<span class="id" title="keyword">goal</span> <span class="id" title="var">G</span> <span class="id" title="var">PP</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp</span>-<span class="id" title="var">sealed</span>-<span class="id" title="keyword">goal</span> <span class="id" title="var">Sealed</span> <span class="id" title="var">PP</span> :- <span class="id" title="var">pp</span>-<span class="id" title="var">goal.fallback</span> <span class="id" title="var">Sealed</span> <span class="id" title="var">PP</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">msg</span> <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">sealed</span>-<span class="id" title="keyword">goal</span>, <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">sealed</span>-<span class="id" title="keyword">goal</span>, <span class="id" title="var">o</span>:<span class="id" title="var">string</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">msg</span> <span class="id" title="var">T</span> <span class="id" title="var">Goals</span> <span class="id" title="var">Shelved</span> <span class="id" title="var">Msg</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Brk</span> = <span class="id" title="var">coq.pp.brk</span> 0 0,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">PPT</span> = <span class="id" title="var">coq.pp.box</span> (<span class="id" title="var">coq.pp.v</span> 2) [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.pp.str</span> "The following term contains unresolved evars:", <span class="id" title="var">Brk</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<span class="id" title="var">coq.term</span>-&gt;<span class="id" title="var">pp</span> <span class="id" title="var">T</span>},<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.map</span> {<span class="id" title="var">std.append</span> <span class="id" title="var">Goals</span> <span class="id" title="var">Shelved</span>} <span class="id" title="var">pp</span>-<span class="id" title="var">sealed</span>-<span class="id" title="keyword">goal</span> <span class="id" title="var">PPG</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.intersperse</span> <span class="id" title="var">Brk</span> [<span class="id" title="var">PPT</span> | [<span class="id" title="var">coq.pp.str</span> "Specifically," | <span class="id" title="var">PPG</span>]] <span class="id" title="var">PPs</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.pp</span>-&gt;<span class="id" title="var">string</span> (<span class="id" title="var">coq.pp.box</span> (<span class="id" title="var">coq.pp.v</span> 0) <span class="id" title="var">PPs</span>) <span class="id" title="var">Msg</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;}<br/>
+<br/>
+&nbsp;&nbsp;% <span class="id" title="keyword">Variant</span> <span class="id" title="keyword">of</span> [<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">skeleton</span>] <span class="id" title="var">that</span> <span class="id" title="var">outputs</span> <span class="id" title="tactic">evar</span>-<span class="id" title="var">free</span> <span class="id" title="var">terms</span> <span class="id" title="var">on</span> <span class="id" title="var">success</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">br.elaborate</span>-<span class="id" title="var">skeleton</span> <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">diagnostic</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">br.elaborate</span>-<span class="id" title="var">skeleton</span> <span class="id" title="var">T</span> <span class="id" title="var">ETy</span> <span class="id" title="var">E</span> <span class="id" title="var">D</span> :- <span class="id" title="var">std.do</span>-<span class="id" title="var">ok</span>! <span class="id" title="var">D</span> [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">skeleton</span> <span class="id" title="var">T</span> <span class="id" title="var">ETy</span> <span class="id" title="var">E</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">br.check</span>-<span class="id" title="tactic">evar</span>-<span class="id" title="var">free</span> <span class="id" title="var">ETy</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">br.check</span>-<span class="id" title="tactic">evar</span>-<span class="id" title="var">free</span> <span class="id" title="var">E</span>,<br/>
+&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;% <span class="id" title="keyword">Variant</span> <span class="id" title="keyword">of</span> [<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">ty</span>-<span class="id" title="var">skeleton</span>] <span class="id" title="var">that</span> <span class="id" title="var">outputs</span> <span class="id" title="var">an</span> <span class="id" title="tactic">evar</span>-<span class="id" title="var">free</span> <span class="id" title="var">term</span> <span class="id" title="var">on</span> <span class="id" title="var">success</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">br.elaborate</span>-<span class="id" title="var">ty</span>-<span class="id" title="var">skeleton</span> <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">sort</span>, <span class="id" title="var">o</span>:<span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">diagnostic</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">br.elaborate</span>-<span class="id" title="var">ty</span>-<span class="id" title="var">skeleton</span> <span class="id" title="var">T</span> <span class="id" title="var">U</span> <span class="id" title="var">E</span> <span class="id" title="var">D</span> :- <span class="id" title="var">std.do</span>-<span class="id" title="var">ok</span>! <span class="id" title="var">D</span> [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">ty</span>-<span class="id" title="var">skeleton</span> <span class="id" title="var">T</span> <span class="id" title="var">U</span> <span class="id" title="var">E</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">br.check</span>-<span class="id" title="tactic">evar</span>-<span class="id" title="var">free</span> <span class="id" title="var">E</span>,<br/>
+&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;%%% <span class="id" title="var">Terms</span> <span class="id" title="var">tagged</span> <span class="id" title="keyword">with</span> <span class="id" title="var">phantom</span> <span class="id" title="var">types</span><br/>
+<br/>
+&nbsp;&nbsp;/*<br/>
+&nbsp;&nbsp;<span class="id" title="var">See</span> [<span class="id" title="var">typeabbrev</span> <span class="id" title="var">bs</span>] <span class="id" title="tactic">in</span> ./<span class="id" title="var">elpi_bytestring.v</span> <span class="id" title="keyword">for</span> <span class="id" title="var">an</span> <span class="id" title="var">example</span>.<br/>
+&nbsp;&nbsp;*/<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">kind</span> <span class="id" title="var">tm</span> <span class="id" title="keyword">type</span> -&gt; <span class="id" title="keyword">type</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">type</span> <span class="id" title="var">tm</span> <span class="id" title="var">term</span> -&gt; <span class="id" title="var">tm</span> <span class="id" title="var">A</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">tm</span>-&gt;<span class="id" title="var">term</span> <span class="id" title="var">i</span>:<span class="id" title="var">tm</span> <span class="id" title="var">A</span>, <span class="id" title="var">o</span>:<span class="id" title="var">term</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">tm</span>-&gt;<span class="id" title="var">term</span> (<span class="id" title="var">tm</span> <span class="id" title="var">T</span>) <span class="id" title="var">T</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">tm</span>-&gt;<span class="id" title="var">string</span> <span class="id" title="var">i</span>:<span class="id" title="var">tm</span> <span class="id" title="var">A</span>, <span class="id" title="var">o</span>:<span class="id" title="var">string</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">tm</span>-&gt;<span class="id" title="var">string</span> (<span class="id" title="var">tm</span> <span class="id" title="var">T</span>) <span class="id" title="var">S</span> :- <span class="id" title="var">coq.term</span>-&gt;<span class="id" title="var">string</span> <span class="id" title="var">T</span> <span class="id" title="var">S</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;%%% <span class="id" title="var">Debugging</span><br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="tactic">debug</span> <span class="id" title="var">i</span>:<span class="id" title="var">string</span>, <span class="id" title="var">i</span>:<span class="id" title="var">string</span>, <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">any</span>.<br/>
+&nbsp;:<span class="id" title="keyword">if</span> "DEBUG"<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">debug</span> <span class="id" title="var">Prefix</span> <span class="id" title="var">Msg</span> <span class="id" title="var">L</span> :-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Prefix'</span> <span class="id" title="keyword">is</span> "DEBUG " ^ <span class="id" title="var">Prefix</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.say</span> <span class="id" title="var">Prefix'</span> <span class="id" title="var">Msg</span> <span class="id" title="var">L</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">debug</span> <span class="id" title="var">_Prefix</span> <span class="id" title="var">_Msg</span> <span class="id" title="var">_L</span> :- !.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">skylabs</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">get</span>-<span class="id" title="var">indt</span> <span class="id" title="var">VariantGR</span> <span class="id" title="var">Indt</span>: <span class="id" title="var">Indt</span> <span class="id" title="keyword">is</span> <span class="id" title="var">the</span> <span class="id" title="var">body</span> <span class="id" title="keyword">of</span> <span class="id" title="keyword">Inductive</span> <span class="id" title="keyword">type</span> <span class="id" title="var">VariantGR</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">Fails</span> <span class="id" title="keyword">if</span> <span class="id" title="var">VariantGR</span> <span class="id" title="var">isn't</span> <span class="id" title="var">a</span> <span class="id" title="var">gref</span> <span class="id" title="keyword">for</span> <span class="id" title="var">an</span> <span class="id" title="var">inductive</span>, <span class="id" title="var">possibly</span> <span class="id" title="var">wrapped</span> <span class="id" title="tactic">in</span> <span class="id" title="var">a</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">constant</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">get</span>-<span class="id" title="var">indt</span> <span class="id" title="var">i</span>:<span class="id" title="var">gref</span>, <span class="id" title="var">o</span>:<span class="id" title="var">inductive</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">get</span>-<span class="id" title="var">indt</span> (<span class="id" title="var">indt</span> <span class="id" title="keyword">Inductive</span>) <span class="id" title="keyword">Inductive</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">get</span>-<span class="id" title="var">indt</span> (<span class="id" title="var">const</span> <span class="id" title="var">C</span>) <span class="id" title="var">Ind</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.const</span> <span class="id" title="var">C</span> (<span class="id" title="var">some</span> (<span class="id" title="var">global</span> <span class="id" title="var">Def</span>)) <span class="id" title="var">_</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">get</span>-<span class="id" title="var">indt</span> <span class="id" title="var">Def</span> <span class="id" title="var">Ind</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">get</span>-<span class="id" title="var">ctors</span> <span class="id" title="var">VariantName</span> <span class="id" title="var">Ctors</span>: <span class="id" title="var">Ctors</span> <span class="id" title="keyword">is</span> <span class="id" title="var">the</span> <span class="id" title="var">list</span> <span class="id" title="keyword">of</span> <span class="id" title="var">constructors</span> <span class="id" title="keyword">of</span> <span class="id" title="var">the</span> <span class="id" title="keyword">Inductive</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="keyword">type</span> <span class="id" title="var">VariantName</span>. <span class="id" title="var">Fails</span> <span class="id" title="keyword">if</span> <span class="id" title="var">VariantName</span> <span class="id" title="var">isn't</span> <span class="id" title="var">an</span> <span class="id" title="var">inductive</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">get</span>-<span class="id" title="var">ctors</span> <span class="id" title="var">i</span>:<span class="id" title="var">string</span>, <span class="id" title="var">o</span>:<span class="id" title="var">list</span> <span class="id" title="tactic">constructor</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">get</span>-<span class="id" title="var">ctors</span> <span class="id" title="var">VariantName</span> <span class="id" title="var">Ctors</span> :- <span class="id" title="var">std.do</span>![<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.locate</span> <span class="id" title="var">VariantName</span> <span class="id" title="var">VariantGR</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">get</span>-<span class="id" title="var">indt</span> <span class="id" title="var">VariantGR</span> <span class="id" title="var">VariantI</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.indt</span> <span class="id" title="var">VariantI</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">Ctors</span> <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">Convenience</span> <span class="id" title="var">function</span> <span class="id" title="keyword">for</span> <span class="id" title="var">extracting</span> <span class="id" title="var">boolean</span> <span class="id" title="var">Coq</span> <span class="id" title="var">options</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">get</span>-<span class="id" title="var">boolopt</span> <span class="id" title="var">i</span>:<span class="id" title="var">string</span>, <span class="id" title="var">o</span>:<span class="id" title="var">bool</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">get</span>-<span class="id" title="var">boolopt</span> <span class="id" title="var">_</span> <span class="id" title="var">tt</span> :- <span class="id" title="var">get</span>-<span class="id" title="var">option</span> "all" <span class="id" title="var">tt</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">get</span>-<span class="id" title="var">boolopt</span> <span class="id" title="var">Opt</span> <span class="id" title="var">B</span> :- <span class="id" title="var">get</span>-<span class="id" title="var">option</span> <span class="id" title="var">Opt</span> <span class="id" title="var">B</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">get</span>-<span class="id" title="var">boolopt</span> <span class="id" title="var">_</span> <span class="id" title="var">ff</span> :- !.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">elpi</span>-<span class="id" title="var">list</span>-&gt;<span class="id" title="var">list</span> <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">term</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">elpi</span>-<span class="id" title="var">list</span>-&gt;<span class="id" title="var">list</span> <span class="id" title="var">L</span> <span class="id" title="var">EL</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">elpi</span>-<span class="id" title="var">list</span>-&gt;<span class="id" title="var">list.aux</span> <span class="id" title="var">L</span> <span class="id" title="var">L'</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">skeleton</span> <span class="id" title="var">L'</span> <span class="id" title="var">_</span> <span class="id" title="var">EL</span>) "elpi-list-&gt;list: failed to typecheck",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">elpi</span>-<span class="id" title="var">list</span>-&gt;<span class="id" title="var">list.aux</span> <span class="id" title="var">i</span>:<span class="id" title="var">list</span> <span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">term</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">elpi</span>-<span class="id" title="var">list</span>-&gt;<span class="id" title="var">list.aux</span> [] {{ <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a> }}.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">elpi</span>-<span class="id" title="var">list</span>-&gt;<span class="id" title="var">list.aux</span> (<span class="id" title="var">T</span> :: <span class="id" title="var">Rest</span>) {{ <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">lp</span>:<span class="id" title="var">T</span> <span class="id" title="var">lp</span>:<span class="id" title="var">Rest'</span> }} :- <span class="id" title="var">elpi</span>-<span class="id" title="var">list</span>-&gt;<span class="id" title="var">list.aux</span> <span class="id" title="var">Rest</span> <span class="id" title="var">Rest'</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">list</span>-&gt;<span class="id" title="var">elpi</span>-<span class="id" title="var">list</span> <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">list</span> <span class="id" title="var">term</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">list</span>-&gt;<span class="id" title="var">elpi</span>-<span class="id" title="var">list</span> <span class="id" title="var">CoqList</span> <span class="id" title="var">ElpiList</span> :- <span class="id" title="var">std.do</span>! [<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="keyword">Check</span> <span class="id" title="var">that</span> <span class="id" title="var">we</span> <span class="id" title="var">actually</span> <span class="id" title="var">have</span> <span class="id" title="var">a</span> [<span class="id" title="var">list</span> <span class="id" title="var">A</span>] - <span class="id" title="keyword">for</span> <span class="id" title="var">some</span> <span class="id" title="var">A</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">skeleton</span> <span class="id" title="var">CoqList</span> {{<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="var">_</span>}} <span class="id" title="var">ElaboratedCoqList</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"[lst-&gt;elpi-list: failed to typecheck",<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;% <span class="id" title="var">Do</span> <span class="id" title="var">the</span> <span class="id" title="var">conversion</span> <span class="id" title="var">from</span> <span class="id" title="var">Coq</span>-<span class="id" title="var">list</span> <span class="id" title="var">to</span> <span class="id" title="var">elpi</span>-<span class="id" title="var">list</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">list</span>-&gt;<span class="id" title="var">elpi</span>-<span class="id" title="var">list.aux</span> <span class="id" title="var">ElaboratedCoqList</span> <span class="id" title="var">ElpiList</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;].<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="var">list</span>-&gt;<span class="id" title="var">elpi</span>-<span class="id" title="var">list.aux</span> <span class="id" title="var">i</span>:<span class="id" title="var">term</span>, <span class="id" title="var">o</span>:<span class="id" title="var">list</span> <span class="id" title="var">term</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">list</span>-&gt;<span class="id" title="var">elpi</span>-<span class="id" title="var">list.aux</span> {{<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>}} [].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">list</span>-&gt;<span class="id" title="var">elpi</span>-<span class="id" title="var">list.aux</span> {{<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="var">lp</span>:<span class="id" title="var">A</span> <span class="id" title="var">lp</span>:<span class="id" title="var">CoqAs</span>}} (<span class="id" title="var">A</span> :: <span class="id" title="var">ElpiAs</span>) :-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">list</span>-&gt;<span class="id" title="var">elpi</span>-<span class="id" title="var">list.aux</span> <span class="id" title="var">CoqAs</span> <span class="id" title="var">ElpiAs</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pred</span> <span class="id" title="keyword">using</span>-<span class="id" title="keyword">context</span> <span class="id" title="var">i</span>:(<span class="id" title="var">list</span> <span class="id" title="var">string</span>), <span class="id" title="var">i</span>:<span class="id" title="var">prop</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">using</span>-<span class="id" title="keyword">context</span> [] <span class="id" title="var">P</span> :- <span class="id" title="var">P</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">using</span>-<span class="id" title="keyword">context</span> [<span class="id" title="var">NM</span> | <span class="id" title="var">CTX</span>] <span class="id" title="var">P</span> :-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id" title="keyword">using</span>! <span class="id" title="var">NM</span> =&gt; <span class="id" title="keyword">using</span>-<span class="id" title="keyword">context</span> <span class="id" title="var">CTX</span> <span class="id" title="var">P</span>.<br/>
+&nbsp;&nbsp;}<br/>
+}}.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

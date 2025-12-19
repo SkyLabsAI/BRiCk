@@ -1,0 +1,137 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.iris.extra.base_logic.monpred_na_invariants</h1>
+
+<div class="code">
+</div>
+
+<div class="doc">
+<a id="lab18"></a><h1 class="section">Copyright (C) 2025 BlueRock Security, Inc.</h1>
+
+<a id="lab19"></a><h1 class="section">This software is distributed under the terms of the BedRock Open-Source License.</h1>
+
+<a id="lab20"></a><h1 class="section">See the LICENSE-BedRock file in the repository root for details.</h1>
+
+ *
+<a id="lab21"></a><h1 class="section">This file is derived from code original to the GPFSL project. That</h1>
+
+<a id="lab22"></a><h1 class="section">original code is</h1>
+
+ *
+<a id="lab23"></a><h1 class="section">Copyright: GPFSL developers and contributors</h1>
+
+ *
+<a id="lab24"></a><h1 class="section">and used according to the following license.</h1>
+
+ *
+<a id="lab25"></a><h1 class="section">SPDX-License-Identifier: BSD-3-Clause</h1>
+
+ *
+<a id="lab26"></a><h1 class="section">Original Code:</h1>
+
+<a id="lab27"></a><h1 class="section">https://gitlab.mpi-sws.org/iris/gpfsl/-/blob/35a7c7df492237047d24d996d33f7f102f75e7c5/gpfsl/logic/na_invariants.v</h1>
+
+ *
+<a id="lab28"></a><h1 class="section">Original GPFSL License:</h1>
+
+<a id="lab29"></a><h1 class="section">https://gitlab.mpi-sws.org/iris/gpfsl/-/blob/35a7c7df492237047d24d996d33f7f102f75e7c5/LICENSE</h1>
+
+ 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#"><span class="id" title="library">iris.bi.monpred</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.invariants.html#"><span class="id" title="library">iris.base_logic.lib.invariants</span></a>. <span class="comment">(*&nbsp;&lt;&lt;&nbsp;<span class="inlinecode"><span class="id" title="var">invGS</span></span>&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.monpred.html#"><span class="id" title="library">iris.proofmode.monpred</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.iris.extra.proofmode.proofmode.html#"><span class="id" title="library">skylabs.iris.extra.proofmode.proofmode</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.iris.extra.base_logic.iprop_prop.html#"><span class="id" title="library">skylabs.iris.extra.base_logic.iprop_prop</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.iris.extra.base_logic.iprop_invariants.html#"><span class="id" title="library">skylabs.iris.extra.base_logic.iprop_invariants</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.iris.extra.bi.monpred_na_invariants.html#"><span class="id" title="library">skylabs.iris.extra.bi.monpred_na_invariants</span></a>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;The&nbsp;<span class="inlinecode"><span class="id" title="var">monPred</span></span> <span class="inlinecode"><span class="id" title="var">I</span></span> <span class="inlinecode">(<span class="id" title="var">iProp</span></span> <span class="inlinecode"><span class="id" title="var">Σ</span>)</span>&nbsp;instances&nbsp;for&nbsp;true&nbsp;thread-local&nbsp;non-atomic&nbsp;invariants.<br/>
+<br/>
+This&nbsp;is&nbsp;strictly&nbsp;stronger&nbsp;than&nbsp;the&nbsp;version&nbsp;in<br/>
+skylabs.iris.extra.base_logic.monpred_invariants,&nbsp;as&nbsp;it&nbsp;does&nbsp;not&nbsp;require<br/>
+the&nbsp;<span class="inlinecode"><span class="id" title="var">WeaklyObjective</span></span>&nbsp;side-condition.<br/>
+*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="props" class="idref" href="#props"><span class="id" title="section">props</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="props.I" class="idref" href="#props.I"><span class="id" title="variable">I</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#biIndex"><span class="id" title="record">biIndex</span></a>}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{!<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.fancy_updates.html#invGS"><span class="id" title="abbreviation">invGS</span></a> <span class="id" title="var">Σ</span>}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{!<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.own.html#inG"><span class="id" title="class">inG</span></a> <a class="idref" href="skylabs.iris.extra.base_logic.monpred_na_invariants.html#81e7def6c3271515cf75e421d19db8a0"><span class="id" title="variable">Σ</span></a> (<a class="idref" href="skylabs.iris.extra.bi.monpred_na_invariants.html#naEnableMapFunR"><span class="id" title="abbreviation">naEnableMapFunR</span></a> <a class="idref" href="skylabs.iris.extra.base_logic.monpred_na_invariants.html#props.I"><span class="id" title="variable">I</span></a>)}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{!<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.own.html#inG"><span class="id" title="class">inG</span></a> <a class="idref" href="skylabs.iris.extra.base_logic.monpred_na_invariants.html#81e7def6c3271515cf75e421d19db8a0"><span class="id" title="variable">Σ</span></a> (<a class="idref" href="skylabs.iris.extra.bi.monpred_na_invariants.html#naEnableMapR"><span class="id" title="abbreviation">naEnableMapR</span></a> <a class="idref" href="skylabs.iris.extra.base_logic.monpred_na_invariants.html#props.I"><span class="id" title="variable">I</span></a>)}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="na_inv_alloc" class="idref" href="#na_inv_alloc"><span class="id" title="lemma">na_inv_alloc</span></a> <a id="p:6" class="idref" href="#p:6"><span class="id" title="binder">p</span></a> <a id="E:7" class="idref" href="#E:7"><span class="id" title="binder">E</span></a> <a id="N:8" class="idref" href="#N:8"><span class="id" title="binder">N</span></a> (<a id="P:9" class="idref" href="#P:9"><span class="id" title="binder">P</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#monPred"><span class="id" title="record">monPred</span></a> <a class="idref" href="skylabs.iris.extra.base_logic.monpred_na_invariants.html#props.I"><span class="id" title="variable">I</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#iProp_solution.iProp"><span class="id" title="abbreviation">iProp</span></a> <a class="idref" href="skylabs.iris.extra.base_logic.monpred_na_invariants.html#81e7def6c3271515cf75e421d19db8a0"><span class="id" title="variable">Σ</span></a>))  :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#1ab064278224e8da215d0768a08713fe"><span class="id" title="notation">▷</span></a> <a class="idref" href="skylabs.iris.extra.base_logic.monpred_na_invariants.html#P:9"><span class="id" title="variable">P</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#032e8f60cf4c8d85414301b1e227a9cb"><span class="id" title="notation">={</span></a><a class="idref" href="skylabs.iris.extra.base_logic.monpred_na_invariants.html#E:7"><span class="id" title="variable">E</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#032e8f60cf4c8d85414301b1e227a9cb"><span class="id" title="notation">}=∗</span></a> <a class="idref" href="skylabs.iris.extra.bi.monpred_na_invariants.html#na_inv"><span class="id" title="definition">na_inv</span></a> <a class="idref" href="skylabs.iris.extra.base_logic.monpred_na_invariants.html#p:6"><span class="id" title="variable">p</span></a> <a class="idref" href="skylabs.iris.extra.base_logic.monpred_na_invariants.html#N:8"><span class="id" title="variable">N</span></a> <a class="idref" href="skylabs.iris.extra.base_logic.monpred_na_invariants.html#P:9"><span class="id" title="variable">P</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iIntros</span> "HP".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iDestruct</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">(</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#monPred_in_intro"><span class="id" title="lemma">monPred_in_intro</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">with</span></a> "HP"<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">)</span></a> <span class="id" title="keyword">as</span> (<span class="id" title="var">s</span>) "[#HV HP]".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iMod</span> (<a class="idref" href="skylabs.iris.extra.bi.own.html#own_unit"><span class="id" title="method">own_unit</span></a> (<span class="id" title="var">PROP</span>:=<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#iProp_solution.iPropI"><span class="id" title="abbreviation">iPropI</span></a> <a class="idref" href="skylabs.iris.extra.base_logic.monpred_na_invariants.html#81e7def6c3271515cf75e421d19db8a0"><span class="id" title="variable">Σ</span></a>) (<span class="id" title="var">A</span>:=<a class="idref" href="skylabs.iris.extra.bi.monpred_na_invariants.html#naEnableMapFunR"><span class="id" title="abbreviation">naEnableMapFunR</span></a> <a class="idref" href="skylabs.iris.extra.base_logic.monpred_na_invariants.html#props.I"><span class="id" title="variable">I</span></a>) <span class="id" title="var">p</span>) <span class="id" title="keyword">as</span> "Hempty".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iMod</span> (<a class="idref" href="skylabs.iris.extra.bi.own.html#own_alloc"><span class="id" title="lemma">own_alloc</span></a> (<span class="id" title="var">PROP</span>:=<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#iProp_solution.iPropI"><span class="id" title="abbreviation">iPropI</span></a> <a class="idref" href="skylabs.iris.extra.base_logic.monpred_na_invariants.html#81e7def6c3271515cf75e421d19db8a0"><span class="id" title="variable">Σ</span></a>) (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.auth.html#78c72ac49d7ce3ebc6ff15bd4319d0ba"><span class="id" title="notation">●</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>)) <span class="id" title="keyword">as</span> (<span class="id" title="var">γ</span>) "Hdis"; [<span class="id" title="tactic">by</span> <span class="id" title="tactic">apply</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.auth.html#auth_auth_valid"><span class="id" title="lemma">auth_auth_valid</span></a>|].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.invariants.html#fresh_inv_name"><span class="id" title="lemma">fresh_inv_name</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#c25a9c7b1a4bc0f91edca9e331dd7eee"><span class="id" title="notation">∅</span></a> <span class="id" title="var">N</span>) <span class="id" title="keyword">as</span> (<span class="id" title="var">i</span> &amp; <span class="id" title="var">_</span> &amp; <span class="id" title="var">HiN</span>). <span class="id" title="tactic">unfold</span> <a class="idref" href="skylabs.iris.extra.bi.monpred_na_invariants.html#na_inv"><span class="id" title="definition">na_inv</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iExists</span> <span class="id" title="var">i</span>, <span class="id" title="var">s</span>, <span class="id" title="var">γ</span>. <span class="id" title="var">iFrame</span> "# %".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iMod</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">(</span></a><a class="idref" href="skylabs.iris.extra.base_logic.iprop_invariants.html#inv_alloc"><span class="id" title="lemma">inv_alloc</span></a> <span class="id" title="var">N</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">with</span></a> "[-]"<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">)</span></a> <span class="id" title="keyword">as</span> "$"; [|<span class="id" title="var">done</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iLeft</span>. <span class="id" title="tactic">rewrite</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#monPred_at_later"><span class="id" title="lemma">monPred_at_later</span></a>. <span class="id" title="var">iNext</span>. <span class="id" title="var">iFrame</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.iris.extra.base_logic.monpred_na_invariants.html#props"><span class="id" title="section">props</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
