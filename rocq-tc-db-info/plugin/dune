@@ -1,7 +1,7 @@
 (library
  (name tc_db_info)
  (flags :standard -w -32-37) ; TODO fix all warnings
- (public_name tc-db-info-plugin.plugin)
+ (public_name rocq-tc-db-info.plugin)
  (libraries
   coq-core.plugins.ltac2
   coq-core.vernac

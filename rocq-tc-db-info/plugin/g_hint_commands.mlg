@@ -5,7 +5,7 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  *)
 
-DECLARE PLUGIN "tc-db-info-plugin.plugin"
+DECLARE PLUGIN "rocq-tc-db-info.plugin"
 
 {
 

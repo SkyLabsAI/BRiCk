@@ -3,5 +3,5 @@
  (deps
   (package rocq-core)
   (package rocq-stdlib)
-  (package tc-db-info-plugin)
+  (package rocq-tc-db-info)
   setup-project.sh))
