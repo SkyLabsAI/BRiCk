@@ -5,7 +5,7 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Declare ML Module "tc-db-info-plugin.plugin".
+Declare ML Module "rocq-tc-db-info.plugin".
 
 Require Import Ltac2.Ltac2.
 
