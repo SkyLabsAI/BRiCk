@@ -54,15 +54,6 @@ Elpi Accumulate File extra.Command.
 
 
 
-## Databases, not files
-
-We package up the library as databases rather than files because accumulating a given database into an Elpi program may be idempotent while accumulating files certainly is not (see [coq-elpi#627](https://github.com/LPCIC/coq-elpi/issues/627)).
-
-Idempotence matters because duplicate clauses may lead to hard-to-diagnose operational errors (_e.g.,_ backtracking to (a copy of) the same code).
-
-Less important, database names need not vary with Coq's synterp, interp phase distinction and databases (presumably) store compiled code rather than source code.
-
-
 ## Manual Linking
 
 Our Elpi code uses `lib:name` to resolve Coq paths previously [registered with `Rocqlib`](https://coq.inria.fr/doc/V8.19.0/refman/proof-engine/vernacular-commands.html#coq:cmd.Register).
@@ -80,8 +71,8 @@ Using elpi-extra as a bunch of files is not supported due to [coq-elpi#627](http
 
 ## Dependencies
 
-There seems to be no nice way to tell dune about dependencies between Elpi files triggered by Elpi's `accumulate` directive.
-(Neither dune nor coqdep scans Elpi files for depenencies.)
+There seems to be no nice way to tell dune about dependencies between Elpi files triggered by Elpi's `accumulate` directive,
+although there is an open pull request https://github.com/ocaml/dune/pull/9591
 
 As a stopgap, we ask dune to generate Elpi files from templates, adding comments containing hashes of their (manually listed) dependencies.
 This forces clients to recompile when those dependencies change.
