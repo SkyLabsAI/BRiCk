@@ -44,7 +44,7 @@ doc:
 	$(Q)mkdir -p $(DOC_PATH)/sphinx/_static/css/coqdocjs $(DOC_PATH)/sphinx/_static/js/coqdocjs
 	$(Q)$(CP) -r coqdocjs/extra/resources/*.css $(DOC_PATH)/sphinx/_static/css/coqdocjs
 	$(Q)$(CP) -r coqdocjs/extra/resources/*.js $(DOC_PATH)/sphinx/_static/js/coqdocjs
-	$(Q)dune build @../vendored/rocq/install
+	$(Q)dune build @../../vendored/rocq/install
 # Can't be merged with the previous step, due to `coqc --config` failure
 	$(Q)dune build
 	$(Q)ROCQLIB=${ROCQLIB} dune build @doc

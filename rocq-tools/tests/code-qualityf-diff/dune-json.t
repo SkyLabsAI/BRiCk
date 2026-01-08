@@ -1,7 +1,7 @@
   $ cat > dune-log.json <<EOF
   > [
   >   {
-  >     "command": "_build/default/fmdeps/vendored/rocq/topbin/coqc_bin.exe --config > /tmp/dune_6f9dd0_output",
+  >     "command": "_build/default/vendored/rocq/topbin/coqc_bin.exe --config > /tmp/dune_6f9dd0_output",
   >     "output": [],
   >     "status": 1
   >   },
