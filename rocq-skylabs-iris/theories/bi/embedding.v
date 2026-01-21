@@ -12,6 +12,20 @@ Require Import skylabs.iris.extra.bi.prelude.
 Its [BiEmbed], etc instances are available after [Import
 compose_embed_instances]. *)
 
+Module compose_embed_instances.
+  #[export] Hint Resolve
+    (* embed_embed *)
+    embed_bi_embed
+    embed_embed_emp
+    embed_embed_later
+    embed_embed_internal_eq
+    embed_embed_bupd
+    embed_embed_fupd
+    embed_embed_plainly
+  : typeclass_instances.
+End compose_embed_instances.
+
+(*
 Definition compose_embed_def {A B C} `{!Embed B C, !Embed A B} : Embed A C :=
   λ P, embed (embed P).
 Definition compose_embed_aux : seal (@compose_embed_def). Proof. by eexists. Qed.
@@ -34,7 +48,7 @@ Section instances.
     - intros n P1 P2 ?. unseal. solve_proper.
     - intros P1 P2 ?. unseal. solve_proper.
     - intros P. unseal. by rewrite !embed_emp_valid.
-    - intros. unseal. by rewrite !embed_interal_inj. 
+    - intros. unseal. by rewrite !embed_interal_inj.
     - unseal. by rewrite !embed_emp_2.
     - intros. unseal. by rewrite !embed_impl_2.
     - intros. unseal. by rewrite !embed_forall_2.
@@ -95,3 +109,5 @@ Module compose_embed_instances.
     compose_embed_plainly
   : typeclass_instances.
 End compose_embed_instances.
+
+*)

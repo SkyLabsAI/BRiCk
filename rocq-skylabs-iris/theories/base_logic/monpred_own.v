@@ -73,7 +73,11 @@ Section with_PROP.
       #[local] Instance has_own_valid_monpred
         `{!BiEmbed siPropI PROP, !HasOwnValid PROP A} :
         HasOwnValid monPredI A.
-      Proof. unseal_monpred. by rewrite own_valid -embedding.embed_embed. Qed.
+      Proof.
+        unseal_monpred.
+        rewrite own_valid.
+        rewrite -embed_embed_alt.
+      Qed.
     End with_compose_embed_instances.
   End with_cmra.
 
