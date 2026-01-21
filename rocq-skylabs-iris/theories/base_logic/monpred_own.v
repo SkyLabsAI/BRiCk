@@ -49,16 +49,14 @@ Section with_has_own.
     HasOwnUpd monPredI A.
   Proof.
     unseal_monpred.
-    - setoid_rewrite <-(@embed_pure PROP).
-      setoid_rewrite <-embed_affinely.
-      setoid_rewrite <-(@embed_sep PROP).
-      setoid_rewrite <-embed_exist.
-      by rewrite -embed_bupd -own_updateP.
-    - setoid_rewrite <-(@embed_pure PROP).
-      setoid_rewrite <-embed_affinely.
-      setoid_rewrite <-(@embed_sep PROP).
-      setoid_rewrite <-embed_exist. rewrite -embed_bupd.
-      by rewrite -own_alloc_strong_dep ?embed_emp.
+    - rewrite own_updateP //.
+      rewrite embed_bupd embed_exist.
+      (do 2 f_equiv) => x.
+      by rewrite embed_sep embed_affinely embed_pure.
+    - rewrite /bi_emp_valid -embed_emp own_alloc_strong_dep //.
+      rewrite embed_bupd embed_exist.
+      (do 2 f_equiv) => x.
+      by rewrite embed_sep embed_affinely embed_pure.
   Qed.
 
   Section with_compose_embed_instances.
