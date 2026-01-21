@@ -15,79 +15,82 @@ Require Import skylabs.iris.extra.bi.own.
 Require Import skylabs.iris.extra.bi.weakly_objective.
 Require Import skylabs.iris.extra.base_logic.iprop_own.
 
-Section with_has_own.
-  Context {I : biIndex} `{Hown: HasOwn PROP A}.
+Implicit Type (γ : gname).
+
+(* Instances for monpred I PROP *)
+Section with_PROP.
+  Context {I : biIndex} {PROP : bi}.
 
   Notation monPred  := (monPred I PROP).
   Notation monPredI := (monPredI I PROP).
 
-  (* sealing here should boost performance, but it requires us to re-export
-    properties of embedding. *)
-  Program Definition has_own_monpred_def : HasOwn monPredI A := {|
-    own := λ γ a , ⎡ own γ a ⎤%I |}.
-  Next Obligation. intros. by rewrite -embed_sep -own_op. Qed.
-  Next Obligation. solve_proper. Qed.
-  Next Obligation. solve_proper. Qed.
-  #[local] Definition has_own_monpred_aux : seal (@has_own_monpred_def). Proof. by eexists. Qed.
-  #[global] Instance has_own_monpred : HasOwn monPredI A := has_own_monpred_aux.(unseal).
-  Definition has_own_monpred_eq :
-    @has_own_monpred = @has_own_monpred_def := has_own_monpred_aux.(seal_eq).
+  Section with_cmra.
+    Context {A : cmra} `{Hown: HasOwn PROP A}.
+    Implicit Type (a : A).
 
-  (* some re-exporting of embedding properties *)
-  #[global] Instance monPred_own_objective γ (a : A) :
-    Objective (own γ a).
-  Proof. rewrite has_own_monpred_eq. apply _. Qed.
+    (* sealing here should boost performance, but it requires us to re-export
+      properties of embedding. *)
+    #[program]
+    Definition has_own_monpred_def : HasOwn monPredI A := {|
+      own := λ γ a , ⎡ own γ a ⎤%I |}.
+    Next Obligation. intros. by rewrite -embed_sep -own_op. Qed.
+    Next Obligation. solve_proper. Qed.
+    Next Obligation. solve_proper. Qed.
+    #[local] Definition has_own_monpred_aux : seal (@has_own_monpred_def). Proof. by eexists. Qed.
+    #[global] Instance has_own_monpred : HasOwn monPredI A := has_own_monpred_aux.(unseal).
+    Definition has_own_monpred_eq :
+      @has_own_monpred = @has_own_monpred_def := has_own_monpred_aux.(seal_eq).
 
-  #[global] Instance monPred_own_weakly_objective γ x :
-    @WeaklyObjective I PROP (own γ x).
-  Proof. rewrite has_own_monpred_eq. apply _. Qed.
+    (* some re-exporting of embedding properties *)
+    #[global] Instance monPred_own_objective γ a :
+      Objective (own γ a).
+    Proof. rewrite has_own_monpred_eq. apply _. Qed.
 
-  #[local] Ltac unseal_monpred :=
-    constructor; intros; rewrite /own has_own_monpred_eq /has_own_monpred_def.
+    #[global] Instance monPred_own_weakly_objective γ a :
+      WeaklyObjective (own γ a).
+    Proof. rewrite has_own_monpred_eq. apply _. Qed.
 
-  #[global] Instance has_own_update_monpred `{!BiBUpd PROP, !HasOwnUpd PROP A} :
-    HasOwnUpd monPredI A.
-  Proof.
-    unseal_monpred.
-    - rewrite own_updateP //.
-      rewrite embed_bupd embed_exist.
-      (do 2 f_equiv) => x.
-      by rewrite embed_sep embed_affinely embed_pure.
-    - rewrite /bi_emp_valid -embed_emp own_alloc_strong_dep //.
-      rewrite embed_bupd embed_exist.
-      (do 2 f_equiv) => x.
-      by rewrite embed_sep embed_affinely embed_pure.
-  Qed.
+    #[local] Ltac unseal_monpred :=
+      constructor; intros; rewrite /own has_own_monpred_eq /has_own_monpred_def.
 
-  Section with_compose_embed_instances.
-    Import compose_embed_instances.
+    #[global] Instance has_own_update_monpred `{!BiBUpd PROP, !HasOwnUpd PROP A} :
+      HasOwnUpd monPredI A.
+    Proof.
+      unseal_monpred.
+      - rewrite own_updateP //.
+        rewrite embed_bupd embed_exist.
+        (do 2 f_equiv) => x.
+        by rewrite embed_sep embed_affinely embed_pure.
+      - rewrite /bi_emp_valid -embed_emp own_alloc_strong_dep //.
+        rewrite embed_bupd embed_exist.
+        (do 2 f_equiv) => x.
+        by rewrite embed_sep embed_affinely embed_pure.
+    Qed.
 
-    #[global] Instance has_own_valid_monpred
-      `{!BiEmbed siPropI PROP, !HasOwnValid PROP A} :
-      HasOwnValid monPredI A.
-    Proof. unseal_monpred. by rewrite own_valid -embedding.embed_embed. Qed.
-  End with_compose_embed_instances.
-End with_has_own.
+    Section with_compose_embed_instances.
+      Import compose_embed_instances.
 
-Section with_has_own_unit.
-  Context {A : ucmra}.
-  Context {I : biIndex}.
-  Context `{!BiBUpd PROP}.
-  Context `{Hown: HasOwn PROP A, Hou : !HasOwnUnit PROP A}.
+      #[global] Instance has_own_valid_monpred
+        `{!BiEmbed siPropI PROP, !HasOwnValid PROP A} :
+        HasOwnValid monPredI A.
+      Proof. unseal_monpred. by rewrite own_valid -embedding.embed_embed. Qed.
+    End with_compose_embed_instances.
+  End with_cmra.
 
-  Notation monPred  := (monPred I PROP).
-  Notation monPredI := (monPredI I PROP).
+  Section with_ucmra.
+    Context {A : ucmra}.
+    Context `{Hown: HasOwn PROP A}.
 
-  #[global] Instance has_own_unit_monpred :
-    HasOwnUnit monPredI A.
-  Proof using Hou.
-    constructor; intros; rewrite /own has_own_monpred_eq /has_own_monpred_def; red.
-    by rewrite -(@embed_emp PROP) -embed_bupd own_unit.
-  Qed.
-End with_has_own_unit.
+    #[global] Instance has_own_unit_monpred `{!BiBUpd PROP, !HasOwnUnit PROP A}:
+      HasOwnUnit monPredI A.
+    Proof.
+      constructor; intros; rewrite /own has_own_monpred_eq /has_own_monpred_def; red.
+      by rewrite -(@embed_emp PROP) -embed_bupd own_unit.
+    Qed.
+  End with_ucmra.
+End with_PROP.
 
-(* Instances for monpred *)
-
+(* Instances for monpred I iPropI *)
 Section si_monpred_embedding.
   Context {I : biIndex} {Σ : gFunctors}.
   Notation monPredI := (monPredI I (iPropI Σ)).
