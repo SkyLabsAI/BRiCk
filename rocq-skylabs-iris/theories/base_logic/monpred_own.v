@@ -37,7 +37,7 @@ Section with_PROP.
     Next Obligation. solve_proper. Qed.
     Next Obligation. solve_proper. Qed.
     #[local] Definition has_own_monpred_aux : seal (@has_own_monpred_def). Proof. by eexists. Qed.
-    #[global] Instance has_own_monpred : HasOwn monPredI A := has_own_monpred_aux.(unseal).
+    #[local] Instance has_own_monpred : HasOwn monPredI A := has_own_monpred_aux.(unseal).
     Definition has_own_monpred_eq :
       @has_own_monpred = @has_own_monpred_def := has_own_monpred_aux.(seal_eq).
 
@@ -53,7 +53,7 @@ Section with_PROP.
     #[local] Ltac unseal_monpred :=
       constructor; intros; rewrite /own has_own_monpred_eq /has_own_monpred_def.
 
-    #[global] Instance has_own_update_monpred `{!BiBUpd PROP, !HasOwnUpd PROP A} :
+    #[local] Instance has_own_update_monpred `{!BiBUpd PROP, !HasOwnUpd PROP A} :
       HasOwnUpd monPredI A.
     Proof.
       unseal_monpred.
@@ -70,7 +70,7 @@ Section with_PROP.
     Section with_compose_embed_instances.
       Import compose_embed_instances.
 
-      #[global] Instance has_own_valid_monpred
+      #[local] Instance has_own_valid_monpred
         `{!BiEmbed siPropI PROP, !HasOwnValid PROP A} :
         HasOwnValid monPredI A.
       Proof. unseal_monpred. by rewrite own_valid -embedding.embed_embed. Qed.
@@ -81,7 +81,9 @@ Section with_PROP.
     Context {A : ucmra}.
     Context `{Hown: HasOwn PROP A}.
 
-    #[global] Instance has_own_unit_monpred `{!BiBUpd PROP, !HasOwnUnit PROP A}:
+    #[local] Existing Instance has_own_monpred.
+
+    #[local] Instance has_own_unit_monpred `{!BiBUpd PROP, !HasOwnUnit PROP A}:
       HasOwnUnit monPredI A.
     Proof.
       constructor; intros; rewrite /own has_own_monpred_eq /has_own_monpred_def; red.
@@ -89,6 +91,25 @@ Section with_PROP.
     Qed.
   End with_ucmra.
 End with_PROP.
+
+(* These hints are necessary to avoid type class inference loops:
+[has_own_monpred] loops on [HasOwn ?PROP _] by instantiating [PROP := monPred I
+?PROP'] and leaving as obligation [HasOwn ?PROP' _].
+*)
+#[global] Hint Extern 0 (HasOwn ?PROP _) =>
+  assert_fails (is_evar PROP);
+  autoapply @has_own_monpred with typeclass_instances : typeclass_instances.
+
+#[global] Hint Extern 0 (HasOwnUpd ?PROP _) =>
+  assert_fails (is_evar PROP);
+  autoapply @has_own_update_monpred with typeclass_instances : typeclass_instances.
+
+#[global] Hint Extern 0 (HasOwnValid ?PROP _) =>
+  assert_fails (is_evar PROP);
+  autoapply @has_own_valid_monpred with typeclass_instances : typeclass_instances.
+#[global] Hint Extern 0 (HasOwnUnit ?PROP _) =>
+  assert_fails (is_evar PROP);
+  autoapply @has_own_unit_monpred with typeclass_instances : typeclass_instances.
 
 (* Instances for monpred I iPropI *)
 Section si_monpred_embedding.
