@@ -17,8 +17,11 @@ import re
 
 def find_key(symbol, obj):
     for x in obj:
-        if sexpdata.car(x) == sexpdata.Symbol(symbol):
-            return sexpdata.cdr(x)
+        # dune directives are sexpr lists of length >=1
+        # Anything that is not a list should be ignored
+        if isinstance(x,list):
+            if sexpdata.car(x) == sexpdata.Symbol(symbol):
+                return sexpdata.cdr(x)
     return None
 
 def get_symbol(obj):
