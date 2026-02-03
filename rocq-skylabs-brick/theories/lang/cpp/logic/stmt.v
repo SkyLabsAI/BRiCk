@@ -149,7 +149,8 @@ Module Type Stmt.
       match d with
       | Dvar x ty init => wp_decl_var ρ x ty init k
       | Ddecompose init x ds =>
-        let common_type := type_of init in
+        (* NOTE: the **declaration type** of the initializer *)
+        let common_type := decltype_of_expr init in
         Forall common_p : ptr,
         (* unlike for variables (see [wp_decl_var]), the variables in a structured binding
            are not available in the initializer.
