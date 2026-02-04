@@ -1,7 +1,7 @@
 cat > dune <<EOF
 (env
  (_
-  (coq
+  (rocq
    (flags
     (:standard
      ; temporarily disable verbose incompatible prefix warnings
@@ -18,7 +18,7 @@ cat > dune <<EOF
      -w +unknown-option
      -w +future-coercion-class-field)))))
 
-(coq.theory
+(rocq.theory
  (name test)
  (theories
   Stdlib stdpp iris elpi elpi_elpi Ltac2
@@ -26,8 +26,8 @@ cat > dune <<EOF
 EOF
 
 cat > dune-project <<EOF
-(lang dune 3.8)
-(using coq 0.8)
+(lang dune 3.21)
+(using rocq 0.11)
 EOF
 
 export ROCQPATH="$DUNE_SOURCEROOT/_build/install/default/lib/coq/user-contrib"

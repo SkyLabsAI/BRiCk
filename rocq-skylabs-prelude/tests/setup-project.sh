@@ -1,12 +1,12 @@
 cat > dune <<EOF
-(coq.theory
+(rocq.theory
  (name test)
  (theories Lens Lens.Elpi elpi elpi_elpi elpi.apps.derive Stdlib stdpp Ltac2 skylabs.ltac2.extra skylabs.upoly skylabs.prelude))
 EOF
 
 cat > dune-project <<EOF
-(lang dune 3.8)
-(using coq 0.8)
+(lang dune 3.21)
+(using rocq 0.11)
 EOF
 
 export ROCQPATH="$DUNE_SOURCEROOT/_build/install/default/lib/coq/user-contrib"
