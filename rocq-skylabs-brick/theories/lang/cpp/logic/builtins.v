@@ -68,6 +68,9 @@ Section wp_builtin.
   Axiom wp_expect : forall exp c Q,
       Q exp |-- wp_builtin "__builtin_expect" (Tfunction Tlong (Tlong :: Tlong :: nil)) (exp :: c :: nil) Q.
 
+  Axiom wp_move : forall ty arg Q,
+      Q arg |-- wp_builtin "move" (Tfunction (Trv_ref ty) [ty]) (arg :: nil) Q.
+
   (** Bit computations
    *)
 
