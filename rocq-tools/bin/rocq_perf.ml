@@ -19,7 +19,7 @@ open Rocq_tools
 open Rocq_tools.Extra
 
 let check_no_comp () =
-  let _NO_COMP = "COQC_PERF_NO_COMPILATION" in
+  let _NO_COMP = "ROCQ_PERF_NO_COMPILATION" in
   match Sys.getenv_opt _NO_COMP with
   | None          -> ()
   | Some("false") -> ()
@@ -27,14 +27,6 @@ let check_no_comp () =
       panic "Error: failed following %s." _NO_COMP
   | Some(_)       ->
       panic "Error: %s can only have value \"true\" or \"false\"." _NO_COMP
-
-let coqc_command : string list -> string = fun args ->
-  let coqc, extra_args =
-    match Sys.getenv_opt "DUNE_SOURCEROOT" with
-    | None       -> ("coqc", [])
-    | Some(_) -> ("rocq", ["c"])
-  in
-  Filename.quote_command coqc (extra_args @ args)
 
 type files = {
   glob : string;
@@ -45,14 +37,21 @@ type files = {
   stdout : string;
 }
 
-let (cmd, files) =
-  let args = List.tl (Array.to_list Sys.argv) in
+let rocq_bin =
+  match Sys.getenv_opt "DUNE_SOURCEROOT" with
+  | None       -> "rocq"
+  | Some(root) -> Filename.concat root "_build/install/default/bin/rocq"
+
+let rocq_command args = Filename.quote_command rocq_bin args
+
+let default args = (rocq_command args, None)
+
+let compile args =
   if List.mem "-profile" args then
     panic "Error: option \"-profile\" not supported (used internally).";
   let is_vfile arg = String.ends_with ~suffix:".v" arg in
   match List.filter is_vfile args with
-  | [] ->
-      (coqc_command args, None)
+  | []      -> default args
   | [vfile] ->
       check_no_comp ();
       let base = Filename.chop_extension vfile in
@@ -70,7 +69,9 @@ let (cmd, files) =
         ("BR_LOG_FILE=" ^ Filename.quote files.log) ::
         []
       in
-      let cmd = coqc_command ("-profile" :: files.perf :: args) in
+      let cmd =
+        rocq_command ("compile" :: "-profile" :: files.perf :: args)
+      in
       let cmd = String.concat " " (env @ [cmd]) in
       let cmd =
         Printf.sprintf
@@ -80,8 +81,13 @@ let (cmd, files) =
       let cmd = "set -o pipefail; " ^ cmd in
       let cmd = "bash -c '" ^ cmd ^ "'" in
       (cmd, Some(files))
-  | _ ->
-      panic "Error: multiple \".v\" files given."
+  | _       -> panic "Error: multiple \".v\" files given."
+
+let (cmd, files) =
+  let args = List.tl (Array.to_list Sys.argv) in
+  match args with
+  | "compile" :: args | "c" :: args -> compile args
+  | _ -> default args
 
 let embed_perf_and_summary glob perf_file summary_file =
   let json =

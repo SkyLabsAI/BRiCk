@@ -19,7 +19,7 @@ the following, assuming the package is installed.
 (env
  (...
   (binaries
-   (coqc-perf as coqc)
+   (rocq-perf as rocq)
    ...)
   ...)
  ...)
@@ -30,7 +30,7 @@ rely on relative paths to the executable instead. For instance:
 (env
  (sl_timing ; profile with timing enabled
   (binaries
-   (.../rocq-tools/bin/coqc_perf.exe as coqc)
+   (.../rocq-tools/bin/rocq_perf.exe as coqc)
    ...)
   ; Other flags
   ...)

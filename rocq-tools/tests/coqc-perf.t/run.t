@@ -34,12 +34,12 @@ Running coqc
 
 Running our coqc wrapper
 
-  $ coqc-perf -color on small.v
-  $ coqc-perf -color on medium.v
-  $ coqc-perf -color on large.v
-  $ coqc-perf -color on huge.v
-  $ coqc-perf -color on medium_variation.v
-  $ coqc-perf -color on err_out.v > out.txt 2> err.txt
+  $ rocq-perf compile -color on small.v
+  $ rocq-perf compile -color on medium.v
+  $ rocq-perf compile -color on large.v
+  $ rocq-perf compile -color on huge.v
+  $ rocq-perf compile -color on medium_variation.v
+  $ rocq-perf compile -color on err_out.v > out.txt 2> err.txt
   $ cat out.txt
   nat : Set
   

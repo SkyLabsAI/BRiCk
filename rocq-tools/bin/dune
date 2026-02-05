@@ -1,16 +1,15 @@
-; Wrapper for "coqc" that records data into the ".glob" file.
+; Wrapper for "rocq" that records data into the ".glob" file.
 (executable
- (name coqc_perf)
- (public_name coqc-perf)
- (modules coqc_perf rocq_dummy)
+ (name rocq_perf)
+ (public_name rocq-perf)
+ (modules rocq_perf rocq_dummy)
  (package rocq-tools)
  (libraries rocq_tools camlzip))
 
 (rule
-  (target rocq_dummy.ml)
-  (deps (package rocq-core))
-  (action (run touch %{target}))
-)
+ (target rocq_dummy.ml)
+ (deps (package rocq-core))
+ (action (run touch %{target})))
 
 ; Program generating an HTML performance diff.
 (executable
