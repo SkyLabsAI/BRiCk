@@ -1,7 +1,7 @@
 # _CoqProject generator
 
 This script will generate an approximate `_CoqProject` file from a dune project, by parsing
-all `coq.theory` stanzas in `dune` files to generate `-Q` mappings.
+all `rocq.theory` stanzas in `dune` files to generate `-Q` mappings.
 
 ## Installing dependencies
 

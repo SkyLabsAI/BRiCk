@@ -7,4 +7,4 @@
   coq-core.vernac
   coq-core.plugins.ltac))
 
-(coq.pp (modules cpp2v_commands))
+(rocq.pp (modules cpp2v_commands))

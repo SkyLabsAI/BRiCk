@@ -13,7 +13,7 @@ license: "LicenseRef-BedRock"
 homepage: "https://github.com/SkyLabsAI/BRiCk"
 bug-reports: "https://github.com/SkyLabsAI/BRiCk/issues"
 depends: [
-  "dune" {>= "3.16"}
+  "dune" {>= "3.21"}
   "coq-core"
   "stdlib-extra"
   "odoc" {with-doc}
@@ -32,3 +32,4 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/SkyLabsAI/BRiCk.git"
+x-maintenance-intent: ["(latest)"]

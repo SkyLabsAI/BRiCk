@@ -7,6 +7,6 @@
 
 (env
  (_
-  (coq
+  (rocq
    (flags (:standard %{read-lines:flags/coqc}))
-   (coqdoc_flags %{read-lines:flags/coqdoc}))))
+   (rocqdoc_flags %{read-lines:flags/coqdoc}))))

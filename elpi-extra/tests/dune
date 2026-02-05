@@ -1,6 +1,6 @@
 (include_subdirs qualified)
 
-(coq.theory
+(rocq.theory
  (name skylabs_tests.elpi.extra)
  (theories skylabs.elpi.extra))
 

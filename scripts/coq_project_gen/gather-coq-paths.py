@@ -32,7 +32,7 @@ def get_args(file_path, prefix=None):
         physical_path = physical_path[2:]
     if prefix:
         physical_path = f'{prefix}/{physical_path}'
-    theory = find_key('coq.theory', data)
+    theory = find_key('rocq.theory', data)
     if theory is None:
         return []
     logical_path = find_key('name', theory)

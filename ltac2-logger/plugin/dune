@@ -7,4 +7,4 @@
   rocq-extra
   logger-lib))
 
-(coq.pp (modules g_ext_flags))
+(rocq.pp (modules g_ext_flags))

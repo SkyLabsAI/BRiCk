@@ -1,5 +1,5 @@
 (include_subdirs qualified)
-(coq.theory
+(rocq.theory
  (name skylabs.prelude)
  (package rocq-skylabs-prelude)
  (theories

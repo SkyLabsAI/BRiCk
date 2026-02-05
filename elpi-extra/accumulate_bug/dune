@@ -1,6 +1,6 @@
 (include_subdirs qualified)
 
-(coq.theory
+(rocq.theory
  (name accumulate_bug)
  (theories elpi))
 

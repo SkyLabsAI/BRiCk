@@ -1,4 +1,4 @@
 (env
  (_
-  (coq
-   (coqdoc_flags %{read-lines:flags/coqdoc}))))
+  (rocq
+   (rocqdoc_flags %{read-lines:flags/coqdoc}))))

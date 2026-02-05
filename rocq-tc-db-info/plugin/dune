@@ -7,4 +7,4 @@
   coq-core.vernac
   rocq-skylabs-rocq-internals))
 
-(coq.pp (modules g_hint_commands))
+(rocq.pp (modules g_hint_commands))

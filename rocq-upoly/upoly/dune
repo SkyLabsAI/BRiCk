@@ -1,6 +1,6 @@
 (include_subdirs qualified)
 
-(coq.theory
+(rocq.theory
  (name skylabs.upoly)
  (package rocq-upoly)
  (theories stdpp Stdlib))

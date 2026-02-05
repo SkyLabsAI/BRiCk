@@ -3,7 +3,7 @@ opam-version: "2.0"
 synopsis: "Ltac2 plugin to access OpenAI bindings."
 license: "LicenseRef-LICENSE-BedRock"
 depends: [
-  "dune" {>= "3.13"}
+  "dune" {>= "3.21"}
   "coq-core"
   "stdlib-extra"
   "odoc" {with-doc}
@@ -21,3 +21,4 @@ build: [
     "@doc" {with-doc}
   ]
 ]
+x-maintenance-intent: ["(latest)"]

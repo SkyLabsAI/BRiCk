@@ -13,7 +13,7 @@ license: "LGPL-2.1-or-later"
 homepage: "https://github.com/SkyLabsAI/BRiCk"
 bug-reports: "https://github.com/SkyLabsAI/BRiCk/issues"
 depends: [
-  "dune" {>= "3.14"}
+  "dune" {>= "3.21"}
   "rocq-lens"
   "coq-elpi"
   "odoc" {with-doc}
@@ -32,3 +32,4 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/SkyLabsAI/BRiCk.git"
+x-maintenance-intent: ["(latest)"]
