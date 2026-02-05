@@ -1,4 +1,6 @@
 (env
  (_
   (rocq
-   (rocqdoc_flags %{read-lines:flags/coqdoc}))))
+   (rocqdoc_flags %{read-lines:flags/coqdoc})
+   (rocqdoc_header flags/header.html)
+   (rocqdoc_footer flags/footer.html))))

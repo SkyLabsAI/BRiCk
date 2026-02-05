@@ -35,11 +35,6 @@ SED = $(shell (which gsed || which sed) 2> /dev/null)
 CP = $(shell (which gcp || which cp) 2> /dev/null)
 
 doc:
-	$(Q)rm -rf /tmp/coqdocjs
-	$(Q)mkdir -p /tmp/coqdocjs/extra
-# Referenced in `flags/coqdoc`
-	$(Q)echo '{{{HEADER}}}' > /tmp/coqdocjs/extra/fake-header.html
-	$(Q)echo '{{{FOOTER}}}' > /tmp/coqdocjs/extra/fake-footer.html
 	$(Q)rm -rf $(DOC_PATH)/sphinx/_static/coqdoc
 	$(Q)mkdir -p $(DOC_PATH)/sphinx/_static/css/coqdocjs $(DOC_PATH)/sphinx/_static/js/coqdocjs
 	$(Q)$(CP) -r coqdocjs/extra/resources/*.css $(DOC_PATH)/sphinx/_static/css/coqdocjs
@@ -51,10 +46,6 @@ doc:
 	$(Q)rm -rf ${COQDOC_DIR}
 	$(Q)mkdir -p ${COQDOC_DIR}
 	$(Q)$(CP) -r -t ${COQDOC_DIR} $$(find ${BUILD_ROOT} -type d -name '*.html')
-	$(Q)find ${COQDOC_DIR} -type f -name '*.html' \
-		| xargs $(SED) -i \
-		-e '/{{{FOOTER}}}/{' -e 'r coqdocjs/extra/footer.html' -e 'd' -e '}' \
-		-e '/{{{HEADER}}}/{' -e 'r coqdocjs/extra/header.html' -e 'd' -e '}'
 	$(Q)uv run --with-requirements python_requirements.txt $(MAKE) -C $(DOC_PATH) html
 .PHONY: doc
 

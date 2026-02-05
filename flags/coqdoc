@@ -12,7 +12,3 @@ iris
 --external
 https://plv.mpi-sws.org/coqdoc/stdpp/
 stdpp
---with-header
-/tmp/coqdocjs/extra/fake-header.html
---with-footer
-/tmp/coqdocjs/extra/fake-footer.html
