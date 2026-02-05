@@ -100,7 +100,7 @@ Module Type Stmt.
       match ds with
       | nil => k ρ free
       | Bvar x ty init :: ds =>
-          Forall p, wp_initialize ρ_init ty p init (fun free' => wp_destructure ρ_init ds (Rbind x p ρ) k (free' >*> free)%free)
+          Forall p, wp_initialize ρ_init ty p init (fun free' => wp_destructure ρ_init ds (Rbind x p ρ) k (FreeTemps.delete ty p >*> free' >*> free)%free)
       | Bbind x _ init :: ds =>
           wp_glval tu ρ_init init (fun p free' => wp_destructure ρ_init ds (Rbind x p ρ) k (free' >*> free)%free)
       end.
