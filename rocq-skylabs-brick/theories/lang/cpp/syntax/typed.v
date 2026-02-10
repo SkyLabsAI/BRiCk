@@ -92,6 +92,7 @@ Module decltype.
     #[local] Instance M_Bind : MBind M := _.
     #[local] Instance M_Fail : MFail M := _.
     #[local] Instance M_Throw : Trace Error.t M := _.
+    #[local] Instance M_Alternative : Alternative M := _.
     #[local] Hint Opaque M : typeclass_instances.
 
     Definition trace {T : Set} {U} (v : T) (m : M U) : M U :=
@@ -862,6 +863,7 @@ Module decltype.
     Definition big_op `{Mon : monoid.Monoid m} `{Traverse T} (ls : T m) : m :=
       writer.value $ traverse (F:=writer.M m) (T:=T) (writer.tell) ls.
 
+
     Section var_decl.
       Context (of_expr : Expr -> M decltype).
 
@@ -883,8 +885,24 @@ Module decltype.
               match oinit with
               | None => mret tt
               | Some init =>
-                  let* _ := with_var lname ty $ of_expr init >>= can_initialize ty in
-                  mret tt
+                  let default :=
+                    let* _ := with_var lname ty $ of_expr init >>= can_initialize ty in
+                    mret tt
+                  in
+                  if init is Estring chars scty then
+                      match qual_norm tqualified ty with
+                      | Tarray cty dsz =>
+                          let* _ := can_initialize cty scty in
+                          let* _ := guard (1 + literal_string.lengthN chars <= dsz)%N in
+                          mret tt
+                      | Tqualified cv (Tarray cty dsz) =>
+                          let* _ := can_initialize (tqualified cv cty) scty in
+                          let* _ := guard (1 + literal_string.lengthN chars <= dsz)%N in
+                          mret tt
+                      | _ => default
+                      end
+                  else
+                    default
               end
             in
             mret ({| _bindings := [(lname, ty)] |})
