@@ -11,6 +11,8 @@ if(DEFINED ENV{BUILD_TYPE})
   set(CMAKE_BUILD_TYPE ${BUILD_TYPE})
 endif()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # Picks the newest version of clang, see https://github.com/CastXML/CastXML/issues/148
 set(CMAKE_FIND_PACKAGE_SORT_ORDER NATURAL)
 set(CMAKE_FIND_PACKAGE_SORT_DIRECTION DEC)
