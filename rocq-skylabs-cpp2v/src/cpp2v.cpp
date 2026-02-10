@@ -70,6 +70,11 @@ static cl::opt<bool> NoElaborate(
     cl::desc("do not elaborate templates and un-forced definitions"),
     cl::Optional, cl::cat(Cpp2V));
 
+static cl::opt<bool> Elaborate(
+    "elaborate",
+    cl::desc("Elaborate templates and un-forced definitions. This is unsafe in general and can cause segfaults."),
+    cl::Optional, cl::cat(Cpp2V));
+
 static cl::opt<bool> Version("cpp2v-version",
                              cl::desc("print version and exit"), cl::Optional,
                              cl::ValueOptional, cl::cat(Cpp2V));
@@ -148,11 +153,18 @@ public:
         if (Compiler.getDiagnostics().getNumErrors() > 0) {
             return nullptr;
         }
+        bool should_elaborate = true; // TODO: change the default to false!
+        if (Elaborate) {
+            should_elaborate = true;
+        }
+        if (NoElaborate) {
+            should_elaborate = false;
+        }
         auto *result =
             new ToCoqConsumer(&Compiler, to_opt(VFileOutput), to_opt(NamesFile),
                               to_opt(Templates), to_opt(NameTest),
                               Trace::fromBits(TraceBits.getBits()), Comment,
-                              !NoSharing, CheckTypes, !NoElaborate, !NoAliases,
+                              !NoSharing, CheckTypes, should_elaborate, !NoAliases,
                               to_opt(Interactive), to_opt(Attributes));
         return std::unique_ptr<clang::ASTConsumer>(result);
     }
