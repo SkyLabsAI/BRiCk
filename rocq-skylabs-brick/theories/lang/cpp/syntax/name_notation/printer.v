@@ -144,14 +144,14 @@ Section with_lang.
 
   Fixpoint printN (inst : PrimString.string) (nm : name) : option PrimString.string :=
     match nm with
-    | Nglobal an => printAN printT None inst an
-    | Ndependent an => (fun b => "typename " ++ b) <$> printT an
+    | Nglobal an => printAN (printT true) None inst an
+    | Ndependent an => (fun b => "typename " ++ b) <$> printT false an
     | Nscoped base n =>
-        (fun b n => b ++ "::" ++ n) <$> printN "" base <*> printAN printT (topName base) inst n
+        (fun b n => b ++ "::" ++ n) <$> printN "" base <*> printAN (printT true) (topName base) inst n
     | Ninst base i =>
         let fix printTA ta :=
           match ta with
-          | Atype t => printT t
+          | Atype t => printT false t
           | Avalue e => printE e
           | Apack ts =>
               ((fun tas => "..." ++ (angles $ sepBy ", " tas)) <$> traverse printTA ts)
@@ -165,7 +165,7 @@ Section with_lang.
     | Nunsupported note => mfail
     end
 
-  with printT (ty : type) : option PrimString.string :=
+  with printT (is_arg : bool) (ty : type) : option PrimString.string :=
     match ty with
     | Tint => mret "int"
     | Tuint => mret "unsigned int"
@@ -200,34 +200,36 @@ Section with_lang.
             end
           in
           (fun ret args => ret ++ "(*)(" ++ sepBy "," (add_dots args) ++ ")")
-            <$> printT ret <*> traverse printT args
+            <$> printT true ret <*> traverse (printT true) args
         else mfail
-    | Tptr t => postfix "*" <$> printT t
+    | Tptr t => postfix "*" <$> printT false t
     | Tref t =>
         match t with
-        | Tref _ | Trv_ref _ => postfix " &" <$> printT t
-        | _ => postfix "&" <$> printT t
+        | Tref _ | Trv_ref _ => postfix " &" <$> printT false t
+        | _ => postfix "&" <$> printT false t
         end
     | Trv_ref t =>
         match t with
-        | Tref _ | Trv_ref _ => postfix " &&" <$> printT t
-        | _ => postfix "&&" <$> printT t
+        | Tref _ | Trv_ref _ => postfix " &&" <$> printT false t
+        | _ => postfix "&&" <$> printT false t
         end
-    | Tmember_pointer cls t => (fun t c => t ++ " " ++ c ++ "::*") <$> printT t <*> printT cls
+    | Tmember_pointer cls t => (fun t c => t ++ " " ++ c ++ "::*") <$> printT false t <*> printT false cls
     | Tqualified QM _ => mfail
     | Tqualified _q (Tqualified _ _) => mfail
        (* ^^ we reject sequences of [Tqualified] because it is not invertible *)
     | Tqualified cv t =>
-        let q_ls := ((if q_const cv then ["const"] else []) ++
-                    (if q_volatile cv then ["volatile"] else []))%list in
-        match t with
-        | Tptr _ | Tref _ | Trv_ref _ => fun t => sepBy " " $ t :: q_ls
-        | _ => fun t => sepBy " " $ q_ls ++ [t]
-        end%list <$> printT t
+        if is_arg then mfail
+        else
+          let q_ls := ((if q_const cv then ["const"] else []) ++
+                      (if q_volatile cv then ["volatile"] else []))%list in
+          match t with
+          | Tptr _ | Tref _ | Trv_ref _ => fun t => sepBy " " $ t :: q_ls
+          | _ => fun t => sepBy " " $ q_ls ++ [t]
+          end%list <$> printT is_arg t
     | Tvoid => mret "void"
-    | Tarray t n => (fun t => t ++ "[" ++ showN n ++ "]") <$> printT t
-    | Tincomplete_array t => postfix "[]" <$> printT t
-    | Tvariable_array t e => (fun t n => t ++ "[" ++ n ++ "]") <$> printT t <*> printE e
+    | Tarray t n => if is_arg then mfail else (fun t => t ++ "[" ++ showN n ++ "]") <$> printT false t
+    | Tincomplete_array t => if is_arg then mfail else postfix "[]" <$> printT false t
+    | Tvariable_array t e => if is_arg then mfail else (fun t n => t ++ "[" ++ n ++ "]") <$> printT false t <*> printE e
     | Tdecltype e => (fun e => "decltype((" ++ e ++ "))") <$> printE e
     | Texprtype e => (fun e => "decltype(" ++ e ++ ")") <$> printE e
     | Tnamed nm => printN "" nm
@@ -241,8 +243,8 @@ Section with_lang.
         in
         if ft.(ft_cc) is CC_C then
           (fun t tas => t ++ parens (sepBy ", " $ add_dots tas))
-            <$> printT ft.(ft_return)
-            <*> traverse (T:=eta list) (F:=eta option) printT ft.(ft_params)
+            <$> printT true ft.(ft_return)
+            <*> traverse (T:=eta list) (F:=eta option) (printT true) ft.(ft_params)
         else mfail
     | Tarch _ note => mfail
     | Tunsupported note => mfail
@@ -278,7 +280,7 @@ Definition print_name (input : name) : option PrimString.string :=
   printN "" input.
 
 Definition print_type (input : type) : option PrimString.string :=
-  printT input.
+  printT false input.
 
 Module Type TESTS.
   #[local] Definition TEST (input : PrimString.string) (nm : name) : Prop :=
