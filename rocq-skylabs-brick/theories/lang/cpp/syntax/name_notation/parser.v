@@ -237,7 +237,7 @@ Module internal.
     Definition get_args (ls : list type) : list type :=
       match ls with
       | [Tvoid] => []
-      | _ => ls
+      | _ => to_arg_type <$> ls
       end.
 
     Definition NEXT {T} (n : nat) (f : nat -> M T) : M T :=
@@ -746,9 +746,9 @@ Module Type TESTS.
                             (Nctor [Tptr (Tqualified QC Tint); Tulong])) := eq_refl.
   Succeed Example _0 : TEST "integral" (Nglobal $ Nid "integral") := eq_refl.
   Succeed Example _0 : TEST "f<int>(int, int)" (Ninst (Nglobal $ Nfunction function_qualifiers.N "f" [Tint; Tint]) [Atype Tint]) := eq_refl.
-  Succeed Example _0 : TEST "f<int>(#e1, const #e2)" (Ninst (Nglobal $ Nfunction function_qualifiers.N "f" [Tenum (Nglobal (Nid "e1")); Tconst $ Tenum (Nglobal (Nid "e2"))]) [Atype Tint]) := eq_refl.
-  Succeed Example _0 : TEST "f(int[], int[3])" (Nglobal $ Nfunction function_qualifiers.N "f" [Tincomplete_array Tint; Tarray Tint 3]) := eq_refl.
-  Succeed Example _0 : TEST "f(const volatile int[], int[3])" (Nglobal $ Nfunction function_qualifiers.N "f" [Tincomplete_array (Tqualified QCV Tint); Tarray Tint 3]) := eq_refl.
+  Succeed Example _0 : TEST "f<int>(#e1, #e2)" (Ninst (Nglobal $ Nfunction function_qualifiers.N "f" [Tenum (Nglobal (Nid "e1")); Tenum (Nglobal (Nid "e2"))]) [Atype Tint]) := eq_refl.
+  Succeed Example _0 : TEST "f(int[], const int[3])" (Nglobal $ Nfunction function_qualifiers.N "f" [Tptr Tint; Tptr (Tconst Tint)]) := eq_refl.
+  Succeed Example _0 : TEST "f(const volatile int[], int[3])" (Nglobal $ Nfunction function_qualifiers.N "f" [Tptr (Tqualified QCV Tint); Tptr Tint]) := eq_refl.
   Succeed Example _0 : TEST "f(void)" (Nglobal $ Nfunction function_qualifiers.N "f" []) := eq_refl.
   Succeed Example _0 : TEST "::f(void)" (Nglobal $ Nfunction function_qualifiers.N "f" []) := eq_refl.
   Succeed Example _0 : TEST "operator """"_f(enum ::foo)" (Nglobal $ Nop_lit "f" [Tenum $ Nglobal $ Nid "foo"]) := eq_refl.
@@ -794,7 +794,7 @@ Module Type TESTS.
   Succeed Example _0 : TEST "foo(int(int))" (Nglobal (Nfunction function_qualifiers.N "foo" [Tfunction (FunctionType Tint [Tint])])) := eq_refl.
   Succeed Example _0 : TEST "foo(int(*)(int))" (Nglobal (Nfunction function_qualifiers.N "foo" [Tptr $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
   Succeed Example _0 : TEST "foo(int(const *)(int))" (Nglobal (Nfunction function_qualifiers.N "foo" [Tptr $ Tconst $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
-  Succeed Example _0 : TEST "foo(int(*const)(int))" (Nglobal (Nfunction function_qualifiers.N "foo" [Tconst $ Tptr $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
+  Succeed Example _0 : TEST "foo(int(*const)(int))" (Nglobal (Nfunction function_qualifiers.N "foo" [Tptr $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
   Succeed Example _0 : TEST "foo(int(C::*)(int))" (Nglobal (Nfunction function_qualifiers.N "foo" [Tmember_pointer (Tnamed $ Nglobal (Nid "C")) $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
 
   Succeed Example _0 : TEST_type "enum E()" (Tfunction (FunctionType (Tenum (Nglobal (Nid "E"))) [])) := eq_refl.
