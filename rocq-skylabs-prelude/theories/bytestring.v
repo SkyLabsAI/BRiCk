@@ -6,9 +6,8 @@
 Require Import stdpp.countable.
 Require Import stdpp.strings.
 Require Import stdpp.namespaces.
+Require Import skylabs.prelude.base.
 Require Export skylabs.prelude.bytestring_core.
-
-#[local] Set Default Proof Using "Type".
 
 (** Bytestring extensions. Integrate with stdpp and strings.
 Caveat: some lemmas here are new, not just lifting of [bytestring_core] properties. *)
@@ -26,10 +25,10 @@ Defined.
 #[global] Instance bytestring_inhabited : Inhabited bs. Proof. exact (populate ""%bs). Qed.
 
 #[global] Instance byte_to_N_inj : Inj eq eq Byte.to_N.
-Proof. intros ?? E; apply (inj Some). by rewrite <-!Byte.of_to_N, E. Qed.
+Proof. intros ?? E; apply (inj Some). by rewrite -!Byte.of_to_N E. Qed.
 #[global] Instance byte_of_N_surj : Surj eq Byte.of_N.
 Proof.
-  intros [b|]. by rewrite <-!Byte.of_to_N; eauto.
+  intros [b|]. by rewrite -!Byte.of_to_N; eauto.
   exists 256%N. by rewrite Byte.of_N_None_iff.
 Qed.
 
@@ -48,16 +47,12 @@ Qed.
 
 #[global] Instance bytestring_append_inj_r xs : Inj eq eq (BS.append xs).
 Proof.
-  induction xs as [|x xs IH]; intros ys1 ys2; try done; rewrite !BS.append_cons_l.
-  by intros [= ?%(inj (BS.append _))].
-  (* elim: xs => [|x xs /= IH] ys1 ys2 //; rewrite !BS.append_cons_l.
-  move => [/(inj (BS.append _))] //. *)
+  elim: xs => [|x xs /= IH] ys1 ys2 //; rewrite !BS.append_cons_l.
+  move => [/(inj (BS.append _))] //.
 Qed.
 #[global] Instance bytestring_append_assoc : Assoc eq BS.append.
 Proof.
-  intros xs; induction xs as [|x xs IH]; try done; intros ys zs.
-  by rewrite !BS.append_cons_l, <-IH.
-  (* elim => [|x xs IH] ys zs //=; by rewrite !BS.append_cons_l -IH. *)
+  elim => [|x xs IH] ys zs //=; by rewrite !BS.append_cons_l -IH.
 Qed.
 
 (** bytestrings *)
@@ -88,7 +83,7 @@ Module Import BS.
   Proof.
     intros *; induction b as [| a b' IHb']; simpl.
     - by reflexivity.
-    - by rewrite IHb', Ascii.byte_of_ascii_of_byte.
+    - by rewrite IHb' Ascii.byte_of_ascii_of_byte.
   Qed.
 
   Lemma to_string_of_string_inv :
@@ -97,7 +92,7 @@ Module Import BS.
   Proof.
     intros *; induction b as [| a b' IHb']; simpl.
     - by reflexivity.
-    - by rewrite IHb', Ascii.ascii_of_byte_of_ascii.
+    - by rewrite IHb' Ascii.ascii_of_byte_of_ascii.
   Qed.
 
   Definition bytes_to_string (xs : list N) : bs :=
@@ -109,7 +104,7 @@ Module Import BS.
   #[global] Instance bytes_to_string_to_bytes : Cancel eq bytes_to_string string_to_bytes.
   Proof.
     intros bs. unfold bytes_to_string, string_to_bytes; induction bs; csimpl. done.
-    by rewrite IHbs, Byte.of_to_N.
+    by rewrite IHbs Byte.of_to_N.
   Qed.
   (* TODO: [string_to_bytes (bytes_to_string bs) = bs], but it only holds for "valid" [bs]. *)
 
