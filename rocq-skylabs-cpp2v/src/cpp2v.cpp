@@ -67,7 +67,7 @@ static cl::opt<bool> Comment("comment", cl::desc("include name comments"),
 
 static cl::opt<bool> NoElaborate(
     "no-elaborate",
-    cl::desc("do not elaborate templates and un-forced definitions"),
+    cl::desc("Do not force generation of implicit member functions."),
     cl::Optional, cl::cat(Cpp2V));
 
 static cl::opt<bool> Elaborate(
