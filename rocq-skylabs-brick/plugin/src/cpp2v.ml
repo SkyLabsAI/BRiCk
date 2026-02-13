@@ -196,9 +196,9 @@ let cpp_command_prog (attrs : report_level option) name flags prog =
 
     (* Capture stdout and stderr *)
     let stderr_buffer = Buffer.create 4096 |> read_all stderr in
-    let msg_text (warn_err : string) (cpp2v_stderr : string) =
+    let msg_text (warn_err : Pp.t) (cpp2v_stderr : string) =
       Pp.(
-        str "Invoking cpp2v " ++ str warn_err ++ fnl() ++
+        str "Invoking cpp2v " ++ warn_err ++ fnl() ++
         str cpp2v_stderr ++ fnl() ++
         str "cpp2v command line:" ++ fnl() ++ str "  " ++ prlist_with_sep (fun () -> str " ") str flags)
     in
@@ -208,13 +208,20 @@ let cpp_command_prog (attrs : report_level option) name flags prog =
       | WEXITED 0 -> true
       | _ -> false
     in
+    let process_failure_str =
+      match process_status with
+      | WEXITED 0 -> ""
+      | WEXITED n -> Printf.sprintf "exited with code %d" n
+      | WSIGNALED n -> Printf.sprintf "killed by signal %d" n
+      | WSTOPPED n -> Printf.sprintf "stopped by signal %d" n
+    in
     if not success then
       if Buffer.length stderr_buffer = 0 then
-        CErrors.user_err Pp.(msg_text "failed with no error message!" "")
+        CErrors.user_err Pp.(msg_text Pp.(str process_failure_str ++ str " with no error message!") "")
       else
-        CErrors.user_err Pp.(msg_text "failed with the following warnings/errors!" (Buffer.contents stderr_buffer))
+        CErrors.user_err Pp.(msg_text Pp.(str process_failure_str ++ str " with the following warnings/errors!") (Buffer.contents stderr_buffer))
     else if Buffer.length stderr_buffer > 0 then
-      Feedback.msg_warning Pp.(msg_text "produced the following warnings!" (Buffer.contents stderr_buffer));
+      Feedback.msg_warning Pp.(msg_text Pp.(str "produced the following warnings!") (Buffer.contents stderr_buffer));
 
     (* this might have problems with coq-lsp if the required file has its own requires *)
     let current_state = Vernacstate.freeze_full_state () in
