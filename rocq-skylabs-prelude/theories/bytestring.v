@@ -48,16 +48,16 @@ Qed.
 
 #[global] Instance bytestring_append_inj_r xs : Inj eq eq (BS.append xs).
 Proof.
-  induction xs as [|x xs IH]; intros [|y1 ys1] [|y2 ys2]; try done;
-    by intros [= ?%(inj (BS.append _))].
-  (* elim: xs => [|x xs /= IH] [|y1 ys1] [|y2 ys2] // [/(inj (BS.append _))] //. *)
+  induction xs as [|x xs IH]; intros ys1 ys2; try done; rewrite !BS.append_cons_l.
+  by intros [= ?%(inj (BS.append _))].
+  (* elim: xs => [|x xs /= IH] ys1 ys2 //; rewrite !BS.append_cons_l.
+  move => [/(inj (BS.append _))] //. *)
 Qed.
 #[global] Instance bytestring_append_assoc : Assoc eq BS.append.
 Proof.
-  intros xs ys zs.
-  induction xs as [|x xs IH]; destruct ys as [|y ys], zs as [|z zs];
-    simpl; try done; by rewrite <-IH.
-  (* elim => [|x xs IH] [|y ys] [|z zs] //=; by rewrite -IH. *)
+  intros xs; induction xs as [|x xs IH]; try done; intros ys zs.
+  by rewrite !BS.append_cons_l, <-IH.
+  (* elim => [|x xs IH] ys zs //=; by rewrite !BS.append_cons_l -IH. *)
 Qed.
 
 (** bytestrings *)
