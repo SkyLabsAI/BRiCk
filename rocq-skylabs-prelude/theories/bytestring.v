@@ -10,7 +10,8 @@ Require Export skylabs.prelude.bytestring_core.
 
 #[local] Set Default Proof Using "Type".
 
-(** Bytestring extensions. Integrate with stdpp and strings. *)
+(** Bytestring extensions. Integrate with stdpp and strings.
+Caveat: some lemmas here are new, not just lifting of [bytestring_core] properties. *)
 (** bytes *)
 #[global] Instance byte_inhabited : Inhabited Byte.byte := populate Byte.x00.
 #[global] Instance byte_eq_dec : EqDecision Byte.byte := Byte.byte_eq_dec.
@@ -45,6 +46,19 @@ Qed.
 #[global] Instance bytestring_parse_surj : Surj eq BS.parse :=
   cancel_surj.
 
+#[global] Instance bytestring_append_inj_r xs : Inj eq eq (BS.append xs).
+Proof.
+  induction xs as [|x xs IH]; intros [|y1 ys1] [|y2 ys2]; try done;
+    by intros [= ?%(inj (BS.append _))].
+  (* elim: xs => [|x xs /= IH] [|y1 ys1] [|y2 ys2] // [/(inj (BS.append _))] //. *)
+Qed.
+#[global] Instance bytestring_append_assoc : Assoc eq BS.append.
+Proof.
+  intros xs ys zs.
+  induction xs as [|x xs IH]; destruct ys as [|y ys], zs as [|z zs];
+    simpl; try done; by rewrite <-IH.
+  (* elim => [|x xs IH] [|y ys] [|z zs] //=; by rewrite -IH. *)
+Qed.
 
 (** bytestrings *)
 (** Many functions on byte strings are meant to be always used
