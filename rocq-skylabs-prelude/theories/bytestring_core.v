@@ -211,6 +211,24 @@ Module Import BS.
   End Bytestring_notations.
   #[local] Notation Byte b := (String b EmptyString) (only parsing).
 
+  (* Block [append] reduction on both arguments being constructors.
+  Otherwise, ["ab" ++ neutral] would simplify to [String 'a' (String 'b'
+  neutral)], which is not what we want in concrete examples.
+
+  Lemmas [append_nil_l] and [append_cons_l] still allow reduction when the left
+  argument is a constructor.
+
+  Example: [Eval cbn in (fun str => "ab" ++ str)%bs].
+  Before [λ str : bs, String "a" (String "b" str)].
+  After: [λ str : bs, ("ab" ++ str)%bs].
+  *)
+  #[global] Arguments append !_ !_ /.
+
+  Lemma append_nil_l ys : (EmptyString ++ ys = ys)%bs.
+  Proof. reflexivity. Qed.
+  Lemma append_cons_l x xs ys : (String x xs ++ ys = String x (xs ++ ys))%bs.
+  Proof. reflexivity. Qed.
+
   Lemma print_rev_append s t :
     print (rev_append s t) = List.rev_append (print s) (print t).
   Proof. by elim: s t; cbn. Qed.
