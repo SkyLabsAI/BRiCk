@@ -9,7 +9,8 @@ Require Import stdpp.namespaces.
 Require Import skylabs.prelude.base.
 Require Export skylabs.prelude.bytestring_core.
 
-(** Bytestring extensions. Integrate with stdpp and strings. *)
+(** Bytestring extensions. Integrate with stdpp and strings.
+Caveat: some lemmas here are new, not just lifting of [bytestring_core] properties. *)
 (** bytes *)
 #[global] Instance byte_inhabited : Inhabited Byte.byte := populate Byte.x00.
 #[global] Instance byte_eq_dec : EqDecision Byte.byte := Byte.byte_eq_dec.
@@ -44,6 +45,15 @@ Qed.
 #[global] Instance bytestring_parse_surj : Surj eq BS.parse :=
   cancel_surj.
 
+#[global] Instance bytestring_append_inj_r xs : Inj eq eq (BS.append xs).
+Proof.
+  elim: xs => [|x xs /= IH] ys1 ys2 //; rewrite !BS.append_cons_l.
+  move => [/(inj (BS.append _))] //.
+Qed.
+#[global] Instance bytestring_append_assoc : Assoc eq BS.append.
+Proof.
+  elim => [|x xs IH] ys zs //=; by rewrite !BS.append_cons_l -IH.
+Qed.
 
 (** bytestrings *)
 (** Many functions on byte strings are meant to be always used
