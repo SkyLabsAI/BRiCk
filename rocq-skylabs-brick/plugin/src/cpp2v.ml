@@ -13,13 +13,15 @@ type report_level =
 
 let attributes =
   let open Attributes in
+  let open Attributes.Notations in
   let name = "duplicates" in
   (Attributes.qualify_attribute "duplicates"
     @@ attribute_of_list [
         ("warn", single_key_parser ~name ~key:"warn" Warn);
         ("error", single_key_parser ~name ~key:"error" Error);
         ("ignore", single_key_parser ~name ~key:"ignore" Ignore);
-    ])
+    ]) ++
+  (map (fun x -> x = Some true) (Attributes.bool_attribute ~name:"elaborate"))
 
 let lib_ref t =
   Rocqlib.lib_ref ("skylabs.lang.cpp.parser.translation_unit." ^ t)
@@ -55,8 +57,9 @@ let force_body (t : _ Declarations.pconstant_body) =
   | Declarations.Def d -> d
   | _ -> assert false
 
-let cpp_command (attrs : report_level option) name (abi : Constrexpr.constr_expr) (defns : Constrexpr.constr_expr list) =
+let cpp_command (attrs : report_level option * bool) name (abi : Constrexpr.constr_expr) (defns : Constrexpr.constr_expr list) =
   (* Create the definition *)
+  let (check_duplicates, elaborate) = attrs in
   let env = Global.env() in
   let e_decl = to_econstr (lib_ref "t") in
   let e_decl_skip = to_econstr (lib_ref "skip") in
@@ -107,7 +110,7 @@ let cpp_command (attrs : report_level option) name (abi : Constrexpr.constr_expr
         ()
       | _ ->
         begin
-        match attrs with
+        match check_duplicates with
         | Some Error -> CErrors.user_err @@ duplicate_symbols_printer (env, evd, err)
         | Some Warn -> CWarnings.warn duplicate_symbols (env, evd, err)
         | Some Ignore | None -> ()
@@ -151,7 +154,8 @@ let temp_file ?(prefix="ocaml_temp_") ?(suffix=".tmp") content =
       let _ = try Sys.remove temp_file with _ -> () in
       raise e
 
-let cpp_command_prog (attrs : report_level option) name flags prog =
+let cpp_command_prog (attrs : report_level option * bool) name flags prog =
+  let (check_duplicates, elaborate) = attrs in
   let temp_cpp , unlink = temp_file ~suffix:".cpp" prog in
   let temp_v = Filename.temp_file "_" ".v" in
   let flags =
@@ -170,7 +174,8 @@ let cpp_command_prog (attrs : report_level option) name flags prog =
                          if we are not in a [Section] *)
     "-o"; temp_v;
     temp_cpp] @
-    (match attrs with
+    (if elaborate then ["--elaborate"] else ["--no-elaborate"]) @
+    (match check_duplicates with
      | None -> []
      | Some Error -> ["-attributes";"duplicates(error)"]
      | Some Warn -> ["-attributes";"duplicates(warn)"]
