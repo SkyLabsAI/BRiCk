@@ -53,12 +53,8 @@
 &nbsp;*)</span><br/>
 
 <br/>
-<span class="comment">(*&nbsp;Load&nbsp;both&nbsp;ssreflect&nbsp;and&nbsp;stdpp,&nbsp;using&nbsp;the&nbsp;same&nbsp;settings&nbsp;as&nbsp;Iris.&nbsp;*)</span><br/>
-<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <span class="id" title="library">Stdlib.ssr.ssreflect</span>.<br/>
-<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.prelude.html#"><span class="id" title="library">stdpp.prelude</span></a>.<br/>
-#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">general_if_scope</span>.<br/>
-#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Set</span> <span class="id" title="var">SsrOldRewriteGoalsOrder</span>. <span class="comment">(*&nbsp;See&nbsp;Coq&nbsp;issue&nbsp;5706 *)</span><br/>
-<span class="id" title="keyword">Ltac</span> <span class="id" title="var">done</span> := <span class="id" title="var">stdpp.tactics.done</span>.<br/>
+<span class="comment">(*&nbsp;Load&nbsp;both&nbsp;ssreflect&nbsp;and&nbsp;stdpp,&nbsp;using&nbsp;the&nbsp;same&nbsp;settings&nbsp;as&nbsp;Iris&nbsp;in&nbsp;<span class="inlinecode"><span class="id" title="var">vendored</span>/<span class="id" title="var">rocq</span>-<span class="id" title="var">iris</span>/<span class="id" title="var">iris</span>/<span class="id" title="var">prelude</span>/<span class="id" title="var">prelude.v</span></span>.&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.ssreflect.html#"><span class="id" title="library">stdpp.ssreflect</span></a>.<br/>
 
 <br/>
 </div>
@@ -68,9 +64,6 @@ Iris itself and many dependencies still rely on this coercion.
 </div>
 <div class="code">
 <span class="id" title="keyword">Coercion</span> <span class="id" title="definition">Z.of_nat</span> <span class="id" title="definition">:</span> <span class="id" title="definition">nat</span> <span class="id" title="definition">&gt;-&gt;</span> <span class="id" title="definition">Z</span>.<br/>
-
-<br/>
-#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="var">Mode</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#Equiv"><span class="id" title="class">Equiv</span></a> ! : <span class="id" title="var">typeclass_instances</span>.<br/>
 </div>
 <!--
 -- Copyright (c) 2020 BlueRock Security, Inc.
