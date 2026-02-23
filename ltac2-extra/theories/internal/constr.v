@@ -121,6 +121,12 @@ Module Constr.
      *)
     Ltac2 @ external restrict : bool list -> evar -> evar :=
       "ltac2_extensions" "restrict_evar".
+
+    (** See [Evd.evar_context].
+        NOTE: The context is returned from outermost to innermost binder, i.e.
+        the same order as in [Control.hyps]. *)
+    Ltac2 @ external context : evar -> (ident * constr option * constr) list :=
+      "sl.Constr" "evar_context".
   End Evar.
 
   (** [subst_evars c] returns [Some c'], where [c'] is a copy of [c] where all
