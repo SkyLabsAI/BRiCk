@@ -33,17 +33,31 @@ let evar_tag : _ Tac2core.map_tag =
     let valmap_eq = Util.Refl
   end)
 
+let define s =
+  define Tac2expr.{ mltac_plugin = "sl.Constr"; mltac_tactic = s }
+
+(* [evar_context] returns the context of an evar, i.e. the context at the time
+   it was defined. *)
+let _ =
+  define "evar_context" (evar @-> eret (list (triple ident (option constr) constr))) @@ fun e _ sigma ->
+    let (EvarInfo e) = Evd.find sigma e in
+    let ctx = Evd.evar_context e in
+    let fn acc decl =
+      let open Context.Named.Declaration in
+      (get_id decl, get_value decl, get_type decl) :: acc
+    in
+    Context.Named.fold_inside fn ~init:[] ctx
+
 (* [compare] must be kept in sync with whatever is used in [ConstrSet] and [ConstrMap] *)
 let _ =
-  define Tac2expr.{ mltac_plugin = "sl.Constr"; mltac_tactic = "compare" }
-    (valexpr @-> valexpr @-> eret int) @@ fun c1 c2 _ sigma ->
+  define "compare" (valexpr @-> valexpr @-> eret int) @@ fun c1 c2 _ sigma ->
     Constr.compare (to_constr sigma c1) (to_constr sigma c2)
 
 module ConstrSet = struct
   include Set.Make(Constr)
 
   let define s =
-    define Tac2expr.{ mltac_plugin = "sl.ConstrSet"; mltac_tactic = s }
+    Tac2externals.define Tac2expr.{ mltac_plugin = "sl.ConstrSet"; mltac_tactic = s }
 
   let repr : t Tac2ffi.repr =
     Tac2ffi.repr_ext (Tac2dyn.Val.create "ConstrSet.t")
@@ -78,7 +92,7 @@ module ConstrMap = struct
   include Map.Make(Constr)
 
   let define s =
-    define Tac2expr.{ mltac_plugin = "sl.ConstrMap"; mltac_tactic = s }
+    Tac2externals.define Tac2expr.{ mltac_plugin = "sl.ConstrMap"; mltac_tactic = s }
 
   type vmap = Tac2val.valexpr t
 

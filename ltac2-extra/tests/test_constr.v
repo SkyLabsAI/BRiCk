@@ -106,3 +106,49 @@ Module Vars_Test.
   Abort.
 
 End Vars_Test.
+
+
+Module Evar_Test.
+  Import Ltac2 Constr Unsafe Printf.
+
+  Goal forall a b : bool, exists x : unit, forall y, a = y -> x = tt /\ x = tt.
+  Proof.
+    intros.
+    Set Printing All.
+    Set Printing Existential Instances.
+    eexists ?[x].
+    lazy_match! goal with
+    | [ |- forall y (_ : a = y), ?l = _ /\ _ ] =>
+      match kind l with
+      | Evar e inst =>
+          let ctx := Evar.context e in
+          let ids := List.map (fun (id, _, _) => id) ctx in
+          Control.assert_true (List.equal Ident.equal ids [@a; @b]);
+          let inst := Array.to_list inst in
+          (* printf "inst:"; *)
+          (* List.iter (printf "%t") inst; *)
+          let cmb := List.combine ids (List.rev inst) in
+          (* printf "ids:"; *)
+          (* List.iter (printf "%I") ids; *)
+          Control.assert_true (List.for_all (fun (id, c) => Constr.equal (make_var id) c) cmb)
+      | _ => Control.throw (Invalid_argument None)
+      end
+    end.
+    intros.
+    split.
+    -
+      pose (evar := ?x).
+      Succeed ltac1:(rename a into c).
+      Fail ltac1:(rename a into c); Unification.unify TransparentState.empty constr:(?x) constr:(?x).
+      Succeed ltac1:(rename a into c); Unification.unify TransparentState.empty constr:(evar) constr:(evar).
+      Succeed ltac1:(rename a into c); Unification.unify TransparentState.empty constr:(?x@{a:=c;b:=b}) constr:(?x@{a:=c;b:=b}).
+      Fail ltac1:(rename a into c); ltac1:(instantiate (1 := if c then tt else tt)). (* solution is interpreted using the substitution defined by the instance *)
+      Succeed ltac1:(rename a into c); ltac1:(instantiate (1 := if a then tt else tt)). (* solution is interpreted using the substitution defined by the instance *)
+      subst a.
+      Succeed Unification.unify TransparentState.empty constr:(evar) constr:(evar).
+      ltac1:(instantiate (1 := if a then tt else tt)). (* solution is interpreted using the substitution defined by the instance *)
+      ltac1:(now destruct y).
+    - ltac1:(now destruct a).
+  Qed.
+
+End Evar_Test.
