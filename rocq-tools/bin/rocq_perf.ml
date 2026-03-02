@@ -40,7 +40,9 @@ type files = {
 let rocq_bin =
   match Sys.getenv_opt "DUNE_SOURCEROOT" with
   | None       -> "rocq"
-  | Some(root) -> Filename.concat root "_build/install/default/bin/rocq"
+  | Some(root) ->
+  let rocq_bin = Filename.concat root "_build/install/default/bin/rocq" in
+  if Sys.file_exists rocq_bin then rocq_bin else "rocq"
 
 let rocq_command args = Filename.quote_command rocq_bin args
 
