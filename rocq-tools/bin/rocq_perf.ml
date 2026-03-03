@@ -37,16 +37,20 @@ type files = {
   stdout : string;
 }
 
-let rocq_bin =
-  match Sys.getenv_opt "DUNE_SOURCEROOT" with
-  | None       -> "rocq"
-  | Some(root) ->
-  let rocq_bin = Filename.concat root "_build/install/default/bin/rocq" in
-  if Sys.file_exists rocq_bin then rocq_bin else "rocq"
+let rocq_command : args:string list -> string =
+  let (cmd, leading_args) =
+    match Sys.getenv_opt "DUNE_SOURCEROOT" with
+    | None       -> ("rocq", [])
+    | Some(root) ->
+    let rocq_bin = Filename.concat root "_build/install/default/bin/rocq" in
+    if Sys.file_exists rocq_bin then
+      (rocq_bin, [])
+    else
+      ("opam", ["exec"; "--"; "rocq"])
+  in
+  fun ~args -> Filename.quote_command cmd (leading_args @ args)
 
-let rocq_command args = Filename.quote_command rocq_bin args
-
-let default args = (rocq_command args, None)
+let default args = (rocq_command ~args, None)
 
 let compile args =
   if List.mem "-profile" args then
@@ -72,7 +76,7 @@ let compile args =
         []
       in
       let cmd =
-        rocq_command ("compile" :: "-profile" :: files.perf :: args)
+        rocq_command ~args:("compile" :: "-profile" :: files.perf :: args)
       in
       let cmd = String.concat " " (env @ [cmd]) in
       let cmd =
