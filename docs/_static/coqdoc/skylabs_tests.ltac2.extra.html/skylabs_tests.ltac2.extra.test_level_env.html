@@ -96,6 +96,16 @@
 &nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Goal</span> <a id="Substitute.Unnamed_thm0" class="idref" href="#Substitute.Unnamed_thm0"><span class="id" title="definition">True</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">e</span> := <span class="id" title="var">LevelEnv.empty</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">e</span> := <span class="id" title="var">LevelEnv.add_decl_level</span> <span class="id" title="var">e</span> (<span class="id" title="var">RelDecl.Def</span> (<span class="id" title="var">Binder.make</span> (<span class="id" title="var">Some</span> @<span class="id" title="var">c</span>) '<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) '3) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">ev</span>, <span class="id" title="var">inst</span>) := <span class="id" title="var">make_evar_in_level_env</span> <span class="id" title="var">true</span> <span class="id" title="var">e</span> '<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">printf</span> "%t" (<span class="id" title="var">make_evar</span> <span class="id" title="var">ev</span> <span class="id" title="var">inst</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.new_goal</span> <span class="id" title="var">ev</span> &gt; [|<span class="id" title="tactic">exact</span> &amp;<span class="id" title="var">c</span>] &gt; [<span class="id" title="tactic">exact</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#I"><span class="id" title="constructor">I</span></a>].<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
 <span class="id" title="keyword">End</span> <a class="idref" href="skylabs_tests.ltac2.extra.test_level_env.html#Substitute"><span class="id" title="module">Substitute</span></a>.<br/>
 </div>
 </div>
