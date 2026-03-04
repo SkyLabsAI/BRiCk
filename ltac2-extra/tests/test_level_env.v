@@ -74,4 +74,13 @@ Module Substitute.
     exact I.
   Qed.
 
+  Goal True.
+    intros.
+    let e := LevelEnv.empty in
+      let e := LevelEnv.add_decl_level e (RelDecl.Def (Binder.make (Some @c) 'nat) '3) in
+    let (ev, inst) := make_evar_in_level_env true e 'nat in
+    printf "%t" (make_evar ev inst);
+    Control.new_goal ev > [|exact &c] > [exact I].
+  Qed.
+
 End Substitute.
