@@ -23,6 +23,7 @@ Require Export skylabs.ltac2.extra.internal.intgraph.
 Require Export skylabs.ltac2.extra.internal.level_env.
 Require Export skylabs.ltac2.extra.internal.list.
 Require Export skylabs.ltac2.extra.internal.ltac1.
+Require Export skylabs.ltac2.extra.internal.message.
 Require Export skylabs.ltac2.extra.internal.misc.
 Require Export skylabs.ltac2.extra.internal.obj.
 Require Export skylabs.ltac2.extra.internal.oneshot.
