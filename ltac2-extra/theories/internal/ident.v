@@ -58,4 +58,7 @@ Module Ident.
     make_app1 rep (make_lambda b tt).
   Ltac2 as_rep (id : ident) : constr := as_rep' () id.
 
+  Ltac2 compare (i0 : ident) (i1 : ident) : int :=
+    String.compare (Ident.to_string i0) (Ident.to_string i1).
+
 End Ident.
