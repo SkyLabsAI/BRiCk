@@ -28,6 +28,7 @@ Require Export skylabs.ltac2.extra.internal.obj.
 Require Export skylabs.ltac2.extra.internal.oneshot.
 Require Export skylabs.ltac2.extra.internal.option.
 Require Export skylabs.ltac2.extra.internal.printf.
+Require Export skylabs.ltac2.extra.internal.reference.
 Require Export skylabs.ltac2.extra.internal.result.
 Require Export skylabs.ltac2.extra.internal.std.
 Require Export skylabs.ltac2.extra.internal.string.

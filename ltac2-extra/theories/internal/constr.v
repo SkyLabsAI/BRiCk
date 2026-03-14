@@ -68,6 +68,7 @@ Module Constr.
 
   Module Binder.
     Export Ltac2.Constr.Binder.
+    Import Ltac2.Bool.
 
     Ltac2 deconstruct (b : binder) : name * relevance * type :=
       (name b, relevance b, type b).
@@ -79,6 +80,11 @@ Module Constr.
 
     Ltac2 map_type : (type -> type) -> binder -> binder := fun f b =>
       let (name, r, ty) := deconstruct b in unsafe_make name r (f ty).
+
+    Ltac2 equal (b0 : binder) (b1 : binder) : bool :=
+      Option.equal Ident.equal (Binder.name b0) (Binder.name b1) &&
+        Constr.equal (Binder.type b0) (Binder.type b1).
+
   End Binder.
 
   Module Evar.
