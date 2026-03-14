@@ -27,4 +27,17 @@ Module Option.
     | None   => ()
     | Some v => f v
     end.
+
+  Ltac2 or_else (x : 'a option) (y : unit -> 'a option) : 'a option :=
+    match x with
+    | Some x => Some x
+    | None => y ()
+    end.
+
+  Ltac2 to_list (x : 'a option) : 'a list :=
+    match x with
+    | Some x => [x]
+    | None => []
+    end.
+
 End Option.
