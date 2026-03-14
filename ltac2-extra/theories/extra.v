@@ -13,6 +13,7 @@ Require Export skylabs.ltac2.extra.internal.constr.
 Require Export skylabs.ltac2.extra.internal.control.
 Require Export skylabs.ltac2.extra.internal.coq_option.
 Require Export skylabs.ltac2.extra.internal.env.
+Require Export skylabs.ltac2.extra.internal.fmap.
 Require Export skylabs.ltac2.extra.internal.fresh.
 Require Export skylabs.ltac2.extra.internal.fset.
 Require Export skylabs.ltac2.extra.internal.ident.
