@@ -12,6 +12,16 @@ Module List.
   Import Ltac2.
   Export Ltac2.List.
 
+  Ltac2 rec tails (xs : 'a list) : 'a list list :=
+    match xs with
+    | [] => []
+    | _x :: xs =>
+        xs :: tails xs
+    end .
+
+  Ltac2 inits (xs : 'a list) : 'a list list :=
+    List.map List.rev (tails (List.rev xs)).
+
   Ltac2 iteri2 (f : int -> 'a -> 'b -> unit) (xs : 'a list) (ys : 'b list) :=
     let rec loop i xs ys :=
       match (xs, ys) with
@@ -43,6 +53,28 @@ Module List.
   Ltac2 foldr2 (f : 'a -> 'b -> 'c -> 'c)
       (xs : 'a list) (ys : 'b list) (acc : 'c) : 'c :=
     List.fold_right2 f xs ys acc.
+
+  Ltac2 rec first_some f xs :=
+    match xs with
+    | [] => None
+    | x :: xs => match f x with
+                 | Some x => Some x
+                 | None => first_some f xs
+                 end
+    end.
+
+  Ltac2 split_at (n : int) (xs : 'a list) : 'a list * 'a list :=
+    let rec go n xs acc :=
+      if Int.le n 0 then
+        (List.rev acc, xs)
+      else
+        match xs with
+        | [] => (List.rev acc, [])
+        | x :: xs =>
+
+            go (Int.sub n 1) xs (x :: acc)
+        end in
+    go n xs [].
 
   (** Note: We have a "smart" list mapper in ML that works in the [Proofview]
       monad and uses Caml's [==] to promote sharing.
