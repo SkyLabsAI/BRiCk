@@ -8,6 +8,7 @@
 Require Import skylabs.ltac2.extra.internal.plugin.
 Require Import skylabs.ltac2.extra.internal.control.
 Require Import skylabs.ltac2.extra.internal.constr.
+Require Import skylabs.ltac2.extra.internal.fresh.
 Require Import skylabs.ltac2.extra.internal.misc.
 
 (** Minor extensions to [Ltac2.Std] *)
@@ -141,4 +142,23 @@ Module Std.
 
   Ltac2 @external typeclasses_eauto_dbs : tc_config -> hint_db list -> unit :=
     "ltac2_extensions" "typeclasses_eauto_dbs".
+
+  Ltac2 rename_ssr_vars () :=
+    let free :=
+      let free := Fresh.Free.of_goal () in
+      Ref.ref free in
+    let for_ssr_ident n :=
+      let fr := Ref.get free in
+      let (fr, n) := Fresh.for_ssr_ident fr n in
+      Ref.set free fr ;
+      n in
+    let hyps := Control.hyps () in
+    let f (h, _def, _ty) :=
+      match for_ssr_ident h with
+      | Some h' => Some (h, h')
+      | None => None
+      end in
+    let ren := List.map_filter f hyps in
+    Std.rename ren.
+
 End Std.

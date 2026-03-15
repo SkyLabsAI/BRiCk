@@ -8,7 +8,8 @@
 Require Import skylabs.ltac2.extra.internal.init.
 Require Import skylabs.ltac2.extra.internal.constr.
 Require Import skylabs.ltac2.extra.internal.char.
-Require Import Stdlib.Strings.String.
+
+Import Stdlib.Strings.String.
 
 (** Minor extensions to [Ltac2.String] *)
 Module String.

@@ -7,6 +7,10 @@
 
 Require Import skylabs.ltac2.extra.internal.plugin.
 
+(** Avoids getting module [Corelib.Classes.Init] to shadow [internal.init.Init] when imported after
+    [internal.init]. *)
+Require Stdlib.Strings.String.
+
 (** Minor extensions to [Ltac2.Init] *)
 Module Init.
   Import Ltac2.
