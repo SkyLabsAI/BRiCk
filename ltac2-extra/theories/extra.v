@@ -9,6 +9,7 @@
 
 Require Export skylabs.ltac2.extra.internal.array.
 Require Export skylabs.ltac2.extra.internal.char.
+Require Export skylabs.ltac2.extra.internal.compare.
 Require Export skylabs.ltac2.extra.internal.constr.
 Require Export skylabs.ltac2.extra.internal.control.
 Require Export skylabs.ltac2.extra.internal.coq_option.
