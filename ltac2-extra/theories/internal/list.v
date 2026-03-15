@@ -76,6 +76,55 @@ Module List.
         end in
     go n xs [].
 
+  (* [bisect_partition ps xs]
+     Assuming for some predicate [ps : 'a -> bool], [ps xs = List.for_all p xs], [bisect_partition] is
+     characterized by [bisect_partition ps xs = List.partition p xs]. It offers better performances
+     then [List.for_all] in terms of the number of calls to [ps].
+
+     If every elements [x ∈ xs] satisfies [p x], [ps] is called only once.
+
+     If only one elemeent [x ∈ xs] does *not* satisfy [p x], then
+        i)  one of two halves of [xs], the one where [x] does *not* reside, can be partitioned using
+            a single call to [ps]
+        ii) the other half can again be split into two halves, one of which requires only a single
+            call to [ps].
+            ...
+        log n) xs can be repeatedly split into two parts and [ps] will be called [log n] times,
+               where [n = length xs].
+
+     If two elements, [x, y ∈ xs] do *not* satisfy [p], [ps] will be called at most [2 * log n]
+     times (if they are located in separate halves of [xs]) and at least [log n] times (if they are
+     next to each other).
+
+     The worse case performances obtain when no two consecutive elements of [xs] both satisfy [p]. [ps]
+     will then be called [2 * n]. They can be improved by switching to linear search for small sizes of [n].
+
+     Thus, the run goes from [O(log n)] to [O(n)] depending on the number and dispersion of elements of [xs]
+     which do not satisfy [p]
+   *)
+  Ltac2 bisect_partition (ps : 'a list -> bool) (xs : 'a list) : 'a list * 'a list :=
+    let min_len := 4 in
+    let rec go len xs (acc0, acc1) :=
+      if ps xs then
+        (List.append xs acc0, acc1)
+      else if Int.le len min_len then
+        let (ys0, ys1)  :=
+            List.partition
+                     (fun l => ps [l])
+                     xs in
+        let acc0 := List.append ys0 acc0 in
+        let acc1 := List.append ys1 acc1 in
+        (acc0, acc1)
+      else
+        let len0 := Int.div len 2 in
+        let len1 := Int.sub len len0 in
+        let (xs0,  xs1)  := split_at len0 xs in
+        let (acc0, acc1) := go len1 xs1 (acc0, acc1) in
+        let (acc0, acc1) := go len0 xs0 (acc0, acc1) in
+        (acc0, acc1) in
+    let len := List.length xs in
+    go len xs ([], []).
+
   (** Note: We have a "smart" list mapper in ML that works in the [Proofview]
       monad and uses Caml's [==] to promote sharing.
 
