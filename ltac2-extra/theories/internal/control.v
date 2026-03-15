@@ -73,6 +73,39 @@ Module Control.
   Ltac2 iter_hyps : (hyp -> unit) -> unit := fun f =>
     Control.enter (fun () => List.iter f (Control.hyps ())).
 
+  (** When listing terms in a goal, [goal_location] tells us where a given term is found. *)
+  Ltac2 Type goal_location := [ Hyp(ident) | DefValue(ident) | DefType(ident) | Concl ].
+
+  Ltac2 pp_goal_location : goal_location pp := fun () x =>
+    match x with
+    | Hyp h => fprintf "hypothesis %I" h
+    | DefValue h => fprintf "local definition %I (value)" h
+    | DefType h => fprintf "local definition %I (type)" h
+    | Concl => fprintf "conclusion"
+    end.
+
+  (** List all the terms in the current goal including the conclusion and the value of local
+      definitions. The hypotheses are local definitions are listed in the order in which they appear
+      and the concludsion is listed last *)
+  Ltac2 goal_constrs () :=
+    let hyp_to_term (h,def,ty) :=
+      match def with
+      | Some def => [(DefType h, ty);(DefValue h, def)]
+      | None => [(Hyp h, ty)]
+      end in
+    let hyps := List.flat_map hyp_to_term (hyps ()) in
+    List.append hyps [(Concl, goal ())].
+
+  (** Fold over all the terms that appear in the current goal. [fold_left_goal_constrs] starts with
+      the first hypothesis and moves down toward the conclusion while [fold_right_goal_constrs]
+      starts with the conclusion and moves up to the first hypothesis. *)
+  Ltac2 fold_left_goal_constrs (f : 'a -> goal_location -> constr -> 'a) (x0 : 'a) : 'a :=
+    let g x (loc, trm) := f x loc trm in
+    List.fold_left g x0 (goal_constrs ()).
+  Ltac2 fold_right_goal_constrs (f : goal_location -> constr -> 'a -> 'a) (x0 : 'a) : 'a :=
+    let g (loc, trm) x := f loc trm x in
+    List.fold_right g (goal_constrs ()) x0.
+
   (** [is_section_variable id] returns [true] if [id] is not a variable in the
       current environment. This seems to mean "being a section variable". *)
   Ltac2 @ external is_section_variable : ident -> bool :=

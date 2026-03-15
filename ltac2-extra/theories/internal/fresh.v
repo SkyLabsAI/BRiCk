@@ -7,6 +7,7 @@
 
 Require Import skylabs.ltac2.extra.internal.init.
 Require Import skylabs.ltac2.extra.internal.constr.
+Require Import skylabs.ltac2.extra.internal.string.
 
 (** Minor extensions to [Ltac2.Fresh] *)
 Module Fresh.
@@ -26,5 +27,17 @@ Module Fresh.
       Free.t * ident :=
     let name := Constr.Unsafe.RelDecl.name decl in
     for_name free name.
+
+  Ltac2 for_ssr_ident (free : Free.t) (n : ident) : Free.t * ident option :=
+    let ns := Ident.to_string n in
+    let ns := if String.equal ns "_" then "__" else ns in
+    let n' :=
+      Option.bind (String.remove_prefix "_" ns) (fun ns =>
+      Option.bind (String.remove_suffix "_" ns) (fun ns =>
+      Some (Fresh.for_name free (Ident.of_string ns)))) in
+    match n' with
+    | Some (free, n') => (free, Some n')
+    | None => (free, None)
+    end.
 
 End Fresh.

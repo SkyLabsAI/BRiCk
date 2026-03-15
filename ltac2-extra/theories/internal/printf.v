@@ -6,10 +6,13 @@
  *)
 
 Require Import skylabs.ltac2.extra.internal.init.
+Require Import skylabs.ltac2.extra.internal.message.
+Require Import skylabs.ltac2.extra.internal.list.
+Require Import skylabs.ltac2.extra.internal.reference.
 
 (** Minor extensions to [Ltac2.Printf] *)
 Module Printf.
-  Import Ltac2 Init.
+  Import Ltac2 Init Message.
   Export Ltac2.Printf.
 
   (** Note: The following pretty-printers for base Ltac2 types are tied to
@@ -46,7 +49,7 @@ Module Printf.
 
   Ltac2 pp_list_sep : string -> 'a pp -> 'a list pp := fun sep pp () xs =>
     let sep := Message.of_string sep in
-    let rec loop xs (acc : message list) :=
+    let rec loop (xs : 'a list) (acc : message list) :=
       match xs with
       | [] => acc
       | x :: xs =>
@@ -59,7 +62,12 @@ Module Printf.
     in
     let msgs := loop xs [] in
     let msgs := List.rev msgs in
-    List.fold_left Message.concat (Message.of_string "") msgs.
+    Message.concat msgs.
+
+  Ltac2 pp_lines (pp : 'a pp) : 'a list pp :=
+    fun _ xs =>
+      Message.join_lines (List.map (pp ()) xs).
+
   Ltac2 pp_list : 'a pp -> 'a list pp := fun pp _ xs =>
     fprintf "[%a]" (pp_list_sep "; " pp) xs.
 
@@ -80,6 +88,14 @@ Module Printf.
   Ltac2 pp_reference : Std.reference pp := fun _ r =>
     let ids := Env.path r in
     pp_list_sep "." pp_ident () ids.
+
+  Ltac2 pp_short_ref : Std.reference pp := fun _ r =>
+    let ids := Env.path r in
+    let shorter := List.rev (ids :: List.tails ids) in
+    let unambiguous path :=
+      List.equal Reference.equal [r] (Env.expand path) in
+    let shorter := List.find unambiguous shorter in
+    pp_list_sep "." pp_ident () shorter.
 
   (** Just enough info to know what case you forgot. *)
   Ltac2 pp_kind_tag : Constr.Unsafe.kind pp := fun _ k =>
@@ -108,5 +124,21 @@ Module Printf.
       | Constr.Unsafe.Array _ _ _ _ => "Array"
       end
     in Message.of_string s.
+
+  Ltac2 pp_prefix (s : string) (pp : 'a pp) : 'a pp :=
+  fun _ x =>
+    Message.append (Message.of_string s) (pp () x).
+
+  Ltac2 pp_hbox (pp : 'a pp) : 'a pp :=
+    fun () x => Message.hbox (pp () x).
+
+  Ltac2 pp_vbox (i : int) (pp : 'a pp) : 'a pp :=
+    fun () x => Message.vbox i (pp () x).
+
+  Ltac2 pp_hvbox (i : int) (pp : 'a pp) : 'a pp :=
+    fun () x => Message.hvbox i (pp () x).
+
+  Ltac2 pp_hovbox (i : int) (pp : 'a pp) : 'a pp :=
+    fun () x => Message.hovbox i (pp () x).
 
 End Printf.
