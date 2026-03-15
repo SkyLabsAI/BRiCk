@@ -34,4 +34,6 @@ Module Init.
   (** Type of pretty-printers for type ['a], suited to format string [%a]. *)
   Ltac2 Type 'a pp := unit -> 'a -> message.
 
+  Ltac2 Type comparison := [ Lt | Eq | Gt ].
+
 End Init.
