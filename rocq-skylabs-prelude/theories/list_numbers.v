@@ -417,14 +417,18 @@ Section listN.
      @lengthN_rotateN, @lengthN_replicateN,
      @lengthN_reverse ).
 
-  Lemma lengthN_zip {B} xs (ys : list B) :
-    lengthN (zip xs ys) = (lengthN xs) `min` (lengthN ys).
+  Lemma lengthN_zip_with {B C} {f : A -> B -> C} (xs : list A) (ys : list B):
+    lengthN (zip_with f xs ys) = (lengthN xs) `min` (lengthN ys).
   Proof.
     move: ys; induction xs; first
       by move=>?; rewrite /= !lengthN_nil N.min_0_l.
     move=>ys; move: xs IHxs; induction ys; first done.
     by rewrite /lengthN=>xs IH; rewrite //= !Nat2N.inj_succ -N.succ_min_distr IH.
   Qed.
+
+  Lemma lengthN_zip {B} xs (ys : list B) :
+    lengthN (zip xs ys) = (lengthN xs) `min` (lengthN ys).
+  Proof. apply lengthN_zip_with. Qed.
 
   Lemma length_zip_with_le {B C} {f : A -> B -> C} (xs : list A) (ys : list B)
     (Hlen : (length xs <= length ys)%nat) :

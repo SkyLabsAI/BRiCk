@@ -417,6 +417,8 @@ Section lists.
     Proof. apply NoDup_zip_with_snd_gen. naive_solver. Qed.
   End zip_with.
 
+  Arguments zip_with : simpl nomatch.
+
   Lemma NoDup_zip_fst xs ys :
     NoDup xs → NoDup (zip xs ys).
   Proof. exact: NoDup_zip_with_fst_inj. Qed.
