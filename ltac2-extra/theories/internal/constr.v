@@ -481,15 +481,19 @@ Module Constr.
       Ltac2 invalid_arg (whence : string) (t : constr) : 'a :=
         invalid_arg' whence (Message.of_constr t).
 
+      Ltac2 of_app : constr -> (constr * constr array) := fun t =>
+        let rec go trm acc :=
+          match Unsafe.kind trm with
+          | Unsafe.App fn args => go fn (args :: acc)
+          | _ => (trm, Array.concat acc)
+          end in
+        go t [].
+
       Ltac2 of_ind_app_opt : constr -> (constr * constr array) option := fun t =>
-        match kind t with
-        | Ind _ _    => Some (t, Array.make 0 t)
-        | App c args =>
-            match kind c with
-            | Ind _ _ => Some (c, args)
-            | _       => None
-            end
-        | _          => None
+        let (c, args) := of_app t in
+        match kind c with
+        | Ind _ _ => Some (c, args)
+        | _       => None
         end.
 
       Ltac2 of_ind_app : constr -> constr * constr array := fun t =>
@@ -501,14 +505,10 @@ Module Constr.
 
       Ltac2 of_constructor_app_opt :
           constr -> (constr * instance * constr array) option := fun t =>
-        match kind t with
-        | Constructor _ inst => Some (t, inst, Array.make 0 t)
-        | App c args         =>
-            match kind c with
-            | Constructor _ inst => Some (c, inst, args)
-            | _       => None
-            end
-        | _          => None
+        let (c, args) := of_app t in
+        match kind c with
+        | Constructor _ inst => Some (c, inst, args)
+        | _       => None
         end.
 
       Ltac2 of_constructor_app : constr -> constr * instance * constr array :=
