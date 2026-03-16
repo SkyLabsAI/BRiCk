@@ -54,12 +54,12 @@ Module List.
       (xs : 'a list) (ys : 'b list) (acc : 'c) : 'c :=
     List.fold_right2 f xs ys acc.
 
-  Ltac2 rec first_some f xs :=
+  Ltac2 rec find_map_opt (f : 'a -> 'b option) (xs : 'a list) : 'b option :=
     match xs with
     | [] => None
     | x :: xs => match f x with
                  | Some x => Some x
-                 | None => first_some f xs
+                 | None => find_map_opt f xs
                  end
     end.
 
