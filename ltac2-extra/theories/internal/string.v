@@ -50,12 +50,12 @@ Module String.
   Ltac2 newline () : string :=
     String.make 1 (Char.of_int 10).
 
-  Ltac2 is_prefix_of (pre : string) (s : string) : bool :=
+  Ltac2 starts_with (pre : string) (s : string) : bool :=
     let len_pre := String.length pre in
     let len_s := String.length s in
     Int.le len_pre len_s && String.equal pre (String.sub s 0 len_pre).
 
-  Ltac2 is_suffix_of (suff : string) (s : string) : bool :=
+  Ltac2 ends_with (suff : string) (s : string) : bool :=
     let len_suff := String.length suff in
     let len_s := String.length s in
     let len_pre := Int.sub len_s len_suff in

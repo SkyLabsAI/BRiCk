@@ -28,7 +28,7 @@ Module FSet.
   Ltac2 of_list (tag : 'a FSet.Tags.tag) (xs : 'a list) : 'a FSet.t :=
     List.foldl FSet.add xs (FSet.empty tag).
 
-  Ltac2 pp_fset (pp_a : 'a pp) : 'a FSet.t pp :=
+  Ltac2 pp (pp_a : 'a pp) : 'a FSet.t pp :=
     fun () set =>
       fprintf "{%a}" (pp_list_sep "," pp_a) (FSet.elements set).
 

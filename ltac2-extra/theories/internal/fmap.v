@@ -35,7 +35,7 @@ Module FMap.
     filter_mapi
       (fun k v => if f k v then Some v else None).
 
-  Ltac2 pp_fmap (pp_k : 'k pp) (pp_a : 'a pp) : ('k, 'a) FMap.t pp :=
+  Ltac2 pp (pp_k : 'k pp) (pp_a : 'a pp) : ('k, 'a) FMap.t pp :=
     fun () map =>
     if FMap.is_empty map then
       fprintf "{}"
