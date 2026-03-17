@@ -1057,12 +1057,12 @@ Module Type Expr.
     Axiom wp_xval_condition : Reduce (wp_cond wp_xval).
     Axiom wp_operand_condition : Reduce (wp_cond wp_operand).
 
-    Axiom wp_init_condition : forall ty addr tst th el Q,
+    Axiom wp_init_condition : forall ity ty addr tst th el Q,
         Unfold WPE.wp_test (wp_test tst (fun c free =>
            if c
-           then wp_init ty addr th (fun frees => Q (frees >*> free))
-           else wp_init ty addr el (fun frees => Q (frees >*> free))))
-        |-- wp_init ty addr (Eif tst th el ty) Q.
+           then wp_init ity addr th (fun frees => Q (frees >*> free))
+           else wp_init ity addr el (fun frees => Q (frees >*> free))))
+        |-- wp_init ity addr (Eif tst th el ty) Q.
 
     Axiom wp_operand_implicit : forall e Q,
         wp_operand e Q |-- wp_operand (Eimplicit e) Q.
