@@ -24,7 +24,9 @@
 <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.ltac2.extra.internal.init.html#"><span class="id" title="library">skylabs.ltac2.extra.internal.init</span></a>.<br/>
 <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.ltac2.extra.internal.constr.html#"><span class="id" title="library">skylabs.ltac2.extra.internal.constr</span></a>.<br/>
 <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.ltac2.extra.internal.char.html#"><span class="id" title="library">skylabs.ltac2.extra.internal.char</span></a>.<br/>
-<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Stdlib.Strings.String</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">Stdlib.Strings.String</span>.<br/>
 
 <br/>
 </div>
@@ -34,7 +36,7 @@ Minor extensions to <span class="inlinecode"><span class="id" title="var">Ltac2.
 </div>
 <div class="code">
 <span class="id" title="keyword">Module</span> <a id="String" class="idref" href="#String"><span class="id" title="module">String</span></a>.<br/>
-&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">Ltac2</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Classes.Init.html#"><span class="id" title="module">Init</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">Ltac2</span> <a class="idref" href="skylabs.ltac2.extra.internal.init.html#Init"><span class="id" title="module">Init</span></a> <span class="id" title="module">Ltac2.Bool</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Export</span> <span class="id" title="module">Ltac2.String</span>.<br/>
 
 <br/>
@@ -90,6 +92,45 @@ Minor extensions to <span class="inlinecode"><span class="id" title="var">Ltac2.
 <br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">newline</span> () : <span class="id" title="var">string</span> :=<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">String.make</span> 1 (<span class="id" title="var">Char.of_int</span> 10).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">starts_with</span> (<span class="id" title="var">pre</span> : <span class="id" title="var">string</span>) (<span class="id" title="var">s</span> : <span class="id" title="var">string</span>) : <span class="id" title="var">bool</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">len_pre</span> := <span class="id" title="var">String.length</span> <span class="id" title="var">pre</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">len_s</span> := <span class="id" title="var">String.length</span> <span class="id" title="var">s</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Int.le</span> <span class="id" title="var">len_pre</span> <span class="id" title="var">len_s</span> &amp;&amp; <span class="id" title="var">String.equal</span> <span class="id" title="var">pre</span> (<span class="id" title="var">String.sub</span> <span class="id" title="var">s</span> 0 <span class="id" title="var">len_pre</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">ends_with</span> (<span class="id" title="var">suff</span> : <span class="id" title="var">string</span>) (<span class="id" title="var">s</span> : <span class="id" title="var">string</span>) : <span class="id" title="var">bool</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">len_suff</span> := <span class="id" title="var">String.length</span> <span class="id" title="var">suff</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">len_s</span> := <span class="id" title="var">String.length</span> <span class="id" title="var">s</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">len_pre</span> := <span class="id" title="var">Int.sub</span> <span class="id" title="var">len_s</span> <span class="id" title="var">len_suff</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Int.le</span> <span class="id" title="var">len_suff</span> <span class="id" title="var">len_s</span> &amp;&amp; <span class="id" title="var">String.equal</span> <span class="id" title="var">suff</span> (<span class="id" title="var">String.sub</span> <span class="id" title="var">s</span> <span class="id" title="var">len_pre</span> <span class="id" title="var">len_suff</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">remove_prefix</span> (<span class="id" title="var">pre</span> : <span class="id" title="var">string</span>) (<span class="id" title="var">s</span> : <span class="id" title="var">string</span>) : <span class="id" title="var">string</span> <span class="id" title="var">option</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">len_pre</span> := <span class="id" title="var">String.length</span> <span class="id" title="var">pre</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">len_s</span> := <span class="id" title="var">String.length</span> <span class="id" title="var">s</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">len_suff</span> := <span class="id" title="var">Int.sub</span> <span class="id" title="var">len_s</span> <span class="id" title="var">len_pre</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">Int.le</span> <span class="id" title="var">len_pre</span> <span class="id" title="var">len_s</span> &amp;&amp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">String.equal</span> <span class="id" title="var">pre</span> (<span class="id" title="var">String.sub</span> <span class="id" title="var">s</span> 0 <span class="id" title="var">len_pre</span>) <span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Some</span> (<span class="id" title="var">String.sub</span> <span class="id" title="var">s</span> <span class="id" title="var">len_pre</span> <span class="id" title="var">len_suff</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">None</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">remove_suffix</span> (<span class="id" title="var">suff</span> : <span class="id" title="var">string</span>) (<span class="id" title="var">s</span> : <span class="id" title="var">string</span>) : <span class="id" title="var">string</span> <span class="id" title="var">option</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">len_suff</span> := <span class="id" title="var">String.length</span> <span class="id" title="var">suff</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">len_s</span> := <span class="id" title="var">String.length</span> <span class="id" title="var">s</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">len_pre</span> := <span class="id" title="var">Int.sub</span> <span class="id" title="var">len_s</span> <span class="id" title="var">len_suff</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">Int.le</span> <span class="id" title="var">len_suff</span> <span class="id" title="var">len_s</span> &amp;&amp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">String.equal</span> <span class="id" title="var">suff</span> (<span class="id" title="var">String.sub</span> <span class="id" title="var">s</span> <span class="id" title="var">len_pre</span> <span class="id" title="var">len_suff</span>) <span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Some</span> (<span class="id" title="var">String.sub</span> <span class="id" title="var">s</span> 0 <span class="id" title="var">len_pre</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">None</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">append</span> := <span class="id" title="var">app</span>.<br/>
+
+<br/>
 <span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.extra.internal.string.html#String"><span class="id" title="module">String</span></a>.<br/>
 </div>
 </div>

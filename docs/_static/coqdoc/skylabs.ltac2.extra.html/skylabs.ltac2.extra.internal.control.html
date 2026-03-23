@@ -153,6 +153,58 @@ Minor extensions to <span class="inlinecode"><span class="id" title="var">Ltac2.
 </div>
 
 <div class="doc">
+When listing terms in a goal, <span class="inlinecode"><span class="id" title="var">goal_location</span></span> tells us where a given term is found. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Type</span> <span class="id" title="var">goal_location</span> := [ <span class="id" title="var">Hyp</span>(<span class="id" title="var">ident</span>) | <span class="id" title="var">DefValue</span>(<span class="id" title="var">ident</span>) | <span class="id" title="var">DefType</span>(<span class="id" title="var">ident</span>) | <span class="id" title="var">Concl</span> ].<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">pp_goal_location</span> : <span class="id" title="var">goal_location</span> <span class="id" title="var">pp</span> := <span class="id" title="keyword">fun</span> () <span class="id" title="var">x</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">x</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Hyp</span> <span class="id" title="var">h</span> =&gt; <span class="id" title="var">fprintf</span> "hypothesis %I" <span class="id" title="var">h</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">DefValue</span> <span class="id" title="var">h</span> =&gt; <span class="id" title="var">fprintf</span> "local definition %I (value)" <span class="id" title="var">h</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">DefType</span> <span class="id" title="var">h</span> =&gt; <span class="id" title="var">fprintf</span> "local definition %I (type)" <span class="id" title="var">h</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Concl</span> =&gt; <span class="id" title="var">fprintf</span> "conclusion"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+List all the terms in the current goal including the conclusion and the value of local
+      definitions. The hypotheses are local definitions are listed in the order in which they appear
+      and the concludsion is listed last 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">goal_constrs</span> () :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">hyp_to_term</span> (<span class="id" title="var">h</span>,<span class="id" title="var">def</span>,<span class="id" title="var">ty</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">def</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Some</span> <span class="id" title="var">def</span> =&gt; [(<span class="id" title="var">DefType</span> <span class="id" title="var">h</span>, <span class="id" title="var">ty</span>);(<span class="id" title="var">DefValue</span> <span class="id" title="var">h</span>, <span class="id" title="var">def</span>)]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">None</span> =&gt; [(<span class="id" title="var">Hyp</span> <span class="id" title="var">h</span>, <span class="id" title="var">ty</span>)]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">hyps</span> := <span class="id" title="var">List.flat_map</span> <span class="id" title="var">hyp_to_term</span> (<span class="id" title="var">hyps</span> ()) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">List.append</span> <span class="id" title="var">hyps</span> [(<span class="id" title="var">Concl</span>, <span class="id" title="keyword">goal</span> ())].<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Fold over all the terms that appear in the current goal. <span class="inlinecode"><span class="id" title="var">fold_left_goal_constrs</span></span> starts with
+      the first hypothesis and moves down toward the conclusion while <span class="inlinecode"><span class="id" title="var">fold_right_goal_constrs</span></span>
+      starts with the conclusion and moves up to the first hypothesis. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">fold_left_goal_constrs</span> (<span class="id" title="var">f</span> : '<span class="id" title="var">a</span> -&gt; <span class="id" title="var">goal_location</span> -&gt; <span class="id" title="keyword">constr</span> -&gt; '<span class="id" title="var">a</span>) (<span class="id" title="var">x0</span> : '<span class="id" title="var">a</span>) : '<span class="id" title="var">a</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">g</span> <span class="id" title="var">x</span> (<span class="id" title="var">loc</span>, <span class="id" title="var">trm</span>) := <span class="id" title="var">f</span> <span class="id" title="var">x</span> <span class="id" title="var">loc</span> <span class="id" title="var">trm</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">List.fold_left</span> <span class="id" title="var">g</span> <span class="id" title="var">x0</span> (<span class="id" title="var">goal_constrs</span> ()).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">fold_right_goal_constrs</span> (<span class="id" title="var">f</span> : <span class="id" title="var">goal_location</span> -&gt; <span class="id" title="keyword">constr</span> -&gt; '<span class="id" title="var">a</span> -&gt; '<span class="id" title="var">a</span>) (<span class="id" title="var">x0</span> : '<span class="id" title="var">a</span>) : '<span class="id" title="var">a</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">g</span> (<span class="id" title="var">loc</span>, <span class="id" title="var">trm</span>) <span class="id" title="var">x</span> := <span class="id" title="var">f</span> <span class="id" title="var">loc</span> <span class="id" title="var">trm</span> <span class="id" title="var">x</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">List.fold_right</span> <span class="id" title="var">g</span> (<span class="id" title="var">goal_constrs</span> ()) <span class="id" title="var">x0</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
 <span class="inlinecode"><span class="id" title="var">is_section_variable</span></span> <span class="inlinecode"><span class="id" title="var">id</span></span> returns <span class="inlinecode"><span class="id" title="var">true</span></span> if <span class="inlinecode"><span class="id" title="var">id</span></span> is not a variable in the
       current environment. This seems to mean "being a section variable". 
 </div>
