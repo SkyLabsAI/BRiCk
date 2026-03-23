@@ -5,11 +5,14 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Ltac2.Ltac2.
+Require Import skylabs.ltac2.extra.internal.init.
+Require Import skylabs.ltac2.extra.internal.cps.
+Require Import skylabs.ltac2.extra.internal.option.
+Require Import skylabs.ltac2.extra.internal.result.
 
 (** Minor extensions to [Ltac2.List]. *)
 Module List.
-  Import Ltac2.
+  Import Ltac2 Init.
   Export Ltac2.List.
 
   Ltac2 iteri2 (f : int -> 'a -> 'b -> unit) (xs : 'a list) (ys : 'b list) :=
@@ -114,6 +117,70 @@ Module List.
         (acc0, acc1) in
     let len := List.length xs in
     go len xs ([], []).
+
+  Ltac2 rec map_accum_cps (f : 's -> 'a -> ('s * 'b, 'r) cps) (s : 's) (xs : 'a list) : ('s * 'b list, 'r) cps :=
+    match xs with
+    | [] => Cps.mret (s, [])
+    | x :: xs =>
+        Cps.bind (f s x) (fun (s, y) =>
+        Cps.bind (map_accum_cps f s xs) (fun (s, ys) =>
+        Cps.mret (s, y :: ys)))
+    end.
+  Ltac2 map_accum_opt (f : 's -> 'a -> ('s * 'b) option) (s : 's) (xs : 'a list) : ('s * 'b list) option :=
+    Option.of_cps (map_accum_cps (fun s x => Option.bind (f s x)) s xs).
+  Ltac2 map_accum_result (f : 's -> 'a -> ('s * 'b) result) (s : 's) (xs : 'a list) : ('s * 'b list) result :=
+    Result.of_cps (map_accum_cps (fun s x => Result.bind (f s x)) s xs).
+
+  Ltac2 rec map_cps (f : 'a -> ('b, 'r) cps) (xs : 'a list) : ('b list, 'r) cps :=
+    match xs with
+    | [] => Cps.mret []
+    | x :: xs =>
+        Cps.bind (f x) (fun y =>
+        Cps.bind (map_cps f xs) (fun ys =>
+        Cps.mret (y :: ys)))
+    end.
+  Ltac2 map_opt (f : 'a -> 'b option) (xs : 'a list) : 'b list option :=
+    Option.of_cps (map_cps (fun x => Option.bind (f x)) xs).
+  Ltac2 map_result (f : 'a -> 'b result) (xs : 'a list) : 'b list result :=
+    Result.of_cps (map_cps (fun x => Result.bind (f x)) xs).
+
+  (** Monads *)
+  Ltac2 mret (x : 'a) : 'a list := [x].
+  Ltac2 bind (xs : 'a list) (f : 'a -> 'b list) : 'b list :=
+    List.flat_map f xs.
+  Ltac2 of_cps (ma : ('a, 'r) cps) : 'a list :=
+    ma (fun a => [a]).
+
+  (** Applicative functors *)
+  Module Ap.
+    Import Ltac2 Constr Unsafe Printf.
+
+    (** Starters *)
+    Ltac2 _fmap (x : 'a) (k : 'a list -> 'k) : 'k :=
+      k (List.mret x).
+    Ltac2 _start (mx : 'a list) (k : 'a list -> 'k) : 'k :=
+      k mx.
+    Ltac2 _choice (k : 'a list -> 'k) : 'k :=
+      k [].
+
+    (** Combinators *)
+    Ltac2 _ap (mx : 'a list) (mf : ('a -> 'b) list) (k : 'b list -> 'k) : 'k :=
+      k (List.bind mf (fun f => List.bind mx (fun x => List.mret (f x)))).
+    Ltac2 _bind (mx : 'a -> 'b list) (mf : 'a list) (k : 'b list -> 'k) : 'k :=
+      k (List.bind mf mx).
+    Ltac2 _alt (mx : unit -> 'a list) (mx0 : 'a list) (k : 'a list -> 'k) : 'k :=
+      k (List.append mx0 (mx ())).
+
+    (** Finishers *)
+    Ltac2 _done (x : 'a list) : 'a list := x.
+    Ltac2 _to_result (err : unit -> exn) (x : 'a list) : 'a result := Option.Ap._to_result err (List.hd_opt x).
+    Ltac2 _to_option (x : 'a list) : 'a option := List.hd_opt x.
+
+    Module Export Notations.
+      Ltac2 Notation "_alt!" f(thunk(self)) := _alt f.
+    End Notations.
+
+  End Ap.
 
   (** Note: We have a "smart" list mapper in ML that works in the [Proofview]
       monad and uses Caml's [==] to promote sharing.
