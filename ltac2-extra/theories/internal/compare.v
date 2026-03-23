@@ -73,7 +73,7 @@ Module Comparison.
 
 End Comparison.
 
-(** Minor extensions to [Ltac2.String] *)
+(** Utilities for comparison functions *)
 Module Compare.
   Import Ltac2.
 
