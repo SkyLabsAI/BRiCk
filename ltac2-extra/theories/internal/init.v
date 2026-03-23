@@ -7,6 +7,10 @@
 
 Require Import skylabs.ltac2.extra.internal.plugin.
 
+(** Avoids getting module [Corelib.Classes.Init] to shadow [internal.init.Init] when imported after
+    [internal.init]. *)
+Require Stdlib.Strings.String.
+
 (** Minor extensions to [Ltac2.Init] *)
 Module Init.
   Import Ltac2.
@@ -29,5 +33,7 @@ Module Init.
 
   (** Type of pretty-printers for type ['a], suited to format string [%a]. *)
   Ltac2 Type 'a pp := unit -> 'a -> message.
+
+  Ltac2 Type comparison := [ Lt | Eq | Gt ].
 
 End Init.

@@ -5,12 +5,14 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import skylabs.ltac2.extra.internal.init.
 Require Import skylabs.ltac2.extra.internal.std.
+Require Import skylabs.ltac2.extra.internal.list.
+Require Import skylabs.ltac2.extra.internal.printf.
+Require Import skylabs.ltac2.extra.internal.init.
 
 (** Minor extensions to [Ltac2.FSet] *)
 Module FSet.
-  Import Ltac2 Init.
+  Import Ltac2 Init Printf.
   Export Ltac2.FSet.
 
   Module Import Tags.
@@ -22,4 +24,12 @@ Module FSet.
     Ltac2 @ external evar_tag : evar FSet.Tags.tag :=
       "rocq-runtime.plugins.ltac2" "fmap_evar_tag".
   End Tags.
+
+  Ltac2 of_list (tag : 'a FSet.Tags.tag) (xs : 'a list) : 'a FSet.t :=
+    List.foldl FSet.add xs (FSet.empty tag).
+
+  Ltac2 pp (pp_a : 'a pp) : 'a FSet.t pp :=
+    fun () set =>
+      fprintf "{%a}" (pp_list_sep "," pp_a) (FSet.elements set).
+
 End FSet.
