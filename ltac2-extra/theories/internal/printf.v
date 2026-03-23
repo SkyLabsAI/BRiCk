@@ -90,11 +90,17 @@ Module Printf.
     pp_list_sep "." pp_ident () ids.
 
   Ltac2 pp_short_ref : Std.reference pp := fun _ r =>
-    let ids := Env.path r in
-    let shorter := List.rev (ids :: List.tails ids) in
+    let rec suffixes xs acc :=
+      match xs with
+      | [] => acc
+      | _x :: xs' => suffixes xs' (xs :: acc)
+      end in
     let unambiguous path :=
       List.equal Reference.equal [r] (Env.expand path) in
-    let shorter := List.find unambiguous shorter in
+    let shorter :=
+      let ids := Env.path r in
+      let suffs := suffixes ids [] in
+      List.find unambiguous suffs in
     pp_list_sep "." pp_ident () shorter.
 
   (** Just enough info to know what case you forgot. *)

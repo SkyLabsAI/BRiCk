@@ -12,16 +12,6 @@ Module List.
   Import Ltac2.
   Export Ltac2.List.
 
-  Ltac2 rec tails (xs : 'a list) : 'a list list :=
-    match xs with
-    | [] => []
-    | _x :: xs =>
-        xs :: tails xs
-    end .
-
-  Ltac2 inits (xs : 'a list) : 'a list list :=
-    List.map List.rev (tails (List.rev xs)).
-
   Ltac2 iteri2 (f : int -> 'a -> 'b -> unit) (xs : 'a list) (ys : 'b list) :=
     let rec loop i xs ys :=
       match (xs, ys) with
