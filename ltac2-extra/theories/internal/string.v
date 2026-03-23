@@ -80,7 +80,7 @@ Module String.
     else
       None.
 
-  (* Synonym meant fit the same naming convention as [List] *)
+  (* Synonym meant to fit the same naming convention as [List] *)
   Ltac2 append := app.
 
 End String.
