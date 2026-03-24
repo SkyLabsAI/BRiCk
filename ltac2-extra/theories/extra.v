@@ -8,6 +8,7 @@
 (** * Extensions of the Ltac2 standard library. *)
 
 Require Export skylabs.ltac2.extra.internal.array.
+Require Export skylabs.ltac2.extra.internal.builder.
 Require Export skylabs.ltac2.extra.internal.char.
 Require Export skylabs.ltac2.extra.internal.compare.
 Require Export skylabs.ltac2.extra.internal.constr.

@@ -443,7 +443,7 @@ Module Constr.
         match from the beginning.  [instantiate_prod '(@List.append) [Term '([1;2])] 1] would produce
         the type [list nat -> list nat], i.e. a function taking one (1) more argument, and [['(nat); [1;2]]]. *)
     Ltac2 instantiate_prod (ty : constr) (args : arg list) : arg list * constr :=
-      let occurs := bound_rel_occurrences ty in
+      let occurs := Constr.Unsafe.bound_rel_occurrences ty in
       let dud := '(True) in
       let mk_evar idx ty :=
         if FMap.mem idx occurs then
