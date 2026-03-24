@@ -20,7 +20,10 @@ Module LevelEnv.
   (* An environment for de Bruijn _levels_ is [decl1; ...; declN] where each
      declaration [decl_i] is either a local assumption [binder_i] or a local
      definition [binder_i := term_i]. Under an environment, [Rel i :
-     Constr.Binder.type binder_i] for levels [1 <= i <= N].
+     Constr.Binder.type binder_i] for levels [offset < i <= offset + N].
+
+     The default [offset] is [0]. Non-zero [offset]s are useful when working in
+     stacked environments.
 
      Levels can be handy because they are stable under extensions to an
      environment, unlike de Bruijn indices. *)
@@ -31,9 +34,13 @@ Module LevelEnv.
 
   Ltac2 Type t := {
     decls : rel_decl list; (** backwards *)
+    offset : int;
 
     (** The following are redundant, but speed up some operations. *)
     length : int; (** [= |decls|] *)
+    (** NOTE: [Rel]s stored in [rels] are _relative_, not absolute, w.r.t. to
+    [offset]. This is necessary to be able to use them in
+    [substnl rels offset ..]. *)
     rels : constr list; (** [= [Rel |decls|; ...; Rel 1] *)
   }.
 
@@ -53,10 +60,16 @@ Module LevelEnv.
     List.foldl f (env.(decls)) acc.
 
   (** The empty environment *)
-  Ltac2 empty : t := { decls := []; length := 0; rels := [] }.
+  Ltac2 empty : t := { decls := []; offset := 0; length := 0; rels := [] }.
+
+  Ltac2 empty_w_offset (offset : int) : t :=
+    { empty with offset }.
 
   (** The number of declarations in an environment. *)
   Ltac2 length (env : t) : int := env.(length).
+
+  (** The offset of an environment. *)
+  Ltac2 offset (env : t) : int := env.(offset).
 
   (** Level of and reference to any next declaration added to environment
       [env]. (The reference is [Rel (|env|+1)]). *)
@@ -66,24 +79,40 @@ Module LevelEnv.
 
   (**
   An environment's _level substitution_ sends references based on de
-  Bruijn indices [Rel 1; ...; Rel (|env|+1)] to those based on levels
-  [Rel (|env|+1); ...; Rel 1]. (It also sends levels to indices.)
+  Bruijn indices [Rel (offset+1); ...; Rel (offset+|env|+1)] to those based on levels
+  [Rel (offset+|env|+1); ...; Rel (offset+1)]. (It also sends levels to indices.)
 
   Used both to start working with de Bruijn levels, and to tidy up
   afterwards.
 
-  [level_subst] leaves [Rel]s above [length env] untouched and is involutive,
-  i.e. it satisfies [level_subst env (level_subst env c) = c].
+  WARNING: Do not use [level_subst env c] if [c] has [Rel]s not bound by [env].
+  It sends [Rel (k)] for [|env|+offset+1 < k] to [Rel(k-|env|-offset)], making
+  them collide with [Rel]s bound by [env].
+
+  If [c] has no such [Rel]s, then [level_subst env (level_subst env c) = c].
+
+  See [level_subst_inv] for a version that is unconditionally involutive.
   *)
   Ltac2 level_subst' (env : t) : constr list := env.(rels).
-  Ltac2 level_subst (env : t) (c : constr) : constr :=
+  Ltac2 level_subst (env : t) : constr -> constr :=
+    Constr.Unsafe.substnl (env.(rels)) (env.(offset)).
+
+  (**
+  [level_subst_inv env c] leaves [Rel]s above [offset+|env|] untouched and is
+  always involutive, i.e. it satisfies [level_subst env (level_subst env c) =
+  c].
+
+  On [Rel]s bound by [env], [level_subst_inv env c] behaves exactly as
+  [level_subst env c].
+  *)
+  Ltac2 level_subst_inv (env : t) (c : constr) : constr :=
     (* [substnl] assumes that we are instantiating binders and shifts [Rel]s
     above [env.(length)] accordingly. This would make [level_subst] not
     involutive. To fix this, we pre-emptively shift those binders by
     [env.(length)]. The shift is then undone by [substnl]. *)
     let n := env.(length) in
-    let c := Constr.Unsafe.liftn n (Int.add n 1) c in
-    Constr.Unsafe.substnl (env.(rels)) 0 c.
+    let c := Constr.Unsafe.liftn n (Int.add n (Int.add (env.(offset)) 1)) c in
+    Constr.Unsafe.substnl (env.(rels)) (env.(offset)) c.
 
   (**
   Extend environment [env] with innermost declaration [level_subst env
@@ -92,11 +121,11 @@ Module LevelEnv.
   (Presupposes [decl] uses de Bruijn levels, not indices.)
   *)
   Ltac2 add_decl_level (env : t) (decl : rel_decl) : t :=
-    let level := next_level_int env in
+    let length := next_level_int env in
     let rels := env.(rels) in
     let decls := decl :: (env.(decls)) in
-    let rels := Constr.Unsafe.make_rel level :: rels in
-    { decls := decls; length := level; rels := rels }.
+    let rels := Constr.Unsafe.make_rel length :: rels in
+    { env with decls; length; rels }.
 
   (**
   Extend environment [env] with innermost declaration [level_subst env
@@ -106,7 +135,7 @@ Module LevelEnv.
   *)
   Ltac2 add_decl (env : t) (decl : rel_decl) : t :=
     let rels := env.(rels) in
-    let mapper := Constr.Unsafe.substnl rels 0 in
+    let mapper := Constr.Unsafe.substnl rels (env.(offset)) in
     let decl := Constr.Unsafe.RelDecl.map_constr mapper decl in
     add_decl_level env decl.
 
@@ -127,6 +156,60 @@ Module LevelEnv.
   Ltac2 add_binder_def (env : t) (b : binder) (val : term) : t :=
     add_decl env (Constr.Unsafe.RelDecl.Def b val).
 
+  (**
+     [cut env n] splits [env] into a prefix env [p_env] of length [n] and a
+     suffix env [s_env] of length [|env| - n]. [s_env.(offset)] is [offset +
+     n].
+
+     The terms in [p_env] and [s_env] are unchanged, i.e. identical to those in
+     [env].
+   *)
+  Ltac2 cut (env : t) (n : int) : t * t :=
+    let _ := Control.assert_valid_argument "LevelEnv.cut" (Int.ge n 0) in
+    let _ := Control.assert_valid_argument "LevelEnv.cut" (Int.lt n (env.(length))) in
+    let s_len := Int.sub (env.(length)) n in
+    let s_offset := Int.add (env.(offset)) n in
+    let (s_decls, p_decls) := List.split_at s_len (env.(decls)) in
+    let (s_rels, p_rels) := List.split_at s_len (env.(rels)) in
+    let p_env := { decls := p_decls; rels := p_rels; length := n; offset := env.(offset) } in
+    let s_env := { decls := s_decls; rels := s_rels; length := s_len; offset := s_offset } in
+    (p_env, s_env).
+
+  (** [append] is the inverse of [cut]. *)
+  Ltac2 append (p_env : t) (s_env : t) : t :=
+    let _ :=
+      Control.assert_valid_argument "LevelEnv.append"
+        (Int.equal (Int.add (p_env.(offset)) (p_env.(length))) (s_env.(offset)))
+    in
+    let length := Int.add (p_env.(length)) (s_env.(length)) in
+    let rels := List.append (s_env.(rels)) (p_env.(rels)) in
+    let decls := List.append (s_env.(decls)) (p_env.(decls)) in
+    let offset := p_env.(offset) in
+    { decls; offset; length; rels }.
+
+  (** [skipn env n] drops the [n] highest levels from [env]. *)
+  Ltac2 skipn (env : LevelEnv.t) (n : int) :=
+    { env with
+        decls := List.skipn n (env.(decls));
+        length := Int.sub (env.(length)) n;
+        rels := List.skipn n (env.(rels))
+    }.
+
+  (** [by_level env i] returns the [i]th entry where [i] is interpreted as an
+      absolute level, i.e. [i] must include [offset].
+    *)
+  Ltac2 by_level (env : LevelEnv.t) (i : int) : Constr.Unsafe.RelDecl.t :=
+    List.nth (env.(decls))
+      (Int.sub (LevelEnv.length env) (Int.add (Int.sub i (env.(offset))) 1)).
+
+  (** [to_level_array env] represents [env] as zero-indexed array in level order. *)
+  Ltac2 to_level_array (env : LevelEnv.t) : Constr.Unsafe.RelDecl.t array :=
+    let arr :=
+      Array.make (LevelEnv.length env)
+        (Constr.Unsafe.RelDecl.Assum (Constr.Binder.make None 'False)) in
+    let () := LevelEnv.foldli (fun i rd () => Array.set arr i rd) env () in
+    arr.
+
   (** Pretty-printing *)
   Ltac2 pp : t pp := fun _ env =>
     let folder decl (acc : int * message list) :=
@@ -136,8 +219,8 @@ Module LevelEnv.
       let level := Int.sub level 1 in
       (level, msgs)
     in
-    let (_, msgs) := foldr folder env (length env,[]) in
-    pp_list pp_message () msgs.
+    let (_, msgs) := foldr folder env (Int.add (env.(offset)) (env.(length)),[]) in
+    pp_list pp_message () (msgs).
 
   Ltac2 pp_named : t pp := fun _ env =>
     let folder decl (acc :
@@ -148,7 +231,7 @@ Module LevelEnv.
       let decl := Constr.Unsafe.RelDecl.map_name (fun _ => Some name) decl in
       let decl :=
         Constr.Unsafe.RelDecl.map_constr
-          (Constr.Unsafe.substnl (List.rev subs) 0) decl
+          (Constr.Unsafe.substnl (List.rev subs) (env.(offset))) decl
       in
       let pp_decl := Constr.Unsafe.RelDecl.pp in
       let msgs := fprintf "%i : %a" level pp_decl decl :: msgs in
@@ -158,15 +241,28 @@ Module LevelEnv.
       (level, fresh, names, subs, msgs)
     in
     let (_, _, _, _, msgs) :=
-      foldl folder env (1, Fresh.Free.of_goal(), [], [], [])
+      foldl folder env (Int.add (env.(offset)) 1, Fresh.Free.of_goal(), [], [], [])
     in
     pp_list pp_message () (List.rev msgs).
+
+
+  (** [named_subst env c] computes named binders for [env] and substitutes them
+  into [c]. *)
+  Ltac2 named_subst (env : t) : constr -> constr :=
+   let (_, ls) :=
+      let fn rd (free, ls) :=
+        let (free, id) := Fresh.for_rel_decl free rd in
+        (free, Constr.Unsafe.make_var id :: ls)
+      in
+      LevelEnv.foldr fn env (Fresh.Free.of_goal (), [])
+    in
+    Constr.Unsafe.substnl ls (env.(offset)).
 
   (**
   Low-level function to convert an environment to (i) a list of
   declarations sorted by level (switching inter-declaration references
   from de Bruijn levels to the terms obtained from [f level]) and (ii)
-  the list of terms [f i | 1 <= i <= |env|]. The function [f] gets
+  the list of terms [f i | offset < i <= offset+|env|]. The function [f] gets
   applied once per level, in order.
 
   Examples: [LevelEnv.to_list] and [LevelEnv.new_goal].
@@ -175,14 +271,17 @@ Module LevelEnv.
   Ltac2 close (f : int -> constr) (env : t) : constr list * rel_decl list :=
     let folder decl (acc : int * constr list * rel_decl list) :=
       let (level, refs, decls) := acc in
-      let mapper := Constr.Unsafe.substnl refs 0 in
+      let mapper c :=
+        let c := Constr.Unsafe.liftn (Int.sub level 1) level c in
+        Constr.Unsafe.substnl refs (env.(offset)) c
+      in
       let decl := Constr.Unsafe.RelDecl.map_constr mapper decl in
       let decls := decl :: decls in
       let refs := f level :: refs in
       let level := Int.add level 1 in
       (level, refs, decls)
     in
-    let (_, refs, decls) := foldl folder env (1, [], []) in
+    let (_, refs, decls) := foldl folder env (Int.add (env.(offset)) 1, [], []) in
     let refs := List.rev refs in
     let decls := List.rev decls in
     (refs, decls).
@@ -282,26 +381,28 @@ Module LevelEnv.
   Ltac2 substitute_defs (env : t) : t * constr list :=
     (* We need to traverse [env] from the outermost decl to the innermost *)
     let folder (decl : rel_decl) (env, subs) :=
+      let f := Constr.Unsafe.substnl (List.rev subs) (env.(offset)) in
       match decl with
       | Constr.Unsafe.RelDecl.Assum b =>
           let decl :=
-            Constr.Unsafe.RelDecl.Assum
-              (Constr.Binder.map_type
-               (Constr.Unsafe.substnl (List.rev subs) 0) b)
+            Constr.Unsafe.RelDecl.Assum (Constr.Binder.map_type f b)
           in
-          let env :=  add_decl env decl in
+          let env := add_decl env decl in
           let subs :=
-            Constr.Unsafe.make_rel 1 :: List.map (Misc.liftn 1 1) subs
+            Constr.Unsafe.make_rel 1
+              :: List.map (Misc.liftn 1 1) subs
           in
           (env, subs)
       | Constr.Unsafe.RelDecl.Def _ v =>
-          let v := Constr.Unsafe.substnl (List.rev subs) 0 v in
-          let subs := v :: subs in
+          let subs := f v :: subs in
           (env, subs)
       end
     in
-    let (env, subs) := foldl folder env (empty, []) in
-    (env, List.rev_map (LevelEnv.level_subst env) subs).
+    let (env, subs) := foldl folder env (empty_w_offset (env.(offset)), []) in
+    let f c :=
+      Constr.Unsafe.substnl (env.(rels)) 0 c
+    in
+    (env, List.rev_map f subs).
 
 
   (**
@@ -345,8 +446,9 @@ Module LevelEnv.
     let (free, ids) := fresh_ident_array free env in
     let forall_c := add_universals env c in
     Control.focus_new_goal forall_c (fun () =>
+      let offset1 := Int.add (env.(offset)) 1 in
       let intro_hyp (level : int) : constr :=
-        let id := Array.get ids (Int.sub level 1) in
+        let id := Array.get ids (Int.sub level offset1) in
         let () := Std.intro_nobacktrack (Some id) (Some Std.MoveLast) in
         Constr.Unsafe.make_var id
       in
