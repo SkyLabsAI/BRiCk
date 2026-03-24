@@ -6,7 +6,6 @@
  *)
 
 Require Import skylabs.ltac2.extra.internal.init.
-Require Import skylabs.ltac2.extra.internal.constr.
 
 (** Minor extensions to [Ltac2.Option] *)
 Module Option.
