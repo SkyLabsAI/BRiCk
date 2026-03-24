@@ -129,10 +129,24 @@ Module Constr.
       "ltac2_extensions" "restrict_evar".
 
     (** See [Evd.evar_context].
+
+        WARNING: Ltac2 evar instances are always filtered.
+        If you are working with those, you need [evar_filtered_context].
+
         NOTE: The context is returned from outermost to innermost binder, i.e.
         the same order as in [Control.hyps]. *)
     Ltac2 @ external context : evar -> (ident * constr option * constr) list :=
       "sl.Constr" "evar_context".
+
+    (** See [Evd.evar_filtered_context].
+
+        NOTE: The filtered context will have the same length as the Ltac2
+        representation of the evar's instance.
+
+        NOTE: The context is returned from outermost to innermost binder, i.e.
+        the same order as in [Control.hyps]. *)
+    Ltac2 @ external filtered_context : evar -> (ident * constr option * constr) list :=
+      "sl.Constr" "evar_filtered_context".
   End Evar.
 
   (** [subst_evars c] returns [Some c'], where [c'] is a copy of [c] where all
