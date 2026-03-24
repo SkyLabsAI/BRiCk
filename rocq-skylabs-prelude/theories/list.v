@@ -417,8 +417,6 @@ Section lists.
     Proof. apply NoDup_zip_with_snd_gen. naive_solver. Qed.
   End zip_with.
 
-  Arguments zip_with : simpl nomatch.
-
   Lemma NoDup_zip_fst xs ys :
     NoDup xs → NoDup (zip xs ys).
   Proof. exact: NoDup_zip_with_fst_inj. Qed.
@@ -480,6 +478,7 @@ Section lists.
     by rewrite -Forall_fmap_ext.
   Qed.
 End lists.
+#[global] Arguments zip_with : simpl nomatch.
 
 Section list_difference.
   Context `{EqDecision A}.
