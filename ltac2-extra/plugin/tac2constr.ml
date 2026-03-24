@@ -48,6 +48,17 @@ let _ =
     in
     Context.Named.fold_inside fn ~init:[] ctx
 
+(* [evar_filtered_context] returns the filtered context of an evar. *)
+let _ =
+  define "evar_filtered_context" (evar @-> eret (list (triple ident (option constr) constr))) @@ fun e _ sigma ->
+    let (EvarInfo e) = Evd.find sigma e in
+    let ctx = Evd.evar_filtered_context e in
+    let fn acc decl =
+      let open Context.Named.Declaration in
+      (get_id decl, get_value decl, get_type decl) :: acc
+    in
+    Context.Named.fold_inside fn ~init:[] ctx
+
 (* [compare] must be kept in sync with whatever is used in [ConstrSet] and [ConstrMap] *)
 let _ =
   define "compare" (valexpr @-> valexpr @-> eret int) @@ fun c1 c2 _ sigma ->

@@ -72,14 +72,18 @@ Module LevelEnv.
   Used both to start working with de Bruijn levels, and to tidy up
   afterwards.
 
-  Note: The variant [level_subst'] represents the substitution as a
-  list of [Rel]s. It behaves identically to the learner's [fun (env :
-  constr list) => subst_levels_to_indices (List.length env)] except
-  that this version takes constant time.
+  [level_subst] leaves [Rel]s above [length env] untouched and is involutive,
+  i.e. it satisfies [level_subst env (level_subst env c) = c].
   *)
   Ltac2 level_subst' (env : t) : constr list := env.(rels).
-  Ltac2 level_subst (env : t) : constr -> constr :=
-    Constr.Unsafe.substnl (env.(rels)) 0.
+  Ltac2 level_subst (env : t) (c : constr) : constr :=
+    (* [substnl] assumes that we are instantiating binders and shifts [Rel]s
+    above [env.(length)] accordingly. This would make [level_subst] not
+    involutive. To fix this, we pre-emptively shift those binders by
+    [env.(length)]. The shift is then undone by [substnl]. *)
+    let n := env.(length) in
+    let c := Constr.Unsafe.liftn n (Int.add n 1) c in
+    Constr.Unsafe.substnl (env.(rels)) 0 c.
 
   (**
   Extend environment [env] with innermost declaration [level_subst env
@@ -216,6 +220,21 @@ Module LevelEnv.
     in
     go env c.
 
+
+  (**
+  Convert [env |- c] to the term [f (x1 : t1 [:= v1]) $ .. $ f (xn : tn [:=
+  vn]), level_subst env c] (switching from de Bruijn levels to indices), where
+  the [x_i : t_i] are the envirnment's entries.
+  *)
+  Ltac2 to_constr
+    (f : Constr.Unsafe.RelDecl.t -> constr -> constr)
+    (env : t)
+    (c : constr) : constr :=
+    let decls := to_list env in
+    let c := level_subst env c in
+    let c := List.foldr f decls c in
+    c.
+
   (**
   Convert [env |- c] to the term [∀ (x1 : t1) ... (xn : tn),
   level_subst env c] (switching from de Bruijn levels to indices),
@@ -229,15 +248,12 @@ Module LevelEnv.
       | Constr.Unsafe.RelDecl.Def b v => Constr.Unsafe.make_let_in b v acc
       end
     in
-    let decls := to_list env in
-    let c := level_subst env c in
-    let c := List.foldr folder decls c in
-    c.
+    to_constr folder env c.
 
   (**
   Convert [env |- c] to the term [λ (x1 : t1) ... (xn : tn),
   level_subst env c] (switching from de Bruijn levels to indices),
-  where the [x_i : t_i] are the envirnment's entries.
+  where the [x_i : t_i] are the environment's entries.
   *)
 
   Ltac2 add_funs (env : t) (c : constr) : constr :=
@@ -247,10 +263,7 @@ Module LevelEnv.
       | Constr.Unsafe.RelDecl.Def b v => Constr.Unsafe.make_let_in b v acc
       end
     in
-    let decls := to_list env in
-    let c := level_subst env c in
-    let c := List.foldr folder decls c in
-    c.
+    to_constr folder env c.
 
 
   (**
