@@ -5,7 +5,6 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import skylabs.ltac2.extra.internal.std.
 Require Import skylabs.ltac2.extra.internal.list.
 Require Import skylabs.ltac2.extra.internal.printf.
 Require Import skylabs.ltac2.extra.internal.init.
