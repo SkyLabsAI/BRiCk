@@ -29,6 +29,11 @@ Module String.
     let res := String.make len (Char.of_int 0) in
     List.iteri (String.set res) cs; res.
 
+  (** [to_char_list cs] returns the list of characters of the string [s]. *)
+  Ltac2 to_char_list (s : string) : char list :=
+    let len := String.length s in
+    List.map (String.get s) (List.range 0 len).
+
   (** [of_string_constr t] attempts to build a string from the given Coq term
       [c], which must be a fully concrete and evaluated term of type [string]
       from the [Coq.Strings.String] module. *)
@@ -42,6 +47,20 @@ Module String.
       end
     in
     build_string [] t.
+
+  Ltac2 to_string_constr (s : string) : constr :=
+    let string_ctor := '(String) in
+    let string := Constr.Unsafe.make_app2 string_ctor in
+    let len := String.length s in
+    let rec build_constr i acc :=
+      if Int.le i 0 then acc
+      else
+        let i := Int.sub i 1 in
+        let c := String.get s i in
+        let c := Char.to_ascii_constr c in
+        let acc := string c acc in
+        build_constr i acc in
+    build_constr len '(EmptyString).
 
   Ltac2 in_quotes (s : string) : string :=
     let q := String.make 1 (Char.of_int 34) in
