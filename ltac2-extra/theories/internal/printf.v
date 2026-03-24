@@ -103,6 +103,14 @@ Module Printf.
       List.find unambiguous suffs in
     pp_list_sep "." pp_ident () shorter.
 
+  Ltac2 pp_arg : arg pp :=
+    fun () a =>
+      match a with
+      | Wildcard => fprintf "?"
+      | WildcardWithType ty => fprintf "? : %t" ty
+      | Term x => fprintf "%t" x
+      end.
+
   (** Just enough info to know what case you forgot. *)
   Ltac2 pp_kind_tag : Constr.Unsafe.kind pp := fun _ k =>
     let s :=

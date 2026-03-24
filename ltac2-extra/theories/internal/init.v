@@ -38,4 +38,6 @@ Module Init.
 
   Ltac2 Type ('a, 'r) cps := (('a -> 'r) -> 'r).
 
+  Ltac2 Type arg := [ Wildcard | WildcardWithType(constr) | Term(constr) ].
+
 End Init.
