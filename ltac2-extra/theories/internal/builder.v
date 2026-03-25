@@ -276,6 +276,7 @@ Module Builder.
     { type  := constr:(PrimString.string);
       build := Unsafe.make_string }.
 
+  (** TODO: do type checking in [build] *)
   Ltac2 constr (type : constr) : constr t :=
     fun () => {type; build := fun x => x}.
 
