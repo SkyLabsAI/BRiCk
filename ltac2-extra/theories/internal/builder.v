@@ -7,6 +7,52 @@ Require Import skylabs.ltac2.extra.internal.string.
 
 Require Import Stdlib.Strings.PrimString.
 
+Import Ltac2 Init.
+
+Ltac2 Type ('a, 'r) cps_list :=
+   [ CpsList(('a Init.list, 'r) cps) ].
+
+(** Monad which helps build a list in CPS style *)
+Module CpsList.
+  Import Ltac2.
+
+  Ltac2 run : ('a, 'r) cps_list -> 'a list :=
+    fun (CpsList f_xs) => f_xs (fun xs => xs).
+
+  Ltac2 run_with : ('a, 'r) cps_list -> ('a list -> 'r) -> 'r :=
+    fun (CpsList f_xs) ret => f_xs ret.
+
+  Ltac2 nil : ('a, 'r) cps_list :=
+    CpsList (fun ret => ret []).
+
+  Ltac2 ret (x : 'a) : ('a, 'r) cps_list :=
+    CpsList (fun ret => ret [x]).
+
+  Ltac2 cons (x : 'a) :
+    ('a, 'r) cps_list -> ('a, 'r) cps_list :=
+    fun (CpsList f_xs) =>
+       CpsList (fun ret => f_xs (fun xs => ret (x :: xs)) ).
+
+  Ltac2 list (xs : 'a list) : ('a, 'r) cps_list :=
+    CpsList (fun ret => ret xs).
+
+  Ltac2 app  :
+    ('a, 'r) cps_list ->
+    ('a, 'r) cps_list ->
+    ('a, 'r) cps_list :=
+    fun (CpsList f_xs) (CpsList f_ys) =>
+       CpsList (fun ret =>
+       f_xs (fun xs =>
+       f_ys (fun ys =>
+       ret (List.append xs ys)))).
+
+  Ltac2 Eval run (cons 1 (cons 2 (cons 3 nil))).
+
+  Ltac2 Eval run (app (list [1;2;3]) (list [4;5;6])).
+
+End CpsList.
+
+
 (** ['a Builder.t] provides a function ['a -> constr] to turn an Ltac2 value into a Gallina term.
     Builders can be combined to build bigger builders. If one defines a Ltac2 type [foo] and a
     builder [build_foo] for it, one can use it to turn [xs : foo option list] into a term with
