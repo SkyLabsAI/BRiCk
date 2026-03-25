@@ -286,4 +286,24 @@ Module Builder.
   Ltac2 to_ltac1 (builder : 'a t) (x : 'a) : Ltac1.t :=
     Ltac1.of_constr ((builder ()).(build) x).
 
+  Section example.
+
+    Import Ap.
+    Open Scope list_scope.
+    Import Lists.List.ListNotations.
+
+    Ltac2 from_lists (build_a : 'a Builder.t) (build_b : 'b Builder.t) () :=
+      _apply '(fun a b c => (a ++ List.rev b ++ c)%list) []
+         (_arg (fun (a,_,_) => a) build_a)
+         (_arg (fun (_,b,_) => b) build_b)
+         (_arg (fun (_,_,c) => c) build_a)
+         _done.
+
+    Goal True.
+      let builder := from_lists (constr '(list nat)) (build_list build_nat) in
+      let trm     := run builder ( '([1]), [2;3;4], '([5])) in
+      Control.assert_true (Constr.equal trm '([1;4;3;2;5])).
+    Abort.
+
+  End example.
 End Builder.
