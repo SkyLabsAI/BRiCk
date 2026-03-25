@@ -36,28 +36,30 @@ let evar_tag : _ Tac2core.map_tag =
 let define s =
   define Tac2expr.{ mltac_plugin = "sl.Constr"; mltac_tactic = s }
 
+let collect_context ctx =
+  let fn acc decl =
+    let open Context.Named.Declaration in
+    let binder =
+      Context.make_annot (Names.Name.Name (get_id decl)) (get_relevance decl), get_type decl
+    in
+    (binder, get_value decl) :: acc
+  in
+  Context.Named.fold_inside fn ~init:[] ctx
+
 (* [evar_context] returns the context of an evar, i.e. the context at the time
    it was defined. *)
 let _ =
-  define "evar_context" (evar @-> eret (list (triple ident (option constr) constr))) @@ fun e _ sigma ->
+  define "evar_context" (evar @-> eret (list (pair binder (option constr)))) @@ fun e _ sigma ->
     let (EvarInfo e) = Evd.find sigma e in
     let ctx = Evd.evar_context e in
-    let fn acc decl =
-      let open Context.Named.Declaration in
-      (get_id decl, get_value decl, get_type decl) :: acc
-    in
-    Context.Named.fold_inside fn ~init:[] ctx
+    collect_context ctx
 
 (* [evar_filtered_context] returns the filtered context of an evar. *)
 let _ =
-  define "evar_filtered_context" (evar @-> eret (list (triple ident (option constr) constr))) @@ fun e _ sigma ->
+  define "evar_filtered_context" (evar @-> eret (list (pair binder (option constr)))) @@ fun e _ sigma ->
     let (EvarInfo e) = Evd.find sigma e in
     let ctx = Evd.evar_filtered_context e in
-    let fn acc decl =
-      let open Context.Named.Declaration in
-      (get_id decl, get_value decl, get_type decl) :: acc
-    in
-    Context.Named.fold_inside fn ~init:[] ctx
+    collect_context ctx
 
 (* [compare] must be kept in sync with whatever is used in [ConstrSet] and [ConstrMap] *)
 let _ =
