@@ -12,7 +12,7 @@ Require Import Stdlib.Strings.PrimString.
     builder [build_foo] for it, one can use it to turn [xs : foo option list] into a term with
     [run (build_list (build_option build_foo)) xs]. *)
 Module Builder.
-  Import Ltac2 Init Constr.
+  Import Ltac2 Init Constr Printf.
 
   Ltac2 Type 'a impl := { type : constr; build : 'a -> constr }.
   Ltac2 Type 'a t := unit -> 'a impl.
@@ -166,6 +166,40 @@ Module Builder.
       { type := '(BinNums.positive);
         build := Int.as_pos }.
 
+  Ltac2 build_N : int Builder.t :=
+    fun () =>
+      { type := '(BinNums.N);
+        build := fun n =>
+            if Int.lt n 0 then
+              let msg := fprintf "numbers of type %t cannot be negative: %i" '(BinNums.N) n in
+              Control.throw (Invalid_argument (Some msg))
+            else if Int.lt 0 n then
+              let n := (build_pos ()).(build) n in
+              '(BinNums.Zpos $n)
+            else
+              '(BinNums.Z0) }.
+
+  Ltac2 build_Z : int Builder.t :=
+    fun () =>
+      { type := '(BinNums.Z);
+        build := fun n =>
+            if Int.lt n 0 then
+              let n := (build_pos ()).(build) (Int.neg n) in
+              '(BinNums.Zneg $n)
+            else if Int.lt 0 n then
+              let n := (build_pos ()).(build) n in
+              '(BinNums.Zpos $n)
+            else
+              '(BinNums.Z0) }.
+
+  Ltac2 build_nat : int Builder.t :=
+    fun () =>
+      { type := '(nat);
+        build := fun n =>
+            if Int.lt n 0 then
+              let msg := fprintf "numbers of type %t cannot be negative: %i" '(nat) n in
+              Control.throw (Invalid_argument (Some msg))
+            else Int.as_nat n }.
 
   Ltac2 make_list (ty : constr) (xs : constr list) : constr :=
     let cons := '(@cons) in
