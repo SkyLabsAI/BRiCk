@@ -77,35 +77,6 @@ Module Builder.
       { type := ty';
         build := fun x => fval type build x }.
 
-  Ltac2 seq2 (fty : constr -> constr -> constr)
-    (fval : constr ->
-            ('a -> constr) ->
-            constr ->
-            ('b -> constr) ->
-            'c -> constr)
-    (build_a : 'a t) (build_b : 'b t) : 'c t :=
-    fun () =>
-      let {type := ty_a; build := build_a} := build_a () in
-      let {type := ty_b; build := build_b} := build_b () in
-      { type  := fty ty_a ty_b;
-        build := fval ty_a build_a ty_b build_b }.
-
-  Ltac2 seq3 (fty : constr -> constr -> constr -> constr)
-    (fval : constr ->
-            ('a -> constr) ->
-            constr ->
-            ('b -> constr) ->
-            constr ->
-            ('c -> constr) ->
-            'd -> constr)
-    (build_a : 'a t) (build_b : 'b t) (build_c : 'c t) : 'd t :=
-    fun () =>
-      let {type := ty_a; build := build_a} := build_a () in
-      let {type := ty_b; build := build_b} := build_b () in
-      let {type := ty_c; build := build_c} := build_c () in
-      { type  := fty ty_a ty_b ty_c;
-        build := fval ty_a build_a ty_b build_b ty_c build_c }.
-
   #[local]
   Ltac2 instantiate_type fn (fixed_args : arg list) (other_args : arg list) :=
     let fty := Constr.type fn in
@@ -119,93 +90,66 @@ Module Builder.
            Unsafe.make_app_list fn args in
          (lazy_app, ty)).
 
+  (** This module allows one to combine builders in an applicative style.
 
-  Ltac2 build_app1_with
-    (fn : constr) (args : arg list)
-    (f : 'b -> 'a)
-    (build_a : 'a Builder.t) : 'b Builder.t :=
-    fun () =>
-    let inst_ty x := instantiate_type fn args [x] in
-    Builder.map
-      (fun ty =>
-          snd (inst_ty (WildcardWithType ty)))
-      (fun _ty_a build_a b =>
-         let trm := build_a (f b) in
-         let (fn_args, _ty_b) := inst_ty (Term trm) in
-         let trm  := fn_args () in
-         Std.eval_cbv RedFlags.all trm)
-      build_a ().
+      Limitation: with a Galina function [f] and n builders [build_a1] .. [build_an], one can only
+      construct a builder which applies [f] to the term constructed by each of [build_ai]. *)
+  Module Ap.
 
-  Ltac2 build_app2_with
-    (fn : constr) (args : arg list)
-    (f : 'c -> 'a * 'b)
-    (build_a : 'a Builder.t)
-    (build_b : 'b Builder.t)
-    : 'c Builder.t :=
-    fun () =>
-    let inst_ty x y := instantiate_type fn args [x;y] in
-    Builder.seq2
-      (fun ty_a ty_b =>
-          snd (inst_ty (WildcardWithType ty_a) (WildcardWithType ty_b)))
-      (fun _ty_a build_a
-         _ty_b build_b
-         c =>
-         let (a, b) := f c in
-         let trm_a := build_a a in
-         let trm_b := build_b b in
-         let (fn_args, _ty_c) := inst_ty (Term trm_a) (Term trm_b) in
-         let trm_c := fn_args () in
-         Std.eval_cbv RedFlags.all trm_c)
-      build_a build_b ().
+    Ltac2 Type ('b, 't, 'e) acc :=
+      { ret : constr list -> ('b -> constr list) -> 't ;
+        r_type : (constr, 'e) cps_list ;
+        term : 'b -> (constr, 'e) cps_list }.
 
-  Ltac2 build_app3_with
-    (fn : constr) (args : arg list)
-    (f : 'd -> 'a * 'b * 'c)
-    (build_a : 'a Builder.t)
-    (build_b : 'b Builder.t)
-    (build_c : 'c Builder.t)
-    : 'd Builder.t :=
-    fun () =>
-    let inst_ty a b c :=
-        instantiate_type fn args [a;b;c] in
-    Builder.seq3
-      (fun ty_a ty_b ty_c =>
-         snd (inst_ty
-                (WildcardWithType ty_a)
-                (WildcardWithType ty_b)
-                (WildcardWithType ty_c)))
-      (fun _ty_a build_a
-         _ty_b build_b
-         _ty_c build_c
-         d =>
-         let (a, b, c) := f d in
-         let trm_a := build_a a in
-         let trm_b := build_b b in
-         let trm_c := build_c c in
-         let (fn_args, _ty_c) := inst_ty (Term trm_a) (Term trm_b) (Term trm_c) in
-         let trm_c := fn_args () in
-         Std.eval_cbv RedFlags.all trm_c)
-      build_a build_b build_c ().
+    (** Implementation *)
+    #[local]
+    Ltac2 _insert (f  : 'b -> 'a) (builder : 'a t) : ('b, 't, 'e) acc -> ('b, 't, 'e) acc :=
+      fun { ret; r_type; term } =>
+      let { type; build } := builder () in
+      { ret ;
+        r_type := CpsList.cons type r_type ;
+        term := fun b => CpsList.cons (build (f b)) (term b)
+      }.
 
-  Ltac2 build_app1
-    (fn : constr) (args : arg list)
-    (build_a : 'a Builder.t) : 'a Builder.t :=
-    build_app1_with fn args (fun a => a) build_a.
+    (** Starter *)
+    Ltac2 _apply (fn : constr) (args : arg list)
+        (x : ('b, 't, 'e) acc -> 'r) : 'r :=
+      let wild_ty ty := WildcardWithType ty in
+      let term trm   := Term trm in
+      let inst_ty xs := instantiate_type fn args xs in
+      let mk_app xs :=
+        let (fn_app, _) := inst_ty (List.map term xs) in
+        let trm := fn_app () in
+        Std.eval_cbv RedFlags.all trm in
+      let compile build_ty build_trm :=
+        let (_, type)    := inst_ty (List.map wild_ty build_ty) in
+        let build args := mk_app (List.rev (build_trm args)) in
+        { type; build } in
+      let acc :=
+        { r_type := CpsList.nil ;
+          ret  := compile ;
+          term := fun _ => CpsList.nil } in
+      x acc.
 
-  Ltac2 build_app2
-    (fn : constr) (args : arg list)
-    (build_a : 'a Builder.t)
-    (build_b : 'b Builder.t)
-    : ('a * 'b) Builder.t :=
-    build_app2_with fn args (fun a => a) build_a build_b.
 
-  Ltac2 build_app3
-    (fn : constr) (args : arg list)
-    (build_a : 'a Builder.t)
-    (build_b : 'b Builder.t)
-    (build_c : 'c Builder.t)
-    : ('a * 'b * 'c) Builder.t :=
-    build_app3_with fn args (fun a => a) build_a build_b build_c.
+    (** Combinators *)
+    Ltac2 _arg (f  : 'b -> 'a) (builder : 'a t)
+      (prev : ('b, 't, 'e) acc) :
+      ( ('b, 't, 'e) acc -> 'r ) -> 'r :=
+      fun k =>
+        k (_insert f builder prev).
+
+
+    (** Finishers *)
+    Ltac2 _done (x : ('b, 't, 'e) acc) : 't :=
+      let { ret    := compile ;
+            r_type := x_ty  ;
+            term   := x_build }  := x in
+      compile
+        (CpsList.run x_ty)
+        (fun b => CpsList.run (x_build b)).
+
+  End Ap.
 
   Ltac2 build_pos : int Builder.t :=
     fun () =>
