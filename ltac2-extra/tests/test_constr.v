@@ -122,7 +122,7 @@ Module Evar_Test.
       match kind l with
       | Evar e inst =>
           let ctx := Evar.context e in
-          let ids := List.map (fun (id, _, _) => id) ctx in
+          let ids := List.map (fun (b, _) => Option.get (Binder.name b)) ctx in
           Control.assert_true (List.equal Ident.equal ids [@a; @b]);
           let inst := Array.to_list inst in
           (* printf "inst:"; *)
