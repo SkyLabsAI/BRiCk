@@ -90,10 +90,39 @@ Module Builder.
            Unsafe.make_app_list fn args in
          (lazy_app, ty)).
 
-  (** This module allows one to combine builders in an applicative style.
+  (** This module allows one to combine builders in an applicative style. With a Galina function [f]
+      and n builders [build_a1] .. [build_an], one can use [f] to combine the result of the n
+      builders as follows:
+      <<
+        _apply f fixed_args
+          (_arg prj1 build_a1)
+          ...
+          (_arg prjn build_an)
+          _done
+      >>
 
-      Limitation: with a Galina function [f] and n builders [build_a1] .. [build_an], one can only
-      construct a builder which applies [f] to the term constructed by each of [build_ai]. *)
+      The result is ['b Builder.t] if each projection [prji] has type ['b -> 'ai] and each builder
+      [build_ai] has type ['ai Builder.t]. The Galina type returned by the resulting builder is
+      calculated by specializing the function type of [f] with the type of each argument it is
+      given. [fixed_args] is a [arg list], a list of terms or (optionally typed) wildcards which will be
+      used as the first few arguments given to [f].
+
+      The resulting builder will apply [cbv] on the resulting term.
+
+      As an example, one may want to use the interface to create a builder which takes a (Ltac2)
+      pair of lists of integers and return their concatenation as a Galina term:
+      <<
+        let build_int_list := build_list build_Z in
+        _apply List.app [Wildcard]
+          (_arg fst build_int_list)
+          (_arg snd build_int_list)
+          _done
+      >>
+
+      The result has type [(int list * int list) Builder.t].
+
+      Limitation: the builders one can create with the interface [Ap] are limited to the builders
+      calling other builders and combining the results using a Galina function. *)
   Module Ap.
 
     Ltac2 Type ('b, 't, 'e) acc :=
