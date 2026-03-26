@@ -1,0 +1,10 @@
+(include_subdirs qualified)
+(rocq.theory
+ (name skylabs.ltac2.tc_dispatch)
+ (package ltac2-tc-dispatch)
+ (theories
+  Ltac2
+  Stdlib ; for ltac2-extra/theories/internal/char.v
+  skylabs.ltac2.extra
+  )
+ (plugins ltac2-tc-dispatch.plugin))
