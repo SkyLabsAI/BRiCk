@@ -140,24 +140,6 @@ Module Constr.
   Ltac2 @ external subst_evars : constr -> constr option :=
     "ltac2_extensions" "subst_evars".
 
-  Module Arg.
-
-    Ltac2 map (f : constr -> constr) (a : arg) : arg :=
-      match a with
-      | Term trm => Term (f trm)
-      | Wildcard => Wildcard
-      | WildcardWithType ty => WildcardWithType (f ty)
-      end.
-
-    Ltac2 term (a : arg) : constr :=
-      match a with
-      | Term trm => trm
-      | Wildcard => '(_)
-      | WildcardWithType ty => Evar.make ty
-      end.
-
-  End Arg.
-
   Module Unsafe.
     Export Ltac2.Constr.Unsafe.
 

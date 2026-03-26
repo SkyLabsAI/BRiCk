@@ -67,6 +67,34 @@ Module Builder.
   Ltac2 Type 'a impl := { type : constr; build : 'a -> constr }.
   Ltac2 Type 'a t := unit -> 'a impl.
 
+  Ltac2 Type arg := [ Wildcard | WildcardWithType(constr) | Term(constr) ].
+
+  Module Arg.
+
+    Ltac2 map (f : constr -> constr) (a : arg) : arg :=
+      match a with
+      | Term trm => Term (f trm)
+      | Wildcard => Wildcard
+      | WildcardWithType ty => WildcardWithType (f ty)
+      end.
+
+    Ltac2 term (a : arg) : constr :=
+      match a with
+      | Term trm => trm
+      | Wildcard => '(_)
+      | WildcardWithType ty => Evar.make ty
+      end.
+
+    Ltac2 pp : arg pp :=
+      fun () a =>
+        match a with
+        | Wildcard => fprintf "?"
+        | WildcardWithType ty => fprintf "? : %t" ty
+        | Term x => fprintf "%t" x
+        end.
+
+  End Arg.
+
   Module Constr.
   Module Unsafe.
 
