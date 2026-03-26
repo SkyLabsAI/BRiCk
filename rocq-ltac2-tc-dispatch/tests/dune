@@ -1,0 +1,4 @@
+(include_subdirs qualified)
+(rocq.theory
+ (name skylabs_tests.ltac2.tc_dispatch)
+ (theories Stdlib skylabs.ltac2.extra skylabs.ltac2.tc_dispatch))
