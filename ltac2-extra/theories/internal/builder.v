@@ -13,50 +13,6 @@ Require Import Stdlib.Strings.PrimString.
 
 Import Ltac2 Init.
 
-Ltac2 Type ('a, 'r) cps_list :=
-   [ CpsList(('a Init.list, 'r) cps) ].
-
-(** Monad which helps build a list in CPS style *)
-Module CpsList.
-  Import Ltac2.
-
-  Ltac2 run : ('a, 'r) cps_list -> 'a list :=
-    fun (CpsList f_xs) => f_xs (fun xs => xs).
-
-  Ltac2 run_with : ('a, 'r) cps_list -> ('a list -> 'r) -> 'r :=
-    fun (CpsList f_xs) ret => f_xs ret.
-
-  Ltac2 nil : ('a, 'r) cps_list :=
-    CpsList (fun ret => ret []).
-
-  Ltac2 ret (x : 'a) : ('a, 'r) cps_list :=
-    CpsList (fun ret => ret [x]).
-
-  Ltac2 cons (x : 'a) :
-    ('a, 'r) cps_list -> ('a, 'r) cps_list :=
-    fun (CpsList f_xs) =>
-       CpsList (fun ret => f_xs (fun xs => ret (x :: xs)) ).
-
-  Ltac2 list (xs : 'a list) : ('a, 'r) cps_list :=
-    CpsList (fun ret => ret xs).
-
-  Ltac2 app  :
-    ('a, 'r) cps_list ->
-    ('a, 'r) cps_list ->
-    ('a, 'r) cps_list :=
-    fun (CpsList f_xs) (CpsList f_ys) =>
-       CpsList (fun ret =>
-       f_xs (fun xs =>
-       f_ys (fun ys =>
-       ret (List.append xs ys)))).
-
-  Ltac2 Eval run (cons 1 (cons 2 (cons 3 nil))).
-
-  Ltac2 Eval run (app (list [1;2;3]) (list [4;5;6])).
-
-End CpsList.
-
-
 (** ['a Builder.t] provides a function ['a -> constr] to turn an Ltac2 value into a Gallina term.
     Builders can be combined to build bigger builders. If one defines a Ltac2 type [foo] and a
     builder [build_foo] for it, one can use it to turn [xs : foo option list] into a term with
@@ -281,8 +237,8 @@ Module Builder.
 
     Ltac2 Type ('b, 't, 'e) acc :=
       { ret : constr list -> ('b -> constr list) -> 't ;
-        r_type : (constr, 'e) cps_list ;
-        r_term : 'b -> (constr, 'e) cps_list }.
+        r_type : constr list ;
+        r_term : 'b -> constr list }.
 
     (** Implementation *)
     #[local]
@@ -290,8 +246,8 @@ Module Builder.
       fun { ret; r_type; r_term } =>
       let { type; build } := builder () in
       { ret ;
-        r_type := CpsList.cons type r_type ;
-        r_term := fun b => CpsList.cons (build (f b)) (r_term b)
+        r_type := (type :: r_type) ;
+        r_term := fun b => build (f b) :: r_term b
       }.
 
     (** Starter *)
@@ -310,8 +266,8 @@ Module Builder.
         { type; build } in
       let acc :=
         { ret  := compile ;
-          r_type := CpsList.nil ;
-          r_term := fun _ => CpsList.nil } in
+          r_type := [] ;
+          r_term := fun _ => [] } in
       x acc.
 
 
@@ -329,9 +285,7 @@ Module Builder.
       let { ret    := compile ;
             r_type := x_ty  ;
             r_term := x_build }  := x in
-      compile
-        (CpsList.run x_ty)
-        (fun b => CpsList.run (x_build b)).
+      compile x_ty x_build.
 
   End Ap.
 
