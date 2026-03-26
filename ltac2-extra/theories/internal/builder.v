@@ -95,9 +95,9 @@ Module Builder.
       builders as follows:
       <<
         _apply f fixed_args
-          (_arg prj1 build_a1)
+          (_arg_on prj1 build_a1)
           ...
-          (_arg prjn build_an)
+          (_arg_on prjn build_an)
           _done
       >>
 
@@ -114,8 +114,8 @@ Module Builder.
       <<
         let build_int_list := build_list build_Z in
         _apply List.app [Wildcard]
-          (_arg fst build_int_list)
-          (_arg snd build_int_list)
+          (_arg_on fst build_int_list)
+          (_arg_on snd build_int_list)
           _done
       >>
 
@@ -162,12 +162,13 @@ Module Builder.
 
 
     (** Combinators *)
-    Ltac2 _arg (f  : 'b -> 'a) (builder : 'a t)
+    Ltac2 _arg_on (f  : 'b -> 'a) (builder : 'a t)
       (prev : ('b, 't, 'e) acc) :
       ( ('b, 't, 'e) acc -> 'r ) -> 'r :=
       fun k =>
         k (_insert f builder prev).
 
+    Ltac2 _arg (builder : 'a t) := _arg_on (fun x => x) builder.
 
     (** Finishers *)
     Ltac2 _done (x : ('b, 't, 'e) acc) : 't :=
@@ -294,9 +295,9 @@ Module Builder.
 
     Ltac2 from_lists (build_a : 'a Builder.t) (build_b : 'b Builder.t) () :=
       _apply '(fun a b c => (a ++ List.rev b ++ c)%list) []
-         (_arg (fun (a,_,_) => a) build_a)
-         (_arg (fun (_,b,_) => b) build_b)
-         (_arg (fun (_,_,c) => c) build_a)
+         (_arg_on (fun (a,_,_) => a) build_a)
+         (_arg_on (fun (_,b,_) => b) build_b)
+         (_arg_on (fun (_,_,c) => c) build_a)
          _done.
 
     Goal True.
