@@ -128,16 +128,16 @@ Module Builder.
     Ltac2 Type ('b, 't, 'e) acc :=
       { ret : constr list -> ('b -> constr list) -> 't ;
         r_type : (constr, 'e) cps_list ;
-        term : 'b -> (constr, 'e) cps_list }.
+        r_term : 'b -> (constr, 'e) cps_list }.
 
     (** Implementation *)
     #[local]
     Ltac2 _insert (f  : 'b -> 'a) (builder : 'a t) : ('b, 't, 'e) acc -> ('b, 't, 'e) acc :=
-      fun { ret; r_type; term } =>
+      fun { ret; r_type; r_term } =>
       let { type; build } := builder () in
       { ret ;
         r_type := CpsList.cons type r_type ;
-        term := fun b => CpsList.cons (build (f b)) (term b)
+        r_term := fun b => CpsList.cons (build (f b)) (r_term b)
       }.
 
     (** Starter *)
@@ -155,9 +155,9 @@ Module Builder.
         let build args := mk_app (List.rev (build_trm args)) in
         { type; build } in
       let acc :=
-        { r_type := CpsList.nil ;
-          ret  := compile ;
-          term := fun _ => CpsList.nil } in
+        { ret  := compile ;
+          r_type := CpsList.nil ;
+          r_term := fun _ => CpsList.nil } in
       x acc.
 
 
@@ -174,7 +174,7 @@ Module Builder.
     Ltac2 _done (x : ('b, 't, 'e) acc) : 't :=
       let { ret    := compile ;
             r_type := x_ty  ;
-            term   := x_build }  := x in
+            r_term := x_build }  := x in
       compile
         (CpsList.run x_ty)
         (fun b => CpsList.run (x_build b)).
