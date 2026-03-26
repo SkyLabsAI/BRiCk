@@ -10,8 +10,6 @@ Require Import skylabs.ltac2.extra.internal.plugin.
 Require Import skylabs.ltac2.extra.internal.init.
 Require Import skylabs.ltac2.extra.internal.misc.
 Require Import skylabs.ltac2.extra.internal.printf.
-Require Import skylabs.ltac2.extra.internal.fset.
-Require Import skylabs.ltac2.extra.internal.fmap.
 
 (* NOTE: When using [Constr.Unsafe], [Constr.Unsafe.check] will enforce sane
    universe constraints on _output_ constructors, as will code like
@@ -370,120 +368,6 @@ Module Constr.
       end.
 
     Ltac2 make_pstring (p : pstring) := make (String p).
-
-    (** For a term [forall x y z, F x y z], return a set of integers that identify which of the bound
-        variables [x,y,z] are referenced. Contrary to the de Bruijn encoding, [x] is referenced to as
-        1, [y] 2, and [z] instead of 3,2,1 respectively. This gives us references that are relative to
-        the first binder instead of the last. Any [Rel] not bound in that list of variables will be
-        omitted.
-
-        The resulting set of integers are paired to the (optional) name given to it by the binder the
-        variables refer to.
-
-        The only binders considered are consecutive top level binders. The binders occurring in the
-        type or definitions of variables are ignored -- otherwise, each referenced variable may refer
-        to different names at different places.
-        NOTE: if the names are not needed, the types and definitions could be treated the same way as the body.
-
-        [let] and [fun] binders are treated similarly to [forall].
-     *)
-    Ltac2 bound_rel_occurrences (trm : constr)  : (int, name) FMap.t :=
-      let empty_set := FSet.empty FSet.Tags.int_tag in
-      let free_rels (bump : int) (trm : constr) : int FSet.t :=
-        let vars := Vars.rels trm in
-        let sub i :=
-          if Int.lt i bump then
-            Some (Int.sub bump i)
-          else
-            None in
-        let vars := List.map_filter sub vars in
-        let tag := FSet.Tags.int_tag in
-        FSet.of_list tag vars in
-
-      let to_binder (trm : constr) :=
-        match Unsafe.kind trm with
-        | Unsafe.Prod bnd bod => Some (bnd, None, bod)
-        | Unsafe.Lambda bnd bod => Some (bnd, None, bod)
-        | Unsafe.LetIn bnd def bod => Some (bnd, Some def, bod)
-        | _ => None
-        end in
-
-      let rec go trm occ idx name_map :=
-        match to_binder trm with
-        | Some (bnd, def, bod) =>
-          let ty := Binder.type bnd in
-          let n := Binder.name bnd in
-          let idx' := Int.add idx 1 in
-          let name_map' := FMap.add idx n name_map in
-          let occ' :=
-            let free_ty := free_rels idx ty in
-            let free_def := Option.map_default (free_rels idx) empty_set def in
-            let free := FSet.union free_ty free_def in
-            FSet.union occ free in
-          go bod occ' idx' name_map'
-        | None =>
-            let free := free_rels idx trm in
-            let acc'  := FSet.union free occ in
-            FMap.filteri (fun k _v => FSet.mem k acc') name_map
-        end in
-      let map := FMap.empty FSet.Tags.int_tag in
-      go trm empty_set 1 map.
-
-
-    (** [instantiate_prod ty args], with [ty] a product type and args a list of (possibly omitted)
-        arguments produces [(args', ty')] with [ty'] the result of instantiating [length args] bound
-        variables and [args'] the arguments and evars used in the instantiation.
-
-        Each argument can be one of:
-          * Wildcard            - when the argument is omitted;
-          * WithcardWithType ty - when the argument is omitted but its type is specified;
-          * Term x              - when [x] is the provided argument.
-
-        POSSIBLE ADDITION: a third argument [future_arguments : int] so that [args] doesn't have to
-        match from the beginning.  [instantiate_prod '(@List.append) [Term '([1;2])] 1] would produce
-        the type [list nat -> list nat], i.e. a function taking one (1) more argument, and [['(nat); [1;2]]]. *)
-    Ltac2 instantiate_prod (ty : constr) (args : arg list) : arg list * constr :=
-      let occurs := Constr.Unsafe.bound_rel_occurrences ty in
-      let dud := '(True) in
-      let mk_evar idx ty :=
-        if FMap.mem idx occurs then
-          let x := Constr.Evar.make ty in
-          (x, Term x)
-        else
-          (dud, WildcardWithType ty) in
-      let rec go ty idx args subst acc :=
-        match args with
-        | [] => (List.rev acc, Constr.Unsafe.substnl subst 0 ty)
-        | x :: xs =>
-            match Constr.Unsafe.kind ty with
-            | Constr.Unsafe.Prod bnd bod =>
-                let arg_ty := Constr.Binder.type bnd in
-                let arg_ty := Constr.Unsafe.substnl subst 0 arg_ty in
-                let (x, arg) :=
-                  match x with
-                  | Wildcard =>
-                      mk_evar idx arg_ty
-                  | WildcardWithType x_ty =>
-                      Std.unify x_ty arg_ty ;
-                      mk_evar idx x_ty
-                  | Term x =>
-                      let x_ty := Constr.type x in
-                      Std.unify x_ty arg_ty ;
-                      (x, Term x)
-                  end in
-                let idx'   := Int.add idx 1 in
-                let subst' := x :: subst in
-                let acc'   := arg :: acc in
-                go bod idx' xs subst' acc'
-            | _ =>
-                let msg := fprintf "instantiate_prod: excess arguments%a%a"
-                             (pp_lines pp_string) [""]
-                             (pp_lines (pp_prefix "  - " pp_arg))
-                             xs in
-                Control.throw (Invalid_argument (Some msg))
-            end
-        end in
-      go ty 1 args [] [].
 
 
     (** ** Declarations *)
