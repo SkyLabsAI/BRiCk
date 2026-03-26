@@ -61,6 +61,6 @@ Module Char.
     let (b6, n) := lsb n in
     let (b7, n) := lsb n in
     Control.assert_true (Int.equal n 0) ;
-    '(Ascii $b0 $b1 $b2 $b3 $b4 $b5 $b6 $b7).
+    Constr.Unsafe.make_app '(Ascii) [|b0;b1;b2;b3;b4;b5;b6;b7|].
 
 End Char.
