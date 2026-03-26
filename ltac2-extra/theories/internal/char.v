@@ -46,10 +46,12 @@ Module Char.
   (** [to_ascii_constr c] converts a character into a Rocq term, the full application of [Ascii] to
       concrete booleans. *)
   Ltac2 to_ascii_constr (c : char) : constr :=
+    let tru := '(true) in
+    let fals := '(false) in
     let lsb (n : int) : constr * int :=
       let b := Int.mod n 2 in
       let n := Int.div n 2 in
-      let b := if Int.equal b 1 then '(true) else '(false) in
+      let b := if Int.equal b 1 then tru else fals in
       (b, n) in
     let n := Char.to_int c in
     let (b0, n) := lsb n in
