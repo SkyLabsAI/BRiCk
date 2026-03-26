@@ -44,24 +44,24 @@ Module Cps.
     Ltac2 Type ('a, 'r) acc := ('a, 'r) cps .
 
     (** Starters *)
-    Ltac2 _fmap (x : 'a) (k : ('a, 'r) cps -> 'k) : 'k :=
+    Ltac2 fmap (x : 'a) (k : ('a, 'r) cps -> 'k) : 'k :=
       k (Cps.mret x).
-    Ltac2 _start (mx : ('a, 'r) cps) (k : ('a, 'r) cps -> 'k) : 'k :=
+    Ltac2 start (mx : ('a, 'r) cps) (k : ('a, 'r) cps -> 'k) : 'k :=
       k mx.
 
     (** Combinators *)
-    Ltac2 _ap (mx : ('a, 'r) cps) (mf : ('a -> 'b, 'r) cps) (k : ('b, 'r) cps -> 'k) : 'k :=
+    Ltac2 ap (mx : ('a, 'r) cps) (mf : ('a -> 'b, 'r) cps) (k : ('b, 'r) cps -> 'k) : 'k :=
       k  (fun ret =>
       mf (fun f =>
       mx (fun a =>
       ret (f a)))).
-    Ltac2 _bind (mx : 'a -> ('b, 'r) cps) (mf : ('a, 'r) cps) (k : ('b, 'r) cps -> 'k) : 'k :=
+    Ltac2 bind (mx : 'a -> ('b, 'r) cps) (mf : ('a, 'r) cps) (k : ('b, 'r) cps -> 'k) : 'k :=
       k (Cps.bind mf mx).
 
     (** Finishers *)
-    Ltac2 _done (x : ('a, 'r) cps) : ('a, 'r) cps := x.
-    Ltac2 _to_option (x : ('a, 'r) cps) : 'a option := x (fun a => Some a).
-    Ltac2 _to_result (x : ('a, 'r) cps) : 'a result := x (fun a => Val a).
+    Ltac2 done (x : ('a, 'r) cps) : ('a, 'r) cps := x.
+    Ltac2 to_option (x : ('a, 'r) cps) : 'a option := x (fun a => Some a).
+    Ltac2 to_result (x : ('a, 'r) cps) : 'a result := x (fun a => Val a).
 
   End Ap.
 

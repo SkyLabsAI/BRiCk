@@ -6,7 +6,8 @@ Require Import skylabs.ltac2.extra.internal.string.
 
 Module Parser.
   Import Ltac2 Constr Unsafe Printf Init.
-  Import Result.Ap.
+
+  Module Ap := Result.Ap.
 
   Ltac2 Type 'a parser := constr -> 'a result.
 
@@ -18,10 +19,10 @@ Module Parser.
   Ltac2 parse_pair (parse_a : 'a parser) (parse_b : 'b parser) : ('a * 'b) parser :=
     fun trm =>
       lazy_match! trm with
-      | (?x, ?y) => _fmap (fun a b => (a, b))
-                     (_ap (parse_a x))
-                     (_ap (parse_b y))
-                     _done
+      | (?x, ?y) => Ap.fmap (fun a b => (a, b))
+                     (Ap.ap (parse_a x))
+                     (Ap.ap (parse_b y))
+                     Ap.done
       | _ => parser_error trm "(_, _)"
       end.
 

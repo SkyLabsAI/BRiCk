@@ -286,7 +286,7 @@ Module Builder.
 
     (** Implementation *)
     #[local]
-    Ltac2 _insert (f  : 'b -> 'a) (builder : 'a t) : ('b, 't, 'e) acc -> ('b, 't, 'e) acc :=
+    Ltac2 insert (f  : 'b -> 'a) (builder : 'a t) : ('b, 't, 'e) acc -> ('b, 't, 'e) acc :=
       fun { ret; r_type; r_term } =>
       let { type; build } := builder () in
       { ret ;
@@ -295,7 +295,7 @@ Module Builder.
       }.
 
     (** Starter *)
-    Ltac2 _apply (fn : constr) (args : arg list)
+    Ltac2 apply (fn : constr) (args : arg list)
         (x : ('b, 't, 'e) acc -> 'r) : 'r :=
       let wild_ty ty := WildcardWithType ty in
       let term trm   := Term trm in
@@ -316,16 +316,16 @@ Module Builder.
 
 
     (** Combinators *)
-    Ltac2 _arg_on (f  : 'b -> 'a) (builder : 'a t)
+    Ltac2 arg_on (f  : 'b -> 'a) (builder : 'a t)
       (prev : ('b, 't, 'e) acc) :
       ( ('b, 't, 'e) acc -> 'r ) -> 'r :=
       fun k =>
-        k (_insert f builder prev).
+        k (insert f builder prev).
 
-    Ltac2 _arg (builder : 'a t) := _arg_on (fun x => x) builder.
+    Ltac2 arg (builder : 'a t) := arg_on (fun x => x) builder.
 
     (** Finishers *)
-    Ltac2 _done (x : ('b, 't, 'e) acc) : 't :=
+    Ltac2 done (x : ('b, 't, 'e) acc) : 't :=
       let { ret    := compile ;
             r_type := x_ty  ;
             r_term := x_build }  := x in
@@ -443,16 +443,15 @@ Module Builder.
 
   Section example.
 
-    Import Ap.
     Open Scope list_scope.
     Import Lists.List.ListNotations.
 
     Ltac2 from_lists (build_a : 'a Builder.t) (build_b : 'b Builder.t) () :=
-      _apply '(fun a b c => (a ++ List.rev b ++ c)%list) []
-         (_arg_on (fun (a,_,_) => a) build_a)
-         (_arg_on (fun (_,b,_) => b) build_b)
-         (_arg_on (fun (_,_,c) => c) build_a)
-         _done.
+      Ap.apply '(fun a b c => (a ++ List.rev b ++ c)%list) []
+         (Ap.arg_on (fun (a,_,_) => a) build_a)
+         (Ap.arg_on (fun (_,b,_) => b) build_b)
+         (Ap.arg_on (fun (_,_,c) => c) build_a)
+         Ap.done.
 
     Goal True.
       let builder := from_lists (constr '(list nat)) (build_list build_nat) in

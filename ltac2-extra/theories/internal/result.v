@@ -32,32 +32,32 @@ Module Result.
     Import Ltac2 Constr Unsafe Printf.
 
     (** Starters *)
-    Ltac2 _fmap (x : 'a) (k : 'a result -> 'k) : 'k :=
+    Ltac2 fmap (x : 'a) (k : 'a result -> 'k) : 'k :=
       k (Result.mret x).
-    Ltac2 _start (mx : 'a result) (k : 'a result -> 'k) : 'k :=
+    Ltac2 start (mx : 'a result) (k : 'a result -> 'k) : 'k :=
       k mx.
-    Ltac2 _choice (k : 'a result -> 'k) : 'k :=
+    Ltac2 choice (k : 'a result -> 'k) : 'k :=
       k (Err Not_found).
 
     (** Combinators *)
-    Ltac2 _ap (mx : 'a result) (mf : ('a -> 'b) result) (k : 'b result -> 'k) : 'k :=
+    Ltac2 ap (mx : 'a result) (mf : ('a -> 'b) result) (k : 'b result -> 'k) : 'k :=
       k (Result.bind mf (fun f => Result.bind mx (fun x => Result.mret (f x)))).
-    Ltac2 _bind (mx : 'a -> 'b result) (mf : 'a result) (k : 'b result -> 'k) : 'k :=
+    Ltac2 bind (mx : 'a -> 'b result) (mf : 'a result) (k : 'b result -> 'k) : 'k :=
       k (Result.bind mf mx).
-    Ltac2 _alt (mx : unit -> 'a result) (mx0 : 'a result) (k : 'a result -> 'k) : 'k :=
+    Ltac2 alt (mx : unit -> 'a result) (mx0 : 'a result) (k : 'a result -> 'k) : 'k :=
       k (Result.or_else mx0 mx).
 
     (** Finishers *)
-    Ltac2 _done (x : 'a result) : 'a result := x.
-    Ltac2 _to_result (x : 'a result) : 'a result := x.
-    Ltac2 _to_option (x : 'a result) : 'a option :=
+    Ltac2 done (x : 'a result) : 'a result := x.
+    Ltac2 to_result (x : 'a result) : 'a result := x.
+    Ltac2 to_option (x : 'a result) : 'a option :=
       match x with
       | Val x => Some x
       | Err _ => None
       end.
 
     Module Export Notations.
-      Ltac2 Notation "_alt!" f(thunk(self)) := _alt f.
+      Ltac2 Notation "alt!" f(thunk(self)) := alt f.
     End Notations.
 
   End Ap.

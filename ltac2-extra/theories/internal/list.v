@@ -156,28 +156,29 @@ Module List.
     Import Ltac2 Constr Unsafe Printf.
 
     (** Starters *)
-    Ltac2 _fmap (x : 'a) (k : 'a list -> 'k) : 'k :=
+    Ltac2 fmap (x : 'a) (k : 'a list -> 'k) : 'k :=
       k (List.mret x).
-    Ltac2 _start (mx : 'a list) (k : 'a list -> 'k) : 'k :=
+    Ltac2 start (mx : 'a list) (k : 'a list -> 'k) : 'k :=
       k mx.
-    Ltac2 _choice (k : 'a list -> 'k) : 'k :=
+    Ltac2 choice (k : 'a list -> 'k) : 'k :=
       k [].
 
     (** Combinators *)
-    Ltac2 _ap (mx : 'a list) (mf : ('a -> 'b) list) (k : 'b list -> 'k) : 'k :=
+    Ltac2 ap (mx : 'a list) (mf : ('a -> 'b) list) (k : 'b list -> 'k) : 'k :=
       k (List.bind mf (fun f => List.bind mx (fun x => List.mret (f x)))).
-    Ltac2 _bind (mx : 'a -> 'b list) (mf : 'a list) (k : 'b list -> 'k) : 'k :=
+    Ltac2 bind (mx : 'a -> 'b list) (mf : 'a list) (k : 'b list -> 'k) : 'k :=
       k (List.bind mf mx).
-    Ltac2 _alt (mx : unit -> 'a list) (mx0 : 'a list) (k : 'a list -> 'k) : 'k :=
+    Ltac2 alt (mx : unit -> 'a list) (mx0 : 'a list) (k : 'a list -> 'k) : 'k :=
       k (List.append mx0 (mx ())).
 
     (** Finishers *)
-    Ltac2 _done (x : 'a list) : 'a list := x.
-    Ltac2 _to_result (err : unit -> exn) (x : 'a list) : 'a result := Option.Ap._to_result err (List.hd_opt x).
-    Ltac2 _to_option (x : 'a list) : 'a option := List.hd_opt x.
+    Ltac2 done (x : 'a list) : 'a list := x.
+    Ltac2 to_result (err : unit -> exn) (x : 'a list) : 'a result :=
+      Option.Ap.to_result err (List.hd_opt x).
+    Ltac2 to_option (x : 'a list) : 'a option := List.hd_opt x.
 
     Module Export Notations.
-      Ltac2 Notation "_alt!" f(thunk(self)) := _alt f.
+      Ltac2 Notation "alt!" f(thunk(self)) := alt f.
     End Notations.
 
   End Ap.
