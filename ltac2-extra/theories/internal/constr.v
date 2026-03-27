@@ -81,9 +81,24 @@ Module Constr.
     Ltac2 map_type : (type -> type) -> binder -> binder := fun f b =>
       let (name, r, ty) := deconstruct b in unsafe_make name r (f ty).
 
+    Module Relevance.
+
+      Ltac2 equal (r0 : relevance) (r1 : relevance) : bool :=
+        match r0, r1 with
+        | Relevant , Relevant => true
+        | Irrelevant , Irrelevant => true
+        | RelevanceVar _ , RelevanceVar _ => true
+        | _, _ => false
+        end.
+
+    End Relevance.
+
     Ltac2 equal (b0 : binder) (b1 : binder) : bool :=
-      Option.equal Ident.equal (Binder.name b0) (Binder.name b1) &&
-        Constr.equal (Binder.type b0) (Binder.type b1).
+      let (name0, r0, ty0) := deconstruct b0 in
+      let (name1, r1, ty1) := deconstruct b1 in
+      Option.equal Ident.equal name0 name1 &&
+      Relevance.equal r0 r1 &&
+      Constr.equal ty0 ty1.
 
   End Binder.
 
