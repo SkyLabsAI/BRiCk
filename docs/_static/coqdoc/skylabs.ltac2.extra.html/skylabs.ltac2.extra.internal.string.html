@@ -68,6 +68,17 @@ Minor extensions to <span class="inlinecode"><span class="id" title="var">Ltac2.
 </div>
 
 <div class="doc">
+<span class="inlinecode"><span class="id" title="var">to_char_list</span></span> <span class="inlinecode"><span class="id" title="var">cs</span></span> returns the list of characters of the string <span class="inlinecode"><span class="id" title="var">s</span></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">to_char_list</span> (<span class="id" title="var">s</span> : <span class="id" title="var">string</span>) : <span class="id" title="var">char</span> <span class="id" title="var">list</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">len</span> := <span class="id" title="var">String.length</span> <span class="id" title="var">s</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">List.map</span> (<span class="id" title="var">String.get</span> <span class="id" title="var">s</span>) (<span class="id" title="var">List.range</span> 0 <span class="id" title="var">len</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
 <span class="inlinecode"><span class="id" title="var">of_string_constr</span></span> <span class="inlinecode"><span class="id" title="var">t</span></span> attempts to build a string from the given Coq term
       <span class="inlinecode"><span class="id" title="var">c</span></span>, which must be a fully concrete and evaluated term of type <span class="inlinecode"><span class="id" title="var">string</span></span>
       from the <span class="inlinecode"><span class="id" title="var">Coq.Strings.String</span></span> module. 
@@ -83,6 +94,21 @@ Minor extensions to <span class="inlinecode"><span class="id" title="var">Ltac2.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">build_string</span> [] <span class="id" title="var">t</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">to_string_constr</span> (<span class="id" title="var">s</span> : <span class="id" title="var">string</span>) : <span class="id" title="keyword">constr</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">string_ctor</span> := '(<span class="id" title="constructor">String</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">string</span> := <span class="id" title="var">Constr.Unsafe.make_app2</span> <span class="id" title="var">string_ctor</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">len</span> := <span class="id" title="var">String.length</span> <span class="id" title="var">s</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="keyword">rec</span> <span class="id" title="var">build_constr</span> <span class="id" title="var">i</span> <span class="id" title="var">acc</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">Int.le</span> <span class="id" title="var">i</span> 0 <span class="id" title="keyword">then</span> <span class="id" title="var">acc</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">i</span> := <span class="id" title="var">Int.sub</span> <span class="id" title="var">i</span> 1 <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">c</span> := <span class="id" title="var">String.get</span> <span class="id" title="var">s</span> <span class="id" title="var">i</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">c</span> := <span class="id" title="var">Char.to_ascii_constr</span> <span class="id" title="var">c</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">acc</span> := <span class="id" title="var">string</span> <span class="id" title="var">c</span> <span class="id" title="var">acc</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">build_constr</span> <span class="id" title="var">i</span> <span class="id" title="var">acc</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">build_constr</span> <span class="id" title="var">len</span> '(<span class="id" title="constructor">EmptyString</span>).<br/>
 
 <br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">in_quotes</span> (<span class="id" title="var">s</span> : <span class="id" title="var">string</span>) : <span class="id" title="var">string</span> :=<br/>

@@ -1,0 +1,578 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>skylabs.ltac2.extra.internal.builder</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library skylabs.ltac2.extra.internal.builder</h1>
+
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.ltac2.extra.internal.init.html#"><span class="id" title="library">skylabs.ltac2.extra.internal.init</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.ltac2.extra.internal.constr.html#"><span class="id" title="library">skylabs.ltac2.extra.internal.constr</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.ltac2.extra.internal.int.html#"><span class="id" title="library">skylabs.ltac2.extra.internal.int</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.ltac2.extra.internal.list.html#"><span class="id" title="library">skylabs.ltac2.extra.internal.list</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.ltac2.extra.internal.string.html#"><span class="id" title="library">skylabs.ltac2.extra.internal.string</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.ltac2.extra.internal.printf.html#"><span class="id" title="library">skylabs.ltac2.extra.internal.printf</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.ltac2.extra.internal.fset.html#"><span class="id" title="library">skylabs.ltac2.extra.internal.fset</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.ltac2.extra.internal.fmap.html#"><span class="id" title="library">skylabs.ltac2.extra.internal.fmap</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Stdlib.Strings.PrimString</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">Ltac2</span> <a class="idref" href="skylabs.ltac2.extra.internal.init.html#Init"><span class="id" title="module">Init</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode">'<span class="id" title="var">a</span></span> <span class="inlinecode"><span class="id" title="var">Builder.t</span></span> provides a function <span class="inlinecode">'<span class="id" title="var">a</span></span> <span class="inlinecode">-&gt;</span> <span class="inlinecode"><span class="id" title="keyword">constr</span></span> to turn an Ltac2 value into a Gallina term.
+    Builders can be combined to build bigger builders. If one defines a Ltac2 type <span class="inlinecode"><span class="id" title="var">foo</span></span> and a
+    builder <span class="inlinecode"><span class="id" title="var">build_foo</span></span> for it, one can use it to turn <span class="inlinecode"><span class="id" title="var">xs</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">foo</span></span> <span class="inlinecode"><span class="id" title="var">option</span></span> <span class="inlinecode"><span class="id" title="var">list</span></span> into a term with
+    <span class="inlinecode"><span class="id" title="var">run</span></span> <span class="inlinecode">(<span class="id" title="var">build_list</span></span> <span class="inlinecode">(<span class="id" title="var">build_option</span></span> <span class="inlinecode"><span class="id" title="var">build_foo</span>))</span> <span class="inlinecode"><span class="id" title="var">xs</span></span>. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="Builder" class="idref" href="#Builder"><span class="id" title="module">Builder</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">Ltac2</span> <a class="idref" href="skylabs.ltac2.extra.internal.init.html#Init"><span class="id" title="module">Init</span></a> <a class="idref" href="skylabs.ltac2.extra.internal.constr.html#Constr"><span class="id" title="module">Constr</span></a> <a class="idref" href="skylabs.ltac2.extra.internal.printf.html#Printf"><span class="id" title="module">Printf</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Type</span> '<span class="id" title="var">a</span> <span class="id" title="var">impl</span> := { <span class="id" title="keyword">type</span> : <span class="id" title="keyword">constr</span>; <span class="id" title="var">build</span> : '<span class="id" title="var">a</span> -&gt; <span class="id" title="keyword">constr</span> }.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Type</span> '<span class="id" title="var">a</span> <span class="id" title="var">t</span> := <span class="id" title="var">unit</span> -&gt; '<span class="id" title="var">a</span> <span class="id" title="var">impl</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Type</span> <span class="id" title="var">arg</span> := [ <span class="id" title="var">Wildcard</span> | <span class="id" title="var">WildcardWithType</span>(<span class="id" title="keyword">constr</span>) | <span class="id" title="var">Term</span>(<span class="id" title="keyword">constr</span>) ].<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Module</span> <a id="Builder.Arg" class="idref" href="#Builder.Arg"><span class="id" title="module">Arg</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">map</span> (<span class="id" title="var">f</span> : <span class="id" title="keyword">constr</span> -&gt; <span class="id" title="keyword">constr</span>) (<span class="id" title="var">a</span> : <span class="id" title="var">arg</span>) : <span class="id" title="var">arg</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">a</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Term</span> <span class="id" title="var">trm</span> =&gt; <span class="id" title="var">Term</span> (<span class="id" title="var">f</span> <span class="id" title="var">trm</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Wildcard</span> =&gt; <span class="id" title="var">Wildcard</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">WildcardWithType</span> <span class="id" title="var">ty</span> =&gt; <span class="id" title="var">WildcardWithType</span> (<span class="id" title="var">f</span> <span class="id" title="var">ty</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">term</span> (<span class="id" title="var">a</span> : <span class="id" title="var">arg</span>) : <span class="id" title="keyword">constr</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">a</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Term</span> <span class="id" title="var">trm</span> =&gt; <span class="id" title="var">trm</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Wildcard</span> =&gt; '(<span class="id" title="var">_</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">WildcardWithType</span> <span class="id" title="var">ty</span> =&gt; <span class="id" title="var">Evar.make</span> <span class="id" title="var">ty</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">pp</span> : <span class="id" title="var">arg</span> <span class="id" title="var">pp</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> () <span class="id" title="var">a</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">a</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Wildcard</span> =&gt; <span class="id" title="var">fprintf</span> "?"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">WildcardWithType</span> <span class="id" title="var">ty</span> =&gt; <span class="id" title="var">fprintf</span> "? : %t" <span class="id" title="var">ty</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Term</span> <span class="id" title="var">x</span> =&gt; <span class="id" title="var">fprintf</span> "%t" <span class="id" title="var">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.extra.internal.builder.html#Builder.Arg"><span class="id" title="module">Arg</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Module</span> <a id="Builder.Constr" class="idref" href="#Builder.Constr"><span class="id" title="module">Constr</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Module</span> <a id="Builder.Constr.Unsafe" class="idref" href="#Builder.Constr.Unsafe"><span class="id" title="module">Unsafe</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+For a term <span class="inlinecode"><span class="id" title="keyword">forall</span></span> <span class="inlinecode"><span class="id" title="var">x</span></span> <span class="inlinecode"><span class="id" title="var">y</span></span> <span class="inlinecode"><span class="id" title="var">z</span>,</span> <span class="inlinecode"><span class="id" title="var">F</span></span> <span class="inlinecode"><span class="id" title="var">x</span></span> <span class="inlinecode"><span class="id" title="var">y</span></span> <span class="inlinecode"><span class="id" title="var">z</span></span>, return a set of integers that identify which of the bound
+        variables <span class="inlinecode"><span class="id" title="var">x</span>,<span class="id" title="var">y</span>,<span class="id" title="var">z</span></span> are referenced. Contrary to the de Bruijn encoding, <span class="inlinecode"><span class="id" title="var">x</span></span> is referenced to as
+        1, <span class="inlinecode"><span class="id" title="var">y</span></span> 2, and <span class="inlinecode"><span class="id" title="var">z</span></span> instead of 3,2,1 respectively. This gives us references that are relative to
+        the first binder instead of the last. Any <span class="inlinecode"><span class="id" title="var">Rel</span></span> not bound in that list of variables will be
+        omitted.
+
+<div class="paragraph"> </div>
+
+        The resulting set of integers are paired to the (optional) name given to it by the binder the
+        variables refer to.
+
+<div class="paragraph"> </div>
+
+        The only binders considered are consecutive top level binders. The binders occurring in the
+        type or definitions of variables are ignored -- otherwise, each referenced variable may refer
+        to different names at different places.
+        NOTE: if the names are not needed, the types and definitions could be treated the same way as the body.
+
+<div class="paragraph"> </div>
+
+        <span class="inlinecode"><span class="id" title="keyword">let</span></span> and <span class="inlinecode"><span class="id" title="keyword">fun</span></span> binders are treated similarly to <span class="inlinecode"><span class="id" title="keyword">forall</span></span>.
+     
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">bound_rel_occurrences</span> (<span class="id" title="var">trm</span> : <span class="id" title="keyword">constr</span>)  : (<span class="id" title="var">int</span>, <span class="id" title="var">name</span>) <span class="id" title="var">FMap.t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">empty_set</span> := <span class="id" title="var">FSet.empty</span> <span class="id" title="var">FSet.Tags.int_tag</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">free_rels</span> (<span class="id" title="var">bump</span> : <span class="id" title="var">int</span>) (<span class="id" title="var">trm</span> : <span class="id" title="keyword">constr</span>) : <span class="id" title="var">int</span> <span class="id" title="var">FSet.t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">vars</span> := <span class="id" title="var">Vars.rels</span> <span class="id" title="var">trm</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">sub</span> <span class="id" title="var">i</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">Int.lt</span> <span class="id" title="var">i</span> <span class="id" title="var">bump</span> <span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Some</span> (<span class="id" title="var">Int.sub</span> <span class="id" title="var">bump</span> <span class="id" title="var">i</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">None</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">vars</span> := <span class="id" title="var">List.map_filter</span> <span class="id" title="var">sub</span> <span class="id" title="var">vars</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">tag</span>  := <span class="id" title="var">FSet.Tags.int_tag</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">FSet.of_list</span> <span class="id" title="var">tag</span> <span class="id" title="var">vars</span> <span class="id" title="tactic">in</span><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">to_binder</span> (<span class="id" title="var">trm</span> : <span class="id" title="keyword">constr</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">Unsafe.kind</span> <span class="id" title="var">trm</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Unsafe.Prod</span> <span class="id" title="var">bnd</span> <span class="id" title="var">bod</span> =&gt; <span class="id" title="var">Some</span> (<span class="id" title="var">bnd</span>, <span class="id" title="var">None</span>, <span class="id" title="var">bod</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Unsafe.Lambda</span> <span class="id" title="var">bnd</span> <span class="id" title="var">bod</span> =&gt; <span class="id" title="var">Some</span> (<span class="id" title="var">bnd</span>, <span class="id" title="var">None</span>, <span class="id" title="var">bod</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Unsafe.LetIn</span> <span class="id" title="var">bnd</span> <span class="id" title="var">def</span> <span class="id" title="var">bod</span> =&gt; <span class="id" title="var">Some</span> (<span class="id" title="var">bnd</span>, <span class="id" title="var">Some</span> <span class="id" title="var">def</span>, <span class="id" title="var">bod</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <span class="id" title="var">None</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span> <span class="id" title="tactic">in</span><br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">name_map</span></span> - collects the names of all binders encountered during term traversal
+          <span class="inlinecode"><span class="id" title="var">occ</span></span>      - collects the level numbers of binders referenced along the traversal  
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="keyword">rec</span> <span class="id" title="var">go</span> <span class="id" title="var">trm</span> <span class="id" title="var">occ</span> <span class="id" title="var">idx</span> <span class="id" title="var">name_map</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">to_binder</span> <span class="id" title="var">trm</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Some</span> (<span class="id" title="var">bnd</span>, <span class="id" title="var">def</span>, <span class="id" title="var">bod</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">ty</span> := <span class="id" title="var">Binder.type</span> <span class="id" title="var">bnd</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">n</span> := <span class="id" title="var">Binder.name</span> <span class="id" title="var">bnd</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">idx'</span> := <span class="id" title="var">Int.add</span> <span class="id" title="var">idx</span> 1 <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">name_map'</span> := <span class="id" title="var">FMap.add</span> <span class="id" title="var">idx</span> <span class="id" title="var">n</span> <span class="id" title="var">name_map</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">occ'</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">free_ty</span> := <span class="id" title="var">free_rels</span> <span class="id" title="var">idx</span> <span class="id" title="var">ty</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">free_def</span> := <span class="id" title="var">Option.map_default</span> (<span class="id" title="var">free_rels</span> <span class="id" title="var">idx</span>) <span class="id" title="var">empty_set</span> <span class="id" title="var">def</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">free</span> := <span class="id" title="var">FSet.union</span> <span class="id" title="var">free_ty</span> <span class="id" title="var">free_def</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">FSet.union</span> <span class="id" title="var">occ</span> <span class="id" title="var">free</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">go</span> <span class="id" title="var">bod</span> <span class="id" title="var">occ'</span> <span class="id" title="var">idx'</span> <span class="id" title="var">name_map'</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">None</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">free</span> := <span class="id" title="var">free_rels</span> <span class="id" title="var">idx</span> <span class="id" title="var">trm</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">occ'</span>  := <span class="id" title="var">FSet.union</span> <span class="id" title="var">free</span> <span class="id" title="var">occ</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">FMap.filteri</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">k</span> <span class="id" title="var">_v</span> =&gt; <span class="id" title="var">FSet.mem</span> <span class="id" title="var">k</span> <span class="id" title="var">occ'</span>) <span class="id" title="var">name_map</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">map</span> := <span class="id" title="var">FMap.empty</span> <span class="id" title="var">FSet.Tags.int_tag</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">go</span> <span class="id" title="var">trm</span> <span class="id" title="var">empty_set</span> 1 <span class="id" title="var">map</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">instantiate_prod</span></span> <span class="inlinecode"><span class="id" title="var">ty</span></span> <span class="inlinecode"><span class="id" title="var">args</span></span>, with <span class="inlinecode"><span class="id" title="var">ty</span></span> a product type and args a list of (possibly omitted)
+        arguments produces <span class="inlinecode">(<span class="id" title="var">args'</span>,</span> <span class="inlinecode"><span class="id" title="var">ty'</span>)</span> with <span class="inlinecode"><span class="id" title="var">ty'</span></span> the result of instantiating <span class="inlinecode"><span class="id" title="var">length</span></span> <span class="inlinecode"><span class="id" title="var">args</span></span> bound
+        variables and <span class="inlinecode"><span class="id" title="var">args'</span></span> the arguments and evars used in the instantiation.
+
+<div class="paragraph"> </div>
+
+        Each argument can be one of:
+<a id="lab2"></a><h1 class="section">Wildcard            - when the argument is omitted;</h1>
+
+<a id="lab3"></a><h1 class="section">WithcardWithType ty - when the argument is omitted but its type is specified;</h1>
+
+<a id="lab4"></a><h1 class="section">Term x              - when <span class="inlinecode"><span class="id" title="var">x</span></span> is the provided argument.</h1>
+
+
+<div class="paragraph"> </div>
+
+        POSSIBLE ADDITION: a third argument <span class="inlinecode"><span class="id" title="var">future_arguments</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">int</span></span> so that <span class="inlinecode"><span class="id" title="var">args</span></span> doesn't have to
+        match from the beginning.  <span class="inlinecode"><span class="id" title="var">instantiate_prod</span></span> <span class="inlinecode">'(@<span class="id" title="var">List.append</span>)</span> <span class="inlinecode">[<span class="id" title="var">Term</span></span> <span class="inlinecode">'([1;2])]</span> <span class="inlinecode">1</span> would produce
+        the type <span class="inlinecode"><span class="id" title="var">list</span></span> <span class="inlinecode"><span class="id" title="var">nat</span></span> <span class="inlinecode">-&gt;</span> <span class="inlinecode"><span class="id" title="var">list</span></span> <span class="inlinecode"><span class="id" title="var">nat</span></span>, i.e. a function taking one (1) more argument, and <span class="inlinecode">['(<span class="id" title="var">nat</span>);</span> <span class="inlinecode">[1;2]]</span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">instantiate_prod</span> (<span class="id" title="var">ty</span> : <span class="id" title="keyword">constr</span>) (<span class="id" title="var">args</span> : <span class="id" title="var">arg</span> <span class="id" title="var">list</span>) : <span class="id" title="var">arg</span> <span class="id" title="var">list</span> * <span class="id" title="keyword">constr</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">occurs</span> := <span class="id" title="var">Constr.Unsafe.bound_rel_occurrences</span> <span class="id" title="var">ty</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">dud</span> := '(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#True"><span class="id" title="inductive">True</span></a>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">mk_evar</span> <span class="id" title="var">idx</span> <span class="id" title="var">ty</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">FMap.mem</span> <span class="id" title="var">idx</span> <span class="id" title="var">occurs</span> <span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">x</span> := <span class="id" title="var">Constr.Evar.make</span> <span class="id" title="var">ty</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">x</span>, <span class="id" title="var">Term</span> <span class="id" title="var">x</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">dud</span>, <span class="id" title="var">WildcardWithType</span> <span class="id" title="var">ty</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="keyword">rec</span> <span class="id" title="var">go</span> <span class="id" title="var">ty</span> <span class="id" title="var">idx</span> <span class="id" title="var">args</span> <span class="id" title="tactic">subst</span> <span class="id" title="var">acc</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">args</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| [] =&gt; (<span class="id" title="var">List.rev</span> <span class="id" title="var">acc</span>, <span class="id" title="var">Constr.Unsafe.substnl</span> <span class="id" title="tactic">subst</span> 0 <span class="id" title="var">ty</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">x</span> :: <span class="id" title="var">xs</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">Constr.Unsafe.kind</span> <span class="id" title="var">ty</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Constr.Unsafe.Prod</span> <span class="id" title="var">bnd</span> <span class="id" title="var">bod</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">arg_ty</span> := <span class="id" title="var">Constr.Binder.type</span> <span class="id" title="var">bnd</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">arg_ty</span> := <span class="id" title="var">Constr.Unsafe.substnl</span> <span class="id" title="tactic">subst</span> 0 <span class="id" title="var">arg_ty</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">x</span>, <span class="id" title="var">arg</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">x</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Wildcard</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk_evar</span> <span class="id" title="var">idx</span> <span class="id" title="var">arg_ty</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">WildcardWithType</span> <span class="id" title="var">x_ty</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Std.unify</span> <span class="id" title="var">x_ty</span> <span class="id" title="var">arg_ty</span> ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">mk_evar</span> <span class="id" title="var">idx</span> <span class="id" title="var">x_ty</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Term</span> <span class="id" title="var">x</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">x_ty</span> := <span class="id" title="var">Constr.type</span> <span class="id" title="var">x</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Std.unify</span> <span class="id" title="var">x_ty</span> <span class="id" title="var">arg_ty</span> ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">x</span>, <span class="id" title="var">Term</span> <span class="id" title="var">x</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">idx'</span>   := <span class="id" title="var">Int.add</span> <span class="id" title="var">idx</span> 1 <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">subst'</span> := <span class="id" title="var">x</span> :: <span class="id" title="tactic">subst</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">acc'</span>   := <span class="id" title="var">arg</span> :: <span class="id" title="var">acc</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">go</span> <span class="id" title="var">bod</span> <span class="id" title="var">idx'</span> <span class="id" title="var">xs</span> <span class="id" title="var">subst'</span> <span class="id" title="var">acc'</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">msg</span> := <span class="id" title="var">fprintf</span> "instantiate_prod: excess arguments%a%a"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">pp_lines</span> <span class="id" title="var">pp_string</span>) [""]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">pp_lines</span> (<span class="id" title="var">pp_prefix</span> "  - " <span class="id" title="var">Arg.pp</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">xs</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.throw</span> (<span class="id" title="var">Invalid_argument</span> (<span class="id" title="var">Some</span> <span class="id" title="var">msg</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">go</span> <span class="id" title="var">ty</span> 1 <span class="id" title="var">args</span> [] [].<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.extra.internal.builder.html#Builder.Constr.Unsafe"><span class="id" title="module">Unsafe</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.extra.internal.builder.html#Builder.Constr"><span class="id" title="module">Constr</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+A convenient shorthand for <span class="inlinecode"><span class="id" title="var">Constr.subst_evars</span></span> 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">subst_evars'</span> (<span class="id" title="var">g</span> : <span class="id" title="keyword">constr</span>) : <span class="id" title="keyword">constr</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Option.default</span> <span class="id" title="var">g</span> (<span class="id" title="var">Constr.subst_evars</span> <span class="id" title="var">g</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">map</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">fty</span> : <span class="id" title="keyword">constr</span> -&gt; <span class="id" title="keyword">constr</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">fval</span> : <span class="id" title="keyword">constr</span> -&gt; ('<span class="id" title="var">a</span> -&gt; <span class="id" title="keyword">constr</span>) -&gt; '<span class="id" title="var">b</span> -&gt; <span class="id" title="keyword">constr</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">build</span> : '<span class="id" title="var">a</span> <span class="id" title="var">t</span>) : '<span class="id" title="var">b</span> <span class="id" title="var">t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> () =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> {<span class="id" title="keyword">type</span>; <span class="id" title="var">build</span>} := <span class="id" title="var">build</span> () <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">ty'</span> := <span class="id" title="var">fty</span> <span class="id" title="keyword">type</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="keyword">type</span> := <span class="id" title="var">ty'</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">build</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">x</span> =&gt; <span class="id" title="var">fval</span> <span class="id" title="keyword">type</span> <span class="id" title="var">build</span> <span class="id" title="var">x</span> }.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>]<br/>
+&nbsp;&nbsp;<span class="id" title="var">Ltac2</span> <span class="id" title="var">instantiate_type</span> <span class="id" title="var">fn</span> (<span class="id" title="var">fixed_args</span> : <span class="id" title="var">arg</span> <span class="id" title="var">list</span>) (<span class="id" title="var">other_args</span> : <span class="id" title="var">arg</span> <span class="id" title="var">list</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">fty</span> := <span class="id" title="var">Constr.type</span> <span class="id" title="var">fn</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.with_holes</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="keyword">fun</span> () =&gt; <span class="id" title="var">Constr.Unsafe.instantiate_prod</span> <span class="id" title="var">fty</span> (<span class="id" title="var">List.append</span> <span class="id" title="var">fixed_args</span> <span class="id" title="var">other_args</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="keyword">fun</span> (<span class="id" title="var">args</span>, <span class="id" title="var">ty</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">args</span> := <span class="id" title="var">List.map</span> (<span class="id" title="var">Arg.map</span> <span class="id" title="var">subst_evars'</span>) <span class="id" title="var">args</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">ty</span> := <span class="id" title="var">subst_evars'</span> <span class="id" title="var">ty</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">lazy_app</span> () :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">args</span> := <span class="id" title="var">List.map</span> <span class="id" title="var">Arg.term</span> <span class="id" title="var">args</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Unsafe.make_app_list</span> <span class="id" title="var">fn</span> <span class="id" title="var">args</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">lazy_app</span>, <span class="id" title="var">ty</span>)).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+This module allows one to combine builders in an applicative style. With a Galina function <span class="inlinecode"><span class="id" title="var">f</span></span>
+      and n builders <span class="inlinecode"><span class="id" title="var">build_a1</span></span> .. <span class="inlinecode"><span class="id" title="var">build_an</span></span>, one can use <span class="inlinecode"><span class="id" title="var">f</span></span> to combine the result of the n
+      builders as follows:
+      <code>
+</code>        <i>apply f fixed_args
+          (<i>arg_on prj1 build_a1)
+          ...
+          (<i>arg_on prjn build_an)
+          <i>done
+      &gt;&gt;
+
+<div class="paragraph"> </div>
+
+      The result is <span class="inlinecode">'<span class="id" title="var">b</span></span> <span class="inlinecode"><span class="id" title="var">Builder.t</span></span> if each projection <span class="inlinecode"><span class="id" title="var">prji</span></span> has type <span class="inlinecode">'<span class="id" title="var">b</span></span> <span class="inlinecode">-&gt;</span> <span class="inlinecode">'<span class="id" title="var">ai</span></span> and each builder
+      <span class="inlinecode"><span class="id" title="var">build_ai</span></span> has type <span class="inlinecode">'<span class="id" title="var">ai</span></span> <span class="inlinecode"><span class="id" title="var">Builder.t</span></span>. The Galina type returned by the resulting builder is
+      calculated by specializing the function type of <span class="inlinecode"><span class="id" title="var">f</span></span> with the type of each argument it is
+      given. <span class="inlinecode"><span class="id" title="var">fixed_args</span></span> is a <span class="inlinecode"><span class="id" title="var">arg</span></span> <span class="inlinecode"><span class="id" title="var">list</span></span>, a list of terms or (optionally typed) wildcards which will be
+      used as the first few arguments given to <span class="inlinecode"><span class="id" title="var">f</span></span>.
+
+<div class="paragraph"> </div>
+
+      The resulting builder will apply <span class="inlinecode"><span class="id" title="tactic">cbv</span></span> on the resulting term.
+
+<div class="paragraph"> </div>
+
+      As an example, one may want to use the interface to create a builder which takes a (Ltac2)
+      pair of lists of integers and return their concatenation as a Galina term:
+      <code>
+</code>        let build_int_list := build_list build_Z in
+        <i>apply '(@List.app) <span class="inlinecode"><span class="id" title="var">Wildcard</span></span>
+          (<i>arg_on fst build_int_list)
+          (<i>arg_on snd build_int_list)
+          <i>done
+      &gt;&gt;
+
+<div class="paragraph"> </div>
+
+      The result has type <span class="inlinecode">(<span class="id" title="var">int</span></span> <span class="inlinecode"><span class="id" title="var">list</span></span> <span class="inlinecode">*</span> <span class="inlinecode"><span class="id" title="var">int</span></span> <span class="inlinecode"><span class="id" title="var">list</span>)</span> <span class="inlinecode"><span class="id" title="var">Builder.t</span></span>.
+
+<div class="paragraph"> </div>
+
+      Limitation: the builders one can create with the interface <span class="inlinecode"><span class="id" title="var">Ap</span></span> are limited to the builders
+      calling other builders and combining the results using a Galina function. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Module</span> <a id="Builder.Ap" class="idref" href="#Builder.Ap"><span class="id" title="module">Ap</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Type</span> ('<span class="id" title="var">b</span>, '<span class="id" title="var">t</span>, '<span class="id" title="var">e</span>) <span class="id" title="var">acc</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="var">ret</span> : <span class="id" title="keyword">constr</span> <span class="id" title="var">list</span> -&gt; ('<span class="id" title="var">b</span> -&gt; <span class="id" title="keyword">constr</span> <span class="id" title="var">list</span>) -&gt; '<span class="id" title="var">t</span> ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">r_type</span> : <span class="id" title="keyword">constr</span> <span class="id" title="var">list</span> ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">r_term</span> : '<span class="id" title="var">b</span> -&gt; <span class="id" title="keyword">constr</span> <span class="id" title="var">list</span> }.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Implementation 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>]<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Ltac2</span> <span class="id" title="var">insert</span> (<span class="id" title="var">f</span>  : '<span class="id" title="var">b</span> -&gt; '<span class="id" title="var">a</span>) (<span class="id" title="var">builder</span> : '<span class="id" title="var">a</span> <span class="id" title="var">t</span>) : ('<span class="id" title="var">b</span>, '<span class="id" title="var">t</span>, '<span class="id" title="var">e</span>) <span class="id" title="var">acc</span> -&gt; ('<span class="id" title="var">b</span>, '<span class="id" title="var">t</span>, '<span class="id" title="var">e</span>) <span class="id" title="var">acc</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> { <span class="id" title="var">ret</span>; <span class="id" title="var">r_type</span>; <span class="id" title="var">r_term</span> } =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> { <span class="id" title="keyword">type</span>; <span class="id" title="var">build</span> } := <span class="id" title="var">builder</span> () <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="var">ret</span> ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">r_type</span> := (<span class="id" title="keyword">type</span> :: <span class="id" title="var">r_type</span>) ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">r_term</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">b</span> =&gt; <span class="id" title="var">build</span> (<span class="id" title="var">f</span> <span class="id" title="var">b</span>) :: <span class="id" title="var">r_term</span> <span class="id" title="var">b</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Starter 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="tactic">apply</span> (<span class="id" title="var">fn</span> : <span class="id" title="keyword">constr</span>) (<span class="id" title="var">args</span> : <span class="id" title="var">arg</span> <span class="id" title="var">list</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">x</span> : ('<span class="id" title="var">b</span>, '<span class="id" title="var">t</span>, '<span class="id" title="var">e</span>) <span class="id" title="var">acc</span> -&gt; '<span class="id" title="var">r</span>) : '<span class="id" title="var">r</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">wild_ty</span> <span class="id" title="var">ty</span> := <span class="id" title="var">WildcardWithType</span> <span class="id" title="var">ty</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">term</span> <span class="id" title="var">trm</span>   := <span class="id" title="var">Term</span> <span class="id" title="var">trm</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">inst_ty</span> <span class="id" title="var">xs</span> := <span class="id" title="var">instantiate_type</span> <span class="id" title="var">fn</span> <span class="id" title="var">args</span> <span class="id" title="var">xs</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">mk_app</span> <span class="id" title="var">xs</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">fn_app</span>, <span class="id" title="var">_</span>) := <span class="id" title="var">inst_ty</span> (<span class="id" title="var">List.map</span> <span class="id" title="var">term</span> <span class="id" title="var">xs</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">trm</span> := <span class="id" title="var">fn_app</span> () <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Std.eval_cbv</span> <span class="id" title="var">RedFlags.all</span> <span class="id" title="var">trm</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">compile</span> <span class="id" title="var">build_ty</span> <span class="id" title="var">build_trm</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">_</span>, <span class="id" title="keyword">type</span>)    := <span class="id" title="var">inst_ty</span> (<span class="id" title="var">List.map</span> <span class="id" title="var">wild_ty</span> <span class="id" title="var">build_ty</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">build</span> <span class="id" title="var">args</span> := <span class="id" title="var">mk_app</span> (<span class="id" title="var">List.rev</span> (<span class="id" title="var">build_trm</span> <span class="id" title="var">args</span>)) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="keyword">type</span>; <span class="id" title="var">build</span> } <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">acc</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="var">ret</span>  := <span class="id" title="var">compile</span> ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">r_type</span> := [] ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">r_term</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> =&gt; [] } <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">x</span> <span class="id" title="var">acc</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Combinators 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">arg_on</span> (<span class="id" title="var">f</span>  : '<span class="id" title="var">b</span> -&gt; '<span class="id" title="var">a</span>) (<span class="id" title="var">builder</span> : '<span class="id" title="var">a</span> <span class="id" title="var">t</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">prev</span> : ('<span class="id" title="var">b</span>, '<span class="id" title="var">t</span>, '<span class="id" title="var">e</span>) <span class="id" title="var">acc</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;( ('<span class="id" title="var">b</span>, '<span class="id" title="var">t</span>, '<span class="id" title="var">e</span>) <span class="id" title="var">acc</span> -&gt; '<span class="id" title="var">r</span> ) -&gt; '<span class="id" title="var">r</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> <span class="id" title="var">k</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">k</span> (<span class="id" title="var">insert</span> <span class="id" title="var">f</span> <span class="id" title="var">builder</span> <span class="id" title="var">prev</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">arg</span> (<span class="id" title="var">builder</span> : '<span class="id" title="var">a</span> <span class="id" title="var">t</span>) := <span class="id" title="var">arg_on</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">x</span> =&gt; <span class="id" title="var">x</span>) <span class="id" title="var">builder</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Finishers 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">done</span> (<span class="id" title="var">x</span> : ('<span class="id" title="var">b</span>, '<span class="id" title="var">t</span>, '<span class="id" title="var">e</span>) <span class="id" title="var">acc</span>) : '<span class="id" title="var">t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> { <span class="id" title="var">ret</span>    := <span class="id" title="var">compile</span> ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">r_type</span> := <span class="id" title="var">x_ty</span>  ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">r_term</span> := <span class="id" title="var">x_build</span> }  := <span class="id" title="var">x</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">compile</span> <span class="id" title="var">x_ty</span> <span class="id" title="var">x_build</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.extra.internal.builder.html#Builder.Ap"><span class="id" title="module">Ap</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">build_pos</span> : <span class="id" title="var">int</span> <span class="id" title="var">Builder.t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> () =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="keyword">type</span> := '(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#positive"><span class="id" title="inductive">BinNums.positive</span></a>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">build</span> := <span class="id" title="var">Int.as_pos</span> }.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">build_N</span> : <span class="id" title="var">int</span> <span class="id" title="var">Builder.t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> () =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="keyword">type</span> := '(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">BinNums.N</span></a>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">build</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">n</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">Int.lt</span> <span class="id" title="var">n</span> 0 <span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">msg</span> := <span class="id" title="var">fprintf</span> "numbers of type %t cannot be negative: %i" '(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">BinNums.N</span></a>) <span class="id" title="var">n</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.throw</span> (<span class="id" title="var">Invalid_argument</span> (<span class="id" title="var">Some</span> <span class="id" title="var">msg</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="keyword">if</span> <span class="id" title="var">Int.lt</span> 0 <span class="id" title="var">n</span> <span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">n</span> := (<span class="id" title="var">build_pos</span> ()).(<span class="id" title="var">build</span>) <span class="id" title="var">n</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Zpos"><span class="id" title="constructor">BinNums.Zpos</span></a> $<span class="id" title="var">n</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z0"><span class="id" title="constructor">BinNums.Z0</span></a>) }.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">build_Z</span> : <span class="id" title="var">int</span> <span class="id" title="var">Builder.t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> () =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="keyword">type</span> := '(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">BinNums.Z</span></a>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">build</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">n</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">Int.lt</span> <span class="id" title="var">n</span> 0 <span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">n</span> := (<span class="id" title="var">build_pos</span> ()).(<span class="id" title="var">build</span>) (<span class="id" title="var">Int.neg</span> <span class="id" title="var">n</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Zneg"><span class="id" title="constructor">BinNums.Zneg</span></a> $<span class="id" title="var">n</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="keyword">if</span> <span class="id" title="var">Int.lt</span> 0 <span class="id" title="var">n</span> <span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">n</span> := (<span class="id" title="var">build_pos</span> ()).(<span class="id" title="var">build</span>) <span class="id" title="var">n</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Zpos"><span class="id" title="constructor">BinNums.Zpos</span></a> $<span class="id" title="var">n</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#Z0"><span class="id" title="constructor">BinNums.Z0</span></a>) }.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">build_nat</span> : <span class="id" title="var">int</span> <span class="id" title="var">Builder.t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> () =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="keyword">type</span> := '(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">build</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">n</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">Int.lt</span> <span class="id" title="var">n</span> 0 <span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">msg</span> := <span class="id" title="var">fprintf</span> "numbers of type %t cannot be negative: %i" '(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) <span class="id" title="var">n</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.throw</span> (<span class="id" title="var">Invalid_argument</span> (<span class="id" title="var">Some</span> <span class="id" title="var">msg</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="var">Int.as_nat</span> <span class="id" title="var">n</span> }.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">make_list</span> (<span class="id" title="var">ty</span> : <span class="id" title="keyword">constr</span>) (<span class="id" title="var">xs</span> : <span class="id" title="keyword">constr</span> <span class="id" title="var">list</span>) : <span class="id" title="keyword">constr</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">cons</span> := '(@<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">make_cons</span> <span class="id" title="var">x</span> <span class="id" title="var">xs</span> := <span class="id" title="var">Unsafe.make_app3</span> <span class="id" title="var">cons</span> <span class="id" title="var">ty</span> <span class="id" title="var">x</span> <span class="id" title="var">xs</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">List.foldr</span> <span class="id" title="var">make_cons</span> <span class="id" title="var">xs</span> (<span class="id" title="var">Unsafe.make_app1</span> '(@<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>) <span class="id" title="var">ty</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">make_pair</span> <span class="id" title="var">tyA</span> <span class="id" title="var">tyB</span> := <span class="id" title="var">Unsafe.make_app2</span> '(@<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#pair"><span class="id" title="constructor">pair</span></a> $<span class="id" title="var">tyA</span> $<span class="id" title="var">tyB</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">make_bool</span> (<span class="id" title="var">b</span> : <span class="id" title="var">bool</span>) : <span class="id" title="keyword">constr</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">b</span> <span class="id" title="keyword">then</span> '(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>) <span class="id" title="keyword">else</span> '(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">build_bool</span> : <span class="id" title="var">bool</span> <span class="id" title="var">Builder.t</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">fun</span> () =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="keyword">type</span> := '(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>)  ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">build</span> := <span class="id" title="var">make_bool</span> }.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">build_option</span> (<span class="id" title="var">build</span> : '<span class="id" title="var">a</span> <span class="id" title="var">Builder.t</span>) : '<span class="id" title="var">a</span> <span class="id" title="var">option</span> <span class="id" title="var">Builder.t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> () =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> {<span class="id" title="keyword">type</span>; <span class="id" title="var">build</span>} := <span class="id" title="var">build</span> () <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="keyword">type</span>  := '(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> $<span class="id" title="keyword">type</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">build</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">x</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">x</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">None</span> =&gt; '(@<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> $<span class="id" title="keyword">type</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Some</span> <span class="id" title="var">x</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">x</span> := <span class="id" title="var">build</span> <span class="id" title="var">x</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'(@<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> $<span class="id" title="keyword">type</span> $<span class="id" title="var">x</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span> }.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">build_list</span> (<span class="id" title="var">build</span> : '<span class="id" title="var">a</span> <span class="id" title="var">t</span>) : '<span class="id" title="var">a</span> <span class="id" title="var">list</span> <span class="id" title="var">t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> () =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> {<span class="id" title="keyword">type</span>; <span class="id" title="var">build</span>} := <span class="id" title="var">build</span> () <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="keyword">type</span>  := <span class="id" title="keyword">constr</span>:(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> $<span class="id" title="keyword">type</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">build</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">x</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">make_list</span> <span class="id" title="keyword">type</span> (<span class="id" title="var">List.map</span> <span class="id" title="var">build</span> <span class="id" title="var">x</span>) }.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">build_pair</span> (<span class="id" title="var">build_a</span> : '<span class="id" title="var">a</span> <span class="id" title="var">t</span>) (<span class="id" title="var">build_b</span> : '<span class="id" title="var">b</span> <span class="id" title="var">t</span>) : ('<span class="id" title="var">a</span> * '<span class="id" title="var">b</span>) <span class="id" title="var">t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> () =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> {<span class="id" title="keyword">type</span> := <span class="id" title="var">ty_a</span>; <span class="id" title="var">build</span> := <span class="id" title="var">build_a</span>} := <span class="id" title="var">build_a</span> () <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> {<span class="id" title="keyword">type</span> := <span class="id" title="var">ty_b</span>; <span class="id" title="var">build</span> := <span class="id" title="var">build_b</span>} := <span class="id" title="var">build_b</span> () <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">pair_ty</span> := <span class="id" title="keyword">constr</span>:(($<span class="id" title="var">ty_a</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">*</span></a> $<span class="id" title="var">ty_b</span>)%<span class="id" title="keyword">type</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="keyword">type</span> := <span class="id" title="var">pair_ty</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">build</span> := <span class="id" title="keyword">fun</span> (<span class="id" title="var">a</span>, <span class="id" title="var">b</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">a</span> := <span class="id" title="var">build_a</span> <span class="id" title="var">a</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">b</span> := <span class="id" title="var">build_b</span> <span class="id" title="var">b</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">constr</span>:(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a>$<span class="id" title="var">a</span><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> $<span class="id" title="var">b</span><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>) }.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Requires <span class="inlinecode"><span class="id" title="var">skylabs.prelude.pstring_string</span></span> which we can't import. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">build_stdlib_string</span> : <span class="id" title="var">string</span> <span class="id" title="var">t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> () =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="keyword">type</span>  := '(<span class="id" title="inductive">String.string</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">build</span> := <span class="id" title="var">String.to_string_constr</span> }.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">build_pstring</span> : <span class="id" title="var">string</span> <span class="id" title="var">t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> () =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="keyword">type</span>  := <span class="id" title="keyword">constr</span>:(<span class="id" title="var">PrimString.string</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">build</span> := <span class="id" title="var">Unsafe.make_string</span> }.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+TODO: do type checking in <span class="inlinecode"><span class="id" title="var">build</span></span> 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">constr</span> (<span class="id" title="keyword">type</span> : <span class="id" title="keyword">constr</span>) : <span class="id" title="keyword">constr</span> <span class="id" title="var">t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">fun</span> () =&gt; {<span class="id" title="keyword">type</span>; <span class="id" title="var">build</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">x</span> =&gt; <span class="id" title="var">x</span>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">run</span> (<span class="id" title="var">builder</span> : '<span class="id" title="var">a</span> <span class="id" title="var">t</span>) (<span class="id" title="var">x</span> : '<span class="id" title="var">a</span>) : <span class="id" title="keyword">constr</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">builder</span> ()).(<span class="id" title="var">build</span>) <span class="id" title="var">x</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">to_ltac1</span> (<span class="id" title="var">builder</span> : '<span class="id" title="var">a</span> <span class="id" title="var">t</span>) (<span class="id" title="var">x</span> : '<span class="id" title="var">a</span>) : <span class="id" title="var">Ltac1.t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Ltac1.of_constr</span> ((<span class="id" title="var">builder</span> ()).(<span class="id" title="var">build</span>) <span class="id" title="var">x</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Section</span> <a id="Builder.example" class="idref" href="#Builder.example"><span class="id" title="section">example</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">list_scope</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">Lists.List.ListNotations</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">from_lists</span> (<span class="id" title="var">build_a</span> : '<span class="id" title="var">a</span> <span class="id" title="var">Builder.t</span>) (<span class="id" title="var">build_b</span> : '<span class="id" title="var">b</span> <span class="id" title="var">Builder.t</span>) () :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Ap.apply</span> '(<span class="id" title="keyword">fun</span> <a id="a:1" class="idref" href="#a:1"><span class="id" title="binder">a</span></a> <a id="b:2" class="idref" href="#b:2"><span class="id" title="binder">b</span></a> <a id="c:3" class="idref" href="#c:3"><span class="id" title="binder">c</span></a> =&gt; (<a class="idref" href="skylabs.ltac2.extra.internal.builder.html#a:1"><span class="id" title="variable">a</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">++</span></a> <span class="id" title="definition">List.rev</span> <a class="idref" href="skylabs.ltac2.extra.internal.builder.html#b:2"><span class="id" title="variable">b</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#bc347c51eaf667706ae54503b26d52c6"><span class="id" title="notation">++</span></a> <a class="idref" href="skylabs.ltac2.extra.internal.builder.html#c:3"><span class="id" title="variable">c</span></a>)%<span class="id" title="var">list</span>) []<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">Ap.arg_on</span> (<span class="id" title="keyword">fun</span> (<span class="id" title="var">a</span>,<span class="id" title="var">_</span>,<span class="id" title="var">_</span>) =&gt; <span class="id" title="var">a</span>) <span class="id" title="var">build_a</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">Ap.arg_on</span> (<span class="id" title="keyword">fun</span> (<span class="id" title="var">_</span>,<span class="id" title="var">b</span>,<span class="id" title="var">_</span>) =&gt; <span class="id" title="var">b</span>) <span class="id" title="var">build_b</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">Ap.arg_on</span> (<span class="id" title="keyword">fun</span> (<span class="id" title="var">_</span>,<span class="id" title="var">_</span>,<span class="id" title="var">c</span>) =&gt; <span class="id" title="var">c</span>) <span class="id" title="var">build_a</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Ap.done</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Goal</span> <a id="Builder.Unnamed_thm" class="idref" href="#Builder.Unnamed_thm"><span class="id" title="definition">True</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">builder</span> := <span class="id" title="var">from_lists</span> (<span class="id" title="keyword">constr</span> '(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>)) (<span class="id" title="var">build_list</span> <span class="id" title="var">build_nat</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">trm</span>     := <span class="id" title="var">run</span> <span class="id" title="var">builder</span> ( '(<span class="id" title="notation">[</span>1<span class="id" title="notation">]</span>), [2;3;4], '(<span class="id" title="notation">[</span>5<span class="id" title="notation">]</span>)) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.assert_true</span> (<span class="id" title="var">Constr.equal</span> <span class="id" title="var">trm</span> '(<span class="id" title="notation">[</span>1<span class="id" title="notation">;</span>4<span class="id" title="notation">;</span>3<span class="id" title="notation">;</span>2<span class="id" title="notation">;</span>5<span class="id" title="notation">]</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Abort</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.extra.internal.builder.html#Builder.example"><span class="id" title="section">example</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.extra.internal.builder.html#Builder"><span class="id" title="module">Builder</span></a>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>
