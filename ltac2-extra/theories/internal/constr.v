@@ -10,7 +10,6 @@ Require Import skylabs.ltac2.extra.internal.plugin.
 Require Import skylabs.ltac2.extra.internal.init.
 Require Import skylabs.ltac2.extra.internal.misc.
 Require Import skylabs.ltac2.extra.internal.printf.
-Require Ltac2.FSet.
 
 (* NOTE: When using [Constr.Unsafe], [Constr.Unsafe.check] will enforce sane
    universe constraints on _output_ constructors, as will code like
@@ -352,6 +351,7 @@ Module Constr.
 
     Ltac2 make_pstring (p : pstring) := make (String p).
 
+
     (** ** Declarations *)
     (**
     An inhabitant of type [RelDecl.t] describes a [Rel i] and can be
@@ -481,6 +481,18 @@ Module Constr.
       Ltac2 invalid_arg (whence : string) (t : constr) : 'a :=
         invalid_arg' whence (Message.of_constr t).
 
+      Ltac2 of_var_opt : constr -> ident option := fun t =>
+        match Unsafe.kind t with
+        | Unsafe.Var n => Some n
+        | _ => None
+        end.
+
+      Ltac2 of_var : constr -> ident := fun t =>
+        match of_var_opt t with
+        | Some r => r
+        | None   => invalid_arg "Constr.Unsafe.Destruct.of_var" t
+        end.
+
       Ltac2 of_app : constr -> (constr * constr array) := fun t =>
         let rec go trm acc :=
           match Unsafe.kind trm with
@@ -546,6 +558,18 @@ Module Constr.
         match of_n_lambdas_opt i t with
         | Some r => r
         | None => invalid_arg "Constr.Unsafe.Destruct.of_n_lambdas" t
+        end.
+
+      Ltac2 of_let_in_opt : constr -> (binder * constr * constr) option := fun t =>
+        match kind t with
+        | LetIn b e t => Some (b, e, t)
+        | _ => None
+        end.
+
+      Ltac2 of_let_in : constr -> binder * constr * constr := fun t =>
+        match of_let_in_opt t with
+        | Some r => r
+        | None => Destruct.invalid_arg "Constr.Unsafe.Destruct.of_let_in" t
         end.
 
       (* Info about an applied projection. *)

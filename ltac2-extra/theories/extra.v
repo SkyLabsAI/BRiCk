@@ -8,9 +8,11 @@
 (** * Extensions of the Ltac2 standard library. *)
 
 Require Export skylabs.ltac2.extra.internal.array.
+Require Export skylabs.ltac2.extra.internal.builder.
 Require Export skylabs.ltac2.extra.internal.char.
 Require Export skylabs.ltac2.extra.internal.compare.
 Require Export skylabs.ltac2.extra.internal.constr.
+Require Export skylabs.ltac2.extra.internal.cps.
 Require Export skylabs.ltac2.extra.internal.control.
 Require Export skylabs.ltac2.extra.internal.coq_option.
 Require Export skylabs.ltac2.extra.internal.env.
@@ -18,6 +20,7 @@ Require Export skylabs.ltac2.extra.internal.fmap.
 Require Export skylabs.ltac2.extra.internal.fresh.
 Require Export skylabs.ltac2.extra.internal.fset.
 Require Export skylabs.ltac2.extra.internal.ident.
+Require Export skylabs.ltac2.extra.internal.identity.
 Require Export skylabs.ltac2.extra.internal.init.
 Require Export skylabs.ltac2.extra.internal.int.
 Require Export skylabs.ltac2.extra.internal.intgraph.
@@ -29,6 +32,7 @@ Require Export skylabs.ltac2.extra.internal.misc.
 Require Export skylabs.ltac2.extra.internal.obj.
 Require Export skylabs.ltac2.extra.internal.oneshot.
 Require Export skylabs.ltac2.extra.internal.option.
+Require Export skylabs.ltac2.extra.internal.parser.
 Require Export skylabs.ltac2.extra.internal.printf.
 Require Export skylabs.ltac2.extra.internal.reference.
 Require Export skylabs.ltac2.extra.internal.result.

@@ -36,4 +36,6 @@ Module Init.
 
   Ltac2 Type comparison := [ Lt | Eq | Gt ].
 
+  Ltac2 Type ('a, 'r) cps := (('a -> 'r) -> 'r).
+
 End Init.

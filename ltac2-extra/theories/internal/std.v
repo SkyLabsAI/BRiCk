@@ -7,7 +7,6 @@
 
 Require Import skylabs.ltac2.extra.internal.plugin.
 Require Import skylabs.ltac2.extra.internal.control.
-Require Import skylabs.ltac2.extra.internal.constr.
 Require Import skylabs.ltac2.extra.internal.fresh.
 Require Import skylabs.ltac2.extra.internal.misc.
 

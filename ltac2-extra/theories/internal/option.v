@@ -6,7 +6,6 @@
  *)
 
 Require Import skylabs.ltac2.extra.internal.init.
-Require Import skylabs.ltac2.extra.internal.constr.
 
 (** Minor extensions to [Ltac2.Option] *)
 Module Option.
@@ -39,5 +38,44 @@ Module Option.
     | Some x => [x]
     | None => []
     end.
+
+  Ltac2 of_cps (mx : ('a, 'r) cps) : 'a option :=
+    mx (fun x => Some x).
+
+  Ltac2 mret (x : 'a) : 'a option := Some x.
+
+  Module Ap.
+    Import Ltac2 Constr Unsafe Printf.
+
+    (** Starters *)
+    Ltac2 fmap (x : 'a) (k : 'a option -> 'k) : 'k :=
+      k (Option.mret x).
+    Ltac2 start (mx : 'a option) (k : 'a option -> 'k) : 'k :=
+      k mx.
+    Ltac2 choice (k : 'a option -> 'k) : 'k :=
+      k None.
+
+    (** Combinators *)
+    Ltac2 ap (mx : 'a option) (mf : ('a -> 'b) option) (k : 'b option -> 'k) : 'k :=
+      k (Option.bind mf (fun f => Option.bind mx (fun x => Option.mret (f x)))).
+    Ltac2 bind (mx : 'a -> 'b option) (mf : 'a option) (k : 'b option -> 'k) : 'k :=
+      k (Option.bind mf mx).
+    Ltac2 alt (mx : unit -> 'a option) (mx0 : 'a option) (k : 'a option -> 'k) : 'k :=
+      k (Option.or_else mx0 mx).
+
+    (** Finishers *)
+    Ltac2 done (x : 'a option) : 'a option := x.
+    Ltac2 to_option (x : 'a option) : 'a option := x.
+    Ltac2 to_result (e : unit -> exn) (x : 'a option) : 'a result :=
+      match x with
+      | Some x => Val x
+      | None => Err (e ())
+      end.
+
+    Module Export Notations.
+      Ltac2 Notation "alt!" f(thunk(self)) := alt f.
+    End Notations.
+
+  End Ap.
 
 End Option.
