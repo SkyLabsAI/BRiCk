@@ -11,6 +11,7 @@ Require Import skylabs.ltac2.extra.internal.init.
 Module Reference.
   Import Ltac2 Init Std.
 
+  (* Remove this function once we bump to 9.2 which includes it *)
   Ltac2 equal (r0 : Std.reference) (r1 : Std.reference) : bool :=
     match r0, r1 with
     | VarRef n0, VarRef n1 => Ident.equal n0 n1

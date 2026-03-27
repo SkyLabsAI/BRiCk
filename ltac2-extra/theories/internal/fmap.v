@@ -14,10 +14,15 @@ Module FMap.
   Import Ltac2 Init Printf.
   Export Ltac2.FMap .
 
-  Ltac2 alter (v0 : 'v) (k : 'k) (f : 'v -> 'v) (m : ('k,'v) FMap.t) : ('k,'v) FMap.t :=
-    match FMap.find_opt k m with
-    | Some v => FMap.add k (f v) m
-    | None => FMap.add k (f v0) m
+  Ltac2 update (k : 'k) (f : 'v option -> 'v option) (m : ('k,'v) FMap.t) : ('k,'v) FMap.t :=
+    let v  := FMap.find_opt k m in
+    let v' := f v in
+    match v' with
+    | Some v' => FMap.add k v' m
+    | None =>
+        if Option.is_some v then
+          FMap.remove k m
+        else m
     end.
 
   Ltac2 of_list (tag : 'k FSet.Tags.tag) (xs : ('k * 'a) list) : ('k, 'a) FMap.t :=
