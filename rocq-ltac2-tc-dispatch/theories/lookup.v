@@ -37,11 +37,11 @@ Module ltac2.
     | List.cons ?c ?cs => f c :: list_of_list_constr f cs
     end.
 
-  Ltac2 goal_dispatch () :=
+  Ltac2 goal_dispatch_with (dbs : ident list option) :=
     let g := Control.goal () in
     let query := constr:(Ltac2Lookup $g) in
     (* let _ := printf "query=%t" query in *)
-    let inst := Constr.Unsafe.make (TC.resolve None query) in
+    let inst := Constr.Unsafe.make (TC.resolve dbs query) in
     (* let _ := printf "inst=%t" inst in *)
     let flags := RedFlags.all in
     let reduced_inst := Std.eval_cbv flags inst in
@@ -68,8 +68,9 @@ Module ltac2.
     | _ =>
         Control.zero (Tactic_failure (Some (Message.of_string "Could not reduce instance to record.")))
     end.
+
 End ltac2.
 
 Ltac goal_dispatch :=
   idtac;
-  ltac2:(ltac2.goal_dispatch ()).
+  ltac2:(ltac2.goal_dispatch_with None).
