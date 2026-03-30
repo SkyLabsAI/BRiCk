@@ -543,6 +543,14 @@ public:
         cprint.printQualType(print, type->getUnderlyingType(), loc::of(type));
 #endif
     }
+
+#if CLANG_VERSION_MAJOR >= 22
+    void VisitPredefinedSugarType(const PredefinedSugarType *type,
+                                  CoqPrinter &print, ClangPrinter &cprint) {
+        always_assert(type->isSugared());
+        cprint.printQualType(print, type->desugar(), loc::of(type));
+    }
+#endif
 };
 
 PrintType PrintType::printer;
