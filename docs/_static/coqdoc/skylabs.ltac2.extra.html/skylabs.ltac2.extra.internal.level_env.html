@@ -52,15 +52,22 @@ Environments for de Bruijn levels.
 
 <div class="doc">
 backwards 
-<div class="paragraph"> </div>
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">offset</span> : <span class="id" title="var">int</span>;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;</div>
 
- The following are redundant, but speed up some operations. 
+<div class="doc">
+The following are redundant, but speed up some operations. 
 </div>
 <div class="code">
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">length</span> : <span class="id" title="var">int</span>; </div>
 
 <div class="doc">
-<span class="inlinecode">=</span> <span class="inlinecode">|<span class="id" title="var">decls</span>|</span> 
+<span class="inlinecode">=</span> <span class="inlinecode">|<span class="id" title="var">decls</span>|</span>  NOTE: <span class="inlinecode"><span class="id" title="var">Rel</span></span>s stored in <span class="inlinecode"><span class="id" title="var">rels</span></span> are <i>relative</i>, not absolute, w.r.t. to
+    <span class="inlinecode"><span class="id" title="var">offset</span></span>. This is necessary to be able to use them in
+    <span class="inlinecode"><span class="id" title="var">substnl</span></span> <span class="inlinecode"><span class="id" title="var">rels</span></span> <span class="inlinecode"><span class="id" title="var">offset</span></span> <span class="inlinecode">..</span>. 
 </div>
 <div class="code">
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">rels</span> : <span class="id" title="keyword">constr</span> <span class="id" title="var">list</span>; </div>
@@ -115,7 +122,11 @@ Fold over an environment's declarations from right to left.
 The empty environment 
 </div>
 <div class="code">
-&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">empty</span> : <span class="id" title="var">t</span> := { <span class="id" title="var">decls</span> := []; <span class="id" title="var">length</span> := 0; <span class="id" title="var">rels</span> := [] }.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">empty</span> : <span class="id" title="var">t</span> := { <span class="id" title="var">decls</span> := []; <span class="id" title="var">offset</span> := 0; <span class="id" title="var">length</span> := 0; <span class="id" title="var">rels</span> := [] }.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">empty_w_offset</span> (<span class="id" title="var">offset</span> : <span class="id" title="var">int</span>) : <span class="id" title="var">t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="var">empty</span> <span class="id" title="keyword">with</span> <span class="id" title="var">offset</span> }.<br/>
 
 <br/>
 </div>
@@ -125,6 +136,15 @@ The number of declarations in an environment.
 </div>
 <div class="code">
 &nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">length</span> (<span class="id" title="var">env</span> : <span class="id" title="var">t</span>) : <span class="id" title="var">int</span> := <span class="id" title="var">env</span>.(<span class="id" title="var">length</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The offset of an environment. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">offset</span> (<span class="id" title="var">env</span> : <span class="id" title="var">t</span>) : <span class="id" title="var">int</span> := <span class="id" title="var">env</span>.(<span class="id" title="var">offset</span>).<br/>
 
 <br/>
 </div>
@@ -143,8 +163,8 @@ Level of and reference to any next declaration added to environment
 
 <div class="doc">
   An environment's <i>level substitution</i> sends references based on de
-  Bruijn indices <span class="inlinecode"><span class="id" title="var">Rel</span></span> <span class="inlinecode">1;</span> <span class="inlinecode">...;</span> <span class="inlinecode"><span class="id" title="var">Rel</span></span> <span class="inlinecode">(|<span class="id" title="var">env</span>|+1)</span> to those based on levels
-  <span class="inlinecode"><span class="id" title="var">Rel</span></span> <span class="inlinecode">(|<span class="id" title="var">env</span>|+1);</span> <span class="inlinecode">...;</span> <span class="inlinecode"><span class="id" title="var">Rel</span></span> <span class="inlinecode">1</span>. (It also sends levels to indices.)
+  Bruijn indices <span class="inlinecode"><span class="id" title="var">Rel</span></span> <span class="inlinecode">(<span class="id" title="var">offset</span>+1);</span> <span class="inlinecode">...;</span> <span class="inlinecode"><span class="id" title="var">Rel</span></span> <span class="inlinecode">(<span class="id" title="var">offset</span>+|<span class="id" title="var">env</span>|+1)</span> to those based on levels
+  <span class="inlinecode"><span class="id" title="var">Rel</span></span> <span class="inlinecode">(<span class="id" title="var">offset</span>+|<span class="id" title="var">env</span>|+1);</span> <span class="inlinecode">...;</span> <span class="inlinecode"><span class="id" title="var">Rel</span></span> <span class="inlinecode">(<span class="id" title="var">offset</span>+1)</span>. (It also sends levels to indices.)
 
 <div class="paragraph"> </div>
 
@@ -153,16 +173,44 @@ Level of and reference to any next declaration added to environment
 
 <div class="paragraph"> </div>
 
-  Note: The variant <span class="inlinecode"><span class="id" title="var">level_subst'</span></span> represents the substitution as a
-  list of <span class="inlinecode"><span class="id" title="var">Rel</span></span>s. It behaves identically to the learner's <span class="inlinecode"><span class="id" title="keyword">fun</span></span> <span class="inlinecode">(<span class="id" title="var">env</span></span> <span class="inlinecode">:</span>
-  <span class="inlinecode"><span class="id" title="keyword">constr</span></span> <span class="inlinecode"><span class="id" title="var">list</span>)</span> <span class="inlinecode">=&gt;</span> <span class="inlinecode"><span class="id" title="var">subst_levels_to_indices</span></span> <span class="inlinecode">(<span class="id" title="var">List.length</span></span> <span class="inlinecode"><span class="id" title="var">env</span>)</span> except
-  that this version takes constant time.
+  WARNING: Do not use <span class="inlinecode"><span class="id" title="var">level_subst</span></span> <span class="inlinecode"><span class="id" title="var">env</span></span> <span class="inlinecode"><span class="id" title="var">c</span></span> if <span class="inlinecode"><span class="id" title="var">c</span></span> has <span class="inlinecode"><span class="id" title="var">Rel</span></span>s not bound by <span class="inlinecode"><span class="id" title="var">env</span></span>.
+  It sends <span class="inlinecode"><span class="id" title="var">Rel</span></span> <span class="inlinecode">(<span class="id" title="var">k</span>)</span> for <span class="inlinecode">|<span class="id" title="var">env</span>|+<span class="id" title="var">offset</span>+1</span> <span class="inlinecode">&lt;</span> <span class="inlinecode"><span class="id" title="var">k</span></span> to <span class="inlinecode"><span class="id" title="var">Rel</span>(<span class="id" title="var">k</span>-|<span class="id" title="var">env</span>|-<span class="id" title="var">offset</span>)</span>, making
+  them collide with <span class="inlinecode"><span class="id" title="var">Rel</span></span>s bound by <span class="inlinecode"><span class="id" title="var">env</span></span>.
+
+<div class="paragraph"> </div>
+
+  If <span class="inlinecode"><span class="id" title="var">c</span></span> has no such <span class="inlinecode"><span class="id" title="var">Rel</span></span>s, then <span class="inlinecode"><span class="id" title="var">level_subst</span></span> <span class="inlinecode"><span class="id" title="var">env</span></span> <span class="inlinecode">(<span class="id" title="var">level_subst</span></span> <span class="inlinecode"><span class="id" title="var">env</span></span> <span class="inlinecode"><span class="id" title="var">c</span>)</span> <span class="inlinecode">=</span> <span class="inlinecode"><span class="id" title="var">c</span></span>.
+
+<div class="paragraph"> </div>
+
+  See <span class="inlinecode"><span class="id" title="var">level_subst_inv</span></span> for a version that is unconditionally involutive.
   
 </div>
 <div class="code">
 &nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">level_subst'</span> (<span class="id" title="var">env</span> : <span class="id" title="var">t</span>) : <span class="id" title="keyword">constr</span> <span class="id" title="var">list</span> := <span class="id" title="var">env</span>.(<span class="id" title="var">rels</span>).<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">level_subst</span> (<span class="id" title="var">env</span> : <span class="id" title="var">t</span>) : <span class="id" title="keyword">constr</span> -&gt; <span class="id" title="keyword">constr</span> :=<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Constr.Unsafe.substnl</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">rels</span>)) 0.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Constr.Unsafe.substnl</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">rels</span>)) (<span class="id" title="var">env</span>.(<span class="id" title="var">offset</span>)).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+  <span class="inlinecode"><span class="id" title="var">level_subst_inv</span></span> <span class="inlinecode"><span class="id" title="var">env</span></span> <span class="inlinecode"><span class="id" title="var">c</span></span> leaves <span class="inlinecode"><span class="id" title="var">Rel</span></span>s above <span class="inlinecode"><span class="id" title="var">offset</span>+|<span class="id" title="var">env</span>|</span> untouched and is
+  always involutive, i.e. it satisfies <span class="inlinecode"><span class="id" title="var">level_subst</span></span> <span class="inlinecode"><span class="id" title="var">env</span></span> <span class="inlinecode">(<span class="id" title="var">level_subst</span></span> <span class="inlinecode"><span class="id" title="var">env</span></span> <span class="inlinecode"><span class="id" title="var">c</span>)</span> <span class="inlinecode">=</span>
+  <span class="inlinecode"><span class="id" title="var">c</span></span>.
+
+<div class="paragraph"> </div>
+
+  On <span class="inlinecode"><span class="id" title="var">Rel</span></span>s bound by <span class="inlinecode"><span class="id" title="var">env</span></span>, <span class="inlinecode"><span class="id" title="var">level_subst_inv</span></span> <span class="inlinecode"><span class="id" title="var">env</span></span> <span class="inlinecode"><span class="id" title="var">c</span></span> behaves exactly as
+  <span class="inlinecode"><span class="id" title="var">level_subst</span></span> <span class="inlinecode"><span class="id" title="var">env</span></span> <span class="inlinecode"><span class="id" title="var">c</span></span>.
+  
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">level_subst_inv</span> (<span class="id" title="var">env</span> : <span class="id" title="var">t</span>) (<span class="id" title="var">c</span> : <span class="id" title="keyword">constr</span>) : <span class="id" title="keyword">constr</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">n</span> := <span class="id" title="var">env</span>.(<span class="id" title="var">length</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">c</span> := <span class="id" title="var">Constr.Unsafe.liftn</span> <span class="id" title="var">n</span> (<span class="id" title="var">Int.add</span> <span class="id" title="var">n</span> (<span class="id" title="var">Int.add</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">offset</span>)) 1)) <span class="id" title="var">c</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Constr.Unsafe.substnl</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">rels</span>)) (<span class="id" title="var">env</span>.(<span class="id" title="var">offset</span>)) <span class="id" title="var">c</span>.<br/>
 
 <br/>
 </div>
@@ -178,11 +226,11 @@ Level of and reference to any next declaration added to environment
 </div>
 <div class="code">
 &nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">add_decl_level</span> (<span class="id" title="var">env</span> : <span class="id" title="var">t</span>) (<span class="id" title="var">decl</span> : <span class="id" title="var">rel_decl</span>) : <span class="id" title="var">t</span> :=<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="keyword">level</span> := <span class="id" title="var">next_level_int</span> <span class="id" title="var">env</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">length</span> := <span class="id" title="var">next_level_int</span> <span class="id" title="var">env</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">rels</span> := <span class="id" title="var">env</span>.(<span class="id" title="var">rels</span>) <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">decls</span> := <span class="id" title="var">decl</span> :: (<span class="id" title="var">env</span>.(<span class="id" title="var">decls</span>)) <span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">rels</span> := <span class="id" title="var">Constr.Unsafe.make_rel</span> <span class="id" title="keyword">level</span> :: <span class="id" title="var">rels</span> <span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="var">decls</span> := <span class="id" title="var">decls</span>; <span class="id" title="var">length</span> := <span class="id" title="keyword">level</span>; <span class="id" title="var">rels</span> := <span class="id" title="var">rels</span> }.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">rels</span> := <span class="id" title="var">Constr.Unsafe.make_rel</span> <span class="id" title="var">length</span> :: <span class="id" title="var">rels</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="var">env</span> <span class="id" title="keyword">with</span> <span class="id" title="var">decls</span>; <span class="id" title="var">length</span>; <span class="id" title="var">rels</span> }.<br/>
 
 <br/>
 </div>
@@ -199,7 +247,7 @@ Level of and reference to any next declaration added to environment
 <div class="code">
 &nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">add_decl</span> (<span class="id" title="var">env</span> : <span class="id" title="var">t</span>) (<span class="id" title="var">decl</span> : <span class="id" title="var">rel_decl</span>) : <span class="id" title="var">t</span> :=<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">rels</span> := <span class="id" title="var">env</span>.(<span class="id" title="var">rels</span>) <span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">mapper</span> := <span class="id" title="var">Constr.Unsafe.substnl</span> <span class="id" title="var">rels</span> 0 <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">mapper</span> := <span class="id" title="var">Constr.Unsafe.substnl</span> <span class="id" title="var">rels</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">offset</span>)) <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">decl</span> := <span class="id" title="var">Constr.Unsafe.RelDecl.map_constr</span> <span class="id" title="var">mapper</span> <span class="id" title="var">decl</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">add_decl_level</span> <span class="id" title="var">env</span> <span class="id" title="var">decl</span>.<br/>
 
@@ -242,6 +290,91 @@ Add a local definition based on a binder
 </div>
 
 <div class="doc">
+     <span class="inlinecode"><span class="id" title="tactic">cut</span></span> <span class="inlinecode"><span class="id" title="var">env</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span> splits <span class="inlinecode"><span class="id" title="var">env</span></span> into a prefix env <span class="inlinecode"><span class="id" title="var">p_env</span></span> of length <span class="inlinecode"><span class="id" title="var">n</span></span> and a
+     suffix env <span class="inlinecode"><span class="id" title="var">s_env</span></span> of length <span class="inlinecode">|<span class="id" title="var">env</span>|</span> <span class="inlinecode">-</span> <span class="inlinecode"><span class="id" title="var">n</span></span>. <span class="inlinecode"><span class="id" title="var">s_env</span>.(<span class="id" title="var">offset</span>)</span> is <span class="inlinecode"><span class="id" title="var">offset</span></span> <span class="inlinecode">+</span>
+     <span class="inlinecode"><span class="id" title="var">n</span></span>.
+
+<div class="paragraph"> </div>
+
+     The terms in <span class="inlinecode"><span class="id" title="var">p_env</span></span> and <span class="inlinecode"><span class="id" title="var">s_env</span></span> are unchanged, i.e. identical to those in
+     <span class="inlinecode"><span class="id" title="var">env</span></span>.
+   
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="tactic">cut</span> (<span class="id" title="var">env</span> : <span class="id" title="var">t</span>) (<span class="id" title="var">n</span> : <span class="id" title="var">int</span>) : <span class="id" title="var">t</span> * <span class="id" title="var">t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">_</span> := <span class="id" title="var">Control.assert_valid_argument</span> "LevelEnv.cut" (<span class="id" title="var">Int.ge</span> <span class="id" title="var">n</span> 0) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">_</span> := <span class="id" title="var">Control.assert_valid_argument</span> "LevelEnv.cut" (<span class="id" title="var">Int.lt</span> <span class="id" title="var">n</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">length</span>))) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">s_len</span> := <span class="id" title="var">Int.sub</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">length</span>)) <span class="id" title="var">n</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">s_offset</span> := <span class="id" title="var">Int.add</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">offset</span>)) <span class="id" title="var">n</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">s_decls</span>, <span class="id" title="var">p_decls</span>) := <span class="id" title="var">List.split_at</span> <span class="id" title="var">s_len</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">decls</span>)) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">s_rels</span>, <span class="id" title="var">p_rels</span>) := <span class="id" title="var">List.split_at</span> <span class="id" title="var">s_len</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">rels</span>)) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">p_env</span> := { <span class="id" title="var">decls</span> := <span class="id" title="var">p_decls</span>; <span class="id" title="var">rels</span> := <span class="id" title="var">p_rels</span>; <span class="id" title="var">length</span> := <span class="id" title="var">n</span>; <span class="id" title="var">offset</span> := <span class="id" title="var">env</span>.(<span class="id" title="var">offset</span>) } <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">s_env</span> := { <span class="id" title="var">decls</span> := <span class="id" title="var">s_decls</span>; <span class="id" title="var">rels</span> := <span class="id" title="var">s_rels</span>; <span class="id" title="var">length</span> := <span class="id" title="var">s_len</span>; <span class="id" title="var">offset</span> := <span class="id" title="var">s_offset</span> } <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">p_env</span>, <span class="id" title="var">s_env</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">append</span></span> is the inverse of <span class="inlinecode"><span class="id" title="tactic">cut</span></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">append</span> (<span class="id" title="var">p_env</span> : <span class="id" title="var">t</span>) (<span class="id" title="var">s_env</span> : <span class="id" title="var">t</span>) : <span class="id" title="var">t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">_</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.assert_valid_argument</span> "LevelEnv.append"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">Int.equal</span> (<span class="id" title="var">Int.add</span> (<span class="id" title="var">p_env</span>.(<span class="id" title="var">offset</span>)) (<span class="id" title="var">p_env</span>.(<span class="id" title="var">length</span>))) (<span class="id" title="var">s_env</span>.(<span class="id" title="var">offset</span>)))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">length</span> := <span class="id" title="var">Int.add</span> (<span class="id" title="var">p_env</span>.(<span class="id" title="var">length</span>)) (<span class="id" title="var">s_env</span>.(<span class="id" title="var">length</span>)) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">rels</span> := <span class="id" title="var">List.append</span> (<span class="id" title="var">s_env</span>.(<span class="id" title="var">rels</span>)) (<span class="id" title="var">p_env</span>.(<span class="id" title="var">rels</span>)) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">decls</span> := <span class="id" title="var">List.append</span> (<span class="id" title="var">s_env</span>.(<span class="id" title="var">decls</span>)) (<span class="id" title="var">p_env</span>.(<span class="id" title="var">decls</span>)) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">offset</span> := <span class="id" title="var">p_env</span>.(<span class="id" title="var">offset</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="var">decls</span>; <span class="id" title="var">offset</span>; <span class="id" title="var">length</span>; <span class="id" title="var">rels</span> }.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">skipn</span></span> <span class="inlinecode"><span class="id" title="var">env</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span> drops the <span class="inlinecode"><span class="id" title="var">n</span></span> highest levels from <span class="inlinecode"><span class="id" title="var">env</span></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">skipn</span> (<span class="id" title="var">env</span> : <span class="id" title="var">LevelEnv.t</span>) (<span class="id" title="var">n</span> : <span class="id" title="var">int</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="var">env</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">decls</span> := <span class="id" title="var">List.skipn</span> <span class="id" title="var">n</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">decls</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">length</span> := <span class="id" title="var">Int.sub</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">length</span>)) <span class="id" title="var">n</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">rels</span> := <span class="id" title="var">List.skipn</span> <span class="id" title="var">n</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">rels</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">by_level</span></span> <span class="inlinecode"><span class="id" title="var">env</span></span> <span class="inlinecode"><span class="id" title="var">i</span></span> returns the <span class="inlinecode"><span class="id" title="var">i</span></span>th entry where <span class="inlinecode"><span class="id" title="var">i</span></span> is interpreted as an
+      absolute level, i.e. <span class="inlinecode"><span class="id" title="var">i</span></span> must include <span class="inlinecode"><span class="id" title="var">offset</span></span>.
+    
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">by_level</span> (<span class="id" title="var">env</span> : <span class="id" title="var">LevelEnv.t</span>) (<span class="id" title="var">i</span> : <span class="id" title="var">int</span>) : <span class="id" title="var">Constr.Unsafe.RelDecl.t</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">List.nth</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">decls</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">Int.sub</span> (<span class="id" title="var">LevelEnv.length</span> <span class="id" title="var">env</span>) (<span class="id" title="var">Int.add</span> (<span class="id" title="var">Int.sub</span> <span class="id" title="var">i</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">offset</span>))) 1)).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">to_level_array</span></span> <span class="inlinecode"><span class="id" title="var">env</span></span> represents <span class="inlinecode"><span class="id" title="var">env</span></span> as zero-indexed array in level order. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">to_level_array</span> (<span class="id" title="var">env</span> : <span class="id" title="var">LevelEnv.t</span>) : <span class="id" title="var">Constr.Unsafe.RelDecl.t</span> <span class="id" title="var">array</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">arr</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Array.make</span> (<span class="id" title="var">LevelEnv.length</span> <span class="id" title="var">env</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">Constr.Unsafe.RelDecl.Assum</span> (<span class="id" title="var">Constr.Binder.make</span> <span class="id" title="var">None</span> '<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#False"><span class="id" title="inductive">False</span></a>)) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> () := <span class="id" title="var">LevelEnv.foldli</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">i</span> <span class="id" title="var">rd</span> () =&gt; <span class="id" title="var">Array.set</span> <span class="id" title="var">arr</span> <span class="id" title="var">i</span> <span class="id" title="var">rd</span>) <span class="id" title="var">env</span> () <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">arr</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
 Pretty-printing 
 </div>
 <div class="code">
@@ -253,8 +386,8 @@ Pretty-printing
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="keyword">level</span> := <span class="id" title="var">Int.sub</span> <span class="id" title="keyword">level</span> 1 <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="keyword">level</span>, <span class="id" title="var">msgs</span>)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">_</span>, <span class="id" title="var">msgs</span>) := <span class="id" title="var">foldr</span> <span class="id" title="var">folder</span> <span class="id" title="var">env</span> (<span class="id" title="var">length</span> <span class="id" title="var">env</span>,[]) <span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp_list</span> <span class="id" title="var">pp_message</span> () <span class="id" title="var">msgs</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">_</span>, <span class="id" title="var">msgs</span>) := <span class="id" title="var">foldr</span> <span class="id" title="var">folder</span> <span class="id" title="var">env</span> (<span class="id" title="var">Int.add</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">offset</span>)) (<span class="id" title="var">env</span>.(<span class="id" title="var">length</span>)),[]) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp_list</span> <span class="id" title="var">pp_message</span> () (<span class="id" title="var">msgs</span>).<br/>
 
 <br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">pp_named</span> : <span class="id" title="var">t</span> <span class="id" title="var">pp</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> <span class="id" title="var">env</span> =&gt;<br/>
@@ -266,7 +399,7 @@ Pretty-printing
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">decl</span> := <span class="id" title="var">Constr.Unsafe.RelDecl.map_name</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> =&gt; <span class="id" title="var">Some</span> <span class="id" title="var">name</span>) <span class="id" title="var">decl</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">decl</span> :=<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Constr.Unsafe.RelDecl.map_constr</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">Constr.Unsafe.substnl</span> (<span class="id" title="var">List.rev</span> <span class="id" title="var">subs</span>) 0) <span class="id" title="var">decl</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">Constr.Unsafe.substnl</span> (<span class="id" title="var">List.rev</span> <span class="id" title="var">subs</span>) (<span class="id" title="var">env</span>.(<span class="id" title="var">offset</span>))) <span class="id" title="var">decl</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">pp_decl</span> := <span class="id" title="var">Constr.Unsafe.RelDecl.pp</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">msgs</span> := <span class="id" title="var">fprintf</span> "%i : %a" <span class="id" title="keyword">level</span> <span class="id" title="var">pp_decl</span> <span class="id" title="var">decl</span> :: <span class="id" title="var">msgs</span> <span class="id" title="tactic">in</span><br/>
@@ -276,9 +409,27 @@ Pretty-printing
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="keyword">level</span>, <span class="id" title="tactic">fresh</span>, <span class="id" title="var">names</span>, <span class="id" title="var">subs</span>, <span class="id" title="var">msgs</span>)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">_</span>, <span class="id" title="var">_</span>, <span class="id" title="var">_</span>, <span class="id" title="var">_</span>, <span class="id" title="var">msgs</span>) :=<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">foldl</span> <span class="id" title="var">folder</span> <span class="id" title="var">env</span> (1, <span class="id" title="var">Fresh.Free.of_goal</span>(), [], [], [])<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">foldl</span> <span class="id" title="var">folder</span> <span class="id" title="var">env</span> (<span class="id" title="var">Int.add</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">offset</span>)) 1, <span class="id" title="var">Fresh.Free.of_goal</span>(), [], [], [])<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">pp_list</span> <span class="id" title="var">pp_message</span> () (<span class="id" title="var">List.rev</span> <span class="id" title="var">msgs</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">named_subst</span></span> <span class="inlinecode"><span class="id" title="var">env</span></span> <span class="inlinecode"><span class="id" title="var">c</span></span> computes named binders for <span class="inlinecode"><span class="id" title="var">env</span></span> and substitutes them
+  into <span class="inlinecode"><span class="id" title="var">c</span></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">named_subst</span> (<span class="id" title="var">env</span> : <span class="id" title="var">t</span>) : <span class="id" title="keyword">constr</span> -&gt; <span class="id" title="keyword">constr</span> :=<br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">_</span>, <span class="id" title="var">ls</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">fn</span> <span class="id" title="var">rd</span> (<span class="id" title="var">free</span>, <span class="id" title="var">ls</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">free</span>, <span class="id" title="var">id</span>) := <span class="id" title="var">Fresh.for_rel_decl</span> <span class="id" title="var">free</span> <span class="id" title="var">rd</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">free</span>, <span class="id" title="var">Constr.Unsafe.make_var</span> <span class="id" title="var">id</span> :: <span class="id" title="var">ls</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">LevelEnv.foldr</span> <span class="id" title="var">fn</span> <span class="id" title="var">env</span> (<span class="id" title="var">Fresh.Free.of_goal</span> (), [])<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Constr.Unsafe.substnl</span> <span class="id" title="var">ls</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">offset</span>)).<br/>
 
 <br/>
 </div>
@@ -287,7 +438,7 @@ Pretty-printing
   Low-level function to convert an environment to (i) a list of
   declarations sorted by level (switching inter-declaration references
   from de Bruijn levels to the terms obtained from <span class="inlinecode"><span class="id" title="var">f</span></span> <span class="inlinecode"><span class="id" title="keyword">level</span></span>) and (ii)
-  the list of terms <span class="inlinecode"><span class="id" title="var">f</span></span> <span class="inlinecode"><span class="id" title="var">i</span></span> <span class="inlinecode">|</span> <span class="inlinecode">1</span> <span class="inlinecode">&lt;=</span> <span class="inlinecode"><span class="id" title="var">i</span></span> <span class="inlinecode">&lt;=</span> <span class="inlinecode">|<span class="id" title="var">env</span>|</span>. The function <span class="inlinecode"><span class="id" title="var">f</span></span> gets
+  the list of terms <span class="inlinecode"><span class="id" title="var">f</span></span> <span class="inlinecode"><span class="id" title="var">i</span></span> <span class="inlinecode">|</span> <span class="inlinecode"><span class="id" title="var">offset</span></span> <span class="inlinecode">&lt;</span> <span class="inlinecode"><span class="id" title="var">i</span></span> <span class="inlinecode">&lt;=</span> <span class="inlinecode"><span class="id" title="var">offset</span>+|<span class="id" title="var">env</span>|</span>. The function <span class="inlinecode"><span class="id" title="var">f</span></span> gets
   applied once per level, in order.
 
 <div class="paragraph"> </div>
@@ -301,14 +452,17 @@ Pretty-printing
 &nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">close</span> (<span class="id" title="var">f</span> : <span class="id" title="var">int</span> -&gt; <span class="id" title="keyword">constr</span>) (<span class="id" title="var">env</span> : <span class="id" title="var">t</span>) : <span class="id" title="keyword">constr</span> <span class="id" title="var">list</span> * <span class="id" title="var">rel_decl</span> <span class="id" title="var">list</span> :=<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">folder</span> <span class="id" title="var">decl</span> (<span class="id" title="var">acc</span> : <span class="id" title="var">int</span> * <span class="id" title="keyword">constr</span> <span class="id" title="var">list</span> * <span class="id" title="var">rel_decl</span> <span class="id" title="var">list</span>) :=<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="keyword">level</span>, <span class="id" title="var">refs</span>, <span class="id" title="var">decls</span>) := <span class="id" title="var">acc</span> <span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">mapper</span> := <span class="id" title="var">Constr.Unsafe.substnl</span> <span class="id" title="var">refs</span> 0 <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">mapper</span> <span class="id" title="var">c</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">c</span> := <span class="id" title="var">Constr.Unsafe.liftn</span> (<span class="id" title="var">Int.sub</span> <span class="id" title="keyword">level</span> 1) <span class="id" title="keyword">level</span> <span class="id" title="var">c</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Constr.Unsafe.substnl</span> <span class="id" title="var">refs</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">offset</span>)) <span class="id" title="var">c</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">decl</span> := <span class="id" title="var">Constr.Unsafe.RelDecl.map_constr</span> <span class="id" title="var">mapper</span> <span class="id" title="var">decl</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">decls</span> := <span class="id" title="var">decl</span> :: <span class="id" title="var">decls</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">refs</span> := <span class="id" title="var">f</span> <span class="id" title="keyword">level</span> :: <span class="id" title="var">refs</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="keyword">level</span> := <span class="id" title="var">Int.add</span> <span class="id" title="keyword">level</span> 1 <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="keyword">level</span>, <span class="id" title="var">refs</span>, <span class="id" title="var">decls</span>)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">_</span>, <span class="id" title="var">refs</span>, <span class="id" title="var">decls</span>) := <span class="id" title="var">foldl</span> <span class="id" title="var">folder</span> <span class="id" title="var">env</span> (1, [], []) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">_</span>, <span class="id" title="var">refs</span>, <span class="id" title="var">decls</span>) := <span class="id" title="var">foldl</span> <span class="id" title="var">folder</span> <span class="id" title="var">env</span> (<span class="id" title="var">Int.add</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">offset</span>)) 1, [], []) <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">refs</span> := <span class="id" title="var">List.rev</span> <span class="id" title="var">refs</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">decls</span> := <span class="id" title="var">List.rev</span> <span class="id" title="var">decls</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">refs</span>, <span class="id" title="var">decls</span>).<br/>
@@ -365,6 +519,25 @@ Pretty-printing
 </div>
 
 <div class="doc">
+  Convert <span class="inlinecode"><span class="id" title="var">env</span></span> <span class="inlinecode">|-</span> <span class="inlinecode"><span class="id" title="var">c</span></span> to the term <span class="inlinecode"><span class="id" title="var">f</span></span> <span class="inlinecode">(<span class="id" title="var">x1</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">t1</span></span> <span class="inlinecode">[:=</span> <span class="inlinecode"><span class="id" title="var">v1</span>])</span> <span class="inlinecode">$</span> <span class="inlinecode">..</span> <span class="inlinecode">$</span> <span class="inlinecode"><span class="id" title="var">f</span></span> <span class="inlinecode">(<span class="id" title="var">xn</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">tn</span></span> <span class="inlinecode">[:=</span>
+  <span class="inlinecode"><span class="id" title="var">vn</span>]),</span> <span class="inlinecode"><span class="id" title="var">level_subst</span></span> <span class="inlinecode"><span class="id" title="var">env</span></span> <span class="inlinecode"><span class="id" title="var">c</span></span> (switching from de Bruijn levels to indices), where
+  the <span class="inlinecode"><span class="id" title="var">x_i</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">t_i</span></span> are the envirnment's entries.
+  
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">to_constr</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">f</span> : <span class="id" title="var">Constr.Unsafe.RelDecl.t</span> -&gt; <span class="id" title="keyword">constr</span> -&gt; <span class="id" title="keyword">constr</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">env</span> : <span class="id" title="var">t</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">c</span> : <span class="id" title="keyword">constr</span>) : <span class="id" title="keyword">constr</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">decls</span> := <span class="id" title="var">to_list</span> <span class="id" title="var">env</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">c</span> := <span class="id" title="var">level_subst</span> <span class="id" title="var">env</span> <span class="id" title="var">c</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">c</span> := <span class="id" title="var">List.foldr</span> <span class="id" title="var">f</span> <span class="id" title="var">decls</span> <span class="id" title="var">c</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">c</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
   Convert <span class="inlinecode"><span class="id" title="var">env</span></span> <span class="inlinecode">|-</span> <span class="inlinecode"><span class="id" title="var">c</span></span> to the term <span class="inlinecode">∀</span> <span class="inlinecode">(<span class="id" title="var">x1</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">t1</span>)</span> <span class="inlinecode">...</span> <span class="inlinecode">(<span class="id" title="var">xn</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">tn</span>),</span>
   <span class="inlinecode"><span class="id" title="var">level_subst</span></span> <span class="inlinecode"><span class="id" title="var">env</span></span> <span class="inlinecode"><span class="id" title="var">c</span></span> (switching from de Bruijn levels to indices),
   where the <span class="inlinecode"><span class="id" title="var">x_i</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">t_i</span></span> are the envirnment's entries.
@@ -380,10 +553,7 @@ Pretty-printing
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Constr.Unsafe.RelDecl.Def</span> <span class="id" title="var">b</span> <span class="id" title="var">v</span> =&gt; <span class="id" title="var">Constr.Unsafe.make_let_in</span> <span class="id" title="var">b</span> <span class="id" title="var">v</span> <span class="id" title="var">acc</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">decls</span> := <span class="id" title="var">to_list</span> <span class="id" title="var">env</span> <span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">c</span> := <span class="id" title="var">level_subst</span> <span class="id" title="var">env</span> <span class="id" title="var">c</span> <span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">c</span> := <span class="id" title="var">List.foldr</span> <span class="id" title="var">folder</span> <span class="id" title="var">decls</span> <span class="id" title="var">c</span> <span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">c</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">to_constr</span> <span class="id" title="var">folder</span> <span class="id" title="var">env</span> <span class="id" title="var">c</span>.<br/>
 
 <br/>
 </div>
@@ -391,7 +561,7 @@ Pretty-printing
 <div class="doc">
   Convert <span class="inlinecode"><span class="id" title="var">env</span></span> <span class="inlinecode">|-</span> <span class="inlinecode"><span class="id" title="var">c</span></span> to the term <span class="inlinecode"><span class="id" title="var">λ</span></span> <span class="inlinecode">(<span class="id" title="var">x1</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">t1</span>)</span> <span class="inlinecode">...</span> <span class="inlinecode">(<span class="id" title="var">xn</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">tn</span>),</span>
   <span class="inlinecode"><span class="id" title="var">level_subst</span></span> <span class="inlinecode"><span class="id" title="var">env</span></span> <span class="inlinecode"><span class="id" title="var">c</span></span> (switching from de Bruijn levels to indices),
-  where the <span class="inlinecode"><span class="id" title="var">x_i</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">t_i</span></span> are the envirnment's entries.
+  where the <span class="inlinecode"><span class="id" title="var">x_i</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><span class="id" title="var">t_i</span></span> are the environment's entries.
   
 </div>
 <div class="code">
@@ -404,10 +574,7 @@ Pretty-printing
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Constr.Unsafe.RelDecl.Def</span> <span class="id" title="var">b</span> <span class="id" title="var">v</span> =&gt; <span class="id" title="var">Constr.Unsafe.make_let_in</span> <span class="id" title="var">b</span> <span class="id" title="var">v</span> <span class="id" title="var">acc</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">decls</span> := <span class="id" title="var">to_list</span> <span class="id" title="var">env</span> <span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">c</span> := <span class="id" title="var">level_subst</span> <span class="id" title="var">env</span> <span class="id" title="var">c</span> <span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">c</span> := <span class="id" title="var">List.foldr</span> <span class="id" title="var">folder</span> <span class="id" title="var">decls</span> <span class="id" title="var">c</span> <span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">c</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">to_constr</span> <span class="id" title="var">folder</span> <span class="id" title="var">env</span> <span class="id" title="var">c</span>.<br/>
 
 <br/>
 </div>
@@ -434,26 +601,28 @@ Pretty-printing
 &nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">substitute_defs</span> (<span class="id" title="var">env</span> : <span class="id" title="var">t</span>) : <span class="id" title="var">t</span> * <span class="id" title="keyword">constr</span> <span class="id" title="var">list</span> :=<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">folder</span> (<span class="id" title="var">decl</span> : <span class="id" title="var">rel_decl</span>) (<span class="id" title="var">env</span>, <span class="id" title="var">subs</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">f</span> := <span class="id" title="var">Constr.Unsafe.substnl</span> (<span class="id" title="var">List.rev</span> <span class="id" title="var">subs</span>) (<span class="id" title="var">env</span>.(<span class="id" title="var">offset</span>)) <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">decl</span> <span class="id" title="keyword">with</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Constr.Unsafe.RelDecl.Assum</span> <span class="id" title="var">b</span> =&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">decl</span> :=<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Constr.Unsafe.RelDecl.Assum</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">Constr.Binder.map_type</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">Constr.Unsafe.substnl</span> (<span class="id" title="var">List.rev</span> <span class="id" title="var">subs</span>) 0) <span class="id" title="var">b</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Constr.Unsafe.RelDecl.Assum</span> (<span class="id" title="var">Constr.Binder.map_type</span> <span class="id" title="var">f</span> <span class="id" title="var">b</span>)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">env</span> :=  <span class="id" title="var">add_decl</span> <span class="id" title="var">env</span> <span class="id" title="var">decl</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">env</span> := <span class="id" title="var">add_decl</span> <span class="id" title="var">env</span> <span class="id" title="var">decl</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">subs</span> :=<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Constr.Unsafe.make_rel</span> 1 :: <span class="id" title="var">List.map</span> (<span class="id" title="var">Misc.liftn</span> 1 1) <span class="id" title="var">subs</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Constr.Unsafe.make_rel</span> 1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;:: <span class="id" title="var">List.map</span> (<span class="id" title="var">Misc.liftn</span> 1 1) <span class="id" title="var">subs</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">env</span>, <span class="id" title="var">subs</span>)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Constr.Unsafe.RelDecl.Def</span> <span class="id" title="var">_</span> <span class="id" title="var">v</span> =&gt;<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">v</span> := <span class="id" title="var">Constr.Unsafe.substnl</span> (<span class="id" title="var">List.rev</span> <span class="id" title="var">subs</span>) 0 <span class="id" title="var">v</span> <span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">subs</span> := <span class="id" title="var">v</span> :: <span class="id" title="var">subs</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">subs</span> := <span class="id" title="var">f</span> <span class="id" title="var">v</span> :: <span class="id" title="var">subs</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">env</span>, <span class="id" title="var">subs</span>)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">env</span>, <span class="id" title="var">subs</span>) := <span class="id" title="var">foldl</span> <span class="id" title="var">folder</span> <span class="id" title="var">env</span> (<span class="id" title="var">empty</span>, []) <span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">env</span>, <span class="id" title="var">List.rev_map</span> (<span class="id" title="var">LevelEnv.level_subst</span> <span class="id" title="var">env</span>) <span class="id" title="var">subs</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">env</span>, <span class="id" title="var">subs</span>) := <span class="id" title="var">foldl</span> <span class="id" title="var">folder</span> <span class="id" title="var">env</span> (<span class="id" title="var">empty_w_offset</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">offset</span>)), []) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">f</span> <span class="id" title="var">c</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Constr.Unsafe.substnl</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">rels</span>)) 0 <span class="id" title="var">c</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">env</span>, <span class="id" title="var">List.rev_map</span> <span class="id" title="var">f</span> <span class="id" title="var">subs</span>).<br/>
 
 <br/>
 </div>
@@ -511,8 +680,9 @@ Pretty-printing
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">free</span>, <span class="id" title="var">ids</span>) := <span class="id" title="var">fresh_ident_array</span> <span class="id" title="var">free</span> <span class="id" title="var">env</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">forall_c</span> := <span class="id" title="var">add_universals</span> <span class="id" title="var">env</span> <span class="id" title="var">c</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.focus_new_goal</span> <span class="id" title="var">forall_c</span> (<span class="id" title="keyword">fun</span> () =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">offset1</span> := <span class="id" title="var">Int.add</span> (<span class="id" title="var">env</span>.(<span class="id" title="var">offset</span>)) 1 <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">intro_hyp</span> (<span class="id" title="keyword">level</span> : <span class="id" title="var">int</span>) : <span class="id" title="keyword">constr</span> :=<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">id</span> := <span class="id" title="var">Array.get</span> <span class="id" title="var">ids</span> (<span class="id" title="var">Int.sub</span> <span class="id" title="keyword">level</span> 1) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">id</span> := <span class="id" title="var">Array.get</span> <span class="id" title="var">ids</span> (<span class="id" title="var">Int.sub</span> <span class="id" title="keyword">level</span> <span class="id" title="var">offset1</span>) <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> () := <span class="id" title="var">Std.intro_nobacktrack</span> (<span class="id" title="var">Some</span> <span class="id" title="var">id</span>) (<span class="id" title="var">Some</span> <span class="id" title="var">Std.MoveLast</span>) <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Constr.Unsafe.make_var</span> <span class="id" title="var">id</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>

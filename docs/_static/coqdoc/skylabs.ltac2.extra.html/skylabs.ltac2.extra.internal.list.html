@@ -38,6 +38,38 @@ Minor extensions to <span class="inlinecode"><span class="id" title="var">Ltac2.
 &nbsp;&nbsp;<span class="id" title="keyword">Export</span> <span class="id" title="module">Ltac2.List</span>.<br/>
 
 <br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">split_at_rev</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span> <span class="inlinecode"><span class="id" title="var">ls</span></span> returns <span class="inlinecode">(<span class="id" title="var">rev</span></span> <span class="inlinecode">(<span class="id" title="var">firstn</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span> <span class="inlinecode"><span class="id" title="var">ls</span>),</span> <span class="inlinecode"><span class="id" title="var">skipn</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span> <span class="inlinecode"><span class="id" title="var">ls</span>)</span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">split_at_rev</span> : <span class="id" title="var">int</span> -&gt; '<span class="id" title="var">a</span> <span class="id" title="var">list</span> -&gt; '<span class="id" title="var">a</span> <span class="id" title="var">list</span> * '<span class="id" title="var">a</span> <span class="id" title="var">list</span> := <span class="id" title="keyword">fun</span> <span class="id" title="var">n</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">_</span> := <span class="id" title="var">Control.assert_valid_argument</span> "List.cut_rev" (<span class="id" title="var">Int.ge</span> <span class="id" title="var">n</span> 0) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="keyword">rec</span> <span class="id" title="var">cut_rev</span> <span class="id" title="var">n</span> <span class="id" title="var">acc</span> <span class="id" title="var">ls</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">Int.equal</span> <span class="id" title="var">n</span> 0 <span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">acc</span>, <span class="id" title="var">ls</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">ls</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| [] =&gt; <span class="id" title="var">Control.throw_out_of_bounds</span> "List.cut_rev"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">x</span> :: <span class="id" title="var">ls</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cut_rev</span> (<span class="id" title="var">Int.sub</span> <span class="id" title="var">n</span> 1) (<span class="id" title="var">x</span> :: <span class="id" title="var">acc</span>) <span class="id" title="var">ls</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">cut_rev</span> <span class="id" title="var">n</span> [].<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">split_at</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span> <span class="inlinecode"><span class="id" title="var">ls</span></span> returns <span class="inlinecode">(<span class="id" title="var">firstn</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span> <span class="inlinecode"><span class="id" title="var">ls</span>,</span> <span class="inlinecode"><span class="id" title="var">skipn</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span> <span class="inlinecode"><span class="id" title="var">ls</span>)</span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">split_at</span> (<span class="id" title="var">n</span> : <span class="id" title="var">int</span>) (<span class="id" title="var">ls</span> : '<span class="id" title="var">a</span> <span class="id" title="var">list</span>) : '<span class="id" title="var">a</span> <span class="id" title="var">list</span> * '<span class="id" title="var">a</span> <span class="id" title="var">list</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">rev_prefix</span>, <span class="id" title="var">suffix</span>) := <span class="id" title="var">split_at_rev</span> <span class="id" title="var">n</span> <span class="id" title="var">ls</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">List.rev</span> <span class="id" title="var">rev_prefix</span>, <span class="id" title="var">suffix</span>).<br/>
+
+<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">iteri2</span> (<span class="id" title="var">f</span> : <span class="id" title="var">int</span> -&gt; '<span class="id" title="var">a</span> -&gt; '<span class="id" title="var">b</span> -&gt; <span class="id" title="var">unit</span>) (<span class="id" title="var">xs</span> : '<span class="id" title="var">a</span> <span class="id" title="var">list</span>) (<span class="id" title="var">ys</span> : '<span class="id" title="var">b</span> <span class="id" title="var">list</span>) :=<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="keyword">rec</span> <span class="id" title="var">loop</span> <span class="id" title="var">i</span> <span class="id" title="var">xs</span> <span class="id" title="var">ys</span> :=<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> (<span class="id" title="var">xs</span>, <span class="id" title="var">ys</span>) <span class="id" title="keyword">with</span><br/>
@@ -88,20 +120,6 @@ These variants avoid silly edits when switching direction.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">None</span> =&gt; <span class="id" title="var">find_map_opt</span> <span class="id" title="var">f</span> <span class="id" title="var">xs</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
-
-<br/>
-&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">split_at</span> (<span class="id" title="var">n</span> : <span class="id" title="var">int</span>) (<span class="id" title="var">xs</span> : '<span class="id" title="var">a</span> <span class="id" title="var">list</span>) : '<span class="id" title="var">a</span> <span class="id" title="var">list</span> * '<span class="id" title="var">a</span> <span class="id" title="var">list</span> :=<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="keyword">rec</span> <span class="id" title="var">go</span> <span class="id" title="var">n</span> <span class="id" title="var">xs</span> <span class="id" title="var">acc</span> :=<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">Int.le</span> <span class="id" title="var">n</span> 0 <span class="id" title="keyword">then</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">List.rev</span> <span class="id" title="var">acc</span>, <span class="id" title="var">xs</span>)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">xs</span> <span class="id" title="keyword">with</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| [] =&gt; (<span class="id" title="var">List.rev</span> <span class="id" title="var">acc</span>, [])<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">x</span> :: <span class="id" title="var">xs</span> =&gt;<br/>
-<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">go</span> (<span class="id" title="var">Int.sub</span> <span class="id" title="var">n</span> 1) <span class="id" title="var">xs</span> (<span class="id" title="var">x</span> :: <span class="id" title="var">acc</span>)<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span> <span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">go</span> <span class="id" title="var">n</span> <span class="id" title="var">xs</span> [].<br/>
 
 <br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">bisect_partition</span> (<span class="id" title="var">ps</span> : '<span class="id" title="var">a</span> <span class="id" title="var">list</span> -&gt; <span class="id" title="var">bool</span>) (<span class="id" title="var">xs</span> : '<span class="id" title="var">a</span> <span class="id" title="var">list</span>) : '<span class="id" title="var">a</span> <span class="id" title="var">list</span> * '<span class="id" title="var">a</span> <span class="id" title="var">list</span> :=<br/>
