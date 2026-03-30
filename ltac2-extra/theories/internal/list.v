@@ -15,6 +15,26 @@ Module List.
   Import Ltac2 Init.
   Export Ltac2.List.
 
+  (** [split_at_rev n ls] returns [(rev (firstn n ls), skipn n ls)]. *)
+  Ltac2 split_at_rev : int -> 'a list -> 'a list * 'a list := fun n =>
+    let _ := Control.assert_valid_argument "List.cut_rev" (Int.ge n 0) in
+    let rec cut_rev n acc ls :=
+      if Int.equal n 0 then
+        (acc, ls)
+      else
+        match ls with
+        | [] => Control.throw_out_of_bounds "List.cut_rev"
+        | x :: ls =>
+            cut_rev (Int.sub n 1) (x :: acc) ls
+        end
+    in
+    cut_rev n [].
+
+  (** [split_at n ls] returns [(firstn n ls, skipn n ls)]. *)
+  Ltac2 split_at (n : int) (ls : 'a list) : 'a list * 'a list :=
+    let (rev_prefix, suffix) := split_at_rev n ls in
+    (List.rev rev_prefix, suffix).
+
   Ltac2 iteri2 (f : int -> 'a -> 'b -> unit) (xs : 'a list) (ys : 'b list) :=
     let rec loop i xs ys :=
       match (xs, ys) with
@@ -55,19 +75,6 @@ Module List.
                  | None => find_map_opt f xs
                  end
     end.
-
-  Ltac2 split_at (n : int) (xs : 'a list) : 'a list * 'a list :=
-    let rec go n xs acc :=
-      if Int.le n 0 then
-        (List.rev acc, xs)
-      else
-        match xs with
-        | [] => (List.rev acc, [])
-        | x :: xs =>
-
-            go (Int.sub n 1) xs (x :: acc)
-        end in
-    go n xs [].
 
   (* [bisect_partition ps xs]
      Assuming for some predicate [ps : 'a -> bool], [ps xs = List.for_all p xs], [bisect_partition] is
