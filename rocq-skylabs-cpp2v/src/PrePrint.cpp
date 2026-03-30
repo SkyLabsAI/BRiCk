@@ -50,6 +50,12 @@ struct PrePrint : TypeVisitor<PrePrint, bool>,
         return false;
     }
 #endif
+#if CLANG_VERSION_MAJOR >= 22
+    bool VisitPredefinedSugarType(const PredefinedSugarType *type) {
+        Visit(type->desugar());
+        return false;
+    }
+#endif
     bool VisitTagType(const TagType *type) {
         VisitName(type->getDecl());
         return true;
