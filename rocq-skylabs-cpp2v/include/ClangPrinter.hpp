@@ -8,6 +8,7 @@
 #include "Logging.hpp"
 #include "Trace.hpp"
 #include <clang/Basic/Diagnostic.h>
+#include <clang/Basic/Version.inc>
 #include <llvm/ADT/ArrayRef.h>
 
 namespace clang {
@@ -118,11 +119,16 @@ public:
       */
     ClangPrinter withDecl(const clang::Decl *decl) const;
 
+#if CLANG_VERSION_MAJOR >= 22
+    using NestedNameSpecifierArg = clang::NestedNameSpecifier;
+#else
+    using NestedNameSpecifierArg = const clang::NestedNameSpecifier *;
+#endif
+
 private:
     const clang::Decl *getDecl() const;
 
-    fmt::Formatter &
-    printNestedName(CoqPrinter &, const clang::NestedNameSpecifier *, loc::loc);
+    fmt::Formatter &printNestedName(CoqPrinter &, NestedNameSpecifierArg, loc::loc);
 
 public:
     clang::ASTContext &getContext() { return *context_; }
@@ -166,17 +172,16 @@ public:
     fmt::Formatter &printName(CoqPrinter &, const clang::Decl *, loc::loc,
                               bool full = true);
     fmt::Formatter &printUnresolvedName(
-        CoqPrinter &, const clang::NestedNameSpecifier * /* optional */,
+        CoqPrinter &, NestedNameSpecifierArg /* optional */,
         const clang::DeclarationName &,
         llvm::ArrayRef<clang::TemplateArgumentLoc> /* optional */, loc::loc);
     fmt::Formatter &printUnresolvedName(
-        CoqPrinter &, const clang::NestedNameSpecifier * /* optional */,
+        CoqPrinter &, NestedNameSpecifierArg /* optional */,
         const clang::DeclarationName &,
         llvm::ArrayRef<clang::TemplateArgument> /* optional */, loc::loc);
 
     fmt::Formatter &
-    printUnresolvedName(CoqPrinter &,
-                        const clang::NestedNameSpecifier * /* optional */,
+    printUnresolvedName(CoqPrinter &, NestedNameSpecifierArg /* optional */,
                         const clang::DeclarationName &, loc::loc);
 
     // TODO: Can we drop these?

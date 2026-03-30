@@ -11,6 +11,7 @@
 #include "Logging.hpp"
 #include "Template.hpp"
 #include "config.hpp"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Basic/Builtins.h"
@@ -18,6 +19,7 @@
 #include "clang/Sema/Sema.h"
 #include <clang/AST/Type.h>
 #include <clang/Basic/Version.inc>
+#include <optional>
 
 using namespace clang;
 
@@ -286,7 +288,13 @@ static fmt::Formatter &printClassName(CoqPrinter &print, const RecordDecl &decl,
         because such types get printed from other contexts.
         */
         guard::ctor _{print, "Ndependent'", false};
+#if CLANG_VERSION_MAJOR >= 22
+        QualType q = decl.getASTContext().getTagType(
+            ElaboratedTypeKeyword::None, std::nullopt, &decl, false);
+        return cprint.printType(print, *q.getTypePtr(), loc::of(decl));
+#else
         return cprint.printType(print, decl.getTypeForDecl(), loc::of(decl));
+#endif
     } else
         return cprint.printName(print, decl);
 }
