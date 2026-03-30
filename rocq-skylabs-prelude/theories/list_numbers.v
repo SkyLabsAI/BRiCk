@@ -869,10 +869,29 @@ Section listN.
     is_Some (xs !! i) -> i < lengthN xs.
   Proof. by rewrite lookupN_is_Some. Qed.
 
+  Lemma lookupN_replicateN_Some n x i y :
+    lookupN i (replicateN n x) = Some y <-> y=x /\ i < n.
+  Proof.
+    rewrite -lookupN_fold /replicateN lookup_replicate. intuition; lia.
+  Qed.
+
+  Lemma lookupN_replicateN_None n x i :
+    lookupN i (replicateN n x) = None <-> n <= i.
+  Proof.
+    split; intros.
+    - destruct (decide (i < n)); [ exfalso | lia].
+      destruct (lookupN_replicateN_Some n x i x) as [_ HH].
+      rewrite HH in H; [ congruence | auto].
+    - remember (replicateN n x !! i) as d; destruct d; trivial; symmetry in Heqd.
+      apply lookupN_replicateN_Some in Heqd; destruct Heqd; lia.
+  Qed.
+
   Lemma lookupN_replicateN n x i :
     lookupN i (replicateN n x) = Some x <-> i < n.
   Proof.
-    rewrite -lookupN_fold /replicateN lookup_replicate. split; [|split=> //]; lia.
+    split; intros.
+     - apply lookupN_replicateN_Some in H; apply H.
+     - apply lookupN_replicateN_Some; auto.
   Qed.
 
   Lemma lookupN_head xs :
