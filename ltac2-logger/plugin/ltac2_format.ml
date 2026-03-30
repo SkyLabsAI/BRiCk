@@ -32,6 +32,7 @@ let build_msg : Environ.env -> Evd.evar_map -> Tac2types.format list ->
     let _Int i = Int(Tac2ffi.to_int i) in
     let _Constr c = Constr(env, sigma, Tac2ffi.to_constr c) in
     let _Ident i = Ident(Tac2ffi.to_ident i) in
+    let _Pp p = Pp(Tac2ffi.to_pp p) in
     let _Msg m = Msg(Tac2ffi.to_ext msg_tag m) in
     let _Thunk f x =
       let thunk () =
@@ -78,8 +79,8 @@ let build_msg : Environ.env -> Evd.evar_map -> Tac2types.format list ->
         build (_Thunk f x :: acc) fs args
     | (FmtAlpha0     :: fs, f :: x :: args) ->
         build (_Thunk0 f x :: acc) fs args
-    | (FmtMessage    :: fs, m      :: args) ->
-        build (_Msg m :: acc) fs args
+    | (FmtMessage    :: fs, p      :: args) ->
+        build (_Pp p :: acc) fs args
     | (_                  , _             ) -> assert false
   in
   build [] fs args
