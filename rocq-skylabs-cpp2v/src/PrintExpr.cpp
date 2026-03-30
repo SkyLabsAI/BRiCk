@@ -10,6 +10,7 @@
 #include "Formatter.hpp"
 #include "Logging.hpp"
 #include "OpaqueNames.hpp"
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DependenceFlags.h"
 #include "clang/AST/Expr.h"
@@ -18,6 +19,7 @@
 #include "clang/AST/Type.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/Version.inc"
+#include <optional>
 
 using namespace clang;
 using namespace fmt;
@@ -1380,7 +1382,16 @@ public:
             print.ctor("Eoffsetof");
             auto field = comm.getField();
             auto parent = field ? field->getParent() : nullptr;
-            auto ty = parent ? parent->getTypeForDecl() : nullptr;
+#if CLANG_VERSION_MAJOR >= 22
+            QualType parentTy =
+                parent ? parent->getASTContext().getTagType(
+                             ElaboratedTypeKeyword::None, std::nullopt, parent,
+                             false)
+                       : QualType{};
+            const Type *ty = parentTy.isNull() ? nullptr : parentTy.getTypePtr();
+#else
+            const Type *ty = parent ? parent->getTypeForDecl() : nullptr;
+#endif
             always_assert(ty && "offsetof without type");
 
             cprint.printType(print, *ty, loc::of(expr)) << fmt::nbsp;
