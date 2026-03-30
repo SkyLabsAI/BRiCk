@@ -204,11 +204,11 @@ Module Builder.
       and n builders [build_a1] .. [build_an], one can use [f] to combine the result of the n
       builders as follows:
       <<
-        _apply f fixed_args
-          (_arg_on prj1 build_a1)
+        Ap.apply f fixed_args
+          (Ap.arg_on prj1 build_a1)
           ...
-          (_arg_on prjn build_an)
-          _done
+          (Ap.arg_on prjn build_an)
+          Ap.done
       >>
 
       The result is ['b Builder.t] if each projection [prji] has type ['b -> 'ai] and each builder
@@ -226,7 +226,7 @@ Module Builder.
         Ap.apply '(@List.app) [Wildcard]
           (Ap.arg_on fst build_int_list)
           (Ap.arg_on snd build_int_list)
-          _done
+          Ap.done
       >>
 
       The result has type [(int list * int list) Builder.t].
