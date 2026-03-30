@@ -223,9 +223,9 @@ Module Builder.
       pair of lists of integers and return their concatenation as a Galina term:
       <<
         let build_int_list := build_list build_Z in
-        _apply '(@List.app) [Wildcard]
-          (_arg_on fst build_int_list)
-          (_arg_on snd build_int_list)
+        Ap.apply '(@List.app) [Wildcard]
+          (Ap.arg_on fst build_int_list)
+          (Ap.arg_on snd build_int_list)
           _done
       >>
 
