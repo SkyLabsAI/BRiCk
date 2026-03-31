@@ -1,4 +1,9 @@
-
+(*
+ * Copyright (C) 2026 SkyLabs AI, Inc.
+ *
+ * This software is distributed under the terms of the BedRock Open-Source
+ * License. See the LICENSE-BedRock file in the repository root for details.
+ *)
 Require Import skylabs.ltac2.extra.internal.init.
 Require Import skylabs.ltac2.extra.internal.constr.
 Require Import skylabs.ltac2.extra.internal.int.

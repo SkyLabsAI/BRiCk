@@ -12,7 +12,7 @@
   - : unit = ()
   
   (** Test 2 - error in function application *)
-  File "./test1.v", line 30, characters 4-305:
+  File "./test1.v", line 29, characters 4-305:
   Error:
   Uncaught Ltac2 exception:
   Control.ErrorCxt

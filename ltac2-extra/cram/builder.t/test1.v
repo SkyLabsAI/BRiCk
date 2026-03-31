@@ -1,9 +1,8 @@
-
-(**
+(*
  * Copyright (C) 2026 SkyLabs AI, Inc.
- * This file is CONFIDENTIAL AND PROPRIETARY to SkyLabs AI. All rights reserved.
  *
- * Use of this file is only permitted subject to a separate written license agreement with SkyLabs AI.
+ * This software is distributed under the terms of the BedRock Open-Source
+ * License. See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import skylabs.ltac2.extra.extra.
 Require Import skylabs_auto.cram.builder.prelude.
