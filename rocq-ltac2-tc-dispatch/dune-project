@@ -1,0 +1,22 @@
+(lang dune 3.21)
+(using rocq 0.11)
+(name ltac2-tc-dispatch)
+
+(generate_opam_files)
+
+(maintainers
+ "Gregory Malecha <gregory@skylabs-ai.com>")
+
+(authors
+ "Gregory Malecha <gregory@skylabs-ai.com>")
+
+(license LGPL-2.1)
+
+(source (github SkyLabsAI/BRiCk))
+
+(package
+ (name ltac2-tc-dispatch)
+ (synopsis "Typeclass-based lookup for Ltac2 functions")
+ (depends coq-core coq-stdlib stdlib-extra rocq-extra))
+
+(subst disabled)
