@@ -183,6 +183,10 @@ Module Builder.
   End Unsafe.
   End Constr.
 
+  (** Type of the terms returned by [Builder.run builder val]. This type should be checked by unsafe
+      combinators like [unsafe_constr] and [Ap.apply]. *)
+  Ltac2 return_type (builder : 'a t) : constr := (builder ()).(type).
+
   (** A convenient shorthand for [Constr.subst_evars] *)
   Ltac2 subst_evars' (g : constr) : constr :=
     Option.default g (Constr.subst_evars g).
@@ -248,8 +252,19 @@ Module Builder.
 
       The result has type [(int list * int list) Builder.t].
 
-      Limitation: the builders one can create with the interface [Ap] are limited to the builders
-      calling other builders and combining the results using a Galina function. *)
+      Exceptions:
+        When defining a compound builder using the [Ap] interface, if the builders combined using
+        [Ap.arg_on] are type correct (i.e. they produce terms of the type advertised by
+        [return_type]), the compound builder can fail the first time it is run if the return type of
+        each of the combined builders do not match the type signature of the Gallina function [f].
+
+        When combining builders which do not do proper error checking, each call of the compound
+        builder may fail with a type error blaming the function application rather than the input of
+        the unsafe builder.
+
+      Limitation:
+        The builders one can create with the interface [Ap] are limited to the builders calling
+        other builders and combining the results using a Galina function. *)
   Module Ap.
 
     Ltac2 Type ('b, 't, 'e) acc :=
