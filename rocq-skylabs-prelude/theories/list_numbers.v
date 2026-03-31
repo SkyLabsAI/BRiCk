@@ -879,10 +879,11 @@ Section listN.
     lookupN i (replicateN n x) = None <-> n <= i.
   Proof.
     have suff : (exists y, lookupN i (replicateN n x) = Some y) <-> (exists y, y=x /\ i < n).
-    - rewrite eq_None_not_Some. unfold is_Some. intuition.
+    - rewrite eq_None_not_Some; unfold is_Some; intros [HH1 HH2].
+      split; intros HH.
       + destruct (decide (n ≤ i)%N); trivial.
-        elim H; apply H1; exists x; intuition; lia.
-      + destruct H3 as [? [? ?]]; lia.
+        elim HH; apply HH2; exists x; intuition; lia.
+      + intros CONTRA; destruct (HH1 CONTRA) as [y [Y Hi]]; lia.
     - setoid_rewrite lookupN_replicateN_Some; auto.
   Qed.
 
@@ -1485,20 +1486,19 @@ Section listZ.
   Qed.
 
   Lemma lookupZ_replicateN_Some {A} (n:N) (x:A) (i:Z) y :
-    (replicateZ n x) !! i = Some y <-> y=x /\ 0 <= i < Z.of_N n.
+    replicateZ n x !! i = Some y <-> y=x /\ 0 <= i < Z.of_N n.
   Proof.
-    rewrite lookupZ_Some_to_N.
-    split; intros.
-    - destruct H.
-      apply lookupN_replicateN_Some in H0.
+    rewrite lookupZ_Some_to_N; split.
+    - intros [Hi R].
+      apply lookupN_replicateN_Some in R.
       intuition; lia.
-    - destruct H; subst.
+    - intros [? ?]; subst.
       split; [ lia |].
       apply lookupN_replicateN_Some; split; [ trivial | lia].
   Qed.
 
   Lemma lookupZ_replicateN_None {A} (n:N) (x:A) (i:Z) :
-    (replicateZ n x) !! i = None <-> i < 0 \/ Z.of_N n <= i.
+    replicateZ n x !! i = None <-> i < 0 \/ Z.of_N n <= i.
   Proof.
     rewrite lookupZ_None lengthN_replicateN.
     intuition.
@@ -1507,20 +1507,20 @@ Section listZ.
   Qed.
 
   Lemma lookupZ_replicateZ_Some {A} (n:Z) (x:A) (i:Z) y :
-    (replicateZ n x) !! i = Some y <-> y=x /\ 0 <= i < n.
+    replicateZ n x !! i = Some y <-> y=x /\ 0 <= i < n.
   Proof.
     rewrite lookupZ_Some_to_N.
-    split; intros.
-    - destruct H.
-      apply lookupN_replicateN_Some in H0.
+    split.
+    - intros [Hi R].
+      apply lookupN_replicateN_Some in R.
       intuition; lia.
-    - destruct H; subst.
+    - intros [? ?]; subst.
       split; [ lia |].
       apply lookupN_replicateN_Some; split; [ trivial | lia].
   Qed.
 
   Lemma lookupZ_replicateZ_None {A} (n:Z) (x:A) (i:Z) :
-    (replicateZ n x) !! i = None <-> i < 0 \/ (0 <= i /\ n <= i).
+    replicateZ n x !! i = None <-> i < 0 \/ (0 <= i /\ n <= i).
   Proof.
     rewrite lookupZ_None lengthN_replicateN.
     intuition.
