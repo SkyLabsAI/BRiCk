@@ -223,9 +223,9 @@ Module Builder.
       pair of lists of integers and return their concatenation as a Galina term:
       <<
         let build_int_list := build_list build_Z in
-        _apply '(@List.app) [Wildcard]
-          (_arg_on fst build_int_list)
-          (_arg_on snd build_int_list)
+        Ap.apply '(@List.app) [Wildcard]
+          (Ap.arg_on fst build_int_list)
+          (Ap.arg_on snd build_int_list)
           _done
       >>
 
@@ -252,17 +252,22 @@ Module Builder.
 
     (** Starter *)
     Ltac2 apply (fn : constr) (args : arg list)
-        (x : ('b, 't, 'e) acc -> 'r) : 'r :=
+        (x : ('b, 'b impl, 'e) acc -> 'r) : 'r :=
       let wild_ty ty := WildcardWithType ty in
       let term trm   := Term trm in
-      let inst_ty xs := instantiate_type fn args xs in
+      let inst_ty xs :=
+        instantiate_type fn args xs in
       let mk_app xs :=
         let (fn_app, _) := inst_ty (List.map term xs) in
         let trm := fn_app () in
         Std.eval_cbv RedFlags.all trm in
       let compile build_ty build_trm :=
+        let build_ty := List.rev build_ty in
         let (_, type)    := inst_ty (List.map wild_ty build_ty) in
-        let build args := mk_app (List.rev (build_trm args)) in
+        let build args :=
+          let args := build_trm args in
+          let args := List.rev args in
+          mk_app args in
         { type; build } in
       let acc :=
         { ret  := compile ;
@@ -401,16 +406,16 @@ Module Builder.
     Import Lists.List.ListNotations.
 
     Ltac2 from_lists (build_a : 'a Builder.t) (build_b : 'b Builder.t) () :=
-      Ap.apply '(fun a b c => (a ++ List.rev b ++ c)%list) []
+      Ap.apply '(fun a b c => ([a] ++ [b] ++ List.rev c)%list) []
          (Ap.arg_on (fun (a,_,_) => a) build_a)
-         (Ap.arg_on (fun (_,b,_) => b) build_b)
          (Ap.arg_on (fun (_,_,c) => c) build_a)
+         (Ap.arg_on (fun (_,b,_) => b) build_b)
          Ap.done.
 
     Goal True.
-      let builder := from_lists (constr '(list nat)) (build_list build_nat) in
-      let trm     := run builder ( '([1]), [2;3;4], '([5])) in
-      Control.assert_true (Constr.equal trm '([1;4;3;2;5])).
+      let builder := from_lists (constr '(nat)) (build_list build_nat) in
+      let trm     := run builder ( '(1), [2;3;4], '(5)) in
+      Control.assert_true (Constr.equal trm '([1;5;4;3;2])).
     Abort.
 
   End example.
