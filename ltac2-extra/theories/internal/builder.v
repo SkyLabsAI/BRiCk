@@ -445,17 +445,85 @@ Module Builder.
     Open Scope list_scope.
     Import Lists.List.ListNotations.
 
-    Ltac2 from_lists (build_a : 'a Builder.t) (build_b : 'b Builder.t) () :=
+    Ltac2 custom_list_builder (build_a : 'a Builder.t) (build_b : 'b Builder.t) : ('a * 'a * 'b) Builder.t :=
+      fun () =>
+      error_context! [fprintf "custom list builder"]
       Ap.apply '(fun a b c => ([a] ++ [b] ++ List.rev c)%list) []
          (Ap.arg_on (fun (a,_,_) => a) build_a)
-         (Ap.arg_on (fun (_,_,c) => c) build_a)
-         (Ap.arg_on (fun (_,b,_) => b) build_b)
+         (Ap.arg_on (fun (_,b,_) => b) build_a)
+         (Ap.arg_on (fun (_,_,c) => c) build_b)
+         Ap.done.
+
+    Ltac2 faulty_list_builder (build_a : 'a Builder.t) (build_b : 'b Builder.t) : ('a * 'a * 'b) Builder.t :=
+      fun () =>
+      error_context! [fprintf "faulty list builder"]
+      Ap.apply '(fun a b c => (a ++ [b] ++ List.rev c)%list) []
+         (Ap.arg_on (fun (a,_,_) => a) build_a)
+         (Ap.arg_on (fun (_,b,_) => b) build_a)
+         (Ap.arg_on (fun (_,_,c) => c) build_b)
          Ap.done.
 
     Goal True.
-      let builder := from_lists (constr '(nat)) (build_list build_nat) in
-      let trm     := run builder ( '(1), [2;3;4], '(5)) in
+      let builder :=
+        let builder_a := unsafe_constr '(nat) in
+        let builder_b := build_list build_nat in
+        custom_list_builder builder_a builder_b in
+
+      let trm     := run builder ( '(1), '(5), [2;3;4]) in
       Control.assert_true (Constr.equal trm '([1;5;4;3;2])).
+
+      (* test error messages:
+         the following should trigger error message B *)
+      Fail let builder :=
+        let builder_a := unsafe_constr '(nat) in
+        let builder_b := build_list build_nat in
+        faulty_list_builder builder_a builder_b in
+
+      let trm     := run builder ( '(1), '(5), [2;3;4]) in
+      Control.assert_true (Constr.equal trm '([1;5;4;3;2])).
+
+      (* test error messages:
+         the following should trigger error message B *)
+      Fail let builder :=
+        let builder_a := unsafe_constr '(nat) in
+        let builder_b := build_list build_nat in
+        custom_list_builder builder_a builder_b in
+
+      let trm     := run builder ( '([1]), '(5), [2;3;4]) in
+      Control.assert_true (Constr.equal trm '([1;5;4;3;2])).
+
+    (** Error messages:
+        Message A
+        <<
+          Uncaught Ltac2 exception:
+          Control.ErrorCxt
+          message:(
+            context:  faulty list builder
+
+            context:  Builder.Ap.apply
+
+            context:
+              Error when checking argument types
+                function:  (fun (a : list ?A) (b : ?A) (c : list ?A) => a ++ [b] ++ List.rev c)
+                type:      (list ?A -> ?A -> list ?A -> list ?A)
+                arguments: ? : nat
+                           ? : nat
+                           ? : (list nat))
+          (Internal err:(Unable to unify "nat" with "list ?A".))
+        >>
+
+        Message B
+        <<
+          Error:
+          Uncaught Ltac2 exception:
+          Control.ErrorCxt message:(
+                             context:  constr builder for type nat
+                                         invalid argument: [1])
+          (Internal err:(The term "[1]" has type "list nat" while it is expected to have type "nat".))
+        >>
+
+        TODO: use cram test
+     *)
     Abort.
 
   End example.
