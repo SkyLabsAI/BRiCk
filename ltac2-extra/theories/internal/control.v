@@ -8,6 +8,7 @@
 Require Import skylabs.ltac2.extra.internal.init.
 Require Import skylabs.ltac2.extra.internal.constr.
 Require Import skylabs.ltac2.extra.internal.printf.
+Require Import skylabs.ltac2.extra.internal.message.
 
 (** Minor extensions to [Ltac2.Control] *)
 Module Control.
@@ -150,6 +151,34 @@ Module Control.
   Ltac2 user_err_format : ('a,'r) kprintf := fun fmt =>
     Message.Format.kfprintf user_err fmt.
 
+  Ltac2 Type exn ::= [ ErrorCxt(message, exn) ].
+
+
+  (** Meant to be used with notation:
+      <<
+        error_context! [fprintf "line 1";fprintf "line2: %s" info] code_that_may_throw
+      >>
+
+      runs [code_that_may_throw] and, if it throws an exception, adds the messages specified using
+      [fprintf] to the exception.
+   *)
+  Ltac2 error_context (err : unit -> message list) (f : unit -> 'a) : 'a :=
+    Control.once_plus f
+      (fun e =>
+         let msg :=
+           fprintf "%acontext:%a%a"
+             pp_message Message.force_new_line
+             pp_message (Message.break 2 2)
+             (pp_hvbox 2 (pp_lines pp_message)) (err ()) in
+         let e :=
+           match e with
+           | ErrorCxt m e =>
+               let m := Message.join_lines [msg;m] in
+               ErrorCxt m e
+           | _ => ErrorCxt msg e
+           end in
+         Control.zero e).
+
   Module Notations.
     Ltac2 Notation "throw_invalid!" fmt(format) := throw_invalid fmt.
     Ltac2 Notation "zero_invalid!"  fmt(format) := zero_invalid  fmt.
@@ -157,6 +186,9 @@ Module Control.
 
     Ltac2 Notation "first_of" "[" ls(list0(thunk(tactic(6)), "|")) "]" :=
       first_of_impl ls.
+
+    Ltac2 Notation "error_context!" cxt(thunk(tactic(0))) f(thunk(tactic(6))) :=
+      error_context cxt f.
   End Notations.
 
   (** Access to the [ProofView] goal state capabilities. *)
