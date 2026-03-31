@@ -5,6 +5,7 @@ Require Import skylabs.ltac2.extra.internal.int.
 Require Import skylabs.ltac2.extra.internal.list.
 Require Import skylabs.ltac2.extra.internal.string.
 
+Require Import skylabs.ltac2.extra.internal.control.
 Require Import skylabs.ltac2.extra.internal.printf.
 Require Import skylabs.ltac2.extra.internal.fset.
 Require Import skylabs.ltac2.extra.internal.fmap.
@@ -19,6 +20,7 @@ Import Ltac2 Init.
     [run (build_list (build_option build_foo)) xs]. *)
 Module Builder.
   Import Ltac2 Init Constr Printf.
+  Import Control.Notations.
 
   Ltac2 Type 'a impl := { type : constr; build : 'a -> constr }.
   Ltac2 Type 'a t := unit -> 'a impl.
@@ -47,6 +49,14 @@ Module Builder.
         | Wildcard => fprintf "?"
         | WildcardWithType ty => fprintf "? : %t" ty
         | Term x => fprintf "%t" x
+        end.
+
+    Ltac2 pp_typed : arg pp :=
+      fun () a =>
+        match a with
+        | Wildcard => fprintf "? : ?"
+        | WildcardWithType ty => fprintf "? : %t" ty
+        | Term x => fprintf "%t : %t" x (Constr.type x)
         end.
 
   End Arg.
@@ -190,8 +200,15 @@ Module Builder.
   #[local]
   Ltac2 instantiate_type fn (fixed_args : arg list) (other_args : arg list) :=
     let fty := Constr.type fn in
+    let all_args := List.append fixed_args other_args in
     Control.with_holes
-      (fun () => Constr.Unsafe.instantiate_prod fty (List.append fixed_args other_args))
+      (fun () =>
+         error_context!
+           [ fprintf "Error when checking argument types" ;
+             fprintf "function:  %a" (pp_hovbox 2 pp_constr) fn ;
+             fprintf "type:      %a" (pp_hovbox 2 pp_constr) fty ;
+             fprintf "arguments: %a" (pp_hbox (pp_lines Arg.pp_typed)) all_args ]
+           Constr.Unsafe.instantiate_prod fty all_args)
       (fun (args, ty) =>
          let args := List.map (Arg.map subst_evars') args in
          let ty := subst_evars' ty in
@@ -256,6 +273,7 @@ Module Builder.
       let wild_ty ty := WildcardWithType ty in
       let term trm   := Term trm in
       let inst_ty xs :=
+        error_context! [fprintf "Builder.Ap.apply"]
         instantiate_type fn args xs in
       let mk_app xs :=
         let (fn_app, _) := inst_ty (List.map term xs) in
@@ -390,9 +408,16 @@ Module Builder.
     { type  := constr:(PrimString.string);
       build := Unsafe.make_string }.
 
-  (** TODO: do type checking in [build] *)
-  Ltac2 constr (type : constr) : constr t :=
-    fun () => {type; build := fun x => x}.
+  (** This creates a term builder which can be applied to any [constr] but applying it to a constr
+      of a different type than [type] will result in a run-time exception. *)
+  Ltac2 unsafe_constr (type : constr) : constr t :=
+    fun () =>
+      {type;
+       build := fun x =>
+         error_context!
+           [ fprintf "constr builder for type %t" type;
+             fprintf "invalid argument: %t" x ]
+         constr:($x :> $type) }.
 
   Ltac2 run (builder : 'a t) (x : 'a) : constr :=
     (builder ()).(build) x.
