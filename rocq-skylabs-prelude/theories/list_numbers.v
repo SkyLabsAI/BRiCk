@@ -1517,14 +1517,12 @@ Section listZ.
   Qed.
 
   Lemma lookupZ_replicateZ_None {A} (z:Z) (x:A) (i:Z) :
-    replicateZ z x !! i = None <-> i < 0 \/ (0 <= i /\ z <= i).
+    replicateZ z x !! i = None <-> i < 0 \/ z <= i.
   Proof.
-    rewrite lookupZ_None lengthN_replicateN.
-    intuition.
-    - destruct (decide (i < 0)); [ left; trivial | right; lia].
-    - right; lia.
+    rewrite lookupZ_None lengthN_replicateN; lia.
   Qed.
 
+  (*
   Lemma lookupN_replicateZ_Some {A} (z:Z) (x:A) (n:N) y :
     replicateZ z x !! n = Some y <-> y=x /\ (n < Z.to_N z)%N.
   Proof.
@@ -1536,6 +1534,7 @@ Section listZ.
   Proof.
     apply lookupN_replicateN_None.
   Qed.
+  *)
 
   Ltac simpl_decide :=
     repeat
