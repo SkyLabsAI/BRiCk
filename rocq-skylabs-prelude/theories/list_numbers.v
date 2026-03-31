@@ -878,20 +878,18 @@ Section listN.
   Lemma lookupN_replicateN_None n x i :
     lookupN i (replicateN n x) = None <-> n <= i.
   Proof.
-    split; intros.
-    - destruct (decide (i < n)); [ exfalso | lia].
-      destruct (lookupN_replicateN_Some n x i x) as [_ HH].
-      rewrite HH in H; [ congruence | auto].
-    - remember (replicateN n x !! i) as d; destruct d; trivial; symmetry in Heqd.
-      apply lookupN_replicateN_Some in Heqd; destruct Heqd; lia.
+    have suff : (exists y, lookupN i (replicateN n x) = Some y) <-> (exists y, y=x /\ i < n).
+    - rewrite eq_None_not_Some. unfold is_Some. intuition.
+      + destruct (decide (n ≤ i)%N); trivial.
+        elim H; apply H1; exists x; intuition; lia.
+      + destruct H3 as [? [? ?]]; lia.
+    - setoid_rewrite lookupN_replicateN_Some; auto.
   Qed.
 
   Lemma lookupN_replicateN n x i :
     lookupN i (replicateN n x) = Some x <-> i < n.
   Proof.
-    split; intros.
-     - apply lookupN_replicateN_Some in H; apply H.
-     - apply lookupN_replicateN_Some; auto.
+    rewrite lookupN_replicateN_Some; intuition.
   Qed.
 
   Lemma lookupN_head xs :
@@ -1210,6 +1208,7 @@ Section listZ.
         end
     end.
   #[global] Existing Instance list_lookupZ | 20.
+  #[local] Notation lookupZ := (lookup (K := Z)) (only parsing).
 
   #[global] Instance list_insertZ {A} : Insert Z A (list A) | 20 :=
     fun k a l =>
@@ -1485,6 +1484,50 @@ Section listZ.
     by case bool_decide.
   Qed.
 
+  Lemma lookupZ_replicateN_Some {A} (n:N) (x:A) (i:Z) y :
+    (replicateZ n x) !! i = Some y <-> y=x /\ 0 <= i < Z.of_N n.
+  Proof.
+    rewrite lookupZ_Some_to_N.
+    split; intros.
+    - destruct H.
+      apply lookupN_replicateN_Some in H0.
+      intuition; lia.
+    - destruct H; subst.
+      split; [ lia |].
+      apply lookupN_replicateN_Some; split; [ trivial | lia].
+  Qed.
+
+  Lemma lookupZ_replicateN_None {A} (n:N) (x:A) (i:Z) :
+    (replicateZ n x) !! i = None <-> i < 0 \/ (0 <= i /\ Z.of_N n <= i).
+  Proof.
+    rewrite lookupZ_None lengthN_replicateN.
+    intuition.
+    - destruct (decide (i < 0)); [ left; trivial | right; lia].
+    - right; lia.
+  Qed.
+
+  Lemma lookupZ_replicateZ_Some {A} (n:Z) (x:A) (i:Z) y :
+    (replicateZ n x) !! i = Some y <-> y=x /\ 0 <= i < n.
+  Proof.
+    rewrite lookupZ_Some_to_N.
+    split; intros.
+    - destruct H.
+      apply lookupN_replicateN_Some in H0.
+      intuition; lia.
+    - destruct H; subst.
+      split; [ lia |].
+      apply lookupN_replicateN_Some; split; [ trivial | lia].
+  Qed.
+
+  Lemma lookupZ_replicateZ_None {A} (n:Z) (x:A) (i:Z) :
+    (replicateZ n x) !! i = None <-> i < 0 \/ (0 <= i /\ n <= i).
+  Proof.
+    rewrite lookupZ_None lengthN_replicateN.
+    intuition.
+    - destruct (decide (i < 0)); [ left; trivial | right; lia].
+    - right; lia.
+  Qed.
+
   Ltac simpl_decide :=
     repeat
       lazymatch goal with
@@ -1589,6 +1632,8 @@ Section listZ.
        @lookupZ_None, @lookupZ_None_inv, @lookupZ_is_Some, Zarith_simpl).
 
 End listZ.
+#[global] Notation lookupZ := (lookup (K := Z)) (only parsing).
+
 
 Section rangeZ.
   #[local] Open Scope Z_scope.
