@@ -1498,7 +1498,7 @@ Section listZ.
   Qed.
 
   Lemma lookupZ_replicateN_None {A} (n:N) (x:A) (i:Z) :
-    (replicateZ n x) !! i = None <-> i < 0 \/ (0 <= i /\ Z.of_N n <= i).
+    (replicateZ n x) !! i = None <-> i < 0 \/ Z.of_N n <= i.
   Proof.
     rewrite lookupZ_None lengthN_replicateN.
     intuition.
