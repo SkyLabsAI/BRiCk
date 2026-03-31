@@ -1486,7 +1486,7 @@ Section listZ.
   Qed.
 
   Lemma lookupZ_replicateN_Some {A} (n:N) (x:A) (i:Z) y :
-    replicateZ n x !! i = Some y <-> y=x /\ 0 <= i < Z.of_N n.
+    replicateN n x !! i = Some y <-> y=x /\ 0 <= i < Z.of_N n.
   Proof.
     rewrite lookupZ_Some_to_N; split.
     - intros [Hi R].
@@ -1498,16 +1498,13 @@ Section listZ.
   Qed.
 
   Lemma lookupZ_replicateN_None {A} (n:N) (x:A) (i:Z) :
-    replicateZ n x !! i = None <-> i < 0 \/ Z.of_N n <= i.
+    replicateN n x !! i = None <-> i < 0 \/ Z.of_N n <= i.
   Proof.
-    rewrite lookupZ_None lengthN_replicateN.
-    intuition.
-    - destruct (decide (i < 0)); [ left; trivial | right; lia].
-    - right; lia.
+    rewrite lookupZ_None lengthN_replicateN; intuition.
   Qed.
 
-  Lemma lookupZ_replicateZ_Some {A} (n:Z) (x:A) (i:Z) y :
-    replicateZ n x !! i = Some y <-> y=x /\ 0 <= i < n.
+  Lemma lookupZ_replicateZ_Some {A} (z:Z) (x:A) (i:Z) y :
+    replicateZ z x !! i = Some y <-> y=x /\ 0 <= i < z.
   Proof.
     rewrite lookupZ_Some_to_N.
     split.
@@ -1519,13 +1516,25 @@ Section listZ.
       apply lookupN_replicateN_Some; split; [ trivial | lia].
   Qed.
 
-  Lemma lookupZ_replicateZ_None {A} (n:Z) (x:A) (i:Z) :
-    replicateZ n x !! i = None <-> i < 0 \/ (0 <= i /\ n <= i).
+  Lemma lookupZ_replicateZ_None {A} (z:Z) (x:A) (i:Z) :
+    replicateZ z x !! i = None <-> i < 0 \/ (0 <= i /\ z <= i).
   Proof.
     rewrite lookupZ_None lengthN_replicateN.
     intuition.
     - destruct (decide (i < 0)); [ left; trivial | right; lia].
     - right; lia.
+  Qed.
+
+  Lemma lookupN_replicateZ_Some {A} (z:Z) (x:A) (n:N) y :
+    replicateZ z x !! n = Some y <-> y=x /\ (n < Z.to_N z)%N.
+  Proof.
+    apply lookupN_replicateN_Some.
+  Qed.
+
+  Lemma lookupN_replicateZ_None {A} (z:Z) (x:A) (n:N) :
+    replicateZ z x !! n = None <-> (Z.to_N z <= n)%N.
+  Proof.
+    apply lookupN_replicateN_None.
   Qed.
 
   Ltac simpl_decide :=
