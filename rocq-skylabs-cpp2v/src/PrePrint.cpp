@@ -57,7 +57,11 @@ struct PrePrint : TypeVisitor<PrePrint, bool>,
     }
 #endif
     bool VisitTagType(const TagType *type) {
+#if CLANG_VERSION_MAJOR >= 22
+        VisitName(type->getOriginalDecl());
+#else
         VisitName(type->getDecl());
+#endif
         return true;
     }
     bool VisitReferenceType(const ReferenceType *type) {

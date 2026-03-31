@@ -190,7 +190,11 @@ public:
 
     void VisitEnumType(const EnumType *type, CoqPrinter &print,
                        ClangPrinter &cprint) {
+#if CLANG_VERSION_MAJOR >= 22
+        auto ed = type->getOriginalDecl()->getCanonicalDecl();
+#else
         auto ed = type->getDecl()->getCanonicalDecl();
+#endif
         print.ctor("Tenum", false);
         cprint.printName(print, ed, loc::of(type));
         print.end_ctor();
@@ -199,7 +203,11 @@ public:
     void VisitRecordType(const RecordType *type, CoqPrinter &print,
                          ClangPrinter &cprint) {
         print.ctor("Tnamed", false);
+#if CLANG_VERSION_MAJOR >= 22
+        cprint.printName(print, type->getOriginalDecl(), loc::of(type));
+#else
         cprint.printName(print, type->getDecl(), loc::of(type));
+#endif
         print.end_ctor();
     }
 
@@ -472,7 +480,11 @@ public:
         // 		  << " - " << type->getTemplateName(p).<< "\n";
         always_assert(print.templates());
 
+#if CLANG_VERSION_MAJOR >= 22
+        if (auto decl = type->getOriginalDecl()) {
+#else
         if (auto decl = type->getDecl()) {
+#endif
             /*
             TODO: We probably have to make this smarter.
 
