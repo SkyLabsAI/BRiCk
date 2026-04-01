@@ -1188,7 +1188,9 @@ Proof.
 Qed.
 
 #[global] Notation lengthZ x := (Z.of_N (lengthN x)).
-#[global] Notation replicateZ n := (replicateN (Z.to_N n)).
+
+Definition replicateZ {A} (n : Z) := (replicateN (A :=A) (Z.to_N n)).
+#[global] Hint Opaque replicateZ : typeclass_instances sl_opacity.
 
 Section listZ.
   #[local] Open Scope Z_scope.
