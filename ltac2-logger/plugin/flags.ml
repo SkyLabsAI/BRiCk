@@ -230,7 +230,7 @@ type notation = {
   with_level: bool;
   data: Ltac2_plugin.Tac2entries.notation_interpretation_data
 }
-type notations =
+type interp_data =
   notation list
 
 let define_notation : with_level:bool -> string -> int -> notation =
@@ -287,7 +287,7 @@ let define_notation_interpretation {flag; with_level; data} =
   Msg.info "Ltac2 notation \"log[%s%s] <format>\" is defined.\n%!"
     flag (if with_level then ",<level>" else "")
 
-let declare_ltac2_log_flag : Names.Id.t -> bool -> notations = fun id dev ->
+let declare_ltac2_log_flag : Names.Id.t -> bool -> interp_data = fun id dev ->
   let id_str = Names.Id.to_string id in
   let id = FlagId.make id in
   (* Check that no flags was defined with the same name. *)
@@ -307,7 +307,7 @@ let declare_ltac2_log_flag : Names.Id.t -> bool -> notations = fun id dev ->
   [define_notation ~with_level:true id_str hash;
    define_notation ~with_level:false id_str hash]
 
-let declare_ltac2_log_flag_interpretation : notations -> unit =
+let declare_ltac2_log_flag_interpretation : interp_data -> unit =
   List.iter define_notation_interpretation
 
 let print_ltac2_log_flags : unit -> unit = fun _ ->
