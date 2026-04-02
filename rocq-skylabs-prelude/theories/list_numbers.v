@@ -1217,6 +1217,10 @@ Section listZ.
       then <[ Z.to_nat k := a ]> l
       else l.
 
+  #[global] Instance list_deleteZ {A}: Delete Z (list A) :=
+    fun (i : Z) (l : list A) =>
+    if bool_decide (i < 0)%Z then l else delete (Z.to_nat i) l.
+
   Definition takeZ {A} (n : Z) := (takeN (A := A) (Z.to_N n)).
   #[global] Hint Opaque takeZ : typeclass_instances sl_opacity.
   Definition dropZ {A} (n : Z) := (dropN (A := A) (Z.to_N n)).
@@ -1633,6 +1637,94 @@ Section listZ.
     case: bool_decide_reflect.
     - move => ->; rewrite inj_iff; split => [|[]] //.
     - split => [|[]] //.
+  Qed.
+
+  (** For every occurrences of [bool_decide] in the conclusion where the conclusion is known to be
+      true or known to be false, perform the substitution. *)
+  Ltac rw_bool_decide :=
+    repeat once ((rewrite bool_decide_eq_true_2 + rewrite bool_decide_eq_false_2); [|lia]).
+
+  (** find terms like (i < j)%Z or (i ≤ j)%Z terms in the conclusion that can be proven to be true or
+      false and simplify the goal accordingly.  *)
+  Ltac clear_decided_terms :=
+    let H := fresh "H" in
+    rw_bool_decide ;
+    repeat
+    ( once
+      ( let prop :=
+          match goal with
+          | |- context [ (?i < ?j)%Z ] => constr:((i < j)%Z)
+          | |- context [ (?i ≤ ?j)%Z ] => constr:((i ≤ j)%Z)
+          end in
+        first
+          [ assert (H : prop <-> True); first lia
+          | assert (H : prop <-> False); first lia ]);
+      rewrite ?{}H ?(left_id,right_id,left_absorb,right_absorb)).
+
+  Lemma list_lookupZ_insertZ_Some {A} (l : list A) (i j : Z) x y:
+        insert i x l !! j = Some y <->
+        (((j = i ∧ 0 ≤ j < lengthZ l) /\ x=y) \/
+         ((¬ ( j=i /\ 0 ≤ j < lengthZ l)) /\ l !! j = Some y))%Z.
+  Proof.
+    rewrite 2!list_lookupZ_eq_list_lookup/insert/list_insertZ.
+    case: (decide ((j < 0))%Z) => Hj; clear_decided_terms; [ intuition |].
+    case: (decide ((0 <= i))%Z) => Hii; clear_decided_terms; rewrite !lengthN_length; rewrite !nat_N_Z.
+    - rewrite list_lookup_insert_Some; intuition; subst; try lia; try solve [ (left + right); intuition; lia].
+      assert(X: (Z.to_nat j < length l)%nat); [ eapply lookup_lt_Some; eauto | right; intuition; lia].
+    - intuition; [| lia].
+      right; intuition; subst; lia.
+  Qed.
+
+  Lemma list_lookupZ_insertZ_None {A} (l : list A) (i j : Z) x:
+        insert i x l !! j = None <-> l !! j = None.
+  Proof.
+    rewrite 2!lookupZ_None/insert/list_insertZ.
+    case: (decide ((j < 0))%Z) => Hj; clear_decided_terms; [ intuition |].
+    case: (decide ((0 <= i))%Z) => Hii; clear_decided_terms; rewrite !lengthN_length; rewrite !nat_N_Z;
+    try rewrite length_insert; trivial.
+  Qed.
+
+  Lemma list_lookupZ_empty {A} (i:Z): (@nil A) !! i = None.
+  Proof. apply lookupZ_nil. Qed.
+
+  Lemma list_lookupZ_deleteZ_Some {A} (l : list A) (i j : Z) y:
+        delete i l !! j = Some y <->
+        ((i < 0 \/ (0 <= j < i)) /\ l !! j = Some y)%Z \/ (0 <= i <= j /\ l !! (j+1) = Some y)%Z.
+  Proof.
+    rewrite 3!list_lookupZ_eq_list_lookup/delete/list_deleteZ.
+    have Hj : (j <= -2 ∨
+               j = -1 ∨
+               i < 0 ∧ 0 <= j ∨
+               0 ≤ i ∧ 0 ≤ j )%Z by lia.
+    case: Hj => [|[|[|]]] ?;
+      clear_decided_terms;
+      [by intuition; try lia .. |].
+    case: (decide (i ≤ j)%Z) => Hij.
+    - rewrite lookup_delete_ge; last by lia.
+      clear_decided_terms.
+      repeat f_equiv; lia.
+    - rewrite lookup_delete_lt; last by lia.
+      by clear_decided_terms.
+  Qed.
+
+  Lemma delete_gt_length {A} (l : list A): forall (i : nat),
+        i >= length l -> delete i l = l.
+  Proof.
+    induction l; simpl in *; trivial.
+    intros i Hi; destruct i; [ | simpl; f_equal; apply IHl]; lia.
+  Qed.
+
+  Lemma list_lookupZ_deleteZ_None {A} (l : list A) (i j : Z):
+        delete i l !! j = None <->
+        (((i < 0 \/ j < i) /\ l !! j = None) \/ (0 <= i <= j /\ l !! (j+1) = None))%Z.
+  Proof.
+    rewrite 3!lookupZ_None/delete/list_deleteZ.
+    case: (decide ((i < 0))%Z) => Hi; clear_decided_terms.
+    - case: (decide ((j < i))%Z) => Hji; clear_decided_terms; intuition; lia.
+    - rewrite !lengthN_length; rewrite !nat_N_Z.
+      case: (decide (Z.to_nat i < length l)%nat) => HH.
+      + rewrite length_delete; [ rewrite Nat2Z.inj_sub; lia | apply lookup_lt_is_Some; trivial].
+      + rewrite delete_gt_length; [ intuition |]; lia.
   Qed.
 
   Definition lookupZ_simpl :=
