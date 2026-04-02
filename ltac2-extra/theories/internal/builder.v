@@ -1,10 +1,16 @@
-
+(*
+ * Copyright (C) 2026 SkyLabs AI, Inc.
+ *
+ * This software is distributed under the terms of the BedRock Open-Source
+ * License. See the LICENSE-BedRock file in the repository root for details.
+ *)
 Require Import skylabs.ltac2.extra.internal.init.
 Require Import skylabs.ltac2.extra.internal.constr.
 Require Import skylabs.ltac2.extra.internal.int.
 Require Import skylabs.ltac2.extra.internal.list.
 Require Import skylabs.ltac2.extra.internal.string.
 
+Require Import skylabs.ltac2.extra.internal.control.
 Require Import skylabs.ltac2.extra.internal.printf.
 Require Import skylabs.ltac2.extra.internal.fset.
 Require Import skylabs.ltac2.extra.internal.fmap.
@@ -19,6 +25,7 @@ Import Ltac2 Init.
     [run (build_list (build_option build_foo)) xs]. *)
 Module Builder.
   Import Ltac2 Init Constr Printf.
+  Import Control.Notations.
 
   Ltac2 Type 'a impl := { type : constr; build : 'a -> constr }.
   Ltac2 Type 'a t := unit -> 'a impl.
@@ -47,6 +54,14 @@ Module Builder.
         | Wildcard => fprintf "?"
         | WildcardWithType ty => fprintf "? : %t" ty
         | Term x => fprintf "%t" x
+        end.
+
+    Ltac2 pp_typed : arg pp :=
+      fun () a =>
+        match a with
+        | Wildcard => fprintf "? : ?"
+        | WildcardWithType ty => fprintf "? : %t" ty
+        | Term x => fprintf "%t : %t" x (Constr.type x)
         end.
 
   End Arg.
@@ -173,6 +188,10 @@ Module Builder.
   End Unsafe.
   End Constr.
 
+  (** Type of the terms returned by [Builder.run builder val]. This type should be checked by unsafe
+      combinators like [unsafe_constr] and [Ap.apply]. *)
+  Ltac2 return_type (builder : 'a t) : constr := (builder ()).(type).
+
   (** A convenient shorthand for [Constr.subst_evars] *)
   Ltac2 subst_evars' (g : constr) : constr :=
     Option.default g (Constr.subst_evars g).
@@ -190,8 +209,15 @@ Module Builder.
   #[local]
   Ltac2 instantiate_type fn (fixed_args : arg list) (other_args : arg list) :=
     let fty := Constr.type fn in
+    let all_args := List.append fixed_args other_args in
     Control.with_holes
-      (fun () => Constr.Unsafe.instantiate_prod fty (List.append fixed_args other_args))
+      (fun () =>
+         error_context!
+           [ fprintf "Error when checking argument types" ;
+             fprintf "function:  %a" (pp_hovbox 2 pp_constr) fn ;
+             fprintf "type:      %a" (pp_hovbox 2 pp_constr) fty ;
+             fprintf "arguments: %a" (pp_hbox (pp_lines Arg.pp_typed)) all_args ]
+           Constr.Unsafe.instantiate_prod fty all_args)
       (fun (args, ty) =>
          let args := List.map (Arg.map subst_evars') args in
          let ty := subst_evars' ty in
@@ -204,11 +230,11 @@ Module Builder.
       and n builders [build_a1] .. [build_an], one can use [f] to combine the result of the n
       builders as follows:
       <<
-        _apply f fixed_args
-          (_arg_on prj1 build_a1)
+        Ap.apply f fixed_args
+          (Ap.arg_on prj1 build_a1)
           ...
-          (_arg_on prjn build_an)
-          _done
+          (Ap.arg_on prjn build_an)
+          Ap.done
       >>
 
       The result is ['b Builder.t] if each projection [prji] has type ['b -> 'ai] and each builder
@@ -226,13 +252,24 @@ Module Builder.
         Ap.apply '(@List.app) [Wildcard]
           (Ap.arg_on fst build_int_list)
           (Ap.arg_on snd build_int_list)
-          _done
+          Ap.done
       >>
 
       The result has type [(int list * int list) Builder.t].
 
-      Limitation: the builders one can create with the interface [Ap] are limited to the builders
-      calling other builders and combining the results using a Galina function. *)
+      Exceptions:
+        When defining a compound builder using the [Ap] interface, if the builders combined using
+        [Ap.arg_on] are type correct (i.e. they produce terms of the type advertised by
+        [return_type]), the compound builder can fail the first time it is run if the return type of
+        each of the combined builders do not match the type signature of the Gallina function [f].
+
+        When combining builders which do not do proper error checking, each call of the compound
+        builder may fail with a type error blaming the function application rather than the input of
+        the unsafe builder.
+
+      Limitation:
+        The builders one can create with the interface [Ap] are limited to the builders calling
+        other builders and combining the results using a Galina function. *)
   Module Ap.
 
     Ltac2 Type ('b, 't, 'e) acc :=
@@ -256,6 +293,7 @@ Module Builder.
       let wild_ty ty := WildcardWithType ty in
       let term trm   := Term trm in
       let inst_ty xs :=
+        error_context! [fprintf "Builder.Ap.apply"]
         instantiate_type fn args xs in
       let mk_app xs :=
         let (fn_app, _) := inst_ty (List.map term xs) in
@@ -390,9 +428,16 @@ Module Builder.
     { type  := constr:(PrimString.string);
       build := Unsafe.make_string }.
 
-  (** TODO: do type checking in [build] *)
-  Ltac2 constr (type : constr) : constr t :=
-    fun () => {type; build := fun x => x}.
+  (** This creates a term builder which can be applied to any [constr] but applying it to a constr
+      of a different type than [type] will result in a run-time exception. *)
+  Ltac2 unsafe_constr (type : constr) : constr t :=
+    fun () =>
+      {type;
+       build := fun x =>
+         error_context!
+           [ fprintf "constr builder for type %t" type;
+             fprintf "invalid argument: %t" x ]
+         constr:($x :> $type) }.
 
   Ltac2 run (builder : 'a t) (x : 'a) : constr :=
     (builder ()).(build) x.
@@ -400,23 +445,4 @@ Module Builder.
   Ltac2 to_ltac1 (builder : 'a t) (x : 'a) : Ltac1.t :=
     Ltac1.of_constr ((builder ()).(build) x).
 
-  Section example.
-
-    Open Scope list_scope.
-    Import Lists.List.ListNotations.
-
-    Ltac2 from_lists (build_a : 'a Builder.t) (build_b : 'b Builder.t) () :=
-      Ap.apply '(fun a b c => ([a] ++ [b] ++ List.rev c)%list) []
-         (Ap.arg_on (fun (a,_,_) => a) build_a)
-         (Ap.arg_on (fun (_,_,c) => c) build_a)
-         (Ap.arg_on (fun (_,b,_) => b) build_b)
-         Ap.done.
-
-    Goal True.
-      let builder := from_lists (constr '(nat)) (build_list build_nat) in
-      let trm     := run builder ( '(1), [2;3;4], '(5)) in
-      Control.assert_true (Constr.equal trm '([1;5;4;3;2])).
-    Abort.
-
-  End example.
 End Builder.
