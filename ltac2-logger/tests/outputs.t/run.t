@@ -1,5 +1,5 @@
-  $ export PATH="$DUNE_SOURCEROOT/_build/install/default/bin:$PATH"
-  $ DUNE_CACHE=disabled dune build test.vo
+  $ . ../setup-project.sh
+  $ dune build test.vo
   [toplevel, flag=test, level=0] test_string,42,test_ident
   msg
   Ind(Corelib.Init.Logic.True,0)
