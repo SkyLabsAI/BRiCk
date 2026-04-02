@@ -72,7 +72,7 @@ end = struct
     let load_function _ = cache_function in
     let classify_function _ = Keep in
     let default = default_object "LOG_FLAGS_STATE" in
-    declare_object 
+    declare_object
       {default with cache_function; load_function; classify_function}
 
   let get () = !state
@@ -91,7 +91,7 @@ module Levels = struct
     let flag_map = State.get () in
     let b = Buffer.create 1024 in
     let add_data key {id=(mp, id); _} =
-      let lvl = try IMap.find key levels with Not_found -> 0 in 
+      let lvl = try IMap.find key levels with Not_found -> 0 in
       match lvl with
       | 0 -> ()
       | _ ->
