@@ -1,0 +1,8 @@
+(cram
+ (applies_to :whole_subtree)
+ (deps
+  (package rocq-core)
+  (package rocq-stdlib)
+  (package ltac2-extra)
+  (package ltac2-logger)
+  setup-project.sh))
