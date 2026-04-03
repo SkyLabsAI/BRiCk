@@ -1217,7 +1217,7 @@ Section listZ.
       then <[ Z.to_nat k := a ]> l
       else l.
 
-  #[global] Instance list_deleteZ {A}: Delete Z (list A) :=
+  #[global] Instance list_deleteZ {A}: Delete Z (list A) | 20 :=
     fun (i : Z) (l : list A) =>
     if bool_decide (i < 0)%Z then l else delete (Z.to_nat i) l.
 
