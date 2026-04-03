@@ -1646,9 +1646,10 @@ Section listZ.
 
   (** find terms like (i < j)%Z or (i ≤ j)%Z terms in the conclusion that can be proven to be true or
       false and simplify the goal accordingly.  *)
+  (** Perhaps there's a common abstraction for clear_decided_terms and simpl_decide_with **)
   Ltac clear_decided_terms :=
     let H := fresh "H" in
-    rw_bool_decide ;
+    (*rw_bool_decide ;*) simpl_decide_with lia;
     repeat
     ( once
       ( let prop :=
