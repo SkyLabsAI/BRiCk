@@ -331,6 +331,7 @@ public:
         });
     }
 
+#if CLANG_VERSION_MAJOR < 22
     void VisitElaboratedType(const ElaboratedType *type, CoqPrinter &print,
                              ClangPrinter &cprint) {
         if (type->getNamedType().isNull()) {
@@ -340,6 +341,7 @@ public:
             cprint.printQualType(print, type->getNamedType(), loc::of(type));
         }
     }
+#endif
 
     void VisitConstantArrayType(const ConstantArrayType *type,
                                 CoqPrinter &print, ClangPrinter &cprint) {
@@ -499,7 +501,17 @@ public:
     void VisitMemberPointerType(const MemberPointerType *type,
                                 CoqPrinter &print, ClangPrinter &cprint) {
         print.ctor("Tmember_pointer", false);
-#if CLANG_VERSION_MAJOR >= 21
+#if CLANG_VERSION_MAJOR >= 22
+        {
+            NestedNameSpecifier NNS = type->getQualifier();
+            if (NNS && NNS.getKind() == NestedNameSpecifier::Kind::Type) {
+                cprint.printType(print, NNS.getAsType(), loc::of(type));
+            } else {
+                unsupported(print, cprint, loc::of(type),
+                            "unresolved class type in MemberPointerType");
+            }
+        }
+#elif CLANG_VERSION_MAJOR >= 21
         {
             const NestedNameSpecifier *NNS = type->getQualifier();
             if (const Type *classType = NNS->getAsType()) {
@@ -525,8 +537,20 @@ public:
     void VisitUsingType(const UsingType *type, CoqPrinter &print,
                         ClangPrinter &cprint) {
         always_assert(type->isSugared());
+#if CLANG_VERSION_MAJOR >= 22
+        cprint.printQualType(print, type->desugar(), loc::of(type));
+#else
         cprint.printQualType(print, type->getUnderlyingType(), loc::of(type));
+#endif
     }
+
+#if CLANG_VERSION_MAJOR >= 22
+    void VisitPredefinedSugarType(const PredefinedSugarType *type,
+                                  CoqPrinter &print, ClangPrinter &cprint) {
+        always_assert(type->isSugared());
+        cprint.printQualType(print, type->desugar(), loc::of(type));
+    }
+#endif
 };
 
 PrintType PrintType::printer;

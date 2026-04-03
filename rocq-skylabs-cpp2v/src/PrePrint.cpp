@@ -5,6 +5,7 @@
 #include "Formatter.hpp"
 #include "TypeVisitorWithArgs.h"
 #include "clang/AST/StmtVisitor.h"
+#include "clang/Basic/Version.inc"
 #include <Assert.hpp>
 
 using namespace clang;
@@ -43,10 +44,18 @@ struct PrePrint : TypeVisitor<PrePrint, bool>,
         Visit(type->getReplacementType());
         return false;
     }
+#if CLANG_VERSION_MAJOR < 22
     bool VisitElaboratedType(const ElaboratedType *type) {
         Visit(type->getNamedType());
         return false;
     }
+#endif
+#if CLANG_VERSION_MAJOR >= 22
+    bool VisitPredefinedSugarType(const PredefinedSugarType *type) {
+        Visit(type->desugar());
+        return false;
+    }
+#endif
     bool VisitTagType(const TagType *type) {
         VisitName(type->getDecl());
         return true;

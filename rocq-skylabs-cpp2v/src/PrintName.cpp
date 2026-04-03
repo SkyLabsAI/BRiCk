@@ -11,6 +11,7 @@
 #include "Template.hpp"
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/DeclCXX.h>
+#include <clang/AST/NestedNameSpecifier.h>
 #include <clang/AST/ExprCXX.h>
 #include <clang/AST/Mangle.h>
 #include <clang/AST/RecursiveASTVisitor.h>
@@ -1160,8 +1161,45 @@ fmt::Formatter &printDeclarationName(CoqPrinter &print,
 } // namespace
 
 fmt::Formatter &ClangPrinter::printNestedName(CoqPrinter &print,
-                                              const NestedNameSpecifier *spec,
+                                              NestedNameSpecifierArg spec,
                                               loc::loc loc) {
+#if CLANG_VERSION_MAJOR >= 22
+    if (!spec) {
+        unsupported(*this, loc, true) << "empty NestedNameSpecifier\n";
+        guard::ctor _{print, "Nunsupported", false};
+        print.output() << "\"NestedNameSpecifier(empty)\"";
+        return print.output();
+    }
+    switch (spec.getKind()) {
+    case NestedNameSpecifier::Kind::Null:
+        llvm_unreachable("unexpected Null NestedNameSpecifier");
+    case NestedNameSpecifier::Kind::Global: {
+        guard::ctor _(print, "Nglobal", false);
+        break;
+    }
+    case NestedNameSpecifier::Kind::Namespace: {
+        NamespaceAndPrefix np = spec.getAsNamespaceAndPrefix();
+        if (np.Prefix) {
+            printNestedName(print, np.Prefix, loc) << fmt::nbsp;
+        }
+        printName(print, np.Namespace, loc);
+        break;
+    }
+    case NestedNameSpecifier::Kind::Type: {
+        guard::ctor _(print, "Ndependent", false);
+        printType(print, spec.getAsType(), loc);
+        break;
+    }
+    case NestedNameSpecifier::Kind::MicrosoftSuper: {
+        unsupported(*this, loc, true)
+            << "unsupported NestedNameSpecifier MicrosoftSuper\n";
+        guard::ctor _{print, "Nunsupported", false};
+        print.output() << "\"NestedNameSpecifier(MicrosoftSuper)\"";
+        break;
+    }
+    }
+    return print.output();
+#else
     if (auto ns = spec->getAsNamespace()) {
         printName(print, ns, loc);
     } else if (auto nsa = spec->getAsNamespaceAlias()) {
@@ -1189,10 +1227,11 @@ fmt::Formatter &ClangPrinter::printNestedName(CoqPrinter &print,
         print.output() << "\"NestedNameSpecifier(" << spec->getKind() << ")\"";
     }
     return print.output();
+#endif
 }
 
 fmt::Formatter &ClangPrinter::printUnresolvedName(CoqPrinter &print,
-                                                  const NestedNameSpecifier *nn,
+                                                  NestedNameSpecifierArg nn,
                                                   const DeclarationName &name,
                                                   loc::loc loc) {
 
@@ -1200,7 +1239,11 @@ fmt::Formatter &ClangPrinter::printUnresolvedName(CoqPrinter &print,
         // There is no prefix. Incomplete!
         guard::ctor _(print, "Nlocal", false);
         return printDeclarationName(print, name, *this);
+#if CLANG_VERSION_MAJOR >= 22
+    } else if (nn.getKind() == NestedNameSpecifier::Kind::Global) {
+#else
     } else if (nn->getKind() == NestedNameSpecifier::Global) {
+#endif
         guard::ctor _(print, "Nglobal", false);
         return printDeclarationName(print, name, *this);
     } else {
@@ -1211,7 +1254,7 @@ fmt::Formatter &ClangPrinter::printUnresolvedName(CoqPrinter &print,
 }
 
 fmt::Formatter &ClangPrinter::printUnresolvedName(
-    CoqPrinter &print, const NestedNameSpecifier *nn,
+    CoqPrinter &print, NestedNameSpecifierArg nn,
     const DeclarationName &name,
     llvm::ArrayRef<clang::TemplateArgumentLoc> template_args, loc::loc loc) {
     if (template_args.empty())
@@ -1224,7 +1267,7 @@ fmt::Formatter &ClangPrinter::printUnresolvedName(
 }
 
 fmt::Formatter &ClangPrinter::printUnresolvedName(
-    CoqPrinter &print, const NestedNameSpecifier *nn,
+    CoqPrinter &print, NestedNameSpecifierArg nn,
     const DeclarationName &name,
     llvm::ArrayRef<clang::TemplateArgument> template_args, loc::loc loc) {
     if (template_args.empty())
