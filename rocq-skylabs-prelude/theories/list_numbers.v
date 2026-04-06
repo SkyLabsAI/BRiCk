@@ -2154,6 +2154,7 @@ End sliceZ.
 #[global] Hint Opaque sliceZ : typeclass_instances sl_opacity.
 
 Section replicateZ_lemmas.
+  #[local] Open Scope Z_scope.
 
   Lemma replicateZ_ofN {A} (n:N): @replicateZ A (Z.of_N n) = @replicateN A n.
   Proof. unfold replicateZ; rewrite N2Z.id; reflexivity. Qed.
@@ -2173,7 +2174,7 @@ Section replicateZ_lemmas.
       + rewrite Hn; lia.
       + by rewrite Hn replicateN_S.
     - move => Hn.
-      have -> : Z.to_N n = 0 by lia.
+      have -> : Z.to_N n = 0%N by lia.
       by rewrite replicateN_0.
   Qed.
 
@@ -2195,6 +2196,22 @@ Section replicateZ_lemmas.
     unfold replicateZ.
     rewrite Z2N.inj_add; try lia.
     apply replicateN_succ'.
+  Qed.
+
+  Lemma replicateZ_cons_inv {A} (n : Z) (x : A) y ys :
+    replicateZ n x = y :: ys <-> 0 < n /\ x = y ∧ replicateZ (n - 1) x = ys.
+  Proof.
+    rewrite /replicateZ.
+    case: (N.zero_or_succ (Z.to_N n)).
+    - move => Hn.
+      rewrite Hn replicateN_0; split; [discriminate|lia].
+    - move => [m Hn].
+      have ? : 0 < n by lia.
+      have Hm : Z.to_N (n - 1) = m by lia.
+      rewrite Hn replicateN_S Hm.
+      split.
+      + by move => [= -> ->].
+      + by move => [?] [<- <-].
   Qed.
 
   Lemma replicateZ_plus {A} (x : A) (n m : Z):
