@@ -2165,12 +2165,16 @@ Section replicateZ_lemmas.
     intros. unfold replicateZ. rewrite Z2N.inj_sub. apply replicateN_cons; lia. lia.
   Qed.
 
-  Lemma replicateZ_neg {A} (n : Z) (x : A) :
-    (n <= 0)%Z -> replicateZ n x = [].
+  Lemma replicateZ_nil {A} (n : Z) (x : A) :
+    replicateZ n x = [] <-> (n <= 0)%Z.
   Proof.
-    intros. unfold replicateZ.
-    assert (Hn: Z.to_N n = 0%N) by lia.
-    rewrite Hn; apply replicateN_zero.
+    rewrite /replicateZ; split.
+    - case: (N.zero_or_succ (Z.to_N n)) => [|[n']] Hn.
+      + rewrite Hn; lia.
+      + by rewrite Hn replicateN_S.
+    - move => Hn.
+      have -> : Z.to_N n = 0 by lia.
+      by rewrite replicateN_0.
   Qed.
 
   Lemma replicateZ_succ {A} (n : Z) (x : A):
@@ -2193,11 +2197,6 @@ Section replicateZ_lemmas.
     apply replicateN_succ'.
   Qed.
 
-  Lemma replicateZ_succ_neg {A} (n : Z) (x : A):
-    (n < 0)%Z ->
-    replicateZ (n + 1) x = [].
-  Proof. intros; apply replicateZ_neg; lia. Qed.
-
   Lemma replicateZ_plus {A} (x : A) (n m : Z):
     (0 <= n)%Z -> (0 <= m)%Z ->
     replicateZ (n + m)%Z x = replicateZ n x ++ replicateZ m x.
@@ -2207,17 +2206,17 @@ Section replicateZ_lemmas.
     apply replicateN_plus.
   Qed.
 
+  Lemma lengthZ_replicateZ_iff {A} (n m : Z) (x : A):
+    lengthZ (replicateZ n x) = m <-> (0 <= n)%Z /\ n = m ∨ (n ≤ 0)%Z ∧ m = 0.
+  Proof. intros; rewrite /replicateZ lengthN_replicateN; lia. Qed.
+
   Lemma lengthZ_replicateZ_nonneg {A} (n : Z) (x : A):
     lengthZ (replicateZ n x) = n <-> (0 <= n)%Z.
-  Proof. intros; unfold replicateZ; rewrite lengthN_replicateN; lia. Qed.
+  Proof. rewrite lengthZ_replicateZ_iff; lia. Qed.
 
   Lemma lengthZ_replicateZ_zero {A} (n : Z) (x : A):
-    lengthZ (replicateZ n x) = 0 <-> (n <= 0)%Z.
-  Proof. intros.
-    split; intros H.
-    - destruct (decide (0 < n)%Z); [ rewrite lengthN_replicateN in H |]; lia.
-    - rewrite replicateZ_neg; trivial.
-  Qed.
+    lengthZ (replicateZ n x) = 0%Z <-> (n <= 0)%Z.
+  Proof. by rewrite lengthZ_replicateZ_iff; lia. Qed.
 
   Lemma lengthZ_replicateZ {A} (n : Z) (x : A) (m : Z):
     lengthZ (replicateZ n x) = m <-> ((0 <= n /\ n = m) \/ (n <= 0 /\ m = 0))%Z.
