@@ -11,9 +11,9 @@
 #include "Template.hpp"
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/DeclCXX.h>
-#include <clang/AST/NestedNameSpecifier.h>
 #include <clang/AST/ExprCXX.h>
 #include <clang/AST/Mangle.h>
+#include <clang/AST/NestedNameSpecifier.h>
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/Basic/Version.inc>
 #include <clang/Frontend/CompilerInstance.h>
@@ -1180,9 +1180,13 @@ fmt::Formatter &ClangPrinter::printNestedName(CoqPrinter &print,
     case NestedNameSpecifier::Kind::Namespace: {
         NamespaceAndPrefix np = spec.getAsNamespaceAndPrefix();
         if (np.Prefix) {
+            guard::ctor _(print, "Nscoped");
             printNestedName(print, np.Prefix, loc) << fmt::nbsp;
+            printName(print, np.Namespace, loc, false);
+
+        } else {
+            printName(print, np.Namespace, loc);
         }
-        printName(print, np.Namespace, loc);
         break;
     }
     case NestedNameSpecifier::Kind::Type: {
