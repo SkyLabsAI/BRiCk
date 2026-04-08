@@ -3,14 +3,51 @@ Require Import skylabs.ltac2.tc_dispatch.lookup.
 Import Ltac2.
 Import Printf.
 
+Set Default Proof Mode "Classic".
+
+
+Module LengthMismatch.
+  Definition tac_with_args : nat -> Ltac2Ref.t. constructor. Qed.
+  Ltac2 tac_with_args : constr -> constr -> unit -> unit := fun _ _ _ => ().
+  Instance missing_args i b : Dispatch (Nat.eqb i 0 = b) (CallLtac2 (tac_with_args i)) := {}.
+
+  Goal Nat.eqb 0 0 = true.
+  Proof.
+    Fail goal_dispatch.
+  Abort.
+
+  Definition tac_with_args_fixed : nat -> bool -> Ltac2Ref.t. constructor. Qed.
+  Ltac2 tac_with_args_fixed : constr -> constr -> unit -> unit :=
+    fun i b () =>
+      refine '(@eq_refl _ _ :> (Nat.eqb $i 0 = $b)).
+  Instance dispatch_with_args i b : Dispatch (Nat.eqb i 0 = b) (CallLtac2 (tac_with_args_fixed i b)) | 100 := {}.
+
+  Goal Nat.eqb 0 0 = true.
+  Proof.
+    (* When the warning is set to error, it stops the entire search and does not find the fixed instance. *)
+    Fail goal_dispatch.
+    (* Turning the warning into a normal warning or turning it off allows backtracking over type errors. *)
+    #[local] Set Warnings "-ltac2-tc-dispatch-type-mismatch".
+    goal_dispatch.
+  Qed.
+End LengthMismatch.
+
+Module TypeMismatch.
+  Definition tac_with_args : nat -> Ltac2Ref.t. constructor. Qed.
+  Ltac2 tac_with_args : unit -> unit -> unit := fun _ _ => ().
+  Instance missing_args i b : Dispatch (Nat.eqb i 0 = b) (CallLtac2 (tac_with_args i)) := {}.
+
+  Goal Nat.eqb 0 0 = true.
+  Proof.
+    Fail goal_dispatch.
+  Abort.
+End TypeMismatch.
+
 Definition tac_with_args : nat -> bool -> Ltac2Ref.t. constructor. Qed.
 Ltac2 tac_with_args : constr -> constr -> unit -> unit :=
-  fun c1 c2 () =>
-    refine '(@eq_refl _ _ :> (Nat.eqb $c1 0  = $c2)).
-
+  fun i b () =>
+    refine '(@eq_refl _ _ :> (Nat.eqb $i 0 = $b)).
 Instance dispatch_with_args i b : Dispatch (Nat.eqb i 0 = b) (CallLtac2 (tac_with_args i b)) := {}.
-
-Set Default Proof Mode "Classic".
 
 Goal Nat.eqb 0 0 = true.
 Proof.

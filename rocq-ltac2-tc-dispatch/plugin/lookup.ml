@@ -11,7 +11,7 @@ let fresh_type_scheme env (t : Tac2expr.type_scheme) : Tac2typing_env.TVar.t Tac
   let substf i = Tac2expr.GTypVar subst.(i) in
   subst_type substf t
 
-let target_type : n_args:int -> int Tac2expr.glb_typexpr =
+let target_type : n_args:int -> Tac2expr.type_scheme =
   let open Tac2expr in
   let unit = GTypRef (Tuple 0, []) in
   fun ~n_args ->
@@ -27,7 +27,7 @@ let target_type : n_args:int -> int Tac2expr.glb_typexpr =
     else
       GTypArrow (constr, go (n_args - 1))
   in
-  go n_args
+  (0, go n_args)
 
 let pr_closed_type : Tac2expr.type_scheme -> Pp.t = fun t ->
   let open Tac2typing_env in
@@ -38,8 +38,20 @@ let pr_closed_type : Tac2expr.type_scheme -> Pp.t = fun t ->
   let t = subst_type substf t in
   Tac2typing_env.pr_glbtype env t
 
+type type_mismatch = {
+  name: Names.KerName.t;
+  actual_type: Tac2expr.type_scheme;
+  expected_type: Tac2expr.type_scheme
+}
+
+let category = CWarnings.create_category ~name:"ltac2-tc-dispatch" ()
+let warn {name; actual_type; expected_type} =
+  Pp.(str "Ltac2 tactic " ++ Names.KerName.print name ++ str " has type " ++ pr_closed_type actual_type ++ str " but was expected to have type " ++ pr_closed_type expected_type)
+
+let type_mismatch = CWarnings.create ~category ~default:CWarnings.AsError ~name:"ltac2-tc-dispatch-type-mismatch" warn
 
 exception NoSuchGlobal of Names.KerName.t
+exception TypeMismatch of type_mismatch
 
 let resolve_ltac2_safe (r : Names.GlobRef.t) (args : Tac2val.valexpr list) : (unit -> unit Proofview.tactic) option Proofview.tactic =
   let path =
@@ -55,11 +67,12 @@ let resolve_ltac2_safe (r : Names.GlobRef.t) (args : Tac2val.valexpr list) : (un
     Proofview.tclUNIT None
   | Some path ->
   let n_args = List.length args in
-  let check_type (ty : Tac2expr.type_scheme) : bool =
+  let check_type name (actual_type : Tac2expr.type_scheme) : unit =
     (* Feedback.msg_debug Pp.(str "ty: " ++ pr_closed_type ty); *)
-    let tty = target_type ~n_args in
+    let expected_type = target_type ~n_args in
     (* Feedback.msg_debug Pp.(str "tty: " ++ pr_closed_type (0, tty)); *)
-    Tac2intern.check_subtype ty (0, tty)
+    if not @@ Tac2intern.check_subtype actual_type expected_type then
+      raise (TypeMismatch {name; actual_type; expected_type})
   in
   try
     let data = try Tac2env.interp_global path with | Not_found as e ->
@@ -67,22 +80,22 @@ let resolve_ltac2_safe (r : Names.GlobRef.t) (args : Tac2val.valexpr list) : (un
       Exninfo.iraise ((NoSuchGlobal path, info))
     in
     (* Feedback.msg_debug Pp.(str "checking types"); *)
-    if check_type data.Tac2env.gdata_type
-    then
-      let v = Tac2interp.eval_global path in
-      (* Feedback.msg_debug Pp.(str "building application"); *)
-      let v = Tac2val.apply_val v args in
-      (* Feedback.msg_debug Pp.(str "applying"); *)
-      let open Proofview.Notations in
-      v >>= fun v ->
-      (* Feedback.msg_debug Pp.(str "applied!"); *)
-      Proofview.tclUNIT (Some (repr_to (fun1 unit unit) v))
-    else
-      (* let () = Feedback.msg_debug Pp.(str "tactic type incorrect") in *)
-      Proofview.tclUNIT None
+    check_type path data.Tac2env.gdata_type;
+    let v = Tac2interp.eval_global path in
+    (* Feedback.msg_debug Pp.(str "building application"); *)
+    let v = Tac2val.apply_val v args in
+    (* Feedback.msg_debug Pp.(str "applying"); *)
+    let open Proofview.Notations in
+    v >>= fun v ->
+    (* Feedback.msg_debug Pp.(str "applied!"); *)
+    Proofview.tclUNIT (Some (repr_to (fun1 unit unit) v))
   with
-  | NoSuchGlobal path ->
-    let () = Feedback.msg_debug Pp.(str "could not find tactic at " ++ Names.KerName.print path) in
+  | TypeMismatch m ->
+    type_mismatch m;
+    (* let () = Feedback.msg_debug Pp.(str "tactic type incorrect") in *)
+    Proofview.tclUNIT None
+  | NoSuchGlobal _path ->
+    (* let () = Feedback.msg_debug Pp.(str "could not find tactic at " ++ Names.KerName.print path) in *)
     Proofview.tclUNIT None
 
 
