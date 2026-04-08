@@ -12,63 +12,69 @@ Require Import skylabs.ltac2.extra.extra.
 
 Declare ML Module "ltac2-tc-dispatch.plugin".
 
-(* The typeclass: P is the goal/type, path is the module hierarchy, name is the tactic *)
-Class Ltac2Lookup (P : Prop) := {
-    ltac2_path : list string;
-    ltac2_name : string;
-  }.
+Module Ltac2Ref.
+  (* A trivial inductive type used to store names of Ltac2 tactics via proxy constants.
+     Recommended use:
+     Definition my_tactic : Ltac2Ref.t. constructor. Qed.
+   *)
+  Inductive t := _mk.
+End Ltac2Ref.
+
+#[universes(polymorphic,cumulative)]
+Inductive Handler (goal : Type) : Prop :=
+| CallLtac2 (ltac2_tac : Ltac2Ref.t) : Handler goal.
+#[global] Arguments CallLtac2 {_} _.
+
+
+#[universes(polymorphic,cumulative)]
+Inductive Dispatch (goal : Type) (handler : Handler goal) := {}.
+Existing Class Dispatch.
 
 Module ltac2.
-
-  Ltac2 @ external resolve_ltac2 : string list -> string -> (unit -> unit) option :=
+  (* [resolve_ltac2 r args] resolves [r] to an Ltac2 tactic [f] of type [constr
+  -> .. -> constr -> unit -> unit] with the number of [constr] arguments being
+  equal to [|args|] and returns [f ..args]. *)
+  Ltac2 @ external resolve_ltac2 : reference -> constr list -> (unit -> unit) option :=
     "ltac2_tc_dispatch" "resolve_ltac2".
-
-  Ltac2 Type exn ::= [ UnexpectedConstr (string * constr) ].
-
-  Ltac2 string_of_pstring_constr (c : constr) : string :=
-    match Constr.Unsafe.kind c with
-    | Constr.Unsafe.String s => Pstring.to_string s
-    | _ => throw (UnexpectedConstr("Expected a pstring", c))
-    end.
-
-  Ltac2 rec list_of_list_constr (f : constr -> 'a) (c : constr) : 'a list :=
-    lazy_match! c with
-    | List.nil => []
-    | List.cons ?c ?cs => f c :: list_of_list_constr f cs
-    end.
 
   Ltac2 goal_dispatch_with (dbs : ident list option) :=
     let g := Control.goal () in
-    let query := constr:(Ltac2Lookup $g) in
+    let query := open_constr:(Dispatch $g _) in
     (* let _ := printf "query=%t" query in *)
-    let inst := Constr.Unsafe.make (TC.resolve dbs query) in
+    let _ := Constr.Unsafe.make (TC.resolve dbs query) in
     (* let _ := printf "inst=%t" inst in *)
+    let inst := lazy_match! query with | Dispatch _ ?h => h end in
     let flags := RedFlags.all in
-    let reduced_inst := Std.eval_cbv flags inst in
+    let reduced_inst := Std.eval_lazy flags inst in
     (* let _ := printf "reduced_inst=%t" reduced_inst in *)
 
-    lazy_match! reduced_inst with
-    | {| ltac2_path := ?p; ltac2_name := ?n |} =>
-        let p_ltac2 := list_of_list_constr (fun c => string_of_pstring_constr c) p in
-        let n_ltac2 := string_of_pstring_constr n in
-        (* printf "n_ltac2=%s" n_ltac2 ; *)
-
-        match resolve_ltac2 p_ltac2 n_ltac2 with
-        | Some f =>
-            (* let _ := printf "resolve_ltac2 success!" in *)
-            f ()
-        | None =>
-            (* let _ := printf "resolve_ltac2 failed!" in *)
-
-            let err :=
-              Message.concat [Message.of_string "Could not find: ";
-                              Message.of_string n_ltac2] in
-            Control.zero (Tactic_failure (Some err))
-        end
-    | _ =>
-        Control.zero (Tactic_failure (Some (Message.of_string "Could not reduce instance to record.")))
-    end.
-
+    let c :=
+      lazy_match! reduced_inst with
+      | CallLtac2 ?c => c
+      | _ =>
+          let msg := fprintf "Could not reduce %t to record. Stuck at: %t" inst reduced_inst in
+          printf "%m" msg;
+          Control.zero (Tactic_failure (Some msg))
+      end
+    in
+    let (r, args) :=
+      let (h, args) := Constr.decompose_app c in
+      match Constr.Unsafe.kind h with
+      | Constr.Unsafe.Constant r _ => (ConstRef r, Array.to_list args)
+      | _ =>
+          let msg := fprintf "[ltac2_tac] must refer to a constant without arguments. Found: %t" c in
+          printf "%m" msg;
+          Control.zero (Tactic_failure (Some msg))
+      end
+    in
+    match resolve_ltac2 r args with
+    | Some f => f ()
+    | None =>
+        let msg := fprintf "Coult not find Ltac2 tactic: %t" c in
+        printf "%m" msg;
+        Control.zero (Tactic_failure (Some msg))
+    end
+  .
 End ltac2.
 
 Ltac goal_dispatch :=
