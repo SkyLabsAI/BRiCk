@@ -511,6 +511,21 @@ Module Constr.
       Ltac2 invalid_arg (whence : string) (t : constr) : 'a :=
         invalid_arg' whence (Message.of_constr t).
 
+      Ltac2 of_ref_opt : constr -> Std.reference option := fun t =>
+        match Unsafe.kind t with
+        | Unsafe.Constant c _ => Some (Std.ConstRef c)
+        | Unsafe.Ind i _ => Some (Std.IndRef i)
+        | Unsafe.Constructor c _ => Some (Std.ConstructRef c)
+        | Unsafe.Var v => Some (Std.VarRef v)
+        | _ => None
+        end.
+
+      Ltac2 of_ref : constr -> Std.reference := fun t =>
+        match of_ref_opt t with
+        | Some r => r
+        | None   => invalid_arg "Constr.Unsafe.Destruct.of_ref" t
+        end.
+
       Ltac2 of_var_opt : constr -> ident option := fun t =>
         match Unsafe.kind t with
         | Unsafe.Var n => Some n

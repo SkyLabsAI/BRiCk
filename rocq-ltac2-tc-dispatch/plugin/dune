@@ -1,0 +1,4 @@
+(library
+ (name ltac2_tc_dispatch)
+ (public_name ltac2-tc-dispatch.plugin)
+ (libraries rocq-runtime.plugins.ltac2 rocq-extra stdlib-extra ltac2-extra.plugin))
