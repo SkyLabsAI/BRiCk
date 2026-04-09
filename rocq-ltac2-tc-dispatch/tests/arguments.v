@@ -59,3 +59,15 @@ Proof.
   intros.
   goal_dispatch.
 Qed.
+
+Definition test_reduction : nat -> nat -> Ltac2Ref.t. constructor. Qed.
+Ltac2 test_reduction : constr -> constr -> unit -> unit :=
+  fun i j () =>
+    Control.assert_true (Bool.neg (Constr.equal i j));
+    refine 'eq_refl.
+Instance test_reduction_inst i j : Dispatch (i = j) (CallLtac2 (test_reduction i j)) := {}.
+
+Goal 1 + 2 = 3 + 0.
+Proof.
+  goal_dispatch.
+Qed.

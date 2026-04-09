@@ -44,7 +44,7 @@ Module ltac2.
     let _ := Constr.Unsafe.make (TC.resolve dbs query) in
     (* let _ := printf "inst=%t" inst in *)
     let inst := lazy_match! query with | Dispatch _ ?h => h end in
-    let flags := RedFlags.all in
+    let flags := { RedFlags.all with Std.rStrength := Std.Head } in
     let reduced_inst := Std.eval_lazy flags inst in
     (* let _ := printf "reduced_inst=%t" reduced_inst in *)
 
