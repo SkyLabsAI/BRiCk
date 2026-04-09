@@ -6,5 +6,6 @@
   Ltac2
   Stdlib ; for ltac2-extra/theories/internal/char.v
   skylabs.ltac2.extra
+  skylabs.ltac2.logger
   )
  (plugins ltac2-tc-dispatch.plugin))
