@@ -1,0 +1,280 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>skylabs.ltac2.tc_dispatch.lookup</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library skylabs.ltac2.tc_dispatch.lookup</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Ltac2.Ltac2</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Ltac2.Control</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Ltac2.Printf</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Ltac2.Std</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Stdlib.Strings.PrimString</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.ltac2.extra.extra</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.ltac2.logger.logger</span>.<br/>
+
+<br/>
+<span class="id" title="var">Declare</span> <span class="id" title="var">ML</span> <span class="id" title="keyword">Module</span> "ltac2-tc-dispatch.plugin".<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Reserved</span> <span class="id" title="keyword">Notation</span> "'[ltac2' t ]" (<span class="id" title="var">format</span> "[ltac2  t ]").<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <span class="id" title="keyword">Type</span> <a id="LTAC2_REF" class="idref" href="#LTAC2_REF"><span class="id" title="module">LTAC2_REF</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="LTAC2_REF.t" class="idref" href="#LTAC2_REF.t"><span class="id" title="axiom">t</span></a> : <span class="id" title="keyword">Prop</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="LTAC2_REF._mk" class="idref" href="#LTAC2_REF._mk"><span class="id" title="axiom">_mk</span></a> : <a class="idref" href="skylabs.ltac2.tc_dispatch.lookup.html#LTAC2_REF.t"><span class="id" title="axiom">t</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.tc_dispatch.lookup.html#LTAC2_REF"><span class="id" title="module">LTAC2_REF</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">Ltac2Ref.t</span></span> is a trivial inductive type used to store names of Ltac2
+    tactics via proxy constants. The constructor <span class="inlinecode"><span class="id" title="var">_mk</span></span> is not meant to be used
+    directly. Instead, use the <span class="inlinecode"><span class="id" title="var">make_ltac2_ref</span></span> tactic which ensures that the
+    reference being built does not depend on section variables.
+    <code>Definition my_tactic : Ltac2Ref.t. make_ltac2_ref. Qed. </code>
+ 
+</div>
+<div class="code">
+<span class="id" title="keyword">Module</span> <a id="Ltac2Ref" class="idref" href="#Ltac2Ref"><span class="id" title="module">Ltac2Ref</span></a> : <a class="idref" href="skylabs.ltac2.tc_dispatch.lookup.html#LTAC2_REF"><span class="id" title="module">LTAC2_REF</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Inductive</span> <a id="Ltac2Ref._t" class="idref" href="#Ltac2Ref._t"><span class="id" title="definition, inductive"><span id="Ltac2Ref._t_rect" class="id"><span id="Ltac2Ref._t_ind" class="id"><span id="Ltac2Ref._t_rec" class="id"><span id="Ltac2Ref._t_sind" class="id">_t</span></span></span></span></span></a> := <a id="Ltac2Ref.__mk" class="idref" href="#Ltac2Ref.__mk"><span class="id" title="constructor">__mk</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Ltac2Ref.t" class="idref" href="#Ltac2Ref.t"><span class="id" title="definition">t</span></a> := <a class="idref" href="skylabs.ltac2.tc_dispatch.lookup.html#Ltac2Ref._t"><span class="id" title="inductive">_t</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="Ltac2Ref._mk" class="idref" href="#Ltac2Ref._mk"><span class="id" title="definition">_mk</span></a> := <a class="idref" href="skylabs.ltac2.tc_dispatch.lookup.html#Ltac2Ref.__mk"><span class="id" title="constructor">__mk</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.tc_dispatch.lookup.html#Ltac2Ref"><span class="id" title="module">Ltac2Ref</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">Handler</span></span> <span class="inlinecode"><span class="id" title="keyword">goal</span></span> represents strategies to apply to goals matching the type
+    <span class="inlinecode"><span class="id" title="keyword">goal</span></span>. They are registered using <span class="inlinecode"><span class="id" title="var">Dispatch</span></span> instances. 
+</div>
+<div class="code">
+#[<span class="id" title="var">universes</span>(<span class="id" title="var">polymorphic</span>,<span class="id" title="var">cumulative</span>)]<br/>
+<span class="id" title="keyword">Variant</span> <a id="Handler" class="idref" href="#Handler"><span class="id" title="inductive">Handler</span></a> (<a id="goal:7" class="idref" href="#goal:7"><span class="id" title="binder">goal</span></a> : <span class="id" title="keyword">Type</span>) : <span class="id" title="keyword">Prop</span> :=<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">CallLtac2</span></span> <span class="inlinecode"><span class="id" title="var">tac_ref</span></span> represents a strategy that calls the Ltac2 tactic
+    referenced by <span class="inlinecode"><span class="id" title="var">tac_ref</span></span> on <span class="inlinecode"><span class="id" title="keyword">goal</span></span>. 
+</div>
+<div class="code">
+| <a id="CallLtac2" class="idref" href="#CallLtac2"><span class="id" title="constructor">CallLtac2</span></a> (<a id="ltac2_tac:10" class="idref" href="#ltac2_tac:10"><span class="id" title="binder">ltac2_tac</span></a> : <a class="idref" href="skylabs.ltac2.tc_dispatch.lookup.html#t"><span class="id" title="axiom">Ltac2Ref.t</span></a>) : <a class="idref" href="skylabs.ltac2.tc_dispatch.lookup.html#Handler:8"><span class="id" title="inductive">Handler</span></a> <a class="idref" href="skylabs.ltac2.tc_dispatch.lookup.html#goal:7"><span class="id" title="variable">goal</span></a>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.ltac2.tc_dispatch.lookup.html#CallLtac2"><span class="id" title="constructor">CallLtac2</span></a> {<span class="id" title="var">_</span>} <span class="id" title="var">_</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Instances of <span class="inlinecode"><span class="id" title="var">Dispatch</span></span> <span class="inlinecode"><span class="id" title="keyword">goal</span></span> <span class="inlinecode"><span class="id" title="var">handler</span></span> instruct the <span class="inlinecode"><span class="id" title="var">goal_dispatch</span></span> tactic to
+    apply <span class="inlinecode"><span class="id" title="var">handler</span></span> to <span class="inlinecode"><span class="id" title="keyword">goal</span></span>. The resolution follows normal typeclass search
+    logic, i.e. priorities and opacity are respected. 
+</div>
+<div class="code">
+#[<span class="id" title="var">universes</span>(<span class="id" title="var">polymorphic</span>,<span class="id" title="var">cumulative</span>)]<br/>
+<span class="id" title="keyword">Class</span> <a id="Dispatch" class="idref" href="#Dispatch"><span class="id" title="record">Dispatch</span></a> (<a id="goal:11" class="idref" href="#goal:11"><span class="id" title="binder">goal</span></a> : <span class="id" title="keyword">Type</span>) (<a id="handler:12" class="idref" href="#handler:12"><span class="id" title="binder">handler</span></a> : <a class="idref" href="skylabs.ltac2.tc_dispatch.lookup.html#Handler"><span class="id" title="inductive">Handler</span></a> <a class="idref" href="skylabs.ltac2.tc_dispatch.lookup.html#goal:11"><span class="id" title="variable">goal</span></a>) := {}.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">Log</span> <span class="id" title="var">Flag</span> <span class="id" title="var">tc_dispatch</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="ltac2" class="idref" href="#ltac2"><span class="id" title="module">ltac2</span></a>.<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">resolve_ltac2</span></span> <span class="inlinecode"><span class="id" title="var">r</span></span> <span class="inlinecode"><span class="id" title="var">args</span></span> resolves <span class="inlinecode"><span class="id" title="var">r</span></span> to an Ltac2 tactic <span class="inlinecode"><span class="id" title="var">f</span></span> of type
+      <span class="inlinecode"><span class="id" title="keyword">constr</span></span> <span class="inlinecode">-&gt;</span> <span class="inlinecode">..</span> <span class="inlinecode">-&gt;</span> <span class="inlinecode"><span class="id" title="keyword">constr</span></span> <span class="inlinecode">-&gt;</span> <span class="inlinecode"><span class="id" title="var">unit</span></span> <span class="inlinecode">-&gt;</span> <span class="inlinecode"><span class="id" title="var">unit</span></span> with the number of <span class="inlinecode"><span class="id" title="keyword">constr</span></span>
+      arguments being equal to <span class="inlinecode">|<span class="id" title="var">args</span>|</span> and returns <span class="inlinecode"><span class="id" title="var">f</span></span> <span class="inlinecode">..<span class="id" title="var">args</span></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">resolve_ltac2</span> : <span class="id" title="var">reference</span> -&gt; <span class="id" title="keyword">constr</span> <span class="id" title="var">list</span> -&gt; (<span class="id" title="var">unit</span> -&gt; <span class="id" title="var">unit</span>) <span class="id" title="var">option</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"ltac2_tc_dispatch" "resolve_ltac2".<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">check_constant</span> (<span class="id" title="var">c</span> : <span class="id" title="keyword">constr</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">Constr.Unsafe.kind</span> <span class="id" title="var">c</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Constr.Unsafe.Constant</span> <span class="id" title="var">r</span> <span class="id" title="var">_</span> =&gt; <span class="id" title="var">ConstRef</span> <span class="id" title="var">r</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">msg</span> := <span class="id" title="var">fprintf</span> "[ltac2_tac] must refer to a constant. Found: %t" <span class="id" title="var">c</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">tc_dispatch</span>, 1] "%m" <span class="id" title="var">msg</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.zero</span> (<span class="id" title="var">Tactic_failure</span> (<span class="id" title="var">Some</span> <span class="id" title="var">msg</span>))<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">goal_dispatch_with</span></span> <span class="inlinecode"><span class="id" title="var">dbs</span></span> resolves a <span class="inlinecode"><span class="id" title="var">Dispatch</span></span> instance from the databases
+        &lt;dbs&gt; and interprets the handler. This effectively acts like a &lt;match goal&gt;
+        where the branches come from <span class="inlinecode"><span class="id" title="var">Dispatch</span></span> hints in the the hint databases.
+
+<div class="paragraph"> </div>
+
+        The tactic runs the handlers in the order that they are found by typeclass search.
+        The tactic completes successfully if any matching handler succeeds, otherwise
+        it fails with `Control.zero`. If a handler raises and exception, the search stops
+        and the exception is passed through.
+
+<div class="paragraph"> </div>
+
+        NOTE: <span class="inlinecode"><span class="id" title="var">Dispatch</span></span> instances should not be directly added to &lt;typeclass_instances&gt;
+        because &lt;typeclass_instances&gt; is used in all searches.
+     
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">goal_dispatch_with</span> (<span class="id" title="var">dbs</span> : <span class="id" title="var">ident</span> <span class="id" title="var">list</span> <span class="id" title="var">option</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">g</span> := <span class="id" title="var">Control.goal</span> () <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">query</span> := <span class="id" title="var">open_constr</span>:(<a class="idref" href="skylabs.ltac2.tc_dispatch.lookup.html#Dispatch"><span class="id" title="class">Dispatch</span></a> $<span class="id" title="var">g</span> <span class="id" title="var">_</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">tc_dispatch</span>, 10] "query: %t" <span class="id" title="var">query</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">_</span> := <span class="id" title="var">Constr.Unsafe.make</span> (<span class="id" title="var">TC.resolve</span> <span class="id" title="var">dbs</span> <span class="id" title="var">query</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">inst</span> := <span class="id" title="var">lazy_match</span>! <span class="id" title="var">query</span> <span class="id" title="keyword">with</span> | <a class="idref" href="skylabs.ltac2.tc_dispatch.lookup.html#Dispatch"><span class="id" title="class">Dispatch</span></a> <span class="id" title="var">_</span> ?<span class="id" title="var">h</span> =&gt; <span class="id" title="var">h</span> <span class="id" title="keyword">end</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">tc_dispatch</span>, 10] "inst: %t" <span class="id" title="var">inst</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">flags</span> := { <span class="id" title="var">RedFlags.all</span> <span class="id" title="keyword">with</span> <span class="id" title="var">Std.rStrength</span> := <span class="id" title="var">Std.Head</span> } <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">reduced_inst</span> := <span class="id" title="var">Std.eval_lazy</span> <span class="id" title="var">flags</span> <span class="id" title="var">inst</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">tc_dispatch</span>, 10] "reduced_inst: %t" <span class="id" title="var">reduced_inst</span>;<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">c</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">lazy_match</span>! <span class="id" title="var">reduced_inst</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.ltac2.tc_dispatch.lookup.html#CallLtac2"><span class="id" title="constructor">CallLtac2</span></a> ?<span class="id" title="var">c</span> =&gt; <span class="id" title="var">c</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">msg</span> := <span class="id" title="var">fprintf</span> "Could not reduce %t to record. Stuck at: %t" <span class="id" title="var">inst</span> <span class="id" title="var">reduced_inst</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">tc_dispatch</span>, 1] "%m" <span class="id" title="var">msg</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.zero</span> (<span class="id" title="var">Tactic_failure</span> (<span class="id" title="var">Some</span> <span class="id" title="var">msg</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">r</span>, <span class="id" title="var">args</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">h</span>, <span class="id" title="var">args</span>) := <span class="id" title="var">Constr.decompose_app</span> <span class="id" title="var">c</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">check_constant</span> <span class="id" title="var">h</span>, <span class="id" title="var">Array.to_list</span> <span class="id" title="var">args</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">resolve_ltac2</span> <span class="id" title="var">r</span> <span class="id" title="var">args</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Some</span> <span class="id" title="var">f</span> =&gt; <span class="id" title="var">f</span> ()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">None</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">msg</span> := <span class="id" title="var">fprintf</span> "Could not find Ltac2 tactic: %t" <span class="id" title="var">c</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">tc_dispatch</span>, 1] "%m" <span class="id" title="var">msg</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.zero</span> (<span class="id" title="var">Tactic_failure</span> (<span class="id" title="var">Some</span> <span class="id" title="var">msg</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Checks that the current proof does not require any &lt;Section&gt; variables.
+        Fails with &lt;Control.zero&gt; if any &lt;Section&gt; variable is used.
+   
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">check_requires_no_section_vars</span> () :=<br/>
+&nbsp;&nbsp;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">hyps</span> := <span class="id" title="var">Control.hyps</span> () <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">to_revert</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">f</span> (<span class="id" title="var">i</span>, <span class="id" title="var">_</span>, <span class="id" title="var">_</span>) := <span class="id" title="keyword">if</span> <span class="id" title="var">Control.is_section_variable</span> <span class="id" title="var">i</span> <span class="id" title="keyword">then</span> <span class="id" title="var">None</span> <span class="id" title="keyword">else</span> <span class="id" title="var">Some</span> <span class="id" title="var">i</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">List.map_filter</span> <span class="id" title="var">f</span> <span class="id" title="var">hyps</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Std.revert</span> <span class="id" title="var">to_revert</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">g</span> := <span class="id" title="var">Control.goal</span> () <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">deps</span> := <span class="id" title="var">Constr.Vars.vars_really_needed</span> <span class="id" title="var">g</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">f</span> <span class="id" title="var">v</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">Control.is_section_variable</span> <span class="id" title="var">v</span> <span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">msg</span> := <span class="id" title="var">fprintf</span> "Signature %t depends on section variable %I" <span class="id" title="var">g</span> <span class="id" title="var">v</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.zero</span> (<span class="id" title="var">Invalid_argument</span> (<span class="id" title="var">Some</span> <span class="id" title="var">msg</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">List.iter</span> <span class="id" title="var">f</span> (<span class="id" title="var">FSet.elements</span> <span class="id" title="var">deps</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Checks whether the given term depends on any &lt;Section&gt; variables. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">check_ref_uses_section_vars</span> (<span class="id" title="var">t</span> : <span class="id" title="var">preterm</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">t</span> := <span class="id" title="var">Constr.pretype</span> <span class="id" title="var">t</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">h</span>, <span class="id" title="var">args</span>) := <span class="id" title="var">Constr.decompose_app</span> <span class="id" title="var">t</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">r</span> := <span class="id" title="var">check_constant</span> <span class="id" title="var">h</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">resolve_ltac2</span> <span class="id" title="var">r</span> (<span class="id" title="var">Array.to_list</span> <span class="id" title="var">args</span>) <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Some</span> <span class="id" title="var">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">vars</span> := <span class="id" title="var">Constr.Vars.vars_really_needed</span> <span class="id" title="var">t</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">f</span> <span class="id" title="var">v</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">Control.is_section_variable</span> <span class="id" title="var">v</span> <span class="id" title="keyword">then</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">msg</span> := <span class="id" title="var">fprintf</span> "Ltac2Ref %t depends on section variable %I" <span class="id" title="var">h</span> <span class="id" title="var">v</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.zero</span> (<span class="id" title="var">Invalid_argument</span> (<span class="id" title="var">Some</span> <span class="id" title="var">msg</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;()<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">List.iter</span> <span class="id" title="var">f</span> (<span class="id" title="var">FSet.elements</span> <span class="id" title="var">vars</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.refine</span> (<span class="id" title="keyword">fun</span> <span class="id" title="var">_</span> =&gt; <span class="id" title="var">t</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">None</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">msg</span> := <span class="id" title="var">fprintf</span> "Could not find Ltac2 tactic: %t" <span class="id" title="var">h</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">tc_dispatch</span>, 1] "%m" <span class="id" title="var">msg</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.zero</span> (<span class="id" title="var">Invalid_argument</span> (<span class="id" title="var">Some</span> <span class="id" title="var">msg</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Ltac2</span> <span class="id" title="keyword">Notation</span> "goal_dispatch" <span class="id" title="var">dbs</span>(<span class="id" title="var">opt</span>(<span class="id" title="var">seq</span>("with", <span class="id" title="var">list0</span>(<span class="id" title="var">ident</span>)))) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">goal_dispatch_with</span> <span class="id" title="var">dbs</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">goal_dispatch_with_ltac1</span> (<span class="id" title="var">dbs</span> : <span class="id" title="var">Ltac1.t</span> <span class="id" title="var">option</span>) :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">dbs</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">f</span> <span class="id" title="var">dbs</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">List.map</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="keyword">fun</span> <span class="id" title="var">db</span> =&gt; <span class="id" title="var">Option.get</span> (<span class="id" title="var">Ltac1.to_ident</span> <span class="id" title="var">db</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">Option.get</span> (<span class="id" title="var">Ltac1.to_list</span> <span class="id" title="var">dbs</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Option.map</span> <span class="id" title="var">f</span> <span class="id" title="var">dbs</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">goal_dispatch_with</span> <span class="id" title="var">dbs</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac</span> <span class="id" title="var">goal_dispatch_with</span> <span class="id" title="var">dbs</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">idtac</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac2</span>:(<span class="id" title="var">dbs</span> |- <span class="id" title="var">goal_dispatch_with_ltac1</span> (<span class="id" title="var">Some</span> <span class="id" title="var">dbs</span>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac</span> <span class="id" title="var">goal_dispatch</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">ltac2</span>:(<span class="id" title="var">goal_dispatch_with</span> <span class="id" title="var">None</span>).<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.ltac2.tc_dispatch.lookup.html#ltac2"><span class="id" title="module">ltac2</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">make_ltac2_ref</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac2</span>:(<span class="id" title="var">ltac2.check_requires_no_section_vars</span> ()); <span class="id" title="tactic">intros</span>; <span class="id" title="tactic">exact</span> <a class="idref" href="skylabs.ltac2.tc_dispatch.lookup.html#_mk"><span class="id" title="axiom">Ltac2Ref._mk</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Notation</span> "'[ltac2' t ]" := (<a class="idref" href="skylabs.ltac2.tc_dispatch.lookup.html#CallLtac2"><span class="id" title="constructor">CallLtac2</span></a> <span class="id" title="var">ltac2</span>:(<span class="id" title="var">ltac2.check_ref_uses_section_vars</span> <span class="id" title="var">t</span>)) (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Notation</span> "'[ltac2' t ]" := (<a class="idref" href="skylabs.ltac2.tc_dispatch.lookup.html#CallLtac2"><span class="id" title="constructor">CallLtac2</span></a> <span class="id" title="var">t</span>) (<span class="id" title="var">only</span> <span class="id" title="var">printing</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">Tactic Notation</span> "goal_dispatch" "with" <span class="id" title="var">ident_list</span>(<span class="id" title="var">dbs</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac2.goal_dispatch_with</span> <span class="id" title="var">dbs</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">goal_dispatch</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac2.goal_dispatch</span>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>
