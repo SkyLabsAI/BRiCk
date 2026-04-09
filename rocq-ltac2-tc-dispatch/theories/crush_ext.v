@@ -5,6 +5,9 @@ Require Import skylabs.ltac2.tc_dispatch.lookup.
 [crush_ext] is An extensible version of [crush].
 
 Users can add new tactics / strategies by adding [Ltac2Lookup] hints
+[crush_ext] is An extensible version of [crush].
+
+Users can add new tactics / strategies by adding [Dispatch] hints
 to the [crush_ext] database.
  *)
 

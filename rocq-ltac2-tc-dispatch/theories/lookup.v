@@ -35,7 +35,7 @@ End Ltac2Ref.
 (** [Handler goal] represents strategies to apply to goals matching the type
     [goal]. They are registered using [Dispatch] instances. *)
 #[universes(polymorphic,cumulative)]
-Inductive Handler (goal : Type) : Prop :=
+Variant Handler (goal : Type) : Prop :=
 (** [CallLtac2 tac_ref] represents a strategy that calls the Ltac2 tactic
     referenced by [tac_ref] on [goal]. *)
 | CallLtac2 (ltac2_tac : Ltac2Ref.t) : Handler goal.
@@ -45,8 +45,7 @@ Inductive Handler (goal : Type) : Prop :=
     apply [handler] to [goal]. The resolution follows normal typeclass search
     logic, i.e. priorities and opacity are respected. *)
 #[universes(polymorphic,cumulative)]
-Inductive Dispatch (goal : Type) (handler : Handler goal) := {}.
-Existing Class Dispatch.
+Class Dispatch (goal : Type) (handler : Handler goal) := {}.
 
 Ltac2 Log Flag tc_dispatch.
 
@@ -66,6 +65,18 @@ Module ltac2.
         Control.zero (Tactic_failure (Some msg))
   end.
 
+  (** [goal_dispatch_with dbs] resolves a [Dispatch] instance from the databases
+        <dbs> and interprets the handler. This effectively acts like a <match goal>
+        where the branches come from [Dispatch] hints in the the hint databases.
+        
+        The tactic runs the handlers in the order that they are found by typeclass search.
+        The tactic completes successfully if any matching handler succeeds, otherwise
+        it fails with `Control.zero`. If a handler raises and exception, the search stops
+        and the exception is passed through.
+        
+        NOTE: [Dispatch] instances should not be directly added to <typeclass_instances>
+        because <typeclass_instances> is used in all searches.
+     *)
   Ltac2 goal_dispatch_with (dbs : ident list option) :=
     let g := Control.goal () in
     let query := open_constr:(Dispatch $g _) in
@@ -98,7 +109,10 @@ Module ltac2.
         Control.zero (Tactic_failure (Some msg))
     end.
 
-  Ltac2 check_ref () :=
+  (** Checks that the current proof does not require any <Section> variables.
+        Fails with <Control.zero> if any <Section> variable is used.
+   *)
+  Ltac2 check_requires_no_section_vars () :=
   (* We want to make sure that no section variables are used. There might be
      arguments already introduced. We revert all non-section variables and check
      that the resulting type does not depend on section variables. *)
@@ -119,7 +133,8 @@ Module ltac2.
     in
     List.iter f (FSet.elements deps).
 
-  Ltac2 check_ref_use (t : preterm) :=
+  (** Checks whether the given term depends on any <Section> variables. *)
+  Ltac2 check_ref_uses_section_vars (t : preterm) :=
     let t := Constr.pretype t in
     let (h, args) := Constr.decompose_app t in
     let r := check_constant h in
@@ -163,9 +178,9 @@ Module ltac2.
 End ltac2.
 
 Ltac make_ltac2_ref :=
-  ltac2:(ltac2.check_ref ()); intros; exact Ltac2Ref._mk.
+  ltac2:(ltac2.check_requires_no_section_vars ()); intros; exact Ltac2Ref._mk.
 
-#[global] Notation "'[ltac2' t ]" := (CallLtac2 ltac2:(ltac2.check_ref_use t)) (only parsing).
+#[global] Notation "'[ltac2' t ]" := (CallLtac2 ltac2:(ltac2.check_ref_uses_section_vars t)) (only parsing).
 #[global] Notation "'[ltac2' t ]" := (CallLtac2 t) (only printing).
 
 Tactic Notation "goal_dispatch" "with" ident_list(dbs) :=
