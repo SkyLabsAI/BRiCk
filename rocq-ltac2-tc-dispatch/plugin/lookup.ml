@@ -45,10 +45,18 @@ type type_mismatch = {
 }
 
 let category = CWarnings.create_category ~name:"ltac2-tc-dispatch" ()
-let warn {name; actual_type; expected_type} =
-  Pp.(str "Ltac2 tactic " ++ Names.KerName.print name ++ str " has type " ++ pr_closed_type actual_type ++ str " but was expected to have type " ++ pr_closed_type expected_type)
 
-let type_mismatch = CWarnings.create ~category ~default:CWarnings.AsError ~name:"ltac2-tc-dispatch-type-mismatch" warn
+let type_mismatch =
+  let warn {name; actual_type; expected_type} =
+    Pp.(str "Ltac2 tactic " ++ Names.KerName.print name ++ str " has type " ++
+        pr_closed_type actual_type ++ str " but was expected to have type " ++
+        pr_closed_type expected_type)
+  in
+  CWarnings.create
+    ~category
+    ~default:CWarnings.AsError
+    ~name:"ltac2-tc-dispatch-type-mismatch"
+    warn
 
 exception NoSuchGlobal of Names.KerName.t
 exception TypeMismatch of type_mismatch
