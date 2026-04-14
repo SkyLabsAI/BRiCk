@@ -34,6 +34,7 @@ Section trace.
   Context {absE conE : Type}.
   Context (R : absE -> conE -> Prop).
   Context {absLTS : LTS absE}.
+  Variable is_init_state : absLTS.(Sts._state) -> Prop.
 
   Context {PROP : bi} `{!Ghostly PROP}.
   Context `{!HasUsualOwn PROP (auth_setR absLTS.(lts_state))}.
@@ -52,7 +53,7 @@ Section trace.
     (∃ ss,
       AuthSet.auth γ_abs ss ∗
       [| ∃ s, s ∈ ss |] ∗
-      ∃ s_init, [| absLTS.(Sts._init_state) s_init |] ∗
+      ∃ s_init, [| is_init_state s_init |] ∗
       [| ∀ s, s ∈ ss -> reachable absLTS s_init tr_abs s |]) ∗
       (* related *)
       [|  let vis_abs := filter is_Some tr_abs in
@@ -61,7 +62,7 @@ Section trace.
           Forall2 (option_Forall2 R) vis_abs vis_con
       |].
 
-  Lemma trace_refine_alloc s_init (INIT : absLTS.(Sts._init_state) s_init) :
+  Lemma trace_refine_alloc s_init (INIT : is_init_state s_init) :
     ⊢ |==> ∃ γ, AuthSet.frag γ {[s_init]} ∗ trace_refine γ [].
   Proof.
     rewrite /trace_refine.
@@ -115,6 +116,7 @@ Section stateI.
     Context {absE : Type}.
     Context (R : absE -> (Compose.event cfg) -> Prop).
     Context {absLTS : LTS absE}.
+    Variable is_init_state : absLTS.(Sts._state) -> Prop.
 
     Context `{!HasUsualOwn PROP (auth_setR absLTS.(lts_state))}.
 
@@ -125,10 +127,10 @@ Section stateI.
     *)
     Definition refine_embed_stateI (γ_abs : AuthSet.gname)
         (σ : state Λ) (ns : nat) (κs : list (observation Λ)) (nt : nat) : PROP :=
-      trace_refine R γ_abs σ.1.*1 ∗
+      trace_refine R is_init_state γ_abs σ.1.*1 ∗
       state_interp σ ns κs nt.
 
-    Program Definition refine_embed_irisGS_gen (γ_abs : AuthSet.gname)
+    #[program] Definition refine_embed_irisGS_gen (γ_abs : AuthSet.gname)
         : irisGS_gen Λ PROP :=
       IrisG (refine_embed_stateI γ_abs) fork_post num_laters_per_step _.
     Next Obligation.

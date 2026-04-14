@@ -53,7 +53,7 @@ NES.Begin root.
 
     TODO (FM-3811):
     In the decomposition of the framework, ownership is not atomically passed
-    one app C1 to another app C2 or vice versa. The updates of the components
+    from app C1 to another app C2 or vice versa. The updates of the components
     are meant to be executed one after the other, that is, one must run all
     C1's updates, using all available invariants from the masks, and restablish
     the invariants again, before C2's updates can be run, which can all use
@@ -208,9 +208,9 @@ Section wp_io.
     Context `{!BiBUpdFUpd PROP}.
 
     (* TODO : not handling non-stuck ness yet. *)
-    Lemma wp_io_run_embed (γ_abs : AuthSet.gname) E e Φ :
+    Lemma wp_io_run_embed init (γ_abs : AuthSet.gname) E e Φ :
       wp_io absA R γ_abs MaybeStuck E e Φ ⊢
-      wp_embed R γ_abs MaybeStuck top e Φ.
+      wp_embed R init γ_abs MaybeStuck top e Φ.
     Proof using All.
       iIntros "WP".
       iLöb as "IH" forall (e).
