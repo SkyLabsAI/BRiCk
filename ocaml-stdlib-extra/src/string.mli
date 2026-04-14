@@ -1,5 +1,5 @@
 (*
- * Copyright (C) 2021-2024 BlueRock Security, Inc.
+ * Copyright (C) 2021-2026 SkyLabs AI, Inc.
  *
  * This software is distributed under the terms of the BedRock Open-Source
  * License. See the LICENSE-BedRock file in the repository root for details.
@@ -21,3 +21,10 @@ val drop : int -> string -> string
 
 (** [of_char_list cs] converts a list of characters into a string. *)
 val of_char_list : char list -> string
+
+(** [sub_from s i] is the same as [sub s i (length s - i)]. *)
+val sub_from : string -> int -> string
+
+(** [trim_leading c s] returns the longest suffix of [s] whose first character
+    is not [c]. *)
+val trim_leading : char -> string -> string
