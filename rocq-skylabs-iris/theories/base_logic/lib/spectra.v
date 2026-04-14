@@ -553,12 +553,12 @@ Module Step.
 End Step.
 
 (*** Satisfiability
-  
+
   We provide a simple invariant to demonstrate that Spectra is satisfiable.
   The definition of [root_inv] below bundles the authoritative state of
   the LTS but does **not** connect it to the physical state of the system,
   which is necessary to use Spectra to prove an actual refinement.
-  
+
   In order to connect to the physical state, the WP of the physical system
   must expose the visible events that it takes (which can be exposed as a trace).
   Using this trace we can construct a true root invariant by bundling the physical
@@ -573,12 +573,12 @@ Section with_app.
   Context `{Ghostly PROP} `{!BiFUpd PROP} `{!BiBUpdFUpd PROP}.
   Context `{root : !App.app, E : coPset}.
 
-  Definition root_inv ns γroot :=
+  Definition root_inv ns γroot (init_state : _ -> Prop) :=
     inv ns $
       Exists root_set init_st,
         AuthSet.auth γroot root_set **
         [| ∃ s, s ∈ root_set |] **
-        [| root.(lts).(Sts._init_state) init_st |] **
+        [| init_state init_st |] **
         [| ∀ s, s ∈ root_set ->
            ∃ evts, reachable root.(lts) init_st evts s |].
 
@@ -586,8 +586,8 @@ Section with_app.
       opening the invariant results in a later. to move the later inside using [bi.later_exist],
       we need that the type is inhabited.
   *)
-  Lemma alloc_updater ns γroot {inh: Inhabited (root.(lts).(Sts._state))}:
-    root_inv ns γroot |-- Step.updater root (↑ns) γroot.
+  Lemma alloc_updater ns γroot init {inh: Inhabited (root.(lts).(Sts._state))}:
+    root_inv ns γroot init |-- Step.updater root (↑ns) γroot.
   Proof using All.
     iIntros "#inv". rewrite Step.updater_unseal.
     iIntros "!#" (sset nonempty safe) "frag".
