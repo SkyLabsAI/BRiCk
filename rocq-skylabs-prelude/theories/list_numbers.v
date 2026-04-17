@@ -1188,7 +1188,9 @@ Proof.
 Qed.
 
 #[global] Notation lengthZ x := (Z.of_N (lengthN x)).
-#[global] Notation replicateZ n := (replicateN (Z.to_N n)).
+
+Definition replicateZ {A} (n : Z) := (replicateN (A :=A) (Z.to_N n)).
+#[global] Hint Opaque replicateZ : typeclass_instances sl_opacity.
 
 Section listZ.
   #[local] Open Scope Z_scope.
@@ -2150,3 +2152,91 @@ Section sliceZ.
 End sliceZ.
 
 #[global] Hint Opaque sliceZ : typeclass_instances sl_opacity.
+
+Section replicateZ_lemmas.
+  #[local] Open Scope Z_scope.
+
+  Lemma replicateZ_ofN {A} (n:N): @replicateZ A (Z.of_N n) = @replicateN A n.
+  Proof. unfold replicateZ; rewrite N2Z.id; reflexivity. Qed.
+
+  Lemma replicateZ_cons {A} (n : Z) (x : A) :
+    (0 < n)%Z ->
+    replicateZ n x = x :: replicateZ (n - 1) x.
+  Proof.
+    intros. unfold replicateZ. rewrite Z2N.inj_sub. apply replicateN_cons; lia. lia.
+  Qed.
+
+  Lemma replicateZ_nil {A} (n : Z) (x : A) :
+    replicateZ n x = [] <-> (n <= 0)%Z.
+  Proof.
+    rewrite /replicateZ; split.
+    - case: (N.zero_or_succ (Z.to_N n)) => [|[n']] Hn.
+      + rewrite Hn; lia.
+      + by rewrite Hn replicateN_S.
+    - move => Hn.
+      have -> : Z.to_N n = 0%N by lia.
+      by rewrite replicateN_0.
+  Qed.
+
+  Lemma replicateZ_succ {A} (n : Z) (x : A):
+    (0 <= n)%Z ->
+    replicateZ (n + 1) x = x :: replicateZ n x.
+  Proof.
+    intros.
+    unfold replicateZ.
+    rewrite Z2N.inj_add; try lia.
+    apply replicateN_succ.
+  Qed.
+
+  Lemma replicateZ_succ' {A} (n : Z) (x : A):
+    (0 <= n)%Z ->
+    replicateZ (n + 1) x = replicateZ n x ++ [x].
+  Proof.
+    intros.
+    unfold replicateZ.
+    rewrite Z2N.inj_add; try lia.
+    apply replicateN_succ'.
+  Qed.
+
+  Lemma replicateZ_cons_inv {A} (n : Z) (x : A) y ys :
+    replicateZ n x = y :: ys <-> 0 < n /\ x = y ∧ replicateZ (n - 1) x = ys.
+  Proof.
+    rewrite /replicateZ.
+    case: (N.zero_or_succ (Z.to_N n)).
+    - move => Hn.
+      rewrite Hn replicateN_0; split; [discriminate|lia].
+    - move => [m Hn].
+      have ? : 0 < n by lia.
+      have Hm : Z.to_N (n - 1) = m by lia.
+      rewrite Hn replicateN_S Hm.
+      split.
+      + by move => [= -> ->].
+      + by move => [?] [<- <-].
+  Qed.
+
+  Lemma replicateZ_plus {A} (x : A) (n m : Z):
+    (0 <= n)%Z -> (0 <= m)%Z ->
+    replicateZ (n + m)%Z x = replicateZ n x ++ replicateZ m x.
+  Proof.
+    intros; unfold replicateZ.
+    rewrite Z2N.inj_add; try lia.
+    apply replicateN_plus.
+  Qed.
+
+  Lemma lengthZ_replicateZ_iff {A} (n m : Z) (x : A):
+    lengthZ (replicateZ n x) = m <-> (0 <= n)%Z /\ n = m ∨ (n ≤ 0)%Z ∧ m = 0.
+  Proof. intros; rewrite /replicateZ lengthN_replicateN; lia. Qed.
+
+  Lemma lengthZ_replicateZ_nonneg {A} (n : Z) (x : A):
+    lengthZ (replicateZ n x) = n <-> (0 <= n)%Z.
+  Proof. rewrite lengthZ_replicateZ_iff; lia. Qed.
+
+  Lemma lengthZ_replicateZ_zero {A} (n : Z) (x : A):
+    lengthZ (replicateZ n x) = 0%Z <-> (n <= 0)%Z.
+  Proof. by rewrite lengthZ_replicateZ_iff; lia. Qed.
+
+  Lemma lengthZ_replicateZ {A} (n : Z) (x : A) (m : Z):
+    lengthZ (replicateZ n x) = m <-> ((0 <= n /\ n = m) \/ (n <= 0 /\ m = 0))%Z.
+  Proof. intros; unfold replicateZ; rewrite lengthN_replicateN; lia. Qed.
+
+End replicateZ_lemmas.
