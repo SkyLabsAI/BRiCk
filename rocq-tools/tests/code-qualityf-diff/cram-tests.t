@@ -27,6 +27,18 @@
   
   <details open><summary>
   
+  ##  Cram Test Files with Errors (1)
+  
+  </summary>
+  
+  ```
+  # Files with new errors
+  - fmdeps/auto/coq-skylabs-auto-cpp/cram/arith_bug.t/run.t
+  ```
+  </details>
+  
+  <details open><summary>
+  
   ## :x: New Errors (1)
   
   </summary>
@@ -45,5 +57,55 @@
    |  [1]
   ```
   
+  </details>
+  
+
+  $ coqc-perf.code-quality-diff --before-dune dune-log.json
+  # Changes in Warnings or Errors
+  |        |Before|New |Fixed|After|
+  |--------|-----:|---:|----:|----:|
+  |Errors  | 1   | 0 | 1  | 0  |
+  |Warnings| 0   | 0 | 0  | 0  |
+  
+  <details><summary>
+  
+  ## :negative_squared_cross_mark: Fixed Errors (1)
+  
+  </summary>
+  
+  ```
+  File "fmdeps/auto/coq-skylabs-auto-cpp/cram/arith_bug.t/run.t", line 5, characters 0-1:
+   |  $ DUNE_CACHE=disabled dune build bug.vo 2>&1
+   |  File "./bug.v", line 43, characters 4-37:
+   |  Error: Timeout!
+   |  
+  -|  File "./bug.v", line 45, characters 4-37:
+  +|  File "./bug.v", line 43, characters 4-37:
+   |  Warning:
+   |  Ill-formed log (Log.collect: span "arith_solve" is still open.), using debug mode.
+   |  [sl-ill-formed-log,default]
+   |  [1]
+  ```
+  
+  </details>
+  
+
+  $ coqc-perf.code-quality-diff --before-dune dune-log.json --after-dune dune-log.json
+  # No Changes in Warnings or Errors
+  |        |Before|New |Fixed|After|
+  |--------|-----:|---:|----:|----:|
+  |Errors  | 1   | 0 | 0  | 1  |
+  |Warnings| 0   | 0 | 0  | 0  |
+  
+  <details open><summary>
+  
+  ##  Cram Test Files with Errors (1)
+  
+  </summary>
+  
+  ```
+  # Files with pre-existing errors
+  - fmdeps/auto/coq-skylabs-auto-cpp/cram/arith_bug.t/run.t
+  ```
   </details>
   

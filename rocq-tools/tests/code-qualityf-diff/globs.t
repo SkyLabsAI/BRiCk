@@ -19,6 +19,18 @@
   
   <details open><summary>
   
+  ##  Rocq Files with Errors (1)
+  
+  </summary>
+  
+  ```
+  # Files with new errors
+  - test.v
+  ```
+  </details>
+  
+  <details open><summary>
+  
   ## :x: New Errors (1)
   
   </summary>
