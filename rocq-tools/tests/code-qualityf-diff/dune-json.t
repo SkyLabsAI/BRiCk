@@ -1,12 +1,12 @@
   $ cat > dune-log.json <<EOF
   > [
   >   {
-  >     "command": "_build/default/vendored/rocq/topbin/coqc_bin.exe --config > /tmp/dune_6f9dd0_output",
+  >     "command": "_build/default/vendored/rocq/topbin/rocq.exe --config > /tmp/dune_84c9e4_output",
   >     "output": [],
   >     "status": 1
   >   },
   >   {
-  >     "command": "(cd _build/default && fmdeps/BRiCk/ltac2-extra/.bin/coqc -q -w <.. a spurious appearance of extra.v ..> fmdeps/BRiCk/ltac2-extra/theories/extra.v)",
+  >     "command": "(cd _build/default && fmdeps/BRiCk/ltac2-extra/.bin/rocq compile -q -w <.. a spurious appearance of extra.v ..> fmdeps/BRiCk/ltac2-extra/theories/extra.v)",
   >     "output": [
   >       "what",
   >       "File \"./fmdeps/BRiCk/ltac2-extra/theories/extra.v\", line 43, characters 8-17:",
