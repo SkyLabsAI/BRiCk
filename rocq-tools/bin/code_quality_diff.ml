@@ -191,7 +191,7 @@ type dune_out = {
 }
 
 let to_dune_out : fname:string -> dune_out list =
-  let re_rocq = Str.regexp {|\bcoqc.* \([^ ]+\.v\))$|} in
+  let re_rocq = Str.regexp {|\brocq\b +\bc\(ompile\)?\b.* \([^ ]+\.v\))$|} in
   let re_cram = Str.regexp {|\bpatdiff.* \([^ ]+\)\.corrected'|} in
   let re_diff = Str.regexp {|\bpatdiff.* \([^ ]+\) [^ ]+\'|} in
   fun ~fname ->
@@ -207,22 +207,21 @@ let to_dune_out : fname:string -> dune_out list =
     List.map f list in
   let list =
     let f (cmd, out) =
-      let file_type =
+      let result =
         try
           let _ = Str.search_forward re_rocq cmd 0 in
-          Some Rocq
+          Some (Rocq, Str.matched_group 2 cmd)
         with Not_found ->
         try
           let _ = Str.search_forward re_cram cmd 0 in
-          Some Cram
+          Some (Cram, Str.matched_group 1 cmd)
         with Not_found ->
         try
           let _ = Str.search_forward re_diff cmd 0 in
-          Some Diff
+          Some (Diff, Str.matched_group 1 cmd)
         with Not_found -> None
       in
-      Option.bind file_type @@ fun file_type ->
-        let src_file = Str.matched_group 1 cmd in
+      Option.bind result @@ fun (file_type, src_file) ->
         let output = List.filter (fun x -> x <> "") out in
         Some { src_file; file_type; output }
     in
