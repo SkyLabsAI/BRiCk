@@ -31,6 +31,7 @@ Section with_lang.
   Context {absE : Type}.
   Context (R : absE -> (Compose.event cfg) -> Prop).
   Context {absLTS : LTS absE}.
+  Variable is_init_state : absLTS.(Sts._state) -> Prop.
 
   (**
   If the client can prove
@@ -55,7 +56,7 @@ Section with_lang.
     (* WP of e *)
     (∀ `{Hinv : !invGS_gen HasNoLc Σ},
       ⊢ |={⊤}=>
-          ∃ s_init, [| absLTS.(Sts._init_state) s_init |] ∗
+          ∃ s_init, [| is_init_state s_init |] ∗
           ∀ γ_abs, AuthSet.frag γ_abs {[s_init]} -∗
           ∃ (stateI : state Λ → nat → list (observation Λ) → nat → iProp Σ)
             (Φ : val Λ → iProp Σ)
@@ -64,10 +65,10 @@ Section with_lang.
           let _ : irisGS_gen Λ (iPropI Σ) :=
             IrisG stateI fork_post num_laters_per_step state_interp_mono in
           stateI σ1 0 κs 0 ∗
-          root.wp_embed R γ_abs MaybeStuck top e Φ) →
+          root.wp_embed R is_init_state γ_abs MaybeStuck top e Φ) →
     language.nsteps (Λ:=Λ) n ([e], σ1) κs (t2, σ2) →
     ∃ s_init s tr_abs,
-      absLTS.(Sts._init_state) s_init ∧
+      is_init_state s_init ∧
       reachable absLTS s_init tr_abs s ∧
       let vis_abs := filter is_Some tr_abs in
       let vis_con := filter is_Some κs.*1 in
@@ -82,10 +83,10 @@ Section with_lang.
     (* extracting user's WP proof *)
     iMod (Hwp Hinv) as (s_init INIT) "WP".
     (* setting up ghost state for refinement *)
-    iMod (root.trace_refine_alloc R s_init INIT) as (γ_abs) "[F RT]".
+    iMod (root.trace_refine_alloc R is_init_state s_init INIT) as (γ_abs) "[F RT]".
     iDestruct ("WP" with "F") as (stateI Φ fork_post ?) "[SI WP]".
     iIntros "!>".
-    iExists (root.refine_embed_stateI R γ_abs), [Φ], _, _.
+    iExists (root.refine_embed_stateI R is_init_state γ_abs), [Φ], _, _.
     iFrame "WP".
     rewrite /root.refine_embed_stateI INIT_EMPTY. iFrame "RT SI".
     iSplitR; [done|].
@@ -120,24 +121,25 @@ Section with_lang.
   Context {absE : Type}.
   Context (R : absE -> (Compose.event cfg) -> Prop).
   Context {absLTS : LTS absE}.
+  Variable is_init_state : absLTS.(Sts._state) -> Prop.
 
   #[local] Lemma ghost_trace_refine_inv_alloc {Σ} `{!invGS_gen hlc Σ}
       `{!AuthSet.G Σ (lts_state absLTS)}             (* for abstract state *)
       `{!mono_list.G Σ (option (Compose.event cfg))} (* for concrete trace *)
       N E
-      s_init (INIT : absLTS.(Sts._init_state) s_init) :
+      s_init (INIT : is_init_state s_init) :
     ⊢@{iPropI Σ}
-      |={E}=> ∃ γ_con γ_abs, root.ghost_trace_refine_inv R γ_con γ_abs N ∗
+      |={E}=> ∃ γ_con γ_abs, root.ghost_trace_refine_inv R is_init_state γ_con γ_abs N ∗
         AuthSet.frag γ_abs {[s_init]} ∗
         mono_list.half γ_con [].
   Proof.
     iMod (mono_list.half_alloc []) as (γ_con) "[h1 h2]".
-    iMod (root.trace_refine_alloc R s_init INIT) as (γ_abs) "[F RT]".
+    iMod (root.trace_refine_alloc R is_init_state s_init INIT) as (γ_abs) "[F RT]".
     iExists γ_con, γ_abs. iFrame.
 
     (* TODO cleanup : inlining [skylabs.iris.extra.base_logic.iprop_invariants]
       because that one is fixed to the default [invGS_gen HasLc] *)
-    iMod (own_inv_alloc N E (root.ghost_trace_refine R γ_con γ_abs) with "[-]") as "#INV".
+    iMod (own_inv_alloc N E (root.ghost_trace_refine R is_init_state γ_con γ_abs) with "[-]") as "#INV".
     { iNext. iExists []. by iFrame. }
     rewrite /root.ghost_trace_refine_inv inv_eq.
     iIntros "!>" (E' SubE') "!#".
@@ -169,9 +171,9 @@ Section with_lang.
     (* WP of e *)
     (∀ `{Hinv : !invGS_gen HasNoLc Σ},
       ⊢ |={⊤}=>
-          ∃ s_init, [| absLTS.(Sts._init_state) s_init |] ∗
+          ∃ s_init, [| is_init_state s_init |] ∗
           ∀ γ_abs γ_con,
-          root.ghost_trace_refine_inv R γ_con γ_abs N -∗
+          root.ghost_trace_refine_inv R is_init_state γ_con γ_abs N -∗
           AuthSet.frag γ_abs {[s_init]} -∗
           ∃ (stateI : state Λ → nat → list (observation Λ) → nat → iProp Σ)
             (Φ : val Λ → iProp Σ)
@@ -183,7 +185,7 @@ Section with_lang.
           root.wp_inv γ_con MaybeStuck top e Φ) →
     language.nsteps (Λ:=Λ) n ([e], σ1) κs (t2, σ2) →
     ∃ s_init s tr_abs,
-      absLTS.(Sts._init_state) s_init ∧
+      is_init_state s_init ∧
       reachable absLTS s_init tr_abs s ∧
       let vis_abs := filter is_Some tr_abs in
       let vis_con := filter is_Some κs.*1 in
