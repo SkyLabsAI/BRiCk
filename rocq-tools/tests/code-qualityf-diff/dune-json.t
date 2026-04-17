@@ -28,6 +28,18 @@
   
   <details open><summary>
   
+  ##  Rocq Files with Errors (1)
+  
+  </summary>
+  
+  ```
+  # Files with new errors
+  - fmdeps/BRiCk/ltac2-extra/theories/extra.v
+  ```
+  </details>
+  
+  <details open><summary>
+  
   ## :x: New Errors (1)
   
   </summary>

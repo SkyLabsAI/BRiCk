@@ -82,12 +82,64 @@ module Markdown = struct
         (WS.cardinal ws.before) (WS.cardinal ws.appeared) (WS.cardinal ws.disappeared) (WS.cardinal ws.after);
     in
 
+    let header fmt symbol title num =
+      Format.fprintf fmt "## %s %s (%i)\n" symbol title num;
+    in
+
     let in_summary : ?is_open:bool -> _ -> header:_ -> _ = fun ?(is_open=false) fmt ~header body ->
       Format.fprintf fmt "<details%s><summary>\n\n" (if is_open then " open" else "");
       header fmt;
       Format.fprintf fmt "\n</summary>\n";
       body fmt;
       Format.fprintf fmt "</details>\n\n";
+    in
+
+    let code_block pp_content fmt content =
+      Format.fprintf fmt "```\n%a```\n" pp_content content
+    in
+
+    let remaining_errors fmt =
+        let module FS = Set.Make(String) in
+        let leftover = ES.diff es.before es.disappeared in
+        let pp_kind kind files_appeared files_leftover =
+          let n_new = List.length files_appeared in
+          let n_leftover = List.length files_leftover in
+          if n_new > 0 || n_leftover > 0 then begin
+            let pp_files fmt = List.iter @@ Format.fprintf fmt "- %s\n" in
+            let header fmt = header fmt "" (kind ^ " Files with Errors") (n_new + n_leftover) in
+            in_summary ~is_open:true fmt ~header @@ fun fmt ->
+            Format.fprintf fmt "\n";
+            code_block (fun fmt (new_errs, existing_errs) ->
+                if n_new > 0 then begin
+                  Format.fprintf fmt "# Files with new errors\n%a"
+                    pp_files new_errs
+                end;
+                if n_leftover > 0 then begin
+                  Format.fprintf fmt "# Files with pre-existing errors\n%a"
+                    pp_files existing_errs
+                end;
+              )
+              fmt
+              (files_appeared, files_leftover)
+          end
+        in
+        let files es = FS.to_list @@ FS.of_seq @@ Seq.map (fun e -> e.Error.file) @@ ES.to_seq es in
+        let files_appeared = files es.appeared in
+        let files_leftover = files leftover in
+        let kinds = [".v"; ".t"] in
+        let names = ["Rocq"; "Cram Test"; "Other"] in
+        let filter suffix files = List.partition (String.ends_with ~suffix) files in
+        let group_by_kind files =
+          let f kind (groups, rest) =
+            let group, rest = filter kind rest in
+            (group :: groups, rest)
+          in
+          List.fold_right f kinds ([], files)
+        in
+        let grouped_appeared, other_appeared = group_by_kind files_appeared in
+        let grouped_leftover, other_leftover = group_by_kind files_leftover in
+        let groups = List.combine names @@ List.combine (grouped_appeared @ [other_appeared]) (grouped_leftover @ [other_leftover]) in
+        List.iter (fun (kind, (appeared, leftover)) -> pp_kind kind appeared leftover) groups
     in
 
     if WS.is_empty w_appeared &&
@@ -97,16 +149,12 @@ module Markdown = struct
     then begin
       Format.fprintf fmt "# No Changes in Warnings or Errors\n%!";
       table fmt;
+      remaining_errors fmt;
     end
     else begin
       Format.fprintf fmt "# Changes in Warnings or Errors\n%!";
       table fmt;
-      let header fmt symbol title num =
-        Format.fprintf fmt "## %s %s (%i)\n" symbol title num;
-      in
-      let code_block pp_content fmt content =
-        Format.fprintf fmt "```\n%a```\n" pp_content content
-      in
+      remaining_errors fmt;
       if not @@ ES.is_empty e_disappeared then begin
         let header fmt = header fmt ":negative_squared_cross_mark:" "Fixed Errors" (ES.cardinal e_disappeared) in
         in_summary fmt ~header @@ fun fmt ->
@@ -128,7 +176,7 @@ module Markdown = struct
         in_summary fmt ~is_open:true ~header @@ fun fmt ->
         Format.fprintf fmt "\n%a\n" (WS.pp @@ code_block WS.pp_elt) w_appeared;
       end;
-    end
+    end;
 end
 
 type glob_out = {
