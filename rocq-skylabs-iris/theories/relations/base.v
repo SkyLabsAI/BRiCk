@@ -1,32 +1,43 @@
 Require Import iris.bi.bi.
 Require Import iris.proofmode.tactics.
 
-Section bi_proper.
+Module bi.
+Section with_prop.
   Context {PROP : bi}.
 
   Definition bi_relation (T : Type) : Type := T -> T -> PROP.
 
+  Declare Scope bi_relation_scope.
+  Delimit Scope bi_relation_scope with bi_relation.
+  Bind Scope bi_relation_scope with bi_relation.
+
+
   (* analog of [Basics.impl] *)
   Definition wand : bi_relation PROP := fun P Q => (P -∗ Q)%I.
+  Definition flip {T} (r : bi_relation T) : bi_relation T := fun P Q => r Q P.
+
   Definition respectful {T U} (r1 : bi_relation T) (r2 : bi_relation U) : bi_relation (T -> U) :=
     λ P Q, (∀ x y, r1 x y -∗ r2 (P x) (Q y))%I.
-  Definition bi_pointwise {T U} (r : bi_relation U) : bi_relation (T -> U) :=
+  Notation "r1 ==> r2" := (respectful r1%bi_relation r2%bi_relation) (at level 55) : bi_relation_scope.
+
+  Definition pointwise {T U} (r : bi_relation U) : bi_relation (T -> U) :=
     λ P Q, (∀ x : T, r (P x) (Q x))%I.
-  Definition bi_tpointwise {TT : tele} {U} (r : bi_relation U) : bi_relation (TT -t> U) :=
+  Definition tpointwise {TT : tele} {U} (r : bi_relation U) : bi_relation (TT -t> U) :=
     λ P Q, (∀.. x : TT, r (tele_app P x) (tele_app Q x))%I.
 
   (* TODO: we should have <BiProperI> which does not include the <⊢> *)
-  Definition BiProper {T : Type} (rel : bi_relation T) (v : T) : Prop :=
-    ⊢ rel v v.
-  Existing Class BiProper.
+  Definition BiProperI {T : Type} (rel : bi_relation T) (v : T) : PROP :=
+    rel v v.
+  Class BiProper {T : Type} (rel : bi_relation T) (v : T) : Prop :=
+    _bi_proper : ⊢ BiProperI rel v.
 
   #[global]
-  Instance forall_proper {T} : BiProper (respectful (bi_pointwise wand) wand) (@bi_forall PROP T).
+  Instance forall_proper {T} : BiProper (pointwise wand ==> wand) (@bi_forall PROP T).
   Proof.
     red. iIntros (P Q) "X Y". iIntros (x). iApply "X". iStopProof. apply bi.forall_elim.
   Qed.
   #[global]
-  Instance tforall_proper {T} : BiProper (respectful (bi_pointwise wand) wand) (@bi_tforall PROP T).
+  Instance tforall_proper {T} : BiProper (pointwise wand ==> wand) (@bi_tforall PROP T).
   Proof.
     red. iIntros (P Q) "X Y". iIntros (x). iApply "X". iStopProof.
     rewrite bi_tforall_forall. apply bi.forall_elim.
@@ -91,4 +102,5 @@ Section bi_proper.
     { admit. }
   Admitted.
 
-End bi_proper.
+End with_prop.
+End bi.
