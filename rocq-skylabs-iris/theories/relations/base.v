@@ -32,7 +32,6 @@ Section with_prop.
   Definition tpointwise {TT : tele} {U} (r : bi_relation U) : bi_relation (TT -t> U) :=
     λ P Q, (∀.. x : TT, r (tele_app P x) (tele_app Q x))%I.
 
-  (* TODO: we should have <BiProperI> which does not include the <⊢> *)
   Definition BiProperI {T : Type} (rel : bi_relation T) (v : T) : PROP :=
     rel v v.
   Class BiProper {T : Type} (rel : bi_relation T) (v : T) : Prop :=
@@ -52,6 +51,15 @@ Section with_prop.
   Qed.
 
   (* NOTE: this doesn't embody framing *)
+  Lemma compose_bi_properI {T U V} (f : T -> U) (g : U -> V) (rT : bi_relation T) (rU : bi_relation U)
+    (rV : bi_relation V) :
+      BiProper ((rT ==> rU) ==> (rU ==> rV) ==> rT ==> rV) (fun f g x => g (f x)).
+  Proof.
+    rewrite /BiProper/respectful; intros.
+    iIntros (??) "A"; iIntros (??) "B". iIntros (??) "C".
+    iApply "B". iApply "A". done.
+  Qed.
+
   Lemma compose_bi_proper {T U V} (f : T -> U) (g : U -> V) (rT : bi_relation T) (rU : bi_relation U)
                           (rV : bi_relation V)
     : BiProper (respectful rT rU) f -> BiProper (respectful rU rV) g ->
