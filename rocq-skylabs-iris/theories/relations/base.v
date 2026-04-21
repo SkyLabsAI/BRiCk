@@ -1,5 +1,10 @@
+Require Import ExtLib.Data.HList.
 Require Import iris.bi.bi.
 Require Import iris.proofmode.tactics.
+Require Import skylabs.iris.extra.bi.only_provable.
+
+Declare Scope bi_relation_scope.
+Delimit Scope bi_relation_scope with bi_relation.
 
 Module bi.
 Section with_prop.
@@ -7,14 +12,13 @@ Section with_prop.
 
   Definition bi_relation (T : Type) : Type := T -> T -> PROP.
 
-  Declare Scope bi_relation_scope.
-  Delimit Scope bi_relation_scope with bi_relation.
   Bind Scope bi_relation_scope with bi_relation.
 
 
   (* analog of [Basics.impl] *)
   Definition wand : bi_relation PROP := fun P Q => (P -∗ Q)%I.
   Definition flip {T} (r : bi_relation T) : bi_relation T := fun P Q => r Q P.
+  Definition pure {T} (rel : relation T) : bi_relation T := fun l r => [| rel l r |]%I.
 
   Definition respectful {T U} (r1 : bi_relation T) (r2 : bi_relation U) : bi_relation (T -> U) :=
     λ P Q, (∀ x y, r1 x y -∗ r2 (P x) (Q y))%I.
@@ -53,13 +57,13 @@ Section with_prop.
     iIntros (??) "A". iApply H0. iApply H. done.
   Qed.
 
-  Lemma use_proper_1 {T : Type} {f : T -> PROP} (r1 : bi_relation T) (r2 : bi_relation PROP) (_ : BiProper (respectful r1 r2) f) :
+  Lemma use_proper_1 {T : Type} {f : T -> PROP} (r1 : bi_relation T) (r2 : bi_relation PROP)
+    (_ : BiProper (respectful r1 r2) f) :
     forall x y, ⊢ r1 x y -∗ r2 (f x) (f y).
   Proof.
     intros. iIntros "X". red in H. unfold respectful in H. iDestruct (H with "X") as "$".
   Qed.
 
-  Require Import ExtLib.Data.HList.
   Fixpoint arrows (ts : list Type) (r : Type) : Type :=
     match ts with
     | nil => r
@@ -103,4 +107,7 @@ Section with_prop.
   Admitted.
 
 End with_prop.
+
+#[global] Bind Scope bi_relation_scope with bi_relation.
+
 End bi.
