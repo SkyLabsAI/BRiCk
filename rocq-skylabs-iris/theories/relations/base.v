@@ -17,6 +17,9 @@ Section with_prop.
 
   (* analog of [Basics.impl] *)
   Definition wand : bi_relation PROP := fun P Q => (P -∗ Q)%I.
+  (* analog of [Basics.iff] *)
+  Definition iff : bi_relation PROP := fun P Q => (P ∗-∗ Q)%I.
+
   Definition flip {T} (r : bi_relation T) : bi_relation T := fun P Q => r Q P.
   Definition pure {T} (rel : relation T) : bi_relation T := fun l r => [| rel l r |]%I.
 
@@ -35,6 +38,7 @@ Section with_prop.
   Class BiProper {T : Type} (rel : bi_relation T) (v : T) : Prop :=
     _bi_proper : ⊢ BiProperI rel v.
 
+  (* Some examples of instances *)
   #[global]
   Instance forall_proper {T} : BiProper (pointwise wand ==> wand) (@bi_forall PROP T).
   Proof.
@@ -89,22 +93,37 @@ Section with_prop.
     | T :: Ts =>fun K => ∀ (x : T) (y : T), pairs_foralls Ts (fun xs ys => K (Hcons x xs) (Hcons y ys))
     end.
 
+  Lemma pairs_foralls_proper Ts :
+    Proper (pointwise_relation _ (pointwise_relation _ Basics.impl) ==> Basics.impl) (pairs_foralls Ts).
+  Proof.
+    induction Ts.
+    { repeat red; intros. apply H. assumption. }
+    { do 3 red; simpl; intros.
+      red in H. do 3 red in IHTs. generalize (H0 x0 y0). apply IHTs.
+      red. red; simpl. intros. apply H. }
+  Qed.
+
   (* TODO: this can be generalized *)
-  Fixpoint args (ts : list Type) : hlist (fun x => x) ts -> hlist (fun x => x) ts -> hlist bi_relation ts -> PROP :=
+  Fixpoint args {ts : list Type} : hlist (fun x => x) ts -> hlist (fun x => x) ts -> hlist bi_relation ts -> PROP :=
     match ts as ts return hlist _ ts -> hlist _ ts -> hlist bi_relation ts -> PROP with
     | nil => fun _ _ _ => emp
-    | t :: ts => fun xs ys rs => hlist_hd rs (hlist_hd xs) (hlist_hd ys) ∗ args ts (hlist_tl xs) (hlist_tl ys) (hlist_tl rs)
+    | t :: ts => fun xs ys rs => hlist_hd rs (hlist_hd xs) (hlist_hd ys) ∗ args (hlist_tl xs) (hlist_tl ys) (hlist_tl rs)
     end%I.
 
   Lemma use_proper_tele {Ts : list Type} {T} (R : bi_relation T) : forall (Rs : hlist bi_relation Ts)
-    (f : arrows Ts T)
-    (_ : BiProper (respectfuls R Rs) f),
-    pairs_foralls Ts (λ xs ys, args _ xs ys Rs ⊢ R (applys _ _ f xs) (applys _ _ f ys)).
+    (fx fy : arrows Ts T),
+      pairs_foralls Ts (λ xs ys, args xs ys Rs ⊢ (respectfuls R Rs) fx fy -∗ R (applys _ _ fx xs) (applys _ _ fy ys)).
   Proof.
     induction Ts; simpl; intros.
-    { apply H. }
-    { admit. }
-  Admitted.
+    { iIntros "_ H"; iApply "H". }
+    { generalize (IHTs (hlist_tl Rs) (fx x) (fy y)).
+      apply pairs_foralls_proper.
+      do 2 intro. red.
+      intros H.
+      iIntros "[H1 H2] H".
+      rewrite H.
+      iApply "H2". iApply "H". done. }
+  Qed.
 
 End with_prop.
 
