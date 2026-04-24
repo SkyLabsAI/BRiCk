@@ -18,7 +18,7 @@ Import ChargeNotation.
 
 (** Core C++ string theory: part of the semantics. *)
 
-(** [strings_bytesR ct q chars] is [q] (const) fractional ownership of
+(** [string_bytesR ct q chars] is [q] (const) fractional ownership of
     [chars] with a trailing [0].
     - Unlike [zstring.t], does not assume the contents avoid `0` elements, since that property might not be guaranteed in all character types/encodings.
     - Used for string literals of arbitrary character types.
