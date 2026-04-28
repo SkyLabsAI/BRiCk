@@ -96,7 +96,7 @@ Section with_monad.
     | Evar _ t => type t
     | Eenum_const n _ => name n
     | Eglobal n t | Eglobal_member n t => name n <+> type t
-    | Echar _ t | Estring _ t | Eint _ t => type t
+    | Echar _ t | Estring _ t | Eint _ t | Efloat _ t => type t
     | Ebool _ => OK
     | Eunop _ e t => expr e <+> type t
     | Ebinop _ e1 e2 t => expr e1 <+> type t
@@ -197,10 +197,10 @@ Section with_monad.
     match c with
     | Cdependent t | Cbitcast t | Clvaluebitcast t | Cnoop t | Cint2ptr t | Cptr2int t
     | Cintegral t
+    | Cfloat t | Cint2float t | Cfloat2int t
     | Cnull2ptr t | Cnull2memberptr t
     | Cbuiltin2fun t | Cctor t | Cdynamic t => type t
     | Cderived2base ts t | Cbase2derived ts t => lst type ts <+> type t
-    | Cfloat _ | Cint2float _ | Cfloat2int _ => FAIL "float"
     | Cl2r_bitcast _ => FAIL "l2r_bitcast"
     | _ => OK
     end.

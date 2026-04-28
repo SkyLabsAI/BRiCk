@@ -1008,10 +1008,12 @@ public:
     }
 
     void VisitFloatingLiteral(const FloatingLiteral *lit) {
-        print.ctor("Eunsupported") << fmt::nbsp << "\"float: ";
-        lit->getValue().print(print.output().nobreak());
-        print.output() << "\"";
-        done(lit, Done::DT);
+        print.ctor("Efloat", false);
+        llvm::APInt bits = lit->getValue().bitcastToAPInt();
+        SmallString<64> s;
+        bits.toStringUnsigned(s);
+        print.output() << s << "%Z";
+        done(lit);
     }
 
     void VisitMemberExpr(const MemberExpr *expr) {

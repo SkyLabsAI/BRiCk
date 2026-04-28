@@ -8,6 +8,13 @@ Require Import skylabs.lang.cpp.logic.
 
 Notation boolR q v := (primR Tbool q (Vbool v)).
 
+(** Floating-point notations *)
+Notation float16R q v := (primR Tfloat16 q (Vfloat v)).
+Notation floatR q v := (primR Tfloat q (Vfloat v)).
+Notation doubleR q v := (primR Tdouble q (Vfloat v)).
+Notation longdoubleR q v := (primR Tlongdouble q (Vfloat v)).
+Notation float128R q v := (primR Tfloat128 q (Vfloat v)).
+
 (* integers with implicit sizes *)
 (* note(gmm): these might need to become definitions if we want to be generic
  * across sizes

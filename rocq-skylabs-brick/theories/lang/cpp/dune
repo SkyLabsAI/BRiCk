@@ -12,6 +12,7 @@
   Lens Lens.Elpi
   Ltac2 skylabs.ltac2.extra
   skylabs.prelude
+  Flocq
   iris
   ; skylabs.iris.extra deps end
   skylabs.iris.extra

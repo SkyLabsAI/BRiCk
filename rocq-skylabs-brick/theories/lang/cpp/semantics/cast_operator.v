@@ -54,45 +54,55 @@ Definition convert_type_op {σ : genv} (tu : translation_unit) (b : BinOp) (ty1 
     | _ => None
     end
   else if is_arithmetic ty1 && is_arithmetic ty2 then
-    (* integer-integer operations *)
-    match promote_integral tu ty1 , promote_integral tu ty2 with
-    | Some ity1 , Some ity2 =>
+    match promote_floating ty1 ty2 with
+    | Some to =>
       match b with
-      | Bshl | Bshr =>
-        (* heterogeneous operators *)
-        Some (ity1, ity2, ity1)
-      | Badd | Bsub | Bmul | Bdiv | Bmod
-      | Band | Bor | Bxor =>
-        (* homogeneous operators *)
-        match promote_arith ity1 ity2 with
-        | Some to => Some (to, to, to)
-        | _ => None
-        end
-      | Beq | Bneq
-      | Blt | Ble | Bgt | Bge =>
-        let same_enum :=
-          match drop_qualifiers ty1 , drop_qualifiers ty2 with
-          | Tenum nm1 , Tenum nm2 => if bool_decide (nm1 = nm2) then true else false
-          | _ , _ => false
-          end
-        in
-        if same_enum then
-          (* Technically, this is only permitted for unscoped enumerations;
-             however, the dynamic semantics lines up with the comparison on
-             scoped enumerations so we do not test.
-           *)
-          Some (drop_qualifiers ty1, drop_qualifiers ty2, Tbool)
-        else
+      | Badd | Bsub | Bmul | Bdiv => Some (to, to, to)
+      | Beq | Bneq | Blt | Ble | Bgt | Bge => Some (to, to, Tbool)
+      | Bmod | Band | Bor | Bxor | Bshl | Bshr | Bcmp
+      | Bdotp | Bdotip | Bunsupported _ => None
+      end
+    | None =>
+      (* integer-integer operations *)
+      match promote_integral tu ty1 , promote_integral tu ty2 with
+      | Some ity1 , Some ity2 =>
+        match b with
+        | Bshl | Bshr =>
+          (* heterogeneous operators *)
+          Some (ity1, ity2, ity1)
+        | Badd | Bsub | Bmul | Bdiv | Bmod
+        | Band | Bor | Bxor =>
           (* homogeneous operators *)
           match promote_arith ity1 ity2 with
           | Some to => Some (to, to, to)
           | _ => None
           end
-      | Bcmp => None
-      | Bdotp
-      | Bdotip
-      | Bunsupported _ => None
+        | Beq | Bneq
+        | Blt | Ble | Bgt | Bge =>
+          let same_enum :=
+            match drop_qualifiers ty1 , drop_qualifiers ty2 with
+            | Tenum nm1 , Tenum nm2 => if bool_decide (nm1 = nm2) then true else false
+            | _ , _ => false
+            end
+          in
+          if same_enum then
+            (* Technically, this is only permitted for unscoped enumerations;
+               however, the dynamic semantics lines up with the comparison on
+               scoped enumerations so we do not test.
+             *)
+            Some (drop_qualifiers ty1, drop_qualifiers ty2, Tbool)
+          else
+            (* homogeneous operators *)
+            match promote_arith ity1 ity2 with
+            | Some to => Some (to, to, to)
+            | _ => None
+            end
+        | Bcmp => None
+        | Bdotp
+        | Bdotip
+        | Bunsupported _ => None
+        end
+      | _ , _ => None
       end
-    | _ , _ => None
     end
   else None.

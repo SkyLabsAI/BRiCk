@@ -290,6 +290,7 @@ Module decltype.
         | Estring chars t =>
             mret $ Tref $ Tarray (Tconst t) (1 + literal_string.lengthN chars)
         | Eint _ t => mret t
+        | Efloat _ t => mret t
         | Ebool _ => mret Tbool
         | Eunop _ _ t => mret t
         | Ebinop op l _ t => of_binop op l t

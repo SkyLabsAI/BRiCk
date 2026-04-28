@@ -37,6 +37,7 @@
   rocq-equations
   rocq-skylabs-prelude
   rocq-skylabs-iris
+  rocq-flocq
   (rocq-skylabs-cpp2v :with-test)
   coq-elpi))
 
