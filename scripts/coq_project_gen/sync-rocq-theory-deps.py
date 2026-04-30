@@ -7,7 +7,7 @@
 # ///
 
 #
-# Copyright (C) 2025 BlueRock Security, Inc.
+# Copyright (C) 2026 SkyLabs AI, Inc.
 # All rights reserved.
 import argparse
 from dataclasses import dataclass
