@@ -249,8 +249,8 @@ def resolve_theory(name, theory_index):
     if not stanzas:
         raise SyncError(f"Unresolved theory dependency {name!r}")
     if len(stanzas) != 1:
-        locations = ", ".join(str(stanza.file_path) for stanza in stanzas)
-        raise SyncError(f"Ambiguous theory dependency {name!r} defined in {locations}")
+        locations = "\n- ".join(str(stanza.file_path) for stanza in stanzas)
+        raise SyncError(f"Ambiguous theory dependency {name!r} defined in:\n- {locations}")
     return stanzas[0]
 
 
@@ -371,21 +371,9 @@ def build_workspace_data(workspace_root):
     return theory_index, file_texts, file_stanzas, errors
 
 
-def duplicate_target_name_errors(cwd, theory_index):
-    errors = []
-    for name, stanzas in theory_index.items():
-        if len(stanzas) <= 1:
-            continue
-        if not any(stanza.file_path.is_relative_to(cwd) for stanza in stanzas):
-            continue
-        locations = ", ".join(str(stanza.file_path) for stanza in stanzas)
-        errors.append(f"Duplicate rocq.theory name {name!r} defined in {locations}")
-    return errors
-
-
 def analyze_targets(*, cwd, theory_index, file_texts, file_stanzas):
     changes = {}
-    errors = duplicate_target_name_errors(cwd, theory_index)
+    errors = []
 
     target_files = sorted(
         path for path in file_stanzas if file_stanzas[path] and path.is_relative_to(cwd)

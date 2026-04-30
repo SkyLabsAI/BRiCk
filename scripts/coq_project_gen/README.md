@@ -55,7 +55,7 @@ Check mode with unified diffs:
 
 - `0`: success, and in `--check` mode no files would change
 - `1`: `--check` found files that would change
-- `2`: parse errors, unresolved dependencies, duplicate theory names, cycles, or write failures
+- `2`: parse errors, unresolved or ambiguous dependencies, cycles, or write failures
 
 ### Notes
 
@@ -64,5 +64,5 @@ Check mode with unified diffs:
 - Formatting inside the rewritten `theories` stanza is normalized to one
   dependency per line.
 - Comments inside the old `theories` stanza are not preserved.
-- Duplicate logical theory names elsewhere in the workspace are reported when
-  they affect the current subtree or a dependency being resolved.
+- Duplicate logical theory names only matter when dependency resolution
+  actually reaches that name.
