@@ -58,6 +58,15 @@ def parse_arguments():
         action="store_true",
         help="Print unified diffs instead of rewriting files in place.",
     )
+    parser.add_argument(
+        "--no-normalize",
+        action="store_true",
+        help=(
+            "Only append newly discovered dependencies. Existing dependency "
+            "order is preserved, and files are unchanged when no new "
+            "dependencies are needed."
+        ),
+    )
     return parser.parse_args()
 
 
@@ -325,6 +334,19 @@ def compute_ordered_dependencies(stanza, theory_index):
     return topological_order(closure, theory_index)
 
 
+def compute_updated_dependencies(stanza, theory_index, *, no_normalize):
+    ordered_dependencies = compute_ordered_dependencies(stanza, theory_index)
+    if not no_normalize:
+        return ordered_dependencies, True
+
+    existing_dependencies = list(stanza.direct_deps)
+    existing_set = set(existing_dependencies)
+    missing_dependencies = [dep for dep in ordered_dependencies if dep not in existing_set]
+    if not missing_dependencies:
+        return existing_dependencies, False
+    return existing_dependencies + missing_dependencies, True
+
+
 def line_indent(text, index):
     line_start = text.rfind("\n", 0, index)
     if line_start == -1:
@@ -371,7 +393,7 @@ def build_workspace_data(workspace_root):
     return theory_index, file_texts, file_stanzas, errors
 
 
-def analyze_targets(*, cwd, theory_index, file_texts, file_stanzas):
+def analyze_targets(*, cwd, theory_index, file_texts, file_stanzas, no_normalize):
     changes = {}
     errors = []
 
@@ -385,9 +407,16 @@ def analyze_targets(*, cwd, theory_index, file_texts, file_stanzas):
 
         for stanza in file_stanzas[dune_file]:
             try:
-                dependencies = compute_ordered_dependencies(stanza, theory_index)
+                dependencies, should_rewrite = compute_updated_dependencies(
+                    stanza,
+                    theory_index,
+                    no_normalize=no_normalize,
+                )
             except SyncError as exc:
                 errors.append(f"{display_path(dune_file, cwd)} [{stanza.name}]: {exc}")
+                continue
+
+            if not should_rewrite:
                 continue
 
             if stanza.theories_span is None:
@@ -443,6 +472,7 @@ def main():
             theory_index=theory_index,
             file_texts=file_texts,
             file_stanzas=file_stanzas,
+            no_normalize=args.no_normalize,
         )
         errors.extend(analysis_errors)
     except SyncError as exc:

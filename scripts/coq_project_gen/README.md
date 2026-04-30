@@ -51,6 +51,12 @@ Check mode with unified diffs:
 ./scripts/coq_project_gen/sync-rocq-theory-deps.py --check
 ```
 
+Check mode without normalizing existing dependency order:
+
+```sh
+./scripts/coq_project_gen/sync-rocq-theory-deps.py --check --no-normalize
+```
+
 ### Exit codes
 
 - `0`: success, and in `--check` mode no files would change
@@ -63,6 +69,9 @@ Check mode with unified diffs:
   the file byte-identical.
 - Formatting inside the rewritten `theories` stanza is normalized to one
   dependency per line.
+- With `--no-normalize`, the script preserves the existing dependency order and
+  only rewrites a file when newly discovered recursive dependencies must be
+  appended.
 - Comments inside the old `theories` stanza are not preserved.
 - Duplicate logical theory names only matter when dependency resolution
   actually reaches that name.
