@@ -120,6 +120,10 @@ def skip_string(text, index):
 
 
 def iter_list_spans(text, *, offset=0):
+    # sexpdata parses the S-expressions themselves, but it does not preserve
+    # source locations. We still need this lightweight scanner so we can find
+    # exact list spans and rewrite only the `(theories ...)` subform without
+    # reserializing the rest of the dune file.
     depth = 0
     start = None
     index = 0
