@@ -276,14 +276,13 @@ Module cstring.
      length is one greater than that of the [cstring.t]).
    *)
   Definition size (cstr : t) := zstring.size (to_zstring cstr).
-  #[global] Arguments size cstr : simpl never.
+  #[global] Arguments size : simpl never.
 
   (** [strlen] mirrors the behavior of the standard-library function of the same name
      (i.e. the length DOES NOT include the null-terminator).
     Always non-negative (see [strlen_nonneg]).
    *)
   Definition strlen (cstr : t) := zstring.strlen (to_zstring cstr).
-  #[global] Arguments size cstr : simpl never.
 
   Definition WF {σ : genv} (cstr : t) : Prop := zstring.WF char_type.Cchar (to_zstring cstr).
   #[global] Arguments WF {σ} cstr : simpl never.
