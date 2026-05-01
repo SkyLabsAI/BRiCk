@@ -201,7 +201,7 @@ Definition read_args `{Σ : cpp_logic, σ : genv} :=
   match targs , ls with
   | nil , nil => Q nil
   | t :: ts , p :: ps =>
-    Exists v, (Exists q, p |-> primR t q v ** True) //\\
+    Exists v, (Exists q, p |-> primR (to_heap_type t) q v ** True) //\\
     read_args ts ps (fun vs => Q (v :: vs))
   | _ , _ => ERROR "read_args"
   end.
