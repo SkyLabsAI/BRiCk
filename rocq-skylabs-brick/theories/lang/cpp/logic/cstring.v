@@ -104,6 +104,7 @@ Module cstring.
   #[global] Arguments _to_zstring' !cstr !l /.
   Notation to_zstring' cstr l := (_to_zstring' cstr l%byte).
 
+  (** Convert to [zstring] by adding a null terminator. *)
   Definition to_zstring (cstr : cstring.t) : zstring.t := to_zstring' cstr ["000"].
   #[global] Arguments to_zstring cstr : simpl never.
 
@@ -277,8 +278,9 @@ Module cstring.
   Definition size (cstr : t) := zstring.size (to_zstring cstr).
   #[global] Arguments size cstr : simpl never.
 
-  (* [strlen] mirrors the behavior of the standard-library function of the same name
+  (** [strlen] mirrors the behavior of the standard-library function of the same name
      (i.e. the length DOES NOT include the null-terminator).
+    Always non-negative (see [strlen_nonneg]).
    *)
   Definition strlen (cstr : t) := zstring.strlen (to_zstring cstr).
   #[global] Arguments size cstr : simpl never.
@@ -607,18 +609,17 @@ Module cstring.
       induction n; simpl; try lia.
     Qed.
 
-    Lemma size_nonneg : forall (cstr : t), 0 <= size cstr.
+    Lemma size_lowerbound : forall (cstr : t), 1 <= size cstr.
     Proof.
       intros cstr; destruct cstr;
         unfold size, zstring.size, to_zstring;
         simpl; by lia.
     Qed.
 
-    Lemma size_lowerbound : forall (cstr : t), 1 <= size cstr.
+    Lemma size_nonneg : forall (cstr : t), 0 <= size cstr.
     Proof.
-      intros cstr; destruct cstr;
-        unfold size, zstring.size, to_zstring;
-        simpl; by lia.
+      intros cstr.
+      pose proof (size_lowerbound cstr); by lia.
     Qed.
 
     Lemma size_neg_inj : forall (cstr : t), 1 = size cstr -> cstr = ""%bs.

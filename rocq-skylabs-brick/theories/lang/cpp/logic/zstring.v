@@ -37,6 +37,8 @@ Section with_ct.
 
   (* [size] reflects the in-memory footprint of the null-terminated string (i.e. the
      length is one greater than that of the string as given by `std::strlen`).
+
+     The result is always >= 0
    *)
   Definition _size (zs : t) : Z :=
     Z.of_nat (List.length zs).
