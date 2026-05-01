@@ -1,0 +1,22 @@
+(lang dune 3.21)
+
+(name rocq-dune-tools)
+
+(generate_opam_files)
+
+(maintainers "Gregory Malecha <gregory@skylabs-ai.com>")
+
+(authors
+ "Gregory Malecha <gregory@skylabs-ai.com>"
+ "Paolo Giarrusso <paolo@skylabs-ai.com>")
+
+(license LGPL-2.1-only)
+
+(source
+ (github SkyLabsAI/BRiCk))
+
+(package
+ (name rocq-dune-tools)
+ (synopsis "Utilities for generating _CoqProject files from Rocq dune workspaces"))
+
+(subst disabled)
