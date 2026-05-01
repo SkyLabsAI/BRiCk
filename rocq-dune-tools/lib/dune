@@ -1,0 +1,5 @@
+(library
+ (name rocq_dune_tools_lib)
+ (wrapped true)
+ (modules support workspace dune_file dependency_graph rewrite tool)
+ (libraries unix bos fpath sexplib))

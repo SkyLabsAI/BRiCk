@@ -1,0 +1,6 @@
+(executable
+ (name dune_rocq_deps)
+ (public_name dune-rocqdeps)
+ (package rocq-dune-tools)
+ (modules dune_rocq_deps)
+ (libraries unix cmdliner rocq_dune_tools_lib))
