@@ -253,7 +253,7 @@ Definition wp_builtin_func' `{Σ : cpp_logic, σ : genv} (u : bool)
   | Tfunction (FunctionType rty targs) =>
     let* vs := read_args targs args in
     let* v := wp_builtin b fty vs in
-    Forall p : ptr, p |-> primR rty 1$m v -* |={top}=>?u Q p
+    Forall p : ptr, p |-> primR (to_heap_type rty) 1$m v -* |={top}=>?u Q p
   | _ => ERROR "wp_builtin_func"
   end.
 Definition wp_builtin_func `{Σ : cpp_logic, σ : genv} :=
