@@ -76,7 +76,10 @@ Module cstring.
   Import zstring.
 
   Definition t := BS.t.
-  Bind Scope bs_scope with t.
+
+  (* Since this module is used without importing, we bind the scope globally for
+  customers after the end of the module. Here we just bind it for the rest of the module. *)
+  #[local] Bind Scope bs_scope with t.
 
   (* TODO: Prove equivalent to
   [BS.bytes_to_string (take (List.length zs - 1) zs)]
@@ -1135,6 +1138,10 @@ Module cstring.
     End Theory.
   End with_Σ.
 End cstring.
+
+Fail Definition a : cstring.t := "a" ++ "b".
+#[global] Bind Scope bs_scope with cstring.t.
+Succeed Definition a : cstring.t := "a" ++ "b".
 
 Require Import skylabs.lang.cpp.logic.core_string.
 

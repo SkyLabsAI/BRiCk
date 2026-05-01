@@ -26,7 +26,10 @@ Import ChargeNotation.
  *)
 Module zstring.
   Definition t := list N.
-  Bind Scope list_scope with t.
+
+  (* Since this module is used without importing, we bind the scope globally for
+  customers after the end of the module. Here we just bind it for the rest of the module. *)
+  #[local] Bind Scope list_scope with t.
 
 Section with_ct.
   Variable ct : char_type.
@@ -989,6 +992,13 @@ Notation WF zs := (_WF zs%Z).
 Notation WF' zs := (_WF' zs%Z).
 
 End zstring.
+Close Scope list_scope.
+Definition a : list Z := [0].
+Definition b : list nat := [0]%nat.
+
+Fail Definition a : zstring.t := [0%N] ++ [1%N].
+#[global] Bind Scope list_scope with zstring.t.
+Definition a : zstring.t := [0%N] ++ [1%N].
 
 Section zstring_pure_hint_test_pre.
   (* TODO (AUTO; cc/ @paolo): globally setting this prevents the use
