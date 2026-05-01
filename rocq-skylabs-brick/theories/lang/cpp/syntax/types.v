@@ -1172,6 +1172,9 @@ Definition is_array_type (ty : type) : bool :=
 
 (**
 [drop_reference] removes any leading reference types.
+
+The implementation is defensive and removes nested references even if they
+should not exist. This might be unnecessary.
 *)
 Fixpoint drop_reference (t : type) : exprtype :=
   match drop_qualifiers t with
@@ -1232,7 +1235,11 @@ Definition is_heap_type (t : type) : bool :=
                         | _ => false
                         end).
 
-(* get the [heap_type] representation of the given type *)
+(* get the [heap_type] representation of the given type.
+
+TODO: should this be more conservative/aggressive in dropping qualifiers, like
+[drop_reference]?
+ *)
 Definition to_heap_type (t : type) : heap_type :=
   match erase_qualifiers t with
   | Trv_ref t => Tref t
