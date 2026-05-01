@@ -205,7 +205,7 @@ Definition read_args `{Σ : cpp_logic, σ : genv} :=
     read_args ts ps (fun vs => Q (v :: vs))
   | _ , _ => ERROR "read_args"
   end.
-#[global] Hint Opaque read_args : typeclass_instances.
+#[global] Hint Opaque read_args : typeclass_instances sl_opacity.
 
 Section with_Σ.
   Context `{Σ : cpp_logic, σ : genv}.
@@ -258,7 +258,7 @@ Definition wp_builtin_func' `{Σ : cpp_logic, σ : genv} (u : bool)
   end.
 Definition wp_builtin_func `{Σ : cpp_logic, σ : genv} :=
   Cbn (Reduce (wp_builtin_func' true)).
-#[global] Hint Opaque wp_builtin_func : typeclass_instances.
+#[global] Hint Opaque wp_builtin_func : typeclass_instances sl_opacity.
 
 Section with_Σ.
   Context `{Σ : cpp_logic, σ : genv}.
