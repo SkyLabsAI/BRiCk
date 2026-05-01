@@ -1,19 +1,15 @@
+open Cmdliner
+
 type sexp = Atom of string | List of sexp list
 
 exception Error of string
-exception Usage of string
 
 type generate_options = { root : string; prefix : string; coq_flags : string }
 type gather_options = { prefix : string; paths : string list }
-type command = Generate of generate_options | Gather of gather_options
 
 let extra_mappings =
   [ ("fmdeps/cpp2v-core/rocq-skylabs-brick/tests/", "bedrocktest") ]
 
-let default_generate_options =
-  { root = "."; prefix = ""; coq_flags = "coq.flags" }
-
-let default_gather_options = { prefix = ""; paths = [] }
 let failf fmt = Printf.ksprintf (fun message -> raise (Error message)) fmt
 
 let read_file path =
@@ -287,76 +283,117 @@ let run_gather options =
         ~display_path:dune_file ~input_path:dune_file)
   |> emit_mappings
 
-let usage_message =
-  String.concat "\n"
-    [
-      "Usage:";
-      "  dune-rocqproject [generate-coq-project] [--root DIR] [--prefix \
-       PREFIX] [--coq-flags FILE]";
-      "  dune-rocqproject gather-coq-paths [--prefix PREFIX] DUNE_FILE...";
-      "";
-      "Default command:";
-      "  generate-coq-project";
-    ]
+let root_arg =
+  let doc =
+    "Scan $(docv) recursively for dune files. Subdirectories named $(b,.git) \
+     and $(b,_build) are skipped. The default is the current directory."
+  in
+  Arg.(value & opt string "." & info [ "root" ] ~docv:"DIR" ~doc)
 
-let rec parse_generate_args options = function
-  | [] -> options
-  | "--root" :: value :: rest ->
-      parse_generate_args { options with root = value } rest
-  | "--prefix" :: value :: rest ->
-      parse_generate_args { options with prefix = value } rest
-  | "--coq-flags" :: value :: rest ->
-      parse_generate_args { options with coq_flags = value } rest
-  | "--help" :: _ | "-h" :: _ -> raise (Usage usage_message)
-  | "--" :: [] -> options
-  | "--" :: _ ->
-      failf "generate-coq-project does not accept positional arguments"
-  | option :: _ when has_prefix option "-" ->
-      failf "unknown option for generate-coq-project: %s" option
-  | argument :: _ ->
-      failf "generate-coq-project does not accept positional argument %S"
-        argument
+let prefix_arg =
+  let doc =
+    "Prepend $(docv) to emitted physical paths. This is useful when a dune \
+     workspace is vendored under another repository and the generated mappings \
+     must stay rooted at the outer workspace."
+  in
+  Arg.(value & opt string "" & info [ "prefix" ] ~docv:"PREFIX" ~doc)
 
-let rec parse_gather_args options = function
-  | [] -> options
-  | "--prefix" :: value :: rest ->
-      parse_gather_args { options with prefix = value } rest
-  | "--help" :: _ | "-h" :: _ -> raise (Usage usage_message)
-  | "--" :: rest -> { options with paths = options.paths @ rest }
-  | option :: _ when has_prefix option "-" ->
-      failf "unknown option for gather-coq-paths: %s" option
-  | path :: rest ->
-      parse_gather_args { options with paths = options.paths @ [ path ] } rest
+let coq_flags_arg =
+  let doc =
+    "If this file exists, splice its contents into the generated _CoqProject \
+     output after the built-in warning settings. Missing files are ignored."
+  in
+  Arg.(value & opt string "coq.flags" & info [ "coq-flags" ] ~docv:"FILE" ~doc)
 
-let parse_command argv =
-  match Array.to_list argv with
-  | _program_name :: "gather-coq-paths" :: rest ->
-      Gather (parse_gather_args default_gather_options rest)
-  | _program_name :: "generate-coq-project" :: rest ->
-      Generate (parse_generate_args default_generate_options rest)
-  | _program_name :: "--help" :: _ -> raise (Usage usage_message)
-  | _program_name :: "-h" :: _ -> raise (Usage usage_message)
-  | _program_name :: arguments ->
-      Generate (parse_generate_args default_generate_options arguments)
-  | [] -> Generate default_generate_options
+let dune_files_arg =
+  let doc =
+    "Dune files to inspect. Each file is parsed for a $(b,rocq.theory) stanza, \
+     and the corresponding $(b,-Q) mapping lines are printed."
+  in
+  Arg.(non_empty & pos_all file [] & info [] ~docv:"DUNE_FILE" ~doc)
 
-let main () =
-  match parse_command Sys.argv with
-  | Generate options ->
-      run_generate options;
-      0
-  | Gather options ->
-      if options.paths = [] then
-        failf "gather-coq-paths expects at least one dune file path";
-      run_gather options;
-      0
+let generate_term =
+  let run root prefix coq_flags = run_generate { root; prefix; coq_flags } in
+  Term.(const run $ root_arg $ prefix_arg $ coq_flags_arg)
+
+let gather_term =
+  let run prefix paths = run_gather { prefix; paths } in
+  Term.(const run $ prefix_arg $ dune_files_arg)
+
+let generate_doc = "generate _CoqProject content from $(b,rocq.theory) stanzas"
+let gather_doc = "print only the $(b,-Q) mappings for selected dune files"
+
+let top_man : Manpage.block list =
+  [
+    `S Manpage.s_description;
+    `P
+      "Generate _CoqProject content for Rocq projects that are organized in a \
+       dune workspaces.";
+    `P
+      "When invoked without a subcommand, $(b,dune-rocqproject) generates a \
+       _CoqProject file for the rocq.theories in the dune workspace.";
+    `Pre
+      {|The contents of the _CoqProject file are constructed by using:
+1/ built-in warning settings;
+2/ optional contents from $(b,--coq-flags);
+3/ -Q paths for the project and each of its dependencies to the workspace
+   build directory; and
+4/ -Q paths for each project and its dependencies to the source directory.
+   Paths to the _build directory will target _default.|};
+    `P
+      "Directories whose physical path ends in $(b,/elpi) emit only the \
+       build-tree mapping. This preserves the behavior of the legacy helper \
+       scripts and avoids duplicate mappings for Elpi sources.";
+    `P
+      "Use the $(b,gather-coq-paths) subcommand when only the mapping lines \
+       are needed.";
+    `S Manpage.s_examples;
+    `P "$(b,dune-rocqproject) > _CoqProject";
+    `P
+      "$(b,dune-rocqproject --root fmdeps/auto --prefix fmdeps/auto) > \
+       _CoqProject.auto";
+    `P
+      "$(b,dune-rocqproject gather-coq-paths path/to/theories/dune \
+       path/to/tests/dune)";
+  ]
+
+let generate_man =
+  [
+    `S Manpage.s_description;
+    `P
+      "Scan the workspace rooted at $(b,--root) and print the full _CoqProject \
+       content. This includes a short prelude, optional contents from \
+       $(b,--coq-flags), the plugin search path, discovered $(b,-Q) mappings \
+       from dune files, and a small set of hard-coded compatibility mappings \
+       carried over from the legacy shell script.";
+  ]
+
+let gather_man =
+  [
+    `S Manpage.s_description;
+    `P
+      "Parse the given dune files and print only the corresponding $(b,-Q) \
+       mapping lines. This is the OCaml replacement for the old \
+       $(b,gather-coq-paths.py) helper.";
+    `P
+      "If a dune file has no $(b,rocq.theory) stanza or no theory name, it \
+       contributes no output.";
+  ]
+
+let default_info = Cmd.info "dune-rocqproject" ~doc:generate_doc ~man:top_man
+
+let generate_info =
+  Cmd.info "generate-coq-project" ~doc:generate_doc ~man:generate_man
+
+let gather_info = Cmd.info "gather-coq-paths" ~doc:gather_doc ~man:gather_man
+
+let command =
+  Cmd.group ~default:generate_term default_info
+    [ Cmd.v generate_info generate_term; Cmd.v gather_info gather_term ]
 
 let () =
   let exit_code =
-    try main () with
-    | Usage message ->
-        print_endline message;
-        0
+    try Cmd.eval command with
     | Error message ->
         prerr_endline ("error: " ^ message);
         1
