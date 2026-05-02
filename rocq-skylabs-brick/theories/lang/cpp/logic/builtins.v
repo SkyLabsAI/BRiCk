@@ -68,8 +68,15 @@ Section wp_builtin.
   Axiom wp_expect : forall exp c Q,
       Q exp |-- wp_builtin "__builtin_expect" (Tfunction Tlong (Tlong :: Tlong :: nil)) (exp :: c :: nil) Q.
 
-  Axiom wp_move : forall ty arg Q,
-      Q arg |-- wp_builtin "move" (Tfunction (Trv_ref ty) [ty]) (arg :: nil) Q.
+  Axiom wp_move : forall ret_ty arg_ty arg Q,
+    trv_ref QM (drop_reference arg_ty) = ret_ty ->
+        Q arg
+    |-- wp_builtin "move" (Tfunction ret_ty [arg_ty]) (arg :: nil) Q.
+
+  Axiom wp_forward : forall ret_ty arg_ty arg Q,
+    trv_ref QM (drop_reference ret_ty) = arg_ty \/ tref QM (drop_reference ret_ty) = arg_ty ->
+        Q arg
+    |-- wp_builtin "forward" (Tfunction ret_ty [arg_ty]) (arg :: nil) Q.
 
   (** Bit computations
    *)
@@ -201,11 +208,11 @@ Definition read_args `{Σ : cpp_logic, σ : genv} :=
   match targs , ls with
   | nil , nil => Q nil
   | t :: ts , p :: ps =>
-    Exists v, (Exists q, p |-> primR t q v ** True) //\\
+    Exists v, (Exists q, p |-> primR (to_heap_type t) q v ** True) //\\
     read_args ts ps (fun vs => Q (v :: vs))
   | _ , _ => ERROR "read_args"
   end.
-#[global] Hint Opaque read_args : typeclass_instances.
+#[global] Hint Opaque read_args : typeclass_instances sl_opacity.
 
 Section with_Σ.
   Context `{Σ : cpp_logic, σ : genv}.
@@ -253,12 +260,12 @@ Definition wp_builtin_func' `{Σ : cpp_logic, σ : genv} (u : bool)
   | Tfunction (FunctionType rty targs) =>
     let* vs := read_args targs args in
     let* v := wp_builtin b fty vs in
-    Forall p : ptr, p |-> primR rty 1$m v -* |={top}=>?u Q p
+    Forall p : ptr, p |-> primR (to_heap_type rty) 1$m v -* |={top}=>?u Q p
   | _ => ERROR "wp_builtin_func"
   end.
 Definition wp_builtin_func `{Σ : cpp_logic, σ : genv} :=
   Cbn (Reduce (wp_builtin_func' true)).
-#[global] Hint Opaque wp_builtin_func : typeclass_instances.
+#[global] Hint Opaque wp_builtin_func : typeclass_instances sl_opacity.
 
 Section with_Σ.
   Context `{Σ : cpp_logic, σ : genv}.
