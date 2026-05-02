@@ -67,12 +67,13 @@ static cl::opt<bool> Comment("comment", cl::desc("include name comments"),
 
 static cl::opt<bool> NoElaborate(
     "no-elaborate",
-    cl::desc("Do not force generation of implicit member functions."),
+    cl::desc("Do not force generation of implicitly-defined member functions [Default]"),
     cl::Optional, cl::cat(Cpp2V));
 
 static cl::opt<bool> Elaborate(
     "elaborate",
-    cl::desc("Elaborate templates and un-forced definitions. This is unsafe in general and can cause segfaults."),
+    cl::desc("Force generation of implicitly-defined member functions. "
+    "This is unsafe in general and can cause segfaults."),
     cl::Optional, cl::cat(Cpp2V));
 
 static cl::opt<bool> Version("cpp2v-version",

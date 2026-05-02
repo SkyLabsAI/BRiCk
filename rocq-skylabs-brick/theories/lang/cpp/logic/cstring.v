@@ -76,7 +76,10 @@ Module cstring.
   Import zstring.
 
   Definition t := BS.t.
-  Bind Scope bs_scope with t.
+
+  (* Since this module is used without importing, we bind the scope globally for
+  customers after the end of the module. Here we just bind it for the rest of the module. *)
+  #[local] Bind Scope bs_scope with t.
 
   (* TODO: Prove equivalent to
   [BS.bytes_to_string (take (List.length zs - 1) zs)]
@@ -101,6 +104,7 @@ Module cstring.
   #[global] Arguments _to_zstring' !cstr !l /.
   Notation to_zstring' cstr l := (_to_zstring' cstr l%byte).
 
+  (** Convert to [zstring] by adding a null terminator. *)
   Definition to_zstring (cstr : cstring.t) : zstring.t := to_zstring' cstr ["000"].
   #[global] Arguments to_zstring cstr : simpl never.
 
@@ -272,13 +276,13 @@ Module cstring.
      length is one greater than that of the [cstring.t]).
    *)
   Definition size (cstr : t) := zstring.size (to_zstring cstr).
-  #[global] Arguments size cstr : simpl never.
+  #[global] Arguments size : simpl never.
 
-  (* [strlen] mirrors the behavior of the standard-library function of the same name
+  (** [strlen] mirrors the behavior of the standard-library function of the same name
      (i.e. the length DOES NOT include the null-terminator).
+    Always non-negative (see [strlen_nonneg]).
    *)
   Definition strlen (cstr : t) := zstring.strlen (to_zstring cstr).
-  #[global] Arguments size cstr : simpl never.
 
   Definition WF {σ : genv} (cstr : t) : Prop := zstring.WF char_type.Cchar (to_zstring cstr).
   #[global] Arguments WF {σ} cstr : simpl never.
@@ -604,18 +608,17 @@ Module cstring.
       induction n; simpl; try lia.
     Qed.
 
-    Lemma size_nonneg : forall (cstr : t), 0 <= size cstr.
+    Lemma size_lowerbound : forall (cstr : t), 1 <= size cstr.
     Proof.
       intros cstr; destruct cstr;
         unfold size, zstring.size, to_zstring;
         simpl; by lia.
     Qed.
 
-    Lemma size_lowerbound : forall (cstr : t), 1 <= size cstr.
+    Lemma size_nonneg : forall (cstr : t), 0 <= size cstr.
     Proof.
-      intros cstr; destruct cstr;
-        unfold size, zstring.size, to_zstring;
-        simpl; by lia.
+      intros cstr.
+      pose proof (size_lowerbound cstr); by lia.
     Qed.
 
     Lemma size_neg_inj : forall (cstr : t), 1 = size cstr -> cstr = ""%bs.
@@ -1135,6 +1138,10 @@ Module cstring.
     End Theory.
   End with_Σ.
 End cstring.
+
+Fail Definition a : cstring.t := "a" ++ "b".
+#[global] Bind Scope bs_scope with cstring.t.
+Succeed Definition a : cstring.t := "a" ++ "b".
 
 Require Import skylabs.lang.cpp.logic.core_string.
 
