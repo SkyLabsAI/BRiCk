@@ -17,6 +17,7 @@ Require Import skylabs.prelude.arith.operator.
 Require Import skylabs.prelude.arith.builtins.
 Require Import skylabs.lang.cpp.syntax.
 Require Export skylabs.lang.cpp.semantics.types.
+Require Export skylabs.lang.cpp.semantics.floating.
 Require Export skylabs.lang.cpp.semantics.sub_module.
 Require Export skylabs.lang.cpp.semantics.genv.
 Require Export skylabs.lang.cpp.semantics.ptrs.
@@ -84,6 +85,7 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
          the semantics will convert the unsigned value into the appropriate
          equivalent on the target platform based on the signedness of the type.
      *)
+  | Vfloat (_ : cpp_float.t)
   | Vptr (_ : ptr)
   | Vraw (_ : raw_byte)
   | Vundef
@@ -122,6 +124,7 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
     | Vint v => Some (bool_decide (v <> 0))
     | Vptr p => Some (bool_decide (p <> nullptr))
     | Vchar n => Some (bool_decide (n <> 0%N))
+    | Vfloat f => Some (cpp_float.is_true f)
     | Vundef | Vraw _ => None
     | Vmember_ptr _ p => Some (bool_decide (p <> None))
     end.
@@ -140,12 +143,15 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
   Proof. by move=> []. Qed.
   Lemma Vchar_inj a b : Vchar a = Vchar b -> a = b.
   Proof. by move=> []. Qed.
+  Lemma Vfloat_inj a b : Vfloat a = Vfloat b -> a = b.
+  Proof. by move=> []. Qed.
   Lemma Vbool_inj a b : Vbool a = Vbool b -> a = b.
   Proof. by move: a b =>[] [] /Vint_inj. Qed.
 
   #[global] Instance Vptr_Inj : Inj (=) (=) Vptr := Vptr_inj.
   #[global] Instance Vint_Inj : Inj (=) (=) Vint := Vint_inj.
   #[global] Instance Vchar_Inj : Inj (=) (=) Vchar := Vchar_inj.
+  #[global] Instance Vfloat_Inj : Inj (=) (=) Vfloat := Vfloat_inj.
   #[global] Instance Vbool_Inj : Inj (=) (=) Vbool := Vbool_inj.
 
   Definition N_to_char (t : char_type.t) (z : N) : val :=
@@ -160,6 +166,7 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
     | Tptr _ => Some (Vptr nullptr)
     | Tnum _ _ => Some (Vint 0%Z)
     | Tchar_ _ => Some (Vchar 0%N)
+    | Tfloat_ ft => Some (Vfloat (cpp_float.zero ft))
     | Tbool => Some (Vbool false)
     | Tnullptr => Some (Vptr nullptr)
     | Tqualified _ t => get_default t
@@ -347,6 +354,14 @@ Module Type RAW_BYTES_MIXIN
     val_related ty (Vchar n1) (Vchar n2) -> n1 = n2.
   Proof. intros. exact: val_related_Vchar'. Qed.
 
+  Lemma val_related_Vfloat' {σ} ty v1 v2 :
+    val_related ty v1 v2 ->
+    forall f1 f2, v1 = Vfloat f1 -> v2 = Vfloat f2 -> f1 = f2.
+  Proof. induction 1; naive_solver. Qed.
+  Lemma val_related_Vfloat {σ} ty f1 f2 :
+    val_related ty (Vfloat f1) (Vfloat f2) -> f1 = f2.
+  Proof. intros. exact: val_related_Vfloat'. Qed.
+
   (*
   NOTE: This stronger property holds because pointers do not have a
   raw representation. (That's future work.).
@@ -494,6 +509,10 @@ Module Type HAS_TYPE (Import P : PTRS) (Import R : RAW_BYTES) (Import V : VAL_MI
     Axiom has_type_prop_bool : forall v,
         has_type_prop v Tbool <-> exists b, v = Vbool b.
 
+    Axiom has_type_prop_float : forall ft v,
+        has_type_prop v (Tfloat_ ft) <->
+          exists f, v = Vfloat f /\ cpp_float.has_type f ft.
+
     (* NOTE: even if an enumeration's underlying type is <<unsigned char>> (which contains
        raw values), raw values are not well typed at the enumeration type. *)
     Axiom has_type_prop_enum : forall v nm,
@@ -551,6 +570,10 @@ Module Type HAS_TYPE_MIXIN (Import P : PTRS) (Import R : RAW_BYTES) (Import V : 
 
     Lemma has_type_prop_char_0 ct : has_type_prop (Vchar 0) (Tchar_ ct).
     Proof. intros. apply has_type_prop_char_255. lia. Qed.
+
+    Lemma has_float_type ft f :
+      cpp_float.has_type f ft <-> has_type_prop (Vfloat f) (Tfloat_ ft).
+    Proof. rewrite has_type_prop_float. naive_solver. Qed.
 
     Lemma has_type_prop_drop_qualifiers :
       forall v ty, has_type_prop v ty <-> has_type_prop v (drop_qualifiers ty).

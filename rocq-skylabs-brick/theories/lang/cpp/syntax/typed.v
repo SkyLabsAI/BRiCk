@@ -186,11 +186,17 @@ Module decltype.
       Context (of_stmt : Stmt -> M (option decltype)).
 
       Definition of_unop (op : UnOp) (t : exprtype) : M decltype :=
+        let is_integral t :=
+          match drop_qualifiers t with
+          | Tnum _ _ | Tbool | Tchar_ _ | Tenum _ => true
+          | _ => false
+          end
+        in
         match op with
         | Uminus | Uplus =>
           if is_arithmetic t then mret t else mfail (* TODO: check this *)
         | Unot => if is_arithmetic t then mret Tbool else mfail
-        | Ubnot => if is_arithmetic t then mret t else mfail
+        | Ubnot => if is_integral t then mret t else mfail
         | Uunsupported _ => mfail
         end.
 
@@ -573,6 +579,11 @@ Module decltype.
         | Eint _ t =>
             let* _ := guard (t ∈ [Tchar;Tuchar;Tschar;Tshort;Tushort;Tint;Tuint;Tlong;Tulong;Tlonglong;Tulonglong]) in
             mret t
+        | Efloat _ t =>
+            match t with
+            | Tfloat_ _ => mret t
+            | _ => mfail
+            end
         | Ebool _ => mret Tbool
         | Eunop op e t =>
             let* et := of_expr e >>= requirePR in

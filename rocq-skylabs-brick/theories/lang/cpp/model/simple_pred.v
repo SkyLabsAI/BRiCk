@@ -400,6 +400,31 @@ Module SimpleCPP.
         exact: _Z_to_bytes_inj_2.
       Qed.
 
+      Lemma cpp_float_bits_in_Z_to_bytes_bounds ft f :
+        cpp_float.has_type f ft ->
+        in_Z_to_bytes_bounds (float_type.bitsize ft) Unsigned (cpp_float.bits f).
+      Proof.
+        rewrite /in_Z_to_bytes_bounds /cpp_float.has_type /cpp_float.valid
+          /cpp_float.bits_bound.
+        destruct f as [fty bits]; simpl.
+        intros [-> Hbits]. destruct ft; simpl in *; lia.
+      Qed.
+
+      Lemma cpp_float_Z_to_bytes_inj ft f1 f2 :
+        cpp_float.has_type f1 ft ->
+        cpp_float.has_type f2 ft ->
+        Z_to_bytes (float_type.bitsize ft) Unsigned (cpp_float.bits f1) =
+          Z_to_bytes (float_type.bitsize ft) Unsigned (cpp_float.bits f2) ->
+        f1 = f2.
+      Proof.
+        intros Hty1 Hty2 Hbytes.
+        assert (Hbits : cpp_float.bits f1 = cpp_float.bits f2).
+        { eapply Z_to_bytes_inj; eauto using cpp_float_bits_in_Z_to_bytes_bounds. }
+        destruct f1 as [fty1 bits1], f2 as [fty2 bits2]; simpl in *.
+        destruct Hty1 as [Hty1 _], Hty2 as [Hty2 _].
+        by destruct fty1, fty2, ft; simpl in *; try congruence; destruct Hbits.
+      Qed.
+
       Definition pure_encodes (t : type) (v : val) (vs : list runtime_val) : Prop :=
         match erase_qualifiers t with
         | Tnum sz sgn =>
@@ -426,7 +451,14 @@ Module SimpleCPP.
           else False
         | Tnullptr =>
           vs = cptr 0 /\ v = Vptr nullptr
-        | Tfloat_ _ => False
+        | Tfloat_ ft =>
+          match v with
+          | Vfloat f =>
+            cpp_float.has_type f ft /\
+            vs = Z_to_bytes (float_type.bitsize ft) Unsigned (cpp_float.bits f)
+          | Vundef => pure_encodes_undef (float_type.bitsize ft) vs
+          | _ => False
+          end
         | Tarch _ _ => False
         | Tptr _ =>
           match v with
@@ -479,6 +511,7 @@ Module SimpleCPP.
           length vs = match erase_qualifiers t with
                       | Tbool => 1
                       | Tnum sz _ => int_rank.bytesNat sz
+                      | Tfloat_ ft => bitsize.bytesNat $ float_type.bitsize ft
 
                       | Tmember_pointer _ _ | Tnullptr | Tptr _
                       | Tfunction _ | Tref _ | Trv_ref _ =>
@@ -538,6 +571,7 @@ Module SimpleCPP.
         by [
           edestruct cptr_ne_aptr | edestruct pure_encodes_undef_aptr |
           edestruct pure_encodes_undef_Z_to_bytes |
+          f_equiv; eapply cpp_float_Z_to_bytes_inj; eauto |
           f_equiv; exact: Z_to_bytes_inj ].
       Qed.
 

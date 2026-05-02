@@ -135,6 +135,15 @@ Axiom eval_minus_int : forall ty a c,
     has_type_prop (Vint c) ty ->
     eval_unop Uminus ty ty (Vint a) (Vint c).
 
+Axiom eval_plus_float : forall ft f,
+    cpp_float.has_type f ft ->
+    eval_unop Uplus (Tfloat_ ft) (Tfloat_ ft) (Vfloat f) (Vfloat f).
+
+Axiom eval_minus_float : forall ft f,
+    cpp_float.has_type f ft ->
+    eval_unop Uminus (Tfloat_ ft) (Tfloat_ ft)
+      (Vfloat f) (Vfloat (cpp_float.neg f)).
+
 (** * Binary Operators *)
 
 (** ** Arithmetic Operators
@@ -186,6 +195,31 @@ Axiom eval_mod : forall `{supports_arith ty} (a b : Z),
     has_type_prop (Vint (Z.quot a b)) ty ->
     let c := Z.rem a b in
     eval_binop_pure Bmod ty ty ty (Vint a) (Vint b) (Vint c).
+
+Axiom eval_add_float : forall ft a b c,
+    cpp_float.has_type a ft ->
+    cpp_float.has_type b ft ->
+    cpp_float.add a b = Some c ->
+    eval_binop_pure Badd (Tfloat_ ft) (Tfloat_ ft) (Tfloat_ ft)
+      (Vfloat a) (Vfloat b) (Vfloat c).
+Axiom eval_sub_float : forall ft a b c,
+    cpp_float.has_type a ft ->
+    cpp_float.has_type b ft ->
+    cpp_float.sub a b = Some c ->
+    eval_binop_pure Bsub (Tfloat_ ft) (Tfloat_ ft) (Tfloat_ ft)
+      (Vfloat a) (Vfloat b) (Vfloat c).
+Axiom eval_mul_float : forall ft a b c,
+    cpp_float.has_type a ft ->
+    cpp_float.has_type b ft ->
+    cpp_float.mul a b = Some c ->
+    eval_binop_pure Bmul (Tfloat_ ft) (Tfloat_ ft) (Tfloat_ ft)
+      (Vfloat a) (Vfloat b) (Vfloat c).
+Axiom eval_div_float : forall ft a b c,
+    cpp_float.has_type a ft ->
+    cpp_float.has_type b ft ->
+    cpp_float.div a b = Some c ->
+    eval_binop_pure Bdiv (Tfloat_ ft) (Tfloat_ ft) (Tfloat_ ft)
+      (Vfloat a) (Vfloat b) (Vfloat c).
 
 (** ** bitwise operators
 
@@ -332,6 +366,17 @@ Definition relop_result_type (ty : type) : Prop :=
  *)
 Definition b2i (b : bool) : Z := if b then 1 else 0.
 
+Definition float_cmp_result (bo : BinOp) (c : option comparison) : option bool :=
+  match bo with
+  | Beq => Some $ if c is Some Eq then true else false
+  | Bneq => Some $ if c is Some Eq then false else true
+  | Blt => Some $ if c is Some Lt then true else false
+  | Ble => Some $ if c is Some Gt then false else if c is Some _ then true else false
+  | Bgt => Some $ if c is Some Gt then true else false
+  | Bge => Some $ if c is Some Lt then false else if c is Some _ then true else false
+  | _ => None
+  end.
+
 (* Integer conversions are used to compare unscoped enumeration types but not
    scoped ones. Therefore, we include comparisons on enum. The values are
    compared after integer conversion.
@@ -360,6 +405,13 @@ Arguments eval_lt _ {_}.
 Arguments eval_le _ {_}.
 Arguments eval_gt _ {_}.
 Arguments eval_ge _ {_}.
+
+Axiom eval_float_rel : forall bo ft a b r,
+    cpp_float.has_type a ft ->
+    cpp_float.has_type b ft ->
+    float_cmp_result bo (cpp_float.compare a b) = Some r ->
+    eval_binop_pure bo (Tfloat_ ft) (Tfloat_ ft) Tbool
+      (Vfloat a) (Vfloat b) (Vbool r).
 
 End operator_axioms.
 End OPERATOR_INTF_FUNCTOR.

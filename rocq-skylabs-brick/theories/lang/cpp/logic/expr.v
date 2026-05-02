@@ -86,6 +86,12 @@ Module Type Expr.
       [! has_type_prop (Vint n) (drop_qualifiers ty) !] //\\ Q (Vint n) FreeTemps.id
       |-- wp_operand (Eint n ty) Q.
 
+    (* floating literals are prvalues *)
+    Axiom wp_operand_float : forall bits ft Q,
+      let f := cpp_float.of_bits ft bits in
+      [! cpp_float.has_type f ft !] //\\ Q (Vfloat f) FreeTemps.id
+      |-- wp_operand (Efloat bits (Tfloat_ ft)) Q.
+
     (* NOTE: character literals represented in the AST as 32-bit unsigned integers
              (with the Coq type [N]). We assume that the AST is well-typed so the
              value here will be well-typed according to the character type.
@@ -788,6 +794,21 @@ Module Type Expr.
         wp_operand e (fun v free =>
            Exists v', [| conv_int tu (type_of e) t v v' |] ** Q v' free)
         |-- wp_operand (Ecast (Cintegral t) e) Q.
+
+    Axiom wp_operand_cast_float2int : forall e t Q,
+        wp_operand e (fun v free =>
+           Exists v', [| conv_float tu (type_of e) t v v' |] ** Q v' free)
+        |-- wp_operand (Ecast (Cfloat2int t) e) Q.
+
+    Axiom wp_operand_cast_int2float : forall e t Q,
+        wp_operand e (fun v free =>
+           Exists v', [| conv_float tu (type_of e) t v v' |] ** Q v' free)
+        |-- wp_operand (Ecast (Cint2float t) e) Q.
+
+    Axiom wp_operand_cast_float : forall e t Q,
+        wp_operand e (fun v free =>
+           Exists v', [| conv_float tu (type_of e) t v v' |] ** Q v' free)
+        |-- wp_operand (Ecast (Cfloat t) e) Q.
 
     Axiom wp_operand_cast_null : forall e ty Q,
         type_of e = Tnullptr ->

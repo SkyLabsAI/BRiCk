@@ -379,6 +379,15 @@ Module float_type.
   Definition bitsN (t : t) : N :=
     8 * bytesN t.
 
+  Definition bitsize (t : t) : bitsize :=
+    match t with
+    | Ffloat16 => bitsize.W16
+    | Ffloat => bitsize.W32
+    | Fdouble => bitsize.W64
+    | Flongdouble => bitsize.W128
+    | Ffloat128 => bitsize.W128
+    end.
+
 End float_type.
 
 (** * Expression Preliminaries *)

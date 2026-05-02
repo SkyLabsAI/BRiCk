@@ -210,6 +210,19 @@ Section conv_int.
   Qed.
 End conv_int.
 
+(** Floating-point conversions.
+
+    The v1 floating model exposes this as a relation so proofs can reason about
+    implementation choices around overflow, NaN, infinities, and rounding without
+    committing all clients to one executable conversion function.
+ *)
+Parameter conv_float : forall {σ : genv},
+    translation_unit -> type -> type -> val -> val -> Prop.
+
+Definition conv_arith {σ : genv} (tu : translation_unit)
+    (from to : type) (v v' : val) : Prop :=
+  conv_int tu from to v v' \/ conv_float tu from to v v'.
+
 (* This (effectively) lifts [conv_int] to arbitrary types.
 
    TODO: it makes sense for this to mirror the properties of [conv_int], but
@@ -221,5 +234,5 @@ Definition convert {σ : genv} (tu : translation_unit) (from to : Rtype) (v : va
     (* TODO: this conservative *)
     has_type_prop v from /\ has_type_prop v' to /\ v' = v
   else if is_arithmetic from && is_arithmetic to then
-    conv_int tu from to v v'
+    conv_arith tu from to v v'
   else False.

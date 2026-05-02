@@ -1446,6 +1446,14 @@ Module Expr.
       compare_lex (Z.compare b1.(box_Eint_0) b2.(box_Eint_0)) $ fun _ =>
       compareT b1.(box_Eint_1) b2.(box_Eint_1).
 
+    Record box_Efloat : Set := Box_Efloat {
+      box_Efloat_0 : Z;
+      box_Efloat_1 : type;
+    }.
+    Definition box_Efloat_compare (b1 b2 : box_Efloat) : comparison :=
+      compare_lex (Z.compare b1.(box_Efloat_0) b2.(box_Efloat_0)) $ fun _ =>
+      compareT b1.(box_Efloat_1) b2.(box_Efloat_1).
+
     Record box_Eunop : Set := Box_Eunop {
       box_Eunop_0 : UnOp;
       box_Eunop_1 : Expr;
@@ -1770,6 +1778,7 @@ Module Expr.
       | Echar _ _ => 12
       | Estring _ _ => 13
       | Eint _ _ => 14
+      | Efloat _ _ => 63
       | Ebool _ => 15
       | Eunop _ _ _ => 16
       | Ebinop _ _ _ _ => 17
@@ -1835,6 +1844,7 @@ Module Expr.
       | 12 => box_Echar
       | 13 => box_Estring
       | 14 => box_Eint
+      | 63 => box_Efloat
       | 15 => bool
       | 16 => box_Eunop
       | 17 => box_Ebinop
@@ -1896,6 +1906,7 @@ Module Expr.
       | Echar c t => Box_Echar c t
       | Estring s t => Box_Estring s t
       | Eint n t => Box_Eint n t
+      | Efloat n t => Box_Efloat n t
       | Ebool b => b
       | Eunop op e t => Box_Eunop op e t
       | Ebinop op l r t => Box_Ebinop op l r t
@@ -1959,6 +1970,7 @@ Module Expr.
       | 12 => box_Echar_compare
       | 13 => box_Estring_compare
       | 14 => box_Eint_compare
+      | 63 => box_Efloat_compare
       | 15 => Bool.compare
       | 16 => box_Eunop_compare
       | 17 => box_Ebinop_compare
@@ -2030,6 +2042,7 @@ Module Expr.
       | Echar c t => COMP (Echar c t)
       | Estring s t => COMP (Estring s t)
       | Eint n t => COMP (Eint n t)
+      | Efloat n t => COMP (Efloat n t)
 
       | Ebool b => COMP (Ebool b : Expr)
       | Eunop op e t => COMP (Eunop op e t)

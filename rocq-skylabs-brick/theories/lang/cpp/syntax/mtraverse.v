@@ -229,6 +229,7 @@ Module MTraverse.
       | Echar c t => Echar c <$> ET (traverseT t)
       | Estring s t => Estring s <$> ET (traverseT t)
       | Eint z t => Eint z <$> ET (traverseT t)
+      | Efloat z t => Efloat z <$> ET (traverseT t)
       | Ebool b => mret $ Ebool b
       | Eunop o e t => Eunop o <$> traverseE e <*> ET (traverseT t)
       | Ebinop o e1 e2 t => Ebinop o <$> traverseE e1 <*> traverseE e2 <*> ET (traverseT t)

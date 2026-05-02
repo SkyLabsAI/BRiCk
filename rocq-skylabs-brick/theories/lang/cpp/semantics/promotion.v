@@ -211,6 +211,27 @@ Succeed Example promote_schar : forall {σ : genv} tu,
     promote_integral tu Tschar = Some Tint :=
   ltac:(compute; reflexivity).
 
+(** ** Floating Point Promotion
+
+    This captures the floating-point side of the usual arithmetic conversions.
+    If either operand is floating point, the common arithmetic type is floating
+    point; otherwise, integral promotion handles the operands.
+ *)
+Definition promote_floating (ty1 ty2 : type) : option type :=
+  match drop_qualifiers ty1 , drop_qualifiers ty2 with
+  | Tfloat_ f1 , Tfloat_ f2 => Some $ Tfloat_ $ cpp_float.promote_type f1 f2
+  | Tfloat_ f , ty2 =>
+      if is_arithmetic ty2 then Some $ Tfloat_ f else None
+  | ty1 , Tfloat_ f =>
+      if is_arithmetic ty1 then Some $ Tfloat_ f else None
+  | _ , _ => None
+  end.
+
+Succeed Example promote_float_int :
+    promote_floating Tfloat Tint = Some Tfloat := eq_refl.
+Succeed Example promote_float_double :
+    promote_floating Tfloat Tdouble = Some Tdouble := eq_refl.
+
 (** ** Arithmetic Promotion
   This computes a "join" on the types of the two arguments to an arithmetic
   operator.
