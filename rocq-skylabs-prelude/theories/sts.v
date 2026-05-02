@@ -1,5 +1,5 @@
 (*
- * Copyright (C) 2020 BlueRock Security, Inc.
+ * Copyright (C) 2020-2026 SkyLabs AI, Inc.
  *
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
@@ -21,8 +21,6 @@ Module Sts.
   Record sts {Label : Type} : Type := {
     (** State type *)
     _state      :> Type
-    (** Initial state predicate *)
-  ; _init_state : _state -> Prop
 
     (** Step relation of the LTS
     [None] means [Tau]. *)
@@ -99,8 +97,7 @@ Module Sts.
     This allows you to translate events in one [t] to another [t]
     *)
     Definition map  : sts L' :=
-      {| _init_state := STS.(_init_state)
-       ; _step := Map_step |}.
+      {| _step := Map_step |}.
 
   End map.
 
@@ -155,8 +152,7 @@ Module Sts.
     transition for the composed system.
     *)
     Definition par : sts e :=
-      {| _init_state '(l,r) := L.(_init_state) l /\ R.(_init_state) r
-       ; _step := Par_step |}.
+      {| _step := Par_step |}.
 
   End par.
 
@@ -167,13 +163,11 @@ Module Sts.
   }.
   #[global] Arguments Build_t {_} _.
   Definition State (x : t) := x.(_sts).(_state).
-  Definition init_state (x : t) : State x -> Prop := x.(_sts).(_init_state).
   Definition step (x : t) : State x -> option x.(Label) -> State x -> Prop :=
     x.(_sts).(_step).
 
   (* Let these simplify as if they were projections. *)
   #[global] Arguments State !_ /.
-  #[global] Arguments init_state !_ /.
   #[global] Arguments step !_ /.
 End Sts.
 
@@ -210,8 +204,6 @@ Module Compose.
     Implicit Types (n : name sf).
 
     Definition State : Type := ∀ n, Sts.State (sts_name sf n).
-
-    Definition init_state (s: State) : Prop := ∀ n, Sts.init_state _ (s n).
 
     Definition eq_except (n : list _) (s s' : State) :=
       ∀ n', n' ∉ n -> s n' = s' n'.
@@ -254,7 +246,6 @@ Module Compose.
 
     Definition compose_lts : Sts.sts (external_event sf) := {|
       Sts._state := State;
-      Sts._init_state := init_state;
       (* a step of the composition is either:
       - an externally visible step which comes from some constituent component n
       - a tau step, which is either
@@ -386,7 +377,6 @@ End Compose.
 #[global] Notation LTS := Sts.sts.
 #[global] Notation lts_state := Sts._state.
 #[global] Notation lts_step := Sts._step.
-#[global] Notation lts_init_state := Sts._init_state.
 
 (* TODO: unify [reachable] and [Sts.step_star]
 The following lemma should hold:
