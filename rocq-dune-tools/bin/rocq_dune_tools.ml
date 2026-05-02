@@ -22,19 +22,6 @@ let read_file path =
 
 let is_whitespace = function ' ' | '\t' | '\r' | '\n' -> true | _ -> false
 
-let has_prefix string prefix =
-  let string_length = String.length string in
-  let prefix_length = String.length prefix in
-  string_length >= prefix_length && String.sub string 0 prefix_length = prefix
-
-let has_suffix string suffix =
-  let string_length = String.length string in
-  let suffix_length = String.length suffix in
-  string_length >= suffix_length
-  &&
-  let start = string_length - suffix_length in
-  String.sub string start suffix_length = suffix
-
 let contains_substring string substring =
   let string_length = String.length string in
   let substring_length = String.length substring in
@@ -45,13 +32,14 @@ let contains_substring string substring =
   substring_length = 0 || loop 0
 
 let normalize_relative_path path =
-  if has_prefix path "./" then String.sub path 2 (String.length path - 2)
+  if String.starts_with ~prefix:"./" path then
+    String.sub path 2 (String.length path - 2)
   else path
 
 let prefix_path ~prefix path = if prefix = "" then path else prefix ^ "/" ^ path
 
 let ensure_trailing_slash path =
-  if has_suffix path "/" then path else path ^ "/"
+  if String.ends_with ~suffix:"/" path then path else path ^ "/"
 
 let resolve_path ~root path =
   if Filename.is_relative path then Filename.concat root path else path
@@ -175,7 +163,9 @@ let gather_mappings_for_dune_file ~prefix ~display_path ~input_path =
               display_path |> Filename.dirname |> normalize_relative_path
               |> prefix_path ~prefix
             in
-            let add_sources = not (has_suffix physical_path "/elpi") in
+            let add_sources =
+              not (String.ends_with ~suffix:"/elpi" physical_path)
+            in
             let source_path = ensure_trailing_slash physical_path in
             let build_path = "_build/default/" ^ source_path in
             let mappings = [ "-Q " ^ build_path ^ " " ^ logical_path ] in
@@ -252,7 +242,7 @@ let extra_mapping_lines ~root ~prefix =
       let build_line =
         "-Q _build/default/" ^ emitted_directory ^ " " ^ logical_path
       in
-      if has_suffix directory "/elpi/" then [ build_line ]
+      if String.ends_with ~suffix:"/elpi/" directory then [ build_line ]
       else [ "-Q " ^ emitted_directory ^ " " ^ logical_path; build_line ]
   in
   List.concat_map mapping_lines extra_mappings
