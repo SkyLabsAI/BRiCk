@@ -1554,6 +1554,11 @@ Determine if <code>ty</code> is an array type.
 <div class="doc">
 <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.types.html#drop_reference"><span class="id" title="definition">drop_reference</span></a></span> removes any leading reference types.
 
+<div class="paragraph"> </div>
+
+The implementation is defensive and removes nested references even if they
+should not exist. This might be unnecessary.
+
 </div>
 <div class="code">
 <span class="id" title="keyword">Fixpoint</span> <a id="drop_reference" class="idref" href="#drop_reference"><span class="id" title="definition">drop_reference</span></a> (<a id="t:427" class="idref" href="#t:427"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a>) : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#exprtype"><span class="id" title="definition">exprtype</span></a> :=<br/>
@@ -1645,7 +1650,11 @@ Determine if <code>ty</code> is an array type.
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#::bool_scope:x_'&amp;&amp;'_x"><span class="id" title="notation">)</span></a>.<br/>
 
 <br/>
-<span class="comment">(*&nbsp;get&nbsp;the&nbsp;<span class="inlinecode"><span class="id" title="var">heap_type</span></span>&nbsp;representation&nbsp;of&nbsp;the&nbsp;given&nbsp;type&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;get&nbsp;the&nbsp;<span class="inlinecode"><span class="id" title="var">heap_type</span></span>&nbsp;representation&nbsp;of&nbsp;the&nbsp;given&nbsp;type.<br/>
+<br/>
+TODO:&nbsp;should&nbsp;this&nbsp;be&nbsp;more&nbsp;conservative/aggressive&nbsp;in&nbsp;dropping&nbsp;qualifiers,&nbsp;like<br/>
+<span class="inlinecode"><span class="id" title="var">drop_reference</span></span>?<br/>
+&nbsp;*)</span><br/>
 <span class="id" title="keyword">Definition</span> <a id="to_heap_type" class="idref" href="#to_heap_type"><span class="id" title="definition">to_heap_type</span></a> (<a id="t:437" class="idref" href="#t:437"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a>) : <a class="idref" href="skylabs.lang.cpp.syntax.types.html#heap_type"><span class="id" title="definition">heap_type</span></a> :=<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.syntax.types.html#erase_qualifiers"><span class="id" title="definition">erase_qualifiers</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.types.html#t:437"><span class="id" title="variable">t</span></a> <span class="id" title="keyword">with</span><br/>
 &nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Trv_ref"><span class="id" title="constructor">Trv_ref</span></a> <span class="id" title="var">t</span> =&gt; <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tref"><span class="id" title="constructor">Tref</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.types.html#t:437"><span class="id" title="variable">t</span></a><br/>
