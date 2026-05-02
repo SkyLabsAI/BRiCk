@@ -22,27 +22,32 @@ let read_file path =
 
 let is_whitespace = function ' ' | '\t' | '\r' | '\n' -> true | _ -> false
 
-let contains_substring string substring =
-  let string_length = String.length string in
-  let substring_length = String.length substring in
-  let rec loop index =
-    index + substring_length <= string_length
-    && (String.sub string index substring_length = substring || loop (index + 1))
-  in
-  substring_length = 0 || loop 0
-
-let normalize_relative_path path =
-  if String.starts_with ~prefix:"./" path then
-    String.sub path 2 (String.length path - 2)
+let strip_current_dir_prefix path =
+  let current_dir = Filename.current_dir_name in
+  let current_dir_prefix = Filename.concat current_dir "" in
+  if path = current_dir then ""
+  else if String.starts_with ~prefix:current_dir_prefix path then
+    String.sub path (String.length current_dir_prefix)
+      (String.length path - String.length current_dir_prefix)
   else path
 
-let prefix_path ~prefix path = if prefix = "" then path else prefix ^ "/" ^ path
+let prefix_path ~prefix path =
+  if prefix = "" then path else Filename.concat prefix path
 
-let ensure_trailing_slash path =
-  if String.ends_with ~suffix:"/" path then path else path ^ "/"
+let path_with_trailing_dir_sep path =
+  if path = "" then Filename.concat Filename.current_dir_name ""
+  else Filename.concat path ""
 
 let resolve_path ~root path =
   if Filename.is_relative path then Filename.concat root path else path
+
+let rec path_has_component component path =
+  if Filename.basename path = component then true
+  else
+    let parent = Filename.dirname path in
+    parent <> path
+    && parent <> Filename.current_dir_name
+    && path_has_component component parent
 
 let rec skip_comment text index =
   if index >= String.length text then index
@@ -141,7 +146,7 @@ let find_named_list name items =
 let first_atom = function Atom atom :: _ -> Some atom | _ -> None
 
 let gather_mappings_for_dune_file ~prefix ~display_path ~input_path =
-  if contains_substring display_path ".git" then []
+  if path_has_component ".git" display_path then []
   else
     let text = read_file input_path in
     let forms =
@@ -160,14 +165,14 @@ let gather_mappings_for_dune_file ~prefix ~display_path ~input_path =
         | None -> []
         | Some logical_path ->
             let physical_path =
-              display_path |> Filename.dirname |> normalize_relative_path
+              display_path |> Filename.dirname |> strip_current_dir_prefix
               |> prefix_path ~prefix
             in
-            let add_sources =
-              not (String.ends_with ~suffix:"/elpi" physical_path)
+            let add_sources = Filename.basename physical_path <> "elpi" in
+            let source_path = path_with_trailing_dir_sep physical_path in
+            let build_path =
+              Filename.concat (Filename.concat "_build" "default") source_path
             in
-            let source_path = ensure_trailing_slash physical_path in
-            let build_path = "_build/default/" ^ source_path in
             let mappings = [ "-Q " ^ build_path ^ " " ^ logical_path ] in
             if add_sources then
               mappings @ [ "-Q " ^ source_path ^ " " ^ logical_path ]
@@ -240,9 +245,11 @@ let extra_mapping_lines ~root ~prefix =
     else
       let emitted_directory = prefix_path ~prefix directory in
       let build_line =
-        "-Q _build/default/" ^ emitted_directory ^ " " ^ logical_path
+        "-Q "
+        ^ Filename.concat (Filename.concat "_build" "default") emitted_directory
+        ^ " " ^ logical_path
       in
-      if String.ends_with ~suffix:"/elpi/" directory then [ build_line ]
+      if Filename.basename directory = "elpi" then [ build_line ]
       else [ "-Q " ^ emitted_directory ^ " " ^ logical_path; build_line ]
   in
   List.concat_map mapping_lines extra_mappings
