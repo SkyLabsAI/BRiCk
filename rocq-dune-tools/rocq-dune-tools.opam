@@ -12,7 +12,10 @@ homepage: "https://github.com/SkyLabsAI/BRiCk"
 bug-reports: "https://github.com/SkyLabsAI/BRiCk/issues"
 depends: [
   "dune" {>= "3.21"}
+  "bos"
   "cmdliner"
+  "fpath"
+  "sexplib"
   "odoc" {with-doc}
 ]
 build: [
