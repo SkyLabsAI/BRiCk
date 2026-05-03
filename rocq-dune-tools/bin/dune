@@ -3,4 +3,4 @@
  (public_name dune-rocqproject)
  (package rocq-dune-tools)
  (modules rocq_dune_tools)
- (libraries unix cmdliner))
+ (libraries unix cmdliner bos fpath sexplib))
