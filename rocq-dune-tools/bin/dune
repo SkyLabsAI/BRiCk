@@ -1,0 +1,6 @@
+(executable
+ (name rocq_dune_tools)
+ (public_name dune-rocqproject)
+ (package rocq-dune-tools)
+ (modules rocq_dune_tools)
+ (libraries unix cmdliner bos fpath sexplib))
