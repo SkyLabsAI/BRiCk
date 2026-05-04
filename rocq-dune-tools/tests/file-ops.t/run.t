@@ -1,3 +1,10 @@
+  $ test_root=$(mktemp -d "${TMPDIR:-/tmp}/rocq-dune-tools-file-ops.XXXXXX")
+  $ cd "$test_root"
+  $ cat > dune-project <<'EOF'
+  > (lang dune 3.21)
+  > (name cram_file_ops)
+  > (using rocq 0.11)
+  > EOF
   $ mkdir -p workspace/pkg workspace/fmdeps/cpp2v-core/rocq-skylabs-brick/tests
   $ cat > workspace/pkg/dune <<'EOF'
   > (rocq.theory
@@ -28,3 +35,12 @@
   -Q workspace/pkg/ smoke.pkg
   -Q fmdeps/cpp2v-core/rocq-skylabs-brick/tests/ bedrocktest
   -Q _build/default/fmdeps/cpp2v-core/rocq-skylabs-brick/tests/ bedrocktest
+
+  $ DUNE_BUILD_DIR=altbuild dune-rocqproject gather-coq-paths workspace/pkg/dune
+  -Q altbuild/default/workspace/pkg/ smoke.pkg
+  -Q workspace/pkg/ smoke.pkg
+
+  $ cd workspace/pkg
+  $ dune-rocqproject gather-coq-paths dune
+  -Q ../../_build/default/workspace/pkg/ smoke.pkg
+  -Q ./ smoke.pkg

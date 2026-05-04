@@ -12,16 +12,23 @@ type generate_options = {
 
 type gather_options = { prefix : Fpath.t option; paths : Fpath.t list }
 
+type workspace_layout = {
+  cwd : Fpath.t;
+  build_dir : Fpath.t;
+  cwd_within_workspace : Fpath.t;
+}
+
 let extra_mappings =
   [ (Fpath.v "fmdeps/cpp2v-core/rocq-skylabs-brick/tests/", "bedrocktest") ]
 
 let current_dir = Fpath.v "./"
-let build_dir = Fpath.v "_build/default"
 let failf fmt = Printf.ksprintf (fun message -> raise (Error message)) fmt
 
 let result_or_fail ~context = function
   | Ok value -> value
   | Error (`Msg message) -> failf "%s: %s" context message
+
+let fpath_or_fail ~context path = result_or_fail ~context (Fpath.of_string path)
 
 let file_exists path =
   result_or_fail
@@ -56,12 +63,100 @@ let prefix_path ~prefix path =
       let prefix = Fpath.to_dir_path prefix in
       if Fpath.equal path current_dir then prefix else Fpath.append prefix path
 
-let build_tree_path path =
-  if Fpath.equal path current_dir then Fpath.to_dir_path build_dir
-  else Fpath.append build_dir path
-
 let resolve_path ~root path =
   if Fpath.is_rel path then Fpath.append root path else path
+
+let relativize_or_keep ~root path =
+  match Fpath.relativize ~root path with Some relative -> relative | None -> path
+
+let dune_describe_env () =
+  let env =
+    result_or_fail ~context:"failed to read the process environment"
+      (OS.Env.current ())
+  in
+  List.fold_left
+    (fun env var -> Astring.String.Map.remove var env)
+    env
+    [ "DUNE_ROOT"; "DUNE_SOURCEROOT"; "INSIDE_DUNE" ]
+
+let current_workspace_layout probe_path =
+  let cwd =
+    result_or_fail ~context:"failed to determine the current directory"
+      (OS.Dir.current ())
+    |> Fpath.to_dir_path |> Fpath.normalize
+  in
+  let cmd =
+    Bos.Cmd.(
+      v "dune"
+      % "describe"
+      % "workspace"
+      % "--format=sexp"
+      % "--lang=0.1"
+      % "--no-print-directory"
+      % "--ignore-lock-dir"
+      % p probe_path)
+  in
+  let output =
+    result_or_fail ~context:"failed to run dune describe workspace"
+      (OS.Cmd.run_out ~env:(dune_describe_env ()) cmd |> OS.Cmd.to_string)
+  in
+  let fields =
+    match Sexp.of_string output with
+    | Sexp.List fields -> fields
+    | _ -> failf "unexpected dune describe workspace output"
+  in
+  let get_field name =
+    let rec loop = function
+      | Sexp.List (Sexp.Atom head :: Sexp.Atom value :: _) :: _
+        when head = name ->
+          Some value
+      | _ :: rest -> loop rest
+      | [] -> None
+    in
+    loop fields
+  in
+  let workspace_root =
+    match get_field "root" with
+    | Some root ->
+        fpath_or_fail ~context:"invalid dune workspace root" root
+        |> Fpath.to_dir_path |> Fpath.normalize
+    | None -> failf "dune describe workspace output did not include a root"
+  in
+  let build_context =
+    match get_field "build_context" with
+    | Some build_context ->
+        fpath_or_fail ~context:"invalid dune build context" build_context
+        |> Fpath.to_dir_path
+    | None ->
+        failf "dune describe workspace output did not include a build_context"
+  in
+  let build_dir =
+    (if Fpath.is_rel build_context then Fpath.append workspace_root build_context
+     else build_context)
+    |> Fpath.to_dir_path |> Fpath.normalize
+  in
+  let cwd_within_workspace =
+    match Fpath.relativize ~root:workspace_root cwd with
+    | Some path -> Fpath.to_dir_path path
+    | None ->
+        failf "current directory %s is not inside dune workspace root %s"
+          (Fpath.to_string cwd) (Fpath.to_string workspace_root)
+  in
+  { cwd; build_dir; cwd_within_workspace }
+
+let path_within_workspace layout path =
+  let path = Fpath.to_dir_path path in
+  if Fpath.equal layout.cwd_within_workspace current_dir then path
+  else if Fpath.equal path current_dir then layout.cwd_within_workspace
+  else Fpath.append layout.cwd_within_workspace path |> Fpath.to_dir_path
+
+let build_tree_path layout path =
+  let absolute_build_path =
+    let build_relative_path = path_within_workspace layout path in
+    if Fpath.equal build_relative_path current_dir then layout.build_dir
+    else Fpath.append layout.build_dir build_relative_path
+  in
+  relativize_or_keep ~root:layout.cwd absolute_build_path |> Fpath.to_dir_path
 
 let path_has_component component path =
   List.exists (String.equal component) (Fpath.segs path)
@@ -76,7 +171,7 @@ let find_named_list name items =
 
 let first_atom = function Sexp.Atom atom :: _ -> Some atom | _ -> None
 
-let gather_mappings_for_dune_file ~prefix dune_file =
+let gather_mappings_for_dune_file ~layout ~prefix dune_file =
   if path_has_component ".git" dune_file then []
   else
     let forms = load_sexps dune_file in
@@ -97,7 +192,7 @@ let gather_mappings_for_dune_file ~prefix dune_file =
             in
             let build_line =
               "-Q "
-              ^ Fpath.to_string (build_tree_path source_path)
+              ^ Fpath.to_string (build_tree_path layout source_path)
               ^ " " ^ logical_path
             in
             if Fpath.basename source_path = "elpi" then [ build_line ]
@@ -150,7 +245,7 @@ let emit_paths_section_intro () =
 
 let emit_mappings lines = List.iter emit_line lines
 
-let extra_mapping_lines ~root ~prefix =
+let extra_mapping_lines ~layout ~root ~prefix =
   let mapping_lines (directory, logical_path) =
     let absolute_directory = resolve_path ~root directory in
     if not (dir_exists absolute_directory) then []
@@ -160,7 +255,7 @@ let extra_mapping_lines ~root ~prefix =
       in
       let build_line =
         "-Q "
-        ^ Fpath.to_string (build_tree_path emitted_directory)
+        ^ Fpath.to_string (build_tree_path layout emitted_directory)
         ^ " " ^ logical_path
       in
       if Fpath.basename directory = "elpi" then [ build_line ]
@@ -176,20 +271,25 @@ let run_generate options =
   let root = Fpath.to_dir_path options.root in
   if not (dir_exists root) then
     failf "%s is not a directory" (Fpath.to_string root);
+  let layout = current_workspace_layout root in
   emit_header ();
   emit_optional_flags_file ~root ~coq_flags:options.coq_flags;
   emit_plugin_section ();
   emit_paths_section_intro ();
   let emitted =
     find_dune_files root
-    |> List.concat_map (gather_mappings_for_dune_file ~prefix:options.prefix)
+    |> List.concat_map
+         (gather_mappings_for_dune_file ~layout ~prefix:options.prefix)
   in
   emit_mappings emitted;
-  emit_mappings (extra_mapping_lines ~root ~prefix:options.prefix)
+  emit_mappings (extra_mapping_lines ~layout ~root ~prefix:options.prefix)
 
 let run_gather options =
+  let probe_path = options.paths |> List.hd |> Fpath.parent in
+  let layout = current_workspace_layout probe_path in
   options.paths
-  |> List.concat_map (gather_mappings_for_dune_file ~prefix:options.prefix)
+  |> List.concat_map
+       (gather_mappings_for_dune_file ~layout ~prefix:options.prefix)
   |> emit_mappings
 
 let report_error_and_exit = function
@@ -276,11 +376,10 @@ let top_man : Manpage.block list =
 3/ -Q paths for the project and each of its dependencies to the workspace
    build directory; and
 4/ -Q paths for each project and its dependencies to the source directory.
-   Paths to the _build directory will target _default.|};
+   Build-directory paths come from $(b,dune describe workspace).|};
     `P
       "Directories whose physical path ends in $(b,/elpi) emit only the \
-       build-tree mapping. This preserves the behavior of the legacy helper \
-       scripts and avoids duplicate mappings for Elpi sources.";
+       build-tree mapping.";
     `P
       "Use the $(b,gather-coq-paths) subcommand when only the mapping lines \
        are needed.";
@@ -309,9 +408,8 @@ let gather_man =
   [
     `S Manpage.s_description;
     `P
-      "Parse the given dune files and print only the corresponding $(b,-Q) \
-       mapping lines. This is the OCaml replacement for the old \
-       $(b,gather-coq-paths.py) helper.";
+      "Parse dune files in the current workspace and generate a _CoqProject \
+       file that is suitable for IDEs.";
     `P
       "If a dune file has no $(b,rocq.theory) stanza or no theory name, it \
        contributes no output.";
