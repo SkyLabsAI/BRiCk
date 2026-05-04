@@ -1,3 +1,10 @@
+  $ test_root=$(mktemp -d "${TMPDIR:-/tmp}/rocq-dune-tools-generate.XXXXXX")
+  $ cd "$test_root"
+  $ cat > dune-project <<'EOF'
+  > (lang dune 3.21)
+  > (name cram_generate)
+  > (using rocq 0.11)
+  > EOF
   $ mkdir -p workspace/pkg workspace/pkg/elpi workspace/.git/ignored workspace/_build/skipped
   $ cat > workspace/dune <<'EOF'
   > (rocq.theory

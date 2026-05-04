@@ -1,4 +1,4 @@
-  $ dune-rocqproject --help=plain | sed -n '1,28p'
+  $ dune-rocqproject --help=plain | sed -n '1,27p'
   NAME
          dune-rocqproject - generate _CoqProject content from rocq.theory
          stanzas
@@ -19,15 +19,13 @@
          3/ -Q paths for the project and each of its dependencies to the workspace
             build directory; and
          4/ -Q paths for each project and its dependencies to the source directory.
-            Paths to the _build directory will target _default.
+            Build-directory paths come from dune describe workspace.
   
          Directories whose physical path ends in /elpi emit only the build-tree
-         mapping. This preserves the behavior of the legacy helper scripts and
-         avoids duplicate mappings for Elpi sources.
+         mapping.
   
          Use the gather-coq-paths subcommand when only the mapping lines are
          needed.
-
   $ dune-rocqproject gather-coq-paths --help=plain | sed -n '1,18p'
   NAME
          dune-rocqproject-gather-coq-paths - print only the -Q mappings for
@@ -38,12 +36,12 @@
          DUNE_FILE…
   
   DESCRIPTION
-         Parse the given dune files and print only the corresponding -Q mapping
-         lines. This is the OCaml replacement for the old gather-coq-paths.py
-         helper.
+         Parse dune files in the current workspace and generate a _CoqProject
+         file that is suitable for IDEs.
   
          If a dune file has no rocq.theory stanza or no theory name, it
          contributes no output.
   
   ARGUMENTS
          DUNE_FILE (required)
+             Dune files to inspect. Each file is parsed for a rocq.theory

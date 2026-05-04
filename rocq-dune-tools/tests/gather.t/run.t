@@ -1,3 +1,10 @@
+  $ test_root=$(mktemp -d "${TMPDIR:-/tmp}/rocq-dune-tools-gather.XXXXXX")
+  $ cd "$test_root"
+  $ cat > dune-project <<'EOF'
+  > (lang dune 3.21)
+  > (name cram_gather)
+  > (using rocq 0.11)
+  > EOF
   $ mkdir -p workspace/pkg workspace/pkg/elpi workspace/plain workspace/.git/ignored
   $ cat > workspace/pkg/dune <<'EOF'
   > (rocq.theory
