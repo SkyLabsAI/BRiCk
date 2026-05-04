@@ -10,8 +10,6 @@ type generate_options = {
   coq_flags : Fpath.t;
 }
 
-type gather_options = { prefix : Fpath.t option; paths : Fpath.t list }
-
 type workspace_layout = {
   cwd : Fpath.t;
   build_dir : Fpath.t;
@@ -67,7 +65,9 @@ let resolve_path ~root path =
   if Fpath.is_rel path then Fpath.append root path else path
 
 let relativize_or_keep ~root path =
-  match Fpath.relativize ~root path with Some relative -> relative | None -> path
+  match Fpath.relativize ~root path with
+  | Some relative -> relative
+  | None -> path
 
 let dune_describe_env () =
   let env =
@@ -87,14 +87,8 @@ let current_workspace_layout probe_path =
   in
   let cmd =
     Bos.Cmd.(
-      v "dune"
-      % "describe"
-      % "workspace"
-      % "--format=sexp"
-      % "--lang=0.1"
-      % "--no-print-directory"
-      % "--ignore-lock-dir"
-      % p probe_path)
+      v "dune" % "describe" % "workspace" % "--format=sexp" % "--lang=0.1"
+      % "--no-print-directory" % "--ignore-lock-dir" % p probe_path)
   in
   let output =
     result_or_fail ~context:"failed to run dune describe workspace"
@@ -107,8 +101,8 @@ let current_workspace_layout probe_path =
   in
   let get_field name =
     let rec loop = function
-      | Sexp.List (Sexp.Atom head :: Sexp.Atom value :: _) :: _
-        when head = name ->
+      | Sexp.List (Sexp.Atom head :: Sexp.Atom value :: _) :: _ when head = name
+        ->
           Some value
       | _ :: rest -> loop rest
       | [] -> None
@@ -131,7 +125,8 @@ let current_workspace_layout probe_path =
         failf "dune describe workspace output did not include a build_context"
   in
   let build_dir =
-    (if Fpath.is_rel build_context then Fpath.append workspace_root build_context
+    (if Fpath.is_rel build_context then
+       Fpath.append workspace_root build_context
      else build_context)
     |> Fpath.to_dir_path |> Fpath.normalize
   in
@@ -140,7 +135,8 @@ let current_workspace_layout probe_path =
     | Some path -> Fpath.to_dir_path path
     | None ->
         failf "current directory %s is not inside dune workspace root %s"
-          (Fpath.to_string cwd) (Fpath.to_string workspace_root)
+          (Fpath.to_string cwd)
+          (Fpath.to_string workspace_root)
   in
   { cwd; build_dir; cwd_within_workspace }
 
@@ -284,14 +280,6 @@ let run_generate options =
   emit_mappings emitted;
   emit_mappings (extra_mapping_lines ~layout ~root ~prefix:options.prefix)
 
-let run_gather options =
-  let probe_path = options.paths |> List.hd |> Fpath.parent in
-  let layout = current_workspace_layout probe_path in
-  options.paths
-  |> List.concat_map
-       (gather_mappings_for_dune_file ~layout ~prefix:options.prefix)
-  |> emit_mappings
-
 let report_error_and_exit = function
   | Error message ->
       prerr_endline ("error: " ^ message);
@@ -338,27 +326,13 @@ let coq_flags_arg =
     & opt fpath_conv Fpath.(v "coq.flags")
     & info [ "coq-flags" ] ~docv:"FILE" ~doc)
 
-let dune_files_arg =
-  let doc =
-    "Dune files to inspect. Each file is parsed for a $(b,rocq.theory) stanza, \
-     and the corresponding $(b,-Q) mapping lines are printed."
-  in
-  Arg.(non_empty & pos_all fpath_conv [] & info [] ~docv:"DUNE_FILE" ~doc)
-
 let generate_term =
   let run root prefix coq_flags =
     with_error_handling (fun () -> run_generate { root; prefix; coq_flags })
   in
   Term.(const run $ root_arg $ prefix_arg $ coq_flags_arg)
 
-let gather_term =
-  let run prefix paths =
-    with_error_handling (fun () -> run_gather { prefix; paths })
-  in
-  Term.(const run $ prefix_arg $ dune_files_arg)
-
 let generate_doc = "generate _CoqProject content from $(b,rocq.theory) stanzas"
-let gather_doc = "print only the $(b,-Q) mappings for selected dune files"
 
 let top_man : Manpage.block list =
   [
@@ -367,8 +341,9 @@ let top_man : Manpage.block list =
       "Generate _CoqProject content for Rocq projects that are organized in a \
        dune workspaces.";
     `P
-      "When invoked without a subcommand, $(b,dune-rocqproject) generates a \
-       _CoqProject file for the rocq.theories in the dune workspace.";
+      "$(b,dune-rocqproject) scans the selected workspace root, discovers \
+       $(b,rocq.theory) stanzas, and prints the corresponding _CoqProject \
+       contents.";
     `Pre
       {|The contents of the _CoqProject file are constructed by using:
 1/ built-in warning settings;
@@ -380,50 +355,13 @@ let top_man : Manpage.block list =
     `P
       "Directories whose physical path ends in $(b,/elpi) emit only the \
        build-tree mapping.";
-    `P
-      "Use the $(b,gather-coq-paths) subcommand when only the mapping lines \
-       are needed.";
     `S Manpage.s_examples;
     `P "$(b,dune-rocqproject) > _CoqProject";
     `P
       "$(b,dune-rocqproject --root fmdeps/auto --prefix fmdeps/auto) > \
        _CoqProject.auto";
-    `P
-      "$(b,dune-rocqproject gather-coq-paths path/to/theories/dune \
-       path/to/tests/dune)";
-  ]
-
-let generate_man =
-  [
-    `S Manpage.s_description;
-    `P
-      "Scan the workspace rooted at $(b,--root) and print the full _CoqProject \
-       content. This includes a short prelude, optional contents from \
-       $(b,--coq-flags), the plugin search path, discovered $(b,-Q) mappings \
-       from dune files, and a small set of hard-coded compatibility mappings \
-       carried over from the legacy shell script.";
-  ]
-
-let gather_man =
-  [
-    `S Manpage.s_description;
-    `P
-      "Parse dune files in the current workspace and generate a _CoqProject \
-       file that is suitable for IDEs.";
-    `P
-      "If a dune file has no $(b,rocq.theory) stanza or no theory name, it \
-       contributes no output.";
   ]
 
 let default_info = Cmd.info "dune-rocqproject" ~doc:generate_doc ~man:top_man
-
-let generate_info =
-  Cmd.info "generate-coq-project" ~doc:generate_doc ~man:generate_man
-
-let gather_info = Cmd.info "gather-coq-paths" ~doc:gather_doc ~man:gather_man
-
-let command =
-  Cmd.group ~default:generate_term default_info
-    [ Cmd.v generate_info generate_term; Cmd.v gather_info gather_term ]
-
+let command = Cmd.v default_info generate_term
 let () = exit (Cmd.eval command)
