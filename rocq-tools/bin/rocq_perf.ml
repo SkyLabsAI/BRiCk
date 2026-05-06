@@ -18,6 +18,13 @@
 open Rocq_tools
 open Rocq_tools.Extra
 
+let _ =
+  try
+    ignore (Unix.getenv "IN_ROCQ_PERF");
+    panic "Error: recursive invocation of \"rocq-perf\" as %S (PATH=%s)."
+      Sys.argv.(0) (try Unix.getenv "PATH" with Not_found -> "")
+  with Not_found -> ()
+
 let check_no_comp () =
   let _NO_COMP = "ROCQ_PERF_NO_COMPILATION" in
   match Sys.getenv_opt _NO_COMP with
@@ -158,6 +165,7 @@ let cleanup files =
   List.iter rm [files.log; files.perf; files.stdout; files.stderr]
 
 let _ =
+  Unix.putenv "IN_ROCQ_PERF" "true";
   let s = Sys.command cmd in
   Option.iter (if s = 0 then hack_glob else cleanup) files;
   exit s
