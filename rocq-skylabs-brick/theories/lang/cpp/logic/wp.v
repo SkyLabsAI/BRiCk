@@ -1170,7 +1170,7 @@ Section with_cpp.
 
   (* Opaque wrapper of [False]: this represents a [False] obtained by a [ValCat] mismatch in [wp_glval]. *)
   Definition wp_glval_mismatch {resolve : genv} (r : region) (vc : ValCat) (e : Expr)
-    : (ptr -> FreeTemps -> mpred) -> mpred := funI _ => |={top}=> False.
+    : (ptr -> FreeTemps -> mpred) -> mpred := funI _ => |={top}=> ERROR.
   #[global] Arguments wp_glval_mismatch : simpl never.
 
   (* evaluate an expression as a generalized lvalue *)
