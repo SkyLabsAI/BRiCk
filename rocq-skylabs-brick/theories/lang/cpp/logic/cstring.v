@@ -283,7 +283,6 @@ Module cstring.
     Always non-negative (see [strlen_nonneg]).
    *)
   Definition strlen (cstr : t) := zstring.strlen (to_zstring cstr).
-  #[global] Arguments strlen : simpl never.
 
   Definition WF {σ : genv} (cstr : t) : Prop := zstring.WF char_type.Cchar (to_zstring cstr).
   #[global] Arguments WF {σ} cstr : simpl never.
