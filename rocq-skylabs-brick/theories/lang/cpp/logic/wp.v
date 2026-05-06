@@ -664,26 +664,35 @@ Section with_cpp.
         rewrite length_rev. eauto. rewrite -(length_rev ls). eauto. }
   Qed.
 
+  (**
+  The expressions in the C++ language are categorized into five
+   "value categories" as defined in:
+      http://eel.is/c++draft/expr.prop#basic.lval-1
 
-  (* The expressions in the C++ language are categorized into five
-   * "value categories" as defined in:
-   *    http://eel.is/c++draft/expr.prop#basic.lval-1
-   *
-   * - "A glvalue is an expression whose evaluation determines the identity of
-   *    an object or function."
-   *   http://eel.is/c++draft/expr.prop#basic.lval-1.1
-   * - "A prvalue is an expression whose evaluation initializes an object or
-   *    computes the value of an operand of an operator, as specified by the
-   *    context in which it appears, or an expression that has type cv void."
-   *   http://eel.is/c++draft/expr.prop#basic.lval-1.2
-   * - "An xvalue is a glvalue that denotes an object whose resources can be
-   *    reused (usually because it is near the end of its lifetime)."
-   *   http://eel.is/c++draft/expr.prop#basic.lval-1.3
-   * - "An lvalue is a glvalue that is not an xvalue."
-   *   http://eel.is/c++draft/expr.prop#basic.lval-1.4
-   * - "An rvalue is a prvalue or an xvalue."
-   *   http://eel.is/c++draft/expr.prop#basic.lval-1.5
+   - "A glvalue is an expression whose evaluation determines the identity of
+      an object or function."
+     http://eel.is/c++draft/expr.prop#basic.lval-1.1
+     We represent the identity of an object or function as a pointer to it.
+     Therefore, in our semantics glvalues evaluate to pointers (and associated ownership).
+   - "A prvalue is an expression whose evaluation initializes an object or
+      computes the value of an operand of an operator, as specified by the
+      context in which it appears, or an expression that has type cv void."
+     http://eel.is/c++draft/expr.prop#basic.lval-1.2
+   - "An xvalue is a glvalue that denotes an object whose resources can be
+      reused (usually because it is near the end of its lifetime)."
+     http://eel.is/c++draft/expr.prop#basic.lval-1.3
+   - "An lvalue is a glvalue that is not an xvalue."
+     http://eel.is/c++draft/expr.prop#basic.lval-1.4
+   - "An rvalue is a prvalue or an xvalue."
+     http://eel.is/c++draft/expr.prop#basic.lval-1.5
    *)
+  (**
+  We define multiple WP predicates for expressions.
+   - [wp_lval] and [wp_rval] evaluate an lvalue/xvalue expression to a pointer.
+   - [wp_operand] evaluates an prvalue expression to a primitive value.
+   - [wp_init] evaluates a non-primitive prvalue that is used to initialize an object. This includes both rvalue and lvalue expressions, but excludes glvalue expressions that are not materialized as prvalues (e.g. [this]).
+   *)
+
 
   (** lvalues *)
   (* BEGIN wp_lval *)
