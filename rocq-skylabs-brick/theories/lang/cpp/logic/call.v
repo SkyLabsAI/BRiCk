@@ -223,7 +223,7 @@ Section with_resolve.
   Qed.
 End with_resolve.
 
-(*
+(**
 The following definitions describe the "return"-convention.
 Specifically, they describe how the returned pointer is received into
 the value category that it is called with.

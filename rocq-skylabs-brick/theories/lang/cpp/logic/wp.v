@@ -21,7 +21,7 @@ Require Import skylabs.iris.extra.bi.errors.
 
 #[local] Set Primitive Projections.
 
-(* expression continuations
+(** expression continuations
  * - in full C++, this includes exceptions, but our current semantics
  *   doesn't treat those.
  *)
@@ -113,13 +113,13 @@ Export FreeTemps.notations.
 Notation FreeTemps := FreeTemps.t.
 Notation FreeTemp := FreeTemps.t (only parsing).
 
-(* continuations
- * C++ statements can terminate in 4 ways.
- *
- * note(gmm): technically, they can also raise exceptions; however,
- * our current semantics doesn't capture this. if we want to support
- * exceptions, we should be able to add another case,
- * `k_throw : val -> mpred`.
+(** continuations
+C++ statements can terminate in 4 ways.
+
+note(gmm): technically, they can also raise exceptions; however,
+our current semantics doesn't capture this. if we want to support
+exceptions, we should be able to add another case,
+`k_throw : val -> mpred`.
  *)
 Variant ReturnType : Set :=
 | Normal
