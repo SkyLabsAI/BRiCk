@@ -403,8 +403,20 @@ Proof.
   by f_equal; rewrite N2Z.inj_add Z2N.id.
 Qed.
 
+Lemma Z_of_N_shiftr n s :
+  (0 <= s)%Z ->
+  (Z.of_N n ≫ s)%Z = Z.of_N (n ≫ Z.to_N s).
+Proof.
+  move => ?.
+  by rewrite N.shiftr_div_pow2 Z.shiftr_div_pow2 // N2Z.inj_div N2Z.inj_pow Z2N.id.
+Qed.
+
 Lemma N2Z_lxor (a b : N) : Z.lxor (Z.of_N a) (Z.of_N b) = Z.of_N (N.lxor a b).
 Proof. by case: a; case: b. Qed.
+
+Lemma N2Z_inj_odd_N n :
+  Z.odd (Z.of_N n) = N.odd n.
+Proof. move: n => [] // [] //. Qed.
 
 Lemma N2Z_lnot_trim (w : N) : Z.modulo (Z.lnot 0) (Z.pow 2 (Z.of_N w)) = Z.of_N (N.lnot 0 w).
 Proof.
@@ -618,6 +630,50 @@ Proof.
   all: rewrite Z.land_spec !Z.pow2_bits_eqb //.
   - case: Z.eqb_spec => ?; subst; rewrite ?andb_false_r ?Hn //.
   - case: Z.eqb_spec => ?; subst; rewrite ?andb_false_r ?Hn ?Z.bits_0 //.
+Qed.
+
+Lemma Z_shiftr_lt: ∀ a n b : Z, (0 ≤ n)%Z → (0 ≤ a < b * 2 ^ n)%Z → (a ≫ n < b)%Z.
+Proof.
+  move => ? ? ? ?.
+  rewrite Z.shiftr_div_pow2; last done.
+  move => [] ? ?.
+  apply: Z.div_lt_upper_bound; lia.
+Qed.
+
+Lemma bool_decide_land_one_odd (z : Z) :
+  (bool_decide ((z `land` 1) <> 0)%Z) = Z.odd z.
+Proof.
+  move: z => []; try reflexivity; move =>[]; try reflexivity.
+  move => []; try (move => []; reflexivity); reflexivity.
+Qed.
+
+Lemma pow_2_even (n : N) :
+  (0 < n)%N -> Z.Even (2 ^ n).
+Proof.
+  move => ?.
+  rewrite /Z.Even.
+  exists (2 ^ (n - 1))%Z.
+  rewrite -(Z.pow_add_r 2 1); [|lia..].
+  by rewrite Zplus_minus.
+Qed.
+
+Lemma Z_land_nonzero_odd (z : Z) :
+  (Z.land z 1 <> 0)%Z <->
+  Is_true (Z.odd z).
+Proof. rewrite -bool_decide_land_one_odd bool_decide_spec //. Qed.
+
+Lemma Z_to_N_le_adjoint (a :Z) (b : N) :
+  (Z.to_N a <= b)%N <-> (a <= Z.of_N b)%Z.
+Proof. lia. Qed.
+
+Lemma byte_bit_pow (a : Z):
+  (0 <= a)%Z ->
+  (256 ^ a = 2 ^ (a * 8))%Z.
+Proof.
+  move => ?.
+  have -> : (256 = 2 ^ 8)%Z by vm_compute.
+  rewrite Z.mul_comm.
+  rewrite Z.pow_mul_r; lia.
 Qed.
 
 (* Z.max and other operations *)

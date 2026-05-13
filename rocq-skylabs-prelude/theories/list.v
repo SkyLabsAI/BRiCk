@@ -263,6 +263,15 @@ Proof. by rewrite -foldr_rev rev_involutive. Qed.
 Lemma foldl_left {A B} (f : A -> B -> A) acc l : foldl f acc l = fold_left f l acc.
 Proof. move: acc. induction l; cbn; auto. Qed.
 
+Lemma foldr_push_in {E T} (f : E -> T -> T) x lst (op : T -> T -> T) core :
+  (forall elm acc, op x (f elm acc) = f elm (op x acc)) ->
+  foldr f (op x core) lst = op x (foldr f core lst).
+Proof.
+  move => opH.
+  elim: lst => [|hd tl IH] /=; first done.
+  by rewrite IH opH.
+Qed.
+
 (* From stdlib's [repeat] to stdpp's [replicate]. *)
 Lemma repeat_replicate {A} (x : A) n :
   repeat x n = replicate n x.
@@ -429,6 +438,15 @@ Section lists.
     (x1, x2) ∈ zip xs ys → x1 ∈ xs ∧ x2 ∈ ys.
   Proof. intros. eauto using elem_of_zip_l, elem_of_zip_r. Qed.
 
+  Lemma zip_app_distr xs xs' ys ys' :
+    length xs = length ys ->
+    zip (xs ++ xs') (ys ++ ys') = zip xs ys ++ zip xs' ys'.
+  Proof.
+    move: xs' ys ys'.
+    elim: xs => [|x xs IH] xs' [|y ys] ys' //=.
+    by move => [=] /IH ->.
+  Qed.
+
   Lemma zip_lookup_Some x y xs ys i :
     xs !! i = Some x
     -> ys !! i = Some y
@@ -479,6 +497,18 @@ Section lists.
   Qed.
 End lists.
 #[global] Arguments zip_with : simpl nomatch.
+
+Lemma foldr_op_index_shift shift (la : list N) (n m : nat) f :
+  0%Z = shift 0%Z ->
+  (forall idx elm acc , shift (f (idx, elm) acc) = f (idx + n, elm) (shift acc)) ->
+  foldr f 0%Z
+    (zip (seq (m + n) (length la)) la) =
+  (shift (foldr f 0
+     (zip (seq m (length la)) la)))%Z.
+Proof.
+  elim: la m; first by intros.
+  by move => hd tl IH m ? Hop; rewrite Hop -IH.
+Qed.
 
 Section list_difference.
   Context `{EqDecision A}.

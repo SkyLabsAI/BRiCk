@@ -547,6 +547,14 @@ Section listN.
     dropN (A := A) n [] = [].
   Proof. rewrite /dropN. by case: (N.to_nat _). Qed.
 
+  Lemma dropN_elem_of x xs n :
+    x ∈ dropN n xs -> x ∈ xs.
+  Proof.
+    rewrite /dropN.
+    move: xs; elim: (N.to_nat n)=> [|k IH] [|hd tl] //=.
+    by move=> /IH ?; right.
+  Qed.
+
   Lemma dropN_cons_succ x xs i :
     dropN (i + 1) (x :: xs) = dropN i xs.
   Proof. by rewrite -dropN_dropN dropN_one. Qed.
@@ -554,6 +562,11 @@ Section listN.
   Lemma dropN_cons_succ' x xs i :
     dropN (N.succ i) (x :: xs) = dropN i xs.
   Proof. by rewrite -N.add_1_r dropN_cons_succ. Qed.
+
+  Lemma Forall_dropN (P : A -> Prop) (n : N) (xs : list A) :
+    List.Forall P xs ->
+    List.Forall P (dropN n xs).
+  Proof. rewrite /dropN. apply Forall_drop. Qed.
 
   Lemma dropN_app n xs1 xs2 :
     dropN n (xs1 ++ xs2) = dropN n xs1 ++ dropN (n - lengthN xs1) xs2.
@@ -629,6 +642,21 @@ Section listN.
     takeN n (xs1 ++ xs2) = takeN n xs1 ++ takeN (n - lengthN xs1) xs2.
   Proof.
     rewrite /takeN/lengthN N2Nat.inj_sub Nat2N.id. by apply: firstn_app.
+  Qed.
+
+  Lemma take_takeN xs (n : nat) :
+    take n xs = takeN (N.of_nat n) xs.
+  Proof. by rewrite /takeN Nat2N.id. Qed.
+
+  Lemma drop_dropN xs (n : nat) :
+    drop n xs = dropN (N.of_nat n) xs.
+  Proof. by rewrite /dropN Nat2N.id. Qed.
+
+  Lemma takeN_plus n m xs :
+    takeN (n + m) xs = takeN n xs ++ takeN m (dropN n xs).
+  Proof.
+    rewrite /takeN/dropN N2Nat.inj_add.
+    by rewrite take_take_drop.
   Qed.
 
   Lemma takeN_nil n :
