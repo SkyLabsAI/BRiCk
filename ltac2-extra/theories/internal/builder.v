@@ -346,9 +346,9 @@ Module Builder.
               Control.throw (Invalid_argument (Some msg))
             else if Int.lt 0 n then
               let n := (build_pos ()).(build) n in
-              '(BinNums.Zpos $n)
+              '(BinNums.Npos $n)
             else
-              '(BinNums.Z0) }.
+              '(BinNums.N0) }.
 
   Ltac2 build_Z : int Builder.t :=
     fun () =>
