@@ -498,18 +498,6 @@ Section lists.
 End lists.
 #[global] Arguments zip_with : simpl nomatch.
 
-Lemma foldr_op_index_shift shift (la : list N) (n m : nat) f :
-  0%Z = shift 0%Z ->
-  (forall idx elm acc , shift (f (idx, elm) acc) = f (idx + n, elm) (shift acc)) ->
-  foldr f 0%Z
-    (zip (seq (m + n) (length la)) la) =
-  (shift (foldr f 0
-     (zip (seq m (length la)) la)))%Z.
-Proof.
-  elim: la m; first by intros.
-  by move => hd tl IH m ? Hop; rewrite Hop -IH.
-Qed.
-
 Section list_difference.
   Context `{EqDecision A}.
   Implicit Types l k : list A.
