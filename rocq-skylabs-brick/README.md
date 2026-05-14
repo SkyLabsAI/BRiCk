@@ -36,6 +36,9 @@ $ dune runtest
     - `semantics` -- core semantic definitions that are independent of separation logic
     - `logic` -- the separation logic weakest pre-condition semantics
     - `parser` -- the environment used to interpret the generated code.
+- `tests` -- unit tests for features of the program representation, e.g. string notation, de-aliasing, duplicates, notations, etc.
+- `test-cpp2v` -- tests that `cpp2v` properly handles C++ features
+  (TODO: these are pretty verbose)
 
 ## Coq IDEs
 
