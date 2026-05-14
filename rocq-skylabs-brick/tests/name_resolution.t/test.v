@@ -29,7 +29,7 @@ cpp.prog source prog cpp:{{
     bar<const C&&>(c);
   }
 }}.
-
+Require Import skylabs.lang.cpp.cpp.
 Require Import skylabs.lang.cpp.syntax.dealias.
 
 Notation TEST input output :=

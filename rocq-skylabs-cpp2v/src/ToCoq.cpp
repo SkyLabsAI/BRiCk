@@ -141,11 +141,11 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
             CoqPrinter print(fmt, /*templates*/ false, cache);
             ClangPrinter cprint(compiler_, ctxt, trace_, comment_, typedefs_);
 
-            parser(print);
             if (interactive_.has_value()) {
                 print.output() << "Section cpp_prog__" << interactive_.value()
                                << "__." << fmt::line;
             }
+            parser(print);
             bytestring(print) << fmt::line;
 
             if (this->sharing_) {
@@ -221,7 +221,7 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
             print.output() << "." << fmt::outdent << fmt::outdent << fmt::line;
 
             // Close the section if we opened one
-            if (this->interactive_.has_value()) {
+            if (interactive_.has_value()) {
                 print.output() << "End cpp_prog__" << interactive_.value()
                                << "__." << fmt::line;
             }

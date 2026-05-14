@@ -15,6 +15,7 @@ cpp.prog source prog cpp:{{
 }}.
 
 Require Import skylabs.lang.cpp.syntax.dealias.
+Require Import skylabs.lang.cpp.cpp.
 
 Notation TEST input output :=
   (eq_refl : trace.runO (resolveValue source input%cpp_name) = Some output%cpp_name).
