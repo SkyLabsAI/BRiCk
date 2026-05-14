@@ -1,4 +1,5 @@
-Require Import skylabs.lang.cpp.parser.
+Check @length.
+
 Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
 
 #[duplicates(warn)]
@@ -31,3 +32,6 @@ cpp.prog source3 prog cpp:{{
   }
 }}.
 End code.
+
+(* check that the interpretation of [length] does not change *)
+Check @length.
