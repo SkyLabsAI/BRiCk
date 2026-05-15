@@ -41,6 +41,10 @@ Proof. constructor; compute; congruence. Qed.
 Proof. constructor; compute; congruence. Qed.
 #[global] Instance: supports_arith Tulonglong.
 Proof. constructor; compute; congruence. Qed.
+#[global] Instance: supports_arith Tint128_t.
+Proof. constructor; compute; congruence. Qed.
+#[global] Instance: supports_arith Tuint128_t.
+Proof. constructor; compute; congruence. Qed.
 
 Succeed Example supports_arith_long : supports_arith Tlong := _.
 Succeed Example supports_arith_ulong : supports_arith Tulong := _.
@@ -308,6 +312,10 @@ Proof. constructor; left; refine _. Qed.
 #[global] Instance: supports_rel Tlonglong.
 Proof. constructor; left; refine _. Qed.
 #[global] Instance: supports_rel Tulonglong.
+Proof. constructor; left; refine _. Qed.
+#[global] Instance: supports_rel Tint128_t.
+Proof. constructor; left; refine _. Qed.
+#[global] Instance: supports_rel Tuint128_t.
 Proof. constructor; left; refine _. Qed.
 #[global] Instance: forall nm, supports_rel (Tenum nm).
 Proof. constructor; right; exact I. Qed.
