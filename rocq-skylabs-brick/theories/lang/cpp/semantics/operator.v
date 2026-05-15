@@ -214,7 +214,6 @@ Arguments eval_and _ {_} _ _ _ _.
 Arguments eval_xor _ {_} _ _ _ _.
 
 
-
 (** ** Shifting Operators
 
     (includes: `<<` and `>>`)
@@ -312,7 +311,6 @@ Proof. constructor; left; refine _. Qed.
 Proof. constructor; left; refine _. Qed.
 #[global] Instance: forall nm, supports_rel (Tenum nm).
 Proof. constructor; right; exact I. Qed.
-
 
 (** [relop_result_type ty] holds on types [ty] that can be the result of a
     relational operator comparison, e.g. `==` or `<`.
