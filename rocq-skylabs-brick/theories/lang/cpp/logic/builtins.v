@@ -151,13 +151,11 @@ Section wp_builtin.
       |-- wp_builtin "__builtin_bswap64" (Tfunction (Tnum sz Unsigned) (Tnum sz Unsigned :: nil))
           (Vint x :: nil) Q.
 
-(*
   Axiom wp_bswap128 : forall sz x Q,
       int_rank.bitsize sz = bitsize.W128 ->
           [| has_type_prop (Vint x) (Tnum sz Unsigned) |] ** Q (Vint (bswap bitsize.W128 x))
       |-- wp_builtin "__builtin_bswap128" (Tfunction (Tnum sz Unsigned) (Tnum sz Unsigned :: nil))
         (Vint x :: nil) Q.
-*)
 
   (** std::launder (http://eel.is/c++draft/ptr.launder) *)
   Axiom wp_launder : forall ty res newp Q,

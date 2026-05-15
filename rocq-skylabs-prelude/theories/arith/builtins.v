@@ -819,14 +819,14 @@ Section Bswap.
   Definition bswap (sz : bitsize) : Z -> Z := bswap_ (bitsize.bytesNat sz).
 
   Section test.
-    Local Definition bytes (ls : list Z) :=
+    #[local] Definition bytes (ls : list Z) :=
       fold_left (fun a b => a * 256 + b)%Z ls 0%Z.
     Arguments bytes _%_Z.
 
-    Local Definition _bswap16_test : bswap bitsize.W16 (bytes (1::2::nil)%Z) = bytes (2::1::nil)%Z := eq_refl.
-    Local Definition _bswap32_test :
+    #[local] Definition _bswap16_test : bswap bitsize.W16 (bytes (1::2::nil)%Z) = bytes (2::1::nil)%Z := eq_refl.
+    #[local] Definition _bswap32_test :
       bswap bitsize.W32 (bytes (1::2::3::4::nil)%Z) = bytes (4::3::2::1::nil)%Z := eq_refl.
-    Local Definition _bswap64_test :
+    #[local] Definition _bswap64_test :
       bswap bitsize.W64 (bytes (1::2::3::4::5::6::7::8::nil)%Z) = bytes (8::7::6::5::4::3::2::1::nil)%Z := eq_refl.
   End test.
 End Bswap.
