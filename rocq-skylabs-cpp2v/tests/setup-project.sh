@@ -1,0 +1,1 @@
+../../rocq-skylabs-brick/setup-project.sh
