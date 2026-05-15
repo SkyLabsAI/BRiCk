@@ -1,0 +1,44 @@
+(*
+ * Copyright (c) 2026 SkyLabs AI, Inc.
+ * This software is distributed under the terms of the BedRock Open-Source License.
+ * See the LICENSE-BedRock file in the repository root for details.
+ *)
+Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
+
+cpp.prog module prog cpp:{{
+  using INT = int;
+  using SINT = INT;
+
+  enum E { };
+
+  void test_e(E);
+
+  void test(INT, SINT) { }
+}}.
+
+(* TODO: this needs to be put in the [_cpp.v] file *)
+Definition parser x := parser.parse_name_with module x.
+Definition printer n := (match printer.print_name n with
+                         | None => None
+                         | Some x => Some x
+                         end).
+String Notation core.name parser printer : cpp_name_scope.
+
+Goal "test(int, int)"%cpp_name = (Nglobal (Nfunction function_qualifiers.N "test" (Tint :: Tint :: nil))).
+Proof. reflexivity. Qed.
+Goal "test(INT, SINT)"%cpp_name = (Nglobal (Nfunction function_qualifiers.N "test" (Tint :: Tint :: nil))).
+Proof. reflexivity. Qed.
+Goal "test_e(enum E)"%cpp_name = (Nglobal (Nfunction function_qualifiers.N "test_e" (Tenum "E" :: nil))).
+Proof. reflexivity. Qed.
+
+(* The use of [enum] is optional *)
+Goal "test_e(E)"%cpp_name = (Nglobal (Nfunction function_qualifiers.N "test_e" (Tenum "E" :: nil))).
+Proof. reflexivity. Qed.
+
+
+(* unknown symbol within the TU
+   NOTE: this could be a parsing error, but it requires that we remove the default parser.
+ *)
+Goal "test_e()"%cpp_name = (Nglobal (Nfunction function_qualifiers.N "test_e" nil)).
+Proof. reflexivity. Qed.

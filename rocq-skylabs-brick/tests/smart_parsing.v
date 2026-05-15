@@ -4,10 +4,21 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import skylabs.lang.cpp.syntax.
-Require test.test_cpp.
+Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
+
+cpp.prog module prog cpp:{{
+  using INT = int;
+  using SINT = INT;
+
+  enum E { };
+
+  void test_e(E);
+
+  void test(INT, SINT) { }
+}}.
 
 (* TODO: this needs to be put in the [_cpp.v] file *)
-Definition parser x := parser.parse_name_with test_cpp.module x.
+Definition parser x := parser.parse_name_with module x.
 Definition printer n := (match printer.print_name n with
                          | None => None
                          | Some x => Some x
