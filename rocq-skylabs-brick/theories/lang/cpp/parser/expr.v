@@ -72,11 +72,13 @@ Module ParserExpr.
   Definition Ealignof_preferred (e : type + Expr) (t : type) :=
     Eunsupported "alignof_preferred" t.
 
-  Definition Eoperator_member_call (oo : OverloadableOperator) (nm : obj_name) (ct : dispatch_type) (ft : type) (obj : Expr) (es : list Expr) : Expr :=
-    Eoperator_call oo (operator_impl.MFunc nm ct ft) (obj :: es).
+  Definition Eoperator_member_call (oo : OverloadableOperator) (nm : obj_name) (ct : dispatch_type) (ft : type) (es : list Expr) : Expr :=
+    Eoperator_call oo (operator_impl.MFunc nm ct ft) es.
 
-  Definition Eoperator_call (oo : OverloadableOperator) (f : obj_name) (ft : type) (es : list Expr) : Expr :=
-    Eoperator_call oo (operator_impl.Func f ft) es.
+  Definition Eoperator_call (oo : OverloadableOperator) (nm : obj_name) (ft : type) (es : list Expr) : Expr :=
+    Eoperator_call oo (operator_impl.Func nm ft) es.
+
+  Definition Static_dispatch : dispatch_type := Static.
 
   Definition Eenum_const_at (gn : name) (c : ident) (ty : exprtype) : Expr :=
     Ecast (Cintegral ty) (Eenum_const gn c).
