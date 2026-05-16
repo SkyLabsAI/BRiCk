@@ -432,8 +432,13 @@ Module dispatch_type.
     match x , y with
     | Virtual , Virtual => Eq
     | Virtual , Direct => Lt
+    | Virtual , Static => Lt
     | Direct , Virtual => Gt
     | Direct , Direct => Eq
+    | Direct , Static => Lt
+    | Static , Virtual => Gt
+    | Static , Direct => Gt
+    | Static , Static => Eq
     end.
 End dispatch_type.
 #[global] Instance dispatch_type_compare : Compare dispatch_type := dispatch_type.compare.

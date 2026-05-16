@@ -1219,6 +1219,7 @@ Module Type Expr.
           | _ => False
           end
       | Direct => |> wp_mfptr this_type fty (_global fn) (obj :: args) Q
+      | Static => |> wp_fptr fty (_global fn) args Q
       end.
 
     Lemma dispatch_frame ct fty fn this_type obj args Q Q' :
@@ -1232,6 +1233,7 @@ Module Type Expr.
       { iApply resolve_virtual_frame.
         iIntros (???). iIntros "X"; iNext; iRevert "X"; iApply wp_mfptr_frame. eauto. }
       { iIntros "X"; iNext; iRevert "X"; iApply wp_mfptr_frame. eauto. }
+      { iIntros "X"; iNext; iRevert "X"; iApply wp_fptr_frame. eauto. }
     Qed.
 
     (** [wp_mcall invoke ooe obj fty es Q] calls a member function on [obj].
@@ -1313,7 +1315,7 @@ Module Type Expr.
         and therefore have (potentially) different order-of-evaluation
         than regular function or member calls.
      *)
-    Definition wp_operator_call oo oi es Q :=
+    Definition wp_operator_call (oo : OverloadableOperator) (oi : operator_impl) (es : list Expr) Q :=
       [| tu ⊧ resolve |] -*
       match oi with
       | operator_impl.Func f fty =>
@@ -1325,10 +1327,25 @@ Module Type Expr.
           | None => False
           end
        | operator_impl.MFunc fn ct fty =>
-           match es with
-           | eobj :: es =>
-               wp_mcall false (dispatch ct fty fn (type_of eobj)) (evaluation_order.order_of oo) eobj fty es Q
-           | _ => False
+           match ct with
+           | Static =>
+               let fty := normalize_type fty in
+               match es, args_for <$> as_function fty with
+               | eobj :: es, Some targs =>
+                   let eval_obj : wp.WPE.M ptr :=
+                     fun K => wp_discard eobj (fun free => K invalid_ptr free)
+                   in
+                   letI* _fps, vs, ifree, free := wp_args (evaluation_order.order_of oo) [eval_obj] targs es in
+                   |> wp_fptr fty (_global fn) vs (fun v => interp ifree $ Q v free)
+               | _, _ => False
+               end
+           | Direct
+           | Virtual =>
+               match es with
+               | eobj :: es =>
+                   wp_mcall false (dispatch ct fty fn (type_of eobj)) (evaluation_order.order_of oo) eobj fty es Q
+               | _ => False
+               end
            end
       end%I.
 
@@ -1338,14 +1355,30 @@ Module Type Expr.
       rewrite /wp_operator_call.
       iIntros "F X Y".
       iSpecialize ("X" with "Y"); iRevert "X".
-      repeat case_match; try solve [ iIntros "[]" ].
-      { iApply wp_args_frame; eauto.
-        iIntros (????) "W !>"; iRevert "W";
-          iApply wp_fptr_frame; iIntros (?); iApply interp_frame.
+      destruct oi as [f fty | fn ct fty]; simpl.
+      { repeat case_match; try iIntros "[]".
+        iApply wp_args_frame; eauto.
+        iIntros (????) "W !>"; iRevert "W".
+        iApply wp_fptr_frame. iIntros (?); iApply interp_frame.
         iApply "F". }
-      { iApply (wp_mcall_frame with "F").
+      destruct ct; simpl.
+      { destruct es as [|eobj es]; simpl; try iIntros "[]".
+        iApply (wp_mcall_frame with "F").
         iIntros (????) "F".
         by iApply dispatch_frame. }
+      { destruct es as [|eobj es]; simpl; try iIntros "[]".
+        iApply (wp_mcall_frame with "F").
+        iIntros (????) "F".
+        by iApply dispatch_frame. }
+      { destruct es as [|eobj es]; simpl; try iIntros "[]".
+        repeat case_match; try iIntros "[]".
+        iApply wp_args_frame.
+        { simpl. iSplitL; eauto. rewrite /wp.WPE.Mframe.
+          iIntros (??) "X". iApply wp_discard_frame; first reflexivity.
+          iIntros (?); iApply "X". }
+        iIntros (????) "W !>"; iRevert "W".
+        iApply wp_fptr_frame. iIntros (?); iApply interp_frame.
+        iApply "F". }
     Qed.
 
     Axiom wp_operand_operator_call : forall oo oi es (ty := type_of $ Eoperator_call oo oi es) Q,
