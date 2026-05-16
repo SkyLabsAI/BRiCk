@@ -713,7 +713,6 @@ public:
         // than regular function calls. Because our semantics overapproximates
         // the possible behaviors, it is sound for us to directly desugar them.
         auto callee = expr->getCalleeDecl();
-        auto method = dyn_cast<CXXMethodDecl>(callee);
         // some operator calls are actually method calls.
         // because we (and C++) distinguish between member calls
         // and function calls, we need to desugar this to a method
@@ -722,7 +721,7 @@ public:
             print.ctor("Eunsupported");
             print.str("unsupported operator call (nullptr)");
             done(expr, Done::DT);
-        } else if (method) {
+        } else if (auto method = dyn_cast<CXXMethodDecl>(callee)) {
             guard::ctor _{print, "Eoperator_member_call"};
             cprint.printOverloadableOperator(print, expr->getOperator(),
                                              loc::of(expr))
