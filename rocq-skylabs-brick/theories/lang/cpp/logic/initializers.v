@@ -465,15 +465,9 @@ Definition wp_initialize `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (�
 #[global] Arguments wp_initialize {_ _ _ _} _ _ !_ _ _ _ / : assert.
 (* END wp_initialize *)
 
-Definition heap_type_of (t : type) : type :=
-  match erase_qualifiers t with
-  | Trv_ref ty => Tref ty
-  | t => t
-  end.
-
 Lemma wp_initialize_unqualified_well_typed `{Σ : cpp_logic, σ : genv}
   tu ρ cv ty addr init (Q : FreeTemps.t -> epred) :
-      wp_initialize_unqualified tu ρ cv ty addr init (fun free => reference_to (heap_type_of ty) addr -* Q free)
+      wp_initialize_unqualified tu ρ cv ty addr init (fun free => reference_to (to_heap_type ty) addr -* Q free)
   |-- wp_initialize_unqualified tu ρ cv ty addr init Q.
 Proof.
   rewrite wp_initialize_unqualified.unlock.
@@ -487,12 +481,12 @@ Proof.
   - iApply wp_glval_frame; [ done | ];
       iIntros (??) "X Y";
       iDestruct (observe (reference_to _ _) with "Y") as "#?".
-      iApply ("X" with "Y"). rewrite /heap_type_of/=. done.
+      iApply ("X" with "Y"). rewrite /to_heap_type/=. done.
   - iApply wp_xval_frame; [ done | ];
       iIntros (??) "X Y";
       iDestruct (observe (reference_to _ _) with "Y") as "#?";
       iApply ("X" with "Y").
-    rewrite /heap_type_of/=. done.
+    rewrite /to_heap_type/=. done.
   - iApply wp_operand_frame; [ done | ].
     iIntros (??) "[$ X] Y".
     iDestruct (observe (reference_to _ _) with "Y") as "#?";
@@ -502,7 +496,7 @@ Proof.
     etransitivity; [ | apply wp_init_well_typed ].
     iApply wp_init_frame; [ done | ].
     iIntros (?) "X Y". iApply "X".
-    rewrite /heap_type_of/=.
+    rewrite /to_heap_type/=.
     rewrite reference_to_erase/=/tqualified'.
     destruct cv; simpl; eauto.
   - etransitivity; [ | apply wp_init_well_typed ].
