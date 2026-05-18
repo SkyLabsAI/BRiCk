@@ -1,9 +1,16 @@
-(cram
- (applies_to :whole_subtree)
- (deps
-  (package rocq-core)
-  (package rocq-stdlib)
-  (package rocq-upoly)
-  (package rocq-skylabs-brick)
-  (package rocq-skylabs-cpp2v)
-  setup-project.sh))
+(rocq.theory
+ (name skylabs_brick.tests)
+ (theories
+  Stdlib
+  Lens
+  Lens.Elpi
+  iris
+  stdpp
+  elpi
+  elpi_elpi
+  Ltac2
+  skylabs.upoly
+  skylabs.prelude
+  skylabs.iris.extra
+  skylabs.ltac2.extra
+  skylabs.lang.cpp))
