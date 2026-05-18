@@ -1,0 +1,102 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.cpp_prog_inline</h1>
+
+<div class="code">
+<span class="id" title="keyword">Check</span> @<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#length"><span class="id" title="definition">length</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <a id="cpp_prog__source1__" class="idref" href="#cpp_prog__source1__"><span class="id" title="section"><span id="cpp_prog__source2__" class="id"><span id="code.cpp_prog__source3__" class="id">Import</span></span></span></a> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">duplicates</span>(<span class="id" title="var">warn</span>)]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">source1</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">void</span> <span class="id" title="var">test</span>() { }<br/>
+&nbsp;}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Check</span> <a class="idref" href="skylabs_brick.tests.cpp_prog_inline.html#source1"><span class="id" title="definition">source1</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">duplicates</span>(<span class="id" title="var">error</span>)]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">source2</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">add</span>(<span class="id" title="var">int</span> <span class="id" title="var">x</span>, <span class="id" title="var">int</span> <span class="id" title="var">y</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">x</span> + <span class="id" title="var">y</span>; }<br/>
+&nbsp;&nbsp;}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Check</span> <a class="idref" href="skylabs_brick.tests.cpp_prog_inline.html#source2"><span class="id" title="definition">source2</span></a>.<br/>
+
+<br/>
+<span class="id" title="var">Fail</span> #[<span class="id" title="var">duplicates</span>(<span class="id" title="var">ignore</span>)]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">buggy_source</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">void</span> <span class="id" title="var">identity</span>(<span class="id" title="var">int</span> <span class="id" title="var">x</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">x</span>; }<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="code" class="idref" href="#code"><span class="id" title="section">code</span></a>.<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">source3</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">void</span> <span class="id" title="var">test</span>(<span class="id" title="var">const</span> <span class="id" title="var">int</span> <span class="id" title="var">src1</span>[], <span class="id" title="var">const</span> <span class="id" title="var">int</span> <span class="id" title="var">src2</span>[], <span class="id" title="var">int</span> <span class="id" title="var">dst</span>[], <span class="id" title="var">int</span> <span class="id" title="var">n</span>) {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;// <span class="id" title="var">Sum</span> <span class="id" title="var">the</span> <span class="id" title="var">arrays</span> <span class="id" title="var">src1</span> <span class="id" title="var">and</span> <span class="id" title="var">src2</span> <span class="id" title="tactic">in</span> <span class="id" title="var">dst</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">for</span> (<span class="id" title="var">int</span> <span class="id" title="var">i</span> = 0; <span class="id" title="var">i</span> &lt; <span class="id" title="var">n</span>; <span class="id" title="var">i</span>++) {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">dst</span>[<span class="id" title="var">i</span>] = <span class="id" title="var">src1</span>[<span class="id" title="var">i</span>] + <span class="id" title="var">src2</span>[<span class="id" title="var">i</span>];<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;}<br/>
+}}.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_brick.tests.cpp_prog_inline.html#code"><span class="id" title="section">code</span></a>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;check&nbsp;that&nbsp;the&nbsp;interpretation&nbsp;of&nbsp;<span class="inlinecode"><span class="id" title="var">length</span></span>&nbsp;does&nbsp;not&nbsp;change&nbsp;*)</span><br/>
+<span class="id" title="keyword">Check</span> @<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#length"><span class="id" title="definition">length</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

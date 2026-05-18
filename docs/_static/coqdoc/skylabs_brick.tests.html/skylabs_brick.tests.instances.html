@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.instances</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2025&nbsp;BlueRock&nbsp;Systems,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.algebra.cfrac</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.logic.arr</span>.<br/>
+<span class="comment">(*&nbsp;Require&nbsp;Import&nbsp;skylabs.lang.cpp.logic.rep_defs.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;Require&nbsp;Import&nbsp;skylabs.lang.cpp.logic.mpred.&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.logic</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="with_cpp" class="idref" href="#with_cpp"><span class="id" title="section">with_cpp</span></a>.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Context&nbsp;`{Σ&nbsp;:&nbsp;cpp_logic}.&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{<a id="43a705d40096ef54c52f70536b49dc5b" class="idref" href="#43a705d40096ef54c52f70536b49dc5b"><span class="id" title="variable">Σ</span></a> : <span class="id" title="class">cpp_logic</span>, <a id="0b1d3f605c206c3f68b5282befa8ad5b" class="idref" href="#0b1d3f605c206c3f68b5282befa8ad5b"><span class="id" title="variable">σ</span></a> : <span class="id" title="class">genv</span>}.<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Context&nbsp;`{Σ&nbsp;:&nbsp;cpp_logic,&nbsp;module&nbsp;⊧&nbsp;σ}.&nbsp;*)</span><br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Section</span> <a id="with_cpp.cQp" class="idref" href="#with_cpp.cQp"><span class="id" title="section">cQp</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="with_cpp.cQp.A" class="idref" href="#with_cpp.cQp.A"><span class="id" title="variable">A</span></a>} {<a id="with_cpp.cQp.R" class="idref" href="#with_cpp.cQp.R"><span class="id" title="variable">R</span></a> : <span class="id" title="record">cQp.t</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs_brick.tests.instances.html#A:5"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">Rep</span>} (<a id="with_cpp.cQp.xs" class="idref" href="#with_cpp.cQp.xs"><span class="id" title="variable">xs</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="skylabs_brick.tests.instances.html#A:5"><span class="id" title="variable">A</span></a>) (<a id="with_cpp.cQp.q" class="idref" href="#with_cpp.cQp.q"><span class="id" title="variable">q</span></a> : <span class="id" title="record">cQp.t</span>) (<a id="with_cpp.cQp.ty" class="idref" href="#with_cpp.cQp.ty"><span class="id" title="variable">ty</span></a> : <span class="id" title="inductive">type</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="foo" class="idref" href="#foo"><span class="id" title="definition">foo</span></a> `{<a id="H:13" class="idref" href="#H:13"><span class="id" title="binder">!</span></a><a id="H:13" class="idref" href="#H:13"><span class="id" title="binder">forall</span></a> <a id="q:10" class="idref" href="#q:10"><span class="id" title="binder"><span id="H:13" class="id">q</span></span></a> <a id="x:11" class="idref" href="#x:11"><span class="id" title="binder"><span id="H:13" class="id">x</span></span></a><a id="H:13" class="idref" href="#H:13"><span class="id" title="binder">,</span></a> <a id="H:13" class="idref" href="#H:13"><span class="id" title="binder">AsCFractional</span></a> <a id="H:13" class="idref" href="#H:13"><span class="id" title="binder">(</span></a><a id="H:13" class="idref" href="#H:13"><span class="id" title="binder">R</span></a> <a id="H:13" class="idref" href="#H:13"><span class="id" title="binder">q</span></a> <a id="H:13" class="idref" href="#H:13"><span class="id" title="binder">x</span></a><a id="H:13" class="idref" href="#H:13"><span class="id" title="binder">)</span></a> <a id="H:13" class="idref" href="#H:13"><span class="id" title="binder">(</span></a><a id="H:13" class="idref" href="#H:13"><span class="id" title="binder">fun</span></a> <a id="q':12" class="idref" href="#q':12"><span class="id" title="binder"><span id="H:13" class="id">q'</span></span></a> <a id="H:13" class="idref" href="#H:13"><span class="id" title="binder">=&gt;</span></a> <a id="H:13" class="idref" href="#H:13"><span class="id" title="binder">R</span></a> <a id="H:13" class="idref" href="#H:13"><span class="id" title="binder">q'</span></a> <a id="H:13" class="idref" href="#H:13"><span class="id" title="binder">x</span></a><a id="H:13" class="idref" href="#H:13"><span class="id" title="binder">)</span></a> <a id="H:13" class="idref" href="#H:13"><span class="id" title="binder">q</span></a>} : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#::type_scope:'True'"><span class="id" title="notation">True</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">eassert</span> (<span class="id" title="var">Hfrac</span> : <span class="id" title="class">AsCFractional</span> (<span class="id" title="definition">arrayR</span> <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.cQp.ty"><span class="id" title="variable">ty</span></a> (<a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.cQp.R"><span class="id" title="variable">R</span></a> <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.cQp.q"><span class="id" title="variable">q</span></a>) <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.cQp.xs"><span class="id" title="variable">xs</span></a>) <span class="id" title="var">_</span> <span class="id" title="var">_</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">_</span>. }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span> <span class="id" title="tactic">in</span> <span class="id" title="var">Hfrac</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<span class="id" title="class">AsCFractional</span> (<span class="id" title="definition">arrayR</span> <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.cQp.ty"><span class="id" title="variable">ty</span></a> (<a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.cQp.R"><span class="id" title="variable">R</span></a> <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.cQp.q"><span class="id" title="variable">q</span></a>) <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.cQp.xs"><span class="id" title="variable">xs</span></a>) (<span class="id" title="notation">λ</span> <a id="q0:14" class="idref" href="#q0:14"><span class="id" title="binder"><span id="q0:16" class="id">q0</span></span></a> : <span class="id" title="record">cQp.t</span><span class="id" title="notation">,</span> <span class="id" title="definition">arrayR</span> <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.cQp.ty"><span class="id" title="variable">ty</span></a> (<span class="id" title="notation">λ</span> <a id="x:15" class="idref" href="#x:15"><span class="id" title="binder"><span id="x:17" class="id">x</span></span></a> : <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.cQp.A"><span class="id" title="variable">A</span></a><span class="id" title="notation">,</span> <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.cQp.R"><span class="id" title="variable">R</span></a> <a class="idref" href="skylabs_brick.tests.instances.html#q0:14"><span class="id" title="variable">q0</span></a> <a class="idref" href="skylabs_brick.tests.instances.html#x:15"><span class="id" title="variable">x</span></a>) <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.cQp.xs"><span class="id" title="variable">xs</span></a>) <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.cQp.q"><span class="id" title="variable">q</span></a>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">first</span> <span class="id" title="tactic">apply</span> <span class="id" title="var">Hfrac</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Abort</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="foo" class="idref" href="#foo"><span class="id" title="definition">foo</span></a> `{<a id="CFractional6:18" class="idref" href="#CFractional6:18"><span class="id" title="binder">!</span></a><a id="CFractional6:18" class="idref" href="#CFractional6:18"><span class="id" title="binder">CFractional1</span></a> <a id="CFractional6:18" class="idref" href="#CFractional6:18"><span class="id" title="binder">R</span></a>} : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#::type_scope:'True'"><span class="id" title="notation">True</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">eassert</span> (<span class="id" title="var">Hfrac</span> : <span class="id" title="class">AsCFractional</span> (<span class="id" title="definition">arrayR</span> <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.cQp.ty"><span class="id" title="variable">ty</span></a> (<a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.cQp.R"><span class="id" title="variable">R</span></a> <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.cQp.q"><span class="id" title="variable">q</span></a>) <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.cQp.xs"><span class="id" title="variable">xs</span></a>) <span class="id" title="var">_</span> <span class="id" title="var">_</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Fail</span> <span class="id" title="tactic">apply</span> <span class="id" title="var">_</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Abort</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.cQp"><span class="id" title="section">cQp</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Section</span> <a id="with_cpp.Qp" class="idref" href="#with_cpp.Qp"><span class="id" title="section">Qp</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="with_cpp.Qp.A" class="idref" href="#with_cpp.Qp.A"><span class="id" title="variable">A</span></a>} {<a id="with_cpp.Qp.R" class="idref" href="#with_cpp.Qp.R"><span class="id" title="variable">R</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs_brick.tests.instances.html#A:19"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">Rep</span>} (<a id="with_cpp.Qp.xs" class="idref" href="#with_cpp.Qp.xs"><span class="id" title="variable">xs</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="skylabs_brick.tests.instances.html#A:19"><span class="id" title="variable">A</span></a>) (<a id="with_cpp.Qp.q" class="idref" href="#with_cpp.Qp.q"><span class="id" title="variable">q</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a>) (<a id="with_cpp.Qp.ty" class="idref" href="#with_cpp.Qp.ty"><span class="id" title="variable">ty</span></a> : <span class="id" title="inductive">type</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">fractional</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="foo" class="idref" href="#foo"><span class="id" title="definition">foo</span></a> `{<a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">!</span></a><a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">forall</span></a> <a id="q:24" class="idref" href="#q:24"><span class="id" title="binder"><span id="H:27" class="id">q</span></span></a> <a id="x:25" class="idref" href="#x:25"><span class="id" title="binder"><span id="H:27" class="id">x</span></span></a><a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">,</span></a> <a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">AsFractional</span></a> <a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">(</span></a><a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">R</span></a> <a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">q</span></a> <a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">x</span></a><a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">)</span></a> <a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">(</span></a><a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">fun</span></a> <a id="q':26" class="idref" href="#q':26"><span class="id" title="binder"><span id="H:27" class="id">q'</span></span></a> <a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">=&gt;</span></a> <a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">R</span></a> <a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">q'</span></a> <a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">x</span></a><a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">)</span></a> <a id="H:27" class="idref" href="#H:27"><span class="id" title="binder">q</span></a>} : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#::type_scope:'True'"><span class="id" title="notation">True</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">eassert</span> (<span class="id" title="var">Hfrac</span> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.lib.fractional.html#AsFractional"><span class="id" title="class">AsFractional</span></a> (<span class="id" title="definition">arrayR</span> <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp.ty"><span class="id" title="variable">ty</span></a> (<a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp.R"><span class="id" title="variable">R</span></a> <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp.q"><span class="id" title="variable">q</span></a>) <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp.xs"><span class="id" title="variable">xs</span></a>) <span class="id" title="var">_</span> <span class="id" title="var">_</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="tactic">apply</span> <span class="id" title="var">_</span>. }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">simpl</span> <span class="id" title="tactic">in</span> <span class="id" title="var">Hfrac</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">assert</span> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.lib.fractional.html#AsFractional"><span class="id" title="class">AsFractional</span></a> (<span class="id" title="definition">arrayR</span> <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp.ty"><span class="id" title="variable">ty</span></a> (<a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp.R"><span class="id" title="variable">R</span></a> <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp.q"><span class="id" title="variable">q</span></a>) <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp.xs"><span class="id" title="variable">xs</span></a>) (<span class="id" title="notation">λ</span> <a id="q0:28" class="idref" href="#q0:28"><span class="id" title="binder"><span id="q0:30" class="id">q0</span></span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#Qp"><span class="id" title="record">Qp</span></a><span class="id" title="notation">,</span> <span class="id" title="definition">arrayR</span> <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp.ty"><span class="id" title="variable">ty</span></a> (<span class="id" title="notation">λ</span> <a id="x:29" class="idref" href="#x:29"><span class="id" title="binder"><span id="x:31" class="id">x</span></span></a> : <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp.A"><span class="id" title="variable">A</span></a><span class="id" title="notation">,</span> <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp.R"><span class="id" title="variable">R</span></a> <a class="idref" href="skylabs_brick.tests.instances.html#q0:28"><span class="id" title="variable">q0</span></a> <a class="idref" href="skylabs_brick.tests.instances.html#x:29"><span class="id" title="variable">x</span></a>) <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp.xs"><span class="id" title="variable">xs</span></a>) <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp.q"><span class="id" title="variable">q</span></a>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">first</span> <span class="id" title="tactic">apply</span> <span class="id" title="var">Hfrac</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Abort</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="foo" class="idref" href="#foo"><span class="id" title="definition">foo</span></a> `{<a id="Fractional6:32" class="idref" href="#Fractional6:32"><span class="id" title="binder">!</span></a><a id="Fractional6:32" class="idref" href="#Fractional6:32"><span class="id" title="binder">Fractional1</span></a> <a id="Fractional6:32" class="idref" href="#Fractional6:32"><span class="id" title="binder">R</span></a>} : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#::type_scope:'True'"><span class="id" title="notation">True</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">eassert</span> (<span class="id" title="var">Hfrac</span> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.lib.fractional.html#AsFractional"><span class="id" title="class">AsFractional</span></a> (<span class="id" title="definition">arrayR</span> <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp.ty"><span class="id" title="variable">ty</span></a> (<a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp.R"><span class="id" title="variable">R</span></a> <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp.q"><span class="id" title="variable">q</span></a>) <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp.xs"><span class="id" title="variable">xs</span></a>) <span class="id" title="var">_</span> <span class="id" title="var">_</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Fail</span> <span class="id" title="tactic">apply</span> <span class="id" title="var">_</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Abort</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp"><span class="id" title="section">Qp</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_brick.tests.instances.html#with_cpp"><span class="id" title="section">with_cpp</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

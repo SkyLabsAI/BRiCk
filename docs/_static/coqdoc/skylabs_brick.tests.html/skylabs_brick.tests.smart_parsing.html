@@ -1,0 +1,106 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.smart_parsing</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2025&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">module</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">using</span> <span class="id" title="var">INT</span> = <span class="id" title="var">int</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">using</span> <span class="id" title="var">SINT</span> = <span class="id" title="var">INT</span>;<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">enum</span> <span class="id" title="var">E</span> { };<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">void</span> <span class="id" title="var">test_e</span>(<span class="id" title="var">E</span>);<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">void</span> <span class="id" title="var">test</span>(<span class="id" title="var">INT</span>, <span class="id" title="var">SINT</span>) { }<br/>
+}}.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;TODO:&nbsp;this&nbsp;needs&nbsp;to&nbsp;be&nbsp;put&nbsp;in&nbsp;the&nbsp;<span class="inlinecode"><span class="id" title="var">_cpp.v</span></span>&nbsp;file&nbsp;*)</span><br/>
+<span class="id" title="keyword">Definition</span> <a id="parser" class="idref" href="#parser"><span class="id" title="definition">parser</span></a> <a id="x:1" class="idref" href="#x:1"><span class="id" title="binder">x</span></a> := <span class="id" title="definition">parser.parse_name_with</span> <a class="idref" href="skylabs_brick.tests.smart_parsing.html#module"><span class="id" title="definition">module</span></a> <a class="idref" href="skylabs_brick.tests.smart_parsing.html#x:1"><span class="id" title="variable">x</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="printer" class="idref" href="#printer"><span class="id" title="definition">printer</span></a> <a id="n:2" class="idref" href="#n:2"><span class="id" title="binder">n</span></a> := (<span class="id" title="keyword">match</span> <span class="id" title="definition">printer.print_name</span> <a class="idref" href="skylabs_brick.tests.smart_parsing.html#n:2"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">x</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>).<br/>
+<span class="id" title="keyword">String Notation</span> <span class="id" title="inductive">core.name</span> <a class="idref" href="skylabs_brick.tests.smart_parsing.html#parser"><span class="id" title="definition">parser</span></a> <a class="idref" href="skylabs_brick.tests.smart_parsing.html#printer"><span class="id" title="definition">printer</span></a> : <span class="id" title="var">cpp_name_scope</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Goal</span> "test(int, int)"<a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">%</span></a><a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">cpp_name</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">=</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">(</span></a><a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">Nglobal</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">(</span></a><a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">Nfunction</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">function_qualifiers.N</span></a> "test" <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">(</span></a><a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">Tint</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">::</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">Tint</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">::</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">nil</span></a><a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">)))</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">Goal</span> "test(INT, SINT)"<a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">%</span></a><a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">cpp_name</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">=</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">(</span></a><a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">Nglobal</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">(</span></a><a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">Nfunction</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">function_qualifiers.N</span></a> "test" <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">(</span></a><a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">Tint</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">::</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">Tint</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">::</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">nil</span></a><a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">)))</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">Goal</span> "test_e(enum E)"<a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">%</span></a><a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">cpp_name</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">=</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">(</span></a><a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">Nglobal</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">(</span></a><a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">Nfunction</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">function_qualifiers.N</span></a> "test_e" <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">(</span></a><a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">Tenum</span></a> "E" <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">::</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">nil</span></a><a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">)))</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;The&nbsp;use&nbsp;of&nbsp;<span class="inlinecode"><span class="id" title="var">enum</span></span>&nbsp;is&nbsp;optional&nbsp;*)</span><br/>
+<span class="id" title="keyword">Goal</span> "test_e(E)"<a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">%</span></a><a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">cpp_name</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">=</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">(</span></a><a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">Nglobal</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">(</span></a><a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">Nfunction</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">function_qualifiers.N</span></a> "test_e" <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">(</span></a><a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">Tenum</span></a> "E" <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">::</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">nil</span></a><a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">)))</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;unknown&nbsp;symbol&nbsp;within&nbsp;the&nbsp;TU<br/>
+&nbsp;&nbsp;&nbsp;NOTE:&nbsp;this&nbsp;could&nbsp;be&nbsp;a&nbsp;parsing&nbsp;error,&nbsp;but&nbsp;it&nbsp;requires&nbsp;that&nbsp;we&nbsp;remove&nbsp;the&nbsp;default&nbsp;parser.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Goal</span> "test_e()"<a id="Unnamed_thm3" class="idref" href="#Unnamed_thm3"><span class="id" title="definition">%</span></a><a id="Unnamed_thm3" class="idref" href="#Unnamed_thm3"><span class="id" title="definition">cpp_name</span></a> <a id="Unnamed_thm3" class="idref" href="#Unnamed_thm3"><span class="id" title="definition">=</span></a> <a id="Unnamed_thm3" class="idref" href="#Unnamed_thm3"><span class="id" title="definition">(</span></a><a id="Unnamed_thm3" class="idref" href="#Unnamed_thm3"><span class="id" title="definition">Nglobal</span></a> <a id="Unnamed_thm3" class="idref" href="#Unnamed_thm3"><span class="id" title="definition">(</span></a><a id="Unnamed_thm3" class="idref" href="#Unnamed_thm3"><span class="id" title="definition">Nfunction</span></a> <a id="Unnamed_thm3" class="idref" href="#Unnamed_thm3"><span class="id" title="definition">function_qualifiers.N</span></a> "test_e" <a id="Unnamed_thm3" class="idref" href="#Unnamed_thm3"><span class="id" title="definition">nil</span></a><a id="Unnamed_thm3" class="idref" href="#Unnamed_thm3"><span class="id" title="definition">))</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

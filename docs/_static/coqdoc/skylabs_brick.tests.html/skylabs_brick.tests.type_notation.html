@@ -1,0 +1,240 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.type_notation</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2022&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Stdlib.Numbers.BinNums</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Stdlib.NArith.BinNat</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.notations</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.code_notations</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="TestTypeNotations" class="idref" href="#TestTypeNotations"><span class="id" title="section">TestTypeNotations</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> (<a id="TestTypeNotations.ty" class="idref" href="#TestTypeNotations.ty"><span class="id" title="variable">ty</span></a> <a id="TestTypeNotations.rty" class="idref" href="#TestTypeNotations.rty"><span class="id" title="variable">rty</span></a> <a id="TestTypeNotations.aty1" class="idref" href="#TestTypeNotations.aty1"><span class="id" title="variable">aty1</span></a> <a id="TestTypeNotations.aty2" class="idref" href="#TestTypeNotations.aty2"><span class="id" title="variable">aty2</span></a> : <span class="id" title="inductive">type</span>) (<a id="TestTypeNotations.n" class="idref" href="#TestTypeNotations.n"><span class="id" title="variable">n</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">BinNums.N</span></a>) (<a id="TestTypeNotations.nm" class="idref" href="#TestTypeNotations.nm"><span class="id" title="variable">nm</span></a> : <span class="id" title="inductive">name</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tptr_1" class="idref" href="#Notation_Tptr_1"><span class="id" title="definition">Notation_Tptr_1</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="constructor">Tptr</span> <span class="id" title="constructor">Tbool</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tptr_2" class="idref" href="#Notation_Tptr_2"><span class="id" title="definition">Notation_Tptr_2</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="constructor">Tptr</span> <a class="idref" href="skylabs_brick.tests.type_notation.html#TestTypeNotations.ty"><span class="id" title="variable">ty</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tptr_1</span>. <span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tptr_2</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tref_1" class="idref" href="#Notation_Tref_1"><span class="id" title="definition">Notation_Tref_1</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="constructor">Tref</span> <span class="id" title="constructor">Tbool</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tref_2" class="idref" href="#Notation_Tref_2"><span class="id" title="definition">Notation_Tref_2</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="constructor">Tref</span> <a class="idref" href="skylabs_brick.tests.type_notation.html#TestTypeNotations.ty"><span class="id" title="variable">ty</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tref_1</span>. <span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tref_2</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Trv_ref_1" class="idref" href="#Notation_Trv_ref_1"><span class="id" title="definition">Notation_Trv_ref_1</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="constructor">Trv_ref</span> <span class="id" title="constructor">Tbool</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Trv_ref_2" class="idref" href="#Notation_Trv_ref_2"><span class="id" title="definition">Notation_Trv_ref_2</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="constructor">Trv_ref</span> <a class="idref" href="skylabs_brick.tests.type_notation.html#TestTypeNotations.ty"><span class="id" title="variable">ty</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Trv_ref_1</span>. <span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Trv_ref_2</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tref_Trv_ref" class="idref" href="#Notation_Tref_Trv_ref"><span class="id" title="definition">Notation_Tref_Trv_ref</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="constructor">Tref</span> (<span class="id" title="constructor">Trv_ref</span> <a class="idref" href="skylabs_brick.tests.type_notation.html#TestTypeNotations.ty"><span class="id" title="variable">ty</span></a>).<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Trv_ref_Tref" class="idref" href="#Notation_Trv_ref_Tref"><span class="id" title="definition">Notation_Trv_ref_Tref</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="constructor">Trv_ref</span> (<span class="id" title="constructor">Tref</span> <a class="idref" href="skylabs_brick.tests.type_notation.html#TestTypeNotations.ty"><span class="id" title="variable">ty</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tref_Trv_ref</span>. <span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Trv_ref_Tref</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_void" class="idref" href="#Notation_void"><span class="id" title="definition">Notation_void</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="constructor">Tvoid</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_void</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tarray_1" class="idref" href="#Notation_Tarray_1"><span class="id" title="definition">Notation_Tarray_1</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="constructor">Tarray</span> <span class="id" title="constructor">Tnullptr</span> 100%<span class="id" title="var">N</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tarray_2" class="idref" href="#Notation_Tarray_2"><span class="id" title="definition">Notation_Tarray_2</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="constructor">Tarray</span> <a class="idref" href="skylabs_brick.tests.type_notation.html#TestTypeNotations.ty"><span class="id" title="variable">ty</span></a> <a class="idref" href="skylabs_brick.tests.type_notation.html#TestTypeNotations.n"><span class="id" title="variable">n</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tarray_1</span>. <span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tarray_2</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tnamed_1" class="idref" href="#Notation_Tnamed_1"><span class="id" title="definition">Notation_Tnamed_1</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="constructor">Tnamed</span> (<span class="id" title="constructor">Nglobal</span> (<span class="id" title="constructor">Nid</span> "foobarbaz")).<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tnamed_2" class="idref" href="#Notation_Tnamed_2"><span class="id" title="definition">Notation_Tnamed_2</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="constructor">Tnamed</span> <a class="idref" href="skylabs_brick.tests.type_notation.html#TestTypeNotations.nm"><span class="id" title="variable">nm</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tnamed_1</span>. <span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tnamed_2</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tfunction_novariadic_noargs_1" class="idref" href="#Notation_Tfunction_novariadic_noargs_1"><span class="id" title="definition">Notation_Tfunction_novariadic_noargs_1</span></a> : <span class="id" title="inductive">type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="constructor">Tfunction</span> (<span class="id" title="constructor">FunctionType</span> <span class="id" title="constructor">Tvoid</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>).<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tfunction_novariadic_noargs_2" class="idref" href="#Notation_Tfunction_novariadic_noargs_2"><span class="id" title="definition">Notation_Tfunction_novariadic_noargs_2</span></a> : <span class="id" title="inductive">type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="constructor">Tfunction</span> (<span class="id" title="constructor">FunctionType</span> <a class="idref" href="skylabs_brick.tests.type_notation.html#TestTypeNotations.rty"><span class="id" title="variable">rty</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tfunction_novariadic_noargs_1</span>. <span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tfunction_novariadic_noargs_2</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tfunction_novariadic_args_nowrap_1" class="idref" href="#Notation_Tfunction_novariadic_args_nowrap_1"><span class="id" title="definition">Notation_Tfunction_novariadic_args_nowrap_1</span></a> : <span class="id" title="inductive">type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="constructor">Tfunction</span> (<span class="id" title="constructor">FunctionType</span> <span class="id" title="constructor">Tvoid</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="constructor">Tbool</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="constructor">Tnullptr</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>))).<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tfunction_novariadic_args_nowrap_2" class="idref" href="#Notation_Tfunction_novariadic_args_nowrap_2"><span class="id" title="definition">Notation_Tfunction_novariadic_args_nowrap_2</span></a> : <span class="id" title="inductive">type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="constructor">Tfunction</span> (<span class="id" title="constructor">FunctionType</span> <a class="idref" href="skylabs_brick.tests.type_notation.html#TestTypeNotations.rty"><span class="id" title="variable">rty</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <a class="idref" href="skylabs_brick.tests.type_notation.html#TestTypeNotations.aty1"><span class="id" title="variable">aty1</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="constructor">Tvoid</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <a class="idref" href="skylabs_brick.tests.type_notation.html#TestTypeNotations.aty2"><span class="id" title="variable">aty2</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>)))).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tfunction_novariadic_args_nowrap_1</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tfunction_novariadic_args_nowrap_2</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tfunction_novariadic_args_wrap" class="idref" href="#Notation_Tfunction_novariadic_args_wrap"><span class="id" title="definition">Notation_Tfunction_novariadic_args_wrap</span></a> : <span class="id" title="inductive">type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="constructor">Tfunction</span> (<span class="id" title="constructor">FunctionType</span> <span class="id" title="constructor">Tvoid</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> (<span class="id" title="constructor">Tnamed</span> (<span class="id" title="constructor">Nglobal</span> (<span class="id" title="constructor">Nid</span> "askldjfo;lasjdlkfj;aklsdjg;blkajl;ksdjfl;aksdjf;lkasjdf;lkajsd;lfkjas;dlkfj;alskdjf;kalsdjf;lk")))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> (<span class="id" title="constructor">Tnamed</span> (<span class="id" title="constructor">Nglobal</span> (<span class="id" title="constructor">Nid</span> "askldjflk;ajsdkl;gjasdklgjakl;sdjgl;kasdjfl;kjasdlfhajklsdgljkasdhfgjkahsdfljk"))) <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>))).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tfunction_novariadic_args_wrap</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tfunction_variadic_noargs_1" class="idref" href="#Notation_Tfunction_variadic_noargs_1"><span class="id" title="definition">Notation_Tfunction_variadic_noargs_1</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="constructor">Tfunction</span> (<span class="id" title="constructor">FunctionType</span> (<span class="id" title="var">ft_arity</span>:=<span class="id" title="constructor">Ar_Variadic</span>) <span class="id" title="constructor">Tvoid</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>).<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tfunction_variadic_noargs_2" class="idref" href="#Notation_Tfunction_variadic_noargs_2"><span class="id" title="definition">Notation_Tfunction_variadic_noargs_2</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="constructor">Tfunction</span> (<span class="id" title="constructor">FunctionType</span> (<span class="id" title="var">ft_arity</span>:=<span class="id" title="constructor">Ar_Variadic</span>) <a class="idref" href="skylabs_brick.tests.type_notation.html#TestTypeNotations.rty"><span class="id" title="variable">rty</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tfunction_variadic_noargs_1</span>. <span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tfunction_variadic_noargs_2</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tfunction_variadic_args_nowrap_1" class="idref" href="#Notation_Tfunction_variadic_args_nowrap_1"><span class="id" title="definition">Notation_Tfunction_variadic_args_nowrap_1</span></a> : <span class="id" title="inductive">type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="constructor">Tfunction</span> (<span class="id" title="constructor">FunctionType</span> (<span class="id" title="var">ft_arity</span>:=<span class="id" title="constructor">Ar_Variadic</span>) <span class="id" title="constructor">Tvoid</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="constructor">Tbool</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="constructor">Tnullptr</span> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>))).<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tfunction_variadic_args_nowrap_2" class="idref" href="#Notation_Tfunction_variadic_args_nowrap_2"><span class="id" title="definition">Notation_Tfunction_variadic_args_nowrap_2</span></a> : <span class="id" title="inductive">type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="constructor">Tfunction</span> (<span class="id" title="constructor">FunctionType</span> (<span class="id" title="var">ft_arity</span>:=<span class="id" title="constructor">Ar_Variadic</span>) <a class="idref" href="skylabs_brick.tests.type_notation.html#TestTypeNotations.rty"><span class="id" title="variable">rty</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <a class="idref" href="skylabs_brick.tests.type_notation.html#TestTypeNotations.aty1"><span class="id" title="variable">aty1</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <span class="id" title="constructor">Tvoid</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> <a class="idref" href="skylabs_brick.tests.type_notation.html#TestTypeNotations.aty2"><span class="id" title="variable">aty2</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>)))).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tfunction_variadic_args_nowrap_1</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tfunction_variadic_args_nowrap_2</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tfunction_variadic_args_wrap" class="idref" href="#Notation_Tfunction_variadic_args_wrap"><span class="id" title="definition">Notation_Tfunction_variadic_args_wrap</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="constructor">Tfunction</span> (<span class="id" title="constructor">FunctionType</span> (<span class="id" title="var">ft_arity</span>:=<span class="id" title="constructor">Ar_Variadic</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="constructor">Tvoid</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> (<span class="id" title="constructor">Tnamed</span> (<span class="id" title="constructor">Nglobal</span> (<span class="id" title="constructor">Nid</span> "askldjfo;lasjdlkfj;aklsdjg;blkajl;ksdjfl;aksdjf;lkasjdf;lkajsd;lfkjas;dlkfj;alskdjf;kalsdjf;lk")))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#cons"><span class="id" title="constructor">cons</span></a> (<span class="id" title="constructor">Tnamed</span> (<span class="id" title="constructor">Nglobal</span> (<span class="id" title="constructor">Nid</span> "askldjflk;ajsdkl;gjasdklgjakl;sdjgl;kasdjfl;kjasdlfhajklsdgljkasdhfgjkahsdfljk"))) <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#nil"><span class="id" title="constructor">nil</span></a>))).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tfunction_variadic_args_wrap</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tbool" class="idref" href="#Notation_Tbool"><span class="id" title="definition">Notation_Tbool</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="constructor">Tbool</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tbool</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_Tmember_pointer_1" class="idref" href="#Notation_Tmember_pointer_1"><span class="id" title="definition">Notation_Tmember_pointer_1</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="constructor">Tmember_pointer</span> (<span class="id" title="constructor">Tnamed</span> (<span class="id" title="constructor">Nglobal</span> (<span class="id" title="constructor">Nid</span> "foobarbaz"))) <span class="id" title="abbreviation">Tchar</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_Tmember_pointer_1</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Section</span> <a id="TestTypeNotations.Qualifiers" class="idref" href="#TestTypeNotations.Qualifiers"><span class="id" title="section">Qualifiers</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_mut_1" class="idref" href="#Notation_mut_1"><span class="id" title="definition">Notation_mut_1</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="abbreviation">Tmut</span> <span class="id" title="constructor">Tbool</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_mut_2" class="idref" href="#Notation_mut_2"><span class="id" title="definition">Notation_mut_2</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="abbreviation">Tmut</span> (<span class="id" title="abbreviation">Tmut</span> <span class="id" title="constructor">Tbool</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_mut_1</span>. <span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_mut_2</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_const_1" class="idref" href="#Notation_const_1"><span class="id" title="definition">Notation_const_1</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="abbreviation">Tconst</span> <span class="id" title="constructor">Tbool</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_const_2" class="idref" href="#Notation_const_2"><span class="id" title="definition">Notation_const_2</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="abbreviation">Tconst</span> (<span class="id" title="constructor">Tptr</span> (<span class="id" title="abbreviation">Tconst</span> <span class="id" title="constructor">Tvoid</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_const_1</span>. <span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_const_2</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_volatile_1" class="idref" href="#Notation_volatile_1"><span class="id" title="definition">Notation_volatile_1</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="abbreviation">Tmut_volatile</span> <span class="id" title="constructor">Tbool</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_volatile_2" class="idref" href="#Notation_volatile_2"><span class="id" title="definition">Notation_volatile_2</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="abbreviation">Tmut_volatile</span> (<span class="id" title="constructor">Tptr</span> (<span class="id" title="abbreviation">Tconst</span> <span class="id" title="constructor">Tvoid</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_volatile_1</span>. <span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_volatile_2</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_const_volatile_1" class="idref" href="#Notation_const_volatile_1"><span class="id" title="definition">Notation_const_volatile_1</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="abbreviation">Tconst_volatile</span> <span class="id" title="constructor">Tbool</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="Notation_const_volatile_2" class="idref" href="#Notation_const_volatile_2"><span class="id" title="definition">Notation_const_volatile_2</span></a> : <span class="id" title="inductive">type</span> := <span class="id" title="abbreviation">Tconst_volatile</span> (<span class="id" title="constructor">Tptr</span> (<span class="id" title="abbreviation">Tconst_volatile</span> <span class="id" title="constructor">Tvoid</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_const_volatile_1</span>. <span class="id" title="keyword">Print</span> <span class="id" title="var">Notation_const_volatile_2</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_brick.tests.type_notation.html#TestTypeNotations.Qualifiers"><span class="id" title="section">Qualifiers</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_brick.tests.type_notation.html#TestTypeNotations"><span class="id" title="section">TestTypeNotations</span></a>.<br/>
+
+<br/>
+<span class="comment">(*<br/>
+Section&nbsp;TestTypeNotationsParsing.<br/>
+&nbsp;&nbsp;Context&nbsp;(ty&nbsp;rty&nbsp;aty1&nbsp;aty2&nbsp;:&nbsp;type)&nbsp;(n&nbsp;:&nbsp;N)&nbsp;(nm&nbsp;:&nbsp;bs).<br/>
+<br/>
+&nbsp;&nbsp;[local] Definition Notation_Tptr_1 : Tptr Tbool = type:{%t ptr<bool>%}%cpp_type := eq_refl.
+  <span class="inlinecode"><span class="id" title="var">local</span></span>&nbsp;Definition&nbsp;Notation_Tptr_2&nbsp;:&nbsp;Tptr&nbsp;ty&nbsp;=&nbsp;{}cpp_type&nbsp;:=&nbsp;eq_refl.<br/>
+&nbsp;&nbsp;[local] Definition Notation_Tref_2 : Tref ty = {(t: ref&<{(coq: ty)}>)}%cpp_type := eq_refl.
+  Print Notation_Tref_1. Print Notation_Tref_2.
+
+  <span class="inlinecode"><span class="id" title="var">local</span></span>&nbsp;Definition&nbsp;Notation_Trv_ref_1&nbsp;:&nbsp;Trv_ref&nbsp;Tbool&nbsp;=&nbsp;{(t:&nbsp;ref&amp;&amp;&lt;bool&gt;)}cpp_type&nbsp;:=&nbsp;eq_refl.<br/>
+&nbsp;&nbsp;Print&nbsp;Notation_Trv_ref_1.&nbsp;Print&nbsp;Notation_Trv_ref_2.<br/>
+<br/>
+&nbsp;&nbsp;[local] Definition Notation_Tref_Trv_ref : Tref (Trv_ref ty) = {(t: ref&<ref&&<{(coq: ty)}>>)}%cpp_type := eq_refl.
+  <span class="inlinecode"><span class="id" title="var">local</span></span>&nbsp;Definition&nbsp;Notation_Trv_ref_Tref&nbsp;:&nbsp;Trv_ref&nbsp;(Tref&nbsp;ty)&nbsp;=&nbsp;{(t:&nbsp;ref&amp;&amp;&lt;ref&amp;&lt;{(coq:&nbsp;ty)}&gt;&gt;)}cpp_type&nbsp;:=&nbsp;eq_refl.<br/>
+&nbsp;&nbsp;Print&nbsp;Notation_void.<br/>
+<br/>
+&nbsp;&nbsp;[local] Definition Notation_Tarray_1 : Tarray Tnullptr 100 = {(t: nullptr_t[100])}%cpp_type := eq_refl.
+  <span class="inlinecode"><span class="id" title="var">local</span></span>&nbsp;Definition&nbsp;Notation_Tarray_2&nbsp;:&nbsp;Tarray&nbsp;ty&nbsp;n&nbsp;=&nbsp;{(t:&nbsp;{(coq:&nbsp;ty)}<span class="inlinecode"><span class="id" title="var">n</span></span>)}cpp_type&nbsp;:=&nbsp;eq_refl.<br/>
+&nbsp;&nbsp;[local] Definition Notation_Tnamed_2 : Tnamed nm = {(t: nm)}%cpp_type := eq_refl.
+  Print Notation_Tnamed_1. Print Notation_Tnamed_2.
+
+  <span class="inlinecode"><span class="id" title="var">local</span></span>&nbsp;Definition&nbsp;Notation_Tfunction_novariadic_noargs_1&nbsp;:&nbsp;Tfunction&nbsp;Tvoid&nbsp;nil&nbsp;=&nbsp;{(t:&nbsp;extern&nbsp;CC_C&nbsp;???()&nbsp;-&gt;&nbsp;void)}cpp_type&nbsp;:=&nbsp;eq_refl.<br/>
+&nbsp;&nbsp;Print&nbsp;Notation_Tfunction_novariadic_noargs_1.&nbsp;Print&nbsp;Notation_Tfunction_novariadic_noargs_2.<br/>
+<br/>
+&nbsp;&nbsp;[local] Definition Notation_Tfunction_novariadic_args_nowrap_1 : Tfunction Tvoid (cons Tbool (cons Tnullptr nil)) = {(t: extern CC_C ???(bool, nullptr_t) -> void)}%cpp_type := eq_refl.
+  <span class="inlinecode"><span class="id" title="var">local</span></span>&nbsp;Definition&nbsp;Notation_Tfunction_novariadic_args_nowrap_2&nbsp;:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Tfunction&nbsp;rty&nbsp;(cons&nbsp;aty1&nbsp;(cons&nbsp;Tvoid&nbsp;(cons&nbsp;aty2&nbsp;nil)))&nbsp;=&nbsp;{(t:&nbsp;extern&nbsp;CC_C&nbsp;???({(coq:&nbsp;aty1)},&nbsp;void,&nbsp;{(coq:&nbsp;aty2)})&nbsp;-&gt;&nbsp;{(coq:&nbsp;rty)})}cpp_type&nbsp;:=&nbsp;eq_refl.<br/>
+&nbsp;&nbsp;Print&nbsp;Notation_Tfunction_novariadic_args_wrap.<br/>
+<br/>
+&nbsp;&nbsp;[local] Definition Notation_Tfunction_variadic_noargs_1 : Tfunction (ar:=Ar_Variadic) Tvoid nil = {(t: extern CC_C ???()(...) -> void)}%cpp_type := eq_refl.
+  <span class="inlinecode"><span class="id" title="var">local</span></span>&nbsp;Definition&nbsp;Notation_Tfunction_variadic_noargs_2&nbsp;:&nbsp;Tfunction&nbsp;(ar:=Ar_Variadic)&nbsp;rty&nbsp;nil&nbsp;=&nbsp;{(t:&nbsp;extern&nbsp;CC_C&nbsp;???()(...)&nbsp;-&gt;&nbsp;{(coq:&nbsp;rty)})}cpp_type&nbsp;:=&nbsp;eq_refl.<br/>
+&nbsp;&nbsp;[local] Definition Notation_Tfunction_variadic_args_nowrap_2 :
+    Tfunction (ar:=Ar_Variadic) rty (cons aty1 (cons Tvoid (cons aty2 nil))) = {(t: extern CC_C ???({(coq: aty1)}, void, {(coq: aty2)})(...) -> {(coq: rty)})}%cpp_type := eq_refl.
+  Print Notation_Tfunction_variadic_args_nowrap_1.
+  Print Notation_Tfunction_variadic_args_nowrap_2.
+
+  <span class="inlinecode"><span class="id" title="var">local</span></span>&nbsp;Definition&nbsp;Notation_Tfunction_variadic_args_wrap&nbsp;:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Tfunction&nbsp;(ar:=Ar_Variadic)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Tvoid&nbsp;(cons&nbsp;(Tnamed&nbsp;"askldjfo;lasjdlkfj;aklsdjg;blkajl;ksdjfl;aksdjf;lkasjdf;lkajsd;lfkjas;dlkfj;alskdjf;kalsdjf;lk")<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(cons&nbsp;(Tnamed&nbsp;"askldjflk;ajsdkl;gjasdklgjakl;sdjgl;kasdjfl;kjasdlfhajklsdgljkasdhfgjkahsdfljk")&nbsp;nil))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;=&nbsp;{(t:&nbsp;extern&nbsp;CC_C&nbsp;???("askldjfo;lasjdlkfj;aklsdjg;blkajl;ksdjfl;aksdjf;lkasjdf;lkajsd;lfkjas;dlkfj;alskdjf;kalsdjf;lk",<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"askldjflk;ajsdkl;gjasdklgjakl;sdjgl;kasdjfl;kjasdlfhajklsdgljkasdhfgjkahsdfljk")(...)&nbsp;-&gt;&nbsp;void)}cpp_type&nbsp;:=&nbsp;eq_refl.<br/>
+&nbsp;&nbsp;Print&nbsp;Notation_Tbool.<br/>
+<br/>
+&nbsp;&nbsp;[local] Definition Notation_Tmember_pointer_1 : Tmember_pointer "foobarbaz" Tschar = {(t: ptr["foobarbaz"]<int8>)}%cpp_type := eq_refl.
+  Print Notation_Tmember_pointer_1.
+
+  Section Qualifiers.
+    <span class="inlinecode"><span class="id" title="var">local</span></span>&nbsp;Definition&nbsp;Notation_mut_1&nbsp;:&nbsp;Tmut&nbsp;Tbool&nbsp;=&nbsp;{(t:&nbsp;mut&nbsp;bool)}cpp_type&nbsp;:=&nbsp;eq_refl.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Print&nbsp;Notation_mut_1.&nbsp;Print&nbsp;Notation_mut_2.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[local] Definition Notation_const_1 : Tconst Tbool = {(t: const bool)}%cpp_type := eq_refl.
+    <span class="inlinecode"><span class="id" title="var">local</span></span>&nbsp;Definition&nbsp;Notation_const_2&nbsp;:&nbsp;Tconst&nbsp;(Tptr&nbsp;(Tconst&nbsp;Tvoid))&nbsp;=&nbsp;{(t:&nbsp;const&nbsp;ptr&lt;const&nbsp;void&gt;)}cpp_type&nbsp;:=&nbsp;eq_refl.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;[local] Definition Notation_volatile_2 : Tmut_volatile (Tptr (Tconst Tvoid)) = {(t: volatile ptr<const void>)}%cpp_type := eq_refl.
+    Print Notation_volatile_1. Print Notation_volatile_2.
+
+    <span class="inlinecode"><span class="id" title="var">local</span></span>&nbsp;Definition&nbsp;Notation_const_volatile_1&nbsp;:&nbsp;Tconst_volatile&nbsp;Tbool&nbsp;=&nbsp;{(t:&nbsp;const&nbsp;volatile&nbsp;bool)}cpp_type&nbsp;:=&nbsp;eq_refl.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;Print&nbsp;Notation_const_volatile_1.&nbsp;Print&nbsp;Notation_const_volatile_2.<br/>
+&nbsp;&nbsp;End&nbsp;Qualifiers.<br/>
+End&nbsp;TestTypeNotationsParsing.<br/>
+*)</span><br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
