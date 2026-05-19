@@ -1,0 +1,90 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.static_operator_overload</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a id="cpp_prog__source__" class="idref" href="#cpp_prog__source__"><span class="id" title="section">Import</span></a> <a id="cpp_prog__source__" class="idref" href="#cpp_prog__source__"><span class="id" title="section">skylabs.lang.cpp.syntax.typed</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.cpp</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">duplicates</span>(<span class="id" title="var">error</span>)]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">source</span> <span class="id" title="var">flags</span> "-std=c++23" <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">C</span> {<br/>
+&nbsp;&nbsp;<span class="id" title="var">static</span> <span class="id" title="var">int</span> <span class="id" title="var">operator</span>()() { <span class="id" title="keyword">return</span> 0; }<br/>
+&nbsp;&nbsp;<span class="id" title="var">static</span> <span class="id" title="var">int</span>&amp; <span class="id" title="var">operator</span>()(<span class="id" title="var">int</span>&amp; <span class="id" title="var">x</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">x</span>; }<br/>
+&nbsp;&nbsp;<span class="id" title="var">static</span> <span class="id" title="var">int</span>&amp;&amp; <span class="id" title="var">operator</span>()(<span class="id" title="var">int</span>&amp;&amp; <span class="id" title="var">x</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">static_cast</span>&lt;<span class="id" title="var">int</span>&amp;&amp;&gt;(<span class="id" title="var">x</span>); }<br/>
+&nbsp;&nbsp;<span class="id" title="var">operator</span> <span class="id" title="var">bool</span>() <span class="id" title="var">const</span> { <span class="id" title="keyword">return</span> <span class="id" title="var">true</span>; }<br/>
+};<br/>
+<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">test</span>() {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">C</span> <span class="id" title="var">c</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">x</span> = 1;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">c</span>();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">void</span>)<span class="id" title="var">c</span>(<span class="id" title="var">x</span>);<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">void</span>)<span class="id" title="var">c</span>(<span class="id" title="var">static_cast</span>&lt;<span class="id" title="var">int</span>&amp;&amp;&gt;(<span class="id" title="var">x</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">void</span>)(<span class="id" title="var">bool</span>)<span class="id" title="var">c</span>;<br/>
+}<br/>
+<br/>
+}}.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;TODO:&nbsp;expand&nbsp;the&nbsp;test&nbsp;case&nbsp;to&nbsp;show&nbsp;that&nbsp;the&nbsp;*)</span><br/>
+<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">trace.runO</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">(</span></a><a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">decltype.check_tu</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">source</span></a><a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">)</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">=</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">Some</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">tt</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
