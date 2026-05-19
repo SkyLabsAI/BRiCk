@@ -56,10 +56,11 @@ guaranteed to have to initialize a value which will result in an
 #[local] Definition default_initialize_array_body `{Σ : cpp_logic, σ : genv}
     (u : bool) (default_initialize : ptr -> (FreeTemps -> epred) -> mpred)
     (tu : translation_unit) (ty : exprtype) (len : N) (p : ptr) (Q : FreeTemps -> epred) : mpred :=
+  let hty := to_heap_type ty in
   let folder i PP :=
-    default_initialize (p ,, o_sub _ ty (Z.of_N i)) (fun free' => interp tu free' PP)
+    default_initialize (p .[ hty ! Z.of_N i]) (fun free' => interp tu free' PP)
   in
-  foldr folder (p |-> type_ptrR (Tarray ty len) -* |={top}=>?u Q FreeTemps.id) (seqN 0 len).
+  foldr folder (p |-> type_ptrR (Tarray hty len) -* |={top}=>?u Q FreeTemps.id) (seqN 0 len).
 
 mlock
 Definition default_initialize_array `{Σ : cpp_logic, σ : genv} :
@@ -178,7 +179,7 @@ Section default_initialize.
     |-- default_initialize_array di tu ty sz p Q -* default_initialize_array di' tu' ty sz p Q'.
   Proof.
     intros IHty Hsub. rewrite unlock.
-    generalize dependent (p |-> type_ptrR (Tarray ty sz)).
+    generalize dependent (p |-> type_ptrR (Tarray (to_heap_type ty) sz)).
     induction (seqN 0 sz) =>/=; intros.
     - iIntros "X a b". iApply "X". by iApply "a".
     - iIntros "F". iApply IHty.
