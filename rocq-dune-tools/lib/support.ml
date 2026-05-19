@@ -52,10 +52,6 @@ let env_var name =
   | None ->
       None
 
-let parse_sexp ~context text =
-  try Sexp.of_string text
-  with exn -> failf "%s: %s" context (Printexc.to_string exn)
-
 let display_path ~cwd path =
   match Fpath.relativize ~root:cwd path with
   | Some relative ->

@@ -23,6 +23,11 @@ type t =
   { text: string
   ; stanzas: stanza list }
 
+type parsed_form =
+  { span: span
+  ; form: Sexp.t
+  ; annotated_form: Sexp.Annotated.t }
+
 let substring text span = String.sub text span.start (span.finish - span.start)
 
 let is_whitespace = function ' ' | '\n' | '\t' | '\r' -> true | _ -> false
@@ -50,38 +55,17 @@ let skip_string text index =
   in
   loop (index + 1)
 
-(* Sexplib gives us structure, but not source locations. This small scanner is
-   only for finding list spans so we can rewrite just the (theories ...) form
-   without reserializing the entire dune file. *)
-let list_spans text ~offset =
-  let length = String.length text in
-  let rec loop index depth start acc =
-    if index >= length then
-      if depth <> 0 then failf "Unterminated list expression" else List.rev acc
-    else
-      let char = text.[index] in
-      if Char.equal char ';' then loop (skip_comment text index) depth start acc
-      else if Char.equal char '"' then
-        loop (skip_string text index) depth start acc
-      else if Char.equal char '(' then
-        let start = if depth = 0 then Some index else start in
-        loop (index + 1) (depth + 1) start acc
-      else if Char.equal char ')' then
-        if depth = 0 then failf "Unexpected closing parenthesis"
-        else
-          let depth = depth - 1 in
-          let index = index + 1 in
-          if depth = 0 then
-            match start with
-            | Some start ->
-                loop index depth None
-                  ({start= offset + start; finish= offset + index} :: acc)
-            | None ->
-                failf "internal error: missing start while collecting list span"
-          else loop index depth start acc
-      else loop (index + 1) depth start acc
-  in
-  loop 0 0 None []
+let span_of_range (range : Sexp.Annotated.range) =
+  {start= range.start_pos.offset; finish= range.end_pos.offset + 1}
+
+let parse_annotated_forms ~context text =
+  try
+    Sexp.Annotated.of_string_many text
+    |> List.map (fun annotated_form ->
+        { span= Sexp.Annotated.get_range annotated_form |> span_of_range
+        ; form= Sexp.Annotated.get_sexp annotated_form
+        ; annotated_form } )
+  with exn -> failf "%s: %s" context (Printexc.to_string exn)
 
 let tokenize_atoms text =
   let length = String.length text in
@@ -164,22 +148,28 @@ let atom_or_fail ~context = function
   | sexp ->
       failf "%s: expected atom, got %s" context (Sexp.to_string_hum sexp)
 
-let find_child_list_span form_text name =
-  let body_text = String.sub form_text 1 (String.length form_text - 2) in
-  let spans = list_spans body_text ~offset:1 in
+let find_child_list_span parent_span annotated_form name =
   let rec loop = function
     | [] ->
         None
-    | span :: rest ->
-        let child_text = substring form_text span in
-        let child_form =
-          parse_sexp ~context:("invalid child form for " ^ name) child_text
-        in
-        if is_named_list name child_form then Some span else loop rest
+    | child :: rest ->
+        let child_form = Sexp.Annotated.get_sexp child in
+        if is_named_list name child_form then
+          let child_span = Sexp.Annotated.get_range child |> span_of_range in
+          Some
+            { start= child_span.start - parent_span.start
+            ; finish= child_span.finish - parent_span.start }
+        else loop rest
   in
-  loop spans
+  match annotated_form with
+  | Sexp.Annotated.List (_, children, _) ->
+      loop children
+  | Sexp.Annotated.Atom _ ->
+      None
 
-let theory_of_stanza id file_path theory_span text form =
+let theory_of_stanza id file_path file_text parsed_form =
+  let text = substring file_text parsed_form.span in
+  let form = parsed_form.form in
   let name =
     match find_field "name" form with
     | Some [atom] ->
@@ -188,7 +178,9 @@ let theory_of_stanza id file_path theory_span text form =
         failf "%s: rocq.theory stanza is missing a single (name ...) field"
           (Fpath.to_string file_path)
   in
-  let theories_span = find_child_list_span text "theories" in
+  let theories_span =
+    find_child_list_span parsed_form.span parsed_form.annotated_form "theories"
+  in
   let direct_dependencies, transitive_dependencies =
     match theories_span with
     | None ->
@@ -214,25 +206,22 @@ let theory_of_stanza id file_path theory_span text form =
         split_theories_dependencies theories_text listed_dependencies
   in
   { theory= {id; name; direct_dependencies; transitive_dependencies}
-  ; theory_span
+  ; theory_span= parsed_form.span
   ; theories_span }
 
 let read file_path =
   let text = read_text_file file_path in
-  let spans = list_spans text ~offset:0 in
+  let parsed_forms =
+    parse_annotated_forms
+      ~context:(Printf.sprintf "invalid form in %s" (Fpath.to_string file_path))
+      text
+  in
   let stanzas =
     List.filter_map
-      (fun (id, theory_span) ->
-        let form_text = substring text theory_span in
-        let form =
-          parse_sexp
-            ~context:
-              (Printf.sprintf "invalid form in %s" (Fpath.to_string file_path))
-            form_text
-        in
-        if not (is_named_list "rocq.theory" form) then None
-        else Some (theory_of_stanza id file_path theory_span form_text form) )
-      (List.mapi (fun index span -> (index, span)) spans)
+      (fun (id, parsed_form) ->
+        if not (is_named_list "rocq.theory" parsed_form.form) then None
+        else Some (theory_of_stanza id file_path text parsed_form) )
+      (List.mapi (fun index parsed_form -> (index, parsed_form)) parsed_forms)
   in
   let file = {text; stanzas} in
   (file, List.map (fun stanza -> stanza.theory) stanzas)
