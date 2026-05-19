@@ -45,6 +45,34 @@ Fixpoint tele_arg_snoc {TT : tele} {T : Type}
   | @TeleS U f => fun '(TeleArgCons x xs) t => TeleArgCons x (tele_arg_snoc xs t)
   end.
 
+Lemma tele_snoc_arg_snoc {TT T} (x : tele_snoc TT T) :
+  exists ys y, x = tele_arg_snoc ys y.
+Proof.
+  clear.
+  induction TT; simpl in *.
+  - destruct x.
+    exists tele_arg_tail, tele_arg_head.
+    destruct tele_arg_tail.
+    done.
+  - destruct x.
+    destruct (H tele_arg_head tele_arg_tail) as [ys [y ->]].
+    exists (TeleArgCons tele_arg_head ys), y.
+    done.
+Qed.
+
+Lemma tele_app_bind_snoc {TT : tele} T U (x : T) :
+  forall (xs : TT) (f : _ -> _ -> U),
+    tele_app (tele_bind_snoc f) (tele_arg_snoc xs x) = f xs x.
+Proof.
+  clear.
+  induction TT; intros.
+  - destruct xs; done.
+  - destruct xs.
+    etrans.
+    apply H.
+    done.
+Qed.
+
 Fixpoint tele_bind_append {U} {TT1 : tele}
   : forall {TT2 : TT1 -t> tele},
     (forall args : TT1, tele_app TT2 args -> U) -> tele_append TT1 TT2 -t> U :=
