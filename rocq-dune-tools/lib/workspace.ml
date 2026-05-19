@@ -85,7 +85,7 @@ let dune_files workspace =
   in
   result_or_fail
     ~context:(Printf.sprintf "failed to scan %s" (Fpath.to_string root))
-    (OS.Path.fold ~err:stop_on_error ~dotfiles:true ~elements:`Files
+    (OS.Path.fold ~err:stop_on_error ~dotfiles:false ~elements:`Files
        ~traverse:(`Sat traverse) collect []
        [Fpath.to_dir_path root] )
   |> List.sort Fpath.compare
