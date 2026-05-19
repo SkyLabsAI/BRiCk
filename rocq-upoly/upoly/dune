@@ -3,4 +3,5 @@
 (rocq.theory
  (name skylabs.upoly)
  (package rocq-upoly)
+ (generate_project_file)
  (theories stdpp Stdlib))

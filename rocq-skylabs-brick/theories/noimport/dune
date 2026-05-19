@@ -1,6 +1,7 @@
 (include_subdirs qualified)
 (rocq.theory
  (name skylabs.noimport)
+ (generate_project_file)
  (theories
   skylabs.prelude
   skylabs.iris.extra

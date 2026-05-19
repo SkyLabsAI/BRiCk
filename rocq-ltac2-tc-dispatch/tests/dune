@@ -1,6 +1,7 @@
 (include_subdirs qualified)
 (rocq.theory
  (name skylabs_tests.ltac2.tc_dispatch)
+ (generate_project_file)
  (theories
   Stdlib
   skylabs.ltac2.extra

@@ -1,5 +1,6 @@
 (rocq.theory
  (name skylabs_brick.tests)
+ (generate_project_file)
  (theories
   Stdlib
   Lens
