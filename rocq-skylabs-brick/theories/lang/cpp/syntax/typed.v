@@ -682,25 +682,37 @@ Module decltype.
 
         | Eoperator_call _ f es =>
             let* tes := traverse (T:=eta list) of_expr es in
-            let* '(result, fargs) :=
+            let* '(result, fargs, args_to_check) :=
               match f with
               | operator_impl.Func _ ft =>
                   let* ft := require_functype ft in
-                  mret (ft.(ft_return), ft.(ft_params))
-              | operator_impl.MFunc _ _ ft =>
-                  (* TODO: the type of the member function does not currently
-                     contain the [Tmember_pointer] type *)
-                  let* objT :=
-                    match tes with
-                    | obj :: _ => mret [obj]
-                    | _ => mret []
-                    end
-                  in
+                  mret (ft.(ft_return), ft.(ft_params), tes)
+              | operator_impl.MFunc _ ct ft =>
                   let* ft := require_functype ft in
-                  mret (ft.(ft_return), objT ++ ft.(ft_params))
+                  match ct with
+                  | Static =>
+                      let checked_args :=
+                        match tes with
+                        | _ :: args => args
+                        | _ => []
+                        end
+                      in
+                      mret (ft.(ft_return), ft.(ft_params), checked_args)
+                  | Direct
+                  | Virtual =>
+                      (* TODO: the type of the member function does not currently
+                         contain the [Tmember_pointer] type *)
+                      let* objT :=
+                        match tes with
+                        | obj :: _ => mret [obj]
+                        | _ => mret []
+                        end
+                      in
+                      mret (ft.(ft_return), objT ++ ft.(ft_params), tes)
+                  end
               end
             in
-            let* _ := check_args Ar_Definite fargs tes in
+            let* _ := check_args Ar_Definite fargs args_to_check in
             mret result
         | Esubscript e1 e2 t =>
             let* t1 := of_expr e1 in

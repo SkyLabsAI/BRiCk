@@ -597,7 +597,7 @@ End BuiltinFn.
 #[global] Bind Scope pstring_scope with BuiltinFn.t.
 
 (** ** Dispatch type, i.e. <<virtual>> or <<static>> *)
-Variant dispatch_type : Set := Virtual | Direct.
+Variant dispatch_type : Set := Virtual | Direct | Static.
 #[global] Instance: EqDecision dispatch_type.
 Proof. solve_decision. Defined.
 #[deprecated(since="20230716",note="use [dispatch_type].")]

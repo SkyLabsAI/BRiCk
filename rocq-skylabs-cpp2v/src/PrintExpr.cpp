@@ -722,8 +722,6 @@ public:
             print.str("unsupported operator call (nullptr)");
             done(expr, Done::DT);
         } else if (auto method = dyn_cast<CXXMethodDecl>(callee)) {
-            always_assert(!method->isStatic() &&
-                          "operator overloads can not be static");
             guard::ctor _{print, "Eoperator_member_call"};
             cprint.printOverloadableOperator(print, expr->getOperator(),
                                              loc::of(expr))
@@ -731,19 +729,14 @@ public:
 
             cprint.printName(print, *method);
             print.output() << fmt::nbsp
-                           << (method->isVirtual() ? "Virtual" : "Direct")
+                           << (method->isStatic()    ? "Static_dispatch"
+                               : method->isVirtual() ? "Virtual"
+                                                     : "Direct")
                            << fmt::nbsp;
             cprint.printQualType(print, method->getType(), loc::of(method));
             print.output() << fmt::nbsp;
-
-            cprint.printExpr(print, expr->getArg(0), names);
-
-            print.output() << fmt::nbsp;
-            // note skip the first parameter because it is the object.
-            print.list_range(
-                expr->arg_begin() + 1, expr->arg_end(),
-                [&](auto i) { cprint.printExpr(print, i, names); });
-
+            print.list(expr->arguments(),
+                       [&](auto i) { cprint.printExpr(print, i, names); });
         } else if (auto function = dyn_cast<FunctionDecl>(callee)) {
             guard::ctor _{print, "Eoperator_call"};
             cprint.printOverloadableOperator(print, expr->getOperator(),
@@ -1383,12 +1376,12 @@ public:
             auto field = comm.getField();
             auto parent = field ? field->getParent() : nullptr;
 #if CLANG_VERSION_MAJOR >= 22
-            QualType parentTy =
-                parent ? parent->getASTContext().getTagType(
-                             ElaboratedTypeKeyword::None, std::nullopt, parent,
-                             false)
-                       : QualType{};
-            const Type *ty = parentTy.isNull() ? nullptr : parentTy.getTypePtr();
+            QualType parentTy = parent ? parent->getASTContext().getTagType(
+                                             ElaboratedTypeKeyword::None,
+                                             std::nullopt, parent, false)
+                                       : QualType{};
+            const Type *ty =
+                parentTy.isNull() ? nullptr : parentTy.getTypePtr();
 #else
             const Type *ty = parent ? parent->getTypeForDecl() : nullptr;
 #endif
