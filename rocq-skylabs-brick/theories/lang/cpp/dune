@@ -4,16 +4,24 @@
  (package rocq-skylabs-brick)
  (plugins rocq-skylabs-brick.plugin)
  (theories
-  ; skylabs.iris.extra deps
   Stdlib
   stdpp
   skylabs.upoly
-  elpi elpi_elpi elpi.apps.locker elpi.apps.NES
-  Lens Lens.Elpi
-  Ltac2 skylabs.ltac2.extra
+  elpi
+  elpi_elpi
+  elpi.apps.locker
+  elpi.apps.NES
+  Lens
+  Lens.Elpi
+  Ltac2
+  skylabs.ltac2.extra
   skylabs.prelude
   iris
-  ; skylabs.iris.extra deps end
   skylabs.iris.extra
-  ; Equations
-  Equations Equations.Prop Equations.Type))
+  Equations
+  Equations.Prop
+  Equations.Type
+  ; transitive dependencies
+  Corelib elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
+  elpi.apps.locker.elpi
+ ))

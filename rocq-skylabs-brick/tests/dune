@@ -13,4 +13,9 @@
   skylabs.prelude
   skylabs.iris.extra
   skylabs.ltac2.extra
-  skylabs.lang.cpp))
+  skylabs.lang.cpp
+  ; transitive dependencies
+  Corelib Equations Equations.Prop Equations.Type elpi.apps.NES
+  elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi elpi.apps.locker
+  elpi.apps.locker.elpi
+ ))

@@ -4,6 +4,8 @@
  (package ltac2-extra)
  (theories
   Ltac2
-  Stdlib ; for ltac2-extra/theories/internal/char.v
-  )
+  Stdlib
+  ; transitive dependencies
+  Corelib
+ )
  (plugins ltac2-extra.plugin))

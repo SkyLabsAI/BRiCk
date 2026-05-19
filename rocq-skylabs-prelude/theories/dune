@@ -6,9 +6,18 @@
   Stdlib
   stdpp
   skylabs.upoly
-  elpi elpi_elpi elpi.apps.locker elpi.apps.NES
-  Lens Lens.Elpi
-  Ltac2 skylabs.ltac2.extra))
+  elpi
+  elpi_elpi
+  elpi.apps.locker
+  elpi.apps.NES
+  Lens
+  Lens.Elpi
+  Ltac2
+  skylabs.ltac2.extra
+  ; transitive dependencies
+  Corelib elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
+  elpi.apps.locker.elpi
+ ))
 
 ; Copy dependencies --- typically Elpi files needed for `From ⋯ Extra
 ; Dependency` --- into dune's build directory. Arrange for the dummy

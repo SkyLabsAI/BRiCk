@@ -2,5 +2,11 @@
 (rocq.theory
  (name skylabs.ltac2.logger)
  (package ltac2-logger)
- (theories Ltac2 skylabs.ltac2.extra Stdlib)
+ (theories
+  Ltac2
+  skylabs.ltac2.extra
+  Stdlib
+  ; transitive dependencies
+  Corelib
+ )
  (plugins ltac2-logger.plugin))

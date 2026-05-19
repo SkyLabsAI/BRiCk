@@ -2,7 +2,12 @@
 
 (rocq.theory
  (name skylabs_tests.elpi.extra)
- (theories skylabs.elpi.extra))
+ (theories
+  skylabs.elpi.extra
+  ; transitive dependencies
+  Corelib Ltac2 Stdlib elpi elpi.apps.NES elpi.apps.NES.elpi elpi_elpi
+  skylabs.ltac2.extra
+ ))
 
 (rule
  (target dummy.v)
