@@ -792,12 +792,12 @@ Module Type Expr.
     Axiom wp_operand_cast_null : forall e ty Q,
         type_of e = Tnullptr ->
         is_pointer ty ->
-            wp_operand e Q (* note: [has_type v Tnullptr |-- has_type v (Tptr ty)] *)
+            wp_discard e (Q (Vptr nullptr)) (* note: [has_type v Tnullptr |-- has_type v (Tptr ty)] *)
         |-- wp_operand (Ecast (Cnull2ptr ty) e) Q.
 
     Axiom wp_operand_cast_null2memberptr : forall cls e ty Q,
         type_of e = Tnullptr ->
-            wp_operand e (fun _ free => Q (Vmember_ptr cls None) free)
+            wp_discard e (Q (Vmember_ptr cls None))
         |-- wp_operand (Ecast (Cnull2memberptr $ Tmember_pointer (Tnamed cls) ty) e) Q.
 
     (* Determine if a 0-constant of this type can be used as a pseudonym for <<nullptr>> *)
@@ -818,8 +818,8 @@ Module Type Expr.
     Axiom wp_operand_cast_null_int : forall e ty Q,
         can_represent_null (type_of e) ->
         is_pointer ty ->
-            (letI* v, free := wp_operand e in
-             [| v = Vint 0 |] ** Q (Vptr nullptr) free)
+            (letI* free := wp_discard e in
+             Q (Vptr nullptr) free)
         |-- wp_operand (Ecast (Cnull2ptr ty) e) Q.
 
     (* note(gmm): in the clang AST, the subexpression is the call.
