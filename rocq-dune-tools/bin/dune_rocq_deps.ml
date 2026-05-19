@@ -9,7 +9,8 @@ let report_error_and_exit = function
         if theory_names = [] then "<none>" else String.concat ", " theory_names
       in
       prerr_endline
-        ("error: internal theory mismatch while rewriting [" ^ theory_names ^ "]") ;
+        ( "error: internal theory mismatch while rewriting [" ^ theory_names
+        ^ "]" ) ;
       exit Support.exit_error
   | Support.Error message ->
       prerr_endline ("error: " ^ message) ;

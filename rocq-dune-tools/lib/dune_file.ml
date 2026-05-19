@@ -25,6 +25,14 @@ type t =
 
 let substring text span = String.sub text span.start (span.finish - span.start)
 
+let is_whitespace = function ' ' | '\n' | '\t' | '\r' -> true | _ -> false
+
+let is_atom_delimiter = function
+  | ';' | '(' | ')' ->
+      true
+  | char ->
+      is_whitespace char
+
 let skip_comment text index =
   let length = String.length text in
   let rec loop i =
@@ -85,21 +93,13 @@ let tokenize_atoms text =
       else if Char.equal char '"' then
         let finish = skip_string text index in
         loop finish (String.sub text index (finish - index) :: acc)
-      else if
-        Char.equal char '(' || Char.equal char ')' || Char.equal char ' '
-        || Char.equal char '\n' || Char.equal char '\t' || Char.equal char '\r'
-      then loop (index + 1) acc
+      else if is_atom_delimiter char then loop (index + 1) acc
       else
         let rec advance i =
           if i >= length then i
           else
             let char = text.[i] in
-            if
-              Char.equal char ';' || Char.equal char '(' || Char.equal char ')'
-              || Char.equal char ' ' || Char.equal char '\n'
-              || Char.equal char '\t' || Char.equal char '\r'
-            then i
-            else advance (i + 1)
+            if is_atom_delimiter char then i else advance (i + 1)
         in
         let finish = advance index in
         loop finish (String.sub text index (finish - index) :: acc)
@@ -147,8 +147,7 @@ let is_named_list name = function
 let find_field name = function
   | Sexp.List (_ :: items) ->
       let rec loop = function
-        | Sexp.List (Sexp.Atom head :: tail) :: _
-          when String.equal head name ->
+        | Sexp.List (Sexp.Atom head :: tail) :: _ when String.equal head name ->
             Some tail
         | _ :: rest ->
             loop rest
@@ -200,8 +199,7 @@ let theory_of_stanza id file_path theory_span text form =
           | Some theories_field ->
               theories_field
           | None ->
-              failf
-                "%s: found theories span but could not parse theories field"
+              failf "%s: found theories span but could not parse theories field"
                 (Fpath.to_string file_path)
         in
         let listed_dependencies =
@@ -215,8 +213,7 @@ let theory_of_stanza id file_path theory_span text form =
         let theories_text = substring text theories_span in
         split_theories_dependencies theories_text listed_dependencies
   in
-  { theory=
-      {id; name; direct_dependencies; transitive_dependencies}
+  { theory= {id; name; direct_dependencies; transitive_dependencies}
   ; theory_span
   ; theories_span }
 
@@ -257,8 +254,7 @@ let wrap_dependency_lines prefix dependencies =
             List.rev (current :: acc)
         | dependency :: remaining ->
             let candidate = current ^ " " ^ dependency in
-            if String.length candidate <= 80 then
-              loop candidate acc remaining
+            if String.length candidate <= 80 then loop candidate acc remaining
             else loop (prefix ^ dependency) (current :: acc) remaining
       in
       loop (prefix ^ first) [] rest
@@ -274,7 +270,9 @@ let format_theories_block indent direct_dependencies transitive_dependencies =
     in
     String.concat "\n"
       ( ["(theories"]
-      @ List.map (fun dependency -> indent ^ " " ^ dependency) direct_dependencies
+      @ List.map
+          (fun dependency -> indent ^ " " ^ dependency)
+          direct_dependencies
       @ transitive_section
       @ [indent ^ ")"] )
 
@@ -300,24 +298,23 @@ let validate_theories file theories =
   let expected_by_id =
     List.fold_left
       (fun theories_by_id (theory : theory) ->
-        StringMap.add (string_of_int theory.id) theory theories_by_id )
-      StringMap.empty expected_theories
+        IntMap.add theory.id theory theories_by_id )
+      IntMap.empty expected_theories
   in
   let provided_by_id, duplicate_names =
     List.fold_left
       (fun (theories_by_id, duplicate_names) (theory : theory) ->
-        let key = string_of_int theory.id in
-        if StringMap.mem key theories_by_id then
+        if IntMap.mem theory.id theories_by_id then
           (theories_by_id, theory.name :: duplicate_names)
-        else (StringMap.add key theory theories_by_id, duplicate_names) )
-      (StringMap.empty, []) theories
+        else (IntMap.add theory.id theory theories_by_id, duplicate_names) )
+      (IntMap.empty, []) theories
   in
   let mismatch_names =
     List.fold_left
       (fun names expected ->
-        let key = string_of_int expected.id in
-        match StringMap.find_opt key provided_by_id with
-        | Some (provided : theory) when String.equal provided.name expected.name ->
+        match IntMap.find_opt expected.id provided_by_id with
+        | Some (provided : theory) when String.equal provided.name expected.name
+          ->
             names
         | Some (provided : theory) ->
             expected.name :: provided.name :: names
@@ -326,9 +323,9 @@ let validate_theories file theories =
       duplicate_names expected_theories
   in
   let mismatch_names =
-    StringMap.fold
-      (fun key (theory : theory) names ->
-        if StringMap.mem key expected_by_id then names else theory.name :: names)
+    IntMap.fold
+      (fun id (theory : theory) names ->
+        if IntMap.mem id expected_by_id then names else theory.name :: names )
       provided_by_id mismatch_names
   in
   if mismatch_names <> [] then mismatch mismatch_names ;
@@ -340,7 +337,7 @@ let write file theories =
     List.filter_map
       (fun stanza ->
         let theory =
-          match StringMap.find_opt (string_of_int stanza.theory.id) theories_by_id with
+          match IntMap.find_opt stanza.theory.id theories_by_id with
           | Some theory ->
               theory
           | None ->

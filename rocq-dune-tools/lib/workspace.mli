@@ -1,9 +1,8 @@
-type t
 (** Opaque dune workspace handle. *)
+type t
 
 val current : unit -> t
-(** Discover the current dune workspace from the process environment or by
-    walking upward from the current directory. *)
+(** Discover the current dune workspace. *)
 
 val root : t -> Fpath.t
 (** Absolute normalized workspace root directory. *)

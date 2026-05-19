@@ -42,10 +42,11 @@ let transitive_closure dependencies =
         let closure =
           List.fold_left
             (fun closure dependency ->
-              dedupe_preserving_order
-                (closure
-                @ [dependency]
-                @ expand ~path_rev:(name :: path_rev) ~visiting dependency ) )
+              let closure =
+                append_unique_preserving_order closure [dependency]
+              in
+              append_unique_preserving_order closure
+                (expand ~path_rev:(name :: path_rev) ~visiting dependency) )
             [] direct_dependencies
         in
         Hashtbl.replace cache name closure ;

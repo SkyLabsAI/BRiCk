@@ -1,11 +1,10 @@
-type transitive_dep_graph = string list Support.StringMap.t
 (** Transitive dependency closure indexed by theory name. Each entry contains
     the theory's direct and transitive dependencies, with direct dependencies
     appearing before any inherited transitive dependencies. *)
+type transitive_dep_graph = string list Support.StringMap.t
 
 val build_transitive_dep_graph :
-     (Fpath.t * Dune_file.theory list) list
-  -> transitive_dep_graph
+  (Fpath.t * Dune_file.theory list) list -> transitive_dep_graph
 (** Build the transitive dependency graph for all uniquely named theories.
 
     Direct dependencies are taken exactly as returned by [Dune_file.read].
@@ -13,10 +12,9 @@ val build_transitive_dep_graph :
     dependencies. If a duplicate name is referenced, this function raises an
     ambiguity error with source locations. *)
 
-val normalize :
-  transitive_dep_graph -> string list * string list -> string list * string list
-(** [normalize graph (direct_dependencies, transitive_dependencies)] applies
-    the normal rewriting policy to an already computed dependency pair.
+val normalize : string list * string list -> string list * string list
+(** [normalize (direct_dependencies, transitive_dependencies)] applies the
+    normal rewriting policy to an already computed dependency pair.
 
     Normalization rules:
     - the direct dependencies are preserved exactly as given

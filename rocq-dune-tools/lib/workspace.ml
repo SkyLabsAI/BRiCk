@@ -2,11 +2,6 @@ open Support
 
 type t = {root: Fpath.t}
 
-let current_cwd () =
-  result_or_fail ~context:"failed to determine the current directory"
-    (OS.Dir.current ())
-  |> Fpath.to_dir_path |> Fpath.normalize
-
 let normalize_workspace_root ~cwd ~source ~value =
   let root =
     fpath_or_fail
@@ -63,7 +58,7 @@ let current () =
     | None ->
         failf
           "no dune workspace root was found: set DUNE_SOURCEROOT or DUNE_ROOT, \
-          or run from inside a tree containing a dune-workspace or \
+           or run from inside a tree containing a dune-workspace or \
            dune-project file (searched from %s upward)"
           (Fpath.to_string cwd) )
 

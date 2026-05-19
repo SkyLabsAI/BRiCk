@@ -11,11 +11,6 @@ type file_change =
   { path: Fpath.t
   ; updated_text: string }
 
-let current_cwd () =
-  result_or_fail ~context:"failed to determine the current directory"
-    (OS.Dir.current ())
-  |> Fpath.to_dir_path |> Fpath.normalize
-
 let read_dune_files dune_files =
   let rec loop parsed_files errors = function
     | [] ->
@@ -39,42 +34,41 @@ let analyze_targets ~cwd parsed_files ~no_normalize =
            (parsed_file.path, parsed_file.theories) )
          parsed_files )
   in
-  let errors = ref [] in
-  let changes =
-    List.filter_map
-      (fun (parsed_file : parsed_file) ->
+  let changes, errors =
+    List.fold_left
+      (fun (changes, errors) (parsed_file : parsed_file) ->
         if
           parsed_file.theories = []
           || not (is_within ~root:cwd parsed_file.path)
-        then None
+        then (changes, errors)
         else
           try
             let updated_theories =
               Rewrite.update_theories transitive_dep_graph ~no_normalize
                 parsed_file.theories
             in
-            let updated_text = Dune_file.write parsed_file.file updated_theories in
-            Some {path= parsed_file.path; updated_text}
+            let updated_text =
+              Dune_file.write parsed_file.file updated_theories
+            in
+            ({path= parsed_file.path; updated_text} :: changes, errors)
           with
           | Error message ->
-              errors :=
-                display_file_error ~cwd parsed_file.path message :: !errors ;
-              None
+              ( changes
+              , display_file_error ~cwd parsed_file.path message :: errors )
           | Dune_file.Theory_mismatch theory_names ->
               let theory_names =
                 if theory_names = [] then "<none>"
                 else String.concat ", " theory_names
               in
-              errors :=
-                display_file_error ~cwd parsed_file.path
+              ( changes
+              , display_file_error ~cwd parsed_file.path
                   (Printf.sprintf
                      "internal theory mismatch while rewriting [%s]"
                      theory_names )
-                :: !errors ;
-              None )
-      parsed_files
+                :: errors ) )
+      ([], []) parsed_files
   in
-  (changes, List.rev !errors)
+  (List.rev changes, List.rev errors)
 
 let run options =
   let cwd = current_cwd () in

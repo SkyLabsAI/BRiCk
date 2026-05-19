@@ -27,22 +27,27 @@ let build_theory_buckets files =
               dependency_names theory.direct_dependencies
           in
           (theory_buckets, dependency_names) )
-        (theory_buckets, dependency_names) theories )
-    (StringMap.empty, StringSet.empty) files
+        (theory_buckets, dependency_names)
+        theories )
+    (StringMap.empty, StringSet.empty)
+    files
 
 let duplicate_names theory_buckets =
   StringMap.fold
     (fun name indexed_theories duplicates ->
-      if List.length indexed_theories > 1 then StringSet.add name duplicates
-      else duplicates )
+      match indexed_theories with
+      | _ :: _ :: _ ->
+          StringSet.add name duplicates
+      | _ ->
+          duplicates )
     theory_buckets StringSet.empty
 
 let dependency_locations theory_buckets name =
   match StringMap.find_opt name theory_buckets with
   | Some indexed_theories ->
       indexed_theories
-      |> List.rev_map
-           (fun indexed_theory -> "- " ^ Fpath.to_string indexed_theory.file_path)
+      |> List.rev_map (fun indexed_theory ->
+          "- " ^ Fpath.to_string indexed_theory.file_path )
       |> String.concat "\n"
   | None ->
       ""
@@ -100,29 +105,21 @@ let build_transitive_dep_graph files =
   let dependency_map =
     unique_theories theory_buckets duplicate_names
     |> StringMap.map (fun indexed_theory ->
-           dedupe_preserving_order indexed_theory.theory.direct_dependencies )
+        dedupe_preserving_order indexed_theory.theory.direct_dependencies )
   in
   try Dependency_graph.transitive_closure dependency_map
-  with
-  | Dependency_graph.Incomplete_graph missing_dependencies ->
-      failf "%s" (unresolved_dependency_message missing_dependencies)
-
-let union_dependency_lists lists =
-  List.fold_left
-    (fun dependencies new_dependencies ->
-      dedupe_preserving_order (dependencies @ new_dependencies) )
-    [] lists
+  with Dependency_graph.Incomplete_graph missing_dependencies ->
+    failf "%s" (unresolved_dependency_message missing_dependencies)
 
 let inherited_dependencies (graph : transitive_dep_graph) direct_dependencies =
-  List.map
-    (fun dependency ->
+  List.fold_left
+    (fun inherited dependency ->
       match StringMap.find_opt dependency graph with
       | Some dependencies ->
-          dependencies
+          append_unique_preserving_order inherited dependencies
       | None ->
-          [] )
-    direct_dependencies
-  |> union_dependency_lists
+          inherited )
+    [] direct_dependencies
 
 let updated_dependencies (graph : transitive_dep_graph)
     (theory : Dune_file.theory) =
@@ -133,8 +130,8 @@ let updated_dependencies (graph : transitive_dep_graph)
         dependencies
     | None ->
         dedupe_preserving_order
-          (direct_dependencies
-          @ inherited_dependencies graph direct_dependencies)
+          ( direct_dependencies
+          @ inherited_dependencies graph direct_dependencies )
   in
   let direct_dependency_set = StringSet.of_list direct_dependencies in
   let transitive_dependencies =
@@ -157,16 +154,15 @@ let same_dependency_set
   in
   StringSet.equal original updated
 
-(** [normalize graph (direct_dependencies, transitive_dependencies)] applies
-    the normal rewriting policy to an already computed dependency pair.
+(** [normalize (direct_dependencies, transitive_dependencies)] applies the
+    normal rewriting policy to an already computed dependency pair.
 
     Normalization rules:
     - the direct dependencies are preserved exactly as given
     - the transitive dependencies are deduplicated and sorted alphabetically
     - dependencies that are already direct are not moved by this function;
       callers are expected to compute the direct/transitive split first *)
-let normalize (_graph : transitive_dep_graph)
-    (direct_dependencies, transitive_dependencies) =
+let normalize (direct_dependencies, transitive_dependencies) =
   (direct_dependencies, dedupe_sorted transitive_dependencies)
 
 let preserve_existing_order original_transitive_dependencies
@@ -190,9 +186,7 @@ let preserve_existing_order original_transitive_dependencies
 
 let compute_updated_theory (graph : transitive_dep_graph) ~no_normalize
     (theory : Dune_file.theory) =
-  let updated_dependencies =
-    updated_dependencies graph theory
-  in
+  let updated_dependencies = updated_dependencies graph theory in
   if
     same_dependency_set
       (theory.direct_dependencies, theory.transitive_dependencies)
@@ -203,7 +197,7 @@ let compute_updated_theory (graph : transitive_dep_graph) ~no_normalize
       if no_normalize then
         preserve_existing_order theory.transitive_dependencies
           updated_dependencies
-      else normalize graph updated_dependencies
+      else normalize updated_dependencies
     in
     {theory with direct_dependencies; transitive_dependencies}
 
@@ -211,6 +205,5 @@ let update_theories graph ~no_normalize theories =
   List.map
     (fun (theory : Dune_file.theory) ->
       try compute_updated_theory graph ~no_normalize theory
-      with Error message ->
-        failf "[%s]: %s" theory.name message )
+      with Error message -> failf "[%s]: %s" theory.name message )
     theories

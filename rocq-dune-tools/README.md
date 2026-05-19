@@ -41,8 +41,8 @@ Rewritten dependency stanzas use this shape:
 )
 ```
 
-In normalized rewrites, the direct section and the transitive section are each
-sorted alphabetically.
+In normalized rewrites, the direct section preserves the order from the source
+stanza, and the transitive section is sorted alphabetically.
 
 Once a stanza already uses the `; transitive dependencies` marker, only the
 entries before that marker are treated as direct roots on the next run. That

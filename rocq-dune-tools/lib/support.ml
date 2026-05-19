@@ -5,6 +5,7 @@ exception Error of string
 
 module StringMap = Map.Make (String)
 module StringSet = Set.Make (String)
+module IntMap = Map.Make (Int)
 
 let prune_dirs = StringSet.of_list [".git"; "_build"; "_opam"]
 
@@ -23,6 +24,11 @@ let result_or_fail ~context = function
       failf "%s: %s" context message
 
 let fpath_or_fail ~context path = result_or_fail ~context (Fpath.of_string path)
+
+let current_cwd () =
+  result_or_fail ~context:"failed to determine the current directory"
+    (OS.Dir.current ())
+  |> Fpath.to_dir_path |> Fpath.normalize
 
 let read_text_file path =
   result_or_fail
@@ -69,5 +75,17 @@ let dedupe_preserving_order values =
         loop (StringSet.add value seen) (value :: acc) rest
   in
   loop StringSet.empty [] values
+
+let append_unique_preserving_order values new_values =
+  let seen = StringSet.of_list values in
+  let rec loop seen acc = function
+    | [] ->
+        values @ List.rev acc
+    | value :: rest when StringSet.mem value seen ->
+        loop seen acc rest
+    | value :: rest ->
+        loop (StringSet.add value seen) (value :: acc) rest
+  in
+  loop seen [] new_values
 
 let dedupe_sorted values = List.sort_uniq String.compare values
