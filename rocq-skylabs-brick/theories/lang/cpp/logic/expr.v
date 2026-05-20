@@ -562,15 +562,15 @@ Module Type Expr.
             | Some (tl, tr, resultT) =>
               letI* '(la, rv), free :=
                 eval2 (evaluation_order.order_of OOEqual) (wp_lval l) (wp_operand r) in
-              Exists v cv v',
+              Exists lv clv resv storedv,
                     ((* cast and perform the computation *)
-                      [| convert tu (type_of l) tl v cv |] **
+                      [| convert tu (type_of l) tl lv clv |] **
                       [| (* ensured by the AST *) tr = type_of r |] **
-                      eval_binop tu o tl tr resultT cv rv v' **
+                      eval_binop tu o tl tr resultT clv rv resv **
                         (* convert the value back to the target type so it can be stored *)
-                        [| convert tu resultT ty cv v' |] ** True) //\\
-                    (la |-> primR (erase_qualifiers ty) 1$m v **
-                      (la |-> primR (erase_qualifiers ty) 1$m v' -* Q la free))
+                        [| convert tu resultT ty resv storedv |] ** True) //\\
+                    (la |-> primR (erase_qualifiers ty) 1$m lv **
+                      (la |-> primR (erase_qualifiers ty) 1$m storedv -* Q la free))
             | _ => False%I
             end
         |-- wp_lval (Eassign_op o l r ty) Q.
