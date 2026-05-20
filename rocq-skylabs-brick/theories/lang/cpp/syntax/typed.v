@@ -473,7 +473,7 @@ Module decltype.
         | Cint2bool => mret Tbool
         | Cnull2ptr t =>
             let* _ :=
-              match (to_exprtype base).2 with
+              match drop_qualifiers (to_exprtype base).2 with
               | Tnullptr | Tnum _ _ => mret tt
               | _ => throw ("source of null2ptr cast must be nullptr or integral type"%bs, base)
               end
