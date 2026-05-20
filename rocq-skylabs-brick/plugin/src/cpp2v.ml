@@ -173,6 +173,39 @@ let temp_file ?(prefix="ocaml_temp_") ?(suffix=".tmp") content =
       let _ = try Sys.remove temp_file with _ -> () in
       raise e
 
+(** Determine whether we should emit a path warning.
+   Only do this if we notice some path arguments
+ *)
+let should_warn (flags : string list) : bool =
+  let exact_path_option =
+    Str.regexp "^\\(-F\\|-I\\|-idirafter\\|-iframework\\|-iframeworkwithsysroot\\|-imacros\\|-include\\|-include-pch\\|-iquote\\|-isysroot\\|-isystem\\|-ivfsoverlay\\|-resource-dir\\|--sysroot\\)$"
+  in
+  let joined_path_option =
+    Str.regexp "^\\(-F\\|-I\\|-idirafter\\|-iframework\\|-iframeworkwithsysroot\\|-iquote\\|-isysroot\\|-isystem\\).+\\|^--sysroot=.+"
+  in
+  let has_path_option flag =
+    Str.string_match exact_path_option flag 0 ||
+    Str.string_match joined_path_option flag 0
+  in
+  List.exists has_path_option flags
+
+let%test "should_warn ignores empty flags" =
+  not (should_warn [])
+
+let%test "should_warn ignores flags without paths" =
+  not (should_warn ["-std=c++23";"-Wall";"-DNAME=value"])
+
+let%test "should_warn detects separated path flags" =
+  should_warn ["-I";"include"] &&
+  should_warn ["-isystem";"/usr/include"] &&
+  should_warn ["-include";"header.hpp"] &&
+  should_warn ["--sysroot";"/opt/sysroot"]
+
+let%test "should_warn detects joined path flags" =
+  should_warn ["-Iinclude"] &&
+  should_warn ["-isystem/usr/include"] &&
+  should_warn ["--sysroot=/opt/sysroot"]
+
 let cpp_command_prog (attrs : attrs) name flags prog =
   let { check_duplicates; elaborate; check_types } = attrs in
   let temp_cpp , unlink = temp_file ~suffix:".cpp" prog in
@@ -182,10 +215,12 @@ let cpp_command_prog (attrs : attrs) name flags prog =
       match flags with
       | None -> []
       | Some flags ->
-        Feedback.msg_notice Pp.(str "Note that cpp.prog does not guarantee the working directory," ++ Pp.brk (0,0) ++
-                                str "so relative paths may yield inconsistent results between different editors." ++ fnl () ++
-                               str "Current working directory: " ++ str (Unix.getcwd ())) ;
-        Str.split (Str.regexp "[ \n\r\x0c\t]+") flags
+        let flags = Str.split (Str.regexp "[ \n\r\x0c\t]+") flags in 
+        if should_warn flags then
+          Feedback.msg_notice Pp.(str "Note that cpp.prog does not guarantee the working directory," ++ Pp.brk (0,0) ++
+                                  str "so relative paths may yield inconsistent results between different editors." ++ fnl () ++
+                                str "Current working directory: " ++ str (Unix.getcwd ())) ;
+        flags
     in
     ["cpp2v";
     "-for-interactive"; Names.Id.to_string name;
