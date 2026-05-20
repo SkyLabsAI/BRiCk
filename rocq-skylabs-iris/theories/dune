@@ -3,13 +3,20 @@
  (name skylabs.iris.extra)
  (package rocq-skylabs-iris)
  (theories
-  ; skylabs.prelude deps
   Stdlib
   stdpp
   skylabs.upoly
-  elpi elpi_elpi elpi.apps.locker elpi.apps.NES
-  Lens Lens.Elpi
-  Ltac2 skylabs.ltac2.extra
-  ; skylabs.prelude deps end
+  elpi
+  elpi_elpi
+  elpi.apps.locker
+  elpi.apps.NES
+  Lens
+  Lens.Elpi
+  Ltac2
+  skylabs.ltac2.extra
   skylabs.prelude
-  iris))
+  iris
+  ; transitive dependencies
+  Corelib elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
+  elpi.apps.locker.elpi
+ ))

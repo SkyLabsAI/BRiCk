@@ -1,4 +1,9 @@
 (include_subdirs qualified)
 (rocq.theory
  (name skylabs_tests.ltac2.extra)
- (theories Stdlib skylabs.ltac2.extra))
+ (theories
+  Stdlib
+  skylabs.ltac2.extra
+  ; transitive dependencies
+  Corelib Ltac2
+ ))

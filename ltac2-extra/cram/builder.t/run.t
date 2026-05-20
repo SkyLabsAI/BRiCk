@@ -1,13 +1,13 @@
   $ export PATH="$DUNE_SOURCEROOT/_build/install/default/bin:$PATH"
   $ DUNE_CACHE=disabled dune build test1.vo 2>&1
-  File "dune", lines 12-32, characters 0-478:
+  File "dune", lines 12-43, characters 0-623:
   12 | (rocq.theory
   13 |   (name skylabs_auto.cram.builder) ; logical path of this library
   14 |   ; skylabs deps
   ....
-  30 |     skylabs.elpi.extra
-  31 |     skylabs.elpi.cpp
-  32 |     skylabs))
+  41 |    Corelib elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
+  42 |    elpi.apps.locker.elpi tactic_classes
+  43 |   ))
   (** Test 1 - no errors *)
   - : unit = ()
   
@@ -33,14 +33,14 @@
   
   [1]
   $ DUNE_CACHE=disabled dune build test2.vo 2>&1
-  File "dune", lines 12-32, characters 0-478:
+  File "dune", lines 12-43, characters 0-623:
   12 | (rocq.theory
   13 |   (name skylabs_auto.cram.builder) ; logical path of this library
   14 |   ; skylabs deps
   ....
-  30 |     skylabs.elpi.extra
-  31 |     skylabs.elpi.cpp
-  32 |     skylabs))
+  41 |    Corelib elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
+  42 |    elpi.apps.locker.elpi tactic_classes
+  43 |   ))
   
   (** Test 3 - error in arguments *)
   File "./test2.v", line 19, characters 4-307:

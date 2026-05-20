@@ -1,6 +1,13 @@
 (rocq.theory
  (name Lens.Elpi)
- (theories Lens elpi elpi_elpi elpi.apps.derive)
+ (theories
+  Lens
+  elpi
+  elpi_elpi
+  elpi.apps.derive
+  ; transitive dependencies
+  elpi.apps.derive.elpi
+ )
  (package rocq-lens-elpi))
 
 ; Hack to ensure the coq-elpi package is avalable. *)

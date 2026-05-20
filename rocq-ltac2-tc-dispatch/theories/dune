@@ -4,8 +4,10 @@
  (package ltac2-tc-dispatch)
  (theories
   Ltac2
-  Stdlib ; for ltac2-extra/theories/internal/char.v
+  Stdlib
   skylabs.ltac2.extra
   skylabs.ltac2.logger
-  )
+  ; transitive dependencies
+  Corelib
+ )
  (plugins ltac2-tc-dispatch.plugin))

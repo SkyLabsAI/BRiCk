@@ -5,8 +5,14 @@
  (package elpi-extra)
  (theories
   Stdlib
-  elpi elpi_elpi elpi.apps.NES
-  Ltac2 skylabs.ltac2.extra))
+  elpi
+  elpi_elpi
+  elpi.apps.NES
+  Ltac2
+  skylabs.ltac2.extra
+  ; transitive dependencies
+  Corelib elpi.apps.NES.elpi
+ ))
 
 (rule
  (target dummy.v)

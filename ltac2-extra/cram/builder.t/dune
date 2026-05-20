@@ -13,22 +13,33 @@
   (name skylabs_auto.cram.builder) ; logical path of this library
   ; skylabs deps
   (theories
-    Stdlib
-    stdpp
-    skylabs.upoly
-    elpi elpi_elpi elpi.apps.locker elpi.apps.NES
-    Lens Lens.Elpi
-    Ltac2 skylabs.ltac2.extra
-    skylabs.prelude
-    iris
-    skylabs.iris.extra
-    Equations Equations.Prop Equations.Type
-    skylabs.lang.cpp
-    skylabs.ltac2.logger
-    skylabs.auto.core
-    ExtLib
-    skylabs.elpi.extra
-    skylabs.elpi.cpp
-    skylabs))
+   Stdlib
+   stdpp
+   skylabs.upoly
+   elpi
+   elpi_elpi
+   elpi.apps.locker
+   elpi.apps.NES
+   Lens
+   Lens.Elpi
+   Ltac2
+   skylabs.ltac2.extra
+   skylabs.prelude
+   iris
+   skylabs.iris.extra
+   Equations
+   Equations.Prop
+   Equations.Type
+   skylabs.lang.cpp
+   skylabs.ltac2.logger
+   skylabs.auto.core
+   ExtLib
+   skylabs.elpi.extra
+   skylabs.elpi.cpp
+   skylabs
+   ; transitive dependencies
+   Corelib elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
+   elpi.apps.locker.elpi tactic_classes
+  ))
 
 (include dune.inc)

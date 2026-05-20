@@ -1,4 +1,15 @@
 (include_subdirs qualified)
 (rocq.theory
  (name skylabs.noimport)
- (theories skylabs.prelude skylabs.iris.extra skylabs.lang.cpp iris stdpp))
+ (theories
+  skylabs.prelude
+  skylabs.iris.extra
+  skylabs.lang.cpp
+  iris
+  stdpp
+  ; transitive dependencies
+  Corelib Equations Equations.Prop Equations.Type Lens Lens.Elpi Ltac2 Stdlib
+  elpi elpi.apps.NES elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
+  elpi.apps.locker elpi.apps.locker.elpi elpi_elpi skylabs.ltac2.extra
+  skylabs.upoly
+ ))
