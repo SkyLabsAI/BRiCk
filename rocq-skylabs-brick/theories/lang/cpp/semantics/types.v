@@ -272,6 +272,13 @@ Proof. by rewrite /SizeOf TCEq_eq=><-. Qed.
   TCEq (bitsize.bytesN sz) n -> SizeOf (Tarch (Some sz) name) n.
 Proof. by rewrite /SizeOf TCEq_eq=><-. Qed.
 
+Lemma size_of_to_heap_type g ty : size_of g (to_heap_type ty) = size_of g ty.
+Proof.
+  rewrite -(size_of_erase_qualifiers _ ty).
+  rewrite /to_heap_type.
+  by destruct (erase_qualifiers ty).
+Qed.
+
 (** [HasSize ty] means that C++ type [ty] has a defined size *)
 Class HasSize {σ : genv} (ty : type) : Prop :=
   has_size : is_Some (size_of σ ty).
