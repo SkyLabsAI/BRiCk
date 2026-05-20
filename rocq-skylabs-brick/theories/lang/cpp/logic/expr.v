@@ -790,13 +790,13 @@ Module Type Expr.
         |-- wp_operand (Ecast (Cintegral t) e) Q.
 
     Axiom wp_operand_cast_null : forall e ty Q,
-        type_of e = Tnullptr ->
+        drop_qualifiers (type_of e) = Tnullptr ->
         is_pointer ty ->
             wp_discard e (Q (Vptr nullptr)) (* note: [has_type v Tnullptr |-- has_type v (Tptr ty)] *)
         |-- wp_operand (Ecast (Cnull2ptr ty) e) Q.
 
     Axiom wp_operand_cast_null2memberptr : forall cls e ty Q,
-        type_of e = Tnullptr ->
+        drop_qualifiers (type_of e) = Tnullptr ->
             wp_discard e (Q (Vmember_ptr cls None))
         |-- wp_operand (Ecast (Cnull2memberptr $ Tmember_pointer (Tnamed cls) ty) e) Q.
 
