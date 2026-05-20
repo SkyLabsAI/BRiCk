@@ -367,6 +367,17 @@ Arguments eval_le _ {_}.
 Arguments eval_gt _ {_}.
 Arguments eval_ge _ {_}.
 
+(* Special cases for <decltype(nullptr)> because they are not generally comparable *)
+Axiom eval_eq_nullptr :
+  forall rty,
+  relop_result_type rty ->
+  eval_binop_pure Beq Tnullptr Tnullptr rty (Vptr PTRS_INTF_AXIOM.nullptr) (Vptr PTRS_INTF_AXIOM.nullptr) (Vbool true).
+Axiom eval_neq_nullptr :
+  forall rty,
+  relop_result_type rty ->
+  eval_binop_pure Bneq Tnullptr Tnullptr rty (Vptr PTRS_INTF_AXIOM.nullptr) (Vptr PTRS_INTF_AXIOM.nullptr) (Vbool false).
+
+
 End operator_axioms.
 End OPERATOR_INTF_FUNCTOR.
 
