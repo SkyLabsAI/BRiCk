@@ -169,9 +169,11 @@ let cpp_command_prog (attrs : report_level option * bool) name flags prog =
       match flags with
       | None -> []
       | Some flags ->
+        (*
         Feedback.msg_notice Pp.(str "Note that cpp.prog does not guarantee the working directory," ++ Pp.brk (0,0) ++
                                 str "so relative paths may yield inconsistent results between different editors." ++ fnl () ++
                                str "Current working directory: " ++ str (Unix.getcwd ())) ;
+                               *)
         Str.split (Str.regexp "[ \n\r\x0c\t]+") flags
     in
     ["cpp2v";
