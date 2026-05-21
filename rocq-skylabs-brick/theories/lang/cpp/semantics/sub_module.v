@@ -224,6 +224,40 @@ Qed.
 
 (** ** Inclusion of [ObjValue] *)
 
+Definition OrDefault_le {T : Set} `{EqDecision T} (ae be : exception_spec.t) (a b : OrDefault T) : bool :=
+  match a , b with
+  | Defaulted , Defaulted => bool_decide (ae ⊆ be)
+  | Defaulted , CompilerProvided _ => bool_decide (ae ⊆ be)
+  | CompilerProvided x , CompilerProvided y
+  | UserDefined x , UserDefined y => bool_decide (ae = be /\ x = y)
+  | _ , _ => false
+  end.
+Definition OrDefault_ler {T : Set} `{EqDecision T} : relation (exception_spec.t * OrDefault T) :=
+  λ '(ae, a) '(be, b), OrDefault_le ae be a b = true.
+
+Section OrDefault_ler.
+  Context {T : Set} `{EqDecision T}.
+
+  #[local] Instance OrDefault_le_refl : Reflexive (@OrDefault_ler T _).
+  Proof.
+    rewrite /OrDefault_ler/OrDefault_le.
+    intros [? od]; destruct od => //=;
+      apply bool_decide_eq_true_2; done.
+  Qed.
+
+  #[local] Instance OrDefault_le_trans : Transitive (@OrDefault_ler T _).
+  Proof.
+    rewrite /OrDefault_ler/OrDefault_le.
+    intros [? x] [? y] [?z] Hxy Hyz.
+    repeat case_match; subst; try congruence.
+    all: repeat case_bool_decide; intuition (subst; try tauto).
+    { exfalso. apply H1. etrans; eauto. }
+    { exfalso. apply H1. etrans; eauto. }
+  Qed.
+
+  #[global] Instance: PreOrder (@OrDefault_ler T _) := {}.
+End OrDefault_ler.
+
 (** [ObjVal_le a b] holds when [a] has compatible (but possibly less)
     information than [b].
     For example, [a] might be a declaration while [b] is a compatible
@@ -270,7 +304,7 @@ Definition ObjValue_le (a b : ObjValue) : bool := Eval cbv beta iota zeta delta 
                    List.map (fun b => drop_norm b.2) m'.(m_params))
     | Some b , Some b' =>
       bool_decide (m.(m_params) = m'.(m_params)) &&
-      bool_decide (b = b')
+      OrDefault_le m.(m_exception) m'.(m_exception) b b'
     | _ , None => false
     end
   | Oconstructor c , Oconstructor c' =>
@@ -284,7 +318,7 @@ Definition ObjValue_le (a b : ObjValue) : bool := Eval cbv beta iota zeta delta 
     | _ , None => false
     | Some x , Some y =>
       bool_decide (c.(c_params) = c'.(c_params)) &&
-      bool_decide (x = y)
+      OrDefault_le c.(c_exception) c'.(c_exception) x y
     end
   | Odestructor dd , Odestructor dd' =>
     bool_decide (dd.(d_cc) = dd'.(d_cc)) &&
@@ -292,7 +326,7 @@ Definition ObjValue_le (a b : ObjValue) : bool := Eval cbv beta iota zeta delta 
     match dd.(d_body) , dd'.(d_body) with
     | None , _ => true
     | _ , None => false
-    | Some x , Some y => bool_decide (x = y)
+    | Some x , Some y => OrDefault_le dd.(d_exception) dd'.(d_exception) x y
     end
   | _ , _ => false
   end.
@@ -302,7 +336,7 @@ Arguments ObjValue_ler !_ _ /.
 Section ObjValue_ler.
   #[local] Instance ObjValue_le_refl : Reflexive ObjValue_ler.
   Proof.
-    rewrite /ObjValue_ler/ObjValue_le => ?; smash.
+    rewrite /ObjValue_ler/ObjValue_le/OrDefault_le => ?; smash.
   Qed.
 
   #[local] Instance ObjValue_le_trans : Transitive ObjValue_ler.
@@ -317,12 +351,14 @@ Section ObjValue_ler.
            | H : false = true |- _ => inversion H
            | H : true = false |- _ => inversion H
            | H : bool_decide _ = true |- _ => apply bool_decide_eq_true_1 in H; subst
+           | H : OrDefault_le ?xe ?ye ?x ?y = true |- _ => change (OrDefault_ler (xe,x) (ye,y)) in H
            | H : context [ if @bool_decide ?P ?DEC then _ else _ ] |- _ =>
                 destruct (@bool_decide_reflect P DEC); subst
            | H : match ?X with _ => _ end = _ |- _ => destruct X eqn:?
            | |- bool_decide _ = _ => apply bool_decide_eq_true_2
+           | |- OrDefault_le ?xe ?ye ?x ?y = true => change (OrDefault_ler (xe,x) (ye,y))
            | |- context [ bool_decide ?X ] => rewrite (bool_decide_eq_true_2 X); [ | by etrans; eauto ]
-           end; solve [ eauto | etrans; eauto ]).
+           end; try solve [ eauto | etrans; eauto ]).
   Qed.
 
   #[global] Instance: PreOrder ObjValue_ler := {}.

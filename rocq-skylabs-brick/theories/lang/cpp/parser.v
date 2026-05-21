@@ -235,6 +235,73 @@ Definition Dglobal_using_namespace (alias : name) : K :=
 Definition Dstatic_assert (msg : option PrimString.string) (e : Expr) : K :=
   _skip.
 
+Definition Oimplicit_default_ctor (n : globname) : K :=
+  let ctor := Oconstructor
+                {| c_class := n
+                ; c_params := []
+                ; c_cc := CC_C
+                ; c_arity := Ar_Definite
+                ; c_exception := exception_spec.Unknown (* TODO: problematic? *)
+                ; c_body := Some Defaulted |} in
+  _symbols (Nscoped n $ Nctor []) ctor.
+
+
+Definition Oimplicit_copy_ctor (n : globname) (is_const : bool) : K :=
+  let arg := Tref $ if is_const then (Tconst (Tnamed n)) else Tnamed n in
+  let ctor := Oconstructor
+                {| c_class := n
+                ; c_params := [("#0"%pstring, arg)]
+                ; c_cc := CC_C
+                ; c_arity := Ar_Definite
+                ; c_exception := exception_spec.Unknown (* TODO: problematic? *)
+                ; c_body := Some Defaulted |} in
+  _symbols (Nscoped n $ Nctor [arg]) ctor.
+
+Definition Oimplicit_move_ctor (n : globname) (is_const : bool) : K :=
+  let arg := Trv_ref $ if is_const then (Tconst (Tnamed n)) else Tnamed n in
+  let ctor := Oconstructor
+                {| c_class := n
+                ; c_params := [("#0"%pstring, arg)]
+                ; c_cc := CC_C
+                ; c_arity := Ar_Definite
+                ; c_exception := exception_spec.Unknown (* TODO: problematic? *)
+                ; c_body := Some Defaulted |} in
+  _symbols (Nscoped n $ Nctor [arg]) ctor.
+
+Definition Oimplicit_copy_assign (n : globname) (is_const : bool) : K :=
+  let arg := Tref $ if is_const then (Tconst (Tnamed n)) else Tnamed n in
+  let ctor := Omethod
+                {| m_class := n
+                ; m_params := [("#0"%pstring, arg)]
+                ; m_return := arg
+                ; m_this_qual := QM
+                ; m_cc := CC_C
+                ; m_arity := Ar_Definite
+                ; m_exception := exception_spec.Unknown (* TODO: problematic? *)
+                ; m_body := Some Defaulted |} in
+  _symbols (Nscoped n $ Nop function_qualifiers.N OOEqual [arg]) ctor.
+
+Definition Oimplicit_move_assign (n : globname) : K :=
+  let arg := Tnamed n in
+  let ctor := Omethod
+                {| m_class := n
+                ; m_params := [("#0"%pstring, Trv_ref arg)]
+                ; m_return := Tref arg
+                ; m_this_qual := QM
+                ; m_cc := CC_C
+                ; m_arity := Ar_Definite
+                ; m_exception := exception_spec.Unknown (* TODO: problematic? *)
+                ; m_body := Some Defaulted |} in
+  _symbols (Nscoped n $ Nop function_qualifiers.N OOEqual [Trv_ref arg]) ctor.
+
+Definition Oimplicit_dtor (n : globname) : K :=
+  let dtor := Odestructor
+                {| d_class := n
+                ; d_cc := CC_C
+                ; d_exception := exception_spec.Unknown (* TODO: problematic? *)
+                ; d_body := Some Defaulted |} in
+  _symbols (Nscoped n $ Ndtor) dtor.
+
 Definition Qconst_volatile : type -> type := tqualified QCV.
 Definition Qconst : type -> type := tqualified QC.
 Definition Qvolatile : type -> type := tqualified QV.

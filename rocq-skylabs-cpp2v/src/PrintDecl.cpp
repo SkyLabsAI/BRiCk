@@ -630,6 +630,11 @@ static fmt::Formatter &printFunctionParams(CoqPrinter &print,
     });
 }
 
+static llvm::StringRef orDefaultBodyCtorName(const FunctionDecl &decl) {
+    return decl.isImplicit() || decl.isDefaulted() ? "CompilerProvided"
+                                                   : "UserDefined";
+}
+
 static fmt::Formatter &printFunction(CoqPrinter &print,
                                      const FunctionDecl &decl,
                                      ClangPrinter &cprint, const ASTContext &) {
@@ -675,9 +680,9 @@ static fmt::Formatter &printMethod(CoqPrinter &print, const CXXMethodDecl &decl,
     cprint.printExceptionSpec(print, decl) << fmt::nbsp;
     if (auto body = decl.getBody()) {
         guard::some some(print);
-        guard::ctor _(print, "UserDefined");
+        guard::ctor _(print, orDefaultBodyCtorName(decl));
         return cprint.printStmt(print, body);
-    } else if (decl.isDefaulted()) {
+    } else if (decl.isDefaulted() || isImplicitSpecialMethod(decl)) {
         return print.output() << "(Some Defaulted)";
     } else {
         return print.none();
@@ -775,10 +780,12 @@ static fmt::Formatter &printConstructor(CoqPrinter &print,
     cprint.printExceptionSpec(print, decl) << fmt::nbsp;
     if (auto body = decl.getBody()) {
         guard::some s(print);
-        guard::ctor ud(print, "UserDefined");
+        guard::ctor od(print, orDefaultBodyCtorName(decl));
         guard::tuple _(print);
         printInitializerList(print, decl, cprint) << fmt::tuple_sep;
         return cprint.printStmt(print, body);
+    } else if (decl.isDefaulted() || isImplicitSpecialMethod(decl)) {
+        return print.output() << "(Some Defaulted)";
     } else {
         return print.none();
     }
@@ -797,9 +804,9 @@ static fmt::Formatter &printDestructor(CoqPrinter &print,
     cprint.printExceptionSpec(print, decl) << fmt::nbsp;
     if (auto body = decl.getBody()) {
         guard::some some(print);
-        guard::ctor _(print, "UserDefined");
+        guard::ctor _(print, orDefaultBodyCtorName(decl));
         return cprint.printStmt(print, body);
-    } else if (decl.isDefaulted()) {
+    } else if (decl.isDefaulted() || isImplicitSpecialMethod(decl)) {
         return print.output() << "(Some Defaulted)";
     } else {
         return print.none();
@@ -1112,20 +1119,105 @@ public:
         return printType(Dstruct, *decl, print, cprint, ctxt);
     }
 
+    bool printImplicitMembers(const CXXRecordDecl &decl, CoqPrinter &print,
+                              ClangPrinter &cprint, const ASTContext &ctxt) {
+        if (ClangPrinter::debug && cprint.trace(Trace::Decl))
+            cprint.trace("printImplicitMembers", loc::of(decl));
+
+        if (decl.isDependentContext())
+            return false;
+
+        auto findCtor = [&](auto pred) -> const CXXConstructorDecl * {
+            for (auto ctor : decl.ctors()) {
+                if (ctor && ctor->isImplicit() && pred(*ctor))
+                    return ctor;
+            }
+            return nullptr;
+        };
+
+        auto findMethod = [&](auto pred) -> const CXXMethodDecl * {
+            for (auto method : decl.methods()) {
+                if (method && method->isImplicit() && pred(*method))
+                    return method;
+            }
+            return nullptr;
+        };
+
+        const auto *default_ctor = findCtor([](const CXXConstructorDecl &ctor) {
+            return ctor.isDefaultConstructor();
+        });
+        const auto *copy_ctor = findCtor([](const CXXConstructorDecl &ctor) {
+            return ctor.isCopyConstructor();
+        });
+        const auto *move_ctor = findCtor([](const CXXConstructorDecl &ctor) {
+            return ctor.isMoveConstructor();
+        });
+        const auto *copy_assign = findMethod([](const CXXMethodDecl &method) {
+            return method.isCopyAssignmentOperator();
+        });
+        const auto *move_assign = findMethod([](const CXXMethodDecl &method) {
+            return method.isMoveAssignmentOperator();
+        });
+        const auto *dtor = decl.getDestructor();
+
+        bool printed = false;
+
+        if (!default_ctor && decl.needsImplicitDefaultConstructor()) {
+            guard::ctor _{print, "Oimplicit_default_ctor"};
+            cprint.printName(print, decl);
+            printed = true;
+        }
+        if (!copy_ctor && decl.needsImplicitCopyConstructor() &&
+            !decl.hasUserDeclaredCopyAssignment()) {
+            guard::ctor _{print, "Oimplicit_copy_ctor"};
+            cprint.printName(print, decl) << fmt::nbsp;
+            print.boolean(decl.hasCopyConstructorWithConstParam());
+            printed = true;
+        }
+        if (!move_ctor && decl.needsImplicitMoveConstructor()) {
+            guard::ctor _{print, "Oimplicit_move_ctor"};
+            cprint.printName(print, decl) << fmt::nbsp;
+            print.boolean(false);
+            printed = true;
+        }
+        if (!copy_assign && decl.needsImplicitCopyAssignment() &&
+            !decl.hasUserDeclaredCopyConstructor()) {
+            guard::ctor _{print, "Oimplicit_copy_assign"};
+            cprint.printName(print, decl) << fmt::nbsp;
+            print.boolean(decl.hasCopyAssignmentWithConstParam());
+            printed = true;
+        }
+        if (!move_assign && decl.needsImplicitMoveAssignment()) {
+            guard::ctor _{print, "Oimplicit_move_assign"};
+            cprint.printName(print, decl);
+            printed = true;
+        }
+        if (!dtor && decl.needsImplicitDestructor()) {
+            guard::ctor _{print, "Oimplicit_dtor"};
+            cprint.printName(print, decl);
+            printed = true;
+        }
+        return printed;
+    }
+
     bool VisitCXXRecordDecl(const CXXRecordDecl *decl, CoqPrinter &print,
                             ClangPrinter &cprint, const ASTContext &ctxt) {
         if (ClangPrinter::debug && cprint.trace(Trace::Decl))
             cprint.trace("VisitCXXRecordDecl", loc::of(decl));
+        bool printed = false;
+        if (decl->isCompleteDefinition()) {
+            printed = printImplicitMembers(*decl, print, cprint, ctxt);
+        }
         if (decl->isStruct() or decl->isClass()) {
-            return VisitStructDecl(decl, print, cprint, ctxt);
+            return VisitStructDecl(decl, print, cprint, ctxt) || printed;
         } else if (decl->isUnion()) {
-            return VisitUnionDecl(decl, print, cprint, ctxt);
+            return VisitUnionDecl(decl, print, cprint, ctxt) || printed;
         } else {
             std::string msg;
             llvm::raw_string_ostream os{msg};
             os << "CXXRecord with tag kind " << decl->getKindName();
             unsupported(cprint, loc::of(decl), msg);
-            return false;
+            return printed;
         }
     }
 

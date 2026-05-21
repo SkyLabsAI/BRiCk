@@ -808,7 +808,7 @@ that implies [type_ptr].
   match ctor.(c_body) with
   | None => ERROR "wp_ctor: no body"
   | Some Defaulted => UNSUPPORTED "wp_ctor: defaulted constructors"
-  | Some (UserDefined ib) =>
+  | Some (UserDefined ib | CompilerProvided ib) =>
     let inits := ib.1 in
     let body := ib.2 in
     match args with
@@ -975,6 +975,7 @@ this resource will be consumed immediately.
         let* :=
           match body with
           | Defaulted => fun k : Kpred => |={top}=>?upd k Normal
+          | CompilerProvided body
           | UserDefined body => wp tu (Remp (Some thisp) None Tvoid) body
           end%I
         in
@@ -1040,13 +1041,13 @@ Section wp_dtor.
     iIntros "HQ". rewrite wp_dtor.unlock.
     repeat case_match; auto.
     all: iIntros "wp !>"; iRevert "wp".
-    1,3: iIntros ">wp !>"; iRevert "wp".
-    3,4: iApply wp_frame; [done|]; iIntros (?).
+    1,4: iIntros ">wp !>"; iRevert "wp".
+    all: try (iApply wp_frame; [done|]; iIntros (?)).
     all: iApply Kreturn_void_frame.
     all: iIntros "($ & wp)"; iRevert "wp".
-    2,4: iApply wpd_members_frame; [done|].
-    2,3: iApply wp_revert_identity_frame =>//.
-    2,3: iApply wpd_bases_frame; [done|].
+    all: try (iApply wpd_members_frame; [done|]).
+    all: try (iApply wp_revert_identity_frame =>//).
+    all: try (iApply wpd_bases_frame; [done|]).
     all: iIntros "HR R"; iMod ("HR" with "R") as "HR"; iIntros "!> !> % R".
     all: iApply "HQ".
     all: iApply ("HR" with "R").
@@ -1063,13 +1064,13 @@ Section wp_dtor.
   Proof.
     rewrite wp_dtor.unlock. repeat case_match; auto.
     all: iIntros "wp !>"; iRevert "wp".
-    1,3: rewrite -fupd_intro.
-    3,4: iApply wp_frame; [done|]; iIntros (?).
+    1,4: rewrite -fupd_intro.
+    all: try (iApply wp_frame; [done|]; iIntros (?)).
     all: iApply Kreturn_void_frame.
     all: iIntros "($ & wp)"; iRevert "wp".
-    2,4: iApply wpd_members_frame; [done|].
-    2,3: iApply wp_revert_identity_frame =>//.
-    2,3: iApply wpd_bases_frame; [done|].
+    all: try (iApply wpd_members_frame; [done|]).
+    all: try (iApply wp_revert_identity_frame =>//).
+    all: try (iApply wpd_bases_frame; [done|]).
     all: iIntros "HR R !>"; iSpecialize ("HR" with "R"); iIntros "!> % R".
     all: iApply ("HR" with "R").
   Qed.
