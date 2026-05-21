@@ -30,6 +30,12 @@ implementation detail that might change (see FM-2738).
 A [genv] contains the result of linking translation units, plus any additional
 information supplied by compiler/linker/loader/...
 
+A value of type [translation_unit] names a concrete source translation unit and
+can reduce accordingly. A value [σ : genv] instead names the linked program
+environment. To keep verification modular, proofs abstract over [σ : genv] and
+assume compatibility with the concrete translation units being verified, rather
+than reducing through the linked program representation directly.
+
 If we add support for dynamic linking, additional [genv]s might be involved.
 
 If we want to do things like word-size agnostic verification, then

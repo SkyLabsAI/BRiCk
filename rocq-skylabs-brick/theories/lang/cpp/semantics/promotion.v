@@ -64,39 +64,39 @@ Definition underlying_unqual_type (tu : translation_unit) (ty : type) : type :=
 Succeed Example underlying_int : forall tu, underlying_unqual_type tu (Tconst Tint) = Tint :=
   ltac:(compute; auto).
 
-Section representable.
-  Context {σ : genv}.
-  (* [fully_representable a b] is [true] if all (well-typed) values of [a] values of [b] *)
-  Definition fully_representable (a b : type) : bool :=
-    let to_equiv ty :=
-      match ty with
-      | Tnum a b => Some $ integral_type.mk a b
-      | Tchar_ ct => Some $ equivalent_int_type _ ct
-      | _ => None
-      end
-    in
-    let min ty := (fun '(integral_type.mk sz sgn) => int_rank.min_val sz sgn) <$> to_equiv ty in
-    let max ty := (fun '(integral_type.mk sz sgn) => int_rank.max_val sz sgn) <$> to_equiv ty in
-    match min a , min b , max a , max b with
-    | Some an , Some bn , Some ax , Some bx =>
-        bool_decide (bn <= an /\ ax <= bx)%Z
-    | _ , _ , _ , _ => false
-    end.
+(* [fully_representable a b] is [true] if all (well-typed) values of [a] values of [b] *)
+Definition fully_representable (info : abi.t) (a b : type) : bool :=
+  let to_equiv ty :=
+    match ty with
+    | Tnum a b => Some $ integral_type.mk a b
+    | Tchar_ ct => Some $ equivalent_int_type_abi info ct
+    | _ => None
+    end
+  in
+  let min ty := (fun '(integral_type.mk sz sgn) => int_rank.min_val sz sgn) <$> to_equiv ty in
+  let max ty := (fun '(integral_type.mk sz sgn) => int_rank.max_val sz sgn) <$> to_equiv ty in
+  match min a , min b , max a , max b with
+  | Some an , Some bn , Some ax , Some bx =>
+      bool_decide (bn <= an /\ ax <= bx)%Z
+  | _ , _ , _ , _ => false
+  end.
 
-  (* [first_representable ty ls] gets the first type in [ls] that is able to
-     fully represent [ty]
-   *)
-  Fixpoint first_representable (ty : type) (ls : list type) : option type :=
-    match ls with
-    | nil => None
-    | l :: ls => if fully_representable ty l then Some l else first_representable ty ls
-    end.
-End representable.
+(* [first_representable ty ls] gets the first type in [ls] that is able to
+   fully represent [ty]
+ *)
+Fixpoint first_representable (info : abi.t) (ty : type) (ls : list type) : option type :=
+  match ls with
+  | nil => None
+  | l :: ls => if fully_representable info ty l then Some l else first_representable info ty ls
+  end.
 
 (** ** Integral Promotion
     This is used to promote a type to a type that supports arithmetic operators.
     For example, it converts types smaller than `int` to `int` (of some signedness).
-    Because it converts `enum` types to integral types, it takes a [translation_unit].
+    Because it converts `enum` types to integral types, it takes a concrete
+    [translation_unit]. It also uses the ABI stored in that same translation
+    unit, rather than the linked-program [genv], so these static computations
+    reduce against a single source TU.
 
     The operation is partial for non-integral types, e.g. struct types.
 
@@ -113,7 +113,8 @@ End representable.
     <https://eel.is/c++draft/conv.prom>
 
  *)
-Definition promote_integral {σ : genv} (tu : translation_unit) (ty : type) : option type :=
+Definition promote_integral (tu : translation_unit) (ty : type) : option type :=
+  let info := tu.(abi) in
   match representation_type tu ty with
     (* signed char or short can be converted to int *)
   | Tschar
@@ -121,11 +122,11 @@ Definition promote_integral {σ : genv} (tu : translation_unit) (ty : type) : op
     (* unsigned char or unsigned short can be converted to int if it can hold its entire
         value range, and unsigned int otherwise *)
   | Tuchar as ty
-  | Tushort as ty => Some $ if fully_representable ty Tint then Tint else Tuint
+  | Tushort as ty => Some $ if fully_representable info ty Tint then Tint else Tuint
   | Tnum _ _ as ty => Some ty
   | Tchar =>
-      Some $ let rty := if char_signed σ is Signed then Tschar else Tuchar in
-             if fully_representable rty Tint then Tint else Tuint
+      Some $ let rty := if info.(abi.char_signed) is Signed then Tschar else Tuchar in
+             if fully_representable info rty Tint then Tint else Tuint
   | Twchar
   | Tchar_ char_type.C8
   | Tchar_ char_type.C16
@@ -136,7 +137,7 @@ Definition promote_integral {σ : genv} (tu : translation_unit) (ty : type) : op
        unsigned int, long, unsigned long, long long,
        unsigned long long (since C++11) *)
 
-      first_representable ty [Tint;Tuint;Tlong;Tulong;Tlonglong;Tulonglong]
+      first_representable info ty [Tint;Tuint;Tlong;Tulong;Tlonglong;Tulonglong]
   | Tenum nm => None
       (* unreachable because of [underlying_type] and because the
           underlying type of an `enum` must be a fundamental type. *)
@@ -188,17 +189,16 @@ Definition promote_integral {σ : genv} (tu : translation_unit) (ty : type) : op
   | Tresult_call _ _ => None
   end.
 
-Goal forall {σ : genv} tu, promote_integral tu Tchar = Some Tint.
+Goal forall tu, promote_integral tu Tchar = Some Tint.
 Proof.
   intros. rewrite /promote_integral/=.
-  destruct (char_signed σ); done.
+  destruct (abi.char_signed (abi tu)); done.
 Succeed Qed. Abort.
-Goal forall {σ : genv} tu, promote_integral tu Twchar = Some (integral_type.to_type $ equivalent_int_type _ char_type.Cwchar).
+Goal forall tu, promote_integral tu Twchar = Some (integral_type.to_type $ equivalent_int_type_abi (abi tu) char_type.Cwchar).
 Proof.
-  intros. rewrite /promote_integral/equivalent_int_type/equivalent_int_type_abi/=.
-  rewrite /fully_representable/equivalent_int_type/equivalent_int_type_abi/=.
-  rewrite /signedness_of_char /signedness_of_char_abi /wchar_signed /genv_abi/=.
-  destruct (abi.wchar_signed (abi (genv_tu σ))); done.
+  intros. rewrite /promote_integral/equivalent_int_type_abi/=.
+  rewrite /fully_representable/=.
+  destruct (abi.wchar_signed (abi tu)); done.
 Succeed Qed. Abort.
 
 (* Test cases *)
