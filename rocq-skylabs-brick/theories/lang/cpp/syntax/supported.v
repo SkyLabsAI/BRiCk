@@ -222,7 +222,7 @@ Section with_monad.
   Definition check_exc_spec {B} (exc : _) (body : option (OrDefault B)) : M :=
     if exc is exception_spec.Unknown
     then match body with
-         | Some Defaulted => OK
+         | None | Some Defaulted => OK
          | _ => FAIL "unknown exception spec"
          end
     else OK.
