@@ -17,7 +17,7 @@ let target_type : n_args:int -> Tac2expr.type_scheme =
   fun ~n_args ->
   let constr =
     let mp = Tac2env.rocq_prefix in
-    let id = Names.Label.of_id @@ Names.Id.of_string_soft "constr" in
+    let id = Names.Id.of_string_soft "constr" in
     let name = Names.KerName.make mp id in
     GTypRef (Other name, [])
   in

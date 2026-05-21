@@ -57,7 +57,7 @@ end = struct
   type t = flag_data IMap.t
 
   let state =
-    Summary.ref ~name:"log_flags_state" IMap.empty
+    Summary.ref ~stage:Summary.Stage.Synterp ~name:"log_flags_state" IMap.empty
 
   let declare_state : t -> Libobject.obj =
     let open Libobject in
@@ -71,7 +71,7 @@ end = struct
     in
     let load_function _ = cache_function in
     let classify_function _ = Keep in
-    let default = default_object "LOG_FLAGS_STATE" in
+    let default = default_object ~stage:Summary.Stage.Synterp "LOG_FLAGS_STATE" in
     declare_object
       {default with cache_function; load_function; classify_function}
 
@@ -243,7 +243,7 @@ let define_notation : with_level:bool -> string -> int -> notation =
   let sexpr_str s = Tac2expr.SexprStr(CAst.make s) in
   let sexpr_int i = Tac2expr.SexprInt(CAst.make i) in
   let sexpr_rec id args =
-    let id = CAst.make (Some(Names.Id.of_string id)) in
+    let id = CAst.make (Some(Libnames.qualid_of_string id)) in
     let dummy_loc = Loc.make_loc (0, 0) in
     Tac2expr.SexprRec(dummy_loc, id, args)
   in
@@ -265,9 +265,9 @@ let define_notation : with_level:bool -> string -> int -> notation =
       let dp = ["skylabs"; "ltac2"; "logger"; "logger"] in
       let dp = List.rev_map Names.Id.of_string dp in
       let mp = Names.ModPath.MPfile(Names.DirPath.make dp) in
-      Names.ModPath.MPdot(mp, Names.Label.make "Log")
+      Names.ModPath.MPdot(mp, Names.Id.of_string "Log")
     in
-    let log = Names.KerName.make mp (Names.Label.make "log_msg") in
+    let log = Names.KerName.make mp (Names.Id.of_string "log_msg") in
     CAst.make Tac2expr.(CTacRef(AbsKn(TacConstant(log))))
   in
   let body =
@@ -283,7 +283,7 @@ let define_notation : with_level:bool -> string -> int -> notation =
     in
     CAst.make Tac2expr.(CTacApp(log_msg, args))
   in
-  let data = Tac2entries.register_notation [] tokens None body in
+  let data = Tac2entries.register_notation [] tokens (None, None) body in
   {flag=id; with_level; data}
 
 let define_notation_interpretation {flag; with_level; data} =

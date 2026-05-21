@@ -121,7 +121,12 @@ let _ =
       let args = List.map EConstr.of_constr args in
       EConstr.Unsafe.to_constr (EConstr.mkLEvar sigma (ev, args))
     in
-    CClosure.{evar_expand; evar_repack; qvar_irrelevant; evar_irrelevant}
+    let qual_equal = Sorts.Quality.equal in
+    let abstr_const _ = assert false in
+    CClosure.{
+      evar_expand; evar_repack; qvar_irrelevant; evar_irrelevant;
+      qual_equal; abstr_const;
+    }
   in
   let infos = create_clos_infos ~evars reds env in
   let tabs = CClosure.create_tab () in
@@ -298,14 +303,14 @@ let _ =
   with_evarmap @@ fun sigma ->
   let current_name = Evd.evar_ident evar sigma in
   match current_name with
-  | Some cname when Names.Id.equal cname name ->
+  | Some cname when Names.Id.equal (Libnames.basename cname) name ->
       Proofview.tclUNIT ()
   | Some _ | None ->
-      Proofview.Unsafe.tclEVARS (Evd.rename evar name sigma)
+      Proofview.Unsafe.tclEVARS (Evd.add_name evar name sigma)
 
 let _ =
   define "evar_name" (evar @-> eret (option ident)) @@ fun evar _ sigma ->
-  Evd.evar_ident evar sigma
+  Option.map Libnames.basename (Evd.evar_ident evar sigma)
 
 let _ =
   define "evar_is_undefined" (evar @-> tac bool) @@ fun evar ->
@@ -509,7 +514,8 @@ let _ =
     ~best_effort ~strategy ~depth ~dep dbs
 
 let _ =
-  define "is_class" (reference @-> ret bool) Typeclasses.is_class
+  define "is_class" (reference @-> eret bool) @@ fun r env _ ->
+    Typeclasses.is_class env r
 
 (* Clean error reporting. *)
 
@@ -576,7 +582,7 @@ let _ = define "is_section_variable" (ident @-> ret bool) @@ fun id ->
 (* String functions *)
 let err_outofbounds =
   let open Names in
-  let core_prefix path n = KerName.make path (Label.of_id (Id.of_string_soft n)) in
+  let core_prefix path n = KerName.make path (Id.of_string_soft n) in
   let coq_core n = core_prefix Tac2env.rocq_prefix n in
   Tac2interp.LtacError (coq_core "Out_of_bounds", [||])
 

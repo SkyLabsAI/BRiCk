@@ -10,7 +10,7 @@ Require Import skylabs.ltac2.extra.internal.printf.
 
 (** Oneshots: a reference cell that can be set at most once. *)
 Module Oneshot.
-  Import Ltac2 Init Printf.
+  Import Init Printf.
 
   Ltac2 Type exn ::= [ Already_set ].
   Ltac2 Type exn ::= [ Not_set ].

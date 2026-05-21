@@ -10,7 +10,7 @@ open Ltac2_plugin
 val to_constr : Evd.evar_map -> Tac2val.valexpr -> Constr.t
 val of_constr : Constr.t -> Tac2val.valexpr
 
-val reference_tag : (Names.GlobRef.t, Names.GlobRef.Set.t, Tac2val.valexpr Names.GlobRef.Map.t) Tac2core.map_tag
+val reference_tag : (Names.GlobRef.t, Names.GlobRef.Set_env.t, Tac2val.valexpr Names.GlobRef.Map_env.t) Tac2core.map_tag
 val evar_tag : (Evar.t, Evar.Set.t, Tac2val.valexpr Evar.Map.t) Tac2core.map_tag
 
 module ConstrSet : sig
