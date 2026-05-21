@@ -3,12 +3,16 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
+Require Import Stdlib.Strings.String.
 Require Stdlib.Array.PArray.
 Require Import Stdlib.Numbers.Cyclic.Int63.PrimInt63.
 Require Import skylabs.lang.cpp.parser.
 Require skylabs.lang.cpp.syntax.typed.
 
+#[local] Open Scope string_scope.
 #[local] Set Printing Universes.
+
+Definition version : string := "PLACEHOLDER".
 
 Register translation_unit.t as skylabs.lang.cpp.parser.translation_unit.t.
 Register translation_unit._skip as skylabs.lang.cpp.parser.translation_unit.skip.
