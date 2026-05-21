@@ -41,16 +41,19 @@ Record genv : Type :=
 { genv_tu : translation_unit
   (* ^ Implementation detail: the result of merging all the [translation_unit]s
   in the program. Might be replaced when fixing FM-2738. *)
-; pointer_size_bitsize : bitsize
-  (* ^ the size of a pointer *)
-; char_signed : signed
-  (* ^ whether or not `char` is signed or unsigned *)
-; wchar_signed : signed
-  (* ^ whether or not `wchar` is signed or unsigned *)
 }.
+
 Existing Class genv.
+Definition genv_abi (g : genv) : abi.t :=
+  g.(genv_tu).(abi).
+Definition pointer_size_bitsize (g : genv) : bitsize :=
+  abi.pointer_size_bitsize (genv_abi g).
+Definition char_signed (g : genv) : signed :=
+  (genv_abi g).(abi.char_signed).
+Definition wchar_signed (g : genv) : signed :=
+  (genv_abi g).(abi.wchar_signed).
 Definition genv_byte_order (g : genv) : endian :=
-  g.(genv_tu).(byte_order).
+  (genv_abi g).(abi.byte_order).
 Definition pointer_size (g : genv) := bitsize.bytesN (pointer_size_bitsize g).
 Definition genv_type_table (g : genv) : type_table :=
   g.(genv_tu).(types).
@@ -63,12 +66,14 @@ Module integral_type.
 End integral_type.
 Coercion integral_type.to_type : integral_type.t >-> type.
 
-Definition signedness_of_char (σ : genv) (ct : char_type) : signed :=
+Definition signedness_of_char_abi (info : abi.t) (ct : char_type) : signed :=
   match ct with
-  | char_type.Cchar => σ.(char_signed)
-  | char_type.Cwchar => σ.(wchar_signed)
+  | char_type.Cchar => info.(abi.char_signed)
+  | char_type.Cwchar => info.(abi.wchar_signed)
   | _ => Unsigned
   end.
+Definition signedness_of_char (σ : genv) (ct : char_type) : signed :=
+  signedness_of_char_abi (genv_abi σ) ct.
 
 (** [equivalent_int_type g ct] is the integral type that is equivalent
     (in rank and signedness) of [ct].
@@ -87,7 +92,7 @@ Definition signedness_of_char (σ : genv) (ct : char_type) : signed :=
   | Some x => x
   end.
 
-Definition equivalent_int_type (g : genv) (ct : char_type) : integral_type.t :=
+Definition equivalent_int_type_abi (info : abi.t) (ct : char_type) : integral_type.t :=
   let bits :=
     (* NOTE the setup here computes the appropriate type given the size
        constraints defined in [char_type.bitsN] and [int_type.bitsN] *)
@@ -99,21 +104,22 @@ Definition equivalent_int_type (g : genv) (ct : char_type) : integral_type.t :=
     | char_type.Cwchar => Evaluate (find_equiv char_type.Cwchar)
     end
   in
-  integral_type.mk bits (signedness_of_char g ct).
+  integral_type.mk bits (signedness_of_char_abi info ct).
+Definition equivalent_int_type (g : genv) (ct : char_type) : integral_type.t :=
+  equivalent_int_type_abi (genv_abi g) ct.
 
 (** * global environments *)
 
 (** [genv_leq a b] states that [b] is an extension of [a] *)
 Record genv_leq {l r : genv} : Prop :=
-{ tu_le : sub_module l.(genv_tu) r.(genv_tu)
-; pointer_size_le : l.(pointer_size_bitsize) = r.(pointer_size_bitsize) }.
+{ tu_le : sub_module l.(genv_tu) r.(genv_tu) }.
 Arguments genv_leq _ _ : clear implicits.
 
 #[global] Instance PreOrder_genv_leq : PreOrder genv_leq.
 Proof.
   constructor.
   { constructor; auto; reflexivity. }
-  { red. destruct 1; destruct 1; constructor; try etransitivity; eauto. }
+  { red. destruct 1; destruct 1; constructor. etransitivity; eauto. }
 Qed.
 #[global] Instance: RewriteRelation genv_leq := {}.
 
@@ -126,19 +132,23 @@ Proof. solve_proper. Qed.
 Proof. solve_proper. Qed.
 
 (* Sadly, neither instance is picked up by [f_equiv]. *)
+#[global] Instance genv_abi_proper : Proper (genv_leq ==> eq) genv_abi.
+Proof. intros ?? []. rewrite /genv_abi. by apply abi_compat. Qed.
+#[global] Instance genv_abi_flip_proper : Proper (flip genv_leq ==> eq) genv_abi.
+Proof. intros ?? []. rewrite /genv_abi. by symmetry; apply abi_compat. Qed.
 #[global] Instance pointer_size_bitsize_proper : Proper (genv_leq ==> eq) pointer_size_bitsize.
-Proof. solve_proper. Qed.
+Proof. intros ?? Hle. by rewrite /pointer_size_bitsize (genv_abi_proper _ _ Hle). Qed.
 #[global] Instance pointer_size_bitsize_flip_proper : Proper (flip genv_leq ==> eq) pointer_size_bitsize.
-Proof. by intros ?? <-. Qed.
+Proof. intros ?? Hle. by rewrite /pointer_size_bitsize (genv_abi_flip_proper _ _ Hle). Qed.
 #[global] Instance pointer_size_proper : Proper (genv_leq ==> eq) pointer_size.
 Proof. unfold pointer_size; intros ???. f_equiv. exact: pointer_size_bitsize_proper. Qed.
 #[global] Instance pointer_size_flip_proper : Proper (flip genv_leq ==> eq) pointer_size.
-Proof. by intros ?? <-. Qed.
+Proof. unfold pointer_size; intros ???. f_equiv. exact: pointer_size_bitsize_flip_proper. Qed.
 
 #[global] Instance genv_byte_order_proper : Proper (genv_leq ==> eq) genv_byte_order.
-Proof. intros ???. apply sub_module.byte_order_proper. solve_proper. Qed.
+Proof. intros ?? Hle. by rewrite /genv_byte_order (genv_abi_proper _ _ Hle). Qed.
 #[global] Instance genv_byte_order_flip_proper : Proper (flip genv_leq ==> eq) genv_byte_order.
-Proof. by intros ?? <-. Qed.
+Proof. intros ?? Hle. by rewrite /genv_byte_order (genv_abi_flip_proper _ _ Hle). Qed.
 (* this states that the [genv] is compatible with the given [translation_unit]
  * it essentially means that the [genv] records all the types from the
  * compilation unit and that the [genv] contains addresses for all globals
@@ -159,7 +169,7 @@ Proof. by destruct 1. Qed.
 
 #[global] Instance genv_compat_proper : Proper (flip sub_module ==> genv_leq ==> impl) genv_compat.
 Proof.
-  intros ?? Heq1 ?? [Heq2 _] [Heq3]; constructor.
+  intros ?? Heq1 ?? [Heq2] [Heq3]; constructor.
   by rewrite Heq1 Heq3.
 Qed.
 #[global] Instance genv_compat_flip_proper : Proper (sub_module ==> flip genv_leq ==> flip impl) genv_compat.

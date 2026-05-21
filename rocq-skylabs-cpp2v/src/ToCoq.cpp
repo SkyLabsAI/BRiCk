@@ -16,6 +16,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Type.h"
+#include "clang/Basic/AddressSpaces.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Version.inc"
@@ -103,6 +104,52 @@ sortAliasList(const ::Module::AliasSet &al) {
     return result;
 }
 
+static const char *toCoqIntRank(clang::TargetInfo::IntType ty) {
+    switch (ty) {
+    case clang::TargetInfo::SignedChar:
+    case clang::TargetInfo::UnsignedChar:
+        return "int_rank.Ichar";
+    case clang::TargetInfo::SignedShort:
+    case clang::TargetInfo::UnsignedShort:
+        return "int_rank.Ishort";
+    case clang::TargetInfo::SignedInt:
+    case clang::TargetInfo::UnsignedInt:
+        return "int_rank.Iint";
+    case clang::TargetInfo::SignedLong:
+    case clang::TargetInfo::UnsignedLong:
+        return "int_rank.Ilong";
+    case clang::TargetInfo::SignedLongLong:
+    case clang::TargetInfo::UnsignedLongLong:
+        return "int_rank.Ilonglong";
+    case clang::TargetInfo::NoInt:
+        logging::fatal() << "TargetInfo has no integer type for uintptr_t\n";
+        logging::die();
+    }
+    logging::fatal() << "Unknown TargetInfo integer type\n";
+    logging::die();
+}
+
+static const char *toCoqSigned(bool isSigned) {
+    return isSigned ? "Signed" : "Unsigned";
+}
+
+static const char *toCoqEndian(const clang::TargetInfo &target) {
+    if (target.isBigEndian())
+        return "Big";
+    always_assert(target.isLittleEndian());
+    return "Little";
+}
+
+static fmt::Formatter &printAbi(fmt::Formatter &out,
+                                const clang::ASTContext &ctxt) {
+    const auto &target = ctxt.getTargetInfo();
+    return out << "(abi.mkT "
+               << toCoqIntRank(target.getUIntPtrType()) << fmt::nbsp
+               << toCoqSigned(ctxt.getLangOpts().CharIsSigned) << fmt::nbsp
+               << toCoqSigned(ctxt.getLangOpts().WCharIsSigned) << fmt::nbsp
+               << toCoqEndian(target) << ")";
+}
+
 void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
                                 clang::TranslationUnitDecl *decl) {
 
@@ -188,12 +235,8 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
             }
             print.output() << "cpp.prog " << interactive_.value_or("source")
                            << fmt::indent << fmt::line;
-            if (ctxt->getTargetInfo().isBigEndian()) {
-                print.output() << "abi Big" << fmt::line;
-            } else {
-                always_assert(ctxt->getTargetInfo().isLittleEndian());
-                print.output() << "abi Little" << fmt::line;
-            }
+            print.output() << "abi ";
+            printAbi(print.output(), *ctxt) << fmt::line;
             print.output() << "defns" << fmt::indent;
 
             for (auto decl : mod.declarations()) {

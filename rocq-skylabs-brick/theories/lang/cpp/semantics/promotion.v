@@ -124,7 +124,7 @@ Definition promote_integral {σ : genv} (tu : translation_unit) (ty : type) : op
   | Tushort as ty => Some $ if fully_representable ty Tint then Tint else Tuint
   | Tnum _ _ as ty => Some ty
   | Tchar =>
-      Some $ let rty := if σ.(char_signed) is Signed then Tschar else Tuchar in
+      Some $ let rty := if char_signed σ is Signed then Tschar else Tuchar in
              if fully_representable rty Tint then Tint else Tuint
   | Twchar
   | Tchar_ char_type.C8
@@ -195,9 +195,10 @@ Proof.
 Succeed Qed. Abort.
 Goal forall {σ : genv} tu, promote_integral tu Twchar = Some (integral_type.to_type $ equivalent_int_type _ char_type.Cwchar).
 Proof.
-  intros. rewrite /promote_integral/equivalent_int_type/=.
-  rewrite /fully_representable/=.
-  destruct (wchar_signed σ); done.
+  intros. rewrite /promote_integral/equivalent_int_type/equivalent_int_type_abi/=.
+  rewrite /fully_representable/equivalent_int_type/equivalent_int_type_abi/=.
+  rewrite /signedness_of_char /signedness_of_char_abi /wchar_signed /genv_abi/=.
+  destruct (abi.wchar_signed (abi (genv_tu σ))); done.
 Succeed Qed. Abort.
 
 (* Test cases *)

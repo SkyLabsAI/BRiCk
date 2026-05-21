@@ -137,21 +137,19 @@ Module Import translation_unit.
         array_fold f ar fuel (PrimInt63.add i 1) (f (PArray.get ar i) acc)
     end.
 
-  Definition abi_type := endian.
-
   Definition decls' (ds : PArray.array t) : t :=
     array_fold (fun (X Y : t) s t ga a dups K => X s t ga a dups (fun s t ga a dups => Y s t ga a dups K))
       ds
       (Z.to_nat (Uint63.to_Z (PArray.length ds))) 0%uint63
       (fun s t ga a dups k => k s t ga a dups).
 
-  Definition decls (ds : PArray.array t) (e : abi_type) : translation_unit * dup_info :=
+  Definition decls (ds : PArray.array t) (info : abi.t) : translation_unit * dup_info :=
     decls' ds ∅ ∅ [] ∅ [] $ fun s t ga a => pair {|
       symbols := NM.from_raw s;
       types := NM.from_raw t;
       namespace_aliases := (Listset (sort.sort ga), NM.from_raw $ NM.Raw.map (fun x => Listset $ sort.sort x) a);
       initializer := nil;	(** TODO *)
-      byte_order := e;
+      abi := info;
     |}.
 
   Definition list_decls (ls : list translation_unit.t) :=
@@ -165,9 +163,9 @@ Module Import translation_unit.
     (* [check_translation_unit tu]
      *)
     Ltac2 check_translation_unit (tu : preterm) (en : preterm) :=
-      let endian := Constr.Pretype.pretype Constr.Pretype.Flags.constr_flags (Constr.Pretype.expected_oftype '(endian)) en in
+      let info := Constr.Pretype.pretype Constr.Pretype.Flags.constr_flags (Constr.Pretype.expected_oftype '(abi.t)) en in
       let tu := Constr.Pretype.pretype Constr.Pretype.Flags.constr_flags (Constr.Pretype.expected_oftype '(PArray.array t)) tu in
-      let term := Constr.Unsafe.make (Constr.Unsafe.App ('decls) (Array.of_list [tu; endian])) in
+      let term := Constr.Unsafe.make (Constr.Unsafe.App ('decls) (Array.of_list [tu; info])) in
       let rtu := Std.eval_vm None term in
       lazy_match! rtu with
       | pair ?tu nil => Std.exact_no_check tu

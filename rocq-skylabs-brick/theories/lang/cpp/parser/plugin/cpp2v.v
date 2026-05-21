@@ -11,7 +11,8 @@ Require Import skylabs.lang.cpp.parser.
 
 Register translation_unit.t as skylabs.lang.cpp.parser.translation_unit.t.
 Register translation_unit._skip as skylabs.lang.cpp.parser.translation_unit.skip.
-Register translation_unit.abi_type as skylabs.lang.cpp.parser.translation_unit.abi_type.
+Register abi.t as skylabs.lang.cpp.parser.translation_unit.abi_type.
+Register abi.abi_default as skylabs.lang.cpp.parser.translation_unit.abi_default.
 Register translation_unit.decls as skylabs.lang.cpp.parser.translation_unit.decls.
 
 (* NOTE: This is a hack to get a universe instance *)

@@ -14,6 +14,7 @@ Require Export skylabs.lang.cpp.syntax.typing.	(* syntax/typing.v *)
 Require Export skylabs.lang.cpp.syntax.stmt.	(* syntax/stmt.v *)
 Require Export skylabs.lang.cpp.syntax.decl.	(* syntax/decl.v *)
 Require Export skylabs.lang.cpp.syntax.namemap. (* syntax/namemap.v *)
+Require Export skylabs.lang.cpp.syntax.abi. (* syntax/abi.v *)
 Require Export skylabs.lang.cpp.syntax.notations. (* syntax/notations.v *)
 Require Export skylabs.lang.cpp.syntax.name_notation.
 Require Export skylabs.lang.cpp.syntax.translation_unit.	(* syntax/translation_unit.v *)

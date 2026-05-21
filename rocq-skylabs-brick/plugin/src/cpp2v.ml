@@ -41,6 +41,8 @@ let to_econstr t =
   match t with
   | Names.GlobRef.ConstRef c ->
     EConstr.mkConstU (c, EConstr.EInstance.empty)
+  | Names.GlobRef.IndRef ind ->
+    EConstr.mkIndU (ind, EConstr.EInstance.empty)
   | _ ->
     Feedback.msg_debug Pp.(Names.GlobRef.print t) ;
     assert false
@@ -57,7 +59,7 @@ let force_body (t : _ Declarations.pconstant_body) =
   | Declarations.Def d -> d
   | _ -> assert false
 
-let cpp_command (attrs : report_level option * bool) name (abi : Constrexpr.constr_expr) (defns : Constrexpr.constr_expr list) =
+let cpp_command (attrs : report_level option * bool) name (abi : Constrexpr.constr_expr option) (defns : Constrexpr.constr_expr list) =
   (* Create the definition *)
   let (check_duplicates, elaborate) = attrs in
   let env = Global.env() in
@@ -75,9 +77,13 @@ let cpp_command (attrs : report_level option * bool) name (abi : Constrexpr.cons
   in
   let evd = Evd.from_env env in
   let abi , evd =
-    let expected_type = Pretyping.OfType (to_econstr (lib_ref "abi_type")) in
-    let abi , ustate = Constrintern.interp_constr ~expected_type env evd abi in
-    (abi, Evd.from_ctx ustate)
+    match abi with
+    | Some abi ->
+      let expected_type = Pretyping.OfType (to_econstr (lib_ref "abi_type")) in
+      let abi , ustate = Constrintern.interp_constr ~expected_type env evd abi in
+      (abi, Evd.from_ctx ustate)
+    | None ->
+      (to_econstr (lib_ref "abi_default"), evd)
   in
   let body , evd =
     let expected_type = Pretyping.OfType e_decl in

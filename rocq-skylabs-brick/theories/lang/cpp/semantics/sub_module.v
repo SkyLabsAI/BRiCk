@@ -455,7 +455,7 @@ Proof. intros. by eapply complete_respects_sub_table_mut. Qed.
 Record sub_module (a b : translation_unit) : Prop :=
 { types_compat : type_table_le a.(types) b.(types)
 ; syms_compat : sym_table_le a.(symbols) b.(symbols)
-; byte_order_compat : a.(byte_order) = b.(byte_order) }.
+; abi_compat : a.(abi) = b.(abi) }.
 
 Section sub_module.
   #[local] Instance: Reflexive sub_module.
@@ -474,7 +474,7 @@ End sub_module.
  *)
 Definition module_le (a b : translation_unit) : bool :=
   Eval cbv beta iota zeta delta [ andb ] in
-  bool_decide (a.(byte_order) = b.(byte_order)) &&
+  bool_decide (a.(abi) = b.(abi)) &&
   bool_decide (type_table_le a.(types) b.(types)) &&
   bool_decide (sym_table_le a.(symbols) b.(symbols)).
 
@@ -574,9 +574,9 @@ Proof.
 Qed.
 
 #[global] Instance byte_order_proper : Proper (sub_module ==> eq) byte_order.
-Proof. by destruct 1. Qed.
+Proof. rewrite /byte_order. destruct 1; congruence. Qed.
 #[global] Instance byte_order_flip_proper : Proper (flip sub_module ==> eq) byte_order.
-Proof. by destruct 1. Qed.
+Proof. rewrite /byte_order. destruct 1; congruence. Qed.
 
 
 Lemma complete_type_respects_sub_module tt1 tt2 t :
