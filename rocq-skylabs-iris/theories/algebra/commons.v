@@ -25,6 +25,8 @@ Module br.
 
     ; frac_inG : inG Σ fracR
 
+    ; cinv_inG : inG Σ (prodR (optionR (exclR unitO)) (optionR fracR))
+
     ; nat_inG : inG Σ natR
     ; mono_nat_inG : inG Σ mono_natR
 
@@ -45,6 +47,8 @@ Module br.
       GFunctor (exclR unitO)
 
     ; GFunctor fracR
+
+    ; GFunctor (prodR (optionR (exclR unitO)) (optionR fracR))
 
     ; GFunctor natR
     ; GFunctor mono_natR

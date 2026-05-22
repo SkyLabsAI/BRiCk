@@ -79,7 +79,8 @@ End semi_set.
 #[global] Hint Resolve pairwise_disjoint_union_2 : core.
 
 Section top_set.
-  Context `{TopSet A C}.
+  Context `{ElemOf A C, Top C, Empty C, Singleton A C, Union C, Intersection C, Difference C}.
+  Context `{!TopSet A C, !Set_ A C}.
   Implicit Types x y : A.
   Implicit Types X Y : C.
 
@@ -87,9 +88,15 @@ Section top_set.
 
   (* Named after [union_empty_l] (+ missing [top_set_] prefix) *)
   #[global] Instance top_set_intersection_top_l : LeftId (≡@{C}) ⊤ (∩).
-  Proof. intros ?. set_solver. Qed.
+  Proof.
+    intros X. apply set_equiv=>x. rewrite elem_of_intersection.
+    split; [naive_solver|]. intros HX. split; [|exact HX]. by apply elem_of_top'.
+  Qed.
   #[global] Instance top_set_intersection_top_r : RightId (≡@{C}) ⊤ (∩).
-  Proof. intros ?. set_solver. Qed.
+  Proof.
+    intros X. apply set_equiv=>x. rewrite elem_of_intersection.
+    split; [naive_solver|]. intros HX. split; [exact HX|]. by apply elem_of_top'.
+  Qed.
 
   Section leibniz.
     Context `{!LeibnizEquiv C}.

@@ -166,7 +166,7 @@ Section proofs.
               (λ _, Some (na_own p F))%I.
   Proof.
     rewrite /IntoAcc /accessor. iIntros ((?&?)) "#Hinv Hown".
-    rewrite exist_unit -assoc /=.
+    rewrite bi.exist_unit -assoc /=.
     iApply (na_inv_acc with "Hinv"); done.
   Qed.
 

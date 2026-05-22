@@ -38,22 +38,22 @@ End monoid_instances.
 
 (** Powers *)
 
-Definition power `{Monoid M o} (x : M) (n : N) : M := N.iter n (o x) monoid_unit.
-#[global] Arguments power {_ _} o {_} _ !_ / : assert.
+Definition power `{MonoidOps M o u} (x : M) (n : N) : M := N.iter n (o x) u.
+#[global] Arguments power {_} o u {_} _ !_ / : assert.
 #[global] Instance: Params (@power) 4 := {}.
 #[global] Hint Opaque power : typeclass_instances sl_opacity.
 
-#[global] Notation "x ^^{ o } n" := (power o x n) : stdpp_scope.
+#[global] Notation "x ^^{ o } n" := (power o _ x n) : stdpp_scope.
 
 #[local] Notation "R≡" := (X in _ ≡ X)%pattern.
 
 Section power.
-  Context `{Monoid M o}.
+  Context `{Monoid M o u}.
   Implicit Types (x : M) (n : N).
   #[local] Infix "`o`" := o (at level 50, left associativity).
   #[local] Open Scope N_scope.
 
-  Lemma power_0 x : x ^^{o} 0 = monoid_unit.
+  Lemma power_0 x : x ^^{o} 0 = u.
   Proof. done. Qed.
 
   Lemma power_1 x : x ^^{o} 1 ≡ x.
@@ -65,19 +65,19 @@ Section power.
   Lemma power_proper (R : relation M) :
     Reflexive R ->
     Proper (R ==> R ==> R) o ->
-    Proper (R ==> eq ==> R) (power o).
+    Proper (R ==> eq ==> R) (power o u).
   Proof.
     intros ? Hop x1 x2 ? n ? <-. elim/N.peano_ind: n =>// n ?.
     rewrite !power_succ. by apply Hop.
   Qed.
 
-  #[global] Instance power_ne (n : SI) : Proper (dist n ==> eq ==> dist n) (power o).
+  #[global] Instance power_ne (n : SI) : Proper (dist n ==> eq ==> dist n) (power o u).
   Proof. apply: power_proper. Qed.
-  #[global] Instance power_proper' : Proper (equiv ==> eq ==> equiv) (power o).
+  #[global] Instance power_proper' : Proper (equiv ==> eq ==> equiv) (power o u).
   Proof. apply: power_proper. Qed.
 
   Lemma power_closed (P : M -> Prop) x n :
-    P monoid_unit -> (∀ x1 x2, P x1 -> P x2 -> P (x1 `o` x2)) ->
+    P u -> (∀ x1 x2, P x1 -> P x2 -> P (x1 `o` x2)) ->
     P x -> P (x ^^{o} n).
   Proof.
     intros ? Hop ?. induction n using N.peano_ind; first done.
@@ -95,7 +95,7 @@ Section power.
     rewrite -N.succ_pos_pred Pos.pred_N_succ power_succ. exact: Hop.
   Qed.
 
-  Lemma power_unit n : monoid_unit ^^{o} n ≡ monoid_unit.
+  Lemma power_unit n : u ^^{o} n ≡ u.
   Proof. elim/N.peano_ind: n => //= n IH. by rewrite power_succ IH right_id. Qed.
 
   Lemma power_add x n1 n2 : x ^^{o} (n1 + n2) ≡ x ^^{o} n1 `o` x ^^{o} n2.

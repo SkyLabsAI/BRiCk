@@ -17,7 +17,7 @@ step indices and the latter holds at a specific step index.
 
 TODO: upstream to Iris.
 *)
-Definition includedI `{!BiInternalEq PROP} {A : cmra} (a b : A) : PROP :=
+Definition includedI `{!Sbi PROP} {A : cmra} (a b : A) : PROP :=
   (∃ c : A, b ≡ a ⋅ c)%I.
 #[global] Instance: Params (@includedI) 3 := {}.
 
@@ -28,7 +28,7 @@ Infix "≼@{ PROP }" := (includedI (PROP:=PROP)) (only parsing, at level 70) : b
 Notation "(≼@{ PROP } )" := (includedI (PROP:=PROP)) (only parsing) : bi_scope.
 
 Section cmra.
-  Context `{!BiInternalEq PROP} {A : cmra}.
+  Context `{!Sbi PROP} {A : cmra}.
   Implicit Types P : PROP.
   Implicit Types a b : A.
   Notation "P ⊣⊢ Q" := (P ⊣⊢@{PROP} Q).
@@ -89,7 +89,7 @@ Section cmra.
 End cmra.
 
 Section ucmra.
-  Context `{!BiInternalEq PROP} {A : ucmra}.
+  Context `{!Sbi PROP} {A : ucmra}.
   Implicit Types P : PROP.
   Implicit Types a : A.
 
@@ -103,12 +103,13 @@ Section ucmra.
   Proof. split'; auto using includedI_refl. Qed.
 End ucmra.
 
-#[global] Instance includedI_plain `{!BiInternalEq PROP, !BiPlainly PROP} {A : cmra}
+#[global] Instance includedI_plain `{!Sbi PROP} {A : cmra}
     (a b : A) :
   Plain (a ≼@{PROP} b).
 Proof. apply _. Qed.
 
-Lemma embed_includedI `{BiEmbedInternalEq PROP1 PROP2} {A : cmra} (a b : A) :
+Lemma embed_includedI `{!BiEmbed PROP1 PROP2, !Sbi PROP1, !Sbi PROP2,
+    !BiEmbedSbi PROP1 PROP2} {A : cmra} (a b : A) :
   embed (a ≼ b) ⊣⊢@{PROP2} a ≼ b.
 Proof. rewrite embed_exist. by setoid_rewrite embed_internal_eq. Qed.
 

@@ -262,7 +262,7 @@ step-index, and
 
 - add [Contractive] and [LaterAgreeF1] to enable agreement lemmas.
 *)
-Class FracLaterAgree1 {A : ofe} {PROP} `{!BiInternalEq PROP}
+Class FracLaterAgree1 {A : ofe} {PROP} `{!Sbi PROP}
     (R : Qp -> A -> PROP) : Prop := {
   #[global] frac_later_agree_1_fractional a :: Fractional (fun q => R q a);
   #[global] frac_later_agree_1_valid q a :: Observe [| q ≤ 1 |]%Qp (R q a);
@@ -272,7 +272,7 @@ Class FracLaterAgree1 {A : ofe} {PROP} `{!BiInternalEq PROP}
 #[global] Hint Mode FracLaterAgree1 - - - ! : typeclass_instances.
 
 Section frac_later_agree.
-  Context {A : ofe} `{!BiInternalEq PROP}.
+  Context {A : ofe} `{!Sbi PROP}.
   Context (R : Qp -> A -> PROP).
   Context `{!frac_splittable.FracLaterAgree1 R}.
   #[local] Set Default Proof Using "Type*".

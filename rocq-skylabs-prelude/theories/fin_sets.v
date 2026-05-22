@@ -190,7 +190,7 @@ Proof.
   intros X. have ? : Inj eq eq g by exact: cancel_inj.
   rewrite -{2}(set_map_id_L X) set_map_compose_L.
   (* setoid_rewrite (cancel right.of_nova right.to_nova). *)
-  apply set_map_ext => x Hin. exact: cancel.
+  apply set_map_ext => x Hin. apply (cancel f g).
 Qed.
 
 Section set_map.

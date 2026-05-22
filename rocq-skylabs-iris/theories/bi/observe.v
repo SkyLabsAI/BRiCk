@@ -443,13 +443,13 @@ Section monpred.
   Qed.
 
   Global Instance observe_2_internal_eq_monPred_at
-      `{!BiInternalEq PROP} {A : ofe} x y P1 P2 i :
+      `{!Sbi PROP} {A : ofe} x y P1 P2 i :
     Observe2 (x ≡@{A} y) P1 P2 -> Observe2 (x ≡ y) (P1 i) (P2 i).
   Proof.
     intros. rewrite -(monPred_at_internal_eq i). exact: observe_2_monPred_at.
   Qed.
   Global Instance observe_2_later_internal_eq_monPred_at
-      `{!BiInternalEq PROP} {A : ofe} x y P1 P2 i :
+      `{!Sbi PROP} {A : ofe} x y P1 P2 i :
     Observe2 (▷ (x ≡@{A} y)) P1 P2 -> Observe2 (▷ (x ≡ y)) (P1 i) (P2 i).
   Proof.
     intros. rewrite -(monPred_at_internal_eq i) -monPred_at_later.

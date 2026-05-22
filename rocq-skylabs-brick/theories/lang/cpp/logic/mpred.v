@@ -41,7 +41,7 @@ Module Type CPP_LOGIC_CLASS_MIXIN (Import CC : CPP_LOGIC_CLASS_BASE).
   #[global] Instance cpp_has_br_ghost `{!cpp_logic thread_info _Σ} : br.ghost.G _Σ
     := has_brG _Σ cpp_has_cppG.
 
-  #[local] Existing Instance br.ghost.frac_inG.
+  #[local] Existing Instance br.ghost.cinv_inG.
   #[global] Instance cpp_has_cinv `{!cpp_logic thread_info _Σ} : cinvG _Σ.
   Proof. constructor. apply _. Qed.
 

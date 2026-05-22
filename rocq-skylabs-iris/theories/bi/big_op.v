@@ -18,7 +18,7 @@ Import ChargeNotation.
 (** ** Lists *)
 
 Section big_op.
-  Context `{Monoid M o}.
+  Context `{Monoid M o u}.
   Implicit Types P : M → Prop.
   Infix "`o`" := o (at level 50, left associativity).
 
@@ -30,7 +30,7 @@ Section big_op.
     (** Any [P] compatible with the monoid and with [f] is compatible
         with [big_opL o f] *)
     Lemma big_opL_gen (P : M → Prop) f xs :
-      P monoid_unit → (∀ x y, P x → P y → P (x `o` y)) →
+      P u → (∀ x y, P x → P y → P (x `o` y)) →
       (∀ k x, xs !! k = Some x → P (f k x)) →
       P ([^o list] k↦x ∈ xs, f k x).
     Proof.
@@ -278,34 +278,36 @@ Section power.
   #[local] Notation "(⊢)" := (⊢@{PROP}) (only parsing).
   #[local] Open Scope N_scope.
 
-  #[local] Notation MONO R op :=
-    (Proper (R%signature ==> eq ==> R) (power op)) (only parsing).
+  #[local] Notation MONO R op u :=
+    (Proper (R%signature ==> eq ==> R) (power op u)) (only parsing).
 
-  #[global] Instance power_sep_mono : MONO (⊢) bi_sep.
+  #[global] Instance power_sep_mono : MONO (⊢) bi_sep emp%I.
   Proof. apply: power_proper. Qed.
-  #[global] Instance power_and_mono : MONO (⊢) bi_and.
+  #[global] Instance power_and_mono : MONO (⊢) bi_and (True%I : PROP).
   Proof. apply: power_proper. Qed.
-  #[global] Instance power_or_mono : MONO (⊢) bi_or.
+  #[global] Instance power_or_mono : MONO (⊢) bi_or (False%I : PROP).
   Proof. apply: power_proper. Qed.
 
-  #[global] Instance power_sep_flip_mono : MONO (flip (⊢)) bi_sep.
+  #[global] Instance power_sep_flip_mono : MONO (flip (⊢)) bi_sep emp%I.
   Proof. apply: power_proper. Qed.
-  #[global] Instance power_and_flip_mono : MONO (flip (⊢)) bi_and.
+  #[global] Instance power_and_flip_mono : MONO (flip (⊢)) bi_and (True%I : PROP).
   Proof. apply: power_proper. Qed.
-  #[global] Instance power_or_flip_mono : MONO (flip (⊢)) bi_or.
+  #[global] Instance power_or_flip_mono : MONO (flip (⊢)) bi_or (False%I : PROP).
   Proof. apply: power_proper. Qed.
 
   (**
    * Avoid exotic goals like [Timeless emp], [Affine True] when [n] a
    * non-zero constructor.
    *)
-  #[local] Lemma power_closed' `{Monoid M o} (P : M -> Prop) x n :
-    TCOr (NNonZero n) (P monoid_unit) ->
+  #[local] Lemma power_closed' `{Monoid M o u} (P : M -> Prop) x n :
+    TCOr (NNonZero n) (P u) ->
     Proper (equiv ==> iff) P ->
     (∀ x1 x2, P x1 -> P x2 -> P (o x1 x2)) ->
     P x -> P (x ^^{o} n).
   Proof.
-    destruct 1; intros. exact: power_closed_nonzero. exact: power_closed.
+    destruct 1; intros.
+    - by apply power_closed_nonzero.
+    - by apply power_closed.
   Qed.
 
   #[local] Notation CLOSED R o :=
@@ -314,25 +316,25 @@ Section power.
     (∀ P n, TCOr (NNonZero n) (R (u : PROP)) -> R P -> R (P ^^{o} n)) (only parsing).
 
   #[global] Instance power_sep_timeless : CLOSED' Timeless emp bi_sep.
-  Proof. intros. apply: power_closed'. Qed.
+  Proof. intros. apply: (power_closed' (M := PROP)). Qed.
   #[global] Instance power_and_timeless : CLOSED Timeless bi_and.
-  Proof. intros. apply: power_closed. Qed.
+  Proof. intros. apply: (power_closed (M := PROP)). Qed.
   #[global] Instance power_or_timeless : CLOSED Timeless bi_or.
-  Proof. intros. apply: power_closed. Qed.
+  Proof. intros. apply: (power_closed (M := PROP)). Qed.
 
   #[global] Instance power_sep_persistent : CLOSED Persistent bi_sep.
-  Proof. intros. apply: power_closed. Qed.
+  Proof. intros. apply: (power_closed (M := PROP)). Qed.
   #[global] Instance power_and_persistent : CLOSED Persistent bi_and.
-  Proof. intros. apply: power_closed. Qed.
+  Proof. intros. apply: (power_closed (M := PROP)). Qed.
   #[global] Instance power_or_persistent : CLOSED Persistent bi_or.
-  Proof. intros. apply: power_closed. Qed.
+  Proof. intros. apply: (power_closed (M := PROP)). Qed.
 
   #[global] Instance power_sep_affine : CLOSED Affine bi_sep.
-  Proof. intros. apply: power_closed. Qed.
+  Proof. intros. apply: (power_closed (M := PROP)). Qed.
   #[global] Instance power_and_affine : CLOSED' Affine True%I bi_and.
-  Proof. intros. apply: power_closed'. Qed.
+  Proof. intros. apply: (power_closed' (M := PROP)). Qed.
   #[global] Instance power_or_affine : CLOSED Affine bi_or.
-  Proof. intros. apply: power_closed. Qed.
+  Proof. intros. apply: (power_closed (M := PROP)). Qed.
 
   Lemma power_sep_emp n : emp ⊣⊢@{PROP} emp ^^ n.
   Proof. by rewrite power_unit. Qed.

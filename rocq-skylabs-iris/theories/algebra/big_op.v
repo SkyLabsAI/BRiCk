@@ -16,7 +16,7 @@ Require Import skylabs.prelude.fin_sets.
 
 (** ** [set_seq] *)
 Section set_seq.
-  Lemma big_opS_set_seq `{Monoid M o} (f : nat -> M) start count :
+  Lemma big_opS_set_seq `{Monoid M o u} (f : nat -> M) start count :
     ([^o set] n ∈ set_seq start count, f n) ≡
     ([^o list] n ∈ seq start count, f n).
   Proof.

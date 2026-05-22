@@ -36,6 +36,8 @@ Proof. iIntros "Q W R". iApply ("Q" with "(W R)"). Qed.
 #[local] Arguments UNSUPPORTED {_ _} _%_bs.
 #[local] Arguments wpi : simpl never.
 
+#[local] Remove Hints Ar_Definite CC_C : typeclass_instances.
+
 (** ** Weakest precondition of a constructor: Initial construction step. *)
 (**
 Makes [this] and immediate [members] of [cls] strictly valid, to
