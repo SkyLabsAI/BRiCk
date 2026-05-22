@@ -18,6 +18,7 @@ Require Import skylabs.lang.cpp.logic.heap_pred.
 Require Import skylabs.lang.cpp.logic.raw.
 Require Import skylabs.lang.cpp.logic.const.
 Require Import skylabs.lang.cpp.logic.operator.
+Require Import skylabs.lang.cpp.logic.arr.
 Require Import skylabs.lang.cpp.logic.destroy.
 Require Import skylabs.lang.cpp.logic.initializers.
 Require Import skylabs.lang.cpp.logic.wp.
@@ -1691,6 +1692,13 @@ Module Type Expr.
           wp_array_init_fill ety base ls fill sz Q
       |-- wp_init (Tarray ety sz) base (Einitlist ls fill ty) Q.
 
+    Axiom wp_init_implicit_init_array : forall sz ety (base : ptr) aty default Q,
+        is_array_of aty ety ->
+        get_default ety = Some default ->
+        (base |-> type_ptrR (Tarray ety sz) -*
+         base |-> arrayR ety (primR ety 1$m) (replicateN sz default) -*
+         Q FreeTemps.id)
+      |-- wp_init (Tarray ety sz) base (Eimplicit_init aty) Q.
 
     (* https://eel.is/c++draft/dcl.init#general-7.2 says that "To
     default-initialize an object of type T means: If T is an array type, each
