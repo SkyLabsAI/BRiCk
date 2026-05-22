@@ -146,7 +146,9 @@ static fmt::Formatter &printAbi(fmt::Formatter &out,
     return out << "(abi.mkT "
                << toCoqIntRank(target.getUIntPtrType()) << fmt::nbsp
                << toCoqSigned(ctxt.getLangOpts().CharIsSigned) << fmt::nbsp
-               << toCoqSigned(ctxt.getLangOpts().WCharIsSigned) << fmt::nbsp
+               << toCoqSigned(clang::TargetInfo::isTypeSigned(
+                      target.getWCharType()))
+               << fmt::nbsp
                << toCoqEndian(target) << ")";
 }
 
