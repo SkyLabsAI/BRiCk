@@ -113,3 +113,11 @@
  (modules perf_script)
  (package rocq-tools)
  (libraries rocq_tools yojson))
+
+; Generate an OCaml or Rocq file holding the hash of a binary.
+(executable
+ (name bin_hash)
+ (public_name bin-hash)
+ (modules bin_hash)
+ (package rocq-tools)
+ (libraries unix))
