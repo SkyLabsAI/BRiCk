@@ -343,7 +343,7 @@ Section derived_laws.
     (P1 ∗ Q) ∧ (P2 ∗ Q).
   Proof. rewrite !(comm bi_sep _ Q). exact: persistent_sep_and_distr_l. Qed.
 
-  Lemma bupd_pure `{!BiBUpd PROP, !BiPlainly PROP, !BiBUpdPlainly PROP} (P : Prop) :
+  Lemma bupd_pure `{!BiBUpd PROP, !Sbi PROP, !BiBUpdSbi PROP} (P : Prop) :
     (|==> ⌜P⌝) ⊣⊢@{PROP} ⌜P⌝.
   Proof. apply (anti_symm _); first exact: bupd_elim. apply bupd_intro. Qed.
 End derived_laws.

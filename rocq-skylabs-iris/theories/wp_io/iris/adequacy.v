@@ -206,10 +206,10 @@ Import uPred.
   not_stuck e2 σ2.
 Proof.
   iIntros (Hwp ??).
-  eapply pure_soundness.
+  apply (pure_soundness (PROP:=iPropI Σ)).
   eapply (step_fupdN_soundness_gen _ HasNoLc (steps_sum num_laters_per_step 0 n)
     (steps_sum num_laters_per_step 0 n)).
-  iIntros (Hinv) "Hcred".
+  iIntros (Hinv) "_".
   iMod Hwp as (stateI Φ fork_post state_interp_mono) "(Hσ & Hwp)".
   iDestruct (big_sepL2_length with "Hwp") as %Hlen1.
   iMod (@wptp_progress _ _ _ _
@@ -217,7 +217,7 @@ Proof.
     with "[Hσ] Hwp") as "H"; [done| done |by rewrite right_id_L|].
   iAssert (|={∅}▷=>^(steps_sum num_laters_per_step 0 n) |={∅}=> ⌜not_stuck e2 σ2⌝)%I
     with "[-]" as "H"; last first.
-  { destruct steps_sum; [done|].  by iApply step_fupdN_S_fupd. }
+  { destruct steps_sum; [done|]. by iApply step_fupdN_S_fupd. }
   iApply (step_fupdN_wand with "H"). iIntros "$".
 Qed.
 
@@ -261,10 +261,10 @@ Lemma wp_strong_adequacy_gen Σ Λ `{!invGpreS Σ} s es σ1 n κs t2 σ2 φ
   φ.
 Proof.
   iIntros (Hwp ?).
-  eapply pure_soundness.
+  apply (pure_soundness (PROP:=iPropI Σ)).
   eapply (step_fupdN_soundness_gen _ HasNoLc (steps_sum num_laters_per_step 0 n)
     (steps_sum num_laters_per_step 0 n)).
-  iIntros (Hinv) "Hcred".
+  iIntros (Hinv) "_".
   iMod Hwp as (stateI Φ fork_post state_interp_mono) "(Hσ & Hwp & Hφ)".
   iDestruct (big_sepL2_length with "Hwp") as %Hlen1.
   iMod (@wptp_postconditions _ _ _ _

@@ -36,7 +36,7 @@ Upstream issue: https://gitlab.mpi-sws.org/iris/iris/-/issues/420 *)
 
 (** Helpers to ease the lifting of meta-level implications. *)
 Section plain_wand.
-  Context `{BiPlainly PROP}.
+  Context `{!Sbi PROP}.
   Implicit Types P Q : PROP.
 
   #[local] Lemma plain_wand_intro_r P Q R `{!Plain P, !Plain Q} :
@@ -51,19 +51,23 @@ Section plain_wand.
   Proof. rewrite -{2}bi.persistently_pure. exact: plain_wand_intro_r. Qed.
 End plain_wand.
 
+(* Re-declare the project's [✓] notation last so it overrides Iris's
+   [internal_cmra_valid] notation in [bi_scope]. Same for [≼]. *)
+Notation "✓ x" := (bi_cmra_valid x) (at level 20) : bi_scope.
+Infix "≼" := includedI : bi_scope.
+
 Section theory.
   #[local] Set Default Proof Using "Type*".
   Context `{!BiEmbed siPropI PROP}.
-  Context `{!BiInternalEq PROP, !BiEmbedInternalEq siPropI PROP}.
-  Context `{!BiPlainly PROP, !BiEmbedPlainly siPropI PROP}.
+  Context `{!Sbi PROP, !BiEmbedSbi siPropI PROP}.
   Notation "P ⊣⊢ Q" := (P ⊣⊢@{PROP} Q).
   Notation "P ⊢ Q" := (P ⊢@{PROP} Q).
   #[local] Arguments siProp_holds !_ _ / : assert.
 
   #[local] Definition unseal_eqs := (si_cmra_valid_eq, siprop.siProp_primitive.siProp_unseal).
   #[local] Ltac unseal' :=
-    unfold bi_pure, bi_and, bi_or, bi_forall, bi_exist, internal_eq; simpl;
-    unfold bi_internal_eq_internal_eq; simpl;
+    unfold bi_pure, bi_and, bi_or, bi_forall, bi_exist; simpl;
+    unfold internal_eq, si_pure, siprop_sbi; simpl;
     rewrite ?unseal_eqs /=.
   #[local] Ltac unseal := let n := fresh "n" in constructor => n /=; unseal'.
 
@@ -82,7 +86,7 @@ Section theory.
     Implicit Types a b : A.
 
     Lemma discrete_eq_L `{!LeibnizEquiv A} a b : Discrete a → a ≡ b ⊣⊢ [! a = b !].
-    Proof. unfold_leibniz. exact: discrete_eq. Qed.
+    Proof. intros. unfold_leibniz. by apply discrete_eq, TCOr_l. Qed.
   End ofe.
 
   (** iris.algebra.cmra *)

@@ -55,8 +55,8 @@ Definition bi_cmra_valid
 Notation "✓ x" := (bi_cmra_valid x) (at level 20) : bi_scope.
 
 #[global] Instance prop_valid_plain
-  {PROP : bi} `{!BiEmbed siPropI PROP} `{BiPlainly PROP}
-  {BEP : BiEmbedPlainly siPropI PROP} {A : cmra} (a : A) :
+  {PROP : bi} `{!BiEmbed siPropI PROP} `{!Sbi PROP}
+  {BEP : BiEmbedSbi siPropI PROP} {A : cmra} (a : A) :
   Plain (✓ a) := _.
 
 #[global] Instance prop_valid_persistent
@@ -141,7 +141,7 @@ Section valid.
     intros NVL. rewrite -embed_pure. apply embed_mono.
     unseal => ?. apply NVL. apply cmra_validN_le with n; auto. cbn; lia.
   Qed.
-  Lemma plainly_cmra_valid_1 `{!BiPlainly PROP} `{!@BiEmbedPlainly siPropI PROP BE _ _}
+  Lemma plainly_cmra_valid_1 `{!Sbi PROP} `{!BiEmbedSbi siPropI PROP}
     (a : A) : ✓ a ⊢ ■ ✓ a.
   Proof. by rewrite -embed_plainly. Qed.
   Lemma cmra_valid_weaken (a b : A) : ✓ (a ⋅ b) ⊢ ✓ a.

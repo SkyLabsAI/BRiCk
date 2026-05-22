@@ -122,12 +122,12 @@ Section si_monpred_embedding.
   #[global] Instance si_monpred_embedding : BiEmbed siPropI monPredI := _.
   #[global] Instance si_monpred_emp : BiEmbedEmp siPropI monPredI := _.
   #[global] Instance si_monpred_later : BiEmbedLater siPropI monPredI := _.
-  #[global] Instance si_monpred_internal_eq : BiEmbedInternalEq siPropI monPredI := _.
-  #[global] Instance si_monpred_plainly : BiEmbedPlainly siPropI monPredI := _.
+  #[global] Instance si_monpred_sbi : BiEmbedSbi siPropI monPredI := _.
 
-  (* TODO: uPred_cmra_valid should have been defined as si_cmra_valid.
-    This is to be fixed upstream in Iris. *)
+  (* TODO: this should have been defined upstream in Iris. *)
   Lemma monPred_si_cmra_valid_validI `{inG Σ A} (a : A) :
-    ⎡ si_cmra_valid a ⎤ ⊣⊢@{monPredI} ⎡ uPred_cmra_valid a ⎤.
-  Proof. by rewrite -si_cmra_valid_validI embedding.embed_embed. Qed.
+    ⎡ si_cmra_valid a ⎤ ⊣⊢@{monPredI} ⎡ internal_cmra_valid a : iPropI _ ⎤.
+  Proof.
+    rewrite -(si_cmra_valid_validI a) embedding.embed_embed. done.
+  Qed.
 End si_monpred_embedding.

@@ -5,6 +5,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
+Require Import Stdlib.Program.Equality.
 Require Export iris.program_logic.language.
 Require Import iris.algebra.cmra.
 
@@ -143,7 +144,7 @@ Module Compose.
   Proof. by inversion 1. Qed.
   #[global] Instance forward_inj_2 {cfg : config} (c : cfg.(name)) :
     Inj (=) (=) (@Forward cfg c).
-  Proof. intros ???. by simplify_eq. Qed.
+  Proof. intros e1 e2 Heq. by dependent destruction Heq. Qed.
 
   Lemma sync_inj_1 {cfg : config} (c11 c12 c21 c22 : cfg.(name))
     {e11 : (components cfg c11).(Component.Event)}
@@ -154,7 +155,7 @@ Module Compose.
   Proof. by inversion 1. Qed.
   #[global] Instance sync_inj_2 {cfg : config} (c1 c2 : cfg.(name)) :
     Inj2 (=) (=) (=) (@Sync cfg c1 c2).
-  Proof. intros ???? ?. by simplify_eq. Qed.
+  Proof. intros e11 e12 e21 e22 Heq. by dependent destruction Heq. Qed.
 
   Definition Obs cfg    := ((option (event cfg)) * (EventSource cfg))%type.
   Definition Trace cfg  := list (Obs cfg).

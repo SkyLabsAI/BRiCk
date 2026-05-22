@@ -84,7 +84,7 @@ Section bi.
   #[global] Instance only_provable_timeless `{Timeless PROP emp} P :
     Timeless (PROP:=PROP) [| P |].
   Proof. rewrite only_provable_unfold. apply _. Qed.
-  #[global] Instance only_provable_plain `{BiPlainly PROP} P :
+  #[global] Instance only_provable_plain `{!Sbi PROP} P :
     Plain (PROP:=PROP) [| P |].
   Proof. rewrite only_provable_unfold. apply _. Qed.
 

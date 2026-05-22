@@ -111,6 +111,7 @@ Section defs.
     rewrite only_provable_equiv.
     constructor => ?.
     rewrite monPred_at_internal_eq monPred_at_and monPred_at_emp monPred_at_pure.
+    rewrite /internal_eq /= siprop.siProp_internal_eq_unseal /=.
     repeat uPred.unseal. constructor => n x ?. by intros [? _].
   Qed.
 
@@ -118,6 +119,7 @@ Section defs.
     P ≡ Q ⊢@{mpredI} P.(fs_spec) vs K ≡ Q.(fs_spec) vs K.
   Proof.
     constructor => ?. rewrite !monPred_at_internal_eq.
+    rewrite /internal_eq /= siprop.siProp_internal_eq_unseal /=.
     repeat uPred.unseal. constructor=>n x ? [_ HPQ]. apply HPQ.
   Qed.
 
@@ -129,7 +131,9 @@ Section defs.
     constructor => ?.
     repeat setoid_rewrite monPred_at_forall.
     repeat setoid_rewrite monPred_at_internal_eq.
-    repeat uPred.unseal. constructor=>x ?; by split.
+    rewrite /internal_eq /= siprop.siProp_internal_eq_unseal /=.
+    repeat uPred.unseal.
+    constructor=>n x. by split.
   Qed.
 
   Lemma fs_equivI P Q :
@@ -215,7 +219,7 @@ Section defs.
     split.
     - intros->. apply internal_eq_refl.
     - rewrite monPred_internal_eq_unfold => /embed_emp_valid_inj.
-      apply uPred.internal_eq_soundness.
+      apply internal_eq_soundness.
   Qed.
 
   Lemma function_spec_equiv_split P Q : P ≡ Q ↔ fs_entails P Q /\ fs_entails Q P.

@@ -62,7 +62,7 @@ Section fractional.
   Proof.
     apply: observe_2_intro_only_provable.
     apply bi.wand_intro_r; rewrite /gmap_own -own_op singleton_op.
-    rewrite own_valid internal_cmra_valid_discrete singleton_valid.
+    rewrite own_valid own.internal_cmra_valid_discrete singleton_valid.
     by iIntros "!%" => /cfrac_valid [].
   Qed.
 
@@ -75,7 +75,7 @@ Section fractional.
     ∀ q k v, Observe [| cQp.frac q ≤ 1 |]%Qp (gmap_own γ q k v).
   Proof.
     intros. apply: observe_intro_only_provable.
-    rewrite /gmap_own own_valid !internal_cmra_valid_discrete singleton_valid.
+    rewrite /gmap_own own_valid !own.internal_cmra_valid_discrete singleton_valid.
     by iIntros "!%" => /pair_valid [? _].
   Qed.
 End fractional.
@@ -653,7 +653,7 @@ Module SimpleCPP.
     Proof.
       apply /observe_2_intro_persistent /bi.wand_intro_r.
       rewrite -own_op singleton_op.
-      rewrite own_valid internal_cmra_valid_discrete singleton_valid.
+      rewrite own_valid own.internal_cmra_valid_discrete singleton_valid.
       by iIntros "!%" => /= /to_agree_op_inv_L.
     Qed.
 

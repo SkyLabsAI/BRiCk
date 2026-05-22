@@ -119,7 +119,8 @@ Section with_cpp.
       rewrite _at_intuitionistically. setoid_rewrite _at_wand.
       iIntros "#HP".
       rewrite (INTERNAL._at_eq p (P x)).
-      iApply (leastR_ind _ (fun p x => P x p)).
+      assert (∀ (p : ptr) (n : natSI), Proper (dist n ==> dist n) ((λ (p0 : ptr) (x : A), P x p0) p)) as Htmp by solve_proper;
+      iApply (leastR_ind _ (fun p x => P x p)); clear Htmp.
       rewrite _at_pureR.
       iModIntro; iIntros (??).
       iIntros "X".
