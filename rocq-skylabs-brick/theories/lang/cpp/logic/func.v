@@ -442,11 +442,11 @@ Section wp_func.
     intros. rewrite wp_func.unlock. iIntros "HQ".
     case_match; last by auto.
     case_match; last by iApply wp_builtin_func_frame.
-    iApply bind_vars_frame; [done|]. iIntros (??) "wp !>"; iRevert "wp".
-    iApply wp_frame; [done|]. iIntros (?).
-    iApply Kcleanup_frame; [done|].
-    iApply Kreturn_frame. iIntros (?) "Q".
-    iApply ("HQ" with "Q").
+    all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
+    all: iApply wp_frame; [done|]; iIntros (?).
+    all: iApply Kcleanup_frame; [done|].
+    all: iApply Kreturn_frame; iIntros (?) "Q".
+    all: iApply ("HQ" with "Q").
   Qed.
 
   (** Unsupported *)
@@ -480,7 +480,7 @@ parameters.
     (m : Method) (args : list ptr) (Q : ptr -> epred) : mpred :=
   match m.(m_body) with
   | None => ERROR "wp_method: no body"
-  | Some (UserDefined body) =>
+  | Some (UserDefined body | CompilerProvided body) =>
     match args with
     | thisp :: rest_vals =>
       let ρ va := Remp (Some thisp) va m.(m_return) in
@@ -509,12 +509,14 @@ Section wp_method.
     |-- wp_method tu m args Q -* wp_method tu' m args Q'.
   Proof.
     intros. iIntros "HQ". rewrite wp_method.unlock.
-    repeat case_match; auto.
-    iApply bind_vars_frame; [done|]. iIntros (??) "wp !>"; iRevert "wp".
-    iApply wp_frame; [done|]. iIntros (?).
-    iApply Kcleanup_frame; [done|].
-    iApply Kreturn_frame. iIntros (?) "Q".
-    iApply ("HQ" with "Q").
+    destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_body]; cbn.
+    destruct m_body as [[|body|body]|]; auto.
+    all: destruct args as [|thisp rest_vals]; auto.
+    all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
+    all: iApply wp_frame; [done|]; iIntros (?).
+    all: iApply Kcleanup_frame; [done|].
+    all: iApply Kreturn_frame; iIntros (?) "Q".
+    all: iApply ("HQ" with "Q").
   Qed.
 
   (** Unsupported *)
@@ -526,11 +528,14 @@ Section wp_method.
   Lemma wp_method_intro tu m args Q :
     Cbn (Reduce (wp_method' false tu m args Q)) |-- wp_method tu m args Q.
   Proof.
-    rewrite wp_method.unlock. do 3!f_equiv.
-    iApply bind_vars_frame; [done|]. iIntros (??) "wp !>"; iRevert "wp".
-    iApply wp_frame; [done|]. iIntros (?).
-    iApply Kcleanup_frame; [done|].
-    iApply Kreturn_frame. auto.
+    rewrite wp_method.unlock.
+    destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_body]; cbn.
+    destruct m_body as [[|body|body]|]; auto.
+    all: destruct args as [|thisp rest_vals]; auto.
+    all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
+    all: iApply wp_frame; [done|]; iIntros (?).
+    all: iApply Kcleanup_frame; [done|].
+    all: iApply Kreturn_frame; auto.
   Qed.
 
   Lemma wp_method_elim tu m args Q :
