@@ -41,6 +41,7 @@ Elpi File skylabs.basis.elpi lp:{{
   list.map3 _ [] [_|_] _ _ :- list.map3.aux.
   list.map3 [] [] [] _ [].
   list.map3 [A|AS] [B|BS] [C|CS] F [D|DS] :- F A B C D, list.map3 AS BS CS F DS.
+  func list.map3.aux.
   list.map3.aux :- coq.error "list.map3 lengths don't agree".
 
   pred list.app! i:list A, i:(pred i:A).
