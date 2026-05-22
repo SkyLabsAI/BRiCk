@@ -28,7 +28,7 @@ Section with_prop.
     iExists (<[u:=γ]>γs').
     rewrite /= fn_lookup_insert. iFrame "P".
     iApply (big_sepL_mono with "Ps").
-    intros k y IN%elem_of_list_lookup_2.
+    intros k y IN%list_elem_of_lookup_2.
     rewrite fn_lookup_insert_ne; [done|].
     by intros ->.
   Qed.

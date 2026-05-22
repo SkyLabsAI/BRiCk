@@ -362,7 +362,7 @@ Lemma find_assoc_list_parent_offset tu derived st base li :
 Proof.
   rewrite /parent_offset_tu => -> Hin.
   apply /find_assoc_list_elem_of.
-  eexists; apply /elem_of_list_fmap; by exists (base, li).
+  eexists; apply /list_elem_of_fmap; by exists (base, li).
 Qed.
 
 Lemma parent_offset_genv_compat {σ tu derived base z} {Hσ : tu ⊧ σ} :

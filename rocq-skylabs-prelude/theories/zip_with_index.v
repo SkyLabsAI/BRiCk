@@ -57,9 +57,9 @@ Section zip_with_index.
       <[i + j := x]> (list_to_map (zip_with_index_from j xs)).
   Proof.
     elim: xs i j => /= [/ltac:(lia)|y xs IH] [j|i j /(proj2 (Nat.succ_lt_mono _ _))] Hlook /=;
-      first by rewrite insert_insert.
+      first by rewrite insert_insert_eq.
     move: IH => /(_ i (S j) Hlook); rewrite Nat.add_succ_r => IH.
-    rewrite insert_commute; last lia.
+    rewrite insert_insert_ne; last lia.
     by rewrite IH.
   Qed.
 

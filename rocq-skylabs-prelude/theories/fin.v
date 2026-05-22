@@ -217,7 +217,7 @@ Module fin.
   Lemma elem_of_seq n {i : t n} : i ∈ seq n.
   Proof.
     destruct n. { by destruct t_0_inv. }
-    apply elem_of_list_fmap; exists (to_N i); split.
+    apply list_elem_of_fmap; exists (to_N i); split.
     { by rewrite of_to_N. }
     apply elem_of_seqN. case: i => /= i /bool_decide_unpack. lia.
   Qed.

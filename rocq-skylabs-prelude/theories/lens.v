@@ -286,7 +286,7 @@ Section map_from_finite.
     rewrite map_fold_insert_first_key //.
     rewrite dom_insert elem_of_union elem_of_singleton.
     move => [-> | Hin].
-    - rewrite lookup_insert /=. f_equiv.
+    - rewrite lookup_insert_eq /=. f_equiv.
       by rewrite view_over.
     - have ? : i <> rn by set_solver.
       by rewrite lookup_insert_ne //= IH // Hdisj.

@@ -812,7 +812,7 @@ Section with_lts.
     iCombine "H1 H2" as "H".
     rewrite -!big_sepL_sep.
     iApply (big_sepL_mono with "H").
-    intros ? ? Hin%elem_of_list_lookup_2.
+    intros ? ? Hin%list_elem_of_lookup_2.
     rewrite decide_False; [done|congruence].
   Qed.
 
@@ -880,7 +880,7 @@ Section with_lts.
         { move : (Inss nl). by rewrite updll. }
         exists (updl s sl'). split; [|done]. exists nl. split.
         - (* TODO lemma *) rewrite /updl.
-          intros n'. rewrite elem_of_list_singleton => NEq. by case_decide.
+          intros n'. rewrite list_elem_of_singleton => NEq. by case_decide.
         - exists el. split; [done|]. by rewrite updll. }
 
       iIntros (e) "[%INe Fup]".
@@ -905,7 +905,7 @@ Section with_lts.
           + move : (Ins d). by rewrite /sset' !updlo //.
         - split; [|done]. exists nl. split.
           + (* TODO lemma *) rewrite /updl.
-            intros n'. rewrite elem_of_list_singleton => NEq. by case_decide.
+            intros n'. rewrite list_elem_of_singleton => NEq. by case_decide.
           + exists el. split; [done|]. by rewrite updll. }
 
       iIntros "!> !>". iExists _. iFrame "Fup".
@@ -924,8 +924,8 @@ Section with_lts.
       iSplitL "Al".
       { rewrite /sset' updll. by iFrame "Al". }
       iApply (big_sepL_mono with "A").
-      intros i n [INn EqL]%elem_of_list_lookup_2%elem_of_list_difference.
-      rewrite elem_of_list_singleton in EqL.
+      intros i n [INn EqL]%list_elem_of_lookup_2%list_elem_of_difference.
+      rewrite list_elem_of_singleton in EqL.
       by rewrite /sset' updlo.
     Qed.
 
@@ -994,8 +994,8 @@ Section with_lts.
           [|apply elem_of_enum|apply NoDup_enum].
         iSplitL "Al". { rewrite /sset' updll. iFrame "Al". }
         iApply (big_sepL_mono with "A") .
-        intros i n [INn EqL]%elem_of_list_lookup_2%elem_of_list_difference.
-        rewrite elem_of_list_singleton in EqL.
+        intros i n [INn EqL]%list_elem_of_lookup_2%list_elem_of_difference.
+        rewrite list_elem_of_singleton in EqL.
         by rewrite /sset' updlo. }
       iMod ("Close" $! (π_set sset') eup with "[$Aup]") as "Q".
       { iIntros "!%"; repeat split; [done..|].
@@ -1010,7 +1010,7 @@ Section with_lts.
           + move : (Ins' d). rewrite /sset' !updlo //.
         - exists nl. split.
           + (* TODO lemma *) rewrite /updl.
-            intros n'. rewrite elem_of_list_singleton => NEq. by case_decide.
+            intros n'. rewrite list_elem_of_singleton => NEq. by case_decide.
           + exists el. split; [done|]. by rewrite updll. }
       iIntros "!>". iExists eup. by iFrame "Q %".
     Qed.
@@ -1138,7 +1138,7 @@ Section with_lts.
       rewrite big_sepL_mono_elem; [iFrame|]; last first.
       {
         intros ? Hin.
-        rewrite -> elem_of_list_difference in Hin.
+        rewrite -> list_elem_of_difference in Hin.
         rewrite updlro; try reflexivity; set_solver+ Hin.
       }
       iIntros "!%".
@@ -1292,7 +1292,7 @@ Section with_lts.
         {
           iApply (big_sepL_mono_elem with "[$]").
           intros ? Hin.
-          rewrite elem_of_list_difference in Hin.
+          rewrite list_elem_of_difference in Hin.
           rewrite updlo; try reflexivity. set_solver+ Hin.
         }
         iPureIntro.

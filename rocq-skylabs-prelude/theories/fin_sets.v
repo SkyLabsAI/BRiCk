@@ -177,7 +177,7 @@ Section set_map.
     set_map f X =@{D} set_map g X.
   Proof.
     rewrite /set_map. f_equiv. apply list_fmap_ext.
-    intros i x ?%elem_of_list_lookup_2. exact /Hext /elem_of_elements.
+    intros i x ?%list_elem_of_lookup_2. exact /Hext /elem_of_elements.
   Qed.
 End set_map.
 

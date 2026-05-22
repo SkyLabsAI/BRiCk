@@ -176,7 +176,7 @@ Proof.
   iIntros (Hstep Hel) "Hσ He". iMod (wptp_preservation with "Hσ He") as "Hwp"; first done.
   iModIntro. iApply (step_fupdN_wand with "Hwp").
   iMod 1 as (nt') "(Hσ & Ht)"; simplify_eq/=.
-  eapply elem_of_list_lookup in Hel as [i Hlook].
+  eapply list_elem_of_lookup in Hel as [i Hlook].
   destruct ((Φs ++ replicate nt' fork_post) !! i) as [Φ|] eqn: Hlook2; last first.
   { rewrite big_sepL2_alt. iDestruct "Ht" as "[%Hlen _]". exfalso.
     eapply lookup_lt_Some in Hlook. rewrite Hlen in Hlook.

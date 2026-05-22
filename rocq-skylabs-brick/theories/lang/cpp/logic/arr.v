@@ -140,7 +140,7 @@ Section arrR.
     apply: bi.sep_timeless.
     apply: bi.sep_timeless.
     apply big_sepL_gen_timeless=>k x Hk.
-    apply _offsetR_timeless, (bi.sep_timeless _ _ _), HR. exact: elem_of_list_lookup_2.
+    apply _offsetR_timeless, (bi.sep_timeless _ _ _), HR. exact: list_elem_of_lookup_2.
   Qed.
   #[global] Instance arrR_persistent ty Rs :
     TCForall Persistent Rs → Persistent (arrR ty Rs).
@@ -149,7 +149,7 @@ Section arrR.
     apply: bi.sep_persistent.
     apply: bi.sep_persistent.
     apply big_sepL_gen_persistent=>k x Hk.
-    apply _offsetR_persistent, (bi.sep_persistent _ _ _), HR. exact: elem_of_list_lookup_2.
+    apply _offsetR_persistent, (bi.sep_persistent _ _ _), HR. exact: list_elem_of_lookup_2.
   Qed.
   #[global] Instance arrR_affine ty Rs :
     TCForall Affine Rs → Affine (arrR ty Rs).

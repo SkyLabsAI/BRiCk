@@ -185,7 +185,7 @@ Lemma big_sepL_mono_elem {PROP : bi} {A : Type} (Φ Ψ : A → PROP) (l : list A
   (∀ (y : A), y ∈ l -> Φ y ⊢ Ψ y)
   → ([∗ list] y ∈ l, Φ y) ⊢ ([∗ list] y ∈ l, Ψ y).
 Proof.
-  intros Hin. apply big_sepL_mono => k y Hl. eapply Hin, elem_of_list_lookup_2, Hl.
+  intros Hin. apply big_sepL_mono => k y Hl. eapply Hin, list_elem_of_lookup_2, Hl.
 Qed.
 
 Lemma big_sepL_difference_singleton {PROP : bi} `{EqDecision A} (x : A)
@@ -194,7 +194,7 @@ Lemma big_sepL_difference_singleton {PROP : bi} `{EqDecision A} (x : A)
   NoDup l ->
   ([∗ list] i ∈ l, f i) ⊣⊢ f x ∗ [∗ list] i ∈ list_difference l [x], f i.
 Proof.
-  intros [j Hl]%elem_of_list_lookup_1 HnoDup.
+  intros [j Hl]%list_elem_of_lookup_1 HnoDup.
   by rewrite big_sepL_delete_delete // (list_difference_delete j).
 Qed.
 

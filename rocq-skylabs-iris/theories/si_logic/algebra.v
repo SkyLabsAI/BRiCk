@@ -277,7 +277,7 @@ Section theory.
       solve_equiv to_agree_includedN.
     Qed.
 
-    Lemma agree_validI x y : ✓ (x ⋅ y) ⊢ x ≡ y.
+    Lemma agree_op_invI x y : ✓ (x ⋅ y) ⊢ x ≡ y.
     Proof. rewrite -embed_internal_eq. solve_entails agree_op_invN. Qed.
 
     Lemma to_agree_uninjI x : ✓ x ⊢ ∃ a, to_agree a ≡ x.

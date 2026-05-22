@@ -194,22 +194,22 @@ Section observe.
     (** Higher cost than the following [to_agree] variants.  *)
     #[global] Instance own_agreeI' g x y :
       Observe2 (x ≡ y) (own g x) (own g y) | 100.
-    Proof. GUARD. apply own_2_obs, agree_validI. Qed.
+    Proof. GUARD. apply own_2_obs, agree_op_invI. Qed.
     #[global] Instance own_agree' g x y `{!Discrete x} :
       Observe2 [| x ≡ y |] (own g x) (own g y) | 100.
     Proof.
       GUARD. apply observe_2_pure, own_2_obs.
-      by rewrite agree_validI discrete_eq.
+      by rewrite agree_op_invI discrete_eq.
     Qed.
 
     #[global] Instance own_agreeI g a b :
       Observe2 (a ≡ b) (own g (to_agree a)) (own g (to_agree b)).
-    Proof. GUARD. apply own_2_obs. by rewrite agree_validI agree_equivI. Qed.
+    Proof. GUARD. apply own_2_obs. by rewrite agree_op_invI agree_equivI. Qed.
     #[global] Instance own_agree g a b `{!Discrete a} :
       Observe2 [| a ≡ b |] (own g (to_agree a)) (own g (to_agree b)).
     Proof.
       GUARD. apply observe_2_pure, own_2_obs.
-      by rewrite agree_validI agree_equivI discrete_eq.
+      by rewrite agree_op_invI agree_equivI discrete_eq.
     Qed.
     #[global] Instance own_agree_L `{!LeibnizEquiv A} g a b `{!Discrete a} :
       Observe2 [| a = b |] (own g (to_agree a)) (own g (to_agree b)).
