@@ -25,7 +25,7 @@ Require Import skylabs.iris.extra.bi.prop_constraints.
 Require Import skylabs.iris.extra.bi.spec.knowledge.
 Require Import skylabs.iris.extra.bi.spec.nary_classes.
 
-Require Import iris.proofmode.tactics.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
 Module mono_list.
 

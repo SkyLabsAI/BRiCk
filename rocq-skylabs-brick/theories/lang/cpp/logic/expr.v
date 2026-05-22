@@ -8,7 +8,7 @@
  * (expressed in weakest pre-condition style)
  *)
 Require Import skylabs.prelude.numbers.
-Require Import iris.proofmode.tactics.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
 Require Import skylabs.lang.cpp.syntax.
 Require Import skylabs.lang.cpp.semantics.
