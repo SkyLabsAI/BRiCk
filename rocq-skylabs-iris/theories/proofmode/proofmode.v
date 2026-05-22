@@ -26,20 +26,20 @@ End class_instances_frame.
 (* https://gitlab.mpi-sws.org/iris/iris/-/merge_requests/1042 *)
 Import environments.
 #[global]
-Ltac iFrameAnyIntuitionistic ::=
+Ltac _iFrameAnyIntuitionistic ::=
   iStartProof;
   let rec go Hs :=
-    match Hs with [] => idtac | ?H :: ?Hs => repeat iFrameHyp H; go Hs end in
+    match Hs with [] => idtac | ?H :: ?Hs => repeat _iFrameHyp H; go Hs end in
   match goal with
   | |- envs_entails ?Δ _ =>
      let Hs := eval lazy in (env_dom (env_intuitionistic Δ)) in go Hs
   end.
 
 #[global]
-Ltac iFrameAnySpatial ::=
+Ltac _iFrameAnySpatial ::=
   iStartProof;
   let rec go Hs :=
-    match Hs with [] => idtac | ?H :: ?Hs => try iFrameHyp H; go Hs end in
+    match Hs with [] => idtac | ?H :: ?Hs => try _iFrameHyp H; go Hs end in
   match goal with
   | |- envs_entails ?Δ _ =>
      let Hs := eval lazy in (env_dom (env_spatial Δ)) in go Hs
