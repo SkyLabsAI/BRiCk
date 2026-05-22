@@ -337,7 +337,7 @@ Module Compose.
         split; last done.
         left; exists n__comp.
         split; last by rewrite dep_fn_insert_view_set.
-        exact /Compose.eq_except_insert_in /elem_of_list_singleton.
+        exact /Compose.eq_except_insert_in /list_elem_of_singleton.
     Qed.
 
     Lemma step_star_ext_lift_single

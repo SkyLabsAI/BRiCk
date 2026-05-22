@@ -77,7 +77,7 @@ Section na_inv.
         intros Ef. exists (coPpick (↑ N ∖ gset_to_coPset Ef)).
         rewrite -elem_of_gset_to_coPset comm -elem_of_difference.
         apply coPpick_elem_of=> Hfin.
-        eapply nclose_infinite, (difference_finite_inv _ _), Hfin.
+        eapply nclose_not_finite, (difference_finite_inv _ _), Hfin.
         apply gset_to_coPset_finite. }
     simpl. iDestruct "Hm" as %(<- & i & -> & ?).
     rewrite /na_inv.

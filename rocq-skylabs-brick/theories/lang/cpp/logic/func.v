@@ -152,8 +152,8 @@ Section derivationsR.
     iPureIntro. intros.
     econstructor; eauto.
     apply List.Forall_forall. intros.
-    apply elem_of_list_In in H1.
-    apply elem_of_list_lookup_1 in H1.
+    apply list_elem_of_In in H1.
+    apply list_elem_of_lookup_1 in H1.
     destruct H1.
     eapply H0; eauto.
   Qed.

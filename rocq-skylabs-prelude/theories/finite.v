@@ -95,7 +95,7 @@ Section finite_stdlib.
   Proof. apply NoDup_ListNoDup, NoDup_enum. Qed.
 
   Lemma list_In_enum x : In x (enum A).
-  Proof. apply elem_of_list_In, elem_of_enum. Qed.
+  Proof. apply list_elem_of_In, elem_of_enum. Qed.
 End finite_stdlib.
 
 Section finite_preimage.
@@ -398,7 +398,7 @@ Qed.
 Lemma elem_of_app_fmap_enum_l `{Finite A} `(f : A → B) x (ys : list B) :
   f x ∈ (f <$> enum A) ++ ys.
 Proof.
-  by apply/elem_of_app; left; apply/elem_of_list_fmap_1/elem_of_enum.
+  by apply/elem_of_app; left; apply/list_elem_of_fmap_2/elem_of_enum.
 Qed.
 
 (**

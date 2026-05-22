@@ -153,7 +153,7 @@ Section valid.
     ✓ mx ⊣⊢ match mx with Some x => ✓ x | None => True end.
   Proof. destruct mx; [|rewrite -embed_pure]; apply embed_proper; by unseal. Qed.
 
-  Lemma discrete_valid `{!CmraDiscrete A} (a : A) : ✓ a ⊣⊢ ⌜✓ a⌝.
+  Lemma internal_cmra_valid_discrete `{!CmraDiscrete A} (a : A) : ✓ a ⊣⊢ ⌜✓ a⌝.
   Proof.
     rewrite -embed_pure. apply embed_proper. unseal.
     by rewrite -cmra_discrete_valid_iff.
@@ -165,7 +165,7 @@ Section valid.
   (* Duplicates from base_logic.proofmode *)
   Global Instance into_pure_cmra_valid `{!CmraDiscrete A} (a : A) :
     IntoPure (✓ a) (✓ a).
-  Proof. by rewrite /IntoPure discrete_valid. Qed.
+  Proof. by rewrite /IntoPure internal_cmra_valid_discrete. Qed.
 
   Global Instance from_pure_cmra_valid (a : A) :
     FromPure false (✓ a) (✓ a).

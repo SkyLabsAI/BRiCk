@@ -89,10 +89,10 @@ Section zip_with_indexN_from.
   Proof.
     elim: xs i j => [|y xs IH]; rewrite lengthN_simpl ?N.add_1_r; [lia|].
     elim/N.peano_ind => [j|i _ j]; rewrite zip_with_indexN_from_cons; first
-      by rewrite insert_insert.
+      by rewrite insert_insert_eq.
     rewrite -N.succ_lt_mono => Hlook.
     move: IH => /(_ i (N.succ j) Hlook); rewrite !N.add_succ_r !N.add_succ_l /= => IH.
-    rewrite insert_commute; last lia.
+    rewrite insert_insert_ne; last lia.
     by rewrite list_insertN_insert N2Nat.inj_succ /= IH.
   Qed.
 
@@ -190,7 +190,7 @@ Section zip_with_indexN_from.
     (i, v) ∈ zip_with_indexN_from j xs →
     xs !! (i - j) = Some v ∧ j ≤ i < j + lengthN xs.
   Proof.
-    rewrite elem_of_list_lookup => -[k].
+    rewrite list_elem_of_lookup => -[k].
     rewrite list_lookup_lookupN lookupN_zip_with_indexN => -[<- Hlook].
     rewrite -Hlook; split_and!; first f_equal; try lia.
     apply lookup_lt_Some in Hlook.

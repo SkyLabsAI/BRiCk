@@ -180,7 +180,7 @@ operations. *)
 #[global] Instance set_unfold_list_bind {A B} (f : A → list B) l P Q y :
   (∀ x, SetUnfoldElemOf x l (P x)) → (∀ x, SetUnfoldElemOf y (f x) (Q x)) →
   SetUnfoldElemOf y (l ≫= f) (∃ x, Q x ∧ P x).
-Proof. constructor. rewrite elem_of_list_bind. naive_solver. Qed.
+Proof. constructor. rewrite list_elem_of_bind. naive_solver. Qed.
 
 #[global] Instance list_bind_mono {A B} :
   Proper (pointwise_relation _ (⊆) ==> (⊆) ==> (⊆))
@@ -198,55 +198,55 @@ Proof. move =>f1 f2 Hf xs _ <-. elim: xs => [//|x xs IH]; csimpl. by rewrite {}I
     (xs : list A) Q x :
   SetUnfoldElemOf x xs Q →
   SetUnfoldElemOf x (filter P xs) (P x ∧ Q).
-Proof. constructor. rewrite elem_of_list_filter. set_solver. Qed.
+Proof. constructor. rewrite list_elem_of_filter. set_solver. Qed.
 
 #[global] Instance set_unfold_list_difference `{EqDecision A} (x : A) l k P Q :
   SetUnfoldElemOf x l P → SetUnfoldElemOf x k Q →
   SetUnfoldElemOf x (list_difference l k) (P ∧ ¬ Q).
-Proof. constructor. rewrite elem_of_list_difference. set_solver. Qed.
+Proof. constructor. rewrite list_elem_of_difference. set_solver. Qed.
 
 #[global] Instance set_unfold_list_intersection `{EqDecision A} (x : A) l k P Q :
   SetUnfoldElemOf x l P → SetUnfoldElemOf x k Q →
   SetUnfoldElemOf x (list_intersection l k) (P ∧ Q).
-Proof. constructor. rewrite elem_of_list_intersection. set_solver. Qed.
+Proof. constructor. rewrite list_elem_of_intersection. set_solver. Qed.
 
 #[global] Instance set_unfold_list_union `{EqDecision A} (x : A) l k P Q :
   SetUnfoldElemOf x l P → SetUnfoldElemOf x k Q →
   SetUnfoldElemOf x (list_union l k) (P ∨ Q).
-Proof. constructor. rewrite elem_of_list_union. set_solver. Qed.
+Proof. constructor. rewrite list_elem_of_union. set_solver. Qed.
 
 #[global] Instance set_unfold_list_intersection_with `{EqDecision A} (y : A) l k P Q R f :
   (∀ x, SetUnfoldElemOf x l (P x)) → (∀ x, SetUnfoldElemOf x k (Q x)) →
   (∀ x1 x2, SetUnfold (f x1 x2 = Some y) (R x1 x2)) →
   SetUnfoldElemOf y (list_intersection_with f l k) (∃ x1 x2 : A, P x1 ∧ Q x2 ∧ R x1 x2).
-Proof. constructor. rewrite elem_of_list_intersection_with. set_solver. Qed.
+Proof. constructor. rewrite list_elem_of_intersection_with. set_solver. Qed.
 
 (* [list_union_with] does not exist. *)
 
 #[global] Instance set_unfold_in {A} (x : A) l P :
   SetUnfoldElemOf x l P → SetUnfold (In x l) P.
-Proof. constructor. rewrite -elem_of_list_In. set_solver. Qed.
+Proof. constructor. rewrite -list_elem_of_In. set_solver. Qed.
 
 #[global] Instance set_unfold_list_ret {A} (x y : A) P :
   SetUnfold (x = y) P →
   SetUnfoldElemOf x (mret (M := list) y) P.
-Proof. constructor. rewrite elem_of_list_ret. set_solver. Qed.
+Proof. constructor. rewrite list_elem_of_ret. set_solver. Qed.
 
 #[global] Instance set_unfold_list_mjoin {A} (x : A) (xss : list (list A)) P Q :
   (∀ xs, SetUnfoldElemOf x xs (P xs)) → (∀ xs, SetUnfoldElemOf xs xss (Q xs)) →
   SetUnfoldElemOf x (mjoin (M := list) xss) (∃ xs, P xs ∧ Q xs).
-Proof. constructor. rewrite elem_of_list_join. set_solver. Qed.
+Proof. constructor. rewrite list_elem_of_join. set_solver. Qed.
 
 #[global] Instance set_unfold_list_omap {A B} (y : B) xs (f : A → option B) P Q :
   (∀ x, SetUnfoldElemOf x xs (P x)) → (∀ x, SetUnfold (f x = Some y) (Q x)) →
   SetUnfoldElemOf y (omap (M := list) f xs) (∃ x : A, P x ∧ Q x).
-Proof. constructor. rewrite elem_of_list_omap. set_solver. Qed.
+Proof. constructor. rewrite list_elem_of_omap. set_solver. Qed.
 
 (*
-Outside this theory remain [elem_of_list_split*], [elem_of_list_lookup] and
-[elem_of_list_lookup_total].
+Outside this theory remain [list_elem_of_split*], [list_elem_of_lookup] and
+[list_elem_of_lookup_total].
 
-Of those, [elem_of_list_lookup] seems interesting but might be a breaking
+Of those, [list_elem_of_lookup] seems interesting but might be a breaking
 change.
 *)
 
@@ -528,7 +528,7 @@ Section list_difference.
   Proof.
     elim: l => /= [//|y l IHl] /not_elem_of_cons [Hne Hni].
     rewrite decide_False.
-    2: { by intros ->%elem_of_list_singleton. }
+    2: { by intros ->%list_elem_of_singleton. }
     f_equal. apply IHl, Hni.
   Qed.
 
@@ -575,7 +575,7 @@ Qed.
 
 Lemma not_elem_of_list_lookup {A} {i} {xs : list A} {x} y :
   xs !! i = Some x → y ∉ xs → x ≠ y.
-Proof. intros Hl Hni ->. eapply Hni, elem_of_list_lookup_2, Hl. Qed.
+Proof. intros Hl Hni ->. eapply Hni, list_elem_of_lookup_2, Hl. Qed.
 
 Lemma list_difference_delete `{EqDecision A} i (x : A) (xs : list A) :
   xs !! i = Some x →
@@ -583,9 +583,9 @@ Lemma list_difference_delete `{EqDecision A} i (x : A) (xs : list A) :
   list_difference xs [x] = delete i xs.
 Proof.
   elim: xs i => [//|y xs /= IHxs] [[->] |i /= Hl] /NoDup_cons [Hni HnoDup] /=. {
-    by rewrite decide_True ?list_difference_singleton_not_in ?elem_of_list_singleton.
+    by rewrite decide_True ?list_difference_singleton_not_in ?list_elem_of_singleton.
   }
-  rewrite decide_False ?(IHxs i) // elem_of_list_singleton.
+  rewrite decide_False ?(IHxs i) // list_elem_of_singleton.
   by have := not_elem_of_list_lookup _ Hl Hni.
 Qed.
 
@@ -621,7 +621,7 @@ Lemma list_difference_remove `{EqDecision A} (x : A) (xs : list A) :
   NoDup xs ->
   list_remove x xs = Some (list_difference xs [x]).
 Proof.
-  intros [i Hl]%elem_of_list_lookup_1 HnoDup.
+  intros [i Hl]%list_elem_of_lookup_1 HnoDup.
   by rewrite !(list_remove_delete i, list_difference_delete i).
 Qed.
 
@@ -767,7 +767,7 @@ Section NoDup_ap.
     move=> HF. elim: fs HF xs => [//|f fs IH] HFFS [|x xs].
     { by rewrite ap_nil_r. }
     move=> /NoDup_cons [Hf Hfs] /NoDup_cons [Hx Hxs].
-    have ? : Inj eq eq f. { eapply pairwise_disj_funs_inj. done. exact: elem_of_list_here. }
+    have ? : Inj eq eq f. { eapply pairwise_disj_funs_inj. done. exact: list_elem_of_here. }
     have HFS : pairwise_disj_funs fs by exact: pairwise_disj_funs_cons.
     specialize (IH HFS); red in HFFS.
     rewrite ap_cons_l ap_cons_r_p fmap_cons.
