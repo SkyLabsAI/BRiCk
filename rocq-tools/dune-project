@@ -18,6 +18,6 @@
 (package
  (name rocq-tools)
  (synopsis "Instrumentation for the Rocq compiler")
- (depends yojson camlzip))
+ (depends yojson camlzip rocq-runtime))
 
 (subst disabled)

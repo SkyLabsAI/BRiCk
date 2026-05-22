@@ -2,14 +2,9 @@
 (executable
  (name rocq_perf)
  (public_name rocq-perf)
- (modules rocq_perf rocq_dummy)
+ (modules rocq_perf)
  (package rocq-tools)
- (libraries rocq_tools camlzip))
-
-(rule
- (target rocq_dummy.ml)
- (deps (package rocq-core))
- (action (run touch %{target})))
+ (libraries rocq_tools camlzip rocq-runtime.kernel))
 
 ; Program generating an HTML performance diff.
 (executable
