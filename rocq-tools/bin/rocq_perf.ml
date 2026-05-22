@@ -18,6 +18,8 @@
 open Rocq_tools
 open Rocq_tools.Extra
 
+let _ = ignore CClosure.norm_term
+
 let _ =
   try
     ignore (Unix.getenv "IN_ROCQ_PERF");

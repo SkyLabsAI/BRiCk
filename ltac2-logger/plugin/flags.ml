@@ -230,8 +230,12 @@ type notation = {
   with_level: bool;
   data: Ltac2_plugin.Tac2entries.notation_interpretation_data
 }
-type interp_data =
-  notation list
+
+type interp_data = {
+  notations: notation list;
+  id_str : string;
+  hash : int;
+}
 
 let define_notation : with_level:bool -> string -> int -> notation =
     fun ~with_level id hash ->
@@ -301,14 +305,19 @@ let declare_ltac2_log_flag : Names.Id.t -> bool -> interp_data = fun id dev ->
   (* Register the flag. *)
   let flag_map = IMap.add hash {id; dev} flag_map in
   State.set flag_map;
-  (* Define an Ltac2 value for the flag (its hash). *)
-  define_flag_value id_str hash;
   (* Define Ltac2 notations for logging with the flag. *)
-  [define_notation ~with_level:true id_str hash;
-   define_notation ~with_level:false id_str hash]
+  let notations =
+    let level = define_notation ~with_level:true id_str hash in
+    let no_level = define_notation ~with_level:false id_str hash in
+    [level; no_level]
+  in
+  {notations; id_str; hash}
 
-let declare_ltac2_log_flag_interpretation : interp_data -> unit =
-  List.iter define_notation_interpretation
+let declare_ltac2_log_flag_interpretation : interp_data -> unit = fun data ->
+  (* Define an Ltac2 value for the flag (its hash). *)
+  define_flag_value data.id_str data.hash;
+  (* Run the interp part of notation definition. *)
+  List.iter define_notation_interpretation data.notations
 
 let print_ltac2_log_flags : unit -> unit = fun _ ->
   let flag_map = State.get () in
