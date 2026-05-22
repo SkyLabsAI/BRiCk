@@ -20,7 +20,7 @@ Require Export skylabs.iris.extra.wp_io.iris.weakestpre.
 Require Export skylabs.iris.extra.wp_io.inout_weakestpre.
 
 Require Export skylabs.iris.extra.wp_io.lang.
-Require Export iris.proofmode.tactics.
+Require Export skylabs.iris.extra.proofmode.proofmode.
 
 (**
 General invariant encoding the refinement relation [trace_refine] that

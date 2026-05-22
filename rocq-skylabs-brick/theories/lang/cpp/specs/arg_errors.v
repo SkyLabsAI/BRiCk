@@ -4,7 +4,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import iris.bi.bi.
-Require Import iris.proofmode.tactics.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
 Module Type BAD_ARGUMENTS.
   Parameter insufficient_arguments : forall {PROP : bi}, PROP.

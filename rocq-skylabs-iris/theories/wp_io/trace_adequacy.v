@@ -5,7 +5,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
-Require Import iris.proofmode.tactics.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
 Require Import skylabs.iris.extra.wp_io.iris.weakestpre.
 Require Import skylabs.iris.extra.wp_io.iris.adequacy.

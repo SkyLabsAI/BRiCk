@@ -6,7 +6,7 @@
  *)
 
 Require Export skylabs.prelude.named_binder.
-Require Import iris.proofmode.tactics.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
 #[global] Instance from_forall_named_binder {PROP:bi} {A} {name} {id}
   {Φ : NamedBinder A name -> PROP}

@@ -27,7 +27,7 @@ Require Import skylabs.iris.extra.bi.observe.
 Require Import skylabs.iris.extra.bi.only_provable.
 Require Import skylabs.iris.extra.bi.own.
 
-Require Export iris.proofmode.tactics.
+Require Export skylabs.iris.extra.proofmode.proofmode.
 
 Module wp_compose.
 Section with_config.
