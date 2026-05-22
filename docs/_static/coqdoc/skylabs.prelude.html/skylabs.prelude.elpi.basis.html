@@ -86,6 +86,7 @@
 &nbsp;&nbsp;<span class="id" title="var">list.map3</span> <span class="id" title="var">_</span> [] [<span class="id" title="var">_</span>|<span class="id" title="var">_</span>] <span class="id" title="var">_</span> <span class="id" title="var">_</span> :- <span class="id" title="var">list.map3.aux</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="var">list.map3</span> [] [] [] <span class="id" title="var">_</span> [].<br/>
 &nbsp;&nbsp;<span class="id" title="var">list.map3</span> [<span class="id" title="var">A</span>|<span class="id" title="var">AS</span>] [<span class="id" title="var">B</span>|<span class="id" title="var">BS</span>] [<span class="id" title="var">C</span>|<span class="id" title="var">CS</span>] <span class="id" title="var">F</span> [<span class="id" title="var">D</span>|<span class="id" title="var">DS</span>] :- <span class="id" title="var">F</span> <span class="id" title="var">A</span> <span class="id" title="var">B</span> <span class="id" title="var">C</span> <span class="id" title="var">D</span>, <span class="id" title="var">list.map3</span> <span class="id" title="var">AS</span> <span class="id" title="var">BS</span> <span class="id" title="var">CS</span> <span class="id" title="var">F</span> <span class="id" title="var">DS</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">func</span> <span class="id" title="var">list.map3.aux</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="var">list.map3.aux</span> :- <span class="id" title="var">coq.error</span> "list.map3 lengths don't agree".<br/>
 
 <br/>
