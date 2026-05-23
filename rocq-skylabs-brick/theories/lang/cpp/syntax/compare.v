@@ -1454,6 +1454,14 @@ Module Expr.
       compare_lex (Z.compare b1.(box_Eint_0) b2.(box_Eint_0)) $ fun _ =>
       compareT b1.(box_Eint_1) b2.(box_Eint_1).
 
+    Record box_Efloat : Set := Box_Efloat {
+      box_Efloat_0 : float_type.t;
+      box_Efloat_1 : Z;
+    }.
+    Definition box_Efloat_compare (b1 b2 : box_Efloat) : comparison :=
+      compare_lex (float_type.compare b1.(box_Efloat_0) b2.(box_Efloat_0)) $ fun _ =>
+      Z.compare b1.(box_Efloat_1) b2.(box_Efloat_1).
+
     Record box_Eunop : Set := Box_Eunop {
       box_Eunop_0 : UnOp;
       box_Eunop_1 : Expr;
@@ -1826,6 +1834,7 @@ Module Expr.
       | Eglobal_member _ _ => 56
       | Eunsupported _ _ => 57
       | Estmt _ _ => 58
+      | Efloat _ _ => 63
       end.
     Definition car (t : positive) : Set :=
       match t with
@@ -1884,6 +1893,7 @@ Module Expr.
       | 60 => box_Einitlist_union
       | 61 => box_Elambda
       | 62 => box_Emember_ignore
+      | 63 => box_Efloat
       | _ => box_Eunsupported
       end.
     Definition data (e : Expr) : car (tag e) :=
@@ -1905,6 +1915,7 @@ Module Expr.
       | Estring s t => Box_Estring s t
       | Eint n t => Box_Eint n t
       | Ebool b => b
+      | Efloat ft v => Box_Efloat ft (float_value.to_bits ft v)
       | Eunop op e t => Box_Eunop op e t
       | Ebinop op l r t => Box_Ebinop op l r t
       | Ederef e t => Box_Ederef e t
@@ -2008,6 +2019,7 @@ Module Expr.
       | 60 => box_Einitlist_union_compare
       | 61 => box_Elambda_compare
       | 62 => box_Emember_ignore_compare
+      | 63 => box_Efloat_compare
       | _ => box_Eunsupported_compare
       end.
 
@@ -2040,6 +2052,7 @@ Module Expr.
       | Eint n t => COMP (Eint n t)
 
       | Ebool b => COMP (Ebool b : Expr)
+      | Efloat ft v => COMP (Efloat ft v)
       | Eunop op e t => COMP (Eunop op e t)
       | Ebinop op l r t => COMP (Ebinop op l r t)
       | Ederef e t => COMP (Ederef e t)

@@ -19,6 +19,7 @@
 #include "clang/AST/Type.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/Version.inc"
+#include "llvm/ADT/APFloat.h"
 #include <optional>
 
 using namespace clang;
@@ -1001,11 +1002,45 @@ public:
         }
     }
 
-    void VisitFloatingLiteral(const FloatingLiteral *lit) {
-        print.ctor("Eunsupported") << fmt::nbsp << "\"float: ";
-        lit->getValue().print(print.output().nobreak());
-        print.output() << "\"";
+    void unsupportedFloatingLiteral(const FloatingLiteral *lit,
+                                    llvm::StringRef reason) {
+        const auto value = lit->getValue();
+        std::string msg;
+        llvm::raw_string_ostream os{msg};
+        os << reason << ": ";
+        value.print(os);
+
+        print.ctor("Eunsupported", false);
+        print.str(msg) << fmt::nbsp;
         done(lit, Done::DT);
+    }
+
+    void VisitFloatingLiteral(const FloatingLiteral *lit) {
+        const char *ft = nullptr;
+        switch (lit->getRawSemantics()) {
+        case llvm::APFloatBase::S_IEEEhalf:
+            ft = "float_type.Ffloat16";
+            break;
+        case llvm::APFloatBase::S_IEEEsingle:
+            ft = "float_type.Ffloat";
+            break;
+        case llvm::APFloatBase::S_IEEEdouble:
+            ft = "float_type.Fdouble";
+            break;
+        case llvm::APFloatBase::S_IEEEquad:
+            ft = "float_type.Ffloat128";
+            break;
+        default:
+            return unsupportedFloatingLiteral(
+                lit, "floating-point semantics are not supported");
+        }
+
+        SmallString<64> bits;
+        lit->getValue().bitcastToAPInt().toStringUnsigned(bits);
+
+        print.ctor("Efloat_of_bits", false);
+        print.output() << ft << fmt::nbsp << bits << "%Z" << fmt::nbsp;
+        done(lit, Done::NONE);
     }
 
     void VisitMemberExpr(const MemberExpr *expr) {

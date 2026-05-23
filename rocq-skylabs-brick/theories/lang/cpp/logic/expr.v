@@ -100,6 +100,11 @@ Module Type Expr.
           Q (Vbool b) FreeTemps.id
       |-- wp_operand (Ebool b) Q.
 
+    (* floating-point literals are prvalues *)
+    Axiom wp_operand_float : forall f (v : float_type.car f) Q,
+          Q (Vfloat f v) FreeTemps.id
+      |-- wp_operand (Efloat f v) Q.
+
     (** * String Literals
 
         The standard states <https://eel.is/c++draft/lex.string#9>:
@@ -790,6 +795,26 @@ Module Type Expr.
         wp_operand e (fun v free =>
            Exists v', [| conv_int tu (type_of e) t v v' |] ** Q v' free)
         |-- wp_operand (Ecast (Cintegral t) e) Q.
+
+    Axiom wp_operand_cast_float2bool : forall e Q,
+        wp_operand e (fun v free =>
+           Exists v', [| conv_float tu (type_of e) Tbool v v' |] ** Q v' free)
+        |-- wp_operand (Ecast Cfloat2bool e) Q.
+
+    Axiom wp_operand_cast_float2int : forall e t Q,
+        wp_operand e (fun v free =>
+           Exists v', [| conv_float tu (type_of e) t v v' |] ** Q v' free)
+        |-- wp_operand (Ecast (Cfloat2int t) e) Q.
+
+    Axiom wp_operand_cast_int2float : forall e t Q,
+        wp_operand e (fun v free =>
+           Exists v', [| conv_float tu (type_of e) t v v' |] ** Q v' free)
+        |-- wp_operand (Ecast (Cint2float t) e) Q.
+
+    Axiom wp_operand_cast_float : forall e t Q,
+        wp_operand e (fun v free =>
+           Exists v', [| conv_float tu (type_of e) t v v' |] ** Q v' free)
+        |-- wp_operand (Ecast (Cfloat t) e) Q.
 
     Axiom wp_operand_cast_null : forall e ty Q,
         is_pointer ty ->
@@ -1514,6 +1539,7 @@ Module Type Expr.
       | Tchar_ _ => Some $ Vchar 0
       | Tbool => Some $ Vbool false
       | Tnum _ _ => Some $ Vint 0
+      | Tfloat_ f => Some $ Vfloat f (float_value.zero f)
       | _ => None
       end.
 
@@ -1543,8 +1569,10 @@ Module Type Expr.
         + apply has_int_type. rewrite /bitsize.bound; destruct sz,sgn; compute; intuition congruence.
         + apply has_type_prop_char_0.
         + apply has_type_prop_bool; eauto.
+        + apply has_float_type.
         + eapply has_type_prop_nullptr; eauto.
       - apply has_type_prop_bool. eauto.
+      - apply has_float_type.
       - eapply has_type_prop_nullptr; eauto.
     Qed.
 

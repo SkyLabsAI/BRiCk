@@ -577,6 +577,7 @@ Module decltype.
             let* _ := guard (t ∈ [Tchar;Tuchar;Tschar;Tshort;Tushort;Tint;Tuint;Tlong;Tulong;Tlonglong;Tulonglong]) in
             mret t
         | Ebool _ => mret Tbool
+        | Efloat ft _ => mret $ Tfloat_ ft
         | Eunop op e t =>
             let* et := of_expr e >>= requirePR in
             let* t' := of_unop op et >>= requirePR in

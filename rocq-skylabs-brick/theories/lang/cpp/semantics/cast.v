@@ -210,6 +210,109 @@ Section conv_int.
   Qed.
 End conv_int.
 
+(** Floating point conversions.
+
+    Source references:
+    - Boolean conversions are specified by C++ [conv.bool]:
+      <https://eel.is/c++draft/conv.bool#1>. Zero converts to [false];
+      every other floating-point value converts to [true]. In particular, a
+      NaN is not a zero value, so it converts to [true].
+    - Floating-integral conversions are specified by C++ [conv.fpint]:
+      <https://eel.is/c++draft/conv.fpint#1> and
+      <https://eel.is/c++draft/conv.fpint#2>. Float-to-integral truncates
+      when the truncated value is representable; otherwise the behavior is
+      undefined. Integral-to-float is exact when possible and otherwise has an
+      implementation-defined adjacent rounding choice.
+    - Floating-to-floating conversions are specified by C++ [conv.double]:
+      <https://eel.is/c++draft/conv.double#1>. Out-of-range conversions are
+      undefined; in-range inexact conversions have implementation-defined
+      adjacent choices.
+
+    The operations [float_value.of_int], [float_value.to_int], and
+    [float_value.cast] encode those implementation-defined choices and
+    undefined cases. In particular, [float_value.to_int] returns [None] when
+    there is no defined
+    truncated integer value, such as NaN or infinity; destination
+    representability is checked by the [has_type_prop] side condition below.
+ *)
+Definition conv_float {σ : genv} (tu : translation_unit) (from to : type) (v v' : val) : Prop :=
+  has_type_prop v from /\
+  match representation_type tu from , representation_type tu to with
+  | Tbool , Tfloat_ f =>
+      match is_true v with
+      | Some b => v' = Vfloat f (float_value.of_int f (if b then 1 else 0))
+      | None => False
+      end
+  | Tnum _ _ , Tfloat_ f =>
+      match v with
+      | Vint z => v' = Vfloat f (float_value.of_int f z)
+      | _ => False
+      end
+  | Tchar_ ct , Tfloat_ f =>
+      match v with
+      | Vchar n =>
+          v' = Vfloat f (float_value.of_int f
+            (of_char (char_type.bitsN ct) (signedness_of_char σ ct)
+              (int_rank.bitsN int_rank.Iint) Signed n))
+      | _ => False
+      end
+  | Tfloat_ _ , Tbool =>
+      match v with
+      | Vfloat f z => v' = Vbool (negb (float_value.is_zero z))
+      | _ => False
+      end
+  | Tfloat_ _ , Tnum _ _ =>
+      match v with
+      | Vfloat f z =>
+          match float_value.to_int f z with
+          | Some n => v' = Vint n /\ has_type_prop (Vint n) to
+          | None => False
+          end
+      | _ => False
+      end
+  | Tfloat_ _ , Tchar_ ct =>
+      match v with
+      | Vfloat f z =>
+          match float_value.to_int f z with
+          | Some n =>
+              v' = Vchar (to_char (int_rank.bitsN int_rank.Iint) Signed
+                (char_type.bitsN ct) n)
+          | None => False
+          end
+      | _ => False
+      end
+  | Tfloat_ _ , Tfloat_ f =>
+      match v with
+      | Vfloat f' z =>
+          match float_value.cast f' f z with
+          | Some z' => v' = Vfloat f z'
+          | None => False
+          end
+      | _ => False
+      end
+  | _ , _ => False
+  end.
+Arguments conv_float !_ !_ _ _ /.
+
+Section conv_float.
+  Context `{Hmod : tu ⊧ σ}.
+
+  Lemma conv_float_well_typed ty ty' v v' :
+       tu ⊧ σ ->
+       conv_float tu ty ty' v v' ->
+       has_type_prop v ty /\ has_type_prop v' ty'.
+  Proof using Hmod. Admitted.
+
+  Lemma conv_float_unique from to v :
+      forall v' v'', conv_float tu from to v v' ->
+                conv_float tu from to v v'' ->
+                v' = v''.
+  Proof using Hmod.
+    rewrite /conv_float.
+    repeat (case_match; try tauto); intuition; try congruence.
+  Qed.
+End conv_float.
+
 (* This (effectively) lifts [conv_int] to arbitrary types.
 
    TODO: it makes sense for this to mirror the properties of [conv_int], but
@@ -221,5 +324,5 @@ Definition convert {σ : genv} (tu : translation_unit) (from to : Rtype) (v : va
     (* TODO: this conservative *)
     has_type_prop v from /\ has_type_prop v' to /\ v' = v
   else if is_arithmetic from && is_arithmetic to then
-    conv_int tu from to v v'
+    conv_int tu from to v v' \/ conv_float tu from to v v'
   else False.

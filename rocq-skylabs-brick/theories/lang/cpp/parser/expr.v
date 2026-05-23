@@ -69,6 +69,9 @@ Module ParserExpr.
   Definition Enoexcept (_ : Expr) (val : bool) : Expr :=
     Ebool val.
 
+  Definition Efloat_of_bits (ft : float_type.t) (bits : Z) : Expr :=
+    Efloat ft (float_value.of_bits ft bits).
+
   Definition Ealignof_preferred (e : type + Expr) (t : type) :=
     Eunsupported "alignof_preferred" t.
 

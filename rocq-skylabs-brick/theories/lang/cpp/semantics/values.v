@@ -84,6 +84,8 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
          the semantics will convert the unsigned value into the appropriate
          equivalent on the target platform based on the signedness of the type.
      *)
+  | Vfloat (ft : float_type.t) (_ : float_type.car ft)
+    (* ^ floating point values, indexed by their C++ floating-point format. *)
   | Vptr (_ : ptr)
   | Vraw (_ : raw_byte)
   | Vundef
@@ -93,8 +95,7 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
   (* TODO Maybe this should be removed *)
   #[global] Coercion Vint : Z >-> val.
 
-  Definition val_dec : forall a b : val, {a = b} + {a <> b}.
-  Proof. solve_decision. Defined.
+  Parameter val_dec : forall a b : val, {a = b} + {a <> b}.
   #[global] Instance val_eq_dec : EqDecision val := val_dec.
   #[global] Instance val_inhabited : Inhabited val := populate (Vint 0).
 
@@ -120,6 +121,7 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
   Definition is_true (v : val) : option bool :=
     match v with
     | Vint v => Some (bool_decide (v <> 0))
+    | Vfloat f v => Some (negb (float_value.is_zero v))
     | Vptr p => Some (bool_decide (p <> nullptr))
     | Vchar n => Some (bool_decide (n <> 0%N))
     | Vundef | Vraw _ => None
@@ -140,12 +142,25 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
   Proof. by move=> []. Qed.
   Lemma Vchar_inj a b : Vchar a = Vchar b -> a = b.
   Proof. by move=> []. Qed.
+  Lemma Vfloat_inj_full : forall f f' (a b : float_type.car _),
+      Vfloat f a = Vfloat f' b ->
+      exists pf : f' = f, a = match pf in _ = X return float_type.car X with eq_refl => b end.
+  Proof. inversion 1; subst. by exists eq_refl. Qed.
+  Lemma Vfloat_inj : forall f (a b : float_type.car _),
+      Vfloat f a = Vfloat f b -> a = b.
+  Proof.
+    inversion 1; subst.
+    eapply Eqdep_dec.inj_pair2_eq_dec; eauto.
+    intros; apply decide; refine _.
+  Qed.
   Lemma Vbool_inj a b : Vbool a = Vbool b -> a = b.
   Proof. by move: a b =>[] [] /Vint_inj. Qed.
 
   #[global] Instance Vptr_Inj : Inj (=) (=) Vptr := Vptr_inj.
   #[global] Instance Vint_Inj : Inj (=) (=) Vint := Vint_inj.
   #[global] Instance Vchar_Inj : Inj (=) (=) Vchar := Vchar_inj.
+  #[global] Instance Vfloat_Inj f : Inj (=) (=) (Vfloat f).
+  Proof. move=>?? /Vfloat_inj; done. Qed.
   #[global] Instance Vbool_Inj : Inj (=) (=) Vbool := Vbool_inj.
 
   Definition N_to_char (t : char_type.t) (z : N) : val :=
@@ -160,6 +175,7 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
     | Tptr _ => Some (Vptr nullptr)
     | Tnum _ _ => Some (Vint 0%Z)
     | Tchar_ _ => Some (Vchar 0%N)
+    | Tfloat_ f => Some (Vfloat f (float_value.zero f))
     | Tbool => Some (Vbool false)
     | Tnullptr => Some (Vptr nullptr)
     | Tqualified _ t => get_default t
@@ -347,6 +363,14 @@ Module Type RAW_BYTES_MIXIN
     val_related ty (Vchar n1) (Vchar n2) -> n1 = n2.
   Proof. intros. exact: val_related_Vchar'. Qed.
 
+  Lemma val_related_Vfloat {σ} ty f (z1 z2 : float_type.car f) :
+    val_related ty (Vfloat f z1) (Vfloat f z2) -> z1 = z2.
+  Proof.
+    intros Hrel.
+    apply Vfloat_inj.
+    apply (val_related_not_raw (Vfloat f z1) (Vfloat f z2) ty); done.
+  Qed.
+
   (*
   NOTE: This stronger property holds because pointers do not have a
   raw representation. (That's future work.).
@@ -494,6 +518,9 @@ Module Type HAS_TYPE (Import P : PTRS) (Import R : RAW_BYTES) (Import V : VAL_MI
     Axiom has_type_prop_bool : forall v,
         has_type_prop v Tbool <-> exists b, v = Vbool b.
 
+    Axiom has_type_prop_float : forall f v,
+        has_type_prop v (Tfloat_ f) <-> exists z : float_type.car f, v = Vfloat f z.
+
     (* NOTE: even if an enumeration's underlying type is <<unsigned char>> (which contains
        raw values), raw values are not well typed at the enumeration type. *)
     Axiom has_type_prop_enum : forall v nm,
@@ -551,6 +578,10 @@ Module Type HAS_TYPE_MIXIN (Import P : PTRS) (Import R : RAW_BYTES) (Import V : 
 
     Lemma has_type_prop_char_0 ct : has_type_prop (Vchar 0) (Tchar_ ct).
     Proof. intros. apply has_type_prop_char_255. lia. Qed.
+
+    Lemma has_float_type f z :
+      has_type_prop (Vfloat f z) (Tfloat_ f).
+    Proof. rewrite has_type_prop_float; eauto. Qed.
 
     Lemma has_type_prop_drop_qualifiers :
       forall v ty, has_type_prop v ty <-> has_type_prop v (drop_qualifiers ty).
