@@ -680,6 +680,10 @@ Definition exprtype := type.	(** An expression's non-reference type *)
 Definition decltype := type.	(** Types as used in declarations (≈ ValCat × exprtype) *)
 Definition functype := type.	(** Must be [Tfunction] *)
 
+Definition integral_type_to_type (v : integral_type.t) : type :=
+  Tnum v.(integral_type.size) v.(integral_type.signedness).
+Coercion integral_type_to_type : integral_type.t >-> type.
+
 Notation Nenum_const gn id := (Nscoped gn (Nid id)) (only parsing).
 
 (** ** Notations

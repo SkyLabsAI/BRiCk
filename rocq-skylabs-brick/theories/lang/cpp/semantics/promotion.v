@@ -69,7 +69,7 @@ Definition fully_representable (info : abi.t) (a b : type) : bool :=
   let to_equiv ty :=
     match ty with
     | Tnum a b => Some $ integral_type.mk a b
-    | Tchar_ ct => Some $ equivalent_int_type_abi info ct
+    | Tchar_ ct => Some $ abi.equivalent_int_type info ct
     | _ => None
     end
   in
@@ -194,9 +194,9 @@ Proof.
   intros. rewrite /promote_integral/=.
   destruct (abi.char_signed (abi tu)); done.
 Succeed Qed. Abort.
-Goal forall tu, promote_integral tu Twchar = Some (integral_type.to_type $ equivalent_int_type_abi (abi tu) char_type.Cwchar).
+Goal forall tu, promote_integral tu Twchar = Some (integral_type_to_type $ abi.equivalent_int_type (abi tu) char_type.Cwchar).
 Proof.
-  intros. rewrite /promote_integral/equivalent_int_type_abi/=.
+  intros. rewrite /promote_integral/abi.equivalent_int_type/=.
   rewrite /fully_representable/=.
   destruct (abi.wchar_signed (abi tu)); done.
 Succeed Qed. Abort.

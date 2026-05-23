@@ -340,6 +340,9 @@ Notation int_type := int_rank.t (only parsing).
 #[global] Arguments int_rank.bitsN !_ /.
 (* #[global] Arguments int_rank.bitsize !_ /. TODO: do I want this? *)
 
+Module integral_type.
+  Record t : Set := mk { size : int_rank.t ; signedness : signed }.
+End integral_type.
 (** ** Floating point types
     See <https://en.cppreference.com/w/cpp/language/types>
  *)
