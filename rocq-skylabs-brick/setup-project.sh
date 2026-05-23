@@ -22,6 +22,7 @@ cat > dune <<EOF
  (name test)
  (theories
   Stdlib stdpp iris elpi elpi_elpi Ltac2
+  Flocq
   skylabs.upoly skylabs.prelude skylabs.iris.extra skylabs.ltac2.extra skylabs.lang.cpp Lens Lens.Elpi))
 EOF
 

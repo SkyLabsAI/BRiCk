@@ -18,6 +18,7 @@
   skylabs.ltac2.extra
   skylabs.prelude
   iris
+  Flocq
   skylabs.iris.extra
   Equations
   Equations.Prop

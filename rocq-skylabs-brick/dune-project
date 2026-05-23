@@ -38,6 +38,7 @@
   rocq-skylabs-prelude
   rocq-skylabs-iris
   (rocq-skylabs-cpp2v :with-test)
+  rocq-flocq
   coq-elpi))
 
 (subst disabled)
