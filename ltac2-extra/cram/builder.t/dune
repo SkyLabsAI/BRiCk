@@ -30,16 +30,12 @@
    Equations
    Equations.Prop
    Equations.Type
-   skylabs.lang.cpp
    skylabs.ltac2.logger
-   skylabs.auto.core
    ExtLib
    skylabs.elpi.extra
-   skylabs.elpi.cpp
-   skylabs
    ; transitive dependencies
    Corelib elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
-   elpi.apps.locker.elpi tactic_classes
+   elpi.apps.locker.elpi
   ))
 
 (include dune.inc)
