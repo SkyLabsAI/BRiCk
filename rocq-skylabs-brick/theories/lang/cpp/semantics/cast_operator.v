@@ -25,7 +25,7 @@ Require Import skylabs.lang.cpp.semantics.cast.
   *)
 Notation Tptrdiff_t := Tlonglong (only parsing).
 
-Definition convert_type_op {σ : genv} (tu : translation_unit) (b : BinOp) (ty1 ty2 : type)
+Definition convert_type_op (tu : translation_unit) (b : BinOp) (ty1 ty2 : type)
   : option (type * type * type) :=
   if is_pointer ty1 && is_pointer ty2 then
     (* pointer-pointer operations *)

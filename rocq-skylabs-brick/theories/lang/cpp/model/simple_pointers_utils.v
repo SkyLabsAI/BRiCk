@@ -34,7 +34,7 @@ Module canonical_tu.
   Record translation_unit_canon : Set := Build_translation_unit_canon
   { symbols    : symbol_table_canon
   ; globals    : type_table_canon
-  ; byte_order : endian
+  ; abi        : abi.t
   }.
   #[global] Instance translation_unit_canon_eq_dec : EqDecision translation_unit_canon.
   Proof. solve_decision. Qed.
@@ -46,18 +46,14 @@ Module canonical_tu.
   Record genv_canon : Set := Build_genv_canon
   { genv_tu : translation_unit_canon
     (* ^ the [translation_unit] *)
-  ; pointer_size_bitsize : bitsize
-    (* ^ the size of a pointer *)
-  ; char_signed : signed
-  ; wchar_signed : signed
   }.
   #[global] Instance genv_canon_eq_dec : EqDecision genv_canon.
   Proof. solve_decision. Qed.
 
   Definition tu_to_canon (tu : translation_unit) : translation_unit_canon.
-    (* let (s, g, init, bo) := tu in Build_translation_unit_canon (im_to_gmap s) (im_to_gmap g) bo. *) Admitted. (* TODO: structured names keys *)
+    (* let '(makeTranslationUnit s g _ init info) := tu in Build_translation_unit_canon (im_to_gmap s) (im_to_gmap g) info. *) Admitted. (* TODO: structured names keys *)
   #[local] Definition genv_to_canon σ : genv_canon :=
-    let (tu, sz, sgn, wsgn) := σ in Build_genv_canon (tu_to_canon tu) sz sgn wsgn.
+    let '(Build_genv tu) := σ in Build_genv_canon (tu_to_canon tu).
 End canonical_tu.
 
 Definition null_alloc_id : alloc_id := MkAllocId 0.

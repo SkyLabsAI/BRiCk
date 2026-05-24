@@ -97,20 +97,20 @@ Section resolve.
 End resolve.
 
 Succeed Example _1 :
-  let tu := empty_tu Little in
+  let tu := empty_tu abi.abi_default in
   trace.runO (resolveValue tu "test(int& &)") = Some ("test(int&)"%cpp_name) := eq_refl.
 Succeed Example _1 :
-  let tu := empty_tu Little in
+  let tu := empty_tu abi.abi_default in
   trace.runO (resolveValue tu "test(int&& &)") = Some ("test(int&)"%cpp_name) := eq_refl.
 Succeed Example _1 :
-  let tu := empty_tu Little in
+  let tu := empty_tu abi.abi_default in
   trace.runO (resolveValue tu "test(int& &&)") = Some ("test(int&)"%cpp_name) := eq_refl.
 Succeed Example _1 :
-  let tu := empty_tu Little in
+  let tu := empty_tu abi.abi_default in
   trace.runO (resolveValue tu "test(int&& &&)") = Some ("test(int&&)"%cpp_name) := eq_refl.
 Succeed Example _1 :
-  let tu := empty_tu Little in
+  let tu := empty_tu abi.abi_default in
   trace.runO (resolveValue tu "test(const int)") = Some ("test(int)"%cpp_name) := eq_refl.
 Succeed Example _1 :
-  let tu := empty_tu Little in
+  let tu := empty_tu abi.abi_default in
   trace.runO (resolveValue tu "test(volatile int, const int&)") = Some ("test(int, const int&)"%cpp_name) := eq_refl.

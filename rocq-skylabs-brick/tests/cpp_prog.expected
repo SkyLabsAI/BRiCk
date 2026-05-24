@@ -33,6 +33,12 @@ module =
            (internal.NameMap.Raw.Leaf (listset name)) I
      |});
   initializer := [];
-  byte_order := Little
+  abi :=
+    {|
+      abi.uintptr_t_rank := int_rank.Ilong;
+      abi.char_signed := Signed;
+      abi.wchar_signed := Signed;
+      abi.byte_order := Little
+    |}
 |}
      : translation_unit

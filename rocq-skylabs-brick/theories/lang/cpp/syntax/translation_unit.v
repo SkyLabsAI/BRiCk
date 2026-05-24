@@ -1,5 +1,5 @@
 (*
- * Copyright (c) 2020-2024 BlueRock Security, Inc.
+ * Copyright (c) 2020-2026 BlueRock Security, Inc.
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
@@ -13,6 +13,7 @@ Require Import skylabs.lang.cpp.syntax.core.
 Require Import skylabs.lang.cpp.syntax.types.
 Require Import skylabs.lang.cpp.syntax.decl.
 Require Import skylabs.lang.cpp.syntax.namemap.
+Require Import skylabs.lang.cpp.syntax.abi.
 Export decl.
 
 #[local] Set Primitive Projections.
@@ -256,6 +257,9 @@ End alias_table.
 A [translation_unit] represents all the statically known
 information about a C++ translation unit, that is, a source file.
 
+For us, a [translation_unit] also contains implementation-defined information,
+both in layout information for types and in [abi].
+
 TOOD: add support for symbols with _internal_ linkage.
 
 TODO: does linking induce a (non-commutative) monoid on object files?
@@ -267,14 +271,18 @@ Record translation_unit : Type := makeTranslationUnit {
   types             : type_table;
   namespace_aliases : alias_table.t;
   initializer       : InitializerBlock;
-  byte_order        : endian; (* NOTE: this is "runtime" information *)
+  abi               : abi.t;
 }.
 #[only(lens)] derive translation_unit.
 
-Definition empty_tu (e : endian) : translation_unit :=
-  makeTranslationUnit ∅ ∅ ∅ [] e.
+Definition byte_order (tu : translation_unit) : endian :=
+  tu.(abi).(abi.byte_order).
+
+(** Just for testing *)
+Definition empty_tu (info : abi.t) : translation_unit :=
+  makeTranslationUnit ∅ ∅ ∅ [] info.
 #[global] Instance : Empty translation_unit :=
-  empty_tu Little.
+  empty_tu abi.abi_default.
 
 #[local]
 Definition canonicalize {T} (find : name -> option T) (tu : translation_unit) (nm : name) : option T :=
