@@ -1,0 +1,169 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.syntax.abi</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2020-2026&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <span class="id" title="library">elpi.apps.NES.NES</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.fin_maps.html#"><span class="id" title="library">stdpp.fin_maps</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.avl</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.lens</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.elpi.derive</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.elpi.derive.lens</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.pstring</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#"><span class="id" title="library">skylabs.lang.cpp.syntax.core</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.types.html#"><span class="id" title="library">skylabs.lang.cpp.syntax.types</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.decl.html#"><span class="id" title="library">skylabs.lang.cpp.syntax.decl</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.namemap.html#"><span class="id" title="library">skylabs.lang.cpp.syntax.namemap</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+This record contains implementation-defined information about a translation unit that is chosen by our clang.
+https://eel.is/c++draft/defns.impl.defineddef:behavior,implementation-defined
+
+TODO: maybe just ABI because we're in the context of C++.
+
+</div>
+<div class="code">
+<a id="abi_aux_1" class="idref" href="#abi_aux_1"><span class="id" title="module"><span id="abi_aux_1.abi" class="id">NES.Begin</span></span></a> <a id="abi_aux_1" class="idref" href="#abi_aux_1"><span class="id" title="module"><span id="abi_aux_1.abi" class="id">abi</span></span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="abi_aux_1.abi.t" class="idref" href="#abi_aux_1.abi.t"><span class="id" title="record">t</span></a> : <span class="id" title="keyword">Set</span> := <span class="id" title="var">mkT</span><br/>
+&nbsp;&nbsp;{ <a id="abi_aux_1.abi.uintptr_t_rank" class="idref" href="#abi_aux_1.abi.uintptr_t_rank"><span class="id" title="projection">uintptr_t_rank</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#int_rank.t"><span class="id" title="inductive">int_rank.t</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;^&nbsp;the&nbsp;size&nbsp;of&nbsp;a&nbsp;pointer&nbsp;*)</span><br/>
+&nbsp;&nbsp;; <a id="abi_aux_1.abi.char_signed" class="idref" href="#abi_aux_1.abi.char_signed"><span class="id" title="projection">char_signed</span></a> : <span class="id" title="inductive">signed</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;^&nbsp;whether&nbsp;or&nbsp;not&nbsp;`char`&nbsp;is&nbsp;signed&nbsp;or&nbsp;unsigned&nbsp;*)</span><br/>
+&nbsp;&nbsp;; <a id="abi_aux_1.abi.wchar_signed" class="idref" href="#abi_aux_1.abi.wchar_signed"><span class="id" title="projection">wchar_signed</span></a> : <span class="id" title="inductive">signed</span><br/>
+&nbsp;&nbsp;; <a id="abi_aux_1.abi.byte_order" class="idref" href="#abi_aux_1.abi.byte_order"><span class="id" title="projection">byte_order</span></a> : <span class="id" title="inductive">endian</span><br/>
+&nbsp;&nbsp;}.<br/>
+&nbsp;&nbsp;<a id="abi_aux_1.abi.t_eq_dec" class="idref" href="#abi_aux_1.abi.t_eq_dec"><span class="id" title="definition"><span id="abi_aux_1.abi._uintptr_t_rank" class="id"><span id="abi_aux_1.abi._char_signed" class="id"><span id="abi_aux_1.abi._wchar_signed" class="id"><span id="abi_aux_1.abi._byte_order" class="id">#[</span></span></span></span></span></a><a id="abi_aux_1.abi.t_eq_dec" class="idref" href="#abi_aux_1.abi.t_eq_dec"><span class="id" title="definition"><span id="abi_aux_1.abi._uintptr_t_rank" class="id"><span id="abi_aux_1.abi._char_signed" class="id"><span id="abi_aux_1.abi._wchar_signed" class="id"><span id="abi_aux_1.abi._byte_order" class="id">only</span></span></span></span></span></a><a id="abi_aux_1.abi.t_eq_dec" class="idref" href="#abi_aux_1.abi.t_eq_dec"><span class="id" title="definition"><span id="abi_aux_1.abi._uintptr_t_rank" class="id"><span id="abi_aux_1.abi._char_signed" class="id"><span id="abi_aux_1.abi._wchar_signed" class="id"><span id="abi_aux_1.abi._byte_order" class="id">(</span></span></span></span></span></a><a id="abi_aux_1.abi.t_eq_dec" class="idref" href="#abi_aux_1.abi.t_eq_dec"><span class="id" title="definition"><span id="abi_aux_1.abi._uintptr_t_rank" class="id"><span id="abi_aux_1.abi._char_signed" class="id"><span id="abi_aux_1.abi._wchar_signed" class="id"><span id="abi_aux_1.abi._byte_order" class="id">lens</span></span></span></span></span></a><a id="abi_aux_1.abi.t_eq_dec" class="idref" href="#abi_aux_1.abi.t_eq_dec"><span class="id" title="definition"><span id="abi_aux_1.abi._uintptr_t_rank" class="id"><span id="abi_aux_1.abi._char_signed" class="id"><span id="abi_aux_1.abi._wchar_signed" class="id"><span id="abi_aux_1.abi._byte_order" class="id">,</span></span></span></span></span></a><a id="abi_aux_1.abi.t_eq_dec" class="idref" href="#abi_aux_1.abi.t_eq_dec"><span class="id" title="definition"><span id="abi_aux_1.abi._uintptr_t_rank" class="id"><span id="abi_aux_1.abi._char_signed" class="id"><span id="abi_aux_1.abi._wchar_signed" class="id"><span id="abi_aux_1.abi._byte_order" class="id">eq_dec</span></span></span></span></span></a><a id="abi_aux_1.abi.t_eq_dec" class="idref" href="#abi_aux_1.abi.t_eq_dec"><span class="id" title="definition"><span id="abi_aux_1.abi._uintptr_t_rank" class="id"><span id="abi_aux_1.abi._char_signed" class="id"><span id="abi_aux_1.abi._wchar_signed" class="id"><span id="abi_aux_1.abi._byte_order" class="id">)]</span></span></span></span></span></a> <a id="abi_aux_1.abi.t_eq_dec" class="idref" href="#abi_aux_1.abi.t_eq_dec"><span class="id" title="definition"><span id="abi_aux_1.abi._uintptr_t_rank" class="id"><span id="abi_aux_1.abi._char_signed" class="id"><span id="abi_aux_1.abi._wchar_signed" class="id"><span id="abi_aux_1.abi._byte_order" class="id">derive</span></span></span></span></span></a> <a id="abi_aux_1.abi.t_eq_dec" class="idref" href="#abi_aux_1.abi.t_eq_dec"><span class="id" title="definition"><span id="abi_aux_1.abi._uintptr_t_rank" class="id"><span id="abi_aux_1.abi._char_signed" class="id"><span id="abi_aux_1.abi._wchar_signed" class="id"><span id="abi_aux_1.abi._byte_order" class="id">t</span></span></span></span></span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="abi_aux_1.abi.uintptr_t_type" class="idref" href="#abi_aux_1.abi.uintptr_t_type"><span class="id" title="definition">uintptr_t_type</span></a> (<a id="info:6" class="idref" href="#info:6"><span class="id" title="binder">info</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.t"><span class="id" title="record">t</span></a>) : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tnum"><span class="id" title="constructor">Tnum</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#info:6"><span class="id" title="variable">info</span></a>.(<a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.uintptr_t_rank"><span class="id" title="projection">uintptr_t_rank</span></a>) <span class="id" title="constructor">Unsigned</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="abi_aux_1.abi.pointer_size_bitsize" class="idref" href="#abi_aux_1.abi.pointer_size_bitsize"><span class="id" title="definition">pointer_size_bitsize</span></a> (<a id="info:7" class="idref" href="#info:7"><span class="id" title="binder">info</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.t"><span class="id" title="record">t</span></a>) : <span class="id" title="abbreviation">bitsize</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#int_rank.bitsize"><span class="id" title="definition">int_rank.bitsize</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#info:7"><span class="id" title="variable">info</span></a>.(<a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.uintptr_t_rank"><span class="id" title="projection">uintptr_t_rank</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="abi_aux_1.abi.signedness_of_char" class="idref" href="#abi_aux_1.abi.signedness_of_char"><span class="id" title="definition">signedness_of_char</span></a> (<a id="info:8" class="idref" href="#info:8"><span class="id" title="binder">info</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.t"><span class="id" title="record">t</span></a>) (<a id="ct:9" class="idref" href="#ct:9"><span class="id" title="binder">ct</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#char_type"><span class="id" title="abbreviation">char_type</span></a>) : <span class="id" title="inductive">signed</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#ct:9"><span class="id" title="variable">ct</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#char_type.Cchar"><span class="id" title="constructor">char_type.Cchar</span></a> =&gt; <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#info:8"><span class="id" title="variable">info</span></a>.(<a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.char_signed"><span class="id" title="projection">char_signed</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#char_type.Cwchar"><span class="id" title="constructor">char_type.Cwchar</span></a> =&gt; <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#info:8"><span class="id" title="variable">info</span></a>.(<a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.wchar_signed"><span class="id" title="projection">wchar_signed</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <span class="id" title="constructor">Unsigned</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.equivalent_int_type"><span class="id" title="definition">equivalent_int_type</span></a></span> <span class="inlinecode"><span class="id" title="tactic">info</span></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.zstring.html#zstring.with_ct.ct"><span class="id" title="variable">ct</span></a></span> is the integral type that is equivalent
+      (in rank and signedness) to <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.zstring.html#zstring.with_ct.ct"><span class="id" title="variable">ct</span></a></span>.
+   
+</div>
+<div class="code">
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="abi_aux_1.abi.find_equiv" class="idref" href="#abi_aux_1.abi.find_equiv"><span class="id" title="definition">find_equiv</span></a> (<a id="ct:11" class="idref" href="#ct:11"><span class="id" title="binder">ct</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#char_type"><span class="id" title="abbreviation">char_type</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="res:13" class="idref" href="#res:13"><span class="id" title="binder">res</span></a> := <span class="id" title="definition">find</span> (<span class="id" title="keyword">fun</span> <a id="a:12" class="idref" href="#a:12"><span class="id" title="binder">a</span></a> =&gt; <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.decidable.html#bool_decide"><span class="id" title="definition">bool_decide</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#char_type.bitsN"><span class="id" title="definition">char_type.bitsN</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#ct:11"><span class="id" title="variable">ct</span></a> <span class="id" title="notation">&lt;=</span> <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#int_rank.bitsN"><span class="id" title="definition">int_rank.bitsN</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#a:12"><span class="id" title="variable">a</span></a>)%<span class="id" title="var">N</span>) <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#int_rank.ranks"><span class="id" title="definition">int_rank.ranks</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;: <span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#res:13"><span class="id" title="variable">res</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">_</span> =&gt; <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#int_rank.t"><span class="id" title="inductive">int_rank.t</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#res:13"><span class="id" title="variable">res</span></a> <span class="id" title="keyword">as</span> <span class="id" title="var">X</span> <span class="id" title="keyword">return</span> <span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#X:15"><span class="id" title="variable">X</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">_</span> =&gt; <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#int_rank.t"><span class="id" title="inductive">int_rank.t</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#tt"><span class="id" title="constructor">tt</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">x</span> =&gt; <span class="id" title="var">x</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="abi_aux_1.abi.equivalent_int_type" class="idref" href="#abi_aux_1.abi.equivalent_int_type"><span class="id" title="definition">equivalent_int_type</span></a> (<a id="info:17" class="idref" href="#info:17"><span class="id" title="binder">info</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.t"><span class="id" title="record">t</span></a>) (<a id="ct:18" class="idref" href="#ct:18"><span class="id" title="binder">ct</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#char_type"><span class="id" title="abbreviation">char_type</span></a>) : <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#integral_type.t"><span class="id" title="record">integral_type.t</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="bits:20" class="idref" href="#bits:20"><span class="id" title="binder">bits</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;NOTE&nbsp;the&nbsp;setup&nbsp;here&nbsp;computes&nbsp;the&nbsp;appropriate&nbsp;type&nbsp;given&nbsp;the&nbsp;size<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;constraints&nbsp;defined&nbsp;in&nbsp;<span class="inlinecode"><span class="id" title="var">char_type.bitsN</span></span>&nbsp;and&nbsp;<span class="inlinecode"><span class="id" title="var">int_type.bitsN</span></span>&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#ct:18"><span class="id" title="variable">ct</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#char_type.Cchar"><span class="id" title="constructor">char_type.Cchar</span></a> =&gt; <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#int_rank.Ichar"><span class="id" title="constructor">int_rank.Ichar</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#char_type.C8"><span class="id" title="constructor">char_type.C8</span></a> =&gt; <span class="id" title="abbreviation">Evaluate</span> (<a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.find_equiv"><span class="id" title="definition">find_equiv</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#char_type.C8"><span class="id" title="constructor">char_type.C8</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#char_type.C16"><span class="id" title="constructor">char_type.C16</span></a> =&gt; <span class="id" title="abbreviation">Evaluate</span> (<a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.find_equiv"><span class="id" title="definition">find_equiv</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#char_type.C16"><span class="id" title="constructor">char_type.C16</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#char_type.C32"><span class="id" title="constructor">char_type.C32</span></a> =&gt; <span class="id" title="abbreviation">Evaluate</span> (<a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.find_equiv"><span class="id" title="definition">find_equiv</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#char_type.C32"><span class="id" title="constructor">char_type.C32</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#char_type.Cwchar"><span class="id" title="constructor">char_type.Cwchar</span></a> =&gt; <span class="id" title="abbreviation">Evaluate</span> (<a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.find_equiv"><span class="id" title="definition">find_equiv</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#char_type.Cwchar"><span class="id" title="constructor">char_type.Cwchar</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#integral_type.mk"><span class="id" title="constructor">integral_type.mk</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#bits:20"><span class="id" title="variable">bits</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.signedness_of_char"><span class="id" title="definition">signedness_of_char</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#info:17"><span class="id" title="variable">info</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#ct:18"><span class="id" title="variable">ct</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Common Linux ABIs. Just for testing. 
+</div>
+<div class="code">
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="abi_aux_1.abi.x64_linux" class="idref" href="#abi_aux_1.abi.x64_linux"><span class="id" title="definition">x64_linux</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.t"><span class="id" title="record">t</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.mkT"><span class="id" title="constructor">mkT</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#int_rank.Ilong"><span class="id" title="constructor">int_rank.Ilong</span></a> <span class="id" title="constructor">Signed</span> <span class="id" title="constructor">Signed</span> <span class="id" title="constructor">Little</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="abi_aux_1.abi.armle64_linux" class="idref" href="#abi_aux_1.abi.armle64_linux"><span class="id" title="definition">armle64_linux</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.t"><span class="id" title="record">t</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.mkT"><span class="id" title="constructor">mkT</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#int_rank.Ilong"><span class="id" title="constructor">int_rank.Ilong</span></a> <span class="id" title="constructor">Unsigned</span> <span class="id" title="constructor">Unsigned</span> <span class="id" title="constructor">Little</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="abi_aux_1.abi.abi_default" class="idref" href="#abi_aux_1.abi.abi_default"><span class="id" title="definition">abi_default</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.t"><span class="id" title="record">t</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.abi.html#abi_aux_1.abi.x64_linux"><span class="id" title="definition">x64_linux</span></a>.<br/>
+<span class="id" title="var">NES.End</span> <span class="id" title="var">abi</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
