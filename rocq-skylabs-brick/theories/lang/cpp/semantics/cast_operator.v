@@ -25,6 +25,14 @@ Require Import skylabs.lang.cpp.semantics.cast.
   *)
 Notation Tptrdiff_t := Tlonglong (only parsing).
 
+(** For a binary operation between two types, determine the type of the result and the necessary conversions on the operands.
+
+This is used for both pointer and arithmetic operators.
+
+The first two components of the result are the types to which the
+left and right operands should be converted, and the third component
+is the type of the result of the operation.
+ *)
 Definition convert_type_op (tu : translation_unit) (b : BinOp) (ty1 ty2 : type)
   : option (type * type * type) :=
   if is_pointer ty1 && is_pointer ty2 then
