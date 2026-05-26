@@ -1,11 +1,12 @@
 (*
- * Copyright (c) 2025 BlueRock Security, Inc.
+ * Copyright (c) 2025-2026 SkyLabs AI, Inc.
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Stdlib.Array.PArray.
 Require Import Stdlib.Numbers.Cyclic.Int63.PrimInt63.
 Require Import skylabs.lang.cpp.parser.
+Require skylabs.lang.cpp.syntax.typed.
 
 #[local] Set Printing Universes.
 
