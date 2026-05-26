@@ -735,6 +735,7 @@ Module Type Expr.
          (letI* v, free := wp_operand e in
           match v with
           | Vint n => Q (Vbool (bool_decide (n <> 0))) free
+          | Vchar n => Q (Vbool (bool_decide (n <> 0)%N)) free
           | _ => ERROR (int2bool_not_num v)
           end)
       |-- wp_operand (Ecast Cint2bool e) Q.
