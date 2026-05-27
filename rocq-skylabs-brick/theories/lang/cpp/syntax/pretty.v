@@ -141,7 +141,7 @@ Section with_lang.
     let printBO o :=
       match o with
       | Badd => "+"
-      | Band => "&&"
+      | Band => "&"
       | Bcmp => "<=>"
       | Bdiv => "/"
       | Beq => "=="
@@ -151,7 +151,7 @@ Section with_lang.
       | Blt => "<"
       | Bmul => "*"
       | Bneq => "!="
-      | Bor => "||"
+      | Bor => "|"
       | Bmod => "%"
       | Bshl => "<<"
       | Bshr => ">>"

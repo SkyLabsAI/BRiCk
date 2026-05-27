@@ -114,7 +114,7 @@ Section with_lang.
     let printBO o :=
       match o with
       | Badd => mret "+"
-      | Band => mret "&&"
+      | Band => mret "&"
       | Bcmp => mret "<=>"
       | Bdiv => mret "/"
       | Beq => mret "=="
@@ -124,7 +124,7 @@ Section with_lang.
       | Blt => mret "<"
       | Bmul => mret "*"
       | Bneq => mret "!="
-      | Bor => mret "||"
+      | Bor => mret "|"
       | Bmod => mret "%"
       | Bshl => mret "<<"
       | Bshr => mret ">>"
@@ -315,6 +315,7 @@ Module Type TESTS.
                             Tuint; Tint] in
     TEST "Msg<unsigned long, long, unsigned long long, long long, unsigned int, int>::Msg()" (Nscoped (Ninst Msg targs) (Nctor [])) := eq_refl.
   Succeed Example _0 : TEST "Msg::Msg(int)" (Nscoped Msg (Nctor [Tint])) := eq_refl.
+  Succeed Example _0 : TEST "operator|(int, int)" (Nglobal (Nop function_qualifiers.N OOPipe [Tint;Tint])) := eq_refl.
   Succeed Example _0 : TEST "Msg::Msg(long)" (Nscoped Msg (Nctor [Tlong])) := eq_refl.
   Succeed Example _0 : TEST "Msg::operator=(const Msg&)" (Nscoped Msg (Nop function_qualifiers.N OOEqual [Tref (Tconst (Tnamed $ Nglobal (Nid "Msg")))])) := eq_refl.
   Succeed Example _0 : TEST "Msg::operator=(const Msg&&)" (Nscoped Msg (Nop function_qualifiers.N OOEqual [Trv_ref (Tconst (Tnamed $ Nglobal (Nid "Msg")))])) := eq_refl.
