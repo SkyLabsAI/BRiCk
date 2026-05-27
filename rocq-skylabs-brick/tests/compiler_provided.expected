@@ -1,0 +1,52 @@
+     = Some
+         (Oconstructor
+            {|
+              c_class := "C";
+              c_params := [];
+              c_cc := CC_C;
+              c_arity := Ar_Definite;
+              c_exception := exception_spec.NoThrow;
+              c_body := Some (CompilerProvided ([], Sseq []))
+            |})
+     : option ObjValue
+     = Some
+         (Odestructor
+            {|
+              d_class := "C";
+              d_cc := CC_C;
+              d_exception := exception_spec.Unknown;
+              d_body := Some Defaulted
+            |})
+     : option ObjValue
+     = Some
+         (Omethod
+            {|
+              m_return := "C&";
+              m_class := "C";
+              m_this_qual := QM;
+              m_params := [("#0"%pstring, "const C&"%cpp_type)];
+              m_cc := CC_C;
+              m_arity := Ar_Definite;
+              m_exception := exception_spec.NoThrow;
+              m_body :=
+                Some
+                  (CompilerProvided
+                     (Sseq [Sreturn (Some (Ederef (Ethis "C*") "C"))]))
+            |})
+     : option ObjValue
+     = Some
+         (Omethod
+            {|
+              m_return := "C&";
+              m_class := "C";
+              m_this_qual := QM;
+              m_params := [("#0"%pstring, "C&&"%cpp_type)];
+              m_cc := CC_C;
+              m_arity := Ar_Definite;
+              m_exception := exception_spec.NoThrow;
+              m_body :=
+                Some
+                  (CompilerProvided
+                     (Sseq [Sreturn (Some (Ederef (Ethis "C*") "C"))]))
+            |})
+     : option ObjValue

@@ -17,6 +17,7 @@ Require Import skylabs.lang.cpp.syntax.stmt.
 
 Variant OrDefault {t : Set} : Set :=
   | Defaulted
+  | CompilerProvided (_ : t)
   | UserDefined (_ : t).
 Arguments OrDefault : clear implicits.
 #[global] Instance OrDefault_inh: forall {T: Set}, Inhabited (OrDefault T).
@@ -30,6 +31,7 @@ Module OrDefault.
   Definition fmap {A B : Set} (f : A -> B) (v : OrDefault A) : OrDefault B :=
     match v with
     | Defaulted => Defaulted
+    | CompilerProvided a => CompilerProvided $ f a
     | UserDefined a => UserDefined (f a)
     end.
   #[global] Arguments fmap _ _ _ & _ : assert.
@@ -51,6 +53,7 @@ Module OrDefault.
     fun F _ _ _ _ _ f od =>
       match od with
       | Defaulted => mret Defaulted
+      | CompilerProvided v => CompilerProvided <$> f v
       | UserDefined v => UserDefined <$> f v
       end.
 End OrDefault.
@@ -265,7 +268,7 @@ Definition static_method (m : Method)
    ; f_arity := m.(m_arity)
    ; f_exception := m.(m_exception)
    ; f_body := match m.(m_body) with
-               | Some (UserDefined body) => Some (Impl body)
+               | Some (UserDefined body | CompilerProvided body) => Some (Impl body)
                | _ => None
                end |}.
 

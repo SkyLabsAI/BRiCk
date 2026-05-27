@@ -280,9 +280,9 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
                 print.output()
                     << fmt::line << "Require skylabs.lang.cpp.syntax.typed."
                     << fmt::line
-                    << "Succeed Example well_typed : "
-                       "typed.decltype.check_tu module = trace.Success tt"
-                       " := ltac:(vm_compute; reflexivity)."
+                    << "Succeed Example well_typed : typed.decltype.check_tu "
+                    << interactive_.value_or("source")
+                    << " = trace.Success tt := ltac:(vm_compute; reflexivity)."
                     << fmt::line;
             }
         });

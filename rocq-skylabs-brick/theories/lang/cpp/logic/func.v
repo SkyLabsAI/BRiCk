@@ -442,11 +442,11 @@ Section wp_func.
     intros. rewrite wp_func.unlock. iIntros "HQ".
     case_match; last by auto.
     case_match; last by iApply wp_builtin_func_frame.
-    iApply bind_vars_frame; [done|]. iIntros (??) "wp !>"; iRevert "wp".
-    iApply wp_frame; [done|]. iIntros (?).
-    iApply Kcleanup_frame; [done|].
-    iApply Kreturn_frame. iIntros (?) "Q".
-    iApply ("HQ" with "Q").
+    all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
+    all: iApply wp_frame; [done|]; iIntros (?).
+    all: iApply Kcleanup_frame; [done|].
+    all: iApply Kreturn_frame; iIntros (?) "Q".
+    all: iApply ("HQ" with "Q").
   Qed.
 
   (** Unsupported *)
@@ -480,7 +480,7 @@ parameters.
     (m : Method) (args : list ptr) (Q : ptr -> epred) : mpred :=
   match m.(m_body) with
   | None => ERROR "wp_method: no body"
-  | Some (UserDefined body) =>
+  | Some (UserDefined body | CompilerProvided body) =>
     match args with
     | thisp :: rest_vals =>
       let ρ va := Remp (Some thisp) va m.(m_return) in
@@ -509,12 +509,14 @@ Section wp_method.
     |-- wp_method tu m args Q -* wp_method tu' m args Q'.
   Proof.
     intros. iIntros "HQ". rewrite wp_method.unlock.
-    repeat case_match; auto.
-    iApply bind_vars_frame; [done|]. iIntros (??) "wp !>"; iRevert "wp".
-    iApply wp_frame; [done|]. iIntros (?).
-    iApply Kcleanup_frame; [done|].
-    iApply Kreturn_frame. iIntros (?) "Q".
-    iApply ("HQ" with "Q").
+    destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_body]; cbn.
+    destruct m_body as [[|body|body]|]; auto.
+    all: destruct args as [|thisp rest_vals]; auto.
+    all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
+    all: iApply wp_frame; [done|]; iIntros (?).
+    all: iApply Kcleanup_frame; [done|].
+    all: iApply Kreturn_frame; iIntros (?) "Q".
+    all: iApply ("HQ" with "Q").
   Qed.
 
   (** Unsupported *)
@@ -526,11 +528,14 @@ Section wp_method.
   Lemma wp_method_intro tu m args Q :
     Cbn (Reduce (wp_method' false tu m args Q)) |-- wp_method tu m args Q.
   Proof.
-    rewrite wp_method.unlock. do 3!f_equiv.
-    iApply bind_vars_frame; [done|]. iIntros (??) "wp !>"; iRevert "wp".
-    iApply wp_frame; [done|]. iIntros (?).
-    iApply Kcleanup_frame; [done|].
-    iApply Kreturn_frame. auto.
+    rewrite wp_method.unlock.
+    destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_body]; cbn.
+    destruct m_body as [[|body|body]|]; auto.
+    all: destruct args as [|thisp rest_vals]; auto.
+    all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
+    all: iApply wp_frame; [done|]; iIntros (?).
+    all: iApply Kcleanup_frame; [done|].
+    all: iApply Kreturn_frame; auto.
   Qed.
 
   Lemma wp_method_elim tu m args Q :
@@ -808,7 +813,7 @@ that implies [type_ptr].
   match ctor.(c_body) with
   | None => ERROR "wp_ctor: no body"
   | Some Defaulted => UNSUPPORTED "wp_ctor: defaulted constructors"
-  | Some (UserDefined ib) =>
+  | Some (UserDefined ib | CompilerProvided ib) =>
     let inits := ib.1 in
     let body := ib.2 in
     match args with
@@ -975,6 +980,7 @@ this resource will be consumed immediately.
         let* :=
           match body with
           | Defaulted => fun k : Kpred => |={top}=>?upd k Normal
+          | CompilerProvided body
           | UserDefined body => wp tu (Remp (Some thisp) None Tvoid) body
           end%I
         in
@@ -1040,13 +1046,13 @@ Section wp_dtor.
     iIntros "HQ". rewrite wp_dtor.unlock.
     repeat case_match; auto.
     all: iIntros "wp !>"; iRevert "wp".
-    1,3: iIntros ">wp !>"; iRevert "wp".
-    3,4: iApply wp_frame; [done|]; iIntros (?).
+    1,4: iIntros ">wp !>"; iRevert "wp".
+    all: try (iApply wp_frame; [done|]; iIntros (?)).
     all: iApply Kreturn_void_frame.
     all: iIntros "($ & wp)"; iRevert "wp".
-    2,4: iApply wpd_members_frame; [done|].
-    2,3: iApply wp_revert_identity_frame =>//.
-    2,3: iApply wpd_bases_frame; [done|].
+    all: try (iApply wpd_members_frame; [done|]).
+    all: try (iApply wp_revert_identity_frame =>//).
+    all: try (iApply wpd_bases_frame; [done|]).
     all: iIntros "HR R"; iMod ("HR" with "R") as "HR"; iIntros "!> !> % R".
     all: iApply "HQ".
     all: iApply ("HR" with "R").
@@ -1063,13 +1069,13 @@ Section wp_dtor.
   Proof.
     rewrite wp_dtor.unlock. repeat case_match; auto.
     all: iIntros "wp !>"; iRevert "wp".
-    1,3: rewrite -fupd_intro.
-    3,4: iApply wp_frame; [done|]; iIntros (?).
+    1,4: rewrite -fupd_intro.
+    all: try (iApply wp_frame; [done|]; iIntros (?)).
     all: iApply Kreturn_void_frame.
     all: iIntros "($ & wp)"; iRevert "wp".
-    2,4: iApply wpd_members_frame; [done|].
-    2,3: iApply wp_revert_identity_frame =>//.
-    2,3: iApply wpd_bases_frame; [done|].
+    all: try (iApply wpd_members_frame; [done|]).
+    all: try (iApply wp_revert_identity_frame =>//).
+    all: try (iApply wpd_bases_frame; [done|]).
     all: iIntros "HR R !>"; iSpecialize ("HR" with "R"); iIntros "!> % R".
     all: iApply ("HR" with "R").
   Qed.

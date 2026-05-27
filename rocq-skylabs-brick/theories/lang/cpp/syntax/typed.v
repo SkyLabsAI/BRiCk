@@ -1027,7 +1027,7 @@ Module decltype.
 
     Definition check_method (m : Method) : Merr unit :=
       match m.(m_body) with
-      | Some (UserDefined s) =>
+      | Some (UserDefined s | CompilerProvided s) =>
           readerT.mk $ fun tu =>
           let this_type := tqualified m.(m_this_qual) $ classname_to_type m.(m_class) in
           const () <$> readerT.run (with_bindings {| _bindings := m.(m_params) |} $ check_stmt s) (tu, m.(m_return), Some this_type, [])
@@ -1036,7 +1036,7 @@ Module decltype.
 
     Definition check_ctor (c : Ctor) : Merr unit :=
       match c.(c_body) with
-      | Some (UserDefined (inits, body)) =>
+      | Some (UserDefined (inits, body) | CompilerProvided (inits, body)) =>
           readerT.mk $ fun tu =>
           readerT.run (with_bindings {| _bindings := c.(c_params) |} $
                          let* _ := traverse (T:=eta list) (fun init => of_expr init.(init_init)) inits in
@@ -1046,7 +1046,7 @@ Module decltype.
 
     Definition check_dtor (d : Dtor) : Merr unit :=
       match d.(d_body) with
-      | Some (UserDefined body) =>
+      | Some (UserDefined body | CompilerProvided body) =>
           readerT.mk $ fun tu =>
           readerT.run (const () <$> check_stmt body) (tu, Tvoid, Some (classname_to_type d.(d_class)), [])
       | _ => mret ()

@@ -213,10 +213,20 @@ Section with_monad.
   Definition or_default {T : Set} (f : T -> M) (o : OrDefault T) : M :=
     match o with
     | Defaulted => OK
+    | CompilerProvided v => f v
     | UserDefined v => f v
     end.
 
   Definition classname : classname -> M := name.
+
+  Definition check_exc_spec {B} (exc : _) (body : option (OrDefault B)) : M :=
+    if exc is exception_spec.Unknown
+    then match body with
+         | None | Some Defaulted => OK
+         | _ => FAIL "unknown exception spec"
+         end
+    else OK.
+
 
   Definition obj_value (o : ObjValue) : M :=
     let params (ps : list (localname * core.type)) : M :=
@@ -236,33 +246,17 @@ Section with_monad.
         type m.(m_return) <+> classname m.(m_class)
         <+> params m.(m_params)
         <+> opt (or_default stmt) m.(m_body)
-        <+> if m.(m_exception) is exception_spec.Unknown
-            then match m.(m_body) with
-                 | None => OK
-                 | _ => FAIL "unknown exception spec"
-                 end
-            else OK
+        <+> check_exc_spec m.(m_exception) m.(m_body)
 
     | Oconstructor c =>
         let check_body '(li, s) := lst (expr ∘ init_init) li <+> stmt s in
         classname c.(c_class) <+> params c.(c_params)
         <+> opt (or_default check_body) c.(c_body)
-        <+> if c.(c_exception) is exception_spec.Unknown
-            then match c.(c_body) with
-                 | None => OK
-                 | _ => FAIL "unknown exception spec"
-                 end
-            else OK
+        <+> check_exc_spec c.(c_exception) c.(c_body)
 
     | Odestructor d =>
         classname d.(d_class) <+> opt (or_default stmt) d.(d_body)
-        <+> if d.(d_exception) is exception_spec.Unknown
-            then match d.(d_body) with
-                 | None => OK
-                 | _ => FAIL "unknown exception spec"
-                 end
-            else OK
-
+        <+> check_exc_spec d.(d_exception) d.(d_body)
     end.
 
   Definition glob_decl (gd : GlobDecl) : M :=
