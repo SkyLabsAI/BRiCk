@@ -19,6 +19,6 @@
 (package
  (name ltac2-tc-dispatch)
  (synopsis "Typeclass-based lookup for Ltac2 functions")
- (depends rocq-core coq-stdlib stdlib-extra rocq-extra ltac2-extra ltac2-logger))
+ (depends rocq-core rocq-stdlib stdlib-extra rocq-extra ltac2-extra ltac2-logger))
 
 (subst disabled)

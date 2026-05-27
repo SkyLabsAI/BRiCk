@@ -18,7 +18,7 @@ depends: [
   "stdlib-extra"
   "rocq-extra"
   "logger-lib"
-  "coq-stdlib"
+  "rocq-stdlib"
   "ltac2-extra"
   "odoc" {with-doc}
 ]
