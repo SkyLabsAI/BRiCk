@@ -25,7 +25,7 @@ bug-reports: "https://github.com/SkyLabsAI/BRiCk/issues"
 depends: [
   "dune" {>= "3.22"}
   "rocq-upoly"
-  "coq-iris"
+  "rocq-iris"
   "rocq-lens"
   "rocq-lens-elpi"
   "rocq-equations"

@@ -31,7 +31,7 @@
  (synopsis "Frontend and program logic for C++")
  (depends
   rocq-upoly
-  coq-iris
+  rocq-iris
   rocq-lens
   rocq-lens-elpi
   rocq-equations
