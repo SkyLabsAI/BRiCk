@@ -4,7 +4,7 @@ synopsis: "Ltac2 plugin to access OpenAI bindings."
 license: "LicenseRef-LICENSE-BedRock"
 depends: [
   "dune" {>= "3.21"}
-  "coq-core"
+  "rocq-core"
   "stdlib-extra"
   "odoc" {with-doc}
 ]

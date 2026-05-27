@@ -1,4 +1,4 @@
 (library
  (name ltac2_llm)
  (public_name ltac2-llm-plugin.plugin)
- (libraries coq-core.plugins.ltac2))
+ (libraries rocq-runtime.plugins.ltac2))

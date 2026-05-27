@@ -20,6 +20,6 @@
 (package
  (name ltac2-extra)
  (synopsis "Extension of the Ltac2 standard library")
- (depends coq-core coq-stdlib stdlib-extra rocq-extra))
+ (depends rocq-core rocq-stdlib stdlib-extra rocq-extra))
 
 (subst disabled)

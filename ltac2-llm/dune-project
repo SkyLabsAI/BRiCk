@@ -9,10 +9,10 @@
 (package
  (name ltac2-llm-plugin)
  (synopsis "Ltac2 plugin to access OpenAI bindings.")
- (depends coq-core stdlib-extra))
+ (depends rocq-core stdlib-extra))
 
 (package
  (name ltac2-llm)
  (synopsis "Ltac2 OpenAI bindings.")
- (depends coq-stdlib ltac2-llm-plugin))
+ (depends rocq-stdlib ltac2-llm-plugin))
 (subst disabled)
