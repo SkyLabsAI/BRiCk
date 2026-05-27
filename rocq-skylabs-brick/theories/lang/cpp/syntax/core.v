@@ -67,29 +67,53 @@ End function_type.
 (** Template parameters
     - <<typename T>> would be represented as [Ptype "T"]
     - <<int X>> would be represented as [Pvalue "X" Tint]
+    - <<template <typename T> class C>> would be represented as
+      [Ptemplate "C" [Ptype "T"]]
 
     <<typename T...>> and <<int X...>> are not currently supported.
  *)
-Variant temp_param_ {type : Set} : Set :=
+Inductive temp_param_ {type : Set} : Set :=
 | Ptype (_ : ident)
 | Pvalue (_ : ident) (_ : type)
+| Ptemplate (_ : ident) (_ : list temp_param_)
 | Punsupported (_ : PrimString.string).
 #[global] Arguments temp_param_ : clear implicits.
 #[global] Instance temp_param__inhabited {A} : Inhabited (temp_param_ A).
 Proof. solve_inhabited. Qed.
 #[global] Instance temp_param_eq_dec {A : Set} `{!EqDecision A} : EqDecision (temp_param_ A).
-Proof. solve_decision. Defined.
+Proof.
+  change (forall x y : temp_param_ A, Decision (x = y)).
+  fix IH 1.
+  intros x y.
+  unfold Decision.
+  destruct x as [i|i t|i ps|msg], y as [j|j u|j qs|msg'];
+    try (right; congruence).
+  - destruct (decide (i = j)) as [->|?]; [left; reflexivity|right; congruence].
+  - destruct (decide (i = j)) as [->|?];
+      destruct (decide (t = u)) as [->|?];
+      try (left; reflexivity); right; congruence.
+  - destruct (decide (i = j)) as [->|?];
+      destruct (@list_eq_dec _ IH ps qs) as [->|?];
+      try (left; reflexivity); right; congruence.
+  - destruct (decide (msg = msg')) as [->|?]; [left; reflexivity|right; congruence].
+Defined.
 
 Module temp_param.
   Import UPoly.
-  Definition existsb {type : Set} (f : type -> bool) (p : temp_param_ type) : bool :=
-    if p is Pvalue _ t then f t else false.
+  Fixpoint existsb {type : Set} (f : type -> bool) (p : temp_param_ type) : bool :=
+    match p with
+    | Ptype _ => false
+    | Pvalue _ t => f t
+    | Ptemplate _ ps => List.existsb (existsb f) ps
+    | Punsupported _ => false
+    end.
 
-  Definition fmap {type type' : Set} (f : type -> type')
+  Fixpoint fmap {type type' : Set} (f : type -> type')
     (p : temp_param_ type) : temp_param_ type' :=
     match p with
     | Ptype id => Ptype id
     | Pvalue id t => Pvalue id (f t)
+    | Ptemplate id ps => Ptemplate id (List.map (fmap f) ps)
     | Punsupported msg => Punsupported msg
     end.
   #[global] Arguments fmap _ _ _ & _ : assert.
@@ -103,11 +127,13 @@ Module temp_param.
     Context {F : Set -> Type@{u}} `{!FMap F, !MRet F, AP : !Ap F}.
     Context {type type' : Set}.
 
-    Definition traverse (f : type -> F type') (p : temp_param_ type)
+    Fixpoint traverse (f : type -> F type') (p : temp_param_ type)
       : F (temp_param_ type') :=
       match p with
       | Ptype id => mret $ Ptype id
       | Pvalue id t => Pvalue id <$> f t
+      | Ptemplate id ps =>
+          Ptemplate id <$> UPoly.traverse (T:=eta list) (F:=F) (traverse f) ps
       | Punsupported msg => mret $ Punsupported msg
       end.
     #[global] Arguments traverse _ & _ : assert.
@@ -347,12 +373,15 @@ Inductive name : Set :=
       C++ requires these to be uniform, i.e. you can not mix [Avalue] and [Atype].
       We can enforce this if we want in the future.
     - <<T>> for <<T>> of template type would be represented as [Atemplate T]
+    - <<T>> for <<T>> of template-template parameter would be represented
+      as [Atemplate_param "T"]
  *)
 with temp_arg : Set :=
 | Atype (_ : type)
 | Avalue (_ : Expr)
 | Apack (_ : list temp_arg) (* See <https://en.cppreference.com/w/cpp/language/pack> *)
 | Atemplate (_ : name)
+| Atemplate_param (_ : ident)
 | Aunsupported (_ : PrimString.string)
 
 (** ** Types *)
@@ -873,6 +902,7 @@ with is_dependentTA (t : temp_arg) : bool :=
   | Avalue e => is_dependentE e
   | Apack tas => List.existsb is_dependentTA tas
   | Atemplate nm => is_dependentN nm
+  | Atemplate_param _ => false
   | Aunsupported _ => false
   end
 

@@ -159,6 +159,7 @@ Module MTraverse.
       | Avalue e => Avalue <$> traverseE e
       | Apack ls => Apack <$> UPoly.traverse (T:=eta list) (F:=F) traverseTA ls
       | Atemplate n => Atemplate <$> traverseN n
+      | Atemplate_param id => mret $ Atemplate_param id
       | Aunsupported msg => mret $ Aunsupported msg
       end
 

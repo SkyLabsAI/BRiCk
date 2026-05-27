@@ -591,32 +591,41 @@ Module temp_param.
       match p with
       | Ptype _ => 1
       | Pvalue _ _ => 2
-      | Punsupported _ => 3
+      | Ptemplate _ _ => 3
+      | Punsupported _ => 4
       end.
     Definition car (t : positive) : Set :=
       match t with
       | 2 => box_Pvalue
+      | 3 => ident * list temp_param
       | _ => ident
       end.
     Definition data (p : temp_param) : car (tag p) :=
       match p with
       | Ptype id => id
       | Pvalue id t => Box_Pvalue id t
+      | Ptemplate id ps => (id, ps)
       | Punsupported msg => msg
       end.
-    Definition compare_data (t : positive) : car t -> car t -> comparison :=
+    Definition compare_data (tp_compare : temp_param -> temp_param -> comparison)
+      (t : positive) : car t -> car t -> comparison :=
       match t with
       | 2 => box_Pvalue_compare
+      | 3 =>
+          fun '(id1, ps1) '(id2, ps2) =>
+            compare_lex (PrimString.compare id1 id2) $ fun _ =>
+            List.compare tp_compare ps1 ps2
       | _ => PrimString.compare
       end.
 
-    #[local] Notation compare_ctor := (compare_ctor tag car data compare_data).
+    #[local] Notation compare_ctor compare := (compare_ctor tag car data $ compare_data compare).
 
-    Definition compare (p : temp_param_ type) : temp_param_ type -> comparison :=
+    Fixpoint compare (p : temp_param_ type) : temp_param_ type -> comparison :=
       match p with
-      | Ptype id => compare_ctor (Reduce (tag (Ptype id))) (fun _ => Reduce (data (Ptype id)))
-      | Pvalue id ty => compare_ctor (Reduce (tag (Pvalue id ty))) (fun _ => Reduce (data (Pvalue id ty)))
-      | Punsupported msg => compare_ctor (Reduce (tag (Punsupported msg))) (fun _ => Reduce (data (Punsupported msg)))
+      | Ptype id => compare_ctor compare (Reduce (tag (Ptype id))) (fun _ => Reduce (data (Ptype id)))
+      | Pvalue id ty => compare_ctor compare (Reduce (tag (Pvalue id ty))) (fun _ => Reduce (data (Pvalue id ty)))
+      | Ptemplate id ps => compare_ctor compare (Reduce (tag (Ptemplate id ps))) (fun _ => Reduce (data (Ptemplate id ps)))
+      | Punsupported msg => compare_ctor compare (Reduce (tag (Punsupported msg))) (fun _ => Reduce (data (Punsupported msg)))
       end.
   End compare.
 
@@ -635,7 +644,8 @@ Module temp_arg.
       | Avalue _ => 2
       | Apack _ => 3
       | Atemplate _ => 4
-      | Aunsupported _ => 5
+      | Atemplate_param _ => 5
+      | Aunsupported _ => 6
       end.
     Definition car (t : positive) : Set :=
       match t with
@@ -651,6 +661,7 @@ Module temp_arg.
       | Avalue e => e
       | Apack ls => ls
       | Atemplate n => n
+      | Atemplate_param id => id
       | Aunsupported msg => msg
       end.
     Definition compare_data (ta_compare : temp_arg -> temp_arg -> comparison)
@@ -671,6 +682,7 @@ Module temp_arg.
       | Avalue e => compare_ctor compare (Reduce (tag (Avalue e))) (fun _ => Reduce (data (Avalue e)))
       | Apack ls => compare_ctor compare (Reduce (tag (Apack ls))) (fun _ => Reduce (data (Apack ls)))
       | Atemplate n => compare_ctor compare (Reduce (tag (Atemplate n))) (fun _ => Reduce (data (Atemplate n)))
+      | Atemplate_param id => compare_ctor compare (Reduce (tag (Atemplate_param id))) (fun _ => Reduce (data (Atemplate_param id)))
       | Aunsupported msg => compare_ctor compare (Reduce (tag (Aunsupported msg))) (fun _ => Reduce (data (Aunsupported msg)))
       end.
   End compare.

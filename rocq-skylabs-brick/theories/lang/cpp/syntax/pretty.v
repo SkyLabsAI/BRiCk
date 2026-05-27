@@ -189,6 +189,7 @@ Section with_lang.
       | Avalue e => [printE e]
       | Apack ls => List.concat (List.map printTA ls)
       | Atemplate n => ["<>" ++ printN n]
+      | Atemplate_param id => ["<>" ++ id]
       | Aunsupported note => [note]
       end
 

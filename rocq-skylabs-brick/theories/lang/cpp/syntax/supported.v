@@ -44,16 +44,18 @@ Section with_monad.
       | Avalue e => expr e
       | Apack xs => lst temp_arg xs
       | Atemplate n => name n
+      | Atemplate_param _ => OK
       | Aunsupported msg => FAIL msg
       end.
   End temp_arg.
 
   Section temp_param.
     Context (name : name -> M) (type : type -> M) (expr : Expr -> M).
-    Definition temp_param  (a : temp_param) : M :=
+    Fixpoint temp_param  (a : temp_param) : M :=
       match a with
       | Ptype _ => OK
       | Pvalue _ t => type t
+      | Ptemplate _ ps => lst temp_param ps
       | Punsupported msg => FAIL msg
       end.
   End temp_param.

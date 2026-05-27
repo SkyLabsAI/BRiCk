@@ -160,6 +160,8 @@ Section with_lang.
               ((fun tas => "..." ++ (angles $ sepBy ", " tas)) <$> traverse printTA ts)
           | Atemplate nm =>
               (fun b => "template " ++ b) <$> printN "" nm
+          | Atemplate_param id =>
+              mret $ "template " ++ id
           | Aunsupported note => mfail
           end
         in

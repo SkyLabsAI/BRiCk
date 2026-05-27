@@ -397,16 +397,26 @@ static fmt::Formatter &printTemplateParameter(CoqPrinter &print,
     if (decl.isParameterPack())
         return unsupported("template parameter pack");
 
-    /*
-    TODO: We could presumably infer a name for some unnamed template
-    parameters.
+    auto get_name = [&]() -> std::string {
+        if (auto id = decl.getIdentifier())
+            return id->getName().str();
 
-    See `TemplateParmPosition`, `printTypeTemplateParam`.
-    */
-    auto id = decl.getIdentifier();
-    if (!id)
-        return unsupported("unnamed template parameter");
-    auto name = id->getName();
+        auto position_name = [](auto &param, StringRef prefix) {
+            return (prefix + Twine(param.getDepth()) + "_" +
+                    Twine(param.getIndex()))
+                .str();
+        };
+
+        if (auto param = dyn_cast<TemplateTypeParmDecl>(&decl))
+            return position_name(*param, "__type_");
+        if (auto param = dyn_cast<NonTypeTemplateParmDecl>(&decl))
+            return position_name(*param, "__value_");
+        if (auto param = dyn_cast<TemplateTemplateParmDecl>(&decl))
+            return position_name(*param, "__template_");
+
+        return "__template_param";
+    };
+    auto name = get_name();
 
     switch (decl.getKind()) {
     case Decl::Kind::TemplateTypeParm:
@@ -432,6 +442,20 @@ static fmt::Formatter &printTemplateParameter(CoqPrinter &print,
         }
 
     case Decl::Kind::TemplateTemplateParm:
+        if (as_arg) {
+            guard::ctor _(print, "Atemplate_param", false);
+            return print.str(name);
+        } else {
+            auto &param = cast<TemplateTemplateParmDecl>(decl);
+            guard::ctor _(print, "Ptemplate", false);
+            print.str(name) << fmt::nbsp;
+            return print.list(param.getTemplateParameters()->asArray(),
+                              [&](const clang::NamedDecl *p) {
+                                  printTemplateParameter(print, p, cprint,
+                                                         loc::of(p),
+                                                         /*as_arg=*/false);
+                              });
+        }
     default:
         return unsupported("template parameter kind");
     }
@@ -510,6 +534,10 @@ static fmt::Formatter &printTemplateArgument(CoqPrinter &print,
     case TemplateArgument::ArgKind::Template: {
         auto templ = arg.getAsTemplate();
         if (auto dt = templ.getAsTemplateDecl()) {
+            if (auto ttp = dyn_cast<TemplateTemplateParmDecl>(dt)) {
+                return printTemplateParameter(print, ttp, cprint, loc,
+                                              /*as_arg=*/true);
+            }
             guard::ctor _(print, "Atemplate", false);
             return cprint.printName(print, *dt);
         } /* else if (auto qtn = templ.getAsQualifiedTemplateName()) {
@@ -949,9 +977,8 @@ static fmt::Formatter &printName(CoqPrinter &print, const Decl &decl,
     auto parameters = [&](auto dct) {
         print.list(dct->getTemplateParameters()->asArray(),
                    [&](const clang::NamedDecl *p) {
-                       guard::ctor _(print, "Atype", false);
-                       guard::ctor __(print, "Tparam", false);
-                       print.str(p->getNameAsString());
+                       printTemplateParameter(print, p, cprint, loc::of(p),
+                                              /*as_arg=*/true);
                    });
     };
 
