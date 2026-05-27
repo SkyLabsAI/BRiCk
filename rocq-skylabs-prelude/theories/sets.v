@@ -88,15 +88,9 @@ Section top_set.
 
   (* Named after [union_empty_l] (+ missing [top_set_] prefix) *)
   #[global] Instance top_set_intersection_top_l : LeftId (≡@{C}) ⊤ (∩).
-  Proof.
-    intros X. apply set_equiv=>x. rewrite elem_of_intersection.
-    split; [naive_solver|]. intros HX. split; [|exact HX]. by apply elem_of_top'.
-  Qed.
+  Proof. intros ?. set_solver. Qed.
   #[global] Instance top_set_intersection_top_r : RightId (≡@{C}) ⊤ (∩).
-  Proof.
-    intros X. apply set_equiv=>x. rewrite elem_of_intersection.
-    split; [naive_solver|]. intros HX. split; [exact HX|]. by apply elem_of_top'.
-  Qed.
+  Proof. intros ?. set_solver. Qed.
 
   Section leibniz.
     Context `{!LeibnizEquiv C}.
