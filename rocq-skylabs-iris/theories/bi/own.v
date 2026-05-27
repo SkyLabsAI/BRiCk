@@ -37,6 +37,7 @@ Require Import iris.base_logic.lib.iprop. (* << for [gname] only *)
 #[local] Set Default Proof Using "Type*".
 
 (* Step-indexed Validity *)
+(* TODO: replace with [siProp_cmra_valid] *)
 Program Definition si_cmra_valid_def {A : cmra} (a : A) : siProp :=
   {| siProp_holds n := ✓{n} a |}.
 Solve Obligations with naive_solver eauto using cmra_validN_le.
