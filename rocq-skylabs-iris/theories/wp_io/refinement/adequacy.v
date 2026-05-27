@@ -85,10 +85,9 @@ Section with_lang.
        fupd to avoid TC unification issues with [BiBUpdFUpd] (the [BiBUpd]
        in the goal comes via the [Ghostly] projection, which evarconv won't
        unify with the canonical [uPred_bi_bupd]). *)
-    iAssert (|={⊤}=> ∃ γ : AuthSet.gname,
-       AuthSet.frag γ {[s_init]} ∗ root.trace_refine R γ [])%I as ">[%γ_abs [F RT]]".
-    { iApply (bupd_fupd (BiBUpdFUpd:=uPred_bi_bupd_fupd) ⊤).
-      iApply (root.trace_refine_alloc R s_init INIT). }
+    Fail iMod (root.trace_refine_alloc (PROP := iProp _) R s_init INIT).
+    Succeed iMod (root.trace_refine_alloc (Ghostly0 := iprop_ghostly) R s_init INIT).
+    iMod (root.trace_refine_alloc (PROP := iProp Σ) R s_init INIT) as (γ_abs) "[F RT]".
     iDestruct ("WP" with "F") as (stateI Φ fork_post ?) "[SI WP]".
     iIntros "!>".
     iExists (root.refine_embed_stateI R γ_abs), [Φ], _, _.
@@ -137,14 +136,8 @@ Section with_lang.
         AuthSet.frag γ_abs {[s_init]} ∗
         mono_list.half γ_con [].
   Proof.
-    iAssert (|={E}=> ∃ γ : mono_list.gname,
-       mono_list.half γ [] ∗ mono_list.half γ [])%I as ">[%γ_con [h1 h2]]".
-    { iApply (bupd_fupd (BiBUpdFUpd:=uPred_bi_bupd_fupd) E).
-      iApply mono_list.half_alloc. }
-    iAssert (|={E}=> ∃ γ : AuthSet.gname,
-       AuthSet.frag γ {[s_init]} ∗ root.trace_refine R γ [])%I as ">[%γ_abs [F RT]]".
-    { iApply (bupd_fupd (BiBUpdFUpd:=uPred_bi_bupd_fupd) E).
-      iApply (root.trace_refine_alloc R s_init INIT). }
+    iMod (mono_list.half_alloc (PROP := iProp Σ) []) as (γ_con) "[h1 h2]".
+    iMod (root.trace_refine_alloc (PROP := iProp Σ) R s_init INIT) as (γ_abs) "[F RT]".
     iExists γ_con, γ_abs. iFrame.
 
     (* TODO cleanup : inlining [skylabs.iris.extra.base_logic.iprop_invariants]
