@@ -339,6 +339,9 @@ Module RBinOp.
     | Rassign => compare_tag Rassign
     | Rassign_op op => compare_ctor (Rassign_op op)
     | Rsubscript => compare_tag Rsubscript
+    | Rcomma => compare_tag Rcomma
+    | Rand => compare_tag Rand
+    | Ror => compare_tag Ror
     end.
 
 End RBinOp.

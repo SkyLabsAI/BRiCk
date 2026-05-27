@@ -140,6 +140,9 @@ Section with_lang.
     | overloadable.Rassign => mret "="
     | overloadable.Rassign_op b => (fun a => a ++ "=") <$> printBO b
     | overloadable.Rsubscript => mret "[]"
+    | overloadable.Rcomma => mret ","
+    | overloadable.Rand => mret "&&"
+    | overloadable.Ror => mret "||"
     end.
 
   Fixpoint printN (inst : PrimString.string) (nm : name) : option PrimString.string :=
@@ -316,6 +319,7 @@ Module Type TESTS.
     TEST "Msg<unsigned long, long, unsigned long long, long long, unsigned int, int>::Msg()" (Nscoped (Ninst Msg targs) (Nctor [])) := eq_refl.
   Succeed Example _0 : TEST "Msg::Msg(int)" (Nscoped Msg (Nctor [Tint])) := eq_refl.
   Succeed Example _0 : TEST "operator|(int, int)" (Nglobal (Nop function_qualifiers.N OOPipe [Tint;Tint])) := eq_refl.
+  Succeed Example _0 : TEST "operator||(int, int)" (Nglobal (Nop function_qualifiers.N OOPipePipe [Tint;Tint])) := eq_refl.
   Succeed Example _0 : TEST "Msg::Msg(long)" (Nscoped Msg (Nctor [Tlong])) := eq_refl.
   Succeed Example _0 : TEST "Msg::operator=(const Msg&)" (Nscoped Msg (Nop function_qualifiers.N OOEqual [Tref (Tconst (Tnamed $ Nglobal (Nid "Msg")))])) := eq_refl.
   Succeed Example _0 : TEST "Msg::operator=(const Msg&&)" (Nscoped Msg (Nop function_qualifiers.N OOEqual [Trv_ref (Tconst (Tnamed $ Nglobal (Nid "Msg")))])) := eq_refl.

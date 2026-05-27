@@ -167,6 +167,9 @@ Section with_lang.
     | overloadable.Rassign => "="
     | overloadable.Rassign_op b => printBO b ++ "="
     | overloadable.Rsubscript => "[]"
+    | overloadable.Rcomma => ","
+    | overloadable.Ror => "||"
+    | overloadable.Rand => "&&"
     end.
 
   Fixpoint printN (nm : name) : PrimString.string :=

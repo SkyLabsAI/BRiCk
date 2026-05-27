@@ -56,6 +56,9 @@ Variant RBinOp : Set :=
 | Rassign
 | Rassign_op (op : BinOp)
 | Rsubscript
+| Rcomma
+| Rand
+| Ror
 .
 #[global] Instance RBinOp_eq_ec : EqDecision RBinOp.
 Proof. solve_decision. Defined.
@@ -69,12 +72,18 @@ Section countable.
       | Rassign => GenNode 1 []
       | Rassign_op op => GenNode 2 [OP op]
       | Rsubscript => GenNode 3 []
+      | Rcomma => GenNode 4 []
+      | Rand => GenNode 5 []
+      | Ror => GenNode 6 []
       end) (fun t =>
       match t with
       | GenNode 0 [OP op] => Rbinop op
       | GenNode 1 [] => Rassign
       | GenNode 2 [OP op] => Rassign_op op
       | GenNode 3 [] => Rsubscript
+      | GenNode 4 [] => Rcomma
+      | GenNode 5 [] => Rand
+      | GenNode 6 [] => Ror
       | _ => Rassign	(* dummy *)
       end)).
     abstract (by intros []).

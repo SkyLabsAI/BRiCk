@@ -78,6 +78,9 @@ Module BinOp.
     | Rassign => Eassign
     | Rassign_op op => Eassign_op op
     | Rsubscript => Esubscript
+    | Rcomma => fun l r _ => Ecomma l r
+    | Rand => fun l r _ => Eseqand l r
+    | Ror => fun l r _ => Eseqor l r
     end.
 
   (** The type of binary operators emitted by cpp2v *)
@@ -177,6 +180,13 @@ Definition Esubscript : BinOp.t :=
   BinOp.infer_subscript.
 Definition Ebinop (op : BinOp) : BinOp.t :=
   BinOp.infer (Rbinop op) $ BinOp.resolve_binop op.
+Definition Ecomma := fun l r =>
+  if BinOp.is_unresolved $ type_of l then Eunresolved_binop Rcomma l r else Ecomma l r.
+Definition Eseqand := fun l r =>
+  if BinOp.is_unresolved $ type_of l then Eunresolved_binop Rand l r else Eseqand l r.
+Definition Eseqor := fun l r =>
+  if BinOp.is_unresolved $ type_of l then Eunresolved_binop Ror l r else Eseqor l r.
+
 
 Module UnOp.
 
