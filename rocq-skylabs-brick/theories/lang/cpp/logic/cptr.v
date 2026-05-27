@@ -105,41 +105,35 @@ Section defs.
     - intros. apply conv_compl.
   Qed.
 
-  #[local] Lemma fs_equivI_type_pure P Q :
-    P ≡ Q ⊢@{mpredI} ⌜type_of_spec P = type_of_spec Q⌝.
-  Proof.
-    constructor => i. rewrite monPred_at_internal_eq monPred_at_pure.
-    rewrite /internal_eq /=. uPred.unseal.
-    rewrite siprop.siProp_internal_eq_unseal /=.
-    split=> n x ? Heq. by pose proof (type_of_spec_ne n _ _ Heq).
-  Qed.
   Lemma fs_equivI_type P Q :
     P ≡ Q ⊢@{mpredI} [| type_of_spec P = type_of_spec Q |].
   Proof.
-    iIntros "Heq". iDestruct (fs_equivI_type_pure with "Heq") as %?.
-    by iApply only_provable_intro.
+    rewrite only_provable_equiv.
+    constructor => ?.
+    rewrite monPred_at_internal_eq monPred_at_and monPred_at_emp monPred_at_pure.
+    rewrite /internal_eq /= siprop.siProp_internal_eq_unseal /=.
+    repeat uPred.unseal. constructor => n x ?. by intros [? _].
   Qed.
 
   Lemma fs_equivI_spec P Q vs K :
     P ≡ Q ⊢@{mpredI} P.(fs_spec) vs K ≡ Q.(fs_spec) vs K.
   Proof.
-    constructor => i. rewrite !monPred_at_internal_eq.
-    rewrite /internal_eq /=. uPred.unseal.
-    rewrite siprop.siProp_internal_eq_unseal /=.
-    split=>n x ? Heq. by destruct Heq as [_ HPQ]; apply HPQ.
+    constructor => ?. rewrite !monPred_at_internal_eq.
+    rewrite /internal_eq /= siprop.siProp_internal_eq_unseal /=.
+    repeat uPred.unseal. constructor=>n x ? [_ HPQ]. apply HPQ.
   Qed.
 
   Lemma fs_equivI_intro P Q :
     type_of_spec P = type_of_spec Q ->
     Forall vs K, P.(fs_spec) vs K ≡ Q.(fs_spec) vs K ⊢@{mpredI} P ≡ Q.
   Proof.
-    intros Htype.
+    intros.
     constructor => ?.
     repeat setoid_rewrite monPred_at_forall.
     repeat setoid_rewrite monPred_at_internal_eq.
-    rewrite /internal_eq /=. uPred.unseal.
-    rewrite siprop.siProp_internal_eq_unseal /=.
-    split=>n x ? H'. split; first done. intros vs K. apply (H' vs K).
+    rewrite /internal_eq /= siprop.siProp_internal_eq_unseal /=.
+    repeat uPred.unseal.
+    constructor=>n x. by split.
   Qed.
 
   Lemma fs_equivI P Q :
