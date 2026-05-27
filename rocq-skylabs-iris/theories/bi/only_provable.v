@@ -10,6 +10,8 @@ Require Import iris.bi.bi.
 Require Import iris.bi.monpred.
 Require Import iris.bi.embedding.
 Require Import iris.bi.lib.fractional.
+
+Require Export skylabs.iris.extra.bi.siprop.
 Require Import skylabs.iris.extra.proofmode.proofmode.
 
 (**
@@ -39,6 +41,19 @@ Notation "[ | P | ]" := (only_provable P) (format "[ |  P  | ]").
 Class BiEmpForallOnlyProvable (PROP : bi) :=
   emp_forall_only_provable A φ : (∀ x : A, [| φ x |]) ⊢@{PROP} <affine> (∀ x : A, [| φ x |]).
 #[global] Hint Mode BiEmpForallOnlyProvable + : typeclass_instances.
+
+Lemma si_prop_only_provable (P : Prop):
+  [| P |] ⊣⊢@{siProp} ⌜ P ⌝.
+Proof. by rewrite only_provable.unlock si_prop_affinely. Qed.
+
+Lemma si_pure_only_provable `{Sbi PROP} (P : Prop):
+  <si_pure> [| P |] ⊣⊢@{PROP} ⌜ P ⌝.
+Proof. by rewrite si_prop_only_provable si_pure_pure. Qed.
+
+Lemma only_provable_affinely_si_pure `{Sbi PROP} (P : Prop):
+  [| P |] ⊣⊢@{PROP} <affine> <si_pure> [| P |].
+Proof. by rewrite si_pure_only_provable only_provable.unlock. Qed.
+
 
 (** * Properties of [only_provable]. *)
 Section bi.
