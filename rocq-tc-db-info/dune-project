@@ -19,6 +19,6 @@
 (package
  (name rocq-tc-db-info)
  (synopsis "Rocq plugin and took for analyzing hint databases")
- (depends coq-core coq-stdlib rocq-skylabs-rocq-internals))
+ (depends rocq-core coq-stdlib rocq-skylabs-rocq-internals))
 
 (subst disabled)

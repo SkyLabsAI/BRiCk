@@ -9,7 +9,7 @@
 (package
  (name ltac2-llm-plugin)
  (synopsis "Ltac2 plugin to access OpenAI bindings.")
- (depends coq-core stdlib-extra))
+ (depends rocq-core stdlib-extra))
 
 (package
  (name ltac2-llm)

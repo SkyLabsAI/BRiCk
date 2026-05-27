@@ -19,6 +19,6 @@
 (package
  (name ltac2-logger)
  (synopsis "Logging library for Ltac2 (Rocq theories)")
- (depends coq-core stdlib-extra rocq-extra logger-lib coq-stdlib ltac2-extra))
+ (depends rocq-core stdlib-extra rocq-extra logger-lib coq-stdlib ltac2-extra))
 
 (subst disabled)

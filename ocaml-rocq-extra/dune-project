@@ -19,7 +19,7 @@
  (name rocq-extra)
  (synopsis "Extensions to the Coq API")
  (depends
-  coq-core
+  rocq-core
   stdlib-extra))
 
 (subst disabled)

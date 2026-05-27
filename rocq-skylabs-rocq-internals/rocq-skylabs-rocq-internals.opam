@@ -8,7 +8,7 @@ homepage: "https://github.com/SkyLabsAI/BRiCk"
 bug-reports: "https://github.com/SkyLabsAI/BRiCk/issues"
 depends: [
   "dune" {>= "3.21"}
-  "coq-core"
+  "rocq-core"
   "odoc" {with-doc}
 ]
 build: [

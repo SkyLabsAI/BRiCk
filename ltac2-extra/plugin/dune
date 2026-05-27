@@ -1,4 +1,4 @@
 (library
  (name ltac2_extra)
  (public_name ltac2-extra.plugin)
- (libraries coq-core.plugins.ltac2 rocq-extra stdlib-extra))
+ (libraries rocq-runtime.plugins.ltac2 rocq-extra stdlib-extra))
