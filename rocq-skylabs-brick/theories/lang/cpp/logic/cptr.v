@@ -105,39 +105,33 @@ Section defs.
     - intros. apply conv_compl.
   Qed.
 
+  (* Unfold definition of internal_eq, siProp model, and [function_spec_dist].
+  Everything else can be derived. *)
+  Lemma fs_equiv_unfold P Q `{Sbi PROP} :
+    P ≡ Q ⊣⊢@{PROP}
+    ⌜ type_of_spec P = type_of_spec Q ⌝ ∗ P.(fs_spec) ≡ Q.(fs_spec).
+  Proof.
+    rewrite /internal_eq -si_pure_pure. rewrite -si_pure_and_sep; f_equiv.
+    by siProp.unseal.
+  Qed.
+
+  Lemma fs_equivI P Q `{Sbi PROP} :
+    P ≡ Q ⊣⊢@{PROP}
+    ⌜ type_of_spec P = type_of_spec Q ⌝ ∗ ∀ vs K, P.(fs_spec) vs K ≡ Q.(fs_spec) vs K.
+  Proof. rewrite fs_equiv_unfold. by repeat setoid_rewrite discrete_fun_equivI. Qed.
+
   Lemma fs_equivI_type P Q :
     P ≡ Q ⊢@{mpredI} [| type_of_spec P = type_of_spec Q |].
-  Proof.
-    iIntros "#E".
-    by iDestruct (f_equivI (B := leibnizO _) type_of_spec with "E") as "->".
-  Qed.
+  Proof. rewrite fs_equivI. by iIntros "[-> _]". Qed.
 
-  Lemma fs_equivI_spec P Q vs K :
-    P ≡ Q ⊢@{mpredI} P.(fs_spec) vs K ≡ Q.(fs_spec) vs K.
-  Proof.
-    apply: (f_equivI (fun P => P.(fs_spec) vs K)); clear.
-    move=>n P Q [_ HPQ]. apply HPQ.
-  Qed.
+  Lemma fs_equivI_spec P Q vs K `{Sbi PROP} :
+    P ≡ Q ⊢@{PROP} P.(fs_spec) vs K ≡ Q.(fs_spec) vs K.
+  Proof. rewrite fs_equivI. by iIntros "[_ E]". Qed.
 
-  Lemma fs_equivI_intro P Q :
+  Lemma fs_equivI_intro P Q `{Sbi PROP} :
     type_of_spec P = type_of_spec Q ->
-    Forall vs K, P.(fs_spec) vs K ≡ Q.(fs_spec) vs K ⊢@{mpredI} P ≡ Q.
-  Proof.
-    intros Htype. rewrite /internal_eq.
-    repeat setoid_rewrite <-si_pure_forall; f_equiv.
-    repeat siProp.unseal. by constructor=>n x.
-  Qed.
-
-  Lemma fs_equivI P Q :
-    P ≡ Q ⊣⊢@{mpredI}
-    [| type_of_spec P = type_of_spec Q |] **
-    Forall vs K, P.(fs_spec) vs K ≡ Q.(fs_spec) vs K.
-  Proof.
-    split'.
-    - iIntros "?". iSplit; first by rewrite fs_equivI_type.
-      iIntros (vs K). by rewrite fs_equivI_spec.
-    - iIntros "[% ?]". by rewrite fs_equivI_intro.
-  Qed.
+    (∀ vs K, P.(fs_spec) vs K ≡ Q.(fs_spec) vs K) ⊢@{PROP} P ≡ Q.
+  Proof. rewrite fs_equivI. by iIntros (->) "$". Qed.
 
   (** [mpred] implication on [function_spec].
   Here, [Q] is a lower-level spec, and [P] is a derived/higher-level spec.
@@ -180,7 +174,7 @@ Section defs.
 
   Lemma fs_equivI_equiv P Q : P ≡ Q |-- fs_equiv P Q.
   Proof.
-    rewrite fs_equivI /fs_equiv. f_equiv.
+    rewrite fs_equivI /fs_equiv. f_equiv. by iIntros (->).
     rewrite -(bi.intuitionistic_intuitionistically (Forall _, _)).
     repeat f_equiv. rewrite prop_ext plainly_elim_persistently.
     by iIntros "#$".
