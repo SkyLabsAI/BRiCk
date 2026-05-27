@@ -290,6 +290,8 @@ Module decltype.
         | Echar _ t => mret t
         | Estring chars t =>
             mret $ Tref $ Tarray (Tconst t) (1 + literal_string.lengthN chars)
+        | Eunresolved_string_literal t =>
+            mret $ Tref $ Tincomplete_array (Tconst t)
         | Eint _ t => mret t
         | Ebool _ => mret Tbool
         | Efloat ft _ => mret $ Tfloat_ ft

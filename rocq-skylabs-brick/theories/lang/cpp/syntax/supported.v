@@ -98,9 +98,9 @@ Section with_monad.
     | Evar _ t => type t
     | Eenum_const n _ => name n
     | Eglobal n t | Eglobal_member n t => name n <+> type t
-    | Echar _ t | Estring _ t | Eint _ t => type t
-    | Ebool _
-    | Efloat _ _ => OK
+    | Echar _ t | Estring _ t | Eunresolved_string_literal t | Eint _ t => type t
+    | Efloat _ _
+    | Ebool _ => OK
     | Eunop _ e t => expr e <+> type t
     | Ebinop _ e1 e2 t => expr e1 <+> type t
     | Ederef e t => expr e <+> type t

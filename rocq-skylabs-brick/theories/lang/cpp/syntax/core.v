@@ -475,6 +475,7 @@ program because, in part, C++ has no type for references to members.
 
 | Echar (c : N) (t : type)
 | Estring (s : literal_string.t) (t : type)
+| Eunresolved_string_literal (t : type)
 | Eint (n : Z) (t : type)
 | Ebool (b : bool)
 | Efloat (ft : float_type.t) (_ : float_type.car ft)
@@ -957,6 +958,7 @@ with is_dependentE (e : Expr) : bool :=
   | Eglobal_member n t => is_dependentN n || is_dependentT t
   | Echar _ t
   | Estring _ t
+  | Eunresolved_string_literal t
   | Eint _ t => is_dependentT t
   | Ebool _
   | Efloat _ _ => false

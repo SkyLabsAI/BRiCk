@@ -573,6 +573,8 @@ Module decltype.
             end
         | Estring chars t =>
             mret $ Tref $ Tarray (Tconst t) (1 + literal_string.lengthN chars)
+        | Eunresolved_string_literal t =>
+            mret $ Tref $ Tincomplete_array (Tconst t)
         | Eint _ t =>
             let* _ := guard (t ∈ [Tchar;Tuchar;Tschar;Tshort;Tushort;Tint;Tuint;Tlong;Tulong;Tlonglong;Tulonglong]) in
             mret t

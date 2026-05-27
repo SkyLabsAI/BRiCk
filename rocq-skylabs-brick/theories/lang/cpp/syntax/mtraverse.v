@@ -229,6 +229,7 @@ Module MTraverse.
 
       | Echar c t => Echar c <$> ET (traverseT t)
       | Estring s t => Estring s <$> ET (traverseT t)
+      | Eunresolved_string_literal t => Eunresolved_string_literal <$> ET (traverseT t)
       | Eint z t => Eint z <$> ET (traverseT t)
       | Ebool b => mret $ Ebool b
       | Efloat ft v => mret $ Efloat ft v

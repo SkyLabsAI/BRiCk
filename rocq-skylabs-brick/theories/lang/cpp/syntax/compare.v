@@ -1807,6 +1807,7 @@ Module Expr.
       | Eglobal _ _ => 11
       | Echar _ _ => 12
       | Estring _ _ => 13
+      | Eunresolved_string_literal _ => 64
       | Eint _ _ => 14
       | Ebool _ => 15
       | Eunop _ _ _ => 16
@@ -1916,6 +1917,7 @@ Module Expr.
       | 61 => box_Elambda
       | 62 => box_Emember_ignore
       | 63 => box_Efloat
+      | 64 => type
       | _ => box_Eunsupported
       end.
     Definition data (e : Expr) : car (tag e) :=
@@ -1935,6 +1937,7 @@ Module Expr.
       | Eglobal_member on t => Box_Eglobal on t
       | Echar c t => Box_Echar c t
       | Estring s t => Box_Estring s t
+      | Eunresolved_string_literal t => t
       | Eint n t => Box_Eint n t
       | Ebool b => b
       | Efloat ft v => Box_Efloat ft (float_value.to_bits ft v)
@@ -2042,6 +2045,7 @@ Module Expr.
       | 61 => box_Elambda_compare
       | 62 => box_Emember_ignore_compare
       | 63 => box_Efloat_compare
+      | 64 => compareT
       | _ => box_Eunsupported_compare
       end.
 
@@ -2071,6 +2075,7 @@ Module Expr.
 
       | Echar c t => COMP (Echar c t)
       | Estring s t => COMP (Estring s t)
+      | Eunresolved_string_literal t => COMP (Eunresolved_string_literal t)
       | Eint n t => COMP (Eint n t)
 
       | Ebool b => COMP (Ebool b : Expr)

@@ -974,12 +974,18 @@ public:
 
     void VisitPredefinedExpr(const PredefinedExpr *expr) {
         // [PredefinedExpr] constructs a [string] which is always ascii
-        print.ctor("Estring");
-        print.ctor("BS.string_to_bytes");
-        print.str(expr->getFunctionName()->getString());
-        print.end_ctor();
-        print_string_type(expr, print, cprint);
-        print.end_ctor();
+        if (auto name = expr->getFunctionName()) {
+            guard::ctor _{print, "Estring"};
+            {
+                guard::ctor __{print, "BS.string_to_bytes"};
+                print.str(name->getString());
+            }
+            always_assert(!expr->getType()->isDependentType() && "dependent type of predefined expr");
+            print_string_type(expr, print, cprint);
+        } else {
+            guard::ctor _{print, "Eunresolved_string_literal"};
+            print.output() << "Tchar";
+        }
     }
 
     void VisitCXXBoolLiteralExpr(const CXXBoolLiteralExpr *lit) {
