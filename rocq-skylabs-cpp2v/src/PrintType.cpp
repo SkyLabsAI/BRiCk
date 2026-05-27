@@ -470,7 +470,6 @@ public:
         // std::cerr << "VisitInjectedClassNameType: "
         // 		  // << type->getTemplateName()
         // 		  << " - " << type->getTemplateName(p).<< "\n";
-        always_assert(print.templates());
 
         if (auto decl = type->getDecl()) {
             /*
