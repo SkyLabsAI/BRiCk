@@ -1,0 +1,105 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.implicit_members</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a id="cpp_prog__source__" class="idref" href="#cpp_prog__source__"><span class="id" title="section">Import</span></a> <a id="cpp_prog__source__" class="idref" href="#cpp_prog__source__"><span class="id" title="section">skylabs.lang.cpp.parser</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">duplicates</span>(<span class="id" title="var">error</span>)]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">source</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> <span class="id" title="var">C1</span> { };<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> <span class="id" title="var">C2</span> { <span class="id" title="var">C2</span>() = <span class="id" title="var">default</span>; };<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> <span class="id" title="var">C3</span> { <span class="id" title="var">C3</span>() = <span class="id" title="var">delete</span>; };<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> <span class="id" title="var">C4</span> { ~<span class="id" title="var">C4</span>() = <span class="id" title="var">delete</span>; };<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="get" class="idref" href="#get"><span class="id" title="definition">get</span></a> (<a id="n:1" class="idref" href="#n:1"><span class="id" title="binder">n</span></a> : <span class="id" title="inductive">name</span>) :=<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="skylabs_brick.tests.implicit_members.html#n:1"><span class="id" title="variable">n</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="skylabs_brick.tests.implicit_members.html#source"><span class="id" title="definition">source</span></a>.(<span class="id" title="projection">symbols</span>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs_brick.tests.implicit_members.html#n:1"><span class="id" title="variable">n</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C1::C1()".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C1::~C1()".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C1::C1(const C1&amp;)".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C1::C1(const C1&amp;&amp;)".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C1::operator=(const C1&amp;)".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C1::operator=(C1&amp;&amp;)".<br/>
+
+<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C2::C2()".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C2::~C2()".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C2::C2(const C2&amp;)".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C2::C2(const C2&amp;&amp;)".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C2::operator=(const C2&amp;)".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C2::operator=(C2&amp;&amp;)".<br/>
+
+<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C3::C3()".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C3::~C3()".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C3::C3(const C3&amp;)".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C3::C3(const C3&amp;&amp;)".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C3::operator=(const C3&amp;)".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C3::operator=(C3&amp;&amp;)".<br/>
+
+<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C4::C4()".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C4::~C4()".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C4::C4(const C4&amp;)".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C4::C4(const C4&amp;&amp;)".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C4::operator=(const C4&amp;)".<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <a class="idref" href="skylabs_brick.tests.implicit_members.html#get"><span class="id" title="definition">get</span></a> "C4::operator=(C4&amp;&amp;)".<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

@@ -39,16 +39,22 @@
 
 <div class="code">
 <span class="comment">(*<br/>
-&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2025&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2025-2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
 &nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
 &nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
 &nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Stdlib.Strings.String</span>.<br/>
 <span class="id" title="keyword">Require</span> <span class="id" title="library">Stdlib.Array.PArray</span>.<br/>
 <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Stdlib.Numbers.Cyclic.Int63.PrimInt63</span>.<br/>
 <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.parser.html#"><span class="id" title="library">skylabs.lang.cpp.parser</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <a class="idref" href="skylabs.lang.cpp.syntax.typed.html#"><span class="id" title="library">skylabs.lang.cpp.syntax.typed</span></a>.<br/>
 
 <br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">string_scope</span>.<br/>
 #[<span class="id" title="var">local</span>] <span class="id" title="keyword">Set</span> <span class="id" title="keyword">Printing</span> <span class="id" title="keyword">Universes</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="version" class="idref" href="#version"><span class="id" title="definition">version</span></a> : <span class="id" title="var">string</span> := "4f56aa10eab1efc2955ca7e2098c062889209cbd".<br/>
 
 <br/>
 <span class="id" title="keyword">Register</span> <span class="id" title="var">translation_unit.t</span> <span class="id" title="keyword">as</span> <span class="id" title="var">skylabs.lang.cpp.parser.translation_unit.t</span>.<br/>

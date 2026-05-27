@@ -1,0 +1,84 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.sub_module_with_implicits</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a id="cpp_prog__header__" class="idref" href="#cpp_prog__header__"><span class="id" title="section"><span id="cpp_prog__cpp__" class="id">Import</span></span></a> <a id="cpp_prog__header__" class="idref" href="#cpp_prog__header__"><span class="id" title="section"><span id="cpp_prog__cpp__" class="id">skylabs.lang.cpp.parser</span></span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics.sub_module</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">duplicates</span>(<span class="id" title="var">error</span>)]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">header</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> <span class="id" title="var">C</span> {<br/>
+&nbsp;&nbsp;};<br/>
+}}.<br/>
+
+<br/>
+#[<span class="id" title="var">duplicates</span>(<span class="id" title="var">error</span>)]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">cpp</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> <span class="id" title="var">C</span> {<br/>
+&nbsp;&nbsp;};<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">void</span> <span class="id" title="var">test</span>() {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">C</span> <span class="id" title="var">c</span>;<br/>
+&nbsp;&nbsp;}<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="first_tu_sub_module_second_tu" class="idref" href="#first_tu_sub_module_second_tu"><span class="id" title="definition">first_tu_sub_module_second_tu</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.decidable.html#bool_decide"><span class="id" title="definition">bool_decide</span></a> (<span class="id" title="record">sub_module</span> <a class="idref" href="skylabs_brick.tests.sub_module_with_implicits.html#header"><span class="id" title="definition">header</span></a> <a class="idref" href="skylabs_brick.tests.sub_module_with_implicits.html#cpp"><span class="id" title="definition">cpp</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.1.0/stdlib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
