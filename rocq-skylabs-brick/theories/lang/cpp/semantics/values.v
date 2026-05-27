@@ -121,7 +121,7 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
   Definition is_true (v : val) : option bool :=
     match v with
     | Vint v => Some (bool_decide (v <> 0))
-    | Vfloat f v => Some (negb (float_value.is_zero v))
+    | Vfloat f v => Some (bool_decide (v <> float_value.zero _))
     | Vptr p => Some (bool_decide (p <> nullptr))
     | Vchar n => Some (bool_decide (n <> 0%N))
     | Vundef | Vraw _ => None
