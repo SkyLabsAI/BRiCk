@@ -28,9 +28,9 @@ let create_clos_infos ?evars flgs env =
 let red_flags : Names.GlobRef.t Genredexpr.glob_red_flag Tac2ffi.repr =
   let to_red_strength v =
     let open Genredexpr in
-    match v with
-    | ValInt 0 -> Norm
-    | ValInt 1 -> Head
+    match unsafe_to_int v with
+    | 0 -> Norm
+    | 1 -> Head
     | _ -> assert false
   in
   let to_red_flags v =
@@ -270,15 +270,15 @@ let _ =
 let relevance =
   let of_relevance r =
     match r with
-    | Sorts.Relevant       -> ValInt 0
-    | Sorts.Irrelevant     -> ValInt 1
+    | Sorts.Relevant       -> of_int @@ 0
+    | Sorts.Irrelevant     -> of_int @@ 1
     | Sorts.RelevanceVar _ -> assert false (* FIXME? *)
   in
   let to_relevance v =
-    match v with
-    | ValInt 0 -> Sorts.Relevant
-    | ValInt 1 -> Sorts.Irrelevant
-    | _        -> assert false
+    match unsafe_to_int v with
+    | 0 -> Sorts.Relevant
+    | 1 -> Sorts.Irrelevant
+    | _ -> assert false
   in
   make_repr of_relevance to_relevance
 
@@ -367,7 +367,7 @@ module RelDecl = struct
 
   let of_val : Tac2val.valexpr -> t = fun v ->
     let open Tac2ffi in
-    match v with
+    match unsafe_to_fat v with
     | ValBlk(0, [|b|]   ) -> Assum(repr_to binder b)
     | ValBlk(1, [|b; t|]) -> Def(repr_to binder b, to_constr t)
     | _                   -> assert false

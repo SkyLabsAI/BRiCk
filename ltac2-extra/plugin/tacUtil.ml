@@ -71,12 +71,12 @@ module Value = struct
   (** Must agree with Ltac2 type [Constr.Unsafe.RelDecl.t] *)
   let of_rel_declaration (decl : EConstr.rel_declaration) : valexpr =
     match decl with
-    | Decl.LocalAssum (a,t) -> ValBlk (0, [|of_binder (a,t)|])
-    | Decl.LocalDef (a,c,t) -> ValBlk (1, [|of_binder (a,t); of_constr c|])
+    | Decl.LocalAssum (a,t) -> of_fat @@ ValBlk (0, [|of_binder (a,t)|])
+    | Decl.LocalDef (a,c,t) -> of_fat @@ ValBlk (1, [|of_binder (a,t); of_constr c|])
 
   (** Must agree with Ltac2 type [Constr.Unsafe.RelDecl.t] *)
   let to_rel_declaration (v : valexpr) : EConstr.rel_declaration =
-    match v with
+    match unsafe_to_fat v with
     | ValBlk (0, [|b|]) -> let a,t = to_binder b in Decl.LocalAssum (a,t)
     | ValBlk (1, [|b;c|]) ->
       let a,t = to_binder b in Decl.LocalDef (a,to_constr c,t)
