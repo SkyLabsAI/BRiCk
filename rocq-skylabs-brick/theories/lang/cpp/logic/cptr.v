@@ -108,32 +108,24 @@ Section defs.
   Lemma fs_equivI_type P Q :
     P ≡ Q ⊢@{mpredI} [| type_of_spec P = type_of_spec Q |].
   Proof.
-    rewrite only_provable_equiv.
-    constructor => ?.
-    rewrite monPred_at_internal_eq monPred_at_and monPred_at_emp monPred_at_pure.
-    rewrite /internal_eq /= siprop.siProp_internal_eq_unseal /=.
-    repeat uPred.unseal. constructor => n x ?. by intros [? _].
+    iIntros "#E".
+    by iDestruct (f_equivI (B := leibnizO _) type_of_spec with "E") as "->".
   Qed.
 
   Lemma fs_equivI_spec P Q vs K :
     P ≡ Q ⊢@{mpredI} P.(fs_spec) vs K ≡ Q.(fs_spec) vs K.
   Proof.
-    constructor => ?. rewrite !monPred_at_internal_eq.
-    rewrite /internal_eq /= siprop.siProp_internal_eq_unseal /=.
-    repeat uPred.unseal. constructor=>n x ? [_ HPQ]. apply HPQ.
+    apply: (f_equivI (fun P => P.(fs_spec) vs K)); clear.
+    move=>n P Q [_ HPQ]. apply HPQ.
   Qed.
 
   Lemma fs_equivI_intro P Q :
     type_of_spec P = type_of_spec Q ->
     Forall vs K, P.(fs_spec) vs K ≡ Q.(fs_spec) vs K ⊢@{mpredI} P ≡ Q.
   Proof.
-    intros.
-    constructor => ?.
-    repeat setoid_rewrite monPred_at_forall.
-    repeat setoid_rewrite monPred_at_internal_eq.
-    rewrite /internal_eq /= siprop.siProp_internal_eq_unseal /=.
-    repeat uPred.unseal.
-    constructor=>n x. by split.
+    intros Htype. rewrite /internal_eq.
+    repeat setoid_rewrite <-si_pure_forall; f_equiv.
+    repeat siProp.unseal. by constructor=>n x.
   Qed.
 
   Lemma fs_equivI P Q :
