@@ -5,21 +5,11 @@
  *)
 
 Require Import skylabs.lang.cpp.mparser.prelude.
+Require Import skylabs.lang.cpp.mparser.expr.
 Require Export skylabs.lang.cpp.parser.stmt.
 Require Import skylabs.lang.cpp.syntax.typing.
 
 (** ** Template-only derived variable declarations emitted by cpp2v *)
 
-#[local] Definition set_declared_type (t : Mdecltype) (e : MExpr) : MExpr :=
-  match e with
-  | Eunresolved_parenlist None es => Eunresolved_parenlist (Some t) es
-  | Eunresolved_initlist None es => Eunresolved_initlist (Some t) es
-  (**
-  TODO: The same treatment for other direct initialization
-  expressions.
-  *)
-  | _ => e
-  end.
-
 Definition Dvar (name : localname) (t : Mdecltype) (init : option MExpr) : MVarDecl :=
-  Dvar name t (set_declared_type t <$> init).
+  Dvar name t (Einitializing_type t <$> init).

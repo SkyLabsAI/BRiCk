@@ -256,7 +256,7 @@ Definition Eunresolved_member (arrow : bool) (base : MExpr) (i : Mname) : MExpr 
 
 (** ** Template-only derived variable declarations emitted by cpp2v *)
 
-#[local] Definition set_declared_type (t : Mdecltype) (e : MExpr) : MExpr :=
+Definition Einitializing_type (t : Mdecltype) (e : MExpr) : MExpr :=
   match e with
   | Eunresolved_parenlist None es => Eunresolved_parenlist (Some t) es
   | Eunresolved_initlist None es => Eunresolved_initlist (Some t) es

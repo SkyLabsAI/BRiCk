@@ -1635,7 +1635,7 @@ public:
                    iinit != expr->capture_init_end();
                  ++icap, ++iinit) {
                 {
-                    guard::ctor _{print, "expr.set_declared_type"};
+                    guard::ctor _{print, "expr.Einitializing_type"};
                     cprint.printQualType(print, capture_type(*icap),
                                          loc::of(expr))
                         << fmt::nbsp;
