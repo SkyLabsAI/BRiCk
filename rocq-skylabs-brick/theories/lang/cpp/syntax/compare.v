@@ -630,7 +630,14 @@ Module temp_param.
   End compare.
 
 End temp_param.
-#[global] Instance temp_param_compare {A : Set} `{!Compare A} : Compare (temp_param_ A) := temp_param.compare compare.
+#[global] Instance temp_param_compare {A : Set} `{!Compare A} : Compare (temp_param_ A) :=
+  temp_param.compare compare.
+#[global] Instance temp_param_comparison {A : Set} `{!@Comparison A cmpA}
+  : Comparison (temp_param.compare cmpA).
+Proof. Admitted.
+#[global] Instance temp_param_leibniz_comparison {A : Set} `{!@Comparison A cmpA} `{LeibnizComparison cmpA}
+  : LeibnizComparison (temp_param.compare cmpA).
+Proof. Admitted.
 
 Module temp_arg.
   Section compare.
