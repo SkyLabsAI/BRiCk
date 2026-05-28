@@ -1210,7 +1210,7 @@ public:
         if (ClangPrinter::debug && cprint.trace(Trace::Decl))
             cprint.trace("VisitCXXRecordDecl", loc::of(decl));
         bool printed = false;
-        if (decl->isCompleteDefinition()) {
+        if (decl->isCompleteDefinition() && !print.templates()) {
             printed = printImplicitMembers(*decl, print, cprint, ctxt);
         }
         if (decl->isStruct() or decl->isClass()) {
