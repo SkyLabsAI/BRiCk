@@ -276,6 +276,8 @@ Module decltype.
         | Eunresolved_member_call on obj es => Tresult_member_call on <$> of_expr obj <*> traverse_list of_expr es
         | Eunresolved_parenlist (Some t) es => mret t (* Tresult_parenlist t <$> traverse_list of_expr es *)
         | Eunresolved_parenlist None _ => mfail
+        | Eunresolved_initlist (Some t) es => mret t (* Tresult_parenlist t <$> traverse_list of_expr es *)
+        | Eunresolved_initlist None _ => mfail
         | Eunresolved_member obj fld => Tresult_member <$> of_expr obj <*> mret fld
 
         | Evar _ t => mret $ tref QM t

@@ -13,6 +13,7 @@ Require Import skylabs.lang.cpp.syntax.typing.
 #[local] Definition set_declared_type (t : Mdecltype) (e : MExpr) : MExpr :=
   match e with
   | Eunresolved_parenlist None es => Eunresolved_parenlist (Some t) es
+  | Eunresolved_initlist None es => Eunresolved_initlist (Some t) es
   (**
   TODO: The same treatment for other direct initialization
   expressions.
@@ -22,4 +23,3 @@ Require Import skylabs.lang.cpp.syntax.typing.
 
 Definition Dvar (name : localname) (t : Mdecltype) (init : option MExpr) : MVarDecl :=
   Dvar name t (set_declared_type t <$> init).
-

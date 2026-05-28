@@ -1287,6 +1287,13 @@ public:
             // and are retained in the clang AST only for printing purposes.
             always_assert(expr->inits().size() == 1);
             cprint.printExpr(print, expr->getInit(0), names);
+        } else if (expr->getType()->isVoidType()) {
+            print.ctor("Eunresolved_initlist");
+            print.none();
+            print.output() << fmt::nbsp;
+            print.list(expr->inits(),
+                       [&](auto i) { cprint.printExpr(print, i, names); });
+            print.end_ctor();
         } else if (auto fld = expr->getInitializedFieldInUnion()) {
             print.ctor("Einitlist_union");
             assert(expr->inits().size() <= 1 &&

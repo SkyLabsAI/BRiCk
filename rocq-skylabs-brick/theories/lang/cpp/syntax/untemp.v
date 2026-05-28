@@ -44,6 +44,7 @@ Module Import internal.
       handle_Eunresolved_call _ _ _ _ := mthrow Not_representable;
       handle_Eunresolved_member_call _ _ _ _ _ _ := mthrow Not_representable;
       handle_Eunresolved_parenlist _ _ _ _ := mthrow Not_representable;
+      handle_Eunresolved_initlist _ _ _ _ := mthrow Not_representable;
       handle_Eunresolved_member _ _ _ _ := mthrow Not_representable;
       handle_expr_type := id;
       handle_Eunresolved_cast _ _ _ _ := mthrow Not_representable;

@@ -1420,6 +1420,14 @@ Module Expr.
       compare_lex (option.compare compareT b1.(box_Eunresolved_parenlist_0) b2.(box_Eunresolved_parenlist_0)) $ fun _ =>
       List.compare compareE b1.(box_Eunresolved_parenlist_1) b2.(box_Eunresolved_parenlist_1).
 
+    Record box_Eunresolved_initlist : Set := Box_Eunresolved_initlist {
+      box_Eunresolved_initlist_0 : option type;
+      box_Eunresolved_initlist_1 : list Expr;
+    }.
+    Definition box_Eunresolved_initlist_compare (b1 b2 : box_Eunresolved_initlist) : comparison :=
+      compare_lex (option.compare compareT b1.(box_Eunresolved_initlist_0) b2.(box_Eunresolved_initlist_0)) $ fun _ =>
+      List.compare compareE b1.(box_Eunresolved_initlist_1) b2.(box_Eunresolved_initlist_1).
+
     Record box_Eunresolved_member : Set := Box_Eunresolved_member {
       box_Eunresolved_member_0 : Expr;
       box_Eunresolved_member_1 : name;
@@ -1801,6 +1809,7 @@ Module Expr.
       | Eunresolved_call _ _ => 5
       | Eunresolved_member_call _ _ _ => 6
       | Eunresolved_parenlist _ _ => 7
+      | Eunresolved_initlist _ _ => 65
       | Eunresolved_member _ _ => 8
       | Evar _ _ => 9
       | Eenum_const _ _ => 10
@@ -1918,6 +1927,7 @@ Module Expr.
       | 62 => box_Emember_ignore
       | 63 => box_Efloat
       | 64 => type
+      | 65 => box_Eunresolved_initlist
       | _ => box_Eunsupported
       end.
     Definition data (e : Expr) : car (tag e) :=
@@ -1929,6 +1939,7 @@ Module Expr.
       | Eunresolved_call on es => Box_Eunresolved_call on es
       | Eunresolved_member_call on e es => Box_Eunresolved_member_call on e es
       | Eunresolved_parenlist e es => Box_Eunresolved_parenlist e es
+      | Eunresolved_initlist e es => Box_Eunresolved_initlist e es
       | Eunresolved_member e f => Box_Eunresolved_member e f
       | Eexplicit_cast s t e => Box_Eexplicit_cast s t e
       | Evar n t => Box_Evar n t
@@ -2046,6 +2057,7 @@ Module Expr.
       | 62 => box_Emember_ignore_compare
       | 63 => box_Efloat_compare
       | 64 => compareT
+      | 65 => box_Eunresolved_initlist_compare
       | _ => box_Eunsupported_compare
       end.
 
@@ -2064,6 +2076,7 @@ Module Expr.
       | Eunresolved_call on es => COMP (Eunresolved_call on es)
       | Eunresolved_member_call on e es => COMP (Eunresolved_member_call on e es)
       | Eunresolved_parenlist e es => COMP (Eunresolved_parenlist e es)
+      | Eunresolved_initlist e es => COMP (Eunresolved_initlist e es)
       | Eunresolved_member e f => COMP (Eunresolved_member e f)
       | Eexplicit_cast s e t => COMP (Eexplicit_cast s e t)
 

@@ -154,6 +154,7 @@ Section with_monad.
     | Eunresolved_call n es => name n <+> lst expr es
     | Eunresolved_member_call _ _ _
     | Eunresolved_parenlist _ _
+    | Eunresolved_initlist _ _
     | Eunresolved_member _ _ => OK
     | Earrayloop_init _ e _ _ e2 t => expr e <+> expr e2 <+> type t
     | Earrayloop_index _ t => type t

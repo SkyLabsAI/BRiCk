@@ -453,6 +453,7 @@ var(arg1,…,argN)>> with dependent type <<T>>. Making the type optional
 simplifies cpp2v---we set it from context in ../mparser.v.
 *)
 | Eunresolved_parenlist (_ : option type) (_ : list Expr)
+| Eunresolved_initlist (_ : option type) (_ : list Expr)
 | Eunresolved_member (_ : Expr) (_ : name)
 
 (**
@@ -951,6 +952,7 @@ with is_dependentE (e : Expr) : bool :=
   | Eunresolved_call _ _
   | Eunresolved_member_call _ _ _
   | Eunresolved_parenlist _ _
+  | Eunresolved_initlist _ _
   | Eunresolved_member _ _ => true
   | Evar _ t => is_dependentT t
   | Eenum_const n _ => is_dependentN n

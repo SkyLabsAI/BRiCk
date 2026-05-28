@@ -216,6 +216,7 @@ Module MTraverse.
       | Eunresolved_call on es => hE.(handle_Eunresolved_call) on es (fun _ => traverseN on) (fun _ => traverseE <$> es)
       | Eunresolved_member_call on e es => hE.(handle_Eunresolved_member_call) on e es (fun _ => traverseN on) (fun _ => traverseE e) (fun _ => traverseE <$> es)
       | Eunresolved_parenlist t es => hE.(handle_Eunresolved_parenlist) t es (fun _ => traverseT <$> t) (fun _ => traverseE <$> es)
+      | Eunresolved_initlist t es => hE.(handle_Eunresolved_initlist) t es (fun _ => traverseT <$> t) (fun _ => traverseE <$> es)
       | Eunresolved_member e f => hE.(handle_Eunresolved_member) e f (fun _ => traverseE e) (fun _ => traverseN f)
 
       (**
