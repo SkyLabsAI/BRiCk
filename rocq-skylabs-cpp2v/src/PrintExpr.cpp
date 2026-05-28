@@ -1084,9 +1084,15 @@ public:
 
     void
     VisitCXXDependentScopeMemberExpr(const CXXDependentScopeMemberExpr *expr) {
-        guard::ctor _{print, "Eunresolved_member"};
-        print.boolean(expr->isArrow()) << fmt::nbsp;
-        cprint.printExpr(print, expr->getBase(), names) << fmt::nbsp;
+        guard::ctor _{print, "core.Eunresolved_member"};
+        if (expr->isArrow()) {
+            guard::ctor arrow{print, "Eunresolved_unop", false};
+            print.output() << "Rarrow" << fmt::nbsp;
+            cprint.printExpr(print, expr->getBase(), names) << fmt::nbsp;
+        } else {
+            cprint.printExpr(print, expr->getBase(), names);
+        }
+        print.output() << fmt::nbsp;
         printDependentMember(cprint, print, expr);
     }
 
