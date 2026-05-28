@@ -330,6 +330,10 @@ Module decltype.
         in
         trace (Can_initialize dt t) $
           match drop_qualifiers dt , drop_qualifiers t with
+          | Tauto , _ =>
+              (* Anything can initialize <auto>.
+                 TODO: make this only apply when checking template code *)
+              mret ()
           | Tref dt , Tref t
           | Trv_ref dt , Trv_ref t =>
               ref_conv dt t
