@@ -1178,9 +1178,7 @@ fmt::Formatter &printDeclarationName(CoqPrinter &print,
     }
 
     default:
-        llvm::errs() << "printDeclarationName(" << name.getNameKind() << ")";
-        name.dump();
-        print.output() << "(Nunsupported \"printDeclarationName("
+        print.output() << "(Nunsupported_atomic \"printDeclarationName("
                        << name.getNameKind() << ")\")";
     }
     return print.output();
