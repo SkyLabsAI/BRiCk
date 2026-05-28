@@ -1592,11 +1592,57 @@ public:
 
     void VisitLambdaExpr(const LambdaExpr *expr) {
         print.ctor("Elambda");
-        cprint.printName(print, *expr->getLambdaClass()) << fmt::nbsp;
 
-        print.list(expr->capture_inits(), [&](auto capture) {
-            cprint.printExpr(print, capture, this->names);
-        });
+        auto LambdaClass = expr->getLambdaClass();
+
+        cprint.printName(print, *LambdaClass) << fmt::nbsp;
+
+        if (print.templates()) {
+            // get the mapping for captures so that we can compute their
+            // types
+            llvm::DenseMap<const ValueDecl *, FieldDecl *> CaptureFields;
+            FieldDecl *ThisCapture = nullptr;
+            LambdaClass->getCaptureFields(CaptureFields, ThisCapture);
+
+            auto capture_type = [&](const LambdaCapture &capture) -> QualType {
+                if (capture.capturesVariable()) {
+                    auto var = capture.getCapturedVar();
+                    auto field = CaptureFields[var];
+                    always_assert(field && "uncaptured field");
+                    return field->getType();
+                } else if (capture.capturesThis()) {
+                    always_assert(ThisCapture && "this capture is null");
+                    return ThisCapture->getType();
+                } else if (capture.capturesVLAType()) {
+                    guard::ctor _{print, "Eunsupported"};
+                    print.str("variable length array capture");
+                } else {
+                    always_assert(false && "unreachable lambda capture type");
+                }
+            };
+
+            auto icap = expr->capture_begin();
+            auto iinit = expr->capture_init_begin();
+            print.begin_list();
+            for (; icap != expr->capture_end() &&
+                   iinit != expr->capture_init_end();
+                 ++icap, ++iinit) {
+                {
+                    guard::ctor _{print, "expr.set_declared_type"};
+                    cprint.printQualType(print, capture_type(*icap),
+                                         loc::of(expr))
+                        << fmt::nbsp;
+                    cprint.printExpr(print, *iinit, this->names);
+                }
+                print.cons();
+            }
+            print.end_list();
+        } else {
+            print.list(expr->capture_inits(), [&](auto init) {
+                cprint.printExpr(print, init, this->names);
+            });
+        }
+
         print.end_ctor();
     }
 
