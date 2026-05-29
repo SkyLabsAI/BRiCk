@@ -7,7 +7,7 @@
 Require Import iris.algebra.lib.gmap_view.
 Require Import skylabs.iris.extra.algebra.gset_bij.
 Require Import skylabs.iris.extra.algebra.coGset.
-Require Import skylabs.iris.extra.si_logic.algebra.
+Require Import skylabs.iris.extra.bi.algebra.
 Require Import skylabs.iris.extra.bi.prelude.
 Require Import skylabs.iris.extra.bi.observe.
 Require Import skylabs.iris.extra.bi.includedI.
@@ -53,7 +53,7 @@ Hv]. We know how to fix [iDestruct], and will report the bug upstream.
 
 (* Bring the project's [algebra.*] lemmas to the front so they are preferred
    over Iris's same-named lemmas (e.g. [excl_validI]). *)
-Import skylabs.iris.extra.si_logic.algebra.
+Import skylabs.iris.extra.bi.algebra.
 
 Section observe.
   #[local] Set Default Proof Using "Type*".
