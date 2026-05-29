@@ -4,4 +4,3 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Export iris.si_logic.bi.
-Require Import skylabs.prelude.base.
