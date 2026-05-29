@@ -27,12 +27,14 @@
   TODO: These should be upstreamed to Iris's code base. **)
 
 Require skylabs.prelude.tactics.base_dbs.
-Require Export skylabs.iris.extra.si_logic.bi.
+Require Export iris.si_logic.bi.
 
 Require Import iris.algebra.proofmode_classes.
 Require Import iris.proofmode.classes.
 
 Require Import iris.base_logic.lib.iprop. (* << for [gname] only *)
+
+Require Import skylabs.prelude.base.
 
 #[local] Set Default Proof Using "Type*".
 
