@@ -51,19 +51,13 @@ with just [%Hv] and then manually [apply excl_auth_frac_op_inv_L in
 Hv]. We know how to fix [iDestruct], and will report the bug upstream.
 *)
 
-(* Re-declare the project's [✓] notation last so it overrides Iris's
-   [internal_cmra_valid] notation in [bi_scope]. Same for [≼]. *)
-Notation "✓ x" := (bi_cmra_valid x) (at level 20) : bi_scope.
-Infix "≼" := includedI : bi_scope.
-
 (* Bring the project's [algebra.*] lemmas to the front so they are preferred
    over Iris's same-named lemmas (e.g. [excl_validI]). *)
 Import skylabs.iris.extra.si_logic.algebra.
 
 Section observe.
   #[local] Set Default Proof Using "Type*".
-  Context `{!BiEmbed siPropI PROP}.
-  Context `{!Sbi PROP, !BiEmbedSbi siPropI PROP}.
+  Context `{!Sbi PROP}.
   Notation HasOwn RA := (HasOwn PROP RA).
   Notation HasOwnValid RA := (HasOwnValid PROP RA).
   Notation Observe := (@Observe PROP).

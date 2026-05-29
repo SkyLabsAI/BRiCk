@@ -36,43 +36,11 @@ Require Import iris.base_logic.lib.iprop. (* << for [gname] only *)
 
 #[local] Set Default Proof Using "Type*".
 
-(* Step-indexed Validity *)
-(* TODO: replace with [siProp_cmra_valid] *)
-Program Definition si_cmra_valid_def {A : cmra} (a : A) : siProp :=
-  {| siProp_holds n := ✓{n} a |}.
-Solve Obligations with naive_solver eauto using cmra_validN_le.
-#[local] Definition si_cmra_valid_aux : seal (@si_cmra_valid_def). Proof. by eexists. Qed.
-Definition si_cmra_valid {A} := si_cmra_valid_aux.(unseal) A.
-Definition si_cmra_valid_eq :
-  @si_cmra_valid = @si_cmra_valid_def := si_cmra_valid_aux.(seal_eq).
 
 (* Validity for arbitrary PROP, assuming an embedding of siProp.
   This subsumes uPred_cmra_valid. *)
-Definition bi_cmra_valid
-  {PROP : bi} `{!BiEmbed siPropI PROP} {A : cmra} (a : A) : PROP :=
-  embed (si_cmra_valid a).
-
-(* TODO: figure out if overwriting Iris's notation for [uPred_cmra_valid] works robustly, until this is upstreamed. *)
-Notation "✓ x" := (bi_cmra_valid x) (at level 20) : bi_scope.
-
-#[global] Instance prop_valid_plain
-  {PROP : bi} `{!BiEmbed siPropI PROP} `{!Sbi PROP}
-  {BEP : BiEmbedSbi siPropI PROP} {A : cmra} (a : A) :
-  Plain (✓ a) := _.
-
-#[global] Instance prop_valid_persistent
-  {PROP : bi} `{!BiEmbed siPropI PROP} {A : cmra} (a : A) :
-  Persistent (✓ a) := _.
-
-Lemma validI_unfold `{BiEmbed siPropI PROP} {A : cmra} (a : A) :
-  ✓ a ⊣⊢ embed (si_cmra_valid a).
-Proof. done. Qed.
-
-#[global] Hint Opaque bi_cmra_valid : typeclass_instances.
-(** Mark it TC opaque; otherwise, TC resolution can prove anew, e.g.,
-[Persistent (✓ a)] and tactics like [iDestruct (own_valid_2 with "A
-B") as "#Hv"] produce [embed (si_cmra_valid (a ⋅ b))] rather than [✓
-(a ⋅ b)]. (We might also wind up wanting "simpl never".) *)
+#[deprecated(since="", note="Use internal_cmra_valid or ✓")]
+Notation bi_cmra_valid := internal_cmra_valid (only parsing).
 
 (* own *)
 Class HasOwn {PROP : bi} {A : cmra} : Type := {
@@ -88,8 +56,8 @@ Class HasOwn {PROP : bi} {A : cmra} : Type := {
   own_core_persistent :: ∀ γ a, CoreId a → Persistent (own γ a)
 }.
 
-Arguments HasOwn : clear implicits.
-Arguments own {_ _ _} _ _.
+#[global] Arguments HasOwn : clear implicits.
+#[global] Arguments own {_ _ _} _ _.
 #[global] Hint Opaque own : sl_opacity.
 
 #[global] Instance : Params (@own) 4 := {}.
@@ -98,10 +66,10 @@ Arguments own {_ _ _} _ _.
   Proper ((≡) ==> (⊣⊢)) (@own PROP A _ γ) := ne_proper _.
 
 (* own_valid *)
-Class HasOwnValid `{!BiEmbed siPropI PROP} `{!HasOwn PROP A} : Prop := {
+Class HasOwnValid `{!Sbi PROP} `{!HasOwn PROP A} : Prop := {
   own_valid : ∀ γ (a : A), own γ a ⊢ ✓ a
 }.
-Arguments HasOwnValid _ {_} _{_}.
+#[global] Arguments HasOwnValid _ {_} _{_}.
 
 (* own_update and own_alloc *)
 Class HasOwnUpd `{!BiBUpd PROP} `{!HasOwn PROP A} : Prop := {
@@ -109,77 +77,34 @@ Class HasOwnUpd `{!BiBUpd PROP} `{!HasOwn PROP A} : Prop := {
   own_alloc_strong_dep (f : gname → A) (P : gname → Prop) :
     pred_infinite P → (∀ γ, P γ → ✓ (f γ)) → ⊢ |==> ∃ γ, <affine> ⌜P γ⌝ ∗ own γ (f γ)
 }.
-Arguments HasOwnUpd _ {_} _ {_}.
+#[global] Arguments HasOwnUpd _ {_} _ {_}.
 
 Class HasOwnUnit `{!BiBUpd PROP} {A : ucmra} `{!HasOwn PROP A} : Prop := {
   own_unit γ : ⊢ |==> own γ (ε:A)
 }.
-Arguments HasOwnUnit _ {_} _ {_}.
+#[global] Arguments HasOwnUnit _ {_} _ {_}.
+
+Require Import skylabs.iris.extra.bi.siprop.
+Require Import skylabs.iris.extra.proofmode.proofmode.
 
 Section valid.
-  Context `{BE: !BiEmbed siPropI PROP} {A : cmra}.
+  Context `{BE: !Sbi PROP} {A : cmra}.
   Implicit Type (a : A) (P : PROP).
 
-  Local Arguments siProp_holds !_ _ /.
-
-  Local Ltac unseal :=
-    constructor => n /=;
-      rewrite /bi_pure /bi_and /bi_forall /= si_cmra_valid_eq
-              ?siprop.siProp_pure_unseal ?siprop.siProp_and_unseal
-              ?siprop.siProp_forall_unseal /=.
-
-  (* Duplicates from Iris's base_logic.upred, but more general. *)
-  (* TODO: need more lemmas for valid *)
-  Lemma cmra_valid_intro P (a : A) : ✓ a → P ⊢ ✓ a.
+  (* Almost duplicates from Iris's base_logic.upred, but more general. *)
+  Lemma cmra_valid_elim (a : A) : ¬ ✓{0} a → ✓ a ⊢@{PROP} False.
   Proof.
-    intros VL.
-    (* stupid proof that relies on embedding *)
-    rewrite (bi.True_intro P) -embed_pure. apply embed_mono.
-    unseal => ?. by apply cmra_valid_validN.
-  Qed.
-  Lemma cmra_valid_elim (a : A) : ¬ ✓{0} a → ✓ a ⊢ False.
-  Proof.
-    intros NVL. rewrite -embed_pure. apply embed_mono.
-    unseal => ?. apply NVL. apply cmra_validN_le with n; auto. cbn; lia.
-  Qed.
-  Lemma plainly_cmra_valid_1 `{!Sbi PROP} `{!BiEmbedSbi siPropI PROP}
-    (a : A) : ✓ a ⊢ ■ ✓ a.
-  Proof. by rewrite -embed_plainly. Qed.
-  Lemma cmra_valid_weaken (a b : A) : ✓ (a ⋅ b) ⊢ ✓ a.
-  Proof. apply embed_mono. unseal. apply cmra_validN_op_l. Qed.
-
-  Lemma prod_validI {B : cmra} (x : A * B) : ✓ x ⊣⊢ ✓ x.1 ∧ ✓ x.2.
-  Proof. rewrite -embed_and. apply embed_proper. by unseal. Qed.
-  Lemma option_validI (mx : option A) :
-    ✓ mx ⊣⊢ match mx with Some x => ✓ x | None => True end.
-  Proof. destruct mx; [|rewrite -embed_pure]; apply embed_proper; by unseal. Qed.
-
-  Lemma internal_cmra_valid_discrete `{!CmraDiscrete A} (a : A) : ✓ a ⊣⊢ ⌜✓ a⌝.
-  Proof.
-    rewrite -embed_pure. apply embed_proper. unseal.
-    by rewrite -cmra_discrete_valid_iff.
-  Qed.
-
-  Lemma discrete_fun_validI {B : A → ucmra} (g : discrete_fun B) : ✓ g ⊣⊢ ∀ i, ✓ g i.
-  Proof. rewrite -embed_forall. apply embed_proper. by unseal. Qed.
-
-  (* Duplicates from base_logic.proofmode *)
-  Global Instance into_pure_cmra_valid `{!CmraDiscrete A} (a : A) :
-    IntoPure (✓ a) (✓ a).
-  Proof. by rewrite /IntoPure internal_cmra_valid_discrete. Qed.
-
-  Global Instance from_pure_cmra_valid (a : A) :
-    FromPure false (✓ a) (✓ a).
-  Proof.
-    rewrite /FromPure /=. eapply bi.pure_elim=> // ?.
-    rewrite -cmra_valid_intro //.
+    rewrite internal_cmra_valid_elim.
+    by iIntros (?) "!%".
+    (* intros NVL. rewrite -embed_pure. apply embed_mono.
+    unseal => ?. apply NVL. apply cmra_validN_le with n; auto. cbn; lia. *)
   Qed.
 End valid.
 
 Import bi.
 
 Section own_valid.
-  Context `{!BiEmbed siPropI PROP} `{!HasOwn PROP A} `{!HasOwnValid PROP A}.
+  Context `{!Sbi PROP} `{!HasOwn PROP A} `{!HasOwnValid PROP A}.
   Implicit Type (a : A) (P : PROP).
 
   (* Duplicates from base_logic.lib.own *)

@@ -14,11 +14,12 @@ This file defines wrappers:
 Require Import iris.algebra.cmra.
 Require Import iris.bi.updates.
 Require Import iris.bi.embedding.
+Require Import iris.bi.sbi.
 Require Import skylabs.iris.extra.bi.own.
 
 Class Ghostly (PROP : bi) := {
   #[global] ghostly_bibupd :: BiBUpd PROP;
-  #[global] ghostly_embed :: BiEmbed siPropI PROP;
+  #[global] ghostly_embed :: Sbi PROP;
 }.
 
 Class HasUsualOwn (PROP : bi) `{ Ghostly PROP } (T : cmra) := {

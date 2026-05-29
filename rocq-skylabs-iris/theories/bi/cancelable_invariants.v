@@ -70,7 +70,7 @@ End defs.
 Section proofs.
   (* TODO: too many ... Also, not all lemmas need all of these (which may affect
     performance). *)
-  Context `{!BiEmbed siPropI PROP}
+  Context `{!Sbi PROP}
           `{!BiBUpd PROP} `{!BiFUpd PROP} `{!BiBUpdFUpd PROP}
           `{!BiLaterContractive PROP}
           `{!HasOwn PROP fracR} `{!HasOwnValid PROP fracR}.
