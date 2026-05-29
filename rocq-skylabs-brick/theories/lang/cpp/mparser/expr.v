@@ -254,6 +254,10 @@ Definition Eunresolved_member (arrow : bool) (base : MExpr) (i : Mname) : MExpr 
   else
     Eunresolved_member base i.
 
+(** TODO: Add this as a constructor. *)
+Definition Eunresolved_delete (array : bool) (arg : MExpr) : MExpr :=
+  Eunsupported "unresolved delete" Tvoid.
+
 (** ** Template-only derived variable declarations emitted by cpp2v *)
 
 Definition Einitializing_type (t : Mdecltype) (e : MExpr) : MExpr :=
