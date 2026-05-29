@@ -93,7 +93,7 @@ described above.
 #[local]
 Definition default_initialize_body `{Σ : cpp_logic, σ : genv}
     (u : bool) (default_initialize : exprtype -> ptr -> (FreeTemps -> epred) -> mpred)
-    (tu : translation_unit)
+    (tu : translation_unit) (ρ : region)
     (ty : exprtype) (p : ptr) (Q : FreeTemps -> epred) : mpred :=
   let ERROR := funI m => |={top}=>?u ERROR m in
   let UNSUPPORTED := funI m => |={top}=>?u UNSUPPORTED m in
@@ -114,7 +114,20 @@ Definition default_initialize_body `{Σ : cpp_logic, σ : genv}
     else
       ERROR "initializing an empty array"
   | Tincomplete_array _ => ERROR "default initialize incomplete array"
-  | Tvariable_array _ _ => ERROR "default initialize variable array"
+  | Tvariable_array ety e =>
+      letI* vlen , free := wp_operand tu ρ e in
+      (* NOTE: we choose to follow the /logical/ gcc implementation and destroy the
+         temporaries from the length expression early *)
+      letI* := interp tu free in
+      match vlen with
+      | Vint sz =>
+          if bool_decide (0 < sz)%Z then
+            letI* free' := default_initialize_array (default_initialize ety) tu ety (Z.to_N sz) p in
+            Q FreeTemps.id
+          else
+            ERROR "initializing an empty array"
+      | _ => ERROR "variable length array length is not an integer"
+      end
 
   | Tref _
   | Trv_ref _ => ERROR "default initialization of reference"
@@ -139,17 +152,17 @@ Definition default_initialize_body `{Σ : cpp_logic, σ : genv}
   end%pstring%I.
 
 mlock
-Definition default_initialize `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
+Definition default_initialize `{Σ : cpp_logic, σ : genv} (tu : translation_unit) ρ
   : ∀ (ty : exprtype) (p : ptr) (Q : FreeTemps -> epred), mpred :=
   fix default_initialize ty p Q {struct ty} :=
-    Cbn (Reduce (default_initialize_body true) default_initialize tu ty p Q).
+    Cbn (Reduce (default_initialize_body true) default_initialize tu ρ ty p Q).
 
 Section unfold.
   Context `{Σ : cpp_logic, σ : genv}.
 
-  Lemma default_initialize_unfold ty tu :
-    default_initialize tu ty =
-    fun p Q => Cbn (Reduce (default_initialize_body true) (default_initialize tu) tu ty p Q).
+  Lemma default_initialize_unfold ty tu ρ :
+    default_initialize tu ρ ty =
+    fun p Q => Cbn (Reduce (default_initialize_body true) (default_initialize tu ρ) tu ρ ty p Q).
   Proof. rewrite unlock. by destruct ty. Qed.
 End unfold.
 
@@ -158,7 +171,7 @@ Unfold for one type, failing if there's nothing to do.
 *)
 Ltac default_initialize_unfold :=
   lazymatch goal with
-  | |- context [default_initialize _ ?ty] => rewrite !(default_initialize_unfold ty)
+  | |- context [default_initialize _ _ ?ty] => rewrite !(default_initialize_unfold ty)
   | _ => fail "[default_initialize] not found"
   end.
 
@@ -204,10 +217,10 @@ Section default_initialize.
   TODO this should be generalized to different [σ] but, in that case
   it relies on the fact that [ty] is defined in both environments.
   *)
-  Lemma default_initialize_frame tu tu' ty this Q Q' :
+  Lemma default_initialize_frame tu tu' ρ ty this Q Q' :
     sub_module tu tu' ->
     (Forall f, Q f -* Q' f)
-    |-- default_initialize tu ty this Q -* default_initialize tu' ty this Q'.
+    |-- default_initialize tu ρ ty this Q -* default_initialize tu' ρ ty this Q'.
   Proof.
     intros.
     move: this Q Q'. induction ty=>this Q Q'; default_initialize_unfold; try iIntros "? []".
@@ -219,22 +232,28 @@ Section default_initialize.
       case_match; eauto.
       iApply (default_initialize_array_frame' with "[HQ] wp"); [done..|].
       iIntros (?) "Q". iApply ("HQ" with "Q"). }
+    { iRevert "wp"; iApply wp_operand_frame => //; iIntros (??).
+      iApply interp_frame_strong => //.
+      case_match; eauto.
+      case_match; eauto.
+      iApply (default_initialize_array_frame' with "[HQ]"); [done..|].
+      iIntros (?); iApply "HQ". }
     { (* qualifiers *)
       case_match; eauto.
       case_match; first by iMod "wp"; iExFalso; rewrite ERROR_elim.
       iApply (IHty with "HQ wp"). }
   Qed.
 
-  Lemma default_initialize_array_frame tu tu' ty sz Q Q' (p : ptr) :
+  Lemma default_initialize_array_frame tu tu' (ρ : region) ty sz Q Q' (p : ptr) :
     sub_module tu tu' ->
     (Forall f, Q f -* Q' f)
-    |-- default_initialize_array (default_initialize tu ty) tu ty sz p Q
-    -* default_initialize_array (default_initialize tu' ty) tu' ty sz p Q'.
+    |-- default_initialize_array (default_initialize tu ρ ty) tu ty sz p Q
+    -* default_initialize_array (default_initialize tu' ρ ty) tu' ty sz p Q'.
   Proof. auto using default_initialize_frame. Qed.
 
-  Lemma default_initialize_shift tu ty this Q :
-    (|={top}=> default_initialize tu ty this (fun f => |={top}=> Q f))
-    |-- default_initialize tu ty this Q.
+  Lemma default_initialize_shift tu ρ ty this Q :
+    (|={top}=> default_initialize tu ρ ty this (fun f => |={top}=> Q f))
+    |-- default_initialize tu ρ ty this Q.
   Proof.
     move: this Q. induction ty=>this Q; default_initialize_unfold;
       auto using fupd_elim, fupd_intro.
@@ -244,13 +263,20 @@ Section default_initialize.
       apply default_initialize_array_shift'; auto.
       intros. exact: default_initialize_frame.
       iIntros ">$". }
+    { iIntros ">wp"; iRevert "wp"; iApply wp_operand_frame => //; iIntros (??).
+      iApply interp_frame_strong => //.
+      case_match; eauto.
+      case_match; eauto.
+      iIntros "wp".
+      iApply (default_initialize_array_shift') => //.
+      iIntros (???) "K"; iApply default_initialize_frame => //. }
     { (* qualifiers *)
       do 2 (case_match; auto using fupd_elim, fupd_intro). }
   Qed.
 
-  Lemma default_initialize_array_shift tu ty sz p Q :
-    (|={top}=> default_initialize_array (default_initialize tu ty) tu ty sz p (fun f => |={top}=> Q f))
-    |-- default_initialize_array (default_initialize tu ty) tu ty sz p Q.
+  Lemma default_initialize_array_shift tu ρ ty sz p Q :
+    (|={top}=> default_initialize_array (default_initialize tu ρ ty) tu ty sz p (fun f => |={top}=> Q f))
+    |-- default_initialize_array (default_initialize tu ρ ty) tu ty sz p Q.
   Proof.
     apply default_initialize_array_shift'.
     - intros. exact: default_initialize_frame.
@@ -259,8 +285,8 @@ Section default_initialize.
 
   #[global] Instance: Params (@default_initialize) 7 := {}.
   #[local] Notation INIT R := (
-    ∀ tu ty this,
-    Proper (pointwise_relation _ R ==> R) (default_initialize tu ty this)
+    ∀ tu ρ ty this,
+    Proper (pointwise_relation _ R ==> R) (default_initialize tu ρ ty this)
   ) (only parsing).
   #[global] Instance default_initialize_mono : INIT bi_entails.
   Proof.
@@ -275,9 +301,9 @@ Section default_initialize.
 
   #[global] Instance: Params (@default_initialize_array) 9 := {}.
   #[local] Notation ARRAY R := (
-    ∀ tu ty sz p,
+    ∀ tu ρ ty sz p,
     Proper (pointwise_relation _ R ==> R)
-      (default_initialize_array (default_initialize tu ty) tu ty sz p)
+      (default_initialize_array (default_initialize tu ρ ty) tu ty sz p)
   ) (only parsing).
   #[global] Instance default_initialize_array_mono : ARRAY bi_entails.
   Proof.
@@ -290,9 +316,9 @@ Section default_initialize.
   #[global] Instance default_initialize_array_proper : ARRAY equiv.
   Proof. intros * Q1 Q2 HQ. by split'; apply default_initialize_array_mono=>free; rewrite HQ. Qed.
 
-  Lemma default_initialize_array_intro tu ty sz (p : ptr) Q :
-    Cbn (Reduce (default_initialize_array_body false) (default_initialize tu ty) tu ty sz p Q)
-    |-- default_initialize_array (default_initialize tu ty) tu ty sz p Q.
+  Lemma default_initialize_array_intro tu ρ ty sz (p : ptr) Q :
+    Cbn (Reduce (default_initialize_array_body false) (default_initialize tu ρ ty) tu ty sz p Q)
+    |-- default_initialize_array (default_initialize tu ρ ty) tu ty sz p Q.
   Proof.
     rewrite default_initialize_array.unlock.
     induction (seqN 0 sz) as [|???IH]; cbn.
@@ -301,14 +327,14 @@ Section default_initialize.
     iIntros (?) "wp". iApply (interp_frame with "[] wp").
     iIntros "wp". iApply (IH with "wp").
   Qed.
-  Lemma default_initialize_array_elim tu ty sz (p : ptr) Q :
-    default_initialize_array (default_initialize tu ty) tu ty sz p Q
-    |-- Cbn (Reduce (default_initialize_array_body true) (default_initialize tu ty) tu ty sz p Q).
+  Lemma default_initialize_array_elim tu ρ ty sz (p : ptr) Q :
+    default_initialize_array (default_initialize tu ρ ty) tu ty sz p Q
+    |-- Cbn (Reduce (default_initialize_array_body true) (default_initialize tu ρ ty) tu ty sz p Q).
   Proof. by rewrite default_initialize_array.unlock. Qed.
 
-  Lemma default_initialize_intro tu ty (p : ptr) Q :
-    Cbn (Reduce (default_initialize_body false) (default_initialize tu) tu ty p Q)
-    |-- default_initialize tu ty p Q.
+  Lemma default_initialize_intro tu ρ ty (p : ptr) Q :
+    Cbn (Reduce (default_initialize_body false) (default_initialize tu ρ) tu ρ ty p Q)
+    |-- default_initialize tu ρ ty p Q.
   Proof.
     rewrite (default_initialize_unfold ty). induction ty; first
       [ by auto using fupd_intro
@@ -316,13 +342,17 @@ Section default_initialize.
       | idtac ].
     { (* arrays *)
       case_bool_decide; eauto. }
+    { clear IHty. iApply wp_operand_frame => //.
+      iIntros (??); iApply interp_frame_strong => //.
+      case_match; eauto.
+      case_match; eauto. }
     { (* qualifiers *)
       destruct (q_volatile q); auto using fupd_intro.
       destruct (q_const q); auto using fupd_intro. }
   Qed.
-  Lemma default_initialize_elim tu ty (p : ptr) Q :
-    default_initialize tu ty p Q
-    |-- Cbn (Reduce (default_initialize_body true) (default_initialize tu) tu ty p Q).
+  Lemma default_initialize_elim tu ρ ty (p : ptr) Q :
+    default_initialize tu ρ ty p Q
+    |-- Cbn (Reduce (default_initialize_body true) (default_initialize tu ρ) tu ρ ty p Q).
   Proof. rewrite default_initialize.unlock. by destruct ty. Qed.
 End default_initialize.
 
