@@ -95,7 +95,29 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
   (* TODO Maybe this should be removed *)
   #[global] Coercion Vint : Z >-> val.
 
-  Parameter val_dec : forall a b : val, {a = b} + {a <> b}.
+  Definition val_dec : forall a b : val, {a = b} + {a <> b}.
+  Proof.
+    intros a b.
+    destruct a as [z|n|f x|p|r| |nm anm];
+      destruct b as [z'|n'|f' x'|p'|r'| |nm' anm'];
+      try (right; congruence).
+    - destruct (decide (z = z')) as [?|?]; [left|right]; congruence.
+    - destruct (decide (n = n')) as [?|?]; [left|right]; congruence.
+    - destruct (decide (f = f')) as [<-|Hneq].
+      + destruct (decide (x = x')) as [->|Hneq].
+        * left; reflexivity.
+        * right; intros Heq; apply Hneq.
+          inversion Heq; subst.
+          eapply Eqdep_dec.inj_pair2_eq_dec; eauto.
+          exact (fun x y => decide (x = y)).
+      + right; intros Heq; apply Hneq.
+        by inversion Heq.
+    - destruct (decide (p = p')) as [?|?]; [left|right]; congruence.
+    - destruct (decide (r = r')) as [?|?]; [left|right]; congruence.
+    - left; reflexivity.
+    - destruct (decide (nm = nm')) as [?|?]; [|right; congruence].
+      destruct (decide (anm = anm')) as [?|?]; [left|right]; congruence.
+  Defined.
   #[global] Instance val_eq_dec : EqDecision val := val_dec.
   #[global] Instance val_inhabited : Inhabited val := populate (Vint 0).
 

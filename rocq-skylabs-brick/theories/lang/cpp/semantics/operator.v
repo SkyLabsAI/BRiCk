@@ -193,6 +193,7 @@ Let eval_float_op (bo : BinOp)
 Axiom eval_float_add : Hnf (eval_float_op Badd float_value.add).
 Axiom eval_float_sub : Hnf (eval_float_op Bsub float_value.sub).
 Axiom eval_float_mul : Hnf (eval_float_op Bmul float_value.mul).
+Axiom eval_float_div : Hnf (eval_float_op Bdiv float_value.div).
 
 (* The binary operator / divides the first operand by the second, after usual
    arithmetic conversions.
@@ -210,10 +211,6 @@ Axiom eval_div : forall `{supports_arith ty} (a b : Z),
     let c := Z.quot a b in
     has_type_prop (Vint c) ty ->
     eval_binop_pure Bdiv ty ty ty (Vint a) (Vint b) (Vint c).
-Axiom eval_float_div : forall f (a b : float_type.car f),
-    let c := float_value.div f a b in
-    eval_binop_pure Bdiv (Tfloat_ f) (Tfloat_ f) (Tfloat_ f)
-      (Vfloat f a) (Vfloat f b) (Vfloat f c).
 Axiom eval_mod : forall `{supports_arith ty} (a b : Z),
     b <> 0%Z ->
     has_type_prop (Vint a) ty ->
