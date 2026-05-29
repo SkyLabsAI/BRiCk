@@ -276,7 +276,9 @@ Definition conv_float {σ : genv} (tu : translation_unit) (from to : type) (v v'
           match float_value.to_int f z with
           | Some n =>
               v' = Vchar (to_char (int_rank.bitsN int_rank.Iint) Signed
-                (char_type.bitsN ct) n)
+                (char_type.bitsN ct) n) /\
+              let int_ty := equivalent_int_type σ ct in
+              has_type_prop (Vint n) (integral_type_to_type int_ty)
           | None => False
           end
       | _ => False
@@ -301,7 +303,36 @@ Section conv_float.
        tu ⊧ σ ->
        conv_float tu ty ty' v v' ->
        has_type_prop v ty /\ has_type_prop v' ty'.
-  Proof using Hmod. Admitted.
+  Proof using Hmod.
+    rewrite /conv_float.
+    destruct (representation_type tu ty) eqn:src_ty; rewrite /=; try tauto;
+    destruct (representation_type tu ty') eqn:dst_ty; rewrite /=; try tauto;
+    intuition;
+    match goal with
+    | H : representation_type ?tu ?ty = ?ty' , H' : has_type_prop _ ?ty |- _ =>
+        generalize (has_type_prop_representation_type _ _ H'); rewrite H; intro
+    end; repeat (case_match; try tauto);
+      repeat match goal with
+        | H : _ /\ _ |- _ => destruct H
+        | H : exists x, _ |- _ => destruct H
+        | H : representation_type _ ?ty = ?ty2 |- has_type_prop _ ?ty =>
+            eapply has_type_prop_representation_type_not_raw => /=; try congruence; try rewrite H
+        end; subst; eauto.
+    all: try solve [eapply has_float_type].
+    all: try solve [eapply has_bool_type; case_match; lia].
+    all: try solve [
+      match goal with
+      | H : has_type_prop ?v ?ty, E : representation_type tu ?ty = ?r
+        |- has_type_prop ?v ?r =>
+          rewrite -E; eapply has_type_prop_representation_type; exact H
+      end].
+    all: try solve [
+      apply has_type_prop_char';
+      match goal with
+      | |- (0 <= to_char ?from ?sgn ?bits ?z < 2 ^ ?bits)%N =>
+          generalize (to_char_bounded from sgn bits z); lia
+      end].
+  Qed.
 
   Lemma conv_float_unique from to v :
       forall v' v'', conv_float tu from to v v' ->
