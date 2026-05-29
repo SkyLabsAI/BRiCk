@@ -68,12 +68,13 @@ Section with_PROP.
     Qed.
 
     Section with_compose_embed_instances.
-      Import compose_embed_instances.
-
       #[local] Instance has_own_valid_monpred
-        `{!BiEmbed siPropI PROP, !HasOwnValid PROP A} :
+        `{!Sbi PROP, !HasOwnValid PROP A} :
         HasOwnValid monPredI A.
-      Proof. unseal_monpred. by rewrite own_valid -embedding.embed_embed. Qed.
+      Proof.
+        unseal_monpred. rewrite own_valid.
+        by rewrite embed_si_pure.
+      Qed.
     End with_compose_embed_instances.
   End with_cmra.
 
@@ -111,6 +112,7 @@ End with_PROP.
   assert_fails (is_evar PROP);
   autoapply @has_own_unit_monpred with typeclass_instances : typeclass_instances.
 
+(**
 (* Instances for monpred I iPropI *)
 Section si_monpred_embedding.
   Context {I : biIndex} {Σ : gFunctors}.
@@ -123,11 +125,6 @@ Section si_monpred_embedding.
   #[global] Instance si_monpred_emp : BiEmbedEmp siPropI monPredI := _.
   #[global] Instance si_monpred_later : BiEmbedLater siPropI monPredI := _.
   #[global] Instance si_monpred_sbi : BiEmbedSbi siPropI monPredI := _.
-
-  (* TODO: this should have been defined upstream in Iris. *)
-  Lemma monPred_si_cmra_valid_validI `{inG Σ A} (a : A) :
-    ⎡ si_cmra_valid a ⎤ ⊣⊢@{monPredI} ⎡ internal_cmra_valid a : iPropI _ ⎤.
-  Proof.
-    rewrite -(si_cmra_valid_validI a) embedding.embed_embed. done.
-  Qed.
 End si_monpred_embedding.
+
+*)

@@ -73,9 +73,8 @@ Global Instance: Params (@na_inv) 5 := {}.
   https://gitlab.mpi-sws.org/iris/iris/-/blob/90b6007faea2b61546aed01fe0ed9936b55468d1/iris/base_logic/lib/invariants.v#L27 *)
 
 Section proofs.
-  Context `{!BiEmbed siPropI PROP}.
+  Context `{!Sbi PROP}.
   Context `{!BiBUpd PROP, !BiFUpd PROP, !BiBUpdFUpd PROP}.
-  Context `{!BiLaterContractive PROP}.
   Context `{!HasOwn PROP na_ownR, !HasOwnValid PROP na_ownR}.
   Context `{!HasOwnUpd PROP na_ownR}.
   Import bi.

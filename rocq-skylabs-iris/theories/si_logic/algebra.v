@@ -51,30 +51,17 @@ Section plain_wand.
   Proof. rewrite -{2}bi.persistently_pure. exact: plain_wand_intro_r. Qed.
 End plain_wand.
 
-(* Re-declare the project's [✓] notation last so it overrides Iris's
-   [internal_cmra_valid] notation in [bi_scope]. Same for [≼]. *)
-Notation "✓ x" := (bi_cmra_valid x) (at level 20) : bi_scope.
-Infix "≼" := includedI : bi_scope.
-
 Section theory.
   #[local] Set Default Proof Using "Type*".
-  Context `{!BiEmbed siPropI PROP}.
-  Context `{!Sbi PROP, !BiEmbedSbi siPropI PROP}.
+  Context `{!Sbi PROP}.
   Notation "P ⊣⊢ Q" := (P ⊣⊢@{PROP} Q).
   Notation "P ⊢ Q" := (P ⊢@{PROP} Q).
   #[local] Arguments siProp_holds !_ _ / : assert.
 
-  #[local] Definition unseal_eqs := (si_cmra_valid_eq, siprop.siProp_primitive.siProp_unseal).
-  #[local] Ltac unseal' :=
-    unfold bi_pure, bi_and, bi_or, bi_forall, bi_exist; simpl;
-    unfold internal_eq, si_pure, siprop_sbi; simpl;
-    rewrite ?unseal_eqs /=.
-  #[local] Ltac unseal := let n := fresh "n" in constructor => n /=; unseal'.
-
   #[local] Tactic Notation "solve_entails'" tactic1(tac) :=
-    apply embed_mono; unseal; by tac.
+    sbi_unfold; intros n; by tac.
   #[local] Tactic Notation "solve_equiv'" tactic1(tac) :=
-    apply embed_proper; unseal; by tac.
+    sbi_unfold; intros n; by tac.
   #[local] Tactic Notation "solve_entails" uconstr(lem) :=
     solve_entails' (apply lem).
   #[local] Tactic Notation "solve_equiv" uconstr(lem) :=
@@ -94,41 +81,35 @@ Section theory.
     Context {A : cmra}.
     Implicit Types x y : A.
 
+    #[deprecated(since="", note="Use cmra_validI_op_l")]
     Lemma validI_op_l x y : ✓ (x ⋅ y) ⊢ ✓ x.
-    Proof. solve_entails cmra_validN_op_l. Qed.
+    Proof. exact: cmra_validI_op_l.  Qed.
+    #[deprecated(since="", note="Use cmra_validI_op_r")]
     Lemma validI_op_r x y : ✓ (x ⋅ y) ⊢ ✓ y.
-    Proof. solve_entails cmra_validN_op_r. Qed.
+    Proof. exact: cmra_validI_op_r. Qed.
 
     Lemma exclusive_includedI x y `{!Exclusive x} : x ≼ y ⊢ ✓ y -∗ False.
-    Proof.
-      apply: plain_wand_intro_pure_r.
-      rewrite -embed_includedI -embed_and -embed_pure.
-      solve_entails' (intros []; eapply exclusive_includedN).
-    Qed.
+    Proof. sbi_unfold. intros; exact: exclusive_includedN. Qed.
 
     Lemma validI_includedI x y : ✓ y ⊢ x ≼ y -∗ <pers> ✓ x.
     Proof.
-      apply: plain_wand_intro_r. rewrite -embed_includedI -embed_and.
-      solve_entails' (intros []; eapply cmra_validN_includedN).
+      apply: plain_wand_intro_r.
+      solve_entails' (intros []; exact: cmra_validN_includedN).
     Qed.
 
-    Lemma cmra_discrete_includedN_l n x y : Discrete x → ✓{n} y → x ≼{n} y → x ≼ y.
+    Lemma cmra_discrete_includedN_l n x y `{!Discrete x} : ✓{n} y → x ≼{n} y → x ≼ y.
     Proof.
-      intros ? Hv Hinc. apply cmra_discrete_included_l; first done.
+      intros Hv Hinc. apply cmra_discrete_included_l; first done.
       - apply (cmra_validN_le n); first done. cbn; lia.
       - apply (cmra_includedN_le n); first done. cbn; lia.
     Qed.
-    Lemma discrete_includedI_l x y : Discrete x → ✓ y ⊢ x ≼ y -∗ [! x ≼ y !].
-    Proof.
-      intros. apply: plain_wand_intro_pure_r.
-      rewrite -embed_includedI -embed_pure -embed_and.
-      solve_entails' (intros []; eapply cmra_discrete_includedN_l).
-    Qed.
+    Lemma discrete_includedI_l x y `{!Discrete x} : ✓ y ⊢ x ≼ y -∗ [! x ≼ y !].
+    Proof. solve_entails cmra_discrete_includedN_l. Qed.
     Lemma discrete_includedI_r x y : Discrete y → x ≼ y ⊢ [! x ≼ y !].
     Proof. intros. by rewrite discrete_includedI. Qed.
 
     Lemma discrete_validI `{!CmraDiscrete A} x : ✓ x ⊣⊢ [! ✓ x !].
-    Proof. rewrite -embed_pure. symmetry. solve_equiv cmra_discrete_valid_iff. Qed.
+    Proof. sbi_unfold => n. by rewrite -cmra_discrete_valid_iff. Qed.
 
   End cmra.
 
@@ -136,19 +117,12 @@ Section theory.
     Context {A B : cmra}.
     Implicit Types a : A.
     Implicit Types b : B.
-    Implicit Types x y : A * B.
-
-    Lemma prod_validI x : ✓ x ⊣⊢ (✓ x.1 ∧ ✓ x.2).
-    Proof. rewrite -embed_and. apply embed_proper. by unseal. Qed.
-
-    Lemma prod_includedI x y : x ≼ y ⊣⊢ x.1 ≼ y.1 ∧ x.2 ≼ y.2.
-    Proof. rewrite -!embed_includedI -embed_and. solve_equiv prod_includedN. Qed.
 
     Lemma pair_validI a b : ✓ (a, b) ⊣⊢ ✓ a ∧ ✓ b.
-    Proof. by rewrite prod_validI. Qed.
+    Proof. apply prod_validI. Qed.
 
     Lemma pair_includedI a a' b b' : (a, b) ≼ (a', b') ⊣⊢ a ≼ a' ∧ b ≼ b'.
-    Proof. by rewrite prod_includedI. Qed.
+    Proof. apply prod_includedI. Qed.
   End prod.
 
   Section option.
@@ -157,68 +131,36 @@ Section theory.
     Implicit Types ma mb : option A.
 
     Lemma None_validI : ✓ (@None A) ⊣⊢ True.
-    Proof. split'; auto. Qed.
+    Proof. by rewrite option_validI. Qed.
     Lemma Some_validI a : ✓ Some a ⊣⊢ ✓ a.
-    Proof. solve_equiv Some_validN. Qed.
-    Lemma option_validI ma : ✓ ma ⊣⊢ if ma is Some a then ✓ a else True.
-    Proof. destruct ma; by rewrite ?Some_validI ?None_validI. Qed.
-
-    Lemma option_includedI ma mb :
-      ma ≼ mb ⊣⊢
-      [! ma = None !] ∨ ∃ a b, [! ma = Some a ∧ mb = Some b !] ∧ (a ≡ b ∨ a ≼ b).
-    Proof.
-      setoid_rewrite bi.pure_and. setoid_rewrite <-(assoc bi_and).
-      setoid_rewrite <-embed_includedI. setoid_rewrite <-embed_internal_eq.
-      setoid_rewrite <-embed_or. setoid_rewrite <-embed_pure.
-      repeat setoid_rewrite <-embed_and.
-      repeat setoid_rewrite <-embed_exist. rewrite -embed_or.
-      solve_equiv option_includedN.
-    Qed.
-    Lemma option_includedI_total `{!CmraTotal A} ma mb :
-      ma ≼ mb ⊣⊢ [! ma = None !] ∨ ∃ a b, [! ma = Some a ∧ mb = Some b !] ∧ a ≼ b.
-    Proof.
-      setoid_rewrite bi.pure_and. setoid_rewrite <-(assoc bi_and).
-      setoid_rewrite <-embed_includedI.
-      setoid_rewrite <-embed_pure. repeat setoid_rewrite <-embed_and.
-      repeat setoid_rewrite <-embed_exist. rewrite -embed_or.
-      solve_equiv option_includedN_total.
-    Qed.
+    Proof. by rewrite option_validI. Qed.
 
     Lemma None_includedI mb : None ≼ mb ⊣⊢ True.
-    Proof. split'; first by auto. iIntros "?". iExists mb. by rewrite left_id. Qed.
+    Proof. by rewrite option_includedI. Qed.
 
     Lemma exclusiveI_Some_l a `{!Exclusive a} mb : ✓ (Some a ⋅ mb) ⊢ [! mb = None !].
-    Proof. rewrite -embed_pure. solve_entails exclusiveN_Some_l. Qed.
+    Proof. sbi_unfold => n. exact: exclusiveN_Some_l. Qed.
     Lemma exclusiveI_Some_r a `{!Exclusive a} mb : ✓ (mb ⋅ Some a) ⊢ [! mb = None !].
-    Proof. rewrite -embed_pure. solve_entails exclusiveN_Some_r. Qed.
+    Proof. sbi_unfold => n. exact: exclusiveN_Some_r. Qed.
 
     Lemma Some_includedI a b : Some a ≼ Some b ⊣⊢ a ≡ b ∨ a ≼ b.
-    Proof.
-      rewrite -!embed_includedI -embed_internal_eq -embed_or.
-      solve_equiv Some_includedN.
-    Qed.
-    Lemma Some_includedI_total `{!CmraTotal A} a b : Some a ≼ Some b ⊣⊢ a ≼ b.
-    Proof. rewrite -!embed_includedI. solve_equiv Some_includedN_total. Qed.
+    Proof. rewrite option_includedI. by rewrite (comm bi_or). Qed.
 
     Lemma Some_includedI_exclusive a `{!Exclusive a} b :
       Some a ≼ Some b ⊢ ✓ b -∗ <pers> (a ≡ b).
     Proof.
       apply: plain_wand_intro_r.
-      rewrite -embed_includedI -embed_and -embed_internal_eq.
-      solve_entails' (intros []; apply Some_includedN_exclusive).
+      sbi_unfold => n []. exact: Some_includedN_exclusive.
     Qed.
 
     Lemma is_Some_includedI ma mb : ma ≼ mb ⊢ [! is_Some ma → is_Some mb !].
-    Proof. rewrite -embed_includedI -embed_pure. solve_entails is_Some_includedN. Qed.
+    Proof. sbi_unfold => n. exact: is_Some_includedN. Qed.
   End option.
 
   Section discrete_fun.
     Context `{B : A → ucmra}.
     Implicit Types f g : discrete_fun B.
     Implicit Types x : A.
-
-    Lemma discrete_fun_validI f : ✓ f ⊣⊢ (∀ i, ✓ (f i)).
-    Proof. rewrite -embed_forall. solve_equiv' done. Qed.
 
     Lemma discrete_fun_includedN_spec_1 n f g x : f ≼{n} g → f x ≼{n} g x.
     Proof. intros [g' Hg]. exists (g' x). apply Hg. Qed.
@@ -230,12 +172,9 @@ Section theory.
     Qed.
 
     Lemma discrete_fun_includedI_spec_1 f g x : f ≼ g ⊢ f x ≼ g x.
-    Proof. rewrite -!embed_includedI. solve_entails discrete_fun_includedN_spec_1. Qed.
+    Proof. sbi_unfold => n. exact: discrete_fun_includedN_spec_1. Qed.
     Lemma discrete_fun_includedI_spec `{Finite A} f g : f ≼ g ⊣⊢ (∀ x, f x ≼ g x).
-    Proof.
-      repeat setoid_rewrite <- embed_includedI. rewrite -embed_forall.
-      solve_equiv discrete_fun_includedN_spec.
-    Qed.
+    Proof. sbi_unfold => n. exact: discrete_fun_includedN_spec. Qed.
   End discrete_fun.
 
   (** iris.algebra.excl *)
@@ -245,18 +184,16 @@ Section theory.
     Implicit Types mx : option (excl A).
     Implicit Types a : A.
 
-    Lemma excl_validI x : ✓ x ⊣⊢ if x is ExclInvalid then False else True.
-    Proof. destruct x; split'; auto using cmra_valid_elim. Qed.
     Lemma excl_validI_inv_l mx a : ✓ (Excl' a ⋅ mx) ⊢ [! mx = None !].
-    Proof. rewrite -embed_pure. solve_entails excl_validN_inv_l. Qed.
+    Proof. sbi_unfold => n. exact: excl_validN_inv_l. Qed.
     Lemma excl_validI_inv_r mx a : ✓ (mx ⋅ Excl' a) ⊢ [! mx = None !].
-    Proof. rewrite -embed_pure. solve_entails excl_validN_inv_r. Qed.
+    Proof. sbi_unfold => n. exact: excl_validN_inv_r. Qed.
 
     Lemma excl_op_validI a1 a2 : ✓ (Excl a1 ⋅ Excl a2) ⊣⊢ False.
     Proof. by rewrite excl_validI. Qed.
 
     Lemma Excl_includedI a b : Excl' a ≼ Excl' b ⊣⊢ a ≡ b.
-    Proof. rewrite -embed_includedI -embed_internal_eq. solve_equiv Excl_includedN. Qed.
+    Proof. sbi_unfold => n. exact: Excl_includedN. Qed.
   End excl.
 
   (** iris.algebra.agree *)
@@ -265,33 +202,11 @@ Section theory.
     Implicit Types x y : agree A.
     Implicit Types a b : A.
 
-    Lemma agree_includedI x y : x ≼ y ⊢ y ≡ x ⋅ y.
-    Proof. iDestruct 1 as (z) "Hy". iRewrite "Hy". by rewrite assoc agree_idemp. Qed.
-
     Lemma agree_valid_includedI x y : ✓ y ⊢ x ≼ y -∗ <pers> (x ≡ y).
     Proof.
       apply: plain_wand_intro_r.
-      rewrite -embed_includedI -embed_and -embed_internal_eq.
-      solve_entails' (intros []; apply agree_valid_includedN).
+      sbi_unfold => n []. exact: agree_valid_includedN.
     Qed.
-
-    Lemma to_agree_includedI a b : to_agree a ≼ to_agree b ⊣⊢ a ≡ b.
-    Proof.
-      rewrite -embed_includedI -embed_internal_eq.
-      solve_equiv to_agree_includedN.
-    Qed.
-
-    Lemma agree_op_invI x y : ✓ (x ⋅ y) ⊢ x ≡ y.
-    Proof. rewrite -embed_internal_eq. solve_entails agree_op_invN. Qed.
-
-    Lemma to_agree_uninjI x : ✓ x ⊢ ∃ a, to_agree a ≡ x.
-    Proof.
-      setoid_rewrite <- embed_internal_eq. rewrite -embed_exist.
-      solve_entails to_agree_uninjN.
-    Qed.
-
-    Lemma agree_equivI a b : to_agree a ≡ to_agree b ⊣⊢ a ≡ b.
-    Proof. rewrite -!embed_internal_eq. solve_equiv' (rewrite (inj_iff to_agree)). Qed.
   End agree.
 
   (** iris.algebra.view *)
@@ -311,10 +226,7 @@ Section theory.
       split'; naive_solver eauto using lem1, lem2.
 
     Lemma view_auth_dfrac_validI_frac dq a : ✓ (●V{dq} a) ⊢ [! ✓ dq !]%Qp.
-    Proof.
-      rewrite -embed_pure.
-      solve_entails' (rewrite view_auth_dfrac_validN; destruct 1).
-    Qed.
+    Proof. sbi_unfold=> n. by rewrite view_auth_dfrac_validN; destruct 1. Qed.
 
     Lemma view_auth_frac_validI_frac q a : ✓ (●V{# q} a) ⊢ [! q ≤ 1 !]%Qp.
     Proof. apply view_auth_dfrac_validI_frac. Qed.
@@ -322,8 +234,8 @@ Section theory.
     Lemma view_auth_dfrac_validI_frac_2 dq1 dq2 a1 a2 :
       ✓ (●V{dq1} a1 ⋅ ●V{dq2} a2) ⊢ [! ✓ (dq1 ⋅ dq2) !].
     Proof.
-      rewrite -embed_pure.
-      solve_entails' (rewrite view_auth_dfrac_op_validN; destruct 1).
+      sbi_unfold=> n.
+      by rewrite view_auth_dfrac_op_validN; destruct 1.
     Qed.
 
     Lemma view_auth_frac_validI_frac_2 q1 q2 a1 a2 :
@@ -331,124 +243,102 @@ Section theory.
     Proof. apply view_auth_dfrac_validI_frac_2. Qed.
 
     Lemma view_auth_dfrac_op_invI dp1 a1 dp2 a2 : ✓ (●V{dp1} a1 ⋅ ●V{dp2} a2) ⊢ a1 ≡ a2.
-    Proof. rewrite -embed_internal_eq. solve_entails view_auth_dfrac_op_invN. Qed.
+    Proof. sbi_unfold=> n. exact: view_auth_dfrac_op_invN. Qed.
     Lemma view_auth_dfrac_op_invI_L `{!OfeDiscrete A, !LeibnizEquiv A} dp1 a1 dp2 a2 :
       ✓ (●V{dp1} a1 ⋅ ●V{dp2} a2) ⊢ [! a1 = a2 !].
     Proof. unfold_leibniz. by rewrite view_auth_dfrac_op_invI discrete_eq. Qed.
 
     Lemma view_auth_frac_validI_1 relI q a :
-      (∀ n, rel n a ε → siProp_holds relI n) → ✓ (●V{# q} a) ⊢ [! q ≤ 1 !]%Qp ∧ embed relI.
-    Proof. intros. rewrite -embed_pure -embed_and. lift view_auth_dfrac_validN. Qed.
+      (∀ n, rel n a ε → siProp_holds relI n) → ✓ (●V{# q} a) ⊢ [! q ≤ 1 !]%Qp ∧ <si_pure> relI.
+    Proof. intros. lift view_auth_dfrac_validN. Qed.
     Lemma view_auth_frac_validI_2 relI q a :
-      (∀ n, siProp_holds relI n → rel n a ε) → [! q ≤ 1 !]%Qp ∧ embed relI ⊢ ✓ (●V{# q} a).
-    Proof. intros. rewrite -embed_pure -embed_and. lift view_auth_dfrac_validN. Qed.
+      (∀ n, siProp_holds relI n → rel n a ε) → [! q ≤ 1 !]%Qp ∧ <si_pure> relI ⊢ ✓ (●V{# q} a).
+    Proof. intros. lift view_auth_dfrac_validN. Qed.
     Lemma view_auth_frac_validI relI q a :
-      (∀ n, rel n a ε ↔ siProp_holds relI n) → ✓ (●V{# q} a) ⊣⊢ [! q ≤ 1 !]%Qp ∧ embed relI.
+      (∀ n, rel n a ε ↔ siProp_holds relI n) → ✓ (●V{# q} a) ⊣⊢ [! q ≤ 1 !]%Qp ∧ <si_pure> relI.
     Proof. combine view_auth_frac_validI_1, view_auth_frac_validI_2. Qed.
 
     Lemma view_auth_validI_1 relI a :
-      (∀ n, rel n a ε → siProp_holds relI n) → ✓ (●V a) ⊢ embed relI.
+      (∀ n, rel n a ε → siProp_holds relI n) → ✓ (●V a) ⊢ <si_pure> relI.
     Proof. intros. lift view_auth_validN. Qed.
     Lemma view_auth_validI_2 relI a :
-      (∀ n, siProp_holds relI n → rel n a ε) → embed relI ⊢ ✓ (●V a).
+      (∀ n, siProp_holds relI n → rel n a ε) → <si_pure> relI ⊢ ✓ (●V a).
     Proof. intros. lift view_auth_validN. Qed.
     Lemma view_auth_validI relI a :
-      (∀ n, rel n a ε ↔ siProp_holds relI n) → ✓ (●V a) ⊣⊢ embed relI.
+      (∀ n, rel n a ε ↔ siProp_holds relI n) → ✓ (●V a) ⊣⊢ <si_pure> relI.
     Proof. combine view_auth_validI_1, view_auth_validI_2. Qed.
 
     Lemma view_auth_frac_op_validI_1 relI q1 q2 a1 a2 :
       (∀ n, rel n a1 ε → siProp_holds relI n) →
-      ✓ (●V{# q1} a1 ⋅ ●V{# q2} a2) ⊢ [! q1 + q2 ≤ 1 !]%Qp ∧ a1 ≡ a2 ∧ embed relI.
-    Proof.
-      intros. rewrite -embed_pure -embed_internal_eq -!embed_and.
-      lift view_auth_dfrac_op_validN.
-    Qed.
+      ✓ (●V{# q1} a1 ⋅ ●V{# q2} a2) ⊢ [! q1 + q2 ≤ 1 !]%Qp ∧ a1 ≡ a2 ∧ <si_pure> relI.
+    Proof. intros. lift view_auth_dfrac_op_validN. Qed.
     Lemma view_auth_frac_op_validI_2 relI q1 q2 a1 a2 :
       (∀ n, siProp_holds relI n → rel n a1 ε) →
-      [! q1 + q2 ≤ 1 !]%Qp ∧ a1 ≡ a2 ∧ embed relI ⊢ ✓ (●V{# q1} a1 ⋅ ●V{# q2} a2).
-    Proof.
-      intros. rewrite -embed_pure -embed_internal_eq -!embed_and.
-      lift view_auth_dfrac_op_validN.
-    Qed.
+      [! q1 + q2 ≤ 1 !]%Qp ∧ a1 ≡ a2 ∧ <si_pure> relI ⊢ ✓ (●V{# q1} a1 ⋅ ●V{# q2} a2).
+    Proof. intros. lift view_auth_dfrac_op_validN. Qed.
     Lemma view_auth_frac_op_validI relI q1 q2 a1 a2 :
       (∀ n, rel n a1 ε ↔ siProp_holds relI n) →
-      ✓ (●V{# q1} a1 ⋅ ●V{# q2} a2) ⊣⊢ [! q1 + q2 ≤ 1 !]%Qp ∧ a1 ≡ a2 ∧ embed relI.
+      ✓ (●V{# q1} a1 ⋅ ●V{# q2} a2) ⊣⊢ [! q1 + q2 ≤ 1 !]%Qp ∧ a1 ≡ a2 ∧ <si_pure> relI.
     Proof. combine view_auth_frac_op_validI_1, view_auth_frac_op_validI_2. Qed.
 
     Lemma view_auth_op_validI a1 a2 : ✓ (●V a1 ⋅ ●V a2) ⊣⊢ False.
-    Proof. rewrite -embed_pure. solve_equiv view_auth_op_validN. Qed.
+    Proof. solve_equiv view_auth_op_validN. Qed.
 
     Lemma view_frag_validI_1 relI b :
-      (∀ n a, rel n a b → siProp_holds relI n) → ✓ (◯V b) ⊢ embed relI.
+      (∀ n a, rel n a b → siProp_holds relI n) → ✓ (◯V b) ⊢ <si_pure> relI.
     Proof. intros. lift view_frag_validN. Qed.
     Lemma view_frag_validI_2 relI b :
-      (∀ n, siProp_holds relI n → ∃ a, rel n a b) → embed relI ⊢ ✓ (◯V b).
+      (∀ n, siProp_holds relI n → ∃ a, rel n a b) → <si_pure> relI ⊢ ✓ (◯V b).
     Proof. intros. lift view_frag_validN. Qed.
     Lemma view_frag_validI relI b :
-      (∀ n, siProp_holds relI n ↔ ∃ a, rel n a b) → ✓ (◯V b) ⊣⊢ embed relI.
+      (∀ n, siProp_holds relI n ↔ ∃ a, rel n a b) → ✓ (◯V b) ⊣⊢ <si_pure> relI.
     Proof. combine view_frag_validI_1, view_frag_validI_2. Qed.
 
     Lemma view_both_frac_validI_1 relI q a b :
-      (∀ n, rel n a b → siProp_holds relI n) → ✓ (●V{# q} a ⋅ ◯V b) ⊢ [! q ≤ 1 !]%Qp ∧ embed relI.
-    Proof. intros. rewrite -embed_pure -embed_and. lift view_both_dfrac_validN. Qed.
+      (∀ n, rel n a b → siProp_holds relI n) → ✓ (●V{# q} a ⋅ ◯V b) ⊢ [! q ≤ 1 !]%Qp ∧ <si_pure> relI.
+    Proof. intros. lift view_both_dfrac_validN. Qed.
     Lemma view_both_frac_validI_2 relI q a b :
-      (∀ n, siProp_holds relI n → rel n a b) → [! q ≤ 1 !]%Qp ∧ embed relI ⊢ ✓ (●V{# q} a ⋅ ◯V b).
-    Proof. intros. rewrite -embed_pure -embed_and. lift view_both_dfrac_validN. Qed.
+      (∀ n, siProp_holds relI n → rel n a b) → [! q ≤ 1 !]%Qp ∧ <si_pure> relI ⊢ ✓ (●V{# q} a ⋅ ◯V b).
+    Proof. intros. lift view_both_dfrac_validN. Qed.
     Lemma view_both_frac_validI relI q a b :
-      (∀ n, rel n a b ↔ siProp_holds relI n) → ✓ (●V{# q} a ⋅ ◯V b) ⊣⊢ [! q ≤ 1 !]%Qp ∧ embed relI.
+      (∀ n, rel n a b ↔ siProp_holds relI n) → ✓ (●V{# q} a ⋅ ◯V b) ⊣⊢ [! q ≤ 1 !]%Qp ∧ <si_pure> relI.
     Proof. combine view_both_frac_validI_1, view_both_frac_validI_2. Qed.
 
     Lemma view_both_validI_1 relI a b :
-      (∀ n, rel n a b → siProp_holds relI n) → ✓ (●V a ⋅ ◯V b) ⊢ embed relI.
+      (∀ n, rel n a b → siProp_holds relI n) → ✓ (●V a ⋅ ◯V b) ⊢ <si_pure> relI.
     Proof. intros. lift view_both_validN. Qed.
     Lemma view_both_validI_2 relI a b :
-      (∀ n, siProp_holds relI n → rel n a b) → embed relI ⊢ ✓ (●V a ⋅ ◯V b).
+      (∀ n, siProp_holds relI n → rel n a b) → <si_pure> relI ⊢ ✓ (●V a ⋅ ◯V b).
     Proof. intros. lift view_both_validN. Qed.
     Lemma view_both_validI relI a b :
-      (∀ n, rel n a b ↔ siProp_holds relI n) → ✓ (●V a ⋅ ◯V b) ⊣⊢ embed relI.
+      (∀ n, rel n a b ↔ siProp_holds relI n) → ✓ (●V a ⋅ ◯V b) ⊣⊢ <si_pure> relI.
     Proof. combine view_both_validI_1, view_both_validI_2. Qed.
 
     Lemma view_auth_dfrac_includedI dq1 dq2 a1 a2 b :
       ●V{dq1} a1 ≼ ●V{dq2} a2 ⋅ ◯V b ⊣⊢ [! dq1 ≼ dq2 ∨ dq1 = dq2 !] ∧ a1 ≡ a2.
-    Proof.
-      rewrite -embed_includedI -embed_pure -embed_internal_eq -embed_and.
-      solve_equiv view_auth_dfrac_includedN.
-    Qed.
+    Proof. solve_equiv view_auth_dfrac_includedN. Qed.
 
     Lemma view_auth_frac_includedI q1 q2 a1 a2 b :
       ●V{# q1} a1 ≼ ●V{# q2} a2 ⋅ ◯V b ⊣⊢ [! q1 ≤ q2 !]%Qp ∧ a1 ≡ a2.
-    Proof.
-      by rewrite view_auth_dfrac_includedI qple_dfrac_own_incl.
-    Qed.
+    Proof. by rewrite view_auth_dfrac_includedI qple_dfrac_own_incl. Qed.
 
     Lemma view_auth_includedI a1 a2 b : ●V a1 ≼ ●V a2 ⋅ ◯V b ⊣⊢ a1 ≡ a2.
-    Proof.
-      rewrite -embed_includedI -embed_internal_eq.
-      solve_equiv view_auth_includedN.
-    Qed.
+    Proof. solve_equiv view_auth_includedN. Qed.
 
     Lemma view_frag_includedI dq a b1 b2 : ◯V b1 ≼ ●V{dq} a ⋅ ◯V b2 ⊣⊢ b1 ≼ b2.
-    Proof. rewrite -!embed_includedI. solve_equiv view_frag_includedN. Qed.
+    Proof. solve_equiv view_frag_includedN. Qed.
 
     Lemma view_both_dfrac_includedI dq1 dq2 a1 a2 b1 b2 :
       ●V{dq1} a1 ⋅ ◯V b1 ≼ ●V{dq2} a2 ⋅ ◯V b2 ⊣⊢ [! dq1 ≼ dq2 ∨ dq1 = dq2 !]%Qp ∧ a1 ≡ a2 ∧ b1 ≼ b2.
-    Proof.
-      rewrite -!embed_includedI -embed_pure -embed_internal_eq -!embed_and.
-      solve_equiv view_both_dfrac_includedN.
-    Qed.
+    Proof. solve_equiv view_both_dfrac_includedN. Qed.
 
     Lemma view_both_frac_includedI q1 q2 a1 a2 b1 b2 :
       ●V{# q1} a1 ⋅ ◯V b1 ≼ ●V{# q2} a2 ⋅ ◯V b2 ⊣⊢ [! q1 ≤ q2 !]%Qp ∧ a1 ≡ a2 ∧ b1 ≼ b2.
-    Proof.
-      by rewrite view_both_dfrac_includedI qple_dfrac_own_incl.
-    Qed.
+    Proof. by rewrite view_both_dfrac_includedI qple_dfrac_own_incl. Qed.
 
     Lemma view_both_includedI a1 a2 b1 b2 :
       ●V a1 ⋅ ◯V b1 ≼ ●V a2 ⋅ ◯V b2 ⊣⊢ a1 ≡ a2 ∧ b1 ≼ b2.
-    Proof.
-      rewrite -!embed_includedI -embed_internal_eq -embed_and.
-      solve_equiv view_both_includedN.
-    Qed.
+    Proof. solve_equiv view_both_includedN. Qed.
   End view.
 
   (** iris.algebra.auth *)
@@ -459,18 +349,15 @@ Section theory.
     Implicit Types x y : auth A.
 
     #[local] Lemma auth_view_rel_auth n a :
-      view_rel_holds auth_view_rel n a ε ↔ siProp_holds (si_cmra_valid a) n.
+      view_rel_holds auth_view_rel n a ε ↔ siProp_holds (siProp_cmra_valid a) n.
     Proof.
-      unseal'. split.
+      siProp.unseal; split.
       - by destruct 1.
       - split. by apply ucmra_unit_leastN. done.
     Qed.
 
     Lemma auth_auth_frac_validI q a : ✓ (●{#q} a) ⊣⊢ [! q ≤ 1 !]%Qp ∧ ✓ a.
     Proof. apply view_auth_frac_validI=>n. apply auth_view_rel_auth. Qed.
-
-    Lemma auth_auth_validI a : ✓ (● a) ⊣⊢ ✓ a.
-    Proof. by rewrite auth_auth_frac_validI refl_True left_id. Qed.
 
     Lemma auth_auth_frac_op_validI_1 q1 q2 a1 a2 :
       ✓ (●{#q1} a1 ⋅ ●{#q2} a2) ⊢ [! q1 + q2 ≤ 1 !]%Qp ∧ a1 ≡ a2 ∧ ✓ a1.
@@ -485,25 +372,14 @@ Section theory.
     Lemma auth_auth_op_validI a1 a2 : ✓ (● a1 ⋅ ● a2) ⊣⊢ False.
     Proof. by rewrite view_auth_op_validI. Qed.
 
-    Lemma auth_frag_validI b : ✓ (◯ b) ⊣⊢ ✓ b.
-    Proof.
-      apply view_frag_validI=>n. unseal'. split.
-      - by exists b.
-      - intros [a []]. exact: (cmra_validN_includedN _ _ a).
-    Qed.
-
     Lemma auth_frag_op_validI b1 b2 : ✓ (◯ b1 ⋅ ◯ b2) ⊣⊢ ✓ (b1 ⋅ b2).
     Proof. apply auth_frag_validI. Qed.
 
     Lemma auth_both_frac_validI q a b :
       ✓ (●{#q} a ⋅ ◯ b) ⊣⊢ [! q ≤ 1 !]%Qp ∧ b ≼ a ∧ ✓ a.
-    Proof.
-      rewrite -embed_includedI -!embed_and.
-      apply view_both_frac_validI=>n. unseal'. split.
-      - intros [[c ?] ?]. split. by exists c. done.
-      - intros ((c & ?) & ?). split. by exists c. done.
-    Qed.
+    Proof. by rewrite /internal_included auth_both_dfrac_validI /=. Qed.
 
+    (* XXX upstream expands [internal_included] *)
     Lemma auth_both_validI a b : ✓ (● a ⋅ ◯ b) ⊣⊢ b ≼ a ∧ ✓ a.
     Proof. by rewrite auth_both_frac_validI refl_True left_id. Qed.
 
@@ -511,9 +387,7 @@ Section theory.
       (q ≤ 1)%Qp → ✓ a ⊢ b ≼ a -∗ <pers> ✓ (●{#q} a ⋅ ◯ b).
     Proof.
       intros. apply: plain_wand_intro_r. rewrite auth_both_frac_validI.
-      iIntros "H". repeat iSplit; first done.
-      - by iDestruct "H" as "[_ ?]".
-      - by iDestruct "H" as "[? _]".
+      iIntros "#[? ?]". by repeat iSplit.
     Qed.
     Lemma auth_both_validI_2 a b : ✓ a ⊢ b ≼ a -∗ <pers> ✓ (● a ⋅ ◯ b).
     Proof. by apply auth_both_frac_validI_2. Qed.
@@ -554,20 +428,17 @@ Section theory.
     Implicit Types a b : A.
 
     Lemma excl_auth_frac_validI q a : ✓ (●E{q} a) ⊣⊢ [! q ≤ 1 !]%Qp.
-    Proof. rewrite -embed_pure. solve_equiv excl_auth_frac_validN. Qed.
+    Proof. solve_equiv excl_auth_frac_validN. Qed.
 
     Lemma excl_auth_auth_frac_op_validI q1 q2 a1 a2 :
       ✓ (●E{q1} a1 ⋅ ●E{q2} a2) ⊣⊢ [! q1 + q2 ≤ 1 !]%Qp ∧ a1 ≡ a2.
-    Proof.
-      rewrite -embed_pure -embed_internal_eq -embed_and.
-      solve_equiv excl_auth_auth_frac_op_validN.
-    Qed.
+    Proof. solve_equiv excl_auth_auth_frac_op_validN. Qed.
 
     Lemma excl_auth_frac_op_invI p a q b : ✓ (●E{p} a ⋅ ●E{q} b) ⊢ a ≡ b.
-    Proof. rewrite -embed_internal_eq. solve_entails excl_auth_frac_op_invN. Qed.
+    Proof. solve_entails excl_auth_frac_op_invN. Qed.
 
     Lemma excl_auth_frac_agreeI q a b : ✓ (●E{q} a ⋅ ◯E b) ⊢ a ≡ b.
-    Proof. rewrite -embed_internal_eq. solve_entails excl_auth_frac_agreeN. Qed.
+    Proof. solve_entails excl_auth_frac_agreeN. Qed.
 
     Lemma excl_auth_validI a : ✓ (●E a ⋅ ◯E a) ⊣⊢ True.
     Proof.
@@ -576,7 +447,7 @@ Section theory.
     Qed.
 
     Lemma excl_auth_agreeI a b : ✓ (●E a ⋅ ◯E b) ⊢ a ≡ b.
-    Proof. rewrite -embed_internal_eq. solve_entails excl_auth_agreeN. Qed.
+    Proof. solve_entails excl_auth_agreeN. Qed.
 
     Lemma excl_auth_frag_validI_op_1_l a b : ✓ (◯E a ⋅ ◯E b) ⊢ False.
     Proof.
@@ -592,60 +463,40 @@ Section theory.
     Implicit Types a b : A.
 
     Lemma frac_auth_auth_frac_validI q a : ✓ (●F{q} a) ⊣⊢ [! q ≤ 1 !]%Qp ∧ ✓ a.
-    Proof.
-      rewrite -embed_pure -embed_and.
-      solve_equiv frac_auth_auth_frac_validN.
-    Qed.
+    Proof. solve_equiv frac_auth_auth_frac_validN. Qed.
 
     Lemma frac_auth_auth_frac_op_validI q1 q2 a1 a2 :
       ✓ (●F{q1} a1 ⋅ ●F{q2} a2) ⊣⊢ [! q1 + q2 ≤ 1 !]%Qp ∧ a1 ≡ a2 ∧ ✓ a1.
-    Proof.
-      rewrite -embed_pure -embed_internal_eq -embed_and -embed_and.
-      solve_equiv frac_auth_auth_frac_op_validN.
-    Qed.
+    Proof. solve_equiv frac_auth_auth_frac_op_validN. Qed.
 
     Lemma frac_auth_auth_frac_op_invI p a q b : ✓ (●F{p} a ⋅ ●F{q} b) ⊢ a ≡ b.
-    Proof.
-      rewrite -embed_internal_eq.
-      solve_entails frac_auth_auth_frac_op_invN.
-    Qed.
+    Proof. solve_entails frac_auth_auth_frac_op_invN. Qed.
 
     Lemma frac_auth_auth_frag_includedI q1 q2 a b :
       ✓ (●F{q1} a ⋅ ◯F{q2} b) ⊢ Some b ≼ Some a.
-    Proof.
-      rewrite -embed_includedI.
-      solve_entails frac_auth_auth_frag_includedN.
-    Qed.
+    Proof. solve_entails frac_auth_auth_frag_includedN. Qed.
     Lemma frac_auth_auth_frag_includedI_discrete `{!CmraDiscrete A} q1 q2 a b :
       ✓ (●F{q1} a ⋅ ◯F{q2} b) ⊢ [! Some b ≼ Some a !].
     Proof.
-      rewrite -embed_pure.
       solve_entails' (rewrite -cmra_discrete_valid_iff;
         apply frac_auth_auth_frag_included).
     Qed.
     Lemma frac_auth_auth_frag_includedI_total `{!CmraTotal A} q1 q2 a b :
       ✓ (●F{q1} a ⋅ ◯F{q2} b) ⊢ b ≼ a.
-    Proof.
-      rewrite -embed_includedI.
-      solve_entails frac_auth_auth_frag_includedN_total.
-    Qed.
+    Proof. solve_entails frac_auth_auth_frag_includedN_total. Qed.
     Lemma frac_auth_auth_frag_includedI_total_discrete `{!CmraDiscrete A,
         !CmraTotal A} q1 q2 a b :
       ✓ (●F{q1} a ⋅ ◯F{q2} b) ⊢ [! b ≼ a !].
     Proof.
-      rewrite -embed_pure.
       solve_entails' (rewrite -cmra_discrete_valid_iff;
         apply frac_auth_auth_frag_included_total).
     Qed.
 
     Lemma frac_auth_auth_frac_agreeI q a b : ✓ (●F{q} a ⋅ ◯F b) ⊢ a ≡ b.
-    Proof.
-      rewrite -embed_internal_eq.
-      solve_entails frac_auth_auth_frac_agreeN.
-    Qed.
+    Proof. solve_entails frac_auth_auth_frac_agreeN. Qed.
 
     Lemma frac_auth_frag_validI q a : ✓ (◯F{q} a) ⊣⊢ [! q ≤ 1 !]%Qp ∧ ✓ a.
-    Proof. rewrite -embed_pure -embed_and. solve_equiv frac_auth_frag_validN. Qed.
+    Proof. solve_equiv frac_auth_frag_validN. Qed.
 
   End frac_auth.
 
@@ -661,32 +512,23 @@ Section theory.
     Qed.
 
     Lemma gmap_view_auth_validI m q : ✓ gmap_view_auth (DfracOwn q) m ⊣⊢ [! q ≤ 1 !]%Qp.
-    Proof. rewrite -embed_pure. solve_equiv gmap_view_auth_validN. Qed.
+    Proof. solve_equiv gmap_view_auth_validN. Qed.
 
     Lemma gmap_view_auth_op_validI q1 q2 m1 m2 :
       ✓ (gmap_view_auth (DfracOwn q1) m1 ⋅ gmap_view_auth (DfracOwn q2) m2) ⊣⊢
         [! q1 + q2 ≤ 1 !]%Qp ∧ m1 ≡ m2.
-    Proof.
-      rewrite -embed_pure -embed_internal_eq -embed_and.
-      solve_equiv gmap_view_auth_dfrac_op_validN.
-    Qed.
+    Proof. solve_equiv gmap_view_auth_dfrac_op_validN. Qed.
 
     Lemma gmap_view_frag_validI k dq v : ✓ gmap_view_frag k dq (to_agree v) ⊣⊢ [! ✓ dq !].
     Proof.
-      rewrite -embed_pure.
-      apply embed_proper; unseal.
-      rewrite gmap_view_frag_validN; naive_solver.
+      solve_entails' (rewrite gmap_view_frag_validN; naive_solver).
     Qed.
 
     Lemma gmap_view_frag_op_validI k dq1 dq2 v1 v2 :
       ✓ (gmap_view_frag k dq1 (to_agree v1) ⋅ gmap_view_frag k dq2 (to_agree v2)) ⊣⊢
         [! ✓ (dq1 ⋅ dq2) !] ∧ v1 ≡ v2.
     Proof.
-      rewrite -embed_pure -embed_internal_eq -embed_and.
-      apply embed_proper; unseal.
-      rewrite gmap_view_frag_op_validN.
-      rewrite to_agree_op_validN.
-      done.
+      solve_entails' (rewrite gmap_view_frag_op_validN to_agree_op_validN).
     Qed.
 
   End gmap_view.

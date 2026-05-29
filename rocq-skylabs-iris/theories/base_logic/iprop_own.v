@@ -12,6 +12,7 @@ Require Export iris.base_logic.lib.own. (* << exporting [inG] and [gFunctors] *)
 
 Require Export skylabs.iris.extra.bi.own.
 
+(**
 (* Instances for iProp *)
 
 (* Embedding of si in iProp. It seems that such an embedding doesn't exist
@@ -93,17 +94,8 @@ Section si_embedding.
     - intros P. rewrite si_embed_eq_si_pure si_emp_valid_si_pure. by unseal.
     - intros Pi. rewrite si_embed_eq_si_pure. by unseal.
   Qed.
-
-  (* TODO: this should have been defined upstream. *)
-  Lemma si_cmra_valid_validI {A : cmra} (a : A) :
-    ⎡ si_cmra_valid a ⎤ ⊣⊢@{uPredI M} internal_cmra_valid a.
-  Proof.
-    (* TODO this proof is LLM-generated, improve. *)
-    rewrite /internal_cmra_valid si_embed_eq_si_pure. apply (anti_symm _);
-      apply si_pure_mono; constructor=> n; rewrite si_cmra_valid_eq;
-      rewrite siprop.siProp_cmra_valid_unseal; done.
-  Qed.
 End si_embedding.
+*)
 
 Section iprop_instances.
   Context `{Hin: inG Σ A}.
@@ -123,15 +115,9 @@ Section iprop_instances.
   Definition has_own_iprop_eq :
     @has_own_iprop = @has_own_iprop_def := has_own_iprop_aux.(seal_eq).
 
-  Lemma uPred_cmra_valid_bi_cmra_valid (a : A) :
-    (internal_cmra_valid a) ⊣⊢@{iPropI} bi_cmra_valid a.
-  Proof.
-    rewrite /bi_cmra_valid /=. by rewrite si_cmra_valid_validI.
-  Qed.
-
   #[global] Instance has_own_valid_iprop : HasOwnValid iPropI A.
   Proof.
-    constructor. intros. rewrite -uPred_cmra_valid_bi_cmra_valid.
+    constructor. intros.
     by rewrite has_own_iprop_eq /= base_logic.lib.own.own_valid.
   Qed.
 
