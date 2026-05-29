@@ -173,6 +173,60 @@ let temp_file ?(prefix="ocaml_temp_") ?(suffix=".tmp") content =
       let _ = try Sys.remove temp_file with _ -> () in
       raise e
 
+let flags_separator = Str.regexp "[ \n\r\x0c\t]+"
+
+let separated_path_option =
+  Str.regexp "^\\(-F\\|-I\\|-idirafter\\|-iframework\\|-iframeworkwithsysroot\\|-imacros\\|-include\\|-include-pch\\|-iquote\\|-isysroot\\|-isystem\\|-ivfsoverlay\\|-resource-dir\\|--sysroot\\)$"
+
+let joined_path_option =
+  Str.regexp "^\\(-F\\|-I\\|-idirafter\\|-iframeworkwithsysroot\\|-iframework\\|-iquote\\|-isysroot\\|-isystem\\)\\(.+\\)$"
+
+let joined_sysroot_option =
+  Str.regexp "^--sysroot=\\(.+\\)$"
+
+let should_warn (flags : string) : bool =
+  let is_relative_path path =
+    path <> "" && Filename.is_relative path
+  in
+  let joined_path flag =
+    if Str.string_match joined_path_option flag 0 then
+      Some (Str.matched_group 2 flag)
+    else if Str.string_match joined_sysroot_option flag 0 then
+      Some (Str.matched_group 1 flag)
+    else
+      None
+  in
+  let rec go = function
+    | [] -> false
+    | flag :: path :: rest when Str.string_match separated_path_option flag 0 ->
+      is_relative_path path || go rest
+    | flag :: rest ->
+      match joined_path flag with
+      | Some path -> is_relative_path path || go rest
+      | None -> go rest
+  in
+  go (Str.split flags_separator flags)
+
+let%test "should_warn ignores flags without paths" =
+  not (should_warn "-std=c++23 -Wall -DNAME=value")
+
+let%test "should_warn ignores absolute separated path flags" =
+  not (should_warn "-I /usr/include -isystem /opt/include --sysroot /opt/sysroot")
+
+let%test "should_warn ignores absolute joined path flags" =
+  not (should_warn "-I/usr/include -isystem/usr/include --sysroot=/opt/sysroot")
+
+let%test "should_warn detects separated relative path flags" =
+  should_warn "-I include" &&
+  should_warn "-isystem ../include" &&
+  should_warn "-include header.hpp" &&
+  should_warn "--sysroot sysroot"
+
+let%test "should_warn detects joined relative path flags" =
+  should_warn "-Iinclude" &&
+  should_warn "-isystem../include" &&
+  should_warn "--sysroot=sysroot"
+
 let cpp_command_prog (attrs : attrs) name flags prog =
   let { check_duplicates; elaborate; check_types } = attrs in
   let temp_cpp , unlink = temp_file ~suffix:".cpp" prog in
@@ -182,10 +236,11 @@ let cpp_command_prog (attrs : attrs) name flags prog =
       match flags with
       | None -> []
       | Some flags ->
-        Feedback.msg_notice Pp.(str "Note that cpp.prog does not guarantee the working directory," ++ Pp.brk (0,0) ++
-                                str "so relative paths may yield inconsistent results between different editors." ++ fnl () ++
-                               str "Current working directory: " ++ str (Unix.getcwd ())) ;
-        Str.split (Str.regexp "[ \n\r\x0c\t]+") flags
+        if should_warn flags then
+          Feedback.msg_notice Pp.(str "Note that cpp.prog does not guarantee the working directory," ++ Pp.brk (0,0) ++
+                                  str "so relative paths may yield inconsistent results between different editors." ++ fnl () ++
+                                 str "Current working directory: " ++ str (Unix.getcwd ())) ;
+        Str.split flags_separator flags
     in
     ["cpp2v";
     "-for-interactive"; Names.Id.to_string name;
