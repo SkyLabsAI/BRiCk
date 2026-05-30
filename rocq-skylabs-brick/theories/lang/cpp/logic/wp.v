@@ -1082,6 +1082,10 @@ Section with_cpp.
   Parameter wp_xval
     : forall {resolve:genv}, translation_unit -> region -> Expr -> M ptr.
 
+  Axiom wp_xval_well_typed : forall {σ:genv} tu ρ e Q,
+      wp_xval tu ρ e (fun v free => reference_to (type_of e) v -* Q v free)
+    ⊢ wp_xval tu ρ e Q.
+
   Axiom wp_xval_shift : forall {σ:genv} tu ρ e Q,
       (|={top}=> wp_xval tu ρ e (fun v free => |={top}=> Q v free))
     ⊢ wp_xval tu ρ e Q.
