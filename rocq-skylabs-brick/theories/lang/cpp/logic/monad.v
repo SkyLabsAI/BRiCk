@@ -122,22 +122,21 @@ Require Import skylabs.prelude.telescopes.
 
 (* TODO: the names here probably need to be in a module *)
 Class WpMonad (PROP : bi) {F : BiFUpd PROP} (M : Type -> Type) : Type :=
-{ angelic : forall T : Type, M T
-; demonic : forall T : Type, M T
-; produce : PROP -> M unit
-; consume : PROP -> M unit
-; check : forall {TT : tele}, (TT -t> PROP) -> M TT
+{ angelic : forall T : Type, M T                    (* ∃ *)
+; demonic : forall T : Type, M T                    (* ∀ *)
+; produce : PROP -> M unit                      (* -∗ *)
+; consume : PROP -> M unit                      (* ∗ *)
+; check : forall {TT : tele}, (TT -t> PROP) -> M TT  (* ∧ *)
 ; update : forall {TT1 TT2 : tele}, (TT1 -t> PROP) -> (TT1 -t> TT2 -t> PROP) ->
                                M (tele_arg (tele_append TT1 (tele_bind (fun _ : TT1 => TT2))))
-; ac : forall {TT: tele} (Apre : TT -t> PROP) (Eouter Einner : coPset)
-         {TT' : tele} (Apost : TT -t> TT' -t> PROP), M (tele_arg (tele_append TT (tele_bind (fun _ : TT => TT'))))
-
-; step : M unit
-; ub : forall {T}, M T
-; contra : forall {T}, M T
+; step : M unit                                (* ▷ *)
+; ub : forall {T}, M T                              (* ⊥ *)
+; contra : forall {T}, M T                          (* ⊤ *)
   (* TODO: below this is all that needs Fupd *)
 ; atomically : forall {T}, M T -> M T
 ; non_atomically : forall {T}, M T -> M T
+; ac : forall {TT: tele} (Apre : TT -t> PROP) (Eouter Einner : coPset)
+              {TT' : tele} (Apost : TT -t> TT' -t> PROP), M (tele_arg (tele_append TT (tele_bind (fun _ : TT => TT'))))
 }.
 
 mlock
