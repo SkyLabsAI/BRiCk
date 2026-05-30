@@ -230,6 +230,7 @@ Module MTraverse.
       | Estring s t => Estring s <$> ET (traverseT t)
       | Eint z t => Eint z <$> ET (traverseT t)
       | Ebool b => mret $ Ebool b
+      | Efloat ft v => mret $ Efloat ft v
       | Eunop o e t => Eunop o <$> traverseE e <*> ET (traverseT t)
       | Ebinop o e1 e2 t => Ebinop o <$> traverseE e1 <*> traverseE e2 <*> ET (traverseT t)
       | Ederef e t => Ederef <$> traverseE e <*> ET (traverseT t)
@@ -357,6 +358,7 @@ Module MTraverse.
       | Cbase2derived path t => Cbase2derived <$> traverse (T:=eta list) traverseT path <*> traverseT t
       | Cintegral t => Cintegral <$> traverseT t
       | Cint2bool => mret Cint2bool
+      | Cfloat2bool => mret Cfloat2bool
       | Cfloat2int t => Cfloat2int <$> traverseT t
       | Cint2float t => Cint2float <$> traverseT t
       | Cfloat t => Cfloat <$> traverseT t

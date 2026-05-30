@@ -133,6 +133,7 @@ Module decltype.
         | Cbase2derived _ ty => mret ty
         | Cintegral t => mret t
         | Cint2bool => mret Tbool
+        | Cfloat2bool => mret Tbool
         | Cfloat2int t
         | Cint2float t
         | Cfloat t
@@ -291,6 +292,7 @@ Module decltype.
             mret $ Tref $ Tarray (Tconst t) (1 + literal_string.lengthN chars)
         | Eint _ t => mret t
         | Ebool _ => mret Tbool
+        | Efloat ft _ => mret $ Tfloat_ ft
         | Eunop _ _ t => mret t
         | Ebinop op l _ t => of_binop op l t
         | Ederef _ t => mret $ Tref t

@@ -448,6 +448,7 @@ program because, in part, C++ has no type for references to members.
 | Estring (s : literal_string.t) (t : type)
 | Eint (n : Z) (t : type)
 | Ebool (b : bool)
+| Efloat (ft : float_type.t) (_ : float_type.car ft)
 | Eunop (op : UnOp) (e : Expr) (t : type)
 | Ebinop (op : BinOp) (e1 e2 : Expr) (t : type)
 | Ederef (e : Expr) (t : type)
@@ -578,6 +579,7 @@ with Cast : Set :=
 | Cptr2bool
 | Cintegral (_ : type)
 | Cint2bool
+| Cfloat2bool
 | Cfloat2int (_ : type)
 | Cint2float (_ : type)
 | Cfloat (_ : type) (* conversion between floating point types *)
@@ -655,6 +657,7 @@ Module Cast.
     | Cbase2derived path t => List.existsb T path || T t
     | Cintegral t => T t
     | Cint2bool => false
+    | Cfloat2bool => false
     | Cfloat2int t
     | Cint2float t
     | Cfloat t
@@ -925,7 +928,8 @@ with is_dependentE (e : Expr) : bool :=
   | Echar _ t
   | Estring _ t
   | Eint _ t => is_dependentT t
-  | Ebool _ => false
+  | Ebool _
+  | Efloat _ _ => false
   | Eunop _ e t => is_dependentE e || is_dependentT t
   | Ebinop _ e1 e2 t => is_dependentE e1 || is_dependentE e2 || is_dependentT t
   | Ederef e t => is_dependentE e || is_dependentT t

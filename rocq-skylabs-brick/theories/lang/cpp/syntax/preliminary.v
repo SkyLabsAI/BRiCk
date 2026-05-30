@@ -9,6 +9,8 @@ Require Export skylabs.prelude.pstring.
 Require Import skylabs.lang.cpp.syntax.prelude.
 Require Export skylabs.prelude.arith.types.
 
+Require Import Flocq.IEEE754.Binary.
+Require Import Flocq.IEEE754.Bits.
 
 (* TODO: is this worth its own file? *)
 
@@ -382,7 +384,258 @@ Module float_type.
   Definition bitsN (t : t) : N :=
     8 * bytesN t.
 
+  (** Parameters for [binary_float].
+
+      [mw] is the significand precision, including the implicit leading bit
+      for normalized finite values. [ew] is the exponent bound parameter used
+      by [binary_float].
+   *)
+  Definition mw (t : t) : Z :=
+    match t with
+    | Ffloat16 => 11
+    | Ffloat => 24
+    | Fdouble => 53
+    | Flongdouble => 64
+    | Ffloat128 => 113
+    end.
+
+  Lemma mw_gt_0 (t : t) : (0 < mw t)%Z.
+  Proof. by destruct t. Qed.
+
+  Definition ew (t : t) : Z :=
+    match t with
+    | Ffloat16 => 16
+    | Ffloat => 128
+    | Fdouble => 1024
+    | Flongdouble => 16384
+    | Ffloat128 => 16384
+    end.
+
+  Lemma mw_lt_ew (t : t) : (mw t < ew t)%Z.
+  Proof. by destruct t. Qed.
+
+
+  (** Parameters for the IEEE bit encoding helpers.
+
+      Flocq's [binary_float] uses the full significand precision [mw],
+      including the implicit leading bit for normal finite values, while its
+      bit-conversion helpers take the number of stored fraction bits. Thus the
+      first bit-conversion parameter is [mw - 1].
+
+      The [binary_float] exponent parameter is [2 ^ (ebits - 1)], so the
+      stored exponent width is recovered from [ew].
+   *)
+  Definition fraction_bits (t : t) : Z := mw t - 1.
+  Definition exponent_bits (t : t) : Z := Z.log2 (ew t) + 1.
+
+  (** The carrier type *)
+  Definition car (t : t) : Set :=
+    binary_float (mw t) (ew t).
+
+  #[global] Instance full_float_dec : EqDecision full_float.
+  Proof. red. intros. red. decide equality; try (apply decide; refine _). Defined.
+
+  #[global] Instance car_dec {ft : t} : EqDecision (car ft) :=
+    fun a b =>
+      match decide (B2FF _ _ a = B2FF _ _ b) with
+      | left pf => left (B2FF_inj _ _ _ _ pf)
+      | right pf => right (fun x => pf match x in _ = X return B2FF _ _ _ = B2FF _ _ X with
+                                  | eq_refl => eq_refl
+                                  end)
+      end.
+
 End float_type.
+Notation float_type := float_type.t.
+
+Module float_value.
+  Import float_type.
+
+  (** Build a floating-point value from the usual IEEE sign/exponent/fraction
+      bit encoding, interpreted as a non-negative [Z].
+
+      [Flongdouble] is included to keep the function total, but cpp2v should
+      only use this helper when Clang's [APFloat] layout matches this implicit
+      leading-bit encoding. In particular, x87 long double has an explicit
+      integer bit and is not printed through this path. *)
+  Definition of_bits (t : t) : Z -> car t :=
+    match t with
+    | Ffloat16 => binary_float_of_bits (Reduce (fraction_bits Ffloat16)) (Reduce (exponent_bits Ffloat16)) eq_refl eq_refl eq_refl
+    | Ffloat => binary_float_of_bits (Reduce (fraction_bits Ffloat)) (Reduce (exponent_bits Ffloat)) eq_refl eq_refl eq_refl
+    | Fdouble => binary_float_of_bits (Reduce (fraction_bits Fdouble)) (Reduce (exponent_bits Fdouble)) eq_refl eq_refl eq_refl
+    | Flongdouble => binary_float_of_bits (Reduce (fraction_bits Flongdouble)) (Reduce (exponent_bits Flongdouble)) eq_refl eq_refl eq_refl
+    | Ffloat128 => binary_float_of_bits (Reduce (fraction_bits Ffloat128)) (Reduce (exponent_bits Ffloat128)) eq_refl eq_refl eq_refl
+    end.
+
+  Definition to_bits (t : t) : car t -> Z :=
+    match t with
+    | Ffloat16 => bits_of_binary_float (Reduce (fraction_bits Ffloat16)) (Reduce (exponent_bits Ffloat16))
+    | Ffloat => bits_of_binary_float (Reduce (fraction_bits Ffloat)) (Reduce (exponent_bits Ffloat))
+    | Fdouble => bits_of_binary_float (Reduce (fraction_bits Fdouble)) (Reduce (exponent_bits Fdouble))
+    | Flongdouble => bits_of_binary_float (Reduce (fraction_bits Flongdouble)) (Reduce (exponent_bits Flongdouble))
+    | Ffloat128 => bits_of_binary_float (Reduce (fraction_bits Ffloat128)) (Reduce (exponent_bits Ffloat128))
+    end.
+
+  Definition zero (t : t) : car t :=
+    B754_zero _ _ false.
+
+  Definition signed_zero (t : t) : bool -> car t :=
+    B754_zero _ _.
+
+  Definition is_zero [t : t] (v : car t) : bool :=
+    match v with
+    | B754_zero _ _ _ => true
+    | _ => false
+    end.
+
+  Definition default_nan (t : t) : { nan : car t | is_nan _ _ nan = true } :=
+    match t return { nan : car t | is_nan _ _ nan = true } with
+    | Ffloat16 => exist _ (@B754_nan 11 16 false xH eq_refl) eq_refl
+    | Ffloat => exist _ (@B754_nan 24 128 false xH eq_refl) eq_refl
+    | Fdouble => exist _ (@B754_nan 53 1024 false xH eq_refl) eq_refl
+    | Flongdouble => exist _ (@B754_nan 64 16384 false xH eq_refl) eq_refl
+    | Ffloat128 => exist _ (@B754_nan 113 16384 false xH eq_refl) eq_refl
+    end.
+
+  Definition unop_nan [t : t] (v : car t) : { nan : car t | is_nan _ _ nan = true } :=
+    match v with
+    | B754_nan _ _ s pl Hpl => exist _ (B754_nan _ _ s pl Hpl) eq_refl
+    | _ => default_nan t
+    end.
+
+  Definition binop_nan [t : t] (v1 v2 : car t) : { nan : car t | is_nan _ _ nan = true } :=
+    match v1, v2 with
+    | B754_nan _ _ s pl Hpl, _ => exist _ (B754_nan _ _ s pl Hpl) eq_refl
+    | _, B754_nan _ _ s pl Hpl => exist _ (B754_nan _ _ s pl Hpl) eq_refl
+    | _, _ => default_nan t
+    end.
+
+
+  Definition opp (t : t) (v : car t) : car t :=
+    Bopp _ _ (@unop_nan t) v.
+
+  Definition normalize_with_mode (m : BinarySingleNaN.mode) (t : t) (z e : Z) (signed_zero : bool) : car t :=
+    match t return car t with
+    | Ffloat16 => binary_normalize _ _ (mw_gt_0 Ffloat16) (mw_lt_ew Ffloat16) m z e signed_zero
+    | Ffloat => binary_normalize _ _ (mw_gt_0 Ffloat) (mw_lt_ew Ffloat) m z e signed_zero
+    | Fdouble => binary_normalize _ _ (mw_gt_0 Fdouble) (mw_lt_ew Fdouble) m z e signed_zero
+    | Flongdouble => binary_normalize _ _ (mw_gt_0 Flongdouble) (mw_lt_ew Flongdouble) m z e signed_zero
+    | Ffloat128 => binary_normalize _ _ (mw_gt_0 Ffloat128) (mw_lt_ew Ffloat128) m z e signed_zero
+    end.
+
+  Definition normalize (t : t) (z e : Z) (signed_zero : bool) : car t :=
+    normalize_with_mode BinarySingleNaN.mode_NE t z e signed_zero.
+
+  Definition of_int_with_mode (m : BinarySingleNaN.mode) (t : t) (z : Z) : car t :=
+    normalize_with_mode m t z 0 false.
+
+  Definition of_int (t : t) (z : Z) : car t :=
+    of_int_with_mode BinarySingleNaN.mode_NE t z.
+
+  Definition to_int (t : t) (v : car t) : option Z :=
+    match v with
+    | B754_zero _ _ _ => Some 0%Z
+    | B754_finite _ _ s m e _ =>
+        let mag :=
+          if (0 <=? e)%Z then Z.shiftl (Zpos m) e else Z.shiftr (Zpos m) (- e)
+        in
+        Some (if s then (- mag)%Z else mag)
+    | _ => None
+    end.
+
+  Definition cast_with_mode (m : BinarySingleNaN.mode) (from to : t) (v : car from) : option (car to) :=
+    Some
+      match v with
+      | B754_zero _ _ s => signed_zero to s
+      | B754_infinity _ _ s => B754_infinity _ _ s
+      | B754_nan _ _ _ _ _ => proj1_sig (default_nan to)
+      | B754_finite _ _ s m' e _ =>
+          normalize_with_mode m to (if s then (- Zpos m')%Z else Zpos m') e false
+      end.
+
+  Definition cast (from to : t) : car from -> option (car to) :=
+    cast_with_mode BinarySingleNaN.mode_NE from to.
+
+  Definition add_with_mode (m : BinarySingleNaN.mode) (t : t) : car t -> car t -> car t :=
+    match t return car t -> car t -> car t with
+    | Ffloat16 => Bplus _ _ (mw_gt_0 Ffloat16) (mw_lt_ew Ffloat16) (@binop_nan Ffloat16) m
+    | Ffloat => Bplus _ _ (mw_gt_0 Ffloat) (mw_lt_ew Ffloat) (@binop_nan Ffloat) m
+    | Fdouble => Bplus _ _ (mw_gt_0 Fdouble) (mw_lt_ew Fdouble) (@binop_nan Fdouble) m
+    | Flongdouble => Bplus _ _ (mw_gt_0 Flongdouble) (mw_lt_ew Flongdouble) (@binop_nan Flongdouble) m
+    | Ffloat128 => Bplus _ _ (mw_gt_0 Ffloat128) (mw_lt_ew Ffloat128) (@binop_nan Ffloat128) m
+    end.
+
+  Definition sub_with_mode (m : BinarySingleNaN.mode) (t : t) : car t -> car t -> car t :=
+    match t return car t -> car t -> car t with
+    | Ffloat16 => Bminus _ _ (mw_gt_0 Ffloat16) (mw_lt_ew Ffloat16) (@binop_nan Ffloat16) m
+    | Ffloat => Bminus _ _ (mw_gt_0 Ffloat) (mw_lt_ew Ffloat) (@binop_nan Ffloat) m
+    | Fdouble => Bminus _ _ (mw_gt_0 Fdouble) (mw_lt_ew Fdouble) (@binop_nan Fdouble) m
+    | Flongdouble => Bminus _ _ (mw_gt_0 Flongdouble) (mw_lt_ew Flongdouble) (@binop_nan Flongdouble) m
+    | Ffloat128 => Bminus _ _ (mw_gt_0 Ffloat128) (mw_lt_ew Ffloat128) (@binop_nan Ffloat128) m
+    end.
+
+  Definition mul_with_mode (m : BinarySingleNaN.mode) (t : t) : car t -> car t -> car t :=
+    match t return car t -> car t -> car t with
+    | Ffloat16 => Bmult _ _ (mw_gt_0 Ffloat16) (mw_lt_ew Ffloat16) (@binop_nan Ffloat16) m
+    | Ffloat => Bmult _ _ (mw_gt_0 Ffloat) (mw_lt_ew Ffloat) (@binop_nan Ffloat) m
+    | Fdouble => Bmult _ _ (mw_gt_0 Fdouble) (mw_lt_ew Fdouble) (@binop_nan Fdouble) m
+    | Flongdouble => Bmult _ _ (mw_gt_0 Flongdouble) (mw_lt_ew Flongdouble) (@binop_nan Flongdouble) m
+    | Ffloat128 => Bmult _ _ (mw_gt_0 Ffloat128) (mw_lt_ew Ffloat128) (@binop_nan Ffloat128) m
+    end.
+
+  Definition div_with_mode (m : BinarySingleNaN.mode) (t : t) : car t -> car t -> car t :=
+    match t return car t -> car t -> car t with
+    | Ffloat16 => Bdiv _ _ (mw_gt_0 Ffloat16) (mw_lt_ew Ffloat16) (@binop_nan Ffloat16) m
+    | Ffloat => Bdiv _ _ (mw_gt_0 Ffloat) (mw_lt_ew Ffloat) (@binop_nan Ffloat) m
+    | Fdouble => Bdiv _ _ (mw_gt_0 Fdouble) (mw_lt_ew Fdouble) (@binop_nan Fdouble) m
+    | Flongdouble => Bdiv _ _ (mw_gt_0 Flongdouble) (mw_lt_ew Flongdouble) (@binop_nan Flongdouble) m
+    | Ffloat128 => Bdiv _ _ (mw_gt_0 Ffloat128) (mw_lt_ew Ffloat128) (@binop_nan Ffloat128) m
+    end.
+
+  (** We fix the rounding mode, we will not support this changing a runtime for the time
+      being because that would introduce differences between compile time and runtime evaluation.
+   *)
+  Definition add (t : t) : car t -> car t -> car t := add_with_mode BinarySingleNaN.mode_NE t.
+  Definition sub (t : t) : car t -> car t -> car t := sub_with_mode BinarySingleNaN.mode_NE t.
+  Definition mul (t : t) : car t -> car t -> car t := mul_with_mode BinarySingleNaN.mode_NE t.
+  Definition div (t : t) : car t -> car t -> car t := div_with_mode BinarySingleNaN.mode_NE t.
+
+  Definition value_compare (t : t) : car t -> car t -> option comparison :=
+    match t return car t -> car t -> option comparison with
+    | Ffloat16 => Bcompare _ _
+    | Ffloat => Bcompare _ _
+    | Fdouble => Bcompare _ _
+    | Flongdouble => Bcompare _ _
+    | Ffloat128 => Bcompare _ _
+    end.
+
+  Definition eqb (t : t) (v1 v2 : car t) : bool :=
+    match value_compare t v1 v2 with
+    | Some Eq => true
+    | _ => false
+    end.
+
+  Definition neqb (t : t) (v1 v2 : car t) : bool :=
+    negb (eqb t v1 v2).
+
+  Definition ltb (t : t) (v1 v2 : car t) : bool :=
+    match value_compare t v1 v2 with
+    | Some Lt => true
+    | _ => false
+    end.
+
+  Definition leb (t : t) (v1 v2 : car t) : bool :=
+    match value_compare t v1 v2 with
+    | Some Lt | Some Eq => true
+    | _ => false
+    end.
+
+  Definition gtb (t : t) (v1 v2 : car t) : bool :=
+    ltb t v2 v1.
+
+  Definition geb (t : t) (v1 v2 : car t) : bool :=
+    leb t v2 v1.
+
+End float_value.
 
 (** * Expression Preliminaries *)
 

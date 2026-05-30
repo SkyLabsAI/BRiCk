@@ -489,6 +489,9 @@ Module decltype.
             let* _ := require_float base in
             let* _ := require_integral t in
             mret t
+        | Cfloat2bool =>
+            let* _ := require_float base in
+            mret Tbool
         | Cint2float t =>
             let* _ := require_integral base in
             let* _ := require_float t in
@@ -574,6 +577,7 @@ Module decltype.
             let* _ := guard (t ∈ [Tchar;Tuchar;Tschar;Tshort;Tushort;Tint;Tuint;Tlong;Tulong;Tlonglong;Tulonglong]) in
             mret t
         | Ebool _ => mret Tbool
+        | Efloat ft _ => mret $ Tfloat_ ft
         | Eunop op e t =>
             let* et := of_expr e >>= requirePR in
             let* t' := of_unop op et >>= requirePR in

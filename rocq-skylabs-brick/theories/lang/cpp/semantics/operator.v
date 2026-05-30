@@ -29,6 +29,9 @@ Definition arith_as (ty : type) : option (int_rank.t * signed) :=
 Class supports_arith (ty : type) : Prop :=
   { _ : arith_as ty <> None }.
 
+Class supports_float_arith (ty : type) : Prop :=
+  { _ : match drop_qualifiers ty with Tfloat_ _ => True | _ => False end }.
+
 #[global] Instance: supports_arith Tint.
 Proof. constructor; compute; congruence. Qed.
 #[global] Instance: supports_arith Tuint.
@@ -45,6 +48,8 @@ Proof. constructor; compute; congruence. Qed.
 Proof. constructor; compute; congruence. Qed.
 #[global] Instance: supports_arith Tuint128_t.
 Proof. constructor; compute; congruence. Qed.
+#[global] Instance: forall f, supports_float_arith (Tfloat_ f).
+Proof. constructor; exact I. Qed.
 
 Succeed Example supports_arith_long : supports_arith Tlong := _.
 Succeed Example supports_arith_ulong : supports_arith Tulong := _.
@@ -123,6 +128,8 @@ Axiom eval_unop_not : forall w (sgn : signed) (a : Z),
 Axiom eval_plus_int : forall `{supports_arith ty} a,
     has_type_prop (Vint a) ty ->
     eval_unop Uplus ty ty (Vint a) (Vint a).
+Axiom eval_plus_float : forall f a,
+    eval_unop Uplus (Tfloat_ f) (Tfloat_ f) (Vfloat f a) (Vfloat f a).
 
 (* The builtin unary `-` operator calculates the negative of its
    promoted operand. For unsigned a, the value of -a is 2^b -a, where b
@@ -138,6 +145,9 @@ Axiom eval_minus_int : forall ty a c,
     end ->
     has_type_prop (Vint c) ty ->
     eval_unop Uminus ty ty (Vint a) (Vint c).
+Axiom eval_minus_float : forall f a,
+    eval_unop Uminus (Tfloat_ f) (Tfloat_ f)
+      (Vfloat f a) (Vfloat f (float_value.opp f a)).
 
 (** * Binary Operators *)
 
@@ -166,6 +176,24 @@ Let eval_int_op (bo : BinOp) (o : Z -> Z -> Z) : Prop :=
 Axiom eval_add : Hnf (eval_int_op Badd Z.add).
 Axiom eval_sub : Hnf (eval_int_op Bsub Z.sub).
 Axiom eval_mul : Hnf (eval_int_op Bmul Z.mul).
+
+(** Floating arithmetic uses the same built-in operator clauses as integral
+    arithmetic after the usual arithmetic conversions
+    (<https://eel.is/c++draft/expr.add#4>,
+    <https://eel.is/c++draft/expr.mul#1>). The arithmetic operations are
+    implemented by [float_value] using Flocq's binary IEEE operators.
+ *)
+Let eval_float_op (bo : BinOp)
+    (o : forall f, float_type.car f -> float_type.car f -> float_type.car f) : Prop :=
+  forall f (a b : float_type.car f),
+    let c := o f a b in
+    eval_binop_pure bo (Tfloat_ f) (Tfloat_ f) (Tfloat_ f)
+      (Vfloat f a) (Vfloat f b) (Vfloat f c).
+
+Axiom eval_float_add : Hnf (eval_float_op Badd float_value.add).
+Axiom eval_float_sub : Hnf (eval_float_op Bsub float_value.sub).
+Axiom eval_float_mul : Hnf (eval_float_op Bmul float_value.mul).
+Axiom eval_float_div : Hnf (eval_float_op Bdiv float_value.div).
 
 (* The binary operator / divides the first operand by the second, after usual
    arithmetic conversions.
@@ -297,6 +325,7 @@ Axiom eval_shr : forall ty `{supports_arith ty_by} w sgn (a b : Z),
 Class supports_rel (ty : type) : Prop :=
 { _ : supports_arith ty \/
       match drop_qualifiers ty with
+      | Tfloat_ _ => True
       | Tenum _ => True
       | _ => False
       end }.
@@ -318,6 +347,8 @@ Proof. constructor; left; refine _. Qed.
 #[global] Instance: supports_rel Tuint128_t.
 Proof. constructor; left; refine _. Qed.
 #[global] Instance: forall nm, supports_rel (Tenum nm).
+Proof. constructor; right; exact I. Qed.
+#[global] Instance: forall f, supports_rel (Tfloat_ f).
 Proof. constructor; right; exact I. Qed.
 
 (** [relop_result_type ty] holds on types [ty] that can be the result of a
@@ -366,6 +397,29 @@ Arguments eval_lt _ {_}.
 Arguments eval_le _ {_}.
 Arguments eval_gt _ {_}.
 Arguments eval_ge _ {_}.
+
+(** C++ relational/equality operators use the usual arithmetic conversions
+    before comparing arithmetic operands
+    (<https://eel.is/c++draft/expr.rel#1>,
+    <https://eel.is/c++draft/expr.eq#1>). For IEEE 754 / ISO/IEC/IEEE 60559
+    floating-point values, NaN comparisons are unordered; ordered comparisons
+    are false, equality is false, and inequality is true.
+    [float_value.value_compare]
+    reports unordered operands as [None], which gives exactly that behavior.
+ *)
+#[local] Definition eval_float_rel_op
+    (o : forall f, float_type.car f -> float_type.car f -> bool) (bo : BinOp) : Prop :=
+  forall f ty' (av bv : float_type.car f),
+    relop_result_type ty' ->
+    eval_binop_pure bo (Tfloat_ f) (Tfloat_ f) ty'
+      (Vfloat f av) (Vfloat f bv) (Vbool (o f av bv)).
+
+Axiom eval_float_eq : Hnf (eval_float_rel_op float_value.eqb Beq).
+Axiom eval_float_neq : Hnf (eval_float_rel_op float_value.neqb Bneq).
+Axiom eval_float_lt : Hnf (eval_float_rel_op float_value.ltb Blt).
+Axiom eval_float_gt : Hnf (eval_float_rel_op float_value.gtb Bgt).
+Axiom eval_float_le : Hnf (eval_float_rel_op float_value.leb Ble).
+Axiom eval_float_ge : Hnf (eval_float_rel_op float_value.geb Bge).
 
 (* Special cases for <decltype(nullptr)> because they are not generally comparable *)
 Axiom eval_eq_nullptr :

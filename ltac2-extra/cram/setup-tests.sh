@@ -29,24 +29,21 @@ EOF
 	(rocq.theory
 	  (name skylabs_auto.cram.${TEST}) ; logical path of this library
 	  ; skylabs deps
-	  (theories
-	    Stdlib
-	    stdpp
-	    skylabs.upoly
-	    elpi elpi_elpi elpi.apps.locker elpi.apps.NES
-	    Lens Lens.Elpi
-	    Ltac2 skylabs.ltac2.extra
-	    skylabs.prelude
-	    iris
-	    skylabs.iris.extra
-	    Equations Equations.Prop Equations.Type
-	    skylabs.lang.cpp
-	    skylabs.ltac2.logger
-	    skylabs.auto.core
-	    ExtLib
-	    skylabs.elpi.extra
-	    skylabs.elpi.cpp
-	    skylabs))
+    (theories
+        Stdlib
+        stdpp
+        Ltac2
+        skylabs.ltac2.extra
+        skylabs.prelude
+        Equations
+        Equations.Prop
+        Equations.Type
+        skylabs.ltac2.logger
+        ; transitive dependencies
+        Corelib Lens Lens.Elpi elpi elpi.apps.NES elpi.apps.NES.elpi elpi.apps.derive
+        elpi.apps.derive.elpi elpi.apps.locker elpi.apps.locker.elpi elpi_elpi
+        skylabs.upoly
+        ))
 
 	(include dune.inc)
 EOF
