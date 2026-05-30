@@ -31,10 +31,16 @@ Require Export iris.si_logic.bi.
 
 Require Import iris.algebra.proofmode_classes.
 Require Import iris.proofmode.classes.
+Require Import iris.bi.derived_laws.
 
 Require Import iris.base_logic.lib.iprop. (* << for [gname] only *)
 
 Require Import skylabs.prelude.base.
+
+Require Import skylabs.iris.extra.bi.siprop.
+
+Require Import skylabs.iris.extra.proofmode.proofmode.
+Require Import skylabs.iris.extra.bi.only_provable.
 
 #[local] Set Default Proof Using "Type*".
 
@@ -86,9 +92,6 @@ Class HasOwnUnit `{!BiBUpd PROP} {A : ucmra} `{!HasOwn PROP A} : Prop := {
 }.
 #[global] Arguments HasOwnUnit _ {_} _ {_}.
 
-Require Import skylabs.iris.extra.bi.siprop.
-Require Import skylabs.iris.extra.proofmode.proofmode.
-
 Section valid.
   Context `{BE: !Sbi PROP} {A : cmra}.
   Implicit Type (a : A) (P : PROP).
@@ -121,9 +124,6 @@ Section own_valid.
   Proof. by rewrite comm -own_valid_r. Qed.
 
 End own_valid.
-
-Import iris.bi.derived_laws.bi.
-Require Import skylabs.iris.extra.proofmode.proofmode.
 
 Section update.
   Context `{!BiBUpd PROP} `{!HasOwn PROP A} `{!HasOwnUpd PROP A}.
@@ -249,8 +249,6 @@ Section proofmode_instances.
     destruct Hb; by rewrite persistent_and_sep.
   Qed.
 End proofmode_instances.
-
-Require Import skylabs.iris.extra.bi.only_provable.
 
 Section update_only_provable.
   Context `{!BiBUpd PROP} `{!HasOwn PROP A} `{!HasOwnUpd PROP A}.
