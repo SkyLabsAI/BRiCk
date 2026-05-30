@@ -80,23 +80,6 @@ Inductive temp_param_ {type : Set} : Set :=
 #[global] Arguments temp_param_ : clear implicits.
 #[global] Instance temp_param__inhabited {A} : Inhabited (temp_param_ A).
 Proof. solve_inhabited. Qed.
-#[global] Instance temp_param_eq_dec {A : Set} `{!EqDecision A} : EqDecision (temp_param_ A).
-Proof.
-  change (forall x y : temp_param_ A, Decision (x = y)).
-  fix IH 1.
-  intros x y.
-  unfold Decision.
-  destruct x as [i|i t|i ps|msg], y as [j|j u|j qs|msg'];
-    try (right; congruence).
-  - destruct (decide (i = j)) as [->|?]; [left; reflexivity|right; congruence].
-  - destruct (decide (i = j)) as [->|?];
-      destruct (decide (t = u)) as [->|?];
-      try (left; reflexivity); right; congruence.
-  - destruct (decide (i = j)) as [->|?];
-      destruct (@list_eq_dec _ IH ps qs) as [->|?];
-      try (left; reflexivity); right; congruence.
-  - destruct (decide (msg = msg')) as [->|?]; [left; reflexivity|right; congruence].
-Defined.
 
 Module temp_param.
   Import UPoly.

@@ -2479,3 +2479,5 @@ End compare_instances.
   LeibnizComparison.from_comparison.
 #[global] Instance temp_arg_eq_dec : EqDecision temp_arg :=
   LeibnizComparison.from_comparison.
+#[global] Instance temp_param_eq_dec : EqDecision temp_param :=
+  LeibnizComparison.from_comparison.
