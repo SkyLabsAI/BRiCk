@@ -44,16 +44,18 @@ Section with_monad.
       | Avalue e => expr e
       | Apack xs => lst temp_arg xs
       | Atemplate n => name n
+      | Atemplate_param _ => OK
       | Aunsupported msg => FAIL msg
       end.
   End temp_arg.
 
   Section temp_param.
     Context (name : name -> M) (type : type -> M) (expr : Expr -> M).
-    Definition temp_param  (a : temp_param) : M :=
+    Fixpoint temp_param  (a : temp_param) : M :=
       match a with
       | Ptype _ => OK
       | Pvalue _ t => type t
+      | Ptemplate _ ps => lst temp_param ps
       | Punsupported msg => FAIL msg
       end.
   End temp_param.
@@ -96,9 +98,9 @@ Section with_monad.
     | Evar _ t => type t
     | Eenum_const n _ => name n
     | Eglobal n t | Eglobal_member n t => name n <+> type t
-    | Echar _ t | Estring _ t | Eint _ t => type t
-    | Ebool _
-    | Efloat _ _ => OK
+    | Echar _ t | Estring _ t | Eunresolved_string_literal t | Eint _ t => type t
+    | Efloat _ _
+    | Ebool _ => OK
     | Eunop _ e t => expr e <+> type t
     | Ebinop _ e1 e2 t => expr e1 <+> type t
     | Ederef e t => expr e <+> type t
@@ -152,6 +154,7 @@ Section with_monad.
     | Eunresolved_call n es => name n <+> lst expr es
     | Eunresolved_member_call _ _ _
     | Eunresolved_parenlist _ _
+    | Eunresolved_initlist _ _
     | Eunresolved_member _ _ => OK
     | Earrayloop_init _ e _ _ e2 t => expr e <+> expr e2 <+> type t
     | Earrayloop_index _ t => type t

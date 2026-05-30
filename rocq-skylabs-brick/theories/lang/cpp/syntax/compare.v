@@ -339,6 +339,9 @@ Module RBinOp.
     | Rassign => compare_tag Rassign
     | Rassign_op op => compare_ctor (Rassign_op op)
     | Rsubscript => compare_tag Rsubscript
+    | Rcomma => compare_tag Rcomma
+    | Rand => compare_tag Rand
+    | Ror => compare_tag Ror
     end.
 
 End RBinOp.
@@ -588,37 +591,53 @@ Module temp_param.
       match p with
       | Ptype _ => 1
       | Pvalue _ _ => 2
-      | Punsupported _ => 3
+      | Ptemplate _ _ => 3
+      | Punsupported _ => 4
       end.
     Definition car (t : positive) : Set :=
       match t with
       | 2 => box_Pvalue
+      | 3 => ident * list temp_param
       | _ => ident
       end.
     Definition data (p : temp_param) : car (tag p) :=
       match p with
       | Ptype id => id
       | Pvalue id t => Box_Pvalue id t
+      | Ptemplate id ps => (id, ps)
       | Punsupported msg => msg
       end.
-    Definition compare_data (t : positive) : car t -> car t -> comparison :=
+    Definition compare_data (tp_compare : temp_param -> temp_param -> comparison)
+      (t : positive) : car t -> car t -> comparison :=
       match t with
       | 2 => box_Pvalue_compare
+      | 3 =>
+          fun '(id1, ps1) '(id2, ps2) =>
+            compare_lex (PrimString.compare id1 id2) $ fun _ =>
+            List.compare tp_compare ps1 ps2
       | _ => PrimString.compare
       end.
 
-    #[local] Notation compare_ctor := (compare_ctor tag car data compare_data).
+    #[local] Notation compare_ctor compare := (compare_ctor tag car data $ compare_data compare).
 
-    Definition compare (p : temp_param_ type) : temp_param_ type -> comparison :=
+    Fixpoint compare (p : temp_param_ type) : temp_param_ type -> comparison :=
       match p with
-      | Ptype id => compare_ctor (Reduce (tag (Ptype id))) (fun _ => Reduce (data (Ptype id)))
-      | Pvalue id ty => compare_ctor (Reduce (tag (Pvalue id ty))) (fun _ => Reduce (data (Pvalue id ty)))
-      | Punsupported msg => compare_ctor (Reduce (tag (Punsupported msg))) (fun _ => Reduce (data (Punsupported msg)))
+      | Ptype id => compare_ctor compare (Reduce (tag (Ptype id))) (fun _ => Reduce (data (Ptype id)))
+      | Pvalue id ty => compare_ctor compare (Reduce (tag (Pvalue id ty))) (fun _ => Reduce (data (Pvalue id ty)))
+      | Ptemplate id ps => compare_ctor compare (Reduce (tag (Ptemplate id ps))) (fun _ => Reduce (data (Ptemplate id ps)))
+      | Punsupported msg => compare_ctor compare (Reduce (tag (Punsupported msg))) (fun _ => Reduce (data (Punsupported msg)))
       end.
   End compare.
 
 End temp_param.
-#[global] Instance temp_param_compare {A : Set} `{!Compare A} : Compare (temp_param_ A) := temp_param.compare compare.
+#[global] Instance temp_param_compare {A : Set} `{!Compare A} : Compare (temp_param_ A) :=
+  temp_param.compare compare.
+#[global] Instance temp_param_comparison {A : Set} `{!@Comparison A cmpA}
+  : Comparison (temp_param.compare cmpA).
+Proof. Admitted.
+#[global] Instance temp_param_leibniz_comparison {A : Set} `{!@Comparison A cmpA} `{LeibnizComparison cmpA}
+  : LeibnizComparison (temp_param.compare cmpA).
+Proof. Admitted.
 
 Module temp_arg.
   Section compare.
@@ -632,7 +651,8 @@ Module temp_arg.
       | Avalue _ => 2
       | Apack _ => 3
       | Atemplate _ => 4
-      | Aunsupported _ => 5
+      | Atemplate_param _ => 5
+      | Aunsupported _ => 6
       end.
     Definition car (t : positive) : Set :=
       match t with
@@ -648,6 +668,7 @@ Module temp_arg.
       | Avalue e => e
       | Apack ls => ls
       | Atemplate n => n
+      | Atemplate_param id => id
       | Aunsupported msg => msg
       end.
     Definition compare_data (ta_compare : temp_arg -> temp_arg -> comparison)
@@ -668,6 +689,7 @@ Module temp_arg.
       | Avalue e => compare_ctor compare (Reduce (tag (Avalue e))) (fun _ => Reduce (data (Avalue e)))
       | Apack ls => compare_ctor compare (Reduce (tag (Apack ls))) (fun _ => Reduce (data (Apack ls)))
       | Atemplate n => compare_ctor compare (Reduce (tag (Atemplate n))) (fun _ => Reduce (data (Atemplate n)))
+      | Atemplate_param id => compare_ctor compare (Reduce (tag (Atemplate_param id))) (fun _ => Reduce (data (Atemplate_param id)))
       | Aunsupported msg => compare_ctor compare (Reduce (tag (Aunsupported msg))) (fun _ => Reduce (data (Aunsupported msg)))
       end.
   End compare.
@@ -1398,6 +1420,14 @@ Module Expr.
       compare_lex (option.compare compareT b1.(box_Eunresolved_parenlist_0) b2.(box_Eunresolved_parenlist_0)) $ fun _ =>
       List.compare compareE b1.(box_Eunresolved_parenlist_1) b2.(box_Eunresolved_parenlist_1).
 
+    Record box_Eunresolved_initlist : Set := Box_Eunresolved_initlist {
+      box_Eunresolved_initlist_0 : option type;
+      box_Eunresolved_initlist_1 : list Expr;
+    }.
+    Definition box_Eunresolved_initlist_compare (b1 b2 : box_Eunresolved_initlist) : comparison :=
+      compare_lex (option.compare compareT b1.(box_Eunresolved_initlist_0) b2.(box_Eunresolved_initlist_0)) $ fun _ =>
+      List.compare compareE b1.(box_Eunresolved_initlist_1) b2.(box_Eunresolved_initlist_1).
+
     Record box_Eunresolved_member : Set := Box_Eunresolved_member {
       box_Eunresolved_member_0 : Expr;
       box_Eunresolved_member_1 : name;
@@ -1779,12 +1809,14 @@ Module Expr.
       | Eunresolved_call _ _ => 5
       | Eunresolved_member_call _ _ _ => 6
       | Eunresolved_parenlist _ _ => 7
+      | Eunresolved_initlist _ _ => 65
       | Eunresolved_member _ _ => 8
       | Evar _ _ => 9
       | Eenum_const _ _ => 10
       | Eglobal _ _ => 11
       | Echar _ _ => 12
       | Estring _ _ => 13
+      | Eunresolved_string_literal _ => 64
       | Eint _ _ => 14
       | Ebool _ => 15
       | Eunop _ _ _ => 16
@@ -1894,6 +1926,8 @@ Module Expr.
       | 61 => box_Elambda
       | 62 => box_Emember_ignore
       | 63 => box_Efloat
+      | 64 => type
+      | 65 => box_Eunresolved_initlist
       | _ => box_Eunsupported
       end.
     Definition data (e : Expr) : car (tag e) :=
@@ -1905,6 +1939,7 @@ Module Expr.
       | Eunresolved_call on es => Box_Eunresolved_call on es
       | Eunresolved_member_call on e es => Box_Eunresolved_member_call on e es
       | Eunresolved_parenlist e es => Box_Eunresolved_parenlist e es
+      | Eunresolved_initlist e es => Box_Eunresolved_initlist e es
       | Eunresolved_member e f => Box_Eunresolved_member e f
       | Eexplicit_cast s t e => Box_Eexplicit_cast s t e
       | Evar n t => Box_Evar n t
@@ -1913,6 +1948,7 @@ Module Expr.
       | Eglobal_member on t => Box_Eglobal on t
       | Echar c t => Box_Echar c t
       | Estring s t => Box_Estring s t
+      | Eunresolved_string_literal t => t
       | Eint n t => Box_Eint n t
       | Ebool b => b
       | Efloat ft v => Box_Efloat ft (float_value.to_bits ft v)
@@ -2020,6 +2056,8 @@ Module Expr.
       | 61 => box_Elambda_compare
       | 62 => box_Emember_ignore_compare
       | 63 => box_Efloat_compare
+      | 64 => compareT
+      | 65 => box_Eunresolved_initlist_compare
       | _ => box_Eunsupported_compare
       end.
 
@@ -2038,6 +2076,7 @@ Module Expr.
       | Eunresolved_call on es => COMP (Eunresolved_call on es)
       | Eunresolved_member_call on e es => COMP (Eunresolved_member_call on e es)
       | Eunresolved_parenlist e es => COMP (Eunresolved_parenlist e es)
+      | Eunresolved_initlist e es => COMP (Eunresolved_initlist e es)
       | Eunresolved_member e f => COMP (Eunresolved_member e f)
       | Eexplicit_cast s e t => COMP (Eexplicit_cast s e t)
 
@@ -2049,6 +2088,7 @@ Module Expr.
 
       | Echar c t => COMP (Echar c t)
       | Estring s t => COMP (Estring s t)
+      | Eunresolved_string_literal t => COMP (Eunresolved_string_literal t)
       | Eint n t => COMP (Eint n t)
 
       | Ebool b => COMP (Ebool b : Expr)
@@ -2438,4 +2478,6 @@ End compare_instances.
 #[global] Instance Stmt_eq_dec : EqDecision Stmt :=
   LeibnizComparison.from_comparison.
 #[global] Instance temp_arg_eq_dec : EqDecision temp_arg :=
+  LeibnizComparison.from_comparison.
+#[global] Instance temp_param_eq_dec : EqDecision temp_param :=
   LeibnizComparison.from_comparison.

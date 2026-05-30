@@ -87,6 +87,9 @@ Definition Ddestructor (ps : Mtemp_params) (n : Mname) (f : MDtor) : K :=
 Definition Dtype (ps : Mtemp_params) (n : Mname) : K :=
   _types <[n := Template ps Gtype]>.
 
+Definition Dunsupported (n : Mname) (msg : PrimString.string) : K :=
+  _types <[n := Template [] $ Gunsupported msg]>.
+
 Definition Dstruct (ps : Mtemp_params) (n : Mname) (f : option MStruct) : K :=
   _types <[n := Template ps $ if f is Some f then Gstruct f else Gtype]>.
 

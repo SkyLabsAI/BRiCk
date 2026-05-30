@@ -330,6 +330,10 @@ Module decltype.
         in
         trace (Can_initialize dt t) $
           match drop_qualifiers dt , drop_qualifiers t with
+          | Tauto , _ =>
+              (* Anything can initialize <auto>.
+                 TODO: make this only apply when checking template code *)
+              mret ()
           | Tref dt , Tref t
           | Trv_ref dt , Trv_ref t =>
               ref_conv dt t
@@ -535,8 +539,10 @@ Module decltype.
         | Eunresolved_binop o l r => Tresult_binop o <$> of_expr l <*> of_expr r
         | Eunresolved_call on es => Tresult_call on <$> traverse (T:=eta list) of_expr es
         | Eunresolved_member_call on obj es => Tresult_member_call on <$> of_expr obj <*> traverse (T:=eta list) of_expr es
-        | Eunresolved_parenlist (Some t) es => Tresult_parenlist t <$> traverse (T:=eta list) of_expr es
+        | Eunresolved_parenlist (Some t) es => mret t (* Tresult_parenlist t <$> traverse (T:=eta list) of_expr es *)
         | Eunresolved_parenlist None _ => mfail
+        | Eunresolved_initlist (Some t) es => mret t (* Tresult_parenlist t <$> traverse (T:=eta list) of_expr es (* TODO: this is a bit awkward, do we need [Tresult_parenlist] at all? isn't it always going to be the type? *) *)
+        | Eunresolved_initlist None _ => mfail
         | Eunresolved_member obj fld => Tresult_member <$> of_expr obj <*> mret fld
 
         | Evar ln t =>
@@ -573,6 +579,8 @@ Module decltype.
             end
         | Estring chars t =>
             mret $ Tref $ Tarray (Tconst t) (1 + literal_string.lengthN chars)
+        | Eunresolved_string_literal t =>
+            mret $ Tref $ Tincomplete_array (Tconst t)
         | Eint _ t =>
             let* _ := guard (t ∈ [Tchar;Tuchar;Tschar;Tshort;Tushort;Tint;Tuint;Tlong;Tulong;Tlonglong;Tulonglong]) in
             mret t
@@ -865,6 +873,8 @@ Module decltype.
         end
         in
         let* _ :=
+          (* NOTE: this is a consistency check between "shallow typing" (implemented in <typing.v>)
+             and "deep typing" (implemented here) *)
           match decltype.of_expr e with
           | None =>
               throw ("shallow failed to typecheck (term, expected)"%bs, e, result)

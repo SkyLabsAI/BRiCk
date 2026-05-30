@@ -424,10 +424,6 @@ public:
             cprint.printExpr(print, expr->getLHS());
             print.output() << fmt::nbsp;
             cprint.printExpr(print, expr->getRHS());
-            // TODO: Can be overloaded
-            always_assert(
-                (dependent || expr->getRHS()->getType() == expr->getType()) &&
-                "types must match");
             print.end_ctor(); // no type information
             return;
         case BinaryOperatorKind::BO_LAnd:
@@ -435,10 +431,6 @@ public:
             cprint.printExpr(print, expr->getLHS());
             print.output() << fmt::nbsp;
             cprint.printExpr(print, expr->getRHS());
-            // TODO: Can be overloaded
-            always_assert(
-                (dependent || expr->getType().getTypePtr()->isBooleanType()) &&
-                "&& is a bool");
             print.end_ctor(); // no type information
             return;
         case BinaryOperatorKind::BO_LOr:
@@ -446,10 +438,6 @@ public:
             cprint.printExpr(print, expr->getLHS());
             print.output() << fmt::nbsp;
             cprint.printExpr(print, expr->getRHS());
-            // TODO: Can be overloaded
-            always_assert(
-                (dependent || expr->getType().getTypePtr()->isBooleanType()) &&
-                "|| is a bool");
             print.end_ctor(); // no type information
             return;
         case BinaryOperatorKind::BO_Assign:
@@ -986,12 +974,18 @@ public:
 
     void VisitPredefinedExpr(const PredefinedExpr *expr) {
         // [PredefinedExpr] constructs a [string] which is always ascii
-        print.ctor("Estring");
-        print.ctor("BS.string_to_bytes");
-        print.str(expr->getFunctionName()->getString());
-        print.end_ctor();
-        print_string_type(expr, print, cprint);
-        print.end_ctor();
+        if (auto name = expr->getFunctionName()) {
+            guard::ctor _{print, "Estring"};
+            {
+                guard::ctor __{print, "BS.string_to_bytes"};
+                print.str(name->getString());
+            }
+            always_assert(!expr->getType()->isDependentType() && "dependent type of predefined expr");
+            print_string_type(expr, print, cprint);
+        } else {
+            guard::ctor _{print, "Eunresolved_string_literal"};
+            print.output() << "Tchar";
+        }
     }
 
     void VisitCXXBoolLiteralExpr(const CXXBoolLiteralExpr *lit) {
@@ -1090,9 +1084,15 @@ public:
 
     void
     VisitCXXDependentScopeMemberExpr(const CXXDependentScopeMemberExpr *expr) {
-        guard::ctor _{print, "Eunresolved_member"};
-        print.boolean(expr->isArrow()) << fmt::nbsp;
-        cprint.printExpr(print, expr->getBase(), names) << fmt::nbsp;
+        guard::ctor _{print, "core.Eunresolved_member"};
+        if (expr->isArrow()) {
+            guard::ctor arrow{print, "Eunresolved_unop", false};
+            print.output() << "Rarrow" << fmt::nbsp;
+            cprint.printExpr(print, expr->getBase(), names) << fmt::nbsp;
+        } else {
+            cprint.printExpr(print, expr->getBase(), names);
+        }
+        print.output() << fmt::nbsp;
         printDependentMember(cprint, print, expr);
     }
 
@@ -1287,6 +1287,13 @@ public:
             // and are retained in the clang AST only for printing purposes.
             always_assert(expr->inits().size() == 1);
             cprint.printExpr(print, expr->getInit(0), names);
+        } else if (expr->getType()->isVoidType()) {
+            print.ctor("Eunresolved_initlist");
+            print.none();
+            print.output() << fmt::nbsp;
+            print.list(expr->inits(),
+                       [&](auto i) { cprint.printExpr(print, i, names); });
+            print.end_ctor();
         } else if (auto fld = expr->getInitializedFieldInUnion()) {
             print.ctor("Einitlist_union");
             assert(expr->inits().size() <= 1 &&
@@ -1592,11 +1599,57 @@ public:
 
     void VisitLambdaExpr(const LambdaExpr *expr) {
         print.ctor("Elambda");
-        cprint.printName(print, *expr->getLambdaClass()) << fmt::nbsp;
 
-        print.list(expr->capture_inits(), [&](auto capture) {
-            cprint.printExpr(print, capture, this->names);
-        });
+        auto LambdaClass = expr->getLambdaClass();
+
+        cprint.printName(print, *LambdaClass) << fmt::nbsp;
+
+        if (print.templates()) {
+            // get the mapping for captures so that we can compute their
+            // types
+            llvm::DenseMap<const ValueDecl *, FieldDecl *> CaptureFields;
+            FieldDecl *ThisCapture = nullptr;
+            LambdaClass->getCaptureFields(CaptureFields, ThisCapture);
+
+            auto capture_type = [&](const LambdaCapture &capture) -> QualType {
+                if (capture.capturesVariable()) {
+                    auto var = capture.getCapturedVar();
+                    auto field = CaptureFields[var];
+                    always_assert(field && "uncaptured field");
+                    return field->getType();
+                } else if (capture.capturesThis()) {
+                    always_assert(ThisCapture && "this capture is null");
+                    return ThisCapture->getType();
+                } else if (capture.capturesVLAType()) {
+                    guard::ctor _{print, "Eunsupported"};
+                    print.str("variable length array capture");
+                } else {
+                    always_assert(false && "unreachable lambda capture type");
+                }
+            };
+
+            auto icap = expr->capture_begin();
+            auto iinit = expr->capture_init_begin();
+            print.begin_list();
+            for (; icap != expr->capture_end() &&
+                   iinit != expr->capture_init_end();
+                 ++icap, ++iinit) {
+                {
+                    guard::ctor _{print, "expr.Einitializing_type"};
+                    cprint.printQualType(print, capture_type(*icap),
+                                         loc::of(expr))
+                        << fmt::nbsp;
+                    cprint.printExpr(print, *iinit, this->names);
+                }
+                print.cons();
+            }
+            print.end_list();
+        } else {
+            print.list(expr->capture_inits(), [&](auto init) {
+                cprint.printExpr(print, init, this->names);
+            });
+        }
+
         print.end_ctor();
     }
 

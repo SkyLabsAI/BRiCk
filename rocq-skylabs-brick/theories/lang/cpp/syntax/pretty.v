@@ -141,7 +141,7 @@ Section with_lang.
     let printBO o :=
       match o with
       | Badd => "+"
-      | Band => "&&"
+      | Band => "&"
       | Bcmp => "<=>"
       | Bdiv => "/"
       | Beq => "=="
@@ -151,7 +151,7 @@ Section with_lang.
       | Blt => "<"
       | Bmul => "*"
       | Bneq => "!="
-      | Bor => "||"
+      | Bor => "|"
       | Bmod => "%"
       | Bshl => "<<"
       | Bshr => ">>"
@@ -167,6 +167,9 @@ Section with_lang.
     | overloadable.Rassign => "="
     | overloadable.Rassign_op b => printBO b ++ "="
     | overloadable.Rsubscript => "[]"
+    | overloadable.Rcomma => ","
+    | overloadable.Ror => "||"
+    | overloadable.Rand => "&&"
     end.
 
   Fixpoint printN (nm : name) : PrimString.string :=
@@ -186,6 +189,7 @@ Section with_lang.
       | Avalue e => [printE e]
       | Apack ls => List.concat (List.map printTA ls)
       | Atemplate n => ["<>" ++ printN n]
+      | Atemplate_param id => ["<>" ++ id]
       | Aunsupported note => [note]
       end
 

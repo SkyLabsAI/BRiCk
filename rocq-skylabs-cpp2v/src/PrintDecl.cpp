@@ -751,7 +751,18 @@ static fmt::Formatter &printInitializer(const CXXConstructorDecl &ctor,
         fatal(cprint, loc::of(ctor), "initializer without expression");
     guard::ctor _(print, "Build_Initializer");
     printInitPath(ctor, init, print, cprint) << fmt::nbsp;
-    return cprint.printExpr(print, e);
+    if (print.templates()) {
+        guard::ctor _{print, "Einitializing_type"};
+        if (auto fd = init.getAnyMember()) {
+            cprint.printQualType(print, fd->getType(), loc::of(ctor));
+        } else if (auto bc = init.getBaseClass()) {
+            cprint.printType(print, *bc, loc::of(ctor));
+        }
+        print.output() << fmt::nbsp;
+        return cprint.printExpr(print, e);
+    } else {
+        return cprint.printExpr(print, e);
+    }
 }
 
 static fmt::Formatter &printInitializerList(CoqPrinter &print,
@@ -1161,41 +1172,46 @@ public:
         const auto *dtor = decl.getDestructor();
 
         bool printed = false;
+        auto nextImplicit = [&] {
+            if (printed && print.templates())
+                print.cons();
+            printed = true;
+        };
 
         if (!default_ctor && decl.needsImplicitDefaultConstructor()) {
+            nextImplicit();
             guard::ctor _{print, "Oimplicit_default_ctor"};
             cprint.printName(print, decl);
-            printed = true;
         }
         if (!copy_ctor && decl.needsImplicitCopyConstructor() &&
             !decl.hasUserDeclaredCopyAssignment()) {
+            nextImplicit();
             guard::ctor _{print, "Oimplicit_copy_ctor"};
             cprint.printName(print, decl) << fmt::nbsp;
             print.boolean(decl.hasCopyConstructorWithConstParam());
-            printed = true;
         }
         if (!move_ctor && decl.needsImplicitMoveConstructor()) {
+            nextImplicit();
             guard::ctor _{print, "Oimplicit_move_ctor"};
             cprint.printName(print, decl) << fmt::nbsp;
             print.boolean(false);
-            printed = true;
         }
         if (!copy_assign && decl.needsImplicitCopyAssignment() &&
             !decl.hasUserDeclaredCopyConstructor()) {
+            nextImplicit();
             guard::ctor _{print, "Oimplicit_copy_assign"};
             cprint.printName(print, decl) << fmt::nbsp;
             print.boolean(decl.hasCopyAssignmentWithConstParam());
-            printed = true;
         }
         if (!move_assign && decl.needsImplicitMoveAssignment()) {
+            nextImplicit();
             guard::ctor _{print, "Oimplicit_move_assign"};
             cprint.printName(print, decl);
-            printed = true;
         }
         if (!dtor && decl.needsImplicitDestructor()) {
+            nextImplicit();
             guard::ctor _{print, "Oimplicit_dtor"};
             cprint.printName(print, decl);
-            printed = true;
         }
         return printed;
     }
@@ -1205,7 +1221,7 @@ public:
         if (ClangPrinter::debug && cprint.trace(Trace::Decl))
             cprint.trace("VisitCXXRecordDecl", loc::of(decl));
         bool printed = false;
-        if (decl->isCompleteDefinition()) {
+        if (decl->isCompleteDefinition() && !print.templates()) {
             printed = printImplicitMembers(*decl, print, cprint, ctxt);
         }
         if (decl->isStruct() or decl->isClass()) {

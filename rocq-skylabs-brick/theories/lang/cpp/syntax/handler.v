@@ -70,6 +70,8 @@ Record expr_handler'@{u} {N T E : Set} {F : Set -> Type@{u}} : Type@{u} := {
     (_ : unit -> F N) (_ : unit -> F E) (_ : unit -> list (F E)) : F E;
   handle_Eunresolved_parenlist (_ : option type) (_ : list Expr)
     (_ : unit -> option (F T)) (_ : unit -> list (F E)) : F E;
+  handle_Eunresolved_initlist (_ : option type) (_ : list Expr)
+    (_ : unit -> option (F T)) (_ : unit -> list (F E)) : F E;
   handle_Eunresolved_member (_ : Expr) (_ : name) (_ : unit -> F E) (_ : unit -> F N) : F E;
   (** Embedded expression types *)
   handle_expr_type : F T -> F T;
@@ -137,6 +139,7 @@ Section handlers.
     handle_Eunresolved_call _ _ n es := Eunresolved_call <$> n () <*> sequence@{eta list} (es ());
     handle_Eunresolved_member_call _ _ _ n e es := Eunresolved_member_call <$> n () <*> e () <*> sequence@{eta list} (es ());
     handle_Eunresolved_parenlist _ _ t es := Eunresolved_parenlist <$> sequence@{eta option} (t ()) <*> sequence@{eta list} (es ());
+    handle_Eunresolved_initlist _ _ t es := Eunresolved_initlist <$> sequence@{eta option} (t ()) <*> sequence@{eta list} (es ());
     handle_Eunresolved_member _ _ o f := Eunresolved_member <$> o () <*> f ();
     handle_expr_type := id;
     handle_Eunresolved_cast _ Mt _ Me := (fun t e => Ecast (Cdependent t) e) <$> Mt () <*> Me () ;

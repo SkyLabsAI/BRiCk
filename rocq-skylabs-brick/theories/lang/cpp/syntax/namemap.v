@@ -14,9 +14,6 @@ Require Import skylabs.lang.cpp.syntax.compare.
 
 (** ** Name maps *)
 
-#[global] Declare Instance name_comparison :
-  Comparison (compareN).	(** TODO *)
-
 Module Import internal.
 
   Module NameMap.
@@ -46,3 +43,27 @@ End NM.
 Module TM.
   Include NameMap.
 End TM.
+
+Module TPMap.
+  (* Map over [temp_param] *)
+
+  (* TODO: the need for this suggests some oddity in the setup of the
+     [Compare] and [Comparison] typeclasses. *)
+  #[local] Hint Transparent base.compare : typeclass_instances.
+
+  Module Compare.
+    Definition t : Type := temp_param.
+    #[local] Definition compare : t -> t -> comparison := temp_param_compare.
+    #[local] Infix "?=" := compare.
+    #[local] Lemma compare_sym x y : (y ?= x) = CompOpp (x ?= y).
+    Proof. exact: compare_antisym. Qed.
+    #[local] Lemma compare_trans c x y z : (x ?= y) = c -> (y ?= z) = c -> (x ?= z) = c.
+    Proof. exact: compare_trans. Qed.
+  End Compare.
+  Module Key := OrderedType_from_Alt Compare.
+  Lemma eqL : forall a b, Key.eq a b -> @eq _ a b.
+  Proof. apply LeibnizComparison.cmp_eq; refine _. Qed.
+  Include FMapAVL.Make Key.
+  Include FMapExtra.MIXIN Key.
+  Include FMapExtra.MIXIN_LEIBNIZ Key.
+End TPMap.

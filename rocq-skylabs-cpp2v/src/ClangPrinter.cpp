@@ -143,7 +143,6 @@ fmt::Formatter &ClangPrinter::printTemplateParam(CoqPrinter &print,
                     if (tpd->getDepth() != depth)
                         continue;
                     if (tpd->getIndex() == index) {
-                        always_assert(print.templates());
                         guard::ctor _{print, "Tparam", false};
                         print.str(tpd->getName());
                         return true;

@@ -203,22 +203,38 @@ public:
         }
     }
 
+    static bool constexprEvalInt(const Expr &expr, ASTContext &ctxt,
+                                 llvm::APSInt &value) {
+        if (expr.containsErrors() || expr.isValueDependent() ||
+            expr.isTypeDependent())
+            return false;
+        Expr::EvalResult result;
+        if (!expr.EvaluateAsInt(result, ctxt))
+            return false;
+        value = result.Val.getInt();
+        return true;
+    }
+
     void VisitCaseStmt(const CaseStmt *stmt, CoqPrinter &print,
                        ClangPrinter &cprint, ASTContext &ctxt) {
-        // note, this only occurs when printing the body of a switch statement
-        print.ctor("Scase");
-
-        auto lo = stmt->getLHS()->EvaluateKnownConstInt(ctxt);
-        if (auto rhs = stmt->getRHS()) {
-            auto hi = rhs->EvaluateKnownConstInt(ctxt);
-            guard::ctor _(print, "Range");
+        llvm::APSInt lo, hi;
+        auto rhs = stmt->getRHS();
+        if (!constexprEvalInt(*stmt->getLHS(), ctxt, lo) ||
+            (rhs && !constexprEvalInt(*rhs, ctxt, hi))) {
+            // not evaluatable
+            guard::ctor _{print, "Sunsupported"};
+            print.str("unsupported (dependent) case label");
+        } else if (rhs) {
+            // evaluatable range
+            guard::ctor _{print, "Scase"};
+            guard::ctor __(print, "Range");
             print.output() << lo << fmt::nbsp << hi;
         } else {
-            guard::ctor _(print, "Exact");
+            // evaluatable simple case
+            guard::ctor _{print, "Scase"};
+            guard::ctor __(print, "Exact");
             print.output() << lo;
         }
-
-        print.end_ctor();
 
         print.cons();
 

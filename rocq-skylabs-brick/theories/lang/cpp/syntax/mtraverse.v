@@ -159,6 +159,7 @@ Module MTraverse.
       | Avalue e => Avalue <$> traverseE e
       | Apack ls => Apack <$> UPoly.traverse (T:=eta list) (F:=F) traverseTA ls
       | Atemplate n => Atemplate <$> traverseN n
+      | Atemplate_param id => mret $ Atemplate_param id
       | Aunsupported msg => mret $ Aunsupported msg
       end
 
@@ -215,6 +216,7 @@ Module MTraverse.
       | Eunresolved_call on es => hE.(handle_Eunresolved_call) on es (fun _ => traverseN on) (fun _ => traverseE <$> es)
       | Eunresolved_member_call on e es => hE.(handle_Eunresolved_member_call) on e es (fun _ => traverseN on) (fun _ => traverseE e) (fun _ => traverseE <$> es)
       | Eunresolved_parenlist t es => hE.(handle_Eunresolved_parenlist) t es (fun _ => traverseT <$> t) (fun _ => traverseE <$> es)
+      | Eunresolved_initlist t es => hE.(handle_Eunresolved_initlist) t es (fun _ => traverseT <$> t) (fun _ => traverseE <$> es)
       | Eunresolved_member e f => hE.(handle_Eunresolved_member) e f (fun _ => traverseE e) (fun _ => traverseN f)
 
       (**
@@ -228,6 +230,7 @@ Module MTraverse.
 
       | Echar c t => Echar c <$> ET (traverseT t)
       | Estring s t => Estring s <$> ET (traverseT t)
+      | Eunresolved_string_literal t => Eunresolved_string_literal <$> ET (traverseT t)
       | Eint z t => Eint z <$> ET (traverseT t)
       | Ebool b => mret $ Ebool b
       | Efloat ft v => mret $ Efloat ft v
