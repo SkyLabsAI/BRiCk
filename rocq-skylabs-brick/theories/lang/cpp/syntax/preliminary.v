@@ -591,6 +591,9 @@ Module float_value.
     | Ffloat128 => Bdiv _ _ (mw_gt_0 Ffloat128) (mw_lt_ew Ffloat128) (@binop_nan Ffloat128) m
     end.
 
+  (** We fix the rounding mode, we will not support this changing a runtime for the time
+      being because that would introduce differences between compile time and runtime evaluation.
+   *)
   Definition add (t : t) : car t -> car t -> car t := add_with_mode BinarySingleNaN.mode_NE t.
   Definition sub (t : t) : car t -> car t -> car t := sub_with_mode BinarySingleNaN.mode_NE t.
   Definition mul (t : t) : car t -> car t -> car t := mul_with_mode BinarySingleNaN.mode_NE t.
