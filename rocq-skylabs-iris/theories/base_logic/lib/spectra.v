@@ -117,7 +117,7 @@ Module masks.
     RinO : ↑refinement_rootNS ⊆ O;
   }.
 
-  Program Definition default := {|
+  #[program] Definition default := {|
     O := ⊤ ;
     I := ∅ ;
   |}.
