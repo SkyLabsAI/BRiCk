@@ -129,6 +129,19 @@ Module masks.
   Module hints.
     #[export] Hint Resolve order RinO : ndisj.
   End hints.
+
+  Definition valid (m : t) (E : coPset) : Prop :=
+    E ⊆ m.(O) ∖ ↑refinement_rootNS /\ m.(I) ⊆ m.(O) ∖ ↑refinement_rootNS ∖ E.
+
+  (** Proof that the default masks are valid as long as <E> does not include
+      the refinement namespace.
+
+      It is easy to satisfy the side condition by prefixing E with something,
+      e.g. <"impl"> for "implementation namespaces".
+   *)
+  Lemma default_valid : forall E, E ∩ ↑refinement_rootNS = ∅ -> valid default E.
+  Proof. rewrite /valid. intros. set_solver. Qed.
+
 End masks.
 Import masks.hints.
 Implicit Type (m : masks.t).
