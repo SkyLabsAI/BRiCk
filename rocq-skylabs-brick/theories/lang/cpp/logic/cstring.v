@@ -1135,6 +1135,7 @@ Module cstring.
     End Theory.
   End with_Σ.
 End cstring.
+#[global] Bind Scope bs_scope with cstring.t.
 
 Require Import skylabs.lang.cpp.logic.core_string.
 
