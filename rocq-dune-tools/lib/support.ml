@@ -59,7 +59,7 @@ let display_path ~cwd path =
   | None ->
       Fpath.to_string path
 
-let is_within ~root path = Option.is_some (Fpath.relativize ~root path)
+let is_within ~root path = Fpath.is_rooted ~root path
 
 let dedupe_preserving_order values =
   let rec loop seen acc = function

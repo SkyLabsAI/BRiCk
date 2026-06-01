@@ -6,7 +6,7 @@
   > (name cram_dune_rocqdeps_rewrite)
   > (using rocq 0.11)
   > EOF
-  $ mkdir -p workspace/a workspace/b workspace/c
+  $ mkdir -p workspace/a workspace/b workspace/c workspace/sibling
   $ cat > workspace/a/dune <<'EOF'
   > (rocq.theory
   >  (name a)
@@ -21,6 +21,11 @@
   > (rocq.theory
   >  (name c))
   > EOF
+  $ cat > workspace/sibling/dune <<'EOF'
+  > (rocq.theory
+  >  (name sibling)
+  >  (theories b))
+  > EOF
   $ cd workspace/a
   $ env -u DUNE_SOURCEROOT -u DUNE_ROOT "$tool"
   $ cat dune
@@ -31,6 +36,10 @@
   (rocq.theory
    (name b)
    (theories c))
+  $ cat ../sibling/dune
+  (rocq.theory
+   (name sibling)
+   (theories b))
   $ cat > dune <<'EOF'
   > (rocq.theory
   >  (name a)
