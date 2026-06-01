@@ -1,0 +1,22 @@
+(** Test 1 - no errors *)
+- : unit = ()
+
+(** Test 2 - error in function application *)
+File "./fmdeps/BRiCk/ltac2-extra/tests/test1.v", line 29, characters 4-310:
+The command has indeed failed with message:
+Uncaught Ltac2 exception:
+Control.ErrorCxt
+message:(
+  context:  faulty list builder
+  
+  context:  Builder.Ap.apply
+  
+  context:
+    Error when checking argument types
+      function:  (fun (a : list ?A) (b : ?A) (c : list ?A) =>
+                  a ++ [b] ++ List.rev c)
+      type:      (list ?A -> ?A -> list ?A -> list ?A)
+      arguments: ? : nat
+                 ? : nat
+                 ? : (list nat))
+(Internal err:(Unable to unify "nat" with "list ?A".))

@@ -1,0 +1,12 @@
+
+(** Test 3 - error in arguments *)
+File "./fmdeps/BRiCk/ltac2-extra/tests/test2.v", line 19, characters 4-312:
+The command has indeed failed with message:
+Uncaught Ltac2 exception:
+Control.ErrorCxt
+message:(
+  context:  constr builder for type nat
+              invalid argument: [1])
+(Internal
+  err:(The term "[1]" has type "list nat" while it is expected to have type
+        "nat".))

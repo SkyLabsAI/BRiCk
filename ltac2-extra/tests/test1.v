@@ -5,7 +5,7 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import skylabs.ltac2.extra.extra.
-Require Import skylabs.ltac2.extra.cram.builder.prelude.
+Require Import test.prelude.
 
 Section example.
   Import Ltac2 Builder Printf.
@@ -26,7 +26,7 @@ Section example.
 
     printf "".
     printf "(** Test 2 - error in function application *)".
-    Ltac2 Eval
+    Fail Ltac2 Eval
       let builder :=
         let builder_a := unsafe_constr '(nat) in
         let builder_b := build_list build_nat in
