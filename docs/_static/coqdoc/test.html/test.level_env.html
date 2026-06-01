@@ -4,7 +4,7 @@
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
 <link href="coqdoc.css" rel="stylesheet" type="text/css" />
-<title>skylabs_tests.ltac2.extra.test_level_env</title>
+<title>test.level_env</title>
 </head>
 
 <body>
@@ -16,7 +16,7 @@
 
 <div id="main">
 
-<h1 class="libtitle">Library skylabs_tests.ltac2.extra.test_level_env</h1>
+<h1 class="libtitle">Library test.level_env</h1>
 
 <div class="code">
 
@@ -86,13 +86,13 @@
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">make_rel</span> <span class="id" title="var">i</span> := <span class="id" title="var">make_rel</span> (<span class="id" title="var">Int.add</span> <span class="id" title="var">i</span> <span class="id" title="var">offset</span>) <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">ref_env</span>, <span class="id" title="var">ref_term</span>) :=<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">e</span> := <span class="id" title="var">test_env_with_let</span> <span class="id" title="var">offset</span> <span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">t</span> := <span class="id" title="var">make_app4</span> '@<a class="idref" href="skylabs_tests.ltac2.extra.test_level_env.html#Substitute.test"><span class="id" title="axiom">test</span></a> (<span class="id" title="var">make_rel</span> 1) (<span class="id" title="var">make_rel</span> 3) '3 (<span class="id" title="var">make_rel</span> 6) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">t</span> := <span class="id" title="var">make_app4</span> '@<a class="idref" href="test.level_env.html#Substitute.test"><span class="id" title="axiom">test</span></a> (<span class="id" title="var">make_rel</span> 1) (<span class="id" title="var">make_rel</span> 3) '3 (<span class="id" title="var">make_rel</span> 6) <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">e</span>, <span class="id" title="var">t</span>)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
 <br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">env</span>, <span class="id" title="var">term</span>) :=<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">e</span> := <span class="id" title="var">test_env_wo_let</span> <span class="id" title="var">offset</span> <span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">t</span> := <span class="id" title="var">make_app4</span> '@<a class="idref" href="skylabs_tests.ltac2.extra.test_level_env.html#Substitute.test"><span class="id" title="axiom">test</span></a> (<span class="id" title="var">make_rel</span> 1) (<span class="id" title="var">make_rel</span> 3) (<span class="id" title="var">make_rel</span> 5) (<span class="id" title="var">make_rel</span> 7) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">t</span> := <span class="id" title="var">make_app4</span> '@<a class="idref" href="test.level_env.html#Substitute.test"><span class="id" title="axiom">test</span></a> (<span class="id" title="var">make_rel</span> 1) (<span class="id" title="var">make_rel</span> 3) (<span class="id" title="var">make_rel</span> 5) (<span class="id" title="var">make_rel</span> 7) <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> (<span class="id" title="var">e</span>, <span class="id" title="var">subs</span>) := <span class="id" title="var">LevelEnv.substitute_defs</span> <span class="id" title="var">e</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">e</span>, <span class="id" title="var">substnl</span> <span class="id" title="var">subs</span> <span class="id" title="var">offset</span> <span class="id" title="var">t</span>)<br/>
@@ -138,7 +138,7 @@
 &nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
-<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_tests.ltac2.extra.test_level_env.html#Substitute"><span class="id" title="module">Substitute</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="test.level_env.html#Substitute"><span class="id" title="module">Substitute</span></a>.<br/>
 </div>
 </div>
 
