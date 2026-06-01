@@ -24,8 +24,7 @@ For `dune-rocqdeps`:
   existing dependency order and leave files unchanged when nothing new is
   needed
 - `--check`: do not edit files; exit successfully only if the selected
-  `rocq.theory` stanzas would be left unchanged because they already contain
-  the needed dependency closure
+  `rocq.theory` stanzas need no changes
 
 `dune-rocqdeps` first looks for `DUNE_SOURCEROOT` or `DUNE_ROOT` in the
 environment. When those are absent, it walks upward from the current directory
