@@ -28,6 +28,9 @@ let fpath_or_fail ~context path = result_or_fail ~context (Fpath.of_string path)
 let current_cwd () =
   result_or_fail ~context:"failed to determine the current directory"
     (OS.Dir.current ())
+  |> fun cwd ->
+  result_or_fail ~context:"failed to canonicalize the current directory"
+    (OS.Path.realpath cwd)
   |> Fpath.to_dir_path |> Fpath.normalize
 
 let read_text_file path =

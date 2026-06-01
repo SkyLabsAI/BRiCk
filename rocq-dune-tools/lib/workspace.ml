@@ -12,6 +12,13 @@ let normalize_workspace_root ~cwd ~source ~value =
     (if Fpath.is_rel root then Fpath.append cwd root else root)
     |> Fpath.to_dir_path |> Fpath.normalize
   in
+  let root =
+    result_or_fail
+      ~context:
+        (Printf.sprintf "failed to canonicalize workspace root from %s" source)
+      (OS.Path.realpath root)
+    |> Fpath.to_dir_path |> Fpath.normalize
+  in
   if not (is_within ~root cwd) then
     failf "current directory %s is not inside workspace root %s from %s"
       (Fpath.to_string cwd) (Fpath.to_string root) source ;
