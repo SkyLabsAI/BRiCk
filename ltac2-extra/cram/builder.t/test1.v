@@ -5,7 +5,7 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import skylabs.ltac2.extra.extra.
-Require Import skylabs_auto.cram.builder.prelude.
+Require Import skylabs.ltac2.extra.cram.builder.prelude.
 
 Section example.
   Import Ltac2 Builder Printf.

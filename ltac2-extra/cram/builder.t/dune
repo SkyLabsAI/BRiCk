@@ -10,22 +10,11 @@
 
 (include_subdirs qualified)
 (rocq.theory
-  (name skylabs_auto.cram.builder) ; logical path of this library
-  ; skylabs deps
+  (name skylabs.ltac2.extra.cram.builder) ; logical path of this library
   (theories
-   Stdlib
-   stdpp
-   Ltac2
-   skylabs.ltac2.extra
-   skylabs.prelude
-   Equations
-   Equations.Prop
-   Equations.Type
-   skylabs.ltac2.logger
-   ; transitive dependencies
-   Corelib Lens Lens.Elpi elpi elpi.apps.NES elpi.apps.NES.elpi elpi.apps.derive
-   elpi.apps.derive.elpi elpi.apps.locker elpi.apps.locker.elpi elpi_elpi
-   skylabs.upoly
-  ))
+    Stdlib
+    Ltac2
+    skylabs.ltac2.extra
+   ))
 
 (include dune.inc)

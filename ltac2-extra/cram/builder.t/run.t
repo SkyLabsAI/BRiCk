@@ -1,13 +1,13 @@
   $ export PATH="$DUNE_SOURCEROOT/_build/install/default/bin:$PATH"
   $ DUNE_CACHE=disabled dune build test1.vo 2>&1
-  File "dune", lines 12-29, characters 0-456:
+  File "dune", lines 12-18, characters 0-148:
   12 | (rocq.theory
-  13 |   (name skylabs_auto.cram.builder) ; logical path of this library
-  14 |   ; skylabs deps
-  ....
-  27 |    elpi.apps.derive.elpi elpi.apps.locker elpi.apps.locker.elpi elpi_elpi
-  28 |    skylabs.upoly
-  29 |   ))
+  13 |   (name skylabs.ltac2.extra.cram.builder) ; logical path of this library
+  14 |   (theories
+  15 |     Stdlib
+  16 |     Ltac2
+  17 |     skylabs.ltac2.extra
+  18 |    ))
   (** Test 1 - no errors *)
   - : unit = ()
   
@@ -33,14 +33,14 @@
   
   [1]
   $ DUNE_CACHE=disabled dune build test2.vo 2>&1
-  File "dune", lines 12-29, characters 0-456:
+  File "dune", lines 12-18, characters 0-148:
   12 | (rocq.theory
-  13 |   (name skylabs_auto.cram.builder) ; logical path of this library
-  14 |   ; skylabs deps
-  ....
-  27 |    elpi.apps.derive.elpi elpi.apps.locker elpi.apps.locker.elpi elpi_elpi
-  28 |    skylabs.upoly
-  29 |   ))
+  13 |   (name skylabs.ltac2.extra.cram.builder) ; logical path of this library
+  14 |   (theories
+  15 |     Stdlib
+  16 |     Ltac2
+  17 |     skylabs.ltac2.extra
+  18 |    ))
   
   (** Test 3 - error in arguments *)
   File "./test2.v", line 19, characters 4-307:
