@@ -19,6 +19,35 @@ Proof. by rewrite /IntoPure (bi.pure_intro True emp). Qed.
 
 #[global] Hint Opaque uPred_emp : typeclass_instances.
 
+(** * Iris 4.5.0 bug fixes *)
+
+(** Removing unnecessary BiIndexBottom assumptions.
+
+    Can be dropped when bumping to a version that includes
+    https://gitlab.mpi-sws.org/iris/iris/-/merge_requests/1234 *)
+#[global] Remove Hints monpred.monPred_bi_bupd_sbi : typeclass_instances.
+#[global] Remove Hints monpred.monPred_bi_fupd_sbi : typeclass_instances.
+Section monPred.
+  Import monpred.
+  Context {I : biIndex} {PROP : bi}.
+  Local Notation monPred := (monPred I PROP).
+  Local Notation monPredI := (monPredI I PROP).
+  #[global] Instance monPred_bi_bupd_sbi `{BiBUpdSbi PROP} :
+    BiBUpdSbi monPredI .
+  Proof. intros P. split=> /= i. monPred.unseal. apply bupd_si_pure. Qed.
+
+  #[global] Instance monPred_bi_fupd_sbi `{BiFUpdSbi PROP} :
+    BiFUpdSbi monPredI.
+  Proof.
+    split; rewrite /bi_except_0; monPred.unseal.
+    - intros E E' P R. split=>/= i.
+      rewrite (bi.forall_elim i) bi.pure_True // bi.True_impl.
+      apply fupd_si_pure_keep_l.
+    - intros E P. split=>/= i. apply fupd_si_pure_later.
+    - intros E A Φ. split=>/= i. apply fupd_si_pure_forall_2.
+  Qed.
+End monPred.
+
 (** * Notation for functions in the Iris scope. To upstream,
 per https://gitlab.mpi-sws.org/iris/iris/-/issues/320. *)
 Notation "'λI' x .. y , t" := (fun x => .. (fun y => t%I) ..)
