@@ -1,6 +1,8 @@
 open Support
 
-type options = {no_normalize: bool}
+type options =
+  { no_normalize: bool
+  ; check: bool }
 
 type parsed_file =
   { path: Fpath.t
@@ -25,6 +27,13 @@ let read_dune_files dune_files =
 
 let display_file_error ~cwd path message =
   Printf.sprintf "%s %s" (display_path ~cwd path) message
+
+let pending_changes changes =
+  List.filter
+    (fun (change : file_change) ->
+      let current_text = read_text_file change.path in
+      not (String.equal current_text change.updated_text) )
+    changes
 
 let analyze_targets ~cwd parsed_files ~no_normalize =
   let transitive_dep_graph =
@@ -82,9 +91,16 @@ let run options =
   if errors <> [] then (
     List.iter (fun error -> prerr_endline ("error: " ^ error)) errors ;
     exit exit_error ) ;
+  let pending_changes = pending_changes changes in
+  if options.check && pending_changes <> [] then (
+    List.iter
+      (fun (change : file_change) ->
+        prerr_endline
+          ( "error: " ^ display_path ~cwd change.path
+          ^ " is not up to date" ) )
+      pending_changes ;
+    exit exit_check_failed ) ;
   List.iter
     (fun (change : file_change) ->
-      let current_text = read_text_file change.path in
-      if not (String.equal current_text change.updated_text) then
-        write_text_file change.path change.updated_text )
-    changes
+      write_text_file change.path change.updated_text )
+    pending_changes

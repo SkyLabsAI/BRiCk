@@ -37,9 +37,17 @@ let no_normalize_arg =
   in
   Arg.(value & flag & info ["no-normalize"] ~doc)
 
+let check_arg =
+  let doc =
+    "Do not edit dune files. Exit successfully only if the selected \
+     rocq.theory stanzas would be left unchanged because they already contain \
+     the needed dependency closure."
+  in
+  Arg.(value & flag & info ["check"] ~doc)
+
 let term =
-  let run no_normalize = run Tool.{no_normalize} in
-  Term.(const run $ no_normalize_arg)
+  let run no_normalize check = run Tool.{no_normalize; check} in
+  Term.(const run $ no_normalize_arg $ check_arg)
 
 let doc = "synchronize recursive rocq dependency stanzas in dune files"
 
@@ -56,7 +64,8 @@ let man =
        recomputed."
   ; `S Manpage.s_examples
   ; `P "$(b,dune-rocqdeps)"
-  ; `P "$(b,dune-rocqdeps --no-normalize)" ]
+  ; `P "$(b,dune-rocqdeps --no-normalize)"
+  ; `P "$(b,dune-rocqdeps --check)" ]
 
 let info = Cmd.info "dune-rocqdeps" ~doc ~man
 

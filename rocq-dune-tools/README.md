@@ -23,6 +23,9 @@ For `dune-rocqdeps`:
 - `--no-normalize`: only append newly discovered dependencies; preserve the
   existing dependency order and leave files unchanged when nothing new is
   needed
+- `--check`: do not edit files; exit successfully only if the selected
+  `rocq.theory` stanzas would be left unchanged because they already contain
+  the needed dependency closure
 
 `dune-rocqdeps` first looks for `DUNE_SOURCEROOT` or `DUNE_ROOT` in the
 environment. When those are absent, it walks upward from the current directory

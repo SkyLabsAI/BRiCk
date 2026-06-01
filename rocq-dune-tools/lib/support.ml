@@ -13,6 +13,8 @@ let transitive_marker = "; transitive dependencies"
 
 let exit_success = 0
 
+let exit_check_failed = 1
+
 let exit_error = 2
 
 let failf fmt = Printf.ksprintf (fun message -> raise (Error message)) fmt
