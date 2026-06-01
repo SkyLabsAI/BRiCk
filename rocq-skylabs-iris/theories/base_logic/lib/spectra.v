@@ -108,7 +108,8 @@ Module masks.
   (**
   A consistent choice of masks.
   When proving requesters, clients can use their own invariants with mask [E : coPset],
-  such that [E ⊆ O \ ↑refinement_rootNS] and [I ⊆ O \ ↑refinement_rootNS \ E].
+ When proving requesters for [m : masks.t], clients can use their own invariants with mask [E : coPset],
+ such that [valid m E].
   *)
   Record t : Set := {
     O : coPset; (** [O]uter mask *)
