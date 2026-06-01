@@ -134,8 +134,8 @@ Module masks.
   Definition valid (m : t) (E : coPset) : Prop :=
     E ⊆ m.(O) ∖ ↑refinement_rootNS /\ m.(I) ⊆ m.(O) ∖ ↑refinement_rootNS ∖ E.
 
-  (** Proof that the default masks are valid as long as <E> does not include
-      the refinement namespace.
+  (** Proof that any <E> not including the refinement namespace is valid
+      relative to the default masks.
 
       It is easy to satisfy the side condition by prefixing E with something,
       e.g. <"impl"> for "implementation namespaces".
