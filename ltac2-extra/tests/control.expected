@@ -1,0 +1,12 @@
+File "./fmdeps/BRiCk/ltac2-extra/tests/control.v", line 22, characters 4-62:
+The command has indeed failed with message:
+Uncaught Ltac2 exception: Invalid_argument None
+File "./fmdeps/BRiCk/ltac2-extra/tests/control.v", line 23, characters 4-63:
+The command has indeed failed with message:
+Uncaught Ltac2 exception: Invalid_argument None
+File "./fmdeps/BRiCk/ltac2-extra/tests/control.v", line 68, characters 4-70:
+The command has indeed failed with message:
+Uncaught Ltac2 exception: Tactic_failure None
+File "./fmdeps/BRiCk/ltac2-extra/tests/control.v", line 74, characters 4-185:
+The command has indeed failed with message:
+Uncaught Ltac2 exception: Tactic_failure None
