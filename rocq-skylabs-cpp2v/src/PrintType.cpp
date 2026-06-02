@@ -76,6 +76,7 @@ public:
 
     IGNORE(BlockPointerType)
     IGNORE(PackExpansionType)
+    IGNORE(VectorType)
 
     void VisitAttributedType(const AttributedType *type, CoqPrinter &print,
                              ClangPrinter &cprint) {

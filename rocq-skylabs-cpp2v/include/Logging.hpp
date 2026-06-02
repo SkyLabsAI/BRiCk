@@ -13,8 +13,8 @@ namespace logging {
 enum Level : int {
     FATAL = -1,
     NONE = 0,
-    UNSUPPORTED = 5,
     VERBOSE = 10,
+    UNSUPPORTED = 15,
     VERBOSER = 20,
     ALL = 1000,
 };
