@@ -1,11 +1,11 @@
   $ tool="$(command -v dune-rocqdeps)"
-  $ "$tool" --help=plain | sed -n '1,31p'
+  $ "$tool" --help=plain | sed -n '1,35p'
   NAME
          dune-rocqdeps - synchronize recursive rocq dependency stanzas in dune
          files
   
   SYNOPSIS
-         dune-rocqdeps [--no-normalize] [OPTION]…
+         dune-rocqdeps [--check] [--no-normalize] [OPTION]…
   
   DESCRIPTION
          dune-rocqdeps scans the current dune workspace, rewrites rocq.theory
@@ -18,6 +18,11 @@
          recomputed.
   
   OPTIONS
+         --check
+             Do not edit dune files. Exit successfully only if the selected
+             rocq.theory stanzas would be left unchanged because they already
+             contain the needed dependency closure.
+  
          --no-normalize
              Only append newly discovered dependencies. Existing dependency
              order is preserved, and files are unchanged when no new
@@ -30,4 +35,3 @@
              whenever the TERM env var is dumb or undefined.
   
   EXIT STATUS
-         dune-rocqdeps exits with:

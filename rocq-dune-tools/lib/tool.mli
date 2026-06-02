@@ -1,5 +1,7 @@
 (** Command options for [dune-rocqdeps]. *)
-type options = {no_normalize: bool}
+type options =
+  { no_normalize: bool
+  ; check: bool }
 
 val run : options -> unit
 (** Run the dependency synchronization tool for the current workspace and
