@@ -56,13 +56,13 @@ Section fractional.
   Proof. solve_as_cfrac. Qed.
 
   #[global] Instance gmap_own_agree
-    `{!BiEmbed siPropI PROP} `{!HasOwnValid PROP (gmapR K (cfractionalR V))}
+    `{!Sbi PROP} `{!HasOwnValid PROP (gmapR K (cfractionalR V))}
     v1 v2 γ q1 q2 k :
     Observe2 [| v1 = v2 |] (gmap_own γ q1 k v1) (gmap_own γ q2 k v2).
   Proof.
     apply: observe_2_intro_only_provable.
     apply bi.wand_intro_r; rewrite /gmap_own -own_op singleton_op.
-    rewrite own_valid discrete_valid singleton_valid.
+    rewrite own_valid internal_cmra_valid_discrete singleton_valid.
     by iIntros "!%" => /cfrac_valid [].
   Qed.
 
@@ -71,11 +71,11 @@ Section fractional.
   prevents it from firing. (Perhaps due to the let binding.)
   *)
   Instance gmap_own_cfrac_valid γ
-    `{!BiEmbed siPropI PROP} `{!HasOwnValid PROP (gmapR K (cfractionalR V))} :
+    `{!Sbi PROP} `{!HasOwnValid PROP (gmapR K (cfractionalR V))} :
     ∀ q k v, Observe [| cQp.frac q ≤ 1 |]%Qp (gmap_own γ q k v).
   Proof.
     intros. apply: observe_intro_only_provable.
-    rewrite /gmap_own own_valid !discrete_valid singleton_valid.
+    rewrite /gmap_own own_valid !internal_cmra_valid_discrete singleton_valid.
     by iIntros "!%" => /pair_valid [? _].
   Qed.
 End fractional.
@@ -653,7 +653,7 @@ Module SimpleCPP.
     Proof.
       apply /observe_2_intro_persistent /bi.wand_intro_r.
       rewrite -own_op singleton_op.
-      rewrite own_valid discrete_valid singleton_valid.
+      rewrite own_valid internal_cmra_valid_discrete singleton_valid.
       by iIntros "!%" => /= /to_agree_op_inv_L.
     Qed.
 

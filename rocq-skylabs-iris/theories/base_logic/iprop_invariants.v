@@ -76,8 +76,9 @@ Section na_inv.
       - apply (gset_disj_alloc_empty_updateP_strong' (λ i, i ∈ (↑N:coPset))).
         intros Ef. exists (coPpick (↑ N ∖ gset_to_coPset Ef)).
         rewrite -elem_of_gset_to_coPset comm -elem_of_difference.
-        apply coPpick_elem_of=> Hfin.
-        eapply nclose_infinite, (difference_finite_inv _ _), Hfin.
+        apply coPpick_elem_of, set_infinite_non_empty,
+          coPset_infinite_finite => Hfin.
+        eapply nclose_not_finite, (difference_finite_inv _ _), Hfin.
         apply gset_to_coPset_finite. }
     simpl. iDestruct "Hm" as %(<- & i & -> & ?).
     rewrite /na_inv.
@@ -89,9 +90,16 @@ End na_inv.
 (*** Cancelable invariants for iProp *)
 (* Copy from
   https://gitlab.mpi-sws.org/iris/iris/-/blob/7ccdfe0df5832b69742306302144b5358c9ed843/iris/base_logic/lib/cancelable_invariants.v *)
+
+(** Old-style frac-only cinvG, kept for this project's generic cancelable
+invariant interface (which uses [HasOwn PROP fracR]). *)
+Class cinvFracG Σ := {
+  #[local] cinv_frac_inG :: inG Σ fracR
+}.
+
 Section cinv.
-  Context `{!invGS Σ, !cinvG Σ}.
-  #[local] Existing Instance cinv_inG.
+  Context `{!invGS Σ, !cinvFracG Σ}.
+  #[local] Existing Instance cinv_frac_inG.
   #[local] Typeclasses Transparent cinv_own cinv.
 
   Implicit Types (P : iProp Σ).

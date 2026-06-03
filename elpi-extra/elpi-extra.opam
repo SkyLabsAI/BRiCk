@@ -8,7 +8,7 @@ homepage: "https://github.com/SkyLabsAI/BRiCk"
 bug-reports: "https://github.com/SkyLabsAI/BRiCk/issues"
 depends: [
   "dune" {>= "3.21"}
-  "coq-stdlib"
+  "rocq-stdlib"
   "coq-elpi"
   "ltac2-extra"
   "odoc" {with-doc}

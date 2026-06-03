@@ -96,7 +96,7 @@ Section tu.
     { intros; repeat (case_bool_decide || case_match) =>//.
       revert select (_ !! _ = _) => /glob_def_genv_compat_struct ?.
       revert select (_ ∈ _) => Helem.
-      eapply elem_of_list_fmap_2 in Helem.
+      eapply list_elem_of_fmap_1 in Helem.
       destruct Helem as [[??][??]]. simplify_eq.
       econstructor; try eassumption.
       by apply IHpath. }

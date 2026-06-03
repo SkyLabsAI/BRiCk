@@ -31,6 +31,7 @@ Require Import skylabs.iris.extra.bi.na_invariants.
 Require Import skylabs.iris.extra.bi.cancelable_invariants.
 Require Import skylabs.iris.extra.bi.weakly_objective.
 Require Import skylabs.iris.extra.base_logic.monpred_own.
+Require Import skylabs.iris.extra.base_logic.iprop_invariants. (* for [cinvFracG] *)
 
 (*** Invariants for monPred **)
 
@@ -248,8 +249,9 @@ Section na_inv_alloc.
       - apply (gset_disj_alloc_empty_updateP_strong' (K:=positive) (λ i : positive, i ∈ (↑N:coPset))).
         intros Ef. exists (coPpick (↑ N ∖ gset_to_coPset Ef)).
         rewrite -elem_of_gset_to_coPset comm -elem_of_difference.
-        apply coPpick_elem_of=> Hfin.
-        eapply nclose_infinite, (difference_finite_inv _ _), Hfin.
+        apply coPpick_elem_of, set_infinite_non_empty,
+          coPset_infinite_finite => Hfin.
+        eapply nclose_not_finite, (difference_finite_inv _ _), Hfin.
         apply gset_to_coPset_finite. }
     simpl. iDestruct "Hm" as %(<- & i & -> & ?).
     iMod (inv_alloc N with "[-]"); last (iModIntro; iExists i; eauto).
@@ -262,11 +264,10 @@ End na_inv_alloc.
 
 (** Cancelable invariants for monPred *)
 (* TODO FM-2323 *)
-#[global] Remove Hints cinv_inG : typeclass_instances.
-#[global] Existing Instance cinv_inG.
 (* Allocation rules for monPred that are tied specifically to iProp. *)
 Section allocation.
-  Context {K J : biIndex} `{!invGS Σ, !cinvG Σ}.
+  Context {K J : biIndex} `{!invGS Σ, !cinvFracG Σ}.
+  #[local] Existing Instance cinv_frac_inG.
   #[local] Typeclasses Transparent cinv_own cinv.
 
 

@@ -3,7 +3,7 @@
  (deps
   (package rocq-core)
   (package rocq-stdlib)
-  (package coq-stdpp)
+  (package rocq-stdpp)
   (package rocq-lens)
   (package rocq-lens-elpi)
   setup-project.sh))

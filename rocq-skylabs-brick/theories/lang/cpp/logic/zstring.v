@@ -61,7 +61,7 @@ Section with_ct.
 
   Lemma _WF_WF_alt {σ : genv} zs : _WF zs <-> _WF_alt zs.
   Proof.
-    rewrite /_WF /_WF_alt elem_of_list_In; setoid_rewrite <-has_type_prop_char'; split. {
+    rewrite /_WF /_WF_alt list_elem_of_In; setoid_rewrite <-has_type_prop_char'; split. {
       move=> [] zs' [] -> [].
       rewrite last_app /= length_app Nat.add_sub take_app_length Forall_app Forall_singleton.
       naive_solver.

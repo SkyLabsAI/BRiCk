@@ -12,6 +12,7 @@ Require Export iris.base_logic.lib.own. (* << exporting [inG] and [gFunctors] *)
 
 Require Export skylabs.iris.extra.bi.own.
 
+(**
 (* Instances for iProp *)
 
 (* Embedding of si in iProp. It seems that such an embedding doesn't exist
@@ -50,7 +51,7 @@ Section si_embedding.
     do ?rewrite si_embed_eq; unfold si_embed_def; cbn;
     try uPred.unseal;
     (* FIXME: figure out what is happening. *)
-    cbv [siPropI bi_emp bi_later siProp_plainlyC siProp_internal_eq bi_internal_eq_internal_eq bi_plainly_plainly];
+    cbv [siPropI bi_emp bi_later siProp_internal_eq plainly internal_eq si_pure si_emp_valid siprop_sbi];
     siProp.unseal;
     try siProp_primitive.unseal.
 
@@ -65,8 +66,6 @@ Section si_embedding.
     - intros P1 P2 HP. unseal'. by apply HP.
     - intros P [HP]. constructor=>n _. generalize (HP n ε).
       unseal. auto using ucmra_unit_validN.
-    - intros PROP' ? P Q.
-      rewrite -{2}(si_embed_unembed P) -{2}(si_embed_unembed Q). apply (f_equivI _).
     - by unseal'.
     - intros. unseal'=>HPQ ??. eapply HPQ; [done..|by eapply cmra_validN_le].
     - intros. by unseal'.
@@ -86,20 +85,17 @@ Section si_embedding.
   #[global] Instance si_embed_later : BiEmbedLater siPropI PROP.
   Proof. intros P. constructor=>-[]; by repeat unseal. Qed.
 
-  #[global] Instance si_embed_internal_eq : BiEmbedInternalEq siPropI PROP.
-  Proof. intros A x y. unseal'. by repeat unseal. Qed.
+  Lemma si_embed_eq_si_pure (P : siProp) : (⎡P⎤ : PROP) ⊣⊢ <si_pure> P.
+  Proof. by unseal'. Qed.
 
-  #[global] Instance si_embed_plainly : BiEmbedPlainly siPropI PROP.
-  Proof. intros P. unseal'. by unseal. Qed.
-
-  (* TODO: uPred_cmra_valid should have been defined as si_cmra_valid.
-    This is to be fixed upstream. *)
-  Lemma si_cmra_valid_validI {A : cmra} (a : A) :
-    ⎡ si_cmra_valid a ⎤ ⊣⊢@{uPredI M} uPred_cmra_valid a.
+  #[global] Instance si_embed_sbi : BiEmbedSbi siPropI PROP.
   Proof.
-    constructor => ???. unseal. by rewrite si_cmra_valid_eq.
+    split.
+    - intros P. rewrite si_embed_eq_si_pure si_emp_valid_si_pure. by unseal.
+    - intros Pi. rewrite si_embed_eq_si_pure. by unseal.
   Qed.
 End si_embedding.
+*)
 
 Section iprop_instances.
   Context `{Hin: inG Σ A}.
@@ -119,17 +115,9 @@ Section iprop_instances.
   Definition has_own_iprop_eq :
     @has_own_iprop = @has_own_iprop_def := has_own_iprop_aux.(seal_eq).
 
-  Lemma uPred_cmra_valid_bi_cmra_valid (a : A) :
-    (uPred_cmra_valid a) ⊣⊢@{iPropI} bi_cmra_valid a.
-  Proof.
-    (* FIXME: this rewrite used to be taken care of by simpl (or /=). *)
-    assert (bi_cmra_valid a = si_embed (si_cmra_valid a)) as -> by by lazy.
-    by rewrite /= si_cmra_valid_eq upred.uPred_cmra_valid_unseal si_embed_eq.
-  Qed.
-
   #[global] Instance has_own_valid_iprop : HasOwnValid iPropI A.
   Proof.
-    constructor. intros. rewrite -uPred_cmra_valid_bi_cmra_valid.
+    constructor. intros.
     by rewrite has_own_iprop_eq /= base_logic.lib.own.own_valid.
   Qed.
 

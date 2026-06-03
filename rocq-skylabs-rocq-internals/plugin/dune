@@ -2,4 +2,4 @@
  (name rocq_internals)
  (public_name rocq-skylabs-rocq-internals)
  (wrapped false)
- (libraries coq-core.pretyping))
+ (libraries rocq-runtime.pretyping))

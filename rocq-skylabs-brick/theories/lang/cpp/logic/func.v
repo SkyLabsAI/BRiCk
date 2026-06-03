@@ -36,6 +36,8 @@ Proof. iIntros "Q W R". iApply ("Q" with "(W R)"). Qed.
 #[local] Arguments UNSUPPORTED {_ _} _%_bs.
 #[local] Arguments wpi : simpl never.
 
+#[local] Remove Hints Ar_Definite CC_C : typeclass_instances.
+
 (** ** Weakest precondition of a constructor: Initial construction step. *)
 (**
 Makes [this] and immediate [members] of [cls] strictly valid, to
@@ -152,8 +154,8 @@ Section derivationsR.
     iPureIntro. intros.
     econstructor; eauto.
     apply List.Forall_forall. intros.
-    apply elem_of_list_In in H1.
-    apply elem_of_list_lookup_1 in H1.
+    apply list_elem_of_In in H1.
+    apply list_elem_of_lookup_1 in H1.
     destruct H1.
     eapply H0; eauto.
   Qed.

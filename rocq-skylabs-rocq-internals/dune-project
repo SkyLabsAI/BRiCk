@@ -17,6 +17,6 @@
 (package
  (name rocq-skylabs-rocq-internals)
  (synopsis "Plugin to expose some internals of Rocq")
- (depends coq-core))
+ (depends rocq-core))
 
 (subst disabled)

@@ -110,12 +110,12 @@ Section internal_eq.
     |-@{mpredI} x ≡ y -> x ≡ y.
   Proof.
     rewrite monPred_internal_eq_unfold embed_emp_valid.
-    apply uPred.internal_eq_soundness.
+    apply internal_eq_soundness.
   Qed.
   Lemma mpred_internal_eq_entails {A B : ofe} (a1 a2 : A) (b1 b2 : B) :
     (∀ n, a1 ≡{n}≡ a2 -> b1 ≡{n}≡ b2) -> a1 ≡ a2 |-@{mpredI} b1 ≡ b2.
   Proof.
     intros. rewrite monPred_internal_eq_unfold. constructor=>i.
-    rewrite !monPred_at_embed. by apply uPred.internal_eq_entails.
+    rewrite !monPred_at_embed. by apply internal_eq_entails.
   Qed.
 End internal_eq.

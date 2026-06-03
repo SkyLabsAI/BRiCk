@@ -32,7 +32,7 @@
  (synopsis "SkyLabs AI's prelude (extensions to stdpp)")
  (depends
   rocq-upoly
-  coq-stdpp
+  rocq-stdpp
   rocq-lens
   rocq-lens-elpi
   coq-elpi

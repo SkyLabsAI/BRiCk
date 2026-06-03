@@ -177,7 +177,7 @@ Section set_map.
     set_map f X =@{D} set_map g X.
   Proof.
     rewrite /set_map. f_equiv. apply list_fmap_ext.
-    intros i x ?%elem_of_list_lookup_2. exact /Hext /elem_of_elements.
+    intros i x ?%list_elem_of_lookup_2. exact /Hext /elem_of_elements.
   Qed.
 End set_map.
 
@@ -190,7 +190,7 @@ Proof.
   intros X. have ? : Inj eq eq g by exact: cancel_inj.
   rewrite -{2}(set_map_id_L X) set_map_compose_L.
   (* setoid_rewrite (cancel right.of_nova right.to_nova). *)
-  apply set_map_ext => x Hin. exact: cancel.
+  apply set_map_ext => x Hin. apply (cancel f g).
 Qed.
 
 Section set_map.

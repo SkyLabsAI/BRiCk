@@ -79,7 +79,8 @@ End semi_set.
 #[global] Hint Resolve pairwise_disjoint_union_2 : core.
 
 Section top_set.
-  Context `{TopSet A C}.
+  Context `{ElemOf A C, Top C, Empty C, Singleton A C, Union C, Intersection C, Difference C}.
+  Context `{!TopSet A C, !Set_ A C}.
   Implicit Types x y : A.
   Implicit Types X Y : C.
 

@@ -91,7 +91,7 @@ Module PTRS_IMPL <: PTRS_INTF.
   Qed.
   #[global] Instance roff_rw_transitive : Transitive roff_rw.
   Proof.
-    move=> x y z. apply rtc_transitive.
+    move=> x y z. apply rtc_trans.
   Qed.
 
   Lemma singleton_offset_canon :

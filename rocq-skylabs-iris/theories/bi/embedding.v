@@ -34,7 +34,6 @@ Section instances.
     - intros n P1 P2 ?. unseal. solve_proper.
     - intros P1 P2 ?. unseal. solve_proper.
     - intros P. unseal. by rewrite !embed_emp_valid.
-    - intros. unseal. by rewrite !embed_interal_inj. 
     - unseal. by rewrite !embed_emp_2.
     - intros. unseal. by rewrite !embed_impl_2.
     - intros. unseal. by rewrite !embed_forall_2.
@@ -59,11 +58,15 @@ Section instances.
     BiEmbedLater PROP1 PROP3.
   Proof. intros P. by rewrite !embed_embed !embed_later. Qed.
 
-  #[local] Instance compose_embed_internal_eq
-      `{!BiInternalEq PROP1, !BiInternalEq PROP2, !BiInternalEq PROP3}
-      `{!BiEmbedInternalEq PROP2 PROP3, !BiEmbedInternalEq PROP1 PROP2} :
-    BiEmbedInternalEq PROP1 PROP3.
-  Proof. intros A x y. by rewrite embed_embed !embed_internal_eq_1. Qed.
+  #[local] Instance compose_embed_sbi
+      `{!Sbi PROP1, !Sbi PROP2, !Sbi PROP3}
+      `{!BiEmbedSbi PROP2 PROP3, !BiEmbedSbi PROP1 PROP2} :
+    BiEmbedSbi PROP1 PROP3.
+  Proof.
+    split.
+    - intros P. by rewrite embed_embed !embed_si_emp_valid.
+    - intros Pi. by rewrite embed_embed !embed_si_pure.
+  Qed.
 
   #[local] Instance compose_embed_bupd
       `{!BiBUpd PROP1, !BiBUpd PROP2, !BiBUpd PROP3}
@@ -76,12 +79,6 @@ Section instances.
       `{!BiEmbedFUpd PROP2 PROP3, !BiEmbedFUpd PROP1 PROP2} :
     BiEmbedFUpd PROP1 PROP3.
   Proof. intros E1 E2 P. by rewrite !embed_embed !embed_fupd. Qed.
-
-  #[local] Instance compose_embed_plainly
-      `{!BiPlainly PROP1, !BiPlainly PROP2, !BiPlainly PROP3}
-      `{!BiEmbedPlainly PROP2 PROP3, !BiEmbedPlainly PROP1 PROP2} :
-    BiEmbedPlainly PROP1 PROP3.
-  Proof. intros P. by rewrite !embed_embed !embed_plainly. Qed.
 End instances.
 
 Module compose_embed_instances.
@@ -89,9 +86,8 @@ Module compose_embed_instances.
     compose_embedding
     compose_embed_emp
     compose_embed_later
-    compose_embed_internal_eq
+    compose_embed_sbi
     compose_embed_bupd
     compose_embed_fupd
-    compose_embed_plainly
   : typeclass_instances.
 End compose_embed_instances.

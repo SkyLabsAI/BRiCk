@@ -167,10 +167,12 @@ Section weakly_obj.
     `{!WeaklyObjective P} : WeaklyObjective (◇ P).
   Proof. rewrite /bi_except_0. apply _. Qed.
 
-  #[global] Instance plainly_weakly_objective `{BiPlainly PROP} P :
+  #[global] Instance plainly_weakly_objective `{!Sbi PROP} P :
     WeaklyObjective (■ P).
-  Proof. rewrite monPred_plainly_unfold. apply _. Qed.
-  #[global] Instance plainly_if_weakly_objective `{BiPlainly PROP} P p
+  Proof.
+    intros i j Hij. by rewrite !monPred_at_plainly.
+  Qed.
+  #[global] Instance plainly_if_weakly_objective `{!Sbi PROP} P p
     `{!WeaklyObjective P} : WeaklyObjective (■?p P).
   Proof. rewrite /plainly_if. destruct p; apply _. Qed.
 

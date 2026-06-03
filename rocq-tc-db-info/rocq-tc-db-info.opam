@@ -14,8 +14,8 @@ homepage: "https://github.com/SkyLabsAI/BRiCk"
 bug-reports: "https://github.com/SkyLabsAI/BRiCk/issues"
 depends: [
   "dune" {>= "3.21"}
-  "coq-core"
-  "coq-stdlib"
+  "rocq-core"
+  "rocq-stdlib"
   "rocq-skylabs-rocq-internals"
   "odoc" {with-doc}
 ]

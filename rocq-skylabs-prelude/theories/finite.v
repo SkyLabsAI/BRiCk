@@ -95,7 +95,7 @@ Section finite_stdlib.
   Proof. apply NoDup_ListNoDup, NoDup_enum. Qed.
 
   Lemma list_In_enum x : In x (enum A).
-  Proof. apply elem_of_list_In, elem_of_enum. Qed.
+  Proof. apply list_elem_of_In, elem_of_enum. Qed.
 End finite_stdlib.
 
 Section finite_preimage.
@@ -398,7 +398,7 @@ Qed.
 Lemma elem_of_app_fmap_enum_l `{Finite A} `(f : A → B) x (ys : list B) :
   f x ∈ (f <$> enum A) ++ ys.
 Proof.
-  by apply/elem_of_app; left; apply/elem_of_list_fmap_1/elem_of_enum.
+  by apply/elem_of_app; left; apply/list_elem_of_fmap_2/elem_of_enum.
 Qed.
 
 (**
@@ -751,7 +751,7 @@ Module Type finite_bits_aux (BT : finite_bitmask_type_intf).
   #[global] Instance top_t : Top t := fin_to_set BT.t (C := t).
 
   #[global] Instance topset_t : TopSet BT.t t.
-  Proof. split. apply _. apply elem_of_fin_to_set. Qed.
+  Proof. split. apply elem_of_fin_to_set. Qed.
 
   Implicit Type (x : BT.t) (m n : N).
   (*
@@ -816,7 +816,13 @@ Module Type finite_bits_aux (BT : finite_bitmask_type_intf).
   (** Internal; [to_bits_union_singleton] is strictly stronger. *)
   #[local] Lemma to_bits_union_singleton_aux x xs (Hni : x ∉ xs) :
     to_bits ({[x]} ∪ xs) = N.lor (BT.to_bitmask x) (to_bits xs).
-  Proof. by rewrite !to_bits_is_comm /to_bits_comm elements_union_singleton. Qed.
+  Proof.
+    (* TODO LLM-generated proof, simplify if possible. *)
+    rewrite !to_bits_is_comm /to_bits_comm.
+    pose proof (elements_union_singleton xs x Hni) as Hperm.
+    pose proof (fmap_Permutation BT.to_bitmask _ _ Hperm) as Hperm'.
+    rewrite (foldr_permutation_proper' (=) N.lor 0 _ _ Hperm'). done.
+  Qed.
 
   Lemma setbit_in_idemp x xs
     (Hin : x ∈ xs) :

@@ -2,7 +2,7 @@
  (name ltac2_log)
  (public_name ltac2-logger.plugin)
  (libraries
-  coq-core.plugins.ltac2
+  rocq-runtime.plugins.ltac2
   stdlib-extra
   rocq-extra
   logger-lib))

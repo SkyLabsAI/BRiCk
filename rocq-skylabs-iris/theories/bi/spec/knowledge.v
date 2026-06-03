@@ -47,7 +47,7 @@ Compared to [Knowledge], we
 
 - add [Contractive] and [LaterAgreeF1] to enable agreement lemmas.
 *)
-Class KnowLaterAgree1 {A : ofe} {PROP} `{!BiInternalEq PROP}
+Class KnowLaterAgree1 {A : ofe} {PROP} `{!Sbi PROP}
     (R : A -> PROP) : Prop := {
   #[global] know_later_agree_1_persistent :: Persistent1 R;
   #[global] know_later_agree_1_affine :: Affine1 R;
@@ -57,7 +57,7 @@ Class KnowLaterAgree1 {A : ofe} {PROP} `{!BiInternalEq PROP}
 #[global] Hint Mode KnowLaterAgree1 - - - ! : typeclass_instances.
 
 Section know_later_agree.
-  Context {A : ofe} `{!BiInternalEq PROP}.
+  Context {A : ofe} `{!Sbi PROP}.
   Context (R : A -> PROP).
   Context `{!knowledge.KnowLaterAgree1 R}.
   #[local] Set Default Proof Using "Type*".

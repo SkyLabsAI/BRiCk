@@ -6,7 +6,7 @@
  (inline_tests)
  (preprocess (pps ppx_inline_test))
  (libraries
-  coq-core.vernac
-  coq-core.plugins.ltac))
+  rocq-runtime.vernac
+  rocq-runtime.plugins.ltac))
 
 (rocq.pp (modules cpp2v_commands))

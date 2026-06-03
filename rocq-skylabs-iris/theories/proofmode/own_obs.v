@@ -7,7 +7,7 @@
 Require Import iris.algebra.lib.gmap_view.
 Require Import skylabs.iris.extra.algebra.gset_bij.
 Require Import skylabs.iris.extra.algebra.coGset.
-Require Import skylabs.iris.extra.si_logic.algebra.
+Require Import skylabs.iris.extra.bi.algebra.
 Require Import skylabs.iris.extra.bi.prelude.
 Require Import skylabs.iris.extra.bi.observe.
 Require Import skylabs.iris.extra.bi.includedI.
@@ -51,11 +51,13 @@ with just [%Hv] and then manually [apply excl_auth_frac_op_inv_L in
 Hv]. We know how to fix [iDestruct], and will report the bug upstream.
 *)
 
+(* Bring the project's [algebra.*] lemmas to the front so they are preferred
+   over Iris's same-named lemmas (e.g. [excl_validI]). *)
+Import skylabs.iris.extra.bi.algebra.
+
 Section observe.
   #[local] Set Default Proof Using "Type*".
-  Context `{!BiEmbed siPropI PROP}.
-  Context `{!BiInternalEq PROP, !BiEmbedInternalEq siPropI PROP}.
-  Context `{!BiPlainly PROP, !BiEmbedPlainly siPropI PROP}.
+  Context `{!Sbi PROP}.
   Notation HasOwn RA := (HasOwn PROP RA).
   Notation HasOwnValid RA := (HasOwnValid PROP RA).
   Notation Observe := (@Observe PROP).
@@ -194,22 +196,22 @@ Section observe.
     (** Higher cost than the following [to_agree] variants.  *)
     #[global] Instance own_agreeI' g x y :
       Observe2 (x ≡ y) (own g x) (own g y) | 100.
-    Proof. GUARD. apply own_2_obs, agree_validI. Qed.
+    Proof. GUARD. apply own_2_obs, agree_op_invI. Qed.
     #[global] Instance own_agree' g x y `{!Discrete x} :
       Observe2 [| x ≡ y |] (own g x) (own g y) | 100.
     Proof.
       GUARD. apply observe_2_pure, own_2_obs.
-      by rewrite agree_validI discrete_eq.
+      by rewrite agree_op_invI discrete_eq.
     Qed.
 
     #[global] Instance own_agreeI g a b :
       Observe2 (a ≡ b) (own g (to_agree a)) (own g (to_agree b)).
-    Proof. GUARD. apply own_2_obs. by rewrite agree_validI agree_equivI. Qed.
+    Proof. GUARD. apply own_2_obs. by rewrite agree_op_invI agree_equivI. Qed.
     #[global] Instance own_agree g a b `{!Discrete a} :
       Observe2 [| a ≡ b |] (own g (to_agree a)) (own g (to_agree b)).
     Proof.
       GUARD. apply observe_2_pure, own_2_obs.
-      by rewrite agree_validI agree_equivI discrete_eq.
+      by rewrite agree_op_invI agree_equivI discrete_eq.
     Qed.
     #[global] Instance own_agree_L `{!LeibnizEquiv A} g a b `{!Discrete a} :
       Observe2 [| a = b |] (own g (to_agree a)) (own g (to_agree b)).

@@ -69,13 +69,13 @@ Section gset_bind.
   Proof. set_solver. Qed.
 End gset_bind.
 
-Section lookup_insert.
+Section lookup_insert_eq.
 
   Lemma lookup_insert_iff `{Countable K, A} (m : gmap K A) k k' a :
     <[ k := a ]> m !! k' = if bool_decide (k = k') then Some a else m !! k'.
-  Proof. by case: bool_decide_reflect => [<-|?]; rewrite (lookup_insert, lookup_insert_ne). Qed.
+  Proof. by case: bool_decide_reflect => [<-|?]; rewrite (lookup_insert_eq, lookup_insert_ne). Qed.
 
-End lookup_insert.
+End lookup_insert_eq.
 
 Lemma gmap_dom_empty {K V} `{Countable K} {m : gmap K V} :
   dom m = dom (empty (A := gmap K V)) -> m = ∅.
@@ -88,8 +88,8 @@ Lemma gmap_dom_insert {K V} `{Countable K} {k v} {m1 m2 : gmap K V}
   ∃ m1', m1 = <[k := v]> m1' ∧ m1' !! k = None ∧ dom m1' = dom m2.
 Proof.
   exists (delete k m1).
-  have Hm1' : delete k m1 !! k = None by exact: lookup_delete.
-  have Heq : m1 = <[k:=v]> (delete k m1) by rewrite insert_delete_insert insert_id.
+  have Hm1' : delete k m1 !! k = None by exact: lookup_delete_eq.
+  have Heq : m1 = <[k:=v]> (delete k m1) by rewrite insert_delete_eq insert_id.
   rewrite Heq dom_insert_L in Hdom. split_and! => // {Hm1 Heq}.
   move: m1 (delete _ _) Hm1' Hm2 Hdom => _ m1.
   move=>/not_elem_of_dom Hm1 /not_elem_of_dom Hm2.
