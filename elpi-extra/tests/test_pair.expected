@@ -1,0 +1,22 @@
+Query assignments:
+  P = pr 1 -1
+Query assignments:
+  T = app
+ [global (indc «pair»), global (indt «N»), global (indt «Z»), 
+  app [global (indc «Npos»), global (indc «xH»)], 
+  app [global (indc «Zneg»), global (indc «xH»)]]
+Query assignments:
+  T = app
+ [global (indc «pair»), global (indt «N»), global (indt «Z»), 
+  app [global (indc «Npos»), global (indc «xH»)], 
+  app [global (indc «Zneg»), global (indc «xH»)]]
+Query assignments:
+  T = app
+ [global (indc «pair»), global (indt «N»), global (indt «Z»), 
+  app [global (indc «Npos»), global (indc «xH»)], 
+  app [global (indc «Zneg»), global (indc «xH»)]]
+Query assignments:
+  T = app
+ [global (indc «pair»), global (indt «N»), global (indt «Z»), 
+  app [global (indc «Npos»), global (indc «xH»)], 
+  app [global (indc «Zneg»), global (indc «xH»)]]

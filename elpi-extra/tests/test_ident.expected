@@ -1,0 +1,13 @@
+Query assignments:
+  Id = cats
+Query assignments:
+  T = app
+ [global (indc «Ident.Rep»), 
+  fun `dogs` (global (indt «unit»)) c0 \ global (indc «tt»)]
+Query assignments:
+  %spill1 = dogs
+  %spill2 = app
+ [global (indc «Ident.Rep»), 
+  fun `dogs` (global (indt «unit»)) c0 \ global (indc «tt»)]
+Query assignments:
+  O = none

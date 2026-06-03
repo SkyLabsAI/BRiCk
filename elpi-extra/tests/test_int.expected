@@ -1,0 +1,156 @@
+Query assignments:
+  N = 42
+Query assignments:
+  N = 42
+Query assignments:
+  N = 42
+Query assignments:
+  N = -42
+Query assignments:
+  N = 42
+Query assignments:
+  N = 84
+Query assignments:
+  T = app
+ [global (indc «xO»), 
+  app
+   [global (indc «xI»), 
+    app
+     [global (indc «xO»), 
+      app [global (indc «xI»), app [global (indc «xO»), global (indc «xH»)]]]]]
+Query assignments:
+  T = global (indc «N0»)
+Query assignments:
+  T = app
+ [global (indc «Npos»), 
+  app
+   [global (indc «xO»), 
+    app
+     [global (indc «xI»), 
+      app
+       [global (indc «xO»), 
+        app
+         [global (indc «xI»), app [global (indc «xO»), global (indc «xH»)]]]]]]
+Query assignments:
+  T = app [global (indc «Zneg»), app [global (indc «xI»), global (indc «xH»)]]
+Query assignments:
+  T = global (indc «Z0»)
+Query assignments:
+  T = app
+ [global (indc «Zpos»), 
+  app
+   [global (indc «xO»), 
+    app
+     [global (indc «xI»), 
+      app
+       [global (indc «xO»), 
+        app
+         [global (indc «xI»), app [global (indc «xO»), global (indc «xH»)]]]]]]
+Query assignments:
+  T = global (indc «x00»)
+Query assignments:
+  T = global (indc «xff»)
+Query assignments:
+  N = coq.tm.v
+ (app
+   [global (indc «xO»), 
+    app
+     [global (indc «xI»), 
+      app
+       [global (indc «xO»), 
+        app
+         [global (indc «xI»), app [global (indc «xO»), global (indc «xH»)]]]]])
+  V = 42
+Query assignments:
+  N = coq.tm.v
+ (app
+   [global (indc «xO»), 
+    app
+     [global (indc «xI»), 
+      app
+       [global (indc «xO»), 
+        app
+         [global (indc «xI»), app [global (indc «xO»), global (indc «xH»)]]]]])
+  T = app
+ [global (indc «xO»), 
+  app
+   [global (indc «xI»), 
+    app
+     [global (indc «xO»), 
+      app [global (indc «xI»), app [global (indc «xO»), global (indc «xH»)]]]]]
+Query assignments:
+  N = coq.tm.v
+ (app
+   [global (indc «Npos»), 
+    app
+     [global (indc «xO»), 
+      app
+       [global (indc «xI»), 
+        app
+         [global (indc «xO»), 
+          app
+           [global (indc «xI»), app [global (indc «xO»), global (indc «xH»)]]]]]])
+  V = 42
+Query assignments:
+  N = coq.tm.v
+ (app
+   [global (indc «Npos»), 
+    app
+     [global (indc «xO»), 
+      app
+       [global (indc «xI»), 
+        app
+         [global (indc «xO»), 
+          app
+           [global (indc «xI»), app [global (indc «xO»), global (indc «xH»)]]]]]])
+  T = app
+ [global (indc «Npos»), 
+  app
+   [global (indc «xO»), 
+    app
+     [global (indc «xI»), 
+      app
+       [global (indc «xO»), 
+        app
+         [global (indc «xI»), app [global (indc «xO»), global (indc «xH»)]]]]]]
+Query assignments:
+  V = 42
+  Z = coq.tm.v
+ (app
+   [global (indc «Zpos»), 
+    app
+     [global (indc «xO»), 
+      app
+       [global (indc «xI»), 
+        app
+         [global (indc «xO»), 
+          app
+           [global (indc «xI»), app [global (indc «xO»), global (indc «xH»)]]]]]])
+Query assignments:
+  T = app
+ [global (indc «Zpos»), 
+  app
+   [global (indc «xO»), 
+    app
+     [global (indc «xI»), 
+      app
+       [global (indc «xO»), 
+        app
+         [global (indc «xI»), app [global (indc «xO»), global (indc «xH»)]]]]]]
+  Z = coq.tm.v
+ (app
+   [global (indc «Zpos»), 
+    app
+     [global (indc «xO»), 
+      app
+       [global (indc «xI»), 
+        app
+         [global (indc «xO»), 
+          app
+           [global (indc «xI»), app [global (indc «xO»), global (indc «xH»)]]]]]])
+Query assignments:
+  B = coq.tm.v (global (indc «x20»))
+  V = 32
+Query assignments:
+  B = coq.tm.v (global (indc «x20»))
+  T = global (indc «x20»)

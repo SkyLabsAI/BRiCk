@@ -1,0 +1,16 @@
+synterp found 1 items: 
+[loc-modtypath «skylabs_tests.elpi.extra.test_locate_all.DOGS»] 
+
+interp found 1 items: 
+[loc-modtypath «skylabs_tests.elpi.extra.test_locate_all.DOGS»]
+synterp found 1 items: 
+[loc-modpath «skylabs_tests.elpi.extra.test_locate_all.Dogs»] 
+interp found 
+1 items: [loc-modpath «skylabs_tests.elpi.extra.test_locate_all.Dogs»]
+synterp found 0 items: [] 
+interp found 1 items: [loc-gref (const «cats»)]
+synterp found 0 items: [] 
+interp found 1 items: [loc-gref (const «cats»)]
+synterp found 0 items: [] 
+interp found 1 items: 
+[loc-abbreviation «skylabs_tests.elpi.extra.test_locate_all.ferrets»]

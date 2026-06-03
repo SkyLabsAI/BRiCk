@@ -1,0 +1,18 @@
+Query assignments:
+  O = none
+Query assignments:
+  O = some 42
+Query assignments:
+  T = app [global (indc «None»), global (indt «N»)]
+Query assignments:
+  T = app
+ [global (indc «Some»), global (indt «N»), 
+  app [global (indc «Npos»), app [global (indc «xI»), global (indc «xH»)]]]
+  X1_ = global (indt «N»)
+Query assignments:
+  O = some 1
+Query assignments:
+  T = app
+ [global (indc «Some»), global (indt «N»), 
+  app [global (indc «Npos»), global (indc «xH»)]]
+  X2_ = global (indt «N»)
