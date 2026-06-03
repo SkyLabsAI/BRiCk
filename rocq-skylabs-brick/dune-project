@@ -37,7 +37,11 @@
   rocq-equations
   rocq-skylabs-prelude
   rocq-skylabs-iris
-  (rocq-skylabs-cpp2v :with-test)
+  rocq-skylabs-cpp2v
+  ; this package mostly does not depend on cpp2v, except
+  ; that rocq-skylabs-brick/theories/lang/cpp/dune uses
+  ; cpp2v's hash in build parser/plugin/cpp2v.v.
+  ; TODO: make that a separate package.
   rocq-flocq
   coq-elpi))
 
