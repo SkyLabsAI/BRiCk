@@ -6,7 +6,5 @@
   Ltac2
   skylabs.ltac2.extra
   Stdlib
-  ; transitive dependencies
-  Corelib
  )
  (plugins ltac2-logger.plugin))

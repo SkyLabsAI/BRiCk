@@ -4,7 +4,5 @@
  (package rocq-tc-db-info)
  (theories
   Ltac2
-  ; transitive dependencies
-  Corelib
  )
  (plugins rocq-tc-db-info.plugin))
