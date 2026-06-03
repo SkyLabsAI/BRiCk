@@ -287,20 +287,6 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
             }
         });
 
-    with_open_file(notations_file_, [&](Formatter &spec_fmt) {
-        Cache c;
-        CoqPrinter print(spec_fmt, /*templates*/ false, c);
-        ClangPrinter cprint(compiler_, ctxt, trace_, comment_, typedefs_);
-        // PrintSpec printer(ctxt);
-
-        NoInclude source(ctxt->getSourceManager());
-
-        parser(print);
-
-        // generate all of the record fields
-        write_globals(mod, print, cprint);
-    });
-
     with_open_file(templates_file_, [&](Formatter &fmt) {
         Cache c;
         CoqPrinter print(fmt, /*templates*/ true, c);
