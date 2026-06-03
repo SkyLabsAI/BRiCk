@@ -19,9 +19,8 @@
   
   OPTIONS
          --check
-             Do not edit dune files. Exit successfully only if the selected
-             rocq.theory stanzas would be left unchanged because they already
-             contain the needed dependency closure.
+             Do not edit dune files. Print unified diffs to stdout and exit
+             unsuccessfully if the selected rocq.theory stanzas need changes.
   
          --no-normalize
              Only append newly discovered dependencies. Existing dependency
@@ -35,3 +34,4 @@
              whenever the TERM env var is dumb or undefined.
   
   EXIT STATUS
+         dune-rocqdeps exits with:

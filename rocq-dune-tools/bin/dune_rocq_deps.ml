@@ -39,9 +39,8 @@ let no_normalize_arg =
 
 let check_arg =
   let doc =
-    "Do not edit dune files. Exit successfully only if the selected \
-     rocq.theory stanzas would be left unchanged because they already contain \
-     the needed dependency closure."
+    "Do not edit dune files. Print unified diffs to stdout and exit \
+     unsuccessfully if the selected rocq.theory stanzas need changes."
   in
   Arg.(value & flag & info ["check"] ~doc)
 
