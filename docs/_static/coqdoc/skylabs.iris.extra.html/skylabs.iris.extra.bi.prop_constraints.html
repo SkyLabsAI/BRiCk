@@ -49,7 +49,7 @@
 </div>
 
 <div class="doc">
-<a id="lab79"></a><h1 class="section">Convenience wrappers for common PROP-constraint bundles</h1>
+<a id="lab81"></a><h1 class="section">Convenience wrappers for common PROP-constraint bundles</h1>
 
 
 <div class="paragraph"> </div>
@@ -67,12 +67,15 @@ This file defines wrappers:
 </div>
 <div class="code">
 <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.cmra.html#"><span class="id" title="library">iris.algebra.cmra</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#"><span class="id" title="library">iris.bi.updates</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.embedding.html#"><span class="id" title="library">iris.bi.embedding</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.sbi.html#"><span class="id" title="library">iris.bi.sbi</span></a>.<br/>
 <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.iris.extra.bi.own.html#"><span class="id" title="library">skylabs.iris.extra.bi.own</span></a>.<br/>
 
 <br/>
 <span class="id" title="keyword">Class</span> <a id="Ghostly" class="idref" href="#Ghostly"><span class="id" title="record">Ghostly</span></a> (<a id="PROP:1" class="idref" href="#PROP:1"><span class="id" title="binder">PROP</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#bi"><span class="id" title="record">bi</span></a>) := {<br/>
 &nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="ghostly_bibupd" class="idref" href="#ghostly_bibupd"><span class="id" title="projection">ghostly_bibupd</span></a> :: <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#BiBUpd"><span class="id" title="class">BiBUpd</span></a> <a class="idref" href="skylabs.iris.extra.bi.prop_constraints.html#PROP:1"><span class="id" title="variable">PROP</span></a>;<br/>
-&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="ghostly_embed" class="idref" href="#ghostly_embed"><span class="id" title="projection">ghostly_embed</span></a> :: <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.embedding.html#BiEmbed"><span class="id" title="class">BiEmbed</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.si_logic.bi.html#siPropI"><span class="id" title="definition">siPropI</span></a> <a class="idref" href="skylabs.iris.extra.bi.prop_constraints.html#PROP:1"><span class="id" title="variable">PROP</span></a>;<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <a id="ghostly_embed" class="idref" href="#ghostly_embed"><span class="id" title="projection">ghostly_embed</span></a> :: <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.sbi.html#Sbi"><span class="id" title="class">Sbi</span></a> <a class="idref" href="skylabs.iris.extra.bi.prop_constraints.html#PROP:1"><span class="id" title="variable">PROP</span></a>;<br/>
 }.<br/>
 
 <br/>

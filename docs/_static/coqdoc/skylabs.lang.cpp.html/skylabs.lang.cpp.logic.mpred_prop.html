@@ -64,21 +64,27 @@ lang/bi/prop_constraints.v
 <div class="code">
 
 <br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#"><span class="id" title="library">iris.bi.monpred</span></a>.<br/>
 <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.base_logic.own_instances</span>.<br/>
 <span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.bi.prop_constraints</span>.<br/>
-<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.logic.pred.html#"><span class="id" title="library">skylabs.lang.cpp.logic.pred</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#"><span class="id" title="library">skylabs.lang.cpp.logic.mpred</span></a>.<br/>
 
 <br/>
-#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="mpred_ghostly" class="idref" href="#mpred_ghostly"><span class="id" title="instance">mpred_ghostly</span></a> `{ <a id="H:3" class="idref" href="#H:3"><span class="id" title="binder">cpp_logic</span></a> } : <span class="id" title="class">Ghostly</span> <span class="id" title="definition">mpredI</span> :=<br/>
-&nbsp;&nbsp;{| <span class="id" title="method">ghostly_bibupd</span> := <span class="id" title="var">_</span><br/>
-&nbsp;&nbsp;&nbsp;; <span class="id" title="method">ghostly_embed</span> := <span class="id" title="var">_</span> |}.<br/>
+<span class="id" title="keyword">Section</span> <a id="106674b72acf13fb9e22a04f2639dc9f" class="idref" href="#106674b72acf13fb9e22a04f2639dc9f"><span class="id" title="section">with_Σ</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="0e86e1b563645c7903a35f5e4284418f" class="idref" href="#0e86e1b563645c7903a35f5e4284418f"><span class="id" title="variable">ti</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#biIndex"><span class="id" title="class">biIndex</span></a>} {<a id="7c2197e978889a076a2c2672f13ee7ed" class="idref" href="#7c2197e978889a076a2c2672f13ee7ed"><span class="id" title="variable">Σ</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.iprop.html#gFunctors"><span class="id" title="class">gFunctors</span></a>}.<br/>
 
 <br/>
-#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="mpred_has_usual_own" class="idref" href="#mpred_has_usual_own"><span class="id" title="instance">mpred_has_usual_own</span></a> `{ <a id="cpp_logic0:6" class="idref" href="#cpp_logic0:6"><span class="id" title="binder">!</span></a><a id="cpp_logic0:6" class="idref" href="#cpp_logic0:6"><span class="id" title="binder">cpp_logic</span></a> <a id="ti:4" class="idref" href="#ti:4"><span class="id" title="binder"><span id="cpp_logic0:6" class="id">ti</span></span></a> <a id="48bbc240c70629f9166b6605559525f0" class="idref" href="#48bbc240c70629f9166b6605559525f0"><span class="id" title="binder"><span id="cpp_logic0:6" class="id">Σ</span></span></a>, <a id="T:7" class="idref" href="#T:7"><span class="id" title="binder">T</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.cmra.html#cmra"><span class="id" title="record">cmra</span></a>, <a id="hasG:8" class="idref" href="#hasG:8"><span class="id" title="binder">hasG</span></a> : !<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.own.html#inG"><span class="id" title="class">inG</span></a> <a class="idref" href="skylabs.lang.cpp.logic.mpred_prop.html#48bbc240c70629f9166b6605559525f0"><span class="id" title="variable">Σ</span></a> <a class="idref" href="skylabs.lang.cpp.logic.mpred_prop.html#T:7"><span class="id" title="variable">T</span></a> }<br/>
-&nbsp;&nbsp;: <span class="id" title="class">HasUsualOwn</span> <span class="id" title="definition">mpredI</span> <a class="idref" href="skylabs.lang.cpp.logic.mpred_prop.html#T:7"><span class="id" title="variable">T</span></a> :=<br/>
-&nbsp;&nbsp;{| <span class="id" title="method">has_usual_own_own</span> := <span class="id" title="var">_</span><br/>
-&nbsp;&nbsp;&nbsp;; <span class="id" title="method">has_usual_own_upd</span> := <span class="id" title="var">_</span><br/>
-&nbsp;&nbsp;&nbsp;; <span class="id" title="method">has_usual_own_valid</span> := <span class="id" title="var">_</span> |}.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="mpred_ghostly" class="idref" href="#mpred_ghostly"><span class="id" title="instance">mpred_ghostly</span></a> : <span class="id" title="class">Ghostly</span> <span class="id" title="definition">mpredI</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{| <span class="id" title="method">ghostly_bibupd</span> := <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;; <span class="id" title="method">ghostly_embed</span> := <span class="id" title="var">_</span> |}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="mpred_has_usual_own" class="idref" href="#mpred_has_usual_own"><span class="id" title="instance">mpred_has_usual_own</span></a> `{<a id="T:3" class="idref" href="#T:3"><span class="id" title="binder">T</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.algebra.cmra.html#cmra"><span class="id" title="record">cmra</span></a>, <a id="hasG:4" class="idref" href="#hasG:4"><span class="id" title="binder">hasG</span></a> : !<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.base_logic.lib.own.html#inG"><span class="id" title="class">inG</span></a> <a class="idref" href="skylabs.lang.cpp.logic.mpred_prop.html#7c2197e978889a076a2c2672f13ee7ed"><span class="id" title="variable">Σ</span></a> <a class="idref" href="skylabs.lang.cpp.logic.mpred_prop.html#T:3"><span class="id" title="variable">T</span></a> }<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;: <span class="id" title="class">HasUsualOwn</span> <span class="id" title="definition">mpredI</span> <a class="idref" href="skylabs.lang.cpp.logic.mpred_prop.html#T:3"><span class="id" title="variable">T</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{| <span class="id" title="method">has_usual_own_own</span> := <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;; <span class="id" title="method">has_usual_own_upd</span> := <span class="id" title="var">_</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;; <span class="id" title="method">has_usual_own_valid</span> := <span class="id" title="var">_</span> |}.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.logic.mpred_prop.html#106674b72acf13fb9e22a04f2639dc9f"><span class="id" title="section">with_Σ</span></a>.<br/>
 </div>
 <!--
 -- Copyright (c) 2020 BlueRock Security, Inc.

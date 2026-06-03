@@ -49,7 +49,7 @@
 </div>
 
 <div class="doc">
-<a id="lab97"></a><h1 class="section">General decomposition of a WPio for the Compose language into WPio's of</h1>
+<a id="lab98"></a><h1 class="section">General decomposition of a WPio for the Compose language into WPio's of</h1>
 
 its components.
 
@@ -565,7 +565,7 @@ GENERAL PROOF STEP :
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iExists</span> <span class="id" title="var">y_i_o</span>. <span class="id" title="var">iSplitL</span> "Hβo_n". { <span class="id" title="tactic">by</span> <span class="id" title="var">iFrame</span>. }<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;re-establishing&nbsp;<span class="inlinecode"><span class="id" title="var">state_interp</span></span>s&nbsp;*)</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iSplitL</span> "FULLTR SIs SIn".<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="tactic">rewrite</span> 2!<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.list_basics.html#length_nil"><span class="id" title="definition">length_nil</span></a> 2!<span class="id" title="lemma">Nat.add_0_l</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="tactic">rewrite</span> 2!<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.list_basics.html#list.length_nil"><span class="id" title="definition">length_nil</span></a> 2!<span class="id" title="lemma">Nat.add_0_l</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iSplitL</span> "FULLTR". { <span class="id" title="tactic">rewrite</span> -<span class="id" title="lemma">app_assoc</span>. <span class="id" title="tactic">by</span> <span class="id" title="var">iFrame</span>. }<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iApply</span> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.big_op.html#big_sepS_delete"><span class="id" title="lemma">big_sepS_delete</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">EqL</span>). <span class="id" title="var">iSplitL</span> "SIn".<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">fin_prod.lookup_update_eq</span>. <span class="id" title="var">iExists</span> <span class="id" title="var">_</span>, <span class="id" title="var">_</span>. <span class="id" title="var">iFrame</span> "SIn".<br/>
@@ -658,7 +658,7 @@ GENERAL PROOF STEP :
 <br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;re-establishing&nbsp;<span class="inlinecode"><span class="id" title="var">state_interp</span></span>s&nbsp;*)</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iSplitL</span> "FULLTR SIs SIn".<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="tactic">rewrite</span> 2!<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.list_basics.html#length_nil"><span class="id" title="definition">length_nil</span></a> 2!<span class="id" title="lemma">Nat.add_0_l</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="tactic">rewrite</span> 2!<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.list_basics.html#list.length_nil"><span class="id" title="definition">length_nil</span></a> 2!<span class="id" title="lemma">Nat.add_0_l</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iSplitL</span> "FULLTR". { <span class="id" title="tactic">rewrite</span> -<span class="id" title="lemma">app_assoc</span>. <span class="id" title="tactic">by</span> <span class="id" title="var">iFrame</span>. }<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iApply</span> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.big_op.html#big_sepS_delete"><span class="id" title="lemma">big_sepS_delete</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">EqL</span>). <span class="id" title="var">iSplitL</span> "SIn".<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">fin_prod.lookup_update_eq</span>. <span class="id" title="var">iExists</span> <span class="id" title="var">_</span>, <span class="id" title="var">_</span>. <span class="id" title="var">iFrame</span> "SIn".<br/>
@@ -829,7 +829,7 @@ GENERAL PROOF STEP :
 <br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;re-establishing&nbsp;<span class="inlinecode"><span class="id" title="var">state_interp</span></span>s&nbsp;*)</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iSplitL</span> "FULLTR SI1 SI2 SIs".<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="tactic">rewrite</span> !<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.list_basics.html#length_nil"><span class="id" title="definition">length_nil</span></a> !<span class="id" title="lemma">Nat.add_0_l</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="tactic">rewrite</span> !<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.list_basics.html#list.length_nil"><span class="id" title="definition">length_nil</span></a> !<span class="id" title="lemma">Nat.add_0_l</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iSplitL</span> "FULLTR". { <span class="id" title="tactic">rewrite</span> -<span class="id" title="lemma">app_assoc</span>. <span class="id" title="tactic">by</span> <span class="id" title="var">iFrame</span>. }<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iApply</span> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.big_op.html#big_sepS_delete"><span class="id" title="lemma">big_sepS_delete</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">EqL1</span>). <span class="id" title="var">iSplitL</span> "SI1".<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">fin_prod.lookup_update_ne</span> // <span class="id" title="lemma">fin_prod.lookup_update_eq</span>.<br/>
