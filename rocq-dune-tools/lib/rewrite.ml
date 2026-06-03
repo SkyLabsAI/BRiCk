@@ -6,6 +6,13 @@ type indexed_theory =
 
 type transitive_dep_graph = string list StringMap.t
 
+let implicit_dependencies = StringSet.of_list ["Corelib"]
+
+let explicit_dependencies dependencies =
+  List.filter
+    (fun dependency -> not (StringSet.mem dependency implicit_dependencies))
+    dependencies
+
 let build_theory_buckets files =
   List.fold_left
     (fun (theory_buckets, dependency_names) (file_path, theories) ->
@@ -24,7 +31,8 @@ let build_theory_buckets files =
             List.fold_left
               (fun dependency_names dependency ->
                 StringSet.add dependency dependency_names )
-              dependency_names theory.direct_dependencies
+              dependency_names
+              (explicit_dependencies theory.direct_dependencies)
           in
           (theory_buckets, dependency_names) )
         (theory_buckets, dependency_names)
@@ -105,7 +113,8 @@ let build_transitive_dep_graph files =
   let dependency_map =
     unique_theories theory_buckets duplicate_names
     |> StringMap.map (fun indexed_theory ->
-        dedupe_preserving_order indexed_theory.theory.direct_dependencies )
+        indexed_theory.theory.direct_dependencies
+        |> explicit_dependencies |> dedupe_preserving_order )
   in
   try Dependency_graph.transitive_closure dependency_map
   with Dependency_graph.Incomplete_graph missing_dependencies ->
@@ -123,7 +132,7 @@ let inherited_dependencies (graph : transitive_dep_graph) direct_dependencies =
 
 let updated_dependencies (graph : transitive_dep_graph)
     (theory : Dune_file.theory) =
-  let direct_dependencies = theory.direct_dependencies in
+  let direct_dependencies = explicit_dependencies theory.direct_dependencies in
   let all_dependencies =
     match StringMap.find_opt theory.name graph with
     | Some dependencies ->

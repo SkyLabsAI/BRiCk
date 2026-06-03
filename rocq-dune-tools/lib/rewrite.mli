@@ -7,10 +7,11 @@ val build_transitive_dep_graph :
   (Fpath.t * Dune_file.theory list) list -> transitive_dep_graph
 (** Build the transitive dependency graph for all uniquely named theories.
 
-    Direct dependencies are taken exactly as returned by [Dune_file.read].
-    Duplicate theory names are tolerated unless they are referenced as
-    dependencies. If a duplicate name is referenced, this function raises an
-    ambiguity error with source locations. *)
+    Direct dependencies are taken from [Dune_file.read], except implicit
+    dependencies such as [Corelib] are ignored because they never need to be
+    listed explicitly. Duplicate theory names are tolerated unless they are
+    referenced as dependencies. If a duplicate name is referenced, this
+    function raises an ambiguity error with source locations. *)
 
 val normalize : string list * string list -> string list * string list
 (** [normalize (direct_dependencies, transitive_dependencies)] applies the
@@ -30,9 +31,10 @@ val update_theories :
 (** Update a list of theories using a previously computed transitive dependency
     graph.
 
-    For each theory, direct dependencies are treated as authoritative roots.
-    The updated transitive dependencies are computed either from the theory's
-    own graph entry, or, when the theory name is absent from the graph because
-    duplicates were removed, by unioning the closures of its direct
-    dependencies. If the overall dependency set is unchanged, the original
-    theory value is returned unchanged so no file rewrite is needed. *)
+    For each theory, direct dependencies are treated as authoritative roots,
+    except implicit dependencies such as [Corelib] are removed. The updated
+    transitive dependencies are computed either from the theory's own graph
+    entry, or, when the theory name is absent from the graph because duplicates
+    were removed, by unioning the closures of its direct dependencies. If the
+    overall dependency set is unchanged, the original theory value is returned
+    unchanged so no file rewrite is needed. *)
