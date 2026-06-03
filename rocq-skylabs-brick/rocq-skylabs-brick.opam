@@ -31,7 +31,7 @@ depends: [
   "rocq-equations"
   "rocq-skylabs-prelude"
   "rocq-skylabs-iris"
-  "rocq-skylabs-cpp2v" {with-test}
+  "rocq-skylabs-cpp2v"
   "rocq-flocq"
   "coq-elpi"
   "odoc" {with-doc}
