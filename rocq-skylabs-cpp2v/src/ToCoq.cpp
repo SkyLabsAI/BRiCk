@@ -295,7 +295,7 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
 
             if (!interactive_.has_value()) {
                 print.output()
-                    << "Notation module := source (only parsing)." << fmt::line;
+                    << "Abbreviation module := source (only parsing)." << fmt::line;
             }
 
             if (check_types_) {
