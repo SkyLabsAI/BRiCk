@@ -22,7 +22,7 @@ Section with_PROP.
   Lemma lexistsR {T : Type} (x : T) (P: T -> PROP) C : C |-- P x -> C |-- Exists y, P y.
   Proof. exact: bi.exist_intro'. Qed.
   Lemma lforallL {T : Type} x (P: T -> PROP) C : P x |-- C -> Forall y, P y |-- C.
-  Proof. rewrite -bi.forall_elim. apply. Qed.
+  Proof. rewrite <-bi.forall_elim. apply. Qed.
   Lemma lforallR {T : Type} (P: T -> PROP) C : (forall x, C |-- P x) -> C |-- Forall y, P y.
   Proof. apply bi.forall_intro. Qed.
   Lemma landL1 (P Q C : PROP) : P |-- C -> P //\\ Q |-- C.
