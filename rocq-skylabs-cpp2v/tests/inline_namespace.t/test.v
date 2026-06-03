@@ -19,7 +19,7 @@ cpp.prog source prog cpp:{{
     }
 }}.
 
-Notation TEST a b :=
+Abbreviation TEST a b :=
   (dealias.resolveValue source a%cpp_name = trace.Success b%cpp_name) (only parsing).
 
 Example _1 : TEST "X::testXYZ()" "X::Y::Z::testXYZ()" := eq_refl.

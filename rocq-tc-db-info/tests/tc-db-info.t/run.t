@@ -6,6 +6,7 @@
   In the database eq_true: nothing
   In the database extcore: nothing
   In the database rewrite: nothing
+  In the database rewrite_instances: nothing
   In the database test:
     exact Cu' (cost 0, pattern C unit' tt', id 0)
     exact Cu (cost 0, pattern C unit tt, id 0)

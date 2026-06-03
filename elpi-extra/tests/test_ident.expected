@@ -5,8 +5,8 @@ Query assignments:
  [global (indc «Ident.Rep»), 
   fun `dogs` (global (indt «unit»)) c0 \ global (indc «tt»)]
 Query assignments:
-  %spill1 = dogs
-  %spill2 = app
+  %spill1_196 = dogs
+  %spill2_197 = app
  [global (indc «Ident.Rep»), 
   fun `dogs` (global (indt «unit»)) c0 \ global (indc «tt»)]
 Query assignments:
