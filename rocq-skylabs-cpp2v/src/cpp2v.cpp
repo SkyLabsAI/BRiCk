@@ -42,11 +42,6 @@ static cl::OptionCategory Cpp2V("cpp2v options");
 static cl::extrahelp CommonHelp(
     "\nACTUAL USAGE: cpp2v [cpp2v options] <source> -- [clang options]\n");
 
-static cl::opt<std::string> NamesFile("names",
-                                      cl::desc("print notation for C++ names"),
-                                      cl::value_desc("filename"), cl::Optional,
-                                      cl::cat(Cpp2V));
-
 static cl::opt<std::string> VFileOutput("module",
                                         cl::desc("print translation unit"),
                                         cl::value_desc("filename"),
@@ -161,7 +156,7 @@ public:
             should_elaborate = false;
         }
         auto *result =
-            new ToCoqConsumer(&Compiler, to_opt(VFileOutput), to_opt(NamesFile),
+            new ToCoqConsumer(&Compiler, to_opt(VFileOutput),
                               to_opt(Templates), to_opt(NameTest),
                               Trace::fromBits(TraceBits.getBits()), Comment,
                               !NoSharing, CheckTypes, should_elaborate, !NoAliases,

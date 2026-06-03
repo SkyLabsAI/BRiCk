@@ -64,5 +64,3 @@ void write_spec(clang::CompilerInstance *compiler, ::Module *mod,
                 const SpecCollector &specs,
                 const clang::TranslationUnitDecl *tu, Filter &filter,
                 fmt::Formatter &output);
-
-void write_globals(::Module &mod, CoqPrinter &print, ClangPrinter &cprint);

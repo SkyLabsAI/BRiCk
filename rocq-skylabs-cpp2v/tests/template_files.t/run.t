@@ -2,7 +2,6 @@
 
 Compiling the C++ code, use "make Q=" for debugging.
   $ make 2> /dev/null
-  [2]
   $ ls *.v | sort
   test.v
   test_cpp.v
