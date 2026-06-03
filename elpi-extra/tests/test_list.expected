@@ -1,0 +1,31 @@
+Query assignments:
+  L = []
+Query assignments:
+  L = [4, 5, 6]
+Query assignments:
+  T = app [global (indc «nil»), global (indt «N»)]
+Query assignments:
+  T = app
+ [global (indc «cons»), global (indt «N»), 
+  app [global (indc «Npos»), global (indc «xH»)], 
+  app
+   [global (indc «cons»), global (indt «N»), 
+    app [global (indc «Npos»), app [global (indc «xO»), global (indc «xH»)]], 
+    app
+     [global (indc «cons»), global (indt «N»), 
+      app
+       [global (indc «Npos»), app [global (indc «xI»), global (indc «xH»)]], 
+      app [global (indc «nil»), global (indt «N»)]]]]
+  X1_ = global (indt «N»)
+  X2_ = global (indt «N»)
+  X3_ = global (indt «N»)
+  X4_ = global (indt «N»)
+Query assignments:
+  L = [1, 1, 1]
+Query assignments:
+  T = app
+ [global (indc «cons»), global (indt «N»), 
+  app [global (indc «Npos»), global (indc «xH»)], 
+  app [global (indc «nil»), global (indt «N»)]]
+  X5_ = global (indt «N»)
+  X6_ = global (indt «N»)
