@@ -48,6 +48,12 @@ static CallingConv getCallingConv(const Type *type, ClangPrinter &cprint,
         return getCallingConv(at->getModifiedType().getTypePtr(), cprint, loc);
     } else if (auto toe = dyn_cast_or_null<TypeOfExprType>(type)) {
         return getCallingConv(toe->desugar().getTypePtr(), cprint, loc);
+    } else if (type) {
+        auto desugared = type->getUnqualifiedDesugaredType();
+        if (desugared != type)
+            return getCallingConv(desugared, cprint, loc);
+        fatal(cprint, loc,
+              "getCallingConv: FunctionDecl type is not a FunctionType");
     } else
         fatal(cprint, loc,
               "getCallingConv: FunctionDecl type is not a FunctionType");
