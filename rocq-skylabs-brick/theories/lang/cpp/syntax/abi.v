@@ -30,6 +30,8 @@ NES.Begin abi.
     (* ^ whether or not `char` is signed or unsigned *)
   ; wchar_signed : signed
   ; byte_order : endian
+  ; lang_version : lang_version.t
+    (* ^ the C++ language version used to compile the translation unit *)
   }.
   #[only(lens,eq_dec)] derive t.
 
@@ -79,9 +81,9 @@ NES.Begin abi.
   (** Common Linux ABIs. Just for testing. *)
 
   Definition x64_linux : t :=
-    mkT int_rank.Ilong Signed Signed Little.
+    mkT int_rank.Ilong Signed Signed Little lang_version.Cpp17.
   Definition armle64_linux : t :=
-    mkT int_rank.Ilong Unsigned Unsigned Little.
+    mkT int_rank.Ilong Unsigned Unsigned Little lang_version.Cpp17.
 
   Definition abi_default : t := x64_linux.
 NES.End abi.

@@ -4,6 +4,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
+Require Export elpi.apps.NES.NES.
 Require Import stdpp.strings.
 Require Export skylabs.prelude.pstring.
 Require Import skylabs.lang.cpp.syntax.prelude.
@@ -22,6 +23,34 @@ Require Import Flocq.IEEE754.Bits.
 
 
 #[local] Open Scope N_scope.
+
+NES.Begin lang_version.
+  Variant t : Set :=
+  | Cpp98
+  | Cpp03
+  | Cpp11
+  | Cpp14
+  | Cpp17
+  | Cpp20
+  | Cpp23
+  | Cpp26.
+  #[only(inhabited,eq_dec)] derive t.
+
+  Definition to_N (v : t) : N :=
+    match v with
+    | Cpp98 => 1998
+    | Cpp03 => 2003
+    | Cpp11 => 2011
+    | Cpp14 => 2014
+    | Cpp17 => 2017
+    | Cpp20 => 2020
+    | Cpp23 => 2023
+    | Cpp26 => 2026
+    end%N.
+
+  Definition lt (lhs rhs : t) : bool :=
+    bool_decide (to_N lhs < to_N rhs)%N.
+NES.End lang_version.
 
 Definition ident : Set := PrimString.string.
 Bind Scope pstring_scope with ident.
