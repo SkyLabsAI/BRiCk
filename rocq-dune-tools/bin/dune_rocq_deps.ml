@@ -39,14 +39,20 @@ let no_normalize_arg =
 
 let check_arg =
   let doc =
-    "Do not edit dune files. Print word diffs to stdout and exit \
+    "Do not edit dune files. Print patdiff output to stdout and exit \
      unsuccessfully if the selected rocq.theory stanzas need changes."
   in
   Arg.(value & flag & info ["check"] ~doc)
 
+let ascii_arg =
+  let doc =
+    "When used with $(b,--check), print diff output without ANSI escape codes."
+  in
+  Arg.(value & flag & info ["ascii"] ~doc)
+
 let term =
-  let run no_normalize check = run Tool.{no_normalize; check} in
-  Term.(const run $ no_normalize_arg $ check_arg)
+  let run no_normalize check ascii = run Tool.{no_normalize; check; ascii} in
+  Term.(const run $ no_normalize_arg $ check_arg $ ascii_arg)
 
 let doc = "synchronize recursive rocq dependency stanzas in dune files"
 

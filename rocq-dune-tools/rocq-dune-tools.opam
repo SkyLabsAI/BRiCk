@@ -15,6 +15,7 @@ depends: [
   "bos"
   "cmdliner"
   "fpath"
+  "patdiff"
   "sexplib"
   "odoc" {with-doc}
 ]

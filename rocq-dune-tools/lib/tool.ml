@@ -2,7 +2,8 @@ open Support
 
 type options =
   { no_normalize: bool
-  ; check: bool }
+  ; check: bool
+  ; ascii: bool }
 
 type parsed_file =
   { path: Fpath.t
@@ -57,36 +58,6 @@ let write_temp_text path text =
     ~finally:(fun () -> close_out channel)
     (fun () -> output_string channel text)
 
-let replace_all ~pattern ~replacement text =
-  let pattern_length = String.length pattern in
-  if pattern_length = 0 then text
-  else
-    let text_length = String.length text in
-    let buffer = Buffer.create text_length in
-    let rec loop offset =
-      if offset >= text_length then ()
-      else if
-        offset + pattern_length <= text_length
-        && String.equal pattern
-             (String.sub text offset pattern_length)
-      then (
-        Buffer.add_string buffer replacement ;
-        loop (offset + pattern_length) )
-      else (
-        Buffer.add_char buffer text.[offset] ;
-        loop (offset + 1) )
-    in
-    loop 0 ;
-    Buffer.contents buffer
-
-let replace_path_references ~path ~replacement text =
-  let text = replace_all ~pattern:path ~replacement text in
-  if String.length path > 0 && path.[0] = Filename.dir_sep.[0] then
-    replace_all
-      ~pattern:(String.sub path 1 (String.length path - 1))
-      ~replacement text
-  else text
-
 let rec read_all_lines channel buffer =
   match input_line channel with
   | line ->
@@ -96,47 +67,41 @@ let rec read_all_lines channel buffer =
   | exception End_of_file ->
       Buffer.contents buffer
 
-let emit_diff ~display original_text replacement_text =
+let emit_diff ~ascii ~display original_text replacement_text =
   with_temp_file "dune-rocqdeps-original" ".tmp" (fun original_path ->
       with_temp_file "dune-rocqdeps-replacement" ".tmp"
         (fun replacement_path ->
           write_temp_text original_path original_text ;
           write_temp_text replacement_path replacement_text ;
           let argv =
-            [| "git"
+            [| "patdiff"
+             ; (if ascii then "-ascii" else "-ansi")
+             ; "-location-style"
              ; "diff"
-             ; "--no-index"
-             ; "--word-diff=plain"
-             ; "--no-color"
-             ; "--no-ext-diff"
-             ; "--no-prefix"
-             ; "--"
+             ; "-alt-old"
+             ; Filename.concat "old" display
+             ; "-alt-new"
+             ; Filename.concat "new" display
              ; original_path
              ; replacement_path |]
           in
-          let channel = Unix.open_process_args_in "git" argv in
+          let channel = Unix.open_process_args_in "patdiff" argv in
           let output = read_all_lines channel (Buffer.create 256) in
-          let output =
-            output
-            |> replace_path_references ~path:original_path
-                 ~replacement:(Filename.concat "old" display)
-            |> replace_path_references ~path:replacement_path
-                 ~replacement:(Filename.concat "new" display)
-          in
           match Unix.close_process_in channel with
           | Unix.WEXITED 0 ->
               ()
           | Unix.WEXITED 1 ->
               output_string stdout output
           | Unix.WEXITED code ->
-              failf "git diff failed for %s with exit code %d" display code
+              failf "patdiff failed for %s with exit code %d" display code
           | Unix.WSIGNALED signal | Unix.WSTOPPED signal ->
-              failf "git diff failed for %s with signal %d" display signal ) )
+              failf "patdiff failed for %s with signal %d" display signal ) )
 
-let emit_diffs ~cwd changes =
+let emit_diffs ~cwd ~ascii changes =
   List.iter
     (fun change ->
       emit_diff
+        ~ascii
         ~display:(display_path ~cwd change.change_path)
         change.original_text change.replacement_text )
     changes
@@ -199,7 +164,7 @@ let run options =
     exit exit_error ) ;
   let pending_changes = pending_changes changes in
   if options.check && pending_changes <> [] then (
-    emit_diffs ~cwd pending_changes ;
+    emit_diffs ~cwd ~ascii:options.ascii pending_changes ;
     exit exit_check_failed ) ;
   List.iter
     (fun change ->

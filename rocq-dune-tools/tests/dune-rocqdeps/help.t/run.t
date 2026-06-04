@@ -5,7 +5,7 @@
          files
   
   SYNOPSIS
-         dune-rocqdeps [--check] [--no-normalize] [OPTION]…
+         dune-rocqdeps [--ascii] [--check] [--no-normalize] [OPTION]…
   
   DESCRIPTION
          dune-rocqdeps scans the current dune workspace, rewrites rocq.theory
@@ -18,8 +18,12 @@
          recomputed.
   
   OPTIONS
+         --ascii
+             When used with --check, print diff output without ANSI escape
+             codes.
+  
          --check
-             Do not edit dune files. Print word diffs to stdout and exit
+             Do not edit dune files. Print patdiff output to stdout and exit
              unsuccessfully if the selected rocq.theory stanzas need changes.
   
          --no-normalize
@@ -31,7 +35,3 @@
          --help[=FMT] (default=auto)
              Show this help in format FMT. The value FMT must be one of auto,
              pager, groff or plain. With auto, the format is pager or plain
-             whenever the TERM env var is dumb or undefined.
-  
-  EXIT STATUS
-         dune-rocqdeps exits with:

@@ -23,8 +23,10 @@ For `dune-rocqdeps`:
 - `--no-normalize`: only append newly discovered dependencies; preserve the
   existing dependency order and leave files unchanged when nothing new is
   needed
-- `--check`: do not edit files; print word diffs to stdout and exit
+- `--check`: do not edit files; print `patdiff` output to stdout and exit
   unsuccessfully if the selected `rocq.theory` stanzas need changes
+- `--ascii`: when used with `--check`, print diff output without ANSI escape
+  codes
 
 `dune-rocqdeps` first looks for `DUNE_SOURCEROOT` or `DUNE_ROOT` in the
 environment. When those are absent, it walks upward from the current directory

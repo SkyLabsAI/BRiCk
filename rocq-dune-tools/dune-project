@@ -18,6 +18,6 @@
 (package
  (name rocq-dune-tools)
  (synopsis "Utilities for generating _CoqProject files from Rocq dune workspaces")
- (depends bos cmdliner fpath sexplib))
+ (depends bos cmdliner fpath patdiff sexplib))
 
 (subst disabled)
