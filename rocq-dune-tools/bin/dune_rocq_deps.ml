@@ -40,13 +40,9 @@ let no_normalize_arg =
 let check_arg =
   let doc =
     "Do not edit dune files. Print a patdiff against the canonical rewrite \
-     that $(b,dune-rocqdeps) would produce. The printed diff is not \
-     necessarily a minimal patch required to make the check pass: it may \
-     include normalization-only changes such as ordering, grouping, comments, \
-     or line layout. The exit status is based on whether the selected \
-     $(b,rocq.theory) dependency closures are stale under $(b,dune-rocqdeps)' \
-     dependency comparison, not on whether file text exactly matches the \
-     printed rewrite."
+     that $(b,dune-rocqdeps) would produce. The diff may include \
+     normalization-only changes and need not be the minimal patch that makes \
+     $(b,--check) pass; the exit status reflects the dependency comparison."
   in
   Arg.(value & flag & info ["check"] ~doc)
 
@@ -74,9 +70,8 @@ let man =
        pre-marker entries are treated as direct roots when the closure is \
        recomputed."
   ; `P
-      "The canonical rewrite may differ textually from other accepted layouts. \
-       When using $(b,--check), treat the printed diff as the canonical output \
-       rather than as a minimal required patch, and trust the exit status."
+      "Canonical rewrites may differ textually from other accepted layouts. \
+       With $(b,--check), use the diff as guidance and trust the exit status."
   ; `S Manpage.s_examples
   ; `P "$(b,dune-rocqdeps)"
   ; `P "$(b,dune-rocqdeps --no-normalize)"

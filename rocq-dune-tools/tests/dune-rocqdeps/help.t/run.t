@@ -1,5 +1,5 @@
   $ tool="$(command -v dune-rocqdeps)"
-  $ "$tool" --help=plain | sed -n '1,41p'
+  $ "$tool" --help=plain | sed -n '1,36p'
   NAME
          dune-rocqdeps - synchronize recursive rocq dependency stanzas in dune
          files
@@ -17,10 +17,8 @@
          pre-marker entries are treated as direct roots when the closure is
          recomputed.
   
-         The canonical rewrite may differ textually from other accepted
-         layouts. When using --check, treat the printed diff as the canonical
-         output rather than as a minimal required patch, and trust the exit
-         status.
+         Canonical rewrites may differ textually from other accepted layouts.
+         With --check, use the diff as guidance and trust the exit status.
   
   OPTIONS
          --ascii
@@ -29,13 +27,10 @@
   
          --check
              Do not edit dune files. Print a patdiff against the canonical
-             rewrite that dune-rocqdeps would produce. The printed diff is not
-             necessarily a minimal patch required to make the check pass: it
-             may include normalization-only changes such as ordering, grouping,
-             comments, or line layout. The exit status is based on whether the
-             selected rocq.theory dependency closures are stale under
-             dune-rocqdeps' dependency comparison, not on whether file text
-             exactly matches the printed rewrite.
+             rewrite that dune-rocqdeps would produce. The diff may include
+             normalization-only changes and need not be the minimal patch that
+             makes --check pass; the exit status reflects the dependency
+             comparison.
   
          --no-normalize
              Only append newly discovered dependencies. Existing dependency
