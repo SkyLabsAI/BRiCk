@@ -810,8 +810,11 @@ Module evaluation_order.
             We use this for left-to-right *binary* operators *)
   | rl (* right-to-left, assignment operators (post C++17) *).
 
+  Definition since_cpp17 (ver : lang_version.t) : bool :=
+    negb (lang_version.lt ver lang_version.Cpp17).
+
   (* The order of evaluation for each operator *when overloaded* *)
-  Definition order_of (oo : OverloadableOperator) : t :=
+  Definition order_of (ver : lang_version.t) (oo : OverloadableOperator) : t :=
     match oo with
     | OOTilde | OOExclaim => nd
     | OOPlusPlus | OOMinusMinus =>
@@ -828,12 +831,14 @@ Module evaluation_order.
     | OOCaret | OOAmp | OOPipe => nd
 
     (* shift operators are sequenced left-to-right: https://eel.is/c++draft/expr.shift#4. *)
-    | OOLessLess | OOGreaterGreater => l_nd
+    | OOLessLess | OOGreaterGreater =>
+      if since_cpp17 ver then l_nd else nd
     (* Assignment operators -- ordered right-to-left*)
     | OOEqual
     | OOPlusEqual  | OOMinusEqual | OOStarEqual
     | OOSlashEqual | OOPercentEqual | OOCaretEqual | OOAmpEqual
-    | OOPipeEqual  | OOLessLessEqual | OOGreaterGreaterEqual => rl
+    | OOPipeEqual  | OOLessLessEqual | OOGreaterGreaterEqual =>
+      if since_cpp17 ver then rl else nd
     (* Comparison operators -- non-deterministic *)
     | OOEqualEqual | OOExclaimEqual
     | OOLess | OOGreater
@@ -841,9 +846,11 @@ Module evaluation_order.
     | OOSpaceship => nd
 
     | OOComma => l_nd (* http://eel.is/c++draft/expr.compound#expr.comma-1 *)
-    | OOArrowStar => l_nd  (* left-to-right: http://eel.is/c++draft/expr.mptr.oper#4*)
+    | OOArrowStar =>
+      if since_cpp17 ver then l_nd else nd
+      (* left-to-right: http://eel.is/c++draft/expr.mptr.oper#4 *)
 
-    | OOSubscript => l_nd
+    | OOSubscript => if since_cpp17 ver then l_nd else nd
     (* ^^ for primitives, the order is determined by the types, but when overloading
        the "object" is always on the left. http://eel.is/c++draft/expr.sub#1 *)
 
@@ -853,7 +860,7 @@ Module evaluation_order.
        overloading it is left-to-right. <http://eel.is/c++draft/expr.log.and#1>
        and <http://eel.is/c++draft/expr.log.and#1> *)
 
-    | OOCall => l_nd
+    | OOCall => if since_cpp17 ver then l_nd else nd
     (* ^^ post-C++17, the evaluation order for calls is the function first and then the
        arguments, sequenced non-deterministically. This holds for <<f(x)>> as well as
        <<(f.*foo)(x)>> (where <<(f.*foo)>> is sequenced before the evaluation of <<x>> *)
