@@ -255,6 +255,7 @@ public:
     void VisitFunctionDecl(const FunctionDecl *decl, Flags flags) {
         if (decl->isDependentContext() and not templates_)
             return;
+        auto decl_flags = decl->isDependentContext() ? flags.set_template() : flags;
 
         // TODO: in some instances, clang does not link all definitions together
         // which can cause both 'defn == decl' and 'first-decl' to succeed on
@@ -281,7 +282,7 @@ public:
                 this->specs_.add_specification(decl, c, *context_);
             }
 
-            auto what = go(decl, flags, true);
+            auto what = go(decl, decl_flags, true);
             if (what >= Filter::What::DEFINITION) {
                 // search for definitions that need to be lifted, e.g.
                 // static local variables, classes, functions, etc.
@@ -297,7 +298,7 @@ public:
             }
         } else if (defn == nullptr && decl->getPreviousDecl() == nullptr) {
             debug("first-decl");
-            go(decl, flags, false);
+            go(decl, decl_flags, false);
         } else {
             debug("skipped");
         }

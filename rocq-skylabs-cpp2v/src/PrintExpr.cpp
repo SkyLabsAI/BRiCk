@@ -974,7 +974,8 @@ public:
                 guard::ctor __{print, "BS.string_to_bytes"};
                 print.str(name->getString());
             }
-            always_assert(!expr->getType()->isDependentType() && "dependent type of predefined expr");
+            always_assert(!expr->getType()->isDependentType() &&
+                          "dependent type of predefined expr");
             print_string_type(expr, print, cprint);
         } else {
             guard::ctor _{print, "Eunresolved_string_literal"};
@@ -1511,6 +1512,8 @@ public:
             // no need to print the type information on [delete]
             print.end_ctor();
         } else {
+            always_assert(print.templates() &&
+                          "unresolved delete in non-templated code");
             guard::ctor _{print, "Eunresolved_delete"};
             print.output() << fmt::BOOL(expr->isArrayForm()) << fmt::nbsp;
             cprint.printExpr(print, expr->getArgument(), names);
