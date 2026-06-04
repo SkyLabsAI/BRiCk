@@ -35,15 +35,16 @@ Corelib is removed when it appears as an explicit direct dependency.
   >  (theories Corelib Ltac2))
   > EOF
   $ env -u DUNE_SOURCEROOT -u DUNE_ROOT "$tool" --check
-  --- dune
-  +++ dune
+  diff --git old/dune new/dune
+  index da91665..46fba5c 100644
+  --- old/dune
+  +++ new/dune
   @@ -1,3 +1,5 @@
-   (rocq.theory
-    (name a)
-  - (theories Corelib Ltac2))
-  + (theories
-  +  Ltac2
-  + ))
+  (rocq.theory
+   (name a)
+   (theories
+    [-Corelib Ltac2))-]{+Ltac2+}
+  {+ ))+}
   [1]
   $ env -u DUNE_SOURCEROOT -u DUNE_ROOT "$tool"
   $ cat dune
@@ -65,15 +66,17 @@ Stale Corelib entries are removed from transitive dependency sections.
   >  ))
   > EOF
   $ env -u DUNE_SOURCEROOT -u DUNE_ROOT "$tool" --check
-  --- dune
-  +++ dune
+  diff --git old/dune new/dune
+  index 5462fbb..46fba5c 100644
+  --- old/dune
+  +++ new/dune
   @@ -2,6 +2,4 @@
-    (name a)
-    (theories
-     Ltac2
-  -  ; transitive dependencies
-  -  Corelib
-    ))
+   (name a)
+   (theories
+    Ltac2
+  [-  ; transitive dependencies-]
+  [-  Corelib-]
+   ))
   [1]
   $ env -u DUNE_SOURCEROOT -u DUNE_ROOT "$tool"
   $ cat dune

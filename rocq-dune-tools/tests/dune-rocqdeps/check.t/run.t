@@ -26,17 +26,18 @@
 Check mode reports stale files without rewriting them:
 
   $ env -u DUNE_SOURCEROOT -u DUNE_ROOT "$tool" --check
-  --- dune
-  +++ dune
+  diff --git old/dune new/dune
+  index a299201..b67b5de 100644
+  --- old/dune
+  +++ new/dune
   @@ -1,3 +1,7 @@
-   (rocq.theory
-    (name a)
-  - (theories b))
-  + (theories
-  +  b
-  +  ; transitive dependencies
-  +  c
-  + ))
+  (rocq.theory
+   (name a)
+   (theories
+    [-b))-]{+b+}
+  {+  ; transitive dependencies+}
+  {+  c+}
+  {+ ))+}
   [1]
   $ cat dune
   (rocq.theory
@@ -87,15 +88,17 @@ Check mode rejects stale dependencies in the transitive dependency section:
   >  ))
   > EOF
   $ env -u DUNE_SOURCEROOT -u DUNE_ROOT "$tool" --check
-  --- dune
-  +++ dune
+  diff --git old/dune new/dune
+  index b67b5de..ad7295e 100644
+  --- old/dune
+  +++ new/dune
   @@ -2,6 +2,4 @@
-    (name a)
-    (theories
-     b
-  -  ; transitive dependencies
-  -  c
-    ))
+   (name a)
+   (theories
+    b
+  [-  ; transitive dependencies-]
+  [-  c-]
+   ))
   [1]
   $ cat dune
   (rocq.theory

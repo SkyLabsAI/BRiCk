@@ -19,7 +19,7 @@
   
   OPTIONS
          --check
-             Do not edit dune files. Print unified diffs to stdout and exit
+             Do not edit dune files. Print word diffs to stdout and exit
              unsuccessfully if the selected rocq.theory stanzas need changes.
   
          --no-normalize
