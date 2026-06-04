@@ -54,7 +54,7 @@ Elpi Accumulate derive lp:{{
       coq.ltac.collect-goals BoEqDecision [SealedGoal] [],
       coq.ltac.open (coq.ltac.call "solve_decision" []) SealedGoal [],
       coq.env.add-const InstanceName BoEqDecision ETyEqDecision @transparent! C,
-      @global! => coq.TC.declare-instance (const C) 0,
+      (@global! => coq.TC.declare-instance (const C) 0),
       Clauses = [eqdec-done OrigGR, eqdec OrigGR (const C)],
       std.forall Clauses (x\
         coq.elpi.accumulate _ "derive.stdpp.eq_dec.db" (clause _ _ x)
