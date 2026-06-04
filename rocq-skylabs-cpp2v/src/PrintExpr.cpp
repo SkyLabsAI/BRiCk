@@ -82,21 +82,16 @@ bool is_dependent(const Expr *expr) {
                              ExprDependence::TypeValueInstantiation);
 }
 
-bool is_static_member(ValueDecl *decl) {
+/**
+ * Determine if the value is a member of a class
+ */
+bool is_class_member(ValueDecl *decl) {
     if (auto field = dyn_cast<FieldDecl>(decl)) {
-        return not field->isCXXInstanceMember();
+        return field->isCXXInstanceMember();
     } else if (auto meth = dyn_cast<CXXMethodDecl>(decl)) {
-        return meth->isStatic();
-    } else if (dyn_cast<FunctionDecl>(decl)) {
-        return true;
-    } else if (dyn_cast<VarDecl>(decl)) {
-        return true; // vd->isStaticLocal();
-    } else {
-        decl->dump();
-        llvm::errs().flush();
-        always_assert(false && "unsupported [is_static_member]");
-        return false;
+        return not meth->isStatic();
     }
+    return false;
 }
 
 // todo(gmm): this is duplicated!
@@ -504,7 +499,7 @@ public:
             auto e = expr->getSubExpr();
             if (auto dre = dyn_cast<DeclRefExpr>(e)) {
                 auto decl = dre->getDecl();
-                if (not is_static_member(decl)) {
+                if (is_class_member(decl)) {
                     guard::ctor _(print, "Eglobal_member");
                     cprint.printName(print, decl, loc::of(expr));
                     print.output() << fmt::nbsp;
@@ -512,9 +507,8 @@ public:
                     return;
                 }
             }
-            print.ctor("Eaddrof");
+            guard::ctor _{print, "Eaddrof"};
             cprint.printExpr(print, e, names);
-            print.end_ctor(); // elide type
             return;
         }
         case UnaryOperatorKind::UO_Deref:
