@@ -145,6 +145,7 @@ Section with_lang.
     | overloadable.Ror => mret "||"
     end.
 
+  #[warnings="-non-full-mutual"]
   Fixpoint printN (inst : PrimString.string) (nm : name) : option PrimString.string :=
     match nm with
     | Nglobal an => printAN (printT true) None inst an
