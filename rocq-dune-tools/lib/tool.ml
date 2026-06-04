@@ -75,6 +75,7 @@ let emit_diff ~ascii ~display original_text replacement_text =
           write_temp_text replacement_path replacement_text ;
           let argv =
             [| "patdiff"
+             ; "-default"
              ; (if ascii then "-ascii" else "-ansi")
              ; "-location-style"
              ; "diff"
