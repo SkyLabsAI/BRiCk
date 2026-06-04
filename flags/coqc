@@ -38,3 +38,7 @@
 -missing-scheme
 -w
 -level-0-notation-not-closed
+-w
++implicit-create-rewrite-hint-db
+-w
++implicit-create-hint-db
