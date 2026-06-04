@@ -164,10 +164,31 @@ public:
         return decl && decl == decl->getCanonicalDecl();
     }
 
+    static const TagDecl *selfTypedefTag(const TypedefNameDecl &decl) {
+        if (!decl.getIdentifier())
+            return nullptr;
+
+        const Type *type = decl.getUnderlyingType().getTypePtrOrNull();
+        const auto *tag = type ? type->getAsTagDecl() : nullptr;
+        if (!tag || !isa<RecordDecl>(tag) || !tag->getIdentifier())
+            return nullptr;
+
+        if (decl.getName() == tag->getName())
+            return tag;
+        return nullptr;
+    }
+
     void VisitTypedefNameDecl(const TypedefNameDecl *decl, Flags flags) {
         if (decl->getAnonDeclWithTypedefName(true)) {
             // these [typedef]s become the name of the anonymous struct, so we
             // ignore them.
+            return;
+        }
+        if (auto tag = selfTypedefTag(*decl)) {
+            // C commonly uses [typedef struct C C] to make the tag name
+            // available as a type name. In cpp2v both declarations have the
+            // same key, so emit the record and suppress the redundant alias.
+            Visit(tag, flags);
             return;
         }
         if (not decl->isCanonicalDecl())
@@ -188,6 +209,13 @@ public:
         } else if (defn == nullptr && decl->getPreviousDecl() == nullptr) {
             go(decl, flags, false);
         }
+    }
+
+    void VisitRecordDecl(const RecordDecl *decl, Flags flags) {
+        if (isa<CXXRecordDecl>(decl))
+            return;
+        VisitTagDecl(decl, flags);
+        VisitDeclContext(decl, flags);
     }
 
     void VisitDeclContext(const DeclContext *dc, Flags flags) {

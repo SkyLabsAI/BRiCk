@@ -17,6 +17,7 @@
 #include "clang/Basic/Builtins.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Sema/Sema.h"
+#include <clang/AST/DeclCXX.h>
 #include <clang/AST/Type.h>
 #include <clang/Basic/Version.inc>
 #include <optional>
@@ -343,10 +344,12 @@ static fmt::Formatter &printLayoutInfo(CoqPrinter &print,
     return print.output() << li;
 }
 
-static const CXXRecordDecl *getTypeAsRecord(const ValueDecl &decl) {
-    if (auto type = decl.getType().getTypePtrOrNull())
-        return type->getAsCXXRecordDecl();
-    else
+static const RecordDecl *getTypeAsRecord(const ValueDecl &decl) {
+    if (auto type = decl.getType().getTypePtrOrNull()) {
+        if (auto tag = type->getAsTagDecl())
+            return dyn_cast<RecordDecl>(tag);
+        return nullptr;
+    } else
         return nullptr;
 }
 
@@ -401,7 +404,7 @@ static fmt::Formatter &printFieldInitializer(CoqPrinter &print,
         return print.none();
 }
 
-static fmt::Formatter &printFields(const CXXRecordDecl &decl,
+static fmt::Formatter &printFields(const RecordDecl &decl,
                                    const ASTRecordLayout *layout,
                                    CoqPrinter &print, ClangPrinter &cprint) {
     auto i = 0;
@@ -542,6 +545,14 @@ static fmt::Formatter &printSizeAlign(const CXXRecordDecl &decl,
     return print.output() << size << fmt::nbsp << align;
 }
 
+static fmt::Formatter &printSizeAlign(const RecordDecl &decl,
+                                      const ASTRecordLayout *layout,
+                                      CoqPrinter &print, ClangPrinter &cprint) {
+    auto size = layout ? layout->getSize().getQuantity() : 0;
+    auto align = layout ? layout->getAlignment().getQuantity() : 0;
+    return print.output() << size << fmt::nbsp << align;
+}
+
 static fmt::Formatter &printStruct(CoqPrinter &print, const CXXRecordDecl &decl,
                                    ClangPrinter &cprint,
                                    const ASTContext &ctxt) {
@@ -602,12 +613,66 @@ static fmt::Formatter &printUnion(CoqPrinter &print, const CXXRecordDecl &decl,
     return printSizeAlign(decl, layout, print, cprint);
 }
 
-static const char *supportedRecord(const CXXRecordDecl &decl,
+static fmt::Formatter &printCStruct(CoqPrinter &print, const RecordDecl &decl,
+                                    ClangPrinter &cprint,
+                                    const ASTContext &ctxt) {
+    if (ClangPrinter::debug && cprint.trace(Trace::Decl))
+        cprint.trace("printCStruct", loc::of(decl));
+#if 18 <= CLANG_VERSION_MAJOR
+    always_assert(decl.getTagKind() == TagTypeKind::Struct);
+#else
+    always_assert(decl.getTagKind() == TagTypeKind::TTK_Struct);
+#endif
+
+    if (!decl.isCompleteDefinition())
+        return print.none();
+
+    const auto layout =
+        decl.isDependentContext() ? nullptr : &ctxt.getASTRecordLayout(&decl);
+
+    guard::some some(print);
+    guard::ctor _(print, "Build_Struct");
+
+    print.output() << "nil" << fmt::line;
+    printFields(decl, layout, print, cprint) << fmt::nbsp;
+    print.output() << "nil" << fmt::nbsp;
+    print.output() << "nil" << fmt::nbsp;
+    print.none() << fmt::nbsp;
+    print.boolean(true) << fmt::nbsp;
+    print.none() << fmt::line;
+    print.output() << "POD" << fmt::nbsp;
+    return printSizeAlign(decl, layout, print, cprint);
+}
+
+static fmt::Formatter &printCUnion(CoqPrinter &print, const RecordDecl &decl,
+                                   ClangPrinter &cprint,
                                    const ASTContext &ctxt) {
-    for (auto base : decl.bases()) {
-        if (base.isVirtual())
-            return "virtual base classes are not supported";
-    }
+    if (ClangPrinter::debug && cprint.trace(Trace::Decl))
+        cprint.trace("printCUnion", loc::of(decl));
+#if 18 <= CLANG_VERSION_MAJOR
+    always_assert(decl.getTagKind() == TagTypeKind::Union);
+#else
+    always_assert(decl.getTagKind() == TagTypeKind::TTK_Union);
+#endif
+
+    if (!decl.isCompleteDefinition())
+        return print.none();
+
+    const auto layout =
+        decl.isDependentContext() ? nullptr : &ctxt.getASTRecordLayout(&decl);
+
+    guard::some some(print);
+    guard::ctor _(print, "Build_Union");
+
+    printFields(decl, layout, print, cprint) << fmt::nbsp;
+    print.none() << fmt::nbsp;
+    print.boolean(true) << fmt::nbsp;
+    print.none() << fmt::line;
+    return printSizeAlign(decl, layout, print, cprint);
+}
+
+static const char *supportedRecord(const RecordDecl &decl,
+                                   const ASTContext &ctxt) {
     for (auto f : decl.fields()) {
         if (f->isBitField())
             return "bitfields are not supported";
@@ -616,10 +681,22 @@ static const char *supportedRecord(const CXXRecordDecl &decl,
     }
     return nullptr;
 }
+static const char *supportedRecord(const CXXRecordDecl &decl,
+                                   const ASTContext &ctxt) {
+    for (auto base : decl.bases()) {
+        if (base.isVirtual())
+            return "virtual base classes are not supported";
+    }
+    return supportedRecord(static_cast<const RecordDecl&>(decl), ctxt);
+}
+
 } // namespace
 
 static const DeclPrinter Dstruct("Dstruct", printStruct, supportedRecord);
 static const DeclPrinter Dunion("Dunion", printUnion, supportedRecord);
+static const DeclPrinter Drecord_struct("Dstruct", printCStruct,
+                                        supportedRecord);
+static const DeclPrinter Drecord_union("Dunion", printCUnion, supportedRecord);
 
 // Functions
 namespace {
@@ -1240,6 +1317,27 @@ public:
             os << "CXXRecord with tag kind " << decl->getKindName();
             unsupported(cprint, loc::of(decl), msg);
             return printed;
+        }
+    }
+
+    bool VisitRecordDecl(const RecordDecl *decl, CoqPrinter &print,
+                         ClangPrinter &cprint, const ASTContext &ctxt) {
+
+        if (ClangPrinter::debug && cprint.trace(Trace::Decl))
+            cprint.trace("VisitRecordDecl", loc::of(decl));
+
+        // the visitor should always visit the subclass first
+        always_assert(!isa<CXXRecordDecl>(decl));
+        if (decl->isStruct()) {
+            return printType(Drecord_struct, *decl, print, cprint, ctxt);
+        } else if (decl->isUnion()) {
+            return printType(Drecord_union, *decl, print, cprint, ctxt);
+        } else {
+            std::string msg;
+            llvm::raw_string_ostream os{msg};
+            os << "Record with tag kind " << decl->getKindName();
+            unsupported(cprint, loc::of(decl), msg);
+            return false;
         }
     }
 
