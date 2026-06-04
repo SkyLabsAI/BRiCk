@@ -23,7 +23,19 @@
   > EOF
   $ cd a
 
-The default check diff uses ANSI escape codes.
+The default check diff uses ANSI escape codes. Cram strips raw ANSI escapes
+from command output, so use sed to make them printable before cram sees them.
 
-  $ env -u DUNE_SOURCEROOT -u DUNE_ROOT "$tool" --check | sed -n '1l'
+  $ env -u DUNE_SOURCEROOT -u DUNE_ROOT "$tool" --check | sed -n l
   \033[0;31m------ \033[0m\033[0;1mold/dune\033[0m$
+  \033[0;32m++++++ \033[0m\033[0;1mnew/dune\033[0m$
+  \033[0;100;30m@|\033[0m\033[0;1m-1,3 +1,7\033[0m ==========\
+  ==================================================$
+  \033[0;100;30m |\033[0m(rocq.theory$
+  \033[0;100;30m |\033[0m (name a)$
+  \033[0;43;30m!|\033[0m (theories$
+  \033[0;43;30m!|\033[0m  b$
+  \033[0;43;30m!|\033[0m\033[0;32m  ; transitive dependencies\
+  \033[0m$
+  \033[0;43;30m!|\033[0m\033[0;32m  c\033[0m$
+  \033[0;43;30m!|\033[0m ))$
