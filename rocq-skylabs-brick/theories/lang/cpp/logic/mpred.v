@@ -33,7 +33,7 @@ Module Type CPP_LOGIC_CLASS_MIXIN (Import CC : CPP_LOGIC_CLASS_BASE).
   ; cpp_has_cppG : cppPreG _Σ
   }.
   #[global] Arguments cpp_logic : clear implicits.
-  #[global] Hint Mode cpp_logic - - : cpp_logic.
+  #[global] Hint Mode cpp_logic - - : typeclass_instances.
 
   #[global] Instance cpp_has_inv `{!cpp_logic thread_info _Σ} : invGS _Σ
     := has_inv _Σ cpp_has_cppG.
