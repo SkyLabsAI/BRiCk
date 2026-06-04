@@ -662,16 +662,7 @@ public:
 
     void VisitCallExpr(const CallExpr *expr) {
         auto callee = expr->getCallee();
-        if (is_dependent(expr)) {
-            /*
-            Either the function or an argument is dependent.
-            */
-            guard::ctor ctor(print, "Eunresolved_call");
-            PrintDependentName{print, cprint}.Visit(callee);
-            print.output() << fmt::nbsp;
-            print.list(expr->arguments(),
-                       [&](auto i) { cprint.printExpr(print, i, names); });
-        } else if (auto pd = dyn_cast<CXXPseudoDestructorExpr>(callee)) {
+        if (auto pd = dyn_cast<CXXPseudoDestructorExpr>(callee)) {
             // in the clang AST, pseudo destructors are represented as calls
             // but in the BRiCk AST, they are their own construct.
             always_assert(expr->arguments().empty());
@@ -681,6 +672,15 @@ public:
             print.output() << fmt::nbsp;
             cprint.printExpr(print, pd->getBase(), names);
             print.end_ctor();
+        } else if (is_dependent(expr)) {
+            /*
+            Either the function or an argument is dependent.
+            */
+            guard::ctor ctor(print, "Eunresolved_call");
+            PrintDependentName{print, cprint}.Visit(callee);
+            print.output() << fmt::nbsp;
+            print.list(expr->arguments(),
+                       [&](auto i) { cprint.printExpr(print, i, names); });
         } else {
             print.ctor("Ecall");
             cprint.printExpr(print, expr->getCallee(), names);
