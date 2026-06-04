@@ -23,7 +23,10 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
 #include <Formatter.hpp>
+#include <cerrno>
+#include <cstdio>
 #include <list>
+#include <system_error>
 
 // Declares clang::SyntaxOnlyAction.
 #include "SpecCollector.hpp"
@@ -37,13 +40,32 @@ template <typename CLOSURE>
 void with_open_file(const std::optional<std::string> path,
                     CLOSURE f /* void f(Formatter&) */) {
     if (path.has_value()) {
+        const auto &target = *path;
+        auto write_path = target == "-" ? target : target + ".partial";
         std::error_code ec;
-        llvm::raw_fd_ostream output(*path, ec);
+        llvm::raw_fd_ostream output(write_path, ec);
         if (ec.value()) {
-            llvm::errs() << *path << ": " << ec.message() << "\n";
+            logging::fatal() << write_path << ": " << ec.message() << "\n";
+            logging::die();
         } else {
             Formatter fmt{output};
             f(fmt);
+            fmt.flush();
+            output.close();
+            if (output.has_error()) {
+                logging::fatal()
+                    << write_path << ": " << output.error().message() << "\n";
+                logging::die();
+            }
+            if (target != "-") {
+                if (std::rename(write_path.c_str(), target.c_str()) != 0) {
+                    std::error_code ec(errno, std::generic_category());
+                    logging::fatal()
+                        << write_path << ": could not rename to " << target
+                        << ": " << ec.message() << "\n";
+                    logging::die();
+                }
+            }
         }
     }
 }
