@@ -43,8 +43,8 @@ Elpi Accumulate derive lp:{{
       std.assert-ok! (coq.typecheck {{ lp:BoInhabited : lp:ETyInhabited }} _) "typechecking the [Inhabited t] instance failed",
       coq.ltac.collect-goals BoInhabited [SealedGoal] [],
       coq.ltac.open (coq.ltac.call "solve_inhabited" []) SealedGoal [],
-      @using! "Type" => coq.env.add-const InstanceName BoInhabited ETyInhabited @opaque! C,
-      @global! => coq.TC.declare-instance (const C) 0,
+      (@using! "Type" => coq.env.add-const InstanceName BoInhabited ETyInhabited @opaque! C),
+      (@global! => coq.TC.declare-instance (const C) 0),
       Clauses = [inhabited-done OrigGR, inhabited OrigGR (const C)],
       std.forall Clauses (x\
         coq.elpi.accumulate _ "derive.stdpp.inhabited.db" (clause _ _ x)
