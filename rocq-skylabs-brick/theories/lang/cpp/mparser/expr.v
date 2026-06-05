@@ -7,6 +7,7 @@ Require Import skylabs.lang.cpp.mparser.prelude.
 Require Import skylabs.lang.cpp.syntax.types.
 Require Import skylabs.lang.cpp.syntax.typing. (* TODO: use [typed]? *)
 Require Import skylabs.lang.cpp.syntax.overloadable.
+Require Import skylabs.lang.cpp.parser.name.
 Require Import skylabs.lang.cpp.parser.expr.
 
 Include ParserExpr.
@@ -253,6 +254,81 @@ Definition Eunresolved_member (arrow : bool) (base : MExpr) (i : Mname) : MExpr 
     Eunresolved_member (Earrow base None) i
   else
     Eunresolved_member base i.
+
+Fixpoint to_unresolved_name (e : MExpr) : Mname :=
+  match e with
+  | Eparam i => ParserName.Nlocal (Nid i)
+  | Eunresolved_global n => n
+  | core.Eunresolved_member base fld =>
+      Ndependent (Tresult_member (type_of base) fld)
+  | Evar i _ => ParserName.Nlocal (Nid i)
+  | Eenum_const n _ => n
+  | Eglobal n _ => n
+  | Eglobal_member n _ => n
+  | Ecast (Cfun2ptr | Cbuiltin2fun _) e => to_unresolved_name e
+  | Eexplicit_cast _ _ e
+  | Ecast (Cnoop _ | Cuser) e
+  | Eimplicit e
+  | Eandclean e
+  | Ematerialize_temp e _ => to_unresolved_name e
+  | core.Eunresolved_call _ _ => Nunsupported "Eunresolved_call"
+  | core.Eunresolved_member_call _ _ _ => Nunsupported "Eunresolved_member_call"
+  | core.Eunresolved_unop _ _ => Nunsupported "Eunresolved_unop"
+  | core.Eunresolved_binop _ _ _ => Nunsupported "Eunresolved_binop"
+  | core.Eunresolved_parenlist _ _ => Nunsupported "Eunresolved_parenlist"
+  | core.Eunresolved_initlist _ _ => Nunsupported "Eunresolved_initlist"
+  | Echar _ _ => Nunsupported "Echar"
+  | core.Estring _ _ => Nunsupported "Estring"
+  | Eunresolved_string_literal _ => Nunsupported "Eunresolved_string_literal"
+  | Eint _ _ => Nunsupported "Eint"
+  | Ebool _ => Nunsupported "Ebool"
+  | Efloat _ _ => Nunsupported "Efloat"
+  | core.Eunop _ _ _ => Nunsupported "Eunop"
+  | core.Ebinop _ _ _ _ => Nunsupported "Ebinop"
+  | core.Ederef _ _ => Nunsupported "Ederef"
+  | Eaddrof _ => Nunsupported "Eaddrof"
+  | core.Eassign _ _ _ => Nunsupported "Eassign"
+  | core.Eassign_op _ _ _ _ => Nunsupported "Eassign_op"
+  | core.Epreinc _ _ => Nunsupported "Epreinc"
+  | core.Epostinc _ _ => Nunsupported "Epostinc"
+  | core.Epredec _ _ => Nunsupported "Epredec"
+  | core.Epostdec _ _ => Nunsupported "Epostdec"
+  | core.Eseqand _ _ => Nunsupported "Eseqand"
+  | core.Eseqor _ _ => Nunsupported "Eseqor"
+  | core.Ecomma _ _ => Nunsupported "Ecomma"
+  | Ecall _ _ => Nunsupported "Ecall"
+  | Ecast _ _ => Nunsupported "Ecast"
+  | core.Emember _ _ _ _ _ => Nunsupported "Emember"
+  | Emember_ignore _ _ _ => Nunsupported "Emember_ignore"
+  | core.Emember_call _ _ _ _ => Nunsupported "Emember_call"
+  | core.Eoperator_call _ _ _ => Nunsupported "Eoperator_call"
+  | core.Esubscript _ _ _ => Nunsupported "Esubscript"
+  | Esizeof _ _ => Nunsupported "Esizeof"
+  | Ealignof _ _ => Nunsupported "Ealignof"
+  | Eoffsetof _ _ _ => Nunsupported "Eoffsetof"
+  | Econstructor _ _ _ => Nunsupported "Econstructor"
+  | Elambda _ _ => Nunsupported "Elambda"
+  | Eimplicit_init _ => Nunsupported "Eimplicit_init"
+  | Eif _ _ _ _ => Nunsupported "Eif"
+  | Eif2 _ _ _ _ _ _ => Nunsupported "Eif2"
+  | Ethis _ => Nunsupported "Ethis"
+  | Enull => Nunsupported "Enull"
+  | Einitlist _ _ _ => Nunsupported "Einitlist"
+  | Einitlist_union _ _ _ => Nunsupported "Einitlist_union"
+  | Enew _ _ _ _ _ _ => Nunsupported "Enew"
+  | Edelete _ _ _ _ => Nunsupported "Edelete"
+  | Eatomic _ _ _ => Nunsupported "Eatomic"
+  | Estmt _ _ => Nunsupported "Estmt"
+  | Eva_arg _ _ => Nunsupported "Eva_arg"
+  | Epseudo_destructor _ _ _ => Nunsupported "Epseudo_destructor"
+  | Earrayloop_init _ _ _ _ _ _ => Nunsupported "Earrayloop_init"
+  | Earrayloop_index _ _ => Nunsupported "Earrayloop_index"
+  | Eopaque_ref _ _ => Nunsupported "Eopaque_ref"
+  | Eunsupported msg _ => Nunsupported ("Eunsupported: " ++ msg)
+  end.
+
+Definition Eunresolved_call (callee : MExpr) (args : list MExpr) : MExpr :=
+  core.Eunresolved_call (to_unresolved_name callee) args.
 
 (** TODO: Add this as a constructor. *)
 Definition Eunresolved_delete (array : bool) (arg : MExpr) : MExpr :=

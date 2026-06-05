@@ -153,102 +153,6 @@ void printDependentMember(ClangPrinter &cprint, CoqPrinter &print,
 }
 
 /**
- * This class prints a dependent name (of Coq type [Mname]).
- */
-struct PrintDependentName : public ConstStmtVisitor<PrintDependentName, void> {
-
-    PrintDependentName(CoqPrinter &print_, ClangPrinter &cprint_)
-        : print(print_), cprint(cprint_) {}
-
-    void Visit(const Expr *expr) {
-        if (cprint.trace(Trace::Name)) {
-            llvm::errs() << "printDependentName(" << expr->getStmtClassName()
-                         << ")\n";
-            expr->dump();
-        }
-        ConstStmtVisitor<PrintDependentName, void>::Visit(expr);
-    }
-
-    void
-    VisitCXXDependentScopeMemberExpr(const CXXDependentScopeMemberExpr *expr) {
-        guard::ctor _{print, "Ndependent"};
-        guard::ctor __{print, "Tresult_member"};
-        cprint.printQualType(print, expr->getBaseType(), loc::of(expr))
-            << fmt::nbsp;
-        printDependentMember(cprint, print, expr);
-    }
-
-    void VisitDependentScopeDeclRefExpr(const DependentScopeDeclRefExpr *expr) {
-        cprint.printUnresolvedName(print, expr->getQualifier(),
-                                   expr->getDeclName(),
-                                   expr->template_arguments(), loc::of(expr));
-    }
-
-    void VisitUnresolvedLookupExpr(const UnresolvedLookupExpr *expr) {
-        cprint.printUnresolvedName(print, expr->getQualifier(), expr->getName(),
-                                   expr->template_arguments(), loc::of(expr));
-    }
-
-    void VisitUnresolvedMemberExpr(const UnresolvedMemberExpr *expr) {
-        cprint.printUnresolvedName(print, expr->getQualifier(), expr->getName(),
-                                   expr->template_arguments(), loc::of(expr));
-    }
-
-    void VisitMemberExpr(const MemberExpr *expr) {
-        guard::ctor _{print, "Ndependent"};
-        guard::ctor __{print, "Tresult_member"};
-        cprint.printQualType(print, expr->getBase()->getType(), loc::of(expr))
-            << fmt::nbsp;
-        cprint.printUnresolvedName(print, expr->getQualifier(),
-                                   expr->getMemberDecl()->getDeclName(),
-                                   loc::of(expr));
-    }
-
-    void VisitParenExpr(const ParenExpr *expr) {
-        Visit(expr->getSubExpr());
-    }
-
-    void VisitImplicitCastExpr(const ImplicitCastExpr *expr) {
-        switch(expr->getCastKind()) {
-        case clang::CK_BuiltinFnToFnPtr:
-        case clang::CK_FunctionToPointerDecay:
-            return Visit(expr->getSubExpr());
-        default:
-            return this->VisitCastExpr(expr);
-        }
-    }
-
-    // void VisitCallExpr(const CallExpr *expr) {
-    //     // TODO: this isn't going to work either because the types of arguments are going to matter
-    //     Visit(expr->getCallee());
-    // }
-
-    void VisitDeclRefExpr(const DeclRefExpr *expr) {
-        if (isa<ParmVarDecl>(expr->getDecl())) {
-            guard::ctor _{print, "Nlocal"};
-            guard::ctor __{print, "Nid", false};
-            cprint.printUnqualifiedName(print, *expr->getDecl());
-        } else {
-            cprint.printName(print, *expr->getDecl());
-        }
-    }
-
-    void VisitExpr(const Expr *expr) {
-        llvm::errs() << "PrintDependentName(" << expr->getStmtClassName()
-                     << ")\n";
-        expr->dump();
-        // TODO: DependentScopeMemberExpr
-        print.ctor("Nunsupported");
-        print.str(expr->getStmtClassName());
-        print.end_ctor();
-    }
-
-private:
-    CoqPrinter &print;
-    ClangPrinter &cprint;
-};
-
-/**
  * This class prints an expression (of Coq type [Expr] or [MExpr])
  */
 class PrintExpr : public ConstStmtVisitor<PrintExpr, void> {
@@ -710,7 +614,7 @@ public:
             Either the function or an argument is dependent.
             */
             guard::ctor ctor(print, "Eunresolved_call");
-            PrintDependentName{print, cprint}.Visit(callee);
+            cprint.printExpr(print, callee, names);
             print.output() << fmt::nbsp;
             print.list(expr->arguments(),
                        [&](auto i) { cprint.printExpr(print, i, names); });
