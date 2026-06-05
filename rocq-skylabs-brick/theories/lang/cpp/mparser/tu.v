@@ -119,7 +119,7 @@ Definition Dinstantiation (c : Mname) (t : Mname) (xs : list Mtemp_arg) : K :=
   match trace.run $ untempN c with
   | inl _ => _skip
   | inr c =>
-      _instances <[c := templates.TPreInst t xs]>
+      _instances <[c := TPreInst t xs]>
   end.
 
 Definition Dname (m : Mname) (n : Mname) : K :=
