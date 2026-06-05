@@ -327,8 +327,8 @@ End fin.
 (* XXX *)
 Module Type Test.
   Fact test1 : @fin.mk 0 1 eq_refl = 0 ↾ I.
-  Proof eq_refl.
+  Proof. exact eq_refl. Qed.
 
   Fact test2 : decide (@fin.mk 0 1 eq_refl = @fin.mk 0 1 eq_refl) = left eq_refl.
-  Proof eq_refl.
+  Proof. exact eq_refl. Qed.
 End Test.

@@ -645,6 +645,7 @@ Module Type HAS_TYPE_MIXIN (Import P : PTRS) (Import R : RAW_BYTES) (Import V : 
 
   End with_env.
 
+  #[global] Create HintDb has_type_prop discriminated.
   #[global] Hint Resolve has_type_prop_qual : has_type_prop.
 
   Arguments Z.add _ _ : simpl never.
