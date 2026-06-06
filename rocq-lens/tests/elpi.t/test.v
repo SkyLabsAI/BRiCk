@@ -48,7 +48,7 @@ End prim_projs.
 
 Print Module prim_projs.
 
-#[module] derive Inductive tickle A := stop | more : A -> tickle-> tickle.
+#[module] derive Inductive tickle A | := stop | more : A -> tickle -> tickle.
 #[module] derive Record State : Set := MkState
   { value' : N
   }.

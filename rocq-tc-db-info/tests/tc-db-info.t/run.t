@@ -1,5 +1,5 @@
   $ . ../setup-project.sh
-  $ dune exec -- coqc test.v
+  $ dune exec -- rocq compile test.v
   For C -> 
   In the database bool: nothing
   In the database core: nothing
