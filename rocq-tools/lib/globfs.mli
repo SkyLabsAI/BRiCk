@@ -15,7 +15,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *)
 
-(** Minimal "file system" embedded into Coq "glob" files. *)
+(** Minimal "file system" embedded into Rocq "glob" files. *)
 
 (** Path to a regular file. All functions in this module except values of type
     [file_path] to represent valid paths to existing regular files. If that is
@@ -25,13 +25,13 @@
     is a file manipulations in any function, [Sys_error] is raised. *)
 type file_path = string
 
-(** Every file that is embedded into a Coq "glob" file ["dir1/dir2/file.glob"]
-    has an associated [key], which encodes an extension of that file path. The
+(** Files that are embedded into a Rocq glob file, say ["dir/file.glob"], have
+    an associated [key], which encodes an extension of their file paths. These
     keys can be thought of as a "file paths", where ['.'] is used as directory
     separator instead of ['/']. With the above "glob" file, a key that encodes
-    ["path1.path2"] is mapped to ["dir1/dir2/file.glob.path1.paht2"]. Keys may
-    not be uniquely mapped in a "glob" files, since file can only be added and
-    not removed. The functions of this module only deal with this last mapping
+    ["path1.path2"] is mapped to ["dir/file.glob.path1.path2"]. Note that Keys
+    may not be uniquely mapped in a "glob" files, since file can only be added
+    and not removed. Functions of this module only deal with this last mapping
     unless otherwise specified. *)
 module Key : sig
   (** Type of a key. *)
@@ -52,7 +52,7 @@ module Key : sig
   val of_file : glob:file_path -> file:file_path -> t
 
   (** [to_file ~glob ~key] gives the canonical path associated to [key] in the
-      given Coq "glob" file [glob]. *)
+      given Rocq "glob" file [glob]. *)
   val to_file : glob:file_path -> key:t -> file_path
 end
 
@@ -79,7 +79,7 @@ val clear : glob:file_path -> unit
     data is encountered (e.g., when a "glob" file has been messed with). *)
 exception Ill_formed
 
-(** [glob_data ~glob] returns the contents of the Coq "glob" file [glob] as if
+(** [glob_data ~glob] gives the contents of the Rocq "glob" file [glob], as if
     it did not have any embedded file. *)
 val glob_data : glob:file_path -> string
 

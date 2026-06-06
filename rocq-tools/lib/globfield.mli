@@ -15,12 +15,12 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *)
 
-(** Encoding of custom fields into Coq "glob" files. *)
+(** Encoding of custom fields into Rocq "glob" files. *)
 
 (** Mode for encoded fields. *)
 type mode = Binary | Text
 
-(** Representation of the contents of a Coq "glob" file. *)
+(** Representation of the contents of a Rocq "glob" file. *)
 type glob_file
 
 (** [fold_fields f glob acc] folds [f] over the custom fields of [glob], using
@@ -54,10 +54,9 @@ val remove_field : key:int -> glob_file -> glob_file
 exception Bad_glob_file
 
 (** [read_glob_file ~allow_fields file] opens and parses the given [file] as a
-    Coq "glob" file. If [file] is ill-formed, exception [Bad_glob_file] may be
-    raised. In particular, this may happen when [allow_fields = false] and the
-    parser detects a custom field. The [Sys_error] exception is raised in case
-    of error in file manipulation. *)
+    Rocq "glob" file. If [file] is ill-formed, [Bad_glob_file] is raised. This
+    can happen if [allow_fields] is [false] and [file] has ustom field. In the
+    case of a file system error, exception [Sys_error] is raised. *)
 val read_glob_file : allow_fields:bool -> string -> glob_file
 
 (** [write_glob_file path glob] writes [glob] to the file identified by [path]
@@ -82,7 +81,7 @@ val write_fields : assume_new:bool -> string -> (int * mode * string) list ->
   unit
 
 (** [read_field path ~key] returns the mode and value pair mapped to the given
-    [key] in the Coq "glob" file identified by [path]. If no binding is found,
+    [key] in the Rocq "glob" file identified by [path]. If no binding is found
     the [Not_found] exception is raised.  The [Bad_glob_file] exception may be
     raised if the file is ill-formed. The [Sys_error] exception is raised upon
     file manipulation errors.  The [Invalid_argument] exception is raised when
@@ -94,7 +93,7 @@ val read_field : string -> key:int -> mode * Base64.t
     if any of the keys is missing. *)
 val read_fields : string -> keys:int list -> (int * mode * Base64.t) list
 
-(** [read_all_fields path] returns all field mappings from the Coq "glob" file
+(** [read_all_fields path] returns the field mapping from the Rocq "glob" file
     identified by [path]. The [Bad_glob_file] exception may be raised when the
     file is ill-formed. Exception [Sys_error] is raised upon file manipulation
     errors. *)

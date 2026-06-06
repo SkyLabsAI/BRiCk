@@ -19,7 +19,7 @@
   >   }
   > ]
   > EOF
-  $ coqc-perf.code-quality-diff --after-dune dune-log.json
+  $ rocq-perf.code-quality-diff --after-dune dune-log.json
   # Changes in Warnings or Errors
   |        |Before|New |Fixed|After|
   |--------|-----:|---:|----:|----:|
@@ -59,7 +59,7 @@
   
   ```
   File "fmdeps/BRiCk/ltac2-extra/theories/extra.v", line 0, characters 0-0:
-  Warning: Dangling output when building using coqc:
+  Warning: Dangling output when building using "rocq compile":
   what
   [dangling-output-stdout,dummy]
   ```
@@ -71,7 +71,7 @@
   </details>
   
 
-  $ coqc-perf.code-quality-diff --before-dune dune-log.json
+  $ rocq-perf.code-quality-diff --before-dune dune-log.json
   # Changes in Warnings or Errors
   |        |Before|New |Fixed|After|
   |--------|-----:|---:|----:|----:|
@@ -99,7 +99,7 @@
   
   ```
   File "fmdeps/BRiCk/ltac2-extra/theories/extra.v", line 0, characters 0-0:
-  Warning: Dangling output when building using coqc:
+  Warning: Dangling output when building using "rocq compile":
   what
   [dangling-output-stdout,dummy]
   ```

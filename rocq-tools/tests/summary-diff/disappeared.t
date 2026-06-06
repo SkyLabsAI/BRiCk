@@ -12,7 +12,7 @@
   > d,16000000000
   > EOF
 
-  $ coqc-perf.summary-diff --no-colors --instr-threshold 0 --markdown base.csv job.csv
+  $ rocq-perf.summary-diff --no-colors --instr-threshold 0 --markdown base.csv job.csv
   | Relative | Master   | MR       | Change   | Filename
   |---------:|---------:|---------:|---------:|----------
   |  -20.00% |     30.0 |     24.0 |     -6.0 | total

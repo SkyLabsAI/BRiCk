@@ -4,9 +4,9 @@
  (action
   (progn
    (ignore-outputs (with-accepted-exit-codes 1 (run globfs)))
-   (ignore-outputs (with-accepted-exit-codes 1 (run coqc-perf.html-diff)))
-   (ignore-outputs (with-accepted-exit-codes 1 (run coqc-perf.html-index)))
-   (ignore-outputs (with-accepted-exit-codes 0 (run coqc-perf.gather-hint-data)))
+   (ignore-outputs (with-accepted-exit-codes 1 (run rocq-perf.html-diff)))
+   (ignore-outputs (with-accepted-exit-codes 1 (run rocq-perf.html-index)))
+   (ignore-outputs (with-accepted-exit-codes 0 (run rocq-perf.gather-hint-data)))
    (with-stdout-to %{target} (echo "OK")))))
 
 (rule
@@ -50,8 +50,8 @@
  (section bin)
  (files
   (globfs-extract-all as globfs.extract-all)
-  (csv-summary as coqc-perf.csv-summary)
-  (extract-all as coqc-perf.extract-all)
-  (report as coqc-perf.report)
+  (csv-summary as rocq-perf.csv-summary)
+  (extract-all as rocq-perf.extract-all)
+  (report as rocq-perf.report)
   (hint-data-extract-all as hint-data.extract-all)
-  (html-diff-all as coqc-perf.html-diff-all)))
+  (html-diff-all as rocq-perf.html-diff-all)))

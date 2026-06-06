@@ -1,5 +1,5 @@
   $ . ../setup.sh
-  $ cat build.log | coqc-perf.code-quality-report 2> /dev/null
+  $ cat build.log | rocq-perf.code-quality-report 2> /dev/null
   [
     {
       "description": "Unused variable: f.",
@@ -15,9 +15,9 @@
       }
     },
     {
-      "description": "Non-empty stdout when building using coqc.",
+      "description": "Non-empty stdout when building using \"rocq compile\".",
       "check_name": "warning:non-empty-stdout",
-      "fingerprint": "680c7db4d2eb8c2ea78be4254f390c9e",
+      "fingerprint": "72356f3fed2061b8aa32ffec58530eea",
       "severity": "minor",
       "location": {
         "path": "dir1/dir2/tests.v",
@@ -54,7 +54,7 @@
       }
     }
   ]
-  $ cat build.log | coqc-perf.code-quality-report 1> /dev/null
+  $ cat build.log | rocq-perf.code-quality-report 1> /dev/null
   Warning: dangling input line.
       3 | This is junk, and an empty line next.
   Warning: dangling input line.

@@ -66,7 +66,7 @@ handle_file(){
               echo "$FILE,identical" >> "$INDEX_FILE"
             else
               mkdir -p "$OUT_DIR/$(dirname "$FILE")/"
-              coqc-perf.html-diff \
+              rocq-perf.html-diff \
                 "$REF_DIR/$FILE" "$REF_DIR/$BASE.json" \
                 "$SRC_DIR/$FILE" "$SRC_DIR/$BASE.json" > "$OUT_DIR/$BASE.html"
               if [[ $? -eq 0 ]]; then
@@ -114,4 +114,4 @@ mkdir "$OUT_DIR"
 cat "$SRC_DIR/sources.txt" | xargs -I {} bash -c 'handle_file "$@"' _ {}
 cat "$REF_DIR/sources.txt" | xargs -I {} bash -c 'check_removed "$@"' _ {}
 
-coqc-perf.html-index "$INDEX_FILE" "$OUT_DIR/index.html"
+rocq-perf.html-index "$INDEX_FILE" "$OUT_DIR/index.html"

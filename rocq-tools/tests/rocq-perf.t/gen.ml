@@ -16,49 +16,49 @@
  *)
 
 let firsts = [|
-{coq|
+{rocq|
 Inductive N :=
   | O : N
   | S : N -> N.
 
 (* Some comment. *)
-|coq};
-{coq|
+|rocq};
+{rocq|
 Fixpoint add (n m : N) : N :=
   match n with
   | O => m
   | S n => S (add n m)
   end.
-|coq};
-{coq|
+|rocq};
+{rocq|
 Lemma add_O_l (n : N) : add O n = n.
 Proof.
   reflexivity.
 Qed.
-|coq};
-{coq|
+|rocq};
+{rocq|
 Lemma add_S_l (n m : N) : add (S n) m = S (add n m).
 Proof.
   reflexivity.
 Qed.
-|coq};
-{coq|
+|rocq};
+{rocq|
 Lemma add_O_r (n : N) : add n O = n.
 Proof.
   induction n as [|n IH].
   - rewrite add_O_l. reflexivity.
   - rewrite add_S_l. rewrite IH. reflexivity.
 Qed.
-|coq};
-{coq|
+|rocq};
+{rocq|
 Lemma add_S_r (n m : N) : add n (S m) = S (add n m).
 Proof.
   induction n as [|n IH].
   - rewrite add_O_l. rewrite add_O_l. reflexivity.
   - rewrite add_S_l. rewrite add_S_l. rewrite IH. reflexivity.
 Qed.
-|coq};
-{coq|
+|rocq};
+{rocq|
 Lemma add_comm (n m : N) : add n m = add m n.
 Proof.
   induction n as [|n IH].
@@ -67,11 +67,11 @@ Proof.
 Qed.
 
 (* Some comment. *)
-|coq};
+|rocq};
 |]
 
 let extra =
-{coq|
+{rocq|
 Goal forall (n m : N), add n m = add m n.
 Proof.
   intro n. intro m.
@@ -81,7 +81,7 @@ Proof.
 Qed.
 
 (* Some comment. *)
-|coq}
+|rocq}
 
 let _ =
   let n = try int_of_string Sys.argv.(1) with Failure _ -> assert false in
