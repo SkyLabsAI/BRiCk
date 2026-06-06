@@ -1,4 +1,3 @@
-  $ . ../setup.sh
   $ cat build.log | rocq-perf.code-quality-report 2> /dev/null
   [
     {

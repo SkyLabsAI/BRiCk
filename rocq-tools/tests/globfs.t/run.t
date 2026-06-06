@@ -1,4 +1,3 @@
-  $ . ../setup.sh
   $ rocq compile test.v
   $ cp test.glob test.glob.orig
   $ globfs ls test.glob

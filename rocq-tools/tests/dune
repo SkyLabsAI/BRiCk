@@ -3,9 +3,8 @@
  (deps
   (package rocq-core)
   (package rocq-stdlib)
-  (package rocq-tools)
-  setup.sh))
+  (package rocq-tools)))
 
 (cram
- (applies_to coqc-perf)
+ (applies_to rocq-perf)
  (enabled_if (<> %{system} "macosx")))

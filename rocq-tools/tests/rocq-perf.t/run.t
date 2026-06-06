@@ -1,5 +1,3 @@
-  $ . ../setup.sh
-
 Generating test files.
 
   $ ocaml gen.ml 1    > small.v
