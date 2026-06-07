@@ -328,10 +328,10 @@ let print_md_summary ?(mode : [`Github | `Gitlab] option = None) analysis =
       let appeared_label = Printf.sprintf "├ newly appeared files (%i)" num_app in
       print_summary appeared_label ~total_new:(fst total_app) total_app);
   (if num_dis > 0 || num_app > 0 then
-      print_summary "└ common files" ~total_new:total_ref.bt_total ~total_ref:total_new.bt_total total_diff.bt_total);
+      print_summary "└ common files" ~total_new:total_new.bt_total ~total_ref:total_ref.bt_total total_diff.bt_total);
   (if total_ref.bt_cpp2v <> 0 && total_new.bt_cpp2v <> 0 then
-      print_summary "├ translation units" ~total_new:total_ref.bt_cpp2v ~total_ref:total_new.bt_cpp2v total_diff.bt_cpp2v);
-  print_summary "└ proofs and tests" ~total_new:total_ref.bt_other ~total_ref:total_new.bt_other total_diff.bt_other
+      print_summary "├ translation units" ~total_new:total_new.bt_cpp2v ~total_ref:total_ref.bt_cpp2v total_diff.bt_cpp2v);
+  print_summary "└ proofs and tests" ~total_new:total_new.bt_other ~total_ref:total_ref.bt_other total_diff.bt_other
 
 let print_md_header () =
   info "| Relative | Master   | MR       | Change   | Filename\n";
