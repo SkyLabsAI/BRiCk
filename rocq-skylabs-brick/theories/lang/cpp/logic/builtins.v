@@ -19,8 +19,11 @@ Require Import skylabs.lang.cpp.logic.wp.
 
 (** ** Wp Semantics for builtins *)
 (**
+[wp_builtin b fty args Q] is the WP of invoking builtin [b] with function type
+[fty] on arguments [args].
+
 NOTE: we use a non-standard calling convention where values are passed
-as if they were all evaluated using [wp_operand].
+as if they were all evaluated using [wp_operand]: see [wp_operand_builtin_call].
 *)
 Parameter wp_builtin : ∀ `{Σ : cpp_logic, σ : genv}
     (b : BuiltinFn) (fty : functype) (** the type of the builtin *)
@@ -199,7 +202,18 @@ Section endian_conversion.
 
 End endian_conversion.
 
-(** ** Builtin functions *)
+(** ** Builtin functions.
+ In our ASTs, Aome builtins are invoked directly, others are wrapped in builtin
+ function definitions [Builtin bf : FunctionBody].
+ For example, Clang wraps some builtin [bf : BuiltinFn] in builtin function definition .
+ Our ASTs distinguish builtin expressions (that can invoke builtins directly)
+ and builtin function definitions (that wrap builtins in a function definition).
+ function definitions do not have a normal body statement, but are just wrappers for builtins.
+
+ The [FunctionBody] of some function definitions in [translation_unit]
+ Clang wraps some builtin [bf : BuiltinFn] in builtin function definition
+ [Builtin bf : FunctionBody].
+ *)
 
 Definition read_args `{Σ : cpp_logic, σ : genv} :=
   fix read_args (targs : list decltype) (ls : list ptr) (Q : list val -> epred) : mpred :=
