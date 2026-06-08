@@ -1177,6 +1177,40 @@ fmt::Formatter &printDeclarationName(CoqPrinter &print,
         break;
     }
 
+    case DeclarationName::NameKind::CXXConstructorName: {
+        guard::ctor _(print, "Nctor", false);
+        print.output() << "nil";
+        break;
+    }
+
+    case DeclarationName::NameKind::CXXDestructorName:
+        print.output() << "Ndtor";
+        break;
+
+    case DeclarationName::NameKind::CXXOperatorName: {
+        guard::ctor _(print, "Nop", false);
+        print.output() << "function_qualifiers.N" << fmt::nbsp;
+        cprint.printOverloadableOperator(print, name.getCXXOverloadedOperator(),
+                                         loc::none);
+        print.output() << fmt::nbsp << "nil";
+        break;
+    }
+
+    case DeclarationName::NameKind::CXXConversionFunctionName: {
+        guard::ctor _(print, "Nop_conv", false);
+        print.output() << "function_qualifiers.N" << fmt::nbsp;
+        cprint.printQualType(print, name.getCXXNameType(), loc::none);
+        break;
+    }
+
+    case DeclarationName::NameKind::CXXLiteralOperatorName:
+        if (auto id = name.getCXXLiteralIdentifier()) {
+            guard::ctor _(print, "Nop_lit", false);
+            print.str(id->getName()) << fmt::nbsp << "nil";
+            break;
+        }
+        [[fallthrough]];
+
     default:
         print.output() << "(Nunsupported_atomic \"printDeclarationName("
                        << name.getNameKind() << ")\")";

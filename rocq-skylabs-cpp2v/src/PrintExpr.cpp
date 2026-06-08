@@ -20,6 +20,7 @@
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/Version.inc"
 #include "llvm/ADT/APFloat.h"
+#include <clang/AST/OperationKinds.h>
 #include <optional>
 
 using namespace clang;
@@ -150,70 +151,6 @@ void printDependentMember(ClangPrinter &cprint, CoqPrinter &print,
     cprint.printUnresolvedName(print, expr->getQualifier(), expr->getMember(),
                                expr->template_arguments(), loc::of(expr));
 }
-
-/**
- * This class prints a dependent name (of Coq type [Mname]).
- */
-struct PrintDependentName : public ConstStmtVisitor<PrintDependentName, void> {
-
-    PrintDependentName(CoqPrinter &print_, ClangPrinter &cprint_)
-        : print(print_), cprint(cprint_) {}
-
-    void Visit(const Expr *expr) {
-        if (cprint.trace(Trace::Name)) {
-            llvm::errs() << "printDependentName(" << expr->getStmtClassName()
-                         << ")\n";
-            expr->dump();
-        }
-        ConstStmtVisitor<PrintDependentName, void>::Visit(expr);
-    }
-
-    void
-    VisitCXXDependentScopeMemberExpr(const CXXDependentScopeMemberExpr *expr) {
-        guard::ctor _{print, "Ndependent"};
-        guard::ctor __{print, "Tresult_member"};
-        cprint.printQualType(print, expr->getBaseType(), loc::of(expr))
-            << fmt::nbsp;
-        printDependentMember(cprint, print, expr);
-    }
-
-    void VisitDependentScopeDeclRefExpr(const DependentScopeDeclRefExpr *expr) {
-        cprint.printUnresolvedName(print, expr->getQualifier(),
-                                   expr->getDeclName(),
-                                   expr->template_arguments(), loc::of(expr));
-    }
-
-    void VisitUnresolvedLookupExpr(const UnresolvedLookupExpr *expr) {
-        cprint.printUnresolvedName(print, expr->getQualifier(), expr->getName(),
-                                   expr->template_arguments(), loc::of(expr));
-    }
-
-    void VisitUnresolvedMemberExpr(const UnresolvedMemberExpr *expr) {
-        auto name = expr->getName();
-        llvm::errs() << "printDeclarationName(" << expr->getName().getNameKind()
-                     << ")";
-        name.dump();
-
-        print.output() << "(Nunsupported \"VisitUnresolvedMemberExpr\")";
-    }
-    void VisitDeclRefExpr(const DeclRefExpr *expr) {
-        cprint.printName(print, *expr->getDecl());
-    }
-
-    void VisitExpr(const Expr *expr) {
-        llvm::errs() << "PrintDependentName(" << expr->getStmtClassName()
-                     << ")\n";
-        expr->dump();
-        // TODO: DependentScopeMemberExpr
-        print.ctor("Nunsupported");
-        print.str(expr->getStmtClassName());
-        print.end_ctor();
-    }
-
-private:
-    CoqPrinter &print;
-    ClangPrinter &cprint;
-};
 
 /**
  * This class prints an expression (of Coq type [Expr] or [MExpr])
@@ -662,16 +599,7 @@ public:
 
     void VisitCallExpr(const CallExpr *expr) {
         auto callee = expr->getCallee();
-        if (is_dependent(expr)) {
-            /*
-            Either the function or an argument is dependent.
-            */
-            guard::ctor ctor(print, "Eunresolved_call");
-            PrintDependentName{print, cprint}.Visit(callee);
-            print.output() << fmt::nbsp;
-            print.list(expr->arguments(),
-                       [&](auto i) { cprint.printExpr(print, i, names); });
-        } else if (auto pd = dyn_cast<CXXPseudoDestructorExpr>(callee)) {
+        if (auto pd = dyn_cast<CXXPseudoDestructorExpr>(callee)) {
             // in the clang AST, pseudo destructors are represented as calls
             // but in the BRiCk AST, they are their own construct.
             always_assert(expr->arguments().empty());
@@ -681,6 +609,15 @@ public:
             print.output() << fmt::nbsp;
             cprint.printExpr(print, pd->getBase(), names);
             print.end_ctor();
+        } else if (is_dependent(expr)) {
+            /*
+            Either the function or an argument is dependent.
+            */
+            guard::ctor ctor(print, "Eunresolved_call");
+            cprint.printExpr(print, callee, names);
+            print.output() << fmt::nbsp;
+            print.list(expr->arguments(),
+                       [&](auto i) { cprint.printExpr(print, i, names); });
         } else {
             print.ctor("Ecall");
             cprint.printExpr(print, expr->getCallee(), names);
@@ -974,7 +911,8 @@ public:
                 guard::ctor __{print, "BS.string_to_bytes"};
                 print.str(name->getString());
             }
-            always_assert(!expr->getType()->isDependentType() && "dependent type of predefined expr");
+            always_assert(!expr->getType()->isDependentType() &&
+                          "dependent type of predefined expr");
             print_string_type(expr, print, cprint);
         } else {
             guard::ctor _{print, "Eunresolved_string_literal"};
@@ -1511,6 +1449,8 @@ public:
             // no need to print the type information on [delete]
             print.end_ctor();
         } else {
+            always_assert(print.templates() &&
+                          "unresolved delete in non-templated code");
             guard::ctor _{print, "Eunresolved_delete"};
             print.output() << fmt::BOOL(expr->isArrayForm()) << fmt::nbsp;
             cprint.printExpr(print, expr->getArgument(), names);
