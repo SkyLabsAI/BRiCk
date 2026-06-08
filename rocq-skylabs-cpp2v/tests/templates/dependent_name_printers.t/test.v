@@ -111,13 +111,15 @@ Example cast_member_call_body :
 Proof. vm_compute. reflexivity. Qed.
 
 Example pseudo_destructor_body :
+  exists tm,
+    (* Backwards compatibility for clang 18
+       = (Ecast Cl2r (Evar "p" (Tptr (Tparam "T")))) *)
   lookup_body pseudo_destructor_name =
   Some (Sseq [
     Sexpr
-      (Epseudo_destructor true (Tparam "T")
-        (Ecast Cl2r (Evar "p" (Tptr (Tparam "T")))))
+      (Epseudo_destructor true (Tparam "T") tm)
   ]).
-Proof. vm_compute. reflexivity. Qed.
+Proof. vm_compute. eexists; reflexivity. Qed.
 
 Example unresolved_member_body :
   lookup_body unresolved_member_name =
@@ -184,15 +186,15 @@ Example member_value_body :
 Proof. vm_compute. reflexivity. Qed.
 
 Example arrow_member_value_body :
+  exists tm, (* clang18 compat : (Ecast Cl2r (Evar "p" (Tptr (Tparam "T")))) *)
   lookup_body arrow_member_value_name =
   Some (Sseq [
     Sreturn (Some
       (core.Eunresolved_member
-        (Eunresolved_unop Rarrow
-          (Ecast Cl2r (Evar "p" (Tptr (Tparam "T")))))
+        (Eunresolved_unop Rarrow tm)
         (Nlocal (Nid "value"))))
   ]).
-Proof. vm_compute. reflexivity. Qed.
+Proof. vm_compute. eexists; reflexivity. Qed.
 
 Example member_template_call_body :
   lookup_body member_template_call_name =
