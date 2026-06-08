@@ -69,47 +69,47 @@ End Mtranslation_unit.
 
 #[local] Notation Mtemp_params := (list Mtemp_param).
 
-Definition Dvariable (ps : Mtemp_params) (n : Mname) (t : Mtype) (init : global_init.t) : K :=
+Definition Dtemplated_variable (ps : Mtemp_params) (n : Mname) (t : Mtype) (init : global_init.t) : K :=
   _symbols <[n := Template ps $ Ovar t init]>.
 
-Definition Dfunction (ps : Mtemp_params) (n : Mname)  (f : MFunc) : K :=
+Definition Dtemplated_function (ps : Mtemp_params) (n : Mname)  (f : MFunc) : K :=
   _symbols <[n := Template ps $ Ofunction f]>.
 
-Definition Dmethod (ps : Mtemp_params) (n : Mname) (static : bool) (f : MMethod) : K :=
+Definition Dtemplated_method (ps : Mtemp_params) (n : Mname) (static : bool) (f : MMethod) : K :=
   _symbols <[n := Template ps $ if static then Ofunction $ static_method f else Omethod f]>.
 
-Definition Dconstructor (ps : Mtemp_params) (n : Mname) (f : MCtor) : K :=
+Definition Dtemplated_constructor (ps : Mtemp_params) (n : Mname) (f : MCtor) : K :=
   _symbols <[n := Template ps $ Oconstructor f]>.
 
-Definition Ddestructor (ps : Mtemp_params) (n : Mname) (f : MDtor) : K :=
+Definition Dtemplated_destructor (ps : Mtemp_params) (n : Mname) (f : MDtor) : K :=
   _symbols <[n := Template ps $ Odestructor f]>.
 
-Definition Dtype (ps : Mtemp_params) (n : Mname) : K :=
+Definition Dtemplated_type (ps : Mtemp_params) (n : Mname) : K :=
   _types <[n := Template ps Gtype]>.
 
-Definition Dunsupported (n : Mname) (msg : PrimString.string) : K :=
+Definition Dtemplated_unsupported (n : Mname) (msg : PrimString.string) : K :=
   _types <[n := Template [] $ Gunsupported msg]>.
 
-Definition Dstruct (ps : Mtemp_params) (n : Mname) (f : option MStruct) : K :=
+Definition Dtemplated_struct (ps : Mtemp_params) (n : Mname) (f : option MStruct) : K :=
   _types <[n := Template ps $ if f is Some f then Gstruct f else Gtype]>.
 
-Definition Dunion (ps : Mtemp_params) (n : Mname) (f : option MUnion) : K :=
+Definition Dtemplated_union (ps : Mtemp_params) (n : Mname) (f : option MUnion) : K :=
   _types <[n := Template ps $ if f is Some f then Gunion f else Gtype]>.
 
-Definition Denum (ps : Mtemp_params) (n : Mname) (u: Mtype) (cs : list ident) : K :=
+Definition Dtemplated_enum (ps : Mtemp_params) (n : Mname) (u: Mtype) (cs : list ident) : K :=
   _types <[n := Template ps $ Genum u cs]>.
 
-Definition Denum_constant (ps : Mtemp_params) (n : Mname)
+Definition Dtemplated_enum_constant (ps : Mtemp_params) (n : Mname)
     (gn : Mglobname) (ut : Mexprtype) (v : N + Z) (init : option MExpr) : K :=
   _types $ insert n $
   let v := match v with inl n => Echar n ut | inr z => Eint z ut end in
   let t := Tenum gn in
   Template ps $ Gconstant t $ Some $ Ecast (Cintegral t) v.
 
-Definition Dtypedef (ps : Mtemp_params) (n : Mname) (t : Mtype) : K :=
+Definition Dtemplated_typedef (ps : Mtemp_params) (n : Mname) (t : Mtype) : K :=
   _aliases <[n := Template ps t]>.
 
-Definition Dstatic_assert (msg : option bs) (e : MExpr) : K :=
+Definition Dtemplated_static_assert (msg : option bs) (e : MExpr) : K :=
   _skip.
 
 (* TODO?: the [c : Mname] argument should actually be a [name], but the parser
