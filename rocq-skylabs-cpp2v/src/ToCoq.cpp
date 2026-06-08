@@ -162,6 +162,26 @@ static const char *toCoqEndian(const clang::TargetInfo &target) {
     return "Little";
 }
 
+static const char *toCoqLangVersion(const clang::LangOptions &lang) {
+    if (lang.CPlusPlus26)
+        return "lang_version.Cpp26";
+    if (lang.CPlusPlus23)
+        return "lang_version.Cpp23";
+    if (lang.CPlusPlus20)
+        return "lang_version.Cpp20";
+    if (lang.CPlusPlus17)
+        return "lang_version.Cpp17";
+    if (lang.CPlusPlus14)
+        return "lang_version.Cpp14";
+    if (lang.CPlusPlus11)
+        return "lang_version.Cpp11";
+    if (lang.CPlusPlus)
+        return "lang_version.Cpp03";
+
+    logging::fatal() << "cpp2v requires a C++ language mode\n";
+    logging::die();
+}
+
 static fmt::Formatter &printAbi(fmt::Formatter &out,
                                 const clang::ASTContext &ctxt) {
     const auto &target = ctxt.getTargetInfo();
@@ -171,7 +191,8 @@ static fmt::Formatter &printAbi(fmt::Formatter &out,
                << toCoqSigned(clang::TargetInfo::isTypeSigned(
                       target.getWCharType()))
                << fmt::nbsp
-               << toCoqEndian(target) << ")";
+               << toCoqEndian(target) << fmt::nbsp
+               << toCoqLangVersion(ctxt.getLangOpts()) << ")";
 }
 
 void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,

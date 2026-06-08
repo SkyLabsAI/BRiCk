@@ -38,7 +38,8 @@ module =
       abi.uintptr_t_rank := int_rank.Ilong;
       abi.char_signed := Signed;
       abi.wchar_signed := Signed;
-      abi.byte_order := Little
+      abi.byte_order := Little;
+      abi.lang_version := lang_version.Cpp17
     |}
 |}
      : translation_unit

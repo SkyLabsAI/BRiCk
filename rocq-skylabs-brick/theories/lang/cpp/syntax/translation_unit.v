@@ -278,6 +278,9 @@ Record translation_unit : Type := makeTranslationUnit {
 Definition byte_order (tu : translation_unit) : endian :=
   tu.(abi).(abi.byte_order).
 
+Definition language_version (tu : translation_unit) : lang_version.t :=
+  tu.(abi).(abi.lang_version).
+
 (** Just for testing *)
 Definition empty_tu (info : abi.t) : translation_unit :=
   makeTranslationUnit ∅ ∅ ∅ [] info.

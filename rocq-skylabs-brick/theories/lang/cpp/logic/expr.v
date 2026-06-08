@@ -558,7 +558,7 @@ Module Type Expr.
      *)
     Axiom wp_lval_assign : forall ty l r Q,
         (letI* '(la, rv), free :=
-           eval2 (evaluation_order.order_of OOEqual) (wp_lval l) (wp_operand r) in
+           eval2 (evaluation_order.order_of (language_version tu) OOEqual) (wp_lval l) (wp_operand r) in
             la |-> anyR (erase_qualifiers ty) 1$m **
            (la |-> tptstoR (erase_qualifiers ty) 1$m rv -* Q la free))
         |-- wp_lval (Eassign l r ty) Q.
@@ -567,7 +567,7 @@ Module Type Expr.
             match convert_type_op tu o (type_of l) (type_of r) with
             | Some (tl, tr, resultT) =>
               letI* '(la, rv), free :=
-                eval2 (evaluation_order.order_of OOEqual) (wp_lval l) (wp_operand r) in
+                eval2 (evaluation_order.order_of (language_version tu) OOEqual) (wp_lval l) (wp_operand r) in
               Exists lv clv resv storedv,
                     ((* cast and perform the computation *)
                       [| convert tu (type_of l) tl lv clv |] **
@@ -1200,22 +1200,22 @@ Module Type Expr.
     Qed.
 
     Axiom wp_lval_call : forall f (es : list Expr) Q (ty := type_of (Ecall f es)),
-        wp_call (evaluation_order.order_of OOCall) (type_of f) f es (fun res free =>
+        wp_call (evaluation_order.order_of (language_version tu) OOCall) (type_of f) f es (fun res free =>
            Reduce (lval_receive ty res $ fun v => Q v free))
         |-- wp_lval (Ecall f es) Q.
 
     Axiom wp_xval_call : forall f (es : list Expr) Q (ty := type_of (Ecall f es)),
-        wp_call (evaluation_order.order_of OOCall) (type_of f) f es (fun res free =>
+        wp_call (evaluation_order.order_of (language_version tu) OOCall) (type_of f) f es (fun res free =>
            Reduce (xval_receive ty res $ fun v => Q v free))
         |-- wp_xval (Ecall f es) Q.
 
     Axiom wp_operand_call : forall f es Q (ty := type_of (Ecall f es)),
-        wp_call (evaluation_order.order_of OOCall) (type_of f) f es (fun res free =>
+        wp_call (evaluation_order.order_of (language_version tu) OOCall) (type_of f) f es (fun res free =>
            operand_receive ty res $ fun v => Q v free)
        |-- wp_operand (Ecall f es) Q.
 
     Axiom wp_init_call : forall f es Q (addr : ptr) ty,
-        (letI* res, free := wp_call (evaluation_order.order_of OOCall) (type_of f) f es in
+        (letI* res, free := wp_call (evaluation_order.order_of (language_version tu) OOCall) (type_of f) f es in
              Reduce (init_receive addr res $ Q free))
       |-- wp_init ty addr (Ecall f es) Q.
 
@@ -1308,7 +1308,7 @@ Module Type Expr.
         arrow_aggregate_type arrow (decltype_of_expr obj) = Some (vc, cv, nm) ->
         (let ty := type_of $ Emember_call arrow (inl (f, ct, fty)) obj es in
          let* res, free :=
-           wp_mcall arrow (dispatch ct fty f $ tqualified cv (Tnamed nm)) (evaluation_order.order_of OOCall) obj fty es in
+           wp_mcall arrow (dispatch ct fty f $ tqualified cv (Tnamed nm)) (evaluation_order.order_of (language_version tu) OOCall) obj fty es in
          lval_receive ty res $ fun v => Q v free)
         |-- wp_lval (Emember_call arrow (inl (f, ct, fty)) obj es) Q.
 
@@ -1316,7 +1316,7 @@ Module Type Expr.
        arrow_aggregate_type arrow (decltype_of_expr obj) = Some (vc, cv, nm) ->
        (let ty := type_of $ Emember_call arrow (inl (f, ct, fty)) obj es in
         let* res, free :=
-          wp_mcall arrow (dispatch ct fty f $ tqualified cv (Tnamed nm)) (evaluation_order.order_of OOCall) obj fty es in
+          wp_mcall arrow (dispatch ct fty f $ tqualified cv (Tnamed nm)) (evaluation_order.order_of (language_version tu) OOCall) obj fty es in
         xval_receive ty res $ fun v => Q v free)
       |-- wp_xval (Emember_call arrow (inl (f, ct, fty)) obj es) Q.
 
@@ -1324,14 +1324,14 @@ Module Type Expr.
         arrow_aggregate_type arrow (decltype_of_expr obj) = Some (vc, cv, nm) ->
         (let ty := type_of $ Emember_call arrow (inl (f, ct, fty)) obj es in
          let* res, free :=
-           wp_mcall arrow (dispatch ct fty f $ tqualified cv (Tnamed nm)) (evaluation_order.order_of OOCall) obj fty es in
+           wp_mcall arrow (dispatch ct fty f $ tqualified cv (Tnamed nm)) (evaluation_order.order_of (language_version tu) OOCall) obj fty es in
          operand_receive ty res $ fun v => Q v free)
       |-- wp_operand (Emember_call arrow (inl (f, ct, fty)) obj es) Q.
 
     Axiom wp_init_member_call : forall arrow ct f fty es (addr : ptr) vc cv nm obj ty Q,
         arrow_aggregate_type arrow (decltype_of_expr obj) = Some (vc, cv, nm) ->
         (let* res, free :=
-           wp_mcall arrow (dispatch ct fty f $ tqualified cv (Tnamed nm)) (evaluation_order.order_of OOCall) obj fty es in
+           wp_mcall arrow (dispatch ct fty f $ tqualified cv (Tnamed nm)) (evaluation_order.order_of (language_version tu) OOCall) obj fty es in
          init_receive addr res $ Q free)
      |-- wp_init ty addr (Emember_call arrow (inl (f, ct, fty)) obj es) Q.
 
@@ -1347,7 +1347,7 @@ Module Type Expr.
           let fty := normalize_type fty in
           match args_for <$> as_function fty with
           | Some targs =>
-            letI* fps, vs, ifree, free := wp_args (evaluation_order.order_of oo) [] targs es in
+            letI* fps, vs, ifree, free := wp_args (evaluation_order.order_of (language_version tu) oo) [] targs es in
             |> wp_fptr fty (_global f) vs (fun v => interp ifree $ Q v free)
           | None => False
           end
@@ -1360,7 +1360,7 @@ Module Type Expr.
                    let eval_obj : wp.WPE.M ptr :=
                      fun K => wp_discard eobj (fun free => K invalid_ptr free)
                    in
-                   letI* _fps, vs, ifree, free := wp_args (evaluation_order.order_of oo) [eval_obj] targs es in
+                   letI* _fps, vs, ifree, free := wp_args (evaluation_order.order_of (language_version tu) oo) [eval_obj] targs es in
                    |> wp_fptr fty (_global fn) vs (fun v => interp ifree $ Q v free)
                | _, _ => False
                end
@@ -1368,7 +1368,7 @@ Module Type Expr.
            | Virtual =>
                match es with
                | eobj :: es =>
-                   wp_mcall false (dispatch ct fty fn (type_of eobj)) (evaluation_order.order_of oo) eobj fty es Q
+                   wp_mcall false (dispatch ct fty fn (type_of eobj)) (evaluation_order.order_of (language_version tu) oo) eobj fty es Q
                | _ => False
                end
            end

@@ -7,8 +7,8 @@ plain char and signed wchar_t.
 
   $ cpp2v --module=x64.v test.cpp -- -target x86_64-linux-gnu -std=c++17
   $ grep '  abi ' x64.v
-    abi (abi.mkT int_rank.Ilong Signed Signed Little)
+    abi (abi.mkT int_rank.Ilong Signed Signed Little lang_version.Cpp17)
 
   $ cpp2v --module=aarch64.v test.cpp -- -target aarch64-linux-gnu -std=c++17
   $ grep '  abi ' aarch64.v
-    abi (abi.mkT int_rank.Ilong Unsigned Unsigned Little)
+    abi (abi.mkT int_rank.Ilong Unsigned Unsigned Little lang_version.Cpp17)
