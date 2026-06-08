@@ -2,6 +2,7 @@
 (rocq.theory
  (name test)
  (flags (:standard -test-mode))
+ (generate_project_file)
  (theories
   skylabs.ltac2.extra
   ; transitive dependencies

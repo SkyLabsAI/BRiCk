@@ -2,6 +2,7 @@
 (rocq.theory
  (name skylabs.ltac2.logger)
  (package ltac2-logger)
+ (generate_project_file)
  (theories
   Ltac2
   skylabs.ltac2.extra

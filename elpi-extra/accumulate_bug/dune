@@ -2,6 +2,7 @@
 
 (rocq.theory
  (name accumulate_bug)
+ (generate_project_file)
  (theories
   elpi
   ; transitive dependencies
@@ -13,4 +14,3 @@
  (deps (glob_files_rec *.elpi))
  (action
   (with-stdout-to %{target} (echo "(* copy elpi files to _build *)"))))
- 

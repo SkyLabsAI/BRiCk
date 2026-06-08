@@ -2,6 +2,7 @@
 
 (rocq.theory
  (name skylabs_tests.elpi.extra)
+ (generate_project_file)
  (theories
   skylabs.elpi.extra
   ; transitive dependencies

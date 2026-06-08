@@ -1,5 +1,6 @@
 (rocq.theory
  (name Lens.Elpi)
+ (generate_project_file)
  (theories
   Lens
   elpi

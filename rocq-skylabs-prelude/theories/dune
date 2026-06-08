@@ -2,6 +2,7 @@
 (rocq.theory
  (name skylabs.prelude)
  (package rocq-skylabs-prelude)
+ (generate_project_file)
  (theories
   Stdlib
   stdpp

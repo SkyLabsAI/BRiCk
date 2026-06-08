@@ -2,6 +2,7 @@
 (rocq.theory
  (name tc_db_info)
  (package rocq-tc-db-info)
+ (generate_project_file)
  (theories
   Ltac2
   ; transitive dependencies

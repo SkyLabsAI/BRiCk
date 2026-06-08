@@ -3,6 +3,7 @@
 (rocq.theory
  (name skylabs.elpi.extra)
  (package elpi-extra)
+ (generate_project_file)
  (theories
   Stdlib
   elpi

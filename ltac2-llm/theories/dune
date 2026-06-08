@@ -1,6 +1,7 @@
 (include_subdirs qualified)
 (rocq.theory
  (name skylabs.ltac2.llm)
+ (generate_project_file)
  (package ltac2-llm)
  (theories
   Ltac2

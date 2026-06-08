@@ -4,6 +4,7 @@
  (package rocq-skylabs-brick)
  (modules (:standard \ parser.plugin.cpp2v_template))
  (plugins rocq-skylabs-brick.plugin)
+ (generate_project_file)
  (theories
   Stdlib
   stdpp

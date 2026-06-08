@@ -2,6 +2,7 @@
 (rocq.theory
  (name skylabs.iris.extra)
  (package rocq-skylabs-iris)
+ (generate_project_file)
  (theories
   Stdlib
   stdpp

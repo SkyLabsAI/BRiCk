@@ -10,5 +10,5 @@ html
 .Makefile.coq.d
 _build
 cpp2v-tests/reject/*.ERR
-_CoqProject
+_RocqProject
 .vscode/
