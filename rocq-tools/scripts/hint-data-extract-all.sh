@@ -26,7 +26,7 @@ DIR="$2"
 hint_data_extract(){
   INPUT="$1"
   OUTPUT="${INPUT%.log.json}.hints.csv"
-  echo "$INPUT" | coqc-perf.gather-hint-data > "$OUTPUT"
+  echo "$INPUT" | rocq-perf.gather-hint-data > "$OUTPUT"
 }
 export -f hint_data_extract
 

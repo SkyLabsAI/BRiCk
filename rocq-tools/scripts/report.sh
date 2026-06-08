@@ -32,7 +32,7 @@ handle_glob(){
   if [[ -f "$OUT" ]]; then
     # Output a dummy warning if stdout is non-empty.
     echo "File \"$SRC\", line 0, characters 0-0:"
-    echo "Warning: Non-empty stdout when building using coqc."
+    echo "Warning: Non-empty stdout when building using \"rocq compile\"."
     echo "[non-empty-stdout,dummy]"
   fi
 }

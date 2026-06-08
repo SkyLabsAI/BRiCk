@@ -15,7 +15,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *)
 
-(** Type of profiling data attached to a single Coq command. *)
+(** Type of profiling data attached to a single Rocq command. *)
 type cmd = private {
   cmd_line  : int;
   (** Line where the command starts in the source file. *)
@@ -33,7 +33,7 @@ type cmd = private {
 val make_cmd :
   line:int -> sbyte:int -> ebyte:int -> text:string -> ic:int -> unit -> cmd
 
-(** Type of profiling data for a Coq file. *)
+(** Type of profiling data for a Rocq file. *)
 type t = {
   ic : int;
   (** Instruction count for processing the whole file. *)
@@ -52,10 +52,10 @@ val make : ic:int -> tm:int -> mj:int -> mn:int -> cmd array -> t
 
 (** [to_json data] converts the given [data] into JSON. The produced object is
     formed of two fields:
-    - ["i"] - an integer giving the CPU instruction count for the full "coqc"
+    - ["i"] - an integer giving the CPU instruction count for the full "rocq"
       process (except the OCaml runtime initialization / finalization),
     - ["a"] - an array of objects giving data about each individual, toplevel  
-      Coq command that was processed.
+      Rocq command that was processed.
     The objects stored in the latter field contain the following fields:
     - ["l"] (integer) - the number of the line on which the command starts,
     - ["s"] (integer) - the index of the first command's byte in the file,

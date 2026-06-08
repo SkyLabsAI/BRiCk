@@ -1,5 +1,4 @@
-  $ . ../setup.sh
-  $ coqc test.v
+  $ rocq compile test.v
   $ cp test.glob test.glob.orig
   $ globfs ls test.glob
   $ globfs cp test.v test.glob:k1.k2

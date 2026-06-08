@@ -10,7 +10,7 @@
   > proof,25000000000
   > EOF
 
-  $ coqc-perf.summary-diff --no-colors --instr-threshold 0 --markdown base.csv job.csv
+  $ rocq-perf.summary-diff --no-colors --instr-threshold 0 --markdown base.csv job.csv
   | Relative | Master   | MR       | Change   | Filename
   |---------:|---------:|---------:|---------:|----------
   |  +25.00% |     20.0 |     25.0 |     +5.0 | proof

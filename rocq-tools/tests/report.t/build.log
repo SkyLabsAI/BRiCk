@@ -4,7 +4,7 @@ This is junk, and an empty line next.
 
 This is more junk.
 File "dir1/dir2/tests.v", line 0, characters 0-0:
-Warning: Non-empty stdout when building using coqc.
+Warning: Non-empty stdout when building using "rocq compile".
 [non-empty-stdout,dummy]
 File "./dir/other_file.v", line 28, characters 4-17:
 Warning:

@@ -1,11 +1,11 @@
   $ cat > dune-log.json <<EOF
   > [
   >   {
-  >     "command": "(cd _build/.sandbox/d408abfb52ef45bc73a852a1f418a0a5/default && /usr/bin/sh -c 'patdiff -keep-whitespace -location-style omake -ascii fmdeps/auto/coq-skylabs-auto-cpp/cram/arith_bug.t/run.t fmdeps/auto/coq-skylabs-auto-cpp/cram/arith_bug.t/run.t.corrected')",
+  >     "command": "(cd _build/.sandbox/d408abfb52ef45bc73a852a1f418a0a5/default && /usr/bin/sh -c 'patdiff -keep-whitespace -location-style omake -ascii fmdeps/auto/rocq-skylabs-auto-cpp/cram/arith_bug.t/run.t fmdeps/auto/rocq-skylabs-auto-cpp/cram/arith_bug.t/run.t.corrected')",
   >     "output": [
-  >       "------ fmdeps/auto/coq-skylabs-auto-cpp/cram/arith_bug.t/run.t",
-  >       "++++++ fmdeps/auto/coq-skylabs-auto-cpp/cram/arith_bug.t/run.t.corrected",
-  >       "File \"fmdeps/auto/coq-skylabs-auto-cpp/cram/arith_bug.t/run.t\", line 5, characters 0-1:",
+  >       "------ fmdeps/auto/rocq-skylabs-auto-cpp/cram/arith_bug.t/run.t",
+  >       "++++++ fmdeps/auto/rocq-skylabs-auto-cpp/cram/arith_bug.t/run.t.corrected",
+  >       "File \"fmdeps/auto/rocq-skylabs-auto-cpp/cram/arith_bug.t/run.t\", line 5, characters 0-1:",
   >       " |  $ DUNE_CACHE=disabled dune build bug.vo 2>&1",
   >       " |  File \"./bug.v\", line 43, characters 4-37:",
   >       " |  Error: Timeout!", " |  ",
@@ -18,7 +18,7 @@
   >   }
   > ]
   > EOF
-  $ coqc-perf.code-quality-diff --after-dune dune-log.json
+  $ rocq-perf.code-quality-diff --after-dune dune-log.json
   # Changes in Warnings or Errors
   |        |Before|New |Fixed|After|
   |--------|-----:|---:|----:|----:|
@@ -33,7 +33,7 @@
   
   ```
   # Files with new errors
-  - fmdeps/auto/coq-skylabs-auto-cpp/cram/arith_bug.t/run.t
+  - fmdeps/auto/rocq-skylabs-auto-cpp/cram/arith_bug.t/run.t
   ```
   </details>
   
@@ -44,7 +44,7 @@
   </summary>
   
   ```
-  File "fmdeps/auto/coq-skylabs-auto-cpp/cram/arith_bug.t/run.t", line 5, characters 0-1:
+  File "fmdeps/auto/rocq-skylabs-auto-cpp/cram/arith_bug.t/run.t", line 5, characters 0-1:
    |  $ DUNE_CACHE=disabled dune build bug.vo 2>&1
    |  File "./bug.v", line 43, characters 4-37:
    |  Error: Timeout!
@@ -60,7 +60,7 @@
   </details>
   
 
-  $ coqc-perf.code-quality-diff --before-dune dune-log.json
+  $ rocq-perf.code-quality-diff --before-dune dune-log.json
   # Changes in Warnings or Errors
   |        |Before|New |Fixed|After|
   |--------|-----:|---:|----:|----:|
@@ -74,7 +74,7 @@
   </summary>
   
   ```
-  File "fmdeps/auto/coq-skylabs-auto-cpp/cram/arith_bug.t/run.t", line 5, characters 0-1:
+  File "fmdeps/auto/rocq-skylabs-auto-cpp/cram/arith_bug.t/run.t", line 5, characters 0-1:
    |  $ DUNE_CACHE=disabled dune build bug.vo 2>&1
    |  File "./bug.v", line 43, characters 4-37:
    |  Error: Timeout!
@@ -90,7 +90,7 @@
   </details>
   
 
-  $ coqc-perf.code-quality-diff --before-dune dune-log.json --after-dune dune-log.json
+  $ rocq-perf.code-quality-diff --before-dune dune-log.json --after-dune dune-log.json
   # No Changes in Warnings or Errors
   |        |Before|New |Fixed|After|
   |--------|-----:|---:|----:|----:|
@@ -105,7 +105,7 @@
   
   ```
   # Files with pre-existing errors
-  - fmdeps/auto/coq-skylabs-auto-cpp/cram/arith_bug.t/run.t
+  - fmdeps/auto/rocq-skylabs-auto-cpp/cram/arith_bug.t/run.t
   ```
   </details>
   

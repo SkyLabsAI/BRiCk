@@ -280,11 +280,11 @@ let to_dune_out : fname:string -> dune_out list =
 let analyse fmt ~before_dune ~after_dune ~before_globs ~after_globs =
 
   let nonempty_stdout_warning src_file output =
-    let text = Format.sprintf "File \"%s\", line 0, characters 0-0:\nWarning: Non-empty stdout when building using coqc:\n%s\n[non-empty-stdout,dummy]" src_file output in
+    let text = Format.sprintf "File \"%s\", line 0, characters 0-0:\nWarning: Non-empty stdout when building using \"rocq compile\":\n%s\n[non-empty-stdout,dummy]" src_file output in
     W.{ file = src_file; pos = None; name = "non-empty-stdout,dummy"; text; full = text }
   in
   let dangling_output_warning src_file output =
-    let text = Format.sprintf "File \"%s\", line 0, characters 0-0:\nWarning: Dangling output when building using coqc:\n%s\n[dangling-output-stdout,dummy]" src_file output in
+    let text = Format.sprintf "File \"%s\", line 0, characters 0-0:\nWarning: Dangling output when building using \"rocq compile\":\n%s\n[dangling-output-stdout,dummy]" src_file output in
     W.{ file = src_file; pos = None; name = "dangling-output,dummy"; text; full = text }
   in
 

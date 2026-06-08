@@ -1,5 +1,3 @@
-  $ . ../setup.sh
-
 Generating test files.
 
   $ ocaml gen.ml 1    > small.v
@@ -94,26 +92,26 @@ Extracting all the data
 
 Build CSV summary
 
-  $ coqc-perf.csv-summary > summary.csv
+  $ rocq-perf.csv-summary > summary.csv
   $ wc -l summary.csv
   7 summary.csv
 
 Adding noise
 
-  $ coqc-perf.add-noise 0.05 small.glob.perf.json small.glob.perf.json.5p
-  $ coqc-perf.add-noise 0.05 medium.glob.perf.json medium.glob.perf.json.5p
-  $ coqc-perf.add-noise 0.05 large.glob.perf.json large.glob.perf.json.5p
-  $ coqc-perf.add-noise 0.05 huge.glob.perf.json huge.glob.perf.json.5p
-  $ coqc-perf.add-noise 0.05 medium_variation.glob.perf.json medium_variation.glob.perf.json.5p
+  $ rocq-perf.add-noise 0.05 small.glob.perf.json small.glob.perf.json.5p
+  $ rocq-perf.add-noise 0.05 medium.glob.perf.json medium.glob.perf.json.5p
+  $ rocq-perf.add-noise 0.05 large.glob.perf.json large.glob.perf.json.5p
+  $ rocq-perf.add-noise 0.05 huge.glob.perf.json huge.glob.perf.json.5p
+  $ rocq-perf.add-noise 0.05 medium_variation.glob.perf.json medium_variation.glob.perf.json.5p
 
 Test webpage
 
-  $ coqc-perf.html-diff small.v small.glob.perf.json small.v small.glob.perf.json.5p > small.html
-  $ coqc-perf.html-diff medium.v medium.glob.perf.json medium.v medium.glob.perf.json.5p > medium.html
-  $ coqc-perf.html-diff large.v large.glob.perf.json large.v large.glob.perf.json.5p > large.html
-  $ coqc-perf.html-diff huge.v huge.glob.perf.json huge.v huge.glob.perf.json.5p > huge.html
+  $ rocq-perf.html-diff small.v small.glob.perf.json small.v small.glob.perf.json.5p > small.html
+  $ rocq-perf.html-diff medium.v medium.glob.perf.json medium.v medium.glob.perf.json.5p > medium.html
+  $ rocq-perf.html-diff large.v large.glob.perf.json large.v large.glob.perf.json.5p > large.html
+  $ rocq-perf.html-diff huge.v huge.glob.perf.json huge.v huge.glob.perf.json.5p > huge.html
 
-  $ coqc-perf.html-diff small.v small.glob.perf.json medium.v medium.glob.perf.json.5p > medium_small_ref.html
-  $ coqc-perf.html-diff medium.v medium.glob.perf.json small.v small.glob.perf.json.5p > medium_small_src.html
+  $ rocq-perf.html-diff small.v small.glob.perf.json medium.v medium.glob.perf.json.5p > medium_small_ref.html
+  $ rocq-perf.html-diff medium.v medium.glob.perf.json small.v small.glob.perf.json.5p > medium_small_src.html
 
-  $ coqc-perf.html-diff medium.v medium.glob.perf.json medium_variation.v medium_variation.glob.perf.json.5p > medium_medium_variation.html
+  $ rocq-perf.html-diff medium.v medium.glob.perf.json medium_variation.v medium_variation.glob.perf.json.5p > medium_medium_variation.html

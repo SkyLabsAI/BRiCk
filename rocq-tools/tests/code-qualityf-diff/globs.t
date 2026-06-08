@@ -10,7 +10,7 @@
   > globs/test.glob.stderr
   > globs/test.glob.stdout
   > EOF
-  $ coqc-perf.code-quality-diff --after-globs-from-file globs/files
+  $ rocq-perf.code-quality-diff --after-globs-from-file globs/files
   # Changes in Warnings or Errors
   |        |Before|New |Fixed|After|
   |--------|-----:|---:|----:|----:|
@@ -50,7 +50,7 @@
   
   ```
   File "test.v", line 0, characters 0-0:
-  Warning: Non-empty stdout when building using coqc:
+  Warning: Non-empty stdout when building using "rocq compile":
   dangling text!
   [non-empty-stdout,dummy]
   ```
@@ -58,7 +58,7 @@
   </details>
   
 
-  $ coqc-perf.code-quality-diff --before-globs-from-file globs/files
+  $ rocq-perf.code-quality-diff --before-globs-from-file globs/files
   # Changes in Warnings or Errors
   |        |Before|New |Fixed|After|
   |--------|-----:|---:|----:|----:|
@@ -86,7 +86,7 @@
   
   ```
   File "test.v", line 0, characters 0-0:
-  Warning: Non-empty stdout when building using coqc:
+  Warning: Non-empty stdout when building using "rocq compile":
   dangling text!
   [non-empty-stdout,dummy]
   ```

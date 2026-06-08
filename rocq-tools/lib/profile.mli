@@ -15,7 +15,7 @@
  * Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  *)
 
-(** Extracting per-command profiling data from Coq output. *)
+(** Extracting per-command profiling data from Rocq output. *)
 
 (** Exception raised by [extract] in case of error. *)
 exception Error of string
@@ -24,10 +24,10 @@ exception Error of string
 exception NoInstr
 
 (** [extract o] extracts per-command profiling data from the given JSON object
-    [o], assumed to have been produced by running "coqc" with "-profile". Note
+    [o], assumed to have been produced by running "rocq" with "-profile". Note
     that the exception [Error(_)] is raised if the object is not recognised as
-    a well-formed Coq profiling data output. The [NoInstr] exception is raised
-    if the profiling data does not contain instruction counts. This may happen
-    if Coq was not compiled with instruction count support, or if the counters
-    cannot be read for some reason (e.g., lack of privileges). *)
+    a well-formed Rocq profiling data output. Exception [NoInstr] is raised if
+    the profiling data does not contain instruction counts. This may happen if
+    Rocq was not compiled with instruction count support, or if the data fails
+    to be read for some reason (e.g., lack of privileges). *)
 val extract : JSON.t -> Data.t
