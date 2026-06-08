@@ -7,5 +7,5 @@
   skylabs.ltac2.extra
   skylabs.ltac2.tc_dispatch
   ; transitive dependencies
-  Corelib Ltac2 skylabs.ltac2.logger
+  Ltac2 skylabs.ltac2.logger
  ))

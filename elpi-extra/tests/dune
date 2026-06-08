@@ -6,7 +6,7 @@
  (theories
   skylabs.elpi.extra
   ; transitive dependencies
-  Corelib Ltac2 Stdlib elpi elpi.apps.NES elpi.apps.NES.elpi elpi_elpi
+  Ltac2 Stdlib elpi elpi.apps.NES elpi.apps.NES.elpi elpi_elpi
   skylabs.ltac2.extra
  ))
 

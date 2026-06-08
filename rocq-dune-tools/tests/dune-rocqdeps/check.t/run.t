@@ -25,8 +25,18 @@
 
 Check mode reports stale files without rewriting them:
 
-  $ env -u DUNE_SOURCEROOT -u DUNE_ROOT "$tool" --check 2>&1
-  error: dune is not up to date
+  $ env -u DUNE_SOURCEROOT -u DUNE_ROOT "$tool" --check --ascii
+  ------ old/dune
+  ++++++ new/dune
+  @|-1,3 +1,7 ============================================================
+   |(rocq.theory
+   | (name a)
+  -| (theories b))
+  +| (theories
+  +|  b
+  +|  ; transitive dependencies
+  +|  c
+  +| ))
   [1]
   $ cat dune
   (rocq.theory
@@ -45,7 +55,7 @@ After a normal rewrite, check mode succeeds:
     c
    ))
 
-  $ env -u DUNE_SOURCEROOT -u DUNE_ROOT "$tool" --check
+  $ env -u DUNE_SOURCEROOT -u DUNE_ROOT "$tool" --check --ascii
 
 Check mode accepts files that already contain the full dependency closure,
 even when they have not been normalized by dune-rocqdeps:
@@ -55,7 +65,7 @@ even when they have not been normalized by dune-rocqdeps:
   >  (name a)
   >  (theories c  b))
   > EOF
-  $ env -u DUNE_SOURCEROOT -u DUNE_ROOT "$tool" --check
+  $ env -u DUNE_SOURCEROOT -u DUNE_ROOT "$tool" --check --ascii
   $ cat dune
   (rocq.theory
    (name a)
@@ -76,8 +86,17 @@ Check mode rejects stale dependencies in the transitive dependency section:
   >   c
   >  ))
   > EOF
-  $ env -u DUNE_SOURCEROOT -u DUNE_ROOT "$tool" --check 2>&1
-  error: dune is not up to date
+  $ env -u DUNE_SOURCEROOT -u DUNE_ROOT "$tool" --check --ascii
+  ------ old/dune
+  ++++++ new/dune
+  @|-1,7 +1,5 ============================================================
+   |(rocq.theory
+   | (name a)
+   | (theories
+   |  b
+  -|  ; transitive dependencies
+  -|  c
+   | ))
   [1]
   $ cat dune
   (rocq.theory

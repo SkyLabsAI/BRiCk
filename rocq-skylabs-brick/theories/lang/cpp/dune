@@ -25,7 +25,7 @@
   Equations.Prop
   Equations.Type
   ; transitive dependencies
-  Corelib elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
+  elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
   elpi.apps.locker.elpi
  ))
 

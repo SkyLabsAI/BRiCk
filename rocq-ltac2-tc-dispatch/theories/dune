@@ -8,7 +8,5 @@
   Stdlib
   skylabs.ltac2.extra
   skylabs.ltac2.logger
-  ; transitive dependencies
-  Corelib
  )
  (plugins ltac2-tc-dispatch.plugin))

@@ -5,8 +5,6 @@
  (package ltac2-llm)
  (theories
   Ltac2
-  ; transitive dependencies
-  Corelib
  )
  (plugins ltac2-llm-plugin.plugin))
 

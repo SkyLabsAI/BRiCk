@@ -39,15 +39,22 @@ let no_normalize_arg =
 
 let check_arg =
   let doc =
-    "Do not edit dune files. Exit successfully only if the selected \
-     rocq.theory stanzas would be left unchanged because they already contain \
-     the needed dependency closure."
+    "Do not edit dune files. Print a patdiff against the canonical rewrite \
+     that $(b,dune-rocqdeps) would produce. The diff may include \
+     normalization-only changes and need not be the minimal patch that makes \
+     $(b,--check) pass; the exit status reflects the dependency comparison."
   in
   Arg.(value & flag & info ["check"] ~doc)
 
+let ascii_arg =
+  let doc =
+    "When used with $(b,--check), print diff output without ANSI escape codes."
+  in
+  Arg.(value & flag & info ["ascii"] ~doc)
+
 let term =
-  let run no_normalize check = run Tool.{no_normalize; check} in
-  Term.(const run $ no_normalize_arg $ check_arg)
+  let run no_normalize check ascii = run Tool.{no_normalize; check; ascii} in
+  Term.(const run $ no_normalize_arg $ check_arg $ ascii_arg)
 
 let doc = "synchronize recursive rocq dependency stanzas in dune files"
 
@@ -62,6 +69,9 @@ let man =
        transitive dependencies) section. Once a file uses that style, only the \
        pre-marker entries are treated as direct roots when the closure is \
        recomputed."
+  ; `P
+      "Canonical rewrites may differ textually from other accepted layouts. \
+       With $(b,--check), use the diff as guidance and trust the exit status."
   ; `S Manpage.s_examples
   ; `P "$(b,dune-rocqdeps)"
   ; `P "$(b,dune-rocqdeps --no-normalize)"

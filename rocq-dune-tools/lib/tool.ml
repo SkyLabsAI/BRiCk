@@ -2,7 +2,8 @@ open Support
 
 type options =
   { no_normalize: bool
-  ; check: bool }
+  ; check: bool
+  ; ascii: bool }
 
 type parsed_file =
   { path: Fpath.t
@@ -12,6 +13,11 @@ type parsed_file =
 type file_change =
   { path: Fpath.t
   ; updated_text: string }
+
+type pending_change =
+  { change_path: Fpath.t
+  ; original_text: string
+  ; replacement_text: string }
 
 let read_dune_files dune_files =
   let rec loop parsed_files errors = function
@@ -29,10 +35,76 @@ let display_file_error ~cwd path message =
   Printf.sprintf "%s %s" (display_path ~cwd path) message
 
 let pending_changes changes =
-  List.filter
+  List.filter_map
     (fun (change : file_change) ->
-      let current_text = read_text_file change.path in
-      not (String.equal current_text change.updated_text) )
+      let original_text = read_text_file change.path in
+      if String.equal original_text change.updated_text then None
+      else
+        Some
+          { change_path= change.path
+          ; original_text
+          ; replacement_text= change.updated_text } )
+    changes
+
+let with_temp_file prefix suffix f =
+  let path = Filename.temp_file prefix suffix in
+  Fun.protect
+    ~finally:(fun () -> try Sys.remove path with Sys_error _ -> ())
+    (fun () -> f path)
+
+let write_temp_text path text =
+  let channel = open_out_bin path in
+  Fun.protect
+    ~finally:(fun () -> close_out channel)
+    (fun () -> output_string channel text)
+
+let rec read_all_lines channel buffer =
+  match input_line channel with
+  | line ->
+      Buffer.add_string buffer line ;
+      Buffer.add_char buffer '\n' ;
+      read_all_lines channel buffer
+  | exception End_of_file ->
+      Buffer.contents buffer
+
+let emit_diff ~ascii ~display original_text replacement_text =
+  with_temp_file "dune-rocqdeps-original" ".tmp" (fun original_path ->
+      with_temp_file "dune-rocqdeps-replacement" ".tmp"
+        (fun replacement_path ->
+          write_temp_text original_path original_text ;
+          write_temp_text replacement_path replacement_text ;
+          let argv =
+            [| "patdiff"
+             ; "-default"
+             ; (if ascii then "-ascii" else "-ansi")
+             ; "-location-style"
+             ; "diff"
+             ; "-alt-old"
+             ; Filename.concat "old" display
+             ; "-alt-new"
+             ; Filename.concat "new" display
+             ; original_path
+             ; replacement_path |]
+          in
+          let channel = Unix.open_process_args_in "patdiff" argv in
+          let output = read_all_lines channel (Buffer.create 256) in
+          match Unix.close_process_in channel with
+          | Unix.WEXITED 0 ->
+              ()
+          | Unix.WEXITED 1 ->
+              output_string stdout output
+          | Unix.WEXITED code ->
+              failf "patdiff failed for %s with exit code %d" display code
+          | Unix.WSIGNALED signal | Unix.WSTOPPED signal ->
+              failf "patdiff failed for %s with signal %d" display signal ) )
+
+let emit_diffs ~cwd ~ascii changes =
+  List.iter
+    (fun change ->
+      emit_diff
+        ~ascii
+        ~display:(display_path ~cwd change.change_path)
+        change.original_text change.replacement_text )
     changes
 
 let analyze_targets ~cwd parsed_files ~no_normalize =
@@ -93,14 +165,9 @@ let run options =
     exit exit_error ) ;
   let pending_changes = pending_changes changes in
   if options.check && pending_changes <> [] then (
-    List.iter
-      (fun (change : file_change) ->
-        prerr_endline
-          ( "error: " ^ display_path ~cwd change.path
-          ^ " is not up to date" ) )
-      pending_changes ;
+    emit_diffs ~cwd ~ascii:options.ascii pending_changes ;
     exit exit_check_failed ) ;
   List.iter
-    (fun (change : file_change) ->
-      write_text_file change.path change.updated_text )
+    (fun change ->
+      write_text_file change.change_path change.replacement_text )
     pending_changes

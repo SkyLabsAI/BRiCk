@@ -23,8 +23,12 @@ For `dune-rocqdeps`:
 - `--no-normalize`: only append newly discovered dependencies; preserve the
   existing dependency order and leave files unchanged when nothing new is
   needed
-- `--check`: do not edit files; exit successfully only if the selected
-  `rocq.theory` stanzas need no changes
+- `--check`: do not edit files; print a `patdiff` against the canonical
+  rewrite that `dune-rocqdeps` would produce. The diff may include
+  normalization-only changes and need not be the minimal patch that makes
+  `--check` pass; the exit status reflects the dependency comparison.
+- `--ascii`: when used with `--check`, print diff output without ANSI escape
+  codes
 
 `dune-rocqdeps` first looks for `DUNE_SOURCEROOT` or `DUNE_ROOT` in the
 environment. When those are absent, it walks upward from the current directory
@@ -45,6 +49,9 @@ Rewritten dependency stanzas use this shape:
 
 In normalized rewrites, the direct section preserves the order from the source
 stanza, and the transitive section is sorted alphabetically.
+
+Canonical rewrites may differ textually from other accepted layouts. With
+`--check`, use the diff as guidance and trust the exit status.
 
 Once a stanza already uses the `; transitive dependencies` marker, only the
 entries before that marker are treated as direct roots on the next run. That

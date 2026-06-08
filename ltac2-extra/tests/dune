@@ -6,6 +6,5 @@
  (theories
   skylabs.ltac2.extra
   ; transitive dependencies
-  Ltac2
-  Stdlib
-  Corelib))
+  Ltac2 Stdlib
+ ))

@@ -6,7 +6,5 @@
  (theories
   Ltac2
   Stdlib
-  ; transitive dependencies
-  Corelib
  )
  (plugins ltac2-extra.plugin))
