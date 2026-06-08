@@ -78,9 +78,9 @@ by cpp2v as:
 *)
 
 Notation "'::Range::_begin'" := (Nscoped (Nglobal $ Nid "Range") (Nid "_begin"))
-                                (in custom cppglobal at level 0).
+                                (in custom notation.cppglobal at level 0).
 Notation "'::Range::_size'" := (Nscoped (Nglobal $ Nid "Range") (Nid "_size"))
-                               (in custom cppglobal at level 0).
+                               (in custom notation.cppglobal at level 0).
 
 Definition _begin := _field "Range::_begin".
 Definition _size := _field "Range::_size".

@@ -7,11 +7,11 @@
 Require Import skylabs.prelude.prelude.
 Require Import skylabs.lang.cpp.syntax.types.
 
-Notation T := (Tnum int_rank.Iint Signed).
-Notation C := (tqualified QC) (only parsing).
-Notation V := (tqualified QV) (only parsing).
-Notation L := (tref QM) (only parsing).
-Notation R := (trv_ref QM) (only parsing).
+Abbreviation T := (Tnum int_rank.Iint Signed).
+Abbreviation C := (tqualified QC) (only parsing).
+Abbreviation V := (tqualified QV) (only parsing).
+Abbreviation L := (tref QM) (only parsing).
+Abbreviation R := (trv_ref QM) (only parsing).
 
 (** qualified reference types (via [tqualified]) *)
 Goal C $ Tref T = Tref T. Proof. done. Qed.

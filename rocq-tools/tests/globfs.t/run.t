@@ -26,8 +26,6 @@
   test.glob.orig
   test.v
   test.vo
-  test.vok
-  test.vos
   $ diff test.glob.k1.k2 test.v
   $ diff test.glob.k3.k4 test.v
   $ globfs ls test.glob

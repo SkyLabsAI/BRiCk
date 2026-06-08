@@ -17,8 +17,8 @@ let of_constr : Constr.t -> Tac2val.valexpr = fun c ->
   Tac2ffi.of_constr (EConstr.of_constr c)
 
 let reference_tag : _ Tac2core.map_tag = Tac2core.register_map ~tag_name:"fmap_reference_tag" (module struct
-    module S = Names.GlobRef.Set
-    module M = Names.GlobRef.Map
+    module S = Names.GlobRef.Set_env
+    module M = Names.GlobRef.Map_env
     let repr = Tac2ffi.reference
     type valmap = Tac2val.valexpr M.t
     let valmap_eq = Util.Refl

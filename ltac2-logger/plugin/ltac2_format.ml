@@ -43,7 +43,9 @@ let build_msg : Environ.env -> Evd.evar_map -> Tac2types.format list ->
         in
         let name = Names.Id.of_string "XXX" in
         let (_, pv) = Proofview.init sigma [] in
-        let (r,_, _, _, _) = Proofview.apply ~name ~poly:false env tac pv in
+        let (r,_, _, _, _) =
+          Proofview.apply ~name ~poly:PolyFlags.default env tac pv
+        in
         r
       in
       Thunk(thunk)
@@ -57,7 +59,9 @@ let build_msg : Environ.env -> Evd.evar_map -> Tac2types.format list ->
         in
         let name = Names.Id.of_string "XXX" in
         let (_, pv) = Proofview.init sigma [] in
-        let (r,_, _, _, _) = Proofview.apply ~name ~poly:false env tac pv in
+        let (r,_, _, _, _) =
+          Proofview.apply ~name ~poly:PolyFlags.default env tac pv
+        in
         r
       in
       Thunk(thunk)

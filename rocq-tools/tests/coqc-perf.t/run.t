@@ -15,24 +15,24 @@ Generating test files.
        7 small.v
    12056 total
 
-Running coqc
+Running rocq
 
-  $ coqc -color on small.v
-  $ coqc -color on medium.v
-  $ coqc -color on large.v
-  $ coqc -color on huge.v
-  $ coqc -color on medium_variation.v
-  $ coqc -color on err_out.v 2>&1
+  $ rocq compile -color on small.v
+  $ rocq compile -color on medium.v
+  $ rocq compile -color on large.v
+  $ rocq compile -color on huge.v
+  $ rocq compile -color on medium_variation.v
+  $ rocq compile -color on err_out.v 2>&1
   File "./err_out.v", line 3, characters 6-20:
   Warning: Unused variable: x. [ltac2-unused-variable,ltac2,default]
   nat : Set
   
   nat is not universe polymorphic
   Expands to: Inductive Corelib.Init.Datatypes.nat
-  Declared in library Corelib.Init.Datatypes, line 178, characters 10-13
-  $ rm *.vo *.glob *.vos *.vok
+  Declared in library Corelib.Init.Datatypes, line 187, characters 10-13
+  $ rm *.vo *.glob
 
-Running our coqc wrapper
+Running our rocq wrapper
 
   $ rocq-perf compile -color on small.v
   $ rocq-perf compile -color on medium.v
@@ -45,11 +45,10 @@ Running our coqc wrapper
   
   nat is not universe polymorphic
   Expands to: Inductive Corelib.Init.Datatypes.nat
-  Declared in library Corelib.Init.Datatypes, line 178, characters 10-13
+  Declared in library Corelib.Init.Datatypes, line 187, characters 10-13
   $ cat err.txt
   File "./err_out.v", line 3, characters 6-20:
   Warning: Unused variable: x. [ltac2-unused-variable,ltac2,default]
-  $ rm *.vos *.vok
 
 Extracting all the data
 

@@ -30,16 +30,16 @@ let decompose_proj_args args =
    of a projection or if there are any additional trailing arguments, the
    function returns [None].
 *)
-let decompose_proj (t : Constr.t) : (Structure.t * decomp_proj) option =
+let decompose_proj (env : Environ.env) (t : Constr.t) : (Structure.t * decomp_proj) option =
   let open Constr in
   let (h, args) = decompose_app t in
   match kind h, args with
   | Proj (proj, _, recval), [||] ->
-    let t = Structure.find_from_projection (Names.Projection.constant proj) in
+    let t = Structure.find_from_projection env (Names.Projection.constant proj) in
     Some (t, Prim {proj; recval})
   | Const (proj, inst), _ ->
     begin
-      match Structure.find_from_projection proj with
+      match Structure.find_from_projection env proj with
       | t ->
         if Array.length args == t.Structure.nparams + 1 then
           let args, recval = decompose_proj_args args in
@@ -55,7 +55,7 @@ let _ =
   with_evarmap @@ fun sigma ->
   TacUtil.env >>= fun env ->
   let t = EConstr.to_constr ~abort_on_undefined_evars:false sigma t in
-  let r = decompose_proj t in
+  let r = decompose_proj env t in
   Proofview.tclUNIT @@
     of_option (fun (t, p) ->
         let (proj, inst, args, recval) = match p with
@@ -68,7 +68,7 @@ let _ =
             (Names.Projection.constant proj, inst, args, recval)
         in
         let proj_index =
-          let id = Names.Label.to_id (Names.Constant.label proj) in
+          let id = Names.Constant.label proj in
           (* Projections in [Structure.projection] are allowed to be anonymous.
              We already know that we have projection in [proj] so there must be a matching named projection in the list. *)
           let rec go pos = function

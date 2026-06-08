@@ -144,11 +144,11 @@ let evaluable_projection p _env ts =
   (match ts with None -> true | Some ts -> TransparentState.is_transparent_projection ts (Names.Projection.repr p))
 
 
-let label_of_opaque_constant c stack =
+let label_of_opaque_constant env c stack =
   match Structures.PrimitiveProjections.find_opt c with
   | None -> (GRLabel (Names.GlobRef.ConstRef c), stack)
   | Some p ->
-    let n_args_needed = Structures.Structure.projection_nparams c + 1 in (* +1 for the record value itself *)
+    let n_args_needed = Structures.Structure.projection_nparams env c + 1 in (* +1 for the record value itself *)
     let n_args_given = List.length stack in
     let n_args_missing = max (n_args_needed - n_args_given) 0 in
     let n_args_drop = min (n_args_needed - 1) n_args_given in (* we do not drop the record value from the stack *)
@@ -176,7 +176,7 @@ let constr_pat_discr env ts depth p : aux =
     | PRef (ConstRef c) when evaluable_constant c env ts -> Result (depth, Label.GRLabel (ConstRef c))
     | PRef (ConstRef c) ->
       let c = Environ.QConstant.canonize env c in
-      Cont (label_of_opaque_constant c stack)
+      Cont (label_of_opaque_constant env c stack)
     | PVar v when evaluable_named v env ts -> Result (depth, Label.PatVar v)
     | PVar v -> Cont (GRLabel (VarRef v), stack)
     | PProd (_,d,c) when stack = [] -> Cont (ProdLabel, [(depth, d) ; (depth, c)])
@@ -327,10 +327,10 @@ let hint_pattern env sigma (h : Hints.FullHint.t) =
           | [] -> (sigma, evars)
           | (b,a) :: bs ->
           let a = EConstr.Vars.substnl evars 0 a in
-          let name = Names.Id.of_string ("H" ^ (string_of_int i)) in
+          let name = (Names.Id.of_string ("H" ^ (string_of_int i)), false) in
           let relevance = Context.binder_relevance b in
           let typeclass_candidate = false in
-          let src = (None, Evar_kinds.MatchingVar (Evar_kinds.FirstOrderPatVar name)) in
+          let src = (None, Evar_kinds.MatchingVar (Evar_kinds.FirstOrderPatVar (fst name))) in
           let (sigma, evar) = Evd.new_pure_evar ~src ~relevance ~name ~typeclass_candidate Environ.empty_named_context_val sigma a in
           let evar = EConstr.mkEvar (evar, SList.empty) in
           make_evars (i+1) (evar :: evars) sigma bs

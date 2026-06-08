@@ -151,14 +151,14 @@ Module Builder.
           (x, Term x)
         else
           (dud, WildcardWithType ty) in
-      let rec go ty idx args subst acc :=
+      let rec go ty idx args sub acc :=
         match args with
-        | [] => (List.rev acc, Constr.Unsafe.substnl subst 0 ty)
+        | [] => (List.rev acc, Constr.Unsafe.substnl sub 0 ty)
         | x :: xs =>
             match Constr.Unsafe.kind ty with
             | Constr.Unsafe.Prod bnd bod =>
                 let arg_ty := Constr.Binder.type bnd in
-                let arg_ty := Constr.Unsafe.substnl subst 0 arg_ty in
+                let arg_ty := Constr.Unsafe.substnl sub 0 arg_ty in
                 let (x, arg) :=
                   match x with
                   | Wildcard =>
@@ -171,10 +171,10 @@ Module Builder.
                       Std.unify x_ty arg_ty ;
                       (x, Term x)
                   end in
-                let idx'   := Int.add idx 1 in
-                let subst' := x :: subst in
-                let acc'   := arg :: acc in
-                go bod idx' xs subst' acc'
+                let idx' := Int.add idx 1 in
+                let sub' := x :: sub in
+                let acc' := arg :: acc in
+                go bod idx' xs sub' acc'
             | _ =>
                 let msg := fprintf "instantiate_prod: excess arguments%a%a"
                              (pp_lines pp_string) [""]

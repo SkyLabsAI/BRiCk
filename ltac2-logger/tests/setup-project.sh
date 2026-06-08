@@ -1,6 +1,7 @@
 cat > dune <<EOF
 (rocq.theory
  (name test)
+ (flags (:standard -w -level-tolerance))
  (theories Stdlib Ltac2 skylabs.ltac2.extra skylabs.ltac2.logger))
 EOF
 

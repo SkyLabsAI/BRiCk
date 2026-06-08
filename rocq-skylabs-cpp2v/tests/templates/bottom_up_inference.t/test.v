@@ -25,7 +25,7 @@ Definition rfail (e : Error) : result := Result 0 [e].
 Definition check_list {A} (f : A -> result) (xs : list A) : result :=
   foldl (fun acc x => radd acc $ f x) rzero xs.
 
-#[local] Notation C_TO_VOID e := (Eexplicit_cast cast_style.c Tvoid (Ecast C2void e)).
+#[local] Abbreviation C_TO_VOID e := (Eexplicit_cast cast_style.c Tvoid (Ecast C2void e)).
 
 Definition check_expr (e : MExpr) : result :=
   match e with
