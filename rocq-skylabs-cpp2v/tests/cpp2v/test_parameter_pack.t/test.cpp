@@ -1,6 +1,7 @@
 template<typename... T>
 int sum(T... args) {
-  return (args + ...);
+  auto count = sizeof...(T) + sizeof...(args);
+  return static_cast<int>(count) + (args + ...);
 }
 
 void test() {

@@ -75,6 +75,12 @@ Module ParserExpr.
   Definition Ealignof_preferred (e : type + Expr) (t : type) :=
     Eunsupported "alignof_preferred" t.
 
+  Definition Esizeof_pack (on : option N) (pack : ident) (sizeof_ty : type) :=
+    match on with
+    | Some n => Eint (Z.of_N n) sizeof_ty
+    | None => Eunresolved_sizeof_pack pack sizeof_ty
+    end.
+
   Definition Eoperator_member_call (oo : OverloadableOperator) (nm : obj_name) (ct : dispatch_type) (ft : type) (es : list Expr) : Expr :=
     Eoperator_call oo (operator_impl.MFunc nm ct ft) es.
 

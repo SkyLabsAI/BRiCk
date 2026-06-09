@@ -270,7 +270,28 @@ public:
 
     // These are template TODOs
     IGNORE(CXXUnresolvedConstructExpr)
-    IGNORE(SizeOfPackExpr) // used in BHV
+
+    void VisitSizeOfPackExpr(const SizeOfPackExpr *expr) {
+        print.ctor("Esizeof_pack", false);
+        if (expr->isValueDependent()) {
+            print.none();
+        } else {
+            print.some();
+            llvm::APInt length(64, expr->getPackLength());
+            print.output() << fmt::N(length);
+            print.end_ctor();
+        }
+        print.output() << fmt::nbsp;
+        auto pack = expr->getPack();
+        if (auto id = pack ? pack->getIdentifier() : nullptr) {
+            print.str(id->getName());
+        } else if (pack) {
+            print.str(pack->getNameAsString());
+        } else {
+            print.str("<unknown pack>");
+        }
+        done(expr);
+    }
 
     void VisitGNUNullExpr(const GNUNullExpr *expr) {
         print.ctor("Egnu_null", false);
