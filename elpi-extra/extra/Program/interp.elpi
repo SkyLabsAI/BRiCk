@@ -12,7 +12,7 @@ This file assumes the <<Elpi Program>> template (i.e., any template).
 It works in the interp phase.
 */
 
-accumulate "skylabs.elpi.extra/Program/both".	% both.elpi.in
+accumulate "skylabs.elpi.extra/Program/both".	% both.elpi
 
 accumulate "skylabs.elpi.extra/Program/interp/coq".	% interp/coq.elpi
 accumulate "skylabs.elpi.extra/Program/interp/diag".	% interp/diag.elpi

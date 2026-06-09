@@ -5,14 +5,14 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  */
 
-/** * Interp extensions for Elpi Commands */
+/** * Synterp extensions for Elpi Commands */
 /**
 This file assumes the <<Elpi Command>> template and may not type check
 under <<Elpi Tactic>> or <<Elpi Program>>.
 
-It works in the interp phase.
+It works in the synterp phase.
 */
 
-accumulate "skylabs.elpi.extra/TacticCommand/interp".	% ../TacticCommand/interp.elpi.in
+accumulate "skylabs.elpi.extra/Program/synterp".	% ../Program/synterp.elpi
 
-accumulate "skylabs.elpi.extra/Command/both".	% both.elpi.in
+accumulate "skylabs.elpi.extra/Command/both".	% ./both.elpi

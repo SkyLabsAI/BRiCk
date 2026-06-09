@@ -1,4 +1,0 @@
-(rule
- (target interp.elpi)
- (deps (:template interp.elpi.in) (:deps ../Program/interp.elpi (glob_files_rec interp/*.elpi)))
- (action (with-stdout-to %{target} (run elpidep %{template} %{deps}))))

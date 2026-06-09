@@ -27,8 +27,3 @@
  (files (glob_files_rec (*.elpi with_prefix coq/user-contrib/skylabs/elpi/extra/)))
  (section lib_root)
  (package elpi-extra))
-
-(install
- (section bin)
- (files elpidep)
- (package elpi-extra))

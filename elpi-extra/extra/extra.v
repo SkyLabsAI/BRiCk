@@ -54,8 +54,9 @@ End tactics.
 (** ** User-facing databases *)
 
 (**
-Force recompilation when our Elpi code changes.
-(List all files referenced as <<coq://logpath/file>> below.)
+Declare the root Elpi bundles so Rocq/dune tracks the Elpi dependency
+graphs accumulated below. The <<Elpi File>> names are the public,
+phase-specific names used by clients.
 *)
 
 From skylabs.elpi.extra.Program Extra Dependency "synterp.elpi" as program_synterp.
@@ -67,11 +68,11 @@ From skylabs.elpi.extra.Command Extra Dependency "interp.elpi" as command_interp
 
 #[synterp]
 Elpi File extra.Program lp:{{
-  accumulate "coq://skylabs.elpi.extra/Program/synterp".	% Program/synterp.elpi.in
+  accumulate "coq://skylabs.elpi.extra/Program/synterp".	% Program/synterp.elpi
 }}.
 #[interp]
 Elpi File extra.Program lp:{{
-  accumulate "coq://skylabs.elpi.extra/Program/interp".	% Program/interp.elpi.in
+  accumulate "coq://skylabs.elpi.extra/Program/interp".	% Program/interp.elpi
 }}.
 
 (**
@@ -82,18 +83,18 @@ TODO: Narrow down and report.
 *)
 #[synterp]
 Elpi File extra.Tactic lp:{{
-  accumulate "coq://skylabs.elpi.extra/Tactic/synterp".	% Tactic/synterp.elpi.in
+  accumulate "coq://skylabs.elpi.extra/Tactic/synterp".	% Tactic/synterp.elpi
 }}.
 #[interp]
 Elpi File extra.Tactic lp:{{
-  accumulate "coq://skylabs.elpi.extra/Tactic/interp".	% Tactic/interp.elpi.in
+  accumulate "coq://skylabs.elpi.extra/Tactic/interp".	% Tactic/interp.elpi
 }}.
 
 #[synterp]
 Elpi File extra.Command lp:{{
-  accumulate "coq://skylabs.elpi.extra/Command/synterp".	% Command/synterp.elpi.in
+  accumulate "coq://skylabs.elpi.extra/Command/synterp".	% Command/synterp.elpi
 }}.
 #[interp]
 Elpi File extra.Command lp:{{
-  accumulate "coq://skylabs.elpi.extra/Command/interp".	% Command/interp.elpi.in
+  accumulate "coq://skylabs.elpi.extra/Command/interp".	% Command/interp.elpi
 }}.
