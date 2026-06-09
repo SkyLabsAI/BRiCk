@@ -15,7 +15,8 @@ check_cpp2v_versions() {
     shift
     for ver in "$@"
     do
-        sayDo "cpp2v -v -check-types -o ${base}_${ver}_cpp.v ${input} -- -std=c++${ver} 2>&1 | sed 's/^ *[0-9]* | //'"
+        # Avoid spurious spaces if CRAM_CPP2VFLAGS/CRAM_CXXFLAGS are empty
+        sayDo "cpp2v -v -check-types -o ${base}_${ver}_cpp.v ${input}${CRAM_CPP2VFLAGS:+ ${CRAM_CPP2VFLAGS}} -- -std=c++${ver}${CRAM_CXXFLAGS:+ ${CRAM_CXXFLAGS}} 2>&1 | sed 's/^ *[0-9]* | //'"
         sayDo "rocq c ${ROCQC_ARGS} ${base}_${ver}_cpp.v"
     done
 }
@@ -31,7 +32,8 @@ check_cpp2v_templates_versions() {
     shift
     for ver in "$@"
     do
-        sayDo "cpp2v -v -check-types -o ${base}_${ver}_cpp.v --templates ${base}_${ver}_cpp_templates.v ${input} -- -std=c++${ver} 2>&1 | sed 's/^ *[0-9]* | //'"
+        # Avoid spurious spaces if CRAM_CPP2VFLAGS/CRAM_CXXFLAGS are empty
+        sayDo "cpp2v -v -check-types -o ${base}_${ver}_cpp.v --templates ${base}_${ver}_cpp_templates.v ${input}${CRAM_CPP2VFLAGS:+ ${CRAM_CPP2VFLAGS}} -- -std=c++${ver}${CRAM_CXXFLAGS:+ ${CRAM_CXXFLAGS}} 2>&1 | sed 's/^ *[0-9]* | //'"
         sayDo "rocq c ${ROCQC_ARGS} ${base}_${ver}_cpp_templates.v"
         sayDo "rocq c ${ROCQC_ARGS} ${base}_${ver}_cpp.v"
     done
