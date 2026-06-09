@@ -211,6 +211,7 @@ Module MTraverse.
       match e with
       | Eparam X => hE.(handle_Eparam) X
       | Eunresolved_global on => hE.(handle_Eunresolved_global) on (fun _ => traverseN on)
+      | Eunresolved_sizeof_pack pack t => hE.(handle_Eunresolved_sizeof_pack) pack t (fun _ => traverseT t)
       | Eunresolved_unop o e => hE.(handle_Eunresolved_unop) o e (fun _ => traverseE e)
       | Eunresolved_binop o l r => hE.(handle_Eunresolved_binop) o l r (fun _ => traverseE l) (fun _ => traverseE r)
       | Eunresolved_call on es => hE.(handle_Eunresolved_call) on es (fun _ => traverseN on) (fun _ => traverseE <$> es)

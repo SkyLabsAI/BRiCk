@@ -535,6 +535,7 @@ Module decltype.
         match e return M decltype with
         | Eparam X => mret $ Tresult_param X
         | Eunresolved_global on => mret $ Tresult_global on
+        | Eunresolved_sizeof_pack _ t => const Tsize_t <$> guard (t = Tsize_t)
         | Eunresolved_unop o e => Tresult_unop o <$> of_expr e
         | Eunresolved_binop o l r => Tresult_binop o <$> of_expr l <*> of_expr r
         | Eunresolved_call on es => Tresult_call on <$> traverse (T:=eta list) of_expr es

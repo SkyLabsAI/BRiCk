@@ -62,6 +62,7 @@ Record expr_handler'@{u} {N T E : Set} {F : Set -> Type@{u}} : Type@{u} := {
   (** Dependent terms *)
   handle_Eparam (_ : ident) : F E;
   handle_Eunresolved_global (_ : name) (_ : unit -> F N) : F E;
+  handle_Eunresolved_sizeof_pack (_ : ident) (_ : type) (_ : unit -> F T) : F E;
   handle_Eunresolved_unop (_ : RUnOp) (_ : Expr) (_ : unit -> F E) : F E;
   handle_Eunresolved_binop (_ : RBinOp) (_ _ : Expr) (_ _ : unit -> F E) : F E;
   handle_Eunresolved_call (_ : name) (_ : list Expr)
@@ -134,6 +135,7 @@ Section handlers.
   Definition handle_expr_traverse : expr_handler F := {|
     handle_Eparam X := mret $ Eparam X;
     handle_Eunresolved_global _ n := Eunresolved_global <$> n ();
+    handle_Eunresolved_sizeof_pack pack _ t := Eunresolved_sizeof_pack pack <$> t ();
     handle_Eunresolved_unop o _ e := Eunresolved_unop o <$> e ();
     handle_Eunresolved_binop o _ _ l r := Eunresolved_binop o <$> l () <*> r ();
     handle_Eunresolved_call _ _ n es := Eunresolved_call <$> n () <*> sequence@{eta list} (es ());

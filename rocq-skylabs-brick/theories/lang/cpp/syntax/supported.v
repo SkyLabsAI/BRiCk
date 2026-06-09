@@ -149,6 +149,7 @@ Section with_monad.
     | Eimplicit_init t => type t
     | Eparam _ => OK
     | Eunresolved_global n => name n
+    | Eunresolved_sizeof_pack _ t => type t
     | Eunresolved_unop _ e => expr e
     | Eunresolved_binop _ e1 e2 => expr e1 <+> expr e2
     | Eunresolved_call n es => name n <+> lst expr es

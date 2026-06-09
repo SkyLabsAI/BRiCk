@@ -425,6 +425,7 @@ like <<operator=(a, b)>>.
 with Expr : Set :=
 | Eparam (_ : ident)
 | Eunresolved_global (_ : name)
+| Eunresolved_sizeof_pack (_ : ident) (t : type)
 | Eunresolved_unop (_ : RUnOp) (e : Expr)
 | Eunresolved_binop (_ : RBinOp) (l r : Expr)
 | Eunresolved_call (on : name) (_ : list Expr)
@@ -941,6 +942,7 @@ with is_dependentE (e : Expr) : bool :=
   match e with
   | Eparam _
   | Eunresolved_global _
+  | Eunresolved_sizeof_pack _ _
   | Eunresolved_unop _ _
   | Eunresolved_binop _ _ _
   | Eunresolved_call _ _
