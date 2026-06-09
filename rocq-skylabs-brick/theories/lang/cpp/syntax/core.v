@@ -441,16 +441,10 @@ simplifies cpp2v---we set it from context in ../mparser.v.
 | Eunresolved_member (_ : Expr) (_ : name)
 
 (**
-The parser layer defines source-spelling smart constructors for some
-template-sensitive expressions. Those constructors lower to ordinary
-resolved AST nodes when cpp2v supplies enough instantiated information,
-and to the corresponding [Eunresolved_*] constructor otherwise.
-For example, parser [Esizeof_pack (Some n) pack t] lowers the [N] count
-to [Eint (Z.of_N n) t], while parser [Esizeof_pack None pack t] lowers
-to [Eunresolved_sizeof_pack pack t].
-
-This keeps the core AST explicit: [Eunresolved_*] constructors represent
-template-only forms that still need instantiation.
+Convention: parser smart constructors may hide source spellings that are
+already resolved. For example, parser [Esizeof_pack (Some n) pack t] lowers
+to [Eint (Z.of_N n) t]; only the unresolved case stays explicit here as
+[Eunresolved_sizeof_pack pack t].
 
 NOTE: We might need to support template parameters as object names in
 a few constructors (by carrying <<Expr ≈ Eparam + Eglobal>> instead of
