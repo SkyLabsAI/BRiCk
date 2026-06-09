@@ -462,17 +462,14 @@ Module float_type.
     binary_float (mw t) (ew t).
 
   #[global] Instance full_float_dec : EqDecision full_float.
-  Proof. red. intros. red. decide equality; try (apply decide; refine _). Defined.
+  Proof. solve_decision. Defined.
+
+  #[global] Instance B2FF_inj' {prec emax} :
+    Inj (=) (=) (B2FF prec emax) :=
+    B2FF_inj _ _.
 
   #[global] Instance car_dec {ft : t} : EqDecision (car ft) :=
-    fun a b =>
-      match decide (B2FF _ _ a = B2FF _ _ b) with
-      | left pf => left (B2FF_inj _ _ _ _ pf)
-      | right pf => right (fun x => pf match x in _ = X return B2FF _ _ _ = B2FF _ _ X with
-                                  | eq_refl => eq_refl
-                                  end)
-      end.
-
+    inj_eq_dec (B2FF _ _).
 End float_type.
 Notation float_type := float_type.t.
 
