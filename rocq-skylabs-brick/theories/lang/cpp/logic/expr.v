@@ -406,12 +406,13 @@ Module Type Expr.
      *)
     Axiom wp_lval_subscript : forall e side vc i t Q,
       subscript_scheme e i = Some (side, vc, t) ->
-      (if side then
-         let* '(base, idx), free := nd_seq (wp_ptr vc e) (wp_int i) in
+      (let ooe := evaluation_order.order_of (language_version tu) OOSubscript in
+       if side then
+         let* '(base, idx), free := eval2 ooe (wp_ptr vc e) (wp_int i) in
          let addr := base .[ erase_qualifiers t ! idx ] in
          reference_to t addr ** Q addr free
        else
-         let* '(idx, base), free := nd_seq (wp_int e) (wp_ptr vc i) in
+         let* '(idx, base), free := eval2 ooe (wp_int e) (wp_ptr vc i) in
          let addr := base .[ erase_qualifiers t ! idx ] in
          reference_to t addr ** Q addr free)
       |-- wp_lval (Esubscript e i t) Q.
@@ -420,12 +421,13 @@ Module Type Expr.
      *)
     Axiom wp_xval_subscript : forall e side i t Q,
         subscript_scheme e i = Some (side, Xvalue, t) ->
-        (if side then
-           let* '(base, idx), free := nd_seq (wp_xval e) (wp_int i) in
+        (let ooe := evaluation_order.order_of (language_version tu) OOSubscript in
+           if side then
+           let* '(base, idx), free := eval2 ooe (wp_xval e) (wp_int i) in
            let addr := base .[ erase_qualifiers t ! idx ] in
            reference_to t addr ** Q addr free
          else
-           let* '(idx, base), free := nd_seq (wp_int e) (wp_xval i) in
+           let* '(idx, base), free := eval2 ooe (wp_int e) (wp_xval i) in
            let addr := base .[ erase_qualifiers t ! idx ] in
            reference_to t addr ** Q addr free)
       |-- wp_xval (Esubscript e i t) Q.
