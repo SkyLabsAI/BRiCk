@@ -421,6 +421,9 @@ with type : Set :=
 NOTE: We need both unresolved operators and unresolved calls because
 operators like <<a = b>> use a different evaluation order than calls
 like <<operator=(a, b)>>.
+
+We use the [Eunresolved_] prefix for constructors whose C++ meaning is
+deferred to template substitution.
 *)
 with Expr : Set :=
 | Eparam (_ : ident)
@@ -441,11 +444,6 @@ simplifies cpp2v---we set it from context in ../mparser.v.
 | Eunresolved_member (_ : Expr) (_ : name)
 
 (**
-Convention: parser smart constructors may hide source spellings that are
-already resolved. For example, parser [Esizeof_pack (Some n) pack t] lowers
-to [Eint (Z.of_N n) t]; only the unresolved case stays explicit here as
-[Eunresolved_sizeof_pack pack t].
-
 NOTE: We might need to support template parameters as object names in
 a few constructors (by carrying <<Expr ≈ Eparam + Eglobal>> instead of
 <<name>>).
