@@ -270,6 +270,7 @@ Module decltype.
 
         | Eparam X => mret $ Tresult_param X
         | Eunresolved_global on => mret $ Tresult_global on
+        | Eunresolved_sizeof_pack _ t => mret t
         | Eunresolved_unop o e => Tresult_unop o <$> of_expr e
         | Eunresolved_binop o l r => Tresult_binop o <$> of_expr l <*> of_expr r
         | Eunresolved_call on es => Tresult_call on <$> traverse_list of_expr es

@@ -1436,6 +1436,14 @@ Module Expr.
       compare_lex (compareE b1.(box_Eunresolved_member_0) b2.(box_Eunresolved_member_0)) $ fun _ =>
       compareN b1.(box_Eunresolved_member_1) b2.(box_Eunresolved_member_1).
 
+    Record box_Eunresolved_sizeof_pack : Set := Box_Eunresolved_sizeof_pack {
+      box_Eunresolved_sizeof_pack_0 : ident;
+      box_Eunresolved_sizeof_pack_1 : type;
+    }.
+    Definition box_Eunresolved_sizeof_pack_compare (b1 b2 : box_Eunresolved_sizeof_pack) : comparison :=
+      compare_lex (PrimString.compare b1.(box_Eunresolved_sizeof_pack_0) b2.(box_Eunresolved_sizeof_pack_0)) $ fun _ =>
+      compareT b1.(box_Eunresolved_sizeof_pack_1) b2.(box_Eunresolved_sizeof_pack_1).
+
     Record box_Evar : Set := Box_Evar {
       box_Evar_0 : localname;
       box_Evar_1 : type;
@@ -1804,6 +1812,7 @@ Module Expr.
       match e with
       | Eparam _ => 1
       | Eunresolved_global _ => 2
+      | Eunresolved_sizeof_pack _ _ => 66
       | Eunresolved_unop _ _ => 3
       | Eunresolved_binop _ _ _ => 4
       | Eunresolved_call _ _ => 5
@@ -1928,12 +1937,14 @@ Module Expr.
       | 63 => box_Efloat
       | 64 => type
       | 65 => box_Eunresolved_initlist
+      | 66 => box_Eunresolved_sizeof_pack
       | _ => box_Eunsupported
       end.
     Definition data (e : Expr) : car (tag e) :=
       match e as e return car (tag e) with
       | Eparam X => X
       | Eunresolved_global on => on
+      | Eunresolved_sizeof_pack pack t => Box_Eunresolved_sizeof_pack pack t
       | Eunresolved_unop op e => Box_Eunresolved_unop op e
       | Eunresolved_binop op l r => Box_Eunresolved_binop op l r
       | Eunresolved_call on es => Box_Eunresolved_call on es
@@ -2058,6 +2069,7 @@ Module Expr.
       | 63 => box_Efloat_compare
       | 64 => compareT
       | 65 => box_Eunresolved_initlist_compare
+      | 66 => box_Eunresolved_sizeof_pack_compare
       | _ => box_Eunsupported_compare
       end.
 
@@ -2070,6 +2082,7 @@ Module Expr.
       match e with
       | Eparam X => COMP (Eparam X : Expr)
       | Eunresolved_global on => COMP (Eunresolved_global on)
+      | Eunresolved_sizeof_pack pack t => COMP (Eunresolved_sizeof_pack pack t)
       | Eunresolved_unop op e => COMP (Eunresolved_unop op e)
       | Eunresolved_binop op l r => COMP (Eunresolved_binop op l r)
 

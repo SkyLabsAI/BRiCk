@@ -13,6 +13,11 @@ Require Import skylabs.lang.cpp.parser.lang.
 (** * Derived expressions emitted by cpp2v *)
 
 Module ParserExpr.
+  (**
+  Smart constructors keep cpp2v from depending on which source spellings are
+  core constructors and which are syntactic sugar.
+  *)
+
   Definition Ecstyle_cast (c : Cast) (t : type) (e : Expr) : Expr :=
     Eexplicit_cast cast_style.c t (Ecast c e).
   Definition Efunctional_cast (c : Cast) (t : type) (e : Expr) : Expr :=
@@ -74,6 +79,15 @@ Module ParserExpr.
 
   Definition Ealignof_preferred (e : type + Expr) (t : type) :=
     Eunsupported "alignof_preferred" t.
+
+  (**
+  We use [Esizeof_pack None] before template instantiation, and [Esizeof_pack (Some n)] after.
+  *)
+  Definition Esizeof_pack (on : option N) (pack : ident) (sizeof_ty : type) :=
+    match on with
+    | Some n => Eint (Z.of_N n) sizeof_ty
+    | None => Eunresolved_sizeof_pack pack sizeof_ty
+    end.
 
   Definition Eoperator_member_call (oo : OverloadableOperator) (nm : obj_name) (ct : dispatch_type) (ft : type) (es : list Expr) : Expr :=
     Eoperator_call oo (operator_impl.MFunc nm ct ft) es.

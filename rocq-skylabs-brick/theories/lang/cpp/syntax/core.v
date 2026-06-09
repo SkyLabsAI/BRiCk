@@ -421,10 +421,14 @@ with type : Set :=
 NOTE: We need both unresolved operators and unresolved calls because
 operators like <<a = b>> use a different evaluation order than calls
 like <<operator=(a, b)>>.
+
+We use the [Eunresolved_] prefix for constructors whose C++ meaning is
+deferred to template substitution.
 *)
 with Expr : Set :=
 | Eparam (_ : ident)
 | Eunresolved_global (_ : name)
+| Eunresolved_sizeof_pack (_ : ident) (t : type)
 | Eunresolved_unop (_ : RUnOp) (e : Expr)
 | Eunresolved_binop (_ : RBinOp) (l r : Expr)
 | Eunresolved_call (on : name) (_ : list Expr)
@@ -930,6 +934,7 @@ with is_dependentE (e : Expr) : bool :=
   match e with
   | Eparam _
   | Eunresolved_global _
+  | Eunresolved_sizeof_pack _ _
   | Eunresolved_unop _ _
   | Eunresolved_binop _ _ _
   | Eunresolved_call _ _

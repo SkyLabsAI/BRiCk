@@ -275,6 +275,7 @@ Fixpoint to_unresolved_name (e : MExpr) : Mname :=
   | core.Eunresolved_member_call _ _ _ => Nunsupported "Eunresolved_member_call"
   | core.Eunresolved_unop _ _ => Nunsupported "Eunresolved_unop"
   | core.Eunresolved_binop _ _ _ => Nunsupported "Eunresolved_binop"
+  | core.Eunresolved_sizeof_pack _ _ => Nunsupported "Eunresolved_sizeof_pack"
   | core.Eunresolved_parenlist _ _ => Nunsupported "Eunresolved_parenlist"
   | core.Eunresolved_initlist _ _ => Nunsupported "Eunresolved_initlist"
   | Echar _ _ => Nunsupported "Echar"

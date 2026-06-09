@@ -363,6 +363,12 @@ Module ExprNotations.
          , e custom CPP_expr at level 200
          , format "'[' sizeof(expr:  e ) ']'"
          , only printing).
+  Notation "'sizeof...(' pack )"
+      := (Eunresolved_sizeof_pack pack _)
+         ( in custom CPP_expr at level 200
+         , pack constr
+         , format "'[' sizeof...( pack ) ']'"
+         , only printing).
 
   Notation "'alignof(ty:' ty )"
       := (Ealignof (inl ty) _)

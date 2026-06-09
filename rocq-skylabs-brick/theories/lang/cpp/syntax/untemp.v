@@ -39,6 +39,7 @@ Module Import internal.
     Definition handle_expr : expr_handler M := {|
       handle_Eparam _ := mthrow Not_representable;
       handle_Eunresolved_global _ _ := mthrow Not_representable;
+      handle_Eunresolved_sizeof_pack _ _ _ := mthrow Not_representable;
       handle_Eunresolved_unop _ _ _ := mthrow Not_representable;
       handle_Eunresolved_binop _ _ _ _ _ := mthrow Not_representable;
       handle_Eunresolved_call _ _ _ _ := mthrow Not_representable;
