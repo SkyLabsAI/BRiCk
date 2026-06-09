@@ -3,6 +3,11 @@ export ROCQLIB="$DUNE_SOURCEROOT/_build/install/default/lib/coq"
 
 ROCQC_ARGS="-w -notation-overridden -w -notation-incompatible-prefix"
 
+sayDo() {
+    echo "$@"
+    eval "$@"
+}
+
 check_cpp2v_versions() {
     input="$1"
     base="${input%.*}"
@@ -10,11 +15,8 @@ check_cpp2v_versions() {
     shift
     for ver in "$@"
     do
-        echo "cpp2v -v -check-types -o ${base}_${ver}_cpp.v ${input} -- -std=c++${ver} 2>&1 | sed 's/^ *[0-9]* | //'"
-        cpp2v -v -check-types -o ${base}_${ver}_cpp.v ${input} -- -std=c++${ver} 2>&1 | sed 's/^ *[0-9]* | //'
-
-        echo "rocq c ${ROCQC_ARGS} ${base}_${ver}_cpp.v"
-        rocq c ${ROCQC_ARGS} "${base}_${ver}_cpp.v"
+        sayDo "cpp2v -v -check-types -o ${base}_${ver}_cpp.v ${input} -- -std=c++${ver} 2>&1 | sed 's/^ *[0-9]* | //'"
+        sayDo "rocq c ${ROCQC_ARGS} ${base}_${ver}_cpp.v"
     done
 }
 
@@ -29,14 +31,9 @@ check_cpp2v_templates_versions() {
     shift
     for ver in "$@"
     do
-        echo "cpp2v -v -check-types -o ${base}_${ver}_cpp.v --templates ${base}_${ver}_cpp_templates.v ${input} -- -std=c++${ver} 2>&1 | sed 's/^ *[0-9]* | //'"
-        cpp2v -v -check-types -o ${base}_${ver}_cpp.v --templates ${base}_${ver}_cpp_templates.v ${input} -- -std=c++${ver} 2>&1 | sed 's/^ *[0-9]* | //'
-
-        echo "rocq c ${ROCQC_ARGS} ${base}_${ver}_cpp_templates.v"
-        rocq c ${ROCQC_ARGS} "${base}_${ver}_cpp_templates.v"
-
-        echo "rocq c ${ROCQC_ARGS} ${base}_${ver}_cpp.v"
-        rocq c ${ROCQC_ARGS} "${base}_${ver}_cpp.v"
+        sayDo "cpp2v -v -check-types -o ${base}_${ver}_cpp.v --templates ${base}_${ver}_cpp_templates.v ${input} -- -std=c++${ver} 2>&1 | sed 's/^ *[0-9]* | //'"
+        sayDo "rocq c ${ROCQC_ARGS} ${base}_${ver}_cpp_templates.v"
+        sayDo "rocq c ${ROCQC_ARGS} ${base}_${ver}_cpp.v"
     done
 }
 
