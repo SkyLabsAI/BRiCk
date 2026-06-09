@@ -7,7 +7,7 @@ license: "LGPL-2.1-only"
 homepage: "https://github.com/SkyLabsAI/BRiCk"
 bug-reports: "https://github.com/SkyLabsAI/BRiCk/issues"
 depends: [
-  "dune" {>= "3.21"}
+  "dune" {>= "3.22"}
   "rocq-core"
   "odoc" {with-doc}
 ]

@@ -2,9 +2,9 @@
   $ tool="$(command -v dune-rocqdeps)"
   $ cd "$test_root"
   $ cat > dune-project <<'EOF'
-  > (lang dune 3.21)
+  > (lang dune 3.22)
   > (name cram_dune_rocqdeps_no_normalize)
-  > (using rocq 0.11)
+  > (using rocq 0.12)
   > EOF
   $ mkdir -p workspace/a workspace/b workspace/c
   $ cat > workspace/a/dune <<'EOF'

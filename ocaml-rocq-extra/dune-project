@@ -1,4 +1,4 @@
-(lang dune 3.21)
+(lang dune 3.22)
 (name rocq-extra)
 
 (generate_opam_files)
