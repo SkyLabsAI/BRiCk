@@ -28,6 +28,6 @@
  (synopsis "Generation of lenses for record datatypes, Elpi backend")
  (depends
   rocq-lens
-  coq-elpi))
+  rocq-elpi))
 
 (subst disabled)

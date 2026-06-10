@@ -11,7 +11,7 @@
  )
  (package rocq-lens-elpi))
 
-; Hack to ensure the coq-elpi package is avalable. *)
+; Hack to ensure the rocq-elpi package is avalable. *)
 (rule
  (targets dummy.v)
  (action (with-stdout-to %{targets} (echo "(* dummy file *)"))))

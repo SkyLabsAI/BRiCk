@@ -35,7 +35,7 @@
   rocq-stdpp
   rocq-lens
   rocq-lens-elpi
-  coq-elpi
+  rocq-elpi
   ltac2-extra))
 
 (subst disabled)
