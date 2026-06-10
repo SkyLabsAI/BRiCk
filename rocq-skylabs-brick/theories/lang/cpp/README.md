@@ -7,12 +7,12 @@ To avoid introducing closed world assumptions, the semantics is defined using a 
 ## Syntax
 The [syntax](syntax) directory contains a deep embeddding of the syntax tree based on Clang.
 
-- [names.v](syntax/names.v) contains the syntax of (mangled) names
-- [types.v](syntax/types.v) contains the syntax of types
-- [expr.v](syntax/expr.v) contains the syntax of expressions
-- [stmt.v](syntax/stmt.v) contains the syntax of statements
+- [core.v](syntax/core.v) contains the core syntax of C++ including names, types, expressions, statements
+- [decl.v](syntax/decl.v) contains the syntax of declarations. These include types (`GlobDecl` for "global declarations") and (`ObjValue` for values, e.g. functions).
 - [translation_units.v](syntax/translation_units.v) contains the syntax of translation units, i.e. a `.cpp` file.
 - [typing.v](syntax/typing.v) contains definitions related to types.
+- [typed.v](syntax/typed.v) contains the newer version of the type system that BRiCk is based on.
+
 
 ## Semantics
 The [semantics](semantics) directory contains definitions pertaining to values and
