@@ -1451,6 +1451,17 @@ Module Expr.
       compare_lex (Z.compare b1.(box_Eint_0) b2.(box_Eint_0)) $ fun _ =>
       compareT b1.(box_Eint_1) b2.(box_Eint_1).
 
+    Record box_Efloat : Set := Box_Efloat {
+      box_Efloat_0 : float_type.t;
+      box_Efloat_1 : fp_carrier box_Efloat_0;
+      box_Efloat_2 : type;
+    }.
+    Definition box_Efloat_compare (b1 b2 : box_Efloat) : comparison :=
+      compare_lex (float_type.compare b1.(box_Efloat_0) b2.(box_Efloat_0)) $ fun _ =>
+      compare_lex (Z.compare (fp_to_bits b1.(box_Efloat_0) b1.(box_Efloat_1))
+                             (fp_to_bits b2.(box_Efloat_0) b2.(box_Efloat_1))) $ fun _ =>
+      compareT b1.(box_Efloat_2) b2.(box_Efloat_2).
+
     Record box_Eunop : Set := Box_Eunop {
       box_Eunop_0 : UnOp;
       box_Eunop_1 : Expr;
@@ -1775,6 +1786,7 @@ Module Expr.
       | Echar _ _ => 12
       | Estring _ _ => 13
       | Eint _ _ => 14
+      | Efloat _ _ _ => 63
       | Ebool _ => 15
       | Eunop _ _ _ => 16
       | Ebinop _ _ _ _ => 17
@@ -1841,6 +1853,7 @@ Module Expr.
       | 13 => box_Estring
       | 14 => box_Eint
       | 15 => bool
+      | 63 => box_Efloat
       | 16 => box_Eunop
       | 17 => box_Ebinop
       | 18 => box_Ederef
@@ -1901,6 +1914,7 @@ Module Expr.
       | Echar c t => Box_Echar c t
       | Estring s t => Box_Estring s t
       | Eint n t => Box_Eint n t
+      | Efloat ft f t => Box_Efloat ft f t
       | Ebool b => b
       | Eunop op e t => Box_Eunop op e t
       | Ebinop op l r t => Box_Ebinop op l r t
@@ -1965,6 +1979,7 @@ Module Expr.
       | 13 => box_Estring_compare
       | 14 => box_Eint_compare
       | 15 => Bool.compare
+      | 63 => box_Efloat_compare
       | 16 => box_Eunop_compare
       | 17 => box_Ebinop_compare
       | 18 => box_Ederef_compare
@@ -2035,6 +2050,7 @@ Module Expr.
       | Echar c t => COMP (Echar c t)
       | Estring s t => COMP (Estring s t)
       | Eint n t => COMP (Eint n t)
+      | Efloat ft f t => COMP (Efloat ft f t)
 
       | Ebool b => COMP (Ebool b : Expr)
       | Eunop op e t => COMP (Eunop op e t)

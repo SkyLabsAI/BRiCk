@@ -11,4 +11,6 @@ lowest() {
 
 void foo() {
 	float f = 1.0f;
+	double d = 1.0;
+	bool b = static_cast<bool>(f);
 }

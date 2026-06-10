@@ -426,7 +426,15 @@ Module SimpleCPP.
           else False
         | Tnullptr =>
           vs = cptr 0 /\ v = Vptr nullptr
-        | Tfloat_ _ => False
+        | Tfloat_ ft =>
+          match v with
+          | Vfloat_ ft' f =>
+              fp_supported ft = true /\ ft = ft' /\
+              in_Z_to_bytes_bounds (fp_bitsize ft') Unsigned (fp_to_bits ft' f) /\
+              vs = Z_to_bytes (fp_bitsize ft') Unsigned (fp_to_bits ft' f)
+          | Vundef => if fp_supported ft then pure_encodes_undef (fp_bitsize ft) vs else False
+          | _ => False
+          end
         | Tarch _ _ => False
         | Tptr _ =>
           match v with
@@ -479,6 +487,7 @@ Module SimpleCPP.
           length vs = match erase_qualifiers t with
                       | Tbool => 1
                       | Tnum sz _ => int_rank.bytesNat sz
+                      | Tfloat_ ft => bitsize.bytesNat (fp_bitsize ft)
 
                       | Tmember_pointer _ _ | Tnullptr | Tptr _
                       | Tfunction _ | Tref _ | Trv_ref _ =>
@@ -490,10 +499,12 @@ Module SimpleCPP.
         rewrite /pure_encodes => ?.
         destruct (erase_qualifiers _) => //;
           destruct v => //; destruct_and? => //;
-          repeat case_decide => //;
-           simplify_eq; eauto.
-        by destruct sz.
-        erewrite length_pure_encodes_undef; eauto. by destruct sz.
+          repeat (case_decide || case_match) => //;
+           destruct_and?; simplify_eq; eauto.
+        all: try by destruct sz.
+        all: try by destruct f.
+        all: try (erewrite length_pure_encodes_undef; eauto; by destruct sz).
+        all: try (erewrite length_pure_encodes_undef; eauto; by destruct f).
       Qed.
 
       Lemma length_encodes_pos t v vs :
@@ -538,6 +549,7 @@ Module SimpleCPP.
         by [
           edestruct cptr_ne_aptr | edestruct pure_encodes_undef_aptr |
           edestruct pure_encodes_undef_Z_to_bytes |
+          f_equal; apply fp_to_bits_inj; exact: Z_to_bytes_inj |
           f_equiv; exact: Z_to_bytes_inj ].
       Qed.
 

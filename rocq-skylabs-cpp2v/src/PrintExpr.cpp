@@ -802,6 +802,7 @@ public:
             CASE_WITH_TYPE(FloatingToIntegral, Cfloat2int)
             CASE_WITH_TYPE(IntegralToFloating, Cint2float)
             CASE_WITH_TYPE(FloatingCast, Cfloat)
+            CASE_WITH_TYPE(FloatingToBoolean, Cfloat2int)
 
             CASE_WITH_TYPE(Dependent, Cdependent)
 #undef CASE_NO_TYPE
@@ -1001,9 +1002,40 @@ public:
     }
 
     void VisitFloatingLiteral(const FloatingLiteral *lit) {
-        print.ctor("Eunsupported") << fmt::nbsp << "\"float: ";
-        lit->getValue().print(print.output().nobreak());
-        print.output() << "\"";
+        auto *bt = lit->getType()->getAs<BuiltinType>();
+        const char *ft = nullptr;
+        if (bt) {
+            switch (bt->getKind()) {
+            case BuiltinType::Float:
+                ft = "Ffloat";
+                break;
+            case BuiltinType::Double:
+                ft = "Fdouble";
+                break;
+            default:
+                break;
+            }
+        }
+
+        if (!ft) {
+            print.ctor("Eunsupported") << fmt::nbsp << "\"float: ";
+            lit->getValue().print(print.output().nobreak());
+            print.output() << "\"" << fmt::nbsp;
+            done(lit, Done::DT);
+            return;
+        }
+
+        llvm::APInt bits = lit->getValue().bitcastToAPInt();
+        SmallString<64> s;
+        bits.toStringUnsigned(s);
+
+        print.ctor("Efloat", false);
+        print.output() << ft << fmt::nbsp;
+        {
+            guard::ctor payload(print, "fp_of_bits", false);
+            print.output() << ft << fmt::nbsp << s << "%Z";
+        }
+        print.output() << fmt::nbsp;
         done(lit, Done::DT);
     }
 

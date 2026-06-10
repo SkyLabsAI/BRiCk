@@ -210,6 +210,30 @@ Section conv_int.
   Qed.
 End conv_int.
 
+Definition is_floating_type (ty : type) : bool :=
+  match drop_qualifiers ty with
+  | Tfloat_ ft => fp_supported ft
+  | _ => false
+  end.
+
+(** Floating conversions are intentionally exposed as a relation: the precise
+    binary32/binary64 operations live in the Flocq wrapper, while
+    float/integer range definedness and future target policy are side
+    conditions of the relation. *)
+Parameter conv_float : forall {σ : genv}, translation_unit -> type -> type -> val -> val -> Prop.
+
+Axiom conv_float_well_typed : forall `{Hmod : tu ⊧ σ} ty ty' v v',
+    conv_float tu ty ty' v v' ->
+    has_type_prop v ty /\ has_type_prop v' ty'.
+
+Axiom conv_float_id : forall {σ : genv} tu ft (f : fp_carrier ft),
+    fp_supported ft = true ->
+    conv_float tu (Tfloat_ ft) (Tfloat_ ft) (Vfloat_ ft f) (Vfloat_ ft f).
+
+Axiom conv_float_to_bool : forall {σ : genv} tu ft (f : fp_carrier ft),
+    fp_supported ft = true ->
+    conv_float tu (Tfloat_ ft) Tbool (Vfloat_ ft f) (Vbool (fp_is_true ft f)).
+
 (* This (effectively) lifts [conv_int] to arbitrary types.
 
    TODO: it makes sense for this to mirror the properties of [conv_int], but
@@ -221,5 +245,8 @@ Definition convert {σ : genv} (tu : translation_unit) (from to : Rtype) (v : va
     (* TODO: this conservative *)
     has_type_prop v from /\ has_type_prop v' to /\ v' = v
   else if is_arithmetic from && is_arithmetic to then
-    conv_int tu from to v v'
+    if is_floating_type from || is_floating_type to then
+      conv_float tu from to v v'
+    else
+      conv_int tu from to v v'
   else False.

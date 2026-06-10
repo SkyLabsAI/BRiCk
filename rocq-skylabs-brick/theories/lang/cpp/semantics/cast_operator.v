@@ -25,6 +25,48 @@ Require Import skylabs.lang.cpp.semantics.cast.
   *)
 Notation Tptrdiff_t := Tlonglong (only parsing).
 
+Definition supported_float_type (ty : type) : option float_type.t :=
+  match drop_qualifiers ty with
+  | Tfloat_ ft => if fp_supported ft then Some ft else None
+  | _ => None
+  end.
+
+Definition usual_float_arith (tu : translation_unit) (ty1 ty2 : type) : option type :=
+  match supported_float_type ty1, supported_float_type ty2 with
+  | Some Fdouble, Some (Ffloat | Fdouble) => Some Tdouble
+  | Some Ffloat, Some Fdouble => Some Tdouble
+  | Some Ffloat, Some Ffloat => Some Tfloat
+  | Some Fdouble, None =>
+      match promote_integral tu ty2 with
+      | Some _ => Some Tdouble
+      | None => None
+      end
+  | None, Some Fdouble =>
+      match promote_integral tu ty1 with
+      | Some _ => Some Tdouble
+      | None => None
+      end
+  | Some Ffloat, None =>
+      match promote_integral tu ty2 with
+      | Some _ => Some Tfloat
+      | None => None
+      end
+  | None, Some Ffloat =>
+      match promote_integral tu ty1 with
+      | Some _ => Some Tfloat
+      | None => None
+      end
+  | _, _ => None
+  end.
+
+Definition convert_type_float_op (b : BinOp) (to : type) : option (type * type * type) :=
+  match b with
+  | Badd | Bsub | Bmul | Bdiv => Some (to, to, to)
+  | Beq | Bneq | Blt | Ble | Bgt | Bge => Some (to, to, Tbool)
+  | Bmod | Band | Bor | Bxor | Bshl | Bshr | Bcmp
+  | Bdotp | Bdotip | Bunsupported _ => None
+  end.
+
 (** For a binary operation between two types, determine the type of the result and the necessary conversions on the operands.
 
 This is used for both pointer and arithmetic operators.
@@ -62,6 +104,9 @@ Definition convert_type_op (tu : translation_unit) (b : BinOp) (ty1 ty2 : type)
     | _ => None
     end
   else if is_arithmetic ty1 && is_arithmetic ty2 then
+    match usual_float_arith tu ty1 ty2 with
+    | Some to => convert_type_float_op b to
+    | None =>
     (* integer-integer operations *)
     match promote_integral tu ty1 , promote_integral tu ty2 with
     | Some ity1 , Some ity2 =>
@@ -102,5 +147,6 @@ Definition convert_type_op (tu : translation_unit) (b : BinOp) (ty1 ty2 : type)
       | Bunsupported _ => None
       end
     | _ , _ => None
+    end
     end
   else None.

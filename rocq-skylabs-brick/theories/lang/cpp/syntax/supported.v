@@ -97,6 +97,8 @@ Section with_monad.
     | Eenum_const n _ => name n
     | Eglobal n t | Eglobal_member n t => name n <+> type t
     | Echar _ t | Estring _ t | Eint _ t => type t
+    | Efloat ft _ t =>
+        type t <+> if fp_supported ft then OK else FAIL "unsupported floating width"
     | Ebool _ => OK
     | Eunop _ e t => expr e <+> type t
     | Ebinop _ e1 e2 t => expr e1 <+> type t
@@ -200,7 +202,7 @@ Section with_monad.
     | Cnull2ptr t | Cnull2memberptr t
     | Cbuiltin2fun t | Cctor t | Cdynamic t => type t
     | Cderived2base ts t | Cbase2derived ts t => lst type ts <+> type t
-    | Cfloat _ | Cint2float _ | Cfloat2int _ => FAIL "float"
+    | Cfloat t | Cint2float t | Cfloat2int t => type t
     | Cl2r_bitcast _ => FAIL "l2r_bitcast"
     | _ => OK
     end.

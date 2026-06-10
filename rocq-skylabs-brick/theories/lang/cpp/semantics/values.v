@@ -76,6 +76,7 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
   *)
   Variant val : Set :=
   | Vint (_ : Z)
+  | Vfloat_ (ft : float_type.t) (_ : fp_carrier ft)
   | Vchar (_ : N)
     (* ^ value used for non-integral character types, e.g.
          [char], [wchar], etc, but *not* [unsigned char] and [signed char]
@@ -94,7 +95,26 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
   #[global] Coercion Vint : Z >-> val.
 
   Definition val_dec : forall a b : val, {a = b} + {a <> b}.
-  Proof. solve_decision. Defined.
+  Proof.
+    intros a b.
+    destruct a as [zi|fti fi|ci|pi|ri| |nmi ami];
+    destruct b as [zj|ftj fj|cj|pj|rj| |nmj amj];
+      try (right; congruence).
+    - destruct (Z.eq_dec zi zj); subst; [left; reflexivity|right; congruence].
+    - destruct (float_type.t_eq_dec fti ftj) as [Hft|Hft].
+      + subst ftj. destruct (fp_carrier_eq_dec fti fi fj) as [->|Hf].
+        * left; reflexivity.
+        * right. intros Hinj. apply Hf, fp_to_bits_inj.
+          exact (f_equal (fun v => match v with Vfloat_ ft f => fp_to_bits ft f | _ => 0%Z end) Hinj).
+      + right. intros Hinj. apply Hft.
+        exact (f_equal (fun v => match v with Vfloat_ ft _ => ft | _ => Ffloat end) Hinj).
+    - destruct (N.eq_dec ci cj); subst; [left; reflexivity|right; congruence].
+    - destruct (decide (pi = pj)); subst; [left; reflexivity|right; congruence].
+    - destruct (raw_byte_eq_dec ri rj); subst; [left; reflexivity|right; congruence].
+    - left; reflexivity.
+    - destruct (decide (nmi = nmj)); subst; [|right; congruence].
+      destruct (decide (ami = amj)); subst; [left; reflexivity|right; congruence].
+  Defined.
   #[global] Instance val_eq_dec : EqDecision val := val_dec.
   #[global] Instance val_inhabited : Inhabited val := populate (Vint 0).
 
@@ -120,6 +140,7 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
   Definition is_true (v : val) : option bool :=
     match v with
     | Vint v => Some (bool_decide (v <> 0))
+    | Vfloat_ ft f => Some (fp_is_true ft f)
     | Vptr p => Some (bool_decide (p <> nullptr))
     | Vchar n => Some (bool_decide (n <> 0%N))
     | Vundef | Vraw _ => None
@@ -140,12 +161,24 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
   Proof. by move=> []. Qed.
   Lemma Vchar_inj a b : Vchar a = Vchar b -> a = b.
   Proof. by move=> []. Qed.
+  Lemma Vfloat_inj (ft : float_type.t) (a b : fp_carrier ft) : Vfloat_ ft a = Vfloat_ ft b -> a = b.
+  Proof.
+    intros H. apply fp_to_bits_inj.
+    exact (f_equal (fun v => match v with Vfloat_ ft f => fp_to_bits ft f | _ => 0%Z end) H).
+  Qed.
+  Lemma Vfloat_index_inj ft ft' (a : fp_carrier ft) (b : fp_carrier ft') :
+      Vfloat_ ft a = Vfloat_ ft' b -> ft = ft'.
+  Proof.
+    intros H.
+    exact (f_equal (fun v => match v with Vfloat_ ft _ => ft | _ => Ffloat end) H).
+  Qed.
   Lemma Vbool_inj a b : Vbool a = Vbool b -> a = b.
   Proof. by move: a b =>[] [] /Vint_inj. Qed.
 
   #[global] Instance Vptr_Inj : Inj (=) (=) Vptr := Vptr_inj.
   #[global] Instance Vint_Inj : Inj (=) (=) Vint := Vint_inj.
   #[global] Instance Vchar_Inj : Inj (=) (=) Vchar := Vchar_inj.
+  #[global] Instance Vfloat_Inj ft : Inj (=) (=) (Vfloat_ ft) := Vfloat_inj ft.
   #[global] Instance Vbool_Inj : Inj (=) (=) Vbool := Vbool_inj.
 
   Definition N_to_char (t : char_type.t) (z : N) : val :=
@@ -159,6 +192,7 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
     match t with
     | Tptr _ => Some (Vptr nullptr)
     | Tnum _ _ => Some (Vint 0%Z)
+    | Tfloat_ ft => if fp_supported ft then Some (Vfloat_ ft (fp_zero ft)) else None
     | Tchar_ _ => Some (Vchar 0%N)
     | Tbool => Some (Vbool false)
     | Tnullptr => Some (Vptr nullptr)
@@ -494,6 +528,10 @@ Module Type HAS_TYPE (Import P : PTRS) (Import R : RAW_BYTES) (Import V : VAL_MI
     Axiom has_type_prop_bool : forall v,
         has_type_prop v Tbool <-> exists b, v = Vbool b.
 
+    Axiom has_type_prop_float : forall ft v,
+        fp_supported ft = true ->
+        has_type_prop v (Tfloat_ ft) <-> exists f : fp_carrier ft, v = Vfloat_ ft f.
+
     (* NOTE: even if an enumeration's underlying type is <<unsigned char>> (which contains
        raw values), raw values are not well typed at the enumeration type. *)
     Axiom has_type_prop_enum : forall v nm,
@@ -551,6 +589,20 @@ Module Type HAS_TYPE_MIXIN (Import P : PTRS) (Import R : RAW_BYTES) (Import V : 
 
     Lemma has_type_prop_char_0 ct : has_type_prop (Vchar 0) (Tchar_ ct).
     Proof. intros. apply has_type_prop_char_255. lia. Qed.
+
+    Lemma has_float_type ft (f : fp_carrier ft) :
+      fp_supported ft = true -> has_type_prop (Vfloat_ ft f) (Tfloat_ ft).
+    Proof. intros Hft. rewrite has_type_prop_float//. eauto. Qed.
+
+    Lemma has_type_prop_float_iff ft v :
+      fp_supported ft = true ->
+      has_type_prop v (Tfloat_ ft) <-> exists f : fp_carrier ft, v = Vfloat_ ft f.
+    Proof. apply has_type_prop_float. Qed.
+
+    Lemma has_type_prop_float_inv ft v :
+      fp_supported ft = true ->
+      has_type_prop v (Tfloat_ ft) -> exists f : fp_carrier ft, v = Vfloat_ ft f.
+    Proof. intros Hft. by rewrite (has_type_prop_float ft v Hft). Qed.
 
     Lemma has_type_prop_drop_qualifiers :
       forall v ty, has_type_prop v ty <-> has_type_prop v (drop_qualifiers ty).

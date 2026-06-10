@@ -139,6 +139,16 @@ Axiom eval_minus_int : forall ty a c,
     has_type_prop (Vint c) ty ->
     eval_unop Uminus ty ty (Vint a) (Vint c).
 
+Axiom eval_plus_float : forall ft (a : fp_carrier ft),
+    fp_supported ft = true ->
+    eval_unop Uplus (Tfloat_ ft) (Tfloat_ ft)
+              (Vfloat_ ft a) (Vfloat_ ft a).
+
+Axiom eval_minus_float : forall ft (a : fp_carrier ft),
+    fp_supported ft = true ->
+    eval_unop Uminus (Tfloat_ ft) (Tfloat_ ft)
+              (Vfloat_ ft a) (Vfloat_ ft (fp_neg ft a)).
+
 (** * Binary Operators *)
 
 (** ** Arithmetic Operators
@@ -190,6 +200,23 @@ Axiom eval_mod : forall `{supports_arith ty} (a b : Z),
     has_type_prop (Vint (Z.quot a b)) ty ->
     let c := Z.rem a b in
     eval_binop_pure Bmod ty ty ty (Vint a) (Vint b) (Vint c).
+
+Axiom eval_add_float : forall ft (a b : fp_carrier ft),
+    fp_supported ft = true ->
+    eval_binop_pure Badd (Tfloat_ ft) (Tfloat_ ft) (Tfloat_ ft)
+      (Vfloat_ ft a) (Vfloat_ ft b) (Vfloat_ ft (fp_add ft a b)).
+Axiom eval_sub_float : forall ft (a b : fp_carrier ft),
+    fp_supported ft = true ->
+    eval_binop_pure Bsub (Tfloat_ ft) (Tfloat_ ft) (Tfloat_ ft)
+      (Vfloat_ ft a) (Vfloat_ ft b) (Vfloat_ ft (fp_sub ft a b)).
+Axiom eval_mul_float : forall ft (a b : fp_carrier ft),
+    fp_supported ft = true ->
+    eval_binop_pure Bmul (Tfloat_ ft) (Tfloat_ ft) (Tfloat_ ft)
+      (Vfloat_ ft a) (Vfloat_ ft b) (Vfloat_ ft (fp_mul ft a b)).
+Axiom eval_div_float : forall ft (a b : fp_carrier ft),
+    fp_supported ft = true ->
+    eval_binop_pure Bdiv (Tfloat_ ft) (Tfloat_ ft) (Tfloat_ ft)
+      (Vfloat_ ft a) (Vfloat_ ft b) (Vfloat_ ft (fp_div ft a b)).
 
 (** ** bitwise operators
 
@@ -366,6 +393,24 @@ Arguments eval_lt _ {_}.
 Arguments eval_le _ {_}.
 Arguments eval_gt _ {_}.
 Arguments eval_ge _ {_}.
+
+Definition fp_cmp_result (c : option comparison) (bo : BinOp) : bool :=
+  match bo with
+  | Beq => if c is Some Eq then true else false
+  | Bneq => if c is Some Eq then false else true
+  | Blt => if c is Some Lt then true else false
+  | Ble => if c is Some (Lt | Eq) then true else false
+  | Bgt => if c is Some Gt then true else false
+  | Bge => if c is Some (Gt | Eq) then true else false
+  | _ => false
+  end.
+
+Axiom eval_cmp_float : forall bo ft (a b : fp_carrier ft),
+    (bo = Beq \/ bo = Bneq \/ bo = Blt \/ bo = Ble \/ bo = Bgt \/ bo = Bge) ->
+    fp_supported ft = true ->
+    eval_binop_pure bo (Tfloat_ ft) (Tfloat_ ft) Tbool
+      (Vfloat_ ft a) (Vfloat_ ft b)
+      (Vbool (fp_cmp_result (fp_compare ft a b) bo)).
 
 (* Special cases for <decltype(nullptr)> because they are not generally comparable *)
 Axiom eval_eq_nullptr :

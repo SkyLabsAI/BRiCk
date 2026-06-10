@@ -95,6 +95,13 @@ Module Type Expr.
           Q (Vchar c) FreeTemps.id
       |-- wp_operand (Echar c (Tchar_ cty)) Q.
 
+    (* floating literals are prvalues *)
+    Axiom wp_operand_float : forall ft (f : fp_carrier ft) ty Q,
+      [! fp_supported ft = true !] //\\
+      [! ty = Tfloat_ ft !] //\\
+      Q (Vfloat_ ft f) FreeTemps.id
+      |-- wp_operand (Efloat ft f ty) Q.
+
     (* boolean literals are prvalues *)
     Axiom wp_operand_bool : forall (b : bool) Q,
           Q (Vbool b) FreeTemps.id
@@ -1514,6 +1521,7 @@ Module Type Expr.
       | Tchar_ _ => Some $ Vchar 0
       | Tbool => Some $ Vbool false
       | Tnum _ _ => Some $ Vint 0
+      | Tfloat_ ft => if fp_supported ft then Some $ Vfloat_ ft (fp_zero ft) else None
       | _ => None
       end.
 
@@ -1543,8 +1551,13 @@ Module Type Expr.
         + apply has_int_type. rewrite /bitsize.bound; destruct sz,sgn; compute; intuition congruence.
         + apply has_type_prop_char_0.
         + apply has_type_prop_bool; eauto.
+        + case_match eqn:Hft; inversion H; subst; simpl; try tauto.
+        + case_match eqn:Hft; inversion H; subst.
+          by apply has_float_type.
         + eapply has_type_prop_nullptr; eauto.
       - apply has_type_prop_bool. eauto.
+      - case_match eqn:Hft; inversion H; subst.
+        by apply has_float_type.
       - eapply has_type_prop_nullptr; eauto.
     Qed.
 

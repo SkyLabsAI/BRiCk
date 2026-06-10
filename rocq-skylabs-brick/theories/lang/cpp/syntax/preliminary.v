@@ -5,6 +5,8 @@
  *)
 
 Require Import stdpp.strings.
+From Stdlib Require Import ZArith.
+From Flocq.IEEE754 Require Import Binary BinarySingleNaN Bits.
 Require Export skylabs.prelude.pstring.
 Require Import skylabs.lang.cpp.syntax.prelude.
 Require Export skylabs.prelude.arith.types.
@@ -383,6 +385,160 @@ Module float_type.
     8 * bytesN t.
 
 End float_type.
+
+#[global] Notation Ffloat16 := float_type.Ffloat16.
+#[global] Notation Ffloat := float_type.Ffloat.
+#[global] Notation Fdouble := float_type.Fdouble.
+#[global] Notation Flongdouble := float_type.Flongdouble.
+#[global] Notation Ffloat128 := float_type.Ffloat128.
+
+(** Flocq-backed carriers and operations for BRiCk floating values.
+
+    The first precise operational milestone is binary32 [Ffloat] and binary64
+    [Fdouble].  Other C++ floating widths keep an opaque [unit] payload so the
+    syntax/value constructors remain total over [float_type.t], while support
+    checking and semantics can reject them explicitly until a concrete format is
+    chosen. *)
+Definition fp_supported (ft : float_type.t) : bool :=
+  match ft with
+  | Ffloat | Fdouble => true
+  | Ffloat16 | Flongdouble | Ffloat128 => false
+  end.
+
+Definition fp_bitsize (ft : float_type.t) : bitsize.t :=
+  match ft with
+  | Ffloat16 => bitsize.W16
+  | Ffloat => bitsize.W32
+  | Fdouble => bitsize.W64
+  | Flongdouble | Ffloat128 => bitsize.W128
+  end.
+
+Definition fp_carrier (ft : float_type.t) : Set :=
+  match ft with
+  | Ffloat => binary32
+  | Fdouble => binary64
+  | Ffloat16 | Flongdouble | Ffloat128 => unit
+  end.
+
+Definition fp_of_bits (ft : float_type.t) : Z -> fp_carrier ft :=
+  match ft return Z -> fp_carrier ft with
+  | Ffloat => b32_of_bits
+  | Fdouble => b64_of_bits
+  | Ffloat16 | Flongdouble | Ffloat128 => fun _ => tt
+  end.
+
+Definition fp_to_bits (ft : float_type.t) : fp_carrier ft -> Z :=
+  match ft return fp_carrier ft -> Z with
+  | Ffloat => bits_of_b32
+  | Fdouble => bits_of_b64
+  | Ffloat16 | Flongdouble | Ffloat128 => fun _ => 0%Z
+  end.
+
+Definition fp_compare_bits (ft : float_type.t) (x y : fp_carrier ft) : comparison :=
+  Z.compare (fp_to_bits ft x) (fp_to_bits ft y).
+
+Definition fp_default_nan (ft : float_type.t) : fp_carrier ft :=
+  match ft return fp_carrier ft with
+  | Ffloat => b32_of_bits 2143289344%Z (* 0x7fc00000 *)
+  | Fdouble => b64_of_bits 9221120237041090560%Z (* 0x7ff8000000000000 *)
+  | Ffloat16 | Flongdouble | Ffloat128 => tt
+  end.
+
+Definition fp_zero (ft : float_type.t) : fp_carrier ft := fp_of_bits ft 0%Z.
+
+Definition fp_is_nan (ft : float_type.t) : fp_carrier ft -> bool :=
+  match ft return fp_carrier ft -> bool with
+  | Ffloat => Binary.is_nan 24 128
+  | Fdouble => Binary.is_nan 53 1024
+  | Ffloat16 | Flongdouble | Ffloat128 => fun _ => false
+  end.
+
+Definition fp_canonicalize_nan (ft : float_type.t) (f : fp_carrier ft) : fp_carrier ft :=
+  if fp_is_nan ft f then fp_default_nan ft else f.
+
+Definition fp_neg (ft : float_type.t) : fp_carrier ft -> fp_carrier ft :=
+  match ft return fp_carrier ft -> fp_carrier ft with
+  | Ffloat => fun f => fp_canonicalize_nan Ffloat (b32_opp f)
+  | Fdouble => fun f => fp_canonicalize_nan Fdouble (b64_opp f)
+  | Ffloat16 | Flongdouble | Ffloat128 => fun f => f
+  end.
+
+Definition fp_binop
+    (op32 : mode -> binary32 -> binary32 -> binary32)
+    (op64 : mode -> binary64 -> binary64 -> binary64)
+    (ft : float_type.t) : fp_carrier ft -> fp_carrier ft -> fp_carrier ft :=
+  match ft return fp_carrier ft -> fp_carrier ft -> fp_carrier ft with
+  | Ffloat => fun x y => fp_canonicalize_nan Ffloat (op32 mode_NE x y)
+  | Fdouble => fun x y => fp_canonicalize_nan Fdouble (op64 mode_NE x y)
+  | Ffloat16 | Flongdouble | Ffloat128 => fun x _ => x
+  end.
+
+Definition fp_add := fp_binop b32_plus b64_plus.
+Definition fp_sub := fp_binop b32_minus b64_minus.
+Definition fp_mul := fp_binop b32_mult b64_mult.
+Definition fp_div := fp_binop b32_div b64_div.
+
+Definition fp_compare (ft : float_type.t) : fp_carrier ft -> fp_carrier ft -> option comparison :=
+  match ft return fp_carrier ft -> fp_carrier ft -> option comparison with
+  | Ffloat => b32_compare
+  | Fdouble => b64_compare
+  | Ffloat16 | Flongdouble | Ffloat128 => fun _ _ => None
+  end.
+
+Definition fp_is_true (ft : float_type.t) (f : fp_carrier ft) : bool :=
+  match fp_compare ft f (fp_zero ft) with
+  | Some Eq => false
+  | _ => true
+  end.
+
+Lemma fp_of_to_bits ft (f : fp_carrier ft) : fp_of_bits ft (fp_to_bits ft f) = f.
+Proof.
+  destruct ft; simpl in *; try by destruct f.
+  - unfold b32_of_bits, bits_of_b32.
+    exact (binary_float_of_bits_of_binary_float 23 8 (refl_equal _) (refl_equal _) (refl_equal _) f).
+  - unfold b64_of_bits, bits_of_b64.
+    exact (binary_float_of_bits_of_binary_float 52 11 (refl_equal _) (refl_equal _) (refl_equal _) f).
+Qed.
+
+Lemma fp_to_bits_range ft (f : fp_carrier ft) :
+  (0 <= fp_to_bits ft f < 2 ^ bitsize.bitsZ (fp_bitsize ft))%Z.
+Proof.
+  destruct ft; simpl in *.
+  - destruct f. vm_compute. split; [discriminate|reflexivity].
+  - unfold bits_of_b32.
+    exact (bits_of_binary_float_range 23 8 ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) f).
+  - unfold bits_of_b64.
+    exact (bits_of_binary_float_range 52 11 ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity) f).
+  - destruct f. vm_compute. split; [discriminate|reflexivity].
+  - destruct f. vm_compute. split; [discriminate|reflexivity].
+Qed.
+
+Lemma fp_to_of_bits ft z :
+  fp_supported ft = true ->
+  (0 <= z < 2 ^ bitsize.bitsZ (fp_bitsize ft))%Z ->
+  fp_to_bits ft (fp_of_bits ft z) = z.
+Proof.
+  destruct ft; simpl; try discriminate; intros _ Hz.
+  - unfold b32_of_bits, bits_of_b32.
+    exact (bits_of_binary_float_of_bits 23 8 (refl_equal _) (refl_equal _) (refl_equal _) z Hz).
+  - unfold b64_of_bits, bits_of_b64.
+    exact (bits_of_binary_float_of_bits 52 11 (refl_equal _) (refl_equal _) (refl_equal _) z Hz).
+Qed.
+
+Lemma fp_to_bits_inj ft : Inj (=) (=) (fp_to_bits ft).
+Proof.
+  intros x y Hbits.
+  apply (f_equal (fp_of_bits ft)) in Hbits.
+  by rewrite !fp_of_to_bits in Hbits.
+Qed.
+
+#[global] Instance fp_carrier_eq_dec ft : EqDecision (fp_carrier ft).
+Proof.
+  intros x y.
+  destruct (Z.eq_dec (fp_to_bits ft x) (fp_to_bits ft y)) as [Hbits|Hbits].
+  - left. by apply fp_to_bits_inj.
+  - right. intros ->. by apply Hbits.
+Defined.
 
 (** * Expression Preliminaries *)
 
