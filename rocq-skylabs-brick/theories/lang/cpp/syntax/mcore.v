@@ -92,7 +92,11 @@ Add Printing Constructor tinst.
 
 Require Import skylabs.lang.cpp.syntax.translation_unit.
 
-(** ** Templated values *)
+(** ** Templated values
+   <<int foo()>> is an [ObjValue]
+   <<template<typename T> int foo(T)>> is a [template ObjValue] and would be represented as
+   <<Template [Ptype "T"] (Ofunction ....(Tparam "T") ...)>>
+*)
 Section template.
   #[local] Set Universe Polymorphism.
   #[local] Set Polymorphic Inductive Cumulativity.
