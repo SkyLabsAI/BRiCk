@@ -6,8 +6,8 @@ cat > dune <<EOF
 EOF
 
 cat > dune-project <<EOF
-(lang dune 3.21)
-(using rocq 0.11)
+(lang dune 3.22)
+(using rocq 0.12)
 EOF
 
 export ROCQPATH="$DUNE_SOURCEROOT/_build/install/default/lib/coq/user-contrib"

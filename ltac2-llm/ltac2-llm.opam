@@ -3,7 +3,7 @@ opam-version: "2.0"
 synopsis: "Ltac2 OpenAI bindings."
 license: "LicenseRef-LICENSE-BedRock"
 depends: [
-  "dune" {>= "3.21"}
+  "dune" {>= "3.22"}
   "rocq-stdlib"
   "ltac2-llm-plugin"
   "odoc" {with-doc}
