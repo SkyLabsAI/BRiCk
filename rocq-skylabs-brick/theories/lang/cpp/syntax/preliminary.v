@@ -89,7 +89,12 @@ Notation localname := localname.t.
 
 (** * Type Preliminaries *)
 
-(** ** Type qualifiers *)
+(** ** Type qualifiers
+    Morally, these are [bool * bool], but we compress their representation because
+    they occur frequently.
+    Users should use the projections [q_const] and [q_volatile] and the "constructor"
+    [CV] to get something that looks like the product construction.
+ *)
 Variant type_qualifiers : Set :=
 | QCV (* const volatile *)
 | QC (* const *)
@@ -115,6 +120,10 @@ Definition CV (const volatile : bool) :=
   | false , true => QV
   | false , false => QM
   end.
+Lemma q_const_CV c v : q_const (CV c v) = c.
+Proof. destruct c, v; done. Qed.
+Lemma q_volatile_CV c v : q_volatile (CV c v) = v.
+Proof. destruct c, v; done. Qed.
 
 (* [merge_tq a b] computes the join of the restrictions of [a] and [b],
    i.e. if either [a] or [b] is const/volatile, the result will be const/volatile.
