@@ -43,6 +43,6 @@
   ; cpp2v's hash in build parser/plugin/cpp2v.v.
   ; TODO: make that a separate package.
   rocq-flocq
-  coq-elpi))
+  rocq-elpi))
 
 (subst disabled)

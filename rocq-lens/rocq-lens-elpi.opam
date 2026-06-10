@@ -15,7 +15,7 @@ bug-reports: "https://github.com/SkyLabsAI/BRiCk/issues"
 depends: [
   "dune" {>= "3.22"}
   "rocq-lens"
-  "coq-elpi"
+  "rocq-elpi"
   "odoc" {with-doc}
 ]
 build: [

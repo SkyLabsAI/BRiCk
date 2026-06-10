@@ -37,6 +37,6 @@
   rocq-lens
   rocq-lens-elpi
   ltac2-extra
-  coq-elpi))
+  rocq-elpi))
 
 (subst disabled)

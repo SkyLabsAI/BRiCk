@@ -33,7 +33,7 @@ depends: [
   "rocq-skylabs-iris"
   "rocq-skylabs-cpp2v"
   "rocq-flocq"
-  "coq-elpi"
+  "rocq-elpi"
   "odoc" {with-doc}
 ]
 build: [

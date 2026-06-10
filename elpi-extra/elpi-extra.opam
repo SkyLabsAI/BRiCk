@@ -9,7 +9,7 @@ bug-reports: "https://github.com/SkyLabsAI/BRiCk/issues"
 depends: [
   "dune" {>= "3.22"}
   "rocq-stdlib"
-  "coq-elpi"
+  "rocq-elpi"
   "ltac2-extra"
   "odoc" {with-doc}
 ]
