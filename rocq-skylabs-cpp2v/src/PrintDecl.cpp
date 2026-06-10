@@ -184,12 +184,14 @@ template <typename T> struct DeclPrinter {
     }
 
     const StringRef ctor;
+    const StringRef templated_ctor;
     const Valid invalid;
     const Printer<T> print_body;
 
     DeclPrinter() = delete;
-    DeclPrinter(StringRef c, Printer<T> p, Valid v = alwaysValid)
-        : ctor{c}, invalid(v), print_body{p} {
+    DeclPrinter(StringRef c, StringRef tc, Printer<T> p,
+                Valid v = alwaysValid)
+        : ctor{c}, templated_ctor{tc}, invalid(v), print_body{p} {
         always_assert(p != nullptr);
     }
 
@@ -221,7 +223,7 @@ template <typename T> struct DeclPrinter {
                 if (!decl.isTemplated() || isSpecialized(decl))
                     return false;
 
-                guard::ctor _(print, ctor);
+                guard::ctor _(print, templated_ctor);
                 cprint.printNameComment(print, decl) << fmt::nbsp;
                 cprint.printTemplateParameters(print, decl) << fmt::nbsp;
                 cprint.printNameAsKey(print, decl) << fmt::nbsp;
@@ -238,7 +240,8 @@ template <typename T> struct DeclPrinter {
         auto printDeclWith = [&]() {
             auto cp = cprint.withDecl(&decl);
             if (auto msg = invalid(box, ctxt)) {
-                guard::ctor _(print, "Dunsupported");
+                guard::ctor _(print, print.templates() ? "Dtemplated_unsupported"
+                                                       : "Dunsupported");
                 cp.printName(print, decl) << fmt::nbsp;
                 print.str(msg);
                 return true;
@@ -249,8 +252,6 @@ template <typename T> struct DeclPrinter {
         return printDeclWith() || printSpecialization(print, decl, cprint);
     }
 };
-template <typename D>
-DeclPrinter(StringRef, Printer<D>, bool) -> DeclPrinter<D>;
 
 // Incomplete types
 namespace {
@@ -261,7 +262,7 @@ static fmt::Formatter &printType(CoqPrinter &print, const TypeDecl &decl,
     return print.output();
 }
 } // namespace
-static const DeclPrinter Dtype("Dtype", printType,
+static const DeclPrinter Dtype("Dtype", "Dtemplated_type", printType,
                                DeclPrinter<TypeDecl>::alwaysValid);
 
 // Type aliases
@@ -275,7 +276,8 @@ static fmt::Formatter &printTypedef(CoqPrinter &print,
     return cprint.printQualType(print, decl.getUnderlyingType(), loc::of(decl));
 }
 } // namespace
-static const DeclPrinter Dtypedef("Dtypedef", printTypedef,
+static const DeclPrinter Dtypedef("Dtypedef", "Dtemplated_typedef",
+                                  printTypedef,
                                   DeclPrinter<TypedefNameDecl>::alwaysValid);
 
 // Structures and unions
@@ -692,11 +694,11 @@ static const char *supportedRecord(const CXXRecordDecl &decl,
 
 } // namespace
 
-static const DeclPrinter Dstruct("Dstruct", printStruct, supportedRecord);
-static const DeclPrinter Dunion("Dunion", printUnion, supportedRecord);
-static const DeclPrinter Drecord_struct("Dstruct", printCStruct,
+static const DeclPrinter Dstruct("Dstruct", "Dtemplated_struct", printStruct, supportedRecord);
+static const DeclPrinter Dunion("Dunion", "Dtemplated_union", printUnion, supportedRecord);
+static const DeclPrinter Drecord_struct("Dstruct", "Dtemplated_struct", printCStruct,
                                         supportedRecord);
-static const DeclPrinter Drecord_union("Dunion", printCUnion, supportedRecord);
+static const DeclPrinter Drecord_union("Dunion", "Dtemplated_union", printCUnion, supportedRecord);
 
 // Functions
 namespace {
@@ -908,10 +910,13 @@ static fmt::Formatter &printDestructor(CoqPrinter &print,
 }
 } // namespace
 
-static const DeclPrinter Dfunction("Dfunction", printFunction);
-static const DeclPrinter Dmethod("Dmethod", printMethod);
-static const DeclPrinter Dconstructor("Dconstructor", printConstructor);
-static const DeclPrinter Ddestructor("Ddestructor", printDestructor);
+static const DeclPrinter Dfunction("Dfunction", "Dtemplated_function",
+                                   printFunction);
+static const DeclPrinter Dmethod("Dmethod", "Dtemplated_method", printMethod);
+static const DeclPrinter Dconstructor("Dconstructor", "Dtemplated_constructor",
+                                      printConstructor);
+static const DeclPrinter Ddestructor("Ddestructor", "Dtemplated_destructor",
+                                     printDestructor);
 
 // Variables
 namespace {
@@ -938,7 +943,8 @@ static fmt::Formatter &printVar(CoqPrinter &print, const VarDecl &decl,
         return print.output() << "global_init.NoInit";
 }
 } // namespace
-static const DeclPrinter Dvariable("Dvariable", printVar,
+static const DeclPrinter Dvariable("Dvariable", "Dtemplated_variable",
+                                   printVar,
                                    DeclPrinter<VarDecl>::alwaysValid);
 
 // Enumerations
@@ -1083,9 +1089,11 @@ static fmt::Formatter &printEnumConst(CoqPrinter &print, const EnumConst &c,
 }
 } // namespace
 
-static const DeclPrinter Denum("Denum", printEnum,
+static const DeclPrinter Denum("Denum", "Dtemplated_enum", printEnum,
                                DeclPrinter<EnumDecl>::alwaysValid);
-static const DeclPrinter Denum_constant("Denum_constant", printEnumConst,
+static const DeclPrinter Denum_constant("Denum_constant",
+                                        "Dtemplated_enum_constant",
+                                        printEnumConst,
                                         DeclPrinter<EnumConst>::alwaysValid);
 
 // Static asserts
@@ -1382,7 +1390,8 @@ public:
         templated code)).
         */
         if (auto e = decl->getAssertExpr()) {
-            guard::ctor _(print, "Dstatic_assert");
+            guard::ctor _(print, print.templates() ? "Dtemplated_static_assert"
+                                                   : "Dstatic_assert");
             /*
             TODO: We insist on a StringLiteral message (the historical
             type). Consider dropping that requirement and using
