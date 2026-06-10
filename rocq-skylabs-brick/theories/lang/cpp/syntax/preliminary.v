@@ -491,6 +491,25 @@ Definition fp_is_true (ft : float_type.t) (f : fp_carrier ft) : bool :=
   | _ => true
   end.
 
+Axiom fp_compare_zero_zero_supported : forall ft,
+  fp_supported ft = true -> fp_compare ft (fp_zero ft) (fp_zero ft) = Some Eq.
+
+Lemma fp_is_true_zero_supported ft :
+  fp_supported ft = true -> fp_is_true ft (fp_zero ft) = false.
+Proof. intros Hft. rewrite /fp_is_true fp_compare_zero_zero_supported//. Qed.
+
+Lemma fp_is_true_zero_Ffloat : fp_is_true Ffloat (fp_zero Ffloat) = false.
+Proof. apply fp_is_true_zero_supported. reflexivity. Qed.
+
+Lemma fp_is_true_zero_Fdouble : fp_is_true Fdouble (fp_zero Fdouble) = false.
+Proof. apply fp_is_true_zero_supported. reflexivity. Qed.
+
+Lemma fp_compare_zero_zero_Ffloat : fp_compare Ffloat (fp_zero Ffloat) (fp_zero Ffloat) = Some Eq.
+Proof. apply fp_compare_zero_zero_supported. reflexivity. Qed.
+
+Lemma fp_compare_zero_zero_Fdouble : fp_compare Fdouble (fp_zero Fdouble) (fp_zero Fdouble) = Some Eq.
+Proof. apply fp_compare_zero_zero_supported. reflexivity. Qed.
+
 Lemma fp_of_to_bits ft (f : fp_carrier ft) : fp_of_bits ft (fp_to_bits ft f) = f.
 Proof.
   destruct ft; simpl in *; try by destruct f.

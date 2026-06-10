@@ -103,6 +103,11 @@ Section operator_axioms.
 Axiom eval_not_bool : forall a,
     eval_unop Unot Tbool Tbool (Vbool a) (Vbool (negb a)).
 
+Axiom eval_not_float : forall ft (a : fp_carrier ft),
+    fp_supported ft = true ->
+    eval_unop Unot (Tfloat_ ft) Tbool
+              (Vfloat_ ft a) (Vbool (negb (fp_is_true ft a))).
+
 (* The builtin unary `~` operator computes the bitwise negation of the operator
    https://eel.is/c++draft/expr.unary.op#10
 
@@ -404,6 +409,22 @@ Definition fp_cmp_result (c : option comparison) (bo : BinOp) : bool :=
   | Bge => if c is Some (Gt | Eq) then true else false
   | _ => false
   end.
+
+Lemma fp_cmp_result_zero_eq_Ffloat :
+  fp_cmp_result (fp_compare Ffloat (fp_zero Ffloat) (fp_zero Ffloat)) Beq = true.
+Proof. by rewrite fp_compare_zero_zero_Ffloat. Qed.
+
+Lemma fp_cmp_result_zero_eq_Fdouble :
+  fp_cmp_result (fp_compare Fdouble (fp_zero Fdouble) (fp_zero Fdouble)) Beq = true.
+Proof. by rewrite fp_compare_zero_zero_Fdouble. Qed.
+
+Lemma fp_cmp_result_zero_neq_Ffloat :
+  fp_cmp_result (fp_compare Ffloat (fp_zero Ffloat) (fp_zero Ffloat)) Bneq = false.
+Proof. by rewrite fp_compare_zero_zero_Ffloat. Qed.
+
+Lemma fp_cmp_result_zero_neq_Fdouble :
+  fp_cmp_result (fp_compare Fdouble (fp_zero Fdouble) (fp_zero Fdouble)) Bneq = false.
+Proof. by rewrite fp_compare_zero_zero_Fdouble. Qed.
 
 Axiom eval_cmp_float : forall bo ft (a b : fp_carrier ft),
     (bo = Beq \/ bo = Bneq \/ bo = Blt \/ bo = Ble \/ bo = Bgt \/ bo = Bge) ->

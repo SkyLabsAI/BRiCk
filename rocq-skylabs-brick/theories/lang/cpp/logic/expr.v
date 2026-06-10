@@ -798,6 +798,21 @@ Module Type Expr.
            Exists v', [| conv_int tu (type_of e) t v v' |] ** Q v' free)
         |-- wp_operand (Ecast (Cintegral t) e) Q.
 
+    Axiom wp_operand_cast_float : forall e t Q,
+        wp_operand e (fun v free =>
+           Exists v', [| conv_float tu (type_of e) t v v' |] ** Q v' free)
+        |-- wp_operand (Ecast (Cfloat t) e) Q.
+
+    Axiom wp_operand_cast_int2float : forall e t Q,
+        wp_operand e (fun v free =>
+           Exists v', [| conv_float tu (type_of e) t v v' |] ** Q v' free)
+        |-- wp_operand (Ecast (Cint2float t) e) Q.
+
+    Axiom wp_operand_cast_float2int : forall e t Q,
+        wp_operand e (fun v free =>
+           Exists v', [| conv_float tu (type_of e) t v v' |] ** Q v' free)
+        |-- wp_operand (Ecast (Cfloat2int t) e) Q.
+
     Axiom wp_operand_cast_null : forall e ty Q,
         is_pointer ty ->
             wp_discard e (Q (Vptr nullptr)) (* note: [has_type v Tnullptr |-- has_type v (Tptr ty)] *)
