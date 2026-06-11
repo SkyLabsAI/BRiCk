@@ -20,6 +20,7 @@ Require Export skylabs.prelude.gmap.
 Require Export skylabs.prelude.finite.
 
 Require Export skylabs.prelude.list.
+Require Export skylabs.prelude.list_prop.
 Require Export skylabs.prelude.list_numbers.
 
 Require Export skylabs.prelude.numbers.
