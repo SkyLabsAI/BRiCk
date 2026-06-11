@@ -33,3 +33,5 @@ Succeed Elpi Query lp:{{ det (list.of_term {{ my_list }} badof-nondet L), check 
 
 Fail Elpi Query lp:{{ list.as_term [1] {{ N }} badas-fail T }}.
 Succeed Elpi Query lp:{{ det (list.as_term [42] {{ N }} badas-nondet T), check {{ [1] }} T }}.
+
+Succeed Elpi Query lp:{{ det (list.uniq-acc [1, 2, 1, 3] [] L), check [3, 2, 1] L }}.

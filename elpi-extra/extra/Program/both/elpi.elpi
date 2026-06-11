@@ -6,17 +6,39 @@
 
 /** * Elpi utilities */
 
+namespace std {
+
+  pred assert-err! i:prop, i:prop.
+  pred guard! i:prop, i:prop.
+
+}
+
+pred guard! i:prop, i:prop.
+
 namespace elpi {
 
   pred with_open_in! i:string, i:(in_stream -> prop).
   pred with_open_out! i:string, i:(out_stream -> prop).
   pred with_open_append! i:string, i:(out_stream -> prop).
 
+  pred log i:string, i:string.
+  pred log-line i:string, i:string.
+
 }
 
 /*
 Implementation
 */
+
+namespace std {
+
+  assert-err! Cond Err :- (Cond ; Err), !.
+
+  guard! Guard X :- if (Guard) (X) (true).
+
+}
+
+guard! Guard X :- std.guard! Guard X.
 
 namespace elpi {
 
@@ -37,5 +59,15 @@ namespace elpi {
     if (P S) (K = true) (K = fail),
     close_in S,
     K,
+  ].
+
+  log Filename Msg :- with_open_append! Filename (Hdl\ std.do! [
+    output Hdl Msg,
+    flush Hdl,
+  ]).
+
+  log-line Filename Msg :- std.do! [
+    Line is Msg ^ "\n",
+    log Filename Line,
   ].
 }

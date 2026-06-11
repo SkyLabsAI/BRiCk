@@ -29,3 +29,5 @@ Query assignments:
   app [global (indc «nil»), global (indt «N»)]]
   X5_ = global (indt «N»)
   X6_ = global (indt «N»)
+Query assignments:
+  L = [3, 2, 1]

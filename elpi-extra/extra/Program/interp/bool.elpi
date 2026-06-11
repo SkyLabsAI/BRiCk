@@ -9,6 +9,7 @@
 namespace bool {
 
   pred of_term i:term o:bool.
+  pred to_term i:bool o:term.
 
   /*
   Implementation
@@ -16,4 +17,7 @@ namespace bool {
 
   of_term {{ lib:core.bool.true }} tt.
   of_term {{ lib:core.bool.false }} ff.
+
+  to_term tt {{ lib:core.bool.true }}.
+  to_term ff {{ lib:core.bool.false }}.
 }

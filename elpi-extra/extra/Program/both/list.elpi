@@ -15,6 +15,7 @@ namespace list {
   pred app2! i:list A, i:list B, i:(pred i:A, i:B).
 
   pred uniq i:list A, o:list A.	% The input should be ground
+  pred uniq-acc i:list A, i:list A, o:list A.
 
   func partition list A, (func A) -> list A, list A.
 
@@ -45,6 +46,10 @@ namespace list {
   uniq.set [] _ [].
   uniq.set [X|L] S L' :- std.set.mem X S, !, uniq.set L S L'.
   uniq.set [X|L] S [X|L'] :- uniq.set L {std.set.add X S} L'.
+
+  uniq-acc [] L L.
+  uniq-acc [X|L] L1 L2 :-
+    if (std.mem! L1 X) (uniq-acc L L1 L2) (uniq-acc L [X|L1] L2).
 
   partition [] _ [] [].
   partition [X|L] P T F :-
