@@ -260,6 +260,10 @@ Proof. by rewrite /SizeOf TCEq_eq=><-. Qed.
   TCEq (char_type.bytesN ct) n -> SizeOf (Tchar_ ct) n.
 Proof. by rewrite /SizeOf TCEq_eq=><-. Qed.
 
+#[global] Instance float_size_of {σ : genv} ft n :
+  TCEq (float_type.bytesN ft) n -> SizeOf (Tfloat_ ft) n.
+Proof. by rewrite /SizeOf TCEq_eq=><-. Qed.
+
 #[global] Instance qualified_size_of {σ : genv} qual ty n :
   SizeOf ty n -> SizeOf (Tqualified qual ty) n.
 Proof. done. Qed.

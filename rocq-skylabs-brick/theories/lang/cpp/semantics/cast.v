@@ -259,7 +259,14 @@ Inductive conv_float {σ : genv} (tu : translation_unit) : type -> type -> val -
     is_float_to_integral_target ty = true ->
     fp_to_Z ft f = Some z ->
     has_type_prop (Vint z) ty ->
-    conv_float tu (Tfloat_ ft) ty (Vfloat_ ft f) (Vint z).
+    conv_float tu (Tfloat_ ft) ty (Vfloat_ ft f) (Vint z)
+| ConvFloatRepresentation ty ty' rty rty' v v' :
+    representation_type tu ty = rty ->
+    representation_type tu ty' = rty' ->
+    conv_float tu rty rty' v v' ->
+    has_type_prop v ty ->
+    has_type_prop v' ty' ->
+    conv_float tu ty ty' v v'.
 
 Lemma conv_float_well_typed : forall `{Hmod : tu ⊧ σ} ty ty' v v',
     conv_float tu ty ty' v v' ->
@@ -274,6 +281,7 @@ Proof.
   - split; apply has_float_type; reflexivity.
   - split; [assumption|apply has_float_type; assumption].
   - split; [apply has_float_type; assumption|assumption].
+  - split; assumption.
 Qed.
 
 Lemma conv_float_id : forall {σ : genv} tu ft (f : fp_carrier ft),

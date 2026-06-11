@@ -65,6 +65,41 @@ Axiom raw_byte_of_int_eq : ∀ {σ : genv} sz x rs,
   raw_bytes_of_val σ (Tnum sz Unsigned) (Vint x) rs <->
   ∃ l, decodes_uint l x /\ raw_int_byte <$> l = rs /\ length l = N.to_nat (int_rank.bytesN sz).
 
+Lemma raw_bytes_of_val_float_intro {σ : genv} ft (f : fp_carrier ft) :
+  fp_supported ft = true ->
+  raw_bytes_of_val σ (Tfloat_ ft) (Vfloat_ ft f) (fp_raw_bytes σ ft f).
+Proof.
+  intros Hsupp.
+  apply (proj2 (raw_bytes_of_val_float σ ft f _ Hsupp)).
+  reflexivity.
+Qed.
+
+Lemma raw_bytes_of_val_float_elim {σ : genv} ft (f : fp_carrier ft) rs :
+  fp_supported ft = true ->
+  raw_bytes_of_val σ (Tfloat_ ft) (Vfloat_ ft f) rs ->
+  rs = fp_raw_bytes σ ft f.
+Proof. intros Hsupp. apply (proj1 (raw_bytes_of_val_float σ ft f rs Hsupp)). Qed.
+
+Lemma fp_to_bits_has_type_unsigned {σ : genv} sz ft (f : fp_carrier ft) :
+  int_rank.bitsize sz = fp_bitsize ft ->
+  has_type_prop (Vint (fp_to_bits ft f)) (Tnum sz Unsigned).
+Proof.
+  intros Hbits.
+  rewrite -has_int_type /bitsize.bound /bitsize.min_val /bitsize.max_val.
+  pose proof (fp_to_bits_range ft f) as Hbounded.
+  destruct sz, ft; simpl in *; try discriminate; lia.
+Qed.
+
+(** Reverse raw-byte reinterpretation is axiomatized at this abstraction level:
+    [raw_byte] deliberately does not expose an injective byte-to-[N] view, so
+    the existing integer raw-byte characterization is not enough to reconstruct
+    the byte list needed by [fp_raw_bytes]. *)
+Axiom raw_bytes_of_val_unsigned_bits_to_float : forall {σ : genv} sz ft z rs,
+  fp_supported ft = true ->
+  int_rank.bitsize sz = fp_bitsize ft ->
+  raw_bytes_of_val σ (Tnum sz Unsigned) (Vint z) rs ->
+  raw_bytes_of_val σ (Tfloat_ ft) (Vfloat_ ft (fp_of_bits ft z)) rs.
+
 Section with_Σ.
   Context `{Σ : cpp_logic} {σ : genv}.
 
@@ -301,6 +336,24 @@ Module Endian.
       intros H; apply (raw_bytes_of_val_to_end_raw_int_byte Little) in H.
       rewrite /to_end/= in H.
       by destruct sz.
+    Qed.
+
+    Lemma raw_bytes_of_val_float_to_unsigned_bits sz ft (f : fp_carrier ft) :
+      fp_supported ft = true ->
+      int_rank.bitsize sz = fp_bitsize ft ->
+      raw_bytes_of_val σ (Tnum sz Unsigned) (Vint (fp_to_bits ft f)) (fp_raw_bytes σ ft f).
+    Proof.
+      intros Hsupp Hbits.
+      rewrite raw_byte_of_int_eq.
+      exists (_Z_to_bytes (N.to_nat (float_type.bytesN ft)) (genv_byte_order σ) Unsigned (fp_to_bits ft f)).
+      split.
+      - replace (N.to_nat (float_type.bytesN ft)) with (int_rank.bytesNat sz)
+          by (destruct sz, ft; simpl in *; try discriminate; reflexivity).
+        eapply (decodes_Z_to_bytes_Unsigned sz); [reflexivity|].
+        apply fp_to_bits_has_type_unsigned. exact Hbits.
+      - split; first reflexivity.
+        rewrite _Z_to_bytes_length.
+        destruct sz, ft; simpl in *; try discriminate; reflexivity.
     Qed.
   End with_Σ.
 End Endian.

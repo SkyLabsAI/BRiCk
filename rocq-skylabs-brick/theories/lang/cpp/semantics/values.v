@@ -11,6 +11,7 @@ Require Import stdpp.gmap.
 Require Import skylabs.prelude.base.
 Require Import skylabs.prelude.option.
 Require Import skylabs.prelude.numbers.
+Require Import skylabs.prelude.arith.z_to_bytes.
 
 Require Import skylabs.lang.cpp.reserved_notation. (* TODO *)
 Require Import skylabs.prelude.arith.operator.
@@ -236,6 +237,46 @@ Module Type RAW_BYTES_VAL
 
   Axiom raw_bytes_of_val_sizeof : forall {σ ty v rs},
       raw_bytes_of_val σ ty v rs -> size_of σ ty = Some (N.of_nat $ length rs).
+
+  Definition fp_raw_bytes (σ : genv) (ft : float_type.t) (f : fp_carrier ft) : list raw_byte :=
+    raw_int_byte <$> _Z_to_bytes (N.to_nat (float_type.bytesN ft))
+      (genv_byte_order σ) Unsigned (fp_to_bits ft f).
+
+  Lemma fp_raw_bytes_length σ ft (f : fp_carrier ft) :
+      length (fp_raw_bytes σ ft f) = N.to_nat (float_type.bytesN ft).
+  Proof. by rewrite /fp_raw_bytes length_fmap _Z_to_bytes_length. Qed.
+
+  Axiom raw_bytes_of_val_float : forall σ ft (f : fp_carrier ft) rs,
+      fp_supported ft = true ->
+      raw_bytes_of_val σ (Tfloat_ ft) (Vfloat_ ft f) rs <->
+      rs = fp_raw_bytes σ ft f.
+
+  Axiom raw_bytes_of_val_float_unique_val : forall {σ ft f f' rs},
+      fp_supported ft = true ->
+      raw_bytes_of_val σ (Tfloat_ ft) (Vfloat_ ft f) rs ->
+      raw_bytes_of_val σ (Tfloat_ ft) (Vfloat_ ft f') rs ->
+      f = f'.
+
+  Lemma raw_bytes_of_val_float_length {σ ft f rs} :
+      fp_supported ft = true ->
+      raw_bytes_of_val σ (Tfloat_ ft) (Vfloat_ ft f) rs ->
+      length rs = N.to_nat (float_type.bytesN ft).
+  Proof.
+    intros Hsupp Hraw.
+    rewrite (proj1 (raw_bytes_of_val_float σ ft f rs Hsupp) Hraw).
+    apply fp_raw_bytes_length.
+  Qed.
+
+  Lemma raw_bytes_of_val_float_undef_length {σ ft rs} :
+      raw_bytes_of_val σ (Tfloat_ ft) Vundef rs ->
+      length rs = N.to_nat (float_type.bytesN ft).
+  Proof.
+    move => /raw_bytes_of_val_sizeof /= Hsz.
+    inversion Hsz as [Hlen].
+    apply (f_equal N.to_nat) in Hlen.
+    rewrite Nat2N.id in Hlen.
+    exact (eq_sym Hlen).
+  Qed.
 
   (* TODO Maybe add?
     Axiom raw_bytes_of_val_int : forall σ sz z rs,

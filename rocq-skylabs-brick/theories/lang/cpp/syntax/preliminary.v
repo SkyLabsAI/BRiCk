@@ -398,7 +398,16 @@ End float_type.
     [Fdouble].  Other C++ floating widths keep an opaque [unit] payload so the
     syntax/value constructors remain total over [float_type.t], while support
     checking and semantics can reject them explicitly until a concrete format is
-    chosen. *)
+    chosen.
+
+    Portable NaN policy: arithmetic and narrowing/widening conversions use
+    nearest-even rounding and canonicalize NaN results to [fp_default_nan]
+    ([0x7fc00000] for binary32 and [0x7ff8000000000000] for binary64).  The
+    raw-bit interface [fp_of_bits]/[fp_to_bits] is intentionally payload
+    preserving, so memory/raw-byte reasoning can retain arbitrary NaN payloads
+    even though arithmetic results are canonicalized.  We do not model dynamic
+    floating-point environment state, traps, fast-math rewrites, or extended
+    precision. *)
 Definition fp_supported (ft : float_type.t) : bool :=
   match ft with
   | Ffloat | Fdouble => true
