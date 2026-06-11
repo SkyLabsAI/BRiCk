@@ -210,29 +210,89 @@ Section conv_int.
   Qed.
 End conv_int.
 
+Definition is_any_floating_type (ty : type) : bool :=
+  match drop_qualifiers ty with
+  | Tfloat_ _ => true
+  | _ => false
+  end.
+
 Definition is_floating_type (ty : type) : bool :=
   match drop_qualifiers ty with
   | Tfloat_ ft => fp_supported ft
   | _ => false
   end.
 
-(** Floating conversions are intentionally exposed as a relation: the precise
-    binary32/binary64 operations live in the Flocq wrapper, while
-    float/integer range definedness and future target policy are side
-    conditions of the relation. *)
-Parameter conv_float : forall {σ : genv}, translation_unit -> type -> type -> val -> val -> Prop.
+Definition floating_type_supported_when_present (ty : type) : bool :=
+  if is_any_floating_type ty then is_floating_type ty else true.
 
-Axiom conv_float_well_typed : forall `{Hmod : tu ⊧ σ} ty ty' v v',
+Definition is_nonfloat_arithmetic (ty : type) : bool :=
+  is_arithmetic ty && negb (is_any_floating_type ty).
+
+Definition is_float_to_integral_target (ty : type) : bool :=
+  match drop_qualifiers ty with
+  | Tbool => false
+  | _ => is_nonfloat_arithmetic ty
+  end.
+
+(** Floating conversions for the currently operational binary32/binary64
+    fragment.  Integer conversions are intentionally scoped to runtime
+    [Vint] sources/results; character payload conversions remain outside this
+    first concrete layer. *)
+Inductive conv_float {σ : genv} (tu : translation_unit) : type -> type -> val -> val -> Prop :=
+| ConvFloatId ft (f : fp_carrier ft) :
+    fp_supported ft = true ->
+    conv_float tu (Tfloat_ ft) (Tfloat_ ft) (Vfloat_ ft f) (Vfloat_ ft f)
+| ConvFloatToBool ft (f : fp_carrier ft) :
+    fp_supported ft = true ->
+    conv_float tu (Tfloat_ ft) Tbool (Vfloat_ ft f) (Vbool (fp_is_true ft f))
+| ConvFloatFloatToDouble (f : fp_carrier Ffloat) :
+    conv_float tu Tfloat Tdouble (Vfloat_ Ffloat f) (Vfloat_ Fdouble (fp_float_to_double f))
+| ConvFloatDoubleToFloat (f : fp_carrier Fdouble) :
+    conv_float tu Tdouble Tfloat (Vfloat_ Fdouble f) (Vfloat_ Ffloat (fp_double_to_float f))
+| ConvFloatIntToFloat ty ft z :
+    fp_supported ft = true ->
+    is_nonfloat_arithmetic ty = true ->
+    has_type_prop (Vint z) ty ->
+    conv_float tu ty (Tfloat_ ft) (Vint z) (Vfloat_ ft (fp_of_Z ft z))
+| ConvFloatToInt ft ty (f : fp_carrier ft) z :
+    fp_supported ft = true ->
+    is_float_to_integral_target ty = true ->
+    fp_to_Z ft f = Some z ->
+    has_type_prop (Vint z) ty ->
+    conv_float tu (Tfloat_ ft) ty (Vfloat_ ft f) (Vint z).
+
+Lemma conv_float_well_typed : forall `{Hmod : tu ⊧ σ} ty ty' v v',
     conv_float tu ty ty' v v' ->
     has_type_prop v ty /\ has_type_prop v' ty'.
+Proof.
+  intros. inversion H; subst.
+  - split; apply has_float_type; assumption.
+  - split.
+    + apply has_float_type; assumption.
+    + rewrite has_type_prop_bool. eexists. reflexivity.
+  - split; apply has_float_type; reflexivity.
+  - split; apply has_float_type; reflexivity.
+  - split; [assumption|apply has_float_type; assumption].
+  - split; [apply has_float_type; assumption|assumption].
+Qed.
 
-Axiom conv_float_id : forall {σ : genv} tu ft (f : fp_carrier ft),
+Lemma conv_float_id : forall {σ : genv} tu ft (f : fp_carrier ft),
     fp_supported ft = true ->
     conv_float tu (Tfloat_ ft) (Tfloat_ ft) (Vfloat_ ft f) (Vfloat_ ft f).
+Proof. constructor. assumption. Qed.
 
-Axiom conv_float_to_bool : forall {σ : genv} tu ft (f : fp_carrier ft),
+Lemma conv_float_to_bool : forall {σ : genv} tu ft (f : fp_carrier ft),
     fp_supported ft = true ->
     conv_float tu (Tfloat_ ft) Tbool (Vfloat_ ft f) (Vbool (fp_is_true ft f)).
+Proof. constructor. assumption. Qed.
+
+Lemma conv_float_widen : forall {σ : genv} tu (f : fp_carrier Ffloat),
+    conv_float tu Tfloat Tdouble (Vfloat_ Ffloat f) (Vfloat_ Fdouble (fp_float_to_double f)).
+Proof. constructor. Qed.
+
+Lemma conv_float_narrow : forall {σ : genv} tu (f : fp_carrier Fdouble),
+    conv_float tu Tdouble Tfloat (Vfloat_ Fdouble f) (Vfloat_ Ffloat (fp_double_to_float f)).
+Proof. constructor. Qed.
 
 (* This (effectively) lifts [conv_int] to arbitrary types.
 
@@ -245,8 +305,10 @@ Definition convert {σ : genv} (tu : translation_unit) (from to : Rtype) (v : va
     (* TODO: this conservative *)
     has_type_prop v from /\ has_type_prop v' to /\ v' = v
   else if is_arithmetic from && is_arithmetic to then
-    if is_floating_type from || is_floating_type to then
-      conv_float tu from to v v'
+    if is_any_floating_type from || is_any_floating_type to then
+      if floating_type_supported_when_present from && floating_type_supported_when_present to then
+        conv_float tu from to v v'
+      else False
     else
       conv_int tu from to v v'
   else False.

@@ -6,6 +6,8 @@
 
 Require Import skylabs.prelude.base.
 Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.types.
+Require Import skylabs.lang.cpp.syntax.typing.
 Require Import skylabs.lang.cpp.syntax.translation_unit.
 Require Import skylabs.lang.cpp.syntax.templates.
 
@@ -20,6 +22,84 @@ Section with_monad.
   #[local] Infix "<+>" := op (at level 30).
   #[local] Notation opt f := (from_option f OK).
   #[local] Notation lst f xs := (List.concat (List.map f xs)).
+
+  Definition check_float_width (ft : float_type.t) : M :=
+    if fp_supported ft then OK else FAIL "unsupported floating width".
+
+  Definition as_float_type (t : type) : option float_type.t :=
+    match drop_qualifiers t with
+    | Tfloat_ ft => Some ft
+    | _ => None
+    end.
+
+  Definition is_float_type (t : type) : bool :=
+    if as_float_type t is Some _ then true else false.
+
+  Definition check_float_type_if_present (t : type) : M :=
+    match as_float_type t with
+    | Some ft => check_float_width ft
+    | None => OK
+    end.
+
+  Definition check_float_cast_target (t : type) : M :=
+    match as_float_type t with
+    | Some ft => check_float_width ft
+    | None => FAIL "expected floating cast target"
+    end.
+
+  Definition check_float_cast_source (t : type) : M :=
+    match as_float_type t with
+    | Some ft => check_float_width ft
+    | None => FAIL "expected floating cast source"
+    end.
+
+  Definition check_unop (op : UnOp) (argT resT : type) : M :=
+    (match op with
+     | Uunsupported msg => FAIL msg
+     | _ => OK
+     end) <+>
+    if is_float_type argT || is_float_type resT then
+      check_float_type_if_present argT <+> check_float_type_if_present resT <+>
+      match op with
+      | Uplus | Uminus | Unot => OK
+      | Ubnot => FAIL "unsupported floating unary operator"
+      | Uunsupported _ => OK
+      end
+    else OK.
+
+  Definition check_binop (op : BinOp) (lhsT rhsT resT : type) : M :=
+    (match op with
+     | Bunsupported msg => FAIL msg
+     | _ => OK
+     end) <+>
+    if is_float_type lhsT || is_float_type rhsT || is_float_type resT then
+      check_float_type_if_present lhsT <+>
+      check_float_type_if_present rhsT <+>
+      check_float_type_if_present resT <+>
+      if is_pointer lhsT || is_pointer rhsT then
+        FAIL "unsupported pointer/floating operator"
+      else
+        match op with
+        | Badd | Bsub | Bmul | Bdiv
+        | Beq | Bneq | Blt | Ble | Bgt | Bge => OK
+        | Bmod | Band | Bor | Bxor | Bshl | Bshr | Bcmp
+        | Bdotp | Bdotip => FAIL "unsupported floating binary operator"
+        | Bunsupported _ => OK
+        end
+    else OK.
+
+  Definition check_float_cast_expr (c : Cast) (srcT : type) : M :=
+    match c with
+    | Cfloat t =>
+        check_float_cast_source srcT <+> check_float_cast_target t
+    | Cint2float t =>
+        check_float_cast_target t <+>
+        if is_float_type srcT then FAIL "invalid floating cast source" else OK
+    | Cfloat2int t =>
+        check_float_cast_source srcT <+>
+        if is_float_type t then FAIL "invalid floating cast target" else OK
+    | _ => OK
+    end.
 
   Definition atomic_name (type : type -> M) (an : atomic_name) : M :=
     match an with
@@ -81,7 +161,8 @@ Section with_monad.
     | Tresult_member t _ => type t
     | Tauto => OK
     | Tptr t | Tref t | Trv_ref t | Tarray t _ | Tincomplete_array t => type t
-    | Tnum _ _ | Tchar_ _ | Tvoid | Tbool | Tfloat_ _ | Tnullptr => OK
+    | Tnum _ _ | Tchar_ _ | Tvoid | Tbool | Tnullptr => OK
+    | Tfloat_ ft => check_float_width ft
     | Tvariable_array t e => type t <+> expr e
     | Tfunction (FunctionType t ts) => type t <+> lst type ts
     | Tmember_pointer t1 t2 => type t1 <+> type t2
@@ -98,10 +179,10 @@ Section with_monad.
     | Eglobal n t | Eglobal_member n t => name n <+> type t
     | Echar _ t | Estring _ t | Eint _ t => type t
     | Efloat ft _ t =>
-        type t <+> if fp_supported ft then OK else FAIL "unsupported floating width"
+        type t <+> check_float_width ft <+> check_float_type_if_present t
     | Ebool _ => OK
-    | Eunop _ e t => expr e <+> type t
-    | Ebinop _ e1 e2 t => expr e1 <+> type t
+    | Eunop op e t => expr e <+> type t <+> check_unop op (type_of e) t
+    | Ebinop op e1 e2 t => expr e1 <+> expr e2 <+> type t <+> check_binop op (type_of e1) (type_of e2) t
     | Ederef e t => expr e <+> type t
     | Eaddrof e => expr e
     | Esubscript e1 e2 t => expr e1 <+> expr e2 <+> type t
@@ -112,8 +193,10 @@ Section with_monad.
         | inl t => type t
         end <+> type t
     | Eoffsetof t1 _ t2 => type t1 <+> type t2
-    | Eassign e1 e2 t | Eassign_op _ e1 e2 t => expr e1 <+> expr e2 <+> type t
-    | Epreinc e t | Epostinc e t | Epredec e t | Epostdec e t => expr e <+> type t
+    | Eassign e1 e2 t => expr e1 <+> expr e2 <+> type t
+    | Eassign_op op e1 e2 t => expr e1 <+> expr e2 <+> type t <+> check_binop op (type_of e1) (type_of e2) t
+    | Epreinc e t | Epostinc e t | Epredec e t | Epostdec e t =>
+        expr e <+> type t <+> if is_float_type (type_of e) || is_float_type t then FAIL "unsupported floating increment/decrement" else OK
     | Eseqand e1 e2 | Eseqor e1 e2 | Ecomma e1 e2 => expr e1 <+> expr e2
     | Ecall e es => expr e <+> lst expr es
     | Eoperator_call _ _ es => lst expr es
@@ -129,7 +212,7 @@ Section with_monad.
         name n <+> type t <+> lst expr es <+> type t1 <+> opt expr oe1 <+> opt expr oe2
     | Edelete _ n e t => name n <+> expr e <+> type t
     | Eexplicit_cast _ t e => type t <+> expr e
-    | Ecast c e => cast c <+> expr e
+    | Ecast c e => cast c <+> expr e <+> check_float_cast_expr c (type_of e)
     | Emember _ e an _ t => expr e <+> atomic_name type an <+> type t
     | Estmt s t => stmt s <+> type t
     | Enull => OK
@@ -202,7 +285,8 @@ Section with_monad.
     | Cnull2ptr t | Cnull2memberptr t
     | Cbuiltin2fun t | Cctor t | Cdynamic t => type t
     | Cderived2base ts t | Cbase2derived ts t => lst type ts <+> type t
-    | Cfloat t | Cint2float t | Cfloat2int t => type t
+    | Cfloat t | Cint2float t => check_float_cast_target t
+    | Cfloat2int t => type t <+> if is_float_type t then FAIL "invalid floating cast target" else OK
     | Cl2r_bitcast _ => FAIL "l2r_bitcast"
     | _ => OK
     end.

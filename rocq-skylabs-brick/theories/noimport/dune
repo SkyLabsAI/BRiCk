@@ -5,6 +5,7 @@
   skylabs.prelude
   skylabs.iris.extra
   skylabs.lang.cpp
+  Flocq
   iris
   stdpp
   ; transitive dependencies

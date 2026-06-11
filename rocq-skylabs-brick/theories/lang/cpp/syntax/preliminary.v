@@ -478,6 +478,52 @@ Definition fp_sub := fp_binop b32_minus b64_minus.
 Definition fp_mul := fp_binop b32_mult b64_mult.
 Definition fp_div := fp_binop b32_div b64_div.
 
+Definition b32_of_Z (z : Z) : binary32 :=
+  Binary.binary_normalize 24 128
+    ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+    mode_NE z 0 false.
+
+Definition b64_of_Z (z : Z) : binary64 :=
+  Binary.binary_normalize 53 1024
+    ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+    mode_NE z 0 false.
+
+Definition fp_of_Z (ft : float_type.t) : Z -> fp_carrier ft :=
+  match ft return Z -> fp_carrier ft with
+  | Ffloat => b32_of_Z
+  | Fdouble => b64_of_Z
+  | Ffloat16 | Flongdouble | Ffloat128 => fun _ => tt
+  end.
+
+Definition fp_float_to_double (f : fp_carrier Ffloat) : fp_carrier Fdouble :=
+  match f with
+  | Binary.B754_zero _ _ s => Binary.B754_zero 53 1024 s
+  | Binary.B754_infinity _ _ s => Binary.B754_infinity 53 1024 s
+  | Binary.B754_nan _ _ _ _ _ => fp_default_nan Fdouble
+  | Binary.B754_finite _ _ s m e _ =>
+      Binary.binary_normalize 53 1024
+        ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+        mode_NE (if s then Z.opp (Z.pos m) else Z.pos m) e s
+  end.
+
+Definition fp_double_to_float (f : fp_carrier Fdouble) : fp_carrier Ffloat :=
+  match f with
+  | Binary.B754_zero _ _ s => Binary.B754_zero 24 128 s
+  | Binary.B754_infinity _ _ s => Binary.B754_infinity 24 128 s
+  | Binary.B754_nan _ _ _ _ _ => fp_default_nan Ffloat
+  | Binary.B754_finite _ _ s m e _ =>
+      Binary.binary_normalize 24 128
+        ltac:(vm_compute; reflexivity) ltac:(vm_compute; reflexivity)
+        mode_NE (if s then Z.opp (Z.pos m) else Z.pos m) e s
+  end.
+
+Definition fp_to_Z (ft : float_type.t) : fp_carrier ft -> option Z :=
+  match ft return fp_carrier ft -> option Z with
+  | Ffloat => fun f => if Binary.is_finite 24 128 f then Some (Binary.Btrunc 24 128 f) else None
+  | Fdouble => fun f => if Binary.is_finite 53 1024 f then Some (Binary.Btrunc 53 1024 f) else None
+  | Ffloat16 | Flongdouble | Ffloat128 => fun _ => None
+  end.
+
 Definition fp_compare (ft : float_type.t) : fp_carrier ft -> fp_carrier ft -> option comparison :=
   match ft return fp_carrier ft -> fp_carrier ft -> option comparison with
   | Ffloat => b32_compare
@@ -491,8 +537,11 @@ Definition fp_is_true (ft : float_type.t) (f : fp_carrier ft) : bool :=
   | _ => true
   end.
 
-Axiom fp_compare_zero_zero_supported : forall ft,
+Lemma fp_compare_zero_zero_supported : forall ft,
   fp_supported ft = true -> fp_compare ft (fp_zero ft) (fp_zero ft) = Some Eq.
+Proof.
+  destruct ft; simpl; try discriminate; vm_compute; reflexivity.
+Qed.
 
 Lemma fp_is_true_zero_supported ft :
   fp_supported ft = true -> fp_is_true ft (fp_zero ft) = false.
@@ -509,6 +558,64 @@ Proof. apply fp_compare_zero_zero_supported. reflexivity. Qed.
 
 Lemma fp_compare_zero_zero_Fdouble : fp_compare Fdouble (fp_zero Fdouble) (fp_zero Fdouble) = Some Eq.
 Proof. apply fp_compare_zero_zero_supported. reflexivity. Qed.
+
+Lemma fp_is_true_neg_zero_Ffloat : fp_is_true Ffloat (fp_of_bits Ffloat 2147483648%Z) = false.
+Proof. vm_compute. reflexivity. Qed.
+
+Lemma fp_is_true_neg_zero_Fdouble : fp_is_true Fdouble (fp_of_bits Fdouble 9223372036854775808%Z) = false.
+Proof. vm_compute. reflexivity. Qed.
+
+Lemma fp_to_bits_default_nan_Ffloat :
+  fp_to_bits Ffloat (fp_default_nan Ffloat) = 2143289344%Z.
+Proof. vm_compute. reflexivity. Qed.
+
+Lemma fp_to_bits_default_nan_Fdouble :
+  fp_to_bits Fdouble (fp_default_nan Fdouble) = 9221120237041090560%Z.
+Proof. vm_compute. reflexivity. Qed.
+
+Lemma fp_canonicalize_nan_result ft (f : fp_carrier ft) :
+  fp_is_nan ft (fp_canonicalize_nan ft f) = true ->
+  fp_canonicalize_nan ft f = fp_default_nan ft.
+Proof.
+  rewrite /fp_canonicalize_nan.
+  destruct (fp_is_nan ft f) eqn:Hnan; first done.
+  intros H; congruence.
+Qed.
+
+Lemma fp_neg_canonicalizes_nan ft (f : fp_carrier ft) :
+  fp_is_nan ft (fp_neg ft f) = true -> fp_neg ft f = fp_default_nan ft.
+Proof.
+  destruct ft; cbn [fp_neg fp_default_nan]; try by destruct f.
+  all: apply fp_canonicalize_nan_result.
+Qed.
+
+Lemma fp_add_canonicalizes_nan ft (x y : fp_carrier ft) :
+  fp_is_nan ft (fp_add ft x y) = true -> fp_add ft x y = fp_default_nan ft.
+Proof.
+  destruct ft; cbn [fp_add fp_binop fp_default_nan]; try by destruct x, y.
+  all: apply fp_canonicalize_nan_result.
+Qed.
+
+Lemma fp_sub_canonicalizes_nan ft (x y : fp_carrier ft) :
+  fp_is_nan ft (fp_sub ft x y) = true -> fp_sub ft x y = fp_default_nan ft.
+Proof.
+  destruct ft; cbn [fp_sub fp_binop fp_default_nan]; try by destruct x, y.
+  all: apply fp_canonicalize_nan_result.
+Qed.
+
+Lemma fp_mul_canonicalizes_nan ft (x y : fp_carrier ft) :
+  fp_is_nan ft (fp_mul ft x y) = true -> fp_mul ft x y = fp_default_nan ft.
+Proof.
+  destruct ft; cbn [fp_mul fp_binop fp_default_nan]; try by destruct x, y.
+  all: apply fp_canonicalize_nan_result.
+Qed.
+
+Lemma fp_div_canonicalizes_nan ft (x y : fp_carrier ft) :
+  fp_is_nan ft (fp_div ft x y) = true -> fp_div ft x y = fp_default_nan ft.
+Proof.
+  destruct ft; cbn [fp_div fp_binop fp_default_nan]; try by destruct x, y.
+  all: apply fp_canonicalize_nan_result.
+Qed.
 
 Lemma fp_of_to_bits ft (f : fp_carrier ft) : fp_of_bits ft (fp_to_bits ft f) = f.
 Proof.
@@ -543,6 +650,22 @@ Proof.
   - unfold b64_of_bits, bits_of_b64.
     exact (bits_of_binary_float_of_bits 52 11 (refl_equal _) (refl_equal _) (refl_equal _) z Hz).
 Qed.
+
+Lemma fp_to_of_bits_Ffloat z :
+  (0 <= z < 2 ^ 32)%Z -> fp_to_bits Ffloat (fp_of_bits Ffloat z) = z.
+Proof. intros Hz. apply fp_to_of_bits; [reflexivity|exact Hz]. Qed.
+
+Lemma fp_to_of_bits_Fdouble z :
+  (0 <= z < 2 ^ 64)%Z -> fp_to_bits Fdouble (fp_of_bits Fdouble z) = z.
+Proof. intros Hz. apply fp_to_of_bits; [reflexivity|exact Hz]. Qed.
+
+Lemma fp_of_to_bits_Ffloat (f : fp_carrier Ffloat) :
+  fp_of_bits Ffloat (fp_to_bits Ffloat f) = f.
+Proof. apply fp_of_to_bits. Qed.
+
+Lemma fp_of_to_bits_Fdouble (f : fp_carrier Fdouble) :
+  fp_of_bits Fdouble (fp_to_bits Fdouble f) = f.
+Proof. apply fp_of_to_bits. Qed.
 
 Lemma fp_to_bits_inj ft : Inj (=) (=) (fp_to_bits ft).
 Proof.
