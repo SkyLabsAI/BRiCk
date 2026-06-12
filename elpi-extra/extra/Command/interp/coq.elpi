@@ -1,0 +1,81 @@
+/*
+ * Copyright (C) 2024 BlueRock Security, Inc.
+ *
+ * SPDX-License-Identifier: LGPL-2.1 WITH BedRock Exception for use over network, see repository root for details.
+ */
+
+/** * Command-phase extensions to namespace <<coq>> */
+
+namespace coq {
+
+  namespace env {
+
+    /*
+    <<mk-variant Name CtorNames I>> defines an inductive type <<I : Set>>
+    named <<Name>> with nullary constructors named by <<CtorNames>>.
+    */
+    pred mk-variant i:string, i:list string, o:inductive.
+
+    /**
+    <<add-lemma-by-ltac Name Opaque Goal Tac Args GR>> defines
+    <<Name : Goal := ltac:(Tac Args)>> and returns the new global.
+    */
+    pred add-lemma-by-ltac i:string, i:opaque?, i:term, i:string, i:list argument, o:gref.
+
+    /**
+    <<add-const-skeleton Name Tm Opaque Implicits C>> elaborates <<Tm>>,
+    defines it as <<Name>>, and optionally sets argument implicitness.
+    */
+    pred add-const-skeleton i:string, i:term, i:opaque?, i:list (list implicit_kind), o:constant.
+
+  }
+
+  namespace TC {
+
+    /**
+    <<add-instance-skeleton Name Locality Cost Tm Implicits C>> elaborates
+    <<Tm>>, defines it as an opaque constant, optionally sets argument
+    implicitness, and declares it as a typeclass instance.
+    */
+    pred add-instance-skeleton i:string, i:coq.locality, i:int, i:term, i:list (list implicit_kind), o:constant.
+
+  }
+
+  /*
+  Implementation
+  */
+
+  namespace env {
+
+    mk-variant Name CtorNames I :- std.do! [
+      Decl = inductive Name tt (arity {{ Set }}) (t\ {mk-variant.ctors CtorNames t}),
+      coq.env.add-indt Decl I,
+    ].
+    pred mk-variant.ctors i:list string, i:term, o:list indc-decl.
+    mk-variant.ctors CtorNames Ty Ctors :-
+      std.map CtorNames (f\ c\ c = constructor f (arity Ty)) Ctors.
+
+    add-lemma-by-ltac Name Opaque Goal Tac Args (const C) :- std.do! [
+      diag.asserts! (coq.ltac.solve Goal Tac Args Proof) "coq.env.add-lemma-by-ltac",
+      @using! "Type" => coq.env.add-const Name Proof Goal Opaque C,
+    ].
+
+    add-const-skeleton Name Tm Opaque Implicits C :- std.do! [
+      diag.asserts! (coq.elaborate-skeleton-evar-free Tm _ ETm)
+        "coq.env.add-const-skeleton",
+      coq.env.add-const Name ETm _ Opaque C,
+      if (Implicits = []) (true) (coq.arguments.set-implicit (const C) Implicits),
+    ].
+
+  }
+
+  namespace TC {
+
+    add-instance-skeleton Name Locality Cost Tm Implicits C :- std.do! [
+      coq.env.add-const-skeleton Name Tm @opaque! Implicits C,
+      coq.locality.with! Locality (coq.TC.declare-instance (const C) Cost),
+    ].
+
+  }
+
+}

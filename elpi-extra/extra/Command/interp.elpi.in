@@ -16,3 +16,4 @@ It works in the interp phase.
 accumulate "skylabs.elpi.extra/TacticCommand/interp".	% ../TacticCommand/interp.elpi.in
 
 accumulate "skylabs.elpi.extra/Command/both".	% both.elpi.in
+accumulate "skylabs.elpi.extra/Command/interp/coq".	% interp/coq.elpi

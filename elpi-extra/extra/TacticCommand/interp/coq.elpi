@@ -41,6 +41,7 @@ namespace coq {
   pred ltac.typeclasses_eauto i:term, o:term, o:diag.	% Class, Term
 
   pred ltac.cbn i:term, o:term, o:diag.
+  pred ltac.try-red i:term, o:term, o:diag.
 
   /*
   Implementation
@@ -101,5 +102,10 @@ namespace coq {
   ltac.cbn T Tred D :-
     coq.ltac.resolve {{:gref tactics.anchor}} "solve_cbn" Tac,
     ltac.solve {{_}} Tac [trm T] Tred D.
+
+  ltac.try-red T Tred D :- diag.do! D [
+    diag.lift! (coq.typecheck T _),
+    diag.lift-ok! (Tred = {coq.try-red T}) ((=) "coq.ltac.try-red")
+  ].
 
 }

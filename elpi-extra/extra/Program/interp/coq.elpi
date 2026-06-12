@@ -38,6 +38,7 @@ namespace coq {
   func eval_whd_all term -> term.
   func eval_lazy_all term -> term.
   func eval_cbv_all term -> term.
+  func try-red term -> term.
 
   /** ** Terms with phantom types */
 
@@ -75,6 +76,12 @@ namespace coq {
   a full path.)
   */
   pred module-locate i:string, i:string, o:gref.
+
+  /*
+  <<coq.copy-prod-context Fill T T'>> recursively copies the leading
+  <<prod>> spine of <<T>>, replacing the body by <<Fill Body>>.
+  */
+  pred copy-prod-context i:(term -> term -> prop), i:term, o:term.
 
   /*
   Elpi quotations for Coq terms do not handle primitive projections
@@ -148,6 +155,7 @@ namespace coq {
   eval_whd_all T U :- @redflags! coq.redflags.all => coq.reduction.lazy.whd T U.
   eval_lazy_all T U :- @redflags! coq.redflags.all => coq.reduction.lazy.norm T U.
   eval_cbv_all T U :- @redflags! coq.redflags.all => coq.reduction.cbv.norm T U.
+  try-red T U :- @redflags! coq.redflags.betadeltazeta => coq.reduction.lazy.whd T U.
 
   namespace tm {
     shorten coq.tm.{v}.
@@ -199,6 +207,11 @@ namespace coq {
 
   module-locate Path Name GR :- !,
     coq.locate {calc (Path ^ "." ^ Name)} GR.
+
+  copy-prod-context Fill (prod N T F) (prod N T F') :- !, std.do! [
+    F' = x\ {copy-prod-context Fill (F x)}
+  ].
+  copy-prod-context Fill T T' :- Fill T T'.
 
   ltac.resolve GR Base Name :- std.do! [
     coq.gref->path GR Path,
