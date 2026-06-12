@@ -318,8 +318,8 @@ let analyse fmt ~before_dune ~after_dune ~before_globs ~after_globs =
     List.fold_left dune res dunes
   in
 
-  let (warnings1, errors1) = parse before_globs before_dune in
   let (warnings2, errors2) = parse after_globs after_dune in
+  let (warnings1, errors1) = parse before_globs before_dune in
 
   (* Format.efprintf fmt "size of warnings1 = %i\n" (List.length warnings1);  *)
   (* Format.efprintf fmt "size of warnings2 = %i\n" (List.length warnings2);  *)
