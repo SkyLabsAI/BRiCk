@@ -50,8 +50,6 @@ module Error : sig
   val compare : t -> t -> int
 end
 
-val get_lines : In_channel.t -> (string -> 'a) -> 'a list
-
 type line =
   | Header of { file : string; pos: pos option; full: string (* full line *) }
   | Data of string * bool (* Is this the last warning line? *)

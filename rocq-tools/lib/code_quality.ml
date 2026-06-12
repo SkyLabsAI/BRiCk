@@ -64,14 +64,6 @@ module Error = struct
   let compare : t -> t -> int = Stdlib.compare
 end
 
-let get_lines : In_channel.t -> (string -> 'a) -> 'a list = fun ic f ->
-  let rec loop rev_lines =
-    match In_channel.input_line ic with
-    | None -> List.rev rev_lines
-    | Some(line) -> loop (f line :: rev_lines)
-  in
-  loop []
-
 type line =
   | Header of { file : string; pos: pos option; full: string (* full line *) }
   | Data of string * bool (* Is this the last warning line? *)
