@@ -211,7 +211,7 @@ let to_glob_out : strip_prefix:string -> string -> glob_out option =
     let std_out =
       if is_std_out then begin
         ensure_file filename;
-        get_lines (open_in filename) (fun x -> x)
+        In_channel.with_open_text filename In_channel.input_lines
       end
       else
         []
@@ -219,7 +219,7 @@ let to_glob_out : strip_prefix:string -> string -> glob_out option =
     let std_err =
       if is_std_err then begin
         ensure_file filename;
-        get_lines (open_in filename) (fun x -> x)
+        In_channel.with_open_text filename In_channel.input_lines
       end
       else
         []
@@ -318,8 +318,8 @@ let analyse fmt ~before_dune ~after_dune ~before_globs ~after_globs =
     List.fold_left dune res dunes
   in
 
-  let (warnings1, errors1) = parse before_globs before_dune in
   let (warnings2, errors2) = parse after_globs after_dune in
+  let (warnings1, errors1) = parse before_globs before_dune in
 
   (* Format.efprintf fmt "size of warnings1 = %i\n" (List.length warnings1);  *)
   (* Format.efprintf fmt "size of warnings2 = %i\n" (List.length warnings2);  *)
@@ -382,13 +382,15 @@ let main () =
     | "--before-globs-from-file" :: file  :: args            ->
         ensure_file file;
         let strip_prefix = Filename.dirname file ^ "/" in
-        let new_before_globs = List.filter_map (fun x -> x) @@ get_lines (open_in file) (to_glob_out ~strip_prefix) in
+        let lines = In_channel.with_open_text file In_channel.input_lines in
+        let new_before_globs = List.filter_map (to_glob_out ~strip_prefix) lines in
         let before_globs = List.rev_append new_before_globs state.before_globs in
         parse_args {state with before_globs} args
     | "--after-globs-from-file" :: file   :: args            ->
         ensure_file file;
         let strip_prefix = Filename.dirname file ^ "/" in
-        let new_after_globs = List.filter_map (fun x -> x) @@ get_lines (open_in file) (to_glob_out ~strip_prefix) in
+        let lines = In_channel.with_open_text file In_channel.input_lines in
+        let new_after_globs = List.filter_map (to_glob_out ~strip_prefix) lines in
         let after_globs = List.rev_append new_after_globs state.after_globs in
         parse_args {state with after_globs} args
     | "--before-dune" :: file       :: args                  ->

@@ -64,14 +64,6 @@ module Error = struct
   let compare : t -> t -> int = Stdlib.compare
 end
 
-let get_lines : In_channel.t -> (string -> 'a) -> 'a list = fun ic f ->
-  let rec loop rev_lines =
-    match In_channel.input_line ic with
-    | None -> List.rev rev_lines
-    | Some(line) -> loop (f line :: rev_lines)
-  in
-  loop []
-
 type line =
   | Header of { file : string; pos: pos option; full: string (* full line *) }
   | Data of string * bool (* Is this the last warning line? *)
@@ -141,6 +133,39 @@ type state = {
   data : string list;           (* reversed content after the header(s) *)
 }
 
+let pp_state fmt {kind; file; pos; headers; data} =
+  let open Format in
+  let pp_kind fmt = function
+    | E -> fprintf fmt "Error"
+    | W -> fprintf fmt "Warning"
+    | U -> fprintf fmt "Unknown"
+  in
+  let pp_pos fmt {line; c0; c1} =
+    fprintf fmt "{line=%i; c0=%i; c1=%i}" line c0 c1
+  in
+  let pp_opos fmt = function
+    | Some pos -> pp_pos fmt pos
+    | None -> fprintf fmt "?"
+  in
+  let pp_str_list fmt hs =
+    fprintf fmt "[";
+    let rec go =
+      function
+      | [] -> ()
+      | [h] -> fprintf fmt "'%s'" h
+      | h :: hs -> fprintf fmt "'%s', " h; go hs
+    in
+    go hs;
+    fprintf fmt "]"
+  in
+  fprintf fmt "{kind=%a; file=%s; pos=%a; headers=%a; data=%a}"
+    pp_kind kind
+    file
+    pp_opos pos
+    pp_str_list headers
+    pp_str_list data
+
+
 let make_item : state -> item =
   fun {kind; file; pos; headers; data} ->
   let data = List.rev data in
@@ -160,12 +185,12 @@ let gather : ?assume_errors:bool -> line list -> item list =
     match (state, lines) with
     | (None, []) ->
         List.rev rev_items
-    | (Some{kind=W; _}, []) ->
-      panic "Unexpected end of warning at line %i." i
-    | (Some{data=[]; _}, []) ->
-      panic "File and position state without content after it in line %i." i
-    | (Some{kind=U; data=_ :: _; _}, _) ->
-      panic "Unknown output in line %i." i
+    | (Some({kind=W; _} as state), []) ->
+      panic "Unexpected end of warning at line %i.\nState:\n%a" i pp_state state
+    | (Some({data=[]; _} as state), []) ->
+      panic "File and position state without content after it in line %i.\nState:\n%a" i pp_state state
+    | (Some({kind=U; data=_ :: _; _} as state), _) ->
+      panic "Unknown output in line %i.\nState:\n%a" i pp_state state
     | (Some(s), []) ->
       let item = make_item s in
       gather (item :: rev_items) None lines
@@ -192,8 +217,8 @@ let gather : ?assume_errors:bool -> line list -> item list =
     | (Some({kind=W; _} as s), Data(line, true ) :: lines) ->
         let item = make_item {s with data=line :: s.data} in
         gather (item :: rev_items) None lines
-    | (Some{kind=(W | U); _},      Header _ :: _    ) ->
-        panic "Nested warning at line %i." i
+    | (Some({kind=(W | U); _} as state),      Header _ :: _    ) ->
+        panic "Nested warning at line %i.\nState:\n%a" i pp_state state
   in
   gather 1 [] None lines
 
