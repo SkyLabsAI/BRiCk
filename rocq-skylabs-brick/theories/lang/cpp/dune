@@ -2,7 +2,6 @@
 (rocq.theory
  (name skylabs.lang.cpp)
  (package rocq-skylabs-brick)
- (modules :standard)
  (plugins rocq-skylabs-brick.plugin)
  (generate_project_file)
  (theories

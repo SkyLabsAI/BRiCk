@@ -11,8 +11,6 @@ Require skylabs.lang.cpp.syntax.typed.
 
 #[local] Set Printing Universes.
 
-Definition version := cpp2v_version.version.
-
 Register translation_unit.t as skylabs.lang.cpp.parser.translation_unit.t.
 Register translation_unit._skip as skylabs.lang.cpp.parser.translation_unit.skip.
 Register abi.t as skylabs.lang.cpp.parser.translation_unit.abi_type.
