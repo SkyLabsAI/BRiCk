@@ -227,6 +227,11 @@ let%test "should_warn detects joined relative path flags" =
   should_warn "-isystem../include" &&
   should_warn "--sysroot=sysroot"
 
+
+let cpp_prog_warn : ?loc:Loc.t -> Pp.t -> unit =
+  let category = CWarnings.create_category ~name:"brick" () in
+  CWarnings.create ~name:"cpp.prog" ~category ~default:CWarnings.Enabled Pp.(fun x -> x ++ fnl ())
+
 let cpp_command_prog (attrs : attrs) name flags prog =
   let { check_duplicates; elaborate; check_types } = attrs in
   let temp_cpp , unlink = temp_file ~suffix:".cpp" prog in
@@ -301,7 +306,7 @@ let cpp_command_prog (attrs : attrs) name flags prog =
       else
         CErrors.user_err Pp.(msg_text Pp.(str process_failure_str ++ str " with the following warnings/errors!") (Buffer.contents stderr_buffer))
     else if Buffer.length stderr_buffer > 0 then
-      Feedback.msg_warning Pp.(msg_text Pp.(str "produced the following warnings!") (Buffer.contents stderr_buffer));
+      cpp_prog_warn Pp.(msg_text Pp.(str "produced the following warnings!") (Buffer.contents stderr_buffer));
 
     (* this might have problems with coq-lsp if the required file has its own requires *)
     let current_state = Vernacstate.freeze_full_state () in
