@@ -31,32 +31,32 @@ Definition supported_float_type (ty : type) : option float_type.t :=
   | _ => None
   end.
 
+Definition float_rank (ft : float_type.t) : nat :=
+  match ft with
+  | Ffloat16 => 0%nat
+  | Ffloat => 1%nat
+  | Fdouble => 2%nat
+  | Flongdouble => 3%nat
+  | Ffloat128 => 4%nat
+  end.
+
+Definition max_float_type (ft1 ft2 : float_type.t) : float_type.t :=
+  if Nat.leb (float_rank ft1) (float_rank ft2) then ft2 else ft1.
+
 Definition usual_float_arith (tu : translation_unit) (ty1 ty2 : type) : option type :=
   match supported_float_type ty1, supported_float_type ty2 with
-  | Some Fdouble, Some (Ffloat | Fdouble) => Some Tdouble
-  | Some Ffloat, Some Fdouble => Some Tdouble
-  | Some Ffloat, Some Ffloat => Some Tfloat
-  | Some Fdouble, None =>
+  | Some ft1, Some ft2 => Some (Tfloat_ (max_float_type ft1 ft2))
+  | Some ft, None =>
       match promote_integral tu ty2 with
-      | Some _ => Some Tdouble
+      | Some _ => Some (Tfloat_ ft)
       | None => None
       end
-  | None, Some Fdouble =>
+  | None, Some ft =>
       match promote_integral tu ty1 with
-      | Some _ => Some Tdouble
+      | Some _ => Some (Tfloat_ ft)
       | None => None
       end
-  | Some Ffloat, None =>
-      match promote_integral tu ty2 with
-      | Some _ => Some Tfloat
-      | None => None
-      end
-  | None, Some Ffloat =>
-      match promote_integral tu ty1 with
-      | Some _ => Some Tfloat
-      | None => None
-      end
-  | _, _ => None
+  | None, None => None
   end.
 
 Definition convert_type_float_op (b : BinOp) (to : type) : option (type * type * type) :=

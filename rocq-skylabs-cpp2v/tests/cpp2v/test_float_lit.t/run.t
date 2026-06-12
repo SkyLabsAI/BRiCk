@@ -32,10 +32,22 @@
   Efloat Ffloat (fp_of_bits Ffloat 2139095040%Z) Tfloat
   $ grep -o 'Efloat Fdouble (fp_of_bits Fdouble 9218868437227405312%Z) Tdouble' test_17_cpp.v
   Efloat Fdouble (fp_of_bits Fdouble 9218868437227405312%Z) Tdouble
-  $ grep -o 'Ecast (Cfloat Tdouble)' test_17_cpp.v
+  $ grep -o 'Efloat Ffloat16 (fp_of_bits Ffloat16 15360%Z) Tfloat16' test_17_cpp.v
+  Efloat Ffloat16 (fp_of_bits Ffloat16 15360%Z) Tfloat16
+  $ grep -o 'Efloat Ffloat16 (fp_of_bits Ffloat16 0%Z) Tfloat16' test_17_cpp.v
+  Efloat Ffloat16 (fp_of_bits Ffloat16 0%Z) Tfloat16
+  $ grep -o 'Efloat Ffloat128 (fp_of_bits Ffloat128 85065399433376081038215121361612832768%Z) Tfloat128' test_17_cpp.v
+  Efloat Ffloat128 (fp_of_bits Ffloat128 85065399433376081038215121361612832768%Z) Tfloat128
+  $ grep -o 'Efloat Ffloat128 (fp_of_bits Ffloat128 0%Z) Tfloat128' test_17_cpp.v
+  Efloat Ffloat128 (fp_of_bits Ffloat128 0%Z) Tfloat128
+  $ grep -o 'Ecast (Cfloat Tdouble)' test_17_cpp.v | head -1
   Ecast (Cfloat Tdouble)
-  $ grep -o 'Ecast (Cfloat Tfloat)' test_17_cpp.v
+  $ grep -o 'Ecast (Cfloat Tfloat)' test_17_cpp.v | head -1
   Ecast (Cfloat Tfloat)
+  $ grep -o 'Ecast (Cfloat Tfloat16)' test_17_cpp.v
+  Ecast (Cfloat Tfloat16)
+  $ grep -o 'Ecast (Cfloat Tfloat128)' test_17_cpp.v
+  Ecast (Cfloat Tfloat128)
   $ grep -o 'Ecast (Cint2float Tfloat)' test_17_cpp.v
   Ecast (Cint2float Tfloat)
   $ grep -o 'Ecast (Cfloat2int Tint)' test_17_cpp.v

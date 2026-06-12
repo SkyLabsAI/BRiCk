@@ -234,10 +234,10 @@ Definition is_float_to_integral_target (ty : type) : bool :=
   | _ => is_nonfloat_arithmetic ty
   end.
 
-(** Floating conversions for the currently operational binary32/binary64
-    fragment.  Integer conversions are intentionally scoped to runtime
-    [Vint] sources/results; character payload conversions remain outside this
-    first concrete layer. *)
+(** Floating conversions for supported Flocq-backed floating formats.
+    Integer conversions are intentionally scoped to runtime [Vint]
+    sources/results; character payload conversions remain outside this concrete
+    layer until a dedicated char/float policy is chosen. *)
 Inductive conv_float {σ : genv} (tu : translation_unit) : type -> type -> val -> val -> Prop :=
 | ConvFloatId ft (f : fp_carrier ft) :
     fp_supported ft = true ->
@@ -245,10 +245,12 @@ Inductive conv_float {σ : genv} (tu : translation_unit) : type -> type -> val -
 | ConvFloatToBool ft (f : fp_carrier ft) :
     fp_supported ft = true ->
     conv_float tu (Tfloat_ ft) Tbool (Vfloat_ ft f) (Vbool (fp_is_true ft f))
-| ConvFloatFloatToDouble (f : fp_carrier Ffloat) :
-    conv_float tu Tfloat Tdouble (Vfloat_ Ffloat f) (Vfloat_ Fdouble (fp_float_to_double f))
-| ConvFloatDoubleToFloat (f : fp_carrier Fdouble) :
-    conv_float tu Tdouble Tfloat (Vfloat_ Fdouble f) (Vfloat_ Ffloat (fp_double_to_float f))
+| ConvFloatCast from to (f : fp_carrier from) :
+    fp_supported from = true ->
+    fp_supported to = true ->
+    from <> to ->
+    conv_float tu (Tfloat_ from) (Tfloat_ to)
+      (Vfloat_ from f) (Vfloat_ to (fp_cast from to f))
 | ConvFloatIntToFloat ty ft z :
     fp_supported ft = true ->
     is_nonfloat_arithmetic ty = true ->
@@ -277,8 +279,7 @@ Proof.
   - split.
     + apply has_float_type; assumption.
     + rewrite has_type_prop_bool. eexists. reflexivity.
-  - split; apply has_float_type; reflexivity.
-  - split; apply has_float_type; reflexivity.
+  - split; apply has_float_type; assumption.
   - split; [assumption|apply has_float_type; assumption].
   - split; [apply has_float_type; assumption|assumption].
   - split; assumption.
@@ -294,13 +295,21 @@ Lemma conv_float_to_bool : forall {σ : genv} tu ft (f : fp_carrier ft),
     conv_float tu (Tfloat_ ft) Tbool (Vfloat_ ft f) (Vbool (fp_is_true ft f)).
 Proof. constructor. assumption. Qed.
 
+Lemma conv_float_cast : forall {σ : genv} tu from to (f : fp_carrier from),
+    fp_supported from = true ->
+    fp_supported to = true ->
+    from <> to ->
+    conv_float tu (Tfloat_ from) (Tfloat_ to)
+      (Vfloat_ from f) (Vfloat_ to (fp_cast from to f)).
+Proof. constructor; assumption. Qed.
+
 Lemma conv_float_widen : forall {σ : genv} tu (f : fp_carrier Ffloat),
     conv_float tu Tfloat Tdouble (Vfloat_ Ffloat f) (Vfloat_ Fdouble (fp_float_to_double f)).
-Proof. constructor. Qed.
+Proof. intros. apply conv_float_cast; [reflexivity|reflexivity|discriminate]. Qed.
 
 Lemma conv_float_narrow : forall {σ : genv} tu (f : fp_carrier Fdouble),
     conv_float tu Tdouble Tfloat (Vfloat_ Fdouble f) (Vfloat_ Ffloat (fp_double_to_float f)).
-Proof. constructor. Qed.
+Proof. intros. apply conv_float_cast; [reflexivity|reflexivity|discriminate]. Qed.
 
 (* This (effectively) lifts [conv_int] to arbitrary types.
 

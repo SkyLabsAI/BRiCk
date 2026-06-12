@@ -16,6 +16,8 @@
 #include "clang/AST/Mangle.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/Version.inc"
+#include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/APFloat.h"
 #include <Formatter.hpp>
 
 using namespace clang;
@@ -242,7 +244,16 @@ public:
             CASE(UInt128, "Tuint128_t")
             CASE(Float, "Tfloat")
             CASE(Double, "Tdouble")
-            CASE(LongDouble, "Tlongdouble")
+        case BuiltinType::Kind::LongDouble:
+            if (&cprint.getContext().getTargetInfo().getLongDoubleFormat() ==
+                &llvm::APFloat::IEEEquad()) {
+                print.output() << "Tlongdouble";
+            } else {
+                unsupported(print, cprint, loc::of(type),
+                            "long double type with non-IEEE-quad semantics",
+                            /*well_known*/ true);
+            }
+            break;
             CASE(Float16, "Tfloat16")
             CASE(Float128, "Tfloat128")
 #undef CASE

@@ -19,6 +19,7 @@
 #include "clang/AST/Type.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/Version.inc"
+#include "llvm/ADT/APFloat.h"
 #include <optional>
 
 using namespace clang;
@@ -1002,15 +1003,37 @@ public:
     }
 
     void VisitFloatingLiteral(const FloatingLiteral *lit) {
+        auto unsupported = [&](llvm::StringRef reason) {
+            print.ctor("Eunsupported") << fmt::nbsp << "\"float: ";
+            print.output() << reason << ": ";
+            lit->getValue().print(print.output().nobreak());
+            print.output() << "\"" << fmt::nbsp;
+            done(lit, Done::DT);
+        };
+
         auto *bt = lit->getType()->getAs<BuiltinType>();
         const char *ft = nullptr;
         if (bt) {
             switch (bt->getKind()) {
+            case BuiltinType::Float16:
+                if (lit->getRawSemantics() == llvm::APFloatBase::S_IEEEhalf)
+                    ft = "Ffloat16";
+                break;
             case BuiltinType::Float:
-                ft = "Ffloat";
+                if (lit->getRawSemantics() == llvm::APFloatBase::S_IEEEsingle)
+                    ft = "Ffloat";
                 break;
             case BuiltinType::Double:
-                ft = "Fdouble";
+                if (lit->getRawSemantics() == llvm::APFloatBase::S_IEEEdouble)
+                    ft = "Fdouble";
+                break;
+            case BuiltinType::LongDouble:
+                if (lit->getRawSemantics() == llvm::APFloatBase::S_IEEEquad)
+                    ft = "Flongdouble";
+                break;
+            case BuiltinType::Float128:
+                if (lit->getRawSemantics() == llvm::APFloatBase::S_IEEEquad)
+                    ft = "Ffloat128";
                 break;
             default:
                 break;
@@ -1018,10 +1041,7 @@ public:
         }
 
         if (!ft) {
-            print.ctor("Eunsupported") << fmt::nbsp << "\"float: ";
-            lit->getValue().print(print.output().nobreak());
-            print.output() << "\"" << fmt::nbsp;
-            done(lit, Done::DT);
+            unsupported("unsupported floating-point semantics");
             return;
         }
 

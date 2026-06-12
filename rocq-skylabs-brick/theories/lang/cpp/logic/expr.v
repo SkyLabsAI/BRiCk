@@ -1566,12 +1566,12 @@ Module Type Expr.
         + apply has_int_type. rewrite /bitsize.bound; destruct sz,sgn; compute; intuition congruence.
         + apply has_type_prop_char_0.
         + apply has_type_prop_bool; eauto.
-        + case_match eqn:Hft; inversion H; subst; simpl; try tauto.
-        + case_match eqn:Hft; inversion H; subst.
+        + inversion H; subst; simpl.
           by apply has_float_type.
-        + eapply has_type_prop_nullptr; eauto.
+        + inversion H; subst.
+          by apply has_type_prop_nullptr.
       - apply has_type_prop_bool. eauto.
-      - case_match eqn:Hft; inversion H; subst.
+      - inversion H; subst.
         by apply has_float_type.
       - eapply has_type_prop_nullptr; eauto.
     Qed.

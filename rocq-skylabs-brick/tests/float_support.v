@@ -29,37 +29,37 @@ Proof. reflexivity. Qed.
 Example support_accepts_double_type : check.type Tdouble = check.OK.
 Proof. reflexivity. Qed.
 
-Example support_rejects_float16_type : check.type Tfloat16 <> check.OK.
-Proof. vm_compute. discriminate. Qed.
+Example support_accepts_float16_type : check.type Tfloat16 = check.OK.
+Proof. reflexivity. Qed.
 
-Example support_rejects_longdouble_type : check.type Tlongdouble <> check.OK.
-Proof. vm_compute. discriminate. Qed.
+Example support_accepts_longdouble_type : check.type Tlongdouble = check.OK.
+Proof. reflexivity. Qed.
 
-Example support_rejects_float128_type : check.type Tfloat128 <> check.OK.
-Proof. vm_compute. discriminate. Qed.
+Example support_accepts_float128_type : check.type Tfloat128 = check.OK.
+Proof. reflexivity. Qed.
 
 Example support_accepts_supported_float_literal : check.expr one_float = check.OK.
 Proof. reflexivity. Qed.
 
-Example support_rejects_unsupported_float_literal :
-  check.expr (Efloat Ffloat16 tt Tfloat16) <> check.OK.
-Proof. vm_compute. discriminate. Qed.
+Example support_accepts_float16_literal :
+  check.expr (Efloat Ffloat16 (fp_of_bits Ffloat16 15360%Z) Tfloat16) = check.OK.
+Proof. reflexivity. Qed.
 
 Example support_accepts_float_to_double_cast :
   check.expr (Ecast (Cfloat Tdouble) (Evar "f" Tfloat)) = check.OK.
 Proof. reflexivity. Qed.
 
-Example support_rejects_longdouble_to_double_cast :
-  check.expr (Ecast (Cfloat Tdouble) (Evar "ld" Tlongdouble)) <> check.OK.
-Proof. vm_compute. discriminate. Qed.
+Example support_accepts_longdouble_to_double_cast :
+  check.expr (Ecast (Cfloat Tdouble) (Evar "ld" Tlongdouble)) = check.OK.
+Proof. reflexivity. Qed.
 
-Example support_rejects_int_to_float16_cast :
-  check.expr (Ecast (Cint2float Tfloat16) (Eint 0 Tint)) <> check.OK.
-Proof. vm_compute. discriminate. Qed.
+Example support_accepts_int_to_float16_cast :
+  check.expr (Ecast (Cint2float Tfloat16) (Eint 0 Tint)) = check.OK.
+Proof. reflexivity. Qed.
 
-Example support_rejects_float128_to_int_cast :
-  check.expr (Ecast (Cfloat2int Tint) (Evar "q" Tfloat128)) <> check.OK.
-Proof. vm_compute. discriminate. Qed.
+Example support_accepts_float128_to_int_cast :
+  check.expr (Ecast (Cfloat2int Tint) (Evar "q" Tfloat128)) = check.OK.
+Proof. reflexivity. Qed.
 
 Example support_accepts_float_add :
   check.expr (Ebinop Badd one_float one_float Tfloat) = check.OK.
@@ -85,8 +85,16 @@ Example support_rejects_float_increment :
   check.expr (Epreinc (Evar "f" Tfloat) Tfloat) <> check.OK.
 Proof. vm_compute. discriminate. Qed.
 
-Example usual_float_arith_rejects_longdouble tu :
-  usual_float_arith tu Tlongdouble Tdouble = None.
+Example usual_float_arith_accepts_longdouble tu :
+  usual_float_arith tu Tlongdouble Tdouble = Some Tlongdouble.
+Proof. reflexivity. Qed.
+
+Example usual_float_arith_accepts_float16_float tu :
+  usual_float_arith tu Tfloat16 Tfloat = Some Tfloat.
+Proof. reflexivity. Qed.
+
+Example usual_float_arith_accepts_float128_longdouble tu :
+  usual_float_arith tu Tfloat128 Tlongdouble = Some Tfloat128.
 Proof. reflexivity. Qed.
 
 Example convert_type_rejects_pointer_plus_float tu :
@@ -121,18 +129,32 @@ Example convert_type_accepts_int_double_compare tu :
   convert_type_op tu Bge Tint Tdouble = Some (Tdouble, Tdouble, Tbool).
 Proof. reflexivity. Qed.
 
-Example convert_rejects_unsupported_float_to_int {σ : genv} tu v v' :
-  @convert σ tu Tlongdouble Tint v v' = False.
+Example convert_uses_conv_float_for_longdouble_to_int {σ : genv} tu v v' :
+  @convert σ tu Tlongdouble Tint v v' = conv_float tu Tlongdouble Tint v v'.
 Proof. reflexivity. Qed.
 
+Definition f16_one : fp_carrier Ffloat16 := fp_of_bits Ffloat16 15360%Z.
 Definition f32_one : fp_carrier Ffloat := fp_of_bits Ffloat 1065353216%Z.
 Definition f64_one : fp_carrier Fdouble := fp_of_bits Fdouble 4607182418800017408%Z.
+Definition fld_one : fp_carrier Flongdouble := fp_of_bits Flongdouble 85065399433376081038215121361612832768%Z.
+Definition f128_one : fp_carrier Ffloat128 := fp_of_bits Ffloat128 85065399433376081038215121361612832768%Z.
+Definition f16_neg_zero : fp_carrier Ffloat16 := fp_of_bits Ffloat16 32768%Z.
 Definition f32_neg_zero : fp_carrier Ffloat := fp_of_bits Ffloat 2147483648%Z.
 Definition f64_neg_zero : fp_carrier Fdouble := fp_of_bits Fdouble 9223372036854775808%Z.
+Definition f128_neg_zero_bits : Z := 170141183460469231731687303715884105728%Z.
+Definition fld_neg_zero : fp_carrier Flongdouble := fp_of_bits Flongdouble f128_neg_zero_bits.
+Definition f128_neg_zero : fp_carrier Ffloat128 := fp_of_bits Ffloat128 f128_neg_zero_bits.
+Definition f16_inf : fp_carrier Ffloat16 := fp_of_bits Ffloat16 31744%Z.
 Definition f32_inf : fp_carrier Ffloat := fp_of_bits Ffloat 2139095040%Z.
 Definition f64_inf : fp_carrier Fdouble := fp_of_bits Fdouble 9218868437227405312%Z.
+Definition f128_inf_bits : Z := 170135991163610696904058773219554885632%Z.
+Definition fld_inf : fp_carrier Flongdouble := fp_of_bits Flongdouble f128_inf_bits.
+Definition f128_inf : fp_carrier Ffloat128 := fp_of_bits Ffloat128 f128_inf_bits.
+Definition f16_nan : fp_carrier Ffloat16 := fp_default_nan Ffloat16.
 Definition f32_nan : fp_carrier Ffloat := fp_default_nan Ffloat.
 Definition f64_nan : fp_carrier Fdouble := fp_default_nan Fdouble.
+Definition fld_nan : fp_carrier Flongdouble := fp_default_nan Flongdouble.
+Definition f128_nan : fp_carrier Ffloat128 := fp_default_nan Ffloat128.
 Definition f32_nan_payload : fp_carrier Ffloat := fp_of_bits Ffloat 2143289345%Z.
 Definition f64_nan_payload : fp_carrier Fdouble := fp_of_bits Fdouble 9221120237041090561%Z.
 
@@ -177,8 +199,47 @@ Proof. reflexivity. Qed.
 Example default_double_zero : get_default Tdouble = Some (Vfloat_ Fdouble (fp_zero Fdouble)).
 Proof. reflexivity. Qed.
 
-Example default_longdouble_unsupported : get_default Tlongdouble = None.
+Example default_float16_zero : get_default Tfloat16 = Some (Vfloat_ Ffloat16 (fp_zero Ffloat16)).
 Proof. reflexivity. Qed.
+
+Example default_longdouble_zero : get_default Tlongdouble = Some (Vfloat_ Flongdouble (fp_zero Flongdouble)).
+Proof. reflexivity. Qed.
+
+Example default_float128_zero : get_default Tfloat128 = Some (Vfloat_ Ffloat128 (fp_zero Ffloat128)).
+Proof. reflexivity. Qed.
+
+Example fp16_to_of_bits_roundtrip bits :
+  (0 <= bits < 2 ^ 16)%Z -> fp_to_bits Ffloat16 (fp_of_bits Ffloat16 bits) = bits.
+Proof. intros Hbits. apply fp_to_of_bits; [reflexivity|exact Hbits]. Qed.
+
+Example fp128_to_of_bits_roundtrip bits :
+  (0 <= bits < 2 ^ 128)%Z -> fp_to_bits Ffloat128 (fp_of_bits Ffloat128 bits) = bits.
+Proof. intros Hbits. apply fp_to_of_bits; [reflexivity|exact Hbits]. Qed.
+
+Example longdouble_to_of_bits_roundtrip bits :
+  (0 <= bits < 2 ^ 128)%Z -> fp_to_bits Flongdouble (fp_of_bits Flongdouble bits) = bits.
+Proof. intros Hbits. apply fp_to_of_bits; [reflexivity|exact Hbits]. Qed.
+
+Example default_nan_bits_float16 :
+  fp_to_bits Ffloat16 (fp_default_nan Ffloat16) = 32256%Z.
+Proof. apply fp_to_bits_default_nan_Ffloat16. Qed.
+
+Example default_nan_bits_longdouble :
+  fp_to_bits Flongdouble (fp_default_nan Flongdouble) = 170138587312039964317873038467719495680%Z.
+Proof. apply fp_to_bits_default_nan_Flongdouble. Qed.
+
+Example default_nan_bits_float128 :
+  fp_to_bits Ffloat128 (fp_default_nan Ffloat128) = 170138587312039964317873038467719495680%Z.
+Proof. apply fp_to_bits_default_nan_Ffloat128. Qed.
+
+Example float16_bool_minus_zero_false : is_true (Vfloat_ Ffloat16 f16_neg_zero) = Some false.
+Proof. vm_compute. reflexivity. Qed.
+
+Example longdouble_bool_minus_zero_false : is_true (Vfloat_ Flongdouble fld_neg_zero) = Some false.
+Proof. vm_compute. reflexivity. Qed.
+
+Example float128_bool_minus_zero_false : is_true (Vfloat_ Ffloat128 f128_neg_zero) = Some false.
+Proof. vm_compute. reflexivity. Qed.
 
 Example float_bool_plus_zero_false : is_true (Vfloat_ Ffloat (fp_zero Ffloat)) = Some false.
 Proof. simpl. rewrite fp_is_true_zero_Ffloat. reflexivity. Qed.
@@ -413,6 +474,12 @@ Qed.
 Section raw_byte_reinterpretation_tests.
   Context `{Σ : cpp_logic} {σ : genv}.
 
+  Example raw_bytes_float16_to_unsigned_bits :
+    raw_bytes_of_val σ Tushort (Vint (fp_to_bits Ffloat16 f16_one)) (fp_raw_bytes σ Ffloat16 f16_one).
+  Proof.
+    apply Endian.raw_bytes_of_val_float_to_unsigned_bits; reflexivity.
+  Qed.
+
   Example raw_bytes_float32_to_unsigned_bits :
     raw_bytes_of_val σ Tuint (Vint (fp_to_bits Ffloat f32_one)) (fp_raw_bytes σ Ffloat f32_one).
   Proof.
@@ -421,6 +488,12 @@ Section raw_byte_reinterpretation_tests.
 
   Example raw_bytes_float64_to_unsigned_bits :
     raw_bytes_of_val σ Tulonglong (Vint (fp_to_bits Fdouble f64_one)) (fp_raw_bytes σ Fdouble f64_one).
+  Proof.
+    apply Endian.raw_bytes_of_val_float_to_unsigned_bits; reflexivity.
+  Qed.
+
+  Example raw_bytes_float128_to_unsigned_bits :
+    raw_bytes_of_val σ Tuint128_t (Vint (fp_to_bits Ffloat128 f128_one)) (fp_raw_bytes σ Ffloat128 f128_one).
   Proof.
     apply Endian.raw_bytes_of_val_float_to_unsigned_bits; reflexivity.
   Qed.

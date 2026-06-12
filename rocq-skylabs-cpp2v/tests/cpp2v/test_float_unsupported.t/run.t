@@ -1,24 +1,15 @@
   $ . ../../setup-cpp2v.sh
 
-Unsupported floating widths are translated by cpp2v but rejected by the
-BRiCk support checker.
+_Float16 and __float128 are supported.  On the default x86 target,
+long double is still rejected because Clang reports non-IEEE-quad semantics.
   $ cpp2v -v -check-types -names unsupported_names.v -o unsupported.v unsupported.cpp -- -std=c++23 2>&1 | sed 's/^ *[0-9]* | //'
   $ coqc $COQC_ARGS unsupported_names.v
   $ coqc $COQC_ARGS unsupported.v
   $ coqc $COQC_ARGS support_check.v
-       = ("unsupported floating width"%pstring
-          :: "unsupported floating width"%pstring
-             :: "unsupported floating width"%pstring
-                :: "unsupported floating width"%pstring
-                   :: "unsupported floating width"%pstring
-                      :: "unsupported floating width"%pstring
-                         :: "unsupported floating width"%pstring
-                            :: "unsupported floating width"%pstring
-                               :: "unsupported floating width"%pstring
-                                  :: "unsupported floating width"%pstring
-                                     :: "unsupported floating width"%pstring
-                                        :: "unsupported floating width"%pstring
-                                           :: nil)%list
+       = ("Builtin long double"%pstring
+          :: "Builtin long double"%pstring
+             :: "Builtin long double"%pstring
+                :: "Builtin long double"%pstring :: nil)%list
        : check.M
 
 Invalid float operators and pointer-plus-float are rejected by clang before
