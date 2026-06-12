@@ -22,7 +22,10 @@ open Rocq_tools.Code_quality
 let dummy_pos : pos = {line = 0; c0 = -1; c1 = -1}
 
 let main () =
-  let lines, warnings, errors = parse_lines (get_lines stdin parse_line) in
+  let lines, warnings, errors =
+    let lines = In_channel.input_lines stdin in
+    parse_lines (List.map parse_line lines)
+  in
   let warn_line (i, line) =
     Printf.eprintf "Warning: dangling input line.\n% 5i | %s\n%!" i line
   in
