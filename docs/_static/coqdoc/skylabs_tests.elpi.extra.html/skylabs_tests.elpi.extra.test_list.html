@@ -58,6 +58,9 @@
 <br/>
 <span class="id" title="var">Fail</span> <span class="id" title="var">Elpi</span> <span class="id" title="var">Query</span> <span class="id" title="var">lp</span>:{{ <span class="id" title="var">list.as_term</span> [1] {{ <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a> }} <span class="id" title="var">badas</span>-<span class="id" title="tactic">fail</span> <span class="id" title="var">T</span> }}.<br/>
 <span class="id" title="var">Succeed</span> <span class="id" title="var">Elpi</span> <span class="id" title="var">Query</span> <span class="id" title="var">lp</span>:{{ <span class="id" title="var">det</span> (<span class="id" title="var">list.as_term</span> [42] {{ <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a> }} <span class="id" title="var">badas</span>-<span class="id" title="var">nondet</span> <span class="id" title="var">T</span>), <span class="id" title="var">check</span> {{ <span class="id" title="notation">[</span>1<span class="id" title="notation">]</span> }} <span class="id" title="var">T</span> }}.<br/>
+
+<br/>
+<span class="id" title="var">Succeed</span> <span class="id" title="var">Elpi</span> <span class="id" title="var">Query</span> <span class="id" title="var">lp</span>:{{ <span class="id" title="var">det</span> (<span class="id" title="var">list.uniq</span>-<span class="id" title="var">acc</span> [1, 2, 1, 3] [] <span class="id" title="var">L</span>), <span class="id" title="var">check</span> [3, 2, 1] <span class="id" title="var">L</span> }}.<br/>
 </div>
 </div>
 
