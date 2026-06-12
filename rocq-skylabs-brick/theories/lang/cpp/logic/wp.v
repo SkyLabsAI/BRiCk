@@ -625,6 +625,18 @@ Section with_cpp.
     | evaluation_order.rl => Mmap (fun '(a,b) => (b,a)) $ Mseq e2 e1
     end.
 
+  Lemma eval2_frame {T U} oe (e1 : M T) (e2 : M U) :
+    Mframe e1 e1 |--
+    Mframe e2 e2 -*
+    Mframe (eval2 oe e1 e2) (eval2 oe e1 e2).
+  Proof.
+    destruct oe; simpl.
+    - iApply nd_seq_frame.
+    - iApply Mseq_frame.
+    - iIntros "A B". iApply Mmap_frame.
+      iApply (Mseq_frame with "B A").
+  Qed.
+
   (** [evals eo es] evaluates [es] according to the evaluation scheme [eo] *)
   Definition eval (eo : evaluation_order.t) {T} (es : list (M T)) : M (list T) :=
     match eo with
