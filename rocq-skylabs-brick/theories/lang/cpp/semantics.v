@@ -4,6 +4,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Export skylabs.lang.cpp.semantics.sub_module.
+Require skylabs.lang.cpp.semantics.evaluation_order.
 Require Export skylabs.lang.cpp.semantics.values.
 Require Export skylabs.lang.cpp.semantics.cast.
 Require Export skylabs.lang.cpp.semantics.operator.
