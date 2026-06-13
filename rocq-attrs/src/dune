@@ -1,0 +1,4 @@
+(library
+ (name params_attr_plugin)
+ (public_name rocq-attrs.params)
+ (libraries rocq-runtime.vernac))

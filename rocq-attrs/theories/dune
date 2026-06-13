@@ -1,0 +1,6 @@
+(include_subdirs qualified)
+(rocq.theory
+ (name attrs)
+ (package rocq-attrs)
+ (generate_project_file)
+ (plugins rocq-attrs.params))
