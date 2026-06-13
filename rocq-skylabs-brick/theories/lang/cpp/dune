@@ -2,7 +2,6 @@
 (rocq.theory
  (name skylabs.lang.cpp)
  (package rocq-skylabs-brick)
- (modules (:standard \ parser.plugin.cpp2v_template))
  (plugins rocq-skylabs-brick.plugin)
  (generate_project_file)
  (theories
@@ -31,10 +30,9 @@
 
 (subdir parser/plugin
  (rule
-  (target cpp2v.v)
+  (target cpp2v_version.v)
   (deps
-   cpp2v_template.v
    (package rocq-skylabs-cpp2v))
   (action
    (with-stdout-to %{target}
-    (bash "checksum=$(sha1sum %{bin:cpp2v} | cut -d' ' -f 1); sed \"s/PLACEHOLDER/${checksum}/g\" cpp2v_template.v")))))
+    (run %{bin:bin-hash} --rocq version %{bin:cpp2v})))))

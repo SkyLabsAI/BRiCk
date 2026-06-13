@@ -14,8 +14,9 @@ let _ =
     match Sys.argv with
     | [|_; "--ocaml"; val_name; bin_name|] -> (`OCaml, val_name, bin_name)
     | [|_; "--rocq" ; val_name; bin_name|] -> (`Rocq , val_name, bin_name)
+    | [|_; "--sh"   ; val_name; bin_name|] -> (`Sh   , val_name, bin_name)
     | _                                    ->
-        panic "Usage: %s (--ocaml | --rocq) VALUE_NAME BIN_NAME" Sys.argv.(0)
+        panic "Usage: %s (--ocaml | --rocq | --sh) VALUE_NAME BIN_NAME" Sys.argv.(0)
   in
   let path = bin_path bin_name in
   let hash = Digest.MD5.(to_hex (file path)) in
@@ -25,3 +26,5 @@ let _ =
   | `Rocq  ->
       Printf.printf "Require Import PrimString.\n\n";
       Printf.printf "Definition %s := %S%%pstring.\n%!" val_name hash
+  | `Sh    ->
+      Printf.printf "%s=%S\n%!" val_name hash
