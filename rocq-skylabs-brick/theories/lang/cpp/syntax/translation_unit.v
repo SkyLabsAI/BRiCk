@@ -182,6 +182,15 @@ Definition InitializerBlock : Set :=
 #[global] Instance InitializerBlock_empty : Empty InitializerBlock :=
   nil.
 
+(** ** Static assertions *)
+
+Record StaticAssert : Set := Build_StaticAssert
+  { sa_message : PrimString.string
+  ; sa_condition : Expr
+  }.
+#[global] Instance StaticAssert_eq : EqDecision StaticAssert.
+Proof. solve_decision. Defined.
+
 (** ** Aliases *)
 
 (** These support
@@ -271,6 +280,7 @@ Record translation_unit : Type := makeTranslationUnit {
   types             : type_table;
   namespace_aliases : alias_table.t;
   initializer       : InitializerBlock;
+  asserts           : list StaticAssert;
   abi               : abi.t;
 }.
 #[only(lens)] derive translation_unit.
@@ -283,7 +293,7 @@ Definition language_version (tu : translation_unit) : lang_version.t :=
 
 (** Just for testing *)
 Definition empty_tu (info : abi.t) : translation_unit :=
-  makeTranslationUnit ∅ ∅ ∅ [] info.
+  makeTranslationUnit ∅ ∅ ∅ [] [] info.
 #[global] Instance : Empty translation_unit :=
   empty_tu abi.abi_default.
 

@@ -1,5 +1,5 @@
 (*
- * Copyright (c) 2020-2024 BlueRock Security, Inc.
+ * Copyright (c) 2020-2026 BlueRock Security, Inc.
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
@@ -486,11 +486,26 @@ Lemma complete_type_respects_sub_table te1 te2 t :
   complete_type te2 t → complete_type te1 t.
 Proof. intros. by eapply complete_respects_sub_table_mut. Qed.
 
+(** ** Inclusion of [static_assert] *)
+Definition asserts_le (sa1 sa2 : list StaticAssert) : Prop :=
+  List.Forall (fun x => x ∈ sa2) sa1.
+
+#[global] Instance: PreOrder asserts_le.
+Proof.
+  constructor.
+  { red. intros. red. apply Forall_forall. done. }
+  { red; intros.
+    apply Forall_forall; intros.
+    eapply Forall_forall in H; eauto.
+    eapply Forall_forall in H0; eauto. }
+Qed.
+
 (** ** Inclusion on [translation_unit] *)
 
 Record sub_module (a b : translation_unit) : Prop :=
 { types_compat : type_table_le a.(types) b.(types)
 ; syms_compat : sym_table_le a.(symbols) b.(symbols)
+; asserts_compat : asserts_le a.(asserts) b.(asserts)
 ; abi_compat : a.(abi) = b.(abi) }.
 
 Section sub_module.
@@ -512,16 +527,19 @@ Definition module_le (a b : translation_unit) : bool :=
   Eval cbv beta iota zeta delta [ andb ] in
   bool_decide (a.(abi) = b.(abi)) &&
   bool_decide (type_table_le a.(types) b.(types)) &&
-  bool_decide (sym_table_le a.(symbols) b.(symbols)).
+  bool_decide (sym_table_le a.(symbols) b.(symbols)) &&
+  bool_decide (asserts_le a.(asserts) b.(asserts)).
 
-Theorem module_le_sound : forall a b, if module_le a b then
-                                   sub_module a b
-                                 else
-                                   ~sub_module a b.
+Theorem module_le_sound : forall a b,
+    if module_le a b then
+      sub_module a b
+    else
+      ~sub_module a b.
 Proof.
   rewrite /module_le; intros.
   repeat case_bool_decide.
   { constructor; eauto. }
+  { intro C; inversion C; eauto. }
   { intro C; inversion C; eauto. }
   { intro C; inversion C; eauto. }
   { intro C; inversion C; eauto. }
