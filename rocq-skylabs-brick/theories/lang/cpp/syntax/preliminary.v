@@ -598,6 +598,9 @@ Definition fp_cast_with_mode
       end
   end.
 
+(* [fp_cast ft ft] is not the semantic path for C++ identity casts.  C++
+   identity conversions use [ConvFloatId]; this generic helper is for
+   non-identity float-to-float conversion and may canonicalize NaNs. *)
 Definition fp_cast (from to : float_type.t) : fp_carrier from -> fp_carrier to :=
   fp_cast_with_mode mode_NE from to.
 

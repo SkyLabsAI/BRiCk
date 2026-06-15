@@ -31,6 +31,10 @@ Definition supported_float_type (ty : type) : option float_type.t :=
   | _ => None
   end.
 
+(* The rank order is the selected deterministic policy for mixed floating
+   arithmetic.  [Flongdouble] and [Ffloat128] are both modeled with binary128
+   carriers in the supported ABI, but they remain distinct C++ extension types;
+   [Ffloat128] therefore wins over [Flongdouble] rather than rejecting the mix. *)
 Definition float_rank (ft : float_type.t) : nat :=
   match ft with
   | Ffloat16 => 0%nat

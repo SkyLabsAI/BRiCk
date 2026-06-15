@@ -5,11 +5,17 @@ long double is still rejected because Clang reports non-IEEE-quad semantics.
   $ cpp2v -v -check-types -names unsupported_names.v -o unsupported.v unsupported.cpp -- -std=c++23 2>&1 | sed 's/^ *[0-9]* | //'
   $ coqc $COQC_ARGS unsupported_names.v
   $ coqc $COQC_ARGS unsupported.v
+  $ grep -o 'float: unsupported floating-point semantics x87DoubleExtended for LongDouble: 1' unsupported.v
+  float: unsupported floating-point semantics x87DoubleExtended for LongDouble: 1
   $ coqc $COQC_ARGS support_check.v
        = ("Builtin long double"%pstring
           :: "Builtin long double"%pstring
              :: "Builtin long double"%pstring
-                :: "Builtin long double"%pstring :: nil)%list
+                :: "Builtin long double"%pstring
+                   :: "Builtin long double"%pstring
+                      :: "float: unsupported floating-point semantics x87DoubleExtended for LongDouble: 1
+  "%pstring
+                         :: nil)%list
        : check.M
 
 Invalid float operators and pointer-plus-float are rejected by clang before

@@ -32,6 +32,46 @@ enum Done : unsigned {
     DT = 4,
 };
 
+static const char *apFloatSemanticsName(llvm::APFloatBase::Semantics sem) {
+    switch (sem) {
+    case llvm::APFloatBase::S_IEEEhalf:
+        return "IEEEhalf";
+    case llvm::APFloatBase::S_BFloat:
+        return "BFloat";
+    case llvm::APFloatBase::S_IEEEsingle:
+        return "IEEEsingle";
+    case llvm::APFloatBase::S_IEEEdouble:
+        return "IEEEdouble";
+    case llvm::APFloatBase::S_IEEEquad:
+        return "IEEEquad";
+    case llvm::APFloatBase::S_PPCDoubleDouble:
+        return "PPCDoubleDouble";
+    case llvm::APFloatBase::S_x87DoubleExtended:
+        return "x87DoubleExtended";
+    default:
+        return "unknown";
+    }
+}
+
+static const char *builtinTypeKindName(const BuiltinType *bt) {
+    if (!bt)
+        return "non-builtin";
+    switch (bt->getKind()) {
+    case BuiltinType::Float16:
+        return "Float16";
+    case BuiltinType::Float:
+        return "Float";
+    case BuiltinType::Double:
+        return "Double";
+    case BuiltinType::LongDouble:
+        return "LongDouble";
+    case BuiltinType::Float128:
+        return "Float128";
+    default:
+        return "other-builtin";
+    }
+}
+
 fmt::Formatter &ClangPrinter::printOverloadableOperator(
     CoqPrinter &print, clang::OverloadedOperatorKind oo, loc::loc loc) {
     if (trace(Trace::Expr))
@@ -1003,15 +1043,16 @@ public:
     }
 
     void VisitFloatingLiteral(const FloatingLiteral *lit) {
-        auto unsupported = [&](llvm::StringRef reason) {
+        auto *bt = lit->getType()->getAs<BuiltinType>();
+        auto unsupported = [&]() {
             print.ctor("Eunsupported") << fmt::nbsp << "\"float: ";
-            print.output() << reason << ": ";
+            print.output() << "unsupported floating-point semantics "
+                           << apFloatSemanticsName(lit->getRawSemantics())
+                           << " for " << builtinTypeKindName(bt) << ": ";
             lit->getValue().print(print.output().nobreak());
             print.output() << "\"" << fmt::nbsp;
             done(lit, Done::DT);
         };
-
-        auto *bt = lit->getType()->getAs<BuiltinType>();
         const char *ft = nullptr;
         if (bt) {
             switch (bt->getKind()) {
@@ -1041,7 +1082,7 @@ public:
         }
 
         if (!ft) {
-            unsupported("unsupported floating-point semantics");
+            unsupported();
             return;
         }
 

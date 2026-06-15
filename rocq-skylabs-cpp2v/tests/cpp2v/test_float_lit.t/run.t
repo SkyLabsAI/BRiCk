@@ -34,23 +34,35 @@
   Efloat Fdouble (fp_of_bits Fdouble 9218868437227405312%Z) Tdouble
   $ grep -o 'Efloat Ffloat16 (fp_of_bits Ffloat16 15360%Z) Tfloat16' test_17_cpp.v
   Efloat Ffloat16 (fp_of_bits Ffloat16 15360%Z) Tfloat16
-  $ grep -o 'Efloat Ffloat16 (fp_of_bits Ffloat16 0%Z) Tfloat16' test_17_cpp.v
+  $ grep -o 'Efloat Ffloat16 (fp_of_bits Ffloat16 0%Z) Tfloat16' test_17_cpp.v | head -1
   Efloat Ffloat16 (fp_of_bits Ffloat16 0%Z) Tfloat16
+  $ grep -o 'Eunop Uminus (Efloat Ffloat16 (fp_of_bits Ffloat16 0%Z) Tfloat16) Tfloat16' test_17_cpp.v
+  Eunop Uminus (Efloat Ffloat16 (fp_of_bits Ffloat16 0%Z) Tfloat16) Tfloat16
   $ grep -o 'Efloat Ffloat128 (fp_of_bits Ffloat128 85065399433376081038215121361612832768%Z) Tfloat128' test_17_cpp.v
   Efloat Ffloat128 (fp_of_bits Ffloat128 85065399433376081038215121361612832768%Z) Tfloat128
   $ grep -o 'Efloat Ffloat128 (fp_of_bits Ffloat128 0%Z) Tfloat128' test_17_cpp.v
   Efloat Ffloat128 (fp_of_bits Ffloat128 0%Z) Tfloat128
-  $ grep -o 'Ecast (Cfloat Tdouble)' test_17_cpp.v | head -1
+  $ grep -A4 'Dvar "double_from_half"' test_17_cpp.v | grep -o 'Ecast (Cfloat Tdouble)'
   Ecast (Cfloat Tdouble)
-  $ grep -o 'Ecast (Cfloat Tfloat)' test_17_cpp.v | head -1
-  Ecast (Cfloat Tfloat)
-  $ grep -o 'Ecast (Cfloat Tfloat16)' test_17_cpp.v
+  $ grep -A4 'Dvar "half_from_double"' test_17_cpp.v | grep -o 'Ecast (Cfloat Tfloat16)'
   Ecast (Cfloat Tfloat16)
-  $ grep -o 'Ecast (Cfloat Tfloat128)' test_17_cpp.v
+  $ grep -A4 'Dvar "quad_from_half"' test_17_cpp.v | grep -o 'Ecast (Cfloat Tfloat128)'
   Ecast (Cfloat Tfloat128)
-  $ grep -o 'Ecast (Cint2float Tfloat)' test_17_cpp.v
-  Ecast (Cint2float Tfloat)
-  $ grep -o 'Ecast (Cfloat2int Tint)' test_17_cpp.v
+  $ grep -A4 'Dvar "half_from_quad"' test_17_cpp.v | grep -o 'Ecast (Cfloat Tfloat16)'
+  Ecast (Cfloat Tfloat16)
+  $ grep -A4 'Dvar "quad_from_float"' test_17_cpp.v | grep -o 'Ecast (Cfloat Tfloat128)'
+  Ecast (Cfloat Tfloat128)
+  $ grep -A4 'Dvar "float_from_quad"' test_17_cpp.v | grep -o 'Ecast (Cfloat Tfloat)'
+  Ecast (Cfloat Tfloat)
+  $ grep -A4 'Dvar "half_from_int"' test_17_cpp.v | grep -o 'Ecast (Cint2float Tfloat16)'
+  Ecast (Cint2float Tfloat16)
+  $ grep -A4 'Dvar "quad_from_int"' test_17_cpp.v | grep -o 'Ecast (Cint2float Tfloat128)'
+  Ecast (Cint2float Tfloat128)
+  $ grep -A4 'Dvar "int_from_half"' test_17_cpp.v | grep -o 'Ecast (Cfloat2int Tint)'
   Ecast (Cfloat2int Tint)
-  $ grep -o 'Ecast (Cfloat2int Tbool)' test_17_cpp.v | head -1
+  $ grep -A4 'Dvar "int_from_quad"' test_17_cpp.v | grep -o 'Ecast (Cfloat2int Tint)'
+  Ecast (Cfloat2int Tint)
+  $ grep -A4 'Dvar "bool_from_half"' test_17_cpp.v | grep -o 'Ecast (Cfloat2int Tbool)'
+  Ecast (Cfloat2int Tbool)
+  $ grep -A4 'Dvar "bool_from_quad"' test_17_cpp.v | grep -o 'Ecast (Cfloat2int Tbool)'
   Ecast (Cfloat2int Tbool)
