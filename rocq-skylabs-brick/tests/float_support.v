@@ -61,6 +61,24 @@ Example support_accepts_float128_to_int_cast :
   check.expr (Ecast (Cfloat2int Tint) (Evar "q" Tfloat128)) = check.OK.
 Proof. reflexivity. Qed.
 
+Definition small_enum_name : name := "Small".
+
+Example support_accepts_char_to_float_cast :
+  check.expr (Ecast (Cint2float Tfloat) (Echar 65 Tchar)) = check.OK.
+Proof. reflexivity. Qed.
+
+Example support_accepts_float_to_char_cast :
+  check.expr (Ecast (Cfloat2int Tchar) one_float) = check.OK.
+Proof. reflexivity. Qed.
+
+Example support_accepts_enum_to_float_cast :
+  check.expr (Ecast (Cint2float Tfloat) (Eenum_const small_enum_name "A")) = check.OK.
+Proof. reflexivity. Qed.
+
+Example support_accepts_float_to_enum_cast :
+  check.expr (Ecast (Cfloat2int (Tenum small_enum_name)) one_float) = check.OK.
+Proof. reflexivity. Qed.
+
 Example support_accepts_float_add :
   check.expr (Ebinop Badd one_float one_float Tfloat) = check.OK.
 Proof. reflexivity. Qed.
@@ -162,6 +180,17 @@ Definition little_float_test_genv : genv :=
   {| genv_tu := empty_tu (abi.mkT int_rank.Ilong Signed Signed Little) |}.
 Definition big_float_test_genv : genv :=
   {| genv_tu := empty_tu (abi.mkT int_rank.Ilong Signed Signed Big) |}.
+Definition unsigned_char_float_test_genv : genv :=
+  {| genv_tu := empty_tu (abi.mkT int_rank.Ilong Unsigned Signed Little) |}.
+
+Definition enum_float_test_tu : translation_unit :=
+  makeTranslationUnit ∅
+    (NM.add small_enum_name (Genum Tint ("A" :: "B" :: nil)) (@NM.empty GlobDecl))
+    ∅ [] (abi.mkT int_rank.Ilong Signed Signed Little).
+Definition enum_float_test_genv : genv := {| genv_tu := enum_float_test_tu |}.
+
+#[local] Instance enum_float_test_compat : enum_float_test_tu ⊧ enum_float_test_genv.
+Proof. constructor. reflexivity. Qed.
 
 Example has_type_prop_float_value {σ : genv} :
   has_type_prop (Vfloat_ Ffloat f32_one) Tfloat.
@@ -363,6 +392,170 @@ Example conv_float_float_to_int_example {σ : genv} tu :
 Proof.
   eapply ConvFloatToInt; [reflexivity|reflexivity|vm_compute; reflexivity|].
   rewrite -has_int_type /bitsize.bound /bitsize.min_val /bitsize.max_val /=; lia.
+Qed.
+
+Example char_to_Z_for_float_signed_char_255 :
+  char_to_Z_for_float little_float_test_genv char_type.Cchar 255 = -1.
+Proof. rewrite /char_to_Z_for_float of_char.unlock. vm_compute. reflexivity. Qed.
+
+Example char_to_Z_for_float_unsigned_char_255 :
+  char_to_Z_for_float unsigned_char_float_test_genv char_type.Cchar 255 = 255.
+Proof. rewrite /char_to_Z_for_float of_char.unlock. vm_compute. reflexivity. Qed.
+
+Example char_to_Z_for_float_char8_255 :
+  char_to_Z_for_float little_float_test_genv char_type.C8 255 = 255.
+Proof. rewrite /char_to_Z_for_float of_char.unlock. vm_compute. reflexivity. Qed.
+
+Example char_to_float_signed_char_positive :
+  @conv_float little_float_test_genv (genv_tu little_float_test_genv)
+    Tchar Tfloat (Vchar 65)
+    (Vfloat_ Ffloat (fp_of_Z Ffloat 65)).
+Proof.
+  replace 65 with (char_to_Z_for_float little_float_test_genv char_type.Cchar 65) by (rewrite /char_to_Z_for_float of_char.unlock; vm_compute; reflexivity).
+  apply conv_float_char_to_float; [reflexivity|apply has_type_prop_char_255; lia].
+Qed.
+
+Example char_to_float_signed_char_negative :
+  @conv_float little_float_test_genv (genv_tu little_float_test_genv)
+    Tchar Tfloat (Vchar 255)
+    (Vfloat_ Ffloat (fp_of_Z Ffloat (-1))).
+Proof.
+  replace (-1) with (char_to_Z_for_float little_float_test_genv char_type.Cchar 255) by (rewrite /char_to_Z_for_float of_char.unlock; vm_compute; reflexivity).
+  apply conv_float_char_to_float; [reflexivity|apply has_type_prop_char_255; lia].
+Qed.
+
+Example char_to_float_unsigned_char_high :
+  @conv_float unsigned_char_float_test_genv (genv_tu unsigned_char_float_test_genv)
+    Tchar Tfloat (Vchar 255)
+    (Vfloat_ Ffloat (fp_of_Z Ffloat 255)).
+Proof.
+  replace 255 with (char_to_Z_for_float unsigned_char_float_test_genv char_type.Cchar 255) by (rewrite /char_to_Z_for_float of_char.unlock; vm_compute; reflexivity).
+  apply conv_float_char_to_float; [reflexivity|apply has_type_prop_char_255; lia].
+Qed.
+
+Example char16_to_double_example :
+  @conv_float little_float_test_genv (genv_tu little_float_test_genv)
+    Tchar16 Tdouble (Vchar 65)
+    (Vfloat_ Fdouble (fp_of_Z Fdouble 65)).
+Proof.
+  replace 65 with (char_to_Z_for_float little_float_test_genv char_type.C16 65) by (rewrite /char_to_Z_for_float of_char.unlock; vm_compute; reflexivity).
+  apply conv_float_char_to_float; [reflexivity|apply has_type_prop_char_255; lia].
+Qed.
+
+Example char32_to_float128_example :
+  @conv_float little_float_test_genv (genv_tu little_float_test_genv)
+    Tchar32 Tfloat128 (Vchar 65)
+    (Vfloat_ Ffloat128 (fp_of_Z Ffloat128 65)).
+Proof.
+  replace 65 with (char_to_Z_for_float little_float_test_genv char_type.C32 65) by (rewrite /char_to_Z_for_float of_char.unlock; vm_compute; reflexivity).
+  apply conv_float_char_to_float; [reflexivity|apply has_type_prop_char_255; lia].
+Qed.
+
+Example char_to_float16_example :
+  @conv_float little_float_test_genv (genv_tu little_float_test_genv)
+    Tchar8 Tfloat16 (Vchar 1)
+    (Vfloat_ Ffloat16 (fp_of_Z Ffloat16 1)).
+Proof.
+  replace 1 with (char_to_Z_for_float little_float_test_genv char_type.C8 1) by (rewrite /char_to_Z_for_float of_char.unlock; vm_compute; reflexivity).
+  apply conv_float_char_to_float; [reflexivity|apply has_type_prop_char_255; lia].
+Qed.
+
+Example fp_to_char_signed_65 :
+  fp_to_char little_float_test_genv Ffloat char_type.Cchar (fp_of_Z Ffloat 65) = Some 65%N.
+Proof. vm_compute. reflexivity. Qed.
+
+Example fp_to_char_signed_minus_one :
+  fp_to_char little_float_test_genv Ffloat char_type.Cchar (fp_of_Z Ffloat (-1)) = Some 255%N.
+Proof. vm_compute. reflexivity. Qed.
+
+Example fp_to_char_char8_255 :
+  fp_to_char little_float_test_genv Ffloat char_type.C8 (fp_of_Z Ffloat 255) = Some 255%N.
+Proof. vm_compute. reflexivity. Qed.
+
+Example fp_to_char_char8_out_of_range :
+  fp_to_char little_float_test_genv Ffloat char_type.C8 (fp_of_Z Ffloat 256) = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Example fp_to_char_signed_out_of_range :
+  fp_to_char little_float_test_genv Ffloat char_type.Cchar (fp_of_Z Ffloat 128) = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Example fp_to_char_nan_none :
+  fp_to_char little_float_test_genv Ffloat char_type.Cchar f32_nan = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Example fp_to_char_inf_none :
+  fp_to_char little_float_test_genv Ffloat char_type.Cchar f32_inf = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Example float_to_char_signed_65 :
+  @conv_float little_float_test_genv (genv_tu little_float_test_genv)
+    Tfloat Tchar (Vfloat_ Ffloat (fp_of_Z Ffloat 65)) (Vchar 65).
+Proof. apply conv_float_to_char; [reflexivity|apply fp_to_char_signed_65]. Qed.
+
+Example float_to_char_signed_minus_one :
+  @conv_float little_float_test_genv (genv_tu little_float_test_genv)
+    Tfloat Tchar (Vfloat_ Ffloat (fp_of_Z Ffloat (-1))) (Vchar 255).
+Proof. apply conv_float_to_char; [reflexivity|apply fp_to_char_signed_minus_one]. Qed.
+
+Example double_to_char8_255 :
+  fp_to_char little_float_test_genv Fdouble char_type.C8 (fp_of_Z Fdouble 255) = Some 255%N.
+Proof. vm_compute. reflexivity. Qed.
+
+Example float128_to_char8_1 :
+  fp_to_char little_float_test_genv Ffloat128 char_type.C8 (fp_of_Z Ffloat128 1) = Some 1%N.
+Proof. vm_compute. reflexivity. Qed.
+
+Example enum_float_test_lookup :
+  enum_float_test_tu.(types) !! small_enum_name = Some (Genum Tint ("A" :: "B" :: nil)).
+Proof. vm_compute. reflexivity. Qed.
+
+Example has_type_prop_small_enum_one :
+  @has_type_prop enum_float_test_genv (Vint 1) (Tenum small_enum_name).
+Proof.
+  rewrite has_type_prop_enum.
+  exists enum_float_test_tu, Tint, ("A" :: "B" :: nil).
+  split; [exact enum_float_test_compat|].
+  split; [apply enum_float_test_lookup|].
+  split; [reflexivity|].
+  rewrite -has_int_type /bitsize.bound /bitsize.min_val /bitsize.max_val /=; lia.
+Qed.
+
+Example enum_to_float_example :
+  @conv_float enum_float_test_genv enum_float_test_tu
+    (Tenum small_enum_name) Tfloat (Vint 1) (Vfloat_ Ffloat (fp_of_Z Ffloat 1)).
+Proof.
+  eapply conv_float_enum_to_float with (rty := Tint).
+  - vm_compute. reflexivity.
+  - reflexivity.
+  - reflexivity.
+  - apply has_type_prop_small_enum_one.
+Qed.
+
+Example float_to_enum_example :
+  @conv_float enum_float_test_genv enum_float_test_tu
+    Tfloat (Tenum small_enum_name) (Vfloat_ Ffloat f32_one) (Vint 1).
+Proof.
+  eapply conv_float_to_enum with (rty := Tint).
+  - vm_compute. reflexivity.
+  - reflexivity.
+  - reflexivity.
+  - vm_compute. reflexivity.
+  - apply has_type_prop_small_enum_one.
+Qed.
+
+Example float_to_enum_out_of_range_not_well_typed :
+  ~ @has_type_prop enum_float_test_genv (Vint (2 ^ 31)) (Tenum small_enum_name).
+Proof.
+  rewrite has_type_prop_enum.
+  intros (tu & ty & ls & Hcompat & Hlookup & _ & Hty).
+  pose proof (sub_module_preserves_genum tu enum_float_test_tu small_enum_name ty ls
+                (genv_compat_submodule _ _ Hcompat) Hlookup) as [ls2 Hlookup2].
+  rewrite enum_float_test_lookup in Hlookup2.
+  inversion Hlookup2; subst ty.
+  simpl in Hty.
+  rewrite -has_int_type in Hty.
+  rewrite /bitsize.bound /bitsize.min_val /bitsize.max_val /= in Hty. lia.
 Qed.
 
 Example eval_add_mixed_float_double_after_conversion {σ : genv} tu :

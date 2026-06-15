@@ -235,9 +235,9 @@ Definition is_float_to_integral_target (ty : type) : bool :=
   end.
 
 (** Floating conversions for supported Flocq-backed floating formats.
-    Integer conversions are intentionally scoped to runtime [Vint]
-    sources/results; character payload conversions remain outside this concrete
-    layer until a dedicated char/float policy is chosen. *)
+    Integer conversions are scoped to runtime [Vint] sources/results. Character
+    conversions use the source/target character type's signedness to interpret
+    or produce the architecture-independent [Vchar] payload. *)
 Inductive conv_float {σ : genv} (tu : translation_unit) : type -> type -> val -> val -> Prop :=
 | ConvFloatId ft (f : fp_carrier ft) :
     fp_supported ft = true ->
@@ -256,12 +256,21 @@ Inductive conv_float {σ : genv} (tu : translation_unit) : type -> type -> val -
     is_nonfloat_arithmetic ty = true ->
     has_type_prop (Vint z) ty ->
     conv_float tu ty (Tfloat_ ft) (Vint z) (Vfloat_ ft (fp_of_Z ft z))
+| ConvFloatCharToFloat ct ft n :
+    fp_supported ft = true ->
+    has_type_prop (Vchar n) (Tchar_ ct) ->
+    conv_float tu (Tchar_ ct) (Tfloat_ ft)
+      (Vchar n) (Vfloat_ ft (fp_of_Z ft (char_to_Z_for_float σ ct n)))
 | ConvFloatToInt ft ty (f : fp_carrier ft) z :
     fp_supported ft = true ->
     is_float_to_integral_target ty = true ->
     fp_to_Z ft f = Some z ->
     has_type_prop (Vint z) ty ->
     conv_float tu (Tfloat_ ft) ty (Vfloat_ ft f) (Vint z)
+| ConvFloatToChar ft ct (f : fp_carrier ft) n :
+    fp_supported ft = true ->
+    fp_to_char σ ft ct f = Some n ->
+    conv_float tu (Tfloat_ ft) (Tchar_ ct) (Vfloat_ ft f) (Vchar n)
 | ConvFloatRepresentation ty ty' rty rty' v v' :
     representation_type tu ty = rty ->
     representation_type tu ty' = rty' ->
@@ -281,7 +290,9 @@ Proof.
     + rewrite has_type_prop_bool. eexists. reflexivity.
   - split; apply has_float_type; assumption.
   - split; [assumption|apply has_float_type; assumption].
+  - split; [assumption|apply has_float_type; assumption].
   - split; [apply has_float_type; assumption|assumption].
+  - split; [apply has_float_type; assumption|eapply fp_to_char_has_type; eassumption].
   - split; assumption.
 Qed.
 
@@ -302,6 +313,56 @@ Lemma conv_float_cast : forall {σ : genv} tu from to (f : fp_carrier from),
     conv_float tu (Tfloat_ from) (Tfloat_ to)
       (Vfloat_ from f) (Vfloat_ to (fp_cast from to f)).
 Proof. constructor; assumption. Qed.
+
+Lemma conv_float_char_to_float : forall {σ : genv} tu ct ft n,
+    fp_supported ft = true ->
+    has_type_prop (Vchar n) (Tchar_ ct) ->
+    conv_float tu (Tchar_ ct) (Tfloat_ ft)
+      (Vchar n) (Vfloat_ ft (fp_of_Z ft (char_to_Z_for_float σ ct n))).
+Proof. constructor; assumption. Qed.
+
+Lemma conv_float_to_char : forall {σ : genv} tu ft ct (f : fp_carrier ft) n,
+    fp_supported ft = true ->
+    fp_to_char σ ft ct f = Some n ->
+    conv_float tu (Tfloat_ ft) (Tchar_ ct) (Vfloat_ ft f) (Vchar n).
+Proof. constructor; assumption. Qed.
+
+Lemma conv_float_enum_to_float : forall {σ : genv} `{Hmod : tu ⊧ σ} nm rty ft z,
+    representation_type tu (Tenum nm) = rty ->
+    fp_supported ft = true ->
+    is_nonfloat_arithmetic rty = true ->
+    has_type_prop (Vint z) (Tenum nm) ->
+    conv_float tu (Tenum nm) (Tfloat_ ft) (Vint z) (Vfloat_ ft (fp_of_Z ft z)).
+Proof.
+  intros σ tu Hmod nm rty ft z Hrepr Hsupp Harith Henum.
+  pose proof (has_type_prop_representation_type (Tenum nm) (Vint z) Henum) as Hrep_ty.
+  rewrite Hrepr in Hrep_ty.
+  eapply ConvFloatRepresentation with (rty := rty) (rty' := Tfloat_ ft).
+  - exact Hrepr.
+  - reflexivity.
+  - eapply ConvFloatIntToFloat; eauto.
+  - exact Henum.
+  - apply has_float_type. exact Hsupp.
+Qed.
+
+Lemma conv_float_to_enum : forall {σ : genv} `{Hmod : tu ⊧ σ} nm rty ft (f : fp_carrier ft) z,
+    representation_type tu (Tenum nm) = rty ->
+    fp_supported ft = true ->
+    is_float_to_integral_target rty = true ->
+    fp_to_Z ft f = Some z ->
+    has_type_prop (Vint z) (Tenum nm) ->
+    conv_float tu (Tfloat_ ft) (Tenum nm) (Vfloat_ ft f) (Vint z).
+Proof.
+  intros σ tu Hmod nm rty ft f z Hrepr Hsupp Htarget HtoZ Henum.
+  pose proof (has_type_prop_representation_type (Tenum nm) (Vint z) Henum) as Hrep_ty.
+  rewrite Hrepr in Hrep_ty.
+  eapply ConvFloatRepresentation with (rty := Tfloat_ ft) (rty' := rty).
+  - reflexivity.
+  - exact Hrepr.
+  - eapply ConvFloatToInt; eauto.
+  - apply has_float_type. exact Hsupp.
+  - exact Henum.
+Qed.
 
 Lemma conv_float_widen : forall {σ : genv} tu (f : fp_carrier Ffloat),
     conv_float tu Tfloat Tdouble (Vfloat_ Ffloat f) (Vfloat_ Fdouble (fp_float_to_double f)).

@@ -47,6 +47,34 @@ Definition of_char (from_bits : N) (from_sgn : signed) (to_bits : N) (to_sgn : s
     else n in
   if to_sgn is Signed then to_signed_bits to_bits n else to_unsigned_bits to_bits n.
 
+Definition char_to_Z_for_float (σ : genv) (ct : char_type.t) (n : N) : Z :=
+  of_char (char_type.bitsN ct) (signedness_of_char σ ct)
+    (int_rank.bitsN int_rank.I128) Signed n.
+
+Definition char_float_bound (σ : genv) (ct : char_type.t) (z : Z) : Prop :=
+  let bits := char_type.bitsN ct in
+  match signedness_of_char σ ct with
+  | Signed => (- 2 ^ (bits - 1) <= z < 2 ^ (bits - 1))%Z
+  | Unsigned => (0 <= z < 2 ^ bits)%Z
+  end.
+
+Definition char_float_boundb (σ : genv) (ct : char_type.t) (z : Z) : bool :=
+  let bits := char_type.bitsN ct in
+  match signedness_of_char σ ct with
+  | Signed => ((- 2 ^ (bits - 1) <=? z) && (z <? 2 ^ (bits - 1)))%Z
+  | Unsigned => ((0 <=? z) && (z <? 2 ^ bits))%Z
+  end.
+
+Definition Z_to_char_bits (ct : char_type.t) (z : Z) : N :=
+  Z.to_N (z `mod` 2 ^ char_type.bitsN ct).
+
+Definition fp_to_char (σ : genv) (ft : float_type.t) (ct : char_type.t)
+    (f : fp_carrier ft) : option N :=
+  match fp_to_Z ft f with
+  | Some z => if char_float_boundb σ ct z then Some (Z_to_char_bits ct z) else None
+  | None => None
+  end.
+
 (* suppose that you are in an architecture with unsigned characters
     and you wrote (128)
   *)
@@ -365,6 +393,26 @@ Proof.
   generalize (Z_mod_lt z (2^bits)). lia.
 Qed.
 
+Lemma char_float_boundb_spec {σ : genv} ct z :
+  char_float_boundb σ ct z = true <-> char_float_bound σ ct z.
+Proof.
+  rewrite /char_float_boundb /char_float_bound.
+  destruct (signedness_of_char σ ct); rewrite andb_true_iff Z.leb_le Z.ltb_lt; tauto.
+Qed.
+
+Lemma Z_to_char_bits_bounded ct z :
+  (0 <= Z_to_char_bits ct z < 2 ^ char_type.bitsN ct)%N.
+Proof.
+  split; first apply N.le_0_l.
+  rewrite /Z_to_char_bits.
+  apply N2Z.inj_lt.
+  rewrite Z2N.id.
+  - replace (Z.of_N (2 ^ char_type.bitsN ct)%N) with (2 ^ char_type.bitsN ct)%Z
+      by (destruct ct; reflexivity).
+    apply Z_mod_lt. destruct ct; simpl; lia.
+  - apply Z_mod_lt. destruct ct; simpl; lia.
+Qed.
+
 Lemma of_char_bounded (from_sz : N) from_sgn (to_sz : N) to_sgn n :
   0 < to_sz -> 0< from_sz ->
   let min_val : Z := if to_sgn is Signed then -2^(to_sz-1) else 0 in
@@ -384,4 +432,26 @@ Proof.
           end
       end.
   repeat first [ case_bool_decide | case_match ]; rewrite /trim/=; split; try rewrite Zmod_0_l ; saturate; try lia.
+Qed.
+
+Lemma char_to_Z_for_float_bounded {σ : genv} ct n :
+  has_type_prop (Vchar n) (Tchar_ ct) ->
+  bitsize.bound (int_rank.bitsize int_rank.I128) Signed (char_to_Z_for_float σ ct n).
+Proof.
+  intros _.
+  rewrite /char_to_Z_for_float /bitsize.bound /bitsize.min_val /bitsize.max_val.
+  pose proof (of_char_bounded (char_type.bitsN ct) (signedness_of_char σ ct)
+                (int_rank.bitsN int_rank.I128) Signed n) as H.
+  destruct ct; simpl in *; specialize (H ltac:(lia) ltac:(lia)); lia.
+Qed.
+
+Lemma fp_to_char_has_type {σ : genv} ft ct (f : fp_carrier ft) n :
+  fp_to_char σ ft ct f = Some n ->
+  has_type_prop (Vchar n) (Tchar_ ct).
+Proof.
+  rewrite /fp_to_char.
+  destruct (fp_to_Z ft f) as [z|] eqn:HtoZ; try discriminate.
+  destruct (char_float_boundb σ ct z) eqn:Hbound; inversion 1; subst.
+  apply has_type_prop_char'.
+  apply Z_to_char_bits_bounded.
 Qed.
