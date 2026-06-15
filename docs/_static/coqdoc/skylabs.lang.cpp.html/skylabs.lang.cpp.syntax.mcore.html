@@ -51,6 +51,30 @@
 #[<span class="id" title="var">local</span>] <span class="id" title="keyword">Set</span> <span class="id" title="var">Primitive</span> <span class="id" title="var">Projections</span>.<br/>
 
 <br/>
+</div>
+
+<div class="doc">
+<a id="lab197"></a><h2 class="section">Naming Conventions</h2>
+
+
+<div class="paragraph"> </div>
+
+    BRiCk uses a single AST to represent both templated (sometimes called "meta") terms
+    as well as non-templated terms. We use the <code>M</code> prefix for types when arguments are
+    intended to be templated terms.
+
+<div class="paragraph"> </div>
+
+    **Alternatives**
+    Alternatively, we could also use <code>Definition</code>s. These are a bit heavier weight,
+    but would be preserved when printing terms.
+ 
+<div class="paragraph"> </div>
+
+<a id="lab198"></a><h2 class="section">C++ with templates</h2>
+
+</div>
+<div class="code">
 <span class="id" title="keyword">Notation</span> <a id="Mname" class="idref" href="#Mname"><span class="id" title="abbreviation">Mname</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name"><span class="id" title="inductive">name</span></a> (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
 <span class="id" title="keyword">Notation</span> <a id="Mglobname" class="idref" href="#Mglobname"><span class="id" title="abbreviation">Mglobname</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.core.html#globname"><span class="id" title="definition">globname</span></a> (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
 <span class="id" title="keyword">Notation</span> <a id="Mobj_name" class="idref" href="#Mobj_name"><span class="id" title="abbreviation">Mobj_name</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.core.html#obj_name"><span class="id" title="definition">obj_name</span></a> (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
@@ -83,7 +107,7 @@
 </div>
 
 <div class="doc">
-<a id="lab196"></a><h2 class="section">Template pre-instances</h2>
+<a id="lab199"></a><h2 class="section">Template pre-instances</h2>
 
 <div class="paragraph"> </div>
 
@@ -120,7 +144,7 @@ template file) and arguments.
 </div>
 
 <div class="doc">
-<a id="lab197"></a><h2 class="section">Template instances</h2>
+<a id="lab200"></a><h2 class="section">Template instances</h2>
 
 </div>
 <div class="code">
@@ -159,7 +183,7 @@ template file) and arguments.
 </div>
 
 <div class="doc">
-<a id="lab198"></a><h2 class="section">Templated values</h2>
+<a id="lab201"></a><h2 class="section">Templated values</h2>
 
    <code>int foo()</code> is an <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#ObjValue"><span class="id" title="abbreviation">ObjValue</span></a></span>
    <code>template&lt;typename T&gt; int foo(T)</code> is a <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.mcore.html#template"><span class="id" title="section">template</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#ObjValue"><span class="id" title="abbreviation">ObjValue</span></a></span> and would be represented as

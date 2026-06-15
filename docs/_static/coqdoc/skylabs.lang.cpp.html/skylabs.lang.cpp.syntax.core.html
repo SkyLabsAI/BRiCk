@@ -65,7 +65,33 @@
 </div>
 
 <div class="doc">
-<a id="lab176"></a><h2 class="section">Function types</h2>
+<a id="lab177"></a><h2 class="section">Naming conventions</h2>
+
+
+<div class="paragraph"> </div>
+
+    Practically speaking, the entire abstract syntax tree of C++ is mutually recursive
+    including names, types, expressions, and statements.
+
+<div class="paragraph"> </div>
+
+    In some instances, e.g. <code>function_type_</code> below, we generalize certain type
+    constructors in order to expose <span class="inlinecode"><span class="id" title="var">Functor</span></span> or traversable structure on them.
+    When we do this, we name these types with an &lt;_&gt; suffix, e.g. <code>function_type_</code>.
+    The "standard instantiations" of these, e.g. <code>function_type_ type</code>, are given
+    the name without the suffix, e.g. <code>Abbreviation function_type := (function_type_ type).</code>
+
+<div class="paragraph"> </div>
+
+    **Historical note**
+    Previously, there were also, e.g. <code>Expr' : lang.t -&gt; Set</code>, which used types to
+    distinguish between templated terms (sometimes referred to as "meta terms", see
+    <span class="inlinecode"><span class="id" title="var">mcore.v</span></span>) and normal terms. The use of &lt;lang.t&gt; has been removed, and therefore
+    <code>'</code>d definitions and notations should be removed.
+ 
+<div class="paragraph"> </div>
+
+<a id="lab178"></a><h2 class="section">Function types</h2>
 
 <div class="paragraph"> </div>
 
@@ -119,7 +145,7 @@ the several function-like things in the language, with quirky rules
 </div>
 
 <div class="doc">
-<a id="lab177"></a><h2 class="section">Templates</h2>
+<a id="lab179"></a><h2 class="section">Templates</h2>
 
 <div class="paragraph"> </div>
 
@@ -304,7 +330,7 @@ the several function-like things in the language, with quirky rules
 </div>
 
 <div class="doc">
-<a id="lab178"></a><h2 class="section">Atomic names</h2>
+<a id="lab180"></a><h2 class="section">Atomic names</h2>
 
 <div class="paragraph"> </div>
 
@@ -468,7 +494,7 @@ Errors
 </div>
 
 <div class="doc">
-<a id="lab179"></a><h2 class="section">Structured names</h2>
+<a id="lab181"></a><h2 class="section">Structured names</h2>
 
 </div>
 <div class="code">
@@ -518,7 +544,7 @@ Template arguments
 </div>
 
 <div class="doc">
-<a id="lab180"></a><h2 class="section">Types</h2>
+<a id="lab182"></a><h2 class="section">Types</h2>
 
 <div class="paragraph"> </div>
 
@@ -574,7 +600,7 @@ substitutions small.
 </div>
 
 <div class="doc">
-<a id="lab181"></a><h2 class="section">Expressions</h2>
+<a id="lab183"></a><h2 class="section">Expressions</h2>
 
 <div class="paragraph"> </div>
 
@@ -610,6 +636,7 @@ simplifies cpp2v---we set it from context in ../mparser.v.
 | <a id="Eunresolved_parenlist" class="idref" href="#Eunresolved_parenlist"><span class="id" title="constructor">Eunresolved_parenlist</span></a> (<span class="id" title="var">_</span> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>) (<span class="id" title="var">_</span> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr:103"><span class="id" title="inductive">Expr</span></a>)<br/>
 | <a id="Eunresolved_initlist" class="idref" href="#Eunresolved_initlist"><span class="id" title="constructor">Eunresolved_initlist</span></a> (<span class="id" title="var">_</span> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>) (<span class="id" title="var">_</span> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr:103"><span class="id" title="inductive">Expr</span></a>)<br/>
 | <a id="Eunresolved_member" class="idref" href="#Eunresolved_member"><span class="id" title="constructor">Eunresolved_member</span></a> (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr:103"><span class="id" title="inductive">Expr</span></a>) (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name:100"><span class="id" title="inductive">name</span></a>)<br/>
+| <a id="Eunresolved_string_literal" class="idref" href="#Eunresolved_string_literal"><span class="id" title="constructor">Eunresolved_string_literal</span></a> (<a id="character_type:149" class="idref" href="#character_type:149"><span class="id" title="binder">character_type</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>)<br/>
 <br/>
 </div>
 
@@ -622,8 +649,8 @@ a few constructors (by carrying <code>Expr ≈ Eparam + Eglobal</code> instead o
 <div class="code">
 <br/>
 | <a id="Evar" class="idref" href="#Evar"><span class="id" title="constructor">Evar</span></a> (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#localname"><span class="id" title="abbreviation">localname</span></a>) (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>)<br/>
-| <a id="Eenum_const" class="idref" href="#Eenum_const"><span class="id" title="constructor">Eenum_const</span></a> (<a id="gn:149" class="idref" href="#gn:149"><span class="id" title="binder">gn</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name:100"><span class="id" title="inductive">name</span></a>) (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#ident"><span class="id" title="definition">ident</span></a>)<br/>
-| <a id="Eglobal" class="idref" href="#Eglobal"><span class="id" title="constructor">Eglobal</span></a> (<a id="on:150" class="idref" href="#on:150"><span class="id" title="binder">on</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name:100"><span class="id" title="inductive">name</span></a>) (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>)<br/>
+| <a id="Eenum_const" class="idref" href="#Eenum_const"><span class="id" title="constructor">Eenum_const</span></a> (<a id="gn:150" class="idref" href="#gn:150"><span class="id" title="binder">gn</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name:100"><span class="id" title="inductive">name</span></a>) (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#ident"><span class="id" title="definition">ident</span></a>)<br/>
+| <a id="Eglobal" class="idref" href="#Eglobal"><span class="id" title="constructor">Eglobal</span></a> (<a id="on:151" class="idref" href="#on:151"><span class="id" title="binder">on</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name:100"><span class="id" title="inductive">name</span></a>) (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>)<br/>
 </div>
 
 <div class="doc">
@@ -635,11 +662,10 @@ program because, in part, C++ has no type for references to members.
 
 </div>
 <div class="code">
-| <a id="Eglobal_member" class="idref" href="#Eglobal_member"><span class="id" title="constructor">Eglobal_member</span></a> (<a id="gn:151" class="idref" href="#gn:151"><span class="id" title="binder">gn</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name:100"><span class="id" title="inductive">name</span></a>) (<a id="ty:152" class="idref" href="#ty:152"><span class="id" title="binder">ty</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>)<br/>
+| <a id="Eglobal_member" class="idref" href="#Eglobal_member"><span class="id" title="constructor">Eglobal_member</span></a> (<a id="gn:152" class="idref" href="#gn:152"><span class="id" title="binder">gn</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name:100"><span class="id" title="inductive">name</span></a>) (<a id="ty:153" class="idref" href="#ty:153"><span class="id" title="binder">ty</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>)<br/>
 <br/>
-| <a id="Echar" class="idref" href="#Echar"><span class="id" title="constructor">Echar</span></a> (<a id="c:153" class="idref" href="#c:153"><span class="id" title="binder">c</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a>) (<a id="t:154" class="idref" href="#t:154"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>)<br/>
-| <a id="Estring" class="idref" href="#Estring"><span class="id" title="constructor">Estring</span></a> (<a id="s:155" class="idref" href="#s:155"><span class="id" title="binder">s</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.literal_string.html#literal_string.t"><span class="id" title="record">literal_string.t</span></a>) (<a id="t:156" class="idref" href="#t:156"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>)<br/>
-| <a id="Eunresolved_string_literal" class="idref" href="#Eunresolved_string_literal"><span class="id" title="constructor">Eunresolved_string_literal</span></a> (<a id="t:157" class="idref" href="#t:157"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>)<br/>
+| <a id="Echar" class="idref" href="#Echar"><span class="id" title="constructor">Echar</span></a> (<a id="c:154" class="idref" href="#c:154"><span class="id" title="binder">c</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a>) (<a id="t:155" class="idref" href="#t:155"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>)<br/>
+| <a id="Estring" class="idref" href="#Estring"><span class="id" title="constructor">Estring</span></a> (<a id="s:156" class="idref" href="#s:156"><span class="id" title="binder">s</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.literal_string.html#literal_string.t"><span class="id" title="record">literal_string.t</span></a>) (<a id="t:157" class="idref" href="#t:157"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>)<br/>
 | <a id="Eint" class="idref" href="#Eint"><span class="id" title="constructor">Eint</span></a> (<a id="n:158" class="idref" href="#n:158"><span class="id" title="binder">n</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>) (<a id="t:159" class="idref" href="#t:159"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>)<br/>
 | <a id="Ebool" class="idref" href="#Ebool"><span class="id" title="constructor">Ebool</span></a> (<a id="b:160" class="idref" href="#b:160"><span class="id" title="binder">b</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>)<br/>
 | <a id="Efloat" class="idref" href="#Efloat"><span class="id" title="constructor">Efloat</span></a> (<a id="ft:161" class="idref" href="#ft:161"><span class="id" title="binder">ft</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#float_type.t"><span class="id" title="inductive">float_type.t</span></a>) (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#float_type.car"><span class="id" title="definition">float_type.car</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#ft:161"><span class="id" title="variable">ft</span></a>)<br/>
@@ -659,11 +685,6 @@ program because, in part, C++ has no type for references to members.
 | <a id="Ecall" class="idref" href="#Ecall"><span class="id" title="constructor">Ecall</span></a> (<a id="f:193" class="idref" href="#f:193"><span class="id" title="binder">f</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr:103"><span class="id" title="inductive">Expr</span></a>) (<a id="es:194" class="idref" href="#es:194"><span class="id" title="binder">es</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr:103"><span class="id" title="inductive">Expr</span></a>)<br/>
 | <a id="Eexplicit_cast" class="idref" href="#Eexplicit_cast"><span class="id" title="constructor">Eexplicit_cast</span></a> (<a id="c:195" class="idref" href="#c:195"><span class="id" title="binder">c</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#t"><span class="id" title="inductive">cast_style.t</span></a>) (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>) (<a id="e:196" class="idref" href="#e:196"><span class="id" title="binder">e</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr:103"><span class="id" title="inductive">Expr</span></a>)<br/>
 | <a id="Ecast" class="idref" href="#Ecast"><span class="id" title="constructor">Ecast</span></a> (<a id="c:197" class="idref" href="#c:197"><span class="id" title="binder">c</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Cast:107"><span class="id" title="inductive">Cast</span></a>) (<a id="e:198" class="idref" href="#e:198"><span class="id" title="binder">e</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr:103"><span class="id" title="inductive">Expr</span></a>)<br/>
-&nbsp;&nbsp;<span class="comment">(*&nbsp;TODO:&nbsp;this&nbsp;use&nbsp;of&nbsp;<span class="inlinecode"><span class="id" title="var">Cast_</span></span>&nbsp;should&nbsp;really&nbsp;use&nbsp;<span class="inlinecode"><span class="id" title="var">classname</span></span>&nbsp;as&nbsp;its&nbsp;first&nbsp;argument,&nbsp;but<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;we&nbsp;can&nbsp;not&nbsp;use&nbsp;that&nbsp;without&nbsp;a&nbsp;<span class="inlinecode"><span class="id" title="keyword">match</span></span>&nbsp;which&nbsp;Coq&nbsp;rejects&nbsp;as&nbsp;not&nbsp;being&nbsp;strictly&nbsp;positive.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;GM:&nbsp;the&nbsp;only&nbsp;way&nbsp;I&nbsp;see&nbsp;to&nbsp;solve&nbsp;this&nbsp;problem&nbsp;is&nbsp;to&nbsp;make&nbsp;<span class="inlinecode"><span class="id" title="var">lang</span></span>&nbsp;and&nbsp;index&nbsp;rather&nbsp;than<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;a&nbsp;parameter.&nbsp;Doing&nbsp;that&nbsp;would&nbsp;allow&nbsp;for&nbsp;two&nbsp;different&nbsp;constructors&nbsp;for&nbsp;<span class="inlinecode"><span class="id" title="var">Ecast</span></span><br/>
-&nbsp;&nbsp;&nbsp;*)</span><br/>
 | <a id="Emember" class="idref" href="#Emember"><span class="id" title="constructor">Emember</span></a> (<a id="arrow:199" class="idref" href="#arrow:199"><span class="id" title="binder">arrow</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>) (<a id="obj:200" class="idref" href="#obj:200"><span class="id" title="binder">obj</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr:103"><span class="id" title="inductive">Expr</span></a>) (<a id="f:201" class="idref" href="#f:201"><span class="id" title="binder">f</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#atomic_name_"><span class="id" title="inductive">atomic_name_</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>) (<a id="mut:202" class="idref" href="#mut:202"><span class="id" title="binder">mut</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>) (<a id="t:203" class="idref" href="#t:203"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>)<br/>
 | <a id="Emember_ignore" class="idref" href="#Emember_ignore"><span class="id" title="constructor">Emember_ignore</span></a> (<a id="arrow:204" class="idref" href="#arrow:204"><span class="id" title="binder">arrow</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>) (<a id="obj:205" class="idref" href="#obj:205"><span class="id" title="binder">obj</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr:103"><span class="id" title="inductive">Expr</span></a>) (<a id="res:206" class="idref" href="#res:206"><span class="id" title="binder">res</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr:103"><span class="id" title="inductive">Expr</span></a>)<br/>
 | <a id="Emember_call" class="idref" href="#Emember_call"><span class="id" title="constructor">Emember_call</span></a> (<a id="arrow:207" class="idref" href="#arrow:207"><span class="id" title="binder">arrow</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>) (<a id="method:208" class="idref" href="#method:208"><span class="id" title="binder">method</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#MethodRef_"><span class="id" title="definition">MethodRef_</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name:100"><span class="id" title="inductive">name</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr:103"><span class="id" title="inductive">Expr</span></a>) (<a id="obj:209" class="idref" href="#obj:209"><span class="id" title="binder">obj</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr:103"><span class="id" title="inductive">Expr</span></a>) (<a id="args:210" class="idref" href="#args:210"><span class="id" title="binder">args</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr:103"><span class="id" title="inductive">Expr</span></a>)<br/>
@@ -730,6 +751,7 @@ Should be <span class="inlinecode"><span class="id" title="var">gn</span></span>
 | <a id="Earrayloop_index" class="idref" href="#Earrayloop_index"><span class="id" title="constructor">Earrayloop_index</span></a> (<a id="level:265" class="idref" href="#level:265"><span class="id" title="binder">level</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a>) (<a id="t:266" class="idref" href="#t:266"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>)<br/>
 | <a id="Eopaque_ref" class="idref" href="#Eopaque_ref"><span class="id" title="constructor">Eopaque_ref</span></a> (<a id="name:267" class="idref" href="#name:267"><span class="id" title="binder">name</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a>) (<a id="t:268" class="idref" href="#t:268"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>)<br/>
 | <a id="Eunsupported" class="idref" href="#Eunsupported"><span class="id" title="constructor">Eunsupported</span></a> (<a id="s:269" class="idref" href="#s:269"><span class="id" title="binder">s</span></a> : <span class="id" title="var">PrimString.string</span>) (<a id="t:270" class="idref" href="#t:270"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>)<br/>
+<br/>
 <span class="id" title="keyword">with</span> <a id="Stmt" class="idref" href="#Stmt"><span class="id" title="definition, inductive"><span id="Stmt_rect" class="id"><span id="Stmt_ind" class="id"><span id="Stmt_rec" class="id"><span id="Stmt_sind" class="id">Stmt</span></span></span></span></span></a> : <span class="id" title="keyword">Set</span> :=<br/>
 | <a id="Sseq" class="idref" href="#Sseq"><span class="id" title="constructor">Sseq</span></a>    (<span class="id" title="var">_</span> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Stmt:104"><span class="id" title="inductive">Stmt</span></a>)<br/>
 | <a id="Sdecl" class="idref" href="#Sdecl"><span class="id" title="constructor">Sdecl</span></a>   (<span class="id" title="var">_</span> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#VarDecl:105"><span class="id" title="inductive">VarDecl</span></a>)<br/>
@@ -762,18 +784,21 @@ Should be <span class="inlinecode"><span class="id" title="var">gn</span></span>
 | <a id="Slabeled" class="idref" href="#Slabeled"><span class="id" title="constructor">Slabeled</span></a> (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#ident"><span class="id" title="definition">ident</span></a>) (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Stmt:104"><span class="id" title="inductive">Stmt</span></a>)<br/>
 | <a id="Sgoto" class="idref" href="#Sgoto"><span class="id" title="constructor">Sgoto</span></a> (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#ident"><span class="id" title="definition">ident</span></a>)<br/>
 | <a id="Sunsupported" class="idref" href="#Sunsupported"><span class="id" title="constructor">Sunsupported</span></a> (<span class="id" title="var">_</span> : <span class="id" title="var">PrimString.string</span>)<br/>
+<br/>
 <span class="id" title="keyword">with</span> <a id="VarDecl" class="idref" href="#VarDecl"><span class="id" title="definition, inductive"><span id="VarDecl_rect" class="id"><span id="VarDecl_ind" class="id"><span id="VarDecl_rec" class="id"><span id="VarDecl_sind" class="id">VarDecl</span></span></span></span></span></a> : <span class="id" title="keyword">Set</span> :=<br/>
 | <a id="Dvar" class="idref" href="#Dvar"><span class="id" title="constructor">Dvar</span></a> (<a id="name:275" class="idref" href="#name:275"><span class="id" title="binder">name</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#localname"><span class="id" title="abbreviation">localname</span></a>) (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>) (<a id="init:276" class="idref" href="#init:276"><span class="id" title="binder">init</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr:103"><span class="id" title="inductive">Expr</span></a>)<br/>
 | <a id="Ddecompose" class="idref" href="#Ddecompose"><span class="id" title="constructor">Ddecompose</span></a> (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr:103"><span class="id" title="inductive">Expr</span></a>) (<a id="anon_var:277" class="idref" href="#anon_var:277"><span class="id" title="binder">anon_var</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#ident"><span class="id" title="definition">ident</span></a>) (<span class="id" title="var">_</span> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#BindingDecl:106"><span class="id" title="inductive">BindingDecl</span></a>)<br/>
 &nbsp;&nbsp;<span class="comment">(*&nbsp;initialization&nbsp;of&nbsp;a&nbsp;function-local&nbsp;<span class="inlinecode"><span class="id" title="var">static</span></span>.&nbsp;See&nbsp;https://eel.is/c++draft/stmt.dcl3 *)</span><br/>
 | <a id="Dinit" class="idref" href="#Dinit"><span class="id" title="constructor">Dinit</span></a> (<a id="thread_safe:278" class="idref" href="#thread_safe:278"><span class="id" title="binder">thread_safe</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>) (<a id="name:279" class="idref" href="#name:279"><span class="id" title="binder">name</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name:100"><span class="id" title="inductive">name</span></a>) (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>) (<a id="init:280" class="idref" href="#init:280"><span class="id" title="binder">init</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr:103"><span class="id" title="inductive">Expr</span></a>)<br/>
+<br/>
 <span class="id" title="keyword">with</span> <a id="BindingDecl" class="idref" href="#BindingDecl"><span class="id" title="definition, inductive"><span id="BindingDecl_rect" class="id"><span id="BindingDecl_ind" class="id"><span id="BindingDecl_rec" class="id"><span id="BindingDecl_sind" class="id">BindingDecl</span></span></span></span></span></a> : <span class="id" title="keyword">Set</span> :=<br/>
 | <a id="Bvar" class="idref" href="#Bvar"><span class="id" title="constructor">Bvar</span></a> (<a id="name:281" class="idref" href="#name:281"><span class="id" title="binder">name</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#localname"><span class="id" title="abbreviation">localname</span></a>) (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>) (<a id="init:282" class="idref" href="#init:282"><span class="id" title="binder">init</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr:103"><span class="id" title="inductive">Expr</span></a>)<br/>
 | <a id="Bbind" class="idref" href="#Bbind"><span class="id" title="constructor">Bbind</span></a> (<a id="name:283" class="idref" href="#name:283"><span class="id" title="binder">name</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#localname"><span class="id" title="abbreviation">localname</span></a>) (<span class="id" title="var">_</span> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type:102"><span class="id" title="inductive">type</span></a>) (<a id="init:284" class="idref" href="#init:284"><span class="id" title="binder">init</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr:103"><span class="id" title="inductive">Expr</span></a>)<br/>
+<br/>
 </div>
 
 <div class="doc">
-<a id="lab182"></a><h2 class="section">Casts</h2>
+<a id="lab184"></a><h2 class="section">Casts</h2>
 
 </div>
 <div class="code">
@@ -940,31 +965,6 @@ Must be <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.
 <span class="id" title="keyword">Notation</span> <a id="Nenum_const" class="idref" href="#Nenum_const"><span class="id" title="abbreviation">Nenum_const</span></a> <span class="id" title="var">gn</span> <span class="id" title="var">id</span> := (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Nscoped"><span class="id" title="constructor">Nscoped</span></a> <span class="id" title="var">gn</span> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Nid"><span class="id" title="constructor">Nid</span></a> <span class="id" title="var">id</span>)) (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
 
 <br/>
-</div>
-
-<div class="doc">
-<a id="lab183"></a><h2 class="section">Notations</h2>
-
-    We aim to set up all of the types so that they look uniform.
-    The convention can be viewed with the type <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.name_notation.printer.html#with_lang.atomic_name.Expr"><span class="id" title="variable">Expr</span></a></span>.
-<ul class="doclist">
-<li> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.name_notation.printer.html#with_lang.atomic_name.Expr"><span class="id" title="variable">Expr</span></a></span> is the syntax that is parametric in the <span class="inlinecode"><span class="id" title="var">lang.t</span></span>
-
-</li>
-<li> <span class="inlinecode"><span class="id" title="keyword">Notation</span></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.name_notation.printer.html#with_lang.atomic_name.Expr"><span class="id" title="variable">Expr</span></a></span> <span class="inlinecode">:=</span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.name_notation.printer.html#with_lang.atomic_name.Expr"><span class="id" title="variable">Expr</span></a></span>
-
-</li>
-<li> <span class="inlinecode"><span class="id" title="keyword">Notation</span></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.mcore.html#MExpr"><span class="id" title="abbreviation">MExpr</span></a></span> <span class="inlinecode">:=</span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.name_notation.printer.html#with_lang.atomic_name.Expr"><span class="id" title="variable">Expr</span></a></span>
-
-</li>
-</ul>
-    When types are not immediately parametric in <span class="inlinecode"><span class="id" title="var">lang.t</span></span>, we
-    give them names with an <code>_</code>, for example, see <span class="inlinecode"><span class="id" title="var">Cast_</span></span>.
- 
-</div>
-<div class="code">
-<span class="id" title="keyword">Notation</span> <a id="operator_impl'" class="idref" href="#operator_impl'"><span class="id" title="abbreviation">operator_impl'</span></a> := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#operator_impl.t"><span class="id" title="inductive">operator_impl.t</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#obj_name"><span class="id" title="definition">obj_name</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a>).<br/>
-<span class="id" title="keyword">Notation</span> <a id="MethodRef'" class="idref" href="#MethodRef'"><span class="id" title="abbreviation">MethodRef'</span></a> := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#MethodRef_"><span class="id" title="definition">MethodRef_</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#obj_name"><span class="id" title="definition">obj_name</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#functype"><span class="id" title="definition">functype</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr"><span class="id" title="inductive">Expr</span></a>).<br/>
 <span class="id" title="keyword">Notation</span> <a id="function_type" class="idref" href="#function_type"><span class="id" title="abbreviation">function_type</span></a> := (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#function_type_"><span class="id" title="record">function_type_</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#decltype"><span class="id" title="definition">decltype</span></a>).<br/>
 <span class="id" title="keyword">Notation</span> <a id="temp_param" class="idref" href="#temp_param"><span class="id" title="abbreviation">temp_param</span></a> := (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#temp_param_"><span class="id" title="inductive">temp_param_</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a>).<br/>
 
@@ -988,14 +988,12 @@ struct Foo : T { };
 </div>
 
 <div class="doc">
-<a id="lab184"></a><h2 class="section">C++ with structured names</h2>
+<a id="lab185"></a><h2 class="section">C++ with structured names</h2>
 
 </div>
 <div class="code">
-<span class="id" title="keyword">Notation</span> <a id="operator_impl" class="idref" href="#operator_impl"><span class="id" title="abbreviation">operator_impl</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.core.html#operator_impl'"><span class="id" title="abbreviation">operator_impl'</span></a>.<br/>
-<span class="id" title="keyword">Notation</span> <a id="MethodRef" class="idref" href="#MethodRef"><span class="id" title="abbreviation">MethodRef</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.core.html#MethodRef'"><span class="id" title="abbreviation">MethodRef'</span></a>.<br/>
-<span class="comment">(*Notation&nbsp;temp_param&nbsp;:=&nbsp;temp_param.<br/>
-Notation&nbsp;Stemp_arg&nbsp;:=&nbsp;temp_arg.&nbsp;*)</span><br/>
+<span class="id" title="keyword">Notation</span> <a id="operator_impl" class="idref" href="#operator_impl"><span class="id" title="abbreviation">operator_impl</span></a> := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#operator_impl.t"><span class="id" title="inductive">operator_impl.t</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#obj_name"><span class="id" title="definition">obj_name</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="MethodRef" class="idref" href="#MethodRef"><span class="id" title="abbreviation">MethodRef</span></a> := (<a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#MethodRef_"><span class="id" title="definition">MethodRef_</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#obj_name"><span class="id" title="definition">obj_name</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#functype"><span class="id" title="definition">functype</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr"><span class="id" title="inductive">Expr</span></a>).<br/>
 <span class="id" title="keyword">Notation</span> <a id="atomic_name" class="idref" href="#atomic_name"><span class="id" title="abbreviation">atomic_name</span></a> := (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#atomic_name_"><span class="id" title="inductive">atomic_name_</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a>).<br/>
 
 <br/>
@@ -1018,10 +1016,8 @@ Proof.&nbsp;rewrite&nbsp;/field_name.t.&nbsp;refine&nbsp;_.&nbsp;Defined.<br/>
 *)</span><br/>
 
 <br/>
-<span class="id" title="keyword">Notation</span> <a id="field'" class="idref" href="#field'"><span class="id" title="abbreviation">field'</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name"><span class="id" title="inductive">name</span></a> (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
-<span class="id" title="keyword">Notation</span> <a id="field" class="idref" href="#field"><span class="id" title="abbreviation">field</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.core.html#field'"><span class="id" title="abbreviation">field'</span></a> (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
-<span class="id" title="keyword">Notation</span> <a id="Field'" class="idref" href="#Field'"><span class="id" title="abbreviation">Field'</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Nscoped"><span class="id" title="constructor">Nscoped</span></a> (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
-<span class="id" title="keyword">Notation</span> <a id="Field" class="idref" href="#Field"><span class="id" title="abbreviation">Field</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Field'"><span class="id" title="abbreviation">Field'</span></a> (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="field" class="idref" href="#field"><span class="id" title="abbreviation">field</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name"><span class="id" title="inductive">name</span></a> (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="Field" class="idref" href="#Field"><span class="id" title="abbreviation">Field</span></a> := <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Nscoped"><span class="id" title="constructor">Nscoped</span></a> (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
 <span class="id" title="keyword">Definition</span> <a id="f_type" class="idref" href="#f_type"><span class="id" title="definition">f_type</span></a> (<a id="t:296" class="idref" href="#t:296"><span class="id" title="binder">t</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#field"><span class="id" title="abbreviation">field</span></a>) : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#globname"><span class="id" title="definition">globname</span></a> :=<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#t:296"><span class="id" title="variable">t</span></a> <span class="id" title="keyword">with</span><br/>
 &nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Nscoped"><span class="id" title="constructor">Nscoped</span></a> <span class="id" title="var">n</span> <span class="id" title="var">_</span> =&gt; <span class="id" title="var">n</span><br/>
@@ -1074,7 +1070,7 @@ Proof.&nbsp;rewrite&nbsp;/field_name.t.&nbsp;refine&nbsp;_.&nbsp;Defined.<br/>
 </div>
 
 <div class="doc">
-<a id="lab185"></a><h2 class="section">Derived forms</h2>
+<a id="lab186"></a><h2 class="section">Derived forms</h2>
 
 </div>
 <div class="code">
@@ -1160,7 +1156,7 @@ Proof.&nbsp;rewrite&nbsp;/field_name.t.&nbsp;refine&nbsp;_.&nbsp;Defined.<br/>
 </div>
 
 <div class="doc">
-<a id="lab186"></a><h2 class="section">Dependent names, types, and terms</h2>
+<a id="lab187"></a><h2 class="section">Dependent names, types, and terms</h2>
 
 </div>
 <div class="code">
