@@ -9,6 +9,18 @@ Require Export skylabs.lang.cpp.syntax.decl.
 
 #[local] Set Primitive Projections.
 
+(** ** Naming Conventions
+
+    BRiCk uses a single AST to represent both templated (sometimes called "meta") terms
+    as well as non-templated terms. We use the <<M>> prefix for types when arguments are
+    intended to be templated terms.
+
+    **Alternatives**
+    Alternatively, we could also use <<Definition>>s. These are a bit heavier weight,
+    but would be preserved when printing terms.
+ *)
+
+(** ** C++ with templates *)
 Notation Mname := name (only parsing).
 Notation Mglobname := globname (only parsing).
 Notation Mobj_name := obj_name (only parsing).

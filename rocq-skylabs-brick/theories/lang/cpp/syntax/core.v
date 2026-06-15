@@ -18,6 +18,24 @@ From Stdlib Require Import PrimInt63.
 #[local] Notation EqDecision3 T := (∀ (A : Set), EqDecision A -> EqDecision2 (T A)) (only parsing).
 #[local] Tactic Notation "solve_decision" := intros; solve_decision.
 
+(** ** Naming conventions
+
+    Practically speaking, the entire abstract syntax tree of C++ is mutually recursive
+    including names, types, expressions, and statements.
+
+    In some instances, e.g. <<function_type_>> below, we generalize certain type
+    constructors in order to expose [Functor] or traversable structure on them.
+    When we do this, we name these types with an <_> suffix, e.g. <<function_type_>>.
+    The "standard instantiations" of these, e.g. <<function_type_ type>>, are given
+    the name without the suffix, e.g. <<Abbreviation function_type := (function_type_ type).>>
+
+    **Historical note**
+    Previously, there were also, e.g. <<Expr' : lang.t -> Set>>, which used types to
+    distinguish between templated terms (sometimes referred to as "meta terms", see
+    [mcore.v]) and normal terms. The use of <lang.t> has been removed, and therefore
+    <<'>>d definitions and notations should be removed.
+ *)
+
 
 (** ** Function types *)
 (**
@@ -442,6 +460,7 @@ simplifies cpp2v---we set it from context in ../mparser.v.
 | Eunresolved_parenlist (_ : option type) (_ : list Expr)
 | Eunresolved_initlist (_ : option type) (_ : list Expr)
 | Eunresolved_member (_ : Expr) (_ : name)
+| Eunresolved_string_literal (character_type : type)
 
 (**
 NOTE: We might need to support template parameters as object names in
@@ -463,7 +482,6 @@ program because, in part, C++ has no type for references to members.
 
 | Echar (c : N) (t : type)
 | Estring (s : literal_string.t) (t : type)
-| Eunresolved_string_literal (t : type)
 | Eint (n : Z) (t : type)
 | Ebool (b : bool)
 | Efloat (ft : float_type.t) (_ : float_type.car ft)
@@ -483,11 +501,6 @@ program because, in part, C++ has no type for references to members.
 | Ecall (f : Expr) (es : list Expr)
 | Eexplicit_cast (c : cast_style.t) (_ : type) (e : Expr)
 | Ecast (c : Cast) (e : Expr)
-  (* TODO: this use of [Cast_] should really use [classname] as its first argument, but
-     we can not use that without a [match] which Coq rejects as not being strictly positive.
-     GM: the only way I see to solve this problem is to make [lang] and index rather than
-       a parameter. Doing that would allow for two different constructors for [Ecast]
-   *)
 | Emember (arrow : bool) (obj : Expr) (f : atomic_name_ type) (mut : bool) (t : type)
 | Emember_ignore (arrow : bool) (obj : Expr) (res : Expr)
 | Emember_call (arrow : bool) (method : MethodRef_ name type Expr) (obj : Expr) (args : list Expr)
@@ -542,6 +555,7 @@ Should be [gn : classname]
 | Earrayloop_index (level : N) (t : type)
 | Eopaque_ref (name : N) (t : type)
 | Eunsupported (s : PrimString.string) (t : type)
+
 with Stmt : Set :=
 | Sseq    (_ : list Stmt)
 | Sdecl   (_ : list VarDecl)
@@ -574,14 +588,17 @@ with Stmt : Set :=
 | Slabeled (_ : ident) (_ : Stmt)
 | Sgoto (_ : ident)
 | Sunsupported (_ : PrimString.string)
+
 with VarDecl : Set :=
 | Dvar (name : localname) (_ : type) (init : option Expr)
 | Ddecompose (_ : Expr) (anon_var : ident) (_ : list BindingDecl)
   (* initialization of a function-local [static]. See https://eel.is/c++draft/stmt.dcl#3 *)
 | Dinit (thread_safe : bool) (name : name) (_ : type) (init : option Expr)
+
 with BindingDecl : Set :=
 | Bvar (name : localname) (_ : type) (init : Expr)
 | Bbind (name : localname) (_ : type) (init : Expr)
+
 (** ** Casts *)
 with Cast : Set :=
 | Cdependent (_ : type)
@@ -707,17 +724,6 @@ Coercion integral_type_to_type : integral_type.t >-> type.
 
 Notation Nenum_const gn id := (Nscoped gn (Nid id)) (only parsing).
 
-(** ** Notations
-    We aim to set up all of the types so that they look uniform.
-    The convention can be viewed with the type [Expr].
-    - [Expr] is the syntax that is parametric in the [lang.t]
-    - [Notation Expr := Expr]
-    - [Notation MExpr := Expr]
-    When types are not immediately parametric in [lang.t], we
-    give them names with an <<_>>, for example, see [Cast_].
- *)
-Notation operator_impl' := (operator_impl.t obj_name type).
-Notation MethodRef' := (MethodRef_ obj_name functype Expr).
 Notation function_type := (function_type_ decltype).
 Notation temp_param := (temp_param_ type).
 
@@ -733,10 +739,8 @@ struct Foo : T { };
 Notation classname := name (only parsing).
 
 (** ** C++ with structured names *)
-Notation operator_impl := operator_impl'.
-Notation MethodRef := MethodRef'.
-(*Notation temp_param := temp_param.
-Notation Stemp_arg := temp_arg. *)
+Notation operator_impl := (operator_impl.t obj_name type).
+Notation MethodRef := (MethodRef_ obj_name functype Expr).
 Notation atomic_name := (atomic_name_ type).
 
 Module field_name.
@@ -756,10 +760,8 @@ Proof. rewrite /field_name.t. refine _. Defined.
 #[global] Hint Opaque field_name.t : typeclass_instances.
 *)
 
-Notation field' := name (only parsing).
-Notation field := field' (only parsing).
-Notation Field' := Nscoped (only parsing).
-Notation Field := Field' (only parsing).
+Notation field := name (only parsing).
+Notation Field := Nscoped (only parsing).
 Definition f_type (t : field) : globname :=
   match t with
   | Nscoped n _ => n

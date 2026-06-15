@@ -89,7 +89,12 @@ Notation localname := localname.t.
 
 (** * Type Preliminaries *)
 
-(** ** Type qualifiers *)
+(** ** Type qualifiers
+    Morally, these are [bool * bool], but we compress their representation because
+    they occur frequently.
+    Users should use the projections [q_const] and [q_volatile] and the "constructor"
+    [CV] to get something that looks like the product construction.
+ *)
 Variant type_qualifiers : Set :=
 | QCV (* const volatile *)
 | QC (* const *)
@@ -115,6 +120,10 @@ Definition CV (const volatile : bool) :=
   | false , true => QV
   | false , false => QM
   end.
+Lemma q_const_CV c v : q_const (CV c v) = c.
+Proof. destruct c, v; done. Qed.
+Lemma q_volatile_CV c v : q_volatile (CV c v) = v.
+Proof. destruct c, v; done. Qed.
 
 (* [merge_tq a b] computes the join of the restrictions of [a] and [b],
    i.e. if either [a] or [b] is const/volatile, the result will be const/volatile.
@@ -798,72 +807,6 @@ Proof.
   abstract (by intros []).
 Defined.
 
-
-(** ** Evaluation Order *)
-Module evaluation_order.
-  Variant t : Set :=
-  | nd (* fully non-deterministic *)
-  | l_nd (* left then non-deterministic, calls.
-            We use this for left-to-right *binary* operators *)
-  | rl (* right-to-left, assignment operators (post C++17) *).
-
-  Definition since_cpp17 (ver : lang_version.t) : bool :=
-    negb (lang_version.lt ver lang_version.Cpp17).
-
-  (* The order of evaluation for each operator *when overloaded* *)
-  Definition order_of (ver : lang_version.t) (oo : OverloadableOperator) : t :=
-    match oo with
-    | OOTilde | OOExclaim => nd
-    | OOPlusPlus | OOMinusMinus =>
-      (* The evaluation order only matters for operator calls. For those, these
-         are unary operators with a possible [Eint 0] as a second argument (to
-         distinguish post-fix). The implicit argument is *always* a constant
-         integer, so nothing is needed *)
-      l_nd
-    | OOStar => nd (* multiplication or deref *)
-    | OOArrow => nd (* deref *)
-
-    (* binary operators *)
-    | OOPlus | OOMinus | OOSlash | OOPercent
-    | OOCaret | OOAmp | OOPipe => nd
-
-    (* shift operators are sequenced left-to-right: https://eel.is/c++draft/expr.shift#4. *)
-    | OOLessLess | OOGreaterGreater =>
-      if since_cpp17 ver then l_nd else nd
-    (* Assignment operators -- ordered right-to-left*)
-    | OOEqual
-    | OOPlusEqual  | OOMinusEqual | OOStarEqual
-    | OOSlashEqual | OOPercentEqual | OOCaretEqual | OOAmpEqual
-    | OOPipeEqual  | OOLessLessEqual | OOGreaterGreaterEqual =>
-      if since_cpp17 ver then rl else nd
-    (* Comparison operators -- non-deterministic *)
-    | OOEqualEqual | OOExclaimEqual
-    | OOLess | OOGreater
-    | OOLessEqual | OOGreaterEqual
-    | OOSpaceship => nd
-
-    | OOComma => l_nd (* http://eel.is/c++draft/expr.compound#expr.comma-1 *)
-    | OOArrowStar =>
-      if since_cpp17 ver then l_nd else nd
-      (* left-to-right: http://eel.is/c++draft/expr.mptr.oper#4 *)
-
-    | OOSubscript => if since_cpp17 ver then l_nd else nd
-    (* ^^ for primitives, the order is determined by the types, but when overloading
-       the "object" is always on the left. http://eel.is/c++draft/expr.sub#1 *)
-
-    (* Short circuiting *)
-    | OOAmpAmp | OOPipePipe => l_nd
-    (* ^^ for primitives, the evaluation is based on short-circuiting, but when
-       overloading it is left-to-right. <http://eel.is/c++draft/expr.log.and#1>
-       and <http://eel.is/c++draft/expr.log.and#1> *)
-
-    | OOCall => if since_cpp17 ver then l_nd else nd
-    (* ^^ post-C++17, the evaluation order for calls is the function first and then the
-       arguments, sequenced non-deterministically. This holds for <<f(x)>> as well as
-       <<(f.*foo)(x)>> (where <<(f.*foo)>> is sequenced before the evaluation of <<x>> *)
-    | OONew _ | OODelete _ | OOCoawait => nd
-    end.
-End evaluation_order.
 
 (** ** Atomic Builtins *)
 Module AtomicOp.
