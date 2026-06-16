@@ -13,6 +13,8 @@
 Require Import attrs.ParamsAttr.
 Require Import Stdlib.Classes.Morphisms.
 
+Definition getParams {A n} (x : A) `{!Params x n} : nat := n.
+
 Notation CHECK id n := (ltac:(typeclasses eauto) : Params id n) (only parsing).
 
 (*======================================================================*)
@@ -38,6 +40,12 @@ Section Sec1.
   Variable unused : nat.     (* section variable NOT used by pairAB *)
 
   #[params="3"] Definition pairAB (x : A) (y : B) : A * B := (x, y).
+
+  (* params generated an instance with arity 3, and that instance must preserve
+  its type after section ends (unlike the actual constant [pairAB]. Otherwise,
+  this code would become ill-typed after cooking: *)
+  Goal getParams (@pairAB) = 3.
+  Proof. reflexivity. Qed.
 
   (* Inside the section the recorded arity is the literal 3. *)
   Check CHECK pairAB 3.   (* (P) in-section arity is 3 *)
