@@ -6,7 +6,9 @@
 Require Import skylabs.prelude.base.
 Require Import skylabs.prelude.error.
 Require Import skylabs.lang.cpp.syntax.core.
-Require Export skylabs.lang.cpp.syntax.mcore.
+Require Export skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.decl.
+Require Export skylabs.lang.cpp.syntax.translation_unit.
 Require Export skylabs.lang.cpp.syntax.namemap.
 
 
@@ -16,20 +18,9 @@ Template TUs house all templated code in a translation unit and relate
 non-templated code induced by template application to the applied
 template and its arguments.
 *)
-Definition Msymbol_table : Type := TM.t (template MObjValue).
-Definition Mtype_table : Type := TM.t (template MGlobDecl).
-Definition Malias_table : Type := TM.t (template Mtype).
-Definition Minstance_table : Type := NM.t Mtpreinst.
 Record Mtranslation_unit : Type := {
   msymbols : Msymbol_table;
   mtypes : Mtype_table;
   maliases : Malias_table;	(* we eschew <<Gtypedef>> for now *)
   minstances : Minstance_table
 }.
-
-
-Notation MObjValue := ObjValue (only parsing).
-Notation MGlobDecl := GlobDecl (only parsing).
-Notation MGlobalInit := GlobalInit (only parsing).
-Notation MGlobalInitializer := GlobalInitializer (only parsing).
-Notation MInitializerBlock := InitializerBlock (only parsing).

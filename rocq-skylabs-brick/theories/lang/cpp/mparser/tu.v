@@ -58,10 +58,10 @@ Module Import Mtranslation_unit.
   *)
   Definition decls (ds : list t) : Mtranslation_unit :=
     decls' ds ∅ ∅ ∅ ∅ $ fun s t a i => {|
-      msymbols := TM.from_raw s;
-      mtypes := TM.from_raw t;
-      maliases := TM.from_raw a;
-      minstances := NM.from_raw i;
+      templates.msymbols := TM.from_raw s;
+      templates.mtypes := TM.from_raw t;
+      templates.maliases := TM.from_raw a;
+      templates.minstances := NM.from_raw i;
     |}.
 
 End Mtranslation_unit.
