@@ -21,6 +21,27 @@ Export characters.
 
 #[local] Open Scope Z_scope.
 
+Definition since_cpp20 (tu : translation_unit) : bool :=
+  negb (lang_version.lt (language_version tu) lang_version.Cpp20).
+
+Lemma to_signed_bounded sz z :
+  bitsize.bound sz Signed (to_signed sz z).
+Proof.
+  rewrite /bitsize.bound/bitsize.min_val/bitsize.max_val/to_signed.
+  destruct sz; rewrite /to_signed_bits /=; repeat case_bool_decide;
+    try generalize (Z_mod_lt z (2 ^ 8) ltac:(lia));
+    try generalize (Z_mod_lt z (2 ^ 16) ltac:(lia));
+    try generalize (Z_mod_lt z (2 ^ 32) ltac:(lia));
+    try generalize (Z_mod_lt z (2 ^ 64) ltac:(lia));
+    try generalize (Z_mod_lt z (2 ^ 128) ltac:(lia)); lia.
+Qed.
+
+Lemma to_signed_eq sz z :
+  to_signed sz z = to_signed_bits (bitsize.bitsN sz) z.
+Proof.
+  destruct sz; rewrite /to_signed/to_signed_bits; repeat case_bool_decide; reflexivity.
+Qed.
+
 (** Numeric conversions.
 
     This includes both conversions and promotions between fundamental
@@ -53,9 +74,15 @@ Definition conv_int {σ : genv} (tu : translation_unit) (from to : type) (v v' :
       | _ => False
       end
   | Tnum _ _ , Tnum sz Signed =>
-      (* Prior to C++20, conversions to signed integer types were implementation
-         defined if the source value can not be represented in the target value *)
-      has_type_prop v (Tnum sz Signed) /\ v' = v
+      if since_cpp20 tu then
+        match v with
+        | Vint v => v' = Vint (to_signed (int_rank.bitsize sz) v)
+        | _ => False
+        end
+      else
+        (* Prior to C++20, conversions to signed integer types were implementation
+           defined if the source value can not be represented in the target value *)
+        has_type_prop v (Tnum sz Signed) /\ v' = v
   | Tbool , Tbool => v = v'
   | Tchar_ _ , Tbool =>
       match v with
@@ -149,6 +176,7 @@ Section conv_int.
         | H : representation_type _ ?ty = ?ty2 |- has_type_prop _ ?ty =>
             eapply has_type_prop_representation_type_not_raw => /=; try congruence; try rewrite H
         end; subst; eauto.
+    { eapply has_int_type. apply to_signed_bounded. }
     { destruct v; simpl; try tauto.
       eapply has_int_type' in H2.
       destruct H2 as [[?[??]] | [?[??]]]; congruence. }
@@ -183,7 +211,7 @@ Section conv_int.
   Qed.
 
   (* Note that a no-op conversion on a raw value is not permitted. *)
-  Lemma conv_int_num_id sz sgn v :
+  Lemma conv_int_num_id sz (sgn : signed) v :
     let ty := Tnum sz sgn in
     ~~ is_raw v ->
     has_type_prop v ty ->
@@ -191,12 +219,21 @@ Section conv_int.
   Proof using Hmod.
     rewrite /=/conv_int/underlying_type/=.
     intros ? Hty. split; eauto.
-    destruct sgn. split; eauto.
-    apply has_int_type' in Hty.
-    destruct Hty as [(? & -> & Hty) | (? & -> & ?)]; last done.
-    move: Hty. rewrite /bitsize.bound/bitsize.min_val/bitsize.max_val. intros.
-    rewrite to_unsigned_id//.
-    destruct sz; simpl in *; lia.
+    destruct sgn.
+    { destruct (since_cpp20 tu) eqn:?; last by split; eauto.
+      apply has_int_type' in Hty.
+      destruct Hty as [(? & -> & Hty) | (? & -> & ?)]; last done.
+      move: Hty. rewrite /bitsize.bound/bitsize.min_val/bitsize.max_val. intros.
+      symmetry.
+      rewrite to_signed_eq.
+      f_equal.
+      apply to_signed_bits_spec_low.
+      destruct sz; simpl in *; lia. }
+    { apply has_int_type' in Hty.
+      destruct Hty as [(? & -> & Hty) | (? & -> & ?)]; last done.
+      move: Hty. rewrite /bitsize.bound/bitsize.min_val/bitsize.max_val. intros.
+      rewrite to_unsigned_id//.
+      destruct sz; simpl in *; lia. }
   Qed.
 
   (* conversion is deterministic *)
