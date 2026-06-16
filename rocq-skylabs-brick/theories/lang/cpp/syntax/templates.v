@@ -26,3 +26,10 @@ Record Mtranslation_unit : Type := {
   maliases : Malias_table;	(* we eschew <<Gtypedef>> for now *)
   minstances : Minstance_table
 }.
+
+
+Notation MObjValue := ObjValue (only parsing).
+Notation MGlobDecl := GlobDecl (only parsing).
+Notation MGlobalInit := GlobalInit (only parsing).
+Notation MGlobalInitializer := GlobalInitializer (only parsing).
+Notation MInitializerBlock := InitializerBlock (only parsing).
