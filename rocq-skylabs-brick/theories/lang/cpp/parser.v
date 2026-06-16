@@ -185,6 +185,10 @@ Module Import translation_unit.
       initializer := nil;	(** TODO *)
       asserts := sort_static_assert.sort asserts;
       abi := info;
+      msymbols := ∅;
+      mtypes := ∅;
+      maliases := ∅;
+      minstances := ∅
     |}.
 
   Definition list_decls (ls : list translation_unit.t) :=

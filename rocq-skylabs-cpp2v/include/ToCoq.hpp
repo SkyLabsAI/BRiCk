@@ -4,6 +4,7 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  */
 #pragma once
+#include "Formatter.hpp"
 #include "Trace.hpp"
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/ASTContext.h>
@@ -16,6 +17,7 @@ class TranslationUnitDecl;
 }
 
 class CoqPrinter;
+class Cache;
 
 namespace clang {
 class CompilerInstance;
@@ -28,7 +30,7 @@ public:
     using path = std::optional<std::string>;
     explicit ToCoqConsumer(
         clang::CompilerInstance *compiler, const path output_file,
-        const path templates_file,
+        const path templates_file, const path output_with_templates_file,
         const path name_test_file, Trace::Mask trace, bool comment,
         bool sharing, bool type_check, bool elaborate = true,
         bool typedefs = false,
@@ -36,6 +38,7 @@ public:
         std::optional<std::string> &&attributes = std::optional<std::string>())
         : compiler_(compiler), output_file_(output_file),
           templates_file_(templates_file),
+          output_with_templates_file_(output_with_templates_file),
           name_test_file_(name_test_file), trace_(trace), comment_{comment},
           sharing_{sharing}, elaborate_(elaborate), check_types_{type_check},
           typedefs_{typedefs}, interactive_{std::move(interactive)},
@@ -72,10 +75,16 @@ private:
     void toCoqModule(clang::ASTContext *ctxt, clang::TranslationUnitDecl *decl);
     void elab(Decl *, bool rec = false);
 
+    void writeTemplates(const char *name, Cache &cache, fmt::Formatter &fmt,
+                        clang::ASTContext &ctxt, ::Module &mod);
+    void writeStatic(const char *name, Cache &cache, fmt::Formatter &fmt,
+                     clang::ASTContext &ctxt, ::Module &mod);
+
 private:
     clang::CompilerInstance *compiler_;
     const path output_file_;
     const path templates_file_;
+    const path output_with_templates_file_;
     const path name_test_file_;
     const Trace::Mask trace_;
     const bool comment_;

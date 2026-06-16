@@ -78,6 +78,12 @@ static cl::opt<std::string> Templates("templates", cl::desc("print templates"),
                                       cl::value_desc("filename"), cl::Optional,
                                       cl::cat(Cpp2V));
 
+static cl::opt<std::string>
+    ModuleWithTemplates("module-with-templates",
+                        cl::desc("print translation unit and templates in one file"),
+                        cl::value_desc("filename"), cl::Optional,
+                        cl::cat(Cpp2V));
+
 static cl::opt<bool>
     NoSystem("no-system",
              cl::desc("Do not use the system clang resource directory"),
@@ -157,7 +163,8 @@ public:
         }
         auto *result =
             new ToCoqConsumer(&Compiler, to_opt(VFileOutput),
-                              to_opt(Templates), to_opt(NameTest),
+                              to_opt(Templates), to_opt(ModuleWithTemplates),
+                              to_opt(NameTest),
                               Trace::fromBits(TraceBits.getBits()), Comment,
                               !NoSharing, CheckTypes, should_elaborate, !NoAliases,
                               to_opt(Interactive), to_opt(Attributes));

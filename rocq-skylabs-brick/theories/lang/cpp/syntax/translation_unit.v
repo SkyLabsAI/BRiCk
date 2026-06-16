@@ -13,6 +13,7 @@ Require Import skylabs.lang.cpp.syntax.core.
 Require Import skylabs.lang.cpp.syntax.types.
 Require Import skylabs.lang.cpp.syntax.decl.
 Require Import skylabs.lang.cpp.syntax.namemap.
+Require Import skylabs.lang.cpp.syntax.mcore.
 Require Import skylabs.lang.cpp.syntax.abi.
 Export decl.
 
@@ -261,6 +262,24 @@ Module alias_table.
   End expand_aliases.
 End alias_table.
 
+(** The template AST *)
+Notation MObjValue := ObjValue (only parsing).
+Notation MGlobDecl := GlobDecl (only parsing).
+Notation MGlobalInit := GlobalInit (only parsing).
+Notation MGlobalInitializer := GlobalInitializer (only parsing).
+Notation MInitializerBlock := InitializerBlock (only parsing).
+
+(** ** Template Information
+
+Template TUs house all templated code in a translation unit and relate
+non-templated code induced by template application to the applied
+template and its arguments.
+ *)
+Definition Msymbol_table : Type := TM.t (template MObjValue).
+Definition Mtype_table : Type := TM.t (template MGlobDecl).
+Definition Malias_table : Type := TM.t (template Mtype).
+Definition Minstance_table : Type := NM.t Mtpreinst.
+
 (** ** Translation units *)
 (**
 A [translation_unit] represents all the statically known
@@ -282,6 +301,11 @@ Record translation_unit : Type := makeTranslationUnit {
   initializer       : InitializerBlock;
   asserts           : list StaticAssert;
   abi               : abi.t;
+
+  msymbols : Msymbol_table;
+  mtypes : Mtype_table;
+  maliases : Malias_table;	(* we eschew <<Gtypedef>> for now *)
+  minstances : Minstance_table
 }.
 #[only(lens)] derive translation_unit.
 
@@ -293,7 +317,7 @@ Definition language_version (tu : translation_unit) : lang_version.t :=
 
 (** Just for testing *)
 Definition empty_tu (info : abi.t) : translation_unit :=
-  makeTranslationUnit ∅ ∅ ∅ [] [] info.
+  makeTranslationUnit ∅ ∅ ∅ [] [] info ∅ ∅ ∅ ∅.
 #[global] Instance : Empty translation_unit :=
   empty_tu abi.abi_default.
 

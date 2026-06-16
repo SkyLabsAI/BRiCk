@@ -372,8 +372,18 @@ Section with_monad.
   Definition translation_unit (tu : translation_unit) : M :=
     let symbol '(nm, obj) := obj_value obj in
     let gd '(nm, gd) := glob_decl gd in
+    let msymbol '(nm, t_obj) :=
+      lst (temp_param type) t_obj.(template_params)
+      <+> obj_value t_obj.(template_value)
+    in
+    let mgd '(nm, t_gd) :=
+      lst (temp_param type) t_gd.(template_params)
+      <+> glob_decl t_gd.(template_value)
+    in
     lst gd (namemap.NM.elements tu.(types)) <+>
-    lst symbol (namemap.NM.elements tu.(symbols)).
+    lst symbol (namemap.NM.elements tu.(symbols)) <+>
+    lst mgd (namemap.NM.elements tu.(translation_unit.mtypes)) <+>
+    lst msymbol (namemap.NM.elements tu.(translation_unit.msymbols)).
 
   Definition template_unit (mtu : Mtranslation_unit) : M :=
     let symbol '(nm, t_obj) :=
