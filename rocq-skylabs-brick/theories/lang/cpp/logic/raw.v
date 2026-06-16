@@ -65,6 +65,49 @@ Axiom raw_byte_of_int_eq : ∀ {σ : genv} sz x rs,
   raw_bytes_of_val σ (Tnum sz Unsigned) (Vint x) rs <->
   ∃ l, decodes_uint l x /\ raw_int_byte <$> l = rs /\ length l = N.to_nat (int_rank.bytesN sz).
 
+Lemma raw_bytes_of_val_float_intro {σ : genv} ft (f : float_type.car ft) :
+  raw_bytes_of_val σ (Tfloat_ ft) (Vfloat ft f) (float_raw_bytes σ ft f).
+Proof. apply raw_bytes_of_val_float. reflexivity. Qed.
+
+Lemma raw_bytes_of_val_float_elim {σ : genv} ft (f : float_type.car ft) rs :
+  raw_bytes_of_val σ (Tfloat_ ft) (Vfloat ft f) rs ->
+  rs = float_raw_bytes σ ft f.
+Proof. apply raw_bytes_of_val_float. Qed.
+
+Definition float_bits_compatible (sz : int_rank.t) (ft : float_type.t) : Prop :=
+  int_rank.bitsize sz = float_type.bitsize ft /\
+  float_type.bit_width ft = bitsize.bitsZ (float_type.bitsize ft).
+
+Lemma unsigned_bitsize_bound bs z :
+  (0 <= z < 2 ^ bitsize.bitsZ bs)%Z ->
+  bitsize.bound bs Unsigned z.
+Proof.
+  destruct bs; rewrite /bitsize.bound /bitsize.min_val /bitsize.max_val /bits_min_val /bits_max_val /=; lia.
+Qed.
+
+Lemma float_to_bits_has_type_unsigned {σ : genv} sz ft (f : float_type.car ft) :
+  float_bits_compatible sz ft ->
+  has_type_prop (Vint (float_value.to_bits ft f)) (Tnum sz Unsigned).
+Proof.
+  intros [Hbits Hwidth].
+  rewrite -has_int_type.
+  rewrite Hbits.
+  apply unsigned_bitsize_bound.
+  rewrite -Hwidth.
+  apply float_value.to_bits_range.
+Qed.
+
+(** Reverse raw-byte reinterpretation is axiomatized at this abstraction level:
+    [raw_byte] deliberately does not expose an injective byte-to-[N] view, so
+    the existing integer raw-byte characterization is not enough to reconstruct
+    the byte list needed by [float_raw_bytes].  The compatibility premise
+    excludes the current [Flongdouble] model, whose Flocq bit encoding does not
+    occupy all 16 object bytes. *)
+Axiom raw_bytes_of_val_unsigned_bits_to_float : forall {σ : genv} sz ft z rs,
+  float_bits_compatible sz ft ->
+  raw_bytes_of_val σ (Tnum sz Unsigned) (Vint z) rs ->
+  raw_bytes_of_val σ (Tfloat_ ft) (Vfloat ft (float_value.of_bits ft z)) rs.
+
 Section with_Σ.
   Context `{Σ : cpp_logic} {σ : genv}.
 

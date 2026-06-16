@@ -251,14 +251,12 @@ Definition conv_float {σ : genv} (tu : translation_unit) (from to : type) (v v'
   | Tchar_ ct , Tfloat_ f =>
       match v with
       | Vchar n =>
-          v' = Vfloat f (float_value.of_int f
-            (of_char (char_type.bitsN ct) (signedness_of_char σ ct)
-              (int_rank.bitsN int_rank.Iint) Signed n))
+          v' = Vfloat f (float_value.of_int f (char_to_Z_for_float σ ct n))
       | _ => False
       end
   | Tfloat_ _ , Tbool =>
       match v with
-      | Vfloat f z => v' = Vbool (negb (float_value.is_zero z))
+      | Vfloat f z => v' = Vbool (float_value.is_true f z)
       | _ => False
       end
   | Tfloat_ _ , Tnum _ _ =>
@@ -273,12 +271,8 @@ Definition conv_float {σ : genv} (tu : translation_unit) (from to : type) (v v'
   | Tfloat_ _ , Tchar_ ct =>
       match v with
       | Vfloat f z =>
-          match float_value.to_int f z with
-          | Some n =>
-              v' = Vchar (to_char (int_rank.bitsN int_rank.Iint) Signed
-                (char_type.bitsN ct) n) /\
-              let int_ty := equivalent_int_type σ ct in
-              has_type_prop (Vint n) (integral_type_to_type int_ty)
+          match float_to_char σ f ct z with
+          | Some n => v' = Vchar n
           | None => False
           end
       | _ => False
@@ -319,6 +313,7 @@ Section conv_float.
             eapply has_type_prop_representation_type_not_raw => /=; try congruence; try rewrite H
         end; subst; eauto.
     all: try solve [eapply has_float_type].
+    all: try solve [eapply float_to_char_has_type; eassumption].
     all: try solve [eapply has_bool_type; case_match; lia].
     all: try solve [
       match goal with
@@ -342,6 +337,111 @@ Section conv_float.
     rewrite /conv_float.
     repeat (case_match; try tauto); intuition; try congruence.
   Qed.
+
+  Lemma conv_float_id ft (fv fv' : float_type.car ft) :
+      float_value.cast ft ft fv = Some fv' ->
+      conv_float tu (Tfloat_ ft) (Tfloat_ ft) (Vfloat ft fv) (Vfloat ft fv').
+  Proof using Hmod.
+    intros Hcast. rewrite /conv_float. cbn [representation_type drop_qualifiers erase_qualifiers].
+    split; first apply has_float_type.
+    change (match float_value.cast ft ft fv with
+            | Some z' => Vfloat ft fv' = Vfloat ft z'
+            | None => False
+            end).
+    by rewrite Hcast.
+  Qed.
+
+  Lemma conv_float_to_bool ft (fv : float_type.car ft) :
+      conv_float tu (Tfloat_ ft) Tbool (Vfloat ft fv)
+        (Vbool (float_value.is_true ft fv)).
+  Proof using Hmod.
+    rewrite /conv_float /=. split; first apply has_float_type. done.
+  Qed.
+
+  Lemma conv_float_cast from to (fv : float_type.car from) fv' :
+      float_value.cast from to fv = Some fv' ->
+      conv_float tu (Tfloat_ from) (Tfloat_ to) (Vfloat from fv) (Vfloat to fv').
+  Proof using Hmod.
+    intros Hcast. rewrite /conv_float. cbn [representation_type drop_qualifiers erase_qualifiers].
+    split; first apply has_float_type.
+    change (match float_value.cast from to fv with
+            | Some z' => Vfloat to fv' = Vfloat to z'
+            | None => False
+            end).
+    by rewrite Hcast.
+  Qed.
+
+  Lemma conv_float_int_to_float ty sz sgn ft z :
+      representation_type tu ty = Tnum sz sgn ->
+      has_type_prop (Vint z) ty ->
+      conv_float tu ty (Tfloat_ ft) (Vint z) (Vfloat ft (float_value.of_int ft z)).
+  Proof using Hmod.
+    intros Hrepr Hty. rewrite /conv_float Hrepr /=. by split.
+  Qed.
+
+  Lemma conv_float_bool_to_float ft b :
+      conv_float tu Tbool (Tfloat_ ft) (Vbool b)
+        (Vfloat ft (float_value.of_int ft (if b then 1 else 0))).
+  Proof using Hmod.
+    rewrite /conv_float /=. split.
+    - rewrite has_type_prop_bool. by eexists.
+    - by destruct b.
+  Qed.
+
+  Lemma conv_float_char_to_float ct ft n :
+      has_type_prop (Vchar n) (Tchar_ ct) ->
+      conv_float tu (Tchar_ ct) (Tfloat_ ft) (Vchar n)
+        (Vfloat ft (float_value.of_int ft (char_to_Z_for_float σ ct n))).
+  Proof using Hmod.
+    intros Hty. rewrite /conv_float /=. by split.
+  Qed.
+
+  Lemma conv_float_to_int ty sz sgn ft (fv : float_type.car ft) z :
+      representation_type tu ty = Tnum sz sgn ->
+      float_value.to_int ft fv = Some z ->
+      has_type_prop (Vint z) ty ->
+      conv_float tu (Tfloat_ ft) ty (Vfloat ft fv) (Vint z).
+  Proof using Hmod.
+    intros Hrepr Hto Hty. rewrite /conv_float Hrepr /=. split; first apply has_float_type.
+    by rewrite Hto.
+  Qed.
+
+  Lemma conv_float_to_char ft ct (fv : float_type.car ft) n :
+      float_to_char σ ft ct fv = Some n ->
+      conv_float tu (Tfloat_ ft) (Tchar_ ct) (Vfloat ft fv) (Vchar n).
+  Proof using Hmod.
+    intros Hto. rewrite /conv_float /=. split; first apply has_float_type.
+    by rewrite Hto.
+  Qed.
+
+  Lemma conv_float_enum_to_float nm sz sgn ft z :
+      representation_type tu (Tenum nm) = Tnum sz sgn ->
+      has_type_prop (Vint z) (Tenum nm) ->
+      conv_float tu (Tenum nm) (Tfloat_ ft) (Vint z)
+        (Vfloat ft (float_value.of_int ft z)).
+  Proof using Hmod.
+    intros Hrepr Hty. rewrite /conv_float Hrepr /=. by split.
+  Qed.
+
+  Lemma conv_float_to_enum nm sz sgn ft (fv : float_type.car ft) z :
+      representation_type tu (Tenum nm) = Tnum sz sgn ->
+      float_value.to_int ft fv = Some z ->
+      has_type_prop (Vint z) (Tenum nm) ->
+      conv_float tu (Tfloat_ ft) (Tenum nm) (Vfloat ft fv) (Vint z).
+  Proof using Hmod.
+    intros Hrepr Hto Hty. rewrite /conv_float Hrepr /=. split; first apply has_float_type.
+    by rewrite Hto.
+  Qed.
+
+  Lemma conv_float_widen (fv : float_type.car float_type.Ffloat) fv' :
+      float_value.cast float_type.Ffloat float_type.Fdouble fv = Some fv' ->
+      conv_float tu Tfloat Tdouble (Vfloat float_type.Ffloat fv) (Vfloat float_type.Fdouble fv').
+  Proof using Hmod. apply conv_float_cast. Qed.
+
+  Lemma conv_float_narrow (fv : float_type.car float_type.Fdouble) fv' :
+      float_value.cast float_type.Fdouble float_type.Ffloat fv = Some fv' ->
+      conv_float tu Tdouble Tfloat (Vfloat float_type.Fdouble fv) (Vfloat float_type.Ffloat fv').
+  Proof using Hmod. apply conv_float_cast. Qed.
 End conv_float.
 
 (* This (effectively) lifts [conv_int] to arbitrary types.

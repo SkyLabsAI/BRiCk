@@ -1,3 +1,7 @@
+_Float16 decimal_float16() {
+  return 1.0f16;
+}
+
 float decimal_float() {
   return 1.0f;
 }
@@ -16,4 +20,8 @@ double hex_double() {
 
 double scientific_double() {
   return 1.25e-3;
+}
+
+__float128 decimal_float128() {
+  return 1.0Q;
 }

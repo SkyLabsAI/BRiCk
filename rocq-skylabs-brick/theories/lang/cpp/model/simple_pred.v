@@ -426,7 +426,15 @@ Module SimpleCPP.
           else False
         | Tnullptr =>
           vs = cptr 0 /\ v = Vptr nullptr
-        | Tfloat_ _ => False
+        | Tfloat_ ft =>
+          match v with
+          | Vfloat ft' f =>
+              ft = ft' /\
+              in_Z_to_bytes_bounds (float_type.bitsize ft') Unsigned (float_value.to_bits ft' f) /\
+              vs = Z_to_bytes (float_type.bitsize ft') Unsigned (float_value.to_bits ft' f)
+          | Vundef => pure_encodes_undef (float_type.bitsize ft) vs
+          | _ => False
+          end
         | Tarch _ _ => False
         | Tptr _ =>
           match v with
@@ -479,6 +487,7 @@ Module SimpleCPP.
           length vs = match erase_qualifiers t with
                       | Tbool => 1
                       | Tnum sz _ => int_rank.bytesNat sz
+                      | Tfloat_ ft => bitsize.bytesNat (float_type.bitsize ft)
 
                       | Tmember_pointer _ _ | Tnullptr | Tptr _
                       | Tfunction _ | Tref _ | Trv_ref _ =>
@@ -492,8 +501,10 @@ Module SimpleCPP.
           destruct v => //; destruct_and? => //;
           repeat case_decide => //;
            simplify_eq; eauto.
-        by destruct sz.
-        erewrite length_pure_encodes_undef; eauto. by destruct sz.
+        all: try by destruct sz.
+        all: try by destruct f.
+        all: try (erewrite length_pure_encodes_undef; eauto; by destruct sz).
+        all: try (erewrite length_pure_encodes_undef; eauto; by destruct f).
       Qed.
 
       Lemma length_encodes_pos t v vs :
@@ -538,6 +549,7 @@ Module SimpleCPP.
         by [
           edestruct cptr_ne_aptr | edestruct pure_encodes_undef_aptr |
           edestruct pure_encodes_undef_Z_to_bytes |
+          f_equal; apply float_value.to_bits_inj; exact: Z_to_bytes_inj |
           f_equiv; exact: Z_to_bytes_inj ].
       Qed.
 

@@ -422,6 +422,28 @@ Module float_type.
   Definition bitsN (t : t) : N :=
     8 * bytesN t.
 
+  (** Additive support predicate for frontend/checker compatibility. *)
+  Definition supported (_ : t) : bool := true.
+
+  (** Object-representation size when it is one of BRiCk's fixed integer
+      bit-widths.  For [Flongdouble], this is the 16-byte object size; its
+      Flocq bit encoding below has a smaller [bit_width]. *)
+  Definition bitsize (t : t) : bitsize.t :=
+    match t with
+    | Ffloat16 => bitsize.W16
+    | Ffloat => bitsize.W32
+    | Fdouble => bitsize.W64
+    | Flongdouble | Ffloat128 => bitsize.W128
+    end.
+
+  Lemma bitsize_bytesN (t : t) :
+    bitsize.bytesN (bitsize t) = bytesN t.
+  Proof. by destruct t. Qed.
+
+  Lemma bitsize_bitsN (t : t) :
+    bitsize.bitsN (bitsize t) = bitsN t.
+  Proof. by destruct t. Qed.
+
   (** Parameters for [binary_float].
 
       [mw] is the significand precision, including the implicit leading bit
@@ -465,6 +487,29 @@ Module float_type.
    *)
   Definition fraction_bits (t : t) : Z := mw t - 1.
   Definition exponent_bits (t : t) : Z := Z.log2 (ew t) + 1.
+  Definition bit_width (t : t) : Z := 1 + fraction_bits t + exponent_bits t.
+
+  Lemma bit_width_nonnegative (t : t) : (0 <= bit_width t)%Z.
+  Proof. by destruct t. Qed.
+
+  Lemma bit_width_le_bitsN (t : t) :
+    (bit_width t <= Z.of_N (bitsN t))%Z.
+  Proof. by destruct t. Qed.
+
+  Lemma bit_width_bitsize_not_longdouble (t : t) :
+    t <> Flongdouble -> bit_width t = bitsize.bitsZ (bitsize t).
+  Proof. by destruct t. Qed.
+
+  Lemma bit_width_Ffloat16 : bit_width Ffloat16 = 16%Z.
+  Proof. reflexivity. Qed.
+  Lemma bit_width_Ffloat : bit_width Ffloat = 32%Z.
+  Proof. reflexivity. Qed.
+  Lemma bit_width_Fdouble : bit_width Fdouble = 64%Z.
+  Proof. reflexivity. Qed.
+  Lemma bit_width_Flongdouble : bit_width Flongdouble = 79%Z.
+  Proof. reflexivity. Qed.
+  Lemma bit_width_Ffloat128 : bit_width Ffloat128 = 128%Z.
+  Proof. reflexivity. Qed.
 
   (** The carrier type *)
   Definition car (t : t) : Set :=
@@ -521,6 +566,15 @@ Module float_value.
     | B754_zero _ _ _ => true
     | _ => false
     end.
+
+  Definition is_true (t : t) (v : car t) : bool :=
+    negb (is_zero v).
+
+  Lemma is_zero_zero (t : t) : is_zero (zero t) = true.
+  Proof. by destruct t. Qed.
+
+  Lemma is_true_zero (t : t) : is_true t (zero t) = false.
+  Proof. by destruct t. Qed.
 
   Definition default_nan (t : t) : { nan : car t | is_nan _ _ nan = true } :=
     match t return { nan : car t | is_nan _ _ nan = true } with
@@ -669,6 +723,78 @@ Module float_value.
 
   Definition geb (t : t) (v1 v2 : car t) : bool :=
     leb t v2 v1.
+
+  Lemma of_to_bits ft (f : car ft) : of_bits ft (to_bits ft f) = f.
+  Proof.
+    destruct ft; simpl in *.
+    - exact (binary_float_of_bits_of_binary_float 10 5 (refl_equal _) (refl_equal _) (refl_equal _) f).
+    - exact (binary_float_of_bits_of_binary_float 23 8 (refl_equal _) (refl_equal _) (refl_equal _) f).
+    - exact (binary_float_of_bits_of_binary_float 52 11 (refl_equal _) (refl_equal _) (refl_equal _) f).
+    - exact (binary_float_of_bits_of_binary_float 63 15 (refl_equal _) (refl_equal _) (refl_equal _) f).
+    - exact (binary_float_of_bits_of_binary_float 112 15 (refl_equal _) (refl_equal _) (refl_equal _) f).
+  Qed.
+
+  Lemma to_bits_range ft (f : car ft) :
+    (0 <= to_bits ft f < 2 ^ float_type.bit_width ft)%Z.
+  Proof.
+    destruct ft; simpl in *.
+    - exact (bits_of_binary_float_range 10 5 ltac:(lia) ltac:(lia) f).
+    - exact (bits_of_binary_float_range 23 8 ltac:(lia) ltac:(lia) f).
+    - exact (bits_of_binary_float_range 52 11 ltac:(lia) ltac:(lia) f).
+    - exact (bits_of_binary_float_range 63 15 ltac:(lia) ltac:(lia) f).
+    - exact (bits_of_binary_float_range 112 15 ltac:(lia) ltac:(lia) f).
+  Qed.
+
+  Lemma to_of_bits ft z :
+    (0 <= z < 2 ^ float_type.bit_width ft)%Z ->
+    to_bits ft (of_bits ft z) = z.
+  Proof.
+    destruct ft; simpl; intros Hz.
+    - exact (bits_of_binary_float_of_bits 10 5 (refl_equal _) (refl_equal _) (refl_equal _) z Hz).
+    - exact (bits_of_binary_float_of_bits 23 8 (refl_equal _) (refl_equal _) (refl_equal _) z Hz).
+    - exact (bits_of_binary_float_of_bits 52 11 (refl_equal _) (refl_equal _) (refl_equal _) z Hz).
+    - exact (bits_of_binary_float_of_bits 63 15 (refl_equal _) (refl_equal _) (refl_equal _) z Hz).
+    - exact (bits_of_binary_float_of_bits 112 15 (refl_equal _) (refl_equal _) (refl_equal _) z Hz).
+  Qed.
+
+  Lemma to_of_bits_Ffloat16 z :
+    (0 <= z < 2 ^ 16)%Z -> to_bits Ffloat16 (of_bits Ffloat16 z) = z.
+  Proof. intros Hz. apply to_of_bits. exact Hz. Qed.
+
+  Lemma to_of_bits_Ffloat z :
+    (0 <= z < 2 ^ 32)%Z -> to_bits Ffloat (of_bits Ffloat z) = z.
+  Proof. intros Hz. apply to_of_bits. exact Hz. Qed.
+
+  Lemma to_of_bits_Fdouble z :
+    (0 <= z < 2 ^ 64)%Z -> to_bits Fdouble (of_bits Fdouble z) = z.
+  Proof. intros Hz. apply to_of_bits. exact Hz. Qed.
+
+  Lemma to_of_bits_Ffloat128 z :
+    (0 <= z < 2 ^ 128)%Z -> to_bits Ffloat128 (of_bits Ffloat128 z) = z.
+  Proof. intros Hz. apply to_of_bits. exact Hz. Qed.
+
+  Lemma of_to_bits_Ffloat16 (f : car Ffloat16) :
+    of_bits Ffloat16 (to_bits Ffloat16 f) = f.
+  Proof. apply of_to_bits. Qed.
+
+  Lemma of_to_bits_Ffloat (f : car Ffloat) :
+    of_bits Ffloat (to_bits Ffloat f) = f.
+  Proof. apply of_to_bits. Qed.
+
+  Lemma of_to_bits_Fdouble (f : car Fdouble) :
+    of_bits Fdouble (to_bits Fdouble f) = f.
+  Proof. apply of_to_bits. Qed.
+
+  Lemma of_to_bits_Ffloat128 (f : car Ffloat128) :
+    of_bits Ffloat128 (to_bits Ffloat128 f) = f.
+  Proof. apply of_to_bits. Qed.
+
+  Lemma to_bits_inj ft : Inj (=) (=) (to_bits ft).
+  Proof.
+    intros x y Hbits.
+    apply (f_equal (of_bits ft)) in Hbits.
+    by rewrite !of_to_bits in Hbits.
+  Qed.
 
 End float_value.
 
