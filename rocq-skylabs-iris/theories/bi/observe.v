@@ -342,6 +342,13 @@ Section bi.
     by apply observe_later, observe_curry.
   Qed.
 
+  Global Instance observe_maybe_later {b : bool} P Q :
+    Observe P Q -> Observe (▷?b P) Q.
+  Proof.
+    intros; destruct b; simpl; [| done].
+    iIntros "Q"; iDestruct (H with "Q") as "#P"; done.
+  Qed.
+
   Global Instance observe_from_false Q : Observe Q False.
   Proof. iDestruct 1 as "[]". Qed.
   Global Instance observe_2_from_false_1 Q P : Observe2 Q False P.
