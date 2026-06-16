@@ -5,10 +5,9 @@
 (* are wrapped in [Fail].                                               *)
 (*                                                                      *)
 (* Observable: [Check CHECK c n] succeeds iff constant [c] has a        *)
-(* registered [Params c n] instance.  The intended                      *)
-(* implementation records the arity AND registers it as a hint that is  *)
-(* #[local] inside a section (hence does not persist verbatim), while a *)
-(* corrected GLOBAL registration is installed at section close.         *)
+(* registered [Params c n] instance. In a section, the intended         *)
+(* implementation records the arity AND registers a local hint, while a *)
+(* correct global hint is installed at section close.                   *)
 (************************************************************************)
 
 Require Import attrs.ParamsAttr.
