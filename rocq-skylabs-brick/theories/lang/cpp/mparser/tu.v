@@ -11,8 +11,21 @@ Require Import skylabs.lang.cpp.syntax.untemp.
 Require Export skylabs.lang.cpp.syntax.decl.
 Require Export skylabs.lang.cpp.syntax.decl.
 
-
 (** ** Template-only top-level declarations emitted by cpp2v *)
+
+Definition with_templates (tu : translation_unit) (mtu : Mtranslation_unit) : translation_unit :=
+  {|
+    translation_unit.symbols := tu.(translation_unit.symbols);
+    translation_unit.types := tu.(translation_unit.types);
+    translation_unit.namespace_aliases := tu.(translation_unit.namespace_aliases);
+    translation_unit.initializer := tu.(translation_unit.initializer);
+    translation_unit.asserts := tu.(translation_unit.asserts);
+    translation_unit.abi := tu.(translation_unit.abi);
+    translation_unit.msymbols := mtu.(templates.msymbols);
+    translation_unit.mtypes := mtu.(templates.mtypes);
+    translation_unit.maliases := mtu.(templates.maliases);
+    translation_unit.minstances := mtu.(templates.minstances)
+  |}.
 
 Module Import Mtranslation_unit.
 

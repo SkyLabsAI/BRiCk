@@ -274,12 +274,12 @@ Section with_monad.
     let symbol '(nm, obj) := obj_value obj in
     let gd '(nm, gd) := glob_decl gd in
     let msymbol '(nm, t_obj) :=
-      lst (temp_param type) t_obj.(mcore.template_params)
-      <+> obj_value t_obj.(mcore.template_value)
+      lst (temp_param type) t_obj.(template_params)
+      <+> obj_value t_obj.(template_value)
     in
     let mgd '(nm, t_gd) :=
-      lst (temp_param type) t_gd.(mcore.template_params)
-      <+> glob_decl t_gd.(mcore.template_value)
+      lst (temp_param type) t_gd.(template_params)
+      <+> glob_decl t_gd.(template_value)
     in
     lst gd (namemap.NM.elements tu.(types)) <+>
     lst symbol (namemap.NM.elements tu.(symbols)) <+>
@@ -288,12 +288,12 @@ Section with_monad.
 
   Definition template_unit (mtu : Mtranslation_unit) : M :=
     let symbol '(nm, t_obj) :=
-      lst (temp_param type) t_obj.(mcore.template_params)
-      <+> obj_value t_obj.(mcore.template_value)
+      lst (temp_param type) t_obj.(template_params)
+      <+> obj_value t_obj.(template_value)
     in
     let gd '(nm, t_gd) :=
-      lst (temp_param type) t_gd.(mcore.template_params)
-      <+> glob_decl t_gd.(mcore.template_value)
+      lst (temp_param type) t_gd.(template_params)
+      <+> glob_decl t_gd.(template_value)
     in
     lst gd (namemap.NM.elements mtu.(mtypes)) <+>
     lst symbol (namemap.NM.elements mtu.(msymbols)).

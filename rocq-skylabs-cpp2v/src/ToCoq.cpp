@@ -195,6 +195,38 @@ static fmt::Formatter &printAbi(fmt::Formatter &out,
                << toCoqLangVersion(ctxt.getLangOpts()) << ")";
 }
 
+void printCache(::Module &mod, Cache &cache, CoqPrinter &print, ClangPrinter &cprint) {
+
+    auto preprint = [&](const Decl *decl) {
+        auto cp = cprint.withDecl(decl);
+        PRINTER<clang::Type> type_fn = [&](auto prefix, auto num,
+                                           auto *type) {
+            print.output()
+                << "#[local] Definition " << prefix << num
+                << " : type := ";
+            cp.printType(print, type, loc::of(type));
+            print.output() << "." << fmt::line;
+        };
+        PRINTER<clang::NamedDecl> name_fn =
+            [&](auto prefix, auto num, auto *decl) {
+                print.output()
+                    << "#[local] Definition " << prefix << num
+                    << " : name := ";
+                cp.printName(print, decl, loc::of(decl));
+                print.output() << "." << fmt::line;
+            };
+        prePrintDecl(decl, cache, type_fn, name_fn);
+    };
+
+    for (auto decl : mod.declarations()) {
+        preprint(decl);
+    }
+    for (auto decl : mod.definitions()) {
+        preprint(decl);
+    }
+    print.output() << fmt::line;
+}
+
 void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
                                 clang::TranslationUnitDecl *decl) {
 
@@ -211,7 +243,9 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
 
     ::Module mod(trace_);
 
-    bool templates = templates_file_.has_value() || name_test_file_.has_value();
+    bool templates = templates_file_.has_value() ||
+                     output_with_templates_file_.has_value() ||
+                     name_test_file_.has_value();
     build_module(decl, mod, filter, specs, compiler_, elaborate_, templates);
 
     auto parser = [&](CoqPrinter &print) -> auto & {
@@ -241,32 +275,7 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
             bytestring(print) << fmt::line;
 
             if (this->sharing_) {
-                auto preprint = [&](const Decl *decl) {
-                    auto cp = cprint.withDecl(decl);
-                    PRINTER<clang::Type> type_fn = [&](auto prefix, auto num,
-                                                       auto *type) {
-                        print.output() << "#[local] Definition " << prefix
-                                       << num << " : type := ";
-                        cp.printType(print, type, loc::of(type));
-                        print.output() << "." << fmt::line;
-                    };
-                    PRINTER<clang::NamedDecl> name_fn =
-                        [&](auto prefix, auto num, auto *decl) {
-                            print.output() << "#[local] Definition " << prefix
-                                           << num << " : name := ";
-                            cp.printName(print, decl, loc::of(decl));
-                            print.output() << "." << fmt::line;
-                        };
-                    prePrintDecl(decl, cache, type_fn, name_fn);
-                };
-
-                for (auto decl : mod.declarations()) {
-                    preprint(decl);
-                }
-                for (auto decl : mod.definitions()) {
-                    preprint(decl);
-                }
-                print.output() << fmt::line;
+                printCache(mod, cache, print, cprint);
             }
 
             if (!interactive_.has_value()) {
@@ -315,6 +324,7 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
             }
 
             if (!interactive_.has_value()) {
+                // NOTE: Backwards compatibility
                 print.output()
                     << "Abbreviation module := source (only parsing)." << fmt::line;
             }
@@ -358,6 +368,124 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
         print.end_list();
 
         print.output() << "." << fmt::outdent << fmt::line;
+    });
+
+    with_open_file(output_with_templates_file_, [&](Formatter &fmt) {
+        Cache cache;
+        CoqPrinter static_print(fmt, /*templates*/ false, cache);
+        CoqPrinter meta_print(fmt, /*templates*/ true, cache);
+        ClangPrinter static_cprint(compiler_, ctxt, trace_, comment_,
+                                   typedefs_);
+        ClangPrinter meta_cprint(compiler_, ctxt, trace_, comment_,
+                                 typedefs_);
+
+        parser(static_print);
+        static_print.output() << "Require skylabs.lang.cpp.mparser."
+                              << fmt::line << fmt::line;
+        if (!interactive_.has_value()) {
+            static_print.output()
+                << "Require Import skylabs.lang.cpp.parser.plugin.cpp2v."
+                << fmt::line;
+        } else {
+            static_print.output() << "Section __cpp_prog." << fmt::line << fmt::indent;
+        }
+
+        bytestring(static_print) << fmt::line;
+
+        if (this->sharing_) {
+            printCache(mod, cache, static_print, static_cprint);
+        }
+
+        static_print.output() << "Section static." << fmt::indent << fmt::line;
+        if (attributes_.has_value()) {
+            static_print.output()
+                << "#[" << attributes_.value() << "]" << fmt::line;
+        }
+        static_print.output() << "cpp.prog static__"
+                              << interactive_.value_or("source")
+                              << fmt::indent << fmt::line;
+        static_print.output() << "abi ";
+        printAbi(static_print.output(), *ctxt) << fmt::line;
+        static_print.output() << "defns" << fmt::indent;
+
+        for (auto decl : mod.declarations()) {
+            printDecl(decl, static_print, static_cprint);
+        }
+        for (auto decl : mod.definitions()) {
+            printDecl(decl, static_print, static_cprint);
+        }
+        for (auto &[from, to] : sortAliasList(mod.aliases())) {
+            if (from) {
+                guard::ctor _{static_print, "Dusing_namespace"};
+                static_cprint.printName(static_print, *from) << fmt::nbsp;
+                static_cprint.printName(static_print, *to);
+            } else {
+                guard::ctor _{static_print, "Dglobal_using_namespace"};
+                static_cprint.printName(static_print, *to);
+            }
+        }
+        for (auto decl : mod.asserts()) {
+            printDecl(decl, static_print, static_cprint);
+        }
+
+        static_print.output() << "." << fmt::outdent << fmt::outdent
+                              << fmt::line;
+        static_print.output() << fmt::outdent << "End static." << fmt::line
+                              << fmt::line;
+
+        meta_print.output() << "Section meta." << fmt::indent << fmt::line;
+        meta_print.output() << "Import skylabs.lang.cpp.mparser."
+                            << fmt::line << fmt::line;
+        meta_print.output()
+            << "Definition meta__"
+            << interactive_.value_or("templates")
+            << " : Mtranslation_unit :=" << fmt::indent
+            << fmt::line
+            << "Eval reduce_translation_unit in Mtranslation_unit.decls"
+            << fmt::nbsp;
+
+        meta_print.begin_list();
+        for (auto decl : mod.template_declarations()) {
+            if (printDecl(decl, meta_print, meta_cprint))
+                meta_print.cons();
+        }
+        for (auto decl : mod.template_definitions()) {
+            if (printDecl(decl, meta_print, meta_cprint))
+                meta_print.cons();
+        }
+        meta_print.end_list();
+
+        meta_print.output() << "." << fmt::outdent << fmt::line;
+        meta_print.output() << fmt::outdent << "End meta." << fmt::line
+                            << fmt::line;
+        if (interactive_.has_value()) {
+            static_print.output() << fmt::outdent << "End __cpp_prog." << fmt::line;
+        }
+
+        static_print.output()
+            << "Definition "
+            << interactive_.value_or("source")
+            << " := Eval vm_compute in skylabs.lang.cpp.mparser.tu.with_templates static__"
+            << interactive_.value_or("source")
+            << " meta__" << interactive_.value_or("templates")
+            << "."
+            << fmt::line;
+
+        if (!interactive_.has_value()) {
+            static_print.output()
+                << "Abbreviation module := source (only parsing)."
+                << fmt::line;
+        }
+
+        if (check_types_) {
+            static_print.output()
+                << fmt::line << "Require skylabs.lang.cpp.syntax.typed."
+                << fmt::line
+                << "Succeed Example well_typed : typed.decltype.check_tu "
+                << interactive_.value_or("source")
+                << " = trace.Success tt := ltac:(vm_compute; reflexivity)."
+                << fmt::line;
+        }
     });
 
     with_open_file(name_test_file_, [&](Formatter &fmt) {

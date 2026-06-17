@@ -6,7 +6,7 @@
 Require Import skylabs.prelude.base.
 Require Import skylabs.prelude.error.
 Require Import skylabs.lang.cpp.syntax.core.
-Require Export skylabs.lang.cpp.syntax.core.
+Require Export skylabs.lang.cpp.syntax.mcore.
 Require Import skylabs.lang.cpp.syntax.decl.
 Require Export skylabs.lang.cpp.syntax.translation_unit.
 Require Export skylabs.lang.cpp.syntax.namemap.
