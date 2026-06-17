@@ -10,6 +10,7 @@ Require Import skylabs.lang.cpp.syntax.types.
 Require Import skylabs.lang.cpp.syntax.typing.
 Require Import skylabs.lang.cpp.syntax.translation_unit.
 Require Import skylabs.lang.cpp.syntax.templates.
+Require Import skylabs.lang.cpp.semantics.cast_operator.
 
 Module check.
 Section with_monad.
@@ -67,6 +68,12 @@ Section with_monad.
       end
     else OK.
 
+  Definition check_float_binop (op : BinOp) : M :=
+    match convert_type_float_op op Tfloat with
+    | Some _ => OK
+    | None => FAIL "unsupported floating binary operator"
+    end.
+
   Definition check_binop (op : BinOp) (lhsT rhsT resT : type) : M :=
     (match op with
      | Bunsupported msg => FAIL msg
@@ -80,11 +87,8 @@ Section with_monad.
         FAIL "unsupported pointer/floating operator"
       else
         match op with
-        | Badd | Bsub | Bmul | Bdiv
-        | Beq | Bneq | Blt | Ble | Bgt | Bge => OK
-        | Bmod | Band | Bor | Bxor | Bshl | Bshr | Bcmp
-        | Bdotp | Bdotip => FAIL "unsupported floating binary operator"
         | Bunsupported _ => OK
+        | _ => check_float_binop op
         end
     else OK.
 
