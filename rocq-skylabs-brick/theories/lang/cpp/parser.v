@@ -64,7 +64,7 @@ Module Import translation_unit.
       | l :: ls' =>
           match compare x l with
           | Lt => x :: ls
-          | Eq => x :: l :: ls'
+          | Eq => ls (* remove duplicates *)
           | Gt => l :: insert x ls'
           end
       end.
