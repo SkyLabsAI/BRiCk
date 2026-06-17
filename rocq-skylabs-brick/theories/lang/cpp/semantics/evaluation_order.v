@@ -1,5 +1,5 @@
 (*
- * Copyright (c) 2020-2024 BlueRock Security, Inc.
+ * Copyright (c) 2020-2026 SkyLabs AI, Inc.
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
@@ -13,8 +13,8 @@ Variant t : Set :=
           We use this for left-to-right *binary* operators *)
 | rl (* right-to-left, assignment operators (post C++17) *).
 
-Definition since_cpp17 (ver : lang_version.t) : bool :=
-  negb (lang_version.lt ver lang_version.Cpp17).
+Definition since_cpp17 : lang_version.t -> bool :=
+  lang_version.le lang_version.Cpp17.
 
 (* The order of evaluation for each operator *when overloaded* *)
 Definition order_of (ver : lang_version.t) (oo : OverloadableOperator) : t :=

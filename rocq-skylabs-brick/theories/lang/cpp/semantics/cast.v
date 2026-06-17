@@ -21,9 +21,6 @@ Export characters.
 
 #[local] Open Scope Z_scope.
 
-Definition since_cpp20 (tu : translation_unit) : bool :=
-  negb (lang_version.lt (language_version tu) lang_version.Cpp20).
-
 Lemma to_signed_bounded sz z :
   bitsize.bound sz Signed (to_signed sz z).
 Proof.
@@ -74,7 +71,7 @@ Definition conv_int {σ : genv} (tu : translation_unit) (from to : type) (v v' :
       | _ => False
       end
   | Tnum _ _ , Tnum sz Signed =>
-      if since_cpp20 tu then
+      if lang_version.le lang_version.Cpp20 (language_version tu) then
         match v with
         | Vint v => v' = Vint (to_signed (int_rank.bitsize sz) v)
         | _ => False
@@ -220,7 +217,7 @@ Section conv_int.
     rewrite /=/conv_int/underlying_type/=.
     intros ? Hty. split; eauto.
     destruct sgn.
-    { destruct (since_cpp20 tu) eqn:?; last by split; eauto.
+    { case_match; last by split; eauto.
       apply has_int_type' in Hty.
       destruct Hty as [(? & -> & Hty) | (? & -> & ?)]; last done.
       move: Hty. rewrite /bitsize.bound/bitsize.min_val/bitsize.max_val. intros.
