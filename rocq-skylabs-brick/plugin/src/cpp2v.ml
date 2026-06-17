@@ -15,6 +15,7 @@ type attrs = {
   check_duplicates : report_level option;
   elaborate : bool;
   check_types : bool;
+  with_templates : bool;
 }
 
 let attributes =
@@ -32,9 +33,10 @@ let attributes =
   let bool_attribute name =
     map (fun x -> x = Some true) (Attributes.bool_attribute ~name)
   in
-  map (fun ((check_duplicates, elaborate), check_types) ->
-      { check_duplicates; elaborate; check_types })
-    ((duplicates ++ bool_attribute "elaborate") ++ bool_attribute "check_types")
+  map (fun ((((check_duplicates, elaborate), check_types), with_templates), with_templates_dash) ->
+      { check_duplicates; elaborate; check_types; with_templates = with_templates || with_templates_dash })
+    (((duplicates ++ bool_attribute "elaborate") ++ bool_attribute "check_types") ++
+     bool_attribute "with_templates" ++ bool_attribute "with-templates")
 
 let lib_ref t =
   Rocqlib.lib_ref ("skylabs.lang.cpp.parser.translation_unit." ^ t)
@@ -233,7 +235,7 @@ let cpp_prog_warn : ?loc:Loc.t -> Pp.t -> unit =
   CWarnings.create ~name:"cpp.prog" ~category ~default:CWarnings.Enabled Pp.(fun x -> x ++ fnl ())
 
 let cpp_command_prog (attrs : attrs) name flags prog =
-  let { check_duplicates; elaborate; check_types } = attrs in
+  let { check_duplicates; elaborate; check_types; with_templates } = attrs in
   let temp_cpp , unlink = temp_file ~suffix:".cpp" prog in
   let temp_v = Filename.temp_file "_" ".v" in
   let flags =
@@ -251,7 +253,7 @@ let cpp_command_prog (attrs : attrs) name flags prog =
     "-for-interactive"; Names.Id.to_string name;
     "--no-sharing"; (* to avoid polluting the namespace. It would be better to put this in a [Module]
                          if we are not in a [Section] *)
-    "-o"; temp_v;
+    (if with_templates then "--module-with-templates" else "-o"); temp_v;
     temp_cpp] @
     (if elaborate then ["--elaborate"] else ["--no-elaborate"]) @
     (if check_types then ["--check-types"] else []) @
