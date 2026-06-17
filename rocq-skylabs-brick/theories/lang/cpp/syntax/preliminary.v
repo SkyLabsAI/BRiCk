@@ -500,17 +500,6 @@ Module float_type.
     t <> Flongdouble -> bit_width t = bitsize.bitsZ (bitsize t).
   Proof. by destruct t. Qed.
 
-  Lemma bit_width_Ffloat16 : bit_width Ffloat16 = 16%Z.
-  Proof. reflexivity. Qed.
-  Lemma bit_width_Ffloat : bit_width Ffloat = 32%Z.
-  Proof. reflexivity. Qed.
-  Lemma bit_width_Fdouble : bit_width Fdouble = 64%Z.
-  Proof. reflexivity. Qed.
-  Lemma bit_width_Flongdouble : bit_width Flongdouble = 79%Z.
-  Proof. reflexivity. Qed.
-  Lemma bit_width_Ffloat128 : bit_width Ffloat128 = 128%Z.
-  Proof. reflexivity. Qed.
-
   (** The carrier type *)
   Definition car (t : t) : Set :=
     binary_float (mw t) (ew t).
@@ -567,13 +556,13 @@ Module float_value.
     | _ => false
     end.
 
-  Definition is_true (t : t) (v : car t) : bool :=
+  Definition is_true {t : t} (v : car t) : bool :=
     negb (is_zero v).
 
   Lemma is_zero_zero (t : t) : is_zero (zero t) = true.
   Proof. by destruct t. Qed.
 
-  Lemma is_true_zero (t : t) : is_true t (zero t) = false.
+  Lemma is_true_zero (t : t) : is_true (zero t) = false.
   Proof. by destruct t. Qed.
 
   Definition default_nan (t : t) : { nan : car t | is_nan _ _ nan = true } :=
@@ -773,23 +762,7 @@ Module float_value.
     (0 <= z < 2 ^ 128)%Z -> to_bits Ffloat128 (of_bits Ffloat128 z) = z.
   Proof. intros Hz. apply to_of_bits. exact Hz. Qed.
 
-  Lemma of_to_bits_Ffloat16 (f : car Ffloat16) :
-    of_bits Ffloat16 (to_bits Ffloat16 f) = f.
-  Proof. apply of_to_bits. Qed.
-
-  Lemma of_to_bits_Ffloat (f : car Ffloat) :
-    of_bits Ffloat (to_bits Ffloat f) = f.
-  Proof. apply of_to_bits. Qed.
-
-  Lemma of_to_bits_Fdouble (f : car Fdouble) :
-    of_bits Fdouble (to_bits Fdouble f) = f.
-  Proof. apply of_to_bits. Qed.
-
-  Lemma of_to_bits_Ffloat128 (f : car Ffloat128) :
-    of_bits Ffloat128 (to_bits Ffloat128 f) = f.
-  Proof. apply of_to_bits. Qed.
-
-  Lemma to_bits_inj ft : Inj (=) (=) (to_bits ft).
+  #[global] Instance to_bits_inj ft : Inj (=) (=) (to_bits ft).
   Proof.
     intros x y Hbits.
     apply (f_equal (of_bits ft)) in Hbits.

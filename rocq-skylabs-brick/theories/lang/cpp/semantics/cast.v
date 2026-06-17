@@ -256,7 +256,7 @@ Definition conv_float {σ : genv} (tu : translation_unit) (from to : type) (v v'
       end
   | Tfloat_ _ , Tbool =>
       match v with
-      | Vfloat f z => v' = Vbool (float_value.is_true f z)
+      | Vfloat f z => v' = Vbool (float_value.is_true z)
       | _ => False
       end
   | Tfloat_ _ , Tnum _ _ =>
@@ -353,7 +353,7 @@ Section conv_float.
 
   Lemma conv_float_to_bool ft (fv : float_type.car ft) :
       conv_float tu (Tfloat_ ft) Tbool (Vfloat ft fv)
-        (Vbool (float_value.is_true ft fv)).
+        (Vbool (float_value.is_true fv)).
   Proof using Hmod.
     rewrite /conv_float /=. split; first apply has_float_type. done.
   Qed.
