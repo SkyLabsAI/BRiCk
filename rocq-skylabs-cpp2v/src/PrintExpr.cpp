@@ -1024,9 +1024,8 @@ public:
                     ft = "float_type.Ffloat128";
                 break;
             case BuiltinType::LongDouble:
-                /* The port's [Flongdouble] carrier is not the experiment's
-                   binary128 model and does not match the usual Clang x87 or
-                   double-double object encodings, so reject literals here. */
+                /* BRiCk marks [Flongdouble] unsupported; reject literals here
+                   to match the type printer and checker. */
                 break;
             default:
                 break;

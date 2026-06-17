@@ -422,8 +422,12 @@ Module float_type.
   Definition bitsN (t : t) : N :=
     8 * bytesN t.
 
-  (** Additive support predicate for frontend/checker compatibility. *)
-  Definition supported (_ : t) : bool := true.
+  (** Frontend/checker support predicate. *)
+  Definition supported (t : t) : bool :=
+    match t with
+    | Flongdouble => false
+    | _ => true
+    end.
 
   (** Object-representation size when it is one of BRiCk's fixed integer
       bit-widths.  For [Flongdouble], this is the 16-byte object size; its

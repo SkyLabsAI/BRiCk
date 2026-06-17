@@ -95,9 +95,12 @@ Example support_accepts_float_types :
   check.type Tfloat16 = check.OK /\
   check.type Tfloat = check.OK /\
   check.type Tdouble = check.OK /\
-  check.type Tlongdouble = check.OK /\
   check.type Tfloat128 = check.OK.
 Proof. repeat split; reflexivity. Qed.
+
+Example support_rejects_longdouble_type :
+  check.type Tlongdouble = check.FAIL "unsupported floating width".
+Proof. reflexivity. Qed.
 
 Example support_accepts_float_literals :
   check.expr one_float16 = check.OK /\
@@ -105,6 +108,11 @@ Example support_accepts_float_literals :
   check.expr one_double = check.OK /\
   check.expr one_float128 = check.OK.
 Proof. repeat split; reflexivity. Qed.
+
+Example support_rejects_longdouble_literal :
+  check.expr (Efloat float_type.Flongdouble (float_value.zero float_type.Flongdouble)) =
+    check.FAIL "unsupported floating width".
+Proof. reflexivity. Qed.
 
 Example support_accepts_float_casts :
   check.expr (Ecast (Cfloat Tdouble) one_float) = check.OK /\
@@ -148,6 +156,11 @@ Example usual_float_arith_examples tu :
   usual_float_arith tu Tfloat16 Tfloat = Some Tfloat /\
   usual_float_arith tu Tfloat Tdouble = Some Tdouble /\
   usual_float_arith tu Tfloat128 Tdouble = Some Tfloat128.
+Proof. repeat split; reflexivity. Qed.
+
+Example usual_float_arith_rejects_longdouble tu :
+  usual_float_arith tu Tlongdouble Tdouble = None /\
+  usual_float_arith tu Tdouble Tlongdouble = None.
 Proof. repeat split; reflexivity. Qed.
 
 Example convert_type_float_examples tu :
