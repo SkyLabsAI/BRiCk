@@ -326,7 +326,7 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
     ::Module mod(trace_);
 
     bool templates = templates_file_.has_value() ||
-                     output_with_templates_file_.has_value() ||
+                     (output_file_.has_value() && output_templates_) ||
                      name_test_file_.has_value();
     build_module(decl, mod, filter, specs, compiler_, elaborate_, templates);
 
@@ -489,11 +489,13 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
         writeTemplates("templates", cache, fmt, *ctxt, mod);
     };
 
-    with_open_file(output_file_, static_and_templates);
+    if (output_templates_) {
+        with_open_file(output_file_, static_and_templates);
+    } else {
+        with_open_file(output_file_, static_only);
+    }
 
     with_open_file(templates_file_, templates_only);
-
-    with_open_file(output_with_templates_file_, static_and_templates);
 
     with_open_file(name_test_file_, [&](Formatter &fmt) {
         Cache c;

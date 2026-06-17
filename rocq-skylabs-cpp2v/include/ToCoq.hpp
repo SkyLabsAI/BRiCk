@@ -30,18 +30,18 @@ public:
     using path = std::optional<std::string>;
     explicit ToCoqConsumer(
         clang::CompilerInstance *compiler, const path output_file,
-        const path templates_file, const path output_with_templates_file,
-        const path name_test_file, Trace::Mask trace, bool comment,
-        bool sharing, bool type_check, bool elaborate = true,
+        const path templates_file, const path name_test_file,
+        Trace::Mask trace, bool comment, bool sharing, bool type_check,
+        bool output_templates, bool elaborate = true,
         bool typedefs = false,
         std::optional<std::string> &&interactive = std::optional<std::string>(),
         std::optional<std::string> &&attributes = std::optional<std::string>())
         : compiler_(compiler), output_file_(output_file),
           templates_file_(templates_file),
-          output_with_templates_file_(output_with_templates_file),
           name_test_file_(name_test_file), trace_(trace), comment_{comment},
           sharing_{sharing}, elaborate_(elaborate), check_types_{type_check},
-          typedefs_{typedefs}, interactive_{std::move(interactive)},
+          output_templates_{output_templates}, typedefs_{typedefs},
+          interactive_{std::move(interactive)},
           attributes_{std::move(attributes)} {}
 
 public:
@@ -86,13 +86,13 @@ private:
     clang::CompilerInstance *compiler_;
     const path output_file_;
     const path templates_file_;
-    const path output_with_templates_file_;
     const path name_test_file_;
     const Trace::Mask trace_;
     const bool comment_;
     const bool sharing_;
     const bool elaborate_;
     const bool check_types_;
+    const bool output_templates_;
     const bool typedefs_;
     const std::optional<std::string> interactive_;
     const std::optional<std::string> attributes_;

@@ -10,4 +10,4 @@ Q = @
 all: $(GEN_FILES)
 
 %_cpp.v: %.cpp
-	$(Q)cpp2v -v -o $@ $< --check-types --no-elaborate -- $(CPPFLAGS)
+	$(Q)cpp2v -v -o $@ $< --check-types --no-elaborate --no-templates -- $(CPPFLAGS)
