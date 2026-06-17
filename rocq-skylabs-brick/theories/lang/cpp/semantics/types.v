@@ -129,12 +129,12 @@ Proof.
   - rewrite /glob_def. move: Hle => [[ /(_ gn) Hle _ _]].
     revert Hle.
     case: (types (genv_tu x) !! gn); simpl; try constructor.
-    move => ? /(_ _ eq_refl) [g2 [-> HH]] /=.
+    move => ? /(_ _ eq_refl) [g2 [-> HH]] * /=.
     exact: proper_GlobDecl_size_of.
   - rewrite /glob_def. move: Hle => [[ /(_ gn) Hle _ _]].
     revert Hle.
     case: (types (genv_tu x) !! gn); simpl; try constructor.
-    move => ? /(_ _ eq_refl) [g2 [-> HH]] /=.
+    move => ? /(_ _ eq_refl) [g2 [-> HH]] * /=.
     exact: proper_GlobDecl_size_of.
   - by destruct osz; constructor.
 Qed.

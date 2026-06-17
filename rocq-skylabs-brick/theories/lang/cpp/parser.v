@@ -51,6 +51,31 @@ Module Import translation_unit.
       end.
   End sort.
 
+  Module sort_static_assert.
+    Definition compare (x y : StaticAssert) : comparison :=
+      match PrimString.compare x.(sa_message) y.(sa_message) with
+      | Eq => base.compare x.(sa_condition) y.(sa_condition)
+      | c => c
+      end.
+
+    Fixpoint insert (x : StaticAssert) (ls : list StaticAssert) : list StaticAssert :=
+      match ls with
+      | nil => x :: nil
+      | l :: ls' =>
+          match compare x l with
+          | Lt => x :: ls
+          | Eq => ls (* remove duplicates *)
+          | Gt => l :: insert x ls'
+          end
+      end.
+
+    Fixpoint sort (ls : list StaticAssert) : list StaticAssert :=
+      match ls with
+      | nil => nil
+      | l :: ls => insert l $ sort ls
+      end.
+  End sort_static_assert.
+
   (**
   We work with an exploded [translation_unit] and raw trees for
   efficiency.
@@ -65,8 +90,8 @@ Module Import translation_unit.
   Definition dup_info := list (name * (GlobDecl + ObjValue)).
   (** This representation is isomorphic to [translation_unit * list name] as shown by [decls]. *)
   Definition t : Type :=
-    raw_symbol_table -> raw_type_table -> list name -> raw_alias_table -> dup_info ->
-    (raw_symbol_table -> raw_type_table -> list name -> raw_alias_table -> dup_info -> translation_unit * dup_info) ->
+    raw_symbol_table -> raw_type_table -> list name -> raw_alias_table -> list StaticAssert -> dup_info ->
+    (raw_symbol_table -> raw_type_table -> list name -> raw_alias_table -> list StaticAssert -> dup_info -> translation_unit * dup_info) ->
     translation_unit * dup_info.
 
   Definition merge_obj_value (a b : ObjValue) : option ObjValue :=
@@ -77,12 +102,12 @@ Module Import translation_unit.
 
   (** Constructs a [translation_unit.t] with _one_ symbol, mapping [n] to [v]. *)
   Definition _symbols (n : name) (v : ObjValue) : t :=
-    fun s t ga a dups k =>
+    fun s t ga a asserts dups k =>
       match s !! n with
-      | None => k (<[n := v]> s) t ga a dups
+      | None => k (<[n := v]> s) t ga a asserts dups
       | Some v' => match merge_obj_value v v' with
-                  | Some v => k (<[n:=v]> s) t ga a dups
-                  | None => k s t ga a ((n, inr v) :: (n, inr v') :: dups)
+                  | Some v => k (<[n:=v]> s) t ga a asserts dups
+                  | None => k s t ga a asserts ((n, inr v) :: (n, inr v') :: dups)
                   end
       end.
   Definition merge_glob_decl (a b : GlobDecl) : option GlobDecl :=
@@ -93,7 +118,7 @@ Module Import translation_unit.
 
   (** Constructs a [translation_unit.t] with _one_ type, mapping [n] to [v]. *)
   Definition _types (n : name) (v : GlobDecl) : t :=
-    fun s t ga a dups k =>
+    fun s t ga a asserts dups k =>
       if bool_decide (Gtypedef (Tnamed n) = v \/ Gtypedef (Tenum n) = v)
       then
         (* ignore self-aliases. These arise when you do
@@ -102,13 +127,13 @@ Module Import translation_unit.
            typedef enum memory_order { .. } memory_order;
            >>
          *)
-        k s t ga a dups
+        k s t ga a asserts dups
       else
         match t !! n with
-        | None => k s (<[n := v]> t) ga a dups
+        | None => k s (<[n := v]> t) ga a asserts dups
         | Some v' => match merge_glob_decl v v' with
-                    | Some v => k s (<[n:=v]> t) ga a dups
-                    | None => k s t ga a ((n, inl v) :: (n, inl v') :: dups)
+                    | Some v => k s (<[n:=v]> t) ga a asserts dups
+                    | None => k s t ga a asserts ((n, inl v) :: (n, inl v') :: dups)
                     end
         end.
 
@@ -116,18 +141,26 @@ Module Import translation_unit.
     _types n (Gtypedef ty).
 
   Definition _value_alias (n : name) (canon : name) : t :=
-    fun s t ga a dups k =>
+    fun s t ga a asserts dups k =>
       match a !! n with
-      | None => k s t ga (<[n := canon :: nil]> a) dups
-      | Some canon' => k s t ga (<[n := canon :: canon']> a) dups
+      | None => k s t ga (<[n := canon :: nil]> a) asserts dups
+      | Some canon' => k s t ga (<[n := canon :: canon']> a) asserts dups
       end.
 
   Definition _global_alias (canon : name) : t :=
-    fun s t ga a dups k => k s t (canon :: ga) a dups.
+    fun s t ga a asserts dups k => k s t (canon :: ga) a asserts dups.
+
+  Definition _static_assert (msg : option PrimString.string) (e : Expr) : t :=
+    let msg := match msg with
+               | Some msg => msg
+               | None => ""%pstring
+               end in
+    fun s t ga a asserts dups k =>
+      k s t ga a (Build_StaticAssert msg e :: asserts) dups.
 
   (** Constructs an empty [translation_unit.t]. *)
   Definition _skip : t :=
-    fun s t ga a dups k => k s t ga a dups.
+    fun s t ga a asserts dups k => k s t ga a asserts dups.
 
   Fixpoint array_fold {A B}
     (f : A -> B -> B) (ar : PArray.array A) (fuel : nat) (i : PrimInt63.int) (acc : B) : B :=
@@ -138,17 +171,19 @@ Module Import translation_unit.
     end.
 
   Definition decls' (ds : PArray.array t) : t :=
-    array_fold (fun (X Y : t) s t ga a dups K => X s t ga a dups (fun s t ga a dups => Y s t ga a dups K))
+    array_fold (fun (X Y : t) s t ga a asserts dups K =>
+                  X s t ga a asserts dups (fun s t ga a asserts dups => Y s t ga a asserts dups K))
       ds
       (Z.to_nat (Uint63.to_Z (PArray.length ds))) 0%uint63
-      (fun s t ga a dups k => k s t ga a dups).
+      (fun s t ga a asserts dups k => k s t ga a asserts dups).
 
   Definition decls (ds : PArray.array t) (info : abi.t) : translation_unit * dup_info :=
-    decls' ds ∅ ∅ [] ∅ [] $ fun s t ga a => pair {|
+    decls' ds ∅ ∅ [] ∅ [] [] $ fun s t ga a asserts => pair {|
       symbols := NM.from_raw s;
       types := NM.from_raw t;
       namespace_aliases := (Listset (sort.sort ga), NM.from_raw $ NM.Raw.map (fun x => Listset $ sort.sort x) a);
       initializer := nil;	(** TODO *)
+      asserts := sort_static_assert.sort asserts;
       abi := info;
     |}.
 
@@ -233,7 +268,7 @@ Definition Dglobal_using_namespace (alias : name) : K :=
   _global_alias alias.
 
 Definition Dstatic_assert (msg : option PrimString.string) (e : Expr) : K :=
-  _skip.
+  _static_assert msg e.
 
 Definition Oimplicit_default_ctor (n : globname) : K :=
   let ctor := Oconstructor

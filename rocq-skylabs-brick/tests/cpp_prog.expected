@@ -33,6 +33,7 @@ module =
            (internal.NameMap.Raw.Leaf (listset name)) I
      |});
   initializer := [];
+  asserts := [];
   abi :=
     {|
       abi.uintptr_t_rank := int_rank.Ilong;
