@@ -1,0 +1,88 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.static_asserts</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <a id="cpp_prog__module__" class="idref" href="#cpp_prog__module__"><span class="id" title="section"><span id="cpp_prog__ordered__" class="id"><span id="cpp_prog__permuted__" class="id">Import</span></span></span></a> <a id="cpp_prog__module__" class="idref" href="#cpp_prog__module__"><span class="id" title="section"><span id="cpp_prog__ordered__" class="id"><span id="cpp_prog__permuted__" class="id">skylabs.lang.cpp.parser</span></span></span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">module</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">static_assert</span>(<span class="id" title="var">true</span>, "truth survives parsing");<br/>
+&nbsp;&nbsp;<span class="id" title="var">static_assert</span>(<span class="id" title="var">true</span>);<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">module</span></a><a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">.(</span></a><a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">asserts</span></a><a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">)</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">=</span></a><br/>
+&nbsp;&nbsp;<a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">[</span></a><a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">Build_StaticAssert</span></a> "" <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">(</span></a><a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">Ebool</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">true</span></a><a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">);</span></a><br/>
+&nbsp;&nbsp;&nbsp;<a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">Build_StaticAssert</span></a> "truth survives parsing" <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">(</span></a><a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">Ebool</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">true</span></a><a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">)]%</span></a><a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">pstring</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">ordered</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">static_assert</span>(<span class="id" title="var">true</span>, "a");<br/>
+&nbsp;&nbsp;<span class="id" title="var">static_assert</span>(<span class="id" title="var">true</span>, "b");<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">permuted</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">static_assert</span>(<span class="id" title="var">true</span>, "b");<br/>
+&nbsp;&nbsp;<span class="id" title="var">static_assert</span>(<span class="id" title="var">true</span>, "a");<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">ordered</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">=</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">permuted</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
