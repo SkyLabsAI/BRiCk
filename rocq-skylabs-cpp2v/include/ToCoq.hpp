@@ -76,9 +76,11 @@ private:
     void elab(Decl *, bool rec = false);
 
     void writeTemplates(const char *name, Cache &cache, fmt::Formatter &fmt,
-                        clang::ASTContext &ctxt, ::Module &mod);
+                        clang::ASTContext &ctxt, ::Module &mod,
+                        bool noimport = false);
     void writeStatic(const char *name, Cache &cache, fmt::Formatter &fmt,
-                     clang::ASTContext &ctxt, ::Module &mod);
+                     clang::ASTContext &ctxt, ::Module &mod,
+                     bool noimport = false);
 
 private:
     clang::CompilerInstance *compiler_;
