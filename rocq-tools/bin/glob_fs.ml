@@ -19,14 +19,11 @@ open Rocq_tools
 open Rocq_tools.Extra
 
 let of_file : file:string -> string = fun ~file ->
-  let ic = In_channel.open_text file in
-  let data = In_channel.input_all ic in
-  In_channel.close_noerr ic; data
+  In_channel.with_open_text file In_channel.input_all
 
 let to_file : data:string -> file:string -> unit = fun ~data ~file ->
-  let oc = Out_channel.open_text file in
-  Out_channel.output_string oc data;
-  Out_channel.close_noerr oc
+  Out_channel.with_open_text file @@ fun oc ->
+  Out_channel.output_string oc data
 
 let glob_ls glob =
   let keys = Globfs.list_keys ~glob in

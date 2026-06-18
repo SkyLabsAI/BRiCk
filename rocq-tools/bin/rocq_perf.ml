@@ -138,9 +138,8 @@ let embed_log glob log_file =
   Sys.remove log_file
 
 let non_empty_file file =
-  let ic = In_channel.open_text file in
-  let non_empty = In_channel.input_char ic <> None in
-  In_channel.close_noerr ic; non_empty
+  In_channel.with_open_text file @@ fun ic ->
+  In_channel.input_char ic <> None
 
 let embed_stdout_and_stderr glob stdout_file stderr_file =
   if non_empty_file stdout_file then Globfs.append ~glob ~file:stdout_file;

@@ -24,7 +24,7 @@ let (src_ref, data_ref, src_new, data_new) =
   | _ -> panic "Usage: %s ref.v ref.json new.v new.json" Sys.argv.(0)
 
 let input_file : string -> string = fun file ->
-  try In_channel.input_all (In_channel.open_text file) with
+  try In_channel.with_open_text file In_channel.input_all with
   | Sys_error(msg) -> panic "Error: %s" msg
 
 let input_data : string -> Data.t = fun file ->

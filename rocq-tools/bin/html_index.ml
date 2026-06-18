@@ -47,7 +47,7 @@ let data : data_category list =
   let removed = ref [] in
   let _ =
     try
-      let ic = In_channel.open_text csv in
+      In_channel.with_open_text csv @@ fun ic ->
       try while true do
         let line = input_line ic in
         match String.split_on_char ',' line with
@@ -66,7 +66,7 @@ let data : data_category list =
         | [f; "diff"; d] -> diff := (f, d) :: !diff
         | [] -> ()
         | _ -> Printf.printf "Warning: cannot parse line %S.\n%!" line
-      done with End_of_file -> In_channel.close_noerr ic 
+      done with End_of_file -> ()
     with Sys_error(msg) -> panic "Error: %s" msg
   in
   let notcompiled = List.length !notcompiled in

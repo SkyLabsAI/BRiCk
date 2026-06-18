@@ -145,18 +145,13 @@ end
 
 let append_data ~glob ~key ~data =
   check_glob glob;
-  let oc = Out_channel.open_gen [Out_channel.Open_append] 0 glob in
+  Out_channel.with_open_gen [Out_channel.Open_append] 0 glob @@ fun oc ->
   let data = Data.encode data in
-  GlobLine.(output oc (File({key; data})));
-  Out_channel.close_noerr oc
+  GlobLine.(output oc (File({key; data})))
 
 let append_gen ~glob ~key ~file =
   check_file glob; check_file file;
-  let data =
-    let ic = In_channel.open_text file in
-    let data = In_channel.input_all ic in
-    In_channel.close_noerr ic; data
-  in
+  let data = In_channel.with_open_text file In_channel.input_all in
   append_data ~glob ~key ~data
 
 let append ~glob ~file =
@@ -165,12 +160,12 @@ let append ~glob ~file =
 
 let iter ~glob f g =
   check_file glob;
-  let ic = In_channel.open_text glob in
+  In_channel.with_open_text glob @@ fun ic ->
   try while true do
     match GlobLine.input ic with
     | Standard(line)    -> f ~line
     | File({key; data}) -> g ~key ~data
-  done; assert false with End_of_file -> ()
+  done with End_of_file -> ()
 
 let glob_data ~glob =
   let buf = Buffer.create 73 in
@@ -180,9 +175,8 @@ let glob_data ~glob =
 
 let clear ~glob =
   let data = glob_data ~glob in
-  let oc = Out_channel.open_text glob in
-  Out_channel.output_string oc data;
-  Out_channel.close_noerr oc
+  Out_channel.with_open_text glob @@ fun oc ->
+  Out_channel.output_string oc data
 
 let list_keys ~glob =
   let keys = ref [] in
@@ -205,9 +199,8 @@ let cat_key oc ~glob ~key =
 
 let extract_key ~glob ~key =
   let file = Key.to_file ~glob ~key in
-  let oc = Out_channel.open_text file in
-  cat_key oc ~glob ~key;
-  Out_channel.close_noerr oc
+  Out_channel.with_open_text file @@ fun oc ->
+  cat_key oc ~glob ~key
 
 let extract ~glob ~file =
   let key = Key.of_file ~glob ~file in
@@ -218,8 +211,7 @@ let extract_all ~glob =
   let write_file key data =
     let file = Key.to_file ~glob ~key in
     let data = Data.decode data in
-    let oc = Out_channel.open_text file in
-    Out_channel.output_string oc data;
-    Out_channel.close_noerr oc
+    Out_channel.with_open_text file @@ fun oc ->
+    Out_channel.output_string oc data
   in
   SMap.iter write_file map

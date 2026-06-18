@@ -120,7 +120,7 @@ let input : In_channel.t -> glob_line = fun ic ->
   Field({key; mode; value})
 
 let read_glob_file ~allow_fields path =
-  let ic = In_channel.open_text path in
+  In_channel.with_open_text path @@ fun ic ->
   let standard = ref [] in
   let fields = ref IMap.empty in
   try
@@ -129,35 +129,28 @@ let read_glob_file ~allow_fields path =
       | Standard(s) -> standard := s :: !standard
       | Field(_) when not allow_fields -> raise Bad_glob_file
       | Field(e) -> fields := IMap.add e.key (e.mode, e.value) !fields
-    done; assert false
-  with
-  | End_of_file ->
-      In_channel.close_noerr ic;
-      let standard = !standard in
-      let fields = !fields in
-      {standard; fields}
-  | e ->
-      In_channel.close_noerr ic;
-      raise e
+    done
+  with End_of_file ->
+    let standard = !standard in
+    let fields = !fields in
+    {standard; fields}
 
 let write_glob_file path {standard; fields} =
-  let oc = Out_channel.open_text path in
+  Out_channel.with_open_text path @@ fun oc ->
   let add s = output oc (Standard(s)) in
   List.iter add standard;
   let add key (mode, value) = output oc (Field({key; mode; value})) in
-  IMap.iter add fields;
-  Out_channel.close_noerr oc
+  IMap.iter add fields
 
 let write_fields ~assume_new path mappings =
   let check (key, _, _) = if key < 0 then invalid_arg "negative key" in
   List.iter check mappings;
   if assume_new then
-    let oc = Out_channel.open_gen [Out_channel.Open_append] 0 path in
+    Out_channel.with_open_gen [Out_channel.Open_append] 0 path @@ fun oc ->
     let output (key, mode, value) =
       output oc (Field({key; mode; value = Base64.encode value}))
     in
-    List.iter output mappings;
-    Out_channel.close_noerr oc
+    List.iter output mappings
   else
     let glob = read_glob_file ~allow_fields:true path in
     let add glob (key, mode, value) = add_field ~key ~mode ~value glob in
