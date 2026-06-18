@@ -4,19 +4,19 @@ Require Import skylabs.lang.cpp.syntax.
 Require test.cases_cpp.
 
 Definition type_is_gstruct (n : name) : bool :=
-  match test.cases_cpp.module.(types) !! n with
+  match test.cases_cpp.source.(types) !! n with
   | Some (Gstruct _) => true
   | _ => false
   end.
 
 Definition type_is_gtype (n : name) : bool :=
-  match test.cases_cpp.module.(types) !! n with
+  match test.cases_cpp.source.(types) !! n with
   | Some Gtype => true
   | _ => false
   end.
 
 Definition type_is_typedef_to (n target : name) : bool :=
-  match test.cases_cpp.module.(types) !! n with
+  match test.cases_cpp.source.(types) !! n with
   | Some (Gtypedef (Tnamed target')) => bool_decide (target' = target)
   | _ => false
   end.

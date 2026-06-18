@@ -3,7 +3,7 @@ Require Import skylabs.lang.cpp.syntax.
 Require test.test_cpp.
 
 Definition longdouble_return_expr : option Expr :=
-  match test_cpp.module.(symbols) !! Nglobal (Nfunction function_qualifiers.N "longdouble_literal" []) with
+  match test_cpp.source.(symbols) !! Nglobal (Nfunction function_qualifiers.N "longdouble_literal" []) with
   | Some (Ofunction f) =>
       match f.(f_body) with
       | Some (Impl (Sseq [Sreturn (Some e)])) => Some e
