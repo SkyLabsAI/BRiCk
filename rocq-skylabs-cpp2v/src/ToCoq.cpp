@@ -481,7 +481,7 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
         writeTemplates("templates", cache, fmt, *ctxt, mod);
     };
 
-    with_open_file(output_file_, static_only);
+    with_open_file(output_file_, static_and_templates);
 
     with_open_file(templates_file_, templates_only);
 
