@@ -211,7 +211,7 @@ let to_glob_out : strip_prefix:string -> string -> glob_out option =
     let std_out =
       if is_std_out then begin
         ensure_file filename;
-        get_lines (open_in filename) (fun x -> x)
+        In_channel.with_open_text filename In_channel.input_lines
       end
       else
         []
@@ -219,7 +219,7 @@ let to_glob_out : strip_prefix:string -> string -> glob_out option =
     let std_err =
       if is_std_err then begin
         ensure_file filename;
-        get_lines (open_in filename) (fun x -> x)
+        In_channel.with_open_text filename In_channel.input_lines
       end
       else
         []
@@ -290,7 +290,7 @@ let analyse fmt ~before_dune ~after_dune ~before_globs ~after_globs =
 
   let parse globs dunes =
     let glob (ws, es) {src_file; std_err; std_out} =
-      let (dangling_lines, w,e) = parse_lines (List.map parse_line std_err) in
+      let (dangling_lines, w,e) = parse_lines ~file:src_file (List.map parse_line std_err) in
       let dangling = List.map (fun (_, txt) -> dangling_output_warning src_file txt) dangling_lines in
       let w =
         if std_out = [] then w else begin
@@ -303,13 +303,13 @@ let analyse fmt ~before_dune ~after_dune ~before_globs ~after_globs =
     let dune (ws, es) {src_file; file_type; output} =
       match file_type with
       | Rocq ->
-        let (dangling_lines, w, e) = parse_lines (List.map parse_line output) in
+        let (dangling_lines, w, e) = parse_lines ~file:src_file (List.map parse_line output) in
         let dangling = List.map (fun (_, txt) -> dangling_output_warning src_file txt) dangling_lines in
         (List.rev_append w @@ List.rev_append dangling ws, List.rev_append e es)
       | Cram | Diff ->
         (* The first two lines are just diff output *)
         let output = List.tl @@ List.tl @@ output in
-        let (dangling_lines, w, e) = parse_lines ~assume_errors:true (List.map parse_line output) in
+        let (dangling_lines, w, e) = parse_lines ~assume_errors:true ~file:src_file (List.map parse_line output) in
         let dangling = List.map (fun (_, txt) -> dangling_output_warning src_file txt) dangling_lines in
         (List.rev_append w @@ List.rev_append dangling ws, List.rev_append e es)
     in
@@ -382,13 +382,15 @@ let main () =
     | "--before-globs-from-file" :: file  :: args            ->
         ensure_file file;
         let strip_prefix = Filename.dirname file ^ "/" in
-        let new_before_globs = List.filter_map (fun x -> x) @@ get_lines (open_in file) (to_glob_out ~strip_prefix) in
+        let lines = In_channel.with_open_text file In_channel.input_lines in
+        let new_before_globs = List.filter_map (to_glob_out ~strip_prefix) lines in
         let before_globs = List.rev_append new_before_globs state.before_globs in
         parse_args {state with before_globs} args
     | "--after-globs-from-file" :: file   :: args            ->
         ensure_file file;
         let strip_prefix = Filename.dirname file ^ "/" in
-        let new_after_globs = List.filter_map (fun x -> x) @@ get_lines (open_in file) (to_glob_out ~strip_prefix) in
+        let lines = In_channel.with_open_text file In_channel.input_lines in
+        let new_after_globs = List.filter_map (to_glob_out ~strip_prefix) lines in
         let after_globs = List.rev_append new_after_globs state.after_globs in
         parse_args {state with after_globs} args
     | "--before-dune" :: file       :: args                  ->
