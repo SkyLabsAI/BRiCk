@@ -55,4 +55,5 @@ type line =
   | Data of string * bool (* Is this the last warning line? *)
 
 val parse_line : string -> line
-val parse_lines : ?assume_errors:bool -> line list -> (int * string) list * Warning.t list * Error.t list
+val parse_lines : ?assume_errors:bool -> file:string -> line list
+  -> (int * string) list * Warning.t list * Error.t list

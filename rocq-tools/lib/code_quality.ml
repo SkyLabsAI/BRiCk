@@ -177,10 +177,13 @@ let make_item : state -> item =
   | W -> Warning (make_warning file pos data full)
   | U -> assert false
 
-let gather : ?assume_errors:bool -> line list -> item list =
-  fun ?(assume_errors=true) lines ->
+let gather : ?assume_errors:bool -> file:string -> line list -> item list =
+    fun ?(assume_errors=true) ~file lines ->
   let default_kind = if assume_errors then E else U in
   let rec gather i rev_items state lines =
+    let panic fmt =
+      panic ("Parse error in file %S, line %i:\n" ^^ fmt) file i
+    in
     let gather = gather (i+1) in
     match (state, lines) with
     | (None, []) ->
@@ -222,8 +225,8 @@ let gather : ?assume_errors:bool -> line list -> item list =
   in
   gather 1 [] None lines
 
-let parse_lines ?(assume_errors=false) lines =
-  let items = gather ~assume_errors lines in
+let parse_lines ?(assume_errors=false) ~file lines =
+  let items = gather ~assume_errors ~file lines in
   let (lines, warnings, errors) =
     let f item (lines, warnings, errors) =
       match item with

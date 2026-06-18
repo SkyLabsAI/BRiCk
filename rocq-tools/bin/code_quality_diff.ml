@@ -290,7 +290,7 @@ let analyse fmt ~before_dune ~after_dune ~before_globs ~after_globs =
 
   let parse globs dunes =
     let glob (ws, es) {src_file; std_err; std_out} =
-      let (dangling_lines, w,e) = parse_lines (List.map parse_line std_err) in
+      let (dangling_lines, w,e) = parse_lines ~file:src_file (List.map parse_line std_err) in
       let dangling = List.map (fun (_, txt) -> dangling_output_warning src_file txt) dangling_lines in
       let w =
         if std_out = [] then w else begin
@@ -303,13 +303,13 @@ let analyse fmt ~before_dune ~after_dune ~before_globs ~after_globs =
     let dune (ws, es) {src_file; file_type; output} =
       match file_type with
       | Rocq ->
-        let (dangling_lines, w, e) = parse_lines (List.map parse_line output) in
+        let (dangling_lines, w, e) = parse_lines ~file:src_file (List.map parse_line output) in
         let dangling = List.map (fun (_, txt) -> dangling_output_warning src_file txt) dangling_lines in
         (List.rev_append w @@ List.rev_append dangling ws, List.rev_append e es)
       | Cram | Diff ->
         (* The first two lines are just diff output *)
         let output = List.tl @@ List.tl @@ output in
-        let (dangling_lines, w, e) = parse_lines ~assume_errors:true (List.map parse_line output) in
+        let (dangling_lines, w, e) = parse_lines ~assume_errors:true ~file:src_file (List.map parse_line output) in
         let dangling = List.map (fun (_, txt) -> dangling_output_warning src_file txt) dangling_lines in
         (List.rev_append w @@ List.rev_append dangling ws, List.rev_append e es)
     in
