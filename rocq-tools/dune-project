@@ -1,5 +1,6 @@
 (lang dune 3.22)
 (name rocq-tools)
+(using rocq 0.12)
 
 (generate_opam_files)
 

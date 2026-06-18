@@ -1,0 +1,3 @@
+(rocq.theory
+ (name test.plugin)
+ (theories skylabs.perf_data_collector))

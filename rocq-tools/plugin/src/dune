@@ -1,0 +1,4 @@
+(library
+ (name glob_data_collector)
+ (public_name rocq-tools.glob-data-collector.plugin)
+ (libraries rocq-runtime.lib rocq-tools yojson))

@@ -1,0 +1,5 @@
+(rocq.theory
+ (name skylabs.perf_data_collector)
+ (package rocq-tools)
+ (generate_project_file)
+ (plugins rocq-tools.glob-data-collector.plugin))
