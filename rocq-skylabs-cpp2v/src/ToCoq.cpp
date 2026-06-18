@@ -194,7 +194,7 @@ static fmt::Formatter &printAbi(fmt::Formatter &out,
 }
 
 void printCache(::Module &mod, Cache &cache, CoqPrinter &print,
-                ClangPrinter &cprint) {
+                ClangPrinter &cprint, bool noimport = false) {
 
     auto preprint = [&](const Decl *decl) {
         auto cp = cprint.withDecl(decl);
@@ -214,8 +214,10 @@ void printCache(::Module &mod, Cache &cache, CoqPrinter &print,
         prePrintDecl(decl, cache, type_fn, name_fn);
     };
 
-    print.output() << "Import skylabs.lang.cpp.parser." << fmt::line
-                   << fmt::line;
+    if (not noimport) {
+        print.output() << "Import skylabs.lang.cpp.parser." << fmt::line
+                       << fmt::line;
+    }
 
     for (auto decl : mod.declarations()) {
         preprint(decl);
@@ -228,13 +230,15 @@ void printCache(::Module &mod, Cache &cache, CoqPrinter &print,
 
 void ToCoqConsumer::writeTemplates(const char *name, Cache &cache,
                                    fmt::Formatter &fmt, clang::ASTContext &ctxt,
-                                   ::Module &mod) {
+                                   ::Module &mod, bool noimport) {
     CoqPrinter print(fmt, /*templates*/ true, cache);
     ClangPrinter cprint(compiler_, &ctxt, trace_, comment_, typedefs_);
 
-    print.output() << "Import skylabs.lang.cpp.mparser." << fmt::line
-                   << "#[local] Open Scope pstring_scope." << fmt::line
-                   << fmt::line;
+    if (not noimport) {
+        print.output() << "Import skylabs.lang.cpp.mparser." << fmt::line
+                       << "#[local] Open Scope pstring_scope." << fmt::line
+                       << fmt::line;
+    }
 
     print.output() << "Definition " << name
                    << " : Mtranslation_unit :=" << fmt::indent << fmt::line
@@ -262,13 +266,15 @@ void ToCoqConsumer::writeTemplates(const char *name, Cache &cache,
  */
 void ToCoqConsumer::writeStatic(const char *name, Cache &cache,
                                 fmt::Formatter &fmt, clang::ASTContext &ctxt,
-                                ::Module &mod) {
+                                ::Module &mod, bool noimport) {
     CoqPrinter print(fmt, /*templates*/ false, cache);
     ClangPrinter cprint(compiler_, &ctxt, trace_, comment_, typedefs_);
 
-    print.output() << "Import skylabs.lang.cpp.parser." << fmt::line
-                   << "#[local] Open Scope pstring_scope." << fmt::line
-                   << fmt::line;
+    if (not noimport) {
+        print.output() << "Import skylabs.lang.cpp.parser." << fmt::line
+                       << "#[local] Open Scope pstring_scope." << fmt::line
+                       << fmt::line;
+    }
 
     if (attributes_.has_value()) {
         print.output() << "#[" << attributes_.value() << "]" << fmt::line;
@@ -360,44 +366,47 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
         */
         Cache cache;
 
-        fmt << "Require skylabs.lang.cpp.parser." << fmt::line
-            << "Require skylabs.lang.cpp.mparser." << fmt::line;
-
         if (interactive_.has_value()) {
-            fmt << "Section __cpp_prog." << fmt::line << fmt::indent;
+            fmt << "Require skylabs.lang.cpp.parser." << fmt::line
+                << "Require skylabs.lang.cpp.mparser." << fmt::line
+                << "Section __cpp_prog." << fmt::line << fmt::indent
+                << "Import skylabs.lang.cpp.parser." << fmt::line;
 
         } else {
             fmt << "Require Import skylabs.lang.cpp.parser.plugin.cpp2v."
+                << fmt::line << "Require Import skylabs.lang.cpp.parser."
+                << fmt::line << "Require skylabs.lang.cpp.mparser." << fmt::line
                 << fmt::line;
         }
+        fmt << "#[local] Open Scope pstring_scope." << fmt::line;
 
         if (this->sharing_) {
             CoqPrinter static_print(fmt, /*templates*/ false, cache);
             ClangPrinter static_cprint(compiler_, ctxt, trace_, comment_,
                                        typedefs_);
-            printCache(mod, cache, static_print, static_cprint);
+            printCache(mod, cache, static_print, static_cprint, true);
         }
 
         // BEGIN: Section static
-        fmt << "Section static." << fmt::indent << fmt::line;
+        // fmt << "Section static." << fmt::indent << fmt::line;
 
         std::string static_name{"static__"};
         static_name += interactive_.value_or("source");
 
-        writeStatic(static_name.c_str(), cache, fmt, *ctxt, mod);
+        writeStatic(static_name.c_str(), cache, fmt, *ctxt, mod, true);
 
-        fmt << fmt::outdent << "End static." << fmt::line << fmt::line;
+        // fmt << fmt::outdent << "End static." << fmt::line << fmt::line;
         // END: Section static
 
         // BEGIN: Section meta
-        fmt << "Section meta." << fmt::indent << fmt::line;
+        // fmt << "Section meta." << fmt::indent << fmt::line;
 
         std::string meta_name{"meta__"};
         meta_name += interactive_.value_or("source");
 
         writeTemplates(meta_name.c_str(), cache, fmt, *ctxt, mod);
 
-        fmt << fmt::outdent << "End meta." << fmt::line << fmt::line;
+        // fmt << fmt::outdent << "End meta." << fmt::line << fmt::line;
         // END: Section meta
 
         if (interactive_.has_value()) {
@@ -405,9 +414,8 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
         }
 
         fmt << "Definition " << interactive_.value_or("source")
-            << " := Eval vm_compute in "
-               "skylabs.lang.cpp.mparser.tu.with_templates "
-            << static_name << " " << meta_name << "." << fmt::line;
+            << " := skylabs.lang.cpp.mparser.tu.with_templates " << static_name
+            << " " << meta_name << "." << fmt::line;
 
         if (!interactive_.has_value()) {
             // NOTE: Backwards compatibility
