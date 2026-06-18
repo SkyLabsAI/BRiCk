@@ -145,7 +145,7 @@ let add_csv_file : string -> map -> map = fun file m ->
     | _                               -> panic "Invalid CSV."
   in
   try
-    let ic = In_channel.open_text file in
+    In_channel.with_open_text file @@ fun ic ->
     ignore (In_channel.input_line ic); (* Drop header line. *)
     let rec loop m =
       match In_channel.input_line ic with
