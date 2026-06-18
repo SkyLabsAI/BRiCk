@@ -337,63 +337,7 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
                << "#[local] Open Scope pstring_scope." << fmt::line;
     };
 
-    with_open_file(
-        output_file_, [&](Formatter &fmt) {
-            Cache cache;
-            CoqPrinter print(fmt, /*templates*/ false, cache);
-            ClangPrinter cprint(compiler_, ctxt, trace_, comment_, typedefs_);
-
-            if (interactive_.has_value()) {
-                // Since we are in interactive mode, the parser is already
-                // loaded; however, it is important that we limit our
-                // side-effects
-                print.output() << "Section cpp_prog__" << interactive_.value()
-                               << "__." << fmt::line;
-            } else {
-                print.output()
-                    << "Require Import skylabs.lang.cpp.parser.plugin.cpp2v."
-                    << fmt::line;
-            }
-            // parser(print);
-            // bytestring(print) << fmt::line;
-
-            if (this->sharing_) {
-                printCache(mod, cache, print, cprint);
-            }
-
-            writeStatic(interactive_.value_or("source").c_str(), cache, fmt,
-                        *ctxt, mod);
-
-            // Close the section if we opened one
-            if (interactive_.has_value()) {
-                print.output() << "End cpp_prog__" << interactive_.value()
-                               << "__." << fmt::line;
-            } else {
-                // NOTE: Backwards compatibility
-                print.output()
-                    << "Abbreviation module := source (only parsing)."
-                    << fmt::line;
-            }
-
-            if (check_types_) {
-                print.output()
-                    << fmt::line << "Require skylabs.lang.cpp.syntax.typed."
-                    << fmt::line
-                    << "Succeed Example well_typed : typed.decltype.check_tu "
-                    << interactive_.value_or("source")
-                    << " = trace.Success tt := ltac:(vm_compute; reflexivity)."
-                    << fmt::line;
-            }
-        });
-
-    with_open_file(templates_file_, [&](Formatter &fmt) {
-        Cache cache;
-        fmt << "Require skylabs.lang.cpp.mparser." << fmt::line;
-
-        writeTemplates("templates", cache, fmt, *ctxt, mod);
-    });
-
-    with_open_file(output_with_templates_file_, [&](Formatter &fmt) {
+    auto static_and_templates = [&](Formatter &fmt) {
         /* This block generates the following setup:
 
         ```
@@ -479,7 +423,69 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
                 << " = trace.Success tt := ltac:(vm_compute; reflexivity)."
                 << fmt::line;
         }
-    });
+    };
+
+    auto static_only =
+        [&](Formatter &fmt) {
+            Cache cache;
+            CoqPrinter print(fmt, /*templates*/ false, cache);
+            ClangPrinter cprint(compiler_, ctxt, trace_, comment_, typedefs_);
+
+            if (interactive_.has_value()) {
+                // Since we are in interactive mode, the parser is already
+                // loaded; however, it is important that we limit our
+                // side-effects
+                print.output() << "Section cpp_prog__" << interactive_.value()
+                               << "__." << fmt::line;
+            } else {
+                print.output()
+                    << "Require Import skylabs.lang.cpp.parser.plugin.cpp2v."
+                    << fmt::line;
+            }
+            // parser(print);
+            // bytestring(print) << fmt::line;
+
+            if (this->sharing_) {
+                printCache(mod, cache, print, cprint);
+            }
+
+            writeStatic(interactive_.value_or("source").c_str(), cache, fmt,
+                        *ctxt, mod);
+
+            // Close the section if we opened one
+            if (interactive_.has_value()) {
+                print.output() << "End cpp_prog__" << interactive_.value()
+                               << "__." << fmt::line;
+            } else {
+                // NOTE: Backwards compatibility
+                print.output()
+                    << "Abbreviation module := source (only parsing)."
+                    << fmt::line;
+            }
+
+            if (check_types_) {
+                print.output()
+                    << fmt::line << "Require skylabs.lang.cpp.syntax.typed."
+                    << fmt::line
+                    << "Succeed Example well_typed : typed.decltype.check_tu "
+                    << interactive_.value_or("source")
+                    << " = trace.Success tt := ltac:(vm_compute; reflexivity)."
+                    << fmt::line;
+            }
+        };
+
+    auto templates_only = [&](Formatter &fmt) {
+        Cache cache;
+        fmt << "Require skylabs.lang.cpp.mparser." << fmt::line;
+
+        writeTemplates("templates", cache, fmt, *ctxt, mod);
+    };
+
+    with_open_file(output_file_, static_only);
+
+    with_open_file(templates_file_, templates_only);
+
+    with_open_file(output_with_templates_file_, static_and_templates);
 
     with_open_file(name_test_file_, [&](Formatter &fmt) {
         Cache c;
