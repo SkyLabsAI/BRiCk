@@ -419,7 +419,7 @@ Module decltype.
         in
         let require_integral t :=
           match t with
-          | Tnum _ _ | Tbool | Tchar_ _ => mret tt
+          | Tnum _ _ | Tbool | Tchar_ _ | Tenum _ => mret tt
           | _ => throw ("integral type required"%bs, t)
           end
         in
