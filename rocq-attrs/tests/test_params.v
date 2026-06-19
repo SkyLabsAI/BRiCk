@@ -114,3 +114,5 @@ End Sec4.
 (* local_in_sec : forall A, A -> A; uses A (1 var) => 2 + 1 = 3 after close. *)
 Check CHECK (@local_in_sec) 3.   (* (P) persisted, bumped to 3 *)
 Fail Check CHECK (@local_in_sec) 2.   (* (N) in-section arity 2 does not persist *)
+
+Search Params.

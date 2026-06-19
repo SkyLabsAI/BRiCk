@@ -2,17 +2,28 @@ idnat_params : Params idnat 0
      : Params idnat 0
 pairAB_params : Params pairAB 3
      : Params pairAB 3
-pairAB_params0 : Params (@pairAB) 5
+pairAB_params : Params (@pairAB) 5
      : Params (@pairAB) 5
 useA_params : Params useA 3
      : Params useA 3
-useA_params0 : Params (@useA) 4
+useA_params : Params (@useA) 4
      : Params (@useA) 4
 noDeps_params : Params noDeps 3
      : Params noDeps 3
-noDeps_params0 : Params noDeps 3
+noDeps_params : Params noDeps 3
      : Params noDeps 3
 local_in_sec_params : Params local_in_sec 2
      : Params local_in_sec 2
-local_in_sec_params0 : Params (@local_in_sec) 3
+local_in_sec_params : Params (@local_in_sec) 3
      : Params (@local_in_sec) 3
+Build_Params: forall (A : Type) (of : A) (arity : nat), Params of arity
+iff_pars: Params iff 0
+impl_pars: Params Basics.impl 0
+getParams: forall {A : Type} {n : nat} (x : A), Params x n -> nat
+idnat_params: Params idnat 0
+eq_pars: Params (@eq) 1
+local_in_sec_params: Params (@local_in_sec) 3
+noDeps_params: Params noDeps 3
+useA_params: Params (@useA) 4
+pairAB_params: Params (@pairAB) 5
+flip_pars: Params (@Basics.flip) 4
