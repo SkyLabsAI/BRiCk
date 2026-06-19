@@ -223,9 +223,10 @@ fmt::Formatter &ClangPrinter::printTemplateParam(CoqPrinter &print,
         } else if (auto vd = dyn_cast<VarDecl>(d)) {
             if (process(vd->getDescribedTemplateParams()))
                 return print.output();
+        } else if (isa<TypedefDecl>(d)) {
         } else {
-            logging::verbose()
-                << "Skipping over: " << d->getDeclKindName() << "\n";
+            logging::verbose() << "printTemplateParam: Skipping over '"
+                               << d->getDeclKindName() << "'\n";
         }
     }
 
