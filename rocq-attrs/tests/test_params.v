@@ -11,7 +11,6 @@
 (************************************************************************)
 
 Require Import attrs.ParamsAttr.
-Require Import Stdlib.Classes.Morphisms.
 
 Definition getParams {A n} (x : A) `{!Params x n} : nat := n.
 

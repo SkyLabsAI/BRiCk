@@ -3,4 +3,5 @@
  (name attrs)
  (package rocq-attrs)
  (generate_project_file)
- (plugins rocq-attrs.params))
+ (plugins rocq-attrs.params)
+ (theories Stdlib))
