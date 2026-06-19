@@ -5,6 +5,9 @@
  *)
 
 Require Import skylabs.lang.cpp.mparser.prelude.
+Require Import Stdlib.Numbers.Cyclic.Int63.PrimInt63.
+Require Import skylabs.prelude.parray.
+Require Import skylabs.prelude.uint63.
 Require Import skylabs.lang.cpp.syntax.translation_unit.
 Require Import skylabs.lang.cpp.syntax.namemap.
 Require Import skylabs.lang.cpp.syntax.untemp.
@@ -66,16 +69,37 @@ Module Import Mtranslation_unit.
     | d :: ds => fun s t a i k => d s t a i (fun s t a i => decls' ds s t a i k)
     end.
 
-  (**
-  TODO: Do we still need <<map_canon>>?
-  *)
-  Definition decls (ds : list t) : Mtranslation_unit :=
-    decls' ds ∅ ∅ ∅ ∅ $ fun s t a i => {|
+  Fixpoint array_fold {A B}
+    (f : A -> B -> B) (ar : PArray.array A) (fuel : nat) (i : PrimInt63.int) (acc : B) : B :=
+    match fuel with
+    | 0 => acc
+    | S fuel =>
+        array_fold f ar fuel (PrimInt63.add i 1) (f (PArray.get ar i) acc)
+    end.
+
+  Definition array_decls' (ds : PArray.array t) : t :=
+    array_fold (fun (X Y : t) s t a i K =>
+                  X s t a i (fun s t a i => Y s t a i K))
+      ds
+      (Z.to_nat (Uint63.to_Z (PArray.length ds))) 0%uint63
+      (fun s t a i k => k s t a i).
+
+  Definition finalize (d : t) : Mtranslation_unit :=
+    d ∅ ∅ ∅ ∅ $ fun s t a i => {|
       templates.msymbols := TM.from_raw s;
       templates.mtypes := TM.from_raw t;
       templates.maliases := TM.from_raw a;
       templates.minstances := NM.from_raw i;
     |}.
+
+  (**
+  TODO: Do we still need <<map_canon>>?
+  *)
+  Definition decls (ds : list t) : Mtranslation_unit :=
+    finalize (decls' ds).
+
+  Definition array_decls (ds : PArray.array t) : Mtranslation_unit :=
+    finalize (array_decls' ds).
 
 End Mtranslation_unit.
 #[local] Notation K := Mtranslation_unit.t (only parsing).

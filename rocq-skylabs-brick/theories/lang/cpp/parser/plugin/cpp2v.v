@@ -7,6 +7,7 @@ Require skylabs.lang.cpp.parser.plugin.cpp2v_version.
 Require Stdlib.Array.PArray.
 Require Import Stdlib.Numbers.Cyclic.Int63.PrimInt63.
 Require Import skylabs.lang.cpp.parser.
+Require Import skylabs.lang.cpp.mparser.
 Require skylabs.lang.cpp.syntax.typed.
 
 #[local] Set Printing Universes.
@@ -23,5 +24,16 @@ Register empty_array as skylabs.lang.cpp.parser.translation_unit.empty_array.
 
 Definition result_type : Type := translation_unit * parser.translation_unit.dup_info.
 Register result_type as skylabs.lang.cpp.parser.translation_unit.result_type.
+
+Register Mtranslation_unit.t as skylabs.lang.cpp.mparser.translation_unit.t.
+Register Mtranslation_unit._skip as skylabs.lang.cpp.mparser.translation_unit.skip.
+Register Mtranslation_unit.array_decls as skylabs.lang.cpp.mparser.translation_unit.decls.
+
+(* NOTE: This is a hack to get a universe instance *)
+Definition empty_template_array := PArray.make 0%uint63 Mtranslation_unit._skip.
+Register empty_template_array as skylabs.lang.cpp.mparser.translation_unit.empty_array.
+
+Definition template_result_type : Type := Mtranslation_unit.
+Register template_result_type as skylabs.lang.cpp.mparser.translation_unit.result_type.
 
 Declare ML Module "rocq-skylabs-brick.plugin".

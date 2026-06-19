@@ -41,6 +41,9 @@ let attributes =
 let lib_ref t =
   Rocqlib.lib_ref ("skylabs.lang.cpp.parser.translation_unit." ^ t)
 
+let mlib_ref t =
+  Rocqlib.lib_ref ("skylabs.lang.cpp.mparser.translation_unit." ^ t)
+
 let (cpp2v_category, cpp2v_warning) =
   CWarnings.create_hybrid ~name:"cpp2v" ()
 
@@ -64,6 +67,13 @@ let to_econstr t =
 
 let decl_of_ref t =
   match lib_ref t with
+  | Names.GlobRef.ConstRef c ->
+    let decl = Global.lookup_constant c in
+    decl
+  | _ -> assert false
+
+let mdecl_of_ref t =
+  match mlib_ref t with
   | Names.GlobRef.ConstRef c ->
     let decl = Global.lookup_constant c in
     decl
@@ -145,6 +155,49 @@ let cpp_command (attrs : attrs) name (abi : Constrexpr.constr_expr option) (defn
     ()
   | _ ->
     CErrors.user_err Pp.(str "cpp.prog failed to return a head constructor. Please report!" ++ fnl () ++
+                        Printer.pr_econstr_env env evd body)
+
+let cpp_templates_command (_attrs : attrs) name (defns : Constrexpr.constr_expr list) =
+  let env = Global.env() in
+  let e_decl = to_econstr (mlib_ref "t") in
+  let e_decl_skip = to_econstr (mlib_ref "skip") in
+  let inst =
+    match Constr.kind (mdecl_of_ref "empty_array").const_type with
+    | Constr.App (f, _) ->
+      begin
+        match Constr.kind f with
+        | Constr.Const (_, univs) -> univs
+        | _ -> assert false
+      end
+    | _ -> assert false
+  in
+  let evd = Evd.from_env env in
+  let body , evd =
+    let expected_type = Pretyping.OfType e_decl in
+    List.fold_left (fun (acc, evd) defn ->
+        let body, ustate = Constrintern.interp_constr ~expected_type env evd defn in
+        (body :: acc, Evd.from_ctx ustate)) ([], evd) defns
+  in
+  let body =
+    EConstr.mkArray (EConstr.EInstance.make inst, Array.of_list (List.rev body), e_decl_skip, e_decl)
+  in
+  let body =
+    EConstr.mkApp (to_econstr (mlib_ref "decls"), [| body |])
+  in
+  let body =
+    let rt = force_body (mdecl_of_ref "result_type") in
+    Vnorm.cbv_vm env evd body (EConstr.of_constr rt)
+  in
+  match EConstr.kind evd body with
+  | Constr.App (hd, _) when EConstr.isConstruct evd hd ->
+    let cinfo = Declare.CInfo.make ~name ~typ:None () in
+    let info = Declare.Info.make () in
+    let _ =
+      Declare.declare_definition ~info ~cinfo ~opaque:false ~body evd
+    in
+    ()
+  | _ ->
+    CErrors.user_err Pp.(str "cpp.prog templates failed to return a head constructor. Please report!" ++ fnl () ++
                         Printer.pr_econstr_env env evd body)
 
 let temp_file ?(prefix="ocaml_temp_") ?(suffix=".tmp") content =

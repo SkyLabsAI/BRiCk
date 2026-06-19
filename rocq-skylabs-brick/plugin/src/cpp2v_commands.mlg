@@ -64,6 +64,8 @@ VERNAC COMMAND EXTEND Cpp CLASSIFIED AS SIDEFF
   { Cpp2v.cpp_command atts name (Some abi) defns }
 | #[ atts = Cpp2v.attributes ] [ "cpp.prog" ident(name) "defns" constr_list(defns) ] ->
   { Cpp2v.cpp_command atts name None defns }
+| #[ atts = Cpp2v.attributes ] [ "cpp.prog" ident(name) "templates" constr_list(defns) ] ->
+  { Cpp2v.cpp_templates_command atts name defns }
 END
 
 VERNAC COMMAND EXTEND CppProg CLASSIFIED AS SIDEFF
