@@ -535,7 +535,7 @@ let _ =
     let infos = Evarutil.create_clos_infos env sigma RedFlags.all in
     let tab = CClosure.create_tab () in
     let to_constr c =
-      EConstr.to_constr ~abort_on_undefined_evars:false sigma c
+      EConstr.Unsafe.to_constr c
     in
     let rec is_empty stk =
       match stk with
