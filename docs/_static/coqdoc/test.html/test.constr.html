@@ -176,6 +176,18 @@
 
 <br/>
 <span class="id" title="keyword">End</span> <a class="idref" href="test.constr.html#Evar_Test"><span class="id" title="module">Evar_Test</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="SpecializeProducts_Tests" class="idref" href="#SpecializeProducts_Tests"><span class="id" title="module">SpecializeProducts_Tests</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">Ltac2</span> <span class="id" title="module">Constr</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Goal</span> <a id="SpecializeProducts_Tests.Unnamed_thm" class="idref" href="#SpecializeProducts_Tests.Unnamed_thm"><span class="id" title="definition">True</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">_</span> := <span class="id" title="var">specialize_products</span> '(<span class="id" title="keyword">forall</span> <a id="A:19" class="idref" href="#A:19"><span class="id" title="binder">A</span></a> : <span class="id" title="keyword">Type</span>, <a class="idref" href="test.constr.html#A:19"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="test.constr.html#A:19"><span class="id" title="variable">A</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[| <span class="id" title="var">open_constr</span>:(<span class="id" title="var">_</span>); <span class="id" title="var">open_constr</span>:(<span class="id" title="var">_</span>) |] <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">exact</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#I"><span class="id" title="constructor">I</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Abort</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="test.constr.html#SpecializeProducts_Tests"><span class="id" title="module">SpecializeProducts_Tests</span></a>.<br/>
 </div>
 </div>
 
