@@ -152,3 +152,13 @@ Module Evar_Test.
   Qed.
 
 End Evar_Test.
+
+Module SpecializeProducts_Tests.
+  Import Ltac2 Constr.
+
+  Goal True.
+    let _ := specialize_products '(forall A : Type, A -> A)
+      [| open_constr:(_); open_constr:(_) |] in
+    exact I.
+  Abort.
+End SpecializeProducts_Tests.
