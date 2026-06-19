@@ -253,8 +253,9 @@ let cpp_command_prog (attrs : attrs) name flags prog =
     "-for-interactive"; Names.Id.to_string name;
     "--no-sharing"; (* to avoid polluting the namespace. It would be better to put this in a [Module]
                          if we are not in a [Section] *)
-    (if with_templates then "--module-with-templates" else "-o"); temp_v;
+    "-o"; temp_v;
     temp_cpp] @
+    (if with_templates then [] else ["--no-templates"]) @
     (if elaborate then ["--elaborate"] else ["--no-elaborate"]) @
     (if check_types then ["--check-types"] else []) @
     (match check_duplicates with
