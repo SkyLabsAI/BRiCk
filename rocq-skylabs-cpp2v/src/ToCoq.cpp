@@ -240,23 +240,16 @@ void ToCoqConsumer::writeTemplates(const char *name, Cache &cache,
                        << fmt::line;
     }
 
-    print.output() << "Definition " << name
-                   << " : Mtranslation_unit :=" << fmt::indent << fmt::line
-                   << "Eval reduce_translation_unit in Mtranslation_unit.decls"
-                   << fmt::nbsp;
+    print.output() << "cpp.prog " << name << " templates" << fmt::indent;
 
-    print.begin_list();
     for (auto decl : mod.template_declarations()) {
         // if (sharing)
         //     prePrintDecl(decl, c, print, cprint);
-        if (printDecl(decl, print, cprint))
-            print.cons();
+        printDecl(decl, print, cprint);
     }
     for (auto decl : mod.template_definitions()) {
-        if (printDecl(decl, print, cprint))
-            print.cons();
+        printDecl(decl, print, cprint);
     }
-    print.end_list();
 
     print.output() << "." << fmt::outdent << fmt::line;
 }
@@ -485,7 +478,13 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
 
     auto templates_only = [&](Formatter &fmt) {
         Cache cache;
-        fmt << "Require skylabs.lang.cpp.mparser." << fmt::line;
+
+        if (not interactive_.has_value()) {
+            fmt << "Require Import skylabs.lang.cpp.parser.plugin.cpp2v."
+                << fmt::line;
+        }
+        fmt << "Require Import skylabs.lang.cpp.parser." << fmt::line
+            << "Require skylabs.lang.cpp.mparser." << fmt::line;
 
         writeTemplates("templates", cache, fmt, *ctxt, mod);
     };
