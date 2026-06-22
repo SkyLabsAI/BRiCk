@@ -108,6 +108,10 @@ Section operator_axioms.
 Axiom eval_not_bool : forall a,
     eval_unop Unot Tbool Tbool (Vbool a) (Vbool (negb a)).
 
+Axiom eval_not_float : forall ft (a : float_type.car ft),
+    eval_unop Unot (Tfloat_ ft) Tbool
+      (Vfloat ft a) (Vbool (negb (float_value.is_true a))).
+
 (* The builtin unary `~` operator computes the bitwise negation of the operator
    https://eel.is/c++draft/expr.unary.op#10
 

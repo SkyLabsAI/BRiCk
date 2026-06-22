@@ -25,6 +25,52 @@ Require Import skylabs.lang.cpp.semantics.cast.
   *)
 Notation Tptrdiff_t := Tlonglong (only parsing).
 
+Definition supported_float_type (ty : type) : option float_type.t :=
+  match drop_qualifiers ty with
+  | Tfloat_ ft => if float_type.supported ft then Some ft else None
+  | _ => None
+  end.
+
+Definition float_rank (ft : float_type.t) : nat :=
+  match ft with
+  | float_type.Ffloat16 => 0%nat
+  | float_type.Ffloat => 1%nat
+  | float_type.Fdouble => 2%nat
+  | float_type.Flongdouble => 3%nat
+  | float_type.Ffloat128 => 4%nat
+  end.
+
+Definition max_float_type (ft1 ft2 : float_type.t) : float_type.t :=
+  if Nat.leb (float_rank ft1) (float_rank ft2) then ft2 else ft1.
+
+(** The floating point type used to perform arithmetic operations between the two C++ types *)
+Definition usual_float_arith (tu : translation_unit) (ty1 ty2 : type) : option float_type.t :=
+  match supported_float_type ty1, supported_float_type ty2 with
+  | Some ft1, Some ft2 => Some $ max_float_type ft1 ft2
+  | Some ft, None =>
+      match promote_integral tu ty2 with
+      | Some _ => Some ft
+      | None => None
+      end
+  | None, Some ft =>
+      match promote_integral tu ty1 with
+      | Some _ => Some ft
+      | None => None
+      end
+  | None, None => None
+  end.
+
+(** The effective type of <<operator b(to, to) -> ?>>.
+    This is mainly handling installing the return type.
+ *)
+Definition result_type (b : BinOp) (to : type) : option type :=
+  match b with
+  | Badd | Bsub | Bmul | Bdiv => Some to
+  | Beq | Bneq | Blt | Ble | Bgt | Bge => Some Tbool
+  | Bmod | Band | Bor | Bxor | Bshl | Bshr | Bcmp
+  | Bdotp | Bdotip | Bunsupported _ => None
+  end.
+
 (** For a binary operation between two types, determine the type of the result and the necessary conversions on the operands.
 
 This is used for both pointer and arithmetic operators.
@@ -62,45 +108,49 @@ Definition convert_type_op (tu : translation_unit) (b : BinOp) (ty1 ty2 : type)
     | _ => None
     end
   else if is_arithmetic ty1 && is_arithmetic ty2 then
-    (* integer-integer operations *)
-    match promote_integral tu ty1 , promote_integral tu ty2 with
-    | Some ity1 , Some ity2 =>
-      match b with
-      | Bshl | Bshr =>
-        (* heterogeneous operators *)
-        Some (ity1, ity2, ity1)
-      | Badd | Bsub | Bmul | Bdiv | Bmod
-      | Band | Bor | Bxor =>
-        (* homogeneous operators *)
-        match promote_arith ity1 ity2 with
-        | Some to => Some (to, to, to)
-        | _ => None
-        end
-      | Beq | Bneq
-      | Blt | Ble | Bgt | Bge =>
-        let same_enum :=
-          match drop_qualifiers ty1 , drop_qualifiers ty2 with
-          | Tenum nm1 , Tenum nm2 => if bool_decide (nm1 = nm2) then true else false
-          | _ , _ => false
-          end
-        in
-        if same_enum then
-          (* Technically, this is only permitted for unscoped enumerations;
-             however, the dynamic semantics lines up with the comparison on
-             scoped enumerations so we do not test.
-           *)
-          Some (drop_qualifiers ty1, drop_qualifiers ty2, Tbool)
-        else
+    match usual_float_arith tu ty1 ty2 with
+    | Some to => (fun res : type => (Tfloat_ to, Tfloat_ to, res)) <$> result_type b (Tfloat_ to)
+    | None =>
+      (* integer-integer operations *)
+      match promote_integral tu ty1 , promote_integral tu ty2 with
+      | Some ity1 , Some ity2 =>
+        match b with
+        | Bshl | Bshr =>
+          (* heterogeneous operators *)
+          Some (ity1, ity2, ity1)
+        | Badd | Bsub | Bmul | Bdiv | Bmod
+        | Band | Bor | Bxor =>
           (* homogeneous operators *)
           match promote_arith ity1 ity2 with
           | Some to => Some (to, to, to)
           | _ => None
           end
-      | Bcmp => None
-      | Bdotp
-      | Bdotip
-      | Bunsupported _ => None
+        | Beq | Bneq
+        | Blt | Ble | Bgt | Bge =>
+          let same_enum :=
+            match drop_qualifiers ty1 , drop_qualifiers ty2 with
+            | Tenum nm1 , Tenum nm2 => if bool_decide (nm1 = nm2) then true else false
+            | _ , _ => false
+            end
+          in
+          if same_enum then
+            (* Technically, this is only permitted for unscoped enumerations;
+               however, the dynamic semantics lines up with the comparison on
+               scoped enumerations so we do not test.
+             *)
+            Some (drop_qualifiers ty1, drop_qualifiers ty2, Tbool)
+          else
+            (* homogeneous operators *)
+            match promote_arith ity1 ity2 with
+            | Some to => Some (to, to, to)
+            | _ => None
+            end
+        | Bcmp => None
+        | Bdotp
+        | Bdotip
+        | Bunsupported _ => None
+        end
+      | _ , _ => None
       end
-    | _ , _ => None
     end
   else None.

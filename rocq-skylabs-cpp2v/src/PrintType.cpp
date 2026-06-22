@@ -243,7 +243,11 @@ public:
             CASE(UInt128, "Tuint128_t")
             CASE(Float, "Tfloat")
             CASE(Double, "Tdouble")
-            CASE(LongDouble, "Tlongdouble")
+        case BuiltinType::Kind::LongDouble:
+            unsupported(print, cprint, loc::of(type),
+                        "long double: Clang layout is not supported by the current BRiCk Flongdouble model",
+                        true);
+            break;
             CASE(Float16, "Tfloat16")
             CASE(Float128, "Tfloat128")
 #undef CASE

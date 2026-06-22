@@ -33,6 +33,46 @@ enum Done : unsigned {
     DT = 4,
 };
 
+static const char *apFloatSemanticsName(llvm::APFloatBase::Semantics sem) {
+    switch (sem) {
+    case llvm::APFloatBase::S_IEEEhalf:
+        return "IEEEhalf";
+    case llvm::APFloatBase::S_BFloat:
+        return "BFloat";
+    case llvm::APFloatBase::S_IEEEsingle:
+        return "IEEEsingle";
+    case llvm::APFloatBase::S_IEEEdouble:
+        return "IEEEdouble";
+    case llvm::APFloatBase::S_IEEEquad:
+        return "IEEEquad";
+    case llvm::APFloatBase::S_PPCDoubleDouble:
+        return "PPCDoubleDouble";
+    case llvm::APFloatBase::S_x87DoubleExtended:
+        return "x87DoubleExtended";
+    default:
+        return "unknown";
+    }
+}
+
+static const char *builtinTypeKindName(const BuiltinType *bt) {
+    if (!bt)
+        return "non-builtin";
+    switch (bt->getKind()) {
+    case BuiltinType::Float16:
+        return "Float16";
+    case BuiltinType::Float:
+        return "Float";
+    case BuiltinType::Double:
+        return "Double";
+    case BuiltinType::LongDouble:
+        return "LongDouble";
+    case BuiltinType::Float128:
+        return "Float128";
+    default:
+        return "other-builtin";
+    }
+}
+
 fmt::Formatter &ClangPrinter::printOverloadableOperator(
     CoqPrinter &print, clang::OverloadedOperatorKind oo, loc::loc loc) {
     if (trace(Trace::Expr))
@@ -963,23 +1003,42 @@ public:
     }
 
     void VisitFloatingLiteral(const FloatingLiteral *lit) {
+        const BuiltinType *bt = lit->getType()->getAs<BuiltinType>();
         const char *ft = nullptr;
-        switch (lit->getRawSemantics()) {
-        case llvm::APFloatBase::S_IEEEhalf:
-            ft = "float_type.Ffloat16";
-            break;
-        case llvm::APFloatBase::S_IEEEsingle:
-            ft = "float_type.Ffloat";
-            break;
-        case llvm::APFloatBase::S_IEEEdouble:
-            ft = "float_type.Fdouble";
-            break;
-        case llvm::APFloatBase::S_IEEEquad:
-            ft = "float_type.Ffloat128";
-            break;
-        default:
-            return unsupportedFloatingLiteral(
-                lit, "floating-point semantics are not supported");
+        if (bt) {
+            switch (bt->getKind()) {
+            case BuiltinType::Float16:
+                if (lit->getRawSemantics() == llvm::APFloatBase::S_IEEEhalf)
+                    ft = "float_type.Ffloat16";
+                break;
+            case BuiltinType::Float:
+                if (lit->getRawSemantics() == llvm::APFloatBase::S_IEEEsingle)
+                    ft = "float_type.Ffloat";
+                break;
+            case BuiltinType::Double:
+                if (lit->getRawSemantics() == llvm::APFloatBase::S_IEEEdouble)
+                    ft = "float_type.Fdouble";
+                break;
+            case BuiltinType::Float128:
+                if (lit->getRawSemantics() == llvm::APFloatBase::S_IEEEquad)
+                    ft = "float_type.Ffloat128";
+                break;
+            case BuiltinType::LongDouble:
+                /* BRiCk marks [Flongdouble] unsupported; reject literals here
+                   to match the type printer and checker. */
+                break;
+            default:
+                break;
+            }
+        }
+
+        if (!ft) {
+            std::string reason;
+            llvm::raw_string_ostream os{reason};
+            os << "unsupported floating-point semantics "
+               << apFloatSemanticsName(lit->getRawSemantics()) << " for "
+               << builtinTypeKindName(bt);
+            return unsupportedFloatingLiteral(lit, os.str());
         }
 
         SmallString<64> bits;

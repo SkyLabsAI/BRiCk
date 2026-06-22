@@ -15,6 +15,7 @@ Require Import skylabs.prelude.numbers.
 Require Import skylabs.lang.cpp.reserved_notation. (* TODO *)
 Require Import skylabs.prelude.arith.operator.
 Require Import skylabs.prelude.arith.builtins.
+Require Import skylabs.prelude.arith.z_to_bytes.
 Require Import skylabs.lang.cpp.syntax.
 Require Export skylabs.lang.cpp.semantics.types.
 Require Export skylabs.lang.cpp.semantics.sub_module.
@@ -143,7 +144,7 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
   Definition is_true (v : val) : option bool :=
     match v with
     | Vint v => Some (bool_decide (v <> 0))
-    | Vfloat f v => Some (bool_decide (v <> float_value.zero _))
+    | Vfloat f v => Some (float_value.is_true v)
     | Vptr p => Some (bool_decide (p <> nullptr))
     | Vchar n => Some (bool_decide (n <> 0%N))
     | Vundef | Vraw _ => None
@@ -240,6 +241,24 @@ Module Type RAW_BYTES_VAL
 
   Axiom raw_bytes_of_val_sizeof : forall {σ ty v rs},
       raw_bytes_of_val σ ty v rs -> size_of σ ty = Some (N.of_nat $ length rs).
+
+  Definition float_raw_bytes (σ : genv) ft (f : float_type.car ft) : list raw_byte :=
+    raw_int_byte <$> _Z_to_bytes (N.to_nat (float_type.bytesN ft))
+      (genv_byte_order σ) Unsigned (float_value.to_bits ft f).
+
+  Lemma float_raw_bytes_length σ ft (f : float_type.car ft) :
+    length (float_raw_bytes σ ft f) = N.to_nat (float_type.bytesN ft).
+  Proof. by rewrite /float_raw_bytes length_fmap _Z_to_bytes_length. Qed.
+
+  (** Float raw-byte support is intentionally narrow: the byte sequence is the
+      deterministic object-size encoding of [float_value.to_bits].  Equality of
+      such encodings for values of the same float type determines the value. *)
+  Axiom raw_bytes_of_val_float : forall {σ ft} (f : float_type.car ft) rs,
+      raw_bytes_of_val σ (Tfloat_ ft) (Vfloat ft f) rs <->
+      rs = float_raw_bytes σ ft f.
+
+  #[global] Declare Instance float_raw_bytes_inj : forall {σ ft},
+      Inj (=) (=) (float_raw_bytes σ ft).
 
   (* TODO Maybe add?
     Axiom raw_bytes_of_val_int : forall σ sz z rs,
@@ -464,6 +483,23 @@ Module Type RAW_BYTES_MIXIN
   Proof.
     move => /raw_bytes_of_val_sizeof/=.
     rewrite /int_rank.bytesN /bitsize.bytesN.
+    inversion 1. lia.
+  Qed.
+
+  Lemma raw_bytes_of_val_float_length {σ} ft (f : float_type.car ft) rs :
+    raw_bytes_of_val σ (Tfloat_ ft) (Vfloat ft f) rs ->
+    length rs = N.to_nat (float_type.bytesN ft).
+  Proof.
+    move=> Hraw.
+    apply raw_bytes_of_val_float in Hraw. subst.
+    apply float_raw_bytes_length.
+  Qed.
+
+  Lemma raw_bytes_of_val_float_undef_length {σ} ft rs :
+    raw_bytes_of_val σ (Tfloat_ ft) Vundef rs ->
+    length rs = N.to_nat (float_type.bytesN ft).
+  Proof.
+    move => /raw_bytes_of_val_sizeof/=.
     inversion 1. lia.
   Qed.
 End RAW_BYTES_MIXIN.
