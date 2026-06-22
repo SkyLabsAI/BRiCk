@@ -33,10 +33,14 @@ let attributes =
   let bool_attribute name =
     map (fun x -> x = Some true) (Attributes.bool_attribute ~name)
   in
-  map (fun ((((check_duplicates, elaborate), check_types), with_templates), with_templates_dash) ->
-      { check_duplicates; elaborate; check_types; with_templates = with_templates || with_templates_dash })
+  map (fun ((((check_duplicates, elaborate), check_types), with_templates), no_templates) ->
+      let with_templates =
+        with_templates || not no_templates
+      in
+      { check_duplicates; elaborate; check_types;
+        with_templates })
     (((duplicates ++ bool_attribute "elaborate") ++ bool_attribute "check_types") ++
-     bool_attribute "with_templates" ++ bool_attribute "with-templates")
+     bool_attribute "with_templates" ++ bool_attribute "no_templates")
 
 let lib_ref t =
   Rocqlib.lib_ref ("skylabs.lang.cpp.parser.translation_unit." ^ t)
