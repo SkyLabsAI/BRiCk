@@ -43,26 +43,30 @@ Definition float_rank (ft : float_type.t) : nat :=
 Definition max_float_type (ft1 ft2 : float_type.t) : float_type.t :=
   if Nat.leb (float_rank ft1) (float_rank ft2) then ft2 else ft1.
 
-Definition usual_float_arith (tu : translation_unit) (ty1 ty2 : type) : option type :=
+(** The floating point type used to perform arithmetic operations between the two C++ types *)
+Definition usual_float_arith (tu : translation_unit) (ty1 ty2 : type) : option float_type.t :=
   match supported_float_type ty1, supported_float_type ty2 with
-  | Some ft1, Some ft2 => Some (Tfloat_ (max_float_type ft1 ft2))
+  | Some ft1, Some ft2 => Some $ max_float_type ft1 ft2
   | Some ft, None =>
       match promote_integral tu ty2 with
-      | Some _ => Some (Tfloat_ ft)
+      | Some _ => Some ft
       | None => None
       end
   | None, Some ft =>
       match promote_integral tu ty1 with
-      | Some _ => Some (Tfloat_ ft)
+      | Some _ => Some ft
       | None => None
       end
   | None, None => None
   end.
 
-Definition convert_type_float_op (b : BinOp) (to : type) : option (type * type * type) :=
+(** The effective type of <<operator b(to, to) -> ?>>.
+    This is mainly handling installing the return type.
+ *)
+Definition result_type (b : BinOp) (to : type) : option type :=
   match b with
-  | Badd | Bsub | Bmul | Bdiv => Some (to, to, to)
-  | Beq | Bneq | Blt | Ble | Bgt | Bge => Some (to, to, Tbool)
+  | Badd | Bsub | Bmul | Bdiv => Some to
+  | Beq | Bneq | Blt | Ble | Bgt | Bge => Some Tbool
   | Bmod | Band | Bor | Bxor | Bshl | Bshr | Bcmp
   | Bdotp | Bdotip | Bunsupported _ => None
   end.
@@ -105,7 +109,7 @@ Definition convert_type_op (tu : translation_unit) (b : BinOp) (ty1 ty2 : type)
     end
   else if is_arithmetic ty1 && is_arithmetic ty2 then
     match usual_float_arith tu ty1 ty2 with
-    | Some to => convert_type_float_op b to
+    | Some to => (fun res : type => (Tfloat_ to, Tfloat_ to, res)) <$> result_type b (Tfloat_ to)
     | None =>
       (* integer-integer operations *)
       match promote_integral tu ty1 , promote_integral tu ty2 with

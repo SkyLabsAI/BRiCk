@@ -77,7 +77,7 @@ Section with_monad.
     else OK.
 
   Definition check_float_binop (op : BinOp) : M :=
-    match convert_type_float_op op Tfloat with
+    match result_type op Tfloat with
     | Some _ => OK
     | None => FAIL "unsupported floating binary operator"
     end.
