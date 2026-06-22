@@ -407,9 +407,8 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
         }
 
         fmt << "Definition " << interactive_.value_or("source")
-            << " := Eval vm_compute in "
-               "skylabs.lang.cpp.mparser.tu.with_templates "
-            << static_name << " " << meta_name << "." << fmt::line;
+            << " := skylabs.lang.cpp.mparser.tu.with_templates " << static_name
+            << " " << meta_name << "." << fmt::line;
 
         if (!interactive_.has_value()) {
             // NOTE: Backwards compatibility
