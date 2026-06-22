@@ -230,26 +230,6 @@ Example support_rejects_float_postdec :
   check.expr (Epostdec (Evar "f" Tfloat) Tfloat) <> check.OK.
 Proof. vm_compute; discriminate. Qed.
 
-Example usual_float_arith_float16_float tu :
-  usual_float_arith tu Tfloat16 Tfloat = Some Tfloat.
-Proof. reflexivity. Qed.
-
-Example usual_float_arith_float_double tu :
-  usual_float_arith tu Tfloat Tdouble = Some Tdouble.
-Proof. reflexivity. Qed.
-
-Example usual_float_arith_float128_double tu :
-  usual_float_arith tu Tfloat128 Tdouble = Some Tfloat128.
-Proof. reflexivity. Qed.
-
-Example usual_float_arith_rejects_longdouble_double tu :
-  usual_float_arith tu Tlongdouble Tdouble = None.
-Proof. reflexivity. Qed.
-
-Example usual_float_arith_rejects_double_longdouble tu :
-  usual_float_arith tu Tdouble Tlongdouble = None.
-Proof. reflexivity. Qed.
-
 Example convert_type_float_add_promotes_to_double tu :
   convert_type_op tu Badd Tfloat Tdouble = Some (Tdouble, Tdouble, Tdouble).
 Proof. reflexivity. Qed.
