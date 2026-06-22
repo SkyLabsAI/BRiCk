@@ -12,6 +12,14 @@ Require Import skylabs.lang.cpp.syntax.translation_unit.
 Require Import skylabs.lang.cpp.syntax.templates.
 Require Import skylabs.lang.cpp.semantics.cast_operator.
 
+(** ** Supported Check
+
+    This file implements a *light-weight* check on terms to determine if they
+    contain unsupported features. A deeper check can be performed using type
+    checking, see [typed.v](typed.v).
+
+ *)
+
 Module check.
 Section with_monad.
 
