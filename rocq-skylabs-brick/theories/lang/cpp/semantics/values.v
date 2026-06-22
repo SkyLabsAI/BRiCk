@@ -257,10 +257,8 @@ Module Type RAW_BYTES_VAL
       raw_bytes_of_val σ (Tfloat_ ft) (Vfloat ft f) rs <->
       rs = float_raw_bytes σ ft f.
 
-  Axiom raw_bytes_of_val_float_unique_val : forall {σ ft} (f f' : float_type.car ft) rs,
-      raw_bytes_of_val σ (Tfloat_ ft) (Vfloat ft f) rs ->
-      raw_bytes_of_val σ (Tfloat_ ft) (Vfloat ft f') rs ->
-      f = f'.
+  #[global] Declare Instance float_raw_bytes_inj : forall {σ ft},
+      Inj (=) (=) (float_raw_bytes σ ft).
 
   (* TODO Maybe add?
     Axiom raw_bytes_of_val_int : forall σ sz z rs,
