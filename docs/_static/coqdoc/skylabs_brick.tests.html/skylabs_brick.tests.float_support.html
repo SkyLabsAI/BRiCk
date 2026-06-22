@@ -1,0 +1,575 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.float_support</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Stdlib.ZArith.BinInt</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Stdlib.micromega.Lia</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax.supported</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics.genv</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics.values</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics.cast</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics.cast_operator</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics.operator</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.logic.raw</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">pstring_scope</span>.<br/>
+<span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">Z_scope</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="f16_one_bits" class="idref" href="#f16_one_bits"><span class="id" title="definition">f16_one_bits</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 15360%<span class="id" title="var">Z</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f16_neg_zero_bits" class="idref" href="#f16_neg_zero_bits"><span class="id" title="definition">f16_neg_zero_bits</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 32768%<span class="id" title="var">Z</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f16_inf_bits" class="idref" href="#f16_inf_bits"><span class="id" title="definition">f16_inf_bits</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 31744%<span class="id" title="var">Z</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f16_nan_payload_bits" class="idref" href="#f16_nan_payload_bits"><span class="id" title="definition">f16_nan_payload_bits</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 32257%<span class="id" title="var">Z</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="f32_one_bits" class="idref" href="#f32_one_bits"><span class="id" title="definition">f32_one_bits</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 1065353216%<span class="id" title="var">Z</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f32_neg_zero_bits" class="idref" href="#f32_neg_zero_bits"><span class="id" title="definition">f32_neg_zero_bits</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 2147483648%<span class="id" title="var">Z</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f32_inf_bits" class="idref" href="#f32_inf_bits"><span class="id" title="definition">f32_inf_bits</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 2139095040%<span class="id" title="var">Z</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f32_nan_payload_bits" class="idref" href="#f32_nan_payload_bits"><span class="id" title="definition">f32_nan_payload_bits</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 2143289345%<span class="id" title="var">Z</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="f64_one_bits" class="idref" href="#f64_one_bits"><span class="id" title="definition">f64_one_bits</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 4607182418800017408%<span class="id" title="var">Z</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f64_neg_zero_bits" class="idref" href="#f64_neg_zero_bits"><span class="id" title="definition">f64_neg_zero_bits</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 9223372036854775808%<span class="id" title="var">Z</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f64_inf_bits" class="idref" href="#f64_inf_bits"><span class="id" title="definition">f64_inf_bits</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 9218868437227405312%<span class="id" title="var">Z</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f64_nan_payload_bits" class="idref" href="#f64_nan_payload_bits"><span class="id" title="definition">f64_nan_payload_bits</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> := 9221120237041090561%<span class="id" title="var">Z</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="f128_one_bits" class="idref" href="#f128_one_bits"><span class="id" title="definition">f128_one_bits</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> :=<br/>
+&nbsp;&nbsp;85065399433376081038215121361612832768%<span class="id" title="var">Z</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f128_neg_zero_bits" class="idref" href="#f128_neg_zero_bits"><span class="id" title="definition">f128_neg_zero_bits</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> :=<br/>
+&nbsp;&nbsp;170141183460469231731687303715884105728%<span class="id" title="var">Z</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f128_inf_bits" class="idref" href="#f128_inf_bits"><span class="id" title="definition">f128_inf_bits</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> :=<br/>
+&nbsp;&nbsp;170135991163610696904058773219554885632%<span class="id" title="var">Z</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f128_nan_payload_bits" class="idref" href="#f128_nan_payload_bits"><span class="id" title="definition">f128_nan_payload_bits</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a> :=<br/>
+&nbsp;&nbsp;170138587312039964317873038467719495681%<span class="id" title="var">Z</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="f16_one" class="idref" href="#f16_one"><span class="id" title="definition">f16_one</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Ffloat16</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.of_bits</span> <span class="id" title="constructor">float_type.Ffloat16</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f16_one_bits"><span class="id" title="definition">f16_one_bits</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f32_one" class="idref" href="#f32_one"><span class="id" title="definition">f32_one</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Ffloat</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.of_bits</span> <span class="id" title="constructor">float_type.Ffloat</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_one_bits"><span class="id" title="definition">f32_one_bits</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f64_one" class="idref" href="#f64_one"><span class="id" title="definition">f64_one</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Fdouble</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.of_bits</span> <span class="id" title="constructor">float_type.Fdouble</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f64_one_bits"><span class="id" title="definition">f64_one_bits</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f128_one" class="idref" href="#f128_one"><span class="id" title="definition">f128_one</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Ffloat128</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.of_bits</span> <span class="id" title="constructor">float_type.Ffloat128</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f128_one_bits"><span class="id" title="definition">f128_one_bits</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="f16_neg_zero" class="idref" href="#f16_neg_zero"><span class="id" title="definition">f16_neg_zero</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Ffloat16</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.of_bits</span> <span class="id" title="constructor">float_type.Ffloat16</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f16_neg_zero_bits"><span class="id" title="definition">f16_neg_zero_bits</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f32_neg_zero" class="idref" href="#f32_neg_zero"><span class="id" title="definition">f32_neg_zero</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Ffloat</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.of_bits</span> <span class="id" title="constructor">float_type.Ffloat</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_neg_zero_bits"><span class="id" title="definition">f32_neg_zero_bits</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f64_neg_zero" class="idref" href="#f64_neg_zero"><span class="id" title="definition">f64_neg_zero</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Fdouble</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.of_bits</span> <span class="id" title="constructor">float_type.Fdouble</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f64_neg_zero_bits"><span class="id" title="definition">f64_neg_zero_bits</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f128_neg_zero" class="idref" href="#f128_neg_zero"><span class="id" title="definition">f128_neg_zero</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Ffloat128</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.of_bits</span> <span class="id" title="constructor">float_type.Ffloat128</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f128_neg_zero_bits"><span class="id" title="definition">f128_neg_zero_bits</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="f16_inf" class="idref" href="#f16_inf"><span class="id" title="definition">f16_inf</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Ffloat16</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.of_bits</span> <span class="id" title="constructor">float_type.Ffloat16</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f16_inf_bits"><span class="id" title="definition">f16_inf_bits</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f32_inf" class="idref" href="#f32_inf"><span class="id" title="definition">f32_inf</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Ffloat</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.of_bits</span> <span class="id" title="constructor">float_type.Ffloat</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_inf_bits"><span class="id" title="definition">f32_inf_bits</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f64_inf" class="idref" href="#f64_inf"><span class="id" title="definition">f64_inf</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Fdouble</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.of_bits</span> <span class="id" title="constructor">float_type.Fdouble</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f64_inf_bits"><span class="id" title="definition">f64_inf_bits</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f128_inf" class="idref" href="#f128_inf"><span class="id" title="definition">f128_inf</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Ffloat128</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.of_bits</span> <span class="id" title="constructor">float_type.Ffloat128</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f128_inf_bits"><span class="id" title="definition">f128_inf_bits</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="f16_nan" class="idref" href="#f16_nan"><span class="id" title="definition">f16_nan</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Ffloat16</span> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Specif.html#proj1_sig"><span class="id" title="definition">proj1_sig</span></a> (<span class="id" title="definition">float_value.default_nan</span> <span class="id" title="constructor">float_type.Ffloat16</span>).<br/>
+<span class="id" title="keyword">Definition</span> <a id="f32_nan" class="idref" href="#f32_nan"><span class="id" title="definition">f32_nan</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Ffloat</span> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Specif.html#proj1_sig"><span class="id" title="definition">proj1_sig</span></a> (<span class="id" title="definition">float_value.default_nan</span> <span class="id" title="constructor">float_type.Ffloat</span>).<br/>
+<span class="id" title="keyword">Definition</span> <a id="f64_nan" class="idref" href="#f64_nan"><span class="id" title="definition">f64_nan</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Fdouble</span> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Specif.html#proj1_sig"><span class="id" title="definition">proj1_sig</span></a> (<span class="id" title="definition">float_value.default_nan</span> <span class="id" title="constructor">float_type.Fdouble</span>).<br/>
+<span class="id" title="keyword">Definition</span> <a id="f128_nan" class="idref" href="#f128_nan"><span class="id" title="definition">f128_nan</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Ffloat128</span> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Specif.html#proj1_sig"><span class="id" title="definition">proj1_sig</span></a> (<span class="id" title="definition">float_value.default_nan</span> <span class="id" title="constructor">float_type.Ffloat128</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="f16_nan_payload" class="idref" href="#f16_nan_payload"><span class="id" title="definition">f16_nan_payload</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Ffloat16</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.of_bits</span> <span class="id" title="constructor">float_type.Ffloat16</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f16_nan_payload_bits"><span class="id" title="definition">f16_nan_payload_bits</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f32_nan_payload" class="idref" href="#f32_nan_payload"><span class="id" title="definition">f32_nan_payload</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Ffloat</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.of_bits</span> <span class="id" title="constructor">float_type.Ffloat</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_nan_payload_bits"><span class="id" title="definition">f32_nan_payload_bits</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f64_nan_payload" class="idref" href="#f64_nan_payload"><span class="id" title="definition">f64_nan_payload</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Fdouble</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.of_bits</span> <span class="id" title="constructor">float_type.Fdouble</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f64_nan_payload_bits"><span class="id" title="definition">f64_nan_payload_bits</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="f128_nan_payload" class="idref" href="#f128_nan_payload"><span class="id" title="definition">f128_nan_payload</span></a> : <span class="id" title="definition">float_type.car</span> <span class="id" title="constructor">float_type.Ffloat128</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.of_bits</span> <span class="id" title="constructor">float_type.Ffloat128</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f128_nan_payload_bits"><span class="id" title="definition">f128_nan_payload_bits</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="one_float16" class="idref" href="#one_float16"><span class="id" title="definition">one_float16</span></a> : <span class="id" title="inductive">Expr</span> := <span class="id" title="constructor">Efloat</span> <span class="id" title="constructor">float_type.Ffloat16</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f16_one"><span class="id" title="definition">f16_one</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="one_float" class="idref" href="#one_float"><span class="id" title="definition">one_float</span></a> : <span class="id" title="inductive">Expr</span> := <span class="id" title="constructor">Efloat</span> <span class="id" title="constructor">float_type.Ffloat</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_one"><span class="id" title="definition">f32_one</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="one_double" class="idref" href="#one_double"><span class="id" title="definition">one_double</span></a> : <span class="id" title="inductive">Expr</span> := <span class="id" title="constructor">Efloat</span> <span class="id" title="constructor">float_type.Fdouble</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f64_one"><span class="id" title="definition">f64_one</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="one_float128" class="idref" href="#one_float128"><span class="id" title="definition">one_float128</span></a> : <span class="id" title="inductive">Expr</span> := <span class="id" title="constructor">Efloat</span> <span class="id" title="constructor">float_type.Ffloat128</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f128_one"><span class="id" title="definition">f128_one</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_float16_type" class="idref" href="#support_accepts_float16_type"><span class="id" title="definition">support_accepts_float16_type</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.type</span> <span class="id" title="abbreviation">Tfloat16</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_float_type" class="idref" href="#support_accepts_float_type"><span class="id" title="definition">support_accepts_float_type</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.type</span> <span class="id" title="abbreviation">Tfloat</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_double_type" class="idref" href="#support_accepts_double_type"><span class="id" title="definition">support_accepts_double_type</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.type</span> <span class="id" title="abbreviation">Tdouble</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_float128_type" class="idref" href="#support_accepts_float128_type"><span class="id" title="definition">support_accepts_float128_type</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.type</span> <span class="id" title="abbreviation">Tfloat128</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_rejects_longdouble_type" class="idref" href="#support_rejects_longdouble_type"><span class="id" title="definition">support_rejects_longdouble_type</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.type</span> <span class="id" title="abbreviation">Tlongdouble</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.FAIL</span> "unsupported floating width".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_float16_literal" class="idref" href="#support_accepts_float16_literal"><span class="id" title="definition">support_accepts_float16_literal</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float16"><span class="id" title="definition">one_float16</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_float_literal" class="idref" href="#support_accepts_float_literal"><span class="id" title="definition">support_accepts_float_literal</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_double_literal" class="idref" href="#support_accepts_double_literal"><span class="id" title="definition">support_accepts_double_literal</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> <a class="idref" href="skylabs_brick.tests.float_support.html#one_double"><span class="id" title="definition">one_double</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_float128_literal" class="idref" href="#support_accepts_float128_literal"><span class="id" title="definition">support_accepts_float128_literal</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float128"><span class="id" title="definition">one_float128</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_rejects_longdouble_literal" class="idref" href="#support_rejects_longdouble_literal"><span class="id" title="definition">support_rejects_longdouble_literal</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Efloat</span> <span class="id" title="constructor">float_type.Flongdouble</span> (<span class="id" title="definition">float_value.zero</span> <span class="id" title="constructor">float_type.Flongdouble</span>)) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">check.FAIL</span> "unsupported floating width".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_float_to_double_cast" class="idref" href="#support_accepts_float_to_double_cast"><span class="id" title="definition">support_accepts_float_to_double_cast</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Ecast</span> (<span class="id" title="constructor">Cfloat</span> <span class="id" title="abbreviation">Tdouble</span>) <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_double_to_float128_cast" class="idref" href="#support_accepts_double_to_float128_cast"><span class="id" title="definition">support_accepts_double_to_float128_cast</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Ecast</span> (<span class="id" title="constructor">Cfloat</span> <span class="id" title="abbreviation">Tfloat128</span>) <a class="idref" href="skylabs_brick.tests.float_support.html#one_double"><span class="id" title="definition">one_double</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_int_to_float16_cast" class="idref" href="#support_accepts_int_to_float16_cast"><span class="id" title="definition">support_accepts_int_to_float16_cast</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Ecast</span> (<span class="id" title="constructor">Cint2float</span> <span class="id" title="abbreviation">Tfloat16</span>) (<span class="id" title="constructor">Eint</span> 0 <span class="id" title="abbreviation">Tint</span>)) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_float128_to_int_cast" class="idref" href="#support_accepts_float128_to_int_cast"><span class="id" title="definition">support_accepts_float128_to_int_cast</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Ecast</span> (<span class="id" title="constructor">Cfloat2int</span> <span class="id" title="abbreviation">Tint</span>) <a class="idref" href="skylabs_brick.tests.float_support.html#one_float128"><span class="id" title="definition">one_float128</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_float_to_bool_cast" class="idref" href="#support_accepts_float_to_bool_cast"><span class="id" title="definition">support_accepts_float_to_bool_cast</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Ecast</span> <span class="id" title="constructor">Cfloat2bool</span> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="small_enum_name" class="idref" href="#small_enum_name"><span class="id" title="definition">small_enum_name</span></a> : <span class="id" title="inductive">name</span> := "Small".<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_char_to_float_cast" class="idref" href="#support_accepts_char_to_float_cast"><span class="id" title="definition">support_accepts_char_to_float_cast</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Ecast</span> (<span class="id" title="constructor">Cint2float</span> <span class="id" title="abbreviation">Tfloat</span>) (<span class="id" title="constructor">Echar</span> 65 <span class="id" title="abbreviation">Tchar</span>)) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_float_to_char_cast" class="idref" href="#support_accepts_float_to_char_cast"><span class="id" title="definition">support_accepts_float_to_char_cast</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Ecast</span> (<span class="id" title="constructor">Cfloat2int</span> <span class="id" title="abbreviation">Tchar</span>) <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_enum_to_float_cast" class="idref" href="#support_accepts_enum_to_float_cast"><span class="id" title="definition">support_accepts_enum_to_float_cast</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Ecast</span> (<span class="id" title="constructor">Cint2float</span> <span class="id" title="abbreviation">Tfloat</span>) (<span class="id" title="constructor">Eenum_const</span> <a class="idref" href="skylabs_brick.tests.float_support.html#small_enum_name"><span class="id" title="definition">small_enum_name</span></a> "A")) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_float_to_enum_cast" class="idref" href="#support_accepts_float_to_enum_cast"><span class="id" title="definition">support_accepts_float_to_enum_cast</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Ecast</span> (<span class="id" title="constructor">Cfloat2int</span> (<span class="id" title="constructor">Tenum</span> <a class="idref" href="skylabs_brick.tests.float_support.html#small_enum_name"><span class="id" title="definition">small_enum_name</span></a>)) <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_float_unary_plus" class="idref" href="#support_accepts_float_unary_plus"><span class="id" title="definition">support_accepts_float_unary_plus</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Eunop</span> <span class="id" title="constructor">Uplus</span> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> <span class="id" title="abbreviation">Tfloat</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_float_unary_minus" class="idref" href="#support_accepts_float_unary_minus"><span class="id" title="definition">support_accepts_float_unary_minus</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Eunop</span> <span class="id" title="constructor">Uminus</span> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> <span class="id" title="abbreviation">Tfloat</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_float_logical_not" class="idref" href="#support_accepts_float_logical_not"><span class="id" title="definition">support_accepts_float_logical_not</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Eunop</span> <span class="id" title="constructor">Unot</span> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> <span class="id" title="constructor">Tbool</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_float_add" class="idref" href="#support_accepts_float_add"><span class="id" title="definition">support_accepts_float_add</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Ebinop</span> <span class="id" title="constructor">Badd</span> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> <a class="idref" href="skylabs_brick.tests.float_support.html#one_double"><span class="id" title="definition">one_double</span></a> <span class="id" title="abbreviation">Tdouble</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_float_sub" class="idref" href="#support_accepts_float_sub"><span class="id" title="definition">support_accepts_float_sub</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Ebinop</span> <span class="id" title="constructor">Bsub</span> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> <span class="id" title="abbreviation">Tfloat</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_float_mul" class="idref" href="#support_accepts_float_mul"><span class="id" title="definition">support_accepts_float_mul</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Ebinop</span> <span class="id" title="constructor">Bmul</span> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> <span class="id" title="abbreviation">Tfloat</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_float_div" class="idref" href="#support_accepts_float_div"><span class="id" title="definition">support_accepts_float_div</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Ebinop</span> <span class="id" title="constructor">Bdiv</span> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> <span class="id" title="abbreviation">Tfloat</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_accepts_float_less_than" class="idref" href="#support_accepts_float_less_than"><span class="id" title="definition">support_accepts_float_less_than</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Ebinop</span> <span class="id" title="constructor">Blt</span> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> <a class="idref" href="skylabs_brick.tests.float_support.html#one_double"><span class="id" title="definition">one_double</span></a> <span class="id" title="constructor">Tbool</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_rejects_float_mod" class="idref" href="#support_rejects_float_mod"><span class="id" title="definition">support_rejects_float_mod</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Ebinop</span> <span class="id" title="constructor">Bmod</span> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> <span class="id" title="abbreviation">Tfloat</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;&gt;'_x"><span class="id" title="notation">&lt;&gt;</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">discriminate</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_rejects_float_bitand" class="idref" href="#support_rejects_float_bitand"><span class="id" title="definition">support_rejects_float_bitand</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Ebinop</span> <span class="id" title="constructor">Band</span> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> <span class="id" title="abbreviation">Tfloat</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;&gt;'_x"><span class="id" title="notation">&lt;&gt;</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">discriminate</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_rejects_float_shift_left" class="idref" href="#support_rejects_float_shift_left"><span class="id" title="definition">support_rejects_float_shift_left</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Ebinop</span> <span class="id" title="constructor">Bshl</span> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> (<span class="id" title="constructor">Eint</span> 1 <span class="id" title="abbreviation">Tint</span>) <span class="id" title="abbreviation">Tfloat</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;&gt;'_x"><span class="id" title="notation">&lt;&gt;</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">discriminate</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_rejects_float_three_way_compare" class="idref" href="#support_rejects_float_three_way_compare"><span class="id" title="definition">support_rejects_float_three_way_compare</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Ebinop</span> <span class="id" title="constructor">Bcmp</span> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> <span class="id" title="abbreviation">Tfloat</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;&gt;'_x"><span class="id" title="notation">&lt;&gt;</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">discriminate</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_rejects_pointer_float_add" class="idref" href="#support_rejects_pointer_float_add"><span class="id" title="definition">support_rejects_pointer_float_add</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Ebinop</span> <span class="id" title="constructor">Badd</span> (<span class="id" title="constructor">Evar</span> "p" (<span class="id" title="constructor">Tptr</span> <span class="id" title="abbreviation">Tint</span>)) <a class="idref" href="skylabs_brick.tests.float_support.html#one_float"><span class="id" title="definition">one_float</span></a> (<span class="id" title="constructor">Tptr</span> <span class="id" title="abbreviation">Tint</span>)) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;&gt;'_x"><span class="id" title="notation">&lt;&gt;</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">discriminate</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_rejects_float_preinc" class="idref" href="#support_rejects_float_preinc"><span class="id" title="definition">support_rejects_float_preinc</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Epreinc</span> (<span class="id" title="constructor">Evar</span> "f" <span class="id" title="abbreviation">Tfloat</span>) <span class="id" title="abbreviation">Tfloat</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;&gt;'_x"><span class="id" title="notation">&lt;&gt;</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">discriminate</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="support_rejects_float_postdec" class="idref" href="#support_rejects_float_postdec"><span class="id" title="definition">support_rejects_float_postdec</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">check.expr</span> (<span class="id" title="constructor">Epostdec</span> (<span class="id" title="constructor">Evar</span> "f" <span class="id" title="abbreviation">Tfloat</span>) <span class="id" title="abbreviation">Tfloat</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;&gt;'_x"><span class="id" title="notation">&lt;&gt;</span></a> <span class="id" title="definition">check.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">discriminate</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="convert_type_float_add_promotes_to_double" class="idref" href="#convert_type_float_add_promotes_to_double"><span class="id" title="definition">convert_type_float_add_promotes_to_double</span></a> <a id="tu:1" class="idref" href="#tu:1"><span class="id" title="binder">tu</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">convert_type_op</span> <a class="idref" href="skylabs_brick.tests.float_support.html#tu:1"><span class="id" title="variable">tu</span></a> <span class="id" title="constructor">Badd</span> <span class="id" title="abbreviation">Tfloat</span> <span class="id" title="abbreviation">Tdouble</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="abbreviation">Tdouble</span><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="abbreviation">Tdouble</span><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="abbreviation">Tdouble</span><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="convert_type_float_int_add_converts_int" class="idref" href="#convert_type_float_int_add_converts_int"><span class="id" title="definition">convert_type_float_int_add_converts_int</span></a> <a id="tu:2" class="idref" href="#tu:2"><span class="id" title="binder">tu</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">convert_type_op</span> <a class="idref" href="skylabs_brick.tests.float_support.html#tu:2"><span class="id" title="variable">tu</span></a> <span class="id" title="constructor">Badd</span> <span class="id" title="abbreviation">Tfloat</span> <span class="id" title="abbreviation">Tint</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="abbreviation">Tfloat</span><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="abbreviation">Tfloat</span><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="abbreviation">Tfloat</span><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="convert_type_int_double_ge_converts_int" class="idref" href="#convert_type_int_double_ge_converts_int"><span class="id" title="definition">convert_type_int_double_ge_converts_int</span></a> <a id="tu:3" class="idref" href="#tu:3"><span class="id" title="binder">tu</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">convert_type_op</span> <a class="idref" href="skylabs_brick.tests.float_support.html#tu:3"><span class="id" title="variable">tu</span></a> <span class="id" title="constructor">Bge</span> <span class="id" title="abbreviation">Tint</span> <span class="id" title="abbreviation">Tdouble</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="abbreviation">Tdouble</span><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="abbreviation">Tdouble</span><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="constructor">Tbool</span><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="convert_type_rejects_float_mod" class="idref" href="#convert_type_rejects_float_mod"><span class="id" title="definition">convert_type_rejects_float_mod</span></a> <a id="tu:4" class="idref" href="#tu:4"><span class="id" title="binder">tu</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">convert_type_op</span> <a class="idref" href="skylabs_brick.tests.float_support.html#tu:4"><span class="id" title="variable">tu</span></a> <span class="id" title="constructor">Bmod</span> <span class="id" title="abbreviation">Tfloat</span> <span class="id" title="abbreviation">Tfloat</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="convert_type_rejects_pointer_float_add" class="idref" href="#convert_type_rejects_pointer_float_add"><span class="id" title="definition">convert_type_rejects_pointer_float_add</span></a> <a id="tu:5" class="idref" href="#tu:5"><span class="id" title="binder">tu</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">convert_type_op</span> <a class="idref" href="skylabs_brick.tests.float_support.html#tu:5"><span class="id" title="variable">tu</span></a> <span class="id" title="constructor">Badd</span> (<span class="id" title="constructor">Tptr</span> <span class="id" title="abbreviation">Tint</span>) <span class="id" title="abbreviation">Tfloat</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="convert_includes_conv_float_for_float_to_int" class="idref" href="#convert_includes_conv_float_for_float_to_int"><span class="id" title="definition">convert_includes_conv_float_for_float_to_int</span></a> {<a id="f0835817faaba90db49f1e400f4a8926" class="idref" href="#f0835817faaba90db49f1e400f4a8926"><span class="id" title="binder">σ</span></a> : <span class="id" title="class">genv</span>} <a id="tu:7" class="idref" href="#tu:7"><span class="id" title="binder">tu</span></a> <a id="v:8" class="idref" href="#v:8"><span class="id" title="binder">v</span></a> <a id="v':9" class="idref" href="#v':9"><span class="id" title="binder">v'</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">conv_float</span> <a class="idref" href="skylabs_brick.tests.float_support.html#tu:7"><span class="id" title="variable">tu</span></a> <span class="id" title="abbreviation">Tfloat</span> <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.float_support.html#v:8"><span class="id" title="variable">v</span></a> <a class="idref" href="skylabs_brick.tests.float_support.html#v':9"><span class="id" title="variable">v'</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> @<span class="id" title="definition">convert</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f0835817faaba90db49f1e400f4a8926"><span class="id" title="variable">σ</span></a> <a class="idref" href="skylabs_brick.tests.float_support.html#tu:7"><span class="id" title="variable">tu</span></a> <span class="id" title="abbreviation">Tfloat</span> <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.float_support.html#v:8"><span class="id" title="variable">v</span></a> <a class="idref" href="skylabs_brick.tests.float_support.html#v':9"><span class="id" title="variable">v'</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intros</span> <span class="id" title="var">Hconv</span>. <span class="id" title="tactic">rewrite</span> /<span class="id" title="definition">convert</span> /=. <span class="id" title="tactic">by</span> <span class="id" title="tactic">right</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="has_type_prop_float_value" class="idref" href="#has_type_prop_float_value"><span class="id" title="definition">has_type_prop_float_value</span></a> {<a id="962aaeeff05b6bd0df6153509c8e8505" class="idref" href="#962aaeeff05b6bd0df6153509c8e8505"><span class="id" title="binder">σ</span></a> : <span class="id" title="class">genv</span>} :<br/>
+&nbsp;&nbsp;<span class="id" title="axiom">has_type_prop</span> (<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Ffloat</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_one"><span class="id" title="definition">f32_one</span></a>) <span class="id" title="abbreviation">Tfloat</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="lemma">has_float_type</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="has_type_prop_rejects_mismatched_float" class="idref" href="#has_type_prop_rejects_mismatched_float"><span class="id" title="definition">has_type_prop_rejects_mismatched_float</span></a> {<a id="303c62d4b554442e1659318da8f8db12" class="idref" href="#303c62d4b554442e1659318da8f8db12"><span class="id" title="binder">σ</span></a> : <span class="id" title="class">genv</span>} :<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#63a68285c81db8f9bc456233bb9ed181"><span class="id" title="notation">~</span></a> <span class="id" title="axiom">has_type_prop</span> (<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Ffloat</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_one"><span class="id" title="definition">f32_one</span></a>) <span class="id" title="abbreviation">Tdouble</span>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">Hty</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="axiom">has_type_prop_float</span> <span class="id" title="tactic">in</span> <span class="id" title="var">Hty</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">Hty</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">f</span> <span class="id" title="var">Hf</span>]. <span class="id" title="tactic">discriminate</span> <span class="id" title="var">Hf</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="float_to_of_bits_roundtrips" class="idref" href="#float_to_of_bits_roundtrips"><span class="id" title="definition">float_to_of_bits_roundtrips</span></a> <a id="bits:12" class="idref" href="#bits:12"><span class="id" title="binder">bits</span></a> :<br/>
+&nbsp;&nbsp;(0 <span class="id" title="notation">&lt;=</span> <a class="idref" href="skylabs_brick.tests.float_support.html#bits:12"><span class="id" title="variable">bits</span></a> <span class="id" title="notation">&lt;</span> 2 <span class="id" title="notation">^</span> <span class="id" title="definition">float_type.bit_width</span> <span class="id" title="constructor">float_type.Ffloat</span>)%<span class="id" title="var">Z</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.to_bits</span> <span class="id" title="constructor">float_type.Ffloat</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="definition">float_value.of_bits</span> <span class="id" title="constructor">float_type.Ffloat</span> <a class="idref" href="skylabs_brick.tests.float_support.html#bits:12"><span class="id" title="variable">bits</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs_brick.tests.float_support.html#bits:12"><span class="id" title="variable">bits</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="lemma">float_value.to_of_bits</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="double_of_to_bits_roundtrip" class="idref" href="#double_of_to_bits_roundtrip"><span class="id" title="definition">double_of_to_bits_roundtrip</span></a> <a id="f:13" class="idref" href="#f:13"><span class="id" title="binder">f</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.of_bits</span> <span class="id" title="constructor">float_type.Fdouble</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="definition">float_value.to_bits</span> <span class="id" title="constructor">float_type.Fdouble</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f:13"><span class="id" title="variable">f</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs_brick.tests.float_support.html#f:13"><span class="id" title="variable">f</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="lemma">float_value.of_to_bits</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="float128_nan_payload_bits_preserved" class="idref" href="#float128_nan_payload_bits_preserved"><span class="id" title="definition">float128_nan_payload_bits_preserved</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.to_bits</span> <span class="id" title="constructor">float_type.Ffloat128</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f128_nan_payload"><span class="id" title="definition">f128_nan_payload</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs_brick.tests.float_support.html#f128_nan_payload_bits"><span class="id" title="definition">f128_nan_payload_bits</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="lemma">float_value.to_of_bits</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">change</span> (0 <span class="id" title="notation">&lt;=</span> 170138587312039964317873038467719495681 <span class="id" title="notation">&lt;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;340282366920938463463374607431768211456)%<span class="id" title="var">Z</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">lia</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="default_float_zero" class="idref" href="#default_float_zero"><span class="id" title="definition">default_float_zero</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">get_default</span> <span class="id" title="abbreviation">Tfloat</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Ffloat</span> (<span class="id" title="definition">float_value.zero</span> <span class="id" title="constructor">float_type.Ffloat</span>)).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="default_float128_zero" class="idref" href="#default_float128_zero"><span class="id" title="definition">default_float128_zero</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">get_default</span> <span class="id" title="abbreviation">Tfloat128</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Ffloat128</span> (<span class="id" title="definition">float_value.zero</span> <span class="id" title="constructor">float_type.Ffloat128</span>)).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="float_zero_is_false" class="idref" href="#float_zero_is_false"><span class="id" title="definition">float_zero_is_false</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">is_true</span> (<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Ffloat</span> (<span class="id" title="definition">float_value.zero</span> <span class="id" title="constructor">float_type.Ffloat</span>)) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="float_negative_zero_is_false" class="idref" href="#float_negative_zero_is_false"><span class="id" title="definition">float_negative_zero_is_false</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">is_true</span> (<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Ffloat</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_neg_zero"><span class="id" title="definition">f32_neg_zero</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="float_one_is_true" class="idref" href="#float_one_is_true"><span class="id" title="definition">float_one_is_true</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">is_true</span> (<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Ffloat</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_one"><span class="id" title="definition">f32_one</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="float_infinity_is_true" class="idref" href="#float_infinity_is_true"><span class="id" title="definition">float_infinity_is_true</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">is_true</span> (<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Ffloat</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_inf"><span class="id" title="definition">f32_inf</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="float_nan_is_true" class="idref" href="#float_nan_is_true"><span class="id" title="definition">float_nan_is_true</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">is_true</span> (<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Ffloat</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_nan"><span class="id" title="definition">f32_nan</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="float16_negative_zero_is_false" class="idref" href="#float16_negative_zero_is_false"><span class="id" title="definition">float16_negative_zero_is_false</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">is_true</span> (<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Ffloat16</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f16_neg_zero"><span class="id" title="definition">f16_neg_zero</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="float16_one_is_true" class="idref" href="#float16_one_is_true"><span class="id" title="definition">float16_one_is_true</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">is_true</span> (<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Ffloat16</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f16_one"><span class="id" title="definition">f16_one</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="float128_negative_zero_is_false" class="idref" href="#float128_negative_zero_is_false"><span class="id" title="definition">float128_negative_zero_is_false</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">is_true</span> (<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Ffloat128</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f128_neg_zero"><span class="id" title="definition">f128_neg_zero</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="float128_infinity_is_true" class="idref" href="#float128_infinity_is_true"><span class="id" title="definition">float128_infinity_is_true</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">is_true</span> (<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Ffloat128</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f128_inf"><span class="id" title="definition">f128_inf</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="float128_nan_is_true" class="idref" href="#float128_nan_is_true"><span class="id" title="definition">float128_nan_is_true</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">is_true</span> (<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Ffloat128</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f128_nan"><span class="id" title="definition">f128_nan</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="eval_not_float_zero" class="idref" href="#eval_not_float_zero"><span class="id" title="definition">eval_not_float_zero</span></a> {<a id="90e77474618ba1a451407daf80040e41" class="idref" href="#90e77474618ba1a451407daf80040e41"><span class="id" title="binder">σ</span></a> : <span class="id" title="class">genv</span>} <a id="tu:15" class="idref" href="#tu:15"><span class="id" title="binder">tu</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="axiom">eval_unop</span> <a class="idref" href="skylabs_brick.tests.float_support.html#tu:15"><span class="id" title="variable">tu</span></a> <span class="id" title="constructor">Unot</span> <span class="id" title="abbreviation">Tfloat</span> <span class="id" title="constructor">Tbool</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Ffloat</span> (<span class="id" title="definition">float_value.zero</span> <span class="id" title="constructor">float_type.Ffloat</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="definition">Vbool</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">replace</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#negb"><span class="id" title="definition">negb</span></a> (@<span class="id" title="definition">float_value.is_true</span> <span class="id" title="constructor">float_type.Ffloat</span> (<span class="id" title="definition">float_value.zero</span> <span class="id" title="constructor">float_type.Ffloat</span>))).<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <span class="id" title="axiom">eval_not_float</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">float_value.is_true_zero</span>. <span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="eval_not_float_nan" class="idref" href="#eval_not_float_nan"><span class="id" title="definition">eval_not_float_nan</span></a> {<a id="dd0f8ee13b043696963f589a3a566f8e" class="idref" href="#dd0f8ee13b043696963f589a3a566f8e"><span class="id" title="binder">σ</span></a> : <span class="id" title="class">genv</span>} <a id="tu:17" class="idref" href="#tu:17"><span class="id" title="binder">tu</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="axiom">eval_unop</span> <a class="idref" href="skylabs_brick.tests.float_support.html#tu:17"><span class="id" title="variable">tu</span></a> <span class="id" title="constructor">Unot</span> <span class="id" title="abbreviation">Tfloat</span> <span class="id" title="constructor">Tbool</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Ffloat</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_nan"><span class="id" title="definition">f32_nan</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="definition">Vbool</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">replace</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> <span class="id" title="keyword">with</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#negb"><span class="id" title="definition">negb</span></a> (@<span class="id" title="definition">float_value.is_true</span> <span class="id" title="constructor">float_type.Ffloat</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_nan"><span class="id" title="definition">f32_nan</span></a>)).<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <span class="id" title="axiom">eval_not_float</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="float_nan_compare_unordered" class="idref" href="#float_nan_compare_unordered"><span class="id" title="definition">float_nan_compare_unordered</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.value_compare</span> <span class="id" title="constructor">float_type.Ffloat</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_nan"><span class="id" title="definition">f32_nan</span></a> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_nan"><span class="id" title="definition">f32_nan</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="double_nan_compare_unordered" class="idref" href="#double_nan_compare_unordered"><span class="id" title="definition">double_nan_compare_unordered</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.value_compare</span> <span class="id" title="constructor">float_type.Fdouble</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f64_nan"><span class="id" title="definition">f64_nan</span></a> <a class="idref" href="skylabs_brick.tests.float_support.html#f64_nan"><span class="id" title="definition">f64_nan</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="float_nan_payload_add_preserved" class="idref" href="#float_nan_payload_add_preserved"><span class="id" title="definition">float_nan_payload_add_preserved</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_value.to_bits</span> <span class="id" title="constructor">float_type.Ffloat</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="definition">float_value.add</span> <span class="id" title="constructor">float_type.Ffloat</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_nan_payload"><span class="id" title="definition">f32_nan_payload</span></a> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_one"><span class="id" title="definition">f32_one</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.float_support.html#f32_nan_payload_bits"><span class="id" title="definition">f32_nan_payload_bits</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="little_float_test_genv" class="idref" href="#little_float_test_genv"><span class="id" title="definition">little_float_test_genv</span></a> : <span class="id" title="class">genv</span> :=<br/>
+&nbsp;&nbsp;{| <span class="id" title="projection">genv_tu</span> := <span class="id" title="definition">empty_tu</span> (<span class="id" title="constructor">abi.mkT</span> <span class="id" title="constructor">int_rank.Ilong</span> <span class="id" title="constructor">Signed</span> <span class="id" title="constructor">Signed</span> <span class="id" title="constructor">Little</span> <span class="id" title="constructor">lang_version.Cpp20</span>) |}.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="char32_to_float_uses_full_unsigned_range" class="idref" href="#char32_to_float_uses_full_unsigned_range"><span class="id" title="definition">char32_to_float_uses_full_unsigned_range</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">char_to_Z_for_float</span> <a class="idref" href="skylabs_brick.tests.float_support.html#little_float_test_genv"><span class="id" title="definition">little_float_test_genv</span></a> <span class="id" title="constructor">char_type.C32</span> 65535 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 65535%<span class="id" title="var">Z</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">rewrite</span> /<span class="id" title="definition">char_to_Z_for_float</span> <span class="id" title="axiom">of_char.unlock</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="float_to_char_accepts_representable_char" class="idref" href="#float_to_char_accepts_representable_char"><span class="id" title="definition">float_to_char_accepts_representable_char</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_to_char</span> <a class="idref" href="skylabs_brick.tests.float_support.html#little_float_test_genv"><span class="id" title="definition">little_float_test_genv</span></a> <span class="id" title="constructor">float_type.Ffloat</span> <span class="id" title="constructor">char_type.C8</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="definition">float_value.of_int</span> <span class="id" title="constructor">float_type.Ffloat</span> 65) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 65%<span class="id" title="var">N</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="raw_float16_intro" class="idref" href="#raw_float16_intro"><span class="id" title="definition">raw_float16_intro</span></a> {<a id="afb2f45ff79aed8fbb6b6cf08ccf3841" class="idref" href="#afb2f45ff79aed8fbb6b6cf08ccf3841"><span class="id" title="binder">σ</span></a> : <span class="id" title="class">genv</span>} :<br/>
+&nbsp;&nbsp;<span class="id" title="axiom">raw_bytes_of_val</span> <a class="idref" href="skylabs_brick.tests.float_support.html#afb2f45ff79aed8fbb6b6cf08ccf3841"><span class="id" title="variable">σ</span></a> <span class="id" title="abbreviation">Tfloat16</span> (<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Ffloat16</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f16_one"><span class="id" title="definition">f16_one</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="definition">float_raw_bytes</span> <a class="idref" href="skylabs_brick.tests.float_support.html#afb2f45ff79aed8fbb6b6cf08ccf3841"><span class="id" title="variable">σ</span></a> <span class="id" title="constructor">float_type.Ffloat16</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f16_one"><span class="id" title="definition">f16_one</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="lemma">raw_bytes_of_val_float_intro</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="raw_float_intro" class="idref" href="#raw_float_intro"><span class="id" title="definition">raw_float_intro</span></a> {<a id="a1f2f8c42645ef2cdf56abf4643509eb" class="idref" href="#a1f2f8c42645ef2cdf56abf4643509eb"><span class="id" title="binder">σ</span></a> : <span class="id" title="class">genv</span>} :<br/>
+&nbsp;&nbsp;<span class="id" title="axiom">raw_bytes_of_val</span> <a class="idref" href="skylabs_brick.tests.float_support.html#a1f2f8c42645ef2cdf56abf4643509eb"><span class="id" title="variable">σ</span></a> <span class="id" title="abbreviation">Tfloat</span> (<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Ffloat</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_one"><span class="id" title="definition">f32_one</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="definition">float_raw_bytes</span> <a class="idref" href="skylabs_brick.tests.float_support.html#a1f2f8c42645ef2cdf56abf4643509eb"><span class="id" title="variable">σ</span></a> <span class="id" title="constructor">float_type.Ffloat</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_one"><span class="id" title="definition">f32_one</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="lemma">raw_bytes_of_val_float_intro</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="raw_double_intro" class="idref" href="#raw_double_intro"><span class="id" title="definition">raw_double_intro</span></a> {<a id="73037d305ae1b6028b521cda53a3cc2f" class="idref" href="#73037d305ae1b6028b521cda53a3cc2f"><span class="id" title="binder">σ</span></a> : <span class="id" title="class">genv</span>} :<br/>
+&nbsp;&nbsp;<span class="id" title="axiom">raw_bytes_of_val</span> <a class="idref" href="skylabs_brick.tests.float_support.html#73037d305ae1b6028b521cda53a3cc2f"><span class="id" title="variable">σ</span></a> <span class="id" title="abbreviation">Tdouble</span> (<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Fdouble</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f64_one"><span class="id" title="definition">f64_one</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="definition">float_raw_bytes</span> <a class="idref" href="skylabs_brick.tests.float_support.html#73037d305ae1b6028b521cda53a3cc2f"><span class="id" title="variable">σ</span></a> <span class="id" title="constructor">float_type.Fdouble</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f64_one"><span class="id" title="definition">f64_one</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="lemma">raw_bytes_of_val_float_intro</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="raw_float128_intro" class="idref" href="#raw_float128_intro"><span class="id" title="definition">raw_float128_intro</span></a> {<a id="2cc2b4bb09eef09b11acd987eb0eb4c0" class="idref" href="#2cc2b4bb09eef09b11acd987eb0eb4c0"><span class="id" title="binder">σ</span></a> : <span class="id" title="class">genv</span>} :<br/>
+&nbsp;&nbsp;<span class="id" title="axiom">raw_bytes_of_val</span> <a class="idref" href="skylabs_brick.tests.float_support.html#2cc2b4bb09eef09b11acd987eb0eb4c0"><span class="id" title="variable">σ</span></a> <span class="id" title="abbreviation">Tfloat128</span> (<span class="id" title="constructor">Vfloat</span> <span class="id" title="constructor">float_type.Ffloat128</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f128_one"><span class="id" title="definition">f128_one</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="definition">float_raw_bytes</span> <a class="idref" href="skylabs_brick.tests.float_support.html#2cc2b4bb09eef09b11acd987eb0eb4c0"><span class="id" title="variable">σ</span></a> <span class="id" title="constructor">float_type.Ffloat128</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f128_one"><span class="id" title="definition">f128_one</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="lemma">raw_bytes_of_val_float_intro</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="float16_bits_compatible" class="idref" href="#float16_bits_compatible"><span class="id" title="definition">float16_bits_compatible</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_bits_compatible</span> <span class="id" title="constructor">int_rank.Ishort</span> <span class="id" title="constructor">float_type.Ffloat16</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">split</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="float32_bits_compatible" class="idref" href="#float32_bits_compatible"><span class="id" title="definition">float32_bits_compatible</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_bits_compatible</span> <span class="id" title="constructor">int_rank.Iint</span> <span class="id" title="constructor">float_type.Ffloat</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">split</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="double_bits_compatible" class="idref" href="#double_bits_compatible"><span class="id" title="definition">double_bits_compatible</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_bits_compatible</span> <span class="id" title="constructor">int_rank.Ilong</span> <span class="id" title="constructor">float_type.Fdouble</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">split</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="float128_bits_compatible" class="idref" href="#float128_bits_compatible"><span class="id" title="definition">float128_bits_compatible</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">float_bits_compatible</span> <span class="id" title="constructor">int_rank.I128</span> <span class="id" title="constructor">float_type.Ffloat128</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">split</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="longdouble_raw_bits_not_binary128_compatible" class="idref" href="#longdouble_raw_bits_not_binary128_compatible"><span class="id" title="definition">longdouble_raw_bits_not_binary128_compatible</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#63a68285c81db8f9bc456233bb9ed181"><span class="id" title="notation">~</span></a> <span class="id" title="definition">float_bits_compatible</span> <span class="id" title="constructor">int_rank.I128</span> <span class="id" title="constructor">float_type.Flongdouble</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intros</span> [<span class="id" title="var">_</span> <span class="id" title="var">Hwidth</span>]. <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <span class="id" title="var">Hwidth</span>. <span class="id" title="tactic">discriminate</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="float_to_bits_has_unsigned_type" class="idref" href="#float_to_bits_has_unsigned_type"><span class="id" title="definition">float_to_bits_has_unsigned_type</span></a> {<a id="7e47f8c913dc13cab771d71295e29a6d" class="idref" href="#7e47f8c913dc13cab771d71295e29a6d"><span class="id" title="binder">σ</span></a> : <span class="id" title="class">genv</span>} :<br/>
+&nbsp;&nbsp;<span class="id" title="axiom">has_type_prop</span> (<span class="id" title="constructor">Vint</span> (<span class="id" title="definition">float_value.to_bits</span> <span class="id" title="constructor">float_type.Ffloat</span> <a class="idref" href="skylabs_brick.tests.float_support.html#f32_one"><span class="id" title="definition">f32_one</span></a>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="constructor">Tnum</span> <span class="id" title="constructor">int_rank.Iint</span> <span class="id" title="constructor">Unsigned</span>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="lemma">float_to_bits_has_type_unsigned</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">split</span>; <span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
