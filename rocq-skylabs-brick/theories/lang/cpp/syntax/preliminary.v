@@ -910,6 +910,45 @@ Proof.
   abstract (by intros []).
 Defined.
 
+Definition to_operator (op : BinOp) : option OverloadableOperator :=
+  match op with
+  | Badd => Some OOPlus
+  | Band => Some OOAmp
+  | Bcmp => Some OOSpaceship
+  | Bdiv => Some OOSlash
+  | Beq => Some OOEqualEqual
+  | Bge => Some OOGreaterEqual
+  | Bgt => Some OOGreater
+  | Ble => Some OOLessEqual
+  | Blt => Some OOLess
+  | Bmul => Some OOStar
+  | Bneq => Some OOExclaimEqual
+  | Bor => Some OOPipe
+  | Bmod => Some OOPercent
+  | Bshl => Some OOLessLess
+  | Bshr => Some OOGreaterGreater
+  | Bsub => Some OOMinus
+  | Bxor => Some OOCaret
+  | Bdotip => Some OOArrowStar
+  | Bdotp | Bunsupported _ => None
+  end.
+
+Definition to_operator_equal (op : BinOp) : option OverloadableOperator :=
+  match op with
+  | Badd => Some OOPlusEqual
+  | Band => Some OOAmpEqual
+  | Bdiv => Some OOSlashEqual
+  | Bmul => Some OOStarEqual
+  | Bor => Some OOPipeEqual
+  | Bmod => Some OOPercentEqual
+  | Bshl => Some OOLessLessEqual
+  | Bshr => Some OOGreaterGreaterEqual
+  | Bsub => Some OOMinusEqual
+  | Bxor => Some OOCaretEqual
+  | Bcmp | Beq | Bge | Bgt | Ble | Blt | Bneq
+  | Bdotp | Bdotip | Bunsupported _ => None
+  end.
+
 
 (** ** Atomic Builtins *)
 Module AtomicOp.

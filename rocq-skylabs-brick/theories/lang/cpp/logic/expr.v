@@ -406,12 +406,13 @@ Module Type Expr.
      *)
     Axiom wp_lval_subscript : forall e side vc i t Q,
       subscript_scheme e i = Some (side, vc, t) ->
-      (if side then
-         let* '(base, idx), free := nd_seq (wp_ptr vc e) (wp_int i) in
+      (let ooe := evaluation_order.order_of (language_version tu) OOSubscript in
+       if side then
+         let* '(base, idx), free := eval2 ooe (wp_ptr vc e) (wp_int i) in
          let addr := base .[ erase_qualifiers t ! idx ] in
          reference_to t addr ** Q addr free
        else
-         let* '(idx, base), free := nd_seq (wp_int e) (wp_ptr vc i) in
+         let* '(idx, base), free := eval2 ooe (wp_int e) (wp_ptr vc i) in
          let addr := base .[ erase_qualifiers t ! idx ] in
          reference_to t addr ** Q addr free)
       |-- wp_lval (Esubscript e i t) Q.
@@ -420,12 +421,13 @@ Module Type Expr.
      *)
     Axiom wp_xval_subscript : forall e side i t Q,
         subscript_scheme e i = Some (side, Xvalue, t) ->
-        (if side then
-           let* '(base, idx), free := nd_seq (wp_xval e) (wp_int i) in
+        (let ooe := evaluation_order.order_of (language_version tu) OOSubscript in
+           if side then
+           let* '(base, idx), free := eval2 ooe (wp_xval e) (wp_int i) in
            let addr := base .[ erase_qualifiers t ! idx ] in
            reference_to t addr ** Q addr free
          else
-           let* '(idx, base), free := nd_seq (wp_int e) (wp_xval i) in
+           let* '(idx, base), free := eval2 ooe (wp_int e) (wp_xval i) in
            let addr := base .[ erase_qualifiers t ! idx ] in
            reference_to t addr ** Q addr free)
       |-- wp_xval (Esubscript e i t) Q.
@@ -544,8 +546,10 @@ Module Type Expr.
 
     (** * Binary Operators *)
     (* NOTE the following axioms assume that [eval_binop] is deterministic *)
-    Axiom wp_operand_binop : forall o e1 e2 ty Q,
-        nd_seq (wp_operand e1) (wp_operand e2) (fun '(v1,v2) free =>
+    Axiom wp_operand_binop : forall o oo e1 e2 ty Q,
+        to_operator o = Some oo ->
+        (let ooe := evaluation_order.order_of (language_version tu) oo in
+         letI* '(v1,v2), free := eval2 ooe (wp_operand e1) (wp_operand e2) in
           Exists v',
             (eval_binop tu o
                 (drop_qualifiers (type_of e1)) (drop_qualifiers (type_of e2))
@@ -563,11 +567,12 @@ Module Type Expr.
            (la |-> tptstoR (erase_qualifiers ty) 1$m rv -* Q la free))
         |-- wp_lval (Eassign l r ty) Q.
 
-    Axiom wp_lval_bop_assign : forall ty o l r Q,
+    Axiom wp_lval_bop_assign : forall ty o oo l r Q,
+            to_operator_equal o = Some oo ->
             match convert_type_op tu o (type_of l) (type_of r) with
             | Some (tl, tr, resultT) =>
               letI* '(la, rv), free :=
-                eval2 (evaluation_order.order_of (language_version tu) OOEqual) (wp_lval l) (wp_operand r) in
+                eval2 (evaluation_order.order_of (language_version tu) oo) (wp_lval l) (wp_operand r) in
               Exists lv clv resv storedv,
                     ((* cast and perform the computation *)
                       [| convert tu (type_of l) tl lv clv |] **
