@@ -7,6 +7,7 @@ Require skylabs.lang.cpp.parser.plugin.cpp2v_version.
 Require Stdlib.Array.PArray.
 Require Import Stdlib.Numbers.Cyclic.Int63.PrimInt63.
 Require Import skylabs.lang.cpp.parser.
+Require skylabs.lang.cpp.mparser.
 Require skylabs.lang.cpp.syntax.typed.
 
 #[local] Set Printing Universes.
