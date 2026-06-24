@@ -89,7 +89,7 @@ bool is_dependent(const clang::Expr *);
 
 class ClangPrinter {
 private:
-    clang::CompilerInstance *compiler_;
+    const clang::CompilerInstance *compiler_;
     clang::ASTContext *context_;
     clang::MangleContext *mangleContext_;
     const Trace::Mask trace_;
@@ -128,12 +128,13 @@ public:
 private:
     const clang::Decl *getDecl() const;
 
-    fmt::Formatter &printNestedName(CoqPrinter &, NestedNameSpecifierArg, loc::loc);
+    fmt::Formatter &printNestedName(CoqPrinter &, NestedNameSpecifierArg,
+                                    loc::loc);
 
 public:
     clang::ASTContext &getContext() { return *context_; }
 
-    clang::CompilerInstance &getCompiler() { return *compiler_; }
+    const clang::CompilerInstance &getCompiler() { return *compiler_; }
 
     clang::MangleContext &getMangleContext() { return *mangleContext_; }
 
@@ -175,14 +176,16 @@ public:
         CoqPrinter &, NestedNameSpecifierArg /* optional */,
         const clang::DeclarationName &,
         llvm::ArrayRef<clang::TemplateArgumentLoc> /* optional */, loc::loc);
-    fmt::Formatter &printUnresolvedName(
-        CoqPrinter &, NestedNameSpecifierArg /* optional */,
-        const clang::DeclarationName &,
-        llvm::ArrayRef<clang::TemplateArgument> /* optional */, loc::loc);
-
     fmt::Formatter &
     printUnresolvedName(CoqPrinter &, NestedNameSpecifierArg /* optional */,
-                        const clang::DeclarationName &, loc::loc);
+                        const clang::DeclarationName &,
+                        llvm::ArrayRef<clang::TemplateArgument> /* optional */,
+                        loc::loc);
+
+    fmt::Formatter &printUnresolvedName(CoqPrinter &,
+                                        NestedNameSpecifierArg /* optional */,
+                                        const clang::DeclarationName &,
+                                        loc::loc);
 
     // TODO: Can we drop these?
     fmt::Formatter &printUnsupportedName(CoqPrinter &, llvm::StringRef); // name

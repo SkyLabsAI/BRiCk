@@ -6,7 +6,7 @@ Require Import skylabs.lang.cpp.syntax.typing.
 Require test.test_cpp.
 
 Definition return_expr (nm : ident) : option Expr :=
-  match test_cpp.module.(symbols) !! Nglobal (Nfunction function_qualifiers.N nm []) with
+  match test_cpp.source.(symbols) !! Nglobal (Nfunction function_qualifiers.N nm []) with
   | Some (Ofunction f) =>
       match f.(f_body) with
       | Some (Impl (Sseq [Sreturn (Some e)])) => Some e
@@ -30,7 +30,7 @@ Definition check_return_bits (nm : ident) (ft : float_type.t) (bits : Z) : bool 
   | _ => false
   end.
 
-Eval vm_compute in supported.check.translation_unit test_cpp.module.
+Eval vm_compute in supported.check.translation_unit test_cpp.source.
 
 Example decimal_float16_typed :
   check_return "decimal_float16" float_type.Ffloat16 = true :=

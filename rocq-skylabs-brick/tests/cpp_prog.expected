@@ -41,6 +41,29 @@ module =
       abi.wchar_signed := Signed;
       abi.byte_order := Little;
       abi.lang_version := lang_version.Cpp17
+    |};
+  msymbols :=
+    {|
+      TM.this := TM.Raw.Leaf (mcore.template ObjValue);
+      TM.is_bst :=
+        internal.NameMap.Raw.Proofs.empty_bst (mcore.template ObjValue)
+    |};
+  mtypes :=
+    {|
+      TM.this := TM.Raw.Leaf (mcore.template GlobDecl);
+      TM.is_bst :=
+        internal.NameMap.Raw.Proofs.empty_bst (mcore.template GlobDecl)
+    |};
+  maliases :=
+    {|
+      TM.this := TM.Raw.Leaf (mcore.template type);
+      TM.is_bst :=
+        internal.NameMap.Raw.Proofs.empty_bst (mcore.template type)
+    |};
+  minstances :=
+    {|
+      TM.this := NM.Raw.Leaf mcore.tpreinst;
+      TM.is_bst := internal.NameMap.Raw.Proofs.empty_bst mcore.tpreinst
     |}
 |}
      : translation_unit

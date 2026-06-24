@@ -12,6 +12,6 @@ Definition check_without_stdlib_long_double : supported.check.M :=
        | Eq => false
        | _ => true
        end)
-    (supported.check.translation_unit test_cpp.module).
+    (supported.check.translation_unit test_cpp.source).
 
 Eval vm_compute in check_without_stdlib_long_double.

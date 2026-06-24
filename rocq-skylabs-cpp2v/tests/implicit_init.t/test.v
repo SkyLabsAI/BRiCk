@@ -6,7 +6,7 @@ Require test.src_cpp.
 #[local] Ltac check := vm_compute; reflexivity.
 
 (* inc.hpp < one_two.cpp *)
-Example _inc_in_src : bool_decide (sub_module inc_hpp.module src_cpp.module) = true :=
+Example _inc_in_src : bool_decide (sub_module inc_hpp.source src_cpp.source) = true :=
   ltac:(check).
 
 Goal True.

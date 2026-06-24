@@ -84,11 +84,11 @@ Require test.valcat_of_14_cpp.
 Require test.valcat_of_17_cpp.
 Require test.valcat_of_20_cpp.
 
-Example test_11 : run_test valcat_of_11_cpp.module = nil :=
+Example test_11 : run_test valcat_of_11_cpp.source = nil :=
   ltac:(vm_compute; reflexivity).
-Example test_14 : run_test valcat_of_14_cpp.module = nil :=
+Example test_14 : run_test valcat_of_14_cpp.source = nil :=
   ltac:(vm_compute; reflexivity).
-Example test_17 : run_test valcat_of_17_cpp.module = nil :=
+Example test_17 : run_test valcat_of_17_cpp.source = nil :=
   ltac:(vm_compute; reflexivity).
-Example test_20 : run_test valcat_of_20_cpp.module = nil :=
+Example test_20 : run_test valcat_of_20_cpp.source = nil :=
   ltac:(vm_compute; reflexivity).

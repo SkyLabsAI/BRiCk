@@ -9,5 +9,5 @@ Require Import skylabs.lang.cpp.semantics.
 Require test.include_hpp.
 Require test.include_cpp.
 
-Goal module_le include_hpp.module include_cpp.module.
+Goal module_le include_hpp.source include_cpp.source.
 Proof. vm_compute. done. Qed.

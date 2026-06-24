@@ -22,7 +22,6 @@ cpp.prog buggy_source prog cpp:{{
 }}.
 
 
-Section code.
 cpp.prog source3 prog cpp:{{
   void test(const int src1[], const int src2[], int dst[], int n) {
     // Sum the arrays src1 and src2 in dst
@@ -31,7 +30,6 @@ cpp.prog source3 prog cpp:{{
     }
   }
 }}.
-End code.
 
 (* check that the interpretation of [length] does not change *)
 Check @length.

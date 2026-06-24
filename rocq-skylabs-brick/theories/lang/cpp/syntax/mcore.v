@@ -102,7 +102,6 @@ Add Printing Constructor tinst.
 #[global] Arguments tinst : clear implicits.
 #[global] Arguments TInst {_} _ _ & _ : assert.
 
-Require Import skylabs.lang.cpp.syntax.translation_unit.
 
 (** ** Templated values
    <<int foo()>> is an [ObjValue]
@@ -144,9 +143,4 @@ End template.
 
 Notation Mtpreinst := tpreinst (only parsing).
 Notation Mtinst := tinst (only parsing).
-Notation MObjValue := ObjValue (only parsing).
-Notation MGlobDecl := GlobDecl (only parsing).
-Notation MGlobalInit := GlobalInit (only parsing).
-Notation MGlobalInitializer := GlobalInitializer (only parsing).
 Notation MInitializer := Initializer (only parsing).
-Notation MInitializerBlock := InitializerBlock (only parsing).
