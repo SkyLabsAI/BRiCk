@@ -694,6 +694,10 @@ Module float_value.
     | Ffloat128 => Bcompare _ _
     end.
 
+  Lemma value_compare_antisym ft (x y : car ft) :
+    value_compare ft y x = CompOpp <$> value_compare ft x y.
+  Proof. by destruct ft; apply Bcompare_swap. Qed.
+
   Definition eqb (t : t) (v1 v2 : car t) : bool :=
     match value_compare t v1 v2 with
     | Some Eq => true
@@ -730,6 +734,9 @@ Module float_value.
     - exact (binary_float_of_bits_of_binary_float 63 15 (refl_equal _) (refl_equal _) (refl_equal _) f).
     - exact (binary_float_of_bits_of_binary_float 112 15 (refl_equal _) (refl_equal _) (refl_equal _) f).
   Qed.
+
+  #[global] Instance of_to_bits_cancel ft : Cancel (=) (of_bits ft) (to_bits ft) :=
+    of_to_bits ft.
 
   Lemma to_bits_range ft (f : car ft) :
     (0 <= to_bits ft f < 2 ^ float_type.bit_width ft)%Z.
@@ -770,11 +777,89 @@ Module float_value.
     (0 <= z < 2 ^ 128)%Z -> to_bits Ffloat128 (of_bits Ffloat128 z) = z.
   Proof. intros Hz. apply to_of_bits. exact Hz. Qed.
 
-  #[global] Instance to_bits_inj ft : Inj (=) (=) (to_bits ft).
+  #[global] Instance to_bits_inj ft : Inj (=) (=) (to_bits ft) := cancel_inj.
+
+  Lemma value_compare_zero_zero ft (x y : car ft) :
+    is_zero x = true -> is_zero y = true -> value_compare ft x y = Some Eq.
   Proof.
-    intros x y Hbits.
-    apply (f_equal (of_bits ft)) in Hbits.
-    by rewrite !of_to_bits in Hbits.
+    destruct ft; destruct x; destruct y; cbn; congruence.
+  Qed.
+
+  Lemma value_compare_eq_or_zeros ft (x y : car ft) :
+    value_compare ft x y = Some Eq -> x = y ∨ is_zero x = true ∧ is_zero y = true.
+  Proof.
+    destruct ft; destruct x as [sx|sx|sx px Hpx|sx mx ex Hx];
+      destruct y as [sy|sy|sy py Hpy|sy my ey Hy]; cbn in *; try congruence.
+    all: try (right; done).
+    all: try (by destruct sx, sy; cbn in *; simplify_eq; left).
+    all: destruct sx, sy; cbn in *; try congruence;
+      repeat case_match; simplify_eq; try congruence;
+      try match goal with
+      | mx : positive, my : positive |- _ =>
+          destruct (Pos.compare_cont Eq mx my) eqn:?; cbn in *; simplify_eq; try congruence
+      end;
+      repeat match goal with
+      | H : Some (CompOpp (Pos.compare_cont Eq ?x ?y)) = Some Eq |- _ =>
+          let Hxy := fresh in
+          assert (Hxy : Pos.compare_cont Eq x y = Eq) by
+            (destruct (Pos.compare_cont Eq x y); cbn in H; congruence);
+          clear H
+      | H : CompOpp (Pos.compare_cont Eq ?x ?y) = Eq |- _ =>
+          let Hxy := fresh in
+          assert (Hxy : Pos.compare_cont Eq x y = Eq) by
+            (destruct (Pos.compare_cont Eq x y); cbn in H; congruence);
+          clear H
+      | H : Some (CompOpp (Pcompare ?x ?y Eq)) = Some Eq |- _ =>
+          let Hxy := fresh in
+          assert (Hxy : Pcompare x y Eq = Eq) by
+            (destruct (Pcompare x y Eq); cbn in H; congruence);
+          clear H
+      | H : CompOpp (Pcompare ?x ?y Eq) = Eq |- _ =>
+          let Hxy := fresh in
+          assert (Hxy : Pcompare x y Eq = Eq) by
+            (destruct (Pcompare x y Eq); cbn in H; congruence);
+          clear H
+      | H : Some (CompOpp ?c) = Some Eq |- _ => destruct c eqn:?; simplify_eq
+      | H : CompOpp ?c = Eq |- _ => destruct c eqn:?; simplify_eq
+      end;
+      repeat match goal with
+      | H : Z.compare _ _ = Eq |- _ => apply Z.compare_eq in H; subst
+      | H : Eq = Z.compare _ _ |- _ => symmetry in H; apply Z.compare_eq in H; subst
+      | H : Pos.compare_cont Eq _ _ = Eq |- _ => apply Pcompare_Eq_eq in H; subst
+      | H : Pcompare _ _ Eq = Eq |- _ => apply Pos.compare_eq in H; subst
+      | H : Eq = Pcompare _ _ Eq |- _ => symmetry in H; apply Pos.compare_eq in H; subst
+      end;
+      left; f_equal; apply Eqdep_dec.UIP_dec; decide equality.
+  Qed.
+
+  Lemma value_compare_eq_nonzero ft (x y : car ft) :
+    value_compare ft x y = Some Eq ->
+    is_zero x = false -> is_zero y = false -> x = y.
+  Proof.
+    move=> /value_compare_eq_or_zeros [//|[Hx _]] Hnz _.
+    by rewrite Hx in Hnz.
+  Qed.
+
+  Lemma value_compare_eq_B2R ft (x y : car ft) :
+    value_compare ft x y = Some Eq -> B2R _ _ x = B2R _ _ y.
+  Proof.
+    move=> /value_compare_eq_or_zeros [->|[Hx Hy]]; [done|].
+    destruct ft; destruct x; destruct y; cbn in *; congruence.
+  Qed.
+
+  Lemma value_compare_eq_sym ft (x y : car ft) :
+    value_compare ft x y = Some Eq -> value_compare ft y x = Some Eq.
+  Proof. by move=> H; rewrite value_compare_antisym H. Qed.
+
+  Lemma value_compare_eq_trans ft (x y z : car ft) :
+    value_compare ft x y = Some Eq ->
+    value_compare ft y z = Some Eq ->
+    value_compare ft x z = Some Eq.
+  Proof.
+    intros Hxy Hyz.
+    destruct (value_compare_eq_or_zeros _ _ _ Hxy) as [->|[Hx Hy]]; [done|].
+    destruct (value_compare_eq_or_zeros _ _ _ Hyz) as [<-|[_ Hz]]; [done|].
+    by apply value_compare_zero_zero.
   Qed.
 
 End float_value.
