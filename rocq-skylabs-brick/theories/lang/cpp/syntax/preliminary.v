@@ -686,38 +686,24 @@ Module float_value.
   Definition div (t : t) : car t -> car t -> car t := div_with_mode BinarySingleNaN.mode_NE t.
 
   Definition value_compare (t : t) : car t -> car t -> option comparison :=
-    match t return car t -> car t -> option comparison with
-    | Ffloat16 => Bcompare _ _
-    | Ffloat => Bcompare _ _
-    | Fdouble => Bcompare _ _
-    | Flongdouble => Bcompare _ _
-    | Ffloat128 => Bcompare _ _
-    end.
+    Bcompare _ _.
 
   Lemma value_compare_antisym ft (x y : car ft) :
     value_compare ft y x = CompOpp <$> value_compare ft x y.
-  Proof. by destruct ft; apply Bcompare_swap. Qed.
+  Proof. apply Bcompare_swap. Qed.
 
   Definition eqb (t : t) (v1 v2 : car t) : bool :=
-    match value_compare t v1 v2 with
-    | Some Eq => true
-    | _ => false
-    end.
+    bool_decide (value_compare t v1 v2 = Some Eq).
 
   Definition neqb (t : t) (v1 v2 : car t) : bool :=
     negb (eqb t v1 v2).
 
   Definition ltb (t : t) (v1 v2 : car t) : bool :=
-    match value_compare t v1 v2 with
-    | Some Lt => true
-    | _ => false
-    end.
+    bool_decide (value_compare t v1 v2 = Some Lt).
 
   Definition leb (t : t) (v1 v2 : car t) : bool :=
-    match value_compare t v1 v2 with
-    | Some Lt | Some Eq => true
-    | _ => false
-    end.
+    let cmp := value_compare t v1 v2 in
+    bool_decide (cmp = Some Lt \/ cmp = Some Eq).
 
   Definition gtb (t : t) (v1 v2 : car t) : bool :=
     ltb t v2 v1.
@@ -741,24 +727,14 @@ Module float_value.
   Lemma to_bits_range ft (f : car ft) :
     (0 <= to_bits ft f < 2 ^ float_type.bit_width ft)%Z.
   Proof.
-    destruct ft; simpl in *.
-    - exact (bits_of_binary_float_range 10 5 ltac:(lia) ltac:(lia) f).
-    - exact (bits_of_binary_float_range 23 8 ltac:(lia) ltac:(lia) f).
-    - exact (bits_of_binary_float_range 52 11 ltac:(lia) ltac:(lia) f).
-    - exact (bits_of_binary_float_range 63 15 ltac:(lia) ltac:(lia) f).
-    - exact (bits_of_binary_float_range 112 15 ltac:(lia) ltac:(lia) f).
+    destruct ft; simpl in *; apply bits_of_binary_float_range; lia.
   Qed.
 
   Lemma to_of_bits ft z :
     (0 <= z < 2 ^ float_type.bit_width ft)%Z ->
     to_bits ft (of_bits ft z) = z.
   Proof.
-    destruct ft; simpl; intros Hz.
-    - exact (bits_of_binary_float_of_bits 10 5 (refl_equal _) (refl_equal _) (refl_equal _) z Hz).
-    - exact (bits_of_binary_float_of_bits 23 8 (refl_equal _) (refl_equal _) (refl_equal _) z Hz).
-    - exact (bits_of_binary_float_of_bits 52 11 (refl_equal _) (refl_equal _) (refl_equal _) z Hz).
-    - exact (bits_of_binary_float_of_bits 63 15 (refl_equal _) (refl_equal _) (refl_equal _) z Hz).
-    - exact (bits_of_binary_float_of_bits 112 15 (refl_equal _) (refl_equal _) (refl_equal _) z Hz).
+    destruct ft; simpl; intros Hz; exact: bits_of_binary_float_of_bits.
   Qed.
 
   Lemma to_of_bits_Ffloat16 z :
@@ -829,7 +805,7 @@ Module float_value.
       | H : Pcompare _ _ Eq = Eq |- _ => apply Pos.compare_eq in H; subst
       | H : Eq = Pcompare _ _ Eq |- _ => symmetry in H; apply Pos.compare_eq in H; subst
       end;
-      left; f_equal; apply Eqdep_dec.UIP_dec; decide equality.
+      left; f_equal; apply: proof_irrel.
   Qed.
 
   Lemma value_compare_eq_nonzero ft (x y : car ft) :
