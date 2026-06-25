@@ -55,7 +55,6 @@ Module internals.
   #[global] Hint Rewrite @N2Z.inj_div : lift_NtoZ.
   #[global] Hint Rewrite @N2Z.inj_succ : lift_NtoZ.
   #[global] Hint Rewrite <- @Z.add_1_r : lift_NtoZ.
-  #[global] Hint Rewrite @Z_of_N_Zto_N_eq_max : lift_NtoZ.
 
   #[global] Hint Rewrite port_Z2N_add_total : lift_NtoZ.
 

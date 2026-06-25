@@ -7,7 +7,10 @@
 Require Import skylabs.prelude.base.
 Require Export skylabs.prelude.list.
 Require Export skylabs.prelude.numbers.
+Require Export skylabs.prelude.tactics.num_lifting.
 Require skylabs.prelude.under_rel_proper.
+
+#[global] Hint Rewrite @Z_of_N_Zto_N_eq_max : lift_NtoZ.
 
 #[global] Instance set_unfold_elem_of_seq (n start len : nat) P :
   SetUnfold (start ≤ n < start + len)%nat P →
