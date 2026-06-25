@@ -52,6 +52,20 @@ Definition rotateN {A} n xs :=
   fun i xs => lookup (N.to_nat i) xs.
 #[global] Notation lookupN := (lookup (K := N)) (only parsing).
 
+Fixpoint split_atN {A} (n : N) (xs : list A) : list A * list A :=
+  match xs with
+  | [] => ([], [])
+  | x :: xs =>
+      match n with
+      | N0 =>
+          ([], x :: xs)
+      | Npos p =>
+        let (ys0, ys1) := split_atN (Pos.pred_N p) xs in
+        (x :: ys0, ys1)
+      end
+  end .
+#[global] Hint Opaque split_atN : typeclass_instances sl_opacity.
+
 (** Instead of lifting the [list_lookup] theory to [list_lookupN] we provide an unfolding lemma. *)
 Lemma list_lookupN_lookup {A} (xs : list A) (n : N) :
   xs !! n = xs !! N.to_nat n.
@@ -1258,6 +1272,10 @@ Section listZ.
   #[global] Hint Opaque takeZ : typeclass_instances sl_opacity.
   Definition dropZ {A} (n : Z) := (dropN (A := A) (Z.to_N n)).
   #[global] Hint Opaque dropZ : typeclass_instances sl_opacity.
+
+  Definition split_atZ {A} (i : Z) (xs : list A) : list A * list A :=
+    split_atN (Z.to_N i) xs.
+  #[global] Hint Opaque split_atZ : typeclass_instances sl_opacity.
 
   Lemma insertZ_eq_insertN {A} (k : Z) x (xs : list A) :
     <[ k := x ]> xs =
