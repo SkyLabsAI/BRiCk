@@ -2845,3 +2845,14 @@ End split_atZ_lemmas.
 
 Definition Forall_simpl {A} :=
   (Forall_nil (A := A), Forall_singleton (A := A), Forall_cons (A := A), Forall_app (A := A)).
+
+#[global] Hint Rewrite @lookupN_ZtoN : lift_NtoZ.
+#[global] Hint Rewrite @lengthN_eq_iff_lengthZ : lift_NtoZ.
+
+#[global] Hint Rewrite @dropN_to_dropZ : lift_NtoZ.
+#[global] Hint Rewrite @dropZ_max_0_l : lift_NtoZ.
+#[global] Hint Rewrite @dropZ_max_0_r : lift_NtoZ.
+
+#[global] Hint Rewrite @takeN_eq_takeZ_ZofN : lift_NtoZ.
+#[global] Hint Rewrite @takeZ_max_0_l : lift_NtoZ.
+#[global] Hint Rewrite @takeZ_max_0_r : lift_NtoZ.
