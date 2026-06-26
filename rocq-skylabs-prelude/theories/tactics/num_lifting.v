@@ -7,9 +7,11 @@
 
 (** * This file defines the tactic [lift_NtoZ]
 
-    [lift_NtoZ] is used in combination with a database of rewriting rules to lift lemmas about type
-    [N] -- in particular when they are used by list functions as is done in
-    [skylabs.prelude.list_numbers] -- and rephrase them in terms of [Z].
+    [lift_NtoZ] is used in combination with a database of rewriting rules to lift lemmas from type
+    [N] to type [Z] -- in particular when they are used by list functions as is done in
+    [skylabs.prelude.list_numbers].
+    
+    TODO: extend documentation.
  *)
 Require Import stdpp.prelude.
 

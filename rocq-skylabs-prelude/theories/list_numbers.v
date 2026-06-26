@@ -2844,4 +2844,4 @@ Section split_atZ_lemmas.
 End split_atZ_lemmas.
 
 Definition Forall_simpl {A} :=
-  (Forall_nil (A := A),Forall_singleton (A := A), Forall_cons (A := A), Forall_app (A := A)).
+  (Forall_nil (A := A), Forall_singleton (A := A), Forall_cons (A := A), Forall_app (A := A)).
