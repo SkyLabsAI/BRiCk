@@ -36,7 +36,7 @@ Section pure_encoding_tests.
     rewrite /pure_encodes /=.
     split; [reflexivity|].
     split.
-    - replace (float_value.to_bits float_type.Ffloat16 f16_one) with f16_one_bits.
+    - replace (float_value.to_bits f16_one) with f16_one_bits.
       + rewrite /in_Z_to_bytes_bounds /f16_one_bits /=.
         change (0 <= 15360 /\ 15360 < 65536)%Z. lia.
       + symmetry. apply float_value.to_of_bits. change (0 <= 15360 < 65536)%Z. lia.
@@ -50,7 +50,7 @@ Section pure_encoding_tests.
     rewrite /pure_encodes /=.
     split; [reflexivity|].
     split.
-    - replace (float_value.to_bits float_type.Ffloat f32_one) with f32_one_bits.
+    - replace (float_value.to_bits f32_one) with f32_one_bits.
       + rewrite /in_Z_to_bytes_bounds /f32_one_bits /=.
         change (0 <= 1065353216 /\ 1065353216 < 4294967296)%Z. lia.
       + symmetry. apply float_value.to_of_bits.
@@ -65,7 +65,7 @@ Section pure_encoding_tests.
     rewrite /pure_encodes /=.
     split; [reflexivity|].
     split.
-    - replace (float_value.to_bits float_type.Ffloat128 f128_one) with f128_one_bits.
+    - replace (float_value.to_bits f128_one) with f128_one_bits.
       + rewrite /in_Z_to_bytes_bounds /f128_one_bits /=.
         change (0 <= 85065399433376081038215121361612832768 /\
                 85065399433376081038215121361612832768 <

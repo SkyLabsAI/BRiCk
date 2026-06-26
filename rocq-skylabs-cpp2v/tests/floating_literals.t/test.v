@@ -26,7 +26,7 @@ Definition check_return (nm : ident) (ft : float_type.t) : bool :=
 Definition check_return_bits (nm : ident) (ft : float_type.t) (bits : Z) : bool :=
   match return_expr nm with
   | Some (Efloat ft' f) =>
-      bool_decide (ft = ft') && bool_decide (float_value.to_bits ft' f = bits)
+      bool_decide (ft = ft') && bool_decide (float_value.to_bits f = bits)
   | _ => false
   end.
 

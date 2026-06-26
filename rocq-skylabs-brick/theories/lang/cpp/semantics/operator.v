@@ -151,7 +151,7 @@ Axiom eval_minus_int : forall ty a c,
     eval_unop Uminus ty ty (Vint a) (Vint c).
 Axiom eval_minus_float : forall f a,
     eval_unop Uminus (Tfloat_ f) (Tfloat_ f)
-      (Vfloat f a) (Vfloat f (float_value.opp f a)).
+      (Vfloat f a) (Vfloat f (float_value.opp a)).
 
 (** * Binary Operators *)
 
@@ -194,10 +194,10 @@ Let eval_float_op (bo : BinOp)
     eval_binop_pure bo (Tfloat_ f) (Tfloat_ f) (Tfloat_ f)
       (Vfloat f a) (Vfloat f b) (Vfloat f c).
 
-Axiom eval_float_add : Hnf (eval_float_op Badd float_value.add).
-Axiom eval_float_sub : Hnf (eval_float_op Bsub float_value.sub).
-Axiom eval_float_mul : Hnf (eval_float_op Bmul float_value.mul).
-Axiom eval_float_div : Hnf (eval_float_op Bdiv float_value.div).
+Axiom eval_float_add : Hnf (eval_float_op Badd (@float_value.add)).
+Axiom eval_float_sub : Hnf (eval_float_op Bsub (@float_value.sub)).
+Axiom eval_float_mul : Hnf (eval_float_op Bmul (@float_value.mul)).
+Axiom eval_float_div : Hnf (eval_float_op Bdiv (@float_value.div)).
 
 (* The binary operator / divides the first operand by the second, after usual
    arithmetic conversions.
@@ -418,12 +418,12 @@ Arguments eval_ge _ {_}.
     eval_binop_pure bo (Tfloat_ f) (Tfloat_ f) ty'
       (Vfloat f av) (Vfloat f bv) (Vbool (o f av bv)).
 
-Axiom eval_float_eq : Hnf (eval_float_rel_op float_value.eqb Beq).
-Axiom eval_float_neq : Hnf (eval_float_rel_op float_value.neqb Bneq).
-Axiom eval_float_lt : Hnf (eval_float_rel_op float_value.ltb Blt).
-Axiom eval_float_gt : Hnf (eval_float_rel_op float_value.gtb Bgt).
-Axiom eval_float_le : Hnf (eval_float_rel_op float_value.leb Ble).
-Axiom eval_float_ge : Hnf (eval_float_rel_op float_value.geb Bge).
+Axiom eval_float_eq  : Hnf (eval_float_rel_op (@float_value.eqb) Beq).
+Axiom eval_float_neq : Hnf (eval_float_rel_op (@float_value.neqb) Bneq).
+Axiom eval_float_lt  : Hnf (eval_float_rel_op (@float_value.ltb) Blt).
+Axiom eval_float_gt  : Hnf (eval_float_rel_op (@float_value.gtb) Bgt).
+Axiom eval_float_le  : Hnf (eval_float_rel_op (@float_value.leb) Ble).
+Axiom eval_float_ge  : Hnf (eval_float_rel_op (@float_value.geb) Bge).
 
 (* Special cases for <decltype(nullptr)> because they are not generally comparable *)
 Axiom eval_eq_nullptr :

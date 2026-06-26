@@ -1962,7 +1962,7 @@ Module Expr.
       | Eunresolved_string_literal t => t
       | Eint n t => Box_Eint n t
       | Ebool b => b
-      | Efloat ft v => Box_Efloat ft (float_value.to_bits ft v)
+      | Efloat ft v => Box_Efloat ft (float_value.to_bits v)
       | Eunop op e t => Box_Eunop op e t
       | Ebinop op l r t => Box_Ebinop op l r t
       | Ederef e t => Box_Ederef e t
