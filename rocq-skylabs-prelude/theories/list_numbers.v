@@ -491,6 +491,18 @@ Section listN.
     - by move => [x ->]; rewrite lengthN_one.
   Qed.
 
+  Lemma lengthN_pos_iff_ex_cons xs :
+    0 < lengthN xs <-> ∃ y ys, xs = y :: ys.
+  Proof.
+    case: xs.
+    - rewrite lengthN_nil; split.
+      + lia.
+      + by case => [?] [?].
+    - move => y ys; rewrite lengthN_cons; split.
+      + by eexists _, _.
+      + lia.
+  Qed.
+
   Lemma resizeN_spec l n x :
     resizeN n x l = takeN n l ++ replicateN (n - lengthN l) x.
   Proof.
@@ -749,6 +761,36 @@ Section listN.
   Proof.
     rewrite /rotateN/dropN/takeN/rotate.
     by rewrite !N2Nat.inj_mod to_nat_lengthN.
+  Qed.
+
+  Lemma split_atN_eq_takeN_dropN n xs :
+    split_atN n xs = (takeN n xs, dropN n xs).
+  Proof.
+    elim: xs n => [|x xs IH] n.
+    - by rewrite takeN_nil dropN_nil.
+    - rewrite /=.
+      case: (N.zero_or_succ n).
+      { by move => ->. }
+      move => [{} n ->] /=.
+      rewrite -N.succ_pos_spec N.pos_pred_succ {}IH N.succ_pos_spec.
+      by rewrite -N.add_1_r takeN_cons_succ dropN_cons_succ.
+  Qed.
+
+  Lemma split_atN_iff n xs ys0 ys1 (Hlen : (n ≤ lengthN xs)%N) :
+    split_atN n xs = (ys0, ys1) <-> lengthN ys0 = n  ∧ xs = ys0 ++ ys1.
+  Proof.
+    rewrite split_atN_eq_takeN_dropN inj2_iff.
+    split.
+    - move => [<- <-].
+      by rewrite lengthN_takeN N.min_l // takeN_dropN.
+    - move => [Hlen_ys Hxs_ys_app].
+      have Hxs_ys_app0 := f_equal (takeN n) Hxs_ys_app.
+      have Hxs_ys_app1 := f_equal (dropN n) Hxs_ys_app.
+      move: Hxs_ys_app0 Hxs_ys_app1; rewrite takeN_app dropN_app.
+      have ? : lengthN ys0 ≤ n by lia.
+      move: Hlen_ys => ->; rewrite N.sub_diag.
+      rewrite takeN_zero (takeN_lengthN _ ys0) // right_id.
+      rewrite dropN_zero (dropN_lengthN _ ys0) // left_id.
   Qed.
 
   Definition head_list {A} (xs : list A) := option_list (hd_error xs).
@@ -1089,6 +1131,67 @@ Section listN.
   Lemma dropN_zip_with {B C} (f : A -> B -> C) n xs ys :
     dropN n (zip_with f xs ys) = zip_with f (dropN n xs) (dropN n ys).
   Proof. by rewrite /dropN zip_with_drop. Qed.
+
+  Lemma takeN_cons_inv (k : N) xs0 x1 (xs1 : list A) :
+     takeN k xs0 = x1 :: xs1
+   <-> ∃ xs2, xs0 = x1 :: xs1 ++ xs2 ∧ lengthN xs1 + 1 = k `min` lengthN xs0.
+  Proof.
+    case: xs0 => [|x0 xs0].
+    { rewrite takeN_nil; split; [by []|by case => [] ? []]. }
+    case: (N.lt_ge_cases (lengthN xs0) k) => Hk.
+    { have Hmin : k `min` (lengthN xs0 + 1) = lengthN xs0 + 1 by lia.
+      rewrite takeN_lengthN ?lengthN_simpl ?Hmin; last lia.
+      setoid_rewrite (inj2_iff _ cons); split.
+      - by firstorder subst; exists []; rewrite right_id.
+      - firstorder subst.
+        move: H0 Hk; rewrite lengthN_simpl => H0 Hk.
+        have Hlen : lengthN x = 0 by lia.
+        move: Hlen => /lengthN_eq_0_iff_nil ->.
+        by rewrite right_id. }
+    case: (N.zero_or_succ k) Hk => [|[{}k]] -> Hk.
+    { rewrite takeN_zero; split => [|[]]; [by []|lia]. }
+    rewrite lengthN_cons !N.add_1_r -N.succ_min_distr.
+    have Hmin : k `min` lengthN xs0 = k by lia.
+    rewrite Hmin takeN_cons_succ'.
+    setoid_rewrite (inj2_iff _ cons); split.
+    - intuition subst.
+      exists (dropN k xs0).
+      by rewrite takeN_dropN lengthN_takeN Hmin.
+    - move => Hlhs; move: Hlhs Hk Hmin
+           => [xs2] [[]{x0} -> {xs0} ->] /inj_iff
+           => Hlen.
+      rewrite lengthN_simpl takeN_app Hlen N.sub_diag.
+      rewrite takeN_zero right_id takeN_lengthN; [by []|lia].
+  Qed.
+
+  Lemma dropN_cons_inv (k : N) xs0 x1 (xs1 : list A) :
+     dropN k xs0 = x1 :: xs1
+   <-> ∃ xs2, xs0 = xs2 ++ x1 :: xs1 ∧ lengthN xs2 = k.
+  Proof.
+    elim /N.induction : k xs0 x1 xs1 => [|n IH] xs0 x1 xs1.
+    - rewrite dropN_zero; split.
+      + move => ->; exists [].
+        rewrite lengthN_nil //.
+      + by move => [xs2] [->] /lengthN_eq_0_iff_nil ->.
+    - case: xs0 => [|x0 xs0].
+      + rewrite dropN_nil.
+        setoid_rewrite <-Permutation_nil_l.
+        setoid_rewrite Permutation_app_comm.
+        setoid_rewrite Permutation_nil_l.
+        split => [| [?] [] ] //.
+      + rewrite dropN_cons_succ' {}IH.
+        split.
+        * move => [xs2] [Hxs0 Hlen].
+          exists (x0 :: xs2).
+          rewrite /= lengthN_cons {}Hlen {}Hxs0.
+          by split; last lia.
+        * move => [xs2] [Hxs0 Hlen].
+          have Hlen_pos : 0 < lengthN xs2 by lia.
+          move: Hlen_pos Hlen Hxs0 => /lengthN_pos_iff_ex_cons [x2] [{}xs2] -> Hlen.
+          move => [=] {x0} _ {xs0} ->.
+          move: Hlen; rewrite lengthN_cons N.add_1_r (inj_iff N.succ) => Hlen.
+          by exists xs2.
+  Qed.
 
   Lemma zip_with_lookupN_Some {B C} (f : A -> B -> C) x (y : B) xs (ys : list B) i :
     xs !! i = Some x
