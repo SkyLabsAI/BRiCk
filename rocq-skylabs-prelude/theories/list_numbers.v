@@ -2779,3 +2779,66 @@ Section replicateZ_lemmas.
   Proof. intros; unfold replicateZ; rewrite lengthN_replicateN; lia. Qed.
 
 End replicateZ_lemmas.
+
+Section split_atZ_lemmas.
+  Context {A : Type}.
+  Implicit Types m n : Z.
+  #[local] Open Scope Z_scope.
+
+  Ltac done ::= solve [repeat do [tactics.done|tauto|lia|split]].
+
+  Lemma split_atZ_iff (xs xs0 xs1 : list A) n (Hi : 0 ≤ n ≤ lengthZ xs) :
+    split_atZ n xs = (xs0, xs1) <-> lengthZ xs0 = n ∧ xs = xs0 ++ xs1.
+  Proof. rewrite /split_atZ split_atN_iff //. Qed.
+
+  Lemma split_atZ_eq_takeZ_dropZ (xs : list A) n :
+    split_atZ n xs = (takeZ n xs, dropZ n xs).
+  Proof.
+    rewrite /split_atZ.
+    by rewrite split_atN_eq_takeN_dropN.
+  Qed.
+
+  Lemma split_atZ_iff_lookupZ (xs xs0 xs1 : list A) x n :
+    split_atZ n xs = (xs0, x :: xs1) <-> lengthZ xs0 = n `max` 0 ∧ xs = xs0 ++ x :: xs1.
+  Proof.
+    have [Hlen|[]Hlen] : 0 ≤ n ≤ lengthZ xs ∨ n < 0 ∨ lengthZ xs < n by lia.
+    - have -> : n `max` 0 = n by lia.
+      by rewrite split_atZ_iff.
+    - rewrite /split_atZ split_atN_eq_takeN_dropN.
+      rewrite inj2_iff.
+      have -> : Z.to_N n = 0%N by lia.
+      have -> : n `max` 0 = 0 by lia.
+      rewrite takeN_zero dropN_zero lengthZ_eq_0_iff_nil.
+      by intuition; subst.
+    - rewrite split_atZ_eq_takeZ_dropZ.
+      rewrite inj2_iff dropZ_cons_inv.
+      split.
+      + move: Hlen => /[swap] - [{xs0} <-] [xs2] [{xs} ->] Hlen_xs2 Hlen.
+        move: Hlen; rewrite lengthZ_takeZ takeZ_app !lengthN_app !lengthN_cons Hlen_xs2 Z.sub_diag => Hlen.
+        rewrite takeZ_zero app_nil_r takeZ_lengthZ //.
+      + have Hn : n `max` 0 = n by lia.
+        rewrite Hn => - [Hlen_xs0 Hxs].
+        rewrite Hxs takeZ_app Hlen_xs0 Hn Z.sub_diag takeZ_zero app_nil_r.
+        rewrite takeZ_lengthZ //.
+        firstorder.
+  Qed.
+
+  Lemma lookupZ_Some_inv (xs : list A) (i : Z) (x : A) :
+    xs !! i = Some x <-> ∃ xs0 xs1, 0 ≤ i ∧ split_atZ i xs = (xs0, x :: xs1).
+  Proof.
+    split.
+    - move => Hx.
+      have [Hi0 Hilen] : 0 ≤ i < lengthZ xs by apply lookupZ_is_Some.
+      move: Hx; rewrite lookupZ_explode => Hx.
+      setoid_rewrite split_atZ_iff_lookupZ.
+      have -> : i `max` 0 = i by lia.
+      eexists _, _; repeat split => //.
+      rewrite lengthZ_takeZ //.
+    - move => - [xs0] [xs1 [] Hi Hxs].
+      have {}Hi : i `max` 0 = i by lia.
+      move: Hi Hxs => + /split_atZ_iff_lookupZ => -> [Hlen ->].
+      rewrite lookupZ_app bool_decide_eq_false_2 //.
+      by rewrite Hlen Z.sub_diag lookupZ_cons bool_decide_eq_true_2.
+  Qed.
+
+End split_atZ_lemmas.
