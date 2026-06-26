@@ -54,6 +54,19 @@ Lemma iff_and (P Q R : Prop) :
   (P ∧ Q) <-> (P ∧ R).
 Proof. tauto. Qed.
 
+(** This is meant for proofs by WLOG. When proving <<P <-> Q>>, one can assume <<X>> if both sides
+    of the equivalence entails <<X>>, i.e. without proving that <<X> holds on its own. *)
+Lemma iff_of_both_implies {P Q} (X : Prop) :
+  (P -> X) ->
+  (Q -> X) ->
+  (X -> P <-> Q) ->
+  P <-> Q.
+Proof.
+  move => HP HQ HPQ; split.
+  - by move => /[dup] {}/HP {}/HPQ /[apply].
+  - by move => /[dup] {}/HQ {}/HPQ /[apply].
+Qed.
+
 (** Workaround https://github.com/coq/coq/issues/4230. Taken from Software Foundations. *)
 #[global] Remove Hints Bool.trans_eq_bool : core.
 

@@ -1913,6 +1913,84 @@ Section listZ.
       by split; [lia |].
   Qed.
 
+  Lemma lookupN_ZtoN {A} (xs : list A) (i : Z) : xs !! Z.to_N i = xs !! (i `max` 0).
+  Proof.
+    apply option_eq => x.
+    rewrite lookupZ_Some_to_N Z2N.inj_max /= N.max_0_r.
+    intuition; lia.
+  Qed.
+
+  #[local] Hint Rewrite @lookupN_ZtoN : lift_NtoZ.
+
+  Lemma lookupZ_Some {A} {xs : list A} {x i} :
+    xs !! i = Some x -> 0 ≤ i < lengthZ xs.
+  Proof.
+    move => Hlookup.
+    by apply lookupZ_is_Some; eexists.
+  Qed.
+
+  Lemma lookupZ_takeZ_Some {A} {xs : list A} {x i} n :
+    takeZ n xs !! i = Some x <-> xs !! i = Some x ∧ i < n.
+  Proof.
+    lift_NtoZ (H := (lookupN_takeN xs)).
+    wlog Hthis : / 0 ≤ i < n.
+    { apply iff_of_both_implies => [|[]] => /lookupZ_Some //;
+      [rewrite lengthZ_takeZ //|]; lia. }
+    rewrite {1 2}(_ : i = i `max` 0) ?H; intuition lia.
+  Qed.
+
+  Lemma lookupZ_takeZ {A} {xs : list A} {i} n (Hn : i < n) :
+    takeZ n xs !! i = xs !! i.
+  Proof.
+    apply option_eq => x.
+    rewrite lookupZ_takeZ_Some //.
+    intuition lia.
+  Qed.
+
+  Lemma lookupZ_dropZ_Some {A} {xs : list A} {x i} n :
+    dropZ n xs !! i = Some x <-> 0 ≤ i ∧ xs !! (n `max` 0 + i) = Some x.
+  Proof.
+    lift_NtoZ (H := (@lookupN_dropN A xs)).
+    wlog Hthis : / 0 ≤ i < lengthZ xs - n `max` 0.
+    { apply iff_of_both_implies => [|[]?] => /lookupZ_Some //.
+      rewrite lengthZ_dropZ //.
+      all: lia. }
+    have Hi : i = i `max` 0 by lia.
+    rewrite {1}Hi {}H -Hi.
+    rewrite (_ : (?[n] + i) `max` 0 = ?n + i) //;
+      intuition lia.
+  Qed.
+
+  Lemma lookupZ_dropZ {A} {xs : list A} {i} n (Hn : 0 ≤ i) :
+    dropZ n xs !! i = xs !! (n `max` 0 + i).
+  Proof.
+    apply option_eq => x.
+    rewrite lookupZ_dropZ_Some //.
+    intuition lia.
+  Qed.
+
+  Lemma lookupZ_explode {A} {xs : list A} {x i} :
+    xs !! i = Some x <-> xs = takeZ i xs ++ [x] ++ dropZ (i + 1) xs.
+  Proof.
+    have [|] : i < 0 ∨ 0 ≤ i by lia.
+    - move => Hi.
+      have /lookupZ_None Hnone : i < 0 ∨ lengthZ xs ≤ i by lia.
+      rewrite Hnone takeZ_zero' ?dropZ_zero'; [|lia ..].
+      split => [//|].
+      move => /(f_equal lengthN); rewrite !lengthN_simpl; lia.
+    - move => Hi.
+      split.
+      + lift_NtoZ (Hexpl := (@lookupN_explode A xs)).
+        have {}Hi : i `max` 0 = i by lia.
+        by rewrite -Hi takeZ_max_0_r => /Hexpl.
+      + move => Hexpl.
+        rewrite Hexpl lookupZ_app lengthZ_takeZ bool_decide_eq_false_2; last lia.
+        have Hi_len : i < lengthZ xs.
+        { have {}Hexpl := f_equal (fun x => lengthZ x) Hexpl.
+          move: Hexpl; rewrite !lengthN_simpl; lia. }
+        rewrite [X in _ !! X] (_ : _ = 0) //; lia.
+  Qed.
+
   Lemma lookupZ_insertZ {A} x (xs : list A) (k k' : Z) :
     <[ k' := x ]> xs !! k =
       if bool_decide (k = k' ∧ 0 ≤ k < lengthZ xs)
@@ -1964,15 +2042,6 @@ Section listZ.
     - move => ->; rewrite inj_iff; split => [|[]] //.
     - split => [|[]] //.
   Qed.
-
-  Lemma lookupN_ZtoN {A} (xs : list A) (i : Z) : xs !! Z.to_N i = xs !! (i `max` 0).
-  Proof.
-    apply option_eq => x.
-    rewrite lookupZ_Some_to_N Z2N.inj_max /= N.max_0_r.
-    intuition; lia.
-  Qed.
-
-  #[local] Hint Rewrite @lookupN_ZtoN : lift_NtoZ.
 
   Lemma takeZ_succ {A} (xs : list A) n x (Hn : xs !! n = Some x) :
     takeZ (n + 1) xs = takeZ n xs ++ [x].
