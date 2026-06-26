@@ -2498,6 +2498,80 @@ Section sliceZ.
     sliceZ m n k xs = dropZ (n - m) (takeZ (k - m) xs).
   Proof. by rewrite /sliceZ; lift_NtoZ. Qed.
 
+  Lemma sliceZ_crop_lengthZ {A} (base i j : Z) (xs : list A) :
+    sliceZ base i j xs =
+    sliceZ base
+      (i `min` (base + lengthZ xs))
+      (j `min` (base + lengthZ xs))
+      xs.
+  Proof.
+    case: (Z.le_ge_cases j i) => [Hji|Hij].
+    { rewrite !sliceZ_nil //; lia. }
+    rewrite !sliceZ_eq_dropZ_takeZ.
+    rewrite -!(Z.sub_min_distr_r,Z.sub_max_distr_r) !Z.add_simpl_l.
+    set (i' := i - base).
+    set (j' := j - base).
+    have {}Hij : i' ≤ j' by lia.
+    move: i' j' Hij => {}i {}j Hij.
+    case: (Z.min_spec_le j (lengthZ xs)) => [] [] Hle ->.
+    { rewrite Z.min_l //; lia. }
+    rewrite !takeZ_lengthZ //.
+    case: (Z.min_spec_le i (lengthZ xs)) => [] [] Hle' -> //.
+    rewrite !dropZ_lengthZ //.
+  Qed.
+
+  Lemma sliceZ_crop_base' {A} (k base i j : Z) (xs : list A) :
+    k ≤ i `max` base ->
+    sliceZ base i j xs =
+    sliceZ base
+      (i `max` base)
+      (j `max` k)
+      xs.
+  Proof.
+    move => Hki.
+    case: (Z.le_ge_cases j (i `max` base)) => [Hji|Hij].
+    { rewrite sliceZ_crop_l !sliceZ_nil //; lia. }
+    rewrite (_ : j `max` k = j `max` base) //; [|lia ..].
+    rewrite !sliceZ_eq_dropZ_takeZ.
+    rewrite -!(Z.sub_min_distr_r,Z.sub_max_distr_r) !(Z.sub_diag,Z.add_simpl_r).
+    by rewrite -dropZ_max_0_r -takeZ_max_0_r.
+  Qed.
+
+  Lemma sliceZ_crop_base {A} (base i j : Z) (xs : list A) :
+    sliceZ base i j xs =
+    sliceZ base
+      (i `max` base)
+      (j `max` i `max` base)
+      xs.
+  Proof. by rewrite -assoc; apply sliceZ_crop_base'. Qed.
+
+  Lemma sliceZ_crop_all' {A} (k base i j : Z) (xs : list A) :
+    k ≤ i `max` base ->
+    sliceZ base i j xs =
+    sliceZ base
+      ((i `max` base) `min` (base + lengthZ xs))
+      ((j `max` k) `min` (base + lengthZ xs))
+      xs.
+  Proof.
+    move => Hki.
+    by rewrite -sliceZ_crop_lengthZ -sliceZ_crop_base'.
+  Qed.
+
+  Lemma sliceZ_crop_all {A} (base i j : Z) (xs : list A) :
+    sliceZ base i j xs =
+    sliceZ base
+      ((i `max` base) `min` (base + lengthZ xs))
+      ((j `max` i `max` base) `min` (base + lengthZ xs))
+      xs.
+  Proof. by rewrite -assoc; apply sliceZ_crop_all'. Qed.
+
+  Lemma lengthZ_sliceZ {A} (base i j : Z) (xs : list A) :
+    lengthZ (sliceZ base i j xs) =   (((j - base) `max` 0) `min` lengthZ xs - (i - base) `max` 0) `max` 0.
+  Proof.
+    rewrite sliceZ_eq_dropZ_takeZ.
+    by rewrite lengthZ_dropZ lengthZ_takeZ.
+  Qed.
+
   Lemma sliceZ_insertN {A} base i j k (xs : list A) x
           (Hbase_i : (base ≤ i))
           (Hij : (i ≤ j))
