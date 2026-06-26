@@ -50,6 +50,10 @@ NES.Begin lang_version.
 
   Definition lt (lhs rhs : t) : bool :=
     bool_decide (to_N lhs < to_N rhs)%N.
+
+  Definition le (lhs rhs : t) : bool :=
+    bool_decide (to_N lhs <= to_N rhs).
+
 NES.End lang_version.
 
 Definition ident : Set := PrimString.string.
