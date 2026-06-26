@@ -560,14 +560,17 @@ with Stmt : Set :=
 | Sseq    (_ : list Stmt)
 | Sdecl   (_ : list VarDecl)
 
-| Sif     (_ : option VarDecl) (_ : Expr) (_ _ : Stmt)
+| Sif     (init : option Stmt) (decl : option VarDecl) (test : Expr) (thn els : Stmt)
+  (* ^^ if (init; decl) { ... } else { ... }
+     the test is the expressions
+   *)
 | Sif_consteval (_ _ : Stmt)
 
 | Swhile  (_ : option VarDecl) (_ : Expr) (_ : Stmt)
 | Sfor    (_ : option Stmt) (_ : option Expr) (_ : option Expr) (_ : Stmt)
 | Sdo     (_ : Stmt) (_ : Expr)
 
-| Sswitch (_ : option VarDecl) (_ : Expr) (_ : Stmt)
+| Sswitch (_ : option Stmt) (_ : option VarDecl) (_ : Expr) (_ : Stmt)
 | Scase   (_ : SwitchBranch)
 | Sdefault
 
@@ -1020,7 +1023,8 @@ with is_dependentS (s : Stmt) : bool :=
   match s with
   | Sseq ss => List.existsb is_dependentS ss
   | Sdecl ds => List.existsb is_dependentVD ds
-  | Sif ovd e thn els =>
+  | Sif os ovd e thn els =>
+      option.existsb is_dependentS os ||
       option.existsb is_dependentVD ovd || is_dependentE e || is_dependentS thn || is_dependentS els
   | Sif_consteval thn els =>
       is_dependentS thn || is_dependentS els
@@ -1029,7 +1033,8 @@ with is_dependentS (s : Stmt) : bool :=
   | Sfor os oe1 oe2 s =>
       option.existsb is_dependentS os || option.existsb is_dependentE oe1 || option.existsb is_dependentE oe2 || is_dependentS s
   | Sdo b t => is_dependentS b || is_dependentE t
-  | Sswitch ovd e s =>
+  | Sswitch os ovd e s =>
+      option.existsb is_dependentS os ||
       option.existsb is_dependentVD ovd || is_dependentE e || is_dependentS s
   | Scase _
   | Sdefault

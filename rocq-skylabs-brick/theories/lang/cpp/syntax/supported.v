@@ -263,13 +263,13 @@ Section with_monad.
     match s with
     | Sseq ss => lst stmt ss
     | Sdecl ds => lst var_decl ds
-    | Sif ovd e s1 s2 => opt var_decl ovd <+> expr e <+> stmt s1 <+> stmt s2
+    | Sif os ovd e s1 s2 => opt stmt os <+> opt var_decl ovd <+> expr e <+> stmt s1 <+> stmt s2
     | Sif_consteval _ _ => FAIL "if consteval"
     | Swhile ovd e s => opt var_decl ovd <+> expr e <+> stmt s
     | Sdo s e => stmt s <+> expr e
     | Sfor os oe1 oe2 s =>
         opt stmt os <+> opt expr oe1 <+> opt expr oe2 <+> stmt s
-    | Sswitch ovd e s => opt var_decl ovd <+> expr e <+> stmt s
+    | Sswitch os ovd e s => opt stmt os <+> opt var_decl ovd <+> expr e <+> stmt s
     | Scase _ => OK
     | Sdefault | Sbreak | Scontinue => OK
     | Sreturn oe => opt expr oe

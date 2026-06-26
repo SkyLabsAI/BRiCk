@@ -958,23 +958,27 @@ Module decltype.
                    let* '(b,d) := check_stmt s in
                    with_bindings b $ block ss
                end) ss
-        | Sif vd tst thn els =>
+        | Sif os vd tst thn els =>
+            let* '(bs, ret) := from_option check_stmt (mret (monoid.monoid_unit, None)) os in
+            with_bindings bs $
             let* ds := from_option check_decl (mret monoid.monoid_unit) vd in
+            with_bindings ds $
             let* _ :=
-              with_bindings ds $
-                let* _ := of_expr tst >>= require_testable in
-                let* _ := check_stmt thn in
-                check_stmt els
+              let* _ := of_expr tst >>= require_testable in
+              let* _ := check_stmt thn in
+              check_stmt els
             in mret (∅, None)
         | Sif_consteval thn els =>
             let* _ := check_stmt thn in
             check_stmt els
-        | Sswitch vd tst b =>
+        | Sswitch os vd tst b =>
+            let* '(bs, ret) := from_option check_stmt (mret (monoid.monoid_unit, None)) os in
+            with_bindings bs $
             let* ds := from_option check_decl (mret monoid.monoid_unit) vd in
+            with_bindings ds $
             let _ :=
-              with_bindings ds $
-                let* _ := of_expr tst >>= require_eq Tint in (* TODO: BAD *)
-                check_stmt b
+              let* _ := of_expr tst >>= require_eq Tint in (* TODO: BAD *)
+              check_stmt b
             in mret (∅, None)
         | Swhile vd tst body =>
             let* ds := from_option check_decl (mret monoid.monoid_unit) vd in
