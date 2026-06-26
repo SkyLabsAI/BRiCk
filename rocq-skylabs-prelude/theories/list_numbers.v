@@ -1342,10 +1342,20 @@ Definition replicateZ {A} (n : Z) := (replicateN (A :=A) (Z.to_N n)).
 
 Section listZ.
   #[local] Open Scope Z_scope.
+  Implicit Types i j k m n : Z.
+
 
   Lemma lengthZ_eq_sub_iff {A} (m n : Z) (xs : list A) :
     lengthZ xs = m - n <-> lengthN xs = Z.to_N (m - n) ∧ n ≤ m.
   Proof. lia. Qed.
+
+  Lemma lengthN_eq_iff_lengthZ {A} (xs : list A) (n : N) : lengthN xs = n <-> lengthZ xs = n.
+  Proof. by lia. Qed.
+
+  #[local] Hint Rewrite @lengthN_eq_iff_lengthZ : lift_NtoZ.
+
+  Lemma lengthZ_eq_0_iff_nil {A} (xs : list A) : lengthZ xs = 0 <-> xs = [].
+  Proof. by lift_NtoZ (H := (lengthN_eq_0_iff_nil (A := A))). Qed.
 
   Fixpoint list_lookupZ {A} : Lookup Z A (list A) :=
     fun k xs =>
@@ -1502,6 +1512,98 @@ Section listZ.
     lia.
   Qed.
 
+  Lemma takeN_eq_takeZ_ZofN {A} (xs : list A) (k : N) : takeN k xs = takeZ (Z.of_N k) xs.
+  Proof. by rewrite /takeZ N2Z.id. Qed.
+
+  Lemma takeZ_max_0_r {A} (xs : list A) k : takeZ (k `max` 0) xs = takeZ k xs.
+  Proof. by rewrite /takeZ Z2N.inj_max /= N.max_0_r. Qed.
+
+  Lemma takeZ_max_0_l {A} (xs : list A) k : takeZ (0 `max` k) xs = takeZ k xs.
+  Proof. by rewrite Z.max_comm takeZ_max_0_r. Qed.
+
+  #[local] Hint Rewrite @takeN_eq_takeZ_ZofN : lift_NtoZ.
+  #[local] Hint Rewrite @takeZ_max_0_l : lift_NtoZ.
+  #[local] Hint Rewrite @takeZ_max_0_r : lift_NtoZ.
+
+  Lemma lengthZ_takeZ {A} k (xs : list A) :
+    lengthZ (takeZ k xs) = (k `max` 0) `min` lengthZ xs.
+  Proof.
+    lift_NtoZ (H := (@lengthN_takeN A)).
+    apply H.
+  Qed.
+
+  Lemma takeZ_lengthZ {A} k (xs : list A) :
+    lengthZ xs ≤ k ->
+    takeZ k xs = xs.
+  Proof.
+    move => Hle_k.
+    lift_NtoZ (H := @takeN_lengthN).
+    apply H; lia.
+  Qed.
+
+  Lemma takeZ_zero' {A} (xs : list A) i (Hi : i ≤ 0) :
+    takeZ i xs = [].
+  Proof.
+    lift_NtoZ (H := @takeN_zero).
+    have {}Hi : i `max` 0 = 0 by lia.
+    by rewrite -takeZ_max_0_r Hi.
+  Qed.
+
+  Lemma takeZ_zero {A} (xs : list A) :
+    takeZ 0 xs = [].
+  Proof. by rewrite takeZ_zero' //; lia. Qed.
+
+  Lemma takeZ_nil {A} n :
+    takeZ (A := A) n [] = [].
+  Proof. by lift_NtoZ (H := (@takeN_nil A)). Qed.
+
+  Lemma takeZ_cons_of_pos {A} n x (xs : list A) :
+    1 ≤ n ->
+    takeZ n (x :: xs) = x :: takeZ (n - 1) xs.
+  Proof.
+    move => Hn.
+    have {}Hn : n `max` 1 = n by lia.
+    lift_NtoZ (H := (@takeN_cons_succ A)).
+    by rewrite -H -Z.add_max_distr_r Z.sub_add left_id Hn.
+  Qed.
+
+  Lemma takeZ_app {A} k (xs0 xs1 : list A) :
+    takeZ k (xs0 ++ xs1) =
+    takeZ k xs0 ++ takeZ (k `max` 0 - lengthZ xs0) xs1.
+  Proof.
+    lift_NtoZ (Happ := (@takeN_app A)).
+    by rewrite {}Happ.
+  Qed.
+
+  Lemma takeZ_takeZ {A} m n (xs : list A) :
+    takeZ m (takeZ n xs) = takeZ (m `min` n) xs.
+  Proof.
+    lift_NtoZ (H := (@takeN_takeN A)).
+    by rewrite H ![_ `max` 0]comm -Z.max_min_distr takeZ_max_0_l.
+  Qed.
+
+  Lemma takeZ_cons_inv {A} k (xs0 : list A) x1 xs1 :
+     takeZ k xs0 = x1 :: xs1
+   <-> ∃ xs2, xs0 = x1 :: xs1 ++ xs2 ∧ lengthZ xs1 + 1 = k `min` lengthZ xs0.
+  Proof.
+    case: (Z.le_ge_cases k 0) => Hk.
+    { rewrite takeZ_zero' // Z.min_l //;
+      firstorder (discriminate + lia). }
+    have {Hk} {2} -> : k = k `max` 0 by lia.
+    by lift_NtoZ (Hinv := (@takeN_cons_inv A)).
+  Qed.
+
+  Lemma dropN_to_dropZ {A} (xs : list A) (k : N) : dropN k xs = dropZ (Z.of_N k) xs.
+  Proof. by rewrite /dropZ N2Z.id. Qed.
+  Lemma dropZ_max_0_r {A} (xs : list A) k : dropZ (k `max` 0) xs = dropZ k xs.
+  Proof. by rewrite /dropZ Z2N.inj_max N.max_0_r. Qed.
+  Lemma dropZ_max_0_l {A} (xs : list A) k : dropZ (0 `max` k) xs = dropZ k xs.
+  Proof. by rewrite Z.max_comm dropZ_max_0_r. Qed.
+
+  #[local] Hint Rewrite @dropN_to_dropZ : lift_NtoZ.
+  #[local] Hint Rewrite @dropZ_max_0_l : lift_NtoZ.
+  #[local] Hint Rewrite @dropZ_max_0_r : lift_NtoZ.
+
   Lemma dropZ_map {A B} n (f : A -> B) (xs : list A) :
     dropZ n (map f xs) = map f (dropZ n xs).
   Proof. by rewrite /dropZ dropN_map. Qed.
@@ -1516,6 +1618,76 @@ Section listZ.
     rewrite -[X in takeZ _ X]reverse_involutive takeZ_reverse reverse_involutive.
     by rewrite lengthN_reverse Z.sub_sub_distr Z.sub_diag Z.add_0_l.
   Qed.
+
+  Lemma dropZ_lengthZ {A} n (xs : list A) :
+    lengthZ xs ≤ n ->
+    dropZ n xs = [].
+  Proof.
+    lift_NtoZ (H := (@dropN_lengthN A)).
+    apply: H.
+  Qed.
+
+  Lemma dropZ_zero' {A} (xs : list A) i (Hi : i ≤ 0) :
+    dropZ i xs = xs.
+  Proof.
+    lift_NtoZ (H := @dropN_zero).
+    have {}Hi : i `max` 0 = 0 by lia.
+    by rewrite -dropZ_max_0_r Hi.
+  Qed.
+
+  Lemma dropZ_zero {A} (xs : list A) :
+    dropZ 0 xs = xs.
+  Proof. by rewrite dropZ_zero' //; lia. Qed.
+
+  Lemma lengthZ_dropZ {A} k (xs : list A) :
+    lengthZ (dropZ k xs) = (lengthZ xs - k `max` 0) `max` 0.
+  Proof.
+    lift_NtoZ (H := (@lengthN_dropN A)).
+    rewrite H; lia.
+  Qed.
+
+  Lemma dropZ_nil {A} n :
+    dropZ (A := A) n [] = [].
+  Proof. by lift_NtoZ (H := (@dropN_nil A)). Qed.
+
+  Lemma dropZ_cons_of_pos {A} n x (xs : list A) :
+    1 ≤ n ->
+    dropZ n (x :: xs) = dropZ (n - 1) xs.
+  Proof.
+    move => Hn.
+    have {}Hn : n `max` 1 = n by lia.
+    lift_NtoZ (H := (@dropN_cons_succ A x)).
+    by rewrite -[RHS]H -Z.add_max_distr_r Z.sub_add left_id Hn.
+  Qed.
+
+  Lemma dropZ_app {A} k (xs0 xs1 : list A) :
+    dropZ k (xs0 ++ xs1) =
+    dropZ k xs0 ++ dropZ (k `max` 0 - lengthZ xs0) xs1.
+  Proof.
+    lift_NtoZ (Happ := (@dropN_app A)).
+    by rewrite {}Happ.
+  Qed.
+
+  Lemma dropZ_dropZ {A} m n (xs : list A) :
+    dropZ m (dropZ n xs) = dropZ (m `max` 0 + n `max` 0) xs.
+  Proof. by lift_NtoZ (H := (@dropN_dropN A)). Qed.
+
+  Lemma dropZ_cons_inv {A} k (xs0 : list A) x1 xs1 :
+     dropZ k xs0 = x1 :: xs1
+   <-> ∃ xs2, xs0 = xs2 ++ x1 :: xs1 ∧ lengthZ xs2 = k `max` 0.
+  Proof. by lift_NtoZ (H := (@dropN_cons_inv A)). Qed.
+
+  Lemma takeZ_dropZ {A} (xs : list A) n :
+    takeZ n xs ++ dropZ n xs = xs.
+  Proof. by lift_NtoZ (H := (@takeN_dropN A)). Qed.
+
+  Lemma takeZ_dropZ_commute {A} (xs : list A) n m :
+    takeZ n (dropZ m xs) = dropZ m (takeZ (m `max` 0 + n `max` 0) xs).
+  Proof. by lift_NtoZ (H := (@takeN_dropN_commute A)). Qed.
+
+  Lemma dropZ_takeZ {A} (xs : list A) n m :
+    dropZ n (takeZ m xs) = takeZ (m `max` 0 - n `max` 0) (dropZ n xs).
+  Proof. by lift_NtoZ (H := (@dropN_takeN A)). Qed.
 
   Lemma insertZ_nil {A} (i : Z) (x : A) : <[i:=x]>[] = [].
   Proof. rewrite /insert /list_insertZ; case: bool_decide_reflect => //. Qed.
@@ -1792,6 +1964,74 @@ Section listZ.
     - move => ->; rewrite inj_iff; split => [|[]] //.
     - split => [|[]] //.
   Qed.
+
+  Lemma lookupN_ZtoN {A} (xs : list A) (i : Z) : xs !! Z.to_N i = xs !! (i `max` 0).
+  Proof.
+    apply option_eq => x.
+    rewrite lookupZ_Some_to_N Z2N.inj_max /= N.max_0_r.
+    intuition; lia.
+  Qed.
+
+  #[local] Hint Rewrite @lookupN_ZtoN : lift_NtoZ.
+
+  Lemma takeZ_succ {A} (xs : list A) n x (Hn : xs !! n = Some x) :
+    takeZ (n + 1) xs = takeZ n xs ++ [x].
+  Proof.
+    lift_NtoZ (H := (takeN_S_r' x xs)).
+    have /lookupZ_is_Some Hn' : is_Some _ := ex_intro _ _ Hn.
+    move: Hn.
+    have {1 2} -> : n = n `max` 0 by lia.
+    apply H.
+  Qed.
+
+  Lemma takeZ_succ_iff' {A} (xs ys : list A) n x :
+    n < lengthZ xs ∧ takeZ (n + 1) xs = ys ++ [x] <-> takeZ n xs = ys ∧ xs !! n = Some x.
+  Proof.
+    split.
+    - move => [Hn Hdrop].
+      have {}Hn : 0 ≤ n < lengthZ xs.
+      { have Hlen := f_equal (fun x => lengthZ x) Hdrop.
+        rewrite lengthZ_takeZ !lengthN_simpl in Hlen.
+        split => //; lia. }
+      move: (Hn) => /lookupZ_is_Some [x' Hx'].
+      move: Hdrop; rewrite Hx' inj_iff (takeZ_succ _ _ _ Hx').
+      by rewrite app_inj_tail_iff.
+    - move => [] /[swap] /[dup] Hlookup /(takeZ_succ (A := A)) -> ->.
+      have {}Hlookup : is_Some _ := ex_intro _ _ Hlookup.
+      by move: Hlookup => /lookupZ_is_Some [].
+  Qed.
+
+  Lemma takeZ_succ_iff {A} {xs ys n x} (Hn : n < lengthZ xs) :
+    takeZ (A := A) (n + 1) xs = ys ++ [x] <-> takeZ n xs = ys ∧ xs !! n = Some x.
+  Proof. rewrite -takeZ_succ_iff' //; intuition lia. Qed.
+
+  Lemma dropZ_succ {A} (xs : list A) n x (Hn : xs !! n = Some x) :
+    dropZ n xs = x :: dropZ (n + 1) xs.
+  Proof.
+    lift_NtoZ (H := (dropN_S xs)).
+    have /lookupZ_is_Some Hn' : is_Some _ := ex_intro _ _ Hn.
+    move: Hn.
+    have {1 3} -> : n = n `max` 0 by lia.
+    apply H.
+  Qed.
+
+  Lemma dropZ_succ_iff' {A} (xs ys : list A) n x :
+    0 ≤ n ∧ dropZ n xs = x :: ys <-> dropZ (n + 1) xs = ys ∧ xs !! n = Some x.
+  Proof.
+    split.
+    - move => [?] /dropZ_cons_inv [xs2] [Happ].
+      rewrite Z.max_l // Happ dropZ_app Z.max_l //; [|lia ..].
+      move => Hlen; rewrite Hlen lookupZ_app bool_decide_eq_false_2 //; [|lia ..].
+      rewrite lookupZ_cons bool_decide_eq_true_2 //; [|lia ..].
+      rewrite dropZ_lengthZ ?(dropZ_cons_of_pos,dropZ_zero',left_id) //; lia.
+    - move => [] /[swap] /[dup] Hxs /(dropZ_succ xs) -> ->.
+      have [Hi0 Hilen] : 0 ≤ n < lengthZ xs by apply lookupZ_is_Some.
+      by [].
+  Qed.
+
+  Lemma dropZ_succ_iff {A} (xs ys : list A) n x (Hn : 0 ≤ n) :
+    dropZ n xs = x :: ys <-> dropZ (n + 1) xs = ys ∧ xs !! n = Some x.
+  Proof. rewrite -dropZ_succ_iff' //; intuition lia. Qed.
 
   (** For every occurrences of [bool_decide] in the conclusion where the conclusion is known to be
       true or known to be false, perform the substitution. *)
@@ -2253,6 +2493,10 @@ Section sliceZ.
     rewrite -!Z.sub_max_distr_r Z.sub_diag Z_to_N_max_0.
     by rewrite -(Z_to_N_max_0 (j - i)) -Z2N.inj_add // -Z.add_max_distr_r Z.add_0_l Hi_cancel Z.max_comm.
   Qed.
+
+  Lemma sliceZ_eq_dropZ_takeZ {A} (xs : list A) m n k :
+    sliceZ m n k xs = dropZ (n - m) (takeZ (k - m) xs).
+  Proof. by rewrite /sliceZ; lift_NtoZ. Qed.
 
   Lemma sliceZ_insertN {A} base i j k (xs : list A) x
           (Hbase_i : (base ≤ i))
