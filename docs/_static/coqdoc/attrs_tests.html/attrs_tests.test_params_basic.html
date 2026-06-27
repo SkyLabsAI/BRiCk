@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">attrs_tests.test_params_basic</h1>
+
+<div class="code">
+<span class="comment">(************************************************************************)</span><br/>
+<span class="comment">(*&nbsp;Basic&nbsp;contract:&nbsp;importing&nbsp;attrs.ParamsAttr&nbsp;is&nbsp;enough,&nbsp;and&nbsp;user&nbsp;names&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;called&nbsp;Params&nbsp;do&nbsp;not&nbsp;affect&nbsp;the&nbsp;registered&nbsp;Stdlib/Corelib&nbsp;class.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(************************************************************************)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">attrs.ParamsAttr</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">params</span>="0"] <span class="id" title="keyword">Definition</span> <a id="only_import" class="idref" href="#only_import"><span class="id" title="definition">only_import</span></a> (<a id="x:1" class="idref" href="#x:1"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> := <a class="idref" href="attrs_tests.test_params_basic.html#x:1"><span class="id" title="variable">x</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="only_import_ok" class="idref" href="#only_import_ok"><span class="id" title="definition">only_import_ok</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Classes.Morphisms.html#Params"><span class="id" title="class">Params</span></a> <a class="idref" href="attrs_tests.test_params_basic.html#only_import"><span class="id" title="definition">only_import</span></a> 0 := <span class="id" title="keyword">ltac</span>:(<span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">Inductive</span> <a id="Params" class="idref" href="#Params"><span class="id" title="definition, inductive"><span id="Params_rect" class="id"><span id="Params_ind" class="id"><span id="Params_rec" class="id"><span id="Params_sind" class="id">Params</span></span></span></span></span></a> : <span class="id" title="keyword">Type</span> := <a id="dummy" class="idref" href="#dummy"><span class="id" title="constructor">dummy</span></a>.<br/>
+#[<span class="id" title="var">params</span>="0"] <span class="id" title="keyword">Definition</span> <a id="shadowed" class="idref" href="#shadowed"><span class="id" title="definition">shadowed</span></a> (<a id="x:4" class="idref" href="#x:4"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> := <a class="idref" href="attrs_tests.test_params_basic.html#x:4"><span class="id" title="variable">x</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="shadowed_ok" class="idref" href="#shadowed_ok"><span class="id" title="definition">shadowed_ok</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Classes.Morphisms.html#Params"><span class="id" title="class">Corelib.Classes.Morphisms.Params</span></a> <a class="idref" href="attrs_tests.test_params_basic.html#shadowed"><span class="id" title="definition">shadowed</span></a> 0 :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">ltac</span>:(<span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="LocalShadow" class="idref" href="#LocalShadow"><span class="id" title="module">LocalShadow</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="LocalShadow.Params" class="idref" href="#LocalShadow.Params"><span class="id" title="definition">Params</span></a> := <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">params</span>="0"] <span class="id" title="keyword">Definition</span> <a id="LocalShadow.shadowed2" class="idref" href="#LocalShadow.shadowed2"><span class="id" title="definition">shadowed2</span></a> (<a id="x:5" class="idref" href="#x:5"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> := <a class="idref" href="attrs_tests.test_params_basic.html#x:5"><span class="id" title="variable">x</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="LocalShadow.shadowed2_ok" class="idref" href="#LocalShadow.shadowed2_ok"><span class="id" title="definition">shadowed2_ok</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Classes.Morphisms.html#Params"><span class="id" title="class">Corelib.Classes.Morphisms.Params</span></a> <a class="idref" href="attrs_tests.test_params_basic.html#LocalShadow.shadowed2"><span class="id" title="definition">shadowed2</span></a> 0 :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">ltac</span>:(<span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>).<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="attrs_tests.test_params_basic.html#LocalShadow"><span class="id" title="module">LocalShadow</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="AbbrevShadow" class="idref" href="#AbbrevShadow"><span class="id" title="module">AbbrevShadow</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">Abbreviation</span> <a id="AbbrevShadow.Params" class="idref" href="#AbbrevShadow.Params"><span class="id" title="abbreviation">Params</span></a> := <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">params</span>="0"] <span class="id" title="keyword">Definition</span> <a id="AbbrevShadow.shadowed3" class="idref" href="#AbbrevShadow.shadowed3"><span class="id" title="definition">shadowed3</span></a> (<a id="x:6" class="idref" href="#x:6"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> := <a class="idref" href="attrs_tests.test_params_basic.html#x:6"><span class="id" title="variable">x</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="AbbrevShadow.shadowed3_ok" class="idref" href="#AbbrevShadow.shadowed3_ok"><span class="id" title="definition">shadowed3_ok</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Classes.Morphisms.html#Params"><span class="id" title="class">Corelib.Classes.Morphisms.Params</span></a> <a class="idref" href="attrs_tests.test_params_basic.html#AbbrevShadow.shadowed3"><span class="id" title="definition">shadowed3</span></a> 0 :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">ltac</span>:(<span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>).<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="attrs_tests.test_params_basic.html#AbbrevShadow"><span class="id" title="module">AbbrevShadow</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

@@ -1,0 +1,203 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">attrs_tests.test_params</h1>
+
+<div class="code">
+<span class="comment">(************************************************************************)</span><br/>
+<span class="comment">(*&nbsp;Test&nbsp;suite&nbsp;for&nbsp;the&nbsp;<span class="inlinecode">#[<span class="id" title="var">params</span>=&quot;<span class="id" title="var">N</span>&quot;]</span>&nbsp;attribute.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;CONVENTION:&nbsp;positive&nbsp;checks&nbsp;should&nbsp;compile,&nbsp;while&nbsp;negative&nbsp;checks&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;are&nbsp;wrapped&nbsp;in&nbsp;<span class="inlinecode"><span class="id" title="var">Fail</span></span>.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;Observable:&nbsp;<span class="inlinecode"><span class="id" title="keyword">Check</span></span> <span class="inlinecode"><span class="id" title="var">CHECK</span></span> <span class="inlinecode"><span class="id" title="var">c</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span>&nbsp;succeeds&nbsp;iff&nbsp;constant&nbsp;<span class="inlinecode"><span class="id" title="var">c</span></span>&nbsp;has&nbsp;a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;registered&nbsp;<span class="inlinecode"><span class="id" title="var">Params</span></span> <span class="inlinecode"><span class="id" title="var">c</span></span> <span class="inlinecode"><span class="id" title="var">n</span></span>&nbsp;instance.&nbsp;In&nbsp;a&nbsp;section,&nbsp;the&nbsp;intended&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;implementation&nbsp;records&nbsp;the&nbsp;arity&nbsp;AND&nbsp;registers&nbsp;a&nbsp;local&nbsp;hint,&nbsp;while&nbsp;a&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;correct&nbsp;global&nbsp;hint&nbsp;is&nbsp;installed&nbsp;at&nbsp;section&nbsp;close.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(************************************************************************)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">attrs.ParamsAttr</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="getParams" class="idref" href="#getParams"><span class="id" title="definition">getParams</span></a> {<a id="A:1" class="idref" href="#A:1"><span class="id" title="binder">A</span></a> <a id="n:2" class="idref" href="#n:2"><span class="id" title="binder">n</span></a>} (<a id="x:3" class="idref" href="#x:3"><span class="id" title="binder">x</span></a> : <a class="idref" href="attrs_tests.test_params.html#A:1"><span class="id" title="variable">A</span></a>) `{<a id="Params0:4" class="idref" href="#Params0:4"><span class="id" title="binder">!</span></a><a id="Params0:4" class="idref" href="#Params0:4"><span class="id" title="binder">Params</span></a> <a id="Params0:4" class="idref" href="#Params0:4"><span class="id" title="binder">x</span></a> <a id="Params0:4" class="idref" href="#Params0:4"><span class="id" title="binder">n</span></a>} : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> := <a class="idref" href="attrs_tests.test_params.html#n:2"><span class="id" title="variable">n</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Notation</span> <a id="CHECK" class="idref" href="#CHECK"><span class="id" title="abbreviation">CHECK</span></a> <span class="id" title="var">id</span> <span class="id" title="var">n</span> := (<span class="id" title="keyword">ltac</span>:(<span class="id" title="var">typeclasses</span> <span class="id" title="tactic">eauto</span>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Classes.Morphisms.html#Params"><span class="id" title="class">Params</span></a> <span class="id" title="var">id</span> <span class="id" title="var">n</span>) (<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
+
+<br/>
+<span class="comment">(*======================================================================*)</span><br/>
+<span class="comment">(*&nbsp;A.&nbsp;Outside&nbsp;any&nbsp;section:&nbsp;arity&nbsp;is&nbsp;recorded&nbsp;verbatim&nbsp;and&nbsp;persists.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(*======================================================================*)</span><br/>
+
+<br/>
+#[<span class="id" title="var">params</span>="0"] <span class="id" title="keyword">Definition</span> <a id="idnat" class="idref" href="#idnat"><span class="id" title="definition">idnat</span></a> (<a id="x:5" class="idref" href="#x:5"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> := <a class="idref" href="attrs_tests.test_params.html#x:5"><span class="id" title="variable">x</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Check</span> <a class="idref" href="attrs_tests.test_params.html#CHECK"><span class="id" title="abbreviation">CHECK</span></a> <a class="idref" href="attrs_tests.test_params.html#idnat"><span class="id" title="definition">idnat</span></a> 0.<br/>
+<span class="id" title="var">Fail</span> <span class="id" title="keyword">Check</span> <a class="idref" href="attrs_tests.test_params.html#CHECK"><span class="id" title="abbreviation">CHECK</span></a> <a class="idref" href="attrs_tests.test_params.html#idnat"><span class="id" title="definition">idnat</span></a> 1.<br/>
+<span class="id" title="var">Fail</span> <span class="id" title="keyword">Check</span> <a class="idref" href="attrs_tests.test_params.html#CHECK"><span class="id" title="abbreviation">CHECK</span></a> <a class="idref" href="attrs_tests.test_params.html#idnat"><span class="id" title="definition">idnat</span></a> 2.<br/>
+
+<br/>
+<span class="comment">(*======================================================================*)</span><br/>
+<span class="comment">(*&nbsp;B.&nbsp;Section;&nbsp;definition&nbsp;uses&nbsp;BOTH&nbsp;implicit&nbsp;section&nbsp;variables&nbsp;and&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;leaves&nbsp;one&nbsp;section&nbsp;variable&nbsp;UNUSED.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;-&gt;&nbsp;at&nbsp;End&nbsp;Section&nbsp;the&nbsp;arity&nbsp;is&nbsp;bumped&nbsp;by&nbsp;the&nbsp;number&nbsp;of&nbsp;section&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;variables&nbsp;ACTUALLY&nbsp;USED&nbsp;(2),&nbsp;not&nbsp;by&nbsp;all&nbsp;section&nbsp;variables&nbsp;(3).&nbsp;*)</span><br/>
+<span class="comment">(*======================================================================*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="Sec1" class="idref" href="#Sec1"><span class="id" title="section">Sec1</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="Sec1.A" class="idref" href="#Sec1.A"><span class="id" title="variable">A</span></a> : <span class="id" title="keyword">Type</span>}. <span class="comment">(*&nbsp;implicit&nbsp;section&nbsp;variable,&nbsp;used&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="Sec1.B" class="idref" href="#Sec1.B"><span class="id" title="variable">B</span></a> : <span class="id" title="keyword">Type</span>}. <span class="comment">(*&nbsp;implicit&nbsp;section&nbsp;variable,&nbsp;used&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Variable</span> <a id="Sec1.unused" class="idref" href="#Sec1.unused"><span class="id" title="variable">unused</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>. <span class="comment">(*&nbsp;section&nbsp;variable&nbsp;NOT&nbsp;used&nbsp;by&nbsp;pairAB&nbsp;*)</span><br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">params</span>="3"] <span class="id" title="keyword">Definition</span> <a id="pairAB" class="idref" href="#pairAB"><span class="id" title="definition">pairAB</span></a> (<a id="x:10" class="idref" href="#x:10"><span class="id" title="binder">x</span></a> : <a class="idref" href="attrs_tests.test_params.html#Sec1.A"><span class="id" title="variable">A</span></a>) (<a id="y:11" class="idref" href="#y:11"><span class="id" title="binder">y</span></a> : <a class="idref" href="attrs_tests.test_params.html#Sec1.B"><span class="id" title="variable">B</span></a>) : <a class="idref" href="attrs_tests.test_params.html#Sec1.A"><span class="id" title="variable">A</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">*</span></a> <a class="idref" href="attrs_tests.test_params.html#Sec1.B"><span class="id" title="variable">B</span></a> := <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="attrs_tests.test_params.html#x:10"><span class="id" title="variable">x</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="attrs_tests.test_params.html#y:11"><span class="id" title="variable">y</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;params&nbsp;generated&nbsp;an&nbsp;instance&nbsp;with&nbsp;arity&nbsp;3,&nbsp;and&nbsp;that&nbsp;instance&nbsp;must&nbsp;preserve<br/>
+&nbsp;&nbsp;its&nbsp;type&nbsp;after&nbsp;section&nbsp;ends&nbsp;(unlike&nbsp;the&nbsp;actual&nbsp;constant&nbsp;<span class="inlinecode"><span class="id" title="var">pairAB</span></span>.&nbsp;Otherwise,<br/>
+&nbsp;&nbsp;this&nbsp;code&nbsp;would&nbsp;become&nbsp;ill-typed&nbsp;after&nbsp;cooking:&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">getParams</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">(@</span></a><a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">pairAB</span></a><a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">)</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">=</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">3</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Inside&nbsp;the&nbsp;section&nbsp;the&nbsp;recorded&nbsp;arity&nbsp;is&nbsp;the&nbsp;literal&nbsp;3.&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Check</span> <a class="idref" href="attrs_tests.test_params.html#CHECK"><span class="id" title="abbreviation">CHECK</span></a> <a class="idref" href="attrs_tests.test_params.html#pairAB"><span class="id" title="definition">pairAB</span></a> 3. <span class="comment">(*&nbsp;(P)&nbsp;in-section&nbsp;arity&nbsp;is&nbsp;3&nbsp;*)</span><br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="attrs_tests.test_params.html#Sec1"><span class="id" title="section">Sec1</span></a>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;After&nbsp;cooking:&nbsp;pairAB&nbsp;:&nbsp;forall&nbsp;(A&nbsp;B&nbsp;:&nbsp;Type),&nbsp;A&nbsp;-&gt;&nbsp;B&nbsp;-&gt;&nbsp;A&nbsp;*&nbsp;B.<br/>
+&nbsp;&nbsp;&nbsp;It&nbsp;depends&nbsp;on&nbsp;A&nbsp;and&nbsp;B&nbsp;(2&nbsp;variables);&nbsp;<span class="inlinecode"><span class="id" title="var">unused</span></span>&nbsp;is&nbsp;not&nbsp;used.&nbsp;*)</span><br/>
+<span class="id" title="keyword">Check</span> <a class="idref" href="attrs_tests.test_params.html#CHECK"><span class="id" title="abbreviation">CHECK</span></a> (@<a class="idref" href="attrs_tests.test_params.html#pairAB"><span class="id" title="definition">pairAB</span></a>) 5. <span class="comment">(*&nbsp;(P)&nbsp;3&nbsp;+&nbsp;2&nbsp;used&nbsp;section&nbsp;vars&nbsp;=&nbsp;5&nbsp;*)</span><br/>
+<span class="id" title="var">Fail</span> <span class="id" title="keyword">Check</span> <a class="idref" href="attrs_tests.test_params.html#CHECK"><span class="id" title="abbreviation">CHECK</span></a> (@<a class="idref" href="attrs_tests.test_params.html#pairAB"><span class="id" title="definition">pairAB</span></a>) 3. <span class="comment">(*&nbsp;(N)&nbsp;the&nbsp;in-section&nbsp;(arity&nbsp;3)&nbsp;registration&nbsp;was&nbsp;a<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[local] hint and must NOT persist *)</span><br/>
+<span class="id" title="var">Fail</span> <span class="id" title="keyword">Check</span> <a class="idref" href="attrs_tests.test_params.html#CHECK"><span class="id" title="abbreviation">CHECK</span></a> (@<a class="idref" href="attrs_tests.test_params.html#pairAB"><span class="id" title="definition">pairAB</span></a>) 6. <span class="comment">(*&nbsp;(N)&nbsp;would&nbsp;be&nbsp;6&nbsp;only&nbsp;if&nbsp;the&nbsp;UNUSED&nbsp;section<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;variable&nbsp;were&nbsp;(wrongly)&nbsp;counted&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*======================================================================*)</span><br/>
+<span class="comment">(*&nbsp;C.&nbsp;Section;&nbsp;definition&nbsp;uses&nbsp;only&nbsp;ONE&nbsp;of&nbsp;two&nbsp;section&nbsp;variables.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(*======================================================================*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="Sec2" class="idref" href="#Sec2"><span class="id" title="section">Sec2</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="Sec2.A" class="idref" href="#Sec2.A"><span class="id" title="variable">A</span></a> : <span class="id" title="keyword">Type</span>}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="Sec2.B" class="idref" href="#Sec2.B"><span class="id" title="variable">B</span></a> : <span class="id" title="keyword">Type</span>}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">params</span>="3"] <span class="id" title="keyword">Definition</span> <a id="useA" class="idref" href="#useA"><span class="id" title="definition">useA</span></a> (<a id="x:14" class="idref" href="#x:14"><span class="id" title="binder">x</span></a> : <a class="idref" href="attrs_tests.test_params.html#Sec2.A"><span class="id" title="variable">A</span></a>) : <a class="idref" href="attrs_tests.test_params.html#Sec2.A"><span class="id" title="variable">A</span></a> := <a class="idref" href="attrs_tests.test_params.html#x:14"><span class="id" title="variable">x</span></a>. <span class="comment">(*&nbsp;uses&nbsp;A&nbsp;only,&nbsp;not&nbsp;B&nbsp;*)</span><br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Check</span> <a class="idref" href="attrs_tests.test_params.html#CHECK"><span class="id" title="abbreviation">CHECK</span></a> <a class="idref" href="attrs_tests.test_params.html#useA"><span class="id" title="definition">useA</span></a> 3. <span class="comment">(*&nbsp;(P)&nbsp;in-section&nbsp;arity&nbsp;is&nbsp;3&nbsp;*)</span><br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="attrs_tests.test_params.html#Sec2"><span class="id" title="section">Sec2</span></a>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;useA&nbsp;:&nbsp;forall&nbsp;(A&nbsp;:&nbsp;Type),&nbsp;A&nbsp;-&gt;&nbsp;A.&nbsp;Depends&nbsp;on&nbsp;A&nbsp;only.&nbsp;*)</span><br/>
+<span class="id" title="keyword">Check</span> <a class="idref" href="attrs_tests.test_params.html#CHECK"><span class="id" title="abbreviation">CHECK</span></a> (@<a class="idref" href="attrs_tests.test_params.html#useA"><span class="id" title="definition">useA</span></a>) 4. <span class="comment">(*&nbsp;(P)&nbsp;3&nbsp;+&nbsp;1&nbsp;used&nbsp;section&nbsp;var&nbsp;=&nbsp;4&nbsp;*)</span><br/>
+<span class="id" title="var">Fail</span> <span class="id" title="keyword">Check</span> <a class="idref" href="attrs_tests.test_params.html#CHECK"><span class="id" title="abbreviation">CHECK</span></a> (@<a class="idref" href="attrs_tests.test_params.html#useA"><span class="id" title="definition">useA</span></a>) 5. <span class="comment">(*&nbsp;(N)&nbsp;B&nbsp;is&nbsp;unused,&nbsp;so&nbsp;not&nbsp;+2&nbsp;*)</span><br/>
+<span class="id" title="var">Fail</span> <span class="id" title="keyword">Check</span> <a class="idref" href="attrs_tests.test_params.html#CHECK"><span class="id" title="abbreviation">CHECK</span></a> (@<a class="idref" href="attrs_tests.test_params.html#useA"><span class="id" title="definition">useA</span></a>) 3. <span class="comment">(*&nbsp;(N)&nbsp;in-section&nbsp;registration&nbsp;does&nbsp;not&nbsp;persist&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*======================================================================*)</span><br/>
+<span class="comment">(*&nbsp;D.&nbsp;Section;&nbsp;definition&nbsp;uses&nbsp;NO&nbsp;section&nbsp;variables&nbsp;(bump&nbsp;0).&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;global&nbsp;registration&nbsp;installed&nbsp;at&nbsp;section&nbsp;close&nbsp;keeps&nbsp;arity&nbsp;3.&nbsp;*)</span><br/>
+<span class="comment">(*======================================================================*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="Sec3" class="idref" href="#Sec3"><span class="id" title="section">Sec3</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="Sec3.A" class="idref" href="#Sec3.A"><span class="id" title="variable">A</span></a> : <span class="id" title="keyword">Type</span>}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">params</span>="3"] <span class="id" title="keyword">Definition</span> <a id="noDeps" class="idref" href="#noDeps"><span class="id" title="definition">noDeps</span></a> (<a id="x:16" class="idref" href="#x:16"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> := <a class="idref" href="attrs_tests.test_params.html#x:16"><span class="id" title="variable">x</span></a>. <span class="comment">(*&nbsp;no&nbsp;section&nbsp;vars&nbsp;used&nbsp;*)</span><br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Check</span> <a class="idref" href="attrs_tests.test_params.html#CHECK"><span class="id" title="abbreviation">CHECK</span></a> <a class="idref" href="attrs_tests.test_params.html#noDeps"><span class="id" title="definition">noDeps</span></a> 3. <span class="comment">(*&nbsp;(P)&nbsp;in-section&nbsp;arity&nbsp;is&nbsp;3&nbsp;*)</span><br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="attrs_tests.test_params.html#Sec3"><span class="id" title="section">Sec3</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Check</span> <a class="idref" href="attrs_tests.test_params.html#CHECK"><span class="id" title="abbreviation">CHECK</span></a> <a class="idref" href="attrs_tests.test_params.html#noDeps"><span class="id" title="definition">noDeps</span></a> 3. <span class="comment">(*&nbsp;(P)&nbsp;persists&nbsp;with&nbsp;arity&nbsp;3&nbsp;(0&nbsp;section&nbsp;vars&nbsp;used)&nbsp;*)</span><br/>
+
+<br/>
+<span class="comment">(*======================================================================*)</span><br/>
+<span class="comment">(*&nbsp;E.&nbsp;Locality:&nbsp;a&nbsp;registration&nbsp;made&nbsp;inside&nbsp;a&nbsp;section&nbsp;does&nbsp;not&nbsp;leak&nbsp;out&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;while&nbsp;the&nbsp;section&nbsp;is&nbsp;still&nbsp;open&nbsp;elsewhere.&nbsp;&nbsp;Here&nbsp;we&nbsp;check&nbsp;that&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;after&nbsp;closing&nbsp;Sec1/Sec2&nbsp;above,&nbsp;the&nbsp;old&nbsp;in-section&nbsp;arities&nbsp;are&nbsp;gone&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;(covered&nbsp;by&nbsp;the&nbsp;(N)&nbsp;lines&nbsp;in&nbsp;B&nbsp;and&nbsp;C),&nbsp;and&nbsp;that&nbsp;re-opening&nbsp;a&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;section&nbsp;does&nbsp;not&nbsp;see&nbsp;stale&nbsp;entries.&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+<span class="comment">(*======================================================================*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="Sec4" class="idref" href="#Sec4"><span class="id" title="section">Sec4</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="Sec4.A" class="idref" href="#Sec4.A"><span class="id" title="variable">A</span></a> : <span class="id" title="keyword">Type</span>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;Nothing&nbsp;recorded&nbsp;for&nbsp;<span class="inlinecode"><span class="id" title="var">pairAB</span></span>&nbsp;at&nbsp;its&nbsp;OLD&nbsp;in-section&nbsp;arity&nbsp;should&nbsp;be<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;visible&nbsp;here&nbsp;either.&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">Fail</span> <span class="id" title="keyword">Check</span> <a class="idref" href="attrs_tests.test_params.html#CHECK"><span class="id" title="abbreviation">CHECK</span></a> (@<a class="idref" href="attrs_tests.test_params.html#pairAB"><span class="id" title="definition">pairAB</span></a>) 3. <span class="comment">(*&nbsp;(N)&nbsp;never&nbsp;persists&nbsp;at&nbsp;arity&nbsp;3&nbsp;*)</span><br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">params</span>="2"] <span class="id" title="keyword">Definition</span> <a id="local_in_sec" class="idref" href="#local_in_sec"><span class="id" title="definition">local_in_sec</span></a> (<a id="x:18" class="idref" href="#x:18"><span class="id" title="binder">x</span></a> : <a class="idref" href="attrs_tests.test_params.html#Sec4.A"><span class="id" title="variable">A</span></a>) : <a class="idref" href="attrs_tests.test_params.html#Sec4.A"><span class="id" title="variable">A</span></a> := <a class="idref" href="attrs_tests.test_params.html#x:18"><span class="id" title="variable">x</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Check</span> <a class="idref" href="attrs_tests.test_params.html#CHECK"><span class="id" title="abbreviation">CHECK</span></a> <a class="idref" href="attrs_tests.test_params.html#local_in_sec"><span class="id" title="definition">local_in_sec</span></a> 2. <span class="comment">(*&nbsp;(P)&nbsp;visible&nbsp;inside&nbsp;its&nbsp;own&nbsp;section&nbsp;*)</span><br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="attrs_tests.test_params.html#Sec4"><span class="id" title="section">Sec4</span></a>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;local_in_sec&nbsp;:&nbsp;forall&nbsp;A,&nbsp;A&nbsp;-&gt;&nbsp;A;&nbsp;uses&nbsp;A&nbsp;(1&nbsp;var)&nbsp;=&gt;&nbsp;2&nbsp;+&nbsp;1&nbsp;=&nbsp;3&nbsp;after&nbsp;close.&nbsp;*)</span><br/>
+<span class="id" title="keyword">Check</span> <a class="idref" href="attrs_tests.test_params.html#CHECK"><span class="id" title="abbreviation">CHECK</span></a> (@<a class="idref" href="attrs_tests.test_params.html#local_in_sec"><span class="id" title="definition">local_in_sec</span></a>) 3. <span class="comment">(*&nbsp;(P)&nbsp;persisted,&nbsp;bumped&nbsp;to&nbsp;3&nbsp;*)</span><br/>
+<span class="id" title="var">Fail</span> <span class="id" title="keyword">Check</span> <a class="idref" href="attrs_tests.test_params.html#CHECK"><span class="id" title="abbreviation">CHECK</span></a> (@<a class="idref" href="attrs_tests.test_params.html#local_in_sec"><span class="id" title="definition">local_in_sec</span></a>) 2. <span class="comment">(*&nbsp;(N)&nbsp;in-section&nbsp;arity&nbsp;2&nbsp;does&nbsp;not&nbsp;persist&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Search</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Classes.Morphisms.html#Params"><span class="id" title="class">Params</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
