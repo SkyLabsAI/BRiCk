@@ -1,0 +1,7 @@
+(include_subdirs qualified)
+(rocq.theory
+ (name attrs_tests)
+ (generate_project_file)
+ (theories
+  Stdlib
+  attrs))
