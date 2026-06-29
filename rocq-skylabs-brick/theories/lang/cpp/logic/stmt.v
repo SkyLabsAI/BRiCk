@@ -413,17 +413,26 @@ Module Type Stmt.
 
     (** * <<if>> *)
 
-    Axiom wp_if : forall ρ e thn els Q,
-        |> Unfold WPE.wp_test (wp_test tu ρ e (fun c free =>
-               interp free $
-               if c
-               then wp ρ thn Q
-               else wp ρ els Q))
-      |-- wp ρ (Sif None e thn els) Q.
+    Definition pre_stmt (init : option Stmt) (decl : option VarDecl) : option (list Stmt) :=
+      match init , decl with
+      | None , None      => None
+      | Some s , None    => Some [s]
+      | None , Some vd   => Some [Sdecl [vd]]
+      | Some s , Some vd => Some [s; Sdecl [vd]]
+      end.
 
-    Axiom wp_if_decl : forall ρ d e thn els Q,
-        wp ρ (Sseq (Sdecl (d :: nil) :: Sif None e thn els :: nil)) Q
-        |-- wp ρ (Sif (Some d) e thn els) Q.
+    Axiom wp_if : forall ρ init decl e thn els Q,
+        match pre_stmt init decl with
+        | None =>
+        |> letI* c , free := Unfold WPE.wp_test (wp_test tu ρ e) in
+           interp free $
+             if c
+             then wp ρ thn Q
+             else wp ρ els Q
+        | Some ss =>
+            wp ρ (Sseq (ss ++ [Sif None None e thn els])) Q
+        end
+      |-- wp ρ (Sif init decl e thn els) Q.
 
     (* The loops are phrased using 1-step unfoldings and invariant rules are
        proved using Löb induction.
@@ -449,7 +458,7 @@ Module Type Stmt.
     (** * <<while>> *)
 
     Definition while_unroll ρ decl test body :=
-      wp ρ (Sif decl test body Sbreak).
+      wp ρ (Sif None decl test body Sbreak).
 
     Axiom wp_while_unroll : forall ρ decl test body Q,
             while_unroll ρ decl test body (Kloop (|> wp ρ (Swhile decl test body) Q) Q)
@@ -502,7 +511,7 @@ Module Type Stmt.
       in
       match test with
       | None => wp ρ body
-      | Some test => wp ρ (Sif None test body Sbreak)
+      | Some test => wp ρ (Sif None None test body Sbreak)
       end Kinc.
 
     Axiom wp_for_unroll : forall ρ test incr body Q,
@@ -645,13 +654,13 @@ Module Type Stmt.
       match s with
       | Sseq ls => forallb no_case ls
       | Sdecl _ => true
-      | Sif _ _ a b
+      | Sif _ _ _ a b
       | Sif_consteval a b => no_case a && no_case b
       | Swhile _ _ s => no_case s
       | Sfor _ _ _ s => no_case s
       | Sdo s _ => no_case s
       | Sattr _ s => no_case s
-      | Sswitch _ _ _ => true
+      | Sswitch _ _ _ _ => true
       | Scase _
       | Sdefault => false
       | Sbreak
@@ -748,22 +757,24 @@ Module Type Stmt.
          rewrite !monPred_at_fupd /=.
     Qed.
 
-    Axiom wp_switch_decl : forall ρ d e ls Q,
-        wp ρ (Sseq (Sdecl (d :: nil) :: Sswitch None e ls :: nil)) Q
-        |-- wp ρ (Sswitch (Some d) e ls) Q.
-
     (* An error to say that a `switch` block with [body] is not supported *)
     Record switch_block (body : list Stmt) : Prop := {}.
 
-    Axiom wp_switch : forall ρ e b Q,
-        match wp_switch_block (Some $ default_from_cases (get_cases b)) b with
-        | None => UNSUPPORTED (switch_block b)
-        | Some cases =>
-          wp_operand tu ρ e (fun v free => interp free $
-                    Exists vv : Z, [| v = Vint vv |] **
-                    [∧list] x ∈ cases, [| x.1 vv |] -* wp_block ρ x.2 (Kswitch Q))
+    Axiom wp_switch : forall ρ init decl e b Q,
+        match pre_stmt init decl with
+        | None =>
+          match wp_switch_block (Some $ default_from_cases (get_cases b)) b with
+          | None => UNSUPPORTED (switch_block b)
+          | Some cases =>
+            letI* v, free := wp_operand tu ρ e in
+            interp free $
+              Exists vv : Z, [| v = Vint vv |] **
+              [∧list] x ∈ cases, [| x.1 vv |] -* wp_block ρ x.2 (Kswitch Q)
+          end
+        | Some ss =>
+            wp ρ (Sseq (ss ++ [Sswitch None None e (Sseq b)])) Q
         end
-        |-- wp ρ (Sswitch None e (Sseq b)) Q.
+        |-- wp ρ (Sswitch init decl e (Sseq b)) Q.
 
     (* note: case and default statements are only meaningful inside of [switch].
      * this is handled by [wp_switch_block].

@@ -183,6 +183,14 @@ public:
             }
         } else {
             guard::ctor _{print, "Sif"};
+            if (auto v = stmt->getInit()) {
+                print.some();
+                cprint.printStmt(print, v);
+                print.end_ctor();
+            } else {
+                print.none();
+            }
+            print.output() << fmt::nbsp;
             if (auto v = stmt->getConditionVariable()) {
                 print.some();
                 cprint.printLocalDecl(print, v);
@@ -254,6 +262,14 @@ public:
     void VisitSwitchStmt(const SwitchStmt *stmt, CoqPrinter &print,
                          ClangPrinter &cprint, ASTContext &) {
         print.ctor("Sswitch");
+        if (auto v = stmt->getInit()) {
+            print.some();
+            cprint.printStmt(print, v);
+            print.end_ctor();
+        } else {
+            print.none();
+        }
+        print.output() << fmt::nbsp;
         if (auto v = stmt->getConditionVariable()) {
             print.some();
             cprint.printLocalDecl(print, v);
@@ -261,8 +277,9 @@ public:
         } else {
             print.none();
         }
+        print.output() << fmt::nbsp;
         cprint.printExpr(print, stmt->getCond());
-
+        print.output() << fmt::nbsp;
         cprint.printStmt(print, stmt->getBody());
         print.end_ctor();
     }

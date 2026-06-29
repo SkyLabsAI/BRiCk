@@ -2290,12 +2290,12 @@ Module Stmt.
       match s with
       | Sseq _ => 1
       | Sdecl _ => 2
-      | Sif _ _ _ _ => 3
+      | Sif _ _ _ _ _ => 3
       | Sif_consteval _ _ => 19
       | Swhile _ _ _ => 4
       | Sfor _ _ _ _ => 5
       | Sdo _ _ => 6
-      | Sswitch _ _ _ => 7
+      | Sswitch _ _ _ _ => 7
       | Scase _ => 8
       | Sdefault => 9
       | Sbreak => 10
@@ -2312,12 +2312,12 @@ Module Stmt.
       match k with
       | 1 => list Stmt
       | 2 => list VarDecl
-      | 3 => option VarDecl * Expr * Stmt * Stmt
+      | 3 => option Stmt * option VarDecl * Expr * Stmt * Stmt
       | 19 => Stmt * Stmt
       | 4 => option VarDecl * Expr * Stmt
       | 5 => option Stmt * option Expr * option Expr * Stmt
       | 6 => Stmt * Expr
-      | 7 => option VarDecl * Expr * Stmt
+      | 7 => option Stmt * option VarDecl * Expr * Stmt
       | 8 => SwitchBranch
       | 9 => unit
       | 10 => unit
@@ -2334,12 +2334,12 @@ Module Stmt.
       match s with
       | Sseq a => a
       | Sdecl a => a
-      | Sif a b c d => (a,b,c,d)
+      | Sif a b c d e => (a,b,c,d,e)
       | Sif_consteval a b => (a,b)
       | Swhile a b c => (a,b,c)
       | Sfor a b c d => (a,b,c,d)
       | Sdo a b => (a,b)
-      | Sswitch a b c => (a,b,c)
+      | Sswitch a b c d => (a,b,c,d)
       | Scase a => a
       | Sdefault => tt
       | Sbreak => ()
@@ -2381,12 +2381,12 @@ Module Stmt.
       match s with
       | Sseq a => compare_ctor (Sseq a)
       | Sdecl a => compare_ctor (Sdecl a)
-      | Sif a b c d => compare_ctor (Sif a b c d)
+      | Sif a b c d e => compare_ctor (Sif a b c d e)
       | Sif_consteval a b => compare_ctor (Sif_consteval a b)
       | Swhile a b c => compare_ctor (Swhile a b c)
       | Sfor a b c d => compare_ctor (Sfor a b c d)
       | Sdo a b => compare_ctor (Sdo a b)
-      | Sswitch a b c => compare_ctor (Sswitch a b c)
+      | Sswitch a b c d => compare_ctor (Sswitch a b c d)
       | Scase a => compare_ctor (Scase a)
       | Sdefault => compare_ctor (Sdefault)
       | Sbreak => compare_ctor (Sbreak)
