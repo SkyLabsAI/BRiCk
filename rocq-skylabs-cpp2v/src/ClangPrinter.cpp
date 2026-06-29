@@ -128,6 +128,28 @@ fmt::Formatter &ClangPrinter::printValCat(CoqPrinter &print, const Expr *d) {
 }
 
 // TODO: this function has a lot of issues with it.
+fmt::Formatter &
+ClangPrinter::printTypeTemplateParam(CoqPrinter &print,
+                                     const TemplateTypeParmDecl *decl,
+                                     loc::loc loc) {
+    if (trace(Trace::Name)) {
+        trace("printTypeTemplateParam", loc::refine(loc, decl));
+    }
+
+    if (!decl)
+        return printTemplateParam(print, 0, 0, true, loc);
+
+    guard::ctor _{print, "Tparam", false};
+    if (auto id = decl->getIdentifier()) {
+        return print.str(id->getName());
+    } else {
+        auto name = (Twine("__type_") + Twine(decl->getDepth()) + "_" +
+                     Twine(decl->getIndex()))
+                        .str();
+        return print.str(name);
+    }
+}
+
 fmt::Formatter &ClangPrinter::printTemplateParam(CoqPrinter &print,
                                                  unsigned depth, unsigned index,
                                                  bool is_type, loc::loc loc) {
@@ -151,7 +173,6 @@ fmt::Formatter &ClangPrinter::printTemplateParam(CoqPrinter &print,
                     if (tpd->getDepth() != depth)
                         continue;
                     if (tpd->getIndex() == index) {
-                        always_assert(print.templates());
                         guard::ctor _{print, "Eparam", false};
                         print.str(tpd->getName());
                         return true;

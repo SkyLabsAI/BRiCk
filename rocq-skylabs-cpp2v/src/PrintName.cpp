@@ -999,6 +999,22 @@ static fmt::Formatter &printName(CoqPrinter &print, const Decl &decl,
             parameters(dct);
             return print.output();
         }
+    } else if (auto td = dyn_cast<TypeAliasDecl>(&decl)) {
+        if (auto dct = td->getDescribedAliasTemplate()) {
+            guard::ctor _(print, "Ninst", true);
+            name();
+            print.output() << fmt::nbsp;
+            parameters(dct);
+            return print.output();
+        }
+    } else if (auto vd = dyn_cast<VarDecl>(&decl)) {
+        if (auto dct = vd->getDescribedVarTemplate()) {
+            guard::ctor _(print, "Ninst", true);
+            name();
+            print.output() << fmt::nbsp;
+            parameters(dct);
+            return print.output();
+        }
     }
 
     auto sd = recoverSpecialization(decl);

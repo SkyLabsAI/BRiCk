@@ -35,6 +35,7 @@ class FieldDecl;
 class RecordDecl;
 class DeclContext;
 class TemplateDecl;
+class TemplateTypeParmDecl;
 class TemplateParameterList;
 class TemplateArgument;
 class TemplateArgumentLoc;
@@ -232,6 +233,9 @@ public:
     // TODO: Adjust and use in the structured name printer
     fmt::Formatter &printTemplateParam(CoqPrinter &, unsigned depth,
                                        unsigned index, bool is_type, loc::loc);
+    fmt::Formatter &printTypeTemplateParam(CoqPrinter &,
+                                           const clang::TemplateTypeParmDecl *,
+                                           loc::loc);
     fmt::Formatter &printTypeTemplateParam(CoqPrinter &print, unsigned depth,
                                            unsigned index, loc::loc loc) {
         return printTemplateParam(print, depth, index, true, loc);

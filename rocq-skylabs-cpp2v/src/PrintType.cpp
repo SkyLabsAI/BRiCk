@@ -185,8 +185,7 @@ public:
 
     void VisitTemplateTypeParmType(const TemplateTypeParmType *type,
                                    CoqPrinter &print, ClangPrinter &cprint) {
-        cprint.printTypeTemplateParam(print, type->getDepth(), type->getIndex(),
-                                      loc::of(type));
+        cprint.printTypeTemplateParam(print, type->getDecl(), loc::of(type));
     }
 
     void VisitEnumType(const EnumType *type, CoqPrinter &print,
