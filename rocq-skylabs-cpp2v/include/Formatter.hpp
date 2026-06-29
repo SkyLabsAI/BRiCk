@@ -22,11 +22,13 @@ public:
     explicit Formatter();
     explicit Formatter(llvm::raw_ostream &);
 
-    llvm::raw_ostream &line();
+    Formatter &line();
 
-    llvm::raw_ostream &nobreak();
+    Formatter &nobreak();
 
-    llvm::raw_ostream &flush();
+    Formatter &flush();
+
+    llvm::raw_ostream &raw();
 
     void nbsp();
 
@@ -38,7 +40,7 @@ public:
     void ascii(int c);
 
     template <typename T> Formatter &operator<<(T val) {
-        nobreak() << val;
+        raw() << val;
         blank = false;
         return *this;
     }
@@ -70,7 +72,7 @@ template <typename T> struct ByDump {
 };
 template <typename T>
 inline Formatter &operator<<(Formatter &fmt, ByDump<T> obj) {
-    obj.value.dump(fmt.nobreak());
+    obj.value.dump(fmt.raw());
     return fmt;
 }
 template <typename T>

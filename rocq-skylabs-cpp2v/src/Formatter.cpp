@@ -16,14 +16,14 @@ Formatter::Formatter() : Formatter(llvm::outs()) {}
 Formatter::Formatter(llvm::raw_ostream &_out)
     : out(_out), depth(0), spaces(0), blank(true) {}
 
-llvm::raw_ostream &Formatter::line() {
+Formatter &Formatter::line() {
     out << "\n";
     blank = true;
     spaces = 0;
-    return out;
+    return *this;
 }
 
-llvm::raw_ostream &Formatter::nobreak() {
+Formatter &Formatter::nobreak() {
     if (blank) {
         for (unsigned int d = this->depth; d > 0; --d) {
             out << " ";
@@ -33,13 +33,17 @@ llvm::raw_ostream &Formatter::nobreak() {
     for (; spaces > 0; --spaces) {
         out << " ";
     }
-    return out;
+    return *this;
 }
 
-llvm::raw_ostream &Formatter::flush() {
-    auto &os = nobreak();
-    os.flush();
-    return os;
+Formatter &Formatter::flush() {
+    raw().flush();
+    return *this;
+}
+
+llvm::raw_ostream &Formatter::raw() {
+    nobreak();
+    return out;
 }
 
 void Formatter::nbsp() { spaces = 1; }
@@ -51,7 +55,7 @@ void Formatter::outdent() {
 }
 
 void Formatter::ascii(int val) {
-    out << "\"";
+    raw() << "\"";
     out << (char)((val >> 6) + '0');
     out << (char)(((val >> 3) & 0x7) + '0');
     out << (char)((val & 0x7) + '0');
@@ -76,7 +80,7 @@ Formatter &operator<<(Formatter &out, OUTDENT) {
 }
 
 Formatter &operator<<(Formatter &out, LPAREN) {
-    out.nobreak() << "(";
+    out.raw() << "(";
     out.indent();
     return out;
 }
@@ -84,7 +88,7 @@ Formatter &operator<<(Formatter &out, LPAREN) {
 Formatter &operator<<(Formatter &out, RPAREN) {
     out.outdent();
     out.clear_spaces();
-    out.nobreak() << ")";
+    out.raw() << ")";
     return out;
 }
 
@@ -102,13 +106,13 @@ Formatter &operator<<(Formatter &out, CONS) {
 }
 
 Formatter &operator<<(Formatter &out, BOOL b) {
-    out.nobreak() << (b.value ? "true" : "false");
+    out.raw() << (b.value ? "true" : "false");
     return out;
 }
 
 Formatter &operator<<(Formatter &out, const NUM &n) {
     auto &[val, is_signed, is_negative, scope] = n;
-    auto &os = out.nobreak();
+    auto &os = out.raw();
     if (is_negative)
         os << '(';
     val.print(os, is_signed);

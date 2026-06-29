@@ -69,7 +69,7 @@ fmt::Formatter &ClangPrinter::printParamName(CoqPrinter &print,
             if (p == decl) {
                 if (decl->getIdentifier()) {
                     print.output() << "\"";
-                    decl->printName(print.output().nobreak());
+                    decl->printName(print.output().raw());
                     if (offset)
                         print.output() << "..." << offset;
                     return print.output() << "\"";
