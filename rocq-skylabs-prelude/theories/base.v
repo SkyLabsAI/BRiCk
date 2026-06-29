@@ -106,6 +106,12 @@ Lemma iff_forall T P Q :
   (forall i : T, P i) <-> (forall i : T, Q i).
 Proof. naive_solver. Qed.
 
+Lemma and_ex {A} (P : Prop) (Q : A -> Prop) : P ∧ ex Q ↔ ∃ x, P ∧ Q x.
+Proof. firstorder. Qed.
+
+Lemma ex_and {A} (P : A -> Prop) (Q : Prop) : ex P ∧ Q ↔ ∃ x, P x ∧ Q.
+Proof. firstorder. Qed.
+
 #[global] Instance reflexive_proper A :
   Proper (pointwise_relation A (pointwise_relation A iff) ==> iff) Reflexive.
 Proof.

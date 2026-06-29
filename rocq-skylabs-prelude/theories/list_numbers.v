@@ -1747,9 +1747,6 @@ Section listZ.
     xs !! k = Some x <-> (0 ≤ k) ∧ xs !! Z.to_N k = Some x.
   Proof. by rewrite lookupZ_Some_to_nat /lookupN /list_lookupN Z_N_nat. Qed.
 
-  Lemma and_ex {A} (P : Prop) (Q : A -> Prop) : P ∧ ex Q ↔ ∃ x, P ∧ Q x.
-  Proof. firstorder. Qed.
-
   Lemma lookupZ_None {A} (xs : list A) (k : Z) :
     xs !! k = None <-> (k < 0 ∨ lengthZ xs ≤ k).
   Proof.
