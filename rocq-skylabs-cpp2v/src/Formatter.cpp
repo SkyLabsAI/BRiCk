@@ -62,8 +62,6 @@ void Formatter::ascii(int val) {
     out << "\"";
 }
 
-Formatter Formatter::default_output = Formatter();
-
 Formatter &operator<<(Formatter &out, NBSP) {
     out.nbsp();
     return out;
