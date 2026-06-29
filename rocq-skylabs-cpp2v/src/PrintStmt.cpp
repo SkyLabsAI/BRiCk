@@ -61,16 +61,12 @@ public:
     void VisitWhileStmt(const WhileStmt *stmt, CoqPrinter &print,
                         ClangPrinter &cprint, ASTContext &) {
         print.ctor("Swhile");
-        if (auto v = stmt->getConditionVariable()) {
-            print.some();
+        print.option(stmt->getConditionVariable(), [&](const VarDecl *v) {
             cprint.printLocalDecl(print, v);
-            print.output() << fmt::rparen;
-        } else {
-            print.none();
-        }
-        print.output() << fmt::nbsp;
+        });
+        print.space();
         cprint.printExpr(print, stmt->getCond());
-        print.output() << fmt::nbsp;
+        print.space();
         cprint.printStmt(print, stmt->getBody());
         print.end_ctor();
     }
@@ -78,30 +74,18 @@ public:
     void VisitForStmt(const ForStmt *stmt, CoqPrinter &print,
                       ClangPrinter &cprint, ASTContext &) {
         print.ctor("Sfor");
-        if (auto v = stmt->getInit()) {
-            print.some();
+        print.option(stmt->getInit(), [&](const Stmt *v) {
             cprint.printStmt(print, v);
-            print.end_ctor();
-        } else {
-            print.none();
-        }
-        print.output() << fmt::nbsp;
-        if (auto v = stmt->getCond()) {
-            print.some();
+        });
+        print.space();
+        print.option(stmt->getCond(), [&](const Expr *v) {
             cprint.printExpr(print, v);
-            print.end_ctor();
-        } else {
-            print.none();
-        }
-        print.output() << fmt::nbsp;
-        if (auto v = stmt->getInc()) {
-            print.some();
+        });
+        print.space();
+        print.option(stmt->getInc(), [&](const Expr *v) {
             cprint.printExpr(print, v);
-            print.end_ctor();
-        } else {
-            print.none();
-        }
-        print.output() << fmt::nbsp;
+        });
+        print.space();
         cprint.printStmt(print, stmt->getBody());
         print.end_ctor();
     }
@@ -116,37 +100,25 @@ public:
         }
         print.ctor("Sforeach");
         cprint.printStmt(print, stmt->getRangeStmt());
-        print.output() << fmt::nbsp;
+        print.space();
         cprint.printStmt(print, stmt->getBeginStmt());
-        print.output() << fmt::nbsp;
+        print.space();
         cprint.printStmt(print, stmt->getEndStmt());
-        print.output() << fmt::nbsp;
-        if (auto v = stmt->getInit()) {
-            print.some();
+        print.space();
+        print.option(stmt->getInit(), [&](const Stmt *v) {
             cprint.printStmt(print, v);
-            print.end_ctor();
-        } else {
-            print.none();
-        }
-        print.output() << fmt::nbsp;
-        if (auto v = stmt->getCond()) {
-            print.some();
+        });
+        print.space();
+        print.option(stmt->getCond(), [&](const Expr *v) {
             cprint.printExpr(print, v);
-            print.end_ctor();
-        } else {
-            print.none();
-        }
-        print.output() << fmt::nbsp;
-        if (auto v = stmt->getInc()) {
-            print.some();
+        });
+        print.space();
+        print.option(stmt->getInc(), [&](const Expr *v) {
             cprint.printExpr(print, v);
-            print.end_ctor();
-        } else {
-            print.none();
-        }
-        print.output() << fmt::nbsp;
+        });
+        print.space();
         cprint.printStmt(print, stmt->getLoopVarStmt());
-        print.output() << fmt::nbsp;
+        print.space();
         cprint.printStmt(print, stmt->getBody());
         print.end_ctor();
     }
@@ -155,7 +127,7 @@ public:
                      ClangPrinter &cprint, ASTContext &) {
         print.ctor("Sdo");
         cprint.printStmt(print, stmt->getBody());
-        print.output() << fmt::nbsp;
+        print.space();
         cprint.printExpr(print, stmt->getCond());
         print.end_ctor();
     }
@@ -183,26 +155,18 @@ public:
             }
         } else {
             guard::ctor _{print, "Sif"};
-            if (auto v = stmt->getInit()) {
-                print.some();
+            print.option(stmt->getInit(), [&](const Stmt *v) {
                 cprint.printStmt(print, v);
-                print.end_ctor();
-            } else {
-                print.none();
-            }
-            print.output() << fmt::nbsp;
-            if (auto v = stmt->getConditionVariable()) {
-                print.some();
+            });
+            print.space();
+            print.option(stmt->getConditionVariable(), [&](const VarDecl *v) {
                 cprint.printLocalDecl(print, v);
-                print.end_ctor();
-            } else {
-                print.none();
-            }
-            print.output() << fmt::nbsp;
+            });
+            print.space();
             cprint.printExpr(print, stmt->getCond());
-            print.output() << fmt::nbsp;
+            print.space();
             cprint.printStmt(print, stmt->getThen());
-            print.output() << fmt::nbsp;
+            print.space();
             if (stmt->getElse()) {
                 cprint.printStmt(print, stmt->getElse());
             } else {
