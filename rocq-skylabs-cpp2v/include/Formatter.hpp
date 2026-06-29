@@ -57,6 +57,11 @@ Formatter &operator<<(Formatter &out, NBSP);
 
 struct NUM {
     NUM() = delete;
+    NUM(const llvm::APInt &val, bool is_signed, bool is_negative,
+        const char *scope)
+        : val(val), is_signed(is_signed), is_negative(is_negative),
+          scope(scope) {}
+
     const llvm::APInt &val;
     const bool is_signed;
     const bool is_negative;
