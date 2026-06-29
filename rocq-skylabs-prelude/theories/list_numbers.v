@@ -52,18 +52,21 @@ Definition rotateN {A} n xs :=
   fun i xs => lookup (N.to_nat i) xs.
 #[global] Notation lookupN := (lookup (K := N)) (only parsing).
 
-Fixpoint split_atN {A} (n : N) (xs : list A) : list A * list A :=
-  match xs with
-  | [] => ([], [])
-  | x :: xs =>
-      match n with
-      | N0 =>
-          ([], x :: xs)
-      | Npos p =>
-        let (ys0, ys1) := split_atN (Pos.pred_N p) xs in
-        (x :: ys0, ys1)
-      end
-  end .
+Definition split_atN {A} (n : N) (xs : list A) : list A * list A :=
+  let ret acc k :=
+        match reverse acc with
+        | [] as ys | (_ :: _) as ys => k ys
+        end in
+  Nrect (fun n => list A -> list A -> list A * list A)
+        (fun xs acc =>
+           ret acc (fun acc => (acc, xs)))
+        (fun n' split_atN_aux xs acc =>
+           match xs with
+           | [] => ret acc $ fun acc => (acc, [])
+           | x :: xs =>
+               split_atN_aux xs (x :: acc)
+           end)
+        n xs [].
 #[global] Hint Opaque split_atN : typeclass_instances sl_opacity.
 
 (** Instead of lifting the [list_lookup] theory to [list_lookupN] we provide an unfolding lemma. *)
@@ -766,14 +769,21 @@ Section listN.
   Lemma split_atN_eq_takeN_dropN n xs :
     split_atN n xs = (takeN n xs, dropN n xs).
   Proof.
-    elim: xs n => [|x xs IH] n.
-    - by rewrite takeN_nil dropN_nil.
-    - rewrite /=.
-      case: (N.zero_or_succ n).
-      { by move => ->. }
-      move => [{} n ->] /=.
-      rewrite -N.succ_pos_spec N.pos_pred_succ {}IH N.succ_pos_spec.
-      by rewrite -N.add_1_r takeN_cons_succ dropN_cons_succ.
+    lazy beta delta [split_atN].
+    lazymatch goal with
+    | |- (let ret := ?a in ?b) = ?c =>
+        change (let ret := a in b = c); intro ret
+    end.
+    have Hret xs' f : ret xs' f = f (reverse xs') by unfold ret; case: reverse xs.
+    clearbody ret.
+    rewrite -[takeN _ _] /(reverse [] ++ _).
+
+    elim/Nind: n xs {2 3}[] => [|n IH] xs acc.
+    - by rewrite takeN_zero dropN_zero /= Hret right_id.
+    - rewrite N.peano_rect_succ.
+      case: xs => [|x xs]; rewrite ?{}Hret ?{}IH.
+      + by rewrite takeN_nil dropN_nil right_id.
+      + by rewrite reverse_cons -assoc takeN_cons_succ' dropN_cons_succ'.
   Qed.
 
   Lemma split_atN_iff n xs ys0 ys1 (Hlen : (n ≤ lengthN xs)%N) :
