@@ -10,12 +10,10 @@
 #include "llvm/ADT/StringRef.h"
 
 namespace comment {
-using namespace clang;
-using namespace llvm;
 
 class CommentScanner {
 private:
-    StringRef block;
+    llvm::StringRef block;
     size_t offset;
 
     size_t parseLineComment(size_t first) {
@@ -23,9 +21,9 @@ private:
         // line that is not a comment.
 
         auto eol = block.find("\n", first);
-        assert(eol != StringRef::npos && "end of line necessary");
+        assert(eol != llvm::StringRef::npos && "end of line necessary");
         auto next_comment = block.find("//", eol + 1);
-        while (next_comment != StringRef::npos &&
+        while (next_comment != llvm::StringRef::npos &&
                block.find("\n", eol + 1) > next_comment) {
             eol = block.find("\n", next_comment);
             next_comment = block.find("//", eol + 1);
@@ -37,20 +35,21 @@ private:
     size_t parseBlockComment(size_t first) {
         // this is a paragraph comment, find the next closing '*/'
         auto closing = block.find("*/", first);
-        assert(closing != StringRef::npos &&
+        assert(closing != llvm::StringRef::npos &&
                "open block comment without close");
 
         return closing + 2;
     }
 
 public:
-    CommentScanner(StringRef _block) : block(_block), offset(0) {}
+    CommentScanner(llvm::StringRef _block) : block(_block), offset(0) {}
 
-    bool next(StringRef &result) {
+    bool next(llvm::StringRef &result) {
         auto first_line = block.find("//", offset);
         auto first_para = block.find("/*", offset);
 
-        if (first_line == StringRef::npos && first_para == StringRef::npos) {
+        if (first_line == llvm::StringRef::npos &&
+            first_para == llvm::StringRef::npos) {
             return false;
         } else if (first_line < first_para) {
             // this is a line comment, keep getting the next line until there is

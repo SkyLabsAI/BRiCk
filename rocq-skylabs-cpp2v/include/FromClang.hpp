@@ -7,6 +7,5 @@
 #include "clang/Basic/Builtins.h"
 #include "clang/Sema/Sema.h"
 
-using namespace clang;
-
-void GenerateUndeprecatedImplicitMembers(CXXRecordDecl *decl, Sema &sema);
+void GenerateUndeprecatedImplicitMembers(clang::CXXRecordDecl *decl,
+                                         clang::Sema &sema);

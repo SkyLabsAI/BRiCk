@@ -18,28 +18,26 @@ class TranslationUnitDecl;
 
 class CoqPrinter;
 class Cache;
+class Module;
 
 namespace clang {
 class CompilerInstance;
 }
-
-using namespace clang;
 
 class ToCoqConsumer : public clang::ASTConsumer, clang::ASTMutationListener {
 public:
     using path = std::optional<std::string>;
     explicit ToCoqConsumer(
         clang::CompilerInstance *compiler, const path output_file,
-        const path templates_file, const path name_test_file,
-        Trace::Mask trace, bool comment, bool sharing, bool type_check,
-        bool output_templates, bool elaborate = true,
-        bool typedefs = false,
+        const path templates_file, const path name_test_file, Trace::Mask trace,
+        bool comment, bool sharing, bool type_check, bool output_templates,
+        bool elaborate = true, bool typedefs = false,
         std::optional<std::string> &&interactive = std::optional<std::string>(),
         std::optional<std::string> &&attributes = std::optional<std::string>())
         : compiler_(compiler), output_file_(output_file),
-          templates_file_(templates_file),
-          name_test_file_(name_test_file), trace_(trace), comment_{comment},
-          sharing_{sharing}, elaborate_(elaborate), check_types_{type_check},
+          templates_file_(templates_file), name_test_file_(name_test_file),
+          trace_(trace), comment_{comment}, sharing_{sharing},
+          elaborate_(elaborate), check_types_{type_check},
           output_templates_{output_templates}, typedefs_{typedefs},
           interactive_{std::move(interactive)},
           attributes_{std::move(attributes)} {}
@@ -48,32 +46,33 @@ public:
     // Implementation of `clang::ASTConsumer`
     virtual void HandleTranslationUnit(clang::ASTContext &Context) override;
 
-    virtual void HandleTagDeclDefinition(TagDecl *decl) override;
-    virtual bool HandleTopLevelDecl(DeclGroupRef decl) override;
-    virtual void HandleInlineFunctionDefinition(FunctionDecl *decl) override;
+    virtual void HandleTagDeclDefinition(clang::TagDecl *decl) override;
+    virtual bool HandleTopLevelDecl(clang::DeclGroupRef decl) override;
     virtual void
-    HandleCXXImplicitFunctionInstantiation(FunctionDecl *decl) override;
-    virtual ASTMutationListener *GetASTMutationListener() override {
+    HandleInlineFunctionDefinition(clang::FunctionDecl *decl) override;
+    virtual void
+    HandleCXXImplicitFunctionInstantiation(clang::FunctionDecl *decl) override;
+    virtual clang::ASTMutationListener *GetASTMutationListener() override {
         return this;
     }
 
 public:
     // Implementation of clang::ASTMutationListener
     virtual void AddedCXXTemplateSpecialization(
-        const ClassTemplateDecl *TD,
-        const ClassTemplateSpecializationDecl *D) override {
+        const clang::ClassTemplateDecl *TD,
+        const clang::ClassTemplateSpecializationDecl *D) override {
         // TODO [const_cast] is a code-smell.
         // The implementation calls this method from a non-`const` method.
         // it is not clear why this method should take a
         // `const ClassTemplateSpecializationDecl` rather than a non-`const`
         // See question:
         // https://stackoverflow.com/questions/76085015/using-clangs-astconsumer-to-force-generation-of-implicit-members
-        elab(const_cast<ClassTemplateSpecializationDecl *>(D), true);
+        elab(const_cast<clang::ClassTemplateSpecializationDecl *>(D), true);
     }
 
 private:
     void toCoqModule(clang::ASTContext *ctxt, clang::TranslationUnitDecl *decl);
-    void elab(Decl *, bool rec = false);
+    void elab(clang::Decl *, bool rec = false);
 
     void writeTemplates(const char *name, Cache &cache, fmt::Formatter &fmt,
                         clang::ASTContext &ctxt, ::Module &mod,

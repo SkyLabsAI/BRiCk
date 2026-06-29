@@ -7,9 +7,8 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/ADT/StringRef.h"
 #include <list>
-
-using namespace clang;
 
 class Filter {
 public:
@@ -35,7 +34,7 @@ public:
         }
     }
 
-    virtual What shouldInclude(const Decl *) = 0;
+    virtual What shouldInclude(const clang::Decl *) = 0;
 };
 
 class Default : public Filter {
@@ -44,22 +43,22 @@ private:
 
 public:
     Default(Filter::What w) : what(w) {}
-    virtual What shouldInclude(const Decl *) { return what; }
+    virtual What shouldInclude(const clang::Decl *) { return what; }
 };
 
 class NoInclude : public Filter {
 private:
-    const SourceManager &SM;
+    const clang::SourceManager &SM;
 
 public:
-    NoInclude(SourceManager &_SM) : SM(_SM) {}
+    NoInclude(clang::SourceManager &_SM) : SM(_SM) {}
 
     /* is this location in an include'd file? */
-    bool isIncluded(SourceLocation loc) {
+    bool isIncluded(clang::SourceLocation loc) {
         if (!loc.isValid()) {
             return false;
         }
-        PresumedLoc PLoc = SM.getPresumedLoc(loc);
+        clang::PresumedLoc PLoc = SM.getPresumedLoc(loc);
         if (PLoc.isInvalid()) {
             return false;
         } else {
@@ -71,15 +70,17 @@ public:
         }
     }
 
-    virtual What shouldInclude(const Decl *d) {
-        SourceLocation loc = d->getSourceRange().getBegin();
+    virtual What shouldInclude(const clang::Decl *d) {
+        clang::SourceLocation loc = d->getSourceRange().getBegin();
         return isIncluded(loc) ? What::DECLARATION : What::DEFINITION;
     }
 };
 
 class NoPrivate : public Filter {
 public:
-    virtual What shouldInclude(const Decl *d) { return What::DEFINITION; }
+    virtual What shouldInclude(const clang::Decl *d) {
+        return What::DEFINITION;
+    }
 };
 
 template <Filter::What unit,
@@ -91,7 +92,7 @@ private:
 public:
     Combine(std::list<Filter *> &f) : filters(f) {}
 
-    virtual What shouldInclude(const Decl *d) {
+    virtual What shouldInclude(const clang::Decl *d) {
         What result = unit;
 
         for (auto x : filters) {
@@ -104,17 +105,17 @@ public:
 
 class FromComment : public Filter {
 private:
-    const ASTContext *const ctxt;
+    const clang::ASTContext *const ctxt;
 
 public:
-    FromComment(const ASTContext *_ctxt) : ctxt(_ctxt) {}
+    FromComment(const clang::ASTContext *_ctxt) : ctxt(_ctxt) {}
 
-    virtual What shouldInclude(const Decl *d) {
+    virtual What shouldInclude(const clang::Decl *d) {
         if (auto comment = ctxt->getRawCommentForDeclNoCache(d)) {
             auto text = comment->getRawText(ctxt->getSourceManager());
-            if (StringRef::npos != text.find("definition")) {
+            if (llvm::StringRef::npos != text.find("definition")) {
                 return What::DEFINITION;
-            } else if (StringRef::npos != text.find("declaration")) {
+            } else if (llvm::StringRef::npos != text.find("declaration")) {
                 return What::DECLARATION;
             } else {
                 return What::NOTHING;
