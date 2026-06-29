@@ -109,13 +109,9 @@ fmt::Formatter &ClangPrinter::printOverloadableOperator(
 
 void printOptionalExpr(CoqPrinter &print, std::optional<const Expr *> expr,
                        ClangPrinter &cprint, OpaqueNames &li) {
-    if (expr.has_value() && expr.value()) {
-        print.some();
-        cprint.printExpr(print, expr.value(), li);
-        print.end_ctor();
-    } else {
-        print.none();
-    }
+    print.option(expr, [&](const Expr *expr) {
+        cprint.printExpr(print, expr, li);
+    });
 }
 
 bool is_dependent(const Expr *expr) {

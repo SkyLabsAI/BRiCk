@@ -11,6 +11,9 @@
 #include "clang/AST/Comment.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/RawCommentList.h"
+#include <list>
+#include <map>
+#include <optional>
 #include <utility>
 
 namespace clang {
@@ -25,7 +28,7 @@ public:
     SpecCollector() {}
 
     void add_specification(const clang::NamedDecl *decl, clang::RawComment *ref,
-                           ASTContext &context) {
+                           clang::ASTContext &context) {
         ref->setAttached();
         this->comment_decl_.insert(std::make_pair(ref, decl));
         if (auto comment = context.getCommentForDecl(decl, nullptr)) {
@@ -34,18 +37,18 @@ public:
     }
 
     std::list<std::pair<const clang::NamedDecl *,
-                        comments::FullComment *>>::const_iterator
+                        clang::comments::FullComment *>>::const_iterator
     begin() const {
         return this->specifications_.begin();
     }
 
     std::list<std::pair<const clang::NamedDecl *,
-                        comments::FullComment *>>::const_iterator
+                        clang::comments::FullComment *>>::const_iterator
     end() const {
         return this->specifications_.end();
     }
 
-    std::optional<const NamedDecl *>
+    std::optional<const clang::NamedDecl *>
     decl_for_comment(clang::RawComment *cmt) const {
         auto result = comment_decl_.find(cmt);
         if (result == comment_decl_.end()) {
@@ -55,9 +58,10 @@ public:
     }
 
 private:
-    std::list<std::pair<const clang::NamedDecl *, comments::FullComment *>>
+    std::list<
+        std::pair<const clang::NamedDecl *, clang::comments::FullComment *>>
         specifications_;
-    std::map<clang::RawComment *, const NamedDecl *> comment_decl_;
+    std::map<clang::RawComment *, const clang::NamedDecl *> comment_decl_;
 };
 
 void write_spec(clang::CompilerInstance *compiler, ::Module *mod,

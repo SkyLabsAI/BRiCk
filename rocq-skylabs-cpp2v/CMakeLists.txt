@@ -6,7 +6,6 @@
 cmake_minimum_required(VERSION 3.12)
 project(cpp2v)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17")
 if(DEFINED ENV{BUILD_TYPE})
   set(CMAKE_BUILD_TYPE ${BUILD_TYPE})
 endif()
@@ -92,14 +91,12 @@ add_llvm_executable(cpp2v
 )
 
 set_property(TARGET tocoq PROPERTY POSITION_INDEPENDENT_CODE ON)
-add_compile_options(-fno-rtti)
+target_compile_features(tocoq PUBLIC cxx_std_17)
+target_compile_features(cpp2v PRIVATE cxx_std_17)
+target_compile_options(tocoq PUBLIC -fno-rtti -Wall -Wimplicit-fallthrough)
+target_compile_options(cpp2v PRIVATE -fno-rtti -Wall -Wimplicit-fallthrough)
 
 llvm_config(cpp2v USE_SHARED ${CPP2V_LLVM_COMPONENTS})
 
 # Link against LLVM/Clang and tocoq libraries
 target_link_libraries(cpp2v PUBLIC ${llvm_libs} clang-cpp tocoq)
-
-target_compile_options(tocoq PUBLIC -Wall -Wimplicit-fallthrough)
-# This PUBLIC setting gets inherited by clients. That's good enough without
-# external clients; otherwise, we'd enable warnings for cpp2v as well.
-# target_compile_options(cpp2v PRIVATE -Wall -Wimplicit-fallthrough)

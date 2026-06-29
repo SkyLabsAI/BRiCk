@@ -9,6 +9,7 @@
 #include "PrePrint.hpp"
 #include <clang/AST/Expr.h>
 #include <llvm/ADT/StringRef.h>
+#include <optional>
 
 namespace clang {
 class NamedDecl;
@@ -79,6 +80,22 @@ public:
 
     fmt::Formatter &some() { return this->ctor("Some"); }
     fmt::Formatter &none() { return this->output_ << "None"; }
+    fmt::Formatter &space() { return this->output_ << fmt::nbsp; }
+
+    template <typename T, typename CLOSURE>
+    fmt::Formatter &option(const T *value, CLOSURE fn) {
+        if (value) {
+            some();
+            fn(value);
+            return end_ctor();
+        }
+        return none();
+    }
+
+    template <typename T, typename CLOSURE>
+    fmt::Formatter &option(const std::optional<T *> &value, CLOSURE fn) {
+        return option(value.value_or(nullptr), fn);
+    }
 
     fmt::Formatter &ascii(int c) {
         assert(0 <= c && c < 256);

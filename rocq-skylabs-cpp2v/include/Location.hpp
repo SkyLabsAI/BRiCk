@@ -31,24 +31,21 @@ class CXXBaseSpecifier;
 // Low-level utilities shared by the structured name printer and
 // locations. (In general, these cannot safely use locations.)
 namespace structured {
-using namespace llvm;
-using namespace clang;
 
 // TODO: Drop this in favor of printing `?null`
-void locfree_warn(const Decl &, const ASTContext &, StringRef);
+void locfree_warn(const clang::Decl &, const clang::ASTContext &,
+                  llvm::StringRef);
 
-const FunctionDecl *recoverFunction(const Decl &decl);
+const clang::FunctionDecl *recoverFunction(const clang::Decl &decl);
 
 /// A variant of NamedDecl::getNameForDiagnostic that adds template
 /// parameters, function parameters, and function qualifiers.
-raw_ostream &printNameForDiagnostics(raw_ostream &, const NamedDecl &,
-                                     const ASTContext &);
+llvm::raw_ostream &printNameForDiagnostics(llvm::raw_ostream &,
+                                           const clang::NamedDecl &,
+                                           const clang::ASTContext &);
 } // namespace structured
 
 namespace loc {
-
-using namespace llvm;
-using namespace clang;
 
 /*
 Roughly, a sum of a few types that can be dumped
@@ -75,44 +72,47 @@ private:
     } kind;
 
     union {
-        const Decl *decl;
-        const Stmt *stmt;
-        const box<TypeLoc> typeloc;    // type is non-null
-        const box<TypeSourceInfo> tsi; // type is non-null
-        const box<QualType> qualtype;  // type is non-null
+        const clang::Decl *decl;
+        const clang::Stmt *stmt;
+        const box<clang::TypeLoc> typeloc;    // type is non-null
+        const box<clang::TypeSourceInfo> tsi; // type is non-null
+        const box<clang::QualType> qualtype;  // type is non-null
         const clang::Type *type;
-        const TemplateArgumentLoc *tal;
-        const SourceLocation::UIntTy location;
+        const clang::TemplateArgumentLoc *tal;
+        const clang::SourceLocation::UIntTy location;
     } u;
 
-    Loc(const box<TypeLoc> &t) : kind{Kind::TypeLoc}, u{.typeloc = t} {}
-    Loc(const box<TypeSourceInfo> &t) : kind{Kind::Tsi}, u{.tsi = t} {}
-    Loc(const box<QualType> &t) : kind{Kind::QualType}, u{.qualtype = t} {}
+    Loc(const box<clang::TypeLoc> &t) : kind{Kind::TypeLoc}, u{.typeloc = t} {}
+    Loc(const box<clang::TypeSourceInfo> &t) : kind{Kind::Tsi}, u{.tsi = t} {}
+    Loc(const box<clang::QualType> &t)
+        : kind{Kind::QualType}, u{.qualtype = t} {}
 
 public:
     Loc() = delete;
-    Loc(const Decl &d) : kind{Kind::Decl}, u{.decl = &d} {}
-    Loc(const Stmt &s) : kind{Kind::Stmt}, u{.stmt = &s} {}
+    Loc(const clang::Decl &d) : kind{Kind::Decl}, u{.decl = &d} {}
+    Loc(const clang::Stmt &s) : kind{Kind::Stmt}, u{.stmt = &s} {}
     Loc(const clang::Type &t) : kind{Kind::Type}, u{.type = &t} {}
-    Loc(const TemplateArgumentLoc &a) : kind{Kind::Tal}, u{.tal = &a} {}
-    Loc(const SourceLocation l)
+    Loc(const clang::TemplateArgumentLoc &a) : kind{Kind::Tal}, u{.tal = &a} {}
+    Loc(const clang::SourceLocation l)
         : kind{Kind::Location}, u{.location = l.getRawEncoding()} {}
 
-    static std::optional<Loc> mk(const TypeLoc &);
-    static std::optional<Loc> mk(const TypeSourceInfo &);
-    static std::optional<Loc> mk(const QualType &);
+    static std::optional<Loc> mk(const clang::TypeLoc &);
+    static std::optional<Loc> mk(const clang::TypeSourceInfo &);
+    static std::optional<Loc> mk(const clang::QualType &);
 
     // Location (may be invalid)
 
-    SourceLocation getLoc() const;
+    clang::SourceLocation getLoc() const;
 
     // Short description
 
-    raw_ostream &describe(raw_ostream &, const ASTContext &) const;
+    llvm::raw_ostream &describe(llvm::raw_ostream &,
+                                const clang::ASTContext &) const;
 
     // Clang's AST dump
 
-    raw_ostream &dump(raw_ostream &, const ASTContext &) const;
+    llvm::raw_ostream &dump(llvm::raw_ostream &,
+                            const clang::ASTContext &) const;
 };
 
 using loc = std::optional<Loc>;
@@ -125,16 +125,18 @@ inline constexpr loc none = std::nullopt;
 template <typename T> loc of(T &ref) { return {Loc{ref}}; }
 
 // Use factory methods to check side-conditions
-template <> inline loc of<>(const TypeLoc &ref) { return Loc::mk(ref); }
-template <> inline loc of<>(TypeLoc &ref) { return Loc::mk(ref); }
-template <> inline loc of<>(const TypeSourceInfo &ref) { return Loc::mk(ref); }
-template <> inline loc of<>(TypeSourceInfo &ref) { return Loc::mk(ref); }
-template <> inline loc of<>(const QualType &ref) { return Loc::mk(ref); }
-template <> inline loc of<>(QualType &ref) { return Loc::mk(ref); }
+template <> inline loc of<>(const clang::TypeLoc &ref) { return Loc::mk(ref); }
+template <> inline loc of<>(clang::TypeLoc &ref) { return Loc::mk(ref); }
+template <> inline loc of<>(const clang::TypeSourceInfo &ref) {
+    return Loc::mk(ref);
+}
+template <> inline loc of<>(clang::TypeSourceInfo &ref) { return Loc::mk(ref); }
+template <> inline loc of<>(const clang::QualType &ref) { return Loc::mk(ref); }
+template <> inline loc of<>(clang::QualType &ref) { return Loc::mk(ref); }
 
 // Avoid an ambiguous constructor
-template <> loc of<>(const DeclContext &);
-template <> loc of<>(DeclContext &);
+template <> loc of<>(const clang::DeclContext &);
+template <> loc of<>(clang::DeclContext &);
 
 // Handle pointers
 template <typename T> loc of(T *ptr) { return ptr ? of(*ptr) : none; }
@@ -160,65 +162,65 @@ template <typename T> loc refine(loc fallback, T &t) {
 inline bool can_describe(loc loc) { return loc.has_value(); }
 struct Describe {
     loc location;
-    const ASTContext &context;
+    const clang::ASTContext &context;
 };
-inline Describe describe(loc loc, const ASTContext &context) {
+inline Describe describe(loc loc, const clang::ASTContext &context) {
     return {loc, context};
 }
-raw_ostream &operator<<(raw_ostream &, Describe);
+llvm::raw_ostream &operator<<(llvm::raw_ostream &, Describe);
 
 // Dump loc (presumed under decl) or decl, if either is present.
 struct Dump {
     loc location;
-    const ASTContext &context;
-    const Decl *decl;
+    const clang::ASTContext &context;
+    const clang::Decl *decl;
 };
-inline Dump dump(loc loc, const ASTContext &context,
-                 const Decl *decl = nullptr) {
+inline Dump dump(loc loc, const clang::ASTContext &context,
+                 const clang::Decl *decl = nullptr) {
     return {loc, context, decl};
 }
-raw_ostream &operator<<(raw_ostream &, Dump);
+llvm::raw_ostream &operator<<(llvm::raw_ostream &, Dump);
 
 // Print location in loc, falling back to address range of decl, falling
 // back to nothing.
-bool can_addr(loc loc, const Decl *decl = nullptr);
+bool can_addr(loc loc, const clang::Decl *decl = nullptr);
 struct Addr {
     loc location;
-    const ASTContext &context;
-    const Decl *decl;
+    const clang::ASTContext &context;
+    const clang::Decl *decl;
 };
-inline Addr addr(loc loc, const ASTContext &context,
-                 const Decl *decl = nullptr) {
+inline Addr addr(loc loc, const clang::ASTContext &context,
+                 const clang::Decl *decl = nullptr) {
     return {loc, context, decl};
 }
-raw_ostream &operator<<(raw_ostream &, Addr);
+llvm::raw_ostream &operator<<(llvm::raw_ostream &, Addr);
 
 // Print diagnostic prefix "ADDR (DESCRIBE): " for loc, falling back to
 // "RANGE: " for decl, falling back to "".
 struct Prefix {
     loc location;
-    const ASTContext &context;
-    const Decl *decl;
+    const clang::ASTContext &context;
+    const clang::Decl *decl;
 };
-inline Prefix prefix(loc loc, const ASTContext &context,
-                     const Decl *decl = nullptr) {
+inline Prefix prefix(loc loc, const clang::ASTContext &context,
+                     const clang::Decl *decl = nullptr) {
     return {loc, context, decl};
 }
-raw_ostream &operator<<(raw_ostream &, Prefix);
+llvm::raw_ostream &operator<<(llvm::raw_ostream &, Prefix);
 
 // Print trace suffix "DESCRIBE at/in ADDR" for loc, falling back to "".
-inline bool can_trace(loc loc, const Decl *decl = nullptr) {
+inline bool can_trace(loc loc, const clang::Decl *decl = nullptr) {
     return loc.has_value();
 }
 struct Trace {
     loc location;
-    const ASTContext &context;
-    const Decl *decl;
+    const clang::ASTContext &context;
+    const clang::Decl *decl;
 };
-inline Trace trace(loc loc, const ASTContext &context,
-                   const Decl *decl = nullptr) {
+inline Trace trace(loc loc, const clang::ASTContext &context,
+                   const clang::Decl *decl = nullptr) {
     return {loc, context, decl};
 }
-raw_ostream &operator<<(raw_ostream &, Trace);
+llvm::raw_ostream &operator<<(llvm::raw_ostream &, Trace);
 
 } // namespace loc
