@@ -60,60 +60,44 @@ void Formatter::ascii(int val) {
 
 Formatter Formatter::default_output = Formatter();
 
-struct NBSP;
-const NBSP *nbsp;
-Formatter &operator<<(Formatter &out, const NBSP *_) {
+Formatter &operator<<(Formatter &out, NBSP) {
     out.nbsp();
     return out;
 }
 
-struct INDENT;
-const INDENT *indent;
-Formatter &operator<<(Formatter &out, const INDENT *_) {
+Formatter &operator<<(Formatter &out, INDENT) {
     out.indent();
     return out;
 }
 
-struct OUTDENT;
-const OUTDENT *outdent;
-Formatter &operator<<(Formatter &out, const OUTDENT *_) {
+Formatter &operator<<(Formatter &out, OUTDENT) {
     out.outdent();
     return out;
 }
 
-struct LPAREN;
-const LPAREN *lparen;
-Formatter &operator<<(Formatter &out, const LPAREN *_) {
+Formatter &operator<<(Formatter &out, LPAREN) {
     out.nobreak() << "(";
     out.indent();
     return out;
 }
 
-struct RPAREN;
-const RPAREN *rparen;
-Formatter &operator<<(Formatter &out, const RPAREN *_) {
+Formatter &operator<<(Formatter &out, RPAREN) {
     out.outdent();
     out.clear_spaces();
     out.nobreak() << ")";
     return out;
 }
 
-struct LINE;
-const LINE *line;
-Formatter &operator<<(Formatter &out, const LINE *_) {
+Formatter &operator<<(Formatter &out, LINE) {
     out.line();
     return out;
 }
 
-struct TUPLESEP;
-const TUPLESEP *tuple_sep;
-Formatter &operator<<(Formatter &out, const TUPLESEP *) {
+Formatter &operator<<(Formatter &out, TUPLESEP) {
     return out << "," << fmt::nbsp;
 }
 
-struct CONS;
-const CONS *cons;
-Formatter &operator<<(Formatter &out, const CONS *) {
+Formatter &operator<<(Formatter &out, CONS) {
     return out << fmt::nbsp << "::" << fmt::nbsp;
 }
 

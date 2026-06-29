@@ -51,9 +51,9 @@ public:
     static Formatter default_output;
 };
 
-struct NBSP;
-extern const NBSP *nbsp;
-Formatter &operator<<(Formatter &out, const NBSP *_);
+struct NBSP {};
+inline constexpr NBSP nbsp{};
+Formatter &operator<<(Formatter &out, NBSP);
 
 struct NUM {
     NUM() = delete;
@@ -94,33 +94,33 @@ inline NUM N(const llvm::APInt &val, bool scope = true) {
 /// Equivalent to `fmt::Z`
 Formatter &operator<<(Formatter &, const llvm::APSInt &);
 
-struct INDENT;
-extern const INDENT *indent;
-Formatter &operator<<(Formatter &out, const INDENT *_);
+struct INDENT {};
+inline constexpr INDENT indent{};
+Formatter &operator<<(Formatter &out, INDENT);
 
-struct OUTDENT;
-extern const OUTDENT *outdent;
-Formatter &operator<<(Formatter &out, const OUTDENT *_);
+struct OUTDENT {};
+inline constexpr OUTDENT outdent{};
+Formatter &operator<<(Formatter &out, OUTDENT);
 
-struct LPAREN;
-extern const LPAREN *lparen;
-Formatter &operator<<(Formatter &out, const LPAREN *_);
+struct LPAREN {};
+inline constexpr LPAREN lparen{};
+Formatter &operator<<(Formatter &out, LPAREN);
 
-struct RPAREN;
-extern const RPAREN *rparen;
-Formatter &operator<<(Formatter &out, const RPAREN *_);
+struct RPAREN {};
+inline constexpr RPAREN rparen{};
+Formatter &operator<<(Formatter &out, RPAREN);
 
-struct LINE;
-extern const LINE *line;
-Formatter &operator<<(Formatter &out, const LINE *_);
+struct LINE {};
+inline constexpr LINE line{};
+Formatter &operator<<(Formatter &out, LINE);
 
-struct TUPLESEP;
-extern const TUPLESEP *tuple_sep;
-Formatter &operator<<(Formatter &, const TUPLESEP *);
+struct TUPLESEP {};
+inline constexpr TUPLESEP tuple_sep{};
+Formatter &operator<<(Formatter &, TUPLESEP);
 
-struct CONS;
-extern const CONS *cons;
-Formatter &operator<<(Formatter &, const CONS *);
+struct CONS {};
+inline constexpr CONS cons{};
+Formatter &operator<<(Formatter &, CONS);
 
 struct BOOL {
     bool value;
