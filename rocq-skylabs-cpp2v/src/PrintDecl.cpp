@@ -1135,6 +1135,7 @@ public:
     IGNORE(UsingDecl)
     IGNORE(UsingDirectiveDecl)
     IGNORE(UsingShadowDecl)
+    IGNORE(UnresolvedUsingTypenameDecl)
 
 #undef IGNORE
 

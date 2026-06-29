@@ -88,6 +88,7 @@ public:
     IGNORE(UsingDecl)
     IGNORE(UsingDirectiveDecl)
     IGNORE(UsingShadowDecl)
+    IGNORE(UnresolvedUsingTypenameDecl)
 
     // TODO: These may impact structured names
     IGNORE(NamespaceAliasDecl)
