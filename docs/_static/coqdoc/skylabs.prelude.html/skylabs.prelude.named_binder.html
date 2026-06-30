@@ -296,6 +296,34 @@ The class <span class="inlinecode"><a class="idref" href="skylabs.prelude.named_
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Notation</span> "'[with_binder' kf ]" := ((<span class="id" title="var">_</span> :&gt; <a class="idref" href="skylabs.prelude.named_binder.html#BinderCPS"><span class="id" title="class">BinderCPS</span></a> <span class="id" title="var">kf</span>) <a class="idref" href="skylabs.prelude.named_binder.html#DummyValue"><span class="id" title="constructor">DummyValue</span></a>) (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 0, <span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
 <span class="id" title="keyword">Ltac</span> <span class="id" title="var">with_binder_cps</span> := <span class="id" title="var">ltac2</span>:(<span class="id" title="var">k</span> <span class="id" title="var">f</span> |- <span class="id" title="var">Binder.with_binder_cps_ltac1</span> <span class="id" title="var">k</span> <span class="id" title="var">f</span>).<br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Extern</span> 0 (<a class="idref" href="skylabs.prelude.named_binder.html#BinderCPS"><span class="id" title="class">BinderCPS</span></a> (?<span class="id" title="var">k</span> ?<span class="id" title="var">f</span>)) =&gt; <span class="id" title="var">with_binder_cps</span> <span class="id" title="var">k</span> <span class="id" title="var">f</span> : <span class="id" title="var">typeclass_instances</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="NameBinders" class="idref" href="#NameBinders"><span class="id" title="section">NameBinders</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Set</span> <span class="id" title="keyword">Typeclasses</span> <span class="id" title="keyword">Strict</span> <span class="id" title="var">Resolution</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">NamedBinders</span></span> <span class="inlinecode"><a class="idref" href="skylabs.prelude.bitsN.html#get_range_bitsN.get_range_bitsN_bounded_elim.X"><span class="id" title="variable">X</span></a></span> can be used to name the binders in <code>X</code>.
+   
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Class</span> <a id="NameBinders" class="idref" href="#NameBinders"><span class="id" title="record">NameBinders</span></a> {<a id="T:22" class="idref" href="#T:22"><span class="id" title="binder">T</span></a> : <span class="id" title="keyword">Type</span>} (<a id="P:23" class="idref" href="#P:23"><span class="id" title="binder">P</span></a> : <a class="idref" href="skylabs.prelude.named_binder.html#T:22"><span class="id" title="variable">T</span></a>) := <span class="id" title="var">mk_name_binders</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="name_binders_named" class="idref" href="#name_binders_named"><span class="id" title="projection">name_binders_named</span></a> : <a class="idref" href="skylabs.prelude.named_binder.html#T:22"><span class="id" title="variable">T</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="name_binders_eq" class="idref" href="#name_binders_eq"><span class="id" title="projection">name_binders_eq</span></a> : <a class="idref" href="skylabs.prelude.named_binder.html#P:23"><span class="id" title="variable">P</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.prelude.named_binder.html#name_binders_named:25"><span class="id" title="method">name_binders_named</span></a><br/>
+&nbsp;&nbsp;}.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="default_name_binders" class="idref" href="#default_name_binders"><span class="id" title="instance">default_name_binders</span></a> {<a id="T:27" class="idref" href="#T:27"><span class="id" title="binder">T</span></a>} (<a id="P:28" class="idref" href="#P:28"><span class="id" title="binder">P</span></a> : <a class="idref" href="skylabs.prelude.named_binder.html#T:27"><span class="id" title="variable">T</span></a>) : <a class="idref" href="skylabs.prelude.named_binder.html#NameBinders"><span class="id" title="class">NameBinders</span></a> <a class="idref" href="skylabs.prelude.named_binder.html#P:28"><span class="id" title="variable">P</span></a> | 1000 :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <a class="idref" href="skylabs.prelude.named_binder.html#name_binders_named"><span class="id" title="method">name_binders_named</span></a> := <span class="id" title="var">P</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;; <a class="idref" href="skylabs.prelude.named_binder.html#name_binders_eq"><span class="id" title="method">name_binders_eq</span></a> := <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#eq_refl"><span class="id" title="constructor">eq_refl</span></a> }.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.prelude.named_binder.html#NameBinders"><span class="id" title="section">NameBinders</span></a>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="var">Mode</span> <a class="idref" href="skylabs.prelude.named_binder.html#NameBinders"><span class="id" title="class">NameBinders</span></a> + + : <span class="id" title="var">typeclass_instances</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.prelude.named_binder.html#mk_name_binders"><span class="id" title="constructor">mk_name_binders</span></a> {<span class="id" title="var">_</span>} <span class="id" title="var">_</span> <span class="id" title="var">_</span>.<br/>
+#[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.prelude.named_binder.html#name_binders_named"><span class="id" title="method">name_binders_named</span></a> {<span class="id" title="var">_</span> <span class="id" title="var">_</span>} !<span class="id" title="var">_</span> /.<br/>
 </div>
 <!--
 -- Copyright (c) 2020 BlueRock Security, Inc.
