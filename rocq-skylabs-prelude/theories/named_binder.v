@@ -201,3 +201,22 @@ End CPS.
 #[global] Notation "'[with_binder' kf ]" := ((_ :> BinderCPS kf) DummyValue) (at level 0, only parsing).
 Ltac with_binder_cps := ltac2:(k f |- Binder.with_binder_cps_ltac1 k f).
 #[global] Hint Extern 0 (BinderCPS (?k ?f)) => with_binder_cps k f : typeclass_instances.
+
+Section NameBinders.
+  #[local] Set Typeclasses Strict Resolution.
+
+  (** [NamedBinders X] can be used to name the binders in <<X>>.
+   *)
+  Class NameBinders {T : Type} (P : T) := mk_name_binders {
+    name_binders_named : T;
+    name_binders_eq : P = name_binders_named
+  }.
+
+  #[global] Instance default_name_binders {T} (P : T) : NameBinders P | 1000 :=
+    { name_binders_named := P
+    ; name_binders_eq := eq_refl }.
+
+End NameBinders.
+#[global] Hint Mode NameBinders + + : typeclass_instances.
+#[global] Arguments mk_name_binders {_} _ _.
+#[global] Arguments name_binders_named {_ _} !_ /.
