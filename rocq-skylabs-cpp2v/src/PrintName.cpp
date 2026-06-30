@@ -1238,7 +1238,8 @@ fmt::Formatter &ClangPrinter::printNestedName(CoqPrinter &print,
     }
     case NestedNameSpecifier::Kind::Namespace: {
         NamespaceAndPrefix np = spec.getAsNamespaceAndPrefix();
-        if (np.Prefix) {
+        if (np.Prefix &&
+            np.Prefix.getKind() != NestedNameSpecifier::Kind::Global) {
             guard::ctor _{print, "Nscoped"};
             printNestedName(print, np.Prefix, loc) << fmt::nbsp;
             printName(print, np.Namespace, loc, false);
