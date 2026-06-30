@@ -17,6 +17,7 @@
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/Basic/Version.inc>
 #include <clang/Frontend/CompilerInstance.h>
+#include <llvm/Support/ErrorHandling.h>
 #include <optional>
 
 using namespace clang;
@@ -1229,13 +1230,14 @@ fmt::Formatter &ClangPrinter::printNestedName(CoqPrinter &print,
         print.output() << "\"NestedNameSpecifier(empty)\"";
         return print.output();
     }
+
     switch (spec.getKind()) {
     case NestedNameSpecifier::Kind::Null:
         llvm_unreachable("unexpected Null NestedNameSpecifier");
-    case NestedNameSpecifier::Kind::Global: {
-        guard::ctor _(print, "Nglobal", false);
-        break;
-    }
+    case NestedNameSpecifier::Kind::Global:
+        // global itself is un-representable, so all callers of this function
+        // guarantee this
+        llvm_unreachable("unspected Global NestedNameSpecifier");
     case NestedNameSpecifier::Kind::Namespace: {
         NamespaceAndPrefix np = spec.getAsNamespaceAndPrefix();
         if (np.Prefix &&
