@@ -145,16 +145,9 @@ public:
     void VisitIfStmt(const IfStmt *stmt, CoqPrinter &print,
                      ClangPrinter &cprint, ASTContext &) {
         if (stmt->isConsteval()) {
-            guard::ctor _{print, "Sif_consteval"};
-            cprint.printStmt(print, stmt->getThen());
-            print.output() << fmt::nbsp;
-            if (stmt->getElse()) {
-                cprint.printStmt(print, stmt->getElse());
-            } else {
-                print.output() << "Sskip";
-            }
+            print.ctor("Sif_consteval");
         } else {
-            guard::ctor _{print, "Sif"};
+            print.ctor("Sif");
             print.option(stmt->getInit(), [&](const Stmt *v) {
                 cprint.printStmt(print, v);
             });
@@ -165,14 +158,15 @@ public:
             print.space();
             cprint.printExpr(print, stmt->getCond());
             print.space();
-            cprint.printStmt(print, stmt->getThen());
-            print.space();
-            if (stmt->getElse()) {
-                cprint.printStmt(print, stmt->getElse());
-            } else {
-                print.output() << "Sskip";
-            }
         }
+        cprint.printStmt(print, stmt->getThen());
+        print.space();
+        if (stmt->getElse()) {
+            cprint.printStmt(print, stmt->getElse());
+        } else {
+            print.output() << "Sskip";
+        }
+        print.end_ctor();
     }
 
     static bool constexprEvalInt(const Expr &expr, ASTContext &ctxt,
