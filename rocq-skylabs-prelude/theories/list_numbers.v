@@ -39,7 +39,7 @@ Definition replicateN {A} (count : N) (x : A) : list A :=
   replicate (N.to_nat count) x.
 #[global] Arguments replicateN : simpl never.
 #[deprecated(since="2021-05-26",note="use [replicateN].")]
-Notation repeatN := (flip replicateN) (only parsing).
+Abbreviation repeatN := (flip replicateN) (only parsing).
 
 Definition dropN {A} n := drop (A := A) (N.to_nat n).
 Definition takeN {A} n := take (A := A) (N.to_nat n).
@@ -50,7 +50,7 @@ Definition rotateN {A} n xs :=
 
 #[global] Instance list_lookupN {A}: Lookup N A (list A) | 10 :=
   fun i xs => lookup (N.to_nat i) xs.
-#[global] Notation lookupN := (lookup (K := N)) (only parsing).
+#[global] Abbreviation lookupN := (lookup (K := N)) (only parsing).
 
 Definition split_atN {A} (n : N) (xs : list A) : list A * list A :=
   let ret acc k :=
@@ -80,7 +80,7 @@ Proof. by rewrite list_lookupN_lookup Nat2N.id. Qed.
 
 #[global] Instance list_insertN {A} : Insert N A (list A) | 10 :=
   fun i x xs => <[N.to_nat i := x]> xs.
-#[global] Notation insertN := (insert (K := N)) (only parsing).
+#[global] Abbreviation insertN := (insert (K := N)) (only parsing).
 
 (* Instead of lifting the [list_insert] theory to [list_insertN] we provide an unfolding lemma. *)
 Lemma list_insertN_insert {A} (i : N) (x : A) (xs : list A) :
@@ -93,7 +93,7 @@ Proof. by rewrite list_insertN_insert Nat2N.id. Qed.
 
 #[global] Instance list_alterN {A} : Alter N A (list A) | 10 :=
   fun f i xs => alter f (N.to_nat i) xs.
-#[global] Notation alterN := (alter (K := N)) (only parsing).
+#[global] Abbreviation alterN := (alter (K := N)) (only parsing).
 
 (* Instead of lifting the [list_alter] theory to [list_alterN] we provide an unfolding lemma. *)
 Lemma list_alterN_alter {A} (i : N) (xs : list A) f :
@@ -1345,7 +1345,7 @@ Proof.
   case=> [{} /IH IH|H]; by [right|left].
 Qed.
 
-#[global] Notation lengthZ x := (Z.of_N (lengthN x)).
+#[global] Abbreviation lengthZ x := (Z.of_N (lengthN x)).
 
 Definition replicateZ {A} (n : Z) := (replicateN (A :=A) (Z.to_N n)).
 #[global] Hint Opaque replicateZ : typeclass_instances sl_opacity.
@@ -1379,7 +1379,7 @@ Section listZ.
         end
     end.
   #[global] Existing Instance list_lookupZ | 20.
-  #[local] Notation lookupZ := (lookup (K := Z)) (only parsing).
+  #[local] Abbreviation lookupZ := (lookup (K := Z)) (only parsing).
 
   #[global] Instance list_insertZ {A} : Insert Z A (list A) | 20 :=
     fun k a l =>
@@ -1950,7 +1950,7 @@ Section lookupZ_lemmas.
 
 End lookupZ_lemmas.
 
-#[global] Notation lookupZ := (lookup (K := Z)) (only parsing).
+#[global] Abbreviation lookupZ := (lookup (K := Z)) (only parsing).
 
 #[global] Hint Rewrite @lookupN_ZtoN : lift_NtoZ.
 #[global] Hint Rewrite @lengthN_eq_iff_lengthZ : lift_NtoZ.
