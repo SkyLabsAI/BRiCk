@@ -144,7 +144,7 @@ public:
 
     void VisitIfStmt(const IfStmt *stmt, CoqPrinter &print,
                      ClangPrinter &cprint, ASTContext &) {
-        if (stmt->isConsteval()) {
+        if (stmt->isConsteval() || stmt->isConstexpr()) {
             guard::ctor _{print, "Sif_consteval"};
             cprint.printStmt(print, stmt->getThen());
             print.output() << fmt::nbsp;
