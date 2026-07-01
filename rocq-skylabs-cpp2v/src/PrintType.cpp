@@ -49,6 +49,16 @@ static void unsupported_type(CoqPrinter &print, ClangPrinter &cprint,
     unsupported(print, cprint, loc::of(type), "type", well_known);
 }
 
+static std::string getTemplateTemplateParamName(
+    const TemplateTemplateParmDecl &decl) {
+    if (auto id = decl.getIdentifier())
+        return id->getName().str();
+
+    return (Twine("__template_") + Twine(decl.getDepth()) + "_" +
+            Twine(decl.getIndex()))
+        .str();
+}
+
 class PrintType
     : public TypeVisitor<PrintType, void, CoqPrinter &, ClangPrinter &> {
 private:
@@ -185,8 +195,8 @@ public:
 
     void VisitTemplateTypeParmType(const TemplateTypeParmType *type,
                                    CoqPrinter &print, ClangPrinter &cprint) {
-        cprint.printTypeTemplateParam(print, type->getDepth(), type->getIndex(),
-                                      loc::of(type));
+        cprint.printTemplateTypeParamRef(print, type->getDecl(),
+                                         loc::of(type));
     }
 
     void VisitEnumType(const EnumType *type, CoqPrinter &print,
@@ -426,11 +436,18 @@ public:
             auto args = type->template_arguments();
             if (temp) {
                 printRiskyTypeComment(print, type, cprint) << fmt::nbsp;
-                guard::ctor _1(print, "Tnamed", false);
-                guard::ctor _2(print, "Ninst (* TemplateSpecializationType *)",
-                               false);
-                cprint.printName(print, *temp) << fmt::nbsp;
-                cprint.printTemplateArgumentList(print, args);
+                if (auto ttp = dyn_cast<TemplateTemplateParmDecl>(temp)) {
+                    guard::ctor _1(print, "Tparam_inst", false);
+                    print.str(getTemplateTemplateParamName(*ttp)) << fmt::nbsp;
+                    cprint.printTemplateArgs(print, args);
+                } else {
+                    guard::ctor _1(print, "Tnamed", false);
+                    guard::ctor _2(print,
+                                   "Ninst (* TemplateSpecializationType *)",
+                                   false);
+                    cprint.printName(print, *temp) << fmt::nbsp;
+                    cprint.printTemplateArgs(print, args);
+                }
             } else
                 unsupported();
         }
@@ -495,7 +512,7 @@ public:
             guard::ctor _1(print, "Tnamed", false);
             // guard::ctor _2(print, "Ninst{InjectedClassNameType}", false);
             cprint.printName(print, *decl) << fmt::nbsp;
-            // cprint.printTemplateParameters(print, *decl, true);
+            // cprint.printTemplateArgsForDecl(print, *decl);
         } else {
             unsupported(print, cprint, loc::of(type),
                         "injected class name without declaration");

@@ -163,7 +163,7 @@ printSpecialization(CoqPrinter &print, const Decl &decl, ClangPrinter &cprint) {
         cprint.printNameAsKey(print, decl) << fmt::nbsp;
         cprint.printNameComment(print, *pat) << fmt::nbsp;
         cprint.printNameAsKey(print, *pat) << fmt::nbsp;
-        cprint.printTemplateArguments(print, decl);
+        cprint.printTemplateArgsForDecl(print, decl);
         return true;
     } else {
         unsupported(cprint, loc::of(decl), "template specialization");
@@ -225,7 +225,7 @@ template <typename T> struct DeclPrinter {
 
                 guard::ctor _(print, templated_ctor);
                 cprint.printNameComment(print, decl) << fmt::nbsp;
-                cprint.printTemplateParameters(print, decl) << fmt::nbsp;
+                cprint.printTemplateParamsForDecl(print, decl) << fmt::nbsp;
                 cprint.printNameAsKey(print, decl) << fmt::nbsp;
                 print_body(print, box, cprint, ctxt);
                 return true;
@@ -1135,6 +1135,7 @@ public:
     IGNORE(UsingDecl)
     IGNORE(UsingDirectiveDecl)
     IGNORE(UsingShadowDecl)
+    IGNORE(UnresolvedUsingTypenameDecl)
 
 #undef IGNORE
 

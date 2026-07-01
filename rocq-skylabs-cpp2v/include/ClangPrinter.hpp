@@ -35,6 +35,7 @@ class FieldDecl;
 class RecordDecl;
 class DeclContext;
 class TemplateDecl;
+class TemplateTypeParmDecl;
 class TemplateParameterList;
 class TemplateArgument;
 class TemplateArgumentLoc;
@@ -201,45 +202,58 @@ public:
     fmt::Formatter &printFieldName(CoqPrinter &, const clang::FieldDecl &,
                                    loc::loc);
 
-    // Print all parameters in scope; for example, with
+    // Print one Rocq [temp_param].
+    fmt::Formatter &printTemplateParam(CoqPrinter &,
+                                       const clang::NamedDecl *,
+                                       loc::loc);
+
+    // Print a Rocq [list temp_param].
+    fmt::Formatter &printTemplateParams(CoqPrinter &,
+                                        llvm::ArrayRef<clang::NamedDecl *>,
+                                        loc::loc);
+
+    // Print all template parameters in scope for a declaration as a Rocq
+    // [list temp_param]. For example, with
     // ```
-    // template<typename T> struct  s{
-    //   int x;
+    // template<typename T> struct s {
     //   template<typename U> void f(T, U);
     // };
     // ```
     // emits roughly `<T>` for `s` and `<T,U>` for `s::f`.
-    // With `as_arg`, print template arguments synthesized from parameters.
-    fmt::Formatter &printTemplateParameters(
-        CoqPrinter &, const clang::Decl &,
-        bool as_arg = false); // list temp_param or list temp_arg
+    fmt::Formatter &printTemplateParamsForDecl(CoqPrinter &,
+                                               const clang::Decl &);
 
-    // Print all arguments in scope
-    fmt::Formatter &
-    printTemplateArguments(CoqPrinter &,
-                           const clang::Decl &); // list temp_arg
+    // Print one Rocq [temp_arg].
+    fmt::Formatter &printTemplateArg(CoqPrinter &,
+                                     const clang::TemplateArgument &,
+                                     loc::loc);
+    fmt::Formatter &printTemplateArg(CoqPrinter &,
+                                     const clang::NamedDecl *,
+                                     loc::loc);
 
+    // Print a Rocq [list temp_arg].
+    fmt::Formatter &printTemplateArgList(CoqPrinter &,
+                                         const clang::TemplateArgumentList &,
+                                         loc::loc);
+    fmt::Formatter &printTemplateArgs(CoqPrinter &,
+                                      llvm::ArrayRef<clang::TemplateArgument>);
     fmt::Formatter &
-    printTemplateArgumentList(CoqPrinter &, const clang::TemplateArgumentList &,
-                              loc::loc); // `list temp_arg`
-    fmt::Formatter &
-    printTemplateArgumentList(CoqPrinter &,
-                              llvm::ArrayRef<clang::TemplateArgument>);
-    fmt::Formatter &
-    printTemplateArgumentList(CoqPrinter &,
-                              llvm::ArrayRef<clang::TemplateArgumentLoc>);
+    printTemplateArgs(CoqPrinter &,
+                      llvm::ArrayRef<clang::TemplateArgumentLoc>);
 
-    // TODO: Adjust and use in the structured name printer
-    fmt::Formatter &printTemplateParam(CoqPrinter &, unsigned depth,
-                                       unsigned index, bool is_type, loc::loc);
-    fmt::Formatter &printTypeTemplateParam(CoqPrinter &print, unsigned depth,
-                                           unsigned index, loc::loc loc) {
-        return printTemplateParam(print, depth, index, true, loc);
-    }
-    fmt::Formatter &printNonTypeTemplateParam(CoqPrinter &print, unsigned depth,
-                                              unsigned index, loc::loc loc) {
-        return printTemplateParam(print, depth, index, false, loc);
-    }
+    // Print all template arguments in scope for a declaration as a Rocq
+    // [list temp_arg].
+    fmt::Formatter &printTemplateArgsForDecl(CoqPrinter &,
+                                             const clang::Decl &);
+
+    // Print template parameter references in the Rocq sort required by their
+    // use site.
+    fmt::Formatter &printTemplateTypeParamRef(
+        CoqPrinter &, const clang::TemplateTypeParmDecl *, loc::loc);
+    fmt::Formatter &printTemplateTypeParamRef(CoqPrinter &, unsigned depth,
+                                              unsigned index, loc::loc);
+    fmt::Formatter &printTemplateValueParamRef(CoqPrinter &, unsigned depth,
+                                               unsigned index, loc::loc);
 
     // Types
 

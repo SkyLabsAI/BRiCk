@@ -658,6 +658,22 @@ with Cast : Set :=
 #[global] Arguments BindingDecl : clear implicits.
 #[global] Arguments Stmt : clear implicits.
 
+(** The representation of applied template type parameters,
+    e.g.
+    <<
+    template<template<typename T> U> f() { U<int> ... };
+    >>
+    This notation effectively has type
+    [[
+    Tparam_inst : ident -> list temp_arg -> type
+    ]]
+
+    TODO: It might be desireable to promote this to a new constructor  
+ *)
+Abbreviation Tparam_inst n args :=
+  (Tnamed (Ninst (Ndependent (Tparam n)) args)).
+
+
 #[global] Instance type_inhabited : Inhabited type.
 Proof. solve_inhabited. Qed.
 #[global] Instance Expr_inhabited : Inhabited Expr.

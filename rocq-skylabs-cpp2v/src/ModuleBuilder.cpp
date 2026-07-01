@@ -126,6 +126,7 @@ public:
     IGNORE(UsingDecl)
     IGNORE(UsingDirectiveDecl)
     IGNORE(UsingShadowDecl)
+    IGNORE(UnresolvedUsingTypenameDecl)
     IGNORE(AccessSpecDecl)
 
     IGNORE(FieldDecl)

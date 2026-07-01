@@ -335,17 +335,199 @@ Definition canonicalize {T} (find : name -> option T) (tu : translation_unit) (n
   | _ => None
   end.
 
+Module template_alias.
+  Definition env : Set := list (ident * temp_arg).
+
+  Fixpoint lookup (xs : env) (id : ident) : option temp_arg :=
+    match xs with
+    | [] => None
+    | (id', arg) :: xs =>
+        if bool_decide (id = id') then Some arg else lookup xs id
+    end.
+
+  Definition lookup_type (xs : env) (id : ident) : option type :=
+    match lookup xs id with
+    | Some (Atype t) => Some t
+    | _ => None
+    end.
+
+  Definition lookup_value (xs : env) (id : ident) : option Expr :=
+    match lookup xs id with
+    | Some (Avalue e) => Some e
+    | _ => None
+    end.
+
+  Definition lookup_template (xs : env) (id : ident) : option temp_arg :=
+    match lookup xs id with
+    | Some (Atemplate _) as arg => arg
+    | Some (Atemplate_param _) as arg => arg
+    | _ => None
+    end.
+
+  Fixpoint bind (ps : list temp_param) (args : list temp_arg) : option env :=
+    match ps, args with
+    | [], [] => Some []
+    | Ptype id :: ps, Atype t :: args =>
+        match bind ps args with
+        | Some xs => Some ((id, Atype t) :: xs)
+        | None => None
+        end
+    | Pvalue id _ :: ps, Avalue e :: args =>
+        match bind ps args with
+        | Some xs => Some ((id, Avalue e) :: xs)
+        | None => None
+        end
+    | Ptemplate id _ :: ps, (Atemplate _ as arg) :: args
+    | Ptemplate id _ :: ps, (Atemplate_param _ as arg) :: args =>
+        match bind ps args with
+        | Some xs => Some ((id, arg) :: xs)
+        | None => None
+        end
+    | Punsupported _ :: ps, Aunsupported _ :: args =>
+        bind ps args
+    | _, _ => None
+    end.
+
+  Definition subst_expr (xs : env) (e : Expr) : Expr :=
+    match e with
+    | Eparam id =>
+        match lookup_value xs id with
+        | Some e => e
+        | None => e
+        end
+    | _ => e
+    end.
+
+  Fixpoint subst_name (xs : env) (n : name) : name :=
+    match n with
+    | Ninst n args =>
+      let n := subst_name xs n in
+      let args := subst_temp_arg xs <$> args in
+      Ninst n args
+    | Nglobal _ => n
+    | Ndependent t => Ndependent (subst_type xs t)
+    | Nscoped n c => Nscoped (subst_name xs n) c
+    | Nunsupported _ => n
+    end
+
+  with subst_temp_arg (xs : env) (a : temp_arg) : temp_arg :=
+    match a with
+    | Atype t => Atype (subst_type xs t)
+    | Avalue e => Avalue (subst_expr xs e)
+    | Apack args => Apack (subst_temp_arg xs <$> args)
+    | Atemplate n => Atemplate (subst_name xs n)
+    | Atemplate_param id =>
+        match lookup_template xs id with
+        | Some arg => arg
+        | None => a
+        end
+    | Aunsupported _ => a
+    end
+
+  with subst_type (xs : env) (t : type) : type :=
+    match t with
+    | Tparam_inst n args =>
+      let args := subst_temp_arg xs <$> args in
+      match lookup_template xs n with
+      | Some (Atemplate n) => Tnamed $ Ninst n args
+      | Some (Atemplate_param n) => Tparam_inst n args
+      | _ => Tparam_inst n args
+      end
+    | Tparam id =>
+        match lookup_type xs id with
+        | Some t => t
+        | None => t
+        end
+    | Tresult_param _ | Tauto | Tnum _ _ | Tchar_ _ | Tvoid
+    | Tbool | Tfloat_ _ | Tnullptr | Tarch _ _ | Tunsupported _ => t
+    | Tresult_global n => Tresult_global (subst_name xs n)
+    | Tresult_unop o t => Tresult_unop o (subst_type xs t)
+    | Tresult_binop o l r =>
+        Tresult_binop o (subst_type xs l) (subst_type xs r)
+    | Tresult_call n ts => Tresult_call (subst_name xs n) (subst_type xs <$> ts)
+    | Tresult_member_call n o ts =>
+        Tresult_member_call (subst_name xs n) (subst_type xs o) (subst_type xs <$> ts)
+    | Tresult_parenlist t ts =>
+        Tresult_parenlist (subst_type xs t) (subst_type xs <$> ts)
+    | Tresult_member o f => Tresult_member (subst_type xs o) (subst_name xs f)
+    | Tnamed n => Tnamed (subst_name xs n)
+    | Tref t => Tref (subst_type xs t)
+    | Trv_ref t => Trv_ref (subst_type xs t)
+    | Tqualified q t => Tqualified q (subst_type xs t)
+    | Tptr t => Tptr (subst_type xs t)
+    | Tarray t n => Tarray (subst_type xs t) n
+    | Tincomplete_array t => Tincomplete_array (subst_type xs t)
+    | Tvariable_array t e =>
+        let t := subst_type xs t in
+        let e := subst_expr xs e in
+        match e with
+        | Eint z _ =>
+            if bool_decide (0 <= z)%Z then Tarray t (Z.to_N z)
+            else Tvariable_array t e
+        | _ => Tvariable_array t e
+        end
+    | Tenum n => Tenum (subst_name xs n)
+    | Tfunction ft => Tfunction (function_type.fmap (subst_type xs) ft)
+    | Tmember_pointer n t => Tmember_pointer (subst_type xs n) (subst_type xs t)
+    | Tdecltype e => Tdecltype (subst_expr xs e)
+    | Texprtype e => Texprtype (subst_expr xs e)
+    end.
+
+  Definition same_template_base (actual candidate : name) : option (list temp_arg) :=
+    match actual, candidate with
+    | Ninst actual_base args, Ninst candidate_base _ =>
+        if bool_decide (actual_base = candidate_base) then Some args else None
+    | _, _ => None
+    end.
+
+  Definition instantiate (actual : name) (candidate : name * template type)
+      : option type :=
+    let '(candidate_name, templ) := candidate in
+    match same_template_base actual candidate_name with
+    | Some args =>
+        match bind templ.(template_params) args with
+        | Some xs => Some (subst_type xs templ.(template_value))
+        | None => None
+        end
+    | None => None
+    end.
+
+  Fixpoint find (actual : name) (candidates : list (name * template type))
+      : option type :=
+    match candidates with
+    | [] => None
+    | candidate :: candidates =>
+        match instantiate actual candidate with
+        | Some t => Some t
+        | None => find actual candidates
+        end
+    end.
+End template_alias.
+
 (** Resolves all of the aliases in a type name. *)
 Definition resolve_type (tu : translation_unit) (nm : name) : option decltype :=
-  let find n :=
+  let maliases := TM.elements tu.(maliases) in
+  let fix find (fuel : nat) (n : name) :=
     match tu.(types) !! n with
     | Some (Gtypedef ty) => Some ty
     | Some (Genum _ _) => Some $ Tenum n
     | Some _ => Some $ Tnamed n
-    | None => None
+    | None =>
+        match template_alias.find n maliases with
+        | Some (Tnamed n') =>
+            match fuel with
+            | O => Some (Tnamed n')
+            | S fuel =>
+                match canonicalize (find fuel) tu n' with
+                | Some t => Some t
+                | None => Some (Tnamed n')
+                end
+            end
+        | other => other
+        end
     end
   in
-  canonicalize find tu nm.
+  canonicalize (find (List.length maliases)) tu nm.
 
 (** Resolves all of the aliases in a value name.
     TODO: This needs to be extended to search for <<enum>> constants.
