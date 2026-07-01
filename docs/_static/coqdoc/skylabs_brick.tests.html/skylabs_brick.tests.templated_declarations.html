@@ -1,0 +1,515 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.templated_declarations</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax.templates</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax.dealias</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">with_templates</span>]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">source</span> <span class="id" title="var">flags</span> "-std=c++20" <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">T</span> {<br/>
+&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">tag</span>;<br/>
+};<br/>
+<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">N</span> = 100;<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">value</span> = 200;<br/>
+<br/>
+<span class="id" title="var">template</span> &lt;<span class="id" title="var">typename</span> <span class="id" title="var">T</span>&gt;<br/>
+<span class="id" title="var">T</span> <span class="id" title="var">type_shadow</span>(<span class="id" title="var">T</span> <span class="id" title="var">value</span>) {<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">return</span> <span class="id" title="var">value</span>;<br/>
+}<br/>
+<br/>
+<span class="id" title="var">template</span> &lt;<span class="id" title="var">int</span> <span class="id" title="var">N</span>&gt;<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">value_shadow</span>() {<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">return</span> <span class="id" title="var">N</span>;<br/>
+}<br/>
+<br/>
+<span class="id" title="var">template</span> &lt;<span class="id" title="var">typename</span> <span class="id" title="var">Outer</span>&gt;<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">Nested</span> {<br/>
+&nbsp;&nbsp;<span class="id" title="var">Outer</span> <span class="id" title="tactic">field</span>;<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">template</span> &lt;<span class="id" title="var">typename</span> <span class="id" title="var">Inner</span>&gt;<br/>
+&nbsp;&nbsp;<span class="id" title="var">Inner</span> <span class="id" title="var">method</span>(<span class="id" title="var">Outer</span> <span class="id" title="var">outer</span>, <span class="id" title="var">Inner</span> <span class="id" title="var">inner</span>) {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">return</span> <span class="id" title="var">inner</span>;<br/>
+&nbsp;&nbsp;}<br/>
+};<br/>
+<br/>
+<span class="id" title="var">template</span> &lt;<span class="id" title="var">typename</span> <span class="id" title="var">T</span>, <span class="id" title="var">int</span> <span class="id" title="var">N</span>&gt;<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">Mixed</span> {<br/>
+&nbsp;&nbsp;<span class="id" title="var">T</span> <span class="id" title="var">slots</span>[<span class="id" title="var">N</span>];<br/>
+};<br/>
+<br/>
+<span class="id" title="var">template</span> &lt;<span class="id" title="var">typename</span> <span class="id" title="var">T</span>&gt;<br/>
+<span class="id" title="keyword">using</span> <span class="id" title="var">Alias</span> = <span class="id" title="var">T</span> *;<br/>
+<br/>
+<span class="id" title="var">template</span> &lt;<span class="id" title="var">typename</span> <span class="id" title="var">T</span>&gt;<br/>
+<span class="id" title="keyword">using</span> <span class="id" title="var">ConstAlias</span> = <span class="id" title="var">const</span> <span class="id" title="var">T</span> *;<br/>
+<br/>
+<span class="id" title="var">template</span> &lt;<span class="id" title="var">typename</span> <span class="id" title="var">T</span>&gt;<br/>
+<span class="id" title="keyword">using</span> <span class="id" title="var">RefAlias</span> = <span class="id" title="var">T</span> &amp;;<br/>
+<br/>
+<span class="id" title="var">template</span> &lt;<span class="id" title="var">typename</span> <span class="id" title="var">T</span>&gt;<br/>
+<span class="id" title="keyword">using</span> <span class="id" title="var">AliasChain</span> = <span class="id" title="var">Alias</span>&lt;<span class="id" title="var">T</span>&gt;;<br/>
+<br/>
+<span class="id" title="var">template</span> &lt;<span class="id" title="var">typename</span> <span class="id" title="var">T</span>&gt;<br/>
+<span class="id" title="keyword">using</span> <span class="id" title="var">NestedPtrAlias</span> = <span class="id" title="var">Alias</span>&lt;<span class="id" title="var">Alias</span>&lt;<span class="id" title="var">T</span>&gt;&gt;;<br/>
+<br/>
+<span class="id" title="var">template</span> &lt;<span class="id" title="var">int</span> <span class="id" title="var">N</span>&gt;<br/>
+<span class="id" title="keyword">using</span> <span class="id" title="var">ValueAlias</span> = <span class="id" title="var">int</span>;<br/>
+<br/>
+<span class="id" title="var">template</span> &lt;<span class="id" title="var">int</span> <span class="id" title="var">N</span>&gt;<br/>
+<span class="id" title="keyword">using</span> <span class="id" title="var">ValueArrayAlias</span> = <span class="id" title="var">int</span>[<span class="id" title="var">N</span>];<br/>
+<br/>
+<span class="id" title="var">template</span> &lt;<span class="id" title="var">template</span> &lt;<span class="id" title="var">typename</span> <span class="id" title="var">T</span>&gt; <span class="id" title="var">class</span> <span class="id" title="var">TemplateParam</span>, <span class="id" title="var">typename</span> <span class="id" title="var">T</span>&gt;<br/>
+<span class="id" title="keyword">using</span> <span class="id" title="var">ApplyAlias</span> = <span class="id" title="var">TemplateParam</span>&lt;<span class="id" title="var">T</span>&gt;;<br/>
+<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">AliasHolder</span> {<br/>
+&nbsp;&nbsp;<span class="id" title="var">template</span> &lt;<span class="id" title="var">typename</span> <span class="id" title="var">T</span>&gt;<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">using</span> <span class="id" title="var">MemberAlias</span> = <span class="id" title="var">Alias</span>&lt;<span class="id" title="var">T</span>&gt;;<br/>
+};<br/>
+<br/>
+<span class="id" title="var">namespace</span> <span class="id" title="var">AliasNS</span> {<br/>
+&nbsp;&nbsp;<span class="id" title="var">template</span> &lt;<span class="id" title="var">typename</span> <span class="id" title="var">T</span>&gt;<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">using</span> <span class="id" title="var">ScopedAlias</span> = <span class="id" title="var">Alias</span>&lt;<span class="id" title="var">T</span>&gt;;<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">using</span> <span class="id" title="var">ConcreteScopedPtr</span> = <span class="id" title="var">ScopedAlias</span>&lt;<span class="id" title="var">int</span>&gt;;<br/>
+}<br/>
+<br/>
+<span class="id" title="keyword">using</span> <span class="id" title="var">ConcreteAliasPtr</span> = <span class="id" title="var">Alias</span>&lt;<span class="id" title="var">int</span>&gt;;<br/>
+<span class="id" title="keyword">using</span> <span class="id" title="var">ConcreteAliasChain</span> = <span class="id" title="var">AliasChain</span>&lt;<span class="id" title="var">int</span>&gt;;<br/>
+<span class="id" title="keyword">using</span> <span class="id" title="var">ConcreteMemberPtr</span> = <span class="id" title="var">AliasHolder</span>::<span class="id" title="var">MemberAlias</span>&lt;<span class="id" title="var">int</span>&gt;;<br/>
+<span class="id" title="keyword">using</span> <span class="id" title="var">ConcreteNestedPtr</span> = <span class="id" title="var">NestedPtrAlias</span>&lt;<span class="id" title="var">int</span>&gt;;<br/>
+<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">takes_ptr</span>(<span class="id" title="var">int</span> *);<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">takes_const_ptr</span>(<span class="id" title="var">const</span> <span class="id" title="var">int</span> *);<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">takes_ref</span>(<span class="id" title="var">int</span> &amp;);<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">takes_nested_ptr</span>(<span class="id" title="var">int</span> **);<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">takes_value_alias</span>(<span class="id" title="var">int</span>);<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">takes_value_array_alias</span>(<span class="id" title="var">int</span> (&amp;)[3]);<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">takes_apply_alias</span>(<span class="id" title="var">int</span> *);<br/>
+<br/>
+<span class="id" title="var">template</span> &lt;<span class="id" title="var">typename</span> <span class="id" title="var">T</span>&gt;<br/>
+<span class="id" title="var">T</span> <span class="id" title="var">templated_var</span> = {};<br/>
+<br/>
+<span class="id" title="var">template</span> &lt;<span class="id" title="var">template</span> &lt;<span class="id" title="var">typename</span> <span class="id" title="var">T</span>&gt; <span class="id" title="var">class</span> <span class="id" title="var">TemplateParam</span>, <span class="id" title="var">typename</span> <span class="id" title="var">T</span>&gt;<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">UsesTemplateTemplate</span> {<br/>
+&nbsp;&nbsp;<span class="id" title="var">TemplateParam</span>&lt;<span class="id" title="var">T</span>&gt; <span class="id" title="var">value</span>;<br/>
+};<br/>
+<br/>
+<span class="id" title="var">template</span> &lt;<span class="id" title="var">typename</span>... <span class="id" title="var">Ts</span>&gt;<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">variadic_count</span>(<span class="id" title="var">Ts</span>... <span class="id" title="var">values</span>) {<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">return</span> <span class="id" title="var">sizeof</span>...(<span class="id" title="var">values</span>);<br/>
+}<br/>
+<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">Agg</span> {<br/>
+&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">a</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">b</span>;<br/>
+};<br/>
+<br/>
+<span class="id" title="var">template</span> &lt;<span class="id" title="var">Agg</span> <span class="id" title="var">V</span>&gt;<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">aggregate_value</span>() {<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">return</span> <span class="id" title="var">V.a</span>;<br/>
+}<br/>
+<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">use_all</span>() {<br/>
+&nbsp;&nbsp;<span class="id" title="var">Nested</span>&lt;<span class="id" title="var">int</span>&gt; <span class="id" title="var">nested</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">return</span> <span class="id" title="var">value_shadow</span>&lt;7&gt;() + <span class="id" title="var">variadic_count</span>(1, 2, 3) +<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">aggregate_value</span>&lt;<span class="id" title="var">Agg</span>{4, 5}&gt;();<br/>
+}<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="lookup_symbol_template" class="idref" href="#lookup_symbol_template"><span class="id" title="definition">lookup_symbol_template</span></a> (<a id="n:1" class="idref" href="#n:1"><span class="id" title="binder">n</span></a> : <span class="id" title="inductive">name</span>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> (<span class="id" title="record">template</span> <span class="id" title="abbreviation">ObjValue</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="projection">translation_unit.msymbols</span> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#source"><span class="id" title="definition">source</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#n:1"><span class="id" title="variable">n</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="lookup_type_template" class="idref" href="#lookup_type_template"><span class="id" title="definition">lookup_type_template</span></a> (<a id="n:2" class="idref" href="#n:2"><span class="id" title="binder">n</span></a> : <span class="id" title="inductive">name</span>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> (<span class="id" title="record">template</span> <span class="id" title="abbreviation">GlobDecl</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="projection">translation_unit.mtypes</span> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#source"><span class="id" title="definition">source</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#n:2"><span class="id" title="variable">n</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="lookup_function_template" class="idref" href="#lookup_function_template"><span class="id" title="definition">lookup_function_template</span></a> (<a id="n:3" class="idref" href="#n:3"><span class="id" title="binder">n</span></a> : <span class="id" title="inductive">name</span>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <span class="id" title="abbreviation">Func</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#lookup_symbol_template"><span class="id" title="definition">lookup_symbol_template</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#n:3"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">t</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">t</span>.(<span class="id" title="projection">template_value</span>) <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="constructor">Ofunction</span> <span class="id" title="var">f</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">f</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="lookup_method_template" class="idref" href="#lookup_method_template"><span class="id" title="definition">lookup_method_template</span></a> (<a id="n:4" class="idref" href="#n:4"><span class="id" title="binder">n</span></a> : <span class="id" title="inductive">name</span>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <span class="id" title="abbreviation">Method</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#lookup_symbol_template"><span class="id" title="definition">lookup_symbol_template</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#n:4"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">t</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">t</span>.(<span class="id" title="projection">template_value</span>) <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="constructor">Omethod</span> <span class="id" title="var">m</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">m</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="lookup_function_template_body" class="idref" href="#lookup_function_template_body"><span class="id" title="definition">lookup_function_template_body</span></a> (<a id="n:5" class="idref" href="#n:5"><span class="id" title="binder">n</span></a> : <span class="id" title="inductive">name</span>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <span class="id" title="inductive">Stmt</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#lookup_function_template"><span class="id" title="definition">lookup_function_template</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#n:5"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">f</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">f</span>.(<span class="id" title="projection">f_body</span>) <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Impl</span> <span class="id" title="var">s</span>) =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">s</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="lookup_method_template_body" class="idref" href="#lookup_method_template_body"><span class="id" title="definition">lookup_method_template_body</span></a> (<a id="n:6" class="idref" href="#n:6"><span class="id" title="binder">n</span></a> : <span class="id" title="inductive">name</span>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <span class="id" title="inductive">Stmt</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#lookup_method_template"><span class="id" title="definition">lookup_method_template</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#n:6"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">m</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">m</span>.(<span class="id" title="projection">m_body</span>) <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">UserDefined</span> <span class="id" title="var">s</span>) =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">s</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="symbol_template_params" class="idref" href="#symbol_template_params"><span class="id" title="definition">symbol_template_params</span></a> (<a id="n:7" class="idref" href="#n:7"><span class="id" title="binder">n</span></a> : <span class="id" title="inductive">name</span>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="abbreviation">temp_param</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#lookup_symbol_template"><span class="id" title="definition">lookup_symbol_template</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#n:7"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">t</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">t</span>.(<span class="id" title="projection">template_params</span>)<br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="type_template_params" class="idref" href="#type_template_params"><span class="id" title="definition">type_template_params</span></a> (<a id="n:8" class="idref" href="#n:8"><span class="id" title="binder">n</span></a> : <span class="id" title="inductive">name</span>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="abbreviation">temp_param</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#lookup_type_template"><span class="id" title="definition">lookup_type_template</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#n:8"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">t</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">t</span>.(<span class="id" title="projection">template_params</span>)<br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="alias_template_params" class="idref" href="#alias_template_params"><span class="id" title="definition">alias_template_params</span></a> (<a id="n:9" class="idref" href="#n:9"><span class="id" title="binder">n</span></a> : <span class="id" title="inductive">name</span>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="abbreviation">temp_param</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="projection">translation_unit.maliases</span> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#source"><span class="id" title="definition">source</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#n:9"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">t</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">t</span>.(<span class="id" title="projection">template_params</span>)<br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Notation</span> <a id="RESOLVE_VALUE" class="idref" href="#RESOLVE_VALUE"><span class="id" title="abbreviation">RESOLVE_VALUE</span></a> <span class="id" title="var">input</span> <span class="id" title="var">output</span> :=<br/>
+&nbsp;&nbsp;(<span class="id" title="definition">trace.runO</span> (<span class="id" title="definition">dealias.resolveValue</span> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#source"><span class="id" title="definition">source</span></a> <span class="id" title="var">input</span>%<span class="id" title="var">cpp_name</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">output</span>%<span class="id" title="var">cpp_name</span>)<br/>
+&nbsp;&nbsp;(<span class="id" title="var">only</span> <span class="id" title="var">parsing</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="type_shadow_name" class="idref" href="#type_shadow_name"><span class="id" title="definition">type_shadow_name</span></a> : <span class="id" title="inductive">name</span> :=<br/>
+&nbsp;&nbsp;"type_shadow&lt;$T&gt;($T)"%<span class="id" title="var">cpp_name</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="value_shadow_name" class="idref" href="#value_shadow_name"><span class="id" title="definition">value_shadow_name</span></a> : <span class="id" title="inductive">name</span> :=<br/>
+&nbsp;&nbsp;"value_shadow&lt;`N&gt;()"%<span class="id" title="var">cpp_name</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="nested_type_name" class="idref" href="#nested_type_name"><span class="id" title="definition">nested_type_name</span></a> : <span class="id" title="inductive">name</span> :=<br/>
+&nbsp;&nbsp;"Nested&lt;$Outer&gt;"%<span class="id" title="var">cpp_name</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="nested_method_name" class="idref" href="#nested_method_name"><span class="id" title="definition">nested_method_name</span></a> : <span class="id" title="inductive">name</span> :=<br/>
+&nbsp;&nbsp;"Nested&lt;$Outer&gt;::method&lt;$Inner&gt;($Outer, $Inner)"%<span class="id" title="var">cpp_name</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="mixed_type_name" class="idref" href="#mixed_type_name"><span class="id" title="definition">mixed_type_name</span></a> : <span class="id" title="inductive">name</span> :=<br/>
+&nbsp;&nbsp;"Mixed&lt;$T, `N&gt;"%<span class="id" title="var">cpp_name</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="alias_name" class="idref" href="#alias_name"><span class="id" title="definition">alias_name</span></a> : <span class="id" title="inductive">name</span> :=<br/>
+&nbsp;&nbsp;"Alias&lt;$T&gt;"%<span class="id" title="var">cpp_name</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="bare_alias_name" class="idref" href="#bare_alias_name"><span class="id" title="definition">bare_alias_name</span></a> : <span class="id" title="inductive">name</span> :=<br/>
+&nbsp;&nbsp;"Alias"%<span class="id" title="var">cpp_name</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="value_alias_name" class="idref" href="#value_alias_name"><span class="id" title="definition">value_alias_name</span></a> : <span class="id" title="inductive">name</span> :=<br/>
+&nbsp;&nbsp;"ValueAlias&lt;`N&gt;"%<span class="id" title="var">cpp_name</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="value_array_alias_name" class="idref" href="#value_array_alias_name"><span class="id" title="definition">value_array_alias_name</span></a> : <span class="id" title="inductive">name</span> :=<br/>
+&nbsp;&nbsp;"ValueArrayAlias&lt;`N&gt;"%<span class="id" title="var">cpp_name</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="apply_alias_name" class="idref" href="#apply_alias_name"><span class="id" title="definition">apply_alias_name</span></a> : <span class="id" title="inductive">name</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="constructor">Ninst</span> (<span class="id" title="constructor">Nglobal</span> (<span class="id" title="constructor">Nid</span> "ApplyAlias"))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">[</span><span class="id" title="constructor">Atemplate_param</span> "TemplateParam"<span class="id" title="notation">;</span> <span class="id" title="constructor">Atype</span> (<span class="id" title="constructor">Tparam</span> "T")<span class="id" title="notation">]</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="templated_var_name" class="idref" href="#templated_var_name"><span class="id" title="definition">templated_var_name</span></a> : <span class="id" title="inductive">name</span> :=<br/>
+&nbsp;&nbsp;"templated_var&lt;$T&gt;"%<span class="id" title="var">cpp_name</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="bare_templated_var_name" class="idref" href="#bare_templated_var_name"><span class="id" title="definition">bare_templated_var_name</span></a> : <span class="id" title="inductive">name</span> :=<br/>
+&nbsp;&nbsp;"templated_var"%<span class="id" title="var">cpp_name</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="uses_template_template_name" class="idref" href="#uses_template_template_name"><span class="id" title="definition">uses_template_template_name</span></a> : <span class="id" title="inductive">name</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="constructor">Ninst</span> (<span class="id" title="constructor">Nglobal</span> (<span class="id" title="constructor">Nid</span> "UsesTemplateTemplate"))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">[</span><span class="id" title="constructor">Atemplate_param</span> "TemplateParam"<span class="id" title="notation">;</span> <span class="id" title="constructor">Atype</span> (<span class="id" title="constructor">Tparam</span> "T")<span class="id" title="notation">]</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="variadic_count_name" class="idref" href="#variadic_count_name"><span class="id" title="definition">variadic_count_name</span></a> : <span class="id" title="inductive">name</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="constructor">Ninst</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="constructor">Nglobal</span> (<span class="id" title="definition">Nfunction</span> <span class="id" title="constructor">function_qualifiers.N</span> "variadic_count"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">[</span><span class="id" title="constructor">Tunsupported</span> "PackExpansion Ts..."<span class="id" title="notation">]</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">[</span><span class="id" title="constructor">Aunsupported</span> "template parameter pack"<span class="id" title="notation">]</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="aggregate_value_name" class="idref" href="#aggregate_value_name"><span class="id" title="definition">aggregate_value_name</span></a> : <span class="id" title="inductive">name</span> :=<br/>
+&nbsp;&nbsp;"aggregate_value&lt;`V&gt;()"%<span class="id" title="var">cpp_name</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="agg" class="idref" href="#agg"><span class="id" title="definition">agg</span></a> : <span class="id" title="inductive">type</span> := "Agg"%<span class="id" title="var">cpp_type</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="type_template_param_is_not_global_T" class="idref" href="#type_template_param_is_not_global_T"><span class="id" title="definition">type_template_param_is_not_global_T</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#symbol_template_params"><span class="id" title="definition">symbol_template_params</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#type_shadow_name"><span class="id" title="definition">type_shadow_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="notation">[</span><span class="id" title="constructor">Ptype</span> "T"<span class="id" title="notation">]</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="value_template_param_is_not_global_N" class="idref" href="#value_template_param_is_not_global_N"><span class="id" title="definition">value_template_param_is_not_global_N</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#symbol_template_params"><span class="id" title="definition">symbol_template_params</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#value_shadow_name"><span class="id" title="definition">value_shadow_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="notation">[</span><span class="id" title="constructor">Pvalue</span> "N" <span class="id" title="abbreviation">Tint</span><span class="id" title="notation">]</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="type_template_param_body_uses_function_parameter" class="idref" href="#type_template_param_body_uses_function_parameter"><span class="id" title="definition">type_template_param_body_uses_function_parameter</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#lookup_function_template_body"><span class="id" title="definition">lookup_function_template_body</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#type_shadow_name"><span class="id" title="definition">type_shadow_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Sseq</span> <span class="id" title="notation">[</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="constructor">Sreturn</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Evar</span> "value" (<span class="id" title="constructor">Tparam</span> "T")))<br/>
+&nbsp;&nbsp;<span class="id" title="notation">]</span>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="value_template_param_body_uses_template_value" class="idref" href="#value_template_param_body_uses_template_value"><span class="id" title="definition">value_template_param_body_uses_template_value</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#lookup_function_template_body"><span class="id" title="definition">lookup_function_template_body</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#value_shadow_name"><span class="id" title="definition">value_shadow_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Sseq</span> <span class="id" title="notation">[</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="constructor">Sreturn</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Eparam</span> "N"))<br/>
+&nbsp;&nbsp;<span class="id" title="notation">]</span>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="nested_class_template_params" class="idref" href="#nested_class_template_params"><span class="id" title="definition">nested_class_template_params</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#type_template_params"><span class="id" title="definition">type_template_params</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#nested_type_name"><span class="id" title="definition">nested_type_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="notation">[</span><span class="id" title="constructor">Ptype</span> "Outer"<span class="id" title="notation">]</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="nested_member_template_params" class="idref" href="#nested_member_template_params"><span class="id" title="definition">nested_member_template_params</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#symbol_template_params"><span class="id" title="definition">symbol_template_params</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#nested_method_name"><span class="id" title="definition">nested_method_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="notation">[</span><span class="id" title="constructor">Ptype</span> "Outer"<span class="id" title="notation">;</span> <span class="id" title="constructor">Ptype</span> "Inner"<span class="id" title="notation">]</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="nested_member_body_uses_inner_parameter" class="idref" href="#nested_member_body_uses_inner_parameter"><span class="id" title="definition">nested_member_body_uses_inner_parameter</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#lookup_method_template_body"><span class="id" title="definition">lookup_method_template_body</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#nested_method_name"><span class="id" title="definition">nested_method_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Sseq</span> <span class="id" title="notation">[</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="constructor">Sreturn</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Evar</span> "inner" (<span class="id" title="constructor">Tparam</span> "Inner")))<br/>
+&nbsp;&nbsp;<span class="id" title="notation">]</span>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="mixed_type_and_value_template_params" class="idref" href="#mixed_type_and_value_template_params"><span class="id" title="definition">mixed_type_and_value_template_params</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#type_template_params"><span class="id" title="definition">type_template_params</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#mixed_type_name"><span class="id" title="definition">mixed_type_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="notation">[</span><span class="id" title="constructor">Ptype</span> "T"<span class="id" title="notation">;</span> <span class="id" title="constructor">Pvalue</span> "N" <span class="id" title="abbreviation">Tint</span><span class="id" title="notation">]</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="alias_template_params_are_preserved" class="idref" href="#alias_template_params_are_preserved"><span class="id" title="definition">alias_template_params_are_preserved</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#alias_template_params"><span class="id" title="definition">alias_template_params</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#alias_name"><span class="id" title="definition">alias_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="notation">[</span><span class="id" title="constructor">Ptype</span> "T"<span class="id" title="notation">]</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="alias_template_is_not_stored_under_bare_name" class="idref" href="#alias_template_is_not_stored_under_bare_name"><span class="id" title="definition">alias_template_is_not_stored_under_bare_name</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#alias_template_params"><span class="id" title="definition">alias_template_params</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#bare_alias_name"><span class="id" title="definition">bare_alias_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="value_alias_template_params_are_preserved" class="idref" href="#value_alias_template_params_are_preserved"><span class="id" title="definition">value_alias_template_params_are_preserved</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#alias_template_params"><span class="id" title="definition">alias_template_params</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#value_alias_name"><span class="id" title="definition">value_alias_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="notation">[</span><span class="id" title="constructor">Pvalue</span> "N" <span class="id" title="abbreviation">Tint</span><span class="id" title="notation">]</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="value_array_alias_template_params_are_preserved" class="idref" href="#value_array_alias_template_params_are_preserved"><span class="id" title="definition">value_array_alias_template_params_are_preserved</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#alias_template_params"><span class="id" title="definition">alias_template_params</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#value_array_alias_name"><span class="id" title="definition">value_array_alias_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="notation">[</span><span class="id" title="constructor">Pvalue</span> "N" <span class="id" title="abbreviation">Tint</span><span class="id" title="notation">]</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="apply_alias_template_params_are_preserved" class="idref" href="#apply_alias_template_params_are_preserved"><span class="id" title="definition">apply_alias_template_params_are_preserved</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#alias_template_params"><span class="id" title="definition">alias_template_params</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#apply_alias_name"><span class="id" title="definition">apply_alias_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="notation">[</span><span class="id" title="constructor">Ptemplate</span> "TemplateParam" <span class="id" title="notation">[</span><span class="id" title="constructor">Ptype</span> "T"<span class="id" title="notation">]</span><span class="id" title="notation">;</span> <span class="id" title="constructor">Ptype</span> "T"<span class="id" title="notation">]</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="concrete_alias_from_template_alias_resolves" class="idref" href="#concrete_alias_from_template_alias_resolves"><span class="id" title="definition">concrete_alias_from_template_alias_resolves</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#RESOLVE_VALUE"><span class="id" title="abbreviation">RESOLVE_VALUE</span></a> "takes_ptr(ConcreteAliasPtr)" "takes_ptr(int*)".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="concrete_alias_chain_from_template_alias_resolves" class="idref" href="#concrete_alias_chain_from_template_alias_resolves"><span class="id" title="definition">concrete_alias_chain_from_template_alias_resolves</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#RESOLVE_VALUE"><span class="id" title="abbreviation">RESOLVE_VALUE</span></a> "takes_ptr(ConcreteAliasChain)" "takes_ptr(int*)".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="concrete_member_template_alias_resolves" class="idref" href="#concrete_member_template_alias_resolves"><span class="id" title="definition">concrete_member_template_alias_resolves</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#RESOLVE_VALUE"><span class="id" title="abbreviation">RESOLVE_VALUE</span></a> "takes_ptr(ConcreteMemberPtr)" "takes_ptr(int*)".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="concrete_scoped_template_alias_resolves" class="idref" href="#concrete_scoped_template_alias_resolves"><span class="id" title="definition">concrete_scoped_template_alias_resolves</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#RESOLVE_VALUE"><span class="id" title="abbreviation">RESOLVE_VALUE</span></a> "takes_ptr(AliasNS::ConcreteScopedPtr)" "takes_ptr(int*)".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="concrete_nested_template_alias_resolves" class="idref" href="#concrete_nested_template_alias_resolves"><span class="id" title="definition">concrete_nested_template_alias_resolves</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#RESOLVE_VALUE"><span class="id" title="abbreviation">RESOLVE_VALUE</span></a> "takes_nested_ptr(ConcreteNestedPtr)" "takes_nested_ptr(int**)".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="direct_template_alias_should_resolve" class="idref" href="#direct_template_alias_should_resolve"><span class="id" title="definition">direct_template_alias_should_resolve</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#RESOLVE_VALUE"><span class="id" title="abbreviation">RESOLVE_VALUE</span></a> "takes_ptr(Alias&lt;int&gt;)" "takes_ptr(int*)".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="chained_template_alias_should_resolve" class="idref" href="#chained_template_alias_should_resolve"><span class="id" title="definition">chained_template_alias_should_resolve</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#RESOLVE_VALUE"><span class="id" title="abbreviation">RESOLVE_VALUE</span></a> "takes_ptr(AliasChain&lt;int&gt;)" "takes_ptr(int*)".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="scoped_template_alias_should_resolve" class="idref" href="#scoped_template_alias_should_resolve"><span class="id" title="definition">scoped_template_alias_should_resolve</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#RESOLVE_VALUE"><span class="id" title="abbreviation">RESOLVE_VALUE</span></a> "takes_ptr(AliasNS::ScopedAlias&lt;int&gt;)" "takes_ptr(int*)".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="member_template_alias_should_resolve" class="idref" href="#member_template_alias_should_resolve"><span class="id" title="definition">member_template_alias_should_resolve</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#RESOLVE_VALUE"><span class="id" title="abbreviation">RESOLVE_VALUE</span></a> "takes_ptr(AliasHolder::MemberAlias&lt;int&gt;)" "takes_ptr(int*)".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="const_template_alias_should_resolve" class="idref" href="#const_template_alias_should_resolve"><span class="id" title="definition">const_template_alias_should_resolve</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#RESOLVE_VALUE"><span class="id" title="abbreviation">RESOLVE_VALUE</span></a> "takes_const_ptr(ConstAlias&lt;int&gt;)" "takes_const_ptr(const int*)".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="reference_template_alias_should_resolve" class="idref" href="#reference_template_alias_should_resolve"><span class="id" title="definition">reference_template_alias_should_resolve</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#RESOLVE_VALUE"><span class="id" title="abbreviation">RESOLVE_VALUE</span></a> "takes_ref(RefAlias&lt;int&gt;)" "takes_ref(int&amp;)".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="value_template_alias_should_resolve" class="idref" href="#value_template_alias_should_resolve"><span class="id" title="definition">value_template_alias_should_resolve</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#RESOLVE_VALUE"><span class="id" title="abbreviation">RESOLVE_VALUE</span></a> "takes_value_alias(ValueAlias&lt;3&gt;)" "takes_value_alias(int)".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="value_array_template_alias_should_resolve" class="idref" href="#value_array_template_alias_should_resolve"><span class="id" title="definition">value_array_template_alias_should_resolve</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#RESOLVE_VALUE"><span class="id" title="abbreviation">RESOLVE_VALUE</span></a> "takes_value_array_alias(ValueArrayAlias&lt;3&gt;&amp;)"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"takes_value_array_alias(int[3]&amp;)".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="template_template_alias_should_resolve" class="idref" href="#template_template_alias_should_resolve"><span class="id" title="definition">template_template_alias_should_resolve</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#RESOLVE_VALUE"><span class="id" title="abbreviation">RESOLVE_VALUE</span></a> "takes_apply_alias(ApplyAlias&lt;template Alias, int&gt;)"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"takes_apply_alias(int*)".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="variable_template_params_are_preserved" class="idref" href="#variable_template_params_are_preserved"><span class="id" title="definition">variable_template_params_are_preserved</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#symbol_template_params"><span class="id" title="definition">symbol_template_params</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#templated_var_name"><span class="id" title="definition">templated_var_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="notation">[</span><span class="id" title="constructor">Ptype</span> "T"<span class="id" title="notation">]</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="variable_template_is_not_stored_under_bare_name" class="idref" href="#variable_template_is_not_stored_under_bare_name"><span class="id" title="definition">variable_template_is_not_stored_under_bare_name</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#symbol_template_params"><span class="id" title="definition">symbol_template_params</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#bare_templated_var_name"><span class="id" title="definition">bare_templated_var_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="template_template_param_is_preserved" class="idref" href="#template_template_param_is_preserved"><span class="id" title="definition">template_template_param_is_preserved</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#type_template_params"><span class="id" title="definition">type_template_params</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#uses_template_template_name"><span class="id" title="definition">uses_template_template_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="notation">[</span><span class="id" title="constructor">Ptemplate</span> "TemplateParam" <span class="id" title="notation">[</span><span class="id" title="constructor">Ptype</span> "T"<span class="id" title="notation">]</span><span class="id" title="notation">;</span> <span class="id" title="constructor">Ptype</span> "T"<span class="id" title="notation">]</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="variadic_template_param_is_explicitly_recorded" class="idref" href="#variadic_template_param_is_explicitly_recorded"><span class="id" title="definition">variadic_template_param_is_explicitly_recorded</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#symbol_template_params"><span class="id" title="definition">symbol_template_params</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#variadic_count_name"><span class="id" title="definition">variadic_count_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="notation">[</span><span class="id" title="constructor">Punsupported</span> "template parameter pack"<span class="id" title="notation">]</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="variadic_body_resolves_function_pack" class="idref" href="#variadic_body_resolves_function_pack"><span class="id" title="definition">variadic_body_resolves_function_pack</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#lookup_function_template_body"><span class="id" title="definition">lookup_function_template_body</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#variadic_count_name"><span class="id" title="definition">variadic_count_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Sseq</span> <span class="id" title="notation">[</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="constructor">Sreturn</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Ecast</span> (<span class="id" title="constructor">Cintegral</span> <span class="id" title="abbreviation">Tint</span>) (<span class="id" title="definition">Esizeof_pack</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> "values" <span class="id" title="abbreviation">Tulong</span>)))<br/>
+&nbsp;&nbsp;<span class="id" title="notation">]</span>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="aggregate_value_template_param_is_preserved" class="idref" href="#aggregate_value_template_param_is_preserved"><span class="id" title="definition">aggregate_value_template_param_is_preserved</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#symbol_template_params"><span class="id" title="definition">symbol_template_params</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#aggregate_value_name"><span class="id" title="definition">aggregate_value_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="notation">[</span><span class="id" title="constructor">Pvalue</span> "V" <a class="idref" href="skylabs_brick.tests.templated_declarations.html#agg"><span class="id" title="definition">agg</span></a><span class="id" title="notation">]</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="aggregate_value_body_uses_template_value" class="idref" href="#aggregate_value_body_uses_template_value"><span class="id" title="definition">aggregate_value_body_uses_template_value</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.templated_declarations.html#lookup_function_template_body"><span class="id" title="definition">lookup_function_template_body</span></a> <a class="idref" href="skylabs_brick.tests.templated_declarations.html#aggregate_value_name"><span class="id" title="definition">aggregate_value_name</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Sseq</span> <span class="id" title="notation">[</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="constructor">Sreturn</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Ecast</span> <span class="id" title="constructor">Cl2r</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="definition">Emember</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> (<span class="id" title="constructor">Eparam</span> "V") (<span class="id" title="constructor">Field</span> (<span class="id" title="definition">field_name.Id</span> "a") <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> <span class="id" title="abbreviation">Tint</span>))))<br/>
+&nbsp;&nbsp;<span class="id" title="notation">]</span>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

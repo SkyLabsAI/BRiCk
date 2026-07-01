@@ -866,6 +866,30 @@ TODO (FM-3431): Drop this constructor?
 #[<span class="id" title="var">global</span>] <span class="id" title="var">Arguments</span> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Stmt"><span class="id" title="inductive">Stmt</span></a> : <span class="id" title="tactic">clear</span> <span class="id" title="var">implicits</span>.<br/>
 
 <br/>
+</div>
+
+<div class="doc">
+The representation of applied template type parameters,
+    e.g.
+    <code>
+</code>    template&lt;template&lt;typename T&gt; U&gt; f() { U&lt;int&gt; ... };
+    &gt;&gt;
+    This notation effectively has type
+    <br/>
+<span class="inlinecode">&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tparam_inst"><span class="id" title="abbreviation">Tparam_inst</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.name_notation.parser.html#internal.ident"><span class="id" title="definition">ident</span></a> -&gt; <a class="idref" href="skylabs.lang.cpp.syntax.mtraverse.html#list"><span class="id" title="section">list</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.supported.html#check.temp_arg"><span class="id" title="definition">temp_arg</span></a> -&gt; <span class="id" title="keyword">type</span>
+<div class="paragraph"> </div>
+
+</span>
+<div class="paragraph"> </div>
+
+    TODO: It might be desireable to promote this to a new constructor  
+ 
+</div>
+<div class="code">
+<span class="id" title="var">Abbreviation</span> <a id="Tparam_inst" class="idref" href="#Tparam_inst"><span class="id" title="abbreviation">Tparam_inst</span></a> <span class="id" title="var">n</span> <span class="id" title="var">args</span> :=<br/>
+&nbsp;&nbsp;(<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tnamed"><span class="id" title="constructor">Tnamed</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Ninst"><span class="id" title="constructor">Ninst</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Ndependent"><span class="id" title="constructor">Ndependent</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tparam"><span class="id" title="constructor">Tparam</span></a> <span class="id" title="var">n</span>)) <span class="id" title="var">args</span>)).<br/>
+
+<br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="type_inhabited" class="idref" href="#type_inhabited"><span class="id" title="instance">type_inhabited</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#Inhabited"><span class="id" title="class">Inhabited</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a>.<br/>
 <span class="id" title="keyword">Proof</span>. <span class="id" title="var">solve_inhabited</span>. <span class="id" title="keyword">Qed</span>.<br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="Expr_inhabited" class="idref" href="#Expr_inhabited"><span class="id" title="instance">Expr_inhabited</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#Inhabited"><span class="id" title="class">Inhabited</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Expr"><span class="id" title="inductive">Expr</span></a>.<br/>
