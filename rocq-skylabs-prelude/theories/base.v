@@ -54,6 +54,19 @@ Lemma iff_and (P Q R : Prop) :
   (P ∧ Q) <-> (P ∧ R).
 Proof. tauto. Qed.
 
+(** This is meant for proofs by WLOG. When proving <<P <-> Q>>, one can assume <<X>> if both sides
+    of the equivalence entails <<X>>, i.e. without proving that <<X> holds on its own. *)
+Lemma iff_of_both_implies {P Q} (X : Prop) :
+  (P -> X) ->
+  (Q -> X) ->
+  (X -> P <-> Q) ->
+  P <-> Q.
+Proof.
+  move => HP HQ HPQ; split.
+  - by move => /[dup] {}/HP {}/HPQ /[apply].
+  - by move => /[dup] {}/HQ {}/HPQ /[apply].
+Qed.
+
 (** Workaround https://github.com/coq/coq/issues/4230. Taken from Software Foundations. *)
 #[global] Remove Hints Bool.trans_eq_bool : core.
 
@@ -92,6 +105,12 @@ Lemma iff_forall T P Q :
   (forall i : T, P i <-> Q i) ->
   (forall i : T, P i) <-> (forall i : T, Q i).
 Proof. naive_solver. Qed.
+
+Lemma and_ex {A} (P : Prop) (Q : A -> Prop) : P ∧ ex Q ↔ ∃ x, P ∧ Q x.
+Proof. firstorder. Qed.
+
+Lemma ex_and {A} (P : A -> Prop) (Q : Prop) : ex P ∧ Q ↔ ∃ x, P x ∧ Q.
+Proof. firstorder. Qed.
 
 #[global] Instance reflexive_proper A :
   Proper (pointwise_relation A (pointwise_relation A iff) ==> iff) Reflexive.
