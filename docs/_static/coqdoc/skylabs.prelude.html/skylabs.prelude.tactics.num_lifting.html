@@ -1,0 +1,207 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.prelude.tactics.num_lifting</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(C)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab75"></a><h1 class="section">This file defines the tactic <span class="inlinecode"><span class="id" title="var">lift_NtoZ</span></span></h1>
+
+
+<div class="paragraph"> </div>
+
+    <span class="inlinecode"><span class="id" title="var">lift_NtoZ</span></span> is used in combination with a database of rewriting rules to lift lemmas from type
+    <span class="inlinecode"><a class="idref" href="skylabs.prelude.pstring.html#N"><span class="id" title="module">N</span></a></span> to type <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a></span> -- in particular when they are used by list functions as is done in
+    <span class="inlinecode"><a class="idref" href="skylabs.prelude.list_numbers.html#"><span class="id" title="library">skylabs.prelude.list_numbers</span></a></span>.
+
+<div class="paragraph"> </div>
+
+    TODO: extend documentation.
+ 
+</div>
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.prelude.html#"><span class="id" title="library">stdpp.prelude</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Ltac2.Ltac2</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Ltac2.Rewrite</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="definition">Coercion</span> <span class="id" title="definition">Z.of_N</span> <span class="id" title="definition">:</span> <span class="id" title="definition">N</span> <span class="id" title="definition">&gt;-&gt;</span> <span class="id" title="definition">Z</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="internals" class="idref" href="#internals"><span class="id" title="module">internals</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">Strategy</span> <span class="id" title="module">Printf</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">Z_scope</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="internals.port_forall_to_Z" class="idref" href="#internals.port_forall_to_Z"><span class="id" title="lemma">port_forall_to_Z</span></a> (<a id="P:1" class="idref" href="#P:1"><span class="id" title="binder">P</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="keyword">Prop</span>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a id="x:2" class="idref" href="#x:2"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">,</span></a> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#P:1"><span class="id" title="variable">P</span></a> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#x:2"><span class="id" title="variable">x</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a id="x:3" class="idref" href="#x:3"><span class="id" title="binder">x</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">,</span></a> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#P:1"><span class="id" title="variable">P</span></a> (<span class="id" title="definition">Z.to_N</span> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#x:3"><span class="id" title="variable">x</span></a>)<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">)</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">Admitted</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="internals.port_eq_N" class="idref" href="#internals.port_eq_N"><span class="id" title="lemma">port_eq_N</span></a> (<a id="x:4" class="idref" href="#x:4"><span class="id" title="binder">x</span></a> <a id="y:5" class="idref" href="#y:5"><span class="id" title="binder">y</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="skylabs.prelude.tactics.num_lifting.html#x:4"><span class="id" title="variable">x</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#y:5"><span class="id" title="variable">y</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">(</span></a><span class="id" title="definition">Z.of_N</span> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#x:4"><span class="id" title="variable">x</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">(</span></a><span class="id" title="definition">Z.of_N</span> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#y:5"><span class="id" title="variable">y</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">)</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">Admitted</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;This&nbsp;lemma&nbsp;is&nbsp;written&nbsp;with&nbsp;<span class="inlinecode"><span class="id" title="var">impl</span></span>&nbsp;instead&nbsp;of&nbsp;an&nbsp;arrow&nbsp;so&nbsp;that&nbsp;the&nbsp;implication&nbsp;will&nbsp;be<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;considered&nbsp;as&nbsp;a&nbsp;rewriting&nbsp;relation.&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="internals.port_Nle_ZtoN" class="idref" href="#internals.port_Nle_ZtoN"><span class="id" title="lemma">port_Nle_ZtoN</span></a> (<a id="i:6" class="idref" href="#i:6"><span class="id" title="binder">i</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>) (<a id="n:7" class="idref" href="#n:7"><span class="id" title="binder">n</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Program.Basics.html#impl"><span class="id" title="definition">impl</span></a> (<span class="id" title="definition">Z.of_N</span> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#n:7"><span class="id" title="variable">n</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#4ba61b06dfba8efe2fde3e31f9b023d3"><span class="id" title="notation">≤</span></a> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#i:6"><span class="id" title="variable">i</span></a>) (<a class="idref" href="skylabs.prelude.tactics.num_lifting.html#n:7"><span class="id" title="variable">n</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#b0945c4fdcdfb14e14a2a2b1ec33a6f8"><span class="id" title="notation">≤</span></a> <span class="id" title="definition">Z.to_N</span> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#i:6"><span class="id" title="variable">i</span></a>)%<span class="id" title="var">N</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">unfold</span> <span class="id" title="var">impl</span>; <span class="id" title="var">ltac1</span>:(<span class="id" title="var">lia</span>). <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="internals.port_ZtoN_Nle" class="idref" href="#internals.port_ZtoN_Nle"><span class="id" title="lemma">port_ZtoN_Nle</span></a> (<a id="i:8" class="idref" href="#i:8"><span class="id" title="binder">i</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>) (<a id="n:9" class="idref" href="#n:9"><span class="id" title="binder">n</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a>) : (<span class="id" title="definition">Z.to_N</span> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#i:8"><span class="id" title="variable">i</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#b0945c4fdcdfb14e14a2a2b1ec33a6f8"><span class="id" title="notation">≤</span></a> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#n:9"><span class="id" title="variable">n</span></a>)%<span class="id" title="var">N</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#i:8"><span class="id" title="variable">i</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#4ba61b06dfba8efe2fde3e31f9b023d3"><span class="id" title="notation">≤</span></a> <span class="id" title="definition">Z.of_N</span> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#n:9"><span class="id" title="variable">n</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">ltac1</span>:(<span class="id" title="var">lia</span>). <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="internals.port_Nle" class="idref" href="#internals.port_Nle"><span class="id" title="lemma">port_Nle</span></a> (<a id="m:10" class="idref" href="#m:10"><span class="id" title="binder">m</span></a> <a id="n:11" class="idref" href="#n:11"><span class="id" title="binder">n</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a>) : (<a class="idref" href="skylabs.prelude.tactics.num_lifting.html#m:10"><span class="id" title="variable">m</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#b0945c4fdcdfb14e14a2a2b1ec33a6f8"><span class="id" title="notation">≤</span></a> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#n:11"><span class="id" title="variable">n</span></a>)%<span class="id" title="var">N</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;-&gt;'_x"><span class="id" title="notation">&lt;-&gt;</span></a> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#m:10"><span class="id" title="variable">m</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#4ba61b06dfba8efe2fde3e31f9b023d3"><span class="id" title="notation">≤</span></a> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#n:11"><span class="id" title="variable">n</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">ltac1</span>:(<span class="id" title="var">lia</span>). <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="internals.port_Z2N_add_total" class="idref" href="#internals.port_Z2N_add_total"><span class="id" title="lemma">port_Z2N_add_total</span></a> (<a id="m:12" class="idref" href="#m:12"><span class="id" title="binder">m</span></a> <a id="n:13" class="idref" href="#n:13"><span class="id" title="binder">n</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a>) : (<span class="id" title="definition">Z.to_N</span> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#m:12"><span class="id" title="variable">m</span></a> <span class="id" title="notation">+</span> <span class="id" title="definition">Z.to_N</span> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#n:13"><span class="id" title="variable">n</span></a>)%<span class="id" title="var">N</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">Z.to_N</span> (<a class="idref" href="skylabs.prelude.tactics.num_lifting.html#m:12"><span class="id" title="variable">m</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#f88311cfa2135899c04e8d09a2363859"><span class="id" title="notation">`</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#f88311cfa2135899c04e8d09a2363859"><span class="id" title="notation">max</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#f88311cfa2135899c04e8d09a2363859"><span class="id" title="notation">`</span></a> 0 <span class="id" title="notation">+</span> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#n:13"><span class="id" title="variable">n</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#f88311cfa2135899c04e8d09a2363859"><span class="id" title="notation">`</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#f88311cfa2135899c04e8d09a2363859"><span class="id" title="notation">max</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#f88311cfa2135899c04e8d09a2363859"><span class="id" title="notation">`</span></a> 0).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">ltac1</span>:(<span class="id" title="var">lia</span>). <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Create</span> <span class="id" title="keyword">Rewrite</span> <span class="id" title="var">HintDb</span> <span class="id" title="var">lift_NtoZ</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Rewrite</span> @<a class="idref" href="skylabs.prelude.tactics.num_lifting.html#internals.port_eq_N"><span class="id" title="axiom">port_eq_N</span></a> : <span class="id" title="var">lift_NtoZ</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;arithmetic&nbsp;*)</span><br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Rewrite</span> @<span class="id" title="lemma">N2Z.inj_min</span> : <span class="id" title="var">lift_NtoZ</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Rewrite</span> @<span class="id" title="lemma">N2Z.inj_max</span> : <span class="id" title="var">lift_NtoZ</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Rewrite</span> @<span class="id" title="lemma">N2Z.inj_sub_max</span> : <span class="id" title="var">lift_NtoZ</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Rewrite</span> @<span class="id" title="lemma">N2Z.inj_add</span> : <span class="id" title="var">lift_NtoZ</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Rewrite</span> @<span class="id" title="lemma">N2Z.inj_mul</span> : <span class="id" title="var">lift_NtoZ</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Rewrite</span> @<span class="id" title="lemma">N2Z.inj_div</span> : <span class="id" title="var">lift_NtoZ</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Rewrite</span> @<span class="id" title="lemma">N2Z.inj_succ</span> : <span class="id" title="var">lift_NtoZ</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Rewrite</span> &lt;- @<span class="id" title="lemma">Z.add_1_r</span> : <span class="id" title="var">lift_NtoZ</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Rewrite</span> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#internals.port_Z2N_add_total"><span class="id" title="lemma">port_Z2N_add_total</span></a> : <span class="id" title="var">lift_NtoZ</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;comparison&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NOTE:&nbsp;the&nbsp;order&nbsp;in&nbsp;which&nbsp;the&nbsp;hints&nbsp;are&nbsp;registered&nbsp;matters&nbsp;*)</span><br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Rewrite</span> @<a class="idref" href="skylabs.prelude.tactics.num_lifting.html#internals.port_Nle"><span class="id" title="lemma">port_Nle</span></a> : <span class="id" title="var">lift_NtoZ</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Rewrite</span> @<a class="idref" href="skylabs.prelude.tactics.num_lifting.html#internals.port_ZtoN_Nle"><span class="id" title="lemma">port_ZtoN_Nle</span></a> : <span class="id" title="var">lift_NtoZ</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Rewrite</span> &lt;- @<a class="idref" href="skylabs.prelude.tactics.num_lifting.html#internals.port_Nle_ZtoN"><span class="id" title="lemma">port_Nle_ZtoN</span></a> : <span class="id" title="var">lift_NtoZ</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;numerals&nbsp;*)</span><br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Rewrite</span> @<span class="id" title="lemma">N2Z.inj_0</span> : <span class="id" title="var">lift_NtoZ</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Rewrite</span> @<span class="id" title="lemma">N2Z.inj_pos</span> : <span class="id" title="var">lift_NtoZ</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">rewrite_N_to_Z</span> <span class="id" title="var">hyp</span> : <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">rw_all</span> := <span class="id" title="var">terms</span> [<span class="id" title="var">preterm</span>:(@<a class="idref" href="skylabs.prelude.tactics.num_lifting.html#internals.port_forall_to_Z"><span class="id" title="axiom">port_forall_to_Z</span></a>)] <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">hints</span> := <span class="id" title="var">choices</span> [<span class="id" title="var">hints</span> @<span class="id" title="var">lift_NtoZ</span>; <span class="id" title="var">old_hints</span> (@<span class="id" title="var">lift_NtoZ</span>)] <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">strat_forall</span> := <span class="id" title="var">outermost</span> <span class="id" title="var">rw_all</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">strat_port</span>   := <span class="id" title="tactic">try</span> (<span class="id" title="var">topdown</span> <span class="id" title="var">hints</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;<span class="inlinecode"><span class="id" title="var">rewrite_strat</span></span>&nbsp;fails&nbsp;to&nbsp;create&nbsp;a&nbsp;<span class="inlinecode"><span class="id" title="var">Proper</span></span>&nbsp;instance&nbsp;after&nbsp;rewriting&nbsp;quantifiers&nbsp;so&nbsp;we&nbsp;need&nbsp;to<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;use&nbsp;it&nbsp;with&nbsp;<span class="inlinecode"><span class="id" title="tactic">repeat</span></span>&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Notations.repeat</span> (<span class="id" title="var">rewrite_strat</span> <span class="id" title="var">strat_forall</span> <span class="id" title="var">hyp</span>) ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">rewrite_strat</span> <span class="id" title="var">strat_port</span> <span class="id" title="var">hyp</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">lift_NtoZ</span> (<span class="id" title="var">id</span> : <span class="id" title="var">ident</span>) (<span class="id" title="var">lmm</span> : <span class="id" title="keyword">constr</span>) : <span class="id" title="var">unit</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Std.assert</span> (<span class="id" title="var">Std.AssertValue</span> <span class="id" title="var">id</span> <span class="id" title="var">lmm</span>) ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">rewrite_N_to_Z</span> (<span class="id" title="var">Some</span> <span class="id" title="var">id</span>) ;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;().<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Notation</span> "lift_NtoZ" <span class="id" title="var">id</span>(<span class="id" title="var">ident</span>) ":=" <span class="id" title="var">lmm</span>(<span class="id" title="keyword">constr</span>) := <span class="id" title="var">lift_NtoZ</span> <span class="id" title="var">id</span> <span class="id" title="var">lmm</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">ltac1_lift_NtoZ</span> <span class="id" title="var">id</span> <span class="id" title="var">lmm</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">id</span> := <span class="id" title="var">Option.get</span> (<span class="id" title="var">Ltac1.to_ident</span> <span class="id" title="var">id</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">lmm</span> := <span class="id" title="var">Option.get</span> (<span class="id" title="var">Ltac1.to_constr</span> <span class="id" title="var">lmm</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">lift_NtoZ</span> $<span class="id" title="var">id</span> := $<span class="id" title="var">lmm</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">ltac1_rewrite_NtoZ</span> () :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">rewrite_N_to_Z</span> <span class="id" title="var">None</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">ltac1_rewrite_NtoZ_in</span> <span class="id" title="var">id</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">id</span> := <span class="id" title="var">Option.get</span> (<span class="id" title="var">Ltac1.to_ident</span> <span class="id" title="var">id</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">rewrite_N_to_Z</span> (<span class="id" title="var">Some</span> <span class="id" title="var">id</span>).<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.prelude.tactics.num_lifting.html#internals"><span class="id" title="module">internals</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Tactic Notation</span> (<span class="id" title="tactic">at</span> <span class="id" title="keyword">level</span> 5) "lift_NtoZ" "(" <span class="id" title="var">ident</span>(<span class="id" title="var">id</span>) ":=" <span class="id" title="keyword">constr</span>(<span class="id" title="var">lmm</span>) ")" :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">tac</span> := <span class="id" title="var">ltac2</span>:(<span class="id" title="var">id</span> <span class="id" title="var">lmm</span> |- <span class="id" title="var">internals.ltac1_lift_NtoZ</span> <span class="id" title="var">id</span> <span class="id" title="var">lmm</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">tac</span> <span class="id" title="var">id</span> <span class="id" title="var">lmm</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Tactic Notation</span> "lift_NtoZ" "in" <span class="id" title="var">ident</span>(<span class="id" title="var">id</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">tac</span> := <span class="id" title="var">ltac2</span>:(<span class="id" title="var">id</span> |- <span class="id" title="var">internals.ltac1_rewrite_NtoZ_in</span> <span class="id" title="var">id</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">tac</span> <span class="id" title="var">id</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Tactic Notation</span> "lift_NtoZ" :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">ltac2</span>:(<span class="id" title="var">internals.ltac1_rewrite_NtoZ</span> ()).<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
