@@ -88,8 +88,9 @@ static unsigned collectParameterLists(const Decl &decl,
     return n;
 }
 
-static raw_ostream &printTemplateParameters(raw_ostream &os, const Decl &decl,
-                                            const ASTContext &context) {
+static raw_ostream &printTemplateParameterNames(raw_ostream &os,
+                                                const Decl &decl,
+                                                const ASTContext &context) {
     ParameterLists lists;
     auto n = collectParameterLists(decl, context, lists);
     if (!lists.empty()) {
@@ -158,7 +159,7 @@ printFunctionQualifiersForDiagnostics(raw_ostream &os,
 
 raw_ostream &printNameForDiagnostics(raw_ostream &os, const NamedDecl &decl,
                                      const ASTContext &context) {
-    printTemplateParameters(os, decl, context);
+    printTemplateParameterNames(os, decl, context);
     auto &policy = context.getPrintingPolicy();
     decl.getNameForDiagnostic(os, policy, true);
     // TODO: Make template arguments explicit in all cases?
@@ -375,117 +376,170 @@ static unsigned getAnonymousIndex(const DeclContext &ctx, const Decl &decl,
     return i;
 }
 
-static fmt::Formatter &printTemplateParameter(CoqPrinter &print,
-                                              const NamedDecl *pdecl,
-                                              ClangPrinter &cprint,
-                                              loc::loc gloc,
-                                              bool as_arg = false) {
-    if (ClangPrinter::debug && cprint.trace(Trace::Name))
-        cprint.trace("printTemplateParameter", loc::of(pdecl));
-    always_assert(pdecl->isTemplateParameter() && "template parameter");
+static fmt::Formatter &printUnsupportedTemplateParam(CoqPrinter &print,
+                                                     const NamedDecl *pdecl,
+                                                     ClangPrinter &cprint,
+                                                     loc::loc gloc,
+                                                     const char *ctor,
+                                                     StringRef msg) {
+    auto loc = pdecl ? loc::refine(gloc, pdecl) : gloc;
+    ::unsupported(cprint, loc) << msg << "\n";
+    guard::ctor _(print, ctor, false);
+    return print.str(msg);
+}
 
-    auto unsupported = [&](StringRef msg) -> auto & {
-        auto loc = loc::refine(gloc, pdecl);
-        ::unsupported(cprint, loc) << msg << "\n";
-        guard::ctor _(print, as_arg ? "Aunsupported" : "Punsupported", false);
-        return print.str(msg);
+static std::string getTemplateParamName(const NamedDecl &decl) {
+    if (auto id = decl.getIdentifier())
+        return id->getName().str();
+
+    auto position_name = [](auto &param, StringRef prefix) {
+        return (prefix + Twine(param.getDepth()) + "_" +
+                Twine(param.getIndex()))
+            .str();
     };
 
+    if (auto param = dyn_cast<TemplateTypeParmDecl>(&decl))
+        return position_name(*param, "__type_");
+    if (auto param = dyn_cast<NonTypeTemplateParmDecl>(&decl))
+        return position_name(*param, "__value_");
+    if (auto param = dyn_cast<TemplateTemplateParmDecl>(&decl))
+        return position_name(*param, "__template_");
+
+    return "__template_param";
+}
+
+static fmt::Formatter &printTemplateParam(CoqPrinter &print,
+                                          const NamedDecl *pdecl,
+                                          ClangPrinter &cprint,
+                                          loc::loc gloc) {
+    if (ClangPrinter::debug && cprint.trace(Trace::Name))
+        cprint.trace("printTemplateParam", loc::of(pdecl));
+
     if (!pdecl)
-        return unsupported("null template parameter");
+        return printUnsupportedTemplateParam(print, pdecl, cprint, gloc,
+                                             "Punsupported",
+                                             "null template parameter");
+
+    always_assert(pdecl->isTemplateParameter() && "template parameter");
     auto &decl = *pdecl;
 
     if (decl.isParameterPack())
-        return unsupported("template parameter pack");
+        return printUnsupportedTemplateParam(print, pdecl, cprint, gloc,
+                                             "Punsupported",
+                                             "template parameter pack");
 
-    auto get_name = [&]() -> std::string {
-        if (auto id = decl.getIdentifier())
-            return id->getName().str();
-
-        auto position_name = [](auto &param, StringRef prefix) {
-            return (prefix + Twine(param.getDepth()) + "_" +
-                    Twine(param.getIndex()))
-                .str();
-        };
-
-        if (auto param = dyn_cast<TemplateTypeParmDecl>(&decl))
-            return position_name(*param, "__type_");
-        if (auto param = dyn_cast<NonTypeTemplateParmDecl>(&decl))
-            return position_name(*param, "__value_");
-        if (auto param = dyn_cast<TemplateTemplateParmDecl>(&decl))
-            return position_name(*param, "__template_");
-
-        return "__template_param";
-    };
-    auto name = get_name();
+    auto name = getTemplateParamName(decl);
 
     switch (decl.getKind()) {
-    case Decl::Kind::TemplateTypeParm:
-        if (as_arg) {
-            guard::ctor _1(print, "Atype", false);
-            guard::ctor _2(print, "Tparam", false);
-            return print.str(name);
-        } else {
-            guard::ctor _(print, "Ptype", false);
-            return print.str(name);
-        }
+    case Decl::Kind::TemplateTypeParm: {
+        guard::ctor _(print, "Ptype", false);
+        return print.str(name);
+    }
 
-    case Decl::Kind::NonTypeTemplateParm:
-        if (as_arg) {
-            guard::ctor _1(print, "Avalue", false);
-            guard::ctor _2(print, "Eparam", false);
-            return print.str(name);
-        } else {
-            auto &param = cast<NonTypeTemplateParmDecl>(decl);
-            guard::ctor _(print, "Pvalue", false);
-            print.str(name) << fmt::nbsp;
-            return cprint.printQualType(print, param.getType(), loc::of(param));
-        }
+    case Decl::Kind::NonTypeTemplateParm: {
+        auto &param = cast<NonTypeTemplateParmDecl>(decl);
+        guard::ctor _(print, "Pvalue", false);
+        print.str(name) << fmt::nbsp;
+        return cprint.printQualType(print, param.getType(), loc::of(param));
+    }
 
-    case Decl::Kind::TemplateTemplateParm:
-        if (as_arg) {
-            guard::ctor _(print, "Atemplate_param", false);
-            return print.str(name);
-        } else {
-            auto &param = cast<TemplateTemplateParmDecl>(decl);
-            guard::ctor _(print, "Ptemplate", false);
-            print.str(name) << fmt::nbsp;
-            return print.list(param.getTemplateParameters()->asArray(),
-                              [&](const clang::NamedDecl *p) {
-                                  printTemplateParameter(print, p, cprint,
-                                                         loc::of(p),
-                                                         /*as_arg=*/false);
-                              });
-        }
+    case Decl::Kind::TemplateTemplateParm: {
+        auto &param = cast<TemplateTemplateParmDecl>(decl);
+        guard::ctor _(print, "Ptemplate", false);
+        print.str(name) << fmt::nbsp;
+        return print.list(param.getTemplateParameters()->asArray(),
+                          [&](const clang::NamedDecl *p) {
+                              printTemplateParam(print, p, cprint, loc::of(p));
+                          });
+    }
     default:
-        return unsupported("template parameter kind");
+        return printUnsupportedTemplateParam(print, pdecl, cprint, gloc,
+                                             "Punsupported",
+                                             "template parameter kind");
     }
 }
 
-static fmt::Formatter &printTemplateParameters(CoqPrinter &print,
-                                               const Decl &decl,
-                                               ClangPrinter &cprint,
-                                               bool as_arg) {
+static fmt::Formatter &printTemplateParams(CoqPrinter &print,
+                                           ArrayRef<NamedDecl *> params,
+                                           ClangPrinter &cprint,
+                                           loc::loc gloc) {
     if (ClangPrinter::debug && cprint.trace(Trace::Name))
-        cprint.trace("printTemplateParameters", loc::of(decl));
+        cprint.trace("printTemplateParams", gloc);
+    return print.list(params, [&](const clang::NamedDecl *param) {
+        printTemplateParam(print, param, cprint,
+                           param ? loc::of(param) : gloc);
+    });
+}
+
+static fmt::Formatter &printTemplateParamsForDecl(CoqPrinter &print,
+                                                  const Decl &decl,
+                                                  ClangPrinter &cprint) {
+    if (ClangPrinter::debug && cprint.trace(Trace::Name))
+        cprint.trace("printTemplateParamsForDecl", loc::of(decl));
     ParameterLists lists;
     if (collectParameterLists(decl, cprint.getContext(), lists)) {
         guard::list _(print);
         for (auto [params, loc] : lists)
             for (auto param : params->asArray())
-                printTemplateParameter(print, param, cprint, loc, as_arg)
-                    << fmt::cons;
+                printTemplateParam(print, param, cprint, loc) << fmt::cons;
         return print.output();
     } else
         return print.output() << "nil";
 }
 
-static fmt::Formatter &printTemplateArgument(CoqPrinter &print,
-                                             const TemplateArgument &arg,
-                                             ClangPrinter &cprint,
-                                             loc::loc loc) {
+static fmt::Formatter &printTemplateArg(CoqPrinter &print,
+                                        const NamedDecl *pdecl,
+                                        ClangPrinter &cprint,
+                                        loc::loc gloc) {
     if (ClangPrinter::debug && cprint.trace(Trace::Name))
-        cprint.trace("printTemplateArgument", loc);
+        cprint.trace("printTemplateArg", loc::of(pdecl));
+
+    if (!pdecl)
+        return printUnsupportedTemplateParam(print, pdecl, cprint, gloc,
+                                             "Aunsupported",
+                                             "null template parameter");
+
+    always_assert(pdecl->isTemplateParameter() && "template parameter");
+    auto &decl = *pdecl;
+
+    if (decl.isParameterPack())
+        return printUnsupportedTemplateParam(print, pdecl, cprint, gloc,
+                                             "Aunsupported",
+                                             "template parameter pack");
+
+    auto name = getTemplateParamName(decl);
+
+    switch (decl.getKind()) {
+    case Decl::Kind::TemplateTypeParm: {
+        guard::ctor _1(print, "Atype", false);
+        guard::ctor _2(print, "Tparam", false);
+        return print.str(name);
+    }
+
+    case Decl::Kind::NonTypeTemplateParm: {
+        guard::ctor _1(print, "Avalue", false);
+        guard::ctor _2(print, "Eparam", false);
+        return print.str(name);
+    }
+
+    case Decl::Kind::TemplateTemplateParm: {
+        guard::ctor _(print, "Atemplate_param", false);
+        return print.str(name);
+    }
+
+    default:
+        return printUnsupportedTemplateParam(print, pdecl, cprint, gloc,
+                                             "Aunsupported",
+                                             "template parameter kind");
+    }
+}
+
+static fmt::Formatter &printTemplateArg(CoqPrinter &print,
+                                        const TemplateArgument &arg,
+                                        ClangPrinter &cprint,
+                                        loc::loc loc) {
+    if (ClangPrinter::debug && cprint.trace(Trace::Name))
+        cprint.trace("printTemplateArg", loc);
     auto kind = arg.getKind();
     auto Avalue = [&](auto val) -> auto & {
         guard::ctor _(print, "Avalue", false);
@@ -529,15 +583,14 @@ static fmt::Formatter &printTemplateArgument(CoqPrinter &print,
     case TemplateArgument::ArgKind::Pack: {
         guard::ctor _(print, "Apack", false);
         return print.list(arg.getPackAsArray(), [&](auto value) {
-            printTemplateArgument(print, value, cprint, loc);
+            printTemplateArg(print, value, cprint, loc);
         });
     }
     case TemplateArgument::ArgKind::Template: {
         auto templ = arg.getAsTemplate();
         if (auto dt = templ.getAsTemplateDecl()) {
             if (auto ttp = dyn_cast<TemplateTemplateParmDecl>(dt)) {
-                return printTemplateParameter(print, ttp, cprint, loc,
-                                              /*as_arg=*/true);
+                return printTemplateArg(print, ttp, cprint, loc);
             }
             guard::ctor _(print, "Atemplate", false);
             return cprint.printName(print, *dt);
@@ -564,12 +617,12 @@ static fmt::Formatter &printTemplateArgument(CoqPrinter &print,
 }
 
 static fmt::Formatter &
-printTemplateArgumentList(CoqPrinter &print, const TemplateArgumentList &args,
-                          ClangPrinter &cprint, loc::loc loc) {
+printTemplateArgList(CoqPrinter &print, const TemplateArgumentList &args,
+                     ClangPrinter &cprint, loc::loc loc) {
     if (ClangPrinter::debug && cprint.trace(Trace::Name))
-        cprint.trace("printTemplateArgumentList", loc);
+        cprint.trace("printTemplateArgList", loc);
     return print.list(args.asArray(), [&](auto &arg) {
-        printTemplateArgument(print, arg, cprint, loc);
+        printTemplateArg(print, arg, cprint, loc);
     });
 }
 
@@ -598,17 +651,17 @@ static unsigned collectArgumentLists(const Decl &decl,
     return n;
 }
 
-static fmt::Formatter &printTemplateArguments(CoqPrinter &print,
-                                              const Decl &decl,
-                                              ClangPrinter &cprint) {
+static fmt::Formatter &printTemplateArgsForDecl(CoqPrinter &print,
+                                                const Decl &decl,
+                                                ClangPrinter &cprint) {
     if (ClangPrinter::debug && cprint.trace(Trace::Name))
-        cprint.trace("printTemplateArguments", loc::of(decl));
+        cprint.trace("printTemplateArgsForDecl", loc::of(decl));
     ArgumentLists lists;
     if (collectArgumentLists(decl, cprint.getContext(), lists)) {
         guard::list _(print);
         for (auto [args, loc] : lists)
             for (auto arg : args->asArray())
-                printTemplateArgument(print, arg, cprint, loc) << fmt::cons;
+                printTemplateArg(print, arg, cprint, loc) << fmt::cons;
         return print.output();
     } else
         return print.output() << "nil";
@@ -978,8 +1031,7 @@ static fmt::Formatter &printName(CoqPrinter &print, const Decl &decl,
     auto parameters = [&](auto dct) {
         print.list(dct->getTemplateParameters()->asArray(),
                    [&](const clang::NamedDecl *p) {
-                       printTemplateParameter(print, p, cprint, loc::of(p),
-                                              /*as_arg=*/true);
+                       printTemplateArg(print, p, cprint, loc::of(p));
                    });
     };
 
@@ -1026,7 +1078,7 @@ static fmt::Formatter &printName(CoqPrinter &print, const Decl &decl,
 
     if (sd) {
         print.output() << fmt::nbsp;
-        printTemplateArgumentList(print, sd->args, cprint, loc::of(decl));
+        printTemplateArgList(print, sd->args, cprint, loc::of(decl));
         print.end_ctor();
     }
     return print.output();
@@ -1130,49 +1182,80 @@ fmt::Formatter &ClangPrinter::printUnqualifiedName(CoqPrinter &print,
         print, deref(print, *this, "printUnqualifiedName", p, loc));
 }
 
-fmt::Formatter &ClangPrinter::printTemplateParameters(CoqPrinter &print,
-                                                      const Decl &decl,
-                                                      bool as_arg) {
+fmt::Formatter &ClangPrinter::printTemplateParam(CoqPrinter &print,
+                                                 const NamedDecl *param,
+                                                 loc::loc loc) {
     if (trace(Trace::Name))
-        trace("printTemplateParameters", loc::of(decl));
-    return structured::printTemplateParameters(print, decl, *this, as_arg);
+        trace("printTemplateParam", loc);
+    return structured::printTemplateParam(print, param, *this, loc);
 }
 
-fmt::Formatter &ClangPrinter::printTemplateArguments(CoqPrinter &print,
-                                                     const Decl &decl) {
+fmt::Formatter &ClangPrinter::printTemplateParams(CoqPrinter &print,
+                                                  ArrayRef<NamedDecl *> params,
+                                                  loc::loc loc) {
     if (trace(Trace::Name))
-        trace("printTemplateArguments", loc::of(decl));
-    return structured::printTemplateArguments(print, decl, *this);
+        trace("printTemplateParams", loc);
+    return structured::printTemplateParams(print, params, *this, loc);
 }
 
-fmt::Formatter &ClangPrinter::printTemplateArgumentList(
+fmt::Formatter &ClangPrinter::printTemplateParamsForDecl(CoqPrinter &print,
+                                                         const Decl &decl) {
+    if (trace(Trace::Name))
+        trace("printTemplateParamsForDecl", loc::of(decl));
+    return structured::printTemplateParamsForDecl(print, decl, *this);
+}
+
+fmt::Formatter &ClangPrinter::printTemplateArg(CoqPrinter &print,
+                                               const TemplateArgument &arg,
+                                               loc::loc loc) {
+    if (trace(Trace::Name))
+        trace("printTemplateArg", loc);
+    return structured::printTemplateArg(print, arg, *this, loc);
+}
+
+fmt::Formatter &ClangPrinter::printTemplateArg(CoqPrinter &print,
+                                               const NamedDecl *param,
+                                               loc::loc loc) {
+    if (trace(Trace::Name))
+        trace("printTemplateArg", loc);
+    return structured::printTemplateArg(print, param, *this, loc);
+}
+
+fmt::Formatter &ClangPrinter::printTemplateArgList(
     CoqPrinter &print, const TemplateArgumentList &args, loc::loc loc) {
     if (trace(Trace::Name))
-        trace("printTemplateArgumentList", loc);
-    return structured::printTemplateArgumentList(print, args, *this, loc);
+        trace("printTemplateArgList", loc);
+    return structured::printTemplateArgList(print, args, *this, loc);
 }
 
 fmt::Formatter &
-ClangPrinter::printTemplateArgumentList(CoqPrinter &print,
-                                        ArrayRef<TemplateArgument> args) {
+ClangPrinter::printTemplateArgs(CoqPrinter &print,
+                                ArrayRef<TemplateArgument> args) {
     if (trace(Trace::Name))
-        trace("printTemplateArgumentList", loc::none);
+        trace("printTemplateArgs", loc::none);
     auto &cprint = *this;
     return print.list(args, [&](auto &arg) {
-        structured::printTemplateArgument(print, arg, cprint, loc::none);
+        structured::printTemplateArg(print, arg, cprint, loc::none);
     });
 }
 
 fmt::Formatter &
-ClangPrinter::printTemplateArgumentList(CoqPrinter &print,
-                                        ArrayRef<TemplateArgumentLoc> args) {
+ClangPrinter::printTemplateArgs(CoqPrinter &print,
+                                ArrayRef<TemplateArgumentLoc> args) {
     if (trace(Trace::Name))
-        trace("printTemplateArgumentList", loc::none);
+        trace("printTemplateArgs", loc::none);
     auto &cprint = *this;
     return print.list(args, [&](auto &arg) {
-        structured::printTemplateArgument(print, arg.getArgument(), cprint,
-                                          loc::of(arg));
+        structured::printTemplateArg(print, arg.getArgument(), cprint,
+                                     loc::of(arg));
     });
+}
+
+fmt::Formatter &ClangPrinter::printTemplateArgsForDecl(CoqPrinter &print,
+                                                       const Decl &decl) {
+    if (trace(Trace::Name))
+        trace("printTemplateArgsForDecl", loc::of(decl));
+    return structured::printTemplateArgsForDecl(print, decl, *this);
 }
 
 namespace {
@@ -1344,7 +1427,7 @@ fmt::Formatter &ClangPrinter::printUnresolvedName(
     else {
         guard::ctor _(print, "Ninst", false);
         printUnresolvedName(print, nn, name, loc) << fmt::nbsp;
-        return printTemplateArgumentList(print, template_args);
+        return printTemplateArgs(print, template_args);
     }
 }
 
@@ -1357,6 +1440,6 @@ fmt::Formatter &ClangPrinter::printUnresolvedName(
     else {
         guard::ctor _(print, "Ninst", false);
         printUnresolvedName(print, nn, name, loc) << fmt::nbsp;
-        return printTemplateArgumentList(print, template_args);
+        return printTemplateArgs(print, template_args);
     }
 }

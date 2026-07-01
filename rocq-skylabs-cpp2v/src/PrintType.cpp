@@ -195,7 +195,8 @@ public:
 
     void VisitTemplateTypeParmType(const TemplateTypeParmType *type,
                                    CoqPrinter &print, ClangPrinter &cprint) {
-        cprint.printTypeTemplateParam(print, type->getDecl(), loc::of(type));
+        cprint.printTemplateTypeParamRef(print, type->getDecl(),
+                                         loc::of(type));
     }
 
     void VisitEnumType(const EnumType *type, CoqPrinter &print,
@@ -438,14 +439,14 @@ public:
                 if (auto ttp = dyn_cast<TemplateTemplateParmDecl>(temp)) {
                     guard::ctor _1(print, "Tparam_inst", false);
                     print.str(getTemplateTemplateParamName(*ttp)) << fmt::nbsp;
-                    cprint.printTemplateArgumentList(print, args);
+                    cprint.printTemplateArgs(print, args);
                 } else {
                     guard::ctor _1(print, "Tnamed", false);
                     guard::ctor _2(print,
                                    "Ninst (* TemplateSpecializationType *)",
                                    false);
                     cprint.printName(print, *temp) << fmt::nbsp;
-                    cprint.printTemplateArgumentList(print, args);
+                    cprint.printTemplateArgs(print, args);
                 }
             } else
                 unsupported();
@@ -511,7 +512,7 @@ public:
             guard::ctor _1(print, "Tnamed", false);
             // guard::ctor _2(print, "Ninst{InjectedClassNameType}", false);
             cprint.printName(print, *decl) << fmt::nbsp;
-            // cprint.printTemplateParameters(print, *decl, true);
+            // cprint.printTemplateArgsForDecl(print, *decl);
         } else {
             unsupported(print, cprint, loc::of(type),
                         "injected class name without declaration");

@@ -630,7 +630,7 @@ public:
                 guard::ctor _(print, "Eparam", false);
                 cprint.printUnqualifiedName(print, *param);
             } else {
-                cprint.printNonTypeTemplateParam(
+                cprint.printTemplateValueParamRef(
                     print, param->getDepth(), param->getIndex(), loc::of(expr));
 #if 0
 				llvm::errs() << "\n";

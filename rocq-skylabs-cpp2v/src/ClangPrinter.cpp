@@ -21,6 +21,8 @@
 
 using namespace clang;
 
+const char *templateArgumentKindName(TemplateArgument::ArgKind);
+
 ClangPrinter::ClangPrinter(clang::CompilerInstance *compiler,
                            clang::ASTContext *context, Trace::Mask trace,
                            bool comment, bool typedefs)
@@ -129,15 +131,15 @@ fmt::Formatter &ClangPrinter::printValCat(CoqPrinter &print, const Expr *d) {
 
 // TODO: this function has a lot of issues with it.
 fmt::Formatter &
-ClangPrinter::printTypeTemplateParam(CoqPrinter &print,
-                                     const TemplateTypeParmDecl *decl,
-                                     loc::loc loc) {
+ClangPrinter::printTemplateTypeParamRef(CoqPrinter &print,
+                                        const TemplateTypeParmDecl *decl,
+                                        loc::loc loc) {
     if (trace(Trace::Name)) {
-        trace("printTypeTemplateParam", loc::refine(loc, decl));
+        trace("printTemplateTypeParamRef", loc::refine(loc, decl));
     }
 
     if (!decl)
-        return printTemplateParam(print, 0, 0, true, loc);
+        return printTemplateTypeParamRef(print, 0, 0, loc);
 
     guard::ctor _{print, "Tparam", false};
     if (auto id = decl->getIdentifier()) {
@@ -150,120 +152,261 @@ ClangPrinter::printTypeTemplateParam(CoqPrinter &print,
     }
 }
 
-fmt::Formatter &ClangPrinter::printTemplateParam(CoqPrinter &print,
-                                                 unsigned depth, unsigned index,
-                                                 bool is_type, loc::loc loc) {
-    if (trace(Trace::Name)) {
-        trace("printTemplateParam", loc)
-            << " depth=" << depth << " index=" << index << "\n";
+namespace {
+
+struct ResolvedTemplateParamRef {
+    enum class Kind : unsigned {
+        TypeParam,
+        ValueParam,
+        TemplateTemplateParam,
+        TemplateArg,
+        NotFound,
+    };
+
+    Kind kind{Kind::NotFound};
+    const NamedDecl *param{nullptr};
+    TemplateArgument arg{};
+
+    static const char *stringOfKind(Kind k) {
+        switch (k) {
+        case Kind::TypeParam:
+            return "type template parameter";
+        case Kind::ValueParam:
+            return "non-type template parameter";
+        case Kind::TemplateTemplateParam:
+            return "template-template parameter";
+        case Kind::TemplateArg:
+            return "template argument";
+        case Kind::NotFound:
+            return "template parameter";
+        }
+        always_assert(false);
     }
 
-    auto process = [&](const TemplateParameterList *list) {
-        if (list) {
-            for (auto i : list->asArray()) {
-                if (auto tpd = dyn_cast<TemplateTypeParmDecl>(i)) {
-                    if (tpd->getDepth() != depth)
-                        continue;
-                    if (tpd->getIndex() == index) {
-                        guard::ctor _{print, "Tparam", false};
-                        print.str(tpd->getName());
-                        return true;
-                    }
-                } else if (auto tpd = dyn_cast<NonTypeTemplateParmDecl>(i)) {
-                    if (tpd->getDepth() != depth)
-                        continue;
-                    if (tpd->getIndex() == index) {
-                        guard::ctor _{print, "Eparam", false};
-                        print.str(tpd->getName());
-                        return true;
-                    }
-                }
-            }
+    static ResolvedTemplateParamRef typeParam(const TemplateTypeParmDecl *p) {
+        return {Kind::TypeParam, p};
+    }
+
+    static ResolvedTemplateParamRef valueParam(const NonTypeTemplateParmDecl *p) {
+        return {Kind::ValueParam, p};
+    }
+
+    static ResolvedTemplateParamRef
+    templateTemplateParam(const TemplateTemplateParmDecl *p) {
+        return {Kind::TemplateTemplateParam, p};
+    }
+
+    static ResolvedTemplateParamRef templateArg(TemplateArgument arg) {
+        return {Kind::TemplateArg, nullptr, arg};
+    }
+};
+
+static const Decl *parentDecl(const Decl *d) {
+    auto dc = d->getDeclContext();
+    return dc == nullptr ? nullptr : Decl::castFromDeclContext(dc);
+}
+
+static std::string templateParamRefName(const NamedDecl *decl, unsigned depth,
+                                        unsigned index) {
+    if (!decl)
+        return (Twine("template parameter ") + Twine(depth) + "_" +
+                Twine(index))
+            .str();
+    if (auto name = decl->getNameAsString(); !name.empty())
+        return name;
+    return (Twine(decl->getDeclKindName()) + " " + Twine(depth) + "_" +
+            Twine(index))
+        .str();
+}
+
+static std::optional<ResolvedTemplateParamRef>
+findTemplateParamRef(const TemplateParameterList *list, unsigned depth,
+                     unsigned index) {
+    if (!list)
+        return std::nullopt;
+
+    for (auto i : list->asArray()) {
+        if (auto tpd = dyn_cast<TemplateTypeParmDecl>(i)) {
+            if (tpd->getDepth() == depth && tpd->getIndex() == index)
+                return ResolvedTemplateParamRef::typeParam(tpd);
+        } else if (auto tpd = dyn_cast<NonTypeTemplateParmDecl>(i)) {
+            if (tpd->getDepth() == depth && tpd->getIndex() == index)
+                return ResolvedTemplateParamRef::valueParam(tpd);
+        } else if (auto tpd = dyn_cast<TemplateTemplateParmDecl>(i)) {
+            if (tpd->getDepth() == depth && tpd->getIndex() == index)
+                return ResolvedTemplateParamRef::templateTemplateParam(tpd);
         }
-        return false;
-    };
+    }
 
-    auto up = [](const Decl *d) {
-        auto dc = d->getDeclContext();
-        return dc == nullptr ? nullptr : Decl::castFromDeclContext(dc);
-    };
+    return std::nullopt;
+}
 
-    for (auto d = decl_; d; d = up(d)) {
+static void dumpTemplateParamRefSearch(const Decl *d, unsigned depth,
+                                       unsigned index) {
+    llvm::errs() << "Looking for depth=" << depth << " index=" << index
+                 << "\n";
+    for (auto xx = d; xx; xx = parentDecl(xx)) {
+        llvm::errs() << xx->getDeclKindName();
+        if (auto nd = dyn_cast<NamedDecl>(xx))
+            llvm::errs() << " " << nd->getNameAsString();
+        llvm::errs() << "\n";
+    }
+}
+
+static ResolvedTemplateParamRef
+resolveTemplateParamRef(const Decl *start, unsigned depth, unsigned index,
+                        loc::loc loc, ClangPrinter &cprint) {
+    for (auto d = start; d; d = parentDecl(d)) {
         if (auto psd = dyn_cast<ClassTemplatePartialSpecializationDecl>(d)) {
-            if (process(psd->getTemplateParameters()))
-                return print.output();
+            if (auto r =
+                    findTemplateParamRef(psd->getTemplateParameters(), depth,
+                                         index))
+                return *r;
         } else if (auto fd = dyn_cast<FunctionDecl>(d)) {
             if (auto y = fd->getTemplateSpecializationArgs()) {
                 auto ary = y->asArray();
                 if (index >= ary.size()) {
                     // NOTE: this is debugging code
-                    llvm::errs() << "Looking for depth=" << depth
-                                 << " index=" << index << "\n";
-                    for (auto xx = d; xx;
-                         xx = Decl::castFromDeclContext(xx->getDeclContext())) {
-                        llvm::errs() << xx->getDeclKindName();
-                        if (auto nd = dyn_cast<NamedDecl>(xx))
-                            llvm::errs() << " " << nd->getNameAsString();
-                        llvm::errs() << "\n";
-                    }
+                    dumpTemplateParamRefSearch(d, depth, index);
                     always_assert(false);
-                } else {
-                    auto &&v = ary[index];
-                    switch (v.getKind()) {
-                    case TemplateArgument::ArgKind::Type:
-                        return printQualType(print, ary[index].getAsType(),
-                                             loc);
-
-                    case TemplateArgument::ArgKind::Integral: {
-                        guard::ctor _{print, "Eint"};
-                        print.output() << v.getAsIntegral() << fmt::nbsp;
-                        return printQualType(print, v.getIntegralType(), loc);
-                    }
-                    case TemplateArgument::ArgKind::Expression: {
-                        return printExpr(print, ary[index].getAsExpr());
-                    }
-                    default: {
-                        guard::ctor _{print, "Eunsupported"};
-                        print.output()
-                            << "\"NonTypeTemplateParam " << v.getKind() << "\"";
-                        return print.output();
-                    }
-                    }
                 }
-
+                return ResolvedTemplateParamRef::templateArg(ary[index]);
             } else if (auto x = fd->getDescribedTemplateParams()) {
-                if (process(x))
-                    return print.output();
+                if (auto r = findTemplateParamRef(x, depth, index))
+                    return *r;
             }
         } else if (auto rd = dyn_cast<CXXRecordDecl>(d)) {
-            if (process(rd->getDescribedTemplateParams()))
-                return print.output();
+            if (auto r =
+                    findTemplateParamRef(rd->getDescribedTemplateParams(),
+                                         depth, index))
+                return *r;
         } else if (auto tad = dyn_cast<TypeAliasDecl>(d)) {
-            if (process(tad->getDescribedTemplateParams()))
-                return print.output();
+            if (auto r =
+                    findTemplateParamRef(tad->getDescribedTemplateParams(),
+                                         depth, index))
+                return *r;
         } else if (auto vd = dyn_cast<VarDecl>(d)) {
-            if (process(vd->getDescribedTemplateParams()))
-                return print.output();
+            if (auto r =
+                    findTemplateParamRef(vd->getDescribedTemplateParams(),
+                                         depth, index))
+                return *r;
         } else if (isa<TypedefDecl>(d)) {
         } else {
-            logging::verbose() << "printTemplateParam: Skipping over '"
+            logging::verbose() << "resolveTemplateParamRef: Skipping over '"
                                << d->getDeclKindName() << "'\n";
         }
     }
 
-    error_prefix(logging::debug(), loc)
+    cprint.error_prefix(logging::debug(), loc)
         << "error: could not infer template parameter name at depth " << depth
         << ", index " << index << "\n";
-    debug_dump(loc);
+    cprint.debug_dump(loc);
     // logging::die();
 
-    if (is_type) {
+    return {};
+}
+
+static fmt::Formatter &
+printWrongTemplateParamRefKind(CoqPrinter &print, const char *ctor,
+                               StringRef description, const NamedDecl *decl,
+                               unsigned depth, unsigned index) {
+    guard::ctor _{print, ctor, false};
+    std::string msg = description.str();
+    msg += " ";
+    msg += templateParamRefName(decl, depth, index);
+    return print.str(msg);
+}
+
+static fmt::Formatter &
+printUnsupportedTemplateArgument(CoqPrinter &print, const char *ctor,
+                                 TemplateArgument::ArgKind kind) {
+    guard::ctor _{print, ctor, false};
+    std::string msg = "TemplateParam ";
+    msg += templateArgumentKindName(kind);
+    return print.str(msg);
+}
+
+} // namespace
+
+fmt::Formatter &ClangPrinter::printTemplateTypeParamRef(CoqPrinter &print,
+                                                        unsigned depth,
+                                                        unsigned index,
+                                                        loc::loc loc) {
+    if (trace(Trace::Name)) {
+        trace("printTemplateTypeParamRef", loc)
+            << " depth=" << depth << " index=" << index << "\n";
+    }
+
+    auto ref = resolveTemplateParamRef(decl_, depth, index, loc, *this);
+    switch (ref.kind) {
+    case ResolvedTemplateParamRef::Kind::TypeParam: {
+        guard::ctor _{print, "Tparam", false};
+        return print.str(templateParamRefName(ref.param, depth, index));
+    }
+    case ResolvedTemplateParamRef::Kind::TemplateArg: {
+        auto &&v = ref.arg;
+        switch (v.getKind()) {
+        case TemplateArgument::ArgKind::Type:
+            return printQualType(print, v.getAsType(), loc);
+        default:
+            return printUnsupportedTemplateArgument(print, "Tunsupported",
+                                                   v.getKind());
+        }
+    }
+    case ResolvedTemplateParamRef::Kind::NotFound: {
         guard::ctor _{print, "Tunsupported"};
         return print.str("type template parameter");
-    } else {
-        guard::ctor _{print, "Eunsupported"};
-        return print.str("template parameter)");
     }
+    default:
+        return printWrongTemplateParamRefKind(
+            print, "Tunsupported",
+            ResolvedTemplateParamRef::stringOfKind(ref.kind), ref.param, depth,
+            index);
+    }
+    always_assert(false);
+}
+
+fmt::Formatter &ClangPrinter::printTemplateValueParamRef(CoqPrinter &print,
+                                                         unsigned depth,
+                                                         unsigned index,
+                                                         loc::loc loc) {
+    if (trace(Trace::Name)) {
+        trace("printTemplateValueParamRef", loc)
+            << " depth=" << depth << " index=" << index << "\n";
+    }
+
+    auto ref = resolveTemplateParamRef(decl_, depth, index, loc, *this);
+    switch (ref.kind) {
+    case ResolvedTemplateParamRef::Kind::ValueParam: {
+        guard::ctor _{print, "Eparam", false};
+        return print.str(templateParamRefName(ref.param, depth, index));
+    }
+    case ResolvedTemplateParamRef::Kind::TemplateArg: {
+        auto &&v = ref.arg;
+        switch (v.getKind()) {
+        case TemplateArgument::ArgKind::Integral: {
+            guard::ctor _{print, "Eint"};
+            print.output() << v.getAsIntegral() << fmt::nbsp;
+            return printQualType(print, v.getIntegralType(), loc);
+        }
+        case TemplateArgument::ArgKind::Expression:
+            return printExpr(print, v.getAsExpr());
+        default:
+            return printUnsupportedTemplateArgument(print, "Eunsupported",
+                                                   v.getKind());
+        }
+    }
+    case ResolvedTemplateParamRef::Kind::NotFound: {
+        guard::ctor _{print, "Eunsupported"};
+        return print.str("template parameter");
+    }
+    default:
+        return printWrongTemplateParamRefKind(
+            print, "Eunsupported",
+            ResolvedTemplateParamRef::stringOfKind(ref.kind), ref.param, depth,
+            index);
+    }
+    always_assert(false);
 }
 
 fmt::Formatter &ClangPrinter::printField(CoqPrinter &print,
