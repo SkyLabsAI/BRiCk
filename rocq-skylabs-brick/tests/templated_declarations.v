@@ -54,6 +54,15 @@ using AliasChain = Alias<T>;
 template <typename T>
 using NestedPtrAlias = Alias<Alias<T>>;
 
+template <int N>
+using ValueAlias = int;
+
+template <int N>
+using ValueArrayAlias = int[N];
+
+template <template <typename T> class TemplateParam, typename T>
+using ApplyAlias = TemplateParam<T>;
+
 struct AliasHolder {
   template <typename T>
   using MemberAlias = Alias<T>;
@@ -75,6 +84,9 @@ void takes_ptr(int *);
 void takes_const_ptr(const int *);
 void takes_ref(int &);
 void takes_nested_ptr(int **);
+void takes_value_alias(int);
+void takes_value_array_alias(int (&)[3]);
+void takes_apply_alias(int *);
 
 template <typename T>
 T templated_var = {};
@@ -195,6 +207,16 @@ Definition alias_name : name :=
 Definition bare_alias_name : name :=
   "Alias"%cpp_name.
 
+Definition value_alias_name : name :=
+  "ValueAlias<`N>"%cpp_name.
+
+Definition value_array_alias_name : name :=
+  "ValueArrayAlias<`N>"%cpp_name.
+
+Definition apply_alias_name : name :=
+  Ninst (Nglobal (Nid "ApplyAlias"))
+    [Atemplate_param "TemplateParam"; Atype (Tparam "T")].
+
 Definition templated_var_name : name :=
   "templated_var<$T>"%cpp_name.
 
@@ -265,6 +287,19 @@ Example alias_template_is_not_stored_under_bare_name :
   alias_template_params bare_alias_name = None.
 Proof. vm_compute. reflexivity. Qed.
 
+Example value_alias_template_params_are_preserved :
+  alias_template_params value_alias_name = Some [Pvalue "N" Tint].
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_array_alias_template_params_are_preserved :
+  alias_template_params value_array_alias_name = Some [Pvalue "N" Tint].
+Proof. vm_compute. reflexivity. Qed.
+
+Example apply_alias_template_params_are_preserved :
+  alias_template_params apply_alias_name =
+  Some [Ptemplate "TemplateParam" [Ptype "T"]; Ptype "T"].
+Proof. vm_compute. reflexivity. Qed.
+
 Example concrete_alias_from_template_alias_resolves :
   RESOLVE_VALUE "takes_ptr(ConcreteAliasPtr)" "takes_ptr(int*)".
 Proof. vm_compute. reflexivity. Qed.
@@ -285,23 +320,43 @@ Example concrete_nested_template_alias_resolves :
   RESOLVE_VALUE "takes_nested_ptr(ConcreteNestedPtr)" "takes_nested_ptr(int**)".
 Proof. vm_compute. reflexivity. Qed.
 
-Fail Example direct_template_alias_should_resolve :
-  RESOLVE_VALUE "takes_ptr(Alias<int>)" "takes_ptr(int*)" := eq_refl.
+Example direct_template_alias_should_resolve :
+  RESOLVE_VALUE "takes_ptr(Alias<int>)" "takes_ptr(int*)".
+Proof. vm_compute. reflexivity. Qed.
 
-Fail Example chained_template_alias_should_resolve :
-  RESOLVE_VALUE "takes_ptr(AliasChain<int>)" "takes_ptr(int*)" := eq_refl.
+Example chained_template_alias_should_resolve :
+  RESOLVE_VALUE "takes_ptr(AliasChain<int>)" "takes_ptr(int*)".
+Proof. vm_compute. reflexivity. Qed.
 
-Fail Example scoped_template_alias_should_resolve :
-  RESOLVE_VALUE "takes_ptr(AliasNS::ScopedAlias<int>)" "takes_ptr(int*)" := eq_refl.
+Example scoped_template_alias_should_resolve :
+  RESOLVE_VALUE "takes_ptr(AliasNS::ScopedAlias<int>)" "takes_ptr(int*)".
+Proof. vm_compute. reflexivity. Qed.
 
-Fail Example member_template_alias_should_resolve :
-  RESOLVE_VALUE "takes_ptr(AliasHolder::MemberAlias<int>)" "takes_ptr(int*)" := eq_refl.
+Example member_template_alias_should_resolve :
+  RESOLVE_VALUE "takes_ptr(AliasHolder::MemberAlias<int>)" "takes_ptr(int*)".
+Proof. vm_compute. reflexivity. Qed.
 
-Fail Example const_template_alias_should_resolve :
-  RESOLVE_VALUE "takes_const_ptr(ConstAlias<int>)" "takes_const_ptr(const int*)" := eq_refl.
+Example const_template_alias_should_resolve :
+  RESOLVE_VALUE "takes_const_ptr(ConstAlias<int>)" "takes_const_ptr(const int*)".
+Proof. vm_compute. reflexivity. Qed.
 
-Fail Example reference_template_alias_should_resolve :
-  RESOLVE_VALUE "takes_ref(RefAlias<int>)" "takes_ref(int&)" := eq_refl.
+Example reference_template_alias_should_resolve :
+  RESOLVE_VALUE "takes_ref(RefAlias<int>)" "takes_ref(int&)".
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_template_alias_should_resolve :
+  RESOLVE_VALUE "takes_value_alias(ValueAlias<3>)" "takes_value_alias(int)".
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_array_template_alias_should_resolve :
+  RESOLVE_VALUE "takes_value_array_alias(ValueArrayAlias<3>&)"
+                "takes_value_array_alias(int[3]&)".
+Proof. vm_compute. reflexivity. Qed.
+
+Example template_template_alias_should_resolve :
+  RESOLVE_VALUE "takes_apply_alias(ApplyAlias<template Alias, int>)"
+                "takes_apply_alias(int*)".
+Proof. vm_compute. reflexivity. Qed.
 
 Example variable_template_params_are_preserved :
   symbol_template_params templated_var_name = Some [Ptype "T"].
