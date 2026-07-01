@@ -430,8 +430,8 @@ Module SimpleCPP.
           match v with
           | Vfloat ft' f =>
               ft = ft' /\
-              in_Z_to_bytes_bounds (float_type.bitsize ft') Unsigned (float_value.to_bits ft' f) /\
-              vs = Z_to_bytes (float_type.bitsize ft') Unsigned (float_value.to_bits ft' f)
+              in_Z_to_bytes_bounds (float_type.bitsize ft') Unsigned (float_value.to_bits f) /\
+              vs = Z_to_bytes (float_type.bitsize ft') Unsigned (float_value.to_bits f)
           | Vundef => pure_encodes_undef (float_type.bitsize ft) vs
           | _ => False
           end

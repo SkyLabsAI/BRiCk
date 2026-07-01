@@ -268,17 +268,17 @@ Qed.
 
 Example float_to_of_bits_roundtrips bits :
   (0 <= bits < 2 ^ float_type.bit_width float_type.Ffloat)%Z ->
-  float_value.to_bits float_type.Ffloat
+  float_value.to_bits
     (float_value.of_bits float_type.Ffloat bits) = bits.
 Proof. apply float_value.to_of_bits. Qed.
 
-Example double_of_to_bits_roundtrip f :
+Example double_of_to_bits_roundtrip (f : float_type.car float_type.Fdouble) :
   float_value.of_bits float_type.Fdouble
-    (float_value.to_bits float_type.Fdouble f) = f.
+    (float_value.to_bits f) = f.
 Proof. apply float_value.of_to_bits. Qed.
 
 Example float128_nan_payload_bits_preserved :
-  float_value.to_bits float_type.Ffloat128 f128_nan_payload = f128_nan_payload_bits.
+  float_value.to_bits f128_nan_payload = f128_nan_payload_bits.
 Proof.
   apply float_value.to_of_bits.
   change (0 <= 170138587312039964317873038467719495681 <
@@ -356,16 +356,16 @@ Proof.
 Qed.
 
 Example float_nan_compare_unordered :
-  float_value.value_compare float_type.Ffloat f32_nan f32_nan = None.
+  float_value.value_compare f32_nan f32_nan = None.
 Proof. vm_compute; reflexivity. Qed.
 
 Example double_nan_compare_unordered :
-  float_value.value_compare float_type.Fdouble f64_nan f64_nan = None.
+  float_value.value_compare f64_nan f64_nan = None.
 Proof. vm_compute; reflexivity. Qed.
 
 Example float_nan_payload_add_preserved :
-  float_value.to_bits float_type.Ffloat
-    (float_value.add float_type.Ffloat f32_nan_payload f32_one) =
+  float_value.to_bits
+    (float_value.add f32_nan_payload f32_one) =
   f32_nan_payload_bits.
 Proof. vm_compute; reflexivity. Qed.
 
@@ -383,22 +383,22 @@ Proof. vm_compute; reflexivity. Qed.
 
 Example raw_float16_intro {σ : genv} :
   raw_bytes_of_val σ Tfloat16 (Vfloat float_type.Ffloat16 f16_one)
-    (float_raw_bytes σ float_type.Ffloat16 f16_one).
+    (float_raw_bytes σ f16_one).
 Proof. apply raw_bytes_of_val_float_intro. Qed.
 
 Example raw_float_intro {σ : genv} :
   raw_bytes_of_val σ Tfloat (Vfloat float_type.Ffloat f32_one)
-    (float_raw_bytes σ float_type.Ffloat f32_one).
+    (float_raw_bytes σ f32_one).
 Proof. apply raw_bytes_of_val_float_intro. Qed.
 
 Example raw_double_intro {σ : genv} :
   raw_bytes_of_val σ Tdouble (Vfloat float_type.Fdouble f64_one)
-    (float_raw_bytes σ float_type.Fdouble f64_one).
+    (float_raw_bytes σ f64_one).
 Proof. apply raw_bytes_of_val_float_intro. Qed.
 
 Example raw_float128_intro {σ : genv} :
   raw_bytes_of_val σ Tfloat128 (Vfloat float_type.Ffloat128 f128_one)
-    (float_raw_bytes σ float_type.Ffloat128 f128_one).
+    (float_raw_bytes σ f128_one).
 Proof. apply raw_bytes_of_val_float_intro. Qed.
 
 Example float16_bits_compatible :
@@ -422,7 +422,7 @@ Example longdouble_raw_bits_not_binary128_compatible :
 Proof. intros [_ Hwidth]. vm_compute in Hwidth. discriminate. Qed.
 
 Example float_to_bits_has_unsigned_type {σ : genv} :
-  has_type_prop (Vint (float_value.to_bits float_type.Ffloat f32_one))
+  has_type_prop (Vint (float_value.to_bits f32_one))
     (Tnum int_rank.Iint Unsigned).
 Proof.
   apply float_to_bits_has_type_unsigned.

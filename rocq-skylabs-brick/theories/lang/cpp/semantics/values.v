@@ -242,12 +242,12 @@ Module Type RAW_BYTES_VAL
   Axiom raw_bytes_of_val_sizeof : forall {σ ty v rs},
       raw_bytes_of_val σ ty v rs -> size_of σ ty = Some (N.of_nat $ length rs).
 
-  Definition float_raw_bytes (σ : genv) ft (f : float_type.car ft) : list raw_byte :=
+  Definition float_raw_bytes (σ : genv) {ft} (f : float_type.car ft) : list raw_byte :=
     raw_int_byte <$> _Z_to_bytes (N.to_nat (float_type.bytesN ft))
-      (genv_byte_order σ) Unsigned (float_value.to_bits ft f).
+      (genv_byte_order σ) Unsigned (float_value.to_bits f).
 
   Lemma float_raw_bytes_length σ ft (f : float_type.car ft) :
-    length (float_raw_bytes σ ft f) = N.to_nat (float_type.bytesN ft).
+    length (float_raw_bytes σ f) = N.to_nat (float_type.bytesN ft).
   Proof. by rewrite /float_raw_bytes length_fmap _Z_to_bytes_length. Qed.
 
   (** Float raw-byte support is intentionally narrow: the byte sequence is the
@@ -255,10 +255,10 @@ Module Type RAW_BYTES_VAL
       such encodings for values of the same float type determines the value. *)
   Axiom raw_bytes_of_val_float : forall {σ ft} (f : float_type.car ft) rs,
       raw_bytes_of_val σ (Tfloat_ ft) (Vfloat ft f) rs <->
-      rs = float_raw_bytes σ ft f.
+      rs = float_raw_bytes σ f.
 
   #[global] Declare Instance float_raw_bytes_inj : forall {σ ft},
-      Inj (=) (=) (float_raw_bytes σ ft).
+      Inj (=) (=) (float_raw_bytes σ (ft := ft)).
 
   (* TODO Maybe add?
     Axiom raw_bytes_of_val_int : forall σ sz z rs,

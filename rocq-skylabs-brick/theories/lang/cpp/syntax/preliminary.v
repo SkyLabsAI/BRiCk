@@ -252,8 +252,8 @@ Module char_type.
     abstract (by intros []).
   Defined.
 
-  Definition bytesN (t : t) : N :=
-    match t with
+  Definition bytesN (ct : t) : N :=
+    match ct with
     | Cchar => 1
     | Cwchar => 4 (* TODO: actually 16-bits on Windows *)
     | C8 => 1
@@ -262,8 +262,8 @@ Module char_type.
     end.
   #[global] Arguments bytesN !_ /.
 
-  Definition bitsN (t : t) : N :=
-    8 * bytesN t.
+  Definition bitsN (ct : t) : N :=
+    8 * bytesN ct.
   #[global] Arguments bitsN !_ /.
 
   #[global] Notation bitsZ t := (Z.of_N (bitsN t)).
@@ -307,8 +307,8 @@ Module int_rank.
   Definition ranks :=
     [Ichar; Ishort; Iint; Ilong; Ilonglong; I128].
 
-  Definition bitsize (t : t) : bitsize :=
-    match t with
+  Definition bitsize (ir : t) : bitsize :=
+    match ir with
     | Ichar => bitsize.W8
     | Ishort => bitsize.W16
     | Iint => bitsize.W32
@@ -318,8 +318,8 @@ Module int_rank.
     end.
 
   (* Having this definition not contain multiplication is helpful *)
-  Definition bytesN (t : t) : N :=
-    match t with
+  Definition bytesN (ir : t) : N :=
+    match ir with
     | Ichar => Evaluate (bitsize.bytesN $ bitsize Ichar)
     | Ishort  => Evaluate (bitsize.bytesN $ bitsize Ishort)
     | Iint  => Evaluate (bitsize.bytesN $ bitsize Iint)
@@ -327,17 +327,17 @@ Module int_rank.
     | Ilonglong  => Evaluate (bitsize.bytesN $ bitsize Ilonglong)
     | I128  => Evaluate (bitsize.bytesN $ bitsize I128)
     end.
-  Lemma bytesN_ok (t : t) :
-    bytesN t = bitsize.bytesN (bitsize t).
-  Proof. by destruct t. Qed.
+  Lemma bytesN_ok (ir : t) :
+    bytesN ir = bitsize.bytesN (bitsize ir).
+  Proof. by destruct ir. Qed.
 
   Notation bytesNat t := (N.to_nat (bytesN t)) (only parsing).
-  Lemma bytesNat_ok (t : t) :
-    bytesNat t = bitsize.bytesNat (bitsize t).
-  Proof. by destruct t. Qed.
+  Lemma bytesNat_ok (ir : t) :
+    bytesNat ir = bitsize.bytesNat (bitsize ir).
+  Proof. by destruct ir. Qed.
 
-  Definition bitsN (t : t) : N :=
-    match t with
+  Definition bitsN (ir : t) : N :=
+    match ir with
     | Ichar => Evaluate (8 * bytesN Ichar)
     | Ishort => Evaluate (8 * bytesN Ishort)
     | Iint => Evaluate (8 * bytesN Iint)
@@ -414,8 +414,8 @@ Module float_type.
     abstract (by intros []).
   Defined.
 
-  Definition bytesN (t : t) : N :=
-    match t with
+  Definition bytesN (ft : t) : N :=
+    match ft with
     | Ffloat16 => 2
     | Ffloat => 4
     | Fdouble => 8
@@ -423,12 +423,12 @@ Module float_type.
     | Ffloat128 => Evaluate (128 / 8)%N
     end.
 
-  Definition bitsN (t : t) : N :=
-    8 * bytesN t.
+  Definition bitsN (ft : t) : N :=
+    8 * bytesN ft.
 
   (** Frontend/checker support predicate. *)
-  Definition supported (t : t) : bool :=
-    match t with
+  Definition supported (ft : t) : bool :=
+    match ft with
     | Flongdouble => false
     | _ => true
     end.
@@ -436,21 +436,21 @@ Module float_type.
   (** Object-representation size when it is one of BRiCk's fixed integer
       bit-widths.  For [Flongdouble], this is the 16-byte object size; its
       Flocq bit encoding below has a smaller [bit_width]. *)
-  Definition bitsize (t : t) : bitsize.t :=
-    match t with
+  Definition bitsize (ft : t) : bitsize.t :=
+    match ft with
     | Ffloat16 => bitsize.W16
     | Ffloat => bitsize.W32
     | Fdouble => bitsize.W64
     | Flongdouble | Ffloat128 => bitsize.W128
     end.
 
-  Lemma bitsize_bytesN (t : t) :
-    bitsize.bytesN (bitsize t) = bytesN t.
-  Proof. by destruct t. Qed.
+  Lemma bitsize_bytesN (ft : t) :
+    bitsize.bytesN (bitsize ft) = bytesN ft.
+  Proof. by destruct ft. Qed.
 
-  Lemma bitsize_bitsN (t : t) :
-    bitsize.bitsN (bitsize t) = bitsN t.
-  Proof. by destruct t. Qed.
+  Lemma bitsize_bitsN (ft : t) :
+    bitsize.bitsN (bitsize ft) = bitsN ft.
+  Proof. by destruct ft. Qed.
 
   (** Parameters for [binary_float].
 
@@ -458,8 +458,8 @@ Module float_type.
       for normalized finite values. [ew] is the exponent bound parameter used
       by [binary_float].
    *)
-  Definition mw (t : t) : Z :=
-    match t with
+  Definition mw (ft : t) : Z :=
+    match ft with
     | Ffloat16 => 11
     | Ffloat => 24
     | Fdouble => 53
@@ -467,11 +467,11 @@ Module float_type.
     | Ffloat128 => 113
     end.
 
-  Lemma mw_gt_0 (t : t) : (0 < mw t)%Z.
-  Proof. by destruct t. Qed.
+  Lemma mw_gt_0 (ft : t) : (0 < mw ft)%Z.
+  Proof. by destruct ft. Qed.
 
-  Definition ew (t : t) : Z :=
-    match t with
+  Definition ew (ft : t) : Z :=
+    match ft with
     | Ffloat16 => 16
     | Ffloat => 128
     | Fdouble => 1024
@@ -479,8 +479,8 @@ Module float_type.
     | Ffloat128 => 16384
     end.
 
-  Lemma mw_lt_ew (t : t) : (mw t < ew t)%Z.
-  Proof. by destruct t. Qed.
+  Lemma mw_lt_ew (ft : t) : (mw ft < ew ft)%Z.
+  Proof. by destruct ft. Qed.
 
 
   (** Parameters for the IEEE bit encoding helpers.
@@ -493,24 +493,24 @@ Module float_type.
       The [binary_float] exponent parameter is [2 ^ (ebits - 1)], so the
       stored exponent width is recovered from [ew].
    *)
-  Definition fraction_bits (t : t) : Z := mw t - 1.
-  Definition exponent_bits (t : t) : Z := Z.log2 (ew t) + 1.
-  Definition bit_width (t : t) : Z := 1 + fraction_bits t + exponent_bits t.
+  Definition fraction_bits (ft : t) : Z := mw ft - 1.
+  Definition exponent_bits (ft : t) : Z := Z.log2 (ew ft) + 1.
+  Definition bit_width (ft : t) : Z := 1 + fraction_bits ft + exponent_bits ft.
 
-  Lemma bit_width_nonnegative (t : t) : (0 <= bit_width t)%Z.
-  Proof. by destruct t. Qed.
+  Lemma bit_width_nonnegative (ft : t) : (0 <= bit_width ft)%Z.
+  Proof. by destruct ft. Qed.
 
-  Lemma bit_width_le_bitsN (t : t) :
-    (bit_width t <= Z.of_N (bitsN t))%Z.
-  Proof. by destruct t. Qed.
+  Lemma bit_width_le_bitsN (ft : t) :
+    (bit_width ft <= Z.of_N (bitsN ft))%Z.
+  Proof. by destruct ft. Qed.
 
-  Lemma bit_width_bitsize_not_longdouble (t : t) :
-    t <> Flongdouble -> bit_width t = bitsize.bitsZ (bitsize t).
-  Proof. by destruct t. Qed.
+  Lemma bit_width_bitsize_not_longdouble (ft : t) :
+    ft <> Flongdouble -> bit_width ft = bitsize.bitsZ (bitsize ft).
+  Proof. by destruct ft. Qed.
 
   (** The carrier type *)
-  Definition car (t : t) : Set :=
-    binary_float (mw t) (ew t).
+  Definition car (ft : t) : Set :=
+    binary_float (mw ft) (ew ft).
 
   #[global] Instance full_float_dec : EqDecision full_float.
   Proof. solve_decision. Defined.
@@ -534,8 +534,8 @@ Module float_value.
       only use this helper when Clang's [APFloat] layout matches this implicit
       leading-bit encoding. In particular, x87 long double has an explicit
       integer bit and is not printed through this path. *)
-  Definition of_bits (t : t) : Z -> car t :=
-    match t with
+  Definition of_bits (ft : t) : Z -> car ft :=
+    match ft with
     | Ffloat16 => binary_float_of_bits (Reduce (fraction_bits Ffloat16)) (Reduce (exponent_bits Ffloat16)) eq_refl eq_refl eq_refl
     | Ffloat => binary_float_of_bits (Reduce (fraction_bits Ffloat)) (Reduce (exponent_bits Ffloat)) eq_refl eq_refl eq_refl
     | Fdouble => binary_float_of_bits (Reduce (fraction_bits Fdouble)) (Reduce (exponent_bits Fdouble)) eq_refl eq_refl eq_refl
@@ -543,8 +543,8 @@ Module float_value.
     | Ffloat128 => binary_float_of_bits (Reduce (fraction_bits Ffloat128)) (Reduce (exponent_bits Ffloat128)) eq_refl eq_refl eq_refl
     end.
 
-  Definition to_bits (t : t) : car t -> Z :=
-    match t with
+  Definition to_bits {ft : t} : car ft -> Z :=
+    match ft with
     | Ffloat16 => bits_of_binary_float (Reduce (fraction_bits Ffloat16)) (Reduce (exponent_bits Ffloat16))
     | Ffloat => bits_of_binary_float (Reduce (fraction_bits Ffloat)) (Reduce (exponent_bits Ffloat))
     | Fdouble => bits_of_binary_float (Reduce (fraction_bits Fdouble)) (Reduce (exponent_bits Fdouble))
@@ -552,29 +552,29 @@ Module float_value.
     | Ffloat128 => bits_of_binary_float (Reduce (fraction_bits Ffloat128)) (Reduce (exponent_bits Ffloat128))
     end.
 
-  Definition zero (t : t) : car t :=
+  Definition zero (ft : t) : car ft :=
     B754_zero _ _ false.
 
-  Definition signed_zero (t : t) : bool -> car t :=
+  Definition signed_zero (ft : t) : bool -> car ft :=
     B754_zero _ _.
 
-  Definition is_zero [t : t] (v : car t) : bool :=
+  Definition is_zero {ft : t} (v : car ft) : bool :=
     match v with
     | B754_zero _ _ _ => true
     | _ => false
     end.
 
-  Definition is_true {t : t} (v : car t) : bool :=
+  Definition is_true {ft : t} (v : car ft) : bool :=
     negb (is_zero v).
 
-  Lemma is_zero_zero (t : t) : is_zero (zero t) = true.
-  Proof. by destruct t. Qed.
+  Lemma is_zero_zero (ft : t) : is_zero (zero ft) = true.
+  Proof. by destruct ft. Qed.
 
-  Lemma is_true_zero (t : t) : is_true (zero t) = false.
-  Proof. by destruct t. Qed.
+  Lemma is_true_zero (ft : t) : is_true (zero ft) = false.
+  Proof. by destruct ft. Qed.
 
-  Definition default_nan (t : t) : { nan : car t | is_nan _ _ nan = true } :=
-    match t return { nan : car t | is_nan _ _ nan = true } with
+  Definition default_nan (ft : t) : { nan : car ft | is_nan _ _ nan = true } :=
+    match ft return { nan : car ft | is_nan _ _ nan = true } with
     | Ffloat16 => exist _ (@B754_nan 11 16 false xH eq_refl) eq_refl
     | Ffloat => exist _ (@B754_nan 24 128 false xH eq_refl) eq_refl
     | Fdouble => exist _ (@B754_nan 53 1024 false xH eq_refl) eq_refl
@@ -582,42 +582,36 @@ Module float_value.
     | Ffloat128 => exist _ (@B754_nan 113 16384 false xH eq_refl) eq_refl
     end.
 
-  Definition unop_nan [t : t] (v : car t) : { nan : car t | is_nan _ _ nan = true } :=
+  Definition unop_nan {ft : t} (v : car ft) : { nan : car ft | is_nan _ _ nan = true } :=
     match v with
     | B754_nan _ _ s pl Hpl => exist _ (B754_nan _ _ s pl Hpl) eq_refl
-    | _ => default_nan t
+    | _ => default_nan ft
     end.
 
-  Definition binop_nan [t : t] (v1 v2 : car t) : { nan : car t | is_nan _ _ nan = true } :=
+  Definition binop_nan {ft : t} (v1 v2 : car ft) : { nan : car ft | is_nan _ _ nan = true } :=
     match v1, v2 with
     | B754_nan _ _ s pl Hpl, _ => exist _ (B754_nan _ _ s pl Hpl) eq_refl
     | _, B754_nan _ _ s pl Hpl => exist _ (B754_nan _ _ s pl Hpl) eq_refl
-    | _, _ => default_nan t
+    | _, _ => default_nan ft
     end.
 
 
-  Definition opp (t : t) (v : car t) : car t :=
-    Bopp _ _ (@unop_nan t) v.
+  Definition opp {ft : t} (v : car ft) : car ft :=
+    Bopp _ _ unop_nan v.
 
-  Definition normalize_with_mode (m : BinarySingleNaN.mode) (t : t) (z e : Z) (signed_zero : bool) : car t :=
-    match t return car t with
-    | Ffloat16 => binary_normalize _ _ (mw_gt_0 Ffloat16) (mw_lt_ew Ffloat16) m z e signed_zero
-    | Ffloat => binary_normalize _ _ (mw_gt_0 Ffloat) (mw_lt_ew Ffloat) m z e signed_zero
-    | Fdouble => binary_normalize _ _ (mw_gt_0 Fdouble) (mw_lt_ew Fdouble) m z e signed_zero
-    | Flongdouble => binary_normalize _ _ (mw_gt_0 Flongdouble) (mw_lt_ew Flongdouble) m z e signed_zero
-    | Ffloat128 => binary_normalize _ _ (mw_gt_0 Ffloat128) (mw_lt_ew Ffloat128) m z e signed_zero
-    end.
+  Definition normalize_with_mode (m : BinarySingleNaN.mode) (ft : t) (z e : Z) (signed_zero : bool) : car ft :=
+    binary_normalize _ _ (mw_gt_0 ft) (mw_lt_ew ft) m z e signed_zero.
 
-  Definition normalize (t : t) (z e : Z) (signed_zero : bool) : car t :=
-    normalize_with_mode BinarySingleNaN.mode_NE t z e signed_zero.
+  Definition normalize (ft : t) (z e : Z) (signed_zero : bool) : car ft :=
+    normalize_with_mode BinarySingleNaN.mode_NE ft z e signed_zero.
 
-  Definition of_int_with_mode (m : BinarySingleNaN.mode) (t : t) (z : Z) : car t :=
-    normalize_with_mode m t z 0 false.
+  Definition of_int_with_mode (m : BinarySingleNaN.mode) (ft : t) (z : Z) : car ft :=
+    normalize_with_mode m ft z 0 false.
 
-  Definition of_int (t : t) (z : Z) : car t :=
-    of_int_with_mode BinarySingleNaN.mode_NE t z.
+  Definition of_int (ft : t) (z : Z) : car ft :=
+    of_int_with_mode BinarySingleNaN.mode_NE ft z.
 
-  Definition to_int (t : t) (v : car t) : option Z :=
+  Definition to_int {ft : t} (v : car ft) : option Z :=
     match v with
     | B754_zero _ _ _ => Some 0%Z
     | B754_finite _ _ s m e _ =>
@@ -641,87 +635,53 @@ Module float_value.
   Definition cast (from to : t) : car from -> option (car to) :=
     cast_with_mode BinarySingleNaN.mode_NE from to.
 
-  Definition add_with_mode (m : BinarySingleNaN.mode) (t : t) : car t -> car t -> car t :=
-    match t return car t -> car t -> car t with
-    | Ffloat16 => Bplus _ _ (mw_gt_0 Ffloat16) (mw_lt_ew Ffloat16) (@binop_nan Ffloat16) m
-    | Ffloat => Bplus _ _ (mw_gt_0 Ffloat) (mw_lt_ew Ffloat) (@binop_nan Ffloat) m
-    | Fdouble => Bplus _ _ (mw_gt_0 Fdouble) (mw_lt_ew Fdouble) (@binop_nan Fdouble) m
-    | Flongdouble => Bplus _ _ (mw_gt_0 Flongdouble) (mw_lt_ew Flongdouble) (@binop_nan Flongdouble) m
-    | Ffloat128 => Bplus _ _ (mw_gt_0 Ffloat128) (mw_lt_ew Ffloat128) (@binop_nan Ffloat128) m
-    end.
+  Definition add_with_mode (m : BinarySingleNaN.mode) {ft : t} : car ft -> car ft -> car ft :=
+    Bplus _ _ (mw_gt_0 ft) (mw_lt_ew ft) binop_nan m.
 
-  Definition sub_with_mode (m : BinarySingleNaN.mode) (t : t) : car t -> car t -> car t :=
-    match t return car t -> car t -> car t with
-    | Ffloat16 => Bminus _ _ (mw_gt_0 Ffloat16) (mw_lt_ew Ffloat16) (@binop_nan Ffloat16) m
-    | Ffloat => Bminus _ _ (mw_gt_0 Ffloat) (mw_lt_ew Ffloat) (@binop_nan Ffloat) m
-    | Fdouble => Bminus _ _ (mw_gt_0 Fdouble) (mw_lt_ew Fdouble) (@binop_nan Fdouble) m
-    | Flongdouble => Bminus _ _ (mw_gt_0 Flongdouble) (mw_lt_ew Flongdouble) (@binop_nan Flongdouble) m
-    | Ffloat128 => Bminus _ _ (mw_gt_0 Ffloat128) (mw_lt_ew Ffloat128) (@binop_nan Ffloat128) m
-    end.
+  Definition sub_with_mode (m : BinarySingleNaN.mode) {ft : t} : car ft -> car ft -> car ft :=
+    Bminus _ _ (mw_gt_0 ft) (mw_lt_ew ft) binop_nan m.
 
-  Definition mul_with_mode (m : BinarySingleNaN.mode) (t : t) : car t -> car t -> car t :=
-    match t return car t -> car t -> car t with
-    | Ffloat16 => Bmult _ _ (mw_gt_0 Ffloat16) (mw_lt_ew Ffloat16) (@binop_nan Ffloat16) m
-    | Ffloat => Bmult _ _ (mw_gt_0 Ffloat) (mw_lt_ew Ffloat) (@binop_nan Ffloat) m
-    | Fdouble => Bmult _ _ (mw_gt_0 Fdouble) (mw_lt_ew Fdouble) (@binop_nan Fdouble) m
-    | Flongdouble => Bmult _ _ (mw_gt_0 Flongdouble) (mw_lt_ew Flongdouble) (@binop_nan Flongdouble) m
-    | Ffloat128 => Bmult _ _ (mw_gt_0 Ffloat128) (mw_lt_ew Ffloat128) (@binop_nan Ffloat128) m
-    end.
+  Definition mul_with_mode (m : BinarySingleNaN.mode) {ft : t} : car ft -> car ft -> car ft :=
+    Bmult _ _ (mw_gt_0 ft) (mw_lt_ew ft) binop_nan m.
 
-  Definition div_with_mode (m : BinarySingleNaN.mode) (t : t) : car t -> car t -> car t :=
-    match t return car t -> car t -> car t with
-    | Ffloat16 => Bdiv _ _ (mw_gt_0 Ffloat16) (mw_lt_ew Ffloat16) (@binop_nan Ffloat16) m
-    | Ffloat => Bdiv _ _ (mw_gt_0 Ffloat) (mw_lt_ew Ffloat) (@binop_nan Ffloat) m
-    | Fdouble => Bdiv _ _ (mw_gt_0 Fdouble) (mw_lt_ew Fdouble) (@binop_nan Fdouble) m
-    | Flongdouble => Bdiv _ _ (mw_gt_0 Flongdouble) (mw_lt_ew Flongdouble) (@binop_nan Flongdouble) m
-    | Ffloat128 => Bdiv _ _ (mw_gt_0 Ffloat128) (mw_lt_ew Ffloat128) (@binop_nan Ffloat128) m
-    end.
+  Definition div_with_mode (m : BinarySingleNaN.mode) {ft : t} : car ft -> car ft -> car ft :=
+    Bdiv _ _ (mw_gt_0 ft) (mw_lt_ew ft) binop_nan m.
 
   (** We fix the rounding mode, we will not support this changing a runtime for the time
       being because that would introduce differences between compile time and runtime evaluation.
    *)
-  Definition add (t : t) : car t -> car t -> car t := add_with_mode BinarySingleNaN.mode_NE t.
-  Definition sub (t : t) : car t -> car t -> car t := sub_with_mode BinarySingleNaN.mode_NE t.
-  Definition mul (t : t) : car t -> car t -> car t := mul_with_mode BinarySingleNaN.mode_NE t.
-  Definition div (t : t) : car t -> car t -> car t := div_with_mode BinarySingleNaN.mode_NE t.
+  Definition add {ft : t} : car ft -> car ft -> car ft := add_with_mode BinarySingleNaN.mode_NE.
+  Definition sub {ft : t} : car ft -> car ft -> car ft := sub_with_mode BinarySingleNaN.mode_NE.
+  Definition mul {ft : t} : car ft -> car ft -> car ft := mul_with_mode BinarySingleNaN.mode_NE.
+  Definition div {ft : t} : car ft -> car ft -> car ft := div_with_mode BinarySingleNaN.mode_NE.
 
-  Definition value_compare (t : t) : car t -> car t -> option comparison :=
-    match t return car t -> car t -> option comparison with
-    | Ffloat16 => Bcompare _ _
-    | Ffloat => Bcompare _ _
-    | Fdouble => Bcompare _ _
-    | Flongdouble => Bcompare _ _
-    | Ffloat128 => Bcompare _ _
-    end.
+  Definition value_compare {ft : t} : car ft -> car ft -> option comparison :=
+    Bcompare _ _.
 
-  Definition eqb (t : t) (v1 v2 : car t) : bool :=
-    match value_compare t v1 v2 with
-    | Some Eq => true
-    | _ => false
-    end.
+  Lemma value_compare_antisym {ft : t} (x y : car ft) :
+    value_compare y x = CompOpp <$> value_compare x y.
+  Proof. apply Bcompare_swap. Qed.
 
-  Definition neqb (t : t) (v1 v2 : car t) : bool :=
-    negb (eqb t v1 v2).
+  Definition eqb {ft : t} (v1 v2 : car ft) : bool :=
+    bool_decide (value_compare v1 v2 = Some Eq).
 
-  Definition ltb (t : t) (v1 v2 : car t) : bool :=
-    match value_compare t v1 v2 with
-    | Some Lt => true
-    | _ => false
-    end.
+  Definition neqb {ft : t} (v1 v2 : car ft) : bool :=
+    negb (eqb v1 v2).
 
-  Definition leb (t : t) (v1 v2 : car t) : bool :=
-    match value_compare t v1 v2 with
-    | Some Lt | Some Eq => true
-    | _ => false
-    end.
+  Definition ltb {ft : t} (v1 v2 : car ft) : bool :=
+    bool_decide (value_compare v1 v2 = Some Lt).
 
-  Definition gtb (t : t) (v1 v2 : car t) : bool :=
-    ltb t v2 v1.
+  Definition leb {ft : t} (v1 v2 : car ft) : bool :=
+    let cmp := value_compare v1 v2 in
+    bool_decide (cmp = Some Lt \/ cmp = Some Eq).
 
-  Definition geb (t : t) (v1 v2 : car t) : bool :=
-    leb t v2 v1.
+  Definition gtb {ft : t} (v1 v2 : car ft) : bool :=
+    ltb v2 v1.
 
-  Lemma of_to_bits ft (f : car ft) : of_bits ft (to_bits ft f) = f.
+  Definition geb {ft : t} (v1 v2 : car ft) : bool :=
+    leb v2 v1.
+
+  Lemma of_to_bits {ft : t} (f : car ft) : of_bits ft (to_bits f) = f.
   Proof.
     destruct ft; simpl in *.
     - exact (binary_float_of_bits_of_binary_float 10 5 (refl_equal _) (refl_equal _) (refl_equal _) f).
@@ -731,50 +691,121 @@ Module float_value.
     - exact (binary_float_of_bits_of_binary_float 112 15 (refl_equal _) (refl_equal _) (refl_equal _) f).
   Qed.
 
-  Lemma to_bits_range ft (f : car ft) :
-    (0 <= to_bits ft f < 2 ^ float_type.bit_width ft)%Z.
+  #[global] Instance of_to_bits_cancel ft : Cancel (=) (of_bits ft) (@to_bits ft) :=
+    @of_to_bits ft.
+
+  Lemma to_bits_range {ft : t} (f : car ft) :
+    (0 <= to_bits f < 2 ^ float_type.bit_width ft)%Z.
   Proof.
-    destruct ft; simpl in *.
-    - exact (bits_of_binary_float_range 10 5 ltac:(lia) ltac:(lia) f).
-    - exact (bits_of_binary_float_range 23 8 ltac:(lia) ltac:(lia) f).
-    - exact (bits_of_binary_float_range 52 11 ltac:(lia) ltac:(lia) f).
-    - exact (bits_of_binary_float_range 63 15 ltac:(lia) ltac:(lia) f).
-    - exact (bits_of_binary_float_range 112 15 ltac:(lia) ltac:(lia) f).
+    destruct ft; simpl in *; apply bits_of_binary_float_range; lia.
   Qed.
 
   Lemma to_of_bits ft z :
     (0 <= z < 2 ^ float_type.bit_width ft)%Z ->
-    to_bits ft (of_bits ft z) = z.
+    to_bits (of_bits ft z) = z.
   Proof.
-    destruct ft; simpl; intros Hz.
-    - exact (bits_of_binary_float_of_bits 10 5 (refl_equal _) (refl_equal _) (refl_equal _) z Hz).
-    - exact (bits_of_binary_float_of_bits 23 8 (refl_equal _) (refl_equal _) (refl_equal _) z Hz).
-    - exact (bits_of_binary_float_of_bits 52 11 (refl_equal _) (refl_equal _) (refl_equal _) z Hz).
-    - exact (bits_of_binary_float_of_bits 63 15 (refl_equal _) (refl_equal _) (refl_equal _) z Hz).
-    - exact (bits_of_binary_float_of_bits 112 15 (refl_equal _) (refl_equal _) (refl_equal _) z Hz).
+    destruct ft; simpl; intros Hz; exact: bits_of_binary_float_of_bits.
   Qed.
 
   Lemma to_of_bits_Ffloat16 z :
-    (0 <= z < 2 ^ 16)%Z -> to_bits Ffloat16 (of_bits Ffloat16 z) = z.
+    (0 <= z < 2 ^ 16)%Z -> to_bits (of_bits Ffloat16 z) = z.
   Proof. intros Hz. apply to_of_bits. exact Hz. Qed.
 
   Lemma to_of_bits_Ffloat z :
-    (0 <= z < 2 ^ 32)%Z -> to_bits Ffloat (of_bits Ffloat z) = z.
+    (0 <= z < 2 ^ 32)%Z -> to_bits (of_bits Ffloat z) = z.
   Proof. intros Hz. apply to_of_bits. exact Hz. Qed.
 
   Lemma to_of_bits_Fdouble z :
-    (0 <= z < 2 ^ 64)%Z -> to_bits Fdouble (of_bits Fdouble z) = z.
+    (0 <= z < 2 ^ 64)%Z -> to_bits (of_bits Fdouble z) = z.
   Proof. intros Hz. apply to_of_bits. exact Hz. Qed.
 
   Lemma to_of_bits_Ffloat128 z :
-    (0 <= z < 2 ^ 128)%Z -> to_bits Ffloat128 (of_bits Ffloat128 z) = z.
+    (0 <= z < 2 ^ 128)%Z -> to_bits (of_bits Ffloat128 z) = z.
   Proof. intros Hz. apply to_of_bits. exact Hz. Qed.
 
-  #[global] Instance to_bits_inj ft : Inj (=) (=) (to_bits ft).
+  #[global] Instance to_bits_inj ft : Inj (=) (=) (@to_bits ft) := cancel_inj.
+
+  Lemma value_compare_zero_zero {ft : t} (x y : car ft) :
+    is_zero x = true -> is_zero y = true -> value_compare x y = Some Eq.
   Proof.
-    intros x y Hbits.
-    apply (f_equal (of_bits ft)) in Hbits.
-    by rewrite !of_to_bits in Hbits.
+    destruct ft; destruct x; destruct y; cbn; congruence.
+  Qed.
+
+  Lemma value_compare_eq_or_zeros {ft : t} (x y : car ft) :
+    value_compare x y = Some Eq -> x = y ∨ is_zero x = true ∧ is_zero y = true.
+  Proof.
+    destruct ft; destruct x as [sx|sx|sx px Hpx|sx mx ex Hx];
+      destruct y as [sy|sy|sy py Hpy|sy my ey Hy]; cbn in *; try congruence.
+    all: try (right; done).
+    all: try (by destruct sx, sy; cbn in *; simplify_eq; left).
+    all: destruct sx, sy; cbn in *; try congruence;
+      repeat case_match; simplify_eq; try congruence;
+      try match goal with
+      | mx : positive, my : positive |- _ =>
+          destruct (Pos.compare_cont Eq mx my) eqn:?; cbn in *; simplify_eq; try congruence
+      end;
+      repeat match goal with
+      | H : Some (CompOpp (Pos.compare_cont Eq ?x ?y)) = Some Eq |- _ =>
+          let Hxy := fresh in
+          assert (Hxy : Pos.compare_cont Eq x y = Eq) by
+            (destruct (Pos.compare_cont Eq x y); cbn in H; congruence);
+          clear H
+      | H : CompOpp (Pos.compare_cont Eq ?x ?y) = Eq |- _ =>
+          let Hxy := fresh in
+          assert (Hxy : Pos.compare_cont Eq x y = Eq) by
+            (destruct (Pos.compare_cont Eq x y); cbn in H; congruence);
+          clear H
+      | H : Some (CompOpp (Pcompare ?x ?y Eq)) = Some Eq |- _ =>
+          let Hxy := fresh in
+          assert (Hxy : Pcompare x y Eq = Eq) by
+            (destruct (Pcompare x y Eq); cbn in H; congruence);
+          clear H
+      | H : CompOpp (Pcompare ?x ?y Eq) = Eq |- _ =>
+          let Hxy := fresh in
+          assert (Hxy : Pcompare x y Eq = Eq) by
+            (destruct (Pcompare x y Eq); cbn in H; congruence);
+          clear H
+      | H : Some (CompOpp ?c) = Some Eq |- _ => destruct c eqn:?; simplify_eq
+      | H : CompOpp ?c = Eq |- _ => destruct c eqn:?; simplify_eq
+      end;
+      repeat match goal with
+      | H : Z.compare _ _ = Eq |- _ => apply Z.compare_eq in H; subst
+      | H : Eq = Z.compare _ _ |- _ => symmetry in H; apply Z.compare_eq in H; subst
+      | H : Pos.compare_cont Eq _ _ = Eq |- _ => apply Pcompare_Eq_eq in H; subst
+      | H : Pcompare _ _ Eq = Eq |- _ => apply Pos.compare_eq in H; subst
+      | H : Eq = Pcompare _ _ Eq |- _ => symmetry in H; apply Pos.compare_eq in H; subst
+      end;
+      left; f_equal; apply: proof_irrel.
+  Qed.
+
+  Lemma value_compare_eq_nonzero {ft : t} (x y : car ft) :
+    value_compare x y = Some Eq ->
+    is_zero x = false -> is_zero y = false -> x = y.
+  Proof.
+    move=> /value_compare_eq_or_zeros [//|[Hx _]] Hnz _.
+    by rewrite Hx in Hnz.
+  Qed.
+
+  Lemma value_compare_eq_B2R {ft : t} (x y : car ft) :
+    value_compare x y = Some Eq -> B2R _ _ x = B2R _ _ y.
+  Proof.
+    move=> /value_compare_eq_or_zeros [->|[Hx Hy]]; [done|].
+    destruct ft; destruct x; destruct y; cbn in *; congruence.
+  Qed.
+
+  Lemma value_compare_eq_sym {ft : t} (x y : car ft) :
+    value_compare x y = Some Eq -> value_compare y x = Some Eq.
+  Proof. by move=> H; rewrite value_compare_antisym H. Qed.
+
+  Lemma value_compare_eq_trans {ft : t} (x y z : car ft) :
+    value_compare x y = Some Eq ->
+    value_compare y z = Some Eq ->
+    value_compare x z = Some Eq.
+  Proof.
+    intros Hxy Hyz.
+    destruct (value_compare_eq_or_zeros _ _ Hxy) as [->|[Hx Hy]]; [done|].
+    destruct (value_compare_eq_or_zeros _ _ Hyz) as [<-|[_ Hz]]; [done|].
+    by apply value_compare_zero_zero.
   Qed.
 
 End float_value.

@@ -296,7 +296,7 @@ Definition conv_float {σ : genv} (tu : translation_unit) (from to : type) (v v'
   | Tfloat_ _ , Tnum _ _ =>
       match v with
       | Vfloat f z =>
-          match float_value.to_int f z with
+          match float_value.to_int z with
           | Some n => v' = Vint n /\ has_type_prop (Vint n) to
           | None => False
           end
@@ -432,7 +432,7 @@ Section conv_float.
 
   Lemma conv_float_to_int ty sz sgn ft (fv : float_type.car ft) z :
       representation_type tu ty = Tnum sz sgn ->
-      float_value.to_int ft fv = Some z ->
+      float_value.to_int fv = Some z ->
       has_type_prop (Vint z) ty ->
       conv_float tu (Tfloat_ ft) ty (Vfloat ft fv) (Vint z).
   Proof using Hmod.
@@ -459,7 +459,7 @@ Section conv_float.
 
   Lemma conv_float_to_enum nm sz sgn ft (fv : float_type.car ft) z :
       representation_type tu (Tenum nm) = Tnum sz sgn ->
-      float_value.to_int ft fv = Some z ->
+      float_value.to_int fv = Some z ->
       has_type_prop (Vint z) (Tenum nm) ->
       conv_float tu (Tfloat_ ft) (Tenum nm) (Vfloat ft fv) (Vint z).
   Proof using Hmod.

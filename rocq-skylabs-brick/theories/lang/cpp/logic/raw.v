@@ -66,12 +66,12 @@ Axiom raw_byte_of_int_eq : ∀ {σ : genv} sz x rs,
   ∃ l, decodes_uint l x /\ raw_int_byte <$> l = rs /\ length l = N.to_nat (int_rank.bytesN sz).
 
 Lemma raw_bytes_of_val_float_intro {σ : genv} ft (f : float_type.car ft) :
-  raw_bytes_of_val σ (Tfloat_ ft) (Vfloat ft f) (float_raw_bytes σ ft f).
+  raw_bytes_of_val σ (Tfloat_ ft) (Vfloat ft f) (float_raw_bytes σ f).
 Proof. apply raw_bytes_of_val_float. reflexivity. Qed.
 
 Lemma raw_bytes_of_val_float_elim {σ : genv} ft (f : float_type.car ft) rs :
   raw_bytes_of_val σ (Tfloat_ ft) (Vfloat ft f) rs ->
-  rs = float_raw_bytes σ ft f.
+  rs = float_raw_bytes σ f.
 Proof. apply raw_bytes_of_val_float. Qed.
 
 Definition float_bits_compatible (sz : int_rank.t) (ft : float_type.t) : Prop :=
@@ -87,7 +87,7 @@ Qed.
 
 Lemma float_to_bits_has_type_unsigned {σ : genv} sz ft (f : float_type.car ft) :
   float_bits_compatible sz ft ->
-  has_type_prop (Vint (float_value.to_bits ft f)) (Tnum sz Unsigned).
+  has_type_prop (Vint (float_value.to_bits f)) (Tnum sz Unsigned).
 Proof.
   intros [Hbits Hwidth].
   rewrite -has_int_type.

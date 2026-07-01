@@ -70,7 +70,7 @@ Definition Z_to_char_bits (ct : char_type.t) (z : Z) : N :=
 
 Definition float_to_char (σ : genv) (ft : float_type.t) (ct : char_type.t)
     (f : float_type.car ft) : option N :=
-  match float_value.to_int ft f with
+  match float_value.to_int f with
   | Some z => if char_float_boundb σ ct z then Some (Z_to_char_bits ct z) else None
   | None => None
   end.
@@ -450,7 +450,7 @@ Lemma float_to_char_has_type {σ : genv} ft ct (f : float_type.car ft) n :
   has_type_prop (Vchar n) (Tchar_ ct).
 Proof.
   rewrite /float_to_char.
-  destruct (float_value.to_int ft f) as [z|] eqn:HtoZ; try discriminate.
+  destruct (float_value.to_int f) as [z|] eqn:HtoZ; try discriminate.
   destruct (char_float_boundb σ ct z) eqn:Hbound; inversion 1; subst.
   apply has_type_prop_char'.
   apply Z_to_char_bits_bounded.
