@@ -96,6 +96,26 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
   (* TODO Maybe this should be removed *)
   #[global] Coercion Vint : Z >-> val.
 
+  #[global] Instance Vint_inj : Inj (=) (=) Vint.
+  Proof. by move=> ?? []. Qed.
+  #[global] Instance Vchar_inj : Inj (=) (=) Vchar.
+  Proof. by move=> ?? []. Qed.
+  #[global] Instance Vptr_inj : Inj (=) (=) Vptr.
+  Proof. by move=> ?? []. Qed.
+  #[global] Instance Vraw_inj : Inj (=) (=) Vraw.
+  Proof. by move=> ?? []. Qed.
+  #[global] Instance Vmember_ptr_inj : Inj2 (=) (=) (=) Vmember_ptr.
+  Proof. by move=> ???? []. Qed.
+
+  #[global] Instance Vfloat_inj f : Inj (=) (=) (Vfloat f).
+  Proof. by intros ?? [= ?%(inj (existT f))]. Qed.
+
+  Lemma Vfloat_inj_full ft ft' a b :
+    Vfloat ft a = Vfloat ft' b ->
+    exists pf : ft' = ft,
+    a = match pf in _ = X return float_type.car X with eq_refl => b end.
+  Proof. intros; simplify_eq/=. by exists eq_refl. Qed.
+
   Definition val_dec : forall a b : val, {a = b} + {a <> b}.
   Proof.
     intros a b.
@@ -125,10 +145,16 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
   (** ** Notation wrappers for [val] *)
   Definition Vbool (b : bool) : val :=
     Vint (if b then 1 else 0).
+  Succeed #[global] Instance Vbool_inj : Inj (=) (=) Vbool := _.
+
   Definition Vnat (b : nat) : val :=
     Vint (Z.of_nat b).
+  Succeed #[global] Instance Vnat_inj : Inj (=) (=) Vnat := _.
+
   Definition Vn (b : N) : val :=
     Vint (Z.of_N b).
+  Succeed #[global] Instance Vn_inj : Inj (=) (=) Vn := _.
+
   Notation Vz := Vint (only parsing).
 
   (** we use [Vundef] as our value of type [void] *)
@@ -158,33 +184,6 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
   Theorem is_true_int : forall i,
       is_true (Vint i) = Some (bool_decide (i <> 0)).
   Proof. reflexivity. Qed.
-
-  Lemma Vptr_inj p1 p2 : Vptr p1 = Vptr p2 -> p1 = p2.
-  Proof. by move=> []. Qed.
-  Lemma Vint_inj a b : Vint a = Vint b -> a = b.
-  Proof. by move=> []. Qed.
-  Lemma Vchar_inj a b : Vchar a = Vchar b -> a = b.
-  Proof. by move=> []. Qed.
-  Lemma Vfloat_inj_full : forall f f' (a b : float_type.car _),
-      Vfloat f a = Vfloat f' b ->
-      exists pf : f' = f, a = match pf in _ = X return float_type.car X with eq_refl => b end.
-  Proof. inversion 1; subst. by exists eq_refl. Qed.
-  Lemma Vfloat_inj : forall f (a b : float_type.car _),
-      Vfloat f a = Vfloat f b -> a = b.
-  Proof.
-    inversion 1; subst.
-    eapply Eqdep_dec.inj_pair2_eq_dec; eauto.
-    intros; apply decide; refine _.
-  Qed.
-  Lemma Vbool_inj a b : Vbool a = Vbool b -> a = b.
-  Proof. by move: a b =>[] [] /Vint_inj. Qed.
-
-  #[global] Instance Vptr_Inj : Inj (=) (=) Vptr := Vptr_inj.
-  #[global] Instance Vint_Inj : Inj (=) (=) Vint := Vint_inj.
-  #[global] Instance Vchar_Inj : Inj (=) (=) Vchar := Vchar_inj.
-  #[global] Instance Vfloat_Inj f : Inj (=) (=) (Vfloat f).
-  Proof. move=>?? /Vfloat_inj; done. Qed.
-  #[global] Instance Vbool_Inj : Inj (=) (=) Vbool := Vbool_inj.
 
   Definition N_to_char (t : char_type.t) (z : N) : val :=
     Vchar $ trimN (char_type.bitsN t) z.
