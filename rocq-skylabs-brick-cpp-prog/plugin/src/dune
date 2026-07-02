@@ -1,0 +1,14 @@
+(library
+ (name rocq_skylabs_brick_cpp_prog_plugin)
+ (public_name rocq-skylabs-brick-cpp-prog.plugin)
+ (synopsis "Rocq plugin for interactive cpp2v-backed BRiCk C++ programs")
+ (flags :standard -rectypes -w -27)
+ (inline_tests)
+ (preprocess (pps ppx_inline_test))
+ (libraries
+  rocq-runtime.vernac
+  rocq-runtime.plugins.ltac
+  rocq-skylabs-brick.plugin
+  str))
+
+(rocq.pp (modules cpp_prog_commands))

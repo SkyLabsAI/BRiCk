@@ -1,0 +1,30 @@
+(rocq.theory
+ (name skylabs_prog_cpp.tests)
+ (generate_project_file)
+ (theories
+  Stdlib
+  Lens
+  Lens.Elpi
+  iris
+  stdpp
+  elpi
+  elpi_elpi
+  Ltac2
+  skylabs.upoly
+  skylabs.prelude
+  skylabs.iris.extra
+  skylabs.ltac2.extra
+  skylabs.lang.cpp
+  skylabs.prog.cpp
+  ; transitive dependencies
+  Equations Equations.Prop Equations.Type Flocq elpi.apps.NES elpi.apps.NES.elpi
+  elpi.apps.derive elpi.apps.derive.elpi elpi.apps.locker elpi.apps.locker.elpi
+ ))
+
+(cram
+ (applies_to syntax_error.t)
+ (deps
+  (package rocq-core)
+  (package rocq-stdlib)
+  (package rocq-skylabs-brick)
+  (package rocq-skylabs-brick-cpp-prog)))

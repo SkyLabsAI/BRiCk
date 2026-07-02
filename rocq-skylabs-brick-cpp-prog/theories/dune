@@ -1,0 +1,17 @@
+(include_subdirs qualified)
+(rocq.theory
+ (name skylabs.prog.cpp)
+ (package rocq-skylabs-brick-cpp-prog)
+ (plugins rocq-skylabs-brick-cpp-prog.plugin)
+ (generate_project_file)
+ (theories
+  Stdlib
+  skylabs.lang.cpp))
+
+(rule
+ (target cpp2v_version.v)
+ (deps
+  (package rocq-skylabs-cpp2v))
+ (action
+  (with-stdout-to %{target}
+   (run %{bin:bin-hash} --rocq version %{bin:cpp2v}))))

@@ -20,6 +20,7 @@
  (name rocq-skylabs-cpp2v)
  (synopsis "Code generator for BRiCk program logic for C++")
  (depends
-  conf-clang))
+  conf-clang
+  (rocq-skylabs-brick :with-test)))
 
 (subst disabled)

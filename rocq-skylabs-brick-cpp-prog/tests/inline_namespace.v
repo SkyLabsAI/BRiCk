@@ -1,7 +1,7 @@
 Require Import skylabs.prelude.base.
 Require Import skylabs.lang.cpp.syntax.
 Require Import skylabs.lang.cpp.syntax.dealias.
-Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
+Require Import skylabs.prog.cpp.plugin.
 
 cpp.prog source prog cpp:{{
     namespace X {

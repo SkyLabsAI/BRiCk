@@ -131,7 +131,7 @@ static cl::opt<std::string>
                 cl::value_desc("module_name"), cl::Optional, cl::cat(Cpp2V));
 
 static cl::opt<std::string>
-    Attributes("attributes", cl::desc("Attributes to pass to the [cpp.prog]"),
+    Attributes("attributes", cl::desc("Attributes to pass to the [cpp.ast]"),
                cl::value_desc("attrs"), cl::Optional, cl::cat(Cpp2V));
 
 class ToCoqAction : public clang::ASTFrontendAction {

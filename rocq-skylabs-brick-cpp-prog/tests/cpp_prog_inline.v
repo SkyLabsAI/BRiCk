@@ -1,6 +1,6 @@
 Check @length.
 
-Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
+Require Import skylabs.prog.cpp.plugin.
 
 #[duplicates(warn)]
 cpp.prog source1 prog cpp:{{

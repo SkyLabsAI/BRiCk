@@ -27,12 +27,3 @@
   elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
   elpi.apps.locker.elpi
  ))
-
-(subdir parser/plugin
- (rule
-  (target cpp2v_version.v)
-  (deps
-   (package rocq-skylabs-cpp2v))
-  (action
-   (with-stdout-to %{target}
-    (run %{bin:bin-hash} --rocq version %{bin:cpp2v})))))

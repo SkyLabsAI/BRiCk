@@ -1,0 +1,60 @@
+(*
+ * Copyright (c) 2025 BlueRock Security, Inc.
+ * Copyright (c) 2026 SkyLabs AI, Inc.
+ * This software is distributed under the terms of the BedRock Open-Source License.
+ * See the LICENSE-BedRock file in the repository root for details.
+ *)
+
+DECLARE PLUGIN "rocq-skylabs-brick-cpp-prog.plugin"
+
+{
+open Stdarg
+
+open Ltac_plugin
+open Gramlib
+open Procq.Constr
+open Procq.Prim
+
+module Cpp2v = Rocq_skylabs_brick_plugin.Cpp2v
+
+let pr_cpp_string _ _ _ (s : string) = Pp.(str "cpp:{{" ++ fnl () ++ str s ++ fnl () ++ str "}}")
+
+let pr_cpp_flags _ _ _ = function
+| None -> Pp.str ""
+| Some s -> Pp.(str "flags \"" ++ str s ++ str "\"")
+
+let trim_loc loc n =
+  let open Loc in
+  { loc with bp = loc.bp + n; ep = loc.ep - n }
+
+let rec strip_each ch loc str n =
+  if n < String.length str && str.[n] = ch then strip_each ch loc str (n + 1) else
+  trim_loc loc n , String.(sub str n (length str - n - n))
+
+let strip_braces loc str =
+  if str.[0] = '\123' then strip_each '\123' loc str 1
+  else if str.[0] = '(' then strip_each '(' loc str 1
+  else if str.[0] = '[' then strip_each '[' loc str 1
+  else loc , str
+}
+
+ARGUMENT EXTEND cpp_string PRINTED BY { pr_cpp_string }
+END
+GRAMMAR EXTEND Gram GLOBAL: cpp_string;
+cpp_string : FIRST [
+  [ s = QUOTATION "cpp:" -> {
+    let loc = { loc with Loc.bp = loc.Loc.bp + 4 } in
+    snd @@ strip_braces loc s
+  }
+]];
+END
+
+ARGUMENT EXTEND cpp_flags TYPED AS string option PRINTED BY { pr_cpp_flags }
+| [ "flags" string(flags) ] -> { Some flags }
+| [ ] -> { None }
+END
+
+VERNAC COMMAND EXTEND CppProg CLASSIFIED AS SIDEFF
+| #[ atts = Cpp2v.attributes ] [ "cpp.prog" ident(name) cpp_flags(flags) "prog" cpp_string(prog) ] ->
+  { Cpp_prog.cpp_command_prog atts name flags prog }
+END

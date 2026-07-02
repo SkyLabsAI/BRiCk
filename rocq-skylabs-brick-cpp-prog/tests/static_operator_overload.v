@@ -1,7 +1,7 @@
 Require Import skylabs.lang.cpp.syntax.typed.
 Require Import skylabs.lang.cpp.cpp.
 
-Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
+Require Import skylabs.prog.cpp.plugin.
 
 #[duplicates(error)]
 cpp.prog source flags "-std=c++23" prog cpp:{{
