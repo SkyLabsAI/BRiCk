@@ -116,30 +116,28 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
     a = match pf in _ = X return float_type.car X with eq_refl => b end.
   Proof. intros; simplify_eq/=. by exists eq_refl. Qed.
 
-  Definition val_dec : forall a b : val, {a = b} + {a <> b}.
-  Proof.
-    intros a b.
-    destruct a as [z|n|f x|p|r| |nm anm];
-      destruct b as [z'|n'|f' x'|p'|r'| |nm' anm'];
-      try (right; congruence).
-    - destruct (decide (z = z')) as [?|?]; [left|right]; congruence.
-    - destruct (decide (n = n')) as [?|?]; [left|right]; congruence.
-    - destruct (decide (f = f')) as [<-|Hneq].
-      + destruct (decide (x = x')) as [->|Hneq].
-        * left; reflexivity.
-        * right; intros Heq; apply Hneq.
-          inversion Heq; subst.
-          eapply Eqdep_dec.inj_pair2_eq_dec; eauto.
-          exact (fun x y => decide (x = y)).
-      + right; intros Heq; apply Hneq.
-        by inversion Heq.
-    - destruct (decide (p = p')) as [?|?]; [left|right]; congruence.
-    - destruct (decide (r = r')) as [?|?]; [left|right]; congruence.
-    - left; reflexivity.
-    - destruct (decide (nm = nm')) as [?|?]; [|right; congruence].
-      destruct (decide (anm = anm')) as [?|?]; [left|right]; congruence.
-  Defined.
-  #[global] Instance val_eq_dec : EqDecision val := val_dec.
+  #[global, program] Instance val_eq_dec : EqDecision val := fun a b =>
+    match a, b with
+    | Vint z, Vint z' => cast_if (decide (z = z'))
+    | Vchar n, Vchar n' => cast_if (decide (n = n'))
+    | Vfloat f x, Vfloat f' x' =>
+      match decide (f = f') with
+      | left Hf => cast_if (decide (eq_rect _ float_type.car x _ Hf = x'))
+      | right _ => right _
+      end
+    | Vptr p, Vptr p' => cast_if (decide (p = p'))
+    | Vraw r, Vraw r' => cast_if (decide (r = r'))
+    | Vundef, Vundef => left _
+    | Vmember_ptr nm anm, Vmember_ptr nm' anm' =>
+      cast_if_and (decide (nm = nm')) (decide (anm = anm'))
+    | _, _ => right _
+    end.
+  Solve Obligations with try congruence.
+  Next Obligation. naive_solver. Qed.
+  Next Obligation.
+    Succeed naive_solver.
+    intros _ _ ???? <-; simpl. intros NX EX%(inj (Vfloat f)). contradiction.
+  Qed.
   #[global] Instance val_inhabited : Inhabited val := populate (Vint 0).
 
   (** ** Notation wrappers for [val] *)
