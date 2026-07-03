@@ -435,7 +435,8 @@ Module internal.
       | _ => None
       end.
 
-    Fixpoint as_conv (q : function_qualifiers.t) (t : type) : option (type * list type * function_qualifiers.t) :=
+    Fixpoint as_conv (q : function_qualifiers.t) (t : type)
+      : option (type * list type * function_qualifiers.t) :=
       match t with
       | Tqualified cv t =>
           as_conv (function_qualifiers.join q $ function_qualifiers.mk (q_const cv) (q_volatile cv) Prvalue) t
@@ -832,6 +833,10 @@ Module Type TESTS.
   Succeed Example _0 : TEST "std::strong_ordering::operator std::partial_ordering() const"
                  (Nscoped (Nscoped (Nglobal (Nid "std")) (Nid "strong_ordering"))
                     (Nop_conv function_qualifiers.Nc (Tnamed (Nscoped (Nglobal (Nid "std")) (Nid "partial_ordering"))))) := eq_refl.
+
+  Succeed Example _0 : TEST "std::operator foo<int>() const"
+                         (Nscoped (Nglobal (Nid "std"))
+                            (Nop_conv function_qualifiers.Nc (Tnamed (Ninst (Nglobal (Nid "foo")) [Atype Tint])))) := eq_refl.
 
   (* known issues *)
 
