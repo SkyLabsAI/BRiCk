@@ -427,6 +427,14 @@ Module internal.
       let* post := parse_postfix_type in
       mret $ post (List.fold_right (fun f x => f x) t quals).
 
+    Fixpoint final_function (nm : name) : option (name * list type * function_qualifiers.t) :=
+      match nm with
+      | Nglobal (Nfunction q nm []) => Some (Nglobal (Nid nm), [], q)
+      | Nscoped s (Nfunction q nm []) => Some (Nscoped s (Nid nm), [], q)
+      | Ninst n inst => (fun '(nm, args, q) => (Ninst nm inst, args, q)) <$> final_function n
+      | _ => None
+      end.
+
     Fixpoint as_conv (q : function_qualifiers.t) (t : type) : option (type * list type * function_qualifiers.t) :=
       match t with
       | Tqualified cv t =>
@@ -434,6 +442,7 @@ Module internal.
       | Tref t => as_conv (function_qualifiers.join q $ function_qualifiers.mk false false Lvalue) t
       | Trv_ref t => as_conv (function_qualifiers.join q $ function_qualifiers.mk false false Xvalue) t
       | Tfunction ft => Some (ft.(ft_return), ft.(ft_params), q)
+      | Tnamed nm => (fun '(nm, args, q') => (Tnamed nm, args, function_qualifiers.join q' q)) <$> final_function nm
       | _ => None
       end.
 
@@ -816,6 +825,13 @@ Module Type TESTS.
 
   Succeed Example _0 : TEST "foo(typename $T)" (Nglobal (Nfunction function_qualifiers.N "foo" [Tparam "T"])) := eq_refl.
   Succeed Example _0 : TEST "foo(typename $T::nested)" (Nglobal (Nfunction function_qualifiers.N "foo" [Tnamed (Nscoped (Ndependent (Tparam "T")) (Nid "nested"))])) := eq_refl.
+
+  Succeed Example _0 : TEST "C::foo() const" (Nscoped (Nglobal (Nid "C")) (Nfunction function_qualifiers.Nc "foo" [])) := eq_refl.
+  Succeed Example _0 : TEST "C::operator foo() const" (Nscoped (Nglobal (Nid "C")) (Nop_conv function_qualifiers.Nc (Tnamed (Nglobal $ Nid "foo")))) := eq_refl.
+
+  Succeed Example _0 : TEST "std::strong_ordering::operator std::partial_ordering() const"
+                 (Nscoped (Nscoped (Nglobal (Nid "std")) (Nid "strong_ordering"))
+                    (Nop_conv function_qualifiers.Nc (Tnamed (Nscoped (Nglobal (Nid "std")) (Nid "partial_ordering"))))) := eq_refl.
 
   (* known issues *)
 
