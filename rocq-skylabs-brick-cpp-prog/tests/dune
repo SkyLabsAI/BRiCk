@@ -10,12 +10,3 @@
   elpi.apps.locker elpi.apps.locker.elpi elpi_elpi iris skylabs.iris.extra
   skylabs.ltac2.extra skylabs.prelude skylabs.upoly stdpp
  ))
-
-(cram
- (applies_to syntax_error.t)
- (deps
-  (package rocq-core)
-  (package rocq-stdlib)
-  (package rocq-skylabs-brick)
-  (package rocq-skylabs-cpp2v)
-  (package rocq-skylabs-brick-cpp-prog)))
