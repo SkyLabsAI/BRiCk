@@ -4,20 +4,17 @@
  (package rocq-skylabs-prelude)
  (generate_project_file)
  (theories
-  Stdlib
   stdpp
   skylabs.upoly
   elpi
-  elpi_elpi
   elpi.apps.locker
   elpi.apps.NES
   Lens
   Lens.Elpi
-  Ltac2
   skylabs.ltac2.extra
   ; transitive dependencies
-  elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
-  elpi.apps.locker.elpi
+  Ltac2 Stdlib elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
+  elpi.apps.locker.elpi elpi_elpi
  ))
 
 ; Copy dependencies --- typically Elpi files needed for `From ⋯ Extra

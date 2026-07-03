@@ -5,25 +5,13 @@
  (plugins rocq-skylabs-brick.plugin)
  (generate_project_file)
  (theories
-  Stdlib
-  stdpp
-  skylabs.upoly
-  elpi
-  elpi_elpi
-  elpi.apps.locker
-  elpi.apps.NES
-  Lens
-  Lens.Elpi
-  Ltac2
-  skylabs.ltac2.extra
-  skylabs.prelude
-  iris
-  Flocq
   skylabs.iris.extra
+  Flocq
   Equations
   Equations.Prop
   Equations.Type
   ; transitive dependencies
-  elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
-  elpi.apps.locker.elpi
+  Lens Lens.Elpi Ltac2 Stdlib elpi elpi.apps.NES elpi.apps.NES.elpi
+  elpi.apps.derive elpi.apps.derive.elpi elpi.apps.locker elpi.apps.locker.elpi
+  elpi_elpi iris skylabs.ltac2.extra skylabs.prelude skylabs.upoly stdpp
  ))
