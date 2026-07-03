@@ -6,7 +6,13 @@
  (generate_project_file)
  (theories
   Stdlib
-  skylabs.lang.cpp))
+  skylabs.lang.cpp
+  ; transitive dependencies
+  Equations Equations.Prop Equations.Type Flocq Lens Lens.Elpi Ltac2 elpi
+  elpi.apps.NES elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
+  elpi.apps.locker elpi.apps.locker.elpi elpi_elpi iris skylabs.iris.extra
+  skylabs.ltac2.extra skylabs.prelude skylabs.upoly stdpp
+ ))
 
 (rule
  (target cpp2v_version.v)
