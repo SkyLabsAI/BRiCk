@@ -1,0 +1,6 @@
+(rocq.theory
+ (name skylabs_prog_cpp.syntax_error)
+ (theories
+  Stdlib
+  skylabs.lang.cpp
+  skylabs.prog.cpp))
