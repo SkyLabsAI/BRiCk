@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Malecha
+    given-names: Gregory
+    orcid: https://orcid.org/0000-0003-3952-0807
+  - family-names: Giarrusso
+    given-names: Paolo
+    orcid: https://orcid.org/0009-0002-5297-6614
+  - family-names: Farka
+    given-names: František
+    orcid: https://orcid.org/0000-0001-8177-1322
+  - family-names: Kaiser
+    given-names: Jan-Oliver Kaiser
+    orcid: https://orcid.org/0000-0003-1029-1772
+  - family-names: Hudon
+    given-names: Simon
+  - family-names: Swasey
+    given-names: David
+  - family-names: Stewart
+    given-names: Gordon
+    orcid: https://orcid.org/0000-0003-0244-2980
+  - family-names: Dang
+    given-names: Hoang-Hai
+    orcid: https://orcid.org/0000-0003-1029-1772
+  - family-names: Lepigre
+    given-names: Rodolphe
+  - family-names: Anand
+    given-names: Abhishek
+title: "The BRiCk C++ Program Logic"
+identifiers:
+  - type: url
+    value: https://github.com/skyLabsAI/brick
