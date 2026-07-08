@@ -694,6 +694,25 @@ Proof. apply populate, Sseq, nil. Qed.
 #[global] Instance Cast_inhabited : Inhabited Cast.
 Proof. apply populate, C2void. Qed.
 
+#[global] Reserved Notation "x .:: y" (left associativity, at level 61).
+(* Maybe not this one *)
+(* #[global] Notation "x .:: y" := (Nscoped x%cpp_type (Nid y%pstring)) : cpp_type_scope. *)
+
+#[global] Notation "x .:: y" := (Nscoped x%cpp_name y) : cpp_name_scope.
+#[global] Notation "x .:: y" := (Nscoped x%cpp y) : cpp_scope.
+#[global] Notation "x .:: y" := (Nscoped x%cpp_field y) : cpp_field_scope.
+
+(* Notation to insert parameters inside names *)
+#[global] Reserved Notation "p .<< a0 , .. , an >>"
+  (at level 61, left associativity, format "p  .<<  a0 ,  .. ,  an  >>").
+
+#[global] Notation "p .<< a0 , .. , an >>" := (Ninst p (@cons temp_arg a0 ( .. (@cons temp_arg an nil) .. )) ) : cpp_field_scope.
+#[global] Notation "p .<< a0 , .. , an >>" := (Ninst p (@cons temp_arg a0 ( .. (@cons temp_arg an nil) .. )) ) : cpp_scope.
+#[global] Notation "p .<< a0 , .. , an >>" := (Ninst p (@cons temp_arg a0 ( .. (@cons temp_arg an nil) .. )) ) : cpp_name_scope.
+(* Maybe not this one *)
+(* #[global] Notation "p .<< a0 , .. , an >>" := (Ninst p (@cons temp_arg a0 ( .. (@cons temp_arg an nil) .. )) ) : cpp_type_scope. *)
+
+
 Module Cast.
   Definition existsb
     (T : type -> bool)
