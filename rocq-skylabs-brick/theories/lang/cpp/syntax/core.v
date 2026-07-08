@@ -668,7 +668,7 @@ with Cast : Set :=
     Tparam_inst : ident -> list temp_arg -> type
     ]]
 
-    TODO: It might be desireable to promote this to a new constructor  
+    TODO: It might be desireable to promote this to a new constructor
  *)
 Abbreviation Tparam_inst n args :=
   (Tnamed (Ninst (Ndependent (Tparam n)) args)).
