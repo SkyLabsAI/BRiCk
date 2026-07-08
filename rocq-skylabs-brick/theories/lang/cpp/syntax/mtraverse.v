@@ -467,6 +467,16 @@ Module MTraverse.
         <*> mret d.(d_exception)
         <*> traverse (T:=eta option) (traverse (T:=eta OrDefault) traverseS) d.(d_body).
 
+    Definition traverseOV (o : ObjValue) : F ObjValue :=
+      match o with
+      | Ovar t init =>
+          Ovar <$> traverseT t <*> global_init.traverse traverseE init
+      | Ofunction f => Ofunction <$> traverseF f
+      | Omethod m => Omethod <$> traverseM m
+      | Oconstructor c => Oconstructor <$> traverseCtor c
+      | Odestructor d => Odestructor <$> traverseDtor d
+      end.
+
     Definition traverseMember (m : Member) : F Member :=
       mkMember
         <$> atomic_name.traverse traverseT m.(mem_name)

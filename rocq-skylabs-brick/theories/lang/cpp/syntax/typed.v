@@ -83,7 +83,8 @@ Module decltype.
   Section with_lang.
     Record ext_tu : Set :=
     { ext_symbols : name -> option decltype
-    ; ext_types : name -> option GlobDecl }.
+    ; ext_types : name -> option GlobDecl
+    ; ext_values : name -> option ObjValue }.
 
     #[local] Definition M : Set -> Type :=
       readerT.M (ext_tu * decltype * option exprtype * list (localname * decltype)) (trace.M Error.t).
@@ -111,6 +112,20 @@ Module decltype.
       match osym with
       | Some gd => mret gd
       | None => throw ("failed to find global "%bs, n)
+      end.
+
+    Definition value (n : name) : M ObjValue :=
+      let* osym := readerT.asks (fun '(tu, _, _, _) => tu.(ext_values) n) in
+      match osym with
+      | Some ov => mret ov
+      | None => throw ("failed to find global value "%bs, n)
+      end.
+
+    Definition constructor_decl (n : name) : M Ctor :=
+      let* ov := value n in
+      match ov with
+      | Oconstructor c => mret c
+      | _ => throw ("global value is not a constructor "%bs, n, ov)
       end.
 
     Definition type_of_constant (n : name) (id : ident) : M decltype :=
@@ -529,6 +544,49 @@ Module decltype.
         | _ => throw "can not increment or decrement bool"%bs
         end.
 
+      Definition field_type (fld : field_name.t) (ms : list Member) : M type :=
+        match List.find (fun m => bool_decide (m.(mem_name) = fld)) ms with
+        | Some m => mret $ normalize_type m.(mem_type)
+        | None => throw ("failed to find field "%bs, fld)
+        end.
+
+      Definition type_of_global_or_field (n : name) : M decltype :=
+        let* osym := readerT.asks (fun '(tu, _, _, _) => tu.(ext_symbols) n) in
+        match osym with
+        | Some sym => mret sym
+        | None =>
+            match n with
+            | Nscoped cls fld =>
+                let* gd := global cls in
+                match gd with
+                | Gstruct st => field_type fld st.(s_fields)
+                | Gunion un => field_type fld un.(u_fields)
+                | _ => throw ("global scope is not an aggregate "%bs, cls, gd)
+                end
+            | _ => throw ("failed to find global "%bs, n)
+            end
+        end.
+
+      Definition class_type (t : type) : M name :=
+        match class_name t with
+        | Some cls => mret cls
+        | None => throw ("not a class type "%bs, t)
+        end.
+
+      Definition constructed_class (t : type) : M name :=
+        match class_name t with
+        | Some cls => mret cls
+        | None =>
+            match array_type t with
+            | Some ety => class_type ety
+            | None => throw ("constructor result is not a class or class array "%bs, t)
+            end
+        end.
+
+      Definition check_constructor_result (c : Ctor) (t : type) : M unit :=
+        let* cls := constructed_class t in
+        require_eq cls c.(c_class).
+
       Definition of_expr_body (e : Expr) : M decltype :=
         trace e $
         let* result :=
@@ -556,14 +614,9 @@ Module decltype.
             let* _ := require_eq (Tenum n) ct in
             mret $ Tenum n
         | Eglobal nm ty =>
-            (* TODO NAMES TYPING:
-               1. fields are not included, these are necessary for <<sizeof()>> (see cxx/bitvector)
-             *)
-            (*
-            let* from_env := type_of_global nm in
-            trace ("from_env = ", from_env))%bs $
+            let* from_env := type_of_global_or_field nm in
+            trace ("from_env = "%bs, from_env) $
             let* _ := require_eq from_env (normalize_type ty) in
-            *)
             mret $ tref QM (normalize_type ty)
         | Eglobal_member nm ty =>
             match nm with
@@ -743,8 +796,10 @@ Module decltype.
             const Tsize_t <$> guard (t = Tsize_t)
         | Eoffsetof _ _ t => mret t
         | Econstructor f es t =>
-            (* TODO: check the type of the constructor [f] *)
+            let* ctor := constructor_decl f in
             let* tes := traverse (T:=eta list) of_expr es in
+            let* _ := check_args ctor.(c_arity) (snd <$> ctor.(c_params)) tes in
+            let* _ := check_constructor_result ctor t in
             mret t
         | Elambda n es =>
             let* tes := traverse (T:=eta list) of_expr es in
@@ -1093,7 +1148,8 @@ Module decltype.
 
   Definition tu_to_ext (tu : translation_unit) : internal.ext_tu :=
     {| internal.ext_symbols nm := fmap (M:=fun t => option t) type_of_value $ tu.(symbols) !! nm
-    ; internal.ext_types nm := types tu !! nm |}.
+    ; internal.ext_types nm := types tu !! nm
+    ; internal.ext_values nm := symbols tu !! nm |}.
 
   Definition of_expr (tu : translation_unit) (e : Expr) : trace.M Error.t decltype :=
      readerT.run (internal.of_expr e) (tu_to_ext tu, Tvoid, None, []).

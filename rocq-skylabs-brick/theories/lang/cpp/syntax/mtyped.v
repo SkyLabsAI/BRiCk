@@ -36,6 +36,15 @@ Definition tu_to_ext (tu : translation_unit) : typed.decltype.internal.ext_tu :=
           end
       | None => None
       end
+  ; typed.decltype.internal.ext_values nm :=
+      match trace.runO $ untempN nm with
+      | Some nm =>
+          match tu.(symbols) !! nm return option MObjValue with
+          | Some o => trace.runO $ totempOV o
+          | None => None
+          end
+      | None => None
+      end
   |}.
 
 #[local] Open Scope monad_scope.
