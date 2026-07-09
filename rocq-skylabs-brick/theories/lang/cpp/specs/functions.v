@@ -204,11 +204,11 @@ Section with_cpp.
     #[global] Instance SConstructor_ne n :
       Proper (pointwise_relation _ (dist n) ==> dist n)
         (SConstructor (cc:=cc) class targs (ar:=ar)).
-    Proof. intros ???. apply SFunction_ne. repeat f_equiv. Qed.
+    Proof. intros ???. apply SFunction_ne. simpl. repeat f_equiv. Qed.
     #[global] Instance SConstructor_proper :
       Proper (pointwise_relation _ equiv ==> equiv)
         (SConstructor (cc:=cc) class targs (ar:=ar)).
-    Proof. intros ???. apply SFunction_proper. repeat f_equiv. Qed.
+    Proof. intros ???. apply SFunction_proper. simpl. repeat f_equiv. Qed.
   End SConstructor.
 
   Section SDestructor.
@@ -223,7 +223,7 @@ Section with_cpp.
         (SDestructor (cc:=cc) class wpp2).
     Proof.
       rewrite /wpspec_entails/wp_specD/=/SDestructor.
-      intros Hwpp; apply SFunction_mono.
+      intros Hwpp; apply SFunction_mono. simpl.
       iIntros (vs K) "[%this wpp] /="; iExists this.
       rewrite -/([]++[λ _: ptr, _]) 2!post_ok.
       rewrite -/([]++[this])%list 2!arg_ok.
@@ -241,7 +241,7 @@ Section with_cpp.
     Proof.
       (* (FM-2648) TODO duplicated from [SDestructor_mono] *)
       rewrite /wpspec_entails_fupd/wp_specD/=/SDestructor.
-      intros Hwpp; apply SFunction_mono_fupd.
+      intros Hwpp; apply SFunction_mono_fupd. simpl.
       iIntros (vs K) "[%this wpp] /="; iExists this.
       rewrite -/([]++[λ _: ptr, _]) 2!post_ok.
       rewrite -/([]++[this])%list 2!arg_ok.
@@ -276,11 +276,11 @@ Section with_cpp.
     #[global] Instance SDestructor_ne n :
       Proper (pointwise_relation _ (dist n) ==> dist n)
         (SDestructor (cc:=cc) class).
-    Proof. intros ???. apply SFunction_ne. repeat f_equiv. Qed.
+    Proof. intros ???. apply SFunction_ne. simpl. repeat f_equiv. Qed.
     #[global] Instance SDestructor_proper :
       Proper (pointwise_relation _ equiv ==> equiv)
         (SDestructor (cc:=cc) class).
-    Proof. intros ???. apply SFunction_proper. repeat f_equiv. Qed.
+    Proof. intros ???. apply SFunction_proper. simpl; repeat f_equiv. Qed.
   End SDestructor.
 
   Section SMethod.

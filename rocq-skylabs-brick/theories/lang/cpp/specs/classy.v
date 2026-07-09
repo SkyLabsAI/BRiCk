@@ -32,11 +32,13 @@ Section with_prop.
     ; add_persist (P : PROP) : spec_car -> spec_car :=
       add_pre (bi_intuitionistically P)
     }.
+  #[global] Hint Opaque add_pre add_post add_with add_prepost add_require add_persist : typeclass_instances.
 
   Class WithArg {ARG : Type} : Type :=
     { add_arg : ARG -> spec_car -> spec_car
     ; add_args : list ARG -> spec_car -> spec_car
     }.
+  #[global] Hint Opaque add_arg add_args : typeclass_instances.
 
   Class WithPost {RESULT : Type} : Type :=
     { post_car : Type
@@ -44,6 +46,7 @@ Section with_prop.
     ; post_with : forall T : Type@{universes.Quant}, (T -> post_car) -> PrimString.string -> dummy_prop -> post_car
     ; post_ret : RESULT -> PROP -> post_car
     }.
+  #[global] Hint Opaque start_post post_with post_ret : typeclass_instances.
 
   (** [HasVoid T] means that the type [T] has an interpretation for
     [\post ..] (i.e. something to fill in the return value)
@@ -60,10 +63,10 @@ Section with_prop.
   Definition exact_spec {T : Type} (x : T) : T := x.
 
   (** Add all of the binders in a telescope.
-      
+
       This should **not** be used on opaque (or variable)
       telescopes because it will block reduction.
-      In this case, use a regular `\with` binding and qualify 
+      In this case, use a regular `\with` binding and qualify
       the telescope with `tele_arg`.
    *)
   Fixpoint add_withT `{!SpecGen} (t : telescopes.tele) :
