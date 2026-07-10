@@ -189,8 +189,7 @@ template <typename T> struct DeclPrinter {
     const Printer<T> print_body;
 
     DeclPrinter() = delete;
-    DeclPrinter(StringRef c, StringRef tc, Printer<T> p,
-                Valid v = alwaysValid)
+    DeclPrinter(StringRef c, StringRef tc, Printer<T> p, Valid v = alwaysValid)
         : ctor{c}, templated_ctor{tc}, invalid(v), print_body{p} {
         always_assert(p != nullptr);
     }
@@ -240,8 +239,9 @@ template <typename T> struct DeclPrinter {
         auto printDeclWith = [&]() {
             auto cp = cprint.withDecl(&decl);
             if (auto msg = invalid(box, ctxt)) {
-                guard::ctor _(print, print.templates() ? "Dtemplated_unsupported"
-                                                       : "Dunsupported");
+                guard::ctor _(print, print.templates()
+                                         ? "Dtemplated_unsupported"
+                                         : "Dunsupported");
                 cp.printName(print, decl) << fmt::nbsp;
                 print.str(msg);
                 return true;
@@ -683,16 +683,19 @@ static const char *supportedRecord(const CXXRecordDecl &decl,
         if (base.isVirtual())
             return "virtual base classes are not supported";
     }
-    return supportedRecord(static_cast<const RecordDecl&>(decl), ctxt);
+    return supportedRecord(static_cast<const RecordDecl &>(decl), ctxt);
 }
 
 } // namespace
 
-static const DeclPrinter Dstruct("Dstruct", "Dtemplated_struct", printStruct, supportedRecord);
-static const DeclPrinter Dunion("Dunion", "Dtemplated_union", printUnion, supportedRecord);
-static const DeclPrinter Drecord_struct("Dstruct", "Dtemplated_struct", printCStruct,
-                                        supportedRecord);
-static const DeclPrinter Drecord_union("Dunion", "Dtemplated_union", printCUnion, supportedRecord);
+static const DeclPrinter Dstruct("Dstruct", "Dtemplated_struct", printStruct,
+                                 supportedRecord);
+static const DeclPrinter Dunion("Dunion", "Dtemplated_union", printUnion,
+                                supportedRecord);
+static const DeclPrinter Drecord_struct("Dstruct", "Dtemplated_struct",
+                                        printCStruct, supportedRecord);
+static const DeclPrinter Drecord_union("Dunion", "Dtemplated_union",
+                                       printCUnion, supportedRecord);
 
 // Functions
 namespace {
@@ -937,8 +940,7 @@ static fmt::Formatter &printVar(CoqPrinter &print, const VarDecl &decl,
         return print.output() << "global_init.NoInit";
 }
 } // namespace
-static const DeclPrinter Dvariable("Dvariable", "Dtemplated_variable",
-                                   printVar,
+static const DeclPrinter Dvariable("Dvariable", "Dtemplated_variable", printVar,
                                    DeclPrinter<VarDecl>::alwaysValid);
 
 // Enumerations
