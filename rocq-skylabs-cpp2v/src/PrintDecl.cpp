@@ -445,24 +445,18 @@ static fmt::Formatter &printStructBases(const CXXRecordDecl &decl,
         if (!type)
             fatal("null base class");
 
-        auto dependent = [&]() -> auto & {
-            guard::ctor _(print, "mkBase");
+        guard::ctor _(print, "mkBase");
+        if (auto record = type->getAsCXXRecordDecl()) {
+            cprint.printName(print, record, loc::of(type)) << fmt::nbsp;
+            auto li =
+                layout ? layout->getBaseClassOffset(record).getQuantity() : 0;
+            return printLayoutInfo(print, li);
+        } else {
             {
                 guard::ctor _2(print, "Ndependent'");
                 cprint.printType(print, type, loc::of(decl)) << fmt::nbsp;
             }
             return printLayoutInfo(print, 0);
-        };
-        if (print.templates())
-            return dependent();
-        else {
-            auto record = type->getAsCXXRecordDecl();
-            always_assert(record && "base class not a RecordType");
-            guard::ctor _(print, "mkBase");
-            cprint.printName(print, record, loc::of(type)) << fmt::nbsp;
-            auto li =
-                layout ? layout->getBaseClassOffset(record).getQuantity() : 0;
-            return printLayoutInfo(print, li);
         }
     });
 }
