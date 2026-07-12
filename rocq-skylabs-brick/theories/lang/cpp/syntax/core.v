@@ -649,6 +649,7 @@ with Cast : Set :=
  *)
 | Cunsupported (_ : bs) (_ : type)
 .
+
 #[global] Arguments Cast : clear implicits.
 #[global] Arguments name : clear implicits.
 #[global] Arguments temp_arg : clear implicits.
@@ -657,6 +658,8 @@ with Cast : Set :=
 #[global] Arguments VarDecl : clear implicits.
 #[global] Arguments BindingDecl : clear implicits.
 #[global] Arguments Stmt : clear implicits.
+
+#[global] Bind Scope cpp_name_scope with name.
 
 (** The representation of applied template type parameters,
     e.g.
@@ -731,11 +734,17 @@ Definition is_implicit (e : Expr) : bool :=
   if e is Eimplicit _ then true else false.
 
 Definition globname := name.	(** Type names *)
+#[global] Bind Scope cpp_name_scope with globname.
 Definition obj_name := name.	(** Function, data names *)
+#[global] Bind Scope cpp_name_scope with obj_name.
 
 Definition exprtype := type.	(** An expression's non-reference type *)
+#[global] Bind Scope cpp_type_scope with exprtype.
 Definition decltype := type.	(** Types as used in declarations (≈ ValCat × exprtype) *)
+#[global] Bind Scope cpp_type_scope with decltype.
 Definition functype := type.	(** Must be [Tfunction] *)
+#[global] Bind Scope cpp_type_scope with functype.
+
 
 Definition integral_type_to_type (v : integral_type.t) : type :=
   Tnum v.(integral_type.size) v.(integral_type.signedness).
@@ -791,13 +800,6 @@ Definition f_name (t : field) : atomic_name :=
   | Nscoped _ n => n
   | _ => Nunsupported_atomic "not a field"
   end.
-#[global] Bind Scope cpp_name_scope with name.
-#[global] Bind Scope cpp_name_scope with globname.
-#[global] Bind Scope cpp_name_scope with obj_name.
-#[global] Bind Scope cpp_name_scope with classname.
-#[global] Bind Scope cpp_type_scope with exprtype.
-#[global] Bind Scope cpp_type_scope with decltype.
-#[global] Bind Scope cpp_type_scope with functype.
 
 Definition Ndependent' (t : type) : classname :=
   match t with
