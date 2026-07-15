@@ -1619,35 +1619,30 @@ public:
             FieldDecl *ThisCapture = nullptr;
             LambdaClass->getCaptureFields(CaptureFields, ThisCapture);
 
-            auto capture_type = [&](const LambdaCapture &capture) -> QualType {
-                if (capture.capturesVariable()) {
-                    auto var = capture.getCapturedVar();
-                    auto field = CaptureFields[var];
-                    always_assert(field && "uncaptured field");
-                    return field->getType();
-                } else if (capture.capturesThis()) {
-                    always_assert(ThisCapture && "this capture is null");
-                    return ThisCapture->getType();
-                } else if (capture.capturesVLAType()) {
-                    guard::ctor _{print, "Eunsupported"};
-                    print.str("variable length array capture");
-                } else {
-                    always_assert(false && "unreachable lambda capture type");
-                }
-            };
-
             auto icap = expr->capture_begin();
             auto iinit = expr->capture_init_begin();
             print.begin_list();
             for (; icap != expr->capture_end() &&
                    iinit != expr->capture_init_end();
                  ++icap, ++iinit) {
-                {
+                auto& capture = *icap;
+                if (capture.capturesVariable()) {
+                    auto var = capture.getCapturedVar();
+                    auto field = CaptureFields[var];
+                    always_assert(field && "uncaptured field");
                     guard::ctor _{print, "expr.Einitializing_type"};
-                    cprint.printQualType(print, capture_type(*icap),
-                                         loc::of(expr))
-                        << fmt::nbsp;
+                    cprint.printQualType(print, field->getType(), loc::of(expr)) << fmt::nbsp;
                     cprint.printExpr(print, *iinit, this->names);
+                } else if (capture.capturesThis()) {
+                    always_assert(ThisCapture && "this capture is null");
+                    guard::ctor _{print, "expr.Einitializing_type"};
+                    cprint.printQualType(print, ThisCapture->getType(), loc::of(expr)) << fmt::nbsp;
+                    cprint.printExpr(print, *iinit, this->names);
+                } else if (capture.capturesVLAType()) {
+                    guard::ctor _{print, "Eunsupported"};
+                    print.str("variable length array capture");
+                } else {
+                    always_assert(false && "unreachable lambda capture type");
                 }
                 print.cons();
             }
