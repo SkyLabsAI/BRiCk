@@ -1127,12 +1127,10 @@ public:
 
     void VisitCXXConstructExpr(const CXXConstructExpr *expr) {
         print.ctor("Econstructor");
-        // print.output() << expr->isElidable() << fmt::nbsp;
         cprint.printName(print, expr->getConstructor(), loc::of(expr));
         print.output() << fmt::nbsp;
         print.list(expr->arguments(),
                    [&](auto i) { cprint.printExpr(print, i, names); });
-        // print.output() << fmt::nbsp << expr->isElidable();
         done(expr);
     }
 
