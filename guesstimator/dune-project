@@ -23,5 +23,6 @@
  (depends
   (dune (>= 3.22))
   (ocaml (>= 4.08))
+  rocq-runtime
   rocq-core
   guesstimator))
