@@ -261,6 +261,7 @@ Module MTraverse.
       | Ealignof et t => Ealignof <$> sum_traverse traverseT traverseE et <*> ET (traverseT t)
       | Eoffsetof gn f t => Eoffsetof <$> traverseT gn <*> mret f <*> ET (traverseT t)
       | Econstructor n es t => Econstructor <$> traverseN n <*> traverse (T:=eta list) traverseE es <*> ET (traverseT t)
+      | Einherited_constructor n args t => Einherited_constructor <$> traverseN n <*> mret args <*> ET (traverseT t)
       | Elambda n es => Elambda <$> traverseN n <*> traverse (T:=eta list) traverseE es
 
       | Eimplicit e => Eimplicit <$> traverseE e

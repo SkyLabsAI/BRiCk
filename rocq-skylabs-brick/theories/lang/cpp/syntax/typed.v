@@ -801,6 +801,13 @@ Module decltype.
             let* _ := check_args ctor.(c_arity) (snd <$> ctor.(c_params)) tes in
             let* _ := check_constructor_result ctor t in
             mret t
+        | Einherited_constructor f vars t =>
+            let* ctor := constructor_decl f in
+            let* tes := traverse (T:=eta list) var_type vars in
+            let* _ := check_args ctor.(c_arity) (snd <$> ctor.(c_params)) tes in
+            let* _ := check_constructor_result ctor t in
+            mret t
+
         | Elambda n es =>
             let* tes := traverse (T:=eta list) of_expr es in
             (* TODO: check the arguments to the constructor / the fields *)

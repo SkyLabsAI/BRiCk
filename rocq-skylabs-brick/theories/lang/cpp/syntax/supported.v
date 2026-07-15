@@ -241,6 +241,7 @@ Section with_monad.
     | Eif2 _ e1 e2 e3 e4 t => expr e1 <+> expr e2 <+> expr e3 <+> expr e4 <+> type t
     | Elambda nm es => name nm <+> lst expr es
     | Econstructor nm es t => name nm <+> lst expr es <+> type t
+    | Einherited_constructor nm _ t => name nm <+> type t
     | Eimplicit e => expr e
     | Emember_ignore _ _ e => expr e
     | Eimplicit_init t => type t
