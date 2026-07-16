@@ -62,6 +62,34 @@ struct ValueDefault {
   T value;
 };
 
+template <typename T, int N = 4>
+struct ValueLiteralDefault {
+  T value;
+};
+
+template <typename T, int N, int M = N>
+struct ValueParamDefault {
+  T value;
+};
+
+template <typename T, int N, int M = N + 1>
+struct ValueExpressionDefault {
+  T value;
+};
+
+template <typename T, unsigned long N = sizeof(T)>
+struct SizeofTypeDefault {
+  T value;
+};
+
+template <int N, typename T = int>
+struct ValueThenTypeDefault {
+  T value;
+};
+
+template <typename T, int N = 4>
+using ValueDefaultTypeAlias = DefaultedPair<T, T>;
+
 template <typename T>
 struct TemplateTemplateDefaultArg {
   T value;
@@ -163,6 +191,24 @@ Definition member_pointer_default_chain_one_arg : type :=
      Atype (Tparam "T");
      Atype defaulted_member_pointer_type]).
 
+Definition value_literal_default_one_arg_params : list temp_param :=
+  [Ptype "T"].
+
+Definition value_literal_default_one_arg_target : type :=
+  Tnamed "ValueLiteralDefault<$T, 4>"%cpp_name.
+
+Definition value_param_default_two_arg_params : list temp_param :=
+  [Ptype "T"; Pvalue "N" Tint].
+
+Definition value_param_default_two_arg_target : type :=
+  Tnamed "ValueParamDefault<$T, `N, `N>"%cpp_name.
+
+Definition value_expression_default_two_arg_target : type :=
+  Tnamed (Ninst (Nglobal (Nid "ValueExpressionDefault"))
+    [Atype (Tparam "T");
+     Avalue (Eparam "N");
+     Avalue (Ebinop Badd (Eparam "N") (Eint 1 Tint) Tint)]).
+
 Example defaulted_pair_generated_alias_params :
   alias_template_params "DefaultedPair<$T>"%cpp_name = Some [Ptype "T"].
 Proof. vm_compute. reflexivity. Qed.
@@ -234,6 +280,50 @@ Example value_default_does_not_generate_unsupported_alias :
   lookup_alias_template "ValueDefault<$T>"%cpp_name = None.
 Proof. vm_compute. reflexivity. Qed.
 
+Example value_literal_default_does_not_generate_unsupported_alias :
+  lookup_alias_template "ValueLiteralDefault<$T>"%cpp_name = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_param_default_does_not_generate_unsupported_alias :
+  lookup_alias_template "ValueParamDefault<$T, `N>"%cpp_name = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_expression_default_does_not_generate_unsupported_alias :
+  lookup_alias_template "ValueExpressionDefault<$T, `N>"%cpp_name = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Example sizeof_type_default_does_not_generate_unsupported_alias :
+  lookup_alias_template "SizeofTypeDefault<$T>"%cpp_name = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_then_type_default_does_not_generate_partial_type_alias :
+  lookup_alias_template "ValueThenTypeDefault<`N>"%cpp_name = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_default_type_alias_does_not_generate_unsupported_alias :
+  lookup_alias_template "ValueDefaultTypeAlias<$T>"%cpp_name = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Fail Definition value_literal_default_future_alias_params :
+  alias_template_params "ValueLiteralDefault<$T>"%cpp_name =
+  Some value_literal_default_one_arg_params := eq_refl.
+
+Fail Definition value_literal_default_future_alias_target :
+  alias_template_value "ValueLiteralDefault<$T>"%cpp_name =
+  Some value_literal_default_one_arg_target := eq_refl.
+
+Fail Definition value_param_default_future_alias_params :
+  alias_template_params "ValueParamDefault<$T, `N>"%cpp_name =
+  Some value_param_default_two_arg_params := eq_refl.
+
+Fail Definition value_param_default_future_alias_target :
+  alias_template_value "ValueParamDefault<$T, `N>"%cpp_name =
+  Some value_param_default_two_arg_target := eq_refl.
+
+Fail Definition value_expression_default_future_alias_target :
+  alias_template_value "ValueExpressionDefault<$T, `N>"%cpp_name =
+  Some value_expression_default_two_arg_target := eq_refl.
+
 Example template_template_default_does_not_generate_unsupported_alias :
   lookup_alias_template template_template_default_alias_name = None.
 Proof. vm_compute. reflexivity. Qed.
@@ -261,6 +351,12 @@ Proof. vm_compute. reflexivity. Qed.
 Example same_template_base_rejects_different_leaf_name :
   same_template_base "Outer<int>::Other<bool>"%cpp_name
                      "Outer<$T>::Inner<$U>"%cpp_name = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Example same_template_base_collects_value_arguments :
+  same_template_base "ValueParamDefault<int, 3>"%cpp_name
+                     "ValueParamDefault<$T, `N>"%cpp_name =
+  Some [Atype Tint; Avalue (Eint 3 Tint)].
 Proof. vm_compute. reflexivity. Qed.
 
 Example defaulted_pair_resolves_through_generated_alias :
