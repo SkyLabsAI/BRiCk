@@ -83,8 +83,7 @@ Module decltype.
   Section with_lang.
     Record ext_tu : Set :=
     { ext_symbols : name -> option decltype
-    ; ext_types : name -> option GlobDecl
-    ; ext_values : name -> option ObjValue }.
+    ; ext_types : name -> option GlobDecl }.
 
     #[local] Definition M : Set -> Type :=
       readerT.M (ext_tu * decltype * option exprtype * list (localname * decltype)) (trace.M Error.t).
@@ -114,18 +113,22 @@ Module decltype.
       | None => throw ("failed to find global "%bs, n)
       end.
 
-    Definition value (n : name) : M ObjValue :=
-      let* osym := readerT.asks (fun '(tu, _, _, _) => tu.(ext_values) n) in
-      match osym with
-      | Some ov => mret ov
-      | None => throw ("failed to find global value "%bs, n)
+    Fixpoint map2 {T U V : Set} (f : T -> U -> M V) (ts : list T) (us : list U) : M (list V) :=
+      match ts , us with
+      | nil , nil => mret nil
+      | t :: ts , u :: us => cons <$> f t u <*> map2 f ts us
+      | _ , _ => throw ("lists with different lengths "%pstring, ts, us)
       end.
 
-    Definition constructor_decl (n : name) : M Ctor :=
-      let* ov := value n in
-      match ov with
-      | Oconstructor c => mret c
-      | _ => throw ("global value is not a constructor "%bs, n, ov)
+    (** Returns the class name *)
+    Definition is_constructor (n : name) : M name :=
+      (* TODO: this should be replaced by something that actually knows about the kind.
+         Lift the definition of <<okind>> here.
+       *)
+      match n with
+      | Nscoped n (Nctor _) => mret n
+      | Ninst (Nscoped n (Nctor _)) ts => mret n
+      | _ => throw ("not a constructor "%pstring, n)
       end.
 
     Definition type_of_constant (n : name) (id : ident) : M decltype :=
@@ -583,9 +586,13 @@ Module decltype.
             end
         end.
 
-      Definition check_constructor_result (c : Ctor) (t : type) : M unit :=
-        let* cls := constructed_class t in
-        require_eq cls c.(c_class).
+      Fixpoint check_constructor_result (c : name) (t : type) : M unit :=
+        match t with
+        | Tnamed nm => trace "constructor result"%pstring $ require_eq c nm
+        | Tarray ety _ => check_constructor_result c ety
+        | Tqualified _ ty => check_constructor_result c ty
+        | _ => throw ("not a constructor type "%pstring, t, " expected type is "%pstring, c)
+        end.
 
       Definition of_expr_body (e : Expr) : M decltype :=
         trace e $
@@ -796,16 +803,22 @@ Module decltype.
             const Tsize_t <$> guard (t = Tsize_t)
         | Eoffsetof _ _ t => mret t
         | Econstructor f es t =>
-            let* ctor := constructor_decl f in
+            let* cls := is_constructor f in
+            let* gty := type_of_global f in
+            let* ft := require_functype gty in
             let* tes := traverse (T:=eta list) of_expr es in
-            let* _ := check_args ctor.(c_arity) (snd <$> ctor.(c_params)) tes in
-            let* _ := check_constructor_result ctor t in
+            (* NOTE: constructors get an extra leading argument for <<this>> *)
+            let* _ := check_args ft.(ft_arity) ft.(ft_params) (Tptr (Tnamed cls) :: tes) in
+            let* _ := check_constructor_result cls t in
             mret t
         | Einherited_constructor f vars t =>
-            let* ctor := constructor_decl f in
+            let* cls := is_constructor f in
+            let* gty := type_of_global f in
+            let* ft := require_functype gty in
             let* tes := traverse (T:=eta list) var_type vars in
-            let* _ := check_args ctor.(c_arity) (snd <$> ctor.(c_params)) tes in
-            let* _ := check_constructor_result ctor t in
+            (* NOTE: constructors get an extra leading argument for <<this>> *)
+            let* _ := map2 (fun a b => require_eq a b) ft.(ft_params) (Tptr (Tnamed cls) :: tes) in
+            let* _ := check_constructor_result cls t in
             mret t
 
         | Elambda n es =>
@@ -1155,8 +1168,7 @@ Module decltype.
 
   Definition tu_to_ext (tu : translation_unit) : internal.ext_tu :=
     {| internal.ext_symbols nm := fmap (M:=fun t => option t) type_of_value $ tu.(symbols) !! nm
-    ; internal.ext_types nm := types tu !! nm
-    ; internal.ext_values nm := symbols tu !! nm |}.
+    ; internal.ext_types nm := types tu !! nm |}.
 
   Definition of_expr (tu : translation_unit) (e : Expr) : trace.M Error.t decltype :=
      readerT.run (internal.of_expr e) (tu_to_ext tu, Tvoid, None, []).
