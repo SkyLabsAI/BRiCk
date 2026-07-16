@@ -33,6 +33,30 @@ struct PointerChain {
   V third;
 };
 
+template <typename T, typename U = T, typename V = U[2]>
+struct ArrayDefaultChain {
+  T first;
+  U second;
+  V third;
+};
+
+template <typename T, typename U = T, typename V = U ( * )(U)>
+struct FunctionPointerDefaultChain {
+  T first;
+  U second;
+  V third;
+};
+
+struct MemberHost {
+};
+
+template <typename T, typename U = T, typename V = U MemberHost::*>
+struct MemberPointerDefaultChain {
+  T first;
+  U second;
+  V third;
+};
+
 template <typename T, int N = 0>
 struct ValueDefault {
   T value;
@@ -118,6 +142,27 @@ Definition alias_template_value (n : name) : option type :=
 Definition template_template_default_alias_name : name :=
   Ninst (Nglobal (Nid "TemplateTemplateDefault")) [].
 
+Definition same_template_base :=
+  translation_unit.template_alias.same_template_base.
+
+Definition defaulted_function_pointer_type : type :=
+  Tptr (core.Tfunction (FunctionType (Tparam "T") [Tparam "T"])).
+
+Definition defaulted_member_pointer_type : type :=
+  Tmember_pointer (Tnamed "MemberHost"%cpp_name) (Tparam "T").
+
+Definition function_pointer_default_chain_one_arg : type :=
+  Tnamed (Ninst (Nglobal (Nid "FunctionPointerDefaultChain"))
+    [Atype (Tparam "T");
+     Atype (Tparam "T");
+     Atype defaulted_function_pointer_type]).
+
+Definition member_pointer_default_chain_one_arg : type :=
+  Tnamed (Ninst (Nglobal (Nid "MemberPointerDefaultChain"))
+    [Atype (Tparam "T");
+     Atype (Tparam "T");
+     Atype defaulted_member_pointer_type]).
+
 Example defaulted_pair_generated_alias_params :
   alias_template_params "DefaultedPair<$T>"%cpp_name = Some [Ptype "T"].
 Proof. vm_compute. reflexivity. Qed.
@@ -160,6 +205,21 @@ Example pointer_chain_generated_alias_target_substitutes_inside_pointer :
   Some "PointerChain<$T, $T, $T*>"%cpp_type.
 Proof. vm_compute. reflexivity. Qed.
 
+Example array_default_chain_generated_alias_target_substitutes_inside_array :
+  alias_template_value "ArrayDefaultChain<$T>"%cpp_name =
+  Some "ArrayDefaultChain<$T, $T, $T[2]>"%cpp_type.
+Proof. vm_compute. reflexivity. Qed.
+
+Example function_pointer_default_chain_generated_alias_target_substitutes_inside_function :
+  alias_template_value "FunctionPointerDefaultChain<$T>"%cpp_name =
+  Some function_pointer_default_chain_one_arg.
+Proof. vm_compute. reflexivity. Qed.
+
+Example member_pointer_default_chain_generated_alias_target_substitutes_inside_member_pointer :
+  alias_template_value "MemberPointerDefaultChain<$T>"%cpp_name =
+  Some member_pointer_default_chain_one_arg.
+Proof. vm_compute. reflexivity. Qed.
+
 Example alias_default_chain_generated_alias_target_expands_alias_default :
   alias_template_value "AliasDefaultChain<$T>"%cpp_name =
   Some "AliasDefaultChain<$T, $T, DefaultedPair<$T, $T>>"%cpp_type.
@@ -180,6 +240,27 @@ Proof. vm_compute. reflexivity. Qed.
 
 Example value_outer_inner_does_not_generate_unsupported_enclosing_alias :
   lookup_alias_template "ValueOuter<`N>::Inner<$T>"%cpp_name = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Example same_template_base_nested_positive :
+  same_template_base "Outer<int>::Inner<bool>"%cpp_name
+                     "Outer<$T>::Inner<$U>"%cpp_name =
+  Some [Atype Tint; Atype Tbool].
+Proof. vm_compute. reflexivity. Qed.
+
+Example same_template_base_rejects_different_outer_arity :
+  same_template_base
+    (Ninst
+      (Nscoped
+        (Ninst (Nglobal (Nid "Outer")) [Atype Tint; Atype Tbool])
+        (Nid "Inner"))
+      [])
+    "Outer<$T>::Inner<$U>"%cpp_name = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Example same_template_base_rejects_different_leaf_name :
+  same_template_base "Outer<int>::Other<bool>"%cpp_name
+                     "Outer<$T>::Inner<$U>"%cpp_name = None.
 Proof. vm_compute. reflexivity. Qed.
 
 Example defaulted_pair_resolves_through_generated_alias :
@@ -224,6 +305,20 @@ Proof. vm_compute. reflexivity. Qed.
 
 Example pointer_chain_template_type_resolves_compound_default_substitution :
   RESOLVE_TYPE "PointerChain<$T>" "PointerChain<$T, $T, $T*>".
+Proof. vm_compute. reflexivity. Qed.
+
+Example array_default_chain_template_type_resolves_compound_default_substitution :
+  RESOLVE_TYPE "ArrayDefaultChain<$T>" "ArrayDefaultChain<$T, $T, $T[2]>".
+Proof. vm_compute. reflexivity. Qed.
+
+Example function_pointer_default_chain_template_type_resolves_compound_default_substitution :
+  trace.runO (dealias.resolveTN source "FunctionPointerDefaultChain<$T>"%cpp_name) =
+  Some function_pointer_default_chain_one_arg.
+Proof. vm_compute. reflexivity. Qed.
+
+Example member_pointer_default_chain_template_type_resolves_compound_default_substitution :
+  trace.runO (dealias.resolveTN source "MemberPointerDefaultChain<$T>"%cpp_name) =
+  Some member_pointer_default_chain_one_arg.
 Proof. vm_compute. reflexivity. Qed.
 
 Example alias_default_chain_resolves_alias_default :

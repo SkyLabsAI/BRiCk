@@ -413,6 +413,21 @@ printDefaultAliasTarget(CoqPrinter &print, const NamedDecl &decl,
                 return;
             }
 
+            if (auto *subst = dyn_cast<SubstTemplateTypeParmType>(type)) {
+                print_type(subst->getReplacementType(), limit);
+                return;
+            }
+
+            if (auto *paren = dyn_cast<ParenType>(type)) {
+                print_type(paren->getInnerType(), limit);
+                return;
+            }
+
+            if (auto *attr = dyn_cast<AttributedType>(type)) {
+                print_type(attr->getModifiedType(), limit);
+                return;
+            }
+
             if (auto *type_param = type->getAs<TemplateTypeParmType>()) {
                 if (auto index = find_param(type_param->getDecl(), limit)) {
                     auto arg = args[*index];
@@ -452,6 +467,14 @@ printDefaultAliasTarget(CoqPrinter &print, const NamedDecl &decl,
                 }
             }
 
+            if (auto *array = dyn_cast<ConstantArrayType>(type)) {
+                guard::ctor _{print, "Tarray", false};
+                print_type(array->getElementType(), limit);
+                print.output() << fmt::nbsp
+                               << array->getSize().getLimitedValue();
+                return;
+            }
+
             if (auto *ptr = dyn_cast<PointerType>(type)) {
                 guard::ctor _{print, "Tptr", false};
                 print_type(ptr->getPointeeType(), limit);
@@ -467,6 +490,51 @@ printDefaultAliasTarget(CoqPrinter &print, const NamedDecl &decl,
             if (auto *ref = dyn_cast<RValueReferenceType>(type)) {
                 guard::ctor _{print, "Trv_ref", false};
                 print_type(ref->getPointeeType(), limit);
+                return;
+            }
+
+            if (auto *func = dyn_cast<FunctionProtoType>(type)) {
+                guard::ctor _{print, "Tfunction"};
+                print.output() << (print.templates() ? "Mtype" : "type")
+                               << fmt::nbsp;
+                cprint.printCallingConv(print, func->getCallConv(),
+                                        loc::of(type))
+                    << fmt::nbsp;
+                cprint.printVariadic(print, func->isVariadic()) << fmt::nbsp;
+                print_type(func->getReturnType(), limit) << fmt::nbsp;
+                print.list(func->param_types(), [&](QualType param_type) {
+                    print_type(param_type, limit);
+                });
+                return;
+            }
+
+            if (auto *member_ptr = dyn_cast<MemberPointerType>(type)) {
+                guard::ctor _{print, "Tmember_pointer", false};
+#if CLANG_VERSION_MAJOR >= 22
+                {
+                    NestedNameSpecifier NNS = member_ptr->getQualifier();
+                    if (NNS && NNS.getKind() == NestedNameSpecifier::Kind::Type) {
+                        cprint.printType(print, NNS.getAsType(), loc::of(type));
+                    } else {
+                        cprint.printUnsupportedName(
+                            print, "unresolved class type in MemberPointerType");
+                    }
+                }
+#elif CLANG_VERSION_MAJOR >= 21
+                {
+                    const NestedNameSpecifier *NNS = member_ptr->getQualifier();
+                    if (const Type *class_type = NNS->getAsType()) {
+                        cprint.printType(print, class_type, loc::of(type));
+                    } else {
+                        cprint.printUnsupportedName(
+                            print, "unresolved class type in MemberPointerType");
+                    }
+                }
+#else
+                cprint.printType(print, member_ptr->getClass(), loc::of(type));
+#endif
+                print.output() << fmt::nbsp;
+                print_type(member_ptr->getPointeeType(), limit);
                 return;
             }
 
@@ -538,6 +606,29 @@ static bool collectTemplateParamsForDecl(const Decl &decl,
     return true;
 }
 
+static bool hasDuplicateTemplateParamNames(
+    ArrayRef<const NamedDecl *> first, ArrayRef<const NamedDecl *> second) {
+    std::vector<std::string> names;
+    names.reserve(first.size() + second.size());
+
+    auto add_name = [&](const NamedDecl *param) {
+        auto name = getTemplateParamName(*param);
+        if (llvm::is_contained(names, name))
+            return false;
+        names.push_back(std::move(name));
+        return true;
+    };
+
+    for (auto *param : first)
+        if (!add_name(param))
+            return true;
+    for (auto *param : second)
+        if (!add_name(param))
+            return true;
+
+    return false;
+}
+
 } // namespace
 
 void printDefaultTemplateAliases(const Decl *decl, CoqPrinter &print,
@@ -595,6 +686,8 @@ void printDefaultTemplateAliases(const Decl *decl, CoqPrinter &print,
                                               enclosing_params))
                 return;
     }
+    if (hasDuplicateTemplateParamNames(enclosing_params, prefix_params))
+        return;
 
     for (unsigned keep = first_default; keep < params.size(); ++keep) {
         {
