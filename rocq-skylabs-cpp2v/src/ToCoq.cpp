@@ -343,6 +343,17 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
                << "#[local] Open Scope pstring_scope." << fmt::line;
     };
 
+    auto check_types = [&](Formatter &fmt, const char* name) {
+      if (!interactive_.has_value()) {
+        fmt << fmt::line << "Require skylabs.lang.cpp.syntax.typed.";
+      }
+      fmt << fmt::line
+          << "Goal typed.decltype.check_tu "
+          << interactive_.value_or("source")
+          << " = trace.Success tt. Proof. vm_compute; reflexivity. Abort."
+          << fmt::line;
+    };
+
     auto static_and_templates = [&](Formatter &fmt) {
         /* This block generates the following setup:
 
@@ -424,12 +435,7 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
         }
 
         if (check_types_) {
-            fmt << fmt::line << "Require skylabs.lang.cpp.syntax.typed."
-                << fmt::line
-                << "Succeed Example well_typed : typed.decltype.check_tu "
-                << interactive_.value_or("source")
-                << " = trace.Success tt := ltac:(vm_compute; reflexivity)."
-                << fmt::line;
+            check_types(fmt, interactive_.value_or("source").c_str());
         }
     };
 
@@ -472,13 +478,7 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
             }
 
             if (check_types_) {
-                print.output()
-                    << fmt::line << "Require skylabs.lang.cpp.syntax.typed."
-                    << fmt::line
-                    << "Succeed Example well_typed : typed.decltype.check_tu "
-                    << interactive_.value_or("source")
-                    << " = trace.Success tt := ltac:(vm_compute; reflexivity)."
-                    << fmt::line;
+                check_types(fmt, interactive_.value_or("source").c_str());
             }
         };
 
