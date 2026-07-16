@@ -68,6 +68,13 @@ union DefaultedUnion {
 template <typename T, typename U = T>
 using DefaultedTypeAlias = DefaultedPair<T, U>;
 
+template <typename T, typename U = T, typename V = DefaultedTypeAlias<U>>
+struct AliasDefaultChain {
+  T first;
+  U second;
+  V third;
+};
+
 template <typename T, typename U = bool>
 using ExplicitAlias = DefaultedPair<U, T>;
 
@@ -153,6 +160,16 @@ Example pointer_chain_generated_alias_target_substitutes_inside_pointer :
   Some "PointerChain<$T, $T, $T*>"%cpp_type.
 Proof. vm_compute. reflexivity. Qed.
 
+Example alias_default_chain_generated_alias_target_expands_alias_default :
+  alias_template_value "AliasDefaultChain<$T>"%cpp_name =
+  Some "AliasDefaultChain<$T, $T, DefaultedPair<$T, $T>>"%cpp_type.
+Proof. vm_compute. reflexivity. Qed.
+
+Example alias_default_chain_two_arg_generated_alias_target_expands_alias_default :
+  alias_template_value "AliasDefaultChain<$T, $U>"%cpp_name =
+  Some "AliasDefaultChain<$T, $U, DefaultedPair<$U, $U>>"%cpp_type.
+Proof. vm_compute. reflexivity. Qed.
+
 Example value_default_does_not_generate_unsupported_alias :
   lookup_alias_template "ValueDefault<$T>"%cpp_name = None.
 Proof. vm_compute. reflexivity. Qed.
@@ -207,6 +224,21 @@ Proof. vm_compute. reflexivity. Qed.
 
 Example pointer_chain_template_type_resolves_compound_default_substitution :
   RESOLVE_TYPE "PointerChain<$T>" "PointerChain<$T, $T, $T*>".
+Proof. vm_compute. reflexivity. Qed.
+
+Example alias_default_chain_resolves_alias_default :
+  RESOLVE_TYPE "AliasDefaultChain<int>"
+               "AliasDefaultChain<int, int, DefaultedPair<int, int>>".
+Proof. vm_compute. reflexivity. Qed.
+
+Example alias_default_chain_template_type_resolves_alias_default :
+  RESOLVE_TYPE "AliasDefaultChain<$T>"
+               "AliasDefaultChain<$T, $T, DefaultedPair<$T, $T>>".
+Proof. vm_compute. reflexivity. Qed.
+
+Example alias_default_chain_two_arg_template_type_resolves_alias_default :
+  RESOLVE_TYPE "AliasDefaultChain<$T, $U>"
+               "AliasDefaultChain<$T, $U, DefaultedPair<$U, $U>>".
 Proof. vm_compute. reflexivity. Qed.
 
 Example forward_default_resolves_from_declaration :

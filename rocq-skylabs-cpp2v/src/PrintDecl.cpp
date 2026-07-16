@@ -425,6 +425,33 @@ printDefaultAliasTarget(CoqPrinter &print, const NamedDecl &decl,
                 }
             }
 
+            if (auto *specialization =
+                    dyn_cast<TemplateSpecializationType>(type)) {
+                if (specialization->isTypeAlias()) {
+                    print_type(specialization->getAliasedType(), limit);
+                    return;
+                }
+
+                auto *templ =
+                    specialization->getTemplateName().getAsTemplateDecl();
+                if (templ) {
+                    guard::ctor _{print, "Tnamed", false};
+                    guard::ctor __{print, "Ninst", false};
+                    cprint.printName(print, *templ) << fmt::nbsp;
+                    guard::list ___{print};
+                    for (auto arg : specialization->template_arguments()) {
+                        if (arg.getKind() == TemplateArgument::Type) {
+                            guard::ctor _{print, "Atype", false};
+                            print_type(arg.getAsType(), limit);
+                        } else {
+                            cprint.printTemplateArg(print, arg, loc::of(type));
+                        }
+                        print.output() << fmt::cons;
+                    }
+                    return;
+                }
+            }
+
             if (auto *ptr = dyn_cast<PointerType>(type)) {
                 guard::ctor _{print, "Tptr", false};
                 print_type(ptr->getPointeeType(), limit);
