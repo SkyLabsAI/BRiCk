@@ -475,14 +475,18 @@ Module template_alias.
 
   (** Match a template alias key against an actual name, collecting arguments
       from nested instantiations such as [Outer<int>::Inner<bool>] against
-      [Outer<$T>::Inner<$U>]. *)
+      [Outer<$T>::Inner<$U>]. Each instantiation level must have the same arity
+      so arguments from different scopes cannot be accidentally flattened
+      together. *)
   Fixpoint same_template_base (actual candidate : name) : option (list temp_arg) :=
     match actual, candidate with
-    | Ninst actual_base args, Ninst candidate_base _ =>
-        match same_template_base actual_base candidate_base with
-        | Some args' => Some (args' ++ args)
-        | None => None
-        end
+    | Ninst actual_base args, Ninst candidate_base candidate_args =>
+        if bool_decide (length args = length candidate_args) then
+          match same_template_base actual_base candidate_base with
+          | Some args' => Some (args' ++ args)
+          | None => None
+          end
+        else None
     | Nscoped actual_base actual_name, Nscoped candidate_base candidate_name =>
         if bool_decide (actual_name = candidate_name) then
           same_template_base actual_base candidate_base
