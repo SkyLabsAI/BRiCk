@@ -19,6 +19,18 @@ struct DefaultedChain {
   V third;
 };
 
+template <typename T, typename U = T>
+union DefaultedUnion {
+  T first;
+  U second;
+};
+
+template <typename T, typename U = T>
+using DefaultedTypeAlias = DefaultedPair<T, U>;
+
+template <typename T, typename U = bool>
+using ExplicitAlias = DefaultedPair<U, T>;
+
 namespace DefaultNS {
   template <typename T, typename U = T>
   struct ScopedDefault {
@@ -58,6 +70,34 @@ Proof. vm_compute. reflexivity. Qed.
 
 Example defaulted_chain_two_arg_template_type_resolves_through_generated_alias :
   RESOLVE_TYPE "DefaultedChain<$T, $U>" "DefaultedChain<$T, $U, $U>".
+Proof. vm_compute. reflexivity. Qed.
+
+Example defaulted_union_resolves_through_generated_alias :
+  RESOLVE_TYPE "DefaultedUnion<int>" "DefaultedUnion<int, int>".
+Proof. vm_compute. reflexivity. Qed.
+
+Example defaulted_union_template_type_resolves_through_generated_alias :
+  RESOLVE_TYPE "DefaultedUnion<$T>" "DefaultedUnion<$T, $T>".
+Proof. vm_compute. reflexivity. Qed.
+
+Example defaulted_type_alias_resolves_through_generated_alias :
+  RESOLVE_TYPE "DefaultedTypeAlias<int>" "DefaultedPair<int, int>".
+Proof. vm_compute. reflexivity. Qed.
+
+Example defaulted_type_alias_template_type_resolves_through_generated_alias :
+  RESOLVE_TYPE "DefaultedTypeAlias<$T>" "DefaultedPair<$T, $T>".
+Proof. vm_compute. reflexivity. Qed.
+
+Example explicit_alias_preserves_its_body_over_default_target :
+  RESOLVE_TYPE "ExplicitAlias<int, char>" "DefaultedPair<char, int>".
+Proof. vm_compute. reflexivity. Qed.
+
+Example explicit_alias_generated_default_resolves_via_explicit_body :
+  RESOLVE_TYPE "ExplicitAlias<int>" "DefaultedPair<bool, int>".
+Proof. vm_compute. reflexivity. Qed.
+
+Example explicit_alias_template_type_resolves_via_explicit_body :
+  RESOLVE_TYPE "ExplicitAlias<$T>" "DefaultedPair<bool, $T>".
 Proof. vm_compute. reflexivity. Qed.
 
 Example scoped_default_resolves_through_generated_alias :
