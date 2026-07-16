@@ -556,14 +556,8 @@ Module decltype.
             let* _ := require_eq (Tenum n) ct in
             mret $ Tenum n
         | Eglobal nm ty =>
-            (* TODO NAMES TYPING:
-               1. fields are not included, these are necessary for <<sizeof()>> (see cxx/bitvector)
-             *)
-            (*
             let* from_env := type_of_global nm in
-            trace ("from_env = ", from_env))%bs $
             let* _ := require_eq from_env (normalize_type ty) in
-            *)
             mret $ tref QM (normalize_type ty)
         | Eglobal_member nm ty =>
             match nm with
