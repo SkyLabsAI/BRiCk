@@ -87,6 +87,11 @@ struct ValueThenTypeDefault {
   T value;
 };
 
+template <int N = 2, int M = N, typename T = int>
+struct ValueLiteralPriorTypeMix {
+  T value;
+};
+
 template <typename T, int N = 4>
 using ValueDefaultTypeAlias = DefaultedPair<T, T>;
 
@@ -191,6 +196,12 @@ Definition member_pointer_default_chain_one_arg : type :=
      Atype (Tparam "T");
      Atype defaulted_member_pointer_type]).
 
+Definition value_default_one_arg_params : list temp_param :=
+  [Ptype "T"].
+
+Definition value_default_one_arg_target : type :=
+  Tnamed "ValueDefault<$T, 0>"%cpp_name.
+
 Definition value_literal_default_one_arg_params : list temp_param :=
   [Ptype "T"].
 
@@ -202,6 +213,36 @@ Definition value_param_default_two_arg_params : list temp_param :=
 
 Definition value_param_default_two_arg_target : type :=
   Tnamed "ValueParamDefault<$T, `N, `N>"%cpp_name.
+
+Definition value_then_type_default_one_arg_params : list temp_param :=
+  [Pvalue "N" Tint].
+
+Definition value_then_type_default_one_arg_target : type :=
+  Tnamed "ValueThenTypeDefault<`N, int>"%cpp_name.
+
+Definition value_default_type_alias_one_arg_params : list temp_param :=
+  [Ptype "T"].
+
+Definition value_default_type_alias_one_arg_target : type :=
+  Tnamed "ValueDefaultTypeAlias<$T, 4>"%cpp_name.
+
+Definition value_literal_prior_type_mix_zero_arg_name : name :=
+  Ninst (Nglobal (Nid "ValueLiteralPriorTypeMix")) [].
+
+Definition value_literal_prior_type_mix_zero_arg_target : type :=
+  Tnamed "ValueLiteralPriorTypeMix<2, 2, int>"%cpp_name.
+
+Definition value_literal_prior_type_mix_one_arg_params : list temp_param :=
+  [Pvalue "N" Tint].
+
+Definition value_literal_prior_type_mix_one_arg_target : type :=
+  Tnamed "ValueLiteralPriorTypeMix<`N, `N, int>"%cpp_name.
+
+Definition value_literal_prior_type_mix_two_arg_params : list temp_param :=
+  [Pvalue "N" Tint; Pvalue "M" Tint].
+
+Definition value_literal_prior_type_mix_two_arg_target : type :=
+  Tnamed "ValueLiteralPriorTypeMix<`N, `M, int>"%cpp_name.
 
 Definition value_expression_default_two_arg_target : type :=
   Tnamed (Ninst (Nglobal (Nid "ValueExpressionDefault"))
@@ -276,16 +317,34 @@ Example alias_default_chain_two_arg_generated_alias_target_expands_alias_default
   Some "AliasDefaultChain<$T, $U, DefaultedPair<$U, $U>>"%cpp_type.
 Proof. vm_compute. reflexivity. Qed.
 
-Example value_default_does_not_generate_unsupported_alias :
-  lookup_alias_template "ValueDefault<$T>"%cpp_name = None.
+Example value_default_generated_alias_params :
+  alias_template_params "ValueDefault<$T>"%cpp_name =
+  Some value_default_one_arg_params.
 Proof. vm_compute. reflexivity. Qed.
 
-Example value_literal_default_does_not_generate_unsupported_alias :
-  lookup_alias_template "ValueLiteralDefault<$T>"%cpp_name = None.
+Example value_default_generated_alias_target :
+  alias_template_value "ValueDefault<$T>"%cpp_name =
+  Some value_default_one_arg_target.
 Proof. vm_compute. reflexivity. Qed.
 
-Example value_param_default_does_not_generate_unsupported_alias :
-  lookup_alias_template "ValueParamDefault<$T, `N>"%cpp_name = None.
+Example value_literal_default_generated_alias_params :
+  alias_template_params "ValueLiteralDefault<$T>"%cpp_name =
+  Some value_literal_default_one_arg_params.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_literal_default_generated_alias_target :
+  alias_template_value "ValueLiteralDefault<$T>"%cpp_name =
+  Some value_literal_default_one_arg_target.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_param_default_generated_alias_params :
+  alias_template_params "ValueParamDefault<$T, `N>"%cpp_name =
+  Some value_param_default_two_arg_params.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_param_default_generated_alias_target :
+  alias_template_value "ValueParamDefault<$T, `N>"%cpp_name =
+  Some value_param_default_two_arg_target.
 Proof. vm_compute. reflexivity. Qed.
 
 Example value_expression_default_does_not_generate_unsupported_alias :
@@ -296,29 +355,55 @@ Example sizeof_type_default_does_not_generate_unsupported_alias :
   lookup_alias_template "SizeofTypeDefault<$T>"%cpp_name = None.
 Proof. vm_compute. reflexivity. Qed.
 
-Example value_then_type_default_does_not_generate_partial_type_alias :
-  lookup_alias_template "ValueThenTypeDefault<`N>"%cpp_name = None.
+Example value_then_type_default_generated_alias_params :
+  alias_template_params "ValueThenTypeDefault<`N>"%cpp_name =
+  Some value_then_type_default_one_arg_params.
 Proof. vm_compute. reflexivity. Qed.
 
-Example value_default_type_alias_does_not_generate_unsupported_alias :
-  lookup_alias_template "ValueDefaultTypeAlias<$T>"%cpp_name = None.
+Example value_then_type_default_generated_alias_target :
+  alias_template_value "ValueThenTypeDefault<`N>"%cpp_name =
+  Some value_then_type_default_one_arg_target.
 Proof. vm_compute. reflexivity. Qed.
 
-Fail Definition value_literal_default_future_alias_params :
-  alias_template_params "ValueLiteralDefault<$T>"%cpp_name =
-  Some value_literal_default_one_arg_params := eq_refl.
+Example value_default_type_alias_generated_alias_params :
+  alias_template_params "ValueDefaultTypeAlias<$T>"%cpp_name =
+  Some value_default_type_alias_one_arg_params.
+Proof. vm_compute. reflexivity. Qed.
 
-Fail Definition value_literal_default_future_alias_target :
-  alias_template_value "ValueLiteralDefault<$T>"%cpp_name =
-  Some value_literal_default_one_arg_target := eq_refl.
+Example value_default_type_alias_generated_alias_target :
+  alias_template_value "ValueDefaultTypeAlias<$T>"%cpp_name =
+  Some value_default_type_alias_one_arg_target.
+Proof. vm_compute. reflexivity. Qed.
 
-Fail Definition value_param_default_future_alias_params :
-  alias_template_params "ValueParamDefault<$T, `N>"%cpp_name =
-  Some value_param_default_two_arg_params := eq_refl.
+Example value_literal_prior_type_mix_zero_arg_generated_alias_params :
+  alias_template_params value_literal_prior_type_mix_zero_arg_name =
+  Some [].
+Proof. vm_compute. reflexivity. Qed.
 
-Fail Definition value_param_default_future_alias_target :
-  alias_template_value "ValueParamDefault<$T, `N>"%cpp_name =
-  Some value_param_default_two_arg_target := eq_refl.
+Example value_literal_prior_type_mix_zero_arg_generated_alias_target :
+  alias_template_value value_literal_prior_type_mix_zero_arg_name =
+  Some value_literal_prior_type_mix_zero_arg_target.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_literal_prior_type_mix_one_arg_generated_alias_params :
+  alias_template_params "ValueLiteralPriorTypeMix<`N>"%cpp_name =
+  Some value_literal_prior_type_mix_one_arg_params.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_literal_prior_type_mix_one_arg_generated_alias_target :
+  alias_template_value "ValueLiteralPriorTypeMix<`N>"%cpp_name =
+  Some value_literal_prior_type_mix_one_arg_target.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_literal_prior_type_mix_two_arg_generated_alias_params :
+  alias_template_params "ValueLiteralPriorTypeMix<`N, `M>"%cpp_name =
+  Some value_literal_prior_type_mix_two_arg_params.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_literal_prior_type_mix_two_arg_generated_alias_target :
+  alias_template_value "ValueLiteralPriorTypeMix<`N, `M>"%cpp_name =
+  Some value_literal_prior_type_mix_two_arg_target.
+Proof. vm_compute. reflexivity. Qed.
 
 Fail Definition value_expression_default_future_alias_target :
   alias_template_value "ValueExpressionDefault<$T, `N>"%cpp_name =
@@ -328,8 +413,14 @@ Example template_template_default_does_not_generate_unsupported_alias :
   lookup_alias_template template_template_default_alias_name = None.
 Proof. vm_compute. reflexivity. Qed.
 
-Example value_outer_inner_does_not_generate_unsupported_enclosing_alias :
-  lookup_alias_template "ValueOuter<`N>::Inner<$T>"%cpp_name = None.
+Example value_outer_inner_generated_alias_params_include_outer_value_param :
+  alias_template_params "ValueOuter<`N>::Inner<$T>"%cpp_name =
+  Some [Pvalue "N" Tint; Ptype "T"].
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_outer_inner_generated_alias_target :
+  alias_template_value "ValueOuter<`N>::Inner<$T>"%cpp_name =
+  Some "ValueOuter<`N>::Inner<$T, $T>"%cpp_type.
 Proof. vm_compute. reflexivity. Qed.
 
 Example same_template_base_nested_positive :
@@ -430,6 +521,45 @@ Proof. vm_compute. reflexivity. Qed.
 Example alias_default_chain_two_arg_template_type_resolves_alias_default :
   RESOLVE_TYPE "AliasDefaultChain<$T, $U>"
                "AliasDefaultChain<$T, $U, DefaultedPair<$U, $U>>".
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_default_resolves_literal_non_type_default :
+  trace.runO (dealias.resolveTN source "ValueDefault<$T>"%cpp_name) =
+  Some value_default_one_arg_target.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_literal_default_resolves_literal_non_type_default :
+  trace.runO (dealias.resolveTN source "ValueLiteralDefault<$T>"%cpp_name) =
+  Some value_literal_default_one_arg_target.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_param_default_resolves_prior_parameter_default :
+  trace.runO (dealias.resolveTN source "ValueParamDefault<$T, `N>"%cpp_name) =
+  Some value_param_default_two_arg_target.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_then_type_default_resolves_mixed_value_and_type_default :
+  trace.runO (dealias.resolveTN source "ValueThenTypeDefault<`N>"%cpp_name) =
+  Some value_then_type_default_one_arg_target.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_default_type_alias_resolves_literal_default_via_explicit_body :
+  RESOLVE_TYPE "ValueDefaultTypeAlias<$T>" "DefaultedPair<$T, $T>".
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_literal_prior_type_mix_resolves_recursive_defaults :
+  trace.runO (dealias.resolveTN source value_literal_prior_type_mix_zero_arg_name) =
+  Some value_literal_prior_type_mix_zero_arg_target.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_literal_prior_type_mix_one_arg_resolves_prior_parameter_default :
+  trace.runO (dealias.resolveTN source "ValueLiteralPriorTypeMix<`N>"%cpp_name) =
+  Some value_literal_prior_type_mix_one_arg_target.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_literal_prior_type_mix_two_arg_resolves_type_default :
+  trace.runO (dealias.resolveTN source "ValueLiteralPriorTypeMix<`N, `M>"%cpp_name) =
+  Some value_literal_prior_type_mix_two_arg_target.
 Proof. vm_compute. reflexivity. Qed.
 
 Example forward_default_resolves_from_declaration :
