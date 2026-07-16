@@ -88,6 +88,9 @@ struct OpaqueNames;
 
 bool is_dependent(const clang::Expr *);
 
+void printDefaultTemplateAliases(const clang::Decl *, CoqPrinter &,
+                                 class ClangPrinter &);
+
 class ClangPrinter {
 private:
     const clang::CompilerInstance *compiler_;
