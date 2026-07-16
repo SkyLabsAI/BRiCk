@@ -282,6 +282,12 @@ printTemplateParamTypeArg(CoqPrinter &print, const NamedDecl *param,
     return print.str(getTemplateParamName(*param));
 }
 
+static fmt::Formatter &printTemplateTypeParam(CoqPrinter &print,
+                                              const NamedDecl *param) {
+    guard::ctor _{print, "Ptype", false};
+    return print.str(getTemplateParamName(*param));
+}
+
 static fmt::Formatter &printTemplateNameWithArgs(
     CoqPrinter &print, const NamedDecl &decl, ClangPrinter &cprint,
     llvm::function_ref<void()> print_args) {
@@ -293,7 +299,7 @@ static fmt::Formatter &printTemplateNameWithArgs(
 
 static fmt::Formatter &
 printDefaultAliasKey(CoqPrinter &print, const NamedDecl &decl,
-                     ArrayRef<NamedDecl *> params, unsigned keep,
+                     ArrayRef<const NamedDecl *> params, unsigned keep,
                      ClangPrinter &cprint, loc::loc loc) {
     return printTemplateNameWithArgs(print, decl, cprint, [&]() {
         print.list(params.take_front(keep), [&](const NamedDecl *param) {
@@ -304,7 +310,7 @@ printDefaultAliasKey(CoqPrinter &print, const NamedDecl &decl,
 
 static fmt::Formatter &
 printDefaultAliasTarget(CoqPrinter &print, const NamedDecl &decl,
-                        ArrayRef<NamedDecl *> params, unsigned keep,
+                        ArrayRef<const NamedDecl *> params, unsigned keep,
                         ClangPrinter &cprint, loc::loc loc) {
     struct Argument {
         std::optional<unsigned> param_ref;
@@ -355,20 +361,30 @@ printDefaultAliasTarget(CoqPrinter &print, const NamedDecl &decl,
 
 static void printDefaultTemplateAliases(const Decl *decl, CoqPrinter &print,
                                         ClangPrinter &cprint) {
-    auto *record = dyn_cast_or_null<CXXRecordDecl>(decl);
-    if (!record)
+    const NamedDecl *templated_decl = nullptr;
+    const TemplateParameterList *template_params = nullptr;
+
+    if (auto *record = dyn_cast_or_null<CXXRecordDecl>(decl)) {
+        if (auto *templ = record->getDescribedClassTemplate()) {
+            templated_decl = record;
+            template_params = templ->getTemplateParameters();
+        }
+    } else if (auto *alias = dyn_cast_or_null<TypeAliasDecl>(decl)) {
+        if (auto *templ = alias->getDescribedAliasTemplate()) {
+            templated_decl = alias;
+            template_params = templ->getTemplateParameters();
+        }
+    }
+
+    if (!templated_decl || !template_params)
         return;
 
-    auto *templ = record->getDescribedClassTemplate();
-    if (!templ)
-        return;
-
-    auto params = templ->getTemplateParameters()->asArray();
+    auto params = template_params->asArray();
     if (params.empty())
         return;
 
     unsigned first_default = params.size();
-    std::vector<NamedDecl *> prefix_params;
+    std::vector<const NamedDecl *> prefix_params;
     prefix_params.reserve(params.size());
 
     for (unsigned i = 0; i < params.size(); ++i) {
@@ -387,19 +403,21 @@ static void printDefaultTemplateAliases(const Decl *decl, CoqPrinter &print,
     if (first_default == params.size())
         return;
 
-    auto cp = cprint.withDecl(record);
-    auto loc = loc::of(record);
+    auto cp = cprint.withDecl(templated_decl);
+    auto loc = loc::of(templated_decl);
     for (unsigned keep = first_default; keep < params.size(); ++keep) {
         {
             guard::ctor _{print, "Dtemplated_typedef"};
-            cp.printTemplateParams(print,
-                                   ArrayRef<NamedDecl *>(prefix_params)
-                                       .take_front(keep),
-                                   loc)
+            print.list(ArrayRef<const NamedDecl *>(prefix_params)
+                           .take_front(keep),
+                       [&](const NamedDecl *param) {
+                           printTemplateTypeParam(print, param);
+                       })
                 << fmt::nbsp;
-            printDefaultAliasKey(print, *record, params, keep, cp, loc)
+            printDefaultAliasKey(print, *templated_decl, params, keep, cp, loc)
                 << fmt::nbsp;
-            printDefaultAliasTarget(print, *record, params, keep, cp, loc);
+            printDefaultAliasTarget(print, *templated_decl, params, keep, cp,
+                                    loc);
         }
         print.cons();
     }
