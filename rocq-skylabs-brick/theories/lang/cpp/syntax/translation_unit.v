@@ -473,11 +473,22 @@ Module template_alias.
     | Texprtype e => Texprtype (subst_expr xs e)
     end.
 
-  Definition same_template_base (actual candidate : name) : option (list temp_arg) :=
+  (** Match a template alias key against an actual name, collecting arguments
+      from nested instantiations such as [Outer<int>::Inner<bool>] against
+      [Outer<$T>::Inner<$U>]. *)
+  Fixpoint same_template_base (actual candidate : name) : option (list temp_arg) :=
     match actual, candidate with
     | Ninst actual_base args, Ninst candidate_base _ =>
-        if bool_decide (actual_base = candidate_base) then Some args else None
-    | _, _ => None
+        match same_template_base actual_base candidate_base with
+        | Some args' => Some (args' ++ args)
+        | None => None
+        end
+    | Nscoped actual_base actual_name, Nscoped candidate_base candidate_name =>
+        if bool_decide (actual_name = candidate_name) then
+          same_template_base actual_base candidate_base
+        else None
+    | _, _ =>
+        if bool_decide (actual = candidate) then Some [] else None
     end.
 
   Definition instantiate (actual : name) (candidate : name * template type)
