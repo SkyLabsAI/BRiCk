@@ -333,6 +333,31 @@ static fmt::Formatter &printTemplateParamTypeArg(CoqPrinter &print,
     return print.str(getTemplateParamName(*param));
 }
 
+static fmt::Formatter &printTemplateParamType(CoqPrinter &print,
+                                              const NamedDecl *param) {
+    guard::ctor _{print, "Tparam", false};
+    return print.str(getTemplateParamName(*param));
+}
+
+static fmt::Formatter &printQualifiers(CoqPrinter &print, QualType qt,
+                                       llvm::function_ref<void()> print_type) {
+    if (qt.isLocalConstQualified()) {
+        print.ctor(qt.isVolatileQualified() ? "Qconst_volatile" : "Qconst",
+                   false);
+        print_type();
+        return print.end_ctor();
+    }
+
+    if (qt.isLocalVolatileQualified()) {
+        print.ctor("Qvolatile", false);
+        print_type();
+        return print.end_ctor();
+    }
+
+    print_type();
+    return print.output();
+}
+
 static fmt::Formatter &printTemplateTypeParam(CoqPrinter &print,
                                               const NamedDecl *param) {
     guard::ctor _{print, "Ptype", false};
@@ -369,6 +394,59 @@ printDefaultAliasTarget(CoqPrinter &print, const NamedDecl &decl,
     };
     std::vector<Argument> args;
     args.reserve(params.size());
+
+    auto find_param = [&](const TemplateTypeParmDecl *needle,
+                          unsigned limit) -> std::optional<unsigned> {
+        for (unsigned j = 0; j < limit; ++j) {
+            if (params[j] == needle)
+                return j;
+        }
+        return std::nullopt;
+    };
+
+    std::function<fmt::Formatter &(QualType, unsigned)> print_type =
+        [&](QualType qt, unsigned limit) -> fmt::Formatter & {
+        return printQualifiers(print, qt, [&]() {
+            auto *type = qt.getTypePtrOrNull();
+            if (!type) {
+                cprint.printQualType(print, qt, loc::none);
+                return;
+            }
+
+            if (auto *type_param = type->getAs<TemplateTypeParmType>()) {
+                if (auto index = find_param(type_param->getDecl(), limit)) {
+                    auto arg = args[*index];
+                    if (arg.param_ref) {
+                        printTemplateParamType(print, params[*arg.param_ref]);
+                    } else {
+                        print_type(arg.default_type, *index);
+                    }
+                    return;
+                }
+            }
+
+            if (auto *ptr = dyn_cast<PointerType>(type)) {
+                guard::ctor _{print, "Tptr", false};
+                print_type(ptr->getPointeeType(), limit);
+                return;
+            }
+
+            if (auto *ref = dyn_cast<LValueReferenceType>(type)) {
+                guard::ctor _{print, "Tref", false};
+                print_type(ref->getPointeeType(), limit);
+                return;
+            }
+
+            if (auto *ref = dyn_cast<RValueReferenceType>(type)) {
+                guard::ctor _{print, "Trv_ref", false};
+                print_type(ref->getPointeeType(), limit);
+                return;
+            }
+
+            cprint.printQualType(print, qt, loc::of(type));
+        });
+    };
+
     for (unsigned i = 0; i < params.size(); ++i) {
         if (i < keep) {
             args.push_back({i, QualType{}});
@@ -379,15 +457,9 @@ printDefaultAliasTarget(CoqPrinter &print, const NamedDecl &decl,
         auto default_type =
             param->getDefaultArgument().getArgument().getAsType();
         std::optional<unsigned> ref;
-        if (auto *type_param = default_type->getAs<TemplateTypeParmType>()) {
-            auto *default_param = type_param->getDecl();
-            for (unsigned j = 0; j < i; ++j) {
-                if (params[j] == default_param) {
-                    ref = args[j].param_ref;
-                    break;
-                }
-            }
-        }
+        if (auto *type_param = default_type->getAs<TemplateTypeParmType>())
+            if (auto index = find_param(type_param->getDecl(), i))
+                ref = args[*index].param_ref;
         args.push_back({ref, default_type});
     }
 
@@ -400,18 +472,52 @@ printDefaultAliasTarget(CoqPrinter &print, const NamedDecl &decl,
                 printTemplateParamTypeArg(print, params[*arg.param_ref]);
             } else {
                 guard::ctor _{print, "Atype", false};
-                cprint.printQualType(print, arg.default_type,
-                                     loc::of(params[i]));
+                print_type(arg.default_type, i);
             }
             print.output() << fmt::cons;
         }
     });
 }
 
+static bool collectTemplateParamsForDecl(const Decl &decl,
+                                         std::vector<const NamedDecl *> &out) {
+    if (auto *ctx = decl.getDeclContext()) {
+        if (!ctx->isTranslationUnit()) {
+            if (!collectTemplateParamsForDecl(*Decl::castFromDeclContext(ctx),
+                                              out))
+                return false;
+        }
+    }
+
+    const TemplateParameterList *params = nullptr;
+    if (auto *record = dyn_cast<CXXRecordDecl>(&decl)) {
+        if (auto *templ = record->getDescribedClassTemplate())
+            params = templ->getTemplateParameters();
+    } else if (auto *alias = dyn_cast<TypeAliasDecl>(&decl)) {
+        if (auto *templ = alias->getDescribedAliasTemplate())
+            params = templ->getTemplateParameters();
+    }
+
+    if (!params)
+        return true;
+
+    for (auto *param : params->asArray()) {
+        auto *type_param = dyn_cast<TemplateTypeParmDecl>(param);
+        if (!type_param || type_param->isParameterPack())
+            return false;
+        out.push_back(type_param);
+    }
+
+    return true;
+}
+
 } // namespace
 
 void printDefaultTemplateAliases(const Decl *decl, CoqPrinter &print,
                                  ClangPrinter &cprint) {
+    if (!print.templates() || !cprint.printTypedefs())
+        return;
+
     const NamedDecl *templated_decl = nullptr;
     const TemplateParameterList *template_params = nullptr;
 
@@ -455,15 +561,26 @@ void printDefaultTemplateAliases(const Decl *decl, CoqPrinter &print,
         return;
 
     auto cp = cprint.withDecl(templated_decl);
+    std::vector<const NamedDecl *> enclosing_params;
+    if (auto *ctx = templated_decl->getDeclContext()) {
+        if (!ctx->isTranslationUnit())
+            if (!collectTemplateParamsForDecl(*Decl::castFromDeclContext(ctx),
+                                              enclosing_params))
+                return;
+    }
+
     for (unsigned keep = first_default; keep < params.size(); ++keep) {
         {
             guard::ctor _{print, "Dtemplated_typedef"};
-            print.list(ArrayRef<const NamedDecl *>(prefix_params)
-                           .take_front(keep),
-                       [&](const NamedDecl *param) {
-                           printTemplateTypeParam(print, param);
-                       })
-                << fmt::nbsp;
+            {
+                guard::list _{print};
+                for (auto *param : enclosing_params)
+                    printTemplateTypeParam(print, param) << fmt::cons;
+                for (auto *param :
+                     ArrayRef<const NamedDecl *>(prefix_params).take_front(keep))
+                    printTemplateTypeParam(print, param) << fmt::cons;
+            }
+            print.output() << fmt::nbsp;
             printDefaultAliasKey(print, *templated_decl, params, keep, cp)
                 << fmt::nbsp;
             printDefaultAliasTarget(print, *templated_decl, params, keep, cp);
