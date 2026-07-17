@@ -35,13 +35,24 @@
 </div>
     <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
     <div id="main">
-<h1 class="libtitle">skylabs.lang.cpp.parser.plugin.cpp2v_version</h1>
+<h1 class="libtitle">skylabs_brick.tests.cpp_prog_check_types</h1>
 
 <div class="code">
-<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Strings.PrimString.html#"><span class="id" title="library">PrimString</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
 
 <br/>
-<span class="id" title="keyword">Definition</span> <a id="version" class="idref" href="#version"><span class="id" title="definition">version</span></a> := "dcd82ed3fc5ae5a1fd4577f98fca4b2a"%<span class="id" title="var">pstring</span>.<br/>
+#[<span class="id" title="var">check_types</span>]<br/>
+<span class="id" title="var">cpp.prog</span> <a id="__cpp_prog" class="idref" href="#__cpp_prog"><span class="id" title="section">checked_source</span></a> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> <span class="id" title="var">Checked</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="tactic">field</span>;<br/>
+&nbsp;&nbsp;};<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">checked_global</span>;<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">checked_source</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">=</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">checked_source</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
 </div>
 <!--
 -- Copyright (c) 2020 BlueRock Security, Inc.
