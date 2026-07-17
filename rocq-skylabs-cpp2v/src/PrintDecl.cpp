@@ -407,6 +407,22 @@ static bool isSupportedValueDefaultExpr(const Expr *expr) {
     return getReferencedValueParam(expr) != nullptr;
 }
 
+static QualType getTemplateTypeDefault(const TemplateTypeParmDecl *param) {
+#if CLANG_VERSION_MAJOR >= 22
+    return param->getDefaultArgument().getArgument().getAsType();
+#else
+    return param->getDefaultArgument();
+#endif
+}
+
+static const Expr *getTemplateValueDefault(const NonTypeTemplateParmDecl *param) {
+#if CLANG_VERSION_MAJOR >= 22
+    return param->getDefaultArgument().getArgument().getAsExpr();
+#else
+    return param->getDefaultArgument();
+#endif
+}
+
 static fmt::Formatter &
 printDefaultAliasTarget(CoqPrinter &print, const NamedDecl &decl,
                         ArrayRef<const NamedDecl *> params, unsigned keep,
@@ -603,8 +619,7 @@ printDefaultAliasTarget(CoqPrinter &print, const NamedDecl &decl,
         }
 
         if (auto *param = dyn_cast<TemplateTypeParmDecl>(params[i])) {
-            auto default_type =
-                param->getDefaultArgument().getArgument().getAsType();
+            auto default_type = getTemplateTypeDefault(param);
             std::optional<unsigned> ref;
             if (auto *type_param = default_type->getAs<TemplateTypeParmType>())
                 if (auto index = find_param(type_param->getDecl(), i))
@@ -612,8 +627,7 @@ printDefaultAliasTarget(CoqPrinter &print, const NamedDecl &decl,
             args.push_back({ArgumentKind::Type, ref, default_type});
         } else {
             auto *value_param = cast<NonTypeTemplateParmDecl>(params[i]);
-            auto *default_expr =
-                value_param->getDefaultArgument().getArgument().getAsExpr();
+            auto *default_expr = getTemplateValueDefault(value_param);
             std::optional<unsigned> ref;
             if (auto *referenced = getReferencedValueParam(default_expr))
                 if (auto index = find_value_param(referenced, i))
@@ -744,8 +758,7 @@ void printDefaultTemplateAliases(const Decl *decl, CoqPrinter &print,
             }
         } else if (auto *param = dyn_cast<NonTypeTemplateParmDecl>(params[i])) {
             if (param->hasDefaultArgument()) {
-                auto *default_expr =
-                    param->getDefaultArgument().getArgument().getAsExpr();
+                auto *default_expr = getTemplateValueDefault(param);
                 if (!isSupportedValueDefaultExpr(default_expr))
                     return;
                 first_default = std::min(first_default, i);
