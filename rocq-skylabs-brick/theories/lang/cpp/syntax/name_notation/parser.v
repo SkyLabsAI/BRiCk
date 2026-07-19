@@ -324,6 +324,10 @@ Module internal.
         else
           parens (pair <$> (get_args <$> args) <*> arity).
 
+      Definition parse_fun_ty (no_start_paren : bool) : M (type -> type) :=
+        let* '(args, ar) := parse_args no_start_paren in
+        mret (fun ret_ty => Tfunction (FunctionType (ft_arity:=ar) ret_ty args)).
+
       Definition parse_postfix_type : M (type -> type) :=
         let entry := fix entry fuel :=
           let array_entry :=
@@ -343,12 +347,9 @@ Module internal.
                 mret (fun rt => Tfunction (FunctionType rt []))
               else
                 let post := fold_left (fun t f => f t) post in
-                let* '(args, ar) := parse_args false in
-                mret (fun rt => post $ Tfunction (FunctionType (ft_arity:=ar) rt args))
+                compose post <$> parse_fun_ty false
             in
-            qualified <|>
-            (let* '(args, ar) := parse_args true in
-             mret (fun rt => Tfunction (FunctionType (ft_arity:=ar) rt args)))
+            qualified <|> parse_fun_ty true
           in
           let* _ := ws in
           (let* _ := exact "&&" in mret Trv_ref) <|>
@@ -363,8 +364,8 @@ Module internal.
              let* _ := spaced "::" in
              let* _ := exact "*" in
              let* _ := spaced ")" in
-             let* '(args, ar) := parse_args false in
-             mret (fun rt => Tmember_pointer (Tnamed nm) $ Tfunction (FunctionType (ft_arity:=ar) rt args)))
+             compose (Tmember_pointer (Tnamed nm)) <$>
+             parse_fun_ty false)
         in
         fold_left (fun t f => f t) <$> star (entry 100).
 
