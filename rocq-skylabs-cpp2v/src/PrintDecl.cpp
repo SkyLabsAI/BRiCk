@@ -408,7 +408,7 @@ static bool isSupportedValueDefaultExpr(const Expr *expr) {
 }
 
 static QualType getTemplateTypeDefault(const TemplateTypeParmDecl *param) {
-#if CLANG_VERSION_MAJOR >= 22
+#if CLANG_VERSION_MAJOR >= 19
     return param->getDefaultArgument().getArgument().getAsType();
 #else
     return param->getDefaultArgument();
@@ -416,7 +416,7 @@ static QualType getTemplateTypeDefault(const TemplateTypeParmDecl *param) {
 }
 
 static const Expr *getTemplateValueDefault(const NonTypeTemplateParmDecl *param) {
-#if CLANG_VERSION_MAJOR >= 22
+#if CLANG_VERSION_MAJOR >= 19
     return param->getDefaultArgument().getArgument().getAsExpr();
 #else
     return param->getDefaultArgument();
