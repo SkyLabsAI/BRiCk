@@ -786,6 +786,7 @@ Module Type TESTS.
                          (Nscoped (Nglobal (Nid "CpuSet")) (Nfunction function_qualifiers.Nc "forall" [Tmember_pointer (Tnamed (Nglobal $ Nid "C")) $ Tfunction (FunctionType Tvoid [Tint])])) := eq_refl.
   Succeed Example _0 : TEST "CpuSet::forall(void (C::*)(int, ...), ...) const"
                          (Nscoped (Nglobal (Nid "CpuSet")) (Nfunction function_qualifiers.Nc "forall" [Tmember_pointer (Tnamed (Nglobal $ Nid "C")) $ Tfunction (FunctionType (ft_arity:=Ar_Variadic) Tvoid [Tint])])) := eq_refl.
+  Fail Example _0 : TEST "Foo::Foo(int Foo::*)" (Nscoped (Nglobal (Nid "Foo")) (Nctor [Tmember_pointer (Tnamed (Nglobal (Nid "Foo"))) Tint])) := eq_refl.
 
   Succeed Example _0 : TEST "foo(unsigned int128, int128)" (Nglobal (Nfunction function_qualifiers.N "foo" [Tuint128_t; Tint128_t])) := eq_refl.
 
