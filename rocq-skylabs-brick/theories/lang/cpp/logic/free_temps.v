@@ -27,13 +27,16 @@ Delimit Scope free_scope with free.
 Reserved Infix "|*|" (at level 31, left associativity).
 Reserved Infix ">*>" (at level 30, right associativity).
 
+(* TODO: maybe rename to "stack unwind steps"; with exceptions it includes more
+than freeing temps *)
 Module FreeTemps.
 
     (* BEGIN FreeTemps.t *)
     Inductive t : Set :=
     | id (* = fun x => x *)
     | delete (ty : decltype) (p : ptr) (* = delete_val ty p *)
-            (* ^^ this type has qualifiers but is otherwise a runtime type *)
+            (* ^^ this type has qualifiers but is otherwise a heap type *)
+    (* [const] and [mutable] are new here: these are not really temporaries, just stack unwind steps *)
     | const (ty : decltype) (p : ptr)    (* = make an object const *)
     | mutable (ty : decltype) (p : ptr)  (* = make an object mutable *)
     | delete_va (va : list (type * ptr)) (p : ptr)

@@ -270,7 +270,9 @@ Section with_cpp.
      [wp_init tu ρ ty p e Q] evaluates [e] to initialize a value of type [ty]
      at location [p] in the region [ρ]. The continuation [Q] is passed the
      [FreeTemps.t] needed to destroy temporaries created while evaluating [e],
-     but does *not* include the destruction of [p].
+     but does *not* include the destruction of [p];
+     clients will schedule that by adding [delete ty p].
+
      The type [ty] and the type of the expression, i.e. [type_of e], are related
      but not always the same. We call [ty] the *dynamic type* and [type_of e]
      the *static type*. The two types should always be compatible, but the dynamic
