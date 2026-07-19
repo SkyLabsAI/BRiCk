@@ -557,6 +557,64 @@ Module Type Expr.
             Q v' free)
         |-- wp_operand (Ebinop o e1 e2 ty) Q.
 
+    Definition strong_ordering_result_name cmp_res : PrimString.string :=
+      match cmp_res with
+      | Lt => "less"
+      | Eq => "equal"
+      | Gt => "greater"
+      end.
+
+    Definition partial_ordering_result_name (cmp_res : option comparison) : PrimString.string :=
+      match cmp_res with
+      | Some Lt => "less"
+      | Some Eq => "equivalent"
+      | Some Gt => "greater"
+      | None => "unordered"
+      end.
+
+    Definition cmp_res_name (te1 : type) (v1 v2 : val) : option PrimString.string :=
+      match te1, v1, v2 with
+      | Tnum sz sgn, Vint a, Vint b =>
+        (* from arith_as *)
+        if bool_decide (int_rank.t_le int_rank.Iint sz) then
+          let cmp_res := Z.compare a b in
+          Some (strong_ordering_result_name cmp_res)
+        else
+          None
+      | Tfloat_ fty, Vfloat f a, Vfloat f' b =>
+        match decide (f = fty), decide (f' = fty) with
+        | left H, left H' =>
+          let a' := eq_rect f float_type.car a fty H in
+          let b' := eq_rect f' float_type.car b fty H' in
+          let cmp_res := float_value.value_compare a' b' in
+          Some (partial_ordering_result_name cmp_res)
+        | _, _ => None
+        end
+      | _, _, _ => None
+      end.
+
+    Axiom wp_init_binop_spaceship : forall e1 e2 ty (addr : ptr) Q,
+      let te1 := drop_qualifiers (type_of e1) in
+      (* TODO: move this to the typechecker? *)
+      te1 = drop_qualifiers (type_of e2) ->
+      (match (decompose_type ty).2 with
+      | Tnamed cls =>
+        letI* '(v1, v2), free := eval2 (evaluation_order.order_of (language_version tu) OOSpaceship)
+          (wp_operand e1) (wp_operand e2) in
+        match cmp_res_name te1 v1 v2 with
+        | None => False
+        | Some res_name =>
+          let ctor := cls .:: Nctor [Tref $ Tconst $ Tnamed cls] in
+          let arg := Eglobal (cls .:: Nid res_name) (Tconst (Tnamed cls)) in
+          [| decltype.of_expr (Econstructor ctor [arg] ty) = Some ty |] ∗
+          wp_init ty addr
+            (Econstructor ctor [arg] ty)
+            (fun free' => Q (free' >*> free))
+        end
+      | _ => False
+      end%I)
+    |-- wp_init ty addr (Ebinop Bcmp e1 e2 ty) Q.
+
     (* NOTE the right operand is sequenced before the left operand since
        P0145R3 (C++17).
      *)

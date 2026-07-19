@@ -649,6 +649,7 @@ with Cast : Set :=
  *)
 | Cunsupported (_ : bs) (_ : type)
 .
+
 #[global] Arguments Cast : clear implicits.
 #[global] Arguments name : clear implicits.
 #[global] Arguments temp_arg : clear implicits.
@@ -657,6 +658,8 @@ with Cast : Set :=
 #[global] Arguments VarDecl : clear implicits.
 #[global] Arguments BindingDecl : clear implicits.
 #[global] Arguments Stmt : clear implicits.
+
+#[global] Bind Scope cpp_name_scope with name.
 
 (** The representation of applied template type parameters,
     e.g.
@@ -668,7 +671,7 @@ with Cast : Set :=
     Tparam_inst : ident -> list temp_arg -> type
     ]]
 
-    TODO: It might be desireable to promote this to a new constructor  
+    TODO: It might be desireable to promote this to a new constructor
  *)
 Abbreviation Tparam_inst n args :=
   (Tnamed (Ninst (Ndependent (Tparam n)) args)).
@@ -690,6 +693,25 @@ Proof. solve_inhabited. Qed.
 Proof. apply populate, Sseq, nil. Qed.
 #[global] Instance Cast_inhabited : Inhabited Cast.
 Proof. apply populate, C2void. Qed.
+
+#[global] Reserved Notation "x .:: y" (left associativity, at level 61).
+(* Maybe not this one *)
+(* #[global] Notation "x .:: y" := (Nscoped x%cpp_type (Nid y%pstring)) : cpp_type_scope. *)
+
+#[global] Notation "x .:: y" := (Nscoped x%cpp_name y) : cpp_name_scope.
+#[global] Notation "x .:: y" := (Nscoped x%cpp y) : cpp_scope.
+#[global] Notation "x .:: y" := (Nscoped x%cpp_field y) : cpp_field_scope.
+
+(* Notation to insert parameters inside names *)
+#[global] Reserved Notation "p .<< a0 , .. , an >>"
+  (at level 61, left associativity, format "p  .<<  a0 ,  .. ,  an  >>").
+
+#[global] Notation "p .<< a0 , .. , an >>" := (Ninst p (@cons temp_arg a0 ( .. (@cons temp_arg an nil) .. )) ) : cpp_field_scope.
+#[global] Notation "p .<< a0 , .. , an >>" := (Ninst p (@cons temp_arg a0 ( .. (@cons temp_arg an nil) .. )) ) : cpp_scope.
+#[global] Notation "p .<< a0 , .. , an >>" := (Ninst p (@cons temp_arg a0 ( .. (@cons temp_arg an nil) .. )) ) : cpp_name_scope.
+(* Maybe not this one *)
+(* #[global] Notation "p .<< a0 , .. , an >>" := (Ninst p (@cons temp_arg a0 ( .. (@cons temp_arg an nil) .. )) ) : cpp_type_scope. *)
+
 
 Module Cast.
   Definition existsb
@@ -731,11 +753,17 @@ Definition is_implicit (e : Expr) : bool :=
   if e is Eimplicit _ then true else false.
 
 Definition globname := name.	(** Type names *)
+#[global] Bind Scope cpp_name_scope with globname.
 Definition obj_name := name.	(** Function, data names *)
+#[global] Bind Scope cpp_name_scope with obj_name.
 
 Definition exprtype := type.	(** An expression's non-reference type *)
+#[global] Bind Scope cpp_type_scope with exprtype.
 Definition decltype := type.	(** Types as used in declarations (≈ ValCat × exprtype) *)
+#[global] Bind Scope cpp_type_scope with decltype.
 Definition functype := type.	(** Must be [Tfunction] *)
+#[global] Bind Scope cpp_type_scope with functype.
+
 
 Definition integral_type_to_type (v : integral_type.t) : type :=
   Tnum v.(integral_type.size) v.(integral_type.signedness).
@@ -791,13 +819,6 @@ Definition f_name (t : field) : atomic_name :=
   | Nscoped _ n => n
   | _ => Nunsupported_atomic "not a field"
   end.
-#[global] Bind Scope cpp_name_scope with name.
-#[global] Bind Scope cpp_name_scope with globname.
-#[global] Bind Scope cpp_name_scope with obj_name.
-#[global] Bind Scope cpp_name_scope with classname.
-#[global] Bind Scope cpp_type_scope with exprtype.
-#[global] Bind Scope cpp_type_scope with decltype.
-#[global] Bind Scope cpp_type_scope with functype.
 
 Definition Ndependent' (t : type) : classname :=
   match t with
