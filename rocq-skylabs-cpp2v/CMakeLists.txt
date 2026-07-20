@@ -1,5 +1,5 @@
 ##
-## Copyright (c) 2020-2024 BlueRock Security, Inc.
+## Copyright (c) 2020-2026 BlueRock Security, Inc.
 ## This software is distributed under the terms of the BedRock Open-Source License.
 ## See the LICENSE-BedRock file in the repository root for details.
 ##
@@ -70,6 +70,7 @@ add_llvm_library(tocoq
   src/PrintStmt.cpp
   src/PrintType.cpp
   src/PrintDecl.cpp
+  src/DefaultTemplateAlias.cpp
   src/PrintLocalDecl.cpp
   src/ModuleBuilder.cpp
   src/CommentScanner.cpp
