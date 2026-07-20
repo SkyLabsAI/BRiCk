@@ -261,6 +261,7 @@ Module MTraverse.
       | Ealignof et t => Ealignof <$> sum_traverse traverseT traverseE et <*> ET (traverseT t)
       | Eoffsetof gn f t => Eoffsetof <$> traverseT gn <*> mret f <*> ET (traverseT t)
       | Econstructor n es t => Econstructor <$> traverseN n <*> traverse (T:=eta list) traverseE es <*> ET (traverseT t)
+      | Einherited_constructor n args t => Einherited_constructor <$> traverseN n <*> mret args <*> ET (traverseT t)
       | Elambda n es => Elambda <$> traverseN n <*> traverse (T:=eta list) traverseE es
 
       | Eimplicit e => Eimplicit <$> traverseE e
@@ -466,6 +467,16 @@ Module MTraverse.
         <*> mret d.(d_cc)
         <*> mret d.(d_exception)
         <*> traverse (T:=eta option) (traverse (T:=eta OrDefault) traverseS) d.(d_body).
+
+    Definition traverseOV (o : ObjValue) : F ObjValue :=
+      match o with
+      | Ovar t init =>
+          Ovar <$> traverseT t <*> global_init.traverse traverseE init
+      | Ofunction f => Ofunction <$> traverseF f
+      | Omethod m => Omethod <$> traverseM m
+      | Oconstructor c => Oconstructor <$> traverseCtor c
+      | Odestructor d => Odestructor <$> traverseDtor d
+      end.
 
     Definition traverseMember (m : Member) : F Member :=
       mkMember

@@ -323,7 +323,8 @@ Module decltype.
         | Esizeof _ t
         | Ealignof _ t
         | Eoffsetof _ _ t
-        | Econstructor _ _ t => mret t
+        | Econstructor _ _ t
+        | Einherited_constructor _ _ t => mret t
         | Elambda n _ => mret $ Tnamed n
         | Eimplicit e => of_expr e
         | Eimplicit_init t =>

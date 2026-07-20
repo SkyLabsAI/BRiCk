@@ -1688,6 +1688,30 @@ Module Type Expr.
            end
       |-- wp_init ty this (Econstructor cnd es ty) Q.
 
+    Axiom wp_init_inherited_constructor : forall cls ty cv (this : ptr) cnd vars Q,
+      decompose_type ty = (cv, Tnamed cls) ->
+        (* NOTE because the AST does not include the types of the arguments of
+           the constructor, we have to look up the type in the environment.
+         *)
+           match type_of_ctor tu cnd with
+           | Some ctor_type =>
+             match marg_types ctor_type with
+             | Some arg_types =>
+                |> (this |-> tblockR (Tnamed cls) 1$m -*
+                   (* ^^ The semantics currently has constructors take ownership of a [tblockR] *)
+                   letI* resultp := wp_fptr ctor_type (_global cnd) (this :: List.map (_local ρ) vars) in
+                    (* in the semantics, constructors return [void] *)
+                    resultp |-> primR Tvoid 1$m Vvoid **
+                    let Q := Q FreeTemps.id in
+                    if q_const cv
+                    then wp_make_const tu this (Tnamed cls) Q
+                    else Q)
+             | _ => False (* unreachable b/c we got a constructor *)
+             end
+           | _ => ERROR ("Constructor not found.", cnd)
+           end
+      |-- wp_init ty this (Einherited_constructor cnd vars ty) Q.
+
     Axiom wp_init_lambda : forall ty cls (this : ptr) es Q,
           wp_init ty this (Einitlist es None (Tnamed cls)) Q
       |-- wp_init ty this (Elambda cls es) Q.

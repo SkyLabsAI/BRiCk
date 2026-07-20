@@ -1656,6 +1656,16 @@ Module Expr.
       compare_lex (List.compare compareE b1.(box_Econstructor_1) b2.(box_Econstructor_1)) $ fun _ =>
       compareT b1.(box_Econstructor_2) b2.(box_Econstructor_2).
 
+    Record box_Einherited_constructor : Set := Box_Einherited_constructor {
+      box_Einherited_constructor_0 : name;
+      box_Einherited_constructor_1 : list ident;
+      box_Einherited_constructor_2 : type;
+    }.
+    Definition box_Einherited_constructor_compare (b1 b2 : box_Einherited_constructor) : comparison :=
+      compare_lex (compareN b1.(box_Einherited_constructor_0) b2.(box_Einherited_constructor_0)) $ fun _ =>
+      compare_lex (List.compare PrimString.compare b1.(box_Einherited_constructor_1) b2.(box_Einherited_constructor_1)) $ fun _ =>
+      compareT b1.(box_Einherited_constructor_2) b2.(box_Einherited_constructor_2).
+
     Record box_Elambda : Set := Box_Elambda {
       box_Elambda_0 : name;
       box_Elambda_1 : list Expr
@@ -1853,6 +1863,7 @@ Module Expr.
       | Ealignof _ _ => 36
       | Eoffsetof _ _ _ => 37
       | Econstructor _ _ _ => 38
+      | Einherited_constructor _ _ _ => 67
       | Elambda _ _ => 61
       | Eimplicit _ => 39
       | Eimplicit_init _ => 40
@@ -1938,6 +1949,7 @@ Module Expr.
       | 64 => type
       | 65 => box_Eunresolved_initlist
       | 66 => box_Eunresolved_sizeof_pack
+      | 67 => box_Einherited_constructor
       | _ => box_Eunsupported
       end.
     Definition data (e : Expr) : car (tag e) :=
@@ -1987,6 +1999,7 @@ Module Expr.
       | Ealignof a t => Box_Esizeof a t
       | Eoffsetof cls m t => Box_Eoffsetof cls m t
       | Econstructor cls es t => Box_Econstructor cls es t
+      | Einherited_constructor cls args t => Box_Einherited_constructor cls args t
       | Elambda n es => Box_Elambda n es
       | Eimplicit e => e
       | Eimplicit_init t => t
@@ -2070,6 +2083,7 @@ Module Expr.
       | 64 => compareT
       | 65 => box_Eunresolved_initlist_compare
       | 66 => box_Eunresolved_sizeof_pack_compare
+      | 67 => box_Einherited_constructor_compare
       | _ => box_Eunsupported_compare
       end.
 
@@ -2134,6 +2148,7 @@ Module Expr.
       | Ealignof a t => COMP (Ealignof a t)
       | Eoffsetof cls m t => COMP (Eoffsetof cls m t)
       | Econstructor cls es t => COMP (Econstructor cls es t)
+      | Einherited_constructor cls args t => COMP (Einherited_constructor cls args t)
       | Elambda n es => COMP (Elambda n es)
 
       | Eimplicit e => COMP (Eimplicit e)

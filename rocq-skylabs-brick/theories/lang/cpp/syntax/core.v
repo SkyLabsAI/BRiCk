@@ -515,6 +515,23 @@ Should be [gn : classname]
 *)
 | Eoffsetof (gn : type) (_ : ident) (t : type)
 | Econstructor (on : name) (args : list Expr) (t : type)
+| Einherited_constructor (on : name) (args : list ident) (t : type)
+  (* ^^ this is a direct dispatch constructor and can not be represented within C++ itself.
+     Morally, this looks like the following:
+     <<
+     struct DATA {};
+     struct C {
+       DATA d;
+     };
+     struct D : C {
+        using C::C;
+        // sketch implementation of the inherited constructor
+        D(DATA x):C(x) {} // << no separate constructor for C is called here, the arguments are used
+                          //    directly from the function. In BRiCk's interpretation, the arguments
+                          //    are pre-materialized
+     };
+     >>
+   *)
 | Elambda (_ : name) (captures : list Expr)
 | Eimplicit (e : Expr)
 | Eimplicit_init (t : type)
@@ -1019,6 +1036,7 @@ with is_dependentE (e : Expr) : bool :=
   | Ealignof te t => sum.existsb is_dependentT is_dependentE te || is_dependentT t
   | Eoffsetof gn _ t => is_dependentT gn || is_dependentT t
   | Econstructor n es t => is_dependentN n || existsb is_dependentE es || is_dependentT t
+  | Einherited_constructor n _ t => is_dependentN n || is_dependentT t
   | Elambda n es => is_dependentN n || existsb is_dependentE es
   | Eimplicit e => is_dependentE e
   | Eimplicit_init t => is_dependentT t

@@ -109,9 +109,8 @@ fmt::Formatter &ClangPrinter::printOverloadableOperator(
 
 void printOptionalExpr(CoqPrinter &print, std::optional<const Expr *> expr,
                        ClangPrinter &cprint, OpaqueNames &li) {
-    print.option(expr, [&](const Expr *expr) {
-        cprint.printExpr(print, expr, li);
-    });
+    print.option(expr,
+                 [&](const Expr *expr) { cprint.printExpr(print, expr, li); });
 }
 
 bool is_dependent(const Expr *expr) {
@@ -1127,18 +1126,17 @@ public:
 
     void VisitCXXConstructExpr(const CXXConstructExpr *expr) {
         print.ctor("Econstructor");
-        // print.output() << expr->isElidable() << fmt::nbsp;
         cprint.printName(print, expr->getConstructor(), loc::of(expr));
         print.output() << fmt::nbsp;
         print.list(expr->arguments(),
                    [&](auto i) { cprint.printExpr(print, i, names); });
-        // print.output() << fmt::nbsp << expr->isElidable();
         done(expr);
     }
 
     void VisitCXXInheritedCtorInitExpr(const CXXInheritedCtorInitExpr *expr) {
-        print.ctor("Econstructor");
-        // print.output() << expr->isElidable() << fmt::nbsp;
+        // See the documentation in the AST for why this needs to be a different
+        // constructor
+        print.ctor("Einherited_constructor");
         auto ctor = expr->getConstructor();
         cprint.printName(print, ctor, loc::of(expr));
         print.output() << fmt::nbsp;
@@ -1150,14 +1148,9 @@ public:
         // variable references directly.
         auto idx = 0;
         print.list(ctor->parameters(), [&](auto i) {
-            print.ctor("Evar", false);
-            print.output() << "(localname.anon " << idx << ")";
-            print.output() << fmt::nbsp;
-            cprint.printQualType(print, i->getType(), loc::of(i));
-            print.end_ctor();
+            print.output() << "localname.anon " << idx;
             ++idx;
         });
-        // print.output() << fmt::nbsp << expr->isElidable();
         done(expr);
     }
 
@@ -1621,35 +1614,33 @@ public:
             FieldDecl *ThisCapture = nullptr;
             LambdaClass->getCaptureFields(CaptureFields, ThisCapture);
 
-            auto capture_type = [&](const LambdaCapture &capture) -> QualType {
-                if (capture.capturesVariable()) {
-                    auto var = capture.getCapturedVar();
-                    auto field = CaptureFields[var];
-                    always_assert(field && "uncaptured field");
-                    return field->getType();
-                } else if (capture.capturesThis()) {
-                    always_assert(ThisCapture && "this capture is null");
-                    return ThisCapture->getType();
-                } else if (capture.capturesVLAType()) {
-                    guard::ctor _{print, "Eunsupported"};
-                    print.str("variable length array capture");
-                } else {
-                    always_assert(false && "unreachable lambda capture type");
-                }
-            };
-
             auto icap = expr->capture_begin();
             auto iinit = expr->capture_init_begin();
             print.begin_list();
             for (; icap != expr->capture_end() &&
                    iinit != expr->capture_init_end();
                  ++icap, ++iinit) {
-                {
+                auto &capture = *icap;
+                if (capture.capturesVariable()) {
+                    auto var = capture.getCapturedVar();
+                    auto field = CaptureFields[var];
+                    always_assert(field && "uncaptured field");
                     guard::ctor _{print, "expr.Einitializing_type"};
-                    cprint.printQualType(print, capture_type(*icap),
+                    cprint.printQualType(print, field->getType(), loc::of(expr))
+                        << fmt::nbsp;
+                    cprint.printExpr(print, *iinit, this->names);
+                } else if (capture.capturesThis()) {
+                    always_assert(ThisCapture && "this capture is null");
+                    guard::ctor _{print, "expr.Einitializing_type"};
+                    cprint.printQualType(print, ThisCapture->getType(),
                                          loc::of(expr))
                         << fmt::nbsp;
                     cprint.printExpr(print, *iinit, this->names);
+                } else if (capture.capturesVLAType()) {
+                    guard::ctor _{print, "Eunsupported"};
+                    print.str("variable length array capture");
+                } else {
+                    always_assert(false && "unreachable lambda capture type");
                 }
                 print.cons();
             }
