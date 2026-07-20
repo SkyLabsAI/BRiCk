@@ -7,6 +7,7 @@
 #include "ClangPrinter.hpp"
 #include "CommentScanner.hpp"
 #include "CoqPrinter.hpp"
+#include "DefaultTemplateAlias.hpp"
 #include "Filter.hpp"
 #include "ModuleBuilder.hpp"
 #include "PrePrint.hpp"
@@ -251,12 +252,16 @@ void ToCoqConsumer::writeTemplates(const char *name, Cache &cache,
         //     prePrintDecl(decl, c, print, cprint);
         if (printDecl(decl, print, cprint))
             print.cons();
-        printDefaultTemplateAliases(decl, print, cprint);
+        if (print.templates() && cprint.printTypedefs())
+            default_template_alias::printDefaultTemplateAliases(decl, print,
+                                                                cprint);
     }
     for (auto decl : mod.template_definitions()) {
         if (printDecl(decl, print, cprint))
             print.cons();
-        printDefaultTemplateAliases(decl, print, cprint);
+        if (print.templates() && cprint.printTypedefs())
+            default_template_alias::printDefaultTemplateAliases(decl, print,
+                                                                cprint);
     }
     print.end_list();
 

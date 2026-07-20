@@ -8,6 +8,7 @@
 #include <llvm/ADT/ArrayRef.h>
 
 namespace clang {
+class Decl;
 class NamedDecl;
 class NonTypeTemplateParmDecl;
 } // namespace clang
@@ -30,6 +31,20 @@ parameters, because those can be printed into the BRiCk alias table without
 evaluating arbitrary expressions.
 */
 bool isSupportedValueDefault(const clang::NonTypeTemplateParmDecl *param);
+
+/*
+Print every `Dtemplated_typedef` that cpp2v synthesizes from default template
+arguments on `decl`.
+
+Precondition: the caller has already decided that template declarations and
+typedef declarations should be printed. The function emits aliases when `decl`
+is a class/union or type-alias template declaration whose template has a suffix
+of defaulted parameters that this module can represent in the BRiCk alias
+table. It emits no output when those declaration/default-argument conditions
+are not met.
+*/
+void printDefaultTemplateAliases(const clang::Decl *decl, CoqPrinter &print,
+                                 ClangPrinter &cprint);
 
 /*
 Print the argument list for the target of a generated default-template alias.
