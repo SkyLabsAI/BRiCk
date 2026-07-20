@@ -96,18 +96,17 @@ Ltac2 problem_size_of_case (input : search_case) : problem_size :=
   float_of_int (input.(search_size)).
 
 Require Import Ltac2.Printf.
-Require Import Corelib.Floats.PrimFloat.
 
 Ltac2 assert_linear (run : search_case -> unit) (inputs : search_case list) : _ :=
   let inputs := List.map (fun input => (problem_size_of_case input, input)) inputs in
-  let measured := Util.sample (Util.Sampler.MinOf repetitions) 1 (fun x => x) run inputs in
+  let measured := Util.sample (Util.Sampler.MinOf repetitions) 1 (fun _ => ()) run inputs in
   let fail_with_data msg :=
     let msg :=
       List.fold_right
         (fun s acc =>
            (Message.concat acc
               (Message.concat (Message.force_new_line) (
-                   fprintf "%t,%i" (Constr.Unsafe.make (Constr.Unsafe.Float (s.(problem_size)))) (s.(time))
+                   fprintf "%a,%i" pp_float (s.(problem_size)) (s.(time))
                  )
               )
            )

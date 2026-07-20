@@ -216,6 +216,10 @@ let _ =
   Float64.of_float (Float.of_int n)
 
 let _ =
+  define "pp_float" (unit @-> float @-> ret pp) @@ fun () value ->
+  Pp.str (Float64.to_string value)
+
+let _ =
   define "instructions_result" (unit @-> ret valexpr) @@ fun () ->
   read_instruction_counter_as_int () |> of_api_result Tac2ffi.of_int
 

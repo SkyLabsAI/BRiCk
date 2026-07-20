@@ -46,6 +46,8 @@ Ltac2 check_complexity_api () :=
     (Int.lt 0 (String.length complexity_class_names));
   check_string "unexpected polynomial rendering"
     (string_of_complexity (ComplexityPolynomial 2)) "polynomial-2";
+  check_string "unexpected float rendering"
+    (Message.to_string (pp_float () (f "1.25"))) "1.25";
   match complexity_of_string "polynomial-2" with
   | Some (ComplexityPolynomial degree) =>
       check_true "unexpected polynomial degree" (Int.equal degree 2)

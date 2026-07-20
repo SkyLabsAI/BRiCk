@@ -177,6 +177,11 @@ Ltac2 @ external float_of_string : string -> float :=
 Ltac2 @ external float_of_int : int -> float :=
   "ltac2_guesstimator" "float_of_int".
 
+(** [pp_float () value] returns a decimal rendering of [value]. The leading
+    [unit] argument lets [pp_float] be used as a [%a] message formatter. *)
+Ltac2 @ external pp_float : unit -> float -> message :=
+  "ltac2_guesstimator" "pp_float".
+
 (** Comma-separated description of the complexity classes accepted by
     [complexity_of_string]. Degree-bearing classes are described with [-N], for
     example [polynomial-N]. Takes no parameters. *)

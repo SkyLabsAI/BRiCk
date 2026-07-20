@@ -25,19 +25,26 @@ Ltac2 with_instructions (f : 'a -> 'b) (x : 'a) : int * 'b :=
   (Int.sub after before, result).
 
 
-Ltac2 Type exn ::= [Rollback(int)].
+Ltac2 Type exn ::= [
+  | Rollback
+  ].
 
-Ltac2 with_instructions_idemp : ('a -> unit) -> 'a  -> int := fun f a =>
+Ltac2 rollback_with_result (f : unit -> 'a) :=
+  let result := Ref.ref None in
   Control.once_plus_bt (fun () =>
-      let (instr, _) := with_instructions f a in
-      Control.zero (Rollback instr)
+      Ref.set result (Some (f ()));
+      Control.zero Rollback
     )
     (fun e bt =>
        match e with
-       | Rollback instr => instr
+       | Rollback => Option.get (Ref.get result)
        | _ => Control.zero_bt e bt
        end
     ).
+
+Ltac2 with_instructions_idemp : ('a -> unit) -> 'a  -> int :=
+  fun f a =>
+    rollback_with_result (fun () => let (instr, _) := with_instructions f a in instr).
 
 Module Sampler.
   Ltac2 Type t := [
@@ -64,8 +71,8 @@ End Sampler.
 Ltac2 sample
   (sampler : Sampler.t)
   (warmup_rounds : int)
-  (setup : 'a -> 'b)
-  (f : 'b -> unit)
+  (setup : 'a -> unit)
+  (f : 'a -> unit)
   (inputs : (problem_size * 'a) list) : int sample list :=
   Control.assert_true (Int.ge warmup_rounds 0);
   let do_warmup k :=
@@ -80,11 +87,27 @@ Ltac2 sample
   List.map
     (fun (problem_size, input) =>
       let k () :=
-        let b := setup input in
-        let time := Sampler.run sampler f b in
-        { problem_size; time }
+        rollback_with_result (fun () =>
+            setup input;
+            let time := Sampler.run sampler f input in
+            { problem_size; time }
+          )
       in
       do_warmup k warmup_rounds;
       k ()
     )
     inputs.
+
+Require Import Ltac2.Printf.
+
+Ltac2 samples_to_csv_msg pp_time (samples : _ sample list) :=
+  List.fold_right
+    (fun s acc =>
+       (Message.concat
+          (fprintf "%a,%a" pp_float (s.(problem_size)) pp_time (s.(time)))
+          (Message.concat (Message.force_new_line) acc)
+       )
+    ) samples (Message.empty).
+
+Ltac2 float_samples_to_csv_msg (samples : float sample list) :=
+  samples_to_csv_msg pp_float samples.
