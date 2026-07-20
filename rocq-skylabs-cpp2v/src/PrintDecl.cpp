@@ -21,7 +21,6 @@
 #include <clang/AST/Type.h>
 #include <clang/Basic/Version.inc>
 #include <optional>
-#include <vector>
 
 using namespace clang;
 
@@ -280,30 +279,6 @@ static fmt::Formatter &printTypedef(CoqPrinter &print,
 static const DeclPrinter Dtypedef("Dtypedef", "Dtemplated_typedef",
                                   printTypedef,
                                   DeclPrinter<TypedefNameDecl>::alwaysValid);
-
-namespace {
-
-static std::string getTemplateParamName(const NamedDecl &decl) {
-    if (auto id = decl.getIdentifier())
-        return id->getName().str();
-
-    auto position_name = [](auto &param, StringRef prefix) {
-        return (prefix + Twine(param.getDepth()) + "_" +
-                Twine(param.getIndex()))
-            .str();
-    };
-
-    if (auto param = dyn_cast<TemplateTypeParmDecl>(&decl))
-        return position_name(*param, "__type_");
-    if (auto param = dyn_cast<NonTypeTemplateParmDecl>(&decl))
-        return position_name(*param, "__value_");
-    if (auto param = dyn_cast<TemplateTemplateParmDecl>(&decl))
-        return position_name(*param, "__template_");
-
-    return "__template_param";
-}
-
-} // namespace
 
 // Structures and unions
 namespace {

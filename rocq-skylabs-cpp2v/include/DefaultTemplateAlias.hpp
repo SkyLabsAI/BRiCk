@@ -25,10 +25,11 @@ namespace default_template_alias {
 /*
 Return whether cpp2v knows how to synthesize aliases for `param`'s default.
 
-This is intentionally narrower than what C++ accepts. We currently support
-literal non-type defaults and direct references to earlier non-type template
-parameters, because those can be printed into the BRiCk alias table without
-evaluating arbitrary expressions.
+This is intentionally narrower than what C++ accepts.
+
+TODO: Extend support beyond literal non-type defaults and direct references to
+earlier non-type template parameters. More general defaults require expression
+substitution/evaluation before they can be printed into the BRiCk alias table.
 */
 bool isSupportedValueDefault(const clang::NonTypeTemplateParmDecl *param);
 
@@ -42,6 +43,14 @@ is a class/union or type-alias template declaration whose template has a suffix
 of defaulted parameters that this module can represent in the BRiCk alias
 table. It emits no output when those declaration/default-argument conditions
 are not met.
+
+TODO: This currently rejects template-template parameters, parameter packs,
+duplicate enclosing/local parameter names, and non-type defaults outside
+`isSupportedValueDefault`.
+
+TODO: Alias generation is currently all-or-nothing for a declaration: if any
+defaulted parameter in the suffix is unsupported, no default-template aliases
+are emitted for that declaration.
 */
 void printDefaultTemplateAliases(const clang::Decl *decl, CoqPrinter &print,
                                  ClangPrinter &cprint);
@@ -55,11 +64,24 @@ The function prints one BRiCk `list temp_arg` containing all original template
 arguments after recursively expanding the omitted default arguments through
 earlier parameters.
 
-Precondition: `keep <= params.size()`, and every parameter at index `keep` or
-later must have a default argument that this module can print. For non-type
-template parameters, callers should check `isSupportedValueDefault` before
-calling this function. For example, `keep == 1` is valid only when the second
-and all later parameters have defaults.
+Precondition: `keep <= params.size()`, every element of `params` is either a
+`TemplateTypeParmDecl` or `NonTypeTemplateParmDecl`, no element is a parameter
+pack, and every parameter at index `keep` or later has a default argument that
+this module can print. For non-type template parameters, callers should check
+`isSupportedValueDefault` before calling this function. For example, `keep == 1`
+is valid only when the second and all later parameters have defaults.
+
+TODO: This function performs only local recursive substitution for defaults that
+are already known to be printable; it is not a general Clang template
+substitution engine.
+
+TODO: A more complete implementation could use Clang's Sema substitution
+machinery with `MultiLevelTemplateArgumentList`, but that requires constructing
+dependent `TemplateArgument`s for parameter-to-parameter substitution and can
+trigger diagnostics or semantic instantiation.
+
+TODO: Generalizing this function to template-template parameters or parameter
+packs requires a larger representation story for generated aliases.
 
 For example, given:
 

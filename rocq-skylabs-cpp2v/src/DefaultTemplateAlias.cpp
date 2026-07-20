@@ -353,7 +353,8 @@ fmt::Formatter &printTargetArgs(CoqPrinter &print,
     This is a small, local substitution engine for defaults that are simple
     enough to represent directly in the generated alias table.
 
-    Clang does expose the more general machinery in Sema:
+    TODO: Consider replacing this local substitution engine with Clang's Sema
+    substitution machinery. Clang does expose the more general machinery in Sema:
     Sema::SubstType, Sema::SubstExpr, and Sema::SubstTemplateArgument over a
     MultiLevelTemplateArgumentList. That is the principled long-term direction,
     but it is not a drop-in replacement here. The generated alias targets often
