@@ -57,6 +57,48 @@ struct MemberPointerDefaultChain {
   V third;
 };
 
+template <typename T, typename U = T, typename V = U &>
+struct ReferenceDefaultChain {
+  T first;
+  U second;
+  V third;
+};
+
+template <typename T, typename U = T, typename V = U &&>
+struct RvalueReferenceDefaultChain {
+  T first;
+  U second;
+  V third;
+};
+
+template <typename T, typename U = T, typename V = const U>
+struct QualifiedDefaultChain {
+  T first;
+  U second;
+  V third;
+};
+
+template <typename T, typename U = T, typename V = const U *>
+struct QualifiedPointerDefaultChain {
+  T first;
+  U second;
+  V third;
+};
+
+template <typename T, typename U = T, typename V = U (*)(const U *, U &)>
+struct FunctionMixedDefaultChain {
+  T first;
+  U second;
+  V third;
+};
+
+template <typename T, typename U = T, typename V = DefaultedPair<U *, const U &>>
+struct SpecializationNestedDefaultChain {
+  T first;
+  U second;
+  V third;
+};
+
 template <typename T, int N = 0>
 struct ValueDefault {
   T value;
@@ -196,6 +238,52 @@ Definition member_pointer_default_chain_one_arg : type :=
      Atype (Tparam "T");
      Atype defaulted_member_pointer_type]).
 
+Definition reference_default_chain_one_arg : type :=
+  Tnamed (Ninst (Nglobal (Nid "ReferenceDefaultChain"))
+    [Atype (Tparam "T");
+     Atype (Tparam "T");
+     Atype (Tref (Tparam "T"))]).
+
+Definition rvalue_reference_default_chain_one_arg : type :=
+  Tnamed (Ninst (Nglobal (Nid "RvalueReferenceDefaultChain"))
+    [Atype (Tparam "T");
+     Atype (Tparam "T");
+     Atype (Trv_ref (Tparam "T"))]).
+
+Definition qualified_default_chain_one_arg : type :=
+  Tnamed (Ninst (Nglobal (Nid "QualifiedDefaultChain"))
+    [Atype (Tparam "T");
+     Atype (Tparam "T");
+     Atype (Tconst (Tparam "T"))]).
+
+Definition qualified_pointer_default_chain_one_arg : type :=
+  Tnamed (Ninst (Nglobal (Nid "QualifiedPointerDefaultChain"))
+    [Atype (Tparam "T");
+     Atype (Tparam "T");
+     Atype (Tptr (Tconst (Tparam "T")))]).
+
+Definition function_mixed_default_type : type :=
+  Tptr (core.Tfunction
+    (FunctionType (Tparam "T")
+      [Tptr (Tconst (Tparam "T")); Tref (Tparam "T")])).
+
+Definition function_mixed_default_chain_one_arg : type :=
+  Tnamed (Ninst (Nglobal (Nid "FunctionMixedDefaultChain"))
+    [Atype (Tparam "T");
+     Atype (Tparam "T");
+     Atype function_mixed_default_type]).
+
+Definition specialization_nested_default_type : type :=
+  Tnamed (Ninst (Nglobal (Nid "DefaultedPair"))
+    [Atype (Tptr (Tparam "T"));
+     Atype (Tref (Tconst (Tparam "T")))]).
+
+Definition specialization_nested_default_chain_one_arg : type :=
+  Tnamed (Ninst (Nglobal (Nid "SpecializationNestedDefaultChain"))
+    [Atype (Tparam "T");
+     Atype (Tparam "T");
+     Atype specialization_nested_default_type]).
+
 Definition value_default_one_arg_params : list temp_param :=
   [Ptype "T"].
 
@@ -305,6 +393,36 @@ Proof. vm_compute. reflexivity. Qed.
 Example member_pointer_default_chain_generated_alias_target_substitutes_inside_member_pointer :
   alias_template_value "MemberPointerDefaultChain<$T>"%cpp_name =
   Some member_pointer_default_chain_one_arg.
+Proof. vm_compute. reflexivity. Qed.
+
+Example reference_default_chain_generated_alias_target_substitutes_inside_reference :
+  alias_template_value "ReferenceDefaultChain<$T>"%cpp_name =
+  Some reference_default_chain_one_arg.
+Proof. vm_compute. reflexivity. Qed.
+
+Example rvalue_reference_default_chain_generated_alias_target_substitutes_inside_reference :
+  alias_template_value "RvalueReferenceDefaultChain<$T>"%cpp_name =
+  Some rvalue_reference_default_chain_one_arg.
+Proof. vm_compute. reflexivity. Qed.
+
+Example qualified_default_chain_generated_alias_target_substitutes_under_cv :
+  alias_template_value "QualifiedDefaultChain<$T>"%cpp_name =
+  Some qualified_default_chain_one_arg.
+Proof. vm_compute. reflexivity. Qed.
+
+Example qualified_pointer_default_chain_generated_alias_target_substitutes_under_pointer_and_cv :
+  alias_template_value "QualifiedPointerDefaultChain<$T>"%cpp_name =
+  Some qualified_pointer_default_chain_one_arg.
+Proof. vm_compute. reflexivity. Qed.
+
+Example function_mixed_default_chain_generated_alias_target_substitutes_inside_function_parts :
+  alias_template_value "FunctionMixedDefaultChain<$T>"%cpp_name =
+  Some function_mixed_default_chain_one_arg.
+Proof. vm_compute. reflexivity. Qed.
+
+Example specialization_nested_default_chain_generated_alias_target_substitutes_inside_template_args :
+  alias_template_value "SpecializationNestedDefaultChain<$T>"%cpp_name =
+  Some specialization_nested_default_chain_one_arg.
 Proof. vm_compute. reflexivity. Qed.
 
 Example alias_default_chain_generated_alias_target_expands_alias_default :
@@ -506,6 +624,36 @@ Proof. vm_compute. reflexivity. Qed.
 Example member_pointer_default_chain_template_type_resolves_compound_default_substitution :
   trace.runO (dealias.resolveTN source "MemberPointerDefaultChain<$T>"%cpp_name) =
   Some member_pointer_default_chain_one_arg.
+Proof. vm_compute. reflexivity. Qed.
+
+Example reference_default_chain_template_type_resolves_compound_default_substitution :
+  trace.runO (dealias.resolveTN source "ReferenceDefaultChain<$T>"%cpp_name) =
+  Some reference_default_chain_one_arg.
+Proof. vm_compute. reflexivity. Qed.
+
+Example rvalue_reference_default_chain_template_type_resolves_compound_default_substitution :
+  trace.runO (dealias.resolveTN source "RvalueReferenceDefaultChain<$T>"%cpp_name) =
+  Some rvalue_reference_default_chain_one_arg.
+Proof. vm_compute. reflexivity. Qed.
+
+Example qualified_default_chain_template_type_resolves_compound_default_substitution :
+  trace.runO (dealias.resolveTN source "QualifiedDefaultChain<$T>"%cpp_name) =
+  Some qualified_default_chain_one_arg.
+Proof. vm_compute. reflexivity. Qed.
+
+Example qualified_pointer_default_chain_template_type_resolves_compound_default_substitution :
+  trace.runO (dealias.resolveTN source "QualifiedPointerDefaultChain<$T>"%cpp_name) =
+  Some qualified_pointer_default_chain_one_arg.
+Proof. vm_compute. reflexivity. Qed.
+
+Example function_mixed_default_chain_template_type_resolves_compound_default_substitution :
+  trace.runO (dealias.resolveTN source "FunctionMixedDefaultChain<$T>"%cpp_name) =
+  Some function_mixed_default_chain_one_arg.
+Proof. vm_compute. reflexivity. Qed.
+
+Example specialization_nested_default_chain_template_type_resolves_compound_default_substitution :
+  trace.runO (dealias.resolveTN source "SpecializationNestedDefaultChain<$T>"%cpp_name) =
+  Some specialization_nested_default_chain_one_arg.
 Proof. vm_compute. reflexivity. Qed.
 
 Example alias_default_chain_resolves_alias_default :
