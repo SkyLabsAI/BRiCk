@@ -1,6 +1,6 @@
 (lang dune 3.22)
-(cram enable)
-(name guesstimator)
+(using rocq 0.12)
+(name ltac2-guesstimator)
 
 (generate_opam_files)
 
@@ -9,9 +9,11 @@
 (license TODO)
 
 (package
- (name guesstimator)
+ (name ltac2-guesstimator)
+ (synopsis "Ltac2 bindings for guesstimator")
  (depends
   (dune (>= 3.22))
   (ocaml (>= 4.08))
-  (cmdliner (>= 1.1.0))
-  (csv (>= 2.4))))
+  rocq-runtime
+  rocq-core
+  guesstimator))
