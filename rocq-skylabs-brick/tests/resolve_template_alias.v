@@ -114,6 +114,11 @@ struct ValueParamDefault {
   T value;
 };
 
+template <typename T, int N, int M = N, int K = M>
+struct ValueParamDefaultChain {
+  T value;
+};
+
 template <typename T, int N, int M = N + 1>
 struct ValueExpressionDefault {
   T value;
@@ -302,6 +307,18 @@ Definition value_param_default_two_arg_params : list temp_param :=
 Definition value_param_default_two_arg_target : type :=
   Tnamed "ValueParamDefault<$T, `N, `N>"%cpp_name.
 
+Definition value_param_default_chain_two_arg_params : list temp_param :=
+  [Ptype "T"; Pvalue "N" Tint].
+
+Definition value_param_default_chain_two_arg_target : type :=
+  Tnamed "ValueParamDefaultChain<$T, `N, `N, `N>"%cpp_name.
+
+Definition value_param_default_chain_three_arg_params : list temp_param :=
+  [Ptype "T"; Pvalue "N" Tint; Pvalue "M" Tint].
+
+Definition value_param_default_chain_three_arg_target : type :=
+  Tnamed "ValueParamDefaultChain<$T, `N, `M, `M>"%cpp_name.
+
 Definition value_then_type_default_one_arg_params : list temp_param :=
   [Pvalue "N" Tint].
 
@@ -463,6 +480,26 @@ Proof. vm_compute. reflexivity. Qed.
 Example value_param_default_generated_alias_target :
   alias_template_value "ValueParamDefault<$T, `N>"%cpp_name =
   Some value_param_default_two_arg_target.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_param_default_chain_two_arg_generated_alias_params :
+  alias_template_params "ValueParamDefaultChain<$T, `N>"%cpp_name =
+  Some value_param_default_chain_two_arg_params.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_param_default_chain_two_arg_generated_alias_target :
+  alias_template_value "ValueParamDefaultChain<$T, `N>"%cpp_name =
+  Some value_param_default_chain_two_arg_target.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_param_default_chain_three_arg_generated_alias_params :
+  alias_template_params "ValueParamDefaultChain<$T, `N, `M>"%cpp_name =
+  Some value_param_default_chain_three_arg_params.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_param_default_chain_three_arg_generated_alias_target :
+  alias_template_value "ValueParamDefaultChain<$T, `N, `M>"%cpp_name =
+  Some value_param_default_chain_three_arg_target.
 Proof. vm_compute. reflexivity. Qed.
 
 Example value_expression_default_does_not_generate_unsupported_alias :
@@ -684,6 +721,16 @@ Proof. vm_compute. reflexivity. Qed.
 Example value_param_default_resolves_prior_parameter_default :
   trace.runO (dealias.resolveTN source "ValueParamDefault<$T, `N>"%cpp_name) =
   Some value_param_default_two_arg_target.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_param_default_chain_two_arg_resolves_prior_parameter_default :
+  trace.runO (dealias.resolveTN source "ValueParamDefaultChain<$T, `N>"%cpp_name) =
+  Some value_param_default_chain_two_arg_target.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_param_default_chain_three_arg_resolves_prior_parameter_default :
+  trace.runO (dealias.resolveTN source "ValueParamDefaultChain<$T, `N, `M>"%cpp_name) =
+  Some value_param_default_chain_three_arg_target.
 Proof. vm_compute. reflexivity. Qed.
 
 Example value_then_type_default_resolves_mixed_value_and_type_default :
