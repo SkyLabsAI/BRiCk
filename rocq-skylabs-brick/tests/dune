@@ -1,5 +1,6 @@
 (rocq.theory
  (name skylabs_brick.tests)
+ (flags (:standard -test-mode) (-output-directory .))
  (generate_project_file)
  (theories
   Stdlib
@@ -16,6 +17,13 @@
   skylabs.ltac2.extra
   skylabs.lang.cpp
   ; transitive dependencies
-  Equations Equations.Prop Equations.Type Flocq elpi.apps.NES elpi.apps.NES.elpi
-  elpi.apps.derive elpi.apps.derive.elpi elpi.apps.locker elpi.apps.locker.elpi
- ))
+  Equations
+  Equations.Prop
+  Equations.Type
+  Flocq
+  elpi.apps.NES
+  elpi.apps.NES.elpi
+  elpi.apps.derive
+  elpi.apps.derive.elpi
+  elpi.apps.locker
+  elpi.apps.locker.elpi))
