@@ -1,0 +1,6 @@
+(executable
+ (name rocq_elpi_lint)
+ (public_name rocq-elpi-lint)
+ (package rocq-elpi-lint)
+ (modules rocq_elpi_lint)
+ (libraries bos cmdliner fpath str))

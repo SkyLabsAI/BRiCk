@@ -1,0 +1,21 @@
+(lang dune 3.22)
+
+(name rocq-elpi-lint)
+
+(generate_opam_files)
+
+(maintainers "Gregory Malecha <gregory@skylabs-ai.com>")
+
+(authors "Gregory Malecha <gregory@skylabs-ai.com>")
+
+(license LGPL-2.1-only)
+
+(source
+ (github SkyLabsAI/BRiCk))
+
+(package
+ (name rocq-elpi-lint)
+ (synopsis "Lint #line directives in Rocq-Elpi accumulate blocks")
+ (depends bos cmdliner fpath))
+
+(subst disabled)
