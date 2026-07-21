@@ -408,6 +408,35 @@ static std::string getTemplateParamName(const NamedDecl &decl) {
     return "__template_param";
 }
 
+static fmt::Formatter &printAtomicName(const DeclContext &ctx, const Decl &decl,
+                                       CoqPrinter &print,
+                                       ClangPrinter &cprint);
+
+static fmt::Formatter &printNameWithoutTemplateArgs(CoqPrinter &print,
+                                                    const Decl &decl,
+                                                    ClangPrinter &cprint) {
+    auto ctx = getNonIgnorableAncestor(decl, cprint);
+    if (ctx->isTranslationUnit()) {
+        guard::ctor _(print, "Nglobal", false);
+        printAtomicName(ctx, decl, print, cprint);
+    } else {
+        guard::ctor _(print, "Nscoped", false);
+        cprint.printName(print, toDecl(ctx, cprint, loc::of(decl)))
+            << fmt::nbsp;
+        printAtomicName(ctx, decl, print, cprint);
+    }
+    return print.output();
+}
+
+static fmt::Formatter &printTemplateNameWithArgs(
+    CoqPrinter &print, const NamedDecl &decl, ClangPrinter &cprint,
+    llvm::function_ref<void()> print_args, bool line = false) {
+    guard::ctor _(print, "Ninst", line);
+    printNameWithoutTemplateArgs(print, decl, cprint) << fmt::nbsp;
+    print_args();
+    return print.output();
+}
+
 static fmt::Formatter &printTemplateParam(CoqPrinter &print,
                                           const NamedDecl *pdecl,
                                           ClangPrinter &cprint,
@@ -428,7 +457,7 @@ static fmt::Formatter &printTemplateParam(CoqPrinter &print,
                                              "Punsupported",
                                              "template parameter pack");
 
-    auto name = getTemplateParamName(decl);
+    auto name = cprint.getTemplateParamName(decl);
 
     switch (decl.getKind()) {
     case Decl::Kind::TemplateTypeParm: {
@@ -507,7 +536,7 @@ static fmt::Formatter &printTemplateArg(CoqPrinter &print,
                                              "Aunsupported",
                                              "template parameter pack");
 
-    auto name = getTemplateParamName(decl);
+    auto name = cprint.getTemplateParamName(decl);
 
     switch (decl.getKind()) {
     case Decl::Kind::TemplateTypeParm: {
@@ -1016,18 +1045,6 @@ static fmt::Formatter &printName(CoqPrinter &print, const Decl &decl,
         always_assert(false);
     }
 
-    auto name = [&]() {
-        auto ctx = getNonIgnorableAncestor(decl, cprint);
-        if (ctx->isTranslationUnit()) {
-            guard::ctor _(print, "Nglobal", false);
-            printAtomicName(ctx, decl, print, cprint);
-        } else {
-            guard::ctor _(print, "Nscoped", false);
-            cprint.printName(print, toDecl(ctx, cprint, loc::of(decl)))
-                << fmt::nbsp;
-            printAtomicName(ctx, decl, print, cprint);
-        }
-    };
     auto parameters = [&](auto dct) {
         print.list(dct->getTemplateParameters()->asArray(),
                    [&](const clang::NamedDecl *p) {
@@ -1037,35 +1054,23 @@ static fmt::Formatter &printName(CoqPrinter &print, const Decl &decl,
 
     if (auto cd = dyn_cast<CXXRecordDecl>(&decl)) {
         if (auto dct = cd->getDescribedClassTemplate()) {
-            guard::ctor _(print, "Ninst", true);
-            name();
-            print.output() << fmt::nbsp;
-            parameters(dct);
-            return print.output();
+            return printTemplateNameWithArgs(print, *cd, cprint,
+                                             [&]() { parameters(dct); }, true);
         }
     } else if (auto fd = dyn_cast<FunctionDecl>(&decl)) {
         if (auto dct = fd->getDescribedFunctionTemplate()) {
-            guard::ctor _(print, "Ninst", true);
-            name();
-            print.output() << fmt::nbsp;
-            parameters(dct);
-            return print.output();
+            return printTemplateNameWithArgs(print, *fd, cprint,
+                                             [&]() { parameters(dct); }, true);
         }
     } else if (auto td = dyn_cast<TypeAliasDecl>(&decl)) {
         if (auto dct = td->getDescribedAliasTemplate()) {
-            guard::ctor _(print, "Ninst", true);
-            name();
-            print.output() << fmt::nbsp;
-            parameters(dct);
-            return print.output();
+            return printTemplateNameWithArgs(print, *td, cprint,
+                                             [&]() { parameters(dct); }, true);
         }
     } else if (auto vd = dyn_cast<VarDecl>(&decl)) {
         if (auto dct = vd->getDescribedVarTemplate()) {
-            guard::ctor _(print, "Ninst", true);
-            name();
-            print.output() << fmt::nbsp;
-            parameters(dct);
-            return print.output();
+            return printTemplateNameWithArgs(print, *vd, cprint,
+                                             [&]() { parameters(dct); }, true);
         }
     }
 
@@ -1074,7 +1079,7 @@ static fmt::Formatter &printName(CoqPrinter &print, const Decl &decl,
         print.ctor("Ninst", false);
     }
 
-    name();
+    printNameWithoutTemplateArgs(print, decl, cprint);
 
     if (sd) {
         print.output() << fmt::nbsp;
@@ -1180,6 +1185,19 @@ fmt::Formatter &ClangPrinter::printUnqualifiedName(CoqPrinter &print,
                                                    loc::loc loc) {
     return printUnqualifiedName(
         print, deref(print, *this, "printUnqualifiedName", p, loc));
+}
+
+std::string ClangPrinter::getTemplateParamName(const NamedDecl &decl) const {
+    return structured::getTemplateParamName(decl);
+}
+
+fmt::Formatter &ClangPrinter::printTemplateNameWithArgs(
+    CoqPrinter &print, const NamedDecl &decl,
+    llvm::function_ref<void()> print_args, bool line) {
+    if (trace(Trace::Name))
+        trace("printTemplateNameWithArgs", loc::of(decl));
+    return structured::printTemplateNameWithArgs(print, decl, *this,
+                                                print_args, line);
 }
 
 fmt::Formatter &ClangPrinter::printTemplateParam(CoqPrinter &print,

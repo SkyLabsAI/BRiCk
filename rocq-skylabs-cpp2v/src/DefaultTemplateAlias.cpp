@@ -19,33 +19,13 @@
 #include <clang/Sema/Template.h>
 #include <llvm/ADT/STLExtras.h>
 #include <llvm/ADT/SmallVector.h>
-#include <functional>
 #include <optional>
+#include <type_traits>
 #include <vector>
 
 using namespace clang;
 
 namespace {
-
-static std::string getTemplateParamName(const NamedDecl &decl) {
-    if (auto id = decl.getIdentifier())
-        return id->getName().str();
-
-    auto position_name = [](auto &param, StringRef prefix) {
-        return (prefix + Twine(param.getDepth()) + "_" +
-                Twine(param.getIndex()))
-            .str();
-    };
-
-    if (auto param = dyn_cast<TemplateTypeParmDecl>(&decl))
-        return position_name(*param, "__type_");
-    if (auto param = dyn_cast<NonTypeTemplateParmDecl>(&decl))
-        return position_name(*param, "__value_");
-    if (auto param = dyn_cast<TemplateTemplateParmDecl>(&decl))
-        return position_name(*param, "__template_");
-
-    return "__template_param";
-}
 
 static fmt::Formatter &printTemplateParamArg(CoqPrinter &print,
                                              const NamedDecl *param,
@@ -59,43 +39,11 @@ static fmt::Formatter &printTemplateParam(CoqPrinter &print,
     return cprint.printTemplateParam(print, param, loc::of(param));
 }
 
-static fmt::Formatter &printId(CoqPrinter &print, StringRef name) {
-    guard::ctor _{print, "Nid", false};
-    return print.str(name);
-}
-
-static fmt::Formatter &printTemplateBaseName(CoqPrinter &print,
-                                             const NamedDecl &decl,
-                                             ClangPrinter &cprint) {
-    auto ctx = decl.getDeclContext();
-    while (ctx && !ctx->isTranslationUnit() && !isa<NamedDecl>(ctx))
-        ctx = ctx->getParent();
-
-    if (!ctx || ctx->isTranslationUnit()) {
-        guard::ctor _{print, "Nglobal", false};
-        return printId(print, decl.getName());
-    }
-
-    guard::ctor _{print, "Nscoped", false};
-    cprint.printName(print, *cast<NamedDecl>(Decl::castFromDeclContext(ctx)))
-        << fmt::nbsp;
-    return printId(print, decl.getName());
-}
-
-static fmt::Formatter &printTemplateNameWithArgs(
-    CoqPrinter &print, const NamedDecl &decl, ClangPrinter &cprint,
-    llvm::function_ref<void()> print_args) {
-    guard::ctor _{print, "Ninst", false};
-    printTemplateBaseName(print, decl, cprint) << fmt::nbsp;
-    print_args();
-    return print.output();
-}
-
 static fmt::Formatter &
 printDefaultAliasKey(CoqPrinter &print, const NamedDecl &decl,
                      ArrayRef<const NamedDecl *> params, unsigned keep,
                      ClangPrinter &cprint) {
-    return printTemplateNameWithArgs(print, decl, cprint, [&]() {
+    return cprint.printTemplateNameWithArgs(print, decl, [&]() {
         print.list(params.take_front(keep), [&](const NamedDecl *param) {
             printTemplateParamArg(print, param, cprint);
         });
@@ -116,14 +64,12 @@ getReferencedValueParam(const Expr *expr) {
     return nullptr;
 }
 
-static const TemplateTypeParmDecl *
-asTemplateTypeParmDecl(const TemplateTypeParmDecl *decl) {
-    return decl;
-}
-
-static const TemplateTypeParmDecl *
-asTemplateTypeParmDecl(const TemplateTypeParmType *type) {
-    return type ? type->getDecl() : nullptr;
+template <typename T>
+static const TemplateTypeParmDecl *asTemplateTypeParmDecl(const T *param) {
+    if constexpr (std::is_same_v<T, TemplateTypeParmDecl>)
+        return param;
+    else
+        return param ? param->getDecl() : nullptr;
 }
 
 static const TemplateTypeParmDecl *
@@ -270,6 +216,18 @@ struct TemplateArgumentListBuilder {
     MultiLevelTemplateArgumentList template_args;
 };
 
+struct TemplateParamPosition {
+    unsigned depth;
+    unsigned index;
+};
+
+static TemplateParamPosition getTemplateParamPosition(const NamedDecl *param) {
+    if (auto *type = dyn_cast<TemplateTypeParmDecl>(param))
+        return {type->getDepth(), type->getIndex()};
+    auto *value = cast<NonTypeTemplateParmDecl>(param);
+    return {value->getDepth(), value->getIndex()};
+}
+
 static TemplateArgumentListBuilder
 buildTemplateArgumentList(ASTContext &context, unsigned limit,
                           ArrayRef<NamedDecl *> params,
@@ -277,24 +235,16 @@ buildTemplateArgumentList(ASTContext &context, unsigned limit,
     TemplateArgumentListBuilder builder;
     unsigned max_depth = 0;
     for (auto *param : params) {
-        unsigned depth = isa<TemplateTypeParmDecl>(param)
-                             ? cast<TemplateTypeParmDecl>(param)->getDepth()
-                             : cast<NonTypeTemplateParmDecl>(param)->getDepth();
-        max_depth = std::max(max_depth, depth);
+        auto position = getTemplateParamPosition(param);
+        max_depth = std::max(max_depth, position.depth);
     }
 
     builder.levels.resize(max_depth + 1);
     for (unsigned i = 0; i < params.size(); ++i) {
-        auto *param = params[i];
-        unsigned depth = isa<TemplateTypeParmDecl>(param)
-                             ? cast<TemplateTypeParmDecl>(param)->getDepth()
-                             : cast<NonTypeTemplateParmDecl>(param)->getDepth();
-        unsigned index = isa<TemplateTypeParmDecl>(param)
-                             ? cast<TemplateTypeParmDecl>(param)->getIndex()
-                             : cast<NonTypeTemplateParmDecl>(param)->getIndex();
-        if (builder.levels[depth].size() <= index)
-            builder.levels[depth].resize(index + 1);
-        builder.levels[depth][index] =
+        auto position = getTemplateParamPosition(params[i]);
+        if (builder.levels[position.depth].size() <= position.index)
+            builder.levels[position.depth].resize(position.index + 1);
+        builder.levels[position.depth][position.index] =
             i < limit ? templateArgumentFor(context, args[i], params)
                       : TemplateArgument{};
     }
@@ -364,12 +314,13 @@ static bool collectTemplateParamsForDecl(const Decl &decl,
 }
 
 static bool hasDuplicateTemplateParamNames(
-    ArrayRef<const NamedDecl *> first, ArrayRef<const NamedDecl *> second) {
+    ArrayRef<const NamedDecl *> first, ArrayRef<const NamedDecl *> second,
+    const ClangPrinter &cprint) {
     std::vector<std::string> names;
     names.reserve(first.size() + second.size());
 
     auto add_name = [&](const NamedDecl *param) {
-        auto name = getTemplateParamName(*param);
+        auto name = cprint.getTemplateParamName(*param);
         if (llvm::is_contained(names, name))
             return false;
         names.push_back(std::move(name));
@@ -386,13 +337,17 @@ static bool hasDuplicateTemplateParamNames(
     return false;
 }
 
+static bool isSupportedValueDefault(const NonTypeTemplateParmDecl *param) {
+    return isSupportedValueDefaultExpr(getTemplateValueDefault(param));
+}
+
+static fmt::Formatter &printTargetArgs(CoqPrinter &print,
+                                       ArrayRef<const NamedDecl *> params,
+                                       unsigned keep, ClangPrinter &cprint);
+
 } // namespace
 
 namespace default_template_alias {
-
-bool isSupportedValueDefault(const NonTypeTemplateParmDecl *param) {
-    return isSupportedValueDefaultExpr(getTemplateValueDefault(param));
-}
 
 void printDefaultTemplateAliases(const Decl *decl, CoqPrinter &print,
                                  ClangPrinter &cprint) {
@@ -419,8 +374,8 @@ void printDefaultTemplateAliases(const Decl *decl, CoqPrinter &print,
         return;
 
     unsigned first_default = params.size();
-    std::vector<const NamedDecl *> prefix_params;
-    prefix_params.reserve(params.size());
+    std::vector<const NamedDecl *> validated_params;
+    validated_params.reserve(params.size());
 
     for (unsigned i = 0; i < params.size(); ++i) {
         if (params[i]->isParameterPack())
@@ -443,7 +398,7 @@ void printDefaultTemplateAliases(const Decl *decl, CoqPrinter &print,
         } else {
             return;
         }
-        prefix_params.push_back(params[i]);
+        validated_params.push_back(params[i]);
     }
 
     if (first_default == params.size())
@@ -457,7 +412,7 @@ void printDefaultTemplateAliases(const Decl *decl, CoqPrinter &print,
                                               enclosing_params))
                 return;
     }
-    if (hasDuplicateTemplateParamNames(enclosing_params, prefix_params))
+    if (hasDuplicateTemplateParamNames(enclosing_params, validated_params, cp))
         return;
 
     for (unsigned keep = first_default; keep < params.size(); ++keep) {
@@ -468,7 +423,8 @@ void printDefaultTemplateAliases(const Decl *decl, CoqPrinter &print,
                 for (auto *param : enclosing_params)
                     printTemplateParam(print, param, cp) << fmt::cons;
                 for (auto *param :
-                     ArrayRef<const NamedDecl *>(prefix_params).take_front(keep))
+                     ArrayRef<const NamedDecl *>(validated_params)
+                         .take_front(keep))
                     printTemplateParam(print, param, cp) << fmt::cons;
             }
             print.output() << fmt::nbsp;
@@ -476,7 +432,7 @@ void printDefaultTemplateAliases(const Decl *decl, CoqPrinter &print,
                 << fmt::nbsp;
             {
                 guard::ctor _{print, "Tnamed", false};
-                printTemplateNameWithArgs(print, *templated_decl, cp, [&]() {
+                cp.printTemplateNameWithArgs(print, *templated_decl, [&]() {
                     printTargetArgs(print, params, keep, cp);
                 });
             }
@@ -485,9 +441,13 @@ void printDefaultTemplateAliases(const Decl *decl, CoqPrinter &print,
     }
 }
 
-fmt::Formatter &printTargetArgs(CoqPrinter &print,
-                                ArrayRef<const NamedDecl *> params,
-                                unsigned keep, ClangPrinter &cprint) {
+} // namespace default_template_alias
+
+namespace {
+
+static fmt::Formatter &printTargetArgs(CoqPrinter &print,
+                                       ArrayRef<const NamedDecl *> params,
+                                       unsigned keep, ClangPrinter &cprint) {
     /*
     This uses Sema substitution for defaults that are simple enough to represent
     directly in the generated alias table.
@@ -565,4 +525,4 @@ fmt::Formatter &printTargetArgs(CoqPrinter &print,
     return print.output();
 }
 
-} // namespace default_template_alias
+} // namespace

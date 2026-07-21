@@ -10,6 +10,8 @@
 #include <clang/Basic/Diagnostic.h>
 #include <clang/Basic/Version.inc>
 #include <llvm/ADT/ArrayRef.h>
+#include <llvm/ADT/STLFunctionalExtras.h>
+#include <string>
 
 namespace clang {
 class Decl;
@@ -201,6 +203,13 @@ public:
 
     fmt::Formatter &printFieldName(CoqPrinter &, const clang::FieldDecl &,
                                    loc::loc);
+
+    std::string getTemplateParamName(const clang::NamedDecl &) const;
+
+    fmt::Formatter &printTemplateNameWithArgs(CoqPrinter &,
+                                              const clang::NamedDecl &,
+                                              llvm::function_ref<void()>,
+                                              bool line = false);
 
     // Print one Rocq [temp_param].
     fmt::Formatter &printTemplateParam(CoqPrinter &,
