@@ -8,12 +8,14 @@
 #include "CoqPrinter.hpp"
 #include "Formatter.hpp"
 #include "Location.hpp"
+#include <clang/AST/ASTContext.h>
 #include <clang/AST/Decl.h>
 #include <clang/AST/DeclTemplate.h>
 #include <clang/AST/ExprCXX.h>
 #include <clang/AST/Type.h>
 #include <clang/Basic/Version.inc>
 #include <llvm/ADT/STLExtras.h>
+#include <llvm/ADT/SmallVector.h>
 #include <functional>
 #include <optional>
 #include <vector>
@@ -40,12 +42,6 @@ static std::string getTemplateParamName(const NamedDecl &decl) {
         return position_name(*param, "__template_");
 
     return "__template_param";
-}
-
-static fmt::Formatter &printTemplateParamType(CoqPrinter &print,
-                                              const NamedDecl *param) {
-    guard::ctor _{print, "Tparam", false};
-    return print.str(getTemplateParamName(*param));
 }
 
 static fmt::Formatter &printTemplateParamArg(CoqPrinter &print,
@@ -101,25 +97,6 @@ printDefaultAliasKey(CoqPrinter &print, const NamedDecl &decl,
             printTemplateParamArg(print, param, cprint);
         });
     });
-}
-
-static fmt::Formatter &printQualifiers(CoqPrinter &print, QualType qt,
-                                       llvm::function_ref<void()> print_type) {
-    if (qt.isLocalConstQualified()) {
-        print.ctor(qt.isVolatileQualified() ? "Qconst_volatile" : "Qconst",
-                   false);
-        print_type();
-        return print.end_ctor();
-    }
-
-    if (qt.isLocalVolatileQualified()) {
-        print.ctor("Qvolatile", false);
-        print_type();
-        return print.end_ctor();
-    }
-
-    print_type();
-    return print.output();
 }
 
 static const Expr *ignoreValueDefaultCasts(const Expr *expr) {
@@ -257,6 +234,197 @@ static bool sameTemplateValueParam(const NonTypeTemplateParmDecl *lhs,
     return lhs == rhs_value ||
            (rhs_value && lhs->getDepth() == rhs_value->getDepth() &&
             lhs->getIndex() == rhs_value->getIndex());
+}
+
+enum class ArgumentKind { Type, Value };
+
+struct Argument {
+    ArgumentKind kind;
+    std::optional<unsigned> param_ref;
+    QualType default_type;
+    const Expr *default_expr = nullptr;
+};
+
+struct ExprSubstitution {
+    std::optional<unsigned> param_ref;
+    const Expr *expr = nullptr;
+};
+
+static std::optional<unsigned>
+findTypeParam(const TemplateTypeParmDecl *needle,
+              ArrayRef<const NamedDecl *> params, unsigned limit) {
+    for (unsigned j = 0; j < limit; ++j)
+        if (sameTemplateTypeParam(needle, params[j]))
+            return j;
+    return std::nullopt;
+}
+
+static std::optional<unsigned>
+findValueParam(const NonTypeTemplateParmDecl *needle,
+               ArrayRef<const NamedDecl *> params, unsigned limit) {
+    for (unsigned j = 0; j < limit; ++j)
+        if (sameTemplateValueParam(needle, params[j]))
+            return j;
+    return std::nullopt;
+}
+
+static QualType templateParamType(ASTContext &context, const NamedDecl *param) {
+    auto *type_param = cast<TemplateTypeParmDecl>(param);
+    return context.getTemplateTypeParmType(
+        type_param->getDepth(), type_param->getIndex(),
+        type_param->isParameterPack(),
+        const_cast<TemplateTypeParmDecl *>(type_param));
+}
+
+static QualType substDefaultType(ASTContext &context, QualType qt,
+                                 unsigned limit,
+                                 ArrayRef<const NamedDecl *> params,
+                                 ArrayRef<Argument> args) {
+    auto *type = qt.getTypePtrOrNull();
+    if (!type)
+        return qt;
+
+    auto subst_with_local_qualifiers = [&](QualType inner) {
+        auto result = substDefaultType(context, inner, limit, params, args);
+        return context.getQualifiedType(result, qt.getLocalQualifiers());
+    };
+
+    QualType unqualified = qt.getLocalQualifiers().empty()
+                               ? qt
+                               : qt.getLocalUnqualifiedType();
+
+    if (unqualified != qt)
+        return subst_with_local_qualifiers(unqualified);
+
+    if (auto *subst = dyn_cast<SubstTemplateTypeParmType>(type))
+        return substDefaultType(context, subst->getReplacementType(), limit,
+                                params, args);
+
+    if (auto *paren = dyn_cast<ParenType>(type))
+        return substDefaultType(context, paren->getInnerType(), limit, params,
+                                args);
+
+    if (auto *attr = dyn_cast<AttributedType>(type))
+        return substDefaultType(context, attr->getModifiedType(), limit, params,
+                                args);
+
+    if (auto *type_param = getReferencedTypeParam(qt)) {
+        if (auto index = findTypeParam(type_param, params, limit)) {
+            auto arg = args[*index];
+            if (arg.param_ref)
+                return templateParamType(context, params[*arg.param_ref]);
+            return substDefaultType(context, arg.default_type, *index, params,
+                                    args);
+        }
+    }
+
+    if (auto *specialization = dyn_cast<TemplateSpecializationType>(type)) {
+        if (specialization->isTypeAlias())
+            return substDefaultType(context, specialization->getAliasedType(),
+                                    limit, params, args);
+
+        bool changed = false;
+        SmallVector<TemplateArgument, 8> subst_args;
+        for (auto arg : specialization->template_arguments()) {
+            if (arg.getKind() == TemplateArgument::Type) {
+                auto old_type = arg.getAsType();
+                auto new_type =
+                    substDefaultType(context, old_type, limit, params, args);
+                changed |= new_type != old_type;
+                subst_args.emplace_back(new_type);
+            } else {
+                subst_args.push_back(arg);
+            }
+        }
+        if (!changed)
+            return qt;
+        return context.getTemplateSpecializationType(
+            specialization->getKeyword(), specialization->getTemplateName(),
+            subst_args, subst_args);
+    }
+
+    if (auto *array = dyn_cast<ConstantArrayType>(type)) {
+        auto element = substDefaultType(context, array->getElementType(), limit,
+                                        params, args);
+        if (element == array->getElementType())
+            return qt;
+        return context.getConstantArrayType(
+            element, array->getSize(), array->getSizeExpr(),
+            array->getSizeModifier(), array->getIndexTypeCVRQualifiers());
+    }
+
+    if (auto *ptr = dyn_cast<PointerType>(type)) {
+        auto pointee =
+            substDefaultType(context, ptr->getPointeeType(), limit, params, args);
+        if (pointee == ptr->getPointeeType())
+            return qt;
+        return context.getPointerType(pointee);
+    }
+
+    if (auto *ref = dyn_cast<LValueReferenceType>(type)) {
+        auto pointee =
+            substDefaultType(context, ref->getPointeeType(), limit, params, args);
+        if (pointee == ref->getPointeeType())
+            return qt;
+        return context.getLValueReferenceType(pointee, ref->isSpelledAsLValue());
+    }
+
+    if (auto *ref = dyn_cast<RValueReferenceType>(type)) {
+        auto pointee =
+            substDefaultType(context, ref->getPointeeType(), limit, params, args);
+        if (pointee == ref->getPointeeType())
+            return qt;
+        return context.getRValueReferenceType(pointee);
+    }
+
+    if (auto *func = dyn_cast<FunctionProtoType>(type)) {
+        bool changed = false;
+        auto return_type =
+            substDefaultType(context, func->getReturnType(), limit, params, args);
+        changed |= return_type != func->getReturnType();
+
+        SmallVector<QualType, 8> param_types;
+        for (auto param_type : func->param_types()) {
+            auto subst_param =
+                substDefaultType(context, param_type, limit, params, args);
+            changed |= subst_param != param_type;
+            param_types.push_back(subst_param);
+        }
+        if (!changed)
+            return qt;
+        return context.getFunctionType(return_type, param_types,
+                                       func->getExtProtoInfo());
+    }
+
+    if (auto *member_ptr = dyn_cast<MemberPointerType>(type)) {
+        auto pointee = substDefaultType(context, member_ptr->getPointeeType(),
+                                        limit, params, args);
+        if (pointee == member_ptr->getPointeeType())
+            return qt;
+#if CLANG_VERSION_MAJOR >= 21
+        return context.getMemberPointerType(
+            pointee, member_ptr->getQualifier(),
+            member_ptr->getMostRecentCXXRecordDecl());
+#else
+        return context.getMemberPointerType(pointee, member_ptr->getClass());
+#endif
+    }
+
+    return qt;
+}
+
+static ExprSubstitution substDefaultExpr(const Expr *expr, unsigned limit,
+                                         ArrayRef<const NamedDecl *> params,
+                                         ArrayRef<Argument> args) {
+    if (auto *value_param = getReferencedValueParam(expr)) {
+        if (auto index = findValueParam(value_param, params, limit)) {
+            auto arg = args[*index];
+            if (arg.param_ref)
+                return {*arg.param_ref, nullptr};
+            return substDefaultExpr(arg.default_expr, *index, params, args);
+        }
+    }
+    return {std::nullopt, expr};
 }
 
 static bool collectTemplateParamsForDecl(const Decl &decl,
@@ -434,188 +602,8 @@ fmt::Formatter &printTargetArgs(CoqPrinter &print,
     compiler action than pure AST rewriting. For now, this code deliberately
     handles only the simple defaults that cpp2v can print predictably.
     */
-    enum class ArgumentKind { Type, Value };
-    struct Argument {
-        ArgumentKind kind;
-        std::optional<unsigned> param_ref;
-        QualType default_type;
-        const Expr *default_expr = nullptr;
-    };
     std::vector<Argument> args;
     args.reserve(params.size());
-
-    auto find_param = [&](const TemplateTypeParmDecl *needle,
-                          unsigned limit) -> std::optional<unsigned> {
-        for (unsigned j = 0; j < limit; ++j) {
-            if (sameTemplateTypeParam(needle, params[j]))
-                return j;
-        }
-        return std::nullopt;
-    };
-
-    auto find_value_param = [&](const NonTypeTemplateParmDecl *needle,
-                                unsigned limit) -> std::optional<unsigned> {
-        for (unsigned j = 0; j < limit; ++j) {
-            if (sameTemplateValueParam(needle, params[j]))
-                return j;
-        }
-        return std::nullopt;
-    };
-
-    std::function<fmt::Formatter &(QualType, unsigned)> print_type =
-        [&](QualType qt, unsigned limit) -> fmt::Formatter & {
-        return printQualifiers(print, qt, [&]() {
-            auto *type = qt.getTypePtrOrNull();
-            if (!type) {
-                cprint.printQualType(print, qt, loc::none);
-                return;
-            }
-
-            if (auto *subst = dyn_cast<SubstTemplateTypeParmType>(type)) {
-                print_type(subst->getReplacementType(), limit);
-                return;
-            }
-
-            if (auto *paren = dyn_cast<ParenType>(type)) {
-                print_type(paren->getInnerType(), limit);
-                return;
-            }
-
-            if (auto *attr = dyn_cast<AttributedType>(type)) {
-                print_type(attr->getModifiedType(), limit);
-                return;
-            }
-
-            if (auto *type_param = getReferencedTypeParam(qt)) {
-                if (auto index = find_param(type_param, limit)) {
-                    auto arg = args[*index];
-                    if (arg.param_ref) {
-                        printTemplateParamType(print, params[*arg.param_ref]);
-                    } else {
-                        print_type(arg.default_type, *index);
-                    }
-                    return;
-                }
-            }
-
-            if (auto *specialization =
-                    dyn_cast<TemplateSpecializationType>(type)) {
-                if (specialization->isTypeAlias()) {
-                    print_type(specialization->getAliasedType(), limit);
-                    return;
-                }
-
-                auto *templ =
-                    specialization->getTemplateName().getAsTemplateDecl();
-                if (templ) {
-                    guard::ctor _{print, "Tnamed", false};
-                    guard::ctor __{print, "Ninst", false};
-                    cprint.printName(print, *templ) << fmt::nbsp;
-                    guard::list ___{print};
-                    for (auto arg : specialization->template_arguments()) {
-                        if (arg.getKind() == TemplateArgument::Type) {
-                            guard::ctor _{print, "Atype", false};
-                            print_type(arg.getAsType(), limit);
-                        } else {
-                            cprint.printTemplateArg(print, arg, loc::of(type));
-                        }
-                        print.output() << fmt::cons;
-                    }
-                    return;
-                }
-            }
-
-            if (auto *array = dyn_cast<ConstantArrayType>(type)) {
-                guard::ctor _{print, "Tarray", false};
-                print_type(array->getElementType(), limit);
-                print.output() << fmt::nbsp
-                               << array->getSize().getLimitedValue();
-                return;
-            }
-
-            if (auto *ptr = dyn_cast<PointerType>(type)) {
-                guard::ctor _{print, "Tptr", false};
-                print_type(ptr->getPointeeType(), limit);
-                return;
-            }
-
-            if (auto *ref = dyn_cast<LValueReferenceType>(type)) {
-                guard::ctor _{print, "Tref", false};
-                print_type(ref->getPointeeType(), limit);
-                return;
-            }
-
-            if (auto *ref = dyn_cast<RValueReferenceType>(type)) {
-                guard::ctor _{print, "Trv_ref", false};
-                print_type(ref->getPointeeType(), limit);
-                return;
-            }
-
-            if (auto *func = dyn_cast<FunctionProtoType>(type)) {
-                guard::ctor _{print, "Tfunction"};
-                print.output() << (print.templates() ? "Mtype" : "type")
-                               << fmt::nbsp;
-                cprint.printCallingConv(print, func->getCallConv(),
-                                        loc::of(type))
-                    << fmt::nbsp;
-                cprint.printVariadic(print, func->isVariadic()) << fmt::nbsp;
-                print_type(func->getReturnType(), limit) << fmt::nbsp;
-                print.list(func->param_types(), [&](QualType param_type) {
-                    print_type(param_type, limit);
-                });
-                return;
-            }
-
-            if (auto *member_ptr = dyn_cast<MemberPointerType>(type)) {
-                guard::ctor _{print, "Tmember_pointer", false};
-#if CLANG_VERSION_MAJOR >= 22
-                {
-                    NestedNameSpecifier NNS = member_ptr->getQualifier();
-                    if (NNS &&
-                        NNS.getKind() == NestedNameSpecifier::Kind::Type) {
-                        cprint.printType(print, NNS.getAsType(), loc::of(type));
-                    } else {
-                        cprint.printUnsupportedName(
-                            print, "unresolved class type in MemberPointerType");
-                    }
-                }
-#elif CLANG_VERSION_MAJOR >= 21
-                {
-                    const NestedNameSpecifier *NNS = member_ptr->getQualifier();
-                    if (const Type *class_type = NNS->getAsType()) {
-                        cprint.printType(print, class_type, loc::of(type));
-                    } else {
-                        cprint.printUnsupportedName(
-                            print, "unresolved class type in MemberPointerType");
-                    }
-                }
-#else
-                cprint.printType(print, member_ptr->getClass(), loc::of(type));
-#endif
-                print.output() << fmt::nbsp;
-                print_type(member_ptr->getPointeeType(), limit);
-                return;
-            }
-
-            cprint.printQualType(print, qt, loc::of(type));
-        });
-    };
-
-    std::function<fmt::Formatter &(const Expr *, unsigned)> print_expr =
-        [&](const Expr *expr, unsigned limit) -> fmt::Formatter & {
-            if (auto *value_param = getReferencedValueParam(expr)) {
-                if (auto index = find_value_param(value_param, limit)) {
-                    auto arg = args[*index];
-                    if (arg.param_ref) {
-                        guard::ctor _{print, "Eparam", false};
-                        return print.str(
-                            getTemplateParamName(*params[*arg.param_ref]));
-                    }
-                    return print_expr(arg.default_expr, *index);
-                }
-            }
-            return cprint.printExpr(print, expr);
-        };
 
     for (unsigned i = 0; i < params.size(); ++i) {
         if (i < keep) {
@@ -630,7 +618,7 @@ fmt::Formatter &printTargetArgs(CoqPrinter &print,
             auto default_type = getTemplateTypeDefault(param);
             std::optional<unsigned> ref;
             if (auto *type_param = getDirectReferencedTypeParam(default_type))
-                if (auto index = find_param(type_param, i))
+                if (auto index = findTypeParam(type_param, params, i))
                     ref = args[*index].param_ref;
             args.push_back({ArgumentKind::Type, ref, default_type});
         } else {
@@ -638,13 +626,14 @@ fmt::Formatter &printTargetArgs(CoqPrinter &print,
             auto *default_expr = getTemplateValueDefault(value_param);
             std::optional<unsigned> ref;
             if (auto *referenced = getReferencedValueParam(default_expr))
-                if (auto index = find_value_param(referenced, i))
+                if (auto index = findValueParam(referenced, params, i))
                     ref = args[*index].param_ref;
             args.push_back({ArgumentKind::Value, ref, QualType{},
                             default_expr});
         }
     }
 
+    auto &context = cprint.getContext();
     guard::list _{print};
     for (unsigned i = 0; i < params.size(); ++i) {
         auto arg = args[i];
@@ -652,10 +641,19 @@ fmt::Formatter &printTargetArgs(CoqPrinter &print,
             printTemplateParamArg(print, params[*arg.param_ref], cprint);
         } else if (arg.kind == ArgumentKind::Type) {
             guard::ctor _{print, "Atype", false};
-            print_type(arg.default_type, i);
+            cprint.printQualType(
+                print, substDefaultType(context, arg.default_type, i, params,
+                                        args),
+                loc::of(arg.default_type.getTypePtrOrNull()));
         } else {
             guard::ctor _{print, "Avalue", false};
-            print_expr(arg.default_expr, i);
+            auto subst = substDefaultExpr(arg.default_expr, i, params, args);
+            if (subst.param_ref) {
+                guard::ctor _{print, "Eparam", false};
+                print.str(getTemplateParamName(*params[*subst.param_ref]));
+            } else {
+                cprint.printExpr(print, subst.expr);
+            }
         }
         print.output() << fmt::cons;
     }
