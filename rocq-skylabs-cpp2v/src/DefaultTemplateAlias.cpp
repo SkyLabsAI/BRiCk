@@ -14,6 +14,9 @@
 #include <clang/AST/ExprCXX.h>
 #include <clang/AST/Type.h>
 #include <clang/Basic/Version.inc>
+#include <clang/Frontend/CompilerInstance.h>
+#include <clang/Sema/Sema.h>
+#include <clang/Sema/Template.h>
 #include <llvm/ADT/STLExtras.h>
 #include <llvm/ADT/SmallVector.h>
 #include <functional>
@@ -124,37 +127,6 @@ asTemplateTypeParmDecl(const TemplateTypeParmType *type) {
 }
 
 static const TemplateTypeParmDecl *
-getReferencedTypeParam(QualType qt) {
-    auto *type = qt.getTypePtrOrNull();
-    if (!type)
-        return nullptr;
-
-    if (auto *type_param = dyn_cast<TemplateTypeParmType>(type))
-        return type_param->getDecl();
-
-    if (auto *subst = dyn_cast<SubstTemplateTypeParmType>(type)) {
-        if (auto *replacement =
-                getReferencedTypeParam(subst->getReplacementType()))
-            return replacement;
-        return asTemplateTypeParmDecl(subst->getReplacedParameter());
-    }
-
-    if (auto *paren = dyn_cast<ParenType>(type))
-        return getReferencedTypeParam(paren->getInnerType());
-
-    if (auto *attr = dyn_cast<AttributedType>(type))
-        return getReferencedTypeParam(attr->getModifiedType());
-
-    if (auto *adjusted = dyn_cast<AdjustedType>(type))
-        return getReferencedTypeParam(adjusted->getOriginalType());
-
-    if (auto *type_param = type->getAs<TemplateTypeParmType>())
-        return type_param->getDecl();
-
-    return nullptr;
-}
-
-static const TemplateTypeParmDecl *
 getDirectReferencedTypeParam(QualType qt) {
     if (qt.hasLocalQualifiers())
         return nullptr;
@@ -200,7 +172,7 @@ static QualType getTemplateTypeDefault(const TemplateTypeParmDecl *param) {
 #endif
 }
 
-static const Expr *getTemplateValueDefault(const NonTypeTemplateParmDecl *param) {
+static Expr *getTemplateValueDefault(const NonTypeTemplateParmDecl *param) {
 #if CLANG_VERSION_MAJOR >= 19
     auto &def = param->getDefaultArgument();
     switch (def.getArgument().getKind()) {
@@ -242,12 +214,7 @@ struct Argument {
     ArgumentKind kind;
     std::optional<unsigned> param_ref;
     QualType default_type;
-    const Expr *default_expr = nullptr;
-};
-
-struct ExprSubstitution {
-    std::optional<unsigned> param_ref;
-    const Expr *expr = nullptr;
+    Expr *default_expr = nullptr;
 };
 
 static std::optional<unsigned>
@@ -268,163 +235,98 @@ findValueParam(const NonTypeTemplateParmDecl *needle,
     return std::nullopt;
 }
 
-static QualType templateParamType(ASTContext &context, const NamedDecl *param) {
+static QualType templateParamType(ASTContext &context, NamedDecl *param) {
     auto *type_param = cast<TemplateTypeParmDecl>(param);
     return context.getTemplateTypeParmType(
         type_param->getDepth(), type_param->getIndex(),
-        type_param->isParameterPack(),
-        const_cast<TemplateTypeParmDecl *>(type_param));
+        type_param->isParameterPack(), type_param);
 }
 
-static QualType substDefaultType(ASTContext &context, QualType qt,
-                                 unsigned limit,
-                                 ArrayRef<const NamedDecl *> params,
-                                 ArrayRef<Argument> args) {
-    auto *type = qt.getTypePtrOrNull();
-    if (!type)
+static DeclRefExpr *templateValueParamExpr(ASTContext &context,
+                                           NamedDecl *param) {
+    auto *value_param = cast<NonTypeTemplateParmDecl>(param);
+    return DeclRefExpr::Create(
+        context, NestedNameSpecifierLoc{}, SourceLocation{}, value_param, false,
+        value_param->getLocation(), value_param->getType(), VK_PRValue);
+}
+
+static TemplateArgument templateArgumentFor(ASTContext &context,
+                                            const Argument &arg,
+                                            ArrayRef<NamedDecl *> params) {
+    if (arg.param_ref) {
+        auto *param = params[*arg.param_ref];
+        if (isa<TemplateTypeParmDecl>(param))
+            return TemplateArgument(templateParamType(context, param));
+        return TemplateArgument(templateValueParamExpr(context, param), false);
+    }
+
+    if (arg.kind == ArgumentKind::Type)
+        return TemplateArgument(arg.default_type);
+    return TemplateArgument(arg.default_expr, false);
+}
+
+struct TemplateArgumentListBuilder {
+    SmallVector<SmallVector<TemplateArgument, 4>, 4> levels;
+    MultiLevelTemplateArgumentList template_args;
+};
+
+static TemplateArgumentListBuilder
+buildTemplateArgumentList(ASTContext &context, unsigned limit,
+                          ArrayRef<NamedDecl *> params,
+                          ArrayRef<Argument> args) {
+    TemplateArgumentListBuilder builder;
+    unsigned max_depth = 0;
+    for (auto *param : params) {
+        unsigned depth = isa<TemplateTypeParmDecl>(param)
+                             ? cast<TemplateTypeParmDecl>(param)->getDepth()
+                             : cast<NonTypeTemplateParmDecl>(param)->getDepth();
+        max_depth = std::max(max_depth, depth);
+    }
+
+    builder.levels.resize(max_depth + 1);
+    for (unsigned i = 0; i < params.size(); ++i) {
+        auto *param = params[i];
+        unsigned depth = isa<TemplateTypeParmDecl>(param)
+                             ? cast<TemplateTypeParmDecl>(param)->getDepth()
+                             : cast<NonTypeTemplateParmDecl>(param)->getDepth();
+        unsigned index = isa<TemplateTypeParmDecl>(param)
+                             ? cast<TemplateTypeParmDecl>(param)->getIndex()
+                             : cast<NonTypeTemplateParmDecl>(param)->getIndex();
+        if (builder.levels[depth].size() <= index)
+            builder.levels[depth].resize(index + 1);
+        builder.levels[depth][index] =
+            i < limit ? templateArgumentFor(context, args[i], params)
+                      : TemplateArgument{};
+    }
+
+    for (auto level = builder.levels.rbegin(); level != builder.levels.rend();
+         ++level)
+        builder.template_args.addOuterTemplateArguments(nullptr, *level, false);
+    return builder;
+}
+
+static QualType substDefaultType(Sema &sema, QualType qt, unsigned limit,
+                                 ArrayRef<NamedDecl *> params,
+                                 ArrayRef<Argument> args, SourceLocation loc) {
+    auto builder =
+        buildTemplateArgumentList(sema.Context, limit, params, args);
+    bool incomplete = false;
+    auto result = sema.SubstType(qt, builder.template_args, loc,
+                                DeclarationName{}, &incomplete);
+    if (result.isNull() || incomplete)
         return qt;
-
-    auto subst_with_local_qualifiers = [&](QualType inner) {
-        auto result = substDefaultType(context, inner, limit, params, args);
-        return context.getQualifiedType(result, qt.getLocalQualifiers());
-    };
-
-    QualType unqualified = qt.getLocalQualifiers().empty()
-                               ? qt
-                               : qt.getLocalUnqualifiedType();
-
-    if (unqualified != qt)
-        return subst_with_local_qualifiers(unqualified);
-
-    if (auto *subst = dyn_cast<SubstTemplateTypeParmType>(type))
-        return substDefaultType(context, subst->getReplacementType(), limit,
-                                params, args);
-
-    if (auto *paren = dyn_cast<ParenType>(type))
-        return substDefaultType(context, paren->getInnerType(), limit, params,
-                                args);
-
-    if (auto *attr = dyn_cast<AttributedType>(type))
-        return substDefaultType(context, attr->getModifiedType(), limit, params,
-                                args);
-
-    if (auto *type_param = getReferencedTypeParam(qt)) {
-        if (auto index = findTypeParam(type_param, params, limit)) {
-            auto arg = args[*index];
-            if (arg.param_ref)
-                return templateParamType(context, params[*arg.param_ref]);
-            return substDefaultType(context, arg.default_type, *index, params,
-                                    args);
-        }
-    }
-
-    if (auto *specialization = dyn_cast<TemplateSpecializationType>(type)) {
-        if (specialization->isTypeAlias())
-            return substDefaultType(context, specialization->getAliasedType(),
-                                    limit, params, args);
-
-        bool changed = false;
-        SmallVector<TemplateArgument, 8> subst_args;
-        for (auto arg : specialization->template_arguments()) {
-            if (arg.getKind() == TemplateArgument::Type) {
-                auto old_type = arg.getAsType();
-                auto new_type =
-                    substDefaultType(context, old_type, limit, params, args);
-                changed |= new_type != old_type;
-                subst_args.emplace_back(new_type);
-            } else {
-                subst_args.push_back(arg);
-            }
-        }
-        if (!changed)
-            return qt;
-        return context.getTemplateSpecializationType(
-            specialization->getKeyword(), specialization->getTemplateName(),
-            subst_args, subst_args);
-    }
-
-    if (auto *array = dyn_cast<ConstantArrayType>(type)) {
-        auto element = substDefaultType(context, array->getElementType(), limit,
-                                        params, args);
-        if (element == array->getElementType())
-            return qt;
-        return context.getConstantArrayType(
-            element, array->getSize(), array->getSizeExpr(),
-            array->getSizeModifier(), array->getIndexTypeCVRQualifiers());
-    }
-
-    if (auto *ptr = dyn_cast<PointerType>(type)) {
-        auto pointee =
-            substDefaultType(context, ptr->getPointeeType(), limit, params, args);
-        if (pointee == ptr->getPointeeType())
-            return qt;
-        return context.getPointerType(pointee);
-    }
-
-    if (auto *ref = dyn_cast<LValueReferenceType>(type)) {
-        auto pointee =
-            substDefaultType(context, ref->getPointeeType(), limit, params, args);
-        if (pointee == ref->getPointeeType())
-            return qt;
-        return context.getLValueReferenceType(pointee, ref->isSpelledAsLValue());
-    }
-
-    if (auto *ref = dyn_cast<RValueReferenceType>(type)) {
-        auto pointee =
-            substDefaultType(context, ref->getPointeeType(), limit, params, args);
-        if (pointee == ref->getPointeeType())
-            return qt;
-        return context.getRValueReferenceType(pointee);
-    }
-
-    if (auto *func = dyn_cast<FunctionProtoType>(type)) {
-        bool changed = false;
-        auto return_type =
-            substDefaultType(context, func->getReturnType(), limit, params, args);
-        changed |= return_type != func->getReturnType();
-
-        SmallVector<QualType, 8> param_types;
-        for (auto param_type : func->param_types()) {
-            auto subst_param =
-                substDefaultType(context, param_type, limit, params, args);
-            changed |= subst_param != param_type;
-            param_types.push_back(subst_param);
-        }
-        if (!changed)
-            return qt;
-        return context.getFunctionType(return_type, param_types,
-                                       func->getExtProtoInfo());
-    }
-
-    if (auto *member_ptr = dyn_cast<MemberPointerType>(type)) {
-        auto pointee = substDefaultType(context, member_ptr->getPointeeType(),
-                                        limit, params, args);
-        if (pointee == member_ptr->getPointeeType())
-            return qt;
-#if CLANG_VERSION_MAJOR >= 21
-        return context.getMemberPointerType(
-            pointee, member_ptr->getQualifier(),
-            member_ptr->getMostRecentCXXRecordDecl());
-#else
-        return context.getMemberPointerType(pointee, member_ptr->getClass());
-#endif
-    }
-
-    return qt;
+    return result;
 }
 
-static ExprSubstitution substDefaultExpr(const Expr *expr, unsigned limit,
-                                         ArrayRef<const NamedDecl *> params,
-                                         ArrayRef<Argument> args) {
-    if (auto *value_param = getReferencedValueParam(expr)) {
-        if (auto index = findValueParam(value_param, params, limit)) {
-            auto arg = args[*index];
-            if (arg.param_ref)
-                return {*arg.param_ref, nullptr};
-            return substDefaultExpr(arg.default_expr, *index, params, args);
-        }
-    }
-    return {std::nullopt, expr};
+static Expr *substDefaultExpr(Sema &sema, Expr *expr, unsigned limit,
+                              ArrayRef<NamedDecl *> params,
+                              ArrayRef<Argument> args) {
+    auto builder =
+        buildTemplateArgumentList(sema.Context, limit, params, args);
+    auto result = sema.SubstExpr(expr, builder.template_args);
+    if (result.isInvalid())
+        return expr;
+    return result.get();
 }
 
 static bool collectTemplateParamsForDecl(const Decl &decl,
@@ -587,20 +489,14 @@ fmt::Formatter &printTargetArgs(CoqPrinter &print,
                                 ArrayRef<const NamedDecl *> params,
                                 unsigned keep, ClangPrinter &cprint) {
     /*
-    This is a small, local substitution engine for defaults that are simple
-    enough to represent directly in the generated alias table.
+    This uses Sema substitution for defaults that are simple enough to represent
+    directly in the generated alias table.
 
-    TODO: Consider replacing this local substitution engine with Clang's Sema
-    substitution machinery. Clang does expose the more general machinery in Sema:
-    Sema::SubstType, Sema::SubstExpr, and Sema::SubstTemplateArgument over a
-    MultiLevelTemplateArgumentList. That is the principled long-term direction,
-    but it is not a drop-in replacement here. The generated alias targets often
-    substitute template parameters with other dependent parameters, not with
-    concrete arguments; constructing the correct dependent TemplateArguments is
-    delicate, especially for non-type parameters. Sema substitution can also
-    emit diagnostics, instantiate semantic state, and otherwise behave more like
-    compiler action than pure AST rewriting. For now, this code deliberately
-    handles only the simple defaults that cpp2v can print predictably.
+    TODO: The generated alias targets often substitute template parameters with
+    other dependent parameters, not with concrete arguments. Keep the
+    MultiLevelTemplateArgumentList construction isolated so that any remaining
+    Clang-version differences or future support for packs/template-template
+    parameters are handled at that boundary.
     */
     std::vector<Argument> args;
     args.reserve(params.size());
@@ -633,7 +529,19 @@ fmt::Formatter &printTargetArgs(CoqPrinter &print,
         }
     }
 
-    auto &context = cprint.getContext();
+    /*
+    Clang's Sema substitution APIs take non-const AST node pointers even when
+    those pointers are used only as identity handles. `printTargetArgs` exposes a
+    const-correct interface because it does not mutate declarations. The mutable
+    view below is therefore safe as long as it is used only to construct Sema
+    template arguments, not to modify the declarations.
+    */
+    SmallVector<NamedDecl *, 8> sema_params;
+    sema_params.reserve(params.size());
+    for (auto *param : params)
+        sema_params.push_back(const_cast<NamedDecl *>(param));
+
+    auto &sema = cprint.getCompiler().getSema();
     guard::list _{print};
     for (unsigned i = 0; i < params.size(); ++i) {
         auto arg = args[i];
@@ -642,18 +550,15 @@ fmt::Formatter &printTargetArgs(CoqPrinter &print,
         } else if (arg.kind == ArgumentKind::Type) {
             guard::ctor _{print, "Atype", false};
             cprint.printQualType(
-                print, substDefaultType(context, arg.default_type, i, params,
-                                        args),
+                print,
+                substDefaultType(sema, arg.default_type, i, sema_params, args,
+                                 SourceLocation{}),
                 loc::of(arg.default_type.getTypePtrOrNull()));
         } else {
             guard::ctor _{print, "Avalue", false};
-            auto subst = substDefaultExpr(arg.default_expr, i, params, args);
-            if (subst.param_ref) {
-                guard::ctor _{print, "Eparam", false};
-                print.str(getTemplateParamName(*params[*subst.param_ref]));
-            } else {
-                cprint.printExpr(print, subst.expr);
-            }
+            auto subst =
+                substDefaultExpr(sema, arg.default_expr, i, sema_params, args);
+            cprint.printExpr(print, subst);
         }
         print.output() << fmt::cons;
     }
