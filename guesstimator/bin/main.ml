@@ -33,11 +33,51 @@ let print_across_comparisons = function
   | Print_comparisons_across | Print_comparisons_all -> true
   | Print_comparisons_none | Print_comparisons_within -> false
 
-let print_fit (display : Api.display_fit) =
+type fit_row = {
+  model : string;
+  rss : string;
+  r_squared : string;
+  aic : string;
+  bic : string;
+  parameters : string;
+}
+
+type fit_widths = {
+  model_width : int;
+  rss_width : int;
+  r_squared_width : int;
+  aic_width : int;
+  bic_width : int;
+}
+
+let fit_row (display : Api.display_fit) =
   let fitted = display.Api.fit in
-  Printf.printf "  %-12s  RSS=%10.4g  R^2=%7.4f  AIC=%9.3f  BIC=%9.3f  %s\n"
-    (Api.string_of_complexity fitted.model) fitted.rss fitted.r_squared fitted.aic fitted.bic
-    (parameter_string display.Api.parameters)
+  {
+    model = Api.string_of_complexity fitted.model;
+    rss = Printf.sprintf "%.4g" fitted.rss;
+    r_squared = Printf.sprintf "%.4f" fitted.r_squared;
+    aic = Printf.sprintf "%.3f" fitted.aic;
+    bic = Printf.sprintf "%.3f" fitted.bic;
+    parameters = parameter_string display.Api.parameters;
+  }
+
+let fit_widths rows =
+  List.fold_left
+    (fun widths row ->
+      {
+        model_width = max widths.model_width (String.length row.model);
+        rss_width = max widths.rss_width (String.length row.rss);
+        r_squared_width = max widths.r_squared_width (String.length row.r_squared);
+        aic_width = max widths.aic_width (String.length row.aic);
+        bic_width = max widths.bic_width (String.length row.bic);
+      })
+    { model_width = 12; rss_width = 10; r_squared_width = 7; aic_width = 9; bic_width = 9 }
+    rows
+
+let print_fit ~widths row =
+  Printf.printf "  %-*s  RSS=%*s  R^2=%*s  AIC=%*s  BIC=%*s  %s\n"
+    widths.model_width row.model widths.rss_width row.rss widths.r_squared_width
+    row.r_squared widths.aic_width row.aic widths.bic_width row.bic row.parameters
 
 type comparison_widths = {
   left_width : int;
@@ -188,6 +228,11 @@ let holdout_stability_warning = function
 
 let print_result ~verbose ~print_comparisons ~print_loser_fits ~file ~has_header
     (result : Api.fit_result) =
+  let fit_rows = List.map fit_row result.Api.display_fits in
+  let loser_fit_rows =
+    if print_loser_fits then List.map fit_row result.Api.display_loser_fits else []
+  in
+  let widths = fit_widths (fit_rows @ loser_fit_rows) in
   Printf.printf "Input: %s\n" file;
   Printf.printf "Header: %s\n" (if has_header then "yes" else "no");
   Printf.printf "Normalized samples: %s\n" (if result.Api.normalized then "yes" else "no");
@@ -198,12 +243,12 @@ let print_result ~verbose ~print_comparisons ~print_loser_fits ~file ~has_header
     (suspicious_rmse_warning result.Api.suspicious_relative_rmse)
     (holdout_stability_warning result.Api.holdout_stability_warning);
   Printf.printf "Fits:\n";
-  List.iter print_fit result.Api.display_fits;
+  List.iter (print_fit ~widths) fit_rows;
   if print_loser_fits then (
     Printf.printf "Comparison loser fits (not already listed under Fits):\n";
-    match result.Api.display_loser_fits with
+    match loser_fit_rows with
     | [] -> Printf.printf "  (none)\n"
-    | loser_fits -> List.iter print_fit loser_fits );
+    | loser_fit_rows -> List.iter (print_fit ~widths) loser_fit_rows );
   if print_within_comparisons print_comparisons then
     print_comparison_section ~verbose
       "Within-class comparisons (nested F test where applicable, otherwise BIC):"

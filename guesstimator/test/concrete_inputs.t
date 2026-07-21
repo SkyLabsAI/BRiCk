@@ -46,3 +46,29 @@ higher degrees.
 
   $ if guesstimator fit --print-loser-fits inputs/polynomial.csv | grep -q 'class comparisons'; then echo unexpected; else echo 'loser fits are independent'; fi
   loser fits are independent
+
+Main and loser fit rows share one layout, including the start of the parameter
+column.
+
+  $ guesstimator fit --print-loser-fits inputs/polynomial.csv | awk '
+  > /^  .*RSS=/ {
+  >   count++
+  >   rss = index($0, "RSS=")
+  >   r_squared = index($0, "R^2=")
+  >   aic = index($0, "AIC=")
+  >   bic = index($0, "BIC=")
+  >   if (!match($0, /BIC= *[^ ]+  /)) bad = 1
+  >   parameters = RSTART + RLENGTH
+  >   if (count == 1) {
+  >     expected_rss = rss
+  >     expected_r_squared = r_squared
+  >     expected_aic = aic
+  >     expected_bic = bic
+  >     expected_parameters = parameters
+  >   } else if (rss != expected_rss || r_squared != expected_r_squared || aic != expected_aic || bic != expected_bic || parameters != expected_parameters) {
+  >     bad = 1
+  >   }
+  > }
+  > END { printf "fit columns aligned: %s (%d rows)\n", (bad ? "no" : "yes"), count }
+  > '
+  fit columns aligned: yes (9 rows)
