@@ -177,6 +177,34 @@ getReferencedTypeParam(QualType qt) {
     return nullptr;
 }
 
+static const TemplateTypeParmDecl *
+getDirectReferencedTypeParam(QualType qt) {
+    if (qt.hasLocalQualifiers())
+        return nullptr;
+
+    auto *type = qt.getTypePtrOrNull();
+    if (!type)
+        return nullptr;
+
+    if (auto *type_param = dyn_cast<TemplateTypeParmType>(type))
+        return type_param->getDecl();
+
+    if (auto *subst = dyn_cast<SubstTemplateTypeParmType>(type)) {
+        if (auto *replacement =
+                getDirectReferencedTypeParam(subst->getReplacementType()))
+            return replacement;
+        return asTemplateTypeParmDecl(subst->getReplacedParameter());
+    }
+
+    if (auto *paren = dyn_cast<ParenType>(type))
+        return getDirectReferencedTypeParam(paren->getInnerType());
+
+    if (auto *attr = dyn_cast<AttributedType>(type))
+        return getDirectReferencedTypeParam(attr->getModifiedType());
+
+    return nullptr;
+}
+
 static bool isSupportedValueDefaultExpr(const Expr *expr) {
     expr = ignoreValueDefaultCasts(expr);
     if (!expr)
@@ -601,7 +629,7 @@ fmt::Formatter &printTargetArgs(CoqPrinter &print,
         if (auto *param = dyn_cast<TemplateTypeParmDecl>(params[i])) {
             auto default_type = getTemplateTypeDefault(param);
             std::optional<unsigned> ref;
-            if (auto *type_param = getReferencedTypeParam(default_type))
+            if (auto *type_param = getDirectReferencedTypeParam(default_type))
                 if (auto index = find_param(type_param, i))
                     ref = args[*index].param_ref;
             args.push_back({ArgumentKind::Type, ref, default_type});
