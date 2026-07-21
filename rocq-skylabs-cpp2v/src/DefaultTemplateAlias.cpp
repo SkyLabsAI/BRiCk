@@ -20,7 +20,6 @@
 #include <llvm/ADT/STLExtras.h>
 #include <llvm/ADT/SmallVector.h>
 #include <optional>
-#include <type_traits>
 #include <vector>
 
 using namespace clang;
@@ -64,42 +63,6 @@ getReferencedValueParam(const Expr *expr) {
     return nullptr;
 }
 
-template <typename T>
-static const TemplateTypeParmDecl *asTemplateTypeParmDecl(const T *param) {
-    if constexpr (std::is_same_v<T, TemplateTypeParmDecl>)
-        return param;
-    else
-        return param ? param->getDecl() : nullptr;
-}
-
-static const TemplateTypeParmDecl *
-getDirectReferencedTypeParam(QualType qt) {
-    if (qt.hasLocalQualifiers())
-        return nullptr;
-
-    auto *type = qt.getTypePtrOrNull();
-    if (!type)
-        return nullptr;
-
-    if (auto *type_param = dyn_cast<TemplateTypeParmType>(type))
-        return type_param->getDecl();
-
-    if (auto *subst = dyn_cast<SubstTemplateTypeParmType>(type)) {
-        if (auto *replacement =
-                getDirectReferencedTypeParam(subst->getReplacementType()))
-            return replacement;
-        return asTemplateTypeParmDecl(subst->getReplacedParameter());
-    }
-
-    if (auto *paren = dyn_cast<ParenType>(type))
-        return getDirectReferencedTypeParam(paren->getInnerType());
-
-    if (auto *attr = dyn_cast<AttributedType>(type))
-        return getDirectReferencedTypeParam(attr->getModifiedType());
-
-    return nullptr;
-}
-
 static bool isSupportedValueDefaultExpr(const Expr *expr) {
     expr = ignoreValueDefaultCasts(expr);
     if (!expr)
@@ -138,14 +101,6 @@ static Expr *getTemplateValueDefault(const NonTypeTemplateParmDecl *param) {
 #endif
 }
 
-static bool sameTemplateTypeParam(const TemplateTypeParmDecl *lhs,
-                                  const NamedDecl *rhs) {
-    auto *rhs_type = dyn_cast<TemplateTypeParmDecl>(rhs);
-    return lhs == rhs_type ||
-           (rhs_type && lhs->getDepth() == rhs_type->getDepth() &&
-            lhs->getIndex() == rhs_type->getIndex());
-}
-
 static bool sameTemplateValueParam(const NonTypeTemplateParmDecl *lhs,
                                    const NamedDecl *rhs) {
     auto *rhs_value = dyn_cast<NonTypeTemplateParmDecl>(rhs);
@@ -162,15 +117,6 @@ struct Argument {
     QualType default_type;
     Expr *default_expr = nullptr;
 };
-
-static std::optional<unsigned>
-findTypeParam(const TemplateTypeParmDecl *needle,
-              ArrayRef<const NamedDecl *> params, unsigned limit) {
-    for (unsigned j = 0; j < limit; ++j)
-        if (sameTemplateTypeParam(needle, params[j]))
-            return j;
-    return std::nullopt;
-}
 
 static std::optional<unsigned>
 findValueParam(const NonTypeTemplateParmDecl *needle,
@@ -468,11 +414,7 @@ static fmt::Formatter &printTargetArgs(CoqPrinter &print,
 
         if (auto *param = dyn_cast<TemplateTypeParmDecl>(params[i])) {
             auto default_type = getTemplateTypeDefault(param);
-            std::optional<unsigned> ref;
-            if (auto *type_param = getDirectReferencedTypeParam(default_type))
-                if (auto index = findTypeParam(type_param, params, i))
-                    ref = args[*index].param_ref;
-            args.push_back({ArgumentKind::Type, ref, default_type});
+            args.push_back({ArgumentKind::Type, std::nullopt, default_type});
         } else {
             auto *value_param = cast<NonTypeTemplateParmDecl>(params[i]);
             auto *default_expr = getTemplateValueDefault(value_param);
