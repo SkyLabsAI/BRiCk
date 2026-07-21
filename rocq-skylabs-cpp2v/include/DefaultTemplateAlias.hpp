@@ -9,14 +9,8 @@ namespace clang {
 class Decl;
 } // namespace clang
 
-namespace fmt {
-class Formatter;
-}
-
 class ClangPrinter;
 class CoqPrinter;
-
-namespace default_template_alias {
 
 /*
 Print every `Dtemplated_typedef` that cpp2v synthesizes from default template
@@ -39,5 +33,3 @@ are emitted for that declaration.
 */
 void printDefaultTemplateAliases(const clang::Decl *decl, CoqPrinter &print,
                                  ClangPrinter &cprint);
-
-} // namespace default_template_alias

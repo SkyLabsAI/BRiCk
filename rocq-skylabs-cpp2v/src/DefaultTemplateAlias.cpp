@@ -347,8 +347,6 @@ static fmt::Formatter &printTargetArgs(CoqPrinter &print,
 
 } // namespace
 
-namespace default_template_alias {
-
 void printDefaultTemplateAliases(const Decl *decl, CoqPrinter &print,
                                  ClangPrinter &cprint) {
     const NamedDecl *templated_decl = nullptr;
@@ -440,8 +438,6 @@ void printDefaultTemplateAliases(const Decl *decl, CoqPrinter &print,
         print.cons();
     }
 }
-
-} // namespace default_template_alias
 
 namespace {
 

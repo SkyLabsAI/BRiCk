@@ -253,15 +253,13 @@ void ToCoqConsumer::writeTemplates(const char *name, Cache &cache,
         if (printDecl(decl, print, cprint))
             print.cons();
         if (print.templates() && cprint.printTypedefs())
-            default_template_alias::printDefaultTemplateAliases(decl, print,
-                                                                cprint);
+            printDefaultTemplateAliases(decl, print, cprint);
     }
     for (auto decl : mod.template_definitions()) {
         if (printDecl(decl, print, cprint))
             print.cons();
         if (print.templates() && cprint.printTypedefs())
-            default_template_alias::printDefaultTemplateAliases(decl, print,
-                                                                cprint);
+            printDefaultTemplateAliases(decl, print, cprint);
     }
     print.end_list();
 
