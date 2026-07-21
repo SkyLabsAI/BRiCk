@@ -355,6 +355,11 @@ Definition value_expression_default_two_arg_target : type :=
      Avalue (Eparam "N");
      Avalue (Ebinop Badd (Eparam "N") (Eint 1 Tint) Tint)]).
 
+Definition sizeof_type_default_one_arg_target : type :=
+  Tnamed (Ninst (Nglobal (Nid "SizeofTypeDefault"))
+    [Atype (Tparam "T");
+     Avalue (Esizeof (inl (Tparam "T")) "unsigned long"%cpp_type)]).
+
 Example defaulted_pair_generated_alias_params :
   alias_template_params "DefaultedPair<$T>"%cpp_name = Some [Ptype "T"].
 Proof. vm_compute. reflexivity. Qed.
@@ -502,12 +507,21 @@ Example value_param_default_chain_three_arg_generated_alias_target :
   Some value_param_default_chain_three_arg_target.
 Proof. vm_compute. reflexivity. Qed.
 
-Example value_expression_default_does_not_generate_unsupported_alias :
-  lookup_alias_template "ValueExpressionDefault<$T, `N>"%cpp_name = None.
+(*
+Substituting non-type expression defaults such as [N + 1] is useful, but may
+be dangerous in some instances because generated aliases preserve the source
+expression rather than reducing it. If downstream resolution needs canonical
+values, the alias printer or resolver will likely need to reduce the actual
+expressions instead of only substituting parameters.
+*)
+Example value_expression_default_generated_alias_target :
+  alias_template_value "ValueExpressionDefault<$T, `N>"%cpp_name =
+  Some value_expression_default_two_arg_target.
 Proof. vm_compute. reflexivity. Qed.
 
-Example sizeof_type_default_does_not_generate_unsupported_alias :
-  lookup_alias_template "SizeofTypeDefault<$T>"%cpp_name = None.
+Example sizeof_type_default_generated_alias_target :
+  alias_template_value "SizeofTypeDefault<$T>"%cpp_name =
+  Some sizeof_type_default_one_arg_target.
 Proof. vm_compute. reflexivity. Qed.
 
 Example value_then_type_default_generated_alias_params :
@@ -559,10 +573,6 @@ Example value_literal_prior_type_mix_two_arg_generated_alias_target :
   alias_template_value "ValueLiteralPriorTypeMix<`N, `M>"%cpp_name =
   Some value_literal_prior_type_mix_two_arg_target.
 Proof. vm_compute. reflexivity. Qed.
-
-Fail Definition value_expression_default_future_alias_target :
-  alias_template_value "ValueExpressionDefault<$T, `N>"%cpp_name =
-  Some value_expression_default_two_arg_target := eq_refl.
 
 Example template_template_default_does_not_generate_unsupported_alias :
   lookup_alias_template template_template_default_alias_name = None.
@@ -731,6 +741,16 @@ Proof. vm_compute. reflexivity. Qed.
 Example value_param_default_chain_three_arg_resolves_prior_parameter_default :
   trace.runO (dealias.resolveTN source "ValueParamDefaultChain<$T, `N, `M>"%cpp_name) =
   Some value_param_default_chain_three_arg_target.
+Proof. vm_compute. reflexivity. Qed.
+
+Example value_expression_default_resolves_expression_default :
+  trace.runO (dealias.resolveTN source "ValueExpressionDefault<$T, `N>"%cpp_name) =
+  Some value_expression_default_two_arg_target.
+Proof. vm_compute. reflexivity. Qed.
+
+Example sizeof_type_default_resolves_expression_default :
+  trace.runO (dealias.resolveTN source "SizeofTypeDefault<$T>"%cpp_name) =
+  Some sizeof_type_default_one_arg_target.
 Proof. vm_compute. reflexivity. Qed.
 
 Example value_then_type_default_resolves_mixed_value_and_type_default :

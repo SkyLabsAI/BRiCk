@@ -63,16 +63,6 @@ getReferencedValueParam(const Expr *expr) {
     return nullptr;
 }
 
-static bool isSupportedValueDefaultExpr(const Expr *expr) {
-    expr = ignoreValueDefaultCasts(expr);
-    if (!expr)
-        return false;
-    if (isa<IntegerLiteral>(expr) || isa<CharacterLiteral>(expr) ||
-        isa<CXXBoolLiteralExpr>(expr))
-        return true;
-    return getReferencedValueParam(expr) != nullptr;
-}
-
 static QualType getTemplateTypeDefault(const TemplateTypeParmDecl *param) {
 #if CLANG_VERSION_MAJOR >= 19
     return param->getDefaultArgument().getArgument().getAsType();
@@ -283,10 +273,6 @@ static bool hasDuplicateTemplateParamNames(
     return false;
 }
 
-static bool isSupportedValueDefault(const NonTypeTemplateParmDecl *param) {
-    return isSupportedValueDefaultExpr(getTemplateValueDefault(param));
-}
-
 static fmt::Formatter &printTargetArgs(CoqPrinter &print,
                                        ArrayRef<const NamedDecl *> params,
                                        unsigned keep, ClangPrinter &cprint);
@@ -333,8 +319,6 @@ void printDefaultTemplateAliases(const Decl *decl, CoqPrinter &print,
             }
         } else if (auto *param = dyn_cast<NonTypeTemplateParmDecl>(params[i])) {
             if (param->hasDefaultArgument()) {
-                if (!isSupportedValueDefault(param))
-                    return;
                 first_default = std::min(first_default, i);
             } else if (first_default != params.size()) {
                 return;
