@@ -1,37 +1,6 @@
 Current value of Debug is "-all,-backtrace,-vmlambda,-vmbytecode,-vernacinterp,-unification,-tactic-unification,-strpos,-scheme-all,-proof-using,-native-compiler,-mltop-init,-misc,-indschemes,-ho-unification,-hconstr,-hcons,-generate_eliminators,-dynlink,-dnet-decomp,-congruence,-comment-lexing,-RAKAM,-Cbv,-API"
 Current value of Debug is "-all,backtrace,-vmlambda,-vmbytecode,-vernacinterp,-unification,-tactic-unification,-strpos,-scheme-all,-proof-using,-native-compiler,-mltop-init,-misc,-indschemes,-ho-unification,-hconstr,-hcons,-generate_eliminators,-dynlink,-dnet-decomp,-congruence,-comment-lexing,-RAKAM,-Cbv,-API"
-Current value of Debug is "-all,backtrace,-zify,-vmlambda,-vmbytecode,-vernacinterp,-unification,-tactic-unification,-strpos,-ssrmatching,-ssreflect,-scheme-all,-proof-using,-native-compiler,-mltop-init,-misc,-indschemes,-ho-unification,-hconstr,-hcons,-generate_eliminators,-elpitime,-elpi,-dynlink,-dnet-decomp,-congruence,-comment-lexing,-RAKAM,-Cbv,-API"
+Current value of Debug is "-all,-backtrace,-zify,-vmlambda,-vmbytecode,-vernacinterp,-unification,-tactic-unification,-strpos,-ssrmatching,-ssreflect,-scheme-all,-proof-using,-native-compiler,-mltop-init,-misc,-indschemes,-ho-unification,-hconstr,-hcons,-generate_eliminators,-elpitime,-elpi,-dynlink,-dnet-decomp,-congruence,-comment-lexing,-RAKAM,-Cbv,-API"
 File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/cpp_prog_backtrace.v", line 7, characters 16-23:
 The command has indeed failed with message:
 bt_test already exists.
-Raised at Exninfo.iraise in file "vendored/rocq/clib/exninfo.ml" (inlined), line 79, characters 4-11
-Called from CErrors.user_err in file "vendored/rocq/lib/cErrors.ml" (inlined), line 43, characters 2-39
-Called from Vernacentries.check_name_freshness in file "vendored/rocq/vernac/vernacentries.ml", line 830, characters 4-58
-Called from Vernacentries.vernac_definition_name in file "vendored/rocq/vernac/vernacentries.ml", line 865, characters 2-32
-Called from Vernacentries.vernac_definition in file "vendored/rocq/vernac/vernacentries.ml", line 909, characters 13-45
-Called from Vernactypes.vtmodifyprogram.(fun) in file "vendored/rocq/vernac/vernactypes.ml" (inlined), line 197, characters 30-40
-Called from Vernactypes.typed_vernac.(fun) in file "vendored/rocq/vernac/vernactypes.ml", line 170, characters 65-71
-Called from Vernactypes.run.(fun) in file "vendored/rocq/vernac/vernactypes.ml", line 164, characters 15-32
-Called from Vernactypes.combine_runners.(fun) in file "vendored/rocq/vernac/vernactypes.ml", line 126, characters 16-23
-Called from Vernactypes.OpaqueAccess.runner.(fun) in file "vendored/rocq/vernac/vernactypes.ml", line 114, characters 30-34
-Called from Vernactypes.combine_runners.(fun) in file "vendored/rocq/vernac/vernactypes.ml", lines 125-127, characters 14-41
-Called from Vernactypes.combine_runners.(fun) in file "vendored/rocq/vernac/vernactypes.ml", line 126, characters 16-23
-Called from Vernactypes.Proof.runner.(fun) in file "vendored/rocq/vernac/vernactypes.ml", line 69, characters 30-34
-Called from Vernactypes.combine_runners.(fun) in file "vendored/rocq/vernac/vernactypes.ml", lines 125-127, characters 14-41
-Called from Vernactypes.Prog.runner.(fun) in file "vendored/rocq/vernac/vernactypes.ml", line 30, characters 20-24
-Called from Vernactypes.combine_runners.(fun) in file "vendored/rocq/vernac/vernactypes.ml", lines 124-128, characters 12-39
-Called from Vernactypes.combine_runners.(fun) in file "vendored/rocq/vernac/vernactypes.ml", lines 124-128, characters 12-39
-Called from Vernactypes.run in file "vendored/rocq/vernac/vernactypes.ml", lines 163-164, characters 14-47
-Called from Vernacinterp.interp_expr_core in file "vendored/rocq/vernac/vernacinterp.ml", lines 80-84, characters 60-7
-Called from Vernacinterp.interp_expr in file "vendored/rocq/vernac/vernacinterp.ml", lines 49-50, characters 19-47
-Called from Flags.with_modified_ref.scope in file "vendored/rocq/lib/flags.ml" (inlined), line 20, characters 32-35
-Called from Memprof_limits__Masking.with_resource in file "src/masking.ml" (inlined), line 54, characters 4-11
-Called from Flags.with_modified_ref in file "vendored/rocq/lib/flags.ml" (inlined), line 21, characters 2-62
-Called from Flags.with_modified_ref in file "vendored/rocq/lib/flags.ml" (inlined), line 21, characters 2-62
-Called from Flags.with_modified_ref in file "vendored/rocq/lib/flags.ml", line 27, characters 33-59
-Re-raised at Memprof_limits__Masking.with_resource in file "src/masking.ml" (inlined), line 67, characters 10-44
-Called from Flags.with_modified_ref in file "vendored/rocq/lib/flags.ml" (inlined), line 21, characters 2-62
-Called from Flags.with_modified_ref in file "vendored/rocq/lib/flags.ml", line 27, characters 33-59
-Called from VernacControl.under_control in file "vendored/rocq/vernac/vernacControl.ml", line 211, characters 14-18
-Called from VernacControl.with_fail in file "vendored/rocq/vernac/vernacControl.ml", line 156, characters 12-16
-

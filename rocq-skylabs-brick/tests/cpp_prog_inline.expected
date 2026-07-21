@@ -4,46 +4,5 @@ source1
      : translation_unit.translation_unit
 source2
      : translation_unit.translation_unit
-File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/cpp_prog_inline.v", line 19, characters 0-101:
-The command has indeed failed with message:
-Invoking cpp2v exited with code 1 with the following warnings/errors!
-/tmp/build_031400_dune/ocaml_temp_bed7f3.cpp:2:26: error: void function 'identity' should not return a value
-    2 |   void identity(int x) { return x; }
-      |                          ^      ~
-1 error generated.
-Error while processing /tmp/build_031400_dune/ocaml_temp_bed7f3.cpp.
-
-cpp2v command line:
-  cpp2v -for-interactive buggy_source --no-sharing -o /tmp/build_031400_dune/_8fbc1e.v /tmp/build_031400_dune/ocaml_temp_bed7f3.cpp --no-elaborate -attributes duplicates(ignore) --
-Raised at Exninfo.iraise in file "vendored/rocq/clib/exninfo.ml" (inlined), line 79, characters 4-11
-Called from CErrors.user_err in file "vendored/rocq/lib/cErrors.ml", line 43, characters 2-39
-Called from Rocq_skylabs_brick_plugin__Cpp2v.cpp_command_prog in file "fmdeps/BRiCk/rocq-skylabs-brick/plugin/src/cpp2v.ml", line 314, characters 8-145
-Called from Rocq_skylabs_brick_plugin__Cpp2v_commands.coqpp_body.(fun) in file "fmdeps/BRiCk/rocq-skylabs-brick/plugin/src/cpp2v_commands.mlg" (inlined), line 71, characters 4-47
-Called from Vernactypes.vtdefault.(fun) in file "vendored/rocq/vernac/vernactypes.ml" (inlined), line 173, characters 34-38
-Called from Vernactypes.typed_vernac.(fun) in file "vendored/rocq/vernac/vernactypes.ml", line 170, characters 65-71
-Called from Vernactypes.run.(fun) in file "vendored/rocq/vernac/vernactypes.ml", line 164, characters 15-32
-Called from Vernactypes.combine_runners.(fun) in file "vendored/rocq/vernac/vernactypes.ml", line 126, characters 16-23
-Called from Vernactypes.OpaqueAccess.runner.(fun) in file "vendored/rocq/vernac/vernactypes.ml", line 114, characters 30-34
-Called from Vernactypes.combine_runners.(fun) in file "vendored/rocq/vernac/vernactypes.ml", lines 125-127, characters 14-41
-Called from Vernactypes.combine_runners.(fun) in file "vendored/rocq/vernac/vernactypes.ml", line 126, characters 16-23
-Called from Vernactypes.Proof.runner.(fun) in file "vendored/rocq/vernac/vernactypes.ml", line 69, characters 30-34
-Called from Vernactypes.combine_runners.(fun) in file "vendored/rocq/vernac/vernactypes.ml", lines 125-127, characters 14-41
-Called from Vernactypes.Prog.runner.(fun) in file "vendored/rocq/vernac/vernactypes.ml", line 27, characters 30-34
-Called from Vernactypes.combine_runners.(fun) in file "vendored/rocq/vernac/vernactypes.ml", lines 124-128, characters 12-39
-Called from Vernactypes.combine_runners.(fun) in file "vendored/rocq/vernac/vernactypes.ml", lines 124-128, characters 12-39
-Called from Vernactypes.run in file "vendored/rocq/vernac/vernactypes.ml", lines 163-164, characters 14-47
-Called from Vernacinterp.interp_expr_core in file "vendored/rocq/vernac/vernacinterp.ml", lines 80-84, characters 60-7
-Called from Vernacinterp.interp_expr in file "vendored/rocq/vernac/vernacinterp.ml", lines 49-50, characters 19-47
-Called from Flags.with_modified_ref.scope in file "vendored/rocq/lib/flags.ml" (inlined), line 20, characters 32-35
-Called from Memprof_limits__Masking.with_resource in file "src/masking.ml" (inlined), line 54, characters 4-11
-Called from Flags.with_modified_ref in file "vendored/rocq/lib/flags.ml" (inlined), line 21, characters 2-62
-Called from Flags.with_modified_ref in file "vendored/rocq/lib/flags.ml" (inlined), line 21, characters 2-62
-Called from Flags.with_modified_ref in file "vendored/rocq/lib/flags.ml", line 27, characters 33-59
-Re-raised at Memprof_limits__Masking.with_resource in file "src/masking.ml" (inlined), line 67, characters 10-44
-Called from Flags.with_modified_ref in file "vendored/rocq/lib/flags.ml" (inlined), line 21, characters 2-62
-Called from Flags.with_modified_ref in file "vendored/rocq/lib/flags.ml", line 27, characters 33-59
-Called from VernacControl.under_control in file "vendored/rocq/vernac/vernacControl.ml", line 211, characters 14-18
-Called from VernacControl.with_fail in file "vendored/rocq/vernac/vernacControl.ml", line 156, characters 12-16
-
 @length
      : forall A : Type, list A -> nat
