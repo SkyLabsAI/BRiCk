@@ -25,3 +25,24 @@ separate heading.
   $ guesstimator fit --print-comparisons=all inputs/polynomial.csv | grep 'class comparisons'
   Within-class comparisons (nested F test where applicable, otherwise BIC):
   Across-class comparisons (nested F test where applicable, otherwise BIC):
+
+Loser-fit printing is independently opt-in. It reports full statistics for
+compared losers that are not already in Fits, including losers of internal
+selection comparisons. It neither prints comparison details nor fits untested
+higher degrees.
+
+  $ if guesstimator fit inputs/polynomial.csv | grep -q '^Comparison loser fits'; then echo unexpected; else echo 'no loser fits by default'; fi
+  no loser fits by default
+
+  $ guesstimator fit --print-loser-fits inputs/polynomial.csv | awk '/^Comparison loser fits/ { printing=1; print; next } printing && /^  / { print $1, $2, $4, $6, $8 }'
+  Comparison loser fits (not already listed under Fits):
+  polynomial-3 RSS= R^2= AIC= BIC=
+  quasi-polynomial-2 RSS= R^2= AIC= BIC=
+  polynomial-1 RSS= R^2= AIC= BIC=
+  quasi-polynomial-1 RSS= R^2= AIC= BIC=
+
+  $ guesstimator fit --print-loser-fits inputs/polynomial.csv | awk '/^  polynomial-2[[:space:]]+RSS=/ { count++ } END { print "polynomial-2 rows:", count }'
+  polynomial-2 rows: 1
+
+  $ if guesstimator fit --print-loser-fits inputs/polynomial.csv | grep -q 'class comparisons'; then echo unexpected; else echo 'loser fits are independent'; fi
+  loser fits are independent

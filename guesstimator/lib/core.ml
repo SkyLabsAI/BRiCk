@@ -62,6 +62,7 @@ type estimate = {
   best : fit;
   comparisons : comparison list;
   within_comparisons : comparison list;
+  comparison_losers : fit list;
 }
 
 let fixed_models = [ Constant; Logarithmic; PowerLaw; Exponential ]
@@ -1248,8 +1249,10 @@ let included_degrees ~max_degree degrees =
 let selected_polynomial_fit ?(alpha = 0.05) ?(include_degrees = []) samples
     constant_fit =
   let candidates = ref [] in
+  let selection_comparisons = ref [] in
   let significant_improvement simpler richer =
     let comparison = compare_fits ~alpha ~samples simpler richer in
+    selection_comparisons := comparison :: !selection_comparisons;
     comparison.significant && comparison.winner = richer.model
   in
   let max_degree = max_identifiable_polynomial_degree samples in
@@ -1310,10 +1313,19 @@ let selected_polynomial_fit ?(alpha = 0.05) ?(include_degrees = []) samples
            match fit_polynomial degree with Ok fitted -> Some fitted | Error _ -> None)
   in
   let selected_fits = match selected with None -> [] | Some fitted -> [ fitted ] in
-  Ok (selected, unique_fits_by_model (selected_fits @ forced_fits), List.rev !candidates)
+  Ok
+    ( selected,
+      unique_fits_by_model (selected_fits @ forced_fits),
+      List.rev !candidates,
+      List.rev !selection_comparisons )
 
 let selected_quasi_polynomial_fit ?(alpha = 0.05) ?(include_degrees = []) samples
     constant_fit polynomial_fit =
+  let selection_comparisons = ref [] in
+  let record_comparison comparison =
+    selection_comparisons := comparison :: !selection_comparisons;
+    comparison
+  in
   let sample_max_degree = max_identifiable_polynomial_degree samples in
   let max_degree =
     match polynomial_fit with
@@ -1353,8 +1365,16 @@ let selected_quasi_polynomial_fit ?(alpha = 0.05) ?(include_degrees = []) sample
   let* selected =
     match List.sort fit_order normal_candidates with
     | [] -> Ok None
-    | best :: _ ->
-        let comparison = compare_fits ~alpha constant_fit best in
+    | best :: other_candidates ->
+        List.iter
+          (fun candidate ->
+            ignore
+              (record_comparison
+                 (compare_fits ~alpha ~samples best candidate)))
+          other_candidates;
+        let comparison =
+          record_comparison (compare_fits ~alpha constant_fit best)
+        in
         if not (comparison.significant && comparison.winner = best.model) then Ok None
         else
           match quasi_polynomial_degree best.model with
@@ -1363,7 +1383,10 @@ let selected_quasi_polynomial_fit ?(alpha = 0.05) ?(include_degrees = []) sample
               match fit (polynomial degree) samples with
               | Error _ -> Ok (Some best)
               | Ok polynomial_fit ->
-                  let comparison = compare_fits ~alpha ~samples polynomial_fit best in
+                  let comparison =
+                    record_comparison
+                      (compare_fits ~alpha ~samples polynomial_fit best)
+                  in
                   Ok (if comparison.winner = polynomial_fit.model then None else Some best) )
   in
   let forced_fits =
@@ -1375,7 +1398,11 @@ let selected_quasi_polynomial_fit ?(alpha = 0.05) ?(include_degrees = []) sample
            | Error _ -> None)
   in
   let selected_fits = match selected with None -> [] | Some fitted -> [ fitted ] in
-  Ok (selected, unique_fits_by_model (selected_fits @ forced_fits), List.rev !candidates)
+  Ok
+    ( selected,
+      unique_fits_by_model (selected_fits @ forced_fits),
+      List.rev !candidates,
+      List.rev !selection_comparisons )
 
 let string_contains haystack needle =
   let haystack_length = String.length haystack in
@@ -1402,6 +1429,17 @@ let insert_selected_fits fixed_fits polynomial_fits quasi_polynomial_fits =
       constant_fit :: logarithmic_fit :: (selected_fits @ rest)
   | _ -> fixed_fits @ selected_fits
 
+let comparison_loser_model comparison =
+  if comparison.winner = comparison.left then Some comparison.right
+  else if comparison.winner = comparison.right then Some comparison.left
+  else None
+
+let comparison_loser_fits fits comparisons =
+  let loser_models = List.filter_map comparison_loser_model comparisons in
+  fits
+  |> List.filter (fun fitted -> List.mem fitted.model loser_models)
+  |> unique_fits_by_model
+
 let estimate ?(alpha = 0.05) ?(include_polynomial_degrees = [])
     ?(include_quasi_polynomial_degrees = []) samples =
   let rec fit_all acc = function
@@ -1416,19 +1454,34 @@ let estimate ?(alpha = 0.05) ?(include_polynomial_degrees = [])
   match fixed_fits with
   | [] -> Error "no candidate models"
   | constant_fit :: _ ->
-      let* polynomial_fit, polynomial_fits, polynomial_candidates =
+      let*
+        polynomial_fit,
+        polynomial_fits,
+        polynomial_candidates,
+        polynomial_selection_comparisons =
         selected_polynomial_fit ~alpha ~include_degrees:include_polynomial_degrees samples
           constant_fit
       in
-      let* quasi_polynomial_fit, quasi_polynomial_fits, quasi_polynomial_candidates =
+      let*
+        quasi_polynomial_fit,
+        quasi_polynomial_fits,
+        quasi_polynomial_candidates,
+        quasi_polynomial_selection_comparisons =
         selected_quasi_polynomial_fit ~alpha
           ~include_degrees:include_quasi_polynomial_degrees samples constant_fit
           polynomial_fit
       in
       let fits = insert_selected_fits fixed_fits polynomial_fits quasi_polynomial_fits in
+      let compared_fits = fixed_fits @ polynomial_candidates @ quasi_polynomial_candidates in
       let within_comparisons =
         adjacent_within_class_comparisons ~alpha ~samples
           (polynomial_candidates @ quasi_polynomial_candidates)
+      in
+      let comparisons = pairwise_comparisons ~alpha ~samples ~across_only:true fits in
+      let all_comparisons =
+        polynomial_selection_comparisons
+        @ quasi_polynomial_selection_comparisons
+        @ within_comparisons @ comparisons
       in
       match List.sort fit_order fits with
       | [] -> Error "no candidate models"
@@ -1437,8 +1490,9 @@ let estimate ?(alpha = 0.05) ?(include_polynomial_degrees = [])
             {
               fits;
               best;
-              comparisons = pairwise_comparisons ~alpha ~samples ~across_only:true fits;
+              comparisons;
               within_comparisons;
+              comparison_losers = comparison_loser_fits compared_fits all_comparisons;
             }
 
 module Holdout = Holdout.Make (struct
@@ -1475,6 +1529,7 @@ module Holdout = Holdout.Make (struct
     best : fit;
     comparisons : comparison list;
     within_comparisons : comparison list;
+    comparison_losers : fit list;
   }
 
   let predict = predict

@@ -102,9 +102,12 @@ restricted-versus-richer comparisons; non-nested models are selected by BIC.
 Comparison output is optional: `--print-comparisons=across` prints comparisons
 across distinct complexity classes, `within` prints comparisons within a class
 (for example, polynomial degree choices), and `all` prints both under separate
-headings. `polynomial-X` and `polynomial-Y` are treated as the same class with
-different degrees, as are `quasi-polynomial-X` and `quasi-polynomial-Y`.
-When same-degree polynomial and quasi-polynomial fits are very close, their
+headings. `--print-loser-fits` independently prints full fit statistics for
+models that lost an exposed or selection-internal comparison and are not already
+listed under `Fits`; models that were fitted but never compared are omitted.
+`polynomial-X` and `polynomial-Y` are treated as the same class with different
+degrees, as are `quasi-polynomial-X` and `quasi-polynomial-Y`. When same-degree
+polynomial and quasi-polynomial fits are very close, their
 comparison is resolved by a ratio-stability diagnostic for the leading term.
 Power-law and exponential fits report both `coefficient` when representable and
 `log_coefficient`, which is also used internally for stable prediction.
@@ -129,6 +132,8 @@ guesstimator fit --normalize-samples=false timings.csv
 guesstimator fit --fit-parameter-scale=normalized timings.csv
 # include comparisons and their rationale notes
 guesstimator fit --print-comparisons=all --verbose timings.csv
+# show statistics for compared candidates that lost and are not in Fits
+guesstimator fit --print-loser-fits timings.csv
 # check that the best fit is polynomial-2; exits 0 on match, 1 on mismatch
 guesstimator assert polynomial-2 timings.csv
 ```

@@ -116,6 +116,10 @@ type estimate = {
   within_comparisons : comparison list;
       (** Adjacent-degree comparisons recorded within model families such as
           polynomial and quasi-polynomial. *)
+  comparison_losers : fit list;
+      (** Deduplicated fits that lost at least one comparison performed while
+          selecting or reporting candidates. Models that were fitted but never
+          compared are not included. *)
 }
 
 module Holdout : sig

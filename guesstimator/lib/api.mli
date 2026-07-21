@@ -16,6 +16,8 @@ type fit_result = {
   samples : Core.sample list;
   estimate : Core.estimate;
   display_fits : display_fit list;
+  display_loser_fits : display_fit list;
+      (** Compared loser fits that are not already present in [display_fits]. *)
   fit_parameter_scale_description : string;
   suspicious_relative_rmse : float option;
   holdout_stability_warning : (float * float) option;

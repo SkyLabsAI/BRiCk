@@ -18,6 +18,7 @@ type fit_result = {
   samples : Core.sample list;
   estimate : Core.estimate;
   display_fits : display_fit list;
+  display_loser_fits : display_fit list;
   fit_parameter_scale_description : string;
   suspicious_relative_rmse : float option;
   holdout_stability_warning : (float * float) option;
@@ -96,10 +97,17 @@ let run_fit ~holdout_options ~normalize_samples fit_parameter_scale raw_samples 
       holdout_options samples
   in
   let parameters = display_parameters ~fit_parameter_scale ~normalization in
-  let display_fits =
-    estimate.Core.fits
+  let display fits =
+    fits
     |> List.sort (fun a b -> compare a.Core.bic b.Core.bic)
     |> List.map (fun fit -> { fit; parameters = parameters fit })
+  in
+  let display_fits = display estimate.Core.fits in
+  let retained_models = List.map (fun fitted -> fitted.Core.model) estimate.Core.fits in
+  let display_loser_fits =
+    estimate.Core.comparison_losers
+    |> List.filter (fun fitted -> not (List.mem fitted.Core.model retained_models))
+    |> display
   in
   Ok
     {
@@ -108,6 +116,7 @@ let run_fit ~holdout_options ~normalize_samples fit_parameter_scale raw_samples 
       samples;
       estimate;
       display_fits;
+      display_loser_fits;
       fit_parameter_scale_description =
         fit_parameter_scale_description ~normalization fit_parameter_scale;
       suspicious_relative_rmse = suspicious_relative_rmse estimate samples;

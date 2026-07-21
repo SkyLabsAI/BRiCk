@@ -32,6 +32,7 @@ module type CORE = sig
     best : fit;
     comparisons : comparison list;
     within_comparisons : comparison list;
+    comparison_losers : fit list;
   }
 
   val predict : fit -> problem_size:float -> float

@@ -186,7 +186,8 @@ let holdout_stability_warning = function
         (percent_string support) (percent_string threshold)
   | None -> ""
 
-let print_result ~verbose ~print_comparisons ~file ~has_header (result : Api.fit_result) =
+let print_result ~verbose ~print_comparisons ~print_loser_fits ~file ~has_header
+    (result : Api.fit_result) =
   Printf.printf "Input: %s\n" file;
   Printf.printf "Header: %s\n" (if has_header then "yes" else "no");
   Printf.printf "Normalized samples: %s\n" (if result.Api.normalized then "yes" else "no");
@@ -198,6 +199,11 @@ let print_result ~verbose ~print_comparisons ~file ~has_header (result : Api.fit
     (holdout_stability_warning result.Api.holdout_stability_warning);
   Printf.printf "Fits:\n";
   List.iter print_fit result.Api.display_fits;
+  if print_loser_fits then (
+    Printf.printf "Comparison loser fits (not already listed under Fits):\n";
+    match result.Api.display_loser_fits with
+    | [] -> Printf.printf "  (none)\n"
+    | loser_fits -> List.iter print_fit loser_fits );
   if print_within_comparisons print_comparisons then
     print_comparison_section ~verbose
       "Within-class comparisons (nested F test where applicable, otherwise BIC):"
@@ -242,14 +248,14 @@ let holdout_options_or_exit options =
       exit invalid_command_line_exit_code
 
 let run_fit holdout_cli_options normalize_samples_enabled fit_parameter_scale verbose
-    print_comparisons header file =
+    print_comparisons print_loser_fits header file =
   let holdout_options = holdout_options_or_exit holdout_cli_options in
   let* has_header, raw_samples = samples_of_csv ?header file in
   let* result =
     Api.run_fit ~holdout_options ~normalize_samples:normalize_samples_enabled
       fit_parameter_scale raw_samples
   in
-  print_result ~verbose ~print_comparisons ~file ~has_header result;
+  print_result ~verbose ~print_comparisons ~print_loser_fits ~file ~has_header result;
   Ok ()
 
 let run_assert holdout_cli_options normalize_samples_enabled max_delta_bic expected header file =
@@ -345,6 +351,12 @@ let print_comparisons_arg =
   in
   Arg.(value & opt (enum choices) Print_comparisons_none
        & info [ "print-comparisons" ] ~docv:"WHICH" ~doc)
+
+let print_loser_fits_arg =
+  let doc =
+    "Print full fit statistics for compared models that lost at least one selection or reported comparison and are not already listed under Fits. This does not enable comparison output or fit models that were never compared."
+  in
+  Arg.(value & flag & info [ "print-loser-fits" ] ~doc)
 
 let int_at_least minimum name =
   let parse string =
@@ -467,6 +479,7 @@ let fit_cmd =
         "guesstimator fit timings.csv\n\
          guesstimator fit --normalize-samples=false timings.csv\n\
          guesstimator fit --fit-parameter-scale=normalized timings.csv\n\
+         guesstimator fit --print-loser-fits timings.csv\n\
          guesstimator fit --holdout --print-comparisons=all --verbose timings.csv\n\
          guesstimator fit --header=true timings-with-header.csv\n\
          guesstimator fit --header=false timings-no-header.csv";
@@ -474,7 +487,7 @@ let fit_cmd =
   in
   Cmd.v (Cmd.info "fit" ~doc ~man ~exits:(invalid_command_line_exit :: Cmd.Exit.defaults))
     Term.(const run_fit $ holdout_options_arg $ normalize_samples_arg $ fit_parameter_scale_arg
-          $ verbose_arg $ print_comparisons_arg $ header_arg $ file_arg)
+          $ verbose_arg $ print_comparisons_arg $ print_loser_fits_arg $ header_arg $ file_arg)
 
 let assert_cmd =
   let doc = "assert the best-fit complexity class" in
