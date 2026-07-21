@@ -6,6 +6,12 @@
 open Procq.Constr
 open Stdarg
 
+(* Disable exception backtraces, overriding effects of the Base library.
+   Backtraces affect all Rocq user errors, not just anomalies. *)
+let _ =
+  let _ = Base.compare_option in
+  Printexc.record_backtrace false
+
 type report_level =
   | Ignore
   | Warn
