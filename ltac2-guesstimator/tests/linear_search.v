@@ -116,7 +116,8 @@ Ltac2 assert_linear (run : search_case -> unit) (inputs : search_case list) : _ 
   in
   let measured := List.map (map_sample float_of_int) measured in
   let options :=
-    { assert_options_holdout :=
+    { assert_options_selection := default_selection_options;
+      assert_options_holdout :=
         make_holdout_options false false 5 (f "0.25") (f "0.80");
       assert_options_normalization := Normalized;
       assert_options_max_delta_bic := f "10" }

@@ -89,11 +89,54 @@ type fit = {
 val parameters_in_original_problem_size_scale :
   sample_normalization -> fit -> parameter list
 
+(** Statistical and practical policy for within-family model selection.
+
+    [minimum_relative_effect] is the smallest RMS added-component effect of
+    interest, relative to RMS observed response variation. It is a declared
+    model-selection resolution, not an inferred noise level. *)
+type selection_options = {
+  alpha : float;
+  minimum_relative_effect : float;
+}
+
+val default_selection_options : selection_options
+
+(** Validate alpha and resolution ranges. All errors are returned together. *)
+val validate_selection_options : selection_options -> (unit, string list) result
+
+type materiality =
+  | Materially_supported
+  | Practically_equivalent
+  | Inconclusive
+
+type practical_evidence = {
+  response_variation_scale : float;
+  rss_improvement : float;
+  relative_effect : float;
+  relative_standard_error : float;
+  confidence_level : float;
+  lower_bound : float;
+  upper_bound : float;
+  resolution : float;
+  materiality : materiality;
+}
+
+type practical_assessment =
+  | Assessed of practical_evidence
+  | Numerically_indistinguishable of {
+      rss_improvement : float;
+      tolerance : float;
+    }
+  | Evidence_unavailable of string
+  | Not_applicable
+
 (** Result of a pairwise model comparison.
 
     [f_statistic] and [p_value] are present when the comparison can be
-    expressed as an extra-sum-of-squares F test: a nested restricted model
-    against a richer model with materially lower residual error.
+    expressed as an extra-sum-of-squares F test. [significant] retains its
+    ordinary p-value meaning. For a one-parameter nested comparison with
+    samples, [practical_assessment] separately records whether a model-based
+    effect interval is above, below, or overlaps the configured resolution.
     For non-nested models, [winner] is chosen by BIC and the test fields are
     [None], except that close same-degree polynomial/quasi-polynomial
     comparisons may use the ratio-stability diagnostic when samples are
@@ -105,6 +148,7 @@ type comparison = {
   f_statistic : float option;
   p_value : float option;
   significant : bool;
+  practical_assessment : practical_assessment;
   note : string;
 }
 
@@ -156,8 +200,17 @@ module Holdout : sig
 
   val best_fit_relative_rmse : estimate -> sample list -> float
   val best_fit_is_suspicious : estimate -> sample list -> bool
+
+  (** Every holdout training estimate uses the supplied alpha and practical
+      model-selection resolution; fold selection never silently falls back to
+      defaults. *)
   val compute_summaries :
-    reference:complexity -> options -> sample list -> (summary list, string) result
+    ?alpha:float ->
+    ?minimum_relative_effect:float ->
+    reference:complexity ->
+    options ->
+    sample list ->
+    (summary list, string) result
   val is_unstable : summary list -> bool
   val support : summary -> float
 end
@@ -186,24 +239,36 @@ val fit : complexity -> sample list -> (fit, string) result
     log-parameterization to avoid avoidable overflow/underflow. *)
 val predict : fit -> problem_size:float -> float
 
-(** Supplying [samples] lets close same-degree polynomial/quasi-polynomial
-    comparisons use a leading-term ratio-stability diagnostic instead of BIC
-    alone. *)
-val compare_fits : ?alpha:float -> ?samples:sample list -> fit -> fit -> comparison
+(** Supplying [samples] enables two independent diagnostics: close same-degree
+    polynomial/quasi-polynomial comparisons may use leading-term ratio
+    stability, and eligible one-parameter nested linear comparisons receive a
+    model-based practical-effect assessment. [minimum_relative_effect] is the
+    SESOI/resolution for the latter; zero recovers alpha-level F-test promotion.
+    Without samples, practical assessment is [Not_applicable]. *)
+val compare_fits :
+  ?alpha:float ->
+  ?minimum_relative_effect:float ->
+  ?samples:sample list ->
+  fit ->
+  fit ->
+  comparison
 
 (** Alias for [compare_fits]; pass the restricted/simpler fit first when using
     it as a nested extra-sum-of-squares test. This is not a classical structural
     break Chow test over separate sample groups. *)
-val chow_test : ?alpha:float -> fit -> fit -> comparison
+val chow_test :
+  ?alpha:float -> ?minimum_relative_effect:float -> fit -> fit -> comparison
 
-(** [estimate ?include_polynomial_degrees ?include_quasi_polynomial_degrees
-    samples] estimates the best model as usual, but also retains any requested
-    identifiable polynomial or quasi-polynomial degrees in [estimate.fits].
-    Requested degrees that cannot be fitted are ignored. This is useful for
-    callers that need to compare a specific degree against the selected model
-    even when the normal degree search would prune it. *)
+(** [estimate ?minimum_relative_effect ?include_polynomial_degrees
+    ?include_quasi_polynomial_degrees samples] estimates the best model using
+    the configured practical resolution for one-parameter polynomial and
+    quasi-polynomial promotions. Requested degrees are fitted when identifiable
+    but retained in [estimate.fits] only when they pass the same adjacent or
+    natural-reference materiality rule; forcing never bypasses eligibility.
+    Raw RSS, R-squared, AIC, and BIC remain unchanged. *)
 val estimate :
   ?alpha:float ->
+  ?minimum_relative_effect:float ->
   ?include_polynomial_degrees:int list ->
   ?include_quasi_polynomial_degrees:int list ->
   sample list ->

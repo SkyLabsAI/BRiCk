@@ -2,6 +2,9 @@ type fit_parameter_scale =
   | Fit_parameter_scale_original
   | Fit_parameter_scale_normalized
 
+(** Statistical alpha and declared practical resolution used consistently by
+    full-data selection, assertions, and holdout reruns. *)
+type selection_options = Core.selection_options
 type holdout_options = Core.Holdout.options
 type holdout_summary = Core.Holdout.summary
 
@@ -11,6 +14,7 @@ type display_fit = {
 }
 
 type fit_result = {
+  selection_options : selection_options;
   normalized : bool;
   normalization : Core.sample_normalization option;
   samples : Core.sample list;
@@ -34,9 +38,13 @@ val complexity_class_names : string
 val string_of_complexity : Core.complexity -> string
 val complexity_of_string : string -> Core.complexity option
 
+(** [make_selection_options resolution] uses alpha 0.05 and the supplied
+    minimum relative added-component effect. *)
+val make_selection_options : float -> selection_options
 val make_holdout_options : bool -> bool -> int -> float -> float -> holdout_options
 
 val run_fit :
+  selection_options:selection_options ->
   holdout_options:holdout_options ->
   normalize_samples:bool ->
   fit_parameter_scale ->
@@ -44,6 +52,7 @@ val run_fit :
   (fit_result, string) result
 
 val run_assert :
+  selection_options:selection_options ->
   holdout_options:holdout_options ->
   normalize_samples:bool ->
   max_delta_bic:float ->

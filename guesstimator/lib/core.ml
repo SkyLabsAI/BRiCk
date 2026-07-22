@@ -47,6 +47,37 @@ type fit = {
   observations : int;
 }
 
+type selection_options = {
+  alpha : float;
+  minimum_relative_effect : float;
+}
+
+type materiality =
+  | Materially_supported
+  | Practically_equivalent
+  | Inconclusive
+
+type practical_evidence = {
+  response_variation_scale : float;
+  rss_improvement : float;
+  relative_effect : float;
+  relative_standard_error : float;
+  confidence_level : float;
+  lower_bound : float;
+  upper_bound : float;
+  resolution : float;
+  materiality : materiality;
+}
+
+type practical_assessment =
+  | Assessed of practical_evidence
+  | Numerically_indistinguishable of {
+      rss_improvement : float;
+      tolerance : float;
+    }
+  | Evidence_unavailable of string
+  | Not_applicable
+
 type comparison = {
   left : complexity;
   right : complexity;
@@ -54,6 +85,7 @@ type comparison = {
   f_statistic : float option;
   p_value : float option;
   significant : bool;
+  practical_assessment : practical_assessment;
   note : string;
 }
 
@@ -66,6 +98,7 @@ type estimate = {
 }
 
 let fixed_models = [ Constant; Logarithmic; PowerLaw; Exponential ]
+let default_selection_options = { alpha = 0.05; minimum_relative_effect = 1e-6 }
 let epsilon = 1e-12
 let model_selection_noise_floor_relative = 4.0 *. epsilon_float
 let close_model_bic_delta = 2.0
@@ -144,6 +177,22 @@ let parameter_count = function
 
 let is_finite x =
   match classify_float x with FP_nan | FP_infinite -> false | _ -> true
+
+let validate_selection_options options =
+  let errors = ref [] in
+  if
+    (not (is_finite options.alpha))
+    || options.alpha <= 0.0 || options.alpha >= 1.0
+  then errors := "alpha must be a finite number strictly between 0 and 1" :: !errors;
+  if
+    (not (is_finite options.minimum_relative_effect))
+    || options.minimum_relative_effect < 0.0
+    || options.minimum_relative_effect > 1.0
+  then
+    errors :=
+      "model-selection resolution must be a finite number between 0 and 1"
+      :: !errors;
+  match List.rev !errors with [] -> Ok () | errors -> Error errors
 
 let safe_exp x =
   if not (is_finite x) then nan
@@ -981,6 +1030,89 @@ let f_survival_probability f d1 d2 =
         let x = 1.0 /. (1.0 +. ((d2f /. d1f) /. f)) in
         1.0 -. regularized_beta x (d1f /. 2.0) (d2f /. 2.0)
 
+let f_upper_tail_quantile ~alpha d1 d2 =
+  if (not (is_finite alpha)) || alpha <= 0.0 || alpha >= 1.0 then
+    Error "F quantile requires alpha strictly between 0 and 1"
+  else if d1 <= 0 || d2 <= 0 then
+    Error "F quantile requires positive degrees of freedom"
+  else
+    let rec bracket high remaining =
+      if remaining = 0 || not (is_finite high) then
+        Error "F quantile failed to find a finite bracket"
+      else
+        let survival = f_survival_probability high d1 d2 in
+        if not (is_finite survival) then Error "F quantile produced a non-finite probability"
+        else if survival <= alpha then Ok high
+        else bracket (high *. 2.0) (remaining - 1)
+    in
+    let* high = bracket 1.0 1024 in
+    let rec bisect low high remaining =
+      let midpoint = low +. ((high -. low) /. 2.0) in
+      if
+        remaining = 0
+        || high -. low <= (1e-12 *. max 1.0 (abs_float midpoint))
+      then Ok midpoint
+      else
+        let survival = f_survival_probability midpoint d1 d2 in
+        if not (is_finite survival) then
+          Error "F quantile produced a non-finite probability"
+        else if survival > alpha then bisect midpoint high (remaining - 1)
+        else bisect low midpoint (remaining - 1)
+    in
+    bisect 0.0 high 256
+
+let classify_materiality ~resolution ~lower ~upper =
+  if lower > resolution then Materially_supported
+  else if upper < resolution then Practically_equivalent
+  else Inconclusive
+
+let one_parameter_practical_assessment ~selection_options ~samples ~improvement
+    richer =
+  let scale = residual_variation_scale samples in
+  if (not (is_finite scale)) || scale <= 0.0 then
+    Evidence_unavailable "response variation scale is not finite and positive"
+  else
+    let effect_ratio = improvement /. scale in
+    if (not (is_finite effect_ratio)) || effect_ratio < 0.0 then
+      Evidence_unavailable "relative model effect is not finite"
+    else
+      let relative_effect = sqrt effect_ratio in
+      let df = richer.degrees_of_freedom in
+      if df <= 0 then Evidence_unavailable "richer model has no residual degrees of freedom"
+      else
+        let relative_variance = (richer.rss /. scale) /. float_of_int df in
+        if (not (is_finite relative_variance)) || relative_variance < 0.0 then
+          Evidence_unavailable "relative model-effect variance is not finite"
+        else
+          match f_upper_tail_quantile ~alpha:selection_options.alpha 1 df with
+          | Error message -> Evidence_unavailable message
+          | Ok f_critical ->
+              let relative_standard_error = sqrt relative_variance in
+              let margin = sqrt f_critical *. relative_standard_error in
+              let lower_bound = max 0.0 (relative_effect -. margin) in
+              let upper_bound = relative_effect +. margin in
+              if
+                (not (is_finite relative_effect))
+                || (not (is_finite relative_standard_error))
+                || (not (is_finite lower_bound)) || not (is_finite upper_bound)
+              then Evidence_unavailable "model-effect interval is not finite"
+              else
+                let resolution = selection_options.minimum_relative_effect in
+                Assessed
+                  {
+                    response_variation_scale = scale;
+                    rss_improvement = improvement;
+                    relative_effect;
+                    relative_standard_error;
+                    confidence_level = 1.0 -. selection_options.alpha;
+                    lower_bound;
+                    upper_bound;
+                    resolution;
+                    materiality =
+                      classify_materiality ~resolution ~lower:lower_bound
+                        ~upper:upper_bound;
+                  }
+
 let fit_order a b =
   let by_bic = compare a.bic b.bic in
   if by_bic <> 0 then by_bic
@@ -1117,9 +1249,56 @@ let is_nested_model simpler richer =
           | Some simpler_degree, Some richer_degree -> simpler_degree < richer_degree
           | _ -> false ) )
 
-let compare_fits ?(alpha = 0.05) ?samples left right =
+let one_parameter_resolution_applicable simpler richer =
+  match (simpler, richer) with
+  | Constant, Polynomial 1 | Constant, QuasiPolynomial 1 -> true
+  | Polynomial simpler_degree, Polynomial richer_degree ->
+      richer_degree = simpler_degree + 1
+  | Polynomial simpler_degree, QuasiPolynomial richer_degree ->
+      richer_degree = simpler_degree + 1
+  | Constant, Constant
+  | Constant, Logarithmic
+  | Constant, Polynomial _
+  | Constant, QuasiPolynomial _
+  | Constant, PowerLaw
+  | Constant, Exponential
+  | Logarithmic, _
+  | Polynomial _, _
+  | QuasiPolynomial _, _
+  | PowerLaw, _
+  | Exponential, _ -> false
+
+let practical_note significant = function
+  | Assessed evidence -> (
+      match evidence.materiality with
+      | Materially_supported ->
+          "extra-sum-of-squares F test; added effect exceeds the model-selection resolution"
+      | Practically_equivalent ->
+          if significant then
+            "added term is statistically detectable but below the model-selection resolution"
+          else "added term is below the model-selection resolution"
+      | Inconclusive ->
+          "effect interval overlaps the model-selection resolution; simpler model selected by policy" )
+  | Numerically_indistinguishable _ ->
+      "richer model does not numerically reduce residual error; simpler model selected"
+  | Evidence_unavailable message ->
+      "model-selection resolution evidence unavailable: " ^ message
+  | Not_applicable -> "extra-sum-of-squares F test for nested models"
+
+let compare_fits ?(alpha = default_selection_options.alpha)
+    ?(minimum_relative_effect = default_selection_options.minimum_relative_effect)
+    ?samples left right =
+  let selection_options = { alpha; minimum_relative_effect } in
+  (match validate_selection_options selection_options with
+  | Ok () -> ()
+  | Error errors -> invalid_arg (String.concat "; " errors));
   let bic_winner = if fit_order left right <= 0 then left.model else right.model in
   let n_ok = left.observations = right.observations in
+  let samples_ok =
+    match samples with
+    | Some samples -> n_ok && List.length samples = left.observations
+    | None -> false
+  in
   let k_left = parameter_count left.model in
   let k_right = parameter_count right.model in
   let base =
@@ -1130,16 +1309,17 @@ let compare_fits ?(alpha = 0.05) ?samples left right =
       f_statistic = None;
       p_value = None;
       significant = false;
+      practical_assessment = Not_applicable;
       note = "non-nested or equal-size models; winner selected by BIC";
     }
   in
   let base =
     match samples with
-    | Some samples when n_ok && List.length samples = left.observations ->
-        apply_polynomial_quasi_diagnostic samples left right base
+    | Some samples when samples_ok -> apply_polynomial_quasi_diagnostic samples left right base
     | Some _ | None -> base
   in
-  if not n_ok then { base with note = "fits have different observation counts; winner selected by BIC" }
+  if not n_ok then
+    { base with note = "fits have different observation counts; winner selected by BIC" }
   else if k_left = k_right then base
   else
     let simpler, richer = if k_left < k_right then (left, right) else (right, left) in
@@ -1153,16 +1333,25 @@ let compare_fits ?(alpha = 0.05) ?samples left right =
       in
       let improvement_tolerance = max (epsilon *. rss_scale) residual_tolerance in
       if improvement <= improvement_tolerance then
+        let practical_assessment =
+          Numerically_indistinguishable
+            { rss_improvement = improvement; tolerance = improvement_tolerance }
+        in
         {
           base with
           winner = simpler.model;
-          note = "richer model does not materially reduce residual error; simpler model selected";
+          practical_assessment;
+          note = practical_note false practical_assessment;
         }
       else
         let d1 = parameter_count richer.model - parameter_count simpler.model in
         let d2 = richer.degrees_of_freedom in
         if d2 <= 0 then
-          { base with note = "not enough residual degrees of freedom for F test; winner selected by BIC" }
+          {
+            base with
+            practical_assessment = Evidence_unavailable "no residual degrees of freedom";
+            note = "not enough residual degrees of freedom for F test; winner selected by BIC";
+          }
         else
           let f_statistic, p_value =
             if richer.rss = 0.0 then (infinity, 0.0)
@@ -1173,19 +1362,47 @@ let compare_fits ?(alpha = 0.05) ?samples left right =
               (f_statistic, f_survival_probability f_statistic d1 d2)
           in
           let significant = is_finite p_value && p_value < alpha in
+          let resolution_applicable =
+            d1 = 1 && one_parameter_resolution_applicable simpler.model richer.model
+          in
+          let practical_assessment =
+            if not resolution_applicable then Not_applicable
+            else
+              match samples with
+              | Some samples when samples_ok ->
+                  one_parameter_practical_assessment ~selection_options ~samples
+                    ~improvement richer
+              | Some _ -> Evidence_unavailable "samples do not match fitted observations"
+              | None -> Not_applicable
+          in
+          let richer_wins =
+            match practical_assessment with
+            | Assessed evidence ->
+                significant && evidence.materiality = Materially_supported
+            | Numerically_indistinguishable _ -> false
+            | Evidence_unavailable _ ->
+                minimum_relative_effect = 0.0 && significant
+            | Not_applicable -> significant
+          in
           {
             left = left.model;
             right = right.model;
-            winner = (if significant then richer.model else simpler.model);
+            winner = (if richer_wins then richer.model else simpler.model);
             f_statistic = Some f_statistic;
             p_value = Some p_value;
             significant;
-            note = "extra-sum-of-squares F test for nested models";
+            practical_assessment;
+            note = practical_note significant practical_assessment;
           }
 
-let chow_test ?(alpha = 0.05) restricted unrestricted = compare_fits ~alpha restricted unrestricted
+let chow_test ?(alpha = default_selection_options.alpha)
+    ?(minimum_relative_effect = default_selection_options.minimum_relative_effect)
+    restricted unrestricted =
+  compare_fits ~alpha ~minimum_relative_effect restricted unrestricted
 
-let pairwise_comparisons ?(alpha = 0.05) ?samples ?(across_only = false) fits =
+let pairwise_comparisons ?(alpha = default_selection_options.alpha)
+    ?(minimum_relative_effect = default_selection_options.minimum_relative_effect)
+    ?samples ?(across_only = false) fits =
   let include_pair left right =
     (not across_only) || not (same_complexity_class left.model right.model)
   in
@@ -1195,7 +1412,7 @@ let pairwise_comparisons ?(alpha = 0.05) ?samples ?(across_only = false) fits =
         let comparisons =
           xs
           |> List.filter (include_pair x)
-          |> List.map (compare_fits ~alpha ?samples x)
+          |> List.map (compare_fits ~alpha ~minimum_relative_effect ?samples x)
         in
         comparisons @ loop xs
   in
@@ -1210,13 +1427,15 @@ let fit_class_and_degree_order left right =
   if by_class <> 0 then by_class
   else compare (model_degree_for_order left.model) (model_degree_for_order right.model)
 
-let adjacent_within_class_comparisons ?(alpha = 0.05) ?samples fits =
+let adjacent_within_class_comparisons ?(alpha = default_selection_options.alpha)
+    ?(minimum_relative_effect = default_selection_options.minimum_relative_effect)
+    ?samples fits =
   let sorted_fits = List.sort fit_class_and_degree_order fits in
   let rec loop acc = function
     | left :: (right :: _ as rest) ->
         let acc =
           if same_complexity_class left.model right.model then
-            compare_fits ~alpha ?samples left right :: acc
+            compare_fits ~alpha ~minimum_relative_effect ?samples left right :: acc
           else acc
         in
         loop acc rest
@@ -1246,14 +1465,17 @@ let included_degrees ~max_degree degrees =
   |> List.filter (fun degree -> degree >= 1 && degree <= max_degree)
   |> List.sort_uniq compare
 
-let selected_polynomial_fit ?(alpha = 0.05) ?(include_degrees = []) samples
-    constant_fit =
+let selected_polynomial_fit ?(alpha = default_selection_options.alpha)
+    ?(minimum_relative_effect = default_selection_options.minimum_relative_effect)
+    ?(include_degrees = []) samples constant_fit =
   let candidates = ref [] in
   let selection_comparisons = ref [] in
-  let significant_improvement simpler richer =
-    let comparison = compare_fits ~alpha ~samples simpler richer in
+  let materially_supported_improvement simpler richer =
+    let comparison =
+      compare_fits ~alpha ~minimum_relative_effect ~samples simpler richer
+    in
     selection_comparisons := comparison :: !selection_comparisons;
-    comparison.significant && comparison.winner = richer.model
+    comparison.winner = richer.model
   in
   let max_degree = max_identifiable_polynomial_degree samples in
   let candidate degree =
@@ -1277,13 +1499,13 @@ let selected_polynomial_fit ?(alpha = 0.05) ?(include_degrees = []) samples
     else
       match fit_polynomial degree with
       | Error _ -> Ok previous
-      | Ok current when significant_improvement previous current ->
+      | Ok current when materially_supported_improvement previous current ->
           search_higher_degree current (degree + 1)
       | Ok _ -> Ok previous
   in
   let lower_degree_choice linear_fit quadratic_fit =
-    if significant_improvement linear_fit quadratic_fit then Some quadratic_fit
-    else if significant_improvement constant_fit linear_fit then Some linear_fit
+    if materially_supported_improvement linear_fit quadratic_fit then Some quadratic_fit
+    else if materially_supported_improvement constant_fit linear_fit then Some linear_fit
     else None
   in
   let* selected =
@@ -1293,12 +1515,17 @@ let selected_polynomial_fit ?(alpha = 0.05) ?(include_degrees = []) samples
       | Error _ -> Ok None
       | Ok linear_fit ->
           if max_degree = 1 then
-            Ok (if significant_improvement constant_fit linear_fit then Some linear_fit else None)
+            Ok
+              (if materially_supported_improvement constant_fit linear_fit then
+                 Some linear_fit
+               else None)
           else
             match fit_polynomial 2 with
             | Error _ ->
                 Ok
-                  (if significant_improvement constant_fit linear_fit then Some linear_fit else None)
+                  (if materially_supported_improvement constant_fit linear_fit then
+                     Some linear_fit
+                   else None)
             | Ok quadratic_fit ->
                 let* searched_fit = search_higher_degree quadratic_fit 3 in
                 Ok
@@ -1310,7 +1537,17 @@ let selected_polynomial_fit ?(alpha = 0.05) ?(include_degrees = []) samples
     include_degrees
     |> included_degrees ~max_degree
     |> List.filter_map (fun degree ->
-           match fit_polynomial degree with Ok fitted -> Some fitted | Error _ -> None)
+           match fit_polynomial degree with
+           | Error _ -> None
+           | Ok fitted ->
+               let reference =
+                 if degree = 1 then Ok constant_fit else fit_polynomial (degree - 1)
+               in
+               (match reference with
+               | Ok reference
+                 when materially_supported_improvement reference fitted ->
+                   Some fitted
+               | Ok _ | Error _ -> None))
   in
   let selected_fits = match selected with None -> [] | Some fitted -> [ fitted ] in
   Ok
@@ -1319,8 +1556,9 @@ let selected_polynomial_fit ?(alpha = 0.05) ?(include_degrees = []) samples
       List.rev !candidates,
       List.rev !selection_comparisons )
 
-let selected_quasi_polynomial_fit ?(alpha = 0.05) ?(include_degrees = []) samples
-    constant_fit polynomial_fit =
+let selected_quasi_polynomial_fit ?(alpha = default_selection_options.alpha)
+    ?(minimum_relative_effect = default_selection_options.minimum_relative_effect)
+    ?(include_degrees = []) samples constant_fit polynomial_fit =
   let selection_comparisons = ref [] in
   let record_comparison comparison =
     selection_comparisons := comparison :: !selection_comparisons;
@@ -1352,6 +1590,38 @@ let selected_quasi_polynomial_fit ?(alpha = 0.05) ?(include_degrees = []) sample
             Ok fitted
         | Error message -> Error (string_of_complexity model ^ ": " ^ message)
   in
+  let polynomial_references = ref [] in
+  let fit_polynomial_reference degree =
+    if degree = 0 then Ok constant_fit
+    else
+      match
+        List.find_opt
+          (fun fitted -> polynomial_degree fitted.model = Some degree)
+          !polynomial_references
+      with
+      | Some fitted -> Ok fitted
+      | None -> (
+          let model = polynomial degree in
+          match fit model samples with
+          | Ok fitted ->
+              polynomial_references := fitted :: !polynomial_references;
+              Ok fitted
+          | Error message -> Error (string_of_complexity model ^ ": " ^ message) )
+  in
+  let materially_eligible fitted =
+    match quasi_polynomial_degree fitted.model with
+    | None -> false
+    | Some degree -> (
+        match fit_polynomial_reference (degree - 1) with
+        | Error _ -> false
+        | Ok reference ->
+            let comparison =
+              record_comparison
+                (compare_fits ~alpha ~minimum_relative_effect ~samples reference
+                   fitted)
+            in
+            comparison.winner = fitted.model )
+  in
   let rec fit_degrees degree =
     if degree > max_degree then Ok ()
     else
@@ -1362,40 +1632,38 @@ let selected_quasi_polynomial_fit ?(alpha = 0.05) ?(include_degrees = []) sample
   in
   let* () = fit_degrees 1 in
   let normal_candidates = List.rev !candidates in
+  let eligible_candidates = List.filter materially_eligible normal_candidates in
   let* selected =
-    match List.sort fit_order normal_candidates with
+    match List.sort fit_order eligible_candidates with
     | [] -> Ok None
     | best :: other_candidates ->
         List.iter
           (fun candidate ->
             ignore
               (record_comparison
-                 (compare_fits ~alpha ~samples best candidate)))
+                 (compare_fits ~alpha ~minimum_relative_effect ~samples best
+                    candidate)))
           other_candidates;
-        let comparison =
-          record_comparison (compare_fits ~alpha constant_fit best)
-        in
-        if not (comparison.significant && comparison.winner = best.model) then Ok None
-        else
-          match quasi_polynomial_degree best.model with
-          | None -> Ok (Some best)
-          | Some degree -> (
-              match fit (polynomial degree) samples with
-              | Error _ -> Ok (Some best)
-              | Ok polynomial_fit ->
-                  let comparison =
-                    record_comparison
-                      (compare_fits ~alpha ~samples polynomial_fit best)
-                  in
-                  Ok (if comparison.winner = polynomial_fit.model then None else Some best) )
+        (match quasi_polynomial_degree best.model with
+        | None -> Ok (Some best)
+        | Some degree -> (
+            match fit_polynomial_reference degree with
+            | Error _ -> Ok (Some best)
+            | Ok polynomial_fit ->
+                let comparison =
+                  record_comparison
+                    (compare_fits ~alpha ~minimum_relative_effect ~samples
+                       polynomial_fit best)
+                in
+                Ok (if comparison.winner = polynomial_fit.model then None else Some best) ))
   in
   let forced_fits =
     include_degrees
     |> included_degrees ~max_degree:sample_max_degree
     |> List.filter_map (fun degree ->
            match fit_quasi_polynomial degree with
-           | Ok fitted -> Some fitted
-           | Error _ -> None)
+           | Ok fitted when materially_eligible fitted -> Some fitted
+           | Ok _ | Error _ -> None)
   in
   let selected_fits = match selected with None -> [] | Some fitted -> [ fitted ] in
   Ok
@@ -1440,8 +1708,15 @@ let comparison_loser_fits fits comparisons =
   |> List.filter (fun fitted -> List.mem fitted.model loser_models)
   |> unique_fits_by_model
 
-let estimate ?(alpha = 0.05) ?(include_polynomial_degrees = [])
-    ?(include_quasi_polynomial_degrees = []) samples =
+let estimate ?(alpha = default_selection_options.alpha)
+    ?(minimum_relative_effect = default_selection_options.minimum_relative_effect)
+    ?(include_polynomial_degrees = []) ?(include_quasi_polynomial_degrees = [])
+    samples =
+  let* () =
+    match validate_selection_options { alpha; minimum_relative_effect } with
+    | Ok () -> Ok ()
+    | Error messages -> Error (String.concat "; " messages)
+  in
   let rec fit_all acc = function
     | [] -> Ok (List.rev acc)
     | model :: rest -> (
@@ -1459,25 +1734,28 @@ let estimate ?(alpha = 0.05) ?(include_polynomial_degrees = [])
         polynomial_fits,
         polynomial_candidates,
         polynomial_selection_comparisons =
-        selected_polynomial_fit ~alpha ~include_degrees:include_polynomial_degrees samples
-          constant_fit
+        selected_polynomial_fit ~alpha ~minimum_relative_effect
+          ~include_degrees:include_polynomial_degrees samples constant_fit
       in
       let*
         quasi_polynomial_fit,
         quasi_polynomial_fits,
         quasi_polynomial_candidates,
         quasi_polynomial_selection_comparisons =
-        selected_quasi_polynomial_fit ~alpha
+        selected_quasi_polynomial_fit ~alpha ~minimum_relative_effect
           ~include_degrees:include_quasi_polynomial_degrees samples constant_fit
           polynomial_fit
       in
       let fits = insert_selected_fits fixed_fits polynomial_fits quasi_polynomial_fits in
       let compared_fits = fixed_fits @ polynomial_candidates @ quasi_polynomial_candidates in
       let within_comparisons =
-        adjacent_within_class_comparisons ~alpha ~samples
+        adjacent_within_class_comparisons ~alpha ~minimum_relative_effect ~samples
           (polynomial_candidates @ quasi_polynomial_candidates)
       in
-      let comparisons = pairwise_comparisons ~alpha ~samples ~across_only:true fits in
+      let comparisons =
+        pairwise_comparisons ~alpha ~minimum_relative_effect ~samples
+          ~across_only:true fits
+      in
       let all_comparisons =
         polynomial_selection_comparisons
         @ quasi_polynomial_selection_comparisons
@@ -1514,6 +1792,8 @@ module Holdout = Holdout.Make (struct
     observations : int;
   }
 
+  type nonrec practical_assessment = practical_assessment
+
   type nonrec comparison = comparison = {
     left : complexity;
     right : complexity;
@@ -1521,6 +1801,7 @@ module Holdout = Holdout.Make (struct
     f_statistic : float option;
     p_value : float option;
     significant : bool;
+    practical_assessment : practical_assessment;
     note : string;
   }
 
@@ -1533,6 +1814,7 @@ module Holdout = Holdout.Make (struct
   }
 
   let predict = predict
-  let estimate ?alpha samples = estimate ?alpha samples
+  let estimate ?alpha ?minimum_relative_effect samples =
+    estimate ?alpha ?minimum_relative_effect samples
   let string_of_complexity = string_of_complexity
 end)

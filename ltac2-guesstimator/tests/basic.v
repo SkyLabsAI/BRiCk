@@ -33,7 +33,8 @@ Ltac2 options () : holdout_options :=
   make_holdout_options false false 5 (f "0.25") (f "0.80").
 
 Ltac2 fit_run_options () : fit_options :=
-  { fit_options_holdout := options ();
+  { fit_options_selection := default_selection_options;
+    fit_options_holdout := options ();
     fit_options_normalization := Unnormalized;
     fit_options_parameter_scale := FitParameterScaleOriginal }.
 
@@ -66,7 +67,20 @@ Ltac2 check_default_holdout_options (options : holdout_options) :=
   check_true "unexpected default holdout stability threshold"
     (Float.equal (options.(holdout_stability_threshold)) (f "0.80")).
 
+Ltac2 check_selection_options (options : selection_options) : unit :=
+  check_true "unexpected default selection alpha"
+    (Float.equal (options.(selection_alpha)) (f "0.05"));
+  check_true "unexpected default model-selection resolution"
+    (Float.equal (options.(selection_minimum_relative_effect)) (f "1e-6")).
+
 Ltac2 check_default_options () :=
+  check_selection_options default_selection_options;
+  let legacy := make_selection_options (f "0.05") (f "0") in
+  check_true "unexpected custom selection alpha"
+    (Float.equal (legacy.(selection_alpha)) (f "0.05"));
+  check_true "unexpected custom model-selection resolution"
+    (Float.equal (legacy.(selection_minimum_relative_effect)) (f "0"));
+  check_selection_options (default_fit_options.(fit_options_selection));
   check_default_holdout_options (default_fit_options.(fit_options_holdout));
   match (default_fit_options.(fit_options_normalization)) with
   | Normalized => ()
@@ -76,6 +90,7 @@ Ltac2 check_default_options () :=
   | FitParameterScaleOriginal => ()
   | _ => fail "fit should display parameters in the original scale by default"
   end;
+  check_selection_options (default_assert_options.(assert_options_selection));
   check_default_holdout_options (default_assert_options.(assert_options_holdout));
   match (default_assert_options.(assert_options_normalization)) with
   | Normalized => ()
@@ -84,10 +99,54 @@ Ltac2 check_default_options () :=
   check_true "unexpected default maximum BIC delta"
     (Float.equal (default_assert_options.(assert_options_max_delta_bic)) (f "2.0")).
 
+Ltac2 quadratic_samples () : float sample list :=
+  [ mk_sample "1" "2";
+    mk_sample "2" "5";
+    mk_sample "3" "10";
+    mk_sample "4" "17";
+    mk_sample "5" "26";
+    mk_sample "6" "37";
+    mk_sample "7" "50";
+    mk_sample "8" "65" ].
+
+Ltac2 check_assessed_comparison_api () : unit :=
+  match run_fit (fit_run_options ()) (quadratic_samples ()) with
+  | ApiError error => fail (api_error_to_string error)
+  | ApiOk result =>
+      let estimate := fit_result_estimate result in
+      match estimate.(within_comparisons) with
+      | comparison :: _ =>
+          match comparison.(practical_assessment_result) with
+          | PracticalAssessed evidence =>
+              match evidence.(materiality_outcome) with
+              | MateriallySupported => ()
+              | _ => fail "quadratic effect should be materially supported"
+              end
+          | _ => fail "quadratic comparison should expose assessed evidence"
+          end
+      | [] => fail "quadratic fit should expose a within-family comparison"
+      end
+  end.
+
+Ltac2 check_invalid_selection_api () : unit :=
+  let invalid_options :=
+    { fit_options_selection := make_selection_options (f "1") (f "1e-6");
+      fit_options_holdout := options ();
+      fit_options_normalization := Unnormalized;
+      fit_options_parameter_scale := FitParameterScaleOriginal }
+  in
+  match run_fit invalid_options (samples ()) with
+  | ApiError _ => ()
+  | ApiOk _ => fail "invalid selection options should return an API error"
+  end.
+
 Ltac2 check_fit_api () :=
+  check_invalid_selection_api ();
+  check_assessed_comparison_api ();
   match run_fit (fit_run_options ()) (samples ()) with
   | ApiError error => fail (api_error_to_string error)
   | ApiOk result =>
+      check_selection_options (fit_result_selection_options result);
       check_true "fit result should not be normalized"
         (Bool.neg (fit_result_normalized result));
       match fit_result_normalization result with
@@ -99,6 +158,17 @@ Ltac2 check_fit_api () :=
       | _ :: _ => ()
       end;
       let estimate := fit_result_estimate result in
+      match estimate.(within_comparisons) with
+      | comparison :: _ =>
+          match comparison.(practical_assessment_result) with
+          | PracticalAssessed _ => ()
+          | PracticalNumericallyIndistinguishable _ => ()
+          | PracticalEvidenceUnavailable _ => ()
+          | PracticalNotApplicable => ()
+          | _ => fail "unexpected practical assessment extension"
+          end
+      | [] => fail "expected a within-family comparison"
+      end;
       match estimate.(best).(model) with
       | ComplexityConstant => ()
       | _ => fail "constant samples should be classified as constant"

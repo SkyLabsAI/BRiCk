@@ -78,6 +78,38 @@ Ltac2 Type fit := {
   observations : int;
 }.
 
+Ltac2 Type materiality := [..].
+Ltac2 Type materiality ::= [
+  | MateriallySupported
+  | PracticallyEquivalent
+  | MaterialityInconclusive
+].
+
+Ltac2 Type practical_evidence := {
+  response_variation_scale : float;
+  rss_improvement : float;
+  relative_effect : float;
+  relative_standard_error : float;
+  confidence_level : float;
+  lower_bound : float;
+  upper_bound : float;
+  resolution : float;
+  materiality_outcome : materiality;
+}.
+
+Ltac2 Type numerical_indistinguishability := {
+  numerical_rss_improvement : float;
+  numerical_tolerance : float;
+}.
+
+Ltac2 Type practical_assessment := [..].
+Ltac2 Type practical_assessment ::= [
+  | PracticalAssessed (practical_evidence)
+  | PracticalNumericallyIndistinguishable (numerical_indistinguishability)
+  | PracticalEvidenceUnavailable (string)
+  | PracticalNotApplicable
+].
+
 Ltac2 Type comparison := {
   left : complexity;
   right : complexity;
@@ -85,6 +117,7 @@ Ltac2 Type comparison := {
   f_statistic : float option;
   p_value : float option;
   significant : bool;
+  practical_assessment_result : practical_assessment;
   note : string;
 }.
 
@@ -93,6 +126,14 @@ Ltac2 Type estimate := {
   best : fit;
   comparisons : comparison list;
   within_comparisons : comparison list;
+}.
+
+(** Statistical alpha and declared smallest relative added-component effect used
+    by [run_fit], [run_assert], and all holdout reruns. The latter is a practical
+    model-selection resolution, not inferred measurement noise. *)
+Ltac2 Type selection_options := {
+  selection_alpha : float;
+  selection_minimum_relative_effect : float;
 }.
 
 Ltac2 Type holdout_options := {
@@ -105,12 +146,15 @@ Ltac2 Type holdout_options := {
 
 (** Configuration for [run_fit].
 
+    - [fit_options_selection] controls statistical alpha and practical
+      model-selection resolution.
     - [fit_options_holdout] controls optional hold-out validation.
     - [fit_options_normalization] selects whether problem sizes are normalized
       before fitting.
     - [fit_options_parameter_scale] selects the problem-size scale used for
       displayed parameters. *)
 Ltac2 Type fit_options := {
+  fit_options_selection : selection_options;
   fit_options_holdout : holdout_options;
   fit_options_normalization : normalization;
   fit_options_parameter_scale : fit_parameter_scale;
@@ -118,6 +162,8 @@ Ltac2 Type fit_options := {
 
 (** Configuration for [run_assert].
 
+    - [assert_options_selection] controls statistical alpha and practical
+      model-selection resolution.
     - [assert_options_holdout] controls optional hold-out validation.
     - [assert_options_normalization] selects whether problem sizes are
       normalized before fitting.
@@ -127,6 +173,7 @@ Ltac2 Type fit_options := {
     The expected complexity class and samples remain separate arguments to
     [run_assert]. *)
 Ltac2 Type assert_options := {
+  assert_options_selection : selection_options;
   assert_options_holdout : holdout_options;
   assert_options_normalization : normalization;
   assert_options_max_delta_bic : float;
@@ -199,6 +246,18 @@ Ltac2 @ external string_of_complexity : complexity -> string :=
 Ltac2 @ external complexity_of_string : string -> complexity option :=
   "ltac2_guesstimator" "complexity_of_string".
 
+(** [make_selection_options alpha minimum_relative_effect] constructs the
+    statistical and practical policy used for model selection. Resolution zero
+    recovers legacy one-parameter F-test promotion. Invalid values are reported
+    as [ApiError] by [run_fit] or [run_assert]. *)
+Ltac2 @ external make_selection_options :
+  float -> float -> selection_options :=
+  "ltac2_guesstimator" "make_selection_options".
+
+(** The Guesstimator defaults: alpha 0.05 and minimum relative effect 1e-6. *)
+Ltac2 @ external default_selection_options : selection_options :=
+  "ltac2_guesstimator" "default_selection_options".
+
 (** [make_holdout_options holdout holdout_tail holdout_folds
     holdout_tail_fraction holdout_stability_threshold] builds the hold-out
     settings stored in [fit_options] and [assert_options].
@@ -222,27 +281,31 @@ Local Ltac2 @ external default_holdout_options_internal : holdout_options :=
 Local Ltac2 @ external default_max_delta_bic_internal : float :=
   "ltac2_guesstimator" "default_max_delta_bic".
 
-(** [default_fit_options] matches the [fit] command's defaults: hold-out
-    validation is disabled with 5 folds, a 0.25 tail fraction, and a 0.80
-    stability threshold ready if enabled; problem sizes are normalized; and
-    parameters are displayed in the original problem-size scale. *)
+(** [default_fit_options] matches the [fit] command's defaults: alpha is 0.05
+    with a 1e-6 model-selection resolution; hold-out validation is disabled with
+    5 folds, a 0.25 tail fraction, and a 0.80 stability threshold ready if
+    enabled; problem sizes are normalized; and parameters are displayed in the
+    original problem-size scale. *)
 Ltac2 default_fit_options : fit_options :=
-  { fit_options_holdout := default_holdout_options_internal;
+  { fit_options_selection := default_selection_options;
+    fit_options_holdout := default_holdout_options_internal;
     fit_options_normalization := Normalized;
     fit_options_parameter_scale := FitParameterScaleOriginal }.
 
 (** [default_assert_options] matches the [assert] command's defaults. It uses
-    the same hold-out and normalization settings as [default_fit_options] and
-    accepts an expected model within a BIC delta of 2.0. *)
+    the same selection, hold-out, and normalization settings as
+    [default_fit_options] and accepts an expected model within a BIC delta of
+    2.0. *)
 Ltac2 default_assert_options : assert_options :=
-  { assert_options_holdout := default_holdout_options_internal;
+  { assert_options_selection := default_selection_options;
+    assert_options_holdout := default_holdout_options_internal;
     assert_options_normalization := Normalized;
     assert_options_max_delta_bic := default_max_delta_bic_internal }.
 
 (** [run_fit options samples] estimates the complexity class of [samples].
 
-    - [options] bundles hold-out validation, problem-size normalization, and
-      the scale used to display fitted parameters.
+    - [options] bundles selection resolution, hold-out validation, problem-size
+      normalization, and the scale used to display fitted parameters.
     - [samples] remains a separate argument containing the observed data, with
       [problem_size] as the input size and [time] as the measured cost.
 
@@ -257,8 +320,8 @@ Ltac2 @ external run_fit :
 (** [run_assert options expected samples] checks whether [samples] are
     compatible with [expected].
 
-    - [options] bundles hold-out validation, problem-size normalization, and
-      the maximum BIC delta allowed for [expected].
+    - [options] bundles selection resolution, hold-out validation, problem-size
+      normalization, and the maximum BIC delta allowed for [expected].
     - [expected] remains a separate argument naming the complexity class being
       asserted.
     - [samples] remains a separate argument containing the observed data.
@@ -273,6 +336,11 @@ Ltac2 @ external run_fit :
 Ltac2 @ external run_assert :
   assert_options -> complexity -> float sample list -> assert_result api_result :=
   "ltac2_guesstimator" "run_assert".
+
+(** [fit_result_selection_options result] returns the statistical alpha and
+    practical resolution used for the full-data fit and holdout reruns. *)
+Ltac2 @ external fit_result_selection_options : fit_result -> selection_options :=
+  "ltac2_guesstimator" "fit_result_selection_options".
 
 (** [fit_result_normalized result] returns [true] exactly when [result] was
     produced with [Normalized]. *)
@@ -291,7 +359,10 @@ Ltac2 @ external fit_result_samples : fit_result -> float sample list :=
   "ltac2_guesstimator" "fit_result_samples".
 
 (** [fit_result_estimate result] returns the complete model-selection estimate,
-    including all retained fits, the best fit by BIC, and pairwise comparisons. *)
+    including all retained fits, the best fit by BIC, and pairwise comparisons.
+    A comparison's [significant] field retains its p-value meaning;
+    [practical_assessment_result] separately reports material, equivalent,
+    inconclusive, numerical, unavailable, or non-applicable resolution evidence. *)
 Ltac2 @ external fit_result_estimate : fit_result -> estimate :=
   "ltac2_guesstimator" "fit_result_estimate".
 

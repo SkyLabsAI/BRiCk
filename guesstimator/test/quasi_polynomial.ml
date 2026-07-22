@@ -28,7 +28,7 @@ let get = function Ok value -> value | Error message -> fail message
 
 let has_fit model result = List.exists (fun fitted -> fitted.model = model) result.fits
 
-let test_estimate_can_force_degree_bearing_candidates () =
+let test_forced_degree_bearing_candidates_cannot_bypass_materiality () =
   let samples =
     List.init 8 (fun index ->
         let n = float_of_int (index + 1) in
@@ -38,11 +38,11 @@ let test_estimate_can_force_degree_bearing_candidates () =
   require (not (has_fit (polynomial 3) default))
     "fixture should normally prune polynomial-3 from retained fits";
   let with_polynomial = get (estimate ~include_polynomial_degrees:[ 3 ] samples) in
-  require (has_fit (polynomial 3) with_polynomial)
-    "expected forced polynomial-3 to be retained";
+  require (not (has_fit (polynomial 3) with_polynomial))
+    "forced polynomial-3 should not bypass materiality";
   let with_quasi = get (estimate ~include_quasi_polynomial_degrees:[ 2 ] samples) in
-  require (has_fit (quasi_polynomial 2) with_quasi)
-    "expected forced quasi-polynomial-2 to be retained"
+  require (not (has_fit (quasi_polynomial 2) with_quasi))
+    "forced quasi-polynomial-2 should not bypass materiality"
 
 let test_fit_stores_quasi_polynomial_degree_and_parameters () =
   let samples =
@@ -174,7 +174,7 @@ let test_large_f_statistic_has_zero_tail_probability () =
   | None -> fail "expected a p-value for nested comparison")
 
 let () =
-  test_estimate_can_force_degree_bearing_candidates ();
+  test_forced_degree_bearing_candidates_cannot_bypass_materiality ();
   test_fit_stores_quasi_polynomial_degree_and_parameters ();
   test_close_polynomial_comparison_uses_ratio_diagnostic ();
   test_nonlinear_predict_uses_stable_log_parameterization ();

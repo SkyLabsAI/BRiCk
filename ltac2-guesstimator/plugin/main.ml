@@ -83,6 +83,38 @@ let to_normalize_samples value =
   | "Normalized", [||] -> true
   | _ -> assert false
 
+let of_materiality = function
+  | G.Materially_supported -> of_constructor "MateriallySupported" [||]
+  | G.Practically_equivalent -> of_constructor "PracticallyEquivalent" [||]
+  | G.Inconclusive -> of_constructor "MaterialityInconclusive" [||]
+
+let of_practical_evidence (evidence : G.practical_evidence) =
+  Tac2ffi.of_tuple
+    [|
+      of_float evidence.G.response_variation_scale;
+      of_float evidence.G.rss_improvement;
+      of_float evidence.G.relative_effect;
+      of_float evidence.G.relative_standard_error;
+      of_float evidence.G.confidence_level;
+      of_float evidence.G.lower_bound;
+      of_float evidence.G.upper_bound;
+      of_float evidence.G.resolution;
+      of_materiality evidence.G.materiality;
+    |]
+
+let of_numerical_indistinguishability rss_improvement tolerance =
+  Tac2ffi.of_tuple [| of_float rss_improvement; of_float tolerance |]
+
+let of_practical_assessment = function
+  | G.Assessed evidence ->
+      of_constructor "PracticalAssessed" [| of_practical_evidence evidence |]
+  | G.Numerically_indistinguishable { rss_improvement; tolerance } ->
+      of_constructor "PracticalNumericallyIndistinguishable"
+        [| of_numerical_indistinguishability rss_improvement tolerance |]
+  | G.Evidence_unavailable message ->
+      of_constructor "PracticalEvidenceUnavailable" [| Tac2ffi.of_string message |]
+  | G.Not_applicable -> of_constructor "PracticalNotApplicable" [||]
+
 let rec of_assert_result = function
   | Api.Assert_ok -> of_constructor "AssertOk" [||]
   | Api.Assert_mismatch -> of_constructor "AssertMismatch" [||]
@@ -135,6 +167,7 @@ and of_comparison (comparison : G.comparison) =
       Tac2ffi.of_option of_float comparison.G.f_statistic;
       Tac2ffi.of_option of_float comparison.G.p_value;
       Tac2ffi.of_bool comparison.G.significant;
+      of_practical_assessment comparison.G.practical_assessment;
       Tac2ffi.of_string comparison.G.note;
     |]
 
@@ -168,6 +201,14 @@ and of_holdout_summary (summary : G.Holdout.summary) =
       Tac2ffi.of_list of_holdout_group summary.G.Holdout.groups;
     |]
 
+and of_selection_options (options : Api.selection_options) =
+  Tac2ffi.of_tuple
+    [| of_float options.G.alpha; of_float options.G.minimum_relative_effect |]
+
+and to_selection_options value : Api.selection_options =
+  let fields = expect_tuple 2 value in
+  { G.alpha = to_float fields.(0); minimum_relative_effect = to_float fields.(1) }
+
 and of_holdout_options (options : Api.holdout_options) =
   Tac2ffi.of_tuple
     [|
@@ -192,14 +233,20 @@ and of_display_fit (display : Api.display_fit) =
   Tac2ffi.of_tuple [| of_fit display.Api.fit; Tac2ffi.of_list of_parameter display.Api.parameters |]
 
 let to_fit_options value =
-  let fields = expect_tuple 3 value in
-  ( to_holdout_options fields.(0),
-    to_normalize_samples fields.(1),
-    to_fit_parameter_scale fields.(2) )
+  let fields = expect_tuple 4 value in
+  ( to_selection_options fields.(0),
+    to_holdout_options fields.(1),
+    to_normalize_samples fields.(2),
+    to_fit_parameter_scale fields.(3) )
 
 let to_assert_options value =
-  let fields = expect_tuple 3 value in
-  (to_holdout_options fields.(0), to_normalize_samples fields.(1), to_float fields.(2))
+  let fields = expect_tuple 4 value in
+  ( to_selection_options fields.(0),
+    to_holdout_options fields.(1),
+    to_normalize_samples fields.(2),
+    to_float fields.(3) )
+
+let default_selection_options = of_selection_options G.default_selection_options
 
 let default_holdout_options =
   of_holdout_options (Api.make_holdout_options false false 5 0.25 0.80)
@@ -240,6 +287,17 @@ let _ =
   Option.map of_complexity (Api.complexity_of_string string)
 
 let _ =
+  define "make_selection_options" (float @-> float @-> ret valexpr)
+    @@ fun alpha minimum_relative_effect ->
+  of_selection_options
+    {
+      G.alpha = Float64.to_float alpha;
+      minimum_relative_effect = Float64.to_float minimum_relative_effect;
+    }
+
+let _ = define "default_selection_options" (ret valexpr) default_selection_options
+
+let _ =
   define "make_holdout_options"
     (bool @-> bool @-> int @-> float @-> float @-> ret valexpr)
     @@ fun holdout holdout_tail holdout_folds holdout_tail_fraction
@@ -254,19 +312,29 @@ let _ = define "default_max_delta_bic" (ret float) (Float64.of_float 2.0)
 
 let _ =
   define "run_fit" (valexpr @-> list valexpr @-> ret valexpr) @@ fun options samples ->
-  let holdout_options, normalize_samples, fit_parameter_scale = to_fit_options options in
+  let selection_options, holdout_options, normalize_samples, fit_parameter_scale =
+    to_fit_options options
+  in
   let samples = List.map to_sample samples in
-  Api.run_fit ~holdout_options ~normalize_samples fit_parameter_scale samples
+  Api.run_fit ~selection_options ~holdout_options ~normalize_samples
+    fit_parameter_scale samples
   |> of_api_result (Tac2ffi.of_ext fit_result_tag)
 
 let _ =
   define "run_assert" (valexpr @-> valexpr @-> list valexpr @-> ret valexpr)
     @@ fun options expected samples ->
-  let holdout_options, normalize_samples, max_delta_bic = to_assert_options options in
+  let selection_options, holdout_options, normalize_samples, max_delta_bic =
+    to_assert_options options
+  in
   let expected = to_complexity expected in
   let samples = List.map to_sample samples in
-  Api.run_assert ~holdout_options ~normalize_samples ~max_delta_bic ~expected samples
+  Api.run_assert ~selection_options ~holdout_options ~normalize_samples ~max_delta_bic
+    ~expected samples
   |> of_api_result of_assert_result
+
+let _ =
+  define "fit_result_selection_options" (fit_result @-> ret valexpr)
+    @@ fun result -> of_selection_options result.Api.selection_options
 
 let _ =
   define "fit_result_normalized" (fit_result @-> ret bool) @@ fun result ->

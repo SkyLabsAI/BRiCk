@@ -19,12 +19,12 @@ separate heading.
   no comparisons by default
 
   $ guesstimator fit --print-comparisons=within inputs/polynomial.csv | awk '/Within-class comparisons/ {print}; /polynomial-1[[:space:]]+vs polynomial-2/ {print $1, $2, $3, $4, $5, $NF}; /Across-class comparisons/ {print}'
-  Within-class comparisons (nested F test where applicable, otherwise BIC):
+  Within-class comparisons (nested F/material-effect test where applicable, otherwise BIC):
   polynomial-1 vs polynomial-2 -> polynomial-2 significant=yes
 
   $ guesstimator fit --print-comparisons=all inputs/polynomial.csv | grep 'class comparisons'
-  Within-class comparisons (nested F test where applicable, otherwise BIC):
-  Across-class comparisons (nested F test where applicable, otherwise BIC):
+  Within-class comparisons (nested F/material-effect test where applicable, otherwise BIC):
+  Across-class comparisons (nested F/material-effect test where applicable, otherwise BIC):
 
 Loser-fit printing is independently opt-in. It reports full statistics for
 compared losers that are not already in Fits, including losers of internal

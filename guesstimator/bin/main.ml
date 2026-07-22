@@ -102,6 +102,27 @@ let comparison_widths comparisons =
     { left_width = 12; right_width = 12; winner_width = 12; f_test_width = 0 }
     comparisons
 
+let materiality_string = function
+  | Materially_supported -> "material"
+  | Practically_equivalent -> "equivalent"
+  | Inconclusive -> "inconclusive"
+
+let print_practical_assessment = function
+  | Assessed evidence ->
+      Printf.printf
+        "    relative-effect=%.4g %.1f%%-CI=[%.4g,%.4g] resolution=%.4g materiality=%s\n"
+        evidence.relative_effect
+        (100.0 *. evidence.confidence_level)
+        evidence.lower_bound evidence.upper_bound evidence.resolution
+        (materiality_string evidence.materiality)
+  | Numerically_indistinguishable { rss_improvement; tolerance } ->
+      Printf.printf
+        "    materiality=numerically-indistinguishable RSS-improvement=%.4g tolerance=%.4g\n"
+        rss_improvement tolerance
+  | Evidence_unavailable message ->
+      Printf.printf "    materiality=unavailable reason=%s\n" message
+  | Not_applicable -> ()
+
 let print_comparison ~verbose ~widths c =
   let left = Api.string_of_complexity c.left in
   let right = Api.string_of_complexity c.right in
@@ -110,6 +131,7 @@ let print_comparison ~verbose ~widths c =
   Printf.printf "  %-*s vs %-*s -> %-*s  %-*s significant=%s\n" widths.left_width left
     widths.right_width right widths.winner_width winner widths.f_test_width f_test
     (if c.significant then "yes" else "no");
+  print_practical_assessment c.practical_assessment;
   if verbose then Printf.printf "    note: %s\n" c.note
 
 let print_comparison_section ~verbose heading comparisons =
@@ -237,6 +259,9 @@ let print_result ~verbose ~print_comparisons ~print_loser_fits ~file ~has_header
   Printf.printf "Header: %s\n" (if has_header then "yes" else "no");
   Printf.printf "Normalized samples: %s\n" (if result.Api.normalized then "yes" else "no");
   Printf.printf "Fit parameter scale: %s\n" result.Api.fit_parameter_scale_description;
+  if result.Api.selection_options.Core.minimum_relative_effect > 0.0 then
+    Printf.printf "Model-selection resolution: %.6g\n"
+      result.Api.selection_options.Core.minimum_relative_effect;
   Printf.printf "Observations: %d\n" result.Api.estimate.best.observations;
   Printf.printf "Best by BIC: %s%s%s\n"
     (Api.string_of_complexity result.Api.estimate.best.model)
@@ -251,15 +276,30 @@ let print_result ~verbose ~print_comparisons ~print_loser_fits ~file ~has_header
     | loser_fit_rows -> List.iter (print_fit ~widths) loser_fit_rows );
   if print_within_comparisons print_comparisons then
     print_comparison_section ~verbose
-      "Within-class comparisons (nested F test where applicable, otherwise BIC):"
+      "Within-class comparisons (nested F/material-effect test where applicable, otherwise BIC):"
       result.Api.estimate.within_comparisons;
   if print_across_comparisons print_comparisons then
     print_comparison_section ~verbose
-      "Across-class comparisons (nested F test where applicable, otherwise BIC):"
+      "Across-class comparisons (nested F/material-effect test where applicable, otherwise BIC):"
       result.Api.estimate.comparisons;
   List.iter print_holdout_summary result.Api.holdout_summaries
 
 let invalid_command_line_exit_code = 102
+
+let selection_options_or_exit resolution_string =
+  let invalid message =
+    Printf.eprintf "guesstimator: %s\n" message;
+    exit invalid_command_line_exit_code
+  in
+  match float_of_string_opt resolution_string with
+  | None -> invalid "--model-selection-resolution must be a floating-point number"
+  | Some minimum_relative_effect ->
+      let options = Api.make_selection_options minimum_relative_effect in
+      (match Core.validate_selection_options options with
+      | Ok () -> options
+      | Error messages ->
+          List.iter (Printf.eprintf "guesstimator: %s\n") messages;
+          exit invalid_command_line_exit_code)
 
 type holdout_cli_options = {
   holdout : bool;
@@ -292,23 +332,27 @@ let holdout_options_or_exit options =
       List.iter (Printf.eprintf "guesstimator: %s\n") messages;
       exit invalid_command_line_exit_code
 
-let run_fit holdout_cli_options normalize_samples_enabled fit_parameter_scale verbose
-    print_comparisons print_loser_fits header file =
+let run_fit resolution_string holdout_cli_options normalize_samples_enabled
+    fit_parameter_scale verbose print_comparisons print_loser_fits header file =
+  let selection_options = selection_options_or_exit resolution_string in
   let holdout_options = holdout_options_or_exit holdout_cli_options in
   let* has_header, raw_samples = samples_of_csv ?header file in
   let* result =
-    Api.run_fit ~holdout_options ~normalize_samples:normalize_samples_enabled
-      fit_parameter_scale raw_samples
+    Api.run_fit ~selection_options ~holdout_options
+      ~normalize_samples:normalize_samples_enabled fit_parameter_scale raw_samples
   in
   print_result ~verbose ~print_comparisons ~print_loser_fits ~file ~has_header result;
   Ok ()
 
-let run_assert holdout_cli_options normalize_samples_enabled max_delta_bic expected header file =
+let run_assert resolution_string holdout_cli_options normalize_samples_enabled
+    max_delta_bic expected header file =
+  let selection_options = selection_options_or_exit resolution_string in
   let holdout_options = holdout_options_or_exit holdout_cli_options in
   let* _has_header, raw_samples = samples_of_csv ?header file in
   let* result =
-    Api.run_assert ~holdout_options ~normalize_samples:normalize_samples_enabled
-      ~max_delta_bic ~expected raw_samples
+    Api.run_assert ~selection_options ~holdout_options
+      ~normalize_samples:normalize_samples_enabled ~max_delta_bic ~expected
+      raw_samples
   in
   match result with
   | Api.Assert_ok -> Ok ()
@@ -359,6 +403,13 @@ let header_arg =
 let verbose_arg =
   let doc = "Print rationale notes for printed model comparisons." in
   Arg.(value & flag & info [ "verbose"; "v" ] ~doc)
+
+let model_selection_resolution_arg =
+  let doc =
+    "Minimum RMS added-component effect, relative to RMS observed response variation, required to promote one-parameter polynomial or quasi-polynomial complexity. This is a declared practical resolution, not inferred measurement noise. Set to $(b,0) for legacy F-test promotion."
+  in
+  Arg.(value & opt string "1e-6"
+       & info [ "model-selection-resolution" ] ~docv:"EFFECT" ~doc)
 
 let normalize_samples_arg =
   let doc =
@@ -523,6 +574,7 @@ let fit_cmd =
       `Pre
         "guesstimator fit timings.csv\n\
          guesstimator fit --normalize-samples=false timings.csv\n\
+         guesstimator fit --model-selection-resolution=0 timings.csv\n\
          guesstimator fit --fit-parameter-scale=normalized timings.csv\n\
          guesstimator fit --print-loser-fits timings.csv\n\
          guesstimator fit --holdout --print-comparisons=all --verbose timings.csv\n\
@@ -531,8 +583,10 @@ let fit_cmd =
     ]
   in
   Cmd.v (Cmd.info "fit" ~doc ~man ~exits:(invalid_command_line_exit :: Cmd.Exit.defaults))
-    Term.(const run_fit $ holdout_options_arg $ normalize_samples_arg $ fit_parameter_scale_arg
-          $ verbose_arg $ print_comparisons_arg $ print_loser_fits_arg $ header_arg $ file_arg)
+    Term.(
+      const run_fit $ model_selection_resolution_arg $ holdout_options_arg
+      $ normalize_samples_arg $ fit_parameter_scale_arg $ verbose_arg
+      $ print_comparisons_arg $ print_loser_fits_arg $ header_arg $ file_arg)
 
 let assert_cmd =
   let doc = "assert the best-fit complexity class" in
@@ -556,14 +610,17 @@ let assert_cmd =
       `Pre
         "guesstimator assert polynomial-2 timings.csv\n\
          guesstimator assert --max-delta-bic=0 polynomial-2 timings.csv\n\
+         guesstimator assert --model-selection-resolution=0 polynomial-2 timings.csv\n\
          guesstimator assert --normalize-samples=false polynomial-2 timings.csv\n\
          guesstimator assert --holdout polynomial-2 timings.csv\n\
          guesstimator assert --header=true power-law timings-with-header.csv";
     ]
   in
   Cmd.v (Cmd.info "assert" ~doc ~exits ~man)
-    Term.(const run_assert $ holdout_options_arg $ normalize_samples_arg $ max_delta_bic_arg
-          $ complexity_arg $ header_arg $ assert_file_arg)
+    Term.(
+      const run_assert $ model_selection_resolution_arg $ holdout_options_arg
+      $ normalize_samples_arg $ max_delta_bic_arg $ complexity_arg $ header_arg
+      $ assert_file_arg)
 
 let cmd =
   let doc = "estimate algorithmic complexity from runtime observations" in

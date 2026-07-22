@@ -17,11 +17,13 @@ Guesstimator currently supports the following function shapes:
 Guesstimator uses several statistical tools to evaluate which function shape
 is the most likely best fit for the given samples.
 
-1. Within the classes of polynomial and quasi-polynomial functions, we use
-the Chow test to weigh the increased model complexity of increased degrees
-against the fit advantage they provide.
+1. Within polynomial and quasi-polynomial families, nested
+extra-sum-of-squares F tests measure whether an added term is statistically
+detectable. By default, the richer model must also exceed an explicit
+model-selection resolution so sub-ppm residual structure does not determine the
+dominant growth class.
 
-2. Between classes, Guesstimator uses the Bayesian information criterion
+2. Between retained family representatives, Guesstimator uses the Bayesian information criterion
 (BIC) (and The Akaike information criterion (AIC) for tie breaking) to rank
 candidate functions.
 
@@ -52,6 +54,7 @@ Input: test/inputs/polynomial.csv
 Header: yes
 Normalized samples: yes
 Fit parameter scale: original problem size
+Model-selection resolution: 1e-06
 Observations: 7
 Best by BIC: polynomial-2
 Fits:
@@ -99,6 +102,9 @@ The library fits these candidate models:
 Models are ranked by BIC/AIC and residual error on the original time scale.
 Pairwise comparisons use an extra-sum-of-squares F test only for nested
 restricted-versus-richer comparisons; non-nested models are selected by BIC.
+For a one-parameter polynomial or quasi-polynomial promotion, statistical
+significance and practical materiality are reported separately, and only a
+materially supported addition advances.
 Comparison output is optional: `--print-comparisons=across` prints comparisons
 across distinct complexity classes, `within` prints comparisons within a class
 (for example, polynomial degree choices), and `all` prints both under separate
@@ -128,6 +134,8 @@ Examples:
 guesstimator fit timings.csv
 # disable default problem-size normalization
 guesstimator fit --normalize-samples=false timings.csv
+# inspect legacy zero-resolution nested selection
+guesstimator fit --model-selection-resolution=0 timings.csv
 # inspect parameters in the normalized fitted coordinate
 guesstimator fit --fit-parameter-scale=normalized timings.csv
 # include comparisons and their rationale notes
@@ -160,10 +168,13 @@ paired with the mode they configure: `--holdout-folds` requires `--holdout`,
 combinations print an error and exit with status 102.
 
 `guesstimator assert CLASS FILE` performs the same fit, including default
-problem-size normalization, without printing output, then exits with status 0 if
-`CLASS` is the best retained fit or is within `--max-delta-bic` of it (default
-2.0), status 1 if it is not, status 100 if the best fit is suspicious by the same
-relative RSME rule, or status 101 if requested holdout validation does not reach
+problem-size normalization and model-selection resolution, without printing
+output. A requested polynomial or quasi-polynomial degree may be fitted for
+comparison, but it cannot bypass the same materiality rule or redefine the
+normal selected best. The command exits with status 0 if `CLASS` is materially
+eligible and is the best retained fit or within `--max-delta-bic` of it (default
+2.0), status 1 if it is not, status 100 if the normal best fit is suspicious by
+the same relative RSME rule, or status 101 if requested holdout validation does not reach
 the stability threshold. Pass `--max-delta-bic=0` for strict best-fit matching,
 and pass `--normalize-samples=false` to assert against raw problem sizes.
 `CLASS` uses the canonical names printed by `fit`: `constant`, `logarithmic`,
@@ -174,6 +185,55 @@ finite positive numbers. The estimator needs residual degrees of freedom for
 every fitted model, so it tries polynomial degrees only up to `observations - 2`
 and the number of distinct problem sizes minus one, and requires at least three
 observations overall.
+
+### Model-selection resolution
+
+The default model-selection resolution is `1e-6`. It is a smallest effect size
+of interest (SESOI) for identifying the dominant observed growth shape, not an
+estimate of benchmark noise. For a simpler and richer nested least-squares model
+that differ by one parameter, Guesstimator computes
+
+```text
+improvement = RSS_simple - RSS_rich
+scale = sum((time - mean_time)^2)
+relative_effect = sqrt(improvement / scale)
+relative_standard_error = sqrt((RSS_rich / residual_df) / scale)
+```
+
+It forms a two-sided model-based `(1 - alpha)` interval around the relative
+effect. The outcome is:
+
+- `material` if the full interval is above the resolution;
+- `equivalent` if the full interval is below it;
+- `inconclusive` if the interval overlaps it.
+
+Only a material effect promotes polynomial degree or admits a quasi-polynomial
+term over its natural polynomial reference. Equivalent and inconclusive results
+select the simpler model; choosing simplicity for an inconclusive result is an
+explicit conservative policy, not proof that the richer term is zero. Detailed
+comparison output shows the p-value, effect interval, resolution, and outcome.
+The ordinary `significant=yes|no` field retains its p-value meaning.
+
+The interval assumes a fixed design with independent, homoscedastic Gaussian
+residuals and uses observed response variation as its reporting scale.
+Heteroscedasticity, correlated measurements, deterministic counters, and the
+sequential degree search limit confirmatory coverage, so the interval is a
+selection diagnostic rather than post-selection inference. Repeated timings at
+the same problem size are preferable when measurement variability needs to be
+estimated directly.
+
+Set `--model-selection-resolution=0` to recover legacy one-parameter F-test
+promotion. The configured value is used consistently by `fit`, `assert`, and all
+holdout reruns. Positive scaling of all times does not change the materiality
+decision, and additive offsets do not change it for models with an intercept.
+The resolution is based on the sampled range: weak curvature that is globally
+small but important only at the largest sizes can still be simplified. Users
+making consequential classifications should inspect sensitivity at several
+resolutions and report the chosen value.
+
+Raw RSS, R², AIC, and BIC are not clamped or rewritten by this policy. BIC ranks
+the family representatives retained by within-family materiality selection; it
+does not rank every degree that was fitted for diagnostics.
 
 ### Notes
 

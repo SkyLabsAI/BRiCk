@@ -31,8 +31,9 @@ zero threshold restores strict best-fit matching.
   $ guesstimator assert --max-delta-bic=0 power-law inputs/constant.csv
   [1]
 
-Assert includes the requested polynomial degree in the candidate set even when
-the normal degree search would prune it from `fit` output.
+Assert evaluates an identifiable requested degree without allowing it to redefine
+the normal best. Suspicious-fit checking of that normal best retains status-100
+precedence.
 
   $ cat > pruned-quartic.csv <<'EOF'
   > n,time
@@ -49,6 +50,7 @@ the normal degree search would prune it from `fit` output.
   $ if guesstimator fit --normalize-samples=false pruned-quartic.csv | grep -q '^  polynomial-4'; then echo unexpected; else echo 'polynomial-4 not retained by default'; fi
   polynomial-4 not retained by default
   $ guesstimator assert --normalize-samples=false polynomial-4 pruned-quartic.csv
+  [100]
 
 A mismatch outside the BIC threshold exits with status 1 and still prints nothing.
 

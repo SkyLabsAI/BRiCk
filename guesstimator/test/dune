@@ -8,6 +8,10 @@
  (libraries guesstimator))
 
 (test
+ (name model_selection_resolution)
+ (libraries guesstimator))
+
+(test
  (name complexity_string)
  (libraries guesstimator))
 

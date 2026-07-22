@@ -51,4 +51,4 @@ policy, and stdin via `-`.
 Verbose mode includes comparison rationale notes when comparison printing is enabled.
 
   $ guesstimator fit --print-comparisons=across --verbose with-header.csv | grep -m 1 '^    note:'
-      note: richer model does not materially reduce residual error; simpler model selected
+      note: richer model does not numerically reduce residual error; simpler model selected

@@ -4,6 +4,7 @@ type fit_parameter_scale =
   | Fit_parameter_scale_original
   | Fit_parameter_scale_normalized
 
+type selection_options = Core.selection_options
 type holdout_options = Core.Holdout.options
 type holdout_summary = Core.Holdout.summary
 
@@ -13,6 +14,7 @@ type display_fit = {
 }
 
 type fit_result = {
+  selection_options : selection_options;
   normalized : bool;
   normalization : Core.sample_normalization option;
   samples : Core.sample list;
@@ -36,6 +38,9 @@ let complexity_class_names =
 
 let string_of_complexity = Core.string_of_complexity
 let complexity_of_string = Core.complexity_of_string
+
+let make_selection_options minimum_relative_effect =
+  { Core.alpha = 0.05; minimum_relative_effect }
 
 let make_holdout_options holdout holdout_tail holdout_folds holdout_tail_fraction
     holdout_stability_threshold =
@@ -89,12 +94,31 @@ let suspicious_relative_rmse result samples =
     Some relative_rmse
   else None
 
-let run_fit ~holdout_options ~normalize_samples fit_parameter_scale raw_samples =
+let validate_selection_options selection_options =
+  match Core.validate_selection_options selection_options with
+  | Ok () -> Ok ()
+  | Error messages -> Error (String.concat "; " messages)
+
+let estimate_with_options selection_options ?(include_polynomial_degrees = [])
+    ?(include_quasi_polynomial_degrees = []) samples =
+  Core.estimate ~alpha:selection_options.Core.alpha
+    ~minimum_relative_effect:selection_options.Core.minimum_relative_effect
+    ~include_polynomial_degrees ~include_quasi_polynomial_degrees samples
+
+let holdout_summaries_with_options selection_options ~reference holdout_options
+    samples =
+  Core.Holdout.compute_summaries ~alpha:selection_options.Core.alpha
+    ~minimum_relative_effect:selection_options.Core.minimum_relative_effect
+    ~reference holdout_options samples
+
+let run_fit ~selection_options ~holdout_options ~normalize_samples
+    fit_parameter_scale raw_samples =
+  let* () = validate_selection_options selection_options in
   let* normalization, samples = maybe_normalize_samples normalize_samples raw_samples in
-  let* estimate = Core.estimate ~alpha:0.05 samples in
+  let* estimate = estimate_with_options selection_options samples in
   let* holdout_summaries =
-    Core.Holdout.compute_summaries ~reference:estimate.Core.best.Core.model
-      holdout_options samples
+    holdout_summaries_with_options selection_options
+      ~reference:estimate.Core.best.Core.model holdout_options samples
   in
   let parameters = display_parameters ~fit_parameter_scale ~normalization in
   let display fits =
@@ -111,6 +135,7 @@ let run_fit ~holdout_options ~normalize_samples fit_parameter_scale raw_samples 
   in
   Ok
     {
+      selection_options;
       normalized = normalize_samples;
       normalization;
       samples;
@@ -129,29 +154,45 @@ let included_degrees_for_assert = function
   | Core.QuasiPolynomial degree -> ([], [ degree ])
   | Core.Constant | Core.Logarithmic | Core.PowerLaw | Core.Exponential -> ([], [])
 
-let requested_fit_within_delta ~max_delta_bic expected result =
-  match List.find_opt (fun fitted -> fitted.Core.model = expected) result.Core.fits with
-  | None -> false
-  | Some fitted -> fitted.Core.bic -. result.Core.best.Core.bic <= max_delta_bic
+let find_fit expected result =
+  List.find_opt (fun fitted -> fitted.Core.model = expected) result.Core.fits
 
-let run_assert ~holdout_options ~normalize_samples ~max_delta_bic ~expected raw_samples =
+let requested_fit_within_delta ~max_delta_bic ~best requested =
+  requested.Core.bic -. best.Core.bic <= max_delta_bic
+
+let run_assert ~selection_options ~holdout_options ~normalize_samples ~max_delta_bic
+    ~expected raw_samples =
+  let* () = validate_selection_options selection_options in
   let* _normalization, samples = maybe_normalize_samples normalize_samples raw_samples in
-  let include_polynomial_degrees, include_quasi_polynomial_degrees =
-    included_degrees_for_assert expected
-  in
-  let* result =
-    Core.estimate ~alpha:0.05 ~include_polynomial_degrees
-      ~include_quasi_polynomial_degrees samples
-  in
-  match suspicious_relative_rmse result samples with
+  let* normal_result = estimate_with_options selection_options samples in
+  match suspicious_relative_rmse normal_result samples with
   | Some relative_rmse -> Ok (Assert_suspicious relative_rmse)
   | None ->
-      if not (requested_fit_within_delta ~max_delta_bic expected result) then
-        Ok Assert_mismatch
-      else
-        let* holdout_summaries =
-          Core.Holdout.compute_summaries ~reference:expected holdout_options samples
-        in
-        if Core.Holdout.is_unstable holdout_summaries then
-          Ok (Assert_unstable holdout_summaries)
-        else Ok Assert_ok
+      let* requested_fit =
+        match find_fit expected normal_result with
+        | Some fitted -> Ok (Some fitted)
+        | None ->
+            let include_polynomial_degrees, include_quasi_polynomial_degrees =
+              included_degrees_for_assert expected
+            in
+            let* augmented_result =
+              estimate_with_options selection_options ~include_polynomial_degrees
+                ~include_quasi_polynomial_degrees samples
+            in
+            Ok (find_fit expected augmented_result)
+      in
+      (match requested_fit with
+      | None -> Ok Assert_mismatch
+      | Some requested
+        when not
+               (requested_fit_within_delta ~max_delta_bic
+                  ~best:normal_result.Core.best requested) ->
+          Ok Assert_mismatch
+      | Some _ ->
+          let* holdout_summaries =
+            holdout_summaries_with_options selection_options ~reference:expected
+              holdout_options samples
+          in
+          if Core.Holdout.is_unstable holdout_summaries then
+            Ok (Assert_unstable holdout_summaries)
+          else Ok Assert_ok)

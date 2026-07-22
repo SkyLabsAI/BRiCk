@@ -17,6 +17,8 @@ module type CORE = sig
     observations : int;
   }
 
+  type practical_assessment
+
   type comparison = {
     left : complexity;
     right : complexity;
@@ -24,6 +26,7 @@ module type CORE = sig
     f_statistic : float option;
     p_value : float option;
     significant : bool;
+    practical_assessment : practical_assessment;
     note : string;
   }
 
@@ -36,7 +39,8 @@ module type CORE = sig
   }
 
   val predict : fit -> problem_size:float -> float
-  val estimate : ?alpha:float -> sample list -> (estimate, string) result
+  val estimate :
+    ?alpha:float -> ?minimum_relative_effect:float -> sample list -> (estimate, string) result
   val string_of_complexity : complexity -> string
 end
 
@@ -163,9 +167,9 @@ module Make (Core : CORE) = struct
 
   let holdout_relative_rmse fitted heldout_samples = relative_rmse fitted heldout_samples
 
-  let holdout_runs splits =
+  let holdout_runs ~alpha ~minimum_relative_effect splits =
     let evaluate_split (training, heldout) =
-      let* result = Core.estimate ~alpha:0.05 training in
+      let* result = Core.estimate ~alpha ~minimum_relative_effect training in
       Ok (result.Core.best.model, holdout_relative_rmse result.Core.best heldout)
     in
     let rec loop acc = function
@@ -214,12 +218,13 @@ module Make (Core : CORE) = struct
       groups;
     }
 
-  let compute_summaries ~reference options samples =
+  let compute_summaries ?(alpha = 0.05) ?(minimum_relative_effect = 1e-6)
+      ~reference options samples =
     let summaries = ref [] in
     let* () =
       if options.holdout then
         let* splits = kfold_splits ~folds:options.holdout_folds samples in
-        let* runs = holdout_runs splits in
+        let* runs = holdout_runs ~alpha ~minimum_relative_effect splits in
         summaries :=
           summarize ~kind:(KFold { folds = List.length splits }) ~reference
             ~threshold:options.holdout_stability_threshold runs
@@ -230,7 +235,7 @@ module Make (Core : CORE) = struct
     let* () =
       if options.holdout_tail then
         let* splits = tail_split ~fraction:options.holdout_tail_fraction samples in
-        let* runs = holdout_runs splits in
+        let* runs = holdout_runs ~alpha ~minimum_relative_effect splits in
         summaries :=
           summarize ~kind:(Tail { fraction = options.holdout_tail_fraction }) ~reference
             ~threshold:options.holdout_stability_threshold runs
