@@ -63,7 +63,7 @@ Module Type Stmt.
       (* {| _wp K := default_initialize ty p (fun free => interp free $ K (Normal $ FreeTemps.delete ty p) FreeTemps.id _) |}. *)
 
     #[program]
-    Definition Mopt_initialize (ρ : region) (ty : decltype) (n : localname) (init : option Expr) : Mlocal (region * FreeTemps.t) :=
+    Definition Mopt_initialize (ρ : region) (ty : decltype) (n : localname) (init : option Expr) : Mlocal (region * ptr * FreeTemps.t) :=
       letM* p := demonic ptr in
       pair (Rbind n p ρ) <$>
       match init with
@@ -73,8 +73,8 @@ Module Type Stmt.
                See <https://eel.is/c++draft/basic.scope.pdecl#1>
            *)
           letWP* extruded := wp_initialize (Rbind n p ρ) ty p init in
-          mret extruded
-      | None => Mdefault_initialize ty p
+          mret (p, extruded)
+      | None => pair p <$> Mdefault_initialize ty p
       end.
 
     #[program]
@@ -87,8 +87,7 @@ Module Type Stmt.
 
     Definition wp_decl_var (ρ : region) (x : ident) (ty : type) (init : option Expr)
       : Mlocal region :=
-      letM* p := demonic ptr in
-      letM* '(ρ, extruded) := Mfree_all tu $ Mopt_initialize ρ ty x init in
+      letM* '(ρ, p, extruded) := Mfree_all tu $ Mopt_initialize ρ ty x init in
       letM* _ := Mexpr.push_free (FreeTemps.delete ty p >*> extruded) in
       mret ρ.
 
