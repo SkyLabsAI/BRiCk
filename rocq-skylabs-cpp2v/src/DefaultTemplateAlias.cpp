@@ -152,6 +152,15 @@ struct TemplateArgumentListBuilder {
     MultiLevelTemplateArgumentList template_args;
 };
 
+static void addTemplateArgumentLevel(MultiLevelTemplateArgumentList &list,
+                                     ArrayRef<TemplateArgument> level) {
+#if CLANG_VERSION_MAJOR >= 18
+    list.addOuterTemplateArguments(nullptr, level, false);
+#else
+    list.addOuterTemplateArguments(level);
+#endif
+}
+
 struct TemplateParamPosition {
     unsigned depth;
     unsigned index;
@@ -169,6 +178,9 @@ buildTemplateArgumentList(ASTContext &context, unsigned limit,
                           ArrayRef<NamedDecl *> params,
                           ArrayRef<Argument> args) {
     TemplateArgumentListBuilder builder;
+#if CLANG_VERSION_MAJOR < 18
+    builder.template_args.setKind(TemplateSubstitutionKind::Rewrite);
+#endif
     unsigned max_depth = 0;
     for (auto *param : params) {
         auto position = getTemplateParamPosition(param);
@@ -187,7 +199,7 @@ buildTemplateArgumentList(ASTContext &context, unsigned limit,
 
     for (auto level = builder.levels.rbegin(); level != builder.levels.rend();
          ++level)
-        builder.template_args.addOuterTemplateArguments(nullptr, *level, false);
+        addTemplateArgumentLevel(builder.template_args, *level);
     return builder;
 }
 
@@ -196,11 +208,18 @@ static QualType substDefaultType(Sema &sema, QualType qt, unsigned limit,
                                  ArrayRef<Argument> args, SourceLocation loc) {
     auto builder =
         buildTemplateArgumentList(sema.Context, limit, params, args);
+#if CLANG_VERSION_MAJOR >= 20
     bool incomplete = false;
     auto result = sema.SubstType(qt, builder.template_args, loc,
                                 DeclarationName{}, &incomplete);
     if (result.isNull() || incomplete)
         return qt;
+#else
+    auto result =
+        sema.SubstType(qt, builder.template_args, loc, DeclarationName{});
+    if (result.isNull())
+        return qt;
+#endif
     return result;
 }
 
