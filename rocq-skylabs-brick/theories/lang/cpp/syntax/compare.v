@@ -575,9 +575,7 @@ End function_type.
 
 Module temp_param.
   Section compare.
-    Context {type : Set}.
     Context (compareT : type -> type -> comparison).
-    #[local] Notation temp_param := (temp_param_ type).
 
     Record box_Pvalue : Set := Box_Pvalue {
       box_Pvalue_0 : ident;
@@ -620,7 +618,7 @@ Module temp_param.
 
     #[local] Notation compare_ctor compare := (compare_ctor tag car data $ compare_data compare).
 
-    Fixpoint compare (p : temp_param_ type) : temp_param_ type -> comparison :=
+    Fixpoint compare (p : temp_param) : temp_param -> comparison :=
       match p with
       | Ptype id => compare_ctor compare (Reduce (tag (Ptype id))) (fun _ => Reduce (data (Ptype id)))
       | Pvalue id ty => compare_ctor compare (Reduce (tag (Pvalue id ty))) (fun _ => Reduce (data (Pvalue id ty)))
@@ -630,12 +628,10 @@ Module temp_param.
   End compare.
 
 End temp_param.
-#[global] Instance temp_param_compare {A : Set} `{!Compare A} : Compare (temp_param_ A) :=
-  temp_param.compare compare.
-#[global] Instance temp_param_comparison {A : Set} `{!@Comparison A cmpA}
+#[global] Instance temp_param_comparison `{!@Comparison type cmpA}
   : Comparison (temp_param.compare cmpA).
 Proof. Admitted.
-#[global] Instance temp_param_leibniz_comparison {A : Set} `{!@Comparison A cmpA} `{LeibnizComparison cmpA}
+#[global] Instance temp_param_leibniz_comparison `{!@Comparison type cmpA} `{LeibnizComparison cmpA}
   : LeibnizComparison (temp_param.compare cmpA).
 Proof. Admitted.
 
@@ -2469,6 +2465,7 @@ Section compare_instances.
 
   #[global] Instance name_compare : Compare name := compareN.
   #[global] Instance atomic_name_compare : Compare atomic_name := atomic_name.compare compareT.
+  #[global] Instance temp_param_compare : Compare temp_param := temp_param.compare compareT.
   #[global] Instance type_compare : Compare type := compareT.
   #[global] Instance Expr_compare : Compare Expr := compareE.
   #[global] Instance VarDecl_compare : Compare VarDecl := compareVD.

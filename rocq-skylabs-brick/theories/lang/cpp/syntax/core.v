@@ -80,69 +80,6 @@ Module function_type.
   #[global] Hint Opaque traverse : typeclass_instances.
 End function_type.
 
-(** ** Templates *)
-
-(** Template parameters
-    - <<typename T>> would be represented as [Ptype "T"]
-    - <<int X>> would be represented as [Pvalue "X" Tint]
-    - <<template <typename T> class C>> would be represented as
-      [Ptemplate "C" [Ptype "T"]]
-
-    <<typename T...>> and <<int X...>> are not currently supported.
- *)
-Inductive temp_param_ {type : Set} : Set :=
-| Ptype (_ : ident)
-| Pvalue (_ : ident) (_ : type)
-| Ptemplate (_ : ident) (_ : list temp_param_)
-| Punsupported (_ : PrimString.string).
-#[global] Arguments temp_param_ : clear implicits.
-#[global] Instance temp_param__inhabited {A} : Inhabited (temp_param_ A).
-Proof. solve_inhabited. Qed.
-
-Module temp_param.
-  Import UPoly.
-  Fixpoint existsb {type : Set} (f : type -> bool) (p : temp_param_ type) : bool :=
-    match p with
-    | Ptype _ => false
-    | Pvalue _ t => f t
-    | Ptemplate _ ps => List.existsb (existsb f) ps
-    | Punsupported _ => false
-    end.
-
-  Fixpoint fmap {type type' : Set} (f : type -> type')
-    (p : temp_param_ type) : temp_param_ type' :=
-    match p with
-    | Ptype id => Ptype id
-    | Pvalue id t => Pvalue id (f t)
-    | Ptemplate id ps => Ptemplate id (List.map (fmap f) ps)
-    | Punsupported msg => Punsupported msg
-    end.
-  #[global] Arguments fmap _ _ _ & _ : assert.
-  #[global] Hint Opaque fmap : typeclass_instances.
-
-  Section traverse.
-    #[local] Set Universe Polymorphism.
-    #[local] Unset Auto Template Polymorphism.
-    #[local] Unset Universe Minimization ToSet.
-    Universe u.
-    Context {F : Set -> Type@{u}} `{!FMap F, !MRet F, AP : !Ap F}.
-    Context {type type' : Set}.
-
-    Fixpoint traverse (f : type -> F type') (p : temp_param_ type)
-      : F (temp_param_ type') :=
-      match p with
-      | Ptype id => mret $ Ptype id
-      | Pvalue id t => Pvalue id <$> f t
-      | Ptemplate id ps =>
-          Ptemplate id <$> UPoly.traverse (T:=eta list) (F:=F) (traverse f) ps
-      | Punsupported msg => mret $ Punsupported msg
-      end.
-    #[global] Arguments traverse _ & _ : assert.
-    #[global] Hint Opaque traverse : typeclass_instances.
-  End traverse.
-
-End temp_param.
-
 Module function_qualifiers.
   (* This is a compressed tuple.
      - <<l>> means <<&>>
@@ -591,10 +528,25 @@ with Cast : Set :=
 | Cunsupported (_ : bs) (_ : type)
 .
 
+(** Template parameters
+    - <<typename T>> would be represented as [Ptype "T"]
+    - <<int X>> would be represented as [Pvalue "X" Tint]
+    - <<template <typename T> class C>> would be represented as
+      [Ptemplate "C" [Ptype "T"]]
+
+    <<typename T...>> and <<int X...>> are not currently supported.
+ *)
+Inductive temp_param : Set :=
+| Ptype (_ : ident)
+| Pvalue (_ : ident) (_ : type)
+| Ptemplate (_ : ident) (_ : list temp_param)
+| Punsupported (_ : PrimString.string).
+
 #[global] Arguments atomic_name : clear implicits.
 #[global] Arguments Cast : clear implicits.
 #[global] Arguments name : clear implicits.
 #[global] Arguments temp_arg : clear implicits.
+#[global] Arguments temp_param : clear implicits.
 #[global] Arguments type : clear implicits.
 #[global] Arguments Expr : clear implicits.
 #[global] Arguments VarDecl : clear implicits.
@@ -669,6 +621,47 @@ Module atomic_name.
 
 End atomic_name.
 
+Module temp_param.
+  Import UPoly.
+  Fixpoint existsb (f : type -> bool) (p : temp_param) : bool :=
+    match p with
+    | Ptype _ => false
+    | Pvalue _ t => f t
+    | Ptemplate _ ps => List.existsb (existsb f) ps
+    | Punsupported _ => false
+    end.
+
+  Fixpoint fmap (f : type -> type) (p : temp_param) : temp_param :=
+    match p with
+    | Ptype id => Ptype id
+    | Pvalue id t => Pvalue id (f t)
+    | Ptemplate id ps => Ptemplate id (List.map (fmap f) ps)
+    | Punsupported msg => Punsupported msg
+    end.
+  #[global] Arguments fmap _ & _ : assert.
+  #[global] Hint Opaque fmap : typeclass_instances.
+
+  Section traverse.
+    #[local] Set Universe Polymorphism.
+    #[local] Unset Auto Template Polymorphism.
+    #[local] Unset Universe Minimization ToSet.
+    Universe u.
+    Context {F : Set -> Type@{u}} `{!FMap F, !MRet F, AP : !Ap F}.
+    Context (f : type -> F type).
+
+    Fixpoint traverse (p : temp_param) : F temp_param :=
+      match p with
+      | Ptype id => mret $ Ptype id
+      | Pvalue id t => Pvalue id <$> f t
+      | Ptemplate id ps =>
+          Ptemplate id <$> UPoly.traverse (T:=eta list) (F:=F) traverse ps
+      | Punsupported msg => mret $ Punsupported msg
+      end.
+    #[global] Hint Opaque traverse : typeclass_instances.
+  End traverse.
+
+End temp_param.
+
 (** The representation of applied template type parameters,
     e.g.
     <<
@@ -688,6 +681,8 @@ Abbreviation Tparam_inst n args :=
 #[global] Instance type_inhabited : Inhabited type.
 Proof. solve_inhabited. Qed.
 #[global] Instance atomic_name_inhabited : Inhabited atomic_name.
+Proof. solve_inhabited. Qed.
+#[global] Instance temp_param_inhabited : Inhabited temp_param.
 Proof. solve_inhabited. Qed.
 #[global] Instance Expr_inhabited : Inhabited Expr.
 Proof. solve_inhabited. Qed.
@@ -782,7 +777,6 @@ Coercion integral_type_to_type : integral_type.t >-> type.
 Notation Nenum_const gn id := (Nscoped gn (Nid id)) (only parsing).
 
 Notation function_type := (function_type_ decltype).
-Notation temp_param := (temp_param_ type).
 
 (**
 In certain places, C++ requires a class name,
