@@ -35,5 +35,5 @@ Proof. apply by_prim_tag_leibniz. compute. by destruct x, y; compute. Qed.
 #[global] Instance function_quailfiers_eq_dec : EqDecision function_qualifiers.t :=
   LeibnizComparison.from_comparison.
 
-#[global] Instance atomic_name__eq_dec : EqDecision (atomic_name_ type) :=
+#[global] Instance atomic_name_eq_dec : EqDecision atomic_name :=
   LeibnizComparison.from_comparison.

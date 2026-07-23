@@ -46,7 +46,7 @@ Section with_lang.
     Variable top : option PrimString.string.
 
     #[local] Open Scope monad_scope.
-    Definition printAN inst (an : atomic_name_ type) : option PrimString.string :=
+    Definition printAN inst (an : atomic_name) : option PrimString.string :=
       match an return option PrimString.string with
       | Nid id =>
           if bool_decide (id = "") then mfail else mret $ id ++ inst

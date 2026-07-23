@@ -109,7 +109,7 @@ Module ParserExpr.
   Definition Esource_loc (name : bs) (e : Expr) : Expr := e.
 
   Variant member_type : Set :=
-    | Field (_ : atomic_name_ type) (_ : bool) (_ : type)
+    | Field (_ : atomic_name) (_ : bool) (_ : type)
     | Enum (_ : name)
     | Static (_ : name) (_ : type).
 
