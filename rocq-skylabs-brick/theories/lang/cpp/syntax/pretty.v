@@ -67,7 +67,7 @@ Section with_lang.
   Definition angles (b : PrimString.string) : PrimString.string := "<" ++ b ++ ">".
 
   Section atomic_name.
-    Context {type Expr : Set} (printType : type -> PrimString.string) (printExpr : Expr -> PrimString.string).
+    Context (printType : type -> PrimString.string).
     Variable top : option PrimString.string.
 
     Definition with_space (b : PrimString.string) : PrimString.string :=
