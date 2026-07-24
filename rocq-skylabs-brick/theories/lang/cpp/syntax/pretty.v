@@ -67,7 +67,7 @@ Section with_lang.
   Definition angles (b : PrimString.string) : PrimString.string := "<" ++ b ++ ">".
 
   Section atomic_name.
-    Context {type Expr : Set} (printType : type -> PrimString.string) (printExpr : Expr -> PrimString.string).
+    Context (printType : type -> PrimString.string).
     Variable top : option PrimString.string.
 
     Definition with_space (b : PrimString.string) : PrimString.string :=
@@ -83,7 +83,7 @@ Section with_lang.
                 end in
       concat $ join_sep " " $ (c ++ v ++ vc)%list.
 
-    Definition printAN (an : atomic_name_ type) : PrimString.string :=
+    Definition printAN (an : atomic_name) : PrimString.string :=
       let print_args args := parens $ concat $ join_sep ", " $ printType <$> args in
       match an with
       | Nid id => id

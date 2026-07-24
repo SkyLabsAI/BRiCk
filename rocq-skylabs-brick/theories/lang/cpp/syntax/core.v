@@ -80,69 +80,6 @@ Module function_type.
   #[global] Hint Opaque traverse : typeclass_instances.
 End function_type.
 
-(** ** Templates *)
-
-(** Template parameters
-    - <<typename T>> would be represented as [Ptype "T"]
-    - <<int X>> would be represented as [Pvalue "X" Tint]
-    - <<template <typename T> class C>> would be represented as
-      [Ptemplate "C" [Ptype "T"]]
-
-    <<typename T...>> and <<int X...>> are not currently supported.
- *)
-Inductive temp_param_ {type : Set} : Set :=
-| Ptype (_ : ident)
-| Pvalue (_ : ident) (_ : type)
-| Ptemplate (_ : ident) (_ : list temp_param_)
-| Punsupported (_ : PrimString.string).
-#[global] Arguments temp_param_ : clear implicits.
-#[global] Instance temp_param__inhabited {A} : Inhabited (temp_param_ A).
-Proof. solve_inhabited. Qed.
-
-Module temp_param.
-  Import UPoly.
-  Fixpoint existsb {type : Set} (f : type -> bool) (p : temp_param_ type) : bool :=
-    match p with
-    | Ptype _ => false
-    | Pvalue _ t => f t
-    | Ptemplate _ ps => List.existsb (existsb f) ps
-    | Punsupported _ => false
-    end.
-
-  Fixpoint fmap {type type' : Set} (f : type -> type')
-    (p : temp_param_ type) : temp_param_ type' :=
-    match p with
-    | Ptype id => Ptype id
-    | Pvalue id t => Pvalue id (f t)
-    | Ptemplate id ps => Ptemplate id (List.map (fmap f) ps)
-    | Punsupported msg => Punsupported msg
-    end.
-  #[global] Arguments fmap _ _ _ & _ : assert.
-  #[global] Hint Opaque fmap : typeclass_instances.
-
-  Section traverse.
-    #[local] Set Universe Polymorphism.
-    #[local] Unset Auto Template Polymorphism.
-    #[local] Unset Universe Minimization ToSet.
-    Universe u.
-    Context {F : Set -> Type@{u}} `{!FMap F, !MRet F, AP : !Ap F}.
-    Context {type type' : Set}.
-
-    Fixpoint traverse (f : type -> F type') (p : temp_param_ type)
-      : F (temp_param_ type') :=
-      match p with
-      | Ptype id => mret $ Ptype id
-      | Pvalue id t => Pvalue id <$> f t
-      | Ptemplate id ps =>
-          Ptemplate id <$> UPoly.traverse (T:=eta list) (F:=F) (traverse f) ps
-      | Punsupported msg => mret $ Punsupported msg
-      end.
-    #[global] Arguments traverse _ & _ : assert.
-    #[global] Hint Opaque traverse : typeclass_instances.
-  End traverse.
-
-End temp_param.
-
 Module function_qualifiers.
   (* This is a compressed tuple.
      - <<l>> means <<&>>
@@ -232,11 +169,25 @@ Module function_qualifiers.
     end.
 End function_qualifiers.
 
-(** ** Atomic names *)
-(**
-Atomic names are effectively path components.
-*)
-Variant atomic_name_ {type : Set} : Set :=
+Module cast_style.
+  Variant t : Set :=
+  | functional
+  | c
+  | static | dynamic | reinterpret | const.
+
+  #[global] Instance t_eq_dec : EqDecision t.
+  Proof. solve_decision. Defined.
+  #[global] Instance t_inhabited : Inhabited t.
+  Proof. repeat constructor. Qed.
+
+  #[prefix="", only(tag)] derive t.
+  Definition compare (a b : t) : comparison :=
+    Pos.compare (tag a) (tag b).
+End cast_style.
+
+(** ** Structured names *)
+(** Atomic names are effectively path components. *)
+Inductive atomic_name : Set :=
 (** Named things *)
 | Nid (_ : ident)	(** namespace, struct, union, typedef, variable, member,
                       and <<extern "C">> symbols... *)
@@ -267,103 +218,13 @@ return types?
 | Nfirst_child (_ : ident)
 
 (** Errors *)
-| Nunsupported_atomic (_ : PrimString.string).
-#[global] Arguments atomic_name_ : clear implicits.
-#[global] Instance atomic_name__inhabited {A} : Inhabited (atomic_name_ A).
-Proof. solve_inhabited. Qed.
+| Nunsupported_atomic (_ : PrimString.string)
 
-Module atomic_name.
-  Definition existsb {type : Set} (f : type -> bool)
-      (c : atomic_name_ type) : bool :=
-    match c with
-    | Nid _ => false
-    | Nfunction _ _ ts => List.existsb f ts
-    | Nctor ts => List.existsb f ts
-    | Ndtor => false
-    | Nop _ _ ts => List.existsb f ts
-    | Nop_conv _ t => f t
-    | Nop_lit _ ts => List.existsb f ts
-    | Nanon _
-    | Nanonymous
-    | Nfirst_decl _
-    | Nfirst_child _
-    | Nunsupported_atomic _ => false
-    end.
-
-  Import UPoly.
-
-  Definition fmap {type type' : Set} (f : type -> type')
-      (c : atomic_name_ type) : atomic_name_ type' :=
-    match c with
-    | Nid id => Nid id
-    | Nfunction qs n ts => Nfunction qs n (f <$> ts)
-    | Nctor ts => Nctor (f <$> ts)
-    | Ndtor => Ndtor
-    | Nop q oo ts => Nop q oo (f <$> ts)
-    | Nop_conv n t => Nop_conv n $ f t
-    | Nop_lit n ts => Nop_lit n $ f <$> ts
-    | Nanon n => Nanon n
-    | Nanonymous => Nanonymous
-    | Nfirst_decl n => Nfirst_decl n
-    | Nfirst_child n => Nfirst_child n
-    | Nunsupported_atomic msg => Nunsupported_atomic msg
-    end.
-  #[global] Arguments fmap _ _ _ & _ : assert.
-
-  Section traverse.
-    #[local] Set Universe Polymorphism.
-    #[local] Unset Auto Template Polymorphism.
-    #[local] Unset Universe Minimization ToSet.
-    Universe u.
-    Context {F : Set -> Type@{u}} `{!FMap F, !MRet F, AP : !Ap F}.
-    Context {type type' : Set}.
-    Context (f : type -> F type').
-
-    #[local] Notation list_traverse := (UPoly.traverse (T:=eta list)).
-    Definition traverse (c : atomic_name_ type) : F (atomic_name_ type') :=
-      match c with
-      | Nid id => mret $ Nid id
-      | Nfunction qs n ts => Nfunction qs n <$> list_traverse f ts
-      | Nctor ts => Nctor <$> list_traverse f ts
-      | Ndtor => mret Ndtor
-      | Nop q oo ts => Nop q oo <$> list_traverse f ts
-      | Nop_conv n t => Nop_conv n <$> f t
-      | Nop_lit n ts => Nop_lit n <$> list_traverse f ts
-      | Nanon n => mret $ Nanon n
-      | Nanonymous => mret Nanonymous
-      | Nfirst_decl n => mret $ Nfirst_decl n
-      | Nfirst_child n => mret $ Nfirst_child n
-
-      | Nunsupported_atomic msg => mret $ Nunsupported_atomic msg
-      end.
-    #[global] Arguments traverse & _ : assert.
-    #[global] Hint Opaque traverse : typeclass_instances.
-  End traverse.
-
-End atomic_name.
-
-Module cast_style.
-  Variant t : Set :=
-  | functional
-  | c
-  | static | dynamic | reinterpret | const.
-
-  #[global] Instance t_eq_dec : EqDecision t.
-  Proof. solve_decision. Defined.
-  #[global] Instance t_inhabited : Inhabited t.
-  Proof. repeat constructor. Qed.
-
-  #[prefix="", only(tag)] derive t.
-  Definition compare (a b : t) : comparison :=
-    Pos.compare (tag a) (tag b).
-End cast_style.
-
-(** ** Structured names *)
-Inductive name : Set :=
+with name : Set :=
 | Ninst (c : name) (_ : list temp_arg)
-| Nglobal (c : atomic_name_ type)	(* <<::c>> *)
+| Nglobal (c : atomic_name)	(* <<::c>> *)
 | Ndependent (t : type) (* <<typename t>> *)
-| Nscoped (n : name) (c : atomic_name_ type)	(* <<n::c>> *)
+| Nscoped (n : name) (c : atomic_name)	(* <<n::c>> *)
 | Nunsupported (_ : PrimString.string)
 
 (** Template arguments
@@ -501,7 +362,7 @@ program because, in part, C++ has no type for references to members.
 | Ecall (f : Expr) (es : list Expr)
 | Eexplicit_cast (c : cast_style.t) (_ : type) (e : Expr)
 | Ecast (c : Cast) (e : Expr)
-| Emember (arrow : bool) (obj : Expr) (f : atomic_name_ type) (mut : bool) (t : type)
+| Emember (arrow : bool) (obj : Expr) (f : atomic_name) (mut : bool) (t : type)
 | Emember_ignore (arrow : bool) (obj : Expr) (res : Expr)
 | Emember_call (arrow : bool) (method : MethodRef_ name type Expr) (obj : Expr) (args : list Expr)
 | Eoperator_call (_ : OverloadableOperator) (_ : operator_impl.t name type) (_ : list Expr)
@@ -540,7 +401,7 @@ Should be [gn : classname]
 | Ethis (t : type)
 | Enull
 | Einitlist (args : list Expr) (default : option Expr) (t : type)
-| Einitlist_union (_ : atomic_name_ type) (_ : option Expr) (t : type)
+| Einitlist_union (_ : atomic_name) (_ : option Expr) (t : type)
 
 | Enew (new_fn : name * type) (new_args : list Expr) (pass_align : new_form)
   (alloc_ty : type) (array_size : option Expr) (init : option Expr)
@@ -667,9 +528,25 @@ with Cast : Set :=
 | Cunsupported (_ : bs) (_ : type)
 .
 
+(** Template parameters
+    - <<typename T>> would be represented as [Ptype "T"]
+    - <<int X>> would be represented as [Pvalue "X" Tint]
+    - <<template <typename T> class C>> would be represented as
+      [Ptemplate "C" [Ptype "T"]]
+
+    <<typename T...>> and <<int X...>> are not currently supported.
+ *)
+Inductive temp_param : Set :=
+| Ptype (_ : ident)
+| Pvalue (_ : ident) (_ : type)
+| Ptemplate (_ : ident) (_ : list temp_param)
+| Punsupported (_ : PrimString.string).
+
+#[global] Arguments atomic_name : clear implicits.
 #[global] Arguments Cast : clear implicits.
 #[global] Arguments name : clear implicits.
 #[global] Arguments temp_arg : clear implicits.
+#[global] Arguments temp_param : clear implicits.
 #[global] Arguments type : clear implicits.
 #[global] Arguments Expr : clear implicits.
 #[global] Arguments VarDecl : clear implicits.
@@ -677,6 +554,113 @@ with Cast : Set :=
 #[global] Arguments Stmt : clear implicits.
 
 #[global] Bind Scope cpp_name_scope with name.
+
+Module atomic_name.
+  Definition existsb (f : type -> bool) (c : atomic_name) : bool :=
+    match c with
+    | Nid _ => false
+    | Nfunction _ _ ts => List.existsb f ts
+    | Nctor ts => List.existsb f ts
+    | Ndtor => false
+    | Nop _ _ ts => List.existsb f ts
+    | Nop_conv _ t => f t
+    | Nop_lit _ ts => List.existsb f ts
+    | Nanon _
+    | Nanonymous
+    | Nfirst_decl _
+    | Nfirst_child _
+    | Nunsupported_atomic _ => false
+    end.
+
+  Import UPoly.
+
+  Definition fmap (f : type -> type) (c : atomic_name) : atomic_name :=
+    match c with
+    | Nid id => Nid id
+    | Nfunction qs n ts => Nfunction qs n (f <$> ts)
+    | Nctor ts => Nctor (f <$> ts)
+    | Ndtor => Ndtor
+    | Nop q oo ts => Nop q oo (f <$> ts)
+    | Nop_conv n t => Nop_conv n $ f t
+    | Nop_lit n ts => Nop_lit n $ f <$> ts
+    | Nanon n => Nanon n
+    | Nanonymous => Nanonymous
+    | Nfirst_decl n => Nfirst_decl n
+    | Nfirst_child n => Nfirst_child n
+    | Nunsupported_atomic msg => Nunsupported_atomic msg
+    end.
+  #[global] Arguments fmap _ & _ : assert.
+
+  Section traverse.
+    #[local] Set Universe Polymorphism.
+    #[local] Unset Auto Template Polymorphism.
+    #[local] Unset Universe Minimization ToSet.
+    Universe u.
+    Context {F : Set -> Type@{u}} `{!FMap F, !MRet F, AP : !Ap F}.
+    Context (f : type -> F type).
+
+    #[local] Notation list_traverse := (UPoly.traverse (T:=eta list)).
+    Definition traverse (c : atomic_name) : F atomic_name :=
+      match c with
+      | Nid id => mret $ Nid id
+      | Nfunction qs n ts => Nfunction qs n <$> list_traverse f ts
+      | Nctor ts => Nctor <$> list_traverse f ts
+      | Ndtor => mret Ndtor
+      | Nop q oo ts => Nop q oo <$> list_traverse f ts
+      | Nop_conv n t => Nop_conv n <$> f t
+      | Nop_lit n ts => Nop_lit n <$> list_traverse f ts
+      | Nanon n => mret $ Nanon n
+      | Nanonymous => mret Nanonymous
+      | Nfirst_decl n => mret $ Nfirst_decl n
+      | Nfirst_child n => mret $ Nfirst_child n
+
+      | Nunsupported_atomic msg => mret $ Nunsupported_atomic msg
+      end.
+    #[global] Hint Opaque traverse : typeclass_instances.
+  End traverse.
+
+End atomic_name.
+
+Module temp_param.
+  Import UPoly.
+  Fixpoint existsb (f : type -> bool) (p : temp_param) : bool :=
+    match p with
+    | Ptype _ => false
+    | Pvalue _ t => f t
+    | Ptemplate _ ps => List.existsb (existsb f) ps
+    | Punsupported _ => false
+    end.
+
+  Fixpoint fmap (f : type -> type) (p : temp_param) : temp_param :=
+    match p with
+    | Ptype id => Ptype id
+    | Pvalue id t => Pvalue id (f t)
+    | Ptemplate id ps => Ptemplate id (List.map (fmap f) ps)
+    | Punsupported msg => Punsupported msg
+    end.
+  #[global] Arguments fmap _ & _ : assert.
+  #[global] Hint Opaque fmap : typeclass_instances.
+
+  Section traverse.
+    #[local] Set Universe Polymorphism.
+    #[local] Unset Auto Template Polymorphism.
+    #[local] Unset Universe Minimization ToSet.
+    Universe u.
+    Context {F : Set -> Type@{u}} `{!FMap F, !MRet F, AP : !Ap F}.
+    Context (f : type -> F type).
+
+    Fixpoint traverse (p : temp_param) : F temp_param :=
+      match p with
+      | Ptype id => mret $ Ptype id
+      | Pvalue id t => Pvalue id <$> f t
+      | Ptemplate id ps =>
+          Ptemplate id <$> UPoly.traverse (T:=eta list) (F:=F) traverse ps
+      | Punsupported msg => mret $ Punsupported msg
+      end.
+    #[global] Hint Opaque traverse : typeclass_instances.
+  End traverse.
+
+End temp_param.
 
 (** The representation of applied template type parameters,
     e.g.
@@ -695,6 +679,10 @@ Abbreviation Tparam_inst n args :=
 
 
 #[global] Instance type_inhabited : Inhabited type.
+Proof. solve_inhabited. Qed.
+#[global] Instance atomic_name_inhabited : Inhabited atomic_name.
+Proof. solve_inhabited. Qed.
+#[global] Instance temp_param_inhabited : Inhabited temp_param.
 Proof. solve_inhabited. Qed.
 #[global] Instance Expr_inhabited : Inhabited Expr.
 Proof. solve_inhabited. Qed.
@@ -789,7 +777,6 @@ Coercion integral_type_to_type : integral_type.t >-> type.
 Notation Nenum_const gn id := (Nscoped gn (Nid id)) (only parsing).
 
 Notation function_type := (function_type_ decltype).
-Notation temp_param := (temp_param_ type).
 
 (**
 In certain places, C++ requires a class name,
@@ -805,7 +792,6 @@ Notation classname := name (only parsing).
 (** ** C++ with structured names *)
 Notation operator_impl := (operator_impl.t obj_name type).
 Notation MethodRef := (MethodRef_ obj_name functype Expr).
-Notation atomic_name := (atomic_name_ type).
 
 Module field_name.
   Definition t := atomic_name.

@@ -42,11 +42,11 @@ Section with_lang.
   Definition postfix (a b : PrimString.string) : PrimString.string := PrimString.cat b a.
 
   Section atomic_name.
-    Context {type Expr : Set} (printType : type -> option PrimString.string) (printExpr : Expr -> option PrimString.string).
+    Context (printType : type -> option PrimString.string).
     Variable top : option PrimString.string.
 
     #[local] Open Scope monad_scope.
-    Definition printAN inst (an : atomic_name_ type) : option PrimString.string :=
+    Definition printAN inst (an : atomic_name) : option PrimString.string :=
       match an return option PrimString.string with
       | Nid id =>
           if bool_decide (id = "") then mfail else mret $ id ++ inst

@@ -575,9 +575,7 @@ End function_type.
 
 Module temp_param.
   Section compare.
-    Context {type : Set}.
     Context (compareT : type -> type -> comparison).
-    #[local] Notation temp_param := (temp_param_ type).
 
     Record box_Pvalue : Set := Box_Pvalue {
       box_Pvalue_0 : ident;
@@ -620,7 +618,7 @@ Module temp_param.
 
     #[local] Notation compare_ctor compare := (compare_ctor tag car data $ compare_data compare).
 
-    Fixpoint compare (p : temp_param_ type) : temp_param_ type -> comparison :=
+    Fixpoint compare (p : temp_param) : temp_param -> comparison :=
       match p with
       | Ptype id => compare_ctor compare (Reduce (tag (Ptype id))) (fun _ => Reduce (data (Ptype id)))
       | Pvalue id ty => compare_ctor compare (Reduce (tag (Pvalue id ty))) (fun _ => Reduce (data (Pvalue id ty)))
@@ -630,12 +628,10 @@ Module temp_param.
   End compare.
 
 End temp_param.
-#[global] Instance temp_param_compare {A : Set} `{!Compare A} : Compare (temp_param_ A) :=
-  temp_param.compare compare.
-#[global] Instance temp_param_comparison {A : Set} `{!@Comparison A cmpA}
+#[global] Instance temp_param_comparison `{!@Comparison type cmpA}
   : Comparison (temp_param.compare cmpA).
 Proof. Admitted.
-#[global] Instance temp_param_leibniz_comparison {A : Set} `{!@Comparison A cmpA} `{LeibnizComparison cmpA}
+#[global] Instance temp_param_leibniz_comparison `{!@Comparison type cmpA} `{LeibnizComparison cmpA}
   : LeibnizComparison (temp_param.compare cmpA).
 Proof. Admitted.
 
@@ -761,13 +757,24 @@ End OverloadableOperator.
 #[global] Instance function_qualifier_compare : Compare function_qualifiers.t := function_qualifiers.compare.
 
 Module atomic_name.
-  #[prefix="", only(tag)] derive atomic_name_.
-  #[global] Arguments tag {_} & _ : assert.
+  Definition tag (n : atomic_name) : positive :=
+    match n with
+    | Nid _ => 1
+    | Nfunction _ _ _ => 2
+    | Nctor _ => 3
+    | Ndtor => 4
+    | Nop _ _ _ => 5
+    | Nop_conv _ _ => 6
+    | Nop_lit _ _ => 7
+    | Nanon _ => 8
+    | Nanonymous => 9
+    | Nfirst_decl _ => 10
+    | Nfirst_child _ => 11
+    | Nunsupported_atomic _ => 12
+    end.
+  #[global] Arguments tag & _ : assert.
   Section compare.
-    Context {type Expr : Set}.
     Context (compareT : type -> type -> comparison).
-    #[local] Notation atomic_name := (atomic_name_ type).
-    #[local] Notation tag := (@tag type).
 
     Record box_Nfunction : Set := Box_Nfunction {
       box_Nfunction_0 : function_qualifiers.t;
@@ -877,12 +884,10 @@ Module atomic_name.
   End compare.
 
 End atomic_name.
-#[global] Instance atomic_name_compare {A : Set} `{!Compare A}
-  : Compare (atomic_name_ A) := atomic_name.compare compare.
-#[global] Instance atomic_name_comparison {A : Set} `{!@Comparison A cmpA}
+#[global] Instance atomic_name_comparison `{!@Comparison type cmpA}
   : Comparison (atomic_name.compare cmpA).
 Proof. Admitted.
-#[global] Instance atomic_name_leibniz_comparison {A : Set} `{!@Comparison A cmpA} `{LeibnizComparison cmpA}
+#[global] Instance atomic_name_leibniz_comparison `{!@Comparison type cmpA} `{LeibnizComparison cmpA}
   : LeibnizComparison (atomic_name.compare cmpA).
 Proof. Admitted.
 
@@ -1713,7 +1718,7 @@ Module Expr.
       compareT b1.(box_Einitlist_2) b2.(box_Einitlist_2).
 
     Record box_Einitlist_union : Set := Box_Einitlist_union {
-      box_Einitlist_union_0 : atomic_name_ type;
+      box_Einitlist_union_0 : atomic_name;
       box_Einitlist_union_1 : option Expr;
       box_Einitlist_union_2 : type;
     }.
@@ -2459,6 +2464,8 @@ End compare.
 Section compare_instances.
 
   #[global] Instance name_compare : Compare name := compareN.
+  #[global] Instance atomic_name_compare : Compare atomic_name := atomic_name.compare compareT.
+  #[global] Instance temp_param_compare : Compare temp_param := temp_param.compare compareT.
   #[global] Instance type_compare : Compare type := compareT.
   #[global] Instance Expr_compare : Compare Expr := compareE.
   #[global] Instance VarDecl_compare : Compare VarDecl := compareVD.
