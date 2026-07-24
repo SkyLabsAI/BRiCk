@@ -467,6 +467,18 @@ static fmt::Formatter &printTemplateParamDefault(CoqPrinter &print,
         guard::some _(print, false);
         return cprint.printTemplateArg(print, arg.getArgument(), loc::of(arg));
     };
+#if CLANG_VERSION_MAJOR < 19
+    auto print_default_type = [&](const QualType &type, loc::loc loc) -> auto & {
+        guard::some _1(print, false);
+        guard::ctor _2(print, "Atype", false);
+        return cprint.printQualType(print, type, loc);
+    };
+    auto print_default_expr = [&](const Expr *expr) -> auto & {
+        guard::some _1(print, false);
+        guard::ctor _2(print, "Avalue", false);
+        return cprint.printExpr(print, expr);
+    };
+#endif
 
     if (!pdecl)
         return print.none();
@@ -474,16 +486,29 @@ static fmt::Formatter &printTemplateParamDefault(CoqPrinter &print,
     switch (pdecl->getKind()) {
     case Decl::Kind::TemplateTypeParm: {
         auto &param = cast<TemplateTypeParmDecl>(*pdecl);
+#if CLANG_VERSION_MAJOR < 19
+        return param.hasDefaultArgument()
+                   ? print_default_type(param.getDefaultArgument(),
+                                        loc::of(param))
+                   : print.none();
+#else
         return param.hasDefaultArgument()
                    ? print_default(param.getDefaultArgument())
                    : print.none();
+#endif
     }
 
     case Decl::Kind::NonTypeTemplateParm: {
         auto &param = cast<NonTypeTemplateParmDecl>(*pdecl);
+#if CLANG_VERSION_MAJOR < 19
+        return param.hasDefaultArgument()
+                   ? print_default_expr(param.getDefaultArgument())
+                   : print.none();
+#else
         return param.hasDefaultArgument()
                    ? print_default(param.getDefaultArgument())
                    : print.none();
+#endif
     }
 
     case Decl::Kind::TemplateTemplateParm: {
