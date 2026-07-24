@@ -139,7 +139,7 @@ Section with_cpp.
       | Tvariable_array _ _ => False
 
       | Tqualified tq ty => typeR (qualify tq q) ty
-      | Tfunction _ => False
+      | Tfunction _ _ _ _ => False
       | Tunsupported _ => False
       | Tresult_global _
       | Tparam _ | Tresult_param _

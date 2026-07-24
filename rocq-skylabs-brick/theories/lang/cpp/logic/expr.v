@@ -835,7 +835,7 @@ Module Type Expr.
     (** [Cbuiltin2fun] is a cast from a builtin to a pointer.
      *)
     Axiom wp_operand_cast_builtin2fun_cpp : forall cc ar ret args g Q,
-        let ty := Tfunction $ FunctionType (ft_cc:=cc) (ft_arity:=ar) ret args in
+        let ty := Tfunction cc ar ret args in
         let e := Eglobal g ty in
             wp_lval e (fun v => Q (Vptr v))
         |-- wp_operand (Ecast (Cbuiltin2fun $ Tptr ty) e) Q.
@@ -1649,11 +1649,11 @@ Module Type Expr.
       |-- wp_operand (Eimplicit_init ty) Q.
 
     Definition marg_types (t : functype) : option (list type * function_arity) :=
-      match t with
-      | Tfunction {| ft_cc:=cc ; ft_arity:=ar ; ft_params := _ :: args |} =>
+      match as_function t with
+      | Some {| ft_arity:=ar ; ft_params := _ :: args |} =>
           (* we drop the first argument which is for [this] *)
           Some (args, ar)
-      | _ => None
+      | Some _ | None => None
       end.
 
     Definition type_of_ctor tu obj : option type :=

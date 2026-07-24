@@ -115,14 +115,14 @@ Module Export TypeNotations.
          , format "'[' ty [ n ] ']'", only printing).
   Notation "nm" := (Tnamed nm%pstring) (in custom CPP_type at level 0, nm constr, only printing).
   Notation "'extern' cc '???()' '->' rty"
-      := (Tfunction (@FunctionType _ cc Ar_Definite rty nil))
+      := (Tfunction cc Ar_Definite rty nil)
          ( in custom CPP_type at level 100
          , cc constr at level 0
          , rty custom CPP_type at level 200
          , format "'[' extern  cc  ???()  ->  rty ']'"
          , only printing).
   Notation "'extern' cc '???(' aty1 , .. , aty2 ')' '->' rty"
-      := (Tfunction (@FunctionType _ cc Ar_Definite rty (cons aty1 .. (cons aty2 nil) ..)))
+      := (Tfunction cc Ar_Definite rty (cons aty1 .. (cons aty2 nil) ..))
          ( in custom CPP_type at level 100
          , cc constr at level 0
          , rty custom CPP_type at level 200
@@ -131,14 +131,14 @@ Module Export TypeNotations.
          , format "'[' extern  cc  ???( '[hv' aty1 ,  '/' .. ,  '/' aty2 ']' )  ->  rty ']'"
          , only printing).
   Notation "'extern' cc '???()(...)' '->' rty"
-      := (@Tfunction (@FunctionType _ cc Ar_Variadic rty nil))
+      := (Tfunction cc Ar_Variadic rty nil)
          ( in custom CPP_type at level 100
          , cc constr at level 0
          , rty custom CPP_type at level 200
          , format "'[' extern  cc  ???()(...)  ->  rty ']'"
          , only printing).
   Notation "'extern' cc '???(' aty1 , .. , aty2 ')(...)' '->' rty"
-      := (@Tfunction (@FunctionType _ cc Ar_Variadic rty (cons aty1 .. (cons aty2 nil) ..)))
+      := (Tfunction cc Ar_Variadic rty (cons aty1 .. (cons aty2 nil) ..))
          ( in custom CPP_type at level 100
          , cc constr at level 0
          , rty custom CPP_type at level 200

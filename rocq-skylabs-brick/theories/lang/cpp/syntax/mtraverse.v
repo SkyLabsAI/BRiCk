@@ -192,11 +192,13 @@ Module MTraverse.
       | Tincomplete_array t => Tincomplete_array <$> traverseT t
       | Tvariable_array t e => Tvariable_array <$> traverseT t <*> traverseE e
       | Tenum gn => Tenum <$> traverseN gn
-      | Tfunction ft =>
+      | Tfunction cc ar ret args =>
           (* function types do not include leading qualifiers on types, e.g. the type
              <<(const int) -> int>> is the same as the type <<(int) -> int>>.
            *)
-          Tfunction <$> function_type.traverse (fun t => types.drop_qualifiers <$> traverseT t) ft
+          Tfunction cc ar
+            <$> (types.drop_qualifiers <$> traverseT ret)
+            <*> traverse (T:=eta list) (fun t => types.drop_qualifiers <$> traverseT t) args
       | Tbool => mret Tbool
       | Tmember_pointer gn t => Tmember_pointer <$> traverseT gn <*> traverseT t
       | Tfloat_ t => mret $ Tfloat_ t

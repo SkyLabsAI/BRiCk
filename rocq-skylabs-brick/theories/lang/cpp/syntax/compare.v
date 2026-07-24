@@ -563,15 +563,14 @@ End new_form.
 
 Module function_type.
 
-  Definition compare {type : Set} (compareT : type -> type -> comparison)
-      (x y : function_type_ type) : comparison :=
+  Definition compare (compareT : type -> type -> comparison)
+      (x y : function_type) : comparison :=
     compare_lex (compareT x.(ft_return) y.(ft_return)) $ fun _ =>
     compare_lex (List.compare compareT x.(ft_params) y.(ft_params)) $ fun _ =>
     compare_lex (calling_conv.compare x.(ft_cc) y.(ft_cc)) $ fun _ =>
     function_arity.compare x.(ft_arity) y.(ft_arity).
 
 End function_type.
-#[global] Instance function_type_compare {A : Set} `{!Compare A} : Compare (function_type_ A) := function_type.compare compare.
 
 Module temp_param.
   Section compare.
@@ -1277,7 +1276,7 @@ Module type.
       | Tarray _ _ => inr 7
       | Tincomplete_array _ => inr 8
       | Tvariable_array _ _ => inr 9
-      | Tfunction _ => inr 10
+      | Tfunction _ _ _ _ => inr 10
       | Tmember_pointer _ _ => inr 11
       | Tarch _ _ => inr 12
       | Tdecltype _ => inr 13
@@ -1313,7 +1312,7 @@ Module type.
       | Tarray t n => kp 7 $ Box_Tarray t n
       | Tincomplete_array t => kp 8 t
       | Tvariable_array t e => kp 9 $ Box_Tvariable_array t e
-      | Tfunction ft => kp 10 ft
+      | Tfunction cc ar ret args => kp 10 $ FunctionType (ft_cc:=cc) (ft_arity:=ar) ret args
       | Tmember_pointer a b => kp 11 $ Box_Tmember_pointer a b
       | Tarch a b => kp 12 $ Box_Tarch a b
       | Tdecltype e => kp 13 e

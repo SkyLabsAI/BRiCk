@@ -36,50 +36,6 @@ From Stdlib Require Import PrimInt63.
     <<'>>d definitions and notations should be removed.
  *)
 
-
-(** ** Function types *)
-(**
-TODO: Prefer [function_type] over [functype]. This is complicated by
-the several function-like things in the language, with quirky rules
-(e.g., member functions may be adorned with qualifiers governing how
-<<this>> works and constructors/destructors aren't member functions).
-*)
-Record function_type_ {decltype : Set} : Set := FunctionType {
-  ft_cc : calling_conv;
-  ft_arity : function_arity;
-  ft_return : decltype;
-  ft_params : list decltype;
-}.
-Add Printing Constructor function_type_.
-#[global] Arguments function_type_ : clear implicits.
-#[global] Arguments FunctionType {_ _ _} _ _ : assert.
-#[global] Instance function_type__inhabited {A : Set} {_ : Inhabited A} : Inhabited (function_type_ A).
-Proof. solve_inhabited. Qed.
-#[global] Instance function_type__eq_dec {A : Set} {_ : EqDecision A} : EqDecision (function_type_ A).
-Proof. solve_decision. Defined.
-
-Module function_type.
-  Import UPoly.
-  Definition existsb {decltype : Set} (f : decltype -> bool)
-      (ft : function_type_ decltype) : bool :=
-    f ft.(ft_return) || existsb f ft.(ft_params).
-
-  Definition fmap {decltype decltype' : Set} (f : decltype -> decltype')
-    (ft : function_type_ decltype) : function_type_ decltype' :=
-    @FunctionType _ ft.(ft_cc) ft.(ft_arity) (f ft.(ft_return)) (f <$> ft.(ft_params)).
-  #[global] Arguments fmap _ _ _ & _ : assert.
-  #[global] Hint Opaque fmap : typeclass_instances.
-
-  #[universes(polymorphic)]
-  Definition traverse@{u | } {F : Set -> Type@{u}} `{!FMap F, !MRet F, AP : !Ap F}
-  {decltype decltype' : Set} (f : decltype -> F decltype')
-  (ft : function_type_ decltype) : F (function_type_ decltype') :=
-    @FunctionType _ ft.(ft_cc) ft.(ft_arity)
-                                    <$> f ft.(ft_return) <*> traverse (T:=eta list) f ft.(ft_params).
-  #[global] Arguments traverse _ _ _ _ _ _ & _ _ : assert.
-  #[global] Hint Opaque traverse : typeclass_instances.
-End function_type.
-
 Module function_qualifiers.
   (* This is a compressed tuple.
      - <<l>> means <<&>>
@@ -185,7 +141,6 @@ Module cast_style.
     Pos.compare (tag a) (tag b).
 End cast_style.
 
-(** ** Structured names *)
 (** Atomic names are effectively path components. *)
 Inductive atomic_name : Set :=
 (** Named things *)
@@ -220,6 +175,7 @@ return types?
 (** Errors *)
 | Nunsupported_atomic (_ : PrimString.string)
 
+(** Structured names *)
 with name : Set :=
 | Ninst (c : name) (_ : list temp_arg)
 | Nglobal (c : atomic_name)	(* <<::c>> *)
@@ -278,7 +234,7 @@ with type : Set :=
 | Tvariable_array (t : type) (e : Expr)
 | Tnamed (gn : name)
 | Tenum (gn : name)
-| Tfunction (t : function_type_ type)
+| Tfunction   (_ : calling_conv) (_ : function_arity) (_ : type) (_ : list type)
 | Tbool
 | Tmember_pointer (gn : (* classname *)type) (t : type)
 | Tfloat_ (_ : float_type.t)
@@ -528,6 +484,55 @@ with Cast : Set :=
 | Cunsupported (_ : bs) (_ : type)
 .
 
+#[global] Instance type_inhabited : Inhabited type.
+Proof. solve_inhabited. Qed.
+#[global] Instance atomic_name_inhabited : Inhabited atomic_name.
+Proof. solve_inhabited. Qed.
+#[global] Instance Expr_inhabited : Inhabited Expr.
+Proof. solve_inhabited. Qed.
+#[global] Instance name_inhabited : Inhabited name.
+Proof. apply populate, Nglobal, inhabitant. Qed.
+#[global] Instance temp_arg_inhabited : Inhabited temp_arg.
+Proof. apply populate, Atype, inhabitant. Qed.
+#[global] Instance VarDecl_inhabited : Inhabited VarDecl.
+Proof. solve_inhabited. Qed.
+#[global] Instance BindingDecl_inhabited : Inhabited BindingDecl.
+Proof. solve_inhabited. Qed.
+#[global] Instance Stmt_inhabited : Inhabited Stmt.
+Proof. apply populate, Sseq, nil. Qed.
+#[global] Instance Cast_inhabited : Inhabited Cast.
+Proof. apply populate, C2void. Qed.
+
+
+
+(** ** Function types *)
+(**
+TODO: Prefer [function_type] over [functype]. This is complicated by
+the several function-like things in the language, with quirky rules
+(e.g., member functions may be adorned with qualifiers governing how
+<<this>> works and constructors/destructors aren't member functions).
+*)
+Record function_type : Set := FunctionType {
+  ft_cc : calling_conv;
+  ft_arity : function_arity;
+  ft_return : type;
+  ft_params : list type;
+}.
+Add Printing Constructor function_type.
+#[global] Arguments FunctionType {_ _} _ _ : assert.
+#[global] Instance function_type__inhabited : Inhabited function_type.
+Proof. solve_inhabited. Qed.
+(* #[global] Instance function_type__eq_dec : EqDecision function_type. *)
+(* Proof. solve_decision. Defined. *)
+
+Module function_type.
+  Import UPoly.
+  Definition existsb (f : type -> bool)
+      (ft : function_type) : bool :=
+    f ft.(ft_return) || existsb f ft.(ft_params).
+End function_type.
+
+
 (** Template parameters
     - <<typename T>> would be represented as [Ptype "T"]
     - <<int X>> would be represented as [Pvalue "X" Tint]
@@ -662,6 +667,10 @@ Module temp_param.
 
 End temp_param.
 
+#[global] Instance temp_param_inhabited : Inhabited temp_param.
+Proof. solve_inhabited. Qed.
+
+
 (** The representation of applied template type parameters,
     e.g.
     <<
@@ -677,27 +686,6 @@ End temp_param.
 Abbreviation Tparam_inst n args :=
   (Tnamed (Ninst (Ndependent (Tparam n)) args)).
 
-
-#[global] Instance type_inhabited : Inhabited type.
-Proof. solve_inhabited. Qed.
-#[global] Instance atomic_name_inhabited : Inhabited atomic_name.
-Proof. solve_inhabited. Qed.
-#[global] Instance temp_param_inhabited : Inhabited temp_param.
-Proof. solve_inhabited. Qed.
-#[global] Instance Expr_inhabited : Inhabited Expr.
-Proof. solve_inhabited. Qed.
-#[global] Instance name_inhabited : Inhabited name.
-Proof. apply populate, Nglobal, inhabitant. Qed.
-#[global] Instance temp_arg_inhabited : Inhabited temp_arg.
-Proof. apply populate, Atype, inhabitant. Qed.
-#[global] Instance VarDecl_inhabited : Inhabited VarDecl.
-Proof. solve_inhabited. Qed.
-#[global] Instance BindingDecl_inhabited : Inhabited BindingDecl.
-Proof. solve_inhabited. Qed.
-#[global] Instance Stmt_inhabited : Inhabited Stmt.
-Proof. apply populate, Sseq, nil. Qed.
-#[global] Instance Cast_inhabited : Inhabited Cast.
-Proof. apply populate, C2void. Qed.
 
 #[global] Reserved Notation "x .:: y" (left associativity, at level 61).
 (* Maybe not this one *)
@@ -775,8 +763,6 @@ Definition integral_type_to_type (v : integral_type.t) : type :=
 Coercion integral_type_to_type : integral_type.t >-> type.
 
 Notation Nenum_const gn id := (Nscoped gn (Nid id)) (only parsing).
-
-Notation function_type := (function_type_ decltype).
 
 (**
 In certain places, C++ requires a class name,
@@ -963,7 +949,7 @@ with is_dependentT (t : type) : bool :=
   | Tvariable_array t e => is_dependentT t || is_dependentE e
   | Tnamed n
   | Tenum n => is_dependentN n
-  | Tfunction ft => function_type.existsb is_dependentT ft
+  | Tfunction _ _ ret args => is_dependentT ret || List.existsb is_dependentT args
   | Tbool => false
   | Tmember_pointer gn t => is_dependentT gn || is_dependentT t
   | Tfloat_ _ => false

@@ -445,7 +445,7 @@ Module SimpleCPP.
               vs = aptr p
           | _ => False
           end
-        | Tfunction _
+        | Tfunction _ _ _ _
         | Tref _
         | Trv_ref _ =>
           match v with
@@ -490,7 +490,7 @@ Module SimpleCPP.
                       | Tfloat_ ft => bitsize.bytesNat (float_type.bitsize ft)
 
                       | Tmember_pointer _ _ | Tnullptr | Tptr _
-                      | Tfunction _ | Tref _ | Trv_ref _ =>
+                      | Tfunction _ _ _ _ | Tref _ | Trv_ref _ =>
                                                  POINTER_BYTES
 
                       | _ => 1	(* dummy for absurd case, but useful for length_encodes_pos. *)

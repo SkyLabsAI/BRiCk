@@ -233,9 +233,9 @@ Section with_lang.
     | Tdecltype e => "decltype((" ++ printE e ++ "))"
     | Texprtype e => "decltype(" ++ printE e ++ ")"
     | Tnamed nm | Tenum nm => printN nm
-    | Tfunction ft =>
-        (parens $ printT ft.(ft_return) ++ "*") ++
-        (parens $ concat $ join_sep ", " $ printT <$> ft.(ft_params))
+    | Tfunction _ _ ret args =>
+        (parens $ printT ret ++ "*") ++
+        (parens $ concat $ join_sep ", " $ printT <$> args)
     | Tarch _ note => "?" ++ note
     | Tunsupported note => "?" ++ note
     | Tauto => "auto"

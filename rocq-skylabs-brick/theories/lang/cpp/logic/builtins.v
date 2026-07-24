@@ -55,7 +55,7 @@ Section wp_builtin.
   Proof. intros * Q1 Q2 HQ. by split'; apply: wp_builtin_mono=>?; rewrite HQ. Qed.
 
   #[local] Notation Tfunction ret args :=
-    (Tfunction $ FunctionType ret args).
+    (Tfunction CC_C Ar_Definite ret args).
 
   Lemma wp_unreachable : forall Q,
       False |-- wp_builtin "__builtin_unreachable" (Tfunction Tvoid nil) nil Q.
@@ -254,12 +254,12 @@ calling convention.
 Definition wp_builtin_func' `{Σ : cpp_logic, σ : genv} (u : bool)
     (b : BuiltinFn) (fty : functype) (args : list ptr) (Q : ptr -> epred) : mpred :=
   |={top}=>?u
-  match fty with
-  | Tfunction (FunctionType rty targs) =>
-    let* vs := read_args targs args in
+  match as_function fty with
+  | Some ft =>
+    let* vs := read_args ft.(ft_params) args in
     let* v := wp_builtin b fty vs in
-    Forall p : ptr, p |-> primR (to_heap_type rty) 1$m v -* |={top}=>?u Q p
-  | _ => ERROR "wp_builtin_func"
+    Forall p : ptr, p |-> primR (to_heap_type ft.(ft_return)) 1$m v -* |={top}=>?u Q p
+  | None => ERROR "wp_builtin_func"
   end.
 Definition wp_builtin_func `{Σ : cpp_logic, σ : genv} :=
   Cbn (Reduce (wp_builtin_func' true)).
@@ -274,7 +274,7 @@ Section with_Σ.
     |-- wp_builtin_func b fty args Q -* wp_builtin_func b fty args Q'.
   Proof.
     rewrite /wp_builtin_func. iIntros "HQ >wp !>".
-    destruct fty; try by rewrite {1}ERROR_elim.
+    destruct (as_function fty); try by rewrite {1}ERROR_elim.
     iApply (read_args_frame with "[HQ] wp"). iIntros (?).
     iApply wp_builtin_frame.  iIntros "% HR % R".
     iApply "HQ". by iApply "HR".
@@ -301,7 +301,7 @@ Section with_Σ.
     |-- wp_builtin_func b fty args Q.
   Proof.
     rewrite /wp_builtin_func. iIntros ">>wp !>".
-    destruct fty; try by rewrite {1}ERROR_elim.
+    destruct (as_function fty); try by rewrite {1}ERROR_elim.
     iApply (read_args_frame with "[] wp"). iIntros (?).
     iApply wp_builtin_frame.  iIntros "% HR % R".
     by iMod ("HR" with "R").
@@ -311,7 +311,7 @@ Section with_Σ.
     Cbn (Reduce (wp_builtin_func' false b fty args Q))
     |-- wp_builtin_func b fty args Q.
   Proof.
-    rewrite /wp_builtin_func. destruct fty; auto. rewrite -fupd_intro.
+    rewrite /wp_builtin_func. destruct (as_function fty); auto. rewrite -fupd_intro.
     iApply read_args_frame. iIntros (?).
     iApply wp_builtin_frame. iIntros "% HQ % ? !>". by iApply "HQ".
   Qed.

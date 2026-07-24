@@ -119,7 +119,7 @@ Definition default_initialize_body `{Σ : cpp_logic, σ : genv}
   | Tref _
   | Trv_ref _ => ERROR "default initialization of reference"
   | Tvoid => ERROR "default initialization of void"
-  | Tfunction _ => ERROR "default initialization of functions"
+  | Tfunction _ _ _ _ => ERROR "default initialization of functions"
   | Tmember_pointer _ _ => ERROR "default initialization of member pointers"
   | Tnamed _ => |={top}=>?u False (* default initialization of aggregates is done at elaboration time. *)
 
@@ -438,7 +438,7 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
       *)
       addr |-> primR rty qf (Vref p) -* |={top}=>?u Q free
 
-    | Tfunction _ => UNSUPPORTED (initializing_type ty init)
+    | Tfunction _ _ _ _ => UNSUPPORTED (initializing_type ty init)
 
     | Tqualified _ ty => |={top}=>?u False (* unreachable *)
     | Tarch _ _ => UNSUPPORTED (initializing_type ty init)
@@ -898,7 +898,7 @@ Section wp_initialize.
           UNSUPPORTED (initializing_type ty' init)
       )
   | WpInitFuncArch cv ty' : match ty' with
-                        | Tfunction _
+                        | Tfunction _ _ _ _
                         | Tarch _ _
                         | Tincomplete_array _
                         | Tvariable_array _ _ => true

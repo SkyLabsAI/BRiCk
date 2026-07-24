@@ -1461,7 +1461,7 @@ Section with_cpp.
   Axiom wp_fptr_complete_type : forall te ft a ls Q,
       wp_fptr te ft a ls Q
       |-- wp_fptr te ft a ls Q **
-          [| exists cc ar tret targs, ft = Tfunction (@FunctionType _ cc ar tret targs) |].
+          [| exists cc ar tret targs, ft = Tfunction cc ar tret targs |].
 
   (* A type is callable against a type table if all of its arguments and return
      type are [complete_type]s.
@@ -1470,9 +1470,9 @@ Section with_cpp.
      calling convention.
    *)
   Definition callable_type (tt : type_table) (t : type) : Prop :=
-    match t with
-    | Tfunction ft => complete_type tt ft.(ft_return) /\ List.Forall (complete_type tt) ft.(ft_params)
-    | _ => False
+    match as_function t with
+    | Some ft => complete_type tt ft.(ft_return) /\ List.Forall (complete_type tt) ft.(ft_params)
+    | None => False
     end.
 
   (* this axiom states that the type environment for an [wp_fptr] can be

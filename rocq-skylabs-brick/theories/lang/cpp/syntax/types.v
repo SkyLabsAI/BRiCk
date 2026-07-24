@@ -147,7 +147,7 @@ applied to an array type attach to the underlying element type."
 *)
 | Tqualified_ref q t : Tqualified q (Tref t) ≡ Tref t
 | Tqualified_rv_ref q t : Tqualified q (Trv_ref t) ≡ Trv_ref t
-| Tqualified_func q ft : Tqualified q (Tfunction ft) ≡ Tfunction ft
+| Tqualified_func q cc ar ret args : Tqualified q (Tfunction cc ar ret args) ≡ Tfunction cc ar ret args
 (**
 "After producing the list of parameter types, any top-level
 cv-qualifiers modifying a parameter type are deleted when forming the
@@ -155,7 +155,7 @@ function type."
 <https://www.eel.is/c++draft/dcl.fct#5>
 *)
 | Tqualified_func_param cc ar ret q t args args' :
-  Tfunction (@FunctionType _ cc ar ret (args ++ Tqualified q t :: args')) ≡ Tfunction (@FunctionType _ cc ar ret (args ++ t :: args'))
+  Tfunction cc ar ret (args ++ Tqualified q t :: args') ≡ Tfunction cc ar ret (args ++ t :: args')
 
 (* Equivalence *)
 | type_equiv_refl t : t ≡ t
@@ -441,7 +441,7 @@ Fixpoint erase_qualifiers (t : type) : type :=
   | Tarray t sz => Tarray (erase_qualifiers t) sz
   | Tincomplete_array t => Tincomplete_array (erase_qualifiers t)
   | Tvariable_array t e => Tvariable_array (erase_qualifiers t) e
-  | Tfunction ft => Tfunction $ FunctionType (ft_cc:=ft.(ft_cc)) (ft_arity:=ft.(ft_arity)) (erase_qualifiers ft.(ft_return)) (List.map erase_qualifiers ft.(ft_params))
+  | Tfunction cc ar ret args => Tfunction cc ar (erase_qualifiers ret) (List.map erase_qualifiers args)
   | Tmember_pointer cls t => Tmember_pointer cls (erase_qualifiers t)
   | Tqualified _ t => erase_qualifiers t
   | Tnullptr => Tnullptr
@@ -476,7 +476,7 @@ Lemma erase_qualifiers_idemp t : erase_qualifiers (erase_qualifiers t) = erase_q
 Proof.
   move: t. fix IHt 1=>t.
   destruct t; cbn; auto with f_equal.
-  { (* functions *) rewrite IHt. f_equal. f_equal. induction (ft_params t); cbn; auto with f_equal. }
+  { (* functions *) rewrite IHt. f_equal. induction l; cbn; auto with f_equal. }
 Qed.
 
 Lemma drop_erase_qualifiers t : drop_qualifiers (erase_qualifiers t) = erase_qualifiers t.
@@ -522,9 +522,9 @@ Lemma drop_qualifiers_Tenum : forall [ty nm],
     drop_qualifiers ty = Tenum nm -> erase_qualifiers ty = Tenum nm.
 Proof. induction ty; simpl; intros; try congruence; eauto. Qed.
 Lemma drop_qualifiers_Tfunction : forall [ty c ar ty' tArgs],
-    drop_qualifiers ty = Tfunction (@FunctionType _ c ar ty' tArgs) ->
-    erase_qualifiers ty = Tfunction (@FunctionType _ c ar (erase_qualifiers ty') (map erase_qualifiers tArgs)).
-Proof. induction ty; simpl; intros; try congruence; eauto. inversion H; subst. done. Qed.
+    drop_qualifiers ty = Tfunction c ar ty' tArgs ->
+    erase_qualifiers ty = Tfunction c ar (erase_qualifiers ty') (map erase_qualifiers tArgs).
+Proof. induction ty; simpl; intros; try congruence; eauto. Qed.
 Lemma drop_qualifiers_Tbool : forall [ty],
     drop_qualifiers ty = Tbool -> erase_qualifiers ty = Tbool.
 Proof. induction ty; simpl; intros; try congruence; eauto. Qed.
@@ -813,10 +813,10 @@ Fixpoint normalize_type' (cv : type_qualifiers) (t : type) : type :=
   | Tarray t n => Tarray (normalize_type' cv t) n
   | Tincomplete_array t => Tincomplete_array (normalize_type' cv t)
   | Tvariable_array t e => Tvariable_array (normalize_type' cv t) e
-  | Tfunction ft =>
-    Tfunction $ FunctionType (ft_cc:=ft.(ft_cc)) (ft_arity:=ft.(ft_arity))
-      (normalize_type ft.(ft_return))
-      (List.map (fun t => to_arg_type $ normalize_type' QM t) ft.(ft_params))
+  | Tfunction cc ar ret args =>
+    Tfunction cc ar
+      (normalize_type ret)
+      (List.map (fun t => to_arg_type $ normalize_type' QM t) args)
   | Tmember_pointer gn t => Tmember_pointer gn (normalize_type t)
   | Tqualified q t => normalize_type' (merge_tq cv q) t
   | Tnum _ _
@@ -853,8 +853,8 @@ Proof.
     all: try solve [ intros; f_equal; apply normalize_type'_idempotent ].
     { destruct cv1, cv2; simpl; f_equal; try first [ apply normalize_type'_idempotent
                                                   | f_equal; apply normalize_type'_idempotent ]. }
-    { intros. do 2 f_equal. apply normalize_type'_idempotent.
-      induction (ft_params t); simpl; f_equal; [ | apply IHl ].
+    { intros. f_equal. apply normalize_type'_idempotent.
+      induction l; simpl; f_equal; [ | apply IHl ].
       rewrite to_arg_type_normalize_type'_idempotent.
       by rewrite to_arg_type_idempotent. }
     { intros; rewrite normalize_type'_idempotent.
@@ -863,8 +863,8 @@ Proof.
     all: try by destruct cv; rewrite /=/to_arg_type/=/qual_norm/=; rewrite normalize_type'_idempotent.
     all: try by rewrite /=/to_arg_type/=/qual_norm/=; rewrite normalize_type'_idempotent.
     { rewrite /=/to_arg_type/=/qual_norm/=; rewrite normalize_type'_idempotent.
-      intros. do 2 f_equal.
-      induction (ft_params t); simpl; f_equal; [ | apply IHl ].
+      intros. f_equal.
+      induction l; simpl; f_equal; [ | apply IHl ].
       rewrite to_arg_type_normalize_type'_idempotent.
       etrans; [ eapply to_arg_type_idempotent | ]. done. }
     { intros. rewrite to_arg_type_normalize_type'_idempotent. done. } }
@@ -927,7 +927,7 @@ Definition is_arithmetic (ty : type) : bool :=
 (* [as_function ty] returns the [function_type'] if [ty] is a function type. *)
 Definition as_function (ty : functype) : option function_type :=
   match ty with
-  | Tfunction ft => Some ft
+  | Tfunction cc ar ret args => Some $ FunctionType (ft_cc:=cc) (ft_arity:=ar) ret args
   | _ => None
   end.
 
@@ -1265,8 +1265,7 @@ Definition is_volatile : type -> bool :=
  *)
 Definition Tmember_func (ty : exprtype) (fty : functype) : functype :=
   match fty with
-  | Tfunction ft => Tfunction $ {| ft_cc := ft.(ft_cc) ; ft_arity := ft.(ft_arity)
-                                ; ft_return := ft.(ft_return) ; ft_params := Tptr ty :: ft.(ft_params) |}
+  | Tfunction cc ar ret args => Tfunction cc ar ret (Tptr ty :: args)
   | _ => fty
   end.
 End with_lang.

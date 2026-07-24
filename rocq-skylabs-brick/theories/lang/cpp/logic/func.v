@@ -420,7 +420,7 @@ place to support `XX_shift` lemmas. This could be fixed.
       |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn $ fun x => |={top}=>?u |> Q x)
     | Builtin builtin =>
       let ts := List.map snd f.(f_params) in
-      wp_builtin_func builtin (Tfunction $ @FunctionType _ f.(f_cc) f.(f_arity) f.(f_return) ts) args Q
+      wp_builtin_func builtin (Tfunction f.(f_cc) f.(f_arity) f.(f_return) ts) args Q
     end
   end.
 mlock Definition wp_func `{Σ : cpp_logic, σ : genv} :=

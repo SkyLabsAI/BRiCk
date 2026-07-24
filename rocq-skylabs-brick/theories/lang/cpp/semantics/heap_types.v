@@ -25,7 +25,7 @@ Fixpoint is_Rtype (s : type) : bool :=
   | Tincomplete_array _
   | Tvariable_array _ _ => false
   | Tarray t _ => is_Rtype t
-  | Tfunction _ => true (* more neuanced? *)
+  | Tfunction _ _ _ _ => true (* more neuanced? *)
   | Tnamed _ | Tenum _ => true
   | _ => false (* TODO *)
   end.

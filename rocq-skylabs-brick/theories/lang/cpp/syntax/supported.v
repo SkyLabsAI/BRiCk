@@ -179,7 +179,7 @@ Section with_monad.
     | Tnum _ _ | Tchar_ _ | Tvoid | Tbool | Tnullptr => OK
     | Tfloat_ ft => check_float_width ft
     | Tvariable_array t e => type t <+> expr e
-    | Tfunction (FunctionType t ts) => type t <+> lst type ts
+    | Tfunction _ _ t ts => type t <+> lst type ts
     | Tmember_pointer t1 t2 => type t1 <+> type t2
     | Tqualified _ t => type t
     | Tarch _ _ => OK

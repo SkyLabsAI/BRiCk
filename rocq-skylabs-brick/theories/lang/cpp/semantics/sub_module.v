@@ -673,10 +673,11 @@ Proof.
   destruct a, b; simpl; try congruence;
     repeat first [ case_bool_decide | case_match ]; subst; try congruence; simpl; eauto.
   all: intros; rewrite /type_of_value/=; try congruence.
-  { f_equal. f_equal; eauto using arguments_same. }
-  { f_equal. f_equal; eauto.
+  { f_equal; eauto using arguments_same. }
+  { f_equal; eauto.
     f_equal; eauto using arguments_same.
-    congruence. }
-  { f_equal. f_equal; eauto.
-    f_equal; eauto using arguments_same. congruence. }
+    by rewrite H1 H2. }
+  { f_equal; eauto.
+    f_equal; eauto using arguments_same.
+    by rewrite H1. }
 Qed.

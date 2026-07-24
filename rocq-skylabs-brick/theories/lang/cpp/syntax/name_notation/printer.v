@@ -197,7 +197,7 @@ Section with_lang.
     | Tlongdouble => mret "long double"
     | Tbool => mret "bool"
     | Tnullptr => mret "nullptr_t"
-    | Tptr (Tfunction (@FunctionType _ cc ar ret args)) =>
+    | Tptr (Tfunction cc ar ret args) =>
         if cc is CC_C then
           let add_dots (ls : list PrimString.string) :=
             match ar with
@@ -240,17 +240,17 @@ Section with_lang.
     | Texprtype e => (fun e => "decltype(" ++ e ++ ")") <$> printE e
     | Tnamed nm => printN "" nm
     | Tenum nm => prefix "enum " <$> printN "" nm
-    | Tfunction ft =>
+    | Tfunction cc ar ret args =>
         let add_dots (ls : list PrimString.string) :=
-          match ft.(ft_arity) with
+          match ar with
           | Ar_Variadic => (ls ++ ["..."])%list
           | _ => ls
           end
         in
-        if ft.(ft_cc) is CC_C then
+        if cc is CC_C then
           (fun t tas => t ++ parens (sepBy ", " $ add_dots tas))
-            <$> printT true ft.(ft_return)
-            <*> traverse (T:=eta list) (F:=eta option) (printT true) ft.(ft_params)
+            <$> printT true ret
+            <*> traverse (T:=eta list) (F:=eta option) (printT true) args
         else mfail
     | Tarch _ note => mfail
     | Tunsupported note => mfail
@@ -344,9 +344,9 @@ Module Type TESTS.
   Succeed Example _0 : TEST "integral" (Nglobal $ Nid "integral") := eq_refl.
   Succeed Example _0 : TEST "f<int>(int, int)" (Ninst (Nglobal $ Nfunction function_qualifiers.N "f" [Tint; Tint]) [Atype Tint]) := eq_refl.
   Succeed Example _0 : TEST "f<int>(enum @1, enum en)" (Ninst (Nglobal $ Nfunction function_qualifiers.N "f" [Tenum (Nglobal (Nanon 1)); Tenum (Nglobal (Nid "en"))]) [Atype Tint]) := eq_refl.
-  Succeed Example _0 : TEST "f<int>(int(*)())" (Ninst (Nglobal $ Nfunction function_qualifiers.N "f" [Tptr (Tfunction (FunctionType Tint []))]) [Atype Tint]) := eq_refl.
-  Succeed Example _0 : TEST "f<int>(int())" (Ninst (Nglobal $ Nfunction function_qualifiers.N "f" [Tfunction (FunctionType Tint [])]) [Atype Tint]) := eq_refl.
-  Succeed Example _0 : TEST "f<int>(int(int))" (Ninst (Nglobal $ Nfunction function_qualifiers.N "f" [Tfunction (FunctionType Tint [Tint])]) [Atype Tint]) := eq_refl.
+  Succeed Example _0 : TEST "f<int>(int(*)())" (Ninst (Nglobal $ Nfunction function_qualifiers.N "f" [Tptr (Tfunction CC_C Ar_Definite Tint [])]) [Atype Tint]) := eq_refl.
+  Succeed Example _0 : TEST "f<int>(int())" (Ninst (Nglobal $ Nfunction function_qualifiers.N "f" [Tfunction CC_C Ar_Definite Tint []]) [Atype Tint]) := eq_refl.
+  Succeed Example _0 : TEST "f<int>(int(int))" (Ninst (Nglobal $ Nfunction function_qualifiers.N "f" [Tfunction CC_C Ar_Definite Tint [Tint]]) [Atype Tint]) := eq_refl.
 
   Succeed Example _0 : TEST "C<1b, 0b>" (Ninst (Nglobal (Nid "C")) [Avalue (Eint 1 Tbool); Avalue (Eint 0 Tbool)]) := eq_refl.
   Succeed Example _0 : TEST "C<1, 0>" (Ninst (Nglobal (Nid "C")) [Avalue (Eint 1 Tint); Avalue (Eint 0 Tint)]) := eq_refl.

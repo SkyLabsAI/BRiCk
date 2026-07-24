@@ -52,11 +52,11 @@ Definition canonical : list (PrimString.string * name) :=
   ; ("submit(unsigned long, std::function<void()>)",
       Nglobal
             (Nfunction function_qualifiers.N "submit"
-               [Tnum int_rank.Ilong Unsigned; Tnamed (Ninst (Nscoped (Nglobal (Nid "std")) (Nid "function")) [Atype (Tfunction (FunctionType Tvoid []))])]))
+               [Tnum int_rank.Ilong Unsigned; Tnamed (Ninst (Nscoped (Nglobal (Nid "std")) (Nid "function")) [Atype (Tfunction CC_C Ar_Definite Tvoid [])])]))
   ; ("submit(unsigned long, std::function<void(long, int, ...)>)",
       (Nglobal
          (Nfunction function_qualifiers.N "submit"
-            [Tnum int_rank.Ilong Unsigned; Tnamed (Ninst (Nscoped (Nglobal (Nid "std")) (Nid "function")) [Atype (Tfunction (FunctionType (ft_arity:=Ar_Variadic) Tvoid [Tlong; Tint]))])])))
+            [Tnum int_rank.Ilong Unsigned; Tnamed (Ninst (Nscoped (Nglobal (Nid "std")) (Nid "function")) [Atype (Tfunction CC_C Ar_Variadic Tvoid [Tlong; Tint])])])))
   ; ("C<1, 0>", (Ninst (Nglobal (Nid "C")) [Avalue (Eint 1 Tint); Avalue (Eint 0 Tint)]) )
   ; ("C<1b, 0b>", (Ninst (Nglobal (Nid "C")) [Avalue (Eint 1 Tbool); Avalue (Eint 0 Tbool)]) )
     (* this is not actually valid C++ syntax but it is necessary in order to parse names without context *)

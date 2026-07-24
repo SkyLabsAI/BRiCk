@@ -120,15 +120,15 @@ Definition type_of_value (o : ObjValue) : type :=
   normalize_type
   match o with
   | Ovar t _ => t
-  | Ofunction f => Tfunction {| ft_cc := f.(f_cc) ; ft_arity := f.(f_arity) ; ft_return := f.(f_return) ; ft_params := snd <$> f.(f_params) |}
+  | Ofunction f => Tfunction f.(f_cc) f.(f_arity) f.(f_return) (snd <$> f.(f_params))
   | Omethod m =>
     Tmember_func (Tqualified m.(m_this_qual) (type_of_classname m.(m_class)))
-                 $ Tfunction {| ft_cc := m.(m_cc) ; ft_arity := m.(m_arity) ; ft_return := m.(m_return) ; ft_params := snd <$> m.(m_params) |}
+                 $ Tfunction m.(m_cc) m.(m_arity) m.(m_return) (snd <$> m.(m_params))
 
   | Oconstructor c =>
-    Tmember_func (type_of_classname c.(c_class)) $ Tfunction {| ft_cc := c.(c_cc) ; ft_arity := c.(c_arity) ; ft_return := Tvoid ; ft_params := snd <$> c.(c_params) |}
+    Tmember_func (type_of_classname c.(c_class)) $ Tfunction c.(c_cc) c.(c_arity) Tvoid (snd <$> c.(c_params))
   | Odestructor d =>
-    Tmember_func (type_of_classname d.(d_class)) $ Tfunction {| ft_cc := d.(d_cc) ; ft_arity := Ar_Definite ; ft_return := Tvoid ; ft_params := nil |}
+    Tmember_func (type_of_classname d.(d_class)) $ Tfunction d.(d_cc) Ar_Definite Tvoid nil
   end.
 
 (** *** The Value Declaration Table *)
@@ -467,7 +467,7 @@ Module template_alias.
         | _ => Tvariable_array t e
         end
     | Tenum n => Tenum (subst_name xs n)
-    | Tfunction ft => Tfunction (function_type.fmap (subst_type xs) ft)
+    | Tfunction cc ar ret args => Tfunction cc ar (subst_type xs ret) (subst_type xs <$> args)
     | Tmember_pointer n t => Tmember_pointer (subst_type xs n) (subst_type xs t)
     | Tdecltype e => Tdecltype (subst_expr xs e)
     | Texprtype e => Texprtype (subst_expr xs e)
@@ -675,7 +675,7 @@ Section with_type_table.
   | complete_pt_function {cc ret args}
       (_ : wellscoped_type ret)
       (_ : wellscoped_types args)
-    : complete_pointee_type (Tfunction $ FunctionType (ft_cc:=cc) ret args)
+    : complete_pointee_type (Tfunction cc Ar_Definite ret args)
   | complete_pt_basic t :
     complete_basic_type t ->
     complete_pointee_type t
@@ -712,8 +712,8 @@ Section with_type_table.
     complete; "complete function types" do not exist in the standard, and
     [complete_symbol_table] does not use the concept.
      *)
-    complete_pointee_type (Tfunction $ FunctionType (ft_cc:=cc) (ft_arity:=ar) ret args) ->
-    complete_type (Tfunction $ FunctionType (ft_cc:=cc) (ft_arity:=ar) ret args)
+    complete_pointee_type (Tfunction cc ar ret args) ->
+    complete_type (Tfunction cc ar ret args)
   | complete_basic t :
     complete_basic_type t ->
     complete_type t

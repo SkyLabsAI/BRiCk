@@ -76,7 +76,7 @@ Fixpoint size_of (resolve : genv) (t : type) : option N :=
   | Tvariable_array _ _ => None
   | Tnamed nm => glob_def resolve nm ≫= GlobDecl_size_of
   | Tenum nm => glob_def resolve nm ≫= GlobDecl_size_of
-  | Tfunction _ => None
+  | Tfunction _ _ _ _ => None
   | Tbool => Some 1
   | Tmember_pointer _ _ => None (* TODO these are not well supported right now *)
   | Tqualified _ t => size_of resolve t

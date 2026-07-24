@@ -168,7 +168,7 @@ Definition promote_integral (tu : translation_unit) (ty : type) : option type :=
   | Tincomplete_array _
   | Tvariable_array _ _
   | Tnamed _
-  | Tfunction _
+  | Tfunction _ _ _ _
   | Tmember_pointer _ _
   | Tfloat_ _
   | Tnullptr

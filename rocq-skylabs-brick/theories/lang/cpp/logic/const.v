@@ -131,7 +131,7 @@ Section defs.
               end
           | None => UNSUPPORTED Q
           end
-      | Tfunction _
+      | Tfunction _ _ _ _
       | Tarch _ _ => UNSUPPORTED Q
       | Tqualified cv ty' => False (* unreachable *)
       | Tunsupported _ => False

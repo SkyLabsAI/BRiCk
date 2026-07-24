@@ -31,7 +31,7 @@ Section defs.
     populate (Build_function_spec inhabitant inhabitant inhabitant inhabitant inhabitant).
 
   Definition type_of_spec (fs : function_spec) : type :=
-    normalize_type (Tfunction {| ft_cc:=fs.(fs_cc) ; ft_arity:=fs.(fs_arity) ; ft_return := fs.(fs_return) ; ft_params := fs.(fs_arguments) |}).
+    normalize_type (Tfunction fs.(fs_cc) fs.(fs_arity) fs.(fs_return) fs.(fs_arguments)).
 
   Lemma cc_type_of_spec fs1 fs2 :
     type_of_spec fs1 = type_of_spec fs2 →

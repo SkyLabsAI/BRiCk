@@ -26,8 +26,8 @@ Module decltype.
     match drop_qualifiers t with
     | Tref u => (Lvalue, u)
     | Trv_ref u =>
-      match drop_qualifiers u with
-      | Tfunction _ as f =>
+      match as_function (drop_qualifiers u) with
+      | Some ft =>
         (**
         Both "a function call or an overloaded operator expression,
         whose return type is rvalue reference to function" and "a cast
@@ -46,8 +46,8 @@ Module decltype.
         of "A function or reference type is always cv-unqualified."
         <https://www.eel.is/c++draft/basic.type.qualifier#1>
         *)
-        (Lvalue, f)
-      | _ => (Xvalue, u)
+        (Lvalue, Tfunction ft.(ft_cc) ft.(ft_arity) ft.(ft_return) ft.(ft_params))
+      | None => (Xvalue, u)
       end
     | _ => (Prvalue, t)	(** Promote sharing, rather than normalize qualifiers *)
     end.
@@ -85,10 +85,8 @@ Module decltype.
     Definition from_function_type (ft : function_type) : decltype :=
       normalize ft.(ft_return).
     Definition from_functype (t : functype) : M decltype :=
-      match t with
-      | Tfunction ft => mret $ from_function_type ft
-      | _ => mfail
-      end.
+      let* ft := as_function t in
+      mret $ from_function_type ft.
 
     Definition requireL (t : decltype) : M exprtype :=
       match drop_qualifiers t with

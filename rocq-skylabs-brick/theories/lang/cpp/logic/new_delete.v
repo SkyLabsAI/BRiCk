@@ -98,7 +98,7 @@ Module delete_operator.
       if d.(destroying) is Some type_name then Tptr (Tnamed type_name) :: args
       else "void*"%cpp_type :: args
     in
-    Tfunction (FunctionType Tvoid args).
+    Tfunction CC_C Ar_Definite Tvoid args.
 
   #[local]
   Definition get_destroying {T} (k : list type -> option T) (args : list type) : option (option name * T) :=
@@ -133,15 +133,15 @@ Module delete_operator.
   (** Given the type of an <<operator delete>> (or <<operator delete[]>>) type,
       determine the information that it needs to be invoked with *)
   Definition classify (ty : type) : option delete_operator.t :=
-    match ty with
-    | Tfunction ft =>
+    match as_function ty with
+    | Some ft =>
         if bool_decide (ft.(ft_return) = "void"%cpp_type) then
           match get_destroying (get_size_t (get_align_t Some)) ft.(ft_params) with
           | Some (destroy, (sz, (al, []))) => Some $ mk destroy sz al
           | _ => None
           end
         else None
-    | _ => None
+    | None => None
     end.
 
   #[local] Definition with_delete (tu : translation_unit) (nm : obj_name)

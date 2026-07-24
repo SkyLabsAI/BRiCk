@@ -22,7 +22,7 @@ Module ParserType.
     result.
 
   Notation Tfunction ty cc var ret args :=
-    (normalize_type (Tfunction (@FunctionType ty cc var ret args))) (only parsing).
+    (normalize_type (Tfunction cc var ret args)) (only parsing).
 
   Notation Tdecay_type original adjusted := (adjusted) (only parsing).
 

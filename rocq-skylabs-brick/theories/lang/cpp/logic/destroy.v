@@ -240,7 +240,7 @@ invoking the destructor [dtor] for type [ty] on [this].
   destructors to have C calling convention. Arguments [this :: nil] is
   correct for member functions taking no arguments.
   *)
-  letI* p := wp_mfptr tu.(types) ty (Tfunction $ FunctionType Tvoid nil) dtor (this :: nil) in
+  letI* p := wp_mfptr tu.(types) ty (Tfunction CC_C Ar_Definite Tvoid nil) dtor (this :: nil) in
   (**
   We inline [operand_receive] (which could be hoisted and shared).
   *)
@@ -556,7 +556,7 @@ Section body.
     | Tvoid =>
       wp_destroy_prim tu cv rty this Q
 
-    | Tfunction _ => |={top}=> UNSUPPORTED ("wp_destroy_val: function type", rty)
+    | Tfunction _ _ _ _ => |={top}=> UNSUPPORTED ("wp_destroy_val: function type", rty)
     | Tarch _ _ => |={top}=> UNSUPPORTED ("wp_destroy_val: arch type", rty)
     | Tunsupported msg => |={top}=> UNSUPPORTED ("wp_destroy_val: unsupported type", msg)
     | _ => |={top}=> UNSUPPORTED ("wp_destroy_val: template type")
@@ -831,7 +831,7 @@ Section val_array.
         wp_destroy_prim tu cv rty this Q
       | Tincomplete_array _ => False
       | Tvariable_array _ _ => False
-      | Tfunction _
+      | Tfunction _ _ _ _
       | Tarch _ _ => False
       | Tunsupported _ => False
       | _ => False
