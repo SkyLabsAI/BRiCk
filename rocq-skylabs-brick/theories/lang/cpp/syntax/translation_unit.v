@@ -367,28 +367,6 @@ Module template_alias.
     | _ => None
     end.
 
-  Fixpoint bind (ps : list temp_param) (args : list temp_arg) : option env :=
-    match ps, args with
-    | [], [] => Some []
-    | Ptype id :: ps, Atype t :: args =>
-        match bind ps args with
-        | Some xs => Some ((id, Atype t) :: xs)
-        | None => None
-        end
-    | Pvalue id _ :: ps, Avalue e :: args =>
-        match bind ps args with
-        | Some xs => Some ((id, Avalue e) :: xs)
-        | None => None
-        end
-    | Ptemplate id _ :: ps, (Atemplate _ as arg) :: args
-    | Ptemplate id _ :: ps, (Atemplate_param _ as arg) :: args =>
-        match bind ps args with
-        | Some xs => Some ((id, arg) :: xs)
-        | None => None
-        end
-    | _, _ => None
-    end.
-
   Definition subst_expr (xs : env) (e : Expr) : Expr :=
     match e with
     | Eparam id =>
@@ -481,12 +459,34 @@ Module template_alias.
     | _, _ => None
     end.
 
+  #[local] Open Scope monad_scope.
+  Fixpoint bind (e : env) (ps : list (temp_param * option temp_arg)) (args : list temp_arg) {struct ps} : option env :=
+    match ps with
+    | [] => if args is [] then Some [] else None
+    | (p, default) :: ps =>
+        let* arg :=
+          match args return option temp_arg with
+          | [] => subst_temp_arg e <$> default
+          | arg :: _ => Some arg
+          end
+        in
+        let* next_arg :=
+          match p , arg with
+          | Ptype id , Atype _ => Some (id, arg)
+          | Pvalue id _ , Avalue _ => Some (id, arg)
+          | Ptemplate id _ , (Atemplate _ | Atemplate_param _) => Some (id, arg)
+          | _ , _ => None
+          end
+        in
+        cons next_arg <$> bind (next_arg :: e) ps (tail args)
+    end.
+
   Definition instantiate (actual : name) (candidate : name * template type)
       : option type :=
     let '(candidate_name, templ) := candidate in
     match same_template_base actual candidate_name with
     | Some args =>
-        match bind templ.(template_params) args with
+        match bind [] templ.(template_params) args with
         | Some xs => Some (subst_type xs templ.(template_value))
         | None => None
         end

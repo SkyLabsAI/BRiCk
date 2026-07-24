@@ -113,7 +113,7 @@ Section template.
   Context {V : Type@{uV}}.
 
   Record template : Type@{uV} := Template {
-    template_params : list temp_param;
+    template_params : list (temp_param * option temp_arg);
     template_value : V;
   }.
 

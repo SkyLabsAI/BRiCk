@@ -151,6 +151,9 @@ Section with_monad.
       | Ptemplate _ ps => lst temp_param ps
       | Punsupported msg => FAIL msg
       end.
+
+    Definition temp_param_entry (a : core.temp_param * option core.temp_arg) : M :=
+      temp_param a.1 <+> opt (temp_arg name type expr) a.2.
   End temp_param.
 
   Fixpoint name (n : name) : M :=
@@ -374,11 +377,11 @@ Section with_monad.
     let symbol '(nm, obj) := obj_value obj in
     let gd '(nm, gd) := glob_decl gd in
     let msymbol '(nm, t_obj) :=
-      lst (temp_param type) t_obj.(template_params)
+      lst (temp_param_entry name type expr) t_obj.(template_params)
       <+> obj_value t_obj.(template_value)
     in
     let mgd '(nm, t_gd) :=
-      lst (temp_param type) t_gd.(template_params)
+      lst (temp_param_entry name type expr) t_gd.(template_params)
       <+> glob_decl t_gd.(template_value)
     in
     lst gd (namemap.NM.elements tu.(types)) <+>
@@ -388,11 +391,11 @@ Section with_monad.
 
   Definition template_unit (mtu : Mtranslation_unit) : M :=
     let symbol '(nm, t_obj) :=
-      lst (temp_param type) t_obj.(template_params)
+      lst (temp_param_entry name type expr) t_obj.(template_params)
       <+> obj_value t_obj.(template_value)
     in
     let gd '(nm, t_gd) :=
-      lst (temp_param type) t_gd.(template_params)
+      lst (temp_param_entry name type expr) t_gd.(template_params)
       <+> glob_decl t_gd.(template_value)
     in
     lst gd (namemap.NM.elements mtu.(mtypes)) <+>
