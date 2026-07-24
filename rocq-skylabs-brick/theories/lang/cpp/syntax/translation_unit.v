@@ -335,6 +335,9 @@ Definition canonicalize {T} (find : name -> option T) (tu : translation_unit) (n
   | _ => None
   end.
 
+(** TODO: this logic replicates part of the substitution infrastructure inside of <auto>
+    The implementation should use the <traverse> functionality.
+ *)
 Module template_alias.
   Definition env : Set := list (ident * temp_arg).
 
@@ -383,8 +386,6 @@ Module template_alias.
         | Some xs => Some ((id, arg) :: xs)
         | None => None
         end
-    | Punsupported _ :: ps, Aunsupported _ :: args =>
-        bind ps args
     | _, _ => None
     end.
 
@@ -405,7 +406,7 @@ Module template_alias.
       let args := subst_temp_arg xs <$> args in
       Ninst n args
     | Nglobal _ => n
-    | Ndependent t => Ndependent (subst_type xs t)
+    | Ndependent t => Ndependent' (subst_type xs t)
     | Nscoped n c => Nscoped (subst_name xs n) c
     | Nunsupported _ => n
     end
@@ -451,11 +452,11 @@ Module template_alias.
         Tresult_parenlist (subst_type xs t) (subst_type xs <$> ts)
     | Tresult_member o f => Tresult_member (subst_type xs o) (subst_name xs f)
     | Tnamed n => Tnamed (subst_name xs n)
-    | Tref t => Tref (subst_type xs t)
-    | Trv_ref t => Trv_ref (subst_type xs t)
-    | Tqualified q t => Tqualified q (subst_type xs t)
+    | Tref t => tref QM (subst_type xs t)
+    | Trv_ref t => trv_ref QM (subst_type xs t)
+    | Tqualified q t => tqualified q (subst_type xs t)
     | Tptr t => Tptr (subst_type xs t)
-    | Tarray t n => Tarray (subst_type xs t) n
+    | Tarray t n => Tarray (subst_type xs t) n (* BUG: qualifier normalization on arrays? *)
     | Tincomplete_array t => Tincomplete_array (subst_type xs t)
     | Tvariable_array t e =>
         let t := subst_type xs t in
@@ -467,7 +468,7 @@ Module template_alias.
         | _ => Tvariable_array t e
         end
     | Tenum n => Tenum (subst_name xs n)
-    | Tfunction ft => Tfunction (function_type.fmap (subst_type xs) ft)
+    | Tfunction ft => Tfunction (function_type.fmap (subst_type xs) ft) (* BUG: qualifier normalization on function types *)
     | Tmember_pointer n t => Tmember_pointer (subst_type xs n) (subst_type xs t)
     | Tdecltype e => Tdecltype (subst_expr xs e)
     | Texprtype e => Texprtype (subst_expr xs e)
