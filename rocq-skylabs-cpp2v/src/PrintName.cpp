@@ -459,6 +459,58 @@ static fmt::Formatter &printTemplateParam(CoqPrinter &print,
     }
 }
 
+static fmt::Formatter &printTemplateParamDefault(CoqPrinter &print,
+                                                 const NamedDecl *pdecl,
+                                                 ClangPrinter &cprint,
+                                                 loc::loc gloc) {
+    auto print_default = [&](const TemplateArgumentLoc &arg) -> auto & {
+        guard::some _(print, false);
+        return cprint.printTemplateArg(print, arg.getArgument(), loc::of(arg));
+    };
+
+    if (!pdecl)
+        return print.none();
+
+    switch (pdecl->getKind()) {
+    case Decl::Kind::TemplateTypeParm: {
+        auto &param = cast<TemplateTypeParmDecl>(*pdecl);
+        return param.hasDefaultArgument()
+                   ? print_default(param.getDefaultArgument())
+                   : print.none();
+    }
+
+    case Decl::Kind::NonTypeTemplateParm: {
+        auto &param = cast<NonTypeTemplateParmDecl>(*pdecl);
+        return param.hasDefaultArgument()
+                   ? print_default(param.getDefaultArgument())
+                   : print.none();
+    }
+
+    case Decl::Kind::TemplateTemplateParm: {
+        auto &param = cast<TemplateTemplateParmDecl>(*pdecl);
+        return param.hasDefaultArgument()
+                   ? print_default(param.getDefaultArgument())
+                   : print.none();
+    }
+
+    default:
+        unsupported(cprint, gloc, false)
+            << "template parameter default for kind "
+            << pdecl->getDeclKindName() << "\n";
+        return print.none();
+    }
+}
+
+static fmt::Formatter &printTemplateParamEntry(CoqPrinter &print,
+                                               const NamedDecl *param,
+                                               ClangPrinter &cprint,
+                                               loc::loc loc) {
+    guard::tuple _(print);
+    printTemplateParam(print, param, cprint, loc);
+    print.next_tuple();
+    return printTemplateParamDefault(print, param, cprint, loc);
+}
+
 static fmt::Formatter &printTemplateParams(CoqPrinter &print,
                                            ArrayRef<NamedDecl *> params,
                                            ClangPrinter &cprint,
@@ -466,8 +518,8 @@ static fmt::Formatter &printTemplateParams(CoqPrinter &print,
     if (ClangPrinter::debug && cprint.trace(Trace::Name))
         cprint.trace("printTemplateParams", gloc);
     return print.list(params, [&](const clang::NamedDecl *param) {
-        printTemplateParam(print, param, cprint,
-                           param ? loc::of(param) : gloc);
+        printTemplateParamEntry(print, param, cprint,
+                                param ? loc::of(param) : gloc);
     });
 }
 
@@ -481,7 +533,7 @@ static fmt::Formatter &printTemplateParamsForDecl(CoqPrinter &print,
         guard::list _(print);
         for (auto [params, loc] : lists)
             for (auto param : params->asArray())
-                printTemplateParam(print, param, cprint, loc) << fmt::cons;
+                printTemplateParamEntry(print, param, cprint, loc) << fmt::cons;
         return print.output();
     } else
         return print.output() << "nil";
