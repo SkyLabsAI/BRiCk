@@ -279,7 +279,7 @@ void ToCoqConsumer::writeStatic(const char *name, Cache &cache,
     if (attributes_.has_value()) {
         print.output() << "#[" << attributes_.value() << "]" << fmt::line;
     }
-    print.output() << "cpp.prog " << name << fmt::indent << fmt::line;
+    print.output() << "cpp.ast " << name << fmt::indent << fmt::line;
     print.output() << "abi ";
     printAbi(print.output(), ctxt) << fmt::line;
     print.output() << "defns" << fmt::indent;

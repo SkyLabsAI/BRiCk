@@ -3,8 +3,6 @@
  (public_name rocq-skylabs-brick.plugin)
  (synopsis "Rocq plugin for the BRiCk C++ program logic")
  (flags :standard -rectypes -w -27)
- (inline_tests)
- (preprocess (pps ppx_inline_test))
  (libraries
   base
   rocq-runtime.vernac

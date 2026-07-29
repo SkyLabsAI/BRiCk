@@ -1,0 +1,12 @@
+(rocq.theory
+ (name skylabs_prog_cpp.tests)
+ (generate_project_file)
+ (theories
+  skylabs.lang.cpp
+  skylabs.prog.cpp
+  ; transitive dependencies
+  Equations Equations.Prop Equations.Type Flocq Lens Lens.Elpi Ltac2 Stdlib elpi
+  elpi.apps.NES elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
+  elpi.apps.locker elpi.apps.locker.elpi elpi_elpi iris skylabs.iris.extra
+  skylabs.ltac2.extra skylabs.prelude skylabs.upoly stdpp
+ ))

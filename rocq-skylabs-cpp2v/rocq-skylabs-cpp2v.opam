@@ -13,6 +13,7 @@ bug-reports: "https://github.com/SkyLabsAI/BRiCk/issues"
 depends: [
   "dune" {>= "3.22"}
   "conf-clang"
+  "rocq-skylabs-brick" {with-test}
   "odoc" {with-doc}
 ]
 build: [

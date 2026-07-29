@@ -3,7 +3,7 @@ Require Import skylabs.lang.cpp.syntax.
 Require Import skylabs.lang.cpp.syntax.templates.
 Require Import skylabs.lang.cpp.parser.
 Require Import skylabs.lang.cpp.syntax.dealias.
-Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
+Require Import skylabs.prog.cpp.plugin.
 
 #[with_templates]
 cpp.prog source flags "-std=c++20" prog cpp:{{

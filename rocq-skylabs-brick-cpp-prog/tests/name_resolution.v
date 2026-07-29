@@ -1,4 +1,4 @@
-Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
+Require Import skylabs.prog.cpp.plugin.
 cpp.prog source prog cpp:{{
   namespace X {
     inline namespace Y {

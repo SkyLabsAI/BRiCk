@@ -1,5 +1,5 @@
 Require Import skylabs.lang.cpp.parser.
-Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
+Require Import skylabs.prog.cpp.plugin.
 
 #[duplicates(error)]
 cpp.prog source prog cpp:{{

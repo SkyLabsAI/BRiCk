@@ -1,0 +1,23 @@
+(include_subdirs qualified)
+(rocq.theory
+ (name skylabs.prog.cpp)
+ (package rocq-skylabs-brick-cpp-prog)
+ (plugins rocq-skylabs-brick-cpp-prog.plugin)
+ (generate_project_file)
+ (theories
+  Stdlib
+  skylabs.lang.cpp
+  ; transitive dependencies
+  Equations Equations.Prop Equations.Type Flocq Lens Lens.Elpi Ltac2 elpi
+  elpi.apps.NES elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
+  elpi.apps.locker elpi.apps.locker.elpi elpi_elpi iris skylabs.iris.extra
+  skylabs.ltac2.extra skylabs.prelude skylabs.upoly stdpp
+ ))
+
+(rule
+ (target cpp2v_version.v)
+ (deps
+  (package rocq-skylabs-cpp2v))
+ (action
+  (with-stdout-to %{target}
+   (run %{bin:bin-hash} --rocq version %{bin:cpp2v}))))

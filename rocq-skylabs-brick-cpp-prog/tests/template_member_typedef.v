@@ -1,6 +1,6 @@
 Require Import skylabs.prelude.base.
 Require Import skylabs.lang.cpp.syntax.
-Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
+Require Import skylabs.prog.cpp.plugin.
 
 #[with_templates]
 cpp.prog source prog cpp:{{

@@ -3,11 +3,9 @@
  (generate_project_file)
  (theories
   Lens
-  elpi
-  elpi_elpi
   elpi.apps.derive
   ; transitive dependencies
-  elpi.apps.derive.elpi
+  elpi elpi.apps.derive.elpi elpi_elpi
  )
  (package rocq-lens-elpi))
 
