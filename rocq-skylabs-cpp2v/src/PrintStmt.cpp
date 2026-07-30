@@ -238,7 +238,30 @@ public:
         print.output() << fmt::nbsp;
         cprint.printExpr(print, stmt->getCond());
         print.output() << fmt::nbsp;
-        cprint.printStmt(print, stmt->getBody());
+        /*
+         * The body of a `switch` need not be a compound statement, but
+         * `Scase`/`Sdefault` are markers *within* the list of an `Sseq`, and
+         * `wp_switch` only looks for them there. Print the block that the
+         * substatement already denotes: it "implicitly defines a block scope",
+         * and when it is "a single statement and not a compound-statement, it
+         * is as if it was rewritten to be a compound-statement containing the
+         * original substatement" ([stmt.select]/2, [stmt.select.general]/2 in
+         * later revisions). This is the shape gtest's
+         * `GTEST_AMBIGUOUS_ELSE_BLOCKER_` (`switch (0) case 0: default:`)
+         * expands to, and it yields exactly the AST of the braced spelling.
+         *
+         * The guard matters: wrapping a body that is already a compound
+         * statement would bury its labels one `Sseq` deeper, where
+         * `get_cases` cannot see them.
+         */
+        if (isa<CompoundStmt>(stmt->getBody())) {
+            cprint.printStmt(print, stmt->getBody());
+        } else {
+            guard::ctor _{print, "Sseq"};
+            guard::list __{print};
+            cprint.printStmt(print, stmt->getBody());
+            print.cons();
+        }
         print.end_ctor();
     }
 
