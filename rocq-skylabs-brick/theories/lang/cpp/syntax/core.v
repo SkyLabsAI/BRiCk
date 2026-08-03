@@ -237,6 +237,11 @@ with name : Set :=
     - <<T>> for <<T>> of template type would be represented as [Atemplate T]
     - <<T>> for <<T>> of template-template parameter would be represented
       as [Atemplate_param "T"]
+
+    TODO: [Atemplate_param] could be removed if we had a [name] constructor
+          that could represent a parameter. It's possible that we could capture
+          this with [Ndependent (Tparam "T")].
+          "T" is not a type, but it is a type-level name.
  *)
 with temp_arg : Set :=
 | Atype (_ : type)

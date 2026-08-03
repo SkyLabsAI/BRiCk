@@ -335,6 +335,9 @@ Definition canonicalize {T} (find : name -> option T) (tu : translation_unit) (n
   | _ => None
   end.
 
+(** TODO: this logic replicates part of the substitution infrastructure inside of <auto>
+    The implementation should use the <traverse> functionality.
+ *)
 Module template_alias.
   Definition env : Set := list (ident * temp_arg).
 
@@ -364,30 +367,6 @@ Module template_alias.
     | _ => None
     end.
 
-  Fixpoint bind (ps : list temp_param) (args : list temp_arg) : option env :=
-    match ps, args with
-    | [], [] => Some []
-    | Ptype id :: ps, Atype t :: args =>
-        match bind ps args with
-        | Some xs => Some ((id, Atype t) :: xs)
-        | None => None
-        end
-    | Pvalue id _ :: ps, Avalue e :: args =>
-        match bind ps args with
-        | Some xs => Some ((id, Avalue e) :: xs)
-        | None => None
-        end
-    | Ptemplate id _ :: ps, (Atemplate _ as arg) :: args
-    | Ptemplate id _ :: ps, (Atemplate_param _ as arg) :: args =>
-        match bind ps args with
-        | Some xs => Some ((id, arg) :: xs)
-        | None => None
-        end
-    | Punsupported _ :: ps, Aunsupported _ :: args =>
-        bind ps args
-    | _, _ => None
-    end.
-
   Definition subst_expr (xs : env) (e : Expr) : Expr :=
     match e with
     | Eparam id =>
@@ -405,7 +384,7 @@ Module template_alias.
       let args := subst_temp_arg xs <$> args in
       Ninst n args
     | Nglobal _ => n
-    | Ndependent t => Ndependent (subst_type xs t)
+    | Ndependent t => Ndependent' (subst_type xs t)
     | Nscoped n c => Nscoped (subst_name xs n) c
     | Nunsupported _ => n
     end
@@ -451,11 +430,11 @@ Module template_alias.
         Tresult_parenlist (subst_type xs t) (subst_type xs <$> ts)
     | Tresult_member o f => Tresult_member (subst_type xs o) (subst_name xs f)
     | Tnamed n => Tnamed (subst_name xs n)
-    | Tref t => Tref (subst_type xs t)
-    | Trv_ref t => Trv_ref (subst_type xs t)
-    | Tqualified q t => Tqualified q (subst_type xs t)
+    | Tref t => tref QM (subst_type xs t)
+    | Trv_ref t => trv_ref QM (subst_type xs t)
+    | Tqualified q t => tqualified q (subst_type xs t)
     | Tptr t => Tptr (subst_type xs t)
-    | Tarray t n => Tarray (subst_type xs t) n
+    | Tarray t n => Tarray (subst_type xs t) n (* BUG: qualifier normalization on arrays? *)
     | Tincomplete_array t => Tincomplete_array (subst_type xs t)
     | Tvariable_array t e =>
         let t := subst_type xs t in
@@ -467,7 +446,7 @@ Module template_alias.
         | _ => Tvariable_array t e
         end
     | Tenum n => Tenum (subst_name xs n)
-    | Tfunction ft => Tfunction (function_type.fmap (subst_type xs) ft)
+    | Tfunction ft => Tfunction (function_type.fmap (subst_type xs) ft) (* BUG: qualifier normalization on function types *)
     | Tmember_pointer n t => Tmember_pointer (subst_type xs n) (subst_type xs t)
     | Tdecltype e => Tdecltype (subst_expr xs e)
     | Texprtype e => Texprtype (subst_expr xs e)
@@ -480,12 +459,34 @@ Module template_alias.
     | _, _ => None
     end.
 
+  #[local] Open Scope monad_scope.
+  Fixpoint bind (e : env) (ps : list (temp_param * option temp_arg)) (args : list temp_arg) {struct ps} : option env :=
+    match ps with
+    | [] => if args is [] then Some [] else None
+    | (p, default) :: ps =>
+        let* arg :=
+          match args return option temp_arg with
+          | [] => subst_temp_arg e <$> default
+          | arg :: _ => Some arg
+          end
+        in
+        let* next_arg :=
+          match p , arg with
+          | Ptype id , Atype _ => Some (id, arg)
+          | Pvalue id _ , Avalue _ => Some (id, arg)
+          | Ptemplate id _ , (Atemplate _ | Atemplate_param _) => Some (id, arg)
+          | _ , _ => None
+          end
+        in
+        cons next_arg <$> bind (next_arg :: e) ps (tail args)
+    end.
+
   Definition instantiate (actual : name) (candidate : name * template type)
       : option type :=
     let '(candidate_name, templ) := candidate in
     match same_template_base actual candidate_name with
     | Some args =>
-        match bind templ.(template_params) args with
+        match bind [] templ.(template_params) args with
         | Some xs => Some (subst_type xs templ.(template_value))
         | None => None
         end
