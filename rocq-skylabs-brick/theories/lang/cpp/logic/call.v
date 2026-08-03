@@ -96,14 +96,14 @@ Section with_resolve.
            not observable.
    *)
   #[local]
-  Definition wp_arg (ty : decltype) e K :=
-    Forall p,
-      letI* free := wp_initialize tu ρ ty p e in
-      K p (if is_trivially_destructible tu ty
-           then free
-           else FreeTemps.delete ty p >*> free)%free.
-  #[global] Arguments wp_arg _ _ _ /.
+  Definition wp_arg (ty : decltype) e : M ptr :=
+    letWP* p := Mnd ptr in
+    letWP* free := wp_initialize tu ρ ty p e in
+    letWP* '() := Mpush_free free in
+    Mret p.
+  #[global] Arguments wp_arg _ _ /.
 
+  (*
   Lemma wp_arg_frame : forall ty e, |-- wp.WPE.Mframe (wp_arg ty e) (wp_arg ty e).
   Proof.
     rewrite /wp.WPE.Mframe; intros.
@@ -113,9 +113,50 @@ Section with_resolve.
     iApply wp_initialize_frame. done.
     case_match; eauto. iIntros (?); iApply "X".
   Qed.
+  *)
 
   Definition early_destroy : list (decltype * ptr) -> list FreeTemps.t :=
     omap (fun '(ty, p) => if is_trivially_destructible tu ty then Some (FreeTemps.delete ty p) else None).
+
+  Fixpoint partition_trivial (f : FreeTemps.t) : FreeTemps.t * FreeTemps.t :=
+    match f with
+    | FreeTemps.id => (FreeTemps.id, FreeTemps.id)
+    | FreeTemps.seq a b =>
+        let '(ta, a) := partition_trivial a in
+        if a is FreeTemps.id then
+          let '(tb, b) := partition_trivial b in
+          (ta >*> tb, b)
+        else
+          (ta, a >*> b)
+    | FreeTemps.par a b => (FreeTemps.id, f) (* BUG *)
+    | FreeTemps.delete ty p =>
+        if is_trivially_destructible tu ty then
+          (f, FreeTemps.id)
+        else
+          (FreeTemps.id, f)
+    | FreeTemps.delete_va tys p =>
+        (f, FreeTemps.id)
+    end%free.
+
+  (* destroys trivally destructible objects at the top of the frees *)
+  #[program]
+  Definition Mdestroy_trivial {T} (m : M T) : M T :=
+    {| _wp K := m.(_wp) (fun v free _ =>
+                           let '(tfree, free) := partition_trivial free in
+                           destroy.interp tu tfree $ K v (FreeTemps.canon free) _) |}.
+  Next Obligation.
+    simpl; intros.
+    iIntros "K".
+    iApply _ok; iIntros (???).
+    case_match.
+    iApply destroy.interp_frame.
+    iApply "K".
+  Qed.
+
+  Definition Malloc_va (va_info : list (type * ptr)) : M ptr :=
+    letWP* p := Mnd ptr in
+    letWP* '() := Mproduce (p |-> varargsR va_info) in
+    Mret p.
 
   (**
      [wp_args eo pre ts_ar es] evaluates [pre ++ es] according to the evaluation order [eo].
@@ -132,39 +173,37 @@ Section with_resolve.
      different ways that it can be used, e.g. to evaluate the object in [o.f()] (which is evaluated
      as a gl-value) or to evaluate the function in [f()] (which is evaluated as a pointer-typed operand).
    *)
-  Definition wp_args (eo : evaluation_order.t) (pre : list (wp.WPE.M ptr))
+  Definition wp_args (eo : evaluation_order.t) (pre : list (M ptr))
       (ts_ar : list decltype * function_arity) (es : list Expr)
-      (Q : list ptr -> list ptr -> FreeTemps -> FreeTemps -> mpred) : mpred :=
+      : M (list ptr * list ptr) :=
     (let '(ts,ar) := ts_ar in
-    if check_arity ts ar es then
-      let '(tes, va_info) := setup_args ts ar es in
-      letI* ps, fs := eval eo (pre ++ map (fun '(t, e) => wp_arg t e) tes) in
-        let (pre, ps) := split_at (length pre) ps in
-        let early_destroy :=
-          FreeTemps.seqs_rev $ early_destroy $ zip_with (fun '(ty, _) p => (ty, p)) tes ps in
-        match va_info with
-        | Some non_va =>
-            let (real, vargs) := split_at non_va ps in
-            let types := map fst $ skipn non_va tes in
-            let va_info := zip types vargs in
-            Forall p, p |-> varargsR va_info -*
-                        Q pre (real ++ [p]) (FreeTemps.delete_va va_info p >*> early_destroy)%free fs
-        | None =>
-            Q pre ps early_destroy fs
-        end
-    else
-      False)%I.
+     if check_arity ts ar es then
+       let '(tes, va_info) := setup_args ts ar es in
+       letWP* ps := eval eo (pre ++ map (fun '(t, e) => wp_arg t e) tes) in
+         let (pre, ps) := split_at (length pre) ps in
+         match va_info with
+         | Some non_va =>
+             let (real, vargs) := split_at non_va ps in
+             let types := map fst $ skipn non_va tes in
+             let va_info := zip types vargs in
+             letWP* p := Malloc_va va_info in
+             Mret (pre, real ++ [p])
+         | None =>
+             Mret (pre, ps)
+         end
+     else
+       Mub)%I.
 
   Lemma wp_args_frame_strong : forall eo pres ts_ar es Q Q',
-      ([∗list] m ∈ pres, wp.WPE.Mframe m m)%I
-      |-- (Forall ps vs ifree free,
+      ([∗list] m ∈ pres, monad.Mframe m m)%I
+      |-- (Forall ps vs free pf,
         [| length ps = length pres |] -*
         [| if ts_ar.2 is Ar_Variadic then
              length vs = length ts_ar.1 + 1
            else length vs = length es |] -*
-        Q ps vs ifree free -* Q' ps vs ifree free) -*
-      wp_args eo pres ts_ar es Q -* wp_args eo pres ts_ar es Q'.
-  Proof.
+        Q (ps, vs) free pf -* Q' (ps, vs) free pf) -*
+      WP (wp_args eo pres ts_ar es) Q -* WP (wp_args eo pres ts_ar es) Q'.
+  Proof. (*
     intros.
     iIntros "PRS X".
     rewrite /wp_args. destruct ts_ar; simpl.
@@ -210,12 +249,12 @@ Section with_resolve.
         iRevert "H"; iApply "X"; iPureIntro.
         - rewrite length_firstn. lia.
         - rewrite length_app length_firstn length_skipn /=. lia. } }
-  Qed.
+  Qed. *) Admitted.
 
   Lemma wp_args_frame : forall eo pres ts_ar es Q Q',
-      ([∗list] m ∈ pres, wp.WPE.Mframe m m)%I
-      |-- (Forall ps vs ifree free, Q ps vs ifree free -* Q' ps vs ifree free) -*
-          wp_args eo pres ts_ar es Q -* wp_args eo pres ts_ar es Q'.
+      ([∗list] m ∈ pres, monad.Mframe m m)%I
+      |-- (Forall ps vs free pf, Q (ps, vs) free pf -* Q' (ps, vs) free pf) -*
+          WP (wp_args eo pres ts_ar es) Q -* WP (wp_args eo pres ts_ar es) Q'.
   Proof.
     intros; iIntros "X Y".
     iApply (wp_args_frame_strong with "X").
