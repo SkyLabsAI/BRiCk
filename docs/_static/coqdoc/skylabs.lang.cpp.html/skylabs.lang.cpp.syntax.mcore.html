@@ -122,9 +122,6 @@ template file) and arguments.
 
 <br/>
 <span class="id" title="keyword">Section</span> <a id="tpreinst" class="idref" href="#tpreinst"><span class="id" title="section">tpreinst</span></a>.<br/>
-&nbsp;&nbsp;<span class="comment">(*&nbsp;TODO:&nbsp;this&nbsp;type&nbsp;probably&nbsp;does&nbsp;not&nbsp;need&nbsp;to&nbsp;be&nbsp;parametric&nbsp;in&nbsp;<span class="inlinecode"><span class="id" title="var">lang.t</span></span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The&nbsp;only&nbsp;meaningful&nbsp;instantation&nbsp;is&nbsp;<span class="inlinecode"><span class="id" title="var">lang.cpp</span></span><br/>
-&nbsp;&nbsp;&nbsp;*)</span><br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="tpreinst" class="idref" href="#tpreinst"><span class="id" title="record">tpreinst</span></a> : <span class="id" title="keyword">Set</span> := <span class="id" title="var">TPreInst</span> {<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<a id="tpreinst_name" class="idref" href="#tpreinst_name"><span class="id" title="projection">tpreinst_name</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.mcore.html#temp_name"><span class="id" title="definition">temp_name</span></a>;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<a id="tpreinst_args" class="idref" href="#tpreinst_args"><span class="id" title="projection">tpreinst_args</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#temp_arg"><span class="id" title="inductive">temp_arg</span></a>;<br/>
@@ -197,7 +194,7 @@ template file) and arguments.
 
 <br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="template" class="idref" href="#template"><span class="id" title="record">template</span></a> : <span class="id" title="var">Type@</span>{<span class="id" title="var">uV</span>} := <span class="id" title="var">Template</span> {<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<a id="template_params" class="idref" href="#template_params"><span class="id" title="projection">template_params</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#temp_param"><span class="id" title="inductive">temp_param</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="template_params" class="idref" href="#template_params"><span class="id" title="projection">template_params</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#temp_param"><span class="id" title="inductive">temp_param</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#11c698c8685bb8ab1cf725545c085ac4"><span class="id" title="notation">*</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#temp_arg"><span class="id" title="inductive">temp_arg</span></a>);<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<a id="template_value" class="idref" href="#template_value"><span class="id" title="projection">template_value</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.mcore.html#template.V"><span class="id" title="variable">V</span></a>;<br/>
 &nbsp;&nbsp;}.<br/>
 
