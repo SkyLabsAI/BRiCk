@@ -218,7 +218,7 @@ Section with_cpp.
     do 4 red; simpl; intros. etrans. eapply H.  eapply H1.
     eapply H0. red. red.
     (* NOT PROVABLE! *)
-  Qed.
+  Admitted.
 
 
   (* The canonical notation of approximation/entailment
