@@ -17,7 +17,7 @@ Require Import skylabs.lang.cpp.semantics.
 Require Import skylabs.lang.cpp.logic.pred.
 Require Import skylabs.lang.cpp.logic.heap_pred.
 Require Import skylabs.lang.cpp.logic.translation_unit.
-Require Import skylabs.lang.cpp.logic.monad.
+Require Export skylabs.lang.cpp.logic.monad.
 Require Export skylabs.lang.cpp.logic.free_temps.
 Require Import skylabs.iris.extra.bi.errors.
 
