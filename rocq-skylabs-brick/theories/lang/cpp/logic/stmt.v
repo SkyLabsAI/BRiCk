@@ -541,7 +541,7 @@ Module Type Stmt.
     Definition while_unroll ρ decl test body :=
       wp ρ (Sif decl test body Sbreak).
 
-    Require Import iris.bi.lib.fixpoint.
+    Require Import iris.bi.lib.fixpoint_banach.
     Import UPoly.
 
     #[program]
