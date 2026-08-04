@@ -556,8 +556,6 @@ Module Type Stmt.
     Definition while_unroll ρ decl test body :=
       wp ρ (Sif None decl test body Sbreak).
 
-    Require Import iris.bi.lib.fixpoint.
-
     Definition M_raw T : ofe :=
       (ReturnType T -> forall free, FreeTemps.IsCanonical free -> mpred) -d> mpred.
 
@@ -611,6 +609,8 @@ Module Type Stmt.
                     else Mbreak)
            Mcontinue
            Mbreak.
+
+    Require Import iris.bi.lib.fixpoint_banach.
 
     #[program]
     Definition Mloop (body : Mlocal ()) : Mlocal () :=

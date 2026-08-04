@@ -769,6 +769,9 @@ Section with_cpp.
     | evaluation_order.rl => (fun '(a,b) => (b,a)) <$> Mseq e2 e1
     end.
 
+  #[local] Definition Mframe {T} (a b : M T) : mpred :=
+    Forall Q Q', (Forall x y pf, Q x y pf -* Q' x y pf) -* a Q -* b Q'.
+
   Lemma eval2_frame {T U} oe (e1 : M T) (e2 : M U) :
     Mframe e1 e1 |--
     Mframe e2 e2 -*
