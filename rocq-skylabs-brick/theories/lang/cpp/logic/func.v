@@ -931,7 +931,7 @@ Proof. Admitted.
                  letWP* '() := Mfree_all tu $ Mexpr.push_free free in
                  Mexpr.throw ty p)
         in
-        letWP* := Kreturn_void in
+        letWP* '() := Kreturn_void in
         |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid (cQp.mut 1) Vvoid -* Q p
 
       | Some (Gunion union) =>
