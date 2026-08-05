@@ -619,13 +619,13 @@ Module Type Stmt.
     Definition Mloop (body : Mlocal ()) : Mlocal () :=
       Mexpr.mk (
       {| M._wp :=
-          @fixpoint _ _ _ (funI (continue : M_raw ()) K =>
-                      letI* rt := Mexpr._wp (@Mfree_all _ _ Σ σ tu _ body) in
+          fixpoint (funI (continue : M_raw ()) K =>
+                      letI* rt := Mexpr._wp (Mfree_all (σ := σ) tu body) in
                       match rt.(with_temps._result) with
                       | Mexpr.Normal _ | Mexpr.Continue => |> continue K
                       | Mexpr.Break => K (mret $ Mexpr.Normal ())
                       | exc => K (mret exc)
-                      end) _ |}).
+                      end) (Contractive0 := _) |}).
     Next Obligation.
       (* Contractive *)
       simpl; intros.
@@ -642,14 +642,14 @@ Module Type Stmt.
       iIntros "K".
       iLöb as "IH".
       match goal with
-      | |- context [ @fixpoint ?X ?Y ?I ?F ?C _ ] =>
+      | |- context [ @fixpoint ?S ?X ?Y ?I ?F ?C _ ] =>
           generalize C; intro CC;
           remember F as BODY ;
-          generalize (@fixpoint_unfold X Y I BODY CC)
+          generalize (@fixpoint_unfold S X Y I BODY CC)
       end.
       match goal with
-      | |- context [ @fixpoint ?X ?Y ?I ?F ?C _ ] =>
-          generalize (@fixpoint X Y I F C)
+      | |- context [ @fixpoint ?S ?X ?Y ?I ?F ?C _ ] =>
+          generalize (@fixpoint S X Y I F C)
       end.
       intros FIX Hfix.
       assert (forall K, FIX K ≡ BODY FIX K) by apply Hfix.
