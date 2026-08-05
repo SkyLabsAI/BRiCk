@@ -931,8 +931,8 @@ Proof. Admitted.
                  letWP* '() := Mfree_all tu $ Mexpr.push_free free in
                  Mexpr.throw ty p)
         in
-        letM* := Kreturn_void in
-        (|={top}=>?u |> Forall p : ptr, p |-> primR Tvoid (cQp.mut 1) Vvoid -* Q p)%I
+        letWP* '() := Kreturn_void in
+        |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid (cQp.mut 1) Vvoid -* Q p
 
       | Some (Gunion union) =>
         (*
@@ -944,11 +944,11 @@ Proof. Admitted.
         thisp |-> tblockR ty 1$m **
         |>
         let ρ vap := Remp (Some thisp) vap Tvoid in
-        letM* ρ, cleanup := bind_vars tu ctor.(c_arity) ctor.(c_params) rest_vals ρ in
-        letM* := wp_union_initializer_list tu union ρ ctor.(c_class) thisp inits in
-        letM* := wp tu ρ body in
-        letM* := Kcleanup tu cleanup in
-        letM* := Kreturn_void in
+        letWP* ρ, cleanup := bind_vars tu ctor.(c_arity) ctor.(c_params) rest_vals ρ in
+        letWP* := wp_union_initializer_list tu union ρ ctor.(c_class) thisp inits in
+        letWP* := wp tu ρ body in
+        letWP* := Kcleanup tu cleanup in
+        letWP* := Kreturn_void in
         |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid (cQp.mut 1) Vvoid -* Q p
 
       | _ => ERROR ("wp_ctor: constructor for non-aggregate", ctor.(c_class))
