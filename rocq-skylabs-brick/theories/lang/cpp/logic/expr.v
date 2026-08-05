@@ -454,7 +454,7 @@ Module Type Expr.
          letWP* '() := Mvalid_ref t p in
          mret p
        else
-         letWP* '(idx, base) := nd_seq (wp_int e) (wp_ptr vc i) in
+         letWP* '(idx, base) := Mexpr.nd_seq (wp_int e) (wp_ptr vc i) in
          let p : ptr := base .[ erase_qualifiers t ! idx ] in
          letWP* '() := Mvalid_ref t p in
          mret p)
@@ -465,12 +465,12 @@ Module Type Expr.
     Axiom wp_xval_subscript : forall e side i t,
         subscript_scheme e i = Some (side, Xvalue, t) ->
         (if side then
-           letWP* '(base, idx) := nd_seq (wp_xval e) (wp_int i) in
+           letWP* '(base, idx) := Mexpr.nd_seq (wp_xval e) (wp_int i) in
            let p : ptr := base .[ erase_qualifiers t ! idx ] in
            letWP* '() := Mvalid_ref t p in
            mret p
          else
-           letWP* '(idx, base) := nd_seq (wp_int e) (wp_xval i) in
+           letWP* '(idx, base) := Mexpr.nd_seq (wp_int e) (wp_xval i) in
            let p := base .[ erase_qualifiers t ! idx ] in
            letWP* '() := Mvalid_ref t p in
            mret p)
@@ -510,12 +510,12 @@ Module Type Expr.
         https://eel.is/c++draft/expr.unary.op#3
      *)
     Axiom wp_operand_addrof : forall e,
-            Mmap Vptr $ wp_lval e
+            Vptr <$> wp_lval e
         ⊆ wp_operand (Eaddrof e).
 
     Definition Munop (ty ty' : type) (o : UnOp) (v : val) : M val :=
-      letWP* v' := Mangelic _ in
-      letWP* '() := Mrequire (eval_unop tu o ty ty' v v') in
+      letWP* v' := angelic _ in
+      letWP* '() := consume [| eval_unop tu o ty ty' v v' |] in
       mret v'.
 
     (** "pure" unary operators on primitives, e.g. `-`, `!`, etc.
@@ -547,16 +547,17 @@ Module Type Expr.
              fun v_result => eval_binop tu op ty Tint ty v (Vint 1) v_result
       else fun _ => UNSUPPORTED "cast-op".
 
+    Print WpMonad.
     Definition pre_op (b : BinOp) (ty : type) (e : Expr) : M ptr :=
       let ety := erase_qualifiers $ type_of e in
       letWP* a := wp_lval e in
-      letWP* v := Mangelic _ in
-      letWP* v' := Mangelic _ in
-      Mboth (letWP* '() := Mconsume (inc_dec_op b ety v v') in
-             Many)
-            (letWP* '() := Mconsume (a |-> primR ety (cQp.mut 1) v) in
-             letWP* '() := Mproduce (a |-> primR ety (cQp.mut 1) v') in
-             mret a).
+      letWP* '(TeleArgCons v (TeleArgCons v' _)) :=
+              check (TT:=[tele (_ : _) (_ : _)]) (fun v v' => inc_dec_op b ety v v')
+      in
+      letWP* _ := update (TT1:=[tele]) (TT2:=[tele])
+                    (a |-> primR ety (cQp.mut 1) v)
+                    (a |-> primR ety (cQp.mut 1) v')
+      in mret a.
 
     (** `++e`
         https://eel.is/c++draft/expr.pre.incr#1
@@ -573,16 +574,14 @@ Module Type Expr.
     #[program]
     Definition post_op (b : BinOp) (ty : type) (e : Expr) : M val :=
       let ety := erase_qualifiers $ type_of e in
-      letWP* a := wp_lval e in
-      letWP* v := Mangelic val in
-      letWP* v' := Mangelic val in
-      {| _wp K :=
-          (inc_dec_op b ety v v' ** True) //\\
-          (a |-> primR ety (cQp.mut 1) v **
-              (a |-> primR ety (cQp.mut 1) v' -* K v FreeTemps.id _)) |}.
-    Next Obligation.
-      simpl; intros.
-    Admitted.
+      letWP* (a : ptr) := wp_lval e in
+      letWP* '(TeleArgCons v (TeleArgCons v' _)) :=
+        check (TT:=[tele (_ : _) (_ : _)]) (fun v v' => inc_dec_op b ety v v')
+      in
+      letWP* _ := update (TT1:=[tele]) (TT2:=[tele])
+                    (a |-> primR ety (cQp.mut 1) v)
+                    (a |-> primR ety (cQp.mut 1) v')
+      in mret v.
 
     (** `e++`
         https://eel.is/c++draft/expr.post.incr#1
@@ -598,28 +597,23 @@ Module Type Expr.
 
     #[program]
     Definition Mbinop (o : BinOp) (tyL tyR tyResult : type) (vL vR : val) : M val :=
-      {| _wp K :=
-           Exists v',
-             (eval_binop tu o tyL tyR tyResult vL vR v' ** True) //\\ K v' FreeTemps.id _ |}.
-    Next Obligation.
-      simpl; intros.
-      iIntros "K X".
-      iDestruct "X" as (v) "X"; iExists v; iSplit.
-      { iDestruct "X" as "[$ _]". }
-      { iDestruct "X" as "[_ X]". iApply "K"; eauto. }
-    Qed.
+      letWP* '(TeleArgCons v' _) :=
+        check (TT:=[tele (_ : _)])
+          (fun v' => eval_binop tu o tyL tyR tyResult vL vR v')
+      in
+      mret v'.
 
     (** * Binary Operators *)
     (* NOTE the following axioms assume that [eval_binop] is deterministic *)
     Axiom wp_operand_binop : forall o e1 e2 ty,
-        (letWP* '(v1,v2) := nd_seq (wp_operand e1) (wp_operand e2) in
+        (letWP* '(v1,v2) := Mexpr.nd_seq (wp_operand e1) (wp_operand e2) in
         Mbinop o (drop_qualifiers (type_of e1)) (drop_qualifiers (type_of e2))
           (drop_qualifiers ty) v1 v2)
         ⊆ wp_operand (Ebinop o e1 e2 ty).
 
     Definition Mupdate (p : ptr) (ty : type) (rv : val) : M unit :=
-      letWP* '() := Mconsume (p |-> anyR (erase_qualifiers ty) (cQp.mut 1)) in
-      Mproduce (tptsto ty (cQp.m 1) p rv). (* to allow writing raw values *)
+      letWP* '() := consume (p |-> anyR (erase_qualifiers ty) (cQp.mut 1)) in
+      produce (tptsto ty (cQp.m 1) p rv). (* to allow writing raw values *)
 
 
     (* NOTE the right operand is sequenced before the left operand since
@@ -627,7 +621,7 @@ Module Type Expr.
      *)
     Axiom wp_lval_assign : forall ty l r,
         (letWP* '(la, rv) :=
-           eval2 (evaluation_order.order_of OOEqual) (wp_lval l) (wp_operand r) in
+           Mexpr.eval2 (evaluation_order.order_of OOEqual) (wp_lval l) (wp_operand r) in
          letWP* '() := Mupdate la ty rv in
          mret la)
         ⊆ wp_lval (Eassign l r ty).
@@ -636,8 +630,9 @@ Module Type Expr.
     Axiom wp_lval_bop_assign : forall ty o l r Q,
             match convert_type_op tu o (type_of l) (type_of r) with
             | Some (tl, tr, resultT) =>
-              let* '(la, rv), free :=
-                WP (eval2 (evaluation_order.order_of OOEqual) (wp_lval l) (wp_operand r)) in
+              letWP* (la, rv) :=
+                Mexpr.eval2 (evaluation_order.order_of OOEqual) (wp_lval l) (wp_operand r) in
+              (* TODO *)
               Exists v cv v',
                     ((* cast and perform the computation *)
                       [| convert tu (type_of l) tl v cv |] **

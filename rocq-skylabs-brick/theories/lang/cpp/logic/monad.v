@@ -784,6 +784,10 @@ Section with_temps.
                                                    ; _canon := _ |}) (k r.(_result)).(Compose._prun)) x.(Compose._prun)).
 
   #[global] Typeclasses Opaque M.
+  #[global] Declare Instance _WpMonad {_ : BiFUpd PROP} : WpMonad PROP M. (* TODO: implement *)
+
+  Definition from_M {T} (m : M.M PROP T) : M T :=
+    mk $ mret (M:=Result) <$> m.
 
   Definition push_free (f : FreeTemps.t) : M () :=
     Compose.mk $ mret {| _result := ()
@@ -872,6 +876,12 @@ Section Mglobal.
 
   #[global] Typeclasses Opaque M.
   #[global] Declare Instance _WpMonad : WpMonad PROP M.
+
+  Definition from_M {T} (m : M.M mpredI T) : M T :=
+    fmap (M:=M.M mpredI) Mglobal.Normal m.
+
+  Definition from_temps {T} (m : with_temps.M mpredI T) : M (FreeTemps.t * T) :=
+    fmap (M:=M.M mpredI) (fun x => Normal (x.(with_temps._free), x.(with_temps._result))) (with_temps.prun m).
 
   Definition eval : evaluation_order.t -> forall {T}, list (M T) -> M (list T) := @eval M _ _ demonic.
 
@@ -1009,6 +1019,7 @@ Section Mexpr.
   #[global] Declare Instance _WpMonad : WpMonad PROP M.
 
   Definition eval : evaluation_order.t -> forall {T}, list (M T) -> M (list T) := @eval M _ _ demonic.
+  Definition eval2 : evaluation_order.t -> forall {T U}, M T -> M U -> M (T * U) := @eval2 M _ _ demonic.
   Definition nd_seq : forall {T U}, M T -> M U -> M (T * U) := @nd_seq M _ _ demonic.
 
   Definition push_free (f : FreeTemps.t) : M () :=
