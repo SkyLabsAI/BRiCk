@@ -914,11 +914,11 @@ Definition handle `{Σ : cpp_logic} {T U} (m : Mexpr.M T)
   (continue : Mglobal.M U)
   (retn : option ptr -> Mglobal.M U) : Mglobal.M U.
 Admitted.
-Search with_temps.M Mglobal.M.
+(* Search with_temps.M Mglobal.M.
 About wp_struct_initializer_list.
 Search Mexpr.M.
 Print Mglobal.Result.
-About interp.
+About interp. *)
 
 Definition Mglobal_mk `{Σ : cpp_logic} {T} (m : M.M mpredI (Mglobal.Result T)) : Mglobal.M T := m.
 Definition Mglobal_prun `{Σ : cpp_logic} {T} (m : Mglobal.M T) : M.M mpredI (Mglobal.Result T) := m.
