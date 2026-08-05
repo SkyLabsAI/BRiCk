@@ -120,25 +120,13 @@ End sumT.
 
 Require Import skylabs.prelude.telescopes.
 
-(**
-Instances of WpMonad must be accompanied by instances of MBind and MRet and
-should satisfy the appropriate laws.
-*)
-(*
-angelic choice
-
-exists n, wp (foo' n)
-|--
-wp foo
-
-*)
 (* TODO: the names here probably need to be in a module *)
-Class WpMonad (PROP : bi) (M : Type -> Type) : Type :=
+Class WpMonad (PROP : bi) {F : BiFUpd PROP} (M : Type -> Type) : Type :=
 { angelic : forall T : Type, M T                    (* ∃ *)
 ; demonic : forall T : Type, M T                    (* ∀ *)
 ; produce : PROP -> M unit                      (* -∗ *)
 ; consume : PROP -> M unit                      (* ∗ *)
-; check : forall {TT : tele}, (TT -t> PROP) -> M TT  (* ∧: angelic and consume *)
+; check : forall {TT : tele}, (TT -t> PROP) -> M TT  (* ∧ *)
 ; update : forall {TT1 TT2 : tele}, (TT1 -t> PROP) -> (TT1 -t> TT2 -t> PROP) ->
                                M (tele_arg (tele_append TT1 (tele_bind (fun _ : TT1 => TT2))))
 ; step : M unit                                (* ▷ *)
@@ -523,12 +511,6 @@ Section M.
   Import UPoly.
   Context {PROP : bi}.
 
-  (* [M t] is a predicate transformer on a computation that returns a value of
-  type [t].
-
-  And the "predicate transformer" [_wp m K] with [m : M t] just expresses the
-  weakest precondition of the computation [m] with postcondition [K].
-   *)
   Record M {t : Type} := mk
   { _wp : (t -> PROP) -> PROP
   ; _frame : forall K1 K2, (∀ x, K1 x -∗ K2 x) ⊢ _wp K1 -∗ _wp K2
@@ -646,7 +628,7 @@ Section M.
   ; ub _ := {| _wp _K := False |}%I
   ; step := {| _wp K := ▷ K () |}%I
   ; non_atomically _ m := {| _wp K := |={top}=> m.(_wp) (fun r => |={top}=> K r) |}%I
-  ; atomically _ m := {| _wp K := |={top,∅}=> m.(_wp) (fun r => |={∅,top}=> K r) |}%I
+  ; atomically _ m := {| _wp K := |={top,∅}=> m.(_wp) (fun r => |={top,∅}=> K r) |}%I
   }.
   Admit Obligations.
   (*
@@ -719,7 +701,7 @@ End M.
 
 (** TODO: End generic, begin C++-specific *)
 
-(* This is effectively [Writer FreeTemps.t] *)
+(* This is effectively [Writer] *)
 Module with_temps.
 Section with_temps.
   Import UPoly.
@@ -815,9 +797,6 @@ End with_temps.
 #[global] Arguments M _ _ : clear implicits.
 End with_temps.
 
-(** The monad for function calls; they are more restricted compared to expressions/statements,
- and we currently call this "global evaluation".
- *)
 Module Mglobal.
 Section Mglobal.
   Import UPoly.
@@ -842,7 +821,7 @@ Section Mglobal.
 
   #[local] Notation PROP := (mpredI).
 
-  (** TODO: use Compose? Or TC issues. *)
+  (* the monad for global evaluation *)
   Definition M `{Σ : cpp_logic} t := M.M PROP (Result t).
 
   Context `{Σ : cpp_logic}.
@@ -915,7 +894,7 @@ End Mglobal.
 End Mglobal.
 Notation Mglobal := Mglobal.M (only parsing).
 
-(** The monad [Mexpr.M] represents the semantic domain of expressions/statements.
+(** The monad [Mexpr.M] represents the semantic domain of expressions.
     Expressions can terminate in one of the following ways:
     - [Normal v] returning a value
     Statement expressions (a GNU extension) also allows expressions to
