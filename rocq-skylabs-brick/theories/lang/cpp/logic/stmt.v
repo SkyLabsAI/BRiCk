@@ -1010,10 +1010,6 @@ Module Type Stmt.
       KP $ Kswitch_inner k.
      *)
 
-    Axiom wp_switch_decl : forall ρ d e ls,
-        wp ρ (Sseq (Sdecl (d :: nil) :: Sswitch None e ls :: nil))
-        ⊆ wp ρ (Sswitch (Some d) e ls).
-
     (* An error to say that a `switch` block with [body] is not supported *)
     Record switch_block (body : list Stmt) : Prop := {}.
 
@@ -1037,14 +1033,15 @@ Module Type Stmt.
       letWP* '() := consume [| x = f y |] in
       mret y.
 
-    Axiom wp_switch : forall ρ init decl e b Q,
+    Notation "m ≫= f" := (mbind f m) : stdpp_scope.
+
+    Axiom wp_switch : forall ρ init decl e b,
         match pre_stmt init decl with
         | None =>
           match wp_switch_block (Some $ default_from_cases (get_cases b)) b with
           | None => Munsupported (switch_block b)
           | Some cases =>
             letM* v := Mfree_all tu $ wp_operand tu ρ e ≫= Mas Vint in
-            (* letM* v := Mfree_all tu $ mbind (Mas Vint) $ wp_operand tu ρ e in *)
             letWP* c := demonic _ in
             letWP* '() := produce [| c ∈ cases |] in
             letWP* _ := produce [| c.1 v |] in
