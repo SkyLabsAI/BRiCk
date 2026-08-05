@@ -13,6 +13,7 @@ Require Import skylabs.prelude.arith.builtins.
 Require Import skylabs.lang.cpp.logic.pred.
 Require Import skylabs.lang.cpp.logic.path_pred.
 Require Import skylabs.lang.cpp.logic.heap_pred.
+Require Import skylabs.lang.cpp.logic.monad.
 Require Import skylabs.lang.cpp.logic.wp.
 
 #[local] Arguments ERROR {_ _} _%_bs : assert.

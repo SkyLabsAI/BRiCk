@@ -892,7 +892,7 @@ not initialized (you get an [uninitR]), but you will get something
 that implies [type_ptr].
 *)
 
-Search Mexpr.M.
+(* Search Mexpr.M. *)
 
 Definition take_free `{Σ : cpp_logic} {T} (m : Mexpr.M T) : Mexpr.M (FreeTemps.t * T).
 Proof. Admitted.

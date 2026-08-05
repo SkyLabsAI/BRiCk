@@ -16,6 +16,7 @@ Require Import skylabs.lang.cpp.logic.heap_pred.
 Require Import skylabs.lang.cpp.logic.wp.
 Require Import skylabs.lang.cpp.logic.destroy.
 Require Import skylabs.lang.cpp.logic.const.
+Require Import skylabs.lang.cpp.logic.monad.
 
 #[local] Set Printing Coercions.
 Import UPoly.
