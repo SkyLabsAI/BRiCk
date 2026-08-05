@@ -15,6 +15,7 @@ Require Import skylabs.lang.cpp.logic.pred.
 Require Import skylabs.lang.cpp.logic.path_pred.
 Require Import skylabs.lang.cpp.logic.wp.
 Require Import skylabs.lang.cpp.logic.heap_pred.
+Require Import skylabs.lang.cpp.logic.monad.
 Require Import skylabs.prelude.telescopes.
 Require Import skylabs.upoly.base.
 
