@@ -184,56 +184,69 @@ Section M.
   #[global] Arguments M _ : clear implicits.
   #[local] Coercion _wp : M >-> Funclass.
 
+  Context `{!Equiv T}.
+  Context `{ET : !Equivalence (≡@{T})}.
   (* The canonical notion of equivalence on [M _] *)
-  #[global] Instance M_equiv [T] : Equiv (M T) :=
+  #[global] Instance M_equiv : Equiv (M T) :=
     fun a b =>
-      forall K1 K2, (forall x, K1 x ⊣⊢ K2 x) -> a K1 ⊣⊢ b K2.
-  #[global] Instance M_equiv_refl {T} : Reflexive (≡@{M T}).
-  Proof.
-    repeat red. intros.
-    split'.
-    { iApply _frame; iIntros (?). rewrite H; eauto. }
-    { iApply _frame; iIntros (?). rewrite H; eauto. }
+      forall K1 K2,
+      (* (forall x, K1 x ⊣⊢ K2 x) -> *)
+      (forall x1 x2, x1 ≡ x2 -> K1 x1 ⊣⊢ K2 x2) ->
+      a K1 ⊣⊢ b K2.
+
+  #[global] Instance M_equiv_refl : Reflexive (≡@{M T}).
+  Proof using ET.
+    rewrite /Reflexive /equiv /M_equiv /=.
+    intros * HK; split'.
+    { iApply _frame; iIntros (?). rewrite HK; eauto. }
+    { iApply _frame; iIntros (?). rewrite HK; eauto. }
   Qed.
-  #[global] Instance M_equiv_sym {T} : Symmetric (≡@{M T}).
-  Proof.
-    do 3 red; simpl; intros. symmetry; apply H.
-    intros; symmetry. apply H0.
+  #[global] Instance M_equiv_sym : Symmetric (≡@{M T}).
+  Proof using ET.
+    rewrite /Symmetric /equiv /M_equiv /=.
+    intros x y Hxy K1 K2 HK12.
+    rewrite (Hxy K2 K1) //.
+    intros. by rewrite (HK12 x2 x1).
   Qed.
-  #[global] Instance M_equiv_trans {T} : Transitive (≡@{M T}).
-  Proof.
-    repeat intro; simpl. etrans. eapply H. eapply H1.
-    eapply H0. intros. reflexivity.
+  #[global] Instance M_equiv_trans : Transitive (≡@{M T}).
+  Proof using ET.
+    rewrite /Transitive /equiv /M_equiv /=.
+    intros x y z Hxy Hyz K1 K2 HK.
+    rewrite (Hxy K1 K1) ?(Hyz K1 K2 HK) //.
+    intros x1 x2 Hx. by rewrite (HK x1 x2 Hx) (HK x2 x2).
   Qed.
 
   (* The canonical notation of approximation/entailment
      Effectively, [a ⊆ b] if all behaviors of [a] are included in [b].
+     TODO: change this to respect (≡@{T}).
    *)
-  #[global] Instance M_subseteq {T} : SubsetEq (M T) :=
+  #[global] Instance M_subseteq : SubsetEq (M T) :=
     fun a b =>
       forall K1 K2, (forall x, K1 x ⊢ K2 x) -> a K1 ⊢ b K2.
-  #[global] Instance M_subseteq_refl {T} : Reflexive (⊆@{M T}).
+  #[global] Instance M_subseteq_refl : Reflexive (⊆@{M T}).
   Proof. repeat intro. iApply _frame; iIntros (?); iApply H. Qed.
-  #[global] Instance M_subseteq_trans {T} : Transitive (⊆@{M T}).
+  #[global] Instance M_subseteq_trans : Transitive (⊆@{M T}).
   Proof.
     repeat intro. etrans.
     { iApply H. reflexivity. }
     { iApply H0. apply H1. }
   Qed.
 
-  (** The distance metric on [M]. *)
-  #[global] Instance M_Dist {T} : Dist (M T) :=
+  (** The distance metric on [M].
+     TODO: change this to respect dist on T, like Equiv, and build the Ofe structure and prove the link with Eequiv. Or drop this.
+  *)
+  #[global] Instance M_Dist : Dist (M T) :=
     fun n (a b : M T) =>
       forall K1 K2, (forall x, K1 x ≡{n}≡ K2 x) -> a K1 ≡{n}≡ b K2.
 
-  #[global] Instance M_Dist_refl {T} : forall n, Reflexive (dist (A:=M T) n).
+  #[global] Instance M_Dist_refl : forall n, Reflexive (dist (A:=M T) n).
   Proof. intros; intro. red; red. simpl. apply _ne. Qed.
-  #[global] Instance M_Dist_sym {T} : forall n, Symmetric (dist (A:=M T) n).
+  #[global] Instance M_Dist_sym : forall n, Symmetric (dist (A:=M T) n).
   Proof.
     intros; intro. red; red. simpl. intros.
     symmetry. apply H. intros. symmetry. apply H0.
   Qed.
-  #[global] Instance M_Dist_trans {T} : forall n, Transitive (dist (A:=M T) n).
+  #[global] Instance M_Dist_trans : forall n, Transitive (dist (A:=M T) n).
   Proof.
     intros; intro. red; red. simpl. intros.
     etrans. eapply H. eassumption. eapply H0. done.
@@ -246,6 +259,10 @@ Section M.
     intros; simpl. iIntros "X"; iApply "X".
   Qed.
   Next Obligation. intros; simpl. auto. Qed.
+
+  #[global] Instance mret_proper : Proper ((≡) ==> (≡@{M T})) mret.
+  Proof. move => x y Exy K1 K2 EK /=. by rewrite (EK x y). Qed.
+
   #[global,program]
   Instance M_map : FMap M :=
     fun _ _ f m => {| _wp K := m.(_wp) (fun t => K (f t)) |}.
@@ -407,6 +424,7 @@ Section with_temps.
   (* The canonical notion of equivalence on [M _] *)
   #[global] Instance M_equiv [T] : Equiv (M T) :=
     fun a b => Compose._prun a ≡ Compose._prun b.
+
   #[global] Instance M_equiv_refl {T} : Reflexive (≡@{M T}).
   Proof. do 3 red; intros; reflexivity. Qed.
   #[global] Instance M_equiv_sym {T} : Symmetric (≡@{M T}).
