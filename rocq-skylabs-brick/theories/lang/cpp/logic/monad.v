@@ -250,8 +250,7 @@ Section M.
   Instance M_map : FMap M :=
     fun _ _ f m => {| _wp K := m.(_wp) (fun t => K (f t)) |}.
   Next Obligation.
-    intros; simpl.
-    iIntros "X"; iApply _frame.
+    iIntros (??????) "X". iApply _frame.
     iIntros (?); iApply "X".
   Qed.
   Next Obligation.
@@ -285,16 +284,43 @@ Section M.
   ; demonic T := {| _wp K := ∀ x : T, K x |}%I
   ; produce P := {| _wp K := P -∗ K () |}%I
   ; consume P := {| _wp K := P ∗ K () |}%I
-  ; check _ P := {| _wp K := ∃.. x, (tele_app P x ∗ True) ∧ K x |}%I
-  ; update _ _ P Q :=
+  ; check {_} P := {| _wp K := ∃.. x, (tele_app P x ∗ True) ∧ K x |}%I
+  ; update {_ _} P Q :=
       {| _wp K := ∃.. x, tele_app P x ∗
                            (∀.. y, tele_app (tele_app Q x) y -∗ K (tele_arg_append_simple x y)) |}%I
-  ; contra _ := {| _wp _K := True |}%I
-  ; ub _ := {| _wp _K := False |}%I
+  ; ac {TT} Apre Eouter Einner {TT'} Apost := {| _wp K := _ |}%I
   ; step := {| _wp K := ▷ K () |}%I
+  ; ub _ := {| _wp _K := False |}%I
+  ; contra _ := {| _wp _K := True |}%I
   ; non_atomically _ m := {| _wp K := |={top}=> m.(_wp) (fun r => |={top}=> K r) |}%I
   ; atomically _ m := {| _wp K := |={top,∅}=> m.(_wp) (fun r => |={top,∅}=> K r) |}%I
   }.
+  Next Obligation.
+    intros; simpl.
+    iIntros "W [%x K]". iExists x. by iApply "W".
+  Qed.
+  Next Obligation. intros; simpl. by f_equiv=>x. Qed.
+  Next Obligation.
+    intros; simpl.
+    iIntros "W K %x". by iApply "W".
+  Qed.
+  Next Obligation. intros; simpl. by f_equiv=>x. Qed.
+  Next Obligation.
+    intros; simpl.
+    iIntros "W K P". iApply ("W" with "(K P)").
+  Qed.
+  Next Obligation. intros; simpl. by f_equiv. Qed.
+  Next Obligation.
+    intros; simpl.
+    iIntros "W [$ K]". iApply ("W" with "K").
+  Qed.
+  Next Obligation. intros; simpl. by f_equiv. Qed.
+  Next Obligation.
+    intros; simpl.
+    iIntros "W [%x PK]". iExists x.
+    iSplit. iDestruct "PK" as "[$ _]". admit.
+    iApply "W". iDestruct "PK" as "[_ $]".
+  Admitted.
   Admit Obligations.
   (*
   #[program]
