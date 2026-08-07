@@ -569,7 +569,7 @@ Module internal.
       let* (nm : name_type) :=
         let operator _ :=
           (Op <$> operator) <|>
-          (commit (exact """""_") (fun _ => OpLit <$> ident)
+          (commit (exact """""" <* ws) (fun _ => OpLit <$> ident)
              $ OpConv <$> parse_type ())
         in
         commit (keyword "operator") operator
@@ -769,7 +769,8 @@ Module Type TESTS.
   Succeed Example _0 : TEST "f(const volatile int[], int[3])" (Nglobal $ Nfunction function_qualifiers.N "f" [Tptr (Tqualified QCV Tint); Tptr Tint]) := eq_refl.
   Succeed Example _0 : TEST "f(void)" (Nglobal $ Nfunction function_qualifiers.N "f" []) := eq_refl.
   Succeed Example _0 : TEST "::f(void)" (Nglobal $ Nfunction function_qualifiers.N "f" []) := eq_refl.
-  Succeed Example _0 : TEST "operator """"_f(enum ::foo)" (Nglobal $ Nop_lit "f" [Tenum $ Nglobal $ Nid "foo"]) := eq_refl.
+  Succeed Example _0 : TEST "operator """"_f(enum ::foo)" (Nglobal $ Nop_lit "_f" [Tenum $ Nglobal $ Nid "foo"]) := eq_refl.
+  Succeed Example _0 : TEST "operator """" _f(enum ::foo)" (Nglobal $ Nop_lit "_f" [Tenum $ Nglobal $ Nid "foo"]) := eq_refl.
 
   Succeed Example _0 : TEST "submit(unsigned long, std::function<void()>)"
                  (Nglobal
