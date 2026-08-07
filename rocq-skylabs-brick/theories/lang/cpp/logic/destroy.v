@@ -1097,6 +1097,19 @@ Section temps.
   Context `{Σ : cpp_logic, σ : genv}.
   Import UPoly.
 
+  Lemma M_non_atomically_subset {T} (P : M.M mpredI T) :
+    P ⊆ non_atomically P.
+  Proof.
+    iIntros (K1 K2 HK) "/= PK1 !>".
+    iApply (M._frame with "[] PK1").
+    iIntros (?) "K1 !>". by iApply HK.
+  Qed.
+
+  Lemma Mglobal_non_atomically_subset {T} (P : Mglobal T) :
+    P ⊆ non_atomically P.
+  Proof.
+  Admitted.
+
   Lemma interp_intro free tu :
     match free return Mglobal unit with
     | FreeTemps.id => mret ()
@@ -1107,7 +1120,8 @@ Section temps.
     end
     ⊆ interp tu free.
   Proof.
-    interp_unfold. destruct free; auto using fupd_elim. (*
+    rewrite ?interp_unfold.
+    destruct free; auto using Mglobal_non_atomically_subset. (*
     { (* par *) iIntros "(%Qf & %Qg & Qf & Qg & HQ)".
       iExists Qf, Qg. iFrame "Qf Qg". iIntros "!> Qf Qg".
       iApply ("HQ" with "Qf Qg"). }

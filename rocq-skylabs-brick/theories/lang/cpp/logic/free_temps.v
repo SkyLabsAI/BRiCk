@@ -137,10 +137,11 @@ Module FreeTemps.
     (* NOTE: I can assume that [a] and [b] are canonical, so
       I need to merge them using the canonical ordering.
     *)
-    Instance X: forall a b : t, Decision (t_cmp a b = Lt).
-    Admitted.
+    Instance X: forall a b : t, Decision (t_cmp a b = Lt) := _.
+    Print X.
+    (* Hint Extern 100 (Decision _) => cbn : typeclass_instances. *)
     Definition par_canon (a b : t) : t :=
-      list_to_t $ @sorting.merge_sort t (fun a b => t_cmp a b = Lt) _ (gather_pars a ++ gather_pars b).
+      list_to_t $ sorting.merge_sort (fun a b : t => t_cmp a b = Lt) (gather_pars a ++ gather_pars b).
 
     Fixpoint canon (a : t) {struct a} : t :=
       match a with
