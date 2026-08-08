@@ -6,6 +6,10 @@
   (package rocq-upoly)
   (package rocq-skylabs-brick)
   (package rocq-skylabs-cpp2v)
+  ../build-dune-tests/cpp2v-source-info-probe
+  check-owned-ir-architecture.py
+  check-phase5-parity-manifest.py
+  phase5-parity-manifest.tsv
   setup-project.sh
   setup-cpp2v.sh
   setup-name-test.sh))

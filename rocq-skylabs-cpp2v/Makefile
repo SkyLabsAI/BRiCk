@@ -12,7 +12,35 @@ BUILD_TYPE ?= Release
 
 all: $(BUILD_DIR)/Makefile
 	+@$(MAKE) -C $(BUILD_DIR) cpp2v
-.PHONY: cpp2v
+.PHONY: all cpp2v
+
+cpp2v-unit-tests: $(BUILD_DIR)/Makefile
+	+@$(MAKE) -C $(BUILD_DIR) cpp2v-unit-tests
+.PHONY: cpp2v-unit-tests
+
+cpp2v-source-info-probe: $(BUILD_DIR)/Makefile
+	+@$(MAKE) -C $(BUILD_DIR) cpp2v-source-info-probe
+.PHONY: cpp2v-source-info-probe
+
+cpp2v-name-builder-probe: $(BUILD_DIR)/Makefile
+	+@$(MAKE) -C $(BUILD_DIR) cpp2v-name-builder-probe
+.PHONY: cpp2v-name-builder-probe
+
+cpp2v-type-expr-builder-probe: $(BUILD_DIR)/Makefile
+	+@$(MAKE) -C $(BUILD_DIR) cpp2v-type-expr-builder-probe
+.PHONY: cpp2v-type-expr-builder-probe
+
+cpp2v-sharing-builder-probe: $(BUILD_DIR)/Makefile
+	+@$(MAKE) -C $(BUILD_DIR) cpp2v-sharing-builder-probe
+.PHONY: cpp2v-sharing-builder-probe
+
+cpp2v-declaration-builder-probe: $(BUILD_DIR)/Makefile
+	+@$(MAKE) -C $(BUILD_DIR) cpp2v-declaration-builder-probe
+.PHONY: cpp2v-declaration-builder-probe
+
+test-binaries: $(BUILD_DIR)/Makefile
+	+@$(MAKE) -C $(BUILD_DIR) cpp2v-unit-tests cpp2v-source-info-probe cpp2v-name-builder-probe cpp2v-type-expr-builder-probe cpp2v-sharing-builder-probe cpp2v-declaration-builder-probe
+.PHONY: test-binaries
 
 $(BUILD_DIR)/Makefile: $(MAKEFILE_LIST) CMakeLists.txt
 	@$(CMAKE) -B $(BUILD_DIR) $(BUILD_ARGS) -DCMAKE_BUILD_TYPE=$(BUILD_TYPE)

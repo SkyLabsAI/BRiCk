@@ -50,6 +50,11 @@ static cl::opt<std::string> VFileOutput("module",
 static cl::alias DashO("o", cl::desc("alias for --module"),
                        cl::value_desc("filename"), cl::aliasopt(VFileOutput));
 
+static cl::opt<std::string>
+    Locations("locations",
+              cl::desc("emit source-location companion for --module"),
+              cl::value_desc("filename"), cl::Optional, cl::cat(Cpp2V));
+
 static cl::opt<bool> Verbose("v", cl::desc("verbose"), cl::Optional,
                              cl::cat(Cpp2V));
 static cl::opt<bool> Verboser("vv", cl::desc("verboser"), cl::Optional,
@@ -65,10 +70,11 @@ static cl::opt<bool> NoElaborate(
     cl::desc("Do not force generation of implicit member functions."),
     cl::Optional, cl::cat(Cpp2V));
 
-static cl::opt<bool> Elaborate(
-    "elaborate",
-    cl::desc("Elaborate templates and un-forced definitions. This is unsafe in general and can cause segfaults."),
-    cl::Optional, cl::cat(Cpp2V));
+static cl::opt<bool>
+    Elaborate("elaborate",
+              cl::desc("Elaborate templates and un-forced definitions. This is "
+                       "unsafe in general and can cause segfaults."),
+              cl::Optional, cl::cat(Cpp2V));
 
 static cl::opt<bool> Version("cpp2v-version",
                              cl::desc("print version and exit"), cl::Optional,
@@ -160,13 +166,12 @@ public:
         if (NoElaborate) {
             should_elaborate = false;
         }
-        auto *result =
-            new ToCoqConsumer(&Compiler, to_opt(VFileOutput),
-                              to_opt(Templates), to_opt(NameTest),
-                              Trace::fromBits(TraceBits.getBits()), Comment,
-                              !NoSharing, CheckTypes, !NoTemplates,
-                              should_elaborate, !NoAliases, to_opt(Interactive),
-                              to_opt(Attributes));
+        auto *result = new ToCoqConsumer(
+            &Compiler, to_opt(VFileOutput), to_opt(Locations),
+            to_opt(Templates), to_opt(NameTest),
+            Trace::fromBits(TraceBits.getBits()), Comment, !NoSharing,
+            CheckTypes, !NoTemplates, should_elaborate, !NoAliases,
+            to_opt(Interactive), to_opt(Attributes));
         return std::unique_ptr<clang::ASTConsumer>(result);
     }
 
@@ -214,6 +219,37 @@ bool isDarwin() {
     return strcmp(name.sysname, "Darwin") == 0;
 }
 
+bool validateLocationOptions() {
+    if (Locations.getNumOccurrences() == 0)
+        return true;
+
+    const std::string &locations = Locations.getValue();
+    const std::string &module = VFileOutput.getValue();
+    if (VFileOutput.getNumOccurrences() == 0 || module.empty()) {
+        llvm::errs() << "cpp2v: --locations requires --module/-o\n";
+        return false;
+    }
+    if (locations.empty() || locations == "-") {
+        llvm::errs() << "cpp2v: --locations must name a file (not '-')\n";
+        return false;
+    }
+    if (module == "-") {
+        llvm::errs()
+            << "cpp2v: --module must name a file when --locations is used\n";
+        return false;
+    }
+    if (module == locations) {
+        llvm::errs() << "cpp2v: --module and --locations paths must differ\n";
+        return false;
+    }
+    if (Interactive.getNumOccurrences() != 0) {
+        llvm::errs()
+            << "cpp2v: --locations is incompatible with --for-interactive\n";
+        return false;
+    }
+    return true;
+}
+
 void addOpt(ClangTool &Tool, const char *opt, std::optional<std::string> value,
             const char *desc) {
     if (value.has_value()) {
@@ -243,6 +279,8 @@ int main(int argc, const char **argv) {
         llvm::errs() << "cpp2v version " << cpp2v::VERSION << "\n";
         return 0;
     }
+    if (!validateLocationOptions())
+        return 1;
 
     logging::set_level(logging::NONE);
     if (Verboser) {

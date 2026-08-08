@@ -1,0 +1,5 @@
+(cram
+ (deps
+  ../../build-dune-tests/cpp2v-declaration-builder-probe
+  ../setup-cpp2v.sh
+  declaration_builder.t/fixture.cpp))

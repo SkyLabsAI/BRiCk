@@ -181,20 +181,6 @@ inline Dump dump(loc loc, const clang::ASTContext &context,
 }
 llvm::raw_ostream &operator<<(llvm::raw_ostream &, Dump);
 
-// Print location in loc, falling back to address range of decl, falling
-// back to nothing.
-bool can_addr(loc loc, const clang::Decl *decl = nullptr);
-struct Addr {
-    loc location;
-    const clang::ASTContext &context;
-    const clang::Decl *decl;
-};
-inline Addr addr(loc loc, const clang::ASTContext &context,
-                 const clang::Decl *decl = nullptr) {
-    return {loc, context, decl};
-}
-llvm::raw_ostream &operator<<(llvm::raw_ostream &, Addr);
-
 // Print diagnostic prefix "ADDR (DESCRIBE): " for loc, falling back to
 // "RANGE: " for decl, falling back to "".
 struct Prefix {

@@ -1,0 +1,15 @@
+(cram
+ (deps
+  (package rocq-core)
+  (package rocq-stdlib)
+  (package rocq-upoly)
+  (package rocq-skylabs-brick)
+  (package rocq-skylabs-cpp2v)
+  ../../build-dune-tests/cpp2v-source-info-probe
+  ../setup-project.sh
+  ../setup-cpp2v.sh
+  check_17.v
+  check_20.v
+  test.cpp
+  user_header.hpp
+  system/system_header.hpp))

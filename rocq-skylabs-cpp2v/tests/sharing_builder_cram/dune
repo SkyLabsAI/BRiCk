@@ -1,0 +1,9 @@
+(cram
+ (deps
+  ../../build-dune-tests/cpp2v-sharing-builder-probe
+  ../setup-cpp2v.sh
+  (package rocq-core)
+  (package rocq-stdlib)
+  (package rocq-upoly)
+  (package rocq-skylabs-brick)
+  (package rocq-skylabs-cpp2v)))

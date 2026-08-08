@@ -84,3 +84,33 @@ check that the diff makes sense, and promote the `run.t` file.
 ```sh
 dune promote new_test.t/run.t
 ```
+
+Source-location maintenance
+---------------------------
+
+User-facing location tests must invoke cpp2v once and compile both halves of
+the generated pair. Reuse `check_cpp2v_locations` or
+`check_cpp2v_locations_versions` from `setup-cpp2v.sh`, then compile a
+`check.v` containing exact `lookup` assertions. Keep tests thematic rather
+than adding one generated snapshot:
+
+- `location_shape.t` covers final-core path order and arity;
+- `location_source.t` covers macros, `#line`, includes, and file kinds;
+- `location_roots.t` covers root namespaces, transformations, templates, and
+  points of instantiation;
+- `location_unsupported_perf.t` covers unsupported/invalid provenance and a
+  non-golden scaling smoke; and
+- `phase6_locations.t` retains sharing, determinism, template filtering,
+  publication, fold-selection, and CLI boundary coverage.
+
+A BRiCk constructor change that adds, removes, or reorders a recursive field is
+a location-path ABI change. In the same patch, update the constructor registry
+shape, checked factory, `Arena::children` unit expectation, public path
+documentation, and every affected production lookup proof. Scalars and
+list/option/product/sum wrappers must not gain artificial path levels.
+
+Tests should assert stable semantic relationships and fixture-owned physical
+coordinates, not Clang's incidental encodings or diagnostics. Do not add
+ancestor fallback, zipper APIs, stale-pair checks, or semantic sharing to the
+companion as a test workaround. Run workspace Dune commands from the composed
+workspace root.

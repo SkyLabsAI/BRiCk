@@ -1,4 +1,4 @@
-cat > dune <<EOF
+cat > dune.partial <<EOF
 (env
  (_
   (rocq
@@ -25,11 +25,13 @@ cat > dune <<EOF
   Flocq
   skylabs.upoly skylabs.prelude skylabs.iris.extra skylabs.ltac2.extra skylabs.lang.cpp Lens Lens.Elpi))
 EOF
+mv -f dune.partial dune
 
-cat > dune-project <<EOF
+cat > dune-project.partial <<EOF
 (lang dune 3.22)
 (using rocq 0.12)
 EOF
+mv -f dune-project.partial dune-project
 
 export ROCQPATH="$DUNE_SOURCEROOT/_build/install/default/lib/coq/user-contrib"
 export ROCQLIB="$DUNE_SOURCEROOT/_build/install/default/lib/coq"

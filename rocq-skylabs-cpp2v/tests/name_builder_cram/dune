@@ -1,0 +1,9 @@
+(cram
+ (deps
+  (package rocq-core)
+  (package rocq-stdlib)
+  (package rocq-upoly)
+  (package rocq-skylabs-brick)
+  (package rocq-skylabs-cpp2v)
+  ../setup-cpp2v.sh
+  ../../build-dune-tests/cpp2v-name-builder-probe))

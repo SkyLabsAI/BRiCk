@@ -8,8 +8,11 @@
 #include "CommentScanner.hpp"
 #include "CoqPrinter.hpp"
 #include "Filter.hpp"
+#include "IRBuilder.hpp"
+#include "LocationEmitter.hpp"
 #include "ModuleBuilder.hpp"
-#include "PrePrint.hpp"
+#include "RocqEmitter.hpp"
+#include "Sharing.hpp"
 #include "SpecCollector.hpp"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/Decl.h"
@@ -26,6 +29,7 @@
 #include <cerrno>
 #include <cstdio>
 #include <list>
+#include <sstream>
 #include <system_error>
 
 // Declares clang::SyntaxOnlyAction.
@@ -35,6 +39,27 @@
 
 using namespace clang;
 using namespace fmt;
+
+static void writeIRLines(Formatter &fmt, const std::string &text,
+                         bool listElements = false) {
+    std::istringstream input(text);
+    std::string line;
+    while (std::getline(input, line)) {
+        if (line.empty())
+            continue;
+        fmt << line;
+        if (listElements)
+            fmt << " ::";
+        fmt << fmt::line;
+    }
+}
+
+[[noreturn]] static void failIR(llvm::Error failure,
+                                llvm::StringRef operation) {
+    logging::fatal() << operation << ": " << llvm::toString(std::move(failure))
+                     << "\n";
+    logging::die();
+}
 
 template <typename CLOSURE>
 void with_open_file(const std::optional<std::string> path,
@@ -69,11 +94,6 @@ void with_open_file(const std::optional<std::string> path,
     }
 }
 
-bool printDecl(const clang::Decl *decl, CoqPrinter &print,
-               ClangPrinter &cprint) {
-    return cprint.withDecl(decl).printDecl(print, decl);
-}
-
 namespace name_test {
 static void bug(ClangPrinter &cprint, loc::loc loc, const std::string what) {
     cprint.error_prefix(logging::fatal(), loc) << "BUG: " << what << "\n";
@@ -103,26 +123,6 @@ void ToCoqConsumer::HandleTranslationUnit(clang::ASTContext &Context) {
     if (Context.getDiagnostics().getClient()->getNumErrors() == 0) {
         toCoqModule(&Context, Context.getTranslationUnitDecl());
     }
-}
-
-static std::list<::Module::AliasEntry>
-sortAliasList(const ::Module::AliasSet &al) {
-    std::set<std::tuple<std::string, std::string, ::Module::AliasEntry>> sorted;
-    auto into_string = [](const clang::NamedDecl *d) -> std::string {
-        if (not d)
-            return "";
-        return d->getQualifiedNameAsString();
-    };
-
-    for (auto i : al) {
-        sorted.insert(
-            std::tuple<std::string, std::string, ::Module::AliasEntry>(
-                into_string(i.first), into_string(i.second), i));
-    }
-    std::list<::Module::AliasEntry> result;
-    for (auto i : sorted)
-        result.push_front(std::move(std::get<2>(i)));
-    return result;
 }
 
 static const char *toCoqIntRank(clang::TargetInfo::IntType ty) {
@@ -193,122 +193,6 @@ static fmt::Formatter &printAbi(fmt::Formatter &out,
                << toCoqLangVersion(ctxt.getLangOpts()) << ")";
 }
 
-void printCache(::Module &mod, Cache &cache, CoqPrinter &print,
-                ClangPrinter &cprint, bool noimport = false) {
-
-    auto preprint = [&](const Decl *decl) {
-        auto cp = cprint.withDecl(decl);
-        PRINTER<clang::Type> type_fn = [&](auto prefix, auto num, auto *type) {
-            print.output() << "#[local] Definition " << prefix << num
-                           << " : type := ";
-            cp.printType(print, type, loc::of(type));
-            print.output() << "." << fmt::line;
-        };
-        PRINTER<clang::NamedDecl> name_fn = [&](auto prefix, auto num,
-                                                auto *decl) {
-            print.output() << "#[local] Definition " << prefix << num
-                           << " : name := ";
-            cp.printName(print, decl, loc::of(decl));
-            print.output() << "." << fmt::line;
-        };
-        prePrintDecl(decl, cache, type_fn, name_fn);
-    };
-
-    if (not noimport) {
-        print.output() << "Import skylabs.lang.cpp.parser." << fmt::line
-                       << fmt::line;
-    }
-
-    for (auto decl : mod.declarations()) {
-        preprint(decl);
-    }
-    for (auto decl : mod.definitions()) {
-        preprint(decl);
-    }
-    print.output() << fmt::line;
-}
-
-void ToCoqConsumer::writeTemplates(const char *name, Cache &cache,
-                                   fmt::Formatter &fmt, clang::ASTContext &ctxt,
-                                   ::Module &mod, bool noimport) {
-    CoqPrinter print(fmt, /*templates*/ true, cache);
-    ClangPrinter cprint(compiler_, &ctxt, trace_, comment_, typedefs_);
-
-    if (not noimport) {
-        print.output() << "Import skylabs.lang.cpp.mparser." << fmt::line
-                       << "#[local] Open Scope pstring_scope." << fmt::line
-                       << fmt::line;
-    }
-
-    print.output() << "Definition " << name
-                   << " : Mtranslation_unit :=" << fmt::indent << fmt::line
-                   << "Eval reduce_translation_unit in Mtranslation_unit.decls"
-                   << fmt::nbsp;
-
-    print.begin_list();
-    for (auto decl : mod.template_declarations()) {
-        // if (sharing)
-        //     prePrintDecl(decl, c, print, cprint);
-        if (printDecl(decl, print, cprint))
-            print.cons();
-    }
-    for (auto decl : mod.template_definitions()) {
-        if (printDecl(decl, print, cprint))
-            print.cons();
-    }
-    print.end_list();
-
-    print.output() << "." << fmt::outdent << fmt::line;
-}
-
-/**
- * Assumes that the plugin is already `Require`d.
- */
-void ToCoqConsumer::writeStatic(const char *name, Cache &cache,
-                                fmt::Formatter &fmt, clang::ASTContext &ctxt,
-                                ::Module &mod, bool noimport) {
-    CoqPrinter print(fmt, /*templates*/ false, cache);
-    ClangPrinter cprint(compiler_, &ctxt, trace_, comment_, typedefs_);
-
-    if (not noimport) {
-        print.output() << "Import skylabs.lang.cpp.parser." << fmt::line
-                       << "#[local] Open Scope pstring_scope." << fmt::line
-                       << fmt::line;
-    }
-
-    if (attributes_.has_value()) {
-        print.output() << "#[" << attributes_.value() << "]" << fmt::line;
-    }
-    print.output() << "cpp.prog " << name << fmt::indent << fmt::line;
-    print.output() << "abi ";
-    printAbi(print.output(), ctxt) << fmt::line;
-    print.output() << "defns" << fmt::indent;
-
-    for (auto decl : mod.declarations()) {
-        printDecl(decl, print, cprint);
-    }
-    for (auto decl : mod.definitions()) {
-        printDecl(decl, print, cprint);
-    }
-    for (auto &[from, to] : sortAliasList(mod.aliases())) {
-        if (from) {
-            guard::ctor _{print, "Dusing_namespace"};
-            cprint.printName(print, *from) << fmt::nbsp;
-            cprint.printName(print, *to);
-        } else {
-            guard::ctor _{print, "Dglobal_using_namespace"};
-            cprint.printName(print, *to);
-        }
-    }
-    for (auto decl : mod.asserts()) {
-        printDecl(decl, print, cprint);
-    }
-
-    // TODO I still need to generate the initializer
-
-    print.output() << "." << fmt::outdent << fmt::outdent << fmt::line;
-}
-
 void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
                                 clang::TranslationUnitDecl *decl) {
 
@@ -330,6 +214,26 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
                      name_test_file_.has_value();
     build_module(decl, mod, filter, specs, compiler_, elaborate_, templates);
 
+    std::unique_ptr<ir::TranslationUnitIR> ownedUnit;
+    std::optional<ir::SharingPlan> ownedSharing;
+    const bool semanticOutput = output_file_.has_value() ||
+                                locations_file_.has_value() ||
+                                templates_file_.has_value();
+    if (semanticOutput) {
+        auto built = ir::IRBuilder::buildModule(
+            *ctxt, mod, &compiler_->getSema(), typedefs_, comment_);
+        if (!built)
+            failIR(built.takeError(), "owned IR construction failed");
+        ownedUnit = std::move(built->unit);
+        if (sharing_) {
+            auto plan = ir::IRSharing::analyze(
+                *ownedUnit, ir::IRSharing::productionSeeds(*ownedUnit));
+            if (!plan)
+                failIR(plan.takeError(), "owned IR sharing analysis failed");
+            ownedSharing = std::move(*plan);
+        }
+    }
+
     auto parser = [&](CoqPrinter &print) -> auto & {
         StringRef coqmod(print.templates() ? "skylabs.lang.cpp.mparser"
                                            : "skylabs.lang.cpp.parser");
@@ -343,15 +247,65 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
                << "#[local] Open Scope pstring_scope." << fmt::line;
     };
 
-    auto check_types = [&](Formatter &fmt, const char* name) {
-      if (!interactive_.has_value()) {
-        fmt << fmt::line << "Require skylabs.lang.cpp.syntax.typed.";
-      }
-      fmt << fmt::line
-          << "Goal typed.decltype.check_tu "
-          << interactive_.value_or("source")
-          << " = trace.Success tt. Proof. vm_compute; reflexivity. Abort."
-          << fmt::line;
+    auto check_types = [&](Formatter &fmt, const char *name) {
+        if (!interactive_.has_value()) {
+            fmt << fmt::line << "Require skylabs.lang.cpp.syntax.typed.";
+        }
+        fmt << fmt::line << "Goal typed.decltype.check_tu "
+            << interactive_.value_or("source")
+            << " = trace.Success tt. Proof. vm_compute; reflexivity. Abort."
+            << fmt::line;
+    };
+
+    ir::SemanticRocqEmitter irEmitter({sharing_, true, false});
+    auto irSharingDefinitions = [&](Formatter &fmt, bool noimport = false) {
+        if (!ownedSharing)
+            return;
+        if (!noimport)
+            fmt << "Import skylabs.lang.cpp.parser." << fmt::line << fmt::line;
+        auto definitions =
+            irEmitter.emitSharingDefinitions(*ownedUnit, *ownedSharing);
+        if (!definitions)
+            failIR(definitions.takeError(), "owned IR sharing emission failed");
+        writeIRLines(fmt, *definitions);
+    };
+    auto writeStaticIR = [&](const char *name, Formatter &fmt,
+                             bool noimport = false) {
+        if (!noimport)
+            fmt << "Import skylabs.lang.cpp.parser." << fmt::line
+                << "#[local] Open Scope pstring_scope." << fmt::line
+                << fmt::line;
+        if (attributes_)
+            fmt << "#[" << *attributes_ << "]" << fmt::line;
+        fmt << "cpp.prog " << name << fmt::indent << fmt::line << "abi ";
+        printAbi(fmt, *ctxt) << fmt::line;
+        fmt << "defns" << fmt::indent;
+        llvm::Expected<std::string> events =
+            ownedSharing ? irEmitter.emitOrdinary(*ownedUnit, *ownedSharing)
+                         : irEmitter.emitOrdinary(*ownedUnit);
+        if (!events)
+            failIR(events.takeError(), "owned ordinary emission failed");
+        writeIRLines(fmt, *events);
+        fmt << "." << fmt::outdent << fmt::outdent << fmt::line;
+    };
+    auto writeTemplatesIR = [&](const char *name, Formatter &fmt,
+                                const ir::SharingPlan *plan = nullptr,
+                                bool noimport = false) {
+        if (!noimport)
+            fmt << "Import skylabs.lang.cpp.mparser." << fmt::line
+                << "#[local] Open Scope pstring_scope." << fmt::line
+                << fmt::line;
+        fmt << "Definition " << name << " : Mtranslation_unit :=" << fmt::indent
+            << fmt::line
+            << "Eval reduce_translation_unit in Mtranslation_unit.decls ("
+            << fmt::indent << fmt::line;
+        llvm::Expected<std::string> events =
+            plan ? irEmitter.emitTemplates(*ownedUnit, *plan)
+                 : irEmitter.emitTemplates(*ownedUnit);
+        if (!events)
+            failIR(events.takeError(), "owned template emission failed");
+        writeIRLines(fmt, *events, true);
+        fmt << "nil)." << fmt::outdent << fmt::outdent << fmt::line;
     };
 
     auto static_and_templates = [&](Formatter &fmt) {
@@ -375,8 +329,6 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
         ```
 
         */
-        Cache cache;
-
         if (interactive_.has_value()) {
             fmt << "Require skylabs.lang.cpp.parser." << fmt::line
                 << "Require skylabs.lang.cpp.mparser." << fmt::line
@@ -391,12 +343,7 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
         }
         fmt << "#[local] Open Scope pstring_scope." << fmt::line;
 
-        if (this->sharing_) {
-            CoqPrinter static_print(fmt, /*templates*/ false, cache);
-            ClangPrinter static_cprint(compiler_, ctxt, trace_, comment_,
-                                       typedefs_);
-            printCache(mod, cache, static_print, static_cprint, true);
-        }
+        irSharingDefinitions(fmt, true);
 
         // BEGIN: Section static
         // fmt << "Section static." << fmt::indent << fmt::line;
@@ -404,7 +351,7 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
         std::string static_name{"static__"};
         static_name += interactive_.value_or("source");
 
-        writeStatic(static_name.c_str(), cache, fmt, *ctxt, mod, true);
+        writeStaticIR(static_name.c_str(), fmt, true);
 
         // fmt << fmt::outdent << "End static." << fmt::line << fmt::line;
         // END: Section static
@@ -415,7 +362,8 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
         std::string meta_name{"meta__"};
         meta_name += interactive_.value_or("source");
 
-        writeTemplates(meta_name.c_str(), cache, fmt, *ctxt, mod);
+        writeTemplatesIR(meta_name.c_str(), fmt,
+                         ownedSharing ? &*ownedSharing : nullptr);
 
         // fmt << fmt::outdent << "End meta." << fmt::line << fmt::line;
         // END: Section meta
@@ -439,60 +387,51 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
         }
     };
 
-    auto static_only =
-        [&](Formatter &fmt) {
-            Cache cache;
-            CoqPrinter print(fmt, /*templates*/ false, cache);
-            ClangPrinter cprint(compiler_, ctxt, trace_, comment_, typedefs_);
+    auto static_only = [&](Formatter &fmt) {
+        if (interactive_.has_value()) {
+            // The interactive host already loaded the parser. Limit all
+            // command side effects to a deterministic section.
+            fmt << "Section cpp_prog__" << interactive_.value() << "__."
+                << fmt::line;
+        } else {
+            fmt << "Require Import skylabs.lang.cpp.parser.plugin.cpp2v."
+                << fmt::line;
+        }
 
-            if (interactive_.has_value()) {
-                // Since we are in interactive mode, the parser is already
-                // loaded; however, it is important that we limit our
-                // side-effects
-                print.output() << "Section cpp_prog__" << interactive_.value()
-                               << "__." << fmt::line;
-            } else {
-                print.output()
-                    << "Require Import skylabs.lang.cpp.parser.plugin.cpp2v."
-                    << fmt::line;
-            }
-            // parser(print);
-            // bytestring(print) << fmt::line;
+        irSharingDefinitions(fmt);
+        writeStaticIR(interactive_.value_or("source").c_str(), fmt);
 
-            if (this->sharing_) {
-                printCache(mod, cache, print, cprint);
-            }
+        if (interactive_.has_value()) {
+            fmt << "End cpp_prog__" << interactive_.value() << "__."
+                << fmt::line;
+        } else {
+            // NOTE: Backwards compatibility
+            fmt << "Abbreviation module := source (only parsing)." << fmt::line;
+        }
 
-            writeStatic(interactive_.value_or("source").c_str(), cache, fmt,
-                        *ctxt, mod);
-
-            // Close the section if we opened one
-            if (interactive_.has_value()) {
-                print.output() << "End cpp_prog__" << interactive_.value()
-                               << "__." << fmt::line;
-            } else {
-                // NOTE: Backwards compatibility
-                print.output()
-                    << "Abbreviation module := source (only parsing)."
-                    << fmt::line;
-            }
-
-            if (check_types_) {
-                check_types(fmt, interactive_.value_or("source").c_str());
-            }
-        };
+        if (check_types_)
+            check_types(fmt, interactive_.value_or("source").c_str());
+    };
 
     auto templates_only = [&](Formatter &fmt) {
-        Cache cache;
         fmt << "Require skylabs.lang.cpp.mparser." << fmt::line;
-
-        writeTemplates("templates", cache, fmt, *ctxt, mod);
+        writeTemplatesIR("templates", fmt);
     };
 
     if (output_templates_) {
         with_open_file(output_file_, static_and_templates);
     } else {
         with_open_file(output_file_, static_only);
+    }
+
+    if (locations_file_) {
+        ir::LocationRocqEmitter locationEmitter({output_templates_});
+        auto companion = locationEmitter.emit(*ownedUnit);
+        if (!companion)
+            failIR(companion.takeError(),
+                   "owned source-location emission failed");
+        with_open_file(locations_file_,
+                       [&](Formatter &fmt) { writeIRLines(fmt, *companion); });
     }
 
     with_open_file(templates_file_, templates_only);

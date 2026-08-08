@@ -6,7 +6,7 @@ Code generator for the BRiCk program logic for C++
 The dependencies for the code generator are the following:
 - A C++ compiler
 - The `cmake` tool
-- LLVM 16 or greater (the tool is well tested up to version 18)
+- LLVM 16 or greater (the tool is tested through version 22)
 
 ### Native dependencies: Linux (Ubuntu)
 
@@ -51,12 +51,15 @@ This assumes that [dune](https://github.com/ocaml/dune) is available.
 ### After building with the `Makefile`
 
 Given a C++ source file `CPP_SOURCE`, and a set of compiler flags `FLAGS`, the
-following command produces files `NAMES_FILE` and `AST_FILE`.
+following command produces `AST_FILE`:
+
 ```sh
-./build/cpp2v -v -names ${NAMES_FILE} -o ${AST_FILE} ${CPP_SOURCE} -- ${FLAGS}
+./build/cpp2v -v -o ${AST_FILE} ${CPP_SOURCE} -- ${FLAGS}
 ```
-For a `CPP_SOURCE` named `file.cpp`, a convention that is often followed is
-to define `AST_FILE` as `file_cpp.v`, and `NAMES_FILE` as `file_cpp_names.v`.
+
+For a `CPP_SOURCE` named `file.cpp`, `file_cpp.v` is a common `AST_FILE` name.
+The isolated `--name-test ${NAMES_FILE}` option can additionally emit structured
+names for diagnostics; it is not a second semantic-output backend.
 
 ### After building with `dune`
 
@@ -65,6 +68,94 @@ arguments `ARGS`.
 ```
 dune exec -- cpp2v ${ARGS}
 ```
+
+## Source-location companions
+
+Pass `--locations` together with a named module output to produce a standalone
+source-location companion from the same validated translation-unit IR as the
+ordinary AST:
+
+```sh
+cpp2v -o file_cpp.v --locations file_cpp_locations.v file.cpp -- -std=c++17
+```
+
+`--locations` requires `--module`/`-o`. Neither output may be `-`, the two paths
+must differ, and location output is incompatible with `--for-interactive`.
+Without `--locations`, cpp2v creates no companion and retains its ordinary CLI
+behavior.
+
+The files are published serially and atomically per path through a temporary
+`.partial` file and rename. The AST is published first. If companion generation
+or publication fails, the already-published AST may remain, but the final
+location path is not published.
+
+### Generated value and root kinds
+
+The ordinary AST output exports `source` (with deprecated parsing abbreviation
+`module` for compatibility). The companion imports the BRiCk source-location
+API and contains local
+`source_files`, `source_origins`, and `located_root_events` construction values.
+Its only public generated value is:
+
+```coq
+source_locations : source_map
+```
+
+It is standalone: semantic root names and values are inline and it neither
+imports the AST output nor refers to that file's sharing definitions. The map
+has four distinct root namespaces, selected with a `decl_root`:
+
+- `DRSymbol name` — ordinary object/function symbol;
+- `DRType name` — ordinary type/global declaration;
+- `DRMsymbol name` — template object/function symbol; and
+- `DRMtype name` — template type/global declaration.
+
+Use the sole public query operation with a root and a zero-based path:
+
+```coq
+skylabs.lang.cpp.syntax.source_location.lookup
+  source_locations (DRSymbol name) [0; 2; 1]
+```
+
+The result is `inr origins` on success or `inl error` for a missing root, an
+out-of-bounds child, or an invalid origin/anchor/derivation ID. Success with no
+provenance is distinct and returns `inr []`.
+
+### Path order
+
+A path starts at the final semantic value stored at the selected root; `[]`
+selects that root. Each index selects a recursive semantic child in constructor
+field order. Required node fields contribute one child, present options one,
+lists one child per element in source order, and products or the active sum
+payload flatten left-to-right. Scalars and container syntax add no levels.
+Consequently, for example, `Ebinop op lhs rhs ty` has children
+`[lhs; rhs; ty]`, and an `Ecall fn args` has `fn` followed by its arguments.
+
+Paths describe cpp2v's final core IR, not the Clang AST or the printed Rocq
+syntax. Erased wrappers do not add a level; their transformed origins can be
+retained on the surviving node. Synthesized and unsupported final nodes remain
+explicit when they carry semantic structure.
+
+Each returned `source_origin` can distinguish explicit, implicit,
+Clang-transformed, cpp2v-synthesized, and inherited provenance. It can contain
+independent spelling and expansion ranges, physical byte/line/column points,
+presumed `#line` points, nested macro frames, a point of instantiation, a
+synthetic anchor, and derivation edges. Range endpoints are optional, so an
+invalid or non-contiguous Clang projection is represented rather than guessed.
+
+### Templates, sharing, and limitations
+
+`--no-templates` omits template root events and leaves both template location
+maps empty. `--no-sharing` can change ordinary AST text but cannot change
+companion bytes or paths: companion semantic values are always inline and path
+shape comes only from owned recursive occurrences.
+
+This version intentionally provides no zipper, provenance-aware traversal,
+ancestor fallback, or lookup from an isolated AST value. It does not detect a
+stale or mismatched AST/companion pair, preserve paths across later semantic
+transformations, or attach roots to non-name-keyed translation-unit metadata.
+Consumers should retain the generated pair from one cpp2v invocation and use
+`lookup` directly.
 
 ## Directory layout
 

@@ -102,4 +102,86 @@
  (name cpp2v)
  (deps
   rocq-skylabs-cpp2v.install
-  compile_commands.json))
+  compile_commands.json
+  (alias cpp2v-architecture-tests)))
+
+(subdir build-dune-tests
+ (rule
+  (targets cpp2v-unit-tests cpp2v-source-info-probe cpp2v-name-builder-probe
+           cpp2v-type-expr-builder-probe cpp2v-sharing-builder-probe
+           cpp2v-declaration-builder-probe dune.log)
+  (deps
+   %{read-lines:../build-dune/llvm-lib-path.txt}
+   ../Makefile
+   ../CMakeLists.txt
+   (source_tree ../include)
+   (source_tree ../llvm-include)
+   (source_tree ../src)
+   (source_tree ../tests/unit)
+   (env_var PATH)
+   (env_var LLVM_DIR)
+   (env_var CLANG_DIR)
+   (env_var BUILD_TYPE)
+   (env_var BUILD_ARGS))
+  (package rocq-skylabs-cpp2v)
+  (action
+   (chdir ..
+    (bash "make -j8 BUILD_DIR=build-dune-tests test-binaries &> build-dune-tests/dune.log || { cat build-dune-tests/dune.log; exit 1; }")))))
+
+(rule
+ (alias cpp2v-unit-tests)
+ (deps build-dune-tests/cpp2v-unit-tests)
+ (action (run %{dep:build-dune-tests/cpp2v-unit-tests})))
+
+(rule
+ (alias cpp2v-source-info-tests)
+ (deps build-dune-tests/cpp2v-source-info-probe
+       tests/source_info.t/test.cpp
+       tests/source_info.t/user_header.hpp
+       tests/source_info.t/system/system_header.hpp)
+ (action
+  (chdir tests/source_info.t
+   (run %{dep:build-dune-tests/cpp2v-source-info-probe} test.cpp -- -I.
+        -isystem system))))
+
+(rule
+ (alias cpp2v-type-expr-builder-tests)
+ (deps build-dune-tests/cpp2v-type-expr-builder-probe
+       tests/type_expr_builder_cram/type_expr_builder.t/fixture.cpp)
+ (action
+  (run %{dep:build-dune-tests/cpp2v-type-expr-builder-probe}
+       tests/type_expr_builder_cram/type_expr_builder.t/fixture.cpp --
+       -std=c++17 -fblocks)))
+
+(rule
+ (alias cpp2v-sharing-builder-tests)
+ (deps build-dune-tests/cpp2v-sharing-builder-probe
+       tests/sharing_builder_cram/sharing_builder.t/fixture.cpp)
+ (action
+  (run %{dep:build-dune-tests/cpp2v-sharing-builder-probe}
+       tests/sharing_builder_cram/sharing_builder.t/fixture.cpp)))
+
+(rule
+ (alias cpp2v-declaration-builder-tests)
+ (deps build-dune-tests/cpp2v-declaration-builder-probe
+       tests/declaration_builder_cram/declaration_builder.t/fixture.cpp)
+ (action
+  (run %{dep:build-dune-tests/cpp2v-declaration-builder-probe}
+       tests/declaration_builder_cram/declaration_builder.t/fixture.cpp
+       BuiltDeclarations -- -std=c++17)))
+
+(rule
+ (alias cpp2v-architecture-tests)
+ (deps tests/check-owned-ir-architecture.py
+       CMakeLists.txt
+       (source_tree include)
+       (source_tree src))
+ (action (run python3 %{dep:tests/check-owned-ir-architecture.py})))
+
+(rule
+ (alias cpp2v-name-builder-tests)
+ (deps build-dune-tests/cpp2v-name-builder-probe
+       tests/name_builder_cram/name_builder.t/fixture.cpp)
+ (action
+  (run %{dep:build-dune-tests/cpp2v-name-builder-probe}
+       tests/name_builder_cram/name_builder.t/fixture.cpp -- -std=c++17)))
