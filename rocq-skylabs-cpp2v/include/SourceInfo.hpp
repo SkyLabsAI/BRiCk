@@ -5,13 +5,16 @@
  */
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include <llvm/ADT/SmallVector.h>
 #include <llvm/Support/Error.h>
 
 namespace source {
@@ -129,9 +132,11 @@ bool operator==(const MacroFrame &lhs, const MacroFrame &rhs);
 bool operator==(const Origin &lhs, const Origin &rhs);
 bool operator==(const File &lhs, const File &rhs);
 
-/// Owned, deterministic first-seen interning. Clang-backed extraction wraps
-/// this pure builder in ClangSourceInfo and never stores SourceManager state in
-/// the resulting values.
+/// Owned, deterministic first-seen interning. Origins use a full-value hash
+/// index with equality-checked collision buckets; table order and IDs remain
+/// first-seen. Clang-backed extraction wraps this pure builder in
+/// ClangSourceInfo and never stores SourceManager state in the resulting
+/// values.
 class TableBuilder {
 public:
     /// Intern by serialized value. Pure/manual producers normally want this.
@@ -144,6 +149,8 @@ public:
 
 private:
     Tables tables_;
+    std::unordered_map<std::size_t, llvm::SmallVector<OriginId, 1>>
+        originIndex_;
     bool finished_ = false;
 };
 

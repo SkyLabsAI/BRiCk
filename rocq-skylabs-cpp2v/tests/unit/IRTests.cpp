@@ -539,6 +539,39 @@ bool sourceInterningAndRendering() {
             return false;
     }
 
+    {
+        source::TableBuilder indexed;
+        auto fileId =
+            indexed.internFile({"many.cpp", std::nullopt,
+                                source::FileKind::User, true, std::nullopt});
+        if (!fileId)
+            return false;
+        auto originAt = [file = *fileId](std::uint32_t index) {
+            source::Origin origin;
+            const source::PhysicalPoint begin{file, index * 2ULL, index + 1, 1};
+            const source::PhysicalPoint end{file, index * 2ULL + 1, index + 1,
+                                            2};
+            origin.spelling =
+                source::Range{begin, end, source::RangeKind::Token,
+                              std::make_pair(begin, end)};
+            return origin;
+        };
+        constexpr std::uint32_t originCount = 8192;
+        for (std::uint32_t index = 0; index < originCount; ++index) {
+            auto id = indexed.internOrigin(originAt(index));
+            if (!id || id->value() != index)
+                return false;
+        }
+        for (std::uint32_t index = originCount; index-- > 0;) {
+            auto id = indexed.internOrigin(originAt(index));
+            if (!id || id->value() != index)
+                return false;
+        }
+        auto finished = std::move(indexed).finish();
+        if (!finished || finished->origins.size() != originCount)
+            return false;
+    }
+
     source::TableBuilder builder;
     source::File file{"a\"\\.cpp", std::string("requested(*.cpp"),
                       source::FileKind::User, true, std::nullopt};

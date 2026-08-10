@@ -26,6 +26,73 @@ bool equalOptional(const std::optional<T> &lhs, const std::optional<T> &rhs) {
     return !lhs || *lhs == *rhs;
 }
 
+void combineHash(std::size_t &seed, std::size_t value) {
+    seed ^= value + static_cast<std::size_t>(0x9e3779b97f4a7c15ULL) +
+            (seed << 6U) + (seed >> 2U);
+}
+
+template <typename T, typename Hash>
+void hashOptional(std::size_t &seed, const std::optional<T> &value, Hash hash) {
+    combineHash(seed, value.has_value());
+    if (value)
+        hash(seed, *value);
+}
+
+void hashPhysicalPoint(std::size_t &seed, const PhysicalPoint &point) {
+    combineHash(seed, point.file.value());
+    combineHash(seed, std::hash<std::uint64_t>{}(point.byteOffset));
+    combineHash(seed, point.line);
+    combineHash(seed, point.byteColumn);
+}
+
+void hashPresumedPoint(std::size_t &seed, const PresumedPoint &point) {
+    combineHash(seed, std::hash<std::string>{}(point.file));
+    combineHash(seed, point.line);
+    combineHash(seed, point.column);
+}
+
+void hashRange(std::size_t &seed, const Range &range) {
+    hashOptional(seed, range.begin, hashPhysicalPoint);
+    hashOptional(seed, range.end, hashPhysicalPoint);
+    combineHash(seed, static_cast<std::size_t>(range.endSemantics));
+    hashOptional(seed, range.normalizedHalfOpen,
+                 [](std::size_t &nested,
+                    const std::pair<PhysicalPoint, PhysicalPoint> &points) {
+                     hashPhysicalPoint(nested, points.first);
+                     hashPhysicalPoint(nested, points.second);
+                 });
+}
+
+void hashMacroFrame(std::size_t &seed, const MacroFrame &frame) {
+    hashOptional(seed, frame.name,
+                 [](std::size_t &nested, const std::string &name) {
+                     combineHash(nested, std::hash<std::string>{}(name));
+                 });
+    combineHash(seed, static_cast<std::size_t>(frame.kind));
+    hashOptional(seed, frame.spelling, hashRange);
+    hashOptional(seed, frame.expansion, hashRange);
+}
+
+std::size_t hashOrigin(const Origin &origin) {
+    std::size_t seed = 0;
+    combineHash(seed, static_cast<std::size_t>(origin.kind));
+    hashOptional(seed, origin.spelling, hashRange);
+    hashOptional(seed, origin.expansion, hashRange);
+    hashOptional(seed, origin.presumedBegin, hashPresumedPoint);
+    hashOptional(seed, origin.presumedEnd, hashPresumedPoint);
+    combineHash(seed, origin.macroStack.size());
+    for (const MacroFrame &frame : origin.macroStack)
+        hashMacroFrame(seed, frame);
+    hashOptional(seed, origin.pointOfInstantiation, hashPhysicalPoint);
+    hashOptional(seed, origin.anchor, [](std::size_t &nested, OriginId id) {
+        combineHash(nested, id.value());
+    });
+    combineHash(seed, origin.derivedFrom.size());
+    for (OriginId id : origin.derivedFrom)
+        combineHash(seed, id.value());
+    return seed;
+}
+
 bool validFile(FileId id, const Tables &tables) {
     return id.valid() && id.value() < tables.files.size();
 }
@@ -138,17 +205,19 @@ llvm::Expected<OriginId> TableBuilder::internOrigin(Origin origin) {
     if (finished_)
         return error(
             "cannot intern an origin after source tables are finished");
-    auto found =
-        std::find(tables_.origins.begin(), tables_.origins.end(), origin);
-    if (found != tables_.origins.end())
-        return OriginId(static_cast<OriginId::value_type>(
-            std::distance(tables_.origins.begin(), found)));
+    const std::size_t hash = hashOrigin(origin);
+    auto indexed = originIndex_.find(hash);
+    if (indexed != originIndex_.end())
+        for (OriginId candidate : indexed->second)
+            if (tables_.origins[candidate.value()] == origin)
+                return candidate;
     if (tables_.origins.size() >=
         std::numeric_limits<OriginId::value_type>::max())
         return error("too many source origins");
     auto id =
         OriginId(static_cast<OriginId::value_type>(tables_.origins.size()));
     tables_.origins.push_back(std::move(origin));
+    originIndex_[hash].push_back(id);
     return id;
 }
 

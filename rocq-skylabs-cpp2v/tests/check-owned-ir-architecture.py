@@ -110,6 +110,15 @@ for relative in pure_files:
     if re.search(r"#\s*include\s*[<\"]clang/|\bclang::", text(relative)):
         fail(f"pure IR/emitter file {relative} depends on Clang")
 
+source_header = text("include/SourceInfo.hpp")
+source_implementation = text("src/SourceInfo.cpp")
+if "originIndex_" not in source_header:
+    fail("source-origin interning must retain its hash index")
+if re.search(r"std::find\s*\(\s*tables_\.origins", source_implementation):
+    fail("source-origin interning regressed to a quadratic table scan")
+if "tables_.origins[candidate.value()] == origin" not in source_implementation:
+    fail("source-origin hash collisions are not equality-checked")
+
 for removed in ("src/PrintDecl.cpp", "src/PrePrint.cpp"):
     if (PACKAGE / removed).exists():
         fail(f"obsolete legacy semantic source remains: {removed}")
