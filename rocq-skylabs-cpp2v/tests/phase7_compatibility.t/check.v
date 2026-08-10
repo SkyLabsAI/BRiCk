@@ -21,6 +21,12 @@ Definition lambda_root : decl_root :=
           [Tparam "T"]))
       [Atype (Tparam "T")]).
 
+Definition dispatch_root (method : PrimString.string) : decl_root :=
+  DRMsymbol
+    (Nscoped
+      (Ninst (Nglobal (Nid "DependentDispatch")) [Atype (Tparam "T")])
+      (core.Nfunction function_qualifiers.N method [Tparam "T"])).
+
 Definition classes (result : lookup_error + list source_origin)
     : list origin_kind :=
   match result with
@@ -53,5 +59,19 @@ Example lambda_callee_reduction_retains_provenance :
     classes
       (skylabs.lang.cpp.syntax.source_location.lookup source_locations
         lambda_root [1; 0; 2; 0; 0; 0; 0]) =
+      [Cpp2vSynthesizedOrigin; ClangTransformedOrigin].
+Proof. vm_compute. reflexivity. Qed.
+
+Example resolved_subscript_callee_reduction_retains_provenance :
+    classes
+      (skylabs.lang.cpp.syntax.source_location.lookup source_locations
+        (dispatch_root "runResolved") [1; 0; 3; 0; 0; 0; 0]) =
+      [Cpp2vSynthesizedOrigin; ClangTransformedOrigin].
+Proof. vm_compute. reflexivity. Qed.
+
+Example unresolved_subscript_callee_reduction_retains_provenance :
+    classes
+      (skylabs.lang.cpp.syntax.source_location.lookup source_locations
+        (dispatch_root "runUnresolved") [1; 0; 3; 0; 0; 0; 0]) =
       [Cpp2vSynthesizedOrigin; ClangTransformedOrigin].
 Proof. vm_compute. reflexivity. Qed.

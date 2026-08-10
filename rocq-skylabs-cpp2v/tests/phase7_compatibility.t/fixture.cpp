@@ -26,6 +26,16 @@ template <typename T> void dependent_allocation_operators(T *pointer) {
     ::operator delete[](pointer);
 }
 
+template <typename T> struct DependentDispatch {
+    using EntryPoint = int (*)(T);
+    static int invoke(T);
+    static EntryPoint mutableDispatch[1];
+    static constexpr EntryPoint dispatch[] = {invoke};
+
+    int runResolved(T value) { return mutableDispatch[0](value); }
+    int runUnresolved(T value) { return dispatch[0](value); }
+};
+
 struct Pair {
     int left;
     int right;

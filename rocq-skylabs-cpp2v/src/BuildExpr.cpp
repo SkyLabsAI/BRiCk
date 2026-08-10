@@ -1704,6 +1704,27 @@ llvm::Expected<NodeId> State::buildExpression(const clang::Expr &expression,
         }
         if (llvm::isa<clang::CallExpr>(&callee))
             return makeUnsupportedCallName(callee, "Eunresolved_call");
+        if (llvm::isa<clang::ArraySubscriptExpr>(&callee)) {
+            // mparser.Esubscript evaluates infer_subscript before
+            // to_unresolved_name sees the callee. Classify the same finished
+            // expression rather than assuming every Clang subscript resolves.
+            auto built = buildExpression(callee, mode);
+            if (!built)
+                return built.takeError();
+            auto node = unit->buildingArena().get(*built);
+            if (!node)
+                return node.takeError();
+            switch ((*node)->constructor) {
+            case Constructor::ExpressionSubscript:
+                return makeUnsupportedCallName(callee, "Esubscript");
+            case Constructor::ExpressionUnresolvedBinary:
+            case Constructor::ExpressionUnresolvedBinarySyntax:
+                return makeUnsupportedCallName(callee, "Eunresolved_binop");
+            default:
+                return expressionError(callee,
+                                       "unresolved subscript call callee");
+            }
+        }
         if (llvm::isa<clang::UnaryOperator>(&callee)) {
             auto built = buildExpression(callee, mode);
             if (!built)
