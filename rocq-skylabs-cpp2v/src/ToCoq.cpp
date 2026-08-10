@@ -370,7 +370,7 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
         End meta.
 
         Definition source := with_templates static_tu meta_tu.
-        #[deprecated]
+        #[warnings="-deprecated-syntactic-definition"]
         Abbreviation module := source.
         ```
 
@@ -430,7 +430,7 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
 
         if (!interactive_.has_value()) {
             // NOTE: Backwards compatibility
-            fmt << "#[deprecated(note=\"use [source] instead.\")]" << fmt::line
+            fmt << "#[warnings=\"-deprecated-syntactic-definition\"]" << fmt::line
                 << "Abbreviation module := source (only parsing)." << fmt::line;
         }
 
@@ -473,6 +473,8 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
             } else {
                 // NOTE: Backwards compatibility
                 print.output()
+                    << "#[warnings=\"-deprecated-syntactic-definition\"]"
+                    << fmt::line
                     << "Abbreviation module := source (only parsing)."
                     << fmt::line;
             }
