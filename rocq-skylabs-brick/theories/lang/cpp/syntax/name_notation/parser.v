@@ -25,13 +25,16 @@ Require Import skylabs.lang.cpp.syntax.translation_unit.
  *)
 
 Import Uint63Notations.
-Definition ident_char (b : PrimString.char63) : bool :=
+Definition alpha_char (b : char63) : bool :=
      in_range_incl "a" "z" b
   || in_range_incl "A" "Z" b
   || (b =? "_".(char63_wrap))%char63%uint63.
 
 Definition digit_char (b : char63) : bool :=
   (("0".(char63_wrap) ≤? b) && (b ≤? "9".(char63_wrap)))%char63%uint63.
+
+Definition ident_char (b : char63) : bool :=
+  alpha_char b || digit_char b.
 
 Module internal.
   Import parsec.
@@ -66,8 +69,8 @@ Module internal.
         (
           stateT.mk $ fun '(idx, str) =>
               if ltb idx (PrimString.length str) then
-                if ident_char (PrimString.get str idx) then
-                  let '(fin, s) := get_ident str idx 1%uint63 (fun x => ident_char x || digit_char x) 1000 in
+                if alpha_char (PrimString.get str idx) then
+                  let '(fin, s) := get_ident str idx 1%uint63 ident_char 1000 in
                   optionT.mk (mret (UTypes.Some (UTypes.pair (fin, str) s)))
                 else optionT.mk (mret (UTypes.None))
               else
@@ -81,19 +84,20 @@ Module internal.
 
     Notation exact bs := (exact_bs bs).
 
+    Definition with_spaces {T} (p : M T) : M T :=
+      ws *> p <* ws.
+
     Definition spaced (s : PrimString.string) : M unit :=
-      let* _ := ws in
-      let* _ := exact s in
-      ws.
+      with_spaces $ exact s.
 
     (* a maximal identifier *)
     Definition keyword_no_ws (s : PrimString.string) : M unit :=
       let* _ := exact s in
-      let* _ := not $ char (fun a => ident_char a || digit_char a) in
+      let* _ := not $ char ident_char in
       mret ().
 
     Definition keyword (b : PrimString.string) : M unit :=
-      ws *> keyword_no_ws b <* ws.
+      with_spaces (keyword_no_ws b).
 
     Definition punct_char (c : char63) : Prop :=
       in_range_incl_excl "!" "0" c \/
@@ -106,9 +110,7 @@ Module internal.
 
     (* TODO: ideally, i would like to say that this does not contain additional characters. *)
     Definition op_token (s : PrimString.string) : M unit :=
-      let* _ := ws in
-      let* _ := exact s in
-      ws.
+      spaced s.
 
     Definition decimal : M N :=
       let make ls := fold_left (fun acc x => 10 * acc + x)%N ls 0%N in
