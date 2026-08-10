@@ -1329,6 +1329,22 @@ public:
         }
     }
 
+    /// The implicit construction of a <<std::initializer_list<E>>> from the
+    /// backing array of <http://eel.is/c++draft/dcl.init.list#5>.
+    ///
+    /// The sub-expression is printed verbatim: it is a [MaterializeTemporaryExpr]
+    /// wrapping an [InitListExpr] of type <<const E[N]>>, so the backing array's
+    /// storage is handled by the existing temporary machinery. Note that this
+    /// means the lifetime-extended case, e.g.
+    /// <<std::initializer_list<int> il = {1,2,3};>>, reports the
+    /// "scope-extruded temporary" limitation from
+    /// [VisitMaterializeTemporaryExpr].
+    void VisitCXXStdInitializerListExpr(const CXXStdInitializerListExpr *expr) {
+        print.ctor("Einitlist_std");
+        cprint.printExpr(print, expr->getSubExpr(), names) << fmt::nbsp;
+        done(expr);
+    }
+
     void VisitCXXThisExpr(const CXXThisExpr *expr) {
         if (auto maybe_lambda = cprint.getLambdaClass()) {
             auto &[lambda, cv] = maybe_lambda.value();
