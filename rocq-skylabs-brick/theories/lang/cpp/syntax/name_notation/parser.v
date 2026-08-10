@@ -81,6 +81,11 @@ Module internal.
 
     Notation exact bs := (exact_bs bs).
 
+    Definition spaced (s : PrimString.string) : M unit :=
+      let* _ := ws in
+      let* _ := exact s in
+      ws.
+
     (* a maximal identifier *)
     Definition keyword_no_ws (s : PrimString.string) : M unit :=
       let* _ := exact s in
@@ -228,11 +233,6 @@ Module internal.
       let* res := (anyOf $ (fun '(lex, syn) => const syn <$> exact lex) <$> operators) in
       let* _ := ws in
       mret res.
-
-    Definition spaced (s : PrimString.string) : M unit :=
-      let* _ := ws in
-      let* _ := exact s in
-      ws.
 
     Definition get_args (ls : list type) : list type :=
       match ls with
