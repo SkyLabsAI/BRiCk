@@ -432,8 +432,12 @@ bool directRootsAndDeterminism() {
            contains(*templateObject, ":: nil) (Ovar ") &&
            contains(*locationFirst, "source_files") &&
            contains(*locationFirst, "source_origins") &&
-           contains(*locationFirst, "point_of_instantiation := (Some") &&
-           contains(*locationFirst, "derived_from := (1 :: nil)");
+           contains(*locationFirst, "Build_source_file") &&
+           contains(*locationFirst, "Build_source_origin") &&
+           contains(*locationFirst,
+                    "None None nil (Some (Build_physical_point 0 99%N 5%N "
+                    "4%N)) (Some 0) nil)") &&
+           contains(*locationFirst, "None (Some 0) (1 :: nil))");
 }
 
 bool completeNonRootEvents() {
@@ -582,10 +586,30 @@ bool sourceInterningAndRendering() {
     source::Origin origin;
     origin.kind = source::OriginKind::Explicit;
     origin.spelling = source::Range{
-        source::PhysicalPoint{*file0, 0, 1, 1},
-        source::PhysicalPoint{*file0, 1, 1, 2}, source::RangeKind::Character,
-        std::make_pair(source::PhysicalPoint{*file0, 0, 1, 1},
-                       source::PhysicalPoint{*file0, 1, 1, 2})};
+        source::PhysicalPoint{*file0, 0, 1, 2},
+        source::PhysicalPoint{*file0, 1, 3, 4}, source::RangeKind::Character,
+        std::make_pair(source::PhysicalPoint{*file0, 2, 5, 6},
+                       source::PhysicalPoint{*file0, 3, 7, 8})};
+    origin.expansion = source::Range{
+        source::PhysicalPoint{*file0, 10, 11, 12},
+        source::PhysicalPoint{*file0, 13, 14, 15}, source::RangeKind::Token,
+        std::make_pair(source::PhysicalPoint{*file0, 16, 17, 18},
+                       source::PhysicalPoint{*file0, 19, 20, 21})};
+    origin.presumedBegin = source::PresumedPoint{"logical-begin.cpp", 22, 23};
+    origin.presumedEnd = source::PresumedPoint{"logical-end.cpp", 24, 25};
+    const source::Range macroSpelling{source::PhysicalPoint{*file0, 30, 31, 32},
+                                      source::PhysicalPoint{*file0, 33, 34, 35},
+                                      source::RangeKind::Character,
+                                      std::nullopt};
+    const source::Range macroExpansion{
+        source::PhysicalPoint{*file0, 40, 41, 42},
+        source::PhysicalPoint{*file0, 43, 44, 45}, source::RangeKind::Token,
+        std::make_pair(source::PhysicalPoint{*file0, 46, 47, 48},
+                       source::PhysicalPoint{*file0, 49, 50, 51})};
+    origin.macroStack.push_back({std::string("MACRO"),
+                                 source::MacroOriginKind::Argument,
+                                 macroSpelling, macroExpansion});
+    origin.pointOfInstantiation = source::PhysicalPoint{*file0, 60, 61, 62};
     auto origin0 = builder.internOrigin(origin);
     auto origin0Again = builder.internOrigin(origin);
     if (!origin0 || !origin0Again || *origin0 != *origin0Again)
@@ -619,10 +643,45 @@ bool sourceInterningAndRendering() {
     if (failed(unit.finish()))
         return false;
     auto text = LocationRocqEmitter().emit(unit);
-    return text && contains(*text, "a\"\"\\.cpp") &&
-           contains(*text, "CharacterRange") &&
-           contains(*text, "normalized_half_open := (Some") &&
-           contains(*text, "0 :: nil");
+    const std::string expectedFile =
+        "(Build_source_file \"a\"\"\\.cpp\" (Some \"requested(*.cpp\") "
+        "FKUser true None)";
+    const std::string expectedSpelling =
+        "(Build_source_range (Some (Build_physical_point 0 0%N 1%N 2%N)) "
+        "(Some (Build_physical_point 0 1%N 3%N 4%N)) CharacterRange (Some "
+        "((Build_physical_point 0 2%N 5%N 6%N), (Build_physical_point 0 3%N "
+        "7%N 8%N))))";
+    const std::string expectedExpansion =
+        "(Build_source_range (Some (Build_physical_point 0 10%N 11%N 12%N)) "
+        "(Some (Build_physical_point 0 13%N 14%N 15%N)) TokenRange (Some "
+        "((Build_physical_point 0 16%N 17%N 18%N), (Build_physical_point 0 "
+        "19%N 20%N 21%N))))";
+    const std::string expectedMacroSpelling =
+        "(Build_source_range (Some (Build_physical_point 0 30%N 31%N 32%N)) "
+        "(Some (Build_physical_point 0 33%N 34%N 35%N)) CharacterRange "
+        "None)";
+    const std::string expectedMacroExpansion =
+        "(Build_source_range (Some (Build_physical_point 0 40%N 41%N 42%N)) "
+        "(Some (Build_physical_point 0 43%N 44%N 45%N)) TokenRange (Some "
+        "((Build_physical_point 0 46%N 47%N 48%N), (Build_physical_point 0 "
+        "49%N 50%N 51%N))))";
+    const std::string expectedOrigin =
+        "(Build_source_origin ExplicitOrigin (Some " + expectedSpelling +
+        ") (Some " + expectedExpansion +
+        ") (Some (Build_presumed_point \"logical-begin.cpp\" 22%N 23%N)) "
+        "(Some (Build_presumed_point \"logical-end.cpp\" 24%N 25%N)) "
+        "((Build_macro_frame (Some \"MACRO\") MacroArgument (Some " +
+        expectedMacroSpelling + ") (Some " + expectedMacroExpansion +
+        ")) :: nil) (Some (Build_physical_point 0 60%N 61%N 62%N)) None "
+        "nil)";
+    return text && contains(*text, expectedFile) &&
+           contains(*text, expectedOrigin) &&
+           !contains(*text, "source_file_physical_name :=") &&
+           !contains(*text, "point_file :=") &&
+           !contains(*text, "presumed_file :=") &&
+           !contains(*text, "range_begin :=") &&
+           !contains(*text, "macro_name :=") &&
+           !contains(*text, "origin_class :=") && contains(*text, "0 :: nil");
 }
 
 bool invalidCategoryAndShape() {

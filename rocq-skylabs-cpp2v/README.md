@@ -95,7 +95,10 @@ The ordinary AST output exports `source` (with deprecated parsing abbreviation
 `module` for compatibility). The companion imports the BRiCk source-location
 API and contains local
 `source_files`, `source_origins`, and `located_root_events` construction values.
-Its only public generated value is:
+Concrete source files, points, ranges, macro frames, and origins are serialized
+with their direct Rocq record constructors rather than expanded record-field
+syntax. This compact spelling changes only generated text size, not the values
+or lookup API. Its only public generated value is:
 
 ```coq
 source_locations : source_map

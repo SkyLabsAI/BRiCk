@@ -34,16 +34,16 @@ Each extraction is repeated and its complete production serialization compared.
   cmp test_20_source_values.v test_20_source_values_repeat.v
   rocq c -w -notation-overridden -w -notation-incompatible-prefix test_20_source_values.v
 
-Text checks ensure fields that the former hand-written probe serializer dropped
-are present in the production LocationRocqEmitter output.
+Text checks ensure values that the former hand-written probe serializer dropped
+remain present in the compact direct-constructor output.
 
-  $ grep -q 'presumed_file := "logical.cpp"' test_17_source_values.v
-  $ grep -q 'macro_name := (Some "INNER_MACRO")' test_17_source_values.v
-  $ grep -q 'macro_name := (Some "HEADER_MACRO")' test_17_source_values.v
-  $ grep -q 'anchor_origin := (Some' test_17_source_values.v
-  $ grep -q 'derived_from := (' test_17_source_values.v
-  $ grep -q 'spelling_range := (Some' test_17_source_values.v
-  $ grep -q 'expansion_range := (Some' test_17_source_values.v
+  $ grep -q 'Build_presumed_point "logical.cpp"' test_17_source_values.v
+  $ grep -q 'Build_macro_frame (Some "INNER_MACRO")' test_17_source_values.v
+  $ grep -q 'Build_macro_frame (Some "HEADER_MACRO")' test_17_source_values.v
+  $ grep -q 'Build_source_range (Some' test_17_source_values.v
+  $ grep -q 'Build_source_origin' test_17_source_values.v
+  $ grep -Eq '\(Some [0-9]+\) \([0-9]+ :: nil\)\)' test_17_source_values.v
+  $ ! grep -Eq 'presumed_file :=|macro_name :=|origin_class :=' test_17_source_values.v
 
 Proof checks establish that both complete tables are nonempty and that whole-map
 construction, including every anchor and derivation reference, succeeds.

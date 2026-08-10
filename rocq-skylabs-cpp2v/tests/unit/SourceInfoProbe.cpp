@@ -131,6 +131,64 @@ bool writeRocqValues(const std::string &path, const std::string &contents) {
     return output.good();
 }
 
+std::size_t countOccurrences(const std::string &text,
+                             const std::string &needle) {
+    std::size_t count = 0;
+    std::size_t position = 0;
+    while ((position = text.find(needle, position)) != std::string::npos) {
+        ++count;
+        position += needle.size();
+    }
+    return count;
+}
+
+struct SerializationCardinality {
+    std::size_t files = 0;
+    std::size_t physicalPoints = 0;
+    std::size_t presumedPoints = 0;
+    std::size_t ranges = 0;
+    std::size_t macroFrames = 0;
+    std::size_t origins = 0;
+};
+
+void countRange(const source::Range &range,
+                SerializationCardinality &cardinality) {
+    ++cardinality.ranges;
+    cardinality.physicalPoints +=
+        static_cast<std::size_t>(range.begin.has_value());
+    cardinality.physicalPoints +=
+        static_cast<std::size_t>(range.end.has_value());
+    if (range.normalizedHalfOpen)
+        cardinality.physicalPoints += 2;
+}
+
+SerializationCardinality
+expectedSerializationCardinality(const source::Tables &tables) {
+    SerializationCardinality cardinality;
+    cardinality.files = tables.files.size();
+    cardinality.origins = tables.origins.size();
+    for (const source::Origin &origin : tables.origins) {
+        if (origin.spelling)
+            countRange(*origin.spelling, cardinality);
+        if (origin.expansion)
+            countRange(*origin.expansion, cardinality);
+        cardinality.presumedPoints +=
+            static_cast<std::size_t>(origin.presumedBegin.has_value());
+        cardinality.presumedPoints +=
+            static_cast<std::size_t>(origin.presumedEnd.has_value());
+        for (const source::MacroFrame &frame : origin.macroStack) {
+            ++cardinality.macroFrames;
+            if (frame.spelling)
+                countRange(*frame.spelling, cardinality);
+            if (frame.expansion)
+                countRange(*frame.expansion, cardinality);
+        }
+        cardinality.physicalPoints +=
+            static_cast<std::size_t>(origin.pointOfInstantiation.has_value());
+    }
+    return cardinality;
+}
+
 using FrameFact = std::pair<std::string, source::MacroOriginKind>;
 
 std::vector<FrameFact> frameFacts(const source::Origin &origin) {
@@ -594,15 +652,32 @@ int main(int argc, char **argv) {
     auto rocqFirst = check.take(renderRocqValues(tables), "render Rocq values");
     auto rocqSecond =
         check.take(renderRocqValues(tables), "repeat Rocq rendering");
+    const std::string anchoredTail =
+        "(Some " + std::to_string(mappedOrigin->value()) + ") (" +
+        std::to_string(mappedOrigin->value()) + " :: nil))";
+    const SerializationCardinality cardinality =
+        expectedSerializationCardinality(tables);
     check.require(
         rocqFirst && rocqSecond && *rocqFirst == *rocqSecond &&
-            contains(*rocqFirst, "presumed_file := \"logical.cpp\"") &&
-            contains(*rocqFirst, "macro_name := (Some \"PASS_MACRO\")") &&
-            contains(*rocqFirst, "anchor_origin := (Some") &&
-            contains(*rocqFirst, "derived_from := (") &&
-            contains(*rocqFirst, "spelling_range := (Some") &&
-            contains(*rocqFirst, "expansion_range := (Some"),
-        "faithful deterministic production source serialization");
+            contains(*rocqFirst, "Build_presumed_point \"logical.cpp\"") &&
+            contains(*rocqFirst, "Build_macro_frame (Some \"PASS_MACRO\")") &&
+            contains(*rocqFirst, anchoredTail) &&
+            countOccurrences(*rocqFirst, "(Build_source_file ") ==
+                cardinality.files &&
+            countOccurrences(*rocqFirst, "(Build_physical_point ") ==
+                cardinality.physicalPoints &&
+            countOccurrences(*rocqFirst, "(Build_presumed_point ") ==
+                cardinality.presumedPoints &&
+            countOccurrences(*rocqFirst, "(Build_source_range ") ==
+                cardinality.ranges &&
+            countOccurrences(*rocqFirst, "(Build_macro_frame ") ==
+                cardinality.macroFrames &&
+            countOccurrences(*rocqFirst, "(Build_source_origin ") ==
+                cardinality.origins &&
+            !contains(*rocqFirst, "presumed_file :=") &&
+            !contains(*rocqFirst, "macro_name :=") &&
+            !contains(*rocqFirst, "origin_class :="),
+        "faithful deterministic compact production source serialization");
     if (!rocqOutput.empty())
         check.require(rocqFirst && writeRocqValues(rocqOutput, *rocqFirst),
                       "write Rocq source tables");

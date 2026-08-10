@@ -81,17 +81,16 @@ const char *originKind(source::OriginKind kind) {
 }
 
 std::string renderPoint(const source::PhysicalPoint &point) {
-    return "{| point_file := " + std::to_string(point.file.value()) +
-           "; point_byte_offset := " + std::to_string(point.byteOffset) +
-           "%N; point_line := " + std::to_string(point.line) +
-           "%N; point_byte_column := " + std::to_string(point.byteColumn) +
-           "%N |}";
+    return "(Build_physical_point " + std::to_string(point.file.value()) + " " +
+           std::to_string(point.byteOffset) + "%N " +
+           std::to_string(point.line) + "%N " +
+           std::to_string(point.byteColumn) + "%N)";
 }
 
 std::string renderPresumed(const source::PresumedPoint &point) {
-    return "{| presumed_file := " + stringLiteral(point.file) +
-           "; presumed_line := " + std::to_string(point.line) +
-           "%N; presumed_column := " + std::to_string(point.column) + "%N |}";
+    return "(Build_presumed_point " + stringLiteral(point.file) + " " +
+           std::to_string(point.line) + "%N " + std::to_string(point.column) +
+           "%N)";
 }
 
 template <typename T, typename Render>
@@ -105,22 +104,20 @@ std::string renderRange(const source::Range &range) {
         normalized = "(Some (" + renderPoint(range.normalizedHalfOpen->first) +
                      ", " + renderPoint(range.normalizedHalfOpen->second) +
                      "))";
-    return "{| range_begin := " + renderOption(range.begin, renderPoint) +
-           "; range_end := " + renderOption(range.end, renderPoint) +
-           "; range_end_semantics := " +
+    return "(Build_source_range " + renderOption(range.begin, renderPoint) +
+           " " + renderOption(range.end, renderPoint) + " " +
            (range.endSemantics == source::RangeKind::Token ? "TokenRange"
                                                            : "CharacterRange") +
-           "; normalized_half_open := " + normalized + " |}";
+           " " + normalized + ")";
 }
 
 std::string renderFrame(const source::MacroFrame &frame) {
-    return "{| macro_name := " + renderOption(frame.name, stringLiteral) +
-           "; macro_kind := " +
+    return "(Build_macro_frame " + renderOption(frame.name, stringLiteral) +
+           " " +
            (frame.kind == source::MacroOriginKind::Body ? "MacroBody"
                                                         : "MacroArgument") +
-           "; macro_spelling := " + renderOption(frame.spelling, renderRange) +
-           "; macro_expansion := " +
-           renderOption(frame.expansion, renderRange) + " |}";
+           " " + renderOption(frame.spelling, renderRange) + " " +
+           renderOption(frame.expansion, renderRange) + ")";
 }
 
 llvm::Expected<std::string> renderOrigin(const source::Origin &origin) {
@@ -134,21 +131,16 @@ llvm::Expected<std::string> renderOrigin(const source::Origin &origin) {
     });
     if (!derived)
         return derived.takeError();
-    return "{| origin_class := " + std::string(originKind(origin.kind)) +
-           "; spelling_range := " + renderOption(origin.spelling, renderRange) +
-           "; expansion_range := " +
-           renderOption(origin.expansion, renderRange) +
-           "; presumed_begin := " +
-           renderOption(origin.presumedBegin, renderPresumed) +
-           "; presumed_end := " +
-           renderOption(origin.presumedEnd, renderPresumed) +
-           "; macro_stack := " + *frames + "; point_of_instantiation := " +
-           renderOption(origin.pointOfInstantiation, renderPoint) +
-           "; anchor_origin := " +
+    return "(Build_source_origin " + std::string(originKind(origin.kind)) +
+           " " + renderOption(origin.spelling, renderRange) + " " +
+           renderOption(origin.expansion, renderRange) + " " +
+           renderOption(origin.presumedBegin, renderPresumed) + " " +
+           renderOption(origin.presumedEnd, renderPresumed) + " " + *frames +
+           " " + renderOption(origin.pointOfInstantiation, renderPoint) + " " +
            renderOption(
                origin.anchor,
                [](source::OriginId id) { return std::to_string(id.value()); }) +
-           "; derived_from := " + *derived + " |}";
+           " " + *derived + ")";
 }
 
 llvm::Expected<std::string> renderFile(const source::File &file) {
@@ -156,13 +148,10 @@ llvm::Expected<std::string> renderFile(const source::File &file) {
     if (file.includeParent)
         parent = "(Some (" + std::to_string(file.includeParent->first.value()) +
                  ", " + std::to_string(file.includeParent->second) + "%N))";
-    return "{| source_file_physical_name := " +
-           stringLiteral(file.physicalName) +
-           "; source_file_requested_name := " +
-           renderOption(file.requestedName, stringLiteral) +
-           "; source_file_kind := " + fileKind(file.kind) +
-           "; source_file_is_main := " + (file.isMain ? "true" : "false") +
-           "; source_file_include_parent := " + parent + " |}";
+    return "(Build_source_file " + stringLiteral(file.physicalName) + " " +
+           renderOption(file.requestedName, stringLiteral) + " " +
+           fileKind(file.kind) + " " + (file.isMain ? "true" : "false") + " " +
+           parent + ")";
 }
 
 } // namespace

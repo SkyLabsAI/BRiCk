@@ -181,9 +181,28 @@ for required in (
     "#[local] Definition located_root_events",
     "Definition source_locations : source_map",
     "Construction.build_source_map_or_fail",
+    "Build_source_file",
+    "Build_physical_point",
+    "Build_presumed_point",
+    "Build_source_range",
+    "Build_macro_frame",
+    "Build_source_origin",
 ):
     if required not in location_emitter:
         fail(f"standalone location companion omits {required!r}")
+for verbose_field in (
+    "source_file_physical_name :=",
+    "point_file :=",
+    "presumed_file :=",
+    "range_begin :=",
+    "macro_name :=",
+    "origin_class :=",
+):
+    if verbose_field in location_emitter:
+        fail(
+            "location emitter regressed to expanded record syntax for "
+            f"{verbose_field!r}"
+        )
 
 cli = text("src/cpp2v.cpp")
 for required in (
