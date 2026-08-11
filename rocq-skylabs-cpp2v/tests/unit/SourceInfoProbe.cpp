@@ -662,8 +662,8 @@ int main(int argc, char **argv) {
     auto rocqSecond =
         check.take(renderRocqValues(tables), "repeat Rocq rendering");
     const std::string anchoredTail =
-        "(Some " + std::to_string(mappedOrigin->value()) + "%nat) (" +
-        std::to_string(mappedOrigin->value()) + "%nat :: nil))";
+        "(Some " + std::to_string(mappedOrigin->value()) + ") (" +
+        std::to_string(mappedOrigin->value()) + " :: nil))";
     const IndexedCardinality cardinality = expectedIndexedCardinality(tables);
     const std::size_t inlineFrames =
         rocqFirst ? countOccurrences(*rocqFirst, "(Encoded.InlineMacroFrame ")
@@ -717,8 +717,9 @@ int main(int argc, char **argv) {
                          std::to_string(cardinality.presumedFilenames.size()) +
                          "\n") &&
             contains(*rocqFirst,
-                     "physical_points : Encoded.indexed_table physical_point "
-                     ":=\n  Encoded.Build_indexed_table " +
+                     "physical_points : Encoded.indexed_table "
+                     "Encoded.encoded_physical_point :=\n  "
+                     "Encoded.Build_indexed_table " +
                          std::to_string(cardinality.physicalPoints.size()) +
                          "\n") &&
             contains(*rocqFirst,
@@ -734,7 +735,7 @@ int main(int argc, char **argv) {
                     std::to_string(cardinality.ranges.size()) + "\n") &&
             countOccurrences(*rocqFirst, "(Build_source_file ") ==
                 tables.files.size() &&
-            countOccurrences(*rocqFirst, "(Build_physical_point ") ==
+            countOccurrences(*rocqFirst, "EP(") ==
                 cardinality.physicalPoints.size() &&
             countOccurrences(*rocqFirst,
                              "(Encoded.Build_encoded_presumed_point ") ==

@@ -94,16 +94,30 @@ location path is not published.
 The ordinary AST output exports `source` (with deprecated parsing abbreviation
 `module` for compatibility). The companion imports the BRiCk source-location
 API and contains local `source_files`, normalized indexed provenance tables,
-and `located_root_events` construction values. Provenance uses deterministic
-first-seen primitive-array chunks and private primitive `uint63` IDs for
+an exact indexed location DAG, and `located_root_events` construction values.
+The location DAG hash-conses complete `(ordered origin IDs, ordered child node
+IDs)` rows child-before-parent and separately interns exact structural shape
+certificates. Root events carry only static node/shape IDs; equal duplicates
+build lazy recursive merge views, while unequal winners retain losing origins
+only at the root. DAG identities never enter public paths. Provenance uses
+deterministic first-seen primitive-array chunks and private primitive `uint63`
+IDs for
 presumed filenames, points, ranges, macro frames when their table is strictly
 smaller than inline occurrences, and origin rows. `lookup` lazily decodes only
 selected origin rows. Direct projection of an origin list is unsupported;
 `files` remains directly available, and
 `Internal.materialize_origins` is an explicitly eager diagnostic/test helper.
-Malformed private table IDs report `MalformedProvenance`; valid generated maps
-preserve the existing lookup values, order, and public errors. Construction only
-VM-reduces root-event folding and never decodes complete provenance. Its only
+Malformed private provenance IDs report `MalformedProvenance`; malformed DAG
+rows, shapes, storage, or non-backward edges report `MalformedLocationDag` only
+when reached. Valid generated maps preserve lookup values, order, and public
+errors. Public `file_id` and
+`origin_id` values are distinct nominal wrappers around primitive `uint63`
+integers rather than unary `nat`; explicit literals may use the `%file_id` and
+`%origin_id` scopes. `lookup_file source_locations id` performs checked file
+access without converting a potentially large primitive ID to unary `nat`.
+Semantic child paths remain `list nat`, while byte offsets, lines, and columns
+remain binary, nonnegative `N` values. Construction only VM-reduces compact
+root-event folding and never reads or expands provenance or location tables. Its only
 public generated value is:
 
 ```coq
@@ -119,7 +133,8 @@ has four distinct root namespaces, selected with a `decl_root`:
 - `DRMsymbol name` — template object/function symbol; and
 - `DRMtype name` — template type/global declaration.
 
-Use the sole public query operation with a root and a zero-based path:
+Use the sole public location-tree/provenance query with a root and a
+zero-based path:
 
 ```coq
 skylabs.lang.cpp.syntax.source_location.lookup

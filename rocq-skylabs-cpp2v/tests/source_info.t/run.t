@@ -44,8 +44,10 @@ decodes provenance.
   $ grep -q 'Encoded.Build_encoded_origin' test_17_source_values.v
   $ grep -q 'Encoded.InlineMacroFrame' test_17_source_values.v
   $ ! grep -q 'Encoded.MacroFrameReference' test_17_source_values.v
-  $ grep -q 'Construction.build_indexed_source_map_or_fail' test_17_source_values.v
-  $ ! grep -Eq 'source_origins : list source_origin|Build_source_origin|presumed_file :=|macro_name :=|origin_class :=' test_17_source_values.v
+  $ grep -q 'Construction.build_indexed_dag_source_map_or_fail' test_17_source_values.v
+  $ grep -q 'Encoded.Build_indexed_location_dag' test_17_source_values.v
+  $ grep -q 'Construction.indexed_located_root_event' test_17_source_values.v
+  $ ! grep -Eq 'Construction\.LESymbol|\(LocNode |source_origins : list source_origin|Build_source_origin|presumed_file :=|macro_name :=|origin_class :=' test_17_source_values.v
 
 Proof checks establish that files remain directly available and that the explicit,
 eager diagnostic materializer retains complete origins for focused assertions.
@@ -63,5 +65,7 @@ and first/last decoded values.
   $ ../cpp2v-unit-tests-boundary --emit-indexed-boundary indexed_boundary_values.v
   $ grep -q 'Encoded.MacroFrameReference' indexed_boundary_values.v
   $ ! grep -q 'Encoded.InlineMacroFrame' indexed_boundary_values.v
+  $ grep -q 'Encoded.Build_indexed_location_dag' indexed_boundary_values.v
+  $ ! grep -q '(LocNode ' indexed_boundary_values.v
   $ rocq c -w -notation-overridden -w -notation-incompatible-prefix indexed_boundary_values.v
   $ rocq c $ROCQC_ARGS check_indexed_boundary.v

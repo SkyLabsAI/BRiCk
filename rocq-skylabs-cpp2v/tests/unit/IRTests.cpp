@@ -9,12 +9,14 @@
  */
 #include "IR.hpp"
 #include "IRFactories.hpp"
+#include "LocationDAGEncoding.hpp"
 #include "LocationEmitter.hpp"
 #include "RocqEmitter.hpp"
 #include "Sharing.hpp"
 #include "SourceInfo.hpp"
 #include "SourceInfoEncoding.hpp"
 
+#include <algorithm>
 #include <fstream>
 #include <functional>
 #include <iostream>
@@ -370,8 +372,11 @@ bool originsOccurrencesAndTrees() {
     auto secondTree = location.renderTree(unit, built.expression1);
     auto typeTree = location.renderTree(unit, built.type);
     return first && second && *first == *second && firstTree && secondTree &&
-           typeTree && contains(*firstTree, "LocNode (0 :: nil)") &&
-           contains(*secondTree, "LocNode (1 :: 2 :: nil)") &&
+           typeTree &&
+           contains(*firstTree, "LocNode ((Build_origin_id 0) :: nil)") &&
+           contains(*secondTree,
+                    "LocNode ((Build_origin_id 1) :: (Build_origin_id 2) :: "
+                    "nil)") &&
            contains(*typeTree, "LocNode nil") && *firstTree != *secondTree;
 }
 
@@ -420,12 +425,12 @@ bool directRootsAndDeterminism() {
            !contains(*templates, "(Dobj_value ") &&
            !contains(*templates, "(Dglob_decl ") &&
            ordered(*locationFirst,
-                   {"Construction.LESymbol", "Construction.LEType",
-                    "Construction.LEMsymbol", "Construction.LEMtype"}) &&
-           contains(*locationOrdinaryOnly, "Construction.LESymbol") &&
-           contains(*locationOrdinaryOnly, "Construction.LEType") &&
-           !contains(*locationOrdinaryOnly, "Construction.LEMsymbol") &&
-           !contains(*locationOrdinaryOnly, "Construction.LEMtype") &&
+                   {"Construction.ILESymbol", "Construction.ILEType",
+                    "Construction.ILEMsymbol", "Construction.ILEMtype"}) &&
+           contains(*locationOrdinaryOnly, "Construction.ILESymbol") &&
+           contains(*locationOrdinaryOnly, "Construction.ILEType") &&
+           !contains(*locationOrdinaryOnly, "Construction.ILEMsymbol") &&
+           !contains(*locationOrdinaryOnly, "Construction.ILEMtype") &&
            contains(*first, "(Ovar ") && contains(*first, "Gtypedef") &&
            !contains(*first, "Eliteral") && !contains(*first, "Ebinary") &&
            !contains(*first, "Oexpression") &&
@@ -437,6 +442,9 @@ bool directRootsAndDeterminism() {
            contains(*locationFirst, "physical_points") &&
            contains(*locationFirst, "encoded_origins") &&
            contains(*locationFirst, "source_provenance") &&
+           contains(*locationFirst, "location_shapes") &&
+           contains(*locationFirst, "location_nodes") &&
+           contains(*locationFirst, "source_location_dag") &&
            contains(*locationFirst, "Build_source_file") &&
            contains(*locationFirst, "Encoded.Build_encoded_origin") &&
            contains(*locationFirst, "Encoded.Build_indexed_table") &&
@@ -680,7 +688,144 @@ bool sourceInterningAndRendering() {
            !contains(*text, "presumed_file :=") &&
            !contains(*text, "range_begin :=") &&
            !contains(*text, "macro_name :=") &&
-           !contains(*text, "origin_class :=") && contains(*text, "0 :: nil");
+           !contains(*text, "origin_class :=") &&
+           contains(*text, "Encoded.Build_encoded_location_node") &&
+           contains(*text, "Encoded.Build_indexed_location_dag") &&
+           contains(*text,
+                    "Construction.build_indexed_dag_source_map_or_fail") &&
+           !contains(*text, "Build_origin_id") && !contains(*text, "LocNode");
+}
+
+bool locationDagEncoding() {
+    namespace location_encoding = ir::location::encoding;
+
+    TranslationUnitIR unit;
+    Built built = buildCore(unit);
+    NodeId differentlyLocatedGlobal =
+        add(unit, Category::GlobalDeclaration, Constructor::GlobalTypedef,
+            {Value::node(built.type)}, {source::OriginId(2)});
+    NodeId exactDuplicateGlobal =
+        add(unit, Category::GlobalDeclaration, Constructor::GlobalTypedef,
+            {Value::node(built.type)}, {source::OriginId(1)});
+    (void)unit.addRoot({RootKind::Type, built.name, differentlyLocatedGlobal});
+    (void)unit.addRoot({RootKind::Type, built.name, exactDuplicateGlobal});
+
+    NodeId expressionAB =
+        add(unit, Category::Expression, Constructor::ExpressionComma,
+            {Value::node(built.expression0), Value::node(built.expression1)});
+    NodeId expressionBA =
+        add(unit, Category::Expression, Constructor::ExpressionComma,
+            {Value::node(built.expression1), Value::node(built.expression0)});
+    NodeId initializerAB =
+        add(unit, Category::GlobalInitializer,
+            Constructor::GlobalInitExpression, {Value::node(expressionAB)});
+    NodeId initializerBA =
+        add(unit, Category::GlobalInitializer,
+            Constructor::GlobalInitExpression, {Value::node(expressionBA)});
+    NodeId objectAB =
+        add(unit, Category::ObjectValue, Constructor::ObjectVariable,
+            {Value::node(built.type), Value::node(initializerAB)});
+    NodeId objectBA =
+        add(unit, Category::ObjectValue, Constructor::ObjectVariable,
+            {Value::node(built.type), Value::node(initializerBA)});
+    (void)unit.addRoot({RootKind::Symbol, built.name, objectAB});
+    (void)unit.addRoot({RootKind::Symbol, built.name, objectBA});
+
+    NodeId orderedOrigins = add(
+        unit, Category::GlobalDeclaration, Constructor::GlobalTypedef,
+        {Value::node(built.type)}, {source::OriginId(0), source::OriginId(1)});
+    NodeId reversedOrigins = add(
+        unit, Category::GlobalDeclaration, Constructor::GlobalTypedef,
+        {Value::node(built.type)}, {source::OriginId(1), source::OriginId(0)});
+    (void)unit.addRoot({RootKind::Type, built.name, orderedOrigins});
+    (void)unit.addRoot({RootKind::Type, built.name, reversedOrigins});
+    if (failed(unit.finish()))
+        return false;
+
+    auto encoded = location_encoding::encode(unit, true);
+    auto collisionEncoded = location_encoding::encode(
+        unit, true, location_encoding::EncodeOptions{true});
+    auto ordinaryOnly = location_encoding::encode(unit, false);
+    if (!encoded || !collisionEncoded || !ordinaryOnly ||
+        encoded->eventRoots.size() != 10 ||
+        collisionEncoded->eventRoots != encoded->eventRoots ||
+        collisionEncoded->shapes != encoded->shapes ||
+        collisionEncoded->nodes != encoded->nodes ||
+        encoded->stats.selectedRootEvents != 10 ||
+        encoded->stats.visitedSemanticNodes <=
+            encoded->stats.locationNodeRows ||
+        ordinaryOnly->stats.selectedRootEvents != 8 ||
+        ordinaryOnly->eventRoots[2] || ordinaryOnly->eventRoots[3])
+        return false;
+
+    auto root = [&](std::size_t index)
+        -> const std::optional<location_encoding::EncodedRoot> & {
+        return encoded->eventRoots[index];
+    };
+    if (!root(1) || !root(4) || !root(5) || !root(6) || !root(7) || !root(8) ||
+        !root(9) || root(1)->shape != root(4)->shape ||
+        root(1)->node == root(4)->node || root(1)->node != root(5)->node ||
+        root(6)->shape != root(7)->shape || root(6)->node == root(7)->node ||
+        root(8)->shape != root(9)->shape || root(8)->node == root(9)->node)
+        return false;
+
+    const auto &ordered = encoded->nodes[root(8)->node.value()].origins;
+    const auto &reversed = encoded->nodes[root(9)->node.value()].origins;
+    if (ordered != std::vector<source::OriginId>(
+                       {source::OriginId(0), source::OriginId(1)}) ||
+        reversed != std::vector<source::OriginId>(
+                        {source::OriginId(1), source::OriginId(0)}))
+        return false;
+
+    for (std::size_t index = 0; index < encoded->shapes.size(); ++index)
+        for (location_encoding::ShapeId child : encoded->shapes[index].children)
+            if (child.value() >= index)
+                return false;
+    for (std::size_t index = 0; index < encoded->nodes.size(); ++index)
+        for (location_encoding::LocationNodeId child :
+             encoded->nodes[index].children)
+            if (child.value() >= index)
+                return false;
+
+    auto badNodeEdge = *encoded;
+    auto nodeWithChildren =
+        std::find_if(badNodeEdge.nodes.rbegin(), badNodeEdge.nodes.rend(),
+                     [](const auto &node) { return !node.children.empty(); });
+    if (nodeWithChildren == badNodeEdge.nodes.rend())
+        return false;
+    const std::size_t nodeIndex = static_cast<std::size_t>(
+        std::distance(nodeWithChildren, badNodeEdge.nodes.rend()) - 1);
+    nodeWithChildren->children[0] = location_encoding::LocationNodeId(
+        static_cast<std::uint32_t>(nodeIndex));
+    if (!failed(location_encoding::validate(badNodeEdge)))
+        return false;
+
+    auto badShapeEdge = *encoded;
+    auto shapeWithChildren =
+        std::find_if(badShapeEdge.shapes.rbegin(), badShapeEdge.shapes.rend(),
+                     [](const auto &shape) { return !shape.children.empty(); });
+    if (shapeWithChildren == badShapeEdge.shapes.rend())
+        return false;
+    const std::size_t shapeIndex = static_cast<std::size_t>(
+        std::distance(shapeWithChildren, badShapeEdge.shapes.rend()) - 1);
+    shapeWithChildren->children[0] =
+        location_encoding::ShapeId(static_cast<std::uint32_t>(shapeIndex));
+    if (!failed(location_encoding::validate(badShapeEdge)))
+        return false;
+
+    auto badOrigin = *encoded;
+    badOrigin.nodes[root(1)->node.value()].origins = {source::OriginId(99)};
+    if (!failed(location_encoding::validate(badOrigin)))
+        return false;
+
+    auto badRootShape = *encoded;
+    badRootShape.eventRoots[1]->shape = root(4)->shape;
+    if (badRootShape.eventRoots[1]->shape ==
+        badRootShape.nodes[badRootShape.eventRoots[1]->node.value()].shape) {
+        badRootShape.eventRoots[1]->shape = location_encoding::ShapeId(
+            static_cast<std::uint32_t>(badRootShape.shapes.size()));
+    }
+    return failed(location_encoding::validate(badRootShape));
 }
 
 bool sourceEncoding() {
@@ -3172,9 +3317,48 @@ bool emitIndexedBoundaryFixture(const std::string &path) {
     TranslationUnitIR unit;
     if (failed(unit.setSources(std::move(sources))) || failed(unit.finish()))
         return false;
-    auto contents = LocationRocqEmitter().emit(unit);
-    if (!contents)
+
+    namespace location_encoding = ir::location::encoding;
+    location_encoding::EncodedLocations boundaryDag;
+    boundaryDag.sourceOriginCount = originCount;
+    constexpr std::uint32_t shapeCount = 4097;
+    boundaryDag.shapes.reserve(shapeCount);
+    for (std::uint32_t index = 0; index < shapeCount; ++index) {
+        location_encoding::EncodedShape shape;
+        if (index != 0)
+            shape.children.push_back(location_encoding::ShapeId(index - 1));
+        boundaryDag.shapes.push_back(std::move(shape));
+    }
+    boundaryDag.nodes.reserve(originCount);
+    for (std::uint32_t index = 0; index < originCount; ++index) {
+        location_encoding::EncodedLocationNode node;
+        if (index < shapeCount) {
+            node.shape = location_encoding::ShapeId(index);
+            if (index != 0)
+                node.children.push_back(
+                    location_encoding::LocationNodeId(index - 1));
+        } else {
+            node.shape = location_encoding::ShapeId(0);
+        }
+        node.origins.push_back(source::OriginId(index));
+        boundaryDag.nodes.push_back(std::move(node));
+    }
+    boundaryDag.stats.shapeRows = boundaryDag.shapes.size();
+    boundaryDag.stats.locationNodeRows = boundaryDag.nodes.size();
+
+    LocationRocqEmitter emitter;
+    auto contents = emitter.emit(unit);
+    auto renderedDag = emitter.renderLocationDagForTest(boundaryDag);
+    if (!contents || !renderedDag)
         return false;
+    const std::string dagStartMarker = "#[local] Definition location_shapes :";
+    const std::string dagEndMarker = "\n#[local] Close Scope uint63_scope";
+    const std::size_t dagStart = contents->find(dagStartMarker);
+    const std::size_t dagEnd = contents->find(dagEndMarker, dagStart);
+    if (dagStart == std::string::npos || dagEnd == std::string::npos)
+        return false;
+    contents->replace(dagStart, dagEnd - dagStart, *renderedDag);
+
     std::ofstream output(path);
     output << *contents;
     return output.good();
@@ -3214,6 +3398,7 @@ int main(int argc, char **argv) {
         {"empty tables and events", emptyTablesAndEvents},
         {"source interning and rendering", sourceInterningAndRendering},
         {"normalized source encoding", sourceEncoding},
+        {"exact location DAG encoding", locationDagEncoding},
         {"invalid categories and shapes", invalidCategoryAndShape},
         {"invalid root and non-root events", invalidRootsAndNonRoots},
         {"semantic graph cycle", semanticCycle},

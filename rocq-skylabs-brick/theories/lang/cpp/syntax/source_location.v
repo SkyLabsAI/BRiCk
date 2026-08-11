@@ -22,13 +22,44 @@ matching IR-constructor registry, checked factory, [Arena::children] test,
 and path-fixture update in the same change.
 
 The map is keyed only by the four name-bearing translation-unit root kinds.
-[lookup] below is deliberately the sole query API: there is no zipper,
-ancestor fallback, isolated-value lookup, or path-preservation promise across
-later semantic transformations.
+[lookup] below is deliberately the sole location-tree/provenance query API;
+[lookup_file] is a checked accessor for file IDs. There is no zipper, ancestor
+fallback, isolated-value lookup, or path-preservation promise across later
+semantic transformations.
 *)
 
-Definition file_id : Set := nat.
-Definition origin_id : Set := nat.
+Record file_id : Set := Build_file_id {
+  file_id_value : PrimInt63.int
+}.
+
+Record origin_id : Set := Build_origin_id {
+  origin_id_value : PrimInt63.int
+}.
+
+Definition parse_file_id
+    (value : PrimInt63.pos_neg_int63) : option file_id :=
+  option_map Build_file_id (PrimInt63.parser value).
+
+Definition print_file_id (value : file_id) : PrimInt63.pos_neg_int63 :=
+  PrimInt63.printer (PrimInt63.wrap_int value.(file_id_value)).
+
+Definition parse_origin_id
+    (value : PrimInt63.pos_neg_int63) : option origin_id :=
+  option_map Build_origin_id (PrimInt63.parser value).
+
+Definition print_origin_id (value : origin_id) : PrimInt63.pos_neg_int63 :=
+  PrimInt63.printer (PrimInt63.wrap_int value.(origin_id_value)).
+
+Declare Scope file_id_scope.
+Delimit Scope file_id_scope with file_id.
+Bind Scope file_id_scope with file_id.
+Number Notation file_id parse_file_id print_file_id : file_id_scope.
+
+Declare Scope origin_id_scope.
+Delimit Scope origin_id_scope with origin_id.
+Bind Scope origin_id_scope with origin_id.
+Number Notation origin_id parse_origin_id print_origin_id : origin_id_scope.
+
 Definition loc_path : Set := list nat.
 
 Inductive file_kind : Set :=
@@ -107,7 +138,7 @@ Record source_origin : Set := {
 
 (** Compact, first-seen source-provenance tables used by generated companions.
     Table identities are private representation details and never occur in
-    [loc_path]. Public [origin_id] values retain their original [nat] rows. *)
+    [loc_path]. Public nominal IDs wrap the corresponding primitive row ID. *)
 Module Encoded.
   Definition table_id : Set := PrimInt63.int.
 
@@ -137,8 +168,8 @@ Module Encoded.
     else None.
 
   (** Bounds are checked before [PArray.get], so a primitive-array default is
-      never observable. Private IDs are primitive integers; only public
-      [origin_id] values require a checked conversion from [nat]. *)
+      never observable. Private table IDs and wrapped public row IDs both use
+      primitive integers; [nat] conversion remains only for diagnostic APIs. *)
   Definition array_get {A : Type}
       (values : PArray.array A) (index : table_id) : option A :=
     if (index <? PArray.length values)%uint63 then
@@ -162,6 +193,13 @@ Module Encoded.
     | Some encoded => table_get table encoded
     | None => None
     end.
+
+  Record encoded_physical_point : Set := {
+    encoded_point_file : table_id;
+    encoded_point_byte_offset : N;
+    encoded_point_line : N;
+    encoded_point_byte_column : N
+  }.
 
   Record encoded_presumed_point : Set := {
     encoded_presumed_file : table_id;
@@ -198,17 +236,32 @@ Module Encoded.
     encoded_presumed_end : option table_id;
     encoded_macro_stack : list encoded_macro_occurrence;
     encoded_point_of_instantiation : option table_id;
-    encoded_anchor_origin : option origin_id;
-    encoded_derived_from : list origin_id
+    encoded_anchor_origin : option table_id;
+    encoded_derived_from : list table_id
   }.
 
   Record indexed_provenance : Type := {
     presumed_filename_table : indexed_table PrimString.string;
-    physical_point_table : indexed_table physical_point;
+    physical_point_table : indexed_table encoded_physical_point;
     presumed_point_table : indexed_table encoded_presumed_point;
     range_table : indexed_table encoded_range;
     macro_frame_table : indexed_table encoded_macro_frame;
     origin_table : indexed_table encoded_origin
+  }.
+
+  Record encoded_location_shape : Set := {
+    encoded_shape_children : list table_id
+  }.
+
+  Record encoded_location_node : Set := {
+    encoded_node_shape : table_id;
+    encoded_node_origins : list table_id;
+    encoded_node_children : list table_id
+  }.
+
+  Record indexed_location_dag : Type := {
+    location_shape_table : indexed_table encoded_location_shape;
+    location_node_table : indexed_table encoded_location_node
   }.
 
   Inductive table_kind : Set :=
@@ -257,7 +310,10 @@ Module Encoded.
   Definition decode_point
       (tables : indexed_provenance) (id : table_id)
       : decode_result physical_point :=
-    fetch PhysicalPointTable tables.(physical_point_table) id.
+    let! point := fetch PhysicalPointTable tables.(physical_point_table) id in
+    inr (Build_physical_point (Build_file_id point.(encoded_point_file))
+      point.(encoded_point_byte_offset) point.(encoded_point_line)
+      point.(encoded_point_byte_column)).
 
   Definition decode_presumed_point
       (tables : indexed_provenance) (id : table_id)
@@ -345,12 +401,13 @@ Module Encoded.
       origin.(encoded_point_of_instantiation) in
     inr (Build_source_origin origin.(encoded_origin_class) spelling expansion
       presumed_begin presumed_end macro_stack point_of_instantiation
-      origin.(encoded_anchor_origin) origin.(encoded_derived_from)).
+      (option_map Build_origin_id origin.(encoded_anchor_origin))
+      (List.map Build_origin_id origin.(encoded_derived_from))).
 
   Definition default_presumed_filename : PrimString.string :=
     PrimString.make 0 0%uint63.
-  Definition default_physical_point : physical_point :=
-    Build_physical_point 0 0%N 0%N 0%N.
+  Definition default_encoded_physical_point : encoded_physical_point :=
+    Build_encoded_physical_point 0%uint63 0%N 0%N 0%N.
   Definition default_encoded_presumed_point : encoded_presumed_point :=
     Build_encoded_presumed_point 0%uint63 0%N 0%N.
   Definition default_encoded_range : encoded_range :=
@@ -359,6 +416,10 @@ Module Encoded.
     Build_encoded_macro_frame None MacroBody None None.
   Definition default_encoded_origin : encoded_origin :=
     Build_encoded_origin ExplicitOrigin None None None None [] None None [].
+  Definition default_encoded_location_shape : encoded_location_shape :=
+    Build_encoded_location_shape [].
+  Definition default_encoded_location_node : encoded_location_node :=
+    Build_encoded_location_node 0%uint63 [] [].
 End Encoded.
 
 Inductive loc_tree (A : Type) : Type :=
@@ -366,17 +427,43 @@ Inductive loc_tree (A : Type) : Type :=
 
 #[global] Arguments LocNode {A} _ _.
 
-Record declaration_locations (A : Type) : Type := {
-  symbol_locations : NM.t (loc_tree A);
-  type_locations : NM.t (loc_tree A);
-  msymbol_locations : TM.t (loc_tree A);
-  mtype_locations : TM.t (loc_tree A)
+Record root_locations (A : Type) : Type := {
+  symbol_locations : NM.t A;
+  type_locations : NM.t A;
+  msymbol_locations : TM.t A;
+  mtype_locations : TM.t A
 }.
 
 #[global] Arguments symbol_locations {A} _.
 #[global] Arguments type_locations {A} _.
 #[global] Arguments msymbol_locations {A} _.
 #[global] Arguments mtype_locations {A} _.
+
+Definition declaration_locations (A : Type) : Type :=
+  root_locations (loc_tree A).
+
+Inductive indexed_location : Type :=
+| StaticLocation (node shape : Encoded.table_id)
+| MergeLocations
+    (shape : Encoded.table_id)
+    (existing incoming : indexed_location)
+| AddRootOrigins
+    (shape : Encoded.table_id)
+    (winner loser : indexed_location).
+
+Definition indexed_location_shape
+    (location : indexed_location) : Encoded.table_id :=
+  match location with
+  | StaticLocation _ shape => shape
+  | MergeLocations shape _ _ => shape
+  | AddRootOrigins shape _ _ => shape
+  end.
+
+Inductive location_store : Type :=
+| ExpandedLocations (roots : declaration_locations origin_id)
+| IndexedLocations
+    (dag : Encoded.indexed_location_dag)
+    (roots : root_locations indexed_location).
 
 Inductive origin_store : Type :=
 | ExpandedOrigins (values : list source_origin)
@@ -385,7 +472,7 @@ Inductive origin_store : Type :=
 Record source_map : Type := {
   files : list source_file;
   origin_data : origin_store;
-  declarations : declaration_locations origin_id
+  location_data : location_store
 }.
 
 Inductive decl_root : Set :=
@@ -393,6 +480,25 @@ Inductive decl_root : Set :=
 | DRType (name : name)
 | DRMsymbol (name : name)
 | DRMtype (name : name).
+
+Inductive location_table_kind : Set :=
+| LocationShapeTable
+| LocationNodeTable.
+
+Inductive location_dag_error : Set :=
+| MissingLocationTableEntry
+    (table : location_table_kind) (id : Encoded.table_id)
+| LocationNodeShapeMismatch
+    (node declared actual : Encoded.table_id)
+| LocationArityMismatch
+    (node shape : Encoded.table_id)
+    (node_arity shape_arity : nat)
+| LocationCompositionShapeMismatch
+    (declared actual : Encoded.table_id)
+| NonBackwardLocationNodeEdge
+    (parent child : Encoded.table_id)
+| NonBackwardLocationShapeEdge
+    (parent child : Encoded.table_id).
 
 Inductive lookup_error : Set :=
 | RootNotFound (root : decl_root)
@@ -409,12 +515,15 @@ Inductive lookup_error : Set :=
     (root : decl_root)
     (path : loc_path)
     (origin : origin_id)
-    (error : Encoded.decode_error).
+    (error : Encoded.decode_error)
+| MalformedLocationDag
+    (root : decl_root)
+    (consumed_depth : nat)
+    (error : location_dag_error).
 
 Module Internal.
-  Definition find_root
-      (locations : declaration_locations origin_id) (root : decl_root)
-      : option (loc_tree origin_id) :=
+  Definition find_root {A : Type}
+      (locations : root_locations A) (root : decl_root) : option A :=
     match root with
     | DRSymbol n => locations.(symbol_locations) !! n
     | DRType n => locations.(type_locations) !! n
@@ -439,9 +548,193 @@ Module Internal.
         end
     end.
 
+  Definition fetch_location_shape
+      (dag : Encoded.indexed_location_dag) (id : Encoded.table_id)
+      : location_dag_error + Encoded.encoded_location_shape :=
+    match Encoded.table_get dag.(Encoded.location_shape_table) id with
+    | Some shape => inr shape
+    | None => inl (MissingLocationTableEntry LocationShapeTable id)
+    end.
+
+  Definition fetch_location_node
+      (dag : Encoded.indexed_location_dag) (id : Encoded.table_id)
+      : location_dag_error + Encoded.encoded_location_node :=
+    match Encoded.table_get dag.(Encoded.location_node_table) id with
+    | Some node => inr node
+    | None => inl (MissingLocationTableEntry LocationNodeTable id)
+    end.
+
+  Definition validate_static_location
+      (dag : Encoded.indexed_location_dag)
+      (node_id shape_id : Encoded.table_id)
+      : location_dag_error +
+          (Encoded.encoded_location_node * Encoded.encoded_location_shape) :=
+    match fetch_location_node dag node_id with
+    | inl error => inl error
+    | inr node =>
+        match fetch_location_shape dag shape_id with
+        | inl error => inl error
+        | inr shape =>
+            if PrimInt63.eqb node.(Encoded.encoded_node_shape) shape_id then
+              let node_arity := List.length
+                node.(Encoded.encoded_node_children) in
+              let shape_arity := List.length
+                shape.(Encoded.encoded_shape_children) in
+              if Nat.eqb node_arity shape_arity then inr (node, shape)
+              else inl (LocationArityMismatch node_id shape_id
+                node_arity shape_arity)
+            else inl (LocationNodeShapeMismatch node_id shape_id
+              node.(Encoded.encoded_node_shape))
+        end
+    end.
+
+  Definition composition_shape
+      (declared : Encoded.table_id) (location : indexed_location)
+      : option location_dag_error :=
+    let actual := indexed_location_shape location in
+    if PrimInt63.eqb declared actual then None
+    else Some (LocationCompositionShapeMismatch declared actual).
+
+  Definition static_location_child
+      (root : decl_root) (consumed index : nat)
+      (dag : Encoded.indexed_location_dag)
+      (node_id shape_id : Encoded.table_id)
+      : lookup_error + indexed_location :=
+    match validate_static_location dag node_id shape_id with
+    | inl error => inl (MalformedLocationDag root consumed error)
+    | inr (node, shape) =>
+        let node_children := node.(Encoded.encoded_node_children) in
+        let shape_children := shape.(Encoded.encoded_shape_children) in
+        match nth_error node_children index, nth_error shape_children index with
+        | Some child_node, Some child_shape =>
+            if (child_node <? node_id)%uint63 then
+              if (child_shape <? shape_id)%uint63 then
+                inr (StaticLocation child_node child_shape)
+              else inl (MalformedLocationDag root consumed
+                (NonBackwardLocationShapeEdge shape_id child_shape))
+            else inl (MalformedLocationDag root consumed
+              (NonBackwardLocationNodeEdge node_id child_node))
+        | None, None =>
+            inl (ChildOutOfBounds root consumed index
+              (List.length node_children))
+        | _, _ =>
+            inl (MalformedLocationDag root consumed
+              (LocationArityMismatch node_id shape_id
+                (List.length node_children) (List.length shape_children)))
+        end
+    end.
+
+  Fixpoint indexed_location_child
+      (root : decl_root) (consumed index : nat)
+      (dag : Encoded.indexed_location_dag) (location : indexed_location)
+      : lookup_error + indexed_location :=
+    match location with
+    | StaticLocation node shape =>
+        static_location_child root consumed index dag node shape
+    | MergeLocations shape existing incoming =>
+        match composition_shape shape existing with
+        | Some error => inl (MalformedLocationDag root consumed error)
+        | None =>
+            match composition_shape shape incoming with
+            | Some error => inl (MalformedLocationDag root consumed error)
+            | None =>
+                match indexed_location_child root consumed index dag existing with
+                | inl error => inl error
+                | inr existing_child =>
+                    match indexed_location_child root consumed index dag incoming with
+                    | inl error => inl error
+                    | inr incoming_child =>
+                        let child_shape :=
+                          indexed_location_shape existing_child in
+                        match composition_shape child_shape incoming_child with
+                        | Some error =>
+                            inl (MalformedLocationDag root consumed error)
+                        | None => inr (MergeLocations child_shape
+                            existing_child incoming_child)
+                        end
+                    end
+                end
+            end
+        end
+    | AddRootOrigins shape winner _ =>
+        match composition_shape shape winner with
+        | Some error => inl (MalformedLocationDag root consumed error)
+        | None => indexed_location_child root consumed index dag winner
+        end
+    end.
+
+  Fixpoint indexed_location_origins
+      (root : decl_root) (consumed : nat)
+      (dag : Encoded.indexed_location_dag) (location : indexed_location)
+      : lookup_error + list Encoded.table_id :=
+    match location with
+    | StaticLocation node_id shape_id =>
+        match validate_static_location dag node_id shape_id with
+        | inl error => inl (MalformedLocationDag root consumed error)
+        | inr (node, _) => inr node.(Encoded.encoded_node_origins)
+        end
+    | MergeLocations shape existing incoming =>
+        match composition_shape shape existing with
+        | Some error => inl (MalformedLocationDag root consumed error)
+        | None =>
+            match composition_shape shape incoming with
+            | Some error => inl (MalformedLocationDag root consumed error)
+            | None =>
+                match indexed_location_origins root consumed dag existing with
+                | inl error => inl error
+                | inr existing_origins =>
+                    match indexed_location_origins root consumed dag incoming with
+                    | inl error => inl error
+                    | inr incoming_origins =>
+                        inr (existing_origins ++ incoming_origins)
+                    end
+                end
+            end
+        end
+    | AddRootOrigins shape winner loser =>
+        match composition_shape shape winner with
+        | Some error => inl (MalformedLocationDag root consumed error)
+        | None =>
+            match indexed_location_origins root consumed dag winner with
+            | inl error => inl error
+            | inr winner_origins =>
+                match indexed_location_origins root consumed dag loser with
+                | inl error => inl error
+                | inr loser_origins => inr (winner_origins ++ loser_origins)
+                end
+            end
+        end
+    end.
+
+  Fixpoint descend_indexed
+      (root : decl_root) (consumed : nat) (path : loc_path)
+      (dag : Encoded.indexed_location_dag) (location : indexed_location)
+      : lookup_error + list Encoded.table_id :=
+    match path with
+    | [] => indexed_location_origins root consumed dag location
+    | index :: rest =>
+        match indexed_location_child root consumed index dag location with
+        | inl error => inl error
+        | inr child => descend_indexed root (S consumed) rest dag child
+        end
+    end.
+
+  Fixpoint list_get_table_id {A : Type}
+      (values : list A) (index : Encoded.table_id) : option A :=
+    match values with
+    | [] => None
+    | value :: rest =>
+        if PrimInt63.eqb index 0%uint63 then Some value
+        else list_get_table_id rest (PrimInt63.sub index 1%uint63)
+    end.
+
+  Definition list_get_origin_id {A : Type}
+      (values : list A) (id : origin_id) : option A :=
+    list_get_table_id values id.(origin_id_value).
+
   Definition valid_expanded_origin_id
       (all_origins : list source_origin) (id : origin_id) : bool :=
-    match nth_error all_origins id with
+    match list_get_origin_id all_origins id with
     | Some _ => true
     | None => false
     end.
@@ -452,19 +745,15 @@ Module Internal.
   | IndexedOriginStorageMissing.
 
   Definition indexed_origin_at
-      (tables : Encoded.indexed_provenance) (id : origin_id)
+      (tables : Encoded.indexed_provenance) (id : Encoded.table_id)
       : indexed_origin_access :=
     let origins := tables.(Encoded.origin_table) in
-    match Encoded.nat_to_table_id id with
-    | None => IndexedOriginLogicalOutOfBounds
-    | Some encoded =>
-        if (encoded <? origins.(Encoded.table_length))%uint63 then
-          match Encoded.table_get origins encoded with
-          | Some origin => IndexedOriginFound origin
-          | None => IndexedOriginStorageMissing
-          end
-        else IndexedOriginLogicalOutOfBounds
-    end.
+    if (id <? origins.(Encoded.table_length))%uint63 then
+      match Encoded.table_get origins id with
+      | Some origin => IndexedOriginFound origin
+      | None => IndexedOriginStorageMissing
+      end
+    else IndexedOriginLogicalOutOfBounds.
 
   Fixpoint first_invalid_id
       (valid : origin_id -> bool) (ids : list origin_id)
@@ -490,11 +779,11 @@ Module Internal.
     end.
 
   Inductive indexed_reference_error : Set :=
-  | IndexedReferenceOutOfBounds (id : origin_id)
-  | IndexedReferenceStorageMissing (id : origin_id).
+  | IndexedReferenceOutOfBounds (id : Encoded.table_id)
+  | IndexedReferenceStorageMissing (id : Encoded.table_id).
 
   Definition check_indexed_reference
-      (tables : Encoded.indexed_provenance) (id : origin_id)
+      (tables : Encoded.indexed_provenance) (id : Encoded.table_id)
       : option indexed_reference_error :=
     match indexed_origin_at tables id with
     | IndexedOriginFound _ => None
@@ -505,7 +794,7 @@ Module Internal.
     end.
 
   Fixpoint first_invalid_indexed_id
-      (tables : Encoded.indexed_provenance) (ids : list origin_id)
+      (tables : Encoded.indexed_provenance) (ids : list Encoded.table_id)
       : option indexed_reference_error :=
     match ids with
     | [] => None
@@ -538,7 +827,7 @@ Module Internal.
     match ids with
     | [] => inr []
     | id :: rest =>
-        match nth_error all_origins id with
+        match list_get_origin_id all_origins id with
         | None => inl (OriginIdOutOfBounds root path id)
         | Some origin =>
             match first_invalid_expanded_reference all_origins origin with
@@ -559,21 +848,20 @@ Module Internal.
     match ids with
     | [] => inr []
     | id :: rest =>
-        match indexed_origin_at tables id with
+        match indexed_origin_at tables id.(origin_id_value) with
         | IndexedOriginLogicalOutOfBounds =>
             inl (OriginIdOutOfBounds root path id)
         | IndexedOriginStorageMissing =>
             inl (MalformedProvenance root path id
               (Encoded.MissingTableEntry Encoded.OriginTable
-                (Uint63.of_Z (Z.of_nat id))))
+                id.(origin_id_value)))
         | IndexedOriginFound origin =>
             match first_invalid_indexed_reference tables origin with
             | Some (IndexedReferenceOutOfBounds bad) =>
-                inl (OriginIdOutOfBounds root path bad)
+                inl (OriginIdOutOfBounds root path (Build_origin_id bad))
             | Some (IndexedReferenceStorageMissing bad) =>
                 inl (MalformedProvenance root path id
-                  (Encoded.MissingTableEntry Encoded.OriginTable
-                    (Uint63.of_Z (Z.of_nat bad))))
+                  (Encoded.MissingTableEntry Encoded.OriginTable bad))
             | None =>
                 match Encoded.decode_origin_row tables origin with
                 | inl error => inl (MalformedProvenance root path id error)
@@ -585,6 +873,99 @@ Module Internal.
                 end
             end
         end
+    end.
+
+  Fixpoint validate_shape_children
+      (parent : Encoded.table_id) (children : list Encoded.table_id)
+      : option location_dag_error :=
+    match children with
+    | [] => None
+    | child :: rest =>
+        if (child <? parent)%uint63 then
+          validate_shape_children parent rest
+        else Some (NonBackwardLocationShapeEdge parent child)
+    end.
+
+  Fixpoint validate_location_shapes_from
+      (dag : Encoded.indexed_location_dag) (remaining : nat)
+      (index : Encoded.table_id) : option location_dag_error :=
+    match remaining with
+    | O => None
+    | S remaining =>
+        match fetch_location_shape dag index with
+        | inl error => Some error
+        | inr shape =>
+            match validate_shape_children index
+                shape.(Encoded.encoded_shape_children) with
+            | Some error => Some error
+            | None => validate_location_shapes_from dag remaining
+                (PrimInt63.add index 1%uint63)
+            end
+        end
+    end.
+
+  Fixpoint validate_location_node_children
+      (dag : Encoded.indexed_location_dag) (parent : Encoded.table_id)
+      (node_children shape_children : list Encoded.table_id)
+      : option location_dag_error :=
+    match node_children, shape_children with
+    | [], [] => None
+    | child_node :: node_rest, child_shape :: shape_rest =>
+        if (child_node <? parent)%uint63 then
+          match fetch_location_node dag child_node with
+          | inl error => Some error
+          | inr child =>
+              if PrimInt63.eqb child.(Encoded.encoded_node_shape)
+                  child_shape then
+                validate_location_node_children dag parent
+                  node_rest shape_rest
+              else Some (LocationNodeShapeMismatch child_node child_shape
+                child.(Encoded.encoded_node_shape))
+          end
+        else Some (NonBackwardLocationNodeEdge parent child_node)
+    | _, _ => Some (LocationArityMismatch parent 0%uint63
+        (List.length node_children) (List.length shape_children))
+    end.
+
+  Fixpoint validate_location_nodes_from
+      (dag : Encoded.indexed_location_dag) (remaining : nat)
+      (index : Encoded.table_id) : option location_dag_error :=
+    match remaining with
+    | O => None
+    | S remaining =>
+        match fetch_location_node dag index with
+        | inl error => Some error
+        | inr node =>
+            let shape_id := node.(Encoded.encoded_node_shape) in
+            match fetch_location_shape dag shape_id with
+            | inl error => Some error
+            | inr shape =>
+                let node_children := node.(Encoded.encoded_node_children) in
+                let shape_children := shape.(Encoded.encoded_shape_children) in
+                if Nat.eqb (List.length node_children)
+                    (List.length shape_children) then
+                  match validate_location_node_children dag index
+                      node_children shape_children with
+                  | Some error => Some error
+                  | None => validate_location_nodes_from dag remaining
+                      (PrimInt63.add index 1%uint63)
+                  end
+                else Some (LocationArityMismatch index shape_id
+                  (List.length node_children) (List.length shape_children))
+            end
+        end
+    end.
+
+  (** Explicitly eager diagnostic validation. Production construction and
+      [lookup] never call it; lookup checks only rows reached by its root/path. *)
+  Definition validate_location_dag
+      (dag : Encoded.indexed_location_dag) : option location_dag_error :=
+    match validate_location_shapes_from dag
+        (Encoded.table_length_nat dag.(Encoded.location_shape_table))
+        0%uint63 with
+    | Some error => Some error
+    | None => validate_location_nodes_from dag
+        (Encoded.table_length_nat dag.(Encoded.location_node_table)) 0%uint63
     end.
 
   (** Deliberately eager diagnostic support. Generated construction and public
@@ -621,23 +1002,49 @@ Module Internal.
     end.
 End Internal.
 
-(** The only supported source-location query operation. Errors are [inl],
+(** Checked access to the stable first-seen file table. The primitive wrapper
+    is traversed against the list itself, so even a maximal malformed ID cannot
+    force construction of a large unary [nat]. *)
+Definition lookup_file
+    (map : source_map) (id : file_id) : option source_file :=
+  Internal.list_get_table_id map.(files) id.(file_id_value).
+
+(** The only supported location-tree/provenance query operation. Errors are [inl],
     success is [inr], and compact provenance is decoded only for origins at the
     selected semantic node. A successful node with no origins returns [inr []]. *)
 Definition lookup
     (map : source_map) (root : decl_root) (path : loc_path)
     : lookup_error + list source_origin :=
-  match Internal.find_root map.(declarations) root with
-  | None => inl (RootNotFound root)
-  | Some tree =>
-      match Internal.descend root 0 path tree with
-      | inl err => inl err
-      | inr (LocNode ids _) =>
-          match map.(origin_data) with
-          | ExpandedOrigins origins =>
-              Internal.resolve_expanded_origins root path origins ids
-          | IndexedOrigins tables =>
-              Internal.resolve_indexed_origins root path tables ids
+  match map.(location_data) with
+  | ExpandedLocations locations =>
+      match Internal.find_root locations root with
+      | None => inl (RootNotFound root)
+      | Some tree =>
+          match Internal.descend root 0 path tree with
+          | inl error => inl error
+          | inr (LocNode ids _) =>
+              match map.(origin_data) with
+              | ExpandedOrigins origins =>
+                  Internal.resolve_expanded_origins root path origins ids
+              | IndexedOrigins tables =>
+                  Internal.resolve_indexed_origins root path tables ids
+              end
+          end
+      end
+  | IndexedLocations dag locations =>
+      match Internal.find_root locations root with
+      | None => inl (RootNotFound root)
+      | Some location =>
+          match Internal.descend_indexed root 0 path dag location with
+          | inl error => inl error
+          | inr raw_ids =>
+              let ids := List.map Build_origin_id raw_ids in
+              match map.(origin_data) with
+              | ExpandedOrigins origins =>
+                  Internal.resolve_expanded_origins root path origins ids
+              | IndexedOrigins tables =>
+                  Internal.resolve_indexed_origins root path tables ids
+              end
           end
       end
   end.

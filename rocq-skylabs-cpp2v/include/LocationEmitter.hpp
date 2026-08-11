@@ -6,6 +6,7 @@
 #pragma once
 
 #include "IR.hpp"
+#include "LocationDAGEncoding.hpp"
 #include "RocqEmitter.hpp"
 
 #include <string>
@@ -25,8 +26,13 @@ public:
         : options_(options) {}
 
     llvm::Expected<std::string> emit(const TranslationUnitIR &unit) const;
+    /// Expanded-tree oracle retained only by pure unit tests. Production
+    /// companions use LocationDAGEncoding and never call this method.
     llvm::Expected<std::string> renderTree(const TranslationUnitIR &unit,
                                            NodeId root) const;
+    /// Serialize a prevalidated synthetic DAG for chunk-boundary tests.
+    llvm::Expected<std::string> renderLocationDagForTest(
+        const location::encoding::EncodedLocations &locations) const;
 
 private:
     llvm::Error appendTreeUnchecked(std::string &output,

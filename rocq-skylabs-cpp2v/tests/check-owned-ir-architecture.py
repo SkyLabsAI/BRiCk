@@ -99,12 +99,14 @@ pure_files = [
     "include/IRFactories.hpp",
     "include/RocqEmitter.hpp",
     "include/LocationEmitter.hpp",
+    "include/LocationDAGEncoding.hpp",
     "include/Sharing.hpp",
     "include/SourceInfoEncoding.hpp",
     "src/IR.cpp",
     "src/IRFactories.cpp",
     "src/RocqEmitter.cpp",
     "src/LocationEmitter.cpp",
+    "src/LocationDAGEncoding.cpp",
     "src/Sharing.cpp",
     "src/SourceInfoEncoding.cpp",
 ]
@@ -221,20 +223,78 @@ if "with_open_file(locations_file_" not in orchestration:
     fail("location output does not use atomic per-file publication")
 
 location_emitter = text("src/LocationEmitter.cpp")
+location_dag_encoder = text("src/LocationDAGEncoding.cpp")
+if location_dag_encoder.count("unit.nodes().children(id)") != 1:
+    fail("location DAG must have exactly one Arena::children projection source")
+for required in (
+    "for (const OrderedEventRef &ordered : unit.orderedEvents())",
+    "forceHashCollisions",
+    "values_[candidate.value()] == value",
+    "child.value() >= index",
+    "sourceOriginCount",
+):
+    if required not in location_dag_encoder:
+        fail(f"exact location DAG encoder omits {required!r}")
+for forbidden in ("SharingPlan", "ownedSharing", "shareClass"):
+    if forbidden in location_dag_encoder:
+        fail(f"location DAG encoder reaches semantic sharing API {forbidden!r}")
 source_location_syntax = (
     PACKAGE.parent
     / "rocq-skylabs-brick/theories/lang/cpp/syntax/source_location.v"
 ).read_text()
 for required in (
+    "Record file_id : Set := Build_file_id",
+    "file_id_value : PrimInt63.int",
+    "Record origin_id : Set := Build_origin_id",
+    "origin_id_value : PrimInt63.int",
     "Definition table_id : Set := PrimInt63.int",
     "Definition table_chunk_size : table_id := 4096%uint63",
     "Definition nat_to_table_id",
     "Definition table_get_nat",
+    "Record encoded_physical_point",
+    "encoded_anchor_origin : option table_id",
+    "encoded_derived_from : list table_id",
+    "Record encoded_location_shape",
+    "Record encoded_location_node",
+    "Record indexed_location_dag",
+    "Inductive indexed_location",
+    "MergeLocations",
+    "AddRootOrigins",
+    "Inductive location_store",
+    "MalformedLocationDag",
+    "Fixpoint descend_indexed",
+    "Definition validate_location_dag",
 ):
     if required not in source_location_syntax:
         fail(f"indexed provenance storage omits {required!r}")
+for forbidden in (
+    "Definition file_id : Set := nat",
+    "Definition origin_id : Set := nat",
+):
+    if forbidden in source_location_syntax:
+        fail(f"source-location API retains unary public ID {forbidden!r}")
+if source_location_syntax.count("validate_location_dag") != 1:
+    fail("eager location-DAG validation escaped its diagnostic definition")
+parser_location = (
+    PACKAGE.parent
+    / "rocq-skylabs-brick/theories/lang/cpp/parser/source_location.v"
+).read_text()
+for required in (
+    "Inductive indexed_located_root_event",
+    "Definition merge_indexed_location",
+    "Fixpoint fold_indexed_events_from",
+    "Definition fold_indexed_events",
+    "Ltac build_indexed_dag_source_map_or_fail",
+    "eval vm_compute in (fold_indexed_events events)",
+):
+    if required not in parser_location:
+        fail(f"indexed location-DAG construction omits {required!r}")
+if "fold_indexed_events (events" not in parser_location:
+    fail("indexed event fold does not remain independent of DAG tables")
 if location_emitter.count("unit.nodes().children(root)") != 1:
-    fail("location-tree shape must have exactly one Arena::children recursion source")
+    fail("expanded location-tree test oracle lost its children-only projection")
+if "appendTreeUnchecked(eventList" in location_emitter:
+    fail("production location events still expand recursive LocNode trees")
 for forbidden in ("Constructor::", "clang::", "SharingPlan", "ownedSharing"):
     if forbidden in location_emitter:
         fail(f"location emitter reaches forbidden shape/sharing API {forbidden!r}")
@@ -244,6 +304,8 @@ for required in (
     "#include \"SourceInfoEncoding.hpp\"",
     "source::encoding::encode(unit.sources())",
     "#[local] Definition source_files",
+    "#include \"LocationDAGEncoding.hpp\"",
+    "location::encoding::encode(unit, options_.includeTemplates)",
     "presumed_filenames",
     "physical_points",
     "presumed_points",
@@ -251,6 +313,16 @@ for required in (
     "macro_frames",
     "encoded_origins",
     "source_provenance",
+    "location_shapes",
+    "location_nodes",
+    "source_location_dag",
+    "Encoded.Build_encoded_location_shape",
+    "Encoded.Build_encoded_location_node",
+    "Encoded.Build_indexed_location_dag",
+    'return "EP("',
+    'return "LS("',
+    'return "LN("',
+    "(only parsing)",
     "Require Import Stdlib.NArith.NArith",
     "Require Import Stdlib.Numbers.Cyclic.Int63.Uint63",
     "Open Scope uint63_scope",
@@ -261,10 +333,11 @@ for required in (
     "Encoded.Build_indexed_provenance",
     "Encoded.InlineMacroFrame",
     "Encoded.MacroFrameReference",
-    "Construction.build_indexed_source_map_or_fail",
+    "Construction.ILESymbol",
+    "Construction.build_indexed_dag_source_map_or_fail",
     "Definition source_locations : source_map",
     "Build_source_file",
-    "Build_physical_point",
+    "Encoded.Build_encoded_physical_point",
 ):
     if required not in location_emitter:
         fail(f"standalone location companion omits {required!r}")
@@ -272,6 +345,8 @@ for forbidden in (
     "source_origins : list source_origin",
     "Build_source_origin",
     "Construction.build_source_map_or_fail",
+    "Construction.build_indexed_source_map_or_fail",
+    "Construction.LESymbol",
     "PArray.of_list",
     "decodeOrigin(",
 ):

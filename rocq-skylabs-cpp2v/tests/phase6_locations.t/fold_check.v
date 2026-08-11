@@ -1,3 +1,4 @@
+Require Import Stdlib.Numbers.Cyclic.Int63.Uint63.
 Require Import skylabs.lang.cpp.syntax.source_location.
 Require Import skylabs.lang.cpp.parser.
 Require Import skylabs.lang.cpp.mparser.
@@ -13,8 +14,10 @@ Definition int_value : ObjValue :=
 Definition extern_value : ObjValue := Ovar int_type global_init.Extern.
 Definition bool_value : ObjValue := Ovar bool_type global_init.NoInit.
 Definition leaf (ids : list origin_id) : loc_tree origin_id := LocNode ids [].
-Definition old_tree : loc_tree origin_id := LocNode [0] [leaf [3]].
-Definition new_tree : loc_tree origin_id := LocNode [1] [leaf [2]].
+Definition old_tree : loc_tree origin_id :=
+  LocNode [0%origin_id] [leaf [3%origin_id]].
+Definition new_tree : loc_tree origin_id :=
+  LocNode [1%origin_id] [leaf [2%origin_id]].
 
 Definition event_symbol
     (events : list Construction.located_root_event) :
@@ -89,7 +92,9 @@ Example equal_duplicates_select_the_parser_value :
 Proof. vm_compute. reflexivity. Qed.
 
 Example equal_duplicates_merge_the_selected_tree :
-    symbol_tree equal_events = Some (LocNode [1; 0] [leaf [2; 3]]).
+    symbol_tree equal_events = Some
+      (LocNode [1%origin_id; 0%origin_id]
+        [leaf [2%origin_id; 3%origin_id]]).
 Proof. vm_compute. reflexivity. Qed.
 
 Definition compatible_events :=
@@ -104,7 +109,8 @@ Example compatible_duplicates_select_the_parser_value :
 Proof. vm_compute. reflexivity. Qed.
 
 Example compatible_duplicates_select_the_winner_tree :
-    symbol_tree compatible_events = Some (LocNode [1; 0] [leaf [2]]).
+    symbol_tree compatible_events = Some
+      (LocNode [1%origin_id; 0%origin_id] [leaf [2%origin_id]]).
 Proof. vm_compute. reflexivity. Qed.
 
 Definition self_typedef_events :=
@@ -136,5 +142,74 @@ Example template_overwrite_selects_the_parser_value :
 Proof. vm_compute. reflexivity. Qed.
 
 Example template_overwrite_selects_the_later_tree :
-    msymbol_tree template_events = Some (LocNode [1; 0] [leaf [2]]).
+    msymbol_tree template_events = Some
+      (LocNode [1%origin_id; 0%origin_id] [leaf [2%origin_id]]).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition indexed_symbol_location
+    (events : list Construction.indexed_located_root_event)
+    : option indexed_location :=
+  match Construction.fold_indexed_events events with
+  | inl _ => None
+  | inr locations => locations.(symbol_locations) !! root_name
+  end.
+
+Definition indexed_type_location
+    (events : list Construction.indexed_located_root_event)
+    : option indexed_location :=
+  match Construction.fold_indexed_events events with
+  | inl _ => None
+  | inr locations => locations.(type_locations) !! root_name
+  end.
+
+Definition indexed_msymbol_location
+    (events : list Construction.indexed_located_root_event)
+    : option indexed_location :=
+  match Construction.fold_indexed_events events with
+  | inl _ => None
+  | inr locations => locations.(msymbol_locations) !! root_name
+  end.
+
+Definition indexed_equal_events :=
+  [ Construction.ILESymbol root_name int_value 0%uint63 1%uint63
+  ; Construction.ILESymbol root_name int_value 1%uint63 1%uint63
+  ].
+
+Example indexed_equal_duplicates_build_a_lazy_merge_in_reverse_fold_order :
+  indexed_symbol_location indexed_equal_events =
+  Some (MergeLocations 1%uint63
+    (StaticLocation 1%uint63 1%uint63)
+    (StaticLocation 0%uint63 1%uint63)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition indexed_compatible_events :=
+  [ Construction.ILESymbol root_name extern_value 0%uint63 1%uint63
+  ; Construction.ILESymbol root_name int_value 1%uint63 1%uint63
+  ].
+
+Example indexed_compatible_duplicates_build_a_root_only_winner_view :
+  indexed_symbol_location indexed_compatible_events =
+  Some (AddRootOrigins 1%uint63
+    (StaticLocation 1%uint63 1%uint63)
+    (StaticLocation 0%uint63 1%uint63)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition indexed_self_typedef_events :=
+  [Construction.ILEType root_name (Gtypedef (Tnamed root_name))
+    99%uint63 99%uint63].
+
+Example indexed_self_typedef_is_suppressed_without_reading_location_ids :
+  indexed_type_location indexed_self_typedef_events = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Definition indexed_template_events :=
+  [ Construction.ILEMsymbol root_name old_template 0%uint63 1%uint63
+  ; Construction.ILEMsymbol root_name new_template 1%uint63 1%uint63
+  ].
+
+Example indexed_template_overwrite_builds_a_forward_root_only_view :
+  indexed_msymbol_location indexed_template_events =
+  Some (AddRootOrigins 1%uint63
+    (StaticLocation 1%uint63 1%uint63)
+    (StaticLocation 0%uint63 1%uint63)).
 Proof. vm_compute. reflexivity. Qed.

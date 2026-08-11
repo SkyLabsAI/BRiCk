@@ -14,6 +14,16 @@ Definition origin_line (origin : source_origin) : option N :=
   | None => None
   end.
 
+Definition generated_uses_indexed_location_dag : bool :=
+  match source_locations.(location_data) with
+  | ExpandedLocations _ => false
+  | IndexedLocations _ _ => true
+  end.
+
+Example generated_location_storage_is_an_indexed_dag :
+  generated_uses_indexed_location_dag = true.
+Proof. vm_compute. reflexivity. Qed.
+
 Definition first_line (result : lookup_error + list source_origin) : option N :=
   match result with
   | inr (origin :: _) => origin_line origin

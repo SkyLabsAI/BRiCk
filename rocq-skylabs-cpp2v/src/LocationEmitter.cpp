@@ -4,6 +4,7 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  */
 #include "LocationEmitter.hpp"
+#include "LocationDAGEncoding.hpp"
 #include "SourceInfoEncoding.hpp"
 
 #include <algorithm>
@@ -99,10 +100,10 @@ const char *macroKind(source::MacroOriginKind kind) {
                                                  : "MacroArgument";
 }
 
-std::string renderPoint(const source::PhysicalPoint &point) {
-    return "(Build_physical_point " + std::to_string(point.file.value()) +
-           "%nat " + std::to_string(point.byteOffset) + "%N " +
-           std::to_string(point.line) + "%N " +
+std::string renderEncodedPhysicalPoint(const source::PhysicalPoint &point) {
+    return "EP(" + std::to_string(point.file.value()) + ", " +
+           std::to_string(point.byteOffset) + "%N, " +
+           std::to_string(point.line) + "%N, " +
            std::to_string(point.byteColumn) + "%N)";
 }
 
@@ -164,8 +165,9 @@ renderEncodedFrame(const source::encoding::EncodedMacroFrame &frame) {
 llvm::Expected<std::string> renderFile(const source::File &file) {
     std::string parent = "None";
     if (file.includeParent)
-        parent = "(Some (" + std::to_string(file.includeParent->first.value()) +
-                 "%nat, " + std::to_string(file.includeParent->second) + "%N))";
+        parent = "(Some ((Build_file_id " +
+                 std::to_string(file.includeParent->first.value()) + "), " +
+                 std::to_string(file.includeParent->second) + "%N))";
     return "(Build_source_file " + stringLiteral(file.physicalName) + " " +
            renderOption(file.requestedName, stringLiteral) + " " +
            fileKind(file.kind) + " " + (file.isMain ? "true" : "false") + " " +
@@ -204,17 +206,21 @@ std::string renderIndexedTable(const std::string &name, const std::string &type,
     return output.str();
 }
 
-std::string renderOriginIds(const std::vector<source::OriginId> &ids,
-                            bool explicitNat = false) {
+template <typename Id> std::string renderRawIds(const std::vector<Id> &ids) {
     if (ids.empty())
         return "nil";
     std::string result = "(";
-    for (source::OriginId id : ids) {
-        result += std::to_string(id.value());
-        if (explicitNat)
-            result += "%nat";
-        result += " :: ";
-    }
+    for (Id id : ids)
+        result += std::to_string(id.value()) + " :: ";
+    return result + "nil)";
+}
+
+std::string renderPublicOriginIds(const std::vector<source::OriginId> &ids) {
+    if (ids.empty())
+        return "nil";
+    std::string result = "(";
+    for (source::OriginId id : ids)
+        result += "(Build_origin_id " + std::to_string(id.value()) + ") :: ";
     return result + "nil)";
 }
 
@@ -257,10 +263,9 @@ std::string renderEncodedOrigin(const source::encoding::EncodedOrigin &origin,
            renderOption(origin.pointOfInstantiation,
                         [](auto id) { return renderTableId(id); }) +
            " " +
-           renderOption(
-               origin.anchor,
-               [](auto id) { return std::to_string(id.value()) + "%nat"; }) +
-           " " + renderOriginIds(origin.derivedFrom, true) + ")";
+           renderOption(origin.anchor,
+                        [](auto id) { return renderTableId(id); }) +
+           " " + renderRawIds(origin.derivedFrom) + ")";
 }
 
 std::string
@@ -269,9 +274,10 @@ renderCommonProvenance(const source::encoding::EncodedTables &tables) {
     result += renderIndexedTable(
         "presumed_filenames", "PrimString.string", tables.presumedFilenames,
         "Encoded.default_presumed_filename", stringLiteral);
-    result += renderIndexedTable("physical_points", "physical_point",
-                                 tables.physicalPoints,
-                                 "Encoded.default_physical_point", renderPoint);
+    result += renderIndexedTable(
+        "physical_points", "Encoded.encoded_physical_point",
+        tables.physicalPoints, "Encoded.default_encoded_physical_point",
+        renderEncodedPhysicalPoint);
     result += renderIndexedTable(
         "presumed_points", "Encoded.encoded_presumed_point",
         tables.presumedPoints, "Encoded.default_encoded_presumed_point",
@@ -296,6 +302,33 @@ renderMacroDependentProvenance(const source::encoding::EncodedTables &tables,
         "Encoded.default_encoded_origin", [&](const auto &origin) {
             return renderEncodedOrigin(origin, tables, references);
         });
+    return result;
+}
+
+std::string
+renderEncodedLocationShape(const location::encoding::EncodedShape &shape) {
+    return "LS(" + renderRawIds(shape.children) + ")";
+}
+
+std::string
+renderEncodedLocationNode(const location::encoding::EncodedLocationNode &node) {
+    return "LN(" + renderTableId(node.shape) + ", " +
+           renderRawIds(node.origins) + ", " + renderRawIds(node.children) +
+           ")";
+}
+
+std::string
+renderLocationDag(const location::encoding::EncodedLocations &locations) {
+    std::string result = renderIndexedTable(
+        "location_shapes", "Encoded.encoded_location_shape", locations.shapes,
+        "Encoded.default_encoded_location_shape", renderEncodedLocationShape);
+    result += renderIndexedTable(
+        "location_nodes", "Encoded.encoded_location_node", locations.nodes,
+        "Encoded.default_encoded_location_node", renderEncodedLocationNode);
+    result += "#[local] Definition source_location_dag : "
+              "Encoded.indexed_location_dag :=\n  "
+              "Encoded.Build_indexed_location_dag location_shapes "
+              "location_nodes.\n";
     return result;
 }
 
@@ -340,7 +373,7 @@ llvm::Error LocationRocqEmitter::appendTreeUnchecked(
     if (!node)
         return node.takeError();
     output += "(LocNode ";
-    output += renderOriginIds((*node)->origins);
+    output += renderPublicOriginIds((*node)->origins);
     output += " ";
 
     // This is intentionally the only recursion point. It has no constructor or
@@ -379,6 +412,13 @@ LocationRocqEmitter::renderTree(const TranslationUnitIR &unit,
     return renderTreeUnchecked(unit, root);
 }
 
+llvm::Expected<std::string> LocationRocqEmitter::renderLocationDagForTest(
+    const location::encoding::EncodedLocations &locations) const {
+    if (auto failure = location::encoding::validate(locations))
+        return std::move(failure);
+    return renderLocationDag(locations);
+}
+
 llvm::Expected<std::string>
 LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
     if (auto failure = IRValidator::validate(unit))
@@ -394,6 +434,11 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
     }();
     if (!provenance)
         return provenance.takeError();
+    auto locations =
+        location::encoding::encode(unit, options_.includeTemplates);
+    if (!locations)
+        return locations.takeError();
+    std::string locationDag = renderLocationDag(*locations);
 
     std::string eventList;
     bool hasEvents = false;
@@ -412,22 +457,29 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
         const char *constructor = nullptr;
         switch (root.kind) {
         case RootKind::Symbol:
-            constructor = "Construction.LESymbol";
+            constructor = "Construction.ILESymbol";
             break;
         case RootKind::Type:
-            constructor = "Construction.LEType";
+            constructor = "Construction.ILEType";
             break;
         case RootKind::TemplateSymbol:
-            constructor = "Construction.LEMsymbol";
+            constructor = "Construction.ILEMsymbol";
             break;
         case RootKind::TemplateType:
-            constructor = "Construction.LEMtype";
+            constructor = "Construction.ILEMtype";
             break;
         default:
             return llvm::createStringError(
                 std::errc::invalid_argument,
                 "location emitter received an invalid root kind");
         }
+        if (ordered.index >= locations->eventRoots.size() ||
+            !locations->eventRoots[ordered.index])
+            return llvm::createStringError(
+                std::errc::invalid_argument,
+                "location DAG omitted a selected root event");
+        const location::encoding::EncodedRoot encodedRoot =
+            *locations->eventRoots[ordered.index];
         auto name = semantic_.renderNodeUnchecked(unit, root.semanticName);
         if (!name)
             return name.takeError();
@@ -445,12 +497,17 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
         eventList += " ";
         eventList += *value;
         eventList += " ";
-        if (auto failure =
-                appendTreeUnchecked(eventList, unit, root.semanticValue))
-            return std::move(failure);
-        eventList += ") :: ";
+        eventList += renderTableId(encodedRoot.node);
+        eventList += "%uint63 ";
+        eventList += renderTableId(encodedRoot.shape);
+        eventList += "%uint63) :: ";
     }
     eventList += hasEvents ? "nil)" : "nil";
+    std::vector<location::encoding::EncodedShape>().swap(locations->shapes);
+    std::vector<location::encoding::EncodedLocationNode>().swap(
+        locations->nodes);
+    std::vector<std::optional<location::encoding::EncodedRoot>>().swap(
+        locations->eventRoots);
 
     constexpr const char *prefix =
         "Require Import skylabs.lang.cpp.syntax.source_location.\n"
@@ -461,7 +518,18 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
         "#[local] Set Warnings \"-abstract-large-number\".\n"
         "#[local] Open Scope pstring_scope.\n"
         "#[local] Open Scope array_scope.\n"
-        "#[local] Open Scope uint63_scope.\n\n"
+        "#[local] Open Scope uint63_scope.\n"
+        "#[local] Notation "
+        "\"'EP' '(' file ',' offset ',' line ',' column ')'\" :=\n"
+        "  (Encoded.Build_encoded_physical_point file offset line column) "
+        "(only parsing).\n"
+        "#[local] Notation \"'LS' '(' children ')'\" :=\n"
+        "  (Encoded.Build_encoded_location_shape children) "
+        "(only parsing).\n"
+        "#[local] Notation \"'LN' '(' shape ',' origins ',' children ')'\" "
+        ":=\n"
+        "  (Encoded.Build_encoded_location_node shape origins children) "
+        "(only parsing).\n\n"
         "#[local] Definition source_files : list source_file := ";
     constexpr const char *sourceFilesEnd = ".\n";
     constexpr const char *middle =
@@ -471,22 +539,24 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
         "Require Import skylabs.lang.cpp.mparser.\n"
         "Require Import skylabs.lang.cpp.parser.source_location.\n\n"
         "#[local] Definition located_root_events : list "
-        "Construction.located_root_event := ";
+        "Construction.indexed_located_root_event := ";
     constexpr const char *suffix =
         ".\n\nDefinition source_locations : source_map.\n"
         "Proof.\n"
-        "  Construction.build_indexed_source_map_or_fail source_files "
-        "source_provenance located_root_events.\n"
+        "  Construction.build_indexed_dag_source_map_or_fail source_files "
+        "source_provenance source_location_dag located_root_events.\n"
         "Defined.\n";
     std::string output;
     output.reserve(std::char_traits<char>::length(prefix) + files->size() +
                    std::char_traits<char>::length(sourceFilesEnd) +
-                   provenance->size() + std::char_traits<char>::length(middle) +
-                   eventList.size() + std::char_traits<char>::length(suffix));
+                   provenance->size() + locationDag.size() +
+                   std::char_traits<char>::length(middle) + eventList.size() +
+                   std::char_traits<char>::length(suffix));
     output += prefix;
     output += *files;
     output += sourceFilesEnd;
     output += *provenance;
+    output += locationDag;
     output += middle;
     output += eventList;
     output += suffix;

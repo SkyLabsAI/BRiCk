@@ -79,8 +79,7 @@ Definition file_of (root : decl_root) (path : loc_path)
       match origin.(spelling_range) with
       | Some range =>
           match range.(range_begin) with
-          | Some point =>
-              List.nth_error source_locations.(files) point.(point_file)
+          | Some point => lookup_file source_locations point.(point_file)
           | None => None
           end
       | None => None
@@ -125,11 +124,12 @@ Example line_directive_preserves_presumed_point :
 Proof. vm_compute. reflexivity. Qed.
 
 Example user_header_keeps_include_parent :
-    file_fact user_root = Some (FKUser, false, Some (0, 9%N)).
+    file_fact user_root = Some (FKUser, false, Some (0%file_id, 9%N)).
 Proof. vm_compute. reflexivity. Qed.
 
 Example system_header_keeps_kind_and_parent :
-    file_fact system_root = Some (FKSystem, false, Some (0, 36%N)).
+    file_fact system_root =
+      Some (FKSystem, false, Some (0%file_id, 36%N)).
 Proof. vm_compute. reflexivity. Qed.
 
 Example files_are_in_first_seen_order : List.length source_locations.(files) = 3.

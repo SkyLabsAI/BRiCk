@@ -16,8 +16,8 @@ Require Import Stdlib.ZArith.ZArith.
 #[local] Notation lookup := syntax.source_location.lookup (only parsing).
 
 Definition test_origin
-    (kind : origin_kind) (anchor : option origin_id)
-    (derived : list origin_id) : source_origin := {|
+    (kind : origin_kind) (anchor : option nat)
+    (derived : list nat) : source_origin := {|
   origin_class := kind;
   spelling_range := None;
   expansion_range := None;
@@ -25,8 +25,10 @@ Definition test_origin
   presumed_end := None;
   macro_stack := [];
   point_of_instantiation := None;
-  anchor_origin := anchor;
-  derived_from := derived
+  anchor_origin := option_map
+    (fun id => Build_origin_id (Uint63.of_Z (Z.of_nat id))) anchor;
+  derived_from := List.map
+    (fun id => Build_origin_id (Uint63.of_Z (Z.of_nat id))) derived
 |}.
 
 Definition origin0 : source_origin := test_origin ExplicitOrigin None [].
@@ -39,8 +41,11 @@ Definition test_origins : list source_origin :=
 Definition shared_root_name : name := "shared()"%cpp_name.
 Definition absent_root_name : name := "absent()"%cpp_name.
 
-Definition leaf (ids : list origin_id) : loc_tree origin_id :=
-  LocNode ids [].
+Definition public_origin_ids (ids : list nat) : list origin_id :=
+  List.map (fun id => Build_origin_id (Uint63.of_Z (Z.of_nat id))) ids.
+
+Definition leaf (ids : list nat) : loc_tree origin_id :=
+  LocNode (public_origin_ids ids) [].
 
 Definition namespace_locations : declaration_locations origin_id := {|
   symbol_locations := <[shared_root_name := leaf [0]]> ∅;
@@ -52,8 +57,44 @@ Definition namespace_locations : declaration_locations origin_id := {|
 Definition namespace_map : source_map := {|
   files := [];
   origin_data := ExpandedOrigins test_origins;
-  declarations := namespace_locations
+  location_data := ExpandedLocations namespace_locations
 |}.
+
+Definition test_file : source_file :=
+  Build_source_file "test.cpp"%pstring None FKUser true None.
+
+Definition file_map : source_map := {|
+  files := [test_file];
+  origin_data := ExpandedOrigins test_origins;
+  location_data := ExpandedLocations namespace_locations
+|}.
+
+Definition empty_declaration_locations : declaration_locations origin_id := {|
+  symbol_locations := ∅;
+  type_locations := ∅;
+  msymbol_locations := ∅;
+  mtype_locations := ∅
+|}.
+
+Definition expanded_location_roots
+    (map : source_map) : declaration_locations origin_id :=
+  match map.(location_data) with
+  | ExpandedLocations roots => roots
+  | IndexedLocations _ _ => empty_declaration_locations
+  end.
+
+Example primitive_id_wrappers_preserve_values :
+  (file_id_value 7%file_id, origin_id_value 9%origin_id) =
+    (7%uint63, 9%uint63).
+Proof. reflexivity. Qed.
+
+Example lookup_file_uses_the_nominal_primitive_id :
+  lookup_file file_map 0%file_id = Some test_file.
+Proof. vm_compute. reflexivity. Qed.
+
+Example lookup_file_rejects_a_maximal_id_without_nat_conversion :
+  lookup_file file_map (Build_file_id Uint63.max_int) = None.
+Proof. vm_compute. reflexivity. Qed.
 
 Example lookup_symbol_namespace :
   lookup namespace_map (DRSymbol shared_root_name) [] = inr [origin0].
@@ -72,12 +113,13 @@ Example lookup_mtype_namespace :
 Proof. vm_compute. reflexivity. Qed.
 
 Definition nested_tree : loc_tree origin_id :=
-  LocNode [0] [leaf [1]; LocNode [] [leaf [2]]].
+  LocNode (public_origin_ids [0])
+    [leaf [1]; LocNode [] [leaf [2]]].
 
 Definition nested_map : source_map := {|
   files := [];
   origin_data := ExpandedOrigins test_origins;
-  declarations := {|
+  location_data := ExpandedLocations {|
     symbol_locations := <[shared_root_name := nested_tree]> ∅;
     type_locations := ∅;
     msymbol_locations := ∅;
@@ -115,7 +157,7 @@ Proof. vm_compute. reflexivity. Qed.
 Definition invalid_id_map : source_map := {|
   files := [];
   origin_data := ExpandedOrigins test_origins;
-  declarations := {|
+  location_data := ExpandedLocations {|
     symbol_locations := <[shared_root_name := leaf [1; 9; 8]]> ∅;
     type_locations := ∅;
     msymbol_locations := ∅;
@@ -134,7 +176,7 @@ Definition invalid_anchor_origin : source_origin :=
 Definition invalid_anchor_map : source_map := {|
   files := [];
   origin_data := ExpandedOrigins [invalid_anchor_origin];
-  declarations := {|
+  location_data := ExpandedLocations {|
     symbol_locations := <[shared_root_name := leaf [0]]> ∅;
     type_locations := ∅;
     msymbol_locations := ∅;
@@ -153,7 +195,7 @@ Definition invalid_derived_origin : source_origin :=
 Definition invalid_derived_map : source_map := {|
   files := [];
   origin_data := ExpandedOrigins [invalid_derived_origin];
-  declarations := {|
+  location_data := ExpandedLocations {|
     symbol_locations := <[shared_root_name := leaf [0]]> ∅;
     type_locations := ∅;
     msymbol_locations := ∅;
@@ -172,7 +214,7 @@ Definition valid_reference_origin : source_origin :=
 Definition valid_reference_map : source_map := {|
   files := [];
   origin_data := ExpandedOrigins [origin0; valid_reference_origin];
-  declarations := {|
+  location_data := ExpandedLocations {|
     symbol_locations := <[shared_root_name := leaf [1]]> ∅;
     type_locations := ∅;
     msymbol_locations := ∅;
@@ -188,7 +230,7 @@ Proof. vm_compute. reflexivity. Qed.
 Definition ordered_multi_origin_map : source_map := {|
   files := [];
   origin_data := ExpandedOrigins test_origins;
-  declarations := {|
+  location_data := ExpandedLocations {|
     symbol_locations := <[shared_root_name := leaf [2; 0; 3; 1]]> ∅;
     type_locations := ∅;
     msymbol_locations := ∅;
@@ -222,7 +264,7 @@ Definition simple_encoded_origins : list Encoded.encoded_origin :=
 Definition simple_indexed_provenance : Encoded.indexed_provenance :=
   Encoded.Build_indexed_provenance
     (indexed_table_of_list Encoded.default_presumed_filename [])
-    (indexed_table_of_list Encoded.default_physical_point [])
+    (indexed_table_of_list Encoded.default_encoded_physical_point [])
     (indexed_table_of_list Encoded.default_encoded_presumed_point [])
     (indexed_table_of_list Encoded.default_encoded_range [])
     (indexed_table_of_list Encoded.default_encoded_macro_frame [])
@@ -232,7 +274,7 @@ Definition simple_indexed_provenance : Encoded.indexed_provenance :=
 Definition indexed_namespace_map : source_map := {|
   files := [];
   origin_data := IndexedOrigins simple_indexed_provenance;
-  declarations := namespace_locations
+  location_data := ExpandedLocations namespace_locations
 |}.
 
 Example indexed_lookup_symbol_namespace_parity :
@@ -255,7 +297,7 @@ Proof. vm_compute. reflexivity. Qed.
 Definition indexed_nested_map : source_map := {|
   files := [];
   origin_data := IndexedOrigins simple_indexed_provenance;
-  declarations := nested_map.(declarations)
+  location_data := ExpandedLocations (expanded_location_roots nested_map)
 |}.
 
 Example indexed_lookup_path_and_empty_parity :
@@ -281,7 +323,7 @@ Proof. vm_compute. reflexivity. Qed.
 Definition indexed_invalid_id_map : source_map := {|
   files := [];
   origin_data := IndexedOrigins simple_indexed_provenance;
-  declarations := invalid_id_map.(declarations)
+  location_data := ExpandedLocations (expanded_location_roots invalid_id_map)
 |}.
 
 Example indexed_lookup_invalid_origin_parity :
@@ -292,7 +334,8 @@ Proof. vm_compute. reflexivity. Qed.
 Definition indexed_ordered_map : source_map := {|
   files := [];
   origin_data := IndexedOrigins simple_indexed_provenance;
-  declarations := ordered_multi_origin_map.(declarations)
+  location_data := ExpandedLocations
+    (expanded_location_roots ordered_multi_origin_map)
 |}.
 
 Example indexed_lookup_origin_order_parity :
@@ -300,11 +343,11 @@ Example indexed_lookup_origin_order_parity :
     lookup ordered_multi_origin_map (DRSymbol shared_root_name) [].
 Proof. vm_compute. reflexivity. Qed.
 
-Definition rich_points : list physical_point :=
-  [ Build_physical_point 0 1%N 2%N 3%N
-  ; Build_physical_point 0 4%N 5%N 6%N
-  ; Build_physical_point 0 7%N 8%N 9%N
-  ; Build_physical_point 0 10%N 11%N 12%N
+Definition rich_points : list Encoded.encoded_physical_point :=
+  [ Encoded.Build_encoded_physical_point 0%uint63 1%N 2%N 3%N
+  ; Encoded.Build_encoded_physical_point 0%uint63 4%N 5%N 6%N
+  ; Encoded.Build_encoded_physical_point 0%uint63 7%N 8%N 9%N
+  ; Encoded.Build_encoded_physical_point 0%uint63 10%N 11%N 12%N
   ].
 
 Definition rich_ranges : list Encoded.encoded_range :=
@@ -328,7 +371,7 @@ Definition rich_encoded_origin : Encoded.encoded_origin :=
     (Some 0%uint63) (Some 1%uint63)
     [ Encoded.MacroFrameReference 0%uint63
     ; Encoded.InlineMacroFrame rich_inline_frame
-    ] (Some 3%uint63) (Some 1) [1].
+    ] (Some 3%uint63) (Some 1%uint63) [1%uint63].
 
 Definition rich_reference_encoded_origin : Encoded.encoded_origin :=
   Encoded.Build_encoded_origin ImplicitOrigin
@@ -338,7 +381,7 @@ Definition rich_indexed_provenance : Encoded.indexed_provenance :=
   Encoded.Build_indexed_provenance
     (indexed_table_of_list Encoded.default_presumed_filename
       ["logical.cpp"%pstring])
-    (indexed_table_of_list Encoded.default_physical_point rich_points)
+    (indexed_table_of_list Encoded.default_encoded_physical_point rich_points)
     (indexed_table_of_list Encoded.default_encoded_presumed_point
       [ Encoded.Build_encoded_presumed_point 0%uint63 20%N 21%N
       ; Encoded.Build_encoded_presumed_point 0%uint63 22%N 23%N
@@ -377,17 +420,18 @@ Definition rich_origin : source_origin :=
           (Some (Build_physical_point 0 4%N 5%N 6%N)) CharacterRange
           (Some (Build_physical_point 0 7%N 8%N 9%N,
                  Build_physical_point 0 10%N 11%N 12%N)))) None
-    ] (Some (Build_physical_point 0 10%N 11%N 12%N)) (Some 1) [1].
+    ] (Some (Build_physical_point 0 10%N 11%N 12%N))
+    (Some 1%origin_id) [1%origin_id].
 
 Definition rich_reference_origin : source_origin :=
   test_origin ImplicitOrigin None [].
 
 Definition indexed_leaf_map
-    (tables : Encoded.indexed_provenance) (ids : list origin_id)
+    (tables : Encoded.indexed_provenance) (ids : list nat)
     : source_map := {|
   files := [];
   origin_data := IndexedOrigins tables;
-  declarations := {|
+  location_data := ExpandedLocations {|
     symbol_locations := <[shared_root_name := leaf ids]> ∅;
     type_locations := ∅;
     msymbol_locations := ∅;
@@ -403,8 +447,8 @@ Proof. vm_compute. reflexivity. Qed.
 Definition rich_expanded_map : source_map := {|
   files := [];
   origin_data := ExpandedOrigins [rich_origin; rich_reference_origin];
-  declarations :=
-    (indexed_leaf_map rich_indexed_provenance [0]).(declarations)
+  location_data := ExpandedLocations (expanded_location_roots
+    (indexed_leaf_map rich_indexed_provenance [0]))
 |}.
 
 Example indexed_rich_lookup_matches_expanded_map :
@@ -436,11 +480,11 @@ Definition malformed_range_origin : Encoded.encoded_origin :=
 
 Definition malformed_anchor_origin : Encoded.encoded_origin :=
   Encoded.Build_encoded_origin ExplicitOrigin (Some 99%uint63) None
-    None None [] None (Some 9) [].
+    None None [] None (Some 9%uint63) [].
 
 Definition malformed_derived_origin : Encoded.encoded_origin :=
   Encoded.Build_encoded_origin ExplicitOrigin None None
-    None None [] None None [8; 7].
+    None None [] None None [8%uint63; 7%uint63].
 
 Example indexed_lookup_reports_private_range_corruption :
   lookup (indexed_leaf_map
@@ -526,11 +570,11 @@ Proof. vm_compute. reflexivity. Qed.
 
 Definition storage_missing_anchor_origin : Encoded.encoded_origin :=
   Encoded.Build_encoded_origin InheritedOrigin
-    None None None None [] None (Some 1) [].
+    None None None None [] None (Some 1%uint63) [].
 
 Definition storage_missing_derived_origin : Encoded.encoded_origin :=
   Encoded.Build_encoded_origin InheritedOrigin
-    None None None None [] None None [1].
+    None None None None [] None None [1%uint63].
 
 Definition short_two_origin_table
     (first : Encoded.encoded_origin)
@@ -576,6 +620,384 @@ Example indexed_empty_table_is_checked :
   Encoded.table_get (indexed_table_of_list 0 []) 0%uint63 = None.
 Proof. vm_compute. reflexivity. Qed.
 
+Definition dag_shapes : list Encoded.encoded_location_shape :=
+  [ Encoded.Build_encoded_location_shape []
+  ; Encoded.Build_encoded_location_shape [0%uint63]
+  ; Encoded.Build_encoded_location_shape [0%uint63; 1%uint63]
+  ].
+
+Definition dag_nodes : list Encoded.encoded_location_node :=
+  [ Encoded.Build_encoded_location_node 0%uint63 [1%uint63] []
+  ; Encoded.Build_encoded_location_node 0%uint63 [2%uint63] []
+  ; Encoded.Build_encoded_location_node 1%uint63 [] [1%uint63]
+  ; Encoded.Build_encoded_location_node 2%uint63 [0%uint63]
+      [0%uint63; 2%uint63]
+  ; Encoded.Build_encoded_location_node 0%uint63 [3%uint63] []
+  ; Encoded.Build_encoded_location_node 0%uint63 [0%uint63] []
+  ; Encoded.Build_encoded_location_node 1%uint63 [1%uint63] [5%uint63]
+  ; Encoded.Build_encoded_location_node 2%uint63 [2%uint63]
+      [4%uint63; 6%uint63]
+  ].
+
+Definition location_dag_of_lists
+    (shapes : list Encoded.encoded_location_shape)
+    (nodes : list Encoded.encoded_location_node)
+    : Encoded.indexed_location_dag :=
+  Encoded.Build_indexed_location_dag
+    (indexed_table_of_list Encoded.default_encoded_location_shape shapes)
+    (indexed_table_of_list Encoded.default_encoded_location_node nodes).
+
+Definition simple_location_dag : Encoded.indexed_location_dag :=
+  location_dag_of_lists dag_shapes dag_nodes.
+
+Definition dag_namespace_locations : root_locations indexed_location := {|
+  symbol_locations :=
+    <[shared_root_name := StaticLocation 3%uint63 2%uint63]> ∅;
+  type_locations :=
+    <[shared_root_name := StaticLocation 0%uint63 0%uint63]> ∅;
+  msymbol_locations :=
+    <[shared_root_name := StaticLocation 1%uint63 0%uint63]> ∅;
+  mtype_locations :=
+    <[shared_root_name := StaticLocation 4%uint63 0%uint63]> ∅
+|}.
+
+Definition dag_map_with_provenance
+    (provenance : Encoded.indexed_provenance)
+    (dag : Encoded.indexed_location_dag)
+    (roots : root_locations indexed_location) : source_map := {|
+  files := [];
+  origin_data := IndexedOrigins provenance;
+  location_data := IndexedLocations dag roots
+|}.
+
+Definition dag_map
+    (dag : Encoded.indexed_location_dag)
+    (roots : root_locations indexed_location) : source_map :=
+  dag_map_with_provenance simple_indexed_provenance dag roots.
+
+Definition simple_dag_map : source_map :=
+  dag_map simple_location_dag dag_namespace_locations.
+
+Example indexed_dag_preserves_all_root_namespaces :
+  ( lookup simple_dag_map (DRSymbol shared_root_name) []
+  , lookup simple_dag_map (DRType shared_root_name) []
+  , lookup simple_dag_map (DRMsymbol shared_root_name) []
+  , lookup simple_dag_map (DRMtype shared_root_name) [] ) =
+  ( inr [origin0], inr [origin1], inr [origin2], inr [origin3] ).
+Proof. vm_compute. reflexivity. Qed.
+
+Example indexed_dag_path_lookup_matches_expanded_tree :
+  ( lookup simple_dag_map (DRSymbol shared_root_name) []
+  , lookup simple_dag_map (DRSymbol shared_root_name) [0]
+  , lookup simple_dag_map (DRSymbol shared_root_name) [1]
+  , lookup simple_dag_map (DRSymbol shared_root_name) [1; 0] ) =
+  ( lookup nested_map (DRSymbol shared_root_name) []
+  , lookup nested_map (DRSymbol shared_root_name) [0]
+  , lookup nested_map (DRSymbol shared_root_name) [1]
+  , lookup nested_map (DRSymbol shared_root_name) [1; 0] ).
+Proof. vm_compute. reflexivity. Qed.
+
+Example indexed_dag_child_errors_match_expanded_tree :
+  ( lookup simple_dag_map (DRSymbol shared_root_name) [2]
+  , lookup simple_dag_map (DRSymbol shared_root_name) [1; 1] ) =
+  ( lookup nested_map (DRSymbol shared_root_name) [2]
+  , lookup nested_map (DRSymbol shared_root_name) [1; 1] ).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition one_dag_root
+    (location : indexed_location) : root_locations indexed_location := {|
+  symbol_locations := <[shared_root_name := location]> ∅;
+  type_locations := ∅;
+  msymbol_locations := ∅;
+  mtype_locations := ∅
+|}.
+
+Definition rich_dag_map : source_map :=
+  dag_map_with_provenance rich_indexed_provenance simple_location_dag
+    (one_dag_root (StaticLocation 5%uint63 0%uint63)).
+
+Example indexed_dag_preserves_rich_lazy_provenance_decoding :
+  lookup rich_dag_map (DRSymbol shared_root_name) [] = inr [rich_origin].
+Proof. vm_compute. reflexivity. Qed.
+
+Definition malformed_anchor_dag_map : source_map :=
+  dag_map_with_provenance
+    (provenance_with_origins rich_indexed_provenance
+      [malformed_anchor_origin]) simple_location_dag
+    (one_dag_root (StaticLocation 5%uint63 0%uint63)).
+
+Example indexed_dag_preserves_anchor_error_priority :
+  lookup malformed_anchor_dag_map (DRSymbol shared_root_name) [] =
+  inl (OriginIdOutOfBounds (DRSymbol shared_root_name) [] 9).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition missing_location_node_table
+    : Encoded.indexed_table Encoded.encoded_location_node :=
+  Encoded.Build_indexed_table 1%uint63
+    (PArray.of_list
+      (PArray.of_list Encoded.default_encoded_location_node []) []).
+
+Definition missing_location_shape_table
+    : Encoded.indexed_table Encoded.encoded_location_shape :=
+  Encoded.Build_indexed_table 1%uint63
+    (PArray.of_list
+      (PArray.of_list Encoded.default_encoded_location_shape []) []).
+
+Definition missing_inner_location_shape_table
+    : Encoded.indexed_table Encoded.encoded_location_shape :=
+  Encoded.Build_indexed_table 1%uint63
+    (PArray.of_list
+      (PArray.of_list Encoded.default_encoded_location_shape [])
+      [PArray.of_list Encoded.default_encoded_location_shape []]).
+
+Example indexed_dag_reports_missing_root_node_storage :
+  lookup (dag_map
+      (Encoded.Build_indexed_location_dag
+        simple_location_dag.(Encoded.location_shape_table)
+        missing_location_node_table)
+      (one_dag_root (StaticLocation 0%uint63 0%uint63)))
+    (DRSymbol shared_root_name) [] =
+  inl (MalformedLocationDag (DRSymbol shared_root_name) 0
+    (MissingLocationTableEntry LocationNodeTable 0%uint63)).
+Proof. vm_compute. reflexivity. Qed.
+
+Example indexed_dag_reports_missing_root_shape_storage :
+  lookup (dag_map
+      (Encoded.Build_indexed_location_dag missing_location_shape_table
+        simple_location_dag.(Encoded.location_node_table))
+      (one_dag_root (StaticLocation 0%uint63 0%uint63)))
+    (DRSymbol shared_root_name) [] =
+  inl (MalformedLocationDag (DRSymbol shared_root_name) 0
+    (MissingLocationTableEntry LocationShapeTable 0%uint63)).
+Proof. vm_compute. reflexivity. Qed.
+
+Example indexed_dag_distinguishes_missing_inner_shape_storage :
+  lookup (dag_map
+      (Encoded.Build_indexed_location_dag
+        missing_inner_location_shape_table
+        simple_location_dag.(Encoded.location_node_table))
+      (one_dag_root (StaticLocation 0%uint63 0%uint63)))
+    (DRSymbol shared_root_name) [] =
+  inl (MalformedLocationDag (DRSymbol shared_root_name) 0
+    (MissingLocationTableEntry LocationShapeTable 0%uint63)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition self_node_edge_dag : Encoded.indexed_location_dag :=
+  location_dag_of_lists
+    [ Encoded.Build_encoded_location_shape []
+    ; Encoded.Build_encoded_location_shape [0%uint63]
+    ]
+    [ Encoded.Build_encoded_location_node 1%uint63 [] [0%uint63] ].
+
+Example indexed_dag_rejects_self_node_edges :
+  lookup (dag_map self_node_edge_dag
+      (one_dag_root (StaticLocation 0%uint63 1%uint63)))
+    (DRSymbol shared_root_name) [0] =
+  inl (MalformedLocationDag (DRSymbol shared_root_name) 0
+    (NonBackwardLocationNodeEdge 0%uint63 0%uint63)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition forward_node_edge_dag : Encoded.indexed_location_dag :=
+  location_dag_of_lists
+    [ Encoded.Build_encoded_location_shape []
+    ; Encoded.Build_encoded_location_shape [0%uint63]
+    ]
+    [ Encoded.Build_encoded_location_node 1%uint63 [] [1%uint63]
+    ; Encoded.Build_encoded_location_node 0%uint63 [] []
+    ].
+
+Example indexed_dag_rejects_forward_node_edges :
+  lookup (dag_map forward_node_edge_dag
+      (one_dag_root (StaticLocation 0%uint63 1%uint63)))
+    (DRSymbol shared_root_name) [0] =
+  inl (MalformedLocationDag (DRSymbol shared_root_name) 0
+    (NonBackwardLocationNodeEdge 0%uint63 1%uint63)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition self_shape_edge_dag : Encoded.indexed_location_dag :=
+  location_dag_of_lists
+    [ Encoded.Build_encoded_location_shape [0%uint63]
+    ; Encoded.Build_encoded_location_shape []
+    ]
+    [ Encoded.Build_encoded_location_node 1%uint63 [] []
+    ; Encoded.Build_encoded_location_node 0%uint63 [] [0%uint63]
+    ].
+
+Example indexed_dag_rejects_self_shape_edges :
+  lookup (dag_map self_shape_edge_dag
+      (one_dag_root (StaticLocation 1%uint63 0%uint63)))
+    (DRSymbol shared_root_name) [0] =
+  inl (MalformedLocationDag (DRSymbol shared_root_name) 0
+    (NonBackwardLocationShapeEdge 0%uint63 0%uint63)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition forward_shape_edge_dag : Encoded.indexed_location_dag :=
+  location_dag_of_lists
+    [ Encoded.Build_encoded_location_shape [1%uint63]
+    ; Encoded.Build_encoded_location_shape []
+    ]
+    [ Encoded.Build_encoded_location_node 1%uint63 [] []
+    ; Encoded.Build_encoded_location_node 0%uint63 [] [0%uint63]
+    ].
+
+Example indexed_dag_rejects_forward_shape_edges :
+  lookup (dag_map forward_shape_edge_dag
+      (one_dag_root (StaticLocation 1%uint63 0%uint63)))
+    (DRSymbol shared_root_name) [0] =
+  inl (MalformedLocationDag (DRSymbol shared_root_name) 0
+    (NonBackwardLocationShapeEdge 0%uint63 1%uint63)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition wrong_node_shape_dag : Encoded.indexed_location_dag :=
+  location_dag_of_lists
+    [ Encoded.Build_encoded_location_shape []
+    ; Encoded.Build_encoded_location_shape []
+    ]
+    [ Encoded.Build_encoded_location_node 0%uint63 [] [] ].
+
+Example indexed_dag_rejects_node_shape_disagreement :
+  lookup (dag_map wrong_node_shape_dag
+      (one_dag_root (StaticLocation 0%uint63 1%uint63)))
+    (DRSymbol shared_root_name) [] =
+  inl (MalformedLocationDag (DRSymbol shared_root_name) 0
+    (LocationNodeShapeMismatch 0%uint63 1%uint63 0%uint63)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition wrong_location_arity_dag : Encoded.indexed_location_dag :=
+  location_dag_of_lists
+    [Encoded.Build_encoded_location_shape []]
+    [Encoded.Build_encoded_location_node 0%uint63 [] [0%uint63]].
+
+Example indexed_dag_rejects_node_shape_arity_disagreement :
+  lookup (dag_map wrong_location_arity_dag
+      (one_dag_root (StaticLocation 0%uint63 0%uint63)))
+    (DRSymbol shared_root_name) [] =
+  inl (MalformedLocationDag (DRSymbol shared_root_name) 0
+    (LocationArityMismatch 0%uint63 0%uint63 1 0)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition partially_malformed_location_dag : Encoded.indexed_location_dag :=
+  location_dag_of_lists
+    [ Encoded.Build_encoded_location_shape []
+    ; Encoded.Build_encoded_location_shape [0%uint63; 0%uint63]
+    ]
+    [ Encoded.Build_encoded_location_node 0%uint63 [1%uint63] []
+    ; Encoded.Build_encoded_location_node 99%uint63 [2%uint63] []
+    ; Encoded.Build_encoded_location_node 1%uint63 [0%uint63]
+        [0%uint63; 1%uint63]
+    ].
+
+Definition partially_malformed_location_map : source_map :=
+  dag_map partially_malformed_location_dag
+    (one_dag_root (StaticLocation 2%uint63 1%uint63)).
+
+Example eager_dag_diagnostic_accepts_the_complete_valid_table :
+  Internal.validate_location_dag simple_location_dag = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Example eager_dag_diagnostic_finds_an_unreachable_malformed_row :
+  Internal.validate_location_dag partially_malformed_location_dag =
+  Some (MissingLocationTableEntry LocationShapeTable 99%uint63).
+Proof. vm_compute. reflexivity. Qed.
+
+Example eager_dag_diagnostic_rejects_shape_cycles_by_order :
+  Internal.validate_location_dag self_shape_edge_dag =
+  Some (NonBackwardLocationShapeEdge 0%uint63 0%uint63).
+Proof. vm_compute. reflexivity. Qed.
+
+Example indexed_dag_does_not_validate_unselected_subtrees :
+  lookup partially_malformed_location_map
+    (DRSymbol shared_root_name) [0] = inr [origin1].
+Proof. vm_compute. reflexivity. Qed.
+
+Example indexed_dag_reports_a_selected_malformed_subtree :
+  lookup partially_malformed_location_map
+    (DRSymbol shared_root_name) [1] =
+  inl (MalformedLocationDag (DRSymbol shared_root_name) 1
+    (LocationNodeShapeMismatch 1%uint63 0%uint63 99%uint63)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition malformed_origin_location_dag : Encoded.indexed_location_dag :=
+  location_dag_of_lists
+    [Encoded.Build_encoded_location_shape []]
+    [Encoded.Build_encoded_location_node 0%uint63 [99%uint63] []].
+
+Definition malformed_origin_location_map : source_map :=
+  dag_map malformed_origin_location_dag
+    (one_dag_root (StaticLocation 0%uint63 0%uint63)).
+
+Example indexed_dag_checks_child_bounds_before_origin_ids :
+  lookup malformed_origin_location_map
+    (DRSymbol shared_root_name) [0] =
+  inl (ChildOutOfBounds (DRSymbol shared_root_name) 0 0 0).
+Proof. vm_compute. reflexivity. Qed.
+
+Example indexed_dag_then_reports_the_selected_origin_id :
+  lookup malformed_origin_location_map
+    (DRSymbol shared_root_name) [] =
+  inl (OriginIdOutOfBounds (DRSymbol shared_root_name) [] 99).
+Proof. vm_compute. reflexivity. Qed.
+
+Example indexed_dag_checks_root_presence_before_storage :
+  lookup (dag_map
+      (Encoded.Build_indexed_location_dag missing_location_shape_table
+        missing_location_node_table)
+      (one_dag_root (StaticLocation 0%uint63 0%uint63)))
+    (DRSymbol absent_root_name) [] =
+  inl (RootNotFound (DRSymbol absent_root_name)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition missing_child_node_table
+    : Encoded.indexed_table Encoded.encoded_location_node :=
+  Encoded.Build_indexed_table 4097%uint63
+    (PArray.of_list
+      (PArray.of_list Encoded.default_encoded_location_node [])
+      [ PArray.of_list Encoded.default_encoded_location_node []
+      ; PArray.of_list Encoded.default_encoded_location_node
+          [Encoded.Build_encoded_location_node 1%uint63 [] [0%uint63]]
+      ]).
+
+Definition missing_selected_child_dag : Encoded.indexed_location_dag :=
+  Encoded.Build_indexed_location_dag
+    (indexed_table_of_list Encoded.default_encoded_location_shape
+      [ Encoded.Build_encoded_location_shape []
+      ; Encoded.Build_encoded_location_shape [0%uint63]
+      ])
+    missing_child_node_table.
+
+Example indexed_dag_reports_missing_selected_child_at_its_depth :
+  lookup (dag_map missing_selected_child_dag
+      (one_dag_root (StaticLocation 4096%uint63 1%uint63)))
+    (DRSymbol shared_root_name) [0] =
+  inl (MalformedLocationDag (DRSymbol shared_root_name) 1
+    (MissingLocationTableEntry LocationNodeTable 0%uint63)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition missing_selected_shape_table
+    : Encoded.indexed_table Encoded.encoded_location_shape :=
+  Encoded.Build_indexed_table 4097%uint63
+    (PArray.of_list
+      (PArray.of_list Encoded.default_encoded_location_shape [])
+      [ PArray.of_list Encoded.default_encoded_location_shape []
+      ; PArray.of_list Encoded.default_encoded_location_shape
+          [Encoded.Build_encoded_location_shape [0%uint63]]
+      ]).
+
+Definition missing_selected_shape_dag : Encoded.indexed_location_dag :=
+  Encoded.Build_indexed_location_dag missing_selected_shape_table
+    (indexed_table_of_list Encoded.default_encoded_location_node
+      [ Encoded.Build_encoded_location_node 0%uint63 [1%uint63] []
+      ; Encoded.Build_encoded_location_node 4096%uint63 [] [0%uint63]
+      ]).
+
+Example indexed_dag_reports_missing_selected_shape_at_its_depth :
+  lookup (dag_map missing_selected_shape_dag
+      (one_dag_root (StaticLocation 1%uint63 4096%uint63)))
+    (DRSymbol shared_root_name) [0] =
+  inl (MalformedLocationDag (DRSymbol shared_root_name) 1
+    (MissingLocationTableEntry LocationShapeTable 0%uint63)).
+Proof. vm_compute. reflexivity. Qed.
+
 Definition int_type : type := "int"%cpp_type.
 Definition bool_type : type := "bool"%cpp_type.
 
@@ -591,6 +1013,233 @@ Defined.
 Example indexed_construction_does_not_decode_provenance :
   lookup tactic_constructed_indexed_map (DRSymbol shared_root_name) [] =
     inr [rich_origin].
+Proof. vm_compute. reflexivity. Qed.
+
+Definition indexed_event_lookup
+    (events : list Construction.indexed_located_root_event)
+    (root : decl_root) (path : loc_path)
+    : Construction.construction_error +
+        (lookup_error + list source_origin) :=
+  match Construction.build_indexed_dag_source_map []
+      simple_indexed_provenance simple_location_dag events with
+  | inl error => inl error
+  | inr map => inr (lookup map root path)
+  end.
+
+Definition equal_indexed_symbol_events :=
+  [ Construction.ILESymbol shared_root_name test_obj_value
+      3%uint63 2%uint63
+  ; Construction.ILESymbol shared_root_name test_obj_value
+      7%uint63 2%uint63
+  ].
+
+Example indexed_equal_ordinary_duplicates_merge_root_origins :
+  indexed_event_lookup equal_indexed_symbol_events
+    (DRSymbol shared_root_name) [] =
+  inr (inr [origin2; origin0]).
+Proof. vm_compute. reflexivity. Qed.
+
+Example indexed_equal_ordinary_duplicates_merge_nested_origins :
+  ( indexed_event_lookup equal_indexed_symbol_events
+      (DRSymbol shared_root_name) [0]
+  , indexed_event_lookup equal_indexed_symbol_events
+      (DRSymbol shared_root_name) [1]
+  , indexed_event_lookup equal_indexed_symbol_events
+      (DRSymbol shared_root_name) [1; 0] ) =
+  ( inr (inr [origin3; origin1])
+  , inr (inr [origin1])
+  , inr (inr [origin0; origin2]) ).
+Proof. vm_compute. reflexivity. Qed.
+
+Example indexed_equal_duplicate_shape_mismatch_is_exact :
+  Construction.fold_indexed_events
+    [ Construction.ILESymbol shared_root_name test_obj_value
+        0%uint63 0%uint63
+    ; Construction.ILESymbol shared_root_name test_obj_value
+        2%uint63 1%uint63
+    ] = inl (Construction.TreeShapeMismatch (DRSymbol shared_root_name)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition indexed_extern_obj_value : ObjValue :=
+  Ovar int_type global_init.Extern.
+Definition indexed_bool_obj_value : ObjValue :=
+  Ovar bool_type global_init.NoInit.
+
+Definition compatible_indexed_symbol_events :=
+  [ Construction.ILESymbol shared_root_name indexed_extern_obj_value
+      3%uint63 2%uint63
+  ; Construction.ILESymbol shared_root_name test_obj_value
+      7%uint63 2%uint63
+  ].
+
+Example indexed_unequal_ordinary_duplicate_adds_loser_only_at_root :
+  ( indexed_event_lookup compatible_indexed_symbol_events
+      (DRSymbol shared_root_name) []
+  , indexed_event_lookup compatible_indexed_symbol_events
+      (DRSymbol shared_root_name) [0]
+  , indexed_event_lookup compatible_indexed_symbol_events
+      (DRSymbol shared_root_name) [1; 0] ) =
+  ( inr (inr [origin2; origin0])
+  , inr (inr [origin3])
+  , inr (inr [origin0]) ).
+Proof. vm_compute. reflexivity. Qed.
+
+Example indexed_unequal_ordinary_duplicate_exercises_incoming_winner :
+  indexed_event_lookup
+    [ Construction.ILESymbol shared_root_name test_obj_value
+        7%uint63 2%uint63
+    ; Construction.ILESymbol shared_root_name indexed_extern_obj_value
+        3%uint63 2%uint63
+    ] (DRSymbol shared_root_name) [] =
+  inr (inr [origin2; origin0]).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition equal_indexed_template_events :=
+  [ Construction.ILEMsymbol shared_root_name
+      (Template [] test_obj_value) 3%uint63 2%uint63
+  ; Construction.ILEMsymbol shared_root_name
+      (Template [] test_obj_value) 7%uint63 2%uint63
+  ].
+
+Example indexed_equal_templates_merge_in_forward_order :
+  ( indexed_event_lookup equal_indexed_template_events
+      (DRMsymbol shared_root_name) []
+  , indexed_event_lookup equal_indexed_template_events
+      (DRMsymbol shared_root_name) [0] ) =
+  ( inr (inr [origin0; origin2])
+  , inr (inr [origin1; origin3]) ).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition unequal_indexed_template_events :=
+  [ Construction.ILEMsymbol shared_root_name
+      (Template [] test_obj_value) 3%uint63 2%uint63
+  ; Construction.ILEMsymbol shared_root_name
+      (Template [] indexed_bool_obj_value) 7%uint63 2%uint63
+  ].
+
+Example indexed_unequal_template_last_write_wins_at_the_root_only :
+  ( indexed_event_lookup unequal_indexed_template_events
+      (DRMsymbol shared_root_name) []
+  , indexed_event_lookup unequal_indexed_template_events
+      (DRMsymbol shared_root_name) [0] ) =
+  ( inr (inr [origin2; origin0])
+  , inr (inr [origin3]) ).
+Proof. vm_compute. reflexivity. Qed.
+
+Example indexed_self_type_alias_is_suppressed_before_location_access :
+  indexed_event_lookup
+    [ Construction.ILEType shared_root_name
+        (Gtypedef (Tnamed shared_root_name)) 99%uint63 99%uint63 ]
+    (DRType shared_root_name) [] =
+  inr (inl (RootNotFound (DRType shared_root_name))).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition indexed_all_namespace_events :=
+  [ Construction.ILESymbol shared_root_name test_obj_value
+      3%uint63 2%uint63
+  ; Construction.ILEType shared_root_name Gtype 0%uint63 0%uint63
+  ; Construction.ILEMsymbol shared_root_name
+      (Template [] test_obj_value) 1%uint63 0%uint63
+  ; Construction.ILEMtype shared_root_name
+      (Template [] Gtype) 4%uint63 0%uint63
+  ].
+
+Example indexed_event_fold_populates_all_four_namespaces :
+  ( indexed_event_lookup indexed_all_namespace_events
+      (DRSymbol shared_root_name) []
+  , indexed_event_lookup indexed_all_namespace_events
+      (DRType shared_root_name) []
+  , indexed_event_lookup indexed_all_namespace_events
+      (DRMsymbol shared_root_name) []
+  , indexed_event_lookup indexed_all_namespace_events
+      (DRMtype shared_root_name) [] ) =
+  ( inr (inr [origin0]), inr (inr [origin1])
+  , inr (inr [origin2]), inr (inr [origin3]) ).
+Proof. vm_compute. reflexivity. Qed.
+
+Example indexed_template_type_shape_mismatch_is_exact :
+  Construction.fold_indexed_events
+    [ Construction.ILEMtype shared_root_name
+        (Template [] Gtype) 0%uint63 0%uint63
+    ; Construction.ILEMtype shared_root_name
+        (Template [] Gtype) 2%uint63 1%uint63
+    ] = inl (Construction.TreeShapeMismatch (DRMtype shared_root_name)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition malformed_merge_shape_locations
+    : root_locations indexed_location := {|
+  symbol_locations := <[shared_root_name :=
+    MergeLocations 2%uint63
+      (StaticLocation 3%uint63 2%uint63)
+      (StaticLocation 0%uint63 0%uint63)]> ∅;
+  type_locations := ∅;
+  msymbol_locations := ∅;
+  mtype_locations := ∅
+|}.
+
+Example indexed_dag_rejects_malformed_composition_shape_ids :
+  lookup (dag_map simple_location_dag malformed_merge_shape_locations)
+    (DRSymbol shared_root_name) [] =
+  inl (MalformedLocationDag (DRSymbol shared_root_name) 0
+    (LocationCompositionShapeMismatch 2%uint63 0%uint63)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition malformed_winner_shape_locations
+    : root_locations indexed_location := {|
+  symbol_locations := <[shared_root_name :=
+    AddRootOrigins 2%uint63
+      (StaticLocation 0%uint63 0%uint63)
+      (StaticLocation 3%uint63 2%uint63)]> ∅;
+  type_locations := ∅;
+  msymbol_locations := ∅;
+  mtype_locations := ∅
+|}.
+
+Example indexed_dag_rejects_malformed_winner_shape_ids :
+  lookup (dag_map simple_location_dag malformed_winner_shape_locations)
+    (DRSymbol shared_root_name) [] =
+  inl (MalformedLocationDag (DRSymbol shared_root_name) 0
+    (LocationCompositionShapeMismatch 2%uint63 0%uint63)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition malformed_loser_locations : root_locations indexed_location := {|
+  symbol_locations := <[shared_root_name :=
+    AddRootOrigins 2%uint63
+      (StaticLocation 7%uint63 2%uint63)
+      (StaticLocation 99%uint63 2%uint63)]> ∅;
+  type_locations := ∅;
+  msymbol_locations := ∅;
+  mtype_locations := ∅
+|}.
+
+Definition malformed_loser_map : source_map :=
+  dag_map simple_location_dag malformed_loser_locations.
+
+Example indexed_root_only_loser_is_not_inspected_below_the_root :
+  lookup malformed_loser_map (DRSymbol shared_root_name) [0] =
+    inr [origin3].
+Proof. vm_compute. reflexivity. Qed.
+
+Example indexed_root_only_loser_is_inspected_at_the_root :
+  lookup malformed_loser_map (DRSymbol shared_root_name) [] =
+  inl (MalformedLocationDag (DRSymbol shared_root_name) 0
+    (MissingLocationTableEntry LocationNodeTable 99%uint63)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition tactic_constructed_dag_map : source_map.
+Proof.
+  Construction.build_indexed_dag_source_map_or_fail
+    ([] : list source_file) simple_indexed_provenance
+    (Encoded.Build_indexed_location_dag
+      missing_location_shape_table missing_location_node_table)
+    [Construction.ILESymbol shared_root_name test_obj_value
+      0%uint63 0%uint63].
+Defined.
+
+Example indexed_dag_construction_does_not_read_tables :
+  lookup tactic_constructed_dag_map (DRSymbol shared_root_name) [] =
+  inl (MalformedLocationDag (DRSymbol shared_root_name) 0
+    (MissingLocationTableEntry LocationNodeTable 0%uint63)).
 Proof. vm_compute. reflexivity. Qed.
 
 Example direct_obj_value_insertion_equivalence :
@@ -776,9 +1425,9 @@ Definition parsed_duplicates
   snd (translation_unit.list_decls declarations abi.abi_default).
 
 Definition equal_tree0 : loc_tree origin_id :=
-  LocNode [0] [leaf [1]].
+  LocNode (public_origin_ids [0]) [leaf [1]].
 Definition equal_tree1 : loc_tree origin_id :=
-  LocNode [2] [leaf [3]].
+  LocNode (public_origin_ids [2]) [leaf [3]].
 
 Example fold_equal_duplicates_merges_root_origins :
   event_lookup
@@ -803,9 +1452,9 @@ Proof. vm_compute. reflexivity. Qed.
 
 Definition extern_obj_value : ObjValue := Ovar int_type global_init.Extern.
 Definition winning_definition_tree : loc_tree origin_id :=
-  LocNode [1] [leaf [2]].
+  LocNode (public_origin_ids [1]) [leaf [2]].
 Definition losing_declaration_tree : loc_tree origin_id :=
-  LocNode [0] [leaf [3]].
+  LocNode (public_origin_ids [0]) [leaf [3]].
 
 Example fold_compatible_symbol_existing_winner_root :
   event_lookup
