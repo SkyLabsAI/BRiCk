@@ -100,11 +100,13 @@ pure_files = [
     "include/RocqEmitter.hpp",
     "include/LocationEmitter.hpp",
     "include/Sharing.hpp",
+    "include/SourceInfoEncoding.hpp",
     "src/IR.cpp",
     "src/IRFactories.cpp",
     "src/RocqEmitter.cpp",
     "src/LocationEmitter.cpp",
     "src/Sharing.cpp",
+    "src/SourceInfoEncoding.cpp",
 ]
 for relative in pure_files:
     if re.search(r"#\s*include\s*[<\"]clang/|\bclang::", text(relative)):
@@ -118,6 +120,57 @@ if re.search(r"std::find\s*\(\s*tables_\.origins", source_implementation):
     fail("source-origin interning regressed to a quadratic table scan")
 if "tables_.origins[candidate.value()] == origin" not in source_implementation:
     fail("source-origin hash collisions are not equality-checked")
+
+source_encoding = text("src/SourceInfoEncoding.cpp")
+interner_match = re.search(
+    r"template\s*<[^>]+>\s*class\s+Interner\s*\{(?P<body>.*?)\n\};",
+    source_encoding,
+    re.DOTALL,
+)
+if not interner_match:
+    fail("normalized provenance encoder has no indexed interner")
+interner_body = interner_match.group("body")
+if not re.search(
+    r"for\s*\(\s*Id\s+candidate\s*:\s*found->second\s*\).*?"
+    r"values_\s*\[\s*candidate\.value\(\)\s*\]\s*==\s*value",
+    interner_body,
+    re.DOTALL,
+):
+    fail("normalized provenance collision buckets do not equality-check candidates")
+if re.search(r"\bstd::find\s*\(", interner_body):
+    fail("normalized provenance interning regressed to a table scan")
+interner_domains = set(
+    re.findall(r"Interner\s*<\s*(\w+)\s*,", source_encoding)
+)
+expected_interner_domains = {
+    "FilenameId",
+    "PhysicalPointId",
+    "PresumedPointId",
+    "RangeId",
+    "MacroFrameId",
+}
+if interner_domains != expected_interner_domains:
+    fail(
+        "normalized provenance interner domains changed: "
+        f"{sorted(interner_domains)!r}"
+    )
+if len(re.findall(r"options\.forceHashCollisions", source_encoding)) != 5:
+    fail("forced-collision test seam does not cover every normalized table")
+
+decode_origin_users = {
+    path.relative_to(PACKAGE).as_posix()
+    for base in (PACKAGE / "include", PACKAGE / "src")
+    for path in base.rglob("*")
+    if path.is_file() and "decodeOrigin(" in path.read_text(errors="ignore")
+}
+if decode_origin_users != {
+    "include/SourceInfoEncoding.hpp",
+    "src/SourceInfoEncoding.cpp",
+}:
+    fail(
+        "test-only full provenance decoder escaped its boundary: "
+        f"{sorted(decode_origin_users)!r}"
+    )
 
 for removed in ("src/PrintDecl.cpp", "src/PrePrint.cpp"):
     if (PACKAGE / removed).exists():
@@ -168,6 +221,18 @@ if "with_open_file(locations_file_" not in orchestration:
     fail("location output does not use atomic per-file publication")
 
 location_emitter = text("src/LocationEmitter.cpp")
+source_location_syntax = (
+    PACKAGE.parent
+    / "rocq-skylabs-brick/theories/lang/cpp/syntax/source_location.v"
+).read_text()
+for required in (
+    "Definition table_id : Set := PrimInt63.int",
+    "Definition table_chunk_size : table_id := 4096%uint63",
+    "Definition nat_to_table_id",
+    "Definition table_get_nat",
+):
+    if required not in source_location_syntax:
+        fail(f"indexed provenance storage omits {required!r}")
 if location_emitter.count("unit.nodes().children(root)") != 1:
     fail("location-tree shape must have exactly one Arena::children recursion source")
 for forbidden in ("Constructor::", "clang::", "SharingPlan", "ownedSharing"):
@@ -176,20 +241,49 @@ for forbidden in ("Constructor::", "clang::", "SharingPlan", "ownedSharing"):
 if "for (const OrderedEventRef &ordered : unit.orderedEvents())" not in location_emitter:
     fail("location roots do not derive from the authoritative ordered event stream")
 for required in (
+    "#include \"SourceInfoEncoding.hpp\"",
+    "source::encoding::encode(unit.sources())",
     "#[local] Definition source_files",
-    "#[local] Definition source_origins",
-    "#[local] Definition located_root_events",
+    "presumed_filenames",
+    "physical_points",
+    "presumed_points",
+    "source_ranges",
+    "macro_frames",
+    "encoded_origins",
+    "source_provenance",
+    "Require Import Stdlib.NArith.NArith",
+    "Require Import Stdlib.Numbers.Cyclic.Int63.Uint63",
+    "Open Scope uint63_scope",
+    'Set Warnings \\"-abstract-large-number\\"',
+    "Encoded.Build_indexed_table",
+    "PArray.array",
+    '"_chunk_"',
+    "Encoded.Build_indexed_provenance",
+    "Encoded.InlineMacroFrame",
+    "Encoded.MacroFrameReference",
+    "Construction.build_indexed_source_map_or_fail",
     "Definition source_locations : source_map",
-    "Construction.build_source_map_or_fail",
     "Build_source_file",
     "Build_physical_point",
-    "Build_presumed_point",
-    "Build_source_range",
-    "Build_macro_frame",
-    "Build_source_origin",
 ):
     if required not in location_emitter:
         fail(f"standalone location companion omits {required!r}")
+for forbidden in (
+    "source_origins : list source_origin",
+    "Build_source_origin",
+    "Construction.build_source_map_or_fail",
+    "PArray.of_list",
+    "decodeOrigin(",
+):
+    if forbidden in location_emitter:
+        fail(f"location emitter retains expanded/eager provenance seam {forbidden!r}")
+if location_emitter.find("Require Import skylabs.lang.cpp.parser") < location_emitter.find(
+    "#[local] Close Scope array_scope"
+):
+    fail("location emitter imports parser before direct primitive-array syntax")
+if "kTableChunkSize = 4096" not in location_emitter:
+    fail("location emitter does not use fixed 4096-row provenance chunks")
+
 for verbose_field in (
     "source_file_physical_name :=",
     "point_file :=",

@@ -93,12 +93,18 @@ location path is not published.
 
 The ordinary AST output exports `source` (with deprecated parsing abbreviation
 `module` for compatibility). The companion imports the BRiCk source-location
-API and contains local
-`source_files`, `source_origins`, and `located_root_events` construction values.
-Concrete source files, points, ranges, macro frames, and origins are serialized
-with their direct Rocq record constructors rather than expanded record-field
-syntax. This compact spelling changes only generated text size, not the values
-or lookup API. Its only public generated value is:
+API and contains local `source_files`, normalized indexed provenance tables,
+and `located_root_events` construction values. Provenance uses deterministic
+first-seen primitive-array chunks and private primitive `uint63` IDs for
+presumed filenames, points, ranges, macro frames when their table is strictly
+smaller than inline occurrences, and origin rows. `lookup` lazily decodes only
+selected origin rows. Direct projection of an origin list is unsupported;
+`files` remains directly available, and
+`Internal.materialize_origins` is an explicitly eager diagnostic/test helper.
+Malformed private table IDs report `MalformedProvenance`; valid generated maps
+preserve the existing lookup values, order, and public errors. Construction only
+VM-reduces root-event folding and never decodes complete provenance. Its only
+public generated value is:
 
 ```coq
 source_locations : source_map

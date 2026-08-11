@@ -29,6 +29,9 @@ public:
                                            NodeId root) const;
 
 private:
+    llvm::Error appendTreeUnchecked(std::string &output,
+                                    const TranslationUnitIR &unit,
+                                    NodeId root) const;
     llvm::Expected<std::string>
     renderTreeUnchecked(const TranslationUnitIR &unit, NodeId root) const;
 

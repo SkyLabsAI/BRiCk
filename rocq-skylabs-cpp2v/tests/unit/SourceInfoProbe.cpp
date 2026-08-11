@@ -10,6 +10,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <numeric>
 #include <optional>
 #include <sstream>
 #include <string>
@@ -142,49 +143,57 @@ std::size_t countOccurrences(const std::string &text,
     return count;
 }
 
-struct SerializationCardinality {
-    std::size_t files = 0;
-    std::size_t physicalPoints = 0;
-    std::size_t presumedPoints = 0;
-    std::size_t ranges = 0;
-    std::size_t macroFrames = 0;
-    std::size_t origins = 0;
-};
-
-void countRange(const source::Range &range,
-                SerializationCardinality &cardinality) {
-    ++cardinality.ranges;
-    cardinality.physicalPoints +=
-        static_cast<std::size_t>(range.begin.has_value());
-    cardinality.physicalPoints +=
-        static_cast<std::size_t>(range.end.has_value());
-    if (range.normalizedHalfOpen)
-        cardinality.physicalPoints += 2;
+template <typename T>
+void appendUnique(std::vector<T> &values, const T &value) {
+    if (std::find(values.begin(), values.end(), value) == values.end())
+        values.push_back(value);
 }
 
-SerializationCardinality
-expectedSerializationCardinality(const source::Tables &tables) {
-    SerializationCardinality cardinality;
-    cardinality.files = tables.files.size();
-    cardinality.origins = tables.origins.size();
+struct IndexedCardinality {
+    std::vector<std::string> presumedFilenames;
+    std::vector<source::PhysicalPoint> physicalPoints;
+    std::vector<source::PresumedPoint> presumedPoints;
+    std::vector<source::Range> ranges;
+    std::vector<source::MacroFrame> macroFrames;
+};
+
+void collectRange(const source::Range &range, IndexedCardinality &cardinality) {
+    if (range.begin)
+        appendUnique(cardinality.physicalPoints, *range.begin);
+    if (range.end)
+        appendUnique(cardinality.physicalPoints, *range.end);
+    if (range.normalizedHalfOpen) {
+        appendUnique(cardinality.physicalPoints,
+                     range.normalizedHalfOpen->first);
+        appendUnique(cardinality.physicalPoints,
+                     range.normalizedHalfOpen->second);
+    }
+    appendUnique(cardinality.ranges, range);
+}
+
+IndexedCardinality expectedIndexedCardinality(const source::Tables &tables) {
+    IndexedCardinality cardinality;
     for (const source::Origin &origin : tables.origins) {
         if (origin.spelling)
-            countRange(*origin.spelling, cardinality);
+            collectRange(*origin.spelling, cardinality);
         if (origin.expansion)
-            countRange(*origin.expansion, cardinality);
-        cardinality.presumedPoints +=
-            static_cast<std::size_t>(origin.presumedBegin.has_value());
-        cardinality.presumedPoints +=
-            static_cast<std::size_t>(origin.presumedEnd.has_value());
+            collectRange(*origin.expansion, cardinality);
+        for (const std::optional<source::PresumedPoint> &point :
+             {origin.presumedBegin, origin.presumedEnd})
+            if (point) {
+                appendUnique(cardinality.presumedFilenames, point->file);
+                appendUnique(cardinality.presumedPoints, *point);
+            }
         for (const source::MacroFrame &frame : origin.macroStack) {
-            ++cardinality.macroFrames;
             if (frame.spelling)
-                countRange(*frame.spelling, cardinality);
+                collectRange(*frame.spelling, cardinality);
             if (frame.expansion)
-                countRange(*frame.expansion, cardinality);
+                collectRange(*frame.expansion, cardinality);
+            appendUnique(cardinality.macroFrames, frame);
         }
-        cardinality.physicalPoints +=
-            static_cast<std::size_t>(origin.pointOfInstantiation.has_value());
+        if (origin.pointOfInstantiation)
+            appendUnique(cardinality.physicalPoints,
+                         *origin.pointOfInstantiation);
     }
     return cardinality;
 }
@@ -653,31 +662,99 @@ int main(int argc, char **argv) {
     auto rocqSecond =
         check.take(renderRocqValues(tables), "repeat Rocq rendering");
     const std::string anchoredTail =
-        "(Some " + std::to_string(mappedOrigin->value()) + ") (" +
-        std::to_string(mappedOrigin->value()) + " :: nil))";
-    const SerializationCardinality cardinality =
-        expectedSerializationCardinality(tables);
+        "(Some " + std::to_string(mappedOrigin->value()) + "%nat) (" +
+        std::to_string(mappedOrigin->value()) + "%nat :: nil))";
+    const IndexedCardinality cardinality = expectedIndexedCardinality(tables);
+    const std::size_t inlineFrames =
+        rocqFirst ? countOccurrences(*rocqFirst, "(Encoded.InlineMacroFrame ")
+                  : 0;
+    const std::size_t referencedFrames =
+        rocqFirst
+            ? countOccurrences(*rocqFirst, "(Encoded.MacroFrameReference ")
+            : 0;
+    const std::size_t encodedRawRanges =
+        rocqFirst ? countOccurrences(*rocqFirst, "(Encoded.EncodedRawRange ")
+                  : 0;
+    const std::size_t encodedSameBeginRanges =
+        rocqFirst
+            ? countOccurrences(*rocqFirst, "(Encoded.EncodedSameBeginRange ")
+            : 0;
+    const std::size_t encodedGeneralRanges =
+        rocqFirst
+            ? countOccurrences(*rocqFirst, "(Encoded.EncodedGeneralRange ")
+            : 0;
+    std::size_t expectedRawRanges = 0;
+    std::size_t expectedSameBeginRanges = 0;
+    std::size_t expectedGeneralRanges = 0;
+    for (const source::Range &range : cardinality.ranges) {
+        if (!range.normalizedHalfOpen)
+            ++expectedRawRanges;
+        else if (range.begin && range.normalizedHalfOpen->first == *range.begin)
+            ++expectedSameBeginRanges;
+        else
+            ++expectedGeneralRanges;
+    }
+    const std::size_t macroFrameConstructors =
+        rocqFirst ? countOccurrences(*rocqFirst,
+                                     "(Encoded.Build_encoded_macro_frame ")
+                  : 0;
+    const std::size_t macroOccurrences = std::accumulate(
+        tables.origins.begin(), tables.origins.end(), std::size_t{0},
+        [](std::size_t total, const source::Origin &origin) {
+            return total + origin.macroStack.size();
+        });
     check.require(
         rocqFirst && rocqSecond && *rocqFirst == *rocqSecond &&
-            contains(*rocqFirst, "Build_presumed_point \"logical.cpp\"") &&
-            contains(*rocqFirst, "Build_macro_frame (Some \"PASS_MACRO\")") &&
+            contains(*rocqFirst, "Encoded.Build_indexed_table") &&
+            contains(*rocqFirst, "Encoded.Build_indexed_provenance") &&
+            contains(*rocqFirst, "Encoded.Build_encoded_presumed_point") &&
+            contains(*rocqFirst, "Encoded.EncodedRawRange") &&
+            contains(*rocqFirst, "Encoded.Build_encoded_origin") &&
             contains(*rocqFirst, anchoredTail) &&
+            contains(*rocqFirst,
+                     "presumed_filenames : Encoded.indexed_table "
+                     "PrimString.string :=\n  Encoded.Build_indexed_table " +
+                         std::to_string(cardinality.presumedFilenames.size()) +
+                         "\n") &&
+            contains(*rocqFirst,
+                     "physical_points : Encoded.indexed_table physical_point "
+                     ":=\n  Encoded.Build_indexed_table " +
+                         std::to_string(cardinality.physicalPoints.size()) +
+                         "\n") &&
+            contains(*rocqFirst,
+                     "presumed_points : Encoded.indexed_table "
+                     "Encoded.encoded_presumed_point :=\n  "
+                     "Encoded.Build_indexed_table " +
+                         std::to_string(cardinality.presumedPoints.size()) +
+                         "\n") &&
+            contains(
+                *rocqFirst,
+                "source_ranges : Encoded.indexed_table "
+                "Encoded.encoded_range :=\n  Encoded.Build_indexed_table " +
+                    std::to_string(cardinality.ranges.size()) + "\n") &&
             countOccurrences(*rocqFirst, "(Build_source_file ") ==
-                cardinality.files &&
+                tables.files.size() &&
             countOccurrences(*rocqFirst, "(Build_physical_point ") ==
-                cardinality.physicalPoints &&
-            countOccurrences(*rocqFirst, "(Build_presumed_point ") ==
-                cardinality.presumedPoints &&
-            countOccurrences(*rocqFirst, "(Build_source_range ") ==
-                cardinality.ranges &&
-            countOccurrences(*rocqFirst, "(Build_macro_frame ") ==
-                cardinality.macroFrames &&
-            countOccurrences(*rocqFirst, "(Build_source_origin ") ==
-                cardinality.origins &&
+                cardinality.physicalPoints.size() &&
+            countOccurrences(*rocqFirst,
+                             "(Encoded.Build_encoded_presumed_point ") ==
+                cardinality.presumedPoints.size() &&
+            countOccurrences(*rocqFirst, "(Encoded.Build_encoded_origin ") ==
+                tables.origins.size() &&
+            encodedRawRanges == expectedRawRanges &&
+            encodedSameBeginRanges == expectedSameBeginRanges &&
+            encodedGeneralRanges == expectedGeneralRanges &&
+            inlineFrames + referencedFrames == macroOccurrences &&
+            ((referencedFrames == 0 &&
+              macroFrameConstructors == inlineFrames) ||
+             (referencedFrames == macroOccurrences &&
+              macroFrameConstructors == cardinality.macroFrames.size())) &&
+            !contains(*rocqFirst, "source_origins : list source_origin") &&
+            !contains(*rocqFirst, "Build_source_origin") &&
             !contains(*rocqFirst, "presumed_file :=") &&
             !contains(*rocqFirst, "macro_name :=") &&
             !contains(*rocqFirst, "origin_class :="),
-        "faithful deterministic compact production source serialization");
+        "faithful deterministic indexed production source serialization");
     if (!rocqOutput.empty())
         check.require(rocqFirst && writeRocqValues(rocqOutput, *rocqFirst),
                       "write Rocq source tables");

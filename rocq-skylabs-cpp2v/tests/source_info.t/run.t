@@ -34,19 +34,34 @@ Each extraction is repeated and its complete production serialization compared.
   cmp test_20_source_values.v test_20_source_values_repeat.v
   rocq c -w -notation-overridden -w -notation-incompatible-prefix test_20_source_values.v
 
-Text checks ensure values that the former hand-written probe serializer dropped
-remain present in the compact direct-constructor output.
+Text checks ensure the generated companion uses compact indexed tables, inline
+or table-referenced macro frames, and source-map construction that never eagerly
+decodes provenance.
 
-  $ grep -q 'Build_presumed_point "logical.cpp"' test_17_source_values.v
-  $ grep -q 'Build_macro_frame (Some "INNER_MACRO")' test_17_source_values.v
-  $ grep -q 'Build_macro_frame (Some "HEADER_MACRO")' test_17_source_values.v
-  $ grep -q 'Build_source_range (Some' test_17_source_values.v
-  $ grep -q 'Build_source_origin' test_17_source_values.v
-  $ grep -Eq '\(Some [0-9]+\) \([0-9]+ :: nil\)\)' test_17_source_values.v
-  $ ! grep -Eq 'presumed_file :=|macro_name :=|origin_class :=' test_17_source_values.v
+  $ grep -q 'Encoded.Build_indexed_table' test_17_source_values.v
+  $ grep -q 'Encoded.Build_encoded_presumed_point' test_17_source_values.v
+  $ grep -q 'Encoded.EncodedRawRange' test_17_source_values.v
+  $ grep -q 'Encoded.Build_encoded_origin' test_17_source_values.v
+  $ grep -q 'Encoded.InlineMacroFrame' test_17_source_values.v
+  $ ! grep -q 'Encoded.MacroFrameReference' test_17_source_values.v
+  $ grep -q 'Construction.build_indexed_source_map_or_fail' test_17_source_values.v
+  $ ! grep -Eq 'source_origins : list source_origin|Build_source_origin|presumed_file :=|macro_name :=|origin_class :=' test_17_source_values.v
 
-Proof checks establish that both complete tables are nonempty and that whole-map
-construction, including every anchor and derivation reference, succeeds.
+Proof checks establish that files remain directly available and that the explicit,
+eager diagnostic materializer retains complete origins for focused assertions.
 
   $ rocq c $ROCQC_ARGS check_17.v
   $ rocq c $ROCQC_ARGS check_20.v
+
+A pure boundary fixture forces table cardinalities immediately below, at, and
+above 4096 rows, an exact second chunk, and a partial third chunk. It also makes
+long repeated macro frames strictly favor references. Compiling both the value
+and its independent checker locks direct-array separators/defaults, the two
+profitability outcomes (the ordinary probe is inline), exact parsed table sizes,
+and first/last decoded values.
+
+  $ ../cpp2v-unit-tests-boundary --emit-indexed-boundary indexed_boundary_values.v
+  $ grep -q 'Encoded.MacroFrameReference' indexed_boundary_values.v
+  $ ! grep -q 'Encoded.InlineMacroFrame' indexed_boundary_values.v
+  $ rocq c -w -notation-overridden -w -notation-incompatible-prefix indexed_boundary_values.v
+  $ rocq c $ROCQC_ARGS check_indexed_boundary.v

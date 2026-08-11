@@ -13,7 +13,9 @@
 #include "RocqEmitter.hpp"
 #include "Sharing.hpp"
 #include "SourceInfo.hpp"
+#include "SourceInfoEncoding.hpp"
 
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <set>
@@ -431,13 +433,16 @@ bool directRootsAndDeterminism() {
            contains(*templateObject, "(Ptype \"T\"), None)") &&
            contains(*templateObject, ":: nil) (Ovar ") &&
            contains(*locationFirst, "source_files") &&
-           contains(*locationFirst, "source_origins") &&
+           contains(*locationFirst, "presumed_filenames") &&
+           contains(*locationFirst, "physical_points") &&
+           contains(*locationFirst, "encoded_origins") &&
+           contains(*locationFirst, "source_provenance") &&
            contains(*locationFirst, "Build_source_file") &&
-           contains(*locationFirst, "Build_source_origin") &&
-           contains(*locationFirst,
-                    "None None nil (Some (Build_physical_point 0 99%N 5%N "
-                    "4%N)) (Some 0) nil)") &&
-           contains(*locationFirst, "None (Some 0) (1 :: nil))");
+           contains(*locationFirst, "Encoded.Build_encoded_origin") &&
+           contains(*locationFirst, "Encoded.Build_indexed_table") &&
+           contains(*locationFirst, "Encoded.Build_encoded_origin") &&
+           !contains(*locationFirst, "source_origins : list source_origin") &&
+           !contains(*locationFirst, "Build_source_origin");
 }
 
 bool completeNonRootEvents() {
@@ -522,8 +527,10 @@ bool emptyTablesAndEvents() {
            contains(*location,
                     "Require Import skylabs.lang.cpp.syntax.source_location") &&
            contains(*location, "source_files : list source_file := nil") &&
-           contains(*location, "source_origins : list source_origin := nil") &&
+           contains(*location, "presumed_filenames : Encoded.indexed_table") &&
+           contains(*location, "encoded_origins : Encoded.indexed_table") &&
            contains(*location, "located_root_event := nil") &&
+           !contains(*location, "source_origins : list source_origin") &&
            contains(*location, "Definition source_locations : source_map") &&
            !contains(*location, "source_location_result");
 }
@@ -646,42 +653,221 @@ bool sourceInterningAndRendering() {
     const std::string expectedFile =
         "(Build_source_file \"a\"\"\\.cpp\" (Some \"requested(*.cpp\") "
         "FKUser true None)";
-    const std::string expectedSpelling =
-        "(Build_source_range (Some (Build_physical_point 0 0%N 1%N 2%N)) "
-        "(Some (Build_physical_point 0 1%N 3%N 4%N)) CharacterRange (Some "
-        "((Build_physical_point 0 2%N 5%N 6%N), (Build_physical_point 0 3%N "
-        "7%N 8%N))))";
-    const std::string expectedExpansion =
-        "(Build_source_range (Some (Build_physical_point 0 10%N 11%N 12%N)) "
-        "(Some (Build_physical_point 0 13%N 14%N 15%N)) TokenRange (Some "
-        "((Build_physical_point 0 16%N 17%N 18%N), (Build_physical_point 0 "
-        "19%N 20%N 21%N))))";
-    const std::string expectedMacroSpelling =
-        "(Build_source_range (Some (Build_physical_point 0 30%N 31%N 32%N)) "
-        "(Some (Build_physical_point 0 33%N 34%N 35%N)) CharacterRange "
-        "None)";
-    const std::string expectedMacroExpansion =
-        "(Build_source_range (Some (Build_physical_point 0 40%N 41%N 42%N)) "
-        "(Some (Build_physical_point 0 43%N 44%N 45%N)) TokenRange (Some "
-        "((Build_physical_point 0 46%N 47%N 48%N), (Build_physical_point 0 "
-        "49%N 50%N 51%N))))";
+    const std::string expectedRange0 =
+        "(Encoded.EncodedGeneralRange 0 1 CharacterRange 2 3)";
+    const std::string expectedRange1 =
+        "(Encoded.EncodedGeneralRange 4 5 TokenRange 6 7)";
+    const std::string expectedFrame =
+        "(Encoded.Build_encoded_macro_frame (Some \"MACRO\") "
+        "MacroArgument (Some 2) (Some 3))";
     const std::string expectedOrigin =
-        "(Build_source_origin ExplicitOrigin (Some " + expectedSpelling +
-        ") (Some " + expectedExpansion +
-        ") (Some (Build_presumed_point \"logical-begin.cpp\" 22%N 23%N)) "
-        "(Some (Build_presumed_point \"logical-end.cpp\" 24%N 25%N)) "
-        "((Build_macro_frame (Some \"MACRO\") MacroArgument (Some " +
-        expectedMacroSpelling + ") (Some " + expectedMacroExpansion +
-        ")) :: nil) (Some (Build_physical_point 0 60%N 61%N 62%N)) None "
-        "nil)";
+        "(Encoded.Build_encoded_origin ExplicitOrigin (Some 0) (Some 1) "
+        "(Some 0) (Some 1) ((Encoded.InlineMacroFrame " +
+        expectedFrame + ") :: nil) (Some 14) None nil)";
     return text && contains(*text, expectedFile) &&
-           contains(*text, expectedOrigin) &&
+           contains(*text, expectedRange0) && contains(*text, expectedRange1) &&
+           contains(*text, expectedFrame) && contains(*text, expectedOrigin) &&
+           contains(*text, "Encoded.Build_indexed_provenance "
+                           "presumed_filenames physical_points presumed_points "
+                           "source_ranges macro_frames encoded_origins") &&
+           contains(*text, "#[local] Close Scope array_scope") &&
+           text->find("Require Import skylabs.lang.cpp.parser.") >
+               text->find("#[local] Close Scope array_scope") &&
+           !contains(*text, "source_origins : list source_origin") &&
+           !contains(*text, "Build_source_origin") &&
            !contains(*text, "source_file_physical_name :=") &&
            !contains(*text, "point_file :=") &&
            !contains(*text, "presumed_file :=") &&
            !contains(*text, "range_begin :=") &&
            !contains(*text, "macro_name :=") &&
            !contains(*text, "origin_class :=") && contains(*text, "0 :: nil");
+}
+
+bool sourceEncoding() {
+    using namespace source::encoding;
+
+    source::Tables source;
+    source.files.push_back({"fixture.cpp", std::nullopt, source::FileKind::User,
+                            true, std::nullopt});
+    const source::FileId file(0);
+    const source::PhysicalPoint a{file, 1, 2, 3};
+    const source::PhysicalPoint b{file, 4, 5, 6};
+    const source::PhysicalPoint c{file, 7, 8, 9};
+    const source::PhysicalPoint d{file, 10, 11, 12};
+    const source::Range raw{a, std::nullopt, source::RangeKind::Character,
+                            std::nullopt};
+    const source::Range sameBegin{a, b, source::RangeKind::Token,
+                                  std::make_pair(a, b)};
+    const source::Range general{a, b, source::RangeKind::Character,
+                                std::make_pair(c, d)};
+    const source::MacroFrame shared{"MACRO", source::MacroOriginKind::Argument,
+                                    sameBegin, general};
+    const source::MacroFrame distinct{"OTHER", source::MacroOriginKind::Body,
+                                      raw, sameBegin};
+
+    source::Origin first;
+    first.kind = source::OriginKind::Explicit;
+    first.spelling = raw;
+    first.expansion = sameBegin;
+    first.presumedBegin = source::PresumedPoint{"logical.cpp", 20, 21};
+    source::Origin second;
+    second.kind = source::OriginKind::Implicit;
+    second.spelling = general;
+    second.presumedEnd = source::PresumedPoint{"other.cpp", 22, 23};
+    second.macroStack = {shared, distinct};
+    second.pointOfInstantiation = a;
+    second.anchor = source::OriginId(0);
+    second.derivedFrom = {source::OriginId(0)};
+    source::Origin third;
+    third.kind = source::OriginKind::Inherited;
+    third.expansion = sameBegin;
+    third.presumedBegin = source::PresumedPoint{"logical.cpp", 24, 25};
+    third.macroStack = {shared};
+    third.anchor = source::OriginId(1);
+    third.derivedFrom = {source::OriginId(1), source::OriginId(0)};
+    source.origins = {first, second, third};
+
+    const std::vector<std::string> expectedFilenames{"logical.cpp",
+                                                     "other.cpp"};
+    const std::vector<source::PhysicalPoint> expectedPoints{a, b, c, d};
+    const std::vector<EncodedPresumedPoint> expectedPresumed{
+        {FilenameId(0), 20, 21},
+        {FilenameId(1), 22, 23},
+        {FilenameId(0), 24, 25},
+    };
+    const std::vector<EncodedRange> expectedRanges{
+        RawRange{PhysicalPointId(0), std::nullopt,
+                 source::RangeKind::Character},
+        SameBeginNormalizedRange{PhysicalPointId(0), PhysicalPointId(1),
+                                 source::RangeKind::Token, PhysicalPointId(1)},
+        GeneralNormalizedRange{PhysicalPointId(0), PhysicalPointId(1),
+                               source::RangeKind::Character, PhysicalPointId(2),
+                               PhysicalPointId(3)},
+    };
+    const std::vector<EncodedMacroFrame> expectedFrames{
+        {std::string("MACRO"), source::MacroOriginKind::Argument, RangeId(1),
+         RangeId(2)},
+        {std::string("OTHER"), source::MacroOriginKind::Body, RangeId(0),
+         RangeId(1)},
+    };
+    std::vector<EncodedOrigin> expectedOrigins(3);
+    expectedOrigins[0].kind = source::OriginKind::Explicit;
+    expectedOrigins[0].spelling = RangeId(0);
+    expectedOrigins[0].expansion = RangeId(1);
+    expectedOrigins[0].presumedBegin = PresumedPointId(0);
+    expectedOrigins[1].kind = source::OriginKind::Implicit;
+    expectedOrigins[1].spelling = RangeId(2);
+    expectedOrigins[1].presumedEnd = PresumedPointId(1);
+    expectedOrigins[1].macroStack = {MacroFrameId(0), MacroFrameId(1)};
+    expectedOrigins[1].pointOfInstantiation = PhysicalPointId(0);
+    expectedOrigins[1].anchor = source::OriginId(0);
+    expectedOrigins[1].derivedFrom = {source::OriginId(0)};
+    expectedOrigins[2].kind = source::OriginKind::Inherited;
+    expectedOrigins[2].expansion = RangeId(1);
+    expectedOrigins[2].presumedBegin = PresumedPointId(2);
+    expectedOrigins[2].macroStack = {MacroFrameId(0)};
+    expectedOrigins[2].anchor = source::OriginId(1);
+    expectedOrigins[2].derivedFrom = {source::OriginId(1), source::OriginId(0)};
+
+    auto encoded = encode(source);
+    auto repeated = encode(source);
+    if (!encoded || !repeated ||
+        encoded->presumedFilenames != expectedFilenames ||
+        encoded->physicalPoints != expectedPoints ||
+        encoded->presumedPoints != expectedPresumed ||
+        encoded->ranges != expectedRanges ||
+        encoded->macroFrames != expectedFrames ||
+        encoded->origins != expectedOrigins ||
+        repeated->presumedFilenames != expectedFilenames ||
+        repeated->physicalPoints != expectedPoints ||
+        repeated->presumedPoints != expectedPresumed ||
+        repeated->ranges != expectedRanges ||
+        repeated->macroFrames != expectedFrames ||
+        repeated->origins != expectedOrigins ||
+        encoded->stats.sourceOrigins != 3 ||
+        encoded->stats.presumedFilenameRows != 2 ||
+        encoded->stats.physicalPointRows != 4 ||
+        encoded->stats.presumedPointRows != 3 ||
+        encoded->stats.rangeRows != 3 || encoded->stats.rawRanges != 1 ||
+        encoded->stats.sameBeginNormalizedRanges != 1 ||
+        encoded->stats.generalNormalizedRanges != 1 ||
+        encoded->stats.macroFrameRows != 2 ||
+        encoded->stats.macroFrameOccurrences != 3)
+        return false;
+    for (std::uint32_t index = 0; index != source.origins.size(); ++index) {
+        auto decoded = decodeOrigin(*encoded, source::OriginId(index));
+        if (!decoded || !(*decoded == source.origins[index]))
+            return false;
+    }
+
+    auto collisions = encode(source, EncodeOptions{true});
+    if (!collisions || collisions->presumedFilenames != expectedFilenames ||
+        collisions->physicalPoints != expectedPoints ||
+        collisions->presumedPoints != expectedPresumed ||
+        collisions->ranges != expectedRanges ||
+        collisions->macroFrames != expectedFrames ||
+        collisions->origins != expectedOrigins)
+        return false;
+    for (std::uint32_t index = 0; index != source.origins.size(); ++index) {
+        auto decoded = decodeOrigin(*collisions, source::OriginId(index));
+        if (!decoded || !(*decoded == source.origins[index]))
+            return false;
+    }
+
+    source::Tables malformedSource = source;
+    malformedSource.origins[0].spelling->begin->file = source::FileId(9);
+    if (!failed(encode(malformedSource)) ||
+        !failed(decodeOrigin(*encoded, source::OriginId(999))))
+        return false;
+    {
+        auto malformed = *encoded;
+        malformed.origins[0].spelling = RangeId(999);
+        if (!failed(decodeOrigin(malformed, source::OriginId(0))))
+            return false;
+    }
+    {
+        auto malformed = *encoded;
+        malformed.origins[0].presumedBegin = PresumedPointId(999);
+        if (!failed(decodeOrigin(malformed, source::OriginId(0))))
+            return false;
+    }
+    {
+        auto malformed = *encoded;
+        malformed.presumedPoints[0].file = FilenameId(999);
+        if (!failed(decodeOrigin(malformed, source::OriginId(0))))
+            return false;
+    }
+    {
+        auto malformed = *encoded;
+        std::get<RawRange>(malformed.ranges[0]).begin = PhysicalPointId(999);
+        if (!failed(decodeOrigin(malformed, source::OriginId(0))))
+            return false;
+    }
+    {
+        auto malformed = *encoded;
+        malformed.origins[1].macroStack[0] = MacroFrameId(999);
+        if (!failed(decodeOrigin(malformed, source::OriginId(1))))
+            return false;
+    }
+    {
+        auto malformed = *encoded;
+        malformed.macroFrames[0].spelling = RangeId(999);
+        if (!failed(decodeOrigin(malformed, source::OriginId(1))))
+            return false;
+    }
+    {
+        auto malformed = *encoded;
+        malformed.origins[1].anchor = source::OriginId(999);
+        if (!failed(decodeOrigin(malformed, source::OriginId(1))))
+            return false;
+    }
+    {
+        auto malformed = *encoded;
+        malformed.origins[1].derivedFrom = {source::OriginId(999)};
+        if (!failed(decodeOrigin(malformed, source::OriginId(1))))
+            return false;
+    }
+    return true;
 }
 
 bool invalidCategoryAndShape() {
@@ -2933,11 +3119,79 @@ bool unfinishedEmissionRejected() {
            failed(LocationRocqEmitter().renderTree(unit, built.object));
 }
 
+std::string boundaryMacroName(std::uint32_t index) {
+    return "BOUNDARY_MACRO_" + std::to_string(index) + "_" +
+           std::string(80, 'x');
+}
+
+bool emitIndexedBoundaryFixture(const std::string &path) {
+    constexpr std::uint32_t originCount = 8193;
+    constexpr std::uint32_t rangeCount = 4096;
+    constexpr std::uint32_t presumedCount = 4095;
+    constexpr std::uint32_t frameCount = 4097;
+
+    source::Tables sources;
+    sources.files.push_back({"boundary.cpp", std::nullopt,
+                             source::FileKind::User, true, std::nullopt});
+    const source::FileId file(0);
+    sources.origins.reserve(originCount);
+    for (std::uint32_t index = 0; index < originCount; ++index) {
+        source::Origin origin;
+        if (index < rangeCount) {
+            const source::PhysicalPoint point{file, index * 4ULL, index + 1, 1};
+            const source::Range range{point, std::nullopt,
+                                      source::RangeKind::Character,
+                                      std::nullopt};
+            origin.spelling = range;
+            if (index == 0) {
+                origin.expansion = range;
+                origin.pointOfInstantiation = point;
+            }
+        }
+        if (index == 0) {
+            origin.presumedBegin =
+                source::PresumedPoint{"boundary-logical.cpp", 100, 101};
+            origin.presumedEnd =
+                source::PresumedPoint{"boundary-logical.cpp", 102, 103};
+            origin.anchor = source::OriginId(1);
+            origin.derivedFrom = {source::OriginId(1)};
+        } else if (index <= presumedCount - 2) {
+            origin.presumedBegin = source::PresumedPoint{
+                "boundary-logical.cpp", index + 200, index + 300};
+        }
+        const std::uint32_t frame =
+            index < frameCount ? index : index - frameCount;
+        origin.macroStack.push_back({boundaryMacroName(frame),
+                                     source::MacroOriginKind::Body,
+                                     std::nullopt, std::nullopt});
+        if (index + 1 == originCount)
+            origin.kind = source::OriginKind::Inherited;
+        sources.origins.push_back(std::move(origin));
+    }
+
+    TranslationUnitIR unit;
+    if (failed(unit.setSources(std::move(sources))) || failed(unit.finish()))
+        return false;
+    auto contents = LocationRocqEmitter().emit(unit);
+    if (!contents)
+        return false;
+    std::ofstream output(path);
+    output << *contents;
+    return output.good();
+}
+
 using Test = std::pair<const char *, std::function<bool()>>;
 
 } // namespace
 
-int main() {
+int main(int argc, char **argv) {
+    if (argc == 3 && std::string(argv[1]) == "--emit-indexed-boundary")
+        return emitIndexedBoundaryFixture(argv[2]) ? 0 : 1;
+    if (argc != 1) {
+        std::cerr << "usage: cpp2v-unit-tests "
+                     "[--emit-indexed-boundary OUTPUT.v]\n";
+        return 2;
+    }
     const std::vector<Test> tests = {
         {"constructor registry completeness", registryComplete},
         {"named factories and occurrence cloning", factoriesAndCloning},
@@ -2959,6 +3213,7 @@ int main() {
         {"Rocq escaping", escaping},
         {"empty tables and events", emptyTablesAndEvents},
         {"source interning and rendering", sourceInterningAndRendering},
+        {"normalized source encoding", sourceEncoding},
         {"invalid categories and shapes", invalidCategoryAndShape},
         {"invalid root and non-root events", invalidRootsAndNonRoots},
         {"semantic graph cycle", semanticCycle},

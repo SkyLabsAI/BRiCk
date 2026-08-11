@@ -253,27 +253,54 @@ Module Construction.
     | inr current => inr (project_locations current)
     end.
 
+  Definition assemble_source_map
+      (source_files : list source_file) (source_origins : origin_store)
+      (locations : declaration_locations origin_id) : source_map := {|
+    files := source_files;
+    origin_data := source_origins;
+    declarations := locations
+  |}.
+
   Definition build_source_map
       (source_files : list source_file) (source_origins : list source_origin)
       (events : list located_root_event)
       : construction_error + source_map :=
     match fold_events events with
     | inl err => inl err
-    | inr locations => inr {|
-        files := source_files;
-        origins := source_origins;
-        declarations := locations
-      |}
+    | inr locations =>
+        inr (assemble_source_map source_files
+          (ExpandedOrigins source_origins) locations)
     end.
 
-  (** Generated companions use this only after constructing concrete event
-      tables. Reduction selects the map or makes the companion fail to compile;
-      there is deliberately no fake map for an incompatible event stream. *)
+  Definition build_indexed_source_map
+      (source_files : list source_file)
+      (source_origins : Encoded.indexed_provenance)
+      (events : list located_root_event)
+      : construction_error + source_map :=
+    match fold_events events with
+    | inl err => inl err
+    | inr locations =>
+        inr (assemble_source_map source_files
+          (IndexedOrigins source_origins) locations)
+    end.
+
+  (** Only root-event selection is reduced. Provenance is deliberately absent
+      from the evaluated term, so construction cannot decode an indexed table. *)
   Ltac build_source_map_or_fail source_files source_origins events :=
-    let result := eval vm_compute in
-      (build_source_map source_files source_origins events) in
+    let result := eval vm_compute in (fold_events events) in
     lazymatch result with
-    | inr ?source_locations => exact source_locations
+    | inr ?locations =>
+        exact (assemble_source_map source_files
+          (ExpandedOrigins source_origins) locations)
+    | inl ?error => fail "source-location construction failed:" error
+    end.
+
+  Ltac build_indexed_source_map_or_fail source_files source_origins events :=
+    let result := eval vm_compute in (fold_events events) in
+    lazymatch result with
+    | inr ?locations =>
+        exact (assemble_source_map source_files
+          (IndexedOrigins source_origins) locations)
     | inl ?error => fail "source-location construction failed:" error
     end.
 End Construction.
