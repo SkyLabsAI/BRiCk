@@ -93,39 +93,48 @@ location path is not published.
 
 The ordinary AST output exports `source` (with deprecated parsing abbreviation
 `module` for compatibility). The companion imports the BRiCk source-location
-API and contains local `source_files`, normalized indexed provenance tables,
-an exact indexed location DAG, and `located_root_events` construction values.
+API and contains local `source_files`, normalized indexed provenance tables, an
+exact indexed location DAG, four namespace-specific singleton-root lists, and a
+small residual semantic-event list. A deterministic Clang-free classifier groups
+roots by namespace and exact semantic-name structure. Singleton groups omit
+semantic values. Duplicate groups and conservative ordinary `Gtypedef` roots
+retain values and use the existing Rocq selection functions.
+
 The location DAG hash-conses complete `(ordered origin IDs, ordered child node
 IDs)` rows child-before-parent and separately interns exact structural shape
-certificates. Root events carry only static node/shape IDs; equal duplicates
-build lazy recursive merge views, while unequal winners retain losing origins
-only at the root. DAG identities never enter public paths. Provenance uses
-deterministic first-seen primitive-array chunks and private primitive `uint63`
-IDs for
-presumed filenames, points, ranges, macro frames when their table is strictly
-smaller than inline occurrences, and origin rows. `lookup` lazily decodes only
-selected origin rows. Direct projection of an origin list is unsupported;
-`files` remains directly available, and
+certificates. Equal residual duplicates build lazy recursive merge views, while
+unequal winners retain losing origins only at the root. DAG identities never
+enter public paths. Production construction VM-reduces only the residual event
+fold; it does not build a board-scale singleton map or read provenance or DAG
+tables. `lookup` scans only the requested singleton namespace, independently
+checks the selected residual map, and then follows the same lazy DAG path.
+Malformed duplicate singleton storage or a singleton/residual collision reports
+`MalformedCompactLocations` before private tables are accessed.
+
+Provenance uses deterministic first-seen primitive-array chunks and private
+primitive `uint63` IDs for presumed filenames, points, ranges, macro frames when
+their table is strictly smaller than inline occurrences, and origin rows.
+`lookup` lazily decodes only selected origin rows. Direct projection of an
+origin list is unsupported; `files` remains directly available, and
 `Internal.materialize_origins` is an explicitly eager diagnostic/test helper.
 Malformed private provenance IDs report `MalformedProvenance`; malformed DAG
 rows, shapes, storage, or non-backward edges report `MalformedLocationDag` only
 when reached. Valid generated maps preserve lookup values, order, and public
-errors. Public `file_id` and
-`origin_id` values are distinct nominal wrappers around primitive `uint63`
-integers rather than unary `nat`; explicit literals may use the `%file_id` and
-`%origin_id` scopes. `lookup_file source_locations id` performs checked file
-access without converting a potentially large primitive ID to unary `nat`.
-Semantic child paths remain `list nat`, while byte offsets, lines, and columns
-remain binary, nonnegative `N` values. Construction only VM-reduces compact
-root-event folding and never reads or expands provenance or location tables. Its only
+errors. Public `file_id` and `origin_id` values are distinct nominal wrappers
+around primitive `uint63` integers rather than unary `nat`; explicit literals
+may use the `%file_id` and `%origin_id` scopes. `lookup_file source_locations id`
+performs checked file access without converting a potentially large primitive
+ID to unary `nat`. Semantic child paths remain `list nat`, while byte offsets,
+lines, and columns remain binary, nonnegative `N` values. The companion's only
 public generated value is:
 
 ```coq
 source_locations : source_map
 ```
 
-It is standalone: semantic root names and values are inline and it neither
-imports the AST output nor refers to that file's sharing definitions. The map
+It is standalone: semantic root names and residual values are inline and it
+neither imports the AST output nor refers to that file's sharing definitions.
+The map
 has four distinct root namespaces, selected with a `decl_root`:
 
 - `DRSymbol name` — ordinary object/function symbol;
@@ -170,9 +179,12 @@ invalid or non-contiguous Clang projection is represented rather than guessed.
 ### Templates, sharing, and limitations
 
 `--no-templates` omits template root events and leaves both template location
-maps empty. `--no-sharing` can change ordinary AST text but cannot change
-companion bytes or paths: companion semantic values are always inline and path
-shape comes only from owned recursive occurrences.
+maps empty. `--no-sharing` can change ordinary AST text but cannot change companion bytes
+or paths: residual semantic values remain inline, singleton classification is
+sharing-independent, and path shape comes only from owned recursive
+occurrences. On very large translation units, singleton root lookup is linear
+in the requested namespace so malformed duplicate storage can be detected; the
+x86 board benchmark is approximately 5.9–6.2 ms per successful lookup.
 
 This version intentionally provides no zipper, provenance-aware traversal,
 ancestor fallback, or lookup from an isolated AST value. It does not detect a

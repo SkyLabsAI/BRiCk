@@ -17,7 +17,7 @@ Definition origin_line (origin : source_origin) : option N :=
 Definition generated_uses_indexed_location_dag : bool :=
   match source_locations.(location_data) with
   | ExpandedLocations _ => false
-  | IndexedLocations _ _ => true
+  | IndexedLocations _ _ | CompactIndexedLocations _ _ _ => true
   end.
 
 Example generated_location_storage_is_an_indexed_dag :

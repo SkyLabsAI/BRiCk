@@ -5,9 +5,11 @@
  */
 #include "LocationEmitter.hpp"
 #include "LocationDAGEncoding.hpp"
+#include "RootEventEncoding.hpp"
 #include "SourceInfoEncoding.hpp"
 
 #include <algorithm>
+#include <array>
 #include <sstream>
 #include <system_error>
 #include <type_traits>
@@ -439,9 +441,29 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
     if (!locations)
         return locations.takeError();
     std::string locationDag = renderLocationDag(*locations);
+    auto rootEvents =
+        root_event::encoding::encode(unit, options_.includeTemplates);
+    if (!rootEvents)
+        return rootEvents.takeError();
+    if (rootEvents->stats.selectedEvents !=
+        rootEvents->stats.singletonEvents + rootEvents->stats.residualEvents)
+        return llvm::createStringError(
+            std::errc::invalid_argument,
+            "root-event classification did not partition selected events");
 
-    std::string eventList;
-    bool hasEvents = false;
+    std::array<std::string, 4> singletonLists;
+    std::array<bool, 4> hasSingletons{};
+    std::string residualList;
+    bool hasResiduals = false;
+    auto appendListEntry = [](std::string &list, bool &hasEntries,
+                              std::string entry) {
+        if (!hasEntries) {
+            list = "(";
+            hasEntries = true;
+        }
+        list += std::move(entry);
+        list += " :: ";
+    };
     for (const OrderedEventRef &ordered : unit.orderedEvents()) {
         if (ordered.kind != OrderedEventKind::Root)
             continue;
@@ -454,19 +476,36 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
                                 root.kind == RootKind::TemplateType;
         if (isTemplate && !options_.includeTemplates)
             continue;
-        const char *constructor = nullptr;
+        if (ordered.index >= rootEvents->eventClasses.size())
+            return llvm::createStringError(
+                std::errc::invalid_argument,
+                "root-event classification omitted a selected root event");
+        const root_event::encoding::EventClass eventClass =
+            rootEvents->eventClasses[ordered.index];
+        if (eventClass == root_event::encoding::EventClass::Excluded)
+            return llvm::createStringError(
+                std::errc::invalid_argument,
+                "root-event classification excluded a selected root event");
+        const bool residual =
+            eventClass == root_event::encoding::EventClass::Residual;
+        std::size_t namespaceIndex = 0;
+        const char *residualConstructor = nullptr;
         switch (root.kind) {
         case RootKind::Symbol:
-            constructor = "Construction.ILESymbol";
+            namespaceIndex = 0;
+            residualConstructor = "CRS";
             break;
         case RootKind::Type:
-            constructor = "Construction.ILEType";
+            namespaceIndex = 1;
+            residualConstructor = "CRT";
             break;
         case RootKind::TemplateSymbol:
-            constructor = "Construction.ILEMsymbol";
+            namespaceIndex = 2;
+            residualConstructor = "CRMS";
             break;
         case RootKind::TemplateType:
-            constructor = "Construction.ILEMtype";
+            namespaceIndex = 3;
+            residualConstructor = "CRMT";
             break;
         default:
             return llvm::createStringError(
@@ -483,26 +522,54 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
         auto name = semantic_.renderNodeUnchecked(unit, root.semanticName);
         if (!name)
             return name.takeError();
-        auto value = semantic_.renderNodeUnchecked(unit, root.semanticValue);
-        if (!value)
-            return value.takeError();
-        if (!hasEvents) {
-            eventList = "(";
-            hasEvents = true;
+        std::string entry;
+        if (residual) {
+            auto value =
+                semantic_.renderNodeUnchecked(unit, root.semanticValue);
+            if (!value)
+                return value.takeError();
+            entry = "(" + std::string(residualConstructor) + "(" + *name +
+                    ", " + *value + ", " + renderTableId(encodedRoot.node) +
+                    "%uint63, " + renderTableId(encodedRoot.shape) +
+                    "%uint63))";
+            appendListEntry(residualList, hasResiduals, std::move(entry));
+        } else {
+            entry = "(CIL(" + *name + ", " + renderTableId(encodedRoot.node) +
+                    "%uint63, " + renderTableId(encodedRoot.shape) +
+                    "%uint63))";
+            appendListEntry(singletonLists[namespaceIndex],
+                            hasSingletons[namespaceIndex], std::move(entry));
         }
-        eventList += "(";
-        eventList += constructor;
-        eventList += " ";
-        eventList += *name;
-        eventList += " ";
-        eventList += *value;
-        eventList += " ";
-        eventList += renderTableId(encodedRoot.node);
-        eventList += "%uint63 ";
-        eventList += renderTableId(encodedRoot.shape);
-        eventList += "%uint63) :: ";
     }
-    eventList += hasEvents ? "nil)" : "nil";
+    for (std::size_t index = 0; index < singletonLists.size(); ++index)
+        singletonLists[index] += hasSingletons[index] ? "nil)" : "nil";
+    residualList += hasResiduals ? "nil)" : "nil";
+    std::string eventSection =
+        "(* compact root events: " +
+        std::to_string(rootEvents->stats.selectedEvents) + " selected; " +
+        std::to_string(rootEvents->stats.singletonEvents) + " singleton; " +
+        std::to_string(rootEvents->stats.residualEvents) + " residual; " +
+        std::to_string(rootEvents->stats.duplicateGroups) +
+        " duplicate groups. *)\n"
+        "#[local] Definition singleton_symbol_events : "
+        "list (name * indexed_location) := " +
+        singletonLists[0] +
+        ".\n#[local] Definition singleton_type_events : "
+        "list (name * indexed_location) := " +
+        singletonLists[1] +
+        ".\n#[local] Definition singleton_msymbol_events : "
+        "list (name * indexed_location) := " +
+        singletonLists[2] +
+        ".\n#[local] Definition singleton_mtype_events : "
+        "list (name * indexed_location) := " +
+        singletonLists[3] +
+        ".\n#[local] Definition singleton_root_events : "
+        "singleton_root_locations :=\n  Build_singleton_root_locations "
+        "singleton_symbol_events singleton_type_events "
+        "singleton_msymbol_events singleton_mtype_events.\n"
+        "#[local] Definition residual_root_events : list "
+        "Construction.indexed_located_root_event := " +
+        residualList;
     std::vector<location::encoding::EncodedShape>().swap(locations->shapes);
     std::vector<location::encoding::EncodedLocationNode>().swap(
         locations->nodes);
@@ -538,27 +605,44 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
         "Require Import skylabs.lang.cpp.parser.\n"
         "Require Import skylabs.lang.cpp.mparser.\n"
         "Require Import skylabs.lang.cpp.parser.source_location.\n\n"
-        "#[local] Definition located_root_events : list "
-        "Construction.indexed_located_root_event := ";
+        "#[local] Notation \"'CIL' '(' n ',' node ',' shape ')'\" :=\n"
+        "  (n, StaticLocation node shape) (only parsing).\n"
+        "#[local] Notation \"'CRS' '(' n ',' value ',' node ',' shape ')'\" "
+        ":=\n"
+        "  (Construction.ILESymbol n value node shape) "
+        "(only parsing).\n"
+        "#[local] Notation \"'CRT' '(' n ',' value ',' node ',' shape ')'\" "
+        ":=\n"
+        "  (Construction.ILEType n value node shape) "
+        "(only parsing).\n"
+        "#[local] Notation \"'CRMS' '(' n ',' value ',' node ',' shape ')'\" "
+        ":=\n"
+        "  (Construction.ILEMsymbol n value node shape) "
+        "(only parsing).\n"
+        "#[local] Notation \"'CRMT' '(' n ',' value ',' node ',' shape ')'\" "
+        ":=\n"
+        "  (Construction.ILEMtype n value node shape) "
+        "(only parsing).\n\n";
     constexpr const char *suffix =
         ".\n\nDefinition source_locations : source_map.\n"
         "Proof.\n"
-        "  Construction.build_indexed_dag_source_map_or_fail source_files "
-        "source_provenance source_location_dag located_root_events.\n"
+        "  Construction.build_lazy_compact_indexed_dag_source_map_or_fail "
+        "source_files source_provenance source_location_dag "
+        "singleton_root_events residual_root_events.\n"
         "Defined.\n";
     std::string output;
-    output.reserve(std::char_traits<char>::length(prefix) + files->size() +
-                   std::char_traits<char>::length(sourceFilesEnd) +
-                   provenance->size() + locationDag.size() +
-                   std::char_traits<char>::length(middle) + eventList.size() +
-                   std::char_traits<char>::length(suffix));
+    output.reserve(
+        std::char_traits<char>::length(prefix) + files->size() +
+        std::char_traits<char>::length(sourceFilesEnd) + provenance->size() +
+        locationDag.size() + std::char_traits<char>::length(middle) +
+        eventSection.size() + std::char_traits<char>::length(suffix));
     output += prefix;
     output += *files;
     output += sourceFilesEnd;
     output += *provenance;
     output += locationDag;
     output += middle;
-    output += eventList;
+    output += eventSection;
     output += suffix;
     return output;
 }

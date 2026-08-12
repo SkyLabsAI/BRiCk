@@ -80,7 +80,8 @@ Definition expanded_location_roots
     (map : source_map) : declaration_locations origin_id :=
   match map.(location_data) with
   | ExpandedLocations roots => roots
-  | IndexedLocations _ _ => empty_declaration_locations
+  | IndexedLocations _ _ | CompactIndexedLocations _ _ _ =>
+      empty_declaration_locations
   end.
 
 Example primitive_id_wrappers_preserve_values :
@@ -1757,4 +1758,429 @@ Proof. vm_compute. reflexivity. Qed.
 Example fold_mixed_events_keep_template_forward_order :
   event_msymbol mixed_order_events shared_root_name =
     inr (Some new_template_value).
+Proof. vm_compute. reflexivity. Qed.
+
+(** Proposal-4 compact events omit values only for producer-certified singleton
+    keys. Residual events below are differential witnesses for the unchanged
+    semantic selection path. FMapAVL proof fields are intentionally hidden by
+    comparing the public root-map observations rather than whole map records. *)
+Definition indexed_location_at
+    (locations : root_locations indexed_location) (root : decl_root)
+    : option indexed_location :=
+  match root with
+  | DRSymbol n => locations.(symbol_locations) !! n
+  | DRType n => locations.(type_locations) !! n
+  | DRMsymbol n => locations.(msymbol_locations) !! n
+  | DRMtype n => locations.(mtype_locations) !! n
+  end.
+
+Definition compact_fold_at
+    (events : list Construction.compact_indexed_located_root_event)
+    (root : decl_root)
+    : Construction.construction_error + option indexed_location :=
+  match Construction.fold_compact_indexed_events events with
+  | inl error => inl error
+  | inr locations => inr (indexed_location_at locations root)
+  end.
+
+Definition indexed_fold_at
+    (events : list Construction.indexed_located_root_event)
+    (root : decl_root)
+    : Construction.construction_error + option indexed_location :=
+  match Construction.fold_indexed_events events with
+  | inl error => inl error
+  | inr locations => inr (indexed_location_at locations root)
+  end.
+
+Definition compact_all_singleton_events :=
+  [ Construction.CILESingletonSymbol shared_root_name 3%uint63 2%uint63
+  ; Construction.CILESingletonType shared_root_name 0%uint63 0%uint63
+  ; Construction.CILESingletonMsymbol shared_root_name 1%uint63 0%uint63
+  ; Construction.CILESingletonMtype shared_root_name 4%uint63 0%uint63
+  ].
+
+Example compact_singletons_populate_all_namespaces_without_values :
+  ( compact_fold_at compact_all_singleton_events
+      (DRSymbol shared_root_name)
+  , compact_fold_at compact_all_singleton_events
+      (DRType shared_root_name)
+  , compact_fold_at compact_all_singleton_events
+      (DRMsymbol shared_root_name)
+  , compact_fold_at compact_all_singleton_events
+      (DRMtype shared_root_name) ) =
+  ( indexed_fold_at indexed_all_namespace_events
+      (DRSymbol shared_root_name)
+  , indexed_fold_at indexed_all_namespace_events
+      (DRType shared_root_name)
+  , indexed_fold_at indexed_all_namespace_events
+      (DRMsymbol shared_root_name)
+  , indexed_fold_at indexed_all_namespace_events
+      (DRMtype shared_root_name) ).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition compact_equal_symbol_events :=
+  [ Construction.CILEResidualSymbol shared_root_name test_obj_value
+      3%uint63 2%uint63
+  ; Construction.CILEResidualSymbol shared_root_name test_obj_value
+      7%uint63 2%uint63
+  ].
+
+Example compact_equal_ordinary_duplicates_preserve_recursive_merge :
+  compact_fold_at compact_equal_symbol_events (DRSymbol shared_root_name) =
+  indexed_fold_at equal_indexed_symbol_events (DRSymbol shared_root_name).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition compact_compatible_symbol_events :=
+  [ Construction.CILEResidualSymbol shared_root_name indexed_extern_obj_value
+      3%uint63 2%uint63
+  ; Construction.CILEResidualSymbol shared_root_name test_obj_value
+      7%uint63 2%uint63
+  ].
+
+Example compact_compatible_ordinary_duplicates_preserve_winner_selection :
+  compact_fold_at compact_compatible_symbol_events
+    (DRSymbol shared_root_name) =
+  indexed_fold_at compatible_indexed_symbol_events
+    (DRSymbol shared_root_name).
+Proof. vm_compute. reflexivity. Qed.
+
+Example compact_incompatible_ordinary_error_is_exact :
+  Construction.fold_compact_indexed_events
+    [ Construction.CILEResidualSymbol shared_root_name test_obj_value
+        0%uint63 0%uint63
+    ; Construction.CILEResidualSymbol shared_root_name indexed_bool_obj_value
+        0%uint63 0%uint63
+    ] =
+  Construction.fold_indexed_events
+    [ Construction.ILESymbol shared_root_name test_obj_value
+        0%uint63 0%uint63
+    ; Construction.ILESymbol shared_root_name indexed_bool_obj_value
+        0%uint63 0%uint63
+    ].
+Proof. vm_compute. reflexivity. Qed.
+
+Example compact_equal_shape_mismatch_error_is_exact :
+  Construction.fold_compact_indexed_events
+    [ Construction.CILEResidualSymbol shared_root_name test_obj_value
+        0%uint63 0%uint63
+    ; Construction.CILEResidualSymbol shared_root_name test_obj_value
+        2%uint63 1%uint63
+    ] =
+  inl (Construction.TreeShapeMismatch (DRSymbol shared_root_name)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition compact_equal_template_events :=
+  [ Construction.CILEResidualMsymbol shared_root_name
+      (Template [] test_obj_value) 3%uint63 2%uint63
+  ; Construction.CILEResidualMsymbol shared_root_name
+      (Template [] test_obj_value) 7%uint63 2%uint63
+  ].
+
+Example compact_equal_templates_preserve_forward_recursive_merge :
+  compact_fold_at compact_equal_template_events (DRMsymbol shared_root_name) =
+  indexed_fold_at equal_indexed_template_events (DRMsymbol shared_root_name).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition compact_unequal_template_events :=
+  [ Construction.CILEResidualMsymbol shared_root_name
+      (Template [] test_obj_value) 3%uint63 2%uint63
+  ; Construction.CILEResidualMsymbol shared_root_name
+      (Template [] indexed_bool_obj_value) 7%uint63 2%uint63
+  ].
+
+Example compact_unequal_templates_preserve_forward_last_write_wins :
+  compact_fold_at compact_unequal_template_events
+    (DRMsymbol shared_root_name) =
+  indexed_fold_at unequal_indexed_template_events
+    (DRMsymbol shared_root_name).
+Proof. vm_compute. reflexivity. Qed.
+
+Example compact_named_self_alias_is_still_suppressed :
+  compact_fold_at
+    [ Construction.CILEResidualType shared_root_name
+        (Gtypedef (Tnamed shared_root_name)) 99%uint63 99%uint63
+    ] (DRType shared_root_name) =
+  indexed_fold_at
+    [ Construction.ILEType shared_root_name
+        (Gtypedef (Tnamed shared_root_name)) 99%uint63 99%uint63
+    ] (DRType shared_root_name).
+Proof. vm_compute. reflexivity. Qed.
+
+Example compact_enum_self_alias_is_still_suppressed :
+  compact_fold_at
+    [ Construction.CILEResidualType shared_root_name
+        (Gtypedef (Tenum shared_root_name)) 99%uint63 99%uint63
+    ] (DRType shared_root_name) = inr None.
+Proof. vm_compute. reflexivity. Qed.
+
+Example compact_nonself_typedef_is_retained :
+  compact_fold_at
+    [ Construction.CILEResidualType shared_root_name
+        (Gtypedef int_type) 0%uint63 0%uint63
+    ] (DRType shared_root_name) =
+  indexed_fold_at
+    [ Construction.ILEType shared_root_name
+        (Gtypedef int_type) 0%uint63 0%uint63
+    ] (DRType shared_root_name).
+Proof. vm_compute. reflexivity. Qed.
+
+Example compact_repeated_singleton_is_rejected :
+  Construction.fold_compact_indexed_events
+    [ Construction.CILESingletonSymbol shared_root_name 0%uint63 0%uint63
+    ; Construction.CILESingletonSymbol shared_root_name 1%uint63 0%uint63
+    ] = inl (Construction.InvalidCompactEventClassification
+      (DRSymbol shared_root_name)).
+Proof. vm_compute. reflexivity. Qed.
+
+Example compact_singleton_then_residual_is_rejected :
+  Construction.fold_compact_indexed_events
+    [ Construction.CILESingletonSymbol shared_root_name 0%uint63 0%uint63
+    ; Construction.CILEResidualSymbol shared_root_name test_obj_value
+        1%uint63 0%uint63
+    ] = inl (Construction.InvalidCompactEventClassification
+      (DRSymbol shared_root_name)).
+Proof. vm_compute. reflexivity. Qed.
+
+Example compact_residual_then_singleton_is_rejected :
+  Construction.fold_compact_indexed_events
+    [ Construction.CILEResidualSymbol shared_root_name test_obj_value
+        1%uint63 0%uint63
+    ; Construction.CILESingletonSymbol shared_root_name 0%uint63 0%uint63
+    ] = inl (Construction.InvalidCompactEventClassification
+      (DRSymbol shared_root_name)).
+Proof. vm_compute. reflexivity. Qed.
+
+Example compact_suppressed_alias_then_singleton_collision_is_detected :
+  Construction.fold_compact_indexed_events
+    [ Construction.CILESingletonType shared_root_name 0%uint63 0%uint63
+    ; Construction.CILEResidualType shared_root_name
+        (Gtypedef (Tnamed shared_root_name)) 99%uint63 99%uint63
+    ] = inl (Construction.InvalidCompactEventClassification
+      (DRType shared_root_name)).
+Proof. vm_compute. reflexivity. Qed.
+
+Example compact_singleton_then_suppressed_alias_collision_is_detected :
+  Construction.fold_compact_indexed_events
+    [ Construction.CILEResidualType shared_root_name
+        (Gtypedef (Tnamed shared_root_name)) 99%uint63 99%uint63
+    ; Construction.CILESingletonType shared_root_name 0%uint63 0%uint63
+    ] = inl (Construction.InvalidCompactEventClassification
+      (DRType shared_root_name)).
+Proof. vm_compute. reflexivity. Qed.
+
+Example compact_repeated_residual_self_alias_is_allowed :
+  compact_fold_at
+    [ Construction.CILEResidualType shared_root_name
+        (Gtypedef (Tnamed shared_root_name)) 99%uint63 99%uint63
+    ; Construction.CILEResidualType shared_root_name
+        (Gtypedef (Tnamed shared_root_name)) 98%uint63 98%uint63
+    ] (DRType shared_root_name) = inr None.
+Proof. vm_compute. reflexivity. Qed.
+
+Definition compact_mixed_residual_events :=
+  [ Construction.CILEResidualType shared_root_name
+      mutually_compatible_enum0 0%uint63 0%uint63
+  ; Construction.CILEResidualMsymbol shared_root_name
+      old_template_value 3%uint63 2%uint63
+  ; Construction.CILEResidualType shared_root_name
+      mutually_compatible_enum1 1%uint63 0%uint63
+  ; Construction.CILEResidualMsymbol shared_root_name
+      new_template_value 7%uint63 2%uint63
+  ].
+
+Definition indexed_mixed_residual_events :=
+  [ Construction.ILEType shared_root_name
+      mutually_compatible_enum0 0%uint63 0%uint63
+  ; Construction.ILEMsymbol shared_root_name
+      old_template_value 3%uint63 2%uint63
+  ; Construction.ILEType shared_root_name
+      mutually_compatible_enum1 1%uint63 0%uint63
+  ; Construction.ILEMsymbol shared_root_name
+      new_template_value 7%uint63 2%uint63
+  ].
+
+Example compact_interleaving_preserves_table_specific_fold_directions :
+  ( compact_fold_at compact_mixed_residual_events
+      (DRType shared_root_name)
+  , compact_fold_at compact_mixed_residual_events
+      (DRMsymbol shared_root_name) ) =
+  ( indexed_fold_at indexed_mixed_residual_events
+      (DRType shared_root_name)
+  , indexed_fold_at indexed_mixed_residual_events
+      (DRMsymbol shared_root_name) ).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition compact_error_name : name := "compact_error"%cpp_name.
+
+Example compact_ordinary_rest_error_precedes_head_classification_error :
+  Construction.fold_compact_indexed_events
+    [ Construction.CILESingletonSymbol shared_root_name 0%uint63 0%uint63
+    ; Construction.CILEResidualSymbol compact_error_name test_obj_value
+        0%uint63 0%uint63
+    ; Construction.CILEResidualSymbol compact_error_name
+        indexed_bool_obj_value 0%uint63 0%uint63
+    ; Construction.CILEResidualSymbol shared_root_name test_obj_value
+        0%uint63 0%uint63
+    ] = inl (Construction.IncompatibleDuplicates
+      [ (compact_error_name, inr test_obj_value)
+      ; (compact_error_name, inr indexed_bool_obj_value)
+      ]).
+Proof. vm_compute. reflexivity. Qed.
+
+Example compact_template_current_error_precedes_later_classification_error :
+  Construction.fold_compact_indexed_events
+    [ Construction.CILEResidualMsymbol compact_error_name
+        old_template_value 0%uint63 0%uint63
+    ; Construction.CILEResidualMsymbol compact_error_name
+        old_template_value 2%uint63 1%uint63
+    ; Construction.CILESingletonMsymbol shared_root_name 0%uint63 0%uint63
+    ; Construction.CILEResidualMsymbol shared_root_name
+        old_template_value 0%uint63 0%uint63
+    ] = inl (Construction.TreeShapeMismatch
+      (DRMsymbol compact_error_name)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition compact_tactic_constructed_dag_map : source_map.
+Proof.
+  Construction.build_compact_indexed_dag_source_map_or_fail
+    ([] : list source_file) unreachable_malformed_provenance
+    (Encoded.Build_indexed_location_dag
+      missing_location_shape_table missing_location_node_table)
+    [Construction.CILESingletonSymbol shared_root_name 0%uint63 0%uint63].
+Defined.
+
+Example compact_construction_reads_neither_provenance_nor_dag :
+  lookup compact_tactic_constructed_dag_map (DRSymbol shared_root_name) [] =
+  inl (MalformedLocationDag (DRSymbol shared_root_name) 0
+    (MissingLocationTableEntry LocationNodeTable 0%uint63)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition empty_indexed_root_locations
+    : root_locations indexed_location := {|
+  symbol_locations := ∅;
+  type_locations := ∅;
+  msymbol_locations := ∅;
+  mtype_locations := ∅
+|}.
+
+Definition all_singleton_root_locations : singleton_root_locations := {|
+  singleton_symbol_locations :=
+    [(shared_root_name, StaticLocation 3%uint63 2%uint63)];
+  singleton_type_locations :=
+    [(shared_root_name, StaticLocation 0%uint63 0%uint63)];
+  singleton_msymbol_locations :=
+    [(shared_root_name, StaticLocation 1%uint63 0%uint63)];
+  singleton_mtype_locations :=
+    [(shared_root_name, StaticLocation 4%uint63 0%uint63)]
+|}.
+
+Definition lazy_compact_map
+    (provenance : Encoded.indexed_provenance)
+    (dag : Encoded.indexed_location_dag)
+    (singletons : singleton_root_locations)
+    (residuals : root_locations indexed_location) : source_map := {|
+  files := [];
+  origin_data := IndexedOrigins provenance;
+  location_data := CompactIndexedLocations dag singletons residuals
+|}.
+
+Definition all_singleton_map : source_map :=
+  lazy_compact_map simple_indexed_provenance simple_location_dag
+    all_singleton_root_locations empty_indexed_root_locations.
+
+Example lazy_singletons_preserve_all_namespaces_and_origin_order :
+  ( lookup all_singleton_map (DRSymbol shared_root_name) []
+  , lookup all_singleton_map (DRType shared_root_name) []
+  , lookup all_singleton_map (DRMsymbol shared_root_name) []
+  , lookup all_singleton_map (DRMtype shared_root_name) [] ) =
+  ( lookup simple_dag_map (DRSymbol shared_root_name) []
+  , lookup simple_dag_map (DRType shared_root_name) []
+  , lookup simple_dag_map (DRMsymbol shared_root_name) []
+  , lookup simple_dag_map (DRMtype shared_root_name) [] ).
+Proof. vm_compute. reflexivity. Qed.
+
+Example lazy_singleton_nested_paths_preserve_dag_lookup :
+  ( lookup all_singleton_map (DRSymbol shared_root_name) [0]
+  , lookup all_singleton_map (DRSymbol shared_root_name) [1; 0] ) =
+  ( lookup simple_dag_map (DRSymbol shared_root_name) [0]
+  , lookup simple_dag_map (DRSymbol shared_root_name) [1; 0] ).
+Proof. vm_compute. reflexivity. Qed.
+
+Example lazy_singleton_absent_root_error_is_unchanged :
+  lookup all_singleton_map (DRSymbol absent_root_name) [] =
+  inl (RootNotFound (DRSymbol absent_root_name)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition duplicate_singleton_locations : singleton_root_locations := {|
+  singleton_symbol_locations :=
+    [ (shared_root_name, StaticLocation 99%uint63 99%uint63)
+    ; (shared_root_name, StaticLocation 98%uint63 98%uint63)
+    ];
+  singleton_type_locations := [];
+  singleton_msymbol_locations := [];
+  singleton_mtype_locations := []
+|}.
+
+Example lazy_duplicate_singleton_error_precedes_private_table_access :
+  lookup (lazy_compact_map unreachable_malformed_provenance
+      (Encoded.Build_indexed_location_dag
+        missing_location_shape_table missing_location_node_table)
+      duplicate_singleton_locations empty_indexed_root_locations)
+    (DRSymbol shared_root_name) [] =
+  inl (MalformedCompactLocations (DRSymbol shared_root_name)
+    DuplicateSingletonLocation).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition one_symbol_singleton : singleton_root_locations := {|
+  singleton_symbol_locations :=
+    [(shared_root_name, StaticLocation 99%uint63 99%uint63)];
+  singleton_type_locations := [];
+  singleton_msymbol_locations := [];
+  singleton_mtype_locations := []
+|}.
+
+Example lazy_singleton_residual_collision_is_explicit :
+  lookup (lazy_compact_map unreachable_malformed_provenance
+      (Encoded.Build_indexed_location_dag
+        missing_location_shape_table missing_location_node_table)
+      one_symbol_singleton
+      (one_dag_root (StaticLocation 98%uint63 98%uint63)))
+    (DRSymbol shared_root_name) [] =
+  inl (MalformedCompactLocations (DRSymbol shared_root_name)
+    SingletonResidualLocationCollision).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition lazy_tactic_constructed_dag_map : source_map.
+Proof.
+  Construction.build_lazy_compact_indexed_dag_source_map_or_fail
+    ([] : list source_file) unreachable_malformed_provenance
+    (Encoded.Build_indexed_location_dag
+      missing_location_shape_table missing_location_node_table)
+    one_symbol_singleton ([] : list Construction.indexed_located_root_event).
+Defined.
+
+Example lazy_production_construction_folds_neither_singletons_nor_tables :
+  lookup lazy_tactic_constructed_dag_map (DRSymbol shared_root_name) [] =
+  inl (MalformedLocationDag (DRSymbol shared_root_name) 0
+    (MissingLocationTableEntry LocationNodeTable 99%uint63)).
+Proof. vm_compute. reflexivity. Qed.
+
+Definition lazy_suppressed_alias_map : source_map.
+Proof.
+  Construction.build_lazy_compact_indexed_dag_source_map_or_fail
+    ([] : list source_file) simple_indexed_provenance simple_location_dag
+    {|
+      singleton_symbol_locations := [];
+      singleton_type_locations := [];
+      singleton_msymbol_locations := [];
+      singleton_mtype_locations := []
+    |}
+    [ Construction.ILEType shared_root_name
+        (Gtypedef (Tnamed shared_root_name)) 99%uint63 99%uint63
+    ].
+Defined.
+
+Example lazy_residual_self_alias_still_has_no_root :
+  lookup lazy_suppressed_alias_map (DRType shared_root_name) [] =
+  inl (RootNotFound (DRType shared_root_name)).
 Proof. vm_compute. reflexivity. Qed.

@@ -100,6 +100,7 @@ pure_files = [
     "include/RocqEmitter.hpp",
     "include/LocationEmitter.hpp",
     "include/LocationDAGEncoding.hpp",
+    "include/RootEventEncoding.hpp",
     "include/Sharing.hpp",
     "include/SourceInfoEncoding.hpp",
     "src/IR.cpp",
@@ -107,6 +108,7 @@ pure_files = [
     "src/RocqEmitter.cpp",
     "src/LocationEmitter.cpp",
     "src/LocationDAGEncoding.cpp",
+    "src/RootEventEncoding.cpp",
     "src/Sharing.cpp",
     "src/SourceInfoEncoding.cpp",
 ]
@@ -224,6 +226,7 @@ if "with_open_file(locations_file_" not in orchestration:
 
 location_emitter = text("src/LocationEmitter.cpp")
 location_dag_encoder = text("src/LocationDAGEncoding.cpp")
+root_event_encoder = text("src/RootEventEncoding.cpp")
 if location_dag_encoder.count("unit.nodes().children(id)") != 1:
     fail("location DAG must have exactly one Arena::children projection source")
 for required in (
@@ -238,6 +241,16 @@ for required in (
 for forbidden in ("SharingPlan", "ownedSharing", "shareClass"):
     if forbidden in location_dag_encoder:
         fail(f"location DAG encoder reaches semantic sharing API {forbidden!r}")
+for required in (
+    "IRSharing::semanticallyEqual",
+    "forceHashCollisions",
+    "for (const OrderedEventRef &ordered : unit.orderedEvents())",
+    "Constructor::GlobalTypedef",
+):
+    if required not in root_event_encoder:
+        fail(f"root-event encoder omits {required!r}")
+if "clang::" in root_event_encoder:
+    fail("root-event encoder depends on Clang")
 source_location_syntax = (
     PACKAGE.parent
     / "rocq-skylabs-brick/theories/lang/cpp/syntax/source_location.v"
@@ -261,7 +274,12 @@ for required in (
     "MergeLocations",
     "AddRootOrigins",
     "Inductive location_store",
+    "Record singleton_root_locations",
+    "CompactIndexedLocations",
     "MalformedLocationDag",
+    "MalformedCompactLocations",
+    "Fixpoint find_unique_singleton",
+    "Definition find_compact_root",
     "Fixpoint descend_indexed",
     "Definition validate_location_dag",
 ):
@@ -286,6 +304,18 @@ for required in (
     "Definition fold_indexed_events",
     "Ltac build_indexed_dag_source_map_or_fail",
     "eval vm_compute in (fold_indexed_events events)",
+    "Inductive compact_indexed_located_root_event",
+    "InvalidCompactEventClassification",
+    "Record compact_indexed_state",
+    "compact_state_symbols : NM.t indexed_location * NM.t unit",
+    "compact_state_msymbols : TM.t indexed_location * TM.t unit",
+    "Fixpoint fold_compact_indexed_events_from",
+    "Definition fold_compact_indexed_events",
+    "Ltac build_compact_indexed_dag_source_map_or_fail",
+    "eval vm_compute in (fold_compact_indexed_events events)",
+    "Definition assemble_lazy_compact_indexed_dag_source_map",
+    "Ltac build_lazy_compact_indexed_dag_source_map_or_fail",
+    "eval vm_compute in (fold_indexed_events residual_events)",
 ):
     if required not in parser_location:
         fail(f"indexed location-DAG construction omits {required!r}")
@@ -306,6 +336,8 @@ for required in (
     "#[local] Definition source_files",
     "#include \"LocationDAGEncoding.hpp\"",
     "location::encoding::encode(unit, options_.includeTemplates)",
+    "#include \"RootEventEncoding.hpp\"",
+    "root_event::encoding::encode(unit, options_.includeTemplates)",
     "presumed_filenames",
     "physical_points",
     "presumed_points",
@@ -333,8 +365,18 @@ for required in (
     "Encoded.Build_indexed_provenance",
     "Encoded.InlineMacroFrame",
     "Encoded.MacroFrameReference",
+    "Build_singleton_root_locations",
+    "singleton_symbol_events",
+    "singleton_type_events",
+    "singleton_msymbol_events",
+    "singleton_mtype_events",
+    "singleton_root_events",
+    "residual_root_events",
     "Construction.ILESymbol",
-    "Construction.build_indexed_dag_source_map_or_fail",
+    "Construction.ILEType",
+    "Construction.ILEMsymbol",
+    "Construction.ILEMtype",
+    "Construction.build_lazy_compact_indexed_dag_source_map_or_fail",
     "Definition source_locations : source_map",
     "Build_source_file",
     "Encoded.Build_encoded_physical_point",
@@ -347,11 +389,22 @@ for forbidden in (
     "Construction.build_source_map_or_fail",
     "Construction.build_indexed_source_map_or_fail",
     "Construction.LESymbol",
+    "Construction.CILESingleton",
+    "Construction.CILEResidual",
+    "Construction.build_compact_indexed_dag_source_map_or_fail",
+    'constructor = "Construction.ILE',
     "PArray.of_list",
     "decodeOrigin(",
 ):
     if forbidden in location_emitter:
         fail(f"location emitter retains expanded/eager provenance seam {forbidden!r}")
+if not re.search(
+    r"if\s*\(residual\)\s*\{.*?renderNodeUnchecked"
+    r"\(unit,\s*root\.semanticValue\)",
+    location_emitter,
+    re.DOTALL,
+):
+    fail("location emitter renders semantic values outside the residual guard")
 if location_emitter.find("Require Import skylabs.lang.cpp.parser") < location_emitter.find(
     "#[local] Close Scope array_scope"
 ):

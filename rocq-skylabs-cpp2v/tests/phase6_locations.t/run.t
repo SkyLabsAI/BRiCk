@@ -10,6 +10,10 @@ a nonempty shape path and recovers its physical source line.
   rocq c -w -notation-overridden -w -notation-incompatible-prefix fixture_17_cpp.v
   rocq c -w -notation-overridden -w -notation-incompatible-prefix fixture_17_cpp_locations.v
   $ rocq c $ROCQC_ARGS check.v
+  $ grep -q 'compact root events: .* selected; .* singleton; .* residual' fixture_17_cpp_locations.v
+  $ grep -q '(CIL(' fixture_17_cpp_locations.v
+  $ ! grep -q '(Ovar ' fixture_17_cpp_locations.v
+  $ grep -q 'residual_root_events : list Construction.indexed_located_root_event' fixture_17_cpp_locations.v
   $ test ! -e fixture_17_cpp.v.partial
   $ test ! -e fixture_17_cpp_locations.v.partial
 
@@ -37,7 +41,9 @@ outputs remain valid.
   $ rocq c $ROCQC_ARGS no_templates.v
   $ rocq c $ROCQC_ARGS no_templates_locations.v
   $ rocq c $ROCQC_ARGS no_templates_check.v
-  $ ! grep -q 'Construction.LEM' no_templates_locations.v
+  $ grep -q 'singleton_msymbol_events : list (name \* indexed_location) := nil' no_templates_locations.v
+  $ grep -q 'singleton_mtype_events : list (name \* indexed_location) := nil' no_templates_locations.v
+  $ ! grep -Eq '\((CRMS|CRMT)\(' no_templates_locations.v
 
 Omitting --locations preserves the existing one-output behavior.
 

@@ -459,11 +459,26 @@ Definition indexed_location_shape
   | AddRootOrigins shape _ _ => shape
   end.
 
+(** Generated proposal-4 companions keep producer-certified singleton roots as
+    data instead of constructing a board-scale AVL map during compilation.
+    Namespace-specific lists avoid irrelevant scans. Residual duplicate and
+    conservative typedef groups remain in ordinary selected root maps. *)
+Record singleton_root_locations : Type := {
+  singleton_symbol_locations : list (name * indexed_location);
+  singleton_type_locations : list (name * indexed_location);
+  singleton_msymbol_locations : list (name * indexed_location);
+  singleton_mtype_locations : list (name * indexed_location)
+}.
+
 Inductive location_store : Type :=
 | ExpandedLocations (roots : declaration_locations origin_id)
 | IndexedLocations
     (dag : Encoded.indexed_location_dag)
-    (roots : root_locations indexed_location).
+    (roots : root_locations indexed_location)
+| CompactIndexedLocations
+    (dag : Encoded.indexed_location_dag)
+    (singletons : singleton_root_locations)
+    (residuals : root_locations indexed_location).
 
 Inductive origin_store : Type :=
 | ExpandedOrigins (values : list source_origin)
@@ -500,6 +515,10 @@ Inductive location_dag_error : Set :=
 | NonBackwardLocationShapeEdge
     (parent child : Encoded.table_id).
 
+Inductive compact_location_error : Set :=
+| DuplicateSingletonLocation
+| SingletonResidualLocationCollision.
+
 Inductive lookup_error : Set :=
 | RootNotFound (root : decl_root)
 | ChildOutOfBounds
@@ -519,7 +538,10 @@ Inductive lookup_error : Set :=
 | MalformedLocationDag
     (root : decl_root)
     (consumed_depth : nat)
-    (error : location_dag_error).
+    (error : location_dag_error)
+| MalformedCompactLocations
+    (root : decl_root)
+    (error : compact_location_error).
 
 Module Internal.
   Definition find_root {A : Type}
@@ -529,6 +551,52 @@ Module Internal.
     | DRType n => locations.(type_locations) !! n
     | DRMsymbol n => locations.(msymbol_locations) !! n
     | DRMtype n => locations.(mtype_locations) !! n
+    end.
+
+  Definition singleton_entries
+      (locations : singleton_root_locations) (root : decl_root)
+      : list (name * indexed_location) :=
+    match root with
+    | DRSymbol _ => locations.(singleton_symbol_locations)
+    | DRType _ => locations.(singleton_type_locations)
+    | DRMsymbol _ => locations.(singleton_msymbol_locations)
+    | DRMtype _ => locations.(singleton_mtype_locations)
+    end.
+
+  Definition root_name (root : decl_root) : name :=
+    match root with
+    | DRSymbol n | DRType n | DRMsymbol n | DRMtype n => n
+    end.
+
+  Fixpoint find_unique_singleton
+      (wanted : name) (entries : list (name * indexed_location))
+      (found : option indexed_location)
+      : compact_location_error + option indexed_location :=
+    match entries with
+    | [] => inr found
+    | (candidate, location) :: rest =>
+        if bool_decide (candidate = wanted) then
+          match found with
+          | Some _ => inl DuplicateSingletonLocation
+          | None => find_unique_singleton wanted rest (Some location)
+          end
+        else find_unique_singleton wanted rest found
+    end.
+
+  Definition find_compact_root
+      (singletons : singleton_root_locations)
+      (residuals : root_locations indexed_location) (root : decl_root)
+      : lookup_error + option indexed_location :=
+    match find_unique_singleton (root_name root)
+        (singleton_entries singletons root) None with
+    | inl error => inl (MalformedCompactLocations root error)
+    | inr singleton =>
+        match singleton, find_root residuals root with
+        | Some _, Some _ => inl (MalformedCompactLocations root
+            SingletonResidualLocationCollision)
+        | Some location, None | None, Some location => inr (Some location)
+        | None, None => inr None
+        end
     end.
 
   Fixpoint descend
@@ -1035,6 +1103,23 @@ Definition lookup
       match Internal.find_root locations root with
       | None => inl (RootNotFound root)
       | Some location =>
+          match Internal.descend_indexed root 0 path dag location with
+          | inl error => inl error
+          | inr raw_ids =>
+              let ids := List.map Build_origin_id raw_ids in
+              match map.(origin_data) with
+              | ExpandedOrigins origins =>
+                  Internal.resolve_expanded_origins root path origins ids
+              | IndexedOrigins tables =>
+                  Internal.resolve_indexed_origins root path tables ids
+              end
+          end
+      end
+  | CompactIndexedLocations dag singletons residuals =>
+      match Internal.find_compact_root singletons residuals root with
+      | inl error => inl error
+      | inr None => inl (RootNotFound root)
+      | inr (Some location) =>
           match Internal.descend_indexed root 0 path dag location with
           | inl error => inl error
           | inr raw_ids =>

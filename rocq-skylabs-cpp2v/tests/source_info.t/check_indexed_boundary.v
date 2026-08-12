@@ -128,8 +128,8 @@ Definition boundary_last_origin : source_origin :=
 
 Example boundary_location_tables_and_roots_are_exact :
   match source_locations.(location_data) with
-  | ExpandedLocations _ => False
-  | IndexedLocations dag roots =>
+  | ExpandedLocations _ | IndexedLocations _ _ => False
+  | CompactIndexedLocations dag _ roots =>
       ( dag.(Encoded.location_shape_table).(Encoded.table_length)
       , dag.(Encoded.location_node_table).(Encoded.table_length)
       , Encoded.array_length
@@ -150,8 +150,8 @@ Proof. vm_compute. reflexivity. Qed.
 
 Example boundary_location_rows_close_every_chunk_correctly :
   match source_locations.(location_data) with
-  | ExpandedLocations _ => False
-  | IndexedLocations dag _ =>
+  | ExpandedLocations _ | IndexedLocations _ _ => False
+  | CompactIndexedLocations dag _ _ =>
       ( is_some (Encoded.table_get dag.(Encoded.location_shape_table)
           4095%uint63)
       , is_some (Encoded.table_get dag.(Encoded.location_shape_table)
@@ -174,8 +174,9 @@ Proof. vm_compute. reflexivity. Qed.
 
 Example boundary_location_dag_is_eagerly_well_formed :
   match source_locations.(location_data) with
-  | ExpandedLocations _ => False
-  | IndexedLocations dag _ => Internal.validate_location_dag dag = None
+  | ExpandedLocations _ | IndexedLocations _ _ => False
+  | CompactIndexedLocations dag _ _ =>
+      Internal.validate_location_dag dag = None
   end.
 Proof. vm_compute. reflexivity. Qed.
 

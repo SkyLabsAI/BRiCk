@@ -24,7 +24,8 @@ Module Construction.
 
   Inductive construction_error : Type :=
   | IncompatibleDuplicates (duplicates : translation_unit.dup_info)
-  | TreeShapeMismatch (root : decl_root).
+  | TreeShapeMismatch (root : decl_root)
+  | InvalidCompactEventClassification (root : decl_root).
 
   Fixpoint merge_tree {A : Type}
       (existing incoming : loc_tree A) {struct existing}
@@ -562,6 +563,363 @@ Module Construction.
     | inr ?locations =>
         exact (assemble_indexed_dag_source_map
           source_files source_origins dag locations)
+    | inl ?error => fail "source-location construction failed:" error
+    end.
+
+  (** Proposal-4 events omit semantic values for keys which the producer has
+      proved singleton in their root namespace. Residual events retain the
+      existing semantic event shape and continue through the authoritative
+      selection functions above. *)
+  Inductive compact_indexed_located_root_event : Type :=
+  | CILESingletonSymbol
+      (name : name) (node shape : Encoded.table_id)
+  | CILESingletonType
+      (name : name) (node shape : Encoded.table_id)
+  | CILESingletonMsymbol
+      (name : name) (node shape : Encoded.table_id)
+  | CILESingletonMtype
+      (name : name) (node shape : Encoded.table_id)
+  | CILEResidualSymbol
+      (name : name) (value : ObjValue)
+      (node shape : Encoded.table_id)
+  | CILEResidualType
+      (name : name) (value : GlobDecl)
+      (node shape : Encoded.table_id)
+  | CILEResidualMsymbol
+      (name : name) (value : template MObjValue)
+      (node shape : Encoded.table_id)
+  | CILEResidualMtype
+      (name : name) (value : template MGlobDecl)
+      (node shape : Encoded.table_id).
+
+  (** Classification markers are independent of semantic selection. Each
+      namespace stores singleton locations directly, plus a small residual-key
+      map. A residual self-type alias therefore remains marked even though
+      [add_indexed_type] suppresses it from the selected state. This layout
+      avoids rebuilding a second full singleton map during projection. *)
+  Record compact_indexed_state : Type := {
+    compact_state_symbols : NM.t indexed_location * NM.t unit;
+    compact_state_types : NM.t indexed_location * NM.t unit;
+    compact_state_msymbols : TM.t indexed_location * TM.t unit;
+    compact_state_mtypes : TM.t indexed_location * TM.t unit;
+    compact_state_residual : indexed_state
+  }.
+
+  Definition empty_compact_indexed_state : compact_indexed_state := {|
+    compact_state_symbols := (∅, ∅);
+    compact_state_types := (∅, ∅);
+    compact_state_msymbols := (∅, ∅);
+    compact_state_mtypes := (∅, ∅);
+    compact_state_residual := empty_indexed_state
+  |}.
+
+  Definition set_compact_symbols
+      (entries : NM.t indexed_location * NM.t unit)
+      (current : compact_indexed_state) : compact_indexed_state := {|
+    compact_state_symbols := entries;
+    compact_state_types := current.(compact_state_types);
+    compact_state_msymbols := current.(compact_state_msymbols);
+    compact_state_mtypes := current.(compact_state_mtypes);
+    compact_state_residual := current.(compact_state_residual)
+  |}.
+
+  Definition set_compact_types
+      (entries : NM.t indexed_location * NM.t unit)
+      (current : compact_indexed_state) : compact_indexed_state := {|
+    compact_state_symbols := current.(compact_state_symbols);
+    compact_state_types := entries;
+    compact_state_msymbols := current.(compact_state_msymbols);
+    compact_state_mtypes := current.(compact_state_mtypes);
+    compact_state_residual := current.(compact_state_residual)
+  |}.
+
+  Definition set_compact_msymbols
+      (entries : TM.t indexed_location * TM.t unit)
+      (current : compact_indexed_state) : compact_indexed_state := {|
+    compact_state_symbols := current.(compact_state_symbols);
+    compact_state_types := current.(compact_state_types);
+    compact_state_msymbols := entries;
+    compact_state_mtypes := current.(compact_state_mtypes);
+    compact_state_residual := current.(compact_state_residual)
+  |}.
+
+  Definition set_compact_mtypes
+      (entries : TM.t indexed_location * TM.t unit)
+      (current : compact_indexed_state) : compact_indexed_state := {|
+    compact_state_symbols := current.(compact_state_symbols);
+    compact_state_types := current.(compact_state_types);
+    compact_state_msymbols := current.(compact_state_msymbols);
+    compact_state_mtypes := entries;
+    compact_state_residual := current.(compact_state_residual)
+  |}.
+
+  Definition set_compact_residual
+      (residual : indexed_state) (current : compact_indexed_state)
+      : compact_indexed_state := {|
+    compact_state_symbols := current.(compact_state_symbols);
+    compact_state_types := current.(compact_state_types);
+    compact_state_msymbols := current.(compact_state_msymbols);
+    compact_state_mtypes := current.(compact_state_mtypes);
+    compact_state_residual := residual
+  |}.
+
+  Definition add_compact_singleton_symbol
+      (n : name) (node shape : Encoded.table_id)
+      (current : compact_indexed_state)
+      : construction_error + compact_indexed_state :=
+    let '(singletons, residuals) := current.(compact_state_symbols) in
+    match singletons !! n, residuals !! n with
+    | None, None => inr (set_compact_symbols
+        (<[n := StaticLocation node shape]> singletons, residuals) current)
+    | _, _ => inl (InvalidCompactEventClassification (DRSymbol n))
+    end.
+
+  Definition add_compact_singleton_type
+      (n : name) (node shape : Encoded.table_id)
+      (current : compact_indexed_state)
+      : construction_error + compact_indexed_state :=
+    let '(singletons, residuals) := current.(compact_state_types) in
+    match singletons !! n, residuals !! n with
+    | None, None => inr (set_compact_types
+        (<[n := StaticLocation node shape]> singletons, residuals) current)
+    | _, _ => inl (InvalidCompactEventClassification (DRType n))
+    end.
+
+  Definition add_compact_singleton_msymbol
+      (n : name) (node shape : Encoded.table_id)
+      (current : compact_indexed_state)
+      : construction_error + compact_indexed_state :=
+    let '(singletons, residuals) := current.(compact_state_msymbols) in
+    match singletons !! n, residuals !! n with
+    | None, None => inr (set_compact_msymbols
+        (<[n := StaticLocation node shape]> singletons, residuals) current)
+    | _, _ => inl (InvalidCompactEventClassification (DRMsymbol n))
+    end.
+
+  Definition add_compact_singleton_mtype
+      (n : name) (node shape : Encoded.table_id)
+      (current : compact_indexed_state)
+      : construction_error + compact_indexed_state :=
+    let '(singletons, residuals) := current.(compact_state_mtypes) in
+    match singletons !! n, residuals !! n with
+    | None, None => inr (set_compact_mtypes
+        (<[n := StaticLocation node shape]> singletons, residuals) current)
+    | _, _ => inl (InvalidCompactEventClassification (DRMtype n))
+    end.
+
+  Definition add_compact_residual_symbol
+      (n : name) (value : ObjValue) (node shape : Encoded.table_id)
+      (current : compact_indexed_state)
+      : construction_error + compact_indexed_state :=
+    let '(singletons, residuals) := current.(compact_state_symbols) in
+    match singletons !! n with
+    | Some _ => inl (InvalidCompactEventClassification (DRSymbol n))
+    | None =>
+        let marked := set_compact_symbols
+          (singletons, <[n := tt]> residuals) current in
+        match add_indexed_symbol n value (StaticLocation node shape)
+            marked.(compact_state_residual) with
+        | inl error => inl error
+        | inr residual => inr (set_compact_residual residual marked)
+        end
+    end.
+
+  Definition add_compact_residual_type
+      (n : name) (value : GlobDecl) (node shape : Encoded.table_id)
+      (current : compact_indexed_state)
+      : construction_error + compact_indexed_state :=
+    let '(singletons, residuals) := current.(compact_state_types) in
+    match singletons !! n with
+    | Some _ => inl (InvalidCompactEventClassification (DRType n))
+    | None =>
+        let marked := set_compact_types
+          (singletons, <[n := tt]> residuals) current in
+        match add_indexed_type n value (StaticLocation node shape)
+            marked.(compact_state_residual) with
+        | inl error => inl error
+        | inr residual => inr (set_compact_residual residual marked)
+        end
+    end.
+
+  Definition add_compact_residual_msymbol
+      (n : name) (value : template MObjValue)
+      (node shape : Encoded.table_id) (current : compact_indexed_state)
+      : construction_error + compact_indexed_state :=
+    let '(singletons, residuals) := current.(compact_state_msymbols) in
+    match singletons !! n with
+    | Some _ => inl (InvalidCompactEventClassification (DRMsymbol n))
+    | None =>
+        let marked := set_compact_msymbols
+          (singletons, <[n := tt]> residuals) current in
+        match add_indexed_msymbol n value (StaticLocation node shape)
+            marked.(compact_state_residual) with
+        | inl error => inl error
+        | inr residual => inr (set_compact_residual residual marked)
+        end
+    end.
+
+  Definition add_compact_residual_mtype
+      (n : name) (value : template MGlobDecl)
+      (node shape : Encoded.table_id) (current : compact_indexed_state)
+      : construction_error + compact_indexed_state :=
+    let '(singletons, residuals) := current.(compact_state_mtypes) in
+    match singletons !! n with
+    | Some _ => inl (InvalidCompactEventClassification (DRMtype n))
+    | None =>
+        let marked := set_compact_mtypes
+          (singletons, <[n := tt]> residuals) current in
+        match add_indexed_mtype n value (StaticLocation node shape)
+            marked.(compact_state_residual) with
+        | inl error => inl error
+        | inr residual => inr (set_compact_residual residual marked)
+        end
+    end.
+
+  (** Ordinary tables retain their right-to-left fold. Template tables retain
+      their left-to-right fold. Marker registration occurs before semantic
+      selection at the current event, so even a suppressed residual alias is
+      visible to later classification checks. *)
+  Fixpoint fold_compact_indexed_events_from
+      (events : list compact_indexed_located_root_event)
+      (current : compact_indexed_state)
+      : construction_error + compact_indexed_state :=
+    match events with
+    | [] => inr current
+    | CILESingletonSymbol n node shape :: rest =>
+        match fold_compact_indexed_events_from rest current with
+        | inl error => inl error
+        | inr next => add_compact_singleton_symbol n node shape next
+        end
+    | CILESingletonType n node shape :: rest =>
+        match fold_compact_indexed_events_from rest current with
+        | inl error => inl error
+        | inr next => add_compact_singleton_type n node shape next
+        end
+    | CILESingletonMsymbol n node shape :: rest =>
+        match add_compact_singleton_msymbol n node shape current with
+        | inl error => inl error
+        | inr next => fold_compact_indexed_events_from rest next
+        end
+    | CILESingletonMtype n node shape :: rest =>
+        match add_compact_singleton_mtype n node shape current with
+        | inl error => inl error
+        | inr next => fold_compact_indexed_events_from rest next
+        end
+    | CILEResidualSymbol n value node shape :: rest =>
+        match fold_compact_indexed_events_from rest current with
+        | inl error => inl error
+        | inr next => add_compact_residual_symbol n value node shape next
+        end
+    | CILEResidualType n value node shape :: rest =>
+        match fold_compact_indexed_events_from rest current with
+        | inl error => inl error
+        | inr next => add_compact_residual_type n value node shape next
+        end
+    | CILEResidualMsymbol n value node shape :: rest =>
+        match add_compact_residual_msymbol n value node shape current with
+        | inl error => inl error
+        | inr next => fold_compact_indexed_events_from rest next
+        end
+    | CILEResidualMtype n value node shape :: rest =>
+        match add_compact_residual_mtype n value node shape current with
+        | inl error => inl error
+        | inr next => fold_compact_indexed_events_from rest next
+        end
+    end.
+
+  Definition residual_left_nm {A : Type}
+      (residual singleton : NM.t A) : NM.t A :=
+    NM.fold (fun n entry current => <[n := entry]> current)
+      residual singleton.
+
+  Definition residual_left_tm {A : Type}
+      (residual singleton : TM.t A) : TM.t A :=
+    TM.fold (fun n entry current => <[n := entry]> current)
+      residual singleton.
+
+  Definition project_compact_indexed_locations
+      (current : compact_indexed_state)
+      : root_locations indexed_location :=
+    let residual := project_indexed_locations current.(compact_state_residual) in
+    {|
+      symbol_locations := residual_left_nm residual.(symbol_locations)
+        (fst current.(compact_state_symbols));
+      type_locations := residual_left_nm residual.(type_locations)
+        (fst current.(compact_state_types));
+      msymbol_locations := residual_left_tm residual.(msymbol_locations)
+        (fst current.(compact_state_msymbols));
+      mtype_locations := residual_left_tm residual.(mtype_locations)
+        (fst current.(compact_state_mtypes))
+    |}.
+
+  Definition fold_compact_indexed_events
+      (events : list compact_indexed_located_root_event)
+      : construction_error + root_locations indexed_location :=
+    match fold_compact_indexed_events_from events empty_compact_indexed_state with
+    | inl error => inl error
+    | inr current => inr (project_compact_indexed_locations current)
+    end.
+
+  Definition build_compact_indexed_dag_source_map
+      (source_files : list source_file)
+      (source_origins : Encoded.indexed_provenance)
+      (dag : Encoded.indexed_location_dag)
+      (events : list compact_indexed_located_root_event)
+      : construction_error + source_map :=
+    match fold_compact_indexed_events events with
+    | inl error => inl error
+    | inr locations => inr (assemble_indexed_dag_source_map
+        source_files source_origins dag locations)
+    end.
+
+  (** VM computation sees root names, residual semantic values, primitive IDs,
+      and compact marker maps only. Provenance and the DAG remain outside the
+      evaluated term. *)
+  Ltac build_compact_indexed_dag_source_map_or_fail
+      source_files source_origins dag events :=
+    let result := eval vm_compute in (fold_compact_indexed_events events) in
+    lazymatch result with
+    | inr ?locations =>
+        exact (assemble_indexed_dag_source_map
+          source_files source_origins dag locations)
+    | inl ?error => fail "source-location construction failed:" error
+    end.
+
+  (** Board-scale production construction keeps singleton roots lazy and
+      VM-reduces only the small residual semantic groups. The producer's exact
+      classifier establishes singleton uniqueness; public lookup independently
+      diagnoses malformed duplicate or mixed private storage. *)
+  Definition assemble_lazy_compact_indexed_dag_source_map
+      (source_files : list source_file)
+      (source_origins : Encoded.indexed_provenance)
+      (dag : Encoded.indexed_location_dag)
+      (singletons : singleton_root_locations)
+      (residuals : root_locations indexed_location) : source_map := {|
+    files := source_files;
+    origin_data := IndexedOrigins source_origins;
+    location_data := CompactIndexedLocations dag singletons residuals
+  |}.
+
+  Definition build_lazy_compact_indexed_dag_source_map
+      (source_files : list source_file)
+      (source_origins : Encoded.indexed_provenance)
+      (dag : Encoded.indexed_location_dag)
+      (singletons : singleton_root_locations)
+      (residual_events : list indexed_located_root_event)
+      : construction_error + source_map :=
+    match fold_indexed_events residual_events with
+    | inl error => inl error
+    | inr residuals => inr (assemble_lazy_compact_indexed_dag_source_map
+        source_files source_origins dag singletons residuals)
+    end.
+
+  Ltac build_lazy_compact_indexed_dag_source_map_or_fail
+      source_files source_origins dag singletons residual_events :=
+    let result := eval vm_compute in (fold_indexed_events residual_events) in
+    lazymatch result with
+    | inr ?residuals =>
+        exact (assemble_lazy_compact_indexed_dag_source_map
+          source_files source_origins dag singletons residuals)
     | inl ?error => fail "source-location construction failed:" error
     end.
 End Construction.

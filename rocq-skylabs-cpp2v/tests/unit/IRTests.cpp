@@ -12,6 +12,7 @@
 #include "LocationDAGEncoding.hpp"
 #include "LocationEmitter.hpp"
 #include "RocqEmitter.hpp"
+#include "RootEventEncoding.hpp"
 #include "Sharing.hpp"
 #include "SourceInfo.hpp"
 #include "SourceInfoEncoding.hpp"
@@ -403,6 +404,11 @@ bool directRootsAndDeterminism() {
         !templateObject || *first != *second || *first != *unshared ||
         *locationFirst != *locationSecond)
         return false;
+    const std::size_t locationEvents =
+        locationFirst->find("(* compact root events:");
+    if (locationEvents == std::string::npos)
+        return false;
+    const std::string eventSection = locationFirst->substr(locationEvents);
     auto ordered = [](const std::string &text,
                       std::initializer_list<const char *> needles) {
         std::size_t position = 0;
@@ -424,13 +430,16 @@ bool directRootsAndDeterminism() {
            contains(*templates, "(Dtemplated_glob_decl ") &&
            !contains(*templates, "(Dobj_value ") &&
            !contains(*templates, "(Dglob_decl ") &&
-           ordered(*locationFirst,
-                   {"Construction.ILESymbol", "Construction.ILEType",
-                    "Construction.ILEMsymbol", "Construction.ILEMtype"}) &&
-           contains(*locationOrdinaryOnly, "Construction.ILESymbol") &&
-           contains(*locationOrdinaryOnly, "Construction.ILEType") &&
-           !contains(*locationOrdinaryOnly, "Construction.ILEMsymbol") &&
-           !contains(*locationOrdinaryOnly, "Construction.ILEMtype") &&
+           contains(
+               *locationOrdinaryOnly,
+               "compact root events: 2 selected; 1 singleton; 1 residual") &&
+           contains(*locationOrdinaryOnly, "(CIL(") &&
+           contains(*locationOrdinaryOnly, "(CRT(") &&
+           contains(
+               eventSection,
+               "compact root events: 4 selected; 3 singleton; 1 residual") &&
+           !contains(eventSection, "(Ovar ") &&
+           !contains(eventSection, "(Template ") &&
            contains(*first, "(Ovar ") && contains(*first, "Gtypedef") &&
            !contains(*first, "Eliteral") && !contains(*first, "Ebinary") &&
            !contains(*first, "Oexpression") &&
@@ -537,10 +546,154 @@ bool emptyTablesAndEvents() {
            contains(*location, "source_files : list source_file := nil") &&
            contains(*location, "presumed_filenames : Encoded.indexed_table") &&
            contains(*location, "encoded_origins : Encoded.indexed_table") &&
-           contains(*location, "located_root_event := nil") &&
+           contains(
+               *location,
+               "compact root events: 0 selected; 0 singleton; 0 residual") &&
+           contains(*location,
+                    "singleton_root_events : singleton_root_locations") &&
+           contains(*location,
+                    "residual_root_events : list "
+                    "Construction.indexed_located_root_event := nil") &&
            !contains(*location, "source_origins : list source_origin") &&
            contains(*location, "Definition source_locations : source_map") &&
            !contains(*location, "source_location_result");
+}
+
+bool rootEventEncoding() {
+    namespace root_event_encoding = ir::root_event::encoding;
+    TranslationUnitIR unfinished;
+    if (!failed(root_event_encoding::encode(unfinished, true)))
+        return false;
+
+    TranslationUnitIR unit;
+    (void)unit.setSources(tables());
+    auto &arena = unit.buildingArena();
+    const NodeId duplicateAtomic0 =
+        add(unit, Category::AtomicName, Constructor::AtomicIdentifier,
+            {Value::scalar(ScalarTerm::string("duplicate"))},
+            {source::OriginId(0)});
+    const NodeId duplicateName0 =
+        add(unit, Category::Name, Constructor::NameFromAtomic,
+            {Value::node(duplicateAtomic0)}, {source::OriginId(0)});
+    const NodeId duplicateAtomic1 =
+        add(unit, Category::AtomicName, Constructor::AtomicIdentifier,
+            {Value::scalar(ScalarTerm::string("duplicate"))},
+            {source::OriginId(1)});
+    const NodeId duplicateName1 =
+        add(unit, Category::Name, Constructor::NameFromAtomic,
+            {Value::node(duplicateAtomic1)}, {source::OriginId(1)});
+    const NodeId nearAtomic =
+        add(unit, Category::AtomicName, Constructor::AtomicIdentifier,
+            {Value::scalar(ScalarTerm::string("near"))}, {source::OriginId(2)});
+    const NodeId nearName =
+        add(unit, Category::Name, Constructor::NameFromAtomic,
+            {Value::node(nearAtomic)}, {source::OriginId(2)});
+    const NodeId typedefAtomic = add(
+        unit, Category::AtomicName, Constructor::AtomicIdentifier,
+        {Value::scalar(ScalarTerm::string("typedef"))}, {source::OriginId(0)});
+    const NodeId typedefName =
+        add(unit, Category::Name, Constructor::NameFromAtomic,
+            {Value::node(typedefAtomic)}, {source::OriginId(0)});
+    const NodeId boolean = add(unit, Category::Type, Constructor::TypeBoolean,
+                               {}, {source::OriginId(0)});
+    const NodeId initializer =
+        add(unit, Category::GlobalInitializer, Constructor::GlobalInitNone, {},
+            {source::OriginId(0)});
+    const NodeId object =
+        add(unit, Category::ObjectValue, Constructor::ObjectVariable,
+            {Value::node(boolean), Value::node(initializer)},
+            {source::OriginId(0)});
+    const NodeId globalType =
+        add(unit, Category::GlobalDeclaration, Constructor::GlobalType, {},
+            {source::OriginId(0)});
+    const NodeId typedefType =
+        add(unit, Category::Type, Constructor::TypeNamed,
+            {Value::node(typedefName)}, {source::OriginId(0)});
+    const NodeId globalTypedef =
+        add(unit, Category::GlobalDeclaration, Constructor::GlobalTypedef,
+            {Value::node(typedefType)}, {source::OriginId(0)});
+    const NodeId templateObject =
+        add(unit, Category::Template, Constructor::TemplateObjectRoot,
+            {Value::sequence({}), Value::node(object)}, {source::OriginId(0)});
+    const NodeId templateType = add(
+        unit, Category::Template, Constructor::TemplateGlobalRoot,
+        {Value::sequence({}), Value::node(globalType)}, {source::OriginId(0)});
+    auto share = unit.addShareClass(ShareClassKind::Name);
+    if (!duplicateAtomic0.valid() || !duplicateName0.valid() ||
+        !duplicateAtomic1.valid() || !duplicateName1.valid() ||
+        !nearAtomic.valid() || !nearName.valid() || !typedefAtomic.valid() ||
+        !typedefName.valid() || !boolean.valid() || !initializer.valid() ||
+        !object.valid() || !globalType.valid() || !typedefType.valid() ||
+        !globalTypedef.valid() || !templateObject.valid() ||
+        !templateType.valid() || !share ||
+        failed(arena.setShareClass(duplicateName0, *share)) ||
+        failed(unit.addRoot({RootKind::Symbol, duplicateName0, object})) ||
+        failed(unit.addRoot({RootKind::Symbol, duplicateName1, object})) ||
+        failed(unit.addRoot({RootKind::Symbol, nearName, object})) ||
+        failed(unit.addRoot({RootKind::Type, duplicateName0, globalType})) ||
+        failed(unit.addRoot({RootKind::Type, typedefName, globalTypedef})) ||
+        failed(unit.addRoot(
+            {RootKind::TemplateSymbol, nearName, templateObject})) ||
+        failed(
+            unit.addRoot({RootKind::TemplateType, nearName, templateType})) ||
+        failed(unit.finish()))
+        return false;
+
+    auto all = root_event_encoding::encode(unit, true);
+    auto ordinary = root_event_encoding::encode(unit, false);
+    auto collided = root_event_encoding::encode(
+        unit, true, root_event_encoding::EncodeOptions{true});
+    if (!all || !ordinary || !collided)
+        return false;
+    using EventClass = root_event_encoding::EventClass;
+    const std::vector<EventClass> expectedAll{
+        EventClass::Residual,  EventClass::Residual, EventClass::Singleton,
+        EventClass::Singleton, EventClass::Residual, EventClass::Singleton,
+        EventClass::Singleton};
+    const std::vector<EventClass> expectedOrdinary{
+        EventClass::Residual,  EventClass::Residual, EventClass::Singleton,
+        EventClass::Singleton, EventClass::Residual, EventClass::Excluded,
+        EventClass::Excluded};
+    const auto exactStats =
+        [](const root_event_encoding::EncodingStats &stats,
+           std::size_t selected, std::size_t singleton, std::size_t residual,
+           std::size_t duplicateGroups, std::size_t duplicateEvents,
+           std::size_t typedefResiduals) {
+            return stats.selectedEvents == selected &&
+                   stats.selectedEvents ==
+                       stats.singletonEvents + stats.residualEvents &&
+                   stats.singletonEvents == singleton &&
+                   stats.residualEvents == residual &&
+                   stats.duplicateGroups == duplicateGroups &&
+                   stats.duplicateEvents == duplicateEvents &&
+                   stats.conservativeTypedefResiduals == typedefResiduals;
+        };
+    auto emitted = LocationRocqEmitter().emit(unit);
+    if (!emitted)
+        return false;
+    const std::size_t eventStart = emitted->find("(* compact root events:");
+    if (eventStart == std::string::npos)
+        return false;
+    const std::string events = emitted->substr(eventStart);
+    const auto count = [&](const std::string &needle) {
+        std::size_t result = 0;
+        for (std::size_t position = 0;
+             (position = events.find(needle, position)) != std::string::npos;
+             position += needle.size())
+            ++result;
+        return result;
+    };
+    return all->eventClasses == expectedAll &&
+           collided->eventClasses == expectedAll &&
+           ordinary->eventClasses == expectedOrdinary &&
+           exactStats(all->stats, 7, 4, 3, 1, 2, 1) &&
+           exactStats(collided->stats, 7, 4, 3, 1, 2, 1) &&
+           exactStats(ordinary->stats, 5, 2, 3, 1, 2, 1) &&
+           contains(
+               events,
+               "7 selected; 4 singleton; 3 residual; 1 duplicate groups") &&
+           count("(CRS(") == 2 && count("(CRT(") == 1 && count("(CIL(") == 4 &&
+           count("(Ovar ") == 2;
 }
 
 bool sourceInterningAndRendering() {
@@ -691,8 +844,8 @@ bool sourceInterningAndRendering() {
            !contains(*text, "origin_class :=") &&
            contains(*text, "Encoded.Build_encoded_location_node") &&
            contains(*text, "Encoded.Build_indexed_location_dag") &&
-           contains(*text,
-                    "Construction.build_indexed_dag_source_map_or_fail") &&
+           contains(*text, "Construction.build_lazy_compact_indexed_dag_source_"
+                           "map_or_fail") &&
            !contains(*text, "Build_origin_id") && !contains(*text, "LocNode");
 }
 
@@ -3396,6 +3549,7 @@ int main(int argc, char **argv) {
         {"complete typed non-root events", completeNonRootEvents},
         {"Rocq escaping", escaping},
         {"empty tables and events", emptyTablesAndEvents},
+        {"root event singleton encoding", rootEventEncoding},
         {"source interning and rendering", sourceInterningAndRendering},
         {"normalized source encoding", sourceEncoding},
         {"exact location DAG encoding", locationDagEncoding},

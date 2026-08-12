@@ -44,9 +44,11 @@ decodes provenance.
   $ grep -q 'Encoded.Build_encoded_origin' test_17_source_values.v
   $ grep -q 'Encoded.InlineMacroFrame' test_17_source_values.v
   $ ! grep -q 'Encoded.MacroFrameReference' test_17_source_values.v
-  $ grep -q 'Construction.build_indexed_dag_source_map_or_fail' test_17_source_values.v
+  $ grep -q 'Construction.build_lazy_compact_indexed_dag_source_map_or_fail' test_17_source_values.v
   $ grep -q 'Encoded.Build_indexed_location_dag' test_17_source_values.v
-  $ grep -q 'Construction.indexed_located_root_event' test_17_source_values.v
+  $ grep -q 'singleton_root_events : singleton_root_locations' test_17_source_values.v
+  $ grep -q 'residual_root_events : list Construction.indexed_located_root_event' test_17_source_values.v
+  $ grep -q 'compact root events: 0 selected; 0 singleton; 0 residual' test_17_source_values.v
   $ ! grep -Eq 'Construction\.LESymbol|\(LocNode |source_origins : list source_origin|Build_source_origin|presumed_file :=|macro_name :=|origin_class :=' test_17_source_values.v
 
 Proof checks establish that files remain directly available and that the explicit,

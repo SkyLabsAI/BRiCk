@@ -69,6 +69,7 @@ add_llvm_library(cpp2v-ir
   src/SourceInfo.cpp
   src/SourceInfoEncoding.cpp
   src/LocationDAGEncoding.cpp
+  src/RootEventEncoding.cpp
   src/IR.cpp
   src/IRFactories.cpp
   src/Sharing.cpp
