@@ -71,49 +71,47 @@ dune exec -- cpp2v ${ARGS}
 
 ## Source-location output
 
-Pass `--locations` together with a named module output to produce a standalone
-source-location companion from the same validated translation-unit IR as the
-ordinary AST:
+By default, a non-interactive module output contains both `source_locations`
+and the ordinary `source` AST from the same validated translation-unit IR:
+
+```sh
+cpp2v -o file_cpp.v file.cpp -- -std=c++17
+```
+
+No companion file is created. The default inline mode supports `--module -`
+because it has only one output stream. `--locations-inline` may still be passed
+explicitly; `--locations-inline=false` opts out and restores AST-only output.
+Interactive `--for-interactive` output remains AST-only by default, and explicit
+inline locations remain incompatible with it.
+
+Pass `--locations <filename>` to select the separate-file mode instead:
 
 ```sh
 cpp2v -o file_cpp.v --locations file_cpp_locations.v file.cpp -- -std=c++17
 ```
 
 `--locations` requires `--module`/`-o`. Neither output may be `-`, the two paths
-must differ, and location output is incompatible with `--for-interactive`.
-
-Use `--locations-inline` instead to emit `source_locations` into the module
-output itself, without creating a companion:
-
-```sh
-cpp2v -o file_cpp.v --locations-inline file.cpp -- -std=c++17
-```
-
-Inline mode and `--locations <filename>` are mutually exclusive. Inline mode
-requires `--module`/`-o`, remains incompatible with `--for-interactive`, and
-supports `--module -` because it has only one output stream. The generated file
+must differ, and separate location output is incompatible with
+`--for-interactive`. Explicit `--locations-inline[=BOOL]` and `--locations` are
+mutually exclusive. The generated file
 contains the exact standalone location stream first, followed by the exact AST
 stream. This order is required because the parser imported by AST output
 installs a global `[` grammar that conflicts with the primitive-array literals
 used by location tables. Both `source_locations` and `source` are available
 after importing the one generated module.
 
-Without either location option, cpp2v creates no location data and retains its
-ordinary CLI behavior.
-
 By default, location output retains only provenance whose physical source
 points are in the main file. Roots whose final selected location tree has no
 retained main-file provenance are omitted and `lookup` reports `RootNotFound`. Use
-`--locations-all-files` together with either location output mode to restore
-the legacy all-files data, including header roots, complete macro stacks, and
-include-file metadata:
+Use `--locations-all-files` with the default inline mode or explicit separate
+mode to restore the legacy all-files data, including header roots, complete
+macro stacks, and include-file metadata:
 
 ```sh
 cpp2v -o file_cpp.v --locations file_cpp_locations.v \
   --locations-all-files file.cpp -- -std=c++17
-# or, without a companion:
-cpp2v -o file_cpp.v --locations-inline --locations-all-files \
-  file.cpp -- -std=c++17
+# or, by default without a companion:
+cpp2v -o file_cpp.v --locations-all-files file.cpp -- -std=c++17
 ```
 
 Main-file membership uses physical file identity, never presumed filenames or

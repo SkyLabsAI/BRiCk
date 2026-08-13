@@ -443,6 +443,10 @@ cli = text("src/cpp2v.cpp")
 for required in (
     'Locations("locations"',
     'LocationsInline("locations-inline"',
+    "emit source locations into --module (default)",
+    "static bool locationsInlineEnabled()",
+    "Locations.getNumOccurrences() == 0",
+    "Interactive.getNumOccurrences() == 0",
     "--locations and --locations-inline are mutually",
     "--locations-inline requires --module/-o",
     "--locations requires --module/-o",

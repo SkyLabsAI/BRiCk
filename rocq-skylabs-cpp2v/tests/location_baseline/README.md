@@ -48,15 +48,19 @@ Sharing is transparent: unfolding `n1`/`t1` defines the path shape, so
 The baseline was generated from the workspace root with:
 
 ```sh
-_build/install/default/bin/cpp2v \
+_build/install/default/bin/cpp2v --locations-inline=false \
   -o fmdeps/BRiCk/rocq-skylabs-cpp2v/tests/location_baseline/default.v \
   fmdeps/BRiCk/rocq-skylabs-cpp2v/tests/location_baseline/fixture.cpp -- \
   -std=c++17
-_build/install/default/bin/cpp2v --no-sharing \
+_build/install/default/bin/cpp2v --no-sharing --locations-inline=false \
   -o fmdeps/BRiCk/rocq-skylabs-cpp2v/tests/location_baseline/no-sharing.v \
   fmdeps/BRiCk/rocq-skylabs-cpp2v/tests/location_baseline/fixture.cpp -- \
   -std=c++17
 ```
+
+These semantic-only migration baselines deliberately opt out of the current
+default inline location section so their historical hashes continue to isolate
+AST serialization.
 
 Frozen SHA-256 values:
 

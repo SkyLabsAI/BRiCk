@@ -57,8 +57,8 @@ static cl::opt<std::string>
 
 static cl::opt<bool>
     LocationsInline("locations-inline",
-                    cl::desc("emit source locations into --module"),
-                    cl::Optional, cl::cat(Cpp2V));
+                    cl::desc("emit source locations into --module (default)"),
+                    cl::Optional, cl::ValueOptional, cl::cat(Cpp2V));
 
 static cl::opt<bool>
     LocationsAllFiles("locations-all-files",
@@ -150,6 +150,14 @@ static cl::opt<std::string>
     Attributes("attributes", cl::desc("Attributes to pass to the [cpp.prog]"),
                cl::value_desc("attrs"), cl::Optional, cl::cat(Cpp2V));
 
+static bool locationsInlineEnabled() {
+    if (LocationsInline.getNumOccurrences() != 0)
+        return LocationsInline.getValue();
+    return Locations.getNumOccurrences() == 0 &&
+           VFileOutput.getNumOccurrences() != 0 &&
+           Interactive.getNumOccurrences() == 0;
+}
+
 class ToCoqAction : public clang::ASTFrontendAction {
 public:
     virtual std::unique_ptr<clang::ASTConsumer>
@@ -177,7 +185,8 @@ public:
             should_elaborate = false;
         }
         auto *result = new ToCoqConsumer(
-            &Compiler, to_opt(VFileOutput), to_opt(Locations), LocationsInline,
+            &Compiler, to_opt(VFileOutput), to_opt(Locations),
+            locationsInlineEnabled(),
             LocationsAllFiles ? ir::LocationScope::AllFiles
                               : ir::LocationScope::MainFile,
             to_opt(Templates), to_opt(NameTest),
@@ -233,10 +242,12 @@ bool isDarwin() {
 
 bool validateLocationOptions() {
     const bool separate = Locations.getNumOccurrences() != 0;
-    const bool inlineOutput = LocationsInline.getValue();
+    const bool explicitInline =
+        LocationsInline.getNumOccurrences() != 0 && LocationsInline.getValue();
+    const bool inlineOutput = locationsInlineEnabled();
     const bool enabled = separate || inlineOutput;
 
-    if (separate && inlineOutput) {
+    if (separate && LocationsInline.getNumOccurrences() != 0) {
         llvm::errs()
             << "cpp2v: --locations and --locations-inline are mutually "
                "exclusive\n";
@@ -245,7 +256,7 @@ bool validateLocationOptions() {
     if (!enabled) {
         if (LocationsAllFiles.getNumOccurrences() != 0)
             llvm::errs()
-                << "cpp2v: --locations-all-files requires --locations\n";
+                << "cpp2v: --locations-all-files requires location output\n";
         return LocationsAllFiles.getNumOccurrences() == 0;
     }
 
@@ -275,7 +286,7 @@ bool validateLocationOptions() {
         }
     }
     if (Interactive.getNumOccurrences() != 0) {
-        if (inlineOutput)
+        if (explicitInline)
             llvm::errs() << "cpp2v: --locations-inline is incompatible with "
                             "--for-interactive\n";
         else
