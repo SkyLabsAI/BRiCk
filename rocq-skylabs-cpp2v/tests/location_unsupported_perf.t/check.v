@@ -39,14 +39,10 @@ Example unsupported_expression_keeps_written_range :
     facts unsupported_root [1; 0] = [(ExplicitOrigin, (true, true))].
 Proof. vm_compute. reflexivity. Qed.
 
-Example unsupported_expression_type_is_inherited :
-    facts unsupported_root [1; 0; 0] = [(InheritedOrigin, (false, false))].
+Example point_empty_inherited_type_remains_in_the_tree :
+  found unsupported_root [1; 0; 0] = inr [].
 Proof. vm_compute. reflexivity. Qed.
 
-Example implicit_builtin_location_is_representable :
-    facts builtin_root [] = [(ImplicitOrigin, (false, false))].
-Proof. vm_compute. reflexivity. Qed.
-
-Example independently_rangeless_builtin_child_is_representable :
-    facts builtin_root [0] = [(ExplicitOrigin, (false, false))].
+Example headerless_builtin_root_is_omitted :
+  found builtin_root [] = inl (RootNotFound builtin_root).
 Proof. vm_compute. reflexivity. Qed.

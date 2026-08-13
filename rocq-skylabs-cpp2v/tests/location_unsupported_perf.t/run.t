@@ -1,9 +1,9 @@
   $ . ../setup-project.sh
   $ . ../setup-cpp2v.sh
 
-Unsupported semantic values keep diagnostic origins, while compiler-provided
-roots with unavailable physical coordinates remain distinguishable from a
-missing root or an explicitly empty origin list.
+Unsupported semantic values keep main-file diagnostic origins. Point-empty
+children remain distinguishable as successful empty lookups, while a wholly
+point-empty compiler-provided root is omitted by the default scope.
 
   $ check_cpp2v_locations fixture.cpp
   cpp2v -v -check-types -o fixture_17_cpp.v --locations fixture_17_cpp_locations.v fixture.cpp -- -std=c++17 2>&1 | sed 's/^ *[0-9]* | //'

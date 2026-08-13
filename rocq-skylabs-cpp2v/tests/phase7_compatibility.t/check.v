@@ -41,37 +41,32 @@ Example dependent_binding_is_explicit :
       [ExplicitOrigin].
 Proof. vm_compute. reflexivity. Qed.
 
-Example deferred_initializer_is_synthesized :
-    classes
-      (skylabs.lang.cpp.syntax.source_location.lookup source_locations
-        decomposition_root [1; 0; 2; 0; 0; 0; 1; 1]) =
-      [Cpp2vSynthesizedOrigin].
+Example point_empty_deferred_initializer_remains_in_the_tree :
+  skylabs.lang.cpp.syntax.source_location.lookup source_locations
+    decomposition_root [1; 0; 2; 0; 0; 0; 1; 1] = inr [].
 Proof. vm_compute. reflexivity. Qed.
 
-Example deferred_initializer_type_is_inherited :
-    classes
-      (skylabs.lang.cpp.syntax.source_location.lookup source_locations
-        decomposition_root [1; 0; 2; 0; 0; 0; 1; 1; 0]) =
-      [InheritedOrigin].
+Example point_empty_deferred_initializer_type_remains_in_the_tree :
+  skylabs.lang.cpp.syntax.source_location.lookup source_locations
+    decomposition_root [1; 0; 2; 0; 0; 0; 1; 1; 0] = inr [].
 Proof. vm_compute. reflexivity. Qed.
 
-Example lambda_callee_reduction_retains_provenance :
-    classes
-      (skylabs.lang.cpp.syntax.source_location.lookup source_locations
-        lambda_root [1; 0; 2; 0; 0; 0; 0]) =
-      [Cpp2vSynthesizedOrigin; ClangTransformedOrigin].
+Example lambda_callee_reduction_retains_direct_provenance :
+  classes
+    (skylabs.lang.cpp.syntax.source_location.lookup source_locations
+      lambda_root [1; 0; 2; 0; 0; 0; 0]) = [ClangTransformedOrigin].
 Proof. vm_compute. reflexivity. Qed.
 
-Example resolved_subscript_callee_reduction_retains_provenance :
-    classes
-      (skylabs.lang.cpp.syntax.source_location.lookup source_locations
-        (dispatch_root "runResolved") [1; 0; 3; 0; 0; 0; 0]) =
-      [Cpp2vSynthesizedOrigin; ClangTransformedOrigin].
+Example resolved_subscript_callee_reduction_retains_direct_provenance :
+  classes
+    (skylabs.lang.cpp.syntax.source_location.lookup source_locations
+      (dispatch_root "runResolved") [1; 0; 3; 0; 0; 0; 0]) =
+    [ClangTransformedOrigin].
 Proof. vm_compute. reflexivity. Qed.
 
-Example unresolved_subscript_callee_reduction_retains_provenance :
-    classes
-      (skylabs.lang.cpp.syntax.source_location.lookup source_locations
-        (dispatch_root "runUnresolved") [1; 0; 3; 0; 0; 0; 0]) =
-      [Cpp2vSynthesizedOrigin; ClangTransformedOrigin].
+Example unresolved_subscript_callee_reduction_retains_direct_provenance :
+  classes
+    (skylabs.lang.cpp.syntax.source_location.lookup source_locations
+      (dispatch_root "runUnresolved") [1; 0; 3; 0; 0; 0; 0]) =
+    [ClangTransformedOrigin].
 Proof. vm_compute. reflexivity. Qed.

@@ -46,10 +46,9 @@ Example multi_declaration_second_initializer :
         shape_root [0; 2; 0; 0; 1; 1]) = [Some 4%N].
 Proof. vm_compute. reflexivity. Qed.
 
-Example omitted_else_is_synthesized :
-    classes
-      (skylabs.lang.cpp.syntax.source_location.lookup source_locations
-        shape_root [0; 2; 0; 1; 2]) = [Cpp2vSynthesizedOrigin].
+Example point_empty_synthesized_else_remains_in_the_tree :
+  skylabs.lang.cpp.syntax.source_location.lookup source_locations
+    shape_root [0; 2; 0; 1; 2] = inr [].
 Proof. vm_compute. reflexivity. Qed.
 
 Example second_call_argument_is_in_source_order :

@@ -120,7 +120,8 @@ llvm::Expected<std::string> renderRocqValues(const source::Tables &tables) {
         return std::move(failure);
     if (auto failure = unit.finish())
         return std::move(failure);
-    auto body = ir::LocationRocqEmitter().emit(unit);
+    auto body =
+        ir::LocationRocqEmitter({true, ir::LocationScope::AllFiles}).emit(unit);
     if (!body)
         return body.takeError();
     return std::move(*body);

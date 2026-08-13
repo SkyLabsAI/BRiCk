@@ -51,12 +51,25 @@ struct EncodedLocations {
     /// Indexed by TranslationUnitIR::rootEvents(). Filtered template events are
     /// [None]; selected roots carry their exact static node and shape IDs.
     std::vector<std::optional<EncodedRoot>> eventRoots;
+    /// In filtered mode, whether the original event tree has a directly
+    /// retained main-file origin. All-files mode keeps this true for selected
+    /// events and does not serialize it.
+    std::vector<bool> eventHasLocation;
+    /// In filtered mode, whether the root node itself has a directly retained
+    /// origin (as opposed to only one of its semantic descendants).
+    std::vector<bool> eventAtRoot;
     std::size_t sourceOriginCount = 0;
     EncodingStats stats;
 };
 
 struct EncodeOptions {
     bool forceHashCollisions = false;
+    /// Main-file projection. A null value retains the literal all-files
+    /// encoding path and its established serialization.
+    const source::MainFileProjection *projection = nullptr;
+    /// Indexed like [TranslationUnitIR::rootEvents()]. A false row is not
+    /// traversed or emitted; callers use it after complete-stream grouping.
+    const std::vector<bool> *includedEvents = nullptr;
 };
 
 /// Validate the finished owned IR, then hash-cons complete location nodes in

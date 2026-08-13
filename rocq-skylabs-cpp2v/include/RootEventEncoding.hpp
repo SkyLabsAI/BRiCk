@@ -44,6 +44,9 @@ struct EncodeOptions {
     /// Narrow test seam: hashes choose buckets only, so results must remain
     /// byte-for-byte equivalent to ordinary hashing under forced collisions.
     bool forceHashCollisions = false;
+    /// Main-file location presence indexed like [rootEvents]. Null preserves
+    /// the original complete-stream classification exactly.
+    const std::vector<bool> *eventHasLocation = nullptr;
 };
 
 /// Validate a finished owned IR, select root events using authoritative ordered

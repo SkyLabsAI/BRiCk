@@ -393,10 +393,10 @@ bool directRootsAndDeterminism() {
     auto templates = emitter.emitTemplates(unit);
     SemanticRocqEmitter noSharing({false});
     auto unshared = noSharing.emit(unit);
-    LocationRocqEmitter locations;
+    LocationRocqEmitter locations({true, LocationScope::AllFiles});
     auto locationFirst = locations.emit(unit);
     auto locationSecond = locations.emit(unit);
-    LocationRocqEmitter ordinaryLocations({false});
+    LocationRocqEmitter ordinaryLocations({false, LocationScope::AllFiles});
     auto locationOrdinaryOnly = ordinaryLocations.emit(unit);
     auto templateObject = emitter.renderNode(unit, built.templateObject);
     if (!first || !second || !ordinary || !templates || !unshared ||
@@ -539,7 +539,8 @@ bool emptyTablesAndEvents() {
     if (failed(unit.finish()))
         return false;
     auto semantic = SemanticRocqEmitter().emit(unit);
-    auto location = LocationRocqEmitter().emit(unit);
+    auto location =
+        LocationRocqEmitter({true, LocationScope::AllFiles}).emit(unit);
     return semantic && semantic->empty() && location &&
            contains(*location,
                     "Require Import skylabs.lang.cpp.syntax.source_location") &&
@@ -668,7 +669,8 @@ bool rootEventEncoding() {
                    stats.duplicateEvents == duplicateEvents &&
                    stats.conservativeTypedefResiduals == typedefResiduals;
         };
-    auto emitted = LocationRocqEmitter().emit(unit);
+    auto emitted =
+        LocationRocqEmitter({true, LocationScope::AllFiles}).emit(unit);
     if (!emitted)
         return false;
     const std::size_t eventStart = emitted->find("(* compact root events:");
@@ -694,6 +696,281 @@ bool rootEventEncoding() {
                "7 selected; 4 singleton; 3 residual; 1 duplicate groups") &&
            count("(CRS(") == 2 && count("(CRT(") == 1 && count("(CIL(") == 4 &&
            count("(Ovar ") == 2;
+}
+
+bool filteredRootEventEncoding() {
+    namespace root_event_encoding = ir::root_event::encoding;
+
+    TranslationUnitIR unit;
+    const Built built = buildCore(unit);
+    if (failed(unit.addRoot({RootKind::Symbol, built.name, built.object})) ||
+        failed(unit.addRoot({RootKind::Type, built.name, built.global})) ||
+        failed(unit.addRoot(
+            {RootKind::TemplateSymbol, built.name, built.templateObject})) ||
+        failed(unit.addRoot(
+            {RootKind::TemplateType, built.name, built.templateGlobal})) ||
+        failed(unit.finish()))
+        return false;
+
+    using EventClass = root_event_encoding::EventClass;
+    const std::vector<EventClass> residual(8, EventClass::Residual);
+    const std::vector<EventClass> excluded(8, EventClass::Excluded);
+    const std::vector<bool> firstRelevant{true,  true,  true,  true,
+                                          false, false, false, false};
+    const std::vector<bool> secondRelevant{false, false, false, false,
+                                           true,  true,  true,  true};
+    const std::vector<bool> noneRelevant(8, false);
+    auto first = root_event_encoding::encode(
+        unit, true, root_event_encoding::EncodeOptions{false, &firstRelevant});
+    auto second = root_event_encoding::encode(
+        unit, true, root_event_encoding::EncodeOptions{true, &secondRelevant});
+    auto none = root_event_encoding::encode(
+        unit, true, root_event_encoding::EncodeOptions{false, &noneRelevant});
+    return first && second && none && first->eventClasses == residual &&
+           second->eventClasses == residual && none->eventClasses == excluded &&
+           first->stats.selectedEvents == 8 &&
+           first->stats.residualEvents == 8 &&
+           first->stats.duplicateGroups == 4 &&
+           second->stats.selectedEvents == 8 &&
+           second->stats.residualEvents == 8 &&
+           second->stats.duplicateGroups == 4 &&
+           none->stats.selectedEvents == 0 &&
+           none->stats.singletonEvents == 0 && none->stats.residualEvents == 0;
+}
+
+bool mainFileSourceProjection() {
+    source::Tables tables;
+    tables.files = {
+        {"main.cpp", std::nullopt, source::FileKind::User, true, std::nullopt},
+        {"header.hpp", std::nullopt, source::FileKind::User, false,
+         std::make_pair(source::FileId(0), 0)},
+    };
+    const source::PhysicalPoint mainBegin{source::FileId(0), 10, 2, 3};
+    const source::PhysicalPoint mainEnd{source::FileId(0), 14, 2, 7};
+    const source::PhysicalPoint headerPoint{source::FileId(1), 20, 4, 5};
+    source::Range mixed;
+    mixed.begin = headerPoint;
+    mixed.end = mainEnd;
+    mixed.endSemantics = source::RangeKind::Token;
+    source::Origin header;
+    header.kind = source::OriginKind::Inherited;
+    header.spelling = source::Range{headerPoint, headerPoint,
+                                    source::RangeKind::Token, std::nullopt};
+    source::Origin expanded;
+    expanded.kind = source::OriginKind::Explicit;
+    expanded.spelling = mixed;
+    expanded.expansion =
+        source::Range{mainBegin, mainEnd, source::RangeKind::Token,
+                      std::make_pair(mainBegin, mainEnd)};
+    expanded.presumedBegin = {"renamed-main.cpp", 70, 3};
+    expanded.presumedEnd = {"renamed-main.cpp", 70, 7};
+    expanded.macroStack = {{std::string("HEADER_MACRO"),
+                            source::MacroOriginKind::Body, header.spelling,
+                            header.spelling}};
+    expanded.pointOfInstantiation = mainBegin;
+    expanded.anchor = source::OriginId(0);
+    expanded.derivedFrom = {source::OriginId(0)};
+    tables.origins = {header, expanded};
+
+    auto projected = source::projectMainFile(tables);
+    auto repeated = source::projectMainFile(tables);
+    if (!projected || !repeated)
+        return false;
+    if (projected->tables.files != repeated->tables.files ||
+        projected->tables.origins != repeated->tables.origins ||
+        projected->tables.files.size() != 1 ||
+        projected->tables.files[0].physicalName != "main.cpp" ||
+        projected->tables.origins.size() != 2 ||
+        projected->directlyRelevant != std::vector<bool>({false, true}) ||
+        !projected->oldToNewOrigin[0] || !projected->oldToNewOrigin[1])
+        return false;
+    const source::Origin &kept = projected->tables.origins[1];
+    const bool valid =
+        kept.spelling && !kept.spelling->begin && kept.spelling->end &&
+        !kept.spelling->normalizedHalfOpen && kept.expansion &&
+        kept.expansion->begin && kept.expansion->end &&
+        kept.expansion->begin->file == source::FileId(0) &&
+        kept.expansion->end->file == source::FileId(0) &&
+        kept.expansion->normalizedHalfOpen && kept.presumedBegin &&
+        kept.presumedEnd && kept.macroStack.empty() &&
+        kept.pointOfInstantiation && kept.anchor == source::OriginId(0) &&
+        kept.derivedFrom ==
+            std::vector<source::OriginId>{source::OriginId(0)} &&
+        !projected->tables.origins[0].spelling;
+    if (!valid)
+        return false;
+
+    source::Tables closure;
+    closure.files = tables.files;
+    source::Origin direct;
+    direct.spelling = source::Range{mainBegin, mainEnd,
+                                    source::RangeKind::Token, std::nullopt};
+    direct.anchor = source::OriginId(1);
+    direct.derivedFrom = {source::OriginId(2)};
+    source::Origin forwardAnchor = header;
+    forwardAnchor.anchor = source::OriginId(3);
+    source::Origin forwardDerived = header;
+    forwardDerived.derivedFrom = {source::OriginId(3)};
+    closure.origins = {direct, forwardAnchor, forwardDerived, header};
+    auto closed = source::projectMainFile(closure);
+    if (!closed || closed->tables.origins.size() != 4 ||
+        closed->directlyRelevant !=
+            std::vector<bool>({true, false, false, false}) ||
+        closed->tables.origins[0].anchor != source::OriginId(1) ||
+        closed->tables.origins[0].derivedFrom !=
+            std::vector<source::OriginId>{source::OriginId(2)} ||
+        closed->tables.origins[1].anchor != source::OriginId(3) ||
+        closed->tables.origins[2].derivedFrom !=
+            std::vector<source::OriginId>{source::OriginId(3)} ||
+        closed->tables.origins[1].spelling ||
+        closed->tables.origins[2].spelling ||
+        closed->tables.origins[3].spelling)
+        return false;
+
+    source::Tables presumedTables;
+    presumedTables.files = tables.files;
+    source::Origin partial;
+    partial.expansion = mixed;
+    partial.presumedBegin = {"header-name.cpp", 1, 1};
+    partial.presumedEnd = {"logical-main.cpp", 2, 7};
+    presumedTables.origins = {partial};
+    auto partialProjection = source::projectMainFile(presumedTables);
+    if (!partialProjection || partialProjection->tables.origins.size() != 1 ||
+        !partialProjection->tables.origins[0].expansion ||
+        partialProjection->tables.origins[0].expansion->begin ||
+        !partialProjection->tables.origins[0].expansion->end ||
+        partialProjection->tables.origins[0].presumedBegin ||
+        !partialProjection->tables.origins[0].presumedEnd)
+        return false;
+
+    auto ordinaryEncoding = source::encoding::encode(projected->tables);
+    auto collisionEncoding = source::encoding::encode(
+        projected->tables, source::encoding::EncodeOptions{true});
+    if (!ordinaryEncoding || !collisionEncoding ||
+        ordinaryEncoding->presumedFilenames !=
+            collisionEncoding->presumedFilenames ||
+        ordinaryEncoding->physicalPoints != collisionEncoding->physicalPoints ||
+        ordinaryEncoding->presumedPoints != collisionEncoding->presumedPoints ||
+        ordinaryEncoding->ranges != collisionEncoding->ranges ||
+        ordinaryEncoding->macroFrames != collisionEncoding->macroFrames ||
+        ordinaryEncoding->origins != collisionEncoding->origins)
+        return false;
+
+    source::Tables noMain;
+    noMain.files.push_back({"header.hpp", std::nullopt, source::FileKind::User,
+                            false, std::nullopt});
+    auto empty = source::projectMainFile(noMain);
+    source::Tables twoMain = tables;
+    twoMain.files[1].isMain = true;
+    return empty && empty->tables.files.empty() &&
+           empty->tables.origins.empty() &&
+           failed(source::projectMainFile(twoMain));
+}
+
+bool mainFileLocationDagFiltering() {
+    namespace location_encoding = ir::location::encoding;
+    namespace root_event_encoding = ir::root_event::encoding;
+
+    TranslationUnitIR unit;
+    source::Tables sources;
+    sources.files = {
+        {"main.cpp", std::nullopt, source::FileKind::User, true, std::nullopt},
+        {"header.hpp", std::nullopt, source::FileKind::User, false,
+         std::make_pair(source::FileId(0), 0)},
+    };
+    source::Origin header;
+    const source::PhysicalPoint headerPoint{source::FileId(1), 1, 1, 1};
+    header.spelling = source::Range{headerPoint, headerPoint,
+                                    source::RangeKind::Token, std::nullopt};
+    source::Origin main;
+    const source::PhysicalPoint mainPoint{source::FileId(0), 2, 2, 1};
+    main.spelling = source::Range{mainPoint, mainPoint,
+                                  source::RangeKind::Token, std::nullopt};
+    sources.origins = {header, main};
+    if (failed(unit.setSources(std::move(sources))))
+        return false;
+
+    const NodeId headerAtomic =
+        add(unit, Category::AtomicName, Constructor::AtomicIdentifier,
+            {Value::scalar(ScalarTerm::string("header"))});
+    const NodeId headerName =
+        add(unit, Category::Name, Constructor::NameFromAtomic,
+            {Value::node(headerAtomic)});
+    const NodeId headerOnly =
+        add(unit, Category::GlobalDeclaration, Constructor::GlobalType, {},
+            {source::OriginId(0)});
+    const NodeId keptAtomic =
+        add(unit, Category::AtomicName, Constructor::AtomicIdentifier,
+            {Value::scalar(ScalarTerm::string("kept"))});
+    const NodeId keptName =
+        add(unit, Category::Name, Constructor::NameFromAtomic,
+            {Value::node(keptAtomic)});
+    const NodeId mainLeaf = add(unit, Category::Type, Constructor::TypeBoolean,
+                                {}, {source::OriginId(1)});
+    const NodeId emptyIntermediate =
+        add(unit, Category::Type, Constructor::TypePointer,
+            {Value::node(mainLeaf)}, {source::OriginId(0)});
+    const NodeId emptySibling =
+        add(unit, Category::GlobalInitializer, Constructor::GlobalInitNone, {},
+            {source::OriginId(0)});
+    const NodeId keptRoot =
+        add(unit, Category::ObjectValue, Constructor::ObjectVariable,
+            {Value::node(emptyIntermediate), Value::node(emptySibling)});
+    if (failed(unit.addRoot({RootKind::Type, headerName, headerOnly})) ||
+        failed(unit.addRoot({RootKind::Symbol, keptName, keptRoot})) ||
+        failed(unit.finish()))
+        return false;
+
+    auto projection = source::projectMainFile(unit.sources());
+    if (!projection)
+        return false;
+    auto initial = location_encoding::encode(
+        unit, true, location_encoding::EncodeOptions{false, &*projection});
+    if (!initial ||
+        initial->eventHasLocation != std::vector<bool>({false, true}))
+        return false;
+    auto classes = root_event_encoding::encode(
+        unit, true,
+        root_event_encoding::EncodeOptions{false, &initial->eventHasLocation});
+    if (!classes || classes->eventClasses !=
+                        std::vector<root_event_encoding::EventClass>{
+                            root_event_encoding::EventClass::Excluded,
+                            root_event_encoding::EventClass::Singleton})
+        return false;
+    const std::vector<bool> included{false, true};
+    auto filtered = location_encoding::encode(
+        unit, true,
+        location_encoding::EncodeOptions{false, &*projection, &included});
+    if (!filtered || filtered->eventRoots[0] || !filtered->eventRoots[1] ||
+        filtered->eventAtRoot[1] || !filtered->eventHasLocation[1])
+        return false;
+    const auto &root = *filtered->eventRoots[1];
+    const auto &rootNode = filtered->nodes[root.node.value()];
+    if (rootNode.children.size() != 2 || !rootNode.origins.empty())
+        return false;
+    const auto &intermediate = filtered->nodes[rootNode.children[0].value()];
+    const auto &sibling = filtered->nodes[rootNode.children[1].value()];
+    if (!intermediate.origins.empty() || intermediate.children.size() != 1 ||
+        !sibling.origins.empty() || !sibling.children.empty())
+        return false;
+    const auto &leaf = filtered->nodes[intermediate.children[0].value()];
+    if (leaf.origins != std::vector<source::OriginId>{source::OriginId(0)})
+        return false;
+
+    auto malformedProjection = *projection;
+    malformedProjection.oldToNewOrigin[1].reset();
+    if (!failed(location_encoding::encode(
+            unit, true,
+            location_encoding::EncodeOptions{false, &malformedProjection})))
+        return false;
+    const std::vector<bool> truncated{true};
+    return failed(root_event_encoding::encode(
+               unit, true,
+               root_event_encoding::EncodeOptions{false, &truncated})) &&
+           failed(
+               location_encoding::encode(unit, true,
+                                         location_encoding::EncodeOptions{
+                                             false, &*projection, &truncated}));
 }
 
 bool sourceInterningAndRendering() {
@@ -810,7 +1087,7 @@ bool sourceInterningAndRendering() {
     (void)unit.addRoot({RootKind::Type, name, global});
     if (failed(unit.finish()))
         return false;
-    auto text = LocationRocqEmitter().emit(unit);
+    auto text = LocationRocqEmitter({true, LocationScope::AllFiles}).emit(unit);
     const std::string expectedFile =
         "(Build_source_file \"a\"\"\\.cpp\" (Some \"requested(*.cpp\") "
         "FKUser true None)";
@@ -3499,7 +3776,7 @@ bool emitIndexedBoundaryFixture(const std::string &path) {
     boundaryDag.stats.shapeRows = boundaryDag.shapes.size();
     boundaryDag.stats.locationNodeRows = boundaryDag.nodes.size();
 
-    LocationRocqEmitter emitter;
+    LocationRocqEmitter emitter({true, LocationScope::AllFiles});
     auto contents = emitter.emit(unit);
     auto renderedDag = emitter.renderLocationDagForTest(boundaryDag);
     if (!contents || !renderedDag)
@@ -3550,6 +3827,9 @@ int main(int argc, char **argv) {
         {"Rocq escaping", escaping},
         {"empty tables and events", emptyTablesAndEvents},
         {"root event singleton encoding", rootEventEncoding},
+        {"filtered root event encoding", filteredRootEventEncoding},
+        {"main-file source projection", mainFileSourceProjection},
+        {"main-file location DAG filtering", mainFileLocationDagFiltering},
         {"source interning and rendering", sourceInterningAndRendering},
         {"normalized source encoding", sourceEncoding},
         {"exact location DAG encoding", locationDagEncoding},

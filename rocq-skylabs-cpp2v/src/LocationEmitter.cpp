@@ -425,24 +425,70 @@ llvm::Expected<std::string>
 LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
     if (auto failure = IRValidator::validate(unit))
         return std::move(failure);
-    auto files = renderList(unit.sources().files, renderFile);
+    const bool allFiles = options_.scope == LocationScope::AllFiles;
+    std::optional<source::MainFileProjection> mainFileProjection;
+    const source::Tables *sourceTables = &unit.sources();
+    if (!allFiles) {
+        auto projection = source::projectMainFile(unit.sources());
+        if (!projection)
+            return projection.takeError();
+        mainFileProjection = std::move(*projection);
+        sourceTables = &mainFileProjection->tables;
+    }
+    auto files = renderList(sourceTables->files, renderFile);
     if (!files)
         return files.takeError();
     auto provenance = [&]() -> llvm::Expected<std::string> {
-        auto encoded = source::encoding::encode(unit.sources());
+        // Keep this literal all-files branch independent of the filtered
+        // projection so its generated companion remains byte-for-byte stable.
+        auto encoded = allFiles ? source::encoding::encode(unit.sources())
+                                : source::encoding::encode(*sourceTables);
         if (!encoded)
             return encoded.takeError();
         return renderProvenance(*encoded);
     }();
     if (!provenance)
         return provenance.takeError();
-    auto locations =
-        location::encoding::encode(unit, options_.includeTemplates);
+
+    std::vector<bool> includedEvents;
+    llvm::Expected<location::encoding::EncodedLocations> locations =
+        [&]() -> llvm::Expected<location::encoding::EncodedLocations> {
+        if (allFiles)
+            return location::encoding::encode(unit, options_.includeTemplates);
+        auto initial = location::encoding::encode(
+            unit, options_.includeTemplates,
+            location::encoding::EncodeOptions{false, &*mainFileProjection,
+                                              nullptr});
+        if (!initial)
+            return initial.takeError();
+        auto filteredClasses = root_event::encoding::encode(
+            unit, options_.includeTemplates,
+            root_event::encoding::EncodeOptions{false,
+                                                &initial->eventHasLocation});
+        if (!filteredClasses)
+            return filteredClasses.takeError();
+        includedEvents.resize(filteredClasses->eventClasses.size());
+        for (std::size_t index = 0; index < includedEvents.size(); ++index)
+            includedEvents[index] = filteredClasses->eventClasses[index] !=
+                                    root_event::encoding::EventClass::Excluded;
+        return location::encoding::encode(
+            unit, options_.includeTemplates,
+            location::encoding::EncodeOptions{false, &*mainFileProjection,
+                                              &includedEvents});
+    }();
     if (!locations)
         return locations.takeError();
     std::string locationDag = renderLocationDag(*locations);
     auto rootEvents =
-        root_event::encoding::encode(unit, options_.includeTemplates);
+        [&]() -> llvm::Expected<root_event::encoding::EncodedRootEvents> {
+        if (allFiles)
+            return root_event::encoding::encode(unit,
+                                                options_.includeTemplates);
+        return root_event::encoding::encode(
+            unit, options_.includeTemplates,
+            root_event::encoding::EncodeOptions{false,
+                                                &locations->eventHasLocation});
+    }();
     if (!rootEvents)
         return rootEvents.takeError();
     if (rootEvents->stats.selectedEvents !=
@@ -482,10 +528,13 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
                 "root-event classification omitted a selected root event");
         const root_event::encoding::EventClass eventClass =
             rootEvents->eventClasses[ordered.index];
-        if (eventClass == root_event::encoding::EventClass::Excluded)
-            return llvm::createStringError(
-                std::errc::invalid_argument,
-                "root-event classification excluded a selected root event");
+        if (eventClass == root_event::encoding::EventClass::Excluded) {
+            if (allFiles)
+                return llvm::createStringError(
+                    std::errc::invalid_argument,
+                    "root-event classification excluded a selected root event");
+            continue;
+        }
         const bool residual =
             eventClass == root_event::encoding::EventClass::Residual;
         std::size_t namespaceIndex = 0;
@@ -528,10 +577,26 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
                 semantic_.renderNodeUnchecked(unit, root.semanticValue);
             if (!value)
                 return value.takeError();
-            entry = "(" + std::string(residualConstructor) + "(" + *name +
-                    ", " + *value + ", " + renderTableId(encodedRoot.node) +
-                    "%uint63, " + renderTableId(encodedRoot.shape) +
-                    "%uint63))";
+            const std::string constructor =
+                allFiles ? residualConstructor
+                         : (std::string("F") + residualConstructor);
+            entry = "(" + constructor + "(" + *name + ", " + *value + ", " +
+                    renderTableId(encodedRoot.node) + "%uint63, " +
+                    renderTableId(encodedRoot.shape) + "%uint63";
+            if (!allFiles) {
+                if (ordered.index >= locations->eventAtRoot.size() ||
+                    ordered.index >= locations->eventHasLocation.size())
+                    return llvm::createStringError(
+                        std::errc::invalid_argument,
+                        "location DAG omitted filtered event presence");
+                entry += locations->eventAtRoot[ordered.index] ? ", true"
+                                                               : ", false";
+                entry += locations->eventHasLocation[ordered.index]
+                             ? ", true))"
+                             : ", false))";
+            } else {
+                entry += "))";
+            }
             appendListEntry(residualList, hasResiduals, std::move(entry));
         } else {
             entry = "(CIL(" + *name + ", " + renderTableId(encodedRoot.node) +
@@ -567,9 +632,11 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
         "singleton_root_locations :=\n  Build_singleton_root_locations "
         "singleton_symbol_events singleton_type_events "
         "singleton_msymbol_events singleton_mtype_events.\n"
-        "#[local] Definition residual_root_events : list "
-        "Construction.indexed_located_root_event := " +
-        residualList;
+        "#[local] Definition residual_root_events : list " +
+        std::string(allFiles
+                        ? "Construction.indexed_located_root_event"
+                        : "Construction.filtered_indexed_located_root_event") +
+        " := " + residualList;
     std::vector<location::encoding::EncodedShape>().swap(locations->shapes);
     std::vector<location::encoding::EncodedLocationNode>().swap(
         locations->nodes);
@@ -623,25 +690,55 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
         ":=\n"
         "  (Construction.ILEMtype n value node shape) "
         "(only parsing).\n\n";
-    constexpr const char *suffix =
-        ".\n\nDefinition source_locations : source_map.\n"
-        "Proof.\n"
-        "  Construction.build_lazy_compact_indexed_dag_source_map_or_fail "
-        "source_files source_provenance source_location_dag "
-        "singleton_root_events residual_root_events.\n"
-        "Defined.\n";
+    const std::string filteredMiddle =
+        allFiles ? ""
+                 : "#[local] Notation \"'FCRS' '(' n ',' value ',' node ',' "
+                   "shape ',' at_root ',' in_tree ')'\" :=\n"
+                   "  (Construction.FILESymbol n value node shape at_root "
+                   "in_tree) (only parsing).\n"
+                   "#[local] Notation \"'FCRT' '(' n ',' value ',' node ',' "
+                   "shape ',' at_root ',' in_tree ')'\" :=\n"
+                   "  (Construction.FILEType n value node shape at_root "
+                   "in_tree) (only parsing).\n"
+                   "#[local] Notation \"'FCRMS' '(' n ',' value ',' node ',' "
+                   "shape ',' at_root ',' in_tree ')'\" :=\n"
+                   "  (Construction.FILEMsymbol n value node shape at_root "
+                   "in_tree) (only parsing).\n"
+                   "#[local] Notation \"'FCRMT' '(' n ',' value ',' node ',' "
+                   "shape ',' at_root ',' in_tree ')'\" :=\n"
+                   "  (Construction.FILEMtype n value node shape at_root "
+                   "in_tree) (only parsing).\n\n";
+    const char *suffix =
+        allFiles
+            ? ".\n\nDefinition source_locations : source_map.\n"
+              "Proof.\n"
+              "  "
+              "Construction.build_lazy_compact_indexed_dag_source_map_or_fail "
+              "source_files source_provenance source_location_dag "
+              "singleton_root_events residual_root_events.\n"
+              "Defined.\n"
+            : ".\n\nDefinition source_locations : source_map.\n"
+              "Proof.\n"
+              "  "
+              "Construction.build_filtered_lazy_compact_indexed_dag_source_map_"
+              "or_fail "
+              "source_files source_provenance source_location_dag "
+              "singleton_root_events residual_root_events.\n"
+              "Defined.\n";
     std::string output;
-    output.reserve(
-        std::char_traits<char>::length(prefix) + files->size() +
-        std::char_traits<char>::length(sourceFilesEnd) + provenance->size() +
-        locationDag.size() + std::char_traits<char>::length(middle) +
-        eventSection.size() + std::char_traits<char>::length(suffix));
+    output.reserve(std::char_traits<char>::length(prefix) + files->size() +
+                   std::char_traits<char>::length(sourceFilesEnd) +
+                   provenance->size() + locationDag.size() +
+                   std::char_traits<char>::length(middle) +
+                   filteredMiddle.size() + eventSection.size() +
+                   std::char_traits<char>::length(suffix));
     output += prefix;
     output += *files;
     output += sourceFilesEnd;
     output += *provenance;
     output += locationDag;
     output += middle;
+    output += filteredMiddle;
     output += eventSection;
     output += suffix;
     return output;

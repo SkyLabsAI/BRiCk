@@ -26,9 +26,10 @@ boundaries and compile in ordinary and companion output.
   $ test "$(grep -o 'Nunsupported "Esubscript"' fixture_20_cpp.v | wc -l)" -eq 1
   $ test "$(grep -o 'Nunsupported "Eunresolved_binop"' fixture_20_cpp.v | wc -l)" -eq 1
 
-The dependent Bbind remains explicit, while its unavailable initializer and its
-independent type occurrence carry synthesized and inherited provenance. The
-erased lambda and both reduced subscript-callee names keep synthesized and
-transformed provenance.
+The dependent Bbind remains explicit. Its unavailable point-empty initializer
+and type occurrence remain addressable as empty location nodes under the
+retained root. The erased lambda and both reduced subscript-callee names keep
+their directly located transformed provenance; point-empty synthetic links are
+closure-only in the default scope.
 
   $ rocq c $ROCQC_ARGS check.v

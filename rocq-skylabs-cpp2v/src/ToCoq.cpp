@@ -425,7 +425,8 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
     }
 
     if (locations_file_) {
-        ir::LocationRocqEmitter locationEmitter({output_templates_});
+        ir::LocationRocqEmitter locationEmitter(
+            {output_templates_, location_scope_});
         auto companion = locationEmitter.emit(*ownedUnit);
         if (!companion)
             failIR(companion.takeError(),

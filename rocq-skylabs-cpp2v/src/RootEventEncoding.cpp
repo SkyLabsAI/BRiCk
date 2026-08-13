@@ -170,6 +170,9 @@ llvm::Expected<EncodedRootEvents> encode(const TranslationUnitIR &unit,
                                          EncodeOptions options) {
     if (auto failure = IRValidator::validate(unit))
         return std::move(failure);
+    if (options.eventHasLocation &&
+        options.eventHasLocation->size() != unit.rootEvents().size())
+        return error("root-event location-presence table has the wrong size");
 
     EncodedRootEvents result;
     result.eventClasses.assign(unit.rootEvents().size(), EventClass::Excluded);
@@ -220,7 +223,16 @@ llvm::Expected<EncodedRootEvents> encode(const TranslationUnitIR &unit,
         groups[*group].events.push_back(ordered.index);
     }
 
+    const bool filtered = options.eventHasLocation != nullptr;
     for (const Group &group : groups) {
+        const auto relevant = [&](std::size_t event) {
+            return !filtered || (event < options.eventHasLocation->size() &&
+                                 (*options.eventHasLocation)[event]);
+        };
+        const bool anyRelevant =
+            std::any_of(group.events.begin(), group.events.end(), relevant);
+        if (!anyRelevant)
+            continue;
         if (group.events.size() > 1) {
             ++result.stats.duplicateGroups;
             result.stats.duplicateEvents += group.events.size();
@@ -241,6 +253,9 @@ llvm::Expected<EncodedRootEvents> encode(const TranslationUnitIR &unit,
             result.eventClasses[event] = EventClass::Singleton;
         }
     }
+    if (filtered)
+        result.stats.selectedEvents =
+            result.stats.singletonEvents + result.stats.residualEvents;
     return result;
 }
 

@@ -311,4 +311,148 @@ llvm::Error validate(const Tables &tables) {
     return llvm::Error::success();
 }
 
+llvm::Expected<MainFileProjection> projectMainFile(const Tables &source) {
+    if (auto failure = validate(source))
+        return std::move(failure);
+
+    std::optional<FileId> mainFile;
+    for (std::size_t index = 0; index < source.files.size(); ++index) {
+        if (!source.files[index].isMain)
+            continue;
+        if (mainFile)
+            return error("source tables contain more than one main file");
+        mainFile = FileId(static_cast<FileId::value_type>(index));
+    }
+
+    MainFileProjection result;
+    result.oldToNewOrigin.resize(source.origins.size());
+    result.directlyRelevant.assign(source.origins.size(), false);
+    if (mainFile) {
+        File file = source.files[mainFile->value()];
+        // A main file should not have an include parent. More importantly, an
+        // included parent is deliberately absent from this filtered table.
+        file.includeParent.reset();
+        result.tables.files.push_back(std::move(file));
+    }
+
+    auto keepPoint = [&](const std::optional<PhysicalPoint> &point)
+        -> std::optional<PhysicalPoint> {
+        if (!point || !mainFile || point->file != *mainFile)
+            return std::nullopt;
+        PhysicalPoint kept = *point;
+        kept.file = FileId(0);
+        return kept;
+    };
+    auto projectRange =
+        [&](const std::optional<Range> &range) -> std::optional<Range> {
+        if (!range)
+            return std::nullopt;
+        Range kept;
+        kept.begin = keepPoint(range->begin);
+        kept.end = keepPoint(range->end);
+        kept.endSemantics = range->endSemantics;
+        if (!kept.begin && !kept.end)
+            return std::nullopt;
+        if (range->normalizedHalfOpen && kept.begin && kept.end) {
+            const auto &[begin, end] = *range->normalizedHalfOpen;
+            auto normalizedBegin = keepPoint(begin);
+            auto normalizedEnd = keepPoint(end);
+            if (normalizedBegin && normalizedEnd &&
+                normalizedBegin->file == normalizedEnd->file &&
+                normalizedBegin->file == kept.begin->file &&
+                normalizedEnd->file == kept.end->file &&
+                normalizedBegin->byteOffset <= normalizedEnd->byteOffset)
+                kept.normalizedHalfOpen =
+                    std::make_pair(*normalizedBegin, *normalizedEnd);
+        }
+        return kept;
+    };
+    auto hasPoint = [](const std::optional<Range> &range) {
+        return range && (range->begin || range->end);
+    };
+    auto expansionEndpoint = [](const std::optional<Range> &range,
+                                bool begin) -> bool {
+        if (!range)
+            return false;
+        return begin ? range->begin.has_value() : range->end.has_value();
+    };
+
+    std::vector<Origin> projected(source.origins.size());
+    std::vector<bool> retain(source.origins.size(), false);
+    std::vector<std::size_t> pending;
+    for (std::size_t index = 0; index < source.origins.size(); ++index) {
+        const Origin &origin = source.origins[index];
+        Origin kept;
+        kept.kind = origin.kind;
+        kept.spelling = projectRange(origin.spelling);
+        kept.expansion = projectRange(origin.expansion);
+        // Presumed locations describe expansion locations in Clang. Preserve
+        // only the corresponding display coordinate when that physical
+        // expansion endpoint survives the main-file filter.
+        if (expansionEndpoint(kept.expansion, true))
+            kept.presumedBegin = origin.presumedBegin;
+        if (expansionEndpoint(kept.expansion, false))
+            kept.presumedEnd = origin.presumedEnd;
+        kept.pointOfInstantiation = keepPoint(origin.pointOfInstantiation);
+        // Main-file mode intentionally does not leak header spelling through
+        // macro backtraces.
+        kept.macroStack.clear();
+        kept.anchor = origin.anchor;
+        kept.derivedFrom = origin.derivedFrom;
+        const bool direct = hasPoint(kept.spelling) ||
+                            hasPoint(kept.expansion) || kept.presumedBegin ||
+                            kept.presumedEnd || kept.pointOfInstantiation;
+        projected[index] = std::move(kept);
+        result.directlyRelevant[index] = direct;
+        if (direct) {
+            retain[index] = true;
+            pending.push_back(index);
+        }
+    }
+
+    // Keep the established directed anchor/derivation closure. The complete
+    // source graph was validated above, so this only selects rows; it cannot
+    // make a malformed dangling link disappear.
+    for (std::size_t cursor = 0; cursor < pending.size(); ++cursor) {
+        const Origin &origin = projected[pending[cursor]];
+        auto retainOrigin = [&](OriginId id) {
+            const std::size_t target = id.value();
+            if (!retain[target]) {
+                retain[target] = true;
+                pending.push_back(target);
+            }
+        };
+        if (origin.anchor)
+            retainOrigin(*origin.anchor);
+        for (OriginId id : origin.derivedFrom)
+            retainOrigin(id);
+    }
+
+    for (std::size_t index = 0; index < retain.size(); ++index)
+        if (retain[index]) {
+            const OriginId id(static_cast<OriginId::value_type>(
+                result.tables.origins.size()));
+            result.oldToNewOrigin[index] = id;
+            result.tables.origins.push_back(projected[index]);
+        }
+
+    for (std::size_t old = 0; old < source.origins.size(); ++old) {
+        if (!result.oldToNewOrigin[old])
+            continue;
+        Origin &origin =
+            result.tables.origins[result.oldToNewOrigin[old]->value()];
+        if (origin.anchor)
+            origin.anchor = result.oldToNewOrigin[origin.anchor->value()];
+        for (OriginId &id : origin.derivedFrom)
+            id = *result.oldToNewOrigin[id.value()];
+    }
+    for (std::size_t old = 0; old < result.directlyRelevant.size(); ++old)
+        if (result.directlyRelevant[old] && !result.oldToNewOrigin[old])
+            return error("main-file projection omitted a directly relevant "
+                         "origin");
+    if (auto failure = validate(result.tables))
+        return std::move(failure);
+    return result;
+}
+
 } // namespace source

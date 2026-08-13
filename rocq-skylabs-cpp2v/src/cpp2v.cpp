@@ -55,6 +55,11 @@ static cl::opt<std::string>
               cl::desc("emit source-location companion for --module"),
               cl::value_desc("filename"), cl::Optional, cl::cat(Cpp2V));
 
+static cl::opt<bool>
+    LocationsAllFiles("locations-all-files",
+                      cl::desc("retain included-file source locations"),
+                      cl::Optional, cl::cat(Cpp2V));
+
 static cl::opt<bool> Verbose("v", cl::desc("verbose"), cl::Optional,
                              cl::cat(Cpp2V));
 static cl::opt<bool> Verboser("vv", cl::desc("verboser"), cl::Optional,
@@ -168,6 +173,8 @@ public:
         }
         auto *result = new ToCoqConsumer(
             &Compiler, to_opt(VFileOutput), to_opt(Locations),
+            LocationsAllFiles ? ir::LocationScope::AllFiles
+                              : ir::LocationScope::MainFile,
             to_opt(Templates), to_opt(NameTest),
             Trace::fromBits(TraceBits.getBits()), Comment, !NoSharing,
             CheckTypes, !NoTemplates, should_elaborate, !NoAliases,
@@ -220,8 +227,12 @@ bool isDarwin() {
 }
 
 bool validateLocationOptions() {
-    if (Locations.getNumOccurrences() == 0)
-        return true;
+    if (Locations.getNumOccurrences() == 0) {
+        if (LocationsAllFiles.getNumOccurrences() != 0)
+            llvm::errs()
+                << "cpp2v: --locations-all-files requires --locations\n";
+        return LocationsAllFiles.getNumOccurrences() == 0;
+    }
 
     const std::string &locations = Locations.getValue();
     const std::string &module = VFileOutput.getValue();

@@ -109,9 +109,8 @@ Example implicit_member_is_distinguishable :
     classes default_ctor [] = [ImplicitOrigin].
 Proof. vm_compute. reflexivity. Qed.
 
-Example synthesized_enum_value_keeps_anchor :
-    (classes enum_constant [1], links enum_constant [1]) =
-      ([Cpp2vSynthesizedOrigin], [(true, 0)]).
+Example closure_only_enum_value_origin_is_not_attached :
+  found enum_constant [1] = inr [].
 Proof. vm_compute. reflexivity. Qed.
 
 Example compatible_definition_is_the_selected_root :

@@ -125,6 +125,16 @@ struct Tables {
     std::vector<Origin> origins;
 };
 
+/** Main-file projection for compact location companions. [oldToNewOrigin]
+    contains dense, first-seen IDs for every retained origin; [directlyRelevant]
+    identifies the old rows whose main-file source data is attached to semantic
+    nodes (rather than retained solely to close provenance links). */
+struct MainFileProjection {
+    Tables tables;
+    std::vector<std::optional<OriginId>> oldToNewOrigin;
+    std::vector<bool> directlyRelevant;
+};
+
 bool operator==(const PhysicalPoint &lhs, const PhysicalPoint &rhs);
 bool operator==(const PresumedPoint &lhs, const PresumedPoint &rhs);
 bool operator==(const Range &lhs, const Range &rhs);
@@ -161,5 +171,10 @@ void appendOriginsStable(std::vector<OriginId> &origins,
                          const std::vector<OriginId> &additions);
 
 llvm::Error validate(const Tables &tables);
+
+/// Validate [source], retain only physical main-file source data, clear macro
+/// stacks, and deterministically remap retained files/origins. This is pure and
+/// deliberately does not retain Clang SourceManager state.
+llvm::Expected<MainFileProjection> projectMainFile(const Tables &source);
 
 } // namespace source

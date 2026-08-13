@@ -888,7 +888,241 @@ Module Construction.
   (** Board-scale production construction keeps singleton roots lazy and
       VM-reduces only the small residual semantic groups. The producer's exact
       classifier establishes singleton uniqueness; public lookup independently
-      diagnoses malformed duplicate or mixed private storage. *)
+      diagnoses malformed duplicate or mixed private storage.
+
+      Filtered companions retain an exact semantic fold while carrying only
+      the two bits needed to decide whether its final selected location is
+      observable.  This deliberately mirrors the existing selection helpers:
+      the ordinary/template fold directions and all incompatibility/self-alias
+      decisions remain authoritative above. *)
+  Record indexed_location_presence : Type := {
+    indexed_presence_at_root : bool;
+    indexed_presence_in_tree : bool
+  }.
+
+  Definition merge_indexed_presence
+      (existing incoming : indexed_location_presence)
+      : indexed_location_presence := {|
+    indexed_presence_at_root := existing.(indexed_presence_at_root) ||
+      incoming.(indexed_presence_at_root);
+    indexed_presence_in_tree := existing.(indexed_presence_in_tree) ||
+      incoming.(indexed_presence_in_tree)
+  |}.
+
+  Definition add_losing_indexed_presence
+      (winner loser : indexed_location_presence)
+      : indexed_location_presence := {|
+    indexed_presence_at_root := winner.(indexed_presence_at_root) ||
+      loser.(indexed_presence_at_root);
+    indexed_presence_in_tree := winner.(indexed_presence_in_tree) ||
+      loser.(indexed_presence_at_root)
+  |}.
+
+  Inductive filtered_indexed_located_root_event : Type :=
+  | FILESymbol (name : name) (value : ObjValue) (node shape : Encoded.table_id)
+      (at_root in_tree : bool)
+  | FILEType (name : name) (value : GlobDecl) (node shape : Encoded.table_id)
+      (at_root in_tree : bool)
+  | FILEMsymbol (name : name) (value : template MObjValue)
+      (node shape : Encoded.table_id) (at_root in_tree : bool)
+  | FILEMtype (name : name) (value : template MGlobDecl)
+      (node shape : Encoded.table_id) (at_root in_tree : bool).
+
+  Definition filtered_event_indexed
+      (event : filtered_indexed_located_root_event) : indexed_located_root_event :=
+    match event with
+    | FILESymbol n value node shape _ _ => ILESymbol n value node shape
+    | FILEType n value node shape _ _ => ILEType n value node shape
+    | FILEMsymbol n value node shape _ _ => ILEMsymbol n value node shape
+    | FILEMtype n value node shape _ _ => ILEMtype n value node shape
+    end.
+
+  Record filtered_indexed_state : Type := {
+    filtered_symbols : NM.t (ObjValue * indexed_location_presence);
+    filtered_types : NM.t (GlobDecl * indexed_location_presence);
+    filtered_msymbols : TM.t (template MObjValue * indexed_location_presence);
+    filtered_mtypes : TM.t (template MGlobDecl * indexed_location_presence)
+  }.
+
+  Definition empty_filtered_indexed_state : filtered_indexed_state := {|
+    filtered_symbols := ∅; filtered_types := ∅;
+    filtered_msymbols := ∅; filtered_mtypes := ∅
+  |}.
+
+  Definition set_filtered_symbol (n : name)
+      (entry : ObjValue * indexed_location_presence)
+      (current : filtered_indexed_state) : filtered_indexed_state := {|
+    filtered_symbols := <[n := entry]> current.(filtered_symbols);
+    filtered_types := current.(filtered_types);
+    filtered_msymbols := current.(filtered_msymbols);
+    filtered_mtypes := current.(filtered_mtypes)
+  |}.
+  Definition set_filtered_type (n : name)
+      (entry : GlobDecl * indexed_location_presence)
+      (current : filtered_indexed_state) : filtered_indexed_state := {|
+    filtered_symbols := current.(filtered_symbols);
+    filtered_types := <[n := entry]> current.(filtered_types);
+    filtered_msymbols := current.(filtered_msymbols);
+    filtered_mtypes := current.(filtered_mtypes)
+  |}.
+  Definition set_filtered_msymbol (n : name)
+      (entry : template MObjValue * indexed_location_presence)
+      (current : filtered_indexed_state) : filtered_indexed_state := {|
+    filtered_symbols := current.(filtered_symbols);
+    filtered_types := current.(filtered_types);
+    filtered_msymbols := <[n := entry]> current.(filtered_msymbols);
+    filtered_mtypes := current.(filtered_mtypes)
+  |}.
+  Definition set_filtered_mtype (n : name)
+      (entry : template MGlobDecl * indexed_location_presence)
+      (current : filtered_indexed_state) : filtered_indexed_state := {|
+    filtered_symbols := current.(filtered_symbols);
+    filtered_types := current.(filtered_types);
+    filtered_msymbols := current.(filtered_msymbols);
+    filtered_mtypes := <[n := entry]> current.(filtered_mtypes)
+  |}.
+
+  Definition add_filtered_symbol (n : name) (incoming : ObjValue)
+      (presence : indexed_location_presence) (current : filtered_indexed_state)
+      : construction_error + filtered_indexed_state :=
+    match current.(filtered_symbols) !! n with
+    | None => inr (set_filtered_symbol n (incoming, presence) current)
+    | Some (existing, existing_presence) =>
+        if bool_decide (incoming = existing) then
+          inr (set_filtered_symbol n (existing,
+            merge_indexed_presence existing_presence presence) current)
+        else match Selection.merge_obj_value incoming existing with
+        | None => inl (IncompatibleDuplicates [(n, inr incoming); (n, inr existing)])
+        | Some winner =>
+            inr (set_filtered_symbol n
+              (winner, if bool_decide (winner = existing)
+                then add_losing_indexed_presence existing_presence presence
+                else add_losing_indexed_presence presence existing_presence)
+              current)
+        end
+    end.
+
+  Definition add_filtered_type (n : name) (incoming : GlobDecl)
+      (presence : indexed_location_presence) (current : filtered_indexed_state)
+      : construction_error + filtered_indexed_state :=
+    if Selection.is_self_type_alias n incoming then inr current else
+    match current.(filtered_types) !! n with
+    | None => inr (set_filtered_type n (incoming, presence) current)
+    | Some (existing, existing_presence) =>
+        if bool_decide (incoming = existing) then
+          inr (set_filtered_type n (existing,
+            merge_indexed_presence existing_presence presence) current)
+        else match Selection.merge_glob_decl incoming existing with
+        | None => inl (IncompatibleDuplicates [(n, inl incoming); (n, inl existing)])
+        | Some winner =>
+            inr (set_filtered_type n
+              (winner, if bool_decide (winner = existing)
+                then add_losing_indexed_presence existing_presence presence
+                else add_losing_indexed_presence presence existing_presence)
+              current)
+        end
+    end.
+
+  Definition add_filtered_msymbol (n : name) (incoming : template MObjValue)
+      (presence : indexed_location_presence) (current : filtered_indexed_state)
+      : construction_error + filtered_indexed_state :=
+    match current.(filtered_msymbols) !! n with
+    | None => inr (set_filtered_msymbol n (incoming, presence) current)
+    | Some (existing, existing_presence) =>
+        if bool_decide (incoming = existing) then
+          inr (set_filtered_msymbol n (existing,
+            merge_indexed_presence existing_presence presence) current)
+        else inr (set_filtered_msymbol n (incoming,
+          add_losing_indexed_presence presence existing_presence) current)
+    end.
+
+  Definition add_filtered_mtype (n : name) (incoming : template MGlobDecl)
+      (presence : indexed_location_presence) (current : filtered_indexed_state)
+      : construction_error + filtered_indexed_state :=
+    match current.(filtered_mtypes) !! n with
+    | None => inr (set_filtered_mtype n (incoming, presence) current)
+    | Some (existing, existing_presence) =>
+        if bool_decide (incoming = existing) then
+          inr (set_filtered_mtype n (existing,
+            merge_indexed_presence existing_presence presence) current)
+        else inr (set_filtered_mtype n (incoming,
+          add_losing_indexed_presence presence existing_presence) current)
+    end.
+
+  Fixpoint fold_filtered_presence_from
+      (events : list filtered_indexed_located_root_event)
+      (current : filtered_indexed_state)
+      : construction_error + filtered_indexed_state :=
+    match events with
+    | [] => inr current
+    | FILESymbol n value _ _ at_root in_tree :: rest =>
+        match fold_filtered_presence_from rest current with
+        | inl error => inl error
+        | inr next => add_filtered_symbol n value
+            {| indexed_presence_at_root := at_root;
+               indexed_presence_in_tree := in_tree |} next
+        end
+    | FILEType n value _ _ at_root in_tree :: rest =>
+        match fold_filtered_presence_from rest current with
+        | inl error => inl error
+        | inr next => add_filtered_type n value
+            {| indexed_presence_at_root := at_root;
+               indexed_presence_in_tree := in_tree |} next
+        end
+    | FILEMsymbol n value _ _ at_root in_tree :: rest =>
+        match add_filtered_msymbol n value
+            {| indexed_presence_at_root := at_root;
+               indexed_presence_in_tree := in_tree |} current with
+        | inl error => inl error
+        | inr next => fold_filtered_presence_from rest next
+        end
+    | FILEMtype n value _ _ at_root in_tree :: rest =>
+        match add_filtered_mtype n value
+            {| indexed_presence_at_root := at_root;
+               indexed_presence_in_tree := in_tree |} current with
+        | inl error => inl error
+        | inr next => fold_filtered_presence_from rest next
+        end
+    end.
+
+  Definition filter_indexed_locations
+      (locations : root_locations indexed_location)
+      (presence : filtered_indexed_state) : root_locations indexed_location := {|
+    symbol_locations := NM.fold (fun n entry result =>
+      if entry.2.(indexed_presence_in_tree) then
+        match locations.(symbol_locations) !! n with
+        | Some location => <[n := location]> result | None => result end
+      else result) presence.(filtered_symbols) ∅;
+    type_locations := NM.fold (fun n entry result =>
+      if entry.2.(indexed_presence_in_tree) then
+        match locations.(type_locations) !! n with
+        | Some location => <[n := location]> result | None => result end
+      else result) presence.(filtered_types) ∅;
+    msymbol_locations := TM.fold (fun n entry result =>
+      if entry.2.(indexed_presence_in_tree) then
+        match locations.(msymbol_locations) !! n with
+        | Some location => <[n := location]> result | None => result end
+      else result) presence.(filtered_msymbols) ∅;
+    mtype_locations := TM.fold (fun n entry result =>
+      if entry.2.(indexed_presence_in_tree) then
+        match locations.(mtype_locations) !! n with
+        | Some location => <[n := location]> result | None => result end
+      else result) presence.(filtered_mtypes) ∅
+  |}.
+
+  Definition fold_filtered_indexed_events
+      (events : list filtered_indexed_located_root_event)
+      : construction_error + root_locations indexed_location :=
+    let raw_events := List.map filtered_event_indexed events in
+    match fold_indexed_events raw_events with
+    | inl error => inl error
+    | inr locations =>
+        match fold_filtered_presence_from events empty_filtered_indexed_state with
+        | inl error => inl error
+        | inr presence => inr (filter_indexed_locations locations presence)
+        end
+    end.
+
   Definition assemble_lazy_compact_indexed_dag_source_map
       (source_files : list source_file)
       (source_origins : Encoded.indexed_provenance)
@@ -916,6 +1150,17 @@ Module Construction.
   Ltac build_lazy_compact_indexed_dag_source_map_or_fail
       source_files source_origins dag singletons residual_events :=
     let result := eval vm_compute in (fold_indexed_events residual_events) in
+    lazymatch result with
+    | inr ?residuals =>
+        exact (assemble_lazy_compact_indexed_dag_source_map
+          source_files source_origins dag singletons residuals)
+    | inl ?error => fail "source-location construction failed:" error
+    end.
+
+  Ltac build_filtered_lazy_compact_indexed_dag_source_map_or_fail
+      source_files source_origins dag singletons residual_events :=
+    let result := eval vm_compute in
+      (fold_filtered_indexed_events residual_events) in
     lazymatch result with
     | inr ?residuals =>
         exact (assemble_lazy_compact_indexed_dag_source_map

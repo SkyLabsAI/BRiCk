@@ -109,17 +109,31 @@ llvm::Expected<EncodedLocations> encode(const TranslationUnitIR &unit,
                                         EncodeOptions options) {
     if (auto failure = IRValidator::validate(unit))
         return std::move(failure);
+    if (options.includedEvents &&
+        options.includedEvents->size() != unit.rootEvents().size())
+        return error("location-DAG inclusion table has the wrong size");
+    if (options.projection && (options.projection->oldToNewOrigin.size() !=
+                                   unit.sources().origins.size() ||
+                               options.projection->directlyRelevant.size() !=
+                                   unit.sources().origins.size()))
+        return error("location-DAG source projection has the wrong size");
 
     Interner<ShapeId, EncodedShape, ShapeHash> shapes(
         options.forceHashCollisions);
     Interner<LocationNodeId, EncodedLocationNode, LocationNodeHash> nodes(
         options.forceHashCollisions);
     std::vector<std::optional<EncodedRoot>> memo(unit.nodes().size());
+    std::vector<bool> memoHasLocation(unit.nodes().size(), false);
+    std::vector<bool> memoAtRoot(unit.nodes().size(), false);
     std::vector<unsigned char> color(unit.nodes().size(), 0);
 
     EncodedLocations result;
     result.eventRoots.resize(unit.rootEvents().size());
-    result.sourceOriginCount = unit.sources().origins.size();
+    result.eventHasLocation.assign(unit.rootEvents().size(), false);
+    result.eventAtRoot.assign(unit.rootEvents().size(), false);
+    result.sourceOriginCount = options.projection
+                                   ? options.projection->tables.origins.size()
+                                   : unit.sources().origins.size();
 
     auto childrenOf = [&](NodeId id) -> llvm::Expected<std::vector<NodeId>> {
         auto children = unit.nodes().children(id);
@@ -135,6 +149,8 @@ llvm::Expected<EncodedLocations> encode(const TranslationUnitIR &unit,
             return error("location-DAG encoder received an invalid root event");
         const RootEvent &event = unit.rootEvents()[ordered.index];
         if (!selectedRoot(event, includeTemplates))
+            continue;
+        if (options.includedEvents && !(*options.includedEvents)[ordered.index])
             continue;
         ++result.stats.selectedRootEvents;
         const NodeId root = event.semanticValue;
@@ -189,17 +205,44 @@ llvm::Expected<EncodedLocations> encode(const TranslationUnitIR &unit,
                 auto semantic = unit.nodes().get(frame.node);
                 if (!semantic)
                     return semantic.takeError();
+                std::vector<source::OriginId> origins;
+                if (options.projection) {
+                    for (source::OriginId old : (*semantic)->origins) {
+                        if (options.projection->directlyRelevant[old.value()]) {
+                            const auto remapped =
+                                options.projection->oldToNewOrigin[old.value()];
+                            if (!remapped)
+                                return error(
+                                    "location-DAG source projection omits a "
+                                    "directly relevant origin");
+                            origins.push_back(*remapped);
+                        }
+                    }
+                } else {
+                    origins = (*semantic)->origins;
+                }
+                const bool atRoot = !origins.empty();
+                const bool hasLocation =
+                    atRoot ||
+                    std::any_of(frame.children.begin(), frame.children.end(),
+                                [&](NodeId child) {
+                                    return memoHasLocation[child.value()];
+                                });
                 auto locationNode = nodes.intern(EncodedLocationNode{
-                    *shape, (*semantic)->origins, std::move(childNodes)});
+                    *shape, std::move(origins), std::move(childNodes)});
                 if (!locationNode)
                     return locationNode.takeError();
                 memo[frame.node.value()] = EncodedRoot{*locationNode, *shape};
+                memoHasLocation[frame.node.value()] = hasLocation;
+                memoAtRoot[frame.node.value()] = atRoot;
                 color[frame.node.value()] = 2;
                 ++result.stats.visitedSemanticNodes;
                 stack.pop_back();
             }
         }
         result.eventRoots[ordered.index] = memo[root.value()];
+        result.eventHasLocation[ordered.index] = memoHasLocation[root.value()];
+        result.eventAtRoot[ordered.index] = memoAtRoot[root.value()];
     }
 
     result.shapes = std::move(shapes).takeValues();

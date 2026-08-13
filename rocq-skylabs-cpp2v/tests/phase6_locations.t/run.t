@@ -13,9 +13,19 @@ a nonempty shape path and recovers its physical source line.
   $ grep -q 'compact root events: .* selected; .* singleton; .* residual' fixture_17_cpp_locations.v
   $ grep -q '(CIL(' fixture_17_cpp_locations.v
   $ ! grep -q '(Ovar ' fixture_17_cpp_locations.v
-  $ grep -q 'residual_root_events : list Construction.indexed_located_root_event' fixture_17_cpp_locations.v
+  $ grep -q 'residual_root_events : list Construction.filtered_indexed_located_root_event' fixture_17_cpp_locations.v
   $ test ! -e fixture_17_cpp.v.partial
   $ test ! -e fixture_17_cpp_locations.v.partial
+
+The explicit all-files scope changes only the companion and uses the unchanged
+legacy construction spelling.
+
+  $ cpp2v -o all_files.v --locations all_files_locations.v --locations-all-files --check-types fixture.cpp -- -std=c++17
+  $ cmp fixture_17_cpp.v all_files.v
+  $ rocq c $ROCQC_ARGS all_files_locations.v
+  $ grep -q 'residual_root_events : list Construction.indexed_located_root_event' all_files_locations.v
+  $ grep -q 'Construction.build_lazy_compact_indexed_dag_source_map_or_fail' all_files_locations.v
+  $ ! grep -q 'filtered_indexed_located_root_event' all_files_locations.v
 
 The table-specific construction fold selects exactly the parser's value and the
 corresponding tree for equal duplicates, compatible unequal declarations,
@@ -44,6 +54,12 @@ outputs remain valid.
   $ grep -q 'singleton_msymbol_events : list (name \* indexed_location) := nil' no_templates_locations.v
   $ grep -q 'singleton_mtype_events : list (name \* indexed_location) := nil' no_templates_locations.v
   $ ! grep -Eq '\((CRMS|CRMT)\(' no_templates_locations.v
+  $ cpp2v -o no_templates_all_files.v --locations no_templates_all_files_locations.v --locations-all-files --no-templates fixture.cpp -- -std=c++17
+  $ rocq c $ROCQC_ARGS no_templates_all_files.v
+  $ rocq c $ROCQC_ARGS no_templates_all_files_locations.v
+  $ grep -q 'singleton_msymbol_events : list (name \* indexed_location) := nil' no_templates_all_files_locations.v
+  $ grep -q 'singleton_mtype_events : list (name \* indexed_location) := nil' no_templates_all_files_locations.v
+  $ ! grep -Eq '\((CRMS|CRMT)\(' no_templates_all_files_locations.v
 
 Omitting --locations preserves the existing one-output behavior.
 
@@ -54,6 +70,9 @@ Omitting --locations preserves the existing one-output behavior.
 
 Invalid CLI combinations fail before opening either requested final path.
 
+  $ cpp2v --locations-all-files fixture.cpp -- -std=c++17 2>&1
+  cpp2v: --locations-all-files requires --locations
+  [1]
   $ cpp2v --locations missing_module_locations.v fixture.cpp -- -std=c++17 2>&1
   cpp2v: --locations requires --module/-o
   [1]

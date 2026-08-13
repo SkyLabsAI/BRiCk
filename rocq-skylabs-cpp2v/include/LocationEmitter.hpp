@@ -15,8 +15,11 @@
 
 namespace ir {
 
+enum class LocationScope { MainFile, AllFiles };
+
 struct LocationRocqEmitterOptions {
     bool includeTemplates = true;
+    LocationScope scope = LocationScope::MainFile;
 };
 
 /// Emit one standalone source-location companion from a finished semantic IR.
