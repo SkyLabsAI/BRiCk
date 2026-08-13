@@ -74,7 +74,7 @@ Section with_lang.
           mret $ "operator " ++ ty ++ "()" ++ pretty.with_space (pretty.printFQ q)
       | Nop_lit i args =>
           let* args := traverse (F:=eta option) printType args in
-          mret $ "operator """"_" ++ i ++ parens (sepBy ", " args)
+          mret $ "operator """"" ++ i ++ parens (sepBy ", " args)
       | Nanonymous =>
           if bool_decide (inst = "") then mret "(anon)" else None
       | Nanon n => mret $ "@" ++ showN n ++ inst
@@ -351,5 +351,6 @@ Module Type TESTS.
   Succeed Example _0 : TEST "C<1b, 0b>" (Ninst (Nglobal (Nid "C")) [Avalue (Eint 1 Tbool); Avalue (Eint 0 Tbool)]) := eq_refl.
   Succeed Example _0 : TEST "C<1, 0>" (Ninst (Nglobal (Nid "C")) [Avalue (Eint 1 Tint); Avalue (Eint 0 Tint)]) := eq_refl.
   Succeed Example _0 : TEST "C<1, ...<int, long>>" (Ninst (Nglobal (Nid "C")) [Avalue (Eint 1 Tint); Apack [Atype Tint; Atype Tlong]]) := eq_refl.
+  Succeed Example _0 : TEST "operator """"_f(enum foo)" (Nglobal $ Nop_lit "_f" [Tenum $ Nglobal $ Nid "foo"]) := eq_refl.
 
 End TESTS.
