@@ -69,7 +69,7 @@ arguments `ARGS`.
 dune exec -- cpp2v ${ARGS}
 ```
 
-## Source-location companions
+## Source-location output
 
 Pass `--locations` together with a named module output to produce a standalone
 source-location companion from the same validated translation-unit IR as the
@@ -81,19 +81,39 @@ cpp2v -o file_cpp.v --locations file_cpp_locations.v file.cpp -- -std=c++17
 
 `--locations` requires `--module`/`-o`. Neither output may be `-`, the two paths
 must differ, and location output is incompatible with `--for-interactive`.
-Without `--locations`, cpp2v creates no companion and retains its ordinary CLI
-behavior.
 
-By default, companions retain only provenance whose physical source points are
-in the main file. Roots whose final selected location tree has no retained
-main-file provenance are omitted and `lookup` reports `RootNotFound`. Use
-`--locations-all-files` together with `--locations` to restore the legacy
-all-files companion, including header roots, complete macro stacks, and
+Use `--locations-inline` instead to emit `source_locations` into the module
+output itself, without creating a companion:
+
+```sh
+cpp2v -o file_cpp.v --locations-inline file.cpp -- -std=c++17
+```
+
+Inline mode and `--locations <filename>` are mutually exclusive. Inline mode
+requires `--module`/`-o`, remains incompatible with `--for-interactive`, and
+supports `--module -` because it has only one output stream. The generated file
+contains the exact standalone location stream first, followed by the exact AST
+stream. This order is required because the parser imported by AST output
+installs a global `[` grammar that conflicts with the primitive-array literals
+used by location tables. Both `source_locations` and `source` are available
+after importing the one generated module.
+
+Without either location option, cpp2v creates no location data and retains its
+ordinary CLI behavior.
+
+By default, location output retains only provenance whose physical source
+points are in the main file. Roots whose final selected location tree has no
+retained main-file provenance are omitted and `lookup` reports `RootNotFound`. Use
+`--locations-all-files` together with either location output mode to restore
+the legacy all-files data, including header roots, complete macro stacks, and
 include-file metadata:
 
 ```sh
 cpp2v -o file_cpp.v --locations file_cpp_locations.v \
   --locations-all-files file.cpp -- -std=c++17
+# or, without a companion:
+cpp2v -o file_cpp.v --locations-inline --locations-all-files \
+  file.cpp -- -std=c++17
 ```
 
 Main-file membership uses physical file identity, never presumed filenames or
@@ -107,18 +127,21 @@ valid but closure-only origins are not attached to semantic nodes. All children
 under a retained root remain present—even empty intermediates and siblings—so
 path indices do not change.
 
-The files are published serially and atomically per path through a temporary
-`.partial` file and rename. The AST is published first. If companion generation
-or publication fails, the already-published AST may remain, but the final
-location path is not published.
+Separate files are published serially and atomically per path through a
+temporary `.partial` file and rename. The AST is published first. If companion
+generation or publication fails, the already-published AST may remain, but the
+final location path is not published. Inline output has one publication
+transaction: location generation finishes before the module `.partial` file is
+opened, and one rename publishes the combined stream.
 
 ### Generated value and root kinds
 
 The ordinary AST output exports `source` (with deprecated parsing abbreviation
-`module` for compatibility). The companion imports the BRiCk source-location
-API and contains local `source_files`, normalized indexed provenance tables, an
-exact indexed location DAG, four namespace-specific singleton-root lists, and a
-small residual semantic-event list. A deterministic Clang-free classifier groups
+`module` for compatibility). The standalone or inline location section imports
+the BRiCk source-location API and contains local `source_files`, normalized
+indexed provenance tables, an exact indexed location DAG, four
+namespace-specific singleton-root lists, and a small residual semantic-event
+list. A deterministic Clang-free classifier groups
 roots by namespace and exact semantic-name structure. Singleton groups omit
 semantic values. Duplicate groups and conservative ordinary `Gtypedef` roots
 retain values and use the existing Rocq selection functions. Default filtering
@@ -151,17 +174,18 @@ around primitive `uint63` integers rather than unary `nat`; explicit literals
 may use the `%file_id` and `%origin_id` scopes. `lookup_file source_locations id`
 performs checked file access without converting a potentially large primitive
 ID to unary `nat`. Semantic child paths remain `list nat`, while byte offsets,
-lines, and columns remain binary, nonnegative `N` values. The companion's only
-public generated value is:
+lines, and columns remain binary, nonnegative `N` values. The location section's
+only public generated value is:
 
 ```coq
 source_locations : source_map
 ```
 
-It is standalone: semantic root names and residual values are inline and it
-neither imports the AST output nor refers to that file's sharing definitions.
-The map
-has four distinct root namespaces, selected with a `decl_root`:
+The section is standalone: semantic root names and residual values are inline
+and it neither imports nor refers to the AST output or its sharing definitions.
+Inline mode therefore composes the unchanged standalone section and AST section
+rather than introducing cross-references between them. The map has four
+distinct root namespaces, selected with a `decl_root`:
 
 - `DRSymbol name` — ordinary object/function symbol;
 - `DRType name` — ordinary type/global declaration;
@@ -207,10 +231,11 @@ guessed.
 ### Templates, sharing, and limitations
 
 `--no-templates` omits template root events and leaves both template location
-maps empty. `--no-sharing` can change ordinary AST text but cannot change companion bytes
-or paths: residual semantic values remain inline, singleton classification is
-sharing-independent, and path shape comes only from owned recursive
-occurrences. On very large translation units, singleton root lookup is linear
+maps empty. `--no-sharing` can change ordinary AST text but cannot change
+location-section bytes or paths: residual semantic values remain inline,
+singleton classification is sharing-independent, and path shape comes only
+from owned recursive occurrences. On very large translation units, singleton
+root lookup is linear
 in the requested retained namespace so malformed duplicate storage can be
 detected. With the main-file default, representative x86 board root/child
 queries take approximately 142–143 microseconds each; the complete all-files
@@ -220,8 +245,8 @@ This version intentionally provides no zipper, provenance-aware traversal,
 ancestor fallback, or lookup from an isolated AST value. It does not detect a
 stale or mismatched AST/companion pair, preserve paths across later semantic
 transformations, or attach roots to non-name-keyed translation-unit metadata.
-Consumers should retain the generated pair from one cpp2v invocation and use
-`lookup` directly.
+Consumers should retain either the generated pair or the combined inline module
+from one cpp2v invocation and use `lookup` directly.
 
 ## Directory layout
 

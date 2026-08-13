@@ -216,9 +216,9 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
 
     std::unique_ptr<ir::TranslationUnitIR> ownedUnit;
     std::optional<ir::SharingPlan> ownedSharing;
-    const bool semanticOutput = output_file_.has_value() ||
-                                locations_file_.has_value() ||
-                                templates_file_.has_value();
+    const bool semanticOutput =
+        output_file_.has_value() || locations_file_.has_value() ||
+        locations_inline_ || templates_file_.has_value();
     if (semanticOutput) {
         auto built = ir::IRBuilder::buildModule(
             *ctxt, mod, &compiler_->getSema(), typedefs_, comment_);
@@ -418,16 +418,35 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
         writeTemplatesIR("templates", fmt);
     };
 
-    if (output_templates_) {
-        with_open_file(output_file_, static_and_templates);
-    } else {
-        with_open_file(output_file_, static_only);
-    }
-
-    if (locations_file_) {
+    auto emitLocations = [&]() {
         ir::LocationRocqEmitter locationEmitter(
             {output_templates_, location_scope_});
-        auto companion = locationEmitter.emit(*ownedUnit);
+        return locationEmitter.emit(*ownedUnit);
+    };
+
+    std::optional<std::string> inlineLocations;
+    if (locations_inline_) {
+        auto locations = emitLocations();
+        if (!locations)
+            failIR(locations.takeError(),
+                   "owned source-location emission failed");
+        inlineLocations = std::move(*locations);
+    }
+
+    with_open_file(output_file_, [&](Formatter &fmt) {
+        // The parser imported by semantic output installs a global `[` grammar
+        // that conflicts with primitive-array literals. Emit the unchanged
+        // location stream first, before that import, then the unchanged AST.
+        if (inlineLocations)
+            writeIRLines(fmt, *inlineLocations);
+        if (output_templates_)
+            static_and_templates(fmt);
+        else
+            static_only(fmt);
+    });
+
+    if (locations_file_) {
+        auto companion = emitLocations();
         if (!companion)
             failIR(companion.takeError(),
                    "owned source-location emission failed");

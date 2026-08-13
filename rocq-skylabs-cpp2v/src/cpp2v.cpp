@@ -56,6 +56,11 @@ static cl::opt<std::string>
               cl::value_desc("filename"), cl::Optional, cl::cat(Cpp2V));
 
 static cl::opt<bool>
+    LocationsInline("locations-inline",
+                    cl::desc("emit source locations into --module"),
+                    cl::Optional, cl::cat(Cpp2V));
+
+static cl::opt<bool>
     LocationsAllFiles("locations-all-files",
                       cl::desc("retain included-file source locations"),
                       cl::Optional, cl::cat(Cpp2V));
@@ -172,7 +177,7 @@ public:
             should_elaborate = false;
         }
         auto *result = new ToCoqConsumer(
-            &Compiler, to_opt(VFileOutput), to_opt(Locations),
+            &Compiler, to_opt(VFileOutput), to_opt(Locations), LocationsInline,
             LocationsAllFiles ? ir::LocationScope::AllFiles
                               : ir::LocationScope::MainFile,
             to_opt(Templates), to_opt(NameTest),
@@ -227,35 +232,55 @@ bool isDarwin() {
 }
 
 bool validateLocationOptions() {
-    if (Locations.getNumOccurrences() == 0) {
+    const bool separate = Locations.getNumOccurrences() != 0;
+    const bool inlineOutput = LocationsInline.getValue();
+    const bool enabled = separate || inlineOutput;
+
+    if (separate && inlineOutput) {
+        llvm::errs()
+            << "cpp2v: --locations and --locations-inline are mutually "
+               "exclusive\n";
+        return false;
+    }
+    if (!enabled) {
         if (LocationsAllFiles.getNumOccurrences() != 0)
             llvm::errs()
                 << "cpp2v: --locations-all-files requires --locations\n";
         return LocationsAllFiles.getNumOccurrences() == 0;
     }
 
-    const std::string &locations = Locations.getValue();
     const std::string &module = VFileOutput.getValue();
     if (VFileOutput.getNumOccurrences() == 0 || module.empty()) {
-        llvm::errs() << "cpp2v: --locations requires --module/-o\n";
+        if (inlineOutput)
+            llvm::errs() << "cpp2v: --locations-inline requires --module/-o\n";
+        else
+            llvm::errs() << "cpp2v: --locations requires --module/-o\n";
         return false;
     }
-    if (locations.empty() || locations == "-") {
-        llvm::errs() << "cpp2v: --locations must name a file (not '-')\n";
-        return false;
-    }
-    if (module == "-") {
-        llvm::errs()
-            << "cpp2v: --module must name a file when --locations is used\n";
-        return false;
-    }
-    if (module == locations) {
-        llvm::errs() << "cpp2v: --module and --locations paths must differ\n";
-        return false;
+    if (separate) {
+        const std::string &locations = Locations.getValue();
+        if (locations.empty() || locations == "-") {
+            llvm::errs() << "cpp2v: --locations must name a file (not '-')\n";
+            return false;
+        }
+        if (module == "-") {
+            llvm::errs() << "cpp2v: --module must name a file when --locations "
+                            "is used\n";
+            return false;
+        }
+        if (module == locations) {
+            llvm::errs()
+                << "cpp2v: --module and --locations paths must differ\n";
+            return false;
+        }
     }
     if (Interactive.getNumOccurrences() != 0) {
-        llvm::errs()
-            << "cpp2v: --locations is incompatible with --for-interactive\n";
+        if (inlineOutput)
+            llvm::errs() << "cpp2v: --locations-inline is incompatible with "
+                            "--for-interactive\n";
+        else
+            llvm::errs() << "cpp2v: --locations is incompatible with "
+                            "--for-interactive\n";
         return false;
     }
     return true;

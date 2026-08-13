@@ -26,17 +26,18 @@ public:
     using path = std::optional<std::string>;
     explicit ToCoqConsumer(
         clang::CompilerInstance *compiler, const path output_file,
-        const path locations_file, ir::LocationScope location_scope,
-        const path templates_file, const path name_test_file, Trace::Mask trace,
-        bool comment, bool sharing, bool type_check, bool output_templates,
+        const path locations_file, bool locations_inline,
+        ir::LocationScope location_scope, const path templates_file,
+        const path name_test_file, Trace::Mask trace, bool comment,
+        bool sharing, bool type_check, bool output_templates,
         bool elaborate = true, bool typedefs = false,
         std::optional<std::string> &&interactive = std::optional<std::string>(),
         std::optional<std::string> &&attributes = std::optional<std::string>())
         : compiler_(compiler), output_file_(output_file),
-          locations_file_(locations_file), location_scope_(location_scope),
-          templates_file_(templates_file), name_test_file_(name_test_file),
-          trace_(trace), comment_{comment}, sharing_{sharing},
-          elaborate_(elaborate), check_types_{type_check},
+          locations_file_(locations_file), locations_inline_(locations_inline),
+          location_scope_(location_scope), templates_file_(templates_file),
+          name_test_file_(name_test_file), trace_(trace), comment_{comment},
+          sharing_{sharing}, elaborate_(elaborate), check_types_{type_check},
           output_templates_{output_templates}, typedefs_{typedefs},
           interactive_{std::move(interactive)},
           attributes_{std::move(attributes)} {}
@@ -77,6 +78,7 @@ private:
     clang::CompilerInstance *compiler_;
     const path output_file_;
     const path locations_file_;
+    const bool locations_inline_;
     const ir::LocationScope location_scope_;
     const path templates_file_;
     const path name_test_file_;

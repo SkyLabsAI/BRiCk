@@ -222,7 +222,17 @@ if orchestration.count("cprint.printName(") != 1:
 if "locationEmitter.emit(*ownedUnit)" not in orchestration:
     fail("location output must consume the same finished module IR")
 if "with_open_file(locations_file_" not in orchestration:
-    fail("location output does not use atomic per-file publication")
+    fail("separate location output does not use atomic per-file publication")
+inline_publication = re.search(
+    r"with_open_file\(output_file_,.*?if \(inlineLocations\).*?"
+    r"writeIRLines\(fmt, \*inlineLocations\).*?"
+    r"if \(output_templates_\).*?static_and_templates\(fmt\).*?"
+    r"static_only\(fmt\)",
+    orchestration,
+    re.DOTALL,
+)
+if not inline_publication:
+    fail("inline locations are not published atomically before semantic output")
 
 location_emitter = text("src/LocationEmitter.cpp")
 location_dag_encoder = text("src/LocationDAGEncoding.cpp")
@@ -432,10 +442,14 @@ for verbose_field in (
 cli = text("src/cpp2v.cpp")
 for required in (
     'Locations("locations"',
+    'LocationsInline("locations-inline"',
+    "--locations and --locations-inline are mutually",
+    "--locations-inline requires --module/-o",
     "--locations requires --module/-o",
     "--locations must name a file (not '-')",
     "--module and --locations paths must differ",
-    "--locations is incompatible with --for-interactive",
+    "--locations-inline is incompatible with",
+    "--locations is incompatible with",
 ):
     if required not in cli:
         fail(f"--locations validation/plumbing omits {required!r}")
