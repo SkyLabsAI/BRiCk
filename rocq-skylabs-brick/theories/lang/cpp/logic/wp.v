@@ -21,6 +21,23 @@ Require Import skylabs.iris.extra.bi.errors.
 
 #[local] Set Primitive Projections.
 
+(* Module bar. *)
+Scheme All for list.
+(* End bar. *)
+(* Print bar. *)
+
+Lemma list_all_Forall_1 {A : Type} (P : A -> Prop) xs : list_all@{Prop; _ _} A P xs -> List.Forall P xs.
+Proof. by elim; constructor. Qed.
+
+(* Register Scheme Forall_rect as rect_nodep for List.Forall. *)
+
+Lemma list_all_Forall_2 {A : Type} (P : A -> Prop) xs : List.Forall P xs -> list_all@{Prop; _ _} A P xs.
+Proof.
+  induction xs. constructor.
+  intros [??]%Forall_cons.
+  constructor; auto.
+Qed.
+
 (* expression continuations
  * - in full C++, this includes exceptions, but our current semantics
  *   doesn't treat those.
@@ -36,16 +53,33 @@ Reserved Infix ">*>" (at level 30).
 
 Module FreeTemps.
 
+  (* Register Scheme *)
   (* BEGIN FreeTemps.t *)
   Inductive t : Set :=
-  | id (* = fun x => x *)
   | delete (ty : decltype) (p : ptr) (* = delete_val ty p *)
-           (* ^^ this type has qualifiers but is otherwise a runtime type *)
+  (* ^^ this type has qualifiers but is otherwise a runtime type *)
   | delete_va (va : list (type * ptr)) (p : ptr)
-  | seq (f g : t) (* = fun x => f $ g x *)
-  | par (f g : t) (* = fun x => Exists Qf Qg, f Qf ** g Qg ** (Qf -* Qg -* x) *)
+  (**
+  [seqs ls] is the [FreeTemp] representing the destruction of each
+  element in [ls] sequentially from left-to-right, i.e. the first
+  element in the list is run first.
+   *)
+  | seqs (xs : list t)
+  (**
+  [pars ls] is the [FreeTemp] representing the destruction of each
+  element in [ls] *in non-deterministic order*.
+   *)
+  | pars (xs : list t)
   .
+
   (* END FreeTemps.t *)
+  (* About t_ind. *)
+  (* About t_rec. *)
+  (* About t_rect. *)
+
+  Definition id : t := seqs [].
+  Definition seq (f g : t) := seqs [f; g].
+  Definition par (f g : t) := pars [f; g].
 
   Module Import notations.
     Bind Scope free_scope with t.
@@ -55,28 +89,154 @@ Module FreeTemps.
   End notations.
   #[local] Open Scope free_scope.
 
-  Inductive t_equiv : Equiv t :=
-  | refl l : l ≡ l
-  | sym l r : l ≡ r -> r ≡ l
-  | trans a b c : a ≡ b -> b ≡ c -> a ≡ c
-
-  | delete_ref ty p : delete (Tref ty) p ≡ delete (Trv_ref ty) p
-
-  | seqA x y z : x >*> (y >*> z) ≡ (x >*> y) >*> z
-  | seq_id_unitL l : 1 >*> l ≡ l
-  | seq_id_unitR l : l >*> 1 ≡ l
-  | seq_proper_ : ∀ {a b}, a ≡ b -> ∀ {c d}, c ≡ d -> a >*> c ≡ b >*> d
-
-  | parC l r : l |*| r ≡ r |*| l
-  | parA x y z : x |*| (y |*| z) ≡ (x |*| y) |*| z
-  | par_id_unitL l : 1 |*| l ≡ l
-  | par_proper_ : ∀ {a b}, a ≡ b -> ∀ {c d}, c ≡ d -> a |*| c ≡ b |*| d
+  Inductive ty_relation : relation type :=
+  | ty_refl : Reflexive ty_relation
+  | ty_ref ty : ty_relation (Tref ty) (Trv_ref ty)
+  | ty_ref_sym ty : ty_relation (Trv_ref ty) (Tref ty)
   .
+  Lemma ty_sym : Symmetric ty_relation.
+  Proof. induction 1; constructor. Qed.
+  Lemma ty_trans : Transitive ty_relation.
+  Proof. induction 1; inversion 1; constructor. Qed.
+  #[global] Instance ty_equivalence : Equivalence ty_relation :=
+    Build_Equivalence _ ty_refl ty_sym ty_trans.
+
+  (* Inductive Permutation_rel {T} (R : relation T) : relation (list T) := *)
+  (* | Permutation_rel_perm xs ys : *)
+  (*   xs ≡ₚ ys -> *)
+  (*   Permutation_rel R xs ys *)
+  (* | Permutation_rel_proper xs ys : *)
+  (*   Forall2 R xs ys -> *)
+  (*   Permutation_rel R xs ys. *)
+
+  Fixpoint gather_pars (a : t) : list t :=
+    match a with
+    | pars xs =>
+      concat (gather_pars <$> xs)
+    | _ => [a]
+    end.
+
+  Definition collapse_pars (xs : list t) : t :=
+    match (xs >>= gather_pars) with
+    | [a] => a
+    | ys => pars ys
+    end.
+
+  Inductive pars_rel (R : relation t) : relation t :=
+  | pars_rel_perm xs ys :
+    xs ≡ₚ ys ->
+    pars_rel R xs ys
+  | pars_rel_proper xs ys :
+    Forall2 R xs ys ->
+    pars_rel R xs ys
+  | pars_rel_flatten xs :
+    pars_rel R
+      xs
+      (xs >>= gather_pars)
+  .
+
+  Inductive t_equiv : Equiv t :=
+  (* | refl l : l ≡ l *)
+  (* | sym l r : l ≡ r -> r ≡ l *)
+  (* | trans a b c : a ≡ b -> b ≡ c -> a ≡ c *)
+
+  | delete_proper ty1 ty2 p :
+    ty_relation ty1 ty2 ->
+    delete ty1 p ≡ delete ty2 p
+
+  | delete_va_refl va p :
+    delete_va va p ≡ delete_va va p
+
+  | seqs_proper_ xs ys :
+    Forall2 (≡) xs ys ->
+    seqs xs ≡ seqs ys
+  | pars_proper_comm xs ys :
+    rtsc (pars_rel (≡)) xs ys ->
+    pars xs ≡ pars ys
+  .
+  #[global] Existing Instance t_equiv.
   Notation t_eq := (≡@{t}) (only parsing).
 
-  #[global] Existing Instance t_equiv.
+  Lemma t_refl : Reflexive t_eq.
+  Proof.
+    elim; try by constructor.
+    intros xs Hxs%list_all_Forall_1%Forall_Forall2_diag.
+    by apply seqs_proper_.
+  Qed.
+
+  Lemma t_sym : Symmetric t_eq.
+  Proof.
+    elim.
+    { by inversion 1; constructor. }
+    { by inversion 1; constructor. }
+    all: intros xs Hxs%list_all_Forall_1 y; inversion_clear 1; constructor => //.
+    decompose_Forall.
+    naive_solver.
+  Qed.
+
+  Lemma t_trans : Transitive t_eq.
+  Proof.
+    elim; intros *; [ | | intros IHxs%list_all_Forall_1 .. ];
+      inversion_clear 1; inversion_clear 1; constructor; try by etrans.
+    decompose_Forall. naive_solver.
+  Qed.
   #[global] Instance t_equivalence : Equivalence t_eq :=
-    Build_Equivalence _ refl sym trans.
+    Build_Equivalence _ t_refl t_sym t_trans.
+
+  Lemma delete_ref ty p : delete (Tref ty) p ≡ delete (Trv_ref ty) p.
+  Proof. repeat constructor. Qed.
+
+  Lemma pars_rel_pars xs ys :
+    pars_rel (≡) xs ys -> pars xs ≡ pars ys.
+  Proof. intros. by apply pars_proper_comm, rtsc_lr. Qed.
+
+  Lemma pars_proper_ xs ys :
+    Forall2 (≡) xs ys -> pars xs ≡ pars ys.
+  Proof. intros. exact /pars_rel_pars /pars_rel_proper. Qed.
+
+  Lemma pars_perm xs ys :
+    xs ≡ₚ ys -> pars xs ≡ pars ys.
+  Proof. intros. exact /pars_rel_pars /pars_rel_perm. Qed.
+
+  (* Inductive t_equiv : Equiv t := *)
+  (* | refl l : l ≡ l *)
+  (* | sym l r : l ≡ r -> r ≡ l *)
+  (* | trans a b c : a ≡ b -> b ≡ c -> a ≡ c *)
+
+  (* | delete_ref ty p : delete (Tref ty) p ≡ delete (Trv_ref ty) p *)
+
+  (* | seqA x y z : x >*> (y >*> z) ≡ (x >*> y) >*> z *)
+  (* | seq_id_unitL l : 1 >*> l ≡ l *)
+  (* | seq_id_unitR l : l >*> 1 ≡ l *)
+  (* | seq_proper_ : ∀ {a b}, a ≡ b -> ∀ {c d}, c ≡ d -> a >*> c ≡ b >*> d *)
+
+  (* | parC l r : l |*| r ≡ r |*| l *)
+  (* | parA x y z : x |*| (y |*| z) ≡ (x |*| y) |*| z *)
+  (* | par_id_unitL l : 1 |*| l ≡ l *)
+  (* | par_proper_ : ∀ {a b}, a ≡ b -> ∀ {c d}, c ≡ d -> a |*| c ≡ b |*| d *)
+  (* . *)
+  (* Notation t_eq := (≡@{t}) (only parsing). *)
+  #[global] Instance par_comm : Comm equiv par.
+  Proof. intros x y. apply pars_perm. solve_Permutation. Qed.
+  #[global] Instance par_assoc : Assoc equiv par.
+  Proof.
+    intros x y z. rewrite /par.
+    apply pars_proper_comm.
+    etrans.
+    apply rtsc_lr, pars_rel_flatten.
+    etrans; first last.
+    apply rtsc_rl, pars_rel_flatten.
+    by rewrite /= !right_id_L -assoc_L.
+  Qed.
+
+  #[global] Instance par_left_id : LeftId equiv id par.
+  Proof.
+    intros x. rewrite /par.
+    apply pars_proper_comm.
+    etrans.
+    apply rtsc_lr, pars_rel_flatten.
+  #[global] Instance par_right_id : RightId equiv id par.
+
 
   #[global] Instance seq_assoc : Assoc equiv seq := seqA.
   #[global] Instance seq_left_id : LeftId equiv id seq := seq_id_unitL.
@@ -89,17 +249,8 @@ Module FreeTemps.
   Proof. intros x. by rewrite comm left_id. Qed.
   #[global] Instance par_proper : Proper (t_eq ==> t_eq ==> t_eq) par := @par_proper_.
 
-  (**
-  [pars ls] is the [FreeTemp] representing the destruction of each
-  element in [ls] *in non-deterministic order*.
-  *)
   Definition pars : list t -> t := foldr par 1.
 
-  (**
-  [seqs ls] is the [FreeTemp] representing the destruction of each
-  element in [ls] sequentially from left-to-right, i.e. the first
-  element in the list is run first.
-  *)
   Definition seqs : list t -> t := foldr seq 1.
 
   (**
