@@ -21,12 +21,10 @@ Require Import skylabs.iris.extra.bi.errors.
 
 #[local] Set Primitive Projections.
 
-(* Module bar. *)
 Scheme All for list.
-(* End bar. *)
-(* Print bar. *)
 
-Lemma list_all_Forall_1 {A : Type} (P : A -> Prop) xs : list_all@{Prop; _ _} A P xs -> List.Forall P xs.
+Lemma list_all_Forall_1 {A : Type} (P : A -> Prop) xs : list_all A P xs -> List.Forall P xs.
+(* Lemma list_all_Forall_1 {A : Type} (P : A -> Prop) xs : list_all@{Prop; _ _} A P xs -> List.Forall P xs. *)
 Proof. by elim; constructor. Qed.
 
 (* Register Scheme Forall_rect as rect_nodep for List.Forall. *)
@@ -122,19 +120,76 @@ Module FreeTemps.
     | ys => pars ys
     end.
 
+  Fixpoint gather_seqs (a : t) : list t :=
+    match a with
+    | seqs xs =>
+      concat (gather_seqs <$> xs)
+    | _ => [a]
+    end.
+
+  Definition collapse_seqs (xs : list t) : t :=
+    match (xs >>= gather_seqs) with
+    | [a] => a
+    | ys => seqs ys
+    end.
+
+  Fixpoint half_canon (x : t) : t :=
+    match x with
+    | pars xs => collapse_pars xs
+    | seqs xs => collapse_seqs xs
+    | _ => x
+    end.
+
   Inductive pars_rel (R : relation t) : relation t :=
   | pars_rel_perm xs ys :
     xs ≡ₚ ys ->
-    pars_rel R xs ys
+    pars_rel R (pars xs) (pars ys)
   | pars_rel_proper xs ys :
     Forall2 R xs ys ->
-    pars_rel R xs ys
-  | pars_rel_flatten xs :
+    pars_rel R (pars xs) (pars ys)
+  | pars_rel_flatten_l xs :
     pars_rel R
-      xs
-      (xs >>= gather_pars)
+      (pars xs)
+      (collapse_pars xs)
+  | pars_rel_flatten_r xs :
+    pars_rel R
+      (collapse_pars xs)
+      (pars xs)
   .
+  Lemma pars_rel_inv R x y :
+    pars_rel R x y -> exists xs, x = pars xs \/ y = pars xs.
+  Proof. inversion 1; eauto. Qed.
 
+
+  Section general.
+    Context `{R : relation A}.
+    Global Instance tc_reflexive : Reflexive R → Reflexive (tc R).
+    Proof. by left. Qed.
+    Global Instance tc_symmetric : Symmetric R → Symmetric (tc R).
+    Proof.
+      intros S ??; induction 1; last trans y; try exact: tc_once; done.
+    Qed.
+  End general.
+
+  Lemma pars_rel_refl R : Reflexive (tc (pars_rel R)).
+    intros ?.
+    trans (pars [x]).
+
+    etrans. 2: { apply tc_once, pars_rel_flatten_r. }
+    rewrite /collapse_pars/=.
+    destruct x; simpl.
+          simpl.
+    (* apply pars_rel_perm. *)
+  Admitted.
+
+  (* Lemma rtsc_pars_rel_inv R x y : *)
+  (*   tc (pars_rel R) x y -> exists xs, x = pars xs \/ y = pars xs. *)
+  (* Proof. *)
+  (*   induction 1. *)
+  (*   exact: pars_rel_inv. *)
+  (*   admit. *)
+
+    (* Print stc. *)
   Inductive t_equiv : Equiv t :=
   (* | refl l : l ≡ l *)
   (* | sym l r : l ≡ r -> r ≡ l *)
@@ -150,9 +205,9 @@ Module FreeTemps.
   | seqs_proper_ xs ys :
     Forall2 (≡) xs ys ->
     seqs xs ≡ seqs ys
-  | pars_proper_comm xs ys :
-    rtsc (pars_rel (≡)) xs ys ->
-    pars xs ≡ pars ys
+  | pars_proper_comm x y :
+    tc (pars_rel (≡)) x y ->
+    x ≡ y
   .
   #[global] Existing Instance t_equiv.
   Notation t_eq := (≡@{t}) (only parsing).
@@ -160,8 +215,10 @@ Module FreeTemps.
   Lemma t_refl : Reflexive t_eq.
   Proof.
     elim; try by constructor.
-    intros xs Hxs%list_all_Forall_1%Forall_Forall2_diag.
+    Set Printing Universes.
+    all: intros xs Hxs%list_all_Forall_1%Forall_Forall2_diag.
     by apply seqs_proper_.
+    apply pars_proper_comm.
   Qed.
 
   Lemma t_sym : Symmetric t_eq.
