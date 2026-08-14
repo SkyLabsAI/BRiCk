@@ -418,7 +418,7 @@ Module compare.
     #[global] Instance lt_trans `{!Comparison (?=)} : Transitive lt.
     Proof. rewrite /lt. intros x y z. apply compare_trans. Qed.
 
-    Lemma compare `{!Comparison (?=)} x y : OrderedType.Compare lt eq x y.
+    Lemma ordered_type_compare `{!Comparison (?=)} x y : OrderedType.Compare lt eq x y.
     Proof.
       rewrite /lt/eq. destruct (x ?= y) eqn:Hc; try by constructor.
       apply OrderedType.GT. by rewrite compare_antisym Hc.
