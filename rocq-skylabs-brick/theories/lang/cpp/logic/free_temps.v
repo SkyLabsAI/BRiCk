@@ -79,7 +79,20 @@ Module FreeTemps.
     | par_proper_ : ∀ {a b}, a ≡ b -> ∀ {c d}, c ≡ d -> a |*| c ≡ b |*| d
     .
     Notation t_eq := (≡@{t}) (only parsing).
-    Existing Instance t_equiv.
+    #[global] Existing Instance t_equiv.
+    #[global] Instance t_equivalence : Equivalence t_eq :=
+      Build_Equivalence _ refl sym trans.
+
+    #[global] Instance seq_assoc : Assoc equiv seq := seqA.
+    #[global] Instance seq_left_id : LeftId equiv id seq := seq_id_unitL.
+    #[global] Instance seq_right_id : RightId equiv id seq := seq_id_unitR.
+    #[global] Instance seq_proper : Proper (t_eq ==> t_eq ==> t_eq) seq := @seq_proper_.
+
+    #[global] Instance par_comm : Comm equiv par := parC.
+    #[global] Instance par_left_id : LeftId equiv id par := par_id_unitL.
+    #[global] Instance par_right_id : RightId equiv id par.
+    Proof. intros x. by rewrite comm left_id. Qed.
+    #[global] Instance par_proper : Proper (t_eq ==> t_eq ==> t_eq) par := @par_proper_.
 
     Fixpoint seq_canon (a b : t) {struct a} : t :=
       match a , b with
@@ -233,21 +246,6 @@ Module FreeTemps.
 
     #[global] Instance canon_IsCanonical free : IsCanonical (canon free).
     Proof. Admitted.
-
-    #[global] Existing Instance t_equiv.
-    #[global] Instance t_equivalence : Equivalence t_eq :=
-      Build_Equivalence _ refl sym trans.
-
-    #[global] Instance seq_assoc : Assoc equiv seq := seqA.
-    #[global] Instance seq_left_id : LeftId equiv id seq := seq_id_unitL.
-    #[global] Instance seq_right_id : RightId equiv id seq := seq_id_unitR.
-    #[global] Instance seq_proper : Proper (t_eq ==> t_eq ==> t_eq) seq := @seq_proper_.
-
-    #[global] Instance par_comm : Comm equiv par := parC.
-    #[global] Instance par_left_id : LeftId equiv id par := par_id_unitL.
-    #[global] Instance par_right_id : RightId equiv id par.
-    Proof. intros x. by rewrite comm left_id. Qed.
-    #[global] Instance par_proper : Proper (t_eq ==> t_eq ==> t_eq) par := @par_proper_.
 End FreeTemps.
 Export FreeTemps.notations.
 Notation FreeTemps := FreeTemps.t.
