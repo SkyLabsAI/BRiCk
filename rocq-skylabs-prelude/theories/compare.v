@@ -87,9 +87,6 @@ Module LeibnizComparison.
         by case: (cmp a a).
       Qed.
 
-      Lemma comparison_not_eq {a b} : cmp a b <> Eq -> a <> b.
-      Proof. intros NE ->. by rewrite comparison_refl in NE. Qed.
-
       (* TODO: make instance? *)
       #[program] Definition from_comparison {LC : C cmp} : EqDecision A := fun l r =>
         match cmp l r as C return cmp l r = C -> _ with
