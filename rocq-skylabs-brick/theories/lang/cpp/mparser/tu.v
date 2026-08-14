@@ -80,6 +80,21 @@ Module Import Mtranslation_unit.
 End Mtranslation_unit.
 #[local] Notation K := Mtranslation_unit.t (only parsing).
 
+Definition Dtemplated_obj_value
+    (n : Mname) (v : template MObjValue) : K :=
+  Mtranslation_unit._symbols <[n := v]>.
+
+Definition Dtemplated_glob_decl
+    (n : Mname) (v : template MGlobDecl) : K :=
+  Mtranslation_unit._types <[n := v]>.
+
+Definition Dtemplated_type_alias
+    (n : Mname) (v : template Mtype) : K :=
+  Mtranslation_unit._aliases <[n := v]>.
+
+Definition Dtemplate_preinst (n : name) (v : Mtpreinst) : K :=
+  Mtranslation_unit._instances <[n := v]>.
+
 #[local] Notation Mtemp_params := (list (Mtemp_param * option temp_arg)).
 
 Definition Dtemplated_variable (ps : Mtemp_params) (n : Mname) (t : Mtype) (init : global_init.t) : K :=

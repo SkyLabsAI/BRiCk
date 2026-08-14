@@ -1,0 +1,476 @@
+/*
+ * Mechanical constructor registry.
+ *
+ * IR_CONSTRUCTOR(enum name, Rocq spelling, category, root mask descriptor,
+ *                real/test-only descriptor, named shape descriptor)
+ *
+ * Keep semantic lowering and the readable shape descriptor definitions in C++.
+ *
+ * AST-evolution rule: adding, removing, or reordering a recursive BRiCk field
+ * changes the public location-path ABI. Update this entry's lossless shape,
+ * its checked factory, Arena::children expectations, path documentation, and
+ * affected lookup fixtures together. Scalar/container syntax adds no path node.
+ */
+IR_CONSTRUCTOR(AtomicIdentifier, "Nid", AtomicName, NoRoots, Real,
+               atomicIdentifierShape)
+IR_CONSTRUCTOR(AtomicAnonymousIndex, "Nanon", AtomicName, NoRoots, Real,
+               atomicAnonymousIndexShape)
+IR_CONSTRUCTOR(AtomicAnonymousNamespace, "Nanonymous", AtomicName, NoRoots,
+               Real, noArgumentsShape)
+IR_CONSTRUCTOR(AtomicFirstDeclaration, "Nfirst_decl", AtomicName, NoRoots, Real,
+               atomicIdentifierShape)
+IR_CONSTRUCTOR(AtomicFirstChild, "Nfirst_child", AtomicName, NoRoots, Real,
+               atomicIdentifierShape)
+IR_CONSTRUCTOR(AtomicUnsupported, "Nunsupported_atomic", AtomicName, NoRoots,
+               Real, atomicIdentifierShape)
+IR_CONSTRUCTOR(AtomicFunction, "core.Nfunction", AtomicName, NoRoots, Real,
+               atomicFunctionShape)
+IR_CONSTRUCTOR(AtomicConstructor, "core.Nctor", AtomicName, NoRoots, Real,
+               atomicConstructorShape)
+IR_CONSTRUCTOR(AtomicDestructor, "Ndtor", AtomicName, NoRoots, Real,
+               noArgumentsShape)
+IR_CONSTRUCTOR(AtomicOperator, "core.Nop", AtomicName, NoRoots, Real,
+               atomicOperatorShape)
+IR_CONSTRUCTOR(AtomicNewOperator, "core.Nop", AtomicName, NoRoots, Real,
+               atomicNewOperatorShape)
+IR_CONSTRUCTOR(AtomicDeleteOperator, "core.Nop", AtomicName, NoRoots, Real,
+               atomicDeleteOperatorShape)
+IR_CONSTRUCTOR(AtomicConversion, "Nop_conv", AtomicName, NoRoots, Real,
+               atomicConversionShape)
+IR_CONSTRUCTOR(AtomicLiteralOperator, "core.Nop_lit", AtomicName, NoRoots, Real,
+               atomicLiteralOperatorShape)
+IR_CONSTRUCTOR(NameFromAtomic, "Nglobal", Name, NoRoots, Real, globalNameShape)
+IR_CONSTRUCTOR(NameScoped, "Nscoped", Name, NoRoots, Real, scopedNameShape)
+IR_CONSTRUCTOR(NameInstantiation, "Ninst", Name, NoRoots, Real,
+               nameInstantiationShape)
+IR_CONSTRUCTOR(NameDependent, "core.Ndependent", Name, NoRoots, Real,
+               nameDependentShape)
+IR_CONSTRUCTOR(NameUnsupported, "Nunsupported", Name, NoRoots, Real,
+               atomicIdentifierShape)
+IR_CONSTRUCTOR(TypeNamed, "Tnamed", Type, NoRoots, Real, namedTypeShape)
+IR_CONSTRUCTOR(TypeEnum, "Tenum", Type, NoRoots, Real, namedTypeShape)
+IR_CONSTRUCTOR(TypeParameter, "Tparam", Type, NoRoots, Real,
+               atomicIdentifierShape)
+IR_CONSTRUCTOR(TypeResultGlobal, "Tresult_global", Type, NoRoots, Real,
+               unaryNameShape)
+IR_CONSTRUCTOR(TypeResultCall, "Tresult_call", Type, NoRoots, Real,
+               resultCallTypeShape)
+IR_CONSTRUCTOR(TypeResultUnarySyntax, "Tresult_unop", Type, NoRoots, Real,
+               resultUnarySyntaxTypeShape)
+IR_CONSTRUCTOR(TypeResultMember, "Tresult_member", Type, NoRoots, Real,
+               resultMemberTypeShape)
+IR_CONSTRUCTOR(TypeNumber, "Tnum", Type, NoRoots, Real, typeNumberShape)
+IR_CONSTRUCTOR(TypeCharacter, "Tchar_", Type, NoRoots, Real,
+               typeLeafSymbolShape)
+IR_CONSTRUCTOR(TypeVoid, "Tvoid", Type, NoRoots, Real, noArgumentsShape)
+IR_CONSTRUCTOR(TypeBoolean, "Tbool", Type, NoRoots, Real, noArgumentsShape)
+IR_CONSTRUCTOR(TypeNullPointer, "Tnullptr", Type, NoRoots, Real,
+               noArgumentsShape)
+IR_CONSTRUCTOR(TypeFloat, "Tfloat_", Type, NoRoots, Real, typeLeafSymbolShape)
+IR_CONSTRUCTOR(TypeAuto, "Tauto", Type, NoRoots, Real, noArgumentsShape)
+IR_CONSTRUCTOR(TypePointer, "Tptr", Type, NoRoots, Real, unaryTypeShape)
+IR_CONSTRUCTOR(TypeLvalueReference, "Tref", Type, NoRoots, Real, unaryTypeShape)
+IR_CONSTRUCTOR(TypeRvalueReference, "Trv_ref", Type, NoRoots, Real,
+               unaryTypeShape)
+IR_CONSTRUCTOR(TypeArray, "Tarray", Type, NoRoots, Real, typeArrayShape)
+IR_CONSTRUCTOR(TypeIncompleteArray, "Tincomplete_array", Type, NoRoots, Real,
+               unaryTypeShape)
+IR_CONSTRUCTOR(TypeVariableArray, "Tvariable_array", Type, NoRoots, Real,
+               typeVariableArrayShape)
+IR_CONSTRUCTOR(TypeQualified, "Tqualified", Type, NoRoots, Real,
+               typeQualifiedShape)
+IR_CONSTRUCTOR(TypeFunction, "core.Tfunction", Type, NoRoots, Real,
+               typeFunctionShape)
+IR_CONSTRUCTOR(TypeMemberPointer, "Tmember_pointer", Type, NoRoots, Real,
+               binaryTypeShape)
+IR_CONSTRUCTOR(TypeDecltype, "Tdecltype", Type, NoRoots, Real,
+               unaryExpressionTypeShape)
+IR_CONSTRUCTOR(TypeExpressionType, "Texprtype", Type, NoRoots, Real,
+               unaryExpressionTypeShape)
+IR_CONSTRUCTOR(TypeArchitecture, "Tarch", Type, NoRoots, Real,
+               typeArchitectureShape)
+IR_CONSTRUCTOR(TypeUnsupported, "Tunsupported", Type, NoRoots, Real,
+               atomicIdentifierShape)
+IR_CONSTRUCTOR(ExpressionInteger, "Eint", Expression, NoRoots, Real,
+               integerExpressionShape)
+IR_CONSTRUCTOR(ExpressionBoolean, "Ebool", Expression, NoRoots, Real,
+               booleanExpressionShape)
+IR_CONSTRUCTOR(ExpressionString, "core.Estring", Expression, NoRoots, Real,
+               stringExpressionShape)
+IR_CONSTRUCTOR(ExpressionCharacter, "Echar", Expression, NoRoots, Real,
+               characterExpressionShape)
+IR_CONSTRUCTOR(ExpressionFloat, "Efloat", Expression, NoRoots, Real,
+               floatExpressionShape)
+IR_CONSTRUCTOR(ExpressionUnsupported, "Eunsupported", Expression, NoRoots, Real,
+               unsupportedExpressionShape)
+IR_CONSTRUCTOR(ExpressionUnresolvedString, "Eunresolved_string_literal",
+               Expression, NoRoots, Real, unaryTypeShape)
+IR_CONSTRUCTOR(ExpressionNull, "Enull", Expression, NoRoots, Real,
+               noArgumentsShape)
+IR_CONSTRUCTOR(ExpressionParameter, "Eparam", Expression, NoRoots, Real,
+               atomicIdentifierShape)
+IR_CONSTRUCTOR(ExpressionGlobal, "Eglobal", Expression, NoRoots, Real,
+               globalExpressionShape)
+IR_CONSTRUCTOR(ExpressionUnresolvedGlobal, "Eunresolved_global", Expression,
+               NoRoots, Real, unaryNameShape)
+IR_CONSTRUCTOR(ExpressionGlobalMember, "Eglobal_member", Expression, NoRoots,
+               Real, globalExpressionShape)
+IR_CONSTRUCTOR(ExpressionEnumConstant, "Eenum_const", Expression, NoRoots, Real,
+               enumConstantExpressionShape)
+IR_CONSTRUCTOR(ExpressionAddressOf, "Eaddrof", Expression, NoRoots, Real,
+               statementExpressionShape)
+IR_CONSTRUCTOR(ExpressionLocalNamed, "Evar", Expression, NoRoots, Real,
+               localNamedExpressionShape)
+IR_CONSTRUCTOR(ExpressionLocalAnonymous, "Evar", Expression, NoRoots, Real,
+               localAnonymousExpressionShape)
+IR_CONSTRUCTOR(ExpressionUnary, "core.Eunop", Expression, NoRoots, Real,
+               unaryOperatorExpressionShape)
+IR_CONSTRUCTOR(ExpressionUnsupportedUnary, "core.Eunop", Expression, NoRoots,
+               Real, unsupportedUnaryOperatorExpressionShape)
+IR_CONSTRUCTOR(ExpressionUnresolvedUnary, "Eunresolved_unop", Expression,
+               NoRoots, Real, unresolvedUnaryExpressionShape)
+IR_CONSTRUCTOR(ExpressionUnresolvedUnsupportedUnary, "Eunresolved_unop",
+               Expression, NoRoots, Real,
+               unresolvedUnsupportedUnaryExpressionShape)
+IR_CONSTRUCTOR(ExpressionUnresolvedUnarySyntax, "Eunresolved_unop", Expression,
+               NoRoots, Real, unresolvedUnarySyntaxExpressionShape)
+IR_CONSTRUCTOR(ExpressionUnresolvedBinary, "Eunresolved_binop", Expression,
+               NoRoots, Real, unresolvedBinaryExpressionShape)
+IR_CONSTRUCTOR(ExpressionUnresolvedBinarySyntax, "Eunresolved_binop",
+               Expression, NoRoots, Real, unresolvedBinarySyntaxExpressionShape)
+IR_CONSTRUCTOR(ExpressionUnresolvedCompoundAssignment, "Eunresolved_binop",
+               Expression, NoRoots, Real,
+               unresolvedCompoundAssignmentExpressionShape)
+IR_CONSTRUCTOR(ExpressionDeref, "core.Ederef", Expression, NoRoots, Real,
+               unaryExpressionNoOperationShape)
+IR_CONSTRUCTOR(ExpressionAssign, "core.Eassign", Expression, NoRoots, Real,
+               assignmentExpressionShape)
+IR_CONSTRUCTOR(ExpressionAssignOp, "core.Eassign_op", Expression, NoRoots, Real,
+               binaryExpressionShape)
+IR_CONSTRUCTOR(ExpressionPreIncrement, "core.Epreinc", Expression, NoRoots,
+               Real, unaryExpressionNoOperationShape)
+IR_CONSTRUCTOR(ExpressionPostIncrement, "core.Epostinc", Expression, NoRoots,
+               Real, unaryExpressionNoOperationShape)
+IR_CONSTRUCTOR(ExpressionPreDecrement, "core.Epredec", Expression, NoRoots,
+               Real, unaryExpressionNoOperationShape)
+IR_CONSTRUCTOR(ExpressionPostDecrement, "core.Epostdec", Expression, NoRoots,
+               Real, unaryExpressionNoOperationShape)
+IR_CONSTRUCTOR(ExpressionSequenceAnd, "core.Eseqand", Expression, NoRoots, Real,
+               binaryExpressionNoTypeShape)
+IR_CONSTRUCTOR(ExpressionSequenceOr, "core.Eseqor", Expression, NoRoots, Real,
+               binaryExpressionNoTypeShape)
+IR_CONSTRUCTOR(ExpressionComma, "core.Ecomma", Expression, NoRoots, Real,
+               binaryExpressionNoTypeShape)
+IR_CONSTRUCTOR(ExpressionSubscript, "core.Esubscript", Expression, NoRoots,
+               Real, subscriptExpressionShape)
+IR_CONSTRUCTOR(ExpressionSizeofType, "core.Esizeof", Expression, NoRoots, Real,
+               traitTypeExpressionShape)
+IR_CONSTRUCTOR(ExpressionSizeofExpression, "core.Esizeof", Expression, NoRoots,
+               Real, traitExpressionExpressionShape)
+IR_CONSTRUCTOR(ExpressionAlignofType, "core.Ealignof", Expression, NoRoots,
+               Real, traitTypeExpressionShape)
+IR_CONSTRUCTOR(ExpressionAlignofExpression, "core.Ealignof", Expression,
+               NoRoots, Real, traitExpressionExpressionShape)
+IR_CONSTRUCTOR(ExpressionUnresolvedSizeofPack, "Eunresolved_sizeof_pack",
+               Expression, NoRoots, Real, unresolvedSizeofPackShape)
+IR_CONSTRUCTOR(ExpressionCall, "core.Ecall", Expression, NoRoots, Real,
+               callExpressionShape)
+IR_CONSTRUCTOR(ExpressionUnresolvedCall, "core.Eunresolved_call", Expression,
+               NoRoots, Real, unresolvedCallExpressionShape)
+IR_CONSTRUCTOR(ExpressionMember, "core.Emember", Expression, NoRoots, Real,
+               memberExpressionShape)
+IR_CONSTRUCTOR(ExpressionMemberIgnore, "core.Emember_ignore", Expression,
+               NoRoots, Real, memberIgnoreExpressionShape)
+IR_CONSTRUCTOR(ExpressionUnresolvedMember, "core.Eunresolved_member",
+               Expression, NoRoots, Real, unresolvedMemberExpressionShape)
+IR_CONSTRUCTOR(ExpressionMemberCallDirect, "core.Emember_call", Expression,
+               NoRoots, Real, directMemberCallExpressionShape)
+IR_CONSTRUCTOR(ExpressionMemberCallPointer, "core.Emember_call", Expression,
+               NoRoots, Real, pointerMemberCallExpressionShape)
+IR_CONSTRUCTOR(ExpressionOperatorCallFunction, "core.Eoperator_call",
+               Expression, NoRoots, Real, functionOperatorCallExpressionShape)
+IR_CONSTRUCTOR(ExpressionOperatorCallMethod, "core.Eoperator_call", Expression,
+               NoRoots, Real, methodOperatorCallExpressionShape)
+IR_CONSTRUCTOR(ExpressionThis, "Ethis", Expression, NoRoots, Real,
+               unaryTypeShape)
+IR_CONSTRUCTOR(ExpressionImplicit, "Eimplicit", Expression, NoRoots, Real,
+               statementExpressionShape)
+IR_CONSTRUCTOR(ExpressionConstructor, "Econstructor", Expression, NoRoots, Real,
+               constructorExpressionShape)
+IR_CONSTRUCTOR(ExpressionInheritedConstructor, "Einherited_constructor",
+               Expression, NoRoots, Real, inheritedConstructorExpressionShape)
+IR_CONSTRUCTOR(ExpressionUnresolvedParenList, "Eunresolved_parenlist",
+               Expression, NoRoots, Real, unresolvedInitializerListShape)
+IR_CONSTRUCTOR(ExpressionUnresolvedInitList, "Eunresolved_initlist", Expression,
+               NoRoots, Real, unresolvedInitializerListShape)
+IR_CONSTRUCTOR(ExpressionInitList, "Einitlist", Expression, NoRoots, Real,
+               initListExpressionShape)
+IR_CONSTRUCTOR(ExpressionInitListUnion, "Einitlist_union", Expression, NoRoots,
+               Real, unionInitListExpressionShape)
+IR_CONSTRUCTOR(ExpressionAndClean, "Eandclean", Expression, NoRoots, Real,
+               statementExpressionShape)
+IR_CONSTRUCTOR(ExpressionMaterializeTemporary, "Ematerialize_temp", Expression,
+               NoRoots, Real, materializeTemporaryExpressionShape)
+IR_CONSTRUCTOR(ExpressionImplicitInit, "Eimplicit_init", Expression, NoRoots,
+               Real, unaryTypeShape)
+IR_CONSTRUCTOR(ExpressionArrayLoopInit, "Earrayloop_init", Expression, NoRoots,
+               Real, arrayLoopInitExpressionShape)
+IR_CONSTRUCTOR(ExpressionArrayLoopIndex, "Earrayloop_index", Expression,
+               NoRoots, Real, arrayLoopIndexExpressionShape)
+IR_CONSTRUCTOR(ExpressionOpaqueReference, "Eopaque_ref", Expression, NoRoots,
+               Real, arrayLoopIndexExpressionShape)
+IR_CONSTRUCTOR(ExpressionNewAllocating, "Enew", Expression, NoRoots, Real,
+               allocatingNewExpressionShape)
+IR_CONSTRUCTOR(ExpressionNewNonAllocating, "Enew", Expression, NoRoots, Real,
+               nonAllocatingNewExpressionShape)
+IR_CONSTRUCTOR(ExpressionDelete, "Edelete", Expression, NoRoots, Real,
+               deleteExpressionShape)
+IR_CONSTRUCTOR(ExpressionAllocationOperatorCallFunctionNew,
+               "core.Eoperator_call", Expression, NoRoots, Real,
+               functionNewOperatorCallExpressionShape)
+IR_CONSTRUCTOR(ExpressionAllocationOperatorCallFunctionDelete,
+               "core.Eoperator_call", Expression, NoRoots, Real,
+               functionDeleteOperatorCallExpressionShape)
+IR_CONSTRUCTOR(ExpressionAllocationOperatorCallMethodNew, "core.Eoperator_call",
+               Expression, NoRoots, Real, methodNewOperatorCallExpressionShape)
+IR_CONSTRUCTOR(ExpressionAllocationOperatorCallMethodDelete,
+               "core.Eoperator_call", Expression, NoRoots, Real,
+               methodDeleteOperatorCallExpressionShape)
+IR_CONSTRUCTOR(ExpressionAtomic, "Eatomic", Expression, NoRoots, Real,
+               atomicExpressionShape)
+IR_CONSTRUCTOR(ExpressionVaArg, "Eva_arg", Expression, NoRoots, Real,
+               vaArgExpressionShape)
+IR_CONSTRUCTOR(ExpressionLambda, "Elambda", Expression, NoRoots, Real,
+               lambdaExpressionShape)
+IR_CONSTRUCTOR(ExpressionConditional, "Eif", Expression, NoRoots, Real,
+               conditionalExpressionShape)
+IR_CONSTRUCTOR(ExpressionBinaryConditional, "Eif2", Expression, NoRoots, Real,
+               binaryConditionalExpressionShape)
+IR_CONSTRUCTOR(ExpressionOffsetOf, "Eoffsetof", Expression, NoRoots, Real,
+               offsetOfExpressionShape)
+IR_CONSTRUCTOR(ExpressionStatementBlock, "Estmt", Expression, NoRoots, Real,
+               statementBlockExpressionShape)
+IR_CONSTRUCTOR(ExpressionPseudoDestructor, "Epseudo_destructor", Expression,
+               NoRoots, Real, pseudoDestructorExpressionShape)
+IR_CONSTRUCTOR(CastDependent, "Cdependent", Cast, NoRoots, Real, unaryTypeShape)
+IR_CONSTRUCTOR(CastBit, "Cbitcast", Cast, NoRoots, Real, unaryTypeShape)
+IR_CONSTRUCTOR(CastLvalueBit, "Clvaluebitcast", Cast, NoRoots, Real,
+               unaryTypeShape)
+IR_CONSTRUCTOR(CastLvalueToRvalue, "Cl2r", Cast, NoRoots, Real,
+               noArgumentsShape)
+IR_CONSTRUCTOR(CastLvalueToRvalueBit, "Cl2r_bitcast", Cast, NoRoots, Real,
+               unaryTypeShape)
+IR_CONSTRUCTOR(CastNoOp, "Cnoop", Cast, NoRoots, Real, unaryTypeShape)
+IR_CONSTRUCTOR(CastArrayToPointer, "Carray2ptr", Cast, NoRoots, Real,
+               noArgumentsShape)
+IR_CONSTRUCTOR(CastFunctionToPointer, "Cfun2ptr", Cast, NoRoots, Real,
+               noArgumentsShape)
+IR_CONSTRUCTOR(CastIntegralToPointer, "Cint2ptr", Cast, NoRoots, Real,
+               unaryTypeShape)
+IR_CONSTRUCTOR(CastPointerToIntegral, "Cptr2int", Cast, NoRoots, Real,
+               unaryTypeShape)
+IR_CONSTRUCTOR(CastPointerToBoolean, "Cptr2bool", Cast, NoRoots, Real,
+               noArgumentsShape)
+IR_CONSTRUCTOR(CastIntegral, "Cintegral", Cast, NoRoots, Real, unaryTypeShape)
+IR_CONSTRUCTOR(CastIntegralToBoolean, "Cint2bool", Cast, NoRoots, Real,
+               noArgumentsShape)
+IR_CONSTRUCTOR(CastFloatingToBoolean, "Cfloat2bool", Cast, NoRoots, Real,
+               noArgumentsShape)
+IR_CONSTRUCTOR(CastNullToPointer, "Cnull2ptr", Cast, NoRoots, Real,
+               unaryTypeShape)
+IR_CONSTRUCTOR(CastNullToMemberPointer, "Cnull2memberptr", Cast, NoRoots, Real,
+               unaryTypeShape)
+IR_CONSTRUCTOR(CastBuiltinToFunction, "Cbuiltin2fun", Cast, NoRoots, Real,
+               unaryTypeShape)
+IR_CONSTRUCTOR(CastConstructorConversion, "Cctor", Cast, NoRoots, Real,
+               unaryTypeShape)
+IR_CONSTRUCTOR(CastUserDefinedConversion, "Cuser", Cast, NoRoots, Real,
+               noArgumentsShape)
+IR_CONSTRUCTOR(CastToVoid, "C2void", Cast, NoRoots, Real, noArgumentsShape)
+IR_CONSTRUCTOR(CastDynamic, "Cdynamic", Cast, NoRoots, Real, unaryTypeShape)
+IR_CONSTRUCTOR(CastFloatingToIntegral, "Cfloat2int", Cast, NoRoots, Real,
+               unaryTypeShape)
+IR_CONSTRUCTOR(CastIntegralToFloating, "Cint2float", Cast, NoRoots, Real,
+               unaryTypeShape)
+IR_CONSTRUCTOR(CastFloating, "Cfloat", Cast, NoRoots, Real, unaryTypeShape)
+IR_CONSTRUCTOR(CastDerivedToBase, "Cderived2base", Cast, NoRoots, Real,
+               pathCastShape)
+IR_CONSTRUCTOR(CastBaseToDerived, "Cbase2derived", Cast, NoRoots, Real,
+               pathCastShape)
+IR_CONSTRUCTOR(CastUnsupported, "Cunsupported", Cast, NoRoots, Real,
+               unsupportedCastShape)
+IR_CONSTRUCTOR(ExpressionCast, "Ecast", Expression, NoRoots, Real,
+               castExpressionShape)
+IR_CONSTRUCTOR(ExpressionExplicitCast, "Eexplicit_cast", Expression, NoRoots,
+               Real, explicitCastExpressionShape)
+IR_CONSTRUCTOR(ExpressionBinary, "core.Ebinop", Expression, NoRoots, Real,
+               binaryExpressionShape)
+IR_CONSTRUCTOR(StatementExpression, "Sexpr", Statement, NoRoots, Real,
+               statementExpressionShape)
+IR_CONSTRUCTOR(StatementReturn, "Sreturn", Statement, NoRoots, Real,
+               statementReturnShape)
+IR_CONSTRUCTOR(StatementSequence, "Sseq", Statement, NoRoots, Real,
+               statementSequenceShape)
+IR_CONSTRUCTOR(StatementDeclaration, "Sdecl", Statement, NoRoots, Real,
+               statementDeclarationShape)
+IR_CONSTRUCTOR(StatementIf, "Sif", Statement, NoRoots, Real, statementIfShape)
+IR_CONSTRUCTOR(StatementIfConsteval, "Sif_consteval", Statement, NoRoots, Real,
+               statementIfConstevalShape)
+IR_CONSTRUCTOR(StatementWhile, "Swhile", Statement, NoRoots, Real,
+               statementWhileShape)
+IR_CONSTRUCTOR(StatementFor, "Sfor", Statement, NoRoots, Real,
+               statementForShape)
+IR_CONSTRUCTOR(StatementDo, "Sdo", Statement, NoRoots, Real, statementDoShape)
+IR_CONSTRUCTOR(StatementSwitch, "Sswitch", Statement, NoRoots, Real,
+               statementSwitchShape)
+IR_CONSTRUCTOR(StatementCase, "Scase", Statement, NoRoots, Real,
+               statementCaseShape)
+IR_CONSTRUCTOR(StatementDefault, "Sdefault", Statement, NoRoots, Real,
+               noArgumentsShape)
+IR_CONSTRUCTOR(StatementBreak, "Sbreak", Statement, NoRoots, Real,
+               noArgumentsShape)
+IR_CONSTRUCTOR(StatementContinue, "Scontinue", Statement, NoRoots, Real,
+               noArgumentsShape)
+IR_CONSTRUCTOR(StatementAttribute, "Sattr", Statement, NoRoots, Real,
+               statementAttributeShape)
+IR_CONSTRUCTOR(StatementAsm, "Sasm", Statement, NoRoots, Real,
+               statementAsmShape)
+IR_CONSTRUCTOR(StatementLabeled, "Slabeled", Statement, NoRoots, Real,
+               statementLabeledShape)
+IR_CONSTRUCTOR(StatementGoto, "Sgoto", Statement, NoRoots, Real,
+               atomicIdentifierShape)
+IR_CONSTRUCTOR(StatementUnsupported, "Sunsupported", Statement, NoRoots, Real,
+               atomicIdentifierShape)
+IR_CONSTRUCTOR(VariableDeclaration, "Dvar", VariableDeclaration, NoRoots, Real,
+               variableDeclarationShape)
+IR_CONSTRUCTOR(VariableDecomposition, "Ddecompose", VariableDeclaration,
+               NoRoots, Real, variableDecompositionShape)
+IR_CONSTRUCTOR(VariableStaticInit, "Dinit", VariableDeclaration, NoRoots, Real,
+               variableStaticInitShape)
+IR_CONSTRUCTOR(BindingVariable, "Bvar", BindingDeclaration, NoRoots, Real,
+               bindingDeclarationShape)
+IR_CONSTRUCTOR(BindingReference, "Bbind", BindingDeclaration, NoRoots, Real,
+               bindingDeclarationShape)
+IR_CONSTRUCTOR(TemplateParameterType, "Ptype", TemplateParameter, NoRoots, Real,
+               templateParameterTypeShape)
+IR_CONSTRUCTOR(TemplateParameterValue, "Pvalue", TemplateParameter, NoRoots,
+               Real, templateParameterValueShape)
+IR_CONSTRUCTOR(TemplateParameterTemplate, "Ptemplate", TemplateParameter,
+               NoRoots, Real, templateParameterTemplateShape)
+IR_CONSTRUCTOR(TemplateParameterUnsupported, "Punsupported", TemplateParameter,
+               NoRoots, Real, atomicIdentifierShape)
+IR_CONSTRUCTOR(TemplateArgumentType, "Atype", TemplateArgument, NoRoots, Real,
+               templateArgumentTypeShape)
+IR_CONSTRUCTOR(TemplateArgumentValue, "Avalue", TemplateArgument, NoRoots, Real,
+               templateArgumentValueShape)
+IR_CONSTRUCTOR(TemplateArgumentPack, "Apack", TemplateArgument, NoRoots, Real,
+               templateArgumentPackShape)
+IR_CONSTRUCTOR(TemplateArgumentTemplate, "Atemplate", TemplateArgument, NoRoots,
+               Real, templateArgumentTemplateShape)
+IR_CONSTRUCTOR(TemplateArgumentTemplateParameter, "Atemplate_param",
+               TemplateArgument, NoRoots, Real, templateParameterTypeShape)
+IR_CONSTRUCTOR(TemplateArgumentUnsupported, "Aunsupported", TemplateArgument,
+               NoRoots, Real, atomicIdentifierShape)
+IR_CONSTRUCTOR(GlobalInitExpression, "global_init.Init", GlobalInitializer,
+               NoRoots, Real, globalInitExpressionShape)
+IR_CONSTRUCTOR(GlobalInitImplicit, "global_init.ImplicitInit",
+               GlobalInitializer, NoRoots, Real, emptyShape)
+IR_CONSTRUCTOR(GlobalInitNone, "global_init.NoInit", GlobalInitializer, NoRoots,
+               Real, emptyShape)
+IR_CONSTRUCTOR(GlobalInitDelayed, "global_init.Delayed", GlobalInitializer,
+               NoRoots, Real, emptyShape)
+IR_CONSTRUCTOR(GlobalInitExtern, "global_init.Extern", GlobalInitializer,
+               NoRoots, Real, emptyShape)
+IR_CONSTRUCTOR(FunctionBodyImplementation, "Impl", FunctionBody, NoRoots, Real,
+               functionBodyImplementationShape)
+IR_CONSTRUCTOR(FunctionBodyBuiltin, "Builtin", FunctionBody, NoRoots, Real,
+               functionBodyBuiltinShape)
+IR_CONSTRUCTOR(DefaultStatementBodyDefaulted, "Defaulted", DefaultStatementBody,
+               NoRoots, Real, emptyShape)
+IR_CONSTRUCTOR(DefaultStatementBodyCompilerProvided, "CompilerProvided",
+               DefaultStatementBody, NoRoots, Real, defaultStatementBodyShape)
+IR_CONSTRUCTOR(DefaultStatementBodyUserDefined, "UserDefined",
+               DefaultStatementBody, NoRoots, Real, defaultStatementBodyShape)
+IR_CONSTRUCTOR(ConstructorBodyDefaulted, "Defaulted", ConstructorBody, NoRoots,
+               Real, emptyShape)
+IR_CONSTRUCTOR(ConstructorBodyCompilerProvided, "CompilerProvided",
+               ConstructorBody, NoRoots, Real, constructorBodyShape)
+IR_CONSTRUCTOR(ConstructorBodyUserDefined, "UserDefined", ConstructorBody,
+               NoRoots, Real, constructorBodyShape)
+IR_CONSTRUCTOR(FunctionRecord, "Build_Func", Function, NoRoots, Real,
+               functionRecordShape)
+IR_CONSTRUCTOR(MethodRecord, "Build_Method", Method, NoRoots, Real,
+               methodRecordShape)
+IR_CONSTRUCTOR(InitializerBasePath, "InitBase", InitializerPath, NoRoots, Real,
+               initializerBasePathShape)
+IR_CONSTRUCTOR(InitializerFieldPath, "InitField", InitializerPath, NoRoots,
+               Real, initializerFieldPathShape)
+IR_CONSTRUCTOR(InitializerThisPath, "InitThis", InitializerPath, NoRoots, Real,
+               emptyShape)
+IR_CONSTRUCTOR(InitializerRecord, "Build_Initializer", Initializer, NoRoots,
+               Real, initializerRecordShape)
+IR_CONSTRUCTOR(ConstructorRecord, "Build_Ctor", Constructor, NoRoots, Real,
+               constructorRecordShape)
+IR_CONSTRUCTOR(DestructorRecord, "Build_Dtor", Destructor, NoRoots, Real,
+               destructorRecordShape)
+IR_CONSTRUCTOR(LayoutInfoRecord, "Build_LayoutInfo", LayoutInfo, NoRoots, Real,
+               layoutInfoShape)
+IR_CONSTRUCTOR(MemberRecord, "mkMember", Member, NoRoots, Real,
+               memberRecordShape)
+IR_CONSTRUCTOR(StructRecord, "Build_Struct", Struct, NoRoots, Real,
+               structRecordShape)
+IR_CONSTRUCTOR(UnionRecord, "Build_Union", Union, NoRoots, Real,
+               unionRecordShape)
+IR_CONSTRUCTOR(ObjectVariable, "Ovar", ObjectValue, SymbolRoot, Real,
+               objectVariableShape)
+IR_CONSTRUCTOR(ObjectFunction, "Ofunction", ObjectValue, SymbolRoot, Real,
+               objectFunctionShape)
+IR_CONSTRUCTOR(ObjectMethod, "Omethod", ObjectValue, SymbolRoot, Real,
+               objectMethodShape)
+IR_CONSTRUCTOR(ObjectConstructor, "Oconstructor", ObjectValue, SymbolRoot, Real,
+               objectConstructorShape)
+IR_CONSTRUCTOR(ObjectDestructor, "Odestructor", ObjectValue, SymbolRoot, Real,
+               objectDestructorShape)
+IR_CONSTRUCTOR(GlobalType, "Gtype", GlobalDeclaration, TypeRoot, Real,
+               emptyShape)
+IR_CONSTRUCTOR(GlobalUnion, "Gunion", GlobalDeclaration, TypeRoot, Real,
+               globalUnionShape)
+IR_CONSTRUCTOR(GlobalStruct, "Gstruct", GlobalDeclaration, TypeRoot, Real,
+               globalStructShape)
+IR_CONSTRUCTOR(GlobalEnum, "Genum", GlobalDeclaration, TypeRoot, Real,
+               globalEnumShape)
+IR_CONSTRUCTOR(GlobalTypedef, "Gtypedef", GlobalDeclaration, TypeRoot, Real,
+               globalTypedefShape)
+IR_CONSTRUCTOR(GlobalConstant, "Gconstant", GlobalDeclaration, TypeRoot, Real,
+               globalConstantShape)
+IR_CONSTRUCTOR(GlobalUnsupported, "Gunsupported", GlobalDeclaration, TypeRoot,
+               Real, globalUnsupportedShape)
+IR_CONSTRUCTOR(TemplateObjectRoot, "Template", Template, TemplateSymbolRoot,
+               Real, templateObjectRootShape)
+IR_CONSTRUCTOR(TemplateGlobalRoot, "Template", Template, TemplateTypeRoot, Real,
+               templateGlobalRootShape)
+IR_CONSTRUCTOR(TemplateAliasValue, "Template", Template, NoRoots, Real,
+               templateAliasShape)
+IR_CONSTRUCTOR(TemplatePreInstantiationValue, "TPreInst",
+               TemplatePreInstantiation, NoRoots, Real,
+               templatePreInstantiationShape)
+IR_CONSTRUCTOR(InitIndirectPath, "InitIndirect", InitializerPath, NoRoots, Real,
+               initIndirectShape)
+IR_CONSTRUCTOR(OptionalFixture, "IR_optional", Auxiliary, NoRoots, TestOnly,
+               optionalFixtureShape)
+IR_CONSTRUCTOR(SequenceFixture, "IR_sequence", Auxiliary, NoRoots, TestOnly,
+               sequenceFixtureShape)
+IR_CONSTRUCTOR(ProductFixture, "IR_product", Auxiliary, NoRoots, TestOnly,
+               productFixtureShape)
+IR_CONSTRUCTOR(SumFixture, "IR_sum", Auxiliary, NoRoots, TestOnly,
+               sumFixtureShape)
+IR_CONSTRUCTOR(IdentTypeList, "IR_ident_type_list", Auxiliary, NoRoots,
+               TestOnly, identTypeListShape)
+IR_CONSTRUCTOR(NameOptionalNameList, "IR_name_option_name_list", Auxiliary,
+               NoRoots, TestOnly, nameOptionalNameListShape)
+IR_CONSTRUCTOR(StructureVirtuals, "IR_structure_virtuals", Auxiliary, NoRoots,
+               TestOnly, nameOptionalNameListShape)
+IR_CONSTRUCTOR(StructureOverrides, "IR_structure_overrides", Auxiliary, NoRoots,
+               TestOnly, structureOverridesShape)
+IR_CONSTRUCTOR(OpaqueFixture, "IR_OPAQUE", Auxiliary, NoRoots, TestOnly,
+               opaqueFixtureShape)

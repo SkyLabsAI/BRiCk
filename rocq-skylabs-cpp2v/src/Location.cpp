@@ -211,25 +211,6 @@ raw_ostream &operator<<(raw_ostream &os, Dump d) {
     return os;
 }
 
-bool can_addr(loc loc, const Decl *decl) {
-    return (loc.has_value() && loc->getLoc().isValid()) || decl;
-}
-
-raw_ostream &operator<<(raw_ostream &os, Addr s) {
-    auto &[loc, context, decl] = s;
-    auto &SM = context.getSourceManager();
-    if (loc) {
-        auto src = loc->getLoc();
-        if (src.isValid()) {
-            src.print(os, SM);
-            return os;
-        }
-    }
-    if (decl)
-        decl->getSourceRange().print(os, SM);
-    return os;
-}
-
 raw_ostream &operator<<(raw_ostream &os, Prefix p) {
     auto &[loc, context, decl] = p;
     auto &SM = context.getSourceManager();

@@ -1,0 +1,4 @@
+(cram
+ (deps
+  ../check-phase5-parity-manifest.py
+  ../phase5-parity-manifest.tsv))

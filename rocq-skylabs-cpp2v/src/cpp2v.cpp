@@ -50,6 +50,21 @@ static cl::opt<std::string> VFileOutput("module",
 static cl::alias DashO("o", cl::desc("alias for --module"),
                        cl::value_desc("filename"), cl::aliasopt(VFileOutput));
 
+static cl::opt<std::string>
+    Locations("locations",
+              cl::desc("emit source-location companion for --module"),
+              cl::value_desc("filename"), cl::Optional, cl::cat(Cpp2V));
+
+static cl::opt<bool>
+    LocationsInline("locations-inline",
+                    cl::desc("emit source locations into --module (default)"),
+                    cl::Optional, cl::ValueOptional, cl::cat(Cpp2V));
+
+static cl::opt<bool>
+    LocationsAllFiles("locations-all-files",
+                      cl::desc("retain included-file source locations"),
+                      cl::Optional, cl::cat(Cpp2V));
+
 static cl::opt<bool> Verbose("v", cl::desc("verbose"), cl::Optional,
                              cl::cat(Cpp2V));
 static cl::opt<bool> Verboser("vv", cl::desc("verboser"), cl::Optional,
@@ -65,10 +80,11 @@ static cl::opt<bool> NoElaborate(
     cl::desc("Do not force generation of implicit member functions."),
     cl::Optional, cl::cat(Cpp2V));
 
-static cl::opt<bool> Elaborate(
-    "elaborate",
-    cl::desc("Elaborate templates and un-forced definitions. This is unsafe in general and can cause segfaults."),
-    cl::Optional, cl::cat(Cpp2V));
+static cl::opt<bool>
+    Elaborate("elaborate",
+              cl::desc("Elaborate templates and un-forced definitions. This is "
+                       "unsafe in general and can cause segfaults."),
+              cl::Optional, cl::cat(Cpp2V));
 
 static cl::opt<bool> Version("cpp2v-version",
                              cl::desc("print version and exit"), cl::Optional,
@@ -134,6 +150,14 @@ static cl::opt<std::string>
     Attributes("attributes", cl::desc("Attributes to pass to the [cpp.prog]"),
                cl::value_desc("attrs"), cl::Optional, cl::cat(Cpp2V));
 
+static bool locationsInlineEnabled() {
+    if (LocationsInline.getNumOccurrences() != 0)
+        return LocationsInline.getValue();
+    return Locations.getNumOccurrences() == 0 &&
+           VFileOutput.getNumOccurrences() != 0 &&
+           Interactive.getNumOccurrences() == 0;
+}
+
 class ToCoqAction : public clang::ASTFrontendAction {
 public:
     virtual std::unique_ptr<clang::ASTConsumer>
@@ -160,13 +184,15 @@ public:
         if (NoElaborate) {
             should_elaborate = false;
         }
-        auto *result =
-            new ToCoqConsumer(&Compiler, to_opt(VFileOutput),
-                              to_opt(Templates), to_opt(NameTest),
-                              Trace::fromBits(TraceBits.getBits()), Comment,
-                              !NoSharing, CheckTypes, !NoTemplates,
-                              should_elaborate, !NoAliases, to_opt(Interactive),
-                              to_opt(Attributes));
+        auto *result = new ToCoqConsumer(
+            &Compiler, to_opt(VFileOutput), to_opt(Locations),
+            locationsInlineEnabled(),
+            LocationsAllFiles ? ir::LocationScope::AllFiles
+                              : ir::LocationScope::MainFile,
+            to_opt(Templates), to_opt(NameTest),
+            Trace::fromBits(TraceBits.getBits()), Comment, !NoSharing,
+            CheckTypes, !NoTemplates, should_elaborate, !NoAliases,
+            to_opt(Interactive), to_opt(Attributes));
         return std::unique_ptr<clang::ASTConsumer>(result);
     }
 
@@ -214,6 +240,63 @@ bool isDarwin() {
     return strcmp(name.sysname, "Darwin") == 0;
 }
 
+bool validateLocationOptions() {
+    const bool separate = Locations.getNumOccurrences() != 0;
+    const bool explicitInline =
+        LocationsInline.getNumOccurrences() != 0 && LocationsInline.getValue();
+    const bool inlineOutput = locationsInlineEnabled();
+    const bool enabled = separate || inlineOutput;
+
+    if (separate && LocationsInline.getNumOccurrences() != 0) {
+        llvm::errs()
+            << "cpp2v: --locations and --locations-inline are mutually "
+               "exclusive\n";
+        return false;
+    }
+    if (!enabled) {
+        if (LocationsAllFiles.getNumOccurrences() != 0)
+            llvm::errs()
+                << "cpp2v: --locations-all-files requires location output\n";
+        return LocationsAllFiles.getNumOccurrences() == 0;
+    }
+
+    const std::string &module = VFileOutput.getValue();
+    if (VFileOutput.getNumOccurrences() == 0 || module.empty()) {
+        if (inlineOutput)
+            llvm::errs() << "cpp2v: --locations-inline requires --module/-o\n";
+        else
+            llvm::errs() << "cpp2v: --locations requires --module/-o\n";
+        return false;
+    }
+    if (separate) {
+        const std::string &locations = Locations.getValue();
+        if (locations.empty() || locations == "-") {
+            llvm::errs() << "cpp2v: --locations must name a file (not '-')\n";
+            return false;
+        }
+        if (module == "-") {
+            llvm::errs() << "cpp2v: --module must name a file when --locations "
+                            "is used\n";
+            return false;
+        }
+        if (module == locations) {
+            llvm::errs()
+                << "cpp2v: --module and --locations paths must differ\n";
+            return false;
+        }
+    }
+    if (Interactive.getNumOccurrences() != 0) {
+        if (explicitInline)
+            llvm::errs() << "cpp2v: --locations-inline is incompatible with "
+                            "--for-interactive\n";
+        else
+            llvm::errs() << "cpp2v: --locations is incompatible with "
+                            "--for-interactive\n";
+        return false;
+    }
+    return true;
+}
+
 void addOpt(ClangTool &Tool, const char *opt, std::optional<std::string> value,
             const char *desc) {
     if (value.has_value()) {
@@ -243,6 +326,8 @@ int main(int argc, const char **argv) {
         llvm::errs() << "cpp2v version " << cpp2v::VERSION << "\n";
         return 0;
     }
+    if (!validateLocationOptions())
+        return 1;
 
     logging::set_level(logging::NONE);
     if (Verboser) {

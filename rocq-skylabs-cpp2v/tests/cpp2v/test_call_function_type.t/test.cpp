@@ -7,6 +7,9 @@
 void foo(const int) {}
 void bar(volatile int) {}
 
+template<typename T>
+void templated(T) {}
+
 class A {
 public:
   void baz(const int) const {}
@@ -16,6 +19,7 @@ public:
 void test() {
   foo(1);
   bar(1);
+  templated<const int>(1);
 
   A a;
   a.baz(1);

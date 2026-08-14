@@ -6,7 +6,7 @@ Code generator for the BRiCk program logic for C++
 The dependencies for the code generator are the following:
 - A C++ compiler
 - The `cmake` tool
-- LLVM 16 or greater (the tool is well tested up to version 18)
+- LLVM 16 or greater (the tool is tested through version 22)
 
 ### Native dependencies: Linux (Ubuntu)
 
@@ -51,12 +51,15 @@ This assumes that [dune](https://github.com/ocaml/dune) is available.
 ### After building with the `Makefile`
 
 Given a C++ source file `CPP_SOURCE`, and a set of compiler flags `FLAGS`, the
-following command produces files `NAMES_FILE` and `AST_FILE`.
+following command produces `AST_FILE`:
+
 ```sh
-./build/cpp2v -v -names ${NAMES_FILE} -o ${AST_FILE} ${CPP_SOURCE} -- ${FLAGS}
+./build/cpp2v -v -o ${AST_FILE} ${CPP_SOURCE} -- ${FLAGS}
 ```
-For a `CPP_SOURCE` named `file.cpp`, a convention that is often followed is
-to define `AST_FILE` as `file_cpp.v`, and `NAMES_FILE` as `file_cpp_names.v`.
+
+For a `CPP_SOURCE` named `file.cpp`, `file_cpp.v` is a common `AST_FILE` name.
+The isolated `--name-test ${NAMES_FILE}` option can additionally emit structured
+names for diagnostics; it is not a second semantic-output backend.
 
 ### After building with `dune`
 
@@ -65,6 +68,183 @@ arguments `ARGS`.
 ```
 dune exec -- cpp2v ${ARGS}
 ```
+
+## Source-location output
+
+By default, a non-interactive module output contains both `source_locations`
+and the ordinary `source` AST from the same validated translation-unit IR:
+
+```sh
+cpp2v -o file_cpp.v file.cpp -- -std=c++17
+```
+
+No companion file is created. The default inline mode supports `--module -`
+because it has only one output stream. `--locations-inline` may still be passed
+explicitly; `--locations-inline=false` opts out and restores AST-only output.
+Interactive `--for-interactive` output remains AST-only by default, and explicit
+inline locations remain incompatible with it.
+
+Pass `--locations <filename>` to select the separate-file mode instead:
+
+```sh
+cpp2v -o file_cpp.v --locations file_cpp_locations.v file.cpp -- -std=c++17
+```
+
+`--locations` requires `--module`/`-o`. Neither output may be `-`, the two paths
+must differ, and separate location output is incompatible with
+`--for-interactive`. Explicit `--locations-inline[=BOOL]` and `--locations` are
+mutually exclusive. The generated file
+contains the exact standalone location stream first, followed by the exact AST
+stream. This order is required because the parser imported by AST output
+installs a global `[` grammar that conflicts with the primitive-array literals
+used by location tables. Both `source_locations` and `source` are available
+after importing the one generated module.
+
+By default, location output retains only provenance whose physical source
+points are in the main file. Roots whose final selected location tree has no
+retained main-file provenance are omitted and `lookup` reports `RootNotFound`. Use
+Use `--locations-all-files` with the default inline mode or explicit separate
+mode to restore the legacy all-files data, including header roots, complete
+macro stacks, and include-file metadata:
+
+```sh
+cpp2v -o file_cpp.v --locations file_cpp_locations.v \
+  --locations-all-files file.cpp -- -std=c++17
+# or, by default without a companion:
+cpp2v -o file_cpp.v --locations-all-files file.cpp -- -std=c++17
+```
+
+Main-file membership uses physical file identity, never presumed filenames or
+`#line` text. Range endpoints are filtered independently, so partial ranges are
+valid. Presumed begin/end points survive only with their corresponding physical
+main-file expansion endpoint. Macro stacks are cleared in default mode; thus a
+header-defined macro expanded in the main file retains its main-file expansion
+and presumed points but not its header spelling or macro backtrace. Main-file
+points of instantiation remain. Required anchor/derivation closure rows remain
+valid but closure-only origins are not attached to semantic nodes. All children
+under a retained root remain present—even empty intermediates and siblings—so
+path indices do not change.
+
+Separate files are published serially and atomically per path through a
+temporary `.partial` file and rename. The AST is published first. If companion
+generation or publication fails, the already-published AST may remain, but the
+final location path is not published. Inline output has one publication
+transaction: location generation finishes before the module `.partial` file is
+opened, and one rename publishes the combined stream.
+
+### Generated value and root kinds
+
+The ordinary AST output exports `source` (with deprecated parsing abbreviation
+`module` for compatibility). The standalone or inline location section imports
+the BRiCk source-location API and contains local `source_files`, normalized
+indexed provenance tables, an exact indexed location DAG, four
+namespace-specific singleton-root lists, and a small residual semantic-event
+list. A deterministic Clang-free classifier groups
+roots by namespace and exact semantic-name structure. Singleton groups omit
+semantic values. Duplicate groups and conservative ordinary `Gtypedef` roots
+retain values and use the existing Rocq selection functions. Default filtering
+groups the complete selected stream before excluding any event: a relevant
+duplicate keeps its whole group for authoritative Rocq selection, then omits the
+final root only if no retained provenance survives that selection.
+
+The location DAG hash-conses complete `(ordered origin IDs, ordered child node
+IDs)` rows child-before-parent and separately interns exact structural shape
+certificates. Equal residual duplicates build lazy recursive merge views, while
+unequal winners retain losing origins only at the root. DAG identities never
+enter public paths. Production construction VM-reduces only the residual event
+fold; it does not build a board-scale singleton map or read provenance or DAG
+tables. `lookup` scans only the requested singleton namespace, independently
+checks the selected residual map, and then follows the same lazy DAG path.
+Malformed duplicate singleton storage or a singleton/residual collision reports
+`MalformedCompactLocations` before private tables are accessed.
+
+Provenance uses deterministic first-seen primitive-array chunks and private
+primitive `uint63` IDs for presumed filenames, points, ranges, macro frames when
+their table is strictly smaller than inline occurrences, and origin rows.
+`lookup` lazily decodes only selected origin rows. Direct projection of an
+origin list is unsupported; `files` remains directly available, and
+`Internal.materialize_origins` is an explicitly eager diagnostic/test helper.
+Malformed private provenance IDs report `MalformedProvenance`; malformed DAG
+rows, shapes, storage, or non-backward edges report `MalformedLocationDag` only
+when reached. Valid generated maps preserve lookup values, order, and public
+errors. Public `file_id` and `origin_id` values are distinct nominal wrappers
+around primitive `uint63` integers rather than unary `nat`; explicit literals
+may use the `%file_id` and `%origin_id` scopes. `lookup_file source_locations id`
+performs checked file access without converting a potentially large primitive
+ID to unary `nat`. Semantic child paths remain `list nat`, while byte offsets,
+lines, and columns remain binary, nonnegative `N` values. The location section's
+only public generated value is:
+
+```coq
+source_locations : source_map
+```
+
+The section is standalone: semantic root names and residual values are inline
+and it neither imports nor refers to the AST output or its sharing definitions.
+Inline mode therefore composes the unchanged standalone section and AST section
+rather than introducing cross-references between them. The map has four
+distinct root namespaces, selected with a `decl_root`:
+
+- `DRSymbol name` — ordinary object/function symbol;
+- `DRType name` — ordinary type/global declaration;
+- `DRMsymbol name` — template object/function symbol; and
+- `DRMtype name` — template type/global declaration.
+
+Use the sole public location-tree/provenance query with a root and a
+zero-based path:
+
+```coq
+skylabs.lang.cpp.syntax.source_location.lookup
+  source_locations (DRSymbol name) [0; 2; 1]
+```
+
+The result is `inr origins` on success or `inl error` for a missing root, an
+out-of-bounds child, or an invalid origin/anchor/derivation ID. Success with no
+provenance is distinct and returns `inr []`.
+
+### Path order
+
+A path starts at the final semantic value stored at the selected root; `[]`
+selects that root. Each index selects a recursive semantic child in constructor
+field order. Required node fields contribute one child, present options one,
+lists one child per element in source order, and products or the active sum
+payload flatten left-to-right. Scalars and container syntax add no levels.
+Consequently, for example, `Ebinop op lhs rhs ty` has children
+`[lhs; rhs; ty]`, and an `Ecall fn args` has `fn` followed by its arguments.
+
+Paths describe cpp2v's final core IR, not the Clang AST or the printed Rocq
+syntax. Erased wrappers do not add a level; their transformed origins can be
+retained on the surviving node. Synthesized and unsupported final nodes remain
+explicit when they carry semantic structure.
+
+Each returned `source_origin` can distinguish explicit, implicit,
+Clang-transformed, cpp2v-synthesized, and inherited provenance. In all-files
+mode it can contain independent spelling and expansion ranges, physical
+byte/line/column points, presumed `#line` points, nested macro frames, a point
+of instantiation, a synthetic anchor, and derivation edges. Default mode applies
+the main-file projection described above. Range endpoints are optional, so an
+invalid, filtered, or non-contiguous projection is represented rather than
+guessed.
+
+### Templates, sharing, and limitations
+
+`--no-templates` omits template root events and leaves both template location
+maps empty. `--no-sharing` can change ordinary AST text but cannot change
+location-section bytes or paths: residual semantic values remain inline,
+singleton classification is sharing-independent, and path shape comes only
+from owned recursive occurrences. On very large translation units, singleton
+root lookup is linear
+in the requested retained namespace so malformed duplicate storage can be
+detected. With the main-file default, representative x86 board root/child
+queries take approximately 142–143 microseconds each; the complete all-files
+namespace remains approximately 5.9–6.2 ms per successful query.
+
+This version intentionally provides no zipper, provenance-aware traversal,
+ancestor fallback, or lookup from an isolated AST value. It does not detect a
+stale or mismatched AST/companion pair, preserve paths across later semantic
+transformations, or attach roots to non-name-keyed translation-unit metadata.
+Consumers should retain either the generated pair or the combined inline module
+from one cpp2v invocation and use `lookup` directly.
 
 ## Directory layout
 

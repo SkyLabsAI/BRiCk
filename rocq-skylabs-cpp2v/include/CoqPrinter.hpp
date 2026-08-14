@@ -6,7 +6,7 @@
 #pragma once
 
 #include "Formatter.hpp"
-#include "PrePrint.hpp"
+#include "NameCache.hpp"
 #include <clang/AST/Expr.h>
 #include <llvm/ADT/StringRef.h>
 #include <optional>

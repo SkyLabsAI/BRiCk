@@ -11,7 +11,6 @@ Require Import skylabs.prelude.uint63.
 Require Export Stdlib.Strings.PrimString.
 Require Import skylabs.prelude.avl.
 Require Export skylabs.lang.cpp.syntax. (* NOTE: too much *)
-Require skylabs.lang.cpp.semantics.sub_module.
 Require Export skylabs.lang.cpp.parser.stmt.
 Require Import skylabs.lang.cpp.parser.lang.
 Require Import skylabs.lang.cpp.parser.type.
@@ -20,6 +19,7 @@ Require Import skylabs.lang.cpp.parser.expr.
 Require Import skylabs.lang.cpp.parser.decl.
 Require Import skylabs.lang.cpp.parser.notation.
 Require Import skylabs.lang.cpp.parser.reduction.
+Require Import skylabs.lang.cpp.parser.selection.
 
 Include ParserName.
 Include ParserType.
@@ -94,11 +94,8 @@ Module Import translation_unit.
     (raw_symbol_table -> raw_type_table -> list name -> raw_alias_table -> list StaticAssert -> dup_info -> translation_unit * dup_info) ->
     translation_unit * dup_info.
 
-  Definition merge_obj_value (a b : ObjValue) : option ObjValue :=
-    if sub_module.ObjValue_le a b then
-      Some b
-    else if sub_module.ObjValue_le b a then Some a
-         else None.
+  Definition merge_obj_value (incoming existing : ObjValue) : option ObjValue :=
+    Selection.merge_obj_value incoming existing.
 
   (** Constructs a [translation_unit.t] with _one_ symbol, mapping [n] to [v]. *)
   Definition _symbols (n : name) (v : ObjValue) : t :=
@@ -110,17 +107,13 @@ Module Import translation_unit.
                   | None => k s t ga a asserts ((n, inr v) :: (n, inr v') :: dups)
                   end
       end.
-  Definition merge_glob_decl (a b : GlobDecl) : option GlobDecl :=
-    if sub_module.GlobDecl_le a b then
-      Some b
-    else if sub_module.GlobDecl_le b a then Some a
-         else None.
+  Definition merge_glob_decl (incoming existing : GlobDecl) : option GlobDecl :=
+    Selection.merge_glob_decl incoming existing.
 
   (** Constructs a [translation_unit.t] with _one_ type, mapping [n] to [v]. *)
   Definition _types (n : name) (v : GlobDecl) : t :=
     fun s t ga a asserts dups k =>
-      if bool_decide (Gtypedef (Tnamed n) = v \/ Gtypedef (Tenum n) = v)
-      then
+      if Selection.is_self_type_alias n v then
         (* ignore self-aliases. These arise when you do
            something like
            <<
@@ -221,6 +214,12 @@ Module Import translation_unit.
 End translation_unit.
 Export translation_unit(decls).
 #[local] Notation K := translation_unit.t (only parsing).
+
+Definition Dobj_value (n : name) (v : ObjValue) : K :=
+  translation_unit._symbols n v.
+
+Definition Dglob_decl (n : name) (v : GlobDecl) : K :=
+  translation_unit._types n v.
 
 Definition Dvariable (n : obj_name) (t : type) (init : global_init.t) : K :=
   _symbols n $ Ovar t init.
