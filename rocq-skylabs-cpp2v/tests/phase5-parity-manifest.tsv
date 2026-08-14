@@ -202,6 +202,7 @@ focused-builder	unit/NameBuilderProbe.cpp
 focused-builder	unit/SharingBuilderProbe.cpp
 focused-builder	unit/SourceInfoProbe.cpp
 focused-builder	unit/TypeExprBuilderProbe.cpp
+production-makefile	user_defined_literal_op.t/test.cpp
 production-makefile	valcat.t/valcat.hpp
 production-makefile	valcat.t/valcat_array.cpp
 production-makefile	valcat.t/valcat_call.cpp
