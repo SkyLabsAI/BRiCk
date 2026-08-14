@@ -99,6 +99,50 @@ Module LeibnizComparison.
     End with_Comparison.
   End with_A.
 
+  Section with_Compare.
+    Context `{!Compare A}.
+
+    Import compare.Notations.
+
+    #[local] Instance eq_anti_symm R :
+      C (?=@{A}) ->
+      AntiSymm (compare.eq (A := A)) R ->
+      AntiSymm (=) R.
+    Proof.
+      rewrite /AntiSymm /C /compare.eq.
+      move=> E AS x y Hxy Hyx.
+      exact /E /AS.
+    Qed.
+
+    Context `{!C (?=@{A})}.
+    Context `{!Comparison (?=@{A})}.
+
+    #[global] Instance lt_anti_symm : AntiSymm (=) (<@{A}) := _.
+    #[global] Instance le_anti_symm : AntiSymm (=) (<=@{A}) := _.
+    #[global] Instance gt_anti_symm : AntiSymm (=) (>@{A}) := _.
+    #[global] Instance ge_anti_symm : AntiSymm (=) (>=@{A}) := _.
+
+    #[global] Instance le_trans : Transitive (<=@{A}).
+    Proof using Type*.
+      rewrite /compare.le => x y z.
+      specialize (compare_trans x y z) as Hc.
+      destruct (x ?= y) eqn:Hxy, (y ?= z) eqn:Hyz, (x ?= z) eqn:Hxz => //.
+      all: try by destruct (Hc _ eq_refl).
+      { rewrite (cmp_eq _ x y Hxy) in Hxz. congruence. }
+      { rewrite (cmp_eq _ y z Hyz) in Hxy. congruence. }
+    Qed.
+
+    #[global] Instance ge_trans : Transitive (>=@{A}).
+    Proof using Type*.
+      rewrite /compare.ge => x y z.
+      specialize (compare_trans x y z) as Hc.
+      destruct (x ?= y) eqn:Hxy, (y ?= z) eqn:Hyz, (x ?= z) eqn:Hxz => //.
+      all: try by destruct (Hc _ eq_refl).
+      { rewrite (cmp_eq _ x y Hxy) in Hxz. congruence. }
+      { rewrite (cmp_eq _ y z Hyz) in Hxy. congruence. }
+    Qed.
+  End with_Compare.
+
   Lemma PrimInt63_int_compare_eq (x y : PrimInt63.int) :
     PrimInt63.compare x y = Eq ->
     PrimInt63.eqb x y = true.
