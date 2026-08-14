@@ -18,6 +18,21 @@ Delimit Scope free_scope with free.
 Reserved Infix "|*|" (at level 31, left associativity).
 Reserved Infix ">*>" (at level 30, right associativity).
 
+Section merge_sort.
+  Context {A} (R : relation A) `{∀ x y, Decision (R x y)}.
+  Import sorting.
+  #[local] Opaque merge_sort.
+
+  #[global] Instance merge_sort_proper `{!Transitive R, !AntiSymm (=) R, !Total R} :
+    Proper ((≡ₚ) ==> (=)) (merge_sort R).
+  Proof.
+    intros l1 l2 Hl.
+    apply (StronglySorted_unique R);
+      last by rewrite !merge_sort_Permutation.
+    all: exact: StronglySorted_merge_sort.
+  Qed.
+End merge_sort.
+
 Module FreeTemps.
 
     (* BEGIN FreeTemps.t *)
