@@ -531,8 +531,10 @@ State::buildStatement(const clang::Stmt *statement, SemanticMode mode) {
             outputs.emplace_back(assembly->getOutputConstraint(index),
                                  *expression);
         }
-        for (unsigned index = 0; index < assembly->getNumClobbers(); ++index)
-            clobbers.push_back(assembly->getClobber(index));
+        for (unsigned index = 0; index < assembly->getNumClobbers(); ++index) {
+            const auto clobber = assembly->getClobber(index);
+            clobbers.emplace_back(clobber.data(), clobber.size());
+        }
 #if CLANG_VERSION_MAJOR > 20
         const std::string assemblyText = assembly->getAsmString();
 #else

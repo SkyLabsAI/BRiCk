@@ -340,10 +340,12 @@ buildFunctionBody(State &state, const clang::FunctionDecl &function,
         auto origins = generatedOrigins(state, function);
         if (!origins)
             return origins.takeError();
+        const auto builtinName =
+            state.context.BuiltinInfo.getName(function.getBuiltinID());
         auto wrapper = factory::makeFunctionBody(
             state.unit->buildingArena(), Constructor::FunctionBodyBuiltin,
             std::move(*origins), std::nullopt,
-            state.context.BuiltinInfo.getName(function.getBuiltinID()));
+            std::string(builtinName.data(), builtinName.size()));
         if (!wrapper)
             return wrapper.takeError();
         return std::optional<NodeId>(*wrapper);

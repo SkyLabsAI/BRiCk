@@ -12,6 +12,7 @@
 #include <clang/AST/TemplateBase.h>
 #include <clang/AST/Type.h>
 #include <clang/AST/TypeLoc.h>
+#include <clang/Basic/Version.inc>
 #include <cstdint>
 #include <utility>
 #include <vector>
@@ -24,6 +25,12 @@ class Sema;
 
 namespace ir {
 namespace builder {
+
+#if CLANG_VERSION_MAJOR >= 22
+using NestedNameSpecifierArg = clang::NestedNameSpecifier;
+#else
+using NestedNameSpecifierArg = const clang::NestedNameSpecifier *;
+#endif
 
 class State {
 public:
@@ -40,13 +47,13 @@ public:
                                           SemanticMode mode,
                                           factory::OriginList origins);
     llvm::Expected<NodeId>
-    buildUnresolvedName(clang::NestedNameSpecifier qualifier,
+    buildUnresolvedName(NestedNameSpecifierArg qualifier,
                         clang::NestedNameSpecifierLoc qualifierLocation,
                         llvm::StringRef identifier,
                         llvm::ArrayRef<clang::TemplateArgumentLoc> arguments,
                         SemanticMode mode, factory::OriginList origins);
     llvm::Expected<NodeId>
-    buildUnresolvedName(clang::NestedNameSpecifier qualifier,
+    buildUnresolvedName(NestedNameSpecifierArg qualifier,
                         clang::NestedNameSpecifierLoc qualifierLocation,
                         clang::DeclarationName name,
                         llvm::ArrayRef<clang::TemplateArgumentLoc> arguments,

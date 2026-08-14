@@ -17,6 +17,62 @@ namespace ir {
 namespace builder {
 namespace {
 
+template <typename Function> auto makeScopeExit(Function &&function) {
+#if CLANG_VERSION_MAJOR >= 22
+    return llvm::scope_exit(std::forward<Function>(function));
+#else
+    return llvm::make_scope_exit(std::forward<Function>(function));
+#endif
+}
+
+bool isEmptyOrGlobalQualifier(NestedNameSpecifierArg qualifier) {
+#if CLANG_VERSION_MAJOR >= 22
+    return !qualifier ||
+           qualifier.getKind() == clang::NestedNameSpecifier::Kind::Null ||
+           qualifier.getKind() == clang::NestedNameSpecifier::Kind::Global;
+#else
+    return !qualifier ||
+           qualifier->getKind() == clang::NestedNameSpecifier::Global;
+#endif
+}
+
+const clang::NamedDecl *qualifierNamespace(NestedNameSpecifierArg qualifier) {
+#if CLANG_VERSION_MAJOR >= 22
+    if (!qualifier ||
+        qualifier.getKind() != clang::NestedNameSpecifier::Kind::Namespace)
+        return nullptr;
+    return qualifier.getAsNamespaceAndPrefix().Namespace;
+#else
+    if (!qualifier)
+        return nullptr;
+    if (const clang::NamespaceDecl *space = qualifier->getAsNamespace())
+        return space;
+    return qualifier->getAsNamespaceAlias();
+#endif
+}
+
+const clang::Type *qualifierType(NestedNameSpecifierArg qualifier) {
+#if CLANG_VERSION_MAJOR >= 22
+    return qualifier &&
+                   qualifier.getKind() == clang::NestedNameSpecifier::Kind::Type
+               ? qualifier.getAsType()
+               : nullptr;
+#else
+    return qualifier ? qualifier->getAsType() : nullptr;
+#endif
+}
+
+clang::TypeLoc
+qualifierTypeLocation(clang::NestedNameSpecifierLoc qualifierLocation) {
+    if (!qualifierLocation)
+        return {};
+#if CLANG_VERSION_MAJOR >= 22
+    return qualifierLocation.getAsTypeLoc();
+#else
+    return qualifierLocation.getTypeLoc();
+#endif
+}
+
 const char *templateArgumentKindName(clang::TemplateArgument::ArgKind kind) {
     using K = clang::TemplateArgument;
     switch (kind) {
@@ -676,7 +732,7 @@ llvm::Expected<NodeId> buildNameImplRaw(State &state,
             writtenArguments ? writtenArguments->arguments()
                              : llvm::ArrayRef<clang::TemplateArgumentLoc>{};
         auto previousNames = state.preferredTemplateTypeNames;
-        llvm::scope_exit restoreNames([&] {
+        auto restoreNames = makeScopeExit([&] {
             state.preferredTemplateTypeNames = std::move(previousNames);
         });
         (void)restoreNames;
@@ -870,7 +926,7 @@ State::buildPatternName(const clang::NamedDecl &declaration,
     auto previousErrors = preferredTemplateTypeErrors;
     auto previousFallback = preferredTemplateTypeFallbackError;
     const bool previousPattern = buildingPatternName;
-    llvm::scope_exit restore([&] {
+    auto restore = makeScopeExit([&] {
         preferredTemplateTypeNames = std::move(previousNames);
         preferredTemplateTypeErrors = std::move(previousErrors);
         preferredTemplateTypeFallbackError = std::move(previousFallback);
@@ -916,7 +972,7 @@ llvm::Expected<NodeId> State::buildFieldName(const clang::FieldDecl &field,
 }
 
 llvm::Expected<NodeId>
-State::buildUnresolvedName(clang::NestedNameSpecifier qualifier,
+State::buildUnresolvedName(NestedNameSpecifierArg qualifier,
                            clang::NestedNameSpecifierLoc qualifierLocation,
                            llvm::StringRef identifier,
                            llvm::ArrayRef<clang::TemplateArgumentLoc> arguments,
@@ -928,7 +984,7 @@ State::buildUnresolvedName(clang::NestedNameSpecifier qualifier,
 }
 
 llvm::Expected<NodeId>
-State::buildUnresolvedName(clang::NestedNameSpecifier qualifier,
+State::buildUnresolvedName(NestedNameSpecifierArg qualifier,
                            clang::NestedNameSpecifierLoc qualifierLocation,
                            clang::DeclarationName name,
                            llvm::ArrayRef<clang::TemplateArgumentLoc> arguments,
@@ -938,29 +994,21 @@ State::buildUnresolvedName(clang::NestedNameSpecifier qualifier,
         return atomic.takeError();
 
     llvm::Expected<NodeId> base = [&]() -> llvm::Expected<NodeId> {
-        if (!qualifier ||
-            qualifier.getKind() == clang::NestedNameSpecifier::Kind::Null ||
-            qualifier.getKind() == clang::NestedNameSpecifier::Kind::Global)
+        if (isEmptyOrGlobalQualifier(qualifier))
             return factory::makeGlobalName(unit->buildingArena(), origins,
                                            *atomic);
-        if (qualifier.getKind() ==
-            clang::NestedNameSpecifier::Kind::Namespace) {
-            const clang::NamespaceBaseDecl *space =
-                qualifier.getAsNamespaceAndPrefix().Namespace;
-            if (!space)
-                return factory::makeUnsupportedName(
-                    unit->buildingArena(), origins,
-                    "nested namespace qualifier without declaration");
+        if (const clang::NamedDecl *space = qualifierNamespace(qualifier)) {
             auto scope = buildName(*space, mode);
             if (!scope)
                 return scope.takeError();
             return factory::makeScopedName(unit->buildingArena(), origins,
                                            *scope, *atomic);
         }
-        if (qualifier.getKind() == clang::NestedNameSpecifier::Kind::Type) {
-            clang::QualType qualifierType(qualifier.getAsType(), 0);
+        if (const clang::Type *qualifiedType = qualifierType(qualifier)) {
+            clang::QualType qualifierType(qualifiedType, 0);
             llvm::Expected<NodeId> type = [&]() -> llvm::Expected<NodeId> {
-                if (clang::TypeLoc written = qualifierLocation.getAsTypeLoc())
+                if (clang::TypeLoc written =
+                        qualifierTypeLocation(qualifierLocation))
                     return buildTypeLoc(written, mode, origins);
                 auto inherited = inheritedTypeOrigins(qualifierType, origins);
                 if (!inherited)

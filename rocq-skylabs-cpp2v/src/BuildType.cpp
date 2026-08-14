@@ -603,19 +603,38 @@ llvm::Expected<NodeId> buildTypeUseRaw(State &state, clang::QualType qualified,
             *result, std::move(parameters));
     }
     if (const auto *member = llvm::dyn_cast<clang::MemberPointerType>(&type)) {
+        clang::QualType memberClass;
+#if CLANG_VERSION_MAJOR >= 22
         clang::NestedNameSpecifier qualifier = member->getQualifier();
+        if (qualifier &&
+            qualifier.getKind() == clang::NestedNameSpecifier::Kind::Type)
+            memberClass = clang::QualType(qualifier.getAsType(), 0);
+#elif CLANG_VERSION_MAJOR >= 21
+        if (const clang::NestedNameSpecifier *qualifier =
+                member->getQualifier())
+            if (const clang::Type *qualifiedType = qualifier->getAsType())
+                memberClass = clang::QualType(qualifiedType, 0);
+#else
+        memberClass = clang::QualType(member->getClass(), 0);
+#endif
         clang::TypeLoc classLoc;
         clang::TypeLoc pointeeLoc;
         if (!location.isNull())
             if (auto typed = location.getAs<clang::MemberPointerTypeLoc>()) {
+#if CLANG_VERSION_MAJOR >= 22
                 classLoc = typed.getQualifierLoc().getAsTypeLoc();
+#elif CLANG_VERSION_MAJOR >= 21
+                classLoc = typed.getQualifierLoc().getTypeLoc();
+#else
+                if (const clang::TypeSourceInfo *written =
+                        typed.getClassTInfo())
+                    classLoc = written->getTypeLoc();
+#endif
                 pointeeLoc = typed.getPointeeLoc();
             }
         llvm::Expected<NodeId> classType = [&]() -> llvm::Expected<NodeId> {
-            if (qualifier &&
-                qualifier.getKind() == clang::NestedNameSpecifier::Kind::Type)
-                return recurse(clang::QualType(qualifier.getAsType(), 0),
-                               classLoc);
+            if (!memberClass.isNull())
+                return recurse(memberClass, classLoc);
             // Legacy retains the Tmember_pointer node and places the
             // diagnostic Tunsupported only in its class-type child.
             auto childOrigins = state.inheritedTypeOrigins(qualified, *origins);
@@ -696,10 +715,12 @@ llvm::Expected<NodeId> buildTypeUseRaw(State &state, clang::QualType qualified,
     if (const auto *usingType = llvm::dyn_cast<clang::UsingType>(&type))
         return forwardType(state, qualified, location, usingType->desugar(),
                            nextLoc(location), mode, std::move(inherited));
+#if CLANG_VERSION_MAJOR >= 22
     if (const auto *predefined =
             llvm::dyn_cast<clang::PredefinedSugarType>(&type))
         return forwardType(state, qualified, location, predefined->desugar(),
                            nextLoc(location), mode, std::move(inherited));
+#endif
     if (const auto *specialization =
             llvm::dyn_cast<clang::TemplateSpecializationType>(&type)) {
         if (specialization->isTypeAlias())
