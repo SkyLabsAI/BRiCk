@@ -411,12 +411,12 @@ Module compare.
     Proof.
       rewrite /eq. split.
       - intros x. generalize (compare_antisym x x). by destruct (compare x x).
-      - intros x y. rewrite compare_antisym. by destruct (compare y x).
+      - intros x y. by rewrite (compare_antisym y x) => ->.
       - intros x y z. apply compare_trans.
     Qed.
 
     #[global] Instance lt_trans `{!Comparison (?=)} : Transitive lt.
-    Proof. intros x y z. apply compare_trans. Qed.
+    Proof. rewrite /lt. intros x y z. apply compare_trans. Qed.
 
     Lemma compare `{!Comparison (?=)} x y : OrderedType.Compare lt eq x y.
     Proof.
