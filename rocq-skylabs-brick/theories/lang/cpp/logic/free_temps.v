@@ -8,17 +8,8 @@
 Require stdpp.sorting.
 Require Import skylabs.prelude.base.
 
-Require Import stdpp.coPset.
-Require Import iris.bi.monpred.
-Require Import skylabs.iris.extra.proofmode.proofmode.
-Require Import iris.proofmode.classes.
-
-Require Import skylabs.lang.cpp.syntax.
-Require Import skylabs.lang.cpp.semantics.
-Require Import skylabs.lang.cpp.logic.pred.
-Require Import skylabs.lang.cpp.logic.heap_pred.
-Require Import skylabs.lang.cpp.logic.translation_unit.
-Require Import skylabs.iris.extra.bi.errors.
+Require Import skylabs.lang.cpp.syntax.types.
+Require Import skylabs.lang.cpp.semantics.ptrs.
 
 #[local] Set Primitive Projections.
 
