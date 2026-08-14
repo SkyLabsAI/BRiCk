@@ -264,7 +264,7 @@ buildAdjustedArgument(State &state, clang::QualType adjusted,
     // [normalize_arg_type] discards top-level qualifiers before applying the
     // array/function parameter adjustment already represented by Clang's
     // adjusted ParmVarDecl/FunctionProtoType type.
-    adjusted = adjusted.getLocalUnqualifiedType();
+    adjusted = adjusted.getUnqualifiedType();
     if (!written)
         return buildTypeUse(state, adjusted, {}, mode, std::move(inherited));
     clang::TypeLoc originalLoc = written->getTypeLoc();
