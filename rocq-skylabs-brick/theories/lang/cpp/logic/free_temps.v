@@ -116,11 +116,19 @@ Module FreeTemps.
       | seq x y , b => seq_canon x (seq_canon y b)
       | _ , _ => seq a b
       end.
+    Import prelude.compare.
+    Import compare.Notations.
 
     (* assume that this is canonical *)
-    Parameter ptr_cmp : ptr -> ptr -> comparison.
+    Declare Instance ptr_compare : Compare ptr.
+    Declare Instance ptr_comparison : Comparison (?=@{ptr}).
+    (* Parameter ptr_cmp : ptr -> ptr -> comparison. *)
 
-    Parameter t_cmp : forall (a b : t), comparison.
+    (* Parameter t_cmp : forall (a b : t), comparison. *)
+    Declare Instance t_compare : Compare t.
+    Declare Instance t_comparison : Comparison (?=@{t}).
+    Declare Instance t_leibniz_comparison: LeibnizComparison (?=@{t}).
+
     (* This is just the canonical construction
       match a , b with
       | id , id => Eq
@@ -156,11 +164,8 @@ Module FreeTemps.
     (* NOTE: I can assume that [a] and [b] are canonical, so
       I need to merge them using the canonical ordering.
     *)
-    Instance X: forall a b : t, Decision (t_cmp a b = Lt) := _.
-    Print X.
-    (* Hint Extern 100 (Decision _) => cbn : typeclass_instances. *)
     Definition par_canon (a b : t) : t :=
-      list_to_t $ sorting.merge_sort (fun a b : t => t_cmp a b = Lt) (gather_pars a ++ gather_pars b).
+      list_to_t $ sorting.merge_sort (<=@{t}) (gather_pars a ++ gather_pars b).
 
     Fixpoint canon (a : t) {struct a} : t :=
       match a with
@@ -185,8 +190,25 @@ Module FreeTemps.
       { destruct b; congruence. }
     Qed.
 
+    Lemma gather_pars_list_to_t xs :
+      gather_pars (list_to_t xs) ≡ₚ xs >>= gather_pars.
+    Proof.
+      elim: xs => [//|x xs IH].
+      csimpl.
+      rewrite -{}IH /=.
+      case: xs => [|//].
+      by rewrite /= right_id_L.
+    Qed.
+
+    Lemma gather_pars_idemp x :
+      gather_pars x >>= gather_pars = gather_pars x.
+    Proof.
+      induction x => //=.
+      by rewrite bind_app IHx1 IHx2.
+    Qed.
+
     Lemma canon_canonical : forall a b : t, a ≡ b -> canon a = canon b.
-    Proof. (*
+    Proof.
       induction 1; simpl; eauto.
       { (* trans *) etrans; eauto. }
       { (* seqA *)
@@ -196,7 +218,7 @@ Module FreeTemps.
         { destruct t0; simpl; eauto; solve [ destruct t0; simpl; eauto ]. }
         { intros.
           case_match.
-          { apply seq_canon_is_id in H.  destruct H.  subst. rewrite seq_canon_unitR.  done. }
+          { apply seq_canon_is_id in H. destruct H. subst. rewrite seq_canon_unitR. done. }
           { case_match; simpl in *; subst; eauto; rewrite -IHt0_1; f_equal.
             { destruct t1; inversion H; subst; eauto. rewrite seq_canon_unitR. done. }
             { destruct t1; inversion H; subst; eauto. }
@@ -208,20 +230,33 @@ Module FreeTemps.
               destruct t1; inversion H; subst; eauto. }
           { destruct t0; simpl in *; subst; eauto; try (rewrite -IHt0_1 -IHt0_2; f_equal; f_equal);
               destruct t1; inversion H; subst; eauto. } }
-        admit. }
+         { intros. by destruct t0, t1. }
+      }
       { rewrite seq_canon_unitR. done. }
       { by f_equal. }
-      { (* parC -- this is problematic because there is no canonical ordering to the unit elements without a total ordering on [ptr] *)
-        admit.
+      {
+        rewrite /par_canon.
+        f_equiv.
+        apply (merge_sort_proper _).
+        by rewrite (comm app).
       }
       { (* parA *)
-        admit.
+        rewrite /par_canon.
+        f_equiv.
+        apply (merge_sort_proper _).
+        rewrite !gather_pars_list_to_t !sorting.merge_sort_Permutation.
+        rewrite !bind_app -assoc_L.
+        by rewrite !gather_pars_idemp.
       }
-      { admit. } *)
+      { rewrite /par_canon /=.
+        admit. }
+      { by rewrite IHt_equiv IHt_equiv0. }
     Admitted.
 
     Lemma canon_equiv f : FreeTemps.canon f ≡ f.
-    Proof. Admitted.
+    Proof.
+      induction f => //=.
+    Admitted.
 
     #[local] Opaque FreeTemps.canon.
     #[global] Instance canon_proper : Proper ((≡) ==> eq) FreeTemps.canon.
