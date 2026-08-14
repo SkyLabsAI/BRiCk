@@ -20,7 +20,6 @@
 
 Require Export stdpp.fin_maps.
 Require Import skylabs.prelude.base.
-Require Import skylabs.prelude.list_numbers.
 
 (* TODO upstream to stdpp. *)
 Section fin_maps.
@@ -95,20 +94,3 @@ Section fin_maps.
     specialize (Hin i). destruct (m !! i); naive_solver.
   Qed.
 End fin_maps.
-
-Section list.
-  (* Note: the RHS uses [map_lookup_total] *)
-  Lemma list_lookup_total_nat_N `{Inhabited A} (xs : list A) (i : N) :
-    xs !!! N.to_nat i = xs !!! i.
-  Proof. by rewrite !lookup_total_alt list_lookup_total_alt. Qed.
-
-  Lemma list_lookupN_total_fmap
-    `{Inhabited A} `{Inhabited B}
-    (f : A → B) (xs : list A) (i : N)
-    (Hin : (i < lengthN xs)%N) :
-    (f <$> xs) !!! i = f (xs !!! i).
-  Proof.
-    rewrite -!list_lookup_total_nat_N list_lookup_total_fmap //.
-    rewrite /lengthN in Hin; lia.
-  Qed.
-End list.
