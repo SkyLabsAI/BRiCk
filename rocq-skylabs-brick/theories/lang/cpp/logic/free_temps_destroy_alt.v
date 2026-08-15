@@ -129,18 +129,15 @@ Inductive nf : Set :=
     [list]. *)
 Lemma nf_ind' (P : nf -> Prop) :
   (forall a, P (nf_atom a)) ->
-  (forall xs, Forall P xs -> P (nf_seq xs)) ->
-  (forall xs, Forall P xs -> P (nf_par xs)) ->
+  (forall xs, List.Forall P xs -> P (nf_seq xs)) ->
+  (forall xs, List.Forall P xs -> P (nf_par xs)) ->
   forall n, P n.
 Proof.
-  (*
   intros Ha Hs Hp. fix REC 1. intros [a|xs|xs].
   - apply Ha.
   - apply Hs. induction xs; constructor; [ apply REC | assumption ].
   - apply Hp. induction xs; constructor; [ apply REC | assumption ].
-  Qed.
-  *)
-Admitted.
+Qed.
 
 Definition nf_children (n : nf) : list nf :=
   match n with
@@ -230,10 +227,15 @@ Export Destroy.
 
 
 (** ** The semantic eliminator *)
+Implicit Types (tu : translation_unit).
 
 Section interp_nf.
   Context `{Σ : cpp_logic} {σ : genv}.
-  Implicit Types (tu : translation_unit) (Q : epred).
+  Implicit Types (Q : epred).
+
+  Definition bi_par K1 K2 Q : mpred :=
+    |={top}=> Exists Q1 Q2,
+      K1 Q1 ** K2 Q2 ** (Q1 ** Q2 -* |={top}=> Q).
 
   (** NOTE on the fancy updates.  They are FORCED, not decorative: see
       [Shift] below.  [Shift] fails for the identity function, so the
@@ -248,14 +250,15 @@ Section interp_nf.
       match xs with
       | [] => |={top}=> Q
       | x :: xs => interp_nf tu x (seqs xs Q)
-      end in
+      end%I in
     let pars := fix pars (xs : list nf) (Q : epred) {struct xs} : mpred :=
       match xs with
       | [] => |={top}=> Q
       | x :: xs =>
-        |={top}=> Exists Qx Qr,
-            interp_nf tu x Qx ** pars xs Qr ** (Qx -* Qr -* |={top}=> Q)
-      end in
+        bi_par (interp_nf tu x) (pars xs) Q
+        (* |={top}=> Exists Qx Qr, *)
+        (*     interp_nf tu x Qx ** pars xs Qr ** (Qx -* Qr -* |={top}=> Q) *)
+      end%I in
     match n with
     | nf_atom (free_temp.delete ty p) => destroy_val tu ty p Q
     | nf_atom (free_temp.delete_va va p) => |={top}=> p |-> varargsR va ** Q
@@ -263,17 +266,36 @@ Section interp_nf.
     | nf_par xs => pars xs Q
     end%I.
 
-  (** Convenient handles for the two inner fixpoints. *)
-  Definition interp_seqs tu (xs : list nf) (Q : epred) : mpred :=
-    interp_nf tu (nf_seq xs) Q.
-  Definition interp_pars tu (xs : list nf) (Q : epred) : mpred :=
-    interp_nf tu (nf_par xs) Q.
-
   Definition interp tu (f : FreeTemps.t) (Q : epred) : mpred :=
     interp_nf tu (view f) Q.
+
+  Lemma interp_seqs_nil tu Q :
+    interp_nf tu (nf_seq []) Q = (|={top}=> Q)%I.
+  Proof. done. Qed.
+
+  Lemma interp_seqs_cons tu Q x xs :
+    interp_nf tu (nf_seq (x :: xs)) Q =
+    interp_nf tu x (interp_nf tu (nf_seq xs) Q).
+  Proof. done. Qed.
+
+  Lemma interp_pars_nil tu :
+    interp_nf tu (nf_par []) = fupd top top.
+  Proof. done. Qed.
+
+  Lemma interp_pars_cons tu x xs :
+    interp_nf tu (nf_par (x :: xs)) =
+      bi_par (interp_nf tu x) (interp_nf tu (nf_par xs)).
+  Proof. done. Qed.
 End interp_nf.
 
 #[global] Arguments interp {_ _ _ _} _ _ _ : assert.
+
+(** Convenient handles for the two inner fixpoints. *)
+Notation interp_seqs tu xs :=
+  (interp_nf tu (nf_seq xs)).
+
+Notation interp_pars tu xs :=
+  (interp_nf tu (nf_par xs)).
 
 
 (** ** [Shift] *)
@@ -282,75 +304,67 @@ Section shift.
   Context `{Σ : cpp_logic}.
 
   Definition Shift (F : epred -> mpred) : Prop :=
-    forall Q, (|={top}=> F (|={top}=> Q)) |-- F Q.
+    forall Q, (|={top}=> F (|={top}=> Q)%I) |-- F Q.
   Definition Mono (F : epred -> mpred) : Prop :=
     forall Q Q', (Q -* Q') |-- F Q -* F Q'.
 
   (** Given [Mono F], [Shift F] is equivalent to absorbing the fupd on
       either side, so one axiom suffices downstream. *)
   Lemma shift_absorb_inner F : Mono F -> Shift F ->
-    forall Q, F (|={top}=> Q) |-- F Q.
+    forall Q, F (|={top}=> Q)%I |-- F Q.
   Proof.
-    (*
-    intros _ HS Q. rewrite -HS. by rewrite -fupd_intro.
-    Qed.
-    *)
-  Admitted.
+    iIntros (_ HS Q) "H".
+    Fail rewrite -HS.
+    rewrite -(HS Q).
+    (* iApply HS. *)
+    by iModIntro.
+  Qed.
 
   Lemma shift_absorb_outer F : Mono F -> Shift F ->
     forall Q, (|={top}=> F Q) |-- F Q.
   Proof.
-    (*
-    intros HM HS Q. rewrite -HS. apply fupd_mono.
+    intros HM HS Q.
+    Fail rewrite -HS.
+    Fail rewrite -(HS Q).
+    rewrite -{2}(HS Q).
+    apply fupd_mono.
     iIntros "H". iApply (HM with "[] H"). iIntros "HQ". by iModIntro.
-    Qed.
-    *)
-  Admitted.
+  Qed.
 
   Lemma shift_bientails F : Mono F -> Shift F ->
     forall Q, F Q ⊣⊢ |={top}=> F (|={top}=> Q).
   Proof.
-    (*
     intros HM HS Q. iSplit.
     - iIntros "H !>". iApply (HM with "[] H"). iIntros "HQ". by iModIntro.
     - iApply HS.
-    Qed.
-    *)
-  Admitted.
+  Qed.
 
   (** [Shift] is closed under composition.  This is where idempotence of
       [fupd] does the work. *)
   Lemma shift_comp F G : Mono F -> Shift F -> Mono G -> Shift G ->
     Shift (fun Q => F (G Q)).
   Proof.
-    (*
     intros HMF HSF HMG HSG Q.
     (* (dagger): G absorbs the inner fupd *)
-    assert (G (|={top}=> Q) |-- G Q) as Hdag by by apply shift_absorb_inner.
+    assert (G (|={top}=> Q) |-- G Q)%I as Hdag by by apply shift_absorb_inner.
     etrans; last by apply (shift_absorb_outer F HMF HSF).
     apply fupd_mono. iIntros "H". iApply (HMF with "[] H"). iIntros "HG".
     by iApply Hdag.
-    Qed.
-    *)
-  Admitted.
+  Qed.
+
+  Implicit Type (Q : mpred).
 
   (** ... but NOT for the identity, which is why [nf_seq []] must carry a
       fupd: [Shift (fun Q => Q)] unfolds to [|={top}=> Q |-- Q]. *)
   Lemma shift_id_fails : Shift (fun Q => Q) -> forall Q, (|={top}=> Q) |-- Q.
   Proof.
-    (*
     intros HS Q. specialize (HS Q). by rewrite fupd_idemp in HS.
-    Qed.
-    *)
-  Admitted.
+  Qed.
 
   Lemma shift_fupd_id : Shift (fun Q => |={top}=> Q)%I.
   Proof.
-    (*
     intros Q. by rewrite !fupd_idemp.
-    Qed.
-    *)
-  Admitted.
+  Qed.
 End shift.
 
 
@@ -360,32 +374,42 @@ Section interp_theory.
   Context `{Σ : cpp_logic} {σ : genv} (tu : translation_unit).
   Implicit Types (Q : epred) (n : nf) (xs ys : list nf) (f g : FreeTemps.t).
 
-  Lemma interp_nf_frame n Q Q' :
-    (Q -* Q') |-- interp_nf tu n Q -* interp_nf tu n Q'.
+  Lemma interp_nf_frame n : Mono (interp_nf tu n).
   Proof.
-    (*
-    revert Q Q'. induction n using nf_ind'; intros.
+    elim /nf_ind': n => [a|xs IH|xs IH] Q Q'.
     - destruct a; simpl.
       + by apply destroy_val_frame.
       + iIntros "HQ >[$ H]". iModIntro. by iApply "HQ".
-    - simpl. (* list induction, using the Forall hypothesis *) admit.
-    - simpl. admit.
-    Qed.
-    *)
-  Admitted.
+    - induction xs as [|x xs]; rewrite !(interp_seqs_nil, interp_seqs_cons).
+      { iIntros "W >Q !>". by iApply "W". }
+      inv IH as [|?? Hx Hxs]; iIntros "W X".
+      iApply (Hx with "[-X] X").
+      iApply (IHxs Hxs with "W").
+    - induction xs as [|x xs]; rewrite !(interp_pars_nil, interp_pars_cons) /bi_par.
+      { iIntros "W >Q !>". by iApply "W". }
+      inv IH as [|?? Hx Hxs]; iIntros "W >(%Q1 & %Q2 & xQ1 & xsQ2 & W') !>".
+      iExists Q1, Q2; iFrame; iIntros.
+      iApply ("W" with "(W' [$])").
+  Qed.
 
   Lemma interp_nf_shift n : Shift (interp_nf tu n).
   Proof.
-    (*
-    induction n using nf_ind'.
-    - destruct a; intros Q; simpl.
+    rewrite /Shift; induction n using nf_ind'; intros Q.
+    - destruct a; simpl.
       + by apply destroy_val_shift.
-      + by rewrite !fupd_idemp.
-    - (* nf_seq: [] is [shift_fupd_id]; cons is [shift_comp] + IH *) admit.
-    - (* nf_par: both fupds collapse by idempotence *) admit.
-    Qed.
-    *)
-  Admitted.
+      + rewrite !fupd_idemp.
+        by iIntros ">[? >?]"; iFrame.
+    - elim: xs H Q => [|x xs IHxs] H Q; rewrite !(interp_seqs_nil, interp_seqs_cons).
+      { by rewrite shift_fupd_id. }
+      inv H as [|?? Hx Hxs].
+      iApply shift_comp.
+      all: try apply: interp_nf_frame.
+      { exact: Hx. }
+      intro. apply (IHxs Hxs).
+    - elim: xs H Q => [|x xs IHxs] H Q; rewrite !(interp_pars_nil, interp_pars_cons) /bi_par.
+      { by rewrite shift_fupd_id. }
+      rewrite !fupd_idemp. by setoid_rewrite fupd_idemp.
+  Qed.
 
   (** *** The two lemmas that carry the weight
 
@@ -394,34 +418,97 @@ Section interp_theory.
       equation to the n-ary definition needs exactly these.  Note the
       canonical order appears here only as a permutation: its actual
       content is never inspected. *)
+  Lemma bi_par_comm_1 (K1 K2 K3 : mpred -> mpred) (Q : mpred) :
+    bi_par K1 (bi_par K2 K3) Q |-- bi_par K2 (bi_par K1 K3) Q.
+  Proof.
+    rewrite /bi_par.
+    iIntros ">(%Q1 & %Q2 & K1 & >(%Q0 & %Q3 & K2 & K3 & W1) & W2) !>".
+    iExists Q0; iFrame "K2".
+    iExists (Q1 ** Q3).
+    iSplitR "W1 W2". {
+      iIntros "!>".
+      iExists Q1, Q3; iFrame. by iIntros; iFrame.
+    }
+    iIntros "(? & Q1 & ?)".
+    iApply ("W2" with "[>- $Q1]").
+    iApply "W1"; iFrame.
+  Qed.
+
+  Lemma bi_par_comm (K1 K2 K3 : mpred -> mpred) (Q : mpred) :
+    bi_par K1 (bi_par K2 K3) Q -|- bi_par K2 (bi_par K1 K3) Q.
+  Proof.
+    iSplit; iApply bi_par_comm_1.
+  Qed.
+
+  Lemma bi_par_assoc K1 K2 K3 Q :
+    bi_par K1 (bi_par K2 K3) Q -|- bi_par (bi_par K1 K2) K3 Q.
+  Proof.
+    rewrite /bi_par; split'. {
+      iIntros ">(%Q1 & %Q4 & K1 & >(%Q2 & %Q3 & K2 & K3 & W4) & W) !>".
+      iExists (Q1 ** Q2), Q3; iFrame "K3".
+      iSplitL "K1 K2". { iIntros "!>". iFrame. by iIntros "$". }
+      iIntros "((Q1 & Q2) & Q3)". iApply ("W" with "[>- $Q1]").
+      iApply "W4"; iFrame.
+    }
+    iIntros ">(%Q4 & %Q3 & >(%Q1 & %Q2 & K1 & K2 & W4) & K3 & W) !>".
+    iExists Q1, (Q2 ** Q3); iFrame "K1".
+    iSplitL "K2 K3". { iIntros "!>". iFrame. by iIntros "$". }
+    iIntros "(Q1 & Q2 & Q3)". iApply ("W" with "[>- $Q3]").
+    iApply "W4"; iFrame.
+  Qed.
 
   Lemma interp_pars_perm xs ys Q :
     xs ≡ₚ ys -> interp_pars tu xs Q ⊣⊢ interp_pars tu ys Q.
   Proof.
-    (*
-    induction 1 as [|x l l' _ IH|x y l|l l' l'' _ IH1 _ IH2]; simpl.
-    - done.
-    - (* skip *) by setoid_rewrite IH.
-    - (* swap: the content. Reassociate the two existentials and the
-         separating conjunctions. *) admit.
-    - by etrans.
-    Qed.
-    *)
-  Admitted.
+    move: Q => /[swap].
+    elim => [//|x {}xs xs' _ IH|x y {}xs|{}xs {}ys zs _ IH1 _ IH2] Q; rewrite ?(interp_pars_nil, interp_pars_cons).
+    - rewrite /bi_par. by setoid_rewrite IH.
+    - by rewrite bi_par_comm.
+    - by rewrite IH1 IH2.
+  Qed.
+
+  Lemma bi_par_fupd K Q : Mono K -> Shift K ->
+    bi_par (fupd top top) K Q -|- K Q.
+  Proof.
+    rewrite /Mono /Shift /bi_par. intros M S. iSplit.
+    - iIntros "H". iApply S. iMod "H" as (Qi Qg) "(HQi & Hg & Hw)".
+      iModIntro. iApply (M with "[HQi Hw] Hg").
+      iIntros "HQg". iMod "HQi". iApply ("Hw" with "[$]").
+    - iIntros "H !>". iExists emp, Q. iFrame "H". iSplitR.
+      + by iModIntro.
+      + by iIntros "[_ $]".
+  Qed.
+
+  Lemma bi_par_fupd_interp_nf Q n :
+    bi_par (fupd top top) (interp_nf tu n) Q -|- interp_nf tu n Q.
+  Proof.
+    apply bi_par_fupd. { apply interp_nf_frame. }
+    apply interp_nf_shift.
+  Qed.
+
+  (** *** [par_id_l], spelled out
+
+      There is no obligation from the law itself. The obligation is
+      [interp_par_eq] instantiated at [f := FreeTemps.id], where the LHS
+      collapses to [interp tu g Q].  Both directions go through with NO
+      affinity assumption: the [⊢] direction picks [Qi := emp] and
+      PRODUCES [emp] rather than discarding a resource. *)
+  Lemma par_id_obligation g Q :
+    interp tu g Q ⊣⊢
+    |={top}=> Exists (Qi Qg : mpred),
+      (|={top}=> Qi) ** interp tu g Qg ** (Qi ** Qg -* |={top}=> Q).
+  Proof.
+    by rewrite /interp -{1}bi_par_fupd_interp_nf /bi_par.
+  Qed.
 
   Lemma interp_pars_app xs ys Q :
-    interp_pars tu (xs ++ ys) Q ⊣⊢
-    |={top}=> Exists Qx Qy,
-      interp_pars tu xs Qx ** interp_pars tu ys Qy ** (Qx -* Qy -* |={top}=> Q).
+    interp_pars tu (xs ++ ys) Q ⊣⊢ bi_par (interp_pars tu xs) (interp_pars tu ys) Q.
   Proof.
-    (*
-    revert Q. induction xs as [|x xs IH]; intros Q; simpl.
-    - (* [] ++ ys: instantiate Qx := emp; see [par_id_obligation] below,
-         this is the same argument *) admit.
-    - (* cons: rewrite IH under the existentials, then reassociate *) admit.
-    Qed.
-    *)
-  Admitted.
+    elim: xs Q => [|x xs IH] Q.
+    { by rewrite left_id_L interp_pars_nil bi_par_fupd_interp_nf. }
+    rewrite -app_comm_cons !interp_pars_cons -bi_par_assoc.
+    by rewrite /bi_par; setoid_rewrite IH.
+  Qed.
 End interp_theory.
 
 
@@ -432,12 +519,7 @@ Section interp_equations.
   Implicit Types (Q : epred) (f g : FreeTemps.t).
 
   Lemma interp_id Q : interp tu FreeTemps.id Q ⊣⊢ |={top}=> Q.
-  Proof.
-    (*
-    by rewrite /interp view_id.
-    Qed.
-    *)
-  Admitted.
+  Proof. by rewrite /interp view_id. Qed.
 
   (** NOTE: no obligation corresponds to [seq_assoc] / [seq_id_l] /
       [seq_id_r] / [par_assoc] / [par_comm] / [par_id_l].  Those are
@@ -449,101 +531,49 @@ Section interp_equations.
   Lemma interp_seq_eq f g Q :
     interp tu (FreeTemps.seq f g) Q ⊣⊢ interp tu f (interp tu g Q).
   Proof.
-    (*
     rewrite /interp view_seq.
     (* [nf_app] appends children and collapses singletons; then a list
        induction on [nf_children (view f)] against the [seqs] clause. *)
     admit.
-    Qed.
-    *)
   Admitted.
 
   Lemma interp_par_eq f g Q :
     interp tu (FreeTemps.par f g) Q ⊣⊢
-    |={top}=> Exists Qf Qg,
-      interp tu f Qf ** interp tu g Qg ** (Qf -* Qg -* |={top}=> Q).
+      bi_par (interp tu f) (interp tu g) Q.
   Proof.
-    (*
     rewrite /interp.
     (* view (f |*| g) = nf_par (merge (children (view f)) (children (view g)))
        for whatever canonical [merge] the implementation uses, and
        [merge l1 l2 ≡ₚ l1 ++ l2]. *)
-    rewrite (interp_pars_perm _ _ (nf_par_children (view f) ++ nf_par_children (view g))); last by apply merge_Permutation.
-    rewrite interp_pars_app. admit.
-    Qed.
-    *)
+    (* erewrite (interp_pars_perm _ [view _] _). last by apply merge_Permutation. *)
+    (* interp_pars *)
+    (* rewrite view_par. *)
+    (* rewrite (interp_pars_perm _ _ (nf_par_children (view f) ++ nf_par_children (view g))); last by apply merge_Permutation. *)
+    (* rewrite interp_pars_app. admit. *)
+    (* Qed. *)
   Admitted.
 
   Lemma interp_delete ty p Q :
     interp tu (FreeTemps.delete ty p) Q ⊣⊢ destroy_val tu ty p Q.
-  Proof.
-    (*
-    by rewrite /interp (view_atom (free_temp.delete ty p)).
-    Qed.
-    *)
-  Admitted.
+  Proof. by rewrite /interp (view_atom (free_temp.delete ty p)). Qed.
 
   Lemma interp_delete_va va p Q :
     interp tu (FreeTemps.delete_va va p) Q ⊣⊢ |={top}=> p |-> varargsR va ** Q.
-  Proof.
-    (*
-    by rewrite /interp (view_atom (free_temp.delete_va va p)).
-    Qed.
-    *)
-  Admitted.
+  Proof. by rewrite /interp (view_atom (free_temp.delete_va va p)). Qed.
 
   (** [delete_ref] on [t] forces this; it is exactly [destroy_val_ref]. *)
   Lemma interp_delete_ref ty p Q :
     interp tu (FreeTemps.delete (Tref ty) p) Q
     ⊣⊢ interp tu (FreeTemps.delete (Trv_ref ty) p) Q.
-  Proof.
-    (*
-    by rewrite FreeTemps.delete_ref.
-    Qed.
-    *)
-  Admitted.
+  Proof. by rewrite FreeTemps.delete_ref. Qed.
 
   Lemma interp_frame f Q Q' :
     (Q -* Q') |-- interp tu f Q -* interp tu f Q'.
-  Proof.
-    (*
-    apply interp_nf_frame.
-    Qed.
-    *)
-  Admitted.
+  Proof. apply interp_nf_frame. Qed.
 
   Lemma interp_shift f Q :
     (|={top}=> interp tu f (|={top}=> Q)) |-- interp tu f Q.
-  Proof.
-    (*
-    apply interp_nf_shift.
-    Qed.
-    *)
-  Admitted.
-
-  (** *** [par_id_l], spelled out
-
-      There is no obligation from the law itself. The obligation is
-      [interp_par_eq] instantiated at [f := FreeTemps.id], where the LHS
-      collapses to [interp tu g Q].  Both directions go through with NO
-      affinity assumption: the [⊢] direction picks [Qi := emp] and
-      PRODUCES [emp] rather than discarding a resource. *)
-  Lemma par_id_obligation g Q :
-    interp tu g Q ⊣⊢
-    |={top}=> Exists Qi Qg,
-      (|={top}=> Qi) ** interp tu g Qg ** (Qi -* Qg -* |={top}=> Q).
-  Proof.
-    (*
-    iSplit.
-    - iIntros "H !>". iExists emp%I, Q. iFrame "H". iSplitR.
-      + by iModIntro.
-      + iIntros "_ HQ". by iModIntro.
-    - iIntros "H". iApply interp_shift. iMod "H" as (Qi Qg) "(HQi & Hg & Hw)".
-      iModIntro. iApply (interp_frame with "[HQi Hw] Hg").
-      iIntros "HQg". iMod "HQi". by iApply ("Hw" with "HQi HQg").
-    Qed.
-    *)
-  Admitted.
+  Proof. apply interp_nf_shift. Qed.
 End interp_equations.
 
 
@@ -562,7 +592,7 @@ End interp_equations.
 
 Section interp_seq_nf.
   Context `{Σ : cpp_logic} {σ : genv}.
-  Implicit Types (tu : translation_unit) (Q : epred).
+  Implicit Types (Q : epred).
 
   Fixpoint interp_seq_nf tu (n : nf) (Q : epred) {struct n} : mpred :=
     let go := fix go (xs : list nf) (Q : epred) {struct xs} : mpred :=
@@ -594,8 +624,7 @@ Section interp_seq_theory.
   Lemma interp_intro_pars_UNSOUND xs Q :
     interp_seq_nf tu (nf_par xs) Q |-- interp_nf tu (nf_par xs) Q.
   Proof.
-    (*
-    revert Q. induction xs as [|x xs IH] using ?; intros Q; simpl.
+    revert Q. induction xs as [|x xs IH]; intros Q; simpl.
     - by rewrite -fupd_intro.
     - (* IH + interp_nf_frame gives
            interp_seq_nf x (go xs Q)
@@ -603,8 +632,6 @@ Section interp_seq_theory.
          then interp_intro_par_UNSOUND with f := unview_par xs,
          g := unview x, then FreeTemps.par_comm. *)
       admit.
-    Qed.
-    *)
   Admitted.
 
   Lemma interp_seq_nf_interp n Q :
