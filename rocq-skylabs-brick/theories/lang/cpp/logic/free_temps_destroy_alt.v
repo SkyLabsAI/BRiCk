@@ -145,6 +145,17 @@ Definition nf_children (n : nf) : list nf :=
   | _ => [n]
   end.
 
+(** Children of a PARALLEL group.  Note the [nf_seq []] case: the unit is
+    represented as [nf_seq []], not [nf_par []], so without it
+    [nf_par_children] of the unit would be a singleton and [view_par]
+    below would be false at [a = b = FreeTemps.id]. *)
+Definition nf_par_children (n : nf) : list nf :=
+  match n with
+  | nf_par xs => xs
+  | nf_seq [] => []
+  | _ => [n]
+  end.
+
 Definition nf_seq' (xs : list nf) : nf :=
   match xs with
   | [x] => x
@@ -182,17 +193,26 @@ Module Type FREE_TEMPS_NF.
       reordering an [nf_par] are equalities in [t]. *)
   Axiom view_unview : forall f, unview (view f) = f.
 
-  (** Enough for automation to compute.  Note there is deliberately NO
-      equation for [par]: the canonical order [view] uses to sort a
-      parallel group appears in no specification.
-
-      (Consequence, discussed separately: automation therefore cannot
-      reduce [view (a |*| b)] either.  That is the real cost of making
-      [t] abstract.) *)
   Axiom view_id : view FreeTemps.id = nf_seq [].
   Axiom view_atom : forall a, view (of_atom a) = nf_atom a.
   Axiom view_seq : forall a b,
     view (FreeTemps.seq a b) = nf_app (view a) (view b).
+
+  (** [par] is exposed only UP TO PERMUTATION: [view] returns some list
+      that is a permutation of the flattening.  The canonical order the
+      implementation uses to pick that list appears nowhere.
+
+      Stated via [nf_par_children] rather than as [view (a |*| b) =
+      nf_par xs], because the latter is false at [a = b = FreeTemps.id]:
+      [par id id = id] and [view id = nf_seq []], which is not an
+      [nf_par] node.
+
+      This is enough for the semantic theory ([interp_par_eq] below).  It
+      is NOT enough for automation, which needs to reduce [view (a |*|
+      b)] to a concrete list -- see the closing notes. *)
+  Axiom view_par : forall a b,
+    nf_par_children (view (FreeTemps.par a b))
+    ≡ₚ nf_par_children (view a) ++ nf_par_children (view b).
 End FREE_TEMPS_NF.
 
 Declare Module FreeTempsNF : FREE_TEMPS_NF.
