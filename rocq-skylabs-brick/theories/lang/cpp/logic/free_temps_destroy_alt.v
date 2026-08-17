@@ -261,6 +261,45 @@ Section interp_nf.
     Proper (pointwise_relation _ (⊣⊢) ==> pointwise_relation _ (⊣⊢) ==> eq ==> (⊣⊢)) bi_par.
   Proof. solve_proper. Qed.
 
+  Lemma bi_par_comm_1 (K1 K2 K3 : mpred -> mpred) (Q : mpred) :
+    bi_par K1 (bi_par K2 K3) Q |-- bi_par K2 (bi_par K1 K3) Q.
+  Proof.
+    rewrite /bi_par.
+    iIntros ">(%Q1 & %Q2 & K1 & >(%Q0 & %Q3 & K2 & K3 & W1) & W2) !>".
+    iExists Q0; iFrame "K2".
+    iExists (Q1 ** Q3).
+    iSplitR "W1 W2". {
+      iIntros "!>".
+      iExists Q1, Q3; iFrame. by iIntros; iFrame.
+    }
+    iIntros "(? & Q1 & ?)".
+    iApply ("W2" with "[>- $Q1]").
+    iApply "W1"; iFrame.
+  Qed.
+
+  Lemma bi_par_comm (K1 K2 K3 : mpred -> mpred) (Q : mpred) :
+    bi_par K1 (bi_par K2 K3) Q -|- bi_par K2 (bi_par K1 K3) Q.
+  Proof.
+    iSplit; iApply bi_par_comm_1.
+  Qed.
+
+  Lemma bi_par_assoc K1 K2 K3 Q :
+    bi_par K1 (bi_par K2 K3) Q -|- bi_par (bi_par K1 K2) K3 Q.
+  Proof.
+    rewrite /bi_par; split'. {
+      iIntros ">(%Q1 & %Q4 & K1 & >(%Q2 & %Q3 & K2 & K3 & W4) & W) !>".
+      iExists (Q1 ** Q2), Q3; iFrame "K3".
+      iSplitL "K1 K2". { iIntros "!>". iFrame. by iIntros "$". }
+      iIntros "((Q1 & Q2) & Q3)". iApply ("W" with "[>- $Q1]").
+      iApply "W4"; iFrame.
+    }
+    iIntros ">(%Q4 & %Q3 & >(%Q1 & %Q2 & K1 & K2 & W4) & K3 & W) !>".
+    iExists Q1, (Q2 ** Q3); iFrame "K1".
+    iSplitL "K2 K3". { iIntros "!>". iFrame. by iIntros "$". }
+    iIntros "(Q1 & Q2 & Q3)". iApply ("W" with "[>- $Q3]").
+    iApply "W4"; iFrame.
+  Qed.
+
   (** NOTE on the fancy updates.  They are FORCED, not decorative: see
       [Shift] below.  [Shift] fails for the identity function, so the
       [nf_seq []] leaf must be [|={top}=> Q] rather than [Q].  Likewise the
@@ -389,6 +428,18 @@ Section shift.
   Proof.
     intros Q. by rewrite !fupd_idemp.
   Qed.
+
+  Lemma bi_par_fupd K Q : Mono K -> Shift K ->
+    bi_par (fupd top top) K Q -|- K Q.
+  Proof.
+    rewrite /Mono /Shift /bi_par. intros M S. iSplit.
+    - iIntros "H". iApply S. iMod "H" as (Qi Qg) "(HQi & Hg & Hw)".
+      iModIntro. iApply (M with "[HQi Hw] Hg").
+      iIntros "HQg". iMod "HQi". iApply ("Hw" with "[$]").
+    - iIntros "H !>". iExists emp, Q. iFrame "H". iSplitR.
+      + by iModIntro.
+      + by iIntros "[_ $]".
+  Qed.
 End shift.
 
 
@@ -442,44 +493,6 @@ Section interp_theory.
       equation to the n-ary definition needs exactly these.  Note the
       canonical order appears here only as a permutation: its actual
       content is never inspected. *)
-  Lemma bi_par_comm_1 (K1 K2 K3 : mpred -> mpred) (Q : mpred) :
-    bi_par K1 (bi_par K2 K3) Q |-- bi_par K2 (bi_par K1 K3) Q.
-  Proof.
-    rewrite /bi_par.
-    iIntros ">(%Q1 & %Q2 & K1 & >(%Q0 & %Q3 & K2 & K3 & W1) & W2) !>".
-    iExists Q0; iFrame "K2".
-    iExists (Q1 ** Q3).
-    iSplitR "W1 W2". {
-      iIntros "!>".
-      iExists Q1, Q3; iFrame. by iIntros; iFrame.
-    }
-    iIntros "(? & Q1 & ?)".
-    iApply ("W2" with "[>- $Q1]").
-    iApply "W1"; iFrame.
-  Qed.
-
-  Lemma bi_par_comm (K1 K2 K3 : mpred -> mpred) (Q : mpred) :
-    bi_par K1 (bi_par K2 K3) Q -|- bi_par K2 (bi_par K1 K3) Q.
-  Proof.
-    iSplit; iApply bi_par_comm_1.
-  Qed.
-
-  Lemma bi_par_assoc K1 K2 K3 Q :
-    bi_par K1 (bi_par K2 K3) Q -|- bi_par (bi_par K1 K2) K3 Q.
-  Proof.
-    rewrite /bi_par; split'. {
-      iIntros ">(%Q1 & %Q4 & K1 & >(%Q2 & %Q3 & K2 & K3 & W4) & W) !>".
-      iExists (Q1 ** Q2), Q3; iFrame "K3".
-      iSplitL "K1 K2". { iIntros "!>". iFrame. by iIntros "$". }
-      iIntros "((Q1 & Q2) & Q3)". iApply ("W" with "[>- $Q1]").
-      iApply "W4"; iFrame.
-    }
-    iIntros ">(%Q4 & %Q3 & >(%Q1 & %Q2 & K1 & K2 & W4) & K3 & W) !>".
-    iExists Q1, (Q2 ** Q3); iFrame "K1".
-    iSplitL "K2 K3". { iIntros "!>". iFrame. by iIntros "$". }
-    iIntros "(Q1 & Q2 & Q3)". iApply ("W" with "[>- $Q3]").
-    iApply "W4"; iFrame.
-  Qed.
 
   Lemma interp_pars_perm xs ys Q :
     xs ≡ₚ ys -> interp_pars tu xs Q ⊣⊢ interp_pars tu ys Q.
@@ -489,18 +502,6 @@ Section interp_theory.
     - rewrite /bi_par. by setoid_rewrite IH.
     - by rewrite bi_par_comm.
     - by rewrite IH1 IH2.
-  Qed.
-
-  Lemma bi_par_fupd K Q : Mono K -> Shift K ->
-    bi_par (fupd top top) K Q -|- K Q.
-  Proof.
-    rewrite /Mono /Shift /bi_par. intros M S. iSplit.
-    - iIntros "H". iApply S. iMod "H" as (Qi Qg) "(HQi & Hg & Hw)".
-      iModIntro. iApply (M with "[HQi Hw] Hg").
-      iIntros "HQg". iMod "HQi". iApply ("Hw" with "[$]").
-    - iIntros "H !>". iExists emp, Q. iFrame "H". iSplitR.
-      + by iModIntro.
-      + by iIntros "[_ $]".
   Qed.
 
   Lemma bi_par_fupd_interp_nf Q n :
