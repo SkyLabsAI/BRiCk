@@ -486,14 +486,6 @@ Section interp_theory.
       rewrite !fupd_idemp. by setoid_rewrite fupd_idemp.
   Qed.
 
-  (** *** The two lemmas that carry the weight
-
-      [view (a |*| b)] MERGES the two children lists in canonical order
-      rather than nesting them, so relating the binary [interp_par]
-      equation to the n-ary definition needs exactly these.  Note the
-      canonical order appears here only as a permutation: its actual
-      content is never inspected. *)
-
   Lemma interp_pars_perm xs ys Q :
     xs ≡ₚ ys -> interp_pars tu xs Q ⊣⊢ interp_pars tu ys Q.
   Proof.
