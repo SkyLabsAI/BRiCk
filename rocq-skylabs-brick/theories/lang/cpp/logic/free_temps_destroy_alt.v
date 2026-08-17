@@ -257,6 +257,10 @@ Section interp_nf.
     |={top}=> Exists Q1 Q2,
       K1 Q1 ** K2 Q2 ** (Q1 ** Q2 -* |={top}=> Q).
 
+  #[global] Instance bi_par_proper :
+    Proper (pointwise_relation _ (⊣⊢) ==> pointwise_relation _ (⊣⊢) ==> eq ==> (⊣⊢)) bi_par.
+  Proof. solve_proper. Qed.
+
   (** NOTE on the fancy updates.  They are FORCED, not decorative: see
       [Shift] below.  [Shift] fails for the identity function, so the
       [nf_seq []] leaf must be [|={top}=> Q] rather than [Q].  Likewise the
