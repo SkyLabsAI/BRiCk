@@ -1,8 +1,6 @@
-(cram
- (applies_to :whole_subtree)
- (deps
-  (package rocq-runtime)
-  (package rocq-core)
-  (package rocq-stdlib)
-  (package rocq-tc-db-info)
-  setup-project.sh))
+(include_subdirs qualified)
+(rocq.theory
+ (name tc_db_info_tests)
+ (generate_project_file)
+ (flags (:standard -test-mode))
+ (theories Ltac2 tc_db_info))
