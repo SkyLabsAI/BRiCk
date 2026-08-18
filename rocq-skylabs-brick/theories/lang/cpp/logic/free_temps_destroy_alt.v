@@ -261,26 +261,11 @@ Section interp_nf.
     Proper (pointwise_relation _ (⊣⊢) ==> pointwise_relation _ (⊣⊢) ==> eq ==> (⊣⊢)) bi_par.
   Proof. solve_proper. Qed.
 
-  Lemma bi_par_comm_1 (K1 K2 K3 : mpred -> mpred) (Q : mpred) :
-    bi_par K1 (bi_par K2 K3) Q |-- bi_par K2 (bi_par K1 K3) Q.
+  Lemma bi_par_comm F G Q : bi_par F G Q ⊣⊢ bi_par G F Q.
   Proof.
-    rewrite /bi_par.
-    iIntros ">(%Q1 & %Q2 & K1 & >(%Q0 & %Q3 & K2 & K3 & W1) & W2) !>".
-    iExists Q0; iFrame "K2".
-    iExists (Q1 ** Q3).
-    iSplitR "W1 W2". {
-      iIntros "!>".
-      iExists Q1, Q3; iFrame. by iIntros; iFrame.
-    }
-    iIntros "(? & Q1 & ?)".
-    iApply ("W2" with "[>- $Q1]").
-    iApply "W1"; iFrame.
-  Qed.
-
-  Lemma bi_par_comm (K1 K2 K3 : mpred -> mpred) (Q : mpred) :
-    bi_par K1 (bi_par K2 K3) Q -|- bi_par K2 (bi_par K1 K3) Q.
-  Proof.
-    iSplit; iApply bi_par_comm_1.
+    rewrite /bi_par; iSplit; iIntros ">(%Qx & %Qy & HF & HG & Hw) !>";
+      iExists Qy, Qx; iFrame "HF HG"; iIntros "[H1 H2]";
+      by iApply ("Hw" with "[$]").
   Qed.
 
   Lemma bi_par_assoc K1 K2 K3 Q :
@@ -298,6 +283,13 @@ Section interp_nf.
     iSplitL "K2 K3". { iIntros "!>". iFrame. by iIntros "$". }
     iIntros "(Q1 & Q2 & Q3)". iApply ("W" with "[>- $Q3]").
     iApply "W4"; iFrame.
+  Qed.
+
+  Lemma bi_par_left_comm (K1 K2 K3 : mpred -> mpred) (Q : mpred) :
+    bi_par K1 (bi_par K2 K3) Q -|- bi_par K2 (bi_par K1 K3) Q.
+  Proof.
+    rewrite (bi_par_assoc K1 K2 K3) (bi_par_assoc K2 K1 K3).
+    f_equiv => {}Q. by rewrite (bi_par_comm K2 K1).
   Qed.
 
   (** NOTE on the fancy updates.  They are FORCED, not decorative: see
@@ -492,7 +484,7 @@ Section interp_theory.
     move: Q => /[swap].
     elim => [//|x {}xs xs' _ IH|x y {}xs|{}xs {}ys zs _ IH1 _ IH2] Q; rewrite ?(interp_pars_nil, interp_pars_cons).
     - rewrite /bi_par. by setoid_rewrite IH.
-    - by rewrite bi_par_comm.
+    - by rewrite bi_par_left_comm.
     - by rewrite IH1 IH2.
   Qed.
 
