@@ -547,10 +547,34 @@ Section interp_equations.
   Lemma interp_seq_eq f g Q :
     interp tu (FreeTemps.seq f g) Q ⊣⊢ interp tu f (interp tu g Q).
   Proof.
-    rewrite /interp view_seq.
+    (*
     (* [nf_app] appends children and collapses singletons; then a list
        induction on [nf_children (view f)] against the [seqs] clause. *)
-    admit.
+    rewrite /interp view_seq /nf_app. move: (view f) (view g) => n1 n2.
+    (* rewrite /nf_children. *)
+    (* destruct n1 => //=. *)
+    (* destruct n1, n2 => //=. *)
+    case E: (_ ++ _) => [|x1 [|x2 xs]]; rewrite ?(interp_seqs_nil, interp_seqs_cons).
+    { move: E. move=>/app_eq_nil. rewrite /nf_children => -[??].
+      destruct n1, n2 => //=; subst.
+      by rewrite fupd_idemp.
+    }
+    { simpl.
+      destruct n1, n2; simplify_list_eq; simplify_eq/=.
+      destruct a => //. admit.
+      { split'.
+        by iIntros ">[$ $] !> !>".
+        by iIntros ">[$ >$] !>".
+      }
+      { case: xs E => [[<-] |x xs /= [<-] /app_eq_nil [] //].
+        destruct a => //. admit. by rewrite fupd_idemp.
+      }
+      simplify_list_eq.
+    { destruct n1, n2 => //.
+    (* case: n1 => [a|[//|x xs]|//] /=. *)
+    (* elim: n1 => //=. *)
+    (* move: (view f) (view g) *)
+     *)
   Admitted.
 
   (** Bridge: any [nf] is its own singleton parallel group.  Needed
