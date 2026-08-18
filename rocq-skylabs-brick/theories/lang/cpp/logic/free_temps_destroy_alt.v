@@ -412,14 +412,10 @@ Section shift.
   (** ... but NOT for the identity, which is why [nf_seq []] must carry a
       fupd: [Shift (fun Q => Q)] unfolds to [|={top}=> Q |-- Q]. *)
   Lemma shift_id_fails : Shift (fun Q => Q) -> forall Q, (|={top}=> Q) |-- Q.
-  Proof.
-    intros HS Q. specialize (HS Q). by rewrite fupd_idemp in HS.
-  Qed.
+  Proof. move=> /[swap] Q /(_ Q). by rewrite fupd_idemp. Qed.
 
   Lemma shift_fupd_id : Shift (fun Q => |={top}=> Q)%I.
-  Proof.
-    intros Q. by rewrite !fupd_idemp.
-  Qed.
+  Proof. intros Q. by rewrite !fupd_idemp. Qed.
 
   Lemma bi_par_fupd K Q : Mono K -> Shift K ->
     bi_par (fupd top top) K Q -|- K Q.
@@ -504,11 +500,8 @@ Section interp_theory.
       PRODUCES [emp] rather than discarding a resource. *)
   Lemma par_id_obligation g Q :
     interp tu g Q ⊣⊢
-    |={top}=> Exists (Qi Qg : mpred),
-      (|={top}=> Qi) ** interp tu g Qg ** (Qi ** Qg -* |={top}=> Q).
-  Proof.
-    by rewrite /interp -{1}bi_par_fupd_interp_nf /bi_par.
-  Qed.
+      bi_par (fupd top top) (interp tu g) Q.
+  Proof. by rewrite /interp -{1}bi_par_fupd_interp_nf. Qed.
 
   Lemma interp_pars_app xs ys Q :
     interp_pars tu (xs ++ ys) Q ⊣⊢ bi_par (interp_pars tu xs) (interp_pars tu ys) Q.
