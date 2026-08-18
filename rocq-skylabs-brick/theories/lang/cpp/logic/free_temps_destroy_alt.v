@@ -417,8 +417,12 @@ Section shift.
   Lemma shift_fupd_id : Shift (fun Q => |={top}=> Q)%I.
   Proof. intros Q. by rewrite !fupd_idemp. Qed.
 
-  Lemma bi_par_fupd K Q : Mono K -> Shift K ->
-    bi_par (fupd top top) K Q -|- K Q.
+  (** The unit for [bi_par] is [fun Q => |={top}=> Q], NOT the identity -- see [shift_id_fails].
+      This generalises [par_id_obligation]; [Mono]/[Shift] are what make
+      the [⊣] direction go through, and NO affinity is needed because the
+      [⊢] direction PRODUCES [emp] rather than discarding a resource. *)
+  Lemma bi_par_unit_l F Q : Mono F -> Shift F ->
+    bi_par (fupd top top) F Q ⊣⊢ F Q.
   Proof.
     rewrite /Mono /Shift /bi_par. intros M S. iSplit.
     - iIntros "H". iApply S. iMod "H" as (Qi Qg) "(HQi & Hg & Hw)".
@@ -428,6 +432,10 @@ Section shift.
       + by iModIntro.
       + by iIntros "[_ $]".
   Qed.
+
+  Lemma bi_par_unit_r F Q : Mono F -> Shift F ->
+    bi_par F (fupd top top) Q ⊣⊢ F Q.
+  Proof. intros. by rewrite bi_par_comm bi_par_unit_l. Qed.
 End shift.
 
 
@@ -487,7 +495,7 @@ Section interp_theory.
   Lemma bi_par_fupd_interp_nf Q n :
     bi_par (fupd top top) (interp_nf tu n) Q -|- interp_nf tu n Q.
   Proof.
-    apply bi_par_fupd. { apply interp_nf_frame. }
+    apply bi_par_unit_l. { apply interp_nf_frame. }
     apply interp_nf_shift.
   Qed.
 
@@ -502,6 +510,12 @@ Section interp_theory.
     interp tu g Q ⊣⊢
       bi_par (fupd top top) (interp tu g) Q.
   Proof. by rewrite /interp -{1}bi_par_fupd_interp_nf. Qed.
+
+  Lemma interp_pars_singleton n Q : interp_pars tu [n] Q ⊣⊢ interp_nf tu n Q.
+  Proof.
+    rewrite interp_pars_cons interp_pars_nil.
+    apply bi_par_unit_r; [ apply interp_nf_frame | apply interp_nf_shift ].
+  Qed.
 
   Lemma interp_pars_app xs ys Q :
     interp_pars tu (xs ++ ys) Q ⊣⊢ bi_par (interp_pars tu xs) (interp_pars tu ys) Q.
@@ -539,21 +553,25 @@ Section interp_equations.
     admit.
   Admitted.
 
+  (** Bridge: any [nf] is its own singleton parallel group.  Needed
+      because [view (a |*| b)] is not necessarily an [nf_par] node (it
+      collapses when a side is the unit). *)
+  Lemma interp_nf_pars n Q :
+    interp_nf tu n Q ⊣⊢ interp_pars tu (nf_par_children n) Q.
+  Proof.
+    case: n => [a|[//|x xs]|//]; rewrite /nf_par_children interp_pars_singleton //.
+  Qed.
+
   Lemma interp_par_eq f g Q :
     interp tu (FreeTemps.par f g) Q ⊣⊢
       bi_par (interp tu f) (interp tu g) Q.
   Proof.
     rewrite /interp.
-    (* view (f |*| g) = nf_par (merge (children (view f)) (children (view g)))
-       for whatever canonical [merge] the implementation uses, and
-       [merge l1 l2 ≡ₚ l1 ++ l2]. *)
-    (* erewrite (interp_pars_perm _ [view _] _). last by apply merge_Permutation. *)
-    (* interp_pars *)
-    (* rewrite view_par. *)
-    (* rewrite (interp_pars_perm _ _ (nf_par_children (view f) ++ nf_par_children (view g))); last by apply merge_Permutation. *)
-    (* rewrite interp_pars_app. admit. *)
-    (* Qed. *)
-  Admitted.
+    rewrite interp_nf_pars.                              (* n is its own singleton group *)
+    rewrite interp_pars_perm; last exact: view_par.      (* <- the only use of the order *)
+    rewrite interp_pars_app.                             (* bi_par of the two halves *)
+    f_equiv => {}Q; by rewrite -!interp_nf_pars.
+  Qed.
 
   Lemma interp_delete ty p Q :
     interp tu (FreeTemps.delete ty p) Q ⊣⊢ destroy_val tu ty p Q.
