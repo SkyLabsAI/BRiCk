@@ -1,2 +1,1 @@
-  $ . ../../setup-name-test.sh
   $ name_test test.cpp

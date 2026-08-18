@@ -1,4 +1,3 @@
-  $ . ../../setup-name-test.sh
   $ name_test test.cpp
   # cpp2v --name-test=test_17_name_test.v test.cpp -- -std=c++17
   # scrub test_17_name_test.v

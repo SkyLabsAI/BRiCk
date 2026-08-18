@@ -1,3 +1,3 @@
-  $ . ../setup-project.sh
+  $ setup_project
   $ make
   $ dune build

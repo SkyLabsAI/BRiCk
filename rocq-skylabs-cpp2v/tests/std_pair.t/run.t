@@ -1,4 +1,4 @@
-  $ . ../setup-project.sh
+  $ setup_project
 
 Compiling the C++ code, use "make Q=" for debugging.
   $ ulimit -S -s 40960
