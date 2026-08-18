@@ -299,6 +299,7 @@ Module internal.
       | FirstDecl (_ : PrimString.string)
       | FirstChild (_ : PrimString.string)
       | Anon (_ : N)
+      | Anonymous
       | Op (_ : OverloadableOperator)
       | OpConv (_ : type)
       | OpLit (_ : PrimString.string).
@@ -463,6 +464,7 @@ Module internal.
               | FirstDecl nm => mret $ Nfirst_decl nm
               | FirstChild nm => mret $ Nfirst_child nm
               | Anon n => mret $ Nanon n
+              | Anonymous => mret Nanonymous
               | OpConv t =>
                   (* NOTE: this is a hack because <<int()>> is parsed as a function type. *)
                   match as_conv function_qualifiers.N t with
@@ -498,6 +500,7 @@ Module internal.
          | FirstDecl n => mfail
          | FirstChild n => mfail
          | Anon _ => mfail
+         | Anonymous => mfail
          end
      end.
 
@@ -576,6 +579,7 @@ Module internal.
         in
         commit (keyword "operator") operator
         $ commit (op_token "~") (fun _ => Dtor <$> ident)
+        $ commit (exact "(anon)") (fun _ => mret Anonymous)
         $ commit (exact "@") (fun _ => (Anon <$> decimal) <|> (FirstDecl <$> ident))
         $ commit (exact ".") (fun _ => FirstChild <$> ident) (Simple <$> ident)
       in
@@ -716,11 +720,17 @@ Module Type TESTS.
   #[local] Definition TEST_type (input : PrimString.string) (nm : type) : Prop :=
     (parse_type input) = Some nm.
 
+  Succeed Example _0 : TEST "(anon)::Msg" (Nscoped (Nglobal Nanonymous) (Nid "Msg")) := eq_refl.
+
   #[local] Definition Msg : name := Nglobal $ Nid "Msg".
 
   Succeed Example _0 : TEST "Msg" Msg := eq_refl.
   Succeed Example _0 : TEST "::Msg" Msg := eq_refl.
   Succeed Example _0 : TEST "Msg::@0" (Nscoped Msg (Nanon 0)) := eq_refl.
+  Succeed Example _0 : TEST "Msg::(anon)" (Msg .:: Nanonymous) :=
+   eq_refl.
+  Succeed Example _0 : TEST "Msg::(anon)::id" (Nscoped (Msg .:: Nanonymous) (Nid "id")) :=
+   eq_refl.
   Succeed Example _0 : TEST "Msg::Msg()" (Nscoped Msg (Nctor [])) := eq_refl.
   Succeed Example _0 : TEST "Msg::~Msg()" (Nscoped Msg (Ndtor)) := eq_refl.
   Succeed Example _0 :

@@ -292,10 +292,16 @@ Module Type TESTS.
   #[local] Definition TEST (input : PrimString.string) (nm : name) : Prop :=
     print_name nm = Some input.
 
+  Succeed Example _0 : TEST "(anon)::Msg" (Nscoped (Nglobal Nanonymous) (Nid "Msg")) := eq_refl.
+
   #[local] Definition Msg : name := Nglobal $ Nid "Msg".
 
   Succeed Example _0 : TEST "Msg" Msg := eq_refl.
   Succeed Example _0 : TEST "Msg::@0" (Nscoped Msg (Nanon 0)) := eq_refl.
+  Succeed Example _0 : TEST "Msg::(anon)" (Msg .:: Nanonymous) :=
+   eq_refl.
+  Succeed Example _0 : TEST "Msg::(anon)::id" (Nscoped (Msg .:: Nanonymous) (Nid "id")) :=
+   eq_refl.
   Succeed Example _0 : TEST "Msg::Msg()" (Nscoped Msg (Nctor [])) := eq_refl.
   Succeed Example _0 : TEST "Msg::~Msg()" (Nscoped Msg Ndtor) := eq_refl.
 
