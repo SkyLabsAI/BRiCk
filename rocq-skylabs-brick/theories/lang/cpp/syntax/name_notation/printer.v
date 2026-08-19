@@ -76,7 +76,7 @@ Section with_lang.
           let* args := traverse (F:=eta option) printType args in
           mret $ "operator """"" ++ i ++ parens (sepBy ", " args)
       | Nanonymous =>
-          if bool_decide (inst = "") then mret "(anon)" else None
+          if bool_decide (inst = "") then mret "(anonymous namespace)" else None
       | Nanon n => mret $ "@" ++ showN n ++ inst
       | Nfirst_decl n => mret $ "@" ++ n ++ inst
       | Nfirst_child n => mret $ "." ++ n ++ inst
@@ -292,10 +292,16 @@ Module Type TESTS.
   #[local] Definition TEST (input : PrimString.string) (nm : name) : Prop :=
     print_name nm = Some input.
 
+  Succeed Example _0 : TEST "(anonymous namespace)::Msg" (Nscoped (Nglobal Nanonymous) (Nid "Msg")) := eq_refl.
+
   #[local] Definition Msg : name := Nglobal $ Nid "Msg".
 
   Succeed Example _0 : TEST "Msg" Msg := eq_refl.
   Succeed Example _0 : TEST "Msg::@0" (Nscoped Msg (Nanon 0)) := eq_refl.
+  Succeed Example _0 : TEST "Msg::(anonymous namespace)" (Msg .:: Nanonymous) :=
+   eq_refl.
+  Succeed Example _0 : TEST "Msg::(anonymous namespace)::id" (Nscoped (Msg .:: Nanonymous) (Nid "id")) :=
+   eq_refl.
   Succeed Example _0 : TEST "Msg::Msg()" (Nscoped Msg (Nctor [])) := eq_refl.
   Succeed Example _0 : TEST "Msg::~Msg()" (Nscoped Msg Ndtor) := eq_refl.
 

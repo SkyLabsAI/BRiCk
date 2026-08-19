@@ -104,7 +104,7 @@ Section with_lang.
       | Nop_conv q t => "operator " ++ printType t ++ "()" ++ with_space (printFQ q)
       | Nop_lit i args => "operator """"_" ++ i ++ print_args args
       | Nanon n => "@" ++ showN n
-      | Nanonymous => "(anon)"
+      | Nanonymous => "(anonymous namespace)"
       | Nfirst_decl n => "#" ++ n
       | Nfirst_child n => "." ++ n
       | Nunsupported_atomic note => "?" ++ note
