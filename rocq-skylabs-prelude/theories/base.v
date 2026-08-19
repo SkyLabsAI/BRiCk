@@ -376,6 +376,12 @@ Section compare.
   #[global] Arguments compare : simpl never.
 End compare.
 
+(** Every relation is antisymmetric relative to itself.
+Not an instance because this is a degenerate case.
+ *)
+Lemma anti_symm_refl {A} (R : relation A) : AntiSymm R R.
+Proof. by intros x y. Qed.
+
 Module compare.
 
   Section derived.
@@ -411,17 +417,52 @@ Module compare.
     Proof.
       rewrite /eq. split.
       - intros x. generalize (compare_antisym x x). by destruct (compare x x).
-      - intros x y. rewrite compare_antisym. by destruct (compare y x).
+      - intros x y. by rewrite (compare_antisym y x) => ->.
       - intros x y z. apply compare_trans.
     Qed.
 
     #[global] Instance lt_trans `{!Comparison (?=)} : Transitive lt.
-    Proof. intros x y z. apply compare_trans. Qed.
+    Proof. rewrite /lt. intros x y z. apply compare_trans. Qed.
 
-    Lemma compare `{!Comparison (?=)} x y : OrderedType.Compare lt eq x y.
+    #[global] Instance gt_trans `{!Comparison (?=)} : Transitive gt.
+    Proof. rewrite /gt. intros x y z. apply compare_trans. Qed.
+
+    Lemma ordered_type_compare `{!Comparison (?=)} x y : OrderedType.Compare lt eq x y.
     Proof.
       rewrite /lt/eq. destruct (x ?= y) eqn:Hc; try by constructor.
       apply OrderedType.GT. by rewrite compare_antisym Hc.
+    Qed.
+
+    (** All these relations are antisymmetric wrt eq.
+    No instance for [eq] since that case is degenerate (see [anti_symm_refl]). *)
+
+    Ltac solve_antisymm R :=
+      intros x y; rewrite /R /eq (compare_antisym y x); by destruct (x ?= y).
+      (* intros x y; unfold R; rewrite /eq (compare_antisym y x); by destruct (x ?= y). *)
+
+    #[global] Instance lt_anti_symm `{!Comparison (?=)} : AntiSymm eq lt.
+    Proof. solve_antisymm lt. Qed.
+
+    #[global] Instance le_anti_symm `{!Comparison (?=)} : AntiSymm eq le.
+    Proof. solve_antisymm le. Qed.
+
+    #[global] Instance gt_anti_symm `{!Comparison (?=)} : AntiSymm eq gt.
+    Proof. solve_antisymm gt. Qed.
+
+    #[global] Instance ge_anti_symm `{!Comparison (?=)} : AntiSymm eq ge.
+    Proof. solve_antisymm ge. Qed.
+
+    (** [le] and [ge] are total. *)
+    #[global] Instance le_total `{!Comparison (?=)} : Total le.
+    Proof.
+      intros x y. rewrite /le (compare_antisym y x).
+      case: (x ?= y) => /=; auto.
+    Qed.
+
+    #[global] Instance ge_total `{!Comparison (?=)} : Total ge.
+    Proof.
+      intros x y. rewrite /ge (compare_antisym y x).
+      case: (x ?= y) => /=; auto.
     Qed.
   End derived.
 
