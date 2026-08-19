@@ -1,7 +1,8 @@
 (rocq.theory
  (name skylabs_brick.tests)
- (modules (:standard \ cpp_prog_backtrace))
+ (flags :standard -test-mode -output-directory .)
  (generate_project_file)
+ (modules :standard \ cpp_prog_inline)
  (theories
   Stdlib
   Lens
@@ -29,9 +30,9 @@
   elpi.apps.locker.elpi))
 
 (rocq.theory
- (name skylabs_brick.tests.backtrace)
- (modules cpp_prog_backtrace)
- (flags (:standard -test-mode) (-output-directory .))
+ (name skylabs_brick.tests.flaky_error_message)
+ (flags :standard -output-directory .)
+ (modules cpp_prog_inline)
  (theories
   Stdlib
   Lens
