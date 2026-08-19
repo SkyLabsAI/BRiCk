@@ -579,7 +579,7 @@ Module internal.
         in
         commit (keyword "operator") operator
         $ commit (op_token "~") (fun _ => Dtor <$> ident)
-        $ commit (exact "(anon)") (fun _ => mret Anonymous)
+        $ commit (exact "(anonymous namespace)") (fun _ => mret Anonymous)
         $ commit (exact "@") (fun _ => (Anon <$> decimal) <|> (FirstDecl <$> ident))
         $ commit (exact ".") (fun _ => FirstChild <$> ident) (Simple <$> ident)
       in
@@ -720,16 +720,16 @@ Module Type TESTS.
   #[local] Definition TEST_type (input : PrimString.string) (nm : type) : Prop :=
     (parse_type input) = Some nm.
 
-  Succeed Example _0 : TEST "(anon)::Msg" (Nscoped (Nglobal Nanonymous) (Nid "Msg")) := eq_refl.
+  Succeed Example _0 : TEST "(anonymous namespace)::Msg" (Nscoped (Nglobal Nanonymous) (Nid "Msg")) := eq_refl.
 
   #[local] Definition Msg : name := Nglobal $ Nid "Msg".
 
   Succeed Example _0 : TEST "Msg" Msg := eq_refl.
   Succeed Example _0 : TEST "::Msg" Msg := eq_refl.
   Succeed Example _0 : TEST "Msg::@0" (Nscoped Msg (Nanon 0)) := eq_refl.
-  Succeed Example _0 : TEST "Msg::(anon)" (Msg .:: Nanonymous) :=
+  Succeed Example _0 : TEST "Msg::(anonymous namespace)" (Msg .:: Nanonymous) :=
    eq_refl.
-  Succeed Example _0 : TEST "Msg::(anon)::id" (Nscoped (Msg .:: Nanonymous) (Nid "id")) :=
+  Succeed Example _0 : TEST "Msg::(anonymous namespace)::id" (Nscoped (Msg .:: Nanonymous) (Nid "id")) :=
    eq_refl.
   Succeed Example _0 : TEST "Msg::Msg()" (Nscoped Msg (Nctor [])) := eq_refl.
   Succeed Example _0 : TEST "Msg::~Msg()" (Nscoped Msg (Ndtor)) := eq_refl.
