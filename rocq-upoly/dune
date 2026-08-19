@@ -1,7 +1,16 @@
 (env
+ (sl_timing
+  (binaries
+   (../rocq-tools/bin/rocq_perf.exe as rocq))
+  (rocq
+   (flags :standard %{read-lines:flags/coqc})
+   (rocqdoc_flags %{read-lines:flags/coqdoc})
+   (rocqdoc_header flags/header.html)
+   (rocqdoc_footer flags/footer.html)))
+ ; Same, but without rocq_perf.
  (_
   (rocq
-   (flags (:standard %{read-lines:flags/coqc}))
+   (flags :standard %{read-lines:flags/coqc})
    (rocqdoc_flags %{read-lines:flags/coqdoc})
    (rocqdoc_header flags/header.html)
    (rocqdoc_footer flags/footer.html))))
