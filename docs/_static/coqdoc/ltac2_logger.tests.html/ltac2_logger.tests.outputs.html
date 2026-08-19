@@ -1,0 +1,95 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>ltac2_logger.tests.outputs</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library ltac2_logger.tests.outputs</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Ltac2.Ltac2</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.ltac2.logger.logger</span>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">Printf</span> <span class="id" title="module">Log</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">Log</span> <span class="id" title="var">Flag</span> <span class="id" title="var">test</span>.<br/>
+<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">Dev</span> <span class="id" title="var">Log</span> <span class="id" title="var">Flag</span> <span class="id" title="var">dev</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">test</span> () :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">test</span>,0] "%s,%i,%I\n%m\n%a\n"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"test_string"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;42<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;@<span class="id" title="var">test_ident</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">fprintf</span> "msg")<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Log.pp_ast</span> '<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#True"><span class="id" title="inductive">True</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">test_filter</span> () :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">test</span>,0]  "test 0";<br/>
+&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">test</span>]    "test";<br/>
+&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">test</span>,1]  "test 1";<br/>
+&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">test</span>,10] "test 10";<br/>
+&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">dev</span>,0]   "dev 0";<br/>
+&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">dev</span>]     "dev";<br/>
+&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">dev</span>,1]   "dev 1";<br/>
+&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">dev</span>,10]  "dev 1";<br/>
+&nbsp;&nbsp;<span class="id" title="var">log</span>[<span class="id" title="var">test</span>,0] "\n".<br/>
+
+<br/>
+<span class="id" title="keyword">Set</span> <span class="id" title="var">SL</span> <span class="id" title="keyword">Debug</span> "_=1".<br/>
+
+<br/>
+<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">True</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">reset_log</span> ();<br/>
+&nbsp;&nbsp;<span class="id" title="var">test</span> ();<br/>
+&nbsp;&nbsp;<span class="id" title="var">output_log</span> ().<br/>
+&nbsp;&nbsp;<span class="id" title="var">test</span> ();<br/>
+&nbsp;&nbsp;<span class="id" title="var">output_log</span> ().<br/>
+&nbsp;&nbsp;<span class="id" title="var">reset_log</span> ().<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">exact</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#I"><span class="id" title="constructor">I</span></a>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">True</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">with_log</span> <span class="id" title="var">true</span> <span class="id" title="var">None</span> <span class="id" title="var">test</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">exact</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#I"><span class="id" title="constructor">I</span></a>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">True</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">with_log</span> <span class="id" title="var">true</span> <span class="id" title="var">None</span> <span class="id" title="var">test_filter</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Set</span> <span class="id" title="var">SL</span> <span class="id" title="keyword">Debug</span> "*=1".<br/>
+&nbsp;&nbsp;<span class="id" title="var">with_log</span> <span class="id" title="var">true</span> <span class="id" title="var">None</span> <span class="id" title="var">test_filter</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Set</span> <span class="id" title="var">SL</span> <span class="id" title="keyword">Debug</span> "_=10".<br/>
+&nbsp;&nbsp;<span class="id" title="var">with_log</span> <span class="id" title="var">true</span> <span class="id" title="var">None</span> <span class="id" title="var">test_filter</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Set</span> <span class="id" title="var">SL</span> <span class="id" title="keyword">Debug</span> "*=10".<br/>
+&nbsp;&nbsp;<span class="id" title="var">with_log</span> <span class="id" title="var">true</span> <span class="id" title="var">None</span> <span class="id" title="var">test_filter</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">exact</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#I"><span class="id" title="constructor">I</span></a>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

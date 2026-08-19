@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>tc_db_info_tests.test</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library tc_db_info_tests.test</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">tc_db_info.tc_db_info</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Create HintDb</span> <span class="id" title="var">test</span> <span class="id" title="var">discriminated</span>.<br/>
+<span class="id" title="keyword">Class</span> <a id="C" class="idref" href="#C"><span class="id" title="record">C</span></a> (<a id="A:1" class="idref" href="#A:1"><span class="id" title="binder">A</span></a>:<span class="id" title="keyword">Type</span>) (<a id="a:2" class="idref" href="#a:2"><span class="id" title="binder">a</span></a>:<a class="idref" href="tc_db_info_tests.test.html#A:1"><span class="id" title="variable">A</span></a>) := <span class="id" title="var">MKC</span> {}.<br/>
+<span class="id" title="keyword">Definition</span> <a id="Cu" class="idref" href="#Cu"><span class="id" title="definition">Cu</span></a> : <a class="idref" href="tc_db_info_tests.test.html#C"><span class="id" title="class">C</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#tt"><span class="id" title="constructor">tt</span></a> := <a class="idref" href="tc_db_info_tests.test.html#MKC"><span class="id" title="constructor">MKC</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="unit'" class="idref" href="#unit'"><span class="id" title="definition">unit'</span></a> := <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#unit"><span class="id" title="inductive">unit</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="tt'" class="idref" href="#tt'"><span class="id" title="definition">tt'</span></a> : <a class="idref" href="tc_db_info_tests.test.html#unit'"><span class="id" title="definition">unit'</span></a> := <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#tt"><span class="id" title="constructor">tt</span></a>.<br/>
+<span class="id" title="keyword">Instance</span> <a id="Cu'" class="idref" href="#Cu'"><span class="id" title="instance">Cu'</span></a> : <a class="idref" href="tc_db_info_tests.test.html#C"><span class="id" title="class">C</span></a> <a class="idref" href="tc_db_info_tests.test.html#unit'"><span class="id" title="definition">unit'</span></a> <a class="idref" href="tc_db_info_tests.test.html#tt'"><span class="id" title="definition">tt'</span></a> := <a class="idref" href="tc_db_info_tests.test.html#MKC"><span class="id" title="constructor">MKC</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span>.<br/>
+<span class="id" title="keyword">Hint Resolve</span> <span class="id" title="var">Cu</span> <span class="id" title="var">Cu'</span> : <span class="id" title="var">test</span>.<br/>
+<span class="id" title="keyword">Print</span> <span class="id" title="keyword">Hint</span> <a class="idref" href="tc_db_info_tests.test.html#C"><span class="id" title="class">C</span></a>.<br/>
+
+<br/>
+<span class="id" title="var">HintDb</span> <span class="id" title="var">Opacity</span> <span class="id" title="var">Info</span> <span class="id" title="var">test</span> <span class="id" title="var">For</span> <span class="id" title="var">C</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="Qualified" class="idref" href="#Qualified"><span class="id" title="module">Qualified</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Set</span> <span class="id" title="var">HintDb</span> <span class="id" title="var">Opacity</span> <span class="id" title="var">Info</span> <span class="id" title="var">Fully</span> <span class="id" title="var">Qualified</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">HintDb</span> <span class="id" title="var">Opacity</span> <span class="id" title="var">Info</span> <span class="id" title="var">test</span> <span class="id" title="var">For</span> <span class="id" title="var">C</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="tc_db_info_tests.test.html#Qualified"><span class="id" title="module">Qualified</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Hint</span> <span class="id" title="var">Mode</span> <a class="idref" href="tc_db_info_tests.test.html#C"><span class="id" title="class">C</span></a> ! - : <span class="id" title="var">test</span>.<br/>
+<span class="id" title="var">HintDb</span> <span class="id" title="var">Opacity</span> <span class="id" title="var">Info</span> <span class="id" title="var">test</span> <span class="id" title="var">For</span> <span class="id" title="var">C</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set</span> <span class="id" title="var">HintDb</span> <span class="id" title="var">Opacity</span> <span class="id" title="var">Info</span> <span class="id" title="var">Ignore</span> <span class="id" title="var">Outputs</span>.<br/>
+<span class="id" title="var">HintDb</span> <span class="id" title="var">Opacity</span> <span class="id" title="var">Info</span> <span class="id" title="var">test</span> <span class="id" title="var">For</span> <span class="id" title="var">C</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Create HintDb</span> <span class="id" title="var">opac</span> <span class="id" title="var">discriminated</span>.<br/>
+<span class="id" title="keyword">Hint Opaque</span> <a class="idref" href="tc_db_info_tests.test.html#unit'"><span class="id" title="definition">unit'</span></a> : <span class="id" title="var">opac</span>.<br/>
+
+<br/>
+<span class="id" title="var">HintDb</span> <span class="id" title="var">Opacity</span> <span class="id" title="var">Info</span> <span class="id" title="var">test</span> <span class="id" title="var">For</span> <span class="id" title="var">C</span> <span class="id" title="var">With</span> <span class="id" title="var">Opacity</span> <span class="id" title="var">Of</span> <span class="id" title="var">opac</span>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>

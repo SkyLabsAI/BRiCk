@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Lens.tests.demo</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">elpi.apps.derive.derive</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Lens.Lens</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Lens.Elpi.Elpi</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">LensNotations</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">lens_scope</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">projections</span>(<span class="id" title="var">primitive</span>=<span class="id" title="keyword">no</span>)]<br/>
+<span class="id" title="keyword">Record</span> <a id="NoPP" class="idref" href="#NoPP"><span class="id" title="record">NoPP</span></a> : <span class="id" title="keyword">Set</span> := { <a id="field" class="idref" href="#field"><span class="id" title="projection">field</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> }.<br/>
+
+<br/>
+<a id="_field" class="idref" href="#_field"><span class="id" title="definition">#[</span></a><a id="_field" class="idref" href="#_field"><span class="id" title="definition">only</span></a><a id="_field" class="idref" href="#_field"><span class="id" title="definition">(</span></a><a id="_field" class="idref" href="#_field"><span class="id" title="definition">lens</span></a><a id="_field" class="idref" href="#_field"><span class="id" title="definition">)]</span></a> <a id="_field" class="idref" href="#_field"><span class="id" title="definition">derive</span></a> <a id="_field" class="idref" href="#_field"><span class="id" title="definition">NoPP</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">About</span> <a class="idref" href="Lens.tests.demo.html#_field"><span class="id" title="definition">_field</span></a>.<br/>
+
+<br/>
+#[<span class="id" title="var">projections</span>(<span class="id" title="var">primitive</span>=<span class="id" title="var">yes</span>)]<br/>
+<span class="id" title="keyword">Record</span> <a id="Foo" class="idref" href="#Foo"><span class="id" title="record">Foo</span></a> : <span class="id" title="keyword">Set</span> := {<br/>
+&nbsp;&nbsp;<a id="foo" class="idref" href="#foo"><span class="id" title="projection">foo</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>;<br/>
+&nbsp;&nbsp;<a id="bar" class="idref" href="#bar"><span class="id" title="projection">bar</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a>;<br/>
+}.<br/>
+
+<br/>
+<a id="_foo" class="idref" href="#_foo"><span class="id" title="definition"><span id="_bar" class="id">#[</span></span></a><a id="_foo" class="idref" href="#_foo"><span class="id" title="definition"><span id="_bar" class="id">only</span></span></a><a id="_foo" class="idref" href="#_foo"><span class="id" title="definition"><span id="_bar" class="id">(</span></span></a><a id="_foo" class="idref" href="#_foo"><span class="id" title="definition"><span id="_bar" class="id">lens</span></span></a><a id="_foo" class="idref" href="#_foo"><span class="id" title="definition"><span id="_bar" class="id">)]</span></span></a> <a id="_foo" class="idref" href="#_foo"><span class="id" title="definition"><span id="_bar" class="id">derive</span></span></a> <a id="_foo" class="idref" href="#_foo"><span class="id" title="definition"><span id="_bar" class="id">Foo</span></span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">About</span> <a class="idref" href="Lens.tests.demo.html#_foo"><span class="id" title="definition">_foo</span></a>.<br/>
+<span class="id" title="keyword">About</span> <a class="idref" href="Lens.tests.demo.html#_bar"><span class="id" title="definition">_bar</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">{|</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">foo</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">:=</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">3</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">;</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">bar</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">:=</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">true</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">|}</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">.^</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">_foo</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">=</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">3</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">{|</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">foo</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">:=</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">3</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">;</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">bar</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">:=</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">true</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">|}</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">.^</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">_bar</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">=</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">true</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">{|</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">foo</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">:=</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">3</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">;</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">bar</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">:=</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">true</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">|}</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">&amp;:</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">_bar</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">.=</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">false</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">{|</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">foo</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">:=</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">3</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">;</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">bar</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">:=</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">false</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">|}</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set Printing All</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;Test&nbsp;for&nbsp;https://github.com/LPCIC/coq-elpi/pull/521&nbsp;*)</span><br/>
+<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">forall</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="binder, definition"><span id="r:6" class="id">r</span></span></a><a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">,</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">foo</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">r</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">=</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">0</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">-&gt;</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">view</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">_foo</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">r</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">=</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">foo</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">r</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">r</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">simpl</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Show</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Show</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">reflexivity</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

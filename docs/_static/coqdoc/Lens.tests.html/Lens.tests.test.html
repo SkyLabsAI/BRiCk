@@ -1,0 +1,162 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">Lens.tests.test</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2023&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">elpi.elpi</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">elpi.apps.derive.derive</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.numbers.html#"><span class="id" title="library">stdpp.numbers</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">Lens.Elpi.Elpi</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;Rocq-Elpi&nbsp;prefers&nbsp;<span class="inlinecode"><span class="id" title="var">main</span>-<span class="id" title="var">interp</span></span>&nbsp;to&nbsp;<span class="inlinecode"><span class="id" title="var">main</span></span>&nbsp;when&nbsp;it&nbsp;is&nbsp;defined.&nbsp;&nbsp;Wrap&nbsp;the<br/>
+&nbsp;&nbsp;&nbsp;ordinary&nbsp;entry&nbsp;point&nbsp;in&nbsp;a&nbsp;hypothetical&nbsp;clause&nbsp;which&nbsp;changes&nbsp;only&nbsp;the&nbsp;timing<br/>
+&nbsp;&nbsp;&nbsp;message;&nbsp;other&nbsp;calls&nbsp;to&nbsp;<span class="inlinecode"><span class="id" title="var">derive.if</span>-<span class="id" title="var">verbose</span></span>&nbsp;use&nbsp;the&nbsp;original&nbsp;clauses.&nbsp;*)</span><br/>
+<span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">lp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">main</span>-<span class="id" title="var">interp</span> <span class="id" title="var">Args</span> <span class="id" title="var">_</span> :-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">pi</span> <span class="id" title="var">name</span> <span class="id" title="var">target</span> <span class="id" title="var">time</span>\<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">derive.if</span>-<span class="id" title="var">verbose</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">coq.say</span> "Derivation" <span class="id" title="var">name</span> "on" <span class="id" title="var">target</span> "took" <span class="id" title="var">time</span>) :-<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;!, <span class="id" title="var">coq.say</span> "Derivation" <span class="id" title="var">name</span> "on" <span class="id" title="var">target</span> "took" "&lt;time&gt;") ==&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">main</span> <span class="id" title="var">Args</span>.<br/>
+}}.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;[verbose,only(lens)] derive Record State : Set := MkState
+  { value : N
+  }.
+Print State._value. *)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="no_prim_projs" class="idref" href="#no_prim_projs"><span class="id" title="module">no_prim_projs</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">projections</span>(<span class="id" title="var">primitive</span>=<span class="id" title="keyword">no</span>)]<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="no_prim_projs.State" class="idref" href="#no_prim_projs.State"><span class="id" title="record">State</span></a> : <span class="id" title="keyword">Set</span> := <span class="id" title="var">MkState</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <a id="no_prim_projs.value" class="idref" href="#no_prim_projs.value"><span class="id" title="projection">value</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+&nbsp;&nbsp;<a id="no_prim_projs._value" class="idref" href="#no_prim_projs._value"><span class="id" title="definition">#[</span></a><a id="no_prim_projs._value" class="idref" href="#no_prim_projs._value"><span class="id" title="definition">verbose</span></a><a id="no_prim_projs._value" class="idref" href="#no_prim_projs._value"><span class="id" title="definition">,</span></a><a id="no_prim_projs._value" class="idref" href="#no_prim_projs._value"><span class="id" title="definition">only</span></a><a id="no_prim_projs._value" class="idref" href="#no_prim_projs._value"><span class="id" title="definition">(</span></a><a id="no_prim_projs._value" class="idref" href="#no_prim_projs._value"><span class="id" title="definition">lens</span></a><a id="no_prim_projs._value" class="idref" href="#no_prim_projs._value"><span class="id" title="definition">)]</span></a> <a id="no_prim_projs._value" class="idref" href="#no_prim_projs._value"><span class="id" title="definition">derive</span></a> <a id="no_prim_projs._value" class="idref" href="#no_prim_projs._value"><span class="id" title="definition">State</span></a>.<br/>
+<span class="comment">(*&nbsp;State__value&nbsp;*)</span><br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Lens.tests.test.html#no_prim_projs"><span class="id" title="module">no_prim_projs</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Print</span> <span class="id" title="keyword">Module</span> <span class="id" title="var">no_prim_projs</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="polymorphic" class="idref" href="#polymorphic"><span class="id" title="module">polymorphic</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="polymorphic.Val" class="idref" href="#polymorphic.Val"><span class="id" title="record">Val</span></a> {<a id="T:3" class="idref" href="#T:3"><span class="id" title="binder">T</span></a> : <span class="id" title="keyword">Type</span>} : <span class="id" title="keyword">Type</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <a id="polymorphic.value" class="idref" href="#polymorphic.value"><span class="id" title="projection">value</span></a> : <a class="idref" href="Lens.tests.test.html#T:3"><span class="id" title="variable">T</span></a> }.<br/>
+&nbsp;&nbsp;<a id="polymorphic._value" class="idref" href="#polymorphic._value"><span class="id" title="definition">#[</span></a><a id="polymorphic._value" class="idref" href="#polymorphic._value"><span class="id" title="definition">verbose</span></a><a id="polymorphic._value" class="idref" href="#polymorphic._value"><span class="id" title="definition">,</span></a><a id="polymorphic._value" class="idref" href="#polymorphic._value"><span class="id" title="definition">only</span></a><a id="polymorphic._value" class="idref" href="#polymorphic._value"><span class="id" title="definition">(</span></a><a id="polymorphic._value" class="idref" href="#polymorphic._value"><span class="id" title="definition">lens</span></a><a id="polymorphic._value" class="idref" href="#polymorphic._value"><span class="id" title="definition">)]</span></a> <a id="polymorphic._value" class="idref" href="#polymorphic._value"><span class="id" title="definition">derive</span></a> <a id="polymorphic._value" class="idref" href="#polymorphic._value"><span class="id" title="definition">Val</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Lens.tests.test.html#polymorphic"><span class="id" title="module">polymorphic</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Print</span> <span class="id" title="keyword">Module</span> <span class="id" title="var">polymorphic</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <a id="prim_projs" class="idref" href="#prim_projs"><span class="id" title="module">prim_projs</span></a>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">projections</span>(<span class="id" title="var">primitive</span>=<span class="id" title="var">yes</span>)]<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="prim_projs.State" class="idref" href="#prim_projs.State"><span class="id" title="record">State</span></a> : <span class="id" title="keyword">Set</span> := <span class="id" title="var">MkState</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <a id="prim_projs.value" class="idref" href="#prim_projs.value"><span class="id" title="projection">value</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+
+<br/>
+&nbsp;&nbsp;<a id="prim_projs._value" class="idref" href="#prim_projs._value"><span class="id" title="definition">#[</span></a><a id="prim_projs._value" class="idref" href="#prim_projs._value"><span class="id" title="definition">verbose</span></a><a id="prim_projs._value" class="idref" href="#prim_projs._value"><span class="id" title="definition">,</span></a><a id="prim_projs._value" class="idref" href="#prim_projs._value"><span class="id" title="definition">only</span></a><a id="prim_projs._value" class="idref" href="#prim_projs._value"><span class="id" title="definition">(</span></a><a id="prim_projs._value" class="idref" href="#prim_projs._value"><span class="id" title="definition">lens</span></a><a id="prim_projs._value" class="idref" href="#prim_projs._value"><span class="id" title="definition">)]</span></a> <a id="prim_projs._value" class="idref" href="#prim_projs._value"><span class="id" title="definition">derive</span></a> <a id="prim_projs._value" class="idref" href="#prim_projs._value"><span class="id" title="definition">State</span></a>.<br/>
+<span class="comment">(*&nbsp;State__value&nbsp;*)</span><br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Lens.tests.test.html#prim_projs"><span class="id" title="module">prim_projs</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Print</span> <span class="id" title="keyword">Module</span> <span class="id" title="var">prim_projs</span>.<br/>
+
+<br/>
+<a id="tickle" class="idref" href="#tickle"><span class="id" title="abbreviation, constructor, inductive, module"><span id="tickle.tickle" class="id"><span id="tickle.stop" class="id"><span id="tickle.more" class="id"><span id="tickle" class="id"><span id="stop" class="id"><span id="more" class="id">#[</span></span></span></span></span></span></span></a><a id="tickle" class="idref" href="#tickle"><span class="id" title="abbreviation, constructor, inductive, module"><span id="tickle.tickle" class="id"><span id="tickle.stop" class="id"><span id="tickle.more" class="id"><span id="tickle" class="id"><span id="stop" class="id"><span id="more" class="id">module</span></span></span></span></span></span></span></a><a id="tickle" class="idref" href="#tickle"><span class="id" title="abbreviation, constructor, inductive, module"><span id="tickle.tickle" class="id"><span id="tickle.stop" class="id"><span id="tickle.more" class="id"><span id="tickle" class="id"><span id="stop" class="id"><span id="more" class="id">]</span></span></span></span></span></span></span></a> <a id="tickle" class="idref" href="#tickle"><span class="id" title="abbreviation, constructor, inductive, module"><span id="tickle.tickle" class="id"><span id="tickle.stop" class="id"><span id="tickle.more" class="id"><span id="tickle" class="id"><span id="stop" class="id"><span id="more" class="id">derive</span></span></span></span></span></span></span></a> <a id="tickle" class="idref" href="#tickle"><span class="id" title="abbreviation, constructor, inductive, module"><span id="tickle.tickle" class="id"><span id="tickle.stop" class="id"><span id="tickle.more" class="id"><span id="tickle" class="id"><span id="stop" class="id"><span id="more" class="id">Inductive</span></span></span></span></span></span></span></a> <a id="tickle" class="idref" href="#tickle"><span class="id" title="abbreviation, constructor, inductive, module"><span id="tickle.tickle" class="id"><span id="tickle.stop" class="id"><span id="tickle.more" class="id"><span id="tickle" class="id"><span id="stop" class="id"><span id="more" class="id">tickle</span></span></span></span></span></span></span></a> <a id="A:8" class="idref" href="#A:8"><span class="id" title="abbreviation, binder, constructor, inductive, module"><span id="tickle" class="id"><span id="tickle.tickle" class="id"><span id="tickle.stop" class="id"><span id="tickle.more" class="id"><span id="tickle" class="id"><span id="stop" class="id"><span id="more" class="id">A</span></span></span></span></span></span></span></span></a> <a id="tickle" class="idref" href="#tickle"><span class="id" title="abbreviation, constructor, inductive, module"><span id="tickle.tickle" class="id"><span id="tickle.stop" class="id"><span id="tickle.more" class="id"><span id="tickle" class="id"><span id="stop" class="id"><span id="more" class="id">|</span></span></span></span></span></span></span></a> <a id="tickle" class="idref" href="#tickle"><span class="id" title="abbreviation, constructor, inductive, module"><span id="tickle.tickle" class="id"><span id="tickle.stop" class="id"><span id="tickle.more" class="id"><span id="tickle" class="id"><span id="stop" class="id"><span id="more" class="id">:=</span></span></span></span></span></span></span></a> <a id="tickle" class="idref" href="#tickle"><span class="id" title="abbreviation, constructor, inductive, module"><span id="tickle.tickle" class="id"><span id="tickle.stop" class="id"><span id="tickle.more" class="id"><span id="tickle" class="id"><span id="stop" class="id"><span id="more" class="id">stop</span></span></span></span></span></span></span></a> <a id="tickle" class="idref" href="#tickle"><span class="id" title="abbreviation, constructor, inductive, module"><span id="tickle.tickle" class="id"><span id="tickle.stop" class="id"><span id="tickle.more" class="id"><span id="tickle" class="id"><span id="stop" class="id"><span id="more" class="id">|</span></span></span></span></span></span></span></a> <a id="tickle" class="idref" href="#tickle"><span class="id" title="abbreviation, constructor, inductive, module"><span id="tickle.tickle" class="id"><span id="tickle.stop" class="id"><span id="tickle.more" class="id"><span id="tickle" class="id"><span id="stop" class="id"><span id="more" class="id">more</span></span></span></span></span></span></span></a> <a id="tickle" class="idref" href="#tickle"><span class="id" title="abbreviation, constructor, inductive, module"><span id="tickle.tickle" class="id"><span id="tickle.stop" class="id"><span id="tickle.more" class="id"><span id="tickle" class="id"><span id="stop" class="id"><span id="more" class="id">:</span></span></span></span></span></span></span></a> <a id="tickle" class="idref" href="#tickle"><span class="id" title="abbreviation, constructor, inductive, module"><span id="tickle.tickle" class="id"><span id="tickle.stop" class="id"><span id="tickle.more" class="id"><span id="tickle" class="id"><span id="stop" class="id"><span id="more" class="id">A</span></span></span></span></span></span></span></a> <a id="tickle" class="idref" href="#tickle"><span class="id" title="abbreviation, constructor, inductive, module"><span id="tickle.tickle" class="id"><span id="tickle.stop" class="id"><span id="tickle.more" class="id"><span id="tickle" class="id"><span id="stop" class="id"><span id="more" class="id">-&gt;</span></span></span></span></span></span></span></a> <a id="tickle" class="idref" href="#tickle"><span class="id" title="abbreviation, constructor, inductive, module"><span id="tickle.tickle" class="id"><span id="tickle.stop" class="id"><span id="tickle.more" class="id"><span id="tickle" class="id"><span id="stop" class="id"><span id="more" class="id">tickle</span></span></span></span></span></span></span></a> <a id="tickle" class="idref" href="#tickle"><span class="id" title="abbreviation, constructor, inductive, module"><span id="tickle.tickle" class="id"><span id="tickle.stop" class="id"><span id="tickle.more" class="id"><span id="tickle" class="id"><span id="stop" class="id"><span id="more" class="id">-&gt;</span></span></span></span></span></span></span></a> <a id="tickle" class="idref" href="#tickle"><span class="id" title="abbreviation, constructor, inductive, module"><span id="tickle.tickle" class="id"><span id="tickle.stop" class="id"><span id="tickle.more" class="id"><span id="tickle" class="id"><span id="stop" class="id"><span id="more" class="id">tickle</span></span></span></span></span></span></span></a>.<br/>
+<a id="State" class="idref" href="#State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="State.State" class="id"><span id="State.value'" class="id"><span id="State._value'" class="id"><span id="State" class="id"><span id="MkState" class="id">#[</span></span></span></span></span></span></a><a id="State" class="idref" href="#State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="State.State" class="id"><span id="State.value'" class="id"><span id="State._value'" class="id"><span id="State" class="id"><span id="MkState" class="id">module</span></span></span></span></span></span></a><a id="State" class="idref" href="#State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="State.State" class="id"><span id="State.value'" class="id"><span id="State._value'" class="id"><span id="State" class="id"><span id="MkState" class="id">]</span></span></span></span></span></span></a> <a id="State" class="idref" href="#State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="State.State" class="id"><span id="State.value'" class="id"><span id="State._value'" class="id"><span id="State" class="id"><span id="MkState" class="id">derive</span></span></span></span></span></span></a> <a id="State" class="idref" href="#State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="State.State" class="id"><span id="State.value'" class="id"><span id="State._value'" class="id"><span id="State" class="id"><span id="MkState" class="id">Record</span></span></span></span></span></span></a> <a id="State" class="idref" href="#State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="State.State" class="id"><span id="State.value'" class="id"><span id="State._value'" class="id"><span id="State" class="id"><span id="MkState" class="id">State</span></span></span></span></span></span></a> <a id="State" class="idref" href="#State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="State.State" class="id"><span id="State.value'" class="id"><span id="State._value'" class="id"><span id="State" class="id"><span id="MkState" class="id">:</span></span></span></span></span></span></a> <a id="State" class="idref" href="#State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="State.State" class="id"><span id="State.value'" class="id"><span id="State._value'" class="id"><span id="State" class="id"><span id="MkState" class="id">Set</span></span></span></span></span></span></a> <a id="State" class="idref" href="#State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="State.State" class="id"><span id="State.value'" class="id"><span id="State._value'" class="id"><span id="State" class="id"><span id="MkState" class="id">:=</span></span></span></span></span></span></a> <a id="State" class="idref" href="#State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="State.State" class="id"><span id="State.value'" class="id"><span id="State._value'" class="id"><span id="State" class="id"><span id="MkState" class="id">MkState</span></span></span></span></span></span></a><br/>
+&nbsp;&nbsp;<a id="State" class="idref" href="#State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="State.State" class="id"><span id="State.value'" class="id"><span id="State._value'" class="id"><span id="State" class="id"><span id="MkState" class="id">{</span></span></span></span></span></span></a> <a id="State" class="idref" href="#State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="State.State" class="id"><span id="State.value'" class="id"><span id="State._value'" class="id"><span id="State" class="id"><span id="MkState" class="id">value'</span></span></span></span></span></span></a> <a id="State" class="idref" href="#State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="State.State" class="id"><span id="State.value'" class="id"><span id="State._value'" class="id"><span id="State" class="id"><span id="MkState" class="id">:</span></span></span></span></span></span></a> <a id="State" class="idref" href="#State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="State.State" class="id"><span id="State.value'" class="id"><span id="State._value'" class="id"><span id="State" class="id"><span id="MkState" class="id">N</span></span></span></span></span></span></a><br/>
+&nbsp;&nbsp;<a id="State" class="idref" href="#State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="State.State" class="id"><span id="State.value'" class="id"><span id="State._value'" class="id"><span id="State" class="id"><span id="MkState" class="id">}</span></span></span></span></span></span></a>.<br/>
+<span class="id" title="keyword">Module</span> <span class="id" title="keyword">Import</span> <a id="bar" class="idref" href="#bar"><span class="id" title="module">bar</span></a>.<br/>
+&nbsp;&nbsp;<a id="bar.State" class="idref" href="#bar.State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="bar.State.State" class="id"><span id="bar.State.value" class="id"><span id="bar.State._value" class="id"><span id="bar.State" class="id"><span id="bar.MkState" class="id">#[</span></span></span></span></span></span></a><a id="bar.State" class="idref" href="#bar.State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="bar.State.State" class="id"><span id="bar.State.value" class="id"><span id="bar.State._value" class="id"><span id="bar.State" class="id"><span id="bar.MkState" class="id">verbose</span></span></span></span></span></span></a><a id="bar.State" class="idref" href="#bar.State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="bar.State.State" class="id"><span id="bar.State.value" class="id"><span id="bar.State._value" class="id"><span id="bar.State" class="id"><span id="bar.MkState" class="id">,</span></span></span></span></span></span></a><a id="bar.State" class="idref" href="#bar.State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="bar.State.State" class="id"><span id="bar.State.value" class="id"><span id="bar.State._value" class="id"><span id="bar.State" class="id"><span id="bar.MkState" class="id">module</span></span></span></span></span></span></a><a id="bar.State" class="idref" href="#bar.State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="bar.State.State" class="id"><span id="bar.State.value" class="id"><span id="bar.State._value" class="id"><span id="bar.State" class="id"><span id="bar.MkState" class="id">]</span></span></span></span></span></span></a> <a id="bar.State" class="idref" href="#bar.State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="bar.State.State" class="id"><span id="bar.State.value" class="id"><span id="bar.State._value" class="id"><span id="bar.State" class="id"><span id="bar.MkState" class="id">derive</span></span></span></span></span></span></a> <a id="bar.State" class="idref" href="#bar.State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="bar.State.State" class="id"><span id="bar.State.value" class="id"><span id="bar.State._value" class="id"><span id="bar.State" class="id"><span id="bar.MkState" class="id">Record</span></span></span></span></span></span></a> <a id="bar.State" class="idref" href="#bar.State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="bar.State.State" class="id"><span id="bar.State.value" class="id"><span id="bar.State._value" class="id"><span id="bar.State" class="id"><span id="bar.MkState" class="id">State</span></span></span></span></span></span></a> <a id="bar.State" class="idref" href="#bar.State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="bar.State.State" class="id"><span id="bar.State.value" class="id"><span id="bar.State._value" class="id"><span id="bar.State" class="id"><span id="bar.MkState" class="id">:</span></span></span></span></span></span></a> <a id="bar.State" class="idref" href="#bar.State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="bar.State.State" class="id"><span id="bar.State.value" class="id"><span id="bar.State._value" class="id"><span id="bar.State" class="id"><span id="bar.MkState" class="id">Set</span></span></span></span></span></span></a> <a id="bar.State" class="idref" href="#bar.State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="bar.State.State" class="id"><span id="bar.State.value" class="id"><span id="bar.State._value" class="id"><span id="bar.State" class="id"><span id="bar.MkState" class="id">:=</span></span></span></span></span></span></a> <a id="bar.State" class="idref" href="#bar.State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="bar.State.State" class="id"><span id="bar.State.value" class="id"><span id="bar.State._value" class="id"><span id="bar.State" class="id"><span id="bar.MkState" class="id">MkState</span></span></span></span></span></span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="bar.State" class="idref" href="#bar.State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="bar.State.State" class="id"><span id="bar.State.value" class="id"><span id="bar.State._value" class="id"><span id="bar.State" class="id"><span id="bar.MkState" class="id">{</span></span></span></span></span></span></a> <a id="bar.State" class="idref" href="#bar.State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="bar.State.State" class="id"><span id="bar.State.value" class="id"><span id="bar.State._value" class="id"><span id="bar.State" class="id"><span id="bar.MkState" class="id">value</span></span></span></span></span></span></a> <a id="bar.State" class="idref" href="#bar.State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="bar.State.State" class="id"><span id="bar.State.value" class="id"><span id="bar.State._value" class="id"><span id="bar.State" class="id"><span id="bar.MkState" class="id">:</span></span></span></span></span></span></a> <a id="bar.State" class="idref" href="#bar.State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="bar.State.State" class="id"><span id="bar.State.value" class="id"><span id="bar.State._value" class="id"><span id="bar.State" class="id"><span id="bar.MkState" class="id">N</span></span></span></span></span></span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a id="bar.State" class="idref" href="#bar.State"><span class="id" title="abbreviation, definition, module, projection, record"><span id="bar.State.State" class="id"><span id="bar.State.value" class="id"><span id="bar.State._value" class="id"><span id="bar.State" class="id"><span id="bar.MkState" class="id">}</span></span></span></span></span></span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Record</span> <a id="bar.State2" class="idref" href="#bar.State2"><span class="id" title="record">State2</span></a> : <span class="id" title="keyword">Set</span> := <span class="id" title="var">MkState2</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <a id="bar.value" class="idref" href="#bar.value"><span class="id" title="projection">value</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;}.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="Lens.tests.test.html#bar"><span class="id" title="module">bar</span></a>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;[only(lens)] derive State. *)</span><br/>
+<span class="id" title="keyword">Print</span> <span class="id" title="keyword">Module</span> <span class="id" title="var">bar</span>.<br/>
+<span class="id" title="keyword">Print</span> <span class="id" title="keyword">Module</span> <span class="id" title="var">bar.State</span>.<br/>
+<span class="id" title="keyword">Print</span> <span class="id" title="var">bar.State.value</span>.<br/>
+<span class="id" title="keyword">Print</span> <span class="id" title="keyword">Module</span> <span class="id" title="var">State</span>.<br/>
+<span class="id" title="keyword">Import</span> <a class="idref" href="Lens.tests.test.html#bar.State"><span class="id" title="module">State</span></a>(<span class="id" title="var">State</span>).<br/>
+<span class="id" title="keyword">Print</span> <span class="id" title="keyword">Module</span> <span class="id" title="var">State</span>.<br/>
+<span class="id" title="keyword">Print</span> <span class="id" title="var">State.value</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;lens.Lens<br/>
+Print&nbsp;lens.&nbsp;*)</span><br/>
+<span class="comment">(*&nbsp;[verbose,only(lens)] derive] State. *)</span><br/>
+<span class="comment">(*&nbsp;derive<span class="inlinecode"><span class="id" title="var">lens</span></span>&nbsp;State.&nbsp;*)</span><br/>
+
+<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
