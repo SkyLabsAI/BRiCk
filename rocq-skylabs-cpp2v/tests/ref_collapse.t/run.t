@@ -1,2 +1,2 @@
-  $ . ../setup-project.sh
+  $ setup_project
   $ dune build test.vo

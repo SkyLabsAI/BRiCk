@@ -10,6 +10,18 @@ Require Import elpi.apps.derive.derive.
 Require Import stdpp.numbers.
 Require Import Lens.Elpi.Elpi.
 
+(* Rocq-Elpi prefers [main-interp] to [main] when it is defined.  Wrap the
+   ordinary entry point in a hypothetical clause which changes only the timing
+   message; other calls to [derive.if-verbose] use the original clauses. *)
+Elpi Accumulate derive lp:{{
+  main-interp Args _ :-
+    (pi name target time\
+      derive.if-verbose
+        (coq.say "Derivation" name "on" target "took" time) :-
+        !, coq.say "Derivation" name "on" target "took" "<time>") ==>
+    main Args.
+}}.
+
 (* #[verbose,only(lens)] derive Record State : Set := MkState
   { value : N
   }.

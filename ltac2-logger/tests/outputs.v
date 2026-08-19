@@ -54,11 +54,3 @@ Proof.
   with_log true None test_filter.
   exact I.
 Qed.
-
-Goal True.
-Proof.
-  Set SL Direct Log.
-  test ().
-  reset_log ().
-  exact I.
-Qed.

@@ -1,4 +1,4 @@
-  $ . ../setup-project.sh
+  $ setup_project
 
 cpp2v should report the ABI selected by the requested clang target, not the
 host platform running the test. This is observable on aarch64-linux because
