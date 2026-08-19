@@ -870,6 +870,36 @@ Module decltype.
               end
             in
             mret t
+        | Einitlist_std e t =>
+            (**
+            The sub-expression is the backing array of
+            <https://eel.is/c++draft/dcl.init.list#5>, i.e. a glvalue of type
+            <<const E[N]>>. The node itself is a prvalue of class type.
+
+            NOTE this is *weaker* than what [wp_init_initlist_std] in
+            ../logic/expr.v requires: that rule needs the array's extent, so it
+            applies only to [Tarray], whereas [array_type] below also accepts
+            [Tincomplete_array] and [Tvariable_array]. [dcl.init.list#5] fixes
+            the type to <<const E[N]>>, so clang cannot produce those here, but
+            a node accepted by <<cpp2v --check-types>> is not by that fact alone
+            one the rule applies to.
+            *)
+            let* bt := of_expr e in
+            let* cls :=
+              match drop_qualifiers t with
+              | Tnamed cls => mret cls
+              | _ => mfail
+              end
+            in
+            (* <<E>> comes from the class, and the backing array's element type
+               must then be <<const E>>; see [std_initializer_list_element] in
+               types.v for why <<E>> is not read off the array instead. *)
+            let* ety := of_option $ std_initializer_list_element cls in
+            let* aety := of_option $ array_type $ drop_reference bt in
+            let* _ :=
+              if bool_decide (aety = tqualified QC ety) then mret () else mfail
+            in
+            mret t
         | Enew (alloc, alloc_ty) aes nf aty osz oinit =>
             let* ats := traverse (T:=eta list) of_expr aes in
             let* afty := require_functype alloc_ty in
@@ -1197,3 +1227,47 @@ Section exprtype.
 
 End exprtype.
 End exprtype.
+
+(** ** Tests for [Einitlist_std]
+
+    <https://eel.is/c++draft/dcl.init.list#5> requires the result to be
+    <<std::initializer_list<E>>> and the backing array to be <<const E[N]>> for
+    that same <<E>>. Checking that here means a malformed node is reported by
+    <<cpp2v --check-types>> instead of surfacing as an unprovable goal deep in
+    a proof. *)
+Section Einitlist_std_tests.
+  (** <<const int[3]>>, the backing array for both <<std::initializer_list<int> >>
+      and <<std::initializer_list<const int> >>: the <<const>> that
+      [dcl.init.list#5] adds is idempotent, so the array does not determine which
+      of the two classes is being built. *)
+  #[local] Definition backing : Expr :=
+    Ematerialize_temp
+      (Einitlist [Eint 1 Tint; Eint 2 Tint; Eint 3 Tint] None
+         (Tarray (Tconst Tint) 3)) Xvalue.
+  #[local] Definition accepts (t : type) : bool :=
+    if trace.runO (decltype.of_expr empty (Einitlist_std backing t))
+    then true else false.
+
+  Succeed Example TEST_accept :
+    accepts (Tstd_initializer_list Tint) = true := eq_refl.
+
+  (** Accepted: <<E>> may itself be <<const>>-qualified, and then <<const E>> is
+      <<E>>. Both this and [TEST_accept] are legitimate, which is why <<E>> has
+      to come from the class -- see [std_initializer_list_element] in types.v. *)
+  Succeed Example TEST_accept_const_elem :
+    accepts (Tstd_initializer_list (Tconst Tint)) = true := eq_refl.
+
+  (** Rejected: the template argument disagrees with the array element type. *)
+  Succeed Example TEST_reject_elem :
+    accepts (Tstd_initializer_list Tbool) = false := eq_refl.
+  (** Rejected: a class that is not <<std::initializer_list>>. *)
+  Succeed Example TEST_reject_class :
+    accepts (Tnamed (Nglobal (Nid "my_span"))) = false := eq_refl.
+  (** Rejected: not a class type at all. *)
+  Succeed Example TEST_reject_prim : accepts Tint = false := eq_refl.
+  (** Rejected: the sub-expression is not a backing array. *)
+  Succeed Example TEST_reject_nonarray :
+    (if trace.runO (decltype.of_expr empty
+                      (Einitlist_std (Eint 1 Tint) (Tstd_initializer_list Tint)))
+     then true else false) = false := eq_refl.
+End Einitlist_std_tests.

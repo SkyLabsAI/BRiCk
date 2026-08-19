@@ -1727,6 +1727,14 @@ Module Expr.
       compare_lex (option.compare compareE b1.(box_Einitlist_union_1) b2.(box_Einitlist_union_1)) $ fun _ =>
       compareT b1.(box_Einitlist_union_2) b2.(box_Einitlist_union_2).
 
+    Record box_Einitlist_std : Set := Box_Einitlist_std {
+      box_Einitlist_std_0 : Expr;
+      box_Einitlist_std_1 : type;
+    }.
+    Definition box_Einitlist_std_compare (b1 b2 : box_Einitlist_std) : comparison :=
+      compare_lex (compareE b1.(box_Einitlist_std_0) b2.(box_Einitlist_std_0)) $ fun _ =>
+      compareT b1.(box_Einitlist_std_1) b2.(box_Einitlist_std_1).
+
     Record box_Enew : Set := Box_Enew {
       box_Enew_0 : name * type;
       box_Enew_1 : list Expr;
@@ -1878,6 +1886,7 @@ Module Expr.
       | Enull => 44
       | Einitlist _ _ _ => 45
       | Einitlist_union _ _ _ => 60
+      | Einitlist_std _ _ => 68
       | Enew _ _ _ _ _ _ => 46
       | Edelete _ _ _ _ => 47
       | Eandclean _ => 48
@@ -1955,6 +1964,7 @@ Module Expr.
       | 65 => box_Eunresolved_initlist
       | 66 => box_Eunresolved_sizeof_pack
       | 67 => box_Einherited_constructor
+      | 68 => box_Einitlist_std
       | _ => box_Eunsupported
       end.
     Definition data (e : Expr) : car (tag e) :=
@@ -2014,6 +2024,7 @@ Module Expr.
       | Enull => ()
       | Einitlist es i t => Box_Einitlist es i t
       | Einitlist_union es i t => Box_Einitlist_union es i t
+      | Einitlist_std e t => Box_Einitlist_std e t
       | Enew fn es a ty sz i => Box_Enew fn es a ty sz i
       | Edelete a fn e t => Box_Edelete a fn e t
       | Eandclean e => e
@@ -2089,6 +2100,7 @@ Module Expr.
       | 65 => box_Eunresolved_initlist_compare
       | 66 => box_Eunresolved_sizeof_pack_compare
       | 67 => box_Einherited_constructor_compare
+      | 68 => box_Einitlist_std_compare
       | _ => box_Eunsupported_compare
       end.
 
@@ -2166,6 +2178,7 @@ Module Expr.
 
       | Einitlist es i t => COMP (Einitlist es i t)
       | Einitlist_union es i t => COMP (Einitlist_union es i t)
+      | Einitlist_std e t => COMP (Einitlist_std e t)
 
       | Enew fn es a ty sz i => COMP (Enew fn es a ty sz i)
       | Edelete a fn e t => COMP (Edelete a fn e t)

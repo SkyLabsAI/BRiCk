@@ -340,6 +340,7 @@ Module decltype.
         | Enull => mret Tnullptr
         | Einitlist _ _ t => mret t
         | Einitlist_union _ _ t => mret t
+        | Einitlist_std _ t => mret t
         | Enew _ _ _ aty _ _ => mret $ Tptr aty
         | Edelete _ _ _ _ => mret Tvoid
         | Eandclean e => of_expr e
