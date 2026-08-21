@@ -264,10 +264,9 @@ const char *macroKind(source::MacroOriginKind kind) {
 }
 
 std::string renderEncodedPhysicalPoint(const source::PhysicalPoint &point) {
-    return "EP(" + std::to_string(point.file.value()) + ", " +
-           std::to_string(point.byteOffset) + ", " +
-           std::to_string(point.line) + ", " +
-           std::to_string(point.byteColumn) + ")";
+    return "EP " + std::to_string(point.file.value()) + " " +
+           std::to_string(point.byteOffset) + " " + std::to_string(point.line) +
+           " " + std::to_string(point.byteColumn);
 }
 
 template <typename Id> std::string renderTableId(Id id) {
@@ -789,8 +788,8 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
             }
             appendListEntry(residualList, hasResiduals, std::move(entry));
         } else {
-            entry = "(CIL(" + *name + ", " + renderTableId(encodedRoot.node) +
-                    ", " + renderTableId(encodedRoot.shape) + "))";
+            entry = "CIL " + *name + " " + renderTableId(encodedRoot.node) +
+                    " " + renderTableId(encodedRoot.shape);
             appendListEntry(singletonLists[namespaceIndex],
                             hasSingletons[namespaceIndex], std::move(entry));
         }
@@ -842,10 +841,8 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
         "#[local] Open Scope pstring_scope.\n"
         "#[local] Open Scope array_scope.\n"
         "#[local] Open Scope uint63_scope.\n"
-        "#[local] Notation "
-        "\"'EP' '(' file ',' offset ',' line ',' column ')'\" :=\n"
-        "  (Encoded.Build_encoded_physical_point file offset line column) "
-        "(only parsing).\n"
+        "#[local] Abbreviation EP :=\n"
+        "  Encoded.Build_encoded_physical_point (only parsing).\n"
         "#[local] Notation \"'LS' '(' children ')'\" :=\n"
         "  (Encoded.Build_encoded_location_shape children) "
         "(only parsing).\n"
@@ -861,7 +858,7 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
         "Require Import skylabs.lang.cpp.parser.\n"
         "Require Import skylabs.lang.cpp.mparser.\n"
         "Require Import skylabs.lang.cpp.parser.source_location.\n\n"
-        "#[local] Notation \"'CIL' '(' n ',' node ',' shape ')'\" :=\n"
+        "#[local] Abbreviation CIL n node shape :=\n"
         "  (n, StaticLocation node shape) (only parsing).\n"
         "#[local] Notation \"'CRS' '(' n ',' value ',' node ',' shape ')'\" "
         ":=\n"

@@ -11,7 +11,7 @@ a nonempty shape path and recovers its physical source line.
   rocq c -w -notation-overridden -w -notation-incompatible-prefix fixture_17_cpp_locations.v
   $ rocq c $ROCQC_ARGS check.v
   $ grep -q 'compact root events: .* selected; .* singleton; .* residual' fixture_17_cpp_locations.v
-  $ grep -q '(CIL(' fixture_17_cpp_locations.v
+  $ grep -q '(CIL (' fixture_17_cpp_locations.v
   $ ! grep -q '(Ovar ' fixture_17_cpp_locations.v
   $ grep -q 'residual_root_events : list Construction.filtered_indexed_located_root_event' fixture_17_cpp_locations.v
   $ test ! -e fixture_17_cpp.v.partial

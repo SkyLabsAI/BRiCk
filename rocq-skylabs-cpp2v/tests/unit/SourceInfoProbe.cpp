@@ -754,7 +754,7 @@ int main(int argc, char **argv) {
                     std::to_string(cardinality.ranges.size()) + "\n") &&
             countOccurrences(*rocqFirst, "(Build_source_file ") ==
                 tables.files.size() &&
-            countOccurrences(*rocqFirst, "EP(") ==
+            countOccurrences(*rocqFirst, "    EP ") ==
                 cardinality.physicalPoints.size() &&
             countOccurrences(*rocqFirst,
                              "(Encoded.Build_encoded_presumed_point ") ==

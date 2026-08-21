@@ -436,7 +436,7 @@ bool directRootsAndDeterminism() {
            contains(
                *locationOrdinaryOnly,
                "compact root events: 2 selected; 1 singleton; 1 residual") &&
-           contains(*locationOrdinaryOnly, "(CIL(") &&
+           contains(*locationOrdinaryOnly, "(CIL (") &&
            contains(*locationOrdinaryOnly, "(CRT(") &&
            contains(
                eventSection,
@@ -697,7 +697,7 @@ bool rootEventEncoding() {
            contains(
                events,
                "7 selected; 4 singleton; 3 residual; 1 duplicate groups") &&
-           count("(CRS(") == 2 && count("(CRT(") == 1 && count("(CIL(") == 4 &&
+           count("(CRS(") == 2 && count("(CRT(") == 1 && count("(CIL (") == 4 &&
            count("(Ovar ") == 2;
 }
 
@@ -1106,8 +1106,12 @@ bool sourceInterningAndRendering() {
         "(Encoded.Build_encoded_origin ExplicitOrigin (Some 0) (Some 1) "
         "(Some 0) (Some 1) ((Encoded.InlineMacroFrame " +
         expectedFrame + ") :: nil) (Some 14) None nil)";
-    return text && contains(*text, expectedFile) &&
-           contains(*text, expectedRange0) && contains(*text, expectedRange1) &&
+    return text && contains(*text, "#[local] Abbreviation EP :=") &&
+           contains(*text, "#[local] Abbreviation CIL n node shape :=") &&
+           !contains(*text, "Notation \"'EP' '('") &&
+           !contains(*text, "Notation \"'CIL' '('") &&
+           contains(*text, expectedFile) && contains(*text, expectedRange0) &&
+           contains(*text, expectedRange1) &&
            contains(*text, "(Encoded.Build_encoded_presumed_point 0 22 23)") &&
            contains(*text, expectedFrame) && contains(*text, expectedOrigin) &&
            contains(*text, "Encoded.Build_indexed_provenance "
@@ -1168,7 +1172,7 @@ bool uint63CoordinateBounds() {
         return false;
     auto output =
         LocationRocqEmitter({true, LocationScope::AllFiles}).emit(unit);
-    return output && contains(*output, "EP(0, 9223372036854775807, 1, 2)") &&
+    return output && contains(*output, "EP 0 9223372036854775807 1 2") &&
            contains(*output, "(Some ((Build_file_id 0), 9223372036854775807))");
 }
 
