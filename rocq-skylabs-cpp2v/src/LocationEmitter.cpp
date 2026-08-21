@@ -162,7 +162,7 @@ private:
 
     static std::string renderAstRelative(const EncodedRelativePath &path) {
         return "(AstRelativeSourceName (Build_relative_path " +
-               std::to_string(path.parents) + "%N " +
+               std::to_string(path.parents) + " " +
                renderStringList(path.components) + "))";
     }
 
@@ -265,9 +265,9 @@ const char *macroKind(source::MacroOriginKind kind) {
 
 std::string renderEncodedPhysicalPoint(const source::PhysicalPoint &point) {
     return "EP(" + std::to_string(point.file.value()) + ", " +
-           std::to_string(point.byteOffset) + "%uint63, " +
-           std::to_string(point.line) + "%uint63, " +
-           std::to_string(point.byteColumn) + "%uint63)";
+           std::to_string(point.byteOffset) + ", " +
+           std::to_string(point.line) + ", " +
+           std::to_string(point.byteColumn) + ")";
 }
 
 template <typename Id> std::string renderTableId(Id id) {
@@ -277,8 +277,8 @@ template <typename Id> std::string renderTableId(Id id) {
 std::string
 renderEncodedPoint(const source::encoding::EncodedPresumedPoint &point) {
     return "(Encoded.Build_encoded_presumed_point " +
-           renderTableId(point.file) + " " + std::to_string(point.line) +
-           "%uint63 " + std::to_string(point.column) + "%uint63)";
+           renderTableId(point.file) + " " + std::to_string(point.line) + " " +
+           std::to_string(point.column) + ")";
 }
 
 std::string renderEncodedRange(const source::encoding::EncodedRange &range) {
@@ -331,7 +331,7 @@ llvm::Expected<std::string> renderFile(const source::File &file,
     if (file.includeParent)
         parent = "(Some ((Build_file_id " +
                  std::to_string(file.includeParent->first.value()) + "), " +
-                 std::to_string(file.includeParent->second) + "%uint63))";
+                 std::to_string(file.includeParent->second) + "))";
     auto physicalName = names.render(file.physicalName);
     if (!physicalName)
         return physicalName.takeError();
@@ -771,8 +771,8 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
                 allFiles ? residualConstructor
                          : (std::string("F") + residualConstructor);
             entry = "(" + constructor + "(" + *name + ", " + *value + ", " +
-                    renderTableId(encodedRoot.node) + "%uint63, " +
-                    renderTableId(encodedRoot.shape) + "%uint63";
+                    renderTableId(encodedRoot.node) + ", " +
+                    renderTableId(encodedRoot.shape);
             if (!allFiles) {
                 if (ordered.index >= locations->eventAtRoot.size() ||
                     ordered.index >= locations->eventHasLocation.size())
@@ -790,8 +790,7 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
             appendListEntry(residualList, hasResiduals, std::move(entry));
         } else {
             entry = "(CIL(" + *name + ", " + renderTableId(encodedRoot.node) +
-                    "%uint63, " + renderTableId(encodedRoot.shape) +
-                    "%uint63))";
+                    ", " + renderTableId(encodedRoot.shape) + "))";
             appendListEntry(singletonLists[namespaceIndex],
                             hasSingletons[namespaceIndex], std::move(entry));
         }
@@ -879,7 +878,8 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
         "#[local] Notation \"'CRMT' '(' n ',' value ',' node ',' shape ')'\" "
         ":=\n"
         "  (Construction.ILEMtype n value node shape) "
-        "(only parsing).\n\n";
+        "(only parsing).\n\n"
+        "#[local] Open Scope uint63_scope.\n\n";
     const std::string filteredMiddle =
         allFiles ? ""
                  : "#[local] Notation \"'FCRS' '(' n ',' value ',' node ',' "
@@ -900,14 +900,16 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
                    "in_tree) (only parsing).\n\n";
     const char *suffix =
         allFiles
-            ? ".\n\nDefinition source_locations : source_map.\n"
+            ? ".\n\n#[local] Close Scope uint63_scope.\n\n"
+              "Definition source_locations : source_map.\n"
               "Proof.\n"
               "  "
               "Construction.build_lazy_compact_indexed_dag_source_map_or_fail "
               "source_files source_provenance source_location_dag "
               "singleton_root_events residual_root_events.\n"
               "Defined.\n"
-            : ".\n\nDefinition source_locations : source_map.\n"
+            : ".\n\n#[local] Close Scope uint63_scope.\n\n"
+              "Definition source_locations : source_map.\n"
               "Proof.\n"
               "  "
               "Construction.build_filtered_lazy_compact_indexed_dag_source_map_"

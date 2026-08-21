@@ -1108,6 +1108,7 @@ bool sourceInterningAndRendering() {
         expectedFrame + ") :: nil) (Some 14) None nil)";
     return text && contains(*text, expectedFile) &&
            contains(*text, expectedRange0) && contains(*text, expectedRange1) &&
+           contains(*text, "(Encoded.Build_encoded_presumed_point 0 22 23)") &&
            contains(*text, expectedFrame) && contains(*text, expectedOrigin) &&
            contains(*text, "Encoded.Build_indexed_provenance "
                            "presumed_filenames physical_points presumed_points "
@@ -1167,11 +1168,8 @@ bool uint63CoordinateBounds() {
         return false;
     auto output =
         LocationRocqEmitter({true, LocationScope::AllFiles}).emit(unit);
-    return output &&
-           contains(*output, "EP(0, 9223372036854775807%uint63, 1%uint63, "
-                             "2%uint63)") &&
-           contains(*output, "(Some ((Build_file_id 0), "
-                             "9223372036854775807%uint63))");
+    return output && contains(*output, "EP(0, 9223372036854775807, 1, 2)") &&
+           contains(*output, "(Some ((Build_file_id 0), 9223372036854775807))");
 }
 
 bool relocatableSourceNameRendering() {
@@ -1219,7 +1217,7 @@ bool relocatableSourceNameRendering() {
                                        {{"toolchain", "/opt/toolchain"}}})
                       .emit(unit);
     const std::string astRelative =
-        "(AstRelativeSourceName (Build_relative_path 1%N "
+        "(AstRelativeSourceName (Build_relative_path 1 "
         "(\"src\" :: \"main.cpp\" :: nil)))";
     const std::string namedRoot = "(NamedRootSourceName \"toolchain\" "
                                   "(\"include\" :: \"header.hpp\" :: nil))";
