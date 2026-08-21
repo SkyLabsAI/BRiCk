@@ -1,3 +1,4 @@
+Require Import Stdlib.Numbers.Cyclic.Int63.Uint63.
 Require Import skylabs.lang.cpp.syntax.source_location.
 Require Import skylabs.lang.cpp.parser.
 Require Import skylabs.lang.cpp.mparser.
@@ -50,7 +51,7 @@ Definition classes (root : decl_root) (path : loc_path)
   | inl _ => []
   end.
 Definition spelling_lines (root : decl_root) (path : loc_path)
-    : list (option N) :=
+    : list (option PrimInt63.int) :=
   match found root path with
   | inr origins =>
       List.map (fun origin =>
@@ -77,7 +78,7 @@ Definition links (root : decl_root) (path : loc_path)
   | inl _ => []
   end.
 Definition pois (root : decl_root) (path : loc_path)
-    : list (option (N * N)) :=
+    : list (option (PrimInt63.int * PrimInt63.int)) :=
   match found root path with
   | inr origins =>
       List.map (fun origin =>
@@ -114,26 +115,26 @@ Example closure_only_enum_value_origin_is_not_attached :
 Proof. vm_compute. reflexivity. Qed.
 
 Example compatible_definition_is_the_selected_root :
-    spelling_lines selected_symbol [] = [Some 22%N].
+    spelling_lines selected_symbol [] = [Some 22%uint63].
 Proof. vm_compute. reflexivity. Qed.
 
 Example self_typedef_does_not_replace_the_record :
-    spelling_lines self_type [] = [Some 3%N].
+    spelling_lines self_type [] = [Some 3%uint63].
 Proof. vm_compute. reflexivity. Qed.
 
 Example class_specialization_keeps_separate_poi :
-    pois box_int_type [] = [Some (25%N, 9%N)].
+    pois box_int_type [] = [Some (25%uint63, 9%uint63)].
 Proof. vm_compute. reflexivity. Qed.
 
 Example function_specialization_keeps_separate_poi :
-    pois identity_int [] = [Some (26%N, 10%N)].
+    pois identity_int [] = [Some (26%uint63, 10%uint63)].
 Proof. vm_compute. reflexivity. Qed.
 
 Example template_parameter_default_precedes_value :
     (spelling_lines box_pattern_type [0],
      spelling_lines box_pattern_type [1],
      spelling_lines box_pattern_type [2]) =
-      ([Some 14%N], [Some 14%N], [Some 14%N]).
+      ([Some 14%uint63], [Some 14%uint63], [Some 14%uint63]).
 Proof. vm_compute. reflexivity. Qed.
 
 Example template_root_has_exact_parameter_default_value_arity :

@@ -136,6 +136,10 @@
  (deps build-dune-tests/cpp2v-unit-tests)
  (action (run %{dep:build-dune-tests/cpp2v-unit-tests})))
 
+(alias
+ (name runtest)
+ (deps (alias cpp2v-unit-tests)))
+
 (rule
  (alias cpp2v-source-info-tests)
  (deps build-dune-tests/cpp2v-source-info-probe

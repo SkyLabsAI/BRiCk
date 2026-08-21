@@ -63,6 +63,28 @@ enum class FileKind {
     Other,
 };
 
+enum class SourceNameKind { Literal, FileSystemPath };
+
+struct SourceName {
+    SourceNameKind kind = SourceNameKind::Literal;
+    std::string value;
+
+    SourceName() = default;
+    SourceName(const char *literal) : value(literal) {}
+    SourceName(std::string literal) : value(std::move(literal)) {}
+
+    static SourceName path(std::string value) {
+        return SourceName(SourceNameKind::FileSystemPath, std::move(value));
+    }
+    static SourceName literal(std::string value) {
+        return SourceName(SourceNameKind::Literal, std::move(value));
+    }
+
+private:
+    SourceName(SourceNameKind kind, std::string value)
+        : kind(kind), value(std::move(value)) {}
+};
+
 enum class RangeKind { Token, Character };
 enum class MacroOriginKind { Body, Argument };
 enum class OriginKind {
@@ -75,13 +97,15 @@ enum class OriginKind {
 
 struct PhysicalPoint {
     FileId file;
+    /// Kept wide at the Clang boundary; validation rejects values that exceed
+    /// Rocq's Uint63.max_int before encoding.
     std::uint64_t byteOffset = 0;
     std::uint32_t line = 0;
     std::uint32_t byteColumn = 0;
 };
 
 struct PresumedPoint {
-    std::string file;
+    SourceName file;
     std::uint32_t line = 0;
     std::uint32_t column = 0;
 };
@@ -113,10 +137,12 @@ struct Origin {
 };
 
 struct File {
-    std::string physicalName;
-    std::optional<std::string> requestedName;
+    SourceName physicalName;
+    std::optional<SourceName> requestedName;
     FileKind kind = FileKind::Other;
     bool isMain = false;
+    /// Parent file plus include byte offset. The offset has the same checked
+    /// uint63 output bound as [PhysicalPoint::byteOffset].
     std::optional<std::pair<FileId, std::uint64_t>> includeParent;
 };
 
@@ -135,6 +161,7 @@ struct MainFileProjection {
     std::vector<bool> directlyRelevant;
 };
 
+bool operator==(const SourceName &lhs, const SourceName &rhs);
 bool operator==(const PhysicalPoint &lhs, const PhysicalPoint &rhs);
 bool operator==(const PresumedPoint &lhs, const PresumedPoint &rhs);
 bool operator==(const Range &lhs, const Range &rhs);

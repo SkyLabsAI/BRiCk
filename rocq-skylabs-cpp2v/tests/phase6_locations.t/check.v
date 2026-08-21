@@ -1,10 +1,11 @@
+Require Import Stdlib.Numbers.Cyclic.Int63.Uint63.
 Require Import skylabs.lang.cpp.syntax.source_location.
 Require Import skylabs.lang.cpp.parser.
 Require Import fixture_17_cpp_locations.
 
 #[local] Open Scope pstring_scope.
 
-Definition origin_line (origin : source_origin) : option N :=
+Definition origin_line (origin : source_origin) : option PrimInt63.int :=
   match origin.(spelling_range) with
   | Some range =>
       match range.(range_begin) with
@@ -24,7 +25,8 @@ Example generated_location_storage_is_an_indexed_dag :
   generated_uses_indexed_location_dag = true.
 Proof. vm_compute. reflexivity. Qed.
 
-Definition first_line (result : lookup_error + list source_origin) : option N :=
+Definition first_line
+    (result : lookup_error + list source_origin) : option PrimInt63.int :=
   match result with
   | inr (origin :: _) => origin_line origin
   | _ => None
@@ -34,5 +36,5 @@ Example nested_initializer_origin :
     first_line
       (skylabs.lang.cpp.syntax.source_location.lookup
         source_locations (DRSymbol (Nglobal (Nid "nested_value")))
-        [1; 0]) = Some 13%N.
+        [1; 0]) = Some 13%uint63.
 Proof. vm_compute. reflexivity. Qed.

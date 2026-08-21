@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <array>
+#include <filesystem>
 #include <sstream>
 #include <system_error>
 #include <type_traits>
@@ -31,6 +32,166 @@ std::string stringLiteral(const std::string &value) {
     result.push_back('"');
     return result;
 }
+
+std::string renderStringList(const std::vector<std::string> &components) {
+    if (components.empty())
+        return "nil";
+    std::string result = "(";
+    for (const auto &component : components)
+        result += stringLiteral(component) + " :: ";
+    return result + "nil)";
+}
+
+struct EncodedRelativePath {
+    std::size_t parents = 0;
+    std::vector<std::string> components;
+};
+
+std::optional<EncodedRelativePath>
+relativePath(const std::filesystem::path &base,
+             const std::filesystem::path &target, bool allowParents) {
+    const std::filesystem::path relative = target.lexically_relative(base);
+    if (relative.empty() && target != base)
+        return std::nullopt;
+
+    EncodedRelativePath result;
+    bool sawComponent = false;
+    for (const auto &part : relative) {
+        const std::string component = part.string();
+        if (component.empty() || component == ".")
+            continue;
+        if (component == "..") {
+            if (!allowParents || sawComponent)
+                return std::nullopt;
+            ++result.parents;
+            continue;
+        }
+        sawComponent = true;
+        result.components.push_back(component);
+    }
+    return result;
+}
+
+llvm::Expected<std::filesystem::path>
+absoluteNormalizedPath(const std::string &value, const char *description) {
+    std::error_code failure;
+    std::filesystem::path result =
+        std::filesystem::absolute(std::filesystem::path(value), failure);
+    if (failure)
+        return llvm::createStringError(failure, "could not make %s absolute",
+                                       description);
+    return result.lexically_normal();
+}
+
+std::filesystem::path weaklyCanonicalPath(const std::filesystem::path &path) {
+    std::error_code failure;
+    std::filesystem::path canonical =
+        std::filesystem::weakly_canonical(path, failure);
+    return failure ? path : canonical;
+}
+
+class SourceNameRenderer {
+    struct Root {
+        std::string name;
+        std::filesystem::path path;
+        std::size_t components = 0;
+    };
+
+public:
+    static llvm::Expected<SourceNameRenderer>
+    create(const LocationRocqEmitterOptions &options) {
+        SourceNameRenderer result;
+        if (options.astPath) {
+            auto astPath =
+                absoluteNormalizedPath(*options.astPath, "location AST path");
+            if (!astPath)
+                return astPath.takeError();
+            result.astDirectory_ = astPath->parent_path();
+        }
+
+        for (const auto &mapping : options.sourceRoots) {
+            if (mapping.name.empty())
+                return llvm::createStringError(
+                    std::errc::invalid_argument,
+                    "location source root has an empty name");
+            if (std::any_of(result.roots_.begin(), result.roots_.end(),
+                            [&](const Root &root) {
+                                return root.name == mapping.name;
+                            }))
+                return llvm::createStringError(
+                    std::errc::invalid_argument,
+                    "location source root '%s' is defined more than once",
+                    mapping.name.c_str());
+            auto path =
+                absoluteNormalizedPath(mapping.path, "location source root");
+            if (!path)
+                return path.takeError();
+            *path = weaklyCanonicalPath(*path);
+            std::size_t components = 0;
+            for (const auto &part : *path) {
+                (void)part;
+                ++components;
+            }
+            result.roots_.push_back(
+                Root{mapping.name, std::move(*path), components});
+        }
+        std::stable_sort(result.roots_.begin(), result.roots_.end(),
+                         [](const Root &left, const Root &right) {
+                             return left.components > right.components;
+                         });
+        return result;
+    }
+
+    llvm::Expected<std::string> render(const source::SourceName &name) const {
+        if (name.kind == source::SourceNameKind::Literal)
+            return renderLiteral(name.value);
+        if (!astDirectory_)
+            return llvm::createStringError(
+                std::errc::invalid_argument,
+                "filesystem source name requires an AST path anchor");
+        auto path = absoluteNormalizedPath(name.value, "source path");
+        if (!path)
+            return path.takeError();
+        return renderPath(*path);
+    }
+
+private:
+    static std::string renderLiteral(const std::string &value) {
+        return "(LiteralSourceName " + stringLiteral(value) + ")";
+    }
+
+    static std::string renderAstRelative(const EncodedRelativePath &path) {
+        return "(AstRelativeSourceName (Build_relative_path " +
+               std::to_string(path.parents) + "%N " +
+               renderStringList(path.components) + "))";
+    }
+
+    static std::string renderNamedRoot(const std::string &root,
+                                       const EncodedRelativePath &path) {
+        return "(NamedRootSourceName " + stringLiteral(root) + " " +
+               renderStringList(path.components) + ")";
+    }
+
+    llvm::Expected<std::string>
+    renderPath(const std::filesystem::path &path) const {
+        const std::filesystem::path canonicalPath = weaklyCanonicalPath(path);
+        for (const Root &root : roots_) {
+            auto relative = relativePath(root.path, canonicalPath, false);
+            if (relative)
+                return renderNamedRoot(root.name, *relative);
+        }
+        auto relative = relativePath(*astDirectory_, path, true);
+        if (!relative)
+            return llvm::createStringError(
+                std::errc::invalid_argument,
+                "source path is on a different filesystem root; configure "
+                "--locations-source-root");
+        return renderAstRelative(*relative);
+    }
+
+    std::optional<std::filesystem::path> astDirectory_;
+    std::vector<Root> roots_;
+};
 
 template <typename Range, typename Render>
 llvm::Expected<std::string> renderList(const Range &values, Render render) {
@@ -104,9 +265,9 @@ const char *macroKind(source::MacroOriginKind kind) {
 
 std::string renderEncodedPhysicalPoint(const source::PhysicalPoint &point) {
     return "EP(" + std::to_string(point.file.value()) + ", " +
-           std::to_string(point.byteOffset) + "%N, " +
-           std::to_string(point.line) + "%N, " +
-           std::to_string(point.byteColumn) + "%N)";
+           std::to_string(point.byteOffset) + "%uint63, " +
+           std::to_string(point.line) + "%uint63, " +
+           std::to_string(point.byteColumn) + "%uint63)";
 }
 
 template <typename Id> std::string renderTableId(Id id) {
@@ -117,7 +278,7 @@ std::string
 renderEncodedPoint(const source::encoding::EncodedPresumedPoint &point) {
     return "(Encoded.Build_encoded_presumed_point " +
            renderTableId(point.file) + " " + std::to_string(point.line) +
-           "%N " + std::to_string(point.column) + "%N)";
+           "%uint63 " + std::to_string(point.column) + "%uint63)";
 }
 
 std::string renderEncodedRange(const source::encoding::EncodedRange &range) {
@@ -164,14 +325,24 @@ renderEncodedFrame(const source::encoding::EncodedMacroFrame &frame) {
            ")";
 }
 
-llvm::Expected<std::string> renderFile(const source::File &file) {
+llvm::Expected<std::string> renderFile(const source::File &file,
+                                       const SourceNameRenderer &names) {
     std::string parent = "None";
     if (file.includeParent)
         parent = "(Some ((Build_file_id " +
                  std::to_string(file.includeParent->first.value()) + "), " +
-                 std::to_string(file.includeParent->second) + "%N))";
-    return "(Build_source_file " + stringLiteral(file.physicalName) + " " +
-           renderOption(file.requestedName, stringLiteral) + " " +
+                 std::to_string(file.includeParent->second) + "%uint63))";
+    auto physicalName = names.render(file.physicalName);
+    if (!physicalName)
+        return physicalName.takeError();
+    std::string requestedName = "None";
+    if (file.requestedName) {
+        auto rendered = names.render(*file.requestedName);
+        if (!rendered)
+            return rendered.takeError();
+        requestedName = "(Some " + *rendered + ")";
+    }
+    return "(Build_source_file " + *physicalName + " " + requestedName + " " +
            fileKind(file.kind) + " " + (file.isMain ? "true" : "false") + " " +
            parent + ")";
 }
@@ -270,12 +441,23 @@ std::string renderEncodedOrigin(const source::encoding::EncodedOrigin &origin,
            " " + renderRawIds(origin.derivedFrom) + ")";
 }
 
-std::string
-renderCommonProvenance(const source::encoding::EncodedTables &tables) {
+llvm::Expected<std::string>
+renderCommonProvenance(const source::encoding::EncodedTables &tables,
+                       const SourceNameRenderer &names) {
+    std::vector<std::string> presumedFilenames;
+    presumedFilenames.reserve(tables.presumedFilenames.size());
+    for (const auto &filename : tables.presumedFilenames) {
+        auto rendered = names.render(filename);
+        if (!rendered)
+            return rendered.takeError();
+        presumedFilenames.push_back(std::move(*rendered));
+    }
+
     std::string result;
     result += renderIndexedTable(
-        "presumed_filenames", "PrimString.string", tables.presumedFilenames,
-        "Encoded.default_presumed_filename", stringLiteral);
+        "presumed_filenames", "source_name", presumedFilenames,
+        "Encoded.default_presumed_filename",
+        [](const std::string &value) { return value; });
     result += renderIndexedTable(
         "physical_points", "Encoded.encoded_physical_point",
         tables.physicalPoints, "Encoded.default_encoded_physical_point",
@@ -335,7 +517,8 @@ renderLocationDag(const location::encoding::EncodedLocations &locations) {
 }
 
 llvm::Expected<std::string>
-renderProvenance(const source::encoding::EncodedTables &tables) {
+renderProvenance(const source::encoding::EncodedTables &tables,
+                 const SourceNameRenderer &names) {
     // The encoder itself establishes these IDs. This guard keeps a corrupt
     // test producer from serializing either a fabricated inline frame or an
     // invalid private table reference.
@@ -346,7 +529,9 @@ renderProvenance(const source::encoding::EncodedTables &tables) {
                     std::errc::invalid_argument,
                     "normalized provenance has an invalid macro frame ID");
 
-    std::string common = renderCommonProvenance(tables);
+    auto common = renderCommonProvenance(tables, names);
+    if (!common)
+        return common.takeError();
     std::string inlineTail = renderMacroDependentProvenance(tables, false);
     std::string referencedTail = renderMacroDependentProvenance(tables, true);
     const bool references = referencedTail.size() < inlineTail.size();
@@ -357,14 +542,14 @@ renderProvenance(const source::encoding::EncodedTables &tables) {
     else
         std::string().swap(referencedTail);
 
-    common.reserve(common.size() + selectedTail.size() + 300);
-    common += selectedTail;
-    common += "#[local] Definition source_provenance : "
-              "Encoded.indexed_provenance :=\n  "
-              "Encoded.Build_indexed_provenance presumed_filenames "
-              "physical_points presumed_points source_ranges macro_frames "
-              "encoded_origins.\n";
-    return common;
+    common->reserve(common->size() + selectedTail.size() + 300);
+    *common += selectedTail;
+    *common += "#[local] Definition source_provenance : "
+               "Encoded.indexed_provenance :=\n  "
+               "Encoded.Build_indexed_provenance presumed_filenames "
+               "physical_points presumed_points source_ranges macro_frames "
+               "encoded_origins.\n";
+    return std::move(*common);
 }
 
 } // namespace
@@ -425,6 +610,9 @@ llvm::Expected<std::string>
 LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
     if (auto failure = IRValidator::validate(unit))
         return std::move(failure);
+    auto names = SourceNameRenderer::create(options_);
+    if (!names)
+        return names.takeError();
     const bool allFiles = options_.scope == LocationScope::AllFiles;
     std::optional<source::MainFileProjection> mainFileProjection;
     const source::Tables *sourceTables = &unit.sources();
@@ -435,7 +623,9 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
         mainFileProjection = std::move(*projection);
         sourceTables = &mainFileProjection->tables;
     }
-    auto files = renderList(sourceTables->files, renderFile);
+    auto files = renderList(sourceTables->files, [&](const source::File &file) {
+        return renderFile(file, *names);
+    });
     if (!files)
         return files.takeError();
     auto provenance = [&]() -> llvm::Expected<std::string> {
@@ -445,7 +635,7 @@ LocationRocqEmitter::emit(const TranslationUnitIR &unit) const {
                                 : source::encoding::encode(*sourceTables);
         if (!encoded)
             return encoded.takeError();
-        return renderProvenance(*encoded);
+        return renderProvenance(*encoded, *names);
     }();
     if (!provenance)
         return provenance.takeError();

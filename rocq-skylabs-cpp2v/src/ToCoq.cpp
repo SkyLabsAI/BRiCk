@@ -420,7 +420,8 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
 
     auto emitLocations = [&]() {
         ir::LocationRocqEmitter locationEmitter(
-            {output_templates_, location_scope_});
+            {output_templates_, location_scope_, location_ast_path_,
+             location_source_roots_});
         return locationEmitter.emit(*ownedUnit);
     };
 

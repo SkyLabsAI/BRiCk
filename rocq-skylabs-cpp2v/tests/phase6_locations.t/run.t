@@ -35,7 +35,7 @@ identical, and the single default stream may be written to stdout.
   $ rocq c $ROCQC_ARGS inline_check.v
   $ test ! -e inline_locations.v
   $ test ! -e inline.v.partial
-  $ cpp2v --module - --check-types fixture.cpp -- -std=c++17 > inline_stdout.v
+  $ cpp2v --module - --locations-ast-path inline.v --check-types fixture.cpp -- -std=c++17 > inline_stdout.v
   $ cmp inline.v inline_stdout.v
 
 The explicit all-files scope changes only the companion and uses the unchanged
@@ -64,6 +64,24 @@ The same input is emitted again, then with ordinary sharing disabled.
   $ cpp2v -o repeat.v --locations repeat_locations.v --check-types fixture.cpp -- -std=c++17
   $ cmp fixture_17_cpp.v repeat.v
   $ cmp fixture_17_cpp_locations.v repeat_locations.v
+  $ grep -q 'AstRelativeSourceName' repeat_locations.v
+  $ ! grep -F "$PWD" repeat_locations.v
+
+The same source/output topology produces byte-identical modules below unrelated
+absolute prefixes. A companion placed elsewhere is still anchored to the AST
+module directory.
+
+  $ mkdir -p relocation_a/src relocation_a/gen relocation_b/deeper/src relocation_b/deeper/gen
+  $ cp fixture.cpp relocation_a/src/fixture.cpp
+  $ cp fixture.cpp relocation_b/deeper/src/fixture.cpp
+  $ (cd relocation_a && cpp2v -o gen/fixture_cpp.v src/fixture.cpp -- -std=c++17)
+  $ (cd relocation_b/deeper && cpp2v -o gen/fixture_cpp.v src/fixture.cpp -- -std=c++17)
+  $ cmp relocation_a/gen/fixture_cpp.v relocation_b/deeper/gen/fixture_cpp.v
+  $ mkdir -p relocated/gen relocated/companions/deep
+  $ cpp2v -o relocated/gen/fixture_cpp.v --locations relocated/companions/deep/fixture_locations.v fixture.cpp -- -std=c++17
+  $ cpp2v -o relocated/gen/fixture_inline.v fixture.cpp -- -std=c++17
+  $ cat relocated/companions/deep/fixture_locations.v relocated/gen/fixture_cpp.v > relocated/gen/fixture_expected.v
+  $ cmp relocated/gen/fixture_expected.v relocated/gen/fixture_inline.v
   $ cpp2v -o unshared.v --locations unshared_locations.v --no-sharing fixture.cpp -- -std=c++17
   $ rocq c $ROCQC_ARGS unshared.v
   $ rocq c $ROCQC_ARGS unshared_locations.v
@@ -119,6 +137,36 @@ Invalid CLI combinations fail before opening either requested final path.
   $ cpp2v --locations-inline fixture.cpp -- -std=c++17 2>&1
   cpp2v: --locations-inline requires --module/-o
   [1]
+  $ cpp2v --module - fixture.cpp -- -std=c++17 > missing_anchor.stdout 2> missing_anchor.stderr; echo $?
+  1
+  $ test ! -s missing_anchor.stdout
+  $ cat missing_anchor.stderr
+  cpp2v: inline locations written to stdout require --locations-ast-path
+  $ cpp2v --module - --locations-ast-path - fixture.cpp -- -std=c++17 2>&1
+  cpp2v: --locations-ast-path must name a file (not '-')
+  [1]
+  $ cpp2v --module named_ast.v --locations-ast-path intended.v fixture.cpp -- -std=c++17 2>&1
+  cpp2v: --locations-ast-path is only valid with --module -
+  [1]
+  $ test ! -e named_ast.v
+  $ cpp2v --module roots_ast.v --locations-source-root malformed fixture.cpp -- -std=c++17 2>&1
+  cpp2v: --locations-source-root expects NAME=PATH
+  [1]
+  $ test ! -e roots_ast.v
+  $ cpp2v --module roots_ast.v --locations-source-root =/opt/a fixture.cpp -- -std=c++17 2>&1
+  cpp2v: --locations-source-root expects NAME=PATH
+  [1]
+  $ cpp2v --module roots_ast.v --locations-source-root toolchain= fixture.cpp -- -std=c++17 2>&1
+  cpp2v: --locations-source-root expects NAME=PATH
+  [1]
+  $ cpp2v --module roots_ast.v --locations-inline=false --locations-source-root toolchain=/opt/a fixture.cpp -- -std=c++17 2>&1
+  cpp2v: --locations-source-root requires location output
+  [1]
+  $ test ! -e roots_ast.v
+  $ cpp2v --module roots_ast.v --locations-source-root toolchain=/opt/a --locations-source-root toolchain=/opt/b fixture.cpp -- -std=c++17 2>&1
+  cpp2v: duplicate --locations-source-root name 'toolchain'
+  [1]
+  $ test ! -e roots_ast.v
   $ rm -f conflicting_ast.v conflicting_locations.v
   $ cpp2v --module conflicting_ast.v --locations conflicting_locations.v --locations-inline fixture.cpp -- -std=c++17 2>&1
   cpp2v: --locations and --locations-inline are mutually exclusive
@@ -146,6 +194,16 @@ Invalid CLI combinations fail before opening either requested final path.
   cpp2v: --module and --locations paths must differ
   [1]
   $ test ! -e same.v
+  $ cpp2v --module same.v --locations ./same.v fixture.cpp -- -std=c++17 2>&1
+  cpp2v: --module and --locations paths must differ
+  [1]
+  $ test ! -e same.v
+  $ mkdir same_directory
+  $ ln -s same_directory same_directory_link
+  $ cpp2v --module same_directory/same.v --locations same_directory_link/same.v fixture.cpp -- -std=c++17 2>&1
+  cpp2v: --module and --locations paths must differ
+  [1]
+  $ test ! -e same_directory/same.v
   $ cpp2v --module interactive_ast.v --locations interactive_locations.v --for-interactive Test fixture.cpp -- -std=c++17 2>&1
   cpp2v: --locations is incompatible with --for-interactive
   [1]

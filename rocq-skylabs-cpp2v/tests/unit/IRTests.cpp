@@ -35,6 +35,9 @@ namespace {
 static_assert(!std::is_copy_assignable_v<Arena>);
 static_assert(!std::is_move_assignable_v<Arena>);
 
+constexpr std::uint64_t kRocqUint63Max =
+    (std::uint64_t{1} << 63U) - std::uint64_t{1};
+
 struct Built {
     NodeId atomic;
     NodeId name;
@@ -779,7 +782,7 @@ bool mainFileSourceProjection() {
     if (projected->tables.files != repeated->tables.files ||
         projected->tables.origins != repeated->tables.origins ||
         projected->tables.files.size() != 1 ||
-        projected->tables.files[0].physicalName != "main.cpp" ||
+        projected->tables.files[0].physicalName.value != "main.cpp" ||
         projected->tables.origins.size() != 2 ||
         projected->directlyRelevant != std::vector<bool>({false, true}) ||
         !projected->oldToNewOrigin[0] || !projected->oldToNewOrigin[1])
@@ -1089,7 +1092,8 @@ bool sourceInterningAndRendering() {
         return false;
     auto text = LocationRocqEmitter({true, LocationScope::AllFiles}).emit(unit);
     const std::string expectedFile =
-        "(Build_source_file \"a\"\"\\.cpp\" (Some \"requested(*.cpp\") "
+        "(Build_source_file (LiteralSourceName \"a\"\"\\.cpp\") "
+        "(Some (LiteralSourceName \"requested(*.cpp\")) "
         "FKUser true None)";
     const std::string expectedRange0 =
         "(Encoded.EncodedGeneralRange 0 1 CharacterRange 2 3)";
@@ -1124,6 +1128,114 @@ bool sourceInterningAndRendering() {
            contains(*text, "Construction.build_lazy_compact_indexed_dag_source_"
                            "map_or_fail") &&
            !contains(*text, "Build_origin_id") && !contains(*text, "LocNode");
+}
+
+bool uint63CoordinateBounds() {
+    source::Tables valid;
+    valid.files.push_back(
+        {"main.cpp", std::nullopt, source::FileKind::User, true, std::nullopt});
+    valid.files.push_back({"header.hpp", std::nullopt, source::FileKind::User,
+                           false,
+                           std::make_pair(source::FileId(0), kRocqUint63Max)});
+    source::Origin origin;
+    const source::PhysicalPoint point{source::FileId(0), kRocqUint63Max, 1, 2};
+    origin.spelling = source::Range{point, point, source::RangeKind::Character,
+                                    std::make_pair(point, point)};
+    valid.origins.push_back(origin);
+
+    source::Tables physicalOverflow = valid;
+    physicalOverflow.origins[0].spelling->begin->byteOffset =
+        kRocqUint63Max + 1;
+    source::Tables includeOverflow = valid;
+    includeOverflow.files[1].includeParent->second = kRocqUint63Max + 1;
+    auto rejectsWith = [](const source::Tables &tables,
+                          const std::string &needle) {
+        llvm::Error failure = source::validate(tables);
+        if (!failure)
+            return false;
+        return contains(llvm::toString(std::move(failure)), needle);
+    };
+    if (!rejectsWith(physicalOverflow,
+                     "byte offset exceeds the Rocq uint63 maximum") ||
+        !rejectsWith(includeOverflow,
+                     "include-parent byte offset exceeds the Rocq uint63 "
+                     "maximum"))
+        return false;
+
+    TranslationUnitIR unit;
+    if (failed(unit.setSources(std::move(valid))) || failed(unit.finish()))
+        return false;
+    auto output =
+        LocationRocqEmitter({true, LocationScope::AllFiles}).emit(unit);
+    return output &&
+           contains(*output, "EP(0, 9223372036854775807%uint63, 1%uint63, "
+                             "2%uint63)") &&
+           contains(*output, "(Some ((Build_file_id 0), "
+                             "9223372036854775807%uint63))");
+}
+
+bool relocatableSourceNameRendering() {
+    source::TableBuilder builder;
+    source::File mainFile;
+    mainFile.physicalName = source::SourceName::path("/workspace/src/main.cpp");
+    mainFile.requestedName =
+        source::SourceName::path("/workspace/src/main.cpp");
+    mainFile.kind = source::FileKind::User;
+    mainFile.isMain = true;
+    auto mainId = builder.internFile(mainFile);
+    source::File header;
+    header.physicalName =
+        source::SourceName::path("/opt/toolchain/include/header.hpp");
+    header.requestedName =
+        source::SourceName::path("/opt/toolchain/include/header.hpp");
+    header.kind = source::FileKind::System;
+    auto headerId = builder.internFile(header);
+    source::File virtualFile;
+    virtualFile.physicalName = source::SourceName::literal("virtual.cpp");
+    virtualFile.kind = source::FileKind::Scratch;
+    auto virtualId = builder.internFile(virtualFile);
+    if (!mainId || !headerId || !virtualId)
+        return false;
+
+    source::Origin physicalNameOrigin;
+    physicalNameOrigin.presumedBegin = source::PresumedPoint{
+        source::SourceName::path("/workspace/src/main.cpp"), 1, 1};
+    source::Origin literalNameOrigin;
+    literalNameOrigin.presumedBegin = source::PresumedPoint{
+        source::SourceName::literal("/logical.cpp"), 700, 1};
+    if (!builder.internOrigin(physicalNameOrigin) ||
+        !builder.internOrigin(literalNameOrigin))
+        return false;
+    auto tables = std::move(builder).finish();
+    if (!tables)
+        return false;
+
+    TranslationUnitIR unit;
+    if (failed(unit.setSources(std::move(*tables))) || failed(unit.finish()))
+        return false;
+    auto output = LocationRocqEmitter({true,
+                                       LocationScope::AllFiles,
+                                       "/workspace/build/main_cpp.v",
+                                       {{"toolchain", "/opt/toolchain"}}})
+                      .emit(unit);
+    const std::string astRelative =
+        "(AstRelativeSourceName (Build_relative_path 1%N "
+        "(\"src\" :: \"main.cpp\" :: nil)))";
+    const std::string namedRoot = "(NamedRootSourceName \"toolchain\" "
+                                  "(\"include\" :: \"header.hpp\" :: nil))";
+    auto occurrences = [](const std::string &text, const std::string &needle) {
+        std::size_t count = 0;
+        for (std::size_t at = text.find(needle); at != std::string::npos;
+             at = text.find(needle, at + needle.size()))
+            ++count;
+        return count;
+    };
+    return output && occurrences(*output, astRelative) == 3 &&
+           occurrences(*output, namedRoot) == 2 &&
+           contains(*output, "(LiteralSourceName \"virtual.cpp\")") &&
+           contains(*output, "(LiteralSourceName \"/logical.cpp\")") &&
+           !contains(*output, "/workspace") &&
+           !contains(*output, "/opt/toolchain");
 }
 
 bool locationDagEncoding() {
@@ -1302,8 +1414,8 @@ bool sourceEncoding() {
     third.derivedFrom = {source::OriginId(1), source::OriginId(0)};
     source.origins = {first, second, third};
 
-    const std::vector<std::string> expectedFilenames{"logical.cpp",
-                                                     "other.cpp"};
+    const std::vector<source::SourceName> expectedFilenames{"logical.cpp",
+                                                            "other.cpp"};
     const std::vector<source::PhysicalPoint> expectedPoints{a, b, c, d};
     const std::vector<EncodedPresumedPoint> expectedPresumed{
         {FilenameId(0), 20, 21},
@@ -3713,7 +3825,9 @@ bool emitIndexedBoundaryFixture(const std::string &path) {
     for (std::uint32_t index = 0; index < originCount; ++index) {
         source::Origin origin;
         if (index < rangeCount) {
-            const source::PhysicalPoint point{file, index * 4ULL, index + 1, 1};
+            const std::uint64_t byteOffset =
+                index == 0 ? kRocqUint63Max : index * 4ULL;
+            const source::PhysicalPoint point{file, byteOffset, index + 1, 1};
             const source::Range range{point, std::nullopt,
                                       source::RangeKind::Character,
                                       std::nullopt};
@@ -3831,6 +3945,8 @@ int main(int argc, char **argv) {
         {"main-file source projection", mainFileSourceProjection},
         {"main-file location DAG filtering", mainFileLocationDagFiltering},
         {"source interning and rendering", sourceInterningAndRendering},
+        {"uint63 coordinate bounds", uint63CoordinateBounds},
+        {"relocatable source-name rendering", relocatableSourceNameRendering},
         {"normalized source encoding", sourceEncoding},
         {"exact location DAG encoding", locationDagEncoding},
         {"invalid categories and shapes", invalidCategoryAndShape},

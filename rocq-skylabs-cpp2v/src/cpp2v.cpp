@@ -17,8 +17,13 @@
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
+#include <filesystem>
 #include <optional>
+#include <string>
 #include <sys/utsname.h>
+#include <system_error>
+#include <unordered_set>
+#include <vector>
 // Declares clang::SyntaxOnlyAction.
 #include "clang/Frontend/FrontendActions.h"
 // Declares llvm::cl::extrahelp.
@@ -64,6 +69,16 @@ static cl::opt<bool>
     LocationsAllFiles("locations-all-files",
                       cl::desc("retain included-file source locations"),
                       cl::Optional, cl::cat(Cpp2V));
+
+static cl::opt<std::string>
+    LocationsAstPath("locations-ast-path",
+                     cl::desc("intended AST .v path when --module is '-'"),
+                     cl::value_desc("filename"), cl::Optional, cl::cat(Cpp2V));
+
+static cl::list<std::string> LocationsSourceRoots(
+    "locations-source-root",
+    cl::desc("replace an external absolute source root (NAME=PATH)"),
+    cl::value_desc("NAME=PATH"), cl::ZeroOrMore, cl::cat(Cpp2V));
 
 static cl::opt<bool> Verbose("v", cl::desc("verbose"), cl::Optional,
                              cl::cat(Cpp2V));
@@ -158,6 +173,37 @@ static bool locationsInlineEnabled() {
            Interactive.getNumOccurrences() == 0;
 }
 
+static std::optional<std::string> locationAstPath() {
+    if (LocationsAstPath.getNumOccurrences() != 0)
+        return LocationsAstPath.getValue();
+    if (VFileOutput.getNumOccurrences() != 0 && VFileOutput != "-")
+        return VFileOutput.getValue();
+    return std::nullopt;
+}
+
+static std::filesystem::path normalizedOutputPath(const std::string &path) {
+    std::error_code failure;
+    std::filesystem::path absolute =
+        std::filesystem::absolute(std::filesystem::path(path), failure);
+    if (failure)
+        return std::filesystem::path(path).lexically_normal();
+    absolute = absolute.lexically_normal();
+    std::filesystem::path canonical =
+        std::filesystem::weakly_canonical(absolute, failure);
+    return failure ? absolute : canonical;
+}
+
+static std::vector<ir::LocationSourceRoot> locationSourceRoots() {
+    std::vector<ir::LocationSourceRoot> result;
+    result.reserve(LocationsSourceRoots.size());
+    for (const auto &mapping : LocationsSourceRoots) {
+        const std::size_t separator = mapping.find('=');
+        result.push_back(
+            {mapping.substr(0, separator), mapping.substr(separator + 1)});
+    }
+    return result;
+}
+
 class ToCoqAction : public clang::ASTFrontendAction {
 public:
     virtual std::unique_ptr<clang::ASTConsumer>
@@ -189,9 +235,9 @@ public:
             locationsInlineEnabled(),
             LocationsAllFiles ? ir::LocationScope::AllFiles
                               : ir::LocationScope::MainFile,
-            to_opt(Templates), to_opt(NameTest),
-            Trace::fromBits(TraceBits.getBits()), Comment, !NoSharing,
-            CheckTypes, !NoTemplates, should_elaborate, !NoAliases,
+            locationAstPath(), locationSourceRoots(), to_opt(Templates),
+            to_opt(NameTest), Trace::fromBits(TraceBits.getBits()), Comment,
+            !NoSharing, CheckTypes, !NoTemplates, should_elaborate, !NoAliases,
             to_opt(Interactive), to_opt(Attributes));
         return std::unique_ptr<clang::ASTConsumer>(result);
     }
@@ -257,7 +303,15 @@ bool validateLocationOptions() {
         if (LocationsAllFiles.getNumOccurrences() != 0)
             llvm::errs()
                 << "cpp2v: --locations-all-files requires location output\n";
-        return LocationsAllFiles.getNumOccurrences() == 0;
+        else if (LocationsAstPath.getNumOccurrences() != 0)
+            llvm::errs()
+                << "cpp2v: --locations-ast-path requires location output\n";
+        else if (!LocationsSourceRoots.empty())
+            llvm::errs()
+                << "cpp2v: --locations-source-root requires location output\n";
+        return LocationsAllFiles.getNumOccurrences() == 0 &&
+               LocationsAstPath.getNumOccurrences() == 0 &&
+               LocationsSourceRoots.empty();
     }
 
     const std::string &module = VFileOutput.getValue();
@@ -268,6 +322,42 @@ bool validateLocationOptions() {
             llvm::errs() << "cpp2v: --locations requires --module/-o\n";
         return false;
     }
+    if (!separate && module == "-" &&
+        LocationsAstPath.getNumOccurrences() == 0) {
+        llvm::errs() << "cpp2v: inline locations written to stdout require "
+                        "--locations-ast-path\n";
+        return false;
+    }
+    if (module != "-" && LocationsAstPath.getNumOccurrences() != 0) {
+        llvm::errs() << "cpp2v: --locations-ast-path is only valid with "
+                        "--module -\n";
+        return false;
+    }
+    if (LocationsAstPath.getNumOccurrences() != 0 &&
+        (LocationsAstPath.getValue().empty() ||
+         LocationsAstPath.getValue() == "-")) {
+        llvm::errs() << "cpp2v: --locations-ast-path must name a file "
+                        "(not '-')\n";
+        return false;
+    }
+
+    std::unordered_set<std::string> sourceRootNames;
+    for (const auto &mapping : LocationsSourceRoots) {
+        const std::size_t separator = mapping.find('=');
+        if (separator == 0 || separator == std::string::npos ||
+            separator + 1 == mapping.size()) {
+            llvm::errs() << "cpp2v: --locations-source-root expects "
+                            "NAME=PATH\n";
+            return false;
+        }
+        const std::string name = mapping.substr(0, separator);
+        if (!sourceRootNames.insert(name).second) {
+            llvm::errs() << "cpp2v: duplicate --locations-source-root name '"
+                         << name << "'\n";
+            return false;
+        }
+    }
+
     if (separate) {
         const std::string &locations = Locations.getValue();
         if (locations.empty() || locations == "-") {
@@ -279,7 +369,7 @@ bool validateLocationOptions() {
                             "is used\n";
             return false;
         }
-        if (module == locations) {
+        if (normalizedOutputPath(module) == normalizedOutputPath(locations)) {
             llvm::errs()
                 << "cpp2v: --module and --locations paths must differ\n";
             return false;

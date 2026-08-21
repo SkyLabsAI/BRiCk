@@ -50,6 +50,13 @@ std::size_t hashString(const std::string &value) {
     return std::hash<std::string>{}(value);
 }
 
+std::size_t hashSourceName(const SourceName &value) {
+    std::size_t seed = 0;
+    combineHash(seed, static_cast<std::size_t>(value.kind));
+    combineHash(seed, hashString(value.value));
+    return seed;
+}
+
 std::size_t hashEncodedPresumed(const EncodedPresumedPoint &point) {
     std::size_t seed = 0;
     hashId(seed, point.file.value());
@@ -150,9 +157,9 @@ private:
     std::unordered_map<std::size_t, llvm::SmallVector<Id, 1>> buckets_;
 };
 
-struct StringHash {
-    std::size_t operator()(const std::string &value) const {
-        return hashString(value);
+struct SourceNameHash {
+    std::size_t operator()(const SourceName &value) const {
+        return hashSourceName(value);
     }
 };
 struct PhysicalPointHash {
@@ -306,7 +313,7 @@ llvm::Expected<EncodedTables> encode(const source::Tables &source,
     if (auto failure = source::validate(source))
         return std::move(failure);
 
-    Interner<FilenameId, std::string, StringHash> filenames(
+    Interner<FilenameId, SourceName, SourceNameHash> filenames(
         options.forceHashCollisions);
     Interner<PhysicalPointId, PhysicalPoint, PhysicalPointHash> points(
         options.forceHashCollisions);

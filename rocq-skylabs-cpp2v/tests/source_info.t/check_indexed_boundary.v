@@ -17,7 +17,8 @@ Definition is_some {A : Type} (value : option A) : bool :=
 
 Example boundary_source_file_is_exact :
   source_locations.(files) =
-    (Build_source_file "boundary.cpp" None FKUser true None :: nil).
+    (Build_source_file (LiteralSourceName "boundary.cpp")
+      None FKUser true None :: nil).
 Proof. vm_compute. reflexivity. Qed.
 
 Example boundary_table_lengths_are_exact :
@@ -104,7 +105,7 @@ Definition decode_boundary_origin
   end.
 
 Definition boundary_point0 : physical_point :=
-  Build_physical_point 0 0%N 1%N 1%N.
+  Build_physical_point 0 Uint63.max_int 1%uint63 1%uint63.
 
 Definition boundary_range0 : source_range :=
   Build_source_range (Some boundary_point0) None CharacterRange None.
@@ -112,8 +113,10 @@ Definition boundary_range0 : source_range :=
 Definition boundary_origin0 : source_origin :=
   Build_source_origin ExplicitOrigin (Some boundary_range0)
     (Some boundary_range0)
-    (Some (Build_presumed_point "boundary-logical.cpp" 100%N 101%N))
-    (Some (Build_presumed_point "boundary-logical.cpp" 102%N 103%N))
+    (Some (Build_presumed_point
+      (LiteralSourceName "boundary-logical.cpp") 100%uint63 101%uint63))
+    (Some (Build_presumed_point
+      (LiteralSourceName "boundary-logical.cpp") 102%uint63 103%uint63))
     (Build_macro_frame
       (Some "BOUNDARY_MACRO_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
       MacroBody None None :: nil)

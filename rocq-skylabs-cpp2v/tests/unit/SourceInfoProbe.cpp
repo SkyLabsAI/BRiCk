@@ -114,14 +114,16 @@ struct Check {
     }
 };
 
-llvm::Expected<std::string> renderRocqValues(const source::Tables &tables) {
+llvm::Expected<std::string> renderRocqValues(const source::Tables &tables,
+                                             const std::string &astPath) {
     ir::TranslationUnitIR unit;
     if (auto failure = unit.setSources(tables))
         return std::move(failure);
     if (auto failure = unit.finish())
         return std::move(failure);
     auto body =
-        ir::LocationRocqEmitter({true, ir::LocationScope::AllFiles}).emit(unit);
+        ir::LocationRocqEmitter({true, ir::LocationScope::AllFiles, astPath})
+            .emit(unit);
     if (!body)
         return body.takeError();
     return std::move(*body);
@@ -151,7 +153,7 @@ void appendUnique(std::vector<T> &values, const T &value) {
 }
 
 struct IndexedCardinality {
-    std::vector<std::string> presumedFilenames;
+    std::vector<source::SourceName> presumedFilenames;
     std::vector<source::PhysicalPoint> physicalPoints;
     std::vector<source::PresumedPoint> presumedPoints;
     std::vector<source::Range> ranges;
@@ -553,9 +555,19 @@ int main(int argc, char **argv) {
                       mappedValue->presumedBegin &&
                       mappedValue->spelling->begin &&
                       mappedValue->presumedBegin->line == 700 &&
-                      mappedValue->presumedBegin->file == "logical.cpp" &&
+                      mappedValue->presumedBegin->file.kind ==
+                          source::SourceNameKind::Literal &&
+                      mappedValue->presumedBegin->file.value == "logical.cpp" &&
                       mappedValue->spelling->begin->line != 700,
                   "#line presumed point differs from physical point");
+    check.require(
+        std::any_of(tables.origins.begin(), tables.origins.end(),
+                    [](const source::Origin &origin) {
+                        return origin.presumedBegin &&
+                               origin.presumedBegin->file.kind ==
+                                   source::SourceNameKind::FileSystemPath;
+                    }),
+        "ordinary presumed filenames retain filesystem provenance");
     check.require(poiValue && poiValue->pointOfInstantiation &&
                       poiValue->spelling && poiValue->spelling->begin &&
                       poiValue->pointOfInstantiation->byteOffset !=
@@ -597,10 +609,13 @@ int main(int argc, char **argv) {
                 std::make_optional(
                     std::make_pair(mainFile, systemIncludeOffset)),
         "exact include-parent IDs, offsets, and classifications");
-    check.require(duplicateIdA != duplicateIdB &&
-                      tables.files[duplicateIdA.value()] ==
-                          tables.files[duplicateIdB.value()],
-                  "equal serialized files preserve distinct live identities");
+    check.require(
+        duplicateIdA != duplicateIdB &&
+            tables.files[duplicateIdA.value()] ==
+                tables.files[duplicateIdB.value()] &&
+            tables.files[duplicateIdA.value()].physicalName.kind ==
+                source::SourceNameKind::Literal,
+        "equal literal virtual files preserve distinct live identities");
 
     const auto *nestedLiteralValue = originAt(nestedLiteralOrigin);
     const auto *bodyLiteralValue = originAt(bodyLiteralOrigin);
@@ -659,9 +674,12 @@ int main(int argc, char **argv) {
                 std::vector<source::OriginId>{*mappedOrigin},
         "exact transformed/synthetic/inherited provenance edges");
 
-    auto rocqFirst = check.take(renderRocqValues(tables), "render Rocq values");
-    auto rocqSecond =
-        check.take(renderRocqValues(tables), "repeat Rocq rendering");
+    const std::string rocqAstPath =
+        rocqOutput.empty() ? "source_values.v" : rocqOutput;
+    auto rocqFirst =
+        check.take(renderRocqValues(tables, rocqAstPath), "render Rocq values");
+    auto rocqSecond = check.take(renderRocqValues(tables, rocqAstPath),
+                                 "repeat Rocq rendering");
     const std::string anchoredTail =
         "(Some " + std::to_string(mappedOrigin->value()) + ") (" +
         std::to_string(mappedOrigin->value()) + " :: nil))";
@@ -714,7 +732,7 @@ int main(int argc, char **argv) {
             contains(*rocqFirst, anchoredTail) &&
             contains(*rocqFirst,
                      "presumed_filenames : Encoded.indexed_table "
-                     "PrimString.string :=\n  Encoded.Build_indexed_table " +
+                     "source_name :=\n  Encoded.Build_indexed_table " +
                          std::to_string(cardinality.presumedFilenames.size()) +
                          "\n") &&
             contains(*rocqFirst,

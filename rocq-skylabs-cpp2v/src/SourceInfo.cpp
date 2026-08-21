@@ -45,8 +45,13 @@ void hashPhysicalPoint(std::size_t &seed, const PhysicalPoint &point) {
     combineHash(seed, point.byteColumn);
 }
 
+void hashSourceName(std::size_t &seed, const SourceName &name) {
+    combineHash(seed, static_cast<std::size_t>(name.kind));
+    combineHash(seed, std::hash<std::string>{}(name.value));
+}
+
 void hashPresumedPoint(std::size_t &seed, const PresumedPoint &point) {
-    combineHash(seed, std::hash<std::string>{}(point.file));
+    hashSourceName(seed, point.file);
     combineHash(seed, point.line);
     combineHash(seed, point.column);
 }
@@ -93,6 +98,9 @@ std::size_t hashOrigin(const Origin &origin) {
     return seed;
 }
 
+constexpr std::uint64_t kRocqUint63Max =
+    (std::uint64_t{1} << 63U) - std::uint64_t{1};
+
 bool validFile(FileId id, const Tables &tables) {
     return id.valid() && id.value() < tables.files.size();
 }
@@ -101,6 +109,9 @@ llvm::Error validatePoint(const PhysicalPoint &point, const Tables &tables,
                           const char *where) {
     if (!validFile(point.file, tables))
         return error(std::string(where) + " has an out-of-range file ID");
+    if (point.byteOffset > kRocqUint63Max)
+        return error(std::string(where) +
+                     " byte offset exceeds the Rocq uint63 maximum");
     return llvm::Error::success();
 }
 
@@ -137,6 +148,10 @@ llvm::Error validateRange(const Range &range, const Tables &tables,
 }
 
 } // namespace
+
+bool operator==(const SourceName &lhs, const SourceName &rhs) {
+    return lhs.kind == rhs.kind && lhs.value == rhs.value;
+}
 
 bool operator==(const PhysicalPoint &lhs, const PhysicalPoint &rhs) {
     return lhs.file == rhs.file && lhs.byteOffset == rhs.byteOffset &&
@@ -247,6 +262,10 @@ llvm::Error validate(const Tables &tables) {
         if (file.includeParent && !validFile(file.includeParent->first, tables))
             return error("source file " + std::to_string(i) +
                          " has an out-of-range include parent");
+        if (file.includeParent && file.includeParent->second > kRocqUint63Max)
+            return error("source file " + std::to_string(i) +
+                         " include-parent byte offset exceeds the Rocq uint63 "
+                         "maximum");
     }
 
     auto validOrigin = [&](OriginId id) {

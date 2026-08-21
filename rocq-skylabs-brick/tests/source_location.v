@@ -61,13 +61,70 @@ Definition namespace_map : source_map := {|
 |}.
 
 Definition test_file : source_file :=
-  Build_source_file "test.cpp"%pstring None FKUser true None.
+  Build_source_file (LiteralSourceName "test.cpp"%pstring)
+    None FKUser true None.
 
 Definition file_map : source_map := {|
   files := [test_file];
   origin_data := ExpandedOrigins test_origins;
   location_data := ExpandedLocations namespace_locations
 |}.
+
+Definition test_ast_path : absolute_path :=
+  Build_absolute_path PosixPathRoot
+    ["tmp"%pstring; "workspace"%pstring; "build"%pstring; "test_cpp.v"%pstring].
+
+Example ast_relative_source_path_resolves_from_the_ast_directory :
+  SourcePath.resolve test_ast_path []
+    (AstRelativeSourceName
+      (Build_relative_path 1%N ["src"%pstring; "test.cpp"%pstring])) =
+  Some (ResolvedSourcePath
+    (Build_absolute_path PosixPathRoot
+      ["tmp"%pstring; "workspace"%pstring;
+       "src"%pstring; "test.cpp"%pstring])).
+Proof. vm_compute. reflexivity. Qed.
+
+Example named_root_source_path_uses_the_supplied_environment :
+  SourcePath.resolve test_ast_path
+    [("toolchain"%pstring,
+      Build_absolute_path PosixPathRoot ["opt"%pstring; "llvm"%pstring])]
+    (NamedRootSourceName "toolchain"%pstring
+      ["include"%pstring; "vector"%pstring]) =
+  Some (ResolvedSourcePath
+    (Build_absolute_path PosixPathRoot
+      ["opt"%pstring; "llvm"%pstring;
+       "include"%pstring; "vector"%pstring])).
+Proof. vm_compute. reflexivity. Qed.
+
+Example literal_source_name_is_not_interpreted_as_a_path :
+  SourcePath.resolve test_ast_path []
+    (LiteralSourceName "logical.cpp"%pstring) =
+  Some (ResolvedLiteralSourceName "logical.cpp"%pstring).
+Proof. vm_compute. reflexivity. Qed.
+
+Example ast_relative_source_path_rejects_parent_underflow :
+  SourcePath.resolve test_ast_path []
+    (AstRelativeSourceName (Build_relative_path 4%N [])) = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Example ast_relative_source_path_rejects_huge_parent_underflow_quickly :
+  SourcePath.resolve test_ast_path []
+    (AstRelativeSourceName (Build_relative_path (N.pow 2 100) [])) = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Example named_root_source_path_rejects_parent_components :
+  SourcePath.resolve test_ast_path
+    [("toolchain"%pstring,
+      Build_absolute_path PosixPathRoot ["opt"%pstring; "llvm"%pstring])]
+    (NamedRootSourceName "toolchain"%pstring [".."%pstring]) = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Example named_root_source_path_rejects_embedded_separators :
+  SourcePath.resolve test_ast_path
+    [("toolchain"%pstring,
+      Build_absolute_path PosixPathRoot ["opt"%pstring; "llvm"%pstring])]
+    (NamedRootSourceName "toolchain"%pstring ["../include"%pstring]) = None.
+Proof. vm_compute. reflexivity. Qed.
 
 Definition empty_declaration_locations : declaration_locations origin_id := {|
   symbol_locations := ∅;
@@ -345,10 +402,10 @@ Example indexed_lookup_origin_order_parity :
 Proof. vm_compute. reflexivity. Qed.
 
 Definition rich_points : list Encoded.encoded_physical_point :=
-  [ Encoded.Build_encoded_physical_point 0%uint63 1%N 2%N 3%N
-  ; Encoded.Build_encoded_physical_point 0%uint63 4%N 5%N 6%N
-  ; Encoded.Build_encoded_physical_point 0%uint63 7%N 8%N 9%N
-  ; Encoded.Build_encoded_physical_point 0%uint63 10%N 11%N 12%N
+  [ Encoded.Build_encoded_physical_point 0%uint63 1%uint63 2%uint63 3%uint63
+  ; Encoded.Build_encoded_physical_point 0%uint63 4%uint63 5%uint63 6%uint63
+  ; Encoded.Build_encoded_physical_point 0%uint63 7%uint63 8%uint63 9%uint63
+  ; Encoded.Build_encoded_physical_point 0%uint63 10%uint63 11%uint63 12%uint63
   ].
 
 Definition rich_ranges : list Encoded.encoded_range :=
@@ -381,11 +438,11 @@ Definition rich_reference_encoded_origin : Encoded.encoded_origin :=
 Definition rich_indexed_provenance : Encoded.indexed_provenance :=
   Encoded.Build_indexed_provenance
     (indexed_table_of_list Encoded.default_presumed_filename
-      ["logical.cpp"%pstring])
+      [LiteralSourceName "logical.cpp"%pstring])
     (indexed_table_of_list Encoded.default_encoded_physical_point rich_points)
     (indexed_table_of_list Encoded.default_encoded_presumed_point
-      [ Encoded.Build_encoded_presumed_point 0%uint63 20%N 21%N
-      ; Encoded.Build_encoded_presumed_point 0%uint63 22%N 23%N
+      [ Encoded.Build_encoded_presumed_point 0%uint63 20%uint63 21%uint63
+      ; Encoded.Build_encoded_presumed_point 0%uint63 22%uint63 23%uint63
       ])
     (indexed_table_of_list Encoded.default_encoded_range rich_ranges)
     (indexed_table_of_list Encoded.default_encoded_macro_frame [rich_frame])
@@ -395,33 +452,35 @@ Definition rich_indexed_provenance : Encoded.indexed_provenance :=
 Definition rich_origin : source_origin :=
   Build_source_origin ExplicitOrigin
     (Some (Build_source_range
-      (Some (Build_physical_point 0 1%N 2%N 3%N))
-      (Some (Build_physical_point 0 4%N 5%N 6%N)) CharacterRange
-      (Some (Build_physical_point 0 7%N 8%N 9%N,
-             Build_physical_point 0 10%N 11%N 12%N))))
+      (Some (Build_physical_point 0 1%uint63 2%uint63 3%uint63))
+      (Some (Build_physical_point 0 4%uint63 5%uint63 6%uint63)) CharacterRange
+      (Some (Build_physical_point 0 7%uint63 8%uint63 9%uint63,
+             Build_physical_point 0 10%uint63 11%uint63 12%uint63))))
     (Some (Build_source_range
-      (Some (Build_physical_point 0 1%N 2%N 3%N))
-      (Some (Build_physical_point 0 4%N 5%N 6%N)) TokenRange
-      (Some (Build_physical_point 0 1%N 2%N 3%N,
-             Build_physical_point 0 4%N 5%N 6%N))))
-    (Some (Build_presumed_point "logical.cpp"%pstring 20%N 21%N))
-    (Some (Build_presumed_point "logical.cpp"%pstring 22%N 23%N))
+      (Some (Build_physical_point 0 1%uint63 2%uint63 3%uint63))
+      (Some (Build_physical_point 0 4%uint63 5%uint63 6%uint63)) TokenRange
+      (Some (Build_physical_point 0 1%uint63 2%uint63 3%uint63,
+             Build_physical_point 0 4%uint63 5%uint63 6%uint63))))
+    (Some (Build_presumed_point
+      (LiteralSourceName "logical.cpp"%pstring) 20%uint63 21%uint63))
+    (Some (Build_presumed_point
+      (LiteralSourceName "logical.cpp"%pstring) 22%uint63 23%uint63))
     [ Build_macro_frame (Some "MACRO"%pstring) MacroArgument
         (Some (Build_source_range
-          (Some (Build_physical_point 0 1%N 2%N 3%N)) None
+          (Some (Build_physical_point 0 1%uint63 2%uint63 3%uint63)) None
           CharacterRange None))
         (Some (Build_source_range
-          (Some (Build_physical_point 0 1%N 2%N 3%N))
-          (Some (Build_physical_point 0 4%N 5%N 6%N)) TokenRange
-          (Some (Build_physical_point 0 1%N 2%N 3%N,
-                 Build_physical_point 0 4%N 5%N 6%N))))
+          (Some (Build_physical_point 0 1%uint63 2%uint63 3%uint63))
+          (Some (Build_physical_point 0 4%uint63 5%uint63 6%uint63)) TokenRange
+          (Some (Build_physical_point 0 1%uint63 2%uint63 3%uint63,
+                 Build_physical_point 0 4%uint63 5%uint63 6%uint63))))
     ; Build_macro_frame (Some "INLINE"%pstring) MacroBody
         (Some (Build_source_range
-          (Some (Build_physical_point 0 1%N 2%N 3%N))
-          (Some (Build_physical_point 0 4%N 5%N 6%N)) CharacterRange
-          (Some (Build_physical_point 0 7%N 8%N 9%N,
-                 Build_physical_point 0 10%N 11%N 12%N)))) None
-    ] (Some (Build_physical_point 0 10%N 11%N 12%N))
+          (Some (Build_physical_point 0 1%uint63 2%uint63 3%uint63))
+          (Some (Build_physical_point 0 4%uint63 5%uint63 6%uint63)) CharacterRange
+          (Some (Build_physical_point 0 7%uint63 8%uint63 9%uint63,
+                 Build_physical_point 0 10%uint63 11%uint63 12%uint63)))) None
+    ] (Some (Build_physical_point 0 10%uint63 11%uint63 12%uint63))
     (Some 1%origin_id) [1%origin_id].
 
 Definition rich_reference_origin : source_origin :=

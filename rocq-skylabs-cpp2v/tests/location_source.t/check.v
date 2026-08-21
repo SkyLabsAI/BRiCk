@@ -1,3 +1,4 @@
+Require Import Stdlib.Numbers.Cyclic.Int63.Uint63.
 Require Import skylabs.lang.cpp.syntax.source_location.
 Require Import skylabs.lang.cpp.parser.
 Require Import fixture_17_cpp_locations.
@@ -26,6 +27,11 @@ Definition line_root : decl_root :=
     (Nglobal
       (core.Nfunction function_qualifiers.N "line_mapped"
         [Tnum int_rank.Iint Signed])).
+Definition absolute_line_root : decl_root :=
+  DRSymbol
+    (Nglobal
+      (core.Nfunction function_qualifiers.N "absolute_line_mapped"
+        [Tnum int_rank.Iint Signed])).
 
 Definition found (root : decl_root) (path : loc_path)
     : lookup_error + list source_origin :=
@@ -43,7 +49,7 @@ Definition stacks (root : decl_root) (path : loc_path)
 
 Definition range_lines
     (select : source_origin -> option source_range)
-    (root : decl_root) (path : loc_path) : list (option N) :=
+    (root : decl_root) (path : loc_path) : list (option PrimInt63.int) :=
   match found root path with
   | inr origins =>
       List.map (fun origin =>
@@ -59,7 +65,7 @@ Definition range_lines
   end.
 
 Definition physical_points (root : decl_root) (path : loc_path)
-    : list (option (N * N * N)) :=
+    : list (option (PrimInt63.int * PrimInt63.int * PrimInt63.int)) :=
   match found root path with
   | inr origins =>
       List.map (fun origin =>
@@ -77,7 +83,7 @@ Definition physical_points (root : decl_root) (path : loc_path)
   end.
 
 Definition presumed (root : decl_root) (path : loc_path)
-    : list (option (PrimString.string * N)) :=
+    : list (option (source_name * PrimInt63.int)) :=
   match found root path with
   | inr origins =>
       List.map (fun origin =>
@@ -102,17 +108,22 @@ Example main_macro_drops_header_spelling_and_macro_frames :
   (stacks macro_root [0; 2; 0; 0; 0],
    range_lines spelling_range macro_root [0; 2; 0; 0; 0],
    range_lines expansion_range macro_root [0; 2; 0; 0; 0]) =
-    ([[]; []], [None; None], [Some 4%N; Some 4%N]).
+    ([[]; []], [None; None], [Some 4%uint63; Some 4%uint63]).
 Proof. vm_compute. reflexivity. Qed.
 
 Example line_directive_preserves_physical_point :
   physical_points line_root [0; 2; 0; 0; 0] =
-    [Some (176%N, 7%N, 37%N)].
+    [Some (176%uint63, 7%uint63, 37%uint63)].
 Proof. vm_compute. reflexivity. Qed.
 
 Example line_directive_preserves_presumed_point :
   presumed line_root [0; 2; 0; 0; 0] =
-    [Some ("logical.cpp", 700%N)].
+    [Some (LiteralSourceName "logical.cpp", 700%uint63)].
+Proof. vm_compute. reflexivity. Qed.
+
+Example absolute_line_directive_remains_literal_text :
+  presumed absolute_line_root [0; 2; 0; 0; 0] =
+    [Some (LiteralSourceName "/logical/absolute.cpp", 800%uint63)].
 Proof. vm_compute. reflexivity. Qed.
 
 Example default_companion_has_only_the_main_file :

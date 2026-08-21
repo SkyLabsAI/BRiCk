@@ -97,7 +97,7 @@ struct EncodingStats {
 /// The tables are ordered exclusively by first source occurrence. Origin row i
 /// is always the existing source OriginId(i); origin IDs are never remapped.
 struct EncodedTables {
-    std::vector<std::string> presumedFilenames;
+    std::vector<SourceName> presumedFilenames;
     std::vector<PhysicalPoint> physicalPoints;
     std::vector<EncodedPresumedPoint> presumedPoints;
     std::vector<EncodedRange> ranges;

@@ -5,3 +5,6 @@ int nested_macro(int value) { return USER_OUTER(value); }
 
 #line 700 "logical.cpp"
 int line_mapped(int value) { return value + 3; }
+
+#line 800 "/logical/absolute.cpp"
+int absolute_line_mapped(int value) { return value + 4; }

@@ -9,6 +9,7 @@ Require Import Stdlib.Numbers.Cyclic.Int63.Uint63.
 Require Import Stdlib.Strings.PrimString.
 Require Import Stdlib.ZArith.ZArith.
 Require Import stdpp.fin_maps.
+Require Import skylabs.prelude.pstring.
 Require Import skylabs.lang.cpp.syntax.core.
 Require Import skylabs.lang.cpp.syntax.namemap.
 
@@ -74,25 +75,145 @@ Inductive file_kind : Set :=
 | FKPredefined
 | FKOther.
 
+(** Source paths are stored relative to the directory containing the generated
+    AST [.v] file. [relative_path_parents] removes directory components before
+    [relative_path_components] are appended. Components never contain path
+    separators, [.], or [..]. *)
+Record relative_path : Set := Build_relative_path {
+  relative_path_parents : N;
+  relative_path_components : list PrimString.string
+}.
+
+(** A source name is either non-filesystem text, a path relative to the AST
+    file, or a path below a caller-supplied stable root. Generated files never
+    contain an absolute filesystem root. *)
+Inductive source_name : Set :=
+| LiteralSourceName (name : PrimString.string)
+| AstRelativeSourceName (path : relative_path)
+| NamedRootSourceName
+    (root : PrimString.string) (components : list PrimString.string).
+
+(** Structured absolute paths are supplied by importing proofs, not generated
+    AST files. Keeping the root structured makes resolution independent of the
+    proof host's path separator conventions. *)
+Inductive path_root : Set :=
+| PosixPathRoot
+| WindowsDrivePathRoot (drive : PrimString.string)
+| WindowsUncPathRoot
+    (server : PrimString.string) (share : PrimString.string).
+
+Record absolute_path : Set := Build_absolute_path {
+  absolute_path_root : path_root;
+  absolute_path_components : list PrimString.string
+}.
+
+Definition named_root_environment : Set :=
+  list (PrimString.string * absolute_path).
+
+Inductive resolved_source_name : Set :=
+| ResolvedLiteralSourceName (name : PrimString.string)
+| ResolvedSourcePath (path : absolute_path).
+
+Module SourcePath.
+  Definition valid_component (component : PrimString.string) : bool :=
+    match PrimString.compare component (PrimString.make 0 0%uint63) with
+    | Eq => false
+    | _ =>
+        match PrimString.compare component "." with
+        | Eq => false
+        | _ =>
+            match PrimString.compare component ".." with
+            | Eq => false
+            | _ =>
+                let slash := PrimString.make 1%uint63 (Uint63.of_Z 47) in
+                let backslash := PrimString.make 1%uint63 (Uint63.of_Z 92) in
+                negb (pstring.contains slash component ||
+                      pstring.contains backslash component)
+            end
+        end
+    end.
+
+  Definition valid_components (components : list PrimString.string) : bool :=
+    List.forallb valid_component components.
+
+  Definition directory (path : absolute_path) : option absolute_path :=
+    match path.(absolute_path_components) with
+    | nil => None
+    | _ :: _ =>
+        Some (Build_absolute_path path.(absolute_path_root)
+          (List.removelast path.(absolute_path_components)))
+    end.
+
+  Definition apply_relative
+      (base : absolute_path) (path : relative_path) : option absolute_path :=
+    let components := base.(absolute_path_components) in
+    if valid_components components &&
+       valid_components path.(relative_path_components) then
+      if N.leb path.(relative_path_parents)
+          (N.of_nat (List.length components)) then
+        let parents := N.to_nat path.(relative_path_parents) in
+        Some (Build_absolute_path base.(absolute_path_root)
+          (List.firstn (List.length components - parents) components ++
+           path.(relative_path_components)))
+      else None
+    else None.
+
+  Fixpoint find_named_root
+      (name : PrimString.string) (roots : named_root_environment)
+      : option absolute_path :=
+    match roots with
+    | nil => None
+    | (candidate, path) :: roots =>
+        match PrimString.compare name candidate with
+        | Eq => Some path
+        | _ => find_named_root name roots
+        end
+    end.
+
+  Definition resolve
+      (ast_file : absolute_path) (roots : named_root_environment)
+      (name : source_name) : option resolved_source_name :=
+    match name with
+    | LiteralSourceName literal => Some (ResolvedLiteralSourceName literal)
+    | AstRelativeSourceName path =>
+        match directory ast_file with
+        | Some ast_directory =>
+            option_map ResolvedSourcePath (apply_relative ast_directory path)
+        | None => None
+        end
+    | NamedRootSourceName root components =>
+        match find_named_root root roots with
+        | Some base =>
+            if valid_components base.(absolute_path_components) &&
+               valid_components components then
+              Some (ResolvedSourcePath
+                (Build_absolute_path base.(absolute_path_root)
+                  (base.(absolute_path_components) ++ components)))
+            else None
+        | None => None
+        end
+    end.
+End SourcePath.
+
 Record source_file : Set := {
-  source_file_physical_name : PrimString.string;
-  source_file_requested_name : option PrimString.string;
+  source_file_physical_name : source_name;
+  source_file_requested_name : option source_name;
   source_file_kind : file_kind;
   source_file_is_main : bool;
-  source_file_include_parent : option (file_id * N)
+  source_file_include_parent : option (file_id * PrimInt63.int)
 }.
 
 Record physical_point : Set := {
   point_file : file_id;
-  point_byte_offset : N;
-  point_line : N;
-  point_byte_column : N
+  point_byte_offset : PrimInt63.int;
+  point_line : PrimInt63.int;
+  point_byte_column : PrimInt63.int
 }.
 
 Record presumed_point : Set := {
-  presumed_file : PrimString.string;
-  presumed_line : N;
-  presumed_column : N
+  presumed_file : source_name;
+  presumed_line : PrimInt63.int;
+  presumed_column : PrimInt63.int
 }.
 
 Inductive range_kind : Set :=
@@ -196,15 +317,15 @@ Module Encoded.
 
   Record encoded_physical_point : Set := {
     encoded_point_file : table_id;
-    encoded_point_byte_offset : N;
-    encoded_point_line : N;
-    encoded_point_byte_column : N
+    encoded_point_byte_offset : PrimInt63.int;
+    encoded_point_line : PrimInt63.int;
+    encoded_point_byte_column : PrimInt63.int
   }.
 
   Record encoded_presumed_point : Set := {
     encoded_presumed_file : table_id;
-    encoded_presumed_line : N;
-    encoded_presumed_column : N
+    encoded_presumed_line : PrimInt63.int;
+    encoded_presumed_column : PrimInt63.int
   }.
 
   Inductive encoded_range : Set :=
@@ -241,7 +362,7 @@ Module Encoded.
   }.
 
   Record indexed_provenance : Type := {
-    presumed_filename_table : indexed_table PrimString.string;
+    presumed_filename_table : indexed_table source_name;
     physical_point_table : indexed_table encoded_physical_point;
     presumed_point_table : indexed_table encoded_presumed_point;
     range_table : indexed_table encoded_range;
@@ -404,12 +525,12 @@ Module Encoded.
       (option_map Build_origin_id origin.(encoded_anchor_origin))
       (List.map Build_origin_id origin.(encoded_derived_from))).
 
-  Definition default_presumed_filename : PrimString.string :=
-    PrimString.make 0 0%uint63.
+  Definition default_presumed_filename : source_name :=
+    LiteralSourceName (PrimString.make 0 0%uint63).
   Definition default_encoded_physical_point : encoded_physical_point :=
-    Build_encoded_physical_point 0%uint63 0%N 0%N 0%N.
+    Build_encoded_physical_point 0%uint63 0%uint63 0%uint63 0%uint63.
   Definition default_encoded_presumed_point : encoded_presumed_point :=
-    Build_encoded_presumed_point 0%uint63 0%N 0%N.
+    Build_encoded_presumed_point 0%uint63 0%uint63 0%uint63.
   Definition default_encoded_range : encoded_range :=
     EncodedRawRange None None TokenRange.
   Definition default_encoded_macro_frame : encoded_macro_frame :=

@@ -1,3 +1,4 @@
+Require Import Stdlib.Numbers.Cyclic.Int63.Uint63.
 Require Import skylabs.lang.cpp.syntax.source_location.
 Require Import skylabs.lang.cpp.parser.
 Require Import fixture_17_cpp_locations.
@@ -18,7 +19,7 @@ Definition classes (result : lookup_error + list source_origin)
   end.
 
 Definition lines (result : lookup_error + list source_origin)
-    : list (option N) :=
+    : list (option PrimInt63.int) :=
   match result with
   | inr origins =>
       List.map (fun origin =>
@@ -43,7 +44,7 @@ Proof. vm_compute. reflexivity. Qed.
 Example multi_declaration_second_initializer :
     lines
       (skylabs.lang.cpp.syntax.source_location.lookup source_locations
-        shape_root [0; 2; 0; 0; 1; 1]) = [Some 4%N].
+        shape_root [0; 2; 0; 0; 1; 1]) = [Some 4%uint63].
 Proof. vm_compute. reflexivity. Qed.
 
 Example point_empty_synthesized_else_remains_in_the_tree :
@@ -54,7 +55,7 @@ Proof. vm_compute. reflexivity. Qed.
 Example second_call_argument_is_in_source_order :
     lines
       (skylabs.lang.cpp.syntax.source_location.lookup source_locations
-        shape_root [0; 2; 0; 1; 1; 0; 2]) = [Some 6%N].
+        shape_root [0; 2; 0; 1; 1; 0; 2]) = [Some 6%uint63].
 Proof. vm_compute. reflexivity. Qed.
 
 Example absent_if_options_add_no_children :

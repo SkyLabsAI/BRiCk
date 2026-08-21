@@ -139,16 +139,16 @@ public:
             requested = manager.getBufferName(start);
 
         if (auto fileEntry = manager.getFileEntryRefForID(clangFile)) {
-            file.requestedName = fileEntry->getName().str();
+            file.requestedName = SourceName::path(fileEntry->getName().str());
             llvm::StringRef real =
                 fileEntry->getFileEntry().tryGetRealPathName();
-            file.physicalName =
-                (real.empty() ? fileEntry->getName() : real).str();
+            file.physicalName = SourceName::path(
+                (real.empty() ? fileEntry->getName() : real).str());
         } else {
-            file.physicalName = requested.str();
+            file.physicalName = SourceName::literal(requested.str());
         }
-        if (file.physicalName.empty())
-            file.physicalName = "<unknown>";
+        if (file.physicalName.value.empty())
+            file.physicalName = SourceName::literal("<unknown>");
 
         file.kind = classify(manager, start, requested);
         file.isMain = clangFile == manager.getMainFileID();
@@ -158,7 +158,7 @@ public:
             identity.fileEntry = &fileEntry->getFileEntry();
         if (auto buffer = manager.getBufferOrNone(clangFile, start))
             identity.bufferStart = buffer->getBufferStart();
-        identity.physicalName = file.physicalName;
+        identity.physicalName = file.physicalName.value;
 
         clang::SourceLocation include = manager.getIncludeLoc(clangFile);
         if (include.isValid()) {
@@ -222,8 +222,24 @@ public:
         clang::PresumedLoc presumed = manager.getPresumedLoc(location);
         if (presumed.isInvalid())
             return std::nullopt;
-        return PresumedPoint{presumed.getFilename(), presumed.getLine(),
-                             presumed.getColumn()};
+        const llvm::StringRef filename(presumed.getFilename());
+        bool isFileSystemPath = false;
+        const clang::SourceLocation fileLocation =
+            manager.getExpansionLoc(location);
+        const clang::PresumedLoc unmodified =
+            manager.getPresumedLoc(location, false);
+        if (fileLocation.isValid() && fileLocation.isFileID() &&
+            unmodified.isValid()) {
+            const clang::FileID file = manager.getFileID(fileLocation);
+            isFileSystemPath = manager.getFileEntryRefForID(file).has_value() &&
+                               filename == unmodified.getFilename() &&
+                               presumed.getLine() == unmodified.getLine() &&
+                               presumed.getColumn() == unmodified.getColumn();
+        }
+        return PresumedPoint{isFileSystemPath
+                                 ? SourceName::path(filename.str())
+                                 : SourceName::literal(filename.str()),
+                             presumed.getLine(), presumed.getColumn()};
     }
 
     llvm::Expected<Range> range(clang::CharSourceRange sourceRange,

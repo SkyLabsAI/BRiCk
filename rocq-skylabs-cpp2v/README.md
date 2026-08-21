@@ -79,7 +79,8 @@ cpp2v -o file_cpp.v file.cpp -- -std=c++17
 ```
 
 No companion file is created. The default inline mode supports `--module -`
-because it has only one output stream. `--locations-inline` may still be passed
+when `--locations-ast-path <intended-file.v>` supplies the filesystem anchor
+that the output stream itself lacks. `--locations-inline` may still be passed
 explicitly; `--locations-inline=false` opts out and restores AST-only output.
 Interactive `--for-interactive` output remains AST-only by default, and explicit
 inline locations remain incompatible with it.
@@ -102,7 +103,7 @@ after importing the one generated module.
 
 By default, location output retains only provenance whose physical source
 points are in the main file. Roots whose final selected location tree has no
-retained main-file provenance are omitted and `lookup` reports `RootNotFound`. Use
+retained main-file provenance are omitted and `lookup` reports `RootNotFound`.
 Use `--locations-all-files` with the default inline mode or explicit separate
 mode to restore the legacy all-files data, including header roots, complete
 macro stacks, and include-file metadata:
@@ -113,6 +114,43 @@ cpp2v -o file_cpp.v --locations file_cpp_locations.v \
 # or, by default without a companion:
 cpp2v -o file_cpp.v --locations-all-files file.cpp -- -std=c++17
 ```
+
+### Relocatable source names
+
+Generated location sections contain no absolute filesystem roots. Physical
+filenames and absolute requested or presumed filenames are encoded as
+`AstRelativeSourceName` values relative to the directory containing the final
+AST `.v` file. Non-filesystem names such as `#line "logical.cpp"` and Clang
+virtual buffers remain `LiteralSourceName` values. A separate companion always
+uses the AST output as its anchor, not the companion's directory.
+
+External roots can be assigned stable names, especially for all-files output:
+
+```sh
+cpp2v -o file_cpp.v --locations-all-files \
+  --locations-source-root toolchain=/opt/llvm \
+  file.cpp -- -std=c++17
+```
+
+Files below that directory are emitted as `NamedRootSourceName "toolchain"`
+plus root-relative components. The option is repeatable and root names must be
+unique. A source path on a filesystem root that cannot be reached from the AST
+anchor must match a configured named root or generation fails; cpp2v never
+falls back to serializing an absolute path.
+
+Importing proofs resolve names with `SourcePath.resolve`. They supply the
+absolute AST path structurally as an `absolute_path` and, when needed, a list of
+named roots:
+
+```coq
+SourcePath.resolve ast_file
+  [("toolchain", toolchain_root)] source_name
+```
+
+Resolution returns either `ResolvedSourcePath`, `ResolvedLiteralSourceName`, or
+`None` for a missing root or invalid parent traversal. Moving the AST and source
+hierarchy together therefore changes only the supplied absolute AST path, not
+the generated module.
 
 Main-file membership uses physical file identity, never presumed filenames or
 `#line` text. Range endpoints are filtered independently, so partial ranges are
@@ -171,9 +209,11 @@ errors. Public `file_id` and `origin_id` values are distinct nominal wrappers
 around primitive `uint63` integers rather than unary `nat`; explicit literals
 may use the `%file_id` and `%origin_id` scopes. `lookup_file source_locations id`
 performs checked file access without converting a potentially large primitive
-ID to unary `nat`. Semantic child paths remain `list nat`, while byte offsets,
-lines, and columns remain binary, nonnegative `N` values. The location section's
-only public generated value is:
+ID to unary `nat`. Semantic child paths remain `list nat`; byte offsets, lines,
+and columns are primitive `uint63` values. cpp2v rejects a 64-bit source or
+include-parent byte offset that exceeds `Uint63.max_int` instead of allowing
+Rocq's primitive numeral interpretation to wrap it. The location section's only
+public generated value is:
 
 ```coq
 source_locations : source_map

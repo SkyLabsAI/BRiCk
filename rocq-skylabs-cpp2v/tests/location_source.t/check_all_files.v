@@ -1,3 +1,4 @@
+Require Import Stdlib.Numbers.Cyclic.Int63.Uint63.
 Require Import skylabs.lang.cpp.syntax.source_location.
 Require Import skylabs.lang.cpp.parser.
 Require Import all_files_locations.
@@ -38,7 +39,7 @@ Definition stacks (root : decl_root) (path : loc_path)
 
 Definition range_lines
     (select : source_origin -> option source_range)
-    (root : decl_root) (path : loc_path) : list (option N) :=
+    (root : decl_root) (path : loc_path) : list (option PrimInt63.int) :=
   List.map (fun origin =>
     match select origin with
     | Some range =>
@@ -64,7 +65,7 @@ Definition file_of (root : decl_root) : option source_file :=
   end.
 
 Definition file_fact (root : decl_root)
-    : option (file_kind * bool * option (file_id * N)) :=
+    : option (file_kind * bool * option (file_id * PrimInt63.int)) :=
   match file_of root with
   | Some file =>
       Some (file.(source_file_kind), file.(source_file_is_main),
@@ -81,21 +82,23 @@ Proof. vm_compute. reflexivity. Qed.
 Example macro_spelling_and_expansion_are_distinct :
   (range_lines spelling_range macro_root [0; 2; 0; 0; 0],
    range_lines expansion_range macro_root [0; 2; 0; 0; 0]) =
-    ([Some 2%N; Some 2%N], [Some 4%N; Some 4%N]).
+    ([Some 2%uint63; Some 2%uint63],
+     [Some 4%uint63; Some 4%uint63]).
 Proof. vm_compute. reflexivity. Qed.
 
 Example user_header_keeps_include_parent :
-  file_fact user_root = Some (FKUser, false, Some (0%file_id, 9%N)).
+  file_fact user_root =
+    Some (FKUser, false, Some (0%file_id, 9%uint63)).
 Proof. vm_compute. reflexivity. Qed.
 
 Example system_header_keeps_kind_and_parent :
   file_fact system_root =
-    Some (FKSystem, false, Some (0%file_id, 36%N)).
+    Some (FKSystem, false, Some (0%file_id, 36%uint63)).
 Proof. vm_compute. reflexivity. Qed.
 
 Example header_line_directive_does_not_change_physical_file :
   file_fact pretending_header_root =
-    Some (FKUser, false, Some (0%file_id, 9%N)).
+    Some (FKUser, false, Some (0%file_id, 9%uint63)).
 Proof. vm_compute. reflexivity. Qed.
 
 Example files_are_in_first_seen_order : List.length source_locations.(files) = 3.
