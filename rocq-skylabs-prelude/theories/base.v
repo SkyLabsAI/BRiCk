@@ -112,6 +112,20 @@ Proof. firstorder. Qed.
 Lemma ex_and {A} (P : A -> Prop) (Q : Prop) : ex P ∧ Q ↔ ∃ x, P x ∧ Q.
 Proof. firstorder. Qed.
 
+Lemma ex_ex_swap {A' B'} (P : A' -> B' -> Prop) :
+  (∃ x, ex (P x)) <-> ∃ y x, P x y.
+Proof. firstorder. Qed.
+
+Lemma exist_eq {A} (x0 : A) (P : A -> Prop) :
+  (forall x, P x -> x = x0) ->
+  ex P <-> P x0.
+Proof.
+  move => Heq; split.
+  - move => -[x HP].
+    by have <- := Heq _ HP.
+  - by eexists.
+Qed.
+
 #[global] Instance reflexive_proper A :
   Proper (pointwise_relation A (pointwise_relation A iff) ==> iff) Reflexive.
 Proof.
