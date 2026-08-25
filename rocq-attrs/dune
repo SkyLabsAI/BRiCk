@@ -1,7 +1,7 @@
 (env
  (sl_timing
   (binaries (../rocq-tools/bin/rocq_perf.exe as rocq))
-  (flags :standard %{read-lines:flags/ocamlc})
+  (flags :standard %{dune-warnings})
   (ocamlopt_flags :standard -O3 -unbox-closures)
   (rocq
    (rocqdep_flags :standard -w +all)
@@ -11,7 +11,7 @@
    (rocqdoc_footer flags/footer.html)))
  ; Same, but without rocq_perf.
  (_
-  (flags :standard %{read-lines:flags/ocamlc})
+  (flags :standard %{dune-warnings})
   (ocamlopt_flags :standard -O3 -unbox-closures)
   (rocq
    (rocqdep_flags :standard -w +all)
