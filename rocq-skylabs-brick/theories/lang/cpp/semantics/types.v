@@ -9,10 +9,8 @@ Require Export skylabs.prelude.option.
 Require Import skylabs.lang.cpp.syntax.
 Require Import skylabs.lang.cpp.semantics.genv.
 
-Fixpoint fundamental_size (t : type) : option N :=
-  match t with
-  | Tqualified _ t
-  | TLocInfo _ t => fundamental_size t
+Definition fundamental_size (t : type) : option N :=
+  match drop_loc_info (drop_qualifiers t) with
   | Tchar_ sz => Some $ char_type.bytesN sz
   | Tnum sz _ => Some $ int_rank.bytesN sz
   | Tbool => Some 1%N

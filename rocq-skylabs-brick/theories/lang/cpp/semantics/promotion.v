@@ -34,10 +34,8 @@ Definition underlying_type (tu : translation_unit) (nm : globname) : option type
     Note that if the [enum] is not defined in the translation unit, then the result
     it the original [enum].
  *)
-Fixpoint representation_type (tu : translation_unit) (ty : type) : type :=
-  match ty with
-  | Tqualified _ ty
-  | TLocInfo _ ty => representation_type tu ty
+Definition representation_type (tu : translation_unit) (ty : type) : type :=
+  match drop_loc_info (drop_qualifiers ty) with
   | Tenum nm as ty => default ty $ underlying_type tu nm
   | ty => ty
   end.
@@ -192,11 +190,8 @@ Definition promote_integral_raw (tu : translation_unit) (ty : type) : option typ
   | TLocInfo _ _ => None
   end.
 
-Fixpoint promote_integral (tu : translation_unit) (ty : type) : option type :=
-  match ty with
-  | TLocInfo _ ty => promote_integral tu ty
-  | _ => promote_integral_raw tu ty
-  end.
+Definition promote_integral (tu : translation_unit) (ty : type) : option type :=
+  promote_integral_raw tu (drop_loc_info ty).
 
 Goal forall tu, promote_integral tu Tchar = Some Tint.
 Proof.

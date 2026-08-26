@@ -208,10 +208,9 @@ Module Type Expr.
        type is not a reference, then the pointer is returned *after* it is
        checked to be strictly valid.
      *)
-    Fixpoint read_decl (p : ptr) (t : type) (Q : ptr -> mpred) : mpred :=
+    Definition read_decl (p : ptr) (t : type) (Q : ptr -> mpred) : mpred :=
+      let t := drop_loc_info (drop_qualifiers t) in
       match t with
-      | Tqualified _ t
-      | TLocInfo _ t => read_decl p t Q
       | Tref ty
       | Trv_ref ty =>
           Exists r,
@@ -996,10 +995,8 @@ Module Type Expr.
         wp_glval e (fun p => Q (Vptr p))
         |-- wp_operand (Ecast Carray2ptr e) Q.
 
-    Fixpoint as_int_type (ty : type) : option (int_rank.t * signed) :=
-      match ty with
-      | Tqualified _ ty
-      | TLocInfo _ ty => as_int_type ty
+    Definition as_int_type (ty : type) : option (int_rank.t * signed) :=
+      match drop_loc_info (drop_qualifiers ty) with
       | Tnum sz sgn => Some (sz, sgn)
       | _ => None
       end.

@@ -46,8 +46,8 @@ Section with_lang.
     Variable top : option PrimString.string.
 
     #[local] Open Scope monad_scope.
-    Fixpoint printAN inst (an : atomic_name) : option PrimString.string :=
-      match an return option PrimString.string with
+    Definition printAN inst (an : atomic_name) : option PrimString.string :=
+      match drop_atomic_name_loc_info an return option PrimString.string with
       | Nid id =>
           if bool_decide (id = "") then mfail else mret $ id ++ inst
       | Nfunction quals nm args =>
@@ -80,8 +80,8 @@ Section with_lang.
       | Nanon n => mret $ "@" ++ showN n ++ inst
       | Nfirst_decl n => mret $ "@" ++ n ++ inst
       | Nfirst_child n => mret $ "." ++ n ++ inst
-      | Nunsupported_atomic note => mfail
-      | ANLocInfo _ an => printAN inst an
+      | Nunsupported_atomic _ => mfail
+      | ANLocInfo _ _ => mfail
       end.
   End atomic_name.
 

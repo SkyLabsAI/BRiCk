@@ -367,14 +367,13 @@ magic wands.
 (* BEGIN wp_initialize *)
 #[local]
 Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
-    (u : bool)
-    (wp_initialize_unqualified : type_qualifiers -> decltype -> ptr -> Expr -> (FreeTemps -> epred) -> mpred)
-    (tu : translation_unit) (ρ : region)
+    (u : bool) (tu : translation_unit) (ρ : region)
     (cv : type_qualifiers) (ty : decltype)
     (addr : ptr) (init : Expr) (Q : FreeTemps -> epred) : mpred :=
   let UNSUPPORTED := funI m => |={top}=>?u UNSUPPORTED m in
   if q_volatile cv then False%I
   else
+    let ty := drop_loc_info ty in
     match ty with
     | Tvoid =>
       (*
@@ -455,17 +454,16 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
     | Tresult_call _ _ | Tresult_member_call _ _ _
     | Tresult_member _ _ | Tresult_parenlist _ _
     | Tauto => UNSUPPORTED (initializing_type ty init)
-    | TLocInfo _ ty => wp_initialize_unqualified cv ty addr init Q
+    | TLocInfo _ _ => False%I (* unreachable *)
     end%I.
 
 mlock
-Definition wp_initialize_unqualified `{Σ : cpp_logic, σ : genv} :
-  ∀ (tu : translation_unit) (ρ : region)
+Definition wp_initialize_unqualified `{Σ : cpp_logic, σ : genv}
+    (tu : translation_unit) (ρ : region)
     (cv : type_qualifiers) (ty : decltype)
-    (addr : ptr) (init : Expr) (Q : FreeTemps -> epred), mpred :=
-  fix wp_initialize_unqualified tu ρ cv ty addr init Q {struct ty} :=
-    Cbn (Reduce (wp_initialize_unqualified_body fupd_compatible)
-      (wp_initialize_unqualified tu ρ) tu ρ cv ty addr init Q).
+    (addr : ptr) (init : Expr) (Q : FreeTemps -> epred) : mpred :=
+  Cbn (Reduce (wp_initialize_unqualified_body fupd_compatible)
+    tu ρ cv ty addr init Q).
 
 Definition wp_initialize `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ρ : region)
     (qty : decltype) (addr : ptr) (init : Expr) (Q : FreeTemps -> epred) : mpred :=
@@ -512,7 +510,8 @@ Proof.
     rewrite reference_to_erase/=/tqualified';
     destruct cv; simpl; eauto).
   specialize (IHty cv addr init Q).
-  rewrite wp_initialize_unqualified.unlock in IHty.
+  rewrite wp_initialize_unqualified.unlock H /= in IHty.
+  change (to_heap_type (TLocInfo l ty)) with (to_heap_type ty).
   exact IHty.
 Qed.
 
@@ -549,13 +548,14 @@ Section wp_initialize.
 
   (** [wp_initialize_unqualified] *)
 
-  Axiom wp_initialize_unqualified_loc_info : forall tu ρ cv li ty obj e Q,
+  Lemma wp_initialize_unqualified_loc_info : forall tu ρ cv li ty obj e Q,
     wp_initialize_unqualified tu ρ cv (TLocInfo li ty) obj e Q =
     wp_initialize_unqualified tu ρ cv ty obj e Q.
+  Proof. by intros; rewrite !wp_initialize_unqualified.unlock. Qed.
 
   Lemma wp_initialize_unqualified_intro tu ρ cv ty obj e Q :
     Cbn (Reduce wp_initialize_unqualified_body false)
-      (wp_initialize_unqualified tu ρ) tu ρ cv ty obj e Q
+      tu ρ cv ty obj e Q
     |-- wp_initialize_unqualified tu ρ cv ty obj e Q.
   Proof.
     rewrite wp_initialize_unqualified.unlock. destruct ty; auto.
@@ -579,7 +579,7 @@ Section wp_initialize.
   Lemma wp_initialize_unqualified_elim tu ρ cv ty obj e Q :
     wp_initialize_unqualified tu ρ cv ty obj e Q
     |-- Cbn (Reduce wp_initialize_unqualified_body fupd_compatible)
-      (wp_initialize_unqualified tu ρ) tu ρ cv ty obj e Q.
+      tu ρ cv ty obj e Q.
   Proof. destruct ty; rewrite !wp_initialize_unqualified.unlock; cbn; auto. Qed.
 
   (**
@@ -594,14 +594,10 @@ Section wp_initialize.
   with value type [ty] and expression [e], serving the conjunct [v =
   Vvoid] in [wp_initialize_unqualified]'s [Tvoid] case.
   *)
-  Fixpoint can_init (ty : type) (e : Expr) : bool :=
-    match ty with
-    | Tqualified _ ty
-    | TLocInfo _ ty => can_init ty e
-    | _ =>
-        bool_decide (ty = Tvoid) ==>
-        bool_decide (type_of e = Tvoid)
-    end.
+  Definition can_init (ty : type) (e : Expr) : bool :=
+    let ty := drop_loc_info (drop_qualifiers ty) in
+    bool_decide (ty = Tvoid) ==>
+    bool_decide (type_of e = Tvoid).
 
   Lemma can_init_void e : can_init Tvoid e -> type_of e = Tvoid.
   Proof.
@@ -636,7 +632,9 @@ Section wp_initialize.
       rewrite tptsto_fuzzyR_Vvoid_primR. by iFrame "HQ". }
     { cbn in Hty, Hnq, Hval.
       have IH := IHty cv Q Hty Hnq Hval.
-      rewrite H in IH. iIntros "wp". iApply IH.
+      rewrite H in IH. iIntros "wp".
+      have Helim := wp_initialize_unqualified_elim tu ρ cv ty addr init Q.
+      rewrite H /= in Helim. iApply Helim. iApply IH.
       iApply (wp_operand_wand with "wp"). iIntros (v f) "HQ R".
       iApply "HQ". iApply _at_tptsto_fuzzyR_loc_info_intro. iFrame. }
   Qed.
@@ -657,6 +655,9 @@ Section wp_initialize.
     { cbn in Hnq, Hval.
       have IH := IHty cv Q Hnq Hval.
       rewrite H in IH. iIntros "wp".
+      have Hintro := wp_initialize_unqualified_intro tu ρ cv ty addr init Q.
+      rewrite H /= in Hintro.
+      iDestruct (Hintro with "wp") as "wp".
       iDestruct (IH with "wp") as "wp".
       iApply (wp_operand_wand with "wp"). iIntros (v f) "HQ R".
       iApply "HQ". iApply _at_tptsto_fuzzyR_loc_info_elim. iFrame. }
@@ -672,11 +673,14 @@ Section wp_initialize.
   Proof.
     revert qty. induction ty; intros qty Heq Hagg;
       rewrite wp_initialize_unqualified_elim.
-    all: case_match; [ iIntros "[]" | ].
+    all: case_match; cbn [drop_loc_info]; [ iIntros "[]" | ].
     all: try by rewrite ?(UNSUPPORTED_elim, bi.False_elim).
     all: try by rewrite tqualified_equiv Heq.
     have Heq' : qty ≡ Tqualified cv ty.
     { etrans; first exact Heq. apply Tqualified_proper, TLocInfo_equiv. }
+    have Hintro := wp_initialize_unqualified_intro tu ρ cv ty addr init Q.
+    rewrite H /= in Hintro.
+    etransitivity; first exact Hintro.
     apply IHty; [exact Heq' | exact Hagg].
   Qed.
   Lemma wp_initialize_unqualified_intro_aggregate tu ρ cv ty qty addr init Q :
@@ -686,12 +690,15 @@ Section wp_initialize.
   Proof.
     revert qty. induction ty; intros qty Heq Hnq Hagg;
       rewrite -wp_initialize_unqualified_intro.
-    all: case_match; [ iIntros "[]" | ].
+    all: case_match; cbn [drop_loc_info]; [ iIntros "[]" | ].
     all: try done.
     all: try by rewrite tqualified_equiv Heq.
     have Heq' : qty ≡ Tqualified cv ty.
     { etrans; first exact Heq. apply Tqualified_proper, TLocInfo_equiv. }
-    apply IHty; [exact Heq' | exact Hnq | exact Hagg].
+    etransitivity.
+    { apply IHty; [exact Heq' | exact Hnq | exact Hagg]. }
+    have Helim := wp_initialize_unqualified_elim tu ρ cv ty addr init Q.
+    by rewrite H /= in Helim.
   Qed.
 
   (** Properties *)
@@ -719,7 +726,6 @@ Section wp_initialize.
         | eauto ]).
     (* void *)
     all: try (iIntros (??) "($ & HQ) ?"; iApply "HQ'"; by iApply "HQ").
-    rewrite unlock in IHty. iApply IHty. iFrame.
   Qed.
 
   Lemma wp_initialize_unqualified_shift tu ρ cv ty obj e Q :
@@ -778,7 +784,7 @@ Section wp_initialize.
 
   Lemma wp_initialize_intro tu ρ ty addr init Q :
     qual_norm (fun cv rty => Cbn (Reduce wp_initialize_unqualified_body false)
-      (wp_initialize_unqualified tu ρ) tu ρ cv rty addr init Q) ty
+      tu ρ cv rty addr init Q) ty
     |-- wp_initialize tu ρ ty addr init Q.
   Proof.
     rewrite qual_norm_decompose_type wp_initialize_decompose_type.
@@ -788,7 +794,7 @@ Section wp_initialize.
   Lemma wp_initialize_elim tu ρ ty addr init Q :
     wp_initialize tu ρ ty addr init Q
     |-- qual_norm (fun cv rty => Cbn (Reduce wp_initialize_unqualified_body fupd_compatible)
-      (wp_initialize_unqualified tu ρ) tu ρ cv rty addr init Q) ty.
+      tu ρ cv rty addr init Q) ty.
   Proof.
     rewrite wp_initialize_decompose_type qual_norm_decompose_type.
     apply wp_initialize_unqualified_elim.

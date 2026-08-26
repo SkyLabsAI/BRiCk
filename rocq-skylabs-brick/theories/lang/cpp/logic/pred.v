@@ -53,10 +53,8 @@ Implicit Types (n : N) (z : Z).
 Definition pred_ns : namespace := nroot .@@ "skylabs" .@@ "lang" .@@ "cpp_logic".
 
 (* Used by [has_type_prop_has_type_noptr]. No theory. *)
-Fixpoint nonptr_prim_type (ty : type) : bool :=
-  match ty with
-  | Tqualified _ ty
-  | TLocInfo _ ty => nonptr_prim_type ty
+Definition nonptr_prim_type (ty : type) : bool :=
+  match drop_loc_info (drop_qualifiers ty) with
   | Tfloat_ _ | Tchar_ _ | Tvoid | Tbool | Tenum _ | Tnum _ _ => true
   | Tnullptr | Tptr _ | Tref _ | Trv_ref _ | _ => false
   end.

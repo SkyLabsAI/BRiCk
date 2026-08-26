@@ -22,10 +22,8 @@ Module decltype.
   on [to_valcat t] is simpler than matching on [t] when [t] might be
   an xvalue reference to a function type.
   *)
-  Fixpoint to_exprtype_go (orig t : decltype) : ValCat * exprtype :=
-    match t with
-    | Tqualified _ t
-    | TLocInfo _ t => to_exprtype_go orig t
+  Definition to_exprtype_go (orig t : decltype) : ValCat * exprtype :=
+    match drop_loc_info (drop_qualifiers t) with
     | Tref u => (Lvalue, u)
     | Trv_ref u =>
       match as_function (drop_qualifiers u) with
@@ -60,14 +58,21 @@ Module decltype.
 
   Lemma to_exprtype_go_tref orig q t :
     (to_exprtype_go orig (tref q t)).1 = Lvalue.
-  Proof. move: orig q. induction t; intros; cbn; auto. Qed.
+  Proof.
+    move: orig q. induction t; intros; rewrite /to_exprtype_go /=; auto;
+      apply IHt.
+  Qed.
 
   Lemma to_valcat_tref q t : to_valcat (tref q t) = Lvalue.
   Proof. apply to_exprtype_go_tref. Qed.
 
   Lemma to_exprtype_go_nonref orig t :
     ~~ is_reference_type t -> to_exprtype_go orig t = (Prvalue, orig).
-  Proof. move: orig. induction t; intros; cbn in *; auto; contradiction. Qed.
+  Proof.
+    intros H. unfold to_exprtype_go, is_reference_type in *.
+    destruct (drop_loc_info (drop_qualifiers t)); simpl in *;
+      try contradiction; reflexivity.
+  Qed.
 
   Lemma to_exprtype_nonref t :
     ~~ is_reference_type t -> to_exprtype t = (Prvalue, t).
@@ -76,8 +81,10 @@ Module decltype.
   Lemma to_exprtype_go_reference orig t :
     is_reference_type t -> (to_exprtype_go orig t).1 <> Prvalue.
   Proof.
-    move: orig. induction t; intros; cbn in *; try contradiction; auto.
-    destruct (as_function (drop_qualifiers t)); discriminate.
+    intros H. unfold to_exprtype_go, is_reference_type in *.
+    destruct (drop_loc_info (drop_qualifiers t)); simpl in *;
+      try contradiction; try discriminate.
+    destruct (as_function (drop_qualifiers t0)); discriminate.
   Qed.
 
   Lemma to_exprtype_reference t :
@@ -87,9 +94,10 @@ Module decltype.
   Lemma to_exprtype_go_prvalue_inv orig t u :
     to_exprtype_go orig t = (Prvalue, u) -> orig = u.
   Proof.
-    move: orig u. induction t; intros orig u H; cbn in H; try discriminate;
-      try (inversion H; done); eauto.
-    destruct (as_function (drop_qualifiers t)); discriminate.
+    unfold to_exprtype_go.
+    destruct (drop_loc_info (drop_qualifiers t)); intros H; try discriminate;
+      try (inversion H; done).
+    destruct (as_function (drop_qualifiers t0)); discriminate.
   Qed.
 
   Lemma to_exprtype_prvalue_inv t u :
@@ -130,18 +138,14 @@ Module decltype.
     Definition from_functype (t : functype) : M decltype :=
       from_function_type <$> as_function t.
 
-    Fixpoint requireL (t : decltype) : M exprtype :=
-      match t with
-      | Tqualified _ t
-      | TLocInfo _ t => requireL t
+    Definition requireL (t : decltype) : M exprtype :=
+      match drop_loc_info (drop_qualifiers t) with
       | Tref t => mret t
       | _ => mfail
       end.
 
-    Fixpoint requireGL (t : decltype) : M exprtype :=
-      match t with
-      | Tqualified _ t
-      | TLocInfo _ t => requireGL t
+    Definition requireGL (t : decltype) : M exprtype :=
+      match drop_loc_info (drop_qualifiers t) with
       | Tref t | Trv_ref t => mret t
       | _ => mfail
       end.
@@ -254,10 +258,8 @@ Module decltype.
             from_functype ft
         | inr e =>
             let* et := of_expr e in
-            let fix from_member_pointer et :=
-              match et with
-              | Tqualified _ et
-              | TLocInfo _ et => from_member_pointer et
+            let from_member_pointer et :=
+              match drop_loc_info (drop_qualifiers et) with
               | Tmember_pointer _ ft => from_functype ft
               | _ => mfail
               end

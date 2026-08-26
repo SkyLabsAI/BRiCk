@@ -219,12 +219,8 @@ location-information wrappers.
 It is incompatible with the equivalence on types.  For example,
 [Tqualified QM (Tref t) ≡ Tref t].
 *)
-Fixpoint has_qualifiers (t : type) : bool :=
-  match t with
-  | Tqualified _ _ => true
-  | TLocInfo _ t => has_qualifiers t
-  | _ => false
-  end.
+Definition has_qualifiers (t : type) : bool :=
+  if drop_loc_info t is Tqualified _ _ then true else false.
 
 Definition is_qualified := has_qualifiers.
 
@@ -1037,18 +1033,15 @@ Qed.
 [unptr t] returns the type of the object that a value of type [t]
 points to or [None] if [t] is not a pointer type.
 *)
-Fixpoint unptr (t : exprtype) : option exprtype :=
-  match t with
-  | Tqualified _ t
-  | TLocInfo _ t => unptr t
+Definition unptr (t : exprtype) : option exprtype :=
+  match drop_loc_info (drop_qualifiers t) with
   | Tptr p => Some p
   | _ => None
   end.
 
 (* [array_type t] extracts element type of the array or fails. *)
-Fixpoint array_type_unqual (cv : type_qualifiers) (ty : exprtype) : option exprtype :=
-  match ty with
-  | TLocInfo _ ty => array_type_unqual cv ty
+Definition array_type_unqual (cv : type_qualifiers) (ty : exprtype) : option exprtype :=
+  match drop_loc_info ty with
   | Tarray ety _
   | Tincomplete_array ety
   | Tvariable_array ety _ => Some $ tqualified cv ety
@@ -1061,10 +1054,8 @@ Definition array_type : exprtype -> option exprtype :=
 (**
 [class_name t] returns the name of the class that this type refers to
 *)
-Fixpoint class_name (t : type) : option name :=
-  match t with
-  | Tqualified _ t
-  | TLocInfo _ t => class_name t
+Definition class_name (t : type) : option name :=
+  match drop_loc_info (drop_qualifiers t) with
   | Tnamed gn => Some gn
   | _ => None
   end.
@@ -1076,10 +1067,8 @@ Proof. by induction t. Qed.
 (**
 [is_arithmetic ty] states whether [ty] is an arithmetic type
 *)
-Fixpoint is_arithmetic (ty : type) : bool :=
-  match ty with
-  | Tqualified _ ty
-  | TLocInfo _ ty => is_arithmetic ty
+Definition is_arithmetic (ty : type) : bool :=
+  match drop_loc_info (drop_qualifiers ty) with
   | Tnum _ _
   | Tchar_ _
   | Tfloat_ _
@@ -1089,9 +1078,8 @@ Fixpoint is_arithmetic (ty : type) : bool :=
   end.
 
 (* [as_function ty] returns the [function_type'] if [ty] is a function type. *)
-Fixpoint as_function (ty : functype) : option function_type :=
-  match ty with
-  | TLocInfo _ ty => as_function ty
+Definition as_function (ty : functype) : option function_type :=
+  match drop_loc_info ty with
   | Tfunction ft => Some ft
   | _ => None
   end.
@@ -1104,10 +1092,8 @@ Definition args_for (ft : function_type)
 (**
 [is_pointer ty] is [true] if [ty] is a pointer type
 *)
-Fixpoint is_pointer (ty : type) : bool :=
-  match ty with
-  | Tqualified _ ty
-  | TLocInfo _ ty => is_pointer ty
+Definition is_pointer (ty : type) : bool :=
+  match drop_loc_info (drop_qualifiers ty) with
   | Tptr _ | Tnullptr => true
   | _ => false
   end.
@@ -1120,10 +1106,8 @@ Proof. induction ty; simpl; intros; eauto. Qed.
 (**
 Formalizes https://eel.is/c++draft/basic.types.general#term.scalar.type.
 *)
-Fixpoint is_scalar_type (ty : type) : bool :=
-  match ty with
-  | Tqualified _ ty
-  | TLocInfo _ ty => is_scalar_type ty
+Definition is_scalar_type (ty : type) : bool :=
+  match drop_loc_info (drop_qualifiers ty) with
   | Tnullptr | Tptr _
   | Tmember_pointer _ _
   | Tfloat_ _
@@ -1152,10 +1136,8 @@ type is one that can be represented by [val].
 NOTE: The only difference between a value type and a scalar type is
 that [Tvoid] is a value type and not a scalar type.
  *)
-Fixpoint is_value_type (t : type) : bool :=
-  match t with
-  | Tqualified _ t
-  | TLocInfo _ t => is_value_type t
+Definition is_value_type (t : type) : bool :=
+  match drop_loc_info (drop_qualifiers t) with
   | Tnum _ _
   | Tchar_ _
   | Tbool
@@ -1223,10 +1205,8 @@ Proof. done. Qed.
 [is_reference_type t] returns [true] if [t] is a (possibly
 cv-qualified) reference type.
 *)
-Fixpoint is_reference_type (t : type) : bool :=
-  match t with
-  | Tqualified _ t
-  | TLocInfo _ t => is_reference_type t
+Definition is_reference_type (t : type) : bool :=
+  match drop_loc_info (drop_qualifiers t) with
   | Tref _ | Trv_ref _ => true
   | _ => false
   end.
@@ -1264,10 +1244,8 @@ return the underlying type [u] (defaulting, respectively, to a dummy
 type and to [None]).
 *)
 
-Fixpoint as_ref' {A} (f : exprtype -> A) (x : A) (t : type) : A :=
-  match t with
-  | Tqualified _ t
-  | TLocInfo _ t => as_ref' f x t
+Definition as_ref' {A} (f : exprtype -> A) (x : A) (t : type) : A :=
+  match drop_loc_info (drop_qualifiers t) with
   | Tref u | Trv_ref u => f u
   | _ => x
   end.
@@ -1299,10 +1277,8 @@ End as_ref'.
 [is_aggregate_type t] returns [true] if [t] is a (possibly qualified)
 <<struct>> type.
 *)
-Fixpoint is_aggregate_type (ty : type) : bool :=
-  match ty with
-  | Tqualified _ ty
-  | TLocInfo _ ty => is_aggregate_type ty
+Definition is_aggregate_type (ty : type) : bool :=
+  match drop_loc_info (drop_qualifiers ty) with
   | Tnamed _ => true
   | _ => false
   end.
@@ -1341,10 +1317,8 @@ Proof.
 Qed.
 
 (** Determine if <<ty>> is an array type. *)
-Fixpoint is_array_type (ty : type) : bool :=
-  match ty with
-  | Tqualified _ ty
-  | TLocInfo _ ty => is_array_type ty
+Definition is_array_type (ty : type) : bool :=
+  match drop_loc_info (drop_qualifiers ty) with
   | Tarray _ _ | Tincomplete_array _ | Tvariable_array _ _ => true
   | _ => false
   end.
@@ -1400,7 +1374,11 @@ Lemma drop_reference_non_ref (t : type) u :
   drop_reference t = t.
 Proof.
   intros Hdrop Href Hty. destruct t; cbn in *; auto.
-  all: try case_match; done.
+  all: try contradiction.
+  all: case_match eqn:Hr; last done.
+  all: apply Is_true_eq in Hty; apply negb_true_iff in Hty.
+  all: change (is_reference_type t = false) in Hty.
+  all: rewrite Hr in Hty; done.
 Qed.
 
 (** ** Heap Types
@@ -1435,15 +1413,10 @@ Definition is_heap_type (t : type) : bool :=
 TODO: should this be more conservative/aggressive in dropping qualifiers, like
 [drop_reference]?
  *)
-Fixpoint to_heap_type (t : type) : heap_type :=
-  match t with
-  | TLocInfo _ t
-  | Tqualified _ t => to_heap_type t
-  | _ =>
-      match erase_qualifiers t with
-      | Trv_ref t => Tref t
-      | t => t
-      end
+Definition to_heap_type (t : type) : heap_type :=
+  match erase_qualifiers (drop_loc_info t) with
+  | Trv_ref t => Tref t
+  | t => t
   end.
 Lemma to_heap_type_qualified cv t :
   to_heap_type (Tqualified cv t) = to_heap_type t.

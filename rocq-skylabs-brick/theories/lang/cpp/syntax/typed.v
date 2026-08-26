@@ -160,10 +160,8 @@ Module decltype.
       from_function_type <$> of_option (as_function t).
     Definition require_functype (t : decltype) : M function_type :=
       of_option (as_function t).
-    Fixpoint require_mfunctype (t : decltype) : M (decltype * function_type) :=
-      match t with
-      | Tqualified _ t
-      | TLocInfo _ t => require_mfunctype t
+    Definition require_mfunctype (t : decltype) : M (decltype * function_type) :=
+      match drop_loc_info (drop_qualifiers t) with
       | Tmember_pointer nm ft => pair nm <$> require_functype ft
       | _ => mfail
       end.
@@ -241,25 +239,19 @@ Module decltype.
             end
         end.
 
-      Fixpoint requireL (t : decltype) : M exprtype :=
-        match t with
-        | Tqualified _ t
-        | TLocInfo _ t => requireL t
+      Definition requireL (t : decltype) : M exprtype :=
+        match drop_loc_info (drop_qualifiers t) with
         | Tref t => mret t
         | _ => mfail
         end.
-      Fixpoint requireGL_get (t : decltype) : M (bool * exprtype) :=
-        match t with
-        | Tqualified _ t
-        | TLocInfo _ t => requireGL_get t
+      Definition requireGL_get (t : decltype) : M (bool * exprtype) :=
+        match drop_loc_info (drop_qualifiers t) with
         | Tref t => mret (false, t)
         | Trv_ref t => mret (true, t)
         | _ => mfail
         end.
-      Fixpoint requireGL (t : decltype) : M exprtype :=
-        match t with
-        | Tqualified _ t
-        | TLocInfo _ t => requireGL t
+      Definition requireGL (t : decltype) : M exprtype :=
+        match drop_loc_info (drop_qualifiers t) with
         | Tref t | Trv_ref t => mret t
         | _ => mfail
         end.
@@ -297,27 +289,13 @@ Module decltype.
       Succeed Example _0 : bool_decide (tq_le QM QC) := I.
       (* END upstream *)
 
-      Fixpoint same_type_loc_right (dt t : type) : bool :=
-        match t with
-        | TLocInfo _ t => same_type_loc_right dt t
-        | _ => bool_decide (dt = t)
-        end.
-      Fixpoint same_type_loc (dt : type) : type -> bool :=
-        match dt with
-        | TLocInfo _ dt => same_type_loc dt
-        | _ => same_type_loc_right dt
-        end.
+      Definition same_type_loc (dt t : type) : bool :=
+        bool_decide (drop_loc_info dt = drop_loc_info t).
 
-      Fixpoint ptr_target_loc_right (dt t : type) : bool :=
-        match t with
-        | TLocInfo _ t => ptr_target_loc_right dt t
-        | _ => bool_decide (dt = t \/ dt = Tvoid)
-        end.
-      Fixpoint ptr_target_loc (dt : type) : type -> bool :=
-        match dt with
-        | TLocInfo _ dt => ptr_target_loc dt
-        | _ => ptr_target_loc_right dt
-        end.
+      Definition ptr_target_loc (dt t : type) : bool :=
+        let dt := drop_loc_info dt in
+        let t := drop_loc_info t in
+        bool_decide (dt = t \/ dt = Tvoid).
 
       Definition ref_conv (dt t : type) : M unit :=
         qual_norm (fun dq dt => qual_norm (fun q t =>
@@ -331,9 +309,10 @@ Module decltype.
           let* _ := guard (Is_true (ptr_target_loc dt t)) in
           mret ()) t) dt.
 
-      Fixpoint can_initialize_unqual_right (dt t : type) {struct t} : M unit :=
+      Definition can_initialize_unqual (dt t : type) : M unit :=
+        let dt := drop_loc_info dt in
+        let t := drop_loc_info t in
         match dt, t with
-        | _, TLocInfo _ t => can_initialize_unqual_right dt t
         | Tauto, _ =>
             (* Anything can initialize <auto>.
                TODO: make this only apply when checking template code *)
@@ -344,12 +323,6 @@ Module decltype.
             if is_const dt then ref_conv dt t else mfail
         | Tptr dt, Tptr t => ptr_conv dt t
         | dt, t => const () <$> guard (Is_true (same_type_loc dt t))
-        end.
-
-      Fixpoint can_initialize_unqual (dt : type) : type -> M unit :=
-        match dt with
-        | TLocInfo _ dt => can_initialize_unqual dt
-        | _ => can_initialize_unqual_right dt
         end.
 
       Definition can_initialize (dt : decltype) (t : decltype) : M unit :=
@@ -418,18 +391,16 @@ Module decltype.
         end.
 
       Definition of_cast (c : Cast) (base : decltype) : M decltype :=
-        let fix require_float t :=
+        let require_float t :=
+          let t := drop_loc_info (drop_qualifiers t) in
           match t with
-          | Tqualified _ t
-          | TLocInfo _ t => require_float t
           | Tfloat_ _ => mret tt
           | _ => throw ("floating point required"%bs, t)
           end
         in
-        let fix require_integral t :=
+        let require_integral t :=
+          let t := drop_loc_info (drop_qualifiers t) in
           match t with
-          | Tqualified _ t
-          | TLocInfo _ t => require_integral t
           | Tnum _ _ | Tbool | Tchar_ _ | Tenum _ => mret tt
           | _ => throw ("integral type required"%bs, t)
           end
@@ -623,10 +594,8 @@ Module decltype.
             end
 
         | Echar _ t =>
-            let fix char_literal_type t :=
-              match t with
-              | Tqualified _ t
-              | TLocInfo _ t => char_literal_type t
+            let char_literal_type t :=
+              match drop_loc_info (drop_qualifiers t) with
               | Tchar_ _ | Tuchar | Tschar => true
               | _ => false
               end
@@ -636,10 +605,8 @@ Module decltype.
         | Eunresolved_string_literal t =>
             mret $ Tref $ Tincomplete_array (Tconst t)
         | Eint _ t =>
-            let fix int_literal_type t :=
-              match t with
-              | Tqualified _ t
-              | TLocInfo _ t => int_literal_type t
+            let int_literal_type t :=
+              match drop_loc_info (drop_qualifiers t) with
               | Tchar_ _ | Tnum _ _ => true
               | _ => false
               end
@@ -953,20 +920,20 @@ Module decltype.
     Section var_decl.
       Context (of_expr : Expr -> M decltype).
 
-      Fixpoint check_binding (d : BindingDecl) : M bindings :=
-        match d with
+      Definition check_binding (d : BindingDecl) : M bindings :=
+        match drop_binding_decl_loc_info d with
         | Bvar lname ty init =>
             let* _ := of_expr init >>= can_initialize ty in
             mret ({| _bindings := [(lname, ty)] |})
         | Bbind lname ty init =>
             let* _ := (of_expr init >>= requireGL) >>= can_initialize ty in
             mret ({| _bindings := [(lname, ty)] |})
-        | BLocInfo _ d => check_binding d
+        | BLocInfo _ _ => mfail (* unreachable *)
         end.
 
-      Fixpoint check_decl (d : VarDecl) : M bindings :=
+      Definition check_decl (d : VarDecl) : M bindings :=
         trace d
-        match d with
+        match drop_var_decl_loc_info d with
         | Dvar lname ty oinit =>
             let* _ :=
               match oinit with
@@ -991,7 +958,7 @@ Module decltype.
               end
             in
             mret monoid.monoid_unit
-        | DLocInfo _ d => check_decl d
+        | DLocInfo _ _ => mfail (* unreachable *)
         end.
 
     End var_decl.

@@ -568,6 +568,68 @@ Inductive temp_param : Set :=
 #[global] Arguments BindingDecl : clear implicits.
 #[global] Arguments Stmt : clear implicits.
 
+(** Remove only leading location-information wrappers.  Unlike the recursive
+    [erase_*] functions below, these functions do not traverse the whole AST.
+    [drop_loc_info] looks through leading qualifiers so that locations and
+    qualifiers can be normalized independently. *)
+Fixpoint drop_atomic_name_loc_info (an : atomic_name) : atomic_name :=
+  match an with
+  | ANLocInfo _ an => drop_atomic_name_loc_info an
+  | _ => an
+  end.
+
+Fixpoint drop_name_loc_info (n : name) : name :=
+  match n with
+  | NLocInfo _ n => drop_name_loc_info n
+  | _ => n
+  end.
+
+Fixpoint drop_temp_arg_loc_info (arg : temp_arg) : temp_arg :=
+  match arg with
+  | ALocInfo _ arg => drop_temp_arg_loc_info arg
+  | _ => arg
+  end.
+
+Fixpoint drop_loc_info (t : type) : type :=
+  match t with
+  | TLocInfo _ t => drop_loc_info t
+  | Tqualified cv t => Tqualified cv (drop_loc_info t)
+  | _ => t
+  end.
+
+Fixpoint drop_expr_loc_info (e : Expr) : Expr :=
+  match e with
+  | ELocInfo _ e => drop_expr_loc_info e
+  | _ => e
+  end.
+
+Fixpoint drop_stmt_loc_info (s : Stmt) : Stmt :=
+  match s with
+  | SLocInfo _ s => drop_stmt_loc_info s
+  | _ => s
+  end.
+
+Fixpoint drop_var_decl_loc_info (d : VarDecl) : VarDecl :=
+  match d with
+  | DLocInfo _ d => drop_var_decl_loc_info d
+  | _ => d
+  end.
+
+Fixpoint drop_binding_decl_loc_info (d : BindingDecl) : BindingDecl :=
+  match d with
+  | BLocInfo _ d => drop_binding_decl_loc_info d
+  | _ => d
+  end.
+
+#[global] Arguments drop_atomic_name_loc_info !_ / : simpl nomatch, assert.
+#[global] Arguments drop_name_loc_info !_ / : simpl nomatch, assert.
+#[global] Arguments drop_temp_arg_loc_info !_ / : simpl nomatch, assert.
+#[global] Arguments drop_loc_info !_ / : simpl nomatch, assert.
+#[global] Arguments drop_expr_loc_info !_ / : simpl nomatch, assert.
+#[global] Arguments drop_stmt_loc_info !_ / : simpl nomatch, assert.
+#[global] Arguments drop_var_decl_loc_info !_ / : simpl nomatch, assert.
+#[global] Arguments drop_binding_decl_loc_info !_ / : simpl nomatch, assert.
+
 Fixpoint erase_atomic_name (an : atomic_name) {struct an} : atomic_name :=
   match an with
   | Nid id => Nid id
@@ -845,8 +907,8 @@ with erase_Cast (cast : Cast) {struct cast} : Cast :=
 #[global] Bind Scope cpp_name_scope with name.
 
 Module atomic_name.
-  Fixpoint existsb (f : type -> bool) (c : atomic_name) : bool :=
-    match c with
+  Definition existsb (f : type -> bool) (c : atomic_name) : bool :=
+    match drop_atomic_name_loc_info c with
     | Nid _ => false
     | Nfunction _ _ ts => List.existsb f ts
     | Nctor ts => List.existsb f ts
@@ -858,8 +920,8 @@ Module atomic_name.
     | Nanonymous
     | Nfirst_decl _
     | Nfirst_child _
-    | Nunsupported_atomic _ => false
-    | ANLocInfo _ c => existsb f c
+    | Nunsupported_atomic _
+    | ANLocInfo _ _ => false
     end.
 
   Import UPoly.

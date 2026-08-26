@@ -35,10 +35,8 @@ Section with_monad.
   Definition check_float_width (ft : float_type.t) : M :=
     if float_type.supported ft then OK else FAIL "unsupported floating width".
 
-  Fixpoint as_float_type (t : type) : option float_type.t :=
-    match t with
-    | Tqualified _ t
-    | TLocInfo _ t => as_float_type t
+  Definition as_float_type (t : type) : option float_type.t :=
+    match drop_loc_info (drop_qualifiers t) with
     | Tfloat_ ft => Some ft
     | _ => None
     end.
@@ -116,8 +114,8 @@ Section with_monad.
     | _ => OK
     end.
 
-  Fixpoint atomic_name (type : type -> M) (an : atomic_name) : M :=
-    match an with
+  Definition atomic_name (type : type -> M) (an : atomic_name) : M :=
+    match drop_atomic_name_loc_info an with
     | Nid _ => OK
     | Nfunction _ _ ts => lst type ts
     | Nctor ts => lst type ts
@@ -129,7 +127,7 @@ Section with_monad.
     | Nanonymous
     | Nfirst_decl _ | Nfirst_child _ => OK
     | Nunsupported_atomic msg => FAIL msg
-    | ANLocInfo _ an => atomic_name type an
+    | ANLocInfo _ _ => OK (* unreachable *)
     end.
 
   Section temp_arg.

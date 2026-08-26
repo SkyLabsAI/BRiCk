@@ -25,10 +25,8 @@ Require Import skylabs.lang.cpp.semantics.cast.
   *)
 Notation Tptrdiff_t := Tlonglong (only parsing).
 
-Fixpoint supported_float_type (ty : type) : option float_type.t :=
-  match ty with
-  | Tqualified _ ty
-  | TLocInfo _ ty => supported_float_type ty
+Definition supported_float_type (ty : type) : option float_type.t :=
+  match drop_loc_info (drop_qualifiers ty) with
   | Tfloat_ ft => if float_type.supported ft then Some ft else None
   | _ => None
   end.

@@ -120,13 +120,13 @@ Module Type Stmt.
       match ds with
       | nil => k ρ free
       | d :: ds =>
-          let fix wp_binding (d : BindingDecl) : mpred :=
-            match d with
+          let wp_binding (d : BindingDecl) : mpred :=
+            match drop_binding_decl_loc_info d with
             | Bvar x ty init =>
                 Forall p, wp_initialize ρ_init ty p init (fun free' => wp_destructure ρ_init ds (Rbind x p ρ) k (FreeTemps.delete ty p >*> free' >*> free)%free)
             | Bbind x _ init =>
                 wp_glval tu ρ_init init (fun p free' => wp_destructure ρ_init ds (Rbind x p ρ) k (free' >*> free)%free)
-            | BLocInfo _ d => wp_binding d
+            | BLocInfo _ _ => False%I (* unreachable *)
             end
           in wp_binding d
       end.
@@ -173,8 +173,8 @@ Module Type Stmt.
     #[global] Declare Instance init_state_agree nm : Agree1 (static_initialized nm).
 
 
-    Fixpoint wp_decl (ρ : region) (d : VarDecl) (k : region -> FreeTemps -> epred) {struct d} : mpred :=
-      match d with
+    Definition wp_decl (ρ : region) (d : VarDecl) (k : region -> FreeTemps -> epred) : mpred :=
+      match drop_var_decl_loc_info d with
       | Dvar x ty init => wp_decl_var ρ x ty init k
       | Ddecompose init x ds =>
         (* NOTE: the **declaration type** of the initializer *)
@@ -227,14 +227,14 @@ Module Type Stmt.
           if i is uninitialized then
             do_init $ fun free => static_initialized nm initialized -* k free
           else k FreeTemps.id
-      | DLocInfo _ d => wp_decl ρ d k
+      | DLocInfo _ _ => False (* unreachable *)
       end%I.
 
     Lemma wp_decl_frame : forall ds ρ m m',
         Forall a b, m a b -* m' a b
         |-- wp_decl ρ ds m -* wp_decl ρ ds m'.
     Proof.
-      induction ds; simpl; intros.
+      induction ds; rewrite /wp_decl /=; intros.
       { iIntros "X". iApply wp_decl_var_frame. iIntros (?); eauto. }
       { iIntros "A X" (p); iSpecialize ("X" $! p); iRevert "X".
         iApply wp_initialize_frame; [done|].
@@ -314,13 +314,13 @@ Module Type Stmt.
 
     (** * Blocks *)
 
-    Fixpoint wp_block_stmt (ρ : region) (s : Stmt)
+    Definition wp_block_stmt (ρ : region) (s : Stmt)
         (body : region -> Kpred -> mpred) (Q : Kpred) : mpred :=
+      let s := drop_stmt_loc_info s in
       match s with
       | Sdecl ds =>
           wp_decls ρ ds (funI ρ free =>
                            |={top}=> |> |={top}=> body ρ (Kfree free Q))
-      | SLocInfo _ s => wp_block_stmt ρ s body Q
       | _ =>
           |={top}=> |> |={top}=> wp ρ s (Kseq (body ρ) (|={top}=> Q))
       end.
@@ -345,7 +345,10 @@ Module Type Stmt.
 
     Lemma wp_block_loc_info ρ li s ss Q :
       wp_block ρ (SLocInfo li s :: ss) Q = wp_block ρ (s :: ss) Q.
-    Proof. by rewrite !wp_block_unfold. Qed.
+    Proof.
+      rewrite !wp_block_unfold. unfold wp_block_stmt.
+      cbn. reflexivity.
+    Qed.
 
     Lemma wp_block_frame : forall ss ρ (Q Q' : Kpred),
         (Forall rt, Q rt -* Q' rt)
@@ -717,10 +720,9 @@ Module Type Stmt.
       | SLocInfo _ s => no_case s
       end.
 
-    Fixpoint get_case (s : Stmt) : option SwitchBranch :=
-      match s with
+    Definition get_case (s : Stmt) : option SwitchBranch :=
+      match drop_stmt_loc_info s with
       | Scase sb => Some sb
-      | SLocInfo _ s => get_case s
       | _ => None
       end.
 
