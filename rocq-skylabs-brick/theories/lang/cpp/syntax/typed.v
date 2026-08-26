@@ -331,22 +331,19 @@ Module decltype.
           let* _ := guard (Is_true (ptr_target_loc dt t)) in
           mret ()) t) dt.
 
-      Fixpoint can_initialize_unqual_right (dt t : type) : M unit :=
-        match t with
-        | TLocInfo _ t => can_initialize_unqual_right dt t
-        | _ =>
-            match dt, t with
-            | Tauto, _ =>
-                (* Anything can initialize <auto>.
-                   TODO: make this only apply when checking template code *)
-                mret ()
-            | Tref dt, Tref t
-            | Trv_ref dt, Trv_ref t => ref_conv dt t
-            | Tref dt, Trv_ref t =>
-                if is_const dt then ref_conv dt t else mfail
-            | Tptr dt, Tptr t => ptr_conv dt t
-            | dt, t => const () <$> guard (Is_true (same_type_loc dt t))
-            end
+      Fixpoint can_initialize_unqual_right (dt t : type) {struct t} : M unit :=
+        match dt, t with
+        | _, TLocInfo _ t => can_initialize_unqual_right dt t
+        | Tauto, _ =>
+            (* Anything can initialize <auto>.
+               TODO: make this only apply when checking template code *)
+            mret ()
+        | Tref dt, Tref t
+        | Trv_ref dt, Trv_ref t => ref_conv dt t
+        | Tref dt, Trv_ref t =>
+            if is_const dt then ref_conv dt t else mfail
+        | Tptr dt, Tptr t => ptr_conv dt t
+        | dt, t => const () <$> guard (Is_true (same_type_loc dt t))
         end.
 
       Fixpoint can_initialize_unqual (dt : type) : type -> M unit :=
