@@ -150,6 +150,10 @@ Section prim.
   Context `{Σ : cpp_logic, σ : genv}.
   Implicit Types (Q : epred).
 
+  Axiom wp_destroy_prim_loc_info : forall tu cv li ty (this : ptr) Q,
+    wp_destroy_prim tu cv (TLocInfo li ty) this Q -|-
+    wp_destroy_prim tu cv ty this Q.
+
   Lemma wp_destroy_prim_intro tu cv ty (this : ptr) Q :
     (Exists v, this |-> tptstoR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) v) ** Q
     |-- wp_destroy_prim tu cv ty this Q.
@@ -525,6 +529,7 @@ Section body.
       (cv : type_qualifiers) (rty : type) (this : ptr) (Q : epred) : mpred :=
     match rty with
     | Tqualified q ty => wp_destroy_val tu (merge_tq cv q) ty this Q
+    | TLocInfo _ ty => wp_destroy_val tu cv ty this Q
 
     | Tnamed cls =>
       |={top}=> |>
@@ -809,6 +814,7 @@ Section val_array.
     Let intro_body tu cv rty this Q : mpred :=
       match rty with
       | Tqualified q ty => wp_destroy_val tu (merge_tq cv q) ty this Q
+      | TLocInfo _ ty => wp_destroy_val tu cv ty this Q
       | Tnamed cls =>
         |>
         letI* := if q_const cv then wp_make_mutable tu this rty else id in
@@ -870,6 +876,23 @@ Section val_array.
     by rewrite wp_gen_succ.
   Qed.
 
+  Lemma wp_destroy_val_intro_val_unqual tu cv ty (this : ptr) Q :
+    ~~ has_qualifiers ty ->
+    is_value_type ty ->
+    (Exists v, this |-> tptstoR (erase_qualifiers ty)
+      (cQp.mk (q_const cv) 1) v) ** Q
+    |-- wp_destroy_val tu cv ty this Q.
+  Proof.
+    revert cv Q. induction ty; intros cv Q Hnq Hval;
+      rewrite -wp_destroy_val_intro /=; try done.
+    all: try (by rewrite -wp_destroy_prim_intro).
+    cbn [erase_qualifiers].
+    iIntros "[(%v & R) Q]".
+    iDestruct (_at_tptstoR_loc_info_elim with "R") as "R".
+    iApply (IHty cv Q); [assumption | assumption |].
+    iFrame.
+  Qed.
+
   Lemma wp_destroy_val_intro_val tu cv ty (this : ptr) Q :
     is_value_type ty ->
     let c := qual_norm' (fun cv _ => q_const cv) cv ty in
@@ -878,10 +901,9 @@ Section val_array.
   Proof.
     cbn. rewrite is_value_type_decompose_type erase_qualifiers_decompose_type.
     rewrite qual_norm'_decompose_type wp_destroy_val_decompose_type.
-    have := is_qualified_decompose_type ty.
+    have := has_qualifiers_decompose_type ty.
     destruct (decompose_type ty) as [cv' rty]; cbn=>??.
-    rewrite -wp_destroy_val_intro. destruct rty; try done.
-    all: by rewrite -wp_destroy_prim_intro.
+    apply wp_destroy_val_intro_val_unqual; assumption.
   Qed.
   Lemma destroy_val_intro_val tu ty (this : ptr) Q :
     is_value_type ty ->
@@ -889,9 +911,10 @@ Section val_array.
     (Exists v, this |-> tptstoR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) v) ** Q
     |-- destroy_val tu ty this Q.
   Proof.
+    have Hnq := has_qualifiers_decompose_type ty.
     rewrite is_value_type_decompose_type qual_norm_decompose_type.
     rewrite erase_qualifiers_decompose_type destroy_val_decompose_type.
-    cbn. intros. by rewrite -wp_destroy_val_intro_val ?qual_norm'_unqual.
+    cbn. intros. by rewrite -wp_destroy_val_intro_val ?qual_norm'_unqual //.
   Qed.
 
   Lemma anyR_wp_destroy_val_val tu cv ty (this : ptr) Q :
@@ -911,9 +934,24 @@ Section val_array.
     this |-> anyR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) ** Q
     |-- destroy_val tu ty this Q.
   Proof.
+    have Hnq := has_qualifiers_decompose_type ty.
     rewrite is_value_type_decompose_type qual_norm_decompose_type.
     rewrite erase_qualifiers_decompose_type destroy_val_decompose_type.
-    cbn. intros. by rewrite -anyR_wp_destroy_val_val ?qual_norm'_unqual.
+    cbn. intros. by rewrite -anyR_wp_destroy_val_val ?qual_norm'_unqual //.
+  Qed.
+
+  Lemma wp_destroy_val_intro_ref_unqual tu cv ty (this : ptr) Q :
+    ~~ has_qualifiers ty ->
+    is_reference_type ty ->
+    (Exists v, this |-> tptstoR
+      (Tref $ erase_qualifiers $ syntax.types.as_ref ty)
+      (cQp.mk (q_const cv) 1) v) ** Q
+    |-- wp_destroy_val tu cv ty this Q.
+  Proof.
+    revert cv Q. induction ty; intros cv Q Hnq Href;
+      rewrite -wp_destroy_val_intro /=; try done.
+    all: try (by rewrite -wp_destroy_prim_intro).
+    apply IHty; assumption.
   Qed.
 
   Lemma wp_destroy_val_intro_ref tu cv ty (this : ptr) Q :
@@ -924,10 +962,9 @@ Section val_array.
   Proof.
     cbn. rewrite is_reference_type_decompose_type as_ref_decompose_type.
     rewrite qual_norm'_decompose_type wp_destroy_val_decompose_type.
-    have := is_qualified_decompose_type ty.
+    have := has_qualifiers_decompose_type ty.
     destruct (decompose_type ty) as [cv' rty]; cbn=>??.
-    rewrite -wp_destroy_val_intro. destruct rty; try done.
-    all: by rewrite -wp_destroy_prim_intro.
+    apply wp_destroy_val_intro_ref_unqual; assumption.
   Qed.
 
   Lemma anyR_wp_destroy_val_ref tu cv ty (this : ptr) Q :
@@ -946,9 +983,10 @@ Section val_array.
     this |-> anyR (Tref $ erase_qualifiers $ as_ref ty) (cQp.mk (q_const cv) 1) ** Q
     |-- destroy_val tu ty this Q.
   Proof.
+    have Hnq := has_qualifiers_decompose_type ty.
     rewrite is_reference_type_decompose_type qual_norm_decompose_type.
     rewrite as_ref_decompose_type destroy_val_decompose_type.
-    cbn. intros. by rewrite -anyR_wp_destroy_val_ref ?qual_norm'_unqual.
+    cbn. intros. by rewrite -anyR_wp_destroy_val_ref ?qual_norm'_unqual //.
   Qed.
 
   Lemma anyR_wp_destroy_array tu cv ety n (p : ptr) Q :
@@ -974,27 +1012,38 @@ Section val_array.
     |-- Cbn (Reduce (V tu QM ty this Q)).
   Proof. by destroy_val_unfold. Qed.
 
+  Lemma wp_destroy_val_value_type_elim_unqual tu cv ty this Q :
+    ~~ has_qualifiers ty ->
+    is_value_type ty ->
+    wp_destroy_val tu cv ty this Q |-- wp_destroy_prim tu cv ty this Q.
+  Proof.
+    revert cv. induction ty; intros cv Hnq Hval;
+      wp_destroy_val_unfold; try done.
+    all: try reflexivity.
+    rewrite wp_destroy_prim_loc_info. apply IHty; assumption.
+  Qed.
+
   Lemma wp_destroy_val_value_type_elim tu cv ty this Q :
     is_value_type ty ->
     wp_destroy_val tu cv ty this Q |--
-      qual_norm' (fun cv ty =>
-        wp_destroy_prim tu cv ty this Q
-      ) cv ty.
+      let p := decompose_type ty in
+      wp_destroy_prim tu (merge_tq cv p.1) p.2 this Q.
   Proof.
-    rewrite {1}wp_destroy_val_qual_norm'.
-    elim: (qual_norm'_ok _ cv ty); [|done]. move=>? rty *.
-    rewrite qual_norm'_unqual//. wp_destroy_val_unfold.
-    by destruct rty.
+    rewrite wp_destroy_val_decompose_type is_value_type_decompose_type.
+    have Hnq := has_qualifiers_decompose_type ty.
+    destruct (decompose_type ty) as [cv' rty]; cbn; intros Hval.
+    apply wp_destroy_val_value_type_elim_unqual; assumption.
   Qed.
+
   Lemma destroy_val_value_type_elim tu ty this Q :
     is_value_type ty ->
     destroy_val tu ty this Q |--
-      qual_norm (fun cv ty =>
-        wp_destroy_prim tu cv ty this Q
-      ) ty.
+      let p := decompose_type ty in
+      wp_destroy_prim tu p.1 p.2 this Q.
   Proof.
-    intros.
-    by rewrite destroy_val_wp_destroy_val  wp_destroy_val_value_type_elim.
+    intros Hval.
+    rewrite destroy_val_wp_destroy_val wp_destroy_val_value_type_elim //.
+    destruct (decompose_type ty); cbn. by rewrite left_id_L.
   Qed.
 
   Lemma wp_destroy_array_elim tu cv ety n p Q :

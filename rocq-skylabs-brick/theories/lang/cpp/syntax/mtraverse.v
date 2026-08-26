@@ -151,6 +151,7 @@ Module MTraverse.
       | Ndependent t => Ndependent' <$> traverseT t
       | Nscoped n c => Nscoped <$> traverseN n <*> traverse_an c
       | Nunsupported msg => mret $ Nunsupported msg
+      | NLocInfo li n => NLocInfo li <$> traverseN n
       end
 
     with traverseTA (a : temp_arg) : F temp_arg :=
@@ -161,6 +162,7 @@ Module MTraverse.
       | Atemplate n => Atemplate <$> traverseN n
       | Atemplate_param id => mret $ Atemplate_param id
       | Aunsupported msg => mret $ Aunsupported msg
+      | ALocInfo li a => ALocInfo li <$> traverseTA a
       end
 
     with traverseT (t : type) : F type :=
@@ -205,6 +207,7 @@ Module MTraverse.
       | Tdecltype e => Tdecltype <$> traverseE e
       | Texprtype e => Texprtype <$> traverseE e
       | Tunsupported msg => mret $ Tunsupported msg
+      | TLocInfo li t => TLocInfo li <$> traverseT t
       end
 
     with traverseE (e : Expr) : F Expr :=
@@ -292,6 +295,7 @@ Module MTraverse.
       | Earrayloop_index n t => Earrayloop_index n <$> ET (traverseT t)
       | Eopaque_ref n t => Eopaque_ref n <$> traverseT t
       | Eunsupported msg t => Eunsupported msg <$> traverseT t
+      | ELocInfo li e => ELocInfo li <$> traverseE e
       end
 
     with traverseD (d : VarDecl) : F VarDecl :=
@@ -307,6 +311,7 @@ Module MTraverse.
       | Ddecompose e id ds =>
           Ddecompose <$> traverseE e <*> mret id
             <*> traverse (T:=eta list) traverseB ds
+      | DLocInfo li d => DLocInfo li <$> traverseD d
       end
 
     with traverseB (d : BindingDecl) : F BindingDecl :=
@@ -315,6 +320,7 @@ Module MTraverse.
           Bvar n <$> traverseT t <*> traverseE e
       | Bbind n t e =>
           Bbind n <$> traverseT t <*> traverseE e
+      | BLocInfo li d => BLocInfo li <$> traverseB d
       end
 
     with traverseS (s : Stmt) : F Stmt :=
@@ -339,6 +345,7 @@ Module MTraverse.
       | Slabeled l s => Slabeled l <$> traverseS s
       | Sgoto id => mret $ Sgoto id
       | Sunsupported msg => mret $ Sunsupported msg
+      | SLocInfo li s => SLocInfo li <$> traverseS s
       end
 
     with traverseC (c : Cast) : F Cast :=

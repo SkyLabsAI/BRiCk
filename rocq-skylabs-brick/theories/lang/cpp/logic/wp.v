@@ -632,6 +632,8 @@ Section with_cpp.
     : forall {resolve:genv}, translation_unit -> region -> Expr -> M ptr.
   (* END wp_lval *)
 
+  Axiom wp_lval_loc_info : forall {σ : genv} tu ρ li e Q,
+      wp_lval tu ρ (ELocInfo li e) Q = wp_lval tu ρ e Q.
 
   Axiom wp_lval_shift : forall {σ:genv} tu ρ e Q,
       (|={top}=> wp_lval tu ρ e (fun v free => |={top}=> Q v free))
@@ -801,6 +803,12 @@ Section with_cpp.
                         mpred. (* pre-condition *)
   (* END wp_init *)
 
+  Axiom wp_init_type_loc_info : forall {σ : genv} tu ρ li ty p e Q,
+      wp_init tu ρ (TLocInfo li ty) p e Q = wp_init tu ρ ty p e Q.
+
+  Axiom wp_init_expr_loc_info : forall {σ : genv} tu ρ ty p li e Q,
+      wp_init tu ρ ty p (ELocInfo li e) Q = wp_init tu ρ ty p e Q.
+
   Axiom wp_init_shift : forall {σ:genv} tu ρ ty p e Q,
       (|={top}=> wp_init tu ρ ty p e (fun frees => |={top}=> Q frees))
     ⊢ wp_init tu ρ ty p e Q.
@@ -906,6 +914,9 @@ Section with_cpp.
    *)
   Parameter wp_operand : forall {resolve:genv}, translation_unit -> region -> Expr -> M val.
   (* END wp_operand *)
+
+  Axiom wp_operand_loc_info : forall {σ : genv} tu ρ li e Q,
+      wp_operand tu ρ (ELocInfo li e) Q = wp_operand tu ρ e Q.
 
   Axiom wp_operand_shift : forall {σ:genv} tu ρ e Q,
       (|={top}=> wp_operand tu ρ e (fun v free => |={top}=> Q v free))
@@ -1019,6 +1030,9 @@ Section with_cpp.
   (* evaluate an expression as an xvalue *)
   Parameter wp_xval
     : forall {resolve:genv}, translation_unit -> region -> Expr -> M ptr.
+
+  Axiom wp_xval_loc_info : forall {σ : genv} tu ρ li e Q,
+      wp_xval tu ρ (ELocInfo li e) Q = wp_xval tu ρ e Q.
 
   Axiom wp_xval_well_typed : forall {σ:genv} tu ρ e Q,
       wp_xval tu ρ e (fun v free => reference_to (type_of e) v -* Q v free)
@@ -1308,6 +1322,10 @@ Section with_cpp.
   (* evaluate a statement *)
   Parameter wp
     : forall {resolve:genv}, translation_unit -> region -> Stmt -> KpredI -> mpred.
+
+  (** An outer location wrapper has no effect on statement semantics. *)
+  Axiom wp_loc_info : forall σ tu ρ li s Q,
+      wp (resolve:=σ) tu ρ (SLocInfo li s) Q = wp tu ρ s Q.
 
   #[global] Declare Instance wp_ne : forall σ n,
     Proper (eq ==> eq ==> eq ==> dist n ==> dist n) (@wp σ).

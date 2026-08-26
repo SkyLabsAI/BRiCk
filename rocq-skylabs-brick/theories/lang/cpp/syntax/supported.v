@@ -35,8 +35,10 @@ Section with_monad.
   Definition check_float_width (ft : float_type.t) : M :=
     if float_type.supported ft then OK else FAIL "unsupported floating width".
 
-  Definition as_float_type (t : type) : option float_type.t :=
-    match drop_qualifiers t with
+  Fixpoint as_float_type (t : type) : option float_type.t :=
+    match t with
+    | Tqualified _ t
+    | TLocInfo _ t => as_float_type t
     | Tfloat_ ft => Some ft
     | _ => None
     end.
@@ -114,7 +116,7 @@ Section with_monad.
     | _ => OK
     end.
 
-  Definition atomic_name (type : type -> M) (an : atomic_name) : M :=
+  Fixpoint atomic_name (type : type -> M) (an : atomic_name) : M :=
     match an with
     | Nid _ => OK
     | Nfunction _ _ ts => lst type ts
@@ -127,6 +129,7 @@ Section with_monad.
     | Nanonymous
     | Nfirst_decl _ | Nfirst_child _ => OK
     | Nunsupported_atomic msg => FAIL msg
+    | ANLocInfo _ an => atomic_name type an
     end.
 
   Section temp_arg.
@@ -139,6 +142,7 @@ Section with_monad.
       | Atemplate n => name n
       | Atemplate_param _ => OK
       | Aunsupported msg => FAIL msg
+      | ALocInfo _ a => temp_arg a
       end.
   End temp_arg.
 
@@ -163,6 +167,7 @@ Section with_monad.
     | Nscoped n s => name n <+> atomic_name type s
     | Ndependent t => type t
     | Nunsupported msg => FAIL msg
+    | NLocInfo _ n => name n
     end
 
   with type (t : type) : M :=
@@ -188,6 +193,7 @@ Section with_monad.
     | Tarch _ _ => OK
     | Tdecltype e | Texprtype e => expr e
     | Tnamed n | Tenum n => name n
+    | TLocInfo _ t => type t
     end
 
   with expr (e : Expr) : M :=
@@ -261,6 +267,7 @@ Section with_monad.
     | Earrayloop_init _ e _ _ e2 t => expr e <+> expr e2 <+> type t
     | Earrayloop_index _ t => type t
     | Eunsupported msg t => FAIL msg
+    | ELocInfo _ e => expr e
     end
 
   with stmt (s : Stmt) : M :=
@@ -283,6 +290,7 @@ Section with_monad.
     | Slabeled _ s => stmt s
     | Sgoto _ => FAIL "goto"
     | Sunsupported msg => FAIL msg
+    | SLocInfo _ s => stmt s
     end
 
   with var_decl (v : VarDecl) : M :=
@@ -291,12 +299,14 @@ Section with_monad.
     | Ddecompose e _ bds => expr e <+> lst binding_decl bds
     | Dinit _ n t None => name n <+> type t
     | Dinit _ n t (Some e) => name n <+> type t <+> expr e
+    | DLocInfo _ v => var_decl v
     end
 
   with binding_decl (b : BindingDecl) : M :=
     match b with
     | Bvar _ t e => type t <+> expr e
     | Bbind _ t e => type t <+> expr e
+    | BLocInfo _ b => binding_decl b
     end
 
   with cast (c : Cast) : M :=

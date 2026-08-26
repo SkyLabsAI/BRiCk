@@ -34,8 +34,10 @@ Definition underlying_type (tu : translation_unit) (nm : globname) : option type
     Note that if the [enum] is not defined in the translation unit, then the result
     it the original [enum].
  *)
-Definition representation_type (tu : translation_unit) (ty : type) : type :=
-  match drop_qualifiers ty with
+Fixpoint representation_type (tu : translation_unit) (ty : type) : type :=
+  match ty with
+  | Tqualified _ ty
+  | TLocInfo _ ty => representation_type tu ty
   | Tenum nm as ty => default ty $ underlying_type tu nm
   | ty => ty
   end.
@@ -113,7 +115,7 @@ Fixpoint first_representable (info : abi.t) (ty : type) (ls : list type) : optio
     <https://eel.is/c++draft/conv.prom>
 
  *)
-Definition promote_integral (tu : translation_unit) (ty : type) : option type :=
+Definition promote_integral_raw (tu : translation_unit) (ty : type) : option type :=
   let info := tu.(abi) in
   match representation_type tu ty with
     (* signed char or short can be converted to int *)
@@ -186,17 +188,24 @@ Definition promote_integral (tu : translation_unit) (ty : type) : option type :=
   | Tdecltype _ (* ?? *)
   | Texprtype _ (* ?? *)
   | Tauto
-  | Tresult_call _ _ => None
+  | Tresult_call _ _
+  | TLocInfo _ _ => None
+  end.
+
+Fixpoint promote_integral (tu : translation_unit) (ty : type) : option type :=
+  match ty with
+  | TLocInfo _ ty => promote_integral tu ty
+  | _ => promote_integral_raw tu ty
   end.
 
 Goal forall tu, promote_integral tu Tchar = Some Tint.
 Proof.
-  intros. rewrite /promote_integral/=.
+  intros. rewrite /promote_integral/promote_integral_raw/=.
   destruct (abi.char_signed (abi tu)); done.
 Succeed Qed. Abort.
 Goal forall tu, promote_integral tu Twchar = Some (integral_type_to_type $ abi.equivalent_int_type (abi tu) char_type.Cwchar).
 Proof.
-  intros. rewrite /promote_integral/abi.equivalent_int_type/=.
+  intros. rewrite /promote_integral/promote_integral_raw/abi.equivalent_int_type/=.
   rewrite /fully_representable/=.
   destruct (abi.wchar_signed (abi tu)); done.
 Succeed Qed. Abort.

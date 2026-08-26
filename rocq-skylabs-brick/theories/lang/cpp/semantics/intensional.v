@@ -26,6 +26,7 @@ Fixpoint prim_initializable (t : type) : bool :=
   | Tbool
   | Tenum _
   | Tnullptr => true
-  | Tqualified _ t => prim_initializable t
+  | Tqualified _ t
+  | TLocInfo _ t => prim_initializable t
   | _ => false
   end.

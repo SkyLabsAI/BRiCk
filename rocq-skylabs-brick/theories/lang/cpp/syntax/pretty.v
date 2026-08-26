@@ -83,7 +83,7 @@ Section with_lang.
                 end in
       concat $ join_sep " " $ (c ++ v ++ vc)%list.
 
-    Definition printAN (an : atomic_name) : PrimString.string :=
+    Fixpoint printAN (an : atomic_name) : PrimString.string :=
       let print_args args := parens $ concat $ join_sep ", " $ printType <$> args in
       match an with
       | Nid id => id
@@ -108,6 +108,7 @@ Section with_lang.
       | Nfirst_decl n => "#" ++ n
       | Nfirst_child n => "." ++ n
       | Nunsupported_atomic note => "?" ++ note
+      | ANLocInfo _ an => printAN an
       end.
   End atomic_name.
 
@@ -116,6 +117,7 @@ Section with_lang.
     | Nglobal (Nid id) => Some id
     | Nscoped _ (Nid id) => Some id
     | Ninst nm _ => topName nm
+    | NLocInfo _ nm => topName nm
     | _ => None
     end.
 
@@ -181,6 +183,7 @@ Section with_lang.
     | Ninst base i =>
         printN base ++ angles (concat $ join_sep ", " $ List.concat (List.map printTA i))
     | Nunsupported note => "?" ++ note
+    | NLocInfo _ nm => printN nm
     end
 
   with printTA (ta : temp_arg) : list PrimString.string :=
@@ -191,6 +194,7 @@ Section with_lang.
       | Atemplate n => ["<>" ++ printN n]
       | Atemplate_param id => ["<>" ++ id]
       | Aunsupported note => [note]
+      | ALocInfo _ ta => printTA ta
       end
 
   with printT (ty : type) : PrimString.string :=
@@ -249,10 +253,12 @@ Section with_lang.
     | Tresult_member_call _ _ _
     | Tresult_parenlist _ _
     | Tresult_member _ _ => "!nyi"
+    | TLocInfo _ ty => printT ty
     end
   with printE (e : Expr) : PrimString.string :=
     match e with
     | Eglobal nm _ => printN nm
+    | ELocInfo _ e => printE e
     | _ => "!nyi"
     end.
 

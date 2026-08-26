@@ -845,7 +845,7 @@ with erase_Cast (cast : Cast) {struct cast} : Cast :=
 #[global] Bind Scope cpp_name_scope with name.
 
 Module atomic_name.
-  Definition existsb (f : type -> bool) (c : atomic_name) : bool :=
+  Fixpoint existsb (f : type -> bool) (c : atomic_name) : bool :=
     match c with
     | Nid _ => false
     | Nfunction _ _ ts => List.existsb f ts
@@ -859,11 +859,12 @@ Module atomic_name.
     | Nfirst_decl _
     | Nfirst_child _
     | Nunsupported_atomic _ => false
+    | ANLocInfo _ c => existsb f c
     end.
 
   Import UPoly.
 
-  Definition fmap (f : type -> type) (c : atomic_name) : atomic_name :=
+  Fixpoint fmap (f : type -> type) (c : atomic_name) : atomic_name :=
     match c with
     | Nid id => Nid id
     | Nfunction qs n ts => Nfunction qs n (f <$> ts)
@@ -877,6 +878,7 @@ Module atomic_name.
     | Nfirst_decl n => Nfirst_decl n
     | Nfirst_child n => Nfirst_child n
     | Nunsupported_atomic msg => Nunsupported_atomic msg
+    | ANLocInfo li c => ANLocInfo li (fmap f c)
     end.
   #[global] Arguments fmap _ & _ : assert.
 
@@ -889,7 +891,7 @@ Module atomic_name.
     Context (f : type -> F type).
 
     #[local] Notation list_traverse := (UPoly.traverse (T:=eta list)).
-    Definition traverse (c : atomic_name) : F atomic_name :=
+    Fixpoint traverse (c : atomic_name) : F atomic_name :=
       match c with
       | Nid id => mret $ Nid id
       | Nfunction qs n ts => Nfunction qs n <$> list_traverse f ts
@@ -904,6 +906,7 @@ Module atomic_name.
       | Nfirst_child n => mret $ Nfirst_child n
 
       | Nunsupported_atomic msg => mret $ Nunsupported_atomic msg
+      | ANLocInfo li c => ANLocInfo li <$> traverse c
       end.
     #[global] Hint Opaque traverse : typeclass_instances.
   End traverse.
@@ -1217,6 +1220,7 @@ Fixpoint is_dependentN (n : name) : bool :=
   | Ndependent t => is_dependentT t
   | Nscoped n c => is_dependentN n || atomic_name.existsb is_dependentT c
   | Nunsupported _ => false
+  | NLocInfo _ n => is_dependentN n
   end
 
 with is_dependentTA (t : temp_arg) : bool :=
@@ -1227,6 +1231,7 @@ with is_dependentTA (t : temp_arg) : bool :=
   | Atemplate nm => is_dependentN nm
   | Atemplate_param _ => false
   | Aunsupported _ => false
+  | ALocInfo _ t => is_dependentTA t
   end
 
 with is_dependentT (t : type) : bool :=
@@ -1262,6 +1267,7 @@ with is_dependentT (t : type) : bool :=
   | Tdecltype e => is_dependentE e
   | Texprtype e => is_dependentE e
   | Tunsupported _ => false
+  | TLocInfo _ t => is_dependentT t
   end
 
 with is_dependentE (e : Expr) : bool :=
@@ -1334,6 +1340,7 @@ with is_dependentE (e : Expr) : bool :=
   | Earrayloop_index _ t => is_dependentT t
   | Eopaque_ref _ t => is_dependentT t
   | Eunsupported _ t => is_dependentT t
+  | ELocInfo _ e => is_dependentE e
   end
 
 with is_dependentVD (vd : VarDecl) : bool :=
@@ -1341,12 +1348,14 @@ with is_dependentVD (vd : VarDecl) : bool :=
   | Dvar _ t oe => is_dependentT t || option.existsb is_dependentE oe
   | Ddecompose e _ lvd => is_dependentE e || List.existsb is_dependentBD lvd
   | Dinit _ n t oe => is_dependentN n || is_dependentT t || option.existsb is_dependentE oe
+  | DLocInfo _ vd => is_dependentVD vd
   end
 
 with is_dependentBD (bd : BindingDecl) : bool :=
   match bd with
   | Bvar _ t e
   | Bbind _ t e => is_dependentT t || is_dependentE e
+  | BLocInfo _ bd => is_dependentBD bd
   end
 
 with is_dependentS (s : Stmt) : bool :=
@@ -1378,4 +1387,5 @@ with is_dependentS (s : Stmt) : bool :=
   | Slabeled _ s => is_dependentS s
   | Sgoto _ => false
   | Sunsupported _ => false
+  | SLocInfo _ s => is_dependentS s
   end.

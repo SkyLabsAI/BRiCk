@@ -53,11 +53,17 @@ Implicit Types (n : N) (z : Z).
 Definition pred_ns : namespace := nroot .@@ "skylabs" .@@ "lang" .@@ "cpp_logic".
 
 (* Used by [has_type_prop_has_type_noptr]. No theory. *)
-Definition nonptr_prim_type (ty : type) : bool :=
-  match drop_qualifiers ty with
+Fixpoint nonptr_prim_type (ty : type) : bool :=
+  match ty with
+  | Tqualified _ ty
+  | TLocInfo _ ty => nonptr_prim_type ty
   | Tfloat_ _ | Tchar_ _ | Tvoid | Tbool | Tenum _ | Tnum _ _ => true
   | Tnullptr | Tptr _ | Tref _ | Trv_ref _ | _ => false
   end.
+
+Lemma nonptr_prim_type_drop_qualifiers : forall (ty : type),
+    nonptr_prim_type ty = nonptr_prim_type (drop_qualifiers ty).
+Proof. induction ty; simpl; eauto. Qed.
 
 Lemma nonptr_prim_type_erase_qualifiers : forall (ty : type),
     nonptr_prim_type ty = nonptr_prim_type (erase_qualifiers ty).
@@ -207,6 +213,8 @@ Module Type CPP_LOGIC
          [reference_to_elim] except for the issue with non-standard types. *)
       Axiom reference_to_erase : forall ty p,
           reference_to ty p -|- reference_to (erase_qualifiers ty) p.
+      Axiom reference_to_loc_info : forall li ty p,
+          reference_to (TLocInfo li ty) p -|- reference_to ty p.
 
       (** The introduction and elimination forms are not the same
           to avoid using [has_type] as types that are not C++ types.

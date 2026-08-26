@@ -1128,15 +1128,7 @@ Module SimpleCPP.
 
     Lemma zero_size_array_erase_qualifiers (ty : type) :
       zero_sized_array (erase_qualifiers ty) = zero_sized_array ty.
-    Proof.
-      induction ty; rewrite /= /qual_norm /=; eauto.
-      - rewrite IHty. done.
-      - rewrite IHty. clear.
-        generalize (merge_tq QM q).
-        clear. induction ty; rewrite /= /qual_norm/=; eauto.
-        intros.
-        rewrite -!IHty. done.
-    Qed.
+    Proof. symmetry. apply zero_sized_array_erase_qualifiers. Qed.
 
     Lemma stict_valid_if_not_empty_array_erase ty p :
       strict_valid_if_not_empty_array ty p
@@ -1192,7 +1184,10 @@ Module SimpleCPP.
       Proof.
         rewrite /has_type /nonptr_prim_type; intros.
         iIntros "$".
-        destruct v => //. by case_match.
+        destruct v => //.
+        have H' : nonptr_prim_type (drop_qualifiers ty).
+        { by rewrite -nonptr_prim_type_drop_qualifiers. }
+        destruct (drop_qualifiers ty); cbn in H' |- *; try contradiction; done.
       Qed.
 
       Lemma has_type_erase_qualifiers ty v :
@@ -1264,6 +1259,13 @@ Module SimpleCPP.
         rewrite /reference_to. intros.
         rewrite -aligned_ptr_ty_erase_qualifiers -zero_size_array_erase_qualifiers.
         done.
+      Qed.
+
+      Theorem reference_to_loc_info : forall li ty p,
+          reference_to (TLocInfo li ty) p -|- reference_to ty p.
+      Proof.
+        rewrite /reference_to/aligned_ptr_ty /=. intros.
+        rewrite align_of_loc_info. done.
       Qed.
 
       Theorem reference_to_intro : forall ty p,

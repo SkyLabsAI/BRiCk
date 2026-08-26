@@ -41,6 +41,9 @@ Require Stdlib.Numbers.Cyclic.Int63.PrimInt63.
   Canonical ident_comparator :=
     {| _car := ident
     ; _compare := PrimString.compare |}.
+  Canonical loc_info_comparator :=
+    {| _car := loc_info
+    ; _compare := PrimInt63.compare |}.
   Canonical bool_comparator :=
     {| _car := bool
     ; _compare := Bool.compare |}.
@@ -649,6 +652,7 @@ Module temp_arg.
       | Atemplate _ => 4
       | Atemplate_param _ => 5
       | Aunsupported _ => 6
+      | ALocInfo _ _ => 7
       end.
     Definition car (t : positive) : Set :=
       match t with
@@ -656,6 +660,7 @@ Module temp_arg.
       | 2 => Expr
       | 3 => list temp_arg
       | 4 => name
+      | 7 => loc_info * temp_arg
       | _ => PrimString.string
       end.
     Definition data (p : temp_arg) : car (tag p) :=
@@ -666,6 +671,7 @@ Module temp_arg.
       | Atemplate n => n
       | Atemplate_param id => id
       | Aunsupported msg => msg
+      | ALocInfo li a => (li, a)
       end.
     Definition compare_data (ta_compare : temp_arg -> temp_arg -> comparison)
       (t : positive) : car t -> car t -> comparison :=
@@ -674,6 +680,7 @@ Module temp_arg.
       | 2 => compareE
       | 3 => List.compare ta_compare
       | 4 => compareN
+      | 7 => prod.compare PrimInt63.compare ta_compare
       | _ => PrimString.compare
       end.
 
@@ -687,6 +694,7 @@ Module temp_arg.
       | Atemplate n => compare_ctor compare (Reduce (tag (Atemplate n))) (fun _ => Reduce (data (Atemplate n)))
       | Atemplate_param id => compare_ctor compare (Reduce (tag (Atemplate_param id))) (fun _ => Reduce (data (Atemplate_param id)))
       | Aunsupported msg => compare_ctor compare (Reduce (tag (Aunsupported msg))) (fun _ => Reduce (data (Aunsupported msg)))
+      | ALocInfo li a => compare_ctor compare (Reduce (tag (ALocInfo li a))) (fun _ => Reduce (data (ALocInfo li a)))
       end.
   End compare.
 
@@ -771,6 +779,7 @@ Module atomic_name.
     | Nfirst_decl _ => 10
     | Nfirst_child _ => 11
     | Nunsupported_atomic _ => 12
+    | ANLocInfo _ _ => 13
     end.
   #[global] Arguments tag & _ : assert.
   Section compare.
@@ -825,6 +834,7 @@ Module atomic_name.
       | 9 => unit
       | 10 => ident
       | 11 => ident
+      | 13 => loc_info * atomic_name
       | _ => PrimString.string
       end.
     Definition data (p : atomic_name) : car (tag p) :=
@@ -841,8 +851,10 @@ Module atomic_name.
       | Nfirst_decl n => n
       | Nfirst_child n => n
       | Nunsupported_atomic msg => msg
+      | ANLocInfo li n => (li, n)
       end.
-    Definition compare_data (t : positive) : car t -> car t -> comparison :=
+    Definition compare_data (an_compare : atomic_name -> atomic_name -> comparison)
+        (t : positive) : car t -> car t -> comparison :=
       match t with
       | 1 => PrimString.compare
       | 2 => box_Nfunction_compare
@@ -855,31 +867,33 @@ Module atomic_name.
       | 9 => _compare
       | 10 => PrimString.compare
       | 11 => PrimString.compare
+      | 13 => prod.compare PrimInt63.compare an_compare
       | _ => PrimString.compare
       end.
 
-    #[local] Notation compare_ctor := (compare_ctor tag car data compare_data).
+    #[local] Notation compare_ctor compare := (compare_ctor tag car data (compare_data compare)).
 
     #[local] Notation compare_tag := (compare_tag tag).
 
-    #[local] Notation COMP e := (compare_ctor (Reduce (tag (e : atomic_name))) (fun _ => Reduce (data (e : atomic_name)))) (only parsing).
+    #[local] Notation COMP compare e := (compare_ctor compare (Reduce (tag (e : atomic_name))) (fun _ => Reduce (data (e : atomic_name)))) (only parsing).
 
 
 
-    Definition compare (p : atomic_name) : atomic_name -> comparison :=
+    Fixpoint compare (p : atomic_name) : atomic_name -> comparison :=
       match p with
-      | Nid i => COMP (Nid i : atomic_name)
-      | Nfunction qs f ts => COMP (Nfunction qs f ts)
-      | Nctor ts => COMP (Nctor ts)
-      | Ndtor => COMP (Ndtor : atomic_name)
-      | Nop a b c => COMP (Nop a b c)
-      | Nop_conv a b => COMP (Nop_conv a b)
-      | Nop_lit a b => COMP (Nop_lit a b)
-      | Nanon n => COMP (Nanon n : atomic_name)
-      | Nanonymous => COMP (Nanonymous : atomic_name)
-      | Nfirst_decl n => COMP (Nfirst_decl n : atomic_name)
-      | Nfirst_child n => COMP (Nfirst_child n : atomic_name)
-      | Nunsupported_atomic msg => COMP (Nunsupported_atomic msg : atomic_name)
+      | Nid i => COMP compare (Nid i : atomic_name)
+      | Nfunction qs f ts => COMP compare (Nfunction qs f ts)
+      | Nctor ts => COMP compare (Nctor ts)
+      | Ndtor => COMP compare (Ndtor : atomic_name)
+      | Nop a b c => COMP compare (Nop a b c)
+      | Nop_conv a b => COMP compare (Nop_conv a b)
+      | Nop_lit a b => COMP compare (Nop_lit a b)
+      | Nanon n => COMP compare (Nanon n : atomic_name)
+      | Nanonymous => COMP compare (Nanonymous : atomic_name)
+      | Nfirst_decl n => COMP compare (Nfirst_decl n : atomic_name)
+      | Nfirst_child n => COMP compare (Nfirst_child n : atomic_name)
+      | Nunsupported_atomic msg => COMP compare (Nunsupported_atomic msg : atomic_name)
+      | ANLocInfo li n => COMP compare (ANLocInfo li n)
       end.
   End compare.
 
@@ -1063,7 +1077,8 @@ Module name.
       | Nglobal _ => 2
       | Ndependent _ => 3
       | Nscoped _ _ => 4
-      | _ => 5
+      | Nunsupported _ => 5
+      | NLocInfo _ _ => 6
       end.
     Definition car (t : positive) : Set :=
       match t with
@@ -1071,6 +1086,7 @@ Module name.
       | 2 => atomic_name
       | 3 => type
       | 4 => box_Nscoped
+      | 6 => loc_info * name
       | _ => PrimString.string
       end.
     Definition data (n : name) : car (tag n) :=
@@ -1080,6 +1096,7 @@ Module name.
       | Ndependent t => t
       | Nscoped n c => Box_Nscoped n c
       | Nunsupported msg => msg
+      | NLocInfo li n => (li, n)
       end.
     Definition compare_data (t : positive) : car t -> car t -> comparison :=
       match t with
@@ -1087,6 +1104,7 @@ Module name.
       | 2 => atomic_name.compare compareT
       | 3 => compareT
       | 4 => box_Nscoped_compare
+      | 6 => prod.compare PrimInt63.compare compareN
       | _ => PrimString.compare
       end.
 
@@ -1098,6 +1116,7 @@ Module name.
       | Ndependent t => compare_ctor (Reduce (tag (Ndependent t))) (fun _ => Reduce (data (Ndependent t)))
       | Nscoped n c => compare_ctor (Reduce (tag (Nscoped n c))) (fun _ => Reduce (data (Nscoped n c)))
       | Nunsupported msg => compare_ctor (Reduce (tag (Nunsupported msg))) (fun _ => Reduce (data (Nunsupported msg)))
+      | NLocInfo li n => compare_ctor (Reduce (tag (NLocInfo li n))) (fun _ => Reduce (data (NLocInfo li n)))
       end.
   End compare_body.
 End name.
@@ -1255,6 +1274,7 @@ Module type.
       | 21 => box_Tresult_member_call
       | 22 => box_Tresult_parenlist
       | 23 => box_Tresult_member
+      | 25 => loc_info * type
       | _ => PrimString.string
       end.
 
@@ -1329,6 +1349,7 @@ Module type.
       | Tresult_member a b => kp 23 $ Box_Tresult_member a b
       | Tauto => k 3%uint63
       | Tunsupported msg => kp 24 msg
+      | TLocInfo li t => kp 25 (li, t)
       end.
 
     Definition compare_data (p : positive) : car p -> car p -> comparison :=
@@ -1351,6 +1372,7 @@ Module type.
       | 21 => box_Tresult_member_call_compare
       | 22 => box_Tresult_parenlist_compare
       | 23 => box_Tresult_member_compare
+      | 25 => prod.compare PrimInt63.compare compareT
       | _ => PrimString.compare
       end.
 
@@ -1892,6 +1914,7 @@ Module Expr.
       | Eunsupported _ _ => 57
       | Estmt _ _ => 58
       | Efloat _ _ => 63
+      | ELocInfo _ _ => 68
       end.
     Definition car (t : positive) : Set :=
       match t with
@@ -1955,6 +1978,7 @@ Module Expr.
       | 65 => box_Eunresolved_initlist
       | 66 => box_Eunresolved_sizeof_pack
       | 67 => box_Einherited_constructor
+      | 68 => loc_info * Expr
       | _ => box_Eunsupported
       end.
     Definition data (e : Expr) : car (tag e) :=
@@ -2026,6 +2050,7 @@ Module Expr.
       | Earrayloop_index c t => Box_Echar c t
       | Eopaque_ref n t => Box_Eopaque_ref n t
       | Eunsupported msg t => Box_Eunsupported msg t
+      | ELocInfo li e => (li, e)
       end.
     Definition compare_data (t : positive) : car t -> car t -> comparison :=
       match t as t return car t -> car t -> comparison with
@@ -2089,6 +2114,7 @@ Module Expr.
       | 65 => box_Eunresolved_initlist_compare
       | 66 => box_Eunresolved_sizeof_pack_compare
       | 67 => box_Einherited_constructor_compare
+      | 68 => prod.compare PrimInt63.compare compareE
       | _ => box_Eunsupported_compare
       end.
 
@@ -2181,6 +2207,7 @@ Module Expr.
       | Eopaque_ref n t => COMP (Eopaque_ref n t)
       | Eunsupported msg t => COMP (Eunsupported msg t)
       | Estmt s t => compare_ctor (Reduce (tag $ Estmt s t)) (fun _ => Reduce (data $ Estmt s t))
+      | ELocInfo li e => COMP (ELocInfo li e)
       end.
   End compare_body.
 End Expr.
@@ -2190,6 +2217,7 @@ Module VarDecl.
     Context (compareN : name -> name -> comparison).
     Context (compareT : type -> type -> comparison).
     Context (compareE : Expr -> Expr -> comparison).
+    Context (compareVD : VarDecl -> VarDecl -> comparison).
     Context (compareBD : BindingDecl -> BindingDecl -> comparison).
     Context (compareS : Stmt -> Stmt -> comparison).
 
@@ -2211,11 +2239,13 @@ Module VarDecl.
       | Dvar _ _ _ => 1
       | Ddecompose _ _ _ => 2
       | Dinit _ _ _ _ => 3
+      | DLocInfo _ _ => 4
       end.
     Definition car (vd : positive) : Set :=
       match vd return Set with
       | 1 => localname * type * option Expr
       | 2 => Expr * ident * list BindingDecl
+      | 4 => loc_info * VarDecl
       | _ => bool * name * type * option Expr
       end%type.
     Definition data (vd : VarDecl) : car (tag vd) :=
@@ -2223,11 +2253,13 @@ Module VarDecl.
       | Dvar a b c => (a, b, c)
       | Ddecompose a b c => (a, b, c)
       | Dinit a b c d => (a, b, c, d)
+      | DLocInfo li d => (li, d)
       end.
     Definition compare_data (k : positive) : car k -> car k -> comparison :=
       match k as k return car k -> car k -> comparison with
       | 1 => _compare
       | 2 => _compare
+      | 4 => prod.compare PrimInt63.compare compareVD
       | _ => _compare
       end.
 
@@ -2237,6 +2269,7 @@ Module VarDecl.
       | Dvar a b c => compare_ctor (Dvar a b c)
       | Ddecompose a b c => compare_ctor (Ddecompose a b c)
       | Dinit a b c d => compare_ctor (Dinit a b c d)
+      | DLocInfo li d => compare_ctor (DLocInfo li d)
       end.
   End compare_body.
 End VarDecl.
@@ -2245,7 +2278,7 @@ Module BindingDecl.
   Section compare_body.
     Context (compareT : type -> type -> comparison).
     Context (compareE : Expr -> Expr -> comparison).
-    Context (compareVD : VarDecl -> VarDecl -> comparison).
+    Context (compareBD : BindingDecl -> BindingDecl -> comparison).
 
     #[local] Canonical type_comparator :=
       {| _car := type
@@ -2253,30 +2286,35 @@ Module BindingDecl.
     #[local] Canonical expr_comparator :=
       {| _car := Expr
       ; _compare := compareE |}.
-    #[local] Canonical VarDecl_comparator :=
-      {| _car := VarDecl
-      ; _compare := compareVD |}.
-
     Definition tag (vd : BindingDecl) : positive :=
       match vd with
       | Bvar _ _ _ => 1
       | Bbind _ _ _ => 2
+      | BLocInfo _ _ => 3
       end.
     Definition car (vd : positive) : Set :=
-      localname * type * Expr.
+      match vd with
+      | 3 => loc_info * BindingDecl
+      | _ => localname * type * Expr
+      end.
     Definition data (vd : BindingDecl) : car (tag vd) :=
       match vd with
       | Bvar a b c => (a, b, c)
       | Bbind a b c => (a, b, c)
+      | BLocInfo li d => (li, d)
       end.
     Definition compare_data (k : positive) : car k -> car k -> comparison :=
-      _compare.
+      match k as k return car k -> car k -> comparison with
+      | 3 => prod.compare PrimInt63.compare compareBD
+      | _ => _compare
+      end.
 
     #[local] Notation compare_ctor X := (compare_ctor tag car data compare_data (Reduce (tag X)) (fun _ => Reduce (data X))) (only parsing).
     Definition compare_body (vd : BindingDecl) : BindingDecl -> comparison :=
       match vd with
       | Bvar a b c => compare_ctor (Bvar a b c)
       | Bbind a b c => compare_ctor (Bbind a b c)
+      | BLocInfo li d => compare_ctor (BLocInfo li d)
       end.
   End compare_body.
 End BindingDecl.
@@ -2327,6 +2365,7 @@ Module Stmt.
       | Slabeled _ _ => 16
       | Sgoto _ => 17
       | Sunsupported _ => 18
+      | SLocInfo _ _ => 20
       end.
     Definition car (k : positive) : Set :=
       match k with
@@ -2348,6 +2387,7 @@ Module Stmt.
       | 15 => PrimString.string * bool * list (ident * Expr) * list (ident * Expr) * list ident
       | 16 => ident * Stmt
       | 17 => ident
+      | 20 => loc_info * Stmt
       | _ => PrimString.string
       end.
     Definition data (s : Stmt) : car (tag s) :=
@@ -2371,6 +2411,7 @@ Module Stmt.
       | Slabeled a b => (a,b)
       | Sgoto a => a
       | Sunsupported a => a
+      | SLocInfo li s => (li, s)
       end.
 
     Definition compare_data  (k : positive) : car k -> car k -> comparison :=
@@ -2393,6 +2434,7 @@ Module Stmt.
       | 16 => _compare
       | 17 => _compare
       | 19 => _compare
+      | 20 => prod.compare PrimInt63.compare compareS
       | _ => _compare
       end.
 
@@ -2418,6 +2460,7 @@ Module Stmt.
       | Slabeled a b => compare_ctor (Slabeled a b)
       | Sgoto a => compare_ctor (Sgoto a)
       | Sunsupported a => compare_ctor (Sunsupported a)
+      | SLocInfo li s => compare_ctor (SLocInfo li s)
       end.
 
   End compare_body.
@@ -2445,10 +2488,10 @@ Section compare.
     Expr.compare_body compareN compareT compareC compareE compareS e
 
   with compareVD (vd : VarDecl) {struct vd} : VarDecl -> comparison :=
-    VarDecl.compare_body compareN compareT compareE compareBD vd
+    VarDecl.compare_body compareN compareT compareE compareVD compareBD vd
 
   with compareBD (bd : BindingDecl) {struct bd} : BindingDecl -> comparison :=
-    BindingDecl.compare_body compareT compareE bd
+    BindingDecl.compare_body compareT compareE compareBD bd
 
   with compareS (s : Stmt) {struct s} : Stmt -> comparison :=
     Stmt.compare_body compareE compareVD compareS s

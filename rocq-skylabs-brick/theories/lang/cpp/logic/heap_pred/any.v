@@ -34,6 +34,10 @@ Definition anyR `{Σ : cpp_logic} {σ : genv} (ty : Rtype) (q : cQp.t) : Rep :=
 Section with_cpp.
   Context `{Σ : cpp_logic} {σ : genv}.
 
+  Lemma anyR_loc_info li ty q :
+    anyR (TLocInfo li ty) q -|- anyR ty q.
+  Proof. by rewrite anyR.unlock !everywhereR_unfold /=. Qed.
+
   #[global] Instance anyR_timeless : ∀ ty q, Timeless (anyR ty q).
   Proof.
     intros. red.
@@ -92,9 +96,8 @@ Section with_cpp.
     { intros.
       iIntros "H".
       iDestruct (IHty with "H") as "%".
-      { by erewrite zero_sized_array_qual. }
-      { rewrite qualify_frac in H0.
-        eauto. } }
+      rewrite qualify_frac in H0.
+      eauto. }
   Qed.
 
   #[global] Instance anyR_as_fractional ty : AsCFractional0 (anyR ty).
@@ -160,6 +163,7 @@ Section with_cpp.
       iExists v; iStopProof. f_equiv.
       rewrite /is_heap_type in H.
       case_bool_decide; auto. exfalso; done. }
+    { intros. rewrite tptstoR_loc_info anyR_loc_info. apply IHt. }
   Qed.
 
   Lemma anyR_tptstoR_val : ∀ t q,
@@ -190,6 +194,11 @@ Section with_cpp.
       rewrite decompose_type_qual/=.
       by rewrite qualify_merge_tq merge_tq_comm.
       Transparent decompose_type. }
+    { intros q Hv. rewrite anyR_loc_info.
+      rewrite /decompose_type qual_norm_unfold /=.
+      rewrite qual_norm'_decompose_pair /= left_id_L.
+      iIntros "H". iDestruct (IHt q Hv with "H") as (v) "R".
+      iExists v. rewrite tptstoR_loc_info. iFrame. }
   Qed.
   Lemma anyR_tptstoR_ref t q :
       anyR (Tref t) q -|- Exists v, tptstoR (Tref (erase_qualifiers t)) q v.

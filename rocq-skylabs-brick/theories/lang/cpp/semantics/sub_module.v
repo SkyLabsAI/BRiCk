@@ -661,11 +661,10 @@ Proof.
   induction xs; destruct ys; simpl; intros; try congruence.
   inversion H; clear H; subst.
   f_equal; eauto.
-  revert H1; clear.
-  rewrite /to_arg_type. rewrite !qual_norm_decompose_type.
-  rewrite !drop_qualifiers_decompose_type.
-  destruct (decompose_type (normalize_type a.2)), (decompose_type (normalize_type p.2)); simpl in *; intros; subst.
-  auto.
+  revert H1; clear. intros H.
+  rewrite -(to_arg_type_drop_qualifiers (normalize_type a.2)).
+  rewrite -(to_arg_type_drop_qualifiers (normalize_type p.2)).
+  by rewrite H.
 Qed.
 
 Lemma type_of_value_ObjValue_ler a b : ObjValue_ler a b -> type_of_value a = type_of_value b.

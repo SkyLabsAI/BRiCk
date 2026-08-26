@@ -22,12 +22,14 @@ Module decltype.
   on [to_valcat t] is simpler than matching on [t] when [t] might be
   an xvalue reference to a function type.
   *)
-  Definition to_exprtype (t : decltype) : ValCat * exprtype :=
-    match drop_qualifiers t with
+  Fixpoint to_exprtype_go (orig t : decltype) : ValCat * exprtype :=
+    match t with
+    | Tqualified _ t
+    | TLocInfo _ t => to_exprtype_go orig t
     | Tref u => (Lvalue, u)
     | Trv_ref u =>
-      match drop_qualifiers u with
-      | Tfunction _ as f =>
+      match as_function (drop_qualifiers u) with
+      | Some ft =>
         (**
         Both "a function call or an overloaded operator expression,
         whose return type is rvalue reference to function" and "a cast
@@ -46,12 +48,53 @@ Module decltype.
         of "A function or reference type is always cv-unqualified."
         <https://www.eel.is/c++draft/basic.type.qualifier#1>
         *)
-        (Lvalue, f)
-      | _ => (Xvalue, u)
+        (Lvalue, Tfunction ft)
+      | None => (Xvalue, u)
       end
-    | _ => (Prvalue, t)	(** Promote sharing, rather than normalize qualifiers *)
+    | _ => (Prvalue, orig)	(** Promote sharing, rather than normalize qualifiers *)
     end.
+
+  Definition to_exprtype (t : decltype) : ValCat * exprtype :=
+    to_exprtype_go t t.
   Definition to_valcat (t : decltype) : ValCat := (to_exprtype t).1.
+
+  Lemma to_exprtype_go_tref orig q t :
+    (to_exprtype_go orig (tref q t)).1 = Lvalue.
+  Proof. move: orig q. induction t; intros; cbn; auto. Qed.
+
+  Lemma to_valcat_tref q t : to_valcat (tref q t) = Lvalue.
+  Proof. apply to_exprtype_go_tref. Qed.
+
+  Lemma to_exprtype_go_nonref orig t :
+    ~~ is_reference_type t -> to_exprtype_go orig t = (Prvalue, orig).
+  Proof. move: orig. induction t; intros; cbn in *; auto; contradiction. Qed.
+
+  Lemma to_exprtype_nonref t :
+    ~~ is_reference_type t -> to_exprtype t = (Prvalue, t).
+  Proof. apply to_exprtype_go_nonref. Qed.
+
+  Lemma to_exprtype_go_reference orig t :
+    is_reference_type t -> (to_exprtype_go orig t).1 <> Prvalue.
+  Proof.
+    move: orig. induction t; intros; cbn in *; try contradiction; auto.
+    destruct (as_function (drop_qualifiers t)); discriminate.
+  Qed.
+
+  Lemma to_exprtype_reference t :
+    is_reference_type t -> (to_exprtype t).1 <> Prvalue.
+  Proof. apply to_exprtype_go_reference. Qed.
+
+  Lemma to_exprtype_go_prvalue_inv orig t u :
+    to_exprtype_go orig t = (Prvalue, u) -> orig = u.
+  Proof.
+    move: orig u. induction t; intros orig u H; cbn in H; try discriminate;
+      try (inversion H; done); eauto.
+    destruct (as_function (drop_qualifiers t)); discriminate.
+  Qed.
+
+  Lemma to_exprtype_prvalue_inv t u :
+    to_exprtype t = (Prvalue, u) -> t = u.
+  Proof. apply to_exprtype_go_prvalue_inv. Qed.
 
   (**
   Compute a declaration type from a value category and expression
@@ -85,21 +128,21 @@ Module decltype.
     Definition from_function_type (ft : function_type) : decltype :=
       normalize ft.(ft_return).
     Definition from_functype (t : functype) : M decltype :=
+      from_function_type <$> as_function t.
+
+    Fixpoint requireL (t : decltype) : M exprtype :=
       match t with
-      | Tfunction ft => mret $ from_function_type ft
-      | _ => mfail
-      end.
-
-    Definition requireL (t : decltype) : M exprtype :=
-      match drop_qualifiers t with
+      | Tqualified _ t
+      | TLocInfo _ t => requireL t
       | Tref t => mret t
       | _ => mfail
       end.
 
-    Definition requireGL (t : decltype) : M exprtype :=
-      match drop_qualifiers t with
-      | Tref t => mret t
-      | Trv_ref t => mret t
+    Fixpoint requireGL (t : decltype) : M exprtype :=
+      match t with
+      | Tqualified _ t
+      | TLocInfo _ t => requireGL t
+      | Tref t | Trv_ref t => mret t
       | _ => mfail
       end.
 
@@ -115,15 +158,7 @@ Module decltype.
         | Cl2r_bitcast t => mret t
         | Cnoop t => mret t
         | Carray2ptr =>
-            let k cv base :=
-              match base with
-              | Tarray ty _
-              | Tincomplete_array ty
-              | Tvariable_array ty _ =>
-                  mret $ Tptr $ tqualified cv ty
-              | _ => mfail
-              end
-            in
+            let k cv base := Tptr <$> array_type_unqual cv base in
             requireGL base >>= qual_norm k
         | Cfun2ptr => Tptr <$> requireL base
         | Cint2ptr t
@@ -180,10 +215,7 @@ Module decltype.
 
       Definition of_call (f : Expr) : M decltype :=
         let* '(_, t) := to_exprtype <$> of_expr f in
-        match t with
-        | Tptr ft => from_functype ft
-        | _ => mfail
-        end.
+        unptr t >>= from_functype.
 
       Definition of_member (arrow : bool) (e : Expr) (mut : bool) (t : decltype) : M decltype :=
         let '(ref, et) := to_exprtype t in
@@ -193,9 +225,13 @@ Module decltype.
           let* '(lval, oty) :=
             let* et := to_exprtype <$> of_expr e in
             if arrow then
-              match et.1 , et.2 with
-              | Prvalue , Tptr t => mret (true, t)
-              | _ , _ => mfail
+              match et.1 with
+              | Prvalue =>
+                  match unptr et.2 with
+                  | Some t => mret (true, t)
+                  | None => mfail
+                  end
+              | _ => mfail
               end
             else
               match et.1 with
@@ -218,10 +254,14 @@ Module decltype.
             from_functype ft
         | inr e =>
             let* et := of_expr e in
-            match et with
-            | Tmember_pointer cls ft => from_functype ft
-            | _ => mfail
-            end
+            let fix from_member_pointer et :=
+              match et with
+              | Tqualified _ et
+              | TLocInfo _ et => from_member_pointer et
+              | Tmember_pointer _ ft => from_functype ft
+              | _ => mfail
+              end
+            in from_member_pointer et
         end.
 
       Definition from_operator_impl (f : operator_impl) : M decltype :=
@@ -231,14 +271,22 @@ Module decltype.
         let* t1 := of_expr e1 in
         let* t2 := of_expr e2 in
         let arithmetic t := guard (Is_true $ is_arithmetic t) in
-        match drop_qualifiers t1 , drop_qualifiers t2 with
-        | Tref aty , other => const (tref QM) <$> arithmetic other <*> array_type aty
-        | Trv_ref aty , other => const (trv_ref QM) <$> arithmetic other <*> array_type aty
-        | Tptr ety , other => const (Tref ety) <$> arithmetic other
-        | other , Tref aty => const (tref QM) <$> arithmetic other <*> array_type aty
-        | other , Trv_ref aty => const (trv_ref QM) <$> arithmetic other <*> array_type aty
-        | other , Tptr ety => const (Tref ety) <$> arithmetic other
-        | _ , _ => mfail
+        let subscript_operand vc ty other :=
+          match vc with
+          | Lvalue => const (tref QM) <$> arithmetic other <*> array_type ty
+          | Xvalue => const (trv_ref QM) <$> arithmetic other <*> array_type ty
+          | Prvalue =>
+              match unptr ty with
+              | Some ety => const (Tref ety) <$> arithmetic other
+              | None => mfail
+              end
+          end
+        in
+        let '(vc1, ty1) := to_exprtype t1 in
+        let '(vc2, ty2) := to_exprtype t2 in
+        match subscript_operand vc1 ty1 ty2 with
+        | Some ret => Some ret
+        | None => subscript_operand vc2 ty2 ty1
         end.
 
       (**
@@ -254,16 +302,19 @@ Module decltype.
 
       #[local] Notation traverse_list := mapM.
 
+      Fixpoint cast_result_unqual (cv : type_qualifiers) (t : decltype) : decltype :=
+        match t with
+        | TLocInfo li t => TLocInfo li (cast_result_unqual cv t)
+        | Tnamed _
+        | Tarray _ _
+        | Tincomplete_array _
+        | Tvariable_array _ _
+        | Tenum _ => tqualified cv t
+        | _ => t
+        end.
+
       Definition cast_result : decltype -> decltype :=
-        qual_norm (fun cv t =>
-          match t with
-          | Tnamed _
-          | Tarray _ _
-          | Tincomplete_array _
-          | Tvariable_array _ _
-          | Tenum _ => tqualified cv t
-          | _ => t
-          end).
+        qual_norm cast_result_unqual.
 
       Definition of_expr_body (e : Expr) : M decltype :=
         match e return M decltype with
@@ -352,6 +403,7 @@ Module decltype.
         | Earrayloop_index _ t => mret t
         | Eopaque_ref _ t
         | Eunsupported _ t => mret t
+        | ELocInfo _ e => of_expr e
         end.
     End fixpoint.
   End with_lang.

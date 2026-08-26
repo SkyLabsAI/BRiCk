@@ -198,7 +198,8 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
     | Tfloat_ f => Some (Vfloat f (float_value.zero f))
     | Tbool => Some (Vbool false)
     | Tnullptr => Some (Vptr nullptr)
-    | Tqualified _ t => get_default t
+    | Tqualified _ t
+    | TLocInfo _ t => get_default t
     | _ => None
     end.
 End VAL_MIXIN.
@@ -545,6 +546,8 @@ Module Type HAS_TYPE (Import P : PTRS) (Import R : RAW_BYTES) (Import V : VAL_MI
         has_type_prop v (Tptr ty) <-> exists p, v = Vptr p.
     Axiom has_type_prop_erase_qualifiers : forall v ty,
         has_type_prop v ty <-> has_type_prop v (erase_qualifiers ty).
+    Axiom has_type_prop_loc_info : forall v li ty,
+        has_type_prop v (TLocInfo li ty) <-> has_type_prop v ty.
     Axiom has_type_prop_nullptr : forall v,
         has_type_prop v Tnullptr <-> v = Vptr nullptr.
     Axiom has_type_prop_ref : forall v ty,
@@ -642,7 +645,8 @@ Module Type HAS_TYPE_MIXIN (Import P : PTRS) (Import R : RAW_BYTES) (Import V : 
       forall v ty, has_type_prop v ty <-> has_type_prop v (drop_qualifiers ty).
     Proof.
       induction ty; simpl; eauto.
-      by rewrite -has_type_prop_qual_iff -IHty.
+      { by rewrite -has_type_prop_qual_iff -IHty. }
+      { by rewrite !has_type_prop_loc_info IHty. }
     Qed.
 
     (* TODO fix naming convention *)

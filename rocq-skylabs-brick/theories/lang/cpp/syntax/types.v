@@ -27,28 +27,31 @@ Section qual_norm.
   Context {A : Type}.
   Variable f : type_qualifiers -> type -> A.
 
-  Fixpoint qual_norm' (q : type_qualifiers) (t : type) : A :=
+  Fixpoint qual_norm' (g : type_qualifiers -> type -> A)
+      (q : type_qualifiers) (t : type) : A :=
     match t with
-    | Tqualified q' t => qual_norm' (merge_tq q q') t
-    | _ => f q t
+    | Tqualified q' t => qual_norm' g (merge_tq q q') t
+    | TLocInfo li t =>
+        qual_norm' (fun q t => g q (TLocInfo li t)) q t
+    | _ => g q t
     end.
   #[global] Hint Opaque qual_norm' : typeclass_instances.
 
   Definition qual_norm : type -> A :=
-    qual_norm' QM.
+    qual_norm' f QM.
   #[global] Hint Opaque qual_norm : typeclass_instances.
 End qual_norm.
 
 Lemma qual_norm'_only_type {T} (f : _ -> T) t : forall q1 q2,
     qual_norm' (fun (_ : type_qualifiers) t => f t) q1 t
     = qual_norm' (fun (_ : type_qualifiers) t => f t) q2 t.
-Proof. induction t; simpl; auto. Qed.
+Proof. revert f. induction t; simpl; auto. Qed.
 
 Lemma qual_norm_map {T U} (f : T -> U) g ty :
   f (qual_norm g ty) = qual_norm (fun cv t => f (g cv t)) ty.
 Proof.
   unfold qual_norm.
-  generalize QM.
+  revert g. generalize QM.
   induction ty; simpl; intros; eauto.
 Qed.
 
@@ -71,6 +74,7 @@ Definition take_qualifiers : type -> type_qualifiers :=
 Fixpoint drop_qualifiers (t : type) : type :=
   match t with
   | Tqualified _ t => drop_qualifiers t
+  | TLocInfo li t => TLocInfo li (drop_qualifiers t)
   | _ => t
   end.
 
@@ -81,9 +85,10 @@ Qualify a type, merging nested qualifiers, suppressing [QM]
 qualifiers, and (https://www.eel.is/c++draft/dcl.ref#1) discarding any
 cv-qualifiers on reference types.
 *)
-Definition tqualified' (q : type_qualifiers) (t : type) : type :=
+Fixpoint tqualified' (q : type_qualifiers) (t : type) : type :=
   match t with
   | Tref _ | Trv_ref _ => t
+  | TLocInfo li t => TLocInfo li (tqualified' q t)
   | _ => match q with QM => t | _ => Tqualified q t end
   end.
 #[global] Hint Opaque tqualified' : typeclass_instances.
@@ -106,6 +111,7 @@ Definition tref := fix tref (acc : type_qualifiers) (t : type) : type :=
   match t with
   | Tref t | Trv_ref t => tref QM t
   | Tqualified q t => tref (merge_tq acc q) t
+  | TLocInfo li t => TLocInfo li (tref acc t)
   | _ => Tref (tqualified acc t)
   end.
 #[global] Hint Opaque tref : typeclass_instances.
@@ -116,6 +122,7 @@ Definition trv_ref := fix trv_ref (acc : type_qualifiers) (t : type) : type :=
   | Tref t => tref QM t
   | Trv_ref t => trv_ref QM t
   | Tqualified q t => trv_ref (merge_tq acc q) t
+  | TLocInfo li t => TLocInfo li (trv_ref acc t)
   | _ => Trv_ref (tqualified acc t)
   end.
 #[global] Hint Opaque trv_ref : typeclass_instances.
@@ -148,6 +155,7 @@ applied to an array type attach to the underlying element type."
 | Tqualified_ref q t : Tqualified q (Tref t) ≡ Tref t
 | Tqualified_rv_ref q t : Tqualified q (Trv_ref t) ≡ Trv_ref t
 | Tqualified_func q ft : Tqualified q (Tfunction ft) ≡ Tfunction ft
+| TLocInfo_equiv li t : TLocInfo li t ≡ t
 (**
 "After producing the list of parameter types, any top-level
 cv-qualifiers modifying a parameter type are deleted when forming the
@@ -172,6 +180,7 @@ function type."
 (* | Tfunction_proper cc ar : Proper (equiv ==> equiv ==> equiv) (@Tfunction cc ar) *)
 | Tmember_pointer_proper gn : Proper (equiv ==> equiv) (Tmember_pointer gn)
 | Tqualified_proper q : Proper (equiv ==> equiv) (Tqualified q)
+| TLocInfo_proper li : Proper (equiv ==> equiv) (TLocInfo li)
 .
 #[global] Existing Instances
   type_equiv
@@ -181,6 +190,7 @@ function type."
   Tarray_proper
   Tmember_pointer_proper
   Tqualified_proper
+  TLocInfo_proper
 .
 #[global] Instance type_equivalence : Equivalence (≡@{type}) :=
   Build_Equivalence _ type_equiv_refl type_equiv_sym type_equiv_trans.
@@ -203,16 +213,33 @@ It would be nice to make this the default.
 #[local] Arguments decompose_type : simpl never.
 
 (**
-[is_qualified t] decides if [t] has top-level qualifiers.
+[has_qualifiers t] decides if [t] has top-level qualifiers, looking through
+location-information wrappers.
 
-Note: [is_qualified] is incompatible with the equivalence on types.
-Counterexample: [Tqualified QM (Tref t) ≡ Tref t].
+It is incompatible with the equivalence on types.  For example,
+[Tqualified QM (Tref t) ≡ Tref t].
 *)
-Definition is_qualified (t : type) : bool :=
-  if t is Tqualified _ _ then true else false.
+Fixpoint has_qualifiers (t : type) : bool :=
+  match t with
+  | Tqualified _ _ => true
+  | TLocInfo _ t => has_qualifiers t
+  | _ => false
+  end.
 
-Lemma is_qualified_spec t : is_qualified t <-> ∃ q t', t = Tqualified q t'.
-Proof. split=>Hq. by destruct t; eauto. by destruct Hq as (?&?&->). Qed.
+Definition is_qualified := has_qualifiers.
+
+Inductive qualified_type : type -> Prop :=
+| qualified_type_here q t : qualified_type (Tqualified q t)
+| qualified_type_loc li t : qualified_type t -> qualified_type (TLocInfo li t).
+
+Lemma is_qualified_spec t : is_qualified t <-> qualified_type t.
+Proof.
+  induction t; cbn; split; intros H; try contradiction;
+    eauto using qualified_type.
+  all: try solve [inversion H].
+  { constructor. apply IHt. exact H. }
+  { inversion H; subst. apply IHt. assumption. }
+Qed.
 
 Lemma is_qualified_qual q t : is_qualified (Tqualified q t).
 Proof. done. Qed.
@@ -225,9 +252,12 @@ Section qual_norm.
 
   Lemma qual_norm'_unfold f q t :
     qual_norm' f q t =
-      if t is Tqualified q' t'
-      then qual_norm' f (merge_tq q q') t'
-      else f q t.
+      match t with
+      | Tqualified q' t' => qual_norm' f (merge_tq q q') t'
+      | TLocInfo li t' =>
+          qual_norm' (fun q t => f q (TLocInfo li t)) q t'
+      | _ => f q t
+      end.
   Proof. by destruct t. Qed.
 
   (**
@@ -241,22 +271,26 @@ Section qual_norm.
   *)
 
   Inductive qual_norm_spec f : type_qualifiers -> type -> A -> Prop :=
-  | qual_norm_spec_unqual q t : ~~ is_qualified t -> qual_norm_spec f q t (f q t)
+  | qual_norm_spec_unqual q t : ~~ has_qualifiers t -> qual_norm_spec f q t (f q t)
   | qual_norm_spec_qual q q' t' ret :
     qual_norm_spec f (merge_tq q q') t' ret ->
     qual_norm_spec f q (Tqualified q' t') ret
+  | qual_norm_spec_loc_info q li t ret :
+    qual_norm_spec (fun q t => f q (TLocInfo li t)) q t ret ->
+    qual_norm_spec f q (TLocInfo li t) ret
   .
   #[local] Hint Constructors qual_norm_spec : core.
 
   Lemma qual_norm'_ok f q t : qual_norm_spec f q t (qual_norm' f q t).
   Proof.
-    move: q. induction t; intros.
+    move: f q. induction t; intros.
     all: rewrite qual_norm'_unfold; auto.
   Qed.
 
-  Lemma qual_norm'_unqual f q t : ~~ is_qualified t -> qual_norm' f q t = f q t.
+  Lemma qual_norm'_unqual f q t : ~~ has_qualifiers t -> qual_norm' f q t = f q t.
   Proof.
-    intros. rewrite qual_norm'_unfold. by destruct t.
+    move: f q. induction t; intros; cbn in *; auto.
+    by rewrite IHt.
   Qed.
 
   Lemma qual_norm'_idemp f q t : qual_norm' (qual_norm' f) q t = qual_norm' f q t.
@@ -264,15 +298,19 @@ Section qual_norm.
     induction (qual_norm'_ok f q t).
     { by rewrite !qual_norm'_unqual. }
     { done. }
+    { done. }
   Qed.
 
   (** [qual_norm] *)
 
   Lemma qual_norm_unfold f t :
     qual_norm f t =
-      if t is Tqualified q' t'
-      then qual_norm' f q' t'
-      else f QM t.
+      match t with
+      | Tqualified q' t' => qual_norm' f q' t'
+      | TLocInfo li t' =>
+          qual_norm' (fun q t => f q (TLocInfo li t)) QM t'
+      | _ => f QM t
+      end.
   Proof.
     rewrite /qual_norm qual_norm'_unfold. f_equiv.
     by rewrite left_id_L.
@@ -281,7 +319,7 @@ Section qual_norm.
   Lemma qual_norm_ok f t : qual_norm_spec f QM t (qual_norm f t).
   Proof. apply qual_norm'_ok. Qed.
 
-  Lemma qual_norm_unqual f t : ~~ is_qualified t -> qual_norm f t = f QM t.
+  Lemma qual_norm_unqual f t : ~~ has_qualifiers t -> qual_norm f t = f QM t.
   Proof. apply qual_norm'_unqual. Qed.
 
   Lemma qual_norm_idemp f t : qual_norm (qual_norm' f) t = qual_norm f t.
@@ -294,40 +332,72 @@ Proof.
   induction (qual_norm'_ok f q t).
   { by rewrite qual_norm'_unqual. }
   { done. }
+  { done. }
 Qed.
 Lemma qual_norm_bind {A B} (f : type_qualifiers -> type -> A) (g : A -> B) t :
   g (qual_norm f t) = qual_norm (fun q => g ∘ f q) t.
 Proof. apply qual_norm'_bind. Qed.
 
-Lemma qual_norm'_equiv q t : qual_norm' Tqualified q t ≡ Tqualified q t.
+Lemma qual_norm'_equiv_aux f
+    (Hf : forall q t, f q t ≡ Tqualified q t) q t :
+  qual_norm' f q t ≡ Tqualified q t.
 Proof.
-  induction (qual_norm'_ok Tqualified q t).
-  { done. }
-  { by rewrite Tqualified_merge. }
+  revert Hf. move: f q. induction t; intros f cv Hf; cbn.
+  all: try apply Hf.
+  { by rewrite (IHt f _ Hf) Tqualified_merge. }
+  { etrans.
+    { apply IHt. intros q t'.
+      etrans; first apply Hf.
+      by apply Tqualified_proper, TLocInfo_equiv. }
+    { apply Tqualified_proper. symmetry. apply TLocInfo_equiv. } }
 Qed.
+
+Lemma qual_norm'_equiv q t : qual_norm' Tqualified q t ≡ Tqualified q t.
+Proof. apply qual_norm'_equiv_aux. done. Qed.
 Lemma qual_norm_equiv t : qual_norm Tqualified t ≡ t.
 Proof. by rewrite /qual_norm qual_norm'_equiv Tqualified_id. Qed.
 
 (** [decompose_type] *)
 
+Lemma qual_norm'_decompose_pair (C : type -> type) q t :
+  qual_norm' (fun q t => (q, C t)) q t =
+    let p := decompose_type t in (merge_tq q p.1, C p.2).
+Proof.
+  rewrite /decompose_type.
+  move: C q. induction t; intros C cv; cbn.
+  all: try rewrite !IHt /=.
+  all: try rewrite right_id_L.
+  all: try rewrite left_id_L.
+  all: try rewrite assoc_L.
+  all: reflexivity.
+Qed.
+
 Lemma decompose_type_unfold t :
   decompose_type t =
-    if t is Tqualified q t' then
-      let p := decompose_type t' in
-      (merge_tq q p.1, p.2)
-    else (QM, t).
+    match t with
+    | Tqualified q t' =>
+        let p := decompose_type t' in
+        (merge_tq q p.1, p.2)
+    | TLocInfo li t' =>
+        let p := decompose_type t' in
+        (p.1, TLocInfo li p.2)
+    | _ => (QM, t)
+    end.
 Proof.
-  rewrite /decompose_type qual_norm_unfold.
-  destruct t; try done. set pair := fun x y => (x, y).
-  move: q. induction t=>?; cbn; try by rewrite right_id_L.
-  rewrite left_id_L !IHt /=. f_equal. by rewrite assoc_L.
+  rewrite /decompose_type. destruct t; cbn.
+  all: try rewrite qual_norm'_decompose_pair /=.
+  all: try rewrite left_id_L.
+  all: reflexivity.
 Qed.
 
 Inductive decompose_type_spec : type -> type_qualifiers * type -> Prop :=
-| decompose_type_spec_unqual t : ~~ is_qualified t -> decompose_type_spec t (QM, t)
+| decompose_type_spec_unqual t : ~~ has_qualifiers t -> decompose_type_spec t (QM, t)
 | decompose_type_spec_qual q t p :
   decompose_type_spec t p ->
   decompose_type_spec (Tqualified q t) (merge_tq q p.1, p.2)
+| decompose_type_spec_loc_info li t p :
+  decompose_type_spec t p ->
+  decompose_type_spec (TLocInfo li t) (p.1, TLocInfo li p.2)
 .
 #[local] Hint Constructors decompose_type_spec : core.
 
@@ -340,7 +410,10 @@ Qed.
 Lemma is_qualified_decompose_type t : ~~ is_qualified (decompose_type t).2.
 Proof. by induction (decompose_type_ok t). Qed.
 
-Lemma decompose_type_unqual t : ~~ is_qualified t -> decompose_type t = (QM, t).
+Lemma has_qualifiers_decompose_type t : ~~ has_qualifiers (decompose_type t).2.
+Proof. by induction (decompose_type_ok t). Qed.
+
+Lemma decompose_type_unqual t : ~~ has_qualifiers t -> decompose_type t = (QM, t).
 Proof. apply qual_norm_unqual. Qed.
 
 Lemma decompose_type_qual q t :
@@ -351,13 +424,17 @@ Proof. by rewrite decompose_type_unfold. Qed.
 
 Lemma decompose_type_idemp t :
   decompose_type (decompose_type t).2 = (QM, (decompose_type t).2).
-Proof. rewrite decompose_type_unqual; eauto using is_qualified_decompose_type. Qed.
+Proof. rewrite decompose_type_unqual; eauto using has_qualifiers_decompose_type. Qed.
 
 Lemma decompose_type_equiv t : let p := decompose_type t in Tqualified p.1 p.2 ≡ t.
 Proof.
   elim: (decompose_type_ok t); cbn.
   { intros. by rewrite Tqualified_id. }
   { intros ???? <-. by rewrite Tqualified_merge. }
+  { intros ???? IH. etrans.
+    { apply Tqualified_proper, TLocInfo_equiv. }
+    etrans; first exact IH.
+    symmetry. apply TLocInfo_equiv. }
 Qed.
 
 (** [qual_norm], [qual_norm'] in terms of [decompose_type] *)
@@ -367,8 +444,11 @@ Lemma qual_norm'_decompose_type {A} (f : type_qualifiers -> type -> A) q t :
     let p := decompose_type t in
     f (merge_tq q p.1) p.2.
 Proof.
-  move: q. induction t=>? /=; try by rewrite right_id_L.
-  rewrite decompose_type_unfold IHt /=. by rewrite assoc_L.
+  move: f q. induction t; intros f cv; rewrite decompose_type_unfold; cbn.
+  all: try rewrite IHt /=.
+  all: try rewrite right_id_L.
+  all: try rewrite assoc_L.
+  all: reflexivity.
 Qed.
 
 Lemma qual_norm_decompose_type {A} (f : type_qualifiers -> type -> A) t :
@@ -386,22 +466,34 @@ Lemma is_qualified_drop_qualifiers ty : ~~ is_qualified (drop_qualifiers ty).
 Proof. by induction ty. Qed.
 #[local] Hint Resolve is_qualified_drop_qualifiers | 0 : core. (* TODO: make this global? *)
 
-Lemma drop_qualifiers_unqual t : ~~ is_qualified t -> drop_qualifiers t = t.
-Proof. by destruct t; cbn; auto. Qed.
-
-Lemma drop_qualifiers_qual_norm' q t : drop_qualifiers t = qual_norm' (fun _ t => t) q t.
+Lemma drop_qualifiers_unqual t : ~~ has_qualifiers t -> drop_qualifiers t = t.
 Proof.
-  elim: (qual_norm'_ok _ q t).
-  { intros. by rewrite drop_qualifiers_unqual. }
-  { done. }
+  induction t; cbn; intros H; try done.
+  f_equal. by apply IHt.
 Qed.
+
+Lemma drop_qualifiers_qual_norm'_ctx (C : type -> type) q t :
+  C (drop_qualifiers t) = qual_norm' (fun _ t => C t) q t.
+Proof.
+  move: C q. induction t; intros C cv; cbn.
+  all: try apply IHt.
+  all: try reflexivity.
+  exact (IHt (fun t => C (TLocInfo l t)) cv).
+Qed.
+
+Lemma drop_qualifiers_qual_norm' q t :
+  drop_qualifiers t = qual_norm' (fun _ t => t) q t.
+Proof. exact (drop_qualifiers_qual_norm'_ctx (fun t => t) q t). Qed.
 Lemma drop_qualifiers_qual_norm t : drop_qualifiers t = qual_norm (fun _ t => t) t.
 Proof. apply drop_qualifiers_qual_norm'. Qed.
 Lemma drop_qualifiers_decompose_type t : drop_qualifiers t = (decompose_type t).2.
 Proof. by rewrite drop_qualifiers_qual_norm qual_norm_decompose_type. Qed.
 
+Lemma has_qualifiers_drop_qualifiers t : ~~ has_qualifiers (drop_qualifiers t).
+Proof. by induction t. Qed.
+
 Lemma drop_qualifiers_idemp t : drop_qualifiers (drop_qualifiers t) = drop_qualifiers t.
-Proof. by rewrite drop_qualifiers_unqual. Qed.
+Proof. apply drop_qualifiers_unqual, has_qualifiers_drop_qualifiers. Qed.
 
 Lemma unqual_drop_qualifiers ty tq ty' : drop_qualifiers ty <> Tqualified tq ty'.
 Proof. by induction ty. Qed.
@@ -456,15 +548,26 @@ Fixpoint erase_qualifiers (t : type) : type :=
   | Tauto
   | Tdecltype _ => t (* TODO: it isn't clear what [erase_qualifiers] means on meta types *)
   | Texprtype _ => t (* TODO: it isn't clear what [erase_qualifiers] means on meta types *)
+  | TLocInfo li t => TLocInfo li (erase_qualifiers t)
   end.
 
 Lemma is_qualified_erase_qualifiers ty : ~~ is_qualified (erase_qualifiers ty).
 Proof. by induction ty. Qed.
 #[local] Hint Resolve is_qualified_erase_qualifiers | 0 : core. (* TODO: global *)
 
+Lemma erase_qualifiers_qual_norm'_ctx (C : type -> type) q t :
+  C (erase_qualifiers t) =
+    qual_norm' (fun _ t => C (erase_qualifiers t)) q t.
+Proof.
+  move: C q. induction t; intros C cv; cbn.
+  all: try apply IHt.
+  all: try reflexivity.
+  exact (IHt (fun t => C (TLocInfo l t)) cv).
+Qed.
+
 Lemma erase_qualifiers_qual_norm' q t :
   erase_qualifiers t = qual_norm' (fun _ t => erase_qualifiers t) q t.
-Proof. by elim: (qual_norm'_ok _ q t). Qed.
+Proof. exact (erase_qualifiers_qual_norm'_ctx (fun t => t) q t). Qed.
 Lemma erase_qualifiers_qual_norm t :
   erase_qualifiers t = qual_norm (fun _ t => erase_qualifiers t) t.
 Proof. apply erase_qualifiers_qual_norm'. Qed.
@@ -479,10 +582,13 @@ Proof.
   { (* functions *) rewrite IHt. f_equal. f_equal. induction (ft_params t); cbn; auto with f_equal. }
 Qed.
 
+Lemma has_qualifiers_erase_qualifiers t : ~~ has_qualifiers (erase_qualifiers t).
+Proof. by induction t. Qed.
+
 Lemma drop_erase_qualifiers t : drop_qualifiers (erase_qualifiers t) = erase_qualifiers t.
-Proof. by rewrite drop_qualifiers_unqual. Qed.
+Proof. apply drop_qualifiers_unqual, has_qualifiers_erase_qualifiers. Qed.
 Lemma erase_drop_qualifiers t : erase_qualifiers (drop_qualifiers t) = erase_qualifiers t.
-Proof. induction t; cbn; auto. Qed.
+Proof. induction t; cbn; auto with f_equal. Qed.
 
 #[deprecated(since="20230531", note="Use [drop_erase_qualifiers].")]
 Notation drop_erase := drop_erase_qualifiers.
@@ -594,27 +700,29 @@ Proof. by destruct cv. Qed.
 
 (** [tqualified] *)
 
-Variant tqualified'_spec : type_qualifiers -> type -> type -> Prop :=
+Inductive tqualified'_spec : type_qualifiers -> type -> type -> Prop :=
 | tqualified'_spec_ref q t : is_ref t -> tqualified'_spec q t t
 | tqualified'_spec_unqual t : ~~ is_ref t -> tqualified'_spec QM t t
 | tqualified'_spec_qual q t : ~~ is_ref t -> ~~ is_QM q -> tqualified'_spec q t (Tqualified q t)
+| tqualified'_spec_loc q li t ret :
+    tqualified'_spec q t ret ->
+    tqualified'_spec q (TLocInfo li t) (TLocInfo li ret)
 .
 #[local] Hint Constructors tqualified'_spec : core.
 
 Lemma tqualified'_ok q t : tqualified'_spec q t (tqualified' q t).
-Proof.
-  rewrite /tqualified'. destruct (boolP (is_ref t)); [by destruct t; auto|].
-  destruct t; try done.
-  all: destruct (boolP (is_QM q)); by destruct q; auto.
-Qed.
+Proof. move: q. induction t; intros cv; destruct cv; cbn; auto. Qed.
 
 Lemma tqualified'_equiv q t : tqualified' q t ≡ Tqualified q t.
 Proof.
-  case: (tqualified'_ok q t).
-  { intros ?? (?&[-> | ->])%is_ref_spec.
+  induction (tqualified'_ok q t).
+  { apply is_ref_spec in H. destruct H as (? & [-> | ->]).
     by rewrite Tqualified_ref. by rewrite Tqualified_rv_ref. }
-  { intros. by rewrite Tqualified_id. }
+  { by rewrite Tqualified_id. }
   { done. }
+  { etrans; first by apply TLocInfo_proper.
+    etrans; first apply TLocInfo_equiv.
+    symmetry. apply Tqualified_proper, TLocInfo_equiv. }
 Qed.
 
 #[global] Instance: Params (@tqualified') 1 := {}.
@@ -625,20 +733,25 @@ Lemma tqualified'_ref q t : is_ref t -> tqualified' q t = t.
 Proof. by destruct t. Qed.
 
 Lemma tqualified'_QM t : tqualified' QM t = t.
-Proof. by destruct t. Qed.
+Proof. induction t; cbn; congruence. Qed.
 
-Lemma tqualified'_non_ref q t : ~~ is_ref t -> ~~ is_QM q -> tqualified' q t = Tqualified q t.
+Definition is_loc_info (t : type) : bool :=
+  if t is TLocInfo _ _ then true else false.
+
+Lemma tqualified'_non_ref q t :
+  ~~ is_ref t -> ~~ is_QM q -> ~~ is_loc_info t ->
+  tqualified' q t = Tqualified q t.
 Proof. by destruct t, q. Qed.
+
+Lemma tqualified'_loc_info q li t :
+  tqualified' q (TLocInfo li t) = TLocInfo li (tqualified' q t).
+Proof. done. Qed.
 
 Lemma tqualified_ok q t : qual_norm_spec tqualified' q t (tqualified q t).
 Proof. apply qual_norm'_ok. Qed.
 
 Lemma tqualified_equiv q t : tqualified q t ≡ Tqualified q t.
-Proof.
-  induction (tqualified_ok q t).
-  { by rewrite tqualified'_equiv. }
-  { by rewrite Tqualified_merge. }
-Qed.
+Proof. apply qual_norm'_equiv_aux, tqualified'_equiv. Qed.
 
 #[global] Instance: Params (@tqualified) 1 := {}.
 #[global] Instance tqualified_proper q : Proper (equiv ==> equiv) (tqualified q).
@@ -658,51 +771,73 @@ Proof.
   by rewrite tqualified_qual_norm' qual_norm'_decompose_type.
 Qed.
 
-Lemma tqualified_unqual q t : ~~ is_qualified t -> tqualified q t = tqualified' q t.
+Lemma tqualified_unqual q t : ~~ has_qualifiers t -> tqualified q t = tqualified' q t.
 Proof. intros. by rewrite /tqualified qual_norm'_unqual. Qed.
 
 Lemma tqualified_idemp q1 q2 t :
   tqualified q1 (tqualified q2 t) = tqualified (merge_tq q1 q2) t.
 Proof.
-  elim: (tqualified_ok q2 t) q1; last first.
-  { intros ????? IH ?. rewrite {}IH /=. by rewrite !assoc_L. }
-  intros q2' t' ? q1. destruct (tqualified'_ok q2' t').
-  - rewrite !tqualified_unqual//. by rewrite !tqualified'_ref.
-  - rewrite !tqualified_unqual//. by rewrite right_id_L.
-  - done.
+  rewrite (tqualified_decompose_type q2 t)
+          (tqualified_decompose_type (merge_tq q1 q2) t).
+  destruct (decompose_type t) as [cv ty] eqn:Hdec; cbn.
+  have Hty := has_qualifiers_decompose_type t.
+  rewrite Hdec /= in Hty.
+  remember (merge_tq q2 cv) as q2cv eqn:Hq.
+  clear Hdec t.
+  induction (tqualified'_ok q2cv ty).
+  { rewrite tqualified_unqual // !tqualified'_ref //. }
+  { rewrite tqualified_unqual //.
+    rewrite -assoc_L -Hq right_id_L. done. }
+  { cbn. rewrite tqualified_unqual //.
+    rewrite -assoc_L -Hq. done. }
+  { cbn. rewrite -qual_norm'_bind. f_equal. apply IHt; assumption. }
 Qed.
 
 Lemma drop_qualifiers_tqualified q t :
   drop_qualifiers (tqualified q t) = drop_qualifiers t.
 Proof.
-  induction (tqualified_ok q t).
-  { by destruct (tqualified'_ok q t). }
-  { done. }
+  rewrite tqualified_decompose_type (drop_qualifiers_decompose_type t).
+  generalize (has_qualifiers_decompose_type t).
+  destruct (decompose_type t) as [cv ty]; cbn; intros Hty.
+  induction (tqualified'_ok (merge_tq q cv) ty); cbn in *.
+  all: try (apply drop_qualifiers_unqual; exact Hty).
+  f_equal. apply IHt0. exact Hty.
 Qed.
 
 Lemma erase_qualifiers_tqualified q t :
   erase_qualifiers (tqualified q t) = erase_qualifiers t.
 Proof.
-  induction (tqualified_ok q t).
-  { by destruct (tqualified'_ok q t). }
-  { done. }
+  rewrite tqualified_decompose_type (erase_qualifiers_decompose_type t).
+  destruct (decompose_type t) as [cv ty]; cbn.
+  induction (tqualified'_ok (merge_tq q cv) ty); cbn; auto.
+  f_equal; exact IHt0.
 Qed.
 
 (** [tref] *)
 
 Inductive tref_spec : type_qualifiers -> type -> type -> Prop :=
-| tref_spec_nonref_unqual q t : ~~ is_ref t -> ~~ is_qualified t -> tref_spec q t (Tref $ tqualified q t)
+| tref_spec_nonref_unqual q t :
+    ~~ is_ref t -> ~~ is_qualified t -> ~~ is_loc_info t ->
+    tref_spec q t (Tref $ tqualified q t)
 | tref_spec_ref q t ret : tref_spec QM t ret -> tref_spec q (Tref t) ret
 | tref_spec_rv_ref q t ret : tref_spec QM t ret -> tref_spec q (Trv_ref t) ret
 | tref_spec_qual q q' t ret : tref_spec (merge_tq q q') t ret -> tref_spec q (Tqualified q' t) ret
+| tref_spec_loc q li t ret :
+    tref_spec q t ret -> tref_spec q (TLocInfo li t) (TLocInfo li ret)
 .
 #[local] Hint Constructors tref_spec : core.
 
 Lemma tref_ok q t : tref_spec q t (tref q t).
-Proof. revert q. induction t; auto. Qed.
+Proof.
+  revert q. induction t; auto. intros; cbn; constructor; auto.
+Qed.
+
+Lemma has_qualifiers_tref q t : ~~ has_qualifiers (tref q t).
+Proof. move: q. by induction t; cbn; auto. Qed.
 
 Lemma tref_nonref_unqual cv (t : type) :
-  ~~ is_ref t -> ~~ is_qualified t -> tref cv t = Tref $ tqualified cv t.
+  ~~ is_ref t -> ~~ is_qualified t -> ~~ is_loc_info t ->
+  tref cv t = Tref $ tqualified cv t.
 Proof. by destruct t. Qed.
 
 (*
@@ -724,29 +859,39 @@ Proof. intros t1 t2 Ht. by rewrite !tref_equiv' Ht. Qed.
 
 Lemma tref_unfold q t :
   tref q t =
-    qual_norm' (fun q' t' =>
-      match t' with
-      | Tref t'' | Trv_ref t'' => tref QM t''
-      | _ => Tref (tqualified q' t')
-      end
-    ) q t.
-Proof. move: q. by induction t; cbn. Qed.
+    match t with
+    | Tref t' | Trv_ref t' => tref QM t'
+    | Tqualified q' t' => tref (merge_tq q q') t'
+    | TLocInfo li t' => TLocInfo li (tref q t')
+    | _ => Tref (tqualified q t)
+    end.
+Proof. by destruct t. Qed.
 
 (** [trv_ref] *)
 
 Inductive trv_ref_spec : type_qualifiers -> type -> type -> Prop :=
-| trv_ref_spec_nonref_unqual q t : ~~ is_ref t -> ~~ is_qualified t -> trv_ref_spec q t (Trv_ref $ tqualified q t)
+| trv_ref_spec_nonref_unqual q t :
+    ~~ is_ref t -> ~~ is_qualified t -> ~~ is_loc_info t ->
+    trv_ref_spec q t (Trv_ref $ tqualified q t)
 | trv_ref_spec_ref q t : trv_ref_spec q (Tref t) (tref QM t)
 | trv_ref_spec_rv_ref q t ret : trv_ref_spec QM t ret -> trv_ref_spec q (Trv_ref t) ret
 | trv_ref_spec_qual q q' t ret : trv_ref_spec (merge_tq q q') t ret -> trv_ref_spec q (Tqualified q' t) ret
+| trv_ref_spec_loc q li t ret :
+    trv_ref_spec q t ret -> trv_ref_spec q (TLocInfo li t) (TLocInfo li ret)
 .
 #[local] Hint Constructors trv_ref_spec : core.
 
 Lemma trv_ref_ok q t : trv_ref_spec q t (trv_ref q t).
-Proof. revert q; induction t; auto. Qed.
+Proof.
+  revert q. induction t; auto. intros; cbn; constructor; auto.
+Qed.
+
+Lemma has_qualifiers_trv_ref q t : ~~ has_qualifiers (trv_ref q t).
+Proof. move: q. by induction t; cbn; auto using has_qualifiers_tref. Qed.
 
 Lemma trv_ref_nonref_unqual cv (t : type) :
-  ~~ is_ref t -> ~~ is_qualified t -> trv_ref cv t = Trv_ref $ tqualified cv t.
+  ~~ is_ref t -> ~~ is_qualified t -> ~~ is_loc_info t ->
+  trv_ref cv t = Trv_ref $ tqualified cv t.
 Proof. by destruct t. Qed.
 
 (*
@@ -768,35 +913,39 @@ Proof. intros t1 t2 Ht. by rewrite !trv_ref_equiv' Ht. Qed.
 
 Lemma trv_ref_unfold q t :
   trv_ref q t =
-    qual_norm' (fun q' t' =>
-      match t' with
-      | Tref t'' => tref QM t''
-      | Trv_ref t'' => trv_ref QM t''
-      | _ => Trv_ref (tqualified q' t')
-      end
-    ) q t.
-Proof. move: q. by induction t; cbn. Qed.
+    match t with
+    | Tref t' => tref QM t'
+    | Trv_ref t' => trv_ref QM t'
+    | Tqualified q' t' => trv_ref (merge_tq q q') t'
+    | TLocInfo li t' => TLocInfo li (trv_ref q t')
+    | _ => Trv_ref (tqualified q t)
+    end.
+Proof. by destruct t. Qed.
 
 (** ** Type normalization *)
 
-Definition to_arg_type : type -> type :=
-  qual_norm (fun cv t =>
-               match t with
-               | Tarray ety _
-               | Tvariable_array ety _
-               | Tincomplete_array ety => Tptr ety
-               | _ => t (* the outer qualifiers do not factor into the type *)
-               end).
+Fixpoint to_arg_type (t : type) : type :=
+  match t with
+  | Tqualified _ t => to_arg_type t
+  | TLocInfo li t => TLocInfo li (to_arg_type t)
+  | Tarray ety _
+  | Tvariable_array ety _
+  | Tincomplete_array ety => Tptr ety
+  | _ => t (* the outer qualifiers do not factor into the type *)
+  end.
 
 Lemma to_arg_type_idempotent : forall t, to_arg_type (to_arg_type t) = to_arg_type t.
-Proof.
-  rewrite /to_arg_type/=/qual_norm/=. intro t.
-  rewrite !qual_norm'_decompose_type.
-  destruct (decompose_type t) eqn:Heq.
-  simpl. destruct t1; simpl; eauto.
-  exfalso.
-  generalize (is_qualified_decompose_type t). rewrite Heq. auto.
-Qed.
+Proof. by induction t; cbn; auto with f_equal. Qed.
+
+Lemma to_arg_type_drop_qualifiers t :
+  to_arg_type (drop_qualifiers t) = to_arg_type t.
+Proof. by induction t; cbn; auto with f_equal. Qed.
+
+Lemma is_qualified_to_arg_type t : ~~ is_qualified (to_arg_type t).
+Proof. by induction t. Qed.
+
+Lemma has_qualifiers_to_arg_type t : ~~ has_qualifiers (to_arg_type t).
+Proof. by induction t. Qed.
 
 
 (**
@@ -838,6 +987,7 @@ Fixpoint normalize_type' (cv : type_qualifiers) (t : type) : type :=
   | Tauto
   | Tdecltype _ => tqualified cv t
   | Texprtype _ => tqualified cv t
+  | TLocInfo li t => TLocInfo li (normalize_type' cv t)
   end.
 Notation normalize_type := (normalize_type' QM).
 
@@ -867,7 +1017,8 @@ Proof.
       induction (ft_params t); simpl; f_equal; [ | apply IHl ].
       rewrite to_arg_type_normalize_type'_idempotent.
       etrans; [ eapply to_arg_type_idempotent | ]. done. }
-    { intros. rewrite to_arg_type_normalize_type'_idempotent. done. } }
+    { intros. rewrite to_arg_type_normalize_type'_idempotent. done. }
+    { intros. f_equal. apply to_arg_type_normalize_type'_idempotent. } }
 Qed.
 
 Lemma normalize_type_idempotent ty : normalize_type (normalize_type ty) = normalize_type ty.
@@ -886,36 +1037,49 @@ Qed.
 [unptr t] returns the type of the object that a value of type [t]
 points to or [None] if [t] is not a pointer type.
 *)
-Definition unptr (t : exprtype) : option exprtype :=
-  match drop_qualifiers t with
+Fixpoint unptr (t : exprtype) : option exprtype :=
+  match t with
+  | Tqualified _ t
+  | TLocInfo _ t => unptr t
   | Tptr p => Some p
   | _ => None
   end.
 
 (* [array_type t] extracts element type of the array or fails. *)
+Fixpoint array_type_unqual (cv : type_qualifiers) (ty : exprtype) : option exprtype :=
+  match ty with
+  | TLocInfo _ ty => array_type_unqual cv ty
+  | Tarray ety _
+  | Tincomplete_array ety
+  | Tvariable_array ety _ => Some $ tqualified cv ety
+  | _ => None
+  end.
+
 Definition array_type : exprtype -> option exprtype :=
-  qual_norm (fun cv ty =>
-               match ty with
-               | Tarray ety _
-               | Tincomplete_array ety
-               | Tvariable_array ety _ => Some $ tqualified cv ety
-               | _ => None
-               end).
+  qual_norm array_type_unqual.
 
 (**
 [class_name t] returns the name of the class that this type refers to
 *)
-Definition class_name (t : type) : option name :=
-  match drop_qualifiers t with
+Fixpoint class_name (t : type) : option name :=
+  match t with
+  | Tqualified _ t
+  | TLocInfo _ t => class_name t
   | Tnamed gn => Some gn
   | _ => None
   end.
 
+Lemma class_name_drop_qualifiers t :
+  class_name (drop_qualifiers t) = class_name t.
+Proof. by induction t. Qed.
+
 (**
 [is_arithmetic ty] states whether [ty] is an arithmetic type
 *)
-Definition is_arithmetic (ty : type) : bool :=
-  match drop_qualifiers ty with
+Fixpoint is_arithmetic (ty : type) : bool :=
+  match ty with
+  | Tqualified _ ty
+  | TLocInfo _ ty => is_arithmetic ty
   | Tnum _ _
   | Tchar_ _
   | Tfloat_ _
@@ -925,8 +1089,9 @@ Definition is_arithmetic (ty : type) : bool :=
   end.
 
 (* [as_function ty] returns the [function_type'] if [ty] is a function type. *)
-Definition as_function (ty : functype) : option function_type :=
+Fixpoint as_function (ty : functype) : option function_type :=
   match ty with
+  | TLocInfo _ ty => as_function ty
   | Tfunction ft => Some ft
   | _ => None
   end.
@@ -939,8 +1104,10 @@ Definition args_for (ft : function_type)
 (**
 [is_pointer ty] is [true] if [ty] is a pointer type
 *)
-Definition is_pointer (ty : type) : bool :=
-  match drop_qualifiers ty with
+Fixpoint is_pointer (ty : type) : bool :=
+  match ty with
+  | Tqualified _ ty
+  | TLocInfo _ ty => is_pointer ty
   | Tptr _ | Tnullptr => true
   | _ => false
   end.
@@ -953,8 +1120,10 @@ Proof. induction ty; simpl; intros; eauto. Qed.
 (**
 Formalizes https://eel.is/c++draft/basic.types.general#term.scalar.type.
 *)
-Definition is_scalar_type (ty : type) : bool :=
-  match drop_qualifiers ty with
+Fixpoint is_scalar_type (ty : type) : bool :=
+  match ty with
+  | Tqualified _ ty
+  | TLocInfo _ ty => is_scalar_type ty
   | Tnullptr | Tptr _
   | Tmember_pointer _ _
   | Tfloat_ _
@@ -968,10 +1137,13 @@ Lemma is_scalar_type_erase_drop ty :
 Proof. by induction ty. Qed.
 Lemma is_scalar_type_erase ty :
   is_scalar_type (erase_qualifiers ty) = is_scalar_type ty.
-Proof. rewrite /is_scalar_type. induction ty; simpl; auto. Qed.
+Proof. induction ty; simpl; auto. Qed.
 Lemma is_scalar_type_drop ty :
   is_scalar_type (drop_qualifiers ty) = is_scalar_type ty.
-Proof. rewrite /is_scalar_type. induction ty; simpl; auto. Qed.
+Proof. induction ty; simpl; auto. Qed.
+Lemma is_scalar_type_decompose_type ty :
+  is_scalar_type ty = is_scalar_type (decompose_type ty).2.
+Proof. by rewrite -drop_qualifiers_decompose_type is_scalar_type_drop. Qed.
 
 (**
 [is_value_type t] returns [true] if [t] has value semantics. A value
@@ -980,8 +1152,10 @@ type is one that can be represented by [val].
 NOTE: The only difference between a value type and a scalar type is
 that [Tvoid] is a value type and not a scalar type.
  *)
-Definition is_value_type (t : type) : bool :=
-  match drop_qualifiers t with
+Fixpoint is_value_type (t : type) : bool :=
+  match t with
+  | Tqualified _ t
+  | TLocInfo _ t => is_value_type t
   | Tnum _ _
   | Tchar_ _
   | Tbool
@@ -1007,7 +1181,7 @@ Proof. induction ty; cbn; auto. Qed.
 
 Lemma is_value_type_qual_norm' q t :
   is_value_type t = qual_norm' (fun _ t' => is_value_type t') q t.
-Proof. by elim: (qual_norm'_ok _ q t). Qed.
+Proof. move: q. by induction t; cbn; auto. Qed.
 Lemma is_value_type_qual_norm t :
   is_value_type t = qual_norm (fun _ t' => is_value_type t') t.
 Proof. apply is_value_type_qual_norm'. Qed.
@@ -1017,53 +1191,48 @@ Proof. by rewrite is_value_type_qual_norm qual_norm_decompose_type. Qed.
 
 (** For use in [init_validR] *)
 Fixpoint zero_sized_array ty : bool :=
-  qual_norm (fun _ t => match t with
-                     | Tarray ety n =>
-                         if bool_decide (n = 0%N) then true
-                         else zero_sized_array ety
-                     | _ => false
-                     end) ty.
+  match ty with
+  | Tqualified _ ty
+  | TLocInfo _ ty => zero_sized_array ty
+  | Tarray ety n =>
+      if bool_decide (n = 0%N) then true else zero_sized_array ety
+  | _ => false
+  end.
 #[global] Arguments zero_sized_array !_ /.
 
-Lemma zero_sized_array_unfold t : forall q,
-    zero_sized_array t =
-    qual_norm' (fun _ t =>
-                  match t with
-                  | Tarray t n => if bool_decide (n = 0%N) then true else zero_sized_array t
-                  | _ => false
-                  end) q t.
-Proof.
-  induction t; simpl; intros; auto.
-  { rewrite qual_norm_unfold. rewrite /qual_norm/=.
-    rewrite -IHt. rewrite {2}/zero_sized_array.
-    destruct q0; auto. }
-Qed.
+Lemma zero_sized_array_unfold t :
+  zero_sized_array t =
+    match t with
+    | Tqualified _ t
+    | TLocInfo _ t => zero_sized_array t
+    | Tarray t n => if bool_decide (n = 0%N) then true else zero_sized_array t
+    | _ => false
+    end.
+Proof. by destruct t. Qed.
+
 Lemma zero_sized_array_erase_qualifiers t :
   zero_sized_array t = zero_sized_array (erase_qualifiers t).
-Proof.
-  induction t; simpl; auto.
-  { rewrite !qual_norm_unfold -IHt. done. }
-  { rewrite qual_norm_unfold.
-    rewrite -IHt.
-    erewrite zero_sized_array_unfold. done. }
-Qed.
+Proof. induction t; cbn; auto; case_match; auto. Qed.
+
 Lemma zero_sized_array_qual ty : forall t,
     zero_sized_array ty = zero_sized_array (Tqualified t ty).
-Proof.
-  intros. rewrite (zero_sized_array_erase_qualifiers (Tqualified _ _)) /=.
-  apply zero_sized_array_erase_qualifiers.
-Qed.
+Proof. done. Qed.
 
 
 (**
 [is_reference_type t] returns [true] if [t] is a (possibly
 cv-qualified) reference type.
 *)
-Definition is_reference_type (t : type) : bool :=
-  is_ref (drop_qualifiers t).
+Fixpoint is_reference_type (t : type) : bool :=
+  match t with
+  | Tqualified _ t
+  | TLocInfo _ t => is_reference_type t
+  | Tref _ | Trv_ref _ => true
+  | _ => false
+  end.
 
 Lemma is_ref_incl t : is_ref t -> is_reference_type t.
-Proof. apply is_ref_drop_qualifiers. Qed.
+Proof. by destruct t. Qed.
 
 Lemma value_type_non_ref {ty} : is_value_type ty -> ~~ is_reference_type ty.
 Proof. by induction ty. Qed.
@@ -1077,7 +1246,7 @@ Proof. induction t; cbn; auto. Qed.
 
 Lemma is_reference_type_qual_norm' q t :
   is_reference_type t = qual_norm' (fun _ t => is_reference_type t) q t.
-Proof. by elim: (qual_norm'_ok _ q t). Qed.
+Proof. move: q. by induction t; cbn; auto. Qed.
 Lemma is_reference_type_qual_norm t :
   is_reference_type t = qual_norm (fun _ t => is_reference_type t) t.
 Proof. apply is_reference_type_qual_norm'. Qed.
@@ -1095,8 +1264,13 @@ return the underlying type [u] (defaulting, respectively, to a dummy
 type and to [None]).
 *)
 
-Definition as_ref' {A} (f : exprtype -> A) (x : A) (t : type) : A :=
-  if drop_qualifiers t is (Tref u | Trv_ref u) then f u else x.
+Fixpoint as_ref' {A} (f : exprtype -> A) (x : A) (t : type) : A :=
+  match t with
+  | Tqualified _ t
+  | TLocInfo _ t => as_ref' f x t
+  | Tref u | Trv_ref u => f u
+  | _ => x
+  end.
 Notation as_ref := (as_ref' (fun u => u) Tvoid).
 Notation as_ref_option := (as_ref' Some None).
 
@@ -1114,7 +1288,7 @@ Section as_ref'.
   Lemma as_ref_drop_qualifiers t : as_ref' (drop_qualifiers t) = as_ref' t.
   Proof. induction t; cbn; auto. Qed.
   Lemma as_ref_qual_norm' q t : as_ref' t = qual_norm' (fun _ t => as_ref' t) q t.
-  Proof. by elim: (qual_norm'_ok _ q t). Qed.
+  Proof. move: q. by induction t; cbn; auto. Qed.
   Lemma as_ref_qual_norm t : as_ref' t = qual_norm (fun _ t => as_ref' t) t.
   Proof. apply as_ref_qual_norm'. Qed.
   Lemma as_ref_decompose_type t : as_ref' t = as_ref' (decompose_type t).2.
@@ -1125,24 +1299,24 @@ End as_ref'.
 [is_aggregate_type t] returns [true] if [t] is a (possibly qualified)
 <<struct>> type.
 *)
-Definition is_aggregate_type (ty : type) : bool :=
-  match drop_qualifiers ty with
+Fixpoint is_aggregate_type (ty : type) : bool :=
+  match ty with
+  | Tqualified _ ty
+  | TLocInfo _ ty => is_aggregate_type ty
   | Tnamed _ => true
   | _ => false
   end.
 
 Lemma is_aggregate_type_drop_qualifiers ty :
   is_aggregate_type (drop_qualifiers ty) = is_aggregate_type ty.
-Proof.
-  by rewrite /is_aggregate_type drop_qualifiers_idemp.
-Qed.
+Proof. by induction ty. Qed.
 Lemma is_aggregate_type_erase_qualifiers ty :
   is_aggregate_type (erase_qualifiers ty) = is_aggregate_type ty.
 Proof. by induction ty. Qed.
 
 Lemma is_aggregate_type_qual_norm' cv ty :
   is_aggregate_type ty = qual_norm' (fun _ ty' => is_aggregate_type ty') cv ty.
-Proof. by elim: (qual_norm'_ok _ _ _). Qed.
+Proof. move: cv. by induction ty; cbn; auto. Qed.
 Lemma is_aggregate_type_qual_norm ty :
   is_aggregate_type ty = qual_norm (fun _ ty' => is_aggregate_type ty')  ty.
 Proof. apply is_aggregate_type_qual_norm'. Qed.
@@ -1156,16 +1330,21 @@ Lemma aggregate_type_non_ref ty : is_aggregate_type ty -> ~~ is_reference_type t
 Proof. by induction ty. Qed.
 Lemma aggregate_type_non_val ty : is_aggregate_type ty -> ~~ is_value_type ty.
 Proof. by induction ty. Qed.
+Lemma aggregate_type_non_scalar ty : is_aggregate_type ty -> ~~ is_scalar_type ty.
+Proof. by induction ty. Qed.
 
 Lemma decompose_type_erase_qualifiers ty
   : decompose_type (erase_qualifiers ty) = (QM, erase_qualifiers ty).
 Proof.
-  induction ty; simpl; intros; eauto.
+  induction ty; cbn; eauto.
+  rewrite decompose_type_unfold IHty. done.
 Qed.
 
 (** Determine if <<ty>> is an array type. *)
-Definition is_array_type (ty : type) : bool :=
+Fixpoint is_array_type (ty : type) : bool :=
   match ty with
+  | Tqualified _ ty
+  | TLocInfo _ ty => is_array_type ty
   | Tarray _ _ | Tincomplete_array _ | Tvariable_array _ _ => true
   | _ => false
   end.
@@ -1177,8 +1356,12 @@ The implementation is defensive and removes nested references even if they
 should not exist. This might be unnecessary.
 *)
 Fixpoint drop_reference (t : type) : exprtype :=
-  match drop_qualifiers t with
+  match t with
   | Tref u | Trv_ref u => drop_reference u
+  | Tqualified q t =>
+      if is_reference_type t then drop_reference t else Tqualified q t
+  | TLocInfo li t =>
+      if is_reference_type t then drop_reference t else TLocInfo li t
   | _ => t	(* We do not normalize qualifiers here to promote sharing *)
   end.
 
@@ -1186,26 +1369,38 @@ Succeed Example TEST_drop_reference : drop_reference (Tconst Tint) = Tconst Tint
 Succeed Example TEST_drop_reference : drop_reference (Tconst (Tref Tint)) = Tint := eq_refl.
 Succeed Example TEST_drop_reference : drop_reference (Tconst (Tref (Tconst Tint))) = Tconst Tint := eq_refl.
 
+Lemma drop_qualifiers_Tref_is_reference t u :
+  drop_qualifiers t = Tref u -> is_reference_type t.
+Proof. induction t; cbn; intros; try discriminate; eauto. Qed.
+
+Lemma drop_qualifiers_Trv_ref_is_reference t u :
+  drop_qualifiers t = Trv_ref u -> is_reference_type t.
+Proof. induction t; cbn; intros; try discriminate; eauto. Qed.
+
 Lemma drop_reference_ref (t : type) u :
   drop_qualifiers t = Tref u -> drop_reference t = drop_reference u.
 Proof.
-  destruct t; first [done|cbn].
-  { (* [Tref] *) by move=>[->]. }
-  { (* [Tqualified] *) by move=>->. }
+  induction t; cbn; intros H; try discriminate;
+    try (injection H; intros; subst; done).
+  have Hr := drop_qualifiers_Tref_is_reference _ _ H.
+  apply Is_true_eq in Hr. rewrite Hr. exact (IHt H).
 Qed.
 
 Lemma drop_reference_rv_ref (t : type) u :
   drop_qualifiers t = Trv_ref u -> drop_reference t = drop_reference u.
 Proof.
-  destruct t; first [done|cbn].
-  { (* [Trv_ref] *) by move=>[->]. }
-  { (* [Tqualified] *) by move=>->. }
+  induction t; cbn; intros H; try discriminate;
+    try (injection H; intros; subst; done).
+  have Hr := drop_qualifiers_Trv_ref_is_reference _ _ H.
+  apply Is_true_eq in Hr. rewrite Hr. exact (IHt H).
 Qed.
 
 Lemma drop_reference_non_ref (t : type) u :
-  drop_qualifiers t = u -> ~~ is_ref u -> drop_reference t = t.
+  drop_qualifiers t = u -> ~~ is_ref u -> ~~ is_reference_type t ->
+  drop_reference t = t.
 Proof.
-  move=><-. destruct t; first [done|cbn]. by case_match.
+  intros Hdrop Href Hty. destruct t; cbn in *; auto.
+  all: try case_match; done.
 Qed.
 
 (** ** Heap Types
@@ -1240,10 +1435,15 @@ Definition is_heap_type (t : type) : bool :=
 TODO: should this be more conservative/aggressive in dropping qualifiers, like
 [drop_reference]?
  *)
-Definition to_heap_type (t : type) : heap_type :=
-  match erase_qualifiers t with
-  | Trv_ref t => Tref t
-  | t => t
+Fixpoint to_heap_type (t : type) : heap_type :=
+  match t with
+  | TLocInfo _ t
+  | Tqualified _ t => to_heap_type t
+  | _ =>
+      match erase_qualifiers t with
+      | Trv_ref t => Tref t
+      | t => t
+      end
   end.
 Lemma to_heap_type_qualified cv t :
   to_heap_type (Tqualified cv t) = to_heap_type t.

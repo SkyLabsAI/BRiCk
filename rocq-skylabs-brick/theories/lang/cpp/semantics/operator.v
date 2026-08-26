@@ -20,8 +20,10 @@ Require Import skylabs.lang.cpp.semantics.values.
 (* [arith_as ty] returns [Some (sz, sgn)] if arithmetic operations are allowed on
    the type [ty] using the size [sz] and the signedness [sgn].
  *)
-Definition arith_as (ty : type) : option (int_rank.t * signed) :=
-  match drop_qualifiers ty with
+Fixpoint arith_as (ty : type) : option (int_rank.t * signed) :=
+  match ty with
+  | Tqualified _ ty
+  | TLocInfo _ ty => arith_as ty
   | Tnum sz sgn => if bool_decide (int_rank.t_le int_rank.Iint sz) then Some (sz, sgn) else None
   | _ => None
   end.
@@ -29,8 +31,16 @@ Definition arith_as (ty : type) : option (int_rank.t * signed) :=
 Class supports_arith (ty : type) : Prop :=
   { _ : arith_as ty <> None }.
 
+Fixpoint is_float_type (ty : type) : bool :=
+  match ty with
+  | Tqualified _ ty
+  | TLocInfo _ ty => is_float_type ty
+  | Tfloat_ _ => true
+  | _ => false
+  end.
+
 Class supports_float_arith (ty : type) : Prop :=
-  { _ : match drop_qualifiers ty with Tfloat_ _ => True | _ => False end }.
+  { _ : Is_true (is_float_type ty) }.
 
 #[global] Instance: supports_arith Tint.
 Proof. constructor; compute; congruence. Qed.
