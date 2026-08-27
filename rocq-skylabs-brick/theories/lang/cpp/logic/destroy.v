@@ -150,9 +150,19 @@ Section prim.
   Context `{Σ : cpp_logic, σ : genv}.
   Implicit Types (Q : epred).
 
-  Axiom wp_destroy_prim_loc_info : forall tu cv li ty (this : ptr) Q,
+  Lemma wp_destroy_prim_loc_info : forall tu cv li ty (this : ptr) Q,
     wp_destroy_prim tu cv (TLocInfo li ty) this Q -|-
     wp_destroy_prim tu cv ty this Q.
+  Proof.
+    intros. rewrite !wp_destroy_prim.unlock /wp_destroy_prim_body /=.
+    iSplit.
+    - iIntros "H". iMod "H". iModIntro.
+      iDestruct "H" as "[H $]". iDestruct "H" as (v) "H". iExists v.
+      by iApply (_at_tptstoR_loc_info_elim with "H").
+    - iIntros "H". iMod "H". iModIntro.
+      iDestruct "H" as "[H $]". iDestruct "H" as (v) "H". iExists v.
+      by iApply (_at_tptstoR_loc_info_intro with "H").
+  Qed.
 
   Lemma wp_destroy_prim_intro tu cv ty (this : ptr) Q :
     (Exists v, this |-> tptstoR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) v) ** Q

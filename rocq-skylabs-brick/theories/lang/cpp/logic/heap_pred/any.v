@@ -115,15 +115,15 @@ Section with_cpp.
   Proof. by rewrite anyR.unlock everywhereR_Tqualified. Qed.
 
   #[local] Lemma not_heap_type (t : type) :
-    (if t is Tqualified _ _ then false else
-       is_value_type t || match t with
+    (if drop_loc_info t is Tqualified _ _ then false else
+       is_value_type (drop_loc_info t) || match drop_loc_info t with
                         | Tref _ => true
                         | _ => false
                         end) = false ->
     Is_true (is_heap_type t) -> False.
   Proof.
     rewrite /is_heap_type.
-    destruct t; try (move => ->; rewrite andb_false_r; inversion 1).
+    destruct (drop_loc_info t); try (move => ->; rewrite andb_false_r; inversion 1).
     intros. case_bool_decide; try inversion H0.
     by symmetry in H1; apply unqual_erase_qualifiers in H1.
   Qed.
@@ -139,8 +139,7 @@ Section with_cpp.
     all: try solve [
              intros;
              iIntros "H"; iDestruct (observe [| is_heap_type _ |] with "H") as "%H";
-             exfalso; revert H;
-             apply not_heap_type; reflexivity
+             exfalso; revert H; rewrite /is_heap_type /=; naive_solver
            | intros; rewrite anyR.unlock everywhereR_unfold/primitiveR/=; eauto ].
     { (* pointers *)
       iIntros (??) "H".
@@ -163,6 +162,10 @@ Section with_cpp.
       iExists v; iStopProof. f_equiv.
       rewrite /is_heap_type in H.
       case_bool_decide; auto. exfalso; done. }
+    { intros. iIntros "H".
+      iDestruct (observe [| is_heap_type _ |] with "H") as %Hheap.
+      exfalso; eapply (not_heap_type (Tqualified q t));
+        [ reflexivity | exact Hheap ]. }
     { intros. rewrite tptstoR_loc_info anyR_loc_info. apply IHt. }
   Qed.
 
@@ -253,7 +256,10 @@ Section with_cpp.
     iIntros "H"; iExists _.
     iDestruct (observe [| is_heap_type _ |] with "H") as "%H".
     rewrite /is_heap_type in H.
-    case_bool_decide; auto. rewrite H0. eauto. exfalso; done.
+    case_bool_decide; auto.
+    { cbn in H0. injection H0 => ->.
+      rewrite erase_qualifiers_idemp. iFrame. }
+    { exfalso; done. }
   Qed.
 
   Lemma anyR_tptsto_fuzzyR_val_2 t q v :

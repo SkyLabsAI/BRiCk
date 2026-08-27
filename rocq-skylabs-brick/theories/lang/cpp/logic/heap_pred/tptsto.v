@@ -30,14 +30,21 @@ Section tptstoR.
 
   (** [tptstoR] *)
 
-  Axiom tptstoR_loc_info : forall li ty q v,
-      tptstoR (TLocInfo li ty) q v = tptstoR ty q v.
+  Lemma tptstoR_loc_info li ty q v :
+      tptstoR (TLocInfo li ty) q v -|- tptstoR ty q v.
+  Proof.
+    rewrite !tptstoR.unlock. f_equiv=>p. apply tptsto_loc_info.
+  Qed.
 
-  Axiom tptsto_fuzzyR_loc_info : forall li ty q v,
-      tptsto_fuzzyR (TLocInfo li ty) q v = tptsto_fuzzyR ty q v.
+  Lemma tptsto_fuzzyR_loc_info li ty q v :
+      tptsto_fuzzyR (TLocInfo li ty) q v -|- tptsto_fuzzyR ty q v.
+  Proof.
+    rewrite !tptsto_fuzzyR.unlock. f_equiv=>v'.
+    by rewrite val_related_loc_info tptstoR_loc_info.
+  Qed.
 
   Lemma _at_tptstoR_loc_info p li ty q v :
-      p |-> tptstoR (TLocInfo li ty) q v = p |-> tptstoR ty q v.
+      p |-> tptstoR (TLocInfo li ty) q v -|- p |-> tptstoR ty q v.
   Proof. by rewrite tptstoR_loc_info. Qed.
 
   Lemma _at_tptstoR_loc_info_elim p li ty q v :
@@ -49,7 +56,7 @@ Section tptstoR.
   Proof. by rewrite _at_tptstoR_loc_info. Qed.
 
   Lemma _at_tptsto_fuzzyR_loc_info p li ty q v :
-      p |-> tptsto_fuzzyR (TLocInfo li ty) q v =
+      p |-> tptsto_fuzzyR (TLocInfo li ty) q v -|-
       p |-> tptsto_fuzzyR ty q v.
   Proof. by rewrite tptsto_fuzzyR_loc_info. Qed.
 

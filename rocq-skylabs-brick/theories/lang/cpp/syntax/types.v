@@ -494,6 +494,10 @@ Proof. apply drop_qualifiers_unqual, has_qualifiers_drop_qualifiers. Qed.
 Lemma unqual_drop_qualifiers ty tq ty' : drop_qualifiers ty <> Tqualified tq ty'.
 Proof. by induction ty. Qed.
 
+Lemma unqual_drop_loc_info_drop_qualifiers ty tq ty' :
+  drop_loc_info (drop_qualifiers ty) <> Tqualified tq ty'.
+Proof. by induction ty. Qed.
+
 Variant qual_norm_decomp_spec {A} (f : type_qualifiers → type → A) t : A -> Prop :=
 | QualNormDecomp q' t' : (q', t') = decompose_type t -> qual_norm_decomp_spec f t (f q' t')
 .
@@ -546,6 +550,10 @@ Fixpoint erase_qualifiers (t : type) : type :=
   | Texprtype _ => t (* TODO: it isn't clear what [erase_qualifiers] means on meta types *)
   | TLocInfo li t => TLocInfo li (erase_qualifiers t)
   end.
+
+Lemma drop_loc_info_erase_qualifiers t :
+  drop_loc_info (erase_qualifiers t) = erase_qualifiers (drop_loc_info t).
+Proof. by induction t; cbn; auto. Qed.
 
 Lemma is_qualified_erase_qualifiers ty : ~~ is_qualified (erase_qualifiers ty).
 Proof. by induction ty. Qed.
@@ -1402,6 +1410,7 @@ Qed.
  *)
 Definition heap_type : Set := type.
 Definition is_heap_type (t : type) : bool :=
+  let t := drop_loc_info t in
      bool_decide (t = erase_qualifiers t)
   && (is_value_type t || match t with
                         | Tref _ => true

@@ -549,7 +549,7 @@ Section wp_initialize.
   (** [wp_initialize_unqualified] *)
 
   Lemma wp_initialize_unqualified_loc_info : forall tu ρ cv li ty obj e Q,
-    wp_initialize_unqualified tu ρ cv (TLocInfo li ty) obj e Q =
+    wp_initialize_unqualified tu ρ cv (TLocInfo li ty) obj e Q -|-
     wp_initialize_unqualified tu ρ cv ty obj e Q.
   Proof. by intros; rewrite !wp_initialize_unqualified.unlock. Qed.
 

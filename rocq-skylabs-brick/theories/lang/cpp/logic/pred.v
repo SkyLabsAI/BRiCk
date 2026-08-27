@@ -190,6 +190,8 @@ Module Type CPP_LOGIC
          *)
       Axiom has_type_erase_qualifiers : ∀ ty v,
         has_type v ty -|- has_type v (erase_qualifiers ty).
+      Axiom has_type_loc_info : ∀ li ty v,
+        has_type v (TLocInfo li ty) -|- has_type v ty.
 
       (* Internal statements: *)
       Axiom has_type_nullptr' : ∀ p,
@@ -289,6 +291,9 @@ Module Type CPP_LOGIC
     #[global] Declare Instance tptsto_valid_type
       : forall (t : Rtype) (q : cQp.t) (a : ptr) (v : val),
         Observe [| is_heap_type t |] (tptsto t q a v).
+
+    Axiom tptsto_loc_info : forall li ty q p v,
+      tptsto (TLocInfo li ty) q p v -|- tptsto ty q p v.
 
     Axiom tptsto_nonnull : forall {σ} ty q a,
       tptsto ty q nullptr a |-- False.
@@ -1464,6 +1469,7 @@ Section has_type.
     induction 1.
     { done. }
     { by rewrite -!has_type_qual_iff. }
+    { by rewrite !has_type_loc_info. }
     all: by rewrite !has_type_nonptr ?has_type_prop_raw_bytes_of_val.
   Qed.
 
@@ -1489,6 +1495,10 @@ Section has_type.
     by rewrite !has_type_or_undef_unfold -!has_type_qual_iff.
   Qed.
 
+  Lemma has_type_or_undef_loc_info li ty v :
+    has_type_or_undef v (TLocInfo li ty) -|- has_type_or_undef v ty.
+  Proof. by rewrite !has_type_or_undef_unfold has_type_loc_info. Qed.
+
   Lemma has_type_or_undef_val_related ty v1 v2 :
     val_related ty v1 v2 ->
     has_type_or_undef v1 ty |-- has_type_or_undef v2 ty.
@@ -1496,6 +1506,7 @@ Section has_type.
     induction 1.
     { done. }
     { by rewrite -!has_type_or_undef_qual_iff. }
+    { by rewrite !has_type_or_undef_loc_info. }
     all: rewrite !has_type_or_undef_nonundef//.
     all: by rewrite !has_type_nonptr// has_type_prop_raw_bytes_of_val.
   Qed.

@@ -99,6 +99,10 @@ Fixpoint size_of (resolve : genv) (t : type) : option N :=
   | TLocInfo _ t => size_of resolve t
   end%N.
 
+Lemma size_of_drop_loc_info resolve t :
+  size_of resolve (drop_loc_info t) = size_of resolve t.
+Proof. by induction t; cbn; auto. Qed.
+
 (* [size_of] result can overflow: *)
 Goal forall σ, size_of σ (Tarray Tchar (2^128)) = Some (2^128)%N.
 Proof. by []. Abort.
@@ -450,6 +454,12 @@ Section with_genv.
 
   Axiom align_of_loc_info : ∀ li t,
       align_of (TLocInfo li t) = align_of t.
+
+  Lemma align_of_drop_loc_info t : align_of (drop_loc_info t) = align_of t.
+  Proof.
+    induction t; cbn; auto;
+      rewrite ?align_of_qualified ?align_of_loc_info ?IHt //.
+  Qed.
 
   Axiom Proper_align_of : Proper (genv_leq ==> eq ==> Roption_leq eq) (@align_of).
   #[global] Existing Instance Proper_align_of.

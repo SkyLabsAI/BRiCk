@@ -621,6 +621,9 @@ Fixpoint drop_binding_decl_loc_info (d : BindingDecl) : BindingDecl :=
   | _ => d
   end.
 
+Lemma drop_loc_info_idemp t : drop_loc_info (drop_loc_info t) = drop_loc_info t.
+Proof. by induction t; cbn; auto; rewrite IHt. Qed.
+
 #[global] Arguments drop_atomic_name_loc_info !_ / : simpl nomatch, assert.
 #[global] Arguments drop_name_loc_info !_ / : simpl nomatch, assert.
 #[global] Arguments drop_temp_arg_loc_info !_ / : simpl nomatch, assert.

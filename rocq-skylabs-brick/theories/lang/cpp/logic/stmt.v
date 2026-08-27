@@ -344,7 +344,7 @@ Module Type Stmt.
     Proof. rewrite !wp_block_eq; by destruct ss. Qed.
 
     Lemma wp_block_loc_info ρ li s ss Q :
-      wp_block ρ (SLocInfo li s :: ss) Q = wp_block ρ (s :: ss) Q.
+      wp_block ρ (SLocInfo li s :: ss) Q -|- wp_block ρ (s :: ss) Q.
     Proof.
       rewrite !wp_block_unfold. unfold wp_block_stmt.
       cbn. reflexivity.
