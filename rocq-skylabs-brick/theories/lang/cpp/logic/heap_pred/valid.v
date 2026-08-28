@@ -37,8 +37,6 @@ Section with_cpp.
 
   Import rep_defs.INTERNAL.
 
-  Lemma monPred_at_validR p : validR p -|- valid_ptr p.
-  Proof. by rewrite validR_eq. Qed.
   Lemma _at_validR (p : ptr) : _at p validR -|- valid_ptr p.
   Proof. by rewrite validR_eq _at_eq. Qed.
 
@@ -49,8 +47,6 @@ Section with_cpp.
   #[global] Instance svalidR_affine : Affine svalidR.
   Proof. rewrite svalidR_eq; refine _. Qed.
 
-  Lemma monPred_at_svalidR p : svalidR p -|- strict_valid_ptr p.
-  Proof. by rewrite svalidR_eq. Qed.
   Lemma _at_svalidR (p : ptr) : _at p svalidR -|- strict_valid_ptr p.
   Proof. by rewrite svalidR_eq _at_eq. Qed.
 
@@ -61,8 +57,6 @@ Section with_cpp.
   #[global] Instance type_ptrR_affine t : Affine (type_ptrR t).
   Proof. rewrite type_ptrR_eq; refine _. Qed.
 
-  Lemma monPred_at_type_ptrR ty p : type_ptrR ty p -|- type_ptr ty p.
-  Proof. by rewrite type_ptrR_eq. Qed.
   Lemma _at_type_ptrR (p : ptr) ty : _at p (type_ptrR ty) -|- type_ptr ty p.
   Proof. by rewrite type_ptrR_eq _at_eq. Qed.
 
@@ -97,8 +91,8 @@ Section with_cpp.
   #[global] Instance type_ptrR_size_observe ty :
     Observe [| is_Some (size_of σ ty) |] (type_ptrR ty).
   Proof.
-    apply monPred_observe_only_provable => p.
-    rewrite monPred_at_type_ptrR. apply _.
+    apply observe_only_provable_at => p.
+    rewrite _at_type_ptrR. apply _.
   Qed.
 
 End with_cpp.
