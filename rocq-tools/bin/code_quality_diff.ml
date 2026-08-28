@@ -67,19 +67,29 @@ module Analysis = struct
 end
 
 module Markdown = struct
-  let output fmt (a : Analysis.t) =
+  let output ~color fmt (a : Analysis.t) =
     let open Analysis in
     let {warnings={appeared=w_appeared; disappeared=w_disappeared; _} as ws;
          errors  ={appeared=e_appeared; disappeared=e_disappeared;_} as es} = a in
 
     let table fmt =
+      let new_count fmt count =
+        if color && count <> 0 then Format.fprintf fmt "${\\color{red}%i}$" count
+        else Format.fprintf fmt "%i" count
+      in
+      let fixed_count fmt count =
+        if color && count <> 0 then Format.fprintf fmt "${\\color{green}%i}$" count
+        else Format.fprintf fmt "%i" count
+      in
       Format.fprintf fmt "\
         |        |Before|New |Fixed|After|\n\
         |--------|-----:|---:|----:|----:|\n\
-        |Errors  | %i   | %i | %i  | %i  |\n\
-        |Warnings| %i   | %i | %i  | %i  |\n\n"
-        (ES.cardinal es.before) (ES.cardinal es.appeared) (ES.cardinal es.disappeared) (ES.cardinal es.after)
-        (WS.cardinal ws.before) (WS.cardinal ws.appeared) (WS.cardinal ws.disappeared) (WS.cardinal ws.after);
+        |Errors  | %i   | %a | %a  | %i  |\n\
+        |Warnings| %i   | %a | %a  | %i  |\n\n"
+        (ES.cardinal es.before) new_count (ES.cardinal es.appeared)
+        fixed_count (ES.cardinal es.disappeared) (ES.cardinal es.after)
+        (WS.cardinal ws.before) new_count (WS.cardinal ws.appeared)
+        fixed_count (WS.cardinal ws.disappeared) (WS.cardinal ws.after);
     in
 
     let header fmt symbol title num =
@@ -277,7 +287,7 @@ let to_dune_out : fname:string -> dune_out list =
   in
   list
 
-let analyse fmt ~before_dune ~after_dune ~before_globs ~after_globs =
+let analyse fmt ~color ~before_dune ~after_dune ~before_globs ~after_globs =
 
   let nonempty_stdout_warning src_file output =
     let text = Format.sprintf "File \"%s\", line 0, characters 0-0:\nWarning: Non-empty stdout when building using \"rocq compile\":\n%s\n[non-empty-stdout,dummy]" src_file output in
@@ -342,7 +352,7 @@ let analyse fmt ~before_dune ~after_dune ~before_globs ~after_globs =
     Analysis.{ before; after; appeared; disappeared }
   in
 
-  Markdown.output fmt {errors; warnings}
+  Markdown.output ~color fmt {errors; warnings}
 
 
 let einfo : 'a outfmt -> 'a = fun fmt ->
@@ -354,19 +364,21 @@ module Args = struct
     before_dune : dune_out list;
     after_globs : glob_out list;
     after_dune : dune_out list;
+    color : bool;
   }
   let empty = {
     before_globs = [];
     after_globs = [];
     before_dune = [];
     after_dune = [];
+    color = false;
   }
 end
 open Args
 
 let usage : ?error:bool -> string -> 'a = fun ?(error=false) prog_name ->
-  if error then panic "Usage: %s [--before-globs-from-file file-with-glob-files ..] [--after-globs-from-file file-with-glob-files ..] [--before-dune dune-log.json ..] [--after-dune dune-log.json ..]" prog_name;
-  einfo "Usage: %s [--before-globs-from-file file-with-glob-files ..] [--after-globs-from-file file-with-glob-files ..] [--before-dune dune-log.json ..] [--after-dune dune-log.json ..]" prog_name;
+  if error then panic "Usage: %s [--color] [--before-globs-from-file file-with-glob-files ..] [--after-globs-from-file file-with-glob-files ..] [--before-dune dune-log.json ..] [--after-dune dune-log.json ..]" prog_name;
+  einfo "Usage: %s [--color] [--before-globs-from-file file-with-glob-files ..] [--after-globs-from-file file-with-glob-files ..] [--before-dune dune-log.json ..] [--after-dune dune-log.json ..]" prog_name;
   exit 0
 
 let main () =
@@ -379,6 +391,8 @@ let main () =
     match args with
     | ("--help" | "-h")             :: _                     ->
         usage prog_name
+    | "--color"                      :: args                  ->
+        parse_args {state with color = true} args
     | "--before-globs-from-file" :: file  :: args            ->
         ensure_file file;
         let strip_prefix = Filename.dirname file ^ "/" in
@@ -411,8 +425,8 @@ let main () =
         state
 
   in
-  let {before_dune; after_dune; before_globs; after_globs} = parse_args empty args in
-  analyse (Format.formatter_of_out_channel stdout) ~before_dune ~after_dune ~before_globs ~after_globs
+  let {before_dune; after_dune; before_globs; after_globs; color} = parse_args empty args in
+  analyse (Format.formatter_of_out_channel stdout) ~color ~before_dune ~after_dune ~before_globs ~after_globs
 
 let _ =
   try main () with
