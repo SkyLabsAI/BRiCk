@@ -128,7 +128,6 @@ Section conv_int.
     { intros.
       apply has_type_prop_qual_iff in H.
       by apply IHty. }
-    { intros. apply has_type_prop_loc_info in H. by apply IHty. }
   Qed.
 
   Lemma has_type_prop_representation_type_not_raw ty v :
@@ -152,7 +151,6 @@ Section conv_int.
     { intros.
       apply IHty in H.
       rewrite -has_type_prop_qual_iff. apply H. }
-    { intros. rewrite has_type_prop_loc_info. by apply IHty. }
   Qed.
   (* END MOVE *)
 

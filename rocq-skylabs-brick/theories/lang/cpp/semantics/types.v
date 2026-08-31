@@ -9,26 +9,30 @@ Require Export skylabs.prelude.option.
 Require Import skylabs.lang.cpp.syntax.
 Require Import skylabs.lang.cpp.semantics.genv.
 
-Definition fundamental_size (t : type) : option N :=
-  match drop_loc_info (drop_qualifiers t) with
-  | Tchar_ sz => Some $ char_type.bytesN sz
-  | Tnum sz _ => Some $ int_rank.bytesN sz
-  | Tbool => Some 1%N
-  | _ => None
-  end.
-
 Definition GlobDecl_size_of (g : GlobDecl) : option N :=
   match g with
   | Gstruct s => Some s.(s_size)
   | Gunion u => Some u.(u_size)
-  | Genum t _ => fundamental_size t
+  | Genum t _ =>
+    match drop_qualifiers t with
+    | Tchar_ sz => Some $ char_type.bytesN sz
+    | Tnum sz _ => Some $ int_rank.bytesN sz
+    | Tbool => Some 1%N
+    | _ => None
+    end
   | _ => None
   end.
 Definition GlobDecl_align_of (g : GlobDecl) : option N :=
   match g with
   | Gstruct s => Some s.(s_alignment)
   | Gunion u => Some u.(u_alignment)
-  | Genum t _ => fundamental_size t
+  | Genum t _ =>
+    match drop_qualifiers t with
+    | Tchar_ sz => Some $ char_type.bytesN sz
+    | Tnum sz _ => Some $ int_rank.bytesN sz
+    | Tbool => Some 1%N
+    | _ => None
+    end
   | _ => None
   end.
 
@@ -39,19 +43,15 @@ Proof.
   do 2 case_match; subst; try contradiction; try constructor.
   case_bool_decide; subst; eauto. contradiction.
   case_bool_decide; subst; eauto. contradiction.
-  case_bool_decide.
-  { subst. destruct (fundamental_size t0); constructor; eauto. }
-  { contradiction. }
+  case_bool_decide; subst; eauto. case_match; constructor; eauto. contradiction.
 Qed.
 #[global] Instance proper_GlobDecl_align_of: Proper (GlobDecl_ler ==> Roption_leq eq) GlobDecl_align_of.
 Proof.
-  rewrite /GlobDecl_align_of/GlobDecl_ler/GlobDecl_le => x y Heq.
+  rewrite /GlobDecl_size_of/GlobDecl_ler/GlobDecl_le => x y Heq.
   do 2 case_match; subst; try contradiction; try constructor.
   case_bool_decide; subst; eauto. contradiction.
   case_bool_decide; subst; eauto. contradiction.
-  case_bool_decide.
-  { subst. destruct (fundamental_size t0); constructor; eauto. }
-  { contradiction. }
+  case_bool_decide; subst; eauto. simpl. case_match; constructor; eauto. contradiction.
 Qed.
 
 (** * sizeof *)
@@ -96,12 +96,7 @@ Fixpoint size_of (resolve : genv) (t : type) : option N :=
   | Tresult_call _ _
   | Tresult_member_call _ _ _
   | Tauto => None
-  | TLocInfo _ t => size_of resolve t
   end%N.
-
-Lemma size_of_drop_loc_info resolve t :
-  size_of resolve (drop_loc_info t) = size_of resolve t.
-Proof. by induction t; cbn; auto. Qed.
 
 (* [size_of] result can overflow: *)
 Goal forall σ, size_of σ (Tarray Tchar (2^128)) = Some (2^128)%N.
@@ -279,8 +274,9 @@ Proof. by rewrite /SizeOf TCEq_eq=><-. Qed.
 
 Lemma size_of_to_heap_type g ty : size_of g (to_heap_type ty) = size_of g ty.
 Proof.
-  induction ty; simpl; auto. all: try by rewrite IHty.
-  by rewrite size_of_erase_qualifiers.
+  rewrite -(size_of_erase_qualifiers _ ty).
+  rewrite /to_heap_type.
+  by destruct (erase_qualifiers ty).
 Qed.
 
 (** [HasSize ty] means that C++ type [ty] has a defined size *)
@@ -450,15 +446,6 @@ Section with_genv.
   Proof.
     intros.
     rewrite -{1}align_of_erase_qualifiers. simpl. by rewrite align_of_erase_qualifiers.
-  Qed.
-
-  Axiom align_of_loc_info : ∀ li t,
-      align_of (TLocInfo li t) = align_of t.
-
-  Lemma align_of_drop_loc_info t : align_of (drop_loc_info t) = align_of t.
-  Proof.
-    induction t; cbn; auto;
-      rewrite ?align_of_qualified ?align_of_loc_info ?IHt //.
   Qed.
 
   Axiom Proper_align_of : Proper (genv_leq ==> eq ==> Roption_leq eq) (@align_of).

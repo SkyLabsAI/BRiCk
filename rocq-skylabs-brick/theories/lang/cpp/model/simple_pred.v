@@ -816,13 +816,6 @@ Module SimpleCPP.
     Instance type_ptr_affine σ p ty : Affine (type_ptr ty p) := _.
     Instance type_ptr_timeless σ p ty : Timeless (type_ptr ty p) := _.
 
-    Lemma type_ptr_drop_loc_info {resolve : genv} ty p :
-      type_ptr (resolve:=resolve) ty p -|- type_ptr (drop_loc_info ty) p.
-    Proof.
-      rewrite /type_ptr /aligned_ptr_ty align_of_drop_loc_info size_of_drop_loc_info.
-      rewrite /o_sub drop_loc_info_idemp. repeat f_equiv; apply proof_irrel.
-    Qed.
-
     Lemma type_ptr_off_nonnull {ty p o} :
       type_ptr ty (p ,, o) |-- [| p <> nullptr |].
     Admitted.
@@ -925,7 +918,6 @@ Module SimpleCPP.
     Qed.
 
     Definition tptsto (t : type) (q : cQp.t) (p : ptr) (v : val) : mpred :=
-      let t := drop_loc_info t in
       [| p <> nullptr |] ** [| is_heap_type t |] **
       Exists (oa : option addr),
         type_ptr t p ** (* use the appropriate ghost state instead *)
@@ -938,15 +930,10 @@ Module SimpleCPP.
     #[global] Instance tptsto_valid_type
       : forall (t : type) (q : cQp.t) (a : ptr) (v : val),
         Observe [| is_heap_type t |] (tptsto t q a v).
-    Proof. intros; rewrite /tptsto /is_heap_type drop_loc_info_idemp; refine _. Qed.
-
-    Theorem tptsto_loc_info li ty q p v :
-      tptsto (TLocInfo li ty) q p v -|- tptsto ty q p v.
-    Proof. done. Qed.
+    Proof. rewrite /tptsto; refine _. Qed.
 
     #[global] Instance tptsto_type_ptr : forall ty q p v,
-        Observe (type_ptr ty p) (tptsto ty q p v).
-    Proof. intros. rewrite type_ptr_drop_loc_info. apply _. Qed.
+        Observe (type_ptr ty p) (tptsto ty q p v) := _.
 
     (* TODO (JH): We shouldn't be axiomatizing this in our model in the long-run *)
     Axiom tptsto_live : forall ty (q : cQp.t) p v,
@@ -967,12 +954,7 @@ Module SimpleCPP.
       Timeless (tptsto ty q p v) := _.
 
     #[global] Instance tptsto_nonvoid ty (q : cQp.t) p v :
-      Observe [| ty <> Tvoid |] (tptsto ty q p v).
-    Proof.
-      apply: observe_intro_persistent. iIntros "H".
-      iDestruct (observe [| drop_loc_info ty <> Tvoid |] with "H") as %Hty.
-      iPureIntro. by intros ->.
-    Qed.
+      Observe [| ty <> Tvoid |] (tptsto ty q p v) := _.
 
     #[global] Instance tptsto_cfrac_valid ty :
       CFracValid2 (tptsto ty).
@@ -1146,7 +1128,15 @@ Module SimpleCPP.
 
     Lemma zero_size_array_erase_qualifiers (ty : type) :
       zero_sized_array (erase_qualifiers ty) = zero_sized_array ty.
-    Proof. symmetry. apply zero_sized_array_erase_qualifiers. Qed.
+    Proof.
+      induction ty; rewrite /= /qual_norm /=; eauto.
+      - rewrite IHty. done.
+      - rewrite IHty. clear.
+        generalize (merge_tq QM q).
+        clear. induction ty; rewrite /= /qual_norm/=; eauto.
+        intros.
+        rewrite -!IHty. done.
+    Qed.
 
     Lemma stict_valid_if_not_empty_array_erase ty p :
       strict_valid_if_not_empty_array ty p
@@ -1160,7 +1150,7 @@ Module SimpleCPP.
       [| has_type_prop v ty |] **
       match v with
       | Vptr p =>
-        match drop_loc_info (drop_qualifiers ty) with
+        match drop_qualifiers ty with
         | Tptr ty =>
           valid_ptr p ** [| aligned_ptr_ty ty p |]
         | Tref ty | Trv_ref ty =>
@@ -1202,17 +1192,7 @@ Module SimpleCPP.
       Proof.
         rewrite /has_type /nonptr_prim_type; intros.
         iIntros "$".
-        destruct v => //.
-        have H' : nonptr_prim_type (drop_qualifiers ty).
-        { by rewrite -nonptr_prim_type_drop_qualifiers. }
-        destruct (drop_loc_info (drop_qualifiers ty)); cbn in H' |- *; try contradiction; done.
-      Qed.
-
-      Theorem has_type_loc_info li ty v :
-        has_type v (TLocInfo li ty) -|- has_type v ty.
-      Proof.
-        rewrite /has_type /= has_type_prop_loc_info.
-        destruct v; cbn; done.
+        destruct v => //. by case_match.
       Qed.
 
       Lemma has_type_erase_qualifiers ty v :
@@ -1222,12 +1202,12 @@ Module SimpleCPP.
         f_equiv.
         rewrite -nonptr_prim_type_erase_qualifiers.
         case_match; eauto.
-        rewrite -erase_drop_qualifiers drop_loc_info_erase_qualifiers.
+        rewrite -erase_drop_qualifiers.
         case_match; simpl; eauto.
         all: try f_equiv.
         all: try rewrite aligned_ptr_ty_erase_qualifiers; auto.
         all: try apply stict_valid_if_not_empty_array_erase.
-        exfalso; by eapply unqual_drop_loc_info_drop_qualifiers.
+        exfalso; by eapply unqual_drop_qualifiers.
       Qed.
 
       Lemma has_type_nullptr' p :
@@ -1284,13 +1264,6 @@ Module SimpleCPP.
         rewrite /reference_to. intros.
         rewrite -aligned_ptr_ty_erase_qualifiers -zero_size_array_erase_qualifiers.
         done.
-      Qed.
-
-      Theorem reference_to_loc_info : forall li ty p,
-          reference_to (TLocInfo li ty) p -|- reference_to ty p.
-      Proof.
-        rewrite /reference_to/aligned_ptr_ty /=. intros.
-        rewrite align_of_loc_info. done.
       Qed.
 
       Theorem reference_to_intro : forall ty p,

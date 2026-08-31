@@ -453,7 +453,6 @@ Module template_alias.
     | Tmember_pointer n t => Tmember_pointer (subst_type xs n) (subst_type xs t)
     | Tdecltype e => Tdecltype (subst_expr xs e)
     | Texprtype e => Texprtype (subst_expr xs e)
-    | TLocInfo li t => TLocInfo li (subst_type xs t)
     end.
 
   Definition same_template_base (actual candidate : name) : option (list temp_arg) :=
@@ -555,8 +554,7 @@ Definition resolve_value (tu : translation_unit) (nm : name) : option name :=
  *)
 Fixpoint is_trivially_destructible (tu : translation_unit) (ty : type) {struct ty} : bool :=
   match ty with
-  | Tqualified _ ty
-  | TLocInfo _ ty => is_trivially_destructible tu ty
+  | Tqualified _ ty => is_trivially_destructible tu ty
   | Tref _ | Trv_ref _
   | Tnum _ _ | Tchar_ _
   | Tvoid | Tbool | Tptr _
@@ -581,8 +579,7 @@ Fixpoint ref_to_type (t : type) : option type :=
   match t with
   | Tref t
   | Trv_ref t => Some t
-  | Tqualified _ t
-  | TLocInfo _ t => ref_to_type t
+  | Tqualified _ t => ref_to_type t
   | _ => None
   end.
 
@@ -636,8 +633,6 @@ Section with_type_table.
   | complete_bool : complete_basic_type Tbool
   | complete_nullptr : complete_basic_type Tnullptr
   | complete_char c : complete_basic_type (Tchar_ c)
-  | complete_basic_loc_info {li t} (_ : complete_basic_type t) :
-    complete_basic_type (TLocInfo li t)
 
   (* t can in turn be a pointer type *)
   | complete_ptr {t} : complete_pointee_type t -> complete_basic_type (Tptr t)
@@ -648,8 +643,6 @@ Section with_type_table.
   with complete_pointee_type : type -> Prop :=
   | complete_pt_qualified {q t} (_ : complete_pointee_type t)
     : complete_pointee_type (Tqualified q t)
-  | complete_pt_loc_info {li t} (_ : complete_pointee_type t)
-    : complete_pointee_type (TLocInfo li t)
   (*
     Pointers to array are only legal if the array is complete, at least
     in C, since they cannot actually be indexed or created.
@@ -695,8 +688,6 @@ Section with_type_table.
   with complete_type : type -> Prop :=
   | complete_qualified {q t} (_ : complete_type t)
     : complete_type (Tqualified q t)
-  | complete_loc_info {li t} (_ : complete_type t)
-    : complete_type (TLocInfo li t)
   (* Reference types. This setup forbids references to references. *)
   | complete_ref {t} : complete_pointee_type t -> complete_type (Tref t)
   | complete_rv_ref {t} : complete_pointee_type t -> complete_type (Trv_ref t)
@@ -735,8 +726,6 @@ Section with_type_table.
   with wellscoped_type : type -> Prop :=
   | wellscoped_qualified {q t} (_ : wellscoped_type t)
     : wellscoped_type (Tqualified q t)
-  | wellscoped_loc_info {li t} (_ : wellscoped_type t)
-    : wellscoped_type (TLocInfo li t)
   | wellscoped_array t n
     (_ : (n <> 0)%N) : (* From Krebbers. Probably needed to reject [T[][]]. *)
     wellscoped_type t ->

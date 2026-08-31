@@ -150,7 +150,6 @@ Section with_cpp.
       | Texprtype _
       | Tauto
       | Tresult_parenlist _ _ => False
-      | TLocInfo _ t => typeR q t
       end%I.
 
     #[local] Instance typeR_timeless
@@ -185,7 +184,6 @@ Section with_cpp.
         case_match; refine _. }
       { intros. eapply IHty.
         by rewrite -zero_sized_array_qual in H. }
-      { simpl; intros. apply IHty. done. }
     Qed.
 
     #[local] Instance typeR_cfractional
@@ -294,7 +292,6 @@ Section with_cpp.
           { iApply "Y"; eauto. }
           iApply IHl.
           iFrame "#∗". }
-    - iApply IHty; eauto.
     - iApply IHty; eauto.
   Qed.
 
@@ -463,10 +460,6 @@ Section with_cpp.
                   [ iApply everywhereR_f_mono'; [ | eauto ]; lia
                   | iStopProof; f_equiv; do 2 intro;
                     case_match; apply everywhereR_f_mono'; lia ]). } } }
-        { iIntros "A".
-          iDestruct (IHty with "A") as (f) "A".
-          iExists f.
-          destruct f; simpl; eauto. }
         { iIntros "A".
           iDestruct (IHty with "A") as (f) "A".
           iExists f.

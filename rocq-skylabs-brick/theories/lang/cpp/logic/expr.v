@@ -208,9 +208,8 @@ Module Type Expr.
        type is not a reference, then the pointer is returned *after* it is
        checked to be strictly valid.
      *)
-    Definition read_decl (p : ptr) (t : type) (Q : ptr -> mpred) : mpred :=
-      let t := drop_loc_info (drop_qualifiers t) in
-      match t with
+    Definition read_decl (p : ptr) (t : type) (Q : ptr -> mpred) :=
+      match drop_qualifiers t with
       | Tref ty
       | Trv_ref ty =>
           Exists r,
@@ -346,20 +345,24 @@ Module Type Expr.
      *)
 
     Definition subscript_scheme (e1 e2 : Expr) : option (bool * ValCat * type) :=
-      let subscript_operand first vc ty other :=
-        if is_arithmetic other then
-          match vc with
-          | Lvalue => (fun t => (first, Lvalue, t)) <$> array_type ty
-          | Xvalue => (fun t => (first, Xvalue, t)) <$> array_type ty
-          | Prvalue => (fun t => (first, Prvalue, t)) <$> unptr ty
-          end
-        else None
+      let array_type :=
+        qual_norm (fun cv ty =>
+            match ty with
+            | Tarray ety _
+            | Tincomplete_array ety
+            | Tvariable_array ety _ => Some $ tqualified cv ety
+            | _ => mfail
+            end)
       in
-      let '(vc1, ty1) := decltype.to_exprtype $ decltype_of_expr e1 in
-      let '(vc2, ty2) := decltype.to_exprtype $ decltype_of_expr e2 in
-      match subscript_operand true vc1 ty1 ty2 with
-      | Some ret => Some ret
-      | None => subscript_operand false vc2 ty2 ty1
+      let guard_arithmetic ty v := if is_arithmetic ty then v else None in
+      match drop_qualifiers $ decltype_of_expr e1 , drop_qualifiers $ decltype_of_expr e2 with
+      | Tref aty , ity => guard_arithmetic ity $ (fun t => (true, Lvalue, t)) <$> array_type aty
+      | Trv_ref aty , ity => guard_arithmetic ity $ (fun t => (true, Xvalue, t)) <$> array_type aty
+      | Tptr ety , ity => guard_arithmetic ity $ Some (true, Prvalue, ety)
+      | ity , Tref aty => guard_arithmetic ity $ (fun t => (false, Lvalue, t)) <$> array_type aty
+      | ity , Trv_ref aty => guard_arithmetic ity $ (fun t => (false, Xvalue, t)) <$> array_type aty
+      | ity , Tptr ety => guard_arithmetic ity $ Some (false, Prvalue, ety)
+      | _ , _ => None
       end.
 
     Definition wp_ptr (vc : ValCat) (e : Expr) (Q : ptr -> FreeTemps.t -> epred) : mpred :=
@@ -995,17 +998,11 @@ Module Type Expr.
         wp_glval e (fun p => Q (Vptr p))
         |-- wp_operand (Ecast Carray2ptr e) Q.
 
-    Definition as_int_type (ty : type) : option (int_rank.t * signed) :=
-      match drop_loc_info (drop_qualifiers ty) with
-      | Tnum sz sgn => Some (sz, sgn)
-      | _ => None
-      end.
-
     (** [Cptr2int] exposes the pointer, which is expressed with [pinned_ptr]
      *)
     Axiom wp_operand_ptr2int : forall e ty Q,
-        match unptr (type_of e) , as_int_type ty with
-        | Some _ , Some (sz, sgn) =>
+        match drop_qualifiers (type_of e) , ty with
+        | Tptr _ , Tnum sz sgn =>
           wp_operand e (fun v free => Exists p, [| v = Vptr p |] **
             (Forall va, pinned_ptr va p -* Q (Vint (match sgn with
                                                     | Signed => to_signed (int_rank.bitsize sz)
@@ -1046,8 +1043,8 @@ Module Type Expr.
              was checked at "compile" time rather than at runtime.
      *)
     Axiom wp_lval_cast_derived2base : forall e ty path Q,
-      match class_name (type_of e), class_name ty with
-      | Some derived , Some base =>
+      match drop_qualifiers (type_of e), drop_qualifiers ty with
+      | Tnamed derived , Tnamed base =>
           match derived_to_base_ty derived (path ++ [Tnamed base]) with
           | Some off =>
             wp_glval e (fun addr free =>
@@ -1060,8 +1057,8 @@ Module Type Expr.
       |-- wp_lval (Ecast (Cderived2base path (Tref ty)) e) Q.
 
     Axiom wp_xval_cast_derived2base : forall e ty path Q,
-      match class_name (type_of e), class_name ty with
-      | Some derived , Some base =>
+      match drop_qualifiers (type_of e), drop_qualifiers ty with
+      | Tnamed derived , Tnamed base =>
           match derived_to_base_ty derived (path ++ [Tnamed base]) with
           | Some off =>
               wp_glval e (fun addr free =>
@@ -1074,8 +1071,8 @@ Module Type Expr.
       |-- wp_xval (Ecast (Cderived2base path (Trv_ref ty)) e) Q.
 
     Axiom wp_operand_cast_derived2base : forall e ty path Q,
-      match unptr (type_of e) >>= class_name, class_name ty with
-      | Some derived , Some base =>
+      match drop_qualifiers <$> unptr (type_of e), drop_qualifiers ty with
+      | Some (Tnamed derived) , Tnamed base =>
           match derived_to_base_ty derived (path ++ [Tnamed base]) with
           | Some off =>
             wp_operand e (fun addr free =>
@@ -1090,8 +1087,8 @@ Module Type Expr.
     (* [Cbase2derived] casts from a base class to a derived class.
      *)
     Axiom wp_lval_cast_base2derived : forall e ty path Q,
-      match class_name (type_of e), class_name ty with
-      | Some base , Some derived =>
+      match drop_qualifiers (type_of e), drop_qualifiers ty with
+      | Tnamed base , Tnamed derived =>
           match base_to_derived_ty derived (path ++ [Tnamed base]) with
           | Some off =>
             wp_glval e (fun addr free =>
@@ -1104,8 +1101,8 @@ Module Type Expr.
       |-- wp_lval (Ecast (Cbase2derived path (Tref ty)) e) Q.
 
     Axiom wp_xval_cast_base2derived : forall e ty path Q,
-      match class_name (type_of e), class_name ty with
-      | Some base , Some derived =>
+      match drop_qualifiers (type_of e), drop_qualifiers ty with
+      | Tnamed base , Tnamed derived =>
           match base_to_derived_ty derived (path ++ [Tnamed base]) with
           | Some off =>
               wp_glval e (fun addr free =>
@@ -1118,8 +1115,8 @@ Module Type Expr.
       |-- wp_xval (Ecast (Cbase2derived path (Trv_ref ty)) e) Q.
 
     Axiom wp_operand_cast_base2derived : forall e ty path Q,
-         match unptr (type_of e) >>= class_name, class_name ty with
-         | Some base, Some derived =>
+         match drop_qualifiers <$> unptr (type_of e), drop_qualifiers ty with
+         | Some (Tnamed base), Tnamed derived =>
              match base_to_derived_ty derived (path ++ [Tnamed base]) with
              | Some off =>
                 wp_operand e (fun addr free =>
@@ -1610,35 +1607,36 @@ Module Type Expr.
       end.
 
     Lemma zero_init_val_is_scalar ty v : zero_init_val ty = Some v -> is_scalar_type ty = true.
-    Proof. induction ty; cbn; intros H; try discriminate; auto. Qed.
+    Proof.
+      rewrite /zero_init_val/is_scalar_type/representation_type /=. destruct (drop_qualifiers ty) eqn:Hdrop => //; eauto.
+    Qed.
 
     Lemma well_typed_zero_init_val (MOD : tu ⊧ resolve) : forall ty v,
         zero_init_val ty = Some v -> has_type_prop v ty.
     Proof.
-      induction ty; cbn; intros v H; try discriminate; subst.
-      all: try (inversion H; subst).
-      all: try apply has_nullptr_type.
-      all: try apply has_type_prop_char_0.
-      all: try (apply has_type_prop_bool; eauto).
-      all: try apply has_float_type.
-      all: try (apply has_int_type; rewrite /bitsize.bound;
-        destruct sz, sgn; compute; intuition congruence).
-      all: try (rewrite -has_type_prop_qual_iff; apply IHty; exact H).
-      all: try (rewrite has_type_prop_loc_info; apply IHty; exact H).
-      eapply has_type_prop_enum.
-      revert H.
-      rewrite /zero_init_val /representation_type /= /underlying_type.
-      destruct (tu.(types) !! gn) eqn:Hglobal => /= //; rewrite Hglobal /= //.
-      destruct g => /= //.
-      intros H. do 3 eexists; split; eauto; split; eauto.
-      case_match; try congruence; inversion H; subst; simpl; split; try tauto.
-      all: try apply has_nullptr_type.
-      all: try (apply has_int_type; rewrite /bitsize.bound;
-        destruct sz, sgn; compute; intuition congruence).
-      all: try apply has_type_prop_char_0.
-      all: try (apply has_type_prop_bool; eauto).
-      all: try apply has_float_type.
-      all: eapply has_type_prop_nullptr; eauto.
+      rewrite /zero_init_val/representation_type. intros.
+      eapply has_type_prop_drop_qualifiers; revert H.
+      destruct (drop_qualifiers ty) eqn:Heq; simpl; try inversion 1; subst.
+      - apply has_nullptr_type.
+      - apply has_int_type. rewrite /bitsize.bound.
+        destruct sz, sgn; compute; intuition congruence.
+      - apply has_type_prop_char_0.
+      - eapply has_type_prop_enum.
+        clear H1. revert H.
+        rewrite /underlying_type/=.
+        destruct (tu.(types) !! gn) eqn:Hglobal => /= //; rewrite Hglobal /= //.
+        destruct g => /=//.
+        intros. do 3 eexists; split; eauto; split; eauto.
+        case_match; try congruence; inversion H; subst; simpl; split; try tauto.
+        + apply has_nullptr_type.
+        + apply has_int_type. rewrite /bitsize.bound; destruct sz,sgn; compute; intuition congruence.
+        + apply has_type_prop_char_0.
+        + apply has_type_prop_bool; eauto.
+        + apply has_float_type.
+        + eapply has_type_prop_nullptr; eauto.
+      - apply has_type_prop_bool. eauto.
+      - apply has_float_type.
+      - eapply has_type_prop_nullptr; eauto.
     Qed.
 
     Lemma zero_init_val_erase_drop ty :
@@ -1651,8 +1649,8 @@ Module Type Expr.
       |-- wp_operand (Eimplicit_init ty) Q.
 
     Definition marg_types (t : functype) : option (list type * function_arity) :=
-      match as_function t with
-      | Some {| ft_cc:=cc ; ft_arity:=ar ; ft_params := _ :: args |} =>
+      match t with
+      | Tfunction {| ft_cc:=cc ; ft_arity:=ar ; ft_params := _ :: args |} =>
           (* we drop the first argument which is for [this] *)
           Some (args, ar)
       | _ => None

@@ -36,7 +36,7 @@ Section with_monad.
     if float_type.supported ft then OK else FAIL "unsupported floating width".
 
   Definition as_float_type (t : type) : option float_type.t :=
-    match drop_loc_info (drop_qualifiers t) with
+    match drop_qualifiers t with
     | Tfloat_ ft => Some ft
     | _ => None
     end.
@@ -191,7 +191,6 @@ Section with_monad.
     | Tarch _ _ => OK
     | Tdecltype e | Texprtype e => expr e
     | Tnamed n | Tenum n => name n
-    | TLocInfo _ t => type t
     end
 
   with expr (e : Expr) : M :=

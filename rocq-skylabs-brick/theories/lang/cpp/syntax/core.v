@@ -304,7 +304,6 @@ with type : Set :=
      (1) in <https://en.cppreference.com/w/cpp/language/decltype>
    *)
 | Tunsupported (_ : PrimString.string)
-| TLocInfo (_ : loc_info) (_ : type)
 
 (** ** Expressions *)
 (**
@@ -568,10 +567,8 @@ Inductive temp_param : Set :=
 #[global] Arguments BindingDecl : clear implicits.
 #[global] Arguments Stmt : clear implicits.
 
-(** Remove only leading location-information wrappers.  Unlike the recursive
-    [erase_*] functions below, these functions do not traverse the whole AST.
-    [drop_loc_info] looks through leading qualifiers so that locations and
-    qualifiers can be normalized independently. *)
+(** Remove only leading location-information wrappers. Unlike the recursive
+    [erase_*] functions below, these functions do not traverse the whole AST. *)
 Fixpoint drop_atomic_name_loc_info (an : atomic_name) : atomic_name :=
   match an with
   | ANLocInfo _ an => drop_atomic_name_loc_info an
@@ -588,13 +585,6 @@ Fixpoint drop_temp_arg_loc_info (arg : temp_arg) : temp_arg :=
   match arg with
   | ALocInfo _ arg => drop_temp_arg_loc_info arg
   | _ => arg
-  end.
-
-Fixpoint drop_loc_info (t : type) : type :=
-  match t with
-  | TLocInfo _ t => drop_loc_info t
-  | Tqualified cv t => Tqualified cv (drop_loc_info t)
-  | _ => t
   end.
 
 Fixpoint drop_expr_loc_info (e : Expr) : Expr :=
@@ -621,13 +611,9 @@ Fixpoint drop_binding_decl_loc_info (d : BindingDecl) : BindingDecl :=
   | _ => d
   end.
 
-Lemma drop_loc_info_idemp t : drop_loc_info (drop_loc_info t) = drop_loc_info t.
-Proof. by induction t; cbn; auto; rewrite IHt. Qed.
-
 #[global] Arguments drop_atomic_name_loc_info !_ / : simpl nomatch, assert.
 #[global] Arguments drop_name_loc_info !_ / : simpl nomatch, assert.
 #[global] Arguments drop_temp_arg_loc_info !_ / : simpl nomatch, assert.
-#[global] Arguments drop_loc_info !_ / : simpl nomatch, assert.
 #[global] Arguments drop_expr_loc_info !_ / : simpl nomatch, assert.
 #[global] Arguments drop_stmt_loc_info !_ / : simpl nomatch, assert.
 #[global] Arguments drop_var_decl_loc_info !_ / : simpl nomatch, assert.
@@ -707,7 +693,6 @@ with erase_type (t : type) {struct t} : type :=
   | Tdecltype e => Tdecltype (erase_Expr e)
   | Texprtype e => Texprtype (erase_Expr e)
   | Tunsupported msg => Tunsupported msg
-  | TLocInfo _ t => erase_type t
   end
 
 with erase_Expr (e : Expr) {struct e} : Expr :=
@@ -1332,7 +1317,6 @@ with is_dependentT (t : type) : bool :=
   | Tdecltype e => is_dependentE e
   | Texprtype e => is_dependentE e
   | Tunsupported _ => false
-  | TLocInfo _ t => is_dependentT t
   end
 
 with is_dependentE (e : Expr) : bool :=

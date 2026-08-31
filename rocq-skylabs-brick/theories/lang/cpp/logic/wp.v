@@ -829,10 +829,6 @@ Section with_cpp.
   Axiom wp_init_type_equiv : forall (σ : genv) tu ρ ty1 ty2 p e Q,
     ty1 ≡ ty2 -> wp_init tu ρ ty1 p e Q -|- wp_init tu ρ ty2 p e Q.
 
-  Lemma wp_init_type_loc_info : forall {σ : genv} tu ρ li ty p e Q,
-      wp_init tu ρ (TLocInfo li ty) p e Q -|- wp_init tu ρ ty p e Q.
-  Proof. intros. apply wp_init_type_equiv, TLocInfo_equiv. Qed.
-
   Section wp_init_proper.
     Context {σ : genv}.
 

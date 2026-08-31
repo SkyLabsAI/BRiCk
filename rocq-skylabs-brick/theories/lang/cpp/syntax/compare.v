@@ -1274,7 +1274,6 @@ Module type.
       | 21 => box_Tresult_member_call
       | 22 => box_Tresult_parenlist
       | 23 => box_Tresult_member
-      | 25 => loc_info * type
       | _ => PrimString.string
       end.
 
@@ -1349,7 +1348,6 @@ Module type.
       | Tresult_member a b => kp 23 $ Box_Tresult_member a b
       | Tauto => k 3%uint63
       | Tunsupported msg => kp 24 msg
-      | TLocInfo li t => kp 25 (li, t)
       end.
 
     Definition compare_data (p : positive) : car p -> car p -> comparison :=
@@ -1372,7 +1370,6 @@ Module type.
       | 21 => box_Tresult_member_call_compare
       | 22 => box_Tresult_parenlist_compare
       | 23 => box_Tresult_member_compare
-      | 25 => prod.compare PrimInt63.compare compareT
       | _ => PrimString.compare
       end.
 

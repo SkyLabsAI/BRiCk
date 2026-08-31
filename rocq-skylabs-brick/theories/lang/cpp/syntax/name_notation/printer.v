@@ -259,7 +259,6 @@ Section with_lang.
     | Tarch _ note => mfail
     | Tunsupported note => mfail
     | Tparam nm => mret $ "$" ++ nm
-    | TLocInfo _ ty => printT is_arg ty
     | _ => mfail
     end
 

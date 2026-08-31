@@ -238,7 +238,6 @@ Module PTRS_IMPL <: PTRS_INTF.
   Definition o_derived σ base derived : offset :=
     mkOffset σ (o_derived_ base derived) I.
   Program Definition o_sub σ ty z : offset :=
-    let ty := drop_loc_info ty in
     if decide (z = 0)%Z
     then
       match size_of σ ty with
@@ -329,7 +328,7 @@ Module PTRS_IMPL <: PTRS_INTF.
   Proof.
     move=> E. rewrite (comm_L _ _ i) /o_sub/eval_offset/eval_raw_offset /=.
     rewrite /= /mkOffset /mk_offset_seg/=/o_sub_off/=.
-    case_decide; subst; rewrite /= size_of_drop_loc_info {}E //=.
+    case_decide; subst; rewrite /= {}E //=.
     by rewrite right_id_L.
   Qed.
 
@@ -556,7 +555,7 @@ Module PTRS_IMPL <: PTRS_INTF.
   Lemma o_sub_0 σ ty :
     is_Some (size_of σ ty) ->
     o_sub σ ty 0 = o_id.
-  Proof. move=>[sz Hsz]. by rewrite /o_sub /= size_of_drop_loc_info Hsz. Qed.
+  Proof. rewrite /o_sub; case_decide=>// -[?]; by case: size_of. Qed.
 
   Lemma ptr_alloc_id_offset {p o} :
     let p' := p ,, o in

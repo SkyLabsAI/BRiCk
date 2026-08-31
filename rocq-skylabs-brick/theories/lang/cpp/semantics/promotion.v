@@ -35,7 +35,7 @@ Definition underlying_type (tu : translation_unit) (nm : globname) : option type
     it the original [enum].
  *)
 Definition representation_type (tu : translation_unit) (ty : type) : type :=
-  match drop_loc_info (drop_qualifiers ty) with
+  match drop_qualifiers ty with
   | Tenum nm as ty => default ty $ underlying_type tu nm
   | ty => ty
   end.
@@ -113,7 +113,7 @@ Fixpoint first_representable (info : abi.t) (ty : type) (ls : list type) : optio
     <https://eel.is/c++draft/conv.prom>
 
  *)
-Definition promote_integral_raw (tu : translation_unit) (ty : type) : option type :=
+Definition promote_integral (tu : translation_unit) (ty : type) : option type :=
   let info := tu.(abi) in
   match representation_type tu ty with
     (* signed char or short can be converted to int *)
@@ -186,21 +186,17 @@ Definition promote_integral_raw (tu : translation_unit) (ty : type) : option typ
   | Tdecltype _ (* ?? *)
   | Texprtype _ (* ?? *)
   | Tauto
-  | Tresult_call _ _
-  | TLocInfo _ _ => None
+  | Tresult_call _ _ => None
   end.
-
-Definition promote_integral (tu : translation_unit) (ty : type) : option type :=
-  promote_integral_raw tu (drop_loc_info ty).
 
 Goal forall tu, promote_integral tu Tchar = Some Tint.
 Proof.
-  intros. rewrite /promote_integral/promote_integral_raw/=.
+  intros. rewrite /promote_integral/=.
   destruct (abi.char_signed (abi tu)); done.
 Succeed Qed. Abort.
 Goal forall tu, promote_integral tu Twchar = Some (integral_type_to_type $ abi.equivalent_int_type (abi tu) char_type.Cwchar).
 Proof.
-  intros. rewrite /promote_integral/promote_integral_raw/abi.equivalent_int_type/=.
+  intros. rewrite /promote_integral/abi.equivalent_int_type/=.
   rewrite /fully_representable/=.
   destruct (abi.wchar_signed (abi tu)); done.
 Succeed Qed. Abort.

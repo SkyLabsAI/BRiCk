@@ -253,7 +253,6 @@ Section with_lang.
     | Tresult_member_call _ _ _
     | Tresult_parenlist _ _
     | Tresult_member _ _ => "!nyi"
-    | TLocInfo _ ty => printT ty
     end
   with printE (e : Expr) : PrimString.string :=
     match e with

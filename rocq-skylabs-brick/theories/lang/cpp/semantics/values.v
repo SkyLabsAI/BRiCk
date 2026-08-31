@@ -198,8 +198,7 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
     | Tfloat_ f => Some (Vfloat f (float_value.zero f))
     | Tbool => Some (Vbool false)
     | Tnullptr => Some (Vptr nullptr)
-    | Tqualified _ t
-    | TLocInfo _ t => get_default t
+    | Tqualified _ t => get_default t
     | _ => None
     end.
 End VAL_MIXIN.
@@ -373,9 +372,6 @@ Module Type RAW_BYTES_MIXIN
   | Vqual t ty v1 v2 :
     val_related ty v1 v2 ->
     val_related (Tqualified t ty) v1 v2
-  | Vloc_info li ty v1 v2 :
-    val_related ty v1 v2 ->
-    val_related (TLocInfo li ty) v1 v2
   | Vraw_uint8 raw z (Hraw : raw_bytes_of_val σ Tbyte (Vint z) [raw]) :
     val_related Tbyte (Vraw raw) (Vint z)
   | Vuint8_raw z raw (Hraw : raw_bytes_of_val σ Tbyte (Vint z) [raw]) :
@@ -449,10 +445,6 @@ Module Type RAW_BYTES_MIXIN
     val_related (Tqualified q ty) v1 v2.
   Proof. by constructor. Qed.
 
-  Lemma val_related_loc_info {σ} li ty v1 v2 :
-    val_related (TLocInfo li ty) v1 v2 <-> val_related ty v1 v2.
-  Proof. split; first by inversion 1; subst; auto. by constructor. Qed.
-
   #[global] Instance val_related_equivalence {σ} ty : Equivalence (val_related ty).
   Proof.
     split; red.
@@ -460,7 +452,6 @@ Module Type RAW_BYTES_MIXIN
     { induction 1; auto. }
     intros v1 v2. induction 1.
     { done. }
-    { inversion 1; simplify_eq; auto. }
     { inversion 1; simplify_eq; auto. }
     { inversion 1; simplify_eq; auto.
       have [->] := raw_bytes_of_val_unique_encoding Hraw Hraw0. auto. }
@@ -554,8 +545,6 @@ Module Type HAS_TYPE (Import P : PTRS) (Import R : RAW_BYTES) (Import V : VAL_MI
         has_type_prop v (Tptr ty) <-> exists p, v = Vptr p.
     Axiom has_type_prop_erase_qualifiers : forall v ty,
         has_type_prop v ty <-> has_type_prop v (erase_qualifiers ty).
-    Axiom has_type_prop_loc_info : forall v li ty,
-        has_type_prop v (TLocInfo li ty) <-> has_type_prop v ty.
     Axiom has_type_prop_nullptr : forall v,
         has_type_prop v Tnullptr <-> v = Vptr nullptr.
     Axiom has_type_prop_ref : forall v ty,
@@ -649,26 +638,11 @@ Module Type HAS_TYPE_MIXIN (Import P : PTRS) (Import R : RAW_BYTES) (Import V : 
       has_type_prop (Vfloat f z) (Tfloat_ f).
     Proof. rewrite has_type_prop_float; eauto. Qed.
 
-    Lemma has_type_prop_drop_loc_info :
-      forall v ty, has_type_prop v ty <-> has_type_prop v (drop_loc_info ty).
-    Proof.
-      induction ty; cbn; try reflexivity.
-      { split; intro H.
-        - apply (proj1 (has_type_prop_qual_iff (drop_loc_info ty) q v)).
-          apply (proj1 IHty), (proj2 (has_type_prop_qual_iff ty q v)), H.
-        - apply (proj1 (has_type_prop_qual_iff ty q v)).
-          apply (proj2 IHty), (proj2 (has_type_prop_qual_iff (drop_loc_info ty) q v)), H. }
-      { split; intro H.
-        - apply (proj1 IHty), (proj1 (has_type_prop_loc_info v l ty)), H.
-        - apply (proj2 (has_type_prop_loc_info v l ty)), (proj2 IHty), H. }
-    Qed.
-
     Lemma has_type_prop_drop_qualifiers :
       forall v ty, has_type_prop v ty <-> has_type_prop v (drop_qualifiers ty).
     Proof.
       induction ty; simpl; eauto.
-      { by rewrite -has_type_prop_qual_iff -IHty. }
-      { by rewrite !has_type_prop_loc_info IHty. }
+      by rewrite -has_type_prop_qual_iff -IHty.
     Qed.
 
     (* TODO fix naming convention *)
@@ -747,6 +721,5 @@ Proof.
   induction 1.
   { done. }
   { by rewrite -!has_type_prop_qual_iff. }
-  { by rewrite !has_type_prop_loc_info. }
   all: by rewrite has_type_prop_raw_bytes_of_val.
 Qed.

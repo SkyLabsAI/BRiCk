@@ -31,8 +31,35 @@ Module decltype.
   on [to_valcat t] is simpler than matching on [t] when [t] might be
   an xvalue reference to a function type.
   *)
-  Definition to_exprtype : decltype -> ValCat * exprtype :=
-    skylabs.lang.cpp.syntax.typing.decltype.to_exprtype.
+  Definition to_exprtype (t : decltype) : ValCat * exprtype :=
+    match drop_qualifiers t with
+    | Tref u => (Lvalue, u)
+    | Trv_ref u =>
+      match drop_qualifiers u with
+      | Tfunction _ as f =>
+        (**
+        Both "a function call or an overloaded operator expression,
+        whose return type is rvalue reference to function" and "a cast
+        expression to rvalue reference to function type" are lvalue
+        expressions.
+
+        This also applies to <<__builtin_va_arg>> (an extension).
+
+        https://en.cppreference.com/w/cpp/language/value_category#lvalue
+        https://www.eel.is/c++draft/expr.call#13
+        https://www.eel.is/c++draft/expr.static.cast#1
+        https://www.eel.is/c++draft/expr.reinterpret.cast#1
+        https://www.eel.is/c++draft/expr.cast#1 (C-style casts)
+
+        NOTE: We return the function type without qualifiers in light
+        of "A function or reference type is always cv-unqualified."
+        <https://www.eel.is/c++draft/basic.type.qualifier#1>
+        *)
+        (Lvalue, f)
+      | _ => (Xvalue, u)
+      end
+    | _ => (Prvalue, t)	(** Promote sharing, rather than normalize qualifiers *)
+    end.
   Definition to_valcat (t : decltype) : ValCat := (to_exprtype t).1.
 
   (**
@@ -157,11 +184,17 @@ Module decltype.
     Definition from_function_type (ft : function_type) : decltype :=
       normalize ft.(ft_return).
     Definition from_functype (t : functype) : M decltype :=
-      from_function_type <$> of_option (as_function t).
+      match t with
+      | Tfunction ft => mret $ from_function_type ft
+      | _ => mfail
+      end.
     Definition require_functype (t : decltype) : M function_type :=
-      of_option (as_function t).
+      match t with
+      | Tfunction ft => mret ft
+      | _ => mfail
+      end.
     Definition require_mfunctype (t : decltype) : M (decltype * function_type) :=
-      match drop_loc_info (drop_qualifiers t) with
+      match t with
       | Tmember_pointer nm ft => pair nm <$> require_functype ft
       | _ => mfail
       end.
@@ -194,8 +227,8 @@ Module decltype.
 
           https://www.eel.is/c++draft/expr.mptr.oper#6
           *)
-          match (to_exprtype l).1 with
-          | Xvalue => mret $ Trv_ref t
+          match l with
+          | Trv_ref _ => mret $ Trv_ref t
           | _ => mret $ Tref t
           end
         | Bdotip => mret $ Tref t	(* derived from [Bdotp] *)
@@ -221,54 +254,63 @@ Module decltype.
            Arrays can be lvalues or xvalues.
          *)
         let arithmetic t := guard (Is_true $ is_arithmetic t) in
-        let subscript_operand vc ty :=
-          match vc with
-          | Lvalue => tref QM <$> array_type ty
-          | Xvalue => trv_ref QM <$> array_type ty
-          | Prvalue => Tref <$> unptr ty
-          end
-        in
-        let '(vc1, ty1) := to_exprtype t1 in
-        let '(vc2, ty2) := to_exprtype t2 in
-        match subscript_operand vc1 ty1 with
-        | Some ret => const ret <$> arithmetic ty2
-        | None =>
-            match subscript_operand vc2 ty2 with
-            | Some ret => const ret <$> arithmetic ty1
-            | None => mfail
-            end
+        match drop_qualifiers t1 , drop_qualifiers t2 with
+        | Tref aty , other => const (tref QM) <$> arithmetic other <*> of_option (array_type aty)
+        | Trv_ref aty , other => const (trv_ref QM) <$> arithmetic other <*> of_option (array_type aty)
+        | Tptr ety , other => const (Tref ety) <$> arithmetic other
+        | other , Tref aty => const (tref QM) <$> arithmetic other <*> of_option (array_type aty)
+        | other , Trv_ref aty => const (trv_ref QM) <$> arithmetic other <*> of_option (array_type aty)
+        | other , Tptr ety => const (Tref ety) <$> arithmetic other
+        | _ , _ => mfail
         end.
 
       Definition requireL (t : decltype) : M exprtype :=
-        match drop_loc_info (drop_qualifiers t) with
+        match t with
         | Tref t => mret t
         | _ => mfail
         end.
       Definition requireGL_get (t : decltype) : M (bool * exprtype) :=
-        match drop_loc_info (drop_qualifiers t) with
+        match t with
         | Tref t => mret (false, t)
         | Trv_ref t => mret (true, t)
         | _ => mfail
         end.
       Definition requireGL (t : decltype) : M exprtype :=
-        match drop_loc_info (drop_qualifiers t) with
+        match t with
         | Tref t | Trv_ref t => mret t
         | _ => mfail
         end.
       Definition requirePR (t : decltype) : M exprtype :=
-        if is_reference_type t then mfail else mret t.
+        match t with
+        | Tref _ | Trv_ref _ => mfail
+        | _ => mret t
+        end.
       Definition requireR (t : decltype) : M exprtype :=
-        if (to_exprtype t).1 is Lvalue then mfail else mret t.
+        match t with
+        | Tref _ => mfail
+        | _ => mret t
+        end.
       Definition require_eq {T : Set} {_ : EqDecision T} (l : T) (r : T) : M unit :=
         trace ("require equal "%bs, l, " = "%bs, r) $
         const () <$> guard (l = r).
 
       (* determine if this type can be used in an <<if>> *)
       Definition require_testable (t : exprtype) : M unit :=
-        if is_arithmetic t || is_pointer t then mret () else mfail.
+        match t with
+        | Tnum _ _
+        | Tptr _
+        | Tbool
+        | Tnullptr
+        | Tchar_ _
+        | Tfloat_ _ => mret ()
+        | _ => mfail
+        end.
 
       Definition require_ptr (t : decltype) : M exprtype :=
-        of_option (unptr t).
+        match t with
+        | Tptr t => mret t
+        | _ => mfail
+        end.
 
       Definition arrow_deref (arrow : bool) : decltype -> M exprtype :=
         if arrow then require_ptr else requireGL.
@@ -289,45 +331,39 @@ Module decltype.
       Succeed Example _0 : bool_decide (tq_le QM QC) := I.
       (* END upstream *)
 
-      Definition same_type_loc (dt t : type) : bool :=
-        bool_decide (drop_loc_info dt = drop_loc_info t).
-
-      Definition ptr_target_loc (dt t : type) : bool :=
-        let dt := drop_loc_info dt in
-        let t := drop_loc_info t in
-        bool_decide (dt = t \/ dt = Tvoid).
-
-      Definition ref_conv (dt t : type) : M unit :=
-        qual_norm (fun dq dt => qual_norm (fun q t =>
-          let* _ := guard (tq_le q dq) in
-          let* _ := guard (Is_true (same_type_loc dt t)) in
-          mret ()) t) dt.
-
-      Definition ptr_conv (dt t : type) : M unit :=
-        qual_norm (fun dq dt => qual_norm (fun q t =>
-          let* _ := guard (tq_le q dq) in
-          let* _ := guard (Is_true (ptr_target_loc dt t)) in
-          mret ()) t) dt.
-
-      Definition can_initialize_unqual (dt t : type) : M unit :=
-        let dt := drop_loc_info dt in
-        let t := drop_loc_info t in
-        match dt, t with
-        | Tauto, _ =>
-            (* Anything can initialize <auto>.
-               TODO: make this only apply when checking template code *)
-            mret ()
-        | Tref dt, Tref t
-        | Trv_ref dt, Trv_ref t => ref_conv dt t
-        | Tref dt, Trv_ref t =>
-            if is_const dt then ref_conv dt t else mfail
-        | Tptr dt, Tptr t => ptr_conv dt t
-        | dt, t => const () <$> guard (Is_true (same_type_loc dt t))
-        end.
-
       Definition can_initialize (dt : decltype) (t : decltype) : M unit :=
+        let ref_conv dt t :=
+          qual_norm (fun dq dt => qual_norm (fun q t =>
+                                    let* _ := guard (tq_le q dq) in
+                                    let* _ := guard (dt = t) in
+                                    mret ()
+            ) t) dt
+        in
+        let ptr_conv dt t :=
+              qual_norm (fun dq dt => qual_norm (fun q t =>
+                                                let* _ := guard (tq_le q dq) in
+                                                let* _ := guard (dt = t \/ dt = Tvoid) in
+                                                mret ()
+                                     ) t) dt
+        in
         trace (Can_initialize dt t) $
-          can_initialize_unqual (drop_qualifiers dt) (drop_qualifiers t).
+          match drop_qualifiers dt , drop_qualifiers t with
+          | Tauto , _ =>
+              (* Anything can initialize <auto>.
+                 TODO: make this only apply when checking template code *)
+              mret ()
+          | Tref dt , Tref t
+          | Trv_ref dt , Trv_ref t =>
+              ref_conv dt t
+          | Tref dt , Trv_ref t =>
+              if is_const dt
+              then ref_conv dt t
+              else mfail
+          | Tptr dt , Tptr t =>
+              ptr_conv dt t
+          | dt , t =>
+              let* _ := guard (dt = t) in mret ()
+          end.
 
       Fixpoint check_args (ar : function_arity) (ts : list decltype) (tes : list decltype) : M unit :=
         match ts , tes with
@@ -345,10 +381,11 @@ Module decltype.
         end.
 
       Definition gl_or_ptr (t : decltype) : M (ValCat * exprtype) :=
-        let '(vc, ty) := to_exprtype t in
-        match vc with
-        | Lvalue | Xvalue => mret (vc, ty)
-        | Prvalue => pair Prvalue <$> of_option (unptr ty)
+        match t with
+        | Tptr t => mret (Prvalue, t)
+        | Tref t => mret (Lvalue, t)
+        | Trv_ref t => mret (Xvalue, t)
+        | _ => mfail
         end.
 
       Definition vc_to_type (vc : ValCat) : exprtype -> decltype :=
@@ -384,22 +421,21 @@ Module decltype.
             throw ("not a class "%bs, from)
         end.
       Definition check_list (from : exprtype) (ts : list exprtype) (result : exprtype) : M () :=
-        match class_name from , class_name result with
-        | Some bc , Some rc => check_list' bc ts rc
+        match drop_qualifiers from , drop_qualifiers result with
+        | Tnamed bc , Tnamed rc =>
+            check_list' bc ts rc
         | _ , _ =>
             throw ("cast does not start and end on named types "%bs, from, result)
         end.
 
       Definition of_cast (c : Cast) (base : decltype) : M decltype :=
         let require_float t :=
-          let t := drop_loc_info (drop_qualifiers t) in
           match t with
           | Tfloat_ _ => mret tt
           | _ => throw ("floating point required"%bs, t)
           end
         in
         let require_integral t :=
-          let t := drop_loc_info (drop_qualifiers t) in
           match t with
           | Tnum _ _ | Tbool | Tchar_ _ | Tenum _ => mret tt
           | _ => throw ("integral type required"%bs, t)
@@ -419,7 +455,17 @@ Module decltype.
             mret $ drop_qualifiers t
         | Cnoop t => mret t
         | Carray2ptr =>
-            let k cv base := Tptr <$> of_option (array_type_unqual cv base) in
+            let k cv base :=
+              match base with
+              | Tarray ty _
+              | Tincomplete_array ty
+              | Tvariable_array ty _ =>
+                  let res := Tptr $ tqualified cv ty in
+                  (* let* _ := require_eq t res in *)
+                  mret res
+              | _ => mfail
+              end
+            in
             requireGL base >>= qual_norm k
         | Cfun2ptr =>
             let* base := requireL base in
@@ -448,14 +494,17 @@ Module decltype.
         | Cintegral t => mret t
         | Cint2bool => mret Tbool
         | Cnull2ptr t =>
-            let src := (to_exprtype base).2 in
             let* _ :=
-              if is_pointer src || is_arithmetic src then mret tt
-              else throw ("source of null2ptr cast must be nullptr or integral type"%bs, base)
+              match drop_qualifiers (to_exprtype base).2 with
+              | Tnullptr | Tnum _ _ => mret tt
+              | _ => throw ("source of null2ptr cast must be nullptr or integral type"%bs, base)
+              end
             in
             let* _ :=
-              if is_pointer t then mret ()
-              else throw ("destination of null2ptr cast must be a pointer"%bs, t)
+              match t with
+              | Tptr _ | Tnullptr => mret ()
+              | _ => throw ("destination of null2ptr cast must be a pointer"%bs, t)
+              end
             in
             mret t
         | Cfloat2int t =>
@@ -482,20 +531,6 @@ Module decltype.
         | Cunsupported _ to => mret to
         end.
 
-      Fixpoint cast_result_unqual (cv : type_qualifiers) (t : decltype) : decltype :=
-        match t with
-        | TLocInfo li t => TLocInfo li (cast_result_unqual cv t)
-        | Tnamed _
-        | Tarray _ _
-        | Tincomplete_array _
-        | Tvariable_array _ _
-        | Tenum _ => tqualified cv t
-        | _ => t
-        end.
-
-      Definition cast_result : decltype -> decltype :=
-        qual_norm cast_result_unqual.
-
       Definition not_const (t : exprtype) : M _ :=
         guard (Is_true $ qual_norm (fun cv _ => negb $ q_const cv) t).
 
@@ -504,8 +539,13 @@ Module decltype.
 
 
       Definition supports_inc_dec (t : exprtype) : M _ :=
-        if is_arithmetic t || is_pointer t then mret ()
-        else throw "can not increment or decrement bool"%bs.
+        match t with
+        | Tnum _ _
+        | Tchar_ _
+        | Tfloat_ _
+        | Tptr _ => mret ()
+        | _ => throw "can not increment or decrement bool"%bs
+        end.
 
       Definition field_type (fld : field_name.t) (ms : list Member) : M type :=
         match List.find (fun m => bool_decide (m.(mem_name) = fld)) ms with
@@ -551,7 +591,6 @@ Module decltype.
         | Tnamed nm => trace "constructor result"%pstring $ require_eq c nm
         | Tarray ety _ => check_constructor_result c ety
         | Tqualified _ ty => check_constructor_result c ty
-        | TLocInfo _ ty => check_constructor_result c ty
         | _ => throw ("not a constructor type "%pstring, t, " expected type is "%pstring, c)
         end.
 
@@ -594,24 +633,18 @@ Module decltype.
             end
 
         | Echar _ t =>
-            let char_literal_type t :=
-              match drop_loc_info (drop_qualifiers t) with
-              | Tchar_ _ | Tuchar | Tschar => true
-              | _ => false
-              end
-            in if char_literal_type t then mret t else mfail
+            match t with
+            | Tchar_ _
+            | Tuchar | Tschar => mret t
+            | _ => mfail
+            end
         | Estring chars t =>
             mret $ Tref $ Tarray (Tconst t) (1 + literal_string.lengthN chars)
         | Eunresolved_string_literal t =>
             mret $ Tref $ Tincomplete_array (Tconst t)
         | Eint _ t =>
-            let int_literal_type t :=
-              match drop_loc_info (drop_qualifiers t) with
-              | Tchar_ _ | Tnum _ _ => true
-              | _ => false
-              end
-            in
-            let* _ := guard (Is_true (int_literal_type t)) in mret t
+            let* _ := guard (t ∈ [Tchar;Tuchar;Tschar;Tshort;Tushort;Tint;Tuint;Tlong;Tulong;Tlonglong;Tulonglong]) in
+            mret t
         | Ebool _ => mret Tbool
         | Efloat ft _ => mret $ Tfloat_ ft
         | Eunop op e t =>
@@ -675,6 +708,17 @@ Module decltype.
               check_args ft.(ft_arity) ft.(ft_params) ts in
             mret ft.(ft_return)
         | Eexplicit_cast _ t e =>
+            let cast_result :=
+              qual_norm (fun cv t =>
+                           match t with
+                           | Tnamed _
+                           | Tarray _ _
+                           | Tincomplete_array _
+                           | Tvariable_array _ _
+                           | Tenum _ => tqualified cv t
+                           | _ => t
+                           end)
+            in
             let* ct := of_expr e in
             let* _ := require_eq ct (cast_result t) in
             (* ^^ in the case of pr-values, type qualifiers do not need to match *)
@@ -697,7 +741,11 @@ Module decltype.
               | inl (_, _, ft) => require_functype ft
               | inr e =>
                   let* ft := of_expr e in
-                  let* '(_, ft) := require_mfunctype ft in mret ft
+                  match ft with
+                  | Tmember_pointer cls (Tfunction ft) =>
+                      mret ft
+                  | _ => mfail
+                  end
               end
             in
             let* _ :=

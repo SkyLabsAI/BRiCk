@@ -207,7 +207,6 @@ Module MTraverse.
       | Tdecltype e => Tdecltype <$> traverseE e
       | Texprtype e => Texprtype <$> traverseE e
       | Tunsupported msg => mret $ Tunsupported msg
-      | TLocInfo li t => TLocInfo li <$> traverseT t
       end
 
     with traverseE (e : Expr) : F Expr :=

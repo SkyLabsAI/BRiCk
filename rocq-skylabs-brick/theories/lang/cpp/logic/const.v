@@ -146,7 +146,6 @@ Section defs.
       | Texprtype _
       | Tauto
       | Tresult_parenlist _ _ => False
-      | TLocInfo _ ty => wp_const from to addr ty Q
       end%I.
 
   (* NOTE: we prefer an entailment ([|--]) to a bi-entailment ([-|-]) or an equality
@@ -155,30 +154,6 @@ Section defs.
   Axiom wp_const_intro : forall tu f t a ty Q,
     Reduce (wp_const_body (wp_const tu) tu f t a ty Q)
     |-- wp_const tu f t a ty Q.
-
-  Lemma wp_const_value_type_intro_unqual tu from to (p : ptr) ty Q :
-    ~~ has_qualifiers ty ->
-    is_value_type ty ->
-    (Exists v,
-      let R q := p |-> tptstoR (erase_qualifiers ty) q v in
-      R from ** (R to -* Q))
-    |-- wp_const tu from to p ty Q.
-  Proof.
-    revert Q. induction ty; intros Q Hnq Hval;
-      rewrite -wp_const_intro decompose_type_unqual // /=; try done.
-    all: try (by
-      iIntros "(%v & R & HQ) !>";
-      iExists v; iFrame "R";
-      iIntros "R !>";
-      iApply ("HQ" with "R")).
-    cbn [erase_qualifiers].
-    iIntros "(%v & R & HQ) !>".
-    iDestruct (_at_tptstoR_loc_info_elim with "R") as "R".
-    iApply (IHty (|={top}=> Q)%I Hnq Hval).
-    iExists v. iFrame "R".
-    iIntros "R !>".
-    iApply "HQ". iApply _at_tptstoR_loc_info_intro. iFrame.
-  Qed.
 
   Lemma wp_const_value_type_intro tu from to (p : ptr) ty Q :
     is_value_type ty ->
@@ -193,20 +168,12 @@ Section defs.
   Proof.
     rewrite is_value_type_decompose_type qual_norm_decompose_type.
     rewrite erase_qualifiers_decompose_type.
-    have := has_qualifiers_decompose_type ty.
+    have := is_qualified_decompose_type ty.
     rewrite -wp_const_intro.
     destruct (decompose_type ty) as [cv rty]; cbn=>??.
     case_match; first by rewrite -fupd_intro. destruct rty; try done.
-    all: try (by iIntros "(% & R & HQ) !>"; iExists _; iFrame "R";
-      iIntros "R !>"; iApply ("HQ" with "R")).
-    cbn [erase_qualifiers].
-    iIntros "(%v & R & HQ) !>".
-    iDestruct (_at_tptstoR_loc_info_elim with "R") as "R".
-    iApply (wp_const_value_type_intro_unqual
-      tu from to p rty (|={top}=> Q)%I); [done | done |].
-    iExists v. iFrame "R".
-    iIntros "R !>".
-    iApply "HQ". iApply _at_tptstoR_loc_info_intro. iFrame.
+    all: by iIntros "(% & R & HQ) !>"; iExists _; iFrame "R";
+      iIntros "R !>"; iApply ("HQ" with "R").
   Qed.
 
   Lemma primR_wp_const_val tu from to (p : ptr) ty Q :
@@ -228,29 +195,6 @@ Section defs.
     iApply "HQ". iApply ("HR" with "V R").
   Qed.
 
-  Lemma wp_const_reference_type_intro_unqual tu from to (p : ptr) ty Q :
-    ~~ has_qualifiers ty ->
-    is_reference_type ty ->
-    (Exists v,
-      let R q := p |-> primR (Tref $ erase_qualifiers $ as_ref ty) q v in
-      R from ** (R to -* Q))
-    |-- wp_const tu from to p ty Q.
-  Proof.
-    revert Q. induction ty; intros Q Hnq Href;
-      rewrite -wp_const_intro decompose_type_unqual // /=; try done.
-    all: try (by
-      iIntros "(%v & R & HQ) !>";
-      iExists v; iFrame "R";
-      iIntros "R !>";
-      iApply ("HQ" with "R")).
-    cbn in Hnq, Href.
-    iIntros "(%v & R & HQ) !>".
-    iApply (IHty (|={top}=> Q)%I Hnq Href).
-    iExists v. iFrame "R".
-    iIntros "R !>".
-    iApply ("HQ" with "R").
-  Qed.
-
   Lemma primR_wp_const_ref tu from to (p : ptr) ty Q :
     is_reference_type ty ->
     (
@@ -264,18 +208,12 @@ Section defs.
   Proof.
     cbn. rewrite is_reference_type_decompose_type.
     rewrite qual_norm_decompose_type as_ref_decompose_type.
-    have := has_qualifiers_decompose_type ty.
+    have := is_qualified_decompose_type ty.
     rewrite -wp_const_intro.
     destruct (decompose_type ty) as [cv rty]; cbn=>??.
     case_match; first by rewrite -fupd_intro. destruct rty; first [done | cbn].
-    all: try (by iIntros "(% & R & HQ) !>"; iExists _; iFrame "R";
-      iIntros "R !>"; iApply ("HQ" with "R")).
-    iIntros "(%v & R & HQ) !>".
-    iApply (wp_const_reference_type_intro_unqual
-      tu from to p rty (|={top}=> Q)%I); [done | done |].
-    iExists v. iFrame "R".
-    iIntros "R !>".
-    iApply ("HQ" with "R").
+    all: iIntros "(% & R & HQ) !>"; iExists _; iFrame "R";
+      iIntros "R !>"; iApply ("HQ" with "R").
   Qed.
 
   (* Sanity check the [_frame] property *)
