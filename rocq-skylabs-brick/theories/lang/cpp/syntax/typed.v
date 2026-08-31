@@ -11,6 +11,7 @@ Require Import skylabs.lang.cpp.syntax.typing.
 Require Import skylabs.lang.cpp.syntax.stmt.
 Require Import skylabs.lang.cpp.syntax.namemap.
 Require Import skylabs.lang.cpp.syntax.translation_unit.
+Require Import skylabs.lang.cpp.syntax.name_notation.
 Import UPoly.
 
 #[local] Open Scope monad_scope.
@@ -19,6 +20,54 @@ Import UPoly.
 mlock Definition breadcrumb {t : Set} (_ : t) : Error.t := inhabitant.
 mlock Definition Bad_allocation_function_args (_ : list type) : Error.t := inhabitant.
 mlock Definition Can_initialize (dt it : decltype) : Error.t := inhabitant.
+
+(** ** <<std::initializer_list>>
+
+The class from <https://eel.is/c++draft/dcl.init.list#5>. The name is fixed by
+the standard and is never versioned.
+
+NOTE [std_initializer_list] and [Tstd_initializer_list] must be [Abbreviation]s,
+not hidden behind [Definition]s, since ASTs will expand them.
+*)
+Abbreviation std_initializer_list := "std::initializer_list"%cpp_name (only parsing).
+
+(** <<std::initializer_list<ety> >>. *)
+Abbreviation Tstd_initializer_list ety :=
+  (Tnamed (Ninst std_initializer_list [Atype ety])) (only parsing).
+
+(**
+[std_initializer_list_element cls] is the <<E>> of <<std::initializer_list<E> >>,
+when [cls] is that class.
+
+NOTE <<E>> is read off the *class*. [dcl.init.list#5] then fixes the backing
+array to <<const E[N]>>, so recovering <<E>> from the array instead -- by erasing
+qualifiers, say -- would conflate the <<const>> that [dcl.init.list#5] adds with
+one that is genuinely part of <<E>>, and so get
+<<std::initializer_list<const int> >> wrong.
+*)
+Definition std_initializer_list_element (cls : name) : option type :=
+  match cls with
+  | Ninst hd [Atype ety] =>
+      if bool_decide (hd = std_initializer_list) then Some ety else None
+  | _ => None
+  end.
+
+Succeed Example TEST_std_initializer_list_element :
+  std_initializer_list_element (Ninst std_initializer_list [Atype Tint])
+    = Some Tint := eq_refl.
+
+(** The <<const E>> case, which a qualifier-erasing version gets wrong. *)
+Succeed Example TEST_std_initializer_list_element_const :
+  std_initializer_list_element (Ninst std_initializer_list [Atype (Tconst Tint)])
+    = Some (Tconst Tint) := eq_refl.
+
+(** Not <<std::initializer_list>>. *)
+Succeed Example TEST_std_initializer_list_element_other :
+  std_initializer_list_element (Nglobal (Nid "my_span")) = None := eq_refl.
+
+(** Not an instantiation at all. *)
+Succeed Example TEST_std_initializer_list_element_uninst :
+  std_initializer_list_element std_initializer_list = None := eq_refl.
 
 Module decltype.
 
@@ -892,8 +941,8 @@ Module decltype.
               end
             in
             (* <<E>> comes from the class, and the backing array's element type
-               must then be <<const E>>; see [std_initializer_list_element] in
-               types.v for why <<E>> is not read off the array instead. *)
+               must then be <<const E>>; see [std_initializer_list_element]
+               above for why <<E>> is not read off the array instead. *)
             let* ety := of_option $ std_initializer_list_element cls in
             let* aety := of_option $ array_type $ drop_reference bt in
             let* _ :=
@@ -1253,7 +1302,7 @@ Section Einitlist_std_tests.
 
   (** Accepted: <<E>> may itself be <<const>>-qualified, and then <<const E>> is
       <<E>>. Both this and [TEST_accept] are legitimate, which is why <<E>> has
-      to come from the class -- see [std_initializer_list_element] in types.v. *)
+      to come from the class -- see [std_initializer_list_element] above. *)
   Succeed Example TEST_accept_const_elem :
     accepts (Tstd_initializer_list (Tconst Tint)) = true := eq_refl.
 

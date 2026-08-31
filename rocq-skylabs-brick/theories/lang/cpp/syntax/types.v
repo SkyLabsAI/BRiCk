@@ -1273,88 +1273,43 @@ End with_lang.
 
 (** ** <<std::initializer_list>>
 
-The class from <https://eel.is/c++draft/dcl.init.list#5>.
+[std_initlist_ctor cls aety] names the constructor that [wp_init_initlist_std]
+(../logic/expr.v) reduces [Einitlist_std] to, for a backing array of element type
+[aety] (i.e. <<const E>>, per <https://eel.is/c++draft/dcl.init.list#5>).
 
-NOTE this name is fixed by the standard and is never versioned: libc++ declares
-<<initializer_list>> *outside* its inline versioning namespace precisely because
-the compiler must be able to find <<std::initializer_list>>.
+<https://eel.is/c++draft/support.initlist> specifies only the default
+constructor, so the one the compiler actually calls is implementation defined.
+clang and gcc pass <<(base, size)>>; the MSVC STL passes <<(base, base + size)>>
+with a slightly different declaration. The two carry the same information and
+will validate the same code, so choosing between them is a technicality -- but a
+reduction has to name one, and we name the clang/gcc form.
 
-We spell the name out rather than using the <<cpp_name>> notation because that
-notation's parser depends on this file. [TEST_std_initializer_list_name] in
-../logic/expr.v checks the two agree.
-
-NOTE [std_initializer_list] and [Tstd_initializer_list] are [Abbreviation]s, not
-[Definition]s, so that a goal mentioning the class contains the name itself. An
-opaque constant could not be matched against the name that specifications use,
-and a transparent one is rejected by the <<sl-transparent-constants>> check when
-it appears under [type_ptr]. They sit outside [with_lang] because a
-section-local [Abbreviation] would be discharged at [End with_lang].
+Nothing is thereby claimed about the other form: [wp_init_initlist_std] takes
+[std_initlist_ctor_available] as a side condition, so on a library declaring only
+the two-pointer constructor the rule simply does not apply. Supporting MSVC would
+mean an alternative rule testing for that overload and/or for the compiler
+flavor, rather than a change here.
 *)
-Abbreviation std_initializer_list :=
-  (Nscoped (Nglobal (Nid "std")) (Nid "initializer_list")) (only parsing).
-
-(** <<std::initializer_list<ety> >>. *)
-Abbreviation Tstd_initializer_list ety :=
-  (Tnamed (Ninst std_initializer_list [Atype ety])) (only parsing).
+Definition std_initlist_ctor (cls : name) (aety : type) : name :=
+  Nscoped cls (Nctor [Tptr aety; Tsize_t]).
 
 (**
-[std_initializer_list_element cls] is the <<E>> of <<std::initializer_list<E> >>,
-when [cls] is that class.
+The same name, computed from the types [Einitlist_std backing ty] carries: [ty]
+is the class and [bty] the backing array's type.
 
-NOTE <<E>> is read off the *class*, not off the backing array. [dcl.init.list#5]
-determines <<E>> from the class and then fixes the backing array's type to
-<<const E[N]>> for that same <<E>>, so the two differ by exactly that <<const>>
-whenever <<E>> is unqualified. Recovering <<E>> from the array instead -- by
-erasing qualifiers, say -- conflates the <<const>> that [dcl.init.list#5] *adds*
-with a <<const>> that is genuinely part of <<E>>, and so gets
-<<std::initializer_list<const int> >> wrong: it would describe such an object
-with an [initializer_listR] indexed by <<int>>, i.e. belonging to a different
-class. [wp_init_initlist_std] in ../logic/expr.v depends on this; see
-[TEST_std_initializer_list_element_const] below.
+This is what the dependency traversal in <<auto/cpp/deps.v>> and the library hint
+that discharges the resulting goal both use, so that all three agree on the name
+by construction.
 *)
-Definition std_initializer_list_element (cls : name) : option type :=
-  match cls with
-  | Ninst hd [Atype ety] =>
-      if bool_decide (hd = std_initializer_list) then Some ety else None
+Definition std_initlist_ctor_of (ty bty : type) : option name :=
+  match drop_qualifiers ty with
+  | Tnamed cls =>
+      match drop_qualifiers (drop_reference bty) with
+      | Tarray aety _ => Some (std_initlist_ctor cls aety)
+      | _ => None
+      end
   | _ => None
   end.
-
-(**
-<<E>> is recovered verbatim, so [Tnamed cls] is [Tstd_initializer_list ety]
-*exactly* -- not merely up to qualifiers.
-
-This is the invariant [wp_init_initlist_std] in ../logic/expr.v relies on to
-describe an object of class [cls] with an [initializer_listR] indexed by [ety]:
-were the two allowed to differ, that rule would hand out [type_ptrR] for a class
-other than the one being constructed.
-*)
-Lemma std_initializer_list_element_inv cls ety :
-  std_initializer_list_element cls = Some ety ->
-  Tnamed cls = Tstd_initializer_list ety.
-Proof.
-  rewrite /std_initializer_list_element.
-  repeat case_match; try discriminate.
-  intros Heq; simplify_eq.
-  match goal with H : bool_decide _ = true |- _ => apply bool_decide_eq_true_1 in H end.
-  by subst.
-Qed.
-
-Succeed Example TEST_std_initializer_list_element :
-  std_initializer_list_element (Ninst std_initializer_list [Atype Tint])
-    = Some Tint := eq_refl.
-
-(** The <<const E>> case, which a qualifier-erasing version gets wrong. *)
-Succeed Example TEST_std_initializer_list_element_const :
-  std_initializer_list_element (Ninst std_initializer_list [Atype (Tconst Tint)])
-    = Some (Tconst Tint) := eq_refl.
-
-(** Not <<std::initializer_list>>. *)
-Succeed Example TEST_std_initializer_list_element_other :
-  std_initializer_list_element (Nglobal (Nid "my_span")) = None := eq_refl.
-
-(** Not an instantiation at all. *)
-Succeed Example TEST_std_initializer_list_element_uninst :
-  std_initializer_list_element std_initializer_list = None := eq_refl.
 
 Notation normalize_type := (normalize_type' QM).
 Notation as_ref := (as_ref' (fun u => u) Tvoid).
