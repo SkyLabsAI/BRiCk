@@ -976,9 +976,6 @@ Proof. rewrite /is_scalar_type. induction ty; simpl; auto. Qed.
 (**
 [is_value_type t] returns [true] if [t] has value semantics. A value
 type is one that can be represented by [val].
-
-NOTE: The only difference between a value type and a scalar type is
-that [Tvoid] is a value type and not a scalar type.
  *)
 Definition is_value_type (t : type) : bool :=
   match drop_qualifiers t with
@@ -997,6 +994,17 @@ Definition is_value_type (t : type) : bool :=
   | Tvoid => true
   | _ => false
   end.
+
+(*
+The only difference between a value type and a scalar type is
+that [Tvoid] is a value type and not a scalar type.
+*)
+Lemma is_value_type_is_scalar_type ty :
+  is_value_type ty <-> is_scalar_type ty \/ drop_qualifiers ty = Tvoid.
+Proof.
+  rewrite /is_value_type /is_scalar_type.
+  case_match; naive_solver.
+Qed.
 
 Lemma is_value_type_erase_qualifiers ty :
   is_value_type (erase_qualifiers ty) = is_value_type ty.
