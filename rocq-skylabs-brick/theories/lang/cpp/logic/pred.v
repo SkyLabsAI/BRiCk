@@ -1493,6 +1493,10 @@ Section has_type.
     all: rewrite !has_type_or_undef_nonundef//.
     all: by rewrite !has_type_nonptr// has_type_prop_raw_bytes_of_val.
   Qed.
+
+  #[global] Instance has_type_ptr_valid_ptr_observe ty p :
+    Observe (valid_ptr p) (has_type (Vptr p) (Tptr ty)).
+  Proof. rewrite has_type_ptr'. apply _. Qed.
 End has_type.
 
 #[global] Notation "'validP<' ty > v" := (has_type v ty%cpp_type)
