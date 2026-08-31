@@ -29,6 +29,26 @@ Require Import skylabs.lang.cpp.logic.dispatch.
 Require Import skylabs.lang.cpp.logic.func.
 Require Import skylabs.iris.extra.bi.errors.
 
+(**
+[std_initlist_ctor_available tu cls aety] holds when [cls] declares the
+constructor that [wp_init_initlist_std] reduces [Einitlist_std] to.
+
+NOTE [Nctor] names carry their parameter types, so finding [std_initlist_ctor]
+under this name *is* finding the <<(const E*, size_t)>> signature; there is
+nothing further to compare. See [std_initlist_ctor] in ../syntax/types.v for why
+that signature, and not another, is the one we target.
+
+It lives here rather than beside [std_initlist_ctor] because
+<<syntax/translation_unit.v>> requires <<syntax/types.v>>, so [types.v] cannot
+mention a [translation_unit].
+*)
+Definition std_initlist_ctor_available
+    (tu : translation_unit) (cls : name) (aety : type) : bool :=
+  match tu.(symbols) !! std_initlist_ctor cls aety with
+  | Some (Oconstructor _) => true
+  | _ => false
+  end.
+
 Module Type Expr.
   (* Needed for [Unfold wp_test] *)
   #[local] Arguments wp_test [_ _ _ _] _ _ _.
@@ -48,82 +68,6 @@ Module Type Expr.
           use [wp_operand] to specify the semantics of any expression that is guaranteed
           to return a primitive.
    *)
-
-  (** ** <<std::initializer_list>>
-
-  [initializer_listR ety q arrayp n] is ownership of a
-  <<std::initializer_list<ety> >> object referring to a backing array of [n]
-  elements at [arrayp] (<https://eel.is/c++draft/dcl.init.list#5>).
-
-  NOTE [ety] is the *class's template argument*, not the backing array's element
-  type: [dcl.init.list#5] gives that array the type <<const ety[n]>>, so the two
-  differ by exactly that <<const>> whenever [ety] is unqualified. Indexing by the
-  template argument is what keeps this predicate and the class of the object it
-  describes in agreement; see [std_initializer_list_element] in
-  ../syntax/types.v.
-
-  *** Why this is abstract
-
-  <https://eel.is/c++draft/initializer.list.syn> specifies only <<begin()>>,
-  <<end()>> and <<size()>>, and declares no data members: how an
-  implementation refers to the backing array is unspecified. But the three
-  accessors pin the *information content* exactly -- <<end() - begin() ==
-  size()>> -- so every conforming representation is isomorphic to the pair
-  ([arrayp], [n]) that this predicate carries. Nothing is lost by declining to
-  name fields, and BRiCk thereby avoids committing to any particular standard
-  library, or to how clang chooses to lay one out.
-
-  This is the canonical statement of that rationale. [Einitlist_std] in
-  ../syntax/core.v, [wp_init_initlist_std] below, and the <<std.initializer_list>>
-  specifications in brick-libcpp refer here rather than repeat it.
-
-  *** What it owns
-
-  Only the <<initializer_list>> object itself, i.e. the "spine". The backing
-  array is a separate resource at [arrayp], held by whoever created it: its
-  storage has automatic duration tied to the materialized temporary, not to this
-  object. Callers pair this with [arrayp |-> arrayR ...].
-
-  NOTE there is deliberately no <<initializer_listR ... |-- anyR ...>> axiom.
-  Destroying one of these objects goes through the destructor specification the
-  standard library provides (<<std.initializer_list.dtor>> in brick-libcpp), which
-  consumes the spine directly; an [anyR] entailment here would be a second, unused
-  route to the same thing.
-
-  NOTE the interface below is what specifications of <<std::initializer_list>>
-  are written against, so it is the expensive thing to change. Should we ever
-  want to *prove* a standard library rather than axiomatize it, this predicate
-  can be given a definition in terms of that library's fields, at which point
-  these instances become theorems and no specification stated in terms of them
-  needs to change.
-  *)
-  Parameter initializer_listR : forall `{Σ : cpp_logic, σ : genv}
-    (ety : type) (q : cQp.t) (arrayp : ptr) (n : N), Rep.
-
-  Section initializer_listR.
-    Context `{Σ : cpp_logic, σ : genv}.
-
-    (** Ownership is fractional, so a <<const>> list can be shared. *)
-    #[global] Declare Instance initializer_listR_cfractional ety arrayp n :
-      CFractional (fun q => initializer_listR ety q arrayp n).
-
-    (** The object exists and has the right type. Without this one cannot call
-        a member function on it, since the call machinery needs the object.
-
-        NOTE [Tstd_initializer_list ety] is the class of the object built by
-        [wp_init_initlist_std], exactly -- not merely up to qualifiers. That is
-        the point of taking [ety] from the class rather than from the backing
-        array. *)
-    #[global] Declare Instance initializer_listR_type_ptr ety q arrayp n :
-      Observe (type_ptrR (Tstd_initializer_list ety))
-              (initializer_listR ety q arrayp n).
-
-    (** Two fractions of the same object refer to the same backing array. *)
-    #[global] Declare Instance initializer_listR_agree ety q q' arrayp arrayp' n n' :
-      Observe2 [| arrayp = arrayp' /\ n = n' |]
-        (initializer_listR ety q  arrayp  n)
-        (initializer_listR ety q' arrayp' n').
-  End initializer_listR.
 
   Section with_resolve.
     Context `{Σ : cpp_logic} {resolve:genv}.
@@ -2037,50 +1981,36 @@ Module Type Expr.
 
     (** ** <<std::initializer_list>>
 
-        [Einitlist_std backing ty] evaluates [backing] to get the address of the
-        backing array of <https://eel.is/c++draft/dcl.init.list#5> and then
-        builds the <<std::initializer_list>> object at [base] referring to it.
+        [Einitlist_std backing ty] is the implicit construction of a
+        <<std::initializer_list<E> >> from the backing array [backing], of type
+        <<const E[N]>> (<https://eel.is/c++draft/dcl.init.list#5>).
 
-        The resulting object is described by [initializer_listR] (declared at
-        the top of this file), which is abstract; see the rationale there. In
-        particular this rule commits to no field layout, and so to none of
-        clang's choices about one.
+        The class has no specified data members, so rather than describe the
+        result directly this rule reduces to the constructor call that builds it
+        -- following [wp_init_binop_spaceship] above -- and leaves the
+        representation to whoever specifies that constructor. [backing] is a
+        subexpression of that call, so its evaluation and [FreeTemps] are the
+        call machinery's job.
 
-        NOTE the backing array is a temporary, so its storage (and the
-        corresponding [FreeTemps]) come from the [Ematerialize_temp] that
-        [backing] wraps. Consequently this rule only covers backing arrays whose
-        lifetime ends with the enclosing full-expression. The lifetime-extended
-        case, e.g. <<std::initializer_list<int> il = {1,2,3};>>, additionally
-        requires support for scope-extruded temporaries, which BRiCk does not
-        yet have; cpp2v emits [Eunsupported] for those.
+        See [std_initlist_ctor] in ../syntax/types.v, which names the
+        constructor and records why that signature. The third side condition
+        requires [tu] to actually declare it, so the rule is inapplicable -- not
+        wrong -- on a standard library that provides a different form. The class
+        and the backing array are checked by [decltype.of_expr] in
+        ../syntax/typed.v, so <<cpp2v --check-types>> rejects malformed nodes.
 
-        NOTE <<const>>ness is carried by the fraction rather than by
-        [wp_make_const]: with an abstract representation there are no subobjects
-        to mark.
-
-        NOTE ../syntax/typed.v checks a *weaker* condition than the side
-        conditions below: it agrees on the class and on the array's element type,
-        but accepts any array shape that [array_type] does -- including
-        [Tincomplete_array] and [Tvariable_array] -- whereas this rule needs the
-        extent [n] and so applies only to [Tarray]. [dcl.init.list#5] fixes the
-        type to <<const E[N]>>, so clang cannot produce the other two here; but a
-        node accepted by <<cpp2v --check-types>> is not by that fact alone one
-        this rule applies to. *)
-    Axiom wp_init_initlist_std : forall cls (base : ptr) cv ty backing ety (n : N) Q,
+        NOTE this covers only backing arrays whose lifetime ends with the
+        enclosing full-expression. The lifetime-extended case, e.g.
+        <<std::initializer_list<int> il = {1,2,3};>>, additionally requires
+        scope-extruded temporaries, which BRiCk does not yet have; cpp2v emits
+        [Eunsupported] for those. *)
+    Axiom wp_init_initlist_std : forall cls (base : ptr) cv ty backing aety (n : N) Q,
         decompose_type ty = (cv, Tnamed cls) ->
-        (* <<E>> is read off the class, so [Tnamed cls] is
-           [Tstd_initializer_list ety] exactly; see
-           [std_initializer_list_element] in ../syntax/types.v for why it is not
-           recovered from the backing array instead. *)
-        std_initializer_list_element cls = Some ety ->
-        (* [dcl.init.list#5]: [backing] is a glvalue of type <<const E[N]>>. The
-           qualifier sits on the element type, but we are defensive about an
-           outer one. *)
-        drop_qualifiers (drop_reference (type_of backing))
-          = Tarray (tqualified QC ety) n ->
-        (letI* arrayp, free := wp_glval backing in
-         base |-> initializer_listR ety (cQp.mk (q_const cv) 1) arrayp n -*
-         Q free)
+        drop_qualifiers (drop_reference (type_of backing)) = Tarray aety n ->
+        std_initlist_ctor_available tu cls aety = true ->
+        wp_init ty base
+          (Econstructor (std_initlist_ctor cls aety)
+             [Ecast Carray2ptr backing; Eint (Z.of_N n) Tsize_t] ty) Q
       |-- wp_init ty base (Einitlist_std backing ty) Q.
 
   End with_resolve.
@@ -2260,17 +2190,3 @@ Declare Module E : Expr.
 Export E.
 
 Export cfrac.
-
-(** [std_initializer_list] in ../syntax/types.v spells the class name out,
-    because the <<cpp_name>> parser depends on that file. Check the two agree. *)
-Succeed Example TEST_std_initializer_list_name :
-  std_initializer_list = "std::initializer_list"%cpp_name := eq_refl.
-
-(** Follows from [initializer_listR_cfractional]; it is what lets the IPM see
-    [initializer_listR] as fractional when solving for a fraction. It cannot be
-    declared alongside the other instances in [Expr], since it has a proof. *)
-#[global] Instance initializer_listR_ascfractional `{Σ : cpp_logic, σ : genv}
-    (ety : type) (arrayp : ptr) (n : N) (q : cQp.t) :
-  AsCFractional (initializer_listR ety q arrayp n)
-    (fun q => initializer_listR ety q arrayp n) q.
-Proof. solve_as_cfrac. Qed.
