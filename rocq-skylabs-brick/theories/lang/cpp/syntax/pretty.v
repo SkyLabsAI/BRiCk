@@ -7,6 +7,7 @@ Require Import skylabs.prelude.base.
 Require Import skylabs.prelude.pstring.
 
 Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.loc_info.
 
 (** Pretty printing of C++ terms *)
 
@@ -85,7 +86,7 @@ Section with_lang.
 
     Definition printAN (an : atomic_name) : PrimString.string :=
       let print_args args := parens $ concat $ join_sep ", " $ printType <$> args in
-      match drop_atomic_name_loc_info an with
+      match LocInfo.drop_atomic_name an with
       | Nid id => id
       | Nfunction quals nm args =>
           nm ++ print_args args ++ with_space (printFQ quals)

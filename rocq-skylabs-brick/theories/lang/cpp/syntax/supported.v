@@ -6,6 +6,7 @@
 
 Require Import skylabs.prelude.base.
 Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.loc_info.
 Require Import skylabs.lang.cpp.syntax.types.
 Require Import skylabs.lang.cpp.syntax.typing.
 Require Import skylabs.lang.cpp.syntax.translation_unit.
@@ -115,7 +116,7 @@ Section with_monad.
     end.
 
   Definition atomic_name (type : type -> M) (an : atomic_name) : M :=
-    match drop_atomic_name_loc_info an with
+    match LocInfo.drop_atomic_name an with
     | Nid _ => OK
     | Nfunction _ _ ts => lst type ts
     | Nctor ts => lst type ts

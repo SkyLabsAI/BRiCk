@@ -9,6 +9,7 @@ Require Import skylabs.prelude.bytestring.
 Require Import skylabs.upoly.base.
 Require Import skylabs.upoly.upoly.
 Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.loc_info.
 Require Import skylabs.lang.cpp.syntax.types.
 Require Import skylabs.lang.cpp.syntax.pretty.
 
@@ -47,7 +48,7 @@ Section with_lang.
 
     #[local] Open Scope monad_scope.
     Definition printAN inst (an : atomic_name) : option PrimString.string :=
-      match drop_atomic_name_loc_info an return option PrimString.string with
+      match LocInfo.drop_atomic_name an return option PrimString.string with
       | Nid id =>
           if bool_decide (id = "") then mfail else mret $ id ++ inst
       | Nfunction quals nm args =>

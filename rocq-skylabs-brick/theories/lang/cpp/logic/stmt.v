@@ -9,6 +9,7 @@ Require Import skylabs.iris.extra.bi.atomic_commit.
 Require Import skylabs.iris.extra.bi.spec.exclusive.
 
 Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.syntax.loc_info.
 Require Import skylabs.lang.cpp.semantics.
 Require Import skylabs.lang.cpp.logic.pred.
 Require Import skylabs.lang.cpp.logic.path_pred.
@@ -121,7 +122,7 @@ Module Type Stmt.
       | nil => k ρ free
       | d :: ds =>
           let wp_binding (d : BindingDecl) : mpred :=
-            match drop_binding_decl_loc_info d with
+            match LocInfo.drop_binding_decl d with
             | Bvar x ty init =>
                 Forall p, wp_initialize ρ_init ty p init (fun free' => wp_destructure ρ_init ds (Rbind x p ρ) k (FreeTemps.delete ty p >*> free' >*> free)%free)
             | Bbind x _ init =>
@@ -174,7 +175,7 @@ Module Type Stmt.
 
 
     Definition wp_decl (ρ : region) (d : VarDecl) (k : region -> FreeTemps -> epred) : mpred :=
-      match drop_var_decl_loc_info d with
+      match LocInfo.drop_var_decl d with
       | Dvar x ty init => wp_decl_var ρ x ty init k
       | Ddecompose init x ds =>
         (* NOTE: the **declaration type** of the initializer *)
@@ -316,7 +317,7 @@ Module Type Stmt.
 
     Definition wp_block_stmt (ρ : region) (s : Stmt)
         (body : region -> Kpred -> mpred) (Q : Kpred) : mpred :=
-      let s := drop_stmt_loc_info s in
+      let s := LocInfo.drop_stmt s in
       match s with
       | Sdecl ds =>
           wp_decls ρ ds (funI ρ free =>
@@ -721,7 +722,7 @@ Module Type Stmt.
       end.
 
     Definition get_case (s : Stmt) : option SwitchBranch :=
-      match drop_stmt_loc_info s with
+      match LocInfo.drop_stmt s with
       | Scase sb => Some sb
       | _ => None
       end.

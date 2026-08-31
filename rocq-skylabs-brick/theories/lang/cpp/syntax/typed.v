@@ -6,6 +6,7 @@
 
 Require Import skylabs.lang.cpp.syntax.prelude.
 Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.loc_info.
 Require Import skylabs.lang.cpp.syntax.types.
 Require Import skylabs.lang.cpp.syntax.typing.
 Require Import skylabs.lang.cpp.syntax.stmt.
@@ -969,7 +970,7 @@ Module decltype.
       Context (of_expr : Expr -> M decltype).
 
       Definition check_binding (d : BindingDecl) : M bindings :=
-        match drop_binding_decl_loc_info d with
+        match LocInfo.drop_binding_decl d with
         | Bvar lname ty init =>
             let* _ := of_expr init >>= can_initialize ty in
             mret ({| _bindings := [(lname, ty)] |})
@@ -981,7 +982,7 @@ Module decltype.
 
       Definition check_decl (d : VarDecl) : M bindings :=
         trace d
-        match drop_var_decl_loc_info d with
+        match LocInfo.drop_var_decl d with
         | Dvar lname ty oinit =>
             let* _ :=
               match oinit with
