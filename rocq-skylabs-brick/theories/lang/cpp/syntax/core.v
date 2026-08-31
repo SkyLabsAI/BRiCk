@@ -415,17 +415,7 @@ See <https://eel.is/c++draft/dcl.init.list#5>; in clang this is
 [CXXStdInitializerListExpr].
 
 The expression is always a prvalue of class type, so it is consumed by
-[wp_init].
-
-NOTE: <https://eel.is/c++draft/initializer.list.syn> declares *no* data
-members for <<std::initializer_list>>, so how the object refers to [backing]
-is implementation defined. Implementations pick one of two two-field layouts,
-<<{ const E* first; size_t size; }>> (libstdc++, libc++) or
-<<{ const E* first; const E* last; }>> (MSVC STL). Rather than commit to
-either, the semantics describes the object with an abstract representation
-predicate carrying just the backing array's base pointer and element count.
-See [initializer_listR] in ../logic/expr.v, which states the rationale, and
-[wp_init_initlist_std], which builds one.
+[wp_init]; see [wp_init_initlist_std] in ../logic/expr.v.
 *)
 | Einitlist_std (backing : Expr) (t : type)
 
