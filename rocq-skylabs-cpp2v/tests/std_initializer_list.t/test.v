@@ -1,6 +1,7 @@
 Require Import skylabs.prelude.base.
 Require Import skylabs.lang.cpp.syntax.
 Require skylabs.lang.cpp.syntax.supported.
+Require Import skylabs.lang.cpp.syntax.typed.
 
 Require test.test_cpp.
 
