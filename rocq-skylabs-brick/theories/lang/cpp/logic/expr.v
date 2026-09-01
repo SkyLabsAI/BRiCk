@@ -29,6 +29,26 @@ Require Import skylabs.lang.cpp.logic.dispatch.
 Require Import skylabs.lang.cpp.logic.func.
 Require Import skylabs.iris.extra.bi.errors.
 
+(**
+[std_initlist_ctor_available tu cls aety] holds when [cls] declares the
+constructor that [wp_init_initlist_std] reduces [Einitlist_std] to.
+
+NOTE [Nctor] names carry their parameter types, so finding [std_initlist_ctor]
+under this name *is* finding the <<(const E*, size_t)>> signature; there is
+nothing further to compare. See [std_initlist_ctor] in ../syntax/types.v for why
+that signature, and not another, is the one we target.
+
+It lives here rather than beside [std_initlist_ctor] because
+<<syntax/translation_unit.v>> requires <<syntax/types.v>>, so [types.v] cannot
+mention a [translation_unit].
+*)
+Definition std_initlist_ctor_available
+    (tu : translation_unit) (cls : name) (aety : type) : bool :=
+  match tu.(symbols) !! std_initlist_ctor cls aety with
+  | Some (Oconstructor _) => true
+  | _ => false
+  end.
+
 Module Type Expr.
   (* Needed for [Unfold wp_test] *)
   #[local] Arguments wp_test [_ _ _ _] _ _ _.
@@ -1958,6 +1978,40 @@ Module Type Expr.
          | _ => False
          end)
       |-- wp_init ty base (Einitlist_union fld e ty) Q.
+
+    (** ** <<std::initializer_list>>
+
+        [Einitlist_std backing ty] is the implicit construction of a
+        <<std::initializer_list<E> >> from the backing array [backing], of type
+        <<const E[N]>> (<https://eel.is/c++draft/dcl.init.list#5>).
+
+        The class has no specified data members, so rather than describe the
+        result directly this rule reduces to the constructor call that builds it
+        -- following [wp_init_binop_spaceship] above -- and leaves the
+        representation to whoever specifies that constructor. [backing] is a
+        subexpression of that call, so its evaluation and [FreeTemps] are the
+        call machinery's job.
+
+        See [std_initlist_ctor] in ../syntax/types.v, which names the
+        constructor and records why that signature. The third side condition
+        requires [tu] to actually declare it, so the rule is inapplicable -- not
+        wrong -- on a standard library that provides a different form. The class
+        and the backing array are checked by [decltype.of_expr] in
+        ../syntax/typed.v, so <<cpp2v --check-types>> rejects malformed nodes.
+
+        NOTE this covers only backing arrays whose lifetime ends with the
+        enclosing full-expression. The lifetime-extended case, e.g.
+        <<std::initializer_list<int> il = {1,2,3};>>, additionally requires
+        scope-extruded temporaries, which BRiCk does not yet have; cpp2v emits
+        [Eunsupported] for those. *)
+    Axiom wp_init_initlist_std : forall cls (base : ptr) cv ty backing aety (n : N) Q,
+        decompose_type ty = (cv, Tnamed cls) ->
+        drop_qualifiers (drop_reference (type_of backing)) = Tarray aety n ->
+        std_initlist_ctor_available tu cls aety = true ->
+        wp_init ty base
+          (Econstructor (std_initlist_ctor cls aety)
+             [Ecast Carray2ptr backing; Eint (Z.of_N n) Tsize_t] ty) Q
+      |-- wp_init ty base (Einitlist_std backing ty) Q.
 
   End with_resolve.
 
