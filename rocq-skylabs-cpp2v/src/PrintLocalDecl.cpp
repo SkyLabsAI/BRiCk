@@ -57,8 +57,11 @@ public:
         // TODO: The following seems to be unsupported by parser.v
         if (decl->hasExternalStorage()) {
             return false;
+        }
 
-        } else if (decl->isStaticLocal()) {
+        LocationTable::Guard location{cprint.locationTable(), print, "DLocInfo",
+                                      loc::of(decl)};
+        if (decl->isStaticLocal()) {
             bool thread_safe =
                 cprint.getCompiler().getLangOpts().ThreadsafeStatics;
             print.ctor("Dinit");
@@ -105,6 +108,8 @@ public:
     }
 
     bool VisitDecompositionDecl(const DecompositionDecl *decl) {
+        LocationTable::Guard location{cprint.locationTable(), print, "DLocInfo",
+                                      loc::of(decl)};
         print.ctor("Ddecompose");
 
         cprint.printExpr(print, decl->getInit(), names);
@@ -115,6 +120,8 @@ public:
         print.output() << fmt::nbsp;
 
         print.list(decl->bindings(), [&](const BindingDecl *b) -> void {
+            LocationTable::Guard location{cprint.locationTable(), print,
+                                          "BLocInfo", loc::of(b)};
             if (auto *var = b->getHoldingVar()) {
                 guard::ctor _{print, "Bvar"};
                 print.str(var->getName()) << fmt::nbsp;

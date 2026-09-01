@@ -74,17 +74,14 @@ public:
     void VisitForStmt(const ForStmt *stmt, CoqPrinter &print,
                       ClangPrinter &cprint, ASTContext &) {
         print.ctor("Sfor");
-        print.option(stmt->getInit(), [&](const Stmt *v) {
-            cprint.printStmt(print, v);
-        });
+        print.option(stmt->getInit(),
+                     [&](const Stmt *v) { cprint.printStmt(print, v); });
         print.space();
-        print.option(stmt->getCond(), [&](const Expr *v) {
-            cprint.printExpr(print, v);
-        });
+        print.option(stmt->getCond(),
+                     [&](const Expr *v) { cprint.printExpr(print, v); });
         print.space();
-        print.option(stmt->getInc(), [&](const Expr *v) {
-            cprint.printExpr(print, v);
-        });
+        print.option(stmt->getInc(),
+                     [&](const Expr *v) { cprint.printExpr(print, v); });
         print.space();
         cprint.printStmt(print, stmt->getBody());
         print.end_ctor();
@@ -105,17 +102,14 @@ public:
         print.space();
         cprint.printStmt(print, stmt->getEndStmt());
         print.space();
-        print.option(stmt->getInit(), [&](const Stmt *v) {
-            cprint.printStmt(print, v);
-        });
+        print.option(stmt->getInit(),
+                     [&](const Stmt *v) { cprint.printStmt(print, v); });
         print.space();
-        print.option(stmt->getCond(), [&](const Expr *v) {
-            cprint.printExpr(print, v);
-        });
+        print.option(stmt->getCond(),
+                     [&](const Expr *v) { cprint.printExpr(print, v); });
         print.space();
-        print.option(stmt->getInc(), [&](const Expr *v) {
-            cprint.printExpr(print, v);
-        });
+        print.option(stmt->getInc(),
+                     [&](const Expr *v) { cprint.printExpr(print, v); });
         print.space();
         cprint.printStmt(print, stmt->getLoopVarStmt());
         print.space();
@@ -148,9 +142,8 @@ public:
             print.ctor("Sif_consteval");
         } else {
             print.ctor("Sif");
-            print.option(stmt->getInit(), [&](const Stmt *v) {
-                cprint.printStmt(print, v);
-            });
+            print.option(stmt->getInit(),
+                         [&](const Stmt *v) { cprint.printStmt(print, v); });
             print.space();
             print.option(stmt->getConditionVariable(), [&](const VarDecl *v) {
                 cprint.printLocalDecl(print, v);
@@ -183,23 +176,27 @@ public:
 
     void VisitCaseStmt(const CaseStmt *stmt, CoqPrinter &print,
                        ClangPrinter &cprint, ASTContext &ctxt) {
-        llvm::APSInt lo, hi;
-        auto rhs = stmt->getRHS();
-        if (!constexprEvalInt(*stmt->getLHS(), ctxt, lo) ||
-            (rhs && !constexprEvalInt(*rhs, ctxt, hi))) {
-            // not evaluatable
-            guard::ctor _{print, "Sunsupported"};
-            print.str("unsupported (dependent) case label");
-        } else if (rhs) {
-            // evaluatable range
-            guard::ctor _{print, "Scase"};
-            guard::ctor __(print, "Range");
-            print.output() << lo << fmt::nbsp << hi;
-        } else {
-            // evaluatable simple case
-            guard::ctor _{print, "Scase"};
-            guard::ctor __(print, "Exact");
-            print.output() << lo;
+        {
+            LocationTable::Guard location{cprint.locationTable(), print,
+                                          "SLocInfo", loc::of(stmt)};
+            llvm::APSInt lo, hi;
+            auto rhs = stmt->getRHS();
+            if (!constexprEvalInt(*stmt->getLHS(), ctxt, lo) ||
+                (rhs && !constexprEvalInt(*rhs, ctxt, hi))) {
+                // not evaluatable
+                guard::ctor _{print, "Sunsupported"};
+                print.str("unsupported (dependent) case label");
+            } else if (rhs) {
+                // evaluatable range
+                guard::ctor _{print, "Scase"};
+                guard::ctor __(print, "Range");
+                print.output() << lo << fmt::nbsp << hi;
+            } else {
+                // evaluatable simple case
+                guard::ctor _{print, "Scase"};
+                guard::ctor __(print, "Exact");
+                print.output() << lo;
+            }
         }
 
         print.cons();
@@ -209,7 +206,11 @@ public:
 
     void VisitDefaultStmt(const DefaultStmt *stmt, CoqPrinter &print,
                           ClangPrinter &cprint, ASTContext &) {
-        print.output() << "Sdefault";
+        {
+            LocationTable::Guard location{cprint.locationTable(), print,
+                                          "SLocInfo", loc::of(stmt)};
+            print.output() << "Sdefault";
+        }
 
         if (stmt->getSubStmt()) {
             print.cons();
@@ -393,6 +394,13 @@ fmt::Formatter &ClangPrinter::printStmt(CoqPrinter &print,
                                         const clang::Stmt *stmt) {
     if (trace(Trace::Stmt))
         trace("printStmt", loc::of(stmt));
+    // Case and default visitors flatten a label and its substatement into two
+    // entries of the enclosing Sseq list. Wrapping their complete output would
+    // pass `Scase :: substatement` to SLocInfo as though it were one Stmt.
+    auto is_switch_label =
+        stmt && (isa<CaseStmt>(stmt) || isa<DefaultStmt>(stmt));
+    LocationTable::Guard location{is_switch_label ? nullptr : locationTable(),
+                                  print, "SLocInfo", loc::of(stmt)};
     __attribute__((unused)) auto depth = print.output().get_depth();
     PrintStmt::printer.Visit(stmt, print, *this, *this->context_);
     always_assert(depth == print.output().get_depth());

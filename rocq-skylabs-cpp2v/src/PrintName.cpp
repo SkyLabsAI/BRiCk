@@ -376,12 +376,10 @@ static unsigned getAnonymousIndex(const DeclContext &ctx, const Decl &decl,
     return i;
 }
 
-static fmt::Formatter &printUnsupportedTemplateParam(CoqPrinter &print,
-                                                     const NamedDecl *pdecl,
-                                                     ClangPrinter &cprint,
-                                                     loc::loc gloc,
-                                                     const char *ctor,
-                                                     StringRef msg) {
+static fmt::Formatter &
+printUnsupportedTemplateParam(CoqPrinter &print, const NamedDecl *pdecl,
+                              ClangPrinter &cprint, loc::loc gloc,
+                              const char *ctor, StringRef msg) {
     auto loc = pdecl ? loc::refine(gloc, pdecl) : gloc;
     ::unsupported(cprint, loc) << msg << "\n";
     guard::ctor _(print, ctor, false);
@@ -410,8 +408,7 @@ static std::string getTemplateParamName(const NamedDecl &decl) {
 
 static fmt::Formatter &printTemplateParam(CoqPrinter &print,
                                           const NamedDecl *pdecl,
-                                          ClangPrinter &cprint,
-                                          loc::loc gloc) {
+                                          ClangPrinter &cprint, loc::loc gloc) {
     if (ClangPrinter::debug && cprint.trace(Trace::Name))
         cprint.trace("printTemplateParam", loc::of(pdecl));
 
@@ -468,7 +465,8 @@ static fmt::Formatter &printTemplateParamDefault(CoqPrinter &print,
         return cprint.printTemplateArg(print, arg.getArgument(), loc::of(arg));
     };
 #if CLANG_VERSION_MAJOR < 19
-    auto print_default_type = [&](const QualType &type, loc::loc loc) -> auto & {
+    auto print_default_type = [&](const QualType &type,
+                                  loc::loc loc) -> auto & {
         guard::some _1(print, false);
         guard::ctor _2(print, "Atype", false);
         return cprint.printQualType(print, type, loc);
@@ -566,11 +564,12 @@ static fmt::Formatter &printTemplateParamsForDecl(CoqPrinter &print,
 
 static fmt::Formatter &printTemplateArg(CoqPrinter &print,
                                         const NamedDecl *pdecl,
-                                        ClangPrinter &cprint,
-                                        loc::loc gloc) {
+                                        ClangPrinter &cprint, loc::loc gloc) {
     if (ClangPrinter::debug && cprint.trace(Trace::Name))
         cprint.trace("printTemplateArg", loc::of(pdecl));
 
+    LocationTable::Guard location{cprint.locationTable(), print, "ALocInfo",
+                                  loc::refine(gloc, pdecl)};
     if (!pdecl)
         return printUnsupportedTemplateParam(print, pdecl, cprint, gloc,
                                              "Aunsupported",
@@ -613,10 +612,11 @@ static fmt::Formatter &printTemplateArg(CoqPrinter &print,
 
 static fmt::Formatter &printTemplateArg(CoqPrinter &print,
                                         const TemplateArgument &arg,
-                                        ClangPrinter &cprint,
-                                        loc::loc loc) {
+                                        ClangPrinter &cprint, loc::loc loc) {
     if (ClangPrinter::debug && cprint.trace(Trace::Name))
         cprint.trace("printTemplateArg", loc);
+    LocationTable::Guard location{cprint.locationTable(), print, "ALocInfo",
+                                  loc};
     auto kind = arg.getKind();
     auto Avalue = [&](auto val) -> auto & {
         guard::ctor _(print, "Avalue", false);
@@ -693,9 +693,10 @@ static fmt::Formatter &printTemplateArg(CoqPrinter &print,
     }
 }
 
-static fmt::Formatter &
-printTemplateArgList(CoqPrinter &print, const TemplateArgumentList &args,
-                     ClangPrinter &cprint, loc::loc loc) {
+static fmt::Formatter &printTemplateArgList(CoqPrinter &print,
+                                            const TemplateArgumentList &args,
+                                            ClangPrinter &cprint,
+                                            loc::loc loc) {
     if (ClangPrinter::debug && cprint.trace(Trace::Name))
         cprint.trace("printTemplateArgList", loc);
     return print.list(args.asArray(), [&](auto &arg) {
@@ -855,6 +856,8 @@ static fmt::Formatter &printAtomicName(const DeclContext &ctx, const Decl &decl,
     if (ClangPrinter::debug && cprint.trace(Trace::Name))
         cprint.trace("printAtomicName", loc::of(decl));
 
+    LocationTable::Guard location{cprint.locationTable(), print, "ANLocInfo",
+                                  loc::of(decl)};
     auto unsupported = [&](StringRef what) -> auto & {
         ::unsupported(cprint, loc::of(decl)) << what << "\n";
         guard::ctor ctor(print, "Nunsupported_atomic", false);
@@ -1084,6 +1087,8 @@ static fmt::Formatter &printName(CoqPrinter &print, const Decl &decl,
                                  ClangPrinter &cprint) {
     if (ClangPrinter::debug && cprint.trace(Trace::Name))
         cprint.trace("structured::printName", loc::of(decl));
+    LocationTable::Guard location{cprint.locationTable(), print, "NLocInfo",
+                                  loc::of(decl)};
     if (auto nd = dyn_cast<NamedDecl>(&decl)) {
         if (print.reference(nd))
             return print.output();
@@ -1167,8 +1172,13 @@ static fmt::Formatter &printDtorName(CoqPrinter &print,
     if (ClangPrinter::debug && cprint.trace(Trace::Name))
         cprint.trace("printDtorName", loc::of(decl));
 
+    auto loc = loc::of(decl);
+    LocationTable::Guard name_location{cprint.locationTable(), print,
+                                       "NLocInfo", loc};
     guard::ctor _(print, "Nscoped", false);
     printName(print, decl, cprint) << fmt::nbsp;
+    LocationTable::Guard atomic_location{cprint.locationTable(), print,
+                                         "ANLocInfo", loc};
     return print.output() << "Ndtor";
 }
 
@@ -1338,7 +1348,9 @@ fmt::Formatter &ClangPrinter::printTemplateArgsForDecl(CoqPrinter &print,
 namespace {
 fmt::Formatter &printDeclarationName(CoqPrinter &print,
                                      const DeclarationName &name,
-                                     ClangPrinter &cprint) {
+                                     ClangPrinter &cprint, loc::loc loc) {
+    LocationTable::Guard location{cprint.locationTable(), print, "ANLocInfo",
+                                  loc};
     /*
       TODO: This seems
 
@@ -1472,51 +1484,55 @@ fmt::Formatter &ClangPrinter::printNestedName(CoqPrinter &print,
 #endif
 }
 
-fmt::Formatter &ClangPrinter::printUnresolvedName(CoqPrinter &print,
-                                                  NestedNameSpecifierArg nn,
-                                                  const DeclarationName &name,
-                                                  loc::loc loc) {
-
+fmt::Formatter &ClangPrinter::printUnresolvedNameRaw(
+    CoqPrinter &print, NestedNameSpecifierArg nn, const DeclarationName &name,
+    loc::loc loc) {
     if (not nn) {
         // There is no prefix. Incomplete!
         guard::ctor _(print, "Nlocal", false);
-        return printDeclarationName(print, name, *this);
+        return printDeclarationName(print, name, *this, loc);
 #if CLANG_VERSION_MAJOR >= 22
     } else if (nn.getKind() == NestedNameSpecifier::Kind::Global) {
 #else
     } else if (nn->getKind() == NestedNameSpecifier::Global) {
 #endif
         guard::ctor _(print, "Nglobal", false);
-        return printDeclarationName(print, name, *this);
+        return printDeclarationName(print, name, *this, loc);
     } else {
         guard::ctor _(print, "Nscoped", false);
         printNestedName(print, nn, loc) << fmt::nbsp;
-        return printDeclarationName(print, name, *this);
+        return printDeclarationName(print, name, *this, loc);
     }
 }
 
+fmt::Formatter &ClangPrinter::printUnresolvedName(CoqPrinter &print,
+                                                  NestedNameSpecifierArg nn,
+                                                  const DeclarationName &name,
+                                                  loc::loc loc) {
+    LocationTable::Guard location{locationTable(), print, "NLocInfo", loc};
+    return printUnresolvedNameRaw(print, nn, name, loc);
+}
+
 fmt::Formatter &ClangPrinter::printUnresolvedName(
-    CoqPrinter &print, NestedNameSpecifierArg nn,
-    const DeclarationName &name,
+    CoqPrinter &print, NestedNameSpecifierArg nn, const DeclarationName &name,
     llvm::ArrayRef<clang::TemplateArgumentLoc> template_args, loc::loc loc) {
     if (template_args.empty())
         return printUnresolvedName(print, nn, name, loc);
-    else {
-        guard::ctor _(print, "Ninst", false);
-        printUnresolvedName(print, nn, name, loc) << fmt::nbsp;
-        return printTemplateArgs(print, template_args);
-    }
+
+    LocationTable::Guard location{locationTable(), print, "NLocInfo", loc};
+    guard::ctor _(print, "Ninst", false);
+    printUnresolvedNameRaw(print, nn, name, loc) << fmt::nbsp;
+    return printTemplateArgs(print, template_args);
 }
 
 fmt::Formatter &ClangPrinter::printUnresolvedName(
-    CoqPrinter &print, NestedNameSpecifierArg nn,
-    const DeclarationName &name,
+    CoqPrinter &print, NestedNameSpecifierArg nn, const DeclarationName &name,
     llvm::ArrayRef<clang::TemplateArgument> template_args, loc::loc loc) {
     if (template_args.empty())
         return printUnresolvedName(print, nn, name, loc);
-    else {
-        guard::ctor _(print, "Ninst", false);
-        printUnresolvedName(print, nn, name, loc) << fmt::nbsp;
-        return printTemplateArgs(print, template_args);
-    }
+
+    LocationTable::Guard location{locationTable(), print, "NLocInfo", loc};
+    guard::ctor _(print, "Ninst", false);
+    printUnresolvedNameRaw(print, nn, name, loc) << fmt::nbsp;
+    return printTemplateArgs(print, template_args);
 }

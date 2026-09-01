@@ -13,9 +13,9 @@ Q = @
 all: $(GEN_FILES) $(GEN_VALCAT_FILES)
 
 valcat_of_%_cpp.v: valcat_of.cpp
-	$(Q)cpp2v -v -o $@ $< -- -std=c++$*
+	$(Q)cpp2v -v -o $@ $< --loc-info=none -- -std=c++$*
 
 %_cpp.v: %.cpp
-	$(Q)cpp2v -v -o $@ $< -- $(CPPFLAGS)
+	$(Q)cpp2v -v -o $@ $< --loc-info=none -- $(CPPFLAGS)
 %_hpp.v: %.hpp
-	$(Q)cpp2v -v -o $@ $< -- $(CPPFLAGS)
+	$(Q)cpp2v -v -o $@ $< --loc-info=none -- $(CPPFLAGS)

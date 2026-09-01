@@ -60,15 +60,25 @@ static cl::opt<bool> Quiet("q", cl::desc("quiet"), cl::Optional,
 static cl::opt<bool> Comment("comment", cl::desc("include name comments"),
                              cl::Optional, cl::cat(Cpp2V));
 
+static cl::opt<LocInfoMode>
+    LocInfo("loc-info",
+            cl::desc("source location information (default: local)"),
+            cl::values(clEnumValN(LocInfoMode::None, "none",
+                                  "disable location information"),
+                       clEnumValN(LocInfoMode::Local, "local",
+                                  "locations involving the original TU")),
+            cl::init(LocInfoMode::Local), cl::cat(Cpp2V));
+
 static cl::opt<bool> NoElaborate(
     "no-elaborate",
     cl::desc("Do not force generation of implicit member functions."),
     cl::Optional, cl::cat(Cpp2V));
 
-static cl::opt<bool> Elaborate(
-    "elaborate",
-    cl::desc("Elaborate templates and un-forced definitions. This is unsafe in general and can cause segfaults."),
-    cl::Optional, cl::cat(Cpp2V));
+static cl::opt<bool>
+    Elaborate("elaborate",
+              cl::desc("Elaborate templates and un-forced definitions. This is "
+                       "unsafe in general and can cause segfaults."),
+              cl::Optional, cl::cat(Cpp2V));
 
 static cl::opt<bool> Version("cpp2v-version",
                              cl::desc("print version and exit"), cl::Optional,
@@ -160,13 +170,11 @@ public:
         if (NoElaborate) {
             should_elaborate = false;
         }
-        auto *result =
-            new ToCoqConsumer(&Compiler, to_opt(VFileOutput),
-                              to_opt(Templates), to_opt(NameTest),
-                              Trace::fromBits(TraceBits.getBits()), Comment,
-                              !NoSharing, CheckTypes, !NoTemplates,
-                              should_elaborate, !NoAliases, to_opt(Interactive),
-                              to_opt(Attributes));
+        auto *result = new ToCoqConsumer(
+            &Compiler, to_opt(VFileOutput), to_opt(Templates), to_opt(NameTest),
+            Trace::fromBits(TraceBits.getBits()), LocInfo, Comment, !NoSharing,
+            CheckTypes, !NoTemplates, should_elaborate, !NoAliases,
+            to_opt(Interactive), to_opt(Attributes));
         return std::unique_ptr<clang::ASTConsumer>(result);
     }
 

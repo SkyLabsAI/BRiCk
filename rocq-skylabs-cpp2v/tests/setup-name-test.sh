@@ -12,7 +12,9 @@ scrub() {
 	# The comments `(* kind name at loc *)` are useful when
 	# writing tests but interfere with CI. Name and loc vary
 	# across machines and llvm versions.
-	grep -E -hv '^[ 	]+\(\*[^*]*\*\)$' ${1+"$@"} /dev/null
+	: "${SCRUB_SOURCE_ROOT:?missing source root for scrub}"
+	grep -E -hv '^[ 	]+\(\*[^*]*\*\)$' ${1+"$@"} /dev/null |
+		sed "s#${SCRUB_SOURCE_ROOT}#"'$TESTCASE_ROOT'"#g"
 }
 
 name_test_versions() {
@@ -33,7 +35,8 @@ name_test_versions() {
 		echo "# cpp2v --name-test=${output} ${input} -- ${std}" >&2
 		cpp2v "--name-test=${output}" "${input}" -- "${std}" || status=1
 		echo "# scrub ${output}" >&2
-		scrub "${output}" || status=1
+		SCRUB_SOURCE_ROOT="$(dirname "$(realpath "${input}")")" \
+			scrub "${output}" || status=1
 	done
 	return $status
 }

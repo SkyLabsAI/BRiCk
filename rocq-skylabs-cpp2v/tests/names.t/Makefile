@@ -10,6 +10,6 @@ Q = @
 all: $(GEN_FILES) $(GEN_VALCAT_FILES)
 
 %_cpp.v: %.cpp
-	$(Q)cpp2v -v -o $@ $< --check-types -- $(CPPFLAGS)
+	$(Q)cpp2v -v -o $@ $< --loc-info=none --check-types -- $(CPPFLAGS)
 %_hpp.v: %.hpp
-	$(Q)cpp2v -v -o $@ $< --check-types -- $(CPPFLAGS)
+	$(Q)cpp2v -v -o $@ $< --loc-info=none --check-types -- $(CPPFLAGS)

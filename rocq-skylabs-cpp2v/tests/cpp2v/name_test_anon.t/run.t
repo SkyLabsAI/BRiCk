@@ -3,44 +3,156 @@
   # scrub test_17_name_test.v
   Require Import skylabs.lang.cpp.mparser.
   
+  Require Import Stdlib.Array.PArray.
+  Require Import Stdlib.Numbers.Cyclic.Int63.PrimInt63.
+  Require Import skylabs.lang.cpp.syntax.loc_info.
+  #[local] Open Scope array_scope.
+  #[local] Open Scope uint63_scope.
   #[local] Open Scope pstring_scope.
   
   Definition module_names : list Mname :=
     (
-      (* CXXRecord (anonymous namespace)::inhabit_ns at $TESTCASE_ROOT/test.cpp:9:5 *) (Nscoped (Nglobal Nanonymous) (Nid "inhabit_ns")) ::
+      (NLocInfo 0%uint63 (Nscoped
+          (NLocInfo 1%uint63 (Nglobal
+              (ANLocInfo 1%uint63 Nanonymous)))
+          (ANLocInfo 0%uint63 (Nid "inhabit_ns")))) ::
   
-      (* CXXConstructor container::container() at $TESTCASE_ROOT/test.cpp:12:5 *) (Nscoped (Nglobal (Nid "container")) (Nctor nil)) ::
+      (NLocInfo 2%uint63 (Nscoped
+          (NLocInfo 3%uint63 (Nglobal
+              (ANLocInfo 3%uint63 (Nid "container"))))
+          (ANLocInfo 2%uint63 (Nctor nil)))) ::
   
-      (* CXXDestructor container::~container() at $TESTCASE_ROOT/test.cpp:13:5 *) (Nscoped (Nglobal (Nid "container")) Ndtor) ::
+      (NLocInfo 4%uint63 (Nscoped
+          (NLocInfo 3%uint63 (Nglobal
+              (ANLocInfo 3%uint63 (Nid "container"))))
+          (ANLocInfo 4%uint63 Ndtor))) ::
   
-      (* CXXRecord container at $TESTCASE_ROOT/test.cpp:11:1 *) (Nglobal (Nid "container")) ::
+      (NLocInfo 3%uint63 (Nglobal
+          (ANLocInfo 3%uint63 (Nid "container")))) ::
   
-      (* CXXRecord container::(anonymous struct at $TESTCASE_ROOT/test.cpp:19:5) at $TESTCASE_ROOT/test.cpp:19:5 *) (Nscoped (Nglobal (Nid "container")) (Nrecord_by_field "inhabit_s")) ::
+      (NLocInfo 5%uint63 (Nscoped
+          (NLocInfo 3%uint63 (Nglobal
+              (ANLocInfo 3%uint63 (Nid "container"))))
+          (ANLocInfo 5%uint63 (Nrecord_by_field "inhabit_s")))) ::
   
-      (* CXXConstructor container::(anonymous struct)::(anonymous struct at $TESTCASE_ROOT/test.cpp:19:5)() at $TESTCASE_ROOT/test.cpp:19:5 *) (Nscoped (Nscoped (Nglobal (Nid "container")) (Nrecord_by_field "inhabit_s")) (Nctor nil)) ::
+      (NLocInfo 5%uint63 (Nscoped
+          (NLocInfo 5%uint63 (Nscoped
+              (NLocInfo 3%uint63 (Nglobal
+                  (ANLocInfo 3%uint63 (Nid "container"))))
+              (ANLocInfo 5%uint63 (Nrecord_by_field "inhabit_s"))))
+          (ANLocInfo 5%uint63 (Nctor nil)))) ::
   
-      (* CXXConstructor container::(anonymous struct)::(anonymous struct at $TESTCASE_ROOT/test.cpp:19:5)(const (anonymous struct at $TESTCASE_ROOT/test.cpp:19:5) &) at $TESTCASE_ROOT/test.cpp:19:5 *) (Nscoped (Nscoped (Nglobal (Nid "container")) (Nrecord_by_field "inhabit_s")) (Nctor ((Tref (Qconst (Tnamed (Nscoped (Nglobal (Nid "container")) (Nrecord_by_field "inhabit_s"))))) :: nil))) ::
+      (NLocInfo 5%uint63 (Nscoped
+          (NLocInfo 5%uint63 (Nscoped
+              (NLocInfo 3%uint63 (Nglobal
+                  (ANLocInfo 3%uint63 (Nid "container"))))
+              (ANLocInfo 5%uint63 (Nrecord_by_field "inhabit_s"))))
+          (ANLocInfo 5%uint63 (Nctor ((Tref (Qconst (Tnamed
+                      (NLocInfo 5%uint63 (Nscoped
+                          (NLocInfo 3%uint63 (Nglobal
+                              (ANLocInfo 3%uint63 (Nid "container"))))
+                          (ANLocInfo 5%uint63 (Nrecord_by_field "inhabit_s"))))))) :: nil))))) ::
   
-      (* CXXMethod container::(anonymous struct)::operator=(const (anonymous struct at $TESTCASE_ROOT/test.cpp:19:5) &) at $TESTCASE_ROOT/test.cpp:19:5 *) (Nscoped (Nscoped (Nglobal (Nid "container")) (Nrecord_by_field "inhabit_s")) (Nop function_qualifiers.N OOEqual ((Tref (Qconst (Tnamed (Nscoped (Nglobal (Nid "container")) (Nrecord_by_field "inhabit_s"))))) :: nil))) ::
+      (NLocInfo 5%uint63 (Nscoped
+          (NLocInfo 5%uint63 (Nscoped
+              (NLocInfo 3%uint63 (Nglobal
+                  (ANLocInfo 3%uint63 (Nid "container"))))
+              (ANLocInfo 5%uint63 (Nrecord_by_field "inhabit_s"))))
+          (ANLocInfo 5%uint63 (Nop function_qualifiers.N OOEqual ((Tref (Qconst (Tnamed
+                      (NLocInfo 5%uint63 (Nscoped
+                          (NLocInfo 3%uint63 (Nglobal
+                              (ANLocInfo 3%uint63 (Nid "container"))))
+                          (ANLocInfo 5%uint63 (Nrecord_by_field "inhabit_s"))))))) :: nil))))) ::
   
-      (* CXXConstructor container::(anonymous struct)::(anonymous struct at $TESTCASE_ROOT/test.cpp:19:5)((anonymous struct at $TESTCASE_ROOT/test.cpp:19:5) &&) at $TESTCASE_ROOT/test.cpp:19:5 *) (Nscoped (Nscoped (Nglobal (Nid "container")) (Nrecord_by_field "inhabit_s")) (Nctor ((Trv_ref (Tnamed (Nscoped (Nglobal (Nid "container")) (Nrecord_by_field "inhabit_s")))) :: nil))) ::
+      (NLocInfo 5%uint63 (Nscoped
+          (NLocInfo 5%uint63 (Nscoped
+              (NLocInfo 3%uint63 (Nglobal
+                  (ANLocInfo 3%uint63 (Nid "container"))))
+              (ANLocInfo 5%uint63 (Nrecord_by_field "inhabit_s"))))
+          (ANLocInfo 5%uint63 (Nctor ((Trv_ref (Tnamed
+                    (NLocInfo 5%uint63 (Nscoped
+                        (NLocInfo 3%uint63 (Nglobal
+                            (ANLocInfo 3%uint63 (Nid "container"))))
+                        (ANLocInfo 5%uint63 (Nrecord_by_field "inhabit_s")))))) :: nil))))) ::
   
-      (* CXXMethod container::(anonymous struct)::operator=((anonymous struct at $TESTCASE_ROOT/test.cpp:19:5) &&) at $TESTCASE_ROOT/test.cpp:19:5 *) (Nscoped (Nscoped (Nglobal (Nid "container")) (Nrecord_by_field "inhabit_s")) (Nop function_qualifiers.N OOEqual ((Trv_ref (Tnamed (Nscoped (Nglobal (Nid "container")) (Nrecord_by_field "inhabit_s")))) :: nil))) ::
+      (NLocInfo 5%uint63 (Nscoped
+          (NLocInfo 5%uint63 (Nscoped
+              (NLocInfo 3%uint63 (Nglobal
+                  (ANLocInfo 3%uint63 (Nid "container"))))
+              (ANLocInfo 5%uint63 (Nrecord_by_field "inhabit_s"))))
+          (ANLocInfo 5%uint63 (Nop function_qualifiers.N OOEqual ((Trv_ref (Tnamed
+                    (NLocInfo 5%uint63 (Nscoped
+                        (NLocInfo 3%uint63 (Nglobal
+                            (ANLocInfo 3%uint63 (Nid "container"))))
+                        (ANLocInfo 5%uint63 (Nrecord_by_field "inhabit_s")))))) :: nil))))) ::
   
-      (* CXXDestructor container::(anonymous struct)::~(anonymous struct at $TESTCASE_ROOT/test.cpp:19:5)() at $TESTCASE_ROOT/test.cpp:19:5 *) (Nscoped (Nscoped (Nglobal (Nid "container")) (Nrecord_by_field "inhabit_s")) Ndtor) ::
+      (NLocInfo 5%uint63 (Nscoped
+          (NLocInfo 5%uint63 (Nscoped
+              (NLocInfo 3%uint63 (Nglobal
+                  (ANLocInfo 3%uint63 (Nid "container"))))
+              (ANLocInfo 5%uint63 (Nrecord_by_field "inhabit_s"))))
+          (ANLocInfo 5%uint63 Ndtor))) ::
   
-      (* CXXRecord container::(anonymous union at $TESTCASE_ROOT/test.cpp:23:5) at $TESTCASE_ROOT/test.cpp:23:5 *) (Nscoped (Nglobal (Nid "container")) (Nrecord_by_field "inhabit_u")) ::
+      (NLocInfo 6%uint63 (Nscoped
+          (NLocInfo 3%uint63 (Nglobal
+              (ANLocInfo 3%uint63 (Nid "container"))))
+          (ANLocInfo 6%uint63 (Nrecord_by_field "inhabit_u")))) ::
   
-      (* CXXConstructor container::(anonymous union)::(anonymous union at $TESTCASE_ROOT/test.cpp:23:5)(const (anonymous union at $TESTCASE_ROOT/test.cpp:23:5) &) at $TESTCASE_ROOT/test.cpp:23:5 *) (Nscoped (Nscoped (Nglobal (Nid "container")) (Nrecord_by_field "inhabit_u")) (Nctor ((Tref (Qconst (Tnamed (Nscoped (Nglobal (Nid "container")) (Nrecord_by_field "inhabit_u"))))) :: nil))) ::
+      (NLocInfo 6%uint63 (Nscoped
+          (NLocInfo 6%uint63 (Nscoped
+              (NLocInfo 3%uint63 (Nglobal
+                  (ANLocInfo 3%uint63 (Nid "container"))))
+              (ANLocInfo 6%uint63 (Nrecord_by_field "inhabit_u"))))
+          (ANLocInfo 6%uint63 (Nctor ((Tref (Qconst (Tnamed
+                      (NLocInfo 6%uint63 (Nscoped
+                          (NLocInfo 3%uint63 (Nglobal
+                              (ANLocInfo 3%uint63 (Nid "container"))))
+                          (ANLocInfo 6%uint63 (Nrecord_by_field "inhabit_u"))))))) :: nil))))) ::
   
-      (* CXXConstructor container::(anonymous union)::(anonymous union at $TESTCASE_ROOT/test.cpp:23:5)((anonymous union at $TESTCASE_ROOT/test.cpp:23:5) &&) at $TESTCASE_ROOT/test.cpp:23:5 *) (Nscoped (Nscoped (Nglobal (Nid "container")) (Nrecord_by_field "inhabit_u")) (Nctor ((Trv_ref (Tnamed (Nscoped (Nglobal (Nid "container")) (Nrecord_by_field "inhabit_u")))) :: nil))) ::
+      (NLocInfo 6%uint63 (Nscoped
+          (NLocInfo 6%uint63 (Nscoped
+              (NLocInfo 3%uint63 (Nglobal
+                  (ANLocInfo 3%uint63 (Nid "container"))))
+              (ANLocInfo 6%uint63 (Nrecord_by_field "inhabit_u"))))
+          (ANLocInfo 6%uint63 (Nctor ((Trv_ref (Tnamed
+                    (NLocInfo 6%uint63 (Nscoped
+                        (NLocInfo 3%uint63 (Nglobal
+                            (ANLocInfo 3%uint63 (Nid "container"))))
+                        (ANLocInfo 6%uint63 (Nrecord_by_field "inhabit_u")))))) :: nil))))) ::
   
-      (* CXXDestructor container::(anonymous union)::~(anonymous union at $TESTCASE_ROOT/test.cpp:23:5)() at $TESTCASE_ROOT/test.cpp:23:5 *) (Nscoped (Nscoped (Nglobal (Nid "container")) (Nrecord_by_field "inhabit_u")) Ndtor) ::
+      (NLocInfo 6%uint63 (Nscoped
+          (NLocInfo 6%uint63 (Nscoped
+              (NLocInfo 3%uint63 (Nglobal
+                  (ANLocInfo 3%uint63 (Nid "container"))))
+              (ANLocInfo 6%uint63 (Nrecord_by_field "inhabit_u"))))
+          (ANLocInfo 6%uint63 Ndtor))) ::
   
-      (* Enum (unnamed enum at $TESTCASE_ROOT/test.cpp:27:1) at $TESTCASE_ROOT/test.cpp:27:1 *) (Nglobal (Nenum_by_enumerator "inhabit_e")) ::
+      (NLocInfo 7%uint63 (Nglobal
+          (ANLocInfo 7%uint63 (Nenum_by_enumerator "inhabit_e")))) ::
   
-      (* EnumConstant inhabit_e at $TESTCASE_ROOT/test.cpp:27:8 *) (Nscoped (Nglobal (Nenum_by_enumerator "inhabit_e")) (Nid "inhabit_e")) ::
+      (NLocInfo 8%uint63 (Nscoped
+          (NLocInfo 7%uint63 (Nglobal
+              (ANLocInfo 7%uint63 (Nenum_by_enumerator "inhabit_e"))))
+          (ANLocInfo 8%uint63 (Nid "inhabit_e")))) ::
       nil).
   
   Definition template_names : list Mname :=
     (nil).
+  
+  Definition file_names : array PrimString.string :=
+    let result := PArray.make 1%uint63 "unknown_file"%pstring in
+    let result := PArray.set result 0%uint63 "$TESTCASE_ROOT/test.cpp"%pstring in
+    result.
+  
+  Definition loc_table : array locations :=
+    let result := PArray.make 9%uint63 dummy_locations in
+    let result := PArray.set result 0%uint63 (Build_locations (Build_location 0%uint63 256%uint63 9%uint63 5%uint63) (Build_location 0%uint63 256%uint63 9%uint63 5%uint63)) in
+    let result := PArray.set result 1%uint63 (Build_locations (Build_location 0%uint63 241%uint63 8%uint63 1%uint63) (Build_location 0%uint63 241%uint63 8%uint63 1%uint63)) in
+    let result := PArray.set result 2%uint63 (Build_locations (Build_location 0%uint63 299%uint63 12%uint63 5%uint63) (Build_location 0%uint63 299%uint63 12%uint63 5%uint63)) in
+    let result := PArray.set result 3%uint63 (Build_locations (Build_location 0%uint63 277%uint63 11%uint63 1%uint63) (Build_location 0%uint63 277%uint63 11%uint63 1%uint63)) in
+    let result := PArray.set result 4%uint63 (Build_locations (Build_location 0%uint63 316%uint63 13%uint63 5%uint63) (Build_location 0%uint63 316%uint63 13%uint63 5%uint63)) in
+    let result := PArray.set result 5%uint63 (Build_locations (Build_location 0%uint63 515%uint63 19%uint63 5%uint63) (Build_location 0%uint63 515%uint63 19%uint63 5%uint63)) in
+    let result := PArray.set result 6%uint63 (Build_locations (Build_location 0%uint63 558%uint63 23%uint63 5%uint63) (Build_location 0%uint63 558%uint63 23%uint63 5%uint63)) in
+    let result := PArray.set result 7%uint63 (Build_locations (Build_location 0%uint63 604%uint63 27%uint63 1%uint63) (Build_location 0%uint63 604%uint63 27%uint63 1%uint63)) in
+    let result := PArray.set result 8%uint63 (Build_locations (Build_location 0%uint63 611%uint63 27%uint63 8%uint63) (Build_location 0%uint63 611%uint63 27%uint63 8%uint63)) in
+    result.

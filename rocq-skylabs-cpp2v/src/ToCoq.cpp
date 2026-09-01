@@ -26,6 +26,7 @@
 #include <cerrno>
 #include <cstdio>
 #include <list>
+#include <memory>
 #include <system_error>
 
 // Declares clang::SyntaxOnlyAction.
@@ -230,9 +231,11 @@ void printCache(::Module &mod, Cache &cache, CoqPrinter &print,
 
 void ToCoqConsumer::writeTemplates(const char *name, Cache &cache,
                                    fmt::Formatter &fmt, clang::ASTContext &ctxt,
-                                   ::Module &mod, bool noimport) {
+                                   ::Module &mod, LocationTable *location_table,
+                                   bool noimport) {
     CoqPrinter print(fmt, /*templates*/ true, cache);
-    ClangPrinter cprint(compiler_, &ctxt, trace_, comment_, typedefs_);
+    ClangPrinter cprint(compiler_, &ctxt, trace_, comment_, typedefs_,
+                        location_table);
 
     if (not noimport) {
         print.output() << "Import skylabs.lang.cpp.mparser." << fmt::line
@@ -266,9 +269,11 @@ void ToCoqConsumer::writeTemplates(const char *name, Cache &cache,
  */
 void ToCoqConsumer::writeStatic(const char *name, Cache &cache,
                                 fmt::Formatter &fmt, clang::ASTContext &ctxt,
-                                ::Module &mod, bool noimport) {
+                                ::Module &mod, LocationTable *location_table,
+                                bool noimport) {
     CoqPrinter print(fmt, /*templates*/ false, cache);
-    ClangPrinter cprint(compiler_, &ctxt, trace_, comment_, typedefs_);
+    ClangPrinter cprint(compiler_, &ctxt, trace_, comment_, typedefs_,
+                        location_table);
 
     if (not noimport) {
         print.output() << "Import skylabs.lang.cpp.parser." << fmt::line
@@ -343,15 +348,31 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
                << "#[local] Open Scope pstring_scope." << fmt::line;
     };
 
-    auto check_types = [&](Formatter &fmt, const char* name) {
-      if (!interactive_.has_value()) {
-        fmt << fmt::line << "Require skylabs.lang.cpp.syntax.typed.";
-      }
-      fmt << fmt::line
-          << "Goal typed.decltype.check_tu "
-          << interactive_.value_or("source")
-          << " = trace.Success tt. Proof. vm_compute; reflexivity. Abort."
-          << fmt::line;
+    auto make_location_table = [&]() -> std::unique_ptr<LocationTable> {
+        if (loc_info_ == LocInfoMode::Local)
+            return std::make_unique<LocationTable>(ctxt->getSourceManager());
+        return {};
+    };
+
+    auto location_prelude = [&](Formatter &fmt) {
+        if (loc_info_ == LocInfoMode::Local) {
+            fmt << "Require Import Stdlib.Array.PArray." << fmt::line
+                << "Require Import Stdlib.Numbers.Cyclic.Int63.PrimInt63."
+                << fmt::line
+                << "Require Import skylabs.lang.cpp.syntax.loc_info."
+                << fmt::line << "#[local] Open Scope array_scope." << fmt::line
+                << "#[local] Open Scope uint63_scope." << fmt::line;
+        }
+    };
+
+    auto check_types = [&](Formatter &fmt, const char *name) {
+        if (!interactive_.has_value()) {
+            fmt << fmt::line << "Require skylabs.lang.cpp.syntax.typed.";
+        }
+        fmt << fmt::line << "Goal typed.decltype.check_tu "
+            << interactive_.value_or("source")
+            << " = trace.Success tt. Proof. vm_compute; reflexivity. Abort."
+            << fmt::line;
     };
 
     auto static_and_templates = [&](Formatter &fmt) {
@@ -376,6 +397,7 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
 
         */
         Cache cache;
+        auto location_table = make_location_table();
 
         if (interactive_.has_value()) {
             fmt << "Require skylabs.lang.cpp.parser." << fmt::line
@@ -389,12 +411,13 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
                 << fmt::line << "Require skylabs.lang.cpp.mparser." << fmt::line
                 << fmt::line;
         }
+        location_prelude(fmt);
         fmt << "#[local] Open Scope pstring_scope." << fmt::line;
 
         if (this->sharing_) {
             CoqPrinter static_print(fmt, /*templates*/ false, cache);
             ClangPrinter static_cprint(compiler_, ctxt, trace_, comment_,
-                                       typedefs_);
+                                       typedefs_, location_table.get());
             printCache(mod, cache, static_print, static_cprint, true);
         }
 
@@ -404,7 +427,8 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
         std::string static_name{"static__"};
         static_name += interactive_.value_or("source");
 
-        writeStatic(static_name.c_str(), cache, fmt, *ctxt, mod, true);
+        writeStatic(static_name.c_str(), cache, fmt, *ctxt, mod,
+                    location_table.get(), true);
 
         // fmt << fmt::outdent << "End static." << fmt::line << fmt::line;
         // END: Section static
@@ -415,7 +439,8 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
         std::string meta_name{"meta__"};
         meta_name += interactive_.value_or("source");
 
-        writeTemplates(meta_name.c_str(), cache, fmt, *ctxt, mod);
+        writeTemplates(meta_name.c_str(), cache, fmt, *ctxt, mod,
+                       location_table.get());
 
         // fmt << fmt::outdent << "End meta." << fmt::line << fmt::line;
         // END: Section meta
@@ -427,6 +452,11 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
         fmt << "Definition " << interactive_.value_or("source")
             << " := skylabs.lang.cpp.mparser.tu.with_templates " << static_name
             << " " << meta_name << "." << fmt::line;
+
+        if (location_table) {
+            CoqPrinter location_print(fmt, /*templates*/ false, cache);
+            location_table->emit(location_print);
+        }
 
         if (!interactive_.has_value()) {
             // NOTE: Backwards compatibility
@@ -442,8 +472,10 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
     auto static_only =
         [&](Formatter &fmt) {
             Cache cache;
+            auto location_table = make_location_table();
             CoqPrinter print(fmt, /*templates*/ false, cache);
-            ClangPrinter cprint(compiler_, ctxt, trace_, comment_, typedefs_);
+            ClangPrinter cprint(compiler_, ctxt, trace_, comment_, typedefs_,
+                                location_table.get());
 
             if (interactive_.has_value()) {
                 // Since we are in interactive mode, the parser is already
@@ -456,6 +488,7 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
                     << "Require Import skylabs.lang.cpp.parser.plugin.cpp2v."
                     << fmt::line;
             }
+            location_prelude(fmt);
             // parser(print);
             // bytestring(print) << fmt::line;
 
@@ -464,7 +497,10 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
             }
 
             writeStatic(interactive_.value_or("source").c_str(), cache, fmt,
-                        *ctxt, mod);
+                        *ctxt, mod, location_table.get());
+
+            if (location_table)
+                location_table->emit(print);
 
             // Close the section if we opened one
             if (interactive_.has_value()) {
@@ -484,9 +520,16 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
 
     auto templates_only = [&](Formatter &fmt) {
         Cache cache;
+        auto location_table = make_location_table();
         fmt << "Require skylabs.lang.cpp.mparser." << fmt::line;
+        location_prelude(fmt);
 
-        writeTemplates("templates", cache, fmt, *ctxt, mod);
+        writeTemplates("templates", cache, fmt, *ctxt, mod,
+                       location_table.get());
+        if (location_table) {
+            CoqPrinter location_print(fmt, /*templates*/ true, cache);
+            location_table->emit(location_print);
+        }
     };
 
     if (output_templates_) {
@@ -499,8 +542,10 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
 
     with_open_file(name_test_file_, [&](Formatter &fmt) {
         Cache c;
+        auto location_table = make_location_table();
         CoqPrinter print(fmt, /*templates*/ true, c);
-        ClangPrinter cprint(compiler_, ctxt, trace_, comment_);
+        ClangPrinter cprint(compiler_, ctxt, trace_, comment_, false,
+                            location_table.get());
 
         auto testnames = [&](const std::string id,
                              std::function<void()> k) -> auto & {
@@ -513,6 +558,7 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
         };
 
         parser(print);
+        location_prelude(fmt);
         bytestring(print);
 
         testnames("module_names", [&]() {
@@ -531,5 +577,8 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
                 name_test::test(decl, print, cprint);
             }
         });
+
+        if (location_table)
+            location_table->emit(print);
     });
 }

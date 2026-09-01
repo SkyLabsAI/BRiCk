@@ -1760,6 +1760,8 @@ fmt::Formatter &ClangPrinter::printExpr(CoqPrinter &print,
     if (trace(Trace::Expr))
         trace("printExpr", loc::of(expr));
 
+    LocationTable::Guard location{locationTable(), print, "ELocInfo",
+                                  loc::of(expr)};
     auto depth = print.output().get_depth();
     PrintExpr{print, *this, li}.Visit(expr);
     if (depth != print.output().get_depth()) {

@@ -5,6 +5,7 @@
  */
 #pragma once
 #include "Formatter.hpp"
+#include "LocationTable.hpp"
 #include "Trace.hpp"
 #include <clang/AST/ASTConsumer.h>
 #include <clang/AST/ASTContext.h>
@@ -30,14 +31,14 @@ public:
     explicit ToCoqConsumer(
         clang::CompilerInstance *compiler, const path output_file,
         const path templates_file, const path name_test_file, Trace::Mask trace,
-        bool comment, bool sharing, bool type_check, bool output_templates,
-        bool elaborate = true, bool typedefs = false,
+        LocInfoMode loc_info, bool comment, bool sharing, bool type_check,
+        bool output_templates, bool elaborate = true, bool typedefs = false,
         std::optional<std::string> &&interactive = std::optional<std::string>(),
         std::optional<std::string> &&attributes = std::optional<std::string>())
         : compiler_(compiler), output_file_(output_file),
           templates_file_(templates_file), name_test_file_(name_test_file),
-          trace_(trace), comment_{comment}, sharing_{sharing},
-          elaborate_(elaborate), check_types_{type_check},
+          trace_(trace), loc_info_{loc_info}, comment_{comment},
+          sharing_{sharing}, elaborate_(elaborate), check_types_{type_check},
           output_templates_{output_templates}, typedefs_{typedefs},
           interactive_{std::move(interactive)},
           attributes_{std::move(attributes)} {}
@@ -76,10 +77,10 @@ private:
 
     void writeTemplates(const char *name, Cache &cache, fmt::Formatter &fmt,
                         clang::ASTContext &ctxt, ::Module &mod,
-                        bool noimport = false);
+                        LocationTable *location_table, bool noimport = false);
     void writeStatic(const char *name, Cache &cache, fmt::Formatter &fmt,
                      clang::ASTContext &ctxt, ::Module &mod,
-                     bool noimport = false);
+                     LocationTable *location_table, bool noimport = false);
 
 private:
     clang::CompilerInstance *compiler_;
@@ -87,6 +88,7 @@ private:
     const path templates_file_;
     const path name_test_file_;
     const Trace::Mask trace_;
+    const LocInfoMode loc_info_;
     const bool comment_;
     const bool sharing_;
     const bool elaborate_;
