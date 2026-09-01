@@ -19,3 +19,4 @@ Require Export skylabs.lang.cpp.syntax.abi. (* syntax/abi.v *)
 Require Export skylabs.lang.cpp.syntax.notations. (* syntax/notations.v *)
 Require Export skylabs.lang.cpp.syntax.name_notation.
 Require Export skylabs.lang.cpp.syntax.translation_unit.	(* syntax/translation_unit.v *)
+Require Export skylabs.lang.cpp.syntax.loc_info_tu.	(* syntax/loc_info_tu.v *)

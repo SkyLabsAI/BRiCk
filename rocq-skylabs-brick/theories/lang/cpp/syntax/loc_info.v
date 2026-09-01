@@ -4,8 +4,34 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
+Require Stdlib.Array.PArray.
+From Stdlib Require Import PrimInt63.
 Require Import skylabs.lang.cpp.syntax.prelude.
 Require Import skylabs.lang.cpp.syntax.core.
+
+Record location : Set := {
+  file : PrimInt63.int;
+  byte : PrimInt63.int;
+  line : PrimInt63.int;
+  column : PrimInt63.int;
+}.
+
+Definition file_location : Set := location.
+
+Record locations : Set := {
+  file_loc : file_location;
+  spelling_loc : location;
+}.
+
+Definition dummy_location : location :=
+  Build_location
+    9223372036854775807%uint63
+    9223372036854775807%uint63
+    9223372036854775807%uint63
+    9223372036854775807%uint63.
+
+Definition dummy_locations : locations :=
+  Build_locations dummy_location dummy_location.
 
 Module LocInfo.
   (** Remove only leading location-information wrappers. Unlike the recursive

@@ -115,8 +115,16 @@ Section with_lang.
 
   Fixpoint topName (nm : name) : option PrimString.string :=
     match nm with
-    | Nglobal (Nid id) => Some id
-    | Nscoped _ (Nid id) => Some id
+    | Nglobal an =>
+        match LocInfo.drop_atomic_name an with
+        | Nid id => Some id
+        | _ => None
+        end
+    | Nscoped _ an =>
+        match LocInfo.drop_atomic_name an with
+        | Nid id => Some id
+        | _ => None
+        end
     | Ninst nm _ => topName nm
     | NLocInfo _ nm => topName nm
     | _ => None

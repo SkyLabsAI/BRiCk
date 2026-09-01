@@ -7,6 +7,7 @@
 Require Import skylabs.lang.cpp.syntax.prelude.
 Require Import skylabs.lang.cpp.syntax.core.
 Require Import skylabs.lang.cpp.syntax.loc_info.
+Require Import skylabs.lang.cpp.syntax.loc_info_tu.
 Require Import skylabs.lang.cpp.syntax.types.
 Require Import skylabs.lang.cpp.syntax.typing.
 Require Import skylabs.lang.cpp.syntax.stmt.
@@ -1179,6 +1180,7 @@ Module decltype.
      readerT.run (internal.of_expr e) (tu_to_ext tu, Tvoid, None, []).
 
   Definition check_tu (tu : translation_unit) : trace.M Error.t unit :=
+    let tu := LocInfoTU.erase_translation_unit tu in
     let fn (nm_v : name * ObjValue) :=
       trace (breadcrumb nm_v.1) $ internal.check_obj_value nm_v.2
     in
