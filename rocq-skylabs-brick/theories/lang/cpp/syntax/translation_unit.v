@@ -707,6 +707,13 @@ Section with_type_table.
       (_ : complete_pointee_type (Tnamed n))
       (_ : complete_pointee_type t)
     : complete_type (Tmember_pointer (Tnamed n) t)
+  | complete_type_enum {n ty branches} :
+    (* This check could not appear in a Krebbers-style definition.
+       And it is not needed to enable computation on complete types.
+     *)
+    te !! n = Some (Genum ty branches) ->
+    complete_basic_type ty ->
+    complete_type (Tenum n)
   | complete_function {cc ar ret args} :
     (*
     We could probably omit this constructor, and consider function types as not
