@@ -1397,7 +1397,11 @@ Section with_cpp.
    *)
   Definition callable_type (tt : type_table) (t : type) : Prop :=
     match t with
-    | Tfunction ft => complete_type tt ft.(ft_return) /\ List.Forall (complete_type tt) ft.(ft_params)
+    | Tfunction ft =>
+        match drop_qualifiers ft.(ft_return) with
+        | Tvoid => True
+        | _ => complete_type tt ft.(ft_return)
+        end /\ List.Forall (complete_type tt) ft.(ft_params)
     | _ => False
     end.
 
