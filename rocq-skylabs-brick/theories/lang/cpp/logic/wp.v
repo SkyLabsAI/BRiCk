@@ -683,7 +683,7 @@ Section with_cpp.
 
   Axiom wp_lval_frame :
     forall σ tu1 tu2 ρ e k1 k2,
-      sub_module tu1 tu2 ->
+      semantic_sub_module tu1 tu2 ->
       Forall v f, k1 v f -* k2 v f |-- @wp_lval σ tu1 ρ e k1 -* @wp_lval σ tu2 ρ e k2.
 
   Section wp_lval_proper.
@@ -694,7 +694,7 @@ Section with_cpp.
 
     #[global] Declare Instance wp_lval_ne : forall n, PROPER eq (dist n).
 
-    #[global] Instance wp_lval_mono : PROPER sub_module (⊢).
+    #[global] Instance wp_lval_mono : PROPER semantic_sub_module (⊢).
     Proof.
       repeat red. intros; subst.
       iIntros "X". iRevert "X".
@@ -702,7 +702,7 @@ Section with_cpp.
       iIntros (v). iIntros (f). iApply H2.
     Qed.
 
-    #[global] Instance wp_lval_flip_mono : PROPER (flip sub_module) (flip (⊢)).
+    #[global] Instance wp_lval_flip_mono : PROPER (flip semantic_sub_module) (flip (⊢)).
     Proof. repeat intro. red. apply: wp_lval_mono; eauto. Qed.
 
     #[global] Instance wp_lval_proper : PROPER eq (⊣⊢).
@@ -819,7 +819,7 @@ Section with_cpp.
     ⊢ wp_init tu ρ ty p e Q.
 
   Axiom wp_init_frame : forall σ tu1 tu2 ρ ty p e k1 k2,
-      sub_module tu1 tu2 ->
+      semantic_sub_module tu1 tu2 ->
       Forall fs, k1 fs -* k2 fs |-- @wp_init σ tu1 ρ ty p e k1 -* @wp_init σ tu2 ρ ty p e k2.
 
   (**
@@ -841,7 +841,7 @@ Section with_cpp.
 
     #[global] Declare Instance wp_init_ne : forall n, PROPER eq (dist n).
 
-    #[global] Instance wp_init_mono : PROPER sub_module bi_entails.
+    #[global] Instance wp_init_mono : PROPER semantic_sub_module bi_entails.
     Proof.
       intros tu1 tu2 ? ρ?<- t1 t2 Ht p?<- e?<- Q1 Q2 HQ. iIntros "wp".
       iApply wp_init_type_equiv; [done|].
@@ -849,7 +849,7 @@ Section with_cpp.
       iApply HQ.
     Qed.
 
-    #[global] Instance wp_init_flip_mono : PROPER (flip sub_module) (flip bi_entails).
+    #[global] Instance wp_init_flip_mono : PROPER (flip semantic_sub_module) (flip bi_entails).
     Proof. repeat intro. exact: wp_init_mono. Qed.
 
     #[global] Instance wp_init_proper : PROPER eq equiv.
@@ -925,7 +925,7 @@ Section with_cpp.
 
   Axiom wp_operand_frame :
     forall σ tu1 tu2 ρ e k1 k2,
-      sub_module tu1 tu2 ->
+      semantic_sub_module tu1 tu2 ->
       Forall v f, k1 v f -* k2 v f |-- @wp_operand σ tu1 ρ e k1 -* @wp_operand σ tu2 ρ e k2.
 
   (** C++ evaluation semantics guarantees that all expressions of type [t] that
@@ -942,7 +942,7 @@ Section with_cpp.
 
     #[global] Declare Instance wp_operand_ne : forall n, PROPER eq (dist n).
 
-    #[global] Instance wp_operand_mono : PROPER sub_module (⊢).
+    #[global] Instance wp_operand_mono : PROPER semantic_sub_module (⊢).
     Proof.
       repeat red. intros; subst.
       iIntros "X". iRevert "X".
@@ -950,7 +950,7 @@ Section with_cpp.
       iIntros (v). iIntros (f). iApply H2.
     Qed.
 
-    #[global] Instance wp_operand_flip_mono : PROPER (flip sub_module) (flip (⊢)).
+    #[global] Instance wp_operand_flip_mono : PROPER (flip semantic_sub_module) (flip (⊢)).
     Proof. repeat intro. red. apply wp_operand_mono => //. Qed.
 
     #[global] Instance wp_operand_proper : PROPER eq (⊣⊢).
@@ -1044,7 +1044,7 @@ Section with_cpp.
     ⊢ wp_xval tu ρ e Q.
 
   Axiom wp_xval_frame : forall σ tu1 tu2 ρ e k1 k2,
-      sub_module tu1 tu2 ->
+      semantic_sub_module tu1 tu2 ->
       Forall v f, k1 v f -* k2 v f |-- @wp_xval σ tu1 ρ e k1 -* @wp_xval σ tu2 ρ e k2.
 
   Section wp_xval_proper.
@@ -1055,7 +1055,7 @@ Section with_cpp.
 
     #[global] Declare Instance wp_xval_ne n : PROPER eq (dist n).
 
-    #[global] Instance wp_xval_mono : PROPER sub_module (⊢).
+    #[global] Instance wp_xval_mono : PROPER semantic_sub_module (⊢).
     Proof.
       repeat red. intros; subst.
       iIntros "X". iRevert "X".
@@ -1063,7 +1063,7 @@ Section with_cpp.
       iIntros (v). iIntros (f). iApply H2 => //.
     Qed.
 
-    #[global] Instance wp_xval_flip_mono : PROPER (flip sub_module) (flip (⊢)).
+    #[global] Instance wp_xval_flip_mono : PROPER (flip semantic_sub_module) (flip (⊢)).
     Proof. repeat intro. red. rewrite wp_xval_mono => // ????; apply H2 => //. Qed.
 
     #[global] Instance wp_xval_proper : PROPER eq (⊣⊢).
@@ -1125,6 +1125,17 @@ Section with_cpp.
       | vc => wp_glval_mismatch ρ vc e
       end%I.
 
+  Lemma wp_glval_loc_info {σ : genv} tu ρ li e Q :
+      wp_glval (σ:=σ) tu ρ (ELocInfo li e) Q -|-
+      wp_glval tu ρ e Q.
+  Proof.
+    rewrite /wp_glval.
+    have -> : valcat_of (ELocInfo li e) = valcat_of e by reflexivity.
+    case_match; try done.
+    - by rewrite wp_lval_loc_info.
+    - by rewrite wp_xval_loc_info.
+  Qed.
+
   #[global] Instance wp_glval_ne σ n :
     Proper (eq ==> eq ==> eq ==> pointwise_relation _ (pointwise_relation _ (dist n)) ==> dist n)
              (@wp_glval σ).
@@ -1144,7 +1155,7 @@ Section with_cpp.
   *)
 
   Lemma wp_glval_frame {σ : genv} tu1 tu2 r e Q Q' :
-    sub_module tu1 tu2 ->
+    semantic_sub_module tu1 tu2 ->
     (Forall v free, Q v free -* Q' v free) |-- wp_glval tu1 r e Q -* wp_glval tu2 r e Q'.
   Proof.
     rewrite /wp_glval. case_match.
@@ -1154,7 +1165,7 @@ Section with_cpp.
   Qed.
 
   #[global] Instance Proper_wp_glval σ :
-    Proper (sub_module ==> eq ==> eq ==> Mrel _) (@wp_glval σ).
+    Proper (semantic_sub_module ==> eq ==> eq ==> Mrel _) (@wp_glval σ).
   Proof.
     solve_proper_prepare. case_match; try solve_proper.
   Qed.
@@ -1244,6 +1255,24 @@ Section with_cpp.
       | Xvalue => wp_xval tu ρ e (fun _ => Q)
       end.
 
+    Lemma wp_discard_loc_info li e Q :
+      wp_discard (ELocInfo li e) Q -|- wp_discard e Q.
+    Proof.
+      rewrite /wp_discard.
+      have -> : valcat_of (ELocInfo li e) = valcat_of e by reflexivity.
+      have -> : type_of (ELocInfo li e) = type_of e by reflexivity.
+      destruct (valcat_of e); simpl.
+      - by rewrite wp_lval_loc_info.
+      - case_match.
+        + by rewrite wp_operand_loc_info.
+        + split'.
+          * iIntros "H" (p). iSpecialize ("H" $! p).
+            rewrite wp_init_expr_loc_info. iExact "H".
+          * iIntros "H" (p). iSpecialize ("H" $! p).
+            rewrite -wp_init_expr_loc_info. iExact "H".
+      - by rewrite wp_xval_loc_info.
+    Qed.
+
     Lemma fupd_wp_discard e Q :
       (|={top}=> wp_discard e Q) |-- wp_discard e Q.
     Proof.
@@ -1282,7 +1311,7 @@ Section with_cpp.
   Proof. solve_proper. Qed.
 
   Lemma wp_discard_frame {σ : genv} tu1 tu2 ρ e k1 k2:
-    sub_module tu1 tu2 ->
+    semantic_sub_module tu1 tu2 ->
     Forall f, k1 f -* k2 f |-- wp_discard tu1 ρ e k1 -* wp_discard tu2 ρ e k2.
   Proof.
     rewrite /wp_discard.
@@ -1301,7 +1330,7 @@ Section with_cpp.
   Qed.
 
   #[global] Instance wp_discard_mono σ :
-    Proper (sub_module ==> eq ==> eq ==> pointwise_relation _ (⊢) ==> (⊢))
+    Proper (semantic_sub_module ==> eq ==> eq ==> pointwise_relation _ (⊢) ==> (⊢))
            (@wp_discard σ).
   Proof.
     repeat red; intros; subst.
@@ -1310,7 +1339,7 @@ Section with_cpp.
   Qed.
 
   #[global] Instance wp_discard_flip_mono σ :
-    Proper (flip sub_module ==> eq ==> eq ==> pointwise_relation _ (flip (⊢)) ==> flip (⊢))
+    Proper (flip semantic_sub_module ==> eq ==> eq ==> pointwise_relation _ (flip (⊢)) ==> flip (⊢))
            (@wp_discard σ).
   Proof. solve_proper. Qed.
 
@@ -1336,11 +1365,11 @@ Section with_cpp.
     ⊢ wp (resolve:=σ) tu ρ s Q.
 
   Axiom wp_frame : forall {σ : genv} tu1 tu2 ρ s (k1 k2 : KpredI),
-      sub_module tu1 tu2 ->
+      semantic_sub_module tu1 tu2 ->
       (Forall rt : ReturnType, k1 rt -* k2 rt) |-- wp tu1 ρ s k1 -* wp tu2 ρ s k2.
 
   #[global] Instance Proper_wp {σ} :
-    Proper (sub_module ==> eq ==> eq ==> (⊢) ==> (⊢))
+    Proper (semantic_sub_module ==> eq ==> eq ==> (⊢) ==> (⊢))
            (@wp σ).
   Proof.
     repeat red; intros; subst.

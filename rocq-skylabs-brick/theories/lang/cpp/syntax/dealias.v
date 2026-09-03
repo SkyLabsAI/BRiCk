@@ -44,8 +44,8 @@ Module internal.
     Context (tu : translation_unit).
 
     Definition handle_Tnamed (_ : name) (traverse : unit -> M name) : M type :=
-      (fun nm => match translation_unit.resolve_type tu nm with
-              | None => Tnamed nm (* this is the best approximation we can make, alternatively, we can fail *)
+      (fun nm => match TU.resolve_type tu nm with
+              | None => Tnamed (LocInfo.erase_name nm) (* this is the best approximation we can make, alternatively, we can fail *)
               | Some t => t
               end) <$> traverse ().
     Definition handle_Tref (_ : type) (traverse : unit -> M type) : M type :=
@@ -90,8 +90,8 @@ Section resolve.
    *)
   Definition resolveValue (n : name) : M name :=
     trace.map (fun n =>
-       match translation_unit.resolve_value tu n with
-       | None => n
+       match TU.resolve_value tu n with
+       | None => LocInfo.erase_name n
        | Some n => n
        end) $ resolveN n.
 End resolve.

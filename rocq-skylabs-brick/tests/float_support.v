@@ -370,7 +370,8 @@ Example float_nan_payload_add_preserved :
 Proof. vm_compute; reflexivity. Qed.
 
 Definition little_float_test_genv : genv :=
-  {| genv_tu := empty_tu (abi.mkT int_rank.Ilong Signed Signed Little lang_version.Cpp20) |}.
+  {| genv_tu := empty_tu (abi.mkT int_rank.Ilong Signed Signed Little lang_version.Cpp20);
+     genv_tu_canonical := eq_refl |}.
 
 Example char32_to_float_uses_full_unsigned_range :
   char_to_Z_for_float little_float_test_genv char_type.C32 65535 = 65535%Z.

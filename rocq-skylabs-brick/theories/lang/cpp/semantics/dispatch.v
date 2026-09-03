@@ -90,7 +90,7 @@ Section dispatch.
           else None
       | next :: rest =>
           tu_dispatch base rest fn ≫= fun rr =>
-            match tu.(types) !! next with
+            match SemanticTU.lookup_type (SemanticTU.of_tu tu) next with
             | Some (Gstruct st) =>
                 let '(_, _, override) := rr in
                 match list_get override st.(s_overrides) with
@@ -111,7 +111,8 @@ Section dispatch.
         apply IHpath in Heq. rewrite Heq. clear IHpath Heq.
         simpl in *.
         do 2 (case_match; try congruence).
-        revert select (_ !! _ = _) => /glob_def_genv_compat_struct.
+        revert select (LocInfoTU.lookup_NM _ _ _ = _) =>
+          /glob_def_genv_compat_struct.
         unfold glob_def. move => ->. case_match; eauto. }
       { inversion H. }
     Qed.

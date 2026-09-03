@@ -7,6 +7,7 @@
 From Stdlib Require Import PrimInt63.
 Require Import Stdlib.Array.PArray.
 Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.syntax.loc_info.
 Require Import skylabs.lang.cpp.syntax.pretty.
 Require Import skylabs.lang.cpp.syntax.typed.
 
@@ -73,6 +74,54 @@ Example erase_translation_unit_locations :
       Some (Ovar Tint (global_init.Init (Eglobal bare_global Tint))).
 Proof. vm_compute. reflexivity. Qed.
 
+Example erase_translation_unit_preserves_abi :
+    (LocInfoTU.erase_translation_unit located_tu).(abi) = located_tu.(abi).
+Proof. reflexivity. Qed.
+
+Example erase_translation_unit_is_stable :
+    LocInfoTU.erase_translation_unit
+      (LocInfoTU.erase_translation_unit located_tu) =
+    LocInfoTU.erase_translation_unit located_tu.
+Proof. vm_compute. reflexivity. Qed.
+
 Example typed_check_erases_locations :
     trace.runO (typed.decltype.check_tu located_tu) = Some tt.
 Proof. vm_compute. reflexivity. Qed.
+
+Require Import skylabs.lang.cpp.semantics.sub_module.
+
+#[local] Definition located_global_1 : name :=
+  NLocInfo 1%uint63 bare_global.
+
+#[local] Definition collision_types
+    (early late : GlobDecl) : NM.t GlobDecl :=
+  NM.add located_global_1 late
+    (NM.add located_global early (NM.empty GlobDecl)).
+
+#[local] Definition types_tu (types : NM.t GlobDecl) : translation_unit :=
+  makeTranslationUnit
+    (NM.empty ObjValue) types
+    (empty_tu abi.abi_default).(namespace_aliases)
+    nil nil abi.abi_default
+    (empty_tu abi.abi_default).(msymbols)
+    (empty_tu abi.abi_default).(mtypes)
+    (empty_tu abi.abi_default).(maliases)
+    (empty_tu abi.abi_default).(minstances).
+
+Example lookup_NM_collision_is_last_match_wins :
+    LocInfoTU.lookup_NM LocInfoTU.erase_GlobDecl
+      (collision_types Gtype (Gtypedef Tint)) bare_global =
+    Some (Gtypedef Tint).
+Proof. reflexivity. Qed.
+
+Example module_le_collision_ignores_shadowed_declaration :
+    module_le
+      (types_tu (collision_types Gtype (Gtypedef Tint)))
+      (types_tu (collision_types (Gtypedef Tint) (Gtypedef Tint))) = true.
+Proof. reflexivity. Qed.
+
+Example module_le_collision_compares_winning_declaration :
+    module_le
+      (types_tu (collision_types Gtype (Gtypedef Tint)))
+      (types_tu (collision_types (Gtypedef Tint) Gtype)) = false.
+Proof. reflexivity. Qed.

@@ -174,7 +174,7 @@ Section default_initialize.
   #[clearbody]
   Let default_initialize_array_frame' di di' tu tu' ty sz Q Q' (p : ptr) :
     FRAME di di' ->
-    sub_module tu tu' ->
+    semantic_sub_module tu tu' ->
     (Forall f, Q f -* Q' f)
     |-- default_initialize_array di tu ty sz p Q -* default_initialize_array di' tu' ty sz p Q'.
   Proof.
@@ -205,7 +205,7 @@ Section default_initialize.
   it relies on the fact that [ty] is defined in both environments.
   *)
   Lemma default_initialize_frame tu tu' ty this Q Q' :
-    sub_module tu tu' ->
+    semantic_sub_module tu tu' ->
     (Forall f, Q f -* Q' f)
     |-- default_initialize tu ty this Q -* default_initialize tu' ty this Q'.
   Proof.
@@ -226,7 +226,7 @@ Section default_initialize.
   Qed.
 
   Lemma default_initialize_array_frame tu tu' ty sz Q Q' (p : ptr) :
-    sub_module tu tu' ->
+    semantic_sub_module tu tu' ->
     (Forall f, Q f -* Q' f)
     |-- default_initialize_array (default_initialize tu ty) tu ty sz p Q
     -* default_initialize_array (default_initialize tu' ty) tu' ty sz p Q'.
@@ -661,7 +661,7 @@ Section wp_initialize.
   (** Properties *)
 
   Lemma wp_initialize_unqualified_frame tu tu' ρ obj cv ty e Q Q' :
-    sub_module tu tu' ->
+    semantic_sub_module tu tu' ->
     (Forall free, Q free -* Q' free)
     |-- wp_initialize_unqualified tu ρ cv ty obj e Q -* wp_initialize_unqualified tu' ρ cv ty obj e Q'.
   Proof.
@@ -739,6 +739,26 @@ Section wp_initialize.
     by rewrite wp_initialize_qual_norm qual_norm_decompose_type.
   Qed.
 
+  Lemma wp_initialize_loc_info tu ρ ty addr li init Q :
+      wp_initialize tu ρ ty addr (ELocInfo li init) Q -|-
+      wp_initialize tu ρ ty addr init Q.
+  Proof.
+    rewrite !wp_initialize_decompose_type.
+    destruct (decompose_type ty) as [cv uty].
+    rewrite !wp_initialize_unqualified.unlock /wp_initialize_unqualified_body /=.
+    destruct (q_volatile cv); first done.
+    destruct uty; simpl;
+      try rewrite wp_operand_loc_info;
+      try rewrite wp_glval_loc_info;
+      try rewrite wp_xval_loc_info;
+      try rewrite wp_init_expr_loc_info;
+      try rewrite UNSUPPORTED.unlock.
+    all: try case_match.
+    all: try rewrite wp_init_expr_loc_info.
+    all: try rewrite UNSUPPORTED.unlock.
+    all: reflexivity.
+  Qed.
+
   Lemma wp_initialize_intro tu ρ ty addr init Q :
     qual_norm (fun cv rty => Cbn (Reduce wp_initialize_unqualified_body false) tu ρ cv rty addr init Q) ty
     |-- wp_initialize tu ρ ty addr init Q.
@@ -806,7 +826,7 @@ Section wp_initialize.
   Qed.
 
   Lemma wp_initialize_frame tu tu' ρ obj ty e Q Q' :
-    sub_module tu tu' ->
+    semantic_sub_module tu tu' ->
     (Forall free, Q free -* Q' free)
     |-- wp_initialize tu ρ ty obj e Q -* wp_initialize tu' ρ ty obj e Q'.
   Proof.
@@ -945,7 +965,7 @@ Section wp_initialize.
   (** [wpi] *)
 
   Lemma wpi_frame tu tu' ρ cls this ty e (Q Q' : epred) :
-    sub_module tu tu' ->
+    semantic_sub_module tu tu' ->
     Q -* Q' |-- wpi tu ρ cls this ty e Q -* wpi tu' ρ cls this ty e Q'.
   Proof.
     intros. iIntros "HQ". rewrite /wpi.

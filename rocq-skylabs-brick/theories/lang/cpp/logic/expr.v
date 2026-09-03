@@ -74,7 +74,8 @@ Module Type Expr.
       (**
       TODO (FM-4393): The type <<t>> in <<Gconstant t>> now redundant.
       *)
-      tu.(types) !! Nenum_const gn id = Some (Gconstant (Tenum gn) (Some e)) ->
+      SemanticTU.lookup_type (SemanticTU.of_tu tu) (Nenum_const gn id) =
+        Some (Gconstant (Tenum gn) (Some e)) ->
           (* evaluation of the expression does not get access to
              local variables, so it gets [Remp] rather than [ρ].
              In addition, the evaluation is done at compile-time, so we clean
@@ -223,7 +224,7 @@ Module Type Expr.
           read_decl (_local ρ x) ty (fun p => Q p FreeTemps.id)
       |-- wp_lval (Evar x ty) Q.
     Axiom wp_lval_global : forall ty x Q,
-          read_decl (_global x) ty (fun p => Q p FreeTemps.id)
+          read_decl (_global $ LocInfo.erase_name x) ty (fun p => Q p FreeTemps.id)
       |-- wp_lval (Eglobal x ty) Q.
 
     (* [Eglobal_member (Nscoped cls nm)] represents a member pointer
@@ -1306,8 +1307,8 @@ Module Type Expr.
               |> wp_mfptr this_type fty fimpl_addr (thisp :: args) Q
           | _ => False
           end
-      | Direct => |> wp_mfptr this_type fty (_global fn) (obj :: args) Q
-      | Static => |> wp_fptr fty (_global fn) args Q
+      | Direct => |> wp_mfptr this_type fty (_global $ LocInfo.erase_name fn) (obj :: args) Q
+      | Static => |> wp_fptr fty (_global $ LocInfo.erase_name fn) args Q
       end.
 
     Lemma dispatch_frame ct fty fn this_type obj args Q Q' :
@@ -1411,7 +1412,7 @@ Module Type Expr.
           match args_for <$> as_function fty with
           | Some targs =>
             letI* fps, vs, ifree, free := wp_args (evaluation_order.order_of (language_version tu) oo) [] targs es in
-            |> wp_fptr fty (_global f) vs (fun v => interp ifree $ Q v free)
+            |> wp_fptr fty (_global $ LocInfo.erase_name f) vs (fun v => interp ifree $ Q v free)
           | None => False
           end
        | operator_impl.MFunc fn ct fty =>
@@ -1424,7 +1425,7 @@ Module Type Expr.
                      fun K => wp_discard eobj (fun free => K invalid_ptr free)
                    in
                    letI* _fps, vs, ifree, free := wp_args (evaluation_order.order_of (language_version tu) oo) [eval_obj] targs es in
-                   |> wp_fptr fty (_global fn) vs (fun v => interp ifree $ Q v free)
+                   |> wp_fptr fty (_global $ LocInfo.erase_name fn) vs (fun v => interp ifree $ Q v free)
                | _, _ => False
                end
            | Direct
@@ -1623,9 +1624,10 @@ Module Type Expr.
       - apply has_type_prop_char_0.
       - eapply has_type_prop_enum.
         clear H1. revert H.
-        rewrite /underlying_type/=.
-        destruct (tu.(types) !! gn) eqn:Hglobal => /= //; rewrite Hglobal /= //.
-        destruct g => /=//.
+        rewrite /underlying_type /underlying_type_view /=.
+        destruct (LocInfoTU.lookup_NM LocInfoTU.erase_GlobDecl tu.(types) gn)
+          as [g|] eqn:Hglobal => /= //.
+        destruct g => /= //.
         intros. do 3 eexists; split; eauto; split; eauto.
         case_match; try congruence; inversion H; subst; simpl; split; try tauto.
         + apply has_nullptr_type.
@@ -1657,7 +1659,8 @@ Module Type Expr.
       end.
 
     Definition type_of_ctor tu obj : option type :=
-      match tu.(symbols) !! obj with
+      match SemanticTU.lookup_symbol (SemanticTU.of_tu tu)
+              (LocInfo.erase_name obj) with
       | Some (Oconstructor ctor as v) => Some (type_of_value v)
       | _ => None
       end.
@@ -1672,15 +1675,15 @@ Module Type Expr.
              match marg_types ctor_type with
              | Some arg_types =>
                 letI* _, argps, ifree, free := wp_args evaluation_order.nd nil arg_types es in
-                |> (this |-> tblockR (Tnamed cls) 1$m -*
+                |> (this |-> tblockR (Tnamed $ LocInfo.erase_name cls) 1$m -*
                    (* ^^ The semantics currently has constructors take ownership of a [tblockR] *)
-                   letI* resultp := wp_fptr ctor_type (_global cnd) (this :: argps) in
+                   letI* resultp := wp_fptr ctor_type (_global $ LocInfo.erase_name cnd) (this :: argps) in
                    letI* := interp ifree in
                     (* in the semantics, constructors return [void] *)
                     resultp |-> primR Tvoid 1$m Vvoid **
                     let Q := Q free in
                     if q_const cv
-                    then wp_make_const tu this (Tnamed cls) Q
+                    then wp_make_const tu this (Tnamed $ LocInfo.erase_name cls) Q
                     else Q)
              | _ => False (* unreachable b/c we got a constructor *)
              end
@@ -1697,14 +1700,14 @@ Module Type Expr.
            | Some ctor_type =>
              match marg_types ctor_type with
              | Some arg_types =>
-                |> (this |-> tblockR (Tnamed cls) 1$m -*
+                |> (this |-> tblockR (Tnamed $ LocInfo.erase_name cls) 1$m -*
                    (* ^^ The semantics currently has constructors take ownership of a [tblockR] *)
-                   letI* resultp := wp_fptr ctor_type (_global cnd) (this :: List.map (_local ρ) vars) in
+                   letI* resultp := wp_fptr ctor_type (_global $ LocInfo.erase_name cnd) (this :: List.map (_local ρ) vars) in
                     (* in the semantics, constructors return [void] *)
                     resultp |-> primR Tvoid 1$m Vvoid **
                     let Q := Q FreeTemps.id in
                     if q_const cv
-                    then wp_make_const tu this (Tnamed cls) Q
+                    then wp_make_const tu this (Tnamed $ LocInfo.erase_name cls) Q
                     else Q)
              | _ => False (* unreachable b/c we got a constructor *)
              end
@@ -1936,7 +1939,7 @@ Module Type Expr.
            then wp_make_const tu base (Tnamed cls) Q
            else Q
          in
-         match tu.(types) !! cls with
+         match TU.lookup_type tu cls with
          | Some (Gstruct s) =>
              letI* free := wp_struct_initlist cls s es base in
              do_const (Q free)
@@ -1951,7 +1954,7 @@ Module Type Expr.
            then wp_make_const tu base (Tnamed cls) Q
            else Q
          in
-         match tu.(types) !! cls with
+         match TU.lookup_type tu cls with
          | Some (Gunion u) =>
              letI* free := wp_union_initlist cls u fld e base in
              do_const (Q free)
