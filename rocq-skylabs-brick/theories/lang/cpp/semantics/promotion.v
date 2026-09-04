@@ -22,11 +22,15 @@ Require Import skylabs.lang.cpp.semantics.values.
 
 (** [underlying_type tu nm] is the type that underlies [Tenum nm].
  *)
-Definition underlying_type (tu : translation_unit) (nm : globname) : option type :=
-  match tu.(types) !! nm with
+Definition underlying_type_view (tu : SemanticTU.t)
+    (nm : globname) : option type :=
+  match SemanticTU.lookup_type tu nm with
   | Some (Genum ty _) => Some $ drop_qualifiers ty
   | _ => None
   end.
+
+Definition underlying_type (tu : translation_unit) (nm : globname) : option type :=
+  underlying_type_view (SemanticTU.of_tu tu) nm.
 
 (** [representation_type tu ty] is the type that underlies [ty] if [ty] is an [enum],
     otherwise, it is the orginal type.
@@ -54,7 +58,7 @@ Definition underlying_unqual_type (tu : translation_unit) (ty : type) : type :=
   let '(cv, ty') := decompose_type ty in
   match ty' with
   | Tenum nm as ty =>
-      match tu.(types) !! nm with
+      match SemanticTU.lookup_type (SemanticTU.of_tu tu) nm with
       | Some (Genum ty _) => ty
       | _ => ty'
       end

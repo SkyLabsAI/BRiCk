@@ -29,7 +29,7 @@ Definition primitiveR `{Σ : cpp_logic} {σ : genv} q ty :=
  *)
 mlock
 Definition anyR `{Σ : cpp_logic} {σ : genv} (ty : Rtype) (q : cQp.t) : Rep :=
-  everywhereR σ.(genv_tu) primitiveR q ty.
+  everywhereR (SemanticTU.repr (genv_view σ)) primitiveR q ty.
 
 Section with_cpp.
   Context `{Σ : cpp_logic} {σ : genv}.
@@ -302,7 +302,7 @@ Section with_cpp.
     -|- Reduce (struct_defR anyR cls st q).
   Proof.
     intros. rewrite {1}anyR.unlock everywhereR_unfold/=.
-    have->: types (genv_tu σ) !! cls = Some (Gstruct st) by done.
+    have->: genv_type_table σ !! cls = Some (Gstruct st) by done.
     rewrite /struct_defR anyR.unlock.
     iSplit; iIntros "($&$&$)".
   Qed.
@@ -315,7 +315,7 @@ Section with_cpp.
     -|- Reduce (union_defR anyR cls un q).
   Proof.
     intros. rewrite {1}anyR.unlock everywhereR_unfold/=.
-    have->: types (genv_tu σ) !! cls = Some (Gunion un) by done.
+    have->: genv_type_table σ !! cls = Some (Gunion un) by done.
     rewrite /union_defR anyR.unlock.
     done.
   Qed.

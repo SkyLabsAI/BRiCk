@@ -69,6 +69,88 @@ Section compat_le.
 
 End compat_le.
 
+Section compat_le_lookup.
+  Context {T : Type}.
+  Variable (f : option T -> option T -> bool).
+
+  Definition compat_le_lookup
+      (l : NM.t T) (find : name -> option T) : bool :=
+    negb $ NM.find_any (fun k v => negb (f (Some v) (find k))) l.
+
+  Lemma compat_le_lookup_sound (l r : NM.t T) find :
+      (forall k, r !! k = find k) ->
+      (forall x, f None x = true) ->
+      if compat_le_lookup l find then
+        forall k, f (l !! k) (r !! k) = true
+      else
+        exists k, f (l !! k) (r !! k) = false.
+  Proof.
+    intros Hfind Hnone. unfold compat_le_lookup.
+    generalize (NM.find_any_ok
+      (fun k v => negb (f (Some v) (find k))) l).
+    generalize (NM.find_any
+      (fun k v => negb (f (Some v) (find k))) l).
+    destruct b; simpl; intros Hany.
+    - destruct Hany as [k [v [Hmaps Hbad]]].
+      exists k. unfold lookup in *.
+      apply negb_true_iff in Hbad.
+      erewrite Hfind. erewrite NM.find_1; eauto.
+    - intros k. rewrite Hfind.
+      destruct (l !! k) as [v|] eqn:Hlookup; last apply Hnone.
+      apply NM.find_2 in Hlookup. specialize (Hany _ _ Hlookup).
+      by apply negb_false_iff in Hany.
+  Qed.
+
+  (** Compare canonical lookups while traversing the original left-hand map.
+      Duplicate annotated keys repeat the same canonical check; this avoids
+      materializing either canonical map while preserving last-match-wins
+      lookup semantics exactly. *)
+  Definition compat_le_source (l : NM.t T)
+      (find_l find_r : name -> option T) : bool :=
+    negb $ NM.find_any
+      (fun stored_key _ =>
+         let key := LocInfo.erase_name stored_key in
+         negb (f (find_l key) (find_r key))) l.
+
+  Lemma compat_le_source_sound (l l' r' : NM.t T) find_l find_r :
+      (forall k, l' !! k = find_l k) ->
+      (forall k, r' !! k = find_r k) ->
+      (forall k value, find_l k = Some value ->
+         exists stored_key stored_value,
+           NM.MapsTo stored_key stored_value l /\
+           LocInfo.erase_name stored_key = k) ->
+      (forall x, f None x = true) ->
+      if compat_le_source l find_l find_r then
+        forall k, f (l' !! k) (r' !! k) = true
+      else
+        exists k, f (l' !! k) (r' !! k) = false.
+  Proof.
+    intros Hl Hr Horigin Hnone. unfold compat_le_source.
+    case Eany: (NM.find_any
+      (fun stored_key (_ : T) =>
+         let key := LocInfo.erase_name stored_key in
+         negb (f (find_l key) (find_r key))) l); simpl.
+    - pose proof (NM.find_any_ok
+        (fun stored_key (_ : T) =>
+           let key := LocInfo.erase_name stored_key in
+           negb (f (find_l key) (find_r key))) l) as Hany.
+      rewrite Eany in Hany.
+      destruct Hany as [stored_key [stored_value [Hmaps Hbad]]].
+      exists (LocInfo.erase_name stored_key).
+      rewrite Hl Hr. by apply negb_true_iff in Hbad.
+    - pose proof (NM.find_any_ok
+        (fun stored_key (_ : T) =>
+           let key := LocInfo.erase_name stored_key in
+           negb (f (find_l key) (find_r key))) l) as Hany.
+      rewrite Eany in Hany. intros key. rewrite Hl Hr.
+      destruct (find_l key) as [value|] eqn:Hfind; last apply Hnone.
+      destruct (Horigin _ _ Hfind)
+        as [stored_key [stored_value [Hmaps Herase]]].
+      specialize (Hany _ _ Hmaps). apply negb_false_iff in Hany.
+      rewrite Herase Hfind in Hany. exact Hany.
+  Qed.
+End compat_le_lookup.
+
 (** ** Inclusion of types ([GlobDecl]) *)
 
 (** [GlobDecl_le a b] holds when [a] has compatible (but possibly less)
@@ -521,24 +603,62 @@ Section sub_module.
 End sub_module.
 #[global] Instance: RewriteRelation sub_module := {}.
 
+(** * Location-insensitive module views *)
+
+Definition view_sub_module (a b : SemanticTU.t) : Prop :=
+  sub_module (SemanticTU.repr a) (SemanticTU.repr b).
+
+#[global] Instance view_sub_module_preorder : PreOrder view_sub_module.
+Proof.
+  split.
+  - intros tu. unfold view_sub_module. reflexivity.
+  - intros tu1 tu2 tu3 H12 H23.
+    unfold view_sub_module in H12, H23 |- *.
+    exact (transitivity H12 H23).
+Qed.
+#[global] Instance view_sub_module_rewrite_relation :
+    RewriteRelation view_sub_module := {}.
+
+Definition semantic_sub_module (a b : translation_unit) : Prop :=
+  view_sub_module (SemanticTU.of_tu a) (SemanticTU.of_tu b).
+
+Lemma semantic_sub_module_eq a b :
+    semantic_sub_module a b =
+      view_sub_module (SemanticTU.of_tu a) (SemanticTU.of_tu b).
+Proof. reflexivity. Qed.
+
+#[global] Instance semantic_sub_module_preorder :
+    PreOrder semantic_sub_module.
+Proof.
+  split.
+  - intros tu. rewrite /semantic_sub_module. reflexivity.
+  - intros tu1 tu2 tu3 H12 H23.
+    unfold semantic_sub_module, view_sub_module in H12, H23.
+    unfold semantic_sub_module, view_sub_module.
+    exact (transitivity H12 H23).
+Qed.
+#[global] Instance semantic_sub_module_rewrite_relation :
+    RewriteRelation semantic_sub_module := {}.
+
 (** * Decidability
 
-    [sub_module] is decidable
- *)
-Definition module_le (a b : translation_unit) : bool :=
+    [structural_module_le] decides the raw structural relation.  Public
+    [module_le] compares semantic views and is therefore insensitive to
+    [LocInfo] wrappers. *)
+Definition structural_module_le (a b : translation_unit) : bool :=
   Eval cbv beta iota zeta delta [ andb ] in
   bool_decide (a.(abi) = b.(abi)) &&
   bool_decide (type_table_le a.(types) b.(types)) &&
   bool_decide (sym_table_le a.(symbols) b.(symbols)) &&
   bool_decide (asserts_le a.(asserts) b.(asserts)).
 
-Theorem module_le_sound : forall a b,
-    if module_le a b then
+Theorem structural_module_le_sound : forall a b,
+    if structural_module_le a b then
       sub_module a b
     else
       ~sub_module a b.
 Proof.
-  rewrite /module_le; intros.
+  rewrite /structural_module_le; intros.
   repeat case_bool_decide.
   { constructor; eauto. }
   { intro C; inversion C; eauto. }
@@ -547,21 +667,226 @@ Proof.
   { intro C; inversion C; eauto. }
 Qed.
 
+Theorem structural_module_le_spec : forall a b,
+    Bool.reflect (sub_module a b) (structural_module_le a b).
+Proof.
+  intros. generalize (structural_module_le_sound a b).
+  destruct (structural_module_le a b); constructor; eauto.
+Qed.
+
+Definition GlobDecl_option_le (l r : option GlobDecl) : bool :=
+  match l, r with
+  | None, _ => true
+  | Some _, None => false
+  | Some l, Some r => GlobDecl_le l r
+  end.
+
+Definition view_type_table_le (a b : SemanticTU.t) : bool :=
+  match a with
+  | SemanticTU.from_tu tu =>
+      compat_le_source GlobDecl_option_le tu.(types)
+        (SemanticTU.lookup_type a) (SemanticTU.lookup_type b)
+  | SemanticTU.from_canonical tu =>
+      compat_le_lookup GlobDecl_option_le tu.(types)
+        (SemanticTU.lookup_type b)
+  end.
+
+Lemma view_type_table_le_compat a b :
+    if view_type_table_le a b then
+      forall k,
+        GlobDecl_option_le
+          (SemanticTU.types a !! k) (SemanticTU.types b !! k) = true
+    else
+      exists k,
+        GlobDecl_option_le
+          (SemanticTU.types a !! k) (SemanticTU.types b !! k) = false.
+Proof.
+  destruct a as [tu|tu]; rewrite /view_type_table_le /=.
+  - eapply compat_le_source_sound.
+    + exact (SemanticTU.lookup_type_spec (SemanticTU.from_tu tu)).
+    + exact (SemanticTU.lookup_type_spec b).
+    + intros key value Hlookup.
+      exact (LocInfoTU.lookup_NM_origin
+        LocInfoTU.erase_GlobDecl tu.(types) key value Hlookup).
+    + reflexivity.
+  - eapply compat_le_lookup_sound.
+    + exact (SemanticTU.lookup_type_spec b).
+    + reflexivity.
+Qed.
+
+Lemma view_type_table_le_sound a b :
+    if view_type_table_le a b then
+      type_table_le (SemanticTU.types a) (SemanticTU.types b)
+    else
+      ~type_table_le (SemanticTU.types a) (SemanticTU.types b).
+Proof.
+  generalize (view_type_table_le_compat a b).
+  case E: view_type_table_le; simpl; intros Hcompat.
+  - rewrite /type_table_le. intros gn gv Hlookup.
+    specialize (Hcompat gn).
+    rewrite /GlobDecl_option_le Hlookup in Hcompat.
+    destruct (SemanticTU.types b !! gn) as [gv'|] eqn:Hlookup'.
+    + exists gv'. split; first done. do 2 red. by rewrite Hcompat.
+    + discriminate Hcompat.
+  - intros Hle. destruct Hcompat as [gn Hcompat].
+    rewrite /GlobDecl_option_le in Hcompat.
+    destruct (SemanticTU.types a !! gn) as [gv|] eqn:Hlookup.
+    2: { discriminate Hcompat. }
+    destruct (SemanticTU.types b !! gn) as [gv'|] eqn:Hlookup'.
+    + destruct (Hle _ _ Hlookup) as [gv'' [Hlookup'' Hle']].
+      rewrite Hlookup' in Hlookup''. injection Hlookup'' as ->.
+      do 2 red in Hle'. rewrite Hcompat in Hle'. contradiction.
+    + destruct (Hle _ _ Hlookup) as [gv' [Hlookup'' _]].
+      by rewrite Hlookup' in Hlookup''.
+Qed.
+
+Definition ObjValue_option_le (l r : option ObjValue) : bool :=
+  match l, r with
+  | None, _ => true
+  | Some _, None => false
+  | Some l, Some r => ObjValue_le l r
+  end.
+
+Definition view_sym_table_le (a b : SemanticTU.t) : bool :=
+  match a with
+  | SemanticTU.from_tu tu =>
+      compat_le_source ObjValue_option_le tu.(symbols)
+        (SemanticTU.lookup_symbol a) (SemanticTU.lookup_symbol b)
+  | SemanticTU.from_canonical tu =>
+      compat_le_lookup ObjValue_option_le tu.(symbols)
+        (SemanticTU.lookup_symbol b)
+  end.
+
+Lemma view_sym_table_le_compat a b :
+    if view_sym_table_le a b then
+      forall k,
+        ObjValue_option_le
+          (SemanticTU.symbols a !! k) (SemanticTU.symbols b !! k) = true
+    else
+      exists k,
+        ObjValue_option_le
+          (SemanticTU.symbols a !! k) (SemanticTU.symbols b !! k) = false.
+Proof.
+  destruct a as [tu|tu]; rewrite /view_sym_table_le /=.
+  - eapply compat_le_source_sound.
+    + exact (SemanticTU.lookup_symbol_spec (SemanticTU.from_tu tu)).
+    + exact (SemanticTU.lookup_symbol_spec b).
+    + intros key value Hlookup.
+      exact (LocInfoTU.lookup_NM_origin
+        LocInfoTU.erase_ObjValue tu.(symbols) key value Hlookup).
+    + reflexivity.
+  - eapply compat_le_lookup_sound.
+    + exact (SemanticTU.lookup_symbol_spec b).
+    + reflexivity.
+Qed.
+
+Lemma view_sym_table_le_sound a b :
+    if view_sym_table_le a b then
+      sym_table_le (SemanticTU.symbols a) (SemanticTU.symbols b)
+    else
+      ~sym_table_le (SemanticTU.symbols a) (SemanticTU.symbols b).
+Proof.
+  generalize (view_sym_table_le_compat a b).
+  case E: view_sym_table_le; simpl; intros Hcompat.
+  - rewrite /sym_table_le. intros on v Hlookup.
+    specialize (Hcompat on).
+    rewrite /ObjValue_option_le Hlookup in Hcompat.
+    destruct (SemanticTU.symbols b !! on) as [v'|] eqn:Hlookup'.
+    + exists v'. split; first done. red. by rewrite Hcompat.
+    + discriminate Hcompat.
+  - intros Hle. destruct Hcompat as [on Hcompat].
+    rewrite /ObjValue_option_le in Hcompat.
+    destruct (SemanticTU.symbols a !! on) as [v|] eqn:Hlookup.
+    2: { discriminate Hcompat. }
+    destruct (SemanticTU.symbols b !! on) as [v'|] eqn:Hlookup'.
+    + destruct (Hle _ _ Hlookup) as [v'' [Hlookup'' Hle']].
+      rewrite Hlookup' in Hlookup''. injection Hlookup'' as ->.
+      red in Hle'. by rewrite Hcompat in Hle'.
+    + destruct (Hle _ _ Hlookup) as [v' [Hlookup'' _]].
+      by rewrite Hlookup' in Hlookup''.
+Qed.
+
+(** Source views traverse original left-hand keys and compare canonical
+    single-entry lookups.  This preserves collision semantics without
+    materializing a complete erased translation unit. *)
+Definition view_module_le (a b : SemanticTU.t) : bool :=
+  Eval cbv beta iota zeta delta [andb] in
+  bool_decide (SemanticTU.abi a = SemanticTU.abi b) &&
+  view_type_table_le a b &&
+  view_sym_table_le a b &&
+  bool_decide (asserts_le (SemanticTU.asserts a) (SemanticTU.asserts b)).
+
+Theorem view_module_le_sound : forall a b,
+    if view_module_le a b then
+      view_sub_module a b
+    else
+      ~view_sub_module a b.
+Proof.
+  intros a b. rewrite /view_module_le.
+  case Eabi: bool_decide; simpl.
+  2: { apply bool_decide_eq_false_1 in Eabi. intros Hsub.
+       apply Eabi. exact (abi_compat _ _ Hsub). }
+  apply bool_decide_eq_true_1 in Eabi.
+  case Etypes: view_type_table_le; simpl.
+  2: { generalize (view_type_table_le_sound a b). rewrite Etypes.
+       intros Hnot Hsub. apply Hnot. exact (types_compat _ _ Hsub). }
+  generalize (view_type_table_le_sound a b). rewrite Etypes.
+  intros Htypes.
+  case Esyms: view_sym_table_le; simpl.
+  2: { generalize (view_sym_table_le_sound a b). rewrite Esyms.
+       intros Hnot Hsub. apply Hnot. exact (syms_compat _ _ Hsub). }
+  generalize (view_sym_table_le_sound a b). rewrite Esyms.
+  intros Hsyms.
+  case Easserts: bool_decide; simpl.
+  - apply bool_decide_eq_true_1 in Easserts.
+    constructor; assumption.
+  - apply bool_decide_eq_false_1 in Easserts. intros Hsub.
+    apply Easserts. exact (asserts_compat _ _ Hsub).
+Qed.
+
+Theorem view_module_le_spec : forall a b,
+    Bool.reflect (view_sub_module a b) (view_module_le a b).
+Proof.
+  intros. generalize (view_module_le_sound a b).
+  destruct (view_module_le a b); constructor; eauto.
+Qed.
+
+Definition module_le (a b : translation_unit) : bool :=
+  view_module_le (SemanticTU.of_tu a) (SemanticTU.of_tu b).
+
+Theorem module_le_sound : forall a b,
+    if module_le a b then
+      semantic_sub_module a b
+    else
+      ~semantic_sub_module a b.
+Proof.
+  intros. generalize (view_module_le_spec (SemanticTU.of_tu a)
+                       (SemanticTU.of_tu b)).
+  rewrite /module_le. case: view_module_le; inversion 1; done.
+Qed.
+
 Theorem module_le_spec : forall a b,
-    Bool.reflect (sub_module a b) (module_le a b).
+    Bool.reflect (semantic_sub_module a b) (module_le a b).
 Proof.
   intros. generalize (module_le_sound a b).
   destruct (module_le a b); constructor; eauto.
 Qed.
 
+(** Keep automation from unfolding semantic module inclusion while it is
+    choosing a translation unit for a generated backward rule.  In particular,
+    unfolding here lets reflexivity instantiate an unresolved right-hand unit
+    and can make separation-logic search explore large annotated sources.
+    Clients that need the representation use [semantic_sub_module_eq]. *)
+#[global] Opaque semantic_sub_module.
+
 #[global]
 Instance sub_module_dec : RelDecision sub_module :=
-  fun l r => match module_le l r as X
+  fun l r => match structural_module_le l r as X
                 return (if X then sub_module l r else ~sub_module l r) -> {_} + {_}
           with
           | true => fun pf => left pf
           | false => fun pf => right pf
-          end (module_le_sound l r).
+          end (structural_module_le_sound l r).
 
 Lemma sub_module_preserves_globdecl {m1 m2 gn g1} :
   sub_module m1 m2 ->

@@ -117,7 +117,7 @@ Section conv_int.
   Proof using Hmod.
     induction ty; rewrite /representation_type /= //.
     { intros.
-      rewrite /underlying_type.
+      rewrite /underlying_type /underlying_type_view.
       case_match => //.
       case_match => //.
       eapply has_type_prop_enum in H.
@@ -136,7 +136,7 @@ Section conv_int.
   Proof using Hmod.
     induction ty; rewrite /representation_type /= //.
     { split; intros.
-      { rewrite /underlying_type.
+      { rewrite /underlying_type /underlying_type_view.
         case_match => //.
         case_match => //.
         eapply has_type_prop_enum in H0.
@@ -144,7 +144,7 @@ Section conv_int.
         subst.
         generalize (enum_compat (ODR Hmod H0 _ _ _ H1 H3)); intro; subst.
         tauto. }
-      { unfold underlying_type in H0.
+      { unfold underlying_type, underlying_type_view in H0.
         case_match; simpl in *; eauto.
         case_match; simpl in *; eauto.
         apply has_type_prop_enum. do 3 eexists; split; eauto. } }

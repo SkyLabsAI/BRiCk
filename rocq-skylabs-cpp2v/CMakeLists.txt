@@ -77,6 +77,7 @@ add_llvm_library(tocoq
   src/Logging.cpp
   src/Assert.cpp
   src/Location.cpp
+  src/LocationTable.cpp
   src/Template.cpp
   src/ClangPrinter.cpp
   src/StringPrettyPrinter.cpp

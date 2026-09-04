@@ -66,6 +66,13 @@ arguments `ARGS`.
 dune exec -- cpp2v ${ARGS}
 ```
 
+### Source-location information
+
+`cpp2v` accepts `--loc-info=[none|local]`. The default is `local`, which emits
+location wrappers and per-output source-location tables for modeled AST nodes
+whose file or spelling location belongs to the original translation unit. Use
+`--loc-info=none` to disable location collection, wrappers, and tables.
+
 ## Directory layout
 
 Directories `src` and `include` hold the implementation of the `cpp2v`. The

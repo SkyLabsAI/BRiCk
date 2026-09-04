@@ -25,9 +25,10 @@ const char *templateArgumentKindName(TemplateArgument::ArgKind);
 
 ClangPrinter::ClangPrinter(clang::CompilerInstance *compiler,
                            clang::ASTContext *context, Trace::Mask trace,
-                           bool comment, bool typedefs)
+                           bool comment, bool typedefs,
+                           LocationTable *location_table)
     : compiler_(compiler), context_(context), trace_(trace), comment_{comment},
-      typedefs_{typedefs} {
+      typedefs_{typedefs}, location_table_{location_table} {
     mangleContext_ =
         ItaniumMangleContext::create(*context, compiler->getDiagnostics());
 }
@@ -130,10 +131,8 @@ fmt::Formatter &ClangPrinter::printValCat(CoqPrinter &print, const Expr *d) {
 }
 
 // TODO: this function has a lot of issues with it.
-fmt::Formatter &
-ClangPrinter::printTemplateTypeParamRef(CoqPrinter &print,
-                                        const TemplateTypeParmDecl *decl,
-                                        loc::loc loc) {
+fmt::Formatter &ClangPrinter::printTemplateTypeParamRef(
+    CoqPrinter &print, const TemplateTypeParmDecl *decl, loc::loc loc) {
     if (trace(Trace::Name)) {
         trace("printTemplateTypeParamRef", loc::refine(loc, decl));
     }
@@ -187,7 +186,8 @@ struct ResolvedTemplateParamRef {
         return {Kind::TypeParam, p};
     }
 
-    static ResolvedTemplateParamRef valueParam(const NonTypeTemplateParmDecl *p) {
+    static ResolvedTemplateParamRef
+    valueParam(const NonTypeTemplateParmDecl *p) {
         return {Kind::ValueParam, p};
     }
 
@@ -243,8 +243,7 @@ findTemplateParamRef(const TemplateParameterList *list, unsigned depth,
 
 static void dumpTemplateParamRefSearch(const Decl *d, unsigned depth,
                                        unsigned index) {
-    llvm::errs() << "Looking for depth=" << depth << " index=" << index
-                 << "\n";
+    llvm::errs() << "Looking for depth=" << depth << " index=" << index << "\n";
     for (auto xx = d; xx; xx = parentDecl(xx)) {
         llvm::errs() << xx->getDeclKindName();
         if (auto nd = dyn_cast<NamedDecl>(xx))
@@ -258,9 +257,8 @@ resolveTemplateParamRef(const Decl *start, unsigned depth, unsigned index,
                         loc::loc loc, ClangPrinter &cprint) {
     for (auto d = start; d; d = parentDecl(d)) {
         if (auto psd = dyn_cast<ClassTemplatePartialSpecializationDecl>(d)) {
-            if (auto r =
-                    findTemplateParamRef(psd->getTemplateParameters(), depth,
-                                         index))
+            if (auto r = findTemplateParamRef(psd->getTemplateParameters(),
+                                              depth, index))
                 return *r;
         } else if (auto fd = dyn_cast<FunctionDecl>(d)) {
             if (auto y = fd->getTemplateSpecializationArgs()) {
@@ -276,19 +274,16 @@ resolveTemplateParamRef(const Decl *start, unsigned depth, unsigned index,
                     return *r;
             }
         } else if (auto rd = dyn_cast<CXXRecordDecl>(d)) {
-            if (auto r =
-                    findTemplateParamRef(rd->getDescribedTemplateParams(),
-                                         depth, index))
+            if (auto r = findTemplateParamRef(rd->getDescribedTemplateParams(),
+                                              depth, index))
                 return *r;
         } else if (auto tad = dyn_cast<TypeAliasDecl>(d)) {
-            if (auto r =
-                    findTemplateParamRef(tad->getDescribedTemplateParams(),
-                                         depth, index))
+            if (auto r = findTemplateParamRef(tad->getDescribedTemplateParams(),
+                                              depth, index))
                 return *r;
         } else if (auto vd = dyn_cast<VarDecl>(d)) {
-            if (auto r =
-                    findTemplateParamRef(vd->getDescribedTemplateParams(),
-                                         depth, index))
+            if (auto r = findTemplateParamRef(vd->getDescribedTemplateParams(),
+                                              depth, index))
                 return *r;
         } else if (isa<TypedefDecl>(d)) {
         } else {
@@ -350,7 +345,7 @@ fmt::Formatter &ClangPrinter::printTemplateTypeParamRef(CoqPrinter &print,
             return printQualType(print, v.getAsType(), loc);
         default:
             return printUnsupportedTemplateArgument(print, "Tunsupported",
-                                                   v.getKind());
+                                                    v.getKind());
         }
     }
     case ResolvedTemplateParamRef::Kind::NotFound: {
@@ -393,7 +388,7 @@ fmt::Formatter &ClangPrinter::printTemplateValueParamRef(CoqPrinter &print,
             return printExpr(print, v.getAsExpr());
         default:
             return printUnsupportedTemplateArgument(print, "Eunsupported",
-                                                   v.getKind());
+                                                    v.getKind());
         }
     }
     case ResolvedTemplateParamRef::Kind::NotFound: {

@@ -53,7 +53,7 @@ Module canonical_tu.
   Definition tu_to_canon (tu : translation_unit) : translation_unit_canon.
     (* let '(makeTranslationUnit s g _ init info) := tu in Build_translation_unit_canon (im_to_gmap s) (im_to_gmap g) info. *) Admitted. (* TODO: structured names keys *)
   #[local] Definition genv_to_canon σ : genv_canon :=
-    let '(Build_genv tu) := σ in Build_genv_canon (tu_to_canon tu).
+    let '(Build_genv tu _) := σ in Build_genv_canon (tu_to_canon tu).
 End canonical_tu.
 
 Definition null_alloc_id : alloc_id := MkAllocId 0.

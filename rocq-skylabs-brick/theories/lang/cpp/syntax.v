@@ -9,6 +9,8 @@ Require Export skylabs.prelude.bytestring.
 Require Export skylabs.lang.cpp.syntax.preliminary.	(* syntax/preliminary.v *)
 Require Export skylabs.lang.cpp.syntax.overloadable.	(* syntax/overloadable.v *)
 Require Export skylabs.lang.cpp.syntax.core.	(* syntax/core.v *)
+Require skylabs.lang.cpp.syntax.loc_info.	(* syntax/loc_info.v *)
+Module LocInfo := skylabs.lang.cpp.syntax.loc_info.LocInfo.
 Require Export skylabs.lang.cpp.syntax.types.	(* syntax/types.v *)
 Require Export skylabs.lang.cpp.syntax.typing.	(* syntax/typing.v *)
 Require Export skylabs.lang.cpp.syntax.stmt.	(* syntax/stmt.v *)
@@ -18,3 +20,4 @@ Require Export skylabs.lang.cpp.syntax.abi. (* syntax/abi.v *)
 Require Export skylabs.lang.cpp.syntax.notations. (* syntax/notations.v *)
 Require Export skylabs.lang.cpp.syntax.name_notation.
 Require Export skylabs.lang.cpp.syntax.translation_unit.	(* syntax/translation_unit.v *)
+Require Export skylabs.lang.cpp.syntax.loc_info_tu.	(* syntax/loc_info_tu.v *)

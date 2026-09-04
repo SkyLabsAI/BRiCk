@@ -6,6 +6,8 @@
 
 Require Import skylabs.lang.cpp.syntax.prelude.
 Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.loc_info.
+Require Import skylabs.lang.cpp.syntax.loc_info_tu.
 Require Import skylabs.lang.cpp.syntax.types.
 Require Import skylabs.lang.cpp.syntax.typing.
 Require Import skylabs.lang.cpp.syntax.stmt.
@@ -946,6 +948,7 @@ Module decltype.
                differ by <<const>> qualifiers in instance-specific ways *)
             mret t
         | Eunsupported _ t => mret t
+        | ELocInfo _ e => of_expr e
         end
         in
         let* _ :=
@@ -968,18 +971,19 @@ Module decltype.
       Context (of_expr : Expr -> M decltype).
 
       Definition check_binding (d : BindingDecl) : M bindings :=
-        match d with
+        match LocInfo.drop_binding_decl d with
         | Bvar lname ty init =>
             let* _ := of_expr init >>= can_initialize ty in
             mret ({| _bindings := [(lname, ty)] |})
         | Bbind lname ty init =>
             let* _ := (of_expr init >>= requireGL) >>= can_initialize ty in
             mret ({| _bindings := [(lname, ty)] |})
+        | BLocInfo _ _ => mfail (* unreachable *)
         end.
 
       Definition check_decl (d : VarDecl) : M bindings :=
         trace d
-        match d with
+        match LocInfo.drop_var_decl d with
         | Dvar lname ty oinit =>
             let* _ :=
               match oinit with
@@ -1004,6 +1008,7 @@ Module decltype.
               end
             in
             mret monoid.monoid_unit
+        | DLocInfo _ _ => mfail (* unreachable *)
         end.
 
     End var_decl.
@@ -1091,6 +1096,7 @@ Module decltype.
             let* _ := traverse (T:=eta list) (fun ab => of_expr ab.2) outs in
             mret (∅, None)
         | Sunsupported _ => mfail
+        | SLocInfo _ s => check_stmt s
         end.
     End stmt.
 
@@ -1174,6 +1180,7 @@ Module decltype.
      readerT.run (internal.of_expr e) (tu_to_ext tu, Tvoid, None, []).
 
   Definition check_tu (tu : translation_unit) : trace.M Error.t unit :=
+    let tu := LocInfoTU.erase_translation_unit tu in
     let fn (nm_v : name * ObjValue) :=
       trace (breadcrumb nm_v.1) $ internal.check_obj_value nm_v.2
     in

@@ -264,7 +264,10 @@ let cpp_command_prog (attrs : attrs) name flags prog =
     "--no-sharing"; (* to avoid polluting the namespace. It would be better to put this in a [Module]
                          if we are not in a [Section] *)
     "-o"; temp_v;
-    temp_cpp] @
+    temp_cpp;
+    (* [cpp.prog] consumers inspect the raw AST, and locations in its
+       temporary source file are neither stable nor useful. *)
+    "--loc-info=none"] @
     (if with_templates then [] else ["--no-templates"]) @
     (if elaborate then ["--elaborate"] else ["--no-elaborate"]) @
     (if check_types then ["--check-types"] else []) @

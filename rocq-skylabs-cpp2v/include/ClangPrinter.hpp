@@ -5,6 +5,7 @@
  */
 #pragma once
 #include "Location.hpp"
+#include "LocationTable.hpp"
 #include "Logging.hpp"
 #include "Trace.hpp"
 #include <clang/Basic/Diagnostic.h>
@@ -97,11 +98,13 @@ private:
     const clang::Decl *decl_{nullptr};
     const bool comment_{false};
     const bool typedefs_;
+    LocationTable *location_table_;
 
     ClangPrinter(const ClangPrinter &from, const clang::Decl *decl)
         : compiler_(from.compiler_), context_(from.context_),
           mangleContext_(from.mangleContext_), trace_(from.trace_), decl_{decl},
-          comment_{from.comment_}, typedefs_{from.typedefs_} {}
+          comment_{from.comment_}, typedefs_{from.typedefs_},
+          location_table_{from.location_table_} {}
 
 public:
     // Silence some warnings until we can improve our diagnostics
@@ -111,7 +114,8 @@ public:
     static inline constexpr bool debug = false;
 
     ClangPrinter(clang::CompilerInstance *compiler, clang::ASTContext *context,
-                 Trace::Mask trace, bool comment, bool typdefs = false);
+                 Trace::Mask trace, bool comment, bool typdefs = false,
+                 LocationTable *location_table = nullptr);
 
     /*
       This declaration provides context for resolving template
@@ -131,6 +135,9 @@ private:
 
     fmt::Formatter &printNestedName(CoqPrinter &, NestedNameSpecifierArg,
                                     loc::loc);
+    fmt::Formatter &printUnresolvedNameRaw(CoqPrinter &, NestedNameSpecifierArg,
+                                           const clang::DeclarationName &,
+                                           loc::loc);
 
 public:
     clang::ASTContext &getContext() { return *context_; }
@@ -140,6 +147,8 @@ public:
     clang::MangleContext &getMangleContext() { return *mangleContext_; }
 
     bool printTypedefs() const { return typedefs_; }
+
+    LocationTable *locationTable() const { return location_table_; }
 
     std::optional<std::pair<const clang::CXXRecordDecl *, clang::Qualifiers>>
     getLambdaClass() const;
@@ -203,8 +212,7 @@ public:
                                    loc::loc);
 
     // Print one Rocq [temp_param].
-    fmt::Formatter &printTemplateParam(CoqPrinter &,
-                                       const clang::NamedDecl *,
+    fmt::Formatter &printTemplateParam(CoqPrinter &, const clang::NamedDecl *,
                                        loc::loc);
 
     // Print a Rocq [list (temp_param * option temp_arg)].
@@ -225,10 +233,8 @@ public:
 
     // Print one Rocq [temp_arg].
     fmt::Formatter &printTemplateArg(CoqPrinter &,
-                                     const clang::TemplateArgument &,
-                                     loc::loc);
-    fmt::Formatter &printTemplateArg(CoqPrinter &,
-                                     const clang::NamedDecl *,
+                                     const clang::TemplateArgument &, loc::loc);
+    fmt::Formatter &printTemplateArg(CoqPrinter &, const clang::NamedDecl *,
                                      loc::loc);
 
     // Print a Rocq [list temp_arg].
@@ -238,18 +244,17 @@ public:
     fmt::Formatter &printTemplateArgs(CoqPrinter &,
                                       llvm::ArrayRef<clang::TemplateArgument>);
     fmt::Formatter &
-    printTemplateArgs(CoqPrinter &,
-                      llvm::ArrayRef<clang::TemplateArgumentLoc>);
+    printTemplateArgs(CoqPrinter &, llvm::ArrayRef<clang::TemplateArgumentLoc>);
 
     // Print all template arguments in scope for a declaration as a Rocq
     // [list temp_arg].
-    fmt::Formatter &printTemplateArgsForDecl(CoqPrinter &,
-                                             const clang::Decl &);
+    fmt::Formatter &printTemplateArgsForDecl(CoqPrinter &, const clang::Decl &);
 
     // Print template parameter references in the Rocq sort required by their
     // use site.
-    fmt::Formatter &printTemplateTypeParamRef(
-        CoqPrinter &, const clang::TemplateTypeParmDecl *, loc::loc);
+    fmt::Formatter &
+    printTemplateTypeParamRef(CoqPrinter &, const clang::TemplateTypeParmDecl *,
+                              loc::loc);
     fmt::Formatter &printTemplateTypeParamRef(CoqPrinter &, unsigned depth,
                                               unsigned index, loc::loc);
     fmt::Formatter &printTemplateValueParamRef(CoqPrinter &, unsigned depth,

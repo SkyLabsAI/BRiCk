@@ -133,7 +133,7 @@ Definition derivationsR `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
   The number of global entries is an upper bound on the height of the
   derivation tree.
   *)
-  let size := NM.cardinal σ.(genv_tu).(types) in
+  let size := NM.cardinal (genv_type_table σ) in
   derivationsR' tu q size include_base cls path.
 
 Section derivationsR.
@@ -212,7 +212,8 @@ Section derivationsR.
   Lemma derivationsR_ok tu tu' (sub : sub_module tu tu') :
     forall mdc (p : ptr) cls include_base q,
         p |-> derivationsR tu include_base cls mdc q
-    |-- p |-> derivationsR tu' include_base cls mdc q ** [| supports_with_fuel tu cls (NM.cardinal (types $ genv_tu σ)) |].
+    |-- p |-> derivationsR tu' include_base cls mdc q **
+        [| supports_with_fuel tu cls (NM.cardinal (genv_type_table σ)) |].
   Proof. intros; by apply derivationsR'_ok; eauto. Qed.
 
   Lemma derivationsR'_ok_supports tu tu' (sub : sub_module tu tu') :
@@ -235,7 +236,7 @@ Section derivationsR.
   Qed.
 
   Lemma derivationsR_ok_supports tu tu' (sub : sub_module tu tu') :
-    forall cls, supports_with_fuel tu cls (NM.cardinal (types (genv_tu σ))) ->
+    forall cls, supports_with_fuel tu cls (NM.cardinal (genv_type_table σ)) ->
              forall mdc (p : ptr) include_base q,
         p |-> derivationsR tu include_base cls mdc q
     -|- p |-> derivationsR tu' include_base cls mdc q.
@@ -258,18 +259,19 @@ producing the new identity for "this".
 *)
 Definition wp_init_identity `{Σ : cpp_logic, σ : genv} (p : ptr) (tu : translation_unit)
     (cls : globname) (Q : mpred) : mpred :=
-  p |-> derivationsR tu false cls [] 1$m **
-  (p |-> derivationsR tu true cls [cls] 1$m -* Q).
+  let semantic_tu := TU.canonical tu in
+  p |-> derivationsR semantic_tu false cls [] 1$m **
+  (p |-> derivationsR semantic_tu true cls [cls] 1$m -* Q).
 
 Section wp_init_identity.
   Context `{Σ : cpp_logic, σ : genv}.
   Implicit Types (p : ptr) (Q : mpred).
 
   Lemma wp_init_identity_frame p tu tu' cls Q Q' :
-    sub_module tu tu' ->
+    semantic_sub_module tu tu' ->
     Q' -* Q |-- wp_init_identity p tu cls Q' -* wp_init_identity p tu' cls Q.
   Proof.
-    rewrite /wp_init_identity.
+    rewrite /wp_init_identity semantic_sub_module_eq.
     iIntros (sub) "Q [X Y]".
     iDestruct (derivationsR_ok with "X") as "[X %]"; eauto.
     iFrame.
@@ -287,18 +289,19 @@ class.
 *)
 Definition wp_revert_identity `{Σ : cpp_logic, σ : genv} (p : ptr) (tu : translation_unit)
     (cls : globname) (Q : mpred) : mpred :=
-  p |-> derivationsR tu true cls [cls] 1$m **
-  (p |-> derivationsR tu false cls [] 1$m -* Q).
+  let semantic_tu := TU.canonical tu in
+  p |-> derivationsR semantic_tu true cls [cls] 1$m **
+  (p |-> derivationsR semantic_tu false cls [] 1$m -* Q).
 
 Section with_cpp.
   Context `{Σ : cpp_logic, σ : genv}.
   Implicit Types (p : ptr) (Q : mpred).
 
   Lemma wp_revert_identity_frame p tu tu' cls Q Q' :
-    sub_module tu tu' ->
+    semantic_sub_module tu tu' ->
     Q' -* Q |-- wp_revert_identity p tu cls Q' -* wp_revert_identity p tu' cls Q.
   Proof.
-    rewrite /wp_revert_identity.
+    rewrite /wp_revert_identity semantic_sub_module_eq.
     iIntros (sub) "Q [X Y]".
     iDestruct (derivationsR_ok with "X") as "[X %]"; eauto.
     iFrame.
@@ -309,7 +312,8 @@ Section with_cpp.
 
   (** sanity chect that initialization and revert are inverses *)
   Lemma wp_init_revert p tu cls Q :
-    let REQ := p |-> derivationsR tu false cls [] 1$m in
+    let REQ := p |-> derivationsR (TU.canonical tu)
+      false cls [] 1$m in
     REQ ** Q
     |-- wp_init_identity p tu cls (wp_revert_identity p tu cls (REQ ** Q)).
   Proof.
@@ -333,10 +337,11 @@ Section with_cpp.
   Implicit Types (Q : epred).
 
   Lemma wp_make_mutables_frame tu tu' args Q Q' :
-    sub_module tu tu' ->
+    semantic_sub_module tu tu' ->
     Q -* Q' |-- wp_make_mutables tu args Q -* wp_make_mutables tu' args Q'.
   Proof.
-    intros ?%types_compat.
+    intros Hsub. rewrite semantic_sub_module_eq in Hsub.
+    move: Hsub => /types_compat Htypes.
     move: Q Q'. induction args; intros; first done. cbn. iIntros "HQ".
     iApply (IHargs with "[HQ]"). by iApply wp_const_frame.
   Qed.
@@ -352,7 +357,7 @@ Section with_cpp.
   Implicit Types (Q : Kpred).
 
   Lemma Kcleanup_frame tu tu' args (Q Q' : Kpred) rt :
-    sub_module tu tu' ->
+    semantic_sub_module tu tu' ->
     Q rt -* Q' rt |-- Kcleanup tu args Q rt -* Kcleanup tu' args Q' rt.
   Proof.
     intros. rewrite /Kcleanup. iIntros "?". iApply Kat_exit_frame; [|done].
@@ -411,11 +416,13 @@ Section with_cpp.
   Implicit Types (Q : region -> list (ptr * decltype) -> epred).
 
   Lemma bind_vars_frame tu tu' ar ts args ρ Q Q' :
-    sub_module tu tu' ->
+    semantic_sub_module tu tu' ->
     Forall ρ args', Q ρ args' -* Q' ρ args'
     |-- bind_vars tu ar ts args ρ Q -* bind_vars tu' ar ts args ρ Q'.
   Proof.
-    intros Hsub%types_compat. move: args ρ Q Q'. induction ts; intros [] *; cbn.
+    intros Hsub. rewrite semantic_sub_module_eq in Hsub.
+    move: Hsub => /types_compat Htypes.
+    move: args ρ Q Q'. induction ts; intros [] *; cbn.
     { destruct ar; auto. iIntros "HQ ?". by iApply "HQ". }
     { destruct ar; auto. case_match; auto. iIntros "HQ ?". by iApply "HQ". }
     { auto. }
@@ -460,7 +467,7 @@ Section wp_func.
   Implicit Types (Q : ptr -> epred).
 
   Lemma wp_func_frame tu tu' f args Q Q' :
-    sub_module tu tu' ->
+    semantic_sub_module tu tu' ->
     Forall p, Q p -* Q' p
     |-- wp_func tu f args Q -* wp_func tu' f args Q'.
   Proof.
@@ -529,7 +536,7 @@ Section wp_method.
   Implicit Types (Q : ptr -> epred).
 
   Lemma wp_method_frame tu tu' m args Q Q' :
-    sub_module tu tu' ->
+    semantic_sub_module tu tu' ->
     Forall p, Q p -* Q' p
     |-- wp_method tu m args Q -* wp_method tu' m args Q'.
   Proof.
@@ -627,7 +634,7 @@ Section with_cpp.
   Implicit Types (p : ptr) (Q : epred).
 
   Lemma wpi_members_frame tu tu' ρ cls this inits flds Q Q' :
-    sub_module tu tu' ->
+    semantic_sub_module tu tu' ->
     Q -* Q'
     |-- wpi_members tu ρ cls this inits flds Q -* wpi_members tu' ρ cls this inits flds Q'.
   Proof.
@@ -672,7 +679,7 @@ Section with_cpp.
   Implicit Types (p : ptr) (Q : epred).
 
   Lemma wpi_bases_frame tu tu' ρ cls p inits bases Q Q' :
-    sub_module tu tu' ->
+    semantic_sub_module tu tu' ->
     Q -* Q'
     |-- wpi_bases tu ρ cls p inits bases Q -* wpi_bases tu' ρ cls p inits bases Q'.
   Proof.
@@ -761,7 +768,7 @@ Section with_cpp.
   Implicit Types (p : ptr) (Q : epred).
 
   Lemma wp_union_initializer_list_frame tu tu' u ρ cls p inits Q Q' :
-    sub_module tu tu' ->
+    semantic_sub_module tu tu' ->
     Q -* Q'
     |-- wp_union_initializer_list tu u ρ cls p inits Q -* wp_union_initializer_list tu' u ρ cls p inits Q'.
   Proof.
@@ -844,7 +851,7 @@ that implies [type_ptr].
     match args with
     | thisp :: rest_vals =>
       let ty := Tnamed ctor.(c_class) in
-      match tu.(types) !! ctor.(c_class) with
+      match SemanticTU.lookup_type (SemanticTU.of_tu tu) ctor.(c_class) with
       | Some (Gstruct cls) =>
         (*
         this is a structure.
@@ -958,7 +965,7 @@ Section with_cpp.
   Implicit Types (Q : epred).
 
   Lemma wpd_bases_frame tu tu' cls this bases Q Q' :
-    sub_module tu tu' ->
+    semantic_sub_module tu tu' ->
     Q -* Q' |-- wpd_bases tu cls this bases Q -* wpd_bases tu' cls this bases Q'.
   Proof. apply interp_frame_strong. Qed.
 End with_cpp.
@@ -973,7 +980,7 @@ Section with_cpp.
   Implicit Types (Q : epred).
 
   Lemma wpd_members_frame tu tu' cls this members Q Q' :
-    sub_module tu tu' ->
+    semantic_sub_module tu tu' ->
     Q -* Q' |-- wpd_members tu cls this members Q -* wpd_members tu' cls this members Q'.
   Proof. apply interp_frame_strong. Qed.
 End with_cpp.
@@ -1011,7 +1018,7 @@ this resource will be consumed immediately.
         in
         Kreturn_void epilog
       in
-      match tu.(types) !! dtor.(d_class) with
+      match SemanticTU.lookup_type (SemanticTU.of_tu tu) dtor.(d_class) with
       | Some (Gstruct s) =>
         letI* := wp_body in
         thisp |-> structR dtor.(d_class) 1$m **

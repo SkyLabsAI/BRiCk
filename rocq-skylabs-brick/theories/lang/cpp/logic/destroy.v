@@ -240,7 +240,8 @@ invoking the destructor [dtor] for type [ty] on [this].
   destructors to have C calling convention. Arguments [this :: nil] is
   correct for member functions taking no arguments.
   *)
-  letI* p := wp_mfptr tu.(types) ty (Tfunction $ FunctionType Tvoid nil) dtor (this :: nil) in
+  letI* p := wp_mfptr (TU.canonical tu).(types)
+    ty (Tfunction $ FunctionType Tvoid nil) dtor (this :: nil) in
   (**
   We inline [operand_receive] (which could be hoisted and shared).
   *)
@@ -301,7 +302,7 @@ Section dtor.
   Proof. intros * Q1 Q2 HQ. split'; by apply wp_destructor_mono; rewrite HQ. Qed.
 
   Lemma wp_destructor_frame tu tu' ty dtor this Q Q' :
-    TULE tu tu' ->
+    semantic_sub_module tu tu' ->
     Q -* Q' |-- wp_destructor tu ty dtor this Q -* wp_destructor tu' ty dtor this Q'.
   Proof.
     intros. wp_destructor_unfold. iIntros "HQ".
@@ -335,7 +336,7 @@ End dtor.
 
 #[local] Definition wp_destroy_named_body `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
     (cls : globname) (this : ptr) (Q : epred) : mpred :=
-  match tu.(types) !! cls with
+  match SemanticTU.lookup_type (SemanticTU.of_tu tu) cls with
   | Some (Gstruct s) =>
     (*
     In the current implementation, we generate destructors even when
@@ -405,7 +406,7 @@ Section named.
 
   Let wp_destroy_named_intro_body (tu : translation_unit)
       (cls : globname) (this : ptr) (Q : epred) : mpred :=
-    match tu.(types) !! cls with
+    match SemanticTU.lookup_type (SemanticTU.of_tu tu) cls with
     | Some (Gstruct s) => wp_destructor tu (Tnamed cls) (_global s.(s_dtor)) this Q
     | Some (Gunion u) => wp_destructor tu (Tnamed cls) (_global u.(u_dtor)) this Q
     | _ => False
@@ -414,16 +415,19 @@ Section named.
   Lemma wp_destroy_named_intro tu cls this Q :
     Reduce (wp_destroy_named_intro_body tu cls this Q)
     |-- wp_destroy_named tu cls this Q.
-  Proof. wp_destroy_named_unfold. destruct (_ !! _) as [[] |]; auto. Qed.
+  Proof.
+    wp_destroy_named_unfold.
+    destruct (SemanticTU.lookup_type (SemanticTU.of_tu tu) cls) as [[] |]; auto.
+  Qed.
 
   Lemma wp_destroy_named_intro_struct tu cls s this Q :
-    tu.(types) !! cls = Some (Gstruct s) ->
+    SemanticTU.lookup_type (SemanticTU.of_tu tu) cls = Some (Gstruct s) ->
     wp_destructor tu (Tnamed cls) (_global s.(s_dtor)) this Q
     |-- wp_destroy_named tu cls this Q.
   Proof. by rewrite -wp_destroy_named_intro=>->. Qed.
 
   Lemma wp_destroy_named_intro_union tu cls u this Q :
-    tu.(types) !! cls = Some (Gunion u) ->
+    SemanticTU.lookup_type (SemanticTU.of_tu tu) cls = Some (Gunion u) ->
     wp_destructor tu (Tnamed cls) (_global u.(u_dtor)) this Q
     |-- wp_destroy_named tu cls this Q.
   Proof. by rewrite -wp_destroy_named_intro=>->. Qed.
@@ -434,13 +438,13 @@ Section named.
   Proof. by wp_destroy_named_unfold. Qed.
 
   Lemma wp_destroy_named_elim_struct tu cls s this Q :
-    tu.(types) !! cls = Some (Gstruct s) ->
+    SemanticTU.lookup_type (SemanticTU.of_tu tu) cls = Some (Gstruct s) ->
     wp_destroy_named tu cls this Q
     |-- wp_destructor tu (Tnamed cls) (_global s.(s_dtor)) this Q.
   Proof. by rewrite wp_destroy_named_elim=>->. Qed.
 
   Lemma wp_destroy_named_elim_union tu cls u this Q :
-    tu.(types) !! cls = Some (Gunion u) ->
+    SemanticTU.lookup_type (SemanticTU.of_tu tu) cls = Some (Gunion u) ->
     wp_destroy_named tu cls this Q
     |-- wp_destructor tu (Tnamed cls) (_global u.(u_dtor)) this Q.
   Proof. by rewrite wp_destroy_named_elim=>->. Qed.
@@ -458,13 +462,20 @@ Section named.
   Proof. intros * Q1 Q2 HQ. split'; by apply wp_destroy_named_mono; rewrite HQ. Qed.
 
   Lemma wp_destroy_named_frame tu tu' cls this Q Q' :
-    TULE tu tu' ->
+    semantic_sub_module tu tu' ->
     Q -* Q' |-- wp_destroy_named tu cls this Q -* wp_destroy_named tu' cls this Q'.
   Proof.
-    intros Htu. move: (Htu)=>/types_compat Htt. wp_destroy_named_unfold.
-    destruct (_ !! _) as [v1|] eqn:Hv1; last first.
+    intros Htu. move: (Htu); rewrite semantic_sub_module_eq;
+      move=>/types_compat Htt. wp_destroy_named_unfold.
+    destruct (SemanticTU.lookup_type (SemanticTU.of_tu tu) cls)
+      as [v1|] eqn:Hv1; last first.
     { case_match; auto. case_match; eauto using fupd_wp_destructor. }
-    destruct (Htt cls _ Hv1) as (v2 & Heq & Hle). rewrite Heq; clear Heq.
+    have Hv1' := eq_trans
+      (SemanticTU.lookup_type_spec (SemanticTU.of_tu tu) cls) Hv1.
+    destruct (Htt cls _ Hv1') as (v2 & Heq & Hle).
+    have Heq' := eq_trans
+      (eq_sym (SemanticTU.lookup_type_spec (SemanticTU.of_tu tu') cls)) Heq.
+    rewrite Heq'; clear Heq Heq'.
     destruct v1, v2; try done.
     all: try solve [ eauto using fupd_wp_destructor ].
     all: cbn in Hle; case_bool_decide; [subst|done].
@@ -476,7 +487,8 @@ Section named.
     |-- wp_destroy_named tu cls this Q.
   Proof.
     wp_destroy_named_unfold.
-    destruct (_ !! _) as [[] |]; auto using wp_destructor_shift.
+    destruct (SemanticTU.lookup_type (SemanticTU.of_tu tu) cls)
+      as [[] |]; auto using wp_destructor_shift.
   Qed.
 
   Lemma fupd_wp_destroy_named tu cls this Q :
@@ -677,7 +689,7 @@ Section val_array.
   : core.
 
   Lemma wp_destroy_val_frame tu tu' cv ty this Q Q' :
-    TULE tu tu' ->
+    semantic_sub_module tu tu' ->
     Q -* Q' |-- wp_destroy_val tu cv ty this Q -* wp_destroy_val tu' cv ty this Q'.
   Proof.
     move: tu tu' cv this Q Q'. induction ty=>tu tu' cv this Q Q' Htu.
@@ -687,12 +699,12 @@ Section val_array.
     { (* named *) destruct (q_const cv); [rewrite -wp_const_frame|cbn]; auto. }
   Qed.
   Lemma destroy_val_frame tu tu' ty this Q Q' :
-    TULE tu tu' ->
+    semantic_sub_module tu tu' ->
     Q -* Q' |-- destroy_val tu ty this Q -* destroy_val tu' ty this Q'.
   Proof. rewrite !destroy_val_wp_destroy_val. apply wp_destroy_val_frame. Qed.
 
   Lemma wp_destroy_array_frame tu tu' cv ety n p Q Q' :
-    TULE tu tu' ->
+    semantic_sub_module tu tu' ->
     Q -* Q' |-- wp_destroy_array tu cv ety n p Q -* wp_destroy_array tu' cv ety n p Q'.
   Proof.
     intros. wp_destroy_array_unfold. apply wp_gen_frame. intros.
@@ -1134,7 +1146,7 @@ Section temps.
   (** Structural rules *)
 
   Lemma interp_frame_strong tu tu' free Q Q' :
-    TULE tu tu' ->
+    semantic_sub_module tu tu' ->
     Q -* Q' |-- interp tu free Q -* interp tu' free Q'.
   Proof.
     intros. move: Q Q'. induction free=>Q Q'; interp_unfold; iIntros "HQ".

@@ -581,7 +581,9 @@ Module Type HAS_TYPE (Import P : PTRS) (Import R : RAW_BYTES) (Import V : VAL_MI
     Axiom has_type_prop_enum : forall v nm,
         has_type_prop v (Tenum nm) <->
         exists tu ty ls,
-          tu ⊧ σ /\ tu.(types) !! nm = Some (Genum ty ls) /\
+          tu ⊧ σ /\
+          SemanticTU.lookup_type (SemanticTU.of_tu tu) nm =
+            Some (Genum ty ls) /\
           ~~ is_raw v /\ has_type_prop v (drop_qualifiers ty).
 
     (** Note in the case of [Tuchar], the value [v] could be a

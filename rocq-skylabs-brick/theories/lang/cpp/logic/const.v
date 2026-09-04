@@ -39,7 +39,8 @@ Section defs.
   Parameter wp_const : forall (tu : translation_unit) {σ : genv} (from to : cQp.t) (addr : ptr) (ty : decltype) (Q : epred), mpred.
 
   Axiom wp_const_frame : forall tu tu' f t a ty Q Q',
-    type_table_le tu.(types) tu'.(types) ->
+    type_table_le (TU.canonical tu).(types)
+                  (TU.canonical tu').(types) ->
     Q -* Q' |-- wp_const tu f t a ty Q -* wp_const tu' f t a ty Q'.
 
   Axiom wp_const_shift : forall tu f t a ty Q,
@@ -89,7 +90,7 @@ Section defs.
           False
 
       | Tnamed cls =>
-          match tu.(types) !! cls with
+          match SemanticTU.lookup_type (SemanticTU.of_tu tu) cls with
           | Some gd =>
               match gd with
               | Gunion u =>

@@ -35,11 +35,11 @@ Section extends.
    *)
   Inductive class_derives (derived : name) : forall (path : list name), Prop :=
   | Derives_here {st}
-      {_ : σ.(genv_tu).(types) !! derived = Some (Gstruct st)}
+      {_ : genv_type_table σ !! derived = Some (Gstruct st)}
     : class_derives derived []
 
   | Derives_base base st li rest
-      {_ : σ.(genv_tu).(types) !! derived = Some (Gstruct st)}
+      {_ : genv_type_table σ !! derived = Some (Gstruct st)}
       {_ : (base, li) ∈ st.(s_bases)}
       (_ : class_derives base rest)
     : class_derives derived (base :: rest)
@@ -70,31 +70,37 @@ Existing Class class_derives.
 Section tu.
   Variable tu : translation_unit.
 
-  Fixpoint tu_class_derives (derived : name) (path : list name) : bool :=
-    match tu.(types) !! derived with
+  Fixpoint tu_class_derives_view (semantic_tu : SemanticTU.t)
+      (derived : name) (path : list name) : bool :=
+    match SemanticTU.lookup_type semantic_tu derived with
     | Some (Gstruct st) =>
         match path with
         | nil => true
         | base :: rest =>
             if bool_decide (base ∈ (fst <$> st.(s_bases))) then
-              tu_class_derives base rest
+              tu_class_derives_view semantic_tu base rest
             else false
         end
     | _ => false
     end.
 
+  Definition tu_class_derives (derived : name) (path : list name) : bool :=
+    tu_class_derives_view (SemanticTU.of_tu tu) derived path.
+
   Context {σ : genv} {M : tu ⊧ σ}.
   Theorem tu_class_derives_sound : forall path derived,
       tu_class_derives derived path -> class_derives derived path.
   Proof using M.
-    induction path =>///=.
+    induction path; rewrite /tu_class_derives /tu_class_derives_view /=.
     { intros; case_match.
       { repeat case_match => //.
-        revert select (_ !! _ = _) => /glob_def_genv_compat_struct ?.
+        revert select (LocInfoTU.lookup_NM _ _ _ = _) =>
+          /glob_def_genv_compat_struct ?.
         econstructor. eassumption. }
       { inversion H. } }
     { intros; repeat (case_bool_decide || case_match) =>//.
-      revert select (_ !! _ = _) => /glob_def_genv_compat_struct ?.
+      revert select (LocInfoTU.lookup_NM _ _ _ = _) =>
+        /glob_def_genv_compat_struct ?.
       revert select (_ ∈ _) => Helem.
       eapply list_elem_of_fmap_1 in Helem.
       destruct Helem as [[??][??]]. simplify_eq.

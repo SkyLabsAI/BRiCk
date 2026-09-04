@@ -110,8 +110,10 @@ Section with_cpp.
         end.
 
   Definition denoteModule_def (tu : translation_unit) : mpred :=
-    ([∗list] sv ∈ map_to_list tu.(symbols), denoteSymbol tu sv.1 sv.2) **
-    [| module_le tu σ.(genv_tu) |].
+    let semantic_tu := SemanticTU.of_tu tu in
+    ([∗list] sv ∈ map_to_list (SemanticTU.symbols semantic_tu),
+        denoteSymbol tu sv.1 sv.2) **
+    [| view_module_le semantic_tu (genv_view σ) |].
   Definition denoteModule_aux : seal (@denoteModule_def). Proof. by eexists. Qed.
   Definition denoteModule := denoteModule_aux.(unseal).
   Definition denoteModule_eq : @denoteModule = _ := denoteModule_aux.(seal_eq).
@@ -129,30 +131,34 @@ Section with_cpp.
   Proof. refine _. Qed.
 
   Lemma denoteModule_denoteSymbol n m o :
-    m.(symbols) !! n = Some o ->
+    SemanticTU.lookup_symbol (SemanticTU.of_tu m) n = Some o ->
     denoteModule m |-- denoteSymbol m n o.
   Proof.
     rewrite denoteModule_eq/denoteModule_def.
     iIntros (Hlookup) "[M _]".
+    rewrite -SemanticTU.lookup_symbol_spec in Hlookup.
     move: (NM.map_to_list_elements _ _ _ Hlookup) => [l1][l2] ->.
     rewrite big_opL_app big_opL_cons.
     by iDestruct "M" as "[_ [M _]]".
   Qed.
 
   Lemma denoteModule_strict_valid n m :
-    is_strict_valid <$> (m.(symbols) !! n) = Some true ->
+    is_strict_valid <$>
+      SemanticTU.lookup_symbol (SemanticTU.of_tu m) n = Some true ->
     denoteModule m |-- strict_valid_ptr (_global n).
   Proof.
-    case E: lookup => [s |//] /= [Hs].
+    case E: (SemanticTU.lookup_symbol (SemanticTU.of_tu m) n) =>
+      [s |//] /= [Hs].
     by rewrite denoteModule_denoteSymbol // denoteSymbol_strict_valid // Hs.
   Qed.
 
   Lemma denoteModule_valid n m :
-    m.(symbols) !! n <> None ->
+    SemanticTU.lookup_symbol (SemanticTU.of_tu m) n <> None ->
     denoteModule m |-- valid_ptr (_global n).
   Proof.
     intros; iIntros "M".
-    destruct (symbols m !! n) eqn:?; try congruence.
+    destruct (SemanticTU.lookup_symbol (SemanticTU.of_tu m) n) eqn:?;
+      try congruence.
     iDestruct (denoteModule_denoteSymbol with "M") as "M"; eauto.
     by iApply denoteSymbol_valid.
   Qed.
@@ -162,7 +168,8 @@ Section with_cpp.
     apply observe_intro_only_provable.
     rewrite denoteModule_eq/denoteModule_def.
     iIntros "[_ %]". iPureIntro. constructor.
-    destruct (module_le_spec tu (genv_tu σ)); eauto.
+    destruct (view_module_le_spec (SemanticTU.of_tu tu) (genv_view σ));
+      eauto.
     destruct H.
   Qed.
 

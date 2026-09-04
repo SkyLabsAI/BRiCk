@@ -128,12 +128,12 @@ Proof.
 *)
   - rewrite /glob_def. move: Hle => [[ /(_ gn) Hle _ _]].
     revert Hle.
-    case: (types (genv_tu x) !! gn); simpl; try constructor.
+    case: (genv_type_table x !! gn); simpl; try constructor.
     move => ? /(_ _ eq_refl) [g2 [-> HH]] * /=.
     exact: proper_GlobDecl_size_of.
   - rewrite /glob_def. move: Hle => [[ /(_ gn) Hle _ _]].
     revert Hle.
-    case: (types (genv_tu x) !! gn); simpl; try constructor.
+    case: (genv_type_table x !! gn); simpl; try constructor.
     move => ? /(_ _ eq_refl) [g2 [-> HH]] * /=.
     exact: proper_GlobDecl_size_of.
   - by destruct osz; constructor.
@@ -195,7 +195,8 @@ Proof. reflexivity. Qed.
 might need to inline the proof. *)
 Lemma size_of_genv_compat tu σ gn st
       (Hσ : tu ⊧ σ)
-      (Hl : tu.(types) !! gn = Some (Gstruct st)) :
+      (Hl : SemanticTU.lookup_type (SemanticTU.of_tu tu) gn =
+            Some (Gstruct st)) :
   size_of σ (Tnamed gn) = GlobDecl_size_of (Gstruct st).
 Proof. by rewrite /= (glob_def_genv_compat_struct st Hl). Qed.
 
@@ -229,7 +230,8 @@ Qed.
 
 #[global] Instance named_struct_size_of tu σ gn st n :
   genv_compat tu σ ->
-  TCEq (tu.(types) !! gn) (Some (Gstruct st)) ->
+  TCEq (SemanticTU.lookup_type (SemanticTU.of_tu tu) gn)
+    (Some (Gstruct st)) ->
   TCEq st.(s_size) n ->
   SizeOf (Tnamed gn) n.
 Proof.
@@ -239,7 +241,8 @@ Qed.
 
 #[global] Instance named_union_size_of tu σ gn u n :
   genv_compat tu σ ->
-  TCEq (tu.(types) !! gn) (Some (Gunion u)) ->
+  TCEq (SemanticTU.lookup_type (SemanticTU.of_tu tu) gn)
+    (Some (Gunion u)) ->
   TCEq u.(u_size) n ->
   SizeOf (Tnamed gn) n.
 Proof.
@@ -350,8 +353,22 @@ Definition parent_offset_tu (tu : translation_unit) (derived : name) (base : nam
   | Some (Gstruct s) => find_assoc_list base (List.map (fun '(s,l) => (s,l.(li_offset) / 8)) s.(s_bases))
   | _ => None
   end.
+
+Definition parent_offset_view (tu : SemanticTU.t)
+    (derived base : name) : option Z :=
+  match SemanticTU.lookup_type tu derived with
+  | Some (Gstruct s) =>
+      find_assoc_list base
+        (List.map (fun '(s, l) => (s, l.(li_offset) / 8)) s.(s_bases))
+  | _ => None
+  end.
+
+Definition semantic_parent_offset (tu : translation_unit)
+    (derived base : name) : option Z :=
+  parent_offset_view (SemanticTU.of_tu tu) derived base.
 (* We hide whether [genv_tu] exists. *)
-mlock Definition parent_offset σ derived base := parent_offset_tu σ.(genv_tu) derived base.
+mlock Definition parent_offset σ derived base :=
+  parent_offset_tu σ.(genv_tu) derived base.
 Notation directly_derives_tu tu derived base := (is_Some (parent_offset_tu tu derived base)).
 Notation directly_derives σ derived base := (is_Some (parent_offset σ derived base)).
 
@@ -366,11 +383,14 @@ Proof.
 Qed.
 
 Lemma parent_offset_genv_compat {σ tu derived base z} {Hσ : tu ⊧ σ} :
-  parent_offset_tu tu derived base = Some z ->
+  semantic_parent_offset tu derived base = Some z ->
   parent_offset σ derived base = Some z.
 Proof.
-  rewrite parent_offset.unlock /parent_offset_tu -/(glob_def σ derived).
-  case E: (tu.(types) !! derived) => [ gd //= | // ]; destruct gd => //.
+  rewrite parent_offset.unlock /parent_offset_tu /semantic_parent_offset
+    /parent_offset_view -/(glob_def σ derived).
+  case E: (SemanticTU.lookup_type (SemanticTU.of_tu tu) derived) =>
+    [gd|] //=.
+  destruct gd => //.
   by erewrite glob_def_genv_compat_struct.
 Qed.
 
@@ -453,7 +473,8 @@ Section with_genv.
 
   Lemma align_of_genv_compat tu gn st
         (Hσ : tu ⊧ σ)
-        (Hl : tu.(types) !! gn = Some (Gstruct st)) :
+        (Hl : SemanticTU.lookup_type (SemanticTU.of_tu tu) gn =
+              Some (Gstruct st)) :
     align_of (Tnamed gn) = GlobDecl_align_of (Gstruct st).
   Proof. by rewrite /= align_of_named (glob_def_genv_compat_struct st Hl). Qed.
 

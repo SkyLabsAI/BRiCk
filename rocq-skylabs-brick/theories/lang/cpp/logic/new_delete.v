@@ -167,15 +167,70 @@ Module delete_operator.
 
       To delete an array of type <<ety>>, <<ty>> should be <<Tincomplete_array ety>>.
    *)
-  Definition delete_for (tu : translation_unit) (default_delete : DEFAULT_DELETE) (ty : type)
-    : option (obj_name * delete_operator.t) :=
+  Definition delete_for_canonical (tu : translation_unit)
+      (default_delete : DEFAULT_DELETE) (ty : type)
+      : option (obj_name * delete_operator.t) :=
     match erase_qualifiers ty with
-    | Tnamed cls => delete_for_named tu default_delete cls
+    | Tnamed cls => delete_for_named tu default_delete (LocInfo.erase_name cls)
     | Tincomplete_array _
     | Tarray _ _ => with_delete tu default_delete
     | Tvariable_array _ _ => None
     | _ => with_delete tu default_delete
     end.
+
+  #[local] Definition with_delete_view (tu : SemanticTU.t) (nm : obj_name)
+    : option (obj_name * delete_operator.t) :=
+    pair nm <$> (SemanticTU.lookup_symbol tu nm >>=
+      fun del_fn => delete_operator.classify (type_of_value del_fn)).
+
+  #[local] Definition delete_for_named_view (tu : SemanticTU.t)
+      (default_delete : DEFAULT_DELETE) (cls : name)
+      : option (obj_name * delete_operator.t) :=
+    match SemanticTU.lookup_type tu cls with
+    | Some (Gstruct s) =>
+        with_delete_view tu $ stdpp.option.default default_delete s.(s_delete)
+    | Some (Gunion u) =>
+        with_delete_view tu $ stdpp.option.default default_delete u.(u_delete)
+    | Some (Genum _ _) => with_delete_view tu default_delete
+    | _ => None
+    end.
+
+  Definition delete_for (tu : translation_unit) (default_delete : DEFAULT_DELETE) (ty : type)
+    : option (obj_name * delete_operator.t) :=
+    let tu := SemanticTU.of_tu tu in
+    match erase_qualifiers ty with
+    | Tnamed cls => delete_for_named_view tu default_delete (LocInfo.erase_name cls)
+    | Tincomplete_array _
+    | Tarray _ _ => with_delete_view tu default_delete
+    | Tvariable_array _ _ => None
+    | _ => with_delete_view tu default_delete
+    end.
+
+  #[local] Lemma with_delete_view_spec {tu nm} :
+    with_delete_view tu nm = with_delete (SemanticTU.repr tu) nm.
+  Proof.
+    rewrite /with_delete_view /with_delete
+      -SemanticTU.lookup_symbol_spec. reflexivity.
+  Qed.
+
+  #[local] Lemma delete_for_named_view_spec {tu def cls} :
+    delete_for_named_view tu def cls =
+      delete_for_named (SemanticTU.repr tu) def cls.
+  Proof.
+    rewrite /delete_for_named_view /delete_for_named
+      -SemanticTU.lookup_type_spec /SemanticTU.types.
+    case_match; last reflexivity.
+    destruct g; simpl; rewrite ?with_delete_view_spec; reflexivity.
+  Qed.
+
+  #[local] Lemma delete_for_spec {tu def ty} :
+    delete_for tu def ty =
+      delete_for_canonical (SemanticTU.repr (SemanticTU.of_tu tu)) def ty.
+  Proof.
+    rewrite /delete_for /delete_for_canonical.
+    repeat case_match; rewrite ?with_delete_view_spec
+      ?delete_for_named_view_spec; reflexivity.
+  Qed.
 
   #[local]
   Lemma with_delete_sub_module {tu1 tu2 nm result} :
@@ -207,10 +262,10 @@ Module delete_operator.
 
   Lemma delete_for_submodule {tu1 tu2 op cls result} :
     delete_for tu1 op cls = Some result ->
-    sub_module tu1 tu2 ->
-    delete_for tu2 op cls = Some result.
+    sub_module (TU.canonical tu1) tu2 ->
+    delete_for_canonical tu2 op cls = Some result.
   Proof.
-    rewrite /delete_for.
+    rewrite delete_for_spec /= /delete_for_canonical.
     intros.
     repeat (case_match; eauto using with_delete_sub_module, delete_for_named_sub_module).
   Qed.
@@ -442,13 +497,15 @@ Module Type Expr__newdelete.
             (let implicit_args := new_implicits pass_align alloc_sz alloc_al in
              letI* _, vs, ifree, free :=
                wp_args evaluation_order.nd [] targs (implicit_args ++ new_args) in
-             |> letI* res := wp_fptr tu.(types) nfty (_global new_fn.1) vs in
+             |> letI* res := wp_fptr
+                  (TU.canonical tu).(types)
+                  nfty (_global new_fn.1) vs in
                 letI* := interp tu ifree in
                 letI* storage_val := operand_receive (Tptr Tvoid) res in
                 Exists storage_ptr : ptr,
                   [| storage_val = Vptr storage_ptr |] **
                   if bool_decide (storage_ptr = nullptr) then
-                    [| can_throw <$> tu.(symbols) !! new_fn.1 = Some exception_spec.NoThrow |] **
+                    [| can_throw <$> TU.lookup_symbol tu new_fn.1 = Some exception_spec.NoThrow |] **
                     Q (Vptr storage_ptr) free
                     (* ^^ only <<noexcept>> overloads for <<operator new>> are allowed to return <<nullptr>> *)
                   else
@@ -495,7 +552,9 @@ Module Type Expr__newdelete.
                (Exists size_loc storage_loc,
                  [| vs = [size_loc; storage_loc] |] **
                  storage_loc |-> primR (Tptr Tvoid) 1$m (Vptr storage_ptr) ** True) //\\
-               (|> letI* res := wp_fptr tu.(types) nfty (_global new_fn.1) vs in
+               (|> letI* res := wp_fptr
+                    (TU.canonical tu).(types)
+                    nfty (_global new_fn.1) vs in
                  letI* := interp tu ifree in
                  res |-> primR (Tptr Tvoid) 1$m (Vptr storage_ptr) **
                  (* ^^ this line requires the function to return the passed pointer.
@@ -574,13 +633,15 @@ Module Type Expr__newdelete.
                       new_implicits pass_align (overhead_sz + alloc_sz) alloc_al in
                   letI* _, vs, ifree, free' :=
                       wp_args evaluation_order.nd [] targs (implicit_args ++ new_args) in
-                  |> letI* res := wp_fptr tu.(types) nfty (_global new_fn.1) vs in
+                  |> letI* res := wp_fptr
+                       (TU.canonical tu).(types)
+                       nfty (_global new_fn.1) vs in
                      letI* := interp tu ifree in
                      letI* storage_val := operand_receive "void*" res in
                      Exists (storage_base : ptr),
                        [| storage_val = Vptr storage_base |] **
                        if bool_decide (storage_base = nullptr) then
-                         [| can_throw <$> tu.(symbols) !! new_fn.1 = Some exception_spec.NoThrow |] **
+                         [| can_throw <$> TU.lookup_symbol tu new_fn.1 = Some exception_spec.NoThrow |] **
                          Q (Vptr storage_base) (free' >*> free)
                          (* ^^ only <<noexcept>> overloads for <<operator new>> are allowed to return <<nullptr>> *)
                        else
@@ -786,7 +847,7 @@ Module Type Expr__newdelete.
   mlock
   Definition wp_delete_null `{Σ : cpp_logic} {σ : genv}
     default_delete destroyed_type Q : mpred :=
-    (match delete_operator.delete_for (genv_tu σ) default_delete destroyed_type with
+    (match delete_operator.delete_for_canonical (genv_tu σ) default_delete destroyed_type with
      | Some del_op =>
          (* The use of <<0>> here is somewhat arbitrary. It is supposed to be
             the size of the allocation (including overhead). For deleting
@@ -842,7 +903,7 @@ Module Type Expr__newdelete.
   Definition wp_delete_obj `{Σ : cpp_logic} {σ : genv}
     (default_delete : DEFAULT_DELETE) (obj_type : type)
     (obj_ptr : ptr) (Q : mpred) : mpred :=
-    match delete_operator.delete_for (genv_tu σ) default_delete obj_type with
+    match delete_operator.delete_for_canonical (genv_tu σ) default_delete obj_type with
     | None => ERROR ("wp_delete_obj: failed to find <<operator delete>> for type"%pstring, obj_type)
     | Some del_op =>
       Exists alloc_type storage_ptr overhead sz,
