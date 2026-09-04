@@ -29,6 +29,10 @@ primitive operators.
 ## Logic
 The [logic](logic) directory contains axiomatic semantics for C++.
 
+See [Why BRiCk Tracks C++ Constness](constness.md) for a concrete example of
+undefined behavior that ordinary compiler warnings do not diagnose, and for an
+overview of BRiCk's const-aware ownership model.
+
 - [logic/pred.v](logic/pred.v) declares our ambient logic using Iris
 - [logic/simple_pred.v](logic/simple_pred.v) instantiates our logic.
 - [logic/path_pred.v](logic/path_pred.v) defines a logic over paths, e.g. field access, array subscript, etc
