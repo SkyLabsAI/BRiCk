@@ -9,6 +9,7 @@ Require Import skylabs.iris.extra.bi.atomic_commit.
 Require Import skylabs.iris.extra.bi.spec.exclusive.
 
 Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.syntax.loc_info.
 Require Import skylabs.lang.cpp.semantics.
 Require Import skylabs.lang.cpp.logic.pred.
 Require Import skylabs.lang.cpp.logic.path_pred.
@@ -119,23 +120,31 @@ Module Type Stmt.
       (ρ : region) (k : region -> FreeTemps -> epred) (free : FreeTemps) {struct ds} : mpred :=
       match ds with
       | nil => k ρ free
-      | Bvar x ty init :: ds =>
-          Forall p, wp_initialize ρ_init ty p init (fun free' => wp_destructure ρ_init ds (Rbind x p ρ) k (FreeTemps.delete ty p >*> free' >*> free)%free)
-      | Bbind x _ init :: ds =>
-          wp_glval tu ρ_init init (fun p free' => wp_destructure ρ_init ds (Rbind x p ρ) k (free' >*> free)%free)
+      | d :: ds =>
+          let wp_binding (d : BindingDecl) : mpred :=
+            match LocInfo.drop_binding_decl d with
+            | Bvar x ty init =>
+                Forall p, wp_initialize ρ_init ty p init (fun free' => wp_destructure ρ_init ds (Rbind x p ρ) k (FreeTemps.delete ty p >*> free' >*> free)%free)
+            | Bbind x _ init =>
+                wp_glval tu ρ_init init (fun p free' => wp_destructure ρ_init ds (Rbind x p ρ) k (free' >*> free)%free)
+            | BLocInfo _ _ => False%I (* unreachable *)
+            end
+          in wp_binding d
       end.
 
     Lemma wp_destructure_frame : forall ds ρ ρ_init m m' free,
         Forall a b, m a b -* m' a b
         |-- wp_destructure ρ_init ds ρ m free -* wp_destructure ρ_init ds ρ m' free.
     Proof.
-      induction ds; simpl; intros.
+      induction ds as [|d ds IHds]; simpl; intros.
       { iIntros "X"; iApply "X". }
-      { iIntros "X H"; case_match.
-        { iIntros (p); iSpecialize ("H" $! p); iRevert "H"; iApply wp_initialize_frame => //.
-          iIntros (?); by iApply IHds. }
-        { iRevert "H"; iApply wp_glval_frame => //.
-          iIntros (??). by iApply IHds. } }
+      induction d; simpl.
+      { iIntros "X H" (p); iSpecialize ("H" $! p); iRevert "H".
+        iApply wp_initialize_frame => //.
+        iIntros (?); by iApply IHds. }
+      { iIntros "X H". iRevert "H"; iApply wp_glval_frame => //.
+        iIntros (??). by iApply IHds. }
+      { exact IHd. }
     Qed.
 
     (* [static_initialized gn b] is ownership of the initialization
@@ -166,7 +175,7 @@ Module Type Stmt.
 
 
     Definition wp_decl (ρ : region) (d : VarDecl) (k : region -> FreeTemps -> epred) : mpred :=
-      match d with
+      match LocInfo.drop_var_decl d with
       | Dvar x ty init => wp_decl_var ρ x ty init k
       | Ddecompose init x ds =>
         (* NOTE: the **declaration type** of the initializer *)
@@ -219,13 +228,14 @@ Module Type Stmt.
           if i is uninitialized then
             do_init $ fun free => static_initialized nm initialized -* k free
           else k FreeTemps.id
+      | DLocInfo _ _ => False (* unreachable *)
       end%I.
 
     Lemma wp_decl_frame : forall ds ρ m m',
         Forall a b, m a b -* m' a b
         |-- wp_decl ρ ds m -* wp_decl ρ ds m'.
     Proof.
-      destruct ds; simpl; intros.
+      induction ds; rewrite /wp_decl /=; intros.
       { iIntros "X". iApply wp_decl_var_frame. iIntros (?); eauto. }
       { iIntros "A X" (p); iSpecialize ("X" $! p); iRevert "X".
         iApply wp_initialize_frame; [done|].
@@ -250,6 +260,7 @@ Module Type Stmt.
             first [ iApply wp_initialize_frame
                   | iApply default_initialize_frame ] => //;
             iIntros (?) "X Y"; iApply "F"; iApply "X"; done. } }
+      { apply IHds. }
     Qed.
 
     (* [wp_decls ρ_init ds ρ K] evalutes the declarations in [ds]
@@ -304,14 +315,21 @@ Module Type Stmt.
 
     (** * Blocks *)
 
+    Definition wp_block_stmt (ρ : region) (s : Stmt)
+        (body : region -> Kpred -> mpred) (Q : Kpred) : mpred :=
+      let s := LocInfo.drop_stmt s in
+      match s with
+      | Sdecl ds =>
+          wp_decls ρ ds (funI ρ free =>
+                           |={top}=> |> |={top}=> body ρ (Kfree free Q))
+      | _ =>
+          |={top}=> |> |={top}=> wp ρ s (Kseq (body ρ) (|={top}=> Q))
+      end.
+
     Fixpoint wp_block_def (ρ : region) (ss : list Stmt) (Q : Kpred) : mpred :=
       match ss with
       | nil => |={top}=> |> |={top}=> Q Normal
-      | Sdecl ds :: ss =>
-          wp_decls ρ ds (funI ρ free =>
-                           |={top}=> |> |={top}=> wp_block_def ρ ss (Kfree free Q))
-      | s :: ss =>
-        |={top}=> |> |={top}=> wp ρ s (Kseq (wp_block_def ρ ss) (|={top}=> Q))
+      | s :: ss => wp_block_stmt ρ s (fun ρ Q => wp_block_def ρ ss Q) Q
       end.
     Definition wp_block_aux : seal (@wp_block_def). Proof. by eexists. Qed.
     Definition wp_block := wp_block_aux.(unseal).
@@ -322,13 +340,16 @@ Module Type Stmt.
       wp_block ρ ss Q =
       (match ss with
       | nil => |={top}=> |> |={top}=> Q Normal
-      | Sdecl ds :: ss =>
-          wp_decls ρ ds (funI ρ free =>
-                           |={top}=> |> |={top}=> wp_block ρ ss (Kfree free Q))
-      | s :: ss =>
-        |={top}=> |> |={top}=> wp ρ s (Kseq (wp_block ρ ss) (|={top}=> Q))
+      | s :: ss => wp_block_stmt ρ s (fun ρ Q => wp_block ρ ss Q) Q
       end)%I.
     Proof. rewrite !wp_block_eq; by destruct ss. Qed.
+
+    Lemma wp_block_loc_info ρ li s ss Q :
+      wp_block ρ (SLocInfo li s :: ss) Q -|- wp_block ρ (s :: ss) Q.
+    Proof.
+      rewrite !wp_block_unfold. unfold wp_block_stmt.
+      cbn. reflexivity.
+    Qed.
 
     Lemma wp_block_frame : forall ss ρ (Q Q' : Kpred),
         (Forall rt, Q rt -* Q' rt)
@@ -349,35 +370,41 @@ Module Type Stmt.
         }
         iIntros (rt); destruct rt => //=.
         by iApply IHss. }
-      rewrite !wp_block_unfold.
-      iIntros "X"; destruct s; try by iApply (Himpl with "X").
-      iApply wp_decls_frame.
-      iIntros (??) ">H !> !>". iMod "H"; iModIntro.
-      iApply (IHss with "[X] H"); iIntros (?).
-      iApply Kfree_frame. iApply "X".
+      rewrite !wp_block_unfold /=.
+      iIntros "X". induction s; simpl; try by iApply (Himpl with "X").
+      - iApply wp_decls_frame.
+        iIntros (??) ">H !> !>". iMod "H"; iModIntro.
+        iApply (IHss with "[X] H"); iIntros (?).
+        iApply Kfree_frame. iApply "X".
+      - apply IHs.
+        rewrite !(@wp_loc_info _ _ _ _ tu ρ l s) in Himpl. exact Himpl.
     Qed.
 
     Lemma wp_block_shift ρ ds (Q : Kpred) :
       (|={top}=> wp_block ρ ds (|={top}=> Q)) |--
       wp_block ρ ds Q.
     Proof.
-      elim: ds ρ Q => [|d ds IH] ρ Q /=; rewrite !wp_block_unfold /=.
-      - iIntros ">>H !> !> /=". by iMod "H" as ">$".
-      - iAssert (
-        (|={⊤}=> |={⊤}▷=> wp ρ d (Kseq (wp_block ρ ds) (|={⊤}=> |={⊤}=> Q))) -∗
-        |={⊤}▷=> wp ρ d (Kseq (wp_block ρ ds) (|={⊤}=> Q)))%I as "W". {
+      elim: ds ρ Q => [|d ds IH] ρ Q /=.
+      - rewrite !wp_block_unfold /=.
+        iIntros ">>H !> !> /=". by iMod "H" as ">$".
+      - assert (
+        (|={⊤}=> |={⊤}▷=> wp ρ d (Kseq (wp_block ρ ds) (|={⊤}=> |={⊤}=> Q))) |--
+        |={⊤}▷=> wp ρ d (Kseq (wp_block ρ ds) (|={⊤}=> Q))) as W. {
           iIntros ">>H !> !> !>". iMod "H". iApply (wp_frame with "[] H"). done.
           iIntros (?) "H".
           iApply (Kseq_frame with "[] [] H").
           { iApply wp_block_frame. }
           iIntros (?) "H". by rewrite fupd_idemp.
       }
-      destruct d; try by iExact "W".
-      iIntros "{W} H". iApply wp_decls_shift. iMod "H"; iModIntro.
-      iApply (wp_decls_frame with "[] H"); iIntros (??) ">H !> !> !> !>".
-      iApply IH. iMod "H"; iModIntro.
-      iApply (wp_block_frame with "[] H"); iIntros (rt) "H !> /=".
-      rewrite monPred_at_fupd. iApply (interp_shift with "H").
+      rewrite !wp_block_unfold /=.
+      induction d; simpl; try by iApply W.
+      + iIntros "H". iApply wp_decls_shift. iMod "H"; iModIntro.
+        iApply (wp_decls_frame with "[] H"); iIntros (??) ">H !> !> !> !>".
+        iApply IH. iMod "H"; iModIntro.
+        iApply (wp_block_frame with "[] H"); iIntros (rt) "H !> /=".
+        rewrite monPred_at_fupd. iApply (interp_shift with "H").
+      + apply IHd.
+        rewrite !(@wp_loc_info _ _ _ _ tu ρ l d) in W. exact W.
     Qed.
 
     Lemma fupd_wp_block ρ ds Q :
@@ -691,13 +718,22 @@ Module Type Stmt.
       | Slabeled _ s => no_case s
       | Sgoto _ => true
       | Sunsupported _ => false
+      | SLocInfo _ s => no_case s
+      end.
+
+    Definition get_case (s : Stmt) : option SwitchBranch :=
+      match LocInfo.drop_stmt s with
+      | Scase sb => Some sb
+      | _ => None
       end.
 
     Fixpoint get_cases (ls : list Stmt) : list SwitchBranch :=
       match ls with
-      | Scase sb :: ls =>
-        sb :: get_cases ls
-      | _ :: ls => get_cases ls
+      | s :: ls =>
+          match get_case s with
+          | Some sb => sb :: get_cases ls
+          | None => get_cases ls
+          end
       | nil => nil
       end.
 
@@ -721,38 +757,39 @@ Module Type Stmt.
 
         We interpret the semantics of [wp_switch_block] by el
      *)
+    Fixpoint wp_switch_block_stmt
+        (next : option (Z -> Prop) -> option (list ((Z -> Prop) * list Stmt)))
+        (Ldef : option (Z -> Prop)) (s : Stmt) (ls' : list Stmt)
+        : option (list ((Z -> Prop) * list Stmt)) :=
+      match s with
+      | Scase sb =>
+          (fun x => (wp_switch_branch sb, ls') :: x) <$> next Ldef
+      | Sdefault =>
+          match Ldef with
+          | None =>
+              (* NOTE in this case there were multiple [default] statements which is
+                 not legal *)
+              None
+          | Some def => (fun x => (def, ls') :: x) <$> next None
+          end
+      | Sdecl _ =>
+          (* NOTE this check ensures that we never case past a declaration which
+             could be problematic from a soundness point of view. *)
+          if no_case (Sseq ls') then next Ldef else None
+      | SLocInfo _ s => wp_switch_block_stmt next Ldef s ls'
+      | s => if no_case s then next Ldef else None
+      end.
+
     Fixpoint wp_switch_block (Ldef : option (Z -> Prop)) (ls : list Stmt)
       : option (list ((Z -> Prop) * list Stmt)) :=
       match ls with
-      | Scase sb :: ls =>
-        (fun x => (wp_switch_branch sb, ls) :: x) <$> wp_switch_block Ldef ls
-      | Sdefault :: ls =>
-        match Ldef with
-        | None =>
-          (* NOTE in this case there were multiple [default] statements which is
-             not legal *)
-          None
-        | Some def =>
-          (fun x => (def, ls) :: x) <$> wp_switch_block None ls
-        end
-      | Sdecl _ :: ls' =>
-        (* NOTE this check ensures that we never case past a declaration which
-           could be problematic from a soundness point of view.
-         *)
-        if no_case (Sseq ls') then
-          wp_switch_block Ldef ls'
-        else
-          None
       | s :: ls' =>
-        if no_case s then
-          wp_switch_block Ldef ls'
-        else
-          None
+          wp_switch_block_stmt (fun Ldef => wp_switch_block Ldef ls') Ldef s ls'
       | nil =>
-        match Ldef with
-        | None => Some nil
-        | Some def => Some ((def, nil) :: nil)
-        end
+          match Ldef with
+          | None => Some nil
+          | Some def => Some ((def, nil) :: nil)
+          end
       end.
 
     Definition Kswitch_inner (k : Kpred) (rt : ReturnType) : mpred :=
