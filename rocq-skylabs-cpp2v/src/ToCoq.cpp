@@ -370,8 +370,6 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
         End meta.
 
         Definition source := with_templates static_tu meta_tu.
-        #[deprecated]
-        Abbreviation module := source.
         ```
 
         */
@@ -428,12 +426,6 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
             << " := skylabs.lang.cpp.mparser.tu.with_templates " << static_name
             << " " << meta_name << "." << fmt::line;
 
-        if (!interactive_.has_value()) {
-            // NOTE: Backwards compatibility
-            fmt << "#[deprecated(note=\"use [source] instead.\")]" << fmt::line
-                << "Abbreviation module := source (only parsing)." << fmt::line;
-        }
-
         if (check_types_) {
             check_types(fmt, interactive_.value_or("source").c_str());
         }
@@ -470,11 +462,6 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
             if (interactive_.has_value()) {
                 print.output() << "End cpp_prog__" << interactive_.value()
                                << "__." << fmt::line;
-            } else {
-                // NOTE: Backwards compatibility
-                print.output()
-                    << "Abbreviation module := source (only parsing)."
-                    << fmt::line;
             }
 
             if (check_types_) {
