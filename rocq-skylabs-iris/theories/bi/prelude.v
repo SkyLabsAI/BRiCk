@@ -16,6 +16,7 @@ Require Export skylabs.iris.extra.bi.derived_laws.
 
 Section with_PROP.
   Context {PROP : bi}.
+  Implicit Type (P : PROP).
 
   #[global] Instance IntoPure_mono :
     Proper (flip (⊢) ==> impl ==> impl) (IntoPure (PROP := PROP)).
@@ -36,6 +37,42 @@ Section with_PROP.
   #[global] Instance into_pure_emp : IntoPure (PROP := PROP) emp True.
   Proof. rewrite (bi.pure_intro True emp) //. apply _. Qed.
 
+  #[global] Instance into_pure_True_sep P φ :
+    IntoPure (PROP := PROP) P φ →
+    IntoPure (PROP := PROP) (True ∗ P) φ.
+  Proof. Fail apply _. rewrite -{2}(left_id True and φ). apply _. Qed.
+
+  #[global] Instance into_pure_sep_True P φ :
+    IntoPure (PROP := PROP) P φ →
+    IntoPure (PROP := PROP) (P ∗ True) φ.
+  Proof. Fail apply _. rewrite comm. apply _. Qed.
+
+  #[global] Instance FromPure_mono b :
+    Proper ((⊢) ==> flip impl ==> impl) (FromPure (PROP := PROP) b).
+  Proof. solve_proper. Qed.
+
+  #[global] Instance FromPure_flip_mono b :
+    Proper (flip (⊢) ==> impl ==> flip impl) (FromPure (PROP := PROP) b).
+  Proof. solve_proper. Qed.
+
+  #[global] Instance FromPure_proper b :
+    Proper ((⊣⊢) ==> iff ==> iff) (FromPure (PROP := PROP) b).
+  Proof. solve_proper. Qed.
+
+  #[global] Instance from_pure_True_sep a φ P :
+    FromPure a P φ →
+    FromPure false (True ∗ P) φ.
+  Proof.
+    (* suff: FromPure (if false then a else false) (True ∗ P) (True /\ φ) *)
+    (*   by rewrite /FromPure/= (left_id True and φ). *)
+    rewrite -{2}(left_id True and φ).
+    exact /(class_instances.from_pure_pure_sep_true false).
+  Qed.
+
+  #[global] Instance from_pure_sep_True a (φ : Prop) P :
+    FromPure a P φ →
+    FromPure false (P ∗ True) φ.
+  Proof. rewrite comm. apply _. Qed.
 End with_PROP.
 
 #[global] Hint Opaque uPred_emp : typeclass_instances.
