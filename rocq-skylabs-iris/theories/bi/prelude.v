@@ -14,8 +14,29 @@ Require Export skylabs.prelude.list_numbers.
 Require Export skylabs.iris.extra.bi.only_provable.
 Require Export skylabs.iris.extra.bi.derived_laws.
 
-#[global] Instance into_pure_emp PROP : IntoPure (PROP := PROP) emp True.
-Proof. by rewrite /IntoPure (bi.pure_intro True emp). Qed.
+Section with_PROP.
+  Context {PROP : bi}.
+
+  #[global] Instance IntoPure_mono :
+    Proper (flip (⊢) ==> impl ==> impl) (IntoPure (PROP := PROP)).
+  Proof.
+    rewrite /IntoPure/flip.
+    move=> P _ /[swap] φ /[swap] _ -> <-.
+    by [].
+  Qed.
+
+  #[global] Instance IntoPure_flip_mono :
+    Proper ((⊢) ==> flip impl ==> flip impl) (IntoPure (PROP := PROP)).
+  Proof. solve_proper. Qed.
+
+  #[global] Instance IntoPure_proper :
+    Proper ((⊣⊢) ==> iff ==> iff) (IntoPure (PROP := PROP)).
+  Proof. solve_proper. Qed.
+
+  #[global] Instance into_pure_emp : IntoPure (PROP := PROP) emp True.
+  Proof. rewrite (bi.pure_intro True emp) //. apply _. Qed.
+
+End with_PROP.
 
 #[global] Hint Opaque uPred_emp : typeclass_instances.
 
