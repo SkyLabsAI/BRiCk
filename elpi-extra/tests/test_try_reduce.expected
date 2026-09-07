@@ -1,0 +1,4 @@
+Query assignments:
+  T = global (indc «O»)
+Query assignments:
+  T = fun `x` (global (indt «nat»)) c0 \ c0

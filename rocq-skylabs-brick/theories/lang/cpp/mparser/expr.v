@@ -308,6 +308,7 @@ Fixpoint to_unresolved_name (e : MExpr) : Mname :=
   | Ealignof _ _ => Nunsupported "Ealignof"
   | Eoffsetof _ _ _ => Nunsupported "Eoffsetof"
   | Econstructor _ _ _ => Nunsupported "Econstructor"
+  | Einherited_constructor _ _ _ => Nunsupported "Einherited_constructor"
   | Elambda _ _ => Nunsupported "Elambda"
   | Eimplicit_init _ => Nunsupported "Eimplicit_init"
   | Eif _ _ _ _ => Nunsupported "Eif"

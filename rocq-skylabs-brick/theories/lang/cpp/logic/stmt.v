@@ -34,6 +34,26 @@ Module Type Stmt.
 
     Implicit Types Q : Kpred.
 
+    Definition Kseq_inner (Q : Kpred -> mpred) (k : Kpred) (rt : ReturnType) : mpred :=
+      match rt with
+      | Normal => Q k
+      | rt => k rt
+      end.
+    #[global] Arguments Kseq_inner _ _ !rt /.
+
+    Definition Kseq (Q : Kpred -> mpred) (k : Kpred) : Kpred :=
+      KP $ Kseq_inner Q k.
+    #[global] Hint Opaque Kseq : typeclass_instances.
+
+    Lemma Kseq_frame (Q1 Q2 : Kpred -> mpred) (k1 k2 : Kpred) (rt : ReturnType) :
+      ((Forall rt : ReturnType, k1 rt -* k2 rt) -* Q1 k1 -* Q2 k2) |--
+      (Forall rt : ReturnType, k1 rt -* k2 rt) -*
+      Kseq Q1 k1 rt -* Kseq Q2 k2 rt.
+    Proof.
+      iIntros "HQ Hk". destruct rt; cbn; try iExact "Hk".
+      by iApply "HQ".
+    Qed.
+
     Definition Kfree (free : FreeTemp) : Kpred -> Kpred :=
       Kat_exit (interp free).
 

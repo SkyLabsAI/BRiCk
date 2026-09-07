@@ -18,6 +18,18 @@
   >   }
   > ]
   > EOF
+  $ rocq-perf.code-quality-diff --color --after-dune dune-log.json | head -n 5
+  # Changes in Warnings or Errors
+  |        |Before|New |Fixed|After|
+  |--------|-----:|---:|----:|----:|
+  |Errors  | 0   | ${\color{red}1}$ | 0  | 1  |
+  |Warnings| 0   | 0 | 0  | 0  |
+  $ rocq-perf.code-quality-diff --color --before-dune dune-log.json | head -n 5
+  # Changes in Warnings or Errors
+  |        |Before|New |Fixed|After|
+  |--------|-----:|---:|----:|----:|
+  |Errors  | 1   | 0 | ${\color{green}1}$  | 0  |
+  |Warnings| 0   | 0 | 0  | 0  |
   $ rocq-perf.code-quality-diff --after-dune dune-log.json
   # Changes in Warnings or Errors
   |        |Before|New |Fixed|After|

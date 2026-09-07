@@ -42,11 +42,11 @@ Section with_lang.
   Definition postfix (a b : PrimString.string) : PrimString.string := PrimString.cat b a.
 
   Section atomic_name.
-    Context {type Expr : Set} (printType : type -> option PrimString.string) (printExpr : Expr -> option PrimString.string).
+    Context (printType : type -> option PrimString.string).
     Variable top : option PrimString.string.
 
     #[local] Open Scope monad_scope.
-    Definition printAN inst (an : atomic_name_ type) : option PrimString.string :=
+    Definition printAN inst (an : atomic_name) : option PrimString.string :=
       match an return option PrimString.string with
       | Nid id =>
           if bool_decide (id = "") then mfail else mret $ id ++ inst
@@ -74,9 +74,9 @@ Section with_lang.
           mret $ "operator " ++ ty ++ "()" ++ pretty.with_space (pretty.printFQ q)
       | Nop_lit i args =>
           let* args := traverse (F:=eta option) printType args in
-          mret $ "operator """"_" ++ i ++ parens (sepBy ", " args)
+          mret $ "operator """"" ++ i ++ parens (sepBy ", " args)
       | Nanonymous =>
-          if bool_decide (inst = "") then mret "(anon)" else None
+          if bool_decide (inst = "") then mret "(anonymous namespace)" else None
       | Nanon n => mret $ "@" ++ showN n ++ inst
       | Nfirst_decl n => mret $ "@" ++ n ++ inst
       | Nfirst_child n => mret $ "." ++ n ++ inst
@@ -292,10 +292,16 @@ Module Type TESTS.
   #[local] Definition TEST (input : PrimString.string) (nm : name) : Prop :=
     print_name nm = Some input.
 
+  Succeed Example _0 : TEST "(anonymous namespace)::Msg" (Nscoped (Nglobal Nanonymous) (Nid "Msg")) := eq_refl.
+
   #[local] Definition Msg : name := Nglobal $ Nid "Msg".
 
   Succeed Example _0 : TEST "Msg" Msg := eq_refl.
   Succeed Example _0 : TEST "Msg::@0" (Nscoped Msg (Nanon 0)) := eq_refl.
+  Succeed Example _0 : TEST "Msg::(anonymous namespace)" (Msg .:: Nanonymous) :=
+   eq_refl.
+  Succeed Example _0 : TEST "Msg::(anonymous namespace)::id" (Nscoped (Msg .:: Nanonymous) (Nid "id")) :=
+   eq_refl.
   Succeed Example _0 : TEST "Msg::Msg()" (Nscoped Msg (Nctor [])) := eq_refl.
   Succeed Example _0 : TEST "Msg::~Msg()" (Nscoped Msg Ndtor) := eq_refl.
 
@@ -351,5 +357,6 @@ Module Type TESTS.
   Succeed Example _0 : TEST "C<1b, 0b>" (Ninst (Nglobal (Nid "C")) [Avalue (Eint 1 Tbool); Avalue (Eint 0 Tbool)]) := eq_refl.
   Succeed Example _0 : TEST "C<1, 0>" (Ninst (Nglobal (Nid "C")) [Avalue (Eint 1 Tint); Avalue (Eint 0 Tint)]) := eq_refl.
   Succeed Example _0 : TEST "C<1, ...<int, long>>" (Ninst (Nglobal (Nid "C")) [Avalue (Eint 1 Tint); Apack [Atype Tint; Atype Tlong]]) := eq_refl.
+  Succeed Example _0 : TEST "operator """"_f(enum foo)" (Nglobal $ Nop_lit "_f" [Tenum $ Nglobal $ Nid "foo"]) := eq_refl.
 
 End TESTS.

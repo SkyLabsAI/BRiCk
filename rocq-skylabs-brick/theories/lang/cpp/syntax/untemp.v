@@ -71,6 +71,7 @@ Definition untempE := M2S MTraverse.traverseE.
 Definition untempTA := M2S MTraverse.traverseTA.
 Definition untempTP := temp_param.traverse untempT.
 Definition untempGD := MTraverse.traverseGD (M2S MTraverse.mk_core_traversal).
+Definition untempOV := MTraverse.traverseOV (M2S MTraverse.mk_core_traversal).
 
 Definition totempN := S2M MTraverse.traverseN.
 Definition totempT := S2M MTraverse.traverseT.
@@ -78,3 +79,4 @@ Definition totempE := S2M MTraverse.traverseE.
 Definition totempTA := S2M MTraverse.traverseTA.
 Definition totempTP := temp_param.traverse totempT.
 Definition totempGD := MTraverse.traverseGD (S2M MTraverse.mk_core_traversal).
+Definition totempOV := MTraverse.traverseOV (S2M MTraverse.mk_core_traversal).

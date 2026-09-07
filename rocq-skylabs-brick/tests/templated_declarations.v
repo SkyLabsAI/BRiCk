@@ -164,19 +164,19 @@ Definition lookup_method_template_body (n : name) : option Stmt :=
   | None => None
   end.
 
-Definition symbol_template_params (n : name) : option (list temp_param) :=
+Definition symbol_template_params (n : name) : option (list _) :=
   match lookup_symbol_template n with
   | Some t => Some t.(template_params)
   | None => None
   end.
 
-Definition type_template_params (n : name) : option (list temp_param) :=
+Definition type_template_params (n : name) : option (list _) :=
   match lookup_type_template n with
   | Some t => Some t.(template_params)
   | None => None
   end.
 
-Definition alias_template_params (n : name) : option (list temp_param) :=
+Definition alias_template_params (n : name) : option (list _) :=
   match translation_unit.maliases source !! n with
   | Some t => Some t.(template_params)
   | None => None
@@ -239,11 +239,11 @@ Definition aggregate_value_name : name :=
 Definition agg : type := "Agg"%cpp_type.
 
 Example type_template_param_is_not_global_T :
-  symbol_template_params type_shadow_name = Some [Ptype "T"].
+  symbol_template_params type_shadow_name = Some [(Ptype "T", None)].
 Proof. vm_compute. reflexivity. Qed.
 
 Example value_template_param_is_not_global_N :
-  symbol_template_params value_shadow_name = Some [Pvalue "N" Tint].
+  symbol_template_params value_shadow_name = Some [(Pvalue "N" Tint, None)].
 Proof. vm_compute. reflexivity. Qed.
 
 Example type_template_param_body_uses_function_parameter :
@@ -261,11 +261,12 @@ Example value_template_param_body_uses_template_value :
 Proof. vm_compute. reflexivity. Qed.
 
 Example nested_class_template_params :
-  type_template_params nested_type_name = Some [Ptype "Outer"].
+  type_template_params nested_type_name = Some [(Ptype "Outer", None)].
 Proof. vm_compute. reflexivity. Qed.
 
 Example nested_member_template_params :
-  symbol_template_params nested_method_name = Some [Ptype "Outer"; Ptype "Inner"].
+  symbol_template_params nested_method_name =
+  Some [(Ptype "Outer", None); (Ptype "Inner", None)].
 Proof. vm_compute. reflexivity. Qed.
 
 Example nested_member_body_uses_inner_parameter :
@@ -276,11 +277,12 @@ Example nested_member_body_uses_inner_parameter :
 Proof. vm_compute. reflexivity. Qed.
 
 Example mixed_type_and_value_template_params :
-  type_template_params mixed_type_name = Some [Ptype "T"; Pvalue "N" Tint].
+  type_template_params mixed_type_name =
+  Some [(Ptype "T", None); (Pvalue "N" Tint, None)].
 Proof. vm_compute. reflexivity. Qed.
 
 Example alias_template_params_are_preserved :
-  alias_template_params alias_name = Some [Ptype "T"].
+  alias_template_params alias_name = Some [(Ptype "T", None)].
 Proof. vm_compute. reflexivity. Qed.
 
 Example alias_template_is_not_stored_under_bare_name :
@@ -288,16 +290,17 @@ Example alias_template_is_not_stored_under_bare_name :
 Proof. vm_compute. reflexivity. Qed.
 
 Example value_alias_template_params_are_preserved :
-  alias_template_params value_alias_name = Some [Pvalue "N" Tint].
+  alias_template_params value_alias_name = Some [(Pvalue "N" Tint, None)].
 Proof. vm_compute. reflexivity. Qed.
 
 Example value_array_alias_template_params_are_preserved :
-  alias_template_params value_array_alias_name = Some [Pvalue "N" Tint].
+  alias_template_params value_array_alias_name =
+  Some [(Pvalue "N" Tint, None)].
 Proof. vm_compute. reflexivity. Qed.
 
 Example apply_alias_template_params_are_preserved :
   alias_template_params apply_alias_name =
-  Some [Ptemplate "TemplateParam" [Ptype "T"]; Ptype "T"].
+  Some [(Ptemplate "TemplateParam" [Ptype "T"], None); (Ptype "T", None)].
 Proof. vm_compute. reflexivity. Qed.
 
 Example concrete_alias_from_template_alias_resolves :
@@ -359,7 +362,7 @@ Example template_template_alias_should_resolve :
 Proof. vm_compute. reflexivity. Qed.
 
 Example variable_template_params_are_preserved :
-  symbol_template_params templated_var_name = Some [Ptype "T"].
+  symbol_template_params templated_var_name = Some [(Ptype "T", None)].
 Proof. vm_compute. reflexivity. Qed.
 
 Example variable_template_is_not_stored_under_bare_name :
@@ -368,12 +371,12 @@ Proof. vm_compute. reflexivity. Qed.
 
 Example template_template_param_is_preserved :
   type_template_params uses_template_template_name =
-  Some [Ptemplate "TemplateParam" [Ptype "T"]; Ptype "T"].
+  Some [(Ptemplate "TemplateParam" [Ptype "T"], None); (Ptype "T", None)].
 Proof. vm_compute. reflexivity. Qed.
 
 Example variadic_template_param_is_explicitly_recorded :
   symbol_template_params variadic_count_name =
-  Some [Punsupported "template parameter pack"].
+  Some [(Punsupported "template parameter pack", None)].
 Proof. vm_compute. reflexivity. Qed.
 
 Example variadic_body_resolves_function_pack :
@@ -384,7 +387,7 @@ Example variadic_body_resolves_function_pack :
 Proof. vm_compute. reflexivity. Qed.
 
 Example aggregate_value_template_param_is_preserved :
-  symbol_template_params aggregate_value_name = Some [Pvalue "V" agg].
+  symbol_template_params aggregate_value_name = Some [(Pvalue "V" agg, None)].
 Proof. vm_compute. reflexivity. Qed.
 
 Example aggregate_value_body_uses_template_value :

@@ -60,9 +60,6 @@ template file) and arguments.
 Definition temp_name : Set := name.
 
 Section tpreinst.
-  (* TODO: this type probably does not need to be parametric in [lang.t]
-     The only meaningful instantation is [lang.cpp]
-   *)
   Record tpreinst : Set := TPreInst {
     tpreinst_name : temp_name;
     tpreinst_args : list temp_arg;
@@ -116,7 +113,7 @@ Section template.
   Context {V : Type@{uV}}.
 
   Record template : Type@{uV} := Template {
-    template_params : list temp_param;
+    template_params : list (temp_param * option temp_arg);
     template_value : V;
   }.
 

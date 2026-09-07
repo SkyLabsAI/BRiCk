@@ -1,0 +1,2 @@
+Query assignments:
+  T = prod `x` (global (indt «nat»)) c0 \ global (indt «True»)

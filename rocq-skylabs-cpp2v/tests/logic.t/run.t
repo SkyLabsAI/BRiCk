@@ -1,4 +1,4 @@
-  $ . ../setup-project.sh
+  $ setup_project
   $ dune build test.vo
   mpred_sep :
   ∀ {thread_info : biIndex} {_Σ : gFunctors}, mpred → mpred → mpredI

@@ -754,8 +754,9 @@ Module Type CPP_LOGIC
     Axiom same_address_eq_type_ptr : forall ty p1 p2 n,
       same_address p1 p2 ->
       size_of _ ty = Some n ->
-      (* if [ty = Tuchar], one of these pointer could provide storage for the other. *)
-      ty <> Tuchar ->
+      (* if [erase_qualifiers ty = Tuchar], one of these pointer could provide
+      storage for the other. *)
+      erase_qualifiers ty <> Tuchar ->
       (n > 0)%N ->
       type_ptr ty p1 ∧ type_ptr ty p2 ∧ live_ptr p1 ∧ live_ptr p2 ⊢
         |={↑pred_ns}=> [| p1 = p2 |].
@@ -1492,6 +1493,10 @@ Section has_type.
     all: rewrite !has_type_or_undef_nonundef//.
     all: by rewrite !has_type_nonptr// has_type_prop_raw_bytes_of_val.
   Qed.
+
+  #[global] Instance has_type_ptr_valid_ptr_observe ty p :
+    Observe (valid_ptr p) (has_type (Vptr p) (Tptr ty)).
+  Proof. rewrite has_type_ptr'. apply _. Qed.
 End has_type.
 
 #[global] Notation "'validP<' ty > v" := (has_type v ty%cpp_type)

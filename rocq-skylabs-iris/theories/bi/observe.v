@@ -628,3 +628,6 @@ Section observable_theory.
 End observable_theory.
 
 #[global] Hint Resolve observe_intro_only_provable_simple : core.
+
+#[global] Hint Extern 100 (Observe (match ?s with _ => _ end) (match ?s with _ => _ end)) =>
+  destruct s : typeclass_instances.

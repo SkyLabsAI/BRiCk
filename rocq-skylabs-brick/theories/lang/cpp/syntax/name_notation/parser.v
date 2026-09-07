@@ -25,13 +25,16 @@ Require Import skylabs.lang.cpp.syntax.translation_unit.
  *)
 
 Import Uint63Notations.
-Definition ident_char (b : PrimString.char63) : bool :=
+Definition alpha_char (b : char63) : bool :=
      in_range_incl "a" "z" b
   || in_range_incl "A" "Z" b
   || (b =? "_".(char63_wrap))%char63%uint63.
 
 Definition digit_char (b : char63) : bool :=
   (("0".(char63_wrap) ≤? b) && (b ≤? "9".(char63_wrap)))%char63%uint63.
+
+Definition ident_char (b : char63) : bool :=
+  alpha_char b || digit_char b.
 
 Module internal.
   Import parsec.
@@ -66,8 +69,8 @@ Module internal.
         (
           stateT.mk $ fun '(idx, str) =>
               if ltb idx (PrimString.length str) then
-                if ident_char (PrimString.get str idx) then
-                  let '(fin, s) := get_ident str idx 1%uint63 (fun x => ident_char x || digit_char x) 1000 in
+                if alpha_char (PrimString.get str idx) then
+                  let '(fin, s) := get_ident str idx 1%uint63 ident_char 1000 in
                   optionT.mk (mret (UTypes.Some (UTypes.pair (fin, str) s)))
                 else optionT.mk (mret (UTypes.None))
               else
@@ -81,14 +84,20 @@ Module internal.
 
     Notation exact bs := (exact_bs bs).
 
+    Definition with_spaces {T} (p : M T) : M T :=
+      ws *> p <* ws.
+
+    Definition spaced (s : PrimString.string) : M unit :=
+      with_spaces $ exact s.
+
     (* a maximal identifier *)
     Definition keyword_no_ws (s : PrimString.string) : M unit :=
       let* _ := exact s in
-      let* _ := not $ char (fun a => ident_char a || digit_char a) in
+      let* _ := not $ char ident_char in
       mret ().
 
     Definition keyword (b : PrimString.string) : M unit :=
-      ws *> keyword_no_ws b <* ws.
+      with_spaces (keyword_no_ws b).
 
     Definition punct_char (c : char63) : Prop :=
       in_range_incl_excl "!" "0" c \/
@@ -101,9 +110,7 @@ Module internal.
 
     (* TODO: ideally, i would like to say that this does not contain additional characters. *)
     Definition op_token (s : PrimString.string) : M unit :=
-      let* _ := ws in
-      let* _ := exact s in
-      ws.
+      spaced s.
 
     Definition decimal : M N :=
       let make ls := fold_left (fun acc x => 10 * acc + x)%N ls 0%N in
@@ -229,11 +236,6 @@ Module internal.
       let* _ := ws in
       mret res.
 
-    Definition spaced (s : PrimString.string) : M unit :=
-      let* _ := ws in
-      let* _ := exact s in
-      ws.
-
     Definition get_args (ls : list type) : list type :=
       match ls with
       | [Tvoid] => []
@@ -297,6 +299,7 @@ Module internal.
       | FirstDecl (_ : PrimString.string)
       | FirstChild (_ : PrimString.string)
       | Anon (_ : N)
+      | Anonymous
       | Op (_ : OverloadableOperator)
       | OpConv (_ : type)
       | OpLit (_ : PrimString.string).
@@ -324,6 +327,10 @@ Module internal.
         else
           parens (pair <$> (get_args <$> args) <*> arity).
 
+      Definition parse_fun_ty (no_start_paren : bool) : M (type -> type) :=
+        let* '(args, ar) := parse_args no_start_paren in
+        mret (fun ret_ty => Tfunction (FunctionType (ft_arity:=ar) ret_ty args)).
+
       Definition parse_postfix_type : M (type -> type) :=
         let entry := fix entry fuel :=
           let array_entry :=
@@ -343,12 +350,9 @@ Module internal.
                 mret (fun rt => Tfunction (FunctionType rt []))
               else
                 let post := fold_left (fun t f => f t) post in
-                let* '(args, ar) := parse_args false in
-                mret (fun rt => post $ Tfunction (FunctionType (ft_arity:=ar) rt args))
+                compose post <$> parse_fun_ty false
             in
-            qualified <|>
-            (let* '(args, ar) := parse_args true in
-             mret (fun rt => Tfunction (FunctionType (ft_arity:=ar) rt args)))
+            qualified <|> parse_fun_ty true
           in
           let* _ := ws in
           (let* _ := exact "&&" in mret Trv_ref) <|>
@@ -363,8 +367,13 @@ Module internal.
              let* _ := spaced "::" in
              let* _ := exact "*" in
              let* _ := spaced ")" in
-             let* '(args, ar) := parse_args false in
-             mret (fun rt => Tmember_pointer (Tnamed nm) $ Tfunction (FunctionType (ft_arity:=ar) rt args)))
+             compose (Tmember_pointer (Tnamed nm)) <$>
+             parse_fun_ty false)
+             <|>
+             (let* nm := parse_name () in
+             let* _ := spaced "::" in
+             let* _ := exact "*" in
+             mret (Tmember_pointer (Tnamed nm)))
         in
         fold_left (fun t f => f t) <$> star (entry 100).
 
@@ -427,13 +436,23 @@ Module internal.
       let* post := parse_postfix_type in
       mret $ post (List.fold_right (fun f x => f x) t quals).
 
-    Fixpoint as_conv (q : function_qualifiers.t) (t : type) : option (type * list type * function_qualifiers.t) :=
+    Fixpoint final_function (nm : name) : option (name * list type * function_qualifiers.t) :=
+      match nm with
+      | Nglobal (Nfunction q nm []) => Some (Nglobal (Nid nm), [], q)
+      | Nscoped s (Nfunction q nm []) => Some (Nscoped s (Nid nm), [], q)
+      | Ninst n inst => (fun '(nm, args, q) => (Ninst nm inst, args, q)) <$> final_function n
+      | _ => None
+      end.
+
+    Fixpoint as_conv (q : function_qualifiers.t) (t : type)
+      : option (type * list type * function_qualifiers.t) :=
       match t with
       | Tqualified cv t =>
           as_conv (function_qualifiers.join q $ function_qualifiers.mk (q_const cv) (q_volatile cv) Prvalue) t
       | Tref t => as_conv (function_qualifiers.join q $ function_qualifiers.mk false false Lvalue) t
       | Trv_ref t => as_conv (function_qualifiers.join q $ function_qualifiers.mk false false Xvalue) t
       | Tfunction ft => Some (ft.(ft_return), ft.(ft_params), q)
+      | Tnamed nm => (fun '(nm, args, q') => (Tnamed nm, args, function_qualifiers.join q' q)) <$> final_function nm
       | _ => None
       end.
 
@@ -445,6 +464,7 @@ Module internal.
               | FirstDecl nm => mret $ Nfirst_decl nm
               | FirstChild nm => mret $ Nfirst_child nm
               | Anon n => mret $ Nanon n
+              | Anonymous => mret Nanonymous
               | OpConv t =>
                   (* NOTE: this is a hack because <<int()>> is parsed as a function type. *)
                   match as_conv function_qualifiers.N t with
@@ -480,6 +500,7 @@ Module internal.
          | FirstDecl n => mfail
          | FirstChild n => mfail
          | Anon _ => mfail
+         | Anonymous => mfail
          end
      end.
 
@@ -553,11 +574,12 @@ Module internal.
       let* (nm : name_type) :=
         let operator _ :=
           (Op <$> operator) <|>
-          (commit (exact """""_") (fun _ => OpLit <$> ident)
+          (commit (exact """""" <* ws) (fun _ => OpLit <$> ident)
              $ OpConv <$> parse_type ())
         in
         commit (keyword "operator") operator
         $ commit (op_token "~") (fun _ => Dtor <$> ident)
+        $ commit (exact "(anonymous namespace)") (fun _ => mret Anonymous)
         $ commit (exact "@") (fun _ => (Anon <$> decimal) <|> (FirstDecl <$> ident))
         $ commit (exact ".") (fun _ => FirstChild <$> ident) (Simple <$> ident)
       in
@@ -698,11 +720,17 @@ Module Type TESTS.
   #[local] Definition TEST_type (input : PrimString.string) (nm : type) : Prop :=
     (parse_type input) = Some nm.
 
+  Succeed Example _0 : TEST "(anonymous namespace)::Msg" (Nscoped (Nglobal Nanonymous) (Nid "Msg")) := eq_refl.
+
   #[local] Definition Msg : name := Nglobal $ Nid "Msg".
 
   Succeed Example _0 : TEST "Msg" Msg := eq_refl.
   Succeed Example _0 : TEST "::Msg" Msg := eq_refl.
   Succeed Example _0 : TEST "Msg::@0" (Nscoped Msg (Nanon 0)) := eq_refl.
+  Succeed Example _0 : TEST "Msg::(anonymous namespace)" (Msg .:: Nanonymous) :=
+   eq_refl.
+  Succeed Example _0 : TEST "Msg::(anonymous namespace)::id" (Nscoped (Msg .:: Nanonymous) (Nid "id")) :=
+   eq_refl.
   Succeed Example _0 : TEST "Msg::Msg()" (Nscoped Msg (Nctor [])) := eq_refl.
   Succeed Example _0 : TEST "Msg::~Msg()" (Nscoped Msg (Ndtor)) := eq_refl.
   Succeed Example _0 :
@@ -723,7 +751,9 @@ Module Type TESTS.
   Succeed Example _0 : TEST "Msg::Msg(int)" (Nscoped Msg (Nctor [Tint])) := eq_refl.
   Succeed Example _0 : TEST "Msg::Msg(long)" (Nscoped Msg (Nctor [Tlong])) := eq_refl.
   Succeed Example _0 : TEST "Msg::operator=(const Msg&)" (Nscoped Msg (Nop function_qualifiers.N OOEqual [Tref (Tconst (Tnamed $ Nglobal (Nid "Msg")))])) := eq_refl.
+  Succeed Example _0 : TEST "Msg::operator = (const Msg&)" (Nscoped Msg (Nop function_qualifiers.N OOEqual [Tref (Tconst (Tnamed $ Nglobal (Nid "Msg")))])) := eq_refl.
   Succeed Example _0 : TEST "Msg::operator=(const Msg&&)" (Nscoped Msg (Nop function_qualifiers.N OOEqual [Trv_ref (Tconst (Tnamed $ Nglobal (Nid "Msg")))])) := eq_refl.
+  Succeed Example _0 : TEST "Msg::operator = (const Msg&&)" (Nscoped Msg (Nop function_qualifiers.N OOEqual [Trv_ref (Tconst (Tnamed $ Nglobal (Nid "Msg")))])) := eq_refl.
   Succeed Example _0 : TEST "Msg::operator new()" (Nscoped Msg (Nop function_qualifiers.N (OONew false) [])) := eq_refl.
   Succeed Example _0 : TEST "Msg::operator new[]()" (Nscoped Msg (Nop function_qualifiers.N (OONew true) [])) := eq_refl.
   Succeed Example _0 : TEST "Msg::operator   delete()" (Nscoped Msg (Nop function_qualifiers.N (OODelete false) [])) := eq_refl.
@@ -751,7 +781,8 @@ Module Type TESTS.
   Succeed Example _0 : TEST "f(const volatile int[], int[3])" (Nglobal $ Nfunction function_qualifiers.N "f" [Tptr (Tqualified QCV Tint); Tptr Tint]) := eq_refl.
   Succeed Example _0 : TEST "f(void)" (Nglobal $ Nfunction function_qualifiers.N "f" []) := eq_refl.
   Succeed Example _0 : TEST "::f(void)" (Nglobal $ Nfunction function_qualifiers.N "f" []) := eq_refl.
-  Succeed Example _0 : TEST "operator """"_f(enum ::foo)" (Nglobal $ Nop_lit "f" [Tenum $ Nglobal $ Nid "foo"]) := eq_refl.
+  Succeed Example _0 : TEST "operator """"_f(enum ::foo)" (Nglobal $ Nop_lit "_f" [Tenum $ Nglobal $ Nid "foo"]) := eq_refl.
+  Succeed Example _0 : TEST "operator """" _f(enum ::foo)" (Nglobal $ Nop_lit "_f" [Tenum $ Nglobal $ Nid "foo"]) := eq_refl.
 
   Succeed Example _0 : TEST "submit(unsigned long, std::function<void()>)"
                  (Nglobal
@@ -775,6 +806,7 @@ Module Type TESTS.
                          (Nscoped (Nglobal (Nid "CpuSet")) (Nfunction function_qualifiers.Nc "forall" [Tmember_pointer (Tnamed (Nglobal $ Nid "C")) $ Tfunction (FunctionType Tvoid [Tint])])) := eq_refl.
   Succeed Example _0 : TEST "CpuSet::forall(void (C::*)(int, ...), ...) const"
                          (Nscoped (Nglobal (Nid "CpuSet")) (Nfunction function_qualifiers.Nc "forall" [Tmember_pointer (Tnamed (Nglobal $ Nid "C")) $ Tfunction (FunctionType (ft_arity:=Ar_Variadic) Tvoid [Tint])])) := eq_refl.
+  Succeed Example _0 : TEST "Foo::Foo(int Foo::*)" (Nscoped (Nglobal (Nid "Foo")) (Nctor [Tmember_pointer (Tnamed (Nglobal (Nid "Foo"))) Tint])) := eq_refl.
 
   Succeed Example _0 : TEST "foo(unsigned int128, int128)" (Nglobal (Nfunction function_qualifiers.N "foo" [Tuint128_t; Tint128_t])) := eq_refl.
 
@@ -816,6 +848,17 @@ Module Type TESTS.
 
   Succeed Example _0 : TEST "foo(typename $T)" (Nglobal (Nfunction function_qualifiers.N "foo" [Tparam "T"])) := eq_refl.
   Succeed Example _0 : TEST "foo(typename $T::nested)" (Nglobal (Nfunction function_qualifiers.N "foo" [Tnamed (Nscoped (Ndependent (Tparam "T")) (Nid "nested"))])) := eq_refl.
+
+  Succeed Example _0 : TEST "C::foo() const" (Nscoped (Nglobal (Nid "C")) (Nfunction function_qualifiers.Nc "foo" [])) := eq_refl.
+  Succeed Example _0 : TEST "C::operator foo() const" (Nscoped (Nglobal (Nid "C")) (Nop_conv function_qualifiers.Nc (Tnamed (Nglobal $ Nid "foo")))) := eq_refl.
+
+  Succeed Example _0 : TEST "std::strong_ordering::operator std::partial_ordering() const"
+                 (Nscoped (Nscoped (Nglobal (Nid "std")) (Nid "strong_ordering"))
+                    (Nop_conv function_qualifiers.Nc (Tnamed (Nscoped (Nglobal (Nid "std")) (Nid "partial_ordering"))))) := eq_refl.
+
+  Succeed Example _0 : TEST "std::operator foo<int>() const"
+                         (Nscoped (Nglobal (Nid "std"))
+                            (Nop_conv function_qualifiers.Nc (Tnamed (Ninst (Nglobal (Nid "foo")) [Atype Tint])))) := eq_refl.
 
   (* known issues *)
 

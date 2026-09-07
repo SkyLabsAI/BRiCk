@@ -1,0 +1,6 @@
+Current value of Debug is "-all,-backtrace,-vmlambda,-vmbytecode,-vernacinterp,-unification,-tactic-unification,-strpos,-scheme-all,-proof-using,-native-compiler,-mltop-init,-misc,-indschemes,-ho-unification,-hconstr,-hcons,-generate_eliminators,-dynlink,-dnet-decomp,-congruence,-comment-lexing,-RAKAM,-Cbv,-API"
+Current value of Debug is "-all,backtrace,-vmlambda,-vmbytecode,-vernacinterp,-unification,-tactic-unification,-strpos,-scheme-all,-proof-using,-native-compiler,-mltop-init,-misc,-indschemes,-ho-unification,-hconstr,-hcons,-generate_eliminators,-dynlink,-dnet-decomp,-congruence,-comment-lexing,-RAKAM,-Cbv,-API"
+Current value of Debug is "-all,-backtrace,-zify,-vmlambda,-vmbytecode,-vernacinterp,-unification,-tactic-unification,-strpos,-ssrmatching,-ssreflect,-scheme-all,-proof-using,-native-compiler,-mltop-init,-misc,-indschemes,-ho-unification,-hconstr,-hcons,-generate_eliminators,-elpitime,-elpi,-dynlink,-dnet-decomp,-congruence,-comment-lexing,-RAKAM,-Cbv,-API"
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/cpp_prog_backtrace.v", line 7, characters 16-23:
+The command has indeed failed with message:
+bt_test already exists.

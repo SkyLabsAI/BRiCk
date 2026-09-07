@@ -1,0 +1,32 @@
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/instances.v", line 34, characters 19-20:
+The command has indeed failed with message:
+Could not find an instance for "AsCFractional (arrayR ty (R q) xs) ?Q ?q" in
+environment:
+thread_info : biIndex
+_Σ : gFunctors
+Σ : cpp_logic thread_info _Σ
+σ : genv
+A : Type
+R : cQp.t → A → Rep
+xs : list A
+q : cQp.t
+ty : type
+CFractional6 : ∀ a : A, CFractional (λ q : cQp.t, R q a)
+
+
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/instances.v", line 56, characters 19-20:
+The command has indeed failed with message:
+Could not find an instance for "AsFractional (arrayR ty (R q) xs) ?Φ ?q" in
+environment:
+thread_info : biIndex
+_Σ : gFunctors
+Σ : cpp_logic thread_info _Σ
+σ : genv
+A : Type
+R : Qp → A → Rep
+xs : list A
+q : Qp
+ty : type
+Fractional6 : Fractional1 R
+
+

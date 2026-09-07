@@ -44,6 +44,7 @@ type files = {
   log : string;
   stderr : string;
   stdout : string;
+  output : string;
 }
 
 let rocq_command : args:string list -> string =
@@ -77,7 +78,8 @@ let compile args =
         let log = glob ^ ".log.json" in
         let stdout = glob ^ ".stdout" in
         let stderr = glob ^ ".stderr" in
-        {glob; perf; summary; log; stdout; stderr}
+        let output = base ^ ".output" in
+        {glob; perf; summary; log; stdout; stderr; output}
       in
       let env =
         "ROCQ_PROFILE_COMPONENTS=command" ::
@@ -141,20 +143,23 @@ let non_empty_file file =
   In_channel.with_open_text file @@ fun ic ->
   In_channel.input_char ic <> None
 
-let embed_stdout_and_stderr glob stdout_file stderr_file =
-  if non_empty_file stdout_file then Globfs.append ~glob ~file:stdout_file;
+let embed_stdout_and_stderr glob ~has_output stdout_file stderr_file =
+  if not has_output && non_empty_file stdout_file then
+    Globfs.append ~glob ~file:stdout_file;
   Sys.remove stdout_file;
-  if non_empty_file stderr_file then Globfs.append ~glob ~file:stderr_file;
+  if non_empty_file stderr_file then
+    Globfs.append ~glob ~file:stderr_file;
   Sys.remove stderr_file
 
-let hack_glob {glob; perf; summary; log; stdout; stderr} =
+let hack_glob {glob; perf; summary; log; stdout; stderr; output} =
   (* Extract and embed the performance data. *)
   embed_perf_and_summary glob perf summary;
   (* Embed the log if it was generated. *)
   if Sys.file_exists log && not (Sys.is_directory log) then
     embed_log glob log;
   (* Embed stdout and stderr. *)
-  embed_stdout_and_stderr glob stdout stderr
+  let has_output = Sys.file_exists output in
+  embed_stdout_and_stderr glob ~has_output stdout stderr
 
 let hack_glob files =
   try hack_glob files with

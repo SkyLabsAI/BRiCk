@@ -69,7 +69,7 @@ files `test1.v`, `test2.v` and `test3.v`, you will need to put your three
 files in a new folder `new_test.t`, and add a `new_test.t/run.t` file with
 the following contents.
 ```sh
-  $ . ../setup-project.sh
+  $ setup_project
   $ dune build test1.vo
   $ dune build test2.vo
   $ dune build test3.vo

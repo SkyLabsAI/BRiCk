@@ -207,13 +207,13 @@ public:
                                        const clang::NamedDecl *,
                                        loc::loc);
 
-    // Print a Rocq [list temp_param].
+    // Print a Rocq [list (temp_param * option temp_arg)].
     fmt::Formatter &printTemplateParams(CoqPrinter &,
                                         llvm::ArrayRef<clang::NamedDecl *>,
                                         loc::loc);
 
     // Print all template parameters in scope for a declaration as a Rocq
-    // [list temp_param]. For example, with
+    // [list (temp_param * option temp_arg)]. For example, with
     // ```
     // template<typename T> struct s {
     //   template<typename U> void f(T, U);

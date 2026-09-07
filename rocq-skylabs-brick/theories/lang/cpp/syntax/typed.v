@@ -113,6 +113,24 @@ Module decltype.
       | None => throw ("failed to find global "%bs, n)
       end.
 
+    Fixpoint map2 {T U V : Set} (f : T -> U -> M V) (ts : list T) (us : list U) : M (list V) :=
+      match ts , us with
+      | nil , nil => mret nil
+      | t :: ts , u :: us => cons <$> f t u <*> map2 f ts us
+      | _ , _ => throw ("lists with different lengths "%pstring, ts, us)
+      end.
+
+    (** Returns the class name *)
+    Definition is_constructor (n : name) : M name :=
+      (* TODO: this should be replaced by something that actually knows about the kind.
+         Lift the definition of <<okind>> here.
+       *)
+      match n with
+      | Nscoped n (Nctor _) => mret n
+      | Ninst (Nscoped n (Nctor _)) ts => mret n
+      | _ => throw ("not a constructor "%pstring, n)
+      end.
+
     Definition type_of_constant (n : name) (id : ident) : M decltype :=
       let* osym := readerT.asks (fun '(tu, _, _, _) => tu.(ext_types) $ Nscoped n (Nid id)) in
       match osym with
@@ -529,6 +547,53 @@ Module decltype.
         | _ => throw "can not increment or decrement bool"%bs
         end.
 
+      Definition field_type (fld : field_name.t) (ms : list Member) : M type :=
+        match List.find (fun m => bool_decide (m.(mem_name) = fld)) ms with
+        | Some m => mret $ normalize_type m.(mem_type)
+        | None => throw ("failed to find field "%bs, fld)
+        end.
+
+      Definition type_of_global_or_field (n : name) : M decltype :=
+        let* osym := readerT.asks (fun '(tu, _, _, _) => tu.(ext_symbols) n) in
+        match osym with
+        | Some sym => mret sym
+        | None =>
+            match n with
+            | Nscoped cls fld =>
+                let* gd := global cls in
+                match gd with
+                | Gstruct st => field_type fld st.(s_fields)
+                | Gunion un => field_type fld un.(u_fields)
+                | _ => throw ("global scope is not an aggregate "%bs, cls, gd)
+                end
+            | _ => throw ("failed to find global "%bs, n)
+            end
+        end.
+
+      Definition class_type (t : type) : M name :=
+        match class_name t with
+        | Some cls => mret cls
+        | None => throw ("not a class type "%bs, t)
+        end.
+
+      Definition constructed_class (t : type) : M name :=
+        match class_name t with
+        | Some cls => mret cls
+        | None =>
+            match array_type t with
+            | Some ety => class_type ety
+            | None => throw ("constructor result is not a class or class array "%bs, t)
+            end
+        end.
+
+      Fixpoint check_constructor_result (c : name) (t : type) : M unit :=
+        match t with
+        | Tnamed nm => trace "constructor result"%pstring $ require_eq c nm
+        | Tarray ety _ => check_constructor_result c ety
+        | Tqualified _ ty => check_constructor_result c ty
+        | _ => throw ("not a constructor type "%pstring, t, " expected type is "%pstring, c)
+        end.
+
       Definition of_expr_body (e : Expr) : M decltype :=
         trace e $
         let* result :=
@@ -556,14 +621,9 @@ Module decltype.
             let* _ := require_eq (Tenum n) ct in
             mret $ Tenum n
         | Eglobal nm ty =>
-            (* TODO NAMES TYPING:
-               1. fields are not included, these are necessary for <<sizeof()>> (see cxx/bitvector)
-             *)
-            (*
-            let* from_env := type_of_global nm in
-            trace ("from_env = ", from_env))%bs $
+            let* from_env := type_of_global_or_field nm in
+            trace ("from_env = "%bs, from_env) $
             let* _ := require_eq from_env (normalize_type ty) in
-            *)
             mret $ tref QM (normalize_type ty)
         | Eglobal_member nm ty =>
             match nm with
@@ -743,9 +803,24 @@ Module decltype.
             const Tsize_t <$> guard (t = Tsize_t)
         | Eoffsetof _ _ t => mret t
         | Econstructor f es t =>
-            (* TODO: check the type of the constructor [f] *)
+            let* cls := is_constructor f in
+            let* gty := type_of_global f in
+            let* ft := require_functype gty in
             let* tes := traverse (T:=eta list) of_expr es in
+            (* NOTE: constructors get an extra leading argument for <<this>> *)
+            let* _ := check_args ft.(ft_arity) ft.(ft_params) (Tptr (Tnamed cls) :: tes) in
+            let* _ := check_constructor_result cls t in
             mret t
+        | Einherited_constructor f vars t =>
+            let* cls := is_constructor f in
+            let* gty := type_of_global f in
+            let* ft := require_functype gty in
+            let* tes := traverse (T:=eta list) var_type vars in
+            (* NOTE: constructors get an extra leading argument for <<this>> *)
+            let* _ := map2 (fun a b => require_eq a b) ft.(ft_params) (Tptr (Tnamed cls) :: tes) in
+            let* _ := check_constructor_result cls t in
+            mret t
+
         | Elambda n es =>
             let* tes := traverse (T:=eta list) of_expr es in
             (* TODO: check the arguments to the constructor / the fields *)

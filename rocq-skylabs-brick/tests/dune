@@ -1,6 +1,8 @@
 (rocq.theory
  (name skylabs_brick.tests)
+ (flags :standard -test-mode -output-directory .)
  (generate_project_file)
+ (modules :standard \ cpp_prog_inline)
  (theories
   Stdlib
   Lens
@@ -16,6 +18,43 @@
   skylabs.ltac2.extra
   skylabs.lang.cpp
   ; transitive dependencies
-  Equations Equations.Prop Equations.Type Flocq elpi.apps.NES elpi.apps.NES.elpi
-  elpi.apps.derive elpi.apps.derive.elpi elpi.apps.locker elpi.apps.locker.elpi
- ))
+  Equations
+  Equations.Prop
+  Equations.Type
+  Flocq
+  elpi.apps.NES
+  elpi.apps.NES.elpi
+  elpi.apps.derive
+  elpi.apps.derive.elpi
+  elpi.apps.locker
+  elpi.apps.locker.elpi))
+
+(rocq.theory
+ (name skylabs_brick.tests.flaky_error_message)
+ (flags :standard -output-directory .)
+ (modules cpp_prog_inline)
+ (theories
+  Stdlib
+  Lens
+  Lens.Elpi
+  iris
+  stdpp
+  elpi
+  elpi_elpi
+  Ltac2
+  skylabs.upoly
+  skylabs.prelude
+  skylabs.iris.extra
+  skylabs.ltac2.extra
+  skylabs.lang.cpp
+  ; transitive dependencies
+  Equations
+  Equations.Prop
+  Equations.Type
+  Flocq
+  elpi.apps.NES
+  elpi.apps.NES.elpi
+  elpi.apps.derive
+  elpi.apps.derive.elpi
+  elpi.apps.locker
+  elpi.apps.locker.elpi))

@@ -1,7 +1,9 @@
-(cram
- (applies_to :whole_subtree)
- (deps
-  (package rocq-core)
-  (package rocq-stdlib)
-  (package rocq-skylabs-prelude)
-  setup-project.sh))
+(include_subdirs qualified)
+(rocq.theory
+ (name skylabs_prelude.tests)
+ (generate_project_file)
+ (flags (:standard -test-mode))
+ (theories
+  Stdlib stdpp skylabs.upoly elpi elpi_elpi elpi.apps.locker elpi.apps.NES
+  Lens Lens.Elpi Ltac2 skylabs.ltac2.extra elpi.apps.NES.elpi elpi.apps.derive
+  elpi.apps.derive.elpi elpi.apps.locker.elpi skylabs.prelude))

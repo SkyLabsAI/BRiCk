@@ -1,0 +1,8 @@
+ExtraColor
+     : Set
+ExtraRed
+     : ExtraColor
+ExtraBlue
+     : ExtraColor
+extra_added_true
+     : True

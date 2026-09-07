@@ -1,4 +1,4 @@
 (env
  (_
-  (flags :standard %{read-lines:flags/ocamlc})
+  (flags :standard %{dune-warnings})
   (ocamlopt_flags :standard -O3 -unbox-closures)))

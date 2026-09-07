@@ -80,7 +80,7 @@ Module Import Mtranslation_unit.
 End Mtranslation_unit.
 #[local] Notation K := Mtranslation_unit.t (only parsing).
 
-#[local] Notation Mtemp_params := (list Mtemp_param).
+#[local] Notation Mtemp_params := (list (Mtemp_param * option temp_arg)).
 
 Definition Dtemplated_variable (ps : Mtemp_params) (n : Mname) (t : Mtype) (init : global_init.t) : K :=
   _symbols <[n := Template ps $ Ovar t init]>.
