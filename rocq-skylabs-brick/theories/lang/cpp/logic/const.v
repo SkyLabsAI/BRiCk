@@ -15,12 +15,17 @@ Require Import skylabs.lang.cpp.logic.pred.
 Require Import skylabs.lang.cpp.logic.path_pred.
 Require Import skylabs.lang.cpp.logic.wp.
 Require Import skylabs.lang.cpp.logic.heap_pred.
+Require Import skylabs.lang.cpp.logic.monad.
+Require Import skylabs.prelude.telescopes.
+Require Import skylabs.upoly.base.
 
 #[local] Set Printing Coercions.
 
 Section defs.
   Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (ty : decltype) (Q : epred).
+  Implicit Types (ty : decltype) (Q : mpred).
+
+  Import UPoly.
 
   (*
   [wp_const tu from to addr ty Q] replaces the [from] ownership of
@@ -35,9 +40,10 @@ Section defs.
   TODO: Consider reordering arguments to [wp_const] in order to bump
   [Params], ease the statement of [Proper] instances, and speed up
   setoid rewriting.
-  *)
-  Parameter wp_const : forall (tu : translation_unit) {σ : genv} (from to : cQp.t) (addr : ptr) (ty : decltype) (Q : epred), mpred.
+   *)
+  Parameter wp_const : forall (tu : translation_unit) {σ : genv} (from to : cQp.t) (addr : ptr) (ty : decltype), Mglobal.M unit.
 
+  (*
   Axiom wp_const_frame : forall tu tu' f t a ty Q Q',
     type_table_le tu.(types) tu'.(types) ->
     Q -* Q' |-- wp_const tu f t a ty Q -* wp_const tu' f t a ty Q'.
@@ -45,21 +51,42 @@ Section defs.
   Axiom wp_const_shift : forall tu f t a ty Q,
     (|={top}=> wp_const tu f t a ty (|={top}=> Q))
     |-- wp_const tu f t a ty Q.
+   *)
+
+
+  (*
+  (* Naviely, this construction would probably provide fancy updates and laters *)
+  Definition Mconsume_produce {TT1 TT2 : tele} (P : TT1 -t> mpred) (Q : TT1 -t> TT2 -t> mpred)
+    : Mglobal.M (tele_append TT1 (tele_bind (fun _ => TT2))).
+  Proof. Admitted.
+
+  Notation eta F := (fun x => F x).
+  #[universes(polymorphic)] Instance eta_M_MRet : MRet (eta M). Admitted.
+  #[universes(polymorphic)] Instance eta_M_FMap : FMap (eta M). Admitted.
+  #[universes(polymorphic)] Instance eta_M_Ap : Ap (eta M). Admitted.
+  #[universes(polymorphic)] Instance eta_M_MBind : MBind (eta M). Admitted.
+  *)
+
+  Instance list_traverse : Traverse (eta list) :=
+    fun F _ _ _ _ _ f => fix recurse ls :=
+      match ls with
+      | nil => mret nil
+      | l :: ls => cons <$> f l <*> recurse ls
+      end.
 
   (*
   TODO this needs to be extended because if it is casting <<volatile>>,
   then it needs to descend under <<const>>
   *)
   #[local] Notation "|={ E }=> P" := (|={E}=> P)%I (only parsing).
-  #[local] Definition wp_const_body (wp_const : cQp.t -> cQp.t -> ptr -> decltype -> epred -> mpred)
-      (tu : translation_unit) (from to : cQp.t)  (addr : ptr) (ty : decltype) (Q : epred) : mpred :=
+  #[local] Definition wp_const_body (wp_const : cQp.t -> cQp.t -> ptr -> decltype -> Mglobal.M unit)
+      (tu : translation_unit) (from to : cQp.t)  (addr : ptr) (ty : decltype) : Mglobal.M unit :=
     let '(cv, rty) := decompose_type ty in
-    let Q := |={top}=> Q in
-    if q_const cv then Q
+(*    let Q := |={top}=> Q in *)
+    if q_const cv then mret ()
     else
-      let UNSUPPORTED Q := wp_const from to addr ty Q in
-      |={top}=>
-      match rty with
+      let UNSUPPORTED : Mglobal.M unit := wp_const from to addr ty in
+      match rty return Mglobal.M unit with
       | Tptr _
       | Tnum _ _
       | Tchar_ _
@@ -70,71 +97,81 @@ Section defs.
       | Tfloat_ _
       | Tvoid =>
         let rty := erase_qualifiers rty in
-        Exists v, addr |-> tptstoR rty from v ** (addr |-> tptstoR rty to v -* Q)
+        letWP* _ :=
+          update (TT1:=[tele (_ : val)]) (TT2:=[tele])
+            (fun v : val => addr |-> tptstoR rty from v)
+            (fun v : val => addr |-> tptstoR rty to v)
+        in mret ()
 
       | Tref rty
       | Trv_ref rty =>
         let rty := erase_qualifiers rty in
-        (Exists v, addr |-> primR (Tref rty) from v ** (addr |-> primR (Tref rty) to v -* Q))
+        letWP* _ :=
+          update (TT1:=[tele (_ : val)]) (TT2:=[tele])
+                          (fun v => addr |-> primR (Tref rty) from v)
+                          (fun v => (addr |-> primR (Tref rty) to v))
+        in mret ()
         (* ^ References must be initialized *)
 
       | Tarray ety sz =>
-        (* NOTE the order here is irrelevant because the operation is "atomic" *)
-        fold_left (fun Q i =>
-            wp_const from to (addr .[ erase_qualifiers ety ! Z.of_N i ]) ety Q)
-                    (seqN 0 sz) Q
+          letWP* _ :=
+            traverse (fun i => wp_const from to (addr .[ erase_qualifiers ety ! Z.of_N i ]) ety)
+                    (seqN 0 sz)
+            in mret ()
       | Tincomplete_array _ =>
-          False
+          Merror ("wp_const", ty)
       | Tvariable_array _ _ =>
-          False
+          Merror ("wp_const", ty)
 
       | Tnamed cls =>
           match tu.(types) !! cls with
           | Some gd =>
               match gd with
               | Gunion u =>
-                Exists br, addr |-> unionR cls from br ** (addr |-> unionR cls to br -*
+                letWP* '(TeleArgCons br _) :=
+                  update (TT1:=[tele (_ : option _)]) (TT2:=[tele])
+                                   (fun br => addr |-> unionR cls from br)
+                                   (fun br => addr |-> unionR cls to br)
+                in
                 match br with
-                | None =>  Q
+                | None => mret ()
                 | Some br => match u.(u_fields) !! br with
-                            | None => UNSUPPORTED Q
+                            | None => contra (* unreachable *)
                             | Some m =>
                                 if m.(mem_mutable)
-                                then Q
+                                then mret ()
                                 else
-                                  wp_const from to (addr ,, _field (Field cls m.(mem_name))) m.(mem_type) Q
+                                  wp_const from to (addr ,, _field (Field cls m.(mem_name))) m.(mem_type)
                             end
-                end)
+                end
               | Gstruct st =>
-                  let do_identity Q :=
-                    if has_vtable st then
-                      Exists path, addr |-> derivationR cls path from ** (addr |-> derivationR cls path to -* Q)
-                    else Q
+                  letWP* _ := traverse (T:=eta list) (fun '(b, _) => wp_const from to (addr ,, _base cls b) (Tnamed b)) (s_bases st) in
+                  letWP* _ := traverse (T:=eta list) (fun m =>
+                                          if m.(mem_mutable)
+                                          then mret ()
+                                          else wp_const from to (addr ,, _field (Field cls m.(mem_name))) m.(mem_type))
+                                       (s_fields st)
                   in
-                  (* TODO this is missing a change to [identity] *)
-                  fold_left (fun Q '(b, _) =>
-                              wp_const from to (addr ,, _base cls b) (Tnamed b) Q)
-                    (s_bases st) $
-                    fold_left (fun Q m =>
-                                if m.(mem_mutable)
-                                then Q
-                                else wp_const from to
-                                        (addr ,, _field (Field cls m.(mem_name)))
-                                        m.(mem_type) Q)
-                    (s_fields st)
-                    (addr |-> structR cls from ** (addr |-> structR cls to -* do_identity Q))
+                  if has_vtable st then
+                    (fun _ => ()) <$> update (TT1:=[tele (_ : _)]) (TT2:=[tele])
+                      (fun path => addr |-> structR cls from ** addr |-> derivationR cls path from)
+                      (fun path => addr |-> structR cls to ** addr |-> derivationR cls path to)
+                  else
+                    (fun _ => ()) <$> update (TT1:=[tele]) (TT2:=[tele])
+                      (addr |-> structR cls from)
+                      (addr |-> structR cls to)
               | Gtype
               | Genum _ _
               | Gconstant _ _
               | Gtypedef _
-              | Gunsupported _ => UNSUPPORTED Q
+              | Gunsupported _ => UNSUPPORTED
               end
-          | None => UNSUPPORTED Q
+          | None => Munsupported ("wp_const", rty)
           end
       | Tfunction _
-      | Tarch _ _ => UNSUPPORTED Q
-      | Tqualified cv ty' => False (* unreachable *)
-      | Tunsupported _ => False
+      | Tarch _ _ => Munsupported ("wp_const", rty)
+      | Tqualified cv ty' => Merror ("wp_const", rty) (* unreachable *)
+      | Tunsupported _ => Munsupported ("wp_const", rty)
       | Tparam _ | Tresult_param _
       | Tresult_global _
       | Tresult_unop _ _
@@ -145,16 +182,17 @@ Section defs.
       | Tdecltype _
       | Texprtype _
       | Tauto
-      | Tresult_parenlist _ _ => False
+      | Tresult_parenlist _ _ => Munsupported ("wp_const", rty)
       end%I.
 
   (* NOTE: we prefer an entailment ([|--]) to a bi-entailment ([-|-]) or an equality
      to be conservative.
    *)
-  Axiom wp_const_intro : forall tu f t a ty Q,
-    Reduce (wp_const_body (wp_const tu) tu f t a ty Q)
-    |-- wp_const tu f t a ty Q.
+  Axiom wp_const_intro : forall tu f t a ty,
+    Reduce (wp_const_body (wp_const tu) tu f t a ty)
+    ⊆ wp_const tu f t a ty.
 
+  (*
   Lemma wp_const_value_type_intro tu from to (p : ptr) ty Q :
     is_value_type ty ->
     (
@@ -217,7 +255,7 @@ Section defs.
   Qed.
 
   (* Sanity check the [_frame] property *)
-  Lemma fold_left_frame : forall B (l : list B) (f f' : epred -> B -> mpred) (Q Q' : epred),
+  Lemma fold_left_frame : forall B (l : list B) (f f' : mpred -> B -> mpred) (Q Q' : mpred),
     (Q -* Q') |-- □ (Forall Q1 Q1' a, (Q1 -* Q1') -* (f Q1 a -* f' Q1' a)) -*  fold_left f l Q -* fold_left f' l Q'.
   Proof.
     move=>B l.
@@ -346,7 +384,7 @@ Section defs.
           iIntros (???) "F". case_match; eauto.
           iApply "C"; eauto. } } }
   Qed.
-  *)
+  *) *)
 
 End defs.
 

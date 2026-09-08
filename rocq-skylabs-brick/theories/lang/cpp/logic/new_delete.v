@@ -395,10 +395,10 @@ Module Type Expr__newdelete.
             - Currently, we do not model coalescing of multiple allocations
               (<https://eel.is/c++draft/expr.new#14>).
          *)
-        Definition wp_opt_initialize (oinit : option Expr) aty obj_ptr :=
+        Definition wp_opt_initialize (oinit : option Expr) aty obj_ptr : M FreeTemps.t :=
           match oinit with
           | None => (* default_initialize the memory *)
-            default_initialize aty obj_ptr
+            Mdefault_initialize tu aty obj_ptr
           | Some init => (* Use [init] to initialize the memory *)
             wp_initialize aty obj_ptr init
           end.
@@ -461,7 +461,7 @@ Module Type Expr__newdelete.
                     storage_ptr |-> blockR alloc_sz 1$m **
                     (Forall (obj_ptr : ptr),
                        provides_storage storage_ptr obj_ptr aty -*
-                       letI* free' := wp_opt_initialize oinit aty obj_ptr in
+                       letWP* _free := wp_opt_initialize oinit aty obj_ptr in
                         (* This also ensures these pointers share their
                           address (see [provides_storage_same_address]) *)
                         (* Track the type we are allocating

@@ -8,7 +8,6 @@ Require Export stdpp.fin_sets.
 Require Import skylabs.prelude.base.
 Require Import skylabs.prelude.sets.
 Require Import skylabs.prelude.list.
-Require Import skylabs.prelude.list_numbers.
 
 (** * Small extensions to [stdpp.fin_sets]. *)
 #[local] Set Default Proof Using "Type*".
@@ -333,28 +332,3 @@ Section fin_set.
     - intros (Y & ? & ? & ?). split; first done. rewrite set_not_Forall. by exists Y.
   Qed.
 End fin_set.
-
-Section set_rangeZ.
-  #[local] Open Scope Z_scope.
-
-  Definition set_rangeZ `{!Singleton Z C, !Union C, !Empty C} (i j : Z) : C :=
-    list_to_set (rangeZ i j).
-
-  Section dom_rangeZ.
-    Context `{!ElemOf Z D, !Empty D, !Singleton Z D, !Union D}.
-
-    Lemma elem_of_set_rangeZ `{!SemiSet Z D} x i j : x ∈ (set_rangeZ i j : D) <-> (i ≤ x < j).
-    Proof.
-      by rewrite /set_rangeZ elem_of_list_to_set elem_of_rangeZ.
-    Qed.
-
-    Lemma size_set_rangeZ `{!Intersection D, !Difference D, !Elements Z D, !FinSet Z D} i j :
-      size (set_rangeZ i j : D) = Z.to_nat (j - i).
-    Proof.
-      have ? := NoDup_rangeZ i j.
-      by rewrite /set_rangeZ size_list_to_set // -(inj_iff N.of_nat) [N.of_nat _]lengthN_rangeZ Z_nat_N.
-    Qed.
-
-  End dom_rangeZ.
-
-End set_rangeZ.
