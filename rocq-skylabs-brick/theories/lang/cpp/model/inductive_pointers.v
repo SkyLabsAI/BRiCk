@@ -327,7 +327,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     eval_offset σ (o_sub σ ty i) = Some (Z.of_N sz * i).
   Proof.
     move=> E. rewrite (comm_L _ _ i) /o_sub/eval_offset/eval_raw_offset /=.
-    rewrite /= /mkOffset /mk_offset_seg/=/o_sub_off/=.
+    rewrite /mkOffset /mk_offset_seg/=/o_sub_off/=.
     case_decide; subst; rewrite /= {}E //=.
     by rewrite right_id_L.
   Qed.
@@ -338,9 +338,9 @@ Module PTRS_IMPL <: PTRS_INTF.
     st.(s_layout) = POD \/ st.(s_layout) = Standard ->
     eval_offset σ (o_field σ f) = offset_of σ cls n.
   Proof.
-    move => -> _ _. cbn.
-    rewrite/mk_offset_seg /eval_raw_offset_seg /o_field_off /=.
-    case: offset_of => [off|//] /=. by rewrite right_id_L.
+    move => -> _ _.
+    rewrite /eval_offset/= /mk_offset_seg /eval_raw_offset /=.
+    case: offset_of => /= [off|//]. by rewrite right_id_L.
   Qed.
 
   Class InvolApp {X} (f : list X → list X) :=
