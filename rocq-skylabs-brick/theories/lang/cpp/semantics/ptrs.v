@@ -318,7 +318,11 @@ Module Type PTRS.
       eval_offset σ (o_field σ f) = offset_of σ cls n.
 
     (*
-    Valid in models, but currently blocked.
+    Valid in models, but currently incompatible with the following rules, that
+    do not model empty-base optimization correctly.
+
+    - [implicit_destruct_struct] (enabled)
+    - [struct_to_raw]/[raw_bytes_of_struct_wf_base] (disabled).
     *)
     (*
     Axiom eval_o_base : ∀ (σ : genv) (cls base : globname) st,

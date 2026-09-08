@@ -77,7 +77,8 @@ Section with_Σ.
       now because we can not decompose [tptsto ty q Vundef] (which is what we
       get from [anyR]). *)
 
-  (** implicit destruction of an aggregate *)
+  (** implicit destruction of an aggregate.
+  XXX: Incompatible with [eval_o_base]. *)
   Axiom implicit_destruct_struct
   : forall cls st q,
       glob_def σ cls = Some (Gstruct st) ->
