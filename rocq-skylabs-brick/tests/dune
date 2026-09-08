@@ -18,9 +18,6 @@
   skylabs.ltac2.extra
   skylabs.lang.cpp
   ; transitive dependencies
-  Equations
-  Equations.Prop
-  Equations.Type
   Flocq
   elpi.apps.NES
   elpi.apps.NES.elpi
@@ -48,9 +45,6 @@
   skylabs.ltac2.extra
   skylabs.lang.cpp
   ; transitive dependencies
-  Equations
-  Equations.Prop
-  Equations.Type
   Flocq
   elpi.apps.NES
   elpi.apps.NES.elpi
