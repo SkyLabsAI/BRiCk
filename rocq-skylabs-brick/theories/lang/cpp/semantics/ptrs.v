@@ -317,6 +317,16 @@ Module Type PTRS.
       st.(s_layout) = POD \/ st.(s_layout) = Standard ->
       eval_offset σ (o_field σ f) = offset_of σ cls n.
 
+    (*
+    Valid in models, but currently blocked.
+    *)
+    (*
+    Axiom eval_o_base : ∀ (σ : genv) (cls base : globname) st,
+      glob_def σ cls = Some (Gstruct st) ->
+      st.(s_layout) = POD \/ st.(s_layout) = Standard ->
+      eval_offset σ (o_base σ cls base) = parent_offset σ cls base.
+    *)
+
     (* [eval_offset] respects the monoidal structure of [offset]s _for well-defined offsets_. *)
     Axiom eval_offset_dot : ∀ {o1 o2 s1 s2},
       eval_offset σ o1 = Some s1 ->
