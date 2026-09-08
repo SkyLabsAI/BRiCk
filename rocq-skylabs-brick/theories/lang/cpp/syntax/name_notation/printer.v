@@ -9,6 +9,7 @@ Require Import skylabs.prelude.bytestring.
 Require Import skylabs.upoly.base.
 Require Import skylabs.upoly.upoly.
 Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.loc_info.
 Require Import skylabs.lang.cpp.syntax.types.
 Require Import skylabs.lang.cpp.syntax.pretty.
 
@@ -47,7 +48,7 @@ Section with_lang.
 
     #[local] Open Scope monad_scope.
     Definition printAN inst (an : atomic_name) : option PrimString.string :=
-      match an return option PrimString.string with
+      match LocInfo.drop_atomic_name an return option PrimString.string with
       | Nid id =>
           if bool_decide (id = "") then mfail else mret $ id ++ inst
       | Nfunction quals nm args =>
@@ -80,7 +81,8 @@ Section with_lang.
       | Nanon n => mret $ "@" ++ showN n ++ inst
       | Nfirst_decl n => mret $ "@" ++ n ++ inst
       | Nfirst_child n => mret $ "." ++ n ++ inst
-      | Nunsupported_atomic note => mfail
+      | Nunsupported_atomic _ => mfail
+      | ANLocInfo _ _ => mfail
       end.
   End atomic_name.
 
@@ -89,6 +91,7 @@ Section with_lang.
     | Nglobal (Nid id) => Some id
     | Nscoped _ (Nid id) => Some id
     | Ninst nm _ => topName nm
+    | NLocInfo _ nm => topName nm
     | _ => None
     end.
 
@@ -164,11 +167,13 @@ Section with_lang.
           | Atemplate_param id =>
               mret $ "template " ++ id
           | Aunsupported note => mfail
+          | ALocInfo _ ta => printTA ta
           end
         in
         ((fun tas => angles $ sepBy ", " tas) <$> traverse printTA i) ≫= fun tas =>
         printN tas base
     | Nunsupported note => mfail
+    | NLocInfo _ nm => printN inst nm
     end
 
   with printT (is_arg : bool) (ty : type) : option PrimString.string :=
@@ -277,6 +282,7 @@ Section with_lang.
     | Ebool b => mret $ if b then "true" else "false"
     | Enull => mret "nullptr"
     | Eparam b => mret $ "`" ++ b
+    | ELocInfo _ e => printE e
     | _ => mfail
     end.
 

@@ -367,13 +367,14 @@ Module template_alias.
     | _ => None
     end.
 
-  Definition subst_expr (xs : env) (e : Expr) : Expr :=
+  Fixpoint subst_expr (xs : env) (e : Expr) : Expr :=
     match e with
     | Eparam id =>
         match lookup_value xs id with
         | Some e => e
         | None => e
         end
+    | ELocInfo li e => ELocInfo li (subst_expr xs e)
     | _ => e
     end.
 
@@ -387,6 +388,7 @@ Module template_alias.
     | Ndependent t => Ndependent' (subst_type xs t)
     | Nscoped n c => Nscoped (subst_name xs n) c
     | Nunsupported _ => n
+    | NLocInfo li n => NLocInfo li (subst_name xs n)
     end
 
   with subst_temp_arg (xs : env) (a : temp_arg) : temp_arg :=
@@ -401,6 +403,7 @@ Module template_alias.
         | None => a
         end
     | Aunsupported _ => a
+    | ALocInfo li a => ALocInfo li (subst_temp_arg xs a)
     end
 
   with subst_type (xs : env) (t : type) : type :=
@@ -550,24 +553,24 @@ Definition resolve_value (tu : translation_unit) (nm : name) : option name :=
     This classifies references as trivially destructible.
  *)
 Fixpoint is_trivially_destructible (tu : translation_unit) (ty : type) {struct ty} : bool :=
-  qual_norm (fun _ t =>
-               match t with
-               | Tref _ | Trv_ref _
-               | Tnum _ _ | Tchar_ _
-               | Tvoid | Tbool | Tptr _
-               | Tenum _
-               | Tmember_pointer _ _
-               | Tfloat_ _
-               | Tnullptr => true
-               | Tnamed nm =>
-                   match tu.(types) !! nm with
-                   | Some (Gunion u) => u.(u_trivially_destructible)
-                   | Some (Gstruct s) => s.(s_trivially_destructible)
-                   | _ => false
-                   end
-               | Tarray ety _ => is_trivially_destructible tu ety
-               | _ => false
-               end) ty.
+  match ty with
+  | Tqualified _ ty => is_trivially_destructible tu ty
+  | Tref _ | Trv_ref _
+  | Tnum _ _ | Tchar_ _
+  | Tvoid | Tbool | Tptr _
+  | Tenum _
+  | Tmember_pointer _ _
+  | Tfloat_ _
+  | Tnullptr => true
+  | Tnamed nm =>
+      match tu.(types) !! nm with
+      | Some (Gunion u) => u.(u_trivially_destructible)
+      | Some (Gstruct s) => s.(s_trivially_destructible)
+      | _ => false
+      end
+  | Tarray ety _ => is_trivially_destructible tu ety
+  | _ => false
+  end.
 
 (**
 TODO: The following work on complete types seems misplaced.
@@ -781,9 +784,9 @@ Combined Scheme complete_mut_ind from complete_decl_mut_ind, complete_basic_type
   wellscoped_type_mut_ind, wellscoped_types_mut_ind.
 
 Lemma complete_basic_type_not_ref te t : complete_basic_type te t → not_ref_type t.
-Proof. by inversion 1. Qed.
+Proof. induction 1; cbn; auto. Qed.
 Lemma complete_pointee_type_not_ref te t : complete_pointee_type te t → not_ref_type t.
-Proof. induction 1; by [eapply complete_basic_type_not_ref | ]. Qed.
+Proof. induction 1; cbn; eauto using complete_basic_type_not_ref. Qed.
 
 Lemma complete_type_not_ref_ref te t1 t2 : complete_type te t1 → ref_to_type t1 = Some t2 → not_ref_type t2.
 Proof.

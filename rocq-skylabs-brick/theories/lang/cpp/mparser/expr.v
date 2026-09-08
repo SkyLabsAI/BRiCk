@@ -327,6 +327,7 @@ Fixpoint to_unresolved_name (e : MExpr) : Mname :=
   | Earrayloop_index _ _ => Nunsupported "Earrayloop_index"
   | Eopaque_ref _ _ => Nunsupported "Eopaque_ref"
   | Eunsupported msg _ => Nunsupported ("Eunsupported: " ++ msg)
+  | ELocInfo _ e => to_unresolved_name e
   end.
 
 Definition Eunresolved_call (callee : MExpr) (args : list MExpr) : MExpr :=
