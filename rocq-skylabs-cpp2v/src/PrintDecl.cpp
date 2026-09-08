@@ -340,10 +340,13 @@ static fmt::Formatter &printClassName(CoqPrinter &print, QualType type,
     return printClassName(print, type.getTypePtrOrNull(), cprint, loc);
 }
 
-static fmt::Formatter &printLayoutInfo(CoqPrinter &print,
-                                       CharUnits::QuantityType li) {
+/// Print a [LayoutInfo]. Its offset is measured in *bits* (see the comment on
+/// [LayoutInfo] in [lang/cpp/syntax/decl.v]); callers must convert. Note that
+/// clang reports field offsets in bits ([getFieldOffset]) but base-class
+/// offsets in [CharUnits] ([getBaseClassOffset]).
+static fmt::Formatter &printLayoutInfo(CoqPrinter &print, uint64_t bit_offset) {
     guard::ctor _(print, "Build_LayoutInfo");
-    return print.output() << li;
+    return print.output() << bit_offset;
 }
 
 static const RecordDecl *getTypeAsRecord(const ValueDecl &decl) {
@@ -448,8 +451,9 @@ static fmt::Formatter &printStructBases(const CXXRecordDecl &decl,
         guard::ctor _(print, "mkBase");
         if (auto record = type->getAsCXXRecordDecl()) {
             cprint.printName(print, record, loc::of(type)) << fmt::nbsp;
-            auto li =
-                layout ? layout->getBaseClassOffset(record).getQuantity() : 0;
+            auto li = layout ? cprint.getContext().toBits(
+                                   layout->getBaseClassOffset(record))
+                             : 0;
             return printLayoutInfo(print, li);
         } else {
             {
