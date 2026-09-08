@@ -274,7 +274,13 @@ Module SIMPLE_PTRS_IMPL <: PTRS_INTF.
       glob_def σ cls = Some (Gstruct st) ->
       st.(s_layout) = POD \/ st.(s_layout) = Standard ->
       eval_offset σ (o_field σ f) = offset_of σ cls n.
-    Proof. (* done. Qed. *) Admitted. (* TODO *)
+    Proof. by move=>-> _ _. Qed.
+
+    Lemma eval_o_base (cls base : globname) st :
+      glob_def σ cls = Some (Gstruct st) ->
+      st.(s_layout) = POD \/ st.(s_layout) = Standard ->
+      eval_offset σ (o_base σ cls base) = parent_offset σ cls base.
+    Proof. by move=> _ _. Qed.
 
     (* [eval_offset] respects the monoidal structure of [offset]s _for well-defined offsets_. *)
     Lemma eval_offset_dot : ∀ (o1 o2 : offset),

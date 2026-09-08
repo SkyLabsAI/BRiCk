@@ -1066,7 +1066,20 @@ Module PTRS_IMPL <: PTRS_INTF.
     s_layout st = POD \/ s_layout st = Standard ->
     eval_offset σ (o_field σ f) = offset_of σ cls n.
   Proof.
-  Admitted.
+    rewrite /eval_offset /o_field /= /o_field_off/=.
+    move=> -> _ _ /=.
+    case: offset_of => /= [off|//]. by rewrite right_id_L.
+  Qed.
+
+  Lemma eval_o_base σ (cls base : globname) st :
+    glob_def σ cls = Some (Gstruct st) ->
+    st.(s_layout) = POD \/ st.(s_layout) = Standard ->
+    eval_offset σ (o_base σ cls base) = parent_offset σ cls base.
+  Proof.
+    rewrite /eval_offset /o_base /= /o_base_off.
+    move => _ _ /=.
+    case: parent_offset => [off|//] /=. by rewrite right_id_L.
+  Qed.
 
   Lemma eval_offset_resp_norm :
     ∀ σ os,

@@ -343,6 +343,16 @@ Module PTRS_IMPL <: PTRS_INTF.
     case: offset_of => /= [off|//]. by rewrite right_id_L.
   Qed.
 
+  Lemma eval_o_base σ (cls base : globname) st :
+    glob_def σ cls = Some (Gstruct st) ->
+    st.(s_layout) = POD \/ st.(s_layout) = Standard ->
+    eval_offset σ (o_base σ cls base) = parent_offset σ cls base.
+  Proof.
+    move => _ _.
+    rewrite /eval_offset/= /mk_offset_seg/= /eval_raw_offset /o_base_off.
+    case: parent_offset => [off|//] /=. by rewrite right_id_L.
+  Qed.
+
   Class InvolApp {X} (f : list X → list X) :=
     invol_app : ∀ xs1 xs2,
     f (xs1 ++ xs2) = f (f xs1 ++ f xs2).
