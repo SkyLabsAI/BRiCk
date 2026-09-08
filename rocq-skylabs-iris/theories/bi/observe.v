@@ -625,6 +625,15 @@ Section observable_theory.
     apply (anti_symm (⊢)); apply observable_mono, HE.
   Qed.
 
+  #[global] Instance frame_observable_observe_l p (P Q : PROP) :
+    Observe Q P ->
+    Frame p (observable P) Q emp.
+  Proof.
+    rewrite /Frame bi.intuitionistically_if_elim.
+    iIntros (HPQR) "[#O _]".
+    by iApply (observable_observe P Q with "O").
+  Qed.
+
 End observable_theory.
 
 #[global] Hint Resolve observe_intro_only_provable_simple : core.
