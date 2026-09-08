@@ -23,48 +23,34 @@ Require Import skylabs.iris.extra.bi.linearity.
 Section with_Σ.
   Context `{Σ : cpp_logic} {σ : genv}.
 
-  (** Convert a <<struct>> to its raw representation.
-   Justified by the concept of object representation.
-   https://eel.is/c++draft/basic.types.general#def:representation,object
+  (* Convert a <<struct>> to its raw representation.
+  Justified by the concept of object representation.
+  https://eel.is/c++draft/basic.types.general#def:representation,object
 
-   DISABLED: this rule is unsound, because it gives a base subobject the raw
-   representation of a *complete* object of the base's type, i.e. [size_of]
-   bytes rather than the bytes the base subobject actually occupies. The
-   everyday witness is the empty base optimization:
+  DISABLED as unused and unsound. Take this code:
+  <<
+    struct E { };                  // POD, size_of = 1, occupies 0 bytes as a base
+    struct D : E { unsigned char c; };   // standard-layout, size_of = 1, [c] at offset 0
+  >>
+  [sizeof(E) = 1], but [E] subobjects in [D] complete objects occupy 0 bytes.
 
-   <<
-     struct E { };                  // POD, size_of = 1, occupies 0 bytes as a base
-     struct D : E { unsigned char c; };   // standard-layout, size_of = 1, [c] at offset 0
-   >>
+  We end up with both the base class and [D]'s first field claiming to own the first raw byte,
+  so, if we enable [eval_o_base] (which holds in models), we can prove
+  <<
+  structR "E" q |-- Exists r : raw_byte, rawR q r.
 
-   Applied at [E] (whose [s_layout] is [POD], so the side condition holds), the
-   rule reads [structR "E" q -|- type_ptrR ** Exists rs, rawsR q rs ** ...],
-   and [raw_bytes_of_struct_wf_size] forces [length rs = s_size E = 1]. So the
-   *empty* base subobject owns a byte -- the same byte as [D::c], which is
-   reachable through [primR_to_rawsR] and [eval_o_field] ([D] is
-   standard-layout, so that side condition holds too). Both at fraction 1
-   gives [p |-> anyR (Tnamed "D") 1$m |-- False]: the representation predicate
-   of an ordinary class is unsatisfiable, so the logic is vacuous for any
-   program containing an empty base.
+  offset_cong σ (o_base σ "D" "E") (o_field σ "D::c").
 
-   Note the [s_layout ∈ [POD;Standard]] guard does not help ([E] is POD and
-   [D] is standard-layout), and neither would a per-class layout check on [E],
-   which has no members at all: the offending layout belongs to [D] while the
-   over-claiming rule is applied at [E].
+  p ,, o_base σ "D" "E" |-> structR "E" 1$m **
+  p ,, o_field σ "D::c" |-> anyR Tbyte 1$m
+  |-- False.
 
-   The only reason this is not already exploitable is that there is no
-   [eval_o_base] (the base-class analogue of [eval_o_field]), so a base offset
-   cannot be evaluated at the interface level -- every concrete pointer model
-   does compute it ([simple_pointers_utils.o_base_off]). Adding [eval_o_base]
-   must therefore wait until this rule is fixed.
+  p |-> anyR "D" 1$m |-- False.
+  >>
 
-   The fix is for a base subobject's extent to be the class's non-virtual
-   size (0 for an empty class) rather than [size_of], so the per-base entries
-   in [rss] cover that instead. Nothing in the workspace uses this rule today,
-   so it is commented out rather than weakened in place.
-
-   See https://github.com/SkyLabsAI/BRiCk/issues/310 for the follow-up work.
-
+  See https://github.com/SkyLabsAI/BRiCk/issues/310 for the follow-up work.
+  *)
+  (*
   Axiom struct_to_raw : forall cls st rss q,
     glob_def σ cls = Some (Gstruct st) ->
     st.(s_layout) ∈ [POD;Standard] ->
