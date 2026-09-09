@@ -1,0 +1,5 @@
+(rocq.theory
+ (name test.ltac2_guesstimator)
+ (flags (:standard -test-mode))
+ (generate_project_file)
+ (theories skylabs.guesstimator Ltac2))
