@@ -317,6 +317,7 @@ Fixpoint to_unresolved_name (e : MExpr) : Mname :=
   | Enull => Nunsupported "Enull"
   | Einitlist _ _ _ => Nunsupported "Einitlist"
   | Einitlist_union _ _ _ => Nunsupported "Einitlist_union"
+  | Einitlist_std _ _ => Nunsupported "Einitlist_std"
   | Enew _ _ _ _ _ _ => Nunsupported "Enew"
   | Edelete _ _ _ _ => Nunsupported "Edelete"
   | Eatomic _ _ _ => Nunsupported "Eatomic"
