@@ -1047,29 +1047,39 @@ Module PTRS_IMPL <: PTRS_INTF.
   Definition eval_offset (σ : genv) (os : offset) : option Z :=
     eval_offset_aux σ (`os).
 
-  Lemma eval_o_sub' :
-    ∀ σ (ty : type) (i : Z) (sz : N),
+  Lemma eval_o_sub' σ (ty : type) (i : Z) (sz : N) :
       size_of σ ty = Some sz ->
       eval_offset σ (o_sub σ ty i) = Some (sz * i).
   Proof.
     rewrite /eval_offset /o_sub.
-    move=> σ ty i n Hsome.
+    move=> Hsome.
     case_match; subst; simpl.
-    { f_equal. lia. }
+    { by rewrite right_absorb_L. }
     {
-      rewrite /o_sub_off Hsome /=.
-      f_equal. lia.
+      by rewrite /o_sub_off Hsome /= right_id_L comm_L.
     }
   Qed.
 
-  Lemma eval_o_field :
-  ∀ σ (f : name) (n : atomic_name) (cls : name) (st : Struct),
+  Lemma eval_o_field σ f n cls st :
     f = Field cls n ->
     glob_def σ cls = Some (Gstruct st) ->
     s_layout st = POD \/ s_layout st = Standard ->
     eval_offset σ (o_field σ f) = offset_of σ cls n.
   Proof.
-  Admitted.
+    rewrite /eval_offset /o_field /= /o_field_off/=.
+    move=> -> _ _ /=.
+    case: offset_of => /= [off|//]. by rewrite right_id_L.
+  Qed.
+
+  Lemma eval_o_base σ (cls base : globname) st :
+    glob_def σ cls = Some (Gstruct st) ->
+    st.(s_layout) = POD \/ st.(s_layout) = Standard ->
+    eval_offset σ (o_base σ cls base) = parent_offset σ cls base.
+  Proof.
+    rewrite /eval_offset /o_base /= /o_base_off.
+    move => _ _ /=.
+    case: parent_offset => [off|//] /=. by rewrite right_id_L.
+  Qed.
 
   Lemma eval_offset_resp_norm :
     ∀ σ os,
