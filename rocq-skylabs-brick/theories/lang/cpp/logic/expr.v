@@ -1995,9 +1995,9 @@ Module Type Expr.
         See [std_initlist_ctor] in ../syntax/types.v, which names the
         constructor and records why that signature. The third side condition
         requires [tu] to actually declare it, so the rule is inapplicable -- not
-        wrong -- on a standard library that provides a different form. The class
-        and the backing array are checked by [decltype.of_expr] in
-        ../syntax/typed.v, so <<cpp2v --check-types>> rejects malformed nodes.
+        wrong -- on a standard library that provides a different form. The
+        [decltype.of_expr] premise typechecks the node we produce; it is weak
+        today, but it is the hook for a stricter check.
 
         NOTE this covers only backing arrays whose lifetime ends with the
         enclosing full-expression. The lifetime-extended case, e.g.
@@ -2008,9 +2008,10 @@ Module Type Expr.
         decompose_type ty = (cv, Tnamed cls) ->
         drop_qualifiers (drop_reference (type_of backing)) = Tarray aety n ->
         std_initlist_ctor_available tu cls aety = true ->
-        wp_init ty base
-          (Econstructor (std_initlist_ctor cls aety)
-             [Ecast Carray2ptr backing; Eint (Z.of_N n) Tsize_t] ty) Q
+        (let e := Econstructor (std_initlist_ctor cls aety)
+                    [Ecast Carray2ptr backing; Eint (Z.of_N n) Tsize_t] ty in
+         [| decltype.of_expr e = Some ty |] ∗
+         wp_init ty base e Q)
       |-- wp_init ty base (Einitlist_std backing ty) Q.
 
   End with_resolve.
