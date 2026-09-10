@@ -79,7 +79,7 @@ Section with_Σ.
 
   (** implicit destruction of an aggregate.
   XXX: Incompatible with [eval_o_base]. *)
-  Axiom implicit_destruct_struct
+  (* Axiom implicit_destruct_struct
   : forall cls st q,
       glob_def σ cls = Some (Gstruct st) ->
       st.(s_trivially_destructible) ->
@@ -94,7 +94,7 @@ Section with_Σ.
       un.(u_trivially_destructible) ->
       cQp.frac q = 1%Qp ->
           type_ptrR (Tnamed cls)
-      |-- (Reduce (union_defR tblockR cls un q)) -* |={↑pred_ns}=> tblockR (Tnamed cls) q.
+      |-- (Reduce (union_defR tblockR cls un q)) -* |={↑pred_ns}=> tblockR (Tnamed cls) q. *)
 
 (*
   (* the following rule would allow you to change the active entity in a union
