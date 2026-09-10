@@ -264,7 +264,7 @@ Section with_Σ.
   #[local] Definition eval_ptr_int_op (bo : BinOp) (f : Z -> Z) : Prop :=
     forall w s p1 p2 o ty,
       is_Some (size_of σ ty) ->
-      p2 = p1 ,, _sub ty (f o) ->
+      p2 = p1 ,, _sub (erase_qualifiers ty) (f o) ->
       valid_ptr p1 ∧ valid_ptr p2 ⊢
       eval_binop_impure tu bo
                 (Tptr ty) (Tnum w s) (Tptr ty)
@@ -273,7 +273,7 @@ Section with_Σ.
   #[local] Definition eval_int_ptr_op (bo : BinOp) (f : Z -> Z) : Prop :=
     forall w s p1 p2 o ty,
       is_Some (size_of σ ty) ->
-      p2 = p1 ,, _sub ty (f o) ->
+      p2 = p1 ,, _sub (erase_qualifiers ty) (f o) ->
       valid_ptr p1 ∧ valid_ptr p2 ⊢
       eval_binop_impure tu bo
                 (Tnum w s) (Tptr ty) (Tptr ty)
