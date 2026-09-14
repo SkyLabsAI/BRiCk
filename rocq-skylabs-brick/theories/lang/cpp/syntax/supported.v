@@ -6,6 +6,7 @@
 
 Require Import skylabs.prelude.base.
 Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.loc_info.
 Require Import skylabs.lang.cpp.syntax.types.
 Require Import skylabs.lang.cpp.syntax.typing.
 Require Import skylabs.lang.cpp.syntax.translation_unit.
@@ -115,7 +116,7 @@ Section with_monad.
     end.
 
   Definition atomic_name (type : type -> M) (an : atomic_name) : M :=
-    match an with
+    match LocInfo.drop_atomic_name an with
     | Nid _ => OK
     | Nfunction _ _ ts => lst type ts
     | Nctor ts => lst type ts
@@ -127,6 +128,7 @@ Section with_monad.
     | Nanonymous
     | Nfirst_decl _ | Nfirst_child _ => OK
     | Nunsupported_atomic msg => FAIL msg
+    | ANLocInfo _ _ => OK (* unreachable *)
     end.
 
   Section temp_arg.
@@ -139,6 +141,7 @@ Section with_monad.
       | Atemplate n => name n
       | Atemplate_param _ => OK
       | Aunsupported msg => FAIL msg
+      | ALocInfo _ a => temp_arg a
       end.
   End temp_arg.
 
@@ -163,6 +166,7 @@ Section with_monad.
     | Nscoped n s => name n <+> atomic_name type s
     | Ndependent t => type t
     | Nunsupported msg => FAIL msg
+    | NLocInfo _ n => name n
     end
 
   with type (t : type) : M :=
@@ -261,6 +265,7 @@ Section with_monad.
     | Earrayloop_init _ e _ _ e2 t => expr e <+> expr e2 <+> type t
     | Earrayloop_index _ t => type t
     | Eunsupported msg t => FAIL msg
+    | ELocInfo _ e => expr e
     end
 
   with stmt (s : Stmt) : M :=
@@ -283,6 +288,7 @@ Section with_monad.
     | Slabeled _ s => stmt s
     | Sgoto _ => FAIL "goto"
     | Sunsupported msg => FAIL msg
+    | SLocInfo _ s => stmt s
     end
 
   with var_decl (v : VarDecl) : M :=
@@ -291,12 +297,14 @@ Section with_monad.
     | Ddecompose e _ bds => expr e <+> lst binding_decl bds
     | Dinit _ n t None => name n <+> type t
     | Dinit _ n t (Some e) => name n <+> type t <+> expr e
+    | DLocInfo _ v => var_decl v
     end
 
   with binding_decl (b : BindingDecl) : M :=
     match b with
     | Bvar _ t e => type t <+> expr e
     | Bbind _ t e => type t <+> expr e
+    | BLocInfo _ b => binding_decl b
     end
 
   with cast (c : Cast) : M :=

@@ -352,6 +352,7 @@ Module decltype.
         | Earrayloop_index _ t => mret t
         | Eopaque_ref _ t
         | Eunsupported _ t => mret t
+        | ELocInfo _ e => of_expr e
         end.
     End fixpoint.
   End with_lang.
