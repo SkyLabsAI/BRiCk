@@ -355,6 +355,10 @@ Module Type EVAL_BINOP_IMPURE.
 
     #[local] Notation EBI := (@eval_binop_impure _ _ _ _) (only parsing).
 
+    Axiom eval_binop_impure_erase_all : forall bo lhsT rhsT resT lhs rhs res,
+      EBI tu bo (erase_qualifiers lhsT) (erase_qualifiers rhsT) (erase_qualifiers resT) lhs rhs res -|-
+      EBI tu bo lhsT rhsT resT lhs rhs res.
+
     Axiom eval_binop_impure_well_typed :
       Unfold (@eval_binop_impure_well_typed_op) (eval_binop_impure_well_typed_op EBI tu).
 
@@ -433,6 +437,13 @@ Section with_Σ.
   Definition eval_binop tu (b : BinOp) (lhsT rhsT resT : type) (lhs rhs res : val) : mpred :=
     [| eval_binop_pure tu b lhsT rhsT resT lhs rhs res |] ∨
     eval_binop_impure tu b lhsT rhsT resT lhs rhs res.
+
+  Lemma eval_binop_erase_all tu bo ty1 ty2 ty3 v1 v2 v3 :
+    eval_binop tu bo (erase_qualifiers ty1) (erase_qualifiers ty2) (erase_qualifiers ty3) v1 v2 v3 -|-
+    eval_binop tu bo ty1 ty2 ty3 v1 v2 v3.
+  Proof.
+    by rewrite /eval_binop eval_binop_pure_erase_all eval_binop_impure_erase_all.
+  Qed.
 
   Lemma eval_binop_impure_well_typed_prop tu bo ty1 ty2 ty3 v1 v2 v3 :
     eval_binop_impure tu bo ty1 ty2 ty3 v1 v2 v3
