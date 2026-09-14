@@ -17,6 +17,7 @@ depends: [
   "yojson"
   "camlzip"
   "rocq-runtime"
+  "csv"
   "odoc" {with-doc}
 ]
 build: [

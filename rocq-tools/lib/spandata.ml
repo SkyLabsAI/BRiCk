@@ -131,7 +131,7 @@ let add_log_file : string -> map -> map = fun file m ->
 
 let add_csv_file : string -> map -> map = fun file m ->
   let add_line m line =
-    match List.map String.trim (String.split_on_char ',' line) with
+    match line with
     | [span_path; span; count; instr] ->
         let span_path =
           let span_path = String.split_on_char ':' span_path in
@@ -141,25 +141,27 @@ let add_csv_file : string -> map -> map = fun file m ->
         let count = int_of_string count in
         let instr = int_of_string instr in
         accumulate Key.{span_path; span} Data.{count; instr} m
-    | [""]                            -> m
-    | _                               -> panic "Invalid CSV."
+    | []                              -> m
+    | _                               ->
+        let pp_sep ff () = Format.pp_print_string ff "\n- " in
+        let pp_string ff s = Format.fprintf ff "%S" s in
+        let pp_list = Format.pp_print_list ~pp_sep pp_string in
+        panic "Invalid CSV record containing:%a." pp_list line
   in
   try
     In_channel.with_open_text file @@ fun ic ->
-    ignore (In_channel.input_line ic); (* Drop header line. *)
-    let rec loop m =
-      match In_channel.input_line ic with
-      | Some(line) -> loop (add_line m line)
-      | None       -> m
-    in
-    loop m
+    let ic = Csv.of_channel ~has_header:true ic in
+    Csv.fold_left ~f:add_line ~init:m ic
   with Sys_error(s) -> panic "Error: %s." s
 
 let output_csv : Out_channel.t -> map -> unit = fun oc m ->
-  Printf.fprintf oc "Span path,Span,Count,Instructions\n";
+  let oc = Csv.to_channel oc in
+  Csv.output_record oc ["Span path"; "Span"; "Count"; "Instructions"];
   let print_line Key.{span_path; span} Data.{count; instr} =
     let span_path = String.concat ":" (List.map Span.to_string span_path) in
     let span = Span.to_string span in
-    Printf.fprintf oc "%s,%s,%i,%i\n" span_path span count instr
+    let count = Int.to_string count in
+    let instr = Int.to_string instr in
+    Csv.output_record oc [span_path; span; count; instr]
   in
   M.iter print_line m

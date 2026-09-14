@@ -1,4 +1,4 @@
 (library
  (name rocq_tools)
  (public_name rocq-tools)
- (libraries yojson camlzip str))
+ (libraries yojson camlzip str csv))
