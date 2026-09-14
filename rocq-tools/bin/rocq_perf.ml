@@ -83,7 +83,7 @@ let compile args =
       in
       let env =
         "ROCQ_PROFILE_COMPONENTS=command" ::
-        ("BR_LOG_FILE=" ^ Filename.quote files.log) ::
+        ("SL_LOG_FILE=" ^ Filename.quote files.log) ::
         []
       in
       let cmd =
