@@ -94,6 +94,13 @@ Module Type OPERATOR_INTF_FUNCTOR
       eval_binop_pure tu bo ty1 ty2 ty3 v1 v2 v3 ->
       has_type_prop v1 ty1 /\ has_type_prop v2 ty2 /\ has_type_prop v3 ty3.
 
+  Axiom eval_binop_pure_erase_all :
+    forall
+      `{σ : genv} (tu : translation_unit) (b : BinOp)
+      (lhsT rhsT resT : type) (lhs rhs res : val),
+      eval_binop_pure tu b (erase_qualifiers lhsT) (erase_qualifiers rhsT) (erase_qualifiers resT) lhs rhs res <->
+      eval_binop_pure tu b lhsT rhsT resT lhs rhs res.
+
 Section operator_axioms.
   Context {σ : genv} (tu : translation_unit).
   #[local] Notation eval_unop := (eval_unop tu).
