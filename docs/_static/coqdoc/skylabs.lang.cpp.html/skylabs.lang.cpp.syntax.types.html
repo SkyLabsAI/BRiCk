@@ -60,7 +60,7 @@
 </div>
 
 <div class="doc">
-<a id="lab229"></a><h2 class="section">Qualifier normalization</h2>
+<a id="lab232"></a><h2 class="section">Qualifier normalization</h2>
 
 <div class="paragraph"> </div>
 
@@ -141,7 +141,7 @@ qualifiers.
 </div>
 
 <div class="doc">
-<a id="lab230"></a><h2 class="section">Smart constructors</h2>
+<a id="lab233"></a><h2 class="section">Smart constructors</h2>
 
 <div class="paragraph"> </div>
 
@@ -598,7 +598,7 @@ Counterexample: <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp
 </div>
 
 <div class="doc">
-<a id="lab231"></a><h2 class="section">Erasing qualifiers</h2>
+<a id="lab234"></a><h2 class="section">Erasing qualifiers</h2>
 
 <div class="paragraph"> </div>
 
@@ -690,7 +690,7 @@ the other criteria.
 </div>
 
 <div class="doc">
-<a id="lab232"></a><h2 class="section">Qualifier simplification tactic</h2>
+<a id="lab235"></a><h2 class="section">Qualifier simplification tactic</h2>
 
 </div>
 <div class="code">
@@ -1049,7 +1049,7 @@ Proof.&nbsp;intros&nbsp;t1&nbsp;t2&nbsp;Ht.&nbsp;by&nbsp;rewrite&nbsp;!trv_ref_e
 </div>
 
 <div class="doc">
-<a id="lab233"></a><h2 class="section">Type normalization</h2>
+<a id="lab236"></a><h2 class="section">Type normalization</h2>
 
 </div>
 <div class="code">
@@ -1174,7 +1174,7 @@ normalization of types
 </div>
 
 <div class="doc">
-<a id="lab234"></a><h2 class="section">Qualifier-aware type operations</h2>
+<a id="lab237"></a><h2 class="section">Qualifier-aware type operations</h2>
 
 <div class="paragraph"> </div>
 
@@ -1601,7 +1601,7 @@ should not exist. This might be unnecessary.
 </div>
 
 <div class="doc">
-<a id="lab235"></a><h2 class="section">Heap Types</h2>
+<a id="lab238"></a><h2 class="section">Heap Types</h2>
 
 
 <div class="paragraph"> </div>
@@ -1690,8 +1690,64 @@ TODO:&nbsp;should&nbsp;this&nbsp;be&nbsp;more&nbsp;conservative/aggressive&nbsp;
 <span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.syntax.types.html#with_lang"><span class="id" title="section">with_lang</span></a>.<br/>
 
 <br/>
+</div>
+
+<div class="doc">
+<a id="lab239"></a><h2 class="section"><code>std::initializer_list</code></h2>
+
+
+<div class="paragraph"> </div>
+
+<span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.types.html#std_initlist_ctor"><span class="id" title="definition">std_initlist_ctor</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.heap_pred.aggregate.html#aggregate.cls"><span class="id" title="variable">cls</span></a></span> <span class="inlinecode"><span class="id" title="var">aety</span></span> names the constructor that <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.expr.html#Expr.with_resolve.wp_init_initlist_std"><span class="id" title="variable">wp_init_initlist_std</span></a></span>
+(../logic/expr.v) reduces <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.core.html#Einitlist_std"><span class="id" title="constructor">Einitlist_std</span></a></span> to, for a backing array of element type
+<span class="inlinecode"><span class="id" title="var">aety</span></span> (i.e. <code>const E</code>, per &lt;https://eel.is/c++draft/dcl.init.list5>).
+
+<https://eel.is/c++draft/support.initlist> specifies only the default
+constructor, so the one the compiler actually calls is implementation defined.
+clang and gcc pass <<(base, size)>>; the MSVC STL passes <<(base, base + size)>>
+with a slightly different declaration. The two carry the same information and
+will validate the same code, so choosing between them is a technicality -- but a
+reduction has to name one, and we name the clang/gcc form.
+
+Nothing is thereby claimed about the other form: [wp_init_initlist_std] takes
+[std_initlist_ctor_available] as a side condition, so on a library declaring only
+the two-pointer constructor the rule simply does not apply. Supporting MSVC would
+mean an alternative rule testing for that overload and/or for the compiler
+flavor, rather than a change here.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="std_initlist_ctor" class="idref" href="#std_initlist_ctor"><span class="id" title="definition">std_initlist_ctor</span></a> (<a id="cls:446" class="idref" href="#cls:446"><span class="id" title="binder">cls</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name"><span class="id" title="inductive">name</span></a>) (<a id="aety:447" class="idref" href="#aety:447"><span class="id" title="binder">aety</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a>) : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name"><span class="id" title="inductive">name</span></a> :=<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Nscoped"><span class="id" title="constructor">Nscoped</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.types.html#cls:446"><span class="id" title="variable">cls</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Nctor"><span class="id" title="constructor">Nctor</span></a> <span class="id" title="notation">[</span><a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tptr"><span class="id" title="constructor">Tptr</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.types.html#aety:447"><span class="id" title="variable">aety</span></a><span class="id" title="notation">;</span> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tsize_t"><span class="id" title="abbreviation">Tsize_t</span></a><span class="id" title="notation">]</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The same name, computed from the types <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.core.html#Einitlist_std"><span class="id" title="constructor">Einitlist_std</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.typed.html#backing"><span class="id" title="definition">backing</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.with_cpp.wp_init.ty"><span class="id" title="variable">ty</span></a></span> carries: <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.with_cpp.wp_init.ty"><span class="id" title="variable">ty</span></a></span>
+is the class and <span class="inlinecode"><span class="id" title="var">bty</span></span> the backing array's type.
+
+<div class="paragraph"> </div>
+
+This is what the dependency traversal in <code>auto/cpp/deps.v</code> and the library hint
+that discharges the resulting goal both use, so that all three agree on the name
+by construction.
+
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="std_initlist_ctor_of" class="idref" href="#std_initlist_ctor_of"><span class="id" title="definition">std_initlist_ctor_of</span></a> (<a id="ty:448" class="idref" href="#ty:448"><span class="id" title="binder">ty</span></a> <a id="bty:449" class="idref" href="#bty:449"><span class="id" title="binder">bty</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name"><span class="id" title="inductive">name</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.syntax.types.html#drop_qualifiers"><span class="id" title="definition">drop_qualifiers</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.types.html#ty:448"><span class="id" title="variable">ty</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tnamed"><span class="id" title="constructor">Tnamed</span></a> <span class="id" title="var">cls</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.syntax.types.html#drop_qualifiers"><span class="id" title="definition">drop_qualifiers</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.types.html#drop_reference"><span class="id" title="definition">drop_reference</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.types.html#bty:449"><span class="id" title="variable">bty</span></a>) <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tarray"><span class="id" title="constructor">Tarray</span></a> <span class="id" title="var">aety</span> <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.types.html#std_initlist_ctor"><span class="id" title="definition">std_initlist_ctor</span></a> <span class="id" title="var">cls</span> <span class="id" title="var">aety</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
 <span class="id" title="keyword">Notation</span> <a id="normalize_type" class="idref" href="#normalize_type"><span class="id" title="abbreviation">normalize_type</span></a> := (<a class="idref" href="skylabs.lang.cpp.syntax.types.html#normalize_type'"><span class="id" title="definition">normalize_type'</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#QM"><span class="id" title="constructor">QM</span></a>).<br/>
-<span class="id" title="keyword">Notation</span> <a id="as_ref" class="idref" href="#as_ref"><span class="id" title="abbreviation">as_ref</span></a> := (<a class="idref" href="skylabs.lang.cpp.syntax.types.html#as_ref'"><span class="id" title="definition">as_ref'</span></a> (<span class="id" title="keyword">fun</span> <a id="u:446" class="idref" href="#u:446"><span class="id" title="binder">u</span></a> =&gt; <a class="idref" href="skylabs.lang.cpp.syntax.types.html#u:446"><span class="id" title="variable">u</span></a>) <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tvoid"><span class="id" title="constructor">Tvoid</span></a>).<br/>
+<span class="id" title="keyword">Notation</span> <a id="as_ref" class="idref" href="#as_ref"><span class="id" title="abbreviation">as_ref</span></a> := (<a class="idref" href="skylabs.lang.cpp.syntax.types.html#as_ref'"><span class="id" title="definition">as_ref'</span></a> (<span class="id" title="keyword">fun</span> <a id="u:450" class="idref" href="#u:450"><span class="id" title="binder">u</span></a> =&gt; <a class="idref" href="skylabs.lang.cpp.syntax.types.html#u:450"><span class="id" title="variable">u</span></a>) <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tvoid"><span class="id" title="constructor">Tvoid</span></a>).<br/>
 <span class="id" title="keyword">Notation</span> <a id="as_ref_option" class="idref" href="#as_ref_option"><span class="id" title="abbreviation">as_ref_option</span></a> := (<a class="idref" href="skylabs.lang.cpp.syntax.types.html#as_ref'"><span class="id" title="definition">as_ref'</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>).<br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Resolve</span> <span class="id" title="var">is_qualified_decompose_type</span> | 0 : <span class="id" title="var">core</span>.<br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Hint</span> <span class="id" title="keyword">Resolve</span> <span class="id" title="var">is_qualified_drop_qualifiers</span> | 0 : <span class="id" title="var">core</span>.<br/>
