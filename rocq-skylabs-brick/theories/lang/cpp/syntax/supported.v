@@ -221,6 +221,7 @@ Section with_monad.
     | Epseudo_destructor _ t e => type t <+> expr e
     | Einitlist es oe t => lst expr es <+> opt expr oe <+> type t
     | Einitlist_union _ oe t => opt expr oe <+> type t
+    | Einitlist_std e t => expr e <+> type t
     | Emember_call _ mr e es =>
         match mr with
         | inr e => expr e

@@ -1271,6 +1271,46 @@ Definition Tmember_func (ty : exprtype) (fty : functype) : functype :=
   end.
 End with_lang.
 
+(** ** <<std::initializer_list>>
+
+[std_initlist_ctor cls aety] names the constructor that [wp_init_initlist_std]
+(../logic/expr.v) reduces [Einitlist_std] to, for a backing array of element type
+[aety] (i.e. <<const E>>, per <https://eel.is/c++draft/dcl.init.list#5>).
+
+<https://eel.is/c++draft/support.initlist> specifies only the default
+constructor, so the one the compiler actually calls is implementation defined.
+clang and gcc pass <<(base, size)>>; the MSVC STL passes <<(base, base + size)>>
+with a slightly different declaration. The two carry the same information and
+will validate the same code, so choosing between them is a technicality -- but a
+reduction has to name one, and we name the clang/gcc form.
+
+Nothing is thereby claimed about the other form: [wp_init_initlist_std] takes
+[std_initlist_ctor_available] as a side condition, so on a library declaring only
+the two-pointer constructor the rule simply does not apply. Supporting MSVC would
+mean an alternative rule testing for that overload and/or for the compiler
+flavor, rather than a change here.
+*)
+Definition std_initlist_ctor (cls : name) (aety : type) : name :=
+  Nscoped cls (Nctor [Tptr aety; Tsize_t]).
+
+(**
+The same name, computed from the types [Einitlist_std backing ty] carries: [ty]
+is the class and [bty] the backing array's type.
+
+This is what the dependency traversal in <<auto/cpp/deps.v>> and the library hint
+that discharges the resulting goal both use, so that all three agree on the name
+by construction.
+*)
+Definition std_initlist_ctor_of (ty bty : type) : option name :=
+  match drop_qualifiers ty with
+  | Tnamed cls =>
+      match drop_qualifiers (drop_reference bty) with
+      | Tarray aety _ => Some (std_initlist_ctor cls aety)
+      | _ => None
+      end
+  | _ => None
+  end.
+
 Notation normalize_type := (normalize_type' QM).
 Notation as_ref := (as_ref' (fun u => u) Tvoid).
 Notation as_ref_option := (as_ref' Some None).

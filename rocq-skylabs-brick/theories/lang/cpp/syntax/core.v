@@ -407,6 +407,17 @@ Should be [gn : classname]
 | Enull
 | Einitlist (args : list Expr) (default : option Expr) (t : type)
 | Einitlist_union (_ : atomic_name) (_ : option Expr) (t : type)
+(**
+[Einitlist_std backing t] is the implicit construction of the
+<<std::initializer_list<E>>> object of type [t] that refers to the backing
+array [backing] (of type <<const E[N]>>).
+See <https://eel.is/c++draft/dcl.init.list#5>; in clang this is
+[CXXStdInitializerListExpr].
+
+The expression is always a prvalue of class type, so it is consumed by
+[wp_init]; see [wp_init_initlist_std] in ../logic/expr.v.
+*)
+| Einitlist_std (backing : Expr) (t : type)
 
 | Enew (new_fn : name * type) (new_args : list Expr) (pass_align : new_form)
   (alloc_ty : type) (array_size : option Expr) (init : option Expr)
@@ -1037,6 +1048,7 @@ with is_dependentE (e : Expr) : bool :=
   | Enull => false
   | Einitlist es eo t => existsb is_dependentE es || option.existsb is_dependentE eo || is_dependentT t
   | Einitlist_union f oe t => option.existsb is_dependentE oe || is_dependentT t
+  | Einitlist_std e t => is_dependentE e || is_dependentT t
 
   | Enew p es _ t e1 e2 => is_dependentN p.1 || is_dependentT p.2 || existsb is_dependentE es || is_dependentT t || option.existsb is_dependentE e1 || option.existsb is_dependentE e2
   | Edelete _ p e t => is_dependentN p || is_dependentE e || is_dependentT t
