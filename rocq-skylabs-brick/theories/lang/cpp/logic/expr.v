@@ -1812,7 +1812,7 @@ Module Type Expr.
         is_array_of aty ety ->
         get_default ety = Some default ->
         (base |-> type_ptrR (Tarray ety sz) -*
-         base |-> arrayR ety (primR ety 1$m) (replicateN sz default) -*
+         base |-> arrayR ety (primR (erase_qualifiers ety) 1$m) (replicateN sz default) -*
          Q FreeTemps.id)
       |-- wp_init (Tarray ety sz) base (Eimplicit_init aty) Q.
 
