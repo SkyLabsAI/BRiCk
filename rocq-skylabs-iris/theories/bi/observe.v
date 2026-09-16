@@ -7,7 +7,7 @@ Require Import elpi.apps.locker.locker.
 Require Import skylabs.iris.extra.bi.prelude.
 Require Import iris.bi.bi iris.bi.monpred.
 Require Import skylabs.iris.extra.proofmode.proofmode.
-Require Import skylabs.prelude.prelude.
+Require Import skylabs.prelude.hint_label.
 
 (** * Observations *)
 (** We define type classes for making observations and a few instances
