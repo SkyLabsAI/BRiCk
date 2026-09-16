@@ -16,9 +16,51 @@ Implicit Type (σ : genv).
 Parameter eval_binop_impure : forall `{cpp_logic} {σ},
     translation_unit -> BinOp -> forall (lhsT rhsT resT : type) (lhs rhs res : val), mpred.
 
-Axiom eval_binop_impure_well_typed : forall `{cpp_logic} {σ} tu bo ty1 ty2 ty3 v1 v2 v3,
-    tu ⊧ σ ->
-    eval_binop_impure tu bo ty1 ty2 ty3 v1 v2 v3 |-- has_type v1 ty1 ** has_type v2 ty2 ** has_type v3 ty3.
+(** [binop_needs_memory lhsT rhsT] is [true] exactly on the operand types at
+    which [eval_binop_impure] has an introduction rule, i.e. those where
+    evaluating the operator has to consult the abstract machine state.
+
+    Every rule for [eval_binop_impure] -- [eval_ptr_eq], [eval_ptr_neq],
+    [eval_ptr_{le,lt,ge,gt}], [eval_ptr_int_add], [eval_int_ptr_add],
+    [eval_ptr_int_sub] and [eval_ptr_ptr_sub] -- has an *object pointer*
+    ([Tptr]) on at least one side, and no rule for [eval_binop_pure] does.
+    Note that [Tnullptr] is deliberately *not* included: [eval_eq_nullptr] and
+    [eval_neq_nullptr] are pure. This is why we test [unptr] rather than
+    [is_pointer].
+
+    NOTE: this predicate is what makes [eval_binop] a case split rather than a
+          disjunction, so it must be kept in sync with the introduction rules
+          for [eval_binop_impure] below. All of them live in this file.
+ *)
+Definition binop_needs_memory (lhsT rhsT : type) : bool :=
+  isSome (unptr lhsT) || isSome (unptr rhsT).
+
+(** Discharging [binop_needs_memory _ _ = false]. On concrete types this is
+    [reflexivity]; the lemmas below cover the type variables that arise in
+    generic rules. *)
+Lemma binop_needs_memory_unptr lhsT rhsT :
+  unptr lhsT = None -> unptr rhsT = None -> binop_needs_memory lhsT rhsT = false.
+Proof. by rewrite /binop_needs_memory => -> ->. Qed.
+
+Lemma unptr_supports_arith ty : supports_arith ty -> unptr ty = None.
+Proof.
+  rewrite /unptr; destruct 1 as [Hty]; move: Hty; rewrite /arith_as.
+  by destruct (drop_qualifiers ty).
+Qed.
+
+Lemma unptr_supports_rel ty : supports_rel ty -> unptr ty = None.
+Proof.
+  rewrite /unptr; destruct 1 as [[Hty|Hty]]; last by destruct (drop_qualifiers ty).
+  by rewrite -/(unptr ty) (unptr_supports_arith _ Hty).
+Qed.
+
+Lemma binop_needs_memory_supports_rel lhsT rhsT :
+  supports_rel lhsT -> supports_rel rhsT -> binop_needs_memory lhsT rhsT = false.
+Proof. eauto using binop_needs_memory_unptr, unptr_supports_rel. Qed.
+
+Lemma binop_needs_memory_supports_arith lhsT rhsT :
+  supports_arith lhsT -> supports_arith rhsT -> binop_needs_memory lhsT rhsT = false.
+Proof. eauto using binop_needs_memory_unptr, unptr_supports_arith. Qed.
 
 (** Pointer [p'] is not at the beginning of a block. *)
 Definition non_beginning_ptr `{cpp_logic} {σ} p' : mpred :=
@@ -40,24 +82,37 @@ End non_beginning_ptr.
 Section with_Σ.
   Context `{cpp_logic} {σ}.
 
+  (** [eval_binop] is the semantics of a binary operator in the logic. It
+      discriminates on the operand types: the operators that need the abstract
+      machine state are exactly the ones on object pointers (see
+      [binop_needs_memory]), everything else is pure. *)
   Definition eval_binop tu (b : BinOp) (lhsT rhsT resT : type) (lhs rhs res : val) : mpred :=
-    [| eval_binop_pure tu b lhsT rhsT resT lhs rhs res |] ∨ eval_binop_impure tu b lhsT rhsT resT lhs rhs res.
+    if binop_needs_memory lhsT rhsT
+    then eval_binop_impure tu b lhsT rhsT resT lhs rhs res
+    else [| eval_binop_pure tu b lhsT rhsT resT lhs rhs res |].
 
-  Lemma eval_binop_impure_well_typed_prop tu bo ty1 ty2 ty3 v1 v2 v3 :
-    tu ⊧ σ ->
-    eval_binop_impure tu bo ty1 ty2 ty3 v1 v2 v3 |-- [| has_type_prop v1 ty1 /\ has_type_prop v2 ty2 /\ has_type_prop v3 ty3 |].
-  Proof.
-    intros; rewrite eval_binop_impure_well_typed.
-    by rewrite !has_type_has_type_prop !only_provable_sep.
-  Qed.
+  Lemma eval_binop_pure_eq tu b lhsT rhsT resT lhs rhs res :
+    binop_needs_memory lhsT rhsT = false ->
+    eval_binop tu b lhsT rhsT resT lhs rhs res
+      -|- [| eval_binop_pure tu b lhsT rhsT resT lhs rhs res |].
+  Proof. by rewrite /eval_binop => ->. Qed.
 
+  Lemma eval_binop_impure_eq tu b lhsT rhsT resT lhs rhs res :
+    binop_needs_memory lhsT rhsT = true ->
+    eval_binop tu b lhsT rhsT resT lhs rhs res
+      -|- eval_binop_impure tu b lhsT rhsT resT lhs rhs res.
+  Proof. by rewrite /eval_binop => ->. Qed.
+
+  (** At the operand types where [eval_binop] is pure, well-typedness comes from
+      [eval_binop_pure_well_typed]. *)
   Theorem eval_binop_well_typed tu bo ty1 ty2 ty3 v1 v2 v3 :
     tu ⊧ σ ->
-    eval_binop tu bo ty1 ty2 ty3 v1 v2 v3 |-- [| has_type_prop v1 ty1 /\ has_type_prop v2 ty2 /\ has_type_prop v3 ty3 |].
+    binop_needs_memory ty1 ty2 = false ->
+    eval_binop tu bo ty1 ty2 ty3 v1 v2 v3
+    |-- [| has_type_prop v1 ty1 /\ has_type_prop v2 ty2 /\ has_type_prop v3 ty3 |].
   Proof.
-    iDestruct 1 as "[% | X]".
-    - eauto using eval_binop_pure_well_typed.
-    - by iApply eval_binop_impure_well_typed_prop.
+    intros ? Hpure; rewrite eval_binop_pure_eq//.
+    iIntros "!%". exact: eval_binop_pure_well_typed.
   Qed.
 
   Variable tu : translation_unit.
