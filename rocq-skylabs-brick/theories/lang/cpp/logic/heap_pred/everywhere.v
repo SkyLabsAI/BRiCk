@@ -75,6 +75,9 @@ Section with_cpp.
       TODO: the use of [nil] in [derivationR] is justified only because it can
             be weakened, but this should probably be changed so that it tracks
             the actual initialized state.
+
+      TODO: Does not yet account correctly for layout optimizations. Its use in
+      [implicit_destruct_struct] is incompatible with [eval_o_base].
    *)
   Definition struct_defR (R : Rtype -> cQp.t -> Rep) (cls : globname) (st : Struct) (q : cQp.t) : Rep :=
     ([** list] base ∈ st.(s_bases),
