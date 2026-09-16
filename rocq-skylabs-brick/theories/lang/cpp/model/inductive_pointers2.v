@@ -11,8 +11,7 @@ difference is that this file defines offset normalization as a string-rewrite sy
 instead of using a Coq function.
 *)
 
-Require Import Equations.Prop.Equations.
-
+Require Import Stdlib.Logic.FunctionalExtensionality.
 Require Import stdpp.relations.
 Require Import stdpp.gmap.
 Require Import skylabs.prelude.base.
@@ -245,127 +244,111 @@ Module PTRS_IMPL <: PTRS_INTF.
 
   Section norm_def.
 
-    Equations find_redex (os : raw_offset)
-      : option (raw_offset * raw_offset * raw_offset * raw_offset)
-      by wf (length os) :=
-    | [] :=
-        None
-    | o_sub_ ty 0 :: os :=
-        Some ([], os, [o_sub_ ty 0], [])
-    | o_sub_ ty1 i1 :: o_sub_ ty2 i2 :: os :=
-        if decide (ty1 = ty2) then
-          Some ([], os, [o_sub_ ty1 i1; o_sub_ ty2 i2], [o_sub_ ty1 (i1 + i2)])
-        else
-          '(l, r, s, t) ← find_redex (o_sub_ ty2 i2 :: os);
-          Some (o_sub_ ty1 i1 :: l, r, s, t)
-    | o_base_ der1 base1 :: o_derived_ base2 der2 :: os =>
-        if decide (der1 = der2 /\ base1 = base2) then
-          Some ([], os, [o_base_ der1 base1; o_derived_ base2 der2], [])
-        else
-          '(l, r, s, t) ← find_redex (o_derived_ base2 der2 :: os);
-          Some (o_base_ der1 base1 :: l, r, s, t)
-    | o_derived_ base1 der1 :: o_base_ der2 base2 :: os =>
-        if decide (der1 = der2 /\ base1 = base2) then
-          Some ([], os, [o_derived_ base1 der1; o_base_ der2 base2], [])
-        else
-          '(l, r, s, t) ← find_redex (o_base_ der2 base2 :: os);
-          Some (o_derived_ base1 der1 :: l, r, s, t)
-    | o :: os =>
-        '(l, r, s, t) ← find_redex os;
-        Some (o :: l, r, s, t).
-    Admit Obligations.
-
-    Ltac dex :=
-      let H0 := fresh in
-      move=> H0;
-      repeat match goal with
-      | H : ∃ x, ?P |- _ => destruct H
-      | H : ?x = ?y |- _ => inversion H; subst; done
+    Definition find_redex_here (os : raw_offset)
+        : option (raw_offset * raw_offset * raw_offset) :=
+      match os with
+      | o_sub_ ty 0 :: os =>
+          Some (os, [o_sub_ ty 0], [])
+      | o_sub_ ty1 i1 :: o_sub_ ty2 i2 :: os =>
+          if decide (ty1 = ty2) then
+            Some (os, [o_sub_ ty1 i1; o_sub_ ty2 i2], [o_sub_ ty1 (i1 + i2)])
+          else None
+      | o_base_ der1 base1 :: o_derived_ base2 der2 :: os =>
+          if decide (der1 = der2 /\ base1 = base2) then
+            Some (os, [o_base_ der1 base1; o_derived_ base2 der2], [])
+          else None
+      | o_derived_ base1 der1 :: o_base_ der2 base2 :: os =>
+          if decide (der1 = der2 /\ base1 = base2) then
+            Some (os, [o_derived_ base1 der1; o_base_ der2 base2], [])
+          else None
+      | _ => None
       end.
 
-    Lemma find_redex_ind :
-      ∀ P :
-        raw_offset ->
-        option (raw_offset * raw_offset * raw_offset * raw_offset) ->
-        Prop,
-      (P [] None) ->
-      (∀ ty os,
-        P
-          (o_sub_ ty 0 :: os)
-          (Some ([], os, [o_sub_ ty 0], []))) ->
-      (∀ ty i1 i2 os,
-        i1 ≠ 0 ->
-        P
-          (o_sub_ ty i1 :: o_sub_ ty i2 :: os)
-          (Some ([], os, [o_sub_ ty i1; o_sub_ ty i2], [o_sub_ ty (i1 + i2)]))) ->
-      (∀ der base os,
-        P
-          (o_base_ der base :: o_derived_ base der :: os)
-          (Some ([], os, [o_base_ der base; o_derived_ base der], []))) ->
-      (∀ base der os,
-        P
-          (o_derived_ base der :: o_base_ der base :: os)
-          (Some ([], os, [o_derived_ base der; o_base_ der base], []))) ->
-      (∀ o os l r s t,
-        P os (Some (l, r, s, t)) ->
-        P (o :: os) (Some (o :: l, r, s, t))) ->
-      (∀ o os,
-        ¬(∃ ty, o = o_sub_ ty 0) ->
-        ¬(∃ ty i1 i2 r, o :: os = o_sub_ ty i1 :: o_sub_ ty i2 :: r) ->
-        ¬(∃ der base r, o :: os = o_base_ der base :: o_derived_ base der :: r) ->
-        ¬(∃ base der r, o :: os = o_derived_ base der :: o_base_ der base :: r) ->
-        P os None ->
-        P (o :: os) None) ->
-      ∀ os, P os (find_redex os).
-    Proof.
-      move=> P Pnil Ps0 Pss Pbd Pdb Pks Pkn os.
-      funelim (find_redex os); simp find_redex in *;
-      try case_match; subst; clear Heqcall; simpl in *.
-      all:
-        repeat match type of H with
-        | ∀ x : ?A, _ =>
-          match goal with
-          | H2 : ?A |- _ => specialize (H H2)
+    Fixpoint find_redex (os : raw_offset)
+        : option (raw_offset * raw_offset * raw_offset * raw_offset) :=
+      match os with
+      | [] => None
+      | o :: os =>
+          match find_redex_here (o :: os) with
+          | Some (r, s, t) => Some ([], r, s, t)
+          | None =>
+              match find_redex os with
+              | Some (l, r, s, t) => Some (o :: l, r, s, t)
+              | None => None
+              end
           end
-        end.
-      all: try (
-        destruct (find_redex _); simpl in *;
-        (
-          repeat match goal with
-          | H : _ * _ |- _ => destruct H
-          end; by apply Pks, H
-        ||
-        apply Pkn; (dex || done)
-        )
-      ).
-      all: try (apply Pkn; (dex || done)).
-      { by apply Pss. }
-      { by apply Pss. }
-      { destruct a. subst. apply Pbd. }
+      end.
+
+    Lemma find_redex_here_pass :
+      ∀ os r s t,
+        find_redex_here os = Some (r, s, t) ->
+        os = s ++ r /\ roff_rw_local s t.
+    Proof.
+      move=> os r s t.
+      destruct os as [|o os]; first done.
+      destruct o as [f|ty i|der base|base der]; try done.
       {
-        destruct (find_redex _); simpl in *.
+        destruct i.
         {
-          repeat match goal with
-          | H : _ * _ |- _ => destruct H
-          end; by apply Pks, H.
+          move=> H. inversion H; subst.
+          split; [done | constructor].
         }
-        {
-          apply Pkn; (dex || done).
-          inversion H1. subst. by apply n.
-        }
+        all: destruct os as [|o os]; first done.
+        all: destruct o as [f'|ty' i'|der' base'|base' der']; try done.
+        all: cbn [find_redex_here].
+        all: (
+          destruct (decide (ty = ty')) as [Heq|Hneq];
+          [ subst ty'; move=> H; inversion H; subst;
+            split; [done | constructor]
+          | done ]
+        ).
       }
-      { destruct a. subst. apply Pdb. }
       {
-        destruct (find_redex _); simpl in *.
-        {
-          repeat match goal with
-          | H : _ * _ |- _ => destruct H
-          end; by apply Pks, H.
-        }
-        {
-          apply Pkn; (dex || done).
-          inversion H1. subst. by apply n.
-        }
+        destruct os as [|o os]; first done.
+        destruct o as [f'|ty i|der' base'|base' der']; try done.
+        cbn [find_redex_here].
+        destruct (decide (der = der' /\ base = base')) as [[-> ->]|Hneq];
+          last done.
+        move=> H. inversion H; subst.
+        split; [done | constructor].
+      }
+      {
+        destruct os as [|o os]; first done.
+        destruct o as [f'|ty i|der' base'|base' der']; try done.
+        cbn [find_redex_here].
+        destruct (decide (der = der' /\ base = base')) as [[-> ->]|Hneq];
+          last done.
+        move=> H. inversion H; subst.
+        split; [done | constructor].
+      }
+    Qed.
+
+    Lemma find_redex_here_fail :
+      ∀ os,
+        find_redex_here os = None ->
+        ¬∃ r s t, os = s ++ r /\ roff_rw_local s t.
+    Proof.
+      move=> os Hnone [r [s [t [Heq Hrw]]]].
+      subst os.
+      destruct Hrw.
+      {
+        cbn [app find_redex_here] in Hnone.
+        destruct (decide (der = der /\ base = base)) as [Heq|Hneq].
+        { discriminate Hnone. }
+        { exfalso. apply Hneq. done. }
+      }
+      {
+        cbn [app find_redex_here] in Hnone.
+        destruct (decide (der = der /\ base = base)) as [Heq|Hneq].
+        { discriminate Hnone. }
+        { exfalso. apply Hneq. done. }
+      }
+      { done. }
+      {
+        destruct n1; cbn [app find_redex_here] in Hnone; try done.
+        all: destruct (decide (ty = ty)) as [Heq|Hneq].
+        all: try discriminate Hnone.
+        all: exfalso; apply Hneq; done.
       }
     Qed.
 
@@ -376,35 +359,24 @@ Module PTRS_IMPL <: PTRS_INTF.
         roff_rw_local s t.
     Proof.
       move=> os.
-      apply find_redex_ind; clear.
-      { done. }
+      induction os as [|o os IH]; move=> l s r t Hred; first done.
+      cbn [find_redex] in Hred.
+      destruct (find_redex_here (o :: os)) as [x|] eqn:Hhere.
       {
-        move=> ty os l r s t H.
-        inversion H; subst.
-        repeat constructor.
+        destruct x as [[r' s'] t'].
+        inversion Hred; subst; clear Hred.
+        apply find_redex_here_pass in Hhere.
+        move: Hhere => [Hos Hrw].
+        split; [done | exact Hrw].
       }
       {
-        move=> ty i1 i2 os H1 l r s t H2.
-        inversion H2. subst.
-        repeat constructor.
+        destruct (find_redex os) as [x|] eqn:Htail; last done.
+        destruct x as [[[l' r'] s'] t'].
+        inversion Hred; subst; clear Hred.
+        specialize (IH _ _ _ _ eq_refl).
+        move: IH => [Hos Hrw].
+        split; [by rewrite Hos | exact Hrw].
       }
-      {
-        move=> der base os l r s t H.
-        inversion H. subst.
-        repeat constructor.
-      }
-      {
-        move=> base der os l r s t H.
-        inversion H. subst.
-        repeat constructor.
-      }
-      {
-        move=> o os l r s t H1 l' s' r' t' H2.
-        inversion H2. subst. simpl in *.
-        specialize (H1 _ _ _ _ eq_refl).
-        move: H1 => [Hos Hrw]. by subst.
-      }
-      { done. }
     Qed.
 
     Lemma find_redex_fail :
@@ -415,32 +387,30 @@ Module PTRS_IMPL <: PTRS_INTF.
             roff_rw_local s t.
     Proof.
       move=> os.
-      apply find_redex_ind;
-      clear; try done.
+      induction os as [|o os IH]; move=> Hred.
       {
-        move=> _ [l [r [s [t [Heq Hrw]]]]].
-        destruct l; simpl in *; try done.
-        destruct s; simpl in *; try done.
+        move=> [l [r [s [t [Heq Hrw]]]]].
+        destruct l; simpl in Heq; try done.
+        destruct s; simpl in Heq; try done.
         subst. inversion Hrw.
       }
+      cbn [find_redex] in Hred.
+      destruct (find_redex_here (o :: os)) as [x|] eqn:Hhere.
+      { destruct x as [[r' s'] t']. done. }
+      destruct (find_redex os) as [x|] eqn:Htail.
+      { destruct x as [[[l' r'] s'] t']. done. }
+      specialize (IH eq_refl).
+      move=> [l [r [s [t [Heq Hrw]]]]].
+      destruct l as [|o' l].
       {
-        move=> o os Hns0 Hnss Hnbd Hndb IH.
-        move=> _ [l [r [s [t [Heq Hrw]]]]].
-        destruct l; simpl in *.
-        {
-          destruct Hrw; simpl in *;
-          inversion Heq; subst.
-          { apply Hndb. repeat eexists. }
-          { apply Hnbd. repeat eexists. }
-          { apply Hns0. repeat eexists. }
-          { apply Hnss. repeat eexists. }
-        }
-        {
-          inversion Heq. subst.
-          apply IH.
-          { done. }
-          { by exists l, r, s, t. }
-        }
+        simpl in Heq.
+        apply (find_redex_here_fail _ Hhere).
+        by exists r, s, t.
+      }
+      {
+        simpl in Heq. inversion Heq; subst.
+        apply IH.
+        by exists l, r, s, t.
       }
     Qed.
 
@@ -452,17 +422,157 @@ Module PTRS_IMPL <: PTRS_INTF.
       induction xs; simpl; auto.
     Qed.
 
-    Equations normalize (os : raw_offset) : raw_offset by wf (length os) lt :=
-    normalize os with (existT (find_redex os) eq_refl) => {
-      normalize os (existT (Some (l, r, s, t)) H) => normalize (l ++ t ++ r);
-      normalize os (existT None H) => os
-    }.
-    Next Obligation.
-      intros.
-      apply find_redex_pass in H.
-      move: H => [Heq Hrw]. subst.
+    Lemma find_redex_decreases :
+      ∀ os l r s t,
+        find_redex os = Some (l, r, s, t) ->
+        (length (l ++ t ++ r) < length os)%nat.
+    Proof.
+      move=> os l r s t Hred.
+      apply find_redex_pass in Hred.
+      move: Hred => [Heq Hrw]. subst.
       repeat rewrite length_app.
       destruct Hrw; simpl; lia.
+    Qed.
+
+    Fixpoint normalize_fuel (fuel : nat) (os : raw_offset) : raw_offset :=
+      match fuel with
+      | O => os
+      | S fuel =>
+          match find_redex os with
+          | Some (l, r, s, t) => normalize_fuel fuel (l ++ t ++ r)
+          | None => os
+          end
+      end.
+
+    Definition normalize (os : raw_offset) : raw_offset :=
+      normalize_fuel (length os) os.
+
+    Lemma normalize_fuel_ext :
+      ∀ n fuel1 fuel2 os,
+        (length os <= n)%nat ->
+        (length os <= fuel1)%nat ->
+        (length os <= fuel2)%nat ->
+        normalize_fuel fuel1 os = normalize_fuel fuel2 os.
+    Proof.
+      move=> n.
+      induction n as [|n IH]; move=> fuel1 fuel2 os Hn Hfuel1 Hfuel2.
+      {
+        have -> : os = [].
+        { destruct os; [done | simpl in Hn; lia]. }
+        destruct fuel1, fuel2; done.
+      }
+      destruct os as [|o os].
+      { destruct fuel1, fuel2; done. }
+      destruct fuel1 as [|fuel1]; first (simpl in Hfuel1; lia).
+      destruct fuel2 as [|fuel2]; first (simpl in Hfuel2; lia).
+      cbn [normalize_fuel].
+      destruct (find_redex (o :: os)) as [x|] eqn:Hred; last done.
+      destruct x as [[[l r] s] t].
+      have Hdecreases := find_redex_decreases _ _ _ _ _ Hred.
+      apply IH; lia.
+    Qed.
+
+    Lemma normalize_eq :
+      ∀ os,
+        normalize os =
+        match find_redex os with
+        | Some (l, r, s, t) => normalize (l ++ t ++ r)
+        | None => os
+        end.
+    Proof.
+      move=> os.
+      destruct os as [|o os]; first done.
+      rewrite /normalize.
+      cbn [length normalize_fuel].
+      destruct (find_redex (o :: os)) as [x|] eqn:Hred; last done.
+      destruct x as [[[l r] s] t].
+      have Hdecreases := find_redex_decreases _ _ _ _ _ Hred.
+      simpl in Hdecreases.
+      have Hle : (length (l ++ t ++ r) <= length os)%nat by lia.
+      apply (normalize_fuel_ext (length os)); [exact Hle | exact Hle | lia].
+    Qed.
+
+    Lemma normalize_ind :
+      ∀ P : raw_offset -> raw_offset -> Prop,
+        (∀ os l r s t,
+          find_redex os = Some (l, r, s, t) ->
+          P (l ++ t ++ r) (normalize (l ++ t ++ r)) ->
+          P os (normalize (l ++ t ++ r))) ->
+        (∀ os, find_redex os = None -> P os os) ->
+        ∀ os, P os (normalize os).
+    Proof.
+      move=> P Pstep Pnone.
+      assert (Hind : ∀ n os, (length os <= n)%nat -> P os (normalize os)).
+      {
+        move=> n.
+        induction n as [|n IH]; move=> os Hlen.
+        {
+          have -> : os = [].
+          { destruct os; [done | simpl in Hlen; lia]. }
+          rewrite normalize_eq.
+          apply Pnone. done.
+        }
+        destruct (find_redex os) as [x|] eqn:Hred.
+        {
+          destruct x as [[[l r] s] t].
+          rewrite normalize_eq Hred.
+          apply (Pstep os l r s t Hred), IH.
+          have Hdecreases := find_redex_decreases _ _ _ _ _ Hred.
+          lia.
+        }
+        {
+          rewrite normalize_eq Hred.
+          by apply Pnone.
+        }
+      }
+      move=> os.
+      apply (Hind (length os)); done.
+    Qed.
+
+    Lemma normalize_sub_zero :
+      ∀ ty os,
+        normalize (o_sub_ ty 0 :: os) = normalize os.
+    Proof.
+      move=> ty os.
+      rewrite normalize_eq.
+      done.
+    Qed.
+
+    Lemma normalize_sub_merge :
+      ∀ ty i j os,
+        i ≠ 0 ->
+        normalize (o_sub_ ty i :: o_sub_ ty j :: os) =
+        normalize (o_sub_ ty (i + j) :: os).
+    Proof.
+      move=> ty i j os Hnz.
+      rewrite normalize_eq.
+      destruct i; first done.
+      all: cbn [find_redex find_redex_here].
+      all: case_decide; done.
+    Qed.
+
+    Lemma normalize_base_derived :
+      ∀ der base os,
+        normalize (o_base_ der base :: o_derived_ base der :: os) = normalize os.
+    Proof.
+      move=> der base os.
+      rewrite normalize_eq.
+      cbn [find_redex find_redex_here].
+      destruct (decide (der = der /\ base = base)) as [Heq|Hneq].
+      { done. }
+      { exfalso. apply Hneq. done. }
+    Qed.
+
+    Lemma normalize_derived_base :
+      ∀ base der os,
+        normalize (o_derived_ base der :: o_base_ der base :: os) = normalize os.
+    Proof.
+      move=> base der os.
+      rewrite normalize_eq.
+      cbn [find_redex find_redex_here].
+      destruct (decide (der = der /\ base = base)) as [Heq|Hneq].
+      { done. }
+      { exfalso. apply Hneq. done. }
     Qed.
 
     Lemma norm_eager :
@@ -470,33 +580,15 @@ Module PTRS_IMPL <: PTRS_INTF.
         roff_rw_local s t ->
         normalize (s ++ r) = normalize (t ++ r).
     Proof.
-      move=> s t r H.
-      funelim (normalize (s ++ r)).
+      move=> s t r Hrw.
+      destruct Hrw; simpl.
+      { apply normalize_derived_base. }
+      { apply normalize_base_derived. }
+      { apply normalize_sub_zero. }
       {
-        clear H0 H1 Heqcall.
-        destruct H2; simpl in *;
-        simp find_redex in *;
-        try case_match;
-        try match goal with
-        | H : ¬(?x = ?x /\ ?y = ?y) |- _ =>
-          exfalso; by apply H
-        end;
-        inversion H;
-        subst; simpl;
-        try done.
-        {
-          destruct n1; simpl in *;
-          simp find_redex in *;
-          try case_match; try done;
-          inversion H1; subst;
-          simpl; done.
-        }
-      }
-      {
-        clear - H H1.
-        apply find_redex_fail in H.
-        exfalso. apply: H.
-        by exists [], r, s, t.
+        destruct (decide (n1 = 0)) as [->|Hnz].
+        { simpl. apply normalize_sub_zero. }
+        { by apply normalize_sub_merge. }
       }
     Qed.
 
@@ -504,34 +596,27 @@ Module PTRS_IMPL <: PTRS_INTF.
       ∀ os ,
         roff_rw os (normalize os).
     Proof.
-      move=> os.
-      funelim (normalize os).
+      apply (normalize_ind (fun os normalized => roff_rw os normalized)).
       {
-        clear H1.
-        apply find_redex_pass in H.
-        move: H => [Heq Hrw]. subst.
-        apply: rtc_l. 2: apply H0.
+        move=> os l r s t Hred IH.
+        apply find_redex_pass in Hred.
+        move: Hred => [Heq Hrw]. subst.
+        apply: rtc_l. 2: exact IH.
         by exists l, r, s, t.
       }
-      { done. }
+      { move=> os Hred. done. }
     Qed.
 
     Lemma norm_canon :
       ∀ os, roff_canon (normalize os).
     Proof.
-      move=> os.
-      funelim (normalize os).
+      apply (normalize_ind (fun _ normalized => roff_canon normalized)).
+      { move=> os l r s t Hred IH. exact IH. }
       {
-        clear H1.
-        apply find_redex_pass in H.
-        move: H => [Heq Hrw]. subst.
-        done.
-      }
-      {
-        clear - H.
-        apply find_redex_fail in H.
+        move=> os Hred.
+        apply find_redex_fail in Hred.
         move=> [y [l [r [s [t [Hos [Hy Hrw]]]]]]].
-        apply H. by exists l, r, s, t.
+        apply Hred. by exists l, r, s, t.
       }
     Qed.
 
@@ -552,36 +637,15 @@ Module PTRS_IMPL <: PTRS_INTF.
       move=> os.
       split; move=> H.
       {
-        funelim (normalize os).
-        clear Heqcall H1. 2: done.
-        exfalso. apply: H2.
-        apply find_redex_pass in H.
-        move: H => [Heq Hrw]. subst.
+        rewrite normalize_eq.
+        destruct (find_redex os) as [x|] eqn:Hred; last done.
+        destruct x as [[[l r] s] t].
+        exfalso. apply: H.
+        apply find_redex_pass in Hred.
+        move: Hred => [Heq Hrw]. subst.
         by exists (l ++ t ++ r), l, r, s, t.
       }
-      {
-        move: H.
-        funelim (normalize os);
-        intros; subst.
-        {
-          clear H1 Heqcall.
-          apply find_redex_pass in H.
-          move: H => [Heq Hrw]. clear H0.
-          assert (roff_canon (l ++ s ++ r)).
-          {
-            rewrite -Heq.
-            apply norm_canon.
-          }
-          exfalso. apply H.
-          by exists (l ++ t ++ r), l, r, s, t.
-        }
-        {
-          clear - H.
-          apply find_redex_fail in H.
-          move=> [y [l [r [s [t [H1 [H2 H3]]]]]]].
-          apply: H. subst. repeat eexists; done.
-        }
-      }
+      { by rewrite -H; apply norm_canon. }
     Qed.
 
     Lemma norm_complete_aux :
@@ -983,9 +1047,9 @@ Module PTRS_IMPL <: PTRS_INTF.
     rewrite /__o_dot /o_sub /o_id.
     repeat case_match; subst;
     try lia; apply sig_eq; simpl.
-    { by simp normalize. }
-    { simp normalize. by destruct j. }
-    { simp normalize. by destruct i. }
+    { done. }
+    { rewrite /normalize. by destruct j. }
+    { rewrite /normalize. by destruct i. }
     {
       change [o_sub_ ty i; o_sub_ ty j]
       with  ([o_sub_ ty i; o_sub_ ty j] ++ []).
@@ -993,7 +1057,7 @@ Module PTRS_IMPL <: PTRS_INTF.
       2: constructor.
       rewrite e (norm_eager _ []).
       2: constructor.
-      simpl. by simp normalize.
+      simpl. done.
     }
     {
       change [o_sub_ ty i; o_sub_ ty j]
@@ -1095,13 +1159,16 @@ Module PTRS_IMPL <: PTRS_INTF.
       eval_offset_aux σ os ≠ None ->
       eval_offset_aux σ (normalize os) = eval_offset_aux σ os.
   Proof.
-    move=> σ os s.
-    funelim (normalize os).
-    2: done. clear H1.
-    apply find_redex_pass in H.
-    move: H => [Heq Hrw]. subst.
-    clear - Hrw s0 H0.
-    rewrite H0; clear H0.
+    move=> σ os.
+    apply (normalize_ind (fun input normalized =>
+      eval_offset_aux σ input ≠ None ->
+      eval_offset_aux σ normalized = eval_offset_aux σ input)).
+    {
+      move=> input l r s t Hred IH Hdefined.
+      apply find_redex_pass in Hred.
+      move: Hred => [Heq Hrw]. subst input.
+      clear - Hrw Hdefined IH.
+      rewrite IH; clear IH.
     2:{
       induction l;
       simpl in *.
@@ -1192,6 +1259,8 @@ Module PTRS_IMPL <: PTRS_INTF.
       simpl in *; try done.
       by rewrite IHl.
     }
+    }
+    { move=> input Hred Hdefined. done. }
   Qed.
 
   Lemma eval_offset_dot :
