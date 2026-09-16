@@ -32,3 +32,5 @@ Require Export skylabs.prelude.propset.
 Require Export skylabs.prelude.sets.
 Require Export skylabs.prelude.relations.
 Require Export skylabs.prelude.under_rel_proper.
+
+Require Export skylabs.prelude.hint_label.

@@ -7,6 +7,7 @@ Require Import elpi.apps.locker.locker.
 Require Import skylabs.iris.extra.bi.prelude.
 Require Import iris.bi.bi iris.bi.monpred.
 Require Import skylabs.iris.extra.proofmode.proofmode.
+Require Import skylabs.prelude.prelude.
 
 (** * Observations *)
 (** We define type classes for making observations and a few instances
@@ -638,5 +639,6 @@ End observable_theory.
 
 #[global] Hint Resolve observe_intro_only_provable_simple : core.
 
+Definition hint_observe_match := tt.
 #[global] Hint Extern 100 (Observe (match ?s with _ => _ end) (match ?s with _ => _ end)) =>
-  destruct s : typeclass_instances.
+  hint_label hint_observe_match; destruct s : typeclass_instances.
