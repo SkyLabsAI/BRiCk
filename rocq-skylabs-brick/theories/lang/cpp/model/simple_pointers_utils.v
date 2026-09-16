@@ -90,7 +90,11 @@ Lemma global_ptr_encode_vaddr_nonnull o va : va = global_ptr_encode_vaddr o -> v
 Proof. (* by move->. Qed. *) Admitted. (* ?? *)
 
 Lemma global_ptr_encode_aid_nonnull o aid : aid = global_ptr_encode_aid o -> aid <> null_alloc_id.
-Proof. (* by move->. Qed. *) Admitted. (* ?? *)
+Proof.
+  intros -> H.
+  apply (global_ptr_encode_vaddr_nonnull o _ eq_refl).
+  by injection H.
+Qed.
 
 (*
 A slightly better model might be something like the following, but we don't

@@ -210,22 +210,37 @@ Module SIMPLE_PTRS_IMPL <: PTRS_INTF.
   Definition fun_ptr := global_ptr.
 
   Lemma global_ptr_nonnull tu o : global_ptr tu o <> nullptr.
-  Proof. (* done. Qed. *) Admitted. (* TODO *)
+  Proof.
+    intros [Haid _]%(inj Some)%(inj2 _).
+    apply (global_ptr_encode_aid_nonnull o _ eq_refl).
+    exact Haid.
+  Qed.
 
   Section with_genv.
     Context {σ}.
 
     Lemma ptr_vaddr_global_ptr tu o :
       ptr_vaddr (global_ptr tu o) = Some (global_ptr_encode_vaddr o).
-    Proof. (* done. Qed. *) Admitted. (* TODO *)
+    Proof.
+      rewrite /ptr_vaddr /global_ptr /=.
+      case_guard; [by rewrite N2Z.id | lia].
+    Qed.
     Lemma ptr_alloc_id_global_ptr tu o :
       ptr_alloc_id (global_ptr tu o) = Some (global_ptr_encode_aid o).
     Proof. done. Qed.
 
     Lemma global_ptr_nonnull_addr tu o : ptr_vaddr (global_ptr tu o) <> Some 0%N.
-    Proof. rewrite ptr_vaddr_global_ptr. (* done. Qed. *) Admitted. (* TODO *)
+    Proof.
+      rewrite ptr_vaddr_global_ptr.
+      intros H%(inj Some).
+      exact (global_ptr_encode_vaddr_nonnull o _ eq_refl H).
+    Qed.
     Lemma global_ptr_nonnull_aid tu o : ptr_alloc_id (global_ptr tu o) <> Some null_alloc_id.
-    Proof. rewrite ptr_alloc_id_global_ptr. (* done. Qed. *) Admitted. (* TODO *)
+    Proof.
+      rewrite ptr_alloc_id_global_ptr.
+      intros H%(inj Some).
+      exact (global_ptr_encode_aid_nonnull o _ eq_refl H).
+    Qed.
 
     #[global] Instance global_ptr_inj tu : Inj (=) (=) (global_ptr tu).
     Proof. by intros o1 o2 [?%(inj global_ptr_encode_aid) _]%(inj Some)%(inj2 _). Qed.
@@ -274,7 +289,7 @@ Module SIMPLE_PTRS_IMPL <: PTRS_INTF.
       glob_def σ cls = Some (Gstruct st) ->
       st.(s_layout) = POD \/ st.(s_layout) = Standard ->
       eval_offset σ (o_field σ f) = offset_of σ cls n.
-    Proof. (* done. Qed. *) Admitted. (* TODO *)
+    Proof. move => -> _ _. done. Qed.
 
     (* [eval_offset] respects the monoidal structure of [offset]s _for well-defined offsets_. *)
     Lemma eval_offset_dot : ∀ (o1 o2 : offset),
