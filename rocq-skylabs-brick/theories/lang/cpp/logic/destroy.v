@@ -1,5 +1,5 @@
 (*
- * Copyright (c) 2020-2024 BlueRock Security, Inc.
+ * Copyright (c) 2020-2025 BlueRock Security, Inc.
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
@@ -17,6 +17,7 @@ Require Import skylabs.lang.cpp.logic.const.
 Require Import skylabs.lang.cpp.logic.dispatch.
 Require Import skylabs.lang.cpp.logic.layout.
 Require Import skylabs.lang.cpp.logic.arr.
+Require Import skylabs.lang.cpp.logic.monad.
 
 #[local] Set Printing Coercions.
 #[local] Infix "|--" := bi_entails.
@@ -27,6 +28,14 @@ Require Import skylabs.lang.cpp.logic.arr.
   etrans; last apply lem; apply fupd_elim; by rewrite -!fupd_intro.
 #[local] Tactic Notation "solve_shift_fupd" open_constr(lem) :=
   etrans; last apply lem; apply fupd_intro.
+
+
+(* TODO:
+   - This file seems to replicate some logic that is bad.
+ *)
+
+Import UPoly.
+
 
 (**
 Overview:
@@ -121,16 +130,17 @@ End wp_gen.
 (** ** Destroying primitives *)
 
 #[local] Definition wp_destroy_prim_body `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
-    (cv : type_qualifiers) (ty : type) (this : ptr) (Q : epred) : mpred :=
-  |={top}=> (Exists v, this |-> tptstoR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) v) ** Q.
+    (cv : type_qualifiers) (ty : type) (this : ptr) : Mglobal.M unit :=
+  non_atomically $ consume (Exists v, this |-> tptstoR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) v).
 
 mlock Definition wp_destroy_prim `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
-    (cv : type_qualifiers) (ty : type) (this : ptr) (Q : epred) : mpred :=
-  wp_destroy_prim_body tu cv ty this Q.
+    (cv : type_qualifiers) (ty : type) (this : ptr) : Mglobal.M unit :=
+  wp_destroy_prim_body tu cv ty this.
+#[global] Arguments wp_destroy_prim {_ _ _ _} _ _ _ _ : assert.	(* mlock bug *)
 
 Section unfold.
   Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (Q : epred).
+  Implicit Types (Q : mpred).
 
   Lemma wp_destroy_prim_unfold ty tu :
     wp_destroy_prim tu ty = Reduce (wp_destroy_prim_body tu ty).
@@ -148,8 +158,9 @@ Ltac wp_destroy_prim_unfold :=
 
 Section prim.
   Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (Q : epred).
+  Implicit Types (Q : mpred).
 
+  (*
   Lemma wp_destroy_prim_intro tu cv ty (this : ptr) Q :
     (Exists v, this |-> tptstoR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) v) ** Q
     |-- wp_destroy_prim tu cv ty this Q.
@@ -208,7 +219,7 @@ Section prim.
     intros * Q1 Q2 HQ. split'; by apply wp_destroy_prim_mono; rewrite HQ.
   Qed.
 
-  Lemma wp_destroy_prim_frame tu tu' cv ty this (Q Q' : epred) :
+  Lemma wp_destroy_prim_frame tu tu' cv ty this (Q Q' : mpred) :
     Q -* Q' |-- wp_destroy_prim tu cv ty this Q -* wp_destroy_prim tu' cv ty this Q'.
   Proof. wp_destroy_prim_unfold. iIntros "HQ >[$ Q]". by iApply "HQ". Qed.
 
@@ -226,7 +237,12 @@ Section prim.
     wp_destroy_prim tu cv ty this (|={top}=> Q) |--
     wp_destroy_prim tu cv ty this Q.
   Proof. solve_shift_fupd wp_destroy_prim_shift. Qed.
+  *)
 End prim.
+
+Definition void_call `{Σ : cpp_logic} {σ : genv} (wp : Mglobal.M ptr) : Mglobal.M unit :=
+  letWP* (p : ptr) := wp in
+  consume (p |-> primR Tvoid (cQp.m 1) Vvoid).
 
 (** ** Invoking destructors *)
 (*
@@ -234,23 +250,22 @@ End prim.
 invoking the destructor [dtor] for type [ty] on [this].
 *)
 #[local] Definition wp_destructor_body `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
-    (ty : type) (dtor : ptr) (this : ptr) (Q : epred) : mpred :=
+    (ty : type) (dtor : ptr) (this : ptr) : Mglobal.M unit :=
   (*
   NOTE: Using [Tfunction Tvoid nil] implicitly requires all
   destructors to have C calling convention. Arguments [this :: nil] is
   correct for member functions taking no arguments.
   *)
-  letI* p := wp_mfptr tu.(types) ty (Tfunction $ FunctionType Tvoid nil) dtor (this :: nil) in
-  (**
-  We inline [operand_receive] (which could be hoisted and shared).
-  *)
-  Exists v, p |-> primR Tvoid 1$m v **
-  this |-> tblockR ty 1$m **
-  Q.
+  letWP* p :=
+    void_call $
+    wp_mfptr tu.(types) ty (Tfunction $ FunctionType Tvoid nil) dtor [this]
+  in
+  consume (this |-> tblockR ty (cQp.mut 1)).
 
 mlock Definition wp_destructor `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
-    (ty : type) (dtor : ptr) (this : ptr) (Q : epred) : mpred :=
-  wp_destructor_body tu ty dtor this Q.
+    (ty : type) (dtor : ptr) (this : ptr) : Mglobal.M unit :=
+  wp_destructor_body tu ty dtor this.
+#[global] Arguments wp_destructor {_ _ _ _} _ _ _ _ : assert.	(* mlock bug *)
 
 (** Note: All we need in this file is [type_table_le]. *)
 #[local] Notation TULE tu tu' := (sub_module tu tu') (only parsing).
@@ -258,7 +273,7 @@ mlock Definition wp_destructor `{Σ : cpp_logic, σ : genv} (tu : translation_un
 
 Section unfold.
   Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (Q : epred).
+  Implicit Types (Q : mpred).
 
   Lemma wp_destructor_unfold ty tu :
     wp_destructor tu ty = Reduce (wp_destructor_body tu ty).
@@ -276,18 +291,19 @@ Ltac wp_destructor_unfold :=
 
 Section dtor.
   Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (Q : epred).
+  Implicit Types (Q : mpred).
 
-  Lemma wp_destructor_intro tu ty dtor this Q :
-    Reduce (wp_destructor_body tu ty dtor this Q) |--
-    wp_destructor tu ty dtor this Q.
+  Lemma wp_destructor_intro tu ty dtor this :
+    Reduce (wp_destructor_body tu ty dtor this) ⊆
+    wp_destructor tu ty dtor this.
   Proof. by wp_destructor_unfold. Qed.
 
-  Lemma wp_destructor_elim tu ty dtor this Q :
-    wp_destructor tu ty dtor this Q |--
-    Reduce (wp_destructor_body tu ty dtor this Q).
+  Lemma wp_destructor_elim tu ty dtor this :
+    wp_destructor tu ty dtor this ⊆
+    Reduce (wp_destructor_body tu ty dtor this).
   Proof. by wp_destructor_unfold. Qed.
 
+  (*
   #[global] Instance: Params (@wp_destructor) 8 := {}.
   #[local] Notation PROPER R := (
     ∀ tu ty dtor this,
@@ -329,12 +345,13 @@ Section dtor.
     wp_destructor tu ty dtor this (|={top}=> Q)
     |-- wp_destructor tu ty dtor this Q.
   Proof. solve_shift_fupd wp_destructor_shift. Qed.
+  *)
 End dtor.
 
 (** ** Destroying structures and unions *)
 
 #[local] Definition wp_destroy_named_body `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
-    (cls : globname) (this : ptr) (Q : epred) : mpred :=
+    (cls : globname) (this : ptr) : Mglobal unit :=
   match tu.(types) !! cls with
   | Some (Gstruct s) =>
     (*
@@ -350,23 +367,24 @@ End dtor.
 
     TODO let's find some justification in the standard.
     *)
-    wp_destructor tu (Tnamed cls) (_global s.(s_dtor)) this Q
+    wp_destructor tu (Tnamed cls) (_global s.(s_dtor)) this
   | Some (Gunion u) =>
     (*
     Unions cannot have [virtual] destructors: we directly invoke the
     destructor.
     *)
-    wp_destructor tu (Tnamed cls) (_global u.(u_dtor)) this Q
-  | _ => |={top}=> ERROR ("wp_destroy_named: cannot resolve", cls)
+    wp_destructor tu (Tnamed cls) (_global u.(u_dtor)) this
+  | _ => non_atomically $ Merror ("wp_destroy_named: cannot resolve", cls)
   end.
 
 mlock Definition wp_destroy_named `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
-    (cls : globname) (this : ptr) (Q : epred) : mpred :=
-  wp_destroy_named_body tu cls this Q.
+  (cls : globname) (this : ptr) : Mglobal unit :=
+  wp_destroy_named_body tu cls this.
+#[global] Arguments wp_destroy_named {_ _ _ _} _ _ _ : assert.	(* mlock bug *)
 
 Section unfold.
   Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (Q : epred).
+  Implicit Types (Q : mpred).
 
   Lemma wp_destroy_named_unfold cls tu :
     wp_destroy_named tu cls = Reduce (wp_destroy_named_body tu cls).
@@ -399,12 +417,13 @@ Proof. intros -><-. by iIntros "? >?". Qed.
 
 #[local] Hint Resolve bi.False_elim : core.
 
+(*
 Section named.
   Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (Q : epred).
+  Implicit Types (Q : mpred).
 
   Let wp_destroy_named_intro_body (tu : translation_unit)
-      (cls : globname) (this : ptr) (Q : epred) : mpred :=
+      (cls : globname) (this : ptr) (Q : mpred) : mpred :=
     match tu.(types) !! cls with
     | Some (Gstruct s) => wp_destructor tu (Tnamed cls) (_global s.(s_dtor)) this Q
     | Some (Gunion u) => wp_destructor tu (Tnamed cls) (_global u.(u_dtor)) this Q
@@ -490,6 +509,7 @@ Section named.
   Proof. solve_shift_fupd wp_destroy_named_shift. Qed.
 
 End named.
+*)
 
 (** ** Arrays and values *)
 (**
@@ -506,36 +526,39 @@ definition, but we could not get the theory to go through.
 *)
 Section body.
   Context `{Σ : cpp_logic, σ : genv}.
-  Context (wp_destroy_val : translation_unit -> type_qualifiers -> type -> ptr -> epred -> mpred).
-  Context (wp_destroy_array : translation_unit -> type_qualifiers -> type -> N -> ptr -> epred -> mpred).
+  Context (wp_destroy_val : translation_unit -> type_qualifiers -> type -> ptr -> Mglobal unit).
+  Context (wp_destroy_array : translation_unit -> type_qualifiers -> type -> N -> ptr -> Mglobal unit).
 
   #[local] Definition destroy_val_body (tu : translation_unit)
-      (ty : type) (this : ptr) (Q : epred) : mpred :=
-    wp_destroy_val tu QM ty this Q.
+      (ty : type) (this : ptr) : Mglobal unit :=
+    wp_destroy_val tu QM ty this.
+  Import UPoly.
 
   #[local] Definition wp_destroy_array_body (tu : translation_unit)
-      (cv : type_qualifiers) (ety : type) (sz : N) (this : ptr) (Q : epred) : mpred :=
+      (cv : type_qualifiers) (ety : type) (sz : N) (this : ptr) : Mglobal unit :=
     (**
     NOTE array elements are destroyed left-to-right with non-virtual
     dispatch.
     *)
-    Reduce (wp_gen (fun i => wp_destroy_val tu cv ety (this .[ erase_qualifiers ety ! Z.of_N i ])) sz Q).
+    letWP* _ :=
+      let body (i : N) : Mglobal _ :=
+        wp_destroy_val tu cv ety (this .[ erase_qualifiers ety ! Z.of_N i ])
+      in traverse (T:=eta list) (F:=Mglobal) body (seqN 0 sz)
+    in mret ().
 
   #[local] Definition wp_destroy_val_body (tu : translation_unit)
-      (cv : type_qualifiers) (rty : type) (this : ptr) (Q : epred) : mpred :=
+      (cv : type_qualifiers) (rty : type) (this : ptr) : Mglobal unit :=
     match rty with
-    | Tqualified q ty => wp_destroy_val tu (merge_tq cv q) ty this Q
+    | Tqualified q ty => wp_destroy_val tu (merge_tq cv q) ty this
 
     | Tnamed cls =>
-      |={top}=> |>
-      letI* := if q_const cv then wp_make_mutable tu this rty else id in
-      letI* := wp_destroy_named tu cls this in
-      Q
+      letWP* _ := if q_const cv then wp_make_mutable tu this rty else mret () in
+      wp_destroy_named tu cls this
 
     | Tarray ety sz =>
-      |={top}=> |> wp_destroy_array tu cv ety sz this Q
-    | Tincomplete_array ety => |={top}=> False
-    | Tvariable_array ety _ => |={top}=> False
+      wp_destroy_array tu cv ety sz this
+    | Tincomplete_array ety => Merror ("wp_destroy_val", cv, rty)
+    | Tvariable_array ety _ => Merror ("wp_destroy_val", cv, rty)
 
     | Tref r_ty
     | Trv_ref r_ty =>
@@ -543,7 +566,7 @@ Section body.
       NOTE r-value references [Trv_ref] are represented as references
       [Tref].
       *)
-      wp_destroy_prim tu cv (Tref r_ty) this Q
+      wp_destroy_prim tu cv (Tref r_ty) this
 
     | Tnum _ _
     | Tchar_ _
@@ -554,36 +577,43 @@ Section body.
     | Tptr _
     | Tmember_pointer _ _
     | Tvoid =>
-      wp_destroy_prim tu cv rty this Q
+      wp_destroy_prim tu cv rty this
 
-    | Tfunction _ => |={top}=> UNSUPPORTED ("wp_destroy_val: function type", rty)
-    | Tarch _ _ => |={top}=> UNSUPPORTED ("wp_destroy_val: arch type", rty)
-    | Tunsupported msg => |={top}=> UNSUPPORTED ("wp_destroy_val: unsupported type", msg)
-    | _ => |={top}=> UNSUPPORTED ("wp_destroy_val: template type")
+    | Tfunction _ =>
+        non_atomically $ Munsupported ("wp_destroy_val: function type", rty)
+    | Tarch _ _ =>
+        non_atomically $ Munsupported ("wp_destroy_val: arch type", rty)
+    | Tunsupported msg =>
+        non_atomically $ Munsupported ("wp_destroy_val: arch type", msg)
+    | _ =>
+        non_atomically $ Munsupported ("wp_destroy_val: template type")
     end.
 End body.
 
 mlock Definition wp_destroy_val `{Σ : cpp_logic, σ : genv}
-    : ∀ (tu : translation_unit) (cv : type_qualifiers) (ty : type) (p : ptr) (Q : epred), mpred :=
+    : ∀ (tu : translation_unit) (cv : type_qualifiers) (ty : type) (p : ptr), Mglobal () :=
   (* Written this way because [mlock Fixpoint ⋯] fails. *)
-  fix wp_destroy_val tu q ty :=
-    let wp_destroy_array := wp_destroy_array_body wp_destroy_val in
-    wp_destroy_val_body wp_destroy_val wp_destroy_array tu q ty.
+  fix wp_destroy_qual tu q ty :=
+    let wp_destroy_array := wp_destroy_array_body wp_destroy_qual in
+    wp_destroy_val_body wp_destroy_qual wp_destroy_array tu q ty.
+#[global] Arguments wp_destroy_val {_ _ _ _} _ _ _ _ : assert.	(* mlock bug *)
 
 mlock Definition destroy_val `{Σ : cpp_logic, σ : genv}
-    : ∀ (tu : translation_unit) (ty : type) (p : ptr) (Q : epred), mpred :=
+    : ∀ (tu : translation_unit) (ty : type) (p : ptr), Mglobal () :=
   destroy_val_body wp_destroy_val.
+#[global] Arguments destroy_val {_ _ _ _} _ _ _ : assert.	(* mlock bug *)
 
 mlock Definition wp_destroy_array `{Σ : cpp_logic, σ : genv}
-    (tu : translation_unit) (cv : type_qualifiers) (ety : type) (sz : N) (base : ptr) (Q : epred) : mpred :=
-  wp_destroy_array_body wp_destroy_val tu cv ety sz base Q.
+    (tu : translation_unit) (cv : type_qualifiers) (ety : type) (sz : N) (base : ptr) : Mglobal unit :=
+  wp_destroy_array_body wp_destroy_val tu cv ety sz base.
+#[global] Arguments wp_destroy_array {_ _ _ _} _ _ _ _ _ : assert.	(* mlock bug *)
 
 #[local] Notation V := (wp_destroy_val_body wp_destroy_val wp_destroy_array) (only parsing).
 #[local] Notation A := (wp_destroy_array_body wp_destroy_val) (only parsing).
 
 Section unfold.
   Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (Q : epred).
+  Implicit Types (Q : mpred).
 
   Lemma wp_destroy_val_unfold ty tu cv : wp_destroy_val tu cv ty = Reduce (V tu cv ty).
   Proof.
@@ -622,7 +652,7 @@ Ltac wp_destroy_array_unfold :=
 
 Section val_array.
   Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (Q : epred).
+  Implicit Types (Q : mpred).
 
   Lemma destroy_val_wp_destroy_val ty tu :
     destroy_val tu ty = wp_destroy_val tu QM ty.
@@ -630,31 +660,31 @@ Section val_array.
 
   (** Qualifier normalization *)
 
-  Lemma wp_destroy_val_qual_norm' tu cv ty this Q :
-    wp_destroy_val tu cv ty this Q =
-      qual_norm' (fun cv' ty' => wp_destroy_val tu cv' ty' this Q) cv ty.
+  Lemma wp_destroy_val_qual_norm' tu cv ty this :
+    wp_destroy_val tu cv ty this =
+      qual_norm' (fun cv' ty' => wp_destroy_val tu cv' ty' this) cv ty.
   Proof.
     rewrite wp_destroy_val.unlock. move: cv. by induction ty; cbn.
   Qed.
-  Lemma destroy_val_qual_norm tu ty this Q :
-    destroy_val tu ty this Q =
-      qual_norm (fun cv ty' => wp_destroy_val tu cv ty' this Q) ty.
+  Lemma destroy_val_qual_norm tu ty this :
+    destroy_val tu ty this =
+      qual_norm (fun cv ty' => wp_destroy_val tu cv ty' this) ty.
   Proof.
     rewrite {1}destroy_val.unlock /destroy_val_body.
     by rewrite wp_destroy_val_qual_norm'.
   Qed.
 
-  Lemma wp_destroy_val_decompose_type tu cv ty this Q :
-    wp_destroy_val tu cv ty this Q =
+  Lemma wp_destroy_val_decompose_type tu cv ty this :
+    wp_destroy_val tu cv ty this =
       let p := decompose_type ty in
-      wp_destroy_val tu (merge_tq cv p.1) p.2 this Q.
+      wp_destroy_val tu (merge_tq cv p.1) p.2 this.
   Proof.
     by rewrite wp_destroy_val_qual_norm' qual_norm'_decompose_type.
   Qed.
-  Lemma destroy_val_decompose_type tu ty this Q :
-    destroy_val tu ty this Q =
+  Lemma destroy_val_decompose_type tu ty this :
+    destroy_val tu ty this =
       let p := decompose_type ty in
-      wp_destroy_val tu p.1 p.2 this Q.
+      wp_destroy_val tu p.1 p.2 this.
   Proof.
     by rewrite destroy_val_qual_norm qual_norm_decompose_type.
   Qed.
@@ -670,12 +700,14 @@ Section val_array.
 
   (** Structural properties *)
 
+  (*
   #[local] Hint Resolve
     wp_destroy_prim_frame
     wp_destroy_named_frame
     wp_gen_frame
-  : core.
+  : core. *)
 
+  (*
   Lemma wp_destroy_val_frame tu tu' cv ty this Q Q' :
     TULE tu tu' ->
     Q -* Q' |-- wp_destroy_val tu cv ty this Q -* wp_destroy_val tu' cv ty this Q'.
@@ -1001,6 +1033,7 @@ Section val_array.
     wp_destroy_array tu cv ety n p Q
     |-- Reduce (A tu cv ety n p Q).
   Proof. by wp_destroy_array_unfold. Qed.
+  *)
 End val_array.
 
 (** ** Destroying temporaries *)
@@ -1026,26 +1059,25 @@ emp] is not provable unless [Q] is affine.
 *)
 (* BEGIN interp *)
 #[local] Definition interp_body `{Σ : cpp_logic, σ : genv}
-    (interp : translation_unit -> FreeTemps -> epred -> mpred)
-    (tu : translation_unit) (free : FreeTemps) (Q : epred) : mpred :=
+    (interp : translation_unit -> FreeTemps.t -> Mglobal unit)
+    (tu : translation_unit) (free : FreeTemps.t) : Mglobal unit :=
   match free with
-  | FreeTemps.id => |={top}=> Q
-  | FreeTemps.seq f g => interp tu f $ interp tu g Q
-  | FreeTemps.par f g => |={top}=> Exists Qf Qg, interp tu f Qf ** interp tu g Qg ** (Qf -* Qg -* |={top}=> Q)
-  | FreeTemps.delete ty addr => destroy_val tu ty addr Q
-  | FreeTemps.delete_va va addr => |={top}=> addr |-> varargsR va ** Q
+  | FreeTemps.id => non_atomically $ mret ()
+  | FreeTemps.seq f g => letWP* _ := interp tu f in interp tu g
+  | FreeTemps.par f g => non_atomically $ letWP* _ := (* Mpar (interp tu f) (interp tu g) *) mret () in UPoly.mret ()
+  | FreeTemps.delete ty addr => destroy_val tu ty addr
+  | FreeTemps.delete_va va addr => non_atomically $ consume (addr |-> varargsR va)
   end.
 
 mlock Definition interp `{Σ : cpp_logic, σ : genv}
-    : translation_unit -> FreeTemps -> epred -> mpred :=
-  fix interp tu free :=
-  interp_body interp tu free.
+    : translation_unit -> FreeTemps.t -> Mglobal unit :=
+  (fix interp tu free := interp_body interp tu free).
+#[global] Arguments interp {_ _ _ _} _ free : assert.	(* set names *)
 (* END interp *)
 (* ^^ These BEGIN/END markers matter to our documentation *)
 
 Section unfold.
   Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types Q : epred.
 
   Lemma interp_unfold free tu : interp tu free = Reduce (interp_body interp tu free).
   Proof. rewrite interp.unlock. by destruct free. Qed.
@@ -1063,76 +1095,97 @@ Ltac interp_unfold :=
 
 Section temps.
   Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types Q : epred.
+  Import UPoly.
 
-  Lemma interp_intro free tu Q :
-    match free with
-    | FreeTemps.id => Q
-    | FreeTemps.seq f g => interp tu f (interp tu g Q)
-    | FreeTemps.par f g => Exists Qf Qg, interp tu f Qf ** interp tu g Qg ** (Qf -* Qg -* Q)
-    | FreeTemps.delete ty addr => destroy_val tu ty addr Q
-    | FreeTemps.delete_va va addr => addr |-> varargsR va ** Q
-    end
-    |-- interp tu free Q.
+  Lemma M_non_atomically_subset {T} (P : M.M mpredI T) :
+    P ⊆ non_atomically P.
   Proof.
-    interp_unfold. destruct free; auto using fupd_elim.
+    iIntros (K1 K2 HK) "/= PK1 !>".
+    iApply (M._frame with "[] PK1").
+    iIntros (?) "K1 !>". by iApply HK.
+  Qed.
+
+  Lemma Mglobal_non_atomically_subset {T} (P : Mglobal T) :
+    P ⊆ non_atomically P.
+  Proof.
+  Admitted.
+
+  Lemma interp_intro free tu :
+    match free return Mglobal unit with
+    | FreeTemps.id => mret ()
+    | FreeTemps.seq f g => letWP* _ := interp tu f in interp tu g
+    | FreeTemps.par f g => letWP* _ := (* Mpar (interp tu f) (interp tu g) *) mret () in mret () (* TODO *)
+    | FreeTemps.delete ty addr => destroy_val tu ty addr
+    | FreeTemps.delete_va va addr => consume (addr |-> varargsR va)
+    end
+    ⊆ interp tu free.
+  Proof.
+    rewrite ?interp_unfold.
+    destruct free; auto using Mglobal_non_atomically_subset. (*
     { (* par *) iIntros "(%Qf & %Qg & Qf & Qg & HQ)".
       iExists Qf, Qg. iFrame "Qf Qg". iIntros "!> Qf Qg".
       iApply ("HQ" with "Qf Qg"). }
-  Qed.
+  Qed. *) Admitted.
 
-  Lemma interp_intro_id tu Q : Q |-- interp tu 1 Q.
-  Proof. by rewrite -interp_intro. Qed.
+  (* TODO
+  Lemma interp_intro_id tu : mret () ⊆ interp tu 1.
+  Proof. rewrite -interp_intro. Qed.
 
-  Lemma interp_intro_seq tu f g Q :
-    interp tu f (interp tu g Q) |-- interp tu (f >*> g) Q.
+  Lemma interp_intro_seq tu f g :
+    (letWP* _ := interp tu f in interp tu g) ⊆ interp tu (f >*> g).
   Proof. by rewrite -(interp_intro (f >*> g)). Qed.
 
-  Lemma interp_intro_par tu f g Q :
-    Exists Qf Qg, interp tu f Qf ** interp tu g Qg ** (Qf -* Qg -* Q)
-    |-- interp tu (f |*| g) Q.
+  Lemma interp_intro_par tu f g :
+    (letWP* _ := Mpar (interp tu f) (interp tu g) in mret ())
+    ⊆ interp tu (f |*| g).
+  Proof. by etrans; last eapply interp_intro. Qed.
+
+  Lemma interp_intro_delete tu ty addr :
+    destroy_val tu ty addr
+    ⊆ interp tu (FreeTemps.delete ty addr).
   Proof. by rewrite -interp_intro. Qed.
 
-  Lemma interp_intro_delete tu ty addr Q :
-    destroy_val tu ty addr Q
-    |-- interp tu (FreeTemps.delete ty addr) Q.
+  Lemma interp_intro_delete_va tu va (addr : ptr) :
+    Mconsume (addr |-> varargsR va)
+    ⊆ interp tu (FreeTemps.delete_va va addr).
   Proof. by rewrite -interp_intro. Qed.
-
-  Lemma interp_intro_delete_va tu va (addr : ptr) Q :
-    addr |-> varargsR va ** Q
-    |-- interp tu (FreeTemps.delete_va va addr) Q.
-  Proof. by rewrite -interp_intro. Qed.
+  *)
 
   (** Elimination rules *)
 
+  (*
   Lemma interp_elim free tu Q :
     interp tu free Q |--
     Reduce (interp_body interp tu free Q).
   Proof. by interp_unfold. Qed.
+  *)
 
+  (*
   Lemma interp_elim_id tu Q : interp tu 1 Q |-- |={top}=> Q.
-  Proof. apply interp_elim. Qed.
+  Proof. (* apply interp_elim. Qed. *) Admitted.
 
   Lemma interp_elim_seq tu f g Q : interp tu (f >*> g) Q |-- interp tu f (interp tu g Q).
-  Proof. apply interp_elim. Qed.
+  Proof. (* apply interp_elim. Qed. *) Admitted.
 
   Lemma interp_elim_par tu f g Q :
     interp tu (f |*| g) Q
     |-- |={top}=> Exists Qf Qg, interp tu f Qf ** interp tu g Qg ** (Qf -* Qg -* |={top}=> Q).
-  Proof. apply interp_elim. Qed.
+  Proof. (* apply interp_elim. Qed. *) Admitted.
 
   Lemma interp_elim_delete tu ty addr Q :
     interp tu (FreeTemps.delete ty addr) Q
     |-- destroy_val tu ty addr Q.
-  Proof. apply interp_elim. Qed.
+  Proof. (* apply interp_elim. Qed. *) Admitted.
 
   Lemma interp_elim_delete_va tu va addr Q :
     interp tu (FreeTemps.delete_va va addr) Q
     |-- |={top}=> addr |-> varargsR va ** Q.
-  Proof. apply interp_elim. Qed.
+  Proof. (* apply interp_elim. Qed. *) Admitted.
+  *)
 
   (** Structural rules *)
 
+  (*
   Lemma interp_frame_strong tu tu' free Q Q' :
     TULE tu tu' ->
     Q -* Q' |-- interp tu free Q -* interp tu' free Q'.
@@ -1204,7 +1257,7 @@ Section temps.
     { done. }
     { by rewrite IHi. }
     { by rewrite IHi IHi0. }
-    { by rewrite !interp_unfold destroy_val_ref. }
+(*    { by rewrite !interp_unfold destroy_val_ref. } *)
     { by rewrite !(interp_unfold (_ >*> _)). }
     { rewrite (interp_unfold (_ >*> _)) (interp_unfold 1).
       by rewrite fupd_interp. }
@@ -1281,5 +1334,35 @@ Section temps.
       rewrite/AddModal. by rewrite fupd_frame_r bi.wand_elim_r fupd_interp.
     Qed.
   End proofmode.
+  *)
 End temps.
+
+#[program]
+Definition Mfree_all `{Σ : cpp_logic} {σ : genv} (tu : translation_unit) {t} (m : Mlocal t) : Mlocal t :=
+  Mexpr.mk $ {| M._wp K :=
+                 Mexpr._wp m (fun v => Mglobal._wp (interp tu v.(with_temps._free))
+                                      (fun v' =>
+                                         match v' with
+                                         | Mglobal.Normal () => K v
+                                         | Mglobal.Exception _ _ =>
+                                             match v.(with_temps._result) with
+                                             | Mexpr.Exception _ _ => False%I (* raising an exception during an exception is UB *)
+                                             | _ => K {| with_temps._result := v.(with_temps._result)
+                                                     ; with_temps._free := FreeTemps.id
+                                                     ; with_temps._canon := _ |}
+                                             end
+                                         end)) |}.
+Next Obligation.
+  simpl; intros. iIntros "K". iApply M._frame. iIntros (?).
+  iApply M._frame. iIntros (?).
+  repeat case_match; eauto.
+Qed.
+Next Obligation.
+  simpl; intros. destruct m => /=. apply M._ne => ?.
+  apply M._ne => ?.
+  repeat case_match; eauto.
+Qed.
+
+(*
 #[global] Hint Resolve interp_intro_id : core.
+*)

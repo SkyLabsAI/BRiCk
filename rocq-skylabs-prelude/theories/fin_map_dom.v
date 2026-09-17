@@ -6,7 +6,6 @@
 
 Require Export stdpp.fin_map_dom.
 Require Import skylabs.prelude.base.
-Require Import skylabs.prelude.list_numbers.
 Require Import skylabs.prelude.fin_maps.
 Require Import skylabs.prelude.fin_sets.
 
@@ -37,37 +36,3 @@ Section fin_map_dom.
     exact: lookup_weaken_elem_of_dom.
   Qed.
 End fin_map_dom.
-
-Section dom_map_seqZ.
-  (* Context `{FMD : FinMapDom Z M D}. *)
-  (* ^^ No: abstracts over [EqDecision Z] :-( *)
-  Context  `{!∀ A, Dom (M A) D, !FMap M,
-               HL : !∀ A, Lookup Z A (M A),
-               HE : !∀ A, Empty (M A),
-               HP : !∀ A, PartialAlter Z A (M A)}.
-  Context `{!Singleton Z D, !Union D, !Intersection D, !Difference D}.
-  Context `{!OMap M, !Merge M, HF : !∀ A, MapFold Z A (M A),
-            !ElemOf Z D, !Empty D, FMD : !FinMapDom Z M D}.
-
-  Import list_numbers.
-  #[local] Open Scope Z_scope.
-
-  Lemma dom_seqZ {A} (start : Z) (xs : list A) :
-    dom (map_seqZ start xs : M A) ≡ (set_rangeZ start (start + lengthZ xs) : D).
-  Proof using FMD.
-    rewrite /set_rangeZ.
-    elim: xs start => [|x xs IH] start.
-    - rewrite lengthN_nil /= Z.add_0_r rangeZ_oob //; apply dom_empty.
-    - have ? : (start < start + (lengthN xs + 1)%N) by lia.
-      rewrite [X in dom X] /= dom_insert lengthN_cons rangeZ_cons //.
-      rewrite N.add_1_r N2Z.inj_succ -Z.add_succ_comm Z.add_1_r.
-      by rewrite /= -IH.
-  Qed.
-
-  Lemma dom_seqZ_L `{!LeibnizEquiv D} {A} (start : Z) (xs : list A) :
-    dom (map_seqZ start xs : M A) = (set_rangeZ start (start + lengthN xs) : D).
-  Proof using FMD.
-    apply leibniz_equiv, dom_seqZ.
-  Qed.
-
-End dom_map_seqZ.
