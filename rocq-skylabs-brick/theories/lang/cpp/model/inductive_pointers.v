@@ -348,10 +348,228 @@ Module PTRS_IMPL <: PTRS_INTF.
     f (xs1 ++ xs2) = f (f xs1 ++ f xs2).
   Class Involutive {X} (f : X → X) :=
     invol : ∀ x, f (f x) = f x.
-  #[global] Instance raw_offset_collapse_involutive : Involutive raw_offset_collapse.
-  Admitted.
+  Lemma raw_offset_collapse_length xs :
+    length (raw_offset_collapse xs) <= length xs.
+  Proof.
+    induction xs as [|[[f|ty n|derived base|base derived|] off] xs IH] => //=;
+      rewrite /offset_seg_cons /=.
+    all: move E: (raw_offset_collapse xs) => r in IH |- *.
+    all: destruct r as [|[[f'|ty' n'|derived' base'|base' derived'|] off'] r].
+    all: simpl in IH |- *; repeat case_decide; simpl in *; lia.
+  Qed.
+
+  Lemma raw_offset_collapse_wf_tail os oss :
+    raw_offset_collapse (os :: oss) = os :: oss ->
+    raw_offset_collapse oss = oss.
+  Proof.
+    rewrite /= /offset_seg_cons.
+    move E: (raw_offset_collapse oss) => r.
+    destruct os as [[f|ty n|derived base|base derived|] off];
+      destruct r as [|[[f'|ty' n'|derived' base'|base' derived'|] off'] r] => /=;
+      repeat case_decide; simplify_eq/=;
+      intros Hx; try solve [naive_solver].
+    all: have B := raw_offset_collapse_length oss; rewrite E in B; simpl in B.
+    all: have L := f_equal (@length _) Hx; simpl in L; lia.
+  Qed.
+
+  #[global] Instance raw_offset_collapse_involutive :
+    Involutive raw_offset_collapse.
+  Proof.
+    intros xs.
+    induction xs as [|[[f|ty n|derived base|base derived|] off] xs IH] => //=.
+    - by f_equal.
+    - rewrite /offset_seg_cons /=.
+      move E: (raw_offset_collapse xs) => ys.
+      rewrite E in IH |- *.
+      destruct ys as [|[[f'|ty' n'|derived' base'|base' derived'|] off'] ys] => //=.
+      all: repeat case_decide; simplify_eq/=; try congruence; try lia.
+      all: try have IH' := raw_offset_collapse_wf_tail _ _ IH.
+      all: repeat case_decide; simplify_eq/=; rewrite ?IH ?IH' //; try lia.
+      all: try have IHtail : raw_offset_collapse ys = ys :=
+        raw_offset_collapse_wf_tail _ _ IH.
+      all: repeat case_decide; simplify_eq/=; rewrite ?IHtail //; try lia.
+      apply (raw_offset_collapse_wf_tail (o_sub_ ty' n', off') ys).
+      rewrite /= /offset_seg_cons decide_False //.
+      destruct H0; subst; simpl; f_equal; lia.
+      have IHtail : raw_offset_collapse ys = ys.
+      { apply (raw_offset_collapse_wf_tail (o_sub_ ty' n', off') ys).
+        rewrite /= /offset_seg_cons decide_False //. }
+      rewrite IHtail in IH |- *.
+      destruct ys as [|[[f''|ty'' n''|derived'' base''|base'' derived''|] off''] ys].
+      all: simpl in IH |- *.
+      all: try done.
+      repeat case_decide; simplify_eq/=; try done.
+      all: exfalso; first
+        [ have L := f_equal (@length _) IH; simpl in L; lia
+        | have L := f_equal (@length _) H6; simpl in L; lia ].
+    - by f_equal.
+    - rewrite /offset_seg_cons /=.
+      move E: (raw_offset_collapse xs) => ys in IH |- *.
+      destruct ys as [|[[f'|ty' n'|derived' base'|base' derived'|] off'] ys].
+      all: simpl in IH |- *.
+      all: repeat case_decide; simplify_eq/=; try congruence.
+      { have B := raw_offset_collapse_length ys.
+        rewrite IH in B; simpl in B; lia. }
+      { have IHtail : raw_offset_collapse ys = ys.
+        { apply (raw_offset_collapse_wf_tail (o_sub_ ty' n', off') ys).
+          rewrite /= /offset_seg_cons decide_False //. }
+        rewrite IHtail in IH |- *.
+        by rewrite IH. }
+      rewrite decide_False; [rewrite IH|done].
+      done.
+      have IHtail : raw_offset_collapse ys = ys.
+      { apply (raw_offset_collapse_wf_tail (o_derived_ base' derived', off') ys).
+        rewrite /= /offset_seg_cons. exact IH. }
+      rewrite IHtail in IH |- *.
+      rewrite IH.
+      all: done.
+  Qed.
+  Lemma raw_offset_collapse_wf_singleton os oss :
+    raw_offset_collapse (os :: oss) = os :: oss ->
+    raw_offset_collapse [os] = [os].
+  Proof.
+    destruct os as [[f|ty n|derived base|base derived|] off] => /=;
+      rewrite /offset_seg_cons /=;
+      repeat case_decide; simplify_eq/=; try done.
+    intros Hx.
+    have B := raw_offset_collapse_length oss.
+    have L := f_equal (@length _) Hx.
+    simpl in L; lia.
+  Qed.
+
+  Lemma offset_seg_cons_assoc os1 os2 zs :
+    raw_offset_collapse [os2] = [os2] ->
+    raw_offset_collapse zs = zs ->
+    foldr offset_seg_cons zs (offset_seg_cons os1 [os2]) =
+      offset_seg_cons os1 (offset_seg_cons os2 zs).
+  Proof.
+    intros H2 Hzs.
+    destruct os1 as [[f1|ty1 n1|derived1 base1|base1 derived1|] off1];
+      destruct os2 as [[f2|ty2 n2|derived2 base2|base2 derived2|] off2];
+      destruct zs as [|[[f3|ty3 n3|derived3 base3|base3 derived3|] off3] zs];
+      rewrite /= /offset_seg_cons /= in H2 Hzs |- *;
+      repeat case_decide; simplify_eq/=; try done; try lia.
+    all: repeat (case_decide; simplify_eq/=); try done; try lia.
+    - destruct H; subst.
+      have B := raw_offset_collapse_length zs.
+      rewrite Hzs in B. simpl in B. lia.
+    - f_equal.
+      f_equal; try lia.
+      f_equal; lia.
+    - destruct H4 as [Hn12 Hoff12].
+      destruct H6 as [Hn32 Hoff32].
+      have En : n1 = n3 by lia.
+      have Eoff : off1 = off3 by lia.
+      subst n1 off1.
+      have HW : raw_offset_collapse ((o_sub_ ty3 n3, off3) :: zs) =
+          (o_sub_ ty3 n3, off3) :: zs.
+      { rewrite /= /offset_seg_cons decide_False; [exact Hzs|done]. }
+      have HT := raw_offset_collapse_wf_tail _ _ HW.
+      rewrite HT in Hzs. symmetry. exact Hzs.
+    - f_equal.
+      f_equal; try lia.
+      f_equal; lia.
+    - have HW : raw_offset_collapse ((o_sub_ ty3 n3, off3) :: zs) =
+          (o_sub_ ty3 n3, off3) :: zs.
+      { rewrite /= /offset_seg_cons decide_False; [exact Hzs|done]. }
+      have HT := raw_offset_collapse_wf_tail _ _ HW.
+      destruct zs as [|[[f|ty n|derived base|base derived|] off] zs].
+      all: rewrite /= /offset_seg_cons /= in HT HW |- *.
+      all: repeat (case_decide; simplify_eq/=); try done; try lia.
+      all: try solve [repeat f_equal; lia].
+      destruct H7; subst.
+      have B := raw_offset_collapse_length zs.
+      rewrite HT in B. simpl in B. lia.
+      rewrite HT in HW.
+      rewrite decide_False in HW; [|congruence].
+      case_decide; simplify_eq/=.
+      have L := f_equal (@length _) HW. simpl in L. lia.
+      have L := f_equal (@length _) H11. simpl in L. lia.
+      rewrite HT in HW.
+      rewrite decide_False in HW; [|congruence].
+      case_decide; simplify_eq/=.
+      all: try match goal with
+        | Hx : ?xs = _ :: ?xs |- _ =>
+            have L := f_equal (@length _) Hx; simpl in L; lia
+        | Hx : ?xs = _ :: _ :: ?xs |- _ =>
+            have L := f_equal (@length _) Hx; simpl in L; lia
+        end.
+    - f_equal.
+      f_equal; try lia.
+      f_equal; lia.
+  Qed.
+
+  Lemma offset_seg_cons_cons os1 os2 xs :
+    isnt os1 (o_invalid_, _) ->
+    offset_seg_cons os1 (os2 :: xs) =
+      offset_seg_cons os1 [os2] ++ xs.
+  Proof.
+    destruct os1 as [[f1|ty1 n1|derived1 base1|base1 derived1|] off1];
+      destruct os2 as [[f2|ty2 n2|derived2 base2|base2 derived2|] off2];
+      rewrite /offset_seg_cons /=;
+      repeat case_decide; simplify_eq/=; done.
+  Qed.
+
+  Lemma offset_seg_cons_foldr os xs zs :
+    raw_offset_collapse xs = xs ->
+    raw_offset_collapse zs = zs ->
+    foldr offset_seg_cons zs (offset_seg_cons os xs) =
+      offset_seg_cons os (foldr offset_seg_cons zs xs).
+  Proof.
+    intros Hxs Hzs.
+    destruct xs as [|os2 xs].
+    { destruct os as [[f|ty n|derived base|base derived|] off];
+        rewrite /offset_seg_cons /=;
+        repeat case_decide; simplify_eq/=; rewrite ?decide_False //. }
+    have H2 : raw_offset_collapse [os2] = [os2] :=
+      raw_offset_collapse_wf_singleton _ _ Hxs.
+    have Htail : raw_offset_collapse xs = xs :=
+      raw_offset_collapse_wf_tail _ _ Hxs.
+    have ER : foldr offset_seg_cons zs xs =
+        raw_offset_collapse (xs ++ zs).
+    { unfold raw_offset_collapse in Hzs |- *. by rewrite foldr_app Hzs. }
+    have HR : raw_offset_collapse (foldr offset_seg_cons zs xs) =
+        foldr offset_seg_cons zs xs.
+    { rewrite ER. apply invol. }
+    destruct os as [[f|ty n|derived base|base derived|] off].
+    all: try rewrite offset_seg_cons_cons // foldr_app.
+    rewrite /offset_seg_cons //.
+    change (foldr offset_seg_cons (foldr offset_seg_cons zs xs)
+      (offset_seg_cons (o_sub_ ty n, off) [os2]) =
+      offset_seg_cons (o_sub_ ty n, off)
+        (offset_seg_cons os2 (foldr offset_seg_cons zs xs))).
+    exact (offset_seg_cons_assoc _ _ _ H2 HR).
+    change (foldr offset_seg_cons (foldr offset_seg_cons zs xs)
+      (offset_seg_cons (o_derived_ base derived, off) [os2]) =
+      offset_seg_cons (o_derived_ base derived, off)
+        (offset_seg_cons os2 (foldr offset_seg_cons zs xs))).
+    exact (offset_seg_cons_assoc _ _ _ H2 HR).
+    rewrite /offset_seg_cons //.
+  Qed.
+
+  Lemma raw_offset_collapse_foldr xs zs :
+    raw_offset_collapse zs = zs ->
+    foldr offset_seg_cons zs (raw_offset_collapse xs) =
+      foldr offset_seg_cons zs xs.
+  Proof.
+    intros Hzs.
+    induction xs as [|os xs IH] => //=.
+    rewrite offset_seg_cons_foldr.
+    - by rewrite IH.
+    - apply invol.
+    - exact Hzs.
+  Qed.
+
   #[global] Instance raw_offset_collapse_invol_app : InvolApp raw_offset_collapse.
-  Admitted.
+  Proof.
+    intros xs1 xs2.
+    rewrite /raw_offset_collapse !foldr_app.
+    change (foldr offset_seg_cons (raw_offset_collapse xs2) xs1 =
+      foldr offset_seg_cons (raw_offset_collapse (raw_offset_collapse xs2))
+        (raw_offset_collapse xs1)).
+    rewrite invol.
+    symmetry. apply raw_offset_collapse_foldr. apply invol.
+  Qed.
 
   Program Definition __o_dot : offset → offset → offset :=
     λ o1 o2, (raw_offset_merge (proj1_sig o1) (proj1_sig o2)) ↾ _.
@@ -464,9 +682,17 @@ Module PTRS_IMPL <: PTRS_INTF.
     Proof. done. Qed.
 
     Lemma global_ptr_nonnull_addr tu o : ptr_vaddr (global_ptr tu o) <> Some 0%N.
-    Proof. rewrite ptr_vaddr_global_ptr. (* done. Qed. *) Admitted. (* TODO *)
+    Proof.
+      rewrite ptr_vaddr_global_ptr.
+      intros [= H].
+      exact (global_ptr_encode_vaddr_nonnull o _ eq_refl H).
+    Qed.
     Lemma global_ptr_nonnull_aid tu o : ptr_alloc_id (global_ptr tu o) <> Some null_alloc_id.
-    Proof. rewrite ptr_alloc_id_global_ptr. (* done. Qed. *) Admitted. (* TODO *)
+    Proof.
+      rewrite ptr_alloc_id_global_ptr.
+      intros [= H].
+      exact (global_ptr_encode_vaddr_nonnull o _ eq_refl H).
+    Qed.
 
     #[global] Instance global_ptr_addr_inj tu : Inj (=) (=) (λ o, ptr_vaddr (global_ptr tu o)).
     Proof. intros ??. rewrite !ptr_vaddr_global_ptr. by intros ?%(inj _)%(inj _). Qed.

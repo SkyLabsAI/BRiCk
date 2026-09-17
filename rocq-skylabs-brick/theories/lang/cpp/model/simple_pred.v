@@ -1290,7 +1290,17 @@ Module SimpleCPP.
     (* TODO: the [Notation] connects to the wrong definition *)
     #[local] Theorem tptsto_reference_to : forall p ty q (v : val),
       Observe (reference_to ty p) (tptsto ty q p v).
-    Proof. Admitted.
+    Proof.
+      intros. apply: observe_intro_persistent.
+      iIntros "H".
+      iDestruct (observe (type_ptr ty p) with "H") as
+        "(%Hnn & %Hal & _ & #Hs & _)".
+      rewrite /reference_to.
+      iFrame (Hnn Hal).
+      iSplit.
+      { by iApply strict_valid_valid. }
+      case_match; done.
+    Qed.
 
   End with_cpp.
 
