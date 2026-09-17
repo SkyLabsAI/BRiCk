@@ -544,6 +544,10 @@ Module Type PTRS_MIXIN (Import P : PTRS_INTF_MINIMAL).
       ptr_vaddr p1 = Some va -> ptr_vaddr p2 = Some va -> same_address p1 p2.
     Proof. rewrite same_address_eq; exact: same_property_intro. Qed.
 
+    Lemma same_address_partial_reflexive p :
+      is_Some (ptr_vaddr p) -> same_address p p.
+    Proof. by rewrite same_address_eq -same_property_reflexive_equiv. Qed.
+
     Lemma same_address_nullptr_nullptr : same_address nullptr nullptr.
     Proof. have ? := ptr_vaddr_nullptr. exact: same_address_intro. Qed.
 
@@ -573,7 +577,7 @@ Module Type PTRS_MIXIN (Import P : PTRS_INTF_MINIMAL).
       same_address_bool p p = true.
     Proof.
       move=> Hsm. rewrite /same_address_bool bool_decide_true; first done.
-      by rewrite same_address_eq -same_property_reflexive_equiv.
+      exact: same_address_partial_reflexive.
     Qed.
 
     (** ** [same_alloc] lemmas *)
@@ -633,6 +637,18 @@ Module Type PTRS_MIXIN (Import P : PTRS_INTF_MINIMAL).
       size_of σ ty = Some sz -> (sz > 0)%N ->
       same_address (p ,, o_sub _ ty n1) (p ,, o_sub _ ty n2) -> n1 = n2.
     Proof. rewrite same_address_eq. exact: ptr_vaddr_o_sub_eq. Qed.
+
+    (** Equality of pointers into a positive-sized array is equality of indices,
+        provided the first pointer has an address. *)
+    Lemma o_sub_eq_inj (p : ptr) ty i j sz :
+      is_Some (ptr_vaddr (p .[ ty ! i ])) ->
+      size_of σ ty = Some sz -> (0 < sz)%N ->
+      p .[ ty ! i ] = p .[ ty ! j ] <-> i = j.
+    Proof.
+      intros; split; last naive_solver; intros E.
+      apply /(same_address_o_sub_eq p); [done|lia|].
+      rewrite -{}E. exact /same_address_partial_reflexive.
+    Qed.
 
     (** [aligned_ptr] states that the pointer (if it exists in memory) has
     the given alignment.
