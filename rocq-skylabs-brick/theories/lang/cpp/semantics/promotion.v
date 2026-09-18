@@ -40,6 +40,25 @@ Definition representation_type (tu : translation_unit) (ty : type) : type :=
   | ty => ty
   end.
 
+Lemma drop_qualifiers_underlying_type tu nm rty :
+  underlying_type tu nm = Some rty ->
+  drop_qualifiers rty = rty.
+Proof.
+  rewrite /underlying_type.
+  case: (tu.(types) !! nm) => [[]|] // ty _ [<-].
+  by rewrite drop_qualifiers_idemp.
+Qed.
+
+Lemma drop_qualifiers_representation_type tu ty :
+  let rty := representation_type tu ty in
+  drop_qualifiers rty = rty.
+Proof.
+  rewrite /representation_type. destruct (drop_qualifiers ty) eqn:E => //.
+  2: { by rewrite -E drop_qualifiers_idemp. }
+  rewrite /default/id. case E': underlying_type => [uty|//].
+  exact: drop_qualifiers_underlying_type.
+Qed.
+
 Succeed Example underlying_int : forall tu, representation_type tu Tint = Tint :=
   ltac:(compute; auto).
 Succeed Example underlying_int : forall tu, representation_type tu (Tconst Tint) = Tint :=
@@ -115,15 +134,16 @@ Fixpoint first_representable (info : abi.t) (ty : type) (ls : list type) : optio
  *)
 Definition promote_integral (tu : translation_unit) (ty : type) : option type :=
   let info := tu.(abi) in
-  match representation_type tu ty with
+  let rty := representation_type tu ty in
+  match rty with
     (* signed char or short can be converted to int *)
   | Tschar
   | Tshort => Some Tint
     (* unsigned char or unsigned short can be converted to int if it can hold its entire
         value range, and unsigned int otherwise *)
-  | Tuchar as ty
-  | Tushort as ty => Some $ if fully_representable info ty Tint then Tint else Tuint
-  | Tnum _ _ as ty => Some ty
+  | Tuchar
+  | Tushort => Some $ if fully_representable info rty Tint then Tint else Tuint
+  | Tnum _ _ => Some rty
   | Tchar =>
       Some $ let rty := if info.(abi.char_signed) is Signed then Tschar else Tuchar in
              if fully_representable info rty Tint then Tint else Tuint
@@ -137,7 +157,7 @@ Definition promote_integral (tu : translation_unit) (ty : type) : option type :=
        unsigned int, long, unsigned long, long long,
        unsigned long long (since C++11) *)
 
-      first_representable info ty [Tint;Tuint;Tlong;Tulong;Tlonglong;Tulonglong]
+      first_representable info rty [Tint;Tuint;Tlong;Tulong;Tlonglong;Tulonglong]
   | Tenum nm => None
       (* unreachable because of [underlying_type] and because the
           underlying type of an `enum` must be a fundamental type. *)
