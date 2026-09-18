@@ -157,7 +157,7 @@ Definition promote_integral (tu : translation_unit) (ty : type) : option type :=
        unsigned int, long, unsigned long, long long,
        unsigned long long (since C++11) *)
 
-      first_representable info ty [Tint;Tuint;Tlong;Tulong;Tlonglong;Tulonglong]
+      first_representable info rty [Tint;Tuint;Tlong;Tulong;Tlonglong;Tulonglong]
   | Tenum nm => None
       (* unreachable because of [underlying_type] and because the
           underlying type of an `enum` must be a fundamental type. *)
