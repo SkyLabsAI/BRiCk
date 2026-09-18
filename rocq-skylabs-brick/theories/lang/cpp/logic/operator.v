@@ -13,52 +13,6 @@ Require Import skylabs.lang.cpp.logic.pred.
 
 Implicit Type (σ : genv).
 
-(** [binop_needs_memory lhsT rhsT] is [true] exactly on the operand types at
-    which [eval_binop_impure] has an introduction rule, i.e. those where
-    evaluating the operator has to consult the abstract machine state.
-
-    Every rule for [eval_binop_impure] -- [eval_ptr_eq], [eval_ptr_neq],
-    [eval_ptr_{le,lt,ge,gt}], [eval_ptr_int_add], [eval_int_ptr_add],
-    [eval_ptr_int_sub] and [eval_ptr_ptr_sub] -- has an *object pointer*
-    ([Tptr]) on at least one side, and no rule for [eval_binop_pure] does.
-    Note that [Tnullptr] is deliberately *not* included: [eval_eq_nullptr] and
-    [eval_neq_nullptr] are pure. This is why we test [unptr] rather than
-    [is_pointer].
-
-    NOTE: this predicate is what makes [eval_binop] a case split rather than a
-          disjunction, so it must be kept in sync with the introduction rules
-          for [eval_binop_impure] below. All of them live in this file.
- *)
-Definition binop_needs_memory (lhsT rhsT : type) : bool :=
-  isSome (unptr lhsT) || isSome (unptr rhsT).
-
-(** Discharging [binop_needs_memory _ _ = false]. On concrete types this is
-    [reflexivity]; the lemmas below cover the type variables that arise in
-    generic rules. *)
-Lemma binop_needs_memory_unptr lhsT rhsT :
-  unptr lhsT = None -> unptr rhsT = None -> binop_needs_memory lhsT rhsT = false.
-Proof. by rewrite /binop_needs_memory => -> ->. Qed.
-
-Lemma unptr_supports_arith ty : supports_arith ty -> unptr ty = None.
-Proof.
-  rewrite /unptr; destruct 1 as [Hty]; move: Hty; rewrite /arith_as.
-  by destruct (drop_qualifiers ty).
-Qed.
-
-Lemma unptr_supports_rel ty : supports_rel ty -> unptr ty = None.
-Proof.
-  rewrite /unptr; destruct 1 as [[Hty|Hty]]; last by destruct (drop_qualifiers ty).
-  by rewrite -/(unptr ty) (unptr_supports_arith _ Hty).
-Qed.
-
-Lemma binop_needs_memory_supports_rel lhsT rhsT :
-  supports_rel lhsT -> supports_rel rhsT -> binop_needs_memory lhsT rhsT = false.
-Proof. eauto using binop_needs_memory_unptr, unptr_supports_rel. Qed.
-
-Lemma binop_needs_memory_supports_arith lhsT rhsT :
-  supports_arith lhsT -> supports_arith rhsT -> binop_needs_memory lhsT rhsT = false.
-Proof. eauto using binop_needs_memory_unptr, unptr_supports_arith. Qed.
-
 (** Pointer [p'] is not at the beginning of a block. *)
 Definition non_beginning_ptr `{cpp_logic} {σ} p' : mpred :=
   ∃ p o, [| p' = p ,, o /\
@@ -225,11 +179,72 @@ Section comparable.
   Qed.
 End comparable.
 
+(** ** Alignment is preserved by pointer arithmetic
+
+    [alignof(T)] divides [sizeof(T)] ([align_of_size_of']), so offsetting a
+    [ty]-aligned pointer by whole [ty] elements preserves [ty]-alignment.
+    Running off the object is ruled out by [valid_ptr] on the *result*, which
+    the rules below already require. This is what keeps the typed premises of
+    those rules from costing their callers anything for [p + n]. *)
+Section aligned_sub.
+  Context `{cpp_logic} {σ}.
+
+  Lemma aligned_ptr_ty_sub (p : ptr) (n : Z) ty :
+    is_Some (size_of σ ty) ->
+    [| aligned_ptr_ty ty p |] ∗ valid_ptr (p ,, _sub ty n)
+    ⊢ [| aligned_ptr_ty ty (p ,, _sub ty n) |].
+  Proof.
+    intros [sz Hsz].
+    destruct (align_of_size_of' _ _ Hsz) as (al & Hal & Hal0 & Hdvd).
+    iIntros "[%Hp V]".
+    destruct (ptr_vaddr (p ,, _sub ty n)) as [va'|] eqn:Hva'.
+    2: { iPureIntro. exists al. split; first done. by right. }
+    iDestruct (offset_inv_pinned_ptr_pure (_sub ty n) (Z.of_N sz * n) va' p
+                 (eval_o_sub' sz Hsz) Hva' with "V") as %[Hge Hpva].
+    iPureIntro. exists al. split; first done. left. exists va'. split; first done.
+    (* [al] divides the base address and [Z.of_N sz * n], hence their sum. *)
+    move: Hp => [al2 [Hal2 Hpal]].
+    have Halq : al2 = al by congruence.
+    rewrite Halq in Hpal.
+    destruct Hpal as [[va [Hva Hdva]]|Hnone]; last by rewrite Hnone in Hpva.
+    rewrite Hpva in Hva. injection Hva as Hva. rewrite -Hva in Hdva.
+    have Hz : (Z.of_N al | Z.of_N va')%Z.
+    { have -> : (Z.of_N va' = Z.of_N (Z.to_N (Z.of_N va' - Z.of_N sz * n))
+                             + Z.of_N sz * n)%Z by rewrite Z2N.id//; lia.
+      apply Z.divide_add_r.
+      - exact: N2Z_inj_divide.
+      - apply Z.divide_mul_l. exact: N2Z_inj_divide. }
+    have Hpos : (0 < Z.of_N al)%Z by lia.
+    have Hnn : (0 <= Z.of_N va')%Z by lia.
+    move: (Z2N_inj_divide _ _ Hpos Hnn Hz). by rewrite !N2Z.id.
+  Qed.
+
+  (** Hence the [has_type] the result needs. *)
+  Lemma has_type_ptr_sub (p : ptr) (n : Z) ty :
+    is_Some (size_of σ ty) ->
+    has_type (Vptr p) (Tptr ty) ∗ valid_ptr (p ,, _sub ty n)
+    ⊢ has_type (Vptr (p ,, _sub ty n)) (Tptr ty).
+  Proof.
+    intros Hsz. rewrite !has_type_ptr'.
+    iIntros "[[_ #A] #V]". iFrame "V".
+    by iApply (aligned_ptr_ty_sub p n ty Hsz); iFrame "A V".
+  Qed.
+  Lemma has_type_ptr_valid (p : ptr) ty : has_type (Vptr p) (Tptr ty) ⊢ valid_ptr p.
+  Proof. by rewrite has_type_ptr' bi.sep_elim_l. Qed.
+End aligned_sub.
+
 (** ** Skeletons for the rules of the impure fragment
 
     These are parameterized by the evaluation relation so that the interface
     [EVAL_BINOP_IMPURE] below and its instance in [lang/cpp/model/operator.v]
-    state the same rules rather than two hand-kept-in-sync copies. *)
+    state the same rules rather than two hand-kept-in-sync copies.
+
+    The operands are constrained by [has_type], not merely [valid_ptr]: for a
+    pointer that is [valid_ptr p ** [| aligned_ptr_ty ty p |]] ([has_type_ptr']),
+    and for an integer it is the [Tnum] bound. Those premises are what make
+    [eval_binop_impure_well_typed] true; without them it is refutable, see
+    [operand_not_well_typed] in [lang/cpp/model/operator.v] and
+    SkyLabsAI/auto#468. *)
 Section skeletons.
   Context `{cpp_logic} {σ}.
 
@@ -237,16 +252,25 @@ Section skeletons.
     (translation_unit -> BinOp -> type -> type -> type -> val -> val -> val -> mpred)
     (only parsing).
 
+  (** Operands and result are values of the types they are given. *)
+  Definition eval_binop_impure_well_typed_op (E : EVAL) tu : Prop :=
+    forall bo ty1 ty2 ty3 v1 v2 v3,
+      E tu bo ty1 ty2 ty3 v1 v2 v3 ⊢
+      has_type v1 ty1 ∗ has_type v2 ty2 ∗ has_type v3 ty3.
+
   (** Skeleton for [Beq] and [Bneq] axioms on pointers. *)
   Definition eval_ptr_eq_cmp_op (E : EVAL) tu (bo : BinOp) ty p1 p2 res : mpred :=
     E tu bo
       (Tptr ty) (Tptr ty) Tbool
       (Vptr p1) (Vptr p2) (Vbool res) ∗ True.
 
-  (** Skeleton for [Ble, Blt, Bge, Bgt] axioms on pointers. *)
-  Definition eval_ptr_ord_cmp_op (E : EVAL) tu (bo : BinOp) (f : vaddr -> vaddr -> bool) : Prop :=
+  (** Skeleton for the comparison axioms on pointers. [P] is the comparability
+      premise: [ptr_comparable] for [Beq], [ptr_ord_comparable _ _ f] for the
+      ordering operators. *)
+  Definition eval_ptr_cmp_op (E : EVAL) tu (bo : BinOp)
+      (P : ptr -> ptr -> bool -> mpred) : Prop :=
     forall ty p1 p2 res,
-      ptr_ord_comparable p1 p2 f res ⊢
+      P p1 p2 res ∗ has_type (Vptr p1) (Tptr ty) ∗ has_type (Vptr p2) (Tptr ty) ⊢
       E tu bo
         (Tptr ty) (Tptr ty) Tbool
         (Vptr p1) (Vptr p2) (Vbool res) ∗ True.
@@ -258,13 +282,15 @@ Section skeletons.
   these operators.
   https://eel.is/c++draft/basic.compound#3.1 *)
 
-  (** Skeletons for ptr/int operators. *)
+  (** Skeletons for ptr/int operators. The result's [has_type] is not demanded:
+      it follows from the operand's by [has_type_ptr_sub]. *)
 
   Definition eval_ptr_int_op (E : EVAL) tu (bo : BinOp) (f : Z -> Z) : Prop :=
     forall w s p1 p2 o ty,
       is_Some (size_of σ ty) ->
       p2 = p1 ,, _sub ty (f o) ->
-      valid_ptr p1 ∧ valid_ptr p2 ⊢
+      has_type (Vptr p1) (Tptr ty) ∗ has_type (Vint o) (Tnum w s) ∗
+      valid_ptr p2 ⊢
       E tu bo
                 (Tptr ty) (Tnum w s) (Tptr ty)
                 (Vptr p1)     (Vint o)   (Vptr p2).
@@ -273,12 +299,14 @@ Section skeletons.
     forall w s p1 p2 o ty,
       is_Some (size_of σ ty) ->
       p2 = p1 ,, _sub ty (f o) ->
-      valid_ptr p1 ∧ valid_ptr p2 ⊢
+      has_type (Vint o) (Tnum w s) ∗ has_type (Vptr p1) (Tptr ty) ∗
+      valid_ptr p2 ⊢
       E tu bo
                 (Tnum w s) (Tptr ty) (Tptr ty)
                 (Vint o)   (Vptr p1)     (Vptr p2).
 
-  (** Skeleton for the ptr/ptr subtraction axiom. *)
+  (** Skeleton for the ptr/ptr subtraction axiom. The result's typing comes
+      from the no-overflow side condition the rule already carried. *)
   Definition eval_ptr_ptr_sub_op (E : EVAL) tu : Prop :=
     forall w p1 p2 o1 o2 base ty,
       is_Some (size_of σ ty) ->
@@ -286,7 +314,7 @@ Section skeletons.
       p2 = base ,, _sub ty o2 ->
       (* Side condition to prevent overflow; needed per https://eel.is/c++draft/expr.add#note-1 *)
       has_type_prop (Vint (o1 - o2)) (Tnum w Signed) ->
-      valid_ptr p1 ∧ valid_ptr p2 ⊢
+      has_type (Vptr p1) (Tptr ty) ∗ has_type (Vptr p2) (Tptr ty) ⊢
       E tu Bsub
                 (Tptr ty) (Tptr ty) (Tnum w Signed)
                 (Vptr p1)     (Vptr p2)     (Vint (o1 - o2)).
@@ -300,17 +328,14 @@ End skeletons.
     an instance, and it is that instance -- checked by Coq against this
     signature -- which establishes that the rules are jointly satisfiable.
 
-    That check is not decoration. [eval_binop_impure_well_typed] used to sit
-    alongside these rules, asserting that [eval_binop_impure] relates operands
-    to types they are values of, and it was refutable from them
-    (SkyLabsAI/auto#468): nothing here constrains the integer operand of
-    [eval_ptr_int_op] against its [Tnum], nor [ty] against the pointers. Any
-    rule added below must be provable of the model, or the model must be
-    extended along with it.
+    That check is not decoration. [eval_binop_impure_well_typed] was removed
+    (SkyLabsAI/BRiCk#321) because it was refutable from rules whose premises
+    only ever established validity, never the operands' types
+    (SkyLabsAI/auto#468). It is back here because the premises now establish
+    them.
 
-    NOTE: every rule here has an *object pointer* ([Tptr]) on at least one
-          side. [binop_needs_memory] above relies on that; a rule that broke
-          it would make [eval_binop] silently drop this fragment. *)
+    A rule added here must be provable of that instance, or the instance must
+    be extended along with it. *)
 Module Type EVAL_BINOP_IMPURE.
   Parameter eval_binop_impure : forall `{cpp_logic} {σ},
       translation_unit -> BinOp -> forall (lhsT rhsT resT : type) (lhs rhs res : val), mpred.
@@ -321,61 +346,32 @@ Module Type EVAL_BINOP_IMPURE.
 
     #[local] Notation EBI := (@eval_binop_impure _ _ _ _) (only parsing).
 
-    Axiom eval_ptr_eq : forall ty p1 p2 res,
-        ptr_comparable p1 p2 res
-      ⊢ Unfold (@eval_ptr_eq_cmp_op) (eval_ptr_eq_cmp_op EBI tu Beq ty p1 p2 res).
+    Axiom eval_binop_impure_well_typed :
+      Unfold (@eval_binop_impure_well_typed_op) (eval_binop_impure_well_typed_op EBI tu).
+
+    Axiom eval_ptr_eq :
+      Unfold (@eval_ptr_cmp_op) (eval_ptr_cmp_op EBI tu Beq ptr_comparable).
 
     Axiom eval_ptr_neq : forall ty p1 p2 res,
       Unfold (@eval_ptr_eq_cmp_op)
         (eval_ptr_eq_cmp_op EBI tu Beq ty p1 p2 res
       ⊢ eval_ptr_eq_cmp_op EBI tu Bneq ty p1 p2 (negb res)).
 
-    Axiom eval_ptr_le :
-      Unfold (@eval_ptr_ord_cmp_op) (eval_ptr_ord_cmp_op EBI tu Ble N.leb).
-    Axiom eval_ptr_lt :
-      Unfold (@eval_ptr_ord_cmp_op) (eval_ptr_ord_cmp_op EBI tu Blt N.ltb).
-    Axiom eval_ptr_ge :
-      Unfold (@eval_ptr_ord_cmp_op) (eval_ptr_ord_cmp_op EBI tu Bge (fun x y => y <=? x)%N).
-    Axiom eval_ptr_gt :
-      Unfold (@eval_ptr_ord_cmp_op) (eval_ptr_ord_cmp_op EBI tu Bgt (fun x y => y <? x)%N).
+    Axiom eval_ptr_le : Unfold (@eval_ptr_cmp_op)
+      (eval_ptr_cmp_op EBI tu Ble (fun p1 p2 r => ptr_ord_comparable p1 p2 N.leb r)).
+    Axiom eval_ptr_lt : Unfold (@eval_ptr_cmp_op)
+      (eval_ptr_cmp_op EBI tu Blt (fun p1 p2 r => ptr_ord_comparable p1 p2 N.ltb r)).
+    Axiom eval_ptr_ge : Unfold (@eval_ptr_cmp_op)
+      (eval_ptr_cmp_op EBI tu Bge (fun p1 p2 r => ptr_ord_comparable p1 p2 (fun x y => y <=? x)%N r)).
+    Axiom eval_ptr_gt : Unfold (@eval_ptr_cmp_op)
+      (eval_ptr_cmp_op EBI tu Bgt (fun p1 p2 r => ptr_ord_comparable p1 p2 (fun x y => y <? x)%N r)).
 
-
-  (**
-  lhs + rhs (https://eel.is/c++draft/expr.add#1): one of rhs or lhs is a
-  pointer to a completely-defined object type
-  (https://eel.is/c++draft/basic.types#general-5), the other has integral or
-  unscoped enumeration type. In this case, the result type has the type of
-  the pointer.
-
-  Liveness note: when adding int [i] to pointer [p], the standard demands
-  that [p] points to an array (https://eel.is/c++draft/expr.add#4.2),
-  With https://eel.is/c++draft/basic.compound#3.1 and
-  https://eel.is/c++draft/basic.memobj#basic.stc.general-4, that implies that
-  [p] has not been deallocated.
-   *)
     Axiom eval_ptr_int_add :
       Unfold (@eval_ptr_int_op) (eval_ptr_int_op EBI tu Badd (fun x => x)).
-
     Axiom eval_int_ptr_add :
       Unfold (@eval_int_ptr_op) (eval_int_ptr_op EBI tu Badd (fun x => x)).
-
-  (**
-  lhs - rhs (https://eel.is/c++draft/expr.add#2.3): lhs is a pointer to
-  completely-defined object type
-  (https://eel.is/c++draft/basic.types#general-5), rhs has integral or
-  unscoped enumeration type. In this case, the result type has the type of
-  the pointer.
-  Liveness note: as above (https://eel.is/c++draft/expr.add#4).
-  *)
     Axiom eval_ptr_int_sub :
       Unfold (@eval_ptr_int_op) (eval_ptr_int_op EBI tu Bsub Z.opp).
-
-  (**
-  lhs - rhs (https://eel.is/c++draft/expr.add#2.2): both lhs and rhs must be
-  pointers to the same completely-defined object types
-  (https://eel.is/c++draft/basic.types#general-5).
-  Liveness note: as above (https://eel.is/c++draft/expr.add#5.2).
-  *)
     Axiom eval_ptr_ptr_sub :
       Unfold (@eval_ptr_ptr_sub_op) (eval_ptr_ptr_sub_op EBI tu).
   End axioms.
@@ -389,55 +385,61 @@ Section derived.
 
   #[local] Notation EBI := (@eval_binop_impure _ _ _ _) (only parsing).
 
+  (** [has_type (Vptr nullptr) (Tptr ty)] is a premise rather than a side
+      condition: it fails when [ty] has no alignment, e.g. an incomplete type. *)
   Lemma eval_ptr_nullptr_eq_l {ty vp res} :
     (is_Some (ptr_vaddr vp) -> bool_decide (vp = nullptr) = res) ->
-    valid_ptr vp ⊢ Unfold (@eval_ptr_eq_cmp_op) (eval_ptr_eq_cmp_op EBI tu Beq ty vp nullptr res).
-  Proof. intros ->%nullptr_ptr_comparable. by rewrite -eval_ptr_eq. Qed.
+    has_type (Vptr vp) (Tptr ty) ∗ has_type (Vptr nullptr) (Tptr ty)
+    ⊢ Unfold (@eval_ptr_eq_cmp_op) (eval_ptr_eq_cmp_op EBI tu Beq ty vp nullptr res).
+  Proof.
+    intros Hres. rewrite -eval_ptr_eq. iIntros "#[Hv Hn]". iFrame "Hv Hn".
+    iApply (nullptr_ptr_comparable Hres). by iApply (has_type_ptr_valid with "Hv").
+  Qed.
 
   Lemma eval_ptr_nullptr_eq_r {ty vp res} :
     (is_Some (ptr_vaddr vp) -> bool_decide (vp = nullptr) = res) ->
-    valid_ptr vp ⊢ Unfold (@eval_ptr_eq_cmp_op) (eval_ptr_eq_cmp_op EBI tu Beq ty nullptr vp res).
-  Proof. intros ->%nullptr_ptr_comparable. by rewrite ptr_comparable_symm -eval_ptr_eq. Qed.
+    has_type (Vptr nullptr) (Tptr ty) ∗ has_type (Vptr vp) (Tptr ty)
+    ⊢ Unfold (@eval_ptr_eq_cmp_op) (eval_ptr_eq_cmp_op EBI tu Beq ty nullptr vp res).
+  Proof.
+    intros Hres. rewrite -eval_ptr_eq. iIntros "#[Hn Hv]". iFrame "Hn Hv".
+    rewrite -ptr_comparable_symm.
+    iApply (nullptr_ptr_comparable Hres). by iApply (has_type_ptr_valid with "Hv").
+  Qed.
 
   Lemma eval_ptr_self_eq ty p :
-    valid_ptr p ⊢ Unfold (@eval_ptr_eq_cmp_op) (eval_ptr_eq_cmp_op EBI tu Beq ty p p true).
-  Proof. by rewrite -eval_ptr_eq -self_ptr_comparable. Qed.
+    has_type (Vptr p) (Tptr ty)
+    ⊢ Unfold (@eval_ptr_eq_cmp_op) (eval_ptr_eq_cmp_op EBI tu Beq ty p p true).
+  Proof.
+    rewrite -eval_ptr_eq. iIntros "#Hp". iFrame "Hp".
+    iApply self_ptr_comparable. by iApply (has_type_ptr_valid with "Hp").
+  Qed.
 End derived.
 
 Section with_Σ.
   Context `{cpp_logic} {σ}.
 
-
-  (** [eval_binop] is the semantics of a binary operator in the logic. It
-      discriminates on the operand types: the operators that need the abstract
-      machine state are exactly the ones on object pointers (see
-      [binop_needs_memory]), everything else is pure. *)
+  (** [eval_binop] is the semantics of a binary operator in the logic: either
+      the operator is pure, or evaluating it consults the abstract machine
+      state. *)
   Definition eval_binop tu (b : BinOp) (lhsT rhsT resT : type) (lhs rhs res : val) : mpred :=
-    if binop_needs_memory lhsT rhsT
-    then eval_binop_impure tu b lhsT rhsT resT lhs rhs res
-    else [| eval_binop_pure tu b lhsT rhsT resT lhs rhs res |].
+    [| eval_binop_pure tu b lhsT rhsT resT lhs rhs res |] ∨
+    eval_binop_impure tu b lhsT rhsT resT lhs rhs res.
 
-  Lemma eval_binop_pure_eq tu b lhsT rhsT resT lhs rhs res :
-    binop_needs_memory lhsT rhsT = false ->
-    eval_binop tu b lhsT rhsT resT lhs rhs res
-      -|- [| eval_binop_pure tu b lhsT rhsT resT lhs rhs res |].
-  Proof. by rewrite /eval_binop => ->. Qed.
+  Lemma eval_binop_impure_well_typed_prop tu bo ty1 ty2 ty3 v1 v2 v3 :
+    eval_binop_impure tu bo ty1 ty2 ty3 v1 v2 v3
+    |-- [| has_type_prop v1 ty1 /\ has_type_prop v2 ty2 /\ has_type_prop v3 ty3 |].
+  Proof.
+    rewrite eval_binop_impure_well_typed.
+    by rewrite !has_type_has_type_prop !only_provable_sep.
+  Qed.
 
-  Lemma eval_binop_impure_eq tu b lhsT rhsT resT lhs rhs res :
-    binop_needs_memory lhsT rhsT = true ->
-    eval_binop tu b lhsT rhsT resT lhs rhs res
-      -|- eval_binop_impure tu b lhsT rhsT resT lhs rhs res.
-  Proof. by rewrite /eval_binop => ->. Qed.
-
-  (** At the operand types where [eval_binop] is pure, well-typedness comes from
-      [eval_binop_pure_well_typed]. *)
   Theorem eval_binop_well_typed tu bo ty1 ty2 ty3 v1 v2 v3 :
     tu ⊧ σ ->
-    binop_needs_memory ty1 ty2 = false ->
     eval_binop tu bo ty1 ty2 ty3 v1 v2 v3
     |-- [| has_type_prop v1 ty1 /\ has_type_prop v2 ty2 /\ has_type_prop v3 ty3 |].
   Proof.
-    intros ? Hpure; rewrite eval_binop_pure_eq//.
-    iIntros "!%". exact: eval_binop_pure_well_typed.
+    iDestruct 1 as "[% | X]".
+    - eauto using eval_binop_pure_well_typed.
+    - by iApply eval_binop_impure_well_typed_prop.
   Qed.
 End with_Σ.
