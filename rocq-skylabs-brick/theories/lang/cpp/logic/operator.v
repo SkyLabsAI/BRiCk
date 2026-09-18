@@ -13,9 +13,6 @@ Require Import skylabs.lang.cpp.logic.pred.
 
 Implicit Type (σ : genv).
 
-Parameter eval_binop_impure : forall `{cpp_logic} {σ},
-    translation_unit -> BinOp -> forall (lhsT rhsT resT : type) (lhs rhs res : val), mpred.
-
 (** [binop_needs_memory lhsT rhsT] is [true] exactly on the operand types at
     which [eval_binop_impure] has an introduction rule, i.e. those where
     evaluating the operator has to consult the abstract machine state.
@@ -79,43 +76,8 @@ End non_beginning_ptr.
 
 #[global] Typeclasses Opaque non_beginning_ptr.
 
-Section with_Σ.
+Section comparable.
   Context `{cpp_logic} {σ}.
-
-  (** [eval_binop] is the semantics of a binary operator in the logic. It
-      discriminates on the operand types: the operators that need the abstract
-      machine state are exactly the ones on object pointers (see
-      [binop_needs_memory]), everything else is pure. *)
-  Definition eval_binop tu (b : BinOp) (lhsT rhsT resT : type) (lhs rhs res : val) : mpred :=
-    if binop_needs_memory lhsT rhsT
-    then eval_binop_impure tu b lhsT rhsT resT lhs rhs res
-    else [| eval_binop_pure tu b lhsT rhsT resT lhs rhs res |].
-
-  Lemma eval_binop_pure_eq tu b lhsT rhsT resT lhs rhs res :
-    binop_needs_memory lhsT rhsT = false ->
-    eval_binop tu b lhsT rhsT resT lhs rhs res
-      -|- [| eval_binop_pure tu b lhsT rhsT resT lhs rhs res |].
-  Proof. by rewrite /eval_binop => ->. Qed.
-
-  Lemma eval_binop_impure_eq tu b lhsT rhsT resT lhs rhs res :
-    binop_needs_memory lhsT rhsT = true ->
-    eval_binop tu b lhsT rhsT resT lhs rhs res
-      -|- eval_binop_impure tu b lhsT rhsT resT lhs rhs res.
-  Proof. by rewrite /eval_binop => ->. Qed.
-
-  (** At the operand types where [eval_binop] is pure, well-typedness comes from
-      [eval_binop_pure_well_typed]. *)
-  Theorem eval_binop_well_typed tu bo ty1 ty2 ty3 v1 v2 v3 :
-    tu ⊧ σ ->
-    binop_needs_memory ty1 ty2 = false ->
-    eval_binop tu bo ty1 ty2 ty3 v1 v2 v3
-    |-- [| has_type_prop v1 ty1 /\ has_type_prop v2 ty2 /\ has_type_prop v3 ty3 |].
-  Proof.
-    intros ? Hpure; rewrite eval_binop_pure_eq//.
-    iIntros "!%". exact: eval_binop_pure_well_typed.
-  Qed.
-
-  Variable tu : translation_unit.
 
   (** * Pointer comparison operators *)
   (** For [Ble, Blt, Bge, Bgt] axioms on pointers. *)
@@ -261,51 +223,33 @@ Section with_Σ.
     intros -> Hres. eapply (ptr_comparable_off_off o1 o_id base) => //.
     by rewrite offset_ptr_id.
   Qed.
+End comparable.
 
-  #[local] Definition eval_ptr_eq_cmp_op (bo : BinOp) ty p1 p2 res : mpred :=
-    eval_binop_impure tu bo
+(** ** Skeletons for the rules of the impure fragment
+
+    These are parameterized by the evaluation relation so that the interface
+    [EVAL_BINOP_IMPURE] below and its instance in [lang/cpp/model/operator.v]
+    state the same rules rather than two hand-kept-in-sync copies. *)
+Section skeletons.
+  Context `{cpp_logic} {σ}.
+
+  #[local] Notation EVAL :=
+    (translation_unit -> BinOp -> type -> type -> type -> val -> val -> val -> mpred)
+    (only parsing).
+
+  (** Skeleton for [Beq] and [Bneq] axioms on pointers. *)
+  Definition eval_ptr_eq_cmp_op (E : EVAL) tu (bo : BinOp) ty p1 p2 res : mpred :=
+    E tu bo
       (Tptr ty) (Tptr ty) Tbool
       (Vptr p1) (Vptr p2) (Vbool res) ∗ True.
 
-  Axiom eval_ptr_eq : forall ty p1 p2 res,
-      ptr_comparable p1 p2 res
-    ⊢ Unfold eval_ptr_eq_cmp_op (eval_ptr_eq_cmp_op Beq ty p1 p2 res).
-
-  Lemma eval_ptr_nullptr_eq_l {ty vp res} :
-    (is_Some (ptr_vaddr vp) -> bool_decide (vp = nullptr) = res) ->
-    valid_ptr vp ⊢ Unfold eval_ptr_eq_cmp_op (eval_ptr_eq_cmp_op Beq ty vp nullptr res).
-  Proof. intros ->%nullptr_ptr_comparable. by rewrite -eval_ptr_eq. Qed.
-
-  Lemma eval_ptr_nullptr_eq_r {ty vp res} :
-    (is_Some (ptr_vaddr vp) -> bool_decide (vp = nullptr) = res) ->
-    valid_ptr vp ⊢ Unfold eval_ptr_eq_cmp_op (eval_ptr_eq_cmp_op Beq ty nullptr vp res).
-  Proof. intros ->%nullptr_ptr_comparable. by rewrite ptr_comparable_symm -eval_ptr_eq. Qed.
-
-  Lemma eval_ptr_self_eq ty p :
-    valid_ptr p ⊢ Unfold eval_ptr_eq_cmp_op (eval_ptr_eq_cmp_op Beq ty p p true).
-  Proof. by rewrite -eval_ptr_eq -self_ptr_comparable. Qed.
-
-  Axiom eval_ptr_neq : forall ty p1 p2 res,
-    Unfold eval_ptr_eq_cmp_op
-      (eval_ptr_eq_cmp_op Beq ty p1 p2 res
-    ⊢ eval_ptr_eq_cmp_op Bneq ty p1 p2 (negb res)).
-
   (** Skeleton for [Ble, Blt, Bge, Bgt] axioms on pointers. *)
-  #[local] Definition eval_ptr_ord_cmp_op (bo : BinOp) (f : vaddr -> vaddr -> bool) : Prop :=
+  Definition eval_ptr_ord_cmp_op (E : EVAL) tu (bo : BinOp) (f : vaddr -> vaddr -> bool) : Prop :=
     forall ty p1 p2 res,
       ptr_ord_comparable p1 p2 f res ⊢
-      eval_binop_impure tu bo
+      E tu bo
         (Tptr ty) (Tptr ty) Tbool
         (Vptr p1) (Vptr p2) (Vbool res) ∗ True.
-
-  Axiom eval_ptr_le :
-    Unfold eval_ptr_ord_cmp_op (eval_ptr_ord_cmp_op Ble N.leb).
-  Axiom eval_ptr_lt :
-    Unfold eval_ptr_ord_cmp_op (eval_ptr_ord_cmp_op Blt N.ltb).
-  Axiom eval_ptr_ge :
-    Unfold eval_ptr_ord_cmp_op (eval_ptr_ord_cmp_op Bge (fun x y => y <=? x)%N).
-  Axiom eval_ptr_gt :
-    Unfold eval_ptr_ord_cmp_op (eval_ptr_ord_cmp_op Bgt (fun x y => y <? x)%N).
 
   (** For non-comparison operations, we do not require liveness, unlike Krebbers.
   We require validity of the result to prevent over/underflow.
@@ -316,23 +260,85 @@ Section with_Σ.
 
   (** Skeletons for ptr/int operators. *)
 
-  #[local] Definition eval_ptr_int_op (bo : BinOp) (f : Z -> Z) : Prop :=
+  Definition eval_ptr_int_op (E : EVAL) tu (bo : BinOp) (f : Z -> Z) : Prop :=
     forall w s p1 p2 o ty,
       is_Some (size_of σ ty) ->
       p2 = p1 ,, _sub ty (f o) ->
       valid_ptr p1 ∧ valid_ptr p2 ⊢
-      eval_binop_impure tu bo
+      E tu bo
                 (Tptr ty) (Tnum w s) (Tptr ty)
                 (Vptr p1)     (Vint o)   (Vptr p2).
 
-  #[local] Definition eval_int_ptr_op (bo : BinOp) (f : Z -> Z) : Prop :=
+  Definition eval_int_ptr_op (E : EVAL) tu (bo : BinOp) (f : Z -> Z) : Prop :=
     forall w s p1 p2 o ty,
       is_Some (size_of σ ty) ->
       p2 = p1 ,, _sub ty (f o) ->
       valid_ptr p1 ∧ valid_ptr p2 ⊢
-      eval_binop_impure tu bo
+      E tu bo
                 (Tnum w s) (Tptr ty) (Tptr ty)
                 (Vint o)   (Vptr p1)     (Vptr p2).
+
+  (** Skeleton for the ptr/ptr subtraction axiom. *)
+  Definition eval_ptr_ptr_sub_op (E : EVAL) tu : Prop :=
+    forall w p1 p2 o1 o2 base ty,
+      is_Some (size_of σ ty) ->
+      p1 = base ,, _sub ty o1 ->
+      p2 = base ,, _sub ty o2 ->
+      (* Side condition to prevent overflow; needed per https://eel.is/c++draft/expr.add#note-1 *)
+      has_type_prop (Vint (o1 - o2)) (Tnum w Signed) ->
+      valid_ptr p1 ∧ valid_ptr p2 ⊢
+      E tu Bsub
+                (Tptr ty) (Tptr ty) (Tnum w Signed)
+                (Vptr p1)     (Vptr p2)     (Vint (o1 - o2)).
+End skeletons.
+
+(** * The impure fragment of binary-operator evaluation
+
+    [eval_binop_impure] is the part of the semantics that has to consult the
+    abstract machine state. Its rules are gathered into a module type so that
+    they form a closed, named interface: [lang/cpp/model/operator.v] provides
+    an instance, and it is that instance -- checked by Coq against this
+    signature -- which establishes that the rules are jointly satisfiable.
+
+    That check is not decoration. [eval_binop_impure_well_typed] used to sit
+    alongside these rules, asserting that [eval_binop_impure] relates operands
+    to types they are values of, and it was refutable from them
+    (SkyLabsAI/auto#468): nothing here constrains the integer operand of
+    [eval_ptr_int_op] against its [Tnum], nor [ty] against the pointers. Any
+    rule added below must be provable of the model, or the model must be
+    extended along with it.
+
+    NOTE: every rule here has an *object pointer* ([Tptr]) on at least one
+          side. [binop_needs_memory] above relies on that; a rule that broke
+          it would make [eval_binop] silently drop this fragment. *)
+Module Type EVAL_BINOP_IMPURE.
+  Parameter eval_binop_impure : forall `{cpp_logic} {σ},
+      translation_unit -> BinOp -> forall (lhsT rhsT resT : type) (lhs rhs res : val), mpred.
+
+  Section axioms.
+    Context `{cpp_logic} {σ}.
+    Variable tu : translation_unit.
+
+    #[local] Notation EBI := (@eval_binop_impure _ _ _ _) (only parsing).
+
+    Axiom eval_ptr_eq : forall ty p1 p2 res,
+        ptr_comparable p1 p2 res
+      ⊢ Unfold (@eval_ptr_eq_cmp_op) (eval_ptr_eq_cmp_op EBI tu Beq ty p1 p2 res).
+
+    Axiom eval_ptr_neq : forall ty p1 p2 res,
+      Unfold (@eval_ptr_eq_cmp_op)
+        (eval_ptr_eq_cmp_op EBI tu Beq ty p1 p2 res
+      ⊢ eval_ptr_eq_cmp_op EBI tu Bneq ty p1 p2 (negb res)).
+
+    Axiom eval_ptr_le :
+      Unfold (@eval_ptr_ord_cmp_op) (eval_ptr_ord_cmp_op EBI tu Ble N.leb).
+    Axiom eval_ptr_lt :
+      Unfold (@eval_ptr_ord_cmp_op) (eval_ptr_ord_cmp_op EBI tu Blt N.ltb).
+    Axiom eval_ptr_ge :
+      Unfold (@eval_ptr_ord_cmp_op) (eval_ptr_ord_cmp_op EBI tu Bge (fun x y => y <=? x)%N).
+    Axiom eval_ptr_gt :
+      Unfold (@eval_ptr_ord_cmp_op) (eval_ptr_ord_cmp_op EBI tu Bgt (fun x y => y <? x)%N).
+
 
   (**
   lhs + rhs (https://eel.is/c++draft/expr.add#1): one of rhs or lhs is a
@@ -347,11 +353,11 @@ Section with_Σ.
   https://eel.is/c++draft/basic.memobj#basic.stc.general-4, that implies that
   [p] has not been deallocated.
    *)
-  Axiom eval_ptr_int_add :
-    Unfold eval_ptr_int_op (eval_ptr_int_op Badd (fun x => x)).
+    Axiom eval_ptr_int_add :
+      Unfold (@eval_ptr_int_op) (eval_ptr_int_op EBI tu Badd (fun x => x)).
 
-  Axiom eval_int_ptr_add :
-    Unfold eval_int_ptr_op (eval_int_ptr_op Badd (fun x => x)).
+    Axiom eval_int_ptr_add :
+      Unfold (@eval_int_ptr_op) (eval_int_ptr_op EBI tu Badd (fun x => x)).
 
   (**
   lhs - rhs (https://eel.is/c++draft/expr.add#2.3): lhs is a pointer to
@@ -361,8 +367,8 @@ Section with_Σ.
   the pointer.
   Liveness note: as above (https://eel.is/c++draft/expr.add#4).
   *)
-  Axiom eval_ptr_int_sub :
-    Unfold eval_ptr_int_op (eval_ptr_int_op Bsub Z.opp).
+    Axiom eval_ptr_int_sub :
+      Unfold (@eval_ptr_int_op) (eval_ptr_int_op EBI tu Bsub Z.opp).
 
   (**
   lhs - rhs (https://eel.is/c++draft/expr.add#2.2): both lhs and rhs must be
@@ -370,15 +376,68 @@ Section with_Σ.
   (https://eel.is/c++draft/basic.types#general-5).
   Liveness note: as above (https://eel.is/c++draft/expr.add#5.2).
   *)
-  Axiom eval_ptr_ptr_sub :
-    forall w p1 p2 o1 o2 base ty,
-      is_Some (size_of σ ty) ->
-      p1 = base ,, _sub ty o1 ->
-      p2 = base ,, _sub ty o2 ->
-      (* Side condition to prevent overflow; needed per https://eel.is/c++draft/expr.add#note-1 *)
-      has_type_prop (Vint (o1 - o2)) (Tnum w Signed) ->
-      valid_ptr p1 ∧ valid_ptr p2 ⊢
-      eval_binop_impure tu Bsub
-                (Tptr ty) (Tptr ty) (Tnum w Signed)
-                (Vptr p1)     (Vptr p2)     (Vint (o1 - o2)).
+    Axiom eval_ptr_ptr_sub :
+      Unfold (@eval_ptr_ptr_sub_op) (eval_ptr_ptr_sub_op EBI tu).
+  End axioms.
+End EVAL_BINOP_IMPURE.
+
+Declare Module Export EVAL_BINOP_IMPURE_AXIOM : EVAL_BINOP_IMPURE.
+
+Section derived.
+  Context `{cpp_logic} {σ}.
+  Variable tu : translation_unit.
+
+  #[local] Notation EBI := (@eval_binop_impure _ _ _ _) (only parsing).
+
+  Lemma eval_ptr_nullptr_eq_l {ty vp res} :
+    (is_Some (ptr_vaddr vp) -> bool_decide (vp = nullptr) = res) ->
+    valid_ptr vp ⊢ Unfold (@eval_ptr_eq_cmp_op) (eval_ptr_eq_cmp_op EBI tu Beq ty vp nullptr res).
+  Proof. intros ->%nullptr_ptr_comparable. by rewrite -eval_ptr_eq. Qed.
+
+  Lemma eval_ptr_nullptr_eq_r {ty vp res} :
+    (is_Some (ptr_vaddr vp) -> bool_decide (vp = nullptr) = res) ->
+    valid_ptr vp ⊢ Unfold (@eval_ptr_eq_cmp_op) (eval_ptr_eq_cmp_op EBI tu Beq ty nullptr vp res).
+  Proof. intros ->%nullptr_ptr_comparable. by rewrite ptr_comparable_symm -eval_ptr_eq. Qed.
+
+  Lemma eval_ptr_self_eq ty p :
+    valid_ptr p ⊢ Unfold (@eval_ptr_eq_cmp_op) (eval_ptr_eq_cmp_op EBI tu Beq ty p p true).
+  Proof. by rewrite -eval_ptr_eq -self_ptr_comparable. Qed.
+End derived.
+
+Section with_Σ.
+  Context `{cpp_logic} {σ}.
+
+
+  (** [eval_binop] is the semantics of a binary operator in the logic. It
+      discriminates on the operand types: the operators that need the abstract
+      machine state are exactly the ones on object pointers (see
+      [binop_needs_memory]), everything else is pure. *)
+  Definition eval_binop tu (b : BinOp) (lhsT rhsT resT : type) (lhs rhs res : val) : mpred :=
+    if binop_needs_memory lhsT rhsT
+    then eval_binop_impure tu b lhsT rhsT resT lhs rhs res
+    else [| eval_binop_pure tu b lhsT rhsT resT lhs rhs res |].
+
+  Lemma eval_binop_pure_eq tu b lhsT rhsT resT lhs rhs res :
+    binop_needs_memory lhsT rhsT = false ->
+    eval_binop tu b lhsT rhsT resT lhs rhs res
+      -|- [| eval_binop_pure tu b lhsT rhsT resT lhs rhs res |].
+  Proof. by rewrite /eval_binop => ->. Qed.
+
+  Lemma eval_binop_impure_eq tu b lhsT rhsT resT lhs rhs res :
+    binop_needs_memory lhsT rhsT = true ->
+    eval_binop tu b lhsT rhsT resT lhs rhs res
+      -|- eval_binop_impure tu b lhsT rhsT resT lhs rhs res.
+  Proof. by rewrite /eval_binop => ->. Qed.
+
+  (** At the operand types where [eval_binop] is pure, well-typedness comes from
+      [eval_binop_pure_well_typed]. *)
+  Theorem eval_binop_well_typed tu bo ty1 ty2 ty3 v1 v2 v3 :
+    tu ⊧ σ ->
+    binop_needs_memory ty1 ty2 = false ->
+    eval_binop tu bo ty1 ty2 ty3 v1 v2 v3
+    |-- [| has_type_prop v1 ty1 /\ has_type_prop v2 ty2 /\ has_type_prop v3 ty3 |].
+  Proof.
+    intros ? Hpure; rewrite eval_binop_pure_eq//.
+    iIntros "!%". exact: eval_binop_pure_well_typed.
+  Qed.
 End with_Σ.
