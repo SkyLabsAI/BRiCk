@@ -30,6 +30,7 @@
  (name rocq-skylabs-brick)
  (synopsis "Frontend and program logic for C++")
  (depends
+  rocq-tools
   rocq-upoly
   rocq-iris
   rocq-lens
