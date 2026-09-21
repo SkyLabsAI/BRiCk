@@ -1,10 +1,13 @@
 (include_subdirs qualified)
 (rocq.theory
- (name skylabs.lang.cpp)
- (package rocq-skylabs-brick)
+ (name skylabs.lang.cpp.parser.plugin)
+ (package rocq-skylabs-brick-cpp-prog)
+ (plugins rocq-skylabs-brick-cpp-prog.plugin)
  (generate_project_file)
  (theories
+  skylabs.lang.cpp
   Stdlib
+  ; transitive dependencies
   stdpp
   skylabs.upoly
   elpi
@@ -22,6 +25,12 @@
   Equations
   Equations.Prop
   Equations.Type
-  ; transitive dependencies
   elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
   elpi.apps.locker.elpi))
+
+(rule
+ (target cpp2v_version.v)
+ (deps (package rocq-skylabs-cpp2v))
+ (action
+  (with-stdout-to %{target}
+   (run %{bin:bin-hash} --rocq version %{bin:cpp2v}))))
