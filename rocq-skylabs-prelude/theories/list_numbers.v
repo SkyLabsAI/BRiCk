@@ -4,6 +4,12 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
+
+(* Some lemmas at the end require these modules *)
+Require Import stdpp.fin_maps.
+Require Import stdpp.fin_sets.
+Require Import stdpp.fin_map_dom.
+
 Require Import skylabs.prelude.base.
 Require Export skylabs.prelude.list.
 Require Export skylabs.prelude.numbers.
@@ -2888,3 +2894,82 @@ End split_atZ_lemmas.
 
 Definition Forall_simpl {A} :=
   (Forall_nil (A := A), Forall_singleton (A := A), Forall_cons (A := A), Forall_app (A := A)).
+
+Section fin_maps.
+  (* Note: the RHS uses [map_lookup_total] *)
+  Lemma list_lookup_total_nat_N `{Inhabited A} (xs : list A) (i : N) :
+    xs !!! N.to_nat i = xs !!! i.
+  Proof. by rewrite !lookup_total_alt list_lookup_total_alt. Qed.
+
+  Lemma list_lookupN_total_fmap
+    `{Inhabited A} `{Inhabited B}
+    (f : A → B) (xs : list A) (i : N)
+    (Hin : (i < lengthN xs)%N) :
+    (f <$> xs) !!! i = f (xs !!! i).
+  Proof.
+    rewrite -!list_lookup_total_nat_N list_lookup_total_fmap //.
+    rewrite /lengthN in Hin; lia.
+  Qed.
+End fin_maps.
+
+Section fin_sets.
+  Section set_rangeZ.
+    #[local] Open Scope Z_scope.
+
+    Definition set_rangeZ `{!Singleton Z C, !Union C, !Empty C} (i j : Z) : C :=
+      list_to_set (rangeZ i j).
+
+    Section dom_rangeZ.
+      Context `{!ElemOf Z D, !Empty D, !Singleton Z D, !Union D}.
+
+      Lemma elem_of_set_rangeZ `{!SemiSet Z D} x i j : x ∈ (set_rangeZ i j : D) <-> (i ≤ x < j).
+      Proof.
+        by rewrite /set_rangeZ elem_of_list_to_set elem_of_rangeZ.
+      Qed.
+
+      Lemma size_set_rangeZ `{!Intersection D, !Difference D, !Elements Z D, !FinSet Z D} i j :
+        size (set_rangeZ i j : D) = Z.to_nat (j - i).
+      Proof.
+        have ? := NoDup_rangeZ i j.
+        by rewrite /set_rangeZ size_list_to_set // -(inj_iff N.of_nat) [N.of_nat _]lengthN_rangeZ Z_nat_N.
+      Qed.
+
+    End dom_rangeZ.
+
+  End set_rangeZ.
+End fin_sets.
+
+Section fin_map_dom.
+  Section dom_map_seqZ.
+    (* Context `{FMD : FinMapDom Z M D}. *)
+    (* ^^ No: abstracts over [EqDecision Z] :-( *)
+    Context  `{!∀ A, Dom (M A) D, !FMap M,
+                HL : !∀ A, Lookup Z A (M A),
+                HE : !∀ A, Empty (M A),
+                HP : !∀ A, PartialAlter Z A (M A)}.
+    Context `{!Singleton Z D, !Union D, !Intersection D, !Difference D}.
+    Context `{!OMap M, !Merge M, HF : !∀ A, MapFold Z A (M A),
+              !ElemOf Z D, !Empty D, FMD : !FinMapDom Z M D}.
+
+    #[local] Open Scope Z_scope.
+
+    Lemma dom_seqZ {A} (start : Z) (xs : list A) :
+      dom (map_seqZ start xs : M A) ≡ (set_rangeZ start (start + lengthZ xs) : D).
+    Proof using FMD.
+      rewrite /set_rangeZ.
+      elim: xs start => [|x xs IH] start.
+      - rewrite lengthN_nil /= Z.add_0_r rangeZ_oob //; apply dom_empty.
+      - have ? : (start < start + (lengthN xs + 1)%N) by lia.
+        rewrite [X in dom X] /= dom_insert lengthN_cons rangeZ_cons //.
+        rewrite N.add_1_r N2Z.inj_succ -Z.add_succ_comm Z.add_1_r.
+        by rewrite /= -IH.
+    Qed.
+
+    Lemma dom_seqZ_L `{!LeibnizEquiv D} {A} (start : Z) (xs : list A) :
+      dom (map_seqZ start xs : M A) = (set_rangeZ start (start + lengthN xs) : D).
+    Proof using FMD.
+      apply leibniz_equiv, dom_seqZ.
+    Qed.
+
+  End dom_map_seqZ.
+End fin_map_dom.
