@@ -25,4 +25,4 @@ Register empty_array as skylabs.lang.cpp.parser.translation_unit.empty_array.
 Definition result_type : Type := translation_unit * parser.translation_unit.dup_info.
 Register result_type as skylabs.lang.cpp.parser.translation_unit.result_type.
 
-Declare ML Module "rocq-skylabs-brick.plugin".
+Declare ML Module "rocq-skylabs-brick-cpp-prog.plugin".

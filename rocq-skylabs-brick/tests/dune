@@ -17,6 +17,7 @@
   skylabs.iris.extra
   skylabs.ltac2.extra
   skylabs.lang.cpp
+  skylabs.lang.cpp.parser.plugin
   ; transitive dependencies
   Equations
   Equations.Prop
@@ -47,6 +48,7 @@
   skylabs.iris.extra
   skylabs.ltac2.extra
   skylabs.lang.cpp
+  skylabs.lang.cpp.parser.plugin
   ; transitive dependencies
   Equations
   Equations.Prop

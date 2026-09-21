@@ -1,6 +1,6 @@
 (library
  (name rocq_skylabs_brick_plugin)
- (public_name rocq-skylabs-brick.plugin)
+ (public_name rocq-skylabs-brick-cpp-prog.plugin)
  (synopsis "Rocq plugin for the BRiCk C++ program logic")
  (flags :standard -rectypes -w -27)
  (inline_tests)
