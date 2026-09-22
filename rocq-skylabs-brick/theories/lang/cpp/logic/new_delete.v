@@ -723,14 +723,16 @@ Module Type Expr__newdelete.
         if del_op.2.(delete_operator.align_arg) then
           let ty := Talign_val_t in
           Exists al, [| align_of obj_type = Some al |] **
-          Forall pp : ptr, pp |-> primR ty (cQp.m 1) (Vn al) -* Q (pp :: nil) (FreeTemps.delete ty pp)
+          Forall pp : ptr, pp |-> primR ty (cQp.m 1) (Vn al) -*
+          Q (pp :: nil) (FreeTemps.delete ty pp)
         else Q nil FreeTemps.id
     in
     letI* args , free := fun (Q : list ptr -> FreeTemps.t -> mpred) =>
       (* Add the size, if required *)
       if del_op.2.(delete_operator.size_arg) then
          let ty := Tsize_t in
-         Forall pp : ptr, pp |-> primR ty (cQp.m 1) (Vn allocation_size) -* Q (pp :: args) (FreeTemps.delete ty pp >*> free)
+         Forall pp : ptr, pp |-> primR ty (cQp.m 1) (Vn allocation_size) -*
+         Q (pp :: args) (free >*> FreeTemps.delete ty pp)
       else Q args free
     in
     letI* args , free := fun (Q : list ptr -> FreeTemps.t -> mpred) =>
@@ -748,13 +750,15 @@ Module Type Expr__newdelete.
         let ty := erase_qualifiers $ Tptr obj_type in
         Forall pp : ptr, pp |-> primR ty (cQp.m 1) (Vptr p) -*
         Forall dd : ptr, dd |-> anyR "std::destroying_delete_t" (cQp.m 1) -*
-        Q (pp :: dd :: args) (FreeTemps.delete ty pp >*> FreeTemps.delete Tdestroying_delete_t dd >*> free)
+        Q (pp :: dd :: args)
+          (free >*> FreeTemps.delete Tdestroying_delete_t dd >*>
+           FreeTemps.delete ty pp)
       else
         let ty := "void*"%cpp_type in
         Forall pp : ptr, pp |-> primR ty (cQp.m 1) (Vptr p) -*
-        Q (pp :: args) (FreeTemps.delete ty pp >*> free)
+        Q (pp :: args) (free >*> FreeTemps.delete ty pp)
     in
-    letI* p :=
+    |> letI* p :=
       let del_ty := delete_operator.type_for del_op.2 in
       wp_fptr (genv_tu σ).(types) del_ty (_global del_op.1) args in
     letI* := interp (genv_tu σ) free in
@@ -770,6 +774,7 @@ Module Type Expr__newdelete.
     rewrite wp_invoke_delete.unlock.
     iIntros "H";
     repeat case_match; simpl; do_frame.
+    all: iIntros "X"; iNext; iRevert "X"; do_frame.
   Qed.
 
   (** [wp_delete_null]
