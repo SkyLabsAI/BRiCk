@@ -5,17 +5,8 @@
  *)
 
 (** An instance of [EVAL_BINOP_IMPURE] (lang/cpp/logic/operator.v).
-
-    The development uses [EVAL_BINOP_IMPURE_AXIOM], which is assumed. This
-    module is what makes that assumption safe: Coq checks it against the
-    signature, so the rules -- including [eval_binop_impure_well_typed] --
-    cannot be jointly unsatisfiable. It is deliberately *not* a C++ semantics:
-    it records the operand/result shapes the rules produce, and the typing
-    they claim, and nothing else, in the same spirit as [simple_pred.v].
-
-    The model is informative rather than trivial: [Badd (Tptr ty) _ (Tptr ty)]
-    relates [Vptr p] and [Vint o] only to [Vptr (p ,, _sub ty o)], so the rules
-    do pin down pointer arithmetic.
+    In the spirit of [simple_pred.v], this is not necessarily a C++ semantics;
+    it simply shows consistency of our rules.
 
     See [operand_not_well_typed] for why the rules' premises are stated with
     [has_type] rather than [valid_ptr]. *)
@@ -198,12 +189,18 @@ End EVAL_BINOP_IMPURE_MODEL.
 
 (** ** Why the premises are [has_type] and not [valid_ptr]
 
-    Drop the typing from the premises and [eval_binop_impure_well_typed]
-    becomes refutable, which is what SkyLabsAI/auto#468 demonstrated and
-    SkyLabsAI/BRiCk#321 responded to by deleting it. The shape relation alone
-    relates [Vint (-1)] to <<unsigned int>>, because nothing in the shape
-    constrains [o] against [Tnum w s] -- nor, for the pointers, [ty] against
-    their alignment. *)
+    Thanks to [eval_binop_impure_well_typed] we have
+    [eval_binop_impure tu bo ty1 ty2 ty3 v1 v2 v3 ⊢ has_type v2 ty2].
+
+    Here, we demonstrate that
+    ¬ ([| binop_impure_ok bo ty1 ty2 ty3 v1 v2 v3 |] ⊢ has_type v2 ty2])
+    with [v2 := Vint (-1)] and [ty2 := Tuint].
+
+    Hence, our model can't just use
+    [eval_binop_impure tu bo ty1 ty2 ty3 v1 v2 v3 := [| binop_impure_ok bo ty1 ty2 ty3 v1 v2 v3 |]].
+    but it includes [has_type] conjuncts, and introduction rules for
+    [eval_binop_impure] have [has_type] obligations.
+     *)
 Section not_well_typed.
   Context `{cpp_logic} {σ}.
   Import EVAL_BINOP_IMPURE_MODEL.

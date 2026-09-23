@@ -340,22 +340,11 @@ Section skeletons.
                 (Vptr p1)     (Vptr p2)     (Vint (o1 - o2)).
 End skeletons.
 
-(** * The impure fragment of binary-operator evaluation
+(** * The impure fragment of binary-operator evaluation, depending on the abstract machine state.
 
-    [eval_binop_impure] is the part of the semantics that has to consult the
-    abstract machine state. Its rules are gathered into a module type so that
-    they form a closed, named interface: [lang/cpp/model/operator.v] provides
-    an instance, and it is that instance -- checked by Coq against this
-    signature -- which establishes that the rules are jointly satisfiable.
-
-    That check is not decoration. [eval_binop_impure_well_typed] was removed
-    (SkyLabsAI/BRiCk#321) because it was refutable from rules whose premises
-    only ever established validity, never the operands' types
-    (SkyLabsAI/auto#468). It is back here because the premises now establish
-    them.
-
-    A rule added here must be provable of that instance, or the instance must
-    be extended along with it. *)
+    [EVAL_BINOP_IMPURE] has a naive model in [lang/cpp/model/operator.v] to
+    show that its rules are jointly satisfiable.
+    *)
 Module Type EVAL_BINOP_IMPURE.
   Parameter eval_binop_impure : forall `{cpp_logic} {σ},
       translation_unit -> BinOp -> forall (lhsT rhsT resT : type) (lhs rhs res : val), mpred.
