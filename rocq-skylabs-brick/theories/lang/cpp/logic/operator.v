@@ -20,6 +20,13 @@ Axiom eval_binop_impure_well_typed : forall `{cpp_logic} {σ} tu bo ty1 ty2 ty3 
     tu ⊧ σ ->
     eval_binop_impure tu bo ty1 ty2 ty3 v1 v2 v3 |-- has_type v1 ty1 ** has_type v2 ty2 ** has_type v3 ty3.
 
+Axiom eval_binop_impure_erase_all :
+  forall `{cpp_logic}
+    `{σ : genv} (tu : translation_unit) (b : BinOp)
+    (lhsT rhsT resT : type) (lhs rhs res : val),
+    eval_binop_impure tu b (erase_qualifiers lhsT) (erase_qualifiers rhsT) (erase_qualifiers resT) lhs rhs res -|-
+    eval_binop_impure tu b lhsT rhsT resT lhs rhs res.
+
 (** Pointer [p'] is not at the beginning of a block. *)
 Definition non_beginning_ptr `{cpp_logic} {σ} p' : mpred :=
   ∃ p o, [| p' = p ,, o /\
@@ -58,6 +65,13 @@ Section with_Σ.
     iDestruct 1 as "[% | X]".
     - eauto using eval_binop_pure_well_typed.
     - by iApply eval_binop_impure_well_typed_prop.
+  Qed.
+
+  Lemma eval_binop_erase_all tu bo ty1 ty2 ty3 v1 v2 v3 :
+    eval_binop tu bo (erase_qualifiers ty1) (erase_qualifiers ty2) (erase_qualifiers ty3) v1 v2 v3 -|-
+    eval_binop tu bo ty1 ty2 ty3 v1 v2 v3.
+  Proof.
+    by rewrite /eval_binop eval_binop_pure_erase_all eval_binop_impure_erase_all.
   Qed.
 
   Variable tu : translation_unit.

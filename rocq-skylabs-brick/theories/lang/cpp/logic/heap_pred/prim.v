@@ -323,4 +323,50 @@ Section with_cpp.
     Observe (p |-> validR) (reference_to ty p).
   Proof. rewrite _at_validR reference_to_elim; refine _. Qed.
 
+  (* [allows_raw] is a more natural definition, but doing it completely requires
+     that we give [has_type] relations for [Tmember_pointer] and such. *)
+  Definition forbids_raw_unqualified (ty : type) : bool :=
+    match ty with
+    | Tnum _ _ =>
+      bool_decide (ty ∈ [Tschar;Tushort;Tshort;Tint;Tuint;Tlong;Tulong;Tlonglong;Tulonglong;Tint128_t;Tuint128_t])
+    | Tptr _
+    | Tenum _
+    | Tchar_ _ (* this might change *)
+    | Tbool
+    | Tnullptr => true
+    | _ => false
+    end.
+
+  Definition forbids_raw (ty : type) : bool :=
+    forbids_raw_unqualified (drop_qualifiers ty).
+
+  Lemma forbids_raw_not_raw ty :
+    forbids_raw ty -> ∀ v, has_type_prop v ty -> ~~ is_raw v.
+  Proof.
+    rewrite /forbids_raw=>Hforbids v. rewrite has_type_prop_drop_qualifiers.
+    destruct (drop_qualifiers ty); try done.
+    - move/has_type_prop_pointer. naive_solver.
+    - move/has_int_type' => [[? [-> ?]] //|[? [-> Hr]]].
+      by rewrite Hr in Hforbids.
+    - move/has_type_prop_char. naive_solver.
+    - move/has_type_prop_enum. naive_solver.
+    - move/has_type_prop_bool. naive_solver.
+    - move/has_type_prop_nullptr. naive_solver.
+  Qed.
+
+  Lemma primR_intro_non_raw ty (p : ptr) q v :
+    forbids_raw ty ->
+    has_type v ty |-- p |-> tptsto_fuzzyR ty q v -* p |-> primR ty q v.
+  Proof.
+    intros. rewrite _at_primR.
+    iIntros "#T $". iFrame "T". rewrite has_type_has_type_prop.
+    by iDestruct "T" as %?%forbids_raw_not_raw.
+  Qed.
+  Lemma justifies_primR ty (p : ptr) q v :
+    forbids_raw ty ->
+    has_type v ty |-- p |-> tptstoR ty q v -* p |-> primR ty q v.
+  Proof.
+    rewrite tptsto_fuzzyR_intro. apply primR_intro_non_raw.
+  Qed.
+
 End with_cpp.
