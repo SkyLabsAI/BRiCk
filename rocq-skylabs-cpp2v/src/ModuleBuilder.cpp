@@ -155,6 +155,11 @@ public:
         for (auto i : decl->decls()) {
             this->Visit(i, flags);
         }
+
+        // Clang creates std::align_val_t for its implicit aligned allocation
+        // functions, but does not add the EnumDecl to a declaration context.
+        if (auto align_val_t = sema_->getStdAlignValT())
+            Visit(align_val_t->getCanonicalDecl(), flags);
     }
 
     void VisitTypeDecl(const TypeDecl *type, Flags) {

@@ -1,9 +1,7 @@
   $ setup_project
 
-cpp2v emits an aligned allocation function referring to std::align_val_t, but
-omits the corresponding enum declaration from the translation unit.
+cpp2v emits the std::align_val_t declaration required by Clang's implicit
+aligned allocation functions.
 
-  $ cpp2v --module=test_cpp.v test.cpp -- -std=c++17 -nostdinc
+  $ cpp2v --module=test_cpp.v test.cpp -- -target x86_64-linux-gnu -std=c++17 -nostdinc
   $ dune build check.vo
-       = None
-       : option GlobDecl
