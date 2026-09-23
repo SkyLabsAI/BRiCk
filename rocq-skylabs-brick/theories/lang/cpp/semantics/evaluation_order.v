@@ -4,6 +4,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
+Require Import skylabs.prelude.base.
 Require Import skylabs.lang.cpp.syntax.
 
 (** ** Evaluation Order *)
@@ -69,3 +70,10 @@ Definition order_of (ver : lang_version.t) (oo : OverloadableOperator) : t :=
      <<(f.*foo)(x)>> (where <<(f.*foo)>> is sequenced before the evaluation of <<x>> *)
   | OONew _ | OODelete _ | OOCoawait => nd
   end.
+
+(* BinOps aren't assignments, so they'll never use right-to-left evaluation;
+this applies to [wp_operand_binop] too. *)
+Lemma BinOp_not_rl lv o oo :
+  to_operator o = Some oo ->
+  evaluation_order.order_of lv oo <> rl.
+Proof. case: o => // -[<-] //=. all: by case_match. Qed.
