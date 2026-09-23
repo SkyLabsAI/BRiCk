@@ -321,11 +321,20 @@ Module Type RAW_BYTES_VAL
                    Some (length bytes) = N.to_nat <$> (size_of σ mty)).
    *)
 
-  (** The raw bytes in each base is the size of the base *)
+  (* The raw bytes in each base is the size of the base.
+  DISABLED because unsound against empty base optimization.
+  Incompatible with [eval_o_base].
+  <<
+    struct E { };                  // POD, size_of = 1, occupies 0 bytes as a base
+    struct D : E { unsigned char c; };   // standard-layout, size_of = 1, [c] at offset 0
+  >>
+  *)
+  (*
   Axiom raw_bytes_of_struct_wf_base : forall σ cls flds rs base bytes,
     raw_bytes_of_struct σ cls flds rs ->
     flds !! FieldOrBase.Base base = Some bytes ->
     Some (length bytes) = N.to_nat <$> (size_of σ $ Tnamed base).
+  *)
 
   (** The bytes at the offset are the ones that are referenced by the field *)
   Axiom raw_bytes_of_struct_offset : forall σ cls flds rs m bytes off,

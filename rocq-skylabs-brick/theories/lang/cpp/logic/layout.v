@@ -23,10 +23,34 @@ Require Import skylabs.iris.extra.bi.linearity.
 Section with_Σ.
   Context `{Σ : cpp_logic} {σ : genv}.
 
-  (** Convert a <<struct>> to its raw representation.
-   Justified by the concept of object representation.
-   https://eel.is/c++draft/basic.types.general#def:representation,object
-   *)
+  (* Convert a <<struct>> to its raw representation.
+  Justified by the concept of object representation.
+  https://eel.is/c++draft/basic.types.general#def:representation,object
+
+  DISABLED as unused and unsound. Take this code:
+  <<
+    struct E { };                  // POD, size_of = 1, occupies 0 bytes as a base
+    struct D : E { unsigned char c; };   // standard-layout, size_of = 1, [c] at offset 0
+  >>
+  [sizeof(E) = 1], but [E] subobjects in [D] complete objects occupy 0 bytes.
+
+  We end up with both the base class and [D]'s first field claiming to own the first raw byte,
+  so, if we enable [eval_o_base] (which holds in models), we can prove
+  <<
+  structR "E" q |-- Exists r : raw_byte, rawR q r.
+
+  offset_cong σ (o_base σ "D" "E") (o_field σ "D::c").
+
+  p ,, o_base σ "D" "E" |-> structR "E" 1$m **
+  p ,, o_field σ "D::c" |-> anyR Tbyte 1$m
+  |-- False.
+
+  p |-> anyR "D" 1$m |-- False.
+  >>
+
+  See https://github.com/SkyLabsAI/BRiCk/issues/310 for the follow-up work.
+  *)
+  (*
   Axiom struct_to_raw : forall cls st rss q,
     glob_def σ cls = Some (Gstruct st) ->
     st.(s_layout) ∈ [POD;Standard] ->
@@ -38,6 +62,7 @@ Section with_Σ.
             _field (Field cls fld.(mem_name)) |-> rawsR q rs)
     -|- type_ptrR (Tnamed cls) **
       Exists rs, rawsR q rs ** [| raw_bytes_of_struct σ cls rss rs |].
+   *)
 
   #[local] Definition implicit_destruct_ty (ty : type) :=
     anyR ty 1$m |-- |={↑pred_ns}=> tblockR ty 1$m.
@@ -52,8 +77,9 @@ Section with_Σ.
       now because we can not decompose [tptsto ty q Vundef] (which is what we
       get from [anyR]). *)
 
-  (** implicit destruction of an aggregate *)
-  Axiom implicit_destruct_struct
+  (** implicit destruction of an aggregate.
+  XXX: Incompatible with [eval_o_base]. *)
+  (* Axiom implicit_destruct_struct
   : forall cls st q,
       glob_def σ cls = Some (Gstruct st) ->
       st.(s_trivially_destructible) ->
@@ -68,7 +94,7 @@ Section with_Σ.
       un.(u_trivially_destructible) ->
       cQp.frac q = 1%Qp ->
           type_ptrR (Tnamed cls)
-      |-- (Reduce (union_defR tblockR cls un q)) -* |={↑pred_ns}=> tblockR (Tnamed cls) q.
+      |-- (Reduce (union_defR tblockR cls un q)) -* |={↑pred_ns}=> tblockR (Tnamed cls) q. *)
 
 (*
   (* the following rule would allow you to change the active entity in a union
