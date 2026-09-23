@@ -56,14 +56,15 @@ Module EVAL_BINOP_IMPURE_MODEL <: EVAL_BINOP_IMPURE.
           lhsT = Tptr ty /\ rhsT = Tnum w s /\ resT = Tptr ty /\
           lhs = Vptr p1 /\ rhs = Vint o /\
           is_Some (size_of σ ty) /\
-          (bo = Badd /\ res = Vptr (p1 ,, _sub ty o) \/
-           bo = Bsub /\ res = Vptr (p1 ,, _sub ty (- o))))
+          (bo = Badd /\ res = Vptr (p1 ,, _sub (erase_qualifiers ty) o) \/
+           bo = Bsub /\ res = Vptr (p1 ,, _sub (erase_qualifiers ty) (- o))))
       \/
       (** [n + p] *)
       (exists ty w s p1 (o : Z),
           bo = Badd /\
           lhsT = Tnum w s /\ rhsT = Tptr ty /\ resT = Tptr ty /\
-          lhs = Vint o /\ rhs = Vptr p1 /\ res = Vptr (p1 ,, _sub ty o) /\
+          lhs = Vint o /\ rhs = Vptr p1 /\
+          res = Vptr (p1 ,, _sub (erase_qualifiers ty) o) /\
           is_Some (size_of σ ty))
       \/
       (** [p - q] *)
@@ -164,7 +165,7 @@ Module EVAL_BINOP_IMPURE_MODEL <: EVAL_BINOP_IMPURE.
       intros w s p1 p2 o ty Hsz ->. apply intro_ok.
       { right; left. eexists _, _, _, _, _. naive_solver. }
       iIntros "(#T & #$ & #V)". iFrame "T".
-      by iApply (has_type_ptr_sub p1 o ty Hsz); iFrame "T V".
+      by iApply (has_type_ptr_sub_erase p1 o ty Hsz); iFrame "T V".
     Qed.
 
     Lemma eval_int_ptr_add :
@@ -173,7 +174,7 @@ Module EVAL_BINOP_IMPURE_MODEL <: EVAL_BINOP_IMPURE.
       intros w s p1 p2 o ty Hsz ->. apply intro_ok.
       { right; right; left. eexists _, _, _, _, _. naive_solver. }
       iIntros "(#$ & #T & #V)". iFrame "T".
-      by iApply (has_type_ptr_sub p1 o ty Hsz); iFrame "T V".
+      by iApply (has_type_ptr_sub_erase p1 o ty Hsz); iFrame "T V".
     Qed.
 
     Lemma eval_ptr_int_sub :
@@ -182,7 +183,7 @@ Module EVAL_BINOP_IMPURE_MODEL <: EVAL_BINOP_IMPURE.
       intros w s p1 p2 o ty Hsz ->. apply intro_ok.
       { right; left. eexists _, _, _, _, _. naive_solver. }
       iIntros "(#T & #$ & #V)". iFrame "T".
-      by iApply (has_type_ptr_sub p1 (- o) ty Hsz); iFrame "T V".
+      by iApply (has_type_ptr_sub_erase p1 (- o) ty Hsz); iFrame "T V".
     Qed.
 
     Lemma eval_ptr_ptr_sub :

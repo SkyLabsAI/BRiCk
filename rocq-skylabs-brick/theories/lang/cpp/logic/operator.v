@@ -229,6 +229,26 @@ Section aligned_sub.
     iIntros "[[_ #A] #V]". iFrame "V".
     by iApply (aligned_ptr_ty_sub p n ty Hsz); iFrame "A V".
   Qed.
+
+  (** [eval_ptr_int_op] offsets by the qualifier-erased type while still typing
+      the result at [ty]; [aligned_ptr_ty_erase_qualifiers] reconciles the two. *)
+  Lemma has_type_ptr_sub_erase (p : ptr) (n : Z) ty :
+    is_Some (size_of σ ty) ->
+    has_type (Vptr p) (Tptr ty) ∗ valid_ptr (p ,, _sub (erase_qualifiers ty) n)
+    ⊢ has_type (Vptr (p ,, _sub (erase_qualifiers ty) n)) (Tptr ty).
+  Proof.
+    intros Hsz.
+    have Hsz' : is_Some (size_of σ (erase_qualifiers ty)).
+    { by rewrite (size_of_erase_qualifiers σ ty). }
+    rewrite !has_type_ptr'.
+    iIntros "[[_ %A] #V]". iFrame "V".
+    iAssert [| aligned_ptr_ty (erase_qualifiers ty) (p ,, _sub (erase_qualifiers ty) n) |]%I
+      as %A'.
+    { iApply (aligned_ptr_ty_sub p n (erase_qualifiers ty) Hsz'). iFrame "V".
+      iPureIntro. by rewrite -aligned_ptr_ty_erase_qualifiers. }
+    iPureIntro. by rewrite aligned_ptr_ty_erase_qualifiers.
+  Qed.
+
   Lemma has_type_ptr_valid (p : ptr) ty : has_type (Vptr p) (Tptr ty) ⊢ valid_ptr p.
   Proof. by rewrite has_type_ptr' bi.sep_elim_l. Qed.
 End aligned_sub.
