@@ -19,9 +19,6 @@
   skylabs.lang.cpp
   skylabs.lang.cpp.parser.plugin
   ; transitive dependencies
-  Equations
-  Equations.Prop
-  Equations.Type
   Flocq
   elpi.apps.NES
   elpi.apps.NES.elpi
@@ -50,9 +47,6 @@
   skylabs.lang.cpp
   skylabs.lang.cpp.parser.plugin
   ; transitive dependencies
-  Equations
-  Equations.Prop
-  Equations.Type
   Flocq
   elpi.apps.NES
   elpi.apps.NES.elpi
