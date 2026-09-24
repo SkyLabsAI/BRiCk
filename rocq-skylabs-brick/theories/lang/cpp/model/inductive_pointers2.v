@@ -145,7 +145,7 @@ Module PTRS_IMPL <: PTRS_INTF.
       roff_canon_syn [o]
   | SubCanon ty i o os :
       roff_canon_syn (o :: os) ->
-      ¬(∃ i' ty', o = o_sub_ ty' i') ->
+      ¬(∃ i', o = o_sub_ ty i') ->
       i ≠ 0 ->
       roff_canon_syn (o_sub_ ty i :: o :: os)
   | FieldCanon f os :
@@ -185,7 +185,7 @@ Module PTRS_IMPL <: PTRS_INTF.
         simpl in *; inversion Ho; subst; try done;
         try (
           match goal with
-          | H : ¬∃ i ty, o_sub_ _ _ = o_sub_ ty i |- False =>
+          | H : ¬∃ i, o_sub_ _ _ = o_sub_ _ i |- False =>
             apply H
           end;
           try repeat eexists
