@@ -62,7 +62,8 @@ Module EVAL_BINOP_IMPURE_MODEL <: EVAL_BINOP_IMPURE.
       (exists ty w base (o1 o2 : Z),
           bo = Bsub /\
           lhsT = Tptr ty /\ rhsT = Tptr ty /\ resT = Tnum w Signed /\
-          lhs = Vptr (base ,, _sub ty o1) /\ rhs = Vptr (base ,, _sub ty o2) /\
+          lhs = Vptr (base ,, _sub (erase_qualifiers ty) o1) /\
+          rhs = Vptr (base ,, _sub (erase_qualifiers ty) o2) /\
           res = Vint (o1 - o2) /\
           is_Some (size_of σ ty) /\
           has_type_prop (Vint (o1 - o2)) (Tnum w Signed)).

@@ -330,8 +330,8 @@ Section skeletons.
   Definition eval_ptr_ptr_sub_op (E : EVAL) tu : Prop :=
     forall w p1 p2 o1 o2 base ty,
       is_Some (size_of σ ty) ->
-      p1 = base ,, _sub ty o1 ->
-      p2 = base ,, _sub ty o2 ->
+      p1 = base ,, _sub (erase_qualifiers ty) o1 ->
+      p2 = base ,, _sub (erase_qualifiers ty) o2 ->
       (* Side condition to prevent overflow; needed per https://eel.is/c++draft/expr.add#note-1 *)
       has_type_prop (Vint (o1 - o2)) (Tnum w Signed) ->
       has_type (Vptr p1) (Tptr ty) ∗ has_type (Vptr p2) (Tptr ty) ⊢
