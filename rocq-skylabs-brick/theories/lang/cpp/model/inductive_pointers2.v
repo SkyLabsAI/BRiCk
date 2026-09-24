@@ -1293,16 +1293,24 @@ Module PTRS_IMPL <: PTRS_INTF.
     }
   Qed.
 
+  Definition root_ptr_alloc_id (rp : root_ptr) : alloc_id :=
+    match rp with
+    | nullptr_ => null_alloc_id
+    | global_ptr_ tu o => global_ptr_encode_aid o
+    | fun_ptr_ tu o => global_ptr_encode_aid o
+    | alloc_ptr_ a _ => a
+    end.
+
   Definition ptr_alloc_id (p : ptr) : option alloc_id :=
     match p with
-    | offset_ptr (alloc_ptr_ a _) _ => Some a
-    | _ => None
+    | invalid_ptr_ => None
+    | offset_ptr rp _ => Some (root_ptr_alloc_id rp)
     end.
 
   Definition null_alloc_id : alloc_id := null_alloc_id.
   Lemma ptr_alloc_id_nullptr :
     ptr_alloc_id nullptr = Some null_alloc_id.
-  Admitted.
+  Proof. done. Qed.
 
   Lemma ptr_alloc_id_offset :
     ∀ p o,
@@ -1665,7 +1673,7 @@ Module PTRS_IMPL <: PTRS_INTF.
   Lemma global_ptr_nonnull_aid :
     ∀ tu o,
       ptr_alloc_id (global_ptr tu o) <> Some null_alloc_id.
-  Proof. intros tu o. discriminate. Qed.
+  Proof. intros tu o [= H]. exact (global_ptr_encode_vaddr_nonnull o _ eq_refl H). Qed.
 
   Lemma global_ptr_inj :
     ∀ tu, Inj (=) (=) (global_ptr tu).
@@ -1683,7 +1691,7 @@ Module PTRS_IMPL <: PTRS_INTF.
 
   Lemma global_ptr_aid_inj :
     ∀ tu, Inj (=) (=) (λ o, ptr_alloc_id (global_ptr tu o)).
-  Admitted.
+  Proof. intros tu o1 o2 [= H]. exact: (inj global_ptr_encode_vaddr). Qed.
   #[global] Existing Instances global_ptr_inj global_ptr_addr_inj global_ptr_aid_inj.
 
   Include PTRS_DERIVED.

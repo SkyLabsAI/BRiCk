@@ -96,6 +96,7 @@ Module PTRS_IMPL <: PTRS_INTF.
       roff_canon s d ->
       roff_canon (o_derived_ base derived :: s) (o_derived_ base derived :: d) *)
     | o_derived_cancel_canon s d derived base o1 o2 :
+      o1 + o2 = 0 ->
       roff_canon s d ->
       (* This premise is a hack, but without it, normalization might not be deterministic. Thankfully, paths can't contain o_derived step, so we're good! *)
       (* roff_canon (o_base_ derived base :: s) (o_base_ derived base :: d) -> *)
@@ -159,7 +160,9 @@ Module PTRS_IMPL <: PTRS_INTF.
         | _ => os :: oss
       end
     | (o_derived_ base1 der1, off1), (o_base_ der2 base2, off2) :: oss' =>
-      if decide (der1 = der2 /\ base1 = base2)
+      (* Like for [o_sub_], only cancel segments whose offsets also cancel, so
+      that normalization preserves [eval_offset]. *)
+      if decide (der1 = der2 /\ base1 = base2 /\ off1 + off2 = 0)%Z
       then oss'
       else os :: oss
     (* | (o_invalid_, _), _ => [(o_invalid_, 0%Z)] *)
@@ -613,6 +616,7 @@ Module PTRS_IMPL <: PTRS_INTF.
   Inductive root_ptr : Set :=
   | nullptr_
   | global_ptr_ (tu : translation_unit_canon) (o : obj_name)
+  | fun_ptr_ (tu : translation_unit_canon) (o : obj_name)
   | alloc_ptr_ (a : alloc_id) (va : vaddr).
 
   #[local] Instance root_ptr_eq_dec : EqDecision root_ptr.
@@ -625,6 +629,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     match rp with
     | nullptr_ => Some null_alloc_id
     | global_ptr_ tu o => Some (global_ptr_encode_aid o)
+    | fun_ptr_ tu o => Some (global_ptr_encode_aid o)
     | alloc_ptr_ aid _ => Some aid
     end.
 
@@ -632,12 +637,12 @@ Module PTRS_IMPL <: PTRS_INTF.
     match rp with
     | nullptr_ => Some 0%N
     | global_ptr_ tu o => Some (global_ptr_encode_vaddr o)
+    | fun_ptr_ tu o => Some (global_ptr_encode_vaddr o)
     | alloc_ptr_ aid va => Some va
     end.
 
   Inductive ptr_ : Set :=
   | invalid_ptr_
-  | fun_ptr_ (tu : translation_unit_canon) (o : obj_name)
   | offset_ptr (p : root_ptr) (o : offset).
   Definition ptr := ptr_.
   #[global] Instance ptr_eq_dec : EqDecision ptr.
@@ -649,14 +654,12 @@ Module PTRS_IMPL <: PTRS_INTF.
   Definition ptr_alloc_id (p : ptr) : option alloc_id :=
     match p with
     | invalid_ptr_ => None
-    | fun_ptr_ tu o => Some (global_ptr_encode_aid o)
     | offset_ptr p o => root_ptr_alloc_id p
     end.
 
   Definition ptr_vaddr {σ} (p : ptr) : option vaddr :=
     match p with
     | invalid_ptr_ => None
-    | fun_ptr_ tu o => Some (global_ptr_encode_vaddr o)
     | offset_ptr p o =>
       foldr
         (λ off ova, ova ≫= offset_vaddr off)
@@ -666,7 +669,7 @@ Module PTRS_IMPL <: PTRS_INTF.
 
   Definition lift_root_ptr (rp : root_ptr) : ptr := offset_ptr rp o_id.
   Definition invalid_ptr := invalid_ptr_.
-  Definition fun_ptr tu o := fun_ptr_ (canonical_tu.tu_to_canon tu) o.
+  Definition fun_ptr tu o := lift_root_ptr (fun_ptr_ (canonical_tu.tu_to_canon tu) o).
 
   Definition null_alloc_id : alloc_id := null_alloc_id.
   Definition nullptr := lift_root_ptr nullptr_.
@@ -730,11 +733,6 @@ Module PTRS_IMPL <: PTRS_INTF.
     match p with
     | offset_ptr p' o' => offset_ptr p' (__o_dot o' o)
     | invalid_ptr_ => invalid_ptr_ (* too eager! *)
-    | fun_ptr_ _ _ =>
-      match `o with
-      | [] => p
-      | _ => invalid_ptr_
-      end
     end.
 
   Include PTRS_SYNTAX_MIXIN.
@@ -744,12 +742,51 @@ Module PTRS_IMPL <: PTRS_INTF.
 
   #[local] Ltac UNFOLD_dot := rewrite _dot.unlock/DOT_dot/=.
 
+  Lemma eval_raw_offset_cons os oss :
+    eval_raw_offset (os :: oss) =
+      liftM2 Z.add (eval_offset_seg os) (eval_raw_offset oss).
+  Proof. done. Qed.
+
+  (* Normalization preserves the sum of the offsets, since every cancellation
+  it performs is between segments whose offsets sum to [0]. *)
+  Lemma eval_raw_offset_seg_cons os oss :
+    eval_raw_offset (offset_seg_cons os oss) = eval_raw_offset (os :: oss).
+  Proof.
+    rewrite !eval_raw_offset_cons.
+    destruct os as [[f|ty n|derived base|base derived|] off];
+      destruct oss as [|[[f'|ty' n'|derived' base'|base' derived'|] off'] oss];
+      rewrite /offset_seg_cons; repeat case_decide; destruct_and?; simplify_eq;
+      rewrite ?eval_raw_offset_cons /=; try done.
+    all: case: eval_raw_offset => [?|] //=; f_equal; lia.
+  Qed.
+
+  Lemma eval_raw_offset_collapse xs :
+    eval_raw_offset (raw_offset_collapse xs) = eval_raw_offset xs.
+  Proof.
+    elim: xs => [//|x xs IH] /=.
+    by rewrite eval_raw_offset_seg_cons !eval_raw_offset_cons IH.
+  Qed.
+
+  Lemma eval_raw_offset_app xs ys :
+    eval_raw_offset (xs ++ ys) =
+      liftM2 Z.add (eval_raw_offset xs) (eval_raw_offset ys).
+  Proof.
+    elim: xs => [|x xs IH] /=.
+    { by case: eval_raw_offset. }
+    rewrite !eval_raw_offset_cons IH.
+    case: eval_offset_seg => [?|] //=; case: eval_raw_offset => [?|] //=;
+      case: eval_raw_offset => [?|] //=; f_equal; lia.
+  Qed.
+
   Lemma eval_offset_dot : ∀ σ (o1 o2 : offset),
     ∀ s1 s2,
       eval_offset σ o1 = Some s1 ->
       eval_offset σ o2 = Some s2 ->
       eval_offset σ (o1 ,, o2) = Some (s1 + s2).
-  Proof. Admitted.
+  Proof.
+    UNFOLD_dot. rewrite /eval_offset => σ [o1 ?] [o2 ?] s1 s2 /= E1 E2.
+    by rewrite /raw_offset_merge eval_raw_offset_collapse eval_raw_offset_app E1 E2.
+  Qed.
 
   #[global] Instance id_dot : LeftId (=) o_id o_dot.
   Proof. UNFOLD_dot. intros o. apply /sig_eq_pi. by case: o. Qed.
@@ -780,13 +817,9 @@ Module PTRS_IMPL <: PTRS_INTF.
 
   Lemma offset_ptr_dot p o1 o2 : p ,, (o1 ,, o2) = p ,, o1 ,, o2.
   Proof.
-    (* TO FIX: collapse function pointers with offsets less eagerly. *)
-    UNFOLD_dot.
-    destruct p; rewrite //= ?assoc //=.
-    move: o1 o2 => [o1 /= +] [o2 /= +]; rewrite /raw_offset_wf => WF1 WF2.
-    repeat (case_match; simplify_eq/= => //).
-    by rewrite H in WF2.
-  Admitted.
+    have := dot_assoc; UNFOLD_dot => Hassoc.
+    destruct p => //=. by rewrite Hassoc.
+  Qed.
 
   Lemma o_sub_0 σ ty :
     is_Some (size_of σ ty) ->
@@ -824,8 +857,6 @@ Module PTRS_IMPL <: PTRS_INTF.
   Proof.
     rewrite -offset_ptr_dot; UNFOLD_dot.
     intros Hsome. destruct p => //=.
-    (* TODO: this model collapses invalid offsets on fun_ptr_ to invalid pointers too eagerly. *)
-    admit.
     f_equiv.
     apply (sig_eq_pi _) => /=.
     move: Hsome => [?].
@@ -844,24 +875,15 @@ Module PTRS_IMPL <: PTRS_INTF.
   Proof.
     rewrite -offset_ptr_dot; UNFOLD_dot.
     intros Hsome. destruct p => //=.
-    {
-      case_match => //.
-      exfalso.
-      Fail repeat case_match; naive_solver.
-      (* TODO: this model collapses invalid offsets on fun_ptr_ to invalid
-      pointers too eagerly. *)
-      admit.
-    }
     f_equiv.
     case: o => o. rewrite /raw_offset_wf => Hwf.
     apply (sig_eq_pi _) => /=.
     move: Hsome => [?].
     rewrite /o_base_off /o_derived_off parent_offset.unlock.
     destruct parent_offset_tu => //= -[_] /=.
-    rewrite decide_True //=.
+    rewrite decide_True /=; last by split_and!; [..|lia].
     rewrite /raw_offset_merge/= app_nil_r //.
-    all: done.
-  Admitted.
+  Qed.
 
   Include PTRS_DERIVED_MIXIN.
   Include PTRS_MIXIN.
