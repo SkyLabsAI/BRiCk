@@ -25,8 +25,8 @@ val wrn : 'a Format.outfmt -> 'a
 (** [err fmt] is the same as [wrn fmt], but outputs an error message. *)
 val err : 'a Format.outfmt -> 'a
 
-(** [panic fmt] outputs the error message specified by [fmt] (and the attached
-    arguments) to [stderr], and interupts the program with [exit 1]. A newline
-    is automatically inserted, and [stderr] is also flushed. Warning: you must
-    fully apply the function for the error to trigger. *)
-val panic : ('a, 'b) Format.koutfmt -> 'a
+(** [panic ?code fmt] prints the error message specified by [fmt] to [stderr],
+    and interrupts the program with [exit code] (with [code] defaulting to 1).
+    A newline is automatically inserted, and [stderr] is flushed. Warning: you
+    must fully apply the function for the error to trigger. *)
+val panic : ?code:int -> ('a, 'b) Format.koutfmt -> 'a
