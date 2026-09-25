@@ -387,3 +387,15 @@ Definition exprtype_of_expr (e : Expr) : ValCat * exprtype :=
   decltype.to_exprtype $ decltype_of_expr e.
 Definition valcat_of (e : Expr) : ValCat := (exprtype_of_expr e).1.
 Definition type_of (e : Expr) : exprtype := (exprtype_of_expr e).2.
+
+Lemma type_of_var x t :
+  type_of (Evar x t) = drop_reference (tref QM t).
+Proof.
+  rewrite /type_of /exprtype_of_expr /decltype_of_expr /=.
+  generalize QM.
+  move=> cv. elim: (tref_ok cv t); try done.
+  move=> q u Href Hqual.
+  rewrite /decltype.to_exprtype /=.
+  rewrite (drop_reference_non_ref (tqualified q u) u) //.
+  by rewrite drop_qualifiers_tqualified drop_qualifiers_unqual.
+Qed.
