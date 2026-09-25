@@ -292,7 +292,19 @@ Module Type PTRS.
     Axiom global_ptr_nonnull_addr : forall tu o, ptr_vaddr (global_ptr tu o) <> Some 0%N.
 
     #[global] Declare Instance global_ptr_inj : forall tu, Inj (=) (=) (global_ptr tu).
-    #[global] Declare Instance global_ptr_addr_inj : forall tu, Inj (=) (=) (λ o, ptr_vaddr (global_ptr tu o)).
+
+    (** Distinct nonempty global variables have distinct defined addresses.
+        Resolve declarations and sizes in the same environment as the pointers.
+        Zero-sized variables may share an address, so this is not an [Inj]
+        instance over all names (nor does equality of two [None] addresses
+        establish anything). Pointer and allocation identity remain injective. *)
+    Axiom global_ptr_addr_inj : forall o1 o2 ty1 ty2 init1 init2 sz1 sz2,
+      σ.(genv_tu).(symbols) !! o1 = Some (Ovar ty1 init1) ->
+      σ.(genv_tu).(symbols) !! o2 = Some (Ovar ty2 init2) ->
+      size_of σ ty1 = Some sz1 -> (0 < sz1)%N ->
+      size_of σ ty2 = Some sz2 -> (0 < sz2)%N ->
+      same_property ptr_vaddr (global_ptr σ.(genv_tu) o1) (global_ptr σ.(genv_tu) o2) ->
+      o1 = o2.
     #[global] Declare Instance global_ptr_aid_inj : forall tu, Inj (=) (=) (λ o, ptr_alloc_id (global_ptr tu o)).
 
     (** Pointers into the same array with the same address have the same index.

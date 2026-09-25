@@ -1,0 +1,87 @@
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/global_pointer_addresses.v", line 38, characters 0-132:
+The command has indeed failed with message:
+The following term contains unresolved implicit arguments:
+  (λ σ : genv, ?i)
+More precisely: 
+- ?i: Cannot infer this placeholder of type
+  "Inj eq eq (λ n : name, ptr_vaddr (global_ptr (genv_tu σ) n))" (no type
+  class instance found) in environment:
+  σ : genv
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/global_pointer_addresses.v", line 67, characters 16-19:
+The command has indeed failed with message:
+Tactic failure:  Cannot find witness.
+In nested Ltac calls to "lia" and "xlia (tactic)", last call failed.
+
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/global_pointer_addresses.v", line 69, characters 35-38:
+The command has indeed failed with message:
+Tactic failure:  Cannot find witness.
+In nested Ltac calls to "lia" and "xlia (tactic)", last call failed.
+
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/global_pointer_addresses.v", line 71, characters 16-19:
+The command has indeed failed with message:
+Tactic failure:  Cannot find witness.
+In nested Ltac calls to "lia" and "xlia (tactic)", last call failed.
+
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/global_pointer_addresses.v", line 73, characters 2-9:
+The command has indeed failed with message:
+The term "eq_refl" has type
+ "size_of (global_address_env "Forward" "int") "Forward" =
+  size_of (global_address_env "Forward" "int") "Forward""
+while it is expected to have type
+ "size_of (global_address_env "Forward" "int") "Forward" = Some 1%N"
+(cannot unify "size_of (global_address_env "Forward" "int") "Forward"" and
+"Some 1%N").
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/global_pointer_addresses.v", line 78, characters 62-73:
+The command has indeed failed with message:
+Unable to unify "Some (Ovar "unsigned char" global_init.NoInit)" with 
+"None".
+
+Axioms:
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+Corelib.Strings.PrimString.string : Set
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr_vaddr : skylabs.lang.cpp.semantics.genv.genv → skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr → Corelib.Init.Datatypes.option skylabs.prelude.addr.vaddr
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr : Set
+skylabs.lang.cpp.syntax.compare.name_comparison : skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareN
+Corelib.Numbers.Cyclic.Int63.PrimInt63.mul : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.global_ptr_addr_inj : ∀ (σ : skylabs.lang.cpp.semantics.genv.genv) (o1 o2 : skylabs.lang.cpp.syntax.core.name) (ty1 ty2 : skylabs.lang.cpp.syntax.core.type) (init1 init2 : skylabs.lang.cpp.syntax.translation_unit.global_init.t) (sz1 sz2 : Corelib.Numbers.BinNums.N), skylabs.lang.cpp.syntax.translation_unit.symbols (skylabs.lang.cpp.semantics.genv.genv_tu σ) !! o1 = Corelib.Init.Datatypes.Some (skylabs.lang.cpp.syntax.translation_unit.Ovar ty1 init1) → skylabs.lang.cpp.syntax.translation_unit.symbols (skylabs.lang.cpp.semantics.genv.genv_tu σ) !! o2 = Corelib.Init.Datatypes.Some (skylabs.lang.cpp.syntax.translation_unit.Ovar ty2 init2) → skylabs.lang.cpp.semantics.types.size_of σ ty1 = Corelib.Init.Datatypes.Some sz1 → (0 < sz1)%N → skylabs.lang.cpp.semantics.types.size_of σ ty2 = Corelib.Init.Datatypes.Some sz2 → (0 < sz2)%N → skylabs.prelude.option.same_property skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr_vaddr (skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.global_ptr (skylabs.lang.cpp.semantics.genv.genv_tu σ) o1) (skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.global_ptr (skylabs.lang.cpp.semantics.genv.genv_tu σ) o2) → o1 = o2
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.global_ptr : skylabs.lang.cpp.syntax.translation_unit.translation_unit → skylabs.lang.cpp.syntax.core.name → skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr
+Corelib.Strings.PrimString.compare : Corelib.Strings.PrimString.string → Corelib.Strings.PrimString.string → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.compare : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.add : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Axioms:
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+Corelib.Strings.PrimString.string : Set
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr_vaddr : skylabs.lang.cpp.semantics.genv.genv → skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr → Corelib.Init.Datatypes.option skylabs.prelude.addr.vaddr
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr : Set
+skylabs.lang.cpp.syntax.compare.name_comparison : skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareN
+Corelib.Numbers.Cyclic.Int63.PrimInt63.mul : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.global_ptr_addr_inj : ∀ (σ : skylabs.lang.cpp.semantics.genv.genv) (o1 o2 : skylabs.lang.cpp.syntax.core.name) (ty1 ty2 : skylabs.lang.cpp.syntax.core.type) (init1 init2 : skylabs.lang.cpp.syntax.translation_unit.global_init.t) (sz1 sz2 : Corelib.Numbers.BinNums.N), skylabs.lang.cpp.syntax.translation_unit.symbols (skylabs.lang.cpp.semantics.genv.genv_tu σ) !! o1 = Corelib.Init.Datatypes.Some (skylabs.lang.cpp.syntax.translation_unit.Ovar ty1 init1) → skylabs.lang.cpp.syntax.translation_unit.symbols (skylabs.lang.cpp.semantics.genv.genv_tu σ) !! o2 = Corelib.Init.Datatypes.Some (skylabs.lang.cpp.syntax.translation_unit.Ovar ty2 init2) → skylabs.lang.cpp.semantics.types.size_of σ ty1 = Corelib.Init.Datatypes.Some sz1 → (0 < sz1)%N → skylabs.lang.cpp.semantics.types.size_of σ ty2 = Corelib.Init.Datatypes.Some sz2 → (0 < sz2)%N → skylabs.prelude.option.same_property skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr_vaddr (skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.global_ptr (skylabs.lang.cpp.semantics.genv.genv_tu σ) o1) (skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.global_ptr (skylabs.lang.cpp.semantics.genv.genv_tu σ) o2) → o1 = o2
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.global_ptr : skylabs.lang.cpp.syntax.translation_unit.translation_unit → skylabs.lang.cpp.syntax.core.name → skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr
+Corelib.Strings.PrimString.compare : Corelib.Strings.PrimString.string → Corelib.Strings.PrimString.string → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.compare : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.add : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Axioms:
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+Corelib.Strings.PrimString.string : Set
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr : Set
+Corelib.Numbers.Cyclic.Int63.PrimInt63.mul : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.global_ptr_inj : ∀ tu : skylabs.lang.cpp.syntax.translation_unit.translation_unit, stdpp.base.Inj Corelib.Init.Logic.eq Corelib.Init.Logic.eq (skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.global_ptr tu)
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.global_ptr : skylabs.lang.cpp.syntax.translation_unit.translation_unit → skylabs.lang.cpp.syntax.core.name → skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr
+Corelib.Strings.PrimString.compare : Corelib.Strings.PrimString.string → Corelib.Strings.PrimString.string → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.compare : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.add : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Axioms:
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+Corelib.Strings.PrimString.string : Set
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr_alloc_id : skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr → Corelib.Init.Datatypes.option skylabs.lang.cpp.semantics.alloc_id.alloc_id
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr : Set
+Corelib.Numbers.Cyclic.Int63.PrimInt63.mul : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.global_ptr_aid_inj : ∀ tu : skylabs.lang.cpp.syntax.translation_unit.translation_unit, stdpp.base.Inj Corelib.Init.Logic.eq Corelib.Init.Logic.eq (λ o : skylabs.lang.cpp.syntax.core.name, skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr_alloc_id (skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.global_ptr tu o))
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.global_ptr : skylabs.lang.cpp.syntax.translation_unit.translation_unit → skylabs.lang.cpp.syntax.core.name → skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr
+Corelib.Strings.PrimString.compare : Corelib.Strings.PrimString.string → Corelib.Strings.PrimString.string → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.compare : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.add : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
