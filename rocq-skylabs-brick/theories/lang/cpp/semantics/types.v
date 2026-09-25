@@ -58,16 +58,15 @@ Qed.
 (** The size of a C++ object.
     This is *not* the same as the semantics of the <<sizeof()>> operator
     because <<sizeof(int&)>> is actually <<sizeof(int)>> whereas
-    [size_of (Tref Tint)] is the size of the reference.
+    [size_of (Tref Tint)] is the size of the reference cell, represented
+    by a pointer (as are reference fields in [offset_of]).
 
     Also, [size_of] is well-defined even in case of overflow, so many users need
     bound-checking; see for instance [wp_operand_sizeof].
  *)
 Fixpoint size_of (resolve : genv) (t : type) : option N :=
   match t with
-  | Tptr _ => Some (pointer_size resolve)
-  | Tref _ => None
-  | Trv_ref _ => None
+  | Tptr _ | Tref _ | Trv_ref _ => Some (pointer_size resolve)
   | Tnum sz _ => Some (int_rank.bytesN sz)
   | Tchar_ ct => Some (char_type.bytesN ct)
   | Tvoid => None
@@ -150,6 +149,12 @@ Theorem size_of_bool : forall {c : genv},
 Proof. reflexivity. Qed.
 Theorem size_of_pointer : forall {c : genv} t,
     @size_of c (Tptr t) = Some (pointer_size c).
+Proof. reflexivity. Qed.
+Theorem size_of_ref : forall {c : genv} t,
+    @size_of c (Tref t) = Some (pointer_size c).
+Proof. reflexivity. Qed.
+Theorem size_of_rv_ref : forall {c : genv} t,
+    @size_of c (Trv_ref t) = Some (pointer_size c).
 Proof. reflexivity. Qed.
 Theorem size_of_qualified : forall {c : genv} t q,
     @size_of c t = @size_of c (Tqualified q t).
@@ -266,6 +271,14 @@ Proof. done. Qed.
 
 #[global] Instance ptr_size_of {σ : genv} ty n :
   TCEq (pointer_size σ) n -> SizeOf (Tptr ty) n.
+Proof. by rewrite /SizeOf TCEq_eq=><-. Qed.
+
+#[global] Instance ref_size_of {σ : genv} ty n :
+  TCEq (pointer_size σ) n -> SizeOf (Tref ty) n.
+Proof. by rewrite /SizeOf TCEq_eq=><-. Qed.
+
+#[global] Instance rv_ref_size_of {σ : genv} ty n :
+  TCEq (pointer_size σ) n -> SizeOf (Trv_ref ty) n.
 Proof. by rewrite /SizeOf TCEq_eq=><-. Qed.
 
 #[global] Instance arch_size_of {σ : genv} sz name n :
