@@ -26,6 +26,6 @@ let wrn : 'a Format.outfmt -> 'a = fun fmt ->
 let err : 'a Format.outfmt -> 'a = fun fmt ->
   Format.eprintf (Format.Color.red (fmt ^^ "\n%!"))
 
-let panic : ('a,'b) Format.koutfmt -> 'a = fun fmt ->
-  Format.kfprintf (fun _ -> exit 1) Format.err_formatter
+let panic : ?code:int -> ('a,'b) Format.koutfmt -> 'a = fun ?(code=1) fmt ->
+  Format.kfprintf (fun _ -> exit code) Format.err_formatter
     (Format.Color.red (fmt ^^ "\n%!"))
