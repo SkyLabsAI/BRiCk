@@ -634,6 +634,13 @@ Module Type HAS_TYPE_MIXIN (Import P : PTRS) (Import R : RAW_BYTES) (Import V : 
         bitsize.bound (int_rank.bitsize sz) sgn z <-> has_type_prop (Vint z) (Tnum sz sgn).
     Proof. move => *. rewrite has_int_type'. naive_solver. Qed.
 
+    Lemma has_type_byte_bound (n : N) :
+      has_type_prop (Vn n) Tbyte <-> (n < 256)%N.
+    Proof.
+      rewrite -has_int_type /bitsize.bound /bitsize.min_val /bitsize.max_val /=.
+      lia.
+    Qed.
+
     Lemma has_type_prop_char' (n : N) ct : (0 <= n < 2 ^ char_type.bitsN ct)%N <-> has_type_prop (Vchar n) (Tchar_ ct).
     Proof. rewrite -has_type_prop_char. naive_solver. Qed.
 
