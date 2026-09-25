@@ -1679,20 +1679,23 @@ Module PTRS_IMPL <: PTRS_INTF.
     ∀ tu, Inj (=) (=) (global_ptr tu).
   Proof. intros tu o1 o2 H. inversion H. reflexivity. Qed.
 
-  Lemma global_ptr_addr_inj :
-    ∀ σ tu, Inj (=) (=) (λ o, @ptr_vaddr σ (global_ptr tu o)).
+  Lemma global_ptr_addr_inj σ o1 o2 ty1 ty2 init1 init2 sz1 sz2 :
+    σ.(genv.genv_tu).(translation_unit.symbols) !! o1 = Some (Ovar ty1 init1) ->
+    σ.(genv.genv_tu).(translation_unit.symbols) !! o2 = Some (Ovar ty2 init2) ->
+    size_of σ ty1 = Some sz1 -> (0 < sz1)%N ->
+    size_of σ ty2 = Some sz2 -> (0 < sz2)%N ->
+    same_property (@ptr_vaddr σ) (global_ptr σ.(genv.genv_tu) o1) (global_ptr σ.(genv.genv_tu) o2) ->
+    o1 = o2.
   Proof.
-    intros σ tu o1 o2 H.
-    rewrite /ptr_vaddr /global_ptr /eval_offset /= in H.
-    inversion H as [Heq].
-    apply (inj global_ptr_encode_vaddr).
-    exact Heq.
+    intros _ _ _ _ _ _ (va & H1 & H2)%same_property_iff.
+    rewrite /ptr_vaddr /global_ptr /eval_offset /= in H1 H2.
+    apply (inj global_ptr_encode_vaddr). congruence.
   Qed.
 
   Lemma global_ptr_aid_inj :
     ∀ tu, Inj (=) (=) (λ o, ptr_alloc_id (global_ptr tu o)).
   Proof. intros tu o1 o2 [= H]. exact: (inj global_ptr_encode_vaddr). Qed.
-  #[global] Existing Instances global_ptr_inj global_ptr_addr_inj global_ptr_aid_inj.
+  #[global] Existing Instances global_ptr_inj global_ptr_aid_inj.
 
   Include PTRS_DERIVED.
   Include PTRS_MIXIN.
