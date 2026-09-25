@@ -36,6 +36,47 @@ Definition GlobDecl_align_of (g : GlobDecl) : option N :=
   | _ => None
   end.
 
+(** Layout metadata is untrusted: [genv] does not enforce these invariants.
+    The logarithm formulation makes the power-of-two check decidable by
+    computation and also excludes zero. *)
+Definition valid_alignment (sz al : N) : Prop :=
+  al = (2 ^ N.log2 al)%N /\ (sz mod al = 0)%N.
+
+#[global] Instance valid_alignment_decision (sz al : N) :
+  Decision (valid_alignment sz al).
+Proof. unfold valid_alignment. solve_decision. Defined.
+
+Lemma valid_alignment_spec (sz al : N) :
+  valid_alignment sz al ->
+  al <> 0%N /\ (exists n, al = (2 ^ n)%N) /\ (al | sz)%N.
+Proof.
+  intros [Hpow Hmod].
+  have Hnonzero : al <> 0%N by rewrite Hpow; apply N.pow_nonzero.
+  split; first done. split; first by exists (N.log2 al).
+  by apply N.Lcm0.mod_divide.
+Qed.
+
+(** Only validated metadata may determine semantic alignment. Invalid or
+    absent metadata leaves [align_of] abstract, just as an incomplete type
+    does; [None] here does not assert that the type has no alignment. *)
+Definition GlobDecl_valid_align_of (g : GlobDecl) : option N :=
+  match GlobDecl_size_of g, GlobDecl_align_of g with
+  | Some sz, Some al =>
+      if bool_decide (valid_alignment sz al) then Some al else None
+  | _, _ => None
+  end.
+
+Lemma GlobDecl_valid_align_of_spec (g : GlobDecl) (al : N) :
+  GlobDecl_valid_align_of g = Some al ->
+  exists sz, GlobDecl_size_of g = Some sz /\
+    GlobDecl_align_of g = Some al /\ valid_alignment sz al.
+Proof.
+  rewrite /GlobDecl_valid_align_of.
+  destruct (GlobDecl_size_of g) as [sz|] eqn:Hsz; cbn; last done.
+  destruct (GlobDecl_align_of g) as [a|] eqn:Hal; cbn; last done.
+  case_bool_decide; naive_solver.
+Qed.
+
 
 #[global] Instance proper_GlobDecl_size_of: Proper (GlobDecl_ler ==> Roption_leq eq) GlobDecl_size_of.
 Proof.
@@ -423,12 +464,12 @@ Section with_genv.
     eauto.
   Qed.
 
-  (* Known alignments of named types are recorded in the translation unit.
+  (* Validated alignments of named types are recorded in the translation unit.
      Missing layout metadata (e.g. [Gtype] or [Gunsupported]) does not mean
      that the type has no alignment: pointers to these types are still valid.
-     In that case we leave [align_of] abstract. *)
+     Invalid metadata likewise leaves [align_of] abstract. *)
   Axiom align_of_named : forall nm al,
-    glob_def σ nm ≫= GlobDecl_align_of = Some al ->
+    glob_def σ nm ≫= GlobDecl_valid_align_of = Some al ->
     align_of (Tnamed nm) = Some al.
 
   Axiom align_of_array : forall (ty : type) n,
@@ -478,10 +519,12 @@ Section with_genv.
   Lemma align_of_genv_compat tu gn st
         (Hσ : tu ⊧ σ)
         (Hl : tu.(types) !! gn = Some (Gstruct st)) :
+    valid_alignment st.(s_size) st.(s_alignment) ->
     align_of (Tnamed gn) = GlobDecl_align_of (Gstruct st).
   Proof.
-    apply align_of_named.
-    by rewrite (glob_def_genv_compat_struct st Hl).
+    intros Hvalid. apply align_of_named.
+    rewrite (glob_def_genv_compat_struct st Hl) /GlobDecl_valid_align_of /=.
+    by rewrite bool_decide_true.
   Qed.
 
   Lemma align_of_genv_leq σ1 σ2 ty align :
