@@ -40,9 +40,12 @@ Also, the proof of [raw_int_byte_primR] below suggest some TODOs for
 [raw_bytes_of_val].
 *)
 Axiom primR_to_rawsR : ∀ `{Σ : cpp_logic, σ : genv} ty q v,
+  size_of σ ty <> Some 0%N ->
   primR ty q v -|-
   Exists rs, [| raw_bytes_of_val σ ty v rs |] ** type_ptrR ty ** rawsR q rs.
-(* ^^ TODO: rewrite this in terms of [tptsto] *)
+(* Empty byte arrays carry no fractional ownership, so they cannot reconstruct
+   a primitive cell. The nonzero-size premise is essential to this equivalence.
+   TODO: rewrite this in terms of [tptsto]. *)
 
 Definition decodes {σ : genv} (endianness : endian) (sgn : signed) (l : list N) (z : Z) : Prop :=
   List.Forall (fun v => has_type_prop (Vn v) Tbyte) l /\
@@ -222,7 +225,7 @@ Section with_Σ.
     raw_int_byte n = r ->
     rawR q r -|- primR Tbyte q (Vn n).
   Proof.
-    intros <-. rewrite primR_to_rawsR. split'.
+    intros <-. rewrite primR_to_rawsR; last discriminate. split'.
     - iIntros "R". iExists [raw_int_byte n].
       rewrite /rawsR arrayR_singleton.
       iDestruct (observe (type_ptrR Tbyte) with "R") as "#T". iFrame "R T".
@@ -255,7 +258,8 @@ Section with_Σ.
       type_ptrR (Tnum sz Unsigned) **
       arrayR Tbyte (fun c => primR Tbyte q (Vint c)) (Z.of_N <$> l).
   Proof.
-    rewrite primR_to_rawsR. f_equiv=>rs. rewrite raw_byte_of_int_eq. split'.
+    rewrite primR_to_rawsR; last by destruct sz.
+    f_equiv=>rs. rewrite raw_byte_of_int_eq. split'.
     - iIntros "(%Hraw & T & Rs)". destruct Hraw as (l & Hdec & Hrs & Hlen).
       iExists l. iFrame (Hdec Hrs Hlen) "T".
       rewrite -{}Hrs /rawsR arrayR_eq/arrayR_def. rewrite arrR_mono//.
