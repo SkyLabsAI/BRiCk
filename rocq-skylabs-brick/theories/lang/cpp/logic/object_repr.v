@@ -454,15 +454,17 @@ Section primR_transport.
   Context `{Σ : cpp_logic} {σ : genv}.
 
   Lemma _at_primR_ptr_congP_transport p p' ty q v :
+    size_of σ ty <> Some 0%N ->
     ptr_congP σ p p' ** type_ptr ty p' |-- p |-> primR ty q v -* p' |-> primR ty q v.
   Proof.
+    intros Hnonzero.
     iIntros "#[cong tptr'] prim".
     iDestruct (type_ptr_size with "tptr'") as "%Hsz"; destruct Hsz as [sz Hsz].
     iDestruct (type_ptr_raw_type_ptrs with "tptr'") as "raw_tptrs"; eauto.
     rewrite raw_type_ptrs_eq/raw_type_ptrs_def.
     iDestruct "raw_tptrs" as (sz') "[%Hsz' tptrs]".
     rewrite Hsz' in Hsz; inversion Hsz; subst.
-    rewrite primR_to_rawsR !_at_exists.
+    rewrite primR_to_rawsR // !_at_exists.
     iDestruct "prim" as (rs) "H"; iExists rs.
     rewrite !_at_sep !_at_only_provable !_at_type_ptrR.
     iDestruct "H" as "(%raw_bytes & _ & raws)"; iFrame "#%".
