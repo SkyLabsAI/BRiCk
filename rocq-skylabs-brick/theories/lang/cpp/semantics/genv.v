@@ -47,6 +47,9 @@ Record genv : Type :=
 { genv_tu : translation_unit
   (* ^ Implementation detail: the result of merging all the [translation_unit]s
   in the program. Might be replaced when fixing FM-2738. *)
+; member_pointer_bitsize : bitsize
+  (* ^ The modeled member-pointer width, supplied by the target environment.
+     Kept separate from the ordinary pointer width. *)
 }.
 
 Existing Class genv.
@@ -61,6 +64,8 @@ Definition wchar_signed (g : genv) : signed :=
 Definition genv_byte_order (g : genv) : endian :=
   (genv_abi g).(abi.byte_order).
 Definition pointer_size (g : genv) := bitsize.bytesN (pointer_size_bitsize g).
+Definition member_pointer_size (g : genv) : N :=
+  bitsize.bytesN g.(member_pointer_bitsize).
 Definition genv_type_table (g : genv) : type_table :=
   g.(genv_tu).(types).
 
@@ -77,14 +82,16 @@ Definition equivalent_int_type (g : genv) (ct : char_type) : integral_type.t :=
 
 (** [genv_leq a b] states that [b] is an extension of [a] *)
 Record genv_leq {l r : genv} : Prop :=
-{ tu_le : sub_module l.(genv_tu) r.(genv_tu) }.
+{ tu_le : sub_module l.(genv_tu) r.(genv_tu)
+; member_pointer_bitsize_le : l.(member_pointer_bitsize) = r.(member_pointer_bitsize)
+}.
 Arguments genv_leq _ _ : clear implicits.
 
 #[global] Instance PreOrder_genv_leq : PreOrder genv_leq.
 Proof.
   constructor.
   { constructor; auto; reflexivity. }
-  { red. destruct 1; destruct 1; constructor. etransitivity; eauto. }
+  { red. destruct 1; destruct 1; constructor; etransitivity; eauto. }
 Qed.
 #[global] Instance: RewriteRelation genv_leq := {}.
 
@@ -110,6 +117,19 @@ Proof. unfold pointer_size; intros ???. f_equiv. exact: pointer_size_bitsize_pro
 #[global] Instance pointer_size_flip_proper : Proper (flip genv_leq ==> eq) pointer_size.
 Proof. unfold pointer_size; intros ???. f_equiv. exact: pointer_size_bitsize_flip_proper. Qed.
 
+#[global] Instance member_pointer_bitsize_proper :
+  Proper (genv_leq ==> eq) member_pointer_bitsize.
+Proof. intros ?? Hle. exact: member_pointer_bitsize_le. Qed.
+#[global] Instance member_pointer_bitsize_flip_proper :
+  Proper (flip genv_leq ==> eq) member_pointer_bitsize.
+Proof. intros ?? Hle. symmetry. exact: member_pointer_bitsize_le. Qed.
+#[global] Instance member_pointer_size_proper :
+  Proper (genv_leq ==> eq) member_pointer_size.
+Proof. intros ?? Hle. by rewrite /member_pointer_size (member_pointer_bitsize_proper _ _ Hle). Qed.
+#[global] Instance member_pointer_size_flip_proper :
+  Proper (flip genv_leq ==> eq) member_pointer_size.
+Proof. intros ?? Hle. by rewrite /member_pointer_size (member_pointer_bitsize_flip_proper _ _ Hle). Qed.
+
 #[global] Instance genv_byte_order_proper : Proper (genv_leq ==> eq) genv_byte_order.
 Proof. intros ?? Hle. by rewrite /genv_byte_order (genv_abi_proper _ _ Hle). Qed.
 #[global] Instance genv_byte_order_flip_proper : Proper (flip genv_leq ==> eq) genv_byte_order.
@@ -134,7 +154,7 @@ Proof. by destruct 1. Qed.
 
 #[global] Instance genv_compat_proper : Proper (flip sub_module ==> genv_leq ==> impl) genv_compat.
 Proof.
-  intros ?? Heq1 ?? [Heq2] [Heq3]; constructor.
+  intros ?? Heq1 ?? [Heq2 _] [Heq3]; constructor.
   by rewrite Heq1 Heq3.
 Qed.
 #[global] Instance genv_compat_flip_proper : Proper (sub_module ==> flip genv_leq ==> flip impl) genv_compat.

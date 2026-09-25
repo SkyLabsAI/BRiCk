@@ -77,7 +77,7 @@ Fixpoint size_of (resolve : genv) (t : type) : option N :=
   | Tenum nm => glob_def resolve nm ≫= GlobDecl_size_of
   | Tfunction _ => None
   | Tbool => Some 1
-  | Tmember_pointer _ _ => None (* TODO these are not well supported right now *)
+  | Tmember_pointer _ _ => Some (member_pointer_size resolve)
   | Tqualified _ t => size_of resolve t
   | Tnullptr => Some (pointer_size resolve)
   | Tfloat_ sz => Some (float_type.bytesN sz)
@@ -109,6 +109,7 @@ Proof. by []. Abort.
 Proof.
   intros ?? Hle ? t ->; induction t; simpl; (try constructor) => //.
   all: try exact: pointer_size_proper.
+  all: try exact: member_pointer_size_proper.
   - by destruct IHt; constructor; subst.
 (*  - rewrite /glob_def.
     generalize (types_compat _ _ (tu_le Hle) gn).
@@ -125,12 +126,12 @@ Proof.
       by eapply proper_GlobDecl_size_of. }
     { intros. constructor. }
 *)
-  - rewrite /glob_def. move: Hle => [[ /(_ gn) Hle _ _]].
+  - rewrite /glob_def. move: Hle => /tu_le [/(_ gn) Hle _ _].
     revert Hle.
     case: (types (genv_tu x) !! gn); simpl; try constructor.
     move => ? /(_ _ eq_refl) [g2 [-> HH]] * /=.
     exact: proper_GlobDecl_size_of.
-  - rewrite /glob_def. move: Hle => [[ /(_ gn) Hle _ _]].
+  - rewrite /glob_def. move: Hle => /tu_le [/(_ gn) Hle _ _].
     revert Hle.
     case: (types (genv_tu x) !! gn); simpl; try constructor.
     move => ? /(_ _ eq_refl) [g2 [-> HH]] * /=.
@@ -149,6 +150,9 @@ Theorem size_of_bool : forall {c : genv},
 Proof. reflexivity. Qed.
 Theorem size_of_pointer : forall {c : genv} t,
     @size_of c (Tptr t) = Some (pointer_size c).
+Proof. reflexivity. Qed.
+Theorem size_of_member_pointer : forall {c : genv} cls t,
+    @size_of c (Tmember_pointer cls t) = Some (member_pointer_size c).
 Proof. reflexivity. Qed.
 Theorem size_of_ref : forall {c : genv} t,
     @size_of c (Tref t) = Some (pointer_size c).
@@ -271,6 +275,10 @@ Proof. done. Qed.
 
 #[global] Instance ptr_size_of {σ : genv} ty n :
   TCEq (pointer_size σ) n -> SizeOf (Tptr ty) n.
+Proof. by rewrite /SizeOf TCEq_eq=><-. Qed.
+
+#[global] Instance member_ptr_size_of {σ : genv} cls ty n :
+  TCEq (member_pointer_size σ) n -> SizeOf (Tmember_pointer cls ty) n.
 Proof. by rewrite /SizeOf TCEq_eq=><-. Qed.
 
 #[global] Instance ref_size_of {σ : genv} ty n :
