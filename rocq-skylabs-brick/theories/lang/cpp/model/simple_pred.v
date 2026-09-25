@@ -973,16 +973,6 @@ Module SimpleCPP.
       by iPureIntro.
     Qed.
 
-    Axiom same_address_eq_type_ptr : forall ty p1 p2 n,
-      same_address p1 p2 ->
-      size_of σ ty = Some n ->
-      (* if [erase_qualifiers ty = Tuchar], one of these pointer could provide
-      storage for the other. *)
-      erase_qualifiers ty <> Tuchar ->
-      (n > 0)%N ->
-      type_ptr ty p1 ∧ type_ptr ty p2 ∧ live_ptr p1 ∧ live_ptr p2 ⊢
-        |={↑pred_ns}=> [| p1 = p2 |].
-
     (* Not provable in the current model without tying to a concrete model of pointers. *)
     Lemma offset_pinned_ptr_pure o z va p :
       eval_offset σ o = Some z ->
