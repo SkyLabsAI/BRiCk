@@ -415,9 +415,9 @@ Module SimpleCPP.
           match v with
           | Vint v =>
             (* note: this is really an offset *)
-            in_Z_to_bytes_bounds POINTER_BITSZ Unsigned v /\
-            vs = Z_to_bytes POINTER_BITSZ Unsigned v
-          | Vundef => pure_encodes_undef POINTER_BITSZ vs
+            in_Z_to_bytes_bounds (member_pointer_bitsize σ) Unsigned v /\
+            vs = Z_to_bytes (member_pointer_bitsize σ) Unsigned v
+          | Vundef => pure_encodes_undef (member_pointer_bitsize σ) vs
           | _ => False
           end
         | Tbool =>
@@ -489,7 +489,8 @@ Module SimpleCPP.
                       | Tnum sz _ => int_rank.bytesNat sz
                       | Tfloat_ ft => bitsize.bytesNat (float_type.bitsize ft)
 
-                      | Tmember_pointer _ _ | Tnullptr | Tptr _
+                      | Tmember_pointer _ _ => bitsize.bytesNat (member_pointer_bitsize σ)
+                      | Tnullptr | Tptr _
                       | Tfunction _ | Tref _ | Trv_ref _ =>
                                                  POINTER_BYTES
 
