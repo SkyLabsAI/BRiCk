@@ -1,0 +1,40 @@
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/global_pointer_addresses.v", line 45, characters 0-164:
+The command has indeed failed with message:
+The following term contains unresolved implicit arguments:
+  (λ (σ : genv) (tu : translation_unit) (H : tu ⊧ σ), ?i@{g:=H})
+More precisely: 
+- ?i: Cannot infer this placeholder of type
+  "Inj eq eq (λ n : name, ptr_vaddr (global_ptr tu n))" (no type class
+  instance found) in environment:
+  σ : genv
+  tu : translation_unit
+  g : tu ⊧ σ
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/global_pointer_addresses.v", line 77, characters 16-19:
+The command has indeed failed with message:
+Tactic failure:  Cannot find witness.
+In nested Ltac calls to "lia" and "xlia (tactic)", last call failed.
+
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/global_pointer_addresses.v", line 79, characters 35-38:
+The command has indeed failed with message:
+Tactic failure:  Cannot find witness.
+In nested Ltac calls to "lia" and "xlia (tactic)", last call failed.
+
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/global_pointer_addresses.v", line 81, characters 16-19:
+The command has indeed failed with message:
+Tactic failure:  Cannot find witness.
+In nested Ltac calls to "lia" and "xlia (tactic)", last call failed.
+
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/global_pointer_addresses.v", line 83, characters 2-9:
+The command has indeed failed with message:
+The term "eq_refl" has type
+ "size_of (global_address_env "Forward" "int") "Forward" =
+  size_of (global_address_env "Forward" "int") "Forward""
+while it is expected to have type
+ "size_of (global_address_env "Forward" "int") "Forward" = Some 1%N"
+(cannot unify "size_of (global_address_env "Forward" "int") "Forward"" and
+"Some 1%N").
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/global_pointer_addresses.v", line 90, characters 70-81:
+The command has indeed failed with message:
+Unable to unify "Some (Ovar "unsigned char" global_init.NoInit)" with 
+"None".
+
