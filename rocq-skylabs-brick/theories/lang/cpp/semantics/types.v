@@ -415,10 +415,13 @@ Section with_genv.
     eauto.
   Qed.
 
-  (* The alignment of named types are recorded in the translation unit *)
-  Axiom align_of_named : forall nm,
-    align_of (Tnamed nm) =
-    glob_def σ nm ≫= GlobDecl_align_of.
+  (* Known alignments of named types are recorded in the translation unit.
+     Missing layout metadata (e.g. [Gtype] or [Gunsupported]) does not mean
+     that the type has no alignment: pointers to these types are still valid.
+     In that case we leave [align_of] abstract. *)
+  Axiom align_of_named : forall nm al,
+    glob_def σ nm ≫= GlobDecl_align_of = Some al ->
+    align_of (Tnamed nm) = Some al.
 
   Axiom align_of_array : forall (ty : type) n,
       align_of (Tarray ty n) = align_of ty.
@@ -468,7 +471,10 @@ Section with_genv.
         (Hσ : tu ⊧ σ)
         (Hl : tu.(types) !! gn = Some (Gstruct st)) :
     align_of (Tnamed gn) = GlobDecl_align_of (Gstruct st).
-  Proof. by rewrite /= align_of_named (glob_def_genv_compat_struct st Hl). Qed.
+  Proof.
+    apply align_of_named.
+    by rewrite (glob_def_genv_compat_struct st Hl).
+  Qed.
 
   Lemma align_of_genv_leq σ1 σ2 ty align :
     @align_of σ1 ty = Some align ->
