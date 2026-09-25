@@ -24,7 +24,8 @@ cat > dune <<EOF
  (theories
   Stdlib stdpp iris elpi elpi_elpi Ltac2
   Flocq
-  skylabs.upoly skylabs.prelude skylabs.iris.extra skylabs.ltac2.extra skylabs.lang.cpp Lens Lens.Elpi))
+  skylabs.upoly skylabs.prelude skylabs.iris.extra skylabs.ltac2.extra skylabs.lang.cpp
+  skylabs.lang.cpp.parser.plugin Lens Lens.Elpi))
 EOF
 
 cat > dune-project <<EOF
