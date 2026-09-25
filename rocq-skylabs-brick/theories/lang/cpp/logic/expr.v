@@ -1697,7 +1697,7 @@ Module Type Expr.
                    letI* resultp := wp_fptr ctor_type (_global cnd) (this :: argps) in
                    letI* := interp ifree in
                     (* in the semantics, constructors return [void] *)
-                    resultp |-> primR Tvoid 1$m Vvoid **
+                    resultp |-> resultR Tvoid 1$m Vvoid **
                     let Q := Q free in
                     if q_const cv
                     then wp_make_const tu this (Tnamed cls) Q
@@ -1721,7 +1721,7 @@ Module Type Expr.
                    (* ^^ The semantics currently has constructors take ownership of a [tblockR] *)
                    letI* resultp := wp_fptr ctor_type (_global cnd) (this :: List.map (_local ρ) vars) in
                     (* in the semantics, constructors return [void] *)
-                    resultp |-> primR Tvoid 1$m Vvoid **
+                    resultp |-> resultR Tvoid 1$m Vvoid **
                     let Q := Q FreeTemps.id in
                     if q_const cv
                     then wp_make_const tu this (Tnamed cls) Q
