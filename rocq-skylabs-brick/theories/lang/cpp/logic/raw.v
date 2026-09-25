@@ -36,13 +36,14 @@ TODO: The axioms here should be at the level of [tptsto], stated in
 pred.v, and proved in simple_pred.v with the properties of [primR] and
 [anyR] derived.
 
-Also, the proof of [raw_int_byte_primR] below suggest some TODOs for
-[raw_bytes_of_val].
 *)
 Axiom primR_to_rawsR : ∀ `{Σ : cpp_logic, σ : genv} ty q v,
+  size_of σ ty <> Some 0%N ->
   primR ty q v -|-
   Exists rs, [| raw_bytes_of_val σ ty v rs |] ** type_ptrR ty ** rawsR q rs.
-(* ^^ TODO: rewrite this in terms of [tptsto] *)
+(* Empty byte arrays carry no fractional ownership, so they cannot reconstruct
+   a primitive cell. The nonzero-size premise is essential to this equivalence.
+   TODO: rewrite this in terms of [tptsto]. *)
 
 Definition decodes {σ : genv} (endianness : endian) (sgn : signed) (l : list N) (z : Z) : Prop :=
   List.Forall (fun v => has_type_prop (Vn v) Tbyte) l /\
@@ -65,14 +66,41 @@ Axiom raw_byte_of_int_eq : ∀ {σ : genv} sz x rs,
   raw_bytes_of_val σ (Tnum sz Unsigned) (Vint x) rs <->
   ∃ l, decodes_uint l x /\ raw_int_byte <$> l = rs /\ length l = N.to_nat (int_rank.bytesN sz).
 
+Lemma has_type_byte_bound {σ : genv} (n : N) :
+  has_type_prop (Vn n) Tbyte <-> (n < 256)%N.
+Proof.
+  rewrite -has_int_type /bitsize.bound /bitsize.min_val /bitsize.max_val /=.
+  lia.
+Qed.
+
+Lemma raw_bytes_of_val_byte {σ : genv} (n : N) rs :
+  (n < 256)%N ->
+  raw_bytes_of_val σ Tbyte (Vn n) rs <-> rs = [raw_int_byte n].
+Proof.
+  intros Hn. rewrite raw_byte_of_int_eq. split.
+  - intros (l & [Htyped Hdecode] & <- & Hlen).
+    destruct l as [|b l]; first discriminate.
+    destruct l; last (simpl in Hlen; lia).
+    inversion Htyped as [|? ? Hb _]; subst.
+    apply has_type_byte_bound in Hb.
+    rewrite _Z_from_bytes_singleton _get_byte_0_small_id Z.mod_small in Hdecode; last lia.
+    have -> : b = n by lia. reflexivity.
+  - intros ->. exists [n]. split; last done.
+    split.
+    + constructor; last constructor. by apply has_type_byte_bound.
+    + by rewrite _Z_from_bytes_singleton _get_byte_0_small_id Z.mod_small; last lia.
+Qed.
+
 Lemma raw_bytes_of_val_float_intro {σ : genv} ft (f : float_type.car ft) :
+  float_type.supported ft = true ->
   raw_bytes_of_val σ (Tfloat_ ft) (Vfloat ft f) (float_raw_bytes σ f).
-Proof. apply raw_bytes_of_val_float. reflexivity. Qed.
+Proof. intros Hft. apply raw_bytes_of_val_float; done. Qed.
 
 Lemma raw_bytes_of_val_float_elim {σ : genv} ft (f : float_type.car ft) rs :
+  float_type.supported ft = true ->
   raw_bytes_of_val σ (Tfloat_ ft) (Vfloat ft f) rs ->
   rs = float_raw_bytes σ f.
-Proof. apply raw_bytes_of_val_float. Qed.
+Proof. intros Hft. apply raw_bytes_of_val_float. exact Hft. Qed.
 
 Definition float_bits_compatible (sz : int_rank.t) (ft : float_type.t) : Prop :=
   int_rank.bitsize sz = float_type.bitsize ft /\
@@ -218,28 +246,36 @@ Section with_Σ.
       iModIntro; by iPureIntro.
   Qed.
 
+  (** Integer views of raw bytes require an in-range byte value. *)
   Lemma raw_int_byte_primR' q r n :
+    (n < 256)%N ->
     raw_int_byte n = r ->
     rawR q r -|- primR Tbyte q (Vn n).
   Proof.
-    intros <-. rewrite primR_to_rawsR. split'.
+    intros Hn <-. rewrite primR_to_rawsR; last discriminate. split'.
     - iIntros "R". iExists [raw_int_byte n].
       rewrite /rawsR arrayR_singleton.
       iDestruct (observe (type_ptrR Tbyte) with "R") as "#T". iFrame "R T".
-      (**
-      TODO: Missing axiom [raw_bytes_of_val σ Tbyte (Vn n) [raw_int_byte n]]
-      *)
-      admit.
-    - iIntros "(% & %Hraw & #T & R)".
-      (**
-      TODO: Missing axioms allowing us to invert [raw_bytes_of_val σ
-      Tbyte (Vn n) rs] to learn [rs] the singleton [raw_int_byte n ::
-      nil].
-      *)
-      admit.
-  Admitted.
-  Lemma raw_int_byte_primR q n : rawR q (raw_int_byte n) -|- primR Tbyte q (Vn n).
-  Proof. exact: raw_int_byte_primR'. Qed.
+      iPureIntro. by apply raw_bytes_of_val_byte.
+    - iIntros "(%rs & %Hraw & #T & R)".
+      apply (raw_bytes_of_val_byte n rs Hn) in Hraw. subst rs.
+      rewrite /rawsR arrayR_singleton. iDestruct "R" as "(_ & $)".
+  Qed.
+  Lemma raw_int_byte_primR q n :
+    (n < 256)%N ->
+    rawR q (raw_int_byte n) -|- primR Tbyte q (Vn n).
+  Proof. intros Hn. exact: raw_int_byte_primR'. Qed.
+
+  Lemma rawsR_int_bytes q (l : list N) :
+    List.Forall (fun n => (n < 256)%N) l ->
+    rawsR q (raw_int_byte <$> l) -|-
+    arrayR Tbyte (fun n => primR Tbyte q (Vn n)) l.
+  Proof.
+    intros Hbytes. induction Hbytes as [|n l Hn Hl IH].
+    - by rewrite /rawsR /= !arrayR_nil.
+    - rewrite /rawsR /= !arrayR_cons raw_int_byte_primR//.
+      rewrite /rawsR in IH. by rewrite IH.
+  Qed.
 
   (** TODO: determine whether this is correct with respect to pointers *)
   Lemma decode_uint_primR q sz (x : Z) :
@@ -255,16 +291,21 @@ Section with_Σ.
       type_ptrR (Tnum sz Unsigned) **
       arrayR Tbyte (fun c => primR Tbyte q (Vint c)) (Z.of_N <$> l).
   Proof.
-    rewrite primR_to_rawsR. f_equiv=>rs. rewrite raw_byte_of_int_eq. split'.
+    rewrite primR_to_rawsR; last by destruct sz.
+    f_equiv=>rs. rewrite raw_byte_of_int_eq. split'.
     - iIntros "(%Hraw & T & Rs)". destruct Hraw as (l & Hdec & Hrs & Hlen).
       iExists l. iFrame (Hdec Hrs Hlen) "T".
       rewrite -{}Hrs /rawsR arrayR_eq/arrayR_def. rewrite arrR_mono//.
-      decompose_Forall. apply Forall_forall=>b ? /=.
-      by rewrite raw_int_byte_primR.
+      decompose_Forall. apply Forall_forall=>b Hb /=.
+      rewrite raw_int_byte_primR//.
+      apply has_type_byte_bound. have Htyped := proj1 Hdec.
+      rewrite Forall_forall in Htyped. exact: Htyped Hb.
     - iIntros "(%l & %Hdec & %Hrs & %Hlen & #T & Rs)". iFrame "T".
       iSplit; eauto. rewrite -{}Hrs /rawsR arrayR_eq/arrayR_def. rewrite arrR_mono//.
-      decompose_Forall. apply Forall_forall=>b ? /=.
-      by rewrite raw_int_byte_primR.
+      decompose_Forall. apply Forall_forall=>b Hb /=.
+      rewrite raw_int_byte_primR//.
+      apply has_type_byte_bound. have Htyped := proj1 Hdec.
+      rewrite Forall_forall in Htyped. exact: Htyped Hb.
   Qed.
 
 End with_Σ.

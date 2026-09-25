@@ -44,7 +44,7 @@ Section with_cpp.
               wp_spec_bind wpp args (fun rv => WITH (fun pr : ptr => DONE pr [| Vptr pr = rv |]) "pr" DummyValue)
           | Some (cv, t) =>
               wp_spec_bind wpp args (fun rv => WITH (fun pr : ptr =>
-                   DONE pr (pr |-> tptsto_fuzzyR t (cQp.mk (q_const cv) 1) rv)) "pr" DummyValue)
+                   DONE pr (pr |-> resultR t (cQp.mk (q_const cv) 1) rv)) "pr" DummyValue)
           end
         in
         match ar with

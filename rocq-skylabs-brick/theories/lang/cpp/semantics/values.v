@@ -239,6 +239,8 @@ Module Type RAW_BYTES_VAL
   Axiom raw_bytes_of_val_sizeof : forall {σ ty v rs},
       raw_bytes_of_val σ ty v rs -> size_of σ ty = Some (N.of_nat $ length rs).
 
+  (** Total bit-encoding helper. This describes object representation only for
+      supported formats; in particular it is not the x87 long-double layout. *)
   Definition float_raw_bytes (σ : genv) {ft} (f : float_type.car ft) : list raw_byte :=
     raw_int_byte <$> _Z_to_bytes (N.to_nat (float_type.bytesN ft))
       (genv_byte_order σ) Unsigned (float_value.to_bits f).
@@ -247,10 +249,12 @@ Module Type RAW_BYTES_VAL
     length (float_raw_bytes σ f) = N.to_nat (float_type.bytesN ft).
   Proof. by rewrite /float_raw_bytes length_fmap _Z_to_bytes_length. Qed.
 
-  (** Float raw-byte support is intentionally narrow: the byte sequence is the
-      deterministic object-size encoding of [float_value.to_bits].  Equality of
-      such encodings for values of the same float type determines the value. *)
+  (** Supported float formats use the implicit-leading-bit encoding of
+      [float_value.to_bits]. Long double remains abstract: its explicit integer
+      bit and padding require a different representation contract before adding
+      frontend support. *)
   Axiom raw_bytes_of_val_float : forall {σ ft} (f : float_type.car ft) rs,
+      float_type.supported ft = true ->
       raw_bytes_of_val σ (Tfloat_ ft) (Vfloat ft f) rs <->
       rs = float_raw_bytes σ f.
 
@@ -496,9 +500,8 @@ Module Type RAW_BYTES_MIXIN
     raw_bytes_of_val σ (Tfloat_ ft) (Vfloat ft f) rs ->
     length rs = N.to_nat (float_type.bytesN ft).
   Proof.
-    move=> Hraw.
-    apply raw_bytes_of_val_float in Hraw. subst.
-    apply float_raw_bytes_length.
+    move => /raw_bytes_of_val_sizeof/=.
+    inversion 1. lia.
   Qed.
 
   Lemma raw_bytes_of_val_float_undef_length {σ} ft rs :

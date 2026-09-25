@@ -415,9 +415,9 @@ Module SimpleCPP.
           match v with
           | Vint v =>
             (* note: this is really an offset *)
-            in_Z_to_bytes_bounds POINTER_BITSZ Unsigned v /\
-            vs = Z_to_bytes POINTER_BITSZ Unsigned v
-          | Vundef => pure_encodes_undef POINTER_BITSZ vs
+            in_Z_to_bytes_bounds (member_pointer_bitsize σ) Unsigned v /\
+            vs = Z_to_bytes (member_pointer_bitsize σ) Unsigned v
+          | Vundef => pure_encodes_undef (member_pointer_bitsize σ) vs
           | _ => False
           end
         | Tbool =>
@@ -489,7 +489,8 @@ Module SimpleCPP.
                       | Tnum sz _ => int_rank.bytesNat sz
                       | Tfloat_ ft => bitsize.bytesNat (float_type.bitsize ft)
 
-                      | Tmember_pointer _ _ | Tnullptr | Tptr _
+                      | Tmember_pointer _ _ => bitsize.bytesNat (member_pointer_bitsize σ)
+                      | Tnullptr | Tptr _
                       | Tfunction _ | Tref _ | Trv_ref _ =>
                                                  POINTER_BYTES
 
@@ -971,16 +972,6 @@ Module SimpleCPP.
       iDestruct (observe_2 [| v1 = v2 |] with "H1 H2") as %->.
       by iPureIntro.
     Qed.
-
-    Axiom same_address_eq_type_ptr : forall ty p1 p2 n,
-      same_address p1 p2 ->
-      size_of σ ty = Some n ->
-      (* if [erase_qualifiers ty = Tuchar], one of these pointer could provide
-      storage for the other. *)
-      erase_qualifiers ty <> Tuchar ->
-      (n > 0)%N ->
-      type_ptr ty p1 ∧ type_ptr ty p2 ∧ live_ptr p1 ∧ live_ptr p2 ⊢
-        |={↑pred_ns}=> [| p1 = p2 |].
 
     (* Not provable in the current model without tying to a concrete model of pointers. *)
     Lemma offset_pinned_ptr_pure o z va p :

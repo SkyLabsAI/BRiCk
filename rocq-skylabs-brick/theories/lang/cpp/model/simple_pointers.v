@@ -245,8 +245,18 @@ Module SIMPLE_PTRS_IMPL <: PTRS_INTF.
     #[global] Instance global_ptr_inj tu : Inj (=) (=) (global_ptr tu).
     Proof. by intros o1 o2 [?%(inj global_ptr_encode_aid) _]%(inj Some)%(inj2 _). Qed.
 
-    #[global] Instance global_ptr_addr_inj tu : Inj (=) (=) (λ o, ptr_vaddr (global_ptr tu o)).
-    Proof. intros ??. rewrite !ptr_vaddr_global_ptr. by intros ?%(inj _)%(inj _). Qed.
+    Lemma global_ptr_addr_inj o1 o2 ty1 ty2 init1 init2 sz1 sz2 :
+      σ.(genv_tu).(symbols) !! o1 = Some (Ovar ty1 init1) ->
+      σ.(genv_tu).(symbols) !! o2 = Some (Ovar ty2 init2) ->
+      size_of σ ty1 = Some sz1 -> (0 < sz1)%N ->
+      size_of σ ty2 = Some sz2 -> (0 < sz2)%N ->
+      same_property ptr_vaddr (global_ptr σ.(genv_tu) o1) (global_ptr σ.(genv_tu) o2) ->
+      o1 = o2.
+    Proof.
+      intros _ _ _ _ _ _ (va & H1 & H2)%same_property_iff.
+      rewrite !ptr_vaddr_global_ptr in H1 H2.
+      apply (inj global_ptr_encode_vaddr). congruence.
+    Qed.
     #[global] Instance global_ptr_aid_inj tu : Inj (=) (=) (λ o, ptr_alloc_id (global_ptr tu o)).
     Proof. intros ??. rewrite !ptr_alloc_id_global_ptr. by intros ?%(inj _)%(inj _). Qed.
 

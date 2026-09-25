@@ -36,6 +36,47 @@ Definition GlobDecl_align_of (g : GlobDecl) : option N :=
   | _ => None
   end.
 
+(** Layout metadata is untrusted: [genv] does not enforce these invariants.
+    The logarithm formulation makes the power-of-two check decidable by
+    computation and also excludes zero. *)
+Definition valid_alignment (sz al : N) : Prop :=
+  al = (2 ^ N.log2 al)%N /\ (sz mod al = 0)%N.
+
+#[global] Instance valid_alignment_decision (sz al : N) :
+  Decision (valid_alignment sz al).
+Proof. unfold valid_alignment. solve_decision. Defined.
+
+Lemma valid_alignment_spec (sz al : N) :
+  valid_alignment sz al ->
+  al <> 0%N /\ (exists n, al = (2 ^ n)%N) /\ (al | sz)%N.
+Proof.
+  intros [Hpow Hmod].
+  have Hnonzero : al <> 0%N by rewrite Hpow; apply N.pow_nonzero.
+  split; first done. split; first by exists (N.log2 al).
+  by apply N.Lcm0.mod_divide.
+Qed.
+
+(** Only validated metadata may determine semantic alignment. Invalid or
+    absent metadata leaves [align_of] abstract, just as an incomplete type
+    does; [None] here does not assert that the type has no alignment. *)
+Definition GlobDecl_valid_align_of (g : GlobDecl) : option N :=
+  match GlobDecl_size_of g, GlobDecl_align_of g with
+  | Some sz, Some al =>
+      if bool_decide (valid_alignment sz al) then Some al else None
+  | _, _ => None
+  end.
+
+Lemma GlobDecl_valid_align_of_spec (g : GlobDecl) (al : N) :
+  GlobDecl_valid_align_of g = Some al ->
+  exists sz, GlobDecl_size_of g = Some sz /\
+    GlobDecl_align_of g = Some al /\ valid_alignment sz al.
+Proof.
+  rewrite /GlobDecl_valid_align_of.
+  destruct (GlobDecl_size_of g) as [sz|] eqn:Hsz; cbn; last done.
+  destruct (GlobDecl_align_of g) as [a|] eqn:Hal; cbn; last done.
+  case_bool_decide; naive_solver.
+Qed.
+
 
 #[global] Instance proper_GlobDecl_size_of: Proper (GlobDecl_ler ==> Roption_leq eq) GlobDecl_size_of.
 Proof.
@@ -58,16 +99,15 @@ Qed.
 (** The size of a C++ object.
     This is *not* the same as the semantics of the <<sizeof()>> operator
     because <<sizeof(int&)>> is actually <<sizeof(int)>> whereas
-    [size_of (Tref Tint)] is the size of the reference.
+    [size_of (Tref Tint)] is the size of the reference cell, represented
+    by a pointer (as are reference fields in [offset_of]).
 
     Also, [size_of] is well-defined even in case of overflow, so many users need
     bound-checking; see for instance [wp_operand_sizeof].
  *)
 Fixpoint size_of (resolve : genv) (t : type) : option N :=
   match t with
-  | Tptr _ => Some (pointer_size resolve)
-  | Tref _ => None
-  | Trv_ref _ => None
+  | Tptr _ | Tref _ | Trv_ref _ => Some (pointer_size resolve)
   | Tnum sz _ => Some (int_rank.bytesN sz)
   | Tchar_ ct => Some (char_type.bytesN ct)
   | Tvoid => None
@@ -78,7 +118,7 @@ Fixpoint size_of (resolve : genv) (t : type) : option N :=
   | Tenum nm => glob_def resolve nm ≫= GlobDecl_size_of
   | Tfunction _ => None
   | Tbool => Some 1
-  | Tmember_pointer _ _ => None (* TODO these are not well supported right now *)
+  | Tmember_pointer _ _ => Some (member_pointer_size resolve)
   | Tqualified _ t => size_of resolve t
   | Tnullptr => Some (pointer_size resolve)
   | Tfloat_ sz => Some (float_type.bytesN sz)
@@ -110,6 +150,7 @@ Proof. by []. Abort.
 Proof.
   intros ?? Hle ? t ->; induction t; simpl; (try constructor) => //.
   all: try exact: pointer_size_proper.
+  all: try exact: member_pointer_size_proper.
   - by destruct IHt; constructor; subst.
 (*  - rewrite /glob_def.
     generalize (types_compat _ _ (tu_le Hle) gn).
@@ -126,12 +167,12 @@ Proof.
       by eapply proper_GlobDecl_size_of. }
     { intros. constructor. }
 *)
-  - rewrite /glob_def. move: Hle => [[ /(_ gn) Hle _ _]].
+  - rewrite /glob_def. move: Hle => /tu_le [/(_ gn) Hle _ _].
     revert Hle.
     case: (types (genv_tu x) !! gn); simpl; try constructor.
     move => ? /(_ _ eq_refl) [g2 [-> HH]] * /=.
     exact: proper_GlobDecl_size_of.
-  - rewrite /glob_def. move: Hle => [[ /(_ gn) Hle _ _]].
+  - rewrite /glob_def. move: Hle => /tu_le [/(_ gn) Hle _ _].
     revert Hle.
     case: (types (genv_tu x) !! gn); simpl; try constructor.
     move => ? /(_ _ eq_refl) [g2 [-> HH]] * /=.
@@ -150,6 +191,15 @@ Theorem size_of_bool : forall {c : genv},
 Proof. reflexivity. Qed.
 Theorem size_of_pointer : forall {c : genv} t,
     @size_of c (Tptr t) = Some (pointer_size c).
+Proof. reflexivity. Qed.
+Theorem size_of_member_pointer : forall {c : genv} cls t,
+    @size_of c (Tmember_pointer cls t) = Some (member_pointer_size c).
+Proof. reflexivity. Qed.
+Theorem size_of_ref : forall {c : genv} t,
+    @size_of c (Tref t) = Some (pointer_size c).
+Proof. reflexivity. Qed.
+Theorem size_of_rv_ref : forall {c : genv} t,
+    @size_of c (Trv_ref t) = Some (pointer_size c).
 Proof. reflexivity. Qed.
 Theorem size_of_qualified : forall {c : genv} t q,
     @size_of c t = @size_of c (Tqualified q t).
@@ -266,6 +316,18 @@ Proof. done. Qed.
 
 #[global] Instance ptr_size_of {σ : genv} ty n :
   TCEq (pointer_size σ) n -> SizeOf (Tptr ty) n.
+Proof. by rewrite /SizeOf TCEq_eq=><-. Qed.
+
+#[global] Instance member_ptr_size_of {σ : genv} cls ty n :
+  TCEq (member_pointer_size σ) n -> SizeOf (Tmember_pointer cls ty) n.
+Proof. by rewrite /SizeOf TCEq_eq=><-. Qed.
+
+#[global] Instance ref_size_of {σ : genv} ty n :
+  TCEq (pointer_size σ) n -> SizeOf (Tref ty) n.
+Proof. by rewrite /SizeOf TCEq_eq=><-. Qed.
+
+#[global] Instance rv_ref_size_of {σ : genv} ty n :
+  TCEq (pointer_size σ) n -> SizeOf (Trv_ref ty) n.
 Proof. by rewrite /SizeOf TCEq_eq=><-. Qed.
 
 #[global] Instance arch_size_of {σ : genv} sz name n :
@@ -402,10 +464,13 @@ Section with_genv.
     eauto.
   Qed.
 
-  (* The alignment of named types are recorded in the translation unit *)
-  Axiom align_of_named : forall nm,
-    align_of (Tnamed nm) =
-    glob_def σ nm ≫= GlobDecl_align_of.
+  (* Validated alignments of named types are recorded in the translation unit.
+     Missing layout metadata (e.g. [Gtype] or [Gunsupported]) does not mean
+     that the type has no alignment: pointers to these types are still valid.
+     Invalid metadata likewise leaves [align_of] abstract. *)
+  Axiom align_of_named : forall nm al,
+    glob_def σ nm ≫= GlobDecl_valid_align_of = Some al ->
+    align_of (Tnamed nm) = Some al.
 
   Axiom align_of_array : forall (ty : type) n,
       align_of (Tarray ty n) = align_of ty.
@@ -454,8 +519,13 @@ Section with_genv.
   Lemma align_of_genv_compat tu gn st
         (Hσ : tu ⊧ σ)
         (Hl : tu.(types) !! gn = Some (Gstruct st)) :
+    valid_alignment st.(s_size) st.(s_alignment) ->
     align_of (Tnamed gn) = GlobDecl_align_of (Gstruct st).
-  Proof. by rewrite /= align_of_named (glob_def_genv_compat_struct st Hl). Qed.
+  Proof.
+    intros Hvalid. apply align_of_named.
+    rewrite (glob_def_genv_compat_struct st Hl) /GlobDecl_valid_align_of /=.
+    by rewrite bool_decide_true.
+  Qed.
 
   Lemma align_of_genv_leq σ1 σ2 ty align :
     @align_of σ1 ty = Some align ->
