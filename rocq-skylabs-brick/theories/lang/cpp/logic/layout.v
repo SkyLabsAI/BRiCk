@@ -122,42 +122,43 @@ Section with_Σ.
                unionR cls 1$m (Some idx).
 *)
 
-  (** decompose an array into individual components
-      note that one past the end of an array is a valid location, but
-      it doesn't store anything.
+  (** Empty arrays still carry their element type's alignment. Requiring a
+      defined element size also rules out arrays of unsized types. *)
+  Lemma tblockR_array_zero t q sz :
+    size_of σ t = Some sz ->
+    tblockR (Tarray t 0) q -|- validR ** aligned_ofR t.
+  Proof.
+    move=> Hsz.
+    rewrite /tblockR /= Hsz /= align_of_array aligned_ofR.unlock.
+    case: (align_of_size_of' _ _ Hsz) => al [Hal _].
+    rewrite Hal blockR_eq /blockR_def /= _offsetR_sub_0 ?right_id //.
+    iSplit.
+    - iIntros "[$ A]". iExists al. by iFrame.
+    - iIntros "[$ A]". iDestruct "A" as (a) "[%Ha A]".
+      by simplify_eq.
+  Qed.
 
-      TODO this should move
-   *)
-  (* TODO a type has a size if and only if it has an alignment *)
+  (** Decompose an array into individual components. One past the end is
+      valid but stores nothing. Keep the base alignment even when there are
+      no elements to supply it. *)
   Lemma tblockR_array_better t n q sz :
         size_of σ t = Some sz ->
         tblockR (Tarray t n) q
-    -|- .[ Tbyte ! Z.of_N (n * sz) ] |-> validR **
+    -|- aligned_ofR t **
+        .[ Tbyte ! Z.of_N (n * sz) ] |-> validR **
         [∗list] i ∈ seq 0 (N.to_nat n),
            .[ Tbyte ! Z.of_N (N.of_nat i * sz) ] |-> tblockR t q.
   Proof.
-    rewrite /tblockR /= => Hsz.
-    rewrite Hsz /= align_of_array.
-    case: (align_of_size_of _ _ Hsz) => [al [Hal HalSz]].
-    rewrite Hal.
-    (*
-    Unclear if unfolding is recommended, but at least it should be sufficient for a hacky proof;
-    maybe we should lift lemmas about [blockR] (not sure which).
-    *)
-    rewrite blockR_eq /blockR_def.
-    rewrite -assoc.
-    f_equiv.
-    (* Maybe useful? *)
-    apply Rep_equiv_at => p.
-    (* To finish the proof, we need to rearrange [anyR], use [o_sub_sub] & c and
-    [anyR_valid_observe], and reason about pointer alignment. For alignment, we
-    need to unfold [alignedR], and maybe [aligned_ptr]. *)
+    (* TODO: prove the general byte-block splitting and alignment transport.
+       The empty case is proved independently by [tblockR_array_zero]. *)
   Admitted.
 
-  (* TODO: migrate client to the statement above, and drop this. *)
+  (* TODO: migrate clients to the statement above, and drop this. *)
   Lemma tblockR_array : forall t n q,
+        is_Some (size_of σ t) ->
         tblockR (Tarray t n) q
-    -|- _sub t (Z.of_N n) |-> validR **
+    -|- aligned_ofR t **
+        _sub t (Z.of_N n) |-> validR **
         [∗list] i ↦ _ ∈ repeat () (BinNatDef.N.to_nat n),
            _sub t (Z.of_nat i) |-> tblockR t q.
   Proof. Admitted.
