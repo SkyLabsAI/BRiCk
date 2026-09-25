@@ -1,0 +1,94 @@
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/float_raw_encoding.v", line 22, characters 49-56:
+The command has indeed failed with message:
+In environment
+σ : genv
+The term "eq_refl" has type
+ "float_type.supported float_type.Flongdouble =
+  float_type.supported float_type.Flongdouble"
+while it is expected to have type
+ "float_type.supported float_type.Flongdouble = true"
+(cannot unify "float_type.supported float_type.Flongdouble" and 
+"true").
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/float_raw_encoding.v", line 24, characters 46-53:
+The command has indeed failed with message:
+In environment
+σ : genv
+The term "eq_refl" has type
+ "float_type.supported float_type.Flongdouble =
+  float_type.supported float_type.Flongdouble"
+while it is expected to have type
+ "float_type.supported float_type.Flongdouble = true"
+(cannot unify "float_type.supported float_type.Flongdouble" and 
+"true").
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/float_raw_encoding.v", line 26, characters 49-56:
+The command has indeed failed with message:
+In environment
+σ : genv
+The term "eq_refl" has type
+ "float_type.supported float_type.Flongdouble =
+  float_type.supported float_type.Flongdouble"
+while it is expected to have type
+ "float_type.supported float_type.Flongdouble = true"
+(cannot unify "float_type.supported float_type.Flongdouble" and 
+"true").
+Axioms:
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+Corelib.Strings.PrimString.string : Set
+skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_int_byte : Corelib.Numbers.BinNums.N → skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_byte
+skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_bytes_of_val_float : ∀ (σ : skylabs.lang.cpp.semantics.genv.genv) (ft : skylabs.lang.cpp.syntax.preliminary.float_type) (f : skylabs.lang.cpp.syntax.preliminary.float_type.car ft) (rs : Corelib.Init.Datatypes.list skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_byte), skylabs.lang.cpp.syntax.preliminary.float_type.supported ft = Corelib.Init.Datatypes.true → skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_bytes_of_val σ (skylabs.lang.cpp.syntax.core.Tfloat_ ft) (skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.Vfloat ft f) rs ↔ rs = skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.float_raw_bytes σ f
+skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_bytes_of_val : skylabs.lang.cpp.semantics.genv.genv → skylabs.lang.cpp.syntax.core.type → skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.val → Corelib.Init.Datatypes.list skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_byte → Prop
+skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_byte : Set
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr : Set
+Corelib.Numbers.Cyclic.Int63.PrimInt63.mul : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+Corelib.Strings.PrimString.compare : Corelib.Strings.PrimString.string → Corelib.Strings.PrimString.string → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.compare : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.add : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Axioms:
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+Corelib.Strings.PrimString.string : Set
+Stdlib.Reals.ClassicalDedekindReals.sig_not_dec : ∀ P : Prop, {¬ ¬ P} + {¬ P}
+Stdlib.Reals.ClassicalDedekindReals.sig_forall_dec : ∀ P : Corelib.Init.Datatypes.nat → Prop, (∀ n : Corelib.Init.Datatypes.nat, {P n} + {¬ P n}) → {n : Corelib.Init.Datatypes.nat | ¬ P n} + {∀ n : Corelib.Init.Datatypes.nat, P n}
+skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_int_byte : Corelib.Numbers.BinNums.N → skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_byte
+skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_bytes_of_val_float : ∀ (σ : skylabs.lang.cpp.semantics.genv.genv) (ft : skylabs.lang.cpp.syntax.preliminary.float_type) (f : skylabs.lang.cpp.syntax.preliminary.float_type.car ft) (rs : Corelib.Init.Datatypes.list skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_byte), skylabs.lang.cpp.syntax.preliminary.float_type.supported ft = Corelib.Init.Datatypes.true → skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_bytes_of_val σ (skylabs.lang.cpp.syntax.core.Tfloat_ ft) (skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.Vfloat ft f) rs ↔ rs = skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.float_raw_bytes σ f
+skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_bytes_of_val : skylabs.lang.cpp.semantics.genv.genv → skylabs.lang.cpp.syntax.core.type → skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.val → Corelib.Init.Datatypes.list skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_byte → Prop
+skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_byte : Set
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr : Set
+Corelib.Numbers.Cyclic.Int63.PrimInt63.mul : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+Stdlib.Logic.FunctionalExtensionality.functional_extensionality_dep : ∀ (A : Type) (B : A → Type) (f g : ∀ x : A, B x), (∀ x : A, f x = g x) → f = g
+Corelib.Strings.PrimString.compare : Corelib.Strings.PrimString.string → Corelib.Strings.PrimString.string → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.compare : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Init.Datatypes.comparison
+Stdlib.Logic.Classical_Prop.classic : ∀ P : Prop, P ∨ ¬ P
+Corelib.Numbers.Cyclic.Int63.PrimInt63.add : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Axioms:
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+Corelib.Strings.PrimString.string : Set
+Stdlib.Reals.ClassicalDedekindReals.sig_not_dec : ∀ P : Prop, {¬ ¬ P} + {¬ P}
+Stdlib.Reals.ClassicalDedekindReals.sig_forall_dec : ∀ P : Corelib.Init.Datatypes.nat → Prop, (∀ n : Corelib.Init.Datatypes.nat, {P n} + {¬ P n}) → {n : Corelib.Init.Datatypes.nat | ¬ P n} + {∀ n : Corelib.Init.Datatypes.nat, P n}
+skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_int_byte : Corelib.Numbers.BinNums.N → skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_byte
+skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_bytes_of_val_float : ∀ (σ : skylabs.lang.cpp.semantics.genv.genv) (ft : skylabs.lang.cpp.syntax.preliminary.float_type) (f : skylabs.lang.cpp.syntax.preliminary.float_type.car ft) (rs : Corelib.Init.Datatypes.list skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_byte), skylabs.lang.cpp.syntax.preliminary.float_type.supported ft = Corelib.Init.Datatypes.true → skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_bytes_of_val σ (skylabs.lang.cpp.syntax.core.Tfloat_ ft) (skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.Vfloat ft f) rs ↔ rs = skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.float_raw_bytes σ f
+skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_bytes_of_val : skylabs.lang.cpp.semantics.genv.genv → skylabs.lang.cpp.syntax.core.type → skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.val → Corelib.Init.Datatypes.list skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_byte → Prop
+skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_byte : Set
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr : Set
+Corelib.Numbers.Cyclic.Int63.PrimInt63.mul : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+Stdlib.Logic.FunctionalExtensionality.functional_extensionality_dep : ∀ (A : Type) (B : A → Type) (f g : ∀ x : A, B x), (∀ x : A, f x = g x) → f = g
+Corelib.Strings.PrimString.compare : Corelib.Strings.PrimString.string → Corelib.Strings.PrimString.string → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.compare : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Init.Datatypes.comparison
+Stdlib.Logic.Classical_Prop.classic : ∀ P : Prop, P ∨ ¬ P
+Corelib.Numbers.Cyclic.Int63.PrimInt63.add : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Axioms:
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+Corelib.Strings.PrimString.string : Set
+skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_bytes_of_val_sizeof : ∀ (σ : skylabs.lang.cpp.semantics.genv.genv) (ty : skylabs.lang.cpp.syntax.core.type) (v : skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.val) (rs : Corelib.Init.Datatypes.list skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_byte), skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_bytes_of_val σ ty v rs → skylabs.lang.cpp.semantics.types.size_of σ ty = Corelib.Init.Datatypes.Some (Stdlib.NArith.BinNat.N.of_nat (Corelib.Init.Datatypes.length rs))
+skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_bytes_of_val : skylabs.lang.cpp.semantics.genv.genv → skylabs.lang.cpp.syntax.core.type → skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.val → Corelib.Init.Datatypes.list skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_byte → Prop
+skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_byte : Set
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr : Set
+skylabs.lang.cpp.syntax.compare.name_comparison : skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareN
+Corelib.Numbers.Cyclic.Int63.PrimInt63.mul : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+Corelib.Strings.PrimString.compare : Corelib.Strings.PrimString.string → Corelib.Strings.PrimString.string → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.compare : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.add : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Closed under the global context

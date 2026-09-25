@@ -92,13 +92,15 @@ Proof.
 Qed.
 
 Lemma raw_bytes_of_val_float_intro {σ : genv} ft (f : float_type.car ft) :
+  float_type.supported ft = true ->
   raw_bytes_of_val σ (Tfloat_ ft) (Vfloat ft f) (float_raw_bytes σ f).
-Proof. apply raw_bytes_of_val_float. reflexivity. Qed.
+Proof. intros Hft. apply raw_bytes_of_val_float; done. Qed.
 
 Lemma raw_bytes_of_val_float_elim {σ : genv} ft (f : float_type.car ft) rs :
+  float_type.supported ft = true ->
   raw_bytes_of_val σ (Tfloat_ ft) (Vfloat ft f) rs ->
   rs = float_raw_bytes σ f.
-Proof. apply raw_bytes_of_val_float. Qed.
+Proof. intros Hft. apply raw_bytes_of_val_float. exact Hft. Qed.
 
 Definition float_bits_compatible (sz : int_rank.t) (ft : float_type.t) : Prop :=
   int_rank.bitsize sz = float_type.bitsize ft /\
