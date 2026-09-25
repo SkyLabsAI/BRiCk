@@ -385,22 +385,22 @@ Proof. vm_compute; reflexivity. Qed.
 Example raw_float16_intro {σ : genv} :
   raw_bytes_of_val σ Tfloat16 (Vfloat float_type.Ffloat16 f16_one)
     (float_raw_bytes σ f16_one).
-Proof. apply raw_bytes_of_val_float_intro. Qed.
+Proof. apply raw_bytes_of_val_float_intro. reflexivity. Qed.
 
 Example raw_float_intro {σ : genv} :
   raw_bytes_of_val σ Tfloat (Vfloat float_type.Ffloat f32_one)
     (float_raw_bytes σ f32_one).
-Proof. apply raw_bytes_of_val_float_intro. Qed.
+Proof. apply raw_bytes_of_val_float_intro. reflexivity. Qed.
 
 Example raw_double_intro {σ : genv} :
   raw_bytes_of_val σ Tdouble (Vfloat float_type.Fdouble f64_one)
     (float_raw_bytes σ f64_one).
-Proof. apply raw_bytes_of_val_float_intro. Qed.
+Proof. apply raw_bytes_of_val_float_intro. reflexivity. Qed.
 
 Example raw_float128_intro {σ : genv} :
   raw_bytes_of_val σ Tfloat128 (Vfloat float_type.Ffloat128 f128_one)
     (float_raw_bytes σ f128_one).
-Proof. apply raw_bytes_of_val_float_intro. Qed.
+Proof. apply raw_bytes_of_val_float_intro. reflexivity. Qed.
 
 Example float16_bits_compatible :
   float_bits_compatible int_rank.Ishort float_type.Ffloat16.
