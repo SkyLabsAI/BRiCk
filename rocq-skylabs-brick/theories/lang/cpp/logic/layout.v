@@ -250,16 +250,4 @@ Section with_Σ.
       rewrite _offsetR_sep. iDestruct "B" as "[$ _]".
   Qed.
 
-  (* TODO: migrate clients to the proved byte-based statement above.
-     Typed offsets can denote different pointers from byte offsets, so the
-     remaining transport obligation is not just an arithmetic rewrite. *)
-  Lemma tblockR_array : forall t n q,
-        is_Some (size_of σ t) ->
-        tblockR (Tarray t n) q
-    -|- aligned_ofR t **
-        _sub t (Z.of_N n) |-> validR **
-        [∗list] i ↦ _ ∈ repeat () (BinNatDef.N.to_nat n),
-           _sub t (Z.of_nat i) |-> tblockR t q.
-  Proof. Admitted.
-
 End with_Σ.

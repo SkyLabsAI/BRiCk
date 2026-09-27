@@ -674,3 +674,141 @@ Section blockR_transport.
     by iApply blockR_ptr_congP_transport_raw; eauto.
   Qed.
 End blockR_transport.
+
+
+Section typed_array_blocks.
+  Context `{Σ : cpp_logic} {σ : genv}.
+
+  Lemma type_ptr_byte_end (p : ptr) (ty : Rtype) (sz : N) :
+    size_of σ ty = Some sz ->
+    type_ptr ty p |-- valid_ptr (p .[ Tbyte ! Z.of_N sz ]).
+  Proof.
+    intros Hsz. destruct (N.eq_dec sz 0%N) as [->|Hnz].
+    - rewrite offset_ptr_sub_0 //. apply type_ptr_valid.
+    - iIntros "#T".
+      iDestruct (type_ptr_obj_repr_byte ty p (N.pred sz) sz Hsz ltac:(lia) with "T") as "#B".
+      iDestruct (type_ptr_valid_plus_one with "B") as "V".
+      iEval (rewrite o_sub_sub) in "V".
+      have Hz : (Z.of_N (N.pred sz) + 1 = Z.of_N sz)%Z by lia.
+      by iEval (rewrite Hz) in "V".
+  Qed.
+
+  Lemma type_ptr_array_end (p : ptr) (ty : Rtype) (n : N) :
+    is_Some (size_of σ ty) ->
+    type_ptr (Tarray ty n) p |-- valid_ptr (p .[ ty ! Z.of_N n ]).
+  Proof.
+    intros Hsz. destruct (N.eq_dec n 0%N) as [->|Hnz].
+    - rewrite offset_ptr_sub_0 //. apply type_ptr_valid.
+    - iIntros "#T".
+      iDestruct (type_ptr_o_sub p (N.pred n) n ty ltac:(lia) with "T") as "#E".
+      iDestruct (type_ptr_valid_plus_one with "E") as "V".
+      iEval (rewrite o_sub_sub) in "V".
+      have Hz : (Z.of_N (N.pred n) + 1 = Z.of_N n)%Z by lia.
+      by iEval (rewrite Hz) in "V".
+  Qed.
+
+  Lemma type_ptr_array_element_block (p : ptr) (ty : Rtype)
+      (n i sz : N) (q : cQp.t) :
+    size_of σ ty = Some sz ->
+    (i < n)%N ->
+    type_ptr (Tarray ty n) p |--
+      (p .[ Tbyte ! Z.of_N (i * sz) ] |-> blockR sz q
+       ∗-∗ p .[ ty ! Z.of_N i ] |-> blockR sz q).
+  Proof.
+    intros Hsz Hi. iIntros "#T".
+    iDestruct (type_ptr_o_sub p i n ty Hi with "T") as "#E".
+    destruct (N.eq_dec sz 0%N) as [->|Hnz].
+    - rewrite N.mul_0_r !offset_ptr_sub_0 // blockR_eq /blockR_def /=.
+      rewrite !_offsetR_sub_0 // !right_id !_at_validR.
+      iSplit; iIntros "_"; by iApply type_ptr_valid.
+    - have Harray : size_of σ (Tarray ty n) = Some (n * sz)%N.
+      { by rewrite /= Hsz /=. }
+      iDestruct (type_ptr_raw_type_ptrs with "T") as "#RA"; first by eexists.
+      iDestruct (type_ptr_raw_type_ptrs with "E") as "#RT"; first by eexists.
+      iDestruct (raw_type_ptrs_Tarray_elem i p ty n sz ltac:(lia) Hsz Hi with "RA") as "#RB".
+      have Hz : (Z.of_N sz * Z.of_N i = Z.of_N (i * sz))%Z by lia.
+      iEval (rewrite Hz) in "RB".
+      iDestruct (type_ptr_obj_repr_byte (Tarray ty n) p (i * sz) (n * sz)
+        Harray ltac:(nia) with "T") as "#B".
+      iDestruct (type_ptr_obj_repr_byte ty (p .[ ty ! Z.of_N i ]) 0 sz
+        Hsz ltac:(lia) with "E") as "#EB".
+      iEval (rewrite offset_ptr_sub_0 //) in "EB".
+      have Hcong : ptr_cong σ (p .[ Tbyte ! Z.of_N (i * sz) ]) (p .[ ty ! Z.of_N i ]).
+      { apply offset_ptr_cong. apply (offset_cong_subs 1 sz); [done|done|nia]. }
+      iAssert (ptr_congP σ (p .[ Tbyte ! Z.of_N (i * sz) ]) (p .[ ty ! Z.of_N i ])) as "#C".
+      { rewrite /ptr_congP. by iFrame "B EB". }
+      iAssert (ptr_congP σ (p .[ ty ! Z.of_N i ]) (p .[ Tbyte ! Z.of_N (i * sz) ])) as "#C'".
+      { rewrite /ptr_congP. iFrame "B EB". iPureIntro. by symmetry. }
+      iSplit.
+      + by iApply (blockR_ptr_congP_transport_raw sz _ _ ty q Hsz with "[$C $RT]").
+      + by iApply (blockR_ptr_congP_transport_raw sz _ _ ty q Hsz with "[$C' $RB]").
+  Qed.
+
+  Lemma type_ptr_array_element_tblock (p : ptr) (ty : Rtype)
+      (n i sz : N) (q : cQp.t) :
+    size_of σ ty = Some sz ->
+    (i < n)%N ->
+    type_ptr (Tarray ty n) p |--
+      (p .[ Tbyte ! Z.of_N (i * sz) ] |-> tblockR ty q
+       ∗-∗ p .[ ty ! Z.of_N i ] |-> tblockR ty q).
+  Proof.
+    intros Hsz Hi.
+    destruct (align_of_size_of' _ _ Hsz) as (al & Hal & Hal0 & Hdvd).
+    have HA : aligned_ofR ty -|- alignedR al.
+    { rewrite aligned_ofR.unlock Hal. iSplit.
+      - iIntros "(%a & %Ha & H)". by simplify_eq.
+      - iIntros "H". iExists al. by iFrame. }
+    iIntros "#T".
+    iDestruct (type_ptr_array_element_block p ty n i sz q Hsz Hi with "T") as "#C".
+    iDestruct (type_ptr_o_sub p i n ty Hi with "T") as "#E".
+    iDestruct (type_ptr_aligned_ofR with "E") as "#EA".
+    iDestruct (type_ptr_aligned_ofR with "T") as "#A".
+    have HAarray : aligned_ofR (Tarray ty n) -|- aligned_ofR ty.
+    { by rewrite !aligned_ofR.unlock align_of_array. }
+    iEval (rewrite HAarray) in "A".
+    rewrite /tblockR Hsz Hal !_at_sep. setoid_rewrite <- HA.
+    iSplit.
+    - iIntros "[B _]". iFrame "EA". by iApply "C".
+    - iIntros "[B _]".
+      iDestruct ("C" with "B") as "B".
+      iDestruct (observe (p .[ Tbyte ! Z.of_N (i * sz) ] |-> validR) with "B") as "#V".
+      iFrame "B".
+      iDestruct (type_ptr_valid with "T") as "#Vp".
+      iEval (rewrite -_at_offsetR -(aligned_ofR_byte_sub ty sz i Hsz) !_at_sep _at_offsetR _at_validR).
+      by iFrame "A Vp V".
+  Qed.
+
+  (** Typed offsets require evidence for an array object. In particular,
+      zero-sized storage at [nullptr] does not supply this evidence. *)
+  Lemma tblockR_array_typed (p : ptr) (ty : Rtype) (n sz : N) (q : cQp.t) :
+    size_of σ ty = Some sz ->
+    type_ptr (Tarray ty n) p |--
+      (p |-> tblockR (Tarray ty n) q ∗-∗
+       p |-> (aligned_ofR ty **
+         .[ ty ! Z.of_N n ] |-> validR **
+         [∗list] i ∈ seq 0 (N.to_nat n),
+           .[ ty ! Z.of_nat i ] |-> tblockR ty q)).
+  Proof.
+    intros Hsz. rewrite (tblockR_array_better ty n q sz Hsz).
+    rewrite !_at_sep !_at_offsetR !_at_big_sepL.
+    setoid_rewrite _at_offsetR.
+    iIntros "#T". iSplit.
+    - iIntros "(A & _ & B)". iFrame "A". iSplit.
+      + rewrite _at_validR. by iApply (type_ptr_array_end p ty n ltac:(eauto) with "T").
+      + iApply (big_sepL_impl with "B"). iIntros "!>" (k i Hi) "B".
+        have Hin : (N.of_nat i < n)%N.
+        { apply lookup_seq in Hi. lia. }
+        iDestruct (type_ptr_array_element_tblock p ty n (N.of_nat i) sz q Hsz Hin with "T") as "C".
+        have HiZ : Z.of_N (N.of_nat i) = Z.of_nat i by lia.
+        iEval (rewrite HiZ) in "C". by iApply "C".
+    - iIntros "(A & _ & B)". iFrame "A". iSplit.
+      + rewrite _at_validR. iApply (type_ptr_byte_end p (Tarray ty n) (n * sz)%N with "T").
+        by rewrite /= Hsz /=.
+      + iApply (big_sepL_impl with "B"). iIntros "!>" (k i Hi) "B".
+        have Hin : (N.of_nat i < n)%N.
+        { apply lookup_seq in Hi. lia. }
+        iDestruct (type_ptr_array_element_tblock p ty n (N.of_nat i) sz q Hsz Hin with "T") as "C".
+        have HiZ : Z.of_N (N.of_nat i) = Z.of_nat i by lia.
+        iEval (rewrite HiZ) in "C". by iApply "C".
+  Qed.
+End typed_array_blocks.
