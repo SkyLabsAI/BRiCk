@@ -810,3 +810,74 @@ Section typed_array_blocks.
         iEval (rewrite HiZ) in "C". by iApply "C".
   Qed.
 End typed_array_blocks.
+
+Lemma heap_value_size_nonzero (σ : genv) (ty : Rtype) (v : val) :
+  is_heap_type ty ->
+  has_type_prop (σ:=σ) v ty ->
+  size_of σ ty <> Some 0%N.
+Proof.
+  intros Hheap Hval. destruct ty; simpl; try discriminate;
+    try solve [exfalso; eapply heap_type_not_qualified; exact Hheap].
+
+  all: try solve [by move: Hheap; rewrite /is_heap_type /is_value_type /= ?andb_false_r].
+  all: try solve [unfold pointer_size; destruct (pointer_size_bitsize σ); discriminate].
+  all: try solve [unfold member_pointer_size; destruct (member_pointer_bitsize σ); discriminate].
+  all: try solve [destruct sz; discriminate].
+  all: try solve [destruct t; discriminate].
+  apply has_type_prop_enum in Hval.
+  destruct Hval as (tu & ety & ls & Htu & Hlookup & _).
+  destruct (@glob_def_genv_compat_enum σ gn tu Htu ety ls Hlookup) as [ls' Hglob].
+  rewrite Hglob /= /GlobDecl_size_of.
+  destruct (drop_qualifiers ety); try discriminate;
+    try solve [destruct sz; discriminate | destruct t; discriminate].
+Qed.
+
+Section primitive_storage.
+  Context `{Σ : cpp_logic} {σ : genv}.
+
+  Lemma primR_size_nonzero (ty : Rtype) (q : cQp.t) (v : val) :
+    primR ty q v |-- [| size_of σ ty <> Some 0%N |].
+  Proof.
+    iIntros "P".
+    iDestruct (observe [| has_type_prop v ty |] with "P") as %Hv.
+    iEval (rewrite primR.unlock initializedR.unlock) in "P".
+    iDestruct "P" as "(_ & _ & V)".
+    iDestruct (observe [| is_heap_type ty |] with "V") as %Ht.
+    iPureIntro. by apply (heap_value_size_nonzero σ ty v).
+  Qed.
+
+  Lemma rawsR_blockR (q : cQp.t) (rs : list raw_byte) :
+    rawsR q rs |-- blockR (N.of_nat (length rs)) q.
+  Proof.
+    rewrite /rawsR arrayR_eq /arrayR_def arrR_eq /arrR_def
+      blockR_eq /blockR_def length_fmap Nat2N.id big_sepL_fmap.
+    have Hz : Z.of_N (N.of_nat (length rs)) = Z.of_nat (length rs) by lia.
+    rewrite Hz.
+    iIntros "(V & _ & R)". iFrame "V".
+    iStopProof.
+    apply big_sepL_gen_mono; first by rewrite length_seq.
+    intros k r i Hr Hi. apply lookup_seq in Hi. have -> : i = k by lia.
+    rewrite _offsetR_sep rawR.unlock anyR_tptsto_fuzzyR_val_2 //.
+    by iIntros "[_ $]".
+  Qed.
+
+  (** An initialized primitive cell already owns its bytes and alignment.
+      This also applies to fractional permissions and needs no state update. *)
+  Lemma primR_tblockR (ty : Rtype) (q : cQp.t) (v : val) :
+    primR ty q v |-- tblockR ty q.
+  Proof.
+    iIntros "P".
+    iDestruct (primR_size_nonzero with "P") as %Hnz.
+    iDestruct (observe (type_ptrR ty) with "P") as "#T".
+    iEval (rewrite primR_to_rawsR //) in "P".
+    iDestruct "P" as (rs) "(%Hr & _ & R)".
+    have Hsz := raw_bytes_of_val_sizeof Hr.
+    destruct (align_of_size_of' _ _ Hsz) as (al & Hal & Hal0 & Hdvd).
+    rewrite /tblockR Hsz Hal.
+    iSplitL "R".
+    - by iApply rawsR_blockR.
+    - iDestruct (type_ptrR_aligned_ofR with "T") as "A".
+      iEval (rewrite aligned_ofR.unlock Hal) in "A".
+      iDestruct "A" as (a) "[%Ha A]". by simplify_eq.
+  Qed.
+End primitive_storage.
