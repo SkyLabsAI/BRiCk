@@ -136,8 +136,6 @@ Section raw_type_ptrs.
   Definition raw_type_ptrs := raw_type_ptrs_aux.(unseal).
   Definition raw_type_ptrs_eq : @raw_type_ptrs = _ := raw_type_ptrs_aux.(seal_eq).
 
-  #[global] Hint Opaque raw_type_ptrs : sl_opacity.
-
   (* [obj_type_ptr ty p] collects all of the constituent [type_ptr Tbyte] facts
      for the "object representation" of an object of type [ty] rooted at [p].
    *)
