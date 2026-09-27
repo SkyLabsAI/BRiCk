@@ -633,9 +633,7 @@ Section blockR_transport.
           iIntros (p p') "#(cong & tptrs & tptrs')"; subst.
           rewrite !N2Nat.inj_succ/= !_at_offsetR !offset_ptr_sub_0 //.
           rewrite !(right_id emp).
-          iApply _at_anyR_ptr_congP_transport.
-          (* TODO AUTO: Missing [Typeclasses Opaque ptr_congP]. *)
-          iFrame "cong #".
+          by iApply (_at_anyR_byte_ptr_congP_transport with "cong").
         }
 
         iIntros (p p') "#(cong & tptrs & tptrs')".
@@ -644,8 +642,8 @@ Section blockR_transport.
         iDestruct "tptrs" as "[tptr tptrs]".
         iDestruct "tptrs'" as "[tptr' tptrs']".
         iIntros "[any REST]"; iSplitL "any".
-        * iRevert "any"; iApply _at_anyR_ptr_congP_transport.
-          by iFrame "cong tptr'".
+        * iRevert "any".
+          by iApply (_at_anyR_byte_ptr_congP_transport with "cong").
         * rewrite !(big_sepL_type_ptr_shift 1 sz'); eauto.
           specialize (IHsz' Hsz' (p .[ Tbyte ! 1%N ]) (p' .[ Tbyte ! 1%N ])).
           iDestruct (IHsz' with "[]") as "IH".
