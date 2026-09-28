@@ -1,0 +1,10 @@
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/pointee_alignment.v", line 58, characters 23-40:
+The command has indeed failed with message:
+Tactic failure: Proof search failed.
+Ltac call to "typeclasses eauto (nat_or_var_opt)" failed.
+
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/pointee_alignment.v", line 61, characters 26-43:
+The command has indeed failed with message:
+Tactic failure: Proof search failed.
+Ltac call to "typeclasses eauto (nat_or_var_opt)" failed.
+
