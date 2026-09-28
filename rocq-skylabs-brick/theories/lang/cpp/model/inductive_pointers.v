@@ -159,6 +159,7 @@ Module PTRS_IMPL <: PTRS_INTF.
           else (o_sub_ ty1 (n2 + n1), (off2 + off1)%Z) :: oss'
         | _ => os :: oss
       end
+    | (o_base_ der1 base1, off1), (o_derived_ base2 der2, off2) :: oss'
     | (o_derived_ base1 der1, off1), (o_base_ der2 base2, off2) :: oss' =>
       (* Like for [o_sub_], only cancel segments whose offsets also cancel, so
       that normalization preserves [eval_offset]. *)
@@ -194,11 +195,22 @@ Module PTRS_IMPL <: PTRS_INTF.
     all: by opose proof* roff_canon_o_sub_wf.
   Qed.
 
+  #[local] Lemma roff_canon_no_derived_head src dst :
+    roff_canon src dst ->
+    match dst with (o_derived_ _ _, _) :: _ => False | _ => True end.
+  Proof. induction 1; done. Qed.
+
   Theorem canon_wf' src dst : roff_canon src dst -> raw_offset_collapse src = dst.
   Proof.
     rewrite /raw_offset_wf /raw_offset_collapse => Hc;
     induction Hc => //=; rewrite ?IHHc /offset_seg_cons //=.
-    { by [ rewrite decide_True //=; repeat (lia || f_equal)]. }
+    { have Hno := roff_canon_no_derived_head _ _ Hc.
+      destruct d as [|[seg off] d]; first done.
+      destruct seg; done. }
+    { have Hno := roff_canon_no_derived_head _ _ Hc.
+      destruct d as [|[seg off] d]; [|destruct seg];
+        simpl in Hno |- *; try contradiction.
+      all: by rewrite decide_True //=; repeat (lia || f_equal). }
     all: repeat ((case_decide || case_match); destruct_and?; subst => //).
     by rewrite !right_id_L.
   Qed.
@@ -425,7 +437,16 @@ Module PTRS_IMPL <: PTRS_INTF.
       all: exfalso; first
         [ have L := f_equal (@length _) IH; simpl in L; lia
         | have L := f_equal (@length _) H6; simpl in L; lia ].
-    - by f_equal.
+    - move E: (raw_offset_collapse xs) => ys in IH |- *.
+      have Hkeep (os : offset_seg) :
+        raw_offset_collapse (os :: ys) = offset_seg_cons os ys.
+      { change (offset_seg_cons os (raw_offset_collapse ys) = offset_seg_cons os ys).
+        by rewrite IH. }
+      destruct ys as [|[[f'|ty' n'|derived' base'|base' derived'|] off'] ys].
+      all: try by rewrite Hkeep.
+      case_decide.
+      { exact (raw_offset_collapse_wf_tail _ _ IH). }
+      by rewrite Hkeep /offset_seg_cons decide_False.
     - rewrite /offset_seg_cons /=.
       move E: (raw_offset_collapse xs) => ys in IH |- *.
       destruct ys as [|[[f'|ty' n'|derived' base'|base' derived'|] off'] ys].
@@ -438,7 +459,8 @@ Module PTRS_IMPL <: PTRS_INTF.
           rewrite /= /offset_seg_cons decide_False //. }
         rewrite IHtail in IH |- *.
         by rewrite IH. }
-      rewrite decide_False; [rewrite IH|done].
+      { exact (raw_offset_collapse_wf_tail (o_base_ derived' base', off') ys IH). }
+      rewrite IH decide_False; last done.
       done.
       have IHtail : raw_offset_collapse ys = ys.
       { apply (raw_offset_collapse_wf_tail (o_derived_ base' derived', off') ys).
@@ -520,6 +542,18 @@ Module PTRS_IMPL <: PTRS_INTF.
     - f_equal.
       f_equal; try lia.
       f_equal; lia.
+    - destruct H as [-> [-> H12]].
+      destruct H0 as [-> [-> H23]].
+      have Eoff : off1 = off3 by lia.
+      subst off1.
+      have Htail := raw_offset_collapse_wf_tail (o_base_ derived3 base3, off3) zs Hzs.
+      rewrite Htail in Hzs.
+      exact (eq_sym Hzs).
+    - destruct H as [-> [-> H12]].
+      destruct H0 as [-> [-> H23]].
+      have Eoff : off1 = off3 by lia. subst off1.
+      have Htail := raw_offset_collapse_wf_tail (o_derived_ base3 derived3, off3) zs Hzs.
+      rewrite Htail in Hzs. exact (eq_sym Hzs).
   Qed.
 
   Lemma offset_seg_cons_cons os1 os2 xs :
@@ -561,6 +595,7 @@ Module PTRS_IMPL <: PTRS_INTF.
       (offset_seg_cons (o_sub_ ty n, off) [os2]) =
       offset_seg_cons (o_sub_ ty n, off)
         (offset_seg_cons os2 (foldr offset_seg_cons zs xs))).
+    exact (offset_seg_cons_assoc _ _ _ H2 HR).
     exact (offset_seg_cons_assoc _ _ _ H2 HR).
     change (foldr offset_seg_cons (foldr offset_seg_cons zs xs)
       (offset_seg_cons (o_derived_ base derived, off) [os2]) =
@@ -1015,16 +1050,14 @@ Module PTRS_IMPL <: PTRS_INTF.
     rewrite -offset_ptr_dot; UNFOLD_dot.
     intros Hsome. destruct p => //=.
     f_equiv.
+    case: o => o. rewrite /raw_offset_wf => Hwf.
     apply (sig_eq_pi _) => /=.
     move: Hsome => [?].
     rewrite /o_base_off /o_derived_off parent_offset.unlock.
     destruct parent_offset_tu => //= -[_] /=.
-    rewrite /raw_offset_merge/=.
-    rewrite /raw_offset_collapse /=.
-    rewrite foldr_app /=.
-    (* TODO: here we should prove that cancellation works out, but the
-    ill-behaved normalization makes this too complex. *)
-  Admitted.
+    rewrite decide_True /=; last by split_and!; [..|lia].
+    rewrite /raw_offset_merge/= app_nil_r //.
+  Qed.
 
   Lemma o_derived_base σ p base derived :
     directly_derives σ derived base ->
