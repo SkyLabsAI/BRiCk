@@ -1399,7 +1399,8 @@ Module SimpleCPP.
     Notation valid_ptr := (_valid_ptr Relaxed).
 
     Axiom exposed_aid_persistent : forall aid, Persistent (exposed_aid aid).
-    Axiom exposed_aid_affine : forall aid, Affine (exposed_aid aid).
+    Lemma exposed_aid_affine : forall aid, Affine (exposed_aid aid).
+    Proof. intros. pose proof mpred_BiAffine. apply _. Qed.
     Axiom exposed_aid_timeless : forall aid, Timeless (exposed_aid aid).
 
     Axiom exposed_aid_null_alloc_id : |-- exposed_aid null_alloc_id.
