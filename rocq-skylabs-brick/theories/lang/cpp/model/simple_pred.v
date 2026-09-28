@@ -327,12 +327,16 @@ Module SimpleCPP.
       in_range Strict l o h |-- in_range Relaxed l o h.
     Proof. rewrite /in_range/=. f_equiv. rewrite/impl. tauto. Qed.
 
+    (** A non-null valid pointer must retain an actual, non-null allocation ID.
+        Excluding address zero alone would also admit [invalid_ptr], whose
+        address and allocation ID are both undefined. *)
     Definition _valid_ptr vt (p : ptr) : mpred :=
       [| p = nullptr /\ vt = Relaxed |] \\//
         Exists σ' base l h o zo,
                 blocks_own base l h **
                 in_range vt l zo h **
                 [| eval_offset σ' o = Some zo /\ p = base ,, o |] **
+                [| exists aid, ptr_alloc_id p = Some aid /\ aid <> null_alloc_id |] **
                 [| ptr_vaddr p <> Some 0%N |].
     (* strict validity (not past-the-end) *)
     Notation strict_valid_ptr := (_valid_ptr Strict).
@@ -351,7 +355,7 @@ Module SimpleCPP.
       [| same_address p nullptr <-> p = nullptr |].
     Proof.
       rewrite /_valid_ptr same_address_eq; iIntros "[[-> _]|H]";
-        [ |iDestruct "H" as (??????) "(_ & _ & _ & %Hne)"]; iIntros "!%".
+        [ |iDestruct "H" as (??????) "(_ & _ & _ & _ & %Hne)"]; iIntros "!%".
       by rewrite same_property_iff ptr_vaddr_nullptr; naive_solver.
       rewrite same_property_iff; split; last intros ->;
         rewrite ptr_vaddr_nullptr; naive_solver.
@@ -363,7 +367,7 @@ Module SimpleCPP.
     Theorem not_strictly_valid_ptr_nullptr : strict_valid_ptr nullptr |-- False.
     Proof.
       iDestruct 1 as "[[_ %]|H] /="; first done.
-      by iDestruct "H" as (??????) "(_ & _ & _ & %Hne)".
+      by iDestruct "H" as (??????) "(_ & _ & _ & _ & %Hne)".
     Qed.
     Typeclasses Opaque _valid_ptr.
 
@@ -374,8 +378,38 @@ Module SimpleCPP.
       by setoid_rewrite in_range_weaken.
     Qed.
 
-    Axiom valid_ptr_alloc_id : forall p,
+    Lemma _valid_ptr_alloc_id vt p :
+      _valid_ptr vt p |-- [| is_Some (ptr_alloc_id p) |].
+    Proof.
+      rewrite /_valid_ptr. iDestruct 1 as "[[-> _]|H]".
+      - iPureIntro. by exists null_alloc_id.
+      - iDestruct "H" as (??????) "(_ & _ & _ & %Haid & _)".
+        iPureIntro. destruct Haid as (aid & Haid & _). by exists aid.
+    Qed.
+
+    Lemma valid_ptr_alloc_id : forall p,
       valid_ptr p |-- [| is_Some (ptr_alloc_id p) |].
+    Proof. intros. apply _valid_ptr_alloc_id. Qed.
+
+    Lemma strict_valid_ptr_nonnull_alloc_id p :
+      strict_valid_ptr p |--
+      [| exists aid, ptr_alloc_id p = Some aid /\ aid <> null_alloc_id |].
+    Proof.
+      rewrite /_valid_ptr. iDestruct 1 as "[[_ %Hvt]|H]"; first discriminate.
+      iDestruct "H" as (??????) "(_ & _ & _ & $ & _)".
+    Qed.
+
+    Lemma strict_valid_ptr_off_nonnull p o :
+      strict_valid_ptr (p ,, o) |-- [| p <> nullptr |].
+    Proof.
+      iIntros "H".
+      iDestruct (strict_valid_ptr_nonnull_alloc_id with "H") as %(aid & Haid & Hnn).
+      iPureIntro. intros ->.
+      have Hroot := ptr_alloc_id_offset (p:=nullptr) (o:=o) (ex_intro _ aid Haid).
+      rewrite ptr_alloc_id_nullptr Haid in Hroot.
+      injection Hroot as ->. contradiction.
+    Qed.
+
     (** This is a very simplistic definition of [provides_storage].
     A more useful definition should probably not be persistent. *)
     Definition provides_storage (storage_ptr obj_ptr : ptr) (_ : type) : mpred :=
@@ -1141,7 +1175,10 @@ Module SimpleCPP.
 
     Lemma type_ptr_off_nonnull {ty p o} :
       type_ptr ty (p ,, o) |-- [| p <> nullptr |].
-    Admitted.
+    Proof.
+      iDestruct 1 as "(_ & _ & _ & H & _)".
+      by iApply strict_valid_ptr_off_nonnull.
+    Qed.
 
     Lemma type_ptr_strict_valid ty p :
       type_ptr ty p |-- strict_valid_ptr p.
@@ -1527,15 +1564,35 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
     Lemma invalid_ptr_invalid vt :
       _valid_ptr vt invalid_ptr |-- False.
     Proof.
-      (* A proper proof requires redesigning valid_ptr *)
-      rewrite /_valid_ptr; iDestruct 1 as "[%|H]"; first naive_solver.
-      iDestruct "H" as (? base l h o zo) "(B & Rng & %Hoff & _)".
-      destruct Hoff as (Heval & Habs).
-    Admitted.
+      iIntros "H". iDestruct (_valid_ptr_alloc_id with "H") as %Haid.
+      destruct Haid as [aid Haid]. discriminate.
+    Qed.
 
     (** Justified by [https://eel.is/c++draft/expr.add#4.1]. *)
-    Axiom _valid_ptr_nullptr_sub_false : forall vt ty (i : Z) (_ : i <> 0),
+    Lemma _valid_ptr_nullptr_sub_false : forall vt ty (i : Z) (_ : i <> 0),
       _valid_ptr vt (nullptr ,, o_sub σ ty i) |-- False.
+    Proof.
+      intros vt ty i Hnz. rewrite /_valid_ptr.
+      iDestruct 1 as "[[%Heq _]|H]".
+      - rewrite _dot.unlock /DOT_dot /= in Heq.
+        apply (f_equal (fun p => match p with
+          | invalid_ptr_ => []
+          | offset_ptr _ o => `o
+          end)) in Heq.
+        rewrite /= /raw_offset_merge /o_sub in Heq.
+        move: Heq. case_decide; first contradiction.
+        rewrite /= /mkOffset /mk_offset_seg /= /simple_pointers_utils.o_sub_off.
+        destruct (size_of σ (erase_qualifiers ty)); simpl.
+        + repeat case_decide; try discriminate; naive_solver.
+        + discriminate.
+      - iDestruct "H" as (??????) "(_ & _ & _ & %Haid & _)".
+        destruct Haid as (aid & Haid & Hnn).
+        have Hroot := ptr_alloc_id_offset (p:=nullptr) (o:=o_sub σ ty i)
+          (ex_intro _ aid Haid).
+        rewrite ptr_alloc_id_nullptr Haid in Hroot.
+        injection Hroot as ->. contradiction.
+    Qed.
+
     (*
     TODO Controversial; if [f] is the first field, [nullptr->f] or casts relying on
     https://eel.is/c++draft/basic.compound#4 might invalidate this.
