@@ -28,8 +28,6 @@ Require Import skylabs.lang.cpp.model.simple_pointers_utils.
 Require Import skylabs.lang.cpp.model.inductive_pointers_utils.
 Require Import skylabs.lang.cpp.semantics.ptrs.
 
-Axiom irr : ∀ (P : Prop) (p q : P), p = q.
-
 Implicit Types (σ : genv) (z : Z).
 #[local] Close Scope nat_scope.
 #[local] Open Scope Z_scope.
@@ -216,6 +214,13 @@ Module PTRS_IMPL <: PTRS_INTF.
   Lemma canon_syn_sem_eqv os : roff_canon os <-> roff_canon_syn os.
   Proof. split; [apply canon_sem_syn|apply canon_syn_sem]. Qed.
 
+  (** Canonicality is a negation, so equality of its proofs only needs
+      function extensionality, already used by the normalization machinery. *)
+  Lemma roff_canon_proof_irrel os (H1 H2 : roff_canon os) : H1 = H2.
+  Proof.
+    apply functional_extensionality. intros Hred. destruct (H1 Hred).
+  Qed.
+
   (** *** Offsets *)
   Definition offset := {o : raw_offset | roff_canon o}.
   #[global] Instance offset_eq_dec : EqDecision offset.
@@ -225,7 +230,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     {
       subst. left.
       f_equal.
-      apply: irr.
+      apply: roff_canon_proof_irrel.
     }
     {
       right.
@@ -895,9 +900,8 @@ Module PTRS_IMPL <: PTRS_INTF.
     intros [os Hcanon]. simpl.
     generalize (norm_canon os).
     rewrite (proj1 (norm_invol os) Hcanon).
-    intros Hcanon'. by rewrite (irr _ Hcanon' Hcanon).
+    intros Hcanon'. by rewrite (roff_canon_proof_irrel _ Hcanon' Hcanon).
   Qed.
-
 
   Section norm_lemmas.
 
@@ -1056,14 +1060,14 @@ Module PTRS_IMPL <: PTRS_INTF.
 
   Include PTRS_SYNTAX_MIXIN.
 
-  Lemma sig_eq {A} {P : A -> Prop} :
-  ∀ (x y : A) (p : P x) (q : P y),
+  Lemma sig_eq :
+  ∀ (x y : raw_offset) (p : roff_canon x) (q : roff_canon y),
     x = y ->
     x ↾ p = y ↾ q.
   Proof.
     move=> x y p q H.
     subst. f_equal.
-    apply: irr.
+    apply: roff_canon_proof_irrel.
   Qed.
 
   Program Definition o_id : offset :=
