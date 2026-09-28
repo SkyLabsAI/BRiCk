@@ -1579,16 +1579,44 @@ Module PTRS_IMPL <: PTRS_INTF.
       end
     end.
 
-  Lemma ptr_vaddr_resp_leq :
-    ∀ σ1 σ2,
-      genv_leq σ1 σ2 ->
-      @ptr_vaddr σ1 = @ptr_vaddr σ2.
+  (** Environment extension preserves defined addresses. An offset whose type
+      was incomplete may become defined, so equality of the partial address
+      functions would be too strong. *)
+  Lemma eval_offset_seg_extension (s1 s2 : genv) o :
+    genv_leq s1 s2 -> Roption_leq eq (eval_offset_seg s1 o) (eval_offset_seg s2 o).
   Proof.
-    move=> σ1 σ2 H.
-    rewrite /ptr_vaddr.
-    extensionality p.
-    destruct p. easy.
-  Admitted.
+    intros Hle. destruct o as [f|ty i|derived base|base derived]; simpl.
+    - rewrite /o_field_off. destruct f => /=; try constructor;
+      exact (offset_of_extension _ _ _ _ Hle).
+    - rewrite /o_sub_off. have Hsize := Proper_size_of _ _ Hle ty ty eq_refl.
+      destruct Hsize; simpl; constructor; naive_solver.
+    - exact (parent_offset_extension _ _ _ _ Hle).
+    - apply (Roption_leq_eq_equiv (R:=eq)). intros z.
+      rewrite /o_derived_off. case E: (parent_offset s1 derived base) => [n|] //=.
+      rewrite ((proj1 (Roption_leq_eq_equiv (R:=eq)) (parent_offset_extension _ _ _ _ Hle)) _ E).
+      done.
+  Qed.
+
+  Lemma eval_offset_aux_extension (s1 s2 : genv) os :
+    genv_leq s1 s2 -> Roption_leq eq (eval_offset_aux s1 os) (eval_offset_aux s2 os).
+  Proof.
+    intros Hle. induction os as [|o os IH]; simpl; first by constructor.
+    apply (Roption_leq_eq_equiv (R:=eq)). intros z.
+    case E: (eval_offset_seg s1 o) => [n|] //=.
+    case F: (eval_offset_aux s1 os) => [m|] //=.
+    rewrite ((proj1 (Roption_leq_eq_equiv (R:=eq)) (eval_offset_seg_extension _ _ _ Hle)) _ E)
+      ((proj1 (Roption_leq_eq_equiv (R:=eq)) IH) _ F). done.
+  Qed.
+
+  Lemma ptr_vaddr_resp_leq (s1 s2 : genv) p :
+    genv_leq s1 s2 -> Roption_leq eq (@ptr_vaddr s1 p) (@ptr_vaddr s2 p).
+  Proof.
+    intros Hle. apply (Roption_leq_eq_equiv (R:=eq)). intros va.
+    destruct p as [|rp os]; simpl; first done.
+    rewrite /eval_offset. case E: (eval_offset_aux s1 (`os)) => [z|] //=.
+    rewrite ((proj1 (Roption_leq_eq_equiv (R:=eq)) (eval_offset_aux_extension _ _ _ Hle)) _ E).
+    done.
+  Qed.
 
   Lemma ptr_vaddr_nullptr :
     ∀ σ, @ptr_vaddr σ nullptr = Some 0%N.
