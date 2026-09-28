@@ -13,10 +13,13 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.sub :
   Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
   Corelib.Numbers.Cyclic.Int63.PrimInt63.int
 Corelib.Strings.PrimString.string : Set
-skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.raw_byte : Set
-skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.ptr_countable :
+skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.root_ptr_countable :
   stdpp.countable.Countable
-    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.ptr
+    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.root_ptr
+skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.raw_offset_seg_countable :
+  stdpp.countable.Countable
+    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.raw_offset_seg
+skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.raw_byte : Set
 Corelib.Strings.PrimStringAxioms.of_to_list :
   forall s : Corelib.Strings.PrimString.string,
   Corelib.Strings.PrimStringAxioms.of_list
@@ -174,10 +177,13 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.sub :
   Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
   Corelib.Numbers.Cyclic.Int63.PrimInt63.int
 Corelib.Strings.PrimString.string : Set
-skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.raw_byte : Set
-skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.ptr_countable :
+skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.root_ptr_countable :
   stdpp.countable.Countable
-    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.ptr
+    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.root_ptr
+skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.raw_offset_seg_countable :
+  stdpp.countable.Countable
+    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.raw_offset_seg
+skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.raw_byte : Set
 Corelib.Strings.PrimStringAxioms.of_to_list :
   forall s : Corelib.Strings.PrimString.string,
   Corelib.Strings.PrimStringAxioms.of_list
@@ -330,10 +336,13 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.sub :
   Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
   Corelib.Numbers.Cyclic.Int63.PrimInt63.int
 Corelib.Strings.PrimString.string : Set
-skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.raw_byte : Set
-skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.ptr_countable :
+skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.root_ptr_countable :
   stdpp.countable.Countable
-    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.ptr
+    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.root_ptr
+skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.raw_offset_seg_countable :
+  stdpp.countable.Countable
+    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.raw_offset_seg
+skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.raw_byte : Set
 Corelib.Strings.PrimStringAxioms.of_to_list :
   forall s : Corelib.Strings.PrimString.string,
   Corelib.Strings.PrimStringAxioms.of_list
@@ -487,10 +496,13 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.sub :
   Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
   Corelib.Numbers.Cyclic.Int63.PrimInt63.int
 Corelib.Strings.PrimString.string : Set
-skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.raw_byte : Set
-skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.ptr_countable :
+skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.root_ptr_countable :
   stdpp.countable.Countable
-    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.ptr
+    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.root_ptr
+skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.raw_offset_seg_countable :
+  stdpp.countable.Countable
+    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.raw_offset_seg
+skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.raw_byte : Set
 Corelib.Strings.PrimStringAxioms.of_to_list :
   forall s : Corelib.Strings.PrimString.string,
   Corelib.Strings.PrimStringAxioms.of_list
@@ -653,10 +665,13 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.sub :
   Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
   Corelib.Numbers.Cyclic.Int63.PrimInt63.int
 Corelib.Strings.PrimString.string : Set
-skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.raw_byte : Set
-skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.ptr_countable :
+skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.root_ptr_countable :
   stdpp.countable.Countable
-    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.ptr
+    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.root_ptr
+skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.raw_offset_seg_countable :
+  stdpp.countable.Countable
+    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.raw_offset_seg
+skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.raw_byte : Set
 Corelib.Strings.PrimStringAxioms.of_to_list :
   forall s : Corelib.Strings.PrimString.string,
   Corelib.Strings.PrimStringAxioms.of_list
@@ -803,10 +818,13 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.sub :
   Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
   Corelib.Numbers.Cyclic.Int63.PrimInt63.int
 Corelib.Strings.PrimString.string : Set
-skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.raw_byte : Set
-skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.ptr_countable :
+skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.root_ptr_countable :
   stdpp.countable.Countable
-    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.ptr
+    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.root_ptr
+skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.raw_offset_seg_countable :
+  stdpp.countable.Countable
+    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.raw_offset_seg
+skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.raw_byte : Set
 Corelib.Strings.PrimStringAxioms.of_to_list :
   forall s : Corelib.Strings.PrimString.string,
   Corelib.Strings.PrimStringAxioms.of_list
@@ -951,10 +969,13 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.sub :
   Corelib.Numbers.Cyclic.Int63.PrimInt63.int ->
   Corelib.Numbers.Cyclic.Int63.PrimInt63.int
 Corelib.Strings.PrimString.string : Set
-skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.raw_byte : Set
-skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.ptr_countable :
+skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.root_ptr_countable :
   stdpp.countable.Countable
-    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.ptr
+    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.root_ptr
+skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.raw_offset_seg_countable :
+  stdpp.countable.Countable
+    skylabs.lang.cpp.model.inductive_pointers.PTRS_IMPL.raw_offset_seg
+skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.raw_byte : Set
 Corelib.Strings.PrimStringAxioms.of_to_list :
   forall s : Corelib.Strings.PrimString.string,
   Corelib.Strings.PrimStringAxioms.of_list
