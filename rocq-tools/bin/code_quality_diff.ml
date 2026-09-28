@@ -69,7 +69,7 @@ end
 module Markdown = struct
   let output ~color fmt (a : Analysis.t) =
     let open Analysis in
-    let {warnings={appeared=w_appeared; disappeared=w_disappeared; _} as ws;
+    let {warnings={after=w_after; appeared=w_appeared; disappeared=w_disappeared; _} as ws;
          errors  ={appeared=e_appeared; disappeared=e_disappeared;_} as es} = a in
 
     let table fmt =
@@ -160,6 +160,12 @@ module Markdown = struct
       Format.fprintf fmt "# No Changes in Warnings or Errors\n%!";
       table fmt;
       remaining_errors fmt;
+      let w_others_remaining = WS.diff w_after w_appeared in
+      if not @@ WS.is_empty w_others_remaining then begin
+        let header fmt = header fmt ":scroll:" "Remaining Warnings (excluding new warnings)" (WS.cardinal w_others_remaining) in
+        in_summary fmt ~is_open:false ~header @@ fun fmt ->
+        Format.fprintf fmt "\n%a\n" (WS.pp @@ code_block WS.pp_elt) w_others_remaining;
+      end;
     end
     else begin
       Format.fprintf fmt "# Changes in Warnings or Errors\n%!";
@@ -180,11 +186,16 @@ module Markdown = struct
         in_summary fmt ~is_open:true ~header @@ fun fmt ->
         Format.fprintf fmt "\n%a\n" (ES.pp @@ code_block ES.pp_elt) e_appeared;
       end;
-
       if not @@ WS.is_empty w_appeared then begin
         let header fmt = header fmt ":warning:" "New Warnings" (WS.cardinal w_appeared) in
         in_summary fmt ~is_open:true ~header @@ fun fmt ->
         Format.fprintf fmt "\n%a\n" (WS.pp @@ code_block WS.pp_elt) w_appeared;
+      end;
+      let w_others_remaining = WS.diff w_after w_appeared in
+      if not @@ WS.is_empty w_others_remaining then begin
+        let header fmt = header fmt ":scroll:" "Remaining Warnings (excluding new warnings)" (WS.cardinal w_others_remaining) in
+        in_summary fmt ~is_open:false ~header @@ fun fmt ->
+        Format.fprintf fmt "\n%a\n" (WS.pp @@ code_block WS.pp_elt) w_others_remaining;
       end;
     end;
 end

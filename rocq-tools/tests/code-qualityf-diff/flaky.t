@@ -20,3 +20,16 @@
   |Errors  | 0   | 0 | 0  | 0  |
   |Warnings| 1   | 0 | 0  | 1  |
   
+  <details><summary>
+  
+  ## :scroll: Remaining Warnings (excluding new warnings) (1)
+  
+  </summary>
+  
+  ```
+  File "test.v", line 100, characters 8-25:
+  Warning: Timeout (2.50s) exceeded: tactic ran for 3.71s [sl-work-timeout,sl]
+  ```
+  
+  </details>
+  
