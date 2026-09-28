@@ -1903,6 +1903,22 @@ Module SimpleCPP.
       - by rewrite -Hsum N2Z.id.
     Qed.
 
+    Lemma offset_inv_pinned_ptr_pure_guarded : forall σ o z va p,
+      eval_offset σ o = Some z ->
+      pinned_ptr_pure va (p ,, o) ->
+      valid_ptr p |--
+      [| 0 <= Z.of_N va - z |]%Z **
+      [| pinned_ptr_pure (Z.to_N (Z.of_N va - z)) p |].
+    Proof.
+      intros σ' o z va p Ho Hp. iIntros "V".
+      iDestruct (_valid_ptr_vaddr (resolve:=σ') with "V") as %(va' & Haddr).
+      have Hsum := ptr_vaddr_offset_add σ' p o va' va z Haddr Hp Ho.
+      have Hdiff : (Z.of_N va - z = Z.of_N va')%Z by lia.
+      iSplit; iPureIntro.
+      - lia.
+      - by rewrite /pinned_ptr_pure Hdiff N2Z.id.
+    Qed.
+
     Axiom offset_inv_pinned_ptr_pure : forall σ o z va p,
       eval_offset σ o = Some z ->
       pinned_ptr_pure va (p ,, o) ->
