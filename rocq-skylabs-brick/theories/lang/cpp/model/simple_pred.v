@@ -18,6 +18,7 @@ Require Import skylabs.lang.cpp.bi.cfractional.
 Require Import skylabs.iris.extra.base_logic.own_instances.
 
 Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.numbers.
 Require Import skylabs.prelude.option.
 Require Import skylabs.prelude.arith.z_to_bytes.
 Require Import skylabs.lang.cpp.algebra.cfrac.
@@ -1457,7 +1458,7 @@ Module SimpleCPP.
         size_of σ ty = Some sz ->
         size_of σ elem = Some esz ->
         0 <= Z.of_N esz * i <= Z.of_N sz ->
-        (vt = pred.Strict -> Z.of_N esz * i < Z.of_N sz) ->
+        (vt = pred.Strict -> Z.of_N esz * i = 0 \/ Z.of_N esz * i < Z.of_N sz) ->
         type_ptr ty p ⊢ _valid_ptr vt (p ,, o_sub σ elem i).
       Proof.
         intros Hsz Hes Hrange Hstrict.
@@ -1489,8 +1490,9 @@ Module SimpleCPP.
         have Hb : z0 + Z.of_N esz * i < h \/
             (vt = pred.Relaxed /\ z0 + Z.of_N esz * i = h).
         { destruct vt.
-          - have Hs := Hstrict eq_refl. left.
-            destruct R1 as [R1|[_ R1]]; lia.
+          - have Hs := Hstrict eq_refl. left. destruct Hs as [Hs|Hs].
+            + destruct R0 as [R0|[Hbad _]]; [lia|discriminate].
+            + destruct R1 as [R1|[_ R1]]; lia.
           - destruct (decide (z0 + Z.of_N esz * i < h)) as [Hlt|Hlt];
               first by left.
             right. split; first done. destruct R1 as [R1|[_ R1]]; lia. }
@@ -1506,6 +1508,30 @@ Module SimpleCPP.
         exact (raw_path_valid_subscript_increase vt root l h prefix
           (erase_qualifiers elem) n d (n+i) (Z.of_N esz * i) z0
           Hpath E0 (proj1 Hrange) Hb).
+      Qed.
+      Lemma aligned_ptr_ty_subscript resolve p ty sz i :
+        size_of resolve ty = Some sz ->
+        @aligned_ptr_ty resolve ty p ->
+        is_Some (@ptr_vaddr resolve p) ->
+        aligned_ptr_ty ty (p ,, o_sub resolve ty i).
+      Proof.
+        intros Hsz [al [Hal Halp]] [va Hva].
+        exists al. split; first done.
+        destruct (ptr_vaddr (p ,, o_sub resolve ty i)) as [va'|] eqn:Hva'; last by right.
+        left. exists va'. split; first done.
+        have Hsum := ptr_vaddr_offset_add resolve p (o_sub resolve ty i) va va'
+          (Z.of_N sz * i) Hva Hva' (eval_o_sub' resolve ty i sz Hsz).
+        destruct Halp as [[base [Hbase Hdva]]|Hnone]; last congruence.
+        have Ebase : base = va by congruence. subst base.
+        destruct (align_of_size_of' ty sz Hsz) as (al' & Hal' & Hnz & Hdvd).
+        have Eal : al' = al by congruence. subst al'.
+        have Hz : (Z.of_N al | Z.of_N va')%Z.
+        { rewrite Hsum. apply Z.divide_add_r.
+          - exact: N2Z_inj_divide.
+          - apply Z.divide_mul_l. exact: N2Z_inj_divide. }
+        have Hpos : (0 < Z.of_N al)%Z by lia.
+        have Hnn : (0 <= Z.of_N va')%Z by lia.
+        move: (Z2N_inj_divide _ _ Hpos Hnn Hz). by rewrite !N2Z.id.
       Qed.
     End subscript_validity.
 
@@ -1803,7 +1829,7 @@ Module SimpleCPP.
       intros ty p i sz Hsz Hi. iIntros "#Htype".
       have Hbyte : size_of σ Tbyte = Some 1%N by done.
       iDestruct (type_ptr_subscript_valid ty p sz Tbyte 1 (Z.of_N i) pred.Strict
-        Hsz Hbyte ltac:(lia) ltac:(intros _; lia) with "Htype") as "#Vi".
+        Hsz Hbyte ltac:(lia) ltac:(intros _; right; lia) with "Htype") as "#Vi".
       iDestruct (type_ptr_subscript_valid ty p sz Tbyte 1 (Z.of_N i + 1) pred.Relaxed
         Hsz Hbyte ltac:(lia) ltac:(discriminate) with "Htype") as "Vend".
       iDestruct (strict_valid_ptr_nonnull_alloc_id with "Vi") as %(aid & Haid & Hneq).
@@ -2091,12 +2117,46 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
       type_ptr (Tnamed cls) p ⊢ type_ptr fld.(mem_type) (p .,
         Field cls fld.(mem_name)).
 
-    Axiom type_ptr_o_sub : forall p (m n : N) ty,
+    Lemma type_ptr_o_sub : forall p (m n : N) ty,
       (m < n)%N ->
       type_ptr (Tarray ty n) p ⊢ type_ptr ty (p ,, _sub ty m).
+    Proof.
+      intros p m n ty Hmn. iIntros "#T".
+      iDestruct (type_ptr_size with "T") as %(total & Htotal).
+      destruct (proj1 (size_of_array_shatter ty n total) Htotal)
+        as (esz & -> & Hes & Harray).
+      iDestruct (type_ptr_subscript_valid (Tarray ty n) p (n*esz)%N ty esz
+        (Z.of_N m) pred.Strict Harray Hes ltac:(rewrite N2Z.inj_mul; nia)
+        ltac:(intros _; destruct (decide (esz=0%N));
+          [left; subst; lia|right; rewrite N2Z.inj_mul; nia]) with "T") as "#Vi".
+      iDestruct (type_ptr_subscript_valid (Tarray ty n) p (n*esz)%N ty esz
+        (Z.of_N m+1) pred.Relaxed Harray Hes ltac:(rewrite N2Z.inj_mul; nia)
+        ltac:(discriminate) with "T") as "Vend".
+      iDestruct (type_ptr_aligned_pure with "T") as %Hal.
+      rewrite /aligned_ptr_ty align_of_array in Hal.
+      iDestruct (type_ptr_strict_valid with "T") as "V0".
+      iDestruct (_valid_ptr_vaddr (resolve:=σ) with "V0") as %Hva.
+      have Hal' := aligned_ptr_ty_subscript σ p ty esz (Z.of_N m) Hes Hal Hva.
+      iDestruct (strict_valid_ptr_nonnull_alloc_id with "Vi") as %(aid & Haid & Hneq).
+      rewrite /type_ptr. iSplit.
+      { iPureIntro. intros E. rewrite E ptr_alloc_id_nullptr in Haid.
+        injection Haid as <-. contradiction. }
+      iSplit; first done.
+      iSplit; first (iPureIntro; by exists esz).
+      iFrame "Vi". rewrite -offset_ptr_dot o_dot_sub. iExact "Vend".
+    Qed.
 
-    Axiom type_ptr_o_sub_end : forall p (n : N) ty,
+    Lemma type_ptr_o_sub_end : forall p (n : N) ty,
       type_ptr (Tarray ty n) p ⊢ valid_ptr (p ,, _sub ty n).
+    Proof.
+      intros p n ty. iIntros "T".
+      iDestruct (type_ptr_size with "T") as %(total & Htotal).
+      destruct (proj1 (size_of_array_shatter ty n total) Htotal)
+        as (esz & -> & Hes & Harray).
+      iApply (type_ptr_subscript_valid (Tarray ty n) p (n*esz)%N ty esz
+        (Z.of_N n) pred.Relaxed Harray Hes ltac:(rewrite N2Z.inj_mul; nia)
+        ltac:(discriminate) with "T").
+    Qed.
 
     Lemma o_base_directly_derives : forall p base derived,
       strict_valid_ptr (p ,, o_base σ derived base) |--
