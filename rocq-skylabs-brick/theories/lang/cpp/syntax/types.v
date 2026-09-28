@@ -1015,7 +1015,7 @@ Lemma is_value_type_decompose_type t :
   is_value_type t = is_value_type (decompose_type t).2.
 Proof. by rewrite is_value_type_qual_norm qual_norm_decompose_type. Qed.
 
-(** For use in [init_validR] *)
+(** Syntactic recognition of zero-length arrays for reference validity. *)
 Fixpoint zero_sized_array ty : bool :=
   qual_norm (fun _ t => match t with
                      | Tarray ety n =>

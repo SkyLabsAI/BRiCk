@@ -22,10 +22,7 @@ Section with_cpp.
   Context `{Σ : cpp_logic} {σ : genv}.
 
   Definition init_validR (ty : type) : Rep :=
-    if zero_sized_array ty then
-      validR
-    else
-      svalidR.
+    if zero_sized_array ty then validR else svalidR.
   #[global] Hint Opaque init_validR : sl_opacity.
   #[global] Instance init_validR_persistent : Persistent1 init_validR.
   Proof. intros; rewrite /init_validR; case_match; apply _. Qed.
@@ -34,7 +31,11 @@ Section with_cpp.
   Definition denoteSymbol (tu : translation_unit) (n : obj_name) (o : ObjValue) : mpred :=
     _global n |->
         match o with
-        | Ovar t e => init_validR t
+        | Ovar t e =>
+          match align_of t with
+          | Some _ => reference_toR t
+          | None => init_validR t
+          end
         | Ofunction f =>
           match f.(f_body) with
           | None => svalidR
@@ -76,8 +77,14 @@ Section with_cpp.
     is_strict_valid o ->
     denoteSymbol tu n o |-- strict_valid_ptr (_global n).
   Proof.
-    rewrite /denoteSymbol/init_validR/is_strict_valid; destruct o.
-    { rewrite -_at_svalidR. by destruct zero_sized_array. }
+    rewrite /denoteSymbol/is_strict_valid.
+    destruct o as [ty init|f|m|c|d].
+    { destruct (align_of ty).
+      - rewrite _at_reference_toR reference_to_elim.
+        case_match; first done.
+        intros _. iIntros "(_ & _ & _ & S)". iExact "S".
+      - rewrite /init_validR. case_match; first done.
+        intros _. by rewrite _at_svalidR. }
     all: intros _; case_match; last by rewrite _at_svalidR.
     all: rewrite !_at_as_Rep; auto using
       code_at_strict_valid, method_at_strict_valid, ctor_at_strict_valid, dtor_at_strict_valid.
@@ -89,8 +96,24 @@ Section with_cpp.
     destruct (is_strict_valid o) eqn:Hs.
     { by rewrite denoteSymbol_strict_valid ?Hs // strict_valid_valid. }
     move: Hs.
-    rewrite -_at_validR /denoteSymbol /init_validR /is_strict_valid.
-    by destruct o => //= ?; case_match.
+    rewrite /denoteSymbol /is_strict_valid.
+    destruct o as [ty init|f|m|c|d] => //= Hzero.
+    destruct (align_of ty).
+    - rewrite _at_reference_toR reference_to_elim.
+      iIntros "(_ & _ & V & _)". iExact "V".
+    - rewrite /init_validR.
+      destruct (zero_sized_array ty); last discriminate.
+      by rewrite _at_validR.
+  Qed.
+
+  (** A global variable with known alignment supplies a reference to its
+      declared object. Its size may still be unknown, as for an incomplete
+      array. Unknown alignment retains the original validity resource. *)
+  Lemma denoteSymbol_Ovar_reference_to tu n ty init :
+    is_Some (align_of ty) ->
+    denoteSymbol tu n (Ovar ty init) |-- reference_to ty (_global n).
+  Proof.
+    intros [al Hal]. by rewrite /denoteSymbol Hal _at_reference_toR.
   Qed.
 
   (** TODO incomplete *)
