@@ -49,6 +49,37 @@ Section concrete_model.
     iSplit; iPureIntro; done.
   Qed.
 
+  (** Inversion needs a valid source, including for negative displacements. *)
+  Lemma byte_offset_inverse_pinned_address p va i :
+    ptr_vaddr (p ,, o_sub σ "unsigned char"%cpp_type i) = Some va ->
+    _valid_ptr pred.Relaxed p ⊢
+    ⌜(0 <= Z.of_N va - i)%Z⌝ ∗
+    ⌜ptr_vaddr p = Some (Z.to_N (Z.of_N va - i))⌝.
+  Proof.
+    intros Hp. iIntros "V".
+    have Ho : eval_offset σ (o_sub σ "unsigned char"%cpp_type i) = Some i.
+    { rewrite (eval_o_sub' σ _ i 1) //=. by rewrite Z.mul_1_l. }
+    iDestruct (SimpleCPP.offset_inv_pinned_ptr_pure σ _ i va p Ho Hp with "V")
+      as "[%Hnonneg %Haddr]".
+    iSplit; iPureIntro; done.
+  Qed.
+
+  Lemma cancelled_null_source_invalid :
+    _valid_ptr pred.Relaxed (nullptr ,, o_sub σ "unsigned char"%cpp_type (-1)) ⊢ False.
+  Proof.
+    apply undefined_address_invalid.
+    rewrite _dot.unlock /DOT_dot /=. reflexivity.
+  Qed.
+
+  (** Cancellation can recover a valid destination from an invalid source. *)
+  Lemma cancelled_null_destination_valid :
+    ⊢ _valid_ptr pred.Relaxed (nullptr ,, o_sub σ "unsigned char"%cpp_type (-1)
+      ,, o_sub σ "unsigned char"%cpp_type 1).
+  Proof.
+    rewrite -offset_ptr_dot o_dot_sub /= o_sub_0; last by eexists.
+    rewrite offset_ptr_id. apply valid_ptr_nullptr.
+  Qed.
+
   (** An address does not require a physical-storage mapping. *)
   Lemma ghost_cell_retains_address ty p q v :
     is_heap_type ty ->
@@ -71,3 +102,7 @@ Print Assumptions undefined_address_invalid.
 Print Assumptions underflow_invalid.
 Print Assumptions byte_offset_pinned_address.
 Print Assumptions ghost_cell_retains_address.
+Print Assumptions SimpleCPP.offset_inv_pinned_ptr_pure.
+Print Assumptions byte_offset_inverse_pinned_address.
+Print Assumptions cancelled_null_source_invalid.
+Print Assumptions cancelled_null_destination_valid.

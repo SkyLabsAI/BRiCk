@@ -183,16 +183,16 @@ Section with_Σ.
         iFrame "L R E".
   Qed.
 
-  (** Whole element sizes preserve alignment at a valid byte-offset pointer. *)
+  (** Whole element sizes preserve alignment between valid byte-offset pointers. *)
   Lemma aligned_ofR_byte_sub (t : Rtype) (sz i : N) :
     size_of σ t = Some sz ->
-    aligned_ofR t ** .[ Tbyte ! Z.of_N (i * sz) ] |-> validR
+    aligned_ofR t ** validR ** .[ Tbyte ! Z.of_N (i * sz) ] |-> validR
     |-- .[ Tbyte ! Z.of_N (i * sz) ] |-> aligned_ofR t.
   Proof.
     intros Hsz. apply Rep_entails_at => p.
-    rewrite _at_sep !_at_offsetR _at_validR !aligned_ofR_aligned_ptr_ty.
+    rewrite !_at_sep !_at_offsetR !_at_validR !aligned_ofR_aligned_ptr_ty.
     destruct (align_of_size_of' _ _ Hsz) as (al & Hal & Hal0 & Hdvd).
-    iIntros "[%Hp V]".
+    iIntros "(%Hp & V & _)".
     destruct (ptr_vaddr (p .[ Tbyte ! Z.of_N (i * sz) ])) as [va'|] eqn:Hva'.
     2: { iPureIntro. exists al. split; first done. by right. }
     have Heval : eval_offset σ (o_sub σ Tbyte (Z.of_N (i * sz))) = Some (Z.of_N (i * sz)).
@@ -234,14 +234,16 @@ Section with_Σ.
       - iIntros "H". iExists al. by iFrame. }
     rewrite /tblockR /= Hsz /= align_of_array Hal.
     have HC := blockR_chunks (N.to_nat n) sz q. rewrite N2Nat.id in HC.
-    rewrite HC. setoid_rewrite <- HA.
+    setoid_rewrite <- HA.
     iSplit.
-    - iIntros "([E B] & #A)". iFrame "A E".
+    - iIntros "(B & #A)".
+      iDestruct (observe validR with "B") as "#Vp".
+      iEval (rewrite HC) in "B". iDestruct "B" as "[E B]". iFrame "A E".
       iApply (big_sepL_impl with "B"). iIntros "!>" (k i Hi) "B".
       rewrite _offsetR_sep.
       iDestruct (observe (.[ Tbyte ! Z.of_N (N.of_nat i * sz) ] |-> validR) with "B") as "#V".
-      iFrame "B". iApply (aligned_ofR_byte_sub t sz (N.of_nat i) Hsz). by iFrame "A V".
-    - iIntros "(#A & E & B)". iFrame "A E".
+      iFrame "B". iApply (aligned_ofR_byte_sub t sz (N.of_nat i) Hsz). by iFrame "A Vp V".
+    - rewrite HC. iIntros "(#A & E & B)". iFrame "A E".
       iApply (big_sepL_impl with "B"). iIntros "!>" (k i Hi) "B".
       rewrite _offsetR_sep. iDestruct "B" as "[$ _]".
   Qed.

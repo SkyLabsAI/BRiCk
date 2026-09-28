@@ -1,0 +1,27 @@
+Axioms:
+skylabs.lang.cpp.logic.pred.L.valid_ptr_nullptr : ∀ (thread_info : iris.bi.monpred.biIndex) (_Σ : iris.base_logic.lib.iprop.gFunctors) (H : skylabs.lang.cpp.logic.mpred.LC.cpp_logic thread_info _Σ), ⊢ skylabs.lang.cpp.logic.pred.L.valid_ptr skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.nullptr
+Corelib.Strings.PrimString.string : Set
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr_vaddr_nullptr : ∀ σ : skylabs.lang.cpp.semantics.genv.genv, skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr_vaddr skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.nullptr = Corelib.Init.Datatypes.Some 0%N
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr_vaddr : skylabs.lang.cpp.semantics.genv.genv → skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr → Corelib.Init.Datatypes.option skylabs.prelude.addr.vaddr
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr : Set
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.offset_ptr_id : ∀ p : skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr, p ,, skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.o_id = p
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.offset_ptr_dot : ∀ (p : skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr) (o1 : skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.DOT_from skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.DOT_offset_offset) (o2 : skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.offset), p ,, (o1 ,, o2) = p ,, o1 ,, o2
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.offset : Set
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.o_sub_0 : ∀ (σ : skylabs.lang.cpp.semantics.genv.genv) (ty : skylabs.lang.cpp.syntax.core.type), stdpp.base.is_Some (skylabs.lang.cpp.semantics.types.size_of σ ty) → .[ ty ! 0 ] = skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.o_id
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.o_sub : skylabs.lang.cpp.semantics.genv.genv → skylabs.lang.cpp.syntax.core.type → Corelib.Numbers.BinNums.Z → skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.offset
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.o_id : skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.offset
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.o_dot_sub : ∀ (σ : skylabs.lang.cpp.semantics.genv.genv) (i j : Corelib.Numbers.BinNums.Z) (ty : skylabs.lang.cpp.syntax.core.type), .[ ty ! i ] .[ ty ! j ] = .[ ty ! i + j ]
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.nullptr : skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr
+skylabs.lang.cpp.syntax.compare.name_comparison : skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareN
+Corelib.Numbers.Cyclic.Int63.PrimInt63.mul : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.eval_offset : skylabs.lang.cpp.semantics.genv.genv → skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.offset → Corelib.Init.Datatypes.option Corelib.Numbers.BinNums.Z
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.eval_o_sub' : ∀ (σ : skylabs.lang.cpp.semantics.genv.genv) (ty : skylabs.lang.cpp.syntax.core.type) (i : Corelib.Numbers.BinNums.Z) (sz : Corelib.Numbers.BinNums.N), skylabs.lang.cpp.semantics.types.size_of σ ty = Corelib.Init.Datatypes.Some sz → skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.eval_offset σ (.[ ty ! i ]) = Corelib.Init.Datatypes.Some (sz * i)%Z
+skylabs.lang.cpp.logic.mpred.LC.cppPreG : iris.base_logic.lib.iprop.gFunctors → Type
+Corelib.Strings.PrimString.compare : Corelib.Strings.PrimString.string → Corelib.Strings.PrimString.string → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.compare : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.add : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+skylabs.lang.cpp.logic.pred.L._valid_ptr : ∀ (thread_info : iris.bi.monpred.biIndex) (_Σ : iris.base_logic.lib.iprop.gFunctors), skylabs.lang.cpp.logic.mpred.LC.cpp_logic thread_info _Σ → skylabs.lang.cpp.logic.pred.validity_type → skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr → skylabs.iris.extra.base_logic.mpred.mpred
+skylabs.lang.cpp.logic.mpred.LC._cpp_ghost : Type
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.__offset_ptr : skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr → skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.offset → skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.__o_dot : skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.offset → skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.offset → skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.offset

@@ -473,10 +473,12 @@ Module Type CPP_LOGIC
       [| 0 <= Z.of_N va + z |]%Z **
       [| ptr_vaddr (p ,, o) = Some (Z.to_N (Z.of_N va + z)) |].
 
+    (** Recovering a source address requires source validity: cancellation can
+        yield a valid destination even when the source address underflows. *)
     Axiom offset_inv_pinned_ptr_pure : forall o z va p,
       eval_offset σ o = Some z ->
       ptr_vaddr (p ,, o) = Some va ->
-      valid_ptr (p ,, o) |--
+      valid_ptr p |--
       [| 0 <= Z.of_N va - z |]%Z **
       [| ptr_vaddr p = Some (Z.to_N (Z.of_N va - z)) |].
 
@@ -1083,7 +1085,7 @@ Section with_cpp.
     [| ptr_vaddr (p ,, o2) = Some (Z.to_N (Z.of_N va - z1 + z2)) |].
   Proof.
     iIntros (He1 He2 Hpin1) "V V1 V2".
-    iDestruct (offset_inv_pinned_ptr_pure with "V1") as %[Hle1 Hp]; [done..|].
+    iDestruct (offset_inv_pinned_ptr_pure o1 z1 va p He1 Hpin1 with "V") as %[Hle1 Hp].
     iDestruct (offset_pinned_ptr_pure with "V2") as %[Hle2 Hgoal]; [done..|].
     iIntros "!%". by rewrite Z2N.id in Hgoal, Hle2.
   Qed.
@@ -1149,8 +1151,7 @@ Section with_cpp.
   Proof.
     rewrite pinned_ptr.unlock.
     iIntros (He) "#V #(%P & E)".
-    iDestruct (offset_inv_pinned_ptr_pure with "[]") as "-#[$$]"; [done..| |].
-    { by iApply (observe with "E"). }
+    iDestruct (offset_inv_pinned_ptr_pure o z va p He P with "V") as "-#[$$]".
     by iApply offset_inv_exposed_ptr.
   Qed.
 

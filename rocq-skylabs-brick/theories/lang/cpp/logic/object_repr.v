@@ -773,8 +773,9 @@ Section typed_array_blocks.
       iDestruct ("C" with "B") as "B".
       iDestruct (observe (p .[ Tbyte ! Z.of_N (i * sz) ] |-> validR) with "B") as "#V".
       iFrame "B".
-      iEval (rewrite -_at_offsetR -(aligned_ofR_byte_sub ty sz i Hsz) _at_sep _at_offsetR).
-      by iFrame "A V".
+      iDestruct (type_ptr_valid with "T") as "#Vp".
+      iEval (rewrite -_at_offsetR -(aligned_ofR_byte_sub ty sz i Hsz) !_at_sep _at_offsetR _at_validR).
+      by iFrame "A Vp V".
   Qed.
 
   (** Typed offsets require evidence for an array object. In particular,
