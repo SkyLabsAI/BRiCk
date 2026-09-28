@@ -819,17 +819,24 @@ Module Type VALID_PTR_AXIOMS
 
     (** These axioms are named after the predicate in the conclusion. *)
 
-    (**
-    TODO: The intended proof of [strict_valid_ptr_sub] assumes that, if [p']
-    normalizes to [p ., [ ty ! i ]], then [valid_ptr p'] is defined to imply
-    validity of all pointers from [p] to [p'].
-
-    Note that `arrR` exposes stronger reasoning principles, but this might still be useful.
-    *)
-    Axiom strict_valid_ptr_sub : ∀ (i j k : Z) p ty vt1 vt2,
+    (** Interpolation preserves relaxed validity at zero stride. A strict
+        conclusion additionally requires a positive element size. *)
+    Axiom _valid_ptr_sub : ∀ (i j k : Z) p ty vt1 vt2 vt,
       (i <= j < k)%Z ->
+      (vt = Strict -> exists sz, size_of σ ty = Some sz /\ (0 < sz)%N) ->
+      _valid_ptr vt1 (p ,, o_sub σ ty i) |--
+      _valid_ptr vt2 (p ,, o_sub σ ty k) -* _valid_ptr vt (p ,, o_sub σ ty j).
+
+    Lemma strict_valid_ptr_sub : ∀ (i j k : Z) p ty vt1 vt2,
+      (i <= j < k)%Z ->
+      (exists sz, size_of σ ty = Some sz /\ (0 < sz)%N) ->
       _valid_ptr vt1 (p ,, o_sub σ ty i) |--
       _valid_ptr vt2 (p ,, o_sub σ ty k) -* strict_valid_ptr (p ,, o_sub σ ty j).
+    Proof.
+      intros i j k p ty vt1 vt2 Hijk Hsize.
+      apply (_valid_ptr_sub i j k p ty vt1 vt2 Strict Hijk).
+      intros _. exact Hsize.
+    Qed.
 
     (** XXX: this axiom is convoluted but
     TODO: The intended proof of [strict_valid_ptr_field_sub] (and friends) is that
@@ -1224,7 +1231,7 @@ Section with_cpp.
   Proof.
     destruct (decide (j = k)) as [->|Hne].
     { rewrite -_valid_valid. by iIntros "_ $". }
-    rewrite -strict_valid_valid. apply strict_valid_ptr_sub. lia.
+    apply (_valid_ptr_sub i j k p ty vt vt Relaxed); [lia|discriminate].
   Qed.
 
   Lemma _valid_ptr_field_sub (i : Z) (p : ptr) ty f vt (Hle : (0 <= i)%Z) :
