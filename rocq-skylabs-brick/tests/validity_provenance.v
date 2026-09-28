@@ -23,13 +23,11 @@ Section concrete_model.
     aid <> null_alloc_id -> va <> 0%N ->
     blocks_own (alloc_ptr aid va) 0 1 ⊢
     _valid_ptr pred.Strict (alloc_ptr aid va).
-  Proof using Type* σ.
+  Proof.
     intros Haid Haddr. rewrite /_valid_ptr. iIntros "B". iRight.
-    iExists σ, (alloc_ptr aid va), 0, 1, o_id, 0. iFrame "B".
-    iSplit; first (iPureIntro; left; lia).
-    iSplit; first (iPureIntro; split; first done; symmetry; apply offset_ptr_id).
+    iExists 0%Z, 1%Z. iFrame "B".
     iSplit; first (iPureIntro; exists aid; split; done).
-    iPureIntro. exists va. split; done.
+    iPureIntro. apply (raw_path_valid_nil _ _ _ _ va); try done. left; lia.
   Qed.
 
   Lemma allocated_one_past_valid aid :
@@ -37,13 +35,15 @@ Section concrete_model.
     blocks_own (alloc_ptr aid 8) 0 1 ⊢
     _valid_ptr pred.Relaxed (alloc_ptr aid 8 ,, o_sub σ "unsigned char"%cpp_type 1).
   Proof.
-    intros Haid. rewrite /_valid_ptr. iIntros "B". iRight.
-    iExists σ, (alloc_ptr aid 8), 0, 1, (o_sub σ "unsigned char"%cpp_type 1), 1.
-    iFrame "B". iSplit; first (iPureIntro; right; done).
-    iSplit; first (iPureIntro; split; done).
-    rewrite _dot.unlock /DOT_dot /=.
+    intros Haid. rewrite /_valid_ptr _dot.unlock /DOT_dot /=.
+    iIntros "B". iRight. iExists 0%Z, 1%Z. iFrame "B".
     iSplit; first (iPureIntro; exists aid; split; done).
-    iPureIntro. exists 9%N. split; done.
+    iPureIntro.
+    change (raw_path_valid pred.Relaxed (alloc_ptr_ aid 8) 0 1
+      ([] ++ [(o_sub_ "unsigned char"%cpp_type 1, 1%Z)])).
+    apply (raw_path_valid_snoc _ _ _ _ _ _ 1%Z 9%N); try done.
+    - apply (raw_path_valid_nil _ _ _ _ 8%N); try done. left; lia.
+    - right; done.
   Qed.
 
   (** The distinguished null pointer retains relaxed validity. *)
@@ -89,14 +89,15 @@ Section concrete_model.
     _valid_ptr pred.Strict
       (alloc_ptr aid 8 ,, o_sub σ "unsigned char[0]"%cpp_type 1).
   Proof.
-    intros Haid. rewrite /_valid_ptr. iIntros "B". iRight.
-    iExists σ, (alloc_ptr aid 8), 0, 1,
-      (o_sub σ "unsigned char[0]"%cpp_type 1), 0.
-    iFrame "B". iSplit; first (iPureIntro; left; lia).
-    iSplit; first (iPureIntro; split; done).
-    rewrite _dot.unlock /DOT_dot /=.
+    intros Haid. rewrite /_valid_ptr _dot.unlock /DOT_dot /=.
+    iIntros "B". iRight. iExists 0%Z, 1%Z. iFrame "B".
     iSplit; first (iPureIntro; exists aid; split; done).
-    iPureIntro. exists 8%N. split; done.
+    iPureIntro.
+    change (raw_path_valid pred.Strict (alloc_ptr_ aid 8) 0 1
+      ([] ++ [(o_sub_ "unsigned char[0]"%cpp_type 1, 0%Z)])).
+    apply (raw_path_valid_snoc _ _ _ _ _ _ 0%Z 8%N); try done.
+    - apply (raw_path_valid_nil _ _ _ _ 8%N); try done. left; lia.
+    - left; lia.
   Qed.
 
   Lemma missing_layout_subscript_invalid vt p ty i :

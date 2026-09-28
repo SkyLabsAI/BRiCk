@@ -327,41 +327,113 @@ Module SimpleCPP.
       in_range Strict l o h |-- in_range Relaxed l o h.
     Proof. rewrite /in_range/=. f_equiv. rewrite/impl. tauto. Qed.
 
-    (** A non-null valid pointer must retain non-null allocation provenance and
-        a defined, nonzero virtual address. In this pointer model, undefined
-        addresses come from invalid layouts or underflow. This does not require
-        physical storage: [mem_inj_own p None] still represents ghost cells. *)
+    (** Check every stored path prefix against the same allocation range. A
+        field pointer cannot validate its own range independently of its parent.
+        Addresses are computed by the pointer model's existing fold. *)
+    Import inductive_pointers_utils.address_sums.
+    Definition raw_path_valid (vt : validity_type) (root : root_ptr)
+        (l h : Z) (path : raw_offset) : Prop :=
+      forall prefix suffix, path = prefix ++ suffix ->
+        exists z va,
+          eval_raw_offset prefix = Some z /\
+          foldr (fun off ova => ova ≫= offset_vaddr off)
+            (root_ptr_vaddr root) (snd <$> prefix) = Some va /\
+          va <> 0%N /\
+          ((l <= z < h)%Z \/ (vt = Relaxed /\ z = h)).
+
+    Lemma raw_path_valid_prefix vt root l h prefix suffix :
+      raw_path_valid vt root l h (prefix ++ suffix) ->
+      raw_path_valid vt root l h prefix.
+    Proof.
+      intros Hpath before after E. apply (Hpath before (after ++ suffix)).
+      by rewrite E app_assoc.
+    Qed.
+
+    Lemma raw_path_valid_weaken root l h path :
+      raw_path_valid Strict root l h path -> raw_path_valid Relaxed root l h path.
+    Proof.
+      intros Hpath prefix suffix E.
+      destruct (Hpath prefix suffix E) as (z & va & Hz & Hva & Hnz & Hr).
+      exists z, va. repeat split; try assumption. destruct Hr as [Hr|[Hbad _]];
+        [by left|discriminate].
+    Qed.
+
+    Lemma raw_path_valid_nil vt root l h va :
+      root_ptr_vaddr root = Some va -> va <> 0%N ->
+      ((l <= 0 < h)%Z \/ (vt = Relaxed /\ 0%Z = h)) ->
+      raw_path_valid vt root l h [].
+    Proof.
+      intros Hva Hnz Hr prefix suffix E.
+      symmetry in E. apply app_eq_nil in E as [-> _].
+      exists 0%Z, va. by repeat split.
+    Qed.
+
+    Lemma raw_path_valid_snoc vt root l h path seg z va :
+      raw_path_valid vt root l h path ->
+      eval_raw_offset (path ++ [seg]) = Some z ->
+      foldr (fun off ova => ova ≫= offset_vaddr off)
+        (root_ptr_vaddr root) (snd <$> (path ++ [seg])) = Some va ->
+      va <> 0%N -> ((l <= z < h)%Z \/ (vt = Relaxed /\ z = h)) ->
+      raw_path_valid vt root l h (path ++ [seg]).
+    Proof.
+      intros Hpath Hz Hva Hnz Hr prefix suffix.
+      induction suffix as [|last suffix IH] using rev_ind; intros E.
+      - rewrite app_nil_r in E. subst prefix. exists z, va. by repeat split.
+      - rewrite app_assoc in E. apply app_inj_tail in E as [E _].
+        exact (Hpath prefix suffix E).
+    Qed.
+
+    Lemma raw_path_valid_vaddr {resolve : genv} vt root l h off :
+      raw_path_valid vt root l h (proj1_sig off) ->
+      exists va, @ptr_vaddr resolve (offset_ptr root off) = Some va /\ va <> 0%N.
+    Proof.
+      intros Hpath. destruct (Hpath (proj1_sig off) [] (eq_sym (app_nil_r _)))
+        as (z & va & Hz & Hva & Hnz & _).
+      exists va. split; last done. by rewrite /ptr_vaddr Hz.
+    Qed.
+
+    (** Non-null validity uses a range owned at the canonical allocation root,
+        non-null provenance, and prefix validity. Physical storage is separate:
+        [mem_inj_own p None] continues to represent ghost cells. *)
     Definition _valid_ptr vt (p : ptr) : mpred :=
       [| p = nullptr /\ vt = Relaxed |] \\//
-        Exists σ' base l h o zo,
-                blocks_own base l h **
-                in_range vt l zo h **
-                [| eval_offset σ' o = Some zo /\ p = base ,, o |] **
-                [| exists aid, ptr_alloc_id p = Some aid /\ aid <> null_alloc_id |] **
-                [| exists va, ptr_vaddr p = Some va /\ va <> 0%N |].
-    (* strict validity (not past-the-end) *)
+        match p with
+        | invalid_ptr_ => False
+        | offset_ptr root off =>
+            Exists l h, blocks_own (lift_root_ptr root) l h **
+              [| exists aid, root_ptr_alloc_id root = Some aid /\ aid <> null_alloc_id |] **
+              [| raw_path_valid vt root l h (proj1_sig off) |]
+        end.
     Notation strict_valid_ptr := (_valid_ptr Strict).
-    (* relaxed validity (past-the-end allowed) *)
     Notation valid_ptr := (_valid_ptr Relaxed).
 
-    Instance _valid_ptr_persistent : forall b p, Persistent (_valid_ptr b p) := _.
-    Instance _valid_ptr_affine : forall b p, Affine (_valid_ptr b p) := _.
-    Instance _valid_ptr_timeless : forall b p, Timeless (_valid_ptr b p) := _.
+    Instance _valid_ptr_persistent : forall b p, Persistent (_valid_ptr b p).
+    Proof. intros b [|root off]; apply _. Qed.
+    Instance _valid_ptr_affine : forall b p, Affine (_valid_ptr b p).
+    Proof. intros b [|root off]; apply _. Qed.
+    Instance _valid_ptr_timeless : forall b p, Timeless (_valid_ptr b p).
+    Proof. intros b [|root off]; apply _. Qed.
 
-    (* Needs validity to exclude non-null pointers with 0 addresses but
-    non-null provenance (which can be created by pointer arithmetic!) as
-    invalid. *)
-    Lemma same_address_eq_null p tv :
-      _valid_ptr tv p |--
-      [| same_address p nullptr <-> p = nullptr |].
+    Lemma _valid_ptr_cases {resolve : genv} vt p :
+      _valid_ptr vt p |--
+      [| p = nullptr \/
+         ((exists aid, ptr_alloc_id p = Some aid /\ aid <> null_alloc_id) /\
+          (exists va, @ptr_vaddr resolve p = Some va /\ va <> 0%N)) |].
     Proof.
-      rewrite /_valid_ptr same_address_eq; iIntros "[[-> _]|H]".
-      - iPureIntro. by rewrite same_property_iff ptr_vaddr_nullptr; naive_solver.
-      - iDestruct "H" as (??????) "(_ & _ & _ & _ & %Haddr)".
-        destruct Haddr as (va & Hva & Hnz).
-        have Hne : ptr_vaddr p <> Some 0%N by congruence.
-        iPureIntro. rewrite same_property_iff; split; last intros ->;
-          rewrite ptr_vaddr_nullptr; naive_solver.
+      rewrite /_valid_ptr. iDestruct 1 as "[[% _]|H]"; first by iLeft.
+      destruct p as [|root off]; first by iDestruct "H" as %[].
+      iDestruct "H" as (l h) "(_ & %Haid & %Hpath)".
+      iPureIntro. right. split; first exact Haid.
+      exact (raw_path_valid_vaddr _ _ _ _ _ Hpath).
+    Qed.
+
+    Lemma same_address_eq_null p tv :
+      _valid_ptr tv p |-- [| same_address p nullptr <-> p = nullptr |].
+    Proof.
+      iIntros "H". iDestruct (_valid_ptr_cases with "H") as %Hchecked.
+      iPureIntro. rewrite same_address_eq same_property_iff ptr_vaddr_nullptr.
+      destruct Hchecked as [->|[_ (va & Hva & Hnz)]]; first naive_solver.
+      split; first naive_solver. intros ->. by exists 0%N.
     Qed.
 
     Theorem valid_ptr_nullptr : |-- valid_ptr nullptr.
@@ -369,18 +441,19 @@ Module SimpleCPP.
 
     Theorem not_strictly_valid_ptr_nullptr : strict_valid_ptr nullptr |-- False.
     Proof.
-      iDestruct 1 as "[[_ %]|H] /="; first done.
-      iDestruct "H" as (??????) "(_ & _ & _ & _ & %Haddr)".
-      destruct Haddr as (va & Hva & Hnz).
-      naive_solver.
+      rewrite /_valid_ptr. iDestruct 1 as "[[_ %Hvt]|H]"; first discriminate.
+      iDestruct "H" as (l h) "(_ & %Haid & _)".
+      destruct Haid as (aid & Haid & Hnz). simpl in Haid. naive_solver.
     Qed.
     Typeclasses Opaque _valid_ptr.
 
-    Lemma strict_valid_valid p :
-      strict_valid_ptr p |-- valid_ptr p.
+    Lemma strict_valid_valid p : strict_valid_ptr p |-- valid_ptr p.
     Proof.
-      rewrite /_valid_ptr/=; f_equiv. { by iIntros "!%" ([_ ?]). }
-      by setoid_rewrite in_range_weaken.
+      rewrite /_valid_ptr. iDestruct 1 as "[[_ %Hvt]|H]"; first discriminate.
+      iRight. destruct p as [|root off]; first done.
+      iDestruct "H" as (l h) "(B & %Haid & %Hpath)".
+      iExists l, h. iFrame "B". iSplit; first done.
+      iPureIntro. by apply raw_path_valid_weaken.
     Qed.
 
     Lemma _valid_ptr_alloc_id vt p :
@@ -388,7 +461,8 @@ Module SimpleCPP.
     Proof.
       rewrite /_valid_ptr. iDestruct 1 as "[[-> _]|H]".
       - iPureIntro. by exists null_alloc_id.
-      - iDestruct "H" as (??????) "(_ & _ & _ & %Haid & _)".
+      - destruct p as [|root off]; first by iDestruct "H" as %[].
+        iDestruct "H" as (l h) "(_ & %Haid & _)".
         iPureIntro. destruct Haid as (aid & Haid & _). by exists aid.
     Qed.
 
@@ -399,10 +473,9 @@ Module SimpleCPP.
     Lemma _valid_ptr_vaddr {resolve : genv} vt p :
       _valid_ptr vt p |-- [| is_Some (@ptr_vaddr resolve p) |].
     Proof.
-      rewrite /_valid_ptr. iDestruct 1 as "[[-> _]|H]".
-      - iPureIntro. by exists 0%N.
-      - iDestruct "H" as (??????) "(_ & _ & _ & _ & %Haddr)".
-        iPureIntro. destruct Haddr as (va & Hva & _). by exists va.
+      iIntros "H". iDestruct (_valid_ptr_cases (resolve:=resolve) with "H") as %Hchecked.
+      iPureIntro. destruct Hchecked as [->|[_ (va & Hva & _)]];
+        [by exists 0%N|by exists va].
     Qed.
 
     Lemma _valid_ptr_offset_defined vt p :
@@ -410,9 +483,11 @@ Module SimpleCPP.
     Proof.
       rewrite /_valid_ptr. iDestruct 1 as "[[-> _]|H]".
       - iPureIntro. by exists 0%Z.
-      - iDestruct "H" as (σ' ?????) "(_ & _ & _ & _ & %Haddr)".
-        iPureIntro. apply (ptr_vaddr_defined σ' p).
-        destruct Haddr as (va & Hva & _). by exists va.
+      - destruct p as [|root off]; first by iDestruct "H" as %[].
+        iDestruct "H" as (l h) "(_ & _ & %Hpath)".
+        destruct (Hpath (proj1_sig off) [] (eq_sym (app_nil_r _)))
+          as (z & va & Hz & _).
+        iPureIntro. by exists z.
     Qed.
 
     Lemma strict_valid_ptr_nonnull_alloc_id p :
@@ -420,7 +495,8 @@ Module SimpleCPP.
       [| exists aid, ptr_alloc_id p = Some aid /\ aid <> null_alloc_id |].
     Proof.
       rewrite /_valid_ptr. iDestruct 1 as "[[_ %Hvt]|H]"; first discriminate.
-      iDestruct "H" as (??????) "(_ & _ & _ & $ & _)".
+      destruct p as [|root off]; first by iDestruct "H" as %[].
+      iDestruct "H" as (l h) "(_ & $ & _)".
     Qed.
 
     Lemma strict_valid_ptr_off_nonnull p o :
@@ -1595,8 +1671,9 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
     Lemma _valid_ptr_nullptr_sub_false : forall vt ty (i : Z) (_ : i <> 0),
       _valid_ptr vt (nullptr ,, o_sub σ ty i) |-- False.
     Proof.
-      intros vt ty i Hnz. rewrite /_valid_ptr.
-      iDestruct 1 as "[[%Heq _]|H]".
+      intros vt ty i Hnz. iIntros "H".
+      iDestruct (_valid_ptr_cases (resolve:=σ) with "H") as %Hcases.
+      destruct Hcases as [Heq|[(aid & Haid & Hnn) _]].
       - rewrite _dot.unlock /DOT_dot /= in Heq.
         apply (f_equal (fun p => match p with
           | invalid_ptr_ => []
@@ -1608,9 +1685,7 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
         destruct (size_of σ (erase_qualifiers ty)); simpl.
         + repeat case_decide; try discriminate; naive_solver.
         + discriminate.
-      - iDestruct "H" as (??????) "(_ & _ & _ & %Haid & _)".
-        destruct Haid as (aid & Haid & Hnn).
-        have Hroot := ptr_alloc_id_offset (p:=nullptr) (o:=o_sub σ ty i)
+      - have Hroot := ptr_alloc_id_offset (p:=nullptr) (o:=o_sub σ ty i)
           (ex_intro _ aid Haid).
         rewrite ptr_alloc_id_nullptr Haid in Hroot.
         injection Hroot as ->. contradiction.
@@ -1662,8 +1737,25 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
       _valid_ptr vt (p ,, o_field σ f ,, o_sub σ ty i) |-- strict_valid_ptr (p ,, o_field σ f).
 
     (* TODO: can we deduce that [p] is strictly valid? *)
-    Axiom _valid_ptr_field : ∀ p f vt,
+    Lemma _valid_ptr_field : ∀ p f vt,
       _valid_ptr vt (p ,, o_field σ f) |-- _valid_ptr vt p.
+    Proof.
+      intros p f vt. iIntros "H".
+      iDestruct (_valid_ptr_offset_defined with "H") as %Hdefined.
+      apply (ptr_offset_defined_dot σ) in Hdefined as [Hp Hf].
+      have [z Hz] := eval_o_field_defined σ f Hf.
+      rewrite /_valid_ptr. iDestruct "H" as "[[%Hnull _]|H]".
+      { exfalso. exact (field_ptr_ne_null σ p f Hnull). }
+      destruct p as [|root off]; first contradiction.
+      rewrite _dot.unlock /DOT_dot /=.
+      iDestruct "H" as (l h) "(B & %Haid & %Hpath)".
+      iRight. iExists l, h. iFrame "B". iSplit; first done.
+      iPureIntro.
+      have Hraw := offset_field_raw σ off f z Hp Hz.
+      rewrite _dot.unlock /DOT_dot /= in Hraw.
+      rewrite Hraw in Hpath.
+      exact (raw_path_valid_prefix _ _ _ _ _ _ Hpath).
+    Qed.
     (* TODO: Pointers to fields can't be past-the-end, right?
     Except 0-size arrays. *)
     (* Axiom strict_valid_ptr_field : ∀ p f,
