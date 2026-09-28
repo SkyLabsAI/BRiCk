@@ -42,11 +42,38 @@ Definition trailing_zeros (sz : bitsize) (n : Z) : Z :=
      end)%Z (List.map Z.of_nat (seq 0 (N.to_nat (bitsize.bitsN sz)))).
 #[global] Arguments trailing_zeros : simpl never.
 
-(* Returns the number of leading 0-bits in x, starting at the most significant
-   bit position. If x is 0, the result is undefined. *)
+(* Returns the number of leading 0-bits after trimming to the selected width.
+   The helper returns the width for zero; C++ builtin specifications exclude it. *)
 Definition leading_zeros (sz : bitsize) (l : Z) : Z :=
-  bitsize.bitsZ sz - Z.log2 (l mod (2^64)).
+  let n := trim (bitsize.bitsN sz) l in
+  if Z.eqb n 0 then bitsize.bitsZ sz
+  else bitsize.bitsZ sz - 1 - Z.log2 n.
+
 #[global] Arguments leading_zeros : simpl never.
+
+(** For positive in-range inputs, the result counts the zero bits above
+    the most significant set bit.  Zero retains the helper convention of
+    returning the width; the C++ builtin specifications still exclude it. *)
+Lemma leading_zeros_spec sz n :
+  0 < n < 2 ^ bitsize.bitsZ sz ->
+  0 <= leading_zeros sz n < bitsize.bitsZ sz /\
+  2 ^ (bitsize.bitsZ sz - leading_zeros sz n - 1) <= n <
+  2 ^ (bitsize.bitsZ sz - leading_zeros sz n).
+Proof.
+  intros Hn.
+  have Htrim : trim (bitsize.bitsN sz) n = n.
+  { apply Z.mod_small. change (0 <= n < 2 ^ bitsize.bitsZ sz). lia. }
+  rewrite /leading_zeros Htrim.
+  have Hz : (n =? 0) = false by apply Z.eqb_neq; lia.
+  rewrite Hz.
+  have Hnonneg := Z.log2_nonneg n.
+  have Hlt : Z.log2 n < bitsize.bitsZ sz by apply Z.log2_lt_pow2; lia.
+  have Hspec := Z.log2_spec n ltac:(lia).
+  split; first lia.
+  replace (bitsize.bitsZ sz - (bitsize.bitsZ sz - 1 - Z.log2 n) - 1) with (Z.log2 n) by lia.
+  replace (bitsize.bitsZ sz - (bitsize.bitsZ sz - 1 - Z.log2 n)) with (Z.succ (Z.log2 n)) by lia.
+  exact Hspec.
+Qed.
 
 Module Import churn_bits.
 (* TODO: using bool_decide would simplify this reasoning. *)
