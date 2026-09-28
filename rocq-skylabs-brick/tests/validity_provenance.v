@@ -29,8 +29,7 @@ Section concrete_model.
     iSplit; first (iPureIntro; left; lia).
     iSplit; first (iPureIntro; split; first done; symmetry; apply offset_ptr_id).
     iSplit; first (iPureIntro; exists aid; split; done).
-    iSplit; first (iPureIntro; by exists 0).
-    iPureIntro. change (Some va <> Some 0%N). congruence.
+    iPureIntro. exists va. split; done.
   Qed.
 
   Lemma allocated_one_past_valid aid :
@@ -44,8 +43,7 @@ Section concrete_model.
     iSplit; first (iPureIntro; split; done).
     rewrite _dot.unlock /DOT_dot /=.
     iSplit; first (iPureIntro; exists aid; split; done).
-    iSplit; first (iPureIntro; by exists 1).
-    iPureIntro. discriminate.
+    iPureIntro. exists 9%N. split; done.
   Qed.
 
   (** The distinguished null pointer retains relaxed validity. *)
@@ -98,8 +96,7 @@ Section concrete_model.
     iSplit; first (iPureIntro; split; done).
     rewrite _dot.unlock /DOT_dot /=.
     iSplit; first (iPureIntro; exists aid; split; done).
-    iSplit; first (iPureIntro; by exists 0).
-    iPureIntro. discriminate.
+    iPureIntro. exists 8%N. split; done.
   Qed.
 
   Lemma missing_layout_subscript_invalid vt p ty i :

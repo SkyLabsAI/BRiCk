@@ -327,10 +327,10 @@ Module SimpleCPP.
       in_range Strict l o h |-- in_range Relaxed l o h.
     Proof. rewrite /in_range/=. f_equiv. rewrite/impl. tauto. Qed.
 
-    (** A non-null valid pointer must retain an actual, non-null allocation ID.
-        Excluding address zero alone would also admit [invalid_ptr], whose
-        address and allocation ID are both undefined. The stored offset must
-        also be defined: provenance alone does not exclude missing layouts. *)
+    (** A non-null valid pointer must retain non-null allocation provenance and
+        a defined, nonzero virtual address. In this pointer model, undefined
+        addresses come from invalid layouts or underflow. This does not require
+        physical storage: [mem_inj_own p None] still represents ghost cells. *)
     Definition _valid_ptr vt (p : ptr) : mpred :=
       [| p = nullptr /\ vt = Relaxed |] \\//
         Exists σ' base l h o zo,
@@ -338,8 +338,7 @@ Module SimpleCPP.
                 in_range vt l zo h **
                 [| eval_offset σ' o = Some zo /\ p = base ,, o |] **
                 [| exists aid, ptr_alloc_id p = Some aid /\ aid <> null_alloc_id |] **
-                [| ptr_offset_defined p |] **
-                [| ptr_vaddr p <> Some 0%N |].
+                [| exists va, ptr_vaddr p = Some va /\ va <> 0%N |].
     (* strict validity (not past-the-end) *)
     Notation strict_valid_ptr := (_valid_ptr Strict).
     (* relaxed validity (past-the-end allowed) *)
@@ -356,11 +355,13 @@ Module SimpleCPP.
       _valid_ptr tv p |--
       [| same_address p nullptr <-> p = nullptr |].
     Proof.
-      rewrite /_valid_ptr same_address_eq; iIntros "[[-> _]|H]";
-        [ |iDestruct "H" as (??????) "(_ & _ & _ & _ & _ & %Hne)"]; iIntros "!%".
-      by rewrite same_property_iff ptr_vaddr_nullptr; naive_solver.
-      rewrite same_property_iff; split; last intros ->;
-        rewrite ptr_vaddr_nullptr; naive_solver.
+      rewrite /_valid_ptr same_address_eq; iIntros "[[-> _]|H]".
+      - iPureIntro. by rewrite same_property_iff ptr_vaddr_nullptr; naive_solver.
+      - iDestruct "H" as (??????) "(_ & _ & _ & _ & %Haddr)".
+        destruct Haddr as (va & Hva & Hnz).
+        have Hne : ptr_vaddr p <> Some 0%N by congruence.
+        iPureIntro. rewrite same_property_iff; split; last intros ->;
+          rewrite ptr_vaddr_nullptr; naive_solver.
     Qed.
 
     Theorem valid_ptr_nullptr : |-- valid_ptr nullptr.
@@ -369,7 +370,9 @@ Module SimpleCPP.
     Theorem not_strictly_valid_ptr_nullptr : strict_valid_ptr nullptr |-- False.
     Proof.
       iDestruct 1 as "[[_ %]|H] /="; first done.
-      by iDestruct "H" as (??????) "(_ & _ & _ & _ & _ & %Hne)".
+      iDestruct "H" as (??????) "(_ & _ & _ & _ & %Haddr)".
+      destruct Haddr as (va & Hva & Hnz).
+      naive_solver.
     Qed.
     Typeclasses Opaque _valid_ptr.
 
@@ -393,12 +396,23 @@ Module SimpleCPP.
       valid_ptr p |-- [| is_Some (ptr_alloc_id p) |].
     Proof. intros. apply _valid_ptr_alloc_id. Qed.
 
+    Lemma _valid_ptr_vaddr {resolve : genv} vt p :
+      _valid_ptr vt p |-- [| is_Some (@ptr_vaddr resolve p) |].
+    Proof.
+      rewrite /_valid_ptr. iDestruct 1 as "[[-> _]|H]".
+      - iPureIntro. by exists 0%N.
+      - iDestruct "H" as (??????) "(_ & _ & _ & _ & %Haddr)".
+        iPureIntro. destruct Haddr as (va & Hva & _). by exists va.
+    Qed.
+
     Lemma _valid_ptr_offset_defined vt p :
       _valid_ptr vt p |-- [| ptr_offset_defined p |].
     Proof.
       rewrite /_valid_ptr. iDestruct 1 as "[[-> _]|H]".
-      - iPureIntro. by exists 0.
-      - iDestruct "H" as (??????) "(_ & _ & _ & _ & $ & _)".
+      - iPureIntro. by exists 0%Z.
+      - iDestruct "H" as (σ' ?????) "(_ & _ & _ & _ & %Haddr)".
+        iPureIntro. apply (ptr_vaddr_defined σ' p).
+        destruct Haddr as (va & Hva & _). by exists va.
     Qed.
 
     Lemma strict_valid_ptr_nonnull_alloc_id p :
@@ -1373,22 +1387,20 @@ Module SimpleCPP.
       - iApply bi.absorbingly_intro. iExact "Q".
     Qed.
 
-    Lemma offset_pinned_ptr_pure o z va p :
-      eval_offset σ o = Some z ->
-      ptr_vaddr p = Some va ->
-      valid_ptr (p ,, o) |--
-      [| 0 <= Z.of_N va + z |]%Z **
-      [| ptr_vaddr (p ,, o) = Some (Z.to_N (Z.of_N va + z)) |].
-    Proof.
-      intros E P.
-    Abort.
-
-    Axiom offset_pinned_ptr_pure : forall σ o z va p,
+    Lemma offset_pinned_ptr_pure : forall σ o z va p,
       eval_offset σ o = Some z ->
       pinned_ptr_pure va p ->
       valid_ptr (p ,, o) |--
       [| 0 <= Z.of_N va + z |]%Z **
       [| ptr_vaddr (p ,, o) = Some (Z.to_N (Z.of_N va + z)) |].
+    Proof.
+      intros σ' o z va p Ho Hp. iIntros "V".
+      iDestruct (_valid_ptr_vaddr (resolve:=σ') with "V") as %(va' & Haddr).
+      have Hsum := ptr_vaddr_offset_add σ' p o va va' z Hp Haddr Ho.
+      iSplit; iPureIntro.
+      - lia.
+      - by rewrite -Hsum N2Z.id.
+    Qed.
 
     Axiom offset_inv_pinned_ptr_pure : forall σ o z va p,
       eval_offset σ o = Some z ->
