@@ -1,0 +1,20 @@
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/inverse_pinned_offsets.v", line 21, characters 4-30:
+The command has indeed failed with message:
+In environment
+thread_info : biIndex
+_Σ : gFunctors
+H : cpp_logic thread_info _Σ
+σ : genv
+The term "offset_inv_pinned_ptr_pure" has type
+ "∀ (o : offset) (z : Z) (va : vaddr) (p : ptr),
+    eval_offset σ o = Some z
+    → ptr_vaddr (p ,, o) = Some va
+      → valid_ptr p ⊢ [| (0 ≤ va - z)%Z |] ∗
+        [| ptr_vaddr p = Some (Z.to_N (va - z)) |]"
+while it is expected to have type
+ "∀ (o : offset) (z : Z) (va : vaddr) (p : DOT_from DOT_ptr_offset),
+    eval_offset σ o = Some z
+    → ptr_vaddr (p ,, o) = Some va
+      → valid_ptr (p ,, o) ⊢ [| (0 ≤ va - z)%Z |] ∗
+        [| ptr_vaddr p = Some (Z.to_N (va - z)) |]"
+(cannot unify "p" and "p ,, o").

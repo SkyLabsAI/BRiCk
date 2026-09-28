@@ -1005,7 +1005,7 @@ Module SimpleCPP.
     Axiom offset_inv_pinned_ptr_pure : forall σ o z va p,
       eval_offset σ o = Some z ->
       pinned_ptr_pure va (p ,, o) ->
-      valid_ptr (p ,, o) |--
+      valid_ptr p |--
       [| 0 <= Z.of_N va - z |]%Z **
       [| pinned_ptr_pure (Z.to_N (Z.of_N va - z)) p |].
 
