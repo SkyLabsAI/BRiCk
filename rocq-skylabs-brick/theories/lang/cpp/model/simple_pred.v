@@ -3,6 +3,8 @@
  * This software is distributed under the terms of the BedRock Open-Source License.
  * See the LICENSE-BedRock file in the repository root for details.
  *)
+Require Import iris.base_logic.lib.own.
+Require Import skylabs.iris.extra.base_logic.iprop_own.
 Require Import iris.algebra.excl.
 Require Import iris.algebra.gmap.
 Require Import iris.algebra.lib.frac_auth.
@@ -80,6 +82,89 @@ Section fractional.
   Qed.
 End fractional.
 #[local] Existing Instance gmap_own_cfrac_valid.
+
+(** A common valid upper bound determines the value of an owned cell,
+    including alternative descriptions whose fractions cannot be combined. *)
+Module CFracAgreement.
+  Set Default Proof Using "Type*".
+  Lemma cfrac_value_included {V : Type} (q : cQp.t) (v : V) (a : cfractionalR V) :
+    ✓ a -> Some (cfrac q v) ≼ Some a -> @to_agree (leibnizO V) v ≡ a.2.
+  Proof.
+    intros Ha Hi. apply Some_included in Hi as [Heq | Hi].
+    - exact (proj2 Heq).
+    - apply prod_included in Hi as [_ Hi].
+      apply agree_valid_included; last exact Hi.
+      exact (proj2 Ha).
+  Qed.
+
+  Lemma cfrac_map_common_value {K V : Type} `{Countable K}
+      (m : gmap K (cfractionalR V)) (k : K) (q1 q2 : cQp.t) (v1 v2 : V) :
+    ✓ m -> {[ k := cfrac q1 v1 ]} ≼ m -> {[ k := cfrac q2 v2 ]} ≼ m -> v1 = v2.
+  Proof.
+    intros Hm H1 H2.
+    apply singleton_included_l in H1 as [a [Ha H1]].
+    apply singleton_included_l in H2 as [b [Hb H2]].
+    have Hab : a ≡ b by apply (inj Some); rewrite <- Ha, <- Hb.
+    have Hva : ✓ a. { have Hvalid := Hm k. move: Hvalid. by rewrite Ha. }
+    have Hvb : ✓ b. { have Hvalid := Hm k. move: Hvalid. by rewrite Hb. }
+    apply (inj (@to_agree (leibnizO V))).
+    etrans; first exact (cfrac_value_included _ _ _ Hva H1).
+    etrans; first exact (proj2 Hab).
+    symmetry. exact (cfrac_value_included _ _ _ Hvb H2).
+  Qed.
+
+  Section ownership.
+    Context {K V : Type} `{Countable K} `{!inG Σ (gmapR K (cfractionalR V))}.
+    Lemma cfrac_own_and_agree (γ : gname) (k : K) (q1 q2 : cQp.t) (v1 v2 : V) :
+      iris.base_logic.lib.own.own γ {[ k := cfrac q1 v1 ]} ∧
+      iris.base_logic.lib.own.own γ {[ k := cfrac q2 v2 ]} ⊢ ⌜v1 = v2⌝.
+    Proof.
+      iIntros "H". iDestruct (own_and_total with "H") as (m) "[Hm [%H1 %H2]]".
+      iDestruct (iris.base_logic.lib.own.own_valid with "Hm") as %Hm.
+      iPureIntro. exact (cfrac_map_common_value m k q1 q2 v1 v2 Hm H1 H2).
+    Qed.
+  End ownership.
+
+  Section monpred_ownership.
+    Context {I : biIndex} {Σ : gFunctors} {K V : Type} `{Countable K}
+      `{!inG Σ (gmapR K (cfractionalR V))}.
+    Lemma cfrac_mpred_own_and_agree (γ : gname) (k : K) (q1 q2 : cQp.t) (v1 v2 : V) :
+      <absorb> (@own (@mpredI I Σ) (gmapR K (cfractionalR V)) _ γ {[ k := cfrac q1 v1 ]}) ∧
+      <absorb> (@own (@mpredI I Σ) (gmapR K (cfractionalR V)) _ γ {[ k := cfrac q2 v2 ]}) ⊢ ⌜v1 = v2⌝.
+    Proof.
+      rewrite /own has_own_monpred_eq /has_own_monpred_def /= has_own_iprop_eq /has_own_iprop_def /=.
+      constructor=>i. rewrite !monPred_at_and !monPred_at_absorbingly !monPred_at_embed monPred_at_pure.
+      rewrite !bi.absorbing_absorbingly. apply cfrac_own_and_agree.
+    Qed.
+  End monpred_ownership.
+
+  Section list_agreement.
+    Context {PROP : bi} {A : Type}.
+    Lemma big_sepL_and_agree (xs ys : list A) (P Q : nat -> A -> PROP) :
+      length xs = length ys ->
+      (forall i x y, <absorb> P i x ∧ <absorb> Q i y ⊢ ⌜x = y⌝) ->
+      <absorb> ([∗ list] i ↦ x ∈ xs, P i x) ∧
+      <absorb> ([∗ list] i ↦ y ∈ ys, Q i y) ⊢ ⌜xs = ys⌝.
+    Proof.
+      revert P Q ys. induction xs as [|x xs IH]; intros P Q [|y ys] Hlen Hagree;
+        cbn in Hlen; try discriminate.
+      - iIntros "_". done.
+      - rewrite !big_sepL_cons !bi.absorbingly_sep !bi.sep_and.
+        iIntros "H".
+        iAssert (⌜x = y⌝)%I as %->.
+        { iApply (Hagree 0 x y). iSplit.
+          - iDestruct "H" as "[[H _] _]". iExact "H".
+          - iDestruct "H" as "[_ [H _]]". iExact "H". }
+        have Htail := IH (fun i => P (S i)) (fun i => Q (S i)) ys
+          ltac:(lia) (fun i => Hagree (S i)).
+        iDestruct (Htail with "[H]") as %->.
+        { iSplit.
+          - iDestruct "H" as "[[_ H] _]". iExact "H".
+          - iDestruct "H" as "[_ [_ H]]". iExact "H". }
+        done.
+    Qed.
+  End list_agreement.
+End CFracAgreement.
 
 Require Import skylabs.lang.cpp.model.inductive_pointers.
 (* Stand-in for actual models.
@@ -565,6 +650,13 @@ Module SimpleCPP.
     #[global] Instance val_agree a v1 v2 q1 q2 :
       Observe2 [| v1 = v2 |] (val_ a v1 q1) (val_ a v2 q2) := _.
 
+    Lemma val_and_agree p v1 v2 q1 q2 :
+      <absorb> (val_ p v1 q1) ∧ <absorb> (val_ p v2 q2) ⊢ ⌜v1 = v2⌝.
+    Proof.
+      rewrite /val_ /ghost_mem_own.
+      apply CFracAgreement.cfrac_mpred_own_and_agree.
+    Qed.
+
     #[global] Instance val_cfrac_valid a v :
       CFracValid0 (val_ a v).
     Proof. solve_cfrac_valid. Qed.
@@ -581,6 +673,14 @@ Module SimpleCPP.
 
     #[global] Instance byte_agree a v1 v2 q1 q2 :
       Observe2 [|v1 = v2|] (byte_ a v1 q1) (byte_ a v2 q2) := _.
+
+    Lemma byte_and_agree a v1 v2 q1 q2 :
+      <absorb> (byte_ a v1 q1) ∧ <absorb> (byte_ a v2 q2) ⊢ ⌜v1 = v2⌝.
+    Proof.
+      rewrite /byte_ /heap_own.
+      apply CFracAgreement.cfrac_mpred_own_and_agree.
+    Qed.
+
     #[global] Instance byte_cfrac_valid a rv q :
       Observe [| q ≤ 1 |]%Qp (byte_ a rv q) := _.
 
@@ -632,6 +732,15 @@ Module SimpleCPP.
       by iDestruct (IH _ _ Hlen with "Hvs1 Hvs2") as %->.
     Qed.
 
+    Lemma bytes_and_agree a vs1 vs2 q1 q2 :
+      length vs1 = length vs2 ->
+      <absorb> (bytes a vs1 q1) ∧ <absorb> (bytes a vs2 q2) ⊢ ⌜vs1 = vs2⌝.
+    Proof.
+      intros Hlen. rewrite /bytes.
+      apply CFracAgreement.big_sepL_and_agree; first exact Hlen.
+      intros i x y. apply byte_and_agree.
+    Qed.
+
     Lemma bytes_cfrac_valid a vs q :
       length vs > 0 ->
       bytes a vs q |-- [| q ≤ 1 |]%Qp.
@@ -670,6 +779,16 @@ Module SimpleCPP.
       by iIntros "!%" => /= /to_agree_op_inv_L.
     Qed.
 
+    Lemma mem_inj_and_agree p oa1 oa2 :
+      <absorb> (mem_inj_own p oa1) ∧
+      <absorb> (mem_inj_own p oa2) ⊢ ⌜oa1 = oa2⌝.
+    Proof.
+      rewrite !bi.absorbing_absorbingly bi.persistent_and_sep.
+      iIntros "[H1 H2]".
+      iDestruct (mem_inj_own_agree with "H1 H2") as %Hagree.
+      done.
+    Qed.
+
     (** heap points to *)
     (* Auxiliary definitions.
       They're not exported, so we don't give them a complete theory;
@@ -703,6 +822,25 @@ Module SimpleCPP.
       iApply (observe_2 with "H1 H2").
     Qed.
 
+    Lemma addr_encodes_and_agree ty a v1 v2 vs1 vs2 q1 q2 :
+      <absorb> (addr_encodes ty q1 a v1 vs1) ∧
+      <absorb> (addr_encodes ty q2 a v2 vs2) ⊢ ⌜v1 = v2⌝.
+    Proof.
+      rewrite !bi.absorbing_absorbingly /addr_encodes !bi.sep_and.
+      iIntros "H".
+      iAssert (encodes ty v1 vs1) as "#E1".
+      { iDestruct "H" as "[[E _] _]". iExact "E". }
+      iAssert (encodes ty v2 vs2) as "#E2".
+      { iDestruct "H" as "[_ [E _]]". iExact "E". }
+      iDestruct (encodes_consistent with "E1 E2") as %Hlen.
+      iAssert (⌜vs1 = vs2⌝)%I as %->.
+      { iApply (bytes_and_agree _ _ _ _ _ Hlen). iSplit.
+        - iDestruct "H" as "[[_ [B _]] _]". by iApply bi.absorbingly_intro.
+        - iDestruct "H" as "[_ [_ [B _]]]". by iApply bi.absorbingly_intro. }
+      iDestruct (encodes_agree with "E1 E2") as %Hagree.
+      done.
+    Qed.
+
     #[global] Instance addr_encodes_cfrac_valid ty :
       CFracValid3 (addr_encodes ty).
     Proof.
@@ -719,6 +857,21 @@ Module SimpleCPP.
           addr_encodes t q a v vs
         | None => [| t <> Tvoid |] ** val_ p v q
         end.
+
+    Lemma oaddr_encodes_and_agree ty oa p v1 v2 q1 q2 :
+      <absorb> (oaddr_encodes ty q1 oa p v1) ∧
+      <absorb> (oaddr_encodes ty q2 oa p v2) ⊢ ⌜v1 = v2⌝.
+    Proof.
+      destruct oa as [a|]; cbn [oaddr_encodes].
+      - rewrite !bi.absorbingly_exist bi.and_exist_r.
+        iDestruct 1 as (vs1) "H".
+        iDestruct (bi.and_exist_l with "H") as (vs2) "H".
+        by iApply addr_encodes_and_agree.
+      - rewrite !bi.absorbingly_sep !bi.sep_and.
+        iIntros "H". iApply val_and_agree. iSplit.
+        + iDestruct "H" as "[[_ V] _]". iExact "V".
+        + iDestruct "H" as "[_ [_ V]]". iExact "V".
+    Qed.
 
     (* Needed by tptsto_cfractional *)
     #[local] Instance oaddr_encodes_fractional t oa p v :
@@ -962,16 +1115,39 @@ Module SimpleCPP.
       CFracValid2 (tptsto ty).
     Proof. solve_cfrac_valid. Qed.
 
+    Lemma tptsto_view ty q p v :
+      tptsto ty q p v ⊢
+      ∃ oa, mem_inj_own p oa ∗ oaddr_encodes ty q oa p v.
+    Proof.
+      iDestruct 1 as (Hnn Hheap oa) "(_ & M & E)".
+      iExists oa. iFrame.
+    Qed.
+
+    Lemma tptsto_agree_and ty q1 q2 p v1 v2 :
+      <absorb> (tptsto ty q1 p v1) ∧
+      <absorb> (tptsto ty q2 p v2) ⊢ ⌜v1 = v2⌝.
+    Proof.
+      rewrite !tptsto_view !bi.absorbingly_exist bi.and_exist_r.
+      iDestruct 1 as (oa1) "H".
+      iDestruct (bi.and_exist_l with "H") as (oa2) "H".
+      iEval (rewrite !bi.absorbingly_sep !bi.sep_and) in "H".
+      iAssert (⌜oa1 = oa2⌝)%I as %->.
+      { iApply mem_inj_and_agree. iSplit.
+        - iDestruct "H" as "[[M _] _]". iExact "M".
+        - iDestruct "H" as "[_ [M _]]". iExact "M". }
+      iApply oaddr_encodes_and_agree. iSplit.
+      - iDestruct "H" as "[[_ E] _]". iExact "E".
+      - iDestruct "H" as "[_ [_ E]]". iExact "E".
+    Qed.
+
     #[global] Instance tptsto_agree ty q1 q2 p v1 v2 :
       Observe2 [| v1 = v2 |] (tptsto ty q1 p v1) (tptsto ty q2 p v2).
     Proof.
-      intros; apply: observe_2_intro_persistent.
-      iDestruct 1 as (Hnn1 Ht1 oa1) "H1".
-      iDestruct 1 as (Hnn2 Ht2 oa2) "H2".
-      iDestruct (observe_2_elim_pure (oa1 = oa2) with "H1 H2") as %->.
-      destruct oa2; [iApply (observe_2 with "H1 H2") |].
-      iDestruct (observe_2 [| v1 = v2 |] with "H1 H2") as %->.
-      by iPureIntro.
+      apply observe_2_intro_only_provable.
+      iIntros "P Q". iApply (tptsto_agree_and ty q1 q2 p v1 v2).
+      iSplit.
+      - iApply bi.absorbingly_intro. iExact "P".
+      - iApply bi.absorbingly_intro. iExact "Q".
     Qed.
 
     Axiom same_address_eq_type_ptr : forall ty p1 p2 n,
