@@ -29,6 +29,7 @@ Section concrete_model.
     iSplit; first (iPureIntro; left; lia).
     iSplit; first (iPureIntro; split; first done; symmetry; apply offset_ptr_id).
     iSplit; first (iPureIntro; exists aid; split; done).
+    iSplit; first (iPureIntro; by exists 0).
     iPureIntro. change (Some va <> Some 0%N). congruence.
   Qed.
 
@@ -43,6 +44,7 @@ Section concrete_model.
     iSplit; first (iPureIntro; split; done).
     rewrite _dot.unlock /DOT_dot /=.
     iSplit; first (iPureIntro; exists aid; split; done).
+    iSplit; first (iPureIntro; by exists 1).
     iPureIntro. discriminate.
   Qed.
 
@@ -82,4 +84,48 @@ Section concrete_model.
     rewrite Heq. apply VALID_PTR._valid_ptr_nullptr_sub_false. lia.
   Qed.
 
+  (** Defined zero-sized layouts remain distinct from missing layouts. *)
+  Lemma allocated_zero_sized_subscript_valid aid :
+    aid <> null_alloc_id ->
+    blocks_own (alloc_ptr aid 8) 0 1 ⊢
+    _valid_ptr pred.Strict
+      (alloc_ptr aid 8 ,, o_sub σ "unsigned char[0]"%cpp_type 1).
+  Proof.
+    intros Haid. rewrite /_valid_ptr. iIntros "B". iRight.
+    iExists σ, (alloc_ptr aid 8), 0, 1,
+      (o_sub σ "unsigned char[0]"%cpp_type 1), 0.
+    iFrame "B". iSplit; first (iPureIntro; left; lia).
+    iSplit; first (iPureIntro; split; done).
+    rewrite _dot.unlock /DOT_dot /=.
+    iSplit; first (iPureIntro; exists aid; split; done).
+    iSplit; first (iPureIntro; by exists 0).
+    iPureIntro. discriminate.
+  Qed.
+
+  Lemma missing_layout_subscript_invalid vt p ty i :
+    size_of σ ty = None ->
+    _valid_ptr vt (p ,, o_sub σ ty i) ⊢ False.
+  Proof.
+    intros Hsz. iIntros "H".
+    iDestruct (VALID_PTR.valid_o_sub_size with "H") as %Hsz'.
+    rewrite Hsz in Hsz'. destruct Hsz' as [? Hsz']; discriminate.
+  Qed.
+
+  Lemma missing_base_offset_invalid p base derived :
+    parent_offset σ derived base = None ->
+    _valid_ptr pred.Strict (p ,, o_base σ derived base) ⊢ False.
+  Proof.
+    intros Hoff. iIntros "H".
+    iDestruct (VALID_PTR.o_base_directly_derives with "H") as %Hoff'.
+    rewrite Hoff in Hoff'. destruct Hoff' as [? Hoff']; discriminate.
+  Qed.
+
+  Lemma missing_derived_offset_invalid p base derived :
+    parent_offset σ derived base = None ->
+    _valid_ptr pred.Strict (p ,, o_derived σ base derived) ⊢ False.
+  Proof.
+    intros Hoff. iIntros "H".
+    iDestruct (VALID_PTR.o_derived_directly_derives with "H") as %Hoff'.
+    rewrite Hoff in Hoff'. destruct Hoff' as [? Hoff']; discriminate.
+  Qed.
 End concrete_model.
