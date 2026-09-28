@@ -102,9 +102,9 @@ Section with_cpp.
   Proof. by rewrite tptstoR_Vvoid_tptstoR_fuzzy tptsto_fuzzyR_Vvoid_primR. Qed.
 
   Lemma has_type_ptr p ty :
-    has_type (Vptr p) (Tptr ty) -|- p |-> (validR ** aligned_ofR ty).
+    has_type (Vptr p) (Tptr ty) -|- p |-> (validR ** pointee_alignedR ty).
   Proof.
-    by rewrite has_type_ptr' _at_sep _at_validR aligned_ofR_aligned_ptr_ty.
+    by rewrite has_type_ptr' _at_sep _at_validR _at_pointee_alignedR.
   Qed.
 
   Definition is_raw_or_undef (v : val) : bool :=

@@ -662,6 +662,51 @@ Module Type PTRS_MIXIN (Import P : PTRS_INTF_MINIMAL).
       rewrite /aligned_ptr_ty; intros. by rewrite -align_of_erase_qualifiers.
     Qed.
 
+    (** Alignment required by a pointer's referent type.  Void and function
+        referents do not have object layout; pointer/reference storage cells
+        and all object referents retain their ordinary alignment obligations. *)
+    Definition pointee_aligned_ptr_ty (ty : type) (p : ptr) : Prop :=
+      match erase_qualifiers ty with
+      | Tvoid | Tfunction _ => True
+      | _ => aligned_ptr_ty ty p
+      end.
+
+    Lemma pointee_aligned_void p : pointee_aligned_ptr_ty Tvoid p.
+    Proof. done. Qed.
+    Lemma pointee_aligned_function ft p : pointee_aligned_ptr_ty (Tfunction ft) p.
+    Proof. done. Qed.
+    Lemma pointee_aligned_erase_qualifiers ty p :
+      pointee_aligned_ptr_ty ty p <-> pointee_aligned_ptr_ty (erase_qualifiers ty) p.
+    Proof.
+      rewrite /pointee_aligned_ptr_ty erase_qualifiers_idemp.
+      have H := aligned_ptr_ty_erase_qualifiers p ty.
+      by destruct (erase_qualifiers ty).
+    Qed.
+    Lemma aligned_ptr_ty_pointee ty p :
+      aligned_ptr_ty ty p -> pointee_aligned_ptr_ty ty p.
+    Proof. rewrite /pointee_aligned_ptr_ty. by destruct (erase_qualifiers ty). Qed.
+    Lemma pointee_aligned_object ty p :
+      erase_qualifiers ty <> Tvoid ->
+      (forall ft, erase_qualifiers ty <> Tfunction ft) ->
+      (pointee_aligned_ptr_ty ty p <-> aligned_ptr_ty ty p).
+    Proof.
+      intros Hvoid Hfun. rewrite /pointee_aligned_ptr_ty.
+      destruct (erase_qualifiers ty); naive_solver.
+    Qed.
+    Lemma pointee_aligned_size_of ty sz p :
+      size_of σ ty = Some sz ->
+      (pointee_aligned_ptr_ty ty p <-> aligned_ptr_ty ty p).
+    Proof.
+      rewrite -size_of_erase_qualifiers /pointee_aligned_ptr_ty.
+      by destruct (erase_qualifiers ty).
+    Qed.
+    Lemma pointee_aligned_pointer_cell ty p :
+      pointee_aligned_ptr_ty (Tptr ty) p <-> aligned_ptr_ty (Tptr ty) p.
+    Proof. done. Qed.
+    Lemma pointee_aligned_reference_cell ty p :
+      pointee_aligned_ptr_ty (Tref ty) p <-> aligned_ptr_ty (Tref ty) p.
+    Proof. done. Qed.
+
     #[global] Instance aligned_ptr_divide_mono :
       Proper (flip N.divide ==> eq ==> impl) aligned_ptr.
     Proof.
