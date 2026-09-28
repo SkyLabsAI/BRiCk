@@ -938,6 +938,25 @@ Module PTRS_IMPL <: PTRS_INTF.
     rewrite (fold_offset_vaddr_sum _ _ _ Haddr).
     by rewrite (eval_raw_offset_sum _ _ E).
   Qed.
+  Lemma ptr_vaddr_offset_add σ p o va va' z :
+    @ptr_vaddr σ p = Some va ->
+    ptr_vaddr (p ,, o) = Some va' ->
+    eval_offset σ o = Some z ->
+    Z.of_N va' = Z.of_N va + z.
+  Proof.
+    intros Hp Hpo Ho. destruct p as [|root off]; first discriminate.
+    rewrite _dot.unlock /DOT_dot /= in Hpo.
+    destruct (ptr_vaddr_offset_ptr_inv σ root off va Hp)
+      as (base1 & z1 & B1 & E1 & A1).
+    destruct (ptr_vaddr_offset_ptr_inv σ root (__o_dot off o) va' Hpo)
+      as (base2 & z2 & B2 & E2 & A2).
+    have Hb : base2 = base1 by congruence. subst base2.
+    rewrite /eval_offset /= /raw_offset_merge
+      eval_raw_offset_collapse eval_raw_offset_app in E2.
+    change (liftM2 Z.add (eval_offset σ off) (eval_offset σ o) = Some z2) in E2.
+    rewrite E1 Ho /= in E2. injection E2 as <-. lia.
+  Qed.
+
 
   Lemma ptr_vaddr_o_sub_eq : forall σ p ty n1 n2 sz,
     size_of σ ty = Some sz -> (sz > 0)%N ->
