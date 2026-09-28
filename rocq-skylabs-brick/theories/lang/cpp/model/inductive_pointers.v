@@ -240,7 +240,10 @@ Module PTRS_IMPL <: PTRS_INTF.
     mkOffset σ (o_base_ derived base) I.
   Definition o_derived σ base derived : offset :=
     mkOffset σ (o_derived_ base derived) I.
-  Program Definition o_sub σ ty z : offset :=
+  (** Qualifiers do not distinguish subscript paths: [type_ptr_erase] requires
+      their one-past pointers to share the same representation as well. *)
+  #[program] Definition o_sub σ ty z : offset :=
+    let ty := erase_qualifiers ty in
     if decide (z = 0)%Z
     then
       match size_of σ ty with
@@ -250,6 +253,13 @@ Module PTRS_IMPL <: PTRS_INTF.
     else
     mkOffset σ (o_sub_ ty z) _.
   Next Obligation. intros; case_match; simplify_eq/=; case_match; naive_solver. Qed.
+
+  Lemma o_sub_erase σ ty z :
+    o_sub σ (erase_qualifiers ty) z = o_sub σ ty z.
+  Proof.
+    apply (sig_eq_pi _).
+    rewrite /o_sub /= erase_qualifiers_idemp. by case_decide.
+  Qed.
 
   Lemma last_last_equiv {X} d {xs : list X} : default d (last xs) = List.last xs d.
   Proof. elim: xs => // x1 xs /= <-. by case_match. Qed.
@@ -331,7 +341,7 @@ Module PTRS_IMPL <: PTRS_INTF.
   Proof.
     move=> E. rewrite (comm_L _ _ i) /o_sub/eval_offset/eval_raw_offset /=.
     rewrite /mkOffset /mk_offset_seg/=/o_sub_off/=.
-    case_decide; subst; rewrite /= {}E //=.
+    case_decide; subst; rewrite /= size_of_erase_qualifiers {}E //=.
     by rewrite right_id_L.
   Qed.
 
@@ -847,7 +857,10 @@ Module PTRS_IMPL <: PTRS_INTF.
   Lemma o_sub_0 σ ty :
     is_Some (size_of σ ty) ->
     o_sub σ ty 0 = o_id.
-  Proof. rewrite /o_sub; case_decide=>// -[?]; by case: size_of. Qed.
+  Proof.
+    rewrite /o_sub; case_decide=>//. rewrite size_of_erase_qualifiers.
+    by intros [sz ->].
+  Qed.
 
   Lemma ptr_alloc_id_offset {p o} :
     let p' := p ,, o in
