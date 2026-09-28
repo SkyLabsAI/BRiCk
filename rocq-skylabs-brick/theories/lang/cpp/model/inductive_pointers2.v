@@ -160,68 +160,61 @@ Module PTRS_IMPL <: PTRS_INTF.
       o ≠ o_base_ der base ->
       roff_canon_syn (o_derived_ base der :: o :: os).
 
-  Lemma canon_syn_sem_eqv :
-    ∀ os,
-      roff_canon os <-> roff_canon_syn os.
+  Definition no_prefix_step (os : raw_offset) : Prop :=
+    forall s t r, os = s ++ r -> roff_rw_local s t -> False.
+
+  Lemma roff_canon_cons o os :
+    roff_canon (o :: os) <-> no_prefix_step (o :: os) /\ roff_canon os.
   Proof.
-    rewrite /roff_canon /nf /red.
-    move=> os. split; move=> Hc.
-    {
-      admit.
-    }
-    {
-      induction Hc;
-      try (
-        remember (o :: os) as eos;
-        destruct Hc; subst
-      ); try done;
-      try inversion Heqeos;
-      subst.
-      { apply: nil_canon. }
-      { by apply: singleton_offset_canon. }
-      all:
-        move=> [y [l [r [s [t [Ho [Hl Hstep]]]]]]];
-        subst; destruct l; simpl in *; destruct Hstep;
-        simpl in *; inversion Ho; subst; try done;
-        try (
-          match goal with
-          | H : ¬∃ i, o_sub_ _ _ = o_sub_ _ i |- False =>
-            apply H
-          end;
-          try repeat eexists
-        );
-        try (
-          match goal with
-          | H : [?o] = ?l ++ ?r |- False =>
-            destruct l; simpl in *;
-            inversion H; subst;
-            destruct l; simpl in *;
-            inversion H
-          end
-        );
-        try (
-          match goal with
-          | H : [?o] = ?l ++ ?r |- False =>
-            destruct l; simpl in *;
-            inversion H; subst
-          end
-        );
-        try (
-          match goal with
-          | H : ¬∃ ty, o_sub_ _ 0 = o_sub_ ty 0 |- False =>
-              apply H; repeat eexists
-          end
-        );
-        try (
-          match goal with
-          | H : [] = ?l ++ ?r |- False =>
-              destruct l; simpl in *;
-              inversion H
-          end
-        ).
-        all: admit.
-    }
-  Admitted.
+    rewrite /roff_canon /nf /red /roff_rw_global /no_prefix_step.
+    split.
+    - intros H. split.
+      + intros s t r Heq Hstep. apply H.
+        exists (t ++ r), [], r, s, t. simpl. auto.
+      + intros [y [l [r [s [t [Heq [Hy Hstep]]]]]]]. apply H.
+        exists (o :: y), (o :: l), r, s, t. simpl. split; [by rewrite Heq|].
+        split; [by rewrite Hy|exact Hstep].
+    - intros [Hprefix Htail] [y [l [r [s [t [Heq [Hy Hstep]]]]]]].
+      destruct l as [|x l]; simpl in Heq.
+      + exact (Hprefix s t r Heq Hstep).
+      + inversion Heq; subst x. apply Htail.
+        exists (l ++ t ++ r), l, r, s, t. auto.
+  Qed.
+
+  Lemma canon_syn_sem os : roff_canon_syn os -> roff_canon os.
+  Proof.
+    intros H. induction H.
+    all: try solve [exact nil_canon | by apply singleton_offset_canon].
+    all: apply roff_canon_cons; split; last assumption.
+    all: rewrite /no_prefix_step; intros s t r Heq Hstep;
+      destruct Hstep; simpl in Heq; inversion Heq; subst; naive_solver.
+  Qed.
+
+  Lemma canon_sem_syn os : roff_canon os -> roff_canon_syn os.
+  Proof.
+    induction os as [|o os IH]; intros Hcanon; first exact NilCanon.
+    apply roff_canon_cons in Hcanon as [Hprefix Htail].
+    have Hsyn := IH Htail.
+    have Hzero : ~ (exists ty, o = o_sub_ ty 0%Z).
+    { intros [ty ->]. apply (Hprefix [o_sub_ ty 0%Z] [] os); [done|constructor]. }
+    destruct os as [|next rest]; first by apply SingCanon.
+    destruct o as [f|ty i|derived base|base derived].
+    - by apply FieldCanon.
+    - apply SubCanon; first exact Hsyn.
+      + intros [j Hnext]. subst next.
+        apply (Hprefix [o_sub_ ty i; o_sub_ ty j] [o_sub_ ty (i+j)%Z] rest);
+          [done|constructor].
+      + intros ->. apply Hzero. by exists ty.
+    - apply BaseCanon; first exact Hsyn.
+      intros ->. apply (Hprefix [o_base_ derived base; o_derived_ base derived] [] rest);
+        [done|constructor].
+    - apply DerCanon; first exact Hsyn.
+      intros ->. apply (Hprefix [o_derived_ base derived; o_base_ derived base] [] rest);
+        [done|constructor].
+  Qed.
+
+  Lemma canon_syn_sem_eqv os : roff_canon os <-> roff_canon_syn os.
+  Proof. split; [apply canon_sem_syn|apply canon_syn_sem]. Qed.
 
   (** *** Offsets *)
   Definition offset := {o : raw_offset | roff_canon o}.
