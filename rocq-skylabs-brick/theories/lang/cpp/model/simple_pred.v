@@ -1207,7 +1207,7 @@ Module SimpleCPP.
       Exists (oa : option addr),
         type_ptr t p ** (* use the appropriate ghost state instead *)
         mem_inj_own p oa **
-        oaddr_encodes t q oa p v.
+        oaddr_encodes t q oa p v ** has_type_or_undef v t.
     (* TODO: [tptsto] should not include [type_ptr] wholesale, but its
     pieces in the new model, replacing [mem_inj_own], and [tptsto_type_ptr]
     should be proved properly. *)
@@ -1245,11 +1245,57 @@ Module SimpleCPP.
       CFracValid2 (tptsto ty).
     Proof. solve_cfrac_valid. Qed.
 
+    Lemma val_update (p : ptr) (v v' : val) :
+      val_ p v 1$m |-- |==> val_ p v' 1$m.
+    Proof. by apply own_update, singleton_update, cmra_update_exclusive. Qed.
+
+    Lemma tptsto_ghost_intro ty q p v :
+      is_heap_type ty ->
+      type_ptr ty p ** mem_inj_own p None ** val_ p v q **
+      has_type_or_undef v ty |-- tptsto ty q p v.
+    Proof.
+      intros Hheap. iIntros "(#T & #M & V & #Hv)".
+      iAssert [| p <> nullptr |] as %Hnn.
+      { iDestruct "T" as "[$ _]". }
+      iAssert [| ty <> Tvoid |] as %Hnv.
+      { iDestruct (type_ptr_size with "T") as %Hsize.
+        iPureIntro. intros ->. destruct Hsize as [sz Hsize]. discriminate. }
+      rewrite /tptsto. iSplit; first done. iSplit; first done.
+      iExists None. iFrame "T M Hv". iFrame "V". done.
+    Qed.
+
+    Lemma tptsto_physical_intro ty q p v a vs :
+      is_heap_type ty ->
+      type_ptr ty p ** mem_inj_own p (Some a) ** encodes ty v vs **
+      bytes a vs q ** vbytes a vs q ** has_type_or_undef v ty |--
+      tptsto ty q p v.
+    Proof.
+      intros Hheap. iIntros "(#T & #M & E & B & V & #Hv)".
+      iAssert [| p <> nullptr |] as %Hnn.
+      { iDestruct "T" as "[$ _]". }
+      rewrite /tptsto. iSplit; first done. iSplit; first done.
+      iExists (Some a). iFrame "T M Hv". iExists vs. iFrame.
+    Qed.
+
+    Lemma tptsto_ghost_update ty p v v' :
+      mem_inj_own p None ** tptsto ty 1$m p v ** has_type_or_undef v' ty |--
+      |==> tptsto ty 1$m p v'.
+    Proof.
+      iIntros "(#M & H & #Hv)".
+      iDestruct "H" as (Hnn Hheap oa) "(#T & #M' & E & _)".
+      iDestruct (mem_inj_own_agree with "M M'") as %<-.
+      iDestruct "E" as "[_ V]".
+      iMod (val_update with "V") as "V".
+      iModIntro. iApply tptsto_ghost_intro; first exact Hheap.
+      iFrame "T M V Hv".
+    Qed.
+
+
     Lemma tptsto_view ty q p v :
       tptsto ty q p v ⊢
       ∃ oa, mem_inj_own p oa ∗ oaddr_encodes ty q oa p v.
     Proof.
-      iDestruct 1 as (Hnn Hheap oa) "(_ & M & E)".
+      iDestruct 1 as (Hnn Hheap oa) "(_ & M & E & _)".
       iExists oa. iFrame.
     Qed.
 
@@ -1411,9 +1457,9 @@ Module SimpleCPP.
       ptr_congP σ p1 p2 |-- tptsto Tbyte q p1 v -* tptsto Tbyte q p2 v.
     Proof. Admitted.
 
-    #[local] Theorem tptsto_welltyped : forall p ty q (v : val),
+    Theorem tptsto_welltyped : forall p ty q (v : val),
       Observe (has_type_or_undef v ty) (tptsto ty q p v).
-    Proof. Admitted.
+    Proof. intros. rewrite /tptsto. refine _. Qed.
 
     (* TODO: the [Notation] connects to the wrong definition *)
     #[local] Theorem tptsto_reference_to : forall p ty q (v : val),
