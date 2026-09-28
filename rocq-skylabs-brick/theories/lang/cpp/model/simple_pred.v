@@ -178,6 +178,42 @@ Implicit Types (p : ptr).
 (** A consistency proof for [CPP_LOGIC_CLASS] *)
 Module SimpleCPP_BASE <: CPP_LOGIC_CLASS.
 
+  (** Storage identity retains allocation provenance and the stored byte offset.
+      Defined aliases share a cell; undefined pointers keep structural keys. *)
+  #[local] Existing Instance PTRS_IMPL.root_ptr_eq_dec.
+  Definition storage_location : Set := ((root_ptr * Z) + ptr)%type.
+  #[global] Instance storage_location_eq_dec : EqDecision storage_location := _.
+  #[global] Instance storage_location_countable : Countable storage_location := _.
+
+  Definition storage_key (p : ptr) : storage_location :=
+    match p with
+    | invalid_ptr_ => inr p
+    | offset_ptr root off =>
+        match eval_raw_offset (`off) with
+        | Some z => inl (root,z)
+        | None => inr p
+        end
+    end.
+
+  Lemma storage_key_offset σ root off z :
+    eval_offset σ off = Some z -> storage_key (offset_ptr root off) = inl (root,z).
+  Proof. intros Hz. by rewrite /storage_key /eval_offset in Hz |- *; rewrite Hz. Qed.
+
+  Lemma storage_key_cong σ p1 p2 :
+    ptr_offset_defined p1 -> ptr_cong σ p1 p2 -> storage_key p1 = storage_key p2.
+  Proof.
+    intros Hdef (p & o1 & o2 & -> & -> & Hcong).
+    apply (ptr_offset_defined_dot σ) in Hdef as [Hp _].
+    apply same_property_iff in Hcong as (z & E1 & E2).
+    destruct p as [|root off]; first contradiction.
+    destruct Hp as [z0 E0].
+    have H1 := eval_offset_dot σ off o1 z0 z E0 E1.
+    have H2 := eval_offset_dot σ off o2 z0 z E0 E2.
+    rewrite _dot.unlock /DOT_dot /= in H1, H2.
+    rewrite _dot.unlock /DOT_dot.
+    by rewrite (storage_key_offset σ _ _ _ H1) (storage_key_offset σ _ _ _ H2).
+  Qed.
+
   Definition addr : Set := N.
   Definition byte : Set := N.
   Variant runtime_val' : Set :=
@@ -208,13 +244,14 @@ Module SimpleCPP_BASE <: CPP_LOGIC_CLASS.
   Record cppG' (Σ : gFunctors) : Type :=
     { heapGS : inG Σ (gmapR addr (cfractionalR runtime_val'))
       (* ^ this represents the contents of physical memory *)
-    ; ghost_memG : inG Σ (gmapR ptr (cfractionalR val))
+    ; ghost_memG : inG Σ (gmapR storage_location (cfractionalR val))
       (* ^ this represents the contents of the C++ runtime that might
          not be represented in physical memory, e.g. values stored in
          registers or temporaries on the stack *)
-    ; mem_injG : inG Σ (gmapUR ptr (agreeR (leibnizO (option addr))))
-      (* ^ this carries the (compiler-supplied) mapping from C++ locations
-         (represented as pointers) to physical memory addresses. Locations that
+    ; mem_injG : inG Σ (gmapUR storage_location (agreeR (leibnizO (option addr))))
+      (* ^ this carries the (compiler-supplied) mapping from C++ storage
+         locations to physical memory addresses. Defined congruent aliases use
+         the same location key, including for ghost-backed cells. Locations that
          are not stored in physical memory (e.g. because they are register
          allocated) are mapped to [None] *)
     ; blocksG : inG Σ (gmapUR ptr (agreeR (leibnizO (Z * Z))))
@@ -245,11 +282,11 @@ Module SimpleCPP_BASE <: CPP_LOGIC_CLASS.
       own (A := gmapR addr (cfractionalR runtime_val'))
         cpp_ghost.(heap_name) {[ a := cfrac q r ]}.
     Definition ghost_mem_own (p : ptr) q (v : val) : mpred :=
-      own (A := gmapR ptr (cfractionalR val))
-        cpp_ghost.(ghost_mem_name) {[ p := cfrac q v ]}.
+      own (A := gmapR storage_location (cfractionalR val))
+        cpp_ghost.(ghost_mem_name) {[ storage_key p := cfrac q v ]}.
     Definition mem_inj_own (p : ptr) (va : option N) : mpred :=
-      own (A := gmapUR ptr (agreeR (leibnizO (option addr))))
-        cpp_ghost.(mem_inj_name) {[ p := to_agree va ]}.
+      own (A := gmapUR storage_location (agreeR (leibnizO (option addr))))
+        cpp_ghost.(mem_inj_name) {[ storage_key p := to_agree va ]}.
     Definition blocks_own (p : ptr) (l h : Z) : mpred :=
       own (A := gmapUR ptr (agreeR (leibnizO (Z * Z))))
         cpp_ghost.(blocks_name) {[ p := to_agree (l, h) ]}.
@@ -1910,7 +1947,17 @@ Module SimpleCPP.
      *)
     Lemma tptsto_ptr_congP_transport : forall q p1 p2 v,
       ptr_congP σ p1 p2 |-- tptsto Tbyte q p1 v -* tptsto Tbyte q p2 v.
-    Proof. Admitted.
+    Proof.
+      iIntros (q p1 p2 v) "(%Hcong & #T1 & #T2)".
+      iDestruct (type_ptr_strict_valid with "T1") as "V1".
+      iDestruct (_valid_ptr_offset_defined with "V1") as %Hdef.
+      have Ekey := storage_key_cong σ p1 p2 Hdef Hcong.
+      rewrite /tptsto /mem_inj_own /oaddr_encodes /val_ /ghost_mem_own Ekey.
+      iIntros "(%Hnn & %Hheap & %oa & _ & Mem & Enc & Hval)".
+      iSplit; first (iDestruct "T2" as "[$ _]").
+      iSplit; first done.
+      iExists oa. iFrame "T2 Mem Enc Hval".
+    Qed.
 
     Theorem tptsto_welltyped : forall p ty q (v : val),
       Observe (has_type_or_undef v ty) (tptsto ty q p v).
