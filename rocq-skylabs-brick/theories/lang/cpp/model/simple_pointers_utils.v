@@ -6,6 +6,7 @@
 
 (** Support code for [simple_pointers.v]. *)
 
+Require Import Stdlib.Sorting.SetoidList.
 Require Import stdpp.gmap.
 Require Import skylabs.prelude.base.
 Require Import skylabs.prelude.addr.
@@ -23,8 +24,10 @@ Implicit Types (σ : genv).
 Module canonical_tu.
   Definition im_to_gmap {V} (m : IM.t V) : gmap BS.t V :=
     list_to_map (map_to_list m).
-  Definition symbol_table_canon : Set := gmap BS.t ObjValue.
-  Definition type_table_canon : Set := gmap BS.t GlobDecl.
+  (** Ordered name-map entries preserve structured names without requiring a
+      countability instance for the mutually recursive syntax. *)
+  Definition symbol_table_canon : Set := list (name * ObjValue).
+  Definition type_table_canon : Set := list (name * GlobDecl).
 
   #[global] Instance symbol_table_canon_eq_dec : EqDecision symbol_table_canon.
   Proof. solve_decision. Qed.
@@ -39,9 +42,8 @@ Module canonical_tu.
   #[global] Instance translation_unit_canon_eq_dec : EqDecision translation_unit_canon.
   Proof. solve_decision. Qed.
 
-  (* TODO: structured names in translation units. *)
-  #[global] Instance symbol_canon_lookup : Lookup obj_name ObjValue translation_unit_canon. (*
-    fun k m => m.(symbols) !! k. *) Admitted.
+  #[global] Instance symbol_canon_lookup : Lookup obj_name ObjValue translation_unit_canon :=
+    fun k m => snd <$> find (fun kv => bool_decide (k = kv.1)) m.(symbols).
 
   Record genv_canon : Set := Build_genv_canon
   { genv_tu : translation_unit_canon
@@ -51,8 +53,33 @@ Module canonical_tu.
   #[global] Instance genv_canon_eq_dec : EqDecision genv_canon.
   Proof. solve_decision. Qed.
 
-  Definition tu_to_canon (tu : translation_unit) : translation_unit_canon.
-    (* let '(makeTranslationUnit s g _ init info) := tu in Build_translation_unit_canon (im_to_gmap s) (im_to_gmap g) info. *) Admitted. (* TODO: structured names keys *)
+  Definition tu_to_canon (tu : translation_unit) : translation_unit_canon :=
+    Build_translation_unit_canon
+      (NM.elements tu.(translation_unit.symbols))
+      (NM.elements tu.(translation_unit.types))
+      tu.(translation_unit.abi).
+
+  Lemma tu_to_canon_lookup (tu : translation_unit) (n : name) :
+    tu_to_canon tu !! n = tu.(translation_unit.symbols) !! n.
+  Proof.
+    change (snd <$> find (fun kv => bool_decide (n = kv.1))
+      (NM.elements tu.(translation_unit.symbols)) =
+      tu.(translation_unit.symbols) !! n).
+    destruct (find (fun kv => bool_decide (n = kv.1))
+      (NM.elements tu.(translation_unit.symbols))) as [[k v]|] eqn:Hfind.
+    - apply find_some in Hfind as [Hin Hname].
+      apply bool_decide_eq_true_1 in Hname. simpl in Hname. subst k.
+      simpl. symmetry. apply NM.find_1, NM.elements_2.
+      apply InA_alt. exists (n, v). split; last exact Hin.
+      split; first apply NM.Key.eq_refl. reflexivity.
+    - simpl. destruct (tu.(translation_unit.symbols) !! n) as [v|] eqn:Hlookup; last done.
+      exfalso.
+      apply NM.find_2, NM.elements_1, InA_alt in Hlookup.
+      destruct Hlookup as [[k w] [[Hname Hvalue] Hin]].
+      apply NM.eqL in Hname. simpl in Hname, Hvalue. subst k w.
+      have Hfalse := find_none _ _ Hfind (n, v) Hin.
+      by rewrite /= bool_decide_true in Hfalse.
+  Qed.
   #[local] Definition genv_to_canon σ : genv_canon :=
     let '(Build_genv tu sz) := σ in Build_genv_canon (tu_to_canon tu) sz.
 End canonical_tu.
