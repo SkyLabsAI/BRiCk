@@ -679,14 +679,20 @@ Module PTRS_IMPL <: PTRS_INTF.
     | offset_ptr p o => root_ptr_alloc_id p
     end.
 
+  (** Invalid layout segments have no address, even when their numeric offset
+      is zero. Retain the existing underflow checks for defined paths. *)
   Definition ptr_vaddr {σ} (p : ptr) : option vaddr :=
     match p with
     | invalid_ptr_ => None
     | offset_ptr p o =>
-      foldr
-        (λ off ova, ova ≫= offset_vaddr off)
-        (root_ptr_vaddr p)
-        (snd <$> `o)
+      match eval_raw_offset (`o) with
+      | None => None
+      | Some _ =>
+        foldr
+          (λ off ova, ova ≫= offset_vaddr off)
+          (root_ptr_vaddr p)
+          (snd <$> `o)
+      end
     end.
 
   Definition lift_root_ptr (rp : root_ptr) : ptr := offset_ptr rp o_id.
@@ -893,12 +899,81 @@ Module PTRS_IMPL <: PTRS_INTF.
     let p' := p ,, o in
     is_Some (ptr_alloc_id p') -> ptr_alloc_id p' = ptr_alloc_id p.
   Proof. UNFOLD_dot. by destruct p, o as [[] ?] => //= /is_Some_None []. Qed.
+  #[local] Lemma fold_offset_vaddr_sum offsets pa va :
+    foldr (fun off ova => ova ≫= offset_vaddr off) (Some pa) offsets = Some va ->
+    Z.of_N va = Z.of_N pa + foldr Z.add 0 offsets.
+  Proof.
+    revert va. induction offsets as [|z zs IH]; intros va; simpl.
+    - intros [= <-]. lia.
+    - destruct (foldr (fun off ova => ova ≫= offset_vaddr off)
+        (Some pa) zs) as [mid|] eqn:E; simpl; last discriminate.
+      have Hmid := IH mid eq_refl.
+      rewrite /offset_vaddr /=. case_guard; last discriminate.
+      intros [= <-]. rewrite Z2N.id; lia.
+  Qed.
 
-  Axiom ptr_vaddr_o_sub_eq : forall σ p ty n1 n2 sz,
+  #[local] Lemma eval_raw_offset_sum offsets z :
+    eval_raw_offset offsets = Some z ->
+    foldr Z.add 0 (snd <$> offsets) = z.
+  Proof.
+    revert z. induction offsets as [|[seg off] rest IH]; intros z.
+    - simpl. by intros [= <-].
+    - rewrite eval_raw_offset_cons.
+      destruct seg; simpl; try discriminate;
+        destruct (eval_raw_offset rest) as [n|] eqn:E; simpl; try discriminate;
+        intros [= <-]; rewrite (IH n eq_refl); done.
+  Qed.
+
+  Lemma ptr_vaddr_offset_ptr_inv σ root off va :
+    @ptr_vaddr σ (offset_ptr root off) = Some va ->
+    exists base z, root_ptr_vaddr root = Some base /\
+      eval_offset σ off = Some z /\ Z.of_N va = Z.of_N base + z.
+  Proof.
+    have [base Hbase] : is_Some (root_ptr_vaddr root).
+    { destruct root; eexists; done. }
+    rewrite /ptr_vaddr. destruct (eval_raw_offset (`off)) as [z|] eqn:E;
+      last discriminate.
+    rewrite Hbase. intros Haddr.
+    exists base, z. split; first done. split; first done.
+    rewrite (fold_offset_vaddr_sum _ _ _ Haddr).
+    by rewrite (eval_raw_offset_sum _ _ E).
+  Qed.
+
+  Lemma ptr_vaddr_o_sub_eq : forall σ p ty n1 n2 sz,
     size_of σ ty = Some sz -> (sz > 0)%N ->
     same_property ptr_vaddr (p ,, o_sub _ ty n1) (p ,, o_sub _ ty n2) ->
     n1 = n2.
+  Proof.
+    intros σ p ty n1 n2 sz Hsz Hpos.
+    rewrite same_property_iff. intros (va & H1 & H2).
+    destruct p as [|root off]; rewrite _dot.unlock /DOT_dot /= in H1 H2;
+      first discriminate.
+    destruct (ptr_vaddr_offset_ptr_inv σ root (__o_dot off (o_sub σ ty n1)) va H1)
+      as (base1 & z1 & B1 & E1 & A1).
+    destruct (ptr_vaddr_offset_ptr_inv σ root (__o_dot off (o_sub σ ty n2)) va H2)
+      as (base2 & z2 & B2 & E2 & A2).
+    have Hb : base2 = base1 by congruence. subst base2.
+    rewrite /eval_offset /= /raw_offset_merge
+      !eval_raw_offset_collapse !eval_raw_offset_app in E1 E2.
+    change (liftM2 Z.add (eval_offset σ off)
+      (eval_offset σ (o_sub σ ty n1)) = Some z1) in E1.
 
+    change (liftM2 Z.add (eval_offset σ off)
+      (eval_offset σ (o_sub σ ty n2)) = Some z2) in E2.
+    rewrite (eval_o_sub' σ ty n1 sz Hsz) in E1.
+    rewrite (eval_o_sub' σ ty n2 sz Hsz) in E2.
+    destruct (eval_offset σ off) as [z|]; simpl in E1, E2; last discriminate.
+    injection E1 as <-. injection E2 as <-.
+    have HszZ : 0 < Z.of_N sz by lia. nia.
+  Qed.
+
+  Lemma ptr_vaddr_defined σ p :
+    is_Some (@ptr_vaddr σ p) -> ptr_offset_defined p.
+  Proof.
+    destruct p as [|root off]; first by intros [? H].
+    rewrite /ptr_vaddr /ptr_offset_defined.
+    destruct (eval_raw_offset (`off)); naive_solver.
+  Qed.
   Arguments mk_offset_seg _ !_ /.
   Lemma o_dot_sub σ (z1 z2 : Z) ty :
     o_sub σ ty z1 ,, o_sub σ ty z2 = o_sub σ ty (z1 + z2).
