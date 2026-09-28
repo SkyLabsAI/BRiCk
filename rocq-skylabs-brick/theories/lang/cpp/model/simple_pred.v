@@ -252,6 +252,14 @@ Module SimpleCPP_BASE <: CPP_LOGIC_CLASS.
     Definition blocks_own (p : ptr) (l h : Z) : mpred :=
       own (A := gmapUR ptr (agreeR (leibnizO (Z * Z))))
         cpp_ghost.(blocks_name) {[ p := to_agree (l, h) ]}.
+    Lemma blocks_own_range_agree p l1 h1 l2 h2 :
+      blocks_own p l1 h1 ∗ blocks_own p l2 h2 ⊢ ⌜(l1,h1) = (l2,h2)⌝.
+    Proof.
+      rewrite /blocks_own -own_op singleton_op.
+      rewrite own_valid internal_cmra_valid_discrete singleton_valid.
+      by iIntros "!%" => /= /to_agree_op_inv_L.
+    Qed.
+
     Definition _code_own (p : ptr) (f : Func + Method + Ctor + Dtor) : mpred :=
       own cpp_ghost.(code_name)
         (A := gmapUR ptr (agreeR (leibnizO (Func + Method + Ctor + Dtor))))
@@ -404,6 +412,96 @@ Module SimpleCPP.
         destruct (Hpath prefix suffix E) as (z' & va' & Hz' & Hva' & Hnz' & Hr').
         exists z', va'. repeat split; try assumption; naive_solver.
     Qed.
+
+    Section subscript_interpolation.
+      #[local] Open Scope Z_scope.
+
+      Lemma raw_path_valid_end vt root l h path :
+        raw_path_valid vt root l h path ->
+        exists z va,
+          eval_raw_offset path = Some z /\
+          foldr (fun off ova => ova ≫= offset_vaddr off)
+            (root_ptr_vaddr root) (snd <$> path) = Some va /\
+          va <> 0%N /\ ((l <= z < h) \/ (vt = pred.Relaxed /\ z = h)).
+      Proof.
+        intros Hpath.
+        destruct (Hpath path [] (eq_sym (app_nil_r _)))
+          as (z & va & Hz & Hva & Hnz & Hr).
+        exists z, va. repeat split; try assumption.
+        destruct Hr as [Hr|[_ Hr]]; by [left|right].
+      Qed.
+
+      Lemma raw_path_valid_subscript_interpolate vt1 vt2 vt root l h
+          prefix ty n d (s : N) i j k :
+        i <= j < k ->
+        (vt = pred.Strict -> (0 < s)%N) ->
+        raw_path_valid vt1 root l h
+          (prefix ++ raw_offset_collapse [(o_sub_ ty (n+i), d + Z.of_N s * i)]) ->
+        raw_path_valid vt2 root l h
+          (prefix ++ raw_offset_collapse [(o_sub_ ty (n+k), d + Z.of_N s * k)]) ->
+        raw_path_valid vt root l h
+          (prefix ++ raw_offset_collapse [(o_sub_ ty (n+j), d + Z.of_N s * j)]).
+      Proof.
+        intros Hijk Hpositive Hpi Hpk.
+        have Hproper x mode :
+            n+x <> 0 ->
+            raw_path_valid mode root l h
+              (prefix ++ raw_offset_collapse [(o_sub_ ty (n+x), d + Z.of_N s * x)]) ->
+            raw_path_valid pred.Strict root l h prefix.
+        { intros Hnx Hpath.
+          apply (raw_path_valid_strict_prefix mode root l h prefix
+            (raw_offset_collapse [(o_sub_ ty (n+x), d + Z.of_N s * x)])).
+          - rewrite /= /offset_seg_cons decide_False; [discriminate|naive_solver].
+          - exact Hpath. }
+        have Hpre : raw_path_valid pred.Strict root l h prefix.
+        { destruct (decide (n+i=0)) as [E|E].
+          - apply (Hproper k vt2); [lia|exact Hpk].
+          - exact (Hproper i vt1 E Hpi). }
+        destruct (raw_path_valid_end _ _ _ _ _ Hpre)
+          as (zp & vp & Ep & Ap & Np & Rp).
+        destruct Rp as [Rp|[Hbad _]]; last discriminate.
+        destruct (raw_path_valid_end _ _ _ _ _ Hpi)
+          as (zi & vi & Ei & Ai & Ni & Ri).
+        destruct (raw_path_valid_end _ _ _ _ _ Hpk)
+          as (zk & vk & Ek & Ak & Nk & Rk).
+        rewrite eval_subscript_collapse Ep in Ei.
+        rewrite eval_subscript_collapse Ep in Ek.
+        injection Ei as <-. injection Ek as <-.
+        have Hdi : d + Z.of_N s * i <= d + Z.of_N s * j by nia.
+        have Hdk : d + Z.of_N s * j <= d + Z.of_N s * k by nia.
+        rewrite fold_subscript_collapse in Ai.
+        destruct (fold_offset_vaddr_increase_tail (snd <$> prefix) (root_ptr_vaddr root)
+          (d + Z.of_N s * i) (d + Z.of_N s * j) vi Hdi Ai)
+          as (vj & Aj & Ej).
+        have Nj : vj <> 0%N by lia.
+        have Rj : l <= zp + (d + Z.of_N s * j) < h \/
+            (vt = pred.Relaxed /\ zp + (d + Z.of_N s * j) = h).
+        { destruct vt.
+          - have Hs := Hpositive eq_refl.
+            have Hstrict : d + Z.of_N s * j < d + Z.of_N s * k by nia.
+            destruct Ri as [Ri|[_ Ri]]; destruct Rk as [Rk|[_ Rk]]; left; lia.
+          - destruct (decide (zp + (d + Z.of_N s * j) < h)) as [Hlt|Hlt].
+            + left. destruct Ri as [Ri|[_ Ri]]; destruct Rk as [Rk|[_ Rk]]; lia.
+            + right. split; first done.
+              destruct Ri as [Ri|[_ Ri]]; destruct Rk as [Rk|[_ Rk]]; lia. }
+        destruct (decide (n+j=0 /\ d + Z.of_N s * j=0)) as [Hzero|Hnon].
+        - have Etail : raw_offset_collapse [(o_sub_ ty (n+j), d + Z.of_N s * j)] = [].
+          { by rewrite /= /offset_seg_cons decide_True. }
+          rewrite Etail app_nil_r. destruct vt; first exact Hpre.
+          exact (raw_path_valid_weaken _ _ _ _ Hpre).
+        - have Etail : raw_offset_collapse [(o_sub_ ty (n+j), d + Z.of_N s * j)] =
+              [(o_sub_ ty (n+j), d + Z.of_N s * j)].
+          { by rewrite /= /offset_seg_cons decide_False. }
+          rewrite Etail.
+          apply (raw_path_valid_snoc vt root l h prefix _
+            (zp + (d + Z.of_N s * j)) vj); try assumption.
+          + rewrite eval_raw_offset_app Ep.
+            change (liftM2 Z.add (Some zp) (Some (d + Z.of_N s * j + 0)) =
+              Some (zp + (d + Z.of_N s * j))).
+            by rewrite Z.add_0_r.
+          + by rewrite fmap_app foldr_app /=.
+      Qed.
+    End subscript_interpolation.
 
     Lemma raw_path_valid_vaddr {resolve : genv} vt root l h off :
       raw_path_valid vt root l h (proj1_sig off) ->
@@ -1507,6 +1605,64 @@ Module SimpleCPP.
       [| 0 <= Z.of_N va - z |]%Z **
       [| pinned_ptr_pure (Z.to_N (Z.of_N va - z)) p |].
 
+    (** Checked interpolation uses canonical root ranges and retains zero-stride
+        boundary validity. Strict interpolation requires positive byte stride. *)
+    Lemma _valid_ptr_sub (i j k : Z) (p : ptr) ty vt1 vt2 vt :
+      (i <= j < k)%Z ->
+      (vt = pred.Strict -> exists sz, size_of σ ty = Some sz /\ (0 < sz)%N) ->
+      _valid_ptr vt1 (p ,, o_sub σ ty i) ⊢
+      _valid_ptr vt2 (p ,, o_sub σ ty k) -∗ _valid_ptr vt (p ,, o_sub σ ty j).
+    Proof.
+      intros Hijk Hpositive. iIntros "Vi Vk".
+      iDestruct (_valid_ptr_offset_defined with "Vi") as %Hdefined.
+      apply (ptr_offset_defined_dot σ) in Hdefined as [Hp Hsub].
+      have [sz Hsz] := eval_o_sub_defined σ ty i Hsub.
+      have Hpos : vt = pred.Strict -> (0 < sz)%N.
+      { intros E. destruct (Hpositive E) as (s & Hs & Hpos).
+        rewrite Hsz in Hs. injection Hs as <-. exact Hpos. }
+      destruct p as [|root off]; first contradiction.
+      have Hnullid (x : Z) : (offset_ptr root off : ptr) ,, o_sub σ ty x = nullptr ->
+          root_ptr_alloc_id root = Some null_alloc_id.
+      { intros E. apply (f_equal ptr_alloc_id) in E.
+        by rewrite _dot.unlock /DOT_dot /= in E. }
+      rewrite /_valid_ptr.
+      iDestruct "Vi" as "[[%Hni _]|Vi]";
+        iDestruct "Vk" as "[[%Hnk _]|Vk]".
+      - exfalso. have E := subscript_null_inj σ (offset_ptr root off) ty i k Hni Hnk. lia.
+      - rewrite _dot.unlock /DOT_dot /=.
+        iDestruct "Vk" as (l h) "(_ & %Haid & _)".
+        exfalso. destruct Haid as (aid & Haid & Hneq).
+        rewrite (Hnullid i Hni) in Haid. injection Haid as <-. contradiction.
+      - rewrite _dot.unlock /DOT_dot /=.
+        iDestruct "Vi" as (l h) "(_ & %Haid & _)".
+        exfalso. destruct Haid as (aid & Haid & Hneq).
+        rewrite (Hnullid k Hnk) in Haid. injection Haid as <-. contradiction.
+      - rewrite _dot.unlock /DOT_dot /=.
+        iDestruct "Vi" as (l h) "(Bi & %Haid & %Hpi)".
+        iDestruct "Vk" as (l' h') "(Bk & _ & %Hpk)".
+        iDestruct (blocks_own_range_agree with "[$Bi $Bk]") as %Erange.
+        injection Erange as <- <-.
+        iRight. iExists l, h. iFrame "Bi". iSplit; first done.
+        iPureIntro.
+        destruct (offset_subscript_decompose σ off ty sz Hp Hsz)
+          as (prefix & n & d & _ & _ & _ & E).
+        rewrite _dot.unlock /DOT_dot /= in E.
+        rewrite (E i) in Hpi. rewrite (E k) in Hpk. rewrite (E j).
+        exact (raw_path_valid_subscript_interpolate vt1 vt2 vt root l h
+          prefix (erase_qualifiers ty) n d sz i j k Hijk Hpos Hpi Hpk).
+    Qed.
+
+    Lemma strict_valid_ptr_sub_guarded : ∀ (i j k : Z) p ty vt1 vt2,
+      (i <= j < k)%Z ->
+      (exists sz, size_of σ ty = Some sz /\ (0 < sz)%N) ->
+      _valid_ptr vt1 (p ,, o_sub σ ty i) |--
+      _valid_ptr vt2 (p ,, o_sub σ ty k) -* strict_valid_ptr (p ,, o_sub σ ty j).
+    Proof.
+      intros i j k p ty vt1 vt2 Hijk Hsize.
+      apply (_valid_ptr_sub i j k p ty vt1 vt2 Strict Hijk).
+      intros _. exact Hsize.
+    Qed.
+
   End with_cpp.
 
     Parameter exposed_aid : forall `{!cpp_logic thread_info Σ}, alloc_id -> mpred.
@@ -1723,13 +1879,7 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
 
     (** These axioms are named after the predicate in the conclusion. *)
 
-    (**
-    TODO: The intended proof of [strict_valid_ptr_sub] assumes that, if [p']
-    normalizes to [p ., [ ty ! i ]], then [valid_ptr p'] is defined to imply
-    validity of all pointers from [p] to [p'].
 
-    Note that `arrR` exposes stronger reasoning principles, but this might still be useful.
-    *)
     Axiom _valid_ptr_sub : ∀ (i j k : Z) p ty vt1 vt2 vt,
       (i <= j < k)%Z ->
       (vt = Strict -> exists sz, size_of σ ty = Some sz /\ (0 < sz)%N) ->
@@ -1746,6 +1896,8 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
       apply (_valid_ptr_sub i j k p ty vt1 vt2 Strict Hijk).
       intros _. exact Hsize.
     Qed.
+
+
 
     (** A nonzero subscript after a field cannot erase the field prefix.
         Every proper prefix is strictly within the allocation range, even when
