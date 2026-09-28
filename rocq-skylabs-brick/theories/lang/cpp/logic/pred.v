@@ -903,8 +903,10 @@ Module Type VALID_PTR_AXIOMS
     Axiom valid_o_sub_size : forall p ty i vt,
       _valid_ptr vt (p ,, o_sub σ ty i) |-- [| is_Some (size_of σ ty) |].
 
+    (** Inheritance alone does not constrain untrusted layout metadata. *)
     Axiom type_ptr_o_base : forall derived base p,
       class_derives derived [base] ->
+      base_layout_compatible σ derived base ->
       type_ptr (Tnamed derived) p ⊢ type_ptr (Tnamed base) (p ,, _base derived base).
 
     (*
@@ -1295,12 +1297,13 @@ Section with_cpp.
   converse. *)
   Lemma type_ptr_o_derived_inv derived base p :
     class_derives derived [base] ->
+    base_layout_compatible σ derived base ->
     type_ptr (Tnamed derived) (p ,, _derived base derived) |--
     type_ptr (Tnamed base) p.
   Proof.
-    iIntros (Hcd) "T".
+    iIntros (Hcd Hlayout) "T".
     iDestruct (o_derived_base_type with "T") as %Hp.
-    by rewrite (type_ptr_o_base _ _ _ Hcd) Hp.
+    by rewrite (type_ptr_o_base _ _ _ Hcd Hlayout) Hp.
   Qed.
 
   (** [p] is a valid pointer value in the sense of the standard, or

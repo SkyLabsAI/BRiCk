@@ -1428,6 +1428,7 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
 
     Axiom type_ptr_o_base : forall derived base p,
       class_derives derived [base] ->
+      base_layout_compatible σ derived base ->
       type_ptr (Tnamed derived) p ⊢ type_ptr (Tnamed base) (p ,, _base derived base).
 
     Axiom type_ptr_o_field_type_ptr : forall p fld cls (st : Struct),
