@@ -1919,12 +1919,13 @@ Module SimpleCPP.
       - by rewrite /pinned_ptr_pure Hdiff N2Z.id.
     Qed.
 
-    Axiom offset_inv_pinned_ptr_pure : forall σ o z va p,
+    Lemma offset_inv_pinned_ptr_pure : forall σ o z va p,
       eval_offset σ o = Some z ->
       pinned_ptr_pure va (p ,, o) ->
       valid_ptr p |--
       [| 0 <= Z.of_N va - z |]%Z **
       [| pinned_ptr_pure (Z.to_N (Z.of_N va - z)) p |].
+    Proof. apply offset_inv_pinned_ptr_pure_guarded. Qed.
 
     (** Checked interpolation uses canonical root ranges and retains zero-stride
         boundary validity. Strict interpolation requires positive byte stride. *)
