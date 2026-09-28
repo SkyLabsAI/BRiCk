@@ -175,6 +175,64 @@ Declare Module Import VALUES_DEFS_IMPL : VALUES_INTF_FUNCTOR PTRS_IMPL.
 
 Implicit Types (p : ptr).
 
+Module BaseLayoutChecks.
+Definition valid_alignment (sz al : N) : Prop :=
+  al = (2 ^ N.log2 al)%N /\ (sz mod al = 0)%N.
+
+#[local] Instance valid_alignment_decision (sz al : N) :
+  Decision (valid_alignment sz al).
+Proof. unfold valid_alignment. solve_decision. Defined.
+
+(** Sufficient metadata for projecting complete-object pointer typing to a base.
+    This concerns pointer extent and alignment, not ownership of base bytes. *)
+Definition base_layout_compatible (σ : genv) (derived base : name) : Prop :=
+  exists dsz bsz dal bal z,
+    size_of σ (Tnamed derived) = Some dsz /\
+    size_of σ (Tnamed base) = Some bsz /\
+    @align_of σ (Tnamed derived) = Some dal /\
+    @align_of σ (Tnamed base) = Some bal /\
+    parent_offset σ derived base = Some z /\
+    (bal | dal)%N /\ (Z.of_N bal | z)%Z /\
+    (0 <= z)%Z /\ (z = 0 \/ z < Z.of_N dsz)%Z /\
+    (z + Z.of_N bsz <= Z.of_N dsz)%Z.
+
+Definition tu_base_layout_compatible (tu : translation_unit) (derived base : name) : bool :=
+  match tu.(types) !! derived, tu.(types) !! base, parent_offset_tu tu derived base with
+  | Some (Gstruct ds), Some (Gstruct bs), Some z =>
+      bool_decide (
+        valid_alignment ds.(s_size) ds.(s_alignment) /\
+        valid_alignment bs.(s_size) bs.(s_alignment) /\
+        (bs.(s_alignment) | ds.(s_alignment))%N /\
+        (Z.of_N bs.(s_alignment) | z)%Z /\
+        (0 <= z)%Z /\ (z = 0 \/ z < Z.of_N ds.(s_size))%Z /\
+        (z + Z.of_N bs.(s_size) <= Z.of_N ds.(s_size))%Z)
+  | _, _, _ => false
+  end.
+
+Lemma tu_base_layout_compatible_sound {σ tu} {Hσ : tu ⊧ σ} derived base :
+  tu_base_layout_compatible tu derived base = true ->
+  base_layout_compatible σ derived base.
+Proof.
+  rewrite /tu_base_layout_compatible.
+  destruct (tu.(types) !! derived) as [gd|] eqn:Hd; last discriminate.
+  destruct gd as [| |ds| | | |]; try discriminate.
+  destruct (tu.(types) !! base) as [gb|] eqn:Hb; last discriminate.
+  destruct gb as [| |bs| | | |]; try discriminate.
+  destruct (parent_offset_tu tu derived base) as [z|] eqn:Hz; last discriminate.
+  intros Hcheck. apply bool_decide_eq_true in Hcheck.
+  destruct Hcheck as (Hda & Hba & Hdiv & Hdz & Hnonneg & Hstrict & Hbound).
+  exists ds.(s_size), bs.(s_size), ds.(s_alignment), bs.(s_alignment), z.
+  repeat split; try assumption.
+  - exact (size_of_genv_compat tu σ derived ds Hσ Hd).
+  - exact (size_of_genv_compat tu σ base bs Hσ Hb).
+  - exact (align_of_genv_compat tu derived ds Hσ Hd Hda).
+  - exact (align_of_genv_compat tu base bs Hσ Hb Hba).
+  - exact (parent_offset_genv_compat Hz).
+Qed.
+
+End BaseLayoutChecks.
+Import BaseLayoutChecks.
+
 (** A consistency proof for [CPP_LOGIC_CLASS] *)
 Module SimpleCPP_BASE <: CPP_LOGIC_CLASS.
 
@@ -581,6 +639,41 @@ Module SimpleCPP.
           + by rewrite fmap_app foldr_app /=.
       Qed.
     End subscript_interpolation.
+
+    Lemma raw_path_valid_base_increase vt root l h path derived base z0 z :
+      raw_offset_collapse path = path ->
+      raw_path_valid pred.Strict root l h path ->
+      eval_raw_offset path = Some z0 ->
+      (0 <= z)%Z ->
+      ((z0 + z < h)%Z \/ (vt = pred.Relaxed /\ (z0 + z = h)%Z)) ->
+      raw_path_valid vt root l h
+        (raw_offset_collapse (path ++ [(o_base_ derived base,z)])).
+    Proof.
+      intros Hwf Hpath E0 Hz Hb.
+      destruct (raw_offset_collapse_base_snoc path derived base z Hwf (ex_intro _ z0 E0))
+        as [(prefix & Epre & E)|E]; rewrite E.
+      - have Hpre : raw_path_valid pred.Strict root l h prefix.
+        { apply (raw_path_valid_prefix pred.Strict root l h prefix
+            [(o_derived_ base derived,(-z)%Z)]). by rewrite -Epre. }
+        destruct vt; [exact Hpre|by apply raw_path_valid_weaken].
+      - destruct (raw_path_valid_end _ _ _ _ _ Hpath)
+          as (z' & va0 & Ez & A0 & N0 & R0).
+        rewrite E0 in Ez. injection Ez as <-.
+        have Azero :
+          foldr (fun off ova => ova ≫= offset_vaddr off)
+            (root_ptr_vaddr root ≫= offset_vaddr 0) (snd <$> path) = Some va0.
+        { destruct root; simpl in *; by rewrite offset_vaddr_0. }
+        destruct (fold_offset_vaddr_increase_tail (snd <$> path)
+          (root_ptr_vaddr root) 0 z va0 Hz Azero) as (va & Ava & Hsum).
+        apply (raw_path_valid_snoc vt root l h path _ (z0+z)%Z va); try done.
+        + rewrite eval_raw_offset_app E0 /=.
+          change (Some (z0+(z+0))%Z = Some (z0+z)%Z).
+          by rewrite Z.add_0_r.
+        + by rewrite fmap_app foldr_app /=.
+        + lia.
+        + destruct R0 as [R0|[Hbad _]]; last discriminate.
+          destruct Hb as [Hb|[-> Hb]]; [left; lia|by right].
+    Qed.
 
     Lemma raw_path_valid_vaddr {resolve : genv} vt root l h off :
       raw_path_valid vt root l h (proj1_sig off) ->
@@ -1572,6 +1665,36 @@ Module SimpleCPP.
       Qed.
     End subscript_validity.
 
+    Lemma aligned_ptr_ty_base resolve p derived base dsz bsz dal bal z :
+      size_of resolve (Tnamed derived) = Some dsz ->
+      size_of resolve (Tnamed base) = Some bsz ->
+      @align_of resolve (Tnamed derived) = Some dal ->
+      @align_of resolve (Tnamed base) = Some bal ->
+      parent_offset resolve derived base = Some z ->
+      (bal | dal)%N -> (Z.of_N bal | z)%Z ->
+      @aligned_ptr_ty resolve (Tnamed derived) p ->
+      is_Some (@ptr_vaddr resolve p) ->
+      aligned_ptr_ty (Tnamed base) (p ,, o_base resolve derived base).
+    Proof.
+      intros Hds Hbs Hda Hba Hz Hdiv Hdz [al [Hal Halp]] [va Hva].
+      have Eal : al = dal by congruence. subst al.
+      exists bal. split; first done.
+      destruct (ptr_vaddr (p ,, o_base resolve derived base)) as [va'|] eqn:Hva'; last by right.
+      left. exists va'. split; first done.
+      have Hsum := ptr_vaddr_offset_add resolve p (o_base resolve derived base) va va' z
+        Hva Hva' (eval_o_base' resolve derived base z Hz).
+      destruct Halp as [[a [Ha Hda']]|Hnone]; last congruence.
+      have Ea : a = va by congruence. subst a.
+      have Hdva : (bal | va)%N := N.divide_trans _ _ _ Hdiv Hda'.
+      destruct (align_of_size_of' (Tnamed base) bsz Hbs) as (al & Habal & Hnz & _).
+      have Eal : al = bal by congruence. subst al.
+      have Hdiv' : (Z.of_N bal | Z.of_N va')%Z.
+      { rewrite Hsum. apply Z.divide_add_r; [exact: N2Z_inj_divide|exact Hdz]. }
+      have Hp : (0 < Z.of_N bal)%Z by lia.
+      have Hnn : (0 <= Z.of_N va')%Z by lia.
+      move: (Z2N_inj_divide _ _ Hp Hnn Hdiv'). by rewrite !N2Z.id.
+    Qed.
+
     Lemma type_ptr_erase : forall ty p,
         type_ptr ty p -|- type_ptr (erase_qualifiers ty) p.
     Proof.
@@ -1823,6 +1946,105 @@ Module SimpleCPP.
       intros i j k p ty vt1 vt2 Hijk Hsize.
       apply (_valid_ptr_sub i j k p ty vt1 vt2 Strict Hijk).
       intros _. exact Hsize.
+    Qed.
+
+    #[local] Lemma type_ptr_base_layout derived base p dsz bsz dal bal z :
+      size_of σ (Tnamed derived) = Some dsz ->
+      size_of σ (Tnamed base) = Some bsz ->
+      @align_of σ (Tnamed derived) = Some dal ->
+      @align_of σ (Tnamed base) = Some bal ->
+      parent_offset σ derived base = Some z ->
+      (bal | dal)%N -> (Z.of_N bal | z)%Z ->
+      (0 <= z)%Z -> (z = 0 \/ z < Z.of_N dsz)%Z ->
+      (z + Z.of_N bsz <= Z.of_N dsz)%Z ->
+      type_ptr (Tnamed derived) p ⊢
+      type_ptr (Tnamed base) (p ,, o_base σ derived base).
+    Proof.
+      intros Hds Hbs Hda Hba Hz Hdiv Hdz Hnonneg Hstrict Hbound.
+      iIntros "#T".
+      iDestruct (type_ptr_aligned_pure with "T") as %Hal.
+      iDestruct (type_ptr_strict_valid with "T") as "V0".
+      iDestruct (_valid_ptr_vaddr (resolve:=σ) with "V0") as %Hva.
+      have Halbase := aligned_ptr_ty_base σ p derived base dsz bsz dal bal z
+        Hds Hbs Hda Hba Hz Hdiv Hdz Hal Hva.
+      iDestruct (type_ptr_valid_plus_one with "T") as "V1".
+      iDestruct (_valid_ptr_offset_defined with "V0") as %Hdef.
+      destruct p as [|root off]; first contradiction.
+      rewrite /_valid_ptr.
+      iDestruct "V0" as "[[_ %Hbad]|V0]"; first discriminate.
+      iDestruct "V0" as (l h) "(#B0 & %Haid & %Hpath)".
+      iDestruct "V1" as "[[%Hnull _]|V1]".
+      { exfalso. apply (f_equal ptr_alloc_id) in Hnull.
+        rewrite _dot.unlock /DOT_dot /= in Hnull.
+        destruct Haid as (aid & Haid & Hneq).
+        rewrite Hnull in Haid. injection Haid as <-. contradiction. }
+      rewrite _dot.unlock /DOT_dot /=.
+      iDestruct "V1" as (l' h') "(B1 & _ & %Hend)".
+
+      iDestruct (blocks_own_range_agree (lift_root_ptr root) l h l' h' with "[$B0 $B1]") as %Erange.
+      injection Erange as <- <-.
+      destruct (raw_path_valid_end _ _ _ _ _ Hpath)
+        as (z0 & va0 & E0 & A0 & N0 & R0).
+      destruct (raw_path_valid_end _ _ _ _ _ Hend)
+        as (z1 & va1 & E1 & A1 & N1 & R1).
+      have Eend := eval_offset_dot σ off (o_sub σ (Tnamed derived) 1) z0 (Z.of_N dsz * 1)
+        E0 (eval_o_sub' σ (Tnamed derived) 1 dsz Hds).
+      rewrite _dot.unlock /DOT_dot /eval_offset /= in Eend.
+      rewrite Eend in E1. injection E1 as <-.
+      have Hb : (z0+z < h)%Z.
+      { destruct R0 as [R0|[Hbad _]]; last discriminate.
+        destruct Hstrict as [->|Hstrict]; first lia.
+        destruct R1 as [R1|[_ R1]]; lia. }
+      have Hbase : raw_path_valid pred.Strict root l h
+        (proj1_sig (__o_dot off (o_base σ derived base))).
+      { have Eraw := offset_base_raw σ off derived base z Hz.
+        rewrite _dot.unlock /DOT_dot in Eraw. rewrite Eraw.
+        apply (raw_path_valid_base_increase pred.Strict root l h (proj1_sig off) derived base z0 z);
+          try done; first exact (proj2_sig off).
+        by left. }
+      have Ebase := eval_offset_dot σ off (o_base σ derived base) z0 z E0
+        (eval_o_base' σ derived base z Hz).
+      rewrite _dot.unlock /DOT_dot in Ebase.
+      have Hbaseend : raw_path_valid pred.Relaxed root l h
+        (proj1_sig (__o_dot (__o_dot off (o_base σ derived base)) (o_sub σ (Tnamed base) 1))).
+      { have Hbd : is_Some (eval_offset σ (__o_dot off (o_base σ derived base))).
+        { exists (z0+z)%Z. exact Ebase. }
+        destruct (offset_subscript_decompose σ (__o_dot off (o_base σ derived base))
+          (Tnamed base) bsz Hbd Hbs) as (prefix & n & d & _ & _ & _ & E).
+        have Ezero := E 0.
+        have Eid : forall o : offset, o ,, o_id = o.
+        { intros o. rewrite _dot.unlock /DOT_dot. apply __o_dot_id. }
+        rewrite (o_sub_0 σ (Tnamed base) (ex_intro _ bsz Hbs)) Eid in Ezero.
+        rewrite ?Z.add_0_r ?Z.mul_0_r ?Z.add_0_r in Ezero.
+        rewrite _dot.unlock /DOT_dot /= in E.
+        rewrite /eval_offset in Ebase.
+        rewrite Ezero in Hbase, Ebase. have Eone := E 1. rewrite /= in Eone.
+        rewrite /__o_dot /= Eone.
+        apply (raw_path_valid_subscript_increase pred.Relaxed root l h prefix
+          (Tnamed base) n d (n+1) (Z.of_N bsz*1) (z0+z)); try done; try lia.
+        destruct (decide (z0+z+Z.of_N bsz*1 < h)%Z) as [Hlt|Hlt]; first by left.
+        right. split; first done. destruct R1 as [R1|[_ R1]]; lia. }
+      rewrite /type_ptr.
+      iSplit.
+      { iPureIntro. intros E. apply (f_equal ptr_alloc_id) in E.
+        simpl in E.
+        destruct Haid as (aid & Haid & Hneq).
+        rewrite E in Haid. injection Haid as <-. contradiction. }
+      iSplit.
+      { iPureIntro. rewrite _dot.unlock /DOT_dot in Halbase. exact Halbase. }
+      iSplit; first (iPureIntro; by exists bsz).
+      rewrite /_valid_ptr _dot.unlock /DOT_dot /=.
+      iSplit; iRight; iExists l,h; iFrame "B0"; iSplit; done.
+    Qed.
+
+    Lemma type_ptr_o_base_guarded derived base p :
+      class_derives derived [base] ->
+      base_layout_compatible σ derived base ->
+      type_ptr (Tnamed derived) p ⊢ type_ptr (Tnamed base) (p ,, o_base σ derived base).
+    Proof.
+      intros _ (dsz & bsz & dal & bal & z & Hds & Hbs & Hda & Hba & Hz & Hd & Hdz & Hnn & Hs & Hb).
+      exact (type_ptr_base_layout derived base p dsz bsz dal bal z
+        Hds Hbs Hda Hba Hz Hd Hdz Hnn Hs Hb).
     Qed.
 
   End with_cpp.
@@ -2153,10 +2375,14 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
       exact (eval_o_sub_defined σ ty i Hsub).
     Qed.
 
+
+
     Axiom type_ptr_o_base : forall derived base p,
       class_derives derived [base] ->
       base_layout_compatible σ derived base ->
       type_ptr (Tnamed derived) p ⊢ type_ptr (Tnamed base) (p ,, _base derived base).
+
+
 
     Axiom type_ptr_o_field_type_ptr : forall p fld cls (st : Struct),
       glob_def σ cls = Some (Gstruct st) ->
