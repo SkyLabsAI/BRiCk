@@ -329,7 +329,8 @@ Module SimpleCPP.
 
     (** A non-null valid pointer must retain an actual, non-null allocation ID.
         Excluding address zero alone would also admit [invalid_ptr], whose
-        address and allocation ID are both undefined. *)
+        address and allocation ID are both undefined. The stored offset must
+        also be defined: provenance alone does not exclude missing layouts. *)
     Definition _valid_ptr vt (p : ptr) : mpred :=
       [| p = nullptr /\ vt = Relaxed |] \\//
         Exists σ' base l h o zo,
@@ -337,6 +338,7 @@ Module SimpleCPP.
                 in_range vt l zo h **
                 [| eval_offset σ' o = Some zo /\ p = base ,, o |] **
                 [| exists aid, ptr_alloc_id p = Some aid /\ aid <> null_alloc_id |] **
+                [| ptr_offset_defined p |] **
                 [| ptr_vaddr p <> Some 0%N |].
     (* strict validity (not past-the-end) *)
     Notation strict_valid_ptr := (_valid_ptr Strict).
@@ -355,7 +357,7 @@ Module SimpleCPP.
       [| same_address p nullptr <-> p = nullptr |].
     Proof.
       rewrite /_valid_ptr same_address_eq; iIntros "[[-> _]|H]";
-        [ |iDestruct "H" as (??????) "(_ & _ & _ & _ & %Hne)"]; iIntros "!%".
+        [ |iDestruct "H" as (??????) "(_ & _ & _ & _ & _ & %Hne)"]; iIntros "!%".
       by rewrite same_property_iff ptr_vaddr_nullptr; naive_solver.
       rewrite same_property_iff; split; last intros ->;
         rewrite ptr_vaddr_nullptr; naive_solver.
@@ -367,7 +369,7 @@ Module SimpleCPP.
     Theorem not_strictly_valid_ptr_nullptr : strict_valid_ptr nullptr |-- False.
     Proof.
       iDestruct 1 as "[[_ %]|H] /="; first done.
-      by iDestruct "H" as (??????) "(_ & _ & _ & _ & %Hne)".
+      by iDestruct "H" as (??????) "(_ & _ & _ & _ & _ & %Hne)".
     Qed.
     Typeclasses Opaque _valid_ptr.
 
@@ -390,6 +392,14 @@ Module SimpleCPP.
     Lemma valid_ptr_alloc_id : forall p,
       valid_ptr p |-- [| is_Some (ptr_alloc_id p) |].
     Proof. intros. apply _valid_ptr_alloc_id. Qed.
+
+    Lemma _valid_ptr_offset_defined vt p :
+      _valid_ptr vt p |-- [| ptr_offset_defined p |].
+    Proof.
+      rewrite /_valid_ptr. iDestruct 1 as "[[-> _]|H]".
+      - iPureIntro. by exists 0.
+      - iDestruct "H" as (??????) "(_ & _ & _ & _ & $ & _)".
+    Qed.
 
     Lemma strict_valid_ptr_nonnull_alloc_id p :
       strict_valid_ptr p |--
@@ -1652,9 +1662,14 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
     (* Axiom strict_valid_ptr_field : ∀ p f,
       strict_valid_ptr (p ,, o_field σ f) |-- strict_valid_ptr p. *)
 
-    (* TODO: maybe add a validity of offsets to allow stating this more generally. *)
-    Axiom valid_o_sub_size : forall p ty i vt,
+    Lemma valid_o_sub_size : forall p ty i vt,
       _valid_ptr vt (p ,, o_sub σ ty i) |-- [| is_Some (size_of σ ty) |].
+    Proof.
+      intros p ty i vt. iIntros "H".
+      iDestruct (_valid_ptr_offset_defined with "H") as %Hpath.
+      iPureIntro. apply (ptr_offset_defined_dot σ) in Hpath as [_ Hsub].
+      exact (eval_o_sub_defined σ ty i Hsub).
+    Qed.
 
     Axiom type_ptr_o_base : forall derived base p,
       class_derives derived [base] ->
@@ -1674,12 +1689,29 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
     Axiom type_ptr_o_sub_end : forall p (n : N) ty,
       type_ptr (Tarray ty n) p ⊢ valid_ptr (p ,, _sub ty n).
 
-    Axiom o_base_directly_derives : forall p base derived,
+    Lemma o_base_directly_derives : forall p base derived,
       strict_valid_ptr (p ,, o_base σ derived base) |--
       [| directly_derives σ derived base |].
+    Proof.
+      intros p base derived. iIntros "H".
+      iDestruct (_valid_ptr_offset_defined with "H") as %Hpath.
+      iPureIntro. apply (ptr_offset_defined_dot σ) in Hpath as [_ Hbase].
+      rewrite /eval_offset /eval_raw_offset /= /mk_offset_seg /=
+        /simple_pointers_utils.o_base_off in Hbase.
+      destruct (parent_offset σ derived base); naive_solver.
+    Qed.
 
-    Axiom o_derived_directly_derives : forall p base derived,
+    Lemma o_derived_directly_derives : forall p base derived,
       strict_valid_ptr (p ,, o_derived σ base derived) |--
       [| directly_derives σ derived base |].
+    Proof.
+      intros p base derived. iIntros "H".
+      iDestruct (_valid_ptr_offset_defined with "H") as %Hpath.
+      iPureIntro. apply (ptr_offset_defined_dot σ) in Hpath as [_ Hbase].
+      rewrite /eval_offset /eval_raw_offset /= /mk_offset_seg /=
+        /simple_pointers_utils.o_derived_off in Hbase.
+      destruct (parent_offset σ derived base); naive_solver.
+    Qed.
+
   End with_cpp.
 End VALID_PTR.

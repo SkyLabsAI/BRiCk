@@ -820,6 +820,33 @@ Module PTRS_IMPL <: PTRS_INTF.
     UNFOLD_dot. rewrite /eval_offset => σ [o1 ?] [o2 ?] s1 s2 /= E1 E2.
     by rewrite /raw_offset_merge eval_raw_offset_collapse eval_raw_offset_app E1 E2.
   Qed.
+  (** Defined stored offsets exclude missing-layout segments, independently of
+      whether a pointer has a concrete virtual address. *)
+  Definition ptr_offset_defined (p : ptr) : Prop :=
+    match p with
+    | invalid_ptr_ => False
+    | offset_ptr _ o => is_Some (eval_raw_offset (`o))
+    end.
+
+  Lemma ptr_offset_defined_dot σ p o :
+    ptr_offset_defined (p ,, o) <->
+    ptr_offset_defined p /\ is_Some (eval_offset σ o).
+  Proof.
+    UNFOLD_dot. destruct p as [|root off]; first naive_solver.
+    rewrite /ptr_offset_defined /= /raw_offset_merge
+      eval_raw_offset_collapse eval_raw_offset_app /eval_offset.
+    destruct (eval_raw_offset (`off)), (eval_raw_offset (`o)); naive_solver.
+  Qed.
+
+  Lemma eval_o_sub_defined σ ty i :
+    is_Some (eval_offset σ (o_sub σ ty i)) -> is_Some (size_of σ ty).
+  Proof.
+    rewrite /o_sub; case_decide;
+      rewrite /eval_offset /eval_raw_offset /= /mkOffset /mk_offset_seg /=
+        /o_sub_off size_of_erase_qualifiers;
+      destruct (size_of σ ty); naive_solver.
+  Qed.
+
 
   #[global] Instance id_dot : LeftId (=) o_id o_dot.
   Proof. UNFOLD_dot. intros o. apply /sig_eq_pi. by case: o. Qed.
