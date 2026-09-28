@@ -647,7 +647,19 @@ Module PTRS_IMPL <: PTRS_INTF.
   Definition ptr := ptr_.
   #[global] Instance ptr_eq_dec : EqDecision ptr.
   Proof. solve_decision. Defined.
-  #[global] Declare Instance ptr_countable : Countable ptr.
+  #[global] Instance ptr_countable : Countable ptr.
+  Proof.
+    apply (inj_countable
+      (fun p : ptr => match p with
+         | invalid_ptr_ => None
+         | offset_ptr root off => Some (root, off)
+         end)
+      (fun encoded => Some (match encoded with
+         | None => invalid_ptr_
+         | Some (root, off) => offset_ptr root off
+         end))).
+    by intros [|root off].
+  Qed.
   #[global] Instance offset_ptr_inj : Inj2 (=) (=) (=) offset_ptr.
   Proof. by intros ???? [=]. Qed.
 
