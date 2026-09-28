@@ -501,6 +501,47 @@ Module SimpleCPP.
             by rewrite Z.add_0_r.
           + by rewrite fmap_app foldr_app /=.
       Qed.
+      Lemma raw_path_valid_subscript_increase vt root l h prefix ty n d m delta z :
+        raw_path_valid pred.Strict root l h
+          (prefix ++ raw_offset_collapse [(o_sub_ ty n,d)]) ->
+        eval_raw_offset (prefix ++ raw_offset_collapse [(o_sub_ ty n,d)]) = Some z ->
+        0 <= delta ->
+        (z + delta < h \/ (vt = pred.Relaxed /\ z + delta = h)) ->
+        raw_path_valid vt root l h
+          (prefix ++ raw_offset_collapse [(o_sub_ ty m,d+delta)]).
+      Proof.
+        intros Hpath Hz Hdelta Hbound.
+        have Hpre := raw_path_valid_prefix _ _ _ _ _ _ Hpath.
+        destruct (raw_path_valid_end _ _ _ _ _ Hpre)
+          as (zp & vp & Ep & Ap & Np & Rp).
+        destruct (raw_path_valid_end _ _ _ _ _ Hpath)
+          as (zi & vi & Ei & Ai & Ni & Ri).
+        rewrite Hz in Ei. injection Ei as <-.
+        rewrite eval_subscript_collapse Ep in Hz. injection Hz as Hz.
+        rewrite fold_subscript_collapse in Ai.
+        destruct (fold_offset_vaddr_increase_tail (snd <$> prefix) (root_ptr_vaddr root)
+          d (d+delta) vi ltac:(lia) Ai) as (vj & Aj & Ej).
+        have Nj : vj <> 0%N by lia.
+        have Rj : l <= zp + (d+delta) < h \/
+            (vt = pred.Relaxed /\ zp + (d+delta) = h).
+        { destruct Ri as [Ri|[Hbad _]]; last discriminate.
+          destruct Hbound as [Hb|[Hvt Hb]]; [left|right]; split; try assumption; lia. }
+        destruct (decide (m=0 /\ d+delta=0)) as [Hzero|Hnon].
+        - have Etail : raw_offset_collapse [(o_sub_ ty m,d+delta)] = [].
+          { by rewrite /= /offset_seg_cons decide_True. }
+          rewrite Etail app_nil_r. destruct vt; first exact Hpre.
+          exact (raw_path_valid_weaken _ _ _ _ Hpre).
+        - have Etail : raw_offset_collapse [(o_sub_ ty m,d+delta)] =
+              [(o_sub_ ty m,d+delta)].
+          { by rewrite /= /offset_seg_cons decide_False. }
+          rewrite Etail.
+          apply (raw_path_valid_snoc vt root l h prefix _ (zp + (d+delta)) vj);
+            try assumption.
+          + rewrite eval_raw_offset_app Ep.
+            change (liftM2 Z.add (Some zp) (Some (d+delta+0)) = Some (zp+(d+delta))).
+            by rewrite Z.add_0_r.
+          + by rewrite fmap_app foldr_app /=.
+      Qed.
     End subscript_interpolation.
 
     Lemma raw_path_valid_vaddr {resolve : genv} vt root l h off :
@@ -1410,6 +1451,64 @@ Module SimpleCPP.
       valid_ptr (p ,, o_sub σ ty 1).
     Proof. iDestruct 1 as "(_ & _ & _ & _ & $)". Qed.
 
+    Section subscript_validity.
+      #[local] Open Scope Z_scope.
+      Lemma type_ptr_subscript_valid ty p sz elem esz (i : Z) vt :
+        size_of σ ty = Some sz ->
+        size_of σ elem = Some esz ->
+        0 <= Z.of_N esz * i <= Z.of_N sz ->
+        (vt = pred.Strict -> Z.of_N esz * i < Z.of_N sz) ->
+        type_ptr ty p ⊢ _valid_ptr vt (p ,, o_sub σ elem i).
+      Proof.
+        intros Hsz Hes Hrange Hstrict.
+        iDestruct 1 as "(_ & _ & _ & V0 & V1)".
+        iDestruct (_valid_ptr_offset_defined with "V0") as %Hdef.
+        destruct p as [|root off]; first contradiction.
+        rewrite /_valid_ptr.
+        iDestruct "V0" as "[[_ %Hbad]|V0]"; first discriminate.
+        iDestruct "V0" as (l h) "(B0 & %Haid & %Hpath)".
+        iDestruct "V1" as "[[%Hnull _]|V1]".
+        { exfalso. apply (f_equal ptr_alloc_id) in Hnull.
+          rewrite _dot.unlock /DOT_dot /= in Hnull.
+          destruct Haid as (aid & Haid & Hneq).
+          rewrite Hnull in Haid. injection Haid as <-. contradiction. }
+        rewrite _dot.unlock /DOT_dot /=.
+        iDestruct "V1" as (l' h') "(B1 & _ & %Hend)".
+        iDestruct (blocks_own_range_agree with "[$B0 $B1]") as %Erange.
+        injection Erange as <- <-.
+        iRight. iExists l, h. iFrame "B0". iSplit; first done.
+        iPureIntro.
+        destruct (raw_path_valid_end _ _ _ _ _ Hpath)
+          as (z0 & va0 & E0 & A0 & N0 & R0).
+        destruct (raw_path_valid_end _ _ _ _ _ Hend)
+          as (z1 & va1 & E1 & A1 & N1 & R1).
+        have Eend := eval_offset_dot σ off (o_sub σ ty 1) z0 (Z.of_N sz * 1)
+          E0 (eval_o_sub' σ ty 1 sz Hsz).
+        rewrite _dot.unlock /DOT_dot /eval_offset /= in Eend.
+        rewrite Eend in E1. injection E1 as <-.
+        have Hb : z0 + Z.of_N esz * i < h \/
+            (vt = pred.Relaxed /\ z0 + Z.of_N esz * i = h).
+        { destruct vt.
+          - have Hs := Hstrict eq_refl. left.
+            destruct R1 as [R1|[_ R1]]; lia.
+          - destruct (decide (z0 + Z.of_N esz * i < h)) as [Hlt|Hlt];
+              first by left.
+            right. split; first done. destruct R1 as [R1|[_ R1]]; lia. }
+        destruct (offset_subscript_decompose σ off elem esz Hdef Hes)
+          as (prefix & n & d & _ & _ & _ & E).
+        have Ezero := E 0.
+        have Eid : off ,, o_id = off.
+        { rewrite _dot.unlock /DOT_dot. apply __o_dot_id. }
+        rewrite (o_sub_0 σ elem (ex_intro _ esz Hes)) Eid in Ezero.
+        rewrite ?Z.add_0_r ?Z.mul_0_r ?Z.add_0_r in Ezero.
+        rewrite _dot.unlock /DOT_dot /= in E.
+        rewrite Ezero in Hpath, E0. rewrite E.
+        exact (raw_path_valid_subscript_increase vt root l h prefix
+          (erase_qualifiers elem) n d (n+i) (Z.of_N esz * i) z0
+          Hpath E0 (proj1 Hrange) Hb).
+      Qed.
+    End subscript_validity.
+
     Lemma type_ptr_erase : forall ty p,
         type_ptr ty p -|- type_ptr (erase_qualifiers ty) p.
     Proof.
@@ -1700,7 +1799,23 @@ Module SimpleCPP.
            |  facts - where [i] is a byte-offset within the [ty] ([0 <= i < sizeof(ty)]).
            v *)
         type_ptr ty p |-- type_ptr Tbyte (p ,, (o_sub σ Tbyte i)).
-    Proof. Admitted.
+    Proof.
+      intros ty p i sz Hsz Hi. iIntros "#Htype".
+      have Hbyte : size_of σ Tbyte = Some 1%N by done.
+      iDestruct (type_ptr_subscript_valid ty p sz Tbyte 1 (Z.of_N i) pred.Strict
+        Hsz Hbyte ltac:(lia) ltac:(intros _; lia) with "Htype") as "#Vi".
+      iDestruct (type_ptr_subscript_valid ty p sz Tbyte 1 (Z.of_N i + 1) pred.Relaxed
+        Hsz Hbyte ltac:(lia) ltac:(discriminate) with "Htype") as "Vend".
+      iDestruct (strict_valid_ptr_nonnull_alloc_id with "Vi") as %(aid & Haid & Hneq).
+      rewrite /type_ptr.
+      iSplit.
+      { iPureIntro. intros E. rewrite E ptr_alloc_id_nullptr in Haid.
+        injection Haid as <-. contradiction. }
+      iSplit.
+      { iPureIntro. exists 1%N. split; [apply align_of_uchar|apply aligned_ptr_min]. }
+      iSplit; first (iPureIntro; by exists 1%N).
+      iFrame "Vi". rewrite -offset_ptr_dot o_dot_sub. iExact "Vend".
+    Qed.
 
     Lemma type_ptr_obj_repr :
       forall (ty : type) (p : ptr) (sz : N),
