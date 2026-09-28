@@ -15,6 +15,7 @@ Require Import Equations.Prop.Equations.
 
 Require Import stdpp.relations.
 Require Import stdpp.gmap.
+Require Import stdpp.proof_irrel.
 Require Import skylabs.prelude.base.
 Require Import skylabs.prelude.addr.
 Require Import skylabs.prelude.avl.
@@ -27,8 +28,6 @@ Require Import skylabs.lang.cpp.semantics.values.
 Require Import skylabs.lang.cpp.model.simple_pointers_utils.
 Require Import skylabs.lang.cpp.model.inductive_pointers_utils.
 Require Import skylabs.lang.cpp.semantics.ptrs.
-
-Axiom irr : ∀ (P : Prop) (p q : P), p = q.
 
 Implicit Types (σ : genv) (z : Z).
 #[local] Close Scope nat_scope.
@@ -216,6 +215,14 @@ Module PTRS_IMPL <: PTRS_INTF.
   Lemma canon_syn_sem_eqv os : roff_canon os <-> roff_canon_syn os.
   Proof. split; [apply canon_sem_syn|apply canon_syn_sem]. Qed.
 
+  (** Canonicality is a negation, so equality of its proofs only needs
+      function extensionality, already used by the normalization machinery. *)
+  #[global] Instance roff_canon_proof_irrel (os : raw_offset) :
+    ProofIrrel (roff_canon os).
+  Proof.
+    intros H1 H2. apply functional_extensionality. intros Hred. destruct (H1 Hred).
+  Qed.
+
   (** *** Offsets *)
   Definition offset := {o : raw_offset | roff_canon o}.
   #[global] Instance offset_eq_dec : EqDecision offset.
@@ -225,7 +232,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     {
       subst. left.
       f_equal.
-      apply: irr.
+      apply proof_irrel.
     }
     {
       right.
@@ -895,9 +902,8 @@ Module PTRS_IMPL <: PTRS_INTF.
     intros [os Hcanon]. simpl.
     generalize (norm_canon os).
     rewrite (proj1 (norm_invol os) Hcanon).
-    intros Hcanon'. by rewrite (irr _ Hcanon' Hcanon).
+    intros Hcanon'. by rewrite (proof_irrel Hcanon' Hcanon).
   Qed.
-
 
   Section norm_lemmas.
 
@@ -1056,16 +1062,6 @@ Module PTRS_IMPL <: PTRS_INTF.
 
   Include PTRS_SYNTAX_MIXIN.
 
-  Lemma sig_eq {A} {P : A -> Prop} :
-  ∀ (x y : A) (p : P x) (q : P y),
-    x = y ->
-    x ↾ p = y ↾ q.
-  Proof.
-    move=> x y p q H.
-    subst. f_equal.
-    apply: irr.
-  Qed.
-
   Program Definition o_id : offset :=
     [].
   Next Obligation.
@@ -1079,7 +1075,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     UNFOLD_dot.
     move=> [o H].
     rewrite /o_id /__o_dot.
-    simpl. apply: sig_eq.
+    simpl. apply (sig_eq_pi roff_canon); simpl.
     by apply norm_invol.
   Qed.
 
@@ -1088,7 +1084,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     UNFOLD_dot.
     move=> [o H].
     rewrite /o_id /__o_dot.
-    simpl. apply: sig_eq.
+    simpl. apply (sig_eq_pi roff_canon); simpl.
     rewrite app_nil_r.
     by apply norm_invol.
   Qed.
@@ -1098,7 +1094,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     UNFOLD_dot.
     move=> [o1 H1] [o2 H2] [o3 H3].
     rewrite /o_id /__o_dot.
-    simpl. apply: sig_eq.
+    simpl. apply (sig_eq_pi roff_canon); simpl.
     by rewrite norm_absorb_l norm_absorb_r app_assoc.
   Qed.
 
@@ -1109,7 +1105,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     move=> [| r [o H]]; UNFOLD_dot.
     { easy. }
     {
-      f_equal. apply: sig_eq.
+      f_equal. apply (sig_eq_pi roff_canon); simpl.
       rewrite app_nil_r.
       by apply norm_invol.
     }
@@ -1123,7 +1119,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     { easy. }
     {
       move=> [o1 H1] [o2 H2].
-      simpl. f_equal. apply: sig_eq.
+      simpl. f_equal. apply (sig_eq_pi roff_canon); simpl.
       by rewrite norm_absorb_l norm_absorb_r app_assoc.
     }
   Qed.
@@ -1228,7 +1224,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     move=> σ [| rp [o H]] base der _.
     { done. }
     {
-      f_equal. simpl. apply: sig_eq.
+      f_equal. simpl. apply (sig_eq_pi roff_canon); simpl.
       rewrite norm_absorb_r -app_assoc norm_rel.
       split.
       {
@@ -1252,7 +1248,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     move=> σ [| rp [o H]] base der _.
     { done. }
     {
-      f_equal. simpl. apply: sig_eq.
+      f_equal. simpl. apply (sig_eq_pi roff_canon); simpl.
       rewrite norm_absorb_r -app_assoc norm_rel.
       split.
       {
@@ -1274,7 +1270,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     move=> σ i j ty.
     rewrite /__o_dot /o_sub /o_id.
     repeat case_match; subst;
-    try lia; apply sig_eq; simpl.
+    try lia; apply (sig_eq_pi roff_canon); simpl.
     { by simp normalize. }
     { simp normalize. by destruct j. }
     { simp normalize. by destruct i. }
@@ -1670,13 +1666,13 @@ Module PTRS_IMPL <: PTRS_INTF.
     match type of E1 with
     | _ = eval_offset _ ?x =>
         have O1 : x = o ,, o_sub σ ty n1 by
-          (UNFOLD_dot; apply sig_eq; done);
+          (UNFOLD_dot; apply (sig_eq_pi roff_canon); done);
         rewrite O1 in E1
     end.
     match type of E2 with
     | _ = eval_offset _ ?x =>
         have O2 : x = o ,, o_sub σ ty n2 by
-          (UNFOLD_dot; apply sig_eq; done);
+          (UNFOLD_dot; apply (sig_eq_pi roff_canon); done);
         rewrite O2 in E2
     end.
     destruct e1 as [z1|]; try discriminate.
