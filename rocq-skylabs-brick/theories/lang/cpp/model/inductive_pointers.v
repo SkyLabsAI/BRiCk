@@ -1056,6 +1056,61 @@ Module PTRS_IMPL <: PTRS_INTF.
       repeat case_decide; simpl in Hdef |- *; try done; naive_solver.
   Qed.
 
+
+  Lemma raw_offset_collapse_base_snoc xs derived base z :
+    raw_offset_collapse xs = xs -> is_Some (eval_raw_offset xs) ->
+    (exists prefix, xs = prefix ++ [(o_derived_ base derived,(-z)%Z)] /\
+      raw_offset_collapse (xs ++ [(o_base_ derived base,z)]) = prefix) \/
+    raw_offset_collapse (xs ++ [(o_base_ derived base,z)]) = xs ++ [(o_base_ derived base,z)].
+  Proof.
+    induction xs as [|os xs IH]; intros Hwf Hdef; first by right.
+    have Htail := raw_offset_collapse_wf_tail _ _ Hwf.
+    rewrite eval_raw_offset_cons in Hdef.
+    destruct (eval_offset_seg os) as [a|] eqn:Eos; last by destruct Hdef.
+    destruct (eval_raw_offset xs) as [b|] eqn:Exs; last by destruct Hdef.
+    destruct (IH Htail (ex_intro _ b eq_refl)) as [(prefix & -> & E)|E].
+
+    - left. exists (os :: prefix). split; first done.
+      change (offset_seg_cons os (raw_offset_collapse
+        ((prefix ++ [(o_derived_ base derived,(-z)%Z)]) ++ [(o_base_ derived base,z)])) = os :: prefix).
+      rewrite E.
+      have Hpre := raw_offset_collapse_wf_init (os :: prefix)
+        [(o_derived_ base derived,(-z)%Z)] Hwf.
+      have Hp := raw_offset_collapse_wf_tail _ _ Hpre.
+      by rewrite /= Hp in Hpre.
+    - destruct xs as [|os' xs].
+      + destruct os as [[f|ty n|d ba|ba d|] dz];
+          rewrite /= /offset_seg_cons /= in Hwf Eos |- *; try (right; done).
+        * case_decide; [by right|by right].
+        * case_decide as Hcancel.
+          -- destruct Hcancel as (-> & -> & Hz). left. exists [].
+             split; last done. simpl. f_equal. f_equal. lia.
+          -- by right.
+      + right. change (offset_seg_cons os
+          (raw_offset_collapse ((os' :: xs) ++ [(o_base_ derived base,z)])) =
+          (os :: os' :: xs) ++ [(o_base_ derived base,z)]).
+        rewrite E offset_seg_cons_app_defined; [|by exists a|discriminate].
+        change (offset_seg_cons os (raw_offset_collapse (os' :: xs)) = os :: os' :: xs) in Hwf.
+        by rewrite Htail in Hwf; rewrite Hwf.
+  Qed.
+
+  Lemma eval_o_base' σ derived base z :
+    parent_offset σ derived base = Some z ->
+    eval_offset σ (o_base σ derived base) = Some z.
+  Proof.
+    intros Hz. rewrite /eval_offset /o_base /mkOffset /mk_offset_seg /= /o_base_off Hz.
+    change (Some (z+0)%Z = Some z). by rewrite Z.add_0_r.
+  Qed.
+
+  Lemma offset_base_raw σ (off : offset) derived base z :
+    parent_offset σ derived base = Some z ->
+    proj1_sig (off ,, o_base σ derived base) =
+      raw_offset_collapse (proj1_sig off ++ [(o_base_ derived base,z)]).
+  Proof.
+    intros Hz. rewrite _dot.unlock /DOT_dot /= /raw_offset_merge.
+    by rewrite /o_base /mkOffset /mk_offset_seg /= /o_base_off Hz.
+  Qed.
+
   #[local] Lemma raw_offset_collapse_sub_separated xs ty n z :
     raw_offset_collapse xs = xs ->
     is_Some (eval_raw_offset xs) ->
