@@ -936,41 +936,6 @@ Module SimpleCPP.
     Proof. iDestruct 1 as "(_ & _ & % & _)"; eauto. Qed.
 
 
-    (* This lemma is unused; it confirms we can lift the other half of
-    [pinned_ptr_aligned_divide], but we don't expose this. *)
-    #[local] Lemma pinned_ptr_type_divide_2 {va n p ty}
-      (Hal : align_of ty = Some n) (Hnn : p <> nullptr) :
-      pinned_ptr va p ⊢ valid_ptr (p ,, o_sub σ ty 1) -∗
-      [| (n | va)%N |] -∗ type_ptr ty p.
-    Proof.
-      rewrite /type_ptr /aligned_ptr_ty Hal /=.
-      iIntros "[V [%P|[%P P]]] #$ %HvaAl"; first by case P.
-      iFrame (Hnn).
-      (* iDestruct (pinned_ptr_valid with "P") as "#$". *)
-      iSplit; last admit.
-      iExists _; iSplit; first done.
-      iIntros "!%". rewrite /aligned_ptr.
-      naive_solver.
-    Admitted.
-
-    (* XXX move *)
-    Axiom align_of_uchar : align_of Tuchar = Some 1%N.
-
-    (* Requirememnt is too strong, we'd want just [(strict_)valid_ptr p]; see comment
-    above on [aligned_ptr_mpred] and [mem_inj_own].
-    XXX: this assumes that casting to uchar preserves the pointer.
-    *)
-    #[local] Lemma valid_type_uchar p (Hnn : p <> nullptr) va :
-      pinned_ptr va p ⊢
-      valid_ptr (p ,, o_sub σ Tuchar 1) -∗
-      type_ptr Tuchar p.
-    Proof.
-      iIntros "#P #V".
-      iApply (pinned_ptr_type_divide_2 (n := 1)) => //. {
-        exact: align_of_uchar. }
-      iIntros "!%". exact: N.divide_1_l.
-    Qed.
-
     (* todo(gmm): this isn't accurate, but it is sufficient to show that the axioms are
     instantiatable. *)
     Definition mdc_path {_ : genv} (this : globname) (most_derived : list globname)
