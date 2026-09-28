@@ -1579,16 +1579,56 @@ Module PTRS_IMPL <: PTRS_INTF.
       end
     end.
 
-  Lemma ptr_vaddr_resp_leq :
-    ∀ σ1 σ2,
-      genv_leq σ1 σ2 ->
-      @ptr_vaddr σ1 = @ptr_vaddr σ2.
+  (** Environment extension preserves defined addresses. An offset whose type
+      was incomplete may become defined, so equality of the partial address
+      functions would be too strong. *)
+  Lemma offset_of_extension (s1 s2 : genv) cls fld z :
+    genv_leq s1 s2 -> offset_of s1 cls fld = Some z -> offset_of s2 cls fld = Some z.
   Proof.
-    move=> σ1 σ2 H.
-    rewrite /ptr_vaddr.
-    extensionality p.
-    destruct p. easy.
-  Admitted.
+    intros Hle. have Hcompat : s1.(genv.genv_tu) ⊧ s2 by constructor; exact (tu_le Hle).
+    rewrite /offset_of. case Hdef: (glob_def s1 cls) => [gd|] //.
+    destruct gd => //; intros H.
+    - erewrite (glob_def_genv_compat_union (Hσ := Hcompat)); eauto.
+    - erewrite (glob_def_genv_compat_struct (Hσ := Hcompat)); eauto.
+  Qed.
+
+  Lemma parent_offset_extension (s1 s2 : genv) derived base z :
+    genv_leq s1 s2 -> parent_offset s1 derived base = Some z ->
+    parent_offset s2 derived base = Some z.
+  Proof.
+    intros Hle. have Hcompat : s1.(genv.genv_tu) ⊧ s2 by constructor; exact (tu_le Hle).
+    intros H. apply (parent_offset_genv_compat (Hσ := Hcompat)).
+    move: H. by rewrite parent_offset.unlock.
+  Qed.
+
+  Lemma eval_offset_seg_extension (s1 s2 : genv) o z :
+    genv_leq s1 s2 -> eval_offset_seg s1 o = Some z -> eval_offset_seg s2 o = Some z.
+  Proof.
+    intros Hle. destruct o as [f|ty i|derived base|base derived]; simpl.
+    - rewrite /o_field_off. destruct f => //; exact (offset_of_extension _ _ _ _ _ Hle).
+    - rewrite /o_sub_off. have Hsize := Proper_size_of _ _ Hle ty ty eq_refl.
+      destruct Hsize; simpl; naive_solver.
+    - exact (parent_offset_extension _ _ _ _ _ Hle).
+    - rewrite /o_derived_off. case E: (parent_offset s1 derived base) => [n|] //=.
+      rewrite (parent_offset_extension _ _ _ _ _ Hle E). done.
+  Qed.
+
+  Lemma eval_offset_aux_extension (s1 s2 : genv) os z :
+    genv_leq s1 s2 -> eval_offset_aux s1 os = Some z -> eval_offset_aux s2 os = Some z.
+  Proof.
+    intros Hle. revert z. induction os as [|o os IH]; simpl; first done.
+    case E: (eval_offset_seg s1 o) => [n|] //=.
+    case F: (eval_offset_aux s1 os) => [m|] //=.
+    rewrite (eval_offset_seg_extension _ _ _ _ Hle E) (IH _ F). done.
+  Qed.
+
+  Lemma ptr_vaddr_resp_leq (s1 s2 : genv) p va :
+    genv_leq s1 s2 -> @ptr_vaddr s1 p = Some va -> @ptr_vaddr s2 p = Some va.
+  Proof.
+    intros Hle. destruct p as [|rp os]; simpl; first done.
+    rewrite /eval_offset. case E: (eval_offset_aux s1 (`os)) => [z|] //=.
+    rewrite (eval_offset_aux_extension _ _ _ _ Hle E). done.
+  Qed.
 
   Lemma ptr_vaddr_nullptr :
     ∀ σ, @ptr_vaddr σ nullptr = Some 0%N.
