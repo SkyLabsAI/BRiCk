@@ -536,3 +536,50 @@ Section with_genv.
     by inversion 1; naive_solver.
   Qed.
 End with_genv.
+
+(** Sufficient metadata for projecting complete-object pointer typing to a base.
+    This concerns pointer extent and alignment, not ownership of base bytes. *)
+Definition base_layout_compatible (σ : genv) (derived base : name) : Prop :=
+  exists dsz bsz dal bal z,
+    size_of σ (Tnamed derived) = Some dsz /\
+    size_of σ (Tnamed base) = Some bsz /\
+    @align_of σ (Tnamed derived) = Some dal /\
+    @align_of σ (Tnamed base) = Some bal /\
+    parent_offset σ derived base = Some z /\
+    (bal | dal)%N /\ (Z.of_N bal | z)%Z /\
+    (0 <= z)%Z /\ (z = 0 \/ z < Z.of_N dsz)%Z /\
+    (z + Z.of_N bsz <= Z.of_N dsz)%Z.
+
+Definition tu_base_layout_compatible (tu : translation_unit) (derived base : name) : bool :=
+  match tu.(types) !! derived, tu.(types) !! base, parent_offset_tu tu derived base with
+  | Some (Gstruct ds), Some (Gstruct bs), Some z =>
+      bool_decide (
+        valid_alignment ds.(s_size) ds.(s_alignment) /\
+        valid_alignment bs.(s_size) bs.(s_alignment) /\
+        (bs.(s_alignment) | ds.(s_alignment))%N /\
+        (Z.of_N bs.(s_alignment) | z)%Z /\
+        (0 <= z)%Z /\ (z = 0 \/ z < Z.of_N ds.(s_size))%Z /\
+        (z + Z.of_N bs.(s_size) <= Z.of_N ds.(s_size))%Z)
+  | _, _, _ => false
+  end.
+
+Lemma tu_base_layout_compatible_sound {σ tu} {Hσ : tu ⊧ σ} derived base :
+  tu_base_layout_compatible tu derived base = true ->
+  base_layout_compatible σ derived base.
+Proof.
+  rewrite /tu_base_layout_compatible.
+  destruct (tu.(types) !! derived) as [gd|] eqn:Hd; last discriminate.
+  destruct gd as [| |ds| | | |]; try discriminate.
+  destruct (tu.(types) !! base) as [gb|] eqn:Hb; last discriminate.
+  destruct gb as [| |bs| | | |]; try discriminate.
+  destruct (parent_offset_tu tu derived base) as [z|] eqn:Hz; last discriminate.
+  intros Hcheck. apply bool_decide_eq_true in Hcheck.
+  destruct Hcheck as (Hda & Hba & Hdiv & Hdz & Hnonneg & Hstrict & Hbound).
+  exists ds.(s_size), bs.(s_size), ds.(s_alignment), bs.(s_alignment), z.
+  repeat split; try assumption.
+  - exact (size_of_genv_compat tu σ derived ds Hσ Hd).
+  - exact (size_of_genv_compat tu σ base bs Hσ Hb).
+  - exact (align_of_genv_compat tu derived ds Hσ Hd Hda).
+  - exact (align_of_genv_compat tu base bs Hσ Hb Hba).
+  - exact (parent_offset_genv_compat Hz).
+Qed.
