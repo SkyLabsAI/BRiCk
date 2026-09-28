@@ -85,6 +85,10 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.land :
   → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
     → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
 Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.has_type_prop :
+  skylabs.lang.cpp.semantics.genv.genv
+  → skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.val
+    → skylabs.lang.cpp.syntax.core.type → Prop
 skylabs.lang.cpp.model.simple_pointers_utils.global_ptr_encode_vaddr :
   skylabs.lang.cpp.syntax.core.obj_name → skylabs.prelude.addr.vaddr
 Corelib.Strings.PrimString.get :
@@ -229,6 +233,10 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.land :
   → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
     → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
 Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.has_type_prop :
+  skylabs.lang.cpp.semantics.genv.genv
+  → skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.val
+    → skylabs.lang.cpp.syntax.core.type → Prop
 skylabs.lang.cpp.model.simple_pointers_utils.global_ptr_encode_vaddr :
   skylabs.lang.cpp.syntax.core.obj_name → skylabs.prelude.addr.vaddr
 Corelib.Strings.PrimString.get :
@@ -373,6 +381,10 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.land :
   → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
     → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
 Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.has_type_prop :
+  skylabs.lang.cpp.semantics.genv.genv
+  → skylabs.lang.cpp.model.simple_pred.VALUES_DEFS_IMPL.val
+    → skylabs.lang.cpp.syntax.core.type → Prop
 skylabs.lang.cpp.model.simple_pointers_utils.global_ptr_encode_vaddr :
   skylabs.lang.cpp.syntax.core.obj_name → skylabs.prelude.addr.vaddr
 Corelib.Strings.PrimString.get :

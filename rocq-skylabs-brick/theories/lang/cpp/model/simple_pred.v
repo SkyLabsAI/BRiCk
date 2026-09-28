@@ -964,283 +964,6 @@ Module SimpleCPP.
       by apply singleton_update, cmra_update_exclusive.
     Qed.
 
-    Definition tptsto (t : type) (q : cQp.t) (p : ptr) (v : val) : mpred :=
-      [| p <> nullptr |] ** [| is_heap_type t |] **
-      Exists (oa : option addr),
-        type_ptr t p ** (* use the appropriate ghost state instead *)
-        mem_inj_own p oa **
-        oaddr_encodes t q oa p v.
-    (* TODO: [tptsto] should not include [type_ptr] wholesale, but its
-    pieces in the new model, replacing [mem_inj_own], and [tptsto_type_ptr]
-    should be proved properly. *)
-
-    #[global] Instance tptsto_valid_type
-      : forall (t : type) (q : cQp.t) (a : ptr) (v : val),
-        Observe [| is_heap_type t |] (tptsto t q a v).
-    Proof. rewrite /tptsto; refine _. Qed.
-
-    #[global] Instance tptsto_type_ptr : forall ty q p v,
-        Observe (type_ptr ty p) (tptsto ty q p v) := _.
-
-    (* TODO (JH): We shouldn't be axiomatizing this in our model in the long-run *)
-    Axiom tptsto_live : forall ty (q : cQp.t) p v,
-      tptsto ty q p v |-- live_ptr p ** True.
-
-    #[global] Instance tptsto_nonnull_obs ty q a :
-      Observe False (tptsto ty q nullptr a).
-    Proof. iDestruct 1 as (Hne) "_". naive_solver. Qed.
-
-    Theorem tptsto_nonnull ty q a :
-      tptsto ty q nullptr a |-- False.
-    Proof. rewrite tptsto_nonnull_obs. iDestruct 1 as "[]". Qed.
-
-    (* Relies on [oaddr_encodes_fractional] *)
-    #[global] Instance tptsto_cfractional ty : CFractional2 (tptsto ty) := _.
-
-    #[global] Instance tptsto_timeless ty q p v :
-      Timeless (tptsto ty q p v) := _.
-
-    #[global] Instance tptsto_nonvoid ty (q : cQp.t) p v :
-      Observe [| ty <> Tvoid |] (tptsto ty q p v) := _.
-
-    #[global] Instance tptsto_cfrac_valid ty :
-      CFracValid2 (tptsto ty).
-    Proof. solve_cfrac_valid. Qed.
-
-    Lemma val_and_agree p v1 v2 q1 q2 :
-      <absorb> (val_ p v1 q1) ∧ <absorb> (val_ p v2 q2) ⊢ ⌜v1 = v2⌝.
-    Proof.
-      rewrite /val_ /ghost_mem_own.
-      apply CFracAgreement.cfrac_mpred_own_and_agree.
-    Qed.
-
-    Lemma byte_and_agree a v1 v2 q1 q2 :
-      <absorb> (byte_ a v1 q1) ∧ <absorb> (byte_ a v2 q2) ⊢ ⌜v1 = v2⌝.
-    Proof.
-      rewrite /byte_ /heap_own.
-      apply CFracAgreement.cfrac_mpred_own_and_agree.
-    Qed.
-
-    Lemma bytes_and_agree a vs1 vs2 q1 q2 :
-      length vs1 = length vs2 ->
-      <absorb> (bytes a vs1 q1) ∧ <absorb> (bytes a vs2 q2) ⊢ ⌜vs1 = vs2⌝.
-    Proof.
-      intros Hlen. rewrite /bytes.
-      apply CFracAgreement.big_sepL_and_agree; first exact Hlen.
-      intros i x y. apply byte_and_agree.
-    Qed.
-    #[local] Existing Instance mpred_BiAffine.
-    Lemma mem_inj_and_agree p oa1 oa2 :
-      <absorb> (mem_inj_own p oa1) ∧
-      <absorb> (mem_inj_own p oa2) ⊢ ⌜oa1 = oa2⌝.
-    Proof.
-      rewrite !bi.absorbing_absorbingly bi.persistent_and_sep.
-      iIntros "[H1 H2]".
-      iDestruct (mem_inj_own_agree with "H1 H2") as %Hagree.
-      done.
-    Qed.
-
-    Lemma addr_encodes_and_agree ty a v1 v2 vs1 vs2 q1 q2 :
-      <absorb> (addr_encodes ty q1 a v1 vs1) ∧
-      <absorb> (addr_encodes ty q2 a v2 vs2) ⊢ ⌜v1 = v2⌝.
-    Proof.
-      rewrite !bi.absorbing_absorbingly /addr_encodes !bi.sep_and.
-      iIntros "H".
-      iAssert (encodes ty v1 vs1) as "#E1".
-      { iDestruct "H" as "[[E _] _]". iExact "E". }
-      iAssert (encodes ty v2 vs2) as "#E2".
-      { iDestruct "H" as "[_ [E _]]". iExact "E". }
-      iDestruct (encodes_consistent with "E1 E2") as %Hlen.
-      iAssert (⌜vs1 = vs2⌝)%I as %->.
-      { iApply (bytes_and_agree _ _ _ _ _ Hlen). iSplit.
-        - iDestruct "H" as "[[_ [B _]] _]". by iApply bi.absorbingly_intro.
-        - iDestruct "H" as "[_ [_ [B _]]]". by iApply bi.absorbingly_intro. }
-      iDestruct (encodes_agree with "E1 E2") as %Hagree.
-      done.
-    Qed.
-
-    Lemma oaddr_encodes_and_agree ty oa p v1 v2 q1 q2 :
-      <absorb> (oaddr_encodes ty q1 oa p v1) ∧
-      <absorb> (oaddr_encodes ty q2 oa p v2) ⊢ ⌜v1 = v2⌝.
-    Proof.
-      destruct oa as [a|]; cbn [oaddr_encodes].
-      - rewrite !bi.absorbingly_exist bi.and_exist_r.
-        iDestruct 1 as (vs1) "H".
-        iDestruct (bi.and_exist_l with "H") as (vs2) "H".
-        by iApply addr_encodes_and_agree.
-      - rewrite !bi.absorbingly_sep !bi.sep_and.
-        iIntros "H". iApply val_and_agree. iSplit.
-        + iDestruct "H" as "[[_ V] _]". iExact "V".
-        + iDestruct "H" as "[_ [_ V]]". iExact "V".
-    Qed.
-
-    Lemma tptsto_view ty q p v :
-      tptsto ty q p v ⊢
-      ∃ oa, mem_inj_own p oa ∗ oaddr_encodes ty q oa p v.
-    Proof.
-      iDestruct 1 as (Hnn Hheap oa) "(_ & M & E)".
-      iExists oa. iFrame.
-    Qed.
-
-    Lemma tptsto_agree_and ty q1 q2 p v1 v2 :
-      <absorb> (tptsto ty q1 p v1) ∧
-      <absorb> (tptsto ty q2 p v2) ⊢ ⌜v1 = v2⌝.
-    Proof.
-      rewrite !tptsto_view !bi.absorbingly_exist bi.and_exist_r.
-      iDestruct 1 as (oa1) "H".
-      iDestruct (bi.and_exist_l with "H") as (oa2) "H".
-      iEval (rewrite !bi.absorbingly_sep !bi.sep_and) in "H".
-      iAssert (⌜oa1 = oa2⌝)%I as %->.
-      { iApply mem_inj_and_agree. iSplit.
-        - iDestruct "H" as "[[M _] _]". iExact "M".
-        - iDestruct "H" as "[_ [M _]]". iExact "M". }
-      iApply oaddr_encodes_and_agree. iSplit.
-      - iDestruct "H" as "[[_ E] _]". iExact "E".
-      - iDestruct "H" as "[_ [_ E]]". iExact "E".
-    Qed.
-
-    #[global] Instance tptsto_agree ty q1 q2 p v1 v2 :
-      Observe2 [| v1 = v2 |] (tptsto ty q1 p v1) (tptsto ty q2 p v2).
-    Proof.
-      apply observe_2_intro_only_provable.
-      iIntros "P Q". iApply (tptsto_agree_and ty q1 q2 p v1 v2).
-      iSplit.
-      - iApply bi.absorbingly_intro. iExact "P".
-      - iApply bi.absorbingly_intro. iExact "Q".
-    Qed.
-
-    (* Not provable in the current model without tying to a concrete model of pointers. *)
-    Lemma offset_pinned_ptr_pure o z va p :
-      eval_offset σ o = Some z ->
-      ptr_vaddr p = Some va ->
-      valid_ptr (p ,, o) |--
-      [| 0 <= Z.of_N va + z |]%Z **
-      [| ptr_vaddr (p ,, o) = Some (Z.to_N (Z.of_N va + z)) |].
-    Proof.
-      intros E P.
-    Abort.
-
-    Axiom offset_pinned_ptr_pure : forall σ o z va p,
-      eval_offset σ o = Some z ->
-      pinned_ptr_pure va p ->
-      valid_ptr (p ,, o) |--
-      [| 0 <= Z.of_N va + z |]%Z **
-      [| ptr_vaddr (p ,, o) = Some (Z.to_N (Z.of_N va + z)) |].
-
-    Axiom offset_inv_pinned_ptr_pure : forall σ o z va p,
-      eval_offset σ o = Some z ->
-      pinned_ptr_pure va (p ,, o) ->
-      valid_ptr (p ,, o) |--
-      [| 0 <= Z.of_N va - z |]%Z **
-      [| pinned_ptr_pure (Z.to_N (Z.of_N va - z)) p |].
-
-  End with_cpp.
-
-    Parameter exposed_aid : forall `{!cpp_logic thread_info Σ}, alloc_id -> mpred.
-
-  Section with_cpp.
-    Context `{!cpp_logic thread_info Σ} {σ}.
-    (* strict validity (not past-the-end) *)
-    Notation strict_valid_ptr := (_valid_ptr Strict).
-    (* relaxed validity (past-the-end allowed) *)
-    Notation valid_ptr := (_valid_ptr Relaxed).
-
-    Axiom exposed_aid_persistent : forall aid, Persistent (exposed_aid aid).
-    Axiom exposed_aid_affine : forall aid, Affine (exposed_aid aid).
-    Axiom exposed_aid_timeless : forall aid, Timeless (exposed_aid aid).
-
-    Axiom exposed_aid_null_alloc_id : |-- exposed_aid null_alloc_id.
-
-    Lemma type_ptr_obj_repr_byte :
-      forall  (ty : type) (p : ptr) (i sz : N),
-        size_of σ ty = Some sz -> (* 1) [ty] has some byte-size [sz] *)
-        (i < sz)%N ->             (* 2) by (1), [sz] is nonzero and [i] is a
-                                        byte-offset into the object rooted at [p ,, o]
-
-                                     NOTE: [forall ty, size_of (Tarray ty 0) = Some 0],
-                                     but zero-length arrays are not permitted by the Standard
-                                     (cf. <https://eel.is/c++draft/dcl.array#def:array,bound>).
-                                     NOTE: if support for flexible array members is ever added,
-                                     it will need to be carefully coordinated with these sorts
-                                     of transport lemmas.
-                                   *)
-        (* 4) The existence of the "object representation" of an object of type [ty] -
-           |  in conjunction with the premises - justifies "lowering" any
-           |  [type_ptr ty p] fact to a collection of [type_ptr Tbyte (p ,, .[Tbyte ! i])]
-           |  facts - where [i] is a byte-offset within the [ty] ([0 <= i < sizeof(ty)]).
-           v *)
-        type_ptr ty p |-- type_ptr Tbyte (p ,, (o_sub σ Tbyte i)).
-    Proof. Admitted.
-
-    Lemma type_ptr_obj_repr :
-      forall (ty : type) (p : ptr) (sz : N),
-        size_of σ ty = Some sz ->
-        type_ptr ty p |-- [∗list] i ∈ seqN 0 sz, type_ptr Tbyte (p ,, o_sub σ Tbyte (Z.of_N i)).
-    Proof.
-      intros * Hsz; iIntros "#tptr".
-      iApply big_sepL_intro; iIntros "!>" (k n) "%Hn'".
-      assert (lookup (K:=N) (N.of_nat k) (seqN 0%N sz) = Some n)
-        as Hn
-        by (unfold lookupN, list_lookupN; rewrite Nat2N.id //);
-        clear Hn'.
-      apply lookupN_seqN in Hn as [? ?].
-      iDestruct (type_ptr_obj_repr_byte ty p n sz Hsz ltac:(lia) with "tptr") as "$".
-    Qed.
-
-    (* [offset_congP] hoists [offset_cong] to [mpred] *)
-    Definition offset_congP (σ : genv) (o1 o2 : offset) : mpred :=
-      [| offset_cong σ o1 o2 |].
-
-    (* [ptr_congP σ p1 p2] is an [mpred] which quotients [ptr_cong σ p1 p2]
-       by requiring that [type_ptr Tbyte] holds for both [p1] /and/ [p2]. This property
-       is intended to be sound and sufficient for transporting certain physical
-       resources between [p1] and [p2] - and we hypothesize that it is also
-       necessary.
-     *)
-    Definition ptr_congP (σ : genv) (p1 p2 : ptr) : mpred :=
-      [| ptr_cong σ p1 p2 |] ** type_ptr Tbyte p1 ** type_ptr Tbyte p2.
-
-    (* All [tptsto Tbyte] facts can be transported over [ptr_congP] [ptr]s.
-
-       High level meaning:
-       In the C++ object model, a single byte of storage can be accessed through different pointers,
-       e.g. consider [struct C { int x; int y; } c;]. The first byte of the struct can be read through
-       [static_cast<byte*>(&c)] (with pointer representation [c]) as well as [static_cast<byte*>(&c.x)]
-       (with pointer representation [c ,, _field "::C" "x"]). To put an ownership discipline on this
-       single byte, we build an equivalence relation on pointers that allows us to transport ownership
-       of the byte between these different pointers. For example, half of the ownership could live at [c]
-       and the other half of the ownership can live at [c ,, _field "::C" "x"].
-
-       The standard justifies this as follows:
-       1) (cf. [tptsto] comment) [tptsto ty q p v] ensures that [p] points to a memory
-          location with C++ type [ty] and which has some value [v].
-       2) (cf. [Section type_ptr_object_representation]) [type_ptr Tbyte] holds for all of the
-          bytes (i.e. the "object reprsentation") constituting well-typed C++ objects.
-       3) NOTE (JH): the following isn't quite true yet, but we'll want this when we flesh
-          out [rawR]/[RAW_BYTES]:
-          a) all values [v] can be converted into (potentially many) [raw_byte]s -
-             which capture its "object representation"
-          b) all [tptsto ty] facts can be shattered into (potentially many)
-             [tptsto Tbyte _ _ (Vraw _)] facts corresponding to its "object representation"
-       4) [tptsto Tbyte _ _ (Vraw _)] can be transported over [ptr_congP] [ptr]s:
-          a) [tptso Tbyte _ _ (Vraw _)] facts deal with the "object representation" directly
-             and thus permit erasing the structure of pointers in favor of reasoning about
-             relative byte offsets from a shared [ptr]-prefix.
-          b) the [ptr]s are [ptr_congP] so we know that:
-             i) they share a common base pointer [p_base]
-             ii) the byte-offset values of the C++ offsets which reconstitute the src/dst from
-                 [p_base] are equal
-             iii) NOTE: (cf. [valid_ptr_nonnull_nonzero]/[type_ptr_valid_ptr]/[type_ptr_nonnull] below)
-                  [p_base] has some [vaddr], but we don't currently rely on this fact.
-     *)
-    (* TODO: improve our axiomatic support for raw values - including "shattering"
-       non-raw values into their constituent raw pieces - to enable deriving
-       [tptsto_ptr_congP_transport] from [tptsto_raw_ptr_congP_transport].
-     *)
-    Lemma tptsto_ptr_congP_transport : forall q p1 p2 v,
-      ptr_congP σ p1 p2 |-- tptsto Tbyte q p1 v -* tptsto Tbyte q p2 v.
-    Proof. Admitted.
-
     Definition strict_valid_if_not_empty_array (ty : type) : ptr -> mpred :=
       if zero_sized_array ty then valid_ptr else strict_valid_ptr.
     #[global] Instance stict_valid_if_not_empty_array_persistent ty p :
@@ -1410,9 +1133,334 @@ Module SimpleCPP.
 
     End with_genv.
 
-    #[local] Theorem tptsto_welltyped : forall p ty q (v : val),
-      Observe (has_type_or_undef v ty) (tptsto ty q p v).
+    (** Storage typing does not constrain the stored value. Keep its persistent
+        typing invariant in both physical and ghost-backed cells; pointer bytes
+        alone provide neither referent validity nor referent alignment. *)
+    Definition tptsto (t : type) (q : cQp.t) (p : ptr) (v : val) : mpred :=
+      [| p <> nullptr |] ** [| is_heap_type t |] **
+      Exists (oa : option addr),
+        type_ptr t p ** (* use the appropriate ghost state instead *)
+        mem_inj_own p oa **
+        oaddr_encodes t q oa p v ** has_type_or_undef v t.
+    (* TODO: [tptsto] should not include [type_ptr] wholesale, but its
+    pieces in the new model, replacing [mem_inj_own], and [tptsto_type_ptr]
+    should be proved properly. *)
+
+    #[global] Instance tptsto_valid_type
+      : forall (t : type) (q : cQp.t) (a : ptr) (v : val),
+        Observe [| is_heap_type t |] (tptsto t q a v).
+    Proof. rewrite /tptsto; refine _. Qed.
+
+    #[global] Instance tptsto_type_ptr : forall ty q p v,
+        Observe (type_ptr ty p) (tptsto ty q p v) := _.
+
+    (* TODO (JH): We shouldn't be axiomatizing this in our model in the long-run *)
+    Axiom tptsto_live : forall ty (q : cQp.t) p v,
+      tptsto ty q p v |-- live_ptr p ** True.
+
+    #[global] Instance tptsto_nonnull_obs ty q a :
+      Observe False (tptsto ty q nullptr a).
+    Proof. iDestruct 1 as (Hne) "_". naive_solver. Qed.
+
+    Theorem tptsto_nonnull ty q a :
+      tptsto ty q nullptr a |-- False.
+    Proof. rewrite tptsto_nonnull_obs. iDestruct 1 as "[]". Qed.
+
+    (* Relies on [oaddr_encodes_fractional] *)
+    #[global] Instance tptsto_cfractional ty : CFractional2 (tptsto ty) := _.
+
+    #[global] Instance tptsto_timeless ty q p v :
+      Timeless (tptsto ty q p v) := _.
+
+    #[global] Instance tptsto_nonvoid ty (q : cQp.t) p v :
+      Observe [| ty <> Tvoid |] (tptsto ty q p v) := _.
+
+    #[global] Instance tptsto_cfrac_valid ty :
+      CFracValid2 (tptsto ty).
+    Proof. solve_cfrac_valid. Qed.
+
+    Lemma val_and_agree p v1 v2 q1 q2 :
+      <absorb> (val_ p v1 q1) ∧ <absorb> (val_ p v2 q2) ⊢ ⌜v1 = v2⌝.
+    Proof.
+      rewrite /val_ /ghost_mem_own.
+      apply CFracAgreement.cfrac_mpred_own_and_agree.
+    Qed.
+
+    Lemma byte_and_agree a v1 v2 q1 q2 :
+      <absorb> (byte_ a v1 q1) ∧ <absorb> (byte_ a v2 q2) ⊢ ⌜v1 = v2⌝.
+    Proof.
+      rewrite /byte_ /heap_own.
+      apply CFracAgreement.cfrac_mpred_own_and_agree.
+    Qed.
+
+    Lemma bytes_and_agree a vs1 vs2 q1 q2 :
+      length vs1 = length vs2 ->
+      <absorb> (bytes a vs1 q1) ∧ <absorb> (bytes a vs2 q2) ⊢ ⌜vs1 = vs2⌝.
+    Proof.
+      intros Hlen. rewrite /bytes.
+      apply CFracAgreement.big_sepL_and_agree; first exact Hlen.
+      intros i x y. apply byte_and_agree.
+    Qed.
+    #[local] Existing Instance mpred_BiAffine.
+    Lemma mem_inj_and_agree p oa1 oa2 :
+      <absorb> (mem_inj_own p oa1) ∧
+      <absorb> (mem_inj_own p oa2) ⊢ ⌜oa1 = oa2⌝.
+    Proof.
+      rewrite !bi.absorbing_absorbingly bi.persistent_and_sep.
+      iIntros "[H1 H2]".
+      iDestruct (mem_inj_own_agree with "H1 H2") as %Hagree.
+      done.
+    Qed.
+
+    Lemma addr_encodes_and_agree ty a v1 v2 vs1 vs2 q1 q2 :
+      <absorb> (addr_encodes ty q1 a v1 vs1) ∧
+      <absorb> (addr_encodes ty q2 a v2 vs2) ⊢ ⌜v1 = v2⌝.
+    Proof.
+      rewrite !bi.absorbing_absorbingly /addr_encodes !bi.sep_and.
+      iIntros "H".
+      iAssert (encodes ty v1 vs1) as "#E1".
+      { iDestruct "H" as "[[E _] _]". iExact "E". }
+      iAssert (encodes ty v2 vs2) as "#E2".
+      { iDestruct "H" as "[_ [E _]]". iExact "E". }
+      iDestruct (encodes_consistent with "E1 E2") as %Hlen.
+      iAssert (⌜vs1 = vs2⌝)%I as %->.
+      { iApply (bytes_and_agree _ _ _ _ _ Hlen). iSplit.
+        - iDestruct "H" as "[[_ [B _]] _]". by iApply bi.absorbingly_intro.
+        - iDestruct "H" as "[_ [_ [B _]]]". by iApply bi.absorbingly_intro. }
+      iDestruct (encodes_agree with "E1 E2") as %Hagree.
+      done.
+    Qed.
+
+    Lemma oaddr_encodes_and_agree ty oa p v1 v2 q1 q2 :
+      <absorb> (oaddr_encodes ty q1 oa p v1) ∧
+      <absorb> (oaddr_encodes ty q2 oa p v2) ⊢ ⌜v1 = v2⌝.
+    Proof.
+      destruct oa as [a|]; cbn [oaddr_encodes].
+      - rewrite !bi.absorbingly_exist bi.and_exist_r.
+        iDestruct 1 as (vs1) "H".
+        iDestruct (bi.and_exist_l with "H") as (vs2) "H".
+        by iApply addr_encodes_and_agree.
+      - rewrite !bi.absorbingly_sep !bi.sep_and.
+        iIntros "H". iApply val_and_agree. iSplit.
+        + iDestruct "H" as "[[_ V] _]". iExact "V".
+        + iDestruct "H" as "[_ [_ V]]". iExact "V".
+    Qed.
+
+    Lemma val_update (p : ptr) (v v' : val) :
+      val_ p v 1$m |-- |==> val_ p v' 1$m.
+    Proof. by apply own_update, singleton_update, cmra_update_exclusive. Qed.
+
+    Lemma tptsto_ghost_intro ty q p v :
+      is_heap_type ty ->
+      type_ptr ty p ** mem_inj_own p None ** val_ p v q **
+      has_type_or_undef v ty |-- tptsto ty q p v.
+    Proof.
+      intros Hheap. iIntros "(#T & #M & V & #Hv)".
+      iAssert [| p <> nullptr |] as %Hnn.
+      { iDestruct "T" as "[$ _]". }
+      iAssert [| ty <> Tvoid |] as %Hnv.
+      { iDestruct (type_ptr_size with "T") as %Hsize.
+        iPureIntro. intros ->. destruct Hsize as [sz Hsize]. discriminate. }
+      rewrite /tptsto. iSplit; first done. iSplit; first done.
+      iExists None. iFrame "T M Hv". iFrame "V". done.
+    Qed.
+
+    Lemma tptsto_physical_intro ty q p v a vs :
+      is_heap_type ty ->
+      type_ptr ty p ** mem_inj_own p (Some a) ** encodes ty v vs **
+      bytes a vs q ** vbytes a vs q ** has_type_or_undef v ty |--
+      tptsto ty q p v.
+    Proof.
+      intros Hheap. iIntros "(#T & #M & E & B & V & #Hv)".
+      iAssert [| p <> nullptr |] as %Hnn.
+      { iDestruct "T" as "[$ _]". }
+      rewrite /tptsto. iSplit; first done. iSplit; first done.
+      iExists (Some a). iFrame "T M Hv". iExists vs. iFrame.
+    Qed.
+
+    Lemma tptsto_ghost_update ty p v v' :
+      mem_inj_own p None ** tptsto ty 1$m p v ** has_type_or_undef v' ty |--
+      |==> tptsto ty 1$m p v'.
+    Proof.
+      iIntros "(#M & H & #Hv)".
+      iDestruct "H" as (Hnn Hheap oa) "(#T & #M' & E & _)".
+      iDestruct (mem_inj_own_agree with "M M'") as %<-.
+      iDestruct "E" as "[_ V]".
+      iMod (val_update with "V") as "V".
+      iModIntro. iApply tptsto_ghost_intro; first exact Hheap.
+      iFrame "T M V Hv".
+    Qed.
+
+    Lemma tptsto_view ty q p v :
+      tptsto ty q p v ⊢
+      ∃ oa, mem_inj_own p oa ∗ oaddr_encodes ty q oa p v.
+    Proof.
+      iDestruct 1 as (Hnn Hheap oa) "(_ & M & E & _)".
+      iExists oa. iFrame.
+    Qed.
+
+    Lemma tptsto_agree_and ty q1 q2 p v1 v2 :
+      <absorb> (tptsto ty q1 p v1) ∧
+      <absorb> (tptsto ty q2 p v2) ⊢ ⌜v1 = v2⌝.
+    Proof.
+      rewrite !tptsto_view !bi.absorbingly_exist bi.and_exist_r.
+      iDestruct 1 as (oa1) "H".
+      iDestruct (bi.and_exist_l with "H") as (oa2) "H".
+      iEval (rewrite !bi.absorbingly_sep !bi.sep_and) in "H".
+      iAssert (⌜oa1 = oa2⌝)%I as %->.
+      { iApply mem_inj_and_agree. iSplit.
+        - iDestruct "H" as "[[M _] _]". iExact "M".
+        - iDestruct "H" as "[_ [M _]]". iExact "M". }
+      iApply oaddr_encodes_and_agree. iSplit.
+      - iDestruct "H" as "[[_ E] _]". iExact "E".
+      - iDestruct "H" as "[_ [_ E]]". iExact "E".
+    Qed.
+
+    #[global] Instance tptsto_agree ty q1 q2 p v1 v2 :
+      Observe2 [| v1 = v2 |] (tptsto ty q1 p v1) (tptsto ty q2 p v2).
+    Proof.
+      apply observe_2_intro_only_provable.
+      iIntros "P Q". iApply (tptsto_agree_and ty q1 q2 p v1 v2).
+      iSplit.
+      - iApply bi.absorbingly_intro. iExact "P".
+      - iApply bi.absorbingly_intro. iExact "Q".
+    Qed.
+
+    (* Not provable in the current model without tying to a concrete model of pointers. *)
+    Lemma offset_pinned_ptr_pure o z va p :
+      eval_offset σ o = Some z ->
+      ptr_vaddr p = Some va ->
+      valid_ptr (p ,, o) |--
+      [| 0 <= Z.of_N va + z |]%Z **
+      [| ptr_vaddr (p ,, o) = Some (Z.to_N (Z.of_N va + z)) |].
+    Proof.
+      intros E P.
+    Abort.
+
+    Axiom offset_pinned_ptr_pure : forall σ o z va p,
+      eval_offset σ o = Some z ->
+      pinned_ptr_pure va p ->
+      valid_ptr (p ,, o) |--
+      [| 0 <= Z.of_N va + z |]%Z **
+      [| ptr_vaddr (p ,, o) = Some (Z.to_N (Z.of_N va + z)) |].
+
+    Axiom offset_inv_pinned_ptr_pure : forall σ o z va p,
+      eval_offset σ o = Some z ->
+      pinned_ptr_pure va (p ,, o) ->
+      valid_ptr (p ,, o) |--
+      [| 0 <= Z.of_N va - z |]%Z **
+      [| pinned_ptr_pure (Z.to_N (Z.of_N va - z)) p |].
+
+  End with_cpp.
+
+    Parameter exposed_aid : forall `{!cpp_logic thread_info Σ}, alloc_id -> mpred.
+
+  Section with_cpp.
+    Context `{!cpp_logic thread_info Σ} {σ}.
+    (* strict validity (not past-the-end) *)
+    Notation strict_valid_ptr := (_valid_ptr Strict).
+    (* relaxed validity (past-the-end allowed) *)
+    Notation valid_ptr := (_valid_ptr Relaxed).
+
+    Axiom exposed_aid_persistent : forall aid, Persistent (exposed_aid aid).
+    Axiom exposed_aid_affine : forall aid, Affine (exposed_aid aid).
+    Axiom exposed_aid_timeless : forall aid, Timeless (exposed_aid aid).
+
+    Axiom exposed_aid_null_alloc_id : |-- exposed_aid null_alloc_id.
+
+    Lemma type_ptr_obj_repr_byte :
+      forall  (ty : type) (p : ptr) (i sz : N),
+        size_of σ ty = Some sz -> (* 1) [ty] has some byte-size [sz] *)
+        (i < sz)%N ->             (* 2) by (1), [sz] is nonzero and [i] is a
+                                        byte-offset into the object rooted at [p ,, o]
+
+                                     NOTE: [forall ty, size_of (Tarray ty 0) = Some 0],
+                                     but zero-length arrays are not permitted by the Standard
+                                     (cf. <https://eel.is/c++draft/dcl.array#def:array,bound>).
+                                     NOTE: if support for flexible array members is ever added,
+                                     it will need to be carefully coordinated with these sorts
+                                     of transport lemmas.
+                                   *)
+        (* 4) The existence of the "object representation" of an object of type [ty] -
+           |  in conjunction with the premises - justifies "lowering" any
+           |  [type_ptr ty p] fact to a collection of [type_ptr Tbyte (p ,, .[Tbyte ! i])]
+           |  facts - where [i] is a byte-offset within the [ty] ([0 <= i < sizeof(ty)]).
+           v *)
+        type_ptr ty p |-- type_ptr Tbyte (p ,, (o_sub σ Tbyte i)).
     Proof. Admitted.
+
+    Lemma type_ptr_obj_repr :
+      forall (ty : type) (p : ptr) (sz : N),
+        size_of σ ty = Some sz ->
+        type_ptr ty p |-- [∗list] i ∈ seqN 0 sz, type_ptr Tbyte (p ,, o_sub σ Tbyte (Z.of_N i)).
+    Proof.
+      intros * Hsz; iIntros "#tptr".
+      iApply big_sepL_intro; iIntros "!>" (k n) "%Hn'".
+      assert (lookup (K:=N) (N.of_nat k) (seqN 0%N sz) = Some n)
+        as Hn
+        by (unfold lookupN, list_lookupN; rewrite Nat2N.id //);
+        clear Hn'.
+      apply lookupN_seqN in Hn as [? ?].
+      iDestruct (type_ptr_obj_repr_byte ty p n sz Hsz ltac:(lia) with "tptr") as "$".
+    Qed.
+
+    (* [offset_congP] hoists [offset_cong] to [mpred] *)
+    Definition offset_congP (σ : genv) (o1 o2 : offset) : mpred :=
+      [| offset_cong σ o1 o2 |].
+
+    (* [ptr_congP σ p1 p2] is an [mpred] which quotients [ptr_cong σ p1 p2]
+       by requiring that [type_ptr Tbyte] holds for both [p1] /and/ [p2]. This property
+       is intended to be sound and sufficient for transporting certain physical
+       resources between [p1] and [p2] - and we hypothesize that it is also
+       necessary.
+     *)
+    Definition ptr_congP (σ : genv) (p1 p2 : ptr) : mpred :=
+      [| ptr_cong σ p1 p2 |] ** type_ptr Tbyte p1 ** type_ptr Tbyte p2.
+
+    (* All [tptsto Tbyte] facts can be transported over [ptr_congP] [ptr]s.
+
+       High level meaning:
+       In the C++ object model, a single byte of storage can be accessed through different pointers,
+       e.g. consider [struct C { int x; int y; } c;]. The first byte of the struct can be read through
+       [static_cast<byte*>(&c)] (with pointer representation [c]) as well as [static_cast<byte*>(&c.x)]
+       (with pointer representation [c ,, _field "::C" "x"]). To put an ownership discipline on this
+       single byte, we build an equivalence relation on pointers that allows us to transport ownership
+       of the byte between these different pointers. For example, half of the ownership could live at [c]
+       and the other half of the ownership can live at [c ,, _field "::C" "x"].
+
+       The standard justifies this as follows:
+       1) (cf. [tptsto] comment) [tptsto ty q p v] ensures that [p] points to a memory
+          location with C++ type [ty] and which has some value [v].
+       2) (cf. [Section type_ptr_object_representation]) [type_ptr Tbyte] holds for all of the
+          bytes (i.e. the "object reprsentation") constituting well-typed C++ objects.
+       3) NOTE (JH): the following isn't quite true yet, but we'll want this when we flesh
+          out [rawR]/[RAW_BYTES]:
+          a) all values [v] can be converted into (potentially many) [raw_byte]s -
+             which capture its "object representation"
+          b) all [tptsto ty] facts can be shattered into (potentially many)
+             [tptsto Tbyte _ _ (Vraw _)] facts corresponding to its "object representation"
+       4) [tptsto Tbyte _ _ (Vraw _)] can be transported over [ptr_congP] [ptr]s:
+          a) [tptso Tbyte _ _ (Vraw _)] facts deal with the "object representation" directly
+             and thus permit erasing the structure of pointers in favor of reasoning about
+             relative byte offsets from a shared [ptr]-prefix.
+          b) the [ptr]s are [ptr_congP] so we know that:
+             i) they share a common base pointer [p_base]
+             ii) the byte-offset values of the C++ offsets which reconstitute the src/dst from
+                 [p_base] are equal
+             iii) NOTE: (cf. [valid_ptr_nonnull_nonzero]/[type_ptr_valid_ptr]/[type_ptr_nonnull] below)
+                  [p_base] has some [vaddr], but we don't currently rely on this fact.
+     *)
+    (* TODO: improve our axiomatic support for raw values - including "shattering"
+       non-raw values into their constituent raw pieces - to enable deriving
+       [tptsto_ptr_congP_transport] from [tptsto_raw_ptr_congP_transport].
+     *)
+    Lemma tptsto_ptr_congP_transport : forall q p1 p2 v,
+      ptr_congP σ p1 p2 |-- tptsto Tbyte q p1 v -* tptsto Tbyte q p2 v.
+    Proof. Admitted.
+
+    Theorem tptsto_welltyped : forall p ty q (v : val),
+      Observe (has_type_or_undef v ty) (tptsto ty q p v).
+    Proof. intros. rewrite /tptsto. refine _. Qed.
 
     (* TODO: the [Notation] connects to the wrong definition *)
     #[local] Theorem tptsto_reference_to : forall p ty q (v : val),
