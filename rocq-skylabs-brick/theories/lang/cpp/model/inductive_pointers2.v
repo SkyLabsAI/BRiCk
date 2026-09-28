@@ -266,7 +266,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     | o :: os =>
         '(l, r, s, t) ← find_redex os;
         Some (o :: l, r, s, t).
-    Admit Obligations.
+    Solve Obligations with (intros; simpl in *; lia).
 
     Ltac dex :=
       let H0 := fresh in
