@@ -987,6 +987,324 @@ Module PTRS_IMPL <: PTRS_INTF.
     have Hlen := f_equal (@length _) Heq. rewrite length_app /= in Hlen. lia.
   Qed.
 
+  #[local] Lemma offset_seg_cons_full_length os xs :
+    length (offset_seg_cons os xs) = S (length xs) ->
+    offset_seg_cons os xs = os :: xs.
+  Proof.
+    destruct os as [[f|ty n|derived base|base derived|] off];
+      destruct xs as [|[[f'|ty' n'|derived' base'|base' derived'|] off'] xs];
+      rewrite /offset_seg_cons /=;
+      repeat case_decide; simpl; intros; try done; try lia.
+  Qed.
+
+  #[local] Lemma offset_seg_cons_length os xs :
+    (length (offset_seg_cons os xs) <= S (length xs))%nat.
+  Proof.
+    destruct os as [[f|ty n|derived base|base derived|] off];
+      destruct xs as [|[[f'|ty' n'|derived' base'|base' derived'|] off'] xs];
+      rewrite /offset_seg_cons /=;
+      repeat case_decide; simpl; lia.
+  Qed.
+
+  #[local] Lemma raw_offset_collapse_full_length xs :
+    length (raw_offset_collapse xs) = length xs ->
+    raw_offset_collapse xs = xs.
+  Proof.
+    induction xs as [|os xs IH]; first done.
+    intros Hlen.
+    have Hcons := offset_seg_cons_length os (raw_offset_collapse xs).
+    have Htail := raw_offset_collapse_length xs.
+    have E : length (raw_offset_collapse xs) = length xs.
+    { change (length (offset_seg_cons os (raw_offset_collapse xs)) = S (length xs)) in Hlen.
+      lia. }
+    rewrite /= (IH E) in Hlen |- *.
+    exact (offset_seg_cons_full_length _ _ Hlen).
+  Qed.
+
+  #[local] Lemma raw_offset_collapse_wf_init xs ys :
+    raw_offset_collapse (xs ++ ys) = xs ++ ys ->
+    raw_offset_collapse xs = xs.
+  Proof.
+    intros Hwf. apply raw_offset_collapse_full_length.
+    have Hbound := raw_offset_collapse_length
+      (raw_offset_collapse xs ++ raw_offset_collapse ys).
+    have Hx := raw_offset_collapse_length xs.
+    have Hy := raw_offset_collapse_length ys.
+    rewrite -invol_app Hwf !length_app in Hbound.
+    lia.
+  Qed.
+
+  #[local] Lemma raw_offset_collapse_wf_suffix xs ys :
+    raw_offset_collapse (xs ++ ys) = xs ++ ys ->
+    raw_offset_collapse ys = ys.
+  Proof.
+    induction xs as [|os xs IH]; first done.
+    intros Hwf. apply IH. exact (raw_offset_collapse_wf_tail _ _ Hwf).
+  Qed.
+
+  Definition subscript_separated (ty : type) (xs : raw_offset) : Prop :=
+    forall before n z, xs <> before ++ [(o_sub_ ty n, z)].
+
+  #[local] Lemma offset_seg_cons_app_defined os xs ys :
+    is_Some (eval_offset_seg os) -> xs <> [] ->
+    offset_seg_cons os (xs ++ ys) = offset_seg_cons os xs ++ ys.
+  Proof.
+    intros Hdef Hxs. destruct xs as [|os' xs]; first contradiction.
+    destruct os as [[f|ty n|derived base|base derived|] off];
+      destruct os' as [[f'|ty' n'|derived' base'|base' derived'|] off'];
+      rewrite /offset_seg_cons /=;
+      repeat case_decide; simpl in Hdef |- *; try done; naive_solver.
+  Qed.
+
+  #[local] Lemma raw_offset_collapse_sub_separated xs ty n z :
+    raw_offset_collapse xs = xs ->
+    is_Some (eval_raw_offset xs) ->
+    subscript_separated ty xs ->
+    raw_offset_collapse (xs ++ [(o_sub_ ty n,z)]) =
+      xs ++ raw_offset_collapse [(o_sub_ ty n,z)].
+  Proof.
+    induction xs as [|os xs IH]; first done.
+    intros Hwf Hdef Hsep.
+    have Htail := raw_offset_collapse_wf_tail _ _ Hwf.
+    rewrite eval_raw_offset_cons in Hdef.
+    destruct (eval_offset_seg os) as [v|] eqn:Eos;
+      destruct (eval_raw_offset xs) as [w|] eqn:Exs;
+      simpl in Hdef; try naive_solver.
+    have Hsep' : subscript_separated ty xs.
+    { intros before m d E. apply (Hsep (os :: before) m d). by rewrite E. }
+    destruct xs as [|os' xs].
+    - destruct os as [[f|ty' m|derived base|base derived|] d];
+        rewrite /= /offset_seg_cons /= in Hwf |- *;
+        repeat case_decide; simplify_eq/=; try done; try naive_solver.
+      all: exfalso; exact (Hsep [] m v eq_refl).
+    - change (offset_seg_cons os
+        (raw_offset_collapse ((os' :: xs) ++ [(o_sub_ ty n,z)])) =
+        os :: (os' :: xs) ++ raw_offset_collapse [(o_sub_ ty n,z)]).
+      rewrite IH; [|exact Htail|by eexists|exact Hsep'].
+      rewrite offset_seg_cons_app_defined; [|by eexists|discriminate].
+      change (offset_seg_cons os (raw_offset_collapse (os' :: xs)) =
+        os :: os' :: xs) in Hwf.
+      rewrite Htail in Hwf. by rewrite Hwf.
+
+  Qed.
+
+  #[local] Lemma subscript_separated_nil ty : subscript_separated ty [].
+  Proof.
+    intros before n z E. have Hlen := f_equal (@length _) E.
+    rewrite length_app /= in Hlen. lia.
+  Qed.
+
+  #[local] Lemma subscript_separated_snoc xs os ty :
+    (forall n z, os <> (o_sub_ ty n,z)) ->
+    subscript_separated ty (xs ++ [os]).
+  Proof.
+    intros Hneq before n z E.
+    apply app_inj_tail in E as [_ E]. exact (Hneq n z E).
+  Qed.
+
+  #[local] Lemma canonical_subscript_prefix_separated xs ty n z :
+    raw_offset_collapse (xs ++ [(o_sub_ ty n,z)]) =
+      xs ++ [(o_sub_ ty n,z)] ->
+    subscript_separated ty xs.
+  Proof.
+    intros Hwf before m d E. subst xs.
+    rewrite -app_assoc in Hwf.
+    have Hpair := raw_offset_collapse_wf_suffix _ _ Hwf.
+    simpl in Hpair.
+    rewrite /offset_seg_cons /= in Hpair.
+    repeat case_decide; simplify_eq/=;
+      have Hlen := f_equal (@length _) Hpair; simpl in Hlen; lia.
+  Qed.
+
+  #[local] Lemma eval_raw_offset_app_defined xs ys :
+    is_Some (eval_raw_offset (xs ++ ys)) ->
+    is_Some (eval_raw_offset xs) /\ is_Some (eval_raw_offset ys).
+  Proof.
+    rewrite eval_raw_offset_app.
+    destruct (eval_raw_offset xs) as [x|];
+      destruct (eval_raw_offset ys) as [y|]; simpl.
+    - intros _. split; by eexists.
+    - intros [r Hr]; discriminate Hr.
+    - intros [r Hr]; discriminate Hr.
+    - intros [r Hr]; discriminate Hr.
+  Qed.
+
+  #[local] Lemma raw_offset_subscript_decompose xs ty :
+    raw_offset_collapse xs = xs ->
+    is_Some (eval_raw_offset xs) ->
+    exists prefix n z,
+      raw_offset_collapse prefix = prefix /\
+      is_Some (eval_raw_offset prefix) /\
+      subscript_separated ty prefix /\
+      xs = prefix ++ raw_offset_collapse [(o_sub_ ty n,z)].
+  Proof.
+    intros Hwf Hdef.
+    destruct xs as [|os xs] using rev_ind.
+    - exists [], 0%Z, 0%Z. repeat split; try done.
+      apply subscript_separated_nil.
+    - have Hpre := raw_offset_collapse_wf_init _ _ Hwf.
+      have Hlast := raw_offset_collapse_wf_suffix _ _ Hwf.
+      have [Hdefpre _] := eval_raw_offset_app_defined _ _ Hdef.
+      have Hdifferent : (forall n z, os <> (o_sub_ ty n,z)) ->
+        exists prefix n z,
+          raw_offset_collapse prefix = prefix /\
+          is_Some (eval_raw_offset prefix) /\
+          subscript_separated ty prefix /\
+          xs ++ [os] = prefix ++ raw_offset_collapse [(o_sub_ ty n,z)].
+      { intros Hneq. exists (xs ++ [os]), 0%Z, 0%Z.
+        repeat split; try assumption.
+        - apply subscript_separated_snoc. exact Hneq.
+        - by rewrite /= /offset_seg_cons /= app_nil_r. }
+      destruct os as [[f|ty' m|derived base|base derived|] d].
+      all: try (apply Hdifferent; intros n z; discriminate).
+      destruct (decide (ty' = ty)) as [->|Hneq].
+      + exists xs, m, d. repeat split; try assumption.
+        * exact (canonical_subscript_prefix_separated _ _ _ _ Hwf).
+        * by rewrite Hlast.
+      + apply Hdifferent. intros n z E. injection E as E _ _. contradiction.
+  Qed.
+
+  #[local] Lemma raw_offset_collapse_sub_pair ty m d n z :
+    raw_offset_collapse [(o_sub_ ty m,d); (o_sub_ ty n,z)] =
+      raw_offset_collapse [(o_sub_ ty (m+n),(d+z)%Z)].
+  Proof.
+    rewrite /= /offset_seg_cons /=.
+    repeat case_decide; simplify_eq/=; try done; try lia.
+  all: f_equal; apply pair_equal_spec; split; [f_equal|]; lia.
+  Qed.
+
+  #[local] Lemma raw_offset_collapse_app_collapse_r xs ys :
+    raw_offset_collapse (xs ++ raw_offset_collapse ys) =
+      raw_offset_collapse (xs ++ ys).
+  Proof.
+    rewrite (invol_app xs (raw_offset_collapse ys)) invol.
+    by rewrite -(invol_app xs ys).
+  Qed.
+
+  #[local] Lemma raw_offset_subscript_extend prefix ty m d n z :
+    raw_offset_collapse prefix = prefix ->
+    is_Some (eval_raw_offset prefix) ->
+    subscript_separated ty prefix ->
+    raw_offset_collapse
+      ((prefix ++ raw_offset_collapse [(o_sub_ ty m,d)]) ++
+        raw_offset_collapse [(o_sub_ ty n,z)]) =
+      prefix ++ raw_offset_collapse [(o_sub_ ty (m+n),(d+z)%Z)].
+  Proof.
+    intros Hwf Hdef Hsep.
+    rewrite -app_assoc (invol_app prefix
+      (raw_offset_collapse [(o_sub_ ty m,d)] ++ raw_offset_collapse [(o_sub_ ty n,z)])).
+    rewrite Hwf -(invol_app [(o_sub_ ty m,d)] [(o_sub_ ty n,z)]).
+    rewrite raw_offset_collapse_sub_pair raw_offset_collapse_app_collapse_r.
+    exact (raw_offset_collapse_sub_separated _ _ _ _ Hwf Hdef Hsep).
+  Qed.
+
+  #[local] Lemma o_sub_raw_collapse σ ty i sz :
+    size_of σ ty = Some sz ->
+    proj1_sig (o_sub σ ty i) =
+      raw_offset_collapse [(o_sub_ (erase_qualifiers ty) i, Z.of_N sz * i)].
+  Proof.
+    intros Hsz. rewrite /o_sub.
+    case_decide.
+    - subst i. rewrite size_of_erase_qualifiers Hsz /= /offset_seg_cons /=.
+      by rewrite Z.mul_0_r.
+    - rewrite /mkOffset /mk_offset_seg /= /o_sub_off size_of_erase_qualifiers Hsz /=.
+      rewrite /offset_seg_cons decide_False; last naive_solver.
+      by rewrite Z.mul_comm.
+  Qed.
+
+  (** Every subscript shares a stable prefix; stored displacement and index
+      are tracked independently, including zero stride and cancellation. *)
+  Lemma offset_subscript_decompose σ off ty sz :
+    is_Some (eval_offset σ off) ->
+    size_of σ ty = Some sz ->
+    exists prefix n z,
+      raw_offset_collapse prefix = prefix /\
+      is_Some (eval_raw_offset prefix) /\
+      subscript_separated (erase_qualifiers ty) prefix /\
+      forall i,
+        proj1_sig (off ,, o_sub σ ty i) =
+          prefix ++ raw_offset_collapse
+            [(o_sub_ (erase_qualifiers ty) (n+i), (z + Z.of_N sz * i)%Z)].
+  Proof.
+    intros Hdef Hsz.
+    destruct (raw_offset_subscript_decompose (proj1_sig off) (erase_qualifiers ty)
+      (proj2_sig off) Hdef) as (prefix & n & z & Hwf & Hpre & Hsep & E).
+    exists prefix, n, z. repeat split; try assumption.
+    intros i. rewrite _dot.unlock /DOT_dot /= /raw_offset_merge.
+    rewrite (o_sub_raw_collapse σ ty i sz Hsz) E.
+    exact (raw_offset_subscript_extend _ _ _ _ _ _ Hwf Hpre Hsep).
+  Qed.
+
+  Lemma fold_subscript_collapse prefix ty n d root :
+    foldr (fun off ova => ova ≫= offset_vaddr off) root
+      (snd <$> (prefix ++ raw_offset_collapse [(o_sub_ ty n,d)])) =
+    foldr (fun off ova => ova ≫= offset_vaddr off)
+      (root ≫= offset_vaddr d) (snd <$> prefix).
+  Proof.
+    rewrite /= /offset_seg_cons /=.
+    case_decide as Hzero.
+    - destruct Hzero as [-> ->].
+      rewrite app_nil_r.
+      destruct root as [base|]; simpl; first by rewrite offset_vaddr_0.
+      done.
+    - by rewrite fmap_app foldr_app /=.
+  Qed.
+
+  Lemma eval_subscript_collapse prefix ty n d :
+    eval_raw_offset (prefix ++ raw_offset_collapse [(o_sub_ ty n,d)]) =
+      liftM2 Z.add (eval_raw_offset prefix) (Some d).
+  Proof.
+    rewrite eval_raw_offset_app eval_raw_offset_collapse /=.
+    change (liftM2 Z.add (eval_raw_offset prefix) (Some (d+0)) =
+      liftM2 Z.add (eval_raw_offset prefix) (Some d)).
+    by rewrite Z.add_0_r.
+  Qed.
+
+  #[local] Lemma raw_subscript_empty_index prefix ty n d :
+    prefix ++ raw_offset_collapse [(o_sub_ ty n,d)] = [] -> n = 0.
+  Proof.
+    intros [_ E]%app_eq_nil.
+    rewrite /= /offset_seg_cons in E.
+    case_decide; [tauto|discriminate].
+  Qed.
+
+  #[local] Lemma offset_subscript_empty_inj σ off ty sz i k :
+    is_Some (eval_offset σ off) ->
+    size_of σ ty = Some sz ->
+    proj1_sig (off ,, o_sub σ ty i) = [] ->
+    proj1_sig (off ,, o_sub σ ty k) = [] ->
+    i = k.
+  Proof.
+    intros Hdef Hsz Hi Hk.
+    destruct (offset_subscript_decompose σ off ty sz Hdef Hsz)
+      as (prefix & n & d & _ & _ & _ & E).
+    rewrite E in Hi. rewrite E in Hk.
+    apply raw_subscript_empty_index in Hi.
+    apply raw_subscript_empty_index in Hk.
+    lia.
+  Qed.
+
+  Lemma subscript_null_inj σ (p : ptr) ty i k :
+    p ,, o_sub σ ty i = nullptr ->
+    p ,, o_sub σ ty k = nullptr ->
+    i = k.
+  Proof.
+    intros Hi Hk.
+    have Hdefined : ptr_offset_defined (p ,, o_sub σ ty i).
+    { rewrite Hi. by exists 0. }
+    apply (ptr_offset_defined_dot σ) in Hdefined as [Hp Hsub].
+    have [sz Hsz] := eval_o_sub_defined σ ty i Hsub.
+    destruct p as [|root off]; first exact (False_ind _ Hp).
+    apply (f_equal (fun p => match p with
+      | invalid_ptr_ => [] | offset_ptr _ off => proj1_sig off end)) in Hi.
+    apply (f_equal (fun p => match p with
+      | invalid_ptr_ => [] | offset_ptr _ off => proj1_sig off end)) in Hk.
+    rewrite _dot.unlock /DOT_dot /= in Hi, Hk.
+    apply (offset_subscript_empty_inj σ off ty sz i k Hp Hsz).
+    - by rewrite _dot.unlock /DOT_dot /=.
+    - by rewrite _dot.unlock /DOT_dot /=.
+  Qed.
+
   #[global] Instance id_dot : LeftId (=) o_id o_dot.
   Proof. UNFOLD_dot. intros o. apply /sig_eq_pi. by case: o. Qed.
   Lemma __o_dot_id : RightId (=) o_id __o_dot.
