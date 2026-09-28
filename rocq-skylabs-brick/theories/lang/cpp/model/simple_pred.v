@@ -789,6 +789,175 @@ Module SimpleCPP.
       done.
     Qed.
 
+    Definition strict_valid_if_not_empty_array (ty : type) : ptr -> mpred :=
+      if zero_sized_array ty then valid_ptr else strict_valid_ptr.
+    #[global] Instance strict_valid_if_not_empty_array_persistent ty p :
+      Persistent (strict_valid_if_not_empty_array ty p).
+    Proof. rewrite /strict_valid_if_not_empty_array. case_match; refine _. Qed.
+    #[global] Instance strict_valid_if_not_empty_array_affine ty p :
+      Affine (strict_valid_if_not_empty_array ty p).
+    Proof. rewrite /strict_valid_if_not_empty_array. case_match; refine _. Qed.
+    #[global] Instance strict_valid_if_not_empty_array_timeless ty p :
+      Timeless (strict_valid_if_not_empty_array ty p).
+    Proof. rewrite /strict_valid_if_not_empty_array. case_match; refine _. Qed.
+
+    Lemma zero_size_array_erase_qualifiers (ty : type) :
+      zero_sized_array (erase_qualifiers ty) = zero_sized_array ty.
+    Proof.
+      induction ty; rewrite /= /qual_norm /=; eauto.
+      - rewrite IHty. done.
+      - rewrite IHty. clear.
+        generalize (merge_tq QM q).
+        clear. induction ty; rewrite /= /qual_norm/=; eauto.
+        intros.
+        rewrite -!IHty. done.
+    Qed.
+
+    Lemma strict_valid_if_not_empty_array_erase ty p :
+      strict_valid_if_not_empty_array ty p
+      -|- strict_valid_if_not_empty_array (erase_qualifiers ty) p.
+    Proof.
+      rewrite /strict_valid_if_not_empty_array.
+      rewrite zero_size_array_erase_qualifiers. done.
+    Qed.
+
+    Definition has_type {σ : genv} (v : val) (ty : type) : mpred :=
+      [| has_type_prop v ty |] **
+      match v with
+      | Vptr p =>
+        match drop_qualifiers ty with
+        | Tptr ty =>
+          valid_ptr p ** [| aligned_ptr_ty ty p |]
+        | Tref ty | Trv_ref ty =>
+          strict_valid_if_not_empty_array ty p ** [| aligned_ptr_ty ty p |]
+        | Tnullptr => [| p = nullptr |]
+        | _ => emp
+        end
+      | _ => [| nonptr_prim_type ty |]
+      end.
+
+    Definition reference_to (ty : type) (p : ptr) : mpred :=
+      [| aligned_ptr_ty ty p |] ** [| p <> nullptr |] **
+        valid_ptr p ** if zero_sized_array ty then emp else strict_valid_ptr p.
+
+    Definition has_type_or_undef (v : val) ty : mpred :=
+      has_type v ty \\// [| v = Vundef |].
+    Lemma has_type_or_undef_unfold :
+      @has_type_or_undef = funI v ty => has_type v ty \\// [| v = Vundef |].
+    Proof. done. Qed.
+
+    Section with_genv.
+      #[global] Instance has_type_knowledge : Knowledge2 has_type.
+      Proof. solve_knowledge. Qed.
+
+      #[global] Instance has_type_timeless : Timeless2 has_type.
+      Proof.
+        (* TODO AUTO: this gives a measureable speedup :-( *)
+        have ?: Refine (Timeless (PROP := mpred) emp) by apply _.
+        apply _.
+      Qed.
+
+      Lemma has_type_has_type_prop v ty :
+        has_type v ty |-- [| has_type_prop v ty |].
+      Proof. iIntros "[$ _]". Qed.
+
+      Lemma has_type_prop_has_type_noptr v ty :
+        nonptr_prim_type ty ->
+        [| has_type_prop v ty |] |-- has_type v ty.
+      Proof.
+        rewrite /has_type /nonptr_prim_type; intros.
+        iIntros "$".
+        destruct v => //. by case_match.
+      Qed.
+
+      Lemma has_type_erase_qualifiers ty v :
+        has_type v ty -|- has_type v (erase_qualifiers ty).
+      Proof.
+        rewrite /has_type has_type_prop_erase_qualifiers drop_erase_qualifiers.
+        f_equiv.
+        rewrite -nonptr_prim_type_erase_qualifiers.
+        case_match; eauto.
+        rewrite -erase_drop_qualifiers.
+        case_match; simpl; eauto.
+        all: try f_equiv.
+        all: try rewrite aligned_ptr_ty_erase_qualifiers; auto.
+        all: try apply strict_valid_if_not_empty_array_erase.
+        exfalso; by eapply unqual_drop_qualifiers.
+      Qed.
+
+      Lemma has_type_nullptr' p :
+        has_type (Vptr p) Tnullptr -|- [| p = nullptr |].
+      Proof.
+        rewrite /has_type/= has_type_prop_nullptr.
+        rewrite (inj_iff Vptr).
+        iSplit; first iIntros "[$ _]".
+        iIntros "->". iSplit; eauto.
+      Qed.
+
+      Lemma has_type_ptr' p ty :
+        has_type (Vptr p) (Tptr ty) -|- valid_ptr p ** [| aligned_ptr_ty ty p |].
+      Proof.
+        rewrite /has_type/= has_type_prop_pointer.
+        rewrite only_provable_True ?(left_id emp) //. eauto.
+      Qed.
+
+      #[local] Instance strict_valid_ptr_nonnull p :
+        Observe [| p <> nullptr |] (strict_valid_ptr p).
+      Proof.
+        iIntros "#? !>"; destruct (decide (p = nullptr)) as [-> | Hne]; last done.
+        by rewrite not_strictly_valid_ptr_nullptr.
+      Qed.
+
+      Lemma has_type_ref' p ty :
+        has_type (Vref p) (Tref ty) |-- reference_to ty p.
+      Proof.
+        rewrite /has_type/=/reference_to has_type_prop_ref.
+        rewrite /strict_valid_if_not_empty_array.
+        iIntros "[%Ht [#H $]]".
+        destruct Ht as [? [Ht?]].
+        inversion Ht; subst. case_match; iFrame "%#∗".
+        by rewrite strict_valid_valid.
+      Qed.
+
+      Lemma has_type_rv_ref' p ty :
+        has_type (Vref p) (Trv_ref ty) |-- reference_to ty p.
+      Proof.
+        rewrite -has_type_ref'.
+        by rewrite /has_type/= has_type_prop_ref has_type_prop_rv_ref.
+      Qed.
+
+      #[global] Instance reference_to_knowledge : Knowledge2 reference_to.
+      Proof.
+        rewrite /reference_to. intros. case_match; split; refine _.
+      Qed.
+      #[global] Instance reference_to_timeless : Timeless2 reference_to.
+      Proof. rewrite /reference_to. intros. case_match; refine _. Qed.
+
+      Theorem reference_to_erase : forall ty p,
+          reference_to ty p -|- reference_to (erase_qualifiers ty) p.
+      Proof.
+        rewrite /reference_to. intros.
+        rewrite -aligned_ptr_ty_erase_qualifiers -zero_size_array_erase_qualifiers.
+        done.
+      Qed.
+
+      Theorem reference_to_intro : forall ty p,
+          strict_valid_ptr p |-- has_type (Vptr p) (Tptr ty) -* reference_to ty p.
+      Proof.
+        rewrite /has_type/reference_to/=.
+        iIntros (??) "#V [%Htype [? %Haligned]]".
+        iFrame "%".
+        iDestruct (observe [| _ <> nullptr |] with "V") as "#$".
+        iFrame. case_match; eauto.
+      Qed.
+      Theorem reference_to_elim : forall ty p,
+          reference_to ty p |--
+            [| aligned_ptr_ty ty p |] ** [| p <> nullptr |] **
+            valid_ptr p ** if zero_sized_array ty then emp else strict_valid_ptr p.
+      Proof. rewrite /reference_to. eauto. Qed.
+
+    End with_genv.
+
     (** heap points to *)
     (* Auxiliary definitions.
       They're not exported, so we don't give them a complete theory;
@@ -1241,175 +1410,6 @@ Module SimpleCPP.
     Lemma tptsto_ptr_congP_transport : forall q p1 p2 v,
       ptr_congP σ p1 p2 |-- tptsto Tbyte q p1 v -* tptsto Tbyte q p2 v.
     Proof. Admitted.
-
-    Definition strict_valid_if_not_empty_array (ty : type) : ptr -> mpred :=
-      if zero_sized_array ty then valid_ptr else strict_valid_ptr.
-    #[global] Instance strict_valid_if_not_empty_array_persistent ty p :
-      Persistent (strict_valid_if_not_empty_array ty p).
-    Proof. rewrite /strict_valid_if_not_empty_array. case_match; refine _. Qed.
-    #[global] Instance strict_valid_if_not_empty_array_affine ty p :
-      Affine (strict_valid_if_not_empty_array ty p).
-    Proof. rewrite /strict_valid_if_not_empty_array. case_match; refine _. Qed.
-    #[global] Instance strict_valid_if_not_empty_array_timeless ty p :
-      Timeless (strict_valid_if_not_empty_array ty p).
-    Proof. rewrite /strict_valid_if_not_empty_array. case_match; refine _. Qed.
-
-    Lemma zero_size_array_erase_qualifiers (ty : type) :
-      zero_sized_array (erase_qualifiers ty) = zero_sized_array ty.
-    Proof.
-      induction ty; rewrite /= /qual_norm /=; eauto.
-      - rewrite IHty. done.
-      - rewrite IHty. clear.
-        generalize (merge_tq QM q).
-        clear. induction ty; rewrite /= /qual_norm/=; eauto.
-        intros.
-        rewrite -!IHty. done.
-    Qed.
-
-    Lemma strict_valid_if_not_empty_array_erase ty p :
-      strict_valid_if_not_empty_array ty p
-      -|- strict_valid_if_not_empty_array (erase_qualifiers ty) p.
-    Proof.
-      rewrite /strict_valid_if_not_empty_array.
-      rewrite zero_size_array_erase_qualifiers. done.
-    Qed.
-
-    Definition has_type {σ : genv} (v : val) (ty : type) : mpred :=
-      [| has_type_prop v ty |] **
-      match v with
-      | Vptr p =>
-        match drop_qualifiers ty with
-        | Tptr ty =>
-          valid_ptr p ** [| aligned_ptr_ty ty p |]
-        | Tref ty | Trv_ref ty =>
-          strict_valid_if_not_empty_array ty p ** [| aligned_ptr_ty ty p |]
-        | Tnullptr => [| p = nullptr |]
-        | _ => emp
-        end
-      | _ => [| nonptr_prim_type ty |]
-      end.
-
-    Definition reference_to (ty : type) (p : ptr) : mpred :=
-      [| aligned_ptr_ty ty p |] ** [| p <> nullptr |] **
-        valid_ptr p ** if zero_sized_array ty then emp else strict_valid_ptr p.
-
-    Definition has_type_or_undef (v : val) ty : mpred :=
-      has_type v ty \\// [| v = Vundef |].
-    Lemma has_type_or_undef_unfold :
-      @has_type_or_undef = funI v ty => has_type v ty \\// [| v = Vundef |].
-    Proof. done. Qed.
-
-    Section with_genv.
-      #[global] Instance has_type_knowledge : Knowledge2 has_type.
-      Proof. solve_knowledge. Qed.
-
-      #[global] Instance has_type_timeless : Timeless2 has_type.
-      Proof.
-        (* TODO AUTO: this gives a measureable speedup :-( *)
-        have ?: Refine (Timeless (PROP := mpred) emp) by apply _.
-        apply _.
-      Qed.
-
-      Lemma has_type_has_type_prop v ty :
-        has_type v ty |-- [| has_type_prop v ty |].
-      Proof. iIntros "[$ _]". Qed.
-
-      Lemma has_type_prop_has_type_noptr v ty :
-        nonptr_prim_type ty ->
-        [| has_type_prop v ty |] |-- has_type v ty.
-      Proof.
-        rewrite /has_type /nonptr_prim_type; intros.
-        iIntros "$".
-        destruct v => //. by case_match.
-      Qed.
-
-      Lemma has_type_erase_qualifiers ty v :
-        has_type v ty -|- has_type v (erase_qualifiers ty).
-      Proof.
-        rewrite /has_type has_type_prop_erase_qualifiers drop_erase_qualifiers.
-        f_equiv.
-        rewrite -nonptr_prim_type_erase_qualifiers.
-        case_match; eauto.
-        rewrite -erase_drop_qualifiers.
-        case_match; simpl; eauto.
-        all: try f_equiv.
-        all: try rewrite aligned_ptr_ty_erase_qualifiers; auto.
-        all: try apply strict_valid_if_not_empty_array_erase.
-        exfalso; by eapply unqual_drop_qualifiers.
-      Qed.
-
-      Lemma has_type_nullptr' p :
-        has_type (Vptr p) Tnullptr -|- [| p = nullptr |].
-      Proof.
-        rewrite /has_type/= has_type_prop_nullptr.
-        rewrite (inj_iff Vptr).
-        iSplit; first iIntros "[$ _]".
-        iIntros "->". iSplit; eauto.
-      Qed.
-
-      Lemma has_type_ptr' p ty :
-        has_type (Vptr p) (Tptr ty) -|- valid_ptr p ** [| aligned_ptr_ty ty p |].
-      Proof.
-        rewrite /has_type/= has_type_prop_pointer.
-        rewrite only_provable_True ?(left_id emp) //. eauto.
-      Qed.
-
-      #[local] Instance strict_valid_ptr_nonnull p :
-        Observe [| p <> nullptr |] (strict_valid_ptr p).
-      Proof.
-        iIntros "#? !>"; destruct (decide (p = nullptr)) as [-> | Hne]; last done.
-        by rewrite not_strictly_valid_ptr_nullptr.
-      Qed.
-
-      Lemma has_type_ref' p ty :
-        has_type (Vref p) (Tref ty) |-- reference_to ty p.
-      Proof.
-        rewrite /has_type/=/reference_to has_type_prop_ref.
-        rewrite /strict_valid_if_not_empty_array.
-        iIntros "[%Ht [#H $]]".
-        destruct Ht as [? [Ht?]].
-        inversion Ht; subst. case_match; iFrame "%#∗".
-        by rewrite strict_valid_valid.
-      Qed.
-
-      Lemma has_type_rv_ref' p ty :
-        has_type (Vref p) (Trv_ref ty) |-- reference_to ty p.
-      Proof.
-        rewrite -has_type_ref'.
-        by rewrite /has_type/= has_type_prop_ref has_type_prop_rv_ref.
-      Qed.
-
-      #[global] Instance reference_to_knowledge : Knowledge2 reference_to.
-      Proof.
-        rewrite /reference_to. intros. case_match; split; refine _.
-      Qed.
-      #[global] Instance reference_to_timeless : Timeless2 reference_to.
-      Proof. rewrite /reference_to. intros. case_match; refine _. Qed.
-
-      Theorem reference_to_erase : forall ty p,
-          reference_to ty p -|- reference_to (erase_qualifiers ty) p.
-      Proof.
-        rewrite /reference_to. intros.
-        rewrite -aligned_ptr_ty_erase_qualifiers -zero_size_array_erase_qualifiers.
-        done.
-      Qed.
-
-      Theorem reference_to_intro : forall ty p,
-          strict_valid_ptr p |-- has_type (Vptr p) (Tptr ty) -* reference_to ty p.
-      Proof.
-        rewrite /has_type/reference_to/=.
-        iIntros (??) "#V [%Htype [? %Haligned]]".
-        iFrame "%".
-        iDestruct (observe [| _ <> nullptr |] with "V") as "#$".
-        iFrame. case_match; eauto.
-      Qed.
-      Theorem reference_to_elim : forall ty p,
-          reference_to ty p |--
-            [| aligned_ptr_ty ty p |] ** [| p <> nullptr |] **
-            valid_ptr p ** if zero_sized_array ty then emp else strict_valid_ptr p.
-      Proof. rewrite /reference_to. eauto. Qed.
-
-    End with_genv.
 
     #[local] Theorem tptsto_welltyped : forall p ty q (v : val),
       Observe (has_type_or_undef v ty) (tptsto ty q p v).
