@@ -2410,12 +2410,12 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
 
 
 
-    Axiom type_ptr_o_base : forall derived base p,
+
+    Lemma type_ptr_o_base derived base p :
       class_derives derived [base] ->
       base_layout_compatible σ derived base ->
-      type_ptr (Tnamed derived) p ⊢ type_ptr (Tnamed base) (p ,, _base derived base).
-
-
+      type_ptr (Tnamed derived) p ⊢ type_ptr (Tnamed base) (p ,, o_base σ derived base).
+    Proof. exact (SimpleCPP.type_ptr_o_base_guarded derived base p). Qed.
 
     Axiom type_ptr_o_field_type_ptr : forall p fld cls (st : Struct),
       glob_def σ cls = Some (Gstruct st) ->
