@@ -327,8 +327,9 @@ Module SimpleCPP.
       in_range Strict l o h |-- in_range Relaxed l o h.
     Proof. rewrite /in_range/=. f_equiv. rewrite/impl. tauto. Qed.
 
-    (** Check every stored path prefix against the same allocation range. A
-        field pointer cannot validate its own range independently of its parent.
+    (** Check every stored path prefix against the same allocation range. Only
+        the final endpoint may use relaxed validity at the upper bound; every
+        proper prefix must be strictly inside the range.
         Addresses are computed by the pointer model's existing fold. *)
     Import inductive_pointers_utils.address_sums.
     Definition raw_path_valid (vt : validity_type) (root : root_ptr)
@@ -339,14 +340,33 @@ Module SimpleCPP.
           foldr (fun off ova => ova ≫= offset_vaddr off)
             (root_ptr_vaddr root) (snd <$> prefix) = Some va /\
           va <> 0%N /\
-          ((l <= z < h)%Z \/ (vt = Relaxed /\ z = h)).
+          ((l <= z < h)%Z \/ (suffix = [] /\ vt = Relaxed /\ z = h)).
 
     Lemma raw_path_valid_prefix vt root l h prefix suffix :
       raw_path_valid vt root l h (prefix ++ suffix) ->
       raw_path_valid vt root l h prefix.
     Proof.
-      intros Hpath before after E. apply (Hpath before (after ++ suffix)).
-      by rewrite E app_assoc.
+      intros Hpath before after E.
+      have Hsplit : prefix ++ suffix = before ++ (after ++ suffix) by rewrite E app_assoc.
+      destruct (Hpath before (after ++ suffix) Hsplit)
+        as (z & va & Hz & Hva & Hnz & Hr).
+      exists z, va. repeat split; try assumption.
+      destruct Hr as [Hr|[Htail [Hvt Hend]]]; first by left.
+      apply app_eq_nil in Htail as [Hafter _]. naive_solver.
+    Qed.
+
+    Lemma raw_path_valid_strict_prefix vt root l h prefix suffix :
+      suffix <> [] ->
+      raw_path_valid vt root l h (prefix ++ suffix) ->
+      raw_path_valid Strict root l h prefix.
+    Proof.
+      intros Hsuffix Hpath before after E.
+      have Hsplit : prefix ++ suffix = before ++ (after ++ suffix) by rewrite E app_assoc.
+      destruct (Hpath before (after ++ suffix) Hsplit)
+        as (z & va & Hz & Hva & Hnz & Hr).
+      exists z, va. repeat split; try assumption.
+      destruct Hr as [Hr|[Htail _]]; first by left.
+      apply app_eq_nil in Htail as [_ Htail]. contradiction.
     Qed.
 
     Lemma raw_path_valid_weaken root l h path :
@@ -354,7 +374,7 @@ Module SimpleCPP.
     Proof.
       intros Hpath prefix suffix E.
       destruct (Hpath prefix suffix E) as (z & va & Hz & Hva & Hnz & Hr).
-      exists z, va. repeat split; try assumption. destruct Hr as [Hr|[Hbad _]];
+      exists z, va. repeat split; try assumption. destruct Hr as [Hr|[_ [Hbad _]]];
         [by left|discriminate].
     Qed.
 
@@ -364,12 +384,12 @@ Module SimpleCPP.
       raw_path_valid vt root l h [].
     Proof.
       intros Hva Hnz Hr prefix suffix E.
-      symmetry in E. apply app_eq_nil in E as [-> _].
-      exists 0%Z, va. by repeat split.
+      symmetry in E. apply app_eq_nil in E as [-> ->].
+      exists 0%Z, va. repeat split; try assumption; naive_solver.
     Qed.
 
     Lemma raw_path_valid_snoc vt root l h path seg z va :
-      raw_path_valid vt root l h path ->
+      raw_path_valid Strict root l h path ->
       eval_raw_offset (path ++ [seg]) = Some z ->
       foldr (fun off ova => ova ≫= offset_vaddr off)
         (root_ptr_vaddr root) (snd <$> (path ++ [seg])) = Some va ->
@@ -378,9 +398,11 @@ Module SimpleCPP.
     Proof.
       intros Hpath Hz Hva Hnz Hr prefix suffix.
       induction suffix as [|last suffix IH] using rev_ind; intros E.
-      - rewrite app_nil_r in E. subst prefix. exists z, va. by repeat split.
+      - rewrite app_nil_r in E. subst prefix. exists z, va.
+        repeat split; try assumption; naive_solver.
       - rewrite app_assoc in E. apply app_inj_tail in E as [E _].
-        exact (Hpath prefix suffix E).
+        destruct (Hpath prefix suffix E) as (z' & va' & Hz' & Hva' & Hnz' & Hr').
+        exists z', va'. repeat split; try assumption; naive_solver.
     Qed.
 
     Lemma raw_path_valid_vaddr {resolve : genv} vt root l h off :
@@ -1725,16 +1747,32 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
       intros _. exact Hsize.
     Qed.
 
-    (** XXX: this axiom is convoluted but
-    TODO: The intended proof of [strict_valid_ptr_field_sub] (and friends) is that
-    (1) if [p'] normalizes to [p'' ., [ ty ! i ]], then [valid_ptr p'] implies
-    [valid_ptr p''].
-    (2) [p ,, o_field σ f ,, o_sub σ ty i] will normalize to [p ,, o_field
-    σ f ,, o_sub σ ty i], without cancellation.
-    *)
-    Axiom strict_valid_ptr_field_sub : ∀ p ty (i : Z) f vt,
+    (** A nonzero subscript after a field cannot erase the field prefix.
+        Every proper prefix is strictly within the allocation range, even when
+        the subscript's element size is zero. *)
+    Lemma strict_valid_ptr_field_sub : ∀ p ty (i : Z) f vt,
       (0 < i)%Z ->
       _valid_ptr vt (p ,, o_field σ f ,, o_sub σ ty i) |-- strict_valid_ptr (p ,, o_field σ f).
+    Proof.
+      intros p ty i f vt Hi. have Hnz : i <> 0%Z by lia.
+      iIntros "H". iDestruct (_valid_ptr_offset_defined with "H") as %Hdefined.
+      apply (ptr_offset_defined_dot σ) in Hdefined as [Hpf Hsub].
+      apply (ptr_offset_defined_dot σ) in Hpf as [Hp Hf].
+      have [z Hz] := eval_o_field_defined σ f Hf.
+      have [sz Hsz] := eval_o_sub_defined σ ty i Hsub.
+      destruct p as [|root off]; first contradiction.
+      have Hraw := offset_field_sub_raw σ off f z ty i sz Hp Hz Hsz Hnz.
+      rewrite _dot.unlock /DOT_dot /= in Hraw.
+      rewrite /_valid_ptr. iDestruct "H" as "[[%Hnull _]|H]".
+      { exfalso. exact (field_sub_ptr_ne_null σ (offset_ptr root off) f ty i Hnz Hnull). }
+      rewrite _dot.unlock /DOT_dot /=.
+      iDestruct "H" as (l h) "(B & %Haid & %Hpath)".
+      iRight. iExists l, h. iFrame "B". iSplit; first done.
+      iPureIntro. rewrite Hraw in Hpath.
+      apply (raw_path_valid_strict_prefix vt root l h _
+        [(o_sub_ (erase_qualifiers ty) i, Z.of_N sz * i)%Z]);
+        [discriminate|exact Hpath].
+    Qed.
 
     (* TODO: can we deduce that [p] is strictly valid? *)
     Lemma _valid_ptr_field : ∀ p f vt,

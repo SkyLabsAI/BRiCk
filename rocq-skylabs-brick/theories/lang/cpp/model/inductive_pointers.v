@@ -890,10 +890,10 @@ Module PTRS_IMPL <: PTRS_INTF.
 
 
   (** A defined field appends a segment without changing its parent path. *)
-  #[local] Lemma offset_seg_cons_snoc_field os xs f z :
+  #[local] Lemma offset_seg_cons_field_app os xs f z ys :
     is_Some (eval_offset_seg os) ->
-    offset_seg_cons os (xs ++ [(o_field_ f, z)]) =
-      offset_seg_cons os xs ++ [(o_field_ f, z)].
+    offset_seg_cons os (xs ++ (o_field_ f,z) :: ys) =
+      offset_seg_cons os xs ++ (o_field_ f,z) :: ys.
   Proof.
     destruct os as [[f1|ty1 n1|der1 base1|base1 der1|] z1];
       destruct xs as [|[[f2|ty2 n2|der2 base2|base2 der2|] z2] xs];
@@ -901,18 +901,18 @@ Module PTRS_IMPL <: PTRS_INTF.
       repeat case_decide; naive_solver.
   Qed.
 
-  #[local] Lemma raw_offset_collapse_snoc_field xs f z :
+  #[local] Lemma raw_offset_collapse_field_app xs f z ys :
     is_Some (eval_raw_offset xs) ->
-    raw_offset_collapse (xs ++ [(o_field_ f, z)]) =
-      raw_offset_collapse xs ++ [(o_field_ f, z)].
+    raw_offset_collapse (xs ++ (o_field_ f,z) :: ys) =
+      raw_offset_collapse xs ++ (o_field_ f,z) :: raw_offset_collapse ys.
   Proof.
     induction xs as [|os xs IH]; first done.
     rewrite eval_raw_offset_cons.
     destruct (eval_offset_seg os) as [a|] eqn:Eos;
       destruct (eval_raw_offset xs) as [b|] eqn:Exs; simpl; try naive_solver.
     intros _. rewrite /= IH; last by eexists.
-    apply offset_seg_cons_snoc_field. by eexists.
-  all: intros [r Hr]; discriminate Hr.
+    apply offset_seg_cons_field_app. by eexists.
+    all: intros [r Hr]; discriminate Hr.
   Qed.
 
   Lemma eval_o_field_defined σ f :
@@ -928,7 +928,7 @@ Module PTRS_IMPL <: PTRS_INTF.
   Proof.
     intros Ho Hf. rewrite _dot.unlock /DOT_dot /= /raw_offset_merge.
     rewrite /o_field /mkOffset /mk_offset_seg /= Hf /=.
-    rewrite raw_offset_collapse_snoc_field; [by rewrite (proj2_sig o)|exact Ho].
+    rewrite raw_offset_collapse_field_app; [by rewrite (proj2_sig o)|exact Ho].
   Qed.
 
   Lemma field_ptr_ne_null σ (p : ptr) f : p ,, o_field σ f <> nullptr.
@@ -943,6 +943,45 @@ Module PTRS_IMPL <: PTRS_INTF.
       | invalid_ptr_ => [] | offset_ptr _ off => proj1_sig off end)) in Heq.
     rewrite _dot.unlock /DOT_dot /= in Heq.
     have Hraw := offset_field_raw σ off f z Hp Hz.
+    rewrite _dot.unlock /DOT_dot /= in Hraw.
+    rewrite Hraw in Heq.
+    have Hlen := f_equal (@length _) Heq. rewrite length_app /= in Hlen. lia.
+  Qed.
+
+  (** A nonzero subscript after a field retains that field as a proper prefix. *)
+  Lemma offset_field_sub_raw σ o f z ty i sz :
+    is_Some (eval_offset σ o) -> o_field_off σ f = Some z ->
+    size_of σ ty = Some sz -> i <> 0 ->
+    proj1_sig ((o ,, o_field σ f) ,, o_sub σ ty i) =
+      proj1_sig (o ,, o_field σ f) ++
+        [(o_sub_ (erase_qualifiers ty) i, Z.of_N sz * i)].
+  Proof.
+    intros Ho Hf Hsz Hi.
+    have Hfield := offset_field_raw σ o f z Ho Hf.
+    rewrite _dot.unlock /DOT_dot /= in Hfield |- *.
+    rewrite Hfield /raw_offset_merge /o_sub.
+    case_decide; first contradiction.
+    rewrite /mkOffset /mk_offset_seg /= /o_sub_off size_of_erase_qualifiers Hsz /=.
+    rewrite -app_assoc /= raw_offset_collapse_field_app; last exact Ho.
+    rewrite (proj2_sig o) /= /offset_seg_cons decide_False; last naive_solver.
+    by rewrite -app_assoc /= (Z.mul_comm i).
+  Qed.
+
+  Lemma field_sub_ptr_ne_null σ (p : ptr) f ty i :
+    i <> 0 -> p ,, o_field σ f ,, o_sub σ ty i <> nullptr.
+  Proof.
+    intros Hi Heq.
+    have Hdefined : ptr_offset_defined (p ,, o_field σ f ,, o_sub σ ty i).
+    { rewrite Heq. by exists 0. }
+    apply (ptr_offset_defined_dot σ) in Hdefined as [Hpf Hsub].
+    apply (ptr_offset_defined_dot σ) in Hpf as [Hp Hf].
+    have [z Hz] := eval_o_field_defined σ f Hf.
+    have [sz Hsz] := eval_o_sub_defined σ ty i Hsub.
+    destruct p as [|root off]; first exact Hp.
+    apply (f_equal (fun p => match p with
+      | invalid_ptr_ => [] | offset_ptr _ off => proj1_sig off end)) in Heq.
+    rewrite _dot.unlock /DOT_dot /= in Heq.
+    have Hraw := offset_field_sub_raw σ off f z ty i sz Hp Hz Hsz Hi.
     rewrite _dot.unlock /DOT_dot /= in Hraw.
     rewrite Hraw in Heq.
     have Hlen := f_equal (@length _) Heq. rewrite length_app /= in Hlen. lia.
