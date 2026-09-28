@@ -1244,13 +1244,13 @@ Module SimpleCPP.
 
     Definition strict_valid_if_not_empty_array (ty : type) : ptr -> mpred :=
       if zero_sized_array ty then valid_ptr else strict_valid_ptr.
-    #[global] Instance stict_valid_if_not_empty_array_persistent ty p :
+    #[global] Instance strict_valid_if_not_empty_array_persistent ty p :
       Persistent (strict_valid_if_not_empty_array ty p).
     Proof. rewrite /strict_valid_if_not_empty_array. case_match; refine _. Qed.
-    #[global] Instance stict_valid_if_not_empty_array_affine ty p :
+    #[global] Instance strict_valid_if_not_empty_array_affine ty p :
       Affine (strict_valid_if_not_empty_array ty p).
     Proof. rewrite /strict_valid_if_not_empty_array. case_match; refine _. Qed.
-    #[global] Instance stict_valid_if_not_empty_array_timeless ty p :
+    #[global] Instance strict_valid_if_not_empty_array_timeless ty p :
       Timeless (strict_valid_if_not_empty_array ty p).
     Proof. rewrite /strict_valid_if_not_empty_array. case_match; refine _. Qed.
 
@@ -1266,7 +1266,7 @@ Module SimpleCPP.
         rewrite -!IHty. done.
     Qed.
 
-    Lemma stict_valid_if_not_empty_array_erase ty p :
+    Lemma strict_valid_if_not_empty_array_erase ty p :
       strict_valid_if_not_empty_array ty p
       -|- strict_valid_if_not_empty_array (erase_qualifiers ty) p.
     Proof.
@@ -1334,7 +1334,7 @@ Module SimpleCPP.
         case_match; simpl; eauto.
         all: try f_equiv.
         all: try rewrite aligned_ptr_ty_erase_qualifiers; auto.
-        all: try apply stict_valid_if_not_empty_array_erase.
+        all: try apply strict_valid_if_not_empty_array_erase.
         exfalso; by eapply unqual_drop_qualifiers.
       Qed.
 
