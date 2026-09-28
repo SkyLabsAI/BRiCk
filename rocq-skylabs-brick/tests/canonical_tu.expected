@@ -1,0 +1,131 @@
+Axioms:
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+Corelib.Strings.PrimString.string : Set
+skylabs.lang.cpp.syntax.compare.name_leibniz_comparison :
+  skylabs.prelude.compare.LeibnizComparison.C
+    skylabs.lang.cpp.syntax.compare.compareN
+skylabs.lang.cpp.syntax.compare.name_comparison :
+  skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareN
+Corelib.Numbers.Cyclic.Int63.PrimInt63.mul :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+  → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+    → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+Corelib.Strings.PrimString.compare :
+  Corelib.Strings.PrimString.string
+  → Corelib.Strings.PrimString.string → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.compare :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+  → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+    → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.add :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+  → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+    → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Axioms:
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+Corelib.Strings.PrimString.string : Set
+skylabs.lang.cpp.syntax.compare.name_leibniz_comparison :
+  skylabs.prelude.compare.LeibnizComparison.C
+    skylabs.lang.cpp.syntax.compare.compareN
+skylabs.lang.cpp.syntax.compare.name_comparison :
+  skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareN
+Corelib.Numbers.Cyclic.Int63.PrimInt63.mul :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+  → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+    → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+Corelib.Strings.PrimString.compare :
+  Corelib.Strings.PrimString.string
+  → Corelib.Strings.PrimString.string → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.compare :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+  → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+    → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.add :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+  → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+    → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Axioms:
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+Corelib.Strings.PrimString.string : Set
+skylabs.lang.cpp.syntax.compare.name_leibniz_comparison :
+  skylabs.prelude.compare.LeibnizComparison.C
+    skylabs.lang.cpp.syntax.compare.compareN
+skylabs.lang.cpp.syntax.compare.name_comparison :
+  skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareN
+Corelib.Numbers.Cyclic.Int63.PrimInt63.mul :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+  → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+    → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+Corelib.Strings.PrimString.compare :
+  Corelib.Strings.PrimString.string
+  → Corelib.Strings.PrimString.string → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.compare :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+  → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+    → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.add :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+  → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+    → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Axioms:
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+Corelib.Strings.PrimString.string : Set
+skylabs.lang.cpp.syntax.compare.name_comparison :
+  skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareN
+Corelib.Numbers.Cyclic.Int63.PrimInt63.mul :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+  → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+    → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+Corelib.Strings.PrimString.compare :
+  Corelib.Strings.PrimString.string
+  → Corelib.Strings.PrimString.string → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.compare :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+  → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+    → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.add :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+  → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+    → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Axioms:
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+Corelib.Strings.PrimString.string : Set
+Corelib.Numbers.Cyclic.Int63.PrimInt63.mul :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+  → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+    → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+Corelib.Strings.PrimString.compare :
+  Corelib.Strings.PrimString.string
+  → Corelib.Strings.PrimString.string → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.compare :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+  → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+    → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.add :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+  → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+    → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Axioms:
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+Corelib.Strings.PrimString.string : Set
+Corelib.Numbers.Cyclic.Int63.PrimInt63.mul :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+  → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+    → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+Corelib.Strings.PrimString.compare :
+  Corelib.Strings.PrimString.string
+  → Corelib.Strings.PrimString.string → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.compare :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+  → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+    → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.add :
+  Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+  → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+    → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
