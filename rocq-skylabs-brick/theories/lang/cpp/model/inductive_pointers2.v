@@ -234,7 +234,6 @@ Module PTRS_IMPL <: PTRS_INTF.
       now apply proj1_sig_eq in H.
     }
   Qed.
-  #[global] Declare Instance offset_countable : Countable offset.
 
   Section norm_def.
 
@@ -888,6 +887,17 @@ Module PTRS_IMPL <: PTRS_INTF.
     Qed.
 
   End norm_def.
+
+  #[global] Instance offset_countable : Countable offset.
+  Proof.
+    apply (inj_countable proj1_sig
+      (fun os => Some (exist roff_canon (normalize os) (norm_canon os)))).
+    intros [os Hcanon]. simpl.
+    generalize (norm_canon os).
+    rewrite (proj1 (norm_invol os) Hcanon).
+    intros Hcanon'. by rewrite (irr _ Hcanon' Hcanon).
+  Qed.
+
 
   Section norm_lemmas.
 
