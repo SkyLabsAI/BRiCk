@@ -192,7 +192,7 @@ Module Type CPP_LOGIC
         has_type (Vptr p) Tnullptr -|- [| p = nullptr |].
       Axiom has_type_ptr' : ∀ p ty,
         has_type (Vptr p) (Tptr ty) -|-
-        valid_ptr p ** [| aligned_ptr_ty ty p |].
+        valid_ptr p ** [| pointee_aligned_ptr_ty ty p |].
 
       (* These two definitions are needed because of [tptsto_has_type] *)
       Axiom has_type_ref' : ∀ p ty,
@@ -227,7 +227,7 @@ Module Type CPP_LOGIC
           strict_valid_ptr p |-- has_type (Vptr p) (Tptr ty) -* reference_to ty p.
       Axiom reference_to_elim : forall ty p,
           reference_to ty p |--
-            [| aligned_ptr_ty ty p |] ** [| p <> nullptr |] **
+            [| pointee_aligned_ptr_ty ty p |] ** [| p <> nullptr |] **
             valid_ptr p ** if zero_sized_array ty then emp else strict_valid_ptr p.
 
     End with_genv.
