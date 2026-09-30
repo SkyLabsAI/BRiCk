@@ -1,0 +1,17 @@
+(lang dune 3.22)
+(cram enable)
+(name guesstimator)
+
+(generate_opam_files)
+
+(maintainers "Jan-Oliver Kaiser <janno@skylabs-ai.com>")
+(authors "Jan-Oliver Kaiser <janno@skylabs-ai.com>")
+(license TODO)
+
+(package
+ (name guesstimator)
+ (depends
+  (dune (>= 3.22))
+  (ocaml (>= 4.08))
+  (cmdliner (>= 1.1.0))
+  (csv (>= 2.4))))
