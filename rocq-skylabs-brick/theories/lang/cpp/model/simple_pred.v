@@ -921,7 +921,15 @@ Module SimpleCPP.
           | Vundef => pure_encodes_undef (int_rank.bitsize sz) vs
           | _ => False
           end
-        | Tchar_ ct => False (* TODO *)
+        | Tchar_ ct =>
+          match v with
+          | Vchar n =>
+            (* Character values carry unsigned bit patterns. *)
+            in_Z_to_bytes_bounds (char_type.bitsize ct) Unsigned (Z.of_N n) /\
+            vs = Z_to_bytes (char_type.bitsize ct) Unsigned (Z.of_N n)
+          | Vundef => pure_encodes_undef (char_type.bitsize ct) vs
+          | _ => False
+          end
         | Tmember_pointer _ _ =>
           match v with
           | Vint v =>
@@ -1006,6 +1014,7 @@ Module SimpleCPP.
           length vs = match erase_qualifiers t with
                       | Tbool => 1
                       | Tnum sz _ => int_rank.bytesNat sz
+                      | Tchar_ ct => N.to_nat (char_type.bytesN ct)
                       | Tfloat_ ft => bitsize.bytesNat (float_type.bitsize ft)
 
                       | Tmember_pointer _ _ => bitsize.bytesNat (member_pointer_bitsize σ)
@@ -1025,6 +1034,8 @@ Module SimpleCPP.
         all: try by destruct f.
         all: try (erewrite length_pure_encodes_undef; eauto; by destruct sz).
         all: try (erewrite length_pure_encodes_undef; eauto; by destruct f).
+        - rewrite length_Z_to_bytes. by destruct t0.
+        - erewrite length_pure_encodes_undef; last eassumption. by destruct t0.
       Qed.
 
       Lemma length_encodes_pos t v vs :
@@ -1033,7 +1044,7 @@ Module SimpleCPP.
       Proof.
         move=> /length_encodes ->. have ?: 1 > 0 by exact: le_n.
         induction t; simpl; try solve [ lia | exact: bytesNat_pos ].
-        destruct sz; compute; lia.
+        all: first [ destruct sz | destruct t ]; compute; lia.
       Qed.
 
       #[global] Instance Inj_aptr: Inj eq eq aptr.
@@ -1069,6 +1080,7 @@ Module SimpleCPP.
         by [
           edestruct cptr_ne_aptr | edestruct pure_encodes_undef_aptr |
           edestruct pure_encodes_undef_Z_to_bytes |
+          f_equal; apply N2Z.inj; exact: Z_to_bytes_inj |
           f_equal; apply float_value.to_bits_inj; exact: Z_to_bytes_inj |
           f_equiv; exact: Z_to_bytes_inj ].
       Qed.
