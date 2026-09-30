@@ -1405,6 +1405,26 @@ Section with_cpp.
     | _ => False
     end.
 
+
+  Lemma callable_type_respects_sub_table te1 te2 t :
+    type_table_le te1 te2 ->
+    callable_type te1 t → callable_type te2 t.
+  Proof.
+    intros Htt.
+    unfold callable_type.
+    have Hct := complete_type_respects_sub_table _ _ _ Htt.
+    case_match => //; [].
+    move => [H1 H2]; split.
+    - revert H1. case_match; by eauto.
+    - revert H2. move : (ft_params _). clear -Hct.
+      elim => [|p ps IHps] H1; inversion H1; econstructor; eauto.
+  Qed.
+
+  Lemma callable_type_respects_sub_module tu1 tu2 t :
+    sub_module tu1 tu2 ->
+    callable_type (types tu1) t → callable_type (types tu2) t.
+  Proof. move => [????]. by apply: callable_type_respects_sub_table. Qed.
+
   (* this axiom states that the type environment for an [wp_fptr] can be
      narrowed as long as the new type environment [small]/[tt2] is smaller than
      the old type environment ([big]/[tt1]), and [ft]
