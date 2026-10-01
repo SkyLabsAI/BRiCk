@@ -18,6 +18,7 @@ let user_err : ('a, 'k) Format.koutfmt -> 'a = fun fmt ->
 
 module Pp = Extra_pp
 module Msg = Extra_msg
+module Whd = Extra_whd
 
 (* FIXME extend Pattern -> dynlink error *)
 module Extra_pattern = Extra_pattern
