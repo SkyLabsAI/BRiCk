@@ -16,15 +16,6 @@ let define s =
 
 open Proofview.Notations
 
-let create_clos_infos ?evars flgs env =
-  let env = Environ.set_typing_flags ({(Environ.typing_flags env) with Declarations.share_reduction = false}) env in
-  let evars =
-    match evars with
-    | None -> CClosure.default_evar_handler env
-    | Some(evars) -> evars
-  in
-  CClosure.create_clos_infos ~evars flgs env
-
 let red_flags : Names.GlobRef.t Genredexpr.glob_red_flag Tac2ffi.repr =
   let to_red_strength v =
     let open Genredexpr in
@@ -103,36 +94,8 @@ let _ =
     let reds = if flags.rZeta  then red_add reds fZETA  else reds in
     red_add_transparent (red_add reds fDELTA) ts
   in
-  let evars =
-    let evar_expand ev = Evd.existential_expand_value0 sigma ev in
-    let qvar_irrelevant q =
-      let open UState in
-      match nf_qvar (Evd.ustate sigma) q with
-      | QConstant QSProp -> true
-      | _ -> false
-    in
-    let evar_irrelevant (evk, _) =
-      match Evd.find sigma evk with
-      | exception Not_found -> true
-      | Evd.EvarInfo evi ->
-      Evd.is_relevance_irrelevant sigma (Evd.evar_relevance evi)
-    in
-    let evar_repack (ev, args) =
-      let args = List.map EConstr.of_constr args in
-      EConstr.Unsafe.to_constr (EConstr.mkLEvar sigma (ev, args))
-    in
-    let qual_equal = Sorts.Quality.equal in
-    let abstr_const _ = assert false in
-    CClosure.{
-      evar_expand; evar_repack; qvar_irrelevant; evar_irrelevant;
-      qual_equal; abstr_const;
-    }
-  in
-  let infos = create_clos_infos ~evars reds env in
-  let tabs = CClosure.create_tab () in
-  let c = CClosure.inject (EConstr.Unsafe.to_constr c) in
-  let c = CClosure.whd_val infos tabs c in
-  Proofview.tclUNIT (EConstr.of_constr c)
+  let whd = Whd.eval ~share:false env sigma reds in
+  Proofview.tclUNIT (whd c)
 
 (* [gen_evar] generates and returns an evar of type [ev_ty]. *)
 let _ =
