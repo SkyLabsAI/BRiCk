@@ -38,7 +38,7 @@
         Some
           (Omethod
              {|
-               m_return := "const C1&";
+               m_return := "C1&";
                m_class := "C1";
                m_this_qual := QM;
                m_params := [("#0"%pstring, "const C1&"%cpp_type)];
@@ -102,7 +102,7 @@
         Some
           (Omethod
              {|
-               m_return := "const C2&";
+               m_return := "C2&";
                m_class := "C2";
                m_this_qual := QM;
                m_params := [("#0"%pstring, "const C2&"%cpp_type)];
@@ -156,7 +156,7 @@
         Some
           (Omethod
              {|
-               m_return := "const C3&";
+               m_return := "C3&";
                m_class := "C3";
                m_this_qual := QM;
                m_params := [("#0"%pstring, "const C3&"%cpp_type)];
@@ -212,7 +212,7 @@
         Some
           (Omethod
              {|
-               m_return := "const C4&";
+               m_return := "C4&";
                m_class := "C4";
                m_this_qual := QM;
                m_params := [("#0"%pstring, "const C4&"%cpp_type)];

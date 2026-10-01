@@ -284,7 +284,6 @@ Definition Oimplicit_default_ctor (n : globname) : K :=
                 ; c_body := Some Defaulted |} in
   _symbols (Nscoped n $ Nctor []) ctor.
 
-
 Definition Oimplicit_copy_ctor (n : globname) (is_const : bool) : K :=
   let arg := Tref $ if is_const then (Tconst (Tnamed n)) else Tnamed n in
   let ctor := Oconstructor
@@ -296,8 +295,12 @@ Definition Oimplicit_copy_ctor (n : globname) (is_const : bool) : K :=
                 ; c_body := Some Defaulted |} in
   _symbols (Nscoped n $ Nctor [arg]) ctor.
 
-Definition Oimplicit_move_ctor (n : globname) (is_const : bool) : K :=
-  let arg := Trv_ref $ if is_const then (Tconst (Tnamed n)) else Tnamed n in
+(** The form is always <<X::X(X&&)>>, in every standard from C++17 (N4659) on
+    (https://eel.is/c++draft/class.copy.ctor#9).  The [bool] is accepted only
+    so that existing cpp2v output, which always passes [false], still parses.
+ *)
+Definition Oimplicit_move_ctor (n : globname) (_ : bool) : K :=
+  let arg := Trv_ref $ Tnamed n in
   let ctor := Oconstructor
                 {| c_class := n
                 ; c_params := [("#0"%pstring, arg)]
@@ -307,12 +310,17 @@ Definition Oimplicit_move_ctor (n : globname) (is_const : bool) : K :=
                 ; c_body := Some Defaulted |} in
   _symbols (Nscoped n $ Nctor [arg]) ctor.
 
+(** [is_const] picks the parameter, <<const X&>> or <<X&>>
+    (https://eel.is/c++draft/class.copy.assign#2); the return type is <<X&>>
+    either way (https://eel.is/c++draft/class.copy.assign#6).  Both are the
+    same in every standard from C++17 (N4659) on.
+ *)
 Definition Oimplicit_copy_assign (n : globname) (is_const : bool) : K :=
   let arg := Tref $ if is_const then (Tconst (Tnamed n)) else Tnamed n in
   let ctor := Omethod
                 {| m_class := n
                 ; m_params := [("#0"%pstring, arg)]
-                ; m_return := arg
+                ; m_return := Tref (Tnamed n)
                 ; m_this_qual := QM
                 ; m_cc := CC_C
                 ; m_arity := Ar_Definite
@@ -325,7 +333,7 @@ Definition Oimplicit_move_assign (n : globname) : K :=
   let ctor := Omethod
                 {| m_class := n
                 ; m_params := [("#0"%pstring, Trv_ref arg)]
-                ; m_return := Tref arg
+                ; m_return := Tref (Tnamed n)
                 ; m_this_qual := QM
                 ; m_cc := CC_C
                 ; m_arity := Ar_Definite
