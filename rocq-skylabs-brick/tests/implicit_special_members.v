@@ -22,16 +22,6 @@ Require Import skylabs.lang.cpp.semantics.sub_module.
 Definition get (tu : translation_unit) (n : name) :=
   (n , tu.(symbols) !! n).
 
-(** The symbols of [a] that keep it from being a [sub_module] of [b]: missing
-    from [b], or not [ObjValue_le] the entry there. *)
-Definition offenders (a b : translation_unit) : list (name * bool) :=
-  stdpp.fin_maps.map_fold
-    (fun n v acc => match b.(symbols) !! n with
-                 | Some v' => if sub_module.ObjValue_le v v' then acc else (n, true) :: acc
-                 | None => (n, false) :: acc
-                 end)
-    [] a.(symbols).
-
 (** * Every placeholder, with the [const] forms of the copy members
 
     Variants:
@@ -212,7 +202,7 @@ Example const_copy_ctor_header_sub_module_const_header :
 Proof. vm_compute. reflexivity. Qed.
 
 (* T's eagerly declared copy assignment is [NoThrow]; the placeholder is [Unknown] *)
-Eval vm_compute in offenders const_header const_copy_ctor_header.
+Eval vm_compute in sub_module_mismatch const_header const_copy_ctor_header.
 
 Example const_header_not_sub_module_const_copy_ctor_header :
   bool_decide (sub_module const_header const_copy_ctor_header) = false.
@@ -262,8 +252,8 @@ Proof. vm_compute. reflexivity. Qed.
 
 (* Each header has a placeholder for one of T's copy members where the other has
    clang's eager declaration *)
-Eval vm_compute in offenders const_copy_assignment_header const_copy_ctor_header.
-Eval vm_compute in offenders const_copy_ctor_header const_copy_assignment_header.
+Eval vm_compute in sub_module_mismatch const_copy_assignment_header const_copy_ctor_header.
+Eval vm_compute in sub_module_mismatch const_copy_ctor_header const_copy_assignment_header.
 
 Example neither_sub_module_const_copy_assignment_header_and_const_copy_ctor_header :
   bool_decide (sub_module const_copy_assignment_header const_copy_ctor_header) = false /\
@@ -271,7 +261,7 @@ Example neither_sub_module_const_copy_assignment_header_and_const_copy_ctor_head
 Proof. vm_compute. split; reflexivity. Qed.
 
 (* T's eagerly declared copy ctor is [NoThrow]; the placeholder is [Unknown] *)
-Eval vm_compute in offenders const_header const_copy_assignment_header.
+Eval vm_compute in sub_module_mismatch const_header const_copy_assignment_header.
 
 Example const_header_not_sub_module_const_copy_assignment_header :
   bool_decide (sub_module const_header const_copy_assignment_header) = false.
