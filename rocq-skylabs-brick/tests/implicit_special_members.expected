@@ -1,0 +1,473 @@
+     = ("S::S()"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "S";
+               c_params := [];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.Unknown;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("S::S(const S&)"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "S";
+               c_params := [("#0"%pstring, "const S&"%cpp_type)];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.Unknown;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("S::S(S&&)"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "S";
+               c_params := [("#0"%pstring, "S&&"%cpp_type)];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.Unknown;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("S::operator=(const S&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "S&";
+               m_class := "S";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "const S&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.Unknown;
+               m_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("S::operator=(S&&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "S&";
+               m_class := "S";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "S&&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.Unknown;
+               m_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("S::~S()"%cpp_name,
+        Some
+          (Odestructor
+             {|
+               d_class := "S";
+               d_cc := CC_C;
+               d_exception := exception_spec.Unknown;
+               d_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("S::operator=(const S&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "S&";
+               m_class := "S";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "const S&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.NoThrow;
+               m_body :=
+                 Some
+                   (CompilerProvided
+                      (Sseq
+                         [Sexpr
+                            (Eassign
+                               (core.Emember true 
+                                  (Ethis "S*") (Nid "x") false "int")
+                               (Ecast Cl2r
+                                  (core.Emember false 
+                                     (Evar "#0" "const S&") 
+                                     (Nid "x") false "int"))
+                               "int");
+                          Sreturn (Some (Ederef (Ethis "S*") "S"))]))
+             |}))
+     : name * option ObjValue
+     = ("N::N(N&)"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "N";
+               c_params := [("#0"%pstring, "N&"%cpp_type)];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.NoThrow;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("N::operator=(N&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "N&";
+               m_class := "N";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "N&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.NoThrow;
+               m_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("T::T(T&)"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "T";
+               c_params := [("#0"%pstring, "T&"%cpp_type)];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.Unknown;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("T::operator=(T&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "T&";
+               m_class := "T";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "T&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.Unknown;
+               m_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("N::N(const N&)"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "N";
+               c_params := [("#0"%pstring, "const N&"%cpp_type)];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.NoThrow;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("N::operator=(const N&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "N&";
+               m_class := "N";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "const N&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.NoThrow;
+               m_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("T::T(const T&)"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "T";
+               c_params := [("#0"%pstring, "const T&"%cpp_type)];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.NoThrow;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("T::operator=(const T&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "T&";
+               m_class := "T";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "const T&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.NoThrow;
+               m_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("N::N(const N&)"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "N";
+               c_params := [("#0"%pstring, "const N&"%cpp_type)];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.NoThrow;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("N::operator=(const N&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "N&";
+               m_class := "N";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "const N&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.NoThrow;
+               m_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("T::T(const T&)"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "T";
+               c_params := [("#0"%pstring, "const T&"%cpp_type)];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.NoThrow;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("T::operator=(const T&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "T&";
+               m_class := "T";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "const T&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.Unknown;
+               m_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = [("T::operator=(const T&)"%cpp_name, true)]
+     : list (name * bool)
+     = ("N::N(const N&)"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "N";
+               c_params := [("#0"%pstring, "const N&"%cpp_type)];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.NoThrow;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("N::operator=(const N&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "N&";
+               m_class := "N";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "const N&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.NoThrow;
+               m_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("T::T(const T&)"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "T";
+               c_params := [("#0"%pstring, "const T&"%cpp_type)];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.Unknown;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("T::operator=(const T&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "T&";
+               m_class := "T";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "const T&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.NoThrow;
+               m_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = [("T::operator=(const T&)"%cpp_name, true)]
+     : list (name * bool)
+     = [("T::T(const T&)"%cpp_name, true)]
+     : list (name * bool)
+     = [("T::T(const T&)"%cpp_name, true)]
+     : list (name * bool)
+     = ("C::C(C&)"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "C";
+               c_params := [("#0"%pstring, "C&"%cpp_type)];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.NoThrow;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("C::operator=(C&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "C&";
+               m_class := "C";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "C&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.NoThrow;
+               m_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("D::D(D&)"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "D";
+               c_params := [("#0"%pstring, "D&"%cpp_type)];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.Unknown;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("D::operator=(D&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "D&";
+               m_class := "D";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "D&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.Unknown;
+               m_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("U::U(U&&)"%cpp_name, None)
+     : name * option ObjValue
+     = ("U::operator=(U&&)"%cpp_name, None)
+     : name * option ObjValue
+     = ("U::U(const U&)"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "U";
+               c_params := [("#0"%pstring, "const U&"%cpp_type)];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.Unknown;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("U::operator=(const U&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "U&";
+               m_class := "U";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "const U&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.Unknown;
+               m_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("W<int>::W()"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "W<int>";
+               c_params := [];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.Unknown;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("W<int>::W(const W<int>&)"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "W<int>";
+               c_params := [("#0"%pstring, "const W<int>&"%cpp_type)];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.Unknown;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("W<int>::W(W<int>&&)"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "W<int>";
+               c_params := [("#0"%pstring, "W<int>&&"%cpp_type)];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.Unknown;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("W<int>::operator=(const W<int>&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "W<int>&";
+               m_class := "W<int>";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "const W<int>&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.Unknown;
+               m_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("W<int>::operator=(W<int>&&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "W<int>&";
+               m_class := "W<int>";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "W<int>&&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.Unknown;
+               m_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("W<int>::~W()"%cpp_name,
+        Some
+          (Odestructor
+             {|
+               d_class := "W<int>";
+               d_cc := CC_C;
+               d_exception := exception_spec.Unknown;
+               d_body := Some Defaulted
+             |}))
+     : name * option ObjValue
