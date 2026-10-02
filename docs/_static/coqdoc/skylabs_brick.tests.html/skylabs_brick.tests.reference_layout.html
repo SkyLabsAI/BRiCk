@@ -1,0 +1,108 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.reference_layout</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics.genv</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics.types</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="with_genv" class="idref" href="#with_genv"><span class="id" title="section">with_genv</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="ecd91c3bac508d4ee5d884a94dc4786a" class="idref" href="#ecd91c3bac508d4ee5d884a94dc4786a"><span class="id" title="variable">σ</span></a> : <span class="id" title="class">genv</span>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;These&nbsp;are&nbsp;reference-cell&nbsp;sizes,&nbsp;independent&nbsp;of&nbsp;the&nbsp;referent's&nbsp;layout.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;C++&nbsp;sizeof/alignof&nbsp;expressions&nbsp;erase&nbsp;references&nbsp;before&nbsp;querying&nbsp;layout.&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="lvalue_reference_size" class="idref" href="#lvalue_reference_size"><span class="id" title="definition">lvalue_reference_size</span></a> : <span class="id" title="class">SizeOf</span> "char&amp;" (<span class="id" title="definition">pointer_size</span> <a class="idref" href="skylabs_brick.tests.reference_layout.html#ecd91c3bac508d4ee5d884a94dc4786a"><span class="id" title="variable">σ</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">_</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="rvalue_reference_size" class="idref" href="#rvalue_reference_size"><span class="id" title="definition">rvalue_reference_size</span></a> : <span class="id" title="class">SizeOf</span> "char&amp;&amp;" (<span class="id" title="definition">pointer_size</span> <a class="idref" href="skylabs_brick.tests.reference_layout.html#ecd91c3bac508d4ee5d884a94dc4786a"><span class="id" title="variable">σ</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">_</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="reference_to_incomplete_size" class="idref" href="#reference_to_incomplete_size"><span class="id" title="definition">reference_to_incomplete_size</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="class">SizeOf</span> (<span class="id" title="constructor">Tref</span> "Incomplete") (<span class="id" title="definition">pointer_size</span> <a class="idref" href="skylabs_brick.tests.reference_layout.html#ecd91c3bac508d4ee5d884a94dc4786a"><span class="id" title="variable">σ</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="var">_</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="qualified_reference_size" class="idref" href="#qualified_reference_size"><span class="id" title="definition">qualified_reference_size</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">size_of</span> <a class="idref" href="skylabs_brick.tests.reference_layout.html#ecd91c3bac508d4ee5d884a94dc4786a"><span class="id" title="variable">σ</span></a> (<span class="id" title="abbreviation">Tconst</span> "int&amp;") <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="definition">pointer_size</span> <a class="idref" href="skylabs_brick.tests.reference_layout.html#ecd91c3bac508d4ee5d884a94dc4786a"><span class="id" title="variable">σ</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="lvalue_reference_alignment" class="idref" href="#lvalue_reference_alignment"><span class="id" title="definition">lvalue_reference_alignment</span></a> <a id="ty:2" class="idref" href="#ty:2"><span class="id" title="binder">ty</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#is_Some"><span class="id" title="definition">is_Some</span></a> (@<span class="id" title="axiom">align_of</span> <a class="idref" href="skylabs_brick.tests.reference_layout.html#ecd91c3bac508d4ee5d884a94dc4786a"><span class="id" title="variable">σ</span></a> (<span class="id" title="constructor">Tref</span> <a class="idref" href="skylabs_brick.tests.reference_layout.html#ty:2"><span class="id" title="variable">ty</span></a>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="axiom">align_of_size_of'</span> (<span class="id" title="constructor">Tref</span> <span class="id" title="var">ty</span>) <span class="id" title="var">_</span> (<span class="id" title="lemma">size_of_ref</span> <span class="id" title="var">ty</span>)) <span class="id" title="keyword">as</span> [<span class="id" title="var">al</span> [<span class="id" title="var">Hal</span> <span class="id" title="var">_</span>]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">exists</span> <span class="id" title="var">al</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="rvalue_reference_alignment" class="idref" href="#rvalue_reference_alignment"><span class="id" title="definition">rvalue_reference_alignment</span></a> <a id="ty:3" class="idref" href="#ty:3"><span class="id" title="binder">ty</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#is_Some"><span class="id" title="definition">is_Some</span></a> (@<span class="id" title="axiom">align_of</span> <a class="idref" href="skylabs_brick.tests.reference_layout.html#ecd91c3bac508d4ee5d884a94dc4786a"><span class="id" title="variable">σ</span></a> (<span class="id" title="constructor">Trv_ref</span> <a class="idref" href="skylabs_brick.tests.reference_layout.html#ty:3"><span class="id" title="variable">ty</span></a>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="axiom">align_of_size_of'</span> (<span class="id" title="constructor">Trv_ref</span> <span class="id" title="var">ty</span>) <span class="id" title="var">_</span> (<span class="id" title="lemma">size_of_rv_ref</span> <span class="id" title="var">ty</span>)) <span class="id" title="keyword">as</span> [<span class="id" title="var">al</span> [<span class="id" title="var">Hal</span> <span class="id" title="var">_</span>]].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">exists</span> <span class="id" title="var">al</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_brick.tests.reference_layout.html#with_genv"><span class="id" title="section">with_genv</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
