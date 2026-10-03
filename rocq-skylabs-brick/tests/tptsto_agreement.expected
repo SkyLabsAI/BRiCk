@@ -2,6 +2,10 @@ Closed under the global context
 Closed under the global context
 Closed under the global context
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareT is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareS is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareE is assumed to be guarded.
 skylabs.lang.cpp.model.simple_pred.SimpleCPP.vbyte :
   ∀ (thread_info : iris.bi.monpred.biIndex) (Σ : iris.base_logic.lib.iprop.gFunctors),
     skylabs.lang.cpp.model.simple_pred.SimpleCPP_BASE.cpp_logic thread_info Σ
@@ -150,6 +154,10 @@ skylabs.lang.cpp.syntax.compare.Expr_leibniz_comparison :
 skylabs.lang.cpp.syntax.compare.Expr_comparison :
   skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareE
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareT is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareS is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareE is assumed to be guarded.
 skylabs.lang.cpp.model.simple_pred.SimpleCPP.vbyte :
   ∀ (thread_info : iris.bi.monpred.biIndex) (Σ : iris.base_logic.lib.iprop.gFunctors),
     skylabs.lang.cpp.model.simple_pred.SimpleCPP_BASE.cpp_logic thread_info Σ
@@ -298,6 +306,10 @@ skylabs.lang.cpp.syntax.compare.Expr_leibniz_comparison :
 skylabs.lang.cpp.syntax.compare.Expr_comparison :
   skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareE
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareT is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareS is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareE is assumed to be guarded.
 skylabs.lang.cpp.model.simple_pred.SimpleCPP.vbyte :
   ∀ (thread_info : iris.bi.monpred.biIndex) (Σ : iris.base_logic.lib.iprop.gFunctors),
     skylabs.lang.cpp.model.simple_pred.SimpleCPP_BASE.cpp_logic thread_info Σ

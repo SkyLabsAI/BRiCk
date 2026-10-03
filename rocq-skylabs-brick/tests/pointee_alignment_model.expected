@@ -121,23 +121,6 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.compare :
 Corelib.Strings.PrimString.cat :
   Corelib.Strings.PrimString.string ->
   Corelib.Strings.PrimString.string -> Corelib.Strings.PrimString.string
-skylabs.lang.cpp.syntax.compare.atomic_name_leibniz_comparison :
-  forall
-    cmpA : skylabs.lang.cpp.syntax.core.type ->
-           skylabs.lang.cpp.syntax.core.type ->
-           Corelib.Init.Datatypes.comparison,
-  skylabs.prelude.base.Comparison cmpA ->
-  skylabs.prelude.compare.LeibnizComparison.C cmpA ->
-  skylabs.prelude.compare.LeibnizComparison.C
-    (skylabs.lang.cpp.syntax.compare.atomic_name.compare cmpA)
-skylabs.lang.cpp.syntax.compare.atomic_name_comparison :
-  forall
-    cmpA : skylabs.lang.cpp.syntax.core.type ->
-           skylabs.lang.cpp.syntax.core.type ->
-           Corelib.Init.Datatypes.comparison,
-  skylabs.prelude.base.Comparison cmpA ->
-  skylabs.prelude.base.Comparison
-    (skylabs.lang.cpp.syntax.compare.atomic_name.compare cmpA)
 skylabs.lang.cpp.semantics.types.align_of_erase_qualifiers :
   forall (σ : skylabs.lang.cpp.semantics.genv.genv)
     (t : skylabs.lang.cpp.syntax.core.type),
@@ -286,23 +269,6 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.compare :
 Corelib.Strings.PrimString.cat :
   Corelib.Strings.PrimString.string ->
   Corelib.Strings.PrimString.string -> Corelib.Strings.PrimString.string
-skylabs.lang.cpp.syntax.compare.atomic_name_leibniz_comparison :
-  forall
-    cmpA : skylabs.lang.cpp.syntax.core.type ->
-           skylabs.lang.cpp.syntax.core.type ->
-           Corelib.Init.Datatypes.comparison,
-  skylabs.prelude.base.Comparison cmpA ->
-  skylabs.prelude.compare.LeibnizComparison.C cmpA ->
-  skylabs.prelude.compare.LeibnizComparison.C
-    (skylabs.lang.cpp.syntax.compare.atomic_name.compare cmpA)
-skylabs.lang.cpp.syntax.compare.atomic_name_comparison :
-  forall
-    cmpA : skylabs.lang.cpp.syntax.core.type ->
-           skylabs.lang.cpp.syntax.core.type ->
-           Corelib.Init.Datatypes.comparison,
-  skylabs.prelude.base.Comparison cmpA ->
-  skylabs.prelude.base.Comparison
-    (skylabs.lang.cpp.syntax.compare.atomic_name.compare cmpA)
 skylabs.lang.cpp.semantics.types.align_of :
   skylabs.lang.cpp.semantics.genv.genv ->
   skylabs.lang.cpp.syntax.core.type ->
@@ -446,23 +412,6 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.compare :
 Corelib.Strings.PrimString.cat :
   Corelib.Strings.PrimString.string ->
   Corelib.Strings.PrimString.string -> Corelib.Strings.PrimString.string
-skylabs.lang.cpp.syntax.compare.atomic_name_leibniz_comparison :
-  forall
-    cmpA : skylabs.lang.cpp.syntax.core.type ->
-           skylabs.lang.cpp.syntax.core.type ->
-           Corelib.Init.Datatypes.comparison,
-  skylabs.prelude.base.Comparison cmpA ->
-  skylabs.prelude.compare.LeibnizComparison.C cmpA ->
-  skylabs.prelude.compare.LeibnizComparison.C
-    (skylabs.lang.cpp.syntax.compare.atomic_name.compare cmpA)
-skylabs.lang.cpp.syntax.compare.atomic_name_comparison :
-  forall
-    cmpA : skylabs.lang.cpp.syntax.core.type ->
-           skylabs.lang.cpp.syntax.core.type ->
-           Corelib.Init.Datatypes.comparison,
-  skylabs.prelude.base.Comparison cmpA ->
-  skylabs.prelude.base.Comparison
-    (skylabs.lang.cpp.syntax.compare.atomic_name.compare cmpA)
 skylabs.lang.cpp.semantics.types.align_of :
   skylabs.lang.cpp.semantics.genv.genv ->
   skylabs.lang.cpp.syntax.core.type ->
@@ -615,23 +564,6 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.compare :
 Corelib.Strings.PrimString.cat :
   Corelib.Strings.PrimString.string ->
   Corelib.Strings.PrimString.string -> Corelib.Strings.PrimString.string
-skylabs.lang.cpp.syntax.compare.atomic_name_leibniz_comparison :
-  forall
-    cmpA : skylabs.lang.cpp.syntax.core.type ->
-           skylabs.lang.cpp.syntax.core.type ->
-           Corelib.Init.Datatypes.comparison,
-  skylabs.prelude.base.Comparison cmpA ->
-  skylabs.prelude.compare.LeibnizComparison.C cmpA ->
-  skylabs.prelude.compare.LeibnizComparison.C
-    (skylabs.lang.cpp.syntax.compare.atomic_name.compare cmpA)
-skylabs.lang.cpp.syntax.compare.atomic_name_comparison :
-  forall
-    cmpA : skylabs.lang.cpp.syntax.core.type ->
-           skylabs.lang.cpp.syntax.core.type ->
-           Corelib.Init.Datatypes.comparison,
-  skylabs.prelude.base.Comparison cmpA ->
-  skylabs.prelude.base.Comparison
-    (skylabs.lang.cpp.syntax.compare.atomic_name.compare cmpA)
 skylabs.lang.cpp.semantics.types.align_of :
   skylabs.lang.cpp.semantics.genv.genv ->
   skylabs.lang.cpp.syntax.core.type ->
@@ -762,23 +694,6 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.compare :
 Corelib.Strings.PrimString.cat :
   Corelib.Strings.PrimString.string ->
   Corelib.Strings.PrimString.string -> Corelib.Strings.PrimString.string
-skylabs.lang.cpp.syntax.compare.atomic_name_leibniz_comparison :
-  forall
-    cmpA : skylabs.lang.cpp.syntax.core.type ->
-           skylabs.lang.cpp.syntax.core.type ->
-           Corelib.Init.Datatypes.comparison,
-  skylabs.prelude.base.Comparison cmpA ->
-  skylabs.prelude.compare.LeibnizComparison.C cmpA ->
-  skylabs.prelude.compare.LeibnizComparison.C
-    (skylabs.lang.cpp.syntax.compare.atomic_name.compare cmpA)
-skylabs.lang.cpp.syntax.compare.atomic_name_comparison :
-  forall
-    cmpA : skylabs.lang.cpp.syntax.core.type ->
-           skylabs.lang.cpp.syntax.core.type ->
-           Corelib.Init.Datatypes.comparison,
-  skylabs.prelude.base.Comparison cmpA ->
-  skylabs.prelude.base.Comparison
-    (skylabs.lang.cpp.syntax.compare.atomic_name.compare cmpA)
 skylabs.lang.cpp.semantics.types.align_of_erase_qualifiers :
   forall (σ : skylabs.lang.cpp.semantics.genv.genv)
     (t : skylabs.lang.cpp.syntax.core.type),
@@ -919,23 +834,6 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.compare :
 Corelib.Strings.PrimString.cat :
   Corelib.Strings.PrimString.string ->
   Corelib.Strings.PrimString.string -> Corelib.Strings.PrimString.string
-skylabs.lang.cpp.syntax.compare.atomic_name_leibniz_comparison :
-  forall
-    cmpA : skylabs.lang.cpp.syntax.core.type ->
-           skylabs.lang.cpp.syntax.core.type ->
-           Corelib.Init.Datatypes.comparison,
-  skylabs.prelude.base.Comparison cmpA ->
-  skylabs.prelude.compare.LeibnizComparison.C cmpA ->
-  skylabs.prelude.compare.LeibnizComparison.C
-    (skylabs.lang.cpp.syntax.compare.atomic_name.compare cmpA)
-skylabs.lang.cpp.syntax.compare.atomic_name_comparison :
-  forall
-    cmpA : skylabs.lang.cpp.syntax.core.type ->
-           skylabs.lang.cpp.syntax.core.type ->
-           Corelib.Init.Datatypes.comparison,
-  skylabs.prelude.base.Comparison cmpA ->
-  skylabs.prelude.base.Comparison
-    (skylabs.lang.cpp.syntax.compare.atomic_name.compare cmpA)
 skylabs.lang.cpp.semantics.types.align_of :
   skylabs.lang.cpp.semantics.genv.genv ->
   skylabs.lang.cpp.syntax.core.type ->
@@ -1066,23 +964,6 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.compare :
 Corelib.Strings.PrimString.cat :
   Corelib.Strings.PrimString.string ->
   Corelib.Strings.PrimString.string -> Corelib.Strings.PrimString.string
-skylabs.lang.cpp.syntax.compare.atomic_name_leibniz_comparison :
-  forall
-    cmpA : skylabs.lang.cpp.syntax.core.type ->
-           skylabs.lang.cpp.syntax.core.type ->
-           Corelib.Init.Datatypes.comparison,
-  skylabs.prelude.base.Comparison cmpA ->
-  skylabs.prelude.compare.LeibnizComparison.C cmpA ->
-  skylabs.prelude.compare.LeibnizComparison.C
-    (skylabs.lang.cpp.syntax.compare.atomic_name.compare cmpA)
-skylabs.lang.cpp.syntax.compare.atomic_name_comparison :
-  forall
-    cmpA : skylabs.lang.cpp.syntax.core.type ->
-           skylabs.lang.cpp.syntax.core.type ->
-           Corelib.Init.Datatypes.comparison,
-  skylabs.prelude.base.Comparison cmpA ->
-  skylabs.prelude.base.Comparison
-    (skylabs.lang.cpp.syntax.compare.atomic_name.compare cmpA)
 skylabs.lang.cpp.semantics.types.align_of :
   skylabs.lang.cpp.semantics.genv.genv ->
   skylabs.lang.cpp.syntax.core.type ->

@@ -1,4 +1,6 @@
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareT is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
 skylabs.lang.cpp.syntax.compare.type_leibniz_comparison :
   skylabs.prelude.compare.LeibnizComparison.C
     skylabs.lang.cpp.syntax.compare.compareT
@@ -101,6 +103,8 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.add :
   → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
     → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareT is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
 skylabs.lang.cpp.syntax.compare.type_leibniz_comparison :
   skylabs.prelude.compare.LeibnizComparison.C
     skylabs.lang.cpp.syntax.compare.compareT
@@ -203,6 +207,8 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.add :
   → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
     → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareT is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
 skylabs.lang.cpp.syntax.compare.type_leibniz_comparison :
   skylabs.prelude.compare.LeibnizComparison.C
     skylabs.lang.cpp.syntax.compare.compareT
@@ -305,6 +311,8 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.add :
   → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
     → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareT is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
 skylabs.lang.cpp.syntax.compare.type_leibniz_comparison :
   skylabs.prelude.compare.LeibnizComparison.C
     skylabs.lang.cpp.syntax.compare.compareT
@@ -407,6 +415,8 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.add :
   → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
     → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareT is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
 skylabs.lang.cpp.syntax.compare.type_leibniz_comparison :
   skylabs.prelude.compare.LeibnizComparison.C
     skylabs.lang.cpp.syntax.compare.compareT

@@ -1,4 +1,8 @@
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareT is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareS is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareE is assumed to be guarded.
 skylabs.lang.cpp.syntax.compare.type_leibniz_comparison :
   skylabs.prelude.compare.LeibnizComparison.C
     skylabs.lang.cpp.syntax.compare.compareT
@@ -121,6 +125,10 @@ skylabs.lang.cpp.syntax.compare.Expr_leibniz_comparison :
 skylabs.lang.cpp.syntax.compare.Expr_comparison :
   skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareE
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareT is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareS is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareE is assumed to be guarded.
 skylabs.lang.cpp.syntax.compare.type_leibniz_comparison :
   skylabs.prelude.compare.LeibnizComparison.C
     skylabs.lang.cpp.syntax.compare.compareT
@@ -253,6 +261,10 @@ skylabs.lang.cpp.syntax.compare.Expr_leibniz_comparison :
 skylabs.lang.cpp.syntax.compare.Expr_comparison :
   skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareE
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareT is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareS is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareE is assumed to be guarded.
 skylabs.lang.cpp.syntax.compare.type_leibniz_comparison :
   skylabs.prelude.compare.LeibnizComparison.C
     skylabs.lang.cpp.syntax.compare.compareT

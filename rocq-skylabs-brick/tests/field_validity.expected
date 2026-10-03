@@ -1,4 +1,8 @@
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareT is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareS is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareE is assumed to be guarded.
 skylabs.lang.cpp.syntax.compare.type_leibniz_comparison : skylabs.prelude.compare.LeibnizComparison.C skylabs.lang.cpp.syntax.compare.compareT
 skylabs.lang.cpp.syntax.compare.type_comparison : skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareT
 Corelib.Numbers.Cyclic.Int63.PrimInt63.sub : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
@@ -36,6 +40,10 @@ skylabs.lang.cpp.syntax.compare.Stmt_comparison : skylabs.prelude.base.Compariso
 skylabs.lang.cpp.syntax.compare.Expr_leibniz_comparison : skylabs.prelude.compare.LeibnizComparison.C skylabs.lang.cpp.syntax.compare.compareE
 skylabs.lang.cpp.syntax.compare.Expr_comparison : skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareE
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareT is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareS is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareE is assumed to be guarded.
 skylabs.lang.cpp.syntax.compare.type_leibniz_comparison : skylabs.prelude.compare.LeibnizComparison.C skylabs.lang.cpp.syntax.compare.compareT
 skylabs.lang.cpp.syntax.compare.type_comparison : skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareT
 Corelib.Numbers.Cyclic.Int63.PrimInt63.sub : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
@@ -73,6 +81,10 @@ skylabs.lang.cpp.syntax.compare.Stmt_comparison : skylabs.prelude.base.Compariso
 skylabs.lang.cpp.syntax.compare.Expr_leibniz_comparison : skylabs.prelude.compare.LeibnizComparison.C skylabs.lang.cpp.syntax.compare.compareE
 skylabs.lang.cpp.syntax.compare.Expr_comparison : skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareE
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareT is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareS is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareE is assumed to be guarded.
 skylabs.lang.cpp.syntax.compare.type_leibniz_comparison : skylabs.prelude.compare.LeibnizComparison.C skylabs.lang.cpp.syntax.compare.compareT
 skylabs.lang.cpp.syntax.compare.type_comparison : skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareT
 Corelib.Numbers.Cyclic.Int63.PrimInt63.sub : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
@@ -110,6 +122,10 @@ skylabs.lang.cpp.syntax.compare.Stmt_comparison : skylabs.prelude.base.Compariso
 skylabs.lang.cpp.syntax.compare.Expr_leibniz_comparison : skylabs.prelude.compare.LeibnizComparison.C skylabs.lang.cpp.syntax.compare.compareE
 skylabs.lang.cpp.syntax.compare.Expr_comparison : skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareE
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareT is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareS is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareE is assumed to be guarded.
 skylabs.lang.cpp.syntax.compare.type_leibniz_comparison : skylabs.prelude.compare.LeibnizComparison.C skylabs.lang.cpp.syntax.compare.compareT
 skylabs.lang.cpp.syntax.compare.type_comparison : skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareT
 Corelib.Numbers.Cyclic.Int63.PrimInt63.sub : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
@@ -147,6 +163,10 @@ skylabs.lang.cpp.syntax.compare.Stmt_comparison : skylabs.prelude.base.Compariso
 skylabs.lang.cpp.syntax.compare.Expr_leibniz_comparison : skylabs.prelude.compare.LeibnizComparison.C skylabs.lang.cpp.syntax.compare.compareE
 skylabs.lang.cpp.syntax.compare.Expr_comparison : skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareE
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareT is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareS is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareE is assumed to be guarded.
 skylabs.lang.cpp.syntax.compare.type_leibniz_comparison : skylabs.prelude.compare.LeibnizComparison.C skylabs.lang.cpp.syntax.compare.compareT
 skylabs.lang.cpp.syntax.compare.type_comparison : skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareT
 Corelib.Numbers.Cyclic.Int63.PrimInt63.sub : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
@@ -184,6 +204,10 @@ skylabs.lang.cpp.syntax.compare.Stmt_comparison : skylabs.prelude.base.Compariso
 skylabs.lang.cpp.syntax.compare.Expr_leibniz_comparison : skylabs.prelude.compare.LeibnizComparison.C skylabs.lang.cpp.syntax.compare.compareE
 skylabs.lang.cpp.syntax.compare.Expr_comparison : skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareE
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareT is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareS is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareE is assumed to be guarded.
 skylabs.lang.cpp.syntax.compare.type_leibniz_comparison : skylabs.prelude.compare.LeibnizComparison.C skylabs.lang.cpp.syntax.compare.compareT
 skylabs.lang.cpp.syntax.compare.type_comparison : skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareT
 Corelib.Numbers.Cyclic.Int63.PrimInt63.sub : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
@@ -224,6 +248,8 @@ Axioms:
 Corelib.Strings.PrimString.string : Set
 skylabs.lang.cpp.model.simple_pointers_utils.global_ptr_encode_vaddr : skylabs.lang.cpp.syntax.core.obj_name → skylabs.prelude.addr.vaddr
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareT is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
 skylabs.lang.cpp.syntax.compare.type_leibniz_comparison : skylabs.prelude.compare.LeibnizComparison.C skylabs.lang.cpp.syntax.compare.compareT
 skylabs.lang.cpp.syntax.compare.type_comparison : skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareT
 Corelib.Numbers.Cyclic.Int63.PrimInt63.sub : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
@@ -253,6 +279,8 @@ Corelib.Numbers.Cyclic.Int63.PrimInt63.compare : Corelib.Numbers.Cyclic.Int63.Pr
 Corelib.Strings.PrimString.cat : Corelib.Strings.PrimString.string → Corelib.Strings.PrimString.string → Corelib.Strings.PrimString.string
 Corelib.Numbers.Cyclic.Int63.PrimInt63.add : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareT is assumed to be guarded.
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
 skylabs.lang.cpp.syntax.compare.type_leibniz_comparison : skylabs.prelude.compare.LeibnizComparison.C skylabs.lang.cpp.syntax.compare.compareT
 skylabs.lang.cpp.syntax.compare.type_comparison : skylabs.prelude.base.Comparison skylabs.lang.cpp.syntax.compare.compareT
 Corelib.Numbers.Cyclic.Int63.PrimInt63.sub : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int

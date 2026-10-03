@@ -1,4 +1,5 @@
 Axioms:
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
 skylabs.lang.cpp.logic.pred.L.valid_ptr_nullptr : ∀ (thread_info : iris.bi.monpred.biIndex) (_Σ : iris.base_logic.lib.iprop.gFunctors) (H : skylabs.lang.cpp.logic.mpred.LC.cpp_logic thread_info _Σ), ⊢ skylabs.lang.cpp.logic.pred.L.valid_ptr skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.nullptr
 Corelib.Strings.PrimString.string : Set
 skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr_vaddr_nullptr : ∀ σ : skylabs.lang.cpp.semantics.genv.genv, skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr_vaddr skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.nullptr = Corelib.Init.Datatypes.Some 0%N
