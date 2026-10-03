@@ -187,8 +187,6 @@ End Roption_leq.
 
 mlock Definition some_Forall2 {A} (R : relation A) (oa1 oa2 : option A) :=
   is_Some oa1 ∧ is_Some oa2 ∧ option_Forall2 R oa1 oa2.
-#[global] Arguments some_Forall2 {A} _ _ _ : assert.
-(* ^^ Necessary to workaround [mlock] bugs. *)
 
 Section some_Forall2.
   Context `{R : relation A}.

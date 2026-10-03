@@ -547,7 +547,6 @@ Motivation: framing [P] might make the goal unprovable, for instance in
 But after observing [observable P], framing [P] always preserves provability. *)
 mlock Definition observable {PROP : bi} (P : PROP) : PROP :=
   □ (∀ Q : PROP, [| Observe Q P |] -∗ Q).
-#[global] Arguments observable {_} _ : assert.
 #[global] Instance: Params (@observable) 1 := {}.
 
 Section observable_theory.
