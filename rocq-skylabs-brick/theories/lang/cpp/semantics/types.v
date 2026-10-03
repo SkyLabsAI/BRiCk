@@ -358,6 +358,19 @@ Definition offset_of (σ : genv) (t : globname) (f : atomic_name) : option Z :=
   | _ => None
   end.
 
+(** Field layout is preserved when a global environment is extended. This
+    semantic fact does not depend on a particular pointer representation. *)
+Lemma offset_of_extension (s1 s2 : genv) cls fld :
+  genv_leq s1 s2 -> Roption_leq eq (offset_of s1 cls fld) (offset_of s2 cls fld).
+Proof.
+  intros Hle. have Hcompat : s1.(genv.genv_tu) ⊧ s2 by constructor; exact (tu_le Hle).
+  apply (Roption_leq_eq_equiv (R:=eq)). intros z.
+  rewrite /offset_of. case Hdef: (glob_def s1 cls) => [gd|] //.
+  destruct gd => //; intros H.
+  - erewrite (glob_def_genv_compat_union (Hσ := Hcompat)); eauto.
+  - erewrite (glob_def_genv_compat_struct (Hσ := Hcompat)); eauto.
+Qed.
+
 Definition parent_offset_tu (tu : translation_unit) (derived : name) (base : name) : option Z :=
   match tu.(types) !! derived with
   | Some (Gstruct s) => find_assoc_list base (List.map (fun '(s,l) => (s,l.(li_offset) / 8)) s.(s_bases))
@@ -385,6 +398,17 @@ Proof.
   rewrite parent_offset.unlock /parent_offset_tu -/(glob_def σ derived).
   case E: (tu.(types) !! derived) => [ gd //= | // ]; destruct gd => //.
   by erewrite glob_def_genv_compat_struct.
+Qed.
+
+(** Base layout is likewise preserved independently of the pointer model. *)
+Lemma parent_offset_extension (s1 s2 : genv) derived base :
+  genv_leq s1 s2 ->
+  Roption_leq eq (parent_offset s1 derived base) (parent_offset s2 derived base).
+Proof.
+  intros Hle. have Hcompat : s1.(genv.genv_tu) ⊧ s2 by constructor; exact (tu_le Hle).
+  apply (Roption_leq_eq_equiv (R:=eq)). intros z H.
+  apply (parent_offset_genv_compat (Hσ := Hcompat)).
+  move: H. by rewrite parent_offset.unlock.
 Qed.
 
 (** * alignof *)

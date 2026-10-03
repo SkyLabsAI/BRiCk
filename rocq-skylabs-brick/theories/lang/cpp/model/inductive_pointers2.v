@@ -15,11 +15,13 @@ Require Import Equations.Prop.Equations.
 
 Require Import stdpp.relations.
 Require Import stdpp.gmap.
+Require Import stdpp.proof_irrel.
 Require Import skylabs.prelude.base.
 Require Import skylabs.prelude.addr.
 Require Import skylabs.prelude.avl.
 Require Import skylabs.prelude.bytestring.
 Require Import skylabs.prelude.numbers.
+Require Import skylabs.prelude.axioms.funext.
 
 Require Import skylabs.lang.cpp.syntax.
 Require Import skylabs.lang.cpp.semantics.sub_module.
@@ -27,8 +29,6 @@ Require Import skylabs.lang.cpp.semantics.values.
 Require Import skylabs.lang.cpp.model.simple_pointers_utils.
 Require Import skylabs.lang.cpp.model.inductive_pointers_utils.
 Require Import skylabs.lang.cpp.semantics.ptrs.
-
-Axiom irr : ∀ (P : Prop) (p q : P), p = q.
 
 Implicit Types (σ : genv) (z : Z).
 #[local] Close Scope nat_scope.
@@ -160,68 +160,64 @@ Module PTRS_IMPL <: PTRS_INTF.
       o ≠ o_base_ der base ->
       roff_canon_syn (o_derived_ base der :: o :: os).
 
-  Lemma canon_syn_sem_eqv :
-    ∀ os,
-      roff_canon os <-> roff_canon_syn os.
+  Definition no_prefix_step (os : raw_offset) : Prop :=
+    forall s t r, os = s ++ r -> roff_rw_local s t -> False.
+
+  Lemma roff_canon_cons o os :
+    roff_canon (o :: os) <-> no_prefix_step (o :: os) /\ roff_canon os.
   Proof.
-    rewrite /roff_canon /nf /red.
-    move=> os. split; move=> Hc.
-    {
-      admit.
-    }
-    {
-      induction Hc;
-      try (
-        remember (o :: os) as eos;
-        destruct Hc; subst
-      ); try done;
-      try inversion Heqeos;
-      subst.
-      { apply: nil_canon. }
-      { by apply: singleton_offset_canon. }
-      all:
-        move=> [y [l [r [s [t [Ho [Hl Hstep]]]]]]];
-        subst; destruct l; simpl in *; destruct Hstep;
-        simpl in *; inversion Ho; subst; try done;
-        try (
-          match goal with
-          | H : ¬∃ i, o_sub_ _ _ = o_sub_ _ i |- False =>
-            apply H
-          end;
-          try repeat eexists
-        );
-        try (
-          match goal with
-          | H : [?o] = ?l ++ ?r |- False =>
-            destruct l; simpl in *;
-            inversion H; subst;
-            destruct l; simpl in *;
-            inversion H
-          end
-        );
-        try (
-          match goal with
-          | H : [?o] = ?l ++ ?r |- False =>
-            destruct l; simpl in *;
-            inversion H; subst
-          end
-        );
-        try (
-          match goal with
-          | H : ¬∃ ty, o_sub_ _ 0 = o_sub_ ty 0 |- False =>
-              apply H; repeat eexists
-          end
-        );
-        try (
-          match goal with
-          | H : [] = ?l ++ ?r |- False =>
-              destruct l; simpl in *;
-              inversion H
-          end
-        ).
-        all: admit.
-    }
-  Admitted.
+    rewrite /roff_canon /nf /red /roff_rw_global /no_prefix_step.
+    split.
+    - intros H. split.
+      + intros s t r Heq Hstep. apply H.
+        exists (t ++ r), [], r, s, t. simpl. auto.
+      + intros [y [l [r [s [t [Heq [Hy Hstep]]]]]]]. apply H.
+        exists (o :: y), (o :: l), r, s, t. simpl. split; [by rewrite Heq|].
+        split; [by rewrite Hy|exact Hstep].
+    - intros [Hprefix Htail] [y [l [r [s [t [Heq [Hy Hstep]]]]]]].
+      destruct l as [|x l]; simpl in Heq.
+      + exact (Hprefix s t r Heq Hstep).
+      + inversion Heq; subst x. apply Htail.
+        exists (l ++ t ++ r), l, r, s, t. auto.
+  Qed.
+
+  Lemma canon_syn_sem os : roff_canon_syn os -> roff_canon os.
+  Proof.
+    intros H. induction H.
+    all: try solve [exact nil_canon | by apply singleton_offset_canon].
+    all: apply roff_canon_cons; split; last assumption.
+    all: rewrite /no_prefix_step; intros s t r Heq Hstep;
+      destruct Hstep; simpl in Heq; inversion Heq; subst; naive_solver.
+  Qed.
+
+  Lemma canon_sem_syn os : roff_canon os -> roff_canon_syn os.
+  Proof.
+    induction os as [|o os IH]; intros Hcanon; first exact NilCanon.
+    apply roff_canon_cons in Hcanon as [Hprefix Htail].
+    have Hsyn := IH Htail.
+    have Hzero : ~ (exists ty, o = o_sub_ ty 0%Z).
+    { intros [ty ->]. apply (Hprefix [o_sub_ ty 0%Z] [] os); [done|constructor]. }
+    destruct os as [|next rest]; first by apply SingCanon.
+    destruct o as [f|ty i|derived base|base derived].
+    - by apply FieldCanon.
+    - apply SubCanon; first exact Hsyn.
+      + intros [j Hnext]. subst next.
+        apply (Hprefix [o_sub_ ty i; o_sub_ ty j] [o_sub_ ty (i+j)%Z] rest);
+          [done|constructor].
+      + intros ->. apply Hzero. by exists ty.
+    - apply BaseCanon; first exact Hsyn.
+      intros ->. apply (Hprefix [o_base_ derived base; o_derived_ base derived] [] rest);
+        [done|constructor].
+    - apply DerCanon; first exact Hsyn.
+      intros ->. apply (Hprefix [o_derived_ base derived; o_base_ derived base] [] rest);
+        [done|constructor].
+  Qed.
+
+  Lemma canon_syn_sem_eqv os : roff_canon os <-> roff_canon_syn os.
+  Proof. split; [apply canon_sem_syn|apply canon_syn_sem]. Qed.
+
+  #[global] Instance roff_canon_proof_irrel os : ProofIrrel (roff_canon os).
+  Proof. exact: fun_pi. Qed.
 
   (** *** Offsets *)
   Definition offset := {o : raw_offset | roff_canon o}.
@@ -232,7 +228,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     {
       subst. left.
       f_equal.
-      apply: irr.
+      apply proof_irrel.
     }
     {
       right.
@@ -241,7 +237,6 @@ Module PTRS_IMPL <: PTRS_INTF.
       now apply proj1_sig_eq in H.
     }
   Qed.
-  #[global] Declare Instance offset_countable : Countable offset.
 
   Section norm_def.
 
@@ -273,7 +268,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     | o :: os =>
         '(l, r, s, t) ← find_redex os;
         Some (o :: l, r, s, t).
-    Admit Obligations.
+    Solve Obligations with (intros; simpl in *; lia).
 
     Ltac dex :=
       let H0 := fresh in
@@ -896,6 +891,16 @@ Module PTRS_IMPL <: PTRS_INTF.
 
   End norm_def.
 
+  #[global] Instance offset_countable : Countable offset.
+  Proof.
+    apply (inj_countable proj1_sig
+      (fun os => Some (exist roff_canon (normalize os) (norm_canon os)))).
+    intros [os Hcanon]. simpl.
+    generalize (norm_canon os).
+    rewrite (proj1 (norm_invol os) Hcanon).
+    intros Hcanon'. by rewrite (proof_irrel Hcanon' Hcanon).
+  Qed.
+
   Section norm_lemmas.
 
     Lemma norm_rel :
@@ -1053,16 +1058,6 @@ Module PTRS_IMPL <: PTRS_INTF.
 
   Include PTRS_SYNTAX_MIXIN.
 
-  Lemma sig_eq {A} {P : A -> Prop} :
-  ∀ (x y : A) (p : P x) (q : P y),
-    x = y ->
-    x ↾ p = y ↾ q.
-  Proof.
-    move=> x y p q H.
-    subst. f_equal.
-    apply: irr.
-  Qed.
-
   Program Definition o_id : offset :=
     [].
   Next Obligation.
@@ -1076,7 +1071,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     UNFOLD_dot.
     move=> [o H].
     rewrite /o_id /__o_dot.
-    simpl. apply: sig_eq.
+    simpl. apply (sig_eq_pi roff_canon); simpl.
     by apply norm_invol.
   Qed.
 
@@ -1085,7 +1080,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     UNFOLD_dot.
     move=> [o H].
     rewrite /o_id /__o_dot.
-    simpl. apply: sig_eq.
+    simpl. apply (sig_eq_pi roff_canon); simpl.
     rewrite app_nil_r.
     by apply norm_invol.
   Qed.
@@ -1095,7 +1090,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     UNFOLD_dot.
     move=> [o1 H1] [o2 H2] [o3 H3].
     rewrite /o_id /__o_dot.
-    simpl. apply: sig_eq.
+    simpl. apply (sig_eq_pi roff_canon); simpl.
     by rewrite norm_absorb_l norm_absorb_r app_assoc.
   Qed.
 
@@ -1106,7 +1101,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     move=> [| r [o H]]; UNFOLD_dot.
     { easy. }
     {
-      f_equal. apply: sig_eq.
+      f_equal. apply (sig_eq_pi roff_canon); simpl.
       rewrite app_nil_r.
       by apply norm_invol.
     }
@@ -1120,7 +1115,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     { easy. }
     {
       move=> [o1 H1] [o2 H2].
-      simpl. f_equal. apply: sig_eq.
+      simpl. f_equal. apply (sig_eq_pi roff_canon); simpl.
       by rewrite norm_absorb_l norm_absorb_r app_assoc.
     }
   Qed.
@@ -1225,7 +1220,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     move=> σ [| rp [o H]] base der _.
     { done. }
     {
-      f_equal. simpl. apply: sig_eq.
+      f_equal. simpl. apply (sig_eq_pi roff_canon); simpl.
       rewrite norm_absorb_r -app_assoc norm_rel.
       split.
       {
@@ -1249,7 +1244,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     move=> σ [| rp [o H]] base der _.
     { done. }
     {
-      f_equal. simpl. apply: sig_eq.
+      f_equal. simpl. apply (sig_eq_pi roff_canon); simpl.
       rewrite norm_absorb_r -app_assoc norm_rel.
       split.
       {
@@ -1271,7 +1266,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     move=> σ i j ty.
     rewrite /__o_dot /o_sub /o_id.
     repeat case_match; subst;
-    try lia; apply sig_eq; simpl.
+    try lia; apply (sig_eq_pi roff_canon); simpl.
     { by simp normalize. }
     { simp normalize. by destruct j. }
     { simp normalize. by destruct i. }
@@ -1576,16 +1571,44 @@ Module PTRS_IMPL <: PTRS_INTF.
       end
     end.
 
-  Lemma ptr_vaddr_resp_leq :
-    ∀ σ1 σ2,
-      genv_leq σ1 σ2 ->
-      @ptr_vaddr σ1 = @ptr_vaddr σ2.
+  (** Environment extension preserves defined addresses. An offset whose type
+      was incomplete may become defined, so equality of the partial address
+      functions would be too strong. *)
+  Lemma eval_offset_seg_extension (s1 s2 : genv) o :
+    genv_leq s1 s2 -> Roption_leq eq (eval_offset_seg s1 o) (eval_offset_seg s2 o).
   Proof.
-    move=> σ1 σ2 H.
-    rewrite /ptr_vaddr.
-    extensionality p.
-    destruct p. easy.
-  Admitted.
+    intros Hle. destruct o as [f|ty i|derived base|base derived]; simpl.
+    - rewrite /o_field_off. destruct f => /=; try constructor;
+      exact (offset_of_extension _ _ _ _ Hle).
+    - rewrite /o_sub_off. have Hsize := Proper_size_of _ _ Hle ty ty eq_refl.
+      destruct Hsize; simpl; constructor; naive_solver.
+    - exact (parent_offset_extension _ _ _ _ Hle).
+    - apply (Roption_leq_eq_equiv (R:=eq)). intros z.
+      rewrite /o_derived_off. case E: (parent_offset s1 derived base) => [n|] //=.
+      rewrite ((proj1 (Roption_leq_eq_equiv (R:=eq)) (parent_offset_extension _ _ _ _ Hle)) _ E).
+      done.
+  Qed.
+
+  Lemma eval_offset_aux_extension (s1 s2 : genv) os :
+    genv_leq s1 s2 -> Roption_leq eq (eval_offset_aux s1 os) (eval_offset_aux s2 os).
+  Proof.
+    intros Hle. induction os as [|o os IH]; simpl; first by constructor.
+    apply (Roption_leq_eq_equiv (R:=eq)). intros z.
+    case E: (eval_offset_seg s1 o) => [n|] //=.
+    case F: (eval_offset_aux s1 os) => [m|] //=.
+    rewrite ((proj1 (Roption_leq_eq_equiv (R:=eq)) (eval_offset_seg_extension _ _ _ Hle)) _ E)
+      ((proj1 (Roption_leq_eq_equiv (R:=eq)) IH) _ F). done.
+  Qed.
+
+  Lemma ptr_vaddr_resp_leq (s1 s2 : genv) p :
+    genv_leq s1 s2 -> Roption_leq eq (@ptr_vaddr s1 p) (@ptr_vaddr s2 p).
+  Proof.
+    intros Hle. apply (Roption_leq_eq_equiv (R:=eq)). intros va.
+    destruct p as [|rp os]; simpl; first done.
+    rewrite /eval_offset. case E: (eval_offset_aux s1 (`os)) => [z|] //=.
+    rewrite ((proj1 (Roption_leq_eq_equiv (R:=eq)) (eval_offset_aux_extension _ _ _ Hle)) _ E).
+    done.
+  Qed.
 
   Lemma ptr_vaddr_nullptr :
     ∀ σ, @ptr_vaddr σ nullptr = Some 0%N.
@@ -1639,13 +1662,13 @@ Module PTRS_IMPL <: PTRS_INTF.
     match type of E1 with
     | _ = eval_offset _ ?x =>
         have O1 : x = o ,, o_sub σ ty n1 by
-          (UNFOLD_dot; apply sig_eq; done);
+          (UNFOLD_dot; apply (sig_eq_pi roff_canon); done);
         rewrite O1 in E1
     end.
     match type of E2 with
     | _ = eval_offset _ ?x =>
         have O2 : x = o ,, o_sub σ ty n2 by
-          (UNFOLD_dot; apply sig_eq; done);
+          (UNFOLD_dot; apply (sig_eq_pi roff_canon); done);
         rewrite O2 in E2
     end.
     destruct e1 as [z1|]; try discriminate.

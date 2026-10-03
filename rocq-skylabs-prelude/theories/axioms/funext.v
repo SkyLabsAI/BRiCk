@@ -22,3 +22,7 @@ Proof.
   split. by move->.
   move=>?. by funext.
 Qed.
+
+(** Functions are proof irrelevant if their codomain is. Not an instance since it uses an axiom. *)
+Lemma fun_pi {A} `{!ProofIrrel B} : ProofIrrel (A -> B).
+Proof. move=> f g. funext => x. exact: proof_irrel. Qed.
