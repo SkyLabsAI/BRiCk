@@ -256,13 +256,14 @@
              |}))
      : name * option ObjValue
      = {|
-         abi_mismatch := false;
-         type_mismatches := [];
-         symbol_mismatches :=
-           [("T::operator=(const T&)"%cpp_name, mismatch.Incompatible)];
-         assert_mismatches := []
+         sub_module_mismatch.abi_mismatch := false;
+         sub_module_mismatch.type_mismatches := [];
+         sub_module_mismatch.symbol_mismatches :=
+           [("T::operator=(const T&)"%cpp_name,
+             sub_module_mismatch.Incompatible)];
+         sub_module_mismatch.assert_mismatches := []
        |}
-     : sub_module_mismatch_t
+     : sub_module_mismatch.t
      = ("N::N(const N&)"%cpp_name,
         Some
           (Oconstructor
@@ -316,29 +317,30 @@
              |}))
      : name * option ObjValue
      = {|
-         abi_mismatch := false;
-         type_mismatches := [];
-         symbol_mismatches :=
-           [("T::operator=(const T&)"%cpp_name, mismatch.Incompatible)];
-         assert_mismatches := []
+         sub_module_mismatch.abi_mismatch := false;
+         sub_module_mismatch.type_mismatches := [];
+         sub_module_mismatch.symbol_mismatches :=
+           [("T::operator=(const T&)"%cpp_name,
+             sub_module_mismatch.Incompatible)];
+         sub_module_mismatch.assert_mismatches := []
        |}
-     : sub_module_mismatch_t
+     : sub_module_mismatch.t
      = {|
-         abi_mismatch := false;
-         type_mismatches := [];
-         symbol_mismatches :=
-           [("T::T(const T&)"%cpp_name, mismatch.Incompatible)];
-         assert_mismatches := []
+         sub_module_mismatch.abi_mismatch := false;
+         sub_module_mismatch.type_mismatches := [];
+         sub_module_mismatch.symbol_mismatches :=
+           [("T::T(const T&)"%cpp_name, sub_module_mismatch.Incompatible)];
+         sub_module_mismatch.assert_mismatches := []
        |}
-     : sub_module_mismatch_t
+     : sub_module_mismatch.t
      = {|
-         abi_mismatch := false;
-         type_mismatches := [];
-         symbol_mismatches :=
-           [("T::T(const T&)"%cpp_name, mismatch.Incompatible)];
-         assert_mismatches := []
+         sub_module_mismatch.abi_mismatch := false;
+         sub_module_mismatch.type_mismatches := [];
+         sub_module_mismatch.symbol_mismatches :=
+           [("T::T(const T&)"%cpp_name, sub_module_mismatch.Incompatible)];
+         sub_module_mismatch.assert_mismatches := []
        |}
-     : sub_module_mismatch_t
+     : sub_module_mismatch.t
      = ("C::C(C&)"%cpp_name,
         Some
           (Oconstructor
