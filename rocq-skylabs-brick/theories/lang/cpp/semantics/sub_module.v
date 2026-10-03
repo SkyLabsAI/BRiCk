@@ -6,6 +6,7 @@
 Require Import stdpp.fin_maps.
 Require Export skylabs.prelude.base.
 Require Import skylabs.prelude.avl.
+Require Import skylabs.prelude.list.
 Require Import skylabs.lang.cpp.syntax.
 
 (** TODO rename [sub_module] since it is not actually about modules
@@ -686,115 +687,110 @@ Qed.
 (** * Mismatches
 
     [module_le] only says whether [sub_module a b] holds.  When it does not,
-    [sub_module_mismatch a b] says why, with one field per conjunct of
-    [sub_module]; [sub_module_mismatch_spec] shows that it is empty exactly
+    [sub_module_mismatch.compute a b] says why, with one field per conjunct of
+    [sub_module]; [sub_module_mismatch.spec] shows that it is empty exactly
     when [sub_module a b] holds.  Like [module_le], it is meant for [vm_compute]
     on closed translation units, and makes one pass over each table. *)
 
-Module mismatch.
-  Variant t : Set :=
+Module sub_module_mismatch.
+
+  Variant kind : Set :=
   | Missing       (** the name has no entry on the right *)
   | Incompatible  (** its entry on the right is not [_le] the one on the left *).
-  #[global] Instance t_eq_dec : EqDecision t.
+  #[global] Instance kind_eq_dec : EqDecision kind.
   Proof. solve_decision. Defined.
-End mismatch.
 
-Section table_mismatches.
-  Context {T : Type} (le : T -> T -> bool).
+  Section table_mismatches.
+    Context {T : Type} (le : T -> T -> bool).
 
-  #[local] Definition step (b : NM.t T) (n : name) (v : T) (acc : list (name * mismatch.t)) :=
-    match b !! n with
-    | Some v' => if le v v' then acc else (n, mismatch.Incompatible) :: acc
-    | None => (n, mismatch.Missing) :: acc
-    end.
+    Definition step (b : NM.t T) (n : name) (v : T)
+        (acc : list (name * kind)) : list (name * kind) :=
+      match b !! n with
+      | Some v' => if le v v' then acc else (n, Incompatible) :: acc
+      | None => (n, Missing) :: acc
+      end.
 
-  (** The names of table [a] that are missing from table [b] or not [le] their
-      entry there.  A fold, like [compat_le], so that it allocates nothing when
-      everything matches. *)
-  Definition table_mismatches (a b : NM.t T) : list (name * mismatch.t) :=
-    NM.fold (step b) a [].
+    (** The names of table [a] that are missing from table [b] or not [le] their
+        entry there.  A fold, like [compat_le], so that it allocates nothing when
+        everything matches. *)
+    Definition table_mismatches (a b : NM.t T) : list (name * kind) :=
+      NM.fold (step b) a [].
 
-  #[local] Definition ok (b : NM.t T) (p : name * T) : Prop :=
-    exists v', b !! p.1 = Some v' /\ le p.2 v' = true.
+    Definition ok (b : NM.t T) (p : name * T) : Prop :=
+      exists v', b !! p.1 = Some v' /\ le p.2 v' = true.
 
-  #[local] Lemma fold_step_nil b l acc :
-    fold_left (fun acc p => step b p.1 p.2 acc) l acc = [] <->
-    acc = [] /\ List.Forall (ok b) l.
+    Lemma fold_step_nil b l acc :
+      fold_left (fun acc p => step b p.1 p.2 acc) l acc = [] <->
+      acc = [] /\ List.Forall (ok b) l.
+    Proof.
+      revert acc; induction l as [|[n v] l IH] => acc /=.
+      - rewrite List.Forall_nil_iff. tauto.
+      - rewrite IH List.Forall_cons_iff /step /ok /=.
+        repeat case_match; try naive_solver.
+        split; [by intros [? ?]|intros (_ & (? & [= <-] & ?) & _); congruence].
+    Qed.
+
+    Lemma table_mismatches_nil_iff a b :
+      table_mismatches a b = [] <->
+      forall n v, a !! n = Some v -> exists v', b !! n = Some v' /\ le v v' = true.
+    Proof.
+      rewrite /table_mismatches NM.fold_1 fold_step_nil List.Forall_forall.
+      split.
+      - intros [_ Hok] n v Hn.
+        rewrite /lookup /NM.map_lookup in Hn.
+        apply NM.find_2, NM.elements_1, SetoidList.InA_alt in Hn as [[n' v'] [[Hk Hv] Hin]].
+        simpl in Hk, Hv; subst v'. apply NM.eqL in Hk; subst n'. exact (Hok _ Hin).
+      - intros Hok; split; [done|]. intros [n v] Hin. apply Hok.
+        rewrite /lookup /NM.map_lookup. apply NM.find_1, NM.elements_2, SetoidList.InA_alt.
+        exists (n, v). split; [split; [apply NM.Key.eq_refl|done]|done].
+    Qed.
+  End table_mismatches.
+
+  Record t : Set := {
+    abi_mismatch : bool;              (** the ABIs differ *)
+    type_mismatches : list (globname * kind);
+    symbol_mismatches : list (obj_name * kind);
+    assert_mismatches : list StaticAssert  (** the left's asserts missing on the right *)
+  }.
+  #[global] Instance t_eq_dec : EqDecision t.
+  Proof. solve_decision. Qed.
+
+  Definition compute (a b : translation_unit) : t :=
+    {| abi_mismatch := bool_decide (a.(abi) <> b.(abi));
+       type_mismatches := table_mismatches GlobDecl_le a.(types) b.(types);
+       symbol_mismatches := table_mismatches ObjValue_le a.(symbols) b.(symbols);
+       assert_mismatches := filter (fun x => x ∉ b.(asserts)) a.(asserts) |}.
+
+  Definition empty : t :=
+    {| abi_mismatch := false; type_mismatches := []; symbol_mismatches := [];
+       assert_mismatches := [] |}.
+
+  Theorem spec a b :
+    sub_module a b <-> compute a b = empty.
   Proof.
-    revert acc; induction l as [|[n v] l IH] => acc /=.
-    - rewrite List.Forall_nil_iff. tauto.
-    - rewrite IH List.Forall_cons_iff /step /ok /=.
-      repeat case_match; try naive_solver.
-      split; [by intros [? ?]|intros (_ & (? & [= <-] & ?) & _); congruence].
+    rewrite /compute /empty. split.
+    - intros [Ht Hs Ha Habi]. f_equal.
+      + apply bool_decide_eq_false. tauto.
+      + apply table_mismatches_nil_iff => n v Hn.
+        destruct (Ht n v Hn) as (v' & ? & Hle). exists v'.
+        rewrite /GlobDecl_ler in Hle. by destruct (GlobDecl_le v v').
+      + apply table_mismatches_nil_iff => n v Hn. exact (Hs n v Hn).
+      + by apply list_filter_not_empty_iff.
+    - intros [= Habi Ht Hs Ha]. constructor.
+      + intros gn gv Hg.
+        destruct (proj1 (table_mismatches_nil_iff _ _ _) Ht gn gv Hg) as (gv' & ? & Hle).
+        exists gv'. by rewrite /GlobDecl_ler Hle.
+      + intros on v Hv. exact (proj1 (table_mismatches_nil_iff _ _ _) Hs on v Hv).
+      + by move: Ha; rewrite list_filter_not_empty_iff.
+      + apply bool_decide_eq_false in Habi. by destruct (decide (a.(abi) = b.(abi))).
   Qed.
 
-  Lemma table_mismatches_nil_iff a b :
-    table_mismatches a b = [] <->
-    forall n v, a !! n = Some v -> exists v', b !! n = Some v' /\ le v v' = true.
-  Proof.
-    rewrite /table_mismatches NM.fold_1 fold_step_nil List.Forall_forall.
-    split.
-    - intros [_ Hok] n v Hn.
-      rewrite /lookup /NM.map_lookup in Hn.
-      apply NM.find_2, NM.elements_1, SetoidList.InA_alt in Hn as [[n' v'] [[Hk Hv] Hin]].
-      simpl in Hk, Hv; subst v'. apply NM.eqL in Hk; subst n'. exact (Hok _ Hin).
-    - intros Hok; split; [done|]. intros [n v] Hin. apply Hok.
-      rewrite /lookup /NM.map_lookup. apply NM.find_1, NM.elements_2, SetoidList.InA_alt.
-      exists (n, v). split; [split; [apply NM.Key.eq_refl|done]|done].
-  Qed.
-End table_mismatches.
+  Lemma sound a b :
+    compute a b = empty -> sub_module a b.
+  Proof. apply spec. Qed.
 
-Record sub_module_mismatch_t : Set := {
-  abi_mismatch : bool;              (** the ABIs differ *)
-  type_mismatches : list (globname * mismatch.t);
-  symbol_mismatches : list (obj_name * mismatch.t);
-  assert_mismatches : list StaticAssert  (** the left's asserts missing on the right *)
-}.
-#[global] Instance sub_module_mismatch_t_eq_dec : EqDecision sub_module_mismatch_t.
-Proof. solve_decision. Qed.
+  Lemma not_sub_module a b :
+    compute a b <> empty -> ~ sub_module a b.
+  Proof. by rewrite spec. Qed.
 
-Definition sub_module_mismatch (a b : translation_unit) : sub_module_mismatch_t :=
-  {| abi_mismatch := bool_decide (a.(abi) <> b.(abi));
-     type_mismatches := table_mismatches GlobDecl_le a.(types) b.(types);
-     symbol_mismatches := table_mismatches ObjValue_le a.(symbols) b.(symbols);
-     assert_mismatches := filter (fun x => x ∉ b.(asserts)) a.(asserts) |}.
-
-Definition no_mismatch : sub_module_mismatch_t :=
-  {| abi_mismatch := false; type_mismatches := []; symbol_mismatches := [];
-     assert_mismatches := [] |}.
-
-#[local] Lemma filter_not_elem_of_nil {A} `{EqDecision A} (l k : list A) :
-  filter (fun x => x ∉ k) l = [] <-> List.Forall (fun x => x ∈ k) l.
-Proof.
-  induction l as [|x l IH]; [by split; [constructor|]|].
-  rewrite filter_cons List.Forall_cons_iff -IH.
-  destruct (decide (x ∈ k)); case_decide; naive_solver.
-Qed.
-
-Theorem sub_module_mismatch_spec a b :
-  sub_module a b <-> sub_module_mismatch a b = no_mismatch.
-Proof.
-  rewrite /sub_module_mismatch /no_mismatch. split.
-  - intros [Ht Hs Ha Habi]. f_equal.
-    + apply bool_decide_eq_false. tauto.
-    + apply table_mismatches_nil_iff => n v Hn.
-      destruct (Ht n v Hn) as (v' & ? & Hle). exists v'.
-      rewrite /GlobDecl_ler in Hle. by destruct (GlobDecl_le v v').
-    + apply table_mismatches_nil_iff => n v Hn. exact (Hs n v Hn).
-    + by apply filter_not_elem_of_nil.
-  - intros [= Habi Ht Hs Ha]. constructor.
-    + intros gn gv Hg.
-      destruct (proj1 (table_mismatches_nil_iff _ _ _) Ht gn gv Hg) as (gv' & ? & Hle).
-      exists gv'. by rewrite /GlobDecl_ler Hle.
-    + intros on v Hv. exact (proj1 (table_mismatches_nil_iff _ _ _) Hs on v Hv).
-    + by apply filter_not_elem_of_nil.
-    + apply bool_decide_eq_false in Habi. by destruct (decide (a.(abi) = b.(abi))).
-Qed.
-
-Lemma sub_module_mismatch_sound a b :
-  sub_module_mismatch a b = no_mismatch -> sub_module a b.
-Proof. apply sub_module_mismatch_spec. Qed.
-
-Lemma sub_module_mismatch_not a b :
-  sub_module_mismatch a b <> no_mismatch -> ~ sub_module a b.
-Proof. by rewrite sub_module_mismatch_spec. Qed.
+End sub_module_mismatch.

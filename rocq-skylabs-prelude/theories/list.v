@@ -330,6 +330,13 @@ Section list.
     case_decide; naive_solver.
   Qed.
 
+  Lemma list_filter_not_empty_iff xs `(∀ x, Decision (P x)) :
+    filter (λ x, ¬P x) xs = [] ↔ List.Forall P xs.
+  Proof.
+    rewrite list_filter_empty_iff. apply Forall_iff => x.
+    split; [apply dec_stable|tauto].
+  Qed.
+
   (** List variant of
   << map_filter_insert : ...
     filter P (<[i:=x]> m) =
