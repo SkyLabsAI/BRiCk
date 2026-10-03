@@ -21,6 +21,7 @@ Require Import skylabs.prelude.addr.
 Require Import skylabs.prelude.avl.
 Require Import skylabs.prelude.bytestring.
 Require Import skylabs.prelude.numbers.
+Require Import skylabs.prelude.axioms.funext.
 
 Require Import skylabs.lang.cpp.syntax.
 Require Import skylabs.lang.cpp.semantics.sub_module.
@@ -215,13 +216,8 @@ Module PTRS_IMPL <: PTRS_INTF.
   Lemma canon_syn_sem_eqv os : roff_canon os <-> roff_canon_syn os.
   Proof. split; [apply canon_sem_syn|apply canon_syn_sem]. Qed.
 
-  (** Canonicality is a negation, so equality of its proofs only needs
-      function extensionality, already used by the normalization machinery. *)
-  #[global] Instance roff_canon_proof_irrel (os : raw_offset) :
-    ProofIrrel (roff_canon os).
-  Proof.
-    intros H1 H2. apply functional_extensionality. intros Hred. destruct (H1 Hred).
-  Qed.
+  #[global] Instance roff_canon_proof_irrel os : ProofIrrel (roff_canon os).
+  Proof. exact: fun_pi. Qed.
 
   (** *** Offsets *)
   Definition offset := {o : raw_offset | roff_canon o}.
