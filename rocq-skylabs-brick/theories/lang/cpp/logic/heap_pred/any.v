@@ -360,9 +360,16 @@ Section with_cpp.
     -|- arr.arrayR t (fun _ => anyR t q) (repeat () (N.to_nat n)).
   Proof. by rewrite anyR_array' repeatN_replicateN. Qed.
 
-  Lemma _at_anyR_ptr_congP_transport : forall p p' ty q,
-    ptr_congP σ p p' ** type_ptr ty p' |-- p |-> anyR ty q -* p' |-> anyR ty q.
-  Proof. (* TODO: this is very interesting *) Admitted.
+  (** Byte storage can be transported using the core byte-ownership rule.
+      [ptr_congP] supplies the source and destination byte typing facts. *)
+  Lemma _at_anyR_byte_ptr_congP_transport (p p' : ptr) (q : cQp.t) :
+    ptr_congP σ p p' |-- p |-> anyR Tbyte q -* p' |-> anyR Tbyte q.
+  Proof.
+    rewrite anyR.unlock everywhereR_unfold /primitiveR /= !_at_exists.
+    iIntros "#C (%v & B)". iExists v.
+    rewrite !_at_tptstoR.
+    by iApply (tptsto_ptr_congP_transport with "C B").
+  Qed.
 
 End with_cpp.
 

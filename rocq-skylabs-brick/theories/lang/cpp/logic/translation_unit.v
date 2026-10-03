@@ -34,7 +34,7 @@ Section with_cpp.
   Definition denoteSymbol (tu : translation_unit) (n : obj_name) (o : ObjValue) : mpred :=
     _global n |->
         match o with
-        | Ovar t e => init_validR t
+        | Ovar t e => reference_toR t
         | Ofunction f =>
           match f.(f_body) with
           | None => svalidR
@@ -77,7 +77,9 @@ Section with_cpp.
     denoteSymbol tu n o |-- strict_valid_ptr (_global n).
   Proof.
     rewrite /denoteSymbol/init_validR/is_strict_valid; destruct o.
-    { rewrite -_at_svalidR. by destruct zero_sized_array. }
+    { rewrite _at_reference_toR reference_to_elim.
+      case_match; first done.
+      intros _. iIntros "(_ & _ & _ & S)". iExact "S". }
     all: intros _; case_match; last by rewrite _at_svalidR.
     all: rewrite !_at_as_Rep; auto using
       code_at_strict_valid, method_at_strict_valid, ctor_at_strict_valid, dtor_at_strict_valid.
@@ -89,9 +91,17 @@ Section with_cpp.
     destruct (is_strict_valid o) eqn:Hs.
     { by rewrite denoteSymbol_strict_valid ?Hs // strict_valid_valid. }
     move: Hs.
-    rewrite -_at_validR /denoteSymbol /init_validR /is_strict_valid.
-    by destruct o => //= ?; case_match.
+    rewrite /denoteSymbol /is_strict_valid.
+    destruct o => //= Hzero.
+    rewrite _at_reference_toR reference_to_elim.
+    iIntros "(_ & _ & V & _)". iExact "V".
   Qed.
+
+  (** A global variable denotes a reference to its declared object, including
+      incomplete and zero-length arrays.  This does not require a defined size. *)
+  Lemma denoteSymbol_variable_reference tu n ty init :
+    denoteSymbol tu n (Ovar ty init) |-- reference_to ty (_global n).
+  Proof. by rewrite /denoteSymbol _at_reference_toR. Qed.
 
   (** TODO incomplete *)
   Definition initSymbol (n : obj_name) (o : ObjValue) : mpred :=

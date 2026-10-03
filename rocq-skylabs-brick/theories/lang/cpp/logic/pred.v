@@ -192,7 +192,7 @@ Module Type CPP_LOGIC
         has_type (Vptr p) Tnullptr -|- [| p = nullptr |].
       Axiom has_type_ptr' : ∀ p ty,
         has_type (Vptr p) (Tptr ty) -|-
-        valid_ptr p ** [| aligned_ptr_ty ty p |].
+        valid_ptr p ** [| pointee_aligned_ptr_ty ty p |].
 
       (* These two definitions are needed because of [tptsto_has_type] *)
       Axiom has_type_ref' : ∀ p ty,
@@ -227,7 +227,7 @@ Module Type CPP_LOGIC
           strict_valid_ptr p |-- has_type (Vptr p) (Tptr ty) -* reference_to ty p.
       Axiom reference_to_elim : forall ty p,
           reference_to ty p |--
-            [| aligned_ptr_ty ty p |] ** [| p <> nullptr |] **
+            [| pointee_aligned_ptr_ty ty p |] ** [| p <> nullptr |] **
             valid_ptr p ** if zero_sized_array ty then emp else strict_valid_ptr p.
 
     End with_genv.
@@ -298,16 +298,21 @@ Module Type CPP_LOGIC
     #[global] Declare Instance tptsto_reference_to : forall {σ} p ty q v,
       Observe (reference_to ty p) (tptsto ty q p v).
 
-    (**
-    NOTE: We'll eventually need the stronger [tptsto_learn : ∀ {σ} ty
-    q1 q2 p v1 v2, <absorb> (tptsto ty q1 p v1) //\\ <absorb> (tptsto
-    ty q2 p v2) |-- [! v1 = v2 !]] but setting up the proof in
-    [simple_pred] now would be a bit of a digression.
-    *)
-    #[global] Declare Instance tptsto_agree : forall {σ} ty q1 q2 p v1 v2,
-      Observe2 [| v1 = v2 |]
-               (tptsto ty q1 p v1)
-               (tptsto ty q2 p v2).
+    (** Agreement under conjunction also covers two descriptions of the same
+    owned cell, without requiring two disjoint shares. The concrete model
+    proves this from agreement of the underlying ghost cells and bytes. *)
+    Axiom tptsto_agree_and : forall {σ} ty q1 q2 p v1 v2,
+      <absorb> (tptsto ty q1 p v1) ∧ <absorb> (tptsto ty q2 p v2) ⊢ ⌜v1 = v2⌝.
+
+    #[global] Instance tptsto_agree : forall {σ} ty q1 q2 p v1 v2,
+      Observe2 [| v1 = v2 |] (tptsto ty q1 p v1) (tptsto ty q2 p v2).
+    Proof.
+      intros σ' ty q1 q2 p v1 v2. apply observe_2_intro_only_provable.
+      iIntros "P Q". iApply (tptsto_agree_and ty q1 q2 p v1 v2).
+      iSplit.
+      - iApply bi.absorbingly_intro. iExact "P".
+      - iApply bi.absorbingly_intro. iExact "Q".
+    Qed.
 
     End with_cpp_logic.
 
@@ -468,10 +473,12 @@ Module Type CPP_LOGIC
       [| 0 <= Z.of_N va + z |]%Z **
       [| ptr_vaddr (p ,, o) = Some (Z.to_N (Z.of_N va + z)) |].
 
+    (** Recovering a source address requires source validity: cancellation can
+        yield a valid destination even when the source address underflows. *)
     Axiom offset_inv_pinned_ptr_pure : forall o z va p,
       eval_offset σ o = Some z ->
       ptr_vaddr (p ,, o) = Some va ->
-      valid_ptr (p ,, o) |--
+      valid_ptr p |--
       [| 0 <= Z.of_N va - z |]%Z **
       [| ptr_vaddr p = Some (Z.to_N (Z.of_N va - z)) |].
 
@@ -709,9 +716,10 @@ Module Type CPP_LOGIC
 
     (**
      ** Deducing pointer equalities
-     The following axioms, together with [same_address_o_sub_eq], enable going
-     from [same_address] (produced by C++ pointer equality) to actual pointer
-     equalities.
+     [same_address_eq_null] and [same_address_o_sub_eq] recover pointer
+     identity in their respective null and same-array cases. General address
+     equality (produced by C++ pointer comparison) does not establish object
+     identity across lifetime changes.
      *)
 
     (** Pointer equality with [nullptr] is easy, as long as your pointer is valid.
@@ -722,44 +730,11 @@ Module Type CPP_LOGIC
       _valid_ptr tv p |--
       [| same_address p nullptr <-> p = nullptr |].
 
-    (**
-    [same_address_eq_type_ptr] concludes that two pointers [p1] and [p2] are
-    equal if they have the same address, point to live objects [o1] and [o2],
-    and have the same (non-uchar) type [ty] with nonzero size.
-
-    Justifying this from the standard is tricky; here's a proof sketch.
-    - Because [ty] has "nonzero size" (https://eel.is/c++draft/intro.object#8),
-      and we don't support bitfields, we apply the standard:
-
-      > Unless it is a bit-field, an object with nonzero size shall occupy one
-        or more bytes of storage, including every byte that is occupied in full
-        or in part by any of its subobjects.
-
-    - Because [o1] and [o2] are live, these objects share storage, hence they
-      must coincide or one must be nested inside the other
-      (https://eel.is/c++draft/intro.object#4); if they coincide, our proof
-      is done.
-    - Because [ty] is not [unsigned char], neither pointer can provide storage
-      for the other (https://eel.is/c++draft/intro.object#3); so one must be a
-      subobject of the other.
-    - Since [o1] and [o2] have type [ty], and type [ty] has "nonzero size",
-      neither of [o1] and [o2] can be a subobject of the other;
-      we conjecture is provable from the C++ type system.
-
-    NOTE: we check "nonzero size"
-    (https://eel.is/c++draft/basic.memobj#intro.object-8) using [size_of],
-    which might incorporate implementation-specific compiler decisions.
-    TODO: handle [std::byte] like [unsigned char].
-    *)
-    Axiom same_address_eq_type_ptr : forall ty p1 p2 n,
-      same_address p1 p2 ->
-      size_of _ ty = Some n ->
-      (* if [erase_qualifiers ty = Tuchar], one of these pointer could provide
-      storage for the other. *)
-      erase_qualifiers ty <> Tuchar ->
-      (n > 0)%N ->
-      type_ptr ty p1 ∧ type_ptr ty p2 ∧ live_ptr p1 ∧ live_ptr p2 ⊢
-        |={↑pred_ns}=> [| p1 = p2 |].
+    (** [type_ptr ty p] can survive the object's destruction, and [live_ptr p]
+        only states that its allocation is alive. Even together, they do not
+        establish that the pointed-to object is alive. In particular, they must
+        not be used to identify storage pointers with placement-new objects
+        merely because their addresses and types agree. *)
 
   End with_cpp_logic.
 
@@ -844,17 +819,24 @@ Module Type VALID_PTR_AXIOMS
 
     (** These axioms are named after the predicate in the conclusion. *)
 
-    (**
-    TODO: The intended proof of [strict_valid_ptr_sub] assumes that, if [p']
-    normalizes to [p ., [ ty ! i ]], then [valid_ptr p'] is defined to imply
-    validity of all pointers from [p] to [p'].
-
-    Note that `arrR` exposes stronger reasoning principles, but this might still be useful.
-    *)
-    Axiom strict_valid_ptr_sub : ∀ (i j k : Z) p ty vt1 vt2,
+    (** Interpolation preserves relaxed validity at zero stride. A strict
+        conclusion additionally requires a positive element size. *)
+    Axiom _valid_ptr_sub : ∀ (i j k : Z) p ty vt1 vt2 vt,
       (i <= j < k)%Z ->
+      (vt = Strict -> exists sz, size_of σ ty = Some sz /\ (0 < sz)%N) ->
+      _valid_ptr vt1 (p ,, o_sub σ ty i) |--
+      _valid_ptr vt2 (p ,, o_sub σ ty k) -* _valid_ptr vt (p ,, o_sub σ ty j).
+
+    Lemma strict_valid_ptr_sub : ∀ (i j k : Z) p ty vt1 vt2,
+      (i <= j < k)%Z ->
+      (exists sz, size_of σ ty = Some sz /\ (0 < sz)%N) ->
       _valid_ptr vt1 (p ,, o_sub σ ty i) |--
       _valid_ptr vt2 (p ,, o_sub σ ty k) -* strict_valid_ptr (p ,, o_sub σ ty j).
+    Proof.
+      intros i j k p ty vt1 vt2 Hijk Hsize.
+      apply (_valid_ptr_sub i j k p ty vt1 vt2 Strict Hijk).
+      intros _. exact Hsize.
+    Qed.
 
     (** XXX: this axiom is convoluted but
     TODO: The intended proof of [strict_valid_ptr_field_sub] (and friends) is that
@@ -894,8 +876,10 @@ Module Type VALID_PTR_AXIOMS
     Axiom valid_o_sub_size : forall p ty i vt,
       _valid_ptr vt (p ,, o_sub σ ty i) |-- [| is_Some (size_of σ ty) |].
 
+    (** Inheritance alone does not constrain untrusted layout metadata. *)
     Axiom type_ptr_o_base : forall derived base p,
       class_derives derived [base] ->
+      base_layout_compatible σ derived base ->
       type_ptr (Tnamed derived) p ⊢ type_ptr (Tnamed base) (p ,, _base derived base).
 
     (*
@@ -1110,7 +1094,7 @@ Section with_cpp.
     [| ptr_vaddr (p ,, o2) = Some (Z.to_N (Z.of_N va - z1 + z2)) |].
   Proof.
     iIntros (He1 He2 Hpin1) "V V1 V2".
-    iDestruct (offset_inv_pinned_ptr_pure with "V1") as %[Hle1 Hp]; [done..|].
+    iDestruct (offset_inv_pinned_ptr_pure o1 z1 va p He1 Hpin1 with "V") as %[Hle1 Hp].
     iDestruct (offset_pinned_ptr_pure with "V2") as %[Hle2 Hgoal]; [done..|].
     iIntros "!%". by rewrite Z2N.id in Hgoal, Hle2.
   Qed.
@@ -1176,8 +1160,7 @@ Section with_cpp.
   Proof.
     rewrite pinned_ptr.unlock.
     iIntros (He) "#V #(%P & E)".
-    iDestruct (offset_inv_pinned_ptr_pure with "[]") as "-#[$$]"; [done..| |].
-    { by iApply (observe with "E"). }
+    iDestruct (offset_inv_pinned_ptr_pure o z va p He P with "V") as "-#[$$]".
     by iApply offset_inv_exposed_ptr.
   Qed.
 
@@ -1250,7 +1233,7 @@ Section with_cpp.
   Proof.
     destruct (decide (j = k)) as [->|Hne].
     { rewrite -_valid_valid. by iIntros "_ $". }
-    rewrite -strict_valid_valid. apply strict_valid_ptr_sub. lia.
+    apply (_valid_ptr_sub i j k p ty vt vt Relaxed); [lia|discriminate].
   Qed.
 
   Lemma _valid_ptr_field_sub (i : Z) (p : ptr) ty f vt (Hle : (0 <= i)%Z) :
@@ -1287,12 +1270,13 @@ Section with_cpp.
   converse. *)
   Lemma type_ptr_o_derived_inv derived base p :
     class_derives derived [base] ->
+    base_layout_compatible σ derived base ->
     type_ptr (Tnamed derived) (p ,, _derived base derived) |--
     type_ptr (Tnamed base) p.
   Proof.
-    iIntros (Hcd) "T".
+    iIntros (Hcd Hlayout) "T".
     iDestruct (o_derived_base_type with "T") as %Hp.
-    by rewrite (type_ptr_o_base _ _ _ Hcd) Hp.
+    by rewrite (type_ptr_o_base _ _ _ Hcd Hlayout) Hp.
   Qed.
 
   (** [p] is a valid pointer value in the sense of the standard, or

@@ -36,6 +36,47 @@ Definition GlobDecl_align_of (g : GlobDecl) : option N :=
   | _ => None
   end.
 
+(** Layout metadata is untrusted: [genv] does not enforce these invariants.
+    The logarithm formulation makes the power-of-two check decidable by
+    computation and also excludes zero. *)
+Definition valid_alignment (sz al : N) : Prop :=
+  al = (2 ^ N.log2 al)%N /\ (sz mod al = 0)%N.
+
+#[global] Instance valid_alignment_decision (sz al : N) :
+  Decision (valid_alignment sz al).
+Proof. unfold valid_alignment. solve_decision. Defined.
+
+Lemma valid_alignment_spec (sz al : N) :
+  valid_alignment sz al ->
+  al <> 0%N /\ (exists n, al = (2 ^ n)%N) /\ (al | sz)%N.
+Proof.
+  intros [Hpow Hmod].
+  have Hnonzero : al <> 0%N by rewrite Hpow; apply N.pow_nonzero.
+  split; first done. split; first by exists (N.log2 al).
+  by apply N.Lcm0.mod_divide.
+Qed.
+
+(** Only validated metadata may determine semantic alignment. Invalid or
+    absent metadata leaves [align_of] abstract, just as an incomplete type
+    does; [None] here does not assert that the type has no alignment. *)
+Definition GlobDecl_valid_align_of (g : GlobDecl) : option N :=
+  match GlobDecl_size_of g, GlobDecl_align_of g with
+  | Some sz, Some al =>
+      if bool_decide (valid_alignment sz al) then Some al else None
+  | _, _ => None
+  end.
+
+Lemma GlobDecl_valid_align_of_spec (g : GlobDecl) (al : N) :
+  GlobDecl_valid_align_of g = Some al ->
+  exists sz, GlobDecl_size_of g = Some sz /\
+    GlobDecl_align_of g = Some al /\ valid_alignment sz al.
+Proof.
+  rewrite /GlobDecl_valid_align_of.
+  destruct (GlobDecl_size_of g) as [sz|] eqn:Hsz; cbn; last done.
+  destruct (GlobDecl_align_of g) as [a|] eqn:Hal; cbn; last done.
+  case_bool_decide; naive_solver.
+Qed.
+
 
 #[global] Instance proper_GlobDecl_size_of: Proper (GlobDecl_ler ==> Roption_leq eq) GlobDecl_size_of.
 Proof.
@@ -77,7 +118,7 @@ Fixpoint size_of (resolve : genv) (t : type) : option N :=
   | Tenum nm => glob_def resolve nm ≫= GlobDecl_size_of
   | Tfunction _ => None
   | Tbool => Some 1
-  | Tmember_pointer _ _ => None (* TODO these are not well supported right now *)
+  | Tmember_pointer _ _ => Some (member_pointer_size resolve)
   | Tqualified _ t => size_of resolve t
   | Tnullptr => Some (pointer_size resolve)
   | Tfloat_ sz => Some (float_type.bytesN sz)
@@ -109,6 +150,7 @@ Proof. by []. Abort.
 Proof.
   intros ?? Hle ? t ->; induction t; simpl; (try constructor) => //.
   all: try exact: pointer_size_proper.
+  all: try exact: member_pointer_size_proper.
   - by destruct IHt; constructor; subst.
 (*  - rewrite /glob_def.
     generalize (types_compat _ _ (tu_le Hle) gn).
@@ -125,12 +167,12 @@ Proof.
       by eapply proper_GlobDecl_size_of. }
     { intros. constructor. }
 *)
-  - rewrite /glob_def. move: Hle => [[ /(_ gn) Hle _ _]].
+  - rewrite /glob_def. move: Hle => /tu_le [/(_ gn) Hle _ _].
     revert Hle.
     case: (types (genv_tu x) !! gn); simpl; try constructor.
     move => ? /(_ _ eq_refl) [g2 [-> HH]] * /=.
     exact: proper_GlobDecl_size_of.
-  - rewrite /glob_def. move: Hle => [[ /(_ gn) Hle _ _]].
+  - rewrite /glob_def. move: Hle => /tu_le [/(_ gn) Hle _ _].
     revert Hle.
     case: (types (genv_tu x) !! gn); simpl; try constructor.
     move => ? /(_ _ eq_refl) [g2 [-> HH]] * /=.
@@ -149,6 +191,9 @@ Theorem size_of_bool : forall {c : genv},
 Proof. reflexivity. Qed.
 Theorem size_of_pointer : forall {c : genv} t,
     @size_of c (Tptr t) = Some (pointer_size c).
+Proof. reflexivity. Qed.
+Theorem size_of_member_pointer : forall {c : genv} cls t,
+    @size_of c (Tmember_pointer cls t) = Some (member_pointer_size c).
 Proof. reflexivity. Qed.
 Theorem size_of_ref : forall {c : genv} t,
     @size_of c (Tref t) = Some (pointer_size c).
@@ -271,6 +316,10 @@ Proof. done. Qed.
 
 #[global] Instance ptr_size_of {σ : genv} ty n :
   TCEq (pointer_size σ) n -> SizeOf (Tptr ty) n.
+Proof. by rewrite /SizeOf TCEq_eq=><-. Qed.
+
+#[global] Instance member_ptr_size_of {σ : genv} cls ty n :
+  TCEq (member_pointer_size σ) n -> SizeOf (Tmember_pointer cls ty) n.
 Proof. by rewrite /SizeOf TCEq_eq=><-. Qed.
 
 #[global] Instance ref_size_of {σ : genv} ty n :
@@ -415,10 +464,13 @@ Section with_genv.
     eauto.
   Qed.
 
-  (* The alignment of named types are recorded in the translation unit *)
-  Axiom align_of_named : forall nm,
-    align_of (Tnamed nm) =
-    glob_def σ nm ≫= GlobDecl_align_of.
+  (* Validated alignments of named types are recorded in the translation unit.
+     Missing layout metadata (e.g. [Gtype] or [Gunsupported]) does not mean
+     that the type has no alignment: pointers to these types are still valid.
+     Invalid metadata likewise leaves [align_of] abstract. *)
+  Axiom align_of_named : forall nm al,
+    glob_def σ nm ≫= GlobDecl_valid_align_of = Some al ->
+    align_of (Tnamed nm) = Some al.
 
   Axiom align_of_array : forall (ty : type) n,
       align_of (Tarray ty n) = align_of ty.
@@ -467,8 +519,13 @@ Section with_genv.
   Lemma align_of_genv_compat tu gn st
         (Hσ : tu ⊧ σ)
         (Hl : tu.(types) !! gn = Some (Gstruct st)) :
+    valid_alignment st.(s_size) st.(s_alignment) ->
     align_of (Tnamed gn) = GlobDecl_align_of (Gstruct st).
-  Proof. by rewrite /= align_of_named (glob_def_genv_compat_struct st Hl). Qed.
+  Proof.
+    intros Hvalid. apply align_of_named.
+    rewrite (glob_def_genv_compat_struct st Hl) /GlobDecl_valid_align_of /=.
+    by rewrite bool_decide_true.
+  Qed.
 
   Lemma align_of_genv_leq σ1 σ2 ty align :
     @align_of σ1 ty = Some align ->
@@ -479,3 +536,50 @@ Section with_genv.
     by inversion 1; naive_solver.
   Qed.
 End with_genv.
+
+(** Sufficient metadata for projecting complete-object pointer typing to a base.
+    This concerns pointer extent and alignment, not ownership of base bytes. *)
+Definition base_layout_compatible (σ : genv) (derived base : name) : Prop :=
+  exists dsz bsz dal bal z,
+    size_of σ (Tnamed derived) = Some dsz /\
+    size_of σ (Tnamed base) = Some bsz /\
+    @align_of σ (Tnamed derived) = Some dal /\
+    @align_of σ (Tnamed base) = Some bal /\
+    parent_offset σ derived base = Some z /\
+    (bal | dal)%N /\ (Z.of_N bal | z)%Z /\
+    (0 <= z)%Z /\ (z = 0 \/ z < Z.of_N dsz)%Z /\
+    (z + Z.of_N bsz <= Z.of_N dsz)%Z.
+
+Definition tu_base_layout_compatible (tu : translation_unit) (derived base : name) : bool :=
+  match tu.(types) !! derived, tu.(types) !! base, parent_offset_tu tu derived base with
+  | Some (Gstruct ds), Some (Gstruct bs), Some z =>
+      bool_decide (
+        valid_alignment ds.(s_size) ds.(s_alignment) /\
+        valid_alignment bs.(s_size) bs.(s_alignment) /\
+        (bs.(s_alignment) | ds.(s_alignment))%N /\
+        (Z.of_N bs.(s_alignment) | z)%Z /\
+        (0 <= z)%Z /\ (z = 0 \/ z < Z.of_N ds.(s_size))%Z /\
+        (z + Z.of_N bs.(s_size) <= Z.of_N ds.(s_size))%Z)
+  | _, _, _ => false
+  end.
+
+Lemma tu_base_layout_compatible_sound {σ tu} {Hσ : tu ⊧ σ} derived base :
+  tu_base_layout_compatible tu derived base = true ->
+  base_layout_compatible σ derived base.
+Proof.
+  rewrite /tu_base_layout_compatible.
+  destruct (tu.(types) !! derived) as [gd|] eqn:Hd; last discriminate.
+  destruct gd as [| |ds| | | |]; try discriminate.
+  destruct (tu.(types) !! base) as [gb|] eqn:Hb; last discriminate.
+  destruct gb as [| |bs| | | |]; try discriminate.
+  destruct (parent_offset_tu tu derived base) as [z|] eqn:Hz; last discriminate.
+  intros Hcheck. apply bool_decide_eq_true in Hcheck.
+  destruct Hcheck as (Hda & Hba & Hdiv & Hdz & Hnonneg & Hstrict & Hbound).
+  exists ds.(s_size), bs.(s_size), ds.(s_alignment), bs.(s_alignment), z.
+  repeat split; try assumption.
+  - exact (size_of_genv_compat tu σ derived ds Hσ Hd).
+  - exact (size_of_genv_compat tu σ base bs Hσ Hb).
+  - exact (align_of_genv_compat tu derived ds Hσ Hd Hda).
+  - exact (align_of_genv_compat tu base bs Hσ Hb Hba).
+  - exact (parent_offset_genv_compat Hz).
+Qed.

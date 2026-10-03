@@ -182,7 +182,7 @@ End comparable.
 (** ** Alignment is preserved by pointer arithmetic
 
     [alignof(T)] divides [sizeof(T)] ([align_of_size_of']), so offsetting a
-    [ty]-aligned pointer by whole [ty] elements preserves [ty]-alignment.
+    valid [ty]-aligned pointer by whole [ty] elements preserves [ty]-alignment.
     Running off the object is ruled out by [valid_ptr] on the *result*, which
     the rules below already require. This is what keeps the typed premises of
     those rules from costing their callers anything for [p + n]. *)
@@ -191,12 +191,12 @@ Section aligned_sub.
 
   Lemma aligned_ptr_ty_sub (p : ptr) (n : Z) ty :
     is_Some (size_of σ ty) ->
-    [| aligned_ptr_ty ty p |] ∗ valid_ptr (p ,, _sub ty n)
+    [| aligned_ptr_ty ty p |] ∗ valid_ptr p ∗ valid_ptr (p ,, _sub ty n)
     ⊢ [| aligned_ptr_ty ty (p ,, _sub ty n) |].
   Proof.
     intros [sz Hsz].
     destruct (align_of_size_of' _ _ Hsz) as (al & Hal & Hal0 & Hdvd).
-    iIntros "[%Hp V]".
+    iIntros "(%Hp & V & _)".
     destruct (ptr_vaddr (p ,, _sub ty n)) as [va'|] eqn:Hva'.
     2: { iPureIntro. exists al. split; first done. by right. }
     iDestruct (offset_inv_pinned_ptr_pure (_sub ty n) (Z.of_N sz * n) va' p
@@ -225,9 +225,11 @@ Section aligned_sub.
     has_type (Vptr p) (Tptr ty) ∗ valid_ptr (p ,, _sub ty n)
     ⊢ has_type (Vptr (p ,, _sub ty n)) (Tptr ty).
   Proof.
-    intros Hsz. rewrite !has_type_ptr'.
-    iIntros "[[_ #A] #V]". iFrame "V".
-    by iApply (aligned_ptr_ty_sub p n ty Hsz); iFrame "A V".
+    intros Hsz.
+    have [sz Hsize] := Hsz.
+    rewrite !has_type_ptr' !(pointee_aligned_size_of ty sz _ Hsize).
+    iIntros "[[#Vp #A] #V]". iFrame "V".
+    by iApply (aligned_ptr_ty_sub p n ty Hsz); iFrame "A Vp V".
   Qed.
 
   (** [eval_ptr_int_op] offsets by the qualifier-erased type while still typing
@@ -240,11 +242,12 @@ Section aligned_sub.
     intros Hsz.
     have Hsz' : is_Some (size_of σ (erase_qualifiers ty)).
     { by rewrite (size_of_erase_qualifiers σ ty). }
-    rewrite !has_type_ptr'.
-    iIntros "[[_ %A] #V]". iFrame "V".
+    have [sz Hsize] := Hsz.
+    rewrite !has_type_ptr' !(pointee_aligned_size_of ty sz _ Hsize).
+    iIntros "[[#Vp %A] #V]". iFrame "V".
     iAssert [| aligned_ptr_ty (erase_qualifiers ty) (p ,, _sub (erase_qualifiers ty) n) |]%I
       as %A'.
-    { iApply (aligned_ptr_ty_sub p n (erase_qualifiers ty) Hsz'). iFrame "V".
+    { iApply (aligned_ptr_ty_sub p n (erase_qualifiers ty) Hsz'). iFrame "Vp V".
       iPureIntro. by rewrite -aligned_ptr_ty_erase_qualifiers. }
     iPureIntro. by rewrite aligned_ptr_ty_erase_qualifiers.
   Qed.

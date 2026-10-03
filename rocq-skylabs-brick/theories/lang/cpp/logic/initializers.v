@@ -385,10 +385,10 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
       [| v = Vvoid |] **
 
       (**
-      [primR] is enough because C++ code never uses the raw bytes
-      underlying an inhabitant of type void.
+      A void result has no storage. [resultR] only records its logical
+      value, so this continuation grants no heap ownership.
       *)
-      (addr |-> primR Tvoid qf Vvoid -* |={top}=>?u Q frees)
+      (addr |-> resultR Tvoid qf Vvoid -* |={top}=>?u Q frees)
 
     | Tptr _
     | Tmember_pointer _ _
@@ -468,12 +468,13 @@ Definition wp_initialize `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (�
 
 Lemma wp_initialize_unqualified_well_typed `{Σ : cpp_logic, σ : genv}
   tu ρ cv ty addr init (Q : FreeTemps.t -> epred) :
+  ty <> Tvoid ->
       wp_initialize_unqualified tu ρ cv ty addr init (fun free => reference_to (to_heap_type ty) addr -* Q free)
   |-- wp_initialize_unqualified tu ρ cv ty addr init Q.
 Proof.
-  rewrite wp_initialize_unqualified.unlock.
+  intros Hnonvoid. rewrite wp_initialize_unqualified.unlock.
   case_match; eauto.
-  case_match; subst; eauto.
+  case_match; subst; eauto; try contradiction.
   all: try (iApply wp_operand_frame; [ done | ];
     iIntros (??) "X Y";
     iDestruct (observe (reference_to _ _) with "Y") as "#?";
@@ -488,10 +489,6 @@ Proof.
       iDestruct (observe (reference_to _ _) with "Y") as "#?";
       iApply ("X" with "Y").
     rewrite /to_heap_type/=. done.
-  - iApply wp_operand_frame; [ done | ].
-    iIntros (??) "[$ X] Y".
-    iDestruct (observe (reference_to _ _) with "Y") as "#?";
-    iApply ("X" with "Y"); eauto.
   - (* arrays *)
     case_bool_decide; eauto.
     etransitivity; [ | apply wp_init_well_typed ].
@@ -596,7 +593,7 @@ Section wp_initialize.
     else
       letI* v, free := wp_operand tu ρ init in
       let qf := cQp.mk (q_const cv') 1 in
-      addr |-> tptsto_fuzzyR (erase_qualifiers ty) qf v -* |={top}=>?u Q free
+      addr |-> resultR (erase_qualifiers ty) qf v -* |={top}=>?u Q free
   )%I) (only parsing).
 
   Lemma wp_initialize_unqualified_intro_val tu ρ cv ty (addr : ptr) init Q :
@@ -613,7 +610,7 @@ Section wp_initialize.
     iApply wp_operand_well_typed.
     iApply (wp_operand_wand with "wp"). iIntros (v f).
     rewrite can_init_void// has_type_void. iIntros "HQ ->".
-    rewrite tptsto_fuzzyR_Vvoid_primR. by iFrame "HQ".
+    by iFrame "HQ".
   Qed.
 
   Lemma wp_initialize_unqualified_elim_val tu ρ cv ty addr init Q :
@@ -626,7 +623,7 @@ Section wp_initialize.
     (* void *)
     iIntros "wp".
     iApply (wp_operand_wand with "wp"). iIntros (v f) "(-> & HQ) R".
-    iApply ("HQ" with "[R]"). cbn. by rewrite tptsto_fuzzyR_Vvoid_primR.
+    by iApply ("HQ" with "R").
   Qed.
 
   (**
@@ -860,14 +857,16 @@ Section wp_initialize.
                                let qf := cQp.mk (q_const cv) 1 in
                                addr |-> tptsto_fuzzyR (erase_qualifiers ty) qf v -* Q free
                            )
-  | WpInitRef cv ty' : drop_qualifiers ty = Tref ty' ->
+  | WpInitRef cv ty' : (cv, Tref ty') = decompose_type ty ->
+                      ~~q_volatile cv ->
                       wp_initialize_decomp_spec tu ρ ty addr init Q (
                           let rty := Tref $ erase_qualifiers ty' in
-                          letI* p, free := wp_lval tu ρ init in
+                          letI* p, free := wp_glval tu ρ init in
                             let qf := cQp.mk (q_const cv) 1 in
                             addr |-> primR rty qf (Vref p) -* Q free
                         )
-  | WpInitRvRef cv ty' : drop_qualifiers ty = Trv_ref ty' ->
+  | WpInitRvRef cv ty' : (cv, Trv_ref ty') = decompose_type ty ->
+                        ~~q_volatile cv ->
                         wp_initialize_decomp_spec tu ρ ty addr init Q (
                             let rty := Tref $ erase_qualifiers ty' in
                             letI* p, free := wp_xval tu ρ init in
@@ -880,7 +879,7 @@ Section wp_initialize.
                         letI* v, frees := wp_operand tu ρ init in
                           let qf := cQp.mk (q_const cv) 1 in
                           [| v = Vvoid |] **
-                            (addr |-> primR Tvoid qf Vvoid -* Q frees)
+                            (addr |-> resultR Tvoid qf Vvoid -* Q frees)
                       )
   | WpInitAggreg cv ty' : is_aggregate_type ty' ->
                          (cv, ty') = decompose_type ty ->
@@ -897,11 +896,15 @@ Section wp_initialize.
         else
           UNSUPPORTED (initializing_type ty' init)
       )
-  | WpInitFuncArch cv ty' : match ty' with
-                        | Tfunction _
-                        | Tarch _ _
-                        | Tincomplete_array _
-                        | Tvariable_array _ _ => true
+  | WpInitUnsupported cv ty' : match ty' with
+                        | Tfunction _ | Tarch _ _
+                        | Tincomplete_array _ | Tvariable_array _ _
+                        | Tunsupported _ | Tdecltype _ | Texprtype _
+                        | Tparam _ | Tresult_param _ | Tresult_global _
+                        | Tresult_unop _ _ | Tresult_binop _ _ _
+                        | Tresult_call _ _ | Tresult_member_call _ _ _
+                        | Tresult_member _ _ | Tresult_parenlist _ _
+                        | Tauto => true
                         | _ => false
                         end ->
                          (cv, ty') = decompose_type ty ->
@@ -909,38 +912,28 @@ Section wp_initialize.
                         wp_initialize_decomp_spec tu ρ ty addr init Q (
                             UNSUPPORTED (initializing_type ty' init)
                           )
-  | WpInitUnsupported cv msg : decompose_type ty = (cv, Tunsupported msg) ->
-                          wp_initialize_decomp_spec tu ρ ty addr init Q False
   .
 
   Lemma wp_initialize_decomp_ok tu ρ ty addr e Q :
     wp_initialize_decomp_spec tu ρ ty addr e Q (wp_initialize tu ρ ty addr e Q).
   Proof.
-    rewrite wp_initialize_qual_norm wp_initialize_unqualified.unlock.
-    case: qual_norm_decomp_ok=>q t.
-    case Ht: t.
-    all: case_match; try solve [ intros; econstructor; eauto ].
-    all: try (rewrite [decompose_type _]surjective_pairing=>[][Hq Hty];
-      rewrite Hty -erase_qualifiers_decompose_type;
-      econstructor; [ | rewrite [decompose_type _]surjective_pairing -Hq -Hty // | rewrite H ]; eauto).
-
-
-(*    all: try by rewrite [decompose_type _]surjective_pairing=>[][Hq Hty];
-      rewrite Hty -erase_qualifiers_decompose_type;
-      econstructor; last rewrite [decompose_type _]surjective_pairing -Hq -Hty //. *)
-    all: try by rewrite [decompose_type _]surjective_pairing=>[][Hq Hty];
-      econstructor;
-      rewrite Hty; apply: drop_qualifiers_decompose_type.
-    all: try by rewrite [decompose_type _]surjective_pairing=>[][Hq Hty]; econstructor;
-      try solve [ done | rewrite //= [decompose_type _]surjective_pairing -Hq -Hty // | rewrite H // ].
-    (*
-    { (* Tqualified *)
-      rewrite [decompose_type _]surjective_pairing;
-        move: (is_qualified_decompose_type ty)=>/[swap][][] _ <-.
-      by simpl. }
-    { (* Tunsupported *)
-      intros. rewrite UNSUPPORTED.unlock. exact: WpInitUnsupported. }
-  Qed. *) Admitted. (* TODO: this would be improved by eliminating these cases using dependency *)
+    rewrite wp_initialize_decompose_type.
+    case Hdec: (decompose_type ty) => [cv t] /=.
+    have Hqual : ~~ is_qualified t.
+    { move: (is_qualified_decompose_type ty). by rewrite Hdec. }
+    rewrite wp_initialize_unqualified.unlock.
+    case Hvol: (q_volatile cv).
+    { apply: WpInitVolatile; by eauto. }
+    case: t Hdec Hqual =>> Hdec Hqual //=.
+    all: have Hnv : ~~q_volatile cv by rewrite Hvol.
+    all: have Hdeq := eq_sym Hdec.
+    all: try solve [econstructor; eauto].
+    all: try solve [apply: (WpInitAggreg _ _ _ _ _ _ _ _ _ Hdeq Hnv); done].
+    all: have Herase := erase_qualifiers_decompose_type ty.
+    all: rewrite Hdec /= in Herase.
+    all: rewrite -Herase.
+    all: eapply WpInitScalar; [|exact Hdeq|exact Hnv]; done.
+  Qed.
 
   (** [wpi] *)
 

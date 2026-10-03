@@ -262,6 +262,17 @@ Module char_type.
     end.
   #[global] Arguments bytesN !_ /.
 
+  Definition bitsize (ct : t) : bitsize :=
+    match ct with
+    | Cchar | C8 => bitsize.W8
+    | C16 => bitsize.W16
+    | Cwchar | C32 => bitsize.W32
+    end.
+
+  Lemma bitsize_bytesN (ct : t) :
+    bitsize.bytesN (bitsize ct) = bytesN ct.
+  Proof. by destruct ct. Qed.
+
   Definition bitsN (ct : t) : N :=
     8 * bytesN ct.
   #[global] Arguments bitsN !_ /.

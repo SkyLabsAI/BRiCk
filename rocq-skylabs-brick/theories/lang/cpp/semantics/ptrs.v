@@ -292,7 +292,19 @@ Module Type PTRS.
     Axiom global_ptr_nonnull_addr : forall tu o, ptr_vaddr (global_ptr tu o) <> Some 0%N.
 
     #[global] Declare Instance global_ptr_inj : forall tu, Inj (=) (=) (global_ptr tu).
-    #[global] Declare Instance global_ptr_addr_inj : forall tu, Inj (=) (=) (λ o, ptr_vaddr (global_ptr tu o)).
+
+    (** Distinct nonempty global variables have distinct defined addresses.
+        Resolve declarations and sizes in the same environment as the pointers.
+        Zero-sized variables may share an address, so this is not an [Inj]
+        instance over all names (nor does equality of two [None] addresses
+        establish anything). Pointer and allocation identity remain injective. *)
+    Axiom global_ptr_addr_inj : forall o1 o2 ty1 ty2 init1 init2 sz1 sz2,
+      σ.(genv_tu).(symbols) !! o1 = Some (Ovar ty1 init1) ->
+      σ.(genv_tu).(symbols) !! o2 = Some (Ovar ty2 init2) ->
+      size_of σ ty1 = Some sz1 -> (0 < sz1)%N ->
+      size_of σ ty2 = Some sz2 -> (0 < sz2)%N ->
+      same_property ptr_vaddr (global_ptr σ.(genv_tu) o1) (global_ptr σ.(genv_tu) o2) ->
+      o1 = o2.
     #[global] Declare Instance global_ptr_aid_inj : forall tu, Inj (=) (=) (λ o, ptr_alloc_id (global_ptr tu o)).
 
     (** Pointers into the same array with the same address have the same index.
@@ -647,6 +659,51 @@ Module Type PTRS_MIXIN (Import P : PTRS_INTF_MINIMAL).
     Proof.
       rewrite /aligned_ptr_ty; intros. by rewrite -align_of_erase_qualifiers.
     Qed.
+
+    (** Alignment required by a pointer's referent type.  Void and function
+        referents do not have object layout; pointer/reference storage cells
+        and all object referents retain their ordinary alignment obligations. *)
+    Definition pointee_aligned_ptr_ty (ty : type) (p : ptr) : Prop :=
+      match erase_qualifiers ty with
+      | Tvoid | Tfunction _ => True
+      | _ => aligned_ptr_ty ty p
+      end.
+
+    Lemma pointee_aligned_void p : pointee_aligned_ptr_ty Tvoid p.
+    Proof. done. Qed.
+    Lemma pointee_aligned_function ft p : pointee_aligned_ptr_ty (Tfunction ft) p.
+    Proof. done. Qed.
+    Lemma pointee_aligned_erase_qualifiers ty p :
+      pointee_aligned_ptr_ty ty p <-> pointee_aligned_ptr_ty (erase_qualifiers ty) p.
+    Proof.
+      rewrite /pointee_aligned_ptr_ty erase_qualifiers_idemp.
+      have H := aligned_ptr_ty_erase_qualifiers p ty.
+      by destruct (erase_qualifiers ty).
+    Qed.
+    Lemma aligned_ptr_ty_pointee ty p :
+      aligned_ptr_ty ty p -> pointee_aligned_ptr_ty ty p.
+    Proof. rewrite /pointee_aligned_ptr_ty. by destruct (erase_qualifiers ty). Qed.
+    Lemma pointee_aligned_object ty p :
+      erase_qualifiers ty <> Tvoid ->
+      (forall ft, erase_qualifiers ty <> Tfunction ft) ->
+      (pointee_aligned_ptr_ty ty p <-> aligned_ptr_ty ty p).
+    Proof.
+      intros Hvoid Hfun. rewrite /pointee_aligned_ptr_ty.
+      destruct (erase_qualifiers ty); naive_solver.
+    Qed.
+    Lemma pointee_aligned_size_of ty sz p :
+      size_of σ ty = Some sz ->
+      (pointee_aligned_ptr_ty ty p <-> aligned_ptr_ty ty p).
+    Proof.
+      rewrite -size_of_erase_qualifiers /pointee_aligned_ptr_ty.
+      by destruct (erase_qualifiers ty).
+    Qed.
+    Lemma pointee_aligned_pointer_cell ty p :
+      pointee_aligned_ptr_ty (Tptr ty) p <-> aligned_ptr_ty (Tptr ty) p.
+    Proof. done. Qed.
+    Lemma pointee_aligned_reference_cell ty p :
+      pointee_aligned_ptr_ty (Tref ty) p <-> aligned_ptr_ty (Tref ty) p.
+    Proof. done. Qed.
 
     #[global] Instance aligned_ptr_divide_mono :
       Proper (flip N.divide ==> eq ==> impl) aligned_ptr.
