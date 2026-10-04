@@ -13,13 +13,10 @@ Import ChargeNotation.
 Module Export Errors.	(* <-- historic *)
 
 mlock Definition ERROR {PROP : bi} {T} (t : T) : PROP := False.
-#[global] Arguments ERROR {_ _} _ : assert.	(* mlock bug *)
 
 mlock Definition UNSUPPORTED {PROP : bi} {T} (t : T) : PROP := False.
-#[global] Arguments UNSUPPORTED {_ _} _ : assert.	(* mlock bug *)
 
 mlock Definition UNREACHABLE {PROP : bi} {T} (t : T) : PROP := False.
-#[global] Arguments UNREACHABLE {_ _} _ : assert.	(* mlock bug *)
 
 Section Errors.
   Context {PROP : bi} {T : Type}.
