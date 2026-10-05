@@ -1,0 +1,122 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.initializer_decomposition</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.bi.errors</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.logic</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set</span> <span class="id" title="var">Default</span> <span class="id" title="keyword">Proof</span> <span class="id" title="var">Using</span> "Type*".<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="with_cpp" class="idref" href="#with_cpp"><span class="id" title="section">with_cpp</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{<a id="43a705d40096ef54c52f70536b49dc5b" class="idref" href="#43a705d40096ef54c52f70536b49dc5b"><span class="id" title="variable">Σ</span></a> : <span class="id" title="class">cpp_logic</span>} {<a id="0b1d3f605c206c3f68b5282befa8ad5b" class="idref" href="#0b1d3f605c206c3f68b5282befa8ad5b"><span class="id" title="variable">σ</span></a> : <span class="id" title="class">genv</span>}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> (<a id="with_cpp.tu" class="idref" href="#with_cpp.tu"><span class="id" title="variable">tu</span></a> : <span class="id" title="record">translation_unit</span>) (<a id="404aa1daee097e425d1b64b0f21926a2" class="idref" href="#404aa1daee097e425d1b64b0f21926a2"><span class="id" title="variable">ρ</span></a> : <span class="id" title="inductive">region</span>) (<a id="with_cpp.addr" class="idref" href="#with_cpp.addr"><span class="id" title="variable">addr</span></a> : <span class="id" title="axiom">ptr</span>) (<a id="with_cpp.e" class="idref" href="#with_cpp.e"><span class="id" title="variable">e</span></a> : <span class="id" title="inductive">Expr</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a id="with_cpp.Q" class="idref" href="#with_cpp.Q"><span class="id" title="variable">Q</span></a> : <span class="id" title="abbreviation">FreeTemps</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">epred</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;This&nbsp;case&nbsp;was&nbsp;absent&nbsp;from&nbsp;the&nbsp;view,&nbsp;making&nbsp;its&nbsp;totality&nbsp;theorem&nbsp;false.&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="unresolved_auto_case" class="idref" href="#unresolved_auto_case"><span class="id" title="definition">unresolved_auto_case</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="inductive">wp_initialize_decomp_spec</span> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#404aa1daee097e425d1b64b0f21926a2"><span class="id" title="variable">ρ</span></a> <span class="id" title="constructor">Tauto</span> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.addr"><span class="id" title="variable">addr</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.e"><span class="id" title="variable">e</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.Q"><span class="id" title="variable">Q</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="abbreviation">UNSUPPORTED</span> (<span class="id" title="inductive">initializing_type</span> <span class="id" title="constructor">Tauto</span> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.e"><span class="id" title="variable">e</span></a>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="constructor">WpInitUnsupported</span> <span class="id" title="keyword">with</span> (<span class="id" title="var">cv</span> := <span class="id" title="constructor">QM</span>); <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="qualified_unresolved_case" class="idref" href="#qualified_unresolved_case"><span class="id" title="definition">qualified_unresolved_case</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="inductive">wp_initialize_decomp_spec</span> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#404aa1daee097e425d1b64b0f21926a2"><span class="id" title="variable">ρ</span></a> (<span class="id" title="abbreviation">Tconst</span> <span class="id" title="constructor">Tauto</span>) <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.addr"><span class="id" title="variable">addr</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.e"><span class="id" title="variable">e</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.Q"><span class="id" title="variable">Q</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="abbreviation">UNSUPPORTED</span> (<span class="id" title="inductive">initializing_type</span> <span class="id" title="constructor">Tauto</span> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.e"><span class="id" title="variable">e</span></a>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="constructor">WpInitUnsupported</span> <span class="id" title="keyword">with</span> (<span class="id" title="var">cv</span> := <span class="id" title="constructor">QC</span>); <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="unresolved_decltype_case" class="idref" href="#unresolved_decltype_case"><span class="id" title="definition">unresolved_decltype_case</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="inductive">wp_initialize_decomp_spec</span> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#404aa1daee097e425d1b64b0f21926a2"><span class="id" title="variable">ρ</span></a> (<span class="id" title="constructor">Tdecltype</span> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.e"><span class="id" title="variable">e</span></a>) <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.addr"><span class="id" title="variable">addr</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.e"><span class="id" title="variable">e</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.Q"><span class="id" title="variable">Q</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="abbreviation">UNSUPPORTED</span> (<span class="id" title="inductive">initializing_type</span> (<span class="id" title="constructor">Tdecltype</span> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.e"><span class="id" title="variable">e</span></a>) <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.e"><span class="id" title="variable">e</span></a>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="constructor">WpInitUnsupported</span> <span class="id" title="keyword">with</span> (<span class="id" title="var">cv</span> := <span class="id" title="constructor">QM</span>); <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;The&nbsp;qualifier&nbsp;belongs&nbsp;to&nbsp;the&nbsp;reference&nbsp;cell&nbsp;here.&nbsp;Its&nbsp;referent&nbsp;is&nbsp;erased<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;in&nbsp;the&nbsp;representation,&nbsp;and&nbsp;initialization&nbsp;accepts&nbsp;a&nbsp;glvalue.&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="const_reference_case" class="idref" href="#const_reference_case"><span class="id" title="definition">const_reference_case</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="inductive">wp_initialize_decomp_spec</span> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#404aa1daee097e425d1b64b0f21926a2"><span class="id" title="variable">ρ</span></a> (<span class="id" title="abbreviation">Tconst</span> "const int&amp;") <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.addr"><span class="id" title="variable">addr</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.e"><span class="id" title="variable">e</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.Q"><span class="id" title="variable">Q</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="definition">wp_glval</span> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#404aa1daee097e425d1b64b0f21926a2"><span class="id" title="variable">ρ</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.e"><span class="id" title="variable">e</span></a> (<span class="id" title="keyword">fun</span> <a id="p:10" class="idref" href="#p:10"><span class="id" title="binder">p</span></a> <a id="free:11" class="idref" href="#free:11"><span class="id" title="binder">free</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.addr"><span class="id" title="variable">addr</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">primR</span> "int&amp;" 1<span class="id" title="notation">$</span><span class="id" title="notation">c</span> (<span class="id" title="abbreviation">Vref</span> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#p:10"><span class="id" title="variable">p</span></a>) <span class="id" title="notation">-*</span> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.Q"><span class="id" title="variable">Q</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#free:11"><span class="id" title="variable">free</span></a>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="constructor">WpInitRef</span> <span class="id" title="keyword">with</span> (<span class="id" title="var">cv</span> := <span class="id" title="constructor">QC</span>) (<span class="id" title="var">ty'</span> := "const int"%<span class="id" title="var">cpp_type</span>); <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="const_rvalue_reference_case" class="idref" href="#const_rvalue_reference_case"><span class="id" title="definition">const_rvalue_reference_case</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="inductive">wp_initialize_decomp_spec</span> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#404aa1daee097e425d1b64b0f21926a2"><span class="id" title="variable">ρ</span></a> (<span class="id" title="abbreviation">Tconst</span> "const int&amp;&amp;") <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.addr"><span class="id" title="variable">addr</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.e"><span class="id" title="variable">e</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.Q"><span class="id" title="variable">Q</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="axiom">wp_xval</span> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#404aa1daee097e425d1b64b0f21926a2"><span class="id" title="variable">ρ</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.e"><span class="id" title="variable">e</span></a> (<span class="id" title="keyword">fun</span> <a id="p:12" class="idref" href="#p:12"><span class="id" title="binder">p</span></a> <a id="free:13" class="idref" href="#free:13"><span class="id" title="binder">free</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.addr"><span class="id" title="variable">addr</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">primR</span> "int&amp;" 1<span class="id" title="notation">$</span><span class="id" title="notation">c</span> (<span class="id" title="abbreviation">Vref</span> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#p:12"><span class="id" title="variable">p</span></a>) <span class="id" title="notation">-*</span> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.Q"><span class="id" title="variable">Q</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#free:13"><span class="id" title="variable">free</span></a>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="constructor">WpInitRvRef</span> <span class="id" title="keyword">with</span> (<span class="id" title="var">cv</span> := <span class="id" title="constructor">QC</span>) (<span class="id" title="var">ty'</span> := "const int"%<span class="id" title="var">cpp_type</span>); <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="volatile_reference_case" class="idref" href="#volatile_reference_case"><span class="id" title="definition">volatile_reference_case</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="inductive">wp_initialize_decomp_spec</span> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#404aa1daee097e425d1b64b0f21926a2"><span class="id" title="variable">ρ</span></a> (<span class="id" title="abbreviation">Tvolatile</span> "int&amp;") <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.addr"><span class="id" title="variable">addr</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.e"><span class="id" title="variable">e</span></a> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp.Q"><span class="id" title="variable">Q</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#::bi_scope:'False'"><span class="id" title="notation">False</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="constructor">WpInitVolatile</span> <span class="id" title="keyword">with</span> (<span class="id" title="var">cv</span> := <span class="id" title="constructor">QV</span>) (<span class="id" title="var">ty'</span> := "int&amp;"%<span class="id" title="var">cpp_type</span>); <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_brick.tests.initializer_decomposition.html#with_cpp"><span class="id" title="section">with_cpp</span></a>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;Guard&nbsp;against&nbsp;replacing&nbsp;the&nbsp;exhaustive&nbsp;proof&nbsp;by&nbsp;another&nbsp;admission.&nbsp;*)</span><br/>
+<span class="id" title="keyword">Set</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Width</span> 4611686018427387903.<br/>
+<span class="id" title="keyword">Set</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Fully</span> <span class="id" title="var">Qualified</span>.<br/>
+<span class="id" title="keyword">Print</span> <span class="id" title="keyword">Assumptions</span> <span class="id" title="lemma">wp_initialize_decomp_ok</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
