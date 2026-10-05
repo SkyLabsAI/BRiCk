@@ -892,8 +892,9 @@ Module SimpleCPP.
       strict_valid_ptr p ** derivation_own p q this most_derived.
 
     Instance mdc_path_cfractional this mdc : CFractional1 (mdc_path this mdc) := _.
-    Axiom mdc_path_cfrac_valid : forall cls path,
+    Lemma mdc_path_cfrac_valid : forall cls path,
       CFracValid1 (mdc_path cls path).
+    Proof. intros cls path. solve_cfrac_valid. Qed.
     Instance mdc_path_timeless this mdc q p : Timeless (mdc_path this mdc q p) := _.
     Instance mdc_path_strict_valid this mdc q p : Observe (strict_valid_ptr p) (mdc_path this mdc q p).
     Proof. refine _. Qed.
