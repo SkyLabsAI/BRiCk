@@ -1,0 +1,97 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_prelude.tests.leading_zeros</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.arith.types</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.arith.operator</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.arith.builtins</span>.<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">Z_scope</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="clz_42" class="idref" href="#clz_42"><span class="id" title="definition">clz_42</span></a> : <span class="id" title="definition">leading_zeros</span> <span class="id" title="constructor">bitsize.W32</span> 42 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 26.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">Example</span> <a id="clz_one_all_widths" class="idref" href="#clz_one_all_widths"><span class="id" title="definition">clz_one_all_widths</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">leading_zeros</span> <span class="id" title="constructor">bitsize.W8</span> 1 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 7 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="definition">leading_zeros</span> <span class="id" title="constructor">bitsize.W16</span> 1 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 15 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="definition">leading_zeros</span> <span class="id" title="constructor">bitsize.W32</span> 1 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 31 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="definition">leading_zeros</span> <span class="id" title="constructor">bitsize.W64</span> 1 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 63 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="definition">leading_zeros</span> <span class="id" title="constructor">bitsize.W128</span> 1 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 127.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">repeat</span> <span class="id" title="tactic">split</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">Example</span> <a id="clz_high_bits" class="idref" href="#clz_high_bits"><span class="id" title="definition">clz_high_bits</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">leading_zeros</span> <span class="id" title="constructor">bitsize.W8</span> (2<span class="id" title="notation">^</span>7) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 0 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="definition">leading_zeros</span> <span class="id" title="constructor">bitsize.W16</span> (2<span class="id" title="notation">^</span>15) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 0 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="definition">leading_zeros</span> <span class="id" title="constructor">bitsize.W32</span> (2<span class="id" title="notation">^</span>31) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 0 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="definition">leading_zeros</span> <span class="id" title="constructor">bitsize.W64</span> (2<span class="id" title="notation">^</span>63) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 0 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="definition">leading_zeros</span> <span class="id" title="constructor">bitsize.W128</span> (2<span class="id" title="notation">^</span>127) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 0.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">repeat</span> <span class="id" title="tactic">split</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">Example</span> <a id="clz_width_trimming" class="idref" href="#clz_width_trimming"><span class="id" title="definition">clz_width_trimming</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">leading_zeros</span> <span class="id" title="constructor">bitsize.W8</span> (2<span class="id" title="notation">^</span>64<span class="id" title="notation">+</span>1) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 7 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="definition">leading_zeros</span> <span class="id" title="constructor">bitsize.W32</span> (2<span class="id" title="notation">^</span>64<span class="id" title="notation">+</span>42) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 26 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="definition">leading_zeros</span> <span class="id" title="constructor">bitsize.W16</span> (-1) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 0.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">repeat</span> <span class="id" title="tactic">split</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">Example</span> <a id="clz_zero_helper_convention" class="idref" href="#clz_zero_helper_convention"><span class="id" title="definition">clz_zero_helper_convention</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a id="sz:1" class="idref" href="#sz:1"><span class="id" title="binder">sz</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">,</span></a> <span class="id" title="definition">leading_zeros</span> <a class="idref" href="skylabs_prelude.tests.leading_zeros.html#sz:1"><span class="id" title="variable">sz</span></a> 0 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">bitsize.bitsZ</span> <a class="idref" href="skylabs_prelude.tests.leading_zeros.html#sz:1"><span class="id" title="variable">sz</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">intros</span> []; <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Fully</span> <span class="id" title="var">Qualified</span>.<br/>
+<span class="id" title="keyword">Print</span> <span class="id" title="keyword">Assumptions</span> <span class="id" title="lemma">leading_zeros_spec</span>.<br/>
+<span class="id" title="keyword">Print</span> <span class="id" title="keyword">Assumptions</span> <a class="idref" href="skylabs_prelude.tests.leading_zeros.html#clz_42"><span class="id" title="definition">clz_42</span></a>.<br/>
+<span class="id" title="keyword">Print</span> <span class="id" title="keyword">Assumptions</span> <a class="idref" href="skylabs_prelude.tests.leading_zeros.html#clz_one_all_widths"><span class="id" title="definition">clz_one_all_widths</span></a>.<br/>
+<span class="id" title="keyword">Print</span> <span class="id" title="keyword">Assumptions</span> <a class="idref" href="skylabs_prelude.tests.leading_zeros.html#clz_high_bits"><span class="id" title="definition">clz_high_bits</span></a>.<br/>
+<span class="id" title="keyword">Print</span> <span class="id" title="keyword">Assumptions</span> <a class="idref" href="skylabs_prelude.tests.leading_zeros.html#clz_width_trimming"><span class="id" title="definition">clz_width_trimming</span></a>.<br/>
+<span class="id" title="keyword">Print</span> <span class="id" title="keyword">Assumptions</span> <a class="idref" href="skylabs_prelude.tests.leading_zeros.html#clz_zero_helper_convention"><span class="id" title="definition">clz_zero_helper_convention</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
