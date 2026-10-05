@@ -1036,16 +1036,18 @@ Module Type Expr.
         pick any pointer that was previously exposed as the given integer.
      *)
     Axiom wp_operand_int2ptr : forall e ty Q,
-        match unptr ty with
-        | Some ptype =>
-          wp_operand e (fun v free => Exists va : N, [| v = Vint (Z.of_N va) |] **
+        match unptr ty, type_of e with
+        | Some ptype, Tnum rnk _ =>
+          wp_operand e (fun v free => Exists va : Z, [| v = Vint va |] **
+             let va := trim (int_rank.bitsN rnk) va in
+             let va := Z.to_N va in
              (([| (0 < va)%N |] **
                Exists p : ptr,
                  pinned_ptr va p **
                  has_type (Vptr p) (Tptr ptype) **
                  Q (Vptr p) free) \\//
               ([| va = 0%N |] ** Q (Vptr nullptr) free)))
-        | _ => False
+        | _, _ => False
         end
         |-- wp_operand (Ecast (Cint2ptr ty) e) Q.
 
