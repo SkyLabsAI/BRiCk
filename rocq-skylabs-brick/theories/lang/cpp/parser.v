@@ -177,19 +177,30 @@ Module Import translation_unit.
       (Z.to_nat (Uint63.to_Z (PArray.length ds))) 0%uint63
       (fun s t ga a asserts dups k => k s t ga a asserts dups).
 
+  Definition conflict (n : name) : ObjValue :=
+    Ofunction {|
+        f_return := Tunsupported "";
+        f_params := [];
+        f_cc := CC_C;
+        f_arity := Ar_Definite;
+        f_exception := exception_spec.Unknown;
+        f_body := Some (Impl (Sunsupported ("Name collision on " ++ pretty.print_name n ++ " replaced by this dummy function")))
+      |}.
+
   Definition decls (ds : PArray.array t) (info : abi.t) : translation_unit * dup_info :=
-    decls' ds ∅ ∅ [] ∅ [] [] $ fun s t ga a asserts => pair {|
-      symbols := NM.from_raw s;
-      types := NM.from_raw t;
-      namespace_aliases := (Listset (sort.sort ga), NM.from_raw $ NM.Raw.map (fun x => Listset $ sort.sort x) a);
-      initializer := nil;	(** TODO *)
-      asserts := sort_static_assert.sort asserts;
-      abi := info;
-      msymbols := ∅;
-      mtypes := ∅;
-      maliases := ∅;
-      minstances := ∅
-    |}.
+    decls' ds ∅ ∅ [] ∅ [] [] $ fun s t ga a asserts dups =>
+        pair {|
+            symbols := List.fold_left (fun t '(n, _) => <[n:=conflict n]> t) dups (NM.from_raw s);
+            types := NM.from_raw t;
+            namespace_aliases := (Listset (sort.sort ga), NM.from_raw $ NM.Raw.map (fun x => Listset $ sort.sort x) a);
+            initializer := nil;	(** TODO *)
+            asserts := sort_static_assert.sort asserts;
+            abi := info;
+            msymbols := ∅;
+            mtypes := ∅;
+            maliases := ∅;
+            minstances := ∅
+          |} dups.
 
   Definition list_decls (ls : list translation_unit.t) :=
     decls $ PArray.of_list _skip ls.
