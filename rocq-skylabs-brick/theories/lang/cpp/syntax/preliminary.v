@@ -372,6 +372,14 @@ Module int_rank.
   Definition t_max (a b : t) : t :=
     if bool_decide (t_le a b) then b else a.
 
+  Lemma  bitsize_bitsN_of_int_rank rnk :
+    bitsize.bitsN (int_rank.bitsize rnk) = int_rank.bitsN rnk.
+  Proof. by case rnk. Qed.
+
+  Lemma  bitsize_bitsZ_of_int_rank rnk :
+    bitsize.bitsZ (int_rank.bitsize rnk) = int_rank.bitsZ rnk.
+  Proof. by case rnk. Qed.
+
   #[global] Notation max_val sz := (bitsize.max_val (bitsize sz)) (only parsing).
   #[global] Notation min_val sz := (bitsize.min_val (bitsize sz)) (only parsing).
   #[global] Notation bound sz  := (bitsize.bound (bitsize sz))   (only parsing).
