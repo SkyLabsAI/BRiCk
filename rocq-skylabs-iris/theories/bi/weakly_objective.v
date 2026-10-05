@@ -10,6 +10,7 @@ Require Import skylabs.iris.extra.proofmode.proofmode.
 Require Import iris.proofmode.monpred.
 
 Require Import skylabs.iris.extra.bi.only_provable.
+Require Import skylabs.iris.extra.bi.observe.
 
 Set Default Proof Using "Type".
 Set Suggest Proof Using.
@@ -243,4 +244,15 @@ Section weakly_obj.
     `{∀ n x y, WeaklyObjective (Φ n x y)} :
     WeaklyObjective ([∗ list] n↦x; y ∈ l; k, Φ n x y)%I.
   Proof. by apply big_sepL2_weakly_objective_lookup, _. Qed.
+
+  Lemma weakly_objective_of_obs {P : monPred} (Q : Prop) :
+    (Q -> WeaklyObjective P) ->
+    Observe [| Q |] P ->
+    WeaklyObjective P.
+  Proof.
+    move => HP /observe_monPred_at Hobs i j Hij.
+    iIntros "A"%string. iDestruct (Hobs with "A") as %?.
+    by iStopProof; apply: HP.
+  Qed.
+
 End weakly_obj.
