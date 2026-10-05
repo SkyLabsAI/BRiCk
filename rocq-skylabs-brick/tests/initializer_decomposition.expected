@@ -1,0 +1,29 @@
+Axioms:
+skylabs.lang.cpp.syntax.compare.compareN is assumed to be guarded.
+skylabs.lang.cpp.logic.wp.WPE.wp_xval : ∀ (thread_info : iris.bi.monpred.biIndex) (_Σ : iris.base_logic.lib.iprop.gFunctors) (Σ : skylabs.lang.cpp.logic.mpred.LC.cpp_logic thread_info _Σ), skylabs.lang.cpp.semantics.genv.genv → skylabs.lang.cpp.syntax.translation_unit.translation_unit → skylabs.lang.cpp.logic.wp.region → skylabs.lang.cpp.syntax.core.Expr → skylabs.lang.cpp.logic.wp.WPE.M skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr
+skylabs.lang.cpp.logic.wp.WPE.wp_operand : ∀ (thread_info : iris.bi.monpred.biIndex) (_Σ : iris.base_logic.lib.iprop.gFunctors) (Σ : skylabs.lang.cpp.logic.mpred.LC.cpp_logic thread_info _Σ), skylabs.lang.cpp.semantics.genv.genv → skylabs.lang.cpp.syntax.translation_unit.translation_unit → skylabs.lang.cpp.logic.wp.region → skylabs.lang.cpp.syntax.core.Expr → skylabs.lang.cpp.logic.wp.WPE.M skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.val
+skylabs.lang.cpp.logic.wp.WPE.wp_lval : ∀ (thread_info : iris.bi.monpred.biIndex) (_Σ : iris.base_logic.lib.iprop.gFunctors) (Σ : skylabs.lang.cpp.logic.mpred.LC.cpp_logic thread_info _Σ), skylabs.lang.cpp.semantics.genv.genv → skylabs.lang.cpp.syntax.translation_unit.translation_unit → skylabs.lang.cpp.logic.wp.region → skylabs.lang.cpp.syntax.core.Expr → skylabs.lang.cpp.logic.wp.WPE.M skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr
+skylabs.lang.cpp.logic.wp.WPE.wp_init : ∀ (thread_info : iris.bi.monpred.biIndex) (_Σ : iris.base_logic.lib.iprop.gFunctors) (Σ : skylabs.lang.cpp.logic.mpred.LC.cpp_logic thread_info _Σ), skylabs.lang.cpp.semantics.genv.genv → skylabs.lang.cpp.syntax.translation_unit.translation_unit → skylabs.lang.cpp.logic.wp.region → skylabs.lang.cpp.syntax.core.exprtype → skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr → skylabs.lang.cpp.syntax.core.Expr → (skylabs.lang.cpp.logic.wp.FreeTemps → skylabs.lang.cpp.logic.wp.epred) → skylabs.iris.extra.base_logic.mpred.mpred
+skylabs.lang.cpp.logic.pred.L.tptsto : ∀ (thread_info : iris.bi.monpred.biIndex) (_Σ : iris.base_logic.lib.iprop.gFunctors), skylabs.lang.cpp.logic.mpred.LC.cpp_logic thread_info _Σ → skylabs.lang.cpp.semantics.genv.genv → skylabs.lang.cpp.syntax.core.type → skylabs.lang.cpp.algebra.cfrac.cQp.t → skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr → skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.val → skylabs.iris.extra.base_logic.mpred.mpred
+Corelib.Numbers.Cyclic.Int63.PrimInt63.sub : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Strings.PrimString.string : Set
+skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_bytes_of_val : skylabs.lang.cpp.semantics.genv.genv → skylabs.lang.cpp.syntax.core.type → skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.val → Corelib.Init.Datatypes.list skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_byte → Prop
+skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.raw_byte : Set
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr : Set
+skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.nullptr : skylabs.lang.cpp.semantics.values.PTRS_INTF_AXIOM.ptr
+Corelib.Numbers.Cyclic.Int63.PrimInt63.mul : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.lsr : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.lsl : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.lor : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Strings.PrimString.length : Corelib.Strings.PrimString.string → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.land : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+Corelib.Numbers.Cyclic.Int63.PrimInt63.int : Set
+skylabs.lang.cpp.logic.pred.L.has_type : ∀ (thread_info : iris.bi.monpred.biIndex) (_Σ : iris.base_logic.lib.iprop.gFunctors), skylabs.lang.cpp.logic.mpred.LC.cpp_logic thread_info _Σ → skylabs.lang.cpp.semantics.genv.genv → skylabs.lang.cpp.semantics.values.VALUES_INTF_AXIOM.val → skylabs.lang.cpp.syntax.core.type → skylabs.iris.extra.base_logic.mpred.mpred
+skylabs.lang.cpp.logic.mpred.LC.has_inv : ∀ Σ : iris.base_logic.lib.iprop.gFunctors, skylabs.lang.cpp.logic.mpred.LC.cppPreG Σ → iris.base_logic.lib.fancy_updates.invGS_gen iris.base_logic.lib.fancy_updates.HasLc Σ
+Corelib.Numbers.Cyclic.Int63.PrimInt63.eqb : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Init.Datatypes.bool
+Corelib.Numbers.Cyclic.Int63.PrimInt63.div : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+skylabs.lang.cpp.logic.mpred.LC.cppPreG : iris.base_logic.lib.iprop.gFunctors → Type
+Corelib.Strings.PrimString.compare : Corelib.Strings.PrimString.string → Corelib.Strings.PrimString.string → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.compare : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Init.Datatypes.comparison
+Corelib.Numbers.Cyclic.Int63.PrimInt63.add : Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int → Corelib.Numbers.Cyclic.Int63.PrimInt63.int
+skylabs.lang.cpp.logic.mpred.LC._cpp_ghost : Type
