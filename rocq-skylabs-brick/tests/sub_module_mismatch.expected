@@ -1,0 +1,37 @@
+     = {|
+         sub_module_mismatch.abi_mismatch := false;
+         sub_module_mismatch.type_mismatches :=
+           [("P"%cpp_name, sub_module_mismatch.Incompatible)];
+         sub_module_mismatch.symbol_mismatches :=
+           [("only_left()"%cpp_name, sub_module_mismatch.Missing);
+            ("f()"%cpp_name, sub_module_mismatch.Incompatible)];
+         sub_module_mismatch.assert_mismatches :=
+           [{|
+              sa_message := "only on the left";
+              sa_condition :=
+                Ebinop Bge (Esizeof (inl "int"%cpp_type) "unsigned long")
+                  (Ecast (Cintegral "unsigned long") (Eint 2 "int")) "bool"
+            |}]
+       |}
+     : sub_module_mismatch.t
+     = {|
+         sub_module_mismatch.abi_mismatch := true;
+         sub_module_mismatch.type_mismatches :=
+           [("__builtin_va_list"%cpp_name, sub_module_mismatch.Incompatible)];
+         sub_module_mismatch.symbol_mismatches := [];
+         sub_module_mismatch.assert_mismatches := []
+       |}
+     : sub_module_mismatch.t
+     = {|
+         sub_module_mismatch.abi_mismatch := false;
+         sub_module_mismatch.type_mismatches := [];
+         sub_module_mismatch.symbol_mismatches := [];
+         sub_module_mismatch.assert_mismatches :=
+           [{|
+              sa_message := "extra";
+              sa_condition :=
+                Ebinop Beq (Esizeof (inl "char"%cpp_type) "unsigned long")
+                  (Ecast (Cintegral "unsigned long") (Eint 1 "int")) "bool"
+            |}]
+       |}
+     : sub_module_mismatch.t

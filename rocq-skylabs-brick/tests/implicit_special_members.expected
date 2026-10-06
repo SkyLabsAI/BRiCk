@@ -255,8 +255,15 @@
                m_body := Some Defaulted
              |}))
      : name * option ObjValue
-     = [("T::operator=(const T&)"%cpp_name, true)]
-     : list (name * bool)
+     = {|
+         sub_module_mismatch.abi_mismatch := false;
+         sub_module_mismatch.type_mismatches := [];
+         sub_module_mismatch.symbol_mismatches :=
+           [("T::operator=(const T&)"%cpp_name,
+             sub_module_mismatch.Incompatible)];
+         sub_module_mismatch.assert_mismatches := []
+       |}
+     : sub_module_mismatch.t
      = ("N::N(const N&)"%cpp_name,
         Some
           (Oconstructor
@@ -309,12 +316,31 @@
                m_body := Some Defaulted
              |}))
      : name * option ObjValue
-     = [("T::operator=(const T&)"%cpp_name, true)]
-     : list (name * bool)
-     = [("T::T(const T&)"%cpp_name, true)]
-     : list (name * bool)
-     = [("T::T(const T&)"%cpp_name, true)]
-     : list (name * bool)
+     = {|
+         sub_module_mismatch.abi_mismatch := false;
+         sub_module_mismatch.type_mismatches := [];
+         sub_module_mismatch.symbol_mismatches :=
+           [("T::operator=(const T&)"%cpp_name,
+             sub_module_mismatch.Incompatible)];
+         sub_module_mismatch.assert_mismatches := []
+       |}
+     : sub_module_mismatch.t
+     = {|
+         sub_module_mismatch.abi_mismatch := false;
+         sub_module_mismatch.type_mismatches := [];
+         sub_module_mismatch.symbol_mismatches :=
+           [("T::T(const T&)"%cpp_name, sub_module_mismatch.Incompatible)];
+         sub_module_mismatch.assert_mismatches := []
+       |}
+     : sub_module_mismatch.t
+     = {|
+         sub_module_mismatch.abi_mismatch := false;
+         sub_module_mismatch.type_mismatches := [];
+         sub_module_mismatch.symbol_mismatches :=
+           [("T::T(const T&)"%cpp_name, sub_module_mismatch.Incompatible)];
+         sub_module_mismatch.assert_mismatches := []
+       |}
+     : sub_module_mismatch.t
      = ("C::C(C&)"%cpp_name,
         Some
           (Oconstructor
