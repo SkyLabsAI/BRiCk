@@ -1,0 +1,191 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.sub_module_mismatch</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">sub_module_mismatch.compute</span></span> <span class="inlinecode"><span class="id" title="var">a</span></span> <span class="inlinecode"><span class="id" title="var">b</span></span> says why <span class="inlinecode"><span class="id" title="library">sub_module</span></span> <span class="inlinecode"><span class="id" title="var">a</span></span> <span class="inlinecode"><span class="id" title="var">b</span></span> fails. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics.sub_module</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">duplicates</span>(<span class="id" title="var">error</span>)]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="tactic">left</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> <span class="id" title="var">P</span> { <span class="id" title="var">int</span> <span class="id" title="var">x</span>; };<br/>
+&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">f</span>() { <span class="id" title="keyword">return</span> 1; }<br/>
+&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">only_left</span>() { <span class="id" title="keyword">return</span> 0; }<br/>
+&nbsp;&nbsp;<span class="id" title="var">static_assert</span>(<span class="id" title="var">sizeof</span>(<span class="id" title="var">int</span>) &gt;= 2, "only on the left");<br/>
+}}.<br/>
+
+<br/>
+#[<span class="id" title="var">duplicates</span>(<span class="id" title="var">error</span>)]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="tactic">right</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> <span class="id" title="var">P</span> { <span class="id" title="var">long</span> <span class="id" title="var">x</span>; };               // <span class="id" title="var">incompatible</span> <span class="id" title="keyword">type</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">f</span>() { <span class="id" title="keyword">return</span> 2; }               // <span class="id" title="var">incompatible</span> <span class="id" title="var">symbol</span><br/>
+}}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+One mismatch of each kind; the ABIs agree. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <span class="id" title="definition">sub_module_mismatch.compute</span> <a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#left"><span class="id" title="definition">left</span></a> <a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#right"><span class="id" title="definition">right</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="left_not_sub_module_right" class="idref" href="#left_not_sub_module_right"><span class="id" title="definition">left_not_sub_module_right</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#63a68285c81db8f9bc456233bb9ed181"><span class="id" title="notation">~</span></a> <span class="id" title="record">sub_module</span> <a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#left"><span class="id" title="definition">left</span></a> <a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#right"><span class="id" title="definition">right</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="lemma">sub_module_mismatch.not_sub_module</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">discriminate</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+A translation unit has no mismatch with itself, and that is enough for
+    <span class="inlinecode"><span class="id" title="library">sub_module</span></span>. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="left_mismatch_left" class="idref" href="#left_mismatch_left"><span class="id" title="definition">left_mismatch_left</span></a> : <span class="id" title="definition">sub_module_mismatch.compute</span> <a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#left"><span class="id" title="definition">left</span></a> <a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#left"><span class="id" title="definition">left</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">sub_module_mismatch.empty</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="left_sub_module_left" class="idref" href="#left_sub_module_left"><span class="id" title="definition">left_sub_module_left</span></a> : <span class="id" title="record">sub_module</span> <a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#left"><span class="id" title="definition">left</span></a> <a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#left"><span class="id" title="definition">left</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="lemma">sub_module_mismatch.sound</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab7"></a><h1 class="section">An ABI mismatch</h1>
+
+
+<div class="paragraph"> </div>
+
+    The same declaration, compiled for two architectures.  Their ABIs differ,
+    and so do target-specific builtin types such as <span class="inlinecode"><span class="id" title="var">__builtin_va_list</span></span>. 
+</div>
+<div class="code">
+
+<br/>
+#[<span class="id" title="var">duplicates</span>(<span class="id" title="var">error</span>)]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">x86</span> <span class="id" title="var">flags</span> "-target x86_64-linux-gnu" <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">g</span>();<br/>
+}}.<br/>
+
+<br/>
+#[<span class="id" title="var">duplicates</span>(<span class="id" title="var">error</span>)]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">arm</span> <span class="id" title="var">flags</span> "-target aarch64-linux-gnu" <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">g</span>();<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <span class="id" title="definition">sub_module_mismatch.compute</span> <a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#x86"><span class="id" title="definition">x86</span></a> <a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#arm"><span class="id" title="definition">arm</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="x86_not_sub_module_arm" class="idref" href="#x86_not_sub_module_arm"><span class="id" title="definition">x86_not_sub_module_arm</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#63a68285c81db8f9bc456233bb9ed181"><span class="id" title="notation">~</span></a> <span class="id" title="record">sub_module</span> <a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#x86"><span class="id" title="definition">x86</span></a> <a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#arm"><span class="id" title="definition">arm</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="lemma">sub_module_mismatch.not_sub_module</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">discriminate</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab8"></a><h1 class="section">An assertion mismatch on its own</h1>
+
+
+<div class="paragraph"> </div>
+
+    <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#with_assert"><span class="id" title="definition">with_assert</span></a></span> has one more <span class="inlinecode"><span class="id" title="var">static_assert</span></span> than <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#without_assert"><span class="id" title="definition">without_assert</span></a></span>.  The
+    relation is directional: only the side with the extra assert mismatches. 
+</div>
+<div class="code">
+
+<br/>
+#[<span class="id" title="var">duplicates</span>(<span class="id" title="var">error</span>)]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">without_assert</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">g</span>();<br/>
+}}.<br/>
+
+<br/>
+#[<span class="id" title="var">duplicates</span>(<span class="id" title="var">error</span>)]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">with_assert</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">g</span>();<br/>
+&nbsp;&nbsp;<span class="id" title="var">static_assert</span>(<span class="id" title="var">sizeof</span>(<span class="id" title="var">char</span>) == 1, "extra");<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <span class="id" title="definition">sub_module_mismatch.compute</span> <a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#with_assert"><span class="id" title="definition">with_assert</span></a> <a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#without_assert"><span class="id" title="definition">without_assert</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="with_assert_not_sub_module_without_assert" class="idref" href="#with_assert_not_sub_module_without_assert"><span class="id" title="definition">with_assert_not_sub_module_without_assert</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#63a68285c81db8f9bc456233bb9ed181"><span class="id" title="notation">~</span></a> <span class="id" title="record">sub_module</span> <a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#with_assert"><span class="id" title="definition">with_assert</span></a> <a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#without_assert"><span class="id" title="definition">without_assert</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="lemma">sub_module_mismatch.not_sub_module</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">discriminate</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="without_assert_sub_module_with_assert" class="idref" href="#without_assert_sub_module_with_assert"><span class="id" title="definition">without_assert_sub_module_with_assert</span></a> : <span class="id" title="record">sub_module</span> <a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#without_assert"><span class="id" title="definition">without_assert</span></a> <a class="idref" href="skylabs_brick.tests.sub_module_mismatch.html#with_assert"><span class="id" title="definition">with_assert</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="lemma">sub_module_mismatch.sound</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
