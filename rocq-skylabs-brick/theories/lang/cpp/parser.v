@@ -178,13 +178,14 @@ Module Import translation_unit.
       (fun s t ga a asserts dups k => k s t ga a asserts dups).
 
   Definition conflict (n : name) : ObjValue :=
+    let error_msg := ("Name collision on " ++ pretty.print_name n ++ " replaced by this dummy function")%pstring in
     Ofunction {|
-        f_return := Tunsupported "";
+        f_return := Tunsupported error_msg;
         f_params := [];
         f_cc := CC_C;
         f_arity := Ar_Definite;
         f_exception := exception_spec.Unknown;
-        f_body := Some (Impl (Sunsupported ("Name collision on " ++ pretty.print_name n ++ " replaced by this dummy function")))
+        f_body := Some (Impl (Sunsupported error_msg))
       |}.
 
   Definition decls (ds : PArray.array t) (info : abi.t) : translation_unit * dup_info :=
