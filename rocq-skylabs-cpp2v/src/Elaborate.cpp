@@ -133,10 +133,7 @@ public:
     }
 
     void VisitCXXRecordDecl(CXXRecordDecl *decl, Flags flags) {
-        if (decl->isImplicit()) {
-            return;
-        }
-        if (isa<ClassTemplatePartialSpecializationDecl>(decl)) {
+        if (decl->isImplicit() || decl->isDependentContext()) {
             return;
         }
 
