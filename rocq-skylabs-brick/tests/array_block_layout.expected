@@ -1,0 +1,6 @@
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/array_block_layout.v", line 19, characters 11-24:
+The command has indeed failed with message:
+The reference tblockR_array was not found in the current environment.
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/array_block_layout.v", line 154, characters 4-24:
+The command has indeed failed with message:
+No applicable tactic.

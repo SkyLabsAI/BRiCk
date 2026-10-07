@@ -122,44 +122,132 @@ Section with_Σ.
                unionR cls 1$m (Some idx).
 *)
 
-  (** decompose an array into individual components
-      note that one past the end of an array is a valid location, but
-      it doesn't store anything.
+  (** Empty arrays still carry their element type's alignment. Requiring a
+      defined element size also rules out arrays of unsized types. *)
+  Lemma tblockR_array_zero t q sz :
+    size_of σ t = Some sz ->
+    tblockR (Tarray t 0) q -|- validR ** aligned_ofR t.
+  Proof.
+    move=> Hsz.
+    rewrite /tblockR /= Hsz /= align_of_array aligned_ofR.unlock.
+    case: (align_of_size_of' _ _ Hsz) => al [Hal _].
+    rewrite Hal blockR_eq /blockR_def /= _offsetR_sub_0 ?right_id //.
+    iSplit.
+    - iIntros "[$ A]". iExists al. by iFrame.
+    - iIntros "[$ A]". iDestruct "A" as (a) "[%Ha A]".
+      by simplify_eq.
+  Qed.
 
-      TODO this should move
-   *)
-  (* TODO a type has a size if and only if it has an alignment *)
+  (** Splitting retains both byte ownership and validity of the split point. *)
+  Lemma blockR_add (n m : N) (q : cQp.t) :
+    blockR (n + m) q -|- blockR n q ** .[ Tbyte ! Z.of_N n ] |-> blockR m q.
+  Proof.
+    rewrite blockR_eq /blockR_def N2Nat.inj_add seq_app big_sepL_app.
+    rewrite _offsetR_sep _offsetR_big_sepL _offsetR_sub_sub N2Z.inj_add.
+    rewrite Nat.add_0_l -(fmap_add_seq_0 (N.to_nat n)) big_sepL_fmap.
+    setoid_rewrite _offsetR_sub_sub. setoid_rewrite Nat2Z.inj_add.
+    have Hn : Z.of_nat (N.to_nat n) = Z.of_N n by lia.
+    rewrite Hn. iSplit.
+    - iIntros "(#E & L & R)".
+      destruct (N.to_nat m) as [|k] eqn:Hm.
+      + have -> : m = 0%N by lia. rewrite Z.add_0_r. iFrame "E L R".
+      + iDestruct "R" as "[R0 R]".
+        iEval (rewrite Z.add_0_r) in "R0".
+        iDestruct (observe (.[ Tbyte ! Z.of_N n ] |-> validR) with "R0") as "#B".
+        simpl. rewrite Z.add_0_r. iFrame "E L R0 R B".
+    - iIntros "([_ L] & E & R)". iFrame.
+  Qed.
+
+  #[local] Instance blockR_valid_end (n : N) (q : cQp.t) :
+    Observe (.[ Tbyte ! Z.of_N n ] |-> validR) (blockR n q).
+  Proof. rewrite blockR_eq /blockR_def. apply _. Qed.
+
+  (** Chunks may have size zero; the final validity fact remains necessary. *)
+  Lemma blockR_chunks (n : nat) (sz : N) (q : cQp.t) :
+    blockR (N.of_nat n * sz) q -|-
+    .[ Tbyte ! Z.of_N (N.of_nat n * sz) ] |-> validR **
+    [∗ list] i ∈ seq 0 n, .[ Tbyte ! Z.of_N (N.of_nat i * sz) ] |-> blockR sz q.
+  Proof.
+    induction n as [|n IH].
+    - rewrite /= blockR_eq /blockR_def /=. done.
+    - have Hsz : (N.of_nat (S n) * sz = N.of_nat n * sz + sz)%N by lia.
+      rewrite Hsz blockR_add IH seq_S big_sepL_app /= right_id.
+      iSplit.
+      + iIntros "([_ L] & R)".
+        iDestruct (observe (.[ Tbyte ! Z.of_N (N.of_nat n * sz) ] |->
+          .[ Tbyte ! Z.of_N sz ] |-> validR) with "R") as "#E".
+        iEval (rewrite _offsetR_sub_sub -N2Z.inj_add) in "E".
+        iFrame "L R E".
+      + iIntros "(_ & L & R)".
+        iDestruct (observe (.[ Tbyte ! Z.of_N (N.of_nat n * sz) ] |-> validR) with "R") as "#E".
+        iFrame "L R E".
+  Qed.
+
+  (** Whole element sizes preserve alignment between valid byte-offset pointers.
+      Alignment alone is vacuous when the source has no virtual address;
+      callers retain source validity from storage or containing-array typing. *)
+  Lemma aligned_ofR_byte_sub (t : Rtype) (sz i : N) :
+    size_of σ t = Some sz ->
+    aligned_ofR t ** validR ** .[ Tbyte ! Z.of_N (i * sz) ] |-> validR
+    |-- .[ Tbyte ! Z.of_N (i * sz) ] |-> aligned_ofR t.
+  Proof.
+    intros Hsz. apply Rep_entails_at => p.
+    rewrite !_at_sep !_at_offsetR !_at_validR !aligned_ofR_aligned_ptr_ty.
+    destruct (align_of_size_of' _ _ Hsz) as (al & Hal & Hal0 & Hdvd).
+    iIntros "(%Hp & Vsrc & V)".
+    destruct (ptr_vaddr (p .[ Tbyte ! Z.of_N (i * sz) ])) as [va'|] eqn:Hva'.
+    2: { iPureIntro. exists al. split; first done. by right. }
+    have Heval : eval_offset σ (o_sub σ Tbyte (Z.of_N (i * sz))) = Some (Z.of_N (i * sz)).
+    { by rewrite (eval_o_sub' (σ:=σ) (ty:=Tbyte) 1 eq_refl) Z.mul_1_l. }
+    iDestruct (offset_inv_pinned_ptr_pure _ _ va' p Heval Hva' with "V") as %[Hge Hpva].
+    iPureIntro. exists al. split; first done. left. exists va'. split; first done.
+    move: Hp => [al2 [Hal2 Hpal]].
+    have Halq : al2 = al by congruence. rewrite Halq in Hpal.
+    destruct Hpal as [[va [Hva Hdva]]|Hnone]; last by rewrite Hnone in Hpva.
+    rewrite Hpva in Hva. injection Hva as Hva. rewrite -Hva in Hdva.
+    have Hz : (Z.of_N al | Z.of_N va')%Z.
+    { have -> : (Z.of_N va' =
+          Z.of_N (Z.to_N (Z.of_N va' - Z.of_N (i * sz))) + Z.of_N (i * sz))%Z
+        by rewrite Z2N.id//; lia.
+      apply Z.divide_add_r.
+      - exact: N2Z_inj_divide.
+      - apply N2Z_inj_divide. by apply N.divide_mul_r. }
+    have Hpos : (0 < Z.of_N al)%Z by lia.
+    have Hnn : (0 <= Z.of_N va')%Z by lia.
+    move: (Z2N_inj_divide _ _ Hpos Hnn Hz). by rewrite !N2Z.id.
+  Qed.
+
+  (** Decompose an array into individual components. One past the end is
+      valid but stores nothing. Keep the base alignment even when there are
+      no elements to supply it. *)
   Lemma tblockR_array_better t n q sz :
         size_of σ t = Some sz ->
         tblockR (Tarray t n) q
-    -|- .[ Tbyte ! Z.of_N (n * sz) ] |-> validR **
+    -|- aligned_ofR t **
+        .[ Tbyte ! Z.of_N (n * sz) ] |-> validR **
         [∗list] i ∈ seq 0 (N.to_nat n),
            .[ Tbyte ! Z.of_N (N.of_nat i * sz) ] |-> tblockR t q.
   Proof.
-    rewrite /tblockR /= => Hsz.
-    rewrite Hsz /= align_of_array.
-    case: (align_of_size_of _ _ Hsz) => [al [Hal HalSz]].
-    rewrite Hal.
-    (*
-    Unclear if unfolding is recommended, but at least it should be sufficient for a hacky proof;
-    maybe we should lift lemmas about [blockR] (not sure which).
-    *)
-    rewrite blockR_eq /blockR_def.
-    rewrite -assoc.
-    f_equiv.
-    (* Maybe useful? *)
-    apply Rep_equiv_at => p.
-    (* To finish the proof, we need to rearrange [anyR], use [o_sub_sub] & c and
-    [anyR_valid_observe], and reason about pointer alignment. For alignment, we
-    need to unfold [alignedR], and maybe [aligned_ptr]. *)
-  Admitted.
-
-  (* TODO: migrate client to the statement above, and drop this. *)
-  Lemma tblockR_array : forall t n q,
-        tblockR (Tarray t n) q
-    -|- _sub t (Z.of_N n) |-> validR **
-        [∗list] i ↦ _ ∈ repeat () (BinNatDef.N.to_nat n),
-           _sub t (Z.of_nat i) |-> tblockR t q.
-  Proof. Admitted.
+    intros Hsz.
+    destruct (align_of_size_of' _ _ Hsz) as (al & Hal & Hal0 & Hdvd).
+    have HA : aligned_ofR t -|- alignedR al.
+    { rewrite aligned_ofR.unlock Hal. iSplit.
+      - iIntros "(%a & %Ha & H)". by simplify_eq.
+      - iIntros "H". iExists al. by iFrame. }
+    rewrite /tblockR /= Hsz /= align_of_array Hal.
+    have HC := blockR_chunks (N.to_nat n) sz q. rewrite N2Nat.id in HC.
+    setoid_rewrite <- HA.
+    iSplit.
+    - iIntros "(B & #A)".
+      iDestruct (observe validR with "B") as "#Vp".
+      iEval (rewrite HC) in "B". iDestruct "B" as "[E B]". iFrame "A E".
+      iApply (big_sepL_impl with "B"). iIntros "!>" (k i Hi) "B".
+      rewrite _offsetR_sep.
+      iDestruct (observe (.[ Tbyte ! Z.of_N (N.of_nat i * sz) ] |-> validR) with "B") as "#V".
+      iFrame "B". iApply (aligned_ofR_byte_sub t sz (N.of_nat i) Hsz). by iFrame "A Vp V".
+    - rewrite HC. iIntros "(#A & E & B)". iFrame "A E".
+      iApply (big_sepL_impl with "B"). iIntros "!>" (k i Hi) "B".
+      rewrite _offsetR_sep. iDestruct "B" as "[$ _]".
+  Qed.
 
 End with_Σ.
