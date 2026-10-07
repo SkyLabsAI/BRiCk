@@ -70,8 +70,3 @@ Proof. intros [_ Hwidth]. vm_compute in Hwidth. discriminate. Qed.
 
 Set Printing Width 4611686018427387903.
 Set Printing Fully Qualified.
-Print Assumptions supported_float_encoding.
-Print Assumptions binary32_one_little.
-Print Assumptions binary32_one_big.
-Print Assumptions longdouble_object_size.
-Print Assumptions longdouble_not_bits_compatible.

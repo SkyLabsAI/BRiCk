@@ -32,15 +32,5 @@ Proof.
 Qed.
 
 Set Printing Fully Qualified.
-Print Assumptions PTRS_IMPL.canon_syn_sem_eqv.
-Print Assumptions PTRS_IMPL.find_redex_pass.
-Print Assumptions PTRS_IMPL.norm_canon.
-Print Assumptions PTRS_IMPL.offset_countable.
-Print Assumptions PTRS_IMPL.ptr_vaddr_resp_leq.
-Print Assumptions zero_subscript_not_canonical.
-Print Assumptions trailing_redex_not_canonical.
-Print Assumptions merging_subscripts.
 
 Fail Check skylabs.lang.cpp.model.inductive_pointers2.irr.
-Print Assumptions PTRS_IMPL.roff_canon_proof_irrel.
-Print Assumptions PTRS_IMPL.offset_eq_dec.
