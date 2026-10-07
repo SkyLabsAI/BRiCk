@@ -27,7 +27,10 @@ let definitely_whnf : EConstr.t -> bool =
     | Constr.Const _
     | Constr.Case _
     | Constr.CoFix _
-    | Constr.Proj _ -> false
+    | Constr.Proj _
+    (* A block can still need reduction of its hidden captures. *)
+    | Constr.PBlock _
+    | Constr.PRun _ -> false
   in
   fun term -> go false (EConstr.Unsafe.to_constr term)
 

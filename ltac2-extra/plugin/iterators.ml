@@ -165,6 +165,65 @@ module ConstrTac = struct
     ArrayTac.smart_map (f n) cs >>= fun cs' ->
     return (if ts == ts' && cs == cs' then r0 else (bs,ts',cs'))
 
+  let map_pblock (g : rel_declaration -> 'c -> 'c)
+      (f : 'c -> t -> t tactic) (n : 'c) (c0 : t)
+      (u, ty, entries, body) : t tactic =
+    let rec map_context n ctx =
+      match ctx with
+      | [] -> return (n, ctx)
+      | decl :: rest ->
+        map_context n rest >>= fun (n, rest') ->
+        (match decl with
+        | Decl.LocalAssum (na, ty) ->
+          f n ty >>= fun ty' ->
+          return (if ty == ty' then decl else Decl.LocalAssum (na, ty'))
+        | Decl.LocalDef (na, value, ty) ->
+          f n value >>= fun value' ->
+          f n ty >>= fun ty' ->
+          return (
+            if value == value' && ty == ty' then decl
+            else Decl.LocalDef (na, value', ty')
+          )) >>= fun decl' ->
+        return (g decl' n, if decl == decl' && rest == rest' then ctx else decl' :: rest')
+    in
+    let rec map_entries i n =
+      if i = Array.length entries then return (n, []) else
+      let entry = entries.(i) in
+      map_context n entry.pbe_context >>= fun (entry_n, context') ->
+      f entry_n entry.pbe_type >>= fun type' ->
+      f entry_n entry.pbe_value >>= fun value' ->
+      let entry' =
+        if context' == entry.pbe_context && type' == entry.pbe_type
+        && value' == entry.pbe_value then entry
+        else {entry with pbe_context=context'; pbe_type=type'; pbe_value=value'}
+      in
+      let hidden_type = Term.it_mkProd_or_LetIn type' context' in
+      let hidden = Decl.LocalAssum
+        (Context.make_annot Names.Anonymous entry.pbe_relevance, hidden_type)
+      in
+      map_entries (i + 1) (g hidden n) >>= fun (body_n, rest) ->
+      return (body_n, entry' :: rest)
+    in
+    f n ty >>= fun ty' ->
+    map_entries 0 n >>= fun (body_n, entries') ->
+    let entries' = Array.of_list entries' in
+    let entries' = if CArray.for_all2 (==) entries entries' then entries else entries' in
+    f body_n body >>= fun body' ->
+    return (
+      if ty == ty' && entries == entries' && body == body' then c0
+      else mkPBlock (u, ty', entries', body')
+    )
+
+  let map_prun (f : t -> t tactic) (c0 : t) (ty, k, b, cont) : t tactic =
+    f ty >>= fun ty' ->
+    f k >>= fun k' ->
+    f b >>= fun b' ->
+    f cont >>= fun cont' ->
+    return (
+      if ty == ty' && k == k' && b == b' && cont == cont' then c0
+      else mkPRun (ty', k', b', cont')
+    )
+
   let map (f : t -> t tactic) (c0 : t) : t tactic =
     match kind c0 with
 
@@ -245,6 +304,11 @@ module ConstrTac = struct
         if cs == cs' && def == def' && t == t' then c0
         else mkArray (u,cs',def',t')
       )
+
+    | PBlock (u, ty, entries, body) ->
+      map_pblock (fun _ n -> n) (fun () -> f) () c0 (u, ty, entries, body)
+
+    | PRun (ty, k, b, cont) -> map_prun f c0 (ty, k, b, cont)
 
   let map_with_binders (g : 'c -> 'c) (f : 'c -> t -> t tactic)
       (n : 'c) (c0 : t) : t tactic =
@@ -327,6 +391,11 @@ module ConstrTac = struct
         if cs == cs' && def == def' && t == t' then c0
         else mkArray (u,cs',def',t')
       )
+
+    | PBlock (u, ty, entries, body) ->
+      map_pblock (fun _ n -> g n) f n c0 (u, ty, entries, body)
+
+    | PRun (ty, k, b, cont) -> map_prun (f n) c0 (ty, k, b, cont)
 
   let map_with_full_binders (env : Environ.env)
       (g : rel_declaration -> 'c -> 'c) (f : 'c -> t -> t tactic)
@@ -415,6 +484,11 @@ module ConstrTac = struct
         if cs == cs' && def == def' && t == t' then c0
         else mkArray (u,cs',def',t')
       )
+
+    | PBlock (u, ty, entries, body) ->
+      map_pblock g f n c0 (u, ty, entries, body)
+
+    | PRun (ty, k, b, cont) -> map_prun (f n) c0 (ty, k, b, cont)
 
 end
 

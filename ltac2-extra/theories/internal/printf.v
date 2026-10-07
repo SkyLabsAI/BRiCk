@@ -128,6 +128,8 @@ Module Printf.
       | Constr.Unsafe.Float _ => "Float"
       | Constr.Unsafe.String _ => "String"
       | Constr.Unsafe.Array _ _ _ _ => "Array"
+      | Constr.Unsafe.PBlock _ _ _ _ => "PBlock"
+      | Constr.Unsafe.PRun _ _ _ _ => "PRun"
       end
     in Message.of_string s.
 

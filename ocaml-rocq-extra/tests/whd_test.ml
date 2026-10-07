@@ -25,6 +25,24 @@ let () =
   assert_equal "beta" sigma value (whd beta_redex);
   assert_equal "zeta with reused state" sigma value (whd zeta_redex);
 
+  let instance = EConstr.EInstance.make UVars.Instance.empty in
+  let block body = EConstr.mkPBlock (instance, typ, [||], body) in
+  let run blocked = EConstr.mkPRun (typ, typ, blocked, identity) in
+  assert_equal "run" sigma value (whd (run (block value)));
+  let captured_value =
+    EConstr.mkLetIn (EConstr.anonR, value, typ, block (EConstr.mkRel 1))
+  in
+  let entry = Constr.{
+    pbe_context=[];
+    pbe_type=typ;
+    pbe_value=captured_value;
+    pbe_relevance=EConstr.ERelevance.make Sorts.Relevant;
+  } in
+  let captured = EConstr.mkPBlock
+    (instance, typ, [|entry|], EConstr.mkRel 1)
+  in
+  assert_equal "block-local capture" sigma (block value) (whd captured);
+
   let no_reduction = Whd.eval env sigma RedFlags.no_red in
   assert_equal "reduction flags" sigma beta_redex (no_reduction beta_redex);
 

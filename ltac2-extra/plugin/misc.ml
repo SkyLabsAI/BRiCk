@@ -522,7 +522,7 @@ let _ =
     in
     let c = Array.fold_left fn (CClosure.inject (to_constr c)) cs in
     let (c, stk) = CClosure.whd_stack infos tab c [] in
-    EConstr.of_constr (CClosure.term_of_process c stk)
+    EConstr.of_constr (CClosure.term_of_process ~info:infos ~tab c stk)
   in
   define "specialize_products"
     (constr @-> array constr @-> tac constr) @@ fun c cs ->
