@@ -52,4 +52,3 @@ End with_cpp.
 (* Guard against replacing the exhaustive proof by another admission. *)
 Set Printing Width 4611686018427387903.
 Set Printing Fully Qualified.
-Print Assumptions wp_initialize_decomp_ok.

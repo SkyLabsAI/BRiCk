@@ -29,9 +29,3 @@ Example clz_zero_helper_convention : forall sz, leading_zeros sz 0 = bitsize.bit
 Proof. intros []; vm_compute; reflexivity. Qed.
 
 Set Printing Fully Qualified.
-Print Assumptions leading_zeros_spec.
-Print Assumptions clz_42.
-Print Assumptions clz_one_all_widths.
-Print Assumptions clz_high_bits.
-Print Assumptions clz_width_trimming.
-Print Assumptions clz_zero_helper_convention.
