@@ -166,7 +166,7 @@ clang declares an implicit special member only once something uses it, and
     reference makes the enclosing class's implicit ones do so too
     (https://eel.is/c++draft/class.copy.ctor7,
     https://eel.is/c++draft/class.copy.assign2).  <span class="inlinecode"><span class="id" title="var">M</span></span>'s are user-declared,
-    so clang declares <span class="inlinecode"><span class="id" title="constructor">N</span></span>'s eagerly (see below); <span class="inlinecode"><span class="id" title="var">T</span></span>, one level further out,
+    so clang declares <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a></span>'s eagerly (see below); <span class="inlinecode"><span class="id" title="var">T</span></span>, one level further out,
     is left to placeholders. 
 </div>
 <div class="code">
@@ -222,11 +222,11 @@ clang declares an implicit special member only once something uses it, and
 
     clang declares an implicit copy member of <span class="inlinecode"><span class="id" title="var">T</span></span> eagerly, i.e. without any use,
     when deciding it needs overload resolution, which is the case when the
-    corresponding member of <span class="inlinecode"><span class="id" title="var">T</span></span>'s subobject <span class="inlinecode"><span class="id" title="constructor">N</span></span> is user-declared (here,
+    corresponding member of <span class="inlinecode"><span class="id" title="var">T</span></span>'s subobject <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a></span> is user-declared (here,
     explicitly defaulted).  Otherwise it is left to a placeholder.  So each
     header below has, for each of <span class="inlinecode"><span class="id" title="var">T</span></span>'s copy members, either clang's declaration
     (exception specification <span class="inlinecode"><span class="id" title="var">NoThrow</span></span>) or a placeholder (<span class="inlinecode"><span class="id" title="constructor">Unknown</span></span>), and
-    comparing headers compares the two.  <span class="inlinecode"><span class="id" title="constructor">N</span></span>'s own copy members are <span class="inlinecode"><span class="id" title="var">NoThrow</span></span> in
+    comparing headers compares the two.  <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a></span>'s own copy members are <span class="inlinecode"><span class="id" title="var">NoThrow</span></span> in
     all of them.
 
 <div class="paragraph"> </div>

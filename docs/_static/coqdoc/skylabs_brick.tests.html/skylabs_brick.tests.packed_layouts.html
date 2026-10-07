@@ -1,0 +1,121 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.packed_layouts</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics.types</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set</span> <span class="id" title="var">Default</span> <span class="id" title="keyword">Proof</span> <span class="id" title="var">Using</span> "Type*".<br/>
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">source</span> <span class="id" title="var">flags</span> "-std=c++23 --target=x86_64-linux-gnu" <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">__attribute__</span>((<span class="id" title="var">packed</span>)) <span class="id" title="var">BadOffset</span> { <span class="id" title="var">char</span> <span class="id" title="var">c</span>; <span class="id" title="var">int</span> <span class="id" title="var">i</span>; };<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">__attribute__</span>((<span class="id" title="var">packed</span>)) <span class="id" title="var">BadContainer</span> { <span class="id" title="var">int</span> <span class="id" title="var">i</span>; };<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">__attribute__</span>((<span class="id" title="var">packed</span>, <span class="id" title="var">aligned</span>(4))) <span class="id" title="var">BadOffsetAligned</span> { <span class="id" title="var">char</span> <span class="id" title="var">c</span>; <span class="id" title="var">int</span> <span class="id" title="var">i</span>; };<br/>
+<span class="id" title="var">union</span> <span class="id" title="var">__attribute__</span>((<span class="id" title="var">packed</span>)) <span class="id" title="var">BadUnion</span> { <span class="id" title="var">int</span> <span class="id" title="var">i</span>; <span class="id" title="var">char</span> <span class="id" title="var">c</span>; };<br/>
+<span class="id" title="var">typedef</span> <span class="id" title="var">int</span> <span class="id" title="var">LowInt</span> <span class="id" title="var">__attribute__</span>((<span class="id" title="var">aligned</span>(1)));<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">BadTypedef</span> { <span class="id" title="var">char</span> <span class="id" title="var">c</span>; <span class="id" title="var">LowInt</span> <span class="id" title="var">i</span>; };<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">Base</span> { <span class="id" title="var">int</span> <span class="id" title="var">i</span>; };<br/>
+<span class="id" title="var">typedef</span> <span class="id" title="var">Base</span> <span class="id" title="var">LowBase</span> <span class="id" title="var">__attribute__</span>((<span class="id" title="var">aligned</span>(1)));<br/>
+#<span class="id" title="var">pragma</span> <span class="id" title="var">pack</span>(<span class="id" title="var">push</span>, 1)<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">BadPragma</span> { <span class="id" title="var">char</span> <span class="id" title="var">c</span>; <span class="id" title="var">int</span> <span class="id" title="var">i</span>; };<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">BadDerived</span> : <span class="id" title="var">Base</span> { <span class="id" title="var">char</span> <span class="id" title="var">c</span>; };<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">BadDerivedTypedef</span> : <span class="id" title="var">LowBase</span> { <span class="id" title="var">char</span> <span class="id" title="var">c</span>; };<br/>
+#<span class="id" title="var">pragma</span> <span class="id" title="var">pack</span>(<span class="id" title="var">pop</span>)<br/>
+#<span class="id" title="var">pragma</span> <span class="id" title="var">pack</span>(<span class="id" title="var">push</span>, 4)<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">BadReference</span> { <span class="id" title="var">char</span> <span class="id" title="var">c</span>; <span class="id" title="var">int</span> &amp;<span class="id" title="var">r</span>; };<br/>
+#<span class="id" title="var">pragma</span> <span class="id" title="var">pack</span>(<span class="id" title="var">pop</span>)<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">__attribute__</span>((<span class="id" title="var">packed</span>)) <span class="id" title="var">Bytes</span> { <span class="id" title="var">char</span> <span class="id" title="var">c</span>; <span class="id" title="var">unsigned</span> <span class="id" title="var">char</span> <span class="id" title="var">d</span>; };<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">__attribute__</span>((<span class="id" title="var">packed</span>)) <span class="id" title="var">GoodAligned</span> { <span class="id" title="var">char</span> <span class="id" title="var">c</span>; <span class="id" title="var">alignas</span>(4) <span class="id" title="var">int</span> <span class="id" title="var">i</span>; };<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">Ordinary</span> { <span class="id" title="var">int</span> <span class="id" title="var">i</span>; <span class="id" title="var">char</span> <span class="id" title="var">c</span>; };<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">alignas</span>(32) <span class="id" title="var">Overaligned</span> { <span class="id" title="var">char</span> <span class="id" title="var">c</span>; };<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">References</span> { <span class="id" title="var">char</span> <span class="id" title="var">c</span>; <span class="id" title="var">int</span> &amp;<span class="id" title="var">r</span>; };<br/>
+<span class="id" title="var">template</span>&lt;<span class="id" title="var">typename</span> <span class="id" title="var">T</span>&gt; <span class="id" title="keyword">struct</span> <span class="id" title="var">__attribute__</span>((<span class="id" title="var">packed</span>)) <span class="id" title="var">PackedT</span> { <span class="id" title="var">char</span> <span class="id" title="var">c</span>; <span class="id" title="var">T</span> <span class="id" title="var">value</span>; };<br/>
+<span class="id" title="var">template</span> <span class="id" title="keyword">struct</span> <span class="id" title="var">PackedT</span>&lt;<span class="id" title="var">char</span>&gt;;<br/>
+<span class="id" title="var">template</span> <span class="id" title="keyword">struct</span> <span class="id" title="var">PackedT</span>&lt;<span class="id" title="var">int</span>&gt;;<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="reject_field_layouts" class="idref" href="#reject_field_layouts"><span class="id" title="definition">reject_field_layouts</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">(</span></a><span class="id" title="keyword">fun</span> <a id="n:1" class="idref" href="#n:1"><span class="id" title="binder">n</span></a> =&gt; <a class="idref" href="skylabs_brick.tests.packed_layouts.html#source"><span class="id" title="definition">source</span></a>.(<span class="id" title="projection">types</span>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs_brick.tests.packed_layouts.html#n:1"><span class="id" title="variable">n</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">)</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">&lt;$&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">[</span>"BadOffset"<span class="id" title="notation">;</span> "BadContainer"<span class="id" title="notation">;</span> "BadOffsetAligned"<span class="id" title="notation">;</span> "BadUnion"<span class="id" title="notation">;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"BadTypedef"<span class="id" title="notation">;</span> "BadPragma"<span class="id" title="notation">;</span> "BadReference"<span class="id" title="notation">;</span> "PackedT&lt;int&gt;"<span class="id" title="notation">]</span>%<span class="id" title="var">cpp_name</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.list_basics.html#list.replicate"><span class="id" title="definition">replicate</span></a> 8 (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Gunsupported</span> "under-aligned fields are not supported")).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="reject_base_layout" class="idref" href="#reject_base_layout"><span class="id" title="definition">reject_base_layout</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">(</span></a><span class="id" title="keyword">fun</span> <a id="n:2" class="idref" href="#n:2"><span class="id" title="binder">n</span></a> =&gt; <a class="idref" href="skylabs_brick.tests.packed_layouts.html#source"><span class="id" title="definition">source</span></a>.(<span class="id" title="projection">types</span>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs_brick.tests.packed_layouts.html#n:2"><span class="id" title="variable">n</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">)</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">&lt;$&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">[</span>"BadDerived"<span class="id" title="notation">;</span> "BadDerivedTypedef"<span class="id" title="notation">]</span>%<span class="id" title="var">cpp_name</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.list_basics.html#list.replicate"><span class="id" title="definition">replicate</span></a> 2 (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Gunsupported</span> "under-aligned base classes are not supported")).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="supported_layouts_keep_alignment" class="idref" href="#supported_layouts_keep_alignment"><span class="id" title="definition">supported_layouts_keep_alignment</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">(</span></a><span class="id" title="keyword">fun</span> <a id="n:3" class="idref" href="#n:3"><span class="id" title="binder">n</span></a> =&gt; <a class="idref" href="skylabs_brick.tests.packed_layouts.html#source"><span class="id" title="definition">source</span></a>.(<span class="id" title="projection">types</span>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs_brick.tests.packed_layouts.html#n:3"><span class="id" title="variable">n</span></a> <span class="id" title="notation">≫=</span> <span class="id" title="definition">GlobDecl_align_of</span><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">)</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">&lt;$&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">[</span>"Bytes"<span class="id" title="notation">;</span> "GoodAligned"<span class="id" title="notation">;</span> "Ordinary"<span class="id" title="notation">;</span> "Overaligned"<span class="id" title="notation">;</span> "References"<span class="id" title="notation">;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"PackedT&lt;char&gt;"<span class="id" title="notation">]</span>%<span class="id" title="var">cpp_name</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="notation">[</span><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 1%<span class="id" title="var">N</span><span class="id" title="notation">;</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 4%<span class="id" title="var">N</span><span class="id" title="notation">;</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 4%<span class="id" title="var">N</span><span class="id" title="notation">;</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 32%<span class="id" title="var">N</span><span class="id" title="notation">;</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 8%<span class="id" title="var">N</span><span class="id" title="notation">;</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 1%<span class="id" title="var">N</span><span class="id" title="notation">]</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;Reference&nbsp;cells&nbsp;keep&nbsp;pointer&nbsp;layout&nbsp;even&nbsp;when&nbsp;the&nbsp;referent&nbsp;is&nbsp;an&nbsp;int.&nbsp;*)</span><br/>
+<span class="id" title="keyword">Example</span> <a id="reference_storage_size" class="idref" href="#reference_storage_size"><span class="id" title="definition">reference_storage_size</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.packed_layouts.html#source"><span class="id" title="definition">source</span></a>.(<span class="id" title="projection">types</span>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> "References"%<span class="id" title="var">cpp_name</span> <span class="id" title="notation">≫=</span> <span class="id" title="definition">GlobDecl_size_of</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 16%<span class="id" title="var">N</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
