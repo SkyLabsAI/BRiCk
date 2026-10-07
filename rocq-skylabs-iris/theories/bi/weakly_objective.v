@@ -251,7 +251,7 @@ Section weakly_obj.
     WeaklyObjective P.
   Proof.
     move => HP /observe_monPred_at Hobs i j Hij.
-    iIntros "A"%string. iDestruct (Hobs with "A") as %?.
+    iIntros "A". iDestruct (Hobs with "A") as %?.
     by iStopProof; apply: HP.
   Qed.
 

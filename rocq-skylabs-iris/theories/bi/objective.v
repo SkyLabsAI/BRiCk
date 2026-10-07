@@ -23,7 +23,7 @@ Section objective.
     Objective P.
   Proof.
     move => HP /observe_monPred_at Hobs i j.
-    iIntros "A"%string. iDestruct (Hobs with "A") as %?.
+    iIntros "A". iDestruct (Hobs with "A") as %?.
     by iStopProof; apply: HP.
   Qed.
 
