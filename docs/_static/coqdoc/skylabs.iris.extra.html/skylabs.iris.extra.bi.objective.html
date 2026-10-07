@@ -1,0 +1,94 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.iris.extra.bi.objective</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2021&nbsp;BlueRock&nbsp;Security,&nbsp;Inc.<br/>
+&nbsp;*<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#"><span class="id" title="library">iris.bi.monpred</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.iris.extra.proofmode.proofmode.html#"><span class="id" title="library">skylabs.iris.extra.proofmode.proofmode</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.monpred.html#"><span class="id" title="library">iris.proofmode.monpred</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.iris.extra.bi.only_provable.html#"><span class="id" title="library">skylabs.iris.extra.bi.only_provable</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.iris.extra.bi.observe.html#"><span class="id" title="library">skylabs.iris.extra.bi.observe</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="objective" class="idref" href="#objective"><span class="id" title="section">objective</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="objective.PROP" class="idref" href="#objective.PROP"><span class="id" title="variable">PROP</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#bi"><span class="id" title="record">bi</span></a>}.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="objective.I" class="idref" href="#objective.I"><span class="id" title="variable">I</span></a> <a id="objective.J" class="idref" href="#objective.J"><span class="id" title="variable">J</span></a> <a id="objective.K" class="idref" href="#objective.K"><span class="id" title="variable">K</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#biIndex"><span class="id" title="record">biIndex</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="objective_of_obs" class="idref" href="#objective_of_obs"><span class="id" title="lemma">objective_of_obs</span></a> {<a id="P:5" class="idref" href="#P:5"><span class="id" title="binder">P</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#monPred"><span class="id" title="record">monPred</span></a> <a class="idref" href="skylabs.iris.extra.bi.objective.html#objective.I"><span class="id" title="variable">I</span></a> <a class="idref" href="skylabs.iris.extra.bi.objective.html#objective.PROP"><span class="id" title="variable">PROP</span></a>} <a id="Q:6" class="idref" href="#Q:6"><span class="id" title="binder">Q</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">(</span></a><a class="idref" href="skylabs.iris.extra.bi.objective.html#Q:6"><span class="id" title="variable">Q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#Objective"><span class="id" title="class">Objective</span></a> <a class="idref" href="skylabs.iris.extra.bi.objective.html#P:5"><span class="id" title="variable">P</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.iris.extra.bi.observe.html#Observe"><span class="id" title="class">Observe</span></a> <a class="idref" href="skylabs.iris.extra.bi.only_provable.html#d95ff2fe2904cc1067c71e0d017740c6"><span class="id" title="notation">[|</span></a> <a class="idref" href="skylabs.iris.extra.bi.objective.html#Q:6"><span class="id" title="variable">Q</span></a> <a class="idref" href="skylabs.iris.extra.bi.only_provable.html#d95ff2fe2904cc1067c71e0d017740c6"><span class="id" title="notation">|]</span></a> <a class="idref" href="skylabs.iris.extra.bi.objective.html#P:5"><span class="id" title="variable">P</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.monpred.html#Objective"><span class="id" title="class">Objective</span></a> <a class="idref" href="skylabs.iris.extra.bi.objective.html#P:5"><span class="id" title="variable">P</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">move</span> =&gt; <span class="id" title="var">HP</span> /<a class="idref" href="skylabs.iris.extra.bi.observe.html#observe_monPred_at"><span class="id" title="lemma">observe_monPred_at</span></a> <span class="id" title="var">Hobs</span> <span class="id" title="var">i</span> <span class="id" title="var">j</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iIntros</span> "A". <span class="id" title="var">iDestruct</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">(</span></a><span class="id" title="var">Hobs</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">with</span></a> "A"<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">)</span></a> <span class="id" title="keyword">as</span> %?.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="var">iStopProof</span>; <span class="id" title="tactic">apply</span>: <span class="id" title="var">HP</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.iris.extra.bi.objective.html#objective"><span class="id" title="section">objective</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
