@@ -502,8 +502,8 @@ Section compare_lex.
   Proof using HlcmpA HlcmpB.
     case => [a0 b0] [a1 b1] /=.
     by move => /compare_lex_inv/= []
-         => /(compare.LeibnizComparison.cmp_eq _ _ _) <-
-         => /(compare.LeibnizComparison.cmp_eq _ _ _) <-.
+         => /(LeibnizComparison.cmp_eq _ _ _) <-
+         => /(LeibnizComparison.cmp_eq _ _ _) <-.
   Qed.
 
 End compare_lex.
