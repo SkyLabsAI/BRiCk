@@ -159,3 +159,79 @@ Module LeibnizComparison.
 
 End LeibnizComparison.
 Notation LeibnizComparison := LeibnizComparison.C.
+
+  Section Compare.
+    Context `{cmp : !Compare A, Hcmp : !Comparison (A := A) base.compare}.
+
+    #[global] Instance cmp_refl :
+      Reflexive (compare.le (A := A)).
+    Proof using Hcmp.
+      move => x.
+      rewrite /compare.le LeibnizComparison.comparison_refl.
+    Qed.
+
+    #[global] Instance cmp_antisymm `{Hleib : !compare.LeibnizComparison (T := A) base.compare} :
+      Antisymmetric _ eq (compare.le (A := A)).
+    Proof using Hcmp.
+      move => x y; rewrite /compare.le => Hxy Hyx.
+      apply compare.LeibnizComparison.cmp_eq with (cmp := base.compare); first apply Hleib.
+      move: Hyx Hxy; rewrite -(inj_iff (R := eq) (S := eq) CompOpp (Inj0 := CompOpp_inj)).
+      rewrite -base.compare_antisym/=.
+      by case: (base.compare x y).
+    Qed.
+
+    #[global] Instance cmp_trans :
+      Transitive (compare.le (A := A)).
+    Proof using Hcmp.
+      move => x y z.
+      rewrite /compare.le => Hxy Hyz.
+      have {}Hxy : base.compare x y = Eq ∨ base.compare x y = Lt
+        by case: (base.compare x y) Hxy; [left|right|].
+      have {}Hyz : base.compare y z = Eq ∨ base.compare y z = Lt
+        by case: (base.compare y z) Hyz; [left|right|].
+      move: Hxy Hyz => [] Hxy [] Hyz.
+      - by rewrite (compare_trans _ _ _ _ Hxy Hyz).
+      - move => Hxz.
+        move: Hyz Hxz; rewrite [base.compare x z] base.compare_antisym CompOpp_iff/=.
+        move => /(base.compare_trans _ _ _) /[apply].
+        by rewrite base.compare_antisym => /CompOpp_iff/=; rewrite Hxy.
+      - move => Hxz.
+        move: Hxz Hxy; rewrite [base.compare x z] base.compare_antisym CompOpp_iff/=.
+        move => /(base.compare_trans _ _ _) /[apply].
+        by rewrite base.compare_antisym => /CompOpp_iff/=; rewrite Hyz.
+      - by rewrite (compare_trans _ _ _ _ Hxy Hyz).
+    Qed.
+
+    #[global] Instance cmp_trichotomy `{compare.LeibnizComparison (T := A) base.compare} :
+      Trichotomy (compare.lt (A := A)).
+    Proof using Hcmp.
+      move => x y.
+      case Hxy : (base.compare (Compare := cmp) x y).
+      - by move: Hxy => /(compare.LeibnizComparison.cmp_eq _ _ _); right; left.
+      - by rewrite /compare.lt Hxy; left.
+      - move: Hxy; rewrite /compare.lt base.compare_antisym CompOpp_iff /=.
+        by move => ->; right; right.
+    Qed.
+
+    #[global] Instance cmp_total :
+      Total (compare.le (A := A)).
+    Proof using Hcmp.
+      move => x y.
+      rewrite /compare.le.
+      case Hxy : (base.compare (Compare := cmp) x y).
+      - by left.
+      - by left.
+      - move: Hxy; rewrite base.compare_antisym CompOpp_iff /= => ->.
+        by right.
+    Qed.
+
+    Lemma cmp_absurd {c0 c1 : comparison} {P} (H : c0 = c1) :
+      match c0, c1 with
+      | Lt, Lt => P -> P
+      | Eq, Eq => P -> P
+      | Gt, Gt => P -> P
+      | _, _ => P
+      end.
+    Proof. by case: c0 c1 H => [] []. Qed.
+
+  End Compare.
