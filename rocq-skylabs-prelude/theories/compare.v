@@ -8,6 +8,7 @@
 Require Import elpi.apps.NES.NES.
 Require Import skylabs.prelude.base.
 Require Import skylabs.prelude.numbers.
+Require Import skylabs.prelude.list.
 Require skylabs.prelude.uint63.
 
 (** ** Generic comparison *)
