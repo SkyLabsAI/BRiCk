@@ -63,6 +63,141 @@ Definition compare_lex (a : comparison) (b : unit -> comparison) : comparison :=
   | Lt | Gt => a
   end.
 
+Module compare.
+
+  Section derived.
+    Context `{!Compare A}.
+    #[local] Infix "?=" := (@compare A _).
+    Notation "(?=)" := (@compare A _) (only parsing).
+
+    Definition eq (x y : A) : Prop := x ?= y = Eq.
+    Definition lt (x y : A) : Prop := x ?= y = Lt.
+    Definition le (x y : A) : Prop := x ?= y <> Gt.
+    Definition gt (x y : A) : Prop := x ?= y = Gt.
+    Definition ge (x y : A) : Prop := x ?= y <> Lt.
+
+    #[global] Instance eq_dec : RelDecision eq.
+    Proof. rewrite/eq. solve_decision. Defined.
+    #[global] Instance lt_dec : RelDecision lt.
+    Proof. rewrite/lt. solve_decision. Defined.
+    #[global] Instance le_dec : RelDecision le.
+    Proof. rewrite/le. solve_decision. Defined.
+    #[global] Instance gt_dec : RelDecision gt.
+    Proof. rewrite/gt. solve_decision. Defined.
+    #[global] Instance ge_dec : RelDecision ge.
+    Proof. rewrite/ge. solve_decision. Defined.
+
+    #[local] Infix "==" := eq.
+    #[local] Infix "<" := lt.
+    #[local] Infix ">" := gt.
+
+    Lemma compare_spec x y : CompareSpec (x == y) (x < y) (x > y) (x ?= y).
+    Proof. rewrite/eq/lt/gt. by destruct (x ?= y); constructor. Qed.
+
+    #[global] Instance eq_equiv `{!Comparison (?=)} : Equivalence eq.
+    Proof.
+      rewrite /eq. split.
+      - intros x. apply comparison_refl.
+      - intros x y. by rewrite (compare_antisym y x) => ->.
+      - intros x y z. apply compare_trans.
+    Qed.
+
+    #[global] Instance le_refl `{!Comparison (?=)} : Reflexive le.
+    Proof. move => x. by rewrite /le comparison_refl. Qed.
+
+    #[global] Instance ge_refl `{!Comparison (?=)} : Reflexive ge.
+    Proof. move => x. by rewrite /ge comparison_refl. Qed.
+
+    #[global] Instance lt_trans `{!Comparison (?=)} : Transitive lt.
+    Proof. rewrite /lt. intros x y z. apply compare_trans. Qed.
+
+    #[global] Instance gt_trans `{!Comparison (?=)} : Transitive gt.
+    Proof. rewrite /gt. intros x y z. apply compare_trans. Qed.
+
+    Lemma ordered_type_compare `{!Comparison (?=)} x y : OrderedType.Compare lt eq x y.
+    Proof.
+      rewrite /lt/eq. destruct (x ?= y) eqn:Hc; try by constructor.
+      apply OrderedType.GT. by rewrite compare_antisym Hc.
+    Qed.
+
+    (** All these relations are antisymmetric wrt eq.
+    No instance for [eq] since that case is degenerate (see [anti_symm_refl]). *)
+
+    Ltac solve_antisymm R :=
+      intros x y; rewrite /R /eq (compare_antisym y x); by destruct (x ?= y).
+      (* intros x y; unfold R; rewrite /eq (compare_antisym y x); by destruct (x ?= y). *)
+
+    #[global] Instance lt_anti_symm `{!Comparison (?=)} : AntiSymm eq lt.
+    Proof. solve_antisymm lt. Qed.
+
+    #[global] Instance le_anti_symm `{!Comparison (?=)} : AntiSymm eq le.
+    Proof. solve_antisymm le. Qed.
+
+    #[global] Instance gt_anti_symm `{!Comparison (?=)} : AntiSymm eq gt.
+    Proof. solve_antisymm gt. Qed.
+
+    #[global] Instance ge_anti_symm `{!Comparison (?=)} : AntiSymm eq ge.
+    Proof. solve_antisymm ge. Qed.
+
+    (** [le] and [ge] are total. *)
+    #[global] Instance le_total `{!Comparison (?=)} : Total le.
+    Proof.
+      intros x y. rewrite /le (compare_antisym y x).
+      case: (x ?= y) => /=; auto.
+    Qed.
+
+    #[global] Instance ge_total `{!Comparison (?=)} : Total ge.
+    Proof.
+      intros x y. rewrite /ge (compare_antisym y x).
+      case: (x ?= y) => /=; auto.
+    Qed.
+  End derived.
+
+  (**
+  These notation effects are opt-in because they can interfere with
+  existing theory tied to notation scopes like <<nat_scope>> (e.g.,
+  <<Peano.lt>> differs from the comparison-based [lt] relation on
+  natural numbers).
+  *)
+  Module Notations.
+    Infix "?=" := compare : stdpp_scope.
+    Infix "?=@{ A }" := (@compare A _) (only parsing) : stdpp_scope.
+    Notation "(?=)" := compare (only parsing) : stdpp_scope.
+    Notation "(?=@{ A } )" := (@compare A _) (only parsing) : stdpp_scope.
+    Notation "( x ?=.)" := (compare x) (only parsing) : stdpp_scope.
+    Notation "(.?= y )" := (fun x => compare x y) (only parsing) : stdpp_scope.
+
+    Infix "<" := lt : stdpp_scope.
+    Infix "<@{ A }" := (@lt A _) (only parsing) : stdpp_scope.
+    Notation "(<)" := lt (only parsing) : stdpp_scope.
+    Notation "(<@{ A } )" := (@lt A _) (only parsing) : stdpp_scope.
+    Notation "( x <.)" := (lt x) (only parsing) : stdpp_scope.
+    Notation "(.< y )" := (fun x => lt x y) (only parsing) : stdpp_scope.
+
+    Infix "<=" := le : stdpp_scope.
+    Infix "<=@{ A }" := (@le A _) (only parsing) : stdpp_scope.
+    Notation "(<=)" := le (only parsing) : stdpp_scope.
+    Notation "(<=@{ A } )" := (@le A _) (only parsing) : stdpp_scope.
+    Notation "( x <=.)" := (le x) (only parsing) : stdpp_scope.
+    Notation "(.<= y )" := (fun x => le x y) (only parsing) : stdpp_scope.
+
+    Infix ">" := gt : stdpp_scope.
+    Infix ">@{ A }" := (@gt A _) (only parsing) : stdpp_scope.
+    Notation "(>)" := gt (only parsing) : stdpp_scope.
+    Notation "(>@{ A } )" := (@gt A _) (only parsing) : stdpp_scope.
+    Notation "( x >.)" := (gt x) (only parsing) : stdpp_scope.
+    Notation "(.> y )" := (fun x => gt x y) (only parsing) : stdpp_scope.
+
+    Infix ">=" := ge : stdpp_scope.
+    Infix ">=@{ A }" := (@ge A _) (only parsing) : stdpp_scope.
+    Notation "(>=)" := ge (only parsing) : stdpp_scope.
+    Notation "(>=@{ A } )" := (@ge A _) (only parsing) : stdpp_scope.
+    Notation "( x >=.)" := (ge x) (only parsing) : stdpp_scope.
+    Notation "(.>= y )" := (fun x => ge x y) (only parsing) : stdpp_scope.
+  End Notations.
+
+End compare.
+
 NES.Begin LeibnizComparison.
 
   Section with_A.
