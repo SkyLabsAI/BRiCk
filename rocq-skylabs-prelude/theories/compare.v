@@ -157,10 +157,6 @@ Notation LeibnizComparison := LeibnizComparison.C.
   Section Compare.
     Context `{cmp : !Compare A, Hcmp : !Comparison (A := A) base.compare}.
 
-    #[global] Instance cmp_refl :
-      Reflexive (compare.le (A := A)).
-    Proof using Hcmp. move => x. rewrite /compare.le comparison_refl. Qed.
-
     #[global] Instance cmp_antisymm `{Hleib : !compare.LeibnizComparison (T := A) base.compare} :
       Antisymmetric _ eq (compare.le (A := A)).
     Proof using Hcmp.

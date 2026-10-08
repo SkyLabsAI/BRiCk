@@ -438,6 +438,12 @@ Module compare.
       - intros x y z. apply compare_trans.
     Qed.
 
+    #[global] Instance le_refl `{!Comparison (?=)} : Reflexive le.
+    Proof. move => x. by rewrite /le comparison_refl. Qed.
+
+    #[global] Instance ge_refl `{!Comparison (?=)} : Reflexive ge.
+    Proof. move => x. by rewrite /ge comparison_refl. Qed.
+
     #[global] Instance lt_trans `{!Comparison (?=)} : Transitive lt.
     Proof. rewrite /lt. intros x y z. apply compare_trans. Qed.
 
