@@ -161,10 +161,10 @@ Notation LeibnizComparison := LeibnizComparison.C.
       Antisymmetric _ eq (compare.le (A := A)).
     Proof using Hcmp.
       move => x y; rewrite /compare.le => Hxy Hyx.
-      apply compare.LeibnizComparison.cmp_eq with (cmp := base.compare); first apply Hleib.
+      apply LeibnizComparison.cmp_eq with (cmp := base.compare); first apply Hleib.
       move: Hyx Hxy; rewrite -(inj_iff (R := eq) (S := eq) CompOpp (Inj0 := CompOpp_inj)).
-      rewrite -base.compare_antisym/=.
-      by case: (base.compare x y).
+      rewrite -compare_antisym/=.
+      by case: (compare x y).
     Qed.
 
     #[global] Instance cmp_trans :
