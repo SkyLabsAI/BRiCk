@@ -398,3 +398,112 @@ Section sorted.
 
 End sorted.
 End sorted.
+
+Section compare_lex.
+  Context {A} {cmpA : A -> A -> comparison} `{HcmpA : !Comparison cmpA}.
+
+  #[local] Arguments compare_trans {A f _ x y z c}.
+
+  Lemma compare_eq_trans {x y z c} :
+    cmpA x y = c ->
+    cmpA y z = Eq ->
+    cmpA x z = c .
+  Proof using HcmpA.
+    case: (decide (c = Eq));
+      first by move => ->; apply compare_trans.
+    move => Hc Hxy Hyz.
+    have Hnot_opp : cmpA x z <> CompOpp c.
+    { rewrite compare_antisym => /CompOpp_inj Hzx.
+      pose proof (Hzy := compare_trans Hzx Hxy).
+      move: Hyz Hzy Hc => - /(f_equal CompOpp).
+      by rewrite -compare_antisym /= => -> <-. }
+    have Hnot_eq : cmpA x z <> Eq.
+    { move: Hyz =>  /(f_equal CompOpp);
+        rewrite -compare_antisym /=.
+      move => /[swap] /(compare_trans) /[apply].
+      by rewrite Hxy. }
+    case: (cmpA x z) c Hc Hnot_opp Hnot_eq {Hxy} => // - [] //.
+  Qed.
+
+  Lemma eq_compare_trans {x y z c} :
+    cmpA x y = Eq ->
+    cmpA y z = c ->
+    cmpA x z = c .
+  Proof using HcmpA.
+    case: (decide (c = Eq));
+      first by move => ->; apply compare_trans.
+    move => Hc Hxy Hyz.
+    have Hnot_opp : cmpA x z <> CompOpp c.
+    { rewrite compare_antisym => /CompOpp_inj Hzx.
+      pose proof (Hzy := compare_trans Hyz Hzx).
+      move: Hxy Hzy Hc => - /(f_equal CompOpp).
+      by rewrite -compare_antisym /= => -> <-. }
+    have Hnot_eq : cmpA x z <> Eq.
+    { move: Hxy =>  /(f_equal CompOpp);
+        rewrite -compare_antisym /=.
+      move => /(compare_trans) /[apply].
+      by rewrite Hyz. }
+    case: (cmpA x z) c Hc Hnot_opp Hnot_eq {Hyz} => // - [] //.
+  Qed.
+
+End compare_lex.
+
+Section compare_lex.
+  Context {A} {cmpA : A -> A -> comparison} `{HcmpA : !Comparison cmpA} `{HlcmpA : !compare.LeibnizComparison cmpA}.
+  Context {B} {cmpB : B -> B -> comparison} `{HcmpB : !Comparison cmpB} `{HlcmpB : !compare.LeibnizComparison cmpB}.
+
+  Definition lex_comparison : A * B -> A * B -> comparison :=
+    fun '(a0,b0) '(a1,b1) => compare.compare_lex (cmpA a0 a1) (fun _ => cmpB b0 b1).
+
+  Lemma compare_lex_inv c0 c1 c2 :
+    compare.compare_lex c0 c1 = c2 <->
+    if bool_decide (c2 = Eq)
+     then c0 = Eq ∧ c1 () = Eq
+     else c0 = c2 ∨ (c0 = Eq ∧ c1 () = c2).
+  Proof.
+    case: bool_decide_reflect c0 => Heq [] /=;
+      by intuition; subst.
+  Qed.
+
+  #[global] Instance lex_comparison_comparison : Comparison (A := A * B) lex_comparison.
+  Proof using HcmpA HcmpB.
+    constructor.
+    - case => [a0 b0] [a1 b1] /=.
+      rewrite [cmpA a0 a1]compare_antisym.
+      by case: cmpA => //=; rewrite -compare_antisym.
+    - case => [a0 b0] [a1 b1] [a2 b2] c /=.
+      rewrite 3!compare_lex_inv.
+      case: bool_decide_reflect;
+        [ move => {c} _ [Ha01 Hb01] [Ha12 Hb12]
+        | move => Hc [Ha01|[Ha01 Hb01]] [Ha12|[Ha12 Hb12]]].
+      all: repeat
+          lazymatch goal with
+          | Hxy : ?cmp ?x ?y = ?c,
+            Hyz : ?cmp ?y ?z = ?c
+            |- _ =>
+              pose proof (compare_trans _ _ _ _ Hxy Hyz) ;
+              clear Hxy Hyz
+          | Hxy : ?cmp ?x ?y = Eq,
+            Hyz : ?cmp ?y ?z = _
+            |- _ =>
+              pose proof (eq_compare_trans Hxy Hyz) ;
+              clear Hxy Hyz
+          | Hxy : ?cmp ?x ?y = _,
+            Hyz : ?cmp ?y ?z = Eq
+            |- _ =>
+              pose proof (compare_eq_trans Hxy Hyz) ;
+              clear Hxy Hyz
+          end.
+      all: first [by left | by right| by []].
+  Qed.
+
+  #[global] Instance lex_comparison_leibniz_comparison :
+    compare.LeibnizComparison (T := A * B) lex_comparison.
+  Proof using HlcmpA HlcmpB.
+    case => [a0 b0] [a1 b1] /=.
+    by move => /compare_lex_inv/= []
+         => /(compare.LeibnizComparison.cmp_eq _ _ _) <-
+         => /(compare.LeibnizComparison.cmp_eq _ _ _) <-.
+  Qed.
+
+End compare_lex.
