@@ -283,7 +283,7 @@ NES.End LeibnizComparison.
   Section Compare.
     Context `{cmp : !Compare A, Hcmp : !Comparison (A := A) base.compare}.
 
-    #[global] Instance cmp_antisymm `{Hleib : !compare.LeibnizComparison (T := A) base.compare} :
+    #[global] Instance cmp_antisymm `{Hleib : !LeibnizComparison (T := A) base.compare} :
       Antisymmetric _ eq (compare.le (A := A)).
     Proof using Hcmp.
       move => x y; rewrite /compare.le => Hxy Hyx.
@@ -315,12 +315,12 @@ NES.End LeibnizComparison.
       - by rewrite (compare_trans _ _ _ _ Hxy Hyz).
     Qed.
 
-    #[global] Instance cmp_trichotomy `{compare.LeibnizComparison (T := A) base.compare} :
+    #[global] Instance cmp_trichotomy `{LeibnizComparison (T := A) base.compare} :
       Trichotomy (compare.lt (A := A)).
     Proof using Hcmp.
       move => x y.
       case Hxy : (base.compare (Compare := cmp) x y).
-      - by move: Hxy => /(compare.LeibnizComparison.cmp_eq _ _ _); right; left.
+      - by move: Hxy => /(LeibnizComparison.cmp_eq _ _ _); right; left.
       - by rewrite /compare.lt Hxy; left.
       - move: Hxy; rewrite /compare.lt base.compare_antisym CompOpp_iff /=.
         by move => ->; right; right.
@@ -362,7 +362,7 @@ Section sorted.
   Context {A} `{!Compare A}.
 
   Definition compare_on {B} (f : B -> A) : Compare B :=
-    fun x y => base.compare (f x) (f y).
+    fun x y => compare (f x) (f y).
 
   (** Remove duplicates from a sorted list *)
   Definition nub (xs : list A) : list A :=
@@ -372,7 +372,7 @@ Section sorted.
       | None, x :: xs => go (Some x) xs
       | Some x, [] => [x]
       | Some x0, x1 :: xs =>
-          if bool_decide (base.compare.eq x0 x1) then
+          if bool_decide (compare.eq x0 x1) then
             go (Some x0) xs
           else
             x0 :: go (Some x1) xs
@@ -384,11 +384,11 @@ Section sorted.
     match xs with
     | [] => []
     | x :: xs =>
-        let ys' := drop_while (base.compare.gt x) ys in
+        let ys' := drop_while (compare.gt x) ys in
         match ys' with
         | [] => []
         | y :: ys'' =>
-            if bool_decide (base.compare.eq x y) then
+            if bool_decide (compare.eq x y) then
               x :: intersection xs ys''
             else
               intersection xs (y :: ys'')
