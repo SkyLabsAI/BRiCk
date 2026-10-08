@@ -42,8 +42,9 @@ Section compare.
       (a : A) : comparison :=
     let ta := tag a in
     let c := Pos.compare ta t in
+    (* The cast requires the transparent proof, independently of import order. *)
     match c as c' return c = c' -> comparison with
-    | Eq => fun EQ => compare t (d ()) $ rew (Pos.compare_eq _ _ EQ) in data a
+    | Eq => fun EQ => compare t (d ()) $ rew (numbers.Pos.compare_eq _ _ EQ) in data a
     | Lt => fun _ => Gt
     | Gt => fun _ => Lt
     end eq_refl.
@@ -563,7 +564,7 @@ Section comparison_laws.
 
   Definition lex_compare {A : Type} (f g : A -> A -> comparison) (x y : A) : comparison :=
     compare_lex (f x y) (fun _ => g x y).
-  Lemma lex_comparison {A} (f g : A -> A -> comparison)
+  Lemma lex_compare_comparison {A} (f g : A -> A -> comparison)
       `{Hf : !Comparison f, Hg : !Comparison g} : Comparison (lex_compare f g).
   Proof.
     constructor.
