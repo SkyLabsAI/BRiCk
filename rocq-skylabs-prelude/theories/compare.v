@@ -81,12 +81,6 @@ Module LeibnizComparison.
       Context `{Comp : !Comparison (A := A) cmp}.
       #[local] Set Default Proof Using "Comp".
 
-      Lemma comparison_refl {a} : cmp a a = Eq.
-      Proof.
-        have := Refine (compare_antisym a a).
-        by case: (cmp a a).
-      Qed.
-
       (* TODO: make instance? *)
       #[program] Definition from_comparison {LC : C cmp} : EqDecision A := fun l r =>
         match cmp l r as C return cmp l r = C -> _ with
@@ -165,10 +159,7 @@ Notation LeibnizComparison := LeibnizComparison.C.
 
     #[global] Instance cmp_refl :
       Reflexive (compare.le (A := A)).
-    Proof using Hcmp.
-      move => x.
-      rewrite /compare.le LeibnizComparison.comparison_refl.
-    Qed.
+    Proof using Hcmp. move => x. rewrite /compare.le comparison_refl. Qed.
 
     #[global] Instance cmp_antisymm `{Hleib : !compare.LeibnizComparison (T := A) base.compare} :
       Antisymmetric _ eq (compare.le (A := A)).

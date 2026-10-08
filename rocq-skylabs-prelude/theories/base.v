@@ -396,6 +396,9 @@ Not an instance because this is a degenerate case.
 Lemma anti_symm_refl {A} (R : relation A) : AntiSymm R R.
 Proof. by intros x y. Qed.
 
+Lemma comparison_refl `{!Comparison (A := A) cmp} {a : A} : cmp a a = Eq.
+Proof. pose proof (compare_antisym a a). by destruct (cmp a a). Qed.
+
 Module compare.
 
   Section derived.
@@ -430,7 +433,7 @@ Module compare.
     #[global] Instance eq_equiv `{!Comparison (?=)} : Equivalence eq.
     Proof.
       rewrite /eq. split.
-      - intros x. generalize (compare_antisym x x). by destruct (compare x x).
+      - intros x. apply comparison_refl.
       - intros x y. by rewrite (compare_antisym y x) => ->.
       - intros x y z. apply compare_trans.
     Qed.
