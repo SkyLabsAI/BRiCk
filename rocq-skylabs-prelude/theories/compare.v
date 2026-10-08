@@ -9,6 +9,7 @@ Require Import elpi.apps.NES.NES.
 Require Import skylabs.prelude.base.
 Require Import skylabs.prelude.numbers.
 Require Import skylabs.prelude.list.
+Require Import skylabs.prelude.pstring.
 Require skylabs.prelude.uint63.
 
 (** ** Generic comparison *)
@@ -507,3 +508,109 @@ Section compare_lex.
   Qed.
 
 End compare_lex.
+
+(** Comparison laws extracted from SkyLabsAI/BRiCk#337. *)
+Module List.
+  Section compare.
+    Context {A : Type}.
+    Context (compareA : A -> A -> comparison).
+
+    (* for types with a small number of constructors the direct comparison function is faster *)
+    Fixpoint compare (l l' : list A) : comparison :=
+      match l , l' with
+      | nil , nil => Eq
+      | nil , _ :: _ => Lt
+      | _ :: _ , nil => Gt
+      | x :: xs , y :: ys => compare_lex (compareA x y) (fun _ => compare xs ys)
+      end.
+
+  End compare.
+End List.
+#[global] Instance list_compare `{!Compare A} : Compare (list A) := List.compare compare.
+
+Lemma lex_eq (a : comparison) (b : unit -> comparison) :
+  compare_lex a b = Eq -> a = Eq /\ b () = Eq.
+Proof. destruct a; cbn; intuition congruence. Qed.
+
+
+(** Lexicographic comparison infrastructure shared by names and templates. *)
+Section comparison_laws.
+  Set Default Proof Using "Type*".
+  Section compare.
+    Context {A : Type} (cmp : A -> A -> comparison) `{Hcmp : !Comparison cmp}.
+    Lemma comparison_eq_left x y z : cmp x y = Eq -> cmp x z = cmp y z.
+    Proof.
+      intros Hxy.
+      have Hyx : cmp y x = Eq by rewrite compare_antisym Hxy.
+      have Hzy := @compare_antisym A cmp Hcmp z y.
+      have Txz := @compare_trans A cmp Hcmp x y z.
+      have Tyz := @compare_trans A cmp Hcmp y x z.
+      have Txy := @compare_trans A cmp Hcmp x z y.
+      destruct (cmp x z) eqn:Hxz, (cmp y z) eqn:Hyz; simpl in *;
+        try reflexivity.
+      all: exfalso; first
+        [ specialize (Tyz Eq Hyx eq_refl); discriminate
+        | specialize (Txz Eq Hxy eq_refl); discriminate
+        | specialize (Txy Lt eq_refl Hzy); congruence
+        | specialize (Txy Gt eq_refl Hzy); congruence ].
+    Qed.
+    Lemma comparison_eq_right x y z : cmp x y = Eq -> cmp z x = cmp z y.
+    Proof.
+      intros Hxy. rewrite (compare_antisym z x) (compare_antisym z y).
+      by rewrite (comparison_eq_left x y z Hxy).
+    Qed.
+  End compare.
+
+  Definition lex_compare {A : Type} (f g : A -> A -> comparison) (x y : A) : comparison :=
+    compare_lex (f x y) (fun _ => g x y).
+  Lemma lex_comparison {A} (f g : A -> A -> comparison)
+      `{Hf : !Comparison f, Hg : !Comparison g} : Comparison (lex_compare f g).
+  Proof.
+    constructor.
+    - intros x y. rewrite /lex_compare (compare_antisym x y (Comparison:=Hf))
+        (compare_antisym x y (Comparison:=Hg)).
+      by destruct (f y x).
+    - intros x y z c Hxy Hyz. unfold lex_compare in *.
+      destruct (f x y) eqn:E1, (f y z) eqn:E2; simpl in Hxy, Hyz; try congruence.
+      all: try (rewrite (@compare_trans _ f Hf x y z _ E1 E2); cbn;
+        first [exact Hxy | exact Hyz | eapply (@compare_trans _ g Hg); eassumption]).
+      all: try (rewrite (comparison_eq_left f x y z E1) E2; cbn; congruence).
+      all: try (rewrite <- (comparison_eq_right f y z x E2), E1; cbn; congruence).
+  Qed.
+  Lemma comparison_pullback {A B} (f : A -> B) (cmp : B -> B -> comparison)
+      `{!Comparison cmp} : Comparison (fun x y => cmp (f x) (f y)).
+  Proof. constructor; intros; [apply compare_antisym | eapply compare_trans; eassumption]. Qed.
+
+  Lemma list_comparison {A} (cmp : A -> A -> comparison) `{Hcmp : !Comparison cmp} :
+    Comparison (List.compare cmp).
+  Proof.
+    constructor.
+    - intros xs. induction xs as [|x xs IH]; intros [|y ys]; try done.
+      cbn [List.compare]. rewrite (compare_antisym x y) (IH ys).
+      by destruct (cmp y x).
+    - fix IH 1. intros xs ys zs c Hxy Hyz.
+      destruct xs as [|x xs], ys as [|y ys], zs as [|z zs];
+        cbn [List.compare] in *; try congruence.
+      destruct (cmp x y) eqn:E1, (cmp y z) eqn:E2; simpl in Hxy, Hyz; try congruence.
+      all: try (rewrite (@compare_trans _ cmp Hcmp x y z _ E1 E2); cbn;
+        first [exact Hxy | exact Hyz | eapply IH; eassumption]).
+      all: try (rewrite (comparison_eq_left cmp x y z E1) E2; cbn; congruence).
+      all: try (rewrite <- (comparison_eq_right cmp y z x E2), E1; cbn; congruence).
+  Qed.
+
+  #[global] Instance string_comparison : Comparison PrimString.compare.
+  Proof. constructor; intros; [apply PString.compare_antisym | eapply PString.compare_trans; eassumption]. Qed.
+End comparison_laws.
+
+Lemma list_compare_eq {A} (cmp : A -> A -> comparison)
+    (Hcmp : forall x y, cmp x y = Eq -> x = y) (xs ys : list A) :
+  List.compare cmp xs ys = Eq -> xs = ys.
+Proof.
+  revert ys. induction xs as [|x xs IH]; intros [|y ys] H; try done.
+  simpl in H. unfold compare_lex in H.
+  destruct (cmp x y) eqn:E; try discriminate.
+  f_equal; [by apply Hcmp | by apply IH].
+Qed.
+
+#[global] Instance primitive_integer_comparison : Comparison PrimInt63.compare.
+Proof. constructor; intros; [apply PString.char63_compare_antisym | eapply PString.char63_compare_trans; eassumption]. Qed.
