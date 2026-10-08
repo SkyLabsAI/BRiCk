@@ -6,6 +6,7 @@
 
 (** "Prelude" for available-everywhere dependencies. *)
 
+Require Import elpi.apps.NES.NES.
 Require Import Stdlib.Structures.OrderedType.
 Require Export stdpp.prelude.
 Require Export stdpp.countable.
@@ -389,6 +390,19 @@ Section compare.
   #[global] Hint Opaque compare : typeclass_instances.
   #[global] Arguments compare : simpl never.
 End compare.
+
+NES.Begin LeibnizComparison.
+  (** [LeibnizComparison] states that the comparison function
+    implies provable equality. This allows deriving [EqDecision]
+    from [LeibnizComparison] (using [from_comparison]).
+    This avoids the complexity of implementing both a comparison
+    function and a equality decision instance.
+   *)
+  Class C {T} (cmp : T -> T -> comparison) : Prop :=
+    cmp_eq : forall a b, cmp a b = Eq -> a = b.
+  #[global] Arguments cmp_eq {_} _ {_} _ _.
+NES.End LeibnizComparison.
+Notation LeibnizComparison := LeibnizComparison.C.
 
 (** Every relation is antisymmetric relative to itself.
 Not an instance because this is a degenerate case.

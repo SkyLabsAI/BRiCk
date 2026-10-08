@@ -5,6 +5,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
+Require Import elpi.apps.NES.NES.
 Require Import skylabs.prelude.base.
 Require Import skylabs.prelude.numbers.
 Require skylabs.prelude.uint63.
@@ -62,16 +63,7 @@ Definition compare_lex (a : comparison) (b : unit -> comparison) : comparison :=
   | Lt | Gt => a
   end.
 
-Module LeibnizComparison.
-  (** [LeibnizComparison] states that the comparison function
-    implies provable equality. This allows deriving [EqDecision]
-    from [LeibnizComparison] (using [from_comparison]).
-    This avoids the complexity of implementing both a comparison
-    function and a equality decision instance.
-   *)
-  Class C {T} (cmp : T -> T -> comparison) : Prop :=
-    cmp_eq : forall a b, cmp a b = Eq -> a = b.
-  #[global] Arguments cmp_eq {_} _ {_} _ _.
+NES.Begin LeibnizComparison.
 
   Section with_A.
     Context {A : Type}.
@@ -151,8 +143,7 @@ Module LeibnizComparison.
     move=> a b E. apply (inj f), Uint63.eqb_spec, PrimInt63_int_compare_eq, E.
   Qed.
 
-End LeibnizComparison.
-Notation LeibnizComparison := LeibnizComparison.C.
+NES.End LeibnizComparison.
 
   Section Compare.
     Context `{cmp : !Compare A, Hcmp : !Comparison (A := A) base.compare}.
