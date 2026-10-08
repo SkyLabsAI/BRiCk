@@ -67,12 +67,32 @@ Module EVAL_BINOP_IMPURE_MODEL <: EVAL_BINOP_IMPURE.
           res = Vint (o1 - o2) /\
           is_Some (size_of σ ty) /\
           has_type_prop (Vint (o1 - o2)) (Tnum w Signed)).
+    Lemma binop_impure_ok_erase bo lhsT rhsT resT lhs rhs res :
+      binop_impure_ok bo lhsT rhsT resT lhs rhs res ->
+      binop_impure_ok bo (erase_qualifiers lhsT) (erase_qualifiers rhsT)
+        (erase_qualifiers resT) lhs rhs res.
+    Proof.
+      rewrite /binop_impure_ok.
+      intros [Hshape | [Hshape | [Hshape | Hshape]]].
+      - destruct Hshape as (ty & p1 & p2 & b & Hbo & -> & -> & -> & Hl & Hr & Hres).
+        left. exists (erase_qualifiers ty), p1, p2, b. cbn. naive_solver.
+      - destruct Hshape as (ty & w & s & p1 & o & -> & -> & -> & Hl & Hr & Hsz & Hres).
+        right; left. exists (erase_qualifiers ty), w, s, p1, o.
+        cbn. rewrite erase_qualifiers_idemp size_of_erase_qualifiers. naive_solver.
+      - destruct Hshape as (ty & w & s & p1 & o & Hbo & -> & -> & -> & Hl & Hr & Hres & Hsz).
+        right; right; left. exists (erase_qualifiers ty), w, s, p1, o.
+        cbn. rewrite erase_qualifiers_idemp size_of_erase_qualifiers. naive_solver.
+      - destruct Hshape as (ty & w & base & o1 & o2 & Hbo & -> & -> & -> & Hl & Hr & Hres & Hsz & HT).
+        right; right; right. exists (erase_qualifiers ty), w, base, o1, o2.
+        cbn. rewrite !erase_qualifiers_idemp size_of_erase_qualifiers. naive_solver.
+    Qed.
   End shape.
 
   Definition eval_binop_impure `{cpp_logic} {σ}
       (_ : translation_unit) (bo : BinOp) (lhsT rhsT resT : type)
       (lhs rhs res : val) : mpred :=
-    [| binop_impure_ok bo lhsT rhsT resT lhs rhs res |] ∗
+    [| binop_impure_ok bo (erase_qualifiers lhsT) (erase_qualifiers rhsT)
+         (erase_qualifiers resT) lhs rhs res |] ∗
     has_type lhs lhsT ∗ has_type rhs rhsT ∗ has_type res resT.
 
   Section axioms.
@@ -102,7 +122,9 @@ Module EVAL_BINOP_IMPURE_MODEL <: EVAL_BINOP_IMPURE.
       P ⊢ EBI tu bo lhsT rhsT resT lhs rhs res.
     Proof.
       intros Hok HT. rewrite /eval_binop_impure.
-      iIntros "P". iSplitR; first by iPureIntro. by iApply HT.
+      iIntros "P". iSplitR.
+      { iPureIntro. exact: binop_impure_ok_erase Hok. }
+      by iApply HT.
     Qed.
 
     #[local] Lemma intro_ok_sep (P : mpred) bo lhsT rhsT resT lhs rhs res :
@@ -110,6 +132,16 @@ Module EVAL_BINOP_IMPURE_MODEL <: EVAL_BINOP_IMPURE.
       (P ⊢ has_type lhs lhsT ∗ has_type rhs rhsT ∗ has_type res resT) ->
       P ⊢ EBI tu bo lhsT rhsT resT lhs rhs res ∗ True.
     Proof. intros. etrans; [ exact: intro_ok | by iIntros "$" ]. Qed.
+
+    Lemma eval_binop_impure_erase_all bo lhsT rhsT resT lhs rhs res :
+      EBI tu bo (erase_qualifiers lhsT) (erase_qualifiers rhsT) (erase_qualifiers resT) lhs rhs res -|-
+      EBI tu bo lhsT rhsT resT lhs rhs res.
+    Proof.
+      by rewrite /eval_binop_impure !erase_qualifiers_idemp
+        (has_type_erase_qualifiers lhsT lhs)
+        (has_type_erase_qualifiers rhsT rhs)
+        (has_type_erase_qualifiers resT res).
+    Qed.
 
     Lemma eval_binop_impure_well_typed :
       Unfold (@eval_binop_impure_well_typed_op) (eval_binop_impure_well_typed_op EBI tu).
