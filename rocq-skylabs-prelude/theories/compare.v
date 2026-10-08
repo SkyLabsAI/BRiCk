@@ -6,11 +6,107 @@
  *)
 
 Require Import elpi.apps.NES.NES.
-Require Import skylabs.prelude.base.
+Require Export skylabs.prelude.base.
 Require Import skylabs.prelude.numbers.
 Require Import skylabs.prelude.list.
 Require Import skylabs.prelude.pstring.
 Require skylabs.prelude.uint63.
+
+#[local] Set Default Proof Using "Type*".
+
+(** Every relation is antisymmetric relative to itself.
+Not an instance because this is a degenerate case.
+ *)
+Lemma anti_symm_refl {A} (R : relation A) : AntiSymm R R.
+Proof. by intros x y. Qed.
+
+Lemma comparison_refl `{!Comparison (A := A) cmp} {a : A} : cmp a a = Eq.
+Proof. pose proof (compare_antisym (f:=cmp) a a). by destruct (cmp a a). Qed.
+
+(** Laws for arbitrary comparison functions, including comparisons whose
+[Eq] result identifies an equivalence class rather than Leibniz equality. *)
+Section comparison_laws.
+  Context {A : Type} (cmp : A -> A -> comparison) `{Hcmp : !Comparison cmp}.
+  Lemma comparison_eq_left x y z : cmp x y = Eq -> cmp x z = cmp y z.
+  Proof.
+    intros Hxy.
+    have Hyx : cmp y x = Eq by rewrite (compare_antisym (f:=cmp)) Hxy.
+    have Hzy := @compare_antisym A cmp Hcmp z y.
+    have Txz := @compare_trans A cmp Hcmp x y z.
+    have Tyz := @compare_trans A cmp Hcmp y x z.
+    have Txy := @compare_trans A cmp Hcmp x z y.
+    destruct (cmp x z) eqn:Hxz, (cmp y z) eqn:Hyz; simpl in *;
+      try reflexivity.
+    all: exfalso; first
+      [ specialize (Tyz Eq Hyx eq_refl); discriminate
+      | specialize (Txz Eq Hxy eq_refl); discriminate
+      | specialize (Txy Lt eq_refl Hzy); congruence
+      | specialize (Txy Gt eq_refl Hzy); congruence ].
+  Qed.
+  Lemma comparison_eq_right x y z : cmp x y = Eq -> cmp z x = cmp z y.
+  Proof.
+    intros Hxy. rewrite (compare_antisym (f:=cmp) z x) (compare_antisym (f:=cmp) z y).
+    by rewrite (comparison_eq_left x y z Hxy).
+  Qed.
+
+  Lemma compare_eq_trans {x y z c} :
+    cmp x y = c -> cmp y z = Eq -> cmp x z = c.
+  Proof. intros Hxy Hyz. by rewrite <- (comparison_eq_right y z x Hyz). Qed.
+
+  Lemma eq_compare_trans {x y z c} :
+    cmp x y = Eq -> cmp y z = c -> cmp x z = c.
+  Proof. intros Hxy. by rewrite (comparison_eq_left x y z Hxy). Qed.
+End comparison_laws.
+
+#[global] Arguments compare_eq_trans {_ cmp _ x y z c}.
+#[global] Arguments eq_compare_trans {_ cmp _ x y z c}.
+
+(** Comparison laws depend only on the pointwise results of a comparator. *)
+Lemma comparison_ext {A : Type} (cmp cmp' : A -> A -> comparison)
+    `{!Comparison cmp} (Hcmp : forall x y, cmp x y = cmp' x y) : Comparison cmp'.
+Proof.
+  constructor.
+  - intros x y. rewrite <- !Hcmp. apply compare_antisym.
+  - intros x y z c Hxy Hyz. rewrite <- Hcmp in *. eapply compare_trans; eassumption.
+Qed.
+
+Lemma leibniz_comparison_ext {A : Type} (cmp cmp' : A -> A -> comparison)
+    `{!LeibnizComparison cmp} (Hcmp : forall x y, cmp x y = cmp' x y) :
+  LeibnizComparison cmp'.
+Proof. intros x y Hxy. apply (LeibnizComparison.cmp_eq cmp). by rewrite Hcmp. Qed.
+
+(** A comparator inherits the comparison laws from finite approximations when
+    each pair eventually has a stable result. No uniform convergence bound or
+    equality reflection is required. *)
+Lemma comparison_of_approximations {A : Type} (cmp : A -> A -> comparison)
+    (approx : nat -> A -> A -> comparison)
+    (Happrox : forall n, Comparison (approx n))
+    (Hagrees : forall x y, exists bound, forall n,
+      (bound <= n)%nat -> approx n x y = cmp x y) : Comparison cmp.
+Proof.
+  constructor.
+  - intros x y. destruct (Hagrees x y) as [n Hxy], (Hagrees y x) as [m Hyx].
+    rewrite <- (Hxy (n + m)%nat ltac:(lia)), <- (Hyx (n + m)%nat ltac:(lia)).
+    exact (@compare_antisym _ _ (Happrox (n + m)%nat) x y).
+  - intros x y z c Hxy Hyz.
+    destruct (Hagrees x y) as [n Hn], (Hagrees y z) as [m Hm],
+      (Hagrees x z) as [p Hp].
+    rewrite <- (Hn (n + m + p)%nat ltac:(lia)) in Hxy.
+    rewrite <- (Hm (n + m + p)%nat ltac:(lia)) in Hyz.
+    rewrite <- (Hp (n + m + p)%nat ltac:(lia)).
+    exact (@compare_trans _ _ (Happrox (n + m + p)%nat) x y z c Hxy Hyz).
+Qed.
+
+(** Pulling a comparison back along a function needs no injectivity. *)
+Lemma comparison_pullback {A B : Type} (f : A -> B) (cmp : B -> B -> comparison)
+    `{!Comparison cmp} : Comparison (fun x y => cmp (f x) (f y)).
+Proof. constructor; intros; [apply compare_antisym | eapply compare_trans; eassumption]. Qed.
+
+(** Injectivity is needed only when pulling back Leibniz equality. *)
+Lemma leibniz_comparison_pullback {A B : Type} (f : A -> B)
+    (cmp : B -> B -> comparison) `{!Inj (=) (=) f, !LeibnizComparison cmp} :
+  LeibnizComparison (fun x y => cmp (f x) (f y)).
+Proof. intros x y Hxy. apply (inj f), (LeibnizComparison.cmp_eq cmp), Hxy. Qed.
 
 (** ** Generic comparison *)
 (**
@@ -66,12 +162,62 @@ Definition compare_lex (a : comparison) (b : unit -> comparison) : comparison :=
   | Lt | Gt => a
   end.
 
-Module compare.
+Lemma compare_lex_eq (a : comparison) (b : unit -> comparison) :
+  compare_lex a b = Eq <-> a = Eq /\ b () = Eq.
+Proof. destruct a; cbn; intuition congruence. Qed.
 
+Lemma compare_lex_inv c0 c1 c2 :
+  compare_lex c0 c1 = c2 <->
+  if bool_decide (c2 = Eq)
+  then c0 = Eq /\ c1 () = Eq
+  else c0 = c2 \/ (c0 = Eq /\ c1 () = c2).
+Proof. case: bool_decide_reflect c0 => Heq [] /=; by intuition; subst. Qed.
+
+Lemma compare_lex_antisym a b :
+  compare_lex (CompOpp a) (fun _ => CompOpp (b ())) = CompOpp (compare_lex a b).
+Proof. by destruct a. Qed.
+
+(** Transitivity with arbitrary tails.  In recursive comparisons, the tail
+premise can be an induction hypothesis rather than a global instance. *)
+Lemma compare_lex_trans {A : Type} (cmp : A -> A -> comparison)
+    `{Hcmp : !Comparison cmp} (x y z : A) (bxy byz bxz : unit -> comparison) c :
+  (bxy () = c -> byz () = c -> bxz () = c) ->
+  compare_lex (cmp x y) bxy = c ->
+  compare_lex (cmp y z) byz = c ->
+  compare_lex (cmp x z) bxz = c.
+Proof.
+  intros Htail Hxy Hyz.
+  destruct (cmp x y) eqn:E1, (cmp y z) eqn:E2; cbn [compare_lex] in Hxy, Hyz; try congruence.
+  all: try (rewrite (@compare_trans _ cmp Hcmp x y z _ E1 E2); cbn [compare_lex];
+    first [exact Hxy | exact Hyz | by apply Htail]).
+  all: try (rewrite (comparison_eq_left cmp x y z E1) E2; cbn [compare_lex]; congruence).
+  all: try (rewrite <- (comparison_eq_right cmp y z x E2), E1; cbn [compare_lex]; congruence).
+Qed.
+
+(** Convenient pointwise composition of already available comparators.
+[g x y] is delayed; an expression constructing [g] itself is a strict argument.
+Use [compare_lex] to delay comparator construction as well. *)
+Definition lex_compare {A : Type} (f g : A -> A -> comparison) (x y : A) : comparison :=
+  compare_lex (f x y) (fun _ => g x y).
+
+Lemma lex_compare_comparison {A : Type} (f g : A -> A -> comparison)
+    `{Hf : !Comparison f, Hg : !Comparison g} : Comparison (lex_compare f g).
+Proof.
+  constructor.
+  - intros x y. rewrite /lex_compare (compare_antisym x y (Comparison:=Hf))
+      (compare_antisym x y (Comparison:=Hg)).
+    apply (compare_lex_antisym (f y x) (fun _ => g y x)).
+  - intros x y z c Hxy Hyz.
+    eapply (compare_lex_trans f (Hcmp:=Hf) x y z
+      (fun _ => g x y) (fun _ => g y z) (fun _ => g x z) c);
+      [apply (@compare_trans _ g Hg) | exact Hxy | exact Hyz].
+Qed.
+
+Module compare.
   Section derived.
     Context `{!Compare A}.
     #[local] Infix "?=" := (@compare A _).
-    Notation "(?=)" := (@compare A _) (only parsing).
+    #[local] Notation "(?=)" := (@compare A _) (only parsing).
 
     Definition eq (x y : A) : Prop := x ?= y = Eq.
     Definition lt (x y : A) : Prop := x ?= y = Lt.
@@ -90,70 +236,146 @@ Module compare.
     #[global] Instance ge_dec : RelDecision ge.
     Proof. rewrite/ge. solve_decision. Defined.
 
-    #[local] Infix "==" := eq.
-    #[local] Infix "<" := lt.
-    #[local] Infix ">" := gt.
+    Lemma compare_spec x y : CompareSpec (eq x y) (lt x y) (gt x y) (x ?= y).
+    Proof. rewrite /eq /lt /gt. by destruct (x ?= y); constructor. Qed.
 
-    Lemma compare_spec x y : CompareSpec (x == y) (x < y) (x > y) (x ?= y).
-    Proof. rewrite/eq/lt/gt. by destruct (x ?= y); constructor. Qed.
+    Section laws.
+      Context `{!Comparison (?=)}.
 
-    #[global] Instance eq_equiv `{!Comparison (?=)} : Equivalence eq.
-    Proof.
-      rewrite /eq. split.
-      - intros x. apply comparison_refl.
-      - intros x y. by rewrite (compare_antisym y x) => ->.
-      - intros x y z. apply compare_trans.
-    Qed.
+      #[global] Instance eq_equiv : Equivalence eq.
+      Proof.
+        rewrite /eq. split.
+        - intros x. apply comparison_refl.
+        - intros x y. by rewrite (compare_antisym (f:=(?=)) y x) => ->.
+        - intros x y z. apply compare_trans.
+      Qed.
 
-    #[global] Instance le_refl `{!Comparison (?=)} : Reflexive le.
-    Proof. move => x. by rewrite /le comparison_refl. Qed.
+      #[global] Instance compare_proper : Proper (eq ==> eq ==> (=)) (?=).
+      Proof.
+        intros x y Hxy z w Hzw.
+        rewrite (comparison_eq_left (?=) x y z Hxy).
+        by rewrite (comparison_eq_right (?=) z w y Hzw).
+      Qed.
 
-    #[global] Instance ge_refl `{!Comparison (?=)} : Reflexive ge.
-    Proof. move => x. by rewrite /ge comparison_refl. Qed.
+      #[global] Instance eq_proper : Proper (eq ==> eq ==> iff) eq.
+      Proof. intros x y Hxy z w Hzw. rewrite /eq Hxy Hzw. done. Qed.
+      #[global] Instance lt_proper : Proper (eq ==> eq ==> iff) lt.
+      Proof. intros x y Hxy z w Hzw. rewrite /lt Hxy Hzw. done. Qed.
+      #[global] Instance le_proper : Proper (eq ==> eq ==> iff) le.
+      Proof. intros x y Hxy z w Hzw. rewrite /le Hxy Hzw. done. Qed.
+      #[global] Instance gt_proper : Proper (eq ==> eq ==> iff) gt.
+      Proof. intros x y Hxy z w Hzw. rewrite /gt Hxy Hzw. done. Qed.
+      #[global] Instance ge_proper : Proper (eq ==> eq ==> iff) ge.
+      Proof. intros x y Hxy z w Hzw. rewrite /ge Hxy Hzw. done. Qed.
 
-    #[global] Instance lt_trans `{!Comparison (?=)} : Transitive lt.
-    Proof. rewrite /lt. intros x y z. apply compare_trans. Qed.
+      Lemma gt_lt x y : gt x y <-> lt y x.
+      Proof. rewrite /gt /lt (compare_antisym (f:=(?=))). by destruct (y ?= x). Qed.
+      Lemma ge_le x y : ge x y <-> le y x.
+      Proof. rewrite /ge /le (compare_antisym (f:=(?=))). by destruct (y ?= x). Qed.
 
-    #[global] Instance gt_trans `{!Comparison (?=)} : Transitive gt.
-    Proof. rewrite /gt. intros x y z. apply compare_trans. Qed.
+      #[local] Instance le_refl : Reflexive le.
+      Proof. intros x. by rewrite /le comparison_refl. Qed.
+      #[local] Instance ge_refl : Reflexive ge.
+      Proof. intros x. apply ge_le, le_refl. Qed.
 
-    Lemma ordered_type_compare `{!Comparison (?=)} x y : OrderedType.Compare lt eq x y.
-    Proof.
-      rewrite /lt/eq. destruct (x ?= y) eqn:Hc; try by constructor.
-      apply OrderedType.GT. by rewrite compare_antisym Hc.
-    Qed.
+      #[local] Instance lt_trans : Transitive lt.
+      Proof. intros x y z. apply compare_trans. Qed.
+      #[local] Instance gt_trans : Transitive gt.
+      Proof. intros x y z. rewrite !gt_lt. intros; by etransitivity. Qed.
 
-    (** All these relations are antisymmetric wrt eq.
-    No instance for [eq] since that case is degenerate (see [anti_symm_refl]). *)
+      #[local] Instance lt_irrefl : Irreflexive lt.
+      Proof.
+        intros x Hxx. change (x ?= x = Lt) in Hxx.
+        have Hrefl : x ?= x = Eq := comparison_refl.
+        rewrite Hrefl in Hxx. discriminate.
+      Qed.
+      #[local] Instance gt_irrefl : Irreflexive gt.
+      Proof.
+        intros x Hxx. change (x ?= x = Gt) in Hxx.
+        have Hrefl : x ?= x = Eq := comparison_refl.
+        rewrite Hrefl in Hxx. discriminate.
+      Qed.
+      #[global] Instance lt_strict_order : StrictOrder lt.
+      Proof. split; apply _. Qed.
+      #[global] Instance gt_strict_order : StrictOrder gt.
+      Proof. split; apply _. Qed.
 
-    Ltac solve_antisymm R :=
-      intros x y; rewrite /R /eq (compare_antisym y x); by destruct (x ?= y).
-      (* intros x y; unfold R; rewrite /eq (compare_antisym y x); by destruct (x ?= y). *)
+      (** Opposing strict comparisons are contradictory, even without Leibniz equality. *)
+      #[global] Instance lt_anti_symm : AntiSymm (=) lt.
+      Proof.
+        intros x y Hxy Hyx. rewrite /lt (compare_antisym (f:=(?=)) y x) Hxy /= in Hyx.
+        discriminate.
+      Qed.
+      #[global] Instance gt_anti_symm : AntiSymm (=) gt.
+      Proof. intros x y Hxy Hyx. symmetry. apply (lt_anti_symm y x); by apply gt_lt. Qed.
 
-    #[global] Instance lt_anti_symm `{!Comparison (?=)} : AntiSymm eq lt.
-    Proof. solve_antisymm lt. Qed.
+      #[local] Instance le_trans : Transitive le.
+      Proof.
+        intros x y z. rewrite /le.
+        destruct (x ?= y) eqn:Hxy; [rewrite (comparison_eq_left (?=) x y z Hxy) | | done].
+        { done. }
+        destruct (y ?= z) eqn:Hyz.
+        - by rewrite <- (comparison_eq_right (?=) y z x Hyz), Hxy.
+        - by rewrite (compare_trans x y z Lt Hxy Hyz).
+        - done.
+      Qed.
+      #[local] Instance ge_trans : Transitive ge.
+      Proof. intros x y z. rewrite !ge_le. intros; by etransitivity. Qed.
+      #[global] Instance le_preorder : PreOrder le.
+      Proof. split; apply _. Qed.
+      #[global] Instance ge_preorder : PreOrder ge.
+      Proof. split; apply _. Qed.
 
-    #[global] Instance le_anti_symm `{!Comparison (?=)} : AntiSymm eq le.
-    Proof. solve_antisymm le. Qed.
+      Lemma ordered_type_compare x y : OrderedType.Compare lt eq x y.
+      Proof.
+        rewrite /lt /eq. destruct (x ?= y) eqn:Hc; try by constructor.
+        apply OrderedType.GT. by rewrite (compare_antisym (f:=(?=))) Hc.
+      Qed.
 
-    #[global] Instance gt_anti_symm `{!Comparison (?=)} : AntiSymm eq gt.
-    Proof. solve_antisymm gt. Qed.
+      (** These versions also apply to comparisons identifying only equivalence classes. *)
+      #[global] Instance lt_anti_symm_compare_eq : AntiSymm eq lt.
+      Proof. intros x y. rewrite /lt /eq (compare_antisym (f:=(?=)) y x). by destruct (x ?= y). Qed.
+      #[global] Instance le_anti_symm_compare_eq : AntiSymm eq le.
+      Proof. intros x y. rewrite /le /eq (compare_antisym (f:=(?=)) y x). by destruct (x ?= y). Qed.
+      #[global] Instance gt_anti_symm_compare_eq : AntiSymm eq gt.
+      Proof. intros x y Hxy Hyx. symmetry. apply (lt_anti_symm_compare_eq y x); by apply gt_lt. Qed.
+      #[global] Instance ge_anti_symm_compare_eq : AntiSymm eq ge.
+      Proof. intros x y Hxy Hyx. symmetry. apply (le_anti_symm_compare_eq y x); by apply ge_le. Qed.
 
-    #[global] Instance ge_anti_symm `{!Comparison (?=)} : AntiSymm eq ge.
-    Proof. solve_antisymm ge. Qed.
+      #[global] Instance le_total : Total le.
+      Proof.
+        intros x y. rewrite /le (compare_antisym (f:=(?=)) y x).
+        destruct (x ?= y); cbn; auto.
+      Qed.
+      #[global] Instance ge_total : Total ge.
+      Proof. intros x y. rewrite !ge_le. apply le_total. Qed.
 
-    (** [le] and [ge] are total. *)
-    #[global] Instance le_total `{!Comparison (?=)} : Total le.
-    Proof.
-      intros x y. rewrite /le (compare_antisym y x).
-      case: (x ?= y) => /=; auto.
-    Qed.
+      Section leibniz.
+        Context `{!LeibnizComparison (?=)}.
 
-    #[global] Instance ge_total `{!Comparison (?=)} : Total ge.
-    Proof.
-      intros x y. rewrite /ge (compare_antisym y x).
-      case: (x ?= y) => /=; auto.
-    Qed.
+        Lemma eq_eq x y : eq x y <-> x = y.
+        Proof.
+          split; [intros Hxy; exact (LeibnizComparison.cmp_eq (?=) x y Hxy)
+            | intros ->; apply comparison_refl].
+        Qed.
+
+        #[local] Instance le_anti_symm : AntiSymm (=) le.
+        Proof. intros x y Hxy Hyx. apply eq_eq. by apply le_anti_symm_compare_eq. Qed.
+        #[local] Instance ge_anti_symm : AntiSymm (=) ge.
+        Proof. intros x y Hxy Hyx. symmetry. apply (le_anti_symm y x); by apply ge_le. Qed.
+        #[global] Instance le_partial_order : PartialOrder le.
+        Proof. split; apply _. Qed.
+        #[global] Instance ge_partial_order : PartialOrder ge.
+        Proof. split; apply _. Qed.
+        #[global] Instance lt_trichotomy : Trichotomy lt.
+        Proof.
+          intros x y. destruct (x ?= y) eqn:Hxy.
+          - right; left. by apply eq_eq.
+          - by left.
+          - right; right. apply gt_lt. exact Hxy.
+        Qed.
+      End leibniz.
+    End laws.
   End derived.
 
   (**
@@ -202,7 +424,6 @@ Module compare.
 End compare.
 
 NES.Begin LeibnizComparison.
-
   Section with_A.
     Context {A : Type}.
     Implicit Type (a b : A).
@@ -223,50 +444,6 @@ NES.Begin LeibnizComparison.
     End with_Comparison.
   End with_A.
 
-  Section with_Compare.
-    Context `{!Compare A}.
-
-    Import compare.Notations.
-
-    #[local] Instance eq_anti_symm R :
-      C (?=@{A}) ->
-      AntiSymm (compare.eq (A := A)) R ->
-      AntiSymm (=) R.
-    Proof.
-      rewrite /AntiSymm /C /compare.eq.
-      move=> E AS x y Hxy Hyx.
-      exact /E /AS.
-    Qed.
-
-    Context `{!C (?=@{A})}.
-    Context `{!Comparison (?=@{A})}.
-
-    #[global] Instance lt_anti_symm : AntiSymm (=) (<@{A}) := _.
-    #[global] Instance le_anti_symm : AntiSymm (=) (<=@{A}) := _.
-    #[global] Instance gt_anti_symm : AntiSymm (=) (>@{A}) := _.
-    #[global] Instance ge_anti_symm : AntiSymm (=) (>=@{A}) := _.
-
-    #[global] Instance le_trans : Transitive (<=@{A}).
-    Proof using Type*.
-      rewrite /compare.le => x y z.
-      specialize (compare_trans x y z) as Hc.
-      destruct (x ?= y) eqn:Hxy, (y ?= z) eqn:Hyz, (x ?= z) eqn:Hxz => //.
-      all: try by destruct (Hc _ eq_refl).
-      { rewrite (cmp_eq _ x y Hxy) in Hxz. congruence. }
-      { rewrite (cmp_eq _ y z Hyz) in Hxy. congruence. }
-    Qed.
-
-    #[global] Instance ge_trans : Transitive (>=@{A}).
-    Proof using Type*.
-      rewrite /compare.ge => x y z.
-      specialize (compare_trans x y z) as Hc.
-      destruct (x ?= y) eqn:Hxy, (y ?= z) eqn:Hyz, (x ?= z) eqn:Hxz => //.
-      all: try by destruct (Hc _ eq_refl).
-      { rewrite (cmp_eq _ x y Hxy) in Hxz. congruence. }
-      { rewrite (cmp_eq _ y z Hyz) in Hxy. congruence. }
-    Qed.
-  End with_Compare.
-
   Lemma PrimInt63_int_compare_eq (x y : PrimInt63.int) :
     PrimInt63.compare x y = Eq ->
     PrimInt63.eqb x y = true.
@@ -283,75 +460,6 @@ NES.Begin LeibnizComparison.
 
 NES.End LeibnizComparison.
 
-  Section Compare.
-    Context `{cmp : !Compare A, Hcmp : !Comparison (A := A) base.compare}.
-
-    #[global] Instance cmp_antisymm `{Hleib : !LeibnizComparison (T := A) base.compare} :
-      Antisymmetric _ eq (compare.le (A := A)).
-    Proof using Hcmp.
-      move => x y; rewrite /compare.le => Hxy Hyx.
-      apply LeibnizComparison.cmp_eq with (cmp := base.compare); first apply Hleib.
-      move: Hyx Hxy; rewrite -(inj_iff (R := eq) (S := eq) CompOpp (Inj0 := CompOpp_inj)).
-      rewrite -compare_antisym/=.
-      by case: (compare x y).
-    Qed.
-
-    #[global] Instance cmp_trans :
-      Transitive (compare.le (A := A)).
-    Proof using Hcmp.
-      move => x y z.
-      rewrite /compare.le => Hxy Hyz.
-      have {}Hxy : base.compare x y = Eq ∨ base.compare x y = Lt
-        by case: (base.compare x y) Hxy; [left|right|].
-      have {}Hyz : base.compare y z = Eq ∨ base.compare y z = Lt
-        by case: (base.compare y z) Hyz; [left|right|].
-      move: Hxy Hyz => [] Hxy [] Hyz.
-      - by rewrite (compare_trans _ _ _ _ Hxy Hyz).
-      - move => Hxz.
-        move: Hyz Hxz; rewrite [base.compare x z] base.compare_antisym CompOpp_iff/=.
-        move => /(base.compare_trans _ _ _) /[apply].
-        by rewrite base.compare_antisym => /CompOpp_iff/=; rewrite Hxy.
-      - move => Hxz.
-        move: Hxz Hxy; rewrite [base.compare x z] base.compare_antisym CompOpp_iff/=.
-        move => /(base.compare_trans _ _ _) /[apply].
-        by rewrite base.compare_antisym => /CompOpp_iff/=; rewrite Hyz.
-      - by rewrite (compare_trans _ _ _ _ Hxy Hyz).
-    Qed.
-
-    #[global] Instance cmp_trichotomy `{LeibnizComparison (T := A) base.compare} :
-      Trichotomy (compare.lt (A := A)).
-    Proof using Hcmp.
-      move => x y.
-      case Hxy : (base.compare (Compare := cmp) x y).
-      - by move: Hxy => /(LeibnizComparison.cmp_eq _ _ _); right; left.
-      - by rewrite /compare.lt Hxy; left.
-      - move: Hxy; rewrite /compare.lt base.compare_antisym CompOpp_iff /=.
-        by move => ->; right; right.
-    Qed.
-
-    #[global] Instance cmp_total :
-      Total (compare.le (A := A)).
-    Proof using Hcmp.
-      move => x y.
-      rewrite /compare.le.
-      case Hxy : (base.compare (Compare := cmp) x y).
-      - by left.
-      - by left.
-      - move: Hxy; rewrite base.compare_antisym CompOpp_iff /= => ->.
-        by right.
-    Qed.
-
-    Lemma cmp_absurd {c0 c1 : comparison} {P} (H : c0 = c1) :
-      match c0, c1 with
-      | Lt, Lt => P -> P
-      | Eq, Eq => P -> P
-      | Gt, Gt => P -> P
-      | _, _ => P
-      end.
-    Proof. by case: c0 c1 H => [] []. Qed.
-
-  End Compare.
-
 Section comparison.
   Context {A} `{!Compare A}.
 
@@ -359,6 +467,18 @@ Section comparison.
     fun x y => base.compare (f x) (f y).
 
 End comparison.
+
+#[global] Instance compare_on_comparison {A B : Type} `{!Compare A}
+    (f : B -> A) `{!Comparison (compare (A:=A))} :
+    Comparison (@compare B (compare_on f)).
+Proof. exact (comparison_pullback f (compare (A:=A))). Qed.
+
+#[global] Instance compare_on_leibniz_comparison {A B : Type} `{!Compare A}
+    (f : B -> A) `{!Inj (=) (=) f, !LeibnizComparison (compare (A:=A))} :
+    LeibnizComparison (@compare B (compare_on f)).
+Proof. exact (leibniz_comparison_pullback f (compare (A:=A))). Qed.
+
+#[global] Hint Opaque compare_on : typeclass_instances.
 
 Module sorted.
 Section sorted.
@@ -402,70 +522,11 @@ End sorted.
 End sorted.
 
 Section compare_lex.
-  Context {A} {cmpA : A -> A -> comparison} `{HcmpA : !Comparison cmpA}.
-
-  #[local] Arguments compare_trans {A f _ x y z c}.
-
-  Lemma compare_eq_trans {x y z c} :
-    cmpA x y = c ->
-    cmpA y z = Eq ->
-    cmpA x z = c .
-  Proof using HcmpA.
-    case: (decide (c = Eq));
-      first by move => ->; apply compare_trans.
-    move => Hc Hxy Hyz.
-    have Hnot_opp : cmpA x z <> CompOpp c.
-    { rewrite compare_antisym => /CompOpp_inj Hzx.
-      pose proof (Hzy := compare_trans Hzx Hxy).
-      move: Hyz Hzy Hc => - /(f_equal CompOpp).
-      by rewrite -compare_antisym /= => -> <-. }
-    have Hnot_eq : cmpA x z <> Eq.
-    { move: Hyz =>  /(f_equal CompOpp);
-        rewrite -compare_antisym /=.
-      move => /[swap] /(compare_trans) /[apply].
-      by rewrite Hxy. }
-    case: (cmpA x z) c Hc Hnot_opp Hnot_eq {Hxy} => // - [] //.
-  Qed.
-
-  Lemma eq_compare_trans {x y z c} :
-    cmpA x y = Eq ->
-    cmpA y z = c ->
-    cmpA x z = c .
-  Proof using HcmpA.
-    case: (decide (c = Eq));
-      first by move => ->; apply compare_trans.
-    move => Hc Hxy Hyz.
-    have Hnot_opp : cmpA x z <> CompOpp c.
-    { rewrite compare_antisym => /CompOpp_inj Hzx.
-      pose proof (Hzy := compare_trans Hyz Hzx).
-      move: Hxy Hzy Hc => - /(f_equal CompOpp).
-      by rewrite -compare_antisym /= => -> <-. }
-    have Hnot_eq : cmpA x z <> Eq.
-    { move: Hxy =>  /(f_equal CompOpp);
-        rewrite -compare_antisym /=.
-      move => /(compare_trans) /[apply].
-      by rewrite Hyz. }
-    case: (cmpA x z) c Hc Hnot_opp Hnot_eq {Hyz} => // - [] //.
-  Qed.
-
-End compare_lex.
-
-Section compare_lex.
-  Context {A} {cmpA : A -> A -> comparison} `{HcmpA : !Comparison cmpA} `{HlcmpA : !compare.LeibnizComparison cmpA}.
-  Context {B} {cmpB : B -> B -> comparison} `{HcmpB : !Comparison cmpB} `{HlcmpB : !compare.LeibnizComparison cmpB}.
+  Context {A} {cmpA : A -> A -> comparison} `{HcmpA : !Comparison cmpA} `{HlcmpA : !LeibnizComparison cmpA}.
+  Context {B} {cmpB : B -> B -> comparison} `{HcmpB : !Comparison cmpB} `{HlcmpB : !LeibnizComparison cmpB}.
 
   Definition lex_comparison : A * B -> A * B -> comparison :=
     fun '(a0,b0) '(a1,b1) => compare.compare_lex (cmpA a0 a1) (fun _ => cmpB b0 b1).
-
-  Lemma compare_lex_inv c0 c1 c2 :
-    compare.compare_lex c0 c1 = c2 <->
-    if bool_decide (c2 = Eq)
-     then c0 = Eq ∧ c1 () = Eq
-     else c0 = c2 ∨ (c0 = Eq ∧ c1 () = c2).
-  Proof.
-    case: bool_decide_reflect c0 => Heq [] /=;
-      by intuition; subst.
-  Qed.
 
   #[global] Instance lex_comparison_comparison : Comparison (A := A * B) lex_comparison.
   Proof using HcmpA HcmpB.
@@ -500,7 +561,7 @@ Section compare_lex.
   Qed.
 
   #[global] Instance lex_comparison_leibniz_comparison :
-    compare.LeibnizComparison (T := A * B) lex_comparison.
+    LeibnizComparison (T := A * B) lex_comparison.
   Proof using HlcmpA HlcmpB.
     case => [a0 b0] [a1 b1] /=.
     by move => /compare_lex_inv/= []
@@ -529,59 +590,8 @@ Module List.
 End List.
 #[global] Instance list_compare `{!Compare A} : Compare (list A) := List.compare compare.
 
-Lemma lex_eq (a : comparison) (b : unit -> comparison) :
-  compare_lex a b = Eq -> a = Eq /\ b () = Eq.
-Proof. destruct a; cbn; intuition congruence. Qed.
-
-
-(** Lexicographic comparison infrastructure shared by names and templates. *)
 Section comparison_laws.
-  Set Default Proof Using "Type*".
-  Section compare.
-    Context {A : Type} (cmp : A -> A -> comparison) `{Hcmp : !Comparison cmp}.
-    Lemma comparison_eq_left x y z : cmp x y = Eq -> cmp x z = cmp y z.
-    Proof.
-      intros Hxy.
-      have Hyx : cmp y x = Eq by rewrite compare_antisym Hxy.
-      have Hzy := @compare_antisym A cmp Hcmp z y.
-      have Txz := @compare_trans A cmp Hcmp x y z.
-      have Tyz := @compare_trans A cmp Hcmp y x z.
-      have Txy := @compare_trans A cmp Hcmp x z y.
-      destruct (cmp x z) eqn:Hxz, (cmp y z) eqn:Hyz; simpl in *;
-        try reflexivity.
-      all: exfalso; first
-        [ specialize (Tyz Eq Hyx eq_refl); discriminate
-        | specialize (Txz Eq Hxy eq_refl); discriminate
-        | specialize (Txy Lt eq_refl Hzy); congruence
-        | specialize (Txy Gt eq_refl Hzy); congruence ].
-    Qed.
-    Lemma comparison_eq_right x y z : cmp x y = Eq -> cmp z x = cmp z y.
-    Proof.
-      intros Hxy. rewrite (compare_antisym z x) (compare_antisym z y).
-      by rewrite (comparison_eq_left x y z Hxy).
-    Qed.
-  End compare.
-
-  Definition lex_compare {A : Type} (f g : A -> A -> comparison) (x y : A) : comparison :=
-    compare_lex (f x y) (fun _ => g x y).
-  Lemma lex_compare_comparison {A} (f g : A -> A -> comparison)
-      `{Hf : !Comparison f, Hg : !Comparison g} : Comparison (lex_compare f g).
-  Proof.
-    constructor.
-    - intros x y. rewrite /lex_compare (compare_antisym x y (Comparison:=Hf))
-        (compare_antisym x y (Comparison:=Hg)).
-      by destruct (f y x).
-    - intros x y z c Hxy Hyz. unfold lex_compare in *.
-      destruct (f x y) eqn:E1, (f y z) eqn:E2; simpl in Hxy, Hyz; try congruence.
-      all: try (rewrite (@compare_trans _ f Hf x y z _ E1 E2); cbn;
-        first [exact Hxy | exact Hyz | eapply (@compare_trans _ g Hg); eassumption]).
-      all: try (rewrite (comparison_eq_left f x y z E1) E2; cbn; congruence).
-      all: try (rewrite <- (comparison_eq_right f y z x E2), E1; cbn; congruence).
-  Qed.
-  Lemma comparison_pullback {A B} (f : A -> B) (cmp : B -> B -> comparison)
-      `{!Comparison cmp} : Comparison (fun x y => cmp (f x) (f y)).
-  Proof. constructor; intros; [apply compare_antisym | eapply compare_trans; eassumption]. Qed.
-
+  #[local] Set Default Proof Using "Type*".
   Lemma list_comparison {A} (cmp : A -> A -> comparison) `{Hcmp : !Comparison cmp} :
     Comparison (List.compare cmp).
   Proof.
