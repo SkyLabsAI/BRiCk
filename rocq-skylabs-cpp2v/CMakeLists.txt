@@ -93,6 +93,12 @@ add_llvm_executable(cpp2v
 set_property(TARGET tocoq PROPERTY POSITION_INDEPENDENT_CODE ON)
 target_compile_features(tocoq PUBLIC cxx_std_17)
 target_compile_features(cpp2v PRIVATE cxx_std_17)
+
+# CMake invokes the compiler with absolute source paths. Remap them so that
+# __FILE__ (used by always_assert) and compiler metadata are reproducible.
+set(CPP2V_FILE_PREFIX_MAP "-ffile-prefix-map=${CMAKE_CURRENT_SOURCE_DIR}=.")
+target_compile_options(tocoq PRIVATE ${CPP2V_FILE_PREFIX_MAP})
+target_compile_options(cpp2v PRIVATE ${CPP2V_FILE_PREFIX_MAP})
 target_compile_options(tocoq PUBLIC -fno-rtti -Wall -Wimplicit-fallthrough)
 target_compile_options(cpp2v PRIVATE -fno-rtti -Wall -Wimplicit-fallthrough)
 
