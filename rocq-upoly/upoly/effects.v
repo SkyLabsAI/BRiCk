@@ -6,6 +6,9 @@
  *)
 
 Require Import skylabs.upoly.prelude.
+Require skylabs.upoly.option.
+Require skylabs.upoly.prod.
+Require skylabs.upoly.sum.
 Require skylabs.upoly.list.
 Require skylabs.upoly.id.
 Require skylabs.upoly.reader.
@@ -19,6 +22,8 @@ Require skylabs.upoly.writerT.
 Require skylabs.upoly.stateT.
 
 Export list.Notations.
+Export prod.Notations.
+Export sum.Notations.
 
 Add Printing Constructor id.M.
 Add Printing Constructor reader.M.
