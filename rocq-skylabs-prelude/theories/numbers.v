@@ -289,22 +289,15 @@ Proof. by rewrite -N.succ_lt_mono. Qed.
 
 (** Adapter [N.eqb] into [bool_decide]. *)
 Lemma N_eqb_bool_decide (m n : N) : N.eqb m n = bool_decide (m = n).
-Proof.
-  by rewrite -(bool_decide_ext _ _ (N.eqb_eq _ _)) bool_decide_bool_eq.
-Qed.
+Proof. by rewrite -(bool_decide_ext _ _ (N.eqb_eq _ _)) bool_decide_bool_eq. Qed.
 
 Lemma N_leb_bool_decide (m n : N) : N.leb m n = bool_decide (m ≤ n)%N.
-Proof.
-  by rewrite -(bool_decide_ext _ _ (N.leb_le _ _)) bool_decide_bool_eq.
-Qed.
+Proof. by rewrite -(bool_decide_ext _ _ (N.leb_le _ _)) bool_decide_bool_eq. Qed.
 
 (** Rephrase spec for [N.ones] using [bool_decide]. *)
 Lemma N_ones_spec (n m : N) :
   N.testbit (N.ones n) m = bool_decide (m < n)%N.
-Proof.
-  case_bool_decide; [exact: N.ones_spec_low|].
-  apply N.ones_spec_high. lia.
-Qed.
+Proof. case_bool_decide; [exact: N.ones_spec_low|]. apply N.ones_spec_high. lia. Qed.
 
 Lemma N_setbit_bool_decide (a n m : N) :
   N.testbit (N.setbit a n) m = bool_decide (n = m) || N.testbit a m.
@@ -744,10 +737,7 @@ Qed.
 Lemma Z_mod_big a b :
   (- b <= a < 0)%Z
   -> (a `mod` b = a + b)%Z.
-Proof.
-  move=>[??].
-  by symmetry; apply: (Zmod_unique_full _ _ (-1)%Z); [left | ]; lia.
-Qed.
+Proof. move=>[??]. by symmetry; apply: (Zmod_unique_full _ _ (-1)%Z); [left | ]; lia. Qed.
 
 Lemma Z_pow2_half a : (1 <= a)%Z -> (2 ^ a = 2 ^ (a - 1) + 2 ^ (a - 1))%Z.
 Proof.
@@ -786,9 +776,7 @@ Section with_Z.
 
   (** Properties of [Z.divide] *)
   Lemma Z_divide_gcd_iff' a b : (a | b) ↔ Z.gcd a b = Z.abs a.
-  Proof.
-    rewrite -Z.divide_abs_l -Z.gcd_abs_l Z.divide_gcd_iff//. apply Z.abs_nonneg.
-  Qed.
+  Proof. rewrite -Z.divide_abs_l -Z.gcd_abs_l Z.divide_gcd_iff//. apply Z.abs_nonneg. Qed.
 
   #[global] Instance Z_divide_dec a b : Decision (a | b).
   Proof.
@@ -800,10 +788,7 @@ Section with_Z.
   Lemma Z_ones_pow2 n : Z.ones n = 2 ^ n - 1.
   Proof. by rewrite Z.ones_equiv Z.sub_1_r. Qed.
   Lemma Z_ones_nonneg n : 0 ≤ n → 0 ≤ Z.ones n.
-  Proof.
-    intros. rewrite Z_ones_pow2 Z.sub_1_r -Z.lt_le_pred.
-    by apply Z.pow_pos_nonneg.
-  Qed.
+  Proof. intros. rewrite Z_ones_pow2 Z.sub_1_r -Z.lt_le_pred. by apply Z.pow_pos_nonneg. Qed.
 
   Lemma Z_rem_dev_eq a b q :
     (0 <> a)
@@ -825,16 +810,11 @@ Section with_Z.
   (** Properties of [align_dn] and [align_up] *)
   Lemma align_dn_pow2 n bits :
     0 ≤ bits → align_dn n bits = 2 ^ bits * n `div` 2 ^ bits.
-  Proof.
-    intros. rewrite/align_dn.
-    rewrite Z.shiftl_mul_pow2// Z.shiftr_div_pow2//. lia.
-  Qed.
+  Proof. intros. rewrite/align_dn. rewrite Z.shiftl_mul_pow2// Z.shiftr_div_pow2//. lia. Qed.
   Lemma align_dn_divide n bits : 0 ≤ bits → (2 ^ bits | align_dn n bits).
   Proof. eexists. by apply Z.shiftl_mul_pow2. Qed.
   Lemma align_dn_below n bits : 0 ≤ bits → align_dn n bits ≤ n.
-  Proof.
-    intros. rewrite align_dn_pow2//. by apply Z.mul_div_le, Z.pow_pos_nonneg.
-  Qed.
+  Proof. intros. rewrite align_dn_pow2//. by apply Z.mul_div_le, Z.pow_pos_nonneg. Qed.
   Lemma align_dn_above n bits : 0 ≤ bits → n < align_dn n bits + 2 ^ bits.
   Proof.
     intros. rewrite align_dn_pow2//.
@@ -915,10 +895,7 @@ Module Qp.
   Proof. compute_done. Qed.
 
   Lemma div_4 q : q / 4 + q / 4 = q / 2.
-  Proof.
-    rewrite -Qp.div_add_distr Qp.add_diag -Qp.mul_2_2.
-    by rewrite Qp.div_mul_cancel_l.
-  Qed.
+  Proof. rewrite -Qp.div_add_distr Qp.add_diag -Qp.mul_2_2. by rewrite Qp.div_mul_cancel_l. Qed.
 
   Lemma third_two_thirds : 1/3 + 2/3 = 1.
   Proof. exact: (bool_decide_unpack _). Qed.
@@ -982,16 +959,11 @@ Section with_N_to_Qp.
   Proof. done. Qed.
 
   Lemma N_to_Qp_succ n : n <> 0 -> N_to_Qp (N.succ n) = (N_to_Qp n + 1)%Qp.
-  Proof.
-    destruct n; [done|]=>_ /=. by rewrite -Pos.add_1_r pos_to_Qp_add.
-  Qed.
+  Proof. destruct n; [done|]=>_ /=. by rewrite -Pos.add_1_r pos_to_Qp_add. Qed.
 
   Lemma N_to_Qp_inj n m :
     n <> 0 -> m <> 0 -> N_to_Qp n = N_to_Qp m -> n = m.
-  Proof.
-    destruct n; [done|]. destruct m; [done|]=>_ _ ?.
-    f_equal. exact: pos_to_Qp_inj.
-  Qed.
+  Proof. destruct n; [done|]. destruct m; [done|]=>_ _ ?. f_equal. exact: pos_to_Qp_inj. Qed.
 
   Lemma N_to_Qp_inj_iff n m :
     n <> 0 -> m <> 0 -> N_to_Qp n = N_to_Qp m <-> n = m.
@@ -1013,15 +985,9 @@ Section with_N_to_Qp.
 
   Lemma N_to_Qp_add n m :
     n <> 0 -> m <> 0 -> (N_to_Qp n + N_to_Qp m)%Qp = N_to_Qp (n + m).
-  Proof.
-    destruct n; [done|]. destruct m; [done|]=>_ _.
-    by rewrite !N_to_Qp_pos pos_to_Qp_add.
-  Qed.
+  Proof. destruct n; [done|]. destruct m; [done|]=>_ _. by rewrite !N_to_Qp_pos pos_to_Qp_add. Qed.
 
   Lemma N_to_Qp_mul n m :
     n <> 0 -> m <> 0 -> (N_to_Qp n * N_to_Qp m)%Qp = N_to_Qp (n * m).
-  Proof.
-    destruct n; [done|]. destruct m; [done|]=>_ _.
-    by rewrite !N_to_Qp_pos pos_to_Qp_mul.
-  Qed.
+  Proof. destruct n; [done|]. destruct m; [done|]=>_ _. by rewrite !N_to_Qp_pos pos_to_Qp_mul. Qed.
 End with_N_to_Qp.

@@ -27,10 +27,7 @@ Module Uint63.
     end%nat.
 
   Lemma seq_int_length start n : List.length (seq_int start n) = n.
-  Proof.
-    elim: n start => [|n IHn] start //.
-    by rewrite /= IHn.
-  Qed.
+  Proof. elim: n start => [|n IHn] start //. by rewrite /= IHn. Qed.
 
   Lemma seq_int_nth start n k d :
     nth k (seq_int start n) d =
@@ -59,9 +56,7 @@ Module Uint63.
 
   Definition compare_spec_Z x y :
     CompareSpec (x = y) (to_Z x < to_Z y) (to_Z x > to_Z y) (x ?= y)%uint63.
-  Proof.
-    rewrite Uint63.compare_spec. case: Z.compare_spec; constructor; lia.
-  Qed.
+  Proof. rewrite Uint63.compare_spec. case: Z.compare_spec; constructor; lia. Qed.
 End Uint63.
 
 #[global] Instance uint63_compare : Compare PrimInt63.int := PrimInt63.compare.

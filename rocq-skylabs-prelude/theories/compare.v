@@ -341,15 +341,15 @@ Module compare.
     Definition ge (x y : A) : Prop := x ?= y <> Lt.
 
     #[global] Instance eq_dec : RelDecision eq.
-    Proof. rewrite/eq. solve_decision. Defined.
+    Proof. rewrite /eq. solve_decision. Defined.
     #[global] Instance lt_dec : RelDecision lt.
-    Proof. rewrite/lt. solve_decision. Defined.
+    Proof. rewrite /lt. solve_decision. Defined.
     #[global] Instance le_dec : RelDecision le.
-    Proof. rewrite/le. solve_decision. Defined.
+    Proof. rewrite /le. solve_decision. Defined.
     #[global] Instance gt_dec : RelDecision gt.
-    Proof. rewrite/gt. solve_decision. Defined.
+    Proof. rewrite /gt. solve_decision. Defined.
     #[global] Instance ge_dec : RelDecision ge.
-    Proof. rewrite/ge. solve_decision. Defined.
+    Proof. rewrite /ge. solve_decision. Defined.
 
     Lemma compare_spec x y : CompareSpec (eq x y) (lt x y) (gt x y) (x ?= y).
     Proof. rewrite /eq /lt /gt. by destruct (x ?= y); constructor. Qed.

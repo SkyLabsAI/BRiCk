@@ -188,9 +188,7 @@ Qed.
 
 Theorem size_of_array : forall {c : genv} t n sz,
     @size_of c t = Some sz -> @size_of c (Tarray t n) = Some (n * sz)%N.
-Proof.
-  simpl. intros. destruct (size_of c t) => /=; try congruence.
-Qed.
+Proof. simpl. intros. destruct (size_of c t) => /=; try congruence. Qed.
 
 Lemma size_of_Tmut : forall {c} t,
     @size_of c t = @size_of c (Tmut t).
@@ -248,10 +246,7 @@ Qed.
   SizeOf ty a ->
   TCEq (n * a)%N b ->
   SizeOf (Tarray ty n) b.
-Proof.
-  rewrite /SizeOf TCEq_eq=>Hty <-.
-  cbn. by rewrite Hty.
-Qed.
+Proof. rewrite /SizeOf TCEq_eq=>Hty <-. cbn. by rewrite Hty. Qed.
 
 (** Compute the size projection rather than normalizing the full declaration,
 whose struct fields can contain large syntax trees. *)
@@ -346,9 +341,7 @@ Qed.
 
 #[global] Instance size_of_has_size {σ : genv} ty n :
   SizeOf ty n -> HasSize ty.
-Proof.
-  intros. rewrite /HasSize size_of_spec. by eexists.
-Qed.
+Proof. intros. rewrite /HasSize size_of_spec. by eexists. Qed.
 
 (** [sizeof ty : N] is the size of C++ type [ty] (if it has a size) *)
 Definition sizeof {σ : genv} (ty : type) `{!HasSize ty} : N :=
@@ -356,9 +349,7 @@ Definition sizeof {σ : genv} (ty : type) `{!HasSize ty} : N :=
 
 Lemma sizeof_spec {σ : genv} ty `{Hsz : !HasSize ty} :
   size_of σ ty = Some (sizeof ty).
-Proof.
-  rewrite/sizeof/has_size. by destruct Hsz as [sz ->].
-Qed.
+Proof. rewrite/sizeof/has_size. by destruct Hsz as [sz ->]. Qed.
 
 (** [offset_of] *)
 
@@ -471,10 +462,7 @@ Section with_genv.
       exists al, align_of t = Some al /\
             (* size is a multiple of alignment *)
             (sz mod al = 0)%N.
-  Proof.
-    move=>/align_of_size_of' [al [? [? /N.Lcm0.mod_divide ?]]].
-    eauto.
-  Qed.
+  Proof. move=>/align_of_size_of' [al [? [? /N.Lcm0.mod_divide ?]]]. eauto. Qed.
 
   (* Known alignments of named types are recorded in the translation unit.
      Missing layout metadata (e.g. [Gtype] or [Gunsupported]) does not mean
@@ -532,17 +520,11 @@ Section with_genv.
         (Hσ : tu ⊧ σ)
         (Hl : tu.(types) !! gn = Some (Gstruct st)) :
     align_of (Tnamed gn) = GlobDecl_align_of (Gstruct st).
-  Proof.
-    apply align_of_named.
-    by rewrite (glob_def_genv_compat_struct st Hl).
-  Qed.
+  Proof. apply align_of_named. by rewrite (glob_def_genv_compat_struct st Hl). Qed.
 
   Lemma align_of_genv_leq σ1 σ2 ty align :
     @align_of σ1 ty = Some align ->
     genv_leq σ1 σ2 ->
     @align_of σ2 ty = Some align.
-  Proof.
-    move=> /[swap] /Proper_align_of /(_ ty ty eq_refl) /=.
-    by inversion 1; naive_solver.
-  Qed.
+  Proof. move=> /[swap] /Proper_align_of /(_ ty ty eq_refl) /=. by inversion 1; naive_solver. Qed.
 End with_genv.

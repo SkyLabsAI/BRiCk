@@ -217,20 +217,12 @@ Module Encoded.
   Lemma of_N_length bpc n :
     (Z.of_nat bpc <= to_Z PrimString.max_length)%Z ->
     length (PrimStringAxioms.to_list (of_N bpc n)) = bpc.
-  Proof.
-    intros.
-    rewrite of_N_spec //.
-    by rewrite length_rev length_map length_seq.
-  Qed.
+  Proof. intros. rewrite of_N_spec //. by rewrite length_rev length_map length_seq. Qed.
 
   Lemma of_N_length_int bpc n :
     (Z.of_nat bpc <= to_Z PrimString.max_length)%Z ->
     PrimString.length (of_N bpc n) = of_nat bpc.
-  Proof.
-    intros.
-    rewrite PString.length_spec_int.
-    by rewrite of_N_length.
-  Qed.
+  Proof. intros. rewrite PString.length_spec_int. by rewrite of_N_length. Qed.
 
   Lemma to_N_spec bpc acc off s :
     (Z.of_nat bpc + to_Z off <= to_Z (PrimString.length s))%Z ->

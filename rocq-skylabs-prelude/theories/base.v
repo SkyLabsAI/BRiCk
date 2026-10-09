@@ -42,10 +42,7 @@ Qed.
 
 Lemma or_proper_r {P Q R} `{!Decision P} :
   (¬ P -> (Q <-> R)) -> P ∨ Q <-> P ∨ R.
-Proof.
-  move => /or_proper_l H.
-  by rewrite or_comm H or_comm.
-Qed.
+Proof. move => /or_proper_l H. by rewrite or_comm H or_comm. Qed.
 
 Lemma iff_impl (A B C : Prop) : (A → B ↔ C) ↔ ((A → B) ↔ (A → C)).
 Proof. tauto. Qed.
@@ -129,10 +126,7 @@ Qed.
 
 #[global] Instance reflexive_proper A :
   Proper (pointwise_relation A (pointwise_relation A iff) ==> iff) Reflexive.
-Proof.
-  unfold Reflexive=> r1 r2 Heq.
-  apply iff_forall => i. by rewrite Heq.
-Qed.
+Proof. unfold Reflexive=> r1 r2 Heq. apply iff_forall => i. by rewrite Heq. Qed.
 
 #[global] Instance transitive_proper A :
   Proper (pointwise_relation A (pointwise_relation A iff) ==> iff) Transitive.
@@ -365,10 +359,7 @@ Lemma inj2_iff {A B C} {R1 : relation A} {R2 : relation B} (S : relation C) (f :
 Proof. split. apply Hinj. firstorder. Qed.
 
 #[global] Instance inj2_inj `{H : Inj2 A B C eq eq eq f} `{Inhabited B} : Inj eq eq f.
-Proof.
-  intros x y E. apply (inj2 f (Inj2 := H) x inhabitant y inhabitant).
-  by rewrite E.
-Qed.
+Proof. intros x y E. apply (inj2 f (Inj2 := H) x inhabitant y inhabitant). by rewrite E. Qed.
 
 (** ** Comparisons *)
 

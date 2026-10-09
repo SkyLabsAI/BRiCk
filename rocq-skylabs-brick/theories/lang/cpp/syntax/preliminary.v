@@ -704,16 +704,12 @@ Module float_value.
 
   Lemma to_bits_range {ft : t} (f : car ft) :
     (0 <= to_bits f < 2 ^ float_type.bit_width ft)%Z.
-  Proof.
-    destruct ft; simpl in *; apply bits_of_binary_float_range; lia.
-  Qed.
+  Proof. destruct ft; simpl in *; apply bits_of_binary_float_range; lia. Qed.
 
   Lemma to_of_bits ft z :
     (0 <= z < 2 ^ float_type.bit_width ft)%Z ->
     to_bits (of_bits ft z) = z.
-  Proof.
-    destruct ft; simpl; intros Hz; exact: bits_of_binary_float_of_bits.
-  Qed.
+  Proof. destruct ft; simpl; intros Hz; exact: bits_of_binary_float_of_bits. Qed.
 
   Lemma to_of_bits_Ffloat16 z :
     (0 <= z < 2 ^ 16)%Z -> to_bits (of_bits Ffloat16 z) = z.
@@ -735,9 +731,7 @@ Module float_value.
 
   Lemma value_compare_zero_zero {ft : t} (x y : car ft) :
     is_zero x = true -> is_zero y = true -> value_compare x y = Some Eq.
-  Proof.
-    destruct ft; destruct x; destruct y; cbn; congruence.
-  Qed.
+  Proof. destruct ft; destruct x; destruct y; cbn; congruence. Qed.
 
   Lemma value_compare_eq_or_zeros {ft : t} (x y : car ft) :
     value_compare x y = Some Eq -> x = y ∨ is_zero x = true ∧ is_zero y = true.
@@ -789,10 +783,7 @@ Module float_value.
   Lemma value_compare_eq_nonzero {ft : t} (x y : car ft) :
     value_compare x y = Some Eq ->
     is_zero x = false -> is_zero y = false -> x = y.
-  Proof.
-    move=> /value_compare_eq_or_zeros [//|[Hx _]] Hnz _.
-    by rewrite Hx in Hnz.
-  Qed.
+  Proof. move=> /value_compare_eq_or_zeros [//|[Hx _]] Hnz _. by rewrite Hx in Hnz. Qed.
 
   Lemma value_compare_eq_B2R {ft : t} (x y : car ft) :
     value_compare x y = Some Eq -> B2R _ _ x = B2R _ _ y.

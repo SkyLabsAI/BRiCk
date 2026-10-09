@@ -79,10 +79,7 @@ Variant reflectPQ (P Q : Prop) : bool -> Prop :=
 
 #[global] Instance: Params reflectPQ 0 := {}.
 #[global] Instance: Proper (impl ==> impl ==> eq ==> impl) reflectPQ.
-Proof.
-  unfold impl; intros P1 P2 HP Q1 Q2 HQ ? b ->.
-  inversion_clear 1; constructor; tauto.
-Qed.
+Proof. unfold impl; intros P1 P2 HP Q1 Q2 HQ ? b ->. inversion_clear 1; constructor; tauto. Qed.
 #[global] Instance: Proper (flip impl ==> flip impl ==> eq ==> flip impl) reflectPQ.
 Proof. solve_proper. Qed.
 #[global] Instance: Proper (iff ==> iff ==> eq ==> iff) reflectPQ.
@@ -171,10 +168,7 @@ Module Bool.
   Proof. by destruct b1, b2. Qed.
 
   #[global] Instance le_dec : RelDecision (<=).
-  Proof.
-    refine (fun b1 b2 => cast_if (decide (leb b1 b2)));
-      by rewrite le_leb.
-  Qed.
+  Proof. refine (fun b1 b2 => cast_if (decide (leb b1 b2))); by rewrite le_leb. Qed.
 
   #[global] Instance le_pi a b : ProofIrrel (a <= b).
   Proof. destruct a, b; apply _. Qed.

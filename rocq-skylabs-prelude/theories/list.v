@@ -43,9 +43,7 @@ Proof. rewrite list_equiv_Forall2. apply Forall_Forall2_diag. Qed.
 
 Lemma list_equiv_symmetric_strong {A} `{!Equiv A} (l k : list A) :
   Forall (fun x => ∀ y, x ≡ y -> y ≡ x) l -> l ≡ k -> k ≡ l.
-Proof.
-  rewrite !list_equiv_Forall2. apply Forall2_symmetric_strong.
-Qed.
+Proof. rewrite !list_equiv_Forall2. apply Forall2_symmetric_strong. Qed.
 
 Lemma Forall_proper_simpl {A B} (R : A -> B -> Prop) (P0 : A -> Prop) (P1 : B -> Prop) xs0 xs1 :
   (forall x0 x1, R x0 x1 -> P0 x0 -> P1 x1) ->
@@ -116,11 +114,7 @@ Section take_while.
     end.
 
   Lemma length_drop_while xs : length (drop_while xs) <= length xs.
-  Proof.
-    elim: xs => // x xs IH /=.
-    case bool_decide => //.
-    apply Nat.le_le_succ_r, IH.
-  Qed.
+  Proof. elim: xs => // x xs IH /=. case bool_decide => //. apply Nat.le_le_succ_r, IH. Qed.
 
 End take_while.
 
@@ -217,11 +211,7 @@ Proof. move: acc. induction l; cbn; auto. Qed.
 Lemma foldr_push_in {E T} (f : E -> T -> T) x lst (op : T -> T -> T) core :
   (forall elm acc, op x (f elm acc) = f elm (op x acc)) ->
   foldr f (op x core) lst = op x (foldr f core lst).
-Proof.
-  move => opH.
-  elim: lst => [|hd tl IH] /=; first done.
-  by rewrite IH opH.
-Qed.
+Proof. move => opH. elim: lst => [|hd tl IH] /=; first done. by rewrite IH opH. Qed.
 
 (* From stdlib's [repeat] to stdpp's [replicate]. *)
 Lemma repeat_replicate {A} (x : A) n :
@@ -248,10 +238,7 @@ Section list.
     #[local] Lemma list_disjoint_alt l k : l ## k <-> Disjoint l k.
     Proof. rewrite Forall_forall. setoid_rewrite Forall_forall. set_solver. Qed.
     #[global] Instance list_disjoint_dec `{EqDecision A} : RelDecision (##@{list A}).
-    Proof.
-      refine (λ l k, cast_if (decide (Disjoint l k)));
-        by rewrite list_disjoint_alt.
-    Defined.
+    Proof. refine (λ l k, cast_if (decide (Disjoint l k))); by rewrite list_disjoint_alt. Defined.
   End disjoint_dec.
 
   (** Witnesses for non-disjoint lists *)
@@ -268,10 +255,7 @@ Section list.
 
   Lemma list_alter_insert l i f :
     alter f i l = if l !! i is Some x then <[i:=f x]> l else l.
-  Proof.
-    elim: l i => [//|x l IHl] [//|i]; csimpl.
-    rewrite IHl. by case_match.
-  Qed.
+  Proof. elim: l i => [//|x l IHl] [//|i]; csimpl. rewrite IHl. by case_match. Qed.
 
   Lemma list_filter_empty_iff xs `(∀ x, Decision (P x)) :
     filter P xs = [] ↔ List.Forall (λ x, ¬P x) xs.
@@ -283,10 +267,7 @@ Section list.
 
   Lemma list_filter_not_empty_iff xs `(∀ x, Decision (P x)) :
     filter (λ x, ¬P x) xs = [] ↔ List.Forall P xs.
-  Proof.
-    rewrite list_filter_empty_iff. apply Forall_iff => x.
-    split; [apply dec_stable|tauto].
-  Qed.
+  Proof. rewrite list_filter_empty_iff. apply Forall_iff => x. split; [apply dec_stable|tauto]. Qed.
 
   (** List variant of
   << map_filter_insert : ...
@@ -336,10 +317,7 @@ Section list.
   (** Properties of [NoDup] *)
   Lemma NoDup_Permutation' l k:
     NoDup l -> length l = length k -> (∀ x : A, x ∈ l -> x ∈ k) → l ≡ₚ k.
-  Proof.
-    move => ???. apply submseteq_length_Permutation; last lia.
-    by apply NoDup_submseteq.
-  Qed.
+  Proof. move => ???. apply submseteq_length_Permutation; last lia. by apply NoDup_submseteq. Qed.
 
   Lemma NoDup_not_in_delete l i x:
     NoDup l -> l !! i = Some x -> x ∉ delete i l.
@@ -399,11 +377,7 @@ Section lists.
   Lemma zip_app_distr xs xs' ys ys' :
     length xs = length ys ->
     zip (xs ++ xs') (ys ++ ys') = zip xs ys ++ zip xs' ys'.
-  Proof.
-    move: xs' ys ys'.
-    elim: xs => [|x xs IH] xs' [|y ys] ys' //=.
-    by move => [=] /IH ->.
-  Qed.
+  Proof. move: xs' ys ys'. elim: xs => [|x xs IH] xs' [|y ys] ys' //=. by move => [=] /IH ->. Qed.
 
   Lemma zip_lookup_Some x y xs ys i :
     xs !! i = Some x
@@ -441,10 +415,7 @@ Section lists.
 
   Lemma Forall_fmap_fmap_1 (f : A -> B) (g : B -> A) l :
     Forall (fun x => g (f x) = x) l -> g <$> (f <$> l) = l.
-  Proof.
-    intros. rewrite -list_fmap_compose -{2}(list_fmap_id l).
-    exact: Forall_fmap_ext_1.
-  Qed.
+  Proof. intros. rewrite -list_fmap_compose -{2}(list_fmap_id l). exact: Forall_fmap_ext_1. Qed.
 
   Lemma Forall_fmap_fmap (f : A -> B) (g : B -> A) l :
     Forall (fun x => g (f x) = x) l <-> g <$> (f <$> l) = l.
@@ -497,17 +468,12 @@ Notation list_difference_id := list_difference_singleton_not_in.
 
 Lemma tail_length {A} (l : list A):
   length (tail l) <= length l <= length (tail l) + 1.
-Proof.
-  induction l; simpl; by lia.
-Qed.
+Proof. induction l; simpl; by lia. Qed.
 
 Lemma tail_length_eq {A} (l : list A):
   0 < length l ->
   length (tail l) + 1 = length l.
-Proof.
-  intros H.
-  destruct l; simpl in *; by lia.
-Qed.
+Proof. intros H. destruct l; simpl in *; by lia. Qed.
 
 Lemma list_ne_length {A} (xs : list A) : length xs ≠ 0 -> xs <> [].
 Proof. by move=> ? /(f_equal length). Qed.
@@ -626,9 +592,7 @@ Section ap.
   Proof. done. Qed.
 
   Lemma ap_app_l fs1 fs2 xs : (fs1 ++ fs2) <*> xs = (fs1 <*> xs) ++ (fs2 <*> xs).
-  Proof.
-    elim: fs1=>// f fs1 IH. csimpl. by rewrite !ap_cons_l IH assoc.
-  Qed.
+  Proof. elim: fs1=>// f fs1 IH. csimpl. by rewrite !ap_cons_l IH assoc. Qed.
   Lemma ap_app_r fs xs1 xs2 : fs <*> (xs1 ++ xs2) ≡ₚ (fs <*> xs1) ++ (fs <*> xs2).
   Proof.
     elim: xs1=>[|x1 xs1 IH].
@@ -704,9 +668,7 @@ Section NoDup_ap.
 
   Lemma pairwise_disj_funs_cons fs f :
     pairwise_disj_funs (f :: fs) -> pairwise_disj_funs fs.
-  Proof.
-    intros HFFS ?? **. apply (HFFS f1 f2) => //; by rewrite elem_of_cons; right.
-  Qed.
+  Proof. intros HFFS ?? **. apply (HFFS f1 f2) => //; by rewrite elem_of_cons; right. Qed.
   Lemma NoDup_fmap_fun fs x :
     NoDup fs ->
     pairwise_disj_funs fs ->
