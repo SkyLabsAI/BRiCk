@@ -1,0 +1,6 @@
+(rocq.theory
+ (name skylabs.guesstimator)
+ (package ltac2-guesstimator)
+ (generate_project_file)
+ (theories Corelib Ltac2)
+ (plugins ltac2-guesstimator.plugin))
