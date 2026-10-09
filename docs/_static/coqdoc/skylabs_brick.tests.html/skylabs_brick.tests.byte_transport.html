@@ -1,0 +1,119 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.byte_transport</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.proofmode.proofmode</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.logic.heap_pred</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.logic.object_repr</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Set</span> <span class="id" title="var">Default</span> <span class="id" title="keyword">Proof</span> <span class="id" title="var">Using</span> "Type*".<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="with_cpp" class="idref" href="#with_cpp"><span class="id" title="section">with_cpp</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{<a id="43a705d40096ef54c52f70536b49dc5b" class="idref" href="#43a705d40096ef54c52f70536b49dc5b"><span class="id" title="variable">Σ</span></a> : <span class="id" title="class">cpp_logic</span>} {<a id="0b1d3f605c206c3f68b5282befa8ad5b" class="idref" href="#0b1d3f605c206c3f68b5282befa8ad5b"><span class="id" title="variable">σ</span></a> : <span class="id" title="class">genv</span>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="comment">(*&nbsp;The&nbsp;frame&nbsp;need&nbsp;not&nbsp;be&nbsp;affine,&nbsp;and&nbsp;the&nbsp;byte&nbsp;need&nbsp;not&nbsp;have&nbsp;a&nbsp;raw&nbsp;encoding.&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="transport_uninitialized_byte" class="idref" href="#transport_uninitialized_byte"><span class="id" title="definition">transport_uninitialized_byte</span></a> (<a id="p:5" class="idref" href="#p:5"><span class="id" title="binder">p</span></a> <a id="p':6" class="idref" href="#p':6"><span class="id" title="binder">p'</span></a> : <span class="id" title="axiom">ptr</span>) (<a id="q:7" class="idref" href="#q:7"><span class="id" title="binder">q</span></a> : <span class="id" title="record">cQp.t</span>) (<a id="P:8" class="idref" href="#P:8"><span class="id" title="binder">P</span></a> : <span class="id" title="definition">mpred</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">ptr_congP</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#0b1d3f605c206c3f68b5282befa8ad5b"><span class="id" title="variable">σ</span></a> <a class="idref" href="skylabs_brick.tests.byte_transport.html#p:5"><span class="id" title="variable">p</span></a> <a class="idref" href="skylabs_brick.tests.byte_transport.html#p':6"><span class="id" title="variable">p'</span></a> <span class="id" title="notation">**</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#p:5"><span class="id" title="variable">p</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">tptstoR</span> <span class="id" title="abbreviation">Tbyte</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#q:7"><span class="id" title="variable">q</span></a> <span class="id" title="constructor">Vundef</span> <span class="id" title="notation">**</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#P:8"><span class="id" title="variable">P</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#p':6"><span class="id" title="variable">p'</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">anyR</span> <span class="id" title="abbreviation">Tbyte</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#q:7"><span class="id" title="variable">q</span></a> <span class="id" title="notation">**</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#P:8"><span class="id" title="variable">P</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<span class="id" title="lemma">tptstoR_anyR_val</span> <span class="id" title="abbreviation">Tbyte</span> <span class="id" title="var">q</span> <span class="id" title="constructor">Vundef</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iIntros</span> "(#C &amp; B &amp; F)". <span class="id" title="var">iFrame</span> "F".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="var">iApply</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">(</span></a><span class="id" title="lemma">_at_anyR_byte_ptr_congP_transport</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">with</span></a> "C B"<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">)</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="transport_raw_byte" class="idref" href="#transport_raw_byte"><span class="id" title="definition">transport_raw_byte</span></a> (<a id="p:9" class="idref" href="#p:9"><span class="id" title="binder">p</span></a> <a id="p':10" class="idref" href="#p':10"><span class="id" title="binder">p'</span></a> : <span class="id" title="axiom">ptr</span>) (<a id="q:11" class="idref" href="#q:11"><span class="id" title="binder">q</span></a> : <span class="id" title="record">cQp.t</span>) (<a id="r:12" class="idref" href="#r:12"><span class="id" title="binder">r</span></a> : <span class="id" title="axiom">raw_byte</span>) (<a id="P:13" class="idref" href="#P:13"><span class="id" title="binder">P</span></a> : <span class="id" title="definition">mpred</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">ptr_congP</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#0b1d3f605c206c3f68b5282befa8ad5b"><span class="id" title="variable">σ</span></a> <a class="idref" href="skylabs_brick.tests.byte_transport.html#p:9"><span class="id" title="variable">p</span></a> <a class="idref" href="skylabs_brick.tests.byte_transport.html#p':10"><span class="id" title="variable">p'</span></a> <span class="id" title="notation">**</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#p:9"><span class="id" title="variable">p</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">tptstoR</span> <span class="id" title="abbreviation">Tbyte</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#q:11"><span class="id" title="variable">q</span></a> (<span class="id" title="constructor">Vraw</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#r:12"><span class="id" title="variable">r</span></a>) <span class="id" title="notation">**</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#P:13"><span class="id" title="variable">P</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#p':10"><span class="id" title="variable">p'</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">anyR</span> <span class="id" title="abbreviation">Tbyte</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#q:11"><span class="id" title="variable">q</span></a> <span class="id" title="notation">**</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#P:13"><span class="id" title="variable">P</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<span class="id" title="lemma">tptstoR_anyR_val</span> <span class="id" title="abbreviation">Tbyte</span> <span class="id" title="var">q</span> (<span class="id" title="constructor">Vraw</span> <span class="id" title="var">r</span>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iIntros</span> "(#C &amp; B &amp; F)". <span class="id" title="var">iFrame</span> "F".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="var">iApply</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">(</span></a><span class="id" title="lemma">_at_anyR_byte_ptr_congP_transport</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">with</span></a> "C B"<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">)</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="transport_three_byte_block" class="idref" href="#transport_three_byte_block"><span class="id" title="definition">transport_three_byte_block</span></a> (<a id="p:14" class="idref" href="#p:14"><span class="id" title="binder">p</span></a> <a id="p':15" class="idref" href="#p':15"><span class="id" title="binder">p'</span></a> : <span class="id" title="axiom">ptr</span>) (<a id="q:16" class="idref" href="#q:16"><span class="id" title="binder">q</span></a> : <span class="id" title="record">cQp.t</span>) (<a id="P:17" class="idref" href="#P:17"><span class="id" title="binder">P</span></a> : <span class="id" title="definition">mpred</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">ptr_congP</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#0b1d3f605c206c3f68b5282befa8ad5b"><span class="id" title="variable">σ</span></a> <a class="idref" href="skylabs_brick.tests.byte_transport.html#p:14"><span class="id" title="variable">p</span></a> <a class="idref" href="skylabs_brick.tests.byte_transport.html#p':15"><span class="id" title="variable">p'</span></a> <span class="id" title="notation">**</span> <span class="id" title="axiom">type_ptr</span> (<span class="id" title="constructor">Tarray</span> <span class="id" title="abbreviation">Tbyte</span> 3) <a class="idref" href="skylabs_brick.tests.byte_transport.html#p:14"><span class="id" title="variable">p</span></a> <span class="id" title="notation">**</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="axiom">type_ptr</span> (<span class="id" title="constructor">Tarray</span> <span class="id" title="abbreviation">Tbyte</span> 3) <a class="idref" href="skylabs_brick.tests.byte_transport.html#p':15"><span class="id" title="variable">p'</span></a> <span class="id" title="notation">**</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#p:14"><span class="id" title="variable">p</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="definition">blockR</span> 3 <a class="idref" href="skylabs_brick.tests.byte_transport.html#q:16"><span class="id" title="variable">q</span></a> <span class="id" title="notation">**</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#P:17"><span class="id" title="variable">P</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#p':15"><span class="id" title="variable">p'</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="definition">blockR</span> 3 <a class="idref" href="skylabs_brick.tests.byte_transport.html#q:16"><span class="id" title="variable">q</span></a> <span class="id" title="notation">**</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#P:17"><span class="id" title="variable">P</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iIntros</span> "(#C &amp; #T &amp; #T' &amp; B &amp; F)". <span class="id" title="var">iFrame</span> "F".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iApply</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">(</span></a><span class="id" title="lemma">blockR_ptr_congP_transport</span> 3 <span class="id" title="var">p</span> <span class="id" title="var">p'</span> (<span class="id" title="constructor">Tarray</span> <span class="id" title="abbreviation">Tbyte</span> 3) <span class="id" title="var">q</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#eq_refl"><span class="id" title="constructor">eq_refl</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">with</span></a> "[$] B"<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">)</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="transport_empty_byte_block" class="idref" href="#transport_empty_byte_block"><span class="id" title="definition">transport_empty_byte_block</span></a> (<a id="p:18" class="idref" href="#p:18"><span class="id" title="binder">p</span></a> <a id="p':19" class="idref" href="#p':19"><span class="id" title="binder">p'</span></a> : <span class="id" title="axiom">ptr</span>) (<a id="q:20" class="idref" href="#q:20"><span class="id" title="binder">q</span></a> : <span class="id" title="record">cQp.t</span>) (<a id="P:21" class="idref" href="#P:21"><span class="id" title="binder">P</span></a> : <span class="id" title="definition">mpred</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">ptr_congP</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#0b1d3f605c206c3f68b5282befa8ad5b"><span class="id" title="variable">σ</span></a> <a class="idref" href="skylabs_brick.tests.byte_transport.html#p:18"><span class="id" title="variable">p</span></a> <a class="idref" href="skylabs_brick.tests.byte_transport.html#p':19"><span class="id" title="variable">p'</span></a> <span class="id" title="notation">**</span> <span class="id" title="axiom">type_ptr</span> (<span class="id" title="constructor">Tarray</span> <span class="id" title="abbreviation">Tbyte</span> 0) <a class="idref" href="skylabs_brick.tests.byte_transport.html#p:18"><span class="id" title="variable">p</span></a> <span class="id" title="notation">**</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="axiom">type_ptr</span> (<span class="id" title="constructor">Tarray</span> <span class="id" title="abbreviation">Tbyte</span> 0) <a class="idref" href="skylabs_brick.tests.byte_transport.html#p':19"><span class="id" title="variable">p'</span></a> <span class="id" title="notation">**</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#p:18"><span class="id" title="variable">p</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="definition">blockR</span> 0 <a class="idref" href="skylabs_brick.tests.byte_transport.html#q:20"><span class="id" title="variable">q</span></a> <span class="id" title="notation">**</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#P:21"><span class="id" title="variable">P</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#p':19"><span class="id" title="variable">p'</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="definition">blockR</span> 0 <a class="idref" href="skylabs_brick.tests.byte_transport.html#q:20"><span class="id" title="variable">q</span></a> <span class="id" title="notation">**</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#P:21"><span class="id" title="variable">P</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iIntros</span> "(#C &amp; #T &amp; #T' &amp; B &amp; F)". <span class="id" title="var">iFrame</span> "F".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iApply</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">(</span></a><span class="id" title="lemma">blockR_ptr_congP_transport</span> 0 <span class="id" title="var">p</span> <span class="id" title="var">p'</span> (<span class="id" title="constructor">Tarray</span> <span class="id" title="abbreviation">Tbyte</span> 0) <span class="id" title="var">q</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#eq_refl"><span class="id" title="constructor">eq_refl</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">with</span></a> "[$] B"<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">)</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_brick.tests.byte_transport.html#with_cpp"><span class="id" title="section">with_cpp</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
