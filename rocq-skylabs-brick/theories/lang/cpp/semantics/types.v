@@ -208,6 +208,23 @@ Lemma size_of_genv_compat tu σ gn st
   size_of σ (Tnamed gn) = GlobDecl_size_of (Gstruct st).
 Proof. by rewrite /= (glob_def_genv_compat_struct st Hl). Qed.
 
+(** A defined size in a translation unit is preserved by any compatible
+global environment. This includes structs, unions, and enums. *)
+Lemma size_of_genv_compat_named tu σ gn n (Hσ : tu ⊧ σ) :
+  (tu.(types) !! gn) ≫= GlobDecl_size_of = Some n ->
+  size_of σ (Tnamed gn) = Some n.
+Proof.
+  intros Hsize.
+  pose (σtu := Build_genv tu σ.(member_pointer_bitsize)).
+  assert (Hle : genv_leq σtu σ).
+  { constructor; [exact (genv_compat_submodule _ _ Hσ)|reflexivity]. }
+  pose proof (Proper_size_of σtu σ Hle (Tnamed gn) (Tnamed gn) eq_refl) as Hsz.
+  change (Roption_leq eq ((tu.(types) !! gn) ≫= GlobDecl_size_of)
+    (size_of σ (Tnamed gn))) in Hsz.
+  rewrite Hsize in Hsz.
+  inversion Hsz; subst; cbn; congruence.
+Qed.
+
 Lemma size_of_erase_qualifiers σ ty :
   size_of σ (erase_qualifiers ty) = size_of σ ty.
 Proof. induction ty => //=. by rewrite IHty. Qed.
@@ -236,25 +253,37 @@ Proof.
   cbn. by rewrite Hty.
 Qed.
 
-#[global] Instance named_struct_size_of tu σ gn st n :
+(** Compute the size projection rather than normalizing the full declaration,
+whose struct fields can contain large syntax trees. *)
+#[global] Instance named_size_of tu σ gn n :
+  genv_compat tu σ ->
+  TCSimpl ((tu.(types) !! gn) ≫= GlobDecl_size_of) (Some n) ->
+  SizeOf (Tnamed gn) n.
+Proof. rewrite /SizeOf TCSimpl_eq. apply size_of_genv_compat_named. Qed.
+
+Lemma named_struct_size_of tu σ gn st n :
   genv_compat tu σ ->
   TCSimpl (tu.(types) !! gn) (Some (Gstruct st)) ->
   TCEq st.(s_size) n ->
   SizeOf (Tnamed gn) n.
 Proof.
-  rewrite /SizeOf TCSimpl_eq TCEq_eq=>? /glob_def_genv_compat_struct Htu <-.
-  cbn. by rewrite Htu.
+  rewrite /SizeOf TCSimpl_eq TCEq_eq=>Hσ Hl <-.
+  apply (size_of_genv_compat_named tu σ gn _ Hσ). by rewrite Hl /=.
 Qed.
 
-#[global] Instance named_union_size_of tu σ gn u n :
+Lemma named_union_size_of tu σ gn u n :
   genv_compat tu σ ->
   TCSimpl (tu.(types) !! gn) (Some (Gunion u)) ->
   TCEq u.(u_size) n ->
   SizeOf (Tnamed gn) n.
 Proof.
-  rewrite /SizeOf TCSimpl_eq TCEq_eq=>? /glob_def_genv_compat_union Htu <-.
-  cbn. by rewrite Htu.
+  rewrite /SizeOf TCSimpl_eq TCEq_eq=>Hσ Hl <-.
+  apply (size_of_genv_compat_named tu σ gn _ Hσ). by rewrite Hl /=.
 Qed.
+
+Lemma enum_size_of {σ : genv} gn n :
+  SizeOf (Tnamed gn) n -> SizeOf (Tenum gn) n.
+Proof. done. Qed.
 
 #[global] Instance bool_size_of {σ : genv} : SizeOf Tbool 1.
 Proof. done. Qed.
