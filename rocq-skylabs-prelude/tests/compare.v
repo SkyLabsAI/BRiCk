@@ -8,11 +8,11 @@ Section comparison_notation.
 
   (** Comparison notation refers to the comparator without requiring its laws. *)
   Example comparison_notation (x y : A) :
-    (x ?= y) = base.compare x y /\
-    (x ?=@{A} y) = base.compare x y /\
-    (?=) x y = base.compare x y /\
-    (?=@{A}) x y = base.compare x y /\
-    (x ?=.) y = base.compare x y /\
-    (.?= y) x = base.compare x y.
+    (x ?= y) = compare x y /\
+    (x ?=@{A} y) = compare x y /\
+    (?=) x y = compare x y /\
+    (?=@{A}) x y = compare x y /\
+    (x ?=.) y = compare x y /\
+    (.?= y) x = compare x y.
   Proof. repeat split; reflexivity. Qed.
 End comparison_notation.

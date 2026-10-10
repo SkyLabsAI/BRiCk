@@ -19,16 +19,16 @@ Module Import internal.
   Module NameMap.
     Module Compare.
       Definition t : Type := name.
-      #[local] Definition compare : t -> t -> comparison := compareN.
+      #[local] Instance compare : base.Compare t := _.
       #[local] Infix "?=" := compare.
       #[local] Lemma compare_sym x y : (y ?= x) = CompOpp (x ?= y).
-      Proof. exact: compare_antisym. Qed.
+      Proof. exact: (compare_antisym (f:=base.compare (A:=t))). Qed.
       #[local] Lemma compare_trans c x y z : (x ?= y) = c -> (y ?= z) = c -> (x ?= z) = c.
-      Proof. exact: base.compare_trans. Qed.
+      Proof. exact: (base.compare_trans (f:=base.compare (A:=t))). Qed.
     End Compare.
     Module Key := OrderedType_from_Alt Compare.
     Lemma eqL : forall a b, Key.eq a b -> @eq _ a b.
-    Proof. apply LeibnizComparison.cmp_eq; refine _. Qed.
+    Proof. exact (LeibnizComparison.cmp_eq (base.compare (A:=Compare.t))). Qed.
     Include FMapAVL.Make Key.
     Include FMapExtra.MIXIN Key.
     Include FMapExtra.MIXIN_LEIBNIZ Key.
@@ -47,22 +47,18 @@ End TM.
 Module TPMap.
   (* Map over [temp_param] *)
 
-  (* TODO: the need for this suggests some oddity in the setup of the
-     [Compare] and [Comparison] typeclasses. *)
-  #[local] Hint Transparent base.compare : typeclass_instances.
-
   Module Compare.
     Definition t : Type := temp_param.
-    #[local] Definition compare : t -> t -> comparison := temp_param_compare.
+    #[local] Instance compare : base.Compare t := _.
     #[local] Infix "?=" := compare.
     #[local] Lemma compare_sym x y : (y ?= x) = CompOpp (x ?= y).
-    Proof. exact: compare_antisym. Qed.
+    Proof. exact: (compare_antisym (f:=base.compare (A:=t))). Qed.
     #[local] Lemma compare_trans c x y z : (x ?= y) = c -> (y ?= z) = c -> (x ?= z) = c.
-    Proof. exact: compare_trans. Qed.
+    Proof. exact: (base.compare_trans (f:=base.compare (A:=t))). Qed.
   End Compare.
   Module Key := OrderedType_from_Alt Compare.
   Lemma eqL : forall a b, Key.eq a b -> @eq _ a b.
-  Proof. apply LeibnizComparison.cmp_eq; refine _. Qed.
+  Proof. exact (LeibnizComparison.cmp_eq (base.compare (A:=Compare.t))). Qed.
   Include FMapAVL.Make Key.
   Include FMapExtra.MIXIN Key.
   Include FMapExtra.MIXIN_LEIBNIZ Key.
