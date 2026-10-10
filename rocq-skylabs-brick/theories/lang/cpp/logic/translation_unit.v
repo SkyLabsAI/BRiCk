@@ -31,10 +31,27 @@ Section with_cpp.
   Proof. intros; rewrite /init_validR; case_match; apply _. Qed.
   #[global] Instance init_validR_affine : Affine1 init_validR := _.
 
+  (** Admission is checked at function entry, not assumed as a module resource.
+      Unknown sizes (including incomplete extern declarations) remain admissible. *)
+  Definition global_size_admitted (o : ObjValue) : Prop :=
+    match o with
+    | Ovar ty _ => size_of σ ty <> Some 0%N
+    | _ => True
+    end.
+
+  Definition globals_admitted (tu : translation_unit) : Prop :=
+    map_Forall (fun _ o => global_size_admitted o) tu.(symbols).
+
+  Definition function_admitted (tu : translation_unit) : Prop :=
+    tu ⊧ σ /\ globals_admitted tu.
+
   Definition denoteSymbol (tu : translation_unit) (n : obj_name) (o : ObjValue) : mpred :=
     _global n |->
         match o with
-        | Ovar t e => init_validR t
+        | Ovar t e =>
+          (* Unsupported zero-sized objects furnish no pointer facts. In
+             particular, this must not be a contradictory module resource. *)
+          if bool_decide (size_of σ t = Some 0%N) then emp else init_validR t
         | Ofunction f =>
           match f.(f_body) with
           | None => svalidR
@@ -68,7 +85,7 @@ Section with_cpp.
    *)
   Definition is_strict_valid (o : ObjValue) : bool :=
     match o with
-    | Ovar t _ => negb (zero_sized_array t)
+    | Ovar t _ => negb (zero_sized_array t) && bool_decide (size_of σ t <> Some 0%N)
     | _ => true
     end.
 
@@ -76,21 +93,34 @@ Section with_cpp.
     is_strict_valid o ->
     denoteSymbol tu n o |-- strict_valid_ptr (_global n).
   Proof.
-    rewrite /denoteSymbol/init_validR/is_strict_valid; destruct o.
-    { rewrite -_at_svalidR. by destruct zero_sized_array. }
+    rewrite /denoteSymbol/init_validR/is_strict_valid.
+    destruct o as [ty init|f|m|c|d].
+    { destruct (decide (size_of σ ty = Some 0%N)) as [Hz|Hnz].
+      { rewrite (bool_decide_true (size_of σ ty = Some 0%N)); last exact Hz.
+        rewrite (bool_decide_false (size_of σ ty <> Some 0%N)); last tauto.
+        by destruct zero_sized_array. }
+      rewrite (bool_decide_false (size_of σ ty = Some 0%N)); last exact Hnz.
+      rewrite (bool_decide_true (size_of σ ty <> Some 0%N)); last exact Hnz.
+      destruct zero_sized_array => //= _.
+      by rewrite _at_svalidR. }
     all: intros _; case_match; last by rewrite _at_svalidR.
     all: rewrite !_at_as_Rep; auto using
       code_at_strict_valid, method_at_strict_valid, ctor_at_strict_valid, dtor_at_strict_valid.
   Qed.
 
   Lemma denoteSymbol_valid tu n o :
+    global_size_admitted o ->
     denoteSymbol tu n o |-- valid_ptr (_global n).
   Proof.
+    intros Had.
     destruct (is_strict_valid o) eqn:Hs.
     { by rewrite denoteSymbol_strict_valid ?Hs // strict_valid_valid. }
-    move: Hs.
-    rewrite -_at_validR /denoteSymbol /init_validR /is_strict_valid.
-    by destruct o => //= ?; case_match.
+    move: Hs Had.
+    rewrite -_at_validR /denoteSymbol /init_validR /is_strict_valid /global_size_admitted.
+    destruct o => //= Hs Had.
+    rewrite bool_decide_false; last exact Had.
+    destruct zero_sized_array => //=.
+    by rewrite _at_svalidR _at_validR strict_valid_valid.
   Qed.
 
   (** TODO incomplete *)
@@ -149,12 +179,14 @@ Section with_cpp.
 
   Lemma denoteModule_valid n m :
     m.(symbols) !! n <> None ->
+    (forall o, m.(symbols) !! n = Some o -> global_size_admitted o) ->
     denoteModule m |-- valid_ptr (_global n).
   Proof.
     intros; iIntros "M".
     destruct (symbols m !! n) eqn:?; try congruence.
     iDestruct (denoteModule_denoteSymbol with "M") as "M"; eauto.
-    by iApply denoteSymbol_valid.
+    iApply denoteSymbol_valid; last done.
+    by apply H0.
   Qed.
 
   #[global] Instance denoteModule_models_observe tu : Observe [| tu ⊧ σ |] (denoteModule tu).

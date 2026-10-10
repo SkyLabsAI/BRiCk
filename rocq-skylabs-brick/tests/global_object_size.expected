@@ -1,0 +1,22 @@
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/global_object_size.v", line 93, characters 4-184:
+The command has indeed failed with message:
+No applicable tactic.
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/global_object_size.v", line 102, characters 42-76:
+The command has indeed failed with message:
+In environment
+thread_info : biIndex
+_Σ : gFunctors
+Σ : cpp_logic thread_info _Σ
+σ : genv
+tu : translation_unit
+ρ : region
+ty : type
+x : obj_name
+Q : ptr → FreeTemps → mpred
+The term "wp_lval_global tu ρ ty x Q" has type
+ "[| size_of ?resolve ty ≠ Some 0%N |] **
+  read_decl (_global x) ty (λ p : ptr, Q p 1%free)
+  |-- wp_lval tu ρ (Eglobal x ty) Q"
+while it is expected to have type
+ "read_decl (_global x) ty (λ p : ptr, Q p 1%free)
+  |-- wp_lval tu ρ (Eglobal x ty) Q".

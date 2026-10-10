@@ -921,6 +921,7 @@ Module Type Expr__newdelete.
     Section with_region.
       Variable (tu : translation_unit).
       Context (ρ : region).
+      Context (Hσ : tu ⊧ σ).
       #[local] Notation wp_operand := (wp_operand tu ρ).
 
       (* <<delete>>
@@ -967,9 +968,9 @@ Module Type Expr__newdelete.
            letI* this', mdc_ty := resolve_complete_obj destroyed_type obj_ptr in
            wp_delete_obj default_delete mdc_ty this' (Q Vvoid free))
       |-- wp_operand (Edelete false default_delete e destroyed_type) Q.
-      Proof.
+      Proof using Type* Hσ.
         intros **; iIntros "operand".
-        iApply wp_operand_models; iIntros "#MOD".
+        iApply (wp_operand_models tu ρ _ _ Hσ). iIntros "#MOD".
         iApply wp_operand_delete; eauto; cbn.
         iApply (wp_operand_frame _ tu); [by reflexivity | | by iFrame].
         iIntros (v free) "H"; iDestruct "H" as (obj_ptr) "(-> & % & dtor_lookup)".

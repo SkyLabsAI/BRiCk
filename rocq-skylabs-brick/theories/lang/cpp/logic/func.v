@@ -431,7 +431,7 @@ End with_cpp.
 NOTE: The fancy updates in `wp_func` and friends are not in the right
 place to support `XX_shift` lemmas. This could be fixed.
 *)
-#[local] Definition wp_func' `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
+#[local] Definition wp_func_body `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
     (f : Func) (args : list ptr) (Q : ptr -> epred) : mpred :=
   match f.(f_body) with
   | None => ERROR "wp_func: no body"
@@ -446,6 +446,11 @@ place to support `XX_shift` lemmas. This could be fixed.
       wp_builtin_func builtin (Tfunction $ @FunctionType _ f.(f_cc) f.(f_arity) f.(f_return) ts) args Q
     end
   end.
+(** Whole-function verification requires an admitted translation unit before
+    any update or evaluation step. Raw local statement WPs remain available. *)
+#[local] Definition wp_func' `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
+    (f : Func) (args : list ptr) (Q : ptr -> epred) : mpred :=
+  [| function_admitted tu |] ** wp_func_body u tu f args Q.
 mlock Definition wp_func `{Σ : cpp_logic, σ : genv} :=
   Cbn (Reduce (wp_func' true)).
 
@@ -455,22 +460,36 @@ Definition func_ok `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
   □ Forall (Q : ptr -> epred) vals,
   spec.(fs_spec) vals Q -* wp_func tu f vals Q.
 
+Section wp_func_admission.
+  Context `{Σ : cpp_logic, σ : genv}.
+  #[global] Instance wp_func_admission tu f args Q :
+    Observe [| function_admitted tu |] (wp_func tu f args Q).
+  Proof.
+    apply observe_intro_only_provable.
+    rewrite wp_func.unlock /wp_func'.
+    by iIntros "[% _]".
+  Qed.
+End wp_func_admission.
+
 Section wp_func.
   Context `{Σ : cpp_logic, σ : genv}.
   Implicit Types (Q : ptr -> epred).
 
   Lemma wp_func_frame tu tu' f args Q Q' :
     sub_module tu tu' ->
+    function_admitted tu' ->
     Forall p, Q p -* Q' p
     |-- wp_func tu f args Q -* wp_func tu' f args Q'.
   Proof.
-    intros. rewrite wp_func.unlock. iIntros "HQ".
+    intros Hsub Had. rewrite wp_func.unlock /wp_func'.
+    iIntros "HQ [_ Hwp]". iSplit; first by iPureIntro.
+    iRevert "Hwp". rewrite /wp_func_body /=.
     case_match; last by auto.
     case_match; last by iApply wp_builtin_func_frame.
     all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
     all: iApply wp_frame; [done|]; iIntros (?).
     all: iApply Kcleanup_frame; [done|].
-    all: iApply Kreturn_frame; iIntros (?) "Q".
+    all: iApply Kreturn_frame; iIntros (?) ">Q !> !>".
     all: iApply ("HQ" with "Q").
   Qed.
 
@@ -483,7 +502,9 @@ Section wp_func.
   Lemma wp_func_intro tu f args Q :
     Cbn (Reduce (wp_func' false tu f args Q)) |-- wp_func tu f args Q.
   Proof.
-    rewrite wp_func.unlock. repeat case_match; auto.
+    rewrite wp_func.unlock /wp_func'.
+    apply bi.sep_mono; first done.
+    rewrite /wp_func_body /=. repeat case_match; auto.
     iApply bind_vars_frame; [done|]. iIntros (??) "wp !>"; iRevert "wp".
     iApply wp_frame; [done|]. iIntros (?).
     iApply Kcleanup_frame; [done|].
@@ -501,7 +522,7 @@ Note that in the calling convention for methods, the [this] parameter
 is passed directly rather than being materialized like normal
 parameters.
 *)
-#[local] Definition wp_method' `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
+#[local] Definition wp_method_body `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
     (m : Method) (args : list ptr) (Q : ptr -> epred) : mpred :=
   match m.(m_body) with
   | None => ERROR "wp_method: no body"
@@ -515,6 +536,11 @@ parameters.
     end
   | Some _ => UNSUPPORTED "wp_method: defaulted methods"
   end.
+(** Whole-function verification requires an admitted translation unit before
+    any update or evaluation step. Raw local statement WPs remain available. *)
+#[local] Definition wp_method' `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
+    (m : Method) (args : list ptr) (Q : ptr -> epred) : mpred :=
+  [| function_admitted tu |] ** wp_method_body u tu m args Q.
 mlock Definition wp_method `{Σ : cpp_logic, σ : genv} :=
   Cbn (Reduce (wp_method' true)).
 
@@ -524,23 +550,37 @@ Definition method_ok `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
   □ Forall (Q : ptr -> mpred) vals,
   spec.(fs_spec) vals Q -* wp_method tu m vals Q.
 
+Section wp_method_admission.
+  Context `{Σ : cpp_logic, σ : genv}.
+  #[global] Instance wp_method_admission tu m args Q :
+    Observe [| function_admitted tu |] (wp_method tu m args Q).
+  Proof.
+    apply observe_intro_only_provable.
+    rewrite wp_method.unlock /wp_method'.
+    by iIntros "[% _]".
+  Qed.
+End wp_method_admission.
+
 Section wp_method.
   Context `{Σ : cpp_logic, σ : genv}.
   Implicit Types (Q : ptr -> epred).
 
   Lemma wp_method_frame tu tu' m args Q Q' :
     sub_module tu tu' ->
+    function_admitted tu' ->
     Forall p, Q p -* Q' p
     |-- wp_method tu m args Q -* wp_method tu' m args Q'.
   Proof.
-    intros. iIntros "HQ". rewrite wp_method.unlock.
+    intros Hsub Had. rewrite wp_method.unlock /wp_method'.
+    iIntros "HQ [_ Hwp]". iSplit; first by iPureIntro.
+    iRevert "Hwp". rewrite /wp_method_body /=.
     destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_body]; cbn.
     destruct m_body as [[|body|body]|]; auto.
     all: destruct args as [|thisp rest_vals]; auto.
     all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
     all: iApply wp_frame; [done|]; iIntros (?).
     all: iApply Kcleanup_frame; [done|].
-    all: iApply Kreturn_frame; iIntros (?) "Q".
+    all: iApply Kreturn_frame; iIntros (?) ">Q !> !>".
     all: iApply ("HQ" with "Q").
   Qed.
 
@@ -553,7 +593,9 @@ Section wp_method.
   Lemma wp_method_intro tu m args Q :
     Cbn (Reduce (wp_method' false tu m args Q)) |-- wp_method tu m args Q.
   Proof.
-    rewrite wp_method.unlock.
+    rewrite wp_method.unlock /wp_method'.
+    apply bi.sep_mono; first done.
+    rewrite /wp_method_body /=.
     destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_body]; cbn.
     destruct m_body as [[|body|body]|]; auto.
     all: destruct args as [|thisp rest_vals]; auto.
@@ -833,7 +875,7 @@ constructor kinds here
 not initialized (you get an [uninitR]), but you will get something
 that implies [type_ptr].
 *)
-#[local] Definition wp_ctor' `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
+#[local] Definition wp_ctor_body `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
     (ctor : Ctor) (args : list ptr) (Q : ptr -> epred) : mpred :=
   match ctor.(c_body) with
   | None => ERROR "wp_ctor: no body"
@@ -884,6 +926,11 @@ that implies [type_ptr].
     | _ => ERROR "wp_ctor: constructor without leading [this] argument"
     end
   end.
+(** Whole-function verification requires an admitted translation unit before
+    any update or evaluation step. Raw local statement WPs remain available. *)
+#[local] Definition wp_ctor' `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
+    (ctor : Ctor) (args : list ptr) (Q : ptr -> epred) : mpred :=
+  [| function_admitted tu |] ** wp_ctor_body u tu ctor args Q.
 mlock Definition wp_ctor `{Σ : cpp_logic, σ : genv} :=
   Cbn (Reduce (wp_ctor' true)).
 
@@ -892,6 +939,17 @@ Definition ctor_ok `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
   [| type_of_spec spec = type_of_value (Oconstructor ctor) |] **
   □ Forall (Q : ptr -> epred) vals,
   spec.(fs_spec) vals Q -* wp_ctor tu ctor vals Q.
+
+Section wp_ctor_admission.
+  Context `{Σ : cpp_logic, σ : genv}.
+  #[global] Instance wp_ctor_admission tu c args Q :
+    Observe [| function_admitted tu |] (wp_ctor tu c args Q).
+  Proof.
+    apply observe_intro_only_provable.
+    rewrite wp_ctor.unlock /wp_ctor'.
+    by iIntros "[% _]".
+  Qed.
+End wp_ctor_admission.
 
 Section wp_ctor.
   Context `{Σ : cpp_logic, σ : genv}.
@@ -911,7 +969,9 @@ Section wp_ctor.
     Forall p, Q p -* Q' p
     |-- wp_ctor tu c args Q -* wp_ctor tu c args Q'.
   Proof.
-    iIntros "HQ". rewrite wp_ctor.unlock. repeat case_match; auto.
+    rewrite wp_ctor.unlock /wp_ctor'.
+    iIntros "HQ [$ Hwp]". iRevert "Hwp".
+    rewrite /wp_ctor_body /=. repeat case_match; auto.
     all: iIntros "($ & wp) !>"; iRevert "wp".
     all: iApply bind_vars_frame; [done|]; iIntros (??).
     all: initializer_list_frame.
@@ -931,7 +991,9 @@ Section wp_ctor.
   Lemma wp_ctor_intro tu c args Q :
     Cbn (Reduce (wp_ctor' false tu c args Q)) |-- wp_ctor tu c args Q.
   Proof.
-    rewrite wp_ctor.unlock. repeat case_match; auto.
+    rewrite wp_ctor.unlock /wp_ctor'.
+    apply bi.sep_mono; first done.
+    rewrite /wp_ctor_body /=. repeat case_match; auto.
     all: iIntros "($ & wp) !>"; iRevert "wp".
     all: iApply bind_vars_frame; [done|]; iIntros (??).
     all: initializer_list_frame.
@@ -989,7 +1051,7 @@ memory (i.e. a [this |-> tblockR (Tnamed cls) 1]) to the caller. When
 the program is destroying this object, e.g. due to stack allocation,
 this resource will be consumed immediately.
 *)
-#[local] Definition wp_dtor' `{Σ : cpp_logic, σ : genv} (upd : bool) (tu : translation_unit)
+#[local] Definition wp_dtor_body `{Σ : cpp_logic, σ : genv} (upd : bool) (tu : translation_unit)
     (dtor : Dtor) (args : list ptr) (Q : ptr -> epred) : mpred :=
   match dtor.(d_body) with
   | None => ERROR "wp_dtor: no body"
@@ -1053,8 +1115,24 @@ this resource will be consumed immediately.
     | _ => ERROR "wp_dtor: expected one argument"
     end
   end.
+(** Whole-function verification requires an admitted translation unit before
+    any update or evaluation step. Raw local statement WPs remain available. *)
+#[local] Definition wp_dtor' `{Σ : cpp_logic, σ : genv} (upd : bool) (tu : translation_unit)
+    (dtor : Dtor) (args : list ptr) (Q : ptr -> epred) : mpred :=
+  [| function_admitted tu |] ** wp_dtor_body upd tu dtor args Q.
 mlock Definition wp_dtor `{Σ : cpp_logic, σ : genv} :=
   Cbn (Reduce (wp_dtor' true)).
+
+Section wp_dtor_admission.
+  Context `{Σ : cpp_logic, σ : genv}.
+  #[global] Instance wp_dtor_admission tu d args Q :
+    Observe [| function_admitted tu |] (wp_dtor tu d args Q).
+  Proof.
+    apply observe_intro_only_provable.
+    rewrite wp_dtor.unlock /wp_dtor'.
+    by iIntros "[% _]".
+  Qed.
+End wp_dtor_admission.
 
 Section wp_dtor.
   Context `{Σ : cpp_logic, σ : genv}.
@@ -1068,8 +1146,9 @@ Section wp_dtor.
     Forall p, Q p -* Q' p
     |-- wp_dtor tu d args Q -* wp_dtor tu d args Q'.
   Proof.
-    iIntros "HQ". rewrite wp_dtor.unlock.
-    repeat case_match; auto.
+    rewrite wp_dtor.unlock /wp_dtor'.
+    iIntros "HQ [$ Hwp]". iRevert "Hwp".
+    rewrite /wp_dtor_body /=. repeat case_match; auto.
     all: iIntros "wp !>"; iRevert "wp".
     1,4: iIntros ">wp !>"; iRevert "wp".
     all: try (iApply wp_frame; [done|]; iIntros (?)).
@@ -1092,7 +1171,9 @@ Section wp_dtor.
   Lemma wp_dtor_intro tu d args Q :
     Cbn (Reduce (wp_dtor' false tu d args Q)) |-- wp_dtor tu d args Q.
   Proof.
-    rewrite wp_dtor.unlock. repeat case_match; auto.
+    rewrite wp_dtor.unlock /wp_dtor'.
+    apply bi.sep_mono; first done.
+    rewrite /wp_dtor_body /=. repeat case_match; auto.
     all: iIntros "wp !>"; iRevert "wp".
     1,4: rewrite -fupd_intro.
     all: try (iApply wp_frame; [done|]; iIntros (?)).
