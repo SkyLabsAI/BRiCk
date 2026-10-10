@@ -410,6 +410,7 @@ Module SimpleCPP.
           | Vundef => pure_encodes_undef (int_rank.bitsize sz) vs
           | _ => False
           end
+        | Tvoid => v = Vvoid /\ vs = [Rundef]
         | Tchar_ ct => False (* TODO *)
         | Tmember_pointer _ _ =>
           match v with
@@ -457,7 +458,6 @@ Module SimpleCPP.
           end
         | Tenum _ => False (* << TODO: incorrect *)
         | Tqualified _ _ => False (* unreachable *)
-        | Tvoid
         | Tarray _ _
         | Tincomplete_array _
         | Tvariable_array _ _
@@ -478,14 +478,10 @@ Module SimpleCPP.
       #[local] Hint Resolve length_cptr : core.
       #[local] Hint Resolve length_pure_encodes_undef : core.
 
-      #[global] Instance encodes_nonvoid t v vs :
-        Observe [| t <> Tvoid |] (encodes t v vs).
-      Proof. apply: observe_intro_persistent; iIntros "!%". by destruct t. Qed.
-
       Lemma length_encodes t v vs :
         pure_encodes t v vs ->
           length vs = match erase_qualifiers t with
-                      | Tbool => 1
+                      | Tvoid | Tbool => 1
                       | Tnum sz _ => int_rank.bytesNat sz
                       | Tfloat_ ft => bitsize.bytesNat (float_type.bitsize ft)
 
@@ -717,20 +713,17 @@ Module SimpleCPP.
         | Some a =>
           Exists vs,
           addr_encodes t q a v vs
-        | None => [| t <> Tvoid |] ** val_ p v q
+        | None => val_ p v q
         end.
 
     (* Needed by tptsto_cfractional *)
     #[local] Instance oaddr_encodes_fractional t oa p v :
       CFractional (λ q, oaddr_encodes t q oa p v).
-    Proof. rewrite /oaddr_encodes; destruct oa; apply _. Qed.
+    Proof. rewrite /oaddr_encodes. destruct oa; [apply _ | exact (val_cfractional p v)]. Qed.
 
-    #[local] Instance oaddr_encodes_nonvoid ty q oa p v :
-      Observe [| ty <> Tvoid |] (oaddr_encodes ty q oa p v).
-    Proof. destruct oa; apply _. Qed.
     #[local] Instance oaddr_encodes_cfrac_valid t :
       CFracValid3 (oaddr_encodes t).
-    Proof. constructor. intros ? oa ??. destruct oa; apply _. Qed.
+    Proof. constructor. intros ? oa ??. rewrite /oaddr_encodes. destruct oa; apply _. Qed.
 
     (** the pointer points to the code
 
@@ -954,9 +947,6 @@ Module SimpleCPP.
 
     #[global] Instance tptsto_timeless ty q p v :
       Timeless (tptsto ty q p v) := _.
-
-    #[global] Instance tptsto_nonvoid ty (q : cQp.t) p v :
-      Observe [| ty <> Tvoid |] (tptsto ty q p v) := _.
 
     #[global] Instance tptsto_cfrac_valid ty :
       CFracValid2 (tptsto ty).
