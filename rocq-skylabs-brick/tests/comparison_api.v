@@ -4,6 +4,7 @@
  *)
 Require Import skylabs.prelude.compare.
 Require Import skylabs.lang.cpp.syntax.
+Require Import skylabs.lang.cpp.syntax.compare.
 
 Example names_have_comparison_laws : Comparison (compare (A:=name)) := _.
 Example types_have_comparison_laws : Comparison (compare (A:=type)) := _.
@@ -63,3 +64,17 @@ Example literal_bytes_break_ties :
   compare (literal_string.Build_t "a"%pstring 1%N)
     (literal_string.Build_t "z"%pstring 1%N) = Lt.
 Proof. vm_compute. reflexivity. Qed.
+
+(** Scoped names compare the final component before the parent scope. *)
+Example scoped_component_precedes_parent :
+  compare "z::a"%cpp_name "a::z"%cpp_name = Lt.
+Proof. vm_compute. reflexivity. Qed.
+
+(** Distinct component dictionaries must survive even when their carriers agree. *)
+Example canonical_pair_keeps_component_operations :
+  let ascending := {| _car := nat; _compare := compare (A:=nat) |} in
+  let descending := {| _car := nat; _compare := fun x y => compare y x |} in
+  let cmp := @_compare (pair_comparator ascending descending) in
+  cmp (0%nat, 0%nat) (1%nat, 0%nat) = Lt /\
+  cmp (0%nat, 0%nat) (0%nat, 1%nat) = Gt.
+Proof. vm_compute. split; reflexivity. Qed.

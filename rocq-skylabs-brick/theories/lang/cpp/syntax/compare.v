@@ -17,6 +17,12 @@ Import (notations) PrimInt63.
 #[local] Set Primitive Projections.
 #[local] Open Scope positive_scope.
 
+(* Reduce operational selectors and tuple projections when defining field
+   comparators, preserving short circuiting without allocating tuples in the VM. *)
+#[local] Notation CompareFields f :=
+  ltac:(let cmp := eval cbv [compare prod_compare fst snd] in f in exact cmp)
+  (only parsing).
+
 (* BEGIN: temporary infrastructure *)
   Structure comparator :=
     { _car : Set
@@ -29,7 +35,10 @@ Import (notations) PrimInt63.
 
   Canonical pair_comparator (C1 C2 : comparator) :=
     {| _car := C1.(_car) * C2.(_car)
-    ; _compare := fun '(a,b) '(c,d) => compare_lex (C1.(_compare) a c) $ fun _ => C2.(_compare) b d |}.
+    ; _compare :=
+        let cmp1 : Compare C1.(_car) := C1.(_compare) in
+        let cmp2 : Compare C2.(_car) := C2.(_compare) in
+        compare |}.
   Canonical bs_comparator :=
     {| _car := bs
     ; _compare := bs_compare |}.
@@ -50,7 +59,7 @@ Import (notations) PrimInt63.
     | Exact a , Exact b => compare a b
     | Exact _ , Range _ _ => Lt
     | Range _ _ , Exact _ => Gt
-    | Range a b , Range c d => compare_lex (compare a c) $ fun _ => compare b d
+    | Range a b , Range c d => compare (a, b) (c, d)
     end.
   #[local] Canonical SwitchBranch_comparator :=
     {| _car := SwitchBranch
@@ -88,7 +97,7 @@ Module UnOp.
     | Uunsupported msg => msg
     | _ => ()
     end.
-  Definition compare_data (t : positive) : car t -> car t -> comparison :=
+  Definition compare_data (t : positive) : car t -> car t -> comparison := Eval cbv [compare] in
     match t with
     | 5 => compare
     | _ => fun _ _ => Eq
@@ -127,7 +136,7 @@ Module BinOp.
     | Bunsupported msg => msg
     | _ => ()
     end.
-  Definition compare_data (t : positive) : car t -> car t -> comparison :=
+  Definition compare_data (t : positive) : car t -> car t -> comparison := Eval cbv [compare] in
     match t with
     | 20 => compare
     | _ => fun _ _ => Eq
@@ -181,7 +190,7 @@ Module RUnOp.
     | Runop op => op
     | _ => ()
     end.
-  Definition compare_data (t : positive) : car t -> car t -> comparison :=
+  Definition compare_data (t : positive) : car t -> car t -> comparison := Eval cbv [compare] in
     match t with
     | 1 => compare
     | _ => fun _ _ => Eq
@@ -222,7 +231,7 @@ Module RBinOp.
     | Rbinop op | Rassign_op op => op
     | _ => ()
     end.
-  Definition compare_data (t : positive) : car t -> car t -> comparison :=
+  Definition compare_data (t : positive) : car t -> car t -> comparison := Eval cbv [compare] in
     match t with
     | 1 | 3 => compare
     | _ => fun _ _ => Eq
@@ -366,19 +375,20 @@ Module operator_impl.
       box_Func_0 : obj_name;
       box_Func_1 : type;
     }.
-    #[local] Instance box_Func_compare : Compare box_Func := fun b1 b2 =>
-      compare_lex (compare b1.(box_Func_0) b2.(box_Func_0)) $ fun _ =>
-      compare b1.(box_Func_1) b2.(box_Func_1).
+    #[local] Instance box_Func_compare : Compare box_Func :=
+      CompareFields (fun b1 b2 : box_Func =>
+        compare (b1.(box_Func_0), b1.(box_Func_1)) (b2.(box_Func_0), b2.(box_Func_1))).
 
     Record box_MFunc : Set := Box_MFunc {
       box_MFunc_0 : obj_name;
       box_MFunc_1 : dispatch_type;
       box_MFunc_2 : type;
     }.
-    #[local] Instance box_MFunc_compare : Compare box_MFunc := fun b1 b2 =>
-      compare_lex (compare b1.(box_MFunc_0) b2.(box_MFunc_0)) $ fun _ =>
-      compare_lex (compare b1.(box_MFunc_1) b2.(box_MFunc_1)) $ fun _ =>
-      compare b1.(box_MFunc_2) b2.(box_MFunc_2).
+    #[local] Instance box_MFunc_compare : Compare box_MFunc :=
+      CompareFields (fun b1 b2 : box_MFunc =>
+        compare
+          (b1.(box_MFunc_0), (b1.(box_MFunc_1), b1.(box_MFunc_2)))
+          (b2.(box_MFunc_0), (b2.(box_MFunc_1), b2.(box_MFunc_2)))).
 
     Definition tag (p : t) : positive :=
       match p with
@@ -395,7 +405,7 @@ Module operator_impl.
       | Func on t => Box_Func on t
       | MFunc on d t => Box_MFunc on d t
       end.
-    Definition compare_data (t : positive) : car t -> car t -> comparison :=
+    Definition compare_data (t : positive) : car t -> car t -> comparison := Eval cbv [compare] in
       match t with
       | 1 => compare
       | _ => compare
@@ -446,11 +456,10 @@ End new_form.
 Module function_type.
 
   #[global] Instance compare_instance {type : Set} `{cmpT : !Compare type}
-      : Compare (function_type_ type) := fun x y =>
-    compare_lex (compare x.(ft_return) y.(ft_return)) $ fun _ =>
-    compare_lex (compare x.(ft_params) y.(ft_params)) $ fun _ =>
-    compare_lex (compare x.(ft_cc) y.(ft_cc)) $ fun _ =>
-    compare x.(ft_arity) y.(ft_arity).
+      : Compare (function_type_ type) :=
+    CompareFields (fun x y : function_type_ type =>
+      compare (x.(ft_return), (x.(ft_params), (x.(ft_cc), x.(ft_arity))))
+        (y.(ft_return), (y.(ft_params), (y.(ft_cc), y.(ft_arity))))).
 
 End function_type.
 
@@ -462,9 +471,9 @@ Module temp_param.
       box_Pvalue_0 : ident;
       box_Pvalue_1 : type;
     }.
-    #[local] Instance box_Pvalue_compare : Compare box_Pvalue := fun b1 b2 =>
-      compare_lex (compare b1.(box_Pvalue_0) b2.(box_Pvalue_0)) $ fun _ =>
-      compare b1.(box_Pvalue_1) b2.(box_Pvalue_1).
+    #[local] Instance box_Pvalue_compare : Compare box_Pvalue :=
+      CompareFields (fun b1 b2 : box_Pvalue =>
+        compare (b1.(box_Pvalue_0), b1.(box_Pvalue_1)) (b2.(box_Pvalue_0), b2.(box_Pvalue_1))).
 
     Definition tag (p : temp_param) : positive :=
       match p with
@@ -487,13 +496,10 @@ Module temp_param.
       | Punsupported msg => msg
       end.
     Definition compare_data (tp_compare : Compare temp_param)
-      (t : positive) : car t -> car t -> comparison :=
+      (t : positive) : car t -> car t -> comparison := Eval cbv [compare] in
       match t with
       | 2 => compare
-      | 3 =>
-          fun '(id1, ps1) '(id2, ps2) =>
-            compare_lex (compare id1 id2) $ fun _ =>
-            compare ps1 ps2
+      | 3 => compare
       | _ => compare
       end.
 
@@ -551,7 +557,7 @@ Module temp_arg.
       | Aunsupported msg => msg
       end.
     Definition compare_data (ta_compare : Compare temp_arg)
-      (t : positive) : car t -> car t -> comparison :=
+      (t : positive) : car t -> car t -> comparison := Eval cbv [compare] in
       match t with
       | 1 => compare
       | 2 => compare
@@ -662,36 +668,40 @@ Module atomic_name.
       box_Nfunction_1 : ident;
       box_Nfunction_2 : list type;
     }.
-    #[local] Instance box_Nfunction_compare : Compare box_Nfunction := fun b1 b2 =>
-      compare_lex (compare b1.(box_Nfunction_0) b2.(box_Nfunction_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Nfunction_1) b2.(box_Nfunction_1)) $ fun _ =>
-      compare b1.(box_Nfunction_2) b2.(box_Nfunction_2).
+    #[local] Instance box_Nfunction_compare : Compare box_Nfunction :=
+      CompareFields (fun b1 b2 : box_Nfunction =>
+        compare
+          (b1.(box_Nfunction_0), (b1.(box_Nfunction_1), b1.(box_Nfunction_2)))
+          (b2.(box_Nfunction_0), (b2.(box_Nfunction_1), b2.(box_Nfunction_2)))).
 
     Record box_Nop : Set := Box_Nop {
       box_Nop_0 : function_qualifiers.t;
       box_Nop_1 : OverloadableOperator;
       box_Nop_2 : list type
     }.
-    #[local] Instance box_Nop_compare : Compare box_Nop := fun b1 b2 =>
-      compare_lex (compare b1.(box_Nop_0) b2.(box_Nop_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Nop_1) b2.(box_Nop_1)) $ fun _ =>
-      compare b1.(box_Nop_2) b2.(box_Nop_2).
+    #[local] Instance box_Nop_compare : Compare box_Nop :=
+      CompareFields (fun b1 b2 : box_Nop =>
+        compare
+          (b1.(box_Nop_0), (b1.(box_Nop_1), b1.(box_Nop_2)))
+          (b2.(box_Nop_0), (b2.(box_Nop_1), b2.(box_Nop_2)))).
 
     Record box_Nop_conv : Set := Box_Nop_conv {
       box_Nop_conv_0 : function_qualifiers.t ;
       box_Nop_conv_1 : type
     }.
-    #[local] Instance box_Nop_conv_compare : Compare box_Nop_conv := fun b1 b2 =>
-      compare_lex (compare b1.(box_Nop_conv_0) b2.(box_Nop_conv_0)) $ fun _ =>
-      compare b1.(box_Nop_conv_1) b2.(box_Nop_conv_1).
+    #[local] Instance box_Nop_conv_compare : Compare box_Nop_conv :=
+      CompareFields (fun b1 b2 : box_Nop_conv =>
+        compare
+          (b1.(box_Nop_conv_0), b1.(box_Nop_conv_1))
+          (b2.(box_Nop_conv_0), b2.(box_Nop_conv_1))).
 
     Record box_Nop_lit : Set := Box_Nop_lit {
                                     box_Nop_lit_0 : ident ;
                                     box_Nop_lit_1 : list type
                                   }.
-    #[local] Instance box_Nop_lit_compare : Compare box_Nop_lit := fun b1 b2 =>
-      compare_lex (compare b1.(box_Nop_lit_0) b2.(box_Nop_lit_0)) $ fun _ =>
-          compare b1.(box_Nop_lit_1) b2.(box_Nop_lit_1).
+    #[local] Instance box_Nop_lit_compare : Compare box_Nop_lit :=
+      CompareFields (fun b1 b2 : box_Nop_lit =>
+        compare (b1.(box_Nop_lit_0), b1.(box_Nop_lit_1)) (b2.(box_Nop_lit_0), b2.(box_Nop_lit_1))).
 
     Definition car (t : positive) : Set :=
       match t with
@@ -723,7 +733,7 @@ Module atomic_name.
       | Nfirst_child n => n
       | Nunsupported_atomic msg => msg
       end.
-    Definition compare_data (t : positive) : car t -> car t -> comparison :=
+    Definition compare_data (t : positive) : car t -> car t -> comparison := Eval cbv [compare] in
       match t with
       | 1 => compare
       | 2 => compare
@@ -858,7 +868,7 @@ Module Cast.
       | Cunsupported err t => (err, t)
       | _ => ()
       end.
-    Definition compare_data (t : positive) : car t -> car t -> comparison :=
+    Definition compare_data (t : positive) : car t -> car t -> comparison := Eval cbv [compare] in
       match t as t return car t -> car t -> comparison with
       | 1 | 2 | 3 => compare
       | 4 => compare (A:=unit)
@@ -927,17 +937,17 @@ Module name.
       box_Ninst_0 : name;
       box_Ninst_1 : list temp_arg;
     }.
-    #[local] Instance box_Ninst_compare : Compare box_Ninst := fun b1 b2 =>
-      compare_lex (compare b1.(box_Ninst_0) b2.(box_Ninst_0)) $ fun _ =>
-      compare b1.(box_Ninst_1) b2.(box_Ninst_1).
+    #[local] Instance box_Ninst_compare : Compare box_Ninst :=
+      CompareFields (fun b1 b2 : box_Ninst =>
+        compare (b1.(box_Ninst_0), b1.(box_Ninst_1)) (b2.(box_Ninst_0), b2.(box_Ninst_1))).
 
     Record box_Nscoped : Set := Box_Nscoped {
       box_Nscoped_0 : name;
       box_Nscoped_1 : atomic_name; (* compare first b/c they are cheap and very discriminating *)
     }.
-    #[local] Instance box_Nscoped_compare : Compare box_Nscoped := fun b1 b2 =>
-      compare_lex (compare b1.(box_Nscoped_1) b2.(box_Nscoped_1)) $ fun _ =>
-      compare b1.(box_Nscoped_0) b2.(box_Nscoped_0).
+    #[local] Instance box_Nscoped_compare : Compare box_Nscoped :=
+      CompareFields (fun b1 b2 : box_Nscoped =>
+        compare (b1.(box_Nscoped_1), b1.(box_Nscoped_0)) (b2.(box_Nscoped_1), b2.(box_Nscoped_0))).
 
     Definition tag (n : name) : positive :=
       match n with
@@ -963,7 +973,7 @@ Module name.
       | Nscoped n c => Box_Nscoped n c
       | Nunsupported msg => msg
       end.
-    Definition compare_data (t : positive) : car t -> car t -> comparison :=
+    Definition compare_data (t : positive) : car t -> car t -> comparison := Eval cbv [compare] in
       match t with
       | 1 => compare
       | 2 => compare
@@ -995,102 +1005,120 @@ Module type.
       box_Tresult_unop_0 : RUnOp;
       box_Tresult_unop_1 : type;
     }.
-    #[local] Instance box_Tresult_unop_compare : Compare box_Tresult_unop := fun b1 b2 =>
-      compare_lex (compare b1.(box_Tresult_unop_0) b2.(box_Tresult_unop_0)) $ fun _ =>
-      compare b1.(box_Tresult_unop_1) b2.(box_Tresult_unop_1).
+    #[local] Instance box_Tresult_unop_compare : Compare box_Tresult_unop :=
+      CompareFields (fun b1 b2 : box_Tresult_unop =>
+        compare
+          (b1.(box_Tresult_unop_0), b1.(box_Tresult_unop_1))
+          (b2.(box_Tresult_unop_0), b2.(box_Tresult_unop_1))).
 
     Record box_Tresult_binop : Set := Box_Tresult_binop {
       box_Tresult_binop_0 : RBinOp;
       box_Tresult_binop_1 : type;
       box_Tresult_binop_2 : type;
     }.
-    #[local] Instance box_Tresult_binop_compare : Compare box_Tresult_binop := fun b1 b2 =>
-      compare_lex (compare b1.(box_Tresult_binop_0) b2.(box_Tresult_binop_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Tresult_binop_1) b2.(box_Tresult_binop_1)) $ fun _ =>
-      compare b1.(box_Tresult_binop_2) b2.(box_Tresult_binop_2).
+    #[local] Instance box_Tresult_binop_compare : Compare box_Tresult_binop :=
+      CompareFields (fun b1 b2 : box_Tresult_binop =>
+        compare
+          (b1.(box_Tresult_binop_0), (b1.(box_Tresult_binop_1), b1.(box_Tresult_binop_2)))
+          (b2.(box_Tresult_binop_0), (b2.(box_Tresult_binop_1), b2.(box_Tresult_binop_2)))).
 
     Record box_Tresult_call : Set := Box_Tresult_call {
       box_Tresult_call_0 : name;
       box_Tresult_call_1 : list type;
     }.
-    #[local] Instance box_Tresult_call_compare : Compare box_Tresult_call := fun b1 b2 =>
-      compare_lex (compare b1.(box_Tresult_call_0) b2.(box_Tresult_call_0)) $ fun _ =>
-      compare b1.(box_Tresult_call_1) b2.(box_Tresult_call_1).
+    #[local] Instance box_Tresult_call_compare : Compare box_Tresult_call :=
+      CompareFields (fun b1 b2 : box_Tresult_call =>
+        compare
+          (b1.(box_Tresult_call_0), b1.(box_Tresult_call_1))
+          (b2.(box_Tresult_call_0), b2.(box_Tresult_call_1))).
 
     Record box_Tresult_member_call : Set := Box_Tresult_member_call {
       box_Tresult_member_call_0 : name;
       box_Tresult_member_call_1 : type;
       box_Tresult_member_call_2 : list type;
     }.
-    #[local] Instance box_Tresult_member_call_compare : Compare box_Tresult_member_call := fun b1 b2 =>
-      compare_lex (compare b1.(box_Tresult_member_call_0) b2.(box_Tresult_member_call_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Tresult_member_call_1) b2.(box_Tresult_member_call_1)) $ fun _ =>
-      compare b1.(box_Tresult_member_call_2) b2.(box_Tresult_member_call_2).
+    #[local] Instance box_Tresult_member_call_compare : Compare box_Tresult_member_call :=
+      CompareFields (fun b1 b2 : box_Tresult_member_call =>
+        compare
+          (b1.(box_Tresult_member_call_0), (b1.(box_Tresult_member_call_1),
+           b1.(box_Tresult_member_call_2)))
+          (b2.(box_Tresult_member_call_0), (b2.(box_Tresult_member_call_1),
+           b2.(box_Tresult_member_call_2)))).
 
     Record box_Tresult_parenlist : Set := Box_Tresult_parenlist {
       box_Tresult_parenlist_0 : type;
       box_Tresult_parenlist_1 : list type;
     }.
-    #[local] Instance box_Tresult_parenlist_compare : Compare box_Tresult_parenlist := fun b1 b2 =>
-      compare_lex (compare b1.(box_Tresult_parenlist_0) b2.(box_Tresult_parenlist_0)) $ fun _ =>
-      compare b1.(box_Tresult_parenlist_1) b2.(box_Tresult_parenlist_1).
+    #[local] Instance box_Tresult_parenlist_compare : Compare box_Tresult_parenlist :=
+      CompareFields (fun b1 b2 : box_Tresult_parenlist =>
+        compare
+          (b1.(box_Tresult_parenlist_0), b1.(box_Tresult_parenlist_1))
+          (b2.(box_Tresult_parenlist_0), b2.(box_Tresult_parenlist_1))).
 
     Record box_Tresult_member : Set := Box_Tresult_member {
       box_Tresult_member_0 : type;
       box_Tresult_member_1 : name;
     }.
-    #[local] Instance box_Tresult_member_compare : Compare box_Tresult_member := fun b1 b2 =>
-      compare_lex (compare b1.(box_Tresult_member_0) b2.(box_Tresult_member_0)) $ fun _ =>
-      compare b1.(box_Tresult_member_1) b2.(box_Tresult_member_1).
+    #[local] Instance box_Tresult_member_compare : Compare box_Tresult_member :=
+      CompareFields (fun b1 b2 : box_Tresult_member =>
+        compare
+          (b1.(box_Tresult_member_0), b1.(box_Tresult_member_1))
+          (b2.(box_Tresult_member_0), b2.(box_Tresult_member_1))).
 
     Record box_Tnum : Set := Box_Tnum {
       box_Tnum_0 : int_rank.t;
       box_Tnum_1 : signed;
     }.
 
-    #[local] Instance box_Tnum_compare : Compare box_Tnum := fun b1 b2 =>
-      compare_lex (compare b1.(box_Tnum_0) b2.(box_Tnum_0)) $ fun _ =>
-      compare b1.(box_Tnum_1) b2.(box_Tnum_1).
+    #[local] Instance box_Tnum_compare : Compare box_Tnum :=
+      CompareFields (fun b1 b2 : box_Tnum =>
+        compare (b1.(box_Tnum_0), b1.(box_Tnum_1)) (b2.(box_Tnum_0), b2.(box_Tnum_1))).
 
     Record box_Tarray : Set := Box_Tarray {
       box_Tarray_0 : type;
       box_Tarray_1 : N;
     }.
-    #[local] Instance box_Tarray_compare : Compare box_Tarray := fun b1 b2 =>
-      compare_lex (compare b1.(box_Tarray_0) b2.(box_Tarray_0)) $ fun _ =>
-      compare b1.(box_Tarray_1) b2.(box_Tarray_1).
+    #[local] Instance box_Tarray_compare : Compare box_Tarray :=
+      CompareFields (fun b1 b2 : box_Tarray =>
+        compare (b1.(box_Tarray_0), b1.(box_Tarray_1)) (b2.(box_Tarray_0), b2.(box_Tarray_1))).
 
     Record box_Tvariable_array : Set := Box_Tvariable_array {
       box_Tvariable_array_0 : type;
       box_Tvariable_array_1 : Expr;
     }.
-    #[local] Instance box_Tvariable_array_compare : Compare box_Tvariable_array := fun b1 b2 =>
-      compare_lex (compare b1.(box_Tvariable_array_0) b2.(box_Tvariable_array_0)) $ fun _ =>
-      compare b1.(box_Tvariable_array_1) b2.(box_Tvariable_array_1).
+    #[local] Instance box_Tvariable_array_compare : Compare box_Tvariable_array :=
+      CompareFields (fun b1 b2 : box_Tvariable_array =>
+        compare
+          (b1.(box_Tvariable_array_0), b1.(box_Tvariable_array_1))
+          (b2.(box_Tvariable_array_0), b2.(box_Tvariable_array_1))).
 
     Record box_Tmember_pointer : Set := Box_Tmember_pointer {
       box_Tmember_pointer_0 : type;
       box_Tmember_pointer_1 : type;
     }.
-    #[local] Instance box_Tmember_pointer_compare : Compare box_Tmember_pointer := fun b1 b2 =>
-      compare_lex (compare b1.(box_Tmember_pointer_0) b2.(box_Tmember_pointer_0)) $ fun _ =>
-      compare b1.(box_Tmember_pointer_1) b2.(box_Tmember_pointer_1).
+    #[local] Instance box_Tmember_pointer_compare : Compare box_Tmember_pointer :=
+      CompareFields (fun b1 b2 : box_Tmember_pointer =>
+        compare
+          (b1.(box_Tmember_pointer_0), b1.(box_Tmember_pointer_1))
+          (b2.(box_Tmember_pointer_0), b2.(box_Tmember_pointer_1))).
 
     Record box_Tqualified : Set := Box_Tqualified {
       box_Tqualified_0 : type_qualifiers;
       box_Tqualified_1 : type;
     }.
-    #[local] Instance box_Tqualified_compare : Compare box_Tqualified := fun b1 b2 =>
-      compare_lex (compare b1.(box_Tqualified_0) b2.(box_Tqualified_0)) $ fun _ =>
-      compare b1.(box_Tqualified_1) b2.(box_Tqualified_1).
+    #[local] Instance box_Tqualified_compare : Compare box_Tqualified :=
+      CompareFields (fun b1 b2 : box_Tqualified =>
+        compare
+          (b1.(box_Tqualified_0), b1.(box_Tqualified_1))
+          (b2.(box_Tqualified_0), b2.(box_Tqualified_1))).
 
     Record box_Tarch : Set := Box_Tarch {
       box_Tarch_0 : option bitsize;
       box_Tarch_1 : PrimString.string;
     }.
-    #[local] Instance box_Tarch_compare : Compare box_Tarch := fun b1 b2 =>
-      compare_lex (compare b1.(box_Tarch_0) b2.(box_Tarch_0)) $ fun _ =>
-      compare b1.(box_Tarch_1) b2.(box_Tarch_1).
+    #[local] Instance box_Tarch_compare : Compare box_Tarch :=
+      CompareFields (fun b1 b2 : box_Tarch =>
+        compare (b1.(box_Tarch_0), b1.(box_Tarch_1)) (b2.(box_Tarch_0), b2.(box_Tarch_1))).
 
 
     Definition prim_tagFT (ft : float_type.t) : PrimInt63.int :=
@@ -1212,7 +1240,7 @@ Module type.
       | Tunsupported msg => kp 24 msg
       end.
 
-    Definition compare_data (p : positive) : car p -> car p -> comparison :=
+    Definition compare_data (p : positive) : car p -> car p -> comparison := Eval cbv [compare] in
       match p as p return car p -> car p -> comparison with
       | 1 | 2 => compare
       | 3 | 4 | 5 => compare
@@ -1267,135 +1295,154 @@ Module Expr.
       box_Eunresolved_unop_0 : RUnOp;
       box_Eunresolved_unop_1 : Expr;
     }.
-    #[local] Instance box_Eunresolved_unop_compare : Compare box_Eunresolved_unop := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eunresolved_unop_0) b2.(box_Eunresolved_unop_0)) $ fun _ =>
-      compare b1.(box_Eunresolved_unop_1) b2.(box_Eunresolved_unop_1).
+    #[local] Instance box_Eunresolved_unop_compare : Compare box_Eunresolved_unop :=
+      CompareFields (fun b1 b2 : box_Eunresolved_unop =>
+        compare
+          (b1.(box_Eunresolved_unop_0), b1.(box_Eunresolved_unop_1))
+          (b2.(box_Eunresolved_unop_0), b2.(box_Eunresolved_unop_1))).
 
     Record box_Eunresolved_binop : Set := Box_Eunresolved_binop {
       box_Eunresolved_binop_0 : RBinOp;
       box_Eunresolved_binop_1 : Expr;
       box_Eunresolved_binop_2 : Expr;
     }.
-    #[local] Instance box_Eunresolved_binop_compare : Compare box_Eunresolved_binop := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eunresolved_binop_0) b2.(box_Eunresolved_binop_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Eunresolved_binop_1) b2.(box_Eunresolved_binop_1)) $ fun _ =>
-      compare b1.(box_Eunresolved_binop_2) b2.(box_Eunresolved_binop_2).
+    #[local] Instance box_Eunresolved_binop_compare : Compare box_Eunresolved_binop :=
+      CompareFields (fun b1 b2 : box_Eunresolved_binop =>
+        compare
+          (b1.(box_Eunresolved_binop_0), (b1.(box_Eunresolved_binop_1), b1.(box_Eunresolved_binop_2)))
+          (b2.(box_Eunresolved_binop_0), (b2.(box_Eunresolved_binop_1), b2.(box_Eunresolved_binop_2)))).
 
     Record box_Eunresolved_call : Set := Box_Eunresolved_call {
       box_Eunresolved_call_0 : name;
       box_Eunresolved_call_1 : list Expr;
     }.
-    #[local] Instance box_Eunresolved_call_compare : Compare box_Eunresolved_call := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eunresolved_call_0) b2.(box_Eunresolved_call_0)) $ fun _ =>
-      compare b1.(box_Eunresolved_call_1) b2.(box_Eunresolved_call_1).
+    #[local] Instance box_Eunresolved_call_compare : Compare box_Eunresolved_call :=
+      CompareFields (fun b1 b2 : box_Eunresolved_call =>
+        compare
+          (b1.(box_Eunresolved_call_0), b1.(box_Eunresolved_call_1))
+          (b2.(box_Eunresolved_call_0), b2.(box_Eunresolved_call_1))).
 
     Record box_Eunresolved_member_call : Set := Box_Eunresolved_member_call {
       box_Eunresolved_member_call_0 : name;
       box_Eunresolved_member_call_1 : Expr;
       box_Eunresolved_member_call_2 : list Expr;
     }.
-    #[local] Instance box_Eunresolved_member_call_compare : Compare box_Eunresolved_member_call := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eunresolved_member_call_0) b2.(box_Eunresolved_member_call_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Eunresolved_member_call_1) b2.(box_Eunresolved_member_call_1)) $ fun _ =>
-      compare b1.(box_Eunresolved_member_call_2) b2.(box_Eunresolved_member_call_2).
+    #[local] Instance box_Eunresolved_member_call_compare : Compare box_Eunresolved_member_call :=
+      CompareFields (fun b1 b2 : box_Eunresolved_member_call =>
+        compare
+          (b1.(box_Eunresolved_member_call_0), (b1.(box_Eunresolved_member_call_1),
+           b1.(box_Eunresolved_member_call_2)))
+          (b2.(box_Eunresolved_member_call_0), (b2.(box_Eunresolved_member_call_1),
+           b2.(box_Eunresolved_member_call_2)))).
 
     Record box_Eunresolved_parenlist : Set := Box_Eunresolved_parenlist {
       box_Eunresolved_parenlist_0 : option type;
       box_Eunresolved_parenlist_1 : list Expr;
     }.
-    #[local] Instance box_Eunresolved_parenlist_compare : Compare box_Eunresolved_parenlist := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eunresolved_parenlist_0) b2.(box_Eunresolved_parenlist_0)) $ fun _ =>
-      compare b1.(box_Eunresolved_parenlist_1) b2.(box_Eunresolved_parenlist_1).
+    #[local] Instance box_Eunresolved_parenlist_compare : Compare box_Eunresolved_parenlist :=
+      CompareFields (fun b1 b2 : box_Eunresolved_parenlist =>
+        compare
+          (b1.(box_Eunresolved_parenlist_0), b1.(box_Eunresolved_parenlist_1))
+          (b2.(box_Eunresolved_parenlist_0), b2.(box_Eunresolved_parenlist_1))).
 
     Record box_Eunresolved_initlist : Set := Box_Eunresolved_initlist {
       box_Eunresolved_initlist_0 : option type;
       box_Eunresolved_initlist_1 : list Expr;
     }.
-    #[local] Instance box_Eunresolved_initlist_compare : Compare box_Eunresolved_initlist := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eunresolved_initlist_0) b2.(box_Eunresolved_initlist_0)) $ fun _ =>
-      compare b1.(box_Eunresolved_initlist_1) b2.(box_Eunresolved_initlist_1).
+    #[local] Instance box_Eunresolved_initlist_compare : Compare box_Eunresolved_initlist :=
+      CompareFields (fun b1 b2 : box_Eunresolved_initlist =>
+        compare
+          (b1.(box_Eunresolved_initlist_0), b1.(box_Eunresolved_initlist_1))
+          (b2.(box_Eunresolved_initlist_0), b2.(box_Eunresolved_initlist_1))).
 
     Record box_Eunresolved_member : Set := Box_Eunresolved_member {
       box_Eunresolved_member_0 : Expr;
       box_Eunresolved_member_1 : name;
     }.
-    #[local] Instance box_Eunresolved_member_compare : Compare box_Eunresolved_member := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eunresolved_member_0) b2.(box_Eunresolved_member_0)) $ fun _ =>
-      compare b1.(box_Eunresolved_member_1) b2.(box_Eunresolved_member_1).
+    #[local] Instance box_Eunresolved_member_compare : Compare box_Eunresolved_member :=
+      CompareFields (fun b1 b2 : box_Eunresolved_member =>
+        compare
+          (b1.(box_Eunresolved_member_0), b1.(box_Eunresolved_member_1))
+          (b2.(box_Eunresolved_member_0), b2.(box_Eunresolved_member_1))).
 
     Record box_Eunresolved_sizeof_pack : Set := Box_Eunresolved_sizeof_pack {
       box_Eunresolved_sizeof_pack_0 : ident;
       box_Eunresolved_sizeof_pack_1 : type;
     }.
-    #[local] Instance box_Eunresolved_sizeof_pack_compare : Compare box_Eunresolved_sizeof_pack := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eunresolved_sizeof_pack_0) b2.(box_Eunresolved_sizeof_pack_0)) $ fun _ =>
-      compare b1.(box_Eunresolved_sizeof_pack_1) b2.(box_Eunresolved_sizeof_pack_1).
+    #[local] Instance box_Eunresolved_sizeof_pack_compare : Compare box_Eunresolved_sizeof_pack :=
+      CompareFields (fun b1 b2 : box_Eunresolved_sizeof_pack =>
+        compare
+          (b1.(box_Eunresolved_sizeof_pack_0), b1.(box_Eunresolved_sizeof_pack_1))
+          (b2.(box_Eunresolved_sizeof_pack_0), b2.(box_Eunresolved_sizeof_pack_1))).
 
     Record box_Evar : Set := Box_Evar {
       box_Evar_0 : localname;
       box_Evar_1 : type;
     }.
-    #[local] Instance box_Evar_compare : Compare box_Evar := fun b1 b2 =>
-      compare_lex (compare b1.(box_Evar_0) b2.(box_Evar_0)) $ fun _ =>
-      compare b1.(box_Evar_1) b2.(box_Evar_1).
+    #[local] Instance box_Evar_compare : Compare box_Evar :=
+      CompareFields (fun b1 b2 : box_Evar =>
+        compare (b1.(box_Evar_0), b1.(box_Evar_1)) (b2.(box_Evar_0), b2.(box_Evar_1))).
 
     Record box_Eenum_const : Set := Box_Eenum_const {
       box_Eenum_const_0 : name;
       box_Eenum_const_1 : ident;
     }.
-    #[local] Instance box_Eenum_const_compare : Compare box_Eenum_const := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eenum_const_0) b2.(box_Eenum_const_0)) $ fun _ =>
-      compare b1.(box_Eenum_const_1) b2.(box_Eenum_const_1).
+    #[local] Instance box_Eenum_const_compare : Compare box_Eenum_const :=
+      CompareFields (fun b1 b2 : box_Eenum_const =>
+        compare
+          (b1.(box_Eenum_const_0), b1.(box_Eenum_const_1))
+          (b2.(box_Eenum_const_0), b2.(box_Eenum_const_1))).
 
     Record box_Eglobal : Set := Box_Eglobal {
       box_Eglobal_0 : name;
       box_Eglobal_1 : type;
     }.
-    #[local] Instance box_Eglobal_compare : Compare box_Eglobal := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eglobal_0) b2.(box_Eglobal_0)) $ fun _ =>
-      compare b1.(box_Eglobal_1) b2.(box_Eglobal_1).
+    #[local] Instance box_Eglobal_compare : Compare box_Eglobal :=
+      CompareFields (fun b1 b2 : box_Eglobal =>
+        compare (b1.(box_Eglobal_0), b1.(box_Eglobal_1)) (b2.(box_Eglobal_0), b2.(box_Eglobal_1))).
 
     Record box_Echar : Set := Box_Echar {
       box_Echar_0 : N;
       box_Echar_1 : type;
     }.
-    #[local] Instance box_Echar_compare : Compare box_Echar := fun b1 b2 =>
-      compare_lex (compare b1.(box_Echar_0) b2.(box_Echar_0)) $ fun _ =>
-      compare b1.(box_Echar_1) b2.(box_Echar_1).
+    #[local] Instance box_Echar_compare : Compare box_Echar :=
+      CompareFields (fun b1 b2 : box_Echar =>
+        compare (b1.(box_Echar_0), b1.(box_Echar_1)) (b2.(box_Echar_0), b2.(box_Echar_1))).
 
     Record box_Estring : Set := Box_Estring {
       box_Estring_0 : literal_string.t;
       box_Estring_1 : type;
     }.
-    #[local] Instance box_Estring_compare : Compare box_Estring := fun b1 b2 =>
-      compare_lex (compare b1.(box_Estring_0) b2.(box_Estring_0)) $ fun _ =>
-      compare b1.(box_Estring_1) b2.(box_Estring_1).
+    #[local] Instance box_Estring_compare : Compare box_Estring :=
+      CompareFields (fun b1 b2 : box_Estring =>
+        compare (b1.(box_Estring_0), b1.(box_Estring_1)) (b2.(box_Estring_0), b2.(box_Estring_1))).
 
     Record box_Eint : Set := Box_Eint {
       box_Eint_0 : Z;
       box_Eint_1 : type;
     }.
-    #[local] Instance box_Eint_compare : Compare box_Eint := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eint_0) b2.(box_Eint_0)) $ fun _ =>
-      compare b1.(box_Eint_1) b2.(box_Eint_1).
+    #[local] Instance box_Eint_compare : Compare box_Eint :=
+      CompareFields (fun b1 b2 : box_Eint =>
+        compare (b1.(box_Eint_0), b1.(box_Eint_1)) (b2.(box_Eint_0), b2.(box_Eint_1))).
 
     Record box_Efloat : Set := Box_Efloat {
       box_Efloat_0 : float_type.t;
       box_Efloat_1 : Z;
     }.
-    #[local] Instance box_Efloat_compare : Compare box_Efloat := fun b1 b2 =>
-      compare_lex (compare b1.(box_Efloat_0) b2.(box_Efloat_0)) $ fun _ =>
-      compare b1.(box_Efloat_1) b2.(box_Efloat_1).
+    #[local] Instance box_Efloat_compare : Compare box_Efloat :=
+      CompareFields (fun b1 b2 : box_Efloat =>
+        compare (b1.(box_Efloat_0), b1.(box_Efloat_1)) (b2.(box_Efloat_0), b2.(box_Efloat_1))).
 
     Record box_Eunop : Set := Box_Eunop {
       box_Eunop_0 : UnOp;
       box_Eunop_1 : Expr;
       box_Eunop_2 : type;
     }.
-    #[local] Instance box_Eunop_compare : Compare box_Eunop := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eunop_0) b2.(box_Eunop_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Eunop_1) b2.(box_Eunop_1)) $ fun _ =>
-      compare b1.(box_Eunop_2) b2.(box_Eunop_2).
+    #[local] Instance box_Eunop_compare : Compare box_Eunop :=
+      CompareFields (fun b1 b2 : box_Eunop =>
+        compare
+          (b1.(box_Eunop_0), (b1.(box_Eunop_1), b1.(box_Eunop_2)))
+          (b2.(box_Eunop_0), (b2.(box_Eunop_1), b2.(box_Eunop_2)))).
 
     Record box_Ebinop : Set := Box_Ebinop {
       box_Ebinop_0 : BinOp;
@@ -1403,71 +1450,75 @@ Module Expr.
       box_Ebinop_2 : Expr;
       box_Ebinop_3 : type;
     }.
-    #[local] Instance box_Ebinop_compare : Compare box_Ebinop := fun b1 b2 =>
-      compare_lex (compare b1.(box_Ebinop_0) b2.(box_Ebinop_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Ebinop_1) b2.(box_Ebinop_1)) $ fun _ =>
-      compare_lex (compare b1.(box_Ebinop_2) b2.(box_Ebinop_2)) $ fun _ =>
-      compare b1.(box_Ebinop_3) b2.(box_Ebinop_3).
+    #[local] Instance box_Ebinop_compare : Compare box_Ebinop :=
+      CompareFields (fun b1 b2 : box_Ebinop =>
+        compare
+          (b1.(box_Ebinop_0), (b1.(box_Ebinop_1), (b1.(box_Ebinop_2), b1.(box_Ebinop_3))))
+          (b2.(box_Ebinop_0), (b2.(box_Ebinop_1), (b2.(box_Ebinop_2), b2.(box_Ebinop_3))))).
 
     Record box_Ederef : Set := Box_Ederef {
       box_Ederef_0 : Expr;
       box_Ederef_1 : type;
     }.
-    #[local] Instance box_Ederef_compare : Compare box_Ederef := fun b1 b2 =>
-      compare_lex (compare b1.(box_Ederef_0) b2.(box_Ederef_0)) $ fun _ =>
-      compare b1.(box_Ederef_1) b2.(box_Ederef_1).
+    #[local] Instance box_Ederef_compare : Compare box_Ederef :=
+      CompareFields (fun b1 b2 : box_Ederef =>
+        compare (b1.(box_Ederef_0), b1.(box_Ederef_1)) (b2.(box_Ederef_0), b2.(box_Ederef_1))).
 
     Record box_Eassign : Set := Box_Eassign {
       box_Eassign_0 : Expr;
       box_Eassign_1 : Expr;
       box_Eassign_2 : type;
     }.
-    #[local] Instance box_Eassign_compare : Compare box_Eassign := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eassign_0) b2.(box_Eassign_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Eassign_1) b2.(box_Eassign_1)) $ fun _ =>
-      compare b1.(box_Eassign_2) b2.(box_Eassign_2).
+    #[local] Instance box_Eassign_compare : Compare box_Eassign :=
+      CompareFields (fun b1 b2 : box_Eassign =>
+        compare
+          (b1.(box_Eassign_0), (b1.(box_Eassign_1), b1.(box_Eassign_2)))
+          (b2.(box_Eassign_0), (b2.(box_Eassign_1), b2.(box_Eassign_2)))).
 
     Record box_Eseqand : Set := Box_Eseqand {
       box_Eseqand_0 : Expr;
       box_Eseqand_1 : Expr;
     }.
-    #[local] Instance box_Eseqand_compare : Compare box_Eseqand := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eseqand_0) b2.(box_Eseqand_0)) $ fun _ =>
-      compare b1.(box_Eseqand_1) b2.(box_Eseqand_1).
+    #[local] Instance box_Eseqand_compare : Compare box_Eseqand :=
+      CompareFields (fun b1 b2 : box_Eseqand =>
+        compare (b1.(box_Eseqand_0), b1.(box_Eseqand_1)) (b2.(box_Eseqand_0), b2.(box_Eseqand_1))).
 
     Record box_Ecall : Set := Box_Ecall {
       box_Ecall_0 : Expr;
       box_Ecall_1 : list Expr;
     }.
-    #[local] Instance box_Ecall_compare : Compare box_Ecall := fun b1 b2 =>
-      compare_lex (compare b1.(box_Ecall_0) b2.(box_Ecall_0)) $ fun _ =>
-      compare b1.(box_Ecall_1) b2.(box_Ecall_1).
+    #[local] Instance box_Ecall_compare : Compare box_Ecall :=
+      CompareFields (fun b1 b2 : box_Ecall =>
+        compare (b1.(box_Ecall_0), b1.(box_Ecall_1)) (b2.(box_Ecall_0), b2.(box_Ecall_1))).
 
     Record box_Eexplicit_cast : Set := Box_Eexplicit_cast {
       box_Eexplicit_cast_0 : cast_style.t;
       box_Eexplicit_cast_1 : type;
       box_Eexplicit_cast_2 : Expr;
     }.
-    #[local] Instance box_Eexplicit_cast_compare : Compare box_Eexplicit_cast := fun b1 b2 =>
-      compare_lex (_compare b1.(box_Eexplicit_cast_0) b2.(box_Eexplicit_cast_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Eexplicit_cast_1) b2.(box_Eexplicit_cast_1)) $ fun _ =>
-      compare b1.(box_Eexplicit_cast_2) b2.(box_Eexplicit_cast_2).
+    #[local] Instance box_Eexplicit_cast_compare : Compare box_Eexplicit_cast :=
+      CompareFields (fun b1 b2 : box_Eexplicit_cast =>
+        compare
+          (b1.(box_Eexplicit_cast_0), (b1.(box_Eexplicit_cast_1), b1.(box_Eexplicit_cast_2)))
+          (b2.(box_Eexplicit_cast_0), (b2.(box_Eexplicit_cast_1), b2.(box_Eexplicit_cast_2)))).
 
     Record box_Ecast : Set := Box_Ecast {
       box_Ecast_0 : Cast;
       box_Ecast_1 : Expr;
     }.
-    #[local] Instance box_Ecast_compare : Compare box_Ecast := fun b1 b2 =>
-      compare_lex (compare b1.(box_Ecast_0) b2.(box_Ecast_0)) $ fun _ =>
-      compare b1.(box_Ecast_1) b2.(box_Ecast_1).
+    #[local] Instance box_Ecast_compare : Compare box_Ecast :=
+      CompareFields (fun b1 b2 : box_Ecast =>
+        compare (b1.(box_Ecast_0), b1.(box_Ecast_1)) (b2.(box_Ecast_0), b2.(box_Ecast_1))).
 
     Record box_Edependent_cast : Set := Box_Edependent_cast {
       box_Edependent_cast_0 : Expr ;
       box_Edependent_cast_1 : type;
     }.
-    #[local] Instance box_Edependent_cast_compare : Compare box_Edependent_cast := fun b1 b2 =>
-      compare_lex (compare b1.(box_Edependent_cast_0) b2.(box_Edependent_cast_0)) $ fun _ =>
-      compare b1.(box_Edependent_cast_1) b2.(box_Edependent_cast_1).
+    #[local] Instance box_Edependent_cast_compare : Compare box_Edependent_cast :=
+      CompareFields (fun b1 b2 : box_Edependent_cast =>
+        compare
+          (b1.(box_Edependent_cast_0), b1.(box_Edependent_cast_1))
+          (b2.(box_Edependent_cast_0), b2.(box_Edependent_cast_1))).
 
     Record box_Emember : Set := Box_Emember {
       box_Emember_0 : bool ;
@@ -1476,22 +1527,24 @@ Module Expr.
       box_Emember_3 : bool;
       box_Emember_4 : type;
     }.
-    #[local] Instance box_Emember_compare : Compare box_Emember := fun b1 b2 =>
-      compare_lex (compare b1.(box_Emember_0) b2.(box_Emember_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Emember_1) b2.(box_Emember_1)) $ fun _ =>
-      compare_lex (compare b1.(box_Emember_2) b2.(box_Emember_2)) $ fun _ =>
-      compare_lex (compare b1.(box_Emember_3) b2.(box_Emember_3)) $ fun _ =>
-      compare b1.(box_Emember_4) b2.(box_Emember_4).
+    #[local] Instance box_Emember_compare : Compare box_Emember :=
+      CompareFields (fun b1 b2 : box_Emember =>
+        compare
+          (b1.(box_Emember_0), (b1.(box_Emember_1), (b1.(box_Emember_2), (b1.(box_Emember_3),
+           b1.(box_Emember_4)))))
+          (b2.(box_Emember_0), (b2.(box_Emember_1), (b2.(box_Emember_2), (b2.(box_Emember_3),
+           b2.(box_Emember_4)))))).
 
     Record box_Emember_ignore : Set := Box_Emember_ignore {
       box_Emember_ignore_0 : bool ;
       box_Emember_ignore_1 : Expr;
       box_Emember_ignore_2 : Expr;
     }.
-    #[local] Instance box_Emember_ignore_compare : Compare box_Emember_ignore := fun b1 b2 =>
-      compare_lex (compare b1.(box_Emember_ignore_0) b2.(box_Emember_ignore_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Emember_ignore_1) b2.(box_Emember_ignore_1)) $ fun _ =>
-      compare b1.(box_Emember_ignore_2) b2.(box_Emember_ignore_2).
+    #[local] Instance box_Emember_ignore_compare : Compare box_Emember_ignore :=
+      CompareFields (fun b1 b2 : box_Emember_ignore =>
+        compare
+          (b1.(box_Emember_ignore_0), (b1.(box_Emember_ignore_1), b1.(box_Emember_ignore_2)))
+          (b2.(box_Emember_ignore_0), (b2.(box_Emember_ignore_1), b2.(box_Emember_ignore_2)))).
 
     Record box_Emember_call : Set := Box_Emember_call {
       box_Emember_call_0 : bool ;
@@ -1499,67 +1552,75 @@ Module Expr.
       box_Emember_call_2 : Expr;
       box_Emember_call_3 : list Expr;
     }.
-    #[local] Instance box_Emember_call_compare : Compare box_Emember_call := fun b1 b2 =>
-      compare_lex (compare b1.(box_Emember_call_0) b2.(box_Emember_call_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Emember_call_1) b2.(box_Emember_call_1)) $ fun _ =>
-      compare_lex (compare b1.(box_Emember_call_2) b2.(box_Emember_call_2)) $ fun _ =>
-      compare b1.(box_Emember_call_3) b2.(box_Emember_call_3).
+    #[local] Instance box_Emember_call_compare : Compare box_Emember_call :=
+      CompareFields (fun b1 b2 : box_Emember_call =>
+        compare
+          (b1.(box_Emember_call_0), (b1.(box_Emember_call_1), (b1.(box_Emember_call_2),
+           b1.(box_Emember_call_3))))
+          (b2.(box_Emember_call_0), (b2.(box_Emember_call_1), (b2.(box_Emember_call_2),
+           b2.(box_Emember_call_3))))).
 
     Record box_Eoperator_call : Set := Box_Eoperator_call {
       box_Eoperator_call_0 : OverloadableOperator;
       box_Eoperator_call_1 : operator_impl.t name type;
       box_Eoperator_call_2 : list Expr;
     }.
-    #[local] Instance box_Eoperator_call_compare : Compare box_Eoperator_call := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eoperator_call_0) b2.(box_Eoperator_call_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Eoperator_call_1) b2.(box_Eoperator_call_1)) $ fun _ =>
-      compare b1.(box_Eoperator_call_2) b2.(box_Eoperator_call_2).
+    #[local] Instance box_Eoperator_call_compare : Compare box_Eoperator_call :=
+      CompareFields (fun b1 b2 : box_Eoperator_call =>
+        compare
+          (b1.(box_Eoperator_call_0), (b1.(box_Eoperator_call_1), b1.(box_Eoperator_call_2)))
+          (b2.(box_Eoperator_call_0), (b2.(box_Eoperator_call_1), b2.(box_Eoperator_call_2)))).
 
     Record box_Esizeof : Set := Box_Esizeof {
       box_Esizeof_0 : type + Expr;
       box_Esizeof_1 : type;
     }.
-    #[local] Instance box_Esizeof_compare : Compare box_Esizeof := fun b1 b2 =>
-      compare_lex (compare b1.(box_Esizeof_0) b2.(box_Esizeof_0)) $ fun _ =>
-      compare b1.(box_Esizeof_1) b2.(box_Esizeof_1).
+    #[local] Instance box_Esizeof_compare : Compare box_Esizeof :=
+      CompareFields (fun b1 b2 : box_Esizeof =>
+        compare (b1.(box_Esizeof_0), b1.(box_Esizeof_1)) (b2.(box_Esizeof_0), b2.(box_Esizeof_1))).
 
     Record box_Eoffsetof : Set := Box_Eoffsetof {
       box_Eoffsetof_0 : type;
       box_Eoffsetof_1 : ident;
       box_Eoffsetof_2 : type;
     }.
-    #[local] Instance box_Eoffsetof_compare : Compare box_Eoffsetof := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eoffsetof_0) b2.(box_Eoffsetof_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Eoffsetof_1) b2.(box_Eoffsetof_1)) $ fun _ =>
-      compare b1.(box_Eoffsetof_2) b2.(box_Eoffsetof_2).
+    #[local] Instance box_Eoffsetof_compare : Compare box_Eoffsetof :=
+      CompareFields (fun b1 b2 : box_Eoffsetof =>
+        compare
+          (b1.(box_Eoffsetof_0), (b1.(box_Eoffsetof_1), b1.(box_Eoffsetof_2)))
+          (b2.(box_Eoffsetof_0), (b2.(box_Eoffsetof_1), b2.(box_Eoffsetof_2)))).
 
     Record box_Econstructor : Set := Box_Econstructor {
       box_Econstructor_0 : name;
       box_Econstructor_1 : list Expr;
       box_Econstructor_2 : type;
     }.
-    #[local] Instance box_Econstructor_compare : Compare box_Econstructor := fun b1 b2 =>
-      compare_lex (compare b1.(box_Econstructor_0) b2.(box_Econstructor_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Econstructor_1) b2.(box_Econstructor_1)) $ fun _ =>
-      compare b1.(box_Econstructor_2) b2.(box_Econstructor_2).
+    #[local] Instance box_Econstructor_compare : Compare box_Econstructor :=
+      CompareFields (fun b1 b2 : box_Econstructor =>
+        compare
+          (b1.(box_Econstructor_0), (b1.(box_Econstructor_1), b1.(box_Econstructor_2)))
+          (b2.(box_Econstructor_0), (b2.(box_Econstructor_1), b2.(box_Econstructor_2)))).
 
     Record box_Einherited_constructor : Set := Box_Einherited_constructor {
       box_Einherited_constructor_0 : name;
       box_Einherited_constructor_1 : list ident;
       box_Einherited_constructor_2 : type;
     }.
-    #[local] Instance box_Einherited_constructor_compare : Compare box_Einherited_constructor := fun b1 b2 =>
-      compare_lex (compare b1.(box_Einherited_constructor_0) b2.(box_Einherited_constructor_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Einherited_constructor_1) b2.(box_Einherited_constructor_1)) $ fun _ =>
-      compare b1.(box_Einherited_constructor_2) b2.(box_Einherited_constructor_2).
+    #[local] Instance box_Einherited_constructor_compare : Compare box_Einherited_constructor :=
+      CompareFields (fun b1 b2 : box_Einherited_constructor =>
+        compare
+          (b1.(box_Einherited_constructor_0), (b1.(box_Einherited_constructor_1),
+           b1.(box_Einherited_constructor_2)))
+          (b2.(box_Einherited_constructor_0), (b2.(box_Einherited_constructor_1),
+           b2.(box_Einherited_constructor_2)))).
 
     Record box_Elambda : Set := Box_Elambda {
       box_Elambda_0 : name;
       box_Elambda_1 : list Expr
     }.
-    #[local] Instance box_Elambda_compare : Compare box_Elambda := fun b1 b2 =>
-      compare_lex (compare b1.(box_Elambda_0) b2.(box_Elambda_0)) $ fun _ =>
-      compare b1.(box_Elambda_1) b2.(box_Elambda_1).
+    #[local] Instance box_Elambda_compare : Compare box_Elambda :=
+      CompareFields (fun b1 b2 : box_Elambda =>
+        compare (b1.(box_Elambda_0), b1.(box_Elambda_1)) (b2.(box_Elambda_0), b2.(box_Elambda_1))).
 
     Record box_Eif : Set := Box_Eif {
       box_Eif_0 : Expr;
@@ -1567,11 +1628,11 @@ Module Expr.
       box_Eif_2 : Expr;
       box_Eif_3 : type;
     }.
-    #[local] Instance box_Eif_compare : Compare box_Eif := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eif_0) b2.(box_Eif_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Eif_1) b2.(box_Eif_1)) $ fun _ =>
-      compare_lex (compare b1.(box_Eif_2) b2.(box_Eif_2)) $ fun _ =>
-      compare b1.(box_Eif_3) b2.(box_Eif_3).
+    #[local] Instance box_Eif_compare : Compare box_Eif :=
+      CompareFields (fun b1 b2 : box_Eif =>
+        compare
+          (b1.(box_Eif_0), (b1.(box_Eif_1), (b1.(box_Eif_2), b1.(box_Eif_3))))
+          (b2.(box_Eif_0), (b2.(box_Eif_1), (b2.(box_Eif_2), b2.(box_Eif_3))))).
 
     Record box_Eif2 : Set := Box_Eif2 {
       box_Eif2_0 : N;
@@ -1581,41 +1642,45 @@ Module Expr.
       box_Eif2_4 : Expr;
       box_Eif2_5 : type;
     }.
-    #[local] Instance box_Eif2_compare : Compare box_Eif2 := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eif2_0) b2.(box_Eif2_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Eif2_1) b2.(box_Eif2_1)) $ fun _ =>
-      compare_lex (compare b1.(box_Eif2_2) b2.(box_Eif2_2)) $ fun _ =>
-      compare_lex (compare b1.(box_Eif2_3) b2.(box_Eif2_3)) $ fun _ =>
-      compare_lex (compare b1.(box_Eif2_4) b2.(box_Eif2_4)) $ fun _ =>
-      compare b1.(box_Eif2_5) b2.(box_Eif2_5).
+    #[local] Instance box_Eif2_compare : Compare box_Eif2 :=
+      CompareFields (fun b1 b2 : box_Eif2 =>
+        compare
+          (b1.(box_Eif2_0), (b1.(box_Eif2_1), (b1.(box_Eif2_2), (b1.(box_Eif2_3), (b1.(box_Eif2_4),
+           b1.(box_Eif2_5))))))
+          (b2.(box_Eif2_0), (b2.(box_Eif2_1), (b2.(box_Eif2_2), (b2.(box_Eif2_3), (b2.(box_Eif2_4),
+           b2.(box_Eif2_5))))))).
 
     Record box_Einitlist : Set := Box_Einitlist {
       box_Einitlist_0 : list Expr;
       box_Einitlist_1 : option Expr;
       box_Einitlist_2 : type;
     }.
-    #[local] Instance box_Einitlist_compare : Compare box_Einitlist := fun b1 b2 =>
-      compare_lex (compare b1.(box_Einitlist_0) b2.(box_Einitlist_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Einitlist_1) b2.(box_Einitlist_1)) $ fun _ =>
-      compare b1.(box_Einitlist_2) b2.(box_Einitlist_2).
+    #[local] Instance box_Einitlist_compare : Compare box_Einitlist :=
+      CompareFields (fun b1 b2 : box_Einitlist =>
+        compare
+          (b1.(box_Einitlist_0), (b1.(box_Einitlist_1), b1.(box_Einitlist_2)))
+          (b2.(box_Einitlist_0), (b2.(box_Einitlist_1), b2.(box_Einitlist_2)))).
 
     Record box_Einitlist_union : Set := Box_Einitlist_union {
       box_Einitlist_union_0 : atomic_name;
       box_Einitlist_union_1 : option Expr;
       box_Einitlist_union_2 : type;
     }.
-    #[local] Instance box_Einitlist_union_compare : Compare box_Einitlist_union := fun b1 b2 =>
-      compare_lex (compare b1.(box_Einitlist_union_0) b2.(box_Einitlist_union_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Einitlist_union_1) b2.(box_Einitlist_union_1)) $ fun _ =>
-      compare b1.(box_Einitlist_union_2) b2.(box_Einitlist_union_2).
+    #[local] Instance box_Einitlist_union_compare : Compare box_Einitlist_union :=
+      CompareFields (fun b1 b2 : box_Einitlist_union =>
+        compare
+          (b1.(box_Einitlist_union_0), (b1.(box_Einitlist_union_1), b1.(box_Einitlist_union_2)))
+          (b2.(box_Einitlist_union_0), (b2.(box_Einitlist_union_1), b2.(box_Einitlist_union_2)))).
 
     Record box_Einitlist_std : Set := Box_Einitlist_std {
       box_Einitlist_std_0 : Expr;
       box_Einitlist_std_1 : type;
     }.
-    #[local] Instance box_Einitlist_std_compare : Compare box_Einitlist_std := fun b1 b2 =>
-      compare_lex (compare b1.(box_Einitlist_std_0) b2.(box_Einitlist_std_0)) $ fun _ =>
-      compare b1.(box_Einitlist_std_1) b2.(box_Einitlist_std_1).
+    #[local] Instance box_Einitlist_std_compare : Compare box_Einitlist_std :=
+      CompareFields (fun b1 b2 : box_Einitlist_std =>
+        compare
+          (b1.(box_Einitlist_std_0), b1.(box_Einitlist_std_1))
+          (b2.(box_Einitlist_std_0), b2.(box_Einitlist_std_1))).
 
     Record box_Enew : Set := Box_Enew {
       box_Enew_0 : name * type;
@@ -1625,13 +1690,13 @@ Module Expr.
       box_Enew_4 : option Expr;
       box_Enew_5 : option Expr;
     }.
-    #[local] Instance box_Enew_compare : Compare box_Enew := fun b1 b2 =>
-      compare_lex (compare b1.(box_Enew_0) b2.(box_Enew_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Enew_1) b2.(box_Enew_1)) $ fun _ =>
-      compare_lex (compare b1.(box_Enew_2) b2.(box_Enew_2)) $ fun _ =>
-      compare_lex (compare b1.(box_Enew_3) b2.(box_Enew_3)) $ fun _ =>
-      compare_lex (compare b1.(box_Enew_4) b2.(box_Enew_4)) $ fun _ =>
-      compare b1.(box_Enew_5) b2.(box_Enew_5).
+    #[local] Instance box_Enew_compare : Compare box_Enew :=
+      CompareFields (fun b1 b2 : box_Enew =>
+        compare
+          (b1.(box_Enew_0), (b1.(box_Enew_1), (b1.(box_Enew_2), (b1.(box_Enew_3), (b1.(box_Enew_4),
+           b1.(box_Enew_5))))))
+          (b2.(box_Enew_0), (b2.(box_Enew_1), (b2.(box_Enew_2), (b2.(box_Enew_3), (b2.(box_Enew_4),
+           b2.(box_Enew_5))))))).
 
     Record box_Edelete : Set := Box_Edelete {
       box_Edelete_0 : bool;
@@ -1639,39 +1704,45 @@ Module Expr.
       box_Edelete_2 : Expr;
       box_Edelete_3 : type;
     }.
-    #[local] Instance box_Edelete_compare : Compare box_Edelete := fun b1 b2 =>
-      compare_lex (compare b1.(box_Edelete_0) b2.(box_Edelete_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Edelete_1) b2.(box_Edelete_1)) $ fun _ =>
-      compare_lex (compare b1.(box_Edelete_2) b2.(box_Edelete_2)) $ fun _ =>
-      compare b1.(box_Edelete_3) b2.(box_Edelete_3).
+    #[local] Instance box_Edelete_compare : Compare box_Edelete :=
+      CompareFields (fun b1 b2 : box_Edelete =>
+        compare
+          (b1.(box_Edelete_0), (b1.(box_Edelete_1), (b1.(box_Edelete_2), b1.(box_Edelete_3))))
+          (b2.(box_Edelete_0), (b2.(box_Edelete_1), (b2.(box_Edelete_2), b2.(box_Edelete_3))))).
 
     Record box_Ematerialize_temp : Set := Box_Ematerialize_temp {
       box_Ematerialize_temp_0 : Expr;
       box_Ematerialize_temp_1 : ValCat;
     }.
-    #[local] Instance box_Ematerialize_temp_compare : Compare box_Ematerialize_temp := fun b1 b2 =>
-      compare_lex (compare b1.(box_Ematerialize_temp_0) b2.(box_Ematerialize_temp_0)) $ fun _ =>
-      compare b1.(box_Ematerialize_temp_1) b2.(box_Ematerialize_temp_1).
+    #[local] Instance box_Ematerialize_temp_compare : Compare box_Ematerialize_temp :=
+      CompareFields (fun b1 b2 : box_Ematerialize_temp =>
+        compare
+          (b1.(box_Ematerialize_temp_0), b1.(box_Ematerialize_temp_1))
+          (b2.(box_Ematerialize_temp_0), b2.(box_Ematerialize_temp_1))).
 
     Record box_Eatomic : Set := Box_Eatomic {
       box_Eatomic_0 : AtomicOp;
       box_Eatomic_1 : list Expr;
       box_Eatomic_2 : type;
     }.
-    #[local] Instance box_Eatomic_compare : Compare box_Eatomic := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eatomic_0) b2.(box_Eatomic_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Eatomic_1) b2.(box_Eatomic_1)) $ fun _ =>
-      compare b1.(box_Eatomic_2) b2.(box_Eatomic_2).
+    #[local] Instance box_Eatomic_compare : Compare box_Eatomic :=
+      CompareFields (fun b1 b2 : box_Eatomic =>
+        compare
+          (b1.(box_Eatomic_0), (b1.(box_Eatomic_1), b1.(box_Eatomic_2)))
+          (b2.(box_Eatomic_0), (b2.(box_Eatomic_1), b2.(box_Eatomic_2)))).
 
     Record box_Epseudo_destructor : Set := Box_Epseudo_destructor {
       box_Epseudo_destructor_0 : bool;
       box_Epseudo_destructor_1 : type;
       box_Epseudo_destructor_2 : Expr;
     }.
-    #[local] Instance box_Epseudo_destructor_compare : Compare box_Epseudo_destructor := fun b1 b2 =>
-      compare_lex (compare b1.(box_Epseudo_destructor_0) b2.(box_Epseudo_destructor_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Epseudo_destructor_1) b2.(box_Epseudo_destructor_1)) $ fun _ =>
-      compare b1.(box_Epseudo_destructor_2) b2.(box_Epseudo_destructor_2).
+    #[local] Instance box_Epseudo_destructor_compare : Compare box_Epseudo_destructor :=
+      CompareFields (fun b1 b2 : box_Epseudo_destructor =>
+        compare
+          (b1.(box_Epseudo_destructor_0), (b1.(box_Epseudo_destructor_1),
+           b1.(box_Epseudo_destructor_2)))
+          (b2.(box_Epseudo_destructor_0), (b2.(box_Epseudo_destructor_1),
+           b2.(box_Epseudo_destructor_2)))).
 
     Record box_Earrayloop_init : Set := Box_Earrayloop_init {
       box_Earrayloop_init_0 : N;
@@ -1681,37 +1752,41 @@ Module Expr.
       box_Earrayloop_init_4 : Expr;
       box_Earrayloop_init_5 : type;
     }.
-    #[local] Instance box_Earrayloop_init_compare : Compare box_Earrayloop_init := fun b1 b2 =>
-      compare_lex (compare b1.(box_Earrayloop_init_0) b2.(box_Earrayloop_init_0)) $ fun _ =>
-      compare_lex (compare b1.(box_Earrayloop_init_1) b2.(box_Earrayloop_init_1)) $ fun _ =>
-      compare_lex (compare b1.(box_Earrayloop_init_2) b2.(box_Earrayloop_init_2)) $ fun _ =>
-      compare_lex (compare b1.(box_Earrayloop_init_3) b2.(box_Earrayloop_init_3)) $ fun _ =>
-      compare_lex (compare b1.(box_Earrayloop_init_4) b2.(box_Earrayloop_init_4)) $ fun _ =>
-      compare b1.(box_Earrayloop_init_5) b2.(box_Earrayloop_init_5).
+    #[local] Instance box_Earrayloop_init_compare : Compare box_Earrayloop_init :=
+      CompareFields (fun b1 b2 : box_Earrayloop_init =>
+        compare
+          (b1.(box_Earrayloop_init_0), (b1.(box_Earrayloop_init_1), (b1.(box_Earrayloop_init_2),
+           (b1.(box_Earrayloop_init_3), (b1.(box_Earrayloop_init_4), b1.(box_Earrayloop_init_5))))))
+          (b2.(box_Earrayloop_init_0), (b2.(box_Earrayloop_init_1), (b2.(box_Earrayloop_init_2),
+           (b2.(box_Earrayloop_init_3), (b2.(box_Earrayloop_init_4), b2.(box_Earrayloop_init_5))))))).
 
     Record box_Eopaque_ref : Set := Box_Eopaque_ref {
       box_Eopaque_ref_0 : N;
       box_Eopaque_ref_1 : type;
     }.
-    #[local] Instance box_Eopaque_ref_compare : Compare box_Eopaque_ref := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eopaque_ref_0) b2.(box_Eopaque_ref_0)) $ fun _ =>
-      compare b1.(box_Eopaque_ref_1) b2.(box_Eopaque_ref_1).
+    #[local] Instance box_Eopaque_ref_compare : Compare box_Eopaque_ref :=
+      CompareFields (fun b1 b2 : box_Eopaque_ref =>
+        compare
+          (b1.(box_Eopaque_ref_0), b1.(box_Eopaque_ref_1))
+          (b2.(box_Eopaque_ref_0), b2.(box_Eopaque_ref_1))).
 
     Record box_Eunsupported : Set := Box_Eunsupported {
       box_Eunsupported_0 : PrimString.string;
       box_Eunsupported_1 : type;
     }.
-    #[local] Instance box_Eunsupported_compare : Compare box_Eunsupported := fun b1 b2 =>
-      compare_lex (compare b1.(box_Eunsupported_0) b2.(box_Eunsupported_0)) $ fun _ =>
-      compare b1.(box_Eunsupported_1) b2.(box_Eunsupported_1).
+    #[local] Instance box_Eunsupported_compare : Compare box_Eunsupported :=
+      CompareFields (fun b1 b2 : box_Eunsupported =>
+        compare
+          (b1.(box_Eunsupported_0), b1.(box_Eunsupported_1))
+          (b2.(box_Eunsupported_0), b2.(box_Eunsupported_1))).
 
     Record box_Estmt : Set := Box_Estmt {
       box_Estmt_0 : Stmt;
       box_Estmt_1 : type
     }.
-    #[local] Instance box_Estmt_compare : Compare box_Estmt := fun b1 b2 =>
-      compare_lex (compare b1.(box_Estmt_0) b2.(box_Estmt_0)) $ fun _ =>
-      compare b1.(box_Estmt_1) b2.(box_Estmt_1).
+    #[local] Instance box_Estmt_compare : Compare box_Estmt :=
+      CompareFields (fun b1 b2 : box_Estmt =>
+        compare (b1.(box_Estmt_0), b1.(box_Estmt_1)) (b2.(box_Estmt_0), b2.(box_Estmt_1))).
 
     Definition tag (e : Expr) : positive :=
       match e with
@@ -1920,7 +1995,7 @@ Module Expr.
       | Eopaque_ref n t => Box_Eopaque_ref n t
       | Eunsupported msg t => Box_Eunsupported msg t
       end.
-    Definition compare_data (t : positive) : car t -> car t -> comparison :=
+    Definition compare_data (t : positive) : car t -> car t -> comparison := Eval cbv [compare] in
       match t as t return car t -> car t -> comparison with
       | 1 => compare
       | 2 => compare
@@ -2119,7 +2194,7 @@ Module VarDecl.
       | Ddecompose a b c => (a, b, c)
       | Dinit a b c d => (a, b, c, d)
       end.
-    Definition compare_data (k : positive) : car k -> car k -> comparison :=
+    Definition compare_data (k : positive) : car k -> car k -> comparison := Eval cbv [compare] in
       match k as k return car k -> car k -> comparison with
       | 1 => _compare
       | 2 => _compare
@@ -2268,7 +2343,7 @@ Module Stmt.
       | Sunsupported a => a
       end.
 
-    Definition compare_data  (k : positive) : car k -> car k -> comparison :=
+    Definition compare_data  (k : positive) : car k -> car k -> comparison := Eval cbv [compare] in
       match k as k return car k -> car k -> comparison with
       | 1 => _compare
       | 2 => _compare
