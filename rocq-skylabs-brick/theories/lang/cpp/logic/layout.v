@@ -194,7 +194,7 @@ Section with_Σ.
     intros Hsz. apply Rep_entails_at => p.
     rewrite !_at_sep !_at_offsetR !_at_validR !aligned_ofR_aligned_ptr_ty.
     destruct (align_of_size_of' _ _ Hsz) as (al & Hal & Hal0 & Hdvd).
-    iIntros "(%Hp & Vsrc & V)".
+    iIntros "(%Hp & V & _)".
     destruct (ptr_vaddr (p .[ Tbyte ! Z.of_N (i * sz) ])) as [va'|] eqn:Hva'.
     2: { iPureIntro. exists al. split; first done. by right. }
     have Heval : eval_offset σ (o_sub σ Tbyte (Z.of_N (i * sz))) = Some (Z.of_N (i * sz)).
