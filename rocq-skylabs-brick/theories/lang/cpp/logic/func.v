@@ -39,7 +39,7 @@ Proof. iIntros "Q W R". iApply ("Q" with "(W R)"). Qed.
 
 Definition Kreturn_inner `{Σ : cpp_logic, σ : genv} (Q : ptr -> mpred) (rt : ReturnType) : mpred :=
   match rt with
-  | Normal | ReturnVoid => Forall p : ptr, p |-> primR Tvoid (cQp.mut 1) Vvoid -* Q p
+  | Normal | ReturnVoid => Forall p : ptr, p |-> resultR Tvoid (cQp.mut 1) Vvoid -* Q p
   | ReturnVal p => Q p
   | _ => False
   end.
@@ -860,7 +860,7 @@ that implies [type_ptr].
         letI* := wp tu ρ body in
         letI* := Kcleanup tu cleanup in
         letI* := Kreturn_void in
-        |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -* Q p
+        |={top}=>?u |> Forall p : ptr, p |-> resultR Tvoid 1$m Vvoid -* Q p
 
       | Some (Gunion union) =>
         (*
@@ -877,7 +877,7 @@ that implies [type_ptr].
         letI* := wp tu ρ body in
         letI* := Kcleanup tu cleanup in
         letI* := Kreturn_void in
-        |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -* Q p
+        |={top}=>?u |> Forall p : ptr, p |-> resultR Tvoid 1$m Vvoid -* Q p
 
       | _ => ERROR ("wp_ctor: constructor for non-aggregate", ctor.(c_class))
       end
@@ -1028,7 +1028,7 @@ this resource will be consumed immediately.
         Return object's memory to the abstract machine.
         *)
         thisp |-> tblockR ty 1$m -*
-        |={top}=>?upd |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -*
+        |={top}=>?upd |> Forall p : ptr, p |-> resultR Tvoid 1$m Vvoid -*
         Q p
       | Some (Gunion u) =>
         (*
@@ -1045,7 +1045,7 @@ this resource will be consumed immediately.
         thisp |-> tblockR ty 1$m **
         (
           thisp |-> tblockR ty 1$m -*
-          |={top}=>?upd |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -*
+          |={top}=>?upd |> Forall p : ptr, p |-> resultR Tvoid 1$m Vvoid -*
           Q p
         )
       | _ => ERROR ("wp_dtor: not a structure or union")

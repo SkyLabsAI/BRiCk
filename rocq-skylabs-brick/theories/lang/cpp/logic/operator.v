@@ -225,7 +225,9 @@ Section aligned_sub.
     has_type (Vptr p) (Tptr ty) ∗ valid_ptr (p ,, _sub ty n)
     ⊢ has_type (Vptr (p ,, _sub ty n)) (Tptr ty).
   Proof.
-    intros Hsz. rewrite !has_type_ptr'.
+    intros Hsz.
+    have [sz Hsize] := Hsz.
+    rewrite !has_type_ptr' !(pointee_aligned_size_of ty sz _ Hsize).
     iIntros "[[#Vp #A] #V]". iFrame "V".
     by iApply (aligned_ptr_ty_sub p n ty Hsz); iFrame "A Vp V".
   Qed.
@@ -240,7 +242,8 @@ Section aligned_sub.
     intros Hsz.
     have Hsz' : is_Some (size_of σ (erase_qualifiers ty)).
     { by rewrite (size_of_erase_qualifiers σ ty). }
-    rewrite !has_type_ptr'.
+    have [sz Hsize] := Hsz.
+    rewrite !has_type_ptr' !(pointee_aligned_size_of ty sz _ Hsize).
     iIntros "[[#Vp %A] #V]". iFrame "V".
     iAssert [| aligned_ptr_ty (erase_qualifiers ty) (p ,, _sub (erase_qualifiers ty) n) |]%I
       as %A'.

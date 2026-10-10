@@ -385,10 +385,10 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
       [| v = Vvoid |] **
 
       (**
-      [primR] is enough because C++ code never uses the raw bytes
-      underlying an inhabitant of type void.
+      A void result has no storage. [resultR] only records its logical
+      value, so this continuation grants no heap ownership.
       *)
-      (addr |-> primR Tvoid qf Vvoid -* |={top}=>?u Q frees)
+      (addr |-> resultR Tvoid qf Vvoid -* |={top}=>?u Q frees)
 
     | Tptr _
     | Tmember_pointer _ _
@@ -468,12 +468,13 @@ Definition wp_initialize `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (�
 
 Lemma wp_initialize_unqualified_well_typed `{Σ : cpp_logic, σ : genv}
   tu ρ cv ty addr init (Q : FreeTemps.t -> epred) :
+  ty <> Tvoid ->
       wp_initialize_unqualified tu ρ cv ty addr init (fun free => reference_to (to_heap_type ty) addr -* Q free)
   |-- wp_initialize_unqualified tu ρ cv ty addr init Q.
 Proof.
-  rewrite wp_initialize_unqualified.unlock.
+  intros Hnonvoid. rewrite wp_initialize_unqualified.unlock.
   case_match; eauto.
-  case_match; subst; eauto.
+  case_match; subst; eauto; try contradiction.
   all: try (iApply wp_operand_frame; [ done | ];
     iIntros (??) "X Y";
     iDestruct (observe (reference_to _ _) with "Y") as "#?";
@@ -488,10 +489,6 @@ Proof.
       iDestruct (observe (reference_to _ _) with "Y") as "#?";
       iApply ("X" with "Y").
     rewrite /to_heap_type/=. done.
-  - iApply wp_operand_frame; [ done | ].
-    iIntros (??) "[$ X] Y".
-    iDestruct (observe (reference_to _ _) with "Y") as "#?";
-    iApply ("X" with "Y"); eauto.
   - (* arrays *)
     case_bool_decide; eauto.
     etransitivity; [ | apply wp_init_well_typed ].
@@ -596,7 +593,7 @@ Section wp_initialize.
     else
       letI* v, free := wp_operand tu ρ init in
       let qf := cQp.mk (q_const cv') 1 in
-      addr |-> tptsto_fuzzyR (erase_qualifiers ty) qf v -* |={top}=>?u Q free
+      addr |-> resultR (erase_qualifiers ty) qf v -* |={top}=>?u Q free
   )%I) (only parsing).
 
   Lemma wp_initialize_unqualified_intro_val tu ρ cv ty (addr : ptr) init Q :
@@ -613,7 +610,7 @@ Section wp_initialize.
     iApply wp_operand_well_typed.
     iApply (wp_operand_wand with "wp"). iIntros (v f).
     rewrite can_init_void// has_type_void. iIntros "HQ ->".
-    rewrite tptsto_fuzzyR_Vvoid_primR. by iFrame "HQ".
+    by iFrame "HQ".
   Qed.
 
   Lemma wp_initialize_unqualified_elim_val tu ρ cv ty addr init Q :
@@ -626,7 +623,7 @@ Section wp_initialize.
     (* void *)
     iIntros "wp".
     iApply (wp_operand_wand with "wp"). iIntros (v f) "(-> & HQ) R".
-    iApply ("HQ" with "[R]"). cbn. by rewrite tptsto_fuzzyR_Vvoid_primR.
+    by iApply ("HQ" with "R").
   Qed.
 
   (**
@@ -882,7 +879,7 @@ Section wp_initialize.
                         letI* v, frees := wp_operand tu ρ init in
                           let qf := cQp.mk (q_const cv) 1 in
                           [| v = Vvoid |] **
-                            (addr |-> primR Tvoid qf Vvoid -* Q frees)
+                            (addr |-> resultR Tvoid qf Vvoid -* Q frees)
                       )
   | WpInitAggreg cv ty' : is_aggregate_type ty' ->
                          (cv, ty') = decompose_type ty ->

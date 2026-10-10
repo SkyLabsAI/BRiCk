@@ -1273,9 +1273,9 @@ Module SimpleCPP.
       | Vptr p =>
         match drop_qualifiers ty with
         | Tptr ty =>
-          valid_ptr p ** [| aligned_ptr_ty ty p |]
+          valid_ptr p ** [| pointee_aligned_ptr_ty ty p |]
         | Tref ty | Trv_ref ty =>
-          strict_valid_if_not_empty_array ty p ** [| aligned_ptr_ty ty p |]
+          strict_valid_if_not_empty_array ty p ** [| pointee_aligned_ptr_ty ty p |]
         | Tnullptr => [| p = nullptr |]
         | _ => emp
         end
@@ -1283,7 +1283,7 @@ Module SimpleCPP.
       end.
 
     Definition reference_to (ty : type) (p : ptr) : mpred :=
-      [| aligned_ptr_ty ty p |] ** [| p <> nullptr |] **
+      [| pointee_aligned_ptr_ty ty p |] ** [| p <> nullptr |] **
         valid_ptr p ** if zero_sized_array ty then emp else strict_valid_ptr p.
 
     Definition has_type_or_undef (v : val) ty : mpred :=
@@ -1326,7 +1326,7 @@ Module SimpleCPP.
         rewrite -erase_drop_qualifiers.
         case_match; simpl; eauto.
         all: try f_equiv.
-        all: try rewrite aligned_ptr_ty_erase_qualifiers; auto.
+        all: try rewrite pointee_aligned_erase_qualifiers; auto.
         all: try apply strict_valid_if_not_empty_array_erase.
         exfalso; by eapply unqual_drop_qualifiers.
       Qed.
@@ -1341,7 +1341,7 @@ Module SimpleCPP.
       Qed.
 
       Lemma has_type_ptr' p ty :
-        has_type (Vptr p) (Tptr ty) -|- valid_ptr p ** [| aligned_ptr_ty ty p |].
+        has_type (Vptr p) (Tptr ty) -|- valid_ptr p ** [| pointee_aligned_ptr_ty ty p |].
       Proof.
         rewrite /has_type/= has_type_prop_pointer.
         rewrite only_provable_True ?(left_id emp) //. eauto.
@@ -1383,7 +1383,7 @@ Module SimpleCPP.
           reference_to ty p -|- reference_to (erase_qualifiers ty) p.
       Proof.
         rewrite /reference_to. intros.
-        rewrite -aligned_ptr_ty_erase_qualifiers -zero_size_array_erase_qualifiers.
+        rewrite -pointee_aligned_erase_qualifiers -zero_size_array_erase_qualifiers.
         done.
       Qed.
 
@@ -1398,7 +1398,7 @@ Module SimpleCPP.
       Qed.
       Theorem reference_to_elim : forall ty p,
           reference_to ty p |--
-            [| aligned_ptr_ty ty p |] ** [| p <> nullptr |] **
+            [| pointee_aligned_ptr_ty ty p |] ** [| p <> nullptr |] **
             valid_ptr p ** if zero_sized_array ty then emp else strict_valid_ptr p.
       Proof. rewrite /reference_to. eauto. Qed.
 
@@ -2231,7 +2231,9 @@ Module SimpleCPP.
       iDestruct (observe (type_ptr ty p) with "H") as
         "(%Hnn & %Hal & _ & #Hs & _)".
       rewrite /reference_to.
-      iFrame (Hnn Hal).
+      iFrame (Hnn).
+      iSplit.
+      { iPureIntro. by apply aligned_ptr_ty_pointee. }
       iSplit.
       { by iApply strict_valid_valid. }
       case_match; done.

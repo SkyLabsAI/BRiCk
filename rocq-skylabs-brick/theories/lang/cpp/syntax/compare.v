@@ -573,6 +573,80 @@ Module function_type.
 End function_type.
 #[global] Instance function_type_compare {A : Set} `{!Compare A} : Compare (function_type_ A) := function_type.compare compare.
 
+#[local] Lemma lex_eq (a : comparison) (b : unit -> comparison) :
+  compare_lex a b = Eq -> a = Eq /\ b () = Eq.
+Proof. destruct a; cbn; intuition congruence. Qed.
+
+
+(** Lexicographic comparison infrastructure shared by names and templates. *)
+Section comparison_laws.
+  Set Default Proof Using "Type*".
+  Section compare.
+    Context {A : Type} (cmp : A -> A -> comparison) `{Hcmp : !Comparison cmp}.
+    #[local] Lemma comparison_eq_left x y z : cmp x y = Eq -> cmp x z = cmp y z.
+    Proof.
+      intros Hxy.
+      have Hyx : cmp y x = Eq by rewrite compare_antisym Hxy.
+      have Hzy := @compare_antisym A cmp Hcmp z y.
+      have Txz := @compare_trans A cmp Hcmp x y z.
+      have Tyz := @compare_trans A cmp Hcmp y x z.
+      have Txy := @compare_trans A cmp Hcmp x z y.
+      destruct (cmp x z) eqn:Hxz, (cmp y z) eqn:Hyz; simpl in *;
+        try reflexivity.
+      all: exfalso; first
+        [ specialize (Tyz Eq Hyx eq_refl); discriminate
+        | specialize (Txz Eq Hxy eq_refl); discriminate
+        | specialize (Txy Lt eq_refl Hzy); congruence
+        | specialize (Txy Gt eq_refl Hzy); congruence ].
+    Qed.
+    #[local] Lemma comparison_eq_right x y z : cmp x y = Eq -> cmp z x = cmp z y.
+    Proof.
+      intros Hxy. rewrite (compare_antisym z x) (compare_antisym z y).
+      by rewrite (comparison_eq_left x y z Hxy).
+    Qed.
+  End compare.
+
+  #[local] Definition lex_compare {A : Type} (f g : A -> A -> comparison) (x y : A) : comparison :=
+    compare_lex (f x y) (fun _ => g x y).
+  #[local] Lemma lex_comparison {A} (f g : A -> A -> comparison)
+      `{Hf : !Comparison f, Hg : !Comparison g} : Comparison (lex_compare f g).
+  Proof.
+    constructor.
+    - intros x y. rewrite /lex_compare (compare_antisym x y (Comparison:=Hf))
+        (compare_antisym x y (Comparison:=Hg)).
+      by destruct (f y x).
+    - intros x y z c Hxy Hyz. unfold lex_compare in *.
+      destruct (f x y) eqn:E1, (f y z) eqn:E2; simpl in Hxy, Hyz; try congruence.
+      all: try (rewrite (@compare_trans _ f Hf x y z _ E1 E2); cbn;
+        first [exact Hxy | exact Hyz | eapply (@compare_trans _ g Hg); eassumption]).
+      all: try (rewrite (comparison_eq_left f x y z E1) E2; cbn; congruence).
+      all: try (rewrite <- (comparison_eq_right f y z x E2), E1; cbn; congruence).
+  Qed.
+  #[local] Lemma comparison_pullback {A B} (f : A -> B) (cmp : B -> B -> comparison)
+      `{!Comparison cmp} : Comparison (fun x y => cmp (f x) (f y)).
+  Proof. constructor; intros; [apply compare_antisym | eapply compare_trans; eassumption]. Qed.
+
+  #[local] Lemma list_comparison {A} (cmp : A -> A -> comparison) `{Hcmp : !Comparison cmp} :
+    Comparison (List.compare cmp).
+  Proof.
+    constructor.
+    - intros xs. induction xs as [|x xs IH]; intros [|y ys]; try done.
+      cbn [List.compare]. rewrite (compare_antisym x y) (IH ys).
+      by destruct (cmp y x).
+    - fix IH 1. intros xs ys zs c Hxy Hyz.
+      destruct xs as [|x xs], ys as [|y ys], zs as [|z zs];
+        cbn [List.compare] in *; try congruence.
+      destruct (cmp x y) eqn:E1, (cmp y z) eqn:E2; simpl in Hxy, Hyz; try congruence.
+      all: try (rewrite (@compare_trans _ cmp Hcmp x y z _ E1 E2); cbn;
+        first [exact Hxy | exact Hyz | eapply IH; eassumption]).
+      all: try (rewrite (comparison_eq_left cmp x y z E1) E2; cbn; congruence).
+      all: try (rewrite <- (comparison_eq_right cmp y z x E2), E1; cbn; congruence).
+  Qed.
+
+  #[local] Instance string_comparison : Comparison PrimString.compare.
+  Proof. constructor; intros; [apply PString.compare_antisym | eapply PString.compare_trans; eassumption]. Qed.
+End comparison_laws.
+
 Module temp_param.
   Section compare.
     Context (compareT : type -> type -> comparison).
@@ -628,12 +702,132 @@ Module temp_param.
   End compare.
 
 End temp_param.
+Module temp_param_order.
+Set Default Proof Using "Type*".
+#[local] Open Scope nat_scope.
+Section order.
+Context (cmp : type -> type -> comparison) `{Hcmp : !Comparison cmp}.
+
+#[local] Instance value_box_comparison : Comparison (temp_param.box_Pvalue_compare cmp).
+Proof.
+  unfold temp_param.box_Pvalue_compare. apply lex_comparison.
+  - apply (comparison_pullback temp_param.box_Pvalue_0), string_comparison.
+  - apply (comparison_pullback temp_param.box_Pvalue_1), Hcmp.
+Qed.
+
+Definition pair_compare (rec : temp_param -> temp_param -> comparison)
+    (x y : ident * list temp_param) : comparison :=
+  compare_lex (PrimString.compare x.1 y.1) (fun _ => List.compare rec x.2 y.2).
+#[local] Instance pair_comparison rec `{!Comparison rec} : Comparison (pair_compare rec).
+Proof.
+  unfold pair_compare. apply lex_comparison.
+  - apply (comparison_pullback fst), string_comparison.
+  - apply (comparison_pullback snd), list_comparison; assumption.
+Qed.
+
+Definition step (rec : temp_param -> temp_param -> comparison)
+    (x y : temp_param) : comparison :=
+  compare_ctor temp_param.tag temp_param.car temp_param.data
+    (temp_param.compare_data cmp rec) (temp_param.tag x) (fun _ => temp_param.data x) y.
+Lemma step_comparison rec `{!Comparison rec} : Comparison (step rec).
+Proof.
+  constructor.
+  - intros x y. destruct x,y; unfold step, compare_ctor;
+      cbn [temp_param.tag temp_param.data temp_param.compare_data]; cbn; try done.
+    all: first [apply PString.compare_antisym | apply compare_antisym
+      | exact (@compare_antisym _ _ (pair_comparison rec) (_,_) (_,_))].
+  - intros x y z c Hxy Hyz. destruct x,y,z; unfold step, compare_ctor in *;
+      cbn [temp_param.tag temp_param.data temp_param.compare_data] in *; cbn in *; try congruence.
+    all: first [eapply PString.compare_trans; eassumption
+      | eapply compare_trans; eassumption
+      | eapply (@compare_trans _ _ (pair_comparison rec) (_,_) (_,_) (_,_)); eassumption].
+Qed.
+
+(** Finite approximations allow structural proofs without assuming the recursive order. *)
+Fixpoint approx (n : nat) : temp_param -> temp_param -> comparison :=
+  match n with O => fun _ _ => Eq | S n => step (approx n) end.
+Lemma approx_comparison n : Comparison (approx n).
+Proof.
+  induction n as [|n IH].
+  - constructor; intros; cbn in *; congruence.
+  - cbn [approx]. apply step_comparison, IH.
+Qed.
+
+(** A sufficient recursion bound for comparison of the first argument. *)
+Fixpoint node_count (p : temp_param) : nat :=
+  S (match p with
+     | Ptemplate _ ps => fold_right (fun p n => node_count p + n) 0 ps
+     | _ => 0
+     end).
+Lemma approx_agrees : forall (x : temp_param) (n : nat) (y : temp_param),
+  node_count x <= n -> approx n x y = temp_param.compare cmp x y.
+Proof.
+  fix IH 1. intros x n y Hnode_count.
+  destruct n as [|n].
+  { destruct x; cbn [node_count] in Hnode_count; lia. }
+  destruct x,y;
+    cbn [approx step temp_param.compare temp_param.tag temp_param.data temp_param.compare_data];
+    unfold compare_ctor; cbn; try reflexivity.
+  destruct (PrimString.compare i i0); cbn [compare_lex]; try reflexivity.
+  revert l0 Hnode_count. induction l as [|x xs IHxs]; intros [|y ys] Hnode_count; try reflexivity.
+  cbn [List.compare].
+  rewrite (IH x n y); last (cbn [node_count fold_right] in Hnode_count; lia).
+  destruct (temp_param.compare cmp x y); cbn [compare_lex]; try reflexivity.
+  apply IHxs. cbn [node_count fold_right] in *. lia.
+Qed.
+
+Lemma template_comparison : Comparison (temp_param.compare cmp).
+Proof.
+  constructor.
+  - intros x y. pose (n := node_count x + node_count y).
+    rewrite <- (approx_agrees x n y ltac:(unfold n; lia)).
+    rewrite <- (approx_agrees y n x ltac:(unfold n; lia)).
+    exact (@compare_antisym _ _ (approx_comparison n) x y).
+  - intros x y z c Hxy Hyz. pose (n := node_count x + node_count y + node_count z).
+    rewrite <- (approx_agrees x n y ltac:(unfold n; lia)) in Hxy.
+    rewrite <- (approx_agrees y n z ltac:(unfold n; lia)) in Hyz.
+    rewrite <- (approx_agrees x n z ltac:(unfold n; lia)).
+    exact (@compare_trans _ _ (approx_comparison n) x y z c Hxy Hyz).
+Qed.
+
+End order.
+End temp_param_order.
+
 #[global] Instance temp_param_comparison `{!@Comparison type cmpA}
   : Comparison (temp_param.compare cmpA).
-Proof. Admitted.
+Proof. exact: temp_param_order.template_comparison. Qed.
+#[local] Lemma temp_param_compare_eq (cmp : type -> type -> comparison)
+    (Hcmp : forall x y, cmp x y = Eq -> x = y) :
+  forall a b : temp_param, temp_param.compare cmp a b = Eq -> a = b.
+Proof.
+  fix IH 1. intros a b H. destruct a, b;
+    cbn [temp_param.compare compare_ctor temp_param.tag temp_param.data temp_param.compare_data] in H;
+    try discriminate H.
+  all: unfold compare_ctor in H; cbn in H.
+  all: cbv [temp_param.box_Pvalue_compare temp_param.box_Pvalue_0 temp_param.box_Pvalue_1] in H.
+  all: repeat match type of H with
+    | compare_lex _ _ = Eq => apply lex_eq in H as [? H]
+    end.
+  all: let cmp := constr:(cmp) in let Hcmp := constr:(Hcmp) in
+    repeat match goal with
+    | H : PrimString.compare _ _ = Eq |- _ => apply PString.compare_eq_correct in H
+    | H : cmp _ _ = Eq |- _ => apply Hcmp in H
+    end.
+  all: try congruence.
+  subst i0. f_equal. revert l0 H.
+  induction l as [|x xs IHxs]; intros [|y ys] Hlist; try done.
+  cbn [List.compare] in Hlist. unfold compare_lex in Hlist.
+  destruct (temp_param.compare cmp x y) eqn:E; try discriminate.
+  f_equal; [by apply IH | by apply IHxs].
+Qed.
+
 #[global] Instance temp_param_leibniz_comparison `{!@Comparison type cmpA} `{LeibnizComparison cmpA}
   : LeibnizComparison (temp_param.compare cmpA).
-Proof. Admitted.
+Proof.
+  red. intros a b Hcompare.
+  apply (temp_param_compare_eq cmpA); last exact Hcompare.
+  exact: LeibnizComparison.cmp_eq.
+Qed.
 
 Module temp_arg.
   Section compare.
@@ -884,12 +1078,129 @@ Module atomic_name.
   End compare.
 
 End atomic_name.
+Section atomic_comparison_proofs.
+  Set Default Proof Using "Type*".
+#[local] Existing Instance string_comparison.
+#[local] Instance primitive_integer_comparison : Comparison PrimInt63.compare.
+Proof. constructor; intros; [apply PString.char63_compare_antisym | eapply PString.char63_compare_trans; eassumption]. Qed.
+#[local] Instance qualifier_comparison : Comparison function_qualifiers.compare.
+Proof. unfold function_qualifiers.compare. apply comparison_pullback, primitive_integer_comparison. Qed.
+#[local] Instance operator_comparison : Comparison OverloadableOperator.compare.
+Proof. unfold OverloadableOperator.compare. apply comparison_pullback, primitive_integer_comparison. Qed.
+#[local] Existing Instance list_comparison.
+
+Section boxes.
+ Context (cmp : type -> type -> comparison) `{Hcmp : !Comparison cmp}.
+ Lemma function_box_comparison : Comparison (atomic_name.box_Nfunction_compare cmp).
+ Proof.
+   unfold atomic_name.box_Nfunction_compare. apply lex_comparison.
+   - apply (comparison_pullback atomic_name.box_Nfunction_0), _.
+   - apply lex_comparison.
+     + apply (comparison_pullback atomic_name.box_Nfunction_1), _.
+     + apply (comparison_pullback atomic_name.box_Nfunction_2), _.
+ Qed.
+ Lemma operator_box_comparison : Comparison (atomic_name.box_Nop_compare cmp).
+ Proof.
+   unfold atomic_name.box_Nop_compare. apply lex_comparison.
+   - apply (comparison_pullback atomic_name.box_Nop_0), _.
+   - apply lex_comparison.
+     + apply (comparison_pullback atomic_name.box_Nop_1), _.
+     + apply (comparison_pullback atomic_name.box_Nop_2), _.
+ Qed.
+ Lemma conversion_box_comparison : Comparison (atomic_name.box_Nop_conv_compare cmp).
+ Proof.
+   unfold atomic_name.box_Nop_conv_compare. apply lex_comparison.
+   - apply (comparison_pullback atomic_name.box_Nop_conv_0), _.
+   - apply (comparison_pullback atomic_name.box_Nop_conv_1), _.
+ Qed.
+ Lemma literal_box_comparison : Comparison (atomic_name.box_Nop_lit_compare cmp).
+ Proof.
+   unfold atomic_name.box_Nop_lit_compare. apply lex_comparison.
+   - apply (comparison_pullback atomic_name.box_Nop_lit_0), _.
+   - apply (comparison_pullback atomic_name.box_Nop_lit_1), _.
+ Qed.
+End boxes.
+
+#[local] Existing Instances function_box_comparison operator_box_comparison
+  conversion_box_comparison literal_box_comparison.
+#[local] Lemma atomic_order_comparison (cmp : type -> type -> comparison) `{Hcmp : !Comparison cmp} :
+  Comparison (atomic_name.compare cmp).
+Proof.
+  constructor.
+  - intros x y. destruct x, y;
+      cbn [atomic_name.compare compare_ctor atomic_name.tag atomic_name.data atomic_name.compare_data];
+      unfold compare_ctor; cbn; try done.
+    all: apply compare_antisym.
+  - intros x y z c Hxy Hyz. destruct x, y, z;
+      cbn [atomic_name.compare compare_ctor atomic_name.tag atomic_name.data atomic_name.compare_data] in *;
+      unfold compare_ctor in *; cbn in *; try congruence.
+    all: eapply compare_trans; eassumption.
+Qed.
+
+End atomic_comparison_proofs.
+
 #[global] Instance atomic_name_comparison `{!@Comparison type cmpA}
   : Comparison (atomic_name.compare cmpA).
-Proof. Admitted.
+Proof. exact: atomic_order_comparison. Qed.
+#[local] Lemma list_compare_eq {A} (cmp : A -> A -> comparison)
+    (Hcmp : forall x y, cmp x y = Eq -> x = y) (xs ys : list A) :
+  List.compare cmp xs ys = Eq -> xs = ys.
+Proof.
+  revert ys. induction xs as [|x xs IH]; intros [|y ys] H; try done.
+  simpl in H. unfold compare_lex in H.
+  destruct (cmp x y) eqn:E; try discriminate.
+  f_equal; [by apply Hcmp | by apply IH].
+Qed.
+
+#[local] Lemma qualifier_compare_eq (x y : function_qualifiers.t) :
+  function_qualifiers.compare x y = Eq -> x = y.
+Proof. destruct x, y; vm_compute; congruence. Qed.
+
+#[local] Lemma operator_compare_eq (x y : OverloadableOperator) :
+  OverloadableOperator.compare x y = Eq -> x = y.
+Proof.
+  destruct x, y;
+    repeat match goal with b : bool |- _ => destruct b end;
+    vm_compute; congruence.
+Qed.
+
+#[local] Lemma atomic_name_compare_eq (cmp : type -> type -> comparison)
+    (Hcmp : forall x y, cmp x y = Eq -> x = y) (a b : atomic_name) :
+  atomic_name.compare cmp a b = Eq -> a = b.
+Proof.
+  intros H. destruct a, b;
+    cbn [atomic_name.compare compare_ctor atomic_name.tag atomic_name.data atomic_name.compare_data] in H;
+    try discriminate H.
+  all: unfold compare_ctor in H; cbn [atomic_name.tag] in H.
+  all: cbn in H.
+  all: cbn in H.
+  all: cbv [atomic_name.box_Nfunction_compare atomic_name.box_Nop_compare
+    atomic_name.box_Nop_conv_compare atomic_name.box_Nop_lit_compare] in H.
+  all: repeat match type of H with
+    | compare_lex _ _ = Eq => apply lex_eq in H as [? H]
+    end.
+  all: let cmp := constr:(cmp) in let Hcmp := constr:(Hcmp) in
+    repeat match goal with
+    | H : PrimString.compare _ _ = Eq |- _ => apply PString.compare_eq_correct in H
+    | H : N.compare _ _ = Eq |- _ => apply N.compare_eq in H
+    | H : function_qualifiers.compare _ _ = Eq |- _ => apply qualifier_compare_eq in H
+    | H : OverloadableOperator.compare _ _ = Eq |- _ => apply operator_compare_eq in H
+    | H : List.compare cmp _ _ = Eq |- _ => apply (list_compare_eq cmp Hcmp) in H
+    | H : cmp _ _ = Eq |- _ => apply Hcmp in H
+    end.
+  all: cbv [atomic_name.box_Nfunction_0 atomic_name.box_Nfunction_1 atomic_name.box_Nfunction_2
+    atomic_name.box_Nop_0 atomic_name.box_Nop_1 atomic_name.box_Nop_2
+    atomic_name.box_Nop_conv_0 atomic_name.box_Nop_conv_1
+    atomic_name.box_Nop_lit_0 atomic_name.box_Nop_lit_1] in *; congruence.
+Qed.
+
 #[global] Instance atomic_name_leibniz_comparison `{!@Comparison type cmpA} `{LeibnizComparison cmpA}
   : LeibnizComparison (atomic_name.compare cmpA).
-Proof. Admitted.
+Proof.
+  red. intros a b Hcompare.
+  apply (atomic_name_compare_eq cmpA); last exact Hcompare.
+  exact: LeibnizComparison.cmp_eq.
+Qed.
 
 Module Cast.
   Section compare.
