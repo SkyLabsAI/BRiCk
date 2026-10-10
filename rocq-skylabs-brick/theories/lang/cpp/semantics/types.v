@@ -455,6 +455,14 @@ Section with_genv.
     glob_def σ nm ≫= GlobDecl_align_of = Some al ->
     align_of (Tnamed nm) = Some al.
 
+  (** Void and function pointers impose no address-alignment restriction.
+      Give their referent types the minimum alignment so that [aligned_ptr_ty]
+      continues to describe their typing without a separate predicate. This
+      internal convention does not make C++ [alignof(void)] or [alignof] of a
+      function type well-formed. *)
+  Axiom align_of_void : align_of Tvoid = Some 1%N.
+  Axiom align_of_function : forall ft, align_of (Tfunction ft) = Some 1%N.
+
   Axiom align_of_array : forall (ty : type) n,
       align_of (Tarray ty n) = align_of ty.
   Axiom align_of_incomplete_array : forall (ty : type),

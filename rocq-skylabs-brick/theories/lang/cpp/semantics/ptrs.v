@@ -680,6 +680,12 @@ Module Type PTRS_MIXIN (Import P : PTRS_INTF_MINIMAL).
       eauto using N.divide_1_l.
     Qed.
 
+    Lemma aligned_ptr_ty_void p : aligned_ptr_ty Tvoid p.
+    Proof. exists 1%N. split; [apply align_of_void | apply aligned_ptr_min]. Qed.
+
+    Lemma aligned_ptr_ty_function ft p : aligned_ptr_ty (Tfunction ft) p.
+    Proof. exists 1%N. split; [apply align_of_function | apply aligned_ptr_min]. Qed.
+
     Lemma aligned_ptr_ty_mult_weaken m n ty p :
       align_of ty = Some m -> (n | m)%N ->
       aligned_ptr_ty ty p -> aligned_ptr n p.
