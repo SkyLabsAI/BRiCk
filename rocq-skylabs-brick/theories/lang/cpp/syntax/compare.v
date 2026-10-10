@@ -516,13 +516,143 @@ Module temp_param.
   End compare.
 
 End temp_param.
+
+(* Restore the selected operational view after reducing constructor tags. *)
+#[local] Ltac select_comparison :=
+  lazymatch goal with
+  | |- ?cmp ?x ?y = CompOpp (?cmp ?y ?x) =>
+      first [change (compare x y = CompOpp (compare y x))
+        | change (@compare _ cmp x y = CompOpp (@compare _ cmp y x))]
+  | |- ?cmp ?x ?y = ?c =>
+      first [change (compare x y = c) | change (@compare _ cmp x y = c)]
+  end.
+#[local] Ltac select_comparison_in H :=
+  lazymatch type of H with
+  | ?cmp ?x ?y = ?c =>
+      first [change (compare x y = c) in H | change (@compare _ cmp x y = c) in H]
+  end.
+
+(** Template parameters recurse through lists, so prove the order through
+finite approximations rather than assuming the recursive order. The bounded
+recursion argument and equality proof follow SkyLabsAI/BRiCk#337; proof recursion
+remains guard checked. *)
+Module temp_param_order.
+  #[local] Set Default Proof Using "Type*".
+  #[local] Open Scope nat_scope.
+  Section order.
+    Context `{cmpT : !Compare type, Hcmp : !Comparison (compare (A:=type))}.
+
+    #[local] Instance value_box_comparison :
+      Comparison (@compare temp_param.box_Pvalue (@temp_param.box_Pvalue_compare cmpT)).
+    Proof.
+      exact (comparison_pullback
+        (fun b => (temp_param.box_Pvalue_0 b, temp_param.box_Pvalue_1 b))
+        (compare (A:=ident * type))).
+    Qed.
+
+    Definition step (rec : Compare temp_param) (x y : temp_param) : comparison :=
+      compare_ctor temp_param.tag temp_param.car temp_param.data
+        (temp_param.compare_data (cmpT:=cmpT) rec)
+        (temp_param.tag x) (fun _ => temp_param.data x) y.
+
+    Lemma step_comparison (rec : Compare temp_param)
+        `{!Comparison (@compare temp_param rec)} : Comparison (step rec).
+    Proof.
+      constructor.
+      - intros x y. destruct x, y; unfold step, compare_ctor;
+          change (compare (A:=positive)) with Pos.compare;
+          cbn -[compare prod_compare skylabs.prelude.compare.list_compare
+            temp_param.box_Pvalue_compare]; try done.
+        all: select_comparison; apply compare_antisym.
+      - intros x y z c Hxy Hyz. destruct x, y, z; unfold step, compare_ctor in *;
+          change (compare (A:=positive)) with Pos.compare in *;
+          cbn -[compare prod_compare skylabs.prelude.compare.list_compare
+            temp_param.box_Pvalue_compare] in *; try congruence.
+        all: select_comparison_in Hxy; select_comparison_in Hyz;
+          select_comparison; eapply compare_trans; eassumption.
+    Qed.
+
+    Fixpoint approx (n : nat) : temp_param -> temp_param -> comparison :=
+      match n with O => fun _ _ => Eq | S n => step (approx n) end.
+
+    Lemma approx_comparison n : Comparison (approx n).
+    Proof.
+      induction n as [|n IH].
+      - constructor; intros; cbn in *; congruence.
+      - cbn [approx]. apply step_comparison, IH.
+    Qed.
+
+    Fixpoint node_count (p : temp_param) : nat :=
+      S (match p with
+         | Ptemplate _ ps => fold_right (fun p n => node_count p + n) 0 ps
+         | _ => 0
+         end).
+
+    Lemma approx_agrees : forall (x : temp_param) (n : nat) (y : temp_param),
+      node_count x <= n -> approx n x y = @temp_param.compare_instance cmpT x y.
+    Proof.
+      fix IH 1. intros x n y Hnode_count.
+      destruct n as [|n].
+      { destruct x; cbn [node_count] in Hnode_count; lia. }
+      destruct x, y;
+        cbn [approx step temp_param.compare_instance temp_param.tag temp_param.data
+          temp_param.compare_data]; unfold compare_ctor;
+        cbn [compare prod_compare]; try reflexivity.
+      change (@prod_compare ident _ (list temp_param)
+          (@skylabs.prelude.compare.list_compare temp_param (approx n))
+          (i, l) (i0, l0) =
+        @prod_compare ident _ (list temp_param)
+          (@skylabs.prelude.compare.list_compare temp_param
+            (@temp_param.compare_instance cmpT)) (i, l) (i0, l0)).
+      unfold prod_compare, compare; cbn.
+      destruct (PrimString.compare i i0); cbn [compare_lex]; try reflexivity.
+      revert l0 Hnode_count. induction l as [|x xs IHxs];
+        intros [|y ys] Hnode_count; try reflexivity.
+      cbn [compare skylabs.prelude.compare.list_compare].
+      cbv beta delta [compare].
+      rewrite (IH x n y); last (cbn [node_count fold_right] in Hnode_count; lia).
+      destruct (@temp_param.compare_instance cmpT x y); cbn [compare_lex]; try reflexivity.
+      apply IHxs. cbn [node_count fold_right] in *. lia.
+    Qed.
+
+    Lemma comparison : Comparison (@temp_param.compare_instance cmpT).
+    Proof.
+      eapply comparison_of_approximations; [exact approx_comparison |].
+      intros x y. exists (node_count x). intros n Hn. by apply approx_agrees.
+    Qed.
+  End order.
+End temp_param_order.
+
 #[global] Instance temp_param_comparison `{!Compare type, !Comparison (compare (A:=type))} :
   Comparison (compare (A:=temp_param)).
-Proof. Admitted.
+Proof. apply temp_param_order.comparison. Qed.
+
 #[global] Instance temp_param_leibniz_comparison
-    `{!Compare type, !Comparison (compare (A:=type)), !LeibnizComparison (compare (A:=type))} :
+    `{cmpT : !Compare type, !LeibnizComparison (compare (A:=type))} :
   LeibnizComparison (compare (A:=temp_param)).
-Proof. Admitted.
+Proof.
+  unfold LeibnizComparison.C. fix IH 1. intros a b H. destruct a, b;
+    cbn [temp_param.compare_instance compare_ctor temp_param.tag temp_param.data
+      temp_param.compare_data] in H; try discriminate H.
+  all: unfold compare_ctor in H; cbn in H.
+  all: cbv [temp_param.box_Pvalue_compare compare prod_compare
+    temp_param.box_Pvalue_0 temp_param.box_Pvalue_1] in H.
+  all: repeat match type of H with
+    | compare_lex _ _ = Eq => apply compare_lex_eq in H as [? H]
+    end.
+  all: repeat match goal with
+    | H : pstring_compare _ _ = Eq |- _ => apply PString.compare_eq_correct in H
+    | H : PrimString.compare _ _ = Eq |- _ => apply PString.compare_eq_correct in H
+    end.
+  all: try (apply (LeibnizComparison.cmp_eq (compare (A:=type))) in H).
+  all: cbn in *; try congruence.
+  subst i0. f_equal. revert l0 H.
+  induction l as [|x xs IHxs]; intros [|y ys] Hlist; try done.
+  cbn [compare skylabs.prelude.compare.list_compare] in Hlist.
+  cbv beta delta [compare] in Hlist. unfold compare_lex in Hlist.
+  destruct (@temp_param.compare_instance cmpT x y) eqn:E; try discriminate.
+  f_equal; [by apply IH | by apply IHxs].
+Qed.
 
 Module temp_arg.
   Section compare.
@@ -581,6 +711,109 @@ Module temp_arg.
   End compare.
 
 End temp_arg.
+
+(** Pack arguments use the same finite-approximation argument as parameters.
+    Their payload laws are independent assumptions; recursive pack laws are proved. *)
+Module temp_arg_order.
+  #[local] Set Default Proof Using "Type*".
+  #[local] Open Scope nat_scope.
+  Section order.
+    Context `{cmpN : !Compare name, cmpT : !Compare type, cmpE : !Compare Expr}.
+    Context `{!Comparison (compare (A:=name)), !Comparison (compare (A:=type)),
+      !Comparison (compare (A:=Expr))}.
+
+    Definition step (rec : Compare temp_arg) (x y : temp_arg) : comparison :=
+      compare_ctor temp_arg.tag temp_arg.car temp_arg.data
+        (temp_arg.compare_data (cmpN:=cmpN) (cmpT:=cmpT) (cmpE:=cmpE) rec)
+        (temp_arg.tag x) (fun _ => temp_arg.data x) y.
+
+    Lemma step_comparison (rec : Compare temp_arg)
+        `{!Comparison (@compare temp_arg rec)} : Comparison (step rec).
+    Proof.
+      constructor.
+      - intros x y. destruct x, y; unfold step, compare_ctor;
+          change (compare (A:=positive)) with Pos.compare;
+          cbn -[compare prod_compare skylabs.prelude.compare.list_compare]; try done.
+        all: select_comparison; apply compare_antisym.
+      - intros x y z c Hxy Hyz. destruct x, y, z; unfold step, compare_ctor in *;
+          change (compare (A:=positive)) with Pos.compare in *;
+          cbn -[compare prod_compare skylabs.prelude.compare.list_compare] in *; try congruence.
+        all: select_comparison_in Hxy; select_comparison_in Hyz;
+          select_comparison; eapply compare_trans; eassumption.
+    Qed.
+
+    Fixpoint approx (n : nat) : temp_arg -> temp_arg -> comparison :=
+      match n with O => fun _ _ => Eq | S n => step (approx n) end.
+
+    Lemma approx_comparison n : Comparison (approx n).
+    Proof.
+      induction n as [|n IH].
+      - constructor; intros; cbn in *; congruence.
+      - cbn [approx]. apply step_comparison, IH.
+    Qed.
+
+    Fixpoint node_count (p : temp_arg) : nat :=
+      S (match p with
+         | Apack ps => fold_right (fun p n => node_count p + n) 0 ps
+         | _ => 0
+         end).
+
+    Lemma approx_agrees : forall (x : temp_arg) (n : nat) (y : temp_arg),
+      node_count x <= n -> approx n x y = @temp_arg.compare_instance cmpN cmpT cmpE x y.
+    Proof.
+      fix IH 1. intros x n y Hnode_count.
+      destruct n as [|n].
+      { destruct x; cbn [node_count] in Hnode_count; lia. }
+      destruct x, y;
+        cbn [approx step temp_arg.compare_instance temp_arg.tag temp_arg.data
+          temp_arg.compare_data]; unfold compare_ctor; cbn [compare]; try reflexivity.
+      change (@skylabs.prelude.compare.list_compare temp_arg (approx n) l l0 =
+        @skylabs.prelude.compare.list_compare temp_arg
+          (@temp_arg.compare_instance cmpN cmpT cmpE) l l0).
+      revert l0 Hnode_count. induction l as [|x xs IHxs]; intros [|y ys] Hnode_count;
+        try reflexivity.
+      cbn [skylabs.prelude.compare.list_compare]. cbv beta delta [compare].
+      rewrite (IH x n y); last (cbn [node_count fold_right] in Hnode_count; lia).
+      destruct (@temp_arg.compare_instance cmpN cmpT cmpE x y);
+        cbn [compare_lex]; try reflexivity.
+      apply IHxs. cbn [node_count fold_right] in *. lia.
+    Qed.
+
+    Lemma comparison : Comparison (@temp_arg.compare_instance cmpN cmpT cmpE).
+    Proof.
+      eapply comparison_of_approximations; [exact approx_comparison |].
+      intros x y. exists (node_count x). intros n Hn. by apply approx_agrees.
+    Qed.
+  End order.
+End temp_arg_order.
+
+#[global] Instance temp_arg_comparison
+    `{!Compare name, !Compare type, !Compare Expr,
+      !Comparison (compare (A:=name)), !Comparison (compare (A:=type)),
+      !Comparison (compare (A:=Expr))} : Comparison (compare (A:=temp_arg)).
+Proof. apply temp_arg_order.comparison. Qed.
+
+#[global] Instance temp_arg_leibniz_comparison
+    `{cmpN : !Compare name, cmpT : !Compare type, cmpE : !Compare Expr,
+      !LeibnizComparison (compare (A:=name)), !LeibnizComparison (compare (A:=type)),
+      !LeibnizComparison (compare (A:=Expr))} : LeibnizComparison (compare (A:=temp_arg)).
+Proof.
+  unfold LeibnizComparison.C. fix IH 1. intros a b H. destruct a, b;
+    cbn [temp_arg.compare_instance temp_arg.tag temp_arg.data temp_arg.compare_data] in H;
+    unfold compare_ctor in H; cbn in H; try discriminate H.
+  all: try (f_equal; first
+    [ exact (LeibnizComparison.cmp_eq (compare (A:=name)) _ _ H)
+    | exact (LeibnizComparison.cmp_eq (compare (A:=type)) _ _ H)
+    | exact (LeibnizComparison.cmp_eq (compare (A:=Expr)) _ _ H)
+    | exact (PString.compare_eq_correct _ _ H) ]).
+  f_equal. revert l0 H.
+  induction l as [|x xs IHxs]; intros [|y ys] Hlist; try done.
+  cbv beta delta [compare] in Hlist.
+  cbn [skylabs.prelude.compare.list_compare] in Hlist.
+  cbv beta delta [compare] in Hlist. unfold compare_lex in Hlist.
+  destruct (@temp_arg.compare_instance cmpN cmpT cmpE x y) eqn:E; try discriminate.
+  f_equal; [by apply IH | by apply IHxs].
+Qed.
 
 Module OverloadableOperator.
   #[prefix="", only(tag)] derive OverloadableOperator.
@@ -775,13 +1008,144 @@ Module atomic_name.
   End compare.
 
 End atomic_name.
-#[global] Instance atomic_name_comparison `{!Compare type, !Comparison (compare (A:=type))} :
-  Comparison (compare (A:=atomic_name)).
-Proof. Admitted.
-#[global] Instance atomic_name_leibniz_comparison
-    `{!Compare type, !Comparison (compare (A:=type)), !LeibnizComparison (compare (A:=type))} :
-  LeibnizComparison (compare (A:=atomic_name)).
-Proof. Admitted.
+
+(** The finite payload orders inherit the laws of their shared tuple comparisons. *)
+#[global] Instance OverloadableOperator_comparison :
+  Comparison (compare (A:=OverloadableOperator)).
+Proof.
+  exact (comparison_pullback OverloadableOperator.prim_tag (compare (A:=PrimInt63.int))).
+Qed.
+
+#[global] Instance OverloadableOperator_leibniz_comparison :
+  LeibnizComparison (compare (A:=OverloadableOperator)).
+Proof.
+  intros x y Hxy. destruct x, y;
+    repeat match goal with b : bool |- _ => destruct b end;
+    vm_compute in Hxy; congruence.
+Qed.
+
+Section atomic_comparison_proofs.
+  #[local] Set Default Proof Using "Type*".
+  Context `{cmpT : !Compare type}.
+  #[local] Instance function_box_comparison
+      `{!Comparison (compare (A:=type))} :
+    Comparison (@compare atomic_name.box_Nfunction (@atomic_name.box_Nfunction_compare cmpT)).
+  Proof.
+    exact (comparison_pullback
+      (fun b => (atomic_name.box_Nfunction_0 b,
+        (atomic_name.box_Nfunction_1 b, atomic_name.box_Nfunction_2 b)))
+      (compare (A:=function_qualifiers.t * (ident * list type)))).
+  Qed.
+
+  #[local] Instance function_box_leibniz_comparison
+      `{!LeibnizComparison (compare (A:=type))} :
+    LeibnizComparison (@compare atomic_name.box_Nfunction
+      (@atomic_name.box_Nfunction_compare cmpT)).
+  Proof.
+    intros [x0 x1 x2] [y0 y1 y2] Hxy.
+    change (compare (x0, (x1, x2)) (y0, (y1, y2)) = Eq) in Hxy.
+    apply (LeibnizComparison.cmp_eq _) in Hxy. by inversion Hxy.
+  Qed.
+
+  #[local] Instance operator_box_comparison
+      `{!Comparison (compare (A:=type))} :
+    Comparison (@compare atomic_name.box_Nop (@atomic_name.box_Nop_compare cmpT)).
+  Proof.
+    exact (comparison_pullback
+      (fun b => (atomic_name.box_Nop_0 b,
+        (atomic_name.box_Nop_1 b, atomic_name.box_Nop_2 b)))
+      (compare (A:=function_qualifiers.t * (OverloadableOperator * list type)))).
+  Qed.
+
+  #[local] Instance operator_box_leibniz_comparison
+      `{!LeibnizComparison (compare (A:=type))} :
+    LeibnizComparison (@compare atomic_name.box_Nop (@atomic_name.box_Nop_compare cmpT)).
+  Proof.
+    intros [x0 x1 x2] [y0 y1 y2] Hxy.
+    change (compare (x0, (x1, x2)) (y0, (y1, y2)) = Eq) in Hxy.
+    apply (LeibnizComparison.cmp_eq _) in Hxy. by inversion Hxy.
+  Qed.
+
+  #[local] Instance conversion_box_comparison
+      `{!Comparison (compare (A:=type))} :
+    Comparison (@compare atomic_name.box_Nop_conv (@atomic_name.box_Nop_conv_compare cmpT)).
+  Proof.
+    exact (comparison_pullback
+      (fun b => (atomic_name.box_Nop_conv_0 b, atomic_name.box_Nop_conv_1 b))
+      (compare (A:=function_qualifiers.t * type))).
+  Qed.
+
+  #[local] Instance conversion_box_leibniz_comparison
+      `{!LeibnizComparison (compare (A:=type))} :
+    LeibnizComparison (@compare atomic_name.box_Nop_conv (@atomic_name.box_Nop_conv_compare cmpT)).
+  Proof.
+    intros [x0 x1] [y0 y1] Hxy.
+    change (compare (x0, x1) (y0, y1) = Eq) in Hxy.
+    apply (LeibnizComparison.cmp_eq _) in Hxy. by inversion Hxy.
+  Qed.
+
+  #[local] Instance literal_box_comparison
+      `{!Comparison (compare (A:=type))} :
+    Comparison (@compare atomic_name.box_Nop_lit (@atomic_name.box_Nop_lit_compare cmpT)).
+  Proof.
+    exact (comparison_pullback
+      (fun b => (atomic_name.box_Nop_lit_0 b, atomic_name.box_Nop_lit_1 b))
+      (compare (A:=ident * list type))).
+  Qed.
+
+  #[local] Instance literal_box_leibniz_comparison
+      `{!LeibnizComparison (compare (A:=type))} :
+    LeibnizComparison (@compare atomic_name.box_Nop_lit (@atomic_name.box_Nop_lit_compare cmpT)).
+  Proof.
+    intros [x0 x1] [y0 y1] Hxy.
+    change (compare (x0, x1) (y0, y1) = Eq) in Hxy.
+    apply (LeibnizComparison.cmp_eq _) in Hxy. by inversion Hxy.
+  Qed.
+
+  #[global] Instance atomic_name_comparison `{!Comparison (compare (A:=type))} :
+    Comparison (compare (A:=atomic_name)).
+  Proof.
+    change (Comparison (@atomic_name.compare_instance cmpT)).
+    constructor.
+    - intros x y. destruct x, y; cbn -[compare prod_compare skylabs.prelude.compare.list_compare
+                                   atomic_name.box_Nfunction_compare
+                                   atomic_name.box_Nop_compare
+                                   atomic_name.box_Nop_conv_compare
+                                   atomic_name.box_Nop_lit_compare]; unfold compare_ctor;
+        change (compare (A:=positive)) with Pos.compare;
+        cbn -[compare prod_compare skylabs.prelude.compare.list_compare
+          atomic_name.box_Nfunction_compare atomic_name.box_Nop_compare
+          atomic_name.box_Nop_conv_compare atomic_name.box_Nop_lit_compare]; try done.
+      all: select_comparison; apply compare_antisym.
+    - intros x y z c Hxy Hyz. destruct x, y, z;
+        cbn -[compare prod_compare skylabs.prelude.compare.list_compare
+          atomic_name.box_Nfunction_compare atomic_name.box_Nop_compare
+          atomic_name.box_Nop_conv_compare atomic_name.box_Nop_lit_compare] in *; unfold compare_ctor in *;
+        change (compare (A:=positive)) with Pos.compare in *;
+        cbn -[compare prod_compare skylabs.prelude.compare.list_compare
+          atomic_name.box_Nfunction_compare atomic_name.box_Nop_compare
+          atomic_name.box_Nop_conv_compare atomic_name.box_Nop_lit_compare] in *; try congruence.
+      all: select_comparison_in Hxy; select_comparison_in Hyz;
+          select_comparison; eapply compare_trans; eassumption.
+  Qed.
+
+  #[global] Instance atomic_name_leibniz_comparison
+      `{!LeibnizComparison (compare (A:=type))} :
+    LeibnizComparison (compare (A:=atomic_name)).
+  Proof.
+    intros a b Hxy.
+    change (@atomic_name.compare_instance cmpT a b = Eq) in Hxy.
+    destruct a, b; cbn -[compare prod_compare skylabs.prelude.compare.list_compare
+                     atomic_name.box_Nfunction_compare atomic_name.box_Nop_compare
+                     atomic_name.box_Nop_conv_compare atomic_name.box_Nop_lit_compare] in Hxy; unfold compare_ctor in Hxy;
+      change (compare (A:=positive)) with Pos.compare in Hxy;
+      cbn -[compare prod_compare skylabs.prelude.compare.list_compare
+        atomic_name.box_Nfunction_compare atomic_name.box_Nop_compare
+        atomic_name.box_Nop_conv_compare atomic_name.box_Nop_lit_compare] in Hxy; try discriminate Hxy.
+    all: select_comparison_in Hxy;
+      apply (LeibnizComparison.cmp_eq _) in Hxy; inversion Hxy; reflexivity.
+  Qed.
+End atomic_comparison_proofs.
 
 Module Cast.
   Section compare.
@@ -2251,6 +2615,78 @@ Module BindingDecl.
   End compare_body.
 End BindingDecl.
 
+(** Declaration bodies inherit their laws from their selected payload orders. *)
+Section finite_declaration_laws.
+  #[local] Set Default Proof Using "Type*".
+  Context `{cmpT : !Compare type, cmpE : !Compare Expr}.
+
+  Lemma binding_decl_body_comparison
+      `{!Comparison (compare (A:=type)), !Comparison (compare (A:=Expr))} :
+    Comparison (@compare BindingDecl (@BindingDecl.compare_body cmpT cmpE)).
+  Proof.
+    change (Comparison (@BindingDecl.compare_body cmpT cmpE)).
+    constructor.
+    - intros x y. destruct x, y; cbn -[compare prod_compare skylabs.prelude.compare.list_compare]; unfold compare_ctor;
+        change (compare (A:=positive)) with Pos.compare;
+        cbn -[compare prod_compare skylabs.prelude.compare.list_compare]; try done.
+      all: select_comparison; apply compare_antisym.
+    - intros x y z c Hxy Hyz. destruct x, y, z;
+        cbn -[compare prod_compare skylabs.prelude.compare.list_compare] in *; unfold compare_ctor in *;
+        change (compare (A:=positive)) with Pos.compare in *;
+        cbn -[compare prod_compare skylabs.prelude.compare.list_compare] in *; try congruence.
+      all: select_comparison_in Hxy; select_comparison_in Hyz;
+          select_comparison; eapply compare_trans; eassumption.
+  Qed.
+
+  Lemma binding_decl_body_leibniz_comparison
+      `{!LeibnizComparison (compare (A:=type)), !LeibnizComparison (compare (A:=Expr))} :
+    LeibnizComparison (@compare BindingDecl (@BindingDecl.compare_body cmpT cmpE)).
+  Proof.
+    change (LeibnizComparison (@BindingDecl.compare_body cmpT cmpE)).
+    intros x y Hxy. destruct x, y; cbn -[compare prod_compare skylabs.prelude.compare.list_compare] in Hxy;
+      unfold compare_ctor in Hxy;
+      change (compare (A:=positive)) with Pos.compare in Hxy;
+      cbn -[compare prod_compare skylabs.prelude.compare.list_compare] in Hxy; try discriminate Hxy.
+    all: select_comparison_in Hxy;
+      apply (LeibnizComparison.cmp_eq _) in Hxy; inversion Hxy; reflexivity.
+  Qed.
+
+  Context `{cmpN : !Compare name, cmpBD : !Compare BindingDecl}.
+
+  Lemma var_decl_body_comparison
+      `{!Comparison (compare (A:=name)), !Comparison (compare (A:=type)),
+        !Comparison (compare (A:=Expr)), !Comparison (compare (A:=BindingDecl))} :
+    Comparison (@compare VarDecl (@VarDecl.compare_body cmpN cmpT cmpE cmpBD)).
+  Proof.
+    change (Comparison (@VarDecl.compare_body cmpN cmpT cmpE cmpBD)).
+    constructor.
+    - intros x y. destruct x, y; cbn -[compare prod_compare skylabs.prelude.compare.list_compare]; unfold compare_ctor;
+        change (compare (A:=positive)) with Pos.compare;
+        cbn -[compare prod_compare skylabs.prelude.compare.list_compare]; try done.
+      all: select_comparison; apply compare_antisym.
+    - intros x y z c Hxy Hyz. destruct x, y, z;
+        cbn -[compare prod_compare skylabs.prelude.compare.list_compare] in *; unfold compare_ctor in *;
+        change (compare (A:=positive)) with Pos.compare in *;
+        cbn -[compare prod_compare skylabs.prelude.compare.list_compare] in *; try congruence.
+      all: select_comparison_in Hxy; select_comparison_in Hyz;
+          select_comparison; eapply compare_trans; eassumption.
+  Qed.
+
+  Lemma var_decl_body_leibniz_comparison
+      `{!LeibnizComparison (compare (A:=name)), !LeibnizComparison (compare (A:=type)),
+        !LeibnizComparison (compare (A:=Expr)),
+        !LeibnizComparison (compare (A:=BindingDecl))} :
+    LeibnizComparison (@compare VarDecl (@VarDecl.compare_body cmpN cmpT cmpE cmpBD)).
+  Proof.
+    change (LeibnizComparison (@VarDecl.compare_body cmpN cmpT cmpE cmpBD)).
+    intros x y Hxy. destruct x, y; cbn -[compare prod_compare skylabs.prelude.compare.list_compare] in Hxy;
+      unfold compare_ctor in Hxy;
+      change (compare (A:=positive)) with Pos.compare in Hxy;
+      cbn -[compare prod_compare skylabs.prelude.compare.list_compare] in Hxy; try discriminate Hxy.
+    all: select_comparison_in Hxy;
+      apply (LeibnizComparison.cmp_eq _) in Hxy; inversion Hxy; reflexivity.
+  Qed.
+End finite_declaration_laws.
 
 Module Stmt.
   Section compare_body.
@@ -2462,12 +2898,23 @@ End compare.
   Comparison (compare (A:=type)). (* TODO *)
 #[global] Declare Instance Expr_comparison :
   Comparison (compare (A:=Expr)). (* TODO *)
-#[global] Declare Instance VarDecl_comparison :
-  Comparison (compare (A:=VarDecl)). (* TODO *)
+#[global] Instance BindingDecl_comparison : Comparison (compare (A:=BindingDecl)).
+Proof.
+  eapply (comparison_ext (@compare BindingDecl
+    (@BindingDecl.compare_body type_compare Expr_compare))).
+  - apply binding_decl_body_comparison.
+  - intros x y. destruct x; reflexivity.
+Qed.
+
+#[global] Instance VarDecl_comparison : Comparison (compare (A:=VarDecl)).
+Proof.
+  eapply (comparison_ext (@compare VarDecl
+    (@VarDecl.compare_body name_compare type_compare Expr_compare BindingDecl_compare))).
+  - apply var_decl_body_comparison.
+  - intros x y. destruct x; reflexivity.
+Qed.
 #[global] Declare Instance Stmt_comparison :
   Comparison (compare (A:=Stmt)). (* TODO *)
-#[global] Declare Instance temp_arg_comparison :
-  Comparison (compare (A:=temp_arg)). (* TODO *)
 
 #[global] Declare Instance name_leibniz_comparison :
   LeibnizComparison (compare (A:=name)).	(* TODO *)
@@ -2475,12 +2922,24 @@ End compare.
   LeibnizComparison (compare (A:=type)). (* TODO *)
 #[global] Declare Instance Expr_leibniz_comparison :
   LeibnizComparison (compare (A:=Expr)). (* TODO *)
-#[global] Declare Instance VarDecl_leibniz_comparison :
-  LeibnizComparison (compare (A:=VarDecl)). (* TODO *)
+#[global] Instance BindingDecl_leibniz_comparison :
+  LeibnizComparison (compare (A:=BindingDecl)).
+Proof.
+  eapply (leibniz_comparison_ext (@compare BindingDecl
+    (@BindingDecl.compare_body type_compare Expr_compare))).
+  - apply binding_decl_body_leibniz_comparison.
+  - intros x y. destruct x; reflexivity.
+Qed.
+
+#[global] Instance VarDecl_leibniz_comparison : LeibnizComparison (compare (A:=VarDecl)).
+Proof.
+  eapply (leibniz_comparison_ext (@compare VarDecl
+    (@VarDecl.compare_body name_compare type_compare Expr_compare BindingDecl_compare))).
+  - apply var_decl_body_leibniz_comparison.
+  - intros x y. destruct x; reflexivity.
+Qed.
 #[global] Declare Instance Stmt_leibniz_comparison :
   LeibnizComparison (compare (A:=Stmt)). (* TODO *)
-#[global] Declare Instance temp_arg_leibniz_comparison :
-  LeibnizComparison (compare (A:=temp_arg)). (* TODO *)
 
 #[global] Instance name_eq_dec : EqDecision name :=
   LeibnizComparison.from_compare.
