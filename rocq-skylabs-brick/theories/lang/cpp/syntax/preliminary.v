@@ -996,7 +996,6 @@ Definition to_operator_equal (op : BinOp) : option OverloadableOperator :=
 (** ** Atomic Builtins *)
 Module AtomicOp.
   Definition t : Set := PrimString.string.
-  Definition compare : t -> t -> _ := PrimString.compare.
   #[global] Instance t_eqdec: EqDecision t :=
     eqdec_pstring.
 End AtomicOp.
@@ -1006,7 +1005,6 @@ End AtomicOp.
 (** ** Builtins *)
 Module BuiltinFn.
   Definition t : Set := PrimString.string.
-  Definition compare : t -> t -> _ := PrimString.compare.
   #[global] Instance t_eqdec: EqDecision t :=
     eqdec_pstring.
 End BuiltinFn.

@@ -32,6 +32,17 @@ Require Import stdpp.countable.
 Require Import stdpp.finite.
 Require Import skylabs.prelude.base.
 
+#[global] Instance pstring_compare : Compare PrimString.string := PrimString.compare.
+#[global] Instance string_comparison : Comparison (compare (A:=PrimString.string)).
+Proof.
+  unfold compare, pstring_compare. constructor; intros.
+  - apply PString.compare_antisym.
+  - eapply PString.compare_trans; eassumption.
+Qed.
+
+#[global] Instance string_leibniz_comparison : LeibnizComparison (compare (A:=PrimString.string)).
+Proof. unfold compare, pstring_compare. intros x y. apply PString.compare_eq_correct. Qed.
+
 Export PrimString.PStringNotations.
 
 Infix "++" := PrimString.cat : pstring_scope.

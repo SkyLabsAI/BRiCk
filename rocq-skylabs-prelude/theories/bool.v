@@ -9,6 +9,14 @@ Require Export skylabs.prelude.base.
 #[local] Set Printing Coercions.
 
 #[global] Instance bool_compare : Compare bool := Bool.compare.
+#[global] Instance bool_comparison : Comparison (compare (A:=bool)).
+Proof.
+  constructor.
+  - by intros [] [].
+  - intros [] [] [] [] Hxy Hyz; unfold compare, bool_compare in *; cbn in *; congruence.
+Qed.
+#[global] Instance bool_leibniz_comparison : LeibnizComparison (compare (A:=bool)).
+Proof. by intros [] []. Qed.
 
 Infix "<=" := Bool.le : bool_scope.
 Notation "(<=)" := Bool.le (only parsing) : bool_scope.

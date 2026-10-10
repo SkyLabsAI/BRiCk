@@ -5,14 +5,16 @@
  *)
 
 Require Import Stdlib.NArith.NArith.
+Require Import skylabs.prelude.compare.
 Require Import skylabs.lang.cpp.syntax.prelude.
 Require Export skylabs.lang.cpp.syntax.preliminary.
-Import Uint63.
+Import (notations) PrimInt63.
 
 (** [Encoded.t] represents string literals containing characters of arbitrary
     byte width. The encoding is big endian, i.e. multi-byte characters are
     encoded from MSB to LSB. *)
 Module Encoded.
+  Import Stdlib.Numbers.Cyclic.Int63.Uint63.
   #[local] Open Scope uint63_scope.
   Definition t := PrimString.string.
 
@@ -20,8 +22,6 @@ Module Encoded.
     PrimString.length.
   Definition num_bytes_N : t -> N :=
     fun v => Z.to_N $ Uint63.to_Z $ num_bytes_int v.
-  Definition compare : t -> t -> comparison :=
-    PrimString.compare.
 
   (** [of_N bpc n] produces a primitive string containing exactly one encoded
       character of [bpc] many bytes taken from [n].
@@ -569,43 +569,28 @@ Module literal_string.
   { bytes : PrimString.string
   ; bytes_per_char : N }.
 
-  Definition compare : t → t → comparison :=
-    fun x y =>
-      match N.compare x.(bytes_per_char) y.(bytes_per_char) with
-      | Eq => Encoded.compare x.(bytes) y.(bytes)
-      | _ as c => c
-      end.
+  #[global] Instance compare_instance : Compare t := fun x y =>
+    compare (x.(bytes_per_char), x.(bytes)) (y.(bytes_per_char), y.(bytes)).
 
-  #[global,program]
-  Instance eqdec_literal_string : EqDecision t :=
-    fun x y =>
-      match compare x y as c return compare x y = c -> _ with
-      | Eq => fun H => left _
-      | _ => fun H => right _
-      end eq_refl.
-  Next Obligation.
-    move => [??] [??].
-    rewrite /compare /Encoded.compare /=.
-    case H: (N.compare _ _); try discriminate; [].
-    apply N.compare_eq in H. rewrite {}H.
-    by move/PString.compare_eq => ->.
+  #[global] Instance compare_comparison : Comparison (compare (A:=t)).
+  Proof.
+    exact (comparison_pullback (fun x : t => (x.(bytes_per_char), x.(bytes)))
+      (compare (A:=N * PrimString.string))).
   Qed.
-  Next Obligation.
-    move => [??] [??].
-    rewrite /compare /Encoded.compare /=.
-    case H: (N.compare _ _); try discriminate; [|].
-    - apply N.compare_eq in H. rewrite {}H.
-      move => H1 [] /PString.compare_eq. by rewrite H1.
-    - move => _ [_] /N.compare_eq_iff. by rewrite H.
+
+  #[global] Instance compare_leibniz_comparison : LeibnizComparison (compare (A:=t)).
+  Proof.
+    have Hinj : Inj (=) (=) (fun x : t => (x.(bytes_per_char), x.(bytes))).
+    { intros [xb xc] [yb yc] Heq. by inversion Heq. }
+    exact (leibniz_comparison_pullback
+      (fun x : t => (x.(bytes_per_char), x.(bytes)))
+      (compare (A:=N * PrimString.string))).
   Qed.
-  Next Obligation.
-    move => [??] [??].
-    rewrite /compare /Encoded.compare /=.
-    case H: (N.compare _ _); try discriminate; [|].
-    - apply N.compare_eq in H. rewrite {}H.
-      move => H1 [] /PString.compare_eq. by rewrite H1.
-    - move => _ [_] /N.compare_eq_iff. by rewrite H.
-  Qed.
+
+  #[global] Instance eqdec_literal_string : EqDecision t :=
+    LeibnizComparison.from_compare.
+
+  Import Stdlib.Numbers.Cyclic.Int63.Uint63.
 
   Definition bpc_of_list_N : list N → N :=
     fun bs =>

@@ -38,6 +38,27 @@ NOTE: Deprecated
 #[global] Instance Qc_compare : Compare Qc := Qccompare.
 (* No [Qp.compare] *)
 
+#[global] Instance nat_comparison : Comparison (compare (A:=nat)).
+Proof.
+  unfold compare, nat_compare.
+  constructor.
+  - intros x y. apply Nat.compare_antisym.
+  - intros x y z []; [rewrite !Nat.compare_eq_iff | rewrite !Nat.compare_lt_iff | rewrite !Nat.compare_gt_iff];
+      intros; lia.
+Qed.
+
+#[global] Instance nat_leibniz_comparison : LeibnizComparison (compare (A:=nat)).
+Proof. unfold compare, nat_compare. intros x y. apply Nat.compare_eq_iff. Qed.
+
+#[global] Instance positive_leibniz_comparison : LeibnizComparison (compare (A:=positive)).
+Proof. unfold compare, positive_compare. intros x y. apply Pos.compare_eq. Qed.
+
+#[global] Instance N_leibniz_comparison : LeibnizComparison (compare (A:=N)).
+Proof. unfold compare, N_compare. intros x y. apply N.compare_eq_iff. Qed.
+
+#[global] Instance Z_leibniz_comparison : LeibnizComparison (compare (A:=Z)).
+Proof. unfold compare, Z_compare. intros x y. apply Z.compare_eq_iff. Qed.
+
 (** * Natural numbers [nat] *)
 
 #[global] Hint Resolve N.le_0_l | 0 : core.
@@ -94,8 +115,9 @@ Definition Gt_Lt_discr : Gt <> Lt := ltac:(discriminate).
 
 (** * Positives [positive] *)
 
-#[global] Instance positive_comparison : Comparison Pos.compare.
+#[global] Instance positive_comparison : Comparison (compare (A:=positive)).
 Proof.
+  unfold compare, positive_compare.
   split.
   { intros x y. apply Pos.compare_antisym. }
   { intros x y z c. case: (Pos.compare_spec x y).
@@ -153,8 +175,9 @@ End Pos.
 
 (** * Natural numbers [N] *)
 
-#[global] Instance N_comparison : Comparison N.compare.
+#[global] Instance N_comparison : Comparison (compare (A:=N)).
 Proof.
+  unfold compare, N_compare.
   split.
   { intros x y. apply N.compare_antisym. }
   { intros x y z c. case: (N.compare_spec x y).
@@ -541,8 +564,9 @@ Proof. by rewrite pow2N_eq. Qed.
 
 (** * Integers *)
 
-#[global] Instance Z_comparison : Comparison Z.compare.
+#[global] Instance Z_comparison : Comparison (compare (A:=Z)).
 Proof.
+  unfold compare, Z_compare.
   split.
   { intros x y. apply Z.compare_antisym. }
   { intros x y z c. case: (Z.compare_spec x y).

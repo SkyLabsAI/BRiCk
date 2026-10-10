@@ -4,6 +4,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import skylabs.prelude.base.
+Require Import skylabs.prelude.numbers.
 Require Stdlib.Numbers.BinNums.
 Require Stdlib.Numbers.Cyclic.Int63.Uint63.
 Require Stdlib.micromega.ZifyUint63.
@@ -62,3 +63,20 @@ Module Uint63.
     rewrite Uint63.compare_spec. case: Z.compare_spec; constructor; lia.
   Qed.
 End Uint63.
+
+#[global] Instance uint63_compare : Compare PrimInt63.int := PrimInt63.compare.
+#[global] Instance primitive_integer_comparison : Comparison (compare (A:=PrimInt63.int)).
+Proof.
+  unfold compare, uint63_compare.
+  constructor.
+  - intros x y. rewrite !Uint63.compare_spec. apply Z.compare_antisym.
+  - intros x y z c Hxy Hyz.
+    rewrite !Uint63.compare_spec. rewrite !Uint63.compare_spec in Hxy Hyz.
+    exact (@compare_trans _ Z.compare Z_comparison _ _ _ _ Hxy Hyz).
+Qed.
+#[global] Instance primitive_integer_leibniz_comparison : LeibnizComparison (compare (A:=PrimInt63.int)).
+Proof.
+  unfold compare, uint63_compare.
+  intros x y Hxy. apply Uint63.to_Z_inj.
+  apply Z.compare_eq_iff. by rewrite <- Uint63.compare_spec.
+Qed.

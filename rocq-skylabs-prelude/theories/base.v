@@ -380,15 +380,17 @@ Section compare.
     compare_antisym (x y : A) : f x y = CompOpp (f y x);
     compare_trans (x y z : A) c : f x y = c -> f y z = c -> f x z = c;
   }.
-  #[global] Hint Mode Comparison + - : typeclass_instances.
-  #[global] Hint Mode Comparison - + : typeclass_instances.
+  (** Laws apply to an existing operation; search must not synthesize one. *)
+  #[global] Hint Mode Comparison - ! : typeclass_instances.
   #[global] Hint Opaque compare_antisym compare_trans : typeclass_instances.
 
   Class Compare A := compare : A -> A -> comparison.
   #[global] Hint Mode Compare ! : typeclass_instances.
   #[global] Instance: Params (@compare) 2 := {}.
   #[global] Hint Opaque compare : typeclass_instances.
-  #[global] Arguments compare : simpl never.
+  (** Compute on constructor operands without exposing symbolic matches.
+  Typeclass search retains the opacity declared above. *)
+  #[global] Arguments compare {_ _} !_ !_ / : simpl nomatch, assert.
 End compare.
 
 (** Equality reflected by a comparison function.  The class lives here so
@@ -397,5 +399,7 @@ NES.Begin LeibnizComparison.
   Class C {T} (cmp : T -> T -> comparison) : Prop :=
     cmp_eq : forall a b, cmp a b = Eq -> a = b.
   #[global] Arguments cmp_eq {_} _ {_} _ _.
+  (** As for [Comparison], the comparator head must already be known. *)
+  #[global] Hint Mode C - ! : typeclass_instances.
 NES.End LeibnizComparison.
 Notation LeibnizComparison := LeibnizComparison.C.

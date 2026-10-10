@@ -5,6 +5,7 @@
  *)
 Require Ltac2.Ltac2.
 Require Export skylabs.prelude.base.	(* for, e.g., <<::>> *)
+Require Import skylabs.prelude.compare.
 Require Import Stdlib.Numbers.Cyclic.Int63.PrimInt63.
 Require Import skylabs.prelude.parray.
 Require Import skylabs.prelude.uint63.
@@ -38,7 +39,7 @@ Module Import translation_unit.
       match ls with
       | nil => x :: nil
       | l :: ls' =>
-          match compare.compareN x l with
+          match base.compare x l with
           | Lt => x :: ls
           | Eq => ls
           | Gt => l :: insert x ls'
@@ -52,17 +53,15 @@ Module Import translation_unit.
   End sort.
 
   Module sort_static_assert.
-    Definition compare (x y : StaticAssert) : comparison :=
-      match PrimString.compare x.(sa_message) y.(sa_message) with
-      | Eq => base.compare x.(sa_condition) y.(sa_condition)
-      | c => c
-      end.
+    #[global] Instance compare_static_assert : Compare StaticAssert := fun x y =>
+      base.compare (x.(sa_message), x.(sa_condition))
+        (y.(sa_message), y.(sa_condition)).
 
     Fixpoint insert (x : StaticAssert) (ls : list StaticAssert) : list StaticAssert :=
       match ls with
       | nil => x :: nil
       | l :: ls' =>
-          match compare x l with
+          match base.compare x l with
           | Lt => x :: ls
           | Eq => ls (* remove duplicates *)
           | Gt => l :: insert x ls'

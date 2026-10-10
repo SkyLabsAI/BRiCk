@@ -202,7 +202,7 @@ Module exception_spec.
   #[global] Instance: Transitive (⊆@{t}).
   Proof. intros [ | | ] [ | | ] [ | | ]; compute; intuition congruence. Qed.
 
-  Import PrimInt63.
+  Import (notations) PrimInt63.
   Definition prim_tag (r : exception_spec.t) : PrimInt63.int :=
     match r with
     | exception_spec.Unknown => 0
@@ -210,14 +210,14 @@ Module exception_spec.
     | exception_spec.MayThrow => 2
     end%uint63.
 
-  Definition compare (x y : exception_spec.t) : comparison :=
-    PrimInt63.compare (prim_tag x) (prim_tag y).
+  #[global] Instance compare_instance : Compare t := fun x y =>
+    compare (prim_tag x) (prim_tag y).
 
-  #[global] Instance: Comparison compare.
-  Proof. apply by_prim_tag_comparison. Qed.
-  #[global] Instance: LeibnizComparison compare.
+  #[global] Instance compare_comparison : Comparison (compare (A:=t)).
+  Proof. exact (comparison_pullback prim_tag (compare (A:=PrimInt63.int))). Qed.
+  #[global] Instance compare_leibniz_comparison : LeibnizComparison (compare (A:=t)).
   Proof. intros [ | | ] [ | | ]; compute; done. Qed.
-  #[global] Instance: EqDecision t := LeibnizComparison.from_comparison.
+  #[global] Instance eq_decision : EqDecision t := LeibnizComparison.from_compare.
 End exception_spec.
 
 (** *** Functions *)

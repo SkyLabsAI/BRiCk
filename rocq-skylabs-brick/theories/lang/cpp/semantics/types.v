@@ -238,21 +238,21 @@ Qed.
 
 #[global] Instance named_struct_size_of tu σ gn st n :
   genv_compat tu σ ->
-  TCEq (tu.(types) !! gn) (Some (Gstruct st)) ->
+  TCSimpl (tu.(types) !! gn) (Some (Gstruct st)) ->
   TCEq st.(s_size) n ->
   SizeOf (Tnamed gn) n.
 Proof.
-  rewrite /SizeOf !TCEq_eq=>? /glob_def_genv_compat_struct Htu <-.
+  rewrite /SizeOf TCSimpl_eq TCEq_eq=>? /glob_def_genv_compat_struct Htu <-.
   cbn. by rewrite Htu.
 Qed.
 
 #[global] Instance named_union_size_of tu σ gn u n :
   genv_compat tu σ ->
-  TCEq (tu.(types) !! gn) (Some (Gunion u)) ->
+  TCSimpl (tu.(types) !! gn) (Some (Gunion u)) ->
   TCEq u.(u_size) n ->
   SizeOf (Tnamed gn) n.
 Proof.
-  rewrite /SizeOf !TCEq_eq=>? /glob_def_genv_compat_union Htu <-.
+  rewrite /SizeOf TCSimpl_eq TCEq_eq=>? /glob_def_genv_compat_union Htu <-.
   cbn. by rewrite Htu.
 Qed.
 

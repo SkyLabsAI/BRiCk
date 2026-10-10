@@ -5,11 +5,13 @@
  *)
 
 Require Import skylabs.lang.cpp.syntax.prelude.
+Require Import skylabs.prelude.compare.
 Require Export skylabs.lang.cpp.syntax.preliminary.
 Require Export skylabs.lang.cpp.syntax.overloadable.
 Require Import skylabs.lang.cpp.syntax.notations.
 Require Export skylabs.lang.cpp.syntax.literal_string.
-From Stdlib Require Import PrimInt63.
+From Stdlib Require PrimInt63.
+Import (notations) PrimInt63.
 
 #[local] Set Primitive Projections.
 
@@ -157,8 +159,14 @@ Module function_qualifiers.
     | Ncvr => 12
     end%uint63.
 
-  Definition compare (a b : t) : comparison :=
-    PrimInt63.compare (tag_prim a) (tag_prim b).
+  #[global] Instance compare_instance : Compare t := fun a b =>
+    compare (tag_prim a) (tag_prim b).
+
+  #[global] Instance compare_comparison : Comparison (compare (A:=t)).
+  Proof. exact (comparison_pullback tag_prim (compare (A:=PrimInt63.int))). Qed.
+
+  #[global] Instance compare_leibniz_comparison : LeibnizComparison (compare (A:=t)).
+  Proof. intros x y Hxy. destruct x, y; compute in Hxy; congruence. Qed.
 
   Definition to_type_qualifiers (f : t) : type_qualifiers :=
     match f with
@@ -181,8 +189,8 @@ Module cast_style.
   Proof. repeat constructor. Qed.
 
   #[prefix="", only(tag)] derive t.
-  Definition compare (a b : t) : comparison :=
-    Pos.compare (tag a) (tag b).
+  #[global] Instance compare_instance : Compare t := fun a b =>
+    compare (tag a) (tag b).
 End cast_style.
 
 (** ** Structured names *)
