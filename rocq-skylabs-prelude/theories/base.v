@@ -6,6 +6,7 @@
 
 (** "Prelude" for available-everywhere dependencies. *)
 
+Require Import elpi.apps.NES.NES.
 Require Import Stdlib.Structures.OrderedType.
 Require Export stdpp.prelude.
 Require Export stdpp.countable.
@@ -390,96 +391,11 @@ Section compare.
   #[global] Arguments compare : simpl never.
 End compare.
 
-Module compare.
-
-  Section derived.
-    Context `{!Compare A}.
-    #[local] Infix "?=" := (@compare A _).
-    Notation "(?=)" := (@compare A _) (only parsing).
-
-    Definition eq (x y : A) : Prop := x ?= y = Eq.
-    Definition lt (x y : A) : Prop := x ?= y = Lt.
-    Definition le (x y : A) : Prop := x ?= y <> Gt.
-    Definition gt (x y : A) : Prop := x ?= y = Gt.
-    Definition ge (x y : A) : Prop := x ?= y <> Lt.
-
-    #[global] Instance eq_dec : RelDecision eq.
-    Proof. rewrite/eq. solve_decision. Defined.
-    #[global] Instance lt_dec : RelDecision lt.
-    Proof. rewrite/lt. solve_decision. Defined.
-    #[global] Instance le_dec : RelDecision le.
-    Proof. rewrite/le. solve_decision. Defined.
-    #[global] Instance gt_dec : RelDecision gt.
-    Proof. rewrite/gt. solve_decision. Defined.
-    #[global] Instance ge_dec : RelDecision ge.
-    Proof. rewrite/ge. solve_decision. Defined.
-
-    #[local] Infix "==" := eq.
-    #[local] Infix "<" := lt.
-    #[local] Infix ">" := gt.
-
-    Lemma compare_spec x y : CompareSpec (x == y) (x < y) (x > y) (x ?= y).
-    Proof. rewrite/eq/lt/gt. by destruct (x ?= y); constructor. Qed.
-
-    #[global] Instance eq_equiv `{!Comparison (?=)} : Equivalence eq.
-    Proof.
-      rewrite /eq. split.
-      - intros x. generalize (compare_antisym x x). by destruct (compare x x).
-      - intros x y. rewrite compare_antisym. by destruct (compare y x).
-      - intros x y z. apply compare_trans.
-    Qed.
-
-    #[global] Instance lt_trans `{!Comparison (?=)} : Transitive lt.
-    Proof. intros x y z. apply compare_trans. Qed.
-
-    Lemma compare `{!Comparison (?=)} x y : OrderedType.Compare lt eq x y.
-    Proof.
-      rewrite /lt/eq. destruct (x ?= y) eqn:Hc; try by constructor.
-      apply OrderedType.GT. by rewrite compare_antisym Hc.
-    Qed.
-  End derived.
-
-  (**
-  These notation effects are opt-in because they can interfere with
-  existing theory tied to notation scopes like <<nat_scope>> (e.g.,
-  <<Peano.lt>> differs from the comparison-based [lt] relation on
-  natural numbers).
-  *)
-  Module Notations.
-    Infix "?=" := compare : stdpp_scope.
-    Infix "?=@{ A }" := (@compare A _) (only parsing) : stdpp_scope.
-    Notation "(?=)" := compare (only parsing) : stdpp_scope.
-    Notation "(?=@{ A } )" := (@compare A _) (only parsing) : stdpp_scope.
-    Notation "( x ?=.)" := (compare x) (only parsing) : stdpp_scope.
-    Notation "(.?= y )" := (fun x => compare x y) (only parsing) : stdpp_scope.
-
-    Infix "<" := lt : stdpp_scope.
-    Infix "<@{ A }" := (@lt A _) (only parsing) : stdpp_scope.
-    Notation "(<)" := lt (only parsing) : stdpp_scope.
-    Notation "(<@{ A } )" := (@lt A _) (only parsing) : stdpp_scope.
-    Notation "( x <.)" := (lt x) (only parsing) : stdpp_scope.
-    Notation "(.< y )" := (fun x => lt x y) (only parsing) : stdpp_scope.
-
-    Infix "<=" := le : stdpp_scope.
-    Infix "<=@{ A }" := (@le A _) (only parsing) : stdpp_scope.
-    Notation "(<=)" := le (only parsing) : stdpp_scope.
-    Notation "(<=@{ A } )" := (@le A _) (only parsing) : stdpp_scope.
-    Notation "( x <=.)" := (le x) (only parsing) : stdpp_scope.
-    Notation "(.<= y )" := (fun x => le x y) (only parsing) : stdpp_scope.
-
-    Infix ">" := gt : stdpp_scope.
-    Infix ">@{ A }" := (@gt A _) (only parsing) : stdpp_scope.
-    Notation "(>)" := gt (only parsing) : stdpp_scope.
-    Notation "(>@{ A } )" := (@gt A _) (only parsing) : stdpp_scope.
-    Notation "( x >.)" := (gt x) (only parsing) : stdpp_scope.
-    Notation "(.> y )" := (fun x => gt x y) (only parsing) : stdpp_scope.
-
-    Infix ">=" := ge : stdpp_scope.
-    Infix ">=@{ A }" := (@ge A _) (only parsing) : stdpp_scope.
-    Notation "(>=)" := ge (only parsing) : stdpp_scope.
-    Notation "(>=@{ A } )" := (@ge A _) (only parsing) : stdpp_scope.
-    Notation "( x >=.)" := (ge x) (only parsing) : stdpp_scope.
-    Notation "(.>= y )" := (fun x => ge x y) (only parsing) : stdpp_scope.
-  End Notations.
-
-End compare.
+(** Equality reflected by a comparison function.  The class lives here so
+that libraries can provide instances without importing comparison theory. *)
+NES.Begin LeibnizComparison.
+  Class C {T} (cmp : T -> T -> comparison) : Prop :=
+    cmp_eq : forall a b, cmp a b = Eq -> a = b.
+  #[global] Arguments cmp_eq {_} _ {_} _ _.
+NES.End LeibnizComparison.
+Notation LeibnizComparison := LeibnizComparison.C.
