@@ -44,7 +44,7 @@ Section with_cpp.
 
   (* A zero length must not make an unsized element type admissible. *)
   Example empty_array_unsized q :
-    tblockR (Tarray "void" 0) q -|- False.
+    tblockR (Tarray (Tfunction (FunctionType Tvoid nil)) 0) q -|- False.
   Proof. by rewrite /tblockR. Qed.
 
   (* A non-affine frame and all three chunks survive in both directions. *)

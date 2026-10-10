@@ -61,6 +61,10 @@ Qed.
     [size_of (Tref Tint)] is the size of the reference cell, represented
     by a pointer (as are reference fields in [offset_of]).
 
+    Void call results use a one-byte logical storage cell. This models
+    their existing [primR Tvoid] representation; it does not make [void]
+    a complete C++ object type.
+
     Also, [size_of] is well-defined even in case of overflow, so many users need
     bound-checking; see for instance [wp_operand_sizeof].
  *)
@@ -69,7 +73,7 @@ Fixpoint size_of (resolve : genv) (t : type) : option N :=
   | Tptr _ | Tref _ | Trv_ref _ => Some (pointer_size resolve)
   | Tnum sz _ => Some (int_rank.bytesN sz)
   | Tchar_ ct => Some (char_type.bytesN ct)
-  | Tvoid => None
+  | Tvoid => Some 1
   | Tarray t n => N.mul n <$> size_of resolve t
   | Tincomplete_array _ => None
   | Tvariable_array _ _ => None
@@ -144,6 +148,9 @@ Theorem size_of_int : forall {c : genv} s w,
 Proof. reflexivity. Qed.
 Theorem size_of_char : forall {c : genv} s,
     @size_of c (Tchar_ s) = Some (char_type.bytesN s).
+Proof. reflexivity. Qed.
+Theorem size_of_void : forall {c : genv},
+    @size_of c Tvoid = Some 1%N.
 Proof. reflexivity. Qed.
 Theorem size_of_bool : forall {c : genv},
     @size_of c Tbool = Some 1%N.
@@ -255,6 +262,9 @@ Proof.
   rewrite /SizeOf !TCEq_eq=>? /glob_def_genv_compat_union Htu <-.
   cbn. by rewrite Htu.
 Qed.
+
+#[global] Instance void_size_of {σ : genv} : SizeOf Tvoid 1.
+Proof. done. Qed.
 
 #[global] Instance bool_size_of {σ : genv} : SizeOf Tbool 1.
 Proof. done. Qed.

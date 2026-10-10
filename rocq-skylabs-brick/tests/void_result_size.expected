@@ -1,0 +1,5 @@
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/void_result_size.v", line 33, characters 9-35:
+The command has indeed failed with message:
+No applicable tactic.
+In nested Ltac calls to "by (tactic)" and "done", last call failed.
+
