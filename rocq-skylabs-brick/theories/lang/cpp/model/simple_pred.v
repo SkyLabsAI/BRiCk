@@ -1381,10 +1381,22 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
 
     Note that `arrR` exposes stronger reasoning principles, but this might still be useful.
     *)
-    Axiom strict_valid_ptr_sub : ∀ (i j k : Z) p ty vt1 vt2,
+    Axiom _valid_ptr_sub : ∀ (i j k : Z) p ty vt1 vt2 vt,
       (i <= j < k)%Z ->
+      (vt = Strict -> exists sz, size_of σ ty = Some sz /\ (0 < sz)%N) ->
+      _valid_ptr vt1 (p ,, o_sub σ ty i) |--
+      _valid_ptr vt2 (p ,, o_sub σ ty k) -* _valid_ptr vt (p ,, o_sub σ ty j).
+
+    Lemma strict_valid_ptr_sub : ∀ (i j k : Z) p ty vt1 vt2,
+      (i <= j < k)%Z ->
+      (exists sz, size_of σ ty = Some sz /\ (0 < sz)%N) ->
       _valid_ptr vt1 (p ,, o_sub σ ty i) |--
       _valid_ptr vt2 (p ,, o_sub σ ty k) -* strict_valid_ptr (p ,, o_sub σ ty j).
+    Proof.
+      intros i j k p ty vt1 vt2 Hijk Hsize.
+      apply (_valid_ptr_sub i j k p ty vt1 vt2 Strict Hijk).
+      intros _. exact Hsize.
+    Qed.
 
     (** XXX: this axiom is convoluted but
     TODO: The intended proof of [strict_valid_ptr_field_sub] (and friends) is that
