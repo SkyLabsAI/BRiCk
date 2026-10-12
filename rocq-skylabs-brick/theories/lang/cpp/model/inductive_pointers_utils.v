@@ -38,6 +38,79 @@ Module address_sums.
     rewrite /offset_vaddr => Hval.
     by case_guard; rewrite /= Z.add_assoc ?Z2N.id.
   Qed.
+  #[local] Open Scope Z_scope.
+
+  #[local] Lemma offset_vaddr_increase off a b va :
+    (a <= b)%N ->
+    offset_vaddr off a = Some va ->
+    exists vb, offset_vaddr off b = Some vb /\
+      Z.of_N vb = Z.of_N va + (Z.of_N b - Z.of_N a).
+  Proof.
+    intros Hab. rewrite /offset_vaddr.
+    case_guard; last discriminate.
+    intros [= <-]. rewrite Z2N.id; last lia.
+    rewrite option_guard_True; last lia.
+    eexists. split; first done. rewrite Z2N.id; lia.
+  Qed.
+
+  #[local] Lemma fold_offset_vaddr_increase offsets a b va :
+    (a <= b)%N ->
+    foldr (fun off ova => ova ≫= offset_vaddr off) (Some a) offsets = Some va ->
+    exists vb,
+      foldr (fun off ova => ova ≫= offset_vaddr off) (Some b) offsets = Some vb /\
+      Z.of_N vb = Z.of_N va + (Z.of_N b - Z.of_N a).
+  Proof.
+    revert va. induction offsets as [|off offsets IH]; intros va Hab; simpl.
+    - intros [= <-]. exists b. split; [done|lia].
+    - destruct (foldr (fun off ova => ova ≫= offset_vaddr off)
+        (Some a) offsets) as [mid|] eqn:E; simpl; last discriminate.
+      have [mid' [Emid Hmid]] := IH mid Hab eq_refl.
+      rewrite Emid /=. intros Hva.
+      have Hle : (mid <= mid')%N by lia.
+      destruct (offset_vaddr_increase off mid mid' va Hle Hva)
+        as (vb & Evb & Hvb).
+      exists vb. split; [exact Evb|lia].
+  Qed.
+
+  #[local] Lemma fold_offset_vaddr_none offsets :
+    foldr (fun off ova => ova ≫= offset_vaddr off) None offsets = None.
+  Proof. induction offsets; by simpl; rewrite ?IHoffsets. Qed.
+
+  #[local] Lemma offset_vaddr_increase_offset a b base va :
+    a <= b ->
+    offset_vaddr a base = Some va ->
+    exists vb, offset_vaddr b base = Some vb /\
+      Z.of_N vb = Z.of_N va + (b-a).
+  Proof.
+    intros Hab. rewrite /offset_vaddr.
+    case_guard; last discriminate.
+    intros [= <-]. rewrite Z2N.id; last lia.
+    rewrite option_guard_True; last lia.
+    eexists. split; first done. rewrite Z2N.id; lia.
+  Qed.
+
+  Lemma fold_offset_vaddr_increase_tail offsets root a b va :
+    a <= b ->
+    foldr (fun off ova => ova ≫= offset_vaddr off)
+      (root ≫= offset_vaddr a) offsets = Some va ->
+    exists vb,
+      foldr (fun off ova => ova ≫= offset_vaddr off)
+        (root ≫= offset_vaddr b) offsets = Some vb /\
+      Z.of_N vb = Z.of_N va + (b-a).
+  Proof.
+    intros Hab.
+    destruct root as [base|]; simpl; last by rewrite fold_offset_vaddr_none.
+    destruct (offset_vaddr a base) as [mid|] eqn:E;
+      last by rewrite fold_offset_vaddr_none.
+    intros Hva.
+    destruct (offset_vaddr_increase_offset a b base mid Hab E)
+      as (mid' & Emid & Hmid).
+    have Hle : (mid <= mid')%N by lia.
+    destruct (fold_offset_vaddr_increase offsets mid mid' va Hle Hva)
+      as (vb & Evb & Hvb).
+    exists vb. rewrite Emid. split; [exact Evb|lia].
+  Qed.
+
 End address_sums.
 
 Module merge_elems.
