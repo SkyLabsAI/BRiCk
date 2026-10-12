@@ -192,7 +192,7 @@ Module Type CPP_LOGIC
         has_type (Vptr p) Tnullptr -|- [| p = nullptr |].
       Axiom has_type_ptr' : ∀ p ty,
         has_type (Vptr p) (Tptr ty) -|-
-        valid_ptr p ** [| aligned_ptr_ty ty p |].
+        valid_ptr p ** [| pointee_aligned_ptr_ty ty p |].
 
       (* These two definitions are needed because of [tptsto_has_type] *)
       Axiom has_type_ref' : ∀ p ty,
@@ -227,7 +227,7 @@ Module Type CPP_LOGIC
           strict_valid_ptr p |-- has_type (Vptr p) (Tptr ty) -* reference_to ty p.
       Axiom reference_to_elim : forall ty p,
           reference_to ty p |--
-            [| aligned_ptr_ty ty p |] ** [| p <> nullptr |] **
+            [| pointee_aligned_ptr_ty ty p |] ** [| p <> nullptr |] **
             valid_ptr p ** if zero_sized_array ty then emp else strict_valid_ptr p.
 
     End with_genv.
@@ -298,16 +298,21 @@ Module Type CPP_LOGIC
     #[global] Declare Instance tptsto_reference_to : forall {σ} p ty q v,
       Observe (reference_to ty p) (tptsto ty q p v).
 
-    (**
-    NOTE: We'll eventually need the stronger [tptsto_learn : ∀ {σ} ty
-    q1 q2 p v1 v2, <absorb> (tptsto ty q1 p v1) //\\ <absorb> (tptsto
-    ty q2 p v2) |-- [! v1 = v2 !]] but setting up the proof in
-    [simple_pred] now would be a bit of a digression.
-    *)
-    #[global] Declare Instance tptsto_agree : forall {σ} ty q1 q2 p v1 v2,
-      Observe2 [| v1 = v2 |]
-               (tptsto ty q1 p v1)
-               (tptsto ty q2 p v2).
+    (** Agreement under conjunction also covers two descriptions of the same
+    owned cell, without requiring two disjoint shares. The concrete model
+    proves this from agreement of the underlying ghost cells and bytes. *)
+    Axiom tptsto_agree_and : forall {σ} ty q1 q2 p v1 v2,
+      <absorb> (tptsto ty q1 p v1) ∧ <absorb> (tptsto ty q2 p v2) ⊢ ⌜v1 = v2⌝.
+
+    #[global] Instance tptsto_agree : forall {σ} ty q1 q2 p v1 v2,
+      Observe2 [| v1 = v2 |] (tptsto ty q1 p v1) (tptsto ty q2 p v2).
+    Proof.
+      intros σ' ty q1 q2 p v1 v2. apply observe_2_intro_only_provable.
+      iIntros "P Q". iApply (tptsto_agree_and ty q1 q2 p v1 v2).
+      iSplit.
+      - iApply bi.absorbingly_intro. iExact "P".
+      - iApply bi.absorbingly_intro. iExact "Q".
+    Qed.
 
     End with_cpp_logic.
 

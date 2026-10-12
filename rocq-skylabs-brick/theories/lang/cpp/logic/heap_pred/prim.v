@@ -302,12 +302,38 @@ Section with_cpp.
   Proof. rewrite primR.unlock. apply _. Qed.
 
   (** ** [reference_to] *)
+  #[global] Instance reference_to_pointee_aligned ty p :
+    Observe [| pointee_aligned_ptr_ty ty p |] (reference_to ty p).
+  Proof. rewrite reference_to_elim. refine _. Qed.
+
+  #[global] Instance reference_to_pointee_alignedR ty (p : ptr) :
+    Observe (p |-> pointee_alignedR ty) (reference_to ty p).
+  Proof. rewrite reference_to_elim _at_pointee_alignedR. refine _. Qed.
+
   #[global] Instance reference_to_valid ty p : Observe (valid_ptr p) (reference_to ty p).
   Proof. rewrite reference_to_elim. refine _. Qed.
-  #[global] Instance reference_to_aligned ty p : Observe [| aligned_ptr_ty ty p |] (reference_to ty p).
-  Proof. rewrite reference_to_elim. refine _. Qed.
-  #[global] Instance reference_to_aligned_ofR ty (p : ptr) : Observe (p |-> aligned_ofR ty) (reference_to ty p).
-  Proof. rewrite reference_to_elim aligned_ofR_aligned_ptr_ty. refine _. Qed.
+  #[global] Instance reference_to_aligned ty p :
+    TCEq (match erase_qualifiers ty with
+           | Tvoid | Tfunction _ => false
+           | _ => true
+           end) true ->
+    Observe [| aligned_ptr_ty ty p |] (reference_to ty p).
+  Proof.
+    intros Hobject%TCEq_eq.
+    rewrite reference_to_elim /pointee_aligned_ptr_ty.
+    destruct (erase_qualifiers ty); try discriminate; refine _.
+  Qed.
+  #[global] Instance reference_to_aligned_ofR ty (p : ptr) :
+    TCEq (match erase_qualifiers ty with
+           | Tvoid | Tfunction _ => false
+           | _ => true
+           end) true ->
+    Observe (p |-> aligned_ofR ty) (reference_to ty p).
+  Proof.
+    intros Hobject%TCEq_eq.
+    rewrite reference_to_elim aligned_ofR_aligned_ptr_ty /pointee_aligned_ptr_ty.
+    destruct (erase_qualifiers ty); try discriminate; refine _.
+  Qed.
   #[global] Instance reference_to_not_null ty p : Observe [| p <> nullptr |] (reference_to ty p).
   Proof. rewrite reference_to_elim. refine _. Qed.
   #[global] Instance reference_to_strict_valid ty p :
@@ -317,8 +343,16 @@ Section with_cpp.
 
 
   #[global] Instance reference_to_aligned_observe p ty :
+    TCEq (match erase_qualifiers ty with
+           | Tvoid | Tfunction _ => false
+           | _ => true
+           end) true ->
     Observe (p |-> aligned_ofR ty) (reference_to ty p).
-  Proof. rewrite aligned_ofR_aligned_ptr_ty reference_to_elim; refine _. Qed.
+  Proof.
+    intros Hobject%TCEq_eq.
+    rewrite reference_to_elim aligned_ofR_aligned_ptr_ty /pointee_aligned_ptr_ty.
+    destruct (erase_qualifiers ty); try discriminate; refine _.
+  Qed.
   #[global] Instance reference_to_valid_observe p ty :
     Observe (p |-> validR) (reference_to ty p).
   Proof. rewrite _at_validR reference_to_elim; refine _. Qed.

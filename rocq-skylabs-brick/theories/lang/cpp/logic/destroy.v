@@ -122,7 +122,9 @@ End wp_gen.
 
 #[local] Definition wp_destroy_prim_body `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
     (cv : type_qualifiers) (ty : type) (this : ptr) (Q : epred) : mpred :=
-  |={top}=> (Exists v, this |-> tptstoR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) v) ** Q.
+  |={top}=>
+  (if decide (erase_qualifiers ty = Tvoid) then emp
+   else Exists v, this |-> tptstoR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) v) ** Q.
 
 mlock Definition wp_destroy_prim `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
     (cv : type_qualifiers) (ty : type) (this : ptr) (Q : epred) : mpred :=
@@ -153,7 +155,20 @@ Section prim.
   Lemma wp_destroy_prim_intro tu cv ty (this : ptr) Q :
     (Exists v, this |-> tptstoR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) v) ** Q
     |-- wp_destroy_prim tu cv ty this Q.
-  Proof. wp_destroy_prim_unfold. by iIntros "[$$]". Qed.
+  Proof.
+    wp_destroy_prim_unfold. case_decide; first by iIntros "[_ $]".
+    by iIntros "[$$]".
+  Qed.
+
+  Lemma wp_destroy_prim_intro_result tu cv ty (this : ptr) Q :
+    (Exists v, this |-> resultR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) v) ** Q
+    |-- wp_destroy_prim tu cv ty this Q.
+  Proof.
+    wp_destroy_prim_unfold. case_decide as Hvoid.
+    - by iIntros "[_ $]".
+    - iIntros "((%v & R) & $)". rewrite resultR_nonvoid// _at_tptsto_fuzzyR.
+      iDestruct "R" as "(%v' & _ & R)". iModIntro. by iExists v'.
+  Qed.
 
   Lemma anyR_wp_destroy_prim_val tu cv ty (p : ptr) Q :
     is_value_type ty ->
@@ -177,8 +192,15 @@ Section prim.
 
   Lemma wp_destroy_prim_elim tu cv ty this Q :
     wp_destroy_prim tu cv ty this Q
-    |-- |={top}=> (Exists v, this |-> tptstoR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) v) ** Q.
+    |-- |={top}=>
+      (if decide (erase_qualifiers ty = Tvoid) then emp
+       else Exists v, this |-> tptstoR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) v) ** Q.
   Proof. by wp_destroy_prim_unfold. Qed.
+
+  Lemma wp_destroy_prim_void tu cv ty this Q :
+    erase_qualifiers ty = Tvoid ->
+    wp_destroy_prim tu cv ty this Q -|- |={top}=> Q.
+  Proof. intros Hvoid. by rewrite wp_destroy_prim_unfold Hvoid left_id. Qed.
 
   Lemma wp_destroy_prim_erase_qualifiers tu cv ty :
     wp_destroy_prim tu cv (erase_qualifiers ty) =
@@ -244,7 +266,7 @@ invoking the destructor [dtor] for type [ty] on [this].
   (**
   We inline [operand_receive] (which could be hoisted and shared).
   *)
-  Exists v, p |-> primR Tvoid 1$m v **
+  Exists v, p |-> resultR Tvoid 1$m v **
   this |-> tblockR ty 1$m **
   Q.
 
@@ -892,6 +914,31 @@ Section val_array.
     rewrite is_value_type_decompose_type qual_norm_decompose_type.
     rewrite erase_qualifiers_decompose_type destroy_val_decompose_type.
     cbn. intros. by rewrite -wp_destroy_val_intro_val ?qual_norm'_unqual.
+  Qed.
+
+  Lemma wp_destroy_val_intro_result tu cv ty (this : ptr) Q :
+    is_value_type ty ->
+    let c := qual_norm' (fun cv _ => q_const cv) cv ty in
+    (Exists v, this |-> resultR (erase_qualifiers ty) (cQp.mk c 1) v) ** Q
+    |-- wp_destroy_val tu cv ty this Q.
+  Proof.
+    cbn. rewrite is_value_type_decompose_type erase_qualifiers_decompose_type.
+    rewrite qual_norm'_decompose_type wp_destroy_val_decompose_type.
+    have := is_qualified_decompose_type ty.
+    destruct (decompose_type ty) as [cv' rty]; cbn=>??.
+    rewrite -wp_destroy_val_intro. destruct rty; try done.
+    all: by rewrite -wp_destroy_prim_intro_result.
+  Qed.
+
+  Lemma destroy_val_intro_result tu ty (this : ptr) Q :
+    is_value_type ty ->
+    let cv := qual_norm (fun cv _ => cv) ty in
+    (Exists v, this |-> resultR (erase_qualifiers ty) (cQp.mk (q_const cv) 1) v) ** Q
+    |-- destroy_val tu ty this Q.
+  Proof.
+    rewrite is_value_type_decompose_type qual_norm_decompose_type.
+    rewrite erase_qualifiers_decompose_type destroy_val_decompose_type.
+    cbn. intros. by rewrite -wp_destroy_val_intro_result ?qual_norm'_unqual.
   Qed.
 
   Lemma anyR_wp_destroy_val_val tu cv ty (this : ptr) Q :

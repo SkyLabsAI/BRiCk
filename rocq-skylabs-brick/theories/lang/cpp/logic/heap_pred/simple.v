@@ -26,6 +26,12 @@ mlock
 Definition aligned_ofR `{Σ : cpp_logic} {σ} (ty : type) : Rep :=
   ∃ align : N, [| align_of ty = Some align |] ** alignedR align.
 
+(** Alignment required by a pointer or reference target.  Object storage
+    continues to use [aligned_ofR], including storage holding pointer values. *)
+mlock
+Definition pointee_alignedR `{Σ : cpp_logic} {σ} (ty : type) : Rep :=
+  as_Rep (λ p, [| pointee_aligned_ptr_ty ty p |]).
+
 Section with_cpp.
   Context `{Σ : cpp_logic} {σ}.
 
@@ -72,6 +78,32 @@ Section with_cpp.
     rewrite aligned_ofR.unlock alignedR.unlock /aligned_ptr_ty _at_exists only_provable_exist.
     f_equiv => n. rewrite _at_sep _at_as_Rep _at_only_provable.
     by iIntros "!%".
+  Qed.
+
+  #[global] Instance pointee_alignedR_persistent ty : Persistent (pointee_alignedR ty).
+  Proof. rewrite pointee_alignedR.unlock. apply _. Qed.
+  #[global] Instance pointee_alignedR_affine ty : Affine (pointee_alignedR ty).
+  Proof. rewrite pointee_alignedR.unlock. apply _. Qed.
+  #[global] Instance pointee_alignedR_timeless ty : Timeless (pointee_alignedR ty).
+  Proof. rewrite pointee_alignedR.unlock. apply _. Qed.
+
+  Lemma _at_pointee_alignedR ty p :
+    p |-> pointee_alignedR ty -|- [| pointee_aligned_ptr_ty ty p |].
+  Proof. by rewrite pointee_alignedR.unlock _at_as_Rep. Qed.
+
+  Lemma object_alignment_to_pointee ty : aligned_ofR ty |-- pointee_alignedR ty.
+  Proof.
+    apply Rep_entails_at => p.
+    rewrite aligned_ofR_aligned_ptr_ty _at_pointee_alignedR.
+    iIntros "%H !%". by apply aligned_ptr_ty_pointee.
+  Qed.
+
+  Lemma pointee_alignment_sized ty sz :
+    size_of σ ty = Some sz -> pointee_alignedR ty -|- aligned_ofR ty.
+  Proof.
+    intros Hsz. apply Rep_equiv_at => p.
+    rewrite _at_pointee_alignedR aligned_ofR_aligned_ptr_ty.
+    by rewrite (pointee_aligned_size_of ty sz p Hsz).
   Qed.
 
   Lemma type_ptrR_aligned_ofR ty :
