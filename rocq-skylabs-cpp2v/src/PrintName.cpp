@@ -17,6 +17,7 @@
 #include <clang/AST/RecursiveASTVisitor.h>
 #include <clang/Basic/Version.inc>
 #include <clang/Frontend/CompilerInstance.h>
+#include <llvm/ADT/SmallVector.h>
 #include <llvm/Support/ErrorHandling.h>
 #include <optional>
 
@@ -362,7 +363,26 @@ static bool getAnonymousIndex(const DeclContext &ctx, const Decl &decl,
 static unsigned getAnonymousIndex(const DeclContext &ctx, const Decl &decl,
                                   ClangPrinter &cprint) {
     unsigned i{0};
-    if (!getAnonymousIndex(ctx, decl, i, cprint)) {
+    bool found = false;
+    if (auto ns = dyn_cast<NamespaceDecl>(&ctx)) {
+        // Reopened namespace fragments share one printed scope. Count their
+        // anonymous declarations together in source order, rather than
+        // restarting the indices in each fragment.
+        llvm::SmallVector<const NamespaceDecl *, 4> fragments;
+        for (auto fragment = ns->getMostRecentDecl(); fragment;
+             fragment = fragment->getPreviousDecl())
+            fragments.push_back(fragment);
+        for (auto fragment = fragments.rbegin(); fragment != fragments.rend();
+             ++fragment) {
+            if (getAnonymousIndex(**fragment, decl, i, cprint)) {
+                found = true;
+                break;
+            }
+        }
+    } else {
+        found = getAnonymousIndex(ctx, decl, i, cprint);
+    }
+    if (!found) {
         fatal(cprint, loc::of(decl))
             << "could not find anonymous declaration in context\n";
         logging::die();
