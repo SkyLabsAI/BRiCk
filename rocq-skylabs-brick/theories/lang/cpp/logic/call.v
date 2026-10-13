@@ -223,7 +223,7 @@ Section with_resolve.
   Qed.
 End with_resolve.
 
-(*
+(**
 The following definitions describe the "return"-convention.
 Specifically, they describe how the returned pointer is received into
 the value category that it is called with.
@@ -233,17 +233,18 @@ all function calls.
 *)
 Definition xval_receive `{Σ : cpp_logic, σ : genv}
     (ty : exprtype) (res : ptr) (Q : ptr -> epred) : mpred :=
-  (**
-  [primR] is enough because C++ code never uses the raw bytes
+  (*
+  [primR] not [tptsto_fuzzyR] is enough because C++ code never uses the raw bytes
   underlying an inhabitant of a reference type.
   *)
   Exists p, res |-> primR (Tref (erase_qualifiers ty)) 1$m (Vref p) ** Q p.
 #[global] Arguments xval_receive {_ _ _ _} _ _ _ / : assert.
 
+(* TODO: lval_receive and xval_receive coincide, have a single glval_receive? *)
 Definition lval_receive `{Σ : cpp_logic, σ : genv}
     (ty : exprtype) (res : ptr) (Q : ptr -> epred) : mpred :=
-  (**
-  [primR] is enough because C++ code never uses the raw bytes
+  (*
+  [primR] not [tptsto_fuzzyR] is enough because C++ code never uses the raw bytes
   underlying an inhabitant of a reference type.
   *)
   Exists p, res |-> primR (Tref (erase_qualifiers ty)) 1$m (Vref p) ** Q p.
