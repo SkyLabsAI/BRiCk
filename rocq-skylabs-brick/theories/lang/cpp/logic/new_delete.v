@@ -148,11 +148,30 @@ Module delete_operator.
     : option (obj_name * delete_operator.t) :=
     pair nm <$> (tu.(symbols) !! nm >>= fun del_fn => delete_operator.classify (type_of_value del_fn)).
 
+  #[local] Definition is_global_name (nm : name) : bool :=
+    if nm is Nglobal _ then true else false.
+
+  (** For a class with a <<virtual>> destructor, [s_delete] is the
+      deallocation function its deleting destructor calls. A
+      delete-expression whose own lookup ([default_delete]) found a member
+      function is not a global <<::delete>>, so [s_delete] applies. When the
+      expression's lookup found a global function but the class's is a
+      member function, the expression is either <<::delete>> (which
+      calls the global function, <https://eel.is/c++draft/expr.delete#10>) or
+      a plain <<delete>> through a base class without a member deallocation
+      function (which calls [s_delete]); the AST does not distinguish the two,
+      so we give no semantics. *)
   #[local] Definition delete_for_named (tu : translation_unit) (default_delete : DEFAULT_DELETE)
     (cls : name) : option (obj_name * delete_operator.t) :=
     match tu.(types) !! cls with
     | Some (Gstruct s) =>
-        with_delete tu $ stdpp.option.default default_delete s.(s_delete)
+        match s.(s_delete) with
+        | Some d =>
+            if is_global_name default_delete && negb (is_global_name d)
+            then None
+            else with_delete tu d
+        | None => with_delete tu default_delete
+        end
     | Some (Gunion u) =>
         with_delete tu $ stdpp.option.default default_delete u.(u_delete)
     | Some (Genum _ _) =>
@@ -200,7 +219,9 @@ Module delete_operator.
     destruct (types tu1 !! cls) eqn:Heq; simpl in *; try congruence.
     destruct g; try congruence.
     { erewrite sub_module_preserves_gunion; eauto using with_delete_sub_module. }
-    { erewrite sub_module_preserves_gstruct; eauto using with_delete_sub_module. }
+    { erewrite sub_module_preserves_gstruct; [ | eauto | eauto ].
+      destruct (s_delete _); [ case_match; first congruence | ];
+        eauto using with_delete_sub_module. }
     { edestruct sub_module_preserves_genum; eauto.
       rewrite H1. eauto using with_delete_sub_module. }
   Qed.
