@@ -242,6 +242,28 @@ End delete_operator.
 
 Module Type Expr__newdelete.
 
+  (** Only the global allocation functions without an alignment
+      parameter are required to provide alignment of
+      <<__STDCPP_DEFAULT_NEW_ALIGNMENT__>>, and compilers rely on it
+      for them. See <https://eel.is/c++draft/cpp.predefined#1.8>.
+      Class-specific allocation functions, and those taking an
+      alignment, only need to provide the alignment of the allocated
+      type.
+   *)
+  Definition requires_default_alignment (tu : translation_unit) (nm : name) : bool :=
+    match nm with
+    | Nglobal (Nop function_qualifiers.N (OONew _) args) =>
+        (* This assumes that names do not use aliases, which they do not *)
+        negb (bool_decide (Talign_val_t ∈ args))
+    | _ => false
+    end.
+
+  (** The alignment that a new-expression requires of the storage returned by
+      the allocation function [nm], for an allocated type of alignment [al]
+      (<https://eel.is/c++draft/basic.stc.dynamic.allocation#3>). *)
+  Abbreviation new_storage_alignment tu nm al :=
+    (if requires_default_alignment tu nm then STDCPP_DEFAULT_NEW_ALIGNMENT else al).
+
   #[local] Open Scope free_scope.
   (* hide [genv] argument, it's a typeclass anyway *)
   #[local] Arguments size_of {_} _ : assert.
@@ -440,21 +462,6 @@ Module Type Expr__newdelete.
             then [Ecast (Cintegral Talign_val_t) (Eint al Tsize_t)]
             else [].
 
-        (** Only the global allocation functions without an alignment
-            parameter are required to provide alignment of
-            <<__STDCPP_DEFAULT_NEW_ALIGNMENT__>>, and compilers rely on it
-            for them. See <https://eel.is/c++draft/cpp.predefined#1.8>.
-            Class-specific allocation functions, and those taking an
-            alignment, only need to provide the alignment of the allocated
-            type.
-         *)
-        Definition requires_default_alignment (tu : translation_unit) (nm : name) : bool :=
-          match nm with
-          | Nglobal (Nop function_qualifiers.N (OONew _) args) =>
-              (* This assumes that names do not use aliases, which they do not *)
-              negb (bool_decide (Talign_val_t ∈ args))
-          | _ => false
-          end.
 
         Axiom wp_operand_new :
           forall (oinit : option Expr)
@@ -479,8 +486,7 @@ Module Type Expr__newdelete.
                     (* The global allocation functions without an alignment parameter
                        must align to <<__STDCPP_DEFAULT_NEW_ALIGNMENT__>> even when the
                        required alignment is smaller; see [requires_default_alignment]. *)
-                    storage_ptr |-> alignedR (if requires_default_alignment tu new_fn.1
-                                              then STDCPP_DEFAULT_NEW_ALIGNMENT else alloc_al) **
+                    storage_ptr |-> alignedR (new_storage_alignment tu new_fn.1 alloc_al) **
                     storage_ptr |-> blockR alloc_sz 1$m **
                     (Forall (obj_ptr : ptr),
                        provides_storage storage_ptr obj_ptr aty -*
@@ -609,8 +615,7 @@ Module Type Expr__newdelete.
                        else
                          (* [blockR alloc_sz -|- tblockR (Tarray aty array_size)] *)
                          storage_base |-> blockR (overhead_sz + alloc_sz) 1$m **
-                         storage_base |-> alignedR (if requires_default_alignment tu new_fn.1
-                                                    then STDCPP_DEFAULT_NEW_ALIGNMENT else alloc_al) **
+                         storage_base |-> alignedR (new_storage_alignment tu new_fn.1 alloc_al) **
                          (Forall (obj_ptr : ptr),
                            storage_base .[Tbyte ! overhead_sz] |-> alignedR alloc_al -*
                            (* This also ensures these pointers share their
