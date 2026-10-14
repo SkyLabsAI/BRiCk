@@ -10,12 +10,13 @@ Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
 Require Import skylabs.lang.cpp.logic.
 
 cpp.prog source flags "-std=c++23 --target=x86_64-linux-gnu" prog cpp:{{
-namespace std { enum class align_val_t : unsigned long {}; }
-
-void* operator new(unsigned long sz);
-void* operator new(unsigned long sz, std::align_val_t al);
-void operator delete(void* p) noexcept;
-void operator delete(void* p, unsigned long sz) noexcept;
+// The global allocation and deallocation functions are implicitly declared
+// in every translation unit (https://eel.is/c++draft/basic.stc.dynamic.general#2);
+// the uses below make cpp2v emit them. Declaring [std::align_val_t] ourselves
+// would be undefined behavior (https://eel.is/c++draft/namespace.std#1).
+struct alignas(64) A { int x; };
+void test_global_new() { delete new int(0); }
+void test_aligned_new() { delete new A{0}; }
 
 // A class-specific allocation function.
 struct D {
@@ -79,7 +80,7 @@ Fail Example class_new_alignment_old :
 (** ** Deallocation function of a delete-expression
 
     A <<::delete>> calls the global deallocation function
-    (<https://eel.is/c++draft/expr.delete#10>), while a plain <<delete>> of an
+    (<https://eel.is/c++draft/expr.delete#8>), while a plain <<delete>> of an
     object with a virtual destructor calls the function its deleting destructor
     selects. The AST does not record <<::>>, so the case where the
     expression's lookup found a global function but the class's is a member is
@@ -101,7 +102,7 @@ Proof. vm_compute. eexists. reflexivity. Qed.
 (** ** Deleting <<nullptr>>
 
     The deallocation function may be called on <<nullptr>>
-    (<https://eel.is/c++draft/expr.delete#7>), and the size argument a sized
+    (<https://eel.is/c++draft/expr.delete#6>), and the size argument a sized
     deallocation function would receive is not fixed, so the call must be safe
     for every size. *)
 Section with_cpp.

@@ -157,7 +157,7 @@ Module delete_operator.
       function is not a global <<::delete>>, so [s_delete] applies. When the
       expression's lookup found a global function but the class's is a
       member function, the expression is either <<::delete>> (which
-      calls the global function, <https://eel.is/c++draft/expr.delete#10>) or
+      calls the global function, <https://eel.is/c++draft/expr.delete#8>) or
       a plain <<delete>> through a base class without a member deallocation
       function (which calls [s_delete]); the AST does not distinguish the two,
       so we give no semantics. *)

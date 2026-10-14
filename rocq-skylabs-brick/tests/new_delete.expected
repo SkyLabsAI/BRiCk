@@ -1,4 +1,4 @@
-File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/new_delete.v", line 77, characters 20-31:
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/new_delete.v", line 78, characters 20-31:
 The command has indeed failed with message:
 Unable to unify "4%N" with "16%N".
 
