@@ -419,16 +419,19 @@ Module Type Expr__newdelete.
             then [Ecast (Cintegral Talign_val_t) (Eint al Tsize_t)]
             else [].
 
-        (** Only the default allocation functions are required to provide
-            alignment of <<__STDCPP_DEFAULT_NEW_ALIGNMENT__>>.
-            See <https://eel.is/c++draft/cpp.predefined#1.8>.
+        (** Only the global allocation functions without an alignment
+            parameter are required to provide alignment of
+            <<__STDCPP_DEFAULT_NEW_ALIGNMENT__>>, and compilers rely on it
+            for them. See <https://eel.is/c++draft/cpp.predefined#1.8>.
+            Class-specific allocation functions, and those taking an
+            alignment, only need to provide the alignment of the allocated
+            type.
          *)
         Definition requires_default_alignment (tu : translation_unit) (nm : name) : bool :=
           match nm with
-          | Nglobal (Nop function_qualifiers.N (OONew _) [arg]) =>
+          | Nglobal (Nop function_qualifiers.N (OONew _) args) =>
               (* This assumes that names do not use aliases, which they do not *)
-              if bool_decide (arg = Tsize_t) then true
-              else false
+              negb (bool_decide (Talign_val_t ∈ args))
           | _ => false
           end.
 
@@ -452,12 +455,11 @@ Module Type Expr__newdelete.
                     Q (Vptr storage_ptr) free
                     (* ^^ only <<noexcept>> overloads for <<operator new>> are allowed to return <<nullptr>> *)
                   else
-                    (* C++ requires the resulting pointer to be aligned to
-                        <<__STDCPP_DEFAULT_NEW_ALIGNMENT__>> even in cases when the
-                        required alignment is actually smaller. When the alignment is
-                        smaller, [pass_align] will be [false]. *)
-                    storage_ptr |-> alignedR (if pass_align && ~~requires_default_alignment tu new_fn.1
-                                              then alloc_al else STDCPP_DEFAULT_NEW_ALIGNMENT) **
+                    (* The global allocation functions without an alignment parameter
+                       must align to <<__STDCPP_DEFAULT_NEW_ALIGNMENT__>> even when the
+                       required alignment is smaller; see [requires_default_alignment]. *)
+                    storage_ptr |-> alignedR (if requires_default_alignment tu new_fn.1
+                                              then STDCPP_DEFAULT_NEW_ALIGNMENT else alloc_al) **
                     storage_ptr |-> blockR alloc_sz 1$m **
                     (Forall (obj_ptr : ptr),
                        provides_storage storage_ptr obj_ptr aty -*
@@ -586,8 +588,8 @@ Module Type Expr__newdelete.
                        else
                          (* [blockR alloc_sz -|- tblockR (Tarray aty array_size)] *)
                          storage_base |-> blockR (overhead_sz + alloc_sz) 1$m **
-                         storage_base |-> alignedR (if pass_align && ~~requires_default_alignment tu new_fn.1
-                                                    then alloc_al else STDCPP_DEFAULT_NEW_ALIGNMENT) **
+                         storage_base |-> alignedR (if requires_default_alignment tu new_fn.1
+                                                    then STDCPP_DEFAULT_NEW_ALIGNMENT else alloc_al) **
                          (Forall (obj_ptr : ptr),
                            storage_base .[Tbyte ! overhead_sz] |-> alignedR alloc_al -*
                            (* This also ensures these pointers share their
@@ -793,13 +795,13 @@ Module Type Expr__newdelete.
     default_delete destroyed_type Q : mpred :=
     (match delete_operator.delete_for (genv_tu σ) default_delete destroyed_type with
      | Some del_op =>
-         (* The use of <<0>> here is somewhat arbitrary. It is supposed to be
-            the size of the allocation (including overhead). For deleting
-            <<nullptr>>, there is no object, but the standard does say that
-            it is legal to call this function. In practice, it seems
-            like compilers do not do this.
+         (* The standard allows calling the deallocation function on
+            <<nullptr>>, but does not pin down the size argument that a sized
+            deallocation function receives in that case (for arrays it would
+            include an unknown cookie). We therefore require the call to be
+            safe for every size.
           *)
-         wp_invoke_delete destroyed_type del_op 0 nullptr Q
+         Forall sz : N, wp_invoke_delete destroyed_type del_op sz nullptr Q
      | None => False
      end ∧ Q).
 
@@ -813,7 +815,8 @@ Module Type Expr__newdelete.
     case_match; do_frame.
     { iIntros "H"; do_frame.
       iIntros "H'"; iSplit.
-      - by iDestruct "H'" as "[H' _]"; iRevert "H'"; iApply wp_invoke_delete_frame.
+      - iDestruct "H'" as "[H' _]"; iIntros (sz); iSpecialize ("H'" $! sz).
+        by iRevert "H'"; iApply wp_invoke_delete_frame.
       - iDestruct "H'" as "[_ H']"; iApply "H"; eauto. }
     { iIntros "H"; do_frame; iIntros "X"; iSplit.
       iDestruct "X" as "[[] _]".
