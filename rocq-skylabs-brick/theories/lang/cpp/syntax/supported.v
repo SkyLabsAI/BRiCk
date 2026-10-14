@@ -229,7 +229,7 @@ Section with_monad.
         end <+> expr e <+> lst expr es
     | Enew (n, t) es _ t1 oe1 oe2 =>
         name n <+> type t <+> lst expr es <+> type t1 <+> opt expr oe1 <+> opt expr oe2
-    | Edelete _ n e t => name n <+> expr e <+> type t
+    | Edelete _ _ n e t => name n <+> expr e <+> type t
     | Eexplicit_cast _ t e => type t <+> expr e
     | Ecast c e => cast c <+> expr e <+> check_float_cast_expr c (type_of e)
     | Emember _ e an _ t => expr e <+> atomic_name type an <+> type t
