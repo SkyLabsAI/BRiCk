@@ -32,7 +32,7 @@ int arrow_union(U *u) { u->c = 1; return 0; }
 int arrow_bits(Bits *b) { return b->a; }
 int take_bits(Bits b) { return b.a; }
 void address_only() { auto p = &take_bits; (void)p; }
-int call_through(Bits *b) { auto p = &take_bits; return p(*b); }
+int call_through(Bits *b) { auto p = &take_bits; return p( *b); }
 int read_volatile(volatile int *p) { return *p; }
 void volatile_local() { volatile int x = 0; (void)x; }
 bool dyn(Base *b) { return dynamic_cast<Derived *>(b) != nullptr; }
