@@ -533,6 +533,13 @@ Module report.
   Definition partials (m : walk.M) : list PrimString.string :=
     List.flat_map (fun i => if i is walk.Gap walk.Partial msg then [msg] else []) m.
 
+  (** [walk.no_refs] discards needs, never gaps. *)
+  Lemma fails_no_refs m : check.fails (walk.no_refs m) = check.fails m.
+  Proof. elim: m => [//|[[] ?|?|?] m IH] /=; by rewrite IH. Qed.
+
+  Lemma partials_no_refs m : partials (walk.no_refs m) = partials m.
+  Proof. elim: m => [//|[[] ?|?|?] m IH] /=; by rewrite IH. Qed.
+
   (** [n] with its [Unsupported] gaps, if any. *)
   Definition named (n : name) (m : walk.M) : list (PrimString.string * list PrimString.string) :=
     if check.fails m is [] then [] else [(print n, check.fails m)].
