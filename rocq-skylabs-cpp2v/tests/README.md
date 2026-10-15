@@ -15,10 +15,11 @@ following commands from the directory containing the current `README.md`.
 mkdir -p dummy/my_test.t
 touch dummy/my_test.t/run.t
 ```
-You can then run your new test using `dune build @my_test` from anywhere in
-the repository. In other words, dune automatically creates an alias for your
-test, based on its directory name (without the extension). You can also run
-it, along with all other tests, using the following command.
+You can then run your new test using `dune build @my_test` from this
+directory or any directory above it. In other words, dune automatically
+creates an alias for your test, based on its directory name (without the
+extension). You can also run it, along with all other tests, using the
+following command.
 ```sh
 dune runtest
 ```
@@ -59,10 +60,10 @@ Setting up a test for a Coq file
 To process a Coq file and check the produced output in a Cram test, it is
 easiest for the test directory to mimic a dune project. The advantage is
 that this will take care of dependencies for us, and put them in the right
-place (module some limitations that we can easily circumvent). Note that in
+place (modulo some limitations that we can easily circumvent). Note that in
 the `dune` file placed next to the current `README.md`, it is specified that
-all our tests depend on the `coq-cpp2v` and `coq-cpp2v-bin` packages. Hence,
-for instance, the `cpp2v` binary is in `PATH` in all Cram tests.
+all our tests depend on the `rocq-skylabs-cpp2v` package (among others).
+Hence, for instance, the `cpp2v` binary is in `PATH` in all Cram tests.
 
 To create a new Cram test called `new_test`, that (sequentially) runs three
 files `test1.v`, `test2.v` and `test3.v`, you will need to put your three

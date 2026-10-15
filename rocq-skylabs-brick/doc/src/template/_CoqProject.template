@@ -5,7 +5,6 @@
 -Q . <TEMPLATE>
 
 <TEMPLATE>_cpp.v
-<TEMPLATE>_cpp_names.v
 
 <TEMPLATE>_cpp_spec.v
 <TEMPLATE>_cpp_proof.v

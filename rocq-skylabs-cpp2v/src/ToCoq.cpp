@@ -359,19 +359,13 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
 
         ```
         (* top-level Require & Import *)
-        (* pre-printing *)
-        Section static.
-          (* non-template definitions *)
-        End static.
-
-        Section meta.
-          Import skylabs.lang.cpp.mparser."
-          (* template definitions *)
-        End meta.
-
-        Definition source := with_templates static_tu meta_tu.
+        (* pre-printing (when sharing is enabled) *)
+        cpp.prog static__source abi ... defns ... (* non-template declarations *)
+        Definition meta__source : Mtranslation_unit := ... (* templates *)
+        Definition source :=
+          skylabs.lang.cpp.mparser.tu.with_templates static__source meta__source.
+        (* with --check-types: a type-checking [Goal] *)
         ```
-
         */
         Cache cache;
 
