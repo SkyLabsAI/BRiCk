@@ -18,8 +18,9 @@ Require skylabs.lang.cpp.syntax.name_notation.printer.
 (** ** Supported Check
 
     This file implements a *light-weight* check on terms to determine if they
-    contain unsupported features. A deeper check can be performed using type
-    checking, see [typed.v](typed.v).
+    use features BRiCk's semantics does not support. It is not a type checker:
+    [typed.v](typed.v) checks that terms are well-typed, including that the
+    shallow [type_of] this file relies on agrees with full typing.
 
     [walk] traverses a term once and records gaps in the semantics
     ([Gap Unsupported]: no semantics, proofs get stuck; [Gap Partial]: partial
@@ -589,9 +590,10 @@ Module report.
       | None, gd => walk.glob_decl <$> gd
       end.
 
-    Definition entry_for (input : PrimString.string) : entry :=
+    (** [fuel] is [closure_fuel], computed once by [run]. *)
+    Definition entry_for (fuel : nat) (input : PrimString.string) : entry :=
       if (n ← parser.parse_name_with tu input; pair n <$> own n) is Some (n, own) then
-        let needed := List.filter (fun t => bool_decide (t <> n)) (closure closure_fuel (type_refs own) []) in
+        let needed := List.filter (fun t => bool_decide (t <> n)) (closure fuel (type_refs own) []) in
         let used := own ++ List.flat_map walk_type needed in
         let unsupported := check.fails own in
         let blocked_by := List.flat_map (fun t => named t (walk_type t)) needed in
@@ -687,5 +689,5 @@ Module report.
   End with_tu.
 
   Definition run (tu : translation_unit) (roots : list PrimString.string) : list entry :=
-    List.map (entry_for tu) roots.
+    List.map (entry_for tu (closure_fuel tu)) roots.
 End report.
