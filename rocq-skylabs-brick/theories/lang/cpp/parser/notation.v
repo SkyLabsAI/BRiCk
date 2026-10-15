@@ -7,8 +7,8 @@
 (* This file provides notations that hook into the C++
    scopes defined in [skylabs.lang.cpp.syntax.notations].
 
-   The notations defined here connect to the notations generated
-   by the <<xxx_names.v>> files produced by <<cpp2v>>.
+   The custom entry [cppglobal] declared here holds notations for
+   global C++ names.
  *)
 
 Declare Custom Entry cppglobal.

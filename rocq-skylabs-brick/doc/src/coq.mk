@@ -18,12 +18,3 @@ CFLAGS=-std=c99
 	$(CPP2V) -v -o $@ $< -- $(CPPFLAGS)
 %_hpp.v: %.hpp $(CPP2V)
 	$(CPP2V) -v -o $@ $< -- $(CPPFLAGS)
-
-%_c_names.v: %.c $(CPP2V)
-	$(CPP2V) -v -names $@ $< -- $(CFLAGS)
-%_h_names.v: %.h $(CPP2V)
-	$(CPP2V) -v -names $@ $< -- $(CFLAGS)
-%_cpp_names.v: %.cpp $(CPP2V)
-	$(CPP2V) -v -names $@ $< -- $(CPPFLAGS)
-%_hpp_names.v: %.hpp $(CPP2V)
-	$(CPP2V) -v -names $@ $< -- $(CPPFLAGS)
