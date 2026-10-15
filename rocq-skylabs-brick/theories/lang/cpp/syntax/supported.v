@@ -387,8 +387,9 @@ Section with_monad.
     | Impl s => stmt s
     | Builtin _ => OK
     end.
-  (** cpp2v elaborates the defaulted members that are used, so a remaining
-      [Defaulted] body only matters when it is queried, see [report]. *)
+  (** clang defines every defaulted member a translation unit uses, with or
+      without cpp2v's elaboration, so a remaining [Defaulted] body belongs to
+      an unused member and only matters when it is queried, see [report]. *)
   Definition or_default {T : Set} (f : T -> M) (o : OrDefault T) : M :=
     match o with
     | Defaulted => OK
