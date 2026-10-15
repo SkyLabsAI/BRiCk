@@ -86,6 +86,25 @@
           report.unsupported_refs := []
         |};
         {|
+          report.input := "address_only()";
+          report.resolved := "address_only()";
+          report.status := "supported";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "call_through(Bits*)";
+          report.resolved := "call_through(Bits*)";
+          report.status := "blocked";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by :=
+            [("Bits"%pstring, ["bitfields are not supported"%pstring])];
+          report.unsupported_refs := []
+        |};
+        {|
           report.input := "read_volatile(volatile int*)";
           report.resolved := "read_volatile(volatile int*)";
           report.status := "partial";

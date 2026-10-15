@@ -200,8 +200,11 @@ Section with_monad.
       temp_param a.1 <+> opt (temp_arg name type expr) a.2.
   End temp_param.
 
+  (* The types in a name (parameters, template arguments) identify it; they
+     are not needed. What a template instance needs comes from its own
+     definition. *)
   Fixpoint name (n : name) : M :=
-    match n with
+    no_refs match n with
     | Ninst n ii => name n <+> lst (temp_arg name type expr) ii
     | Nglobal an => atomic_name type an
     | Nscoped n s => name n <+> atomic_name type s
@@ -229,7 +232,10 @@ Section with_monad.
     | Tvariable_array t e =>
         (* Templates also use [Tvariable_array] for dependent sizes. *)
         (if is_dependentE e then OK else FAIL "variable-length array") <+> type t <+> expr e
-    | Tfunction (FunctionType t ts) => type t <+> lst type ts
+    (* Like a pointee, a function type needs its return and parameter types
+       only well-scoped ([complete_pt_function]); a call needs them complete
+       through the types of its arguments and result. *)
+    | Tfunction (FunctionType t ts) => no_refs (type t <+> lst type ts)
     | Tmember_pointer t1 t2 => no_refs (type t1 <+> type t2)
     | Tqualified q t =>
         (if q_volatile q then PARTIAL "volatile: accesses are modelled as ordinary memory" else OK)
