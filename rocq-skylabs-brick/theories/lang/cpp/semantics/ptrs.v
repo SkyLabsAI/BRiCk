@@ -321,7 +321,7 @@ Module Type PTRS.
     Valid in models, but currently incompatible with the following rules, that
     do not model empty-base optimization correctly.
 
-    - [implicit_destruct_struct] (enabled)
+    - [implicit_destruct_struct] (disabled)
     - [struct_to_raw]/[raw_bytes_of_struct_wf_base] (disabled).
     *)
     (*

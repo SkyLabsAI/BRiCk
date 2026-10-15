@@ -95,7 +95,7 @@ of the variable used for the pointer is not important.
 
   void foo() {
     int x = 42;
-    // `x_ptr |-> intR 42 1`
+    // `x_ptr |-> intR 1$m 42`
     return x;
   }
 
@@ -112,7 +112,7 @@ virtual address of a pointer.
 
 .. code-block:: coq
 
-  Parameter ptr_vaddr : ptr -> option vaddr.
+  Parameter ptr_vaddr : ∀ {σ : genv}, ptr -> option vaddr.
 
 Pointer provenance in |project|
 ================================================
@@ -139,20 +139,20 @@ A pointer identifies a "path" inside the complete object, where each
 step goes to a subobject; this is less common, but follows both Krebbers (2015)
 for C and Ramananandro for C++. For instance:
 
-- if pointer `p` points to a `struct` instance, then pointer `p ., _field field`
-  points to the field identified by `field`.
+- if pointer `p` points to a `struct` instance, then pointer `p ,, _field field`
+  (also written `p ., field`) points to the field identified by `field`.
 - if pointer `p` points to an array of 10 integers (hence, also to its first element),
-  then pointer `p ., _sub Tint 1` points to the second element.
+  then pointer `p ,, _sub Tint 1` (also written `p .[ Tint ! 1 ]`) points to the second element.
 
-Above, `p ,. o` represents the pointer resulting from applying the *pointer offset* `o`
+Above, `p ,, o` represents the pointer resulting from applying the *pointer offset* `o`
 to the pointer `p`, and is a notation for `_offset_ptr p o`.
 To simplify reasoning about pointers, we provide an equational theory of pointer
 equality, which helps us show that C++ snippets such as `p + 2` and `p + 1 + 1`
 produce the same pointer.
 
-Pointer offsets form a *monoid* under concatenation, and |link:skylabs.lang.cpp.semantics.ptrs#PTRS._offset_ptr| represent
+Pointer offsets form a *monoid* under concatenation, and |link:skylabs.lang.cpp.semantics.ptrs#PTRS_SYNTAX_MIXIN._offset_ptr| represent
 their *monoid action* over pointers. That is, we can compose offsets (via
-|link:skylabs.lang.cpp.semantics.ptrs#PTRS.o_dot|, also written `.,`), this composition has an identity (|link:skylabs.lang.cpp.semantics.ptrs#PTRS.o_id|) and is
+|link:skylabs.lang.cpp.semantics.ptrs#PTRS_SYNTAX_MIXIN.o_dot|, also written `,,`), this composition has an identity (|link:skylabs.lang.cpp.semantics.ptrs#PTRS.o_id|) and is
 associative, and compositions with pointers is well-behaved. Moreover, specific
 axioms allow us to collapse adjacent offsets, such as consecutive |link:skylabs.lang.cpp.semantics.ptrs#PTRS.o_sub| offsets.
 
@@ -160,17 +160,17 @@ Here are a few of the algebraic equations that apply to pointers and offsets.
 
 .. code-block:: coq
 
-    offset_ptr_id : p ., o_id = p
-    offset_ptr_dot : p ., o1 ., o2 = p ., (o1 ., o2)
+    offset_ptr_id : p ,, o_id = p
+    offset_ptr_dot : p ,, (o1 ,, o2) = p ,, o1 ,, o2
 
-    id_dot : o ., o_id = o
-    dot_id : o_id ., o = o
-    dot_assoc : o1 ., (o2 ., o3) = (o1 ., o2) ., o3
+    id_dot : o_id ,, o = o
+    dot_id : o ,, o_id = o
+    dot_assoc : o1 ,, (o2 ,, o3) = (o1 ,, o2) ,, o3
 
     o_sub_0 : _sub ty 0 = o_id (* Under side conditions on [ty] *)
-    o_dot_sub : _sub T n1 ., _sub T n2 = _sub T (n1 + n2)
+    o_dot_sub : _sub T n1 ,, _sub T n2 = _sub T (n1 + n2)
 
-This is formalized in Coq in |link:skylabs.lang.cpp.semantics.ptrs|.
+This is formalized in Rocq in |link:skylabs.lang.cpp.semantics.ptrs|.
 
 Integer-pointer casts
 ---------------------

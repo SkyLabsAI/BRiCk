@@ -1,5 +1,5 @@
-BRiCk and other BlueRock libraries
-==================================
+BRiCk and other SkyLabs AI libraries
+====================================
 
 ## Build
 
