@@ -303,6 +303,21 @@ global_substitutions = {
 from docutils.transforms import Transform
 from docutils import nodes
 
+_COQDOC = os.path.join(os.path.dirname(os.path.abspath(__file__)), '_static', 'coqdoc')
+
+def coqdoc_page(module):
+    """The coqdoc page of [module]. `make doc` copies coqdoc output as one
+    `<theory>.html` directory per dune theory; pick the longest theory that
+    is a prefix of [module]."""
+    theories = [d[:-len('.html')] for d in os.listdir(_COQDOC)
+                if d.endswith('.html') and os.path.isdir(os.path.join(_COQDOC, d))] \
+        if os.path.isdir(_COQDOC) else []
+    theory = max((t for t in theories if module == t or module.startswith(t + '.')),
+                 key=len, default=None)
+    if theory is None:
+        return '_static/coqdoc/{module}.html'.format(module=module)
+    return '_static/coqdoc/{theory}.html/{module}.html'.format(theory=theory, module=module)
+
 class GlobalSubstitutions(Transform):
     default_priority = 200
 
@@ -325,13 +340,13 @@ class GlobalSubstitutions(Transform):
                         path = refname[len('link:'):]
                         if '#' in path:
                             m,d = path.split('#')
-                            target = '_static/coqdoc/{module}.html#{defn}'.format(module=m, defn=d)
+                            target = '{page}#{defn}'.format(page=coqdoc_page(m), defn=d)
                             if '.' in d:
                                 text = d[d.rindex('.')+1:]
                             else:
                                 text = d
                         else:
-                            target = '_static/coqdoc/{module}.html'.format(module=path)
+                            target = coqdoc_page(path)
                             text = path
                         refnode = nodes.reference('', '', internal=False, refuri=target)
                         refnode.append(nodes.Text(text, text))
