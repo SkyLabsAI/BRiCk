@@ -1,0 +1,24 @@
+(cram
+ (deps
+  %{bin:guesstimator}
+  (source_tree inputs)))
+
+(test
+ (name quasi_polynomial)
+ (libraries guesstimator))
+
+(test
+ (name model_selection_resolution)
+ (libraries guesstimator))
+
+(test
+ (name complexity_string)
+ (libraries guesstimator))
+
+(test
+ (name normalize_samples)
+ (libraries guesstimator))
+
+(test
+ (name unnormalize_parameters)
+ (libraries guesstimator))
