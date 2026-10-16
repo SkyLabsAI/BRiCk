@@ -989,7 +989,7 @@ Module decltype.
               end
             in
             mret $ Tptr aty
-        | Edelete _ del e ty =>
+        | Edelete _ _ del e ty =>
             let* et := of_expr e >>= require_ptr in
             let* _ := guard (ty = et) in (* TODO: constness check? *)
             mret Tvoid

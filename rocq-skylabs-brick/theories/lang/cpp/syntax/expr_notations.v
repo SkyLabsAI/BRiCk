@@ -490,17 +490,31 @@ Module ExprNotations.
          , only printing).
 
   Notation "'delete' e"
-      := (Edelete false _ e _)
+      := (Edelete false false _ e _)
          ( in custom CPP_expr at level 30
          , e custom CPP_expr at level 200
          , format "'[' delete  e ']'"
          , only printing).
 
   Notation "'delete[]' e"
-      := (Edelete true _ e _)
+      := (Edelete true false _ e _)
          ( in custom CPP_expr at level 30
          , e custom CPP_expr at level 200
          , format "'[' delete[]  e ']'"
+         , only printing).
+
+  Notation "'::delete' e"
+      := (Edelete false true _ e _)
+         ( in custom CPP_expr at level 30
+         , e custom CPP_expr at level 200
+         , format "'[' ::delete  e ']'"
+         , only printing).
+
+  Notation "'::delete[]' e"
+      := (Edelete true true _ e _)
+         ( in custom CPP_expr at level 30
+         , e custom CPP_expr at level 200
+         , format "'[' ::delete[]  e ']'"
          , only printing).
 
   (* QUESTION (JH): should we have notations which display sequence points? *)

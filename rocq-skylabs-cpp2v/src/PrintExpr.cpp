@@ -1514,7 +1514,8 @@ public:
     void VisitCXXDeleteExpr(const CXXDeleteExpr *expr) {
         if (expr->getOperatorDelete()) {
             print.ctor("Edelete");
-            print.output() << fmt::BOOL(expr->isArrayForm()) << fmt::nbsp;
+            print.output() << fmt::BOOL(expr->isArrayForm()) << fmt::nbsp
+                           << fmt::BOOL(expr->isGlobalDelete()) << fmt::nbsp;
 
             if (auto op = expr->getOperatorDelete()) {
                 cprint.printName(print, *op);
@@ -1537,7 +1538,8 @@ public:
             always_assert(print.templates() &&
                           "unresolved delete in non-templated code");
             guard::ctor _{print, "Eunresolved_delete"};
-            print.output() << fmt::BOOL(expr->isArrayForm()) << fmt::nbsp;
+            print.output() << fmt::BOOL(expr->isArrayForm()) << fmt::nbsp
+                           << fmt::BOOL(expr->isGlobalDelete()) << fmt::nbsp;
             cprint.printExpr(print, expr->getArgument(), names);
         }
     }
