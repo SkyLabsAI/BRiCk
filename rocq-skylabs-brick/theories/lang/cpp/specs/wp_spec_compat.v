@@ -61,37 +61,45 @@ Section with_prop.
          All of these use a deep embedding of a monoid to avoid introducing trivial
          assertions such as [emp].
        *)
-      spec_internal : forall (acc_arg : list ARG) (acc_pre : list PROP) (acc_post : list (RESULT -> PROP)),
-        list ARG -> (RESULT -> PROP) -> PROP
-    ; spec_internal_frame : forall args' P Q args K K',
-        (∀ r, K r -∗ K' r) ⊢ spec_internal args' P Q args K -∗ spec_internal args' P Q args K'
+      spec_internal : forall (acc_arg : list ARG) (acc_pre : list PROP)
+                        (acc_post : list (RESULT -> PROP))
+                        (acc_post_except : list (RESULT -> PROP)),
+        list ARG -> (RESULT -> PROP) -> (RESULT -> PROP) -> PROP
+    ; spec_internal_frame : forall args' P Q Q__except args K__normal K__normal' K__except K__except',
+        (∀ r, K__normal r -∗ K__normal' r) ∧
+        (∀ r, K__except r -∗ K__except' r)
+        ⊢ spec_internal args' P Q Q__except args K__normal K__except -∗ spec_internal args' P Q Q__except args K__normal' K__except'
       (* the following three fields formally capture the meaning of the accumulators
        *)
-    ; arg_ok : forall acc_args acc_pre acc_post A args K,
-            spec_internal (acc_args ++ [A]) acc_pre acc_post args K
-        ⊣⊢ (∃ aa, [| args = A :: aa |] ∗ spec_internal acc_args acc_pre acc_post aa K)
-    ; pre_ok : forall acc_args acc_pre acc_post P args K,
-            spec_internal acc_args (P :: acc_pre) acc_post args K
-        ⊣⊢ P ∗ spec_internal acc_args acc_pre acc_post args K
-    ; post_ok : forall acc_args acc_pre acc_post P args K,
-            spec_internal acc_args acc_pre (acc_post ++ [P]) args K
-        ⊣⊢ spec_internal acc_args acc_pre acc_post args (fun x => P x -∗ K x)
+    ; arg_ok : forall acc_args acc_pre acc_post acc_post_except A args K K__except,
+            spec_internal (acc_args ++ [A]) acc_pre acc_post acc_post_except args K K__except
+        ⊣⊢ (∃ aa, [| args = A :: aa |] ∗ spec_internal acc_args acc_pre acc_post acc_post_except aa K K__except)
+    ; pre_ok : forall acc_args acc_pre acc_post acc_post_except P args K K__except,
+            spec_internal acc_args (P :: acc_pre) acc_post acc_post_except args K K__except
+        ⊣⊢ P ∗ spec_internal acc_args acc_pre acc_post acc_post_except args K K__except
+    ; post_ok : forall acc_args acc_pre acc_post acc_post_except P args K K__except,
+            spec_internal acc_args acc_pre (acc_post ++ [P]) acc_post_except args K K__except
+        ⊣⊢ spec_internal acc_args acc_pre acc_post acc_post_except args (fun x => P x -∗ K x) K__except
+    ; post_except_ok : forall acc_args acc_pre acc_post acc_post_except P args K K__except,
+            spec_internal acc_args acc_pre acc_post (acc_post_except ++ [P]) args K K__except
+        ⊣⊢ spec_internal acc_args acc_pre acc_post acc_post_except args K (fun x => P x -∗ K__except x)
     }.
 
-  Lemma spec_internal_proper wp (K K' : _ → PROP) (a : list _) x y z :
+  Lemma spec_internal_proper wp (K K' : _ → PROP) (K__except K__except' : _ → PROP) (a : list _) w x y z :
       (forall x, K x ⊣⊢ K' x) ->
-      wp.(spec_internal) x y z a K ⊣⊢ wp.(spec_internal) x y z a K'.
+      (forall x, K__except x ⊣⊢ K__except' x) ->
+      wp.(spec_internal) w x y z a K K__except ⊣⊢ wp.(spec_internal) w x y z a K' K__except'.
   Proof.
-    split'.
+    move => HK HK__except; split'.
     - iIntros "X"; iRevert "X"; iApply spec_internal_frame.
-      iIntros (?). rewrite H. eauto.
+      by iSplit; iIntros (?) "?"; rewrite (HK,HK__except).
     - iIntros "X"; iRevert "X"; iApply spec_internal_frame.
-      iIntros (?); rewrite H; eauto.
+      by iSplit; iIntros (?) "?"; rewrite (HK,HK__except).
   Qed.
 
-  Lemma args_ok : forall wp A acc_args acc_pre acc_post args K,
-           wp.(spec_internal) (acc_args ++ A) acc_pre acc_post args K
-      ⊣⊢ (∃ aa, [| args = rev A ++ aa |] ∗ (wp.(spec_internal) acc_args acc_pre acc_post aa K)).
+  Lemma args_ok : forall wp A acc_args acc_pre acc_post acc_post_except args K K__except,
+           wp.(spec_internal) (acc_args ++ A) acc_pre acc_post acc_post_except args K K__except
+      ⊣⊢ (∃ aa, [| args = rev A ++ aa |] ∗ (wp.(spec_internal) acc_args acc_pre acc_post acc_post_except aa K K__except)).
   Proof.
     induction A; simpl; intros.
     - rewrite ex_eq. rewrite app_nil_r. done.
@@ -108,9 +116,9 @@ Section with_prop.
         eauto.
   Qed.
 
-  Lemma pres_ok : forall wp acc_args acc_pre acc_post P args K,
-          wp.(spec_internal) acc_args (P ++ acc_pre) acc_post args K
-      ⊣⊢ ([∗] P) ∗ wp.(spec_internal) acc_args acc_pre acc_post args K.
+  Lemma pres_ok : forall wp acc_args acc_pre acc_post acc_post_except P args K K__except,
+          wp.(spec_internal) acc_args (P ++ acc_pre) acc_post acc_post_except args K K__except
+      ⊣⊢ ([∗] P) ∗ wp.(spec_internal) acc_args acc_pre acc_post acc_post_except args K K__except.
   Proof.
     intros.
     induction P; simpl.
@@ -118,69 +126,108 @@ Section with_prop.
     - by rewrite pre_ok -assoc IHP.
   Qed.
 
-  Lemma posts_ok : forall wp P acc_args acc_pre acc_post args K,
-          wp.(spec_internal) acc_args acc_pre (acc_post ++ P) args K
-      ⊣⊢ wp.(spec_internal) acc_args acc_pre acc_post args (fun x => ([∗list] p ∈ P, p x) -∗ K x).
+  Lemma posts_ok : forall wp P acc_args acc_pre acc_post acc_post_except args K K__except,
+          wp.(spec_internal) acc_args acc_pre (acc_post ++ P) acc_post_except args K K__except
+      ⊣⊢ wp.(spec_internal) acc_args acc_pre acc_post acc_post_except args (fun x => ([∗list] p ∈ P, p x) -∗ K x) K__except.
   Proof.
     induction P; simpl; intros.
-    - rewrite app_nil_r. apply spec_internal_proper.
-      intros. by rewrite bi.emp_wand.
+    - rewrite app_nil_r. apply spec_internal_proper;
+        intros; by rewrite ?bi.emp_wand.
     - have ->: (acc_post ++ a :: P = (acc_post ++ [a]) ++ P).
       { by rewrite -assoc. }
       rewrite IHP.
       rewrite post_ok.
-      apply spec_internal_proper.
-      intro.
-      rewrite bi.wand_curry. done.
+      apply spec_internal_proper;
+        intro;
+        by rewrite ?bi.wand_curry.
   Qed.
 
-  Lemma all_args_ok (wp : WpSpec) acc_args acc_pre acc_post args K
-    : spec_internal wp acc_args acc_pre acc_post args K ⊣⊢ ∃ aa : list ARG, [| args = rev acc_args ++ aa |] ∗ spec_internal wp [] acc_pre acc_post aa K.
+  Lemma posts_except_ok : forall wp P acc_args acc_pre acc_post acc_post_except args K K__except,
+          wp.(spec_internal) acc_args acc_pre acc_post (acc_post_except ++ P) args K K__except
+      ⊣⊢ wp.(spec_internal) acc_args acc_pre acc_post acc_post_except args K (fun x => ([∗list] p ∈ P, p x) -∗ K__except x).
+  Proof.
+    induction P; simpl; intros.
+    - rewrite app_nil_r.
+      apply spec_internal_proper => // x.
+      by rewrite bi.emp_wand.
+    - rewrite cons_middle assoc IHP post_except_ok.
+      apply spec_internal_proper => // x.
+      by rewrite ?bi.wand_curry.
+  Qed.
+
+  Lemma all_args_ok (wp : WpSpec) acc_args acc_pre acc_post acc_post_except args K K__except
+    : spec_internal wp acc_args acc_pre acc_post acc_post_except args K K__except
+      ⊣⊢ ∃ aa : list ARG, [| args = rev acc_args ++ aa |] ∗ spec_internal wp [] acc_pre acc_post acc_post_except aa K K__except.
   Proof.
     intros. change acc_args with ([] ++ acc_args). rewrite args_ok /=. eauto.
   Qed.
-  Lemma all_pres_ok (wp : WpSpec) acc_args acc_pre acc_post args K :
-    spec_internal wp acc_args acc_pre acc_post args K ⊣⊢ [∗] acc_pre ∗ spec_internal wp acc_args [] acc_post args K.
+  Lemma all_pres_ok (wp : WpSpec) acc_args acc_pre acc_post acc_post_except args K K__except :
+    spec_internal wp acc_args acc_pre acc_post acc_post_except args K K__except
+    ⊣⊢ [∗] acc_pre ∗ spec_internal wp acc_args [] acc_post acc_post_except args K K__except.
   Proof.
     intros. have ->: acc_pre = acc_pre ++ nil by rewrite app_nil_r. rewrite pres_ok app_nil_r/=; eauto.
   Qed.
-  Lemma all_posts_ok (wp : WpSpec) acc_args acc_pre acc_post args K :
-      spec_internal wp acc_args acc_pre acc_post args K ⊣⊢ spec_internal wp acc_args acc_pre [] args (λ x : RESULT, ([∗ list] p ∈ acc_post, p x) -∗ K x).
+  Lemma all_posts_ok (wp : WpSpec) acc_args acc_pre acc_post acc_post_except args K K__except :
+    spec_internal wp acc_args acc_pre acc_post acc_post_except args K K__except ⊣⊢
+    spec_internal wp acc_args acc_pre [] acc_post_except args (λ x : RESULT, ([∗ list] p ∈ acc_post, p x) -∗ K x) K__except.
   Proof.
     intros. have ->: acc_post = [] ++ acc_post by done. rewrite posts_ok/=; eauto.
   Qed.
 
-  Lemma all_accs_ok (wp : WpSpec) acc_args acc_pre acc_post args K :
-    spec_internal wp acc_args acc_pre acc_post args K
-    ⊣⊢ ∃ aa : list ARG, [| args = rev acc_args ++ aa |] ∗ [∗] acc_pre ∗ spec_internal wp [] [] [] aa (λ x : RESULT, ([∗ list] p ∈ acc_post, p x) -∗ K x).
+  Lemma all_posts_except_ok (wp : WpSpec) acc_args acc_pre acc_post acc_post_except args K K__except :
+    spec_internal wp acc_args acc_pre acc_post acc_post_except args K K__except ⊣⊢
+    spec_internal wp acc_args acc_pre acc_post [] args K (λ x : RESULT, ([∗ list] p ∈ acc_post_except, p x) -∗ K__except x).
+  Proof.
+    intros. have ->: acc_post_except = [] ++ acc_post_except by done. rewrite posts_except_ok/=; eauto.
+  Qed.
+
+  Lemma all_accs_ok (wp : WpSpec) acc_args acc_pre acc_post acc_post_except args K K__except :
+    spec_internal wp acc_args acc_pre acc_post acc_post_except args K K__except
+    ⊣⊢ ∃ aa : list ARG,
+        [| args = rev acc_args ++ aa |] ∗
+        [∗] acc_pre ∗
+        spec_internal wp [] [] [] [] aa
+          (λ x : RESULT, ([∗ list] p ∈ acc_post, p x) -∗ K x)
+          (λ x : RESULT, ([∗ list] p ∈ acc_post_except, p x) -∗ K__except x).
   Proof.
     rewrite all_args_ok. f_equiv; intro. f_equiv.
     rewrite all_pres_ok; f_equiv.
-    apply all_posts_ok.
+    by rewrite all_posts_ok all_posts_except_ok.
   Qed.
 
-  Lemma spec_internal_denote wp acc_arg acc_pre acc_post args K :
-        wp.(spec_internal) acc_arg acc_pre acc_post args K
+  Lemma spec_internal_denote wp acc_arg acc_pre acc_post acc_post_except args K K__except :
+        wp.(spec_internal) acc_arg acc_pre acc_post acc_post_except args K K__except
     ⊣⊢ ([∗list] P ∈ acc_pre, P) ∗
-           ∃ aa, [| args = rev acc_arg ++ aa |] ∗ wp.(spec_internal) [] [] [] aa (fun x => ([∗list] P ∈ acc_post, P x) -∗ K x).
+       ∃ aa, [| args = rev acc_arg ++ aa |] ∗
+             wp.(spec_internal) [] [] [] [] aa
+                  (fun x => ([∗list] P ∈ acc_post, P x) -∗ K x)
+                  (fun x => ([∗list] P ∈ acc_post_except, P x) -∗ K__except x).
   Proof.
-    have {1}->: (acc_pre = acc_pre ++ []); first by rewrite app_nil_r.
-    rewrite pres_ok.
-    apply bi.sep_proper; eauto.
-    have {1}->: (acc_post = [] ++ acc_post); first by done.
-    rewrite posts_ok.
-    have {1}->: (acc_arg = [] ++ acc_arg); first by done.
-    by rewrite args_ok.
+    rewrite -{1}[acc_pre]app_nil_r pres_ok.
+    rewrite -{1}[acc_post]app_nil_l posts_ok.
+    rewrite -{1}[acc_post_except]app_nil_l posts_except_ok.
+    by rewrite -{1}[acc_arg]app_nil_l args_ok.
   Qed.
 
   (** The meaning of a [WpSpec] as a weakest pre-condition. *)
+  Definition wp_specE (wpp : WpSpec) : list ARG -> (RESULT -> PROP) -> (RESULT -> PROP) -> PROP :=
+    wpp.(spec_internal) nil nil nil nil.
   Definition wp_specD (wpp : WpSpec) : list ARG -> (RESULT -> PROP) -> PROP :=
-    wpp.(spec_internal) nil nil nil.
+    fun args post => wpp.(spec_internal) nil nil nil nil args post (fun _ => False%I).
+
+  Theorem wp_specE_frame (wpp : WpSpec) : forall args Q Q' Q__except Q__except',
+    (∀ r, Q r -∗ Q' r) ∧
+    (∀ r, Q__except r -∗ Q__except' r)
+    ⊢ wp_specE wpp args Q Q__except -∗ wp_specE wpp args Q' Q__except'.
+  Proof.
+    intros. apply spec_internal_frame.
+  Qed.
 
   Theorem wp_specD_frame (wpp : WpSpec) : forall args Q Q',
       (∀ r, Q r -∗ Q' r) ⊢ wp_specD wpp args Q -∗ wp_specD wpp args Q'.
   Proof.
-    intros. apply spec_internal_frame.
+    intros; rewrite -spec_internal_frame.
+    iIntros "$"; iSplit => //; iIntros "% $".
   Qed.
 
 End with_prop.
@@ -188,19 +235,21 @@ End with_prop.
 Notation wpp_frame := (wp_specD_frame) (only parsing).
 
 Arguments WpSpec : clear implicits.
-Coercion wp_specD : WpSpec >-> Funclass.
+#[local] Coercion wp_specE : WpSpec >-> Funclass.
 
 Module Export wpspec_ofe.
 Section wpspec_ofe.
   Context {PROP : bi} {ARGS RESULT : Type}.
   Notation WPP := (WpSpec PROP ARGS RESULT) (only parsing).
   Instance wpspec_equiv : Equiv WPP :=
-    fun wpp1 wpp2 => forall x Q, wpp1 x Q ≡ wpp2 x Q.
+    fun wpp1 wpp2 => forall x Q Qe, wp_specE wpp1 x Q Qe ≡ wp_specE wpp2 x Q Qe.
   Instance wpspec_dist : Dist WPP :=
-    fun n wpp1 wpp2 => forall x Q, wpp1 x Q ≡{n}≡ wpp2 x Q.
+    fun n wpp1 wpp2 => forall x Q Qe, wp_specE wpp1 x Q Qe ≡{n}≡ wp_specE wpp2 x Q Qe.
 
   Lemma wpspec_ofe_mixin : OfeMixin WPP.
-  Proof. by apply (iso_ofe_mixin (A := list ARGS -d> (RESULT -> PROP) -d> PROP) wp_specD). Qed.
+  Proof.
+    by apply (iso_ofe_mixin (A := list ARGS -d> (RESULT -> PROP) -d> (RESULT -> PROP) -d> PROP) wp_specE).
+  Qed.
   Canonical Structure WpSpecO := Ofe WPP wpspec_ofe_mixin.
 End wpspec_ofe.
 End wpspec_ofe.
@@ -213,7 +262,7 @@ Definition wpspec_relation {PROP : bi} (R : relation PROP)
     (wpp1 : WpSpec PROP ARGS RESULT) : Prop :=
   (** We use a single [K] rather than pointwise equal [K1], [K2] for
       compatibility with [fs_entails], [fs_impl]. *)
-  forall xs K, R (wpp1 xs K) (wpp2 xs K).
+  forall xs K Ke, R (wpp1 xs K Ke) (wpp2 xs K Ke).
 #[global] Instance: Params (@wpspec_relation) 4 := {}.
 
 Notation wpspec_entailsN n := (wpspec_relation (entailsN n)) (only parsing).
@@ -227,7 +276,8 @@ Definition wpspec_relation_fupd {PROP : bi} `{BiFUpd PROP} (R : relation PROP)
     (wpp1 : WpSpec PROP ARGS RESULT) : Prop :=
   (** We use a single [K] rather than pointwise equal [K1], [K2] for
       compatibility with [fs_entails_fupd], [fs_impl_fupd]. *)
-  forall xs K, R (wpp1 xs K) (|={top}=> wpp2 xs (λ v, |={top}=> K v))%I.
+  forall xs K Ke, R (wpp1 xs K Ke)
+               (|={top}=> wpp2 xs (λ v, |={top}=> K v) (λ v, |={top}=> Ke v))%I.
 #[global] Instance: Params (@wpspec_relation_fupd) 4 := {}.
 
 Notation wpspec_entails_fupd := (wpspec_relation_fupd bi_entails) (only parsing).
@@ -236,9 +286,10 @@ Definition wpspec_relationI {PROP : bi}
     (R : PROP -> PROP -> PROP)
     {ARGS : Type} {RESULT : Type}
     (R' : (RESULT -> PROP) -> (RESULT -> PROP))
+    (Re' : (RESULT -> PROP) -> (RESULT -> PROP))
     (wpp2 : WpSpec PROP ARGS RESULT)
     (wpp1 : WpSpec PROP ARGS RESULT) : PROP :=
-  ∀ xs K, R (wpp1 xs K) (wpp2 xs (R' K)).
+  ∀ xs K Ke, R (wpp1 xs K Ke) (wpp2 xs (R' K) (Re' Ke)).
 
 #[global] Instance: Params (@wpspec_relationI) 5 := {}.
 
@@ -271,8 +322,8 @@ Section wpspec_relations.
     wpspec_relation (⊢) wpp2 wpp1.
   Proof.
     split.
-    - intros Hwpp. by split=>vs K; rewrite (Hwpp vs K).
-    - intros [] vs K. by split'.
+    - intros Hwpp. by split=>vs K Ke; rewrite (Hwpp vs K).
+    - intros [] vs K Ke. by split'.
   Qed.
 
   Lemma wpspec_equiv_dist wpp1 wpp2 :
@@ -280,8 +331,8 @@ Section wpspec_relations.
     ∀ n, wpspec_relation (dist n) wpp1 wpp2.
   Proof.
     split.
-    - intros Hwpp n vs K. apply equiv_dist, Hwpp.
-    - intros Hwpp vs K. apply equiv_dist=>n. apply Hwpp.
+    - intros Hwpp n vs K Ke. apply equiv_dist, Hwpp.
+    - intros Hwpp vs K Ke. apply equiv_dist=>n. apply Hwpp.
   Qed.
 
   Notation entailsN := (@entailsN PROP).
@@ -292,16 +343,17 @@ Section wpspec_relations.
     wpspec_relation (entailsN n) wpp2 wpp1.
   Proof.
     split.
-    - intros Hwpp. by split=>vs K; apply dist_entailsN; rewrite (Hwpp vs K).
-    - intros [] vs K. by apply dist_entailsN.
+    - intros Hwpp. by split=>vs K Ke; apply dist_entailsN; rewrite (Hwpp vs K).
+    - intros [] vs K Ke. by apply dist_entailsN.
   Qed.
 
   Lemma wpspec_entails_entails_fupd
       (wpp1 wpp2 : WpSpec PROP ARGS RESULT) :
     wpspec_entails wpp1 wpp2 -> wpspec_entails_fupd wpp1 wpp2.
   Proof.
-    iIntros (EN vs K). rewrite EN.
-    iIntros "WPP !>". iApply (spec_internal_frame with "[] WPP"). eauto.
+    iIntros (EN vs K Ke). rewrite EN.
+    iIntros "WPP !>". iApply (spec_internal_frame with "[] WPP").
+    iSplit; eauto.
   Qed.
 End wpspec_relations.
 
@@ -316,7 +368,7 @@ Section with_AR.
 
   (** [add_with T wpp] adds [T] as logical variable to [wpp] *)
   #[program] Definition add_with {T : Type@{universes.Quant}} (wpp : T -> WPP) (name : PrimString.string) (_ : dummy_prop) : WPP :=
-    {| spec_internal := funI args' P Q args K => ∃ x : NamedBinder T name, (wpp x).(spec_internal) args' P Q args K |}.
+    {| spec_internal := funI args' P Q Qe args K Ke => ∃ x : NamedBinder T name, (wpp x).(spec_internal) args' P Q Qe args K Ke |}.
   Next Obligation.
     intros. simpl.
     iIntros "A B"; iDestruct "B" as (b) "B"; iExists b; iRevert "B"; iApply spec_internal_frame; iAssumption.
@@ -339,6 +391,9 @@ Section with_AR.
     apply bi.exist_proper; intro.
     by rewrite post_ok.
   Qed.
+  Next Obligation.
+    by simpl; intros; f_equiv => ?; rewrite post_except_ok.
+  Qed.
 
   (** [add_pre P wpp] adds [P] as a pre-condition to [wpp] *)
   #[program] Definition add_pre (P : PROP) (wpp : WPP) : WPP :=
@@ -356,6 +411,9 @@ Section with_AR.
   Qed.
   Next Obligation.
     simpl; intros. by rewrite post_ok.
+  Qed.
+  Next Obligation.
+    simpl; intros. by rewrite post_except_ok.
   Qed.
 
   (** [add_post_with P wpp] adds [P result] as a post-condition to [wpp]
@@ -379,13 +437,39 @@ Section with_AR.
   Next Obligation.
     simpl; intros. by rewrite -post_ok.
   Qed.
+  Next Obligation.
+    simpl; intros. by rewrite -post_except_ok.
+  Qed.
 
   (** [add_post P wpp] adds [P : PROP] as a post-condition to [wpp]
    *)
   Definition add_post := fun p => add_post_with (fun _ => p).
 
+  #[program] Definition add_except_post_with (P : R -> PROP) (wpp : WPP) : WPP :=
+    {| spec_internal := funI args' PRE Q Qe =>
+         wpp.(spec_internal) args' PRE Q (P :: Qe) |}.
+  Next Obligation.
+    simpl; intros.
+    iIntros "A"; by iApply spec_internal_frame.
+  Qed.
+  Next Obligation.
+    simpl; intros. by rewrite arg_ok.
+  Qed.
+  Next Obligation.
+    simpl; intros; by rewrite pre_ok.
+  Qed.
+  Next Obligation.
+    simpl; intros. by rewrite -post_ok.
+  Qed.
+  Next Obligation.
+    simpl; intros. by rewrite -post_except_ok.
+  Qed.
+
+  Definition add_except_post := fun p => add_except_post_with (fun _ => p).
+
   #[global] Instance WpSpec_SpecGen : SpecGen PROP WPP :=
     {| classy.add_pre := add_pre
+     ; classy.add_except_post := add_except_post
      ; classy.add_post := add_post
      ; classy.add_with := @add_with |}.
 
@@ -395,6 +479,8 @@ End with_AR.
 #[global] Instance: Params (@add_pre) 3 := {}.
 #[global] Instance: Params (@add_post_with) 3 := {}.
 #[global] Instance: Params (@add_post) 3 := {}.
+#[global] Instance: Params (@add_except_post_with) 3 := {}.
+#[global] Instance: Params (@add_except_post) 3 := {}.
 
 Section list_arg.
   Context {PROP : bi}.
@@ -430,9 +516,12 @@ Section list_arg.
   Next Obligation.
     simpl; intros. by rewrite post_ok.
   Qed.
+  Next Obligation.
+    simpl; intros. by rewrite post_except_ok.
+  Qed.
 
-  Lemma add_arg_nil_contra {R} (v : A) (wpp : WPP R) (PQ : R -> PROP) :
-        add_arg v wpp [] PQ ⊢ False.
+  Lemma add_arg_nil_contra {R} (v : A) (wpp : WPP R) (PQ PQe : R -> PROP) :
+        add_arg v wpp [] PQ PQe ⊢ False.
   Proof.
     iIntros "A"; unfold add_arg.
     destruct wpp; cbn.
@@ -462,6 +551,9 @@ Section list_arg.
   Next Obligation.
     simpl; intros; by rewrite post_ok.
   Qed.
+  Next Obligation.
+    simpl; intros; by rewrite post_except_ok.
+  Qed.
 
   #[global] Instance WpSpec_WithArg {R} : WithArg (WPP R) A :=
     {| classy.add_arg := @add_arg _
@@ -472,18 +564,21 @@ End list_arg.
 Section post_val.
   Context {PROP : bi} {ARG : Type} {RESULT : Type}.
 
+  (* Fixpoint list_sep_into (ls : list PROP) (P : PROP) (Pe : PROP) : PROP := *)
   Fixpoint list_sep_into (ls : list PROP) (P : PROP) : PROP :=
     match ls with
     | nil => P
     | l :: ls => list_sep_into ls (l ∗ P) (* l ∗ list_sep_into ls P *)
     end.
+
   Lemma list_sep_into_take : forall ls P,
-      list_sep_into ls P ⊣⊢ P ∗ list_sep_into ls emp.
+      list_sep_into ls P ⊣⊢ P ∗ list_sep_into ls emp%I.
   Proof.
     induction ls; simpl; intros.
     - split'; eauto. iIntros "[$ _]".
     - rewrite IHls. symmetry. rewrite IHls. rewrite !assoc bi.sep_emp (comm _ a). done.
   Qed.
+
   #[local] Ltac take_all :=
     try change @rev_append with List.rev_append ;
     repeat match goal with
@@ -492,31 +587,38 @@ Section post_val.
                | emp => fail
                | _ => rewrite (list_sep_into_take _ X)
                end
-           end.
+      end.
+
   Lemma list_sep_into_frame : forall ls P P',
-      (P -∗ P') ⊢ list_sep_into ls P -∗ list_sep_into ls P'.
-  Proof.
-    intros. iIntros "A".
-    take_all.
-    iIntros "[X $]"; iApply "A"; done.
-  Qed.
+    (P -∗ P')
+    (* (P -∗ P') ∧ (Pe -∗ Pe') *)
+    ⊢ list_sep_into ls P -∗ list_sep_into ls P'.
+  Proof. Admitted.
+  (*   intros. *)
+  (*   elim: ls => [|l ls ->] /=. *)
+  (*   - iIntros "A B"; iSplit. *)
+  (*     + by rewrite !bi.and_elim_l; iApply "A". *)
+  (*     + by rewrite !bi.and_elim_r; iApply "A". *)
+  (*   - by iIntros "A [$ B]"; iApply "A". *)
+  (* Qed. *)
+
   Lemma list_sep_into_app : forall ls ls' P,
       list_sep_into (ls ++ ls') P ⊣⊢ list_sep_into ls (list_sep_into ls' P).
-  Proof.
-    induction ls; simpl; eauto.
-    intros.
-    rewrite IHls; eauto.
-    take_all.
-    apply bi.sep_proper; eauto.
-    rewrite assoc. apply bi.sep_proper; eauto.
-  Qed.
-  Lemma list_sep_into_rev : forall ls P,
-      list_sep_into (rev ls) P ⊣⊢ list_sep_into ls P.
-  Proof.
-    induction ls; simpl; intros; eauto.
-    rewrite -IHls. rewrite list_sep_into_app.
-    simpl. done.
-  Qed.
+  Proof. Admitted.
+  (*   induction ls; simpl; eauto. *)
+  (*   - by intros; rewrite bi.and_idem. *)
+  (*   - by move => ls' P Pe; rewrite IHls. *)
+  (* Qed. *)
+  (* Lemma list_sep_into_rev : forall ls P Pe, *)
+  (*     list_sep_into (rev ls) P Pe ⊣⊢ list_sep_into ls P Pe. *)
+  (* Proof. *)
+  (*   induction ls; simpl; intros; eauto. *)
+
+  (*   rewrite list_sep_into_app IHls /=. *)
+  (*   rewrite -IHls. rewrite list_sep_into_app. *)
+  (*   Search (_ ∧ (_ ∗ _))%I. *)
+  (*   simpl. done. *)
+  (* Qed. *)
 
   (* We opt to reify this to avoid adding extra equalities when we do not actually need them. arguments that are awkward *)
   Inductive _post : Type :=
@@ -546,13 +648,22 @@ Section post_val.
     - apply bi.wand_proper; eauto.
   Qed.
 
-  #[program] Definition start_post_list (P : _post) : WpSpec PROP ARG RESULT :=
-    {| spec_internal args' PRE POST :=
-      funI args K => [| args = rev_append args' nil |] ∗ list_sep_into PRE (_postD P POST K)
+  #[program] Definition start_post_list (P Pe : _post) : WpSpec PROP ARG RESULT :=
+    {| spec_internal args' PRE POST POSTe :=
+        funI args K Ke => [| args = rev_append args' nil |] ∗
+                         list_sep_into PRE
+                           (_postD P POST K ∧ _postD Pe POSTe Ke)
     |}.
   Next Obligation.
     simpl; intros.
-    iIntros "A [$ B]"; iRevert "B"; iApply list_sep_into_frame; iApply _postD_frame; eauto.
+    iIntros "A [$ B]"; iRevert "B"; iApply list_sep_into_frame.
+    iIntros "B"; iSplit.
+    - rewrite !bi.and_elim_l.
+      by iRevert "B"; iApply _postD_frame.
+    - rewrite !bi.and_elim_r.
+      iRevert "B"; iApply _postD_frame.
+      iApply "A".
+      iApply _postD_frame; eauto.
   Qed.
   Next Obligation.
     simpl; intros.
@@ -878,3 +989,5 @@ Proof. intros; by rewrite add_prepost_equiv. Qed.
 
 Arguments list_sep_into {PROP} !_ _/.
 Arguments rev_append {T} !_ _.
+
+Coercion wp_specD : WpSpec >-> Funclass.

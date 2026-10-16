@@ -21,12 +21,47 @@ Require Import skylabs.lang.cpp.specs.spec_notations.
 Section with_prop.
   Context {PROP : bi} {spec_car : Type}.
 
+  (* IDEA: \except instead of \exceptPost
+     modes:
+     - noexcept
+
+     - weak safety
+       \pre{x y} P x y
+       \exceptPost Other x
+       \post{z} Q x y z
+
+     - strong safety
+       - \strong_safety
+         \pre{x} P x
+         \post{y} Q x y
+       - equivalent to
+         \pre{x} P x
+         \exceptPost P x
+         \post{y} Q x y
+     - \except{p}[Vptr p]
+   *)
+
+  (* Notation:
+     \post*         -- either normal exit or exception and normal exit
+     \exceptPost    -- only on exception
+     \post_all      -- exception and normal
+     \post_normal   -- normal exit
+
+     implicit \exceptPost False when?
+       - when no except postcondition is specified?
+   *)
+
   Class SpecGen : Type :=
     { add_pre : PROP -> spec_car -> spec_car
     ; add_post : PROP -> spec_car -> spec_car
     ; add_with : forall {T : Type@{universes.Quant}}, (T -> spec_car) -> PrimString.string -> dummy_prop -> spec_car
+
+    ; add_except_post : PROP -> spec_car -> spec_car
+      (* assumption: for exception safety, prepost adds an except post as well and normal post *)
+    ; add_post_all (P : PROP) (S : spec_car) : spec_car :=
+      add_post P (add_except_post P S)
     ; add_prepost (P : PROP) (S : spec_car) : spec_car :=
-      add_pre P (add_post P S)
+      add_pre P (add_post P (add_except_post P S))
     ; add_require (P : Prop) : spec_car -> spec_car :=
       add_pre (only_provable P)
     ; add_persist (P : PROP) : spec_car -> spec_car :=
@@ -45,6 +80,12 @@ Section with_prop.
     ; post_ret : RESULT -> PROP -> post_car
     }.
 
+  Class WithExceptPost {RESULT : Type} `{!@WithPost RESULT} : Type :=
+    { except_car : Type
+    ; except_with : forall T : Type@{universes.Quant}, (T -> post_car) -> PrimString.string -> dummy_prop -> post_car
+    ; except_ret : RESULT -> PROP -> post_car
+    }.
+
   (** [HasVoid T] means that the type [T] has an interpretation for
     [\post ..] (i.e. something to fill in the return value)
    *)
@@ -60,10 +101,10 @@ Section with_prop.
   Definition exact_spec {T : Type} (x : T) : T := x.
 
   (** Add all of the binders in a telescope.
-      
+
       This should **not** be used on opaque (or variable)
       telescopes because it will block reduction.
-      In this case, use a regular `\with` binding and qualify 
+      In this case, use a regular `\with` binding and qualify
       the telescope with `tele_arg`.
    *)
   Fixpoint add_withT `{!SpecGen} (t : telescopes.tele) :
