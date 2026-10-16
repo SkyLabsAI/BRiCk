@@ -406,7 +406,7 @@ NOTATION_wp_func =
   (σ : genv) (tu : translation_unit) (F : Func) (ls : list ptr) 
   (Q : ptr → epred), ::wpFunc Q
      : ∀ (ti : biIndex) (_Σ : gFunctors) (Σ : cpp_logic ti _Σ),
-         genv → translation_unit → Func → list ptr → (ptr → epred) → mpred
+         genv → translation_unit → Func → list ptr → (ptr → epred) → mpredI
 
 Arguments NOTATION_wp_func ti _Σ Σ σ tu F ls%_list_scope Q%_function_scope
 NOTATION_wp_method =
@@ -414,7 +414,7 @@ NOTATION_wp_method =
   (σ : genv) (tu : translation_unit) (M : Method) 
   (ls : list ptr) (Q : ptr → epred), ::wpMethod Q
      : ∀ (ti : biIndex) (_Σ : gFunctors) (Σ : cpp_logic ti _Σ),
-         genv → translation_unit → Method → list ptr → (ptr → epred) → mpred
+         genv → translation_unit → Method → list ptr → (ptr → epred) → mpredI
 
 Arguments NOTATION_wp_method ti _Σ Σ σ tu M ls%_list_scope Q%_function_scope
 NOTATION_wp_ctor =
@@ -422,7 +422,7 @@ NOTATION_wp_ctor =
   (σ : genv) (tu : translation_unit) (C : Ctor) (ls : list ptr) 
   (Q : ptr → epred), ::wpCtor Q
      : ∀ (ti : biIndex) (_Σ : gFunctors) (Σ : cpp_logic ti _Σ),
-         genv → translation_unit → Ctor → list ptr → (ptr → epred) → mpred
+         genv → translation_unit → Ctor → list ptr → (ptr → epred) → mpredI
 
 Arguments NOTATION_wp_ctor ti _Σ Σ σ tu C ls%_list_scope Q%_function_scope
 NOTATION_wp_dtor =
@@ -430,7 +430,7 @@ NOTATION_wp_dtor =
   (σ : genv) (tu : translation_unit) (D : Dtor) (ls : list ptr) 
   (Q : ptr → epred), ::wpDtor Q
      : ∀ (ti : biIndex) (_Σ : gFunctors) (Σ : cpp_logic ti _Σ),
-         genv → translation_unit → Dtor → list ptr → (ptr → epred) → mpred
+         genv → translation_unit → Dtor → list ptr → (ptr → epred) → mpredI
 
 Arguments NOTATION_wp_dtor ti _Σ Σ σ tu D ls%_list_scope Q%_function_scope
 NOTATION_wp_args_nowrap =
@@ -924,7 +924,7 @@ NOTATION_wp_func =
   (σ : genv) (tu : translation_unit) (F : Func) (ls : list ptr) 
   (Q : ptr → epred), ::wpFunc Q
      : ∀ (ti : biIndex) (_Σ : gFunctors) (Σ : cpp_logic ti _Σ),
-         genv → translation_unit → Func → list ptr → (ptr → epred) → mpred
+         genv → translation_unit → Func → list ptr → (ptr → epred) → mpredI
 
 Arguments NOTATION_wp_func ti _Σ Σ σ tu F ls%_list_scope Q%_function_scope
 NOTATION_wp_method =
@@ -932,7 +932,7 @@ NOTATION_wp_method =
   (σ : genv) (tu : translation_unit) (M : Method) 
   (ls : list ptr) (Q : ptr → epred), ::wpMethod Q
      : ∀ (ti : biIndex) (_Σ : gFunctors) (Σ : cpp_logic ti _Σ),
-         genv → translation_unit → Method → list ptr → (ptr → epred) → mpred
+         genv → translation_unit → Method → list ptr → (ptr → epred) → mpredI
 
 Arguments NOTATION_wp_method ti _Σ Σ σ tu M ls%_list_scope Q%_function_scope
 NOTATION_wp_ctor =
@@ -940,7 +940,7 @@ NOTATION_wp_ctor =
   (σ : genv) (tu : translation_unit) (C : Ctor) (ls : list ptr) 
   (Q : ptr → epred), ::wpCtor Q
      : ∀ (ti : biIndex) (_Σ : gFunctors) (Σ : cpp_logic ti _Σ),
-         genv → translation_unit → Ctor → list ptr → (ptr → epred) → mpred
+         genv → translation_unit → Ctor → list ptr → (ptr → epred) → mpredI
 
 Arguments NOTATION_wp_ctor ti _Σ Σ σ tu C ls%_list_scope Q%_function_scope
 NOTATION_wp_dtor =
@@ -948,7 +948,7 @@ NOTATION_wp_dtor =
   (σ : genv) (tu : translation_unit) (D : Dtor) (ls : list ptr) 
   (Q : ptr → epred), ::wpDtor Q
      : ∀ (ti : biIndex) (_Σ : gFunctors) (Σ : cpp_logic ti _Σ),
-         genv → translation_unit → Dtor → list ptr → (ptr → epred) → mpred
+         genv → translation_unit → Dtor → list ptr → (ptr → epred) → mpredI
 
 Arguments NOTATION_wp_dtor ti _Σ Σ σ tu D ls%_list_scope Q%_function_scope
 NOTATION_wp_args_nowrap =
