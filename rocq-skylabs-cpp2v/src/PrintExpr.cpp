@@ -2929,7 +2929,7 @@ public:
             loc::of(expr))
             << fmt::nbsp;
 
-        if (expr->getDependence()) {
+        if (!expr->getDependence()) {
             guard::ctor _{print, "Some", false};
             print.boolean(expr->isSatisfied());
         } else
