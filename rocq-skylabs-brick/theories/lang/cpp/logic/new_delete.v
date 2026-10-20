@@ -148,18 +148,22 @@ Module delete_operator.
     : option (obj_name * delete_operator.t) :=
     pair nm <$> (tu.(symbols) !! nm >>= fun del_fn => delete_operator.classify (type_of_value del_fn)).
 
-  #[local] Definition delete_for_named (tu : translation_unit) (default_delete : DEFAULT_DELETE)
-    (cls : name) : option (obj_name * delete_operator.t) :=
+  (** For a class with a <<virtual>> destructor, [s_delete] is the
+      deallocation function selected at the definition of the destructor
+      (<https://eel.is/c++draft/class.dtor#15>). A plain <<delete>> of such an
+      object calls it (<https://eel.is/c++draft/expr.delete#8.1>), while
+      <<::delete>> calls [default_delete], the function found by global lookup
+      (<https://eel.is/c++draft/expr.delete#8>). *)
+  #[local] Definition delete_for_named (tu : translation_unit) (global : bool)
+    (default_delete : DEFAULT_DELETE) (cls : name) : option (obj_name * delete_operator.t) :=
+    let member d := if global then default_delete else stdpp.option.default default_delete d in
     match tu.(types) !! cls with
-    | Some (Gstruct s) =>
-        with_delete tu $ stdpp.option.default default_delete s.(s_delete)
-    | Some (Gunion u) =>
-        with_delete tu $ stdpp.option.default default_delete u.(u_delete)
+    | Some (Gstruct s) => with_delete tu (member s.(s_delete))
+    | Some (Gunion u) => with_delete tu (member u.(u_delete))
     | Some (Gopaque o) =>
         (* Selecting <<operator delete>> does not need the record's body. *)
-        with_delete tu $ stdpp.option.default default_delete o.(o_delete)
-    | Some (Genum _ _) =>
-        with_delete tu default_delete
+        with_delete tu (member o.(o_delete))
+    | Some (Genum _ _) => with_delete tu default_delete
     | _ => None
     end.
 
@@ -170,10 +174,10 @@ Module delete_operator.
 
       To delete an array of type <<ety>>, <<ty>> should be <<Tincomplete_array ety>>.
    *)
-  Definition delete_for (tu : translation_unit) (default_delete : DEFAULT_DELETE) (ty : type)
+  Definition delete_for (tu : translation_unit) (global : bool) (default_delete : DEFAULT_DELETE) (ty : type)
     : option (obj_name * delete_operator.t) :=
     match erase_qualifiers ty with
-    | Tnamed cls => delete_for_named tu default_delete cls
+    | Tnamed cls => delete_for_named tu global default_delete cls
     | Tincomplete_array _
     | Tarray _ _ => with_delete tu default_delete
     | Tvariable_array _ _ => None
@@ -195,10 +199,10 @@ Module delete_operator.
   Qed.
 
   #[local]
-  Lemma delete_for_named_sub_module {tu1 tu2 def cls result} :
-    delete_for_named tu1 def cls = Some result ->
+  Lemma delete_for_named_sub_module {tu1 tu2 global def cls result} :
+    delete_for_named tu1 global def cls = Some result ->
     sub_module tu1 tu2 ->
-    delete_for_named tu2 def cls = Some result.
+    delete_for_named tu2 global def cls = Some result.
   Proof.
     rewrite /delete_for_named; intros.
     destruct (types tu1 !! cls) eqn:Heq; simpl in *; try congruence.
@@ -210,10 +214,10 @@ Module delete_operator.
     { erewrite sub_module_preserves_gopaque; eauto using with_delete_sub_module. }
   Qed.
 
-  Lemma delete_for_submodule {tu1 tu2 op cls result} :
-    delete_for tu1 op cls = Some result ->
+  Lemma delete_for_submodule {tu1 tu2 global op cls result} :
+    delete_for tu1 global op cls = Some result ->
     sub_module tu1 tu2 ->
-    delete_for tu2 op cls = Some result.
+    delete_for tu2 global op cls = Some result.
   Proof.
     rewrite /delete_for.
     intros.
@@ -804,8 +808,8 @@ Module Type Expr__newdelete.
    *)
   mlock
   Definition wp_delete_null `{Σ : cpp_logic} {σ : genv}
-    default_delete destroyed_type Q : mpred :=
-    (match delete_operator.delete_for (genv_tu σ) default_delete destroyed_type with
+    (global : bool) default_delete destroyed_type Q : mpred :=
+    (match delete_operator.delete_for (genv_tu σ) global default_delete destroyed_type with
      | Some del_op =>
          (* The standard allows calling the deallocation function on
             <<nullptr>>, but does not pin down the size argument that a sized
@@ -818,10 +822,10 @@ Module Type Expr__newdelete.
      end ∧ Q).
 
   Lemma wp_delete_null_frame `{Σ : cpp_logic} {σ : genv}
-    default_delete destroyed_type Q Q' :
+    global default_delete destroyed_type Q Q' :
     Q -* Q'
-    |-- wp_delete_null default_delete destroyed_type Q -*
-        wp_delete_null default_delete destroyed_type Q'.
+    |-- wp_delete_null global default_delete destroyed_type Q -*
+        wp_delete_null global default_delete destroyed_type Q'.
   Proof.
     rewrite wp_delete_null.unlock.
     case_match; do_frame.
@@ -860,9 +864,9 @@ Module Type Expr__newdelete.
    *)
   mlock
   Definition wp_delete_obj `{Σ : cpp_logic} {σ : genv}
-    (default_delete : DEFAULT_DELETE) (obj_type : type)
+    (global : bool) (default_delete : DEFAULT_DELETE) (obj_type : type)
     (obj_ptr : ptr) (Q : mpred) : mpred :=
-    match delete_operator.delete_for (genv_tu σ) default_delete obj_type with
+    match delete_operator.delete_for (genv_tu σ) global default_delete obj_type with
     | None => ERROR ("wp_delete_obj: failed to find <<operator delete>> for type"%pstring, obj_type)
     | Some del_op =>
       Exists alloc_type storage_ptr overhead sz,
@@ -915,10 +919,10 @@ Module Type Expr__newdelete.
     end%I.
 
   Lemma wp_delete_obj_frame `{Σ : cpp_logic} {σ : genv}
-    default_delete destroyed_type p Q Q' :
+    global default_delete destroyed_type p Q Q' :
     Q -* Q'
-    |-- wp_delete_obj default_delete destroyed_type p Q -*
-        wp_delete_obj default_delete destroyed_type p Q'.
+    |-- wp_delete_obj global default_delete destroyed_type p Q -*
+        wp_delete_obj global default_delete destroyed_type p Q'.
   Proof.
     rewrite wp_delete_obj.unlock.
     iIntros "H";
@@ -959,29 +963,29 @@ Module Type Expr__newdelete.
           > to do nothing when passed a null pointer.
 
           NOTE: [Edelete]'s first argument is [true] iff the expression corresponds to
-          an array-delete, i.e. <<delete[]>>.
+          an array-delete, i.e. <<delete[]>>; its second is [true] for <<::delete>>.
         *)
-      Axiom wp_operand_delete : forall default_delete e destroyed_type Q,
+      Axiom wp_operand_delete : forall global default_delete e destroyed_type Q,
         (letI* v , free := wp_operand e in
          Exists obj_ptr, [| v = Vptr obj_ptr |] **
          if bool_decide (obj_ptr = nullptr) then
-           wp_delete_null default_delete destroyed_type (Q Vvoid free)
+           wp_delete_null global default_delete destroyed_type (Q Vvoid free)
          else
            letI* this', mdc_ty := resolve_complete_obj destroyed_type obj_ptr in
-           wp_delete_obj default_delete mdc_ty this' (Q Vvoid free))
-      |-- wp_operand (Edelete false default_delete e destroyed_type) Q.
+           wp_delete_obj global default_delete mdc_ty this' (Q Vvoid free))
+      |-- wp_operand (Edelete false global default_delete e destroyed_type) Q.
 
       (** [wp_operand_delete_default] specializes [wp_operand_delete] for invocations of
         *  the form <<delete p;>> - where <<p>> is a non-null pointer to an object whose
         *  most-derived destructor is defined in the current translation unit.
         *)
-      Lemma wp_operand_delete_default : forall default_delete e destroyed_type Q,
+      Lemma wp_operand_delete_default : forall global default_delete e destroyed_type Q,
         (* call the destructor on the object, and then call delete_fn *)
         (letI* v, free := wp_operand e in
          Exists obj_ptr, [| v = Vptr obj_ptr |] ** [| obj_ptr <> nullptr |] **
            letI* this', mdc_ty := resolve_complete_obj destroyed_type obj_ptr in
-           wp_delete_obj default_delete mdc_ty this' (Q Vvoid free))
-      |-- wp_operand (Edelete false default_delete e destroyed_type) Q.
+           wp_delete_obj global default_delete mdc_ty this' (Q Vvoid free))
+      |-- wp_operand (Edelete false global default_delete e destroyed_type) Q.
       Proof.
         intros **; iIntros "operand".
         iApply wp_operand_models; iIntros "#MOD".
@@ -993,15 +997,15 @@ Module Type Expr__newdelete.
       Qed.
 
       (* NOTE: <<destroyed_type>> will refer to the /element/ of the array *)
-      Axiom wp_operand_array_delete : forall default_delete e destroyed_type Q,
+      Axiom wp_operand_array_delete : forall global default_delete e destroyed_type Q,
         (* call the destructor on the object, and then call delete_fn *)
         (letI* v, free := wp_operand e in
          Exists obj_ptr, [| v = Vptr obj_ptr |] **
          if bool_decide (obj_ptr = nullptr) then
-           wp_delete_null default_delete (Tincomplete_array destroyed_type) (Q Vvoid free)
+           wp_delete_null global default_delete (Tincomplete_array destroyed_type) (Q Vvoid free)
          else
-           wp_delete_obj default_delete (Tincomplete_array destroyed_type) obj_ptr (Q Vvoid free))
-      |-- wp_operand (Edelete true default_delete e destroyed_type) Q.
+           wp_delete_obj global default_delete (Tincomplete_array destroyed_type) obj_ptr (Q Vvoid free))
+      |-- wp_operand (Edelete true global default_delete e destroyed_type) Q.
 
       Section NOTE_potentially_relaxing_array_delete.
         (* While (we currently think) it is UB to delete [auto p = new int[5][6]]
