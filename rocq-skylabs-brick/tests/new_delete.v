@@ -30,7 +30,29 @@ struct E {
   static void operator delete(void* p, unsigned long sz);
 };
 
+// A virtual destructor whose deleting destructor calls a member deallocation
+// function.
+struct S {
+  virtual ~S() { }
+  static void operator delete(void* p) { }
+};
+
+// A virtual destructor without a member deallocation function.
+struct B {
+  virtual ~B() { }
+};
+
+// A class whose (implicit, virtual) destructor selects a member deallocation
+// function that its base [B] does not have.
+struct V : B {
+  static void operator delete(void* p) { }
+};
+
 void test_new() { delete new D{0}; }
+void test_global_delete(S* p) { ::delete p; }
+void test_delete(S* p) { delete p; }
+void test_delete_base(B* p) { delete p; }
+void test_new_v() { delete new V; }
 }}.
 
 (** ** Alignment required of the storage returned by an allocation function
@@ -54,6 +76,39 @@ Example aligned_new_alignment :
   new_storage_alignment source "operator new(unsigned long, enum std::align_val_t)" 64%N = 64%N.
 Proof. vm_compute. reflexivity. Qed.
 
+(** ** Deallocation function of a delete-expression
+
+    A <<::delete>> calls the function found by global lookup
+    (<https://eel.is/c++draft/expr.delete#8>), while a plain <<delete>> of an
+    object with a virtual destructor calls the function selected at the
+    definition of the dynamic type's destructor
+    (<https://eel.is/c++draft/expr.delete#8.1>,
+    <https://eel.is/c++draft/class.dtor#15>). Both expressions record the same
+    global function when the static type has no member deallocation function,
+    so [Edelete] records whether <<::>> was written. *)
+
+Example delete_for_global_delete :
+  delete_operator.delete_for source true "operator delete(void*, unsigned long)" "S" =
+    Some ("operator delete(void*, unsigned long)"%cpp_name, delete_operator.mk None true false).
+Proof. vm_compute. reflexivity. Qed.
+
+Example delete_for_member_delete :
+  delete_operator.delete_for source false "S::operator delete(void*)" "S" =
+    Some ("S::operator delete(void*)"%cpp_name, delete_operator.mk None false false).
+Proof. vm_compute. reflexivity. Qed.
+
+(** <<delete p>> with <<p : B*>> pointing to a <<V>>: the expression's lookup
+    in <<B>> finds the global function, but <<V>>'s destructor selects
+    <<V::operator delete>>. *)
+Example delete_for_dynamic_member_delete :
+  delete_operator.delete_for source false "operator delete(void*, unsigned long)" "V" =
+    Some ("V::operator delete(void*)"%cpp_name, delete_operator.mk None false false).
+Proof. vm_compute. reflexivity. Qed.
+
+Example delete_for_virtual_without_member :
+  is_Some (delete_operator.delete_for source false "operator delete(void*)" "B").
+Proof. vm_compute. eexists. reflexivity. Qed.
+
 (** ** Deleting <<nullptr>>
 
     The deallocation function may be called on <<nullptr>>
@@ -64,7 +119,7 @@ Section with_cpp.
   Context `{Σ : cpp_logic} {σ : genv} `{MOD : source ⊧ σ}.
 
   Lemma wp_delete_null_any_size Q (sz : N) :
-    wp_delete_null "E::operator delete(void*, unsigned long)" "E" Q ⊢
+    wp_delete_null false "E::operator delete(void*, unsigned long)" "E" Q ⊢
     wp_invoke_delete "E"
       ("E::operator delete(void*, unsigned long)"%cpp_name, delete_operator.mk None true false)
       sz nullptr Q.
@@ -72,7 +127,7 @@ Section with_cpp.
     rewrite wp_delete_null.unlock.
     (* All arguments explicit: [vm_compute] must only run on the closed
        [delete_for source ...]. *)
-    rewrite (delete_operator.delete_for_submodule (tu1 := source)
+    rewrite (delete_operator.delete_for_submodule (tu1 := source) (global := false)
       (op := "E::operator delete(void*, unsigned long)") (cls := "E")
       (result := ("E::operator delete(void*, unsigned long)"%cpp_name,
                   delete_operator.mk None true false))
