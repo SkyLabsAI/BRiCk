@@ -25,6 +25,11 @@ struct D {
   static void operator delete(void* p);
 };
 
+// A class-specific sized deallocation function.
+struct E {
+  static void operator delete(void* p, unsigned long sz);
+};
+
 void test_new() { delete new D{0}; }
 }}.
 
@@ -49,3 +54,29 @@ Example aligned_new_alignment :
   new_storage_alignment source "operator new(unsigned long, enum std::align_val_t)" 64%N = 64%N.
 Proof. vm_compute. reflexivity. Qed.
 
+(** ** Deleting <<nullptr>>
+
+    The deallocation function may be called on <<nullptr>>
+    (<https://eel.is/c++draft/expr.delete#6>), and the size argument a sized
+    deallocation function would receive is not fixed, so the call must be safe
+    for every size. *)
+Section with_cpp.
+  Context `{Σ : cpp_logic} {σ : genv} `{MOD : source ⊧ σ}.
+
+  Lemma wp_delete_null_any_size Q (sz : N) :
+    wp_delete_null "E::operator delete(void*, unsigned long)" "E" Q ⊢
+    wp_invoke_delete "E"
+      ("E::operator delete(void*, unsigned long)"%cpp_name, delete_operator.mk None true false)
+      sz nullptr Q.
+  Proof using MOD.
+    rewrite wp_delete_null.unlock.
+    (* All arguments explicit: [vm_compute] must only run on the closed
+       [delete_for source ...]. *)
+    rewrite (delete_operator.delete_for_submodule (tu1 := source)
+      (op := "E::operator delete(void*, unsigned long)") (cls := "E")
+      (result := ("E::operator delete(void*, unsigned long)"%cpp_name,
+                  delete_operator.mk None true false))
+      ltac:(vm_compute; reflexivity) (genv_compat_submodule _ _ MOD)).
+    iIntros "[H _]". iApply "H".
+  Qed.
+End with_cpp.
