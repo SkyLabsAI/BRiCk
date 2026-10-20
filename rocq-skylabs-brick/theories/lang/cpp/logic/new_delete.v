@@ -800,13 +800,13 @@ Module Type Expr__newdelete.
     default_delete destroyed_type Q : mpred :=
     (match delete_operator.delete_for (genv_tu σ) default_delete destroyed_type with
      | Some del_op =>
-         (* The use of <<0>> here is somewhat arbitrary. It is supposed to be
-            the size of the allocation (including overhead). For deleting
-            <<nullptr>>, there is no object, but the standard does say that
-            it is legal to call this function. In practice, it seems
-            like compilers do not do this.
+         (* The standard allows calling the deallocation function on
+            <<nullptr>>, but does not pin down the size argument that a sized
+            deallocation function receives in that case (for arrays it would
+            include an unknown cookie). We therefore require the call to be
+            safe for every size.
           *)
-         wp_invoke_delete destroyed_type del_op 0 nullptr Q
+         Forall sz : N, wp_invoke_delete destroyed_type del_op sz nullptr Q
      | None => False
      end ∧ Q).
 
@@ -820,7 +820,8 @@ Module Type Expr__newdelete.
     case_match; do_frame.
     { iIntros "H"; do_frame.
       iIntros "H'"; iSplit.
-      - by iDestruct "H'" as "[H' _]"; iRevert "H'"; iApply wp_invoke_delete_frame.
+      - iDestruct "H'" as "[H' _]"; iIntros (sz); iSpecialize ("H'" $! sz).
+        by iRevert "H'"; iApply wp_invoke_delete_frame.
       - iDestruct "H'" as "[_ H']"; iApply "H"; eauto. }
     { iIntros "H"; do_frame; iIntros "X"; iSplit.
       iDestruct "X" as "[[] _]".
