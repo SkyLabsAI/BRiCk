@@ -885,13 +885,19 @@ Module Type VALID_PTR_AXIOMS
       base_layout_compatible σ derived base ->
       type_ptr (Tnamed derived) p ⊢ type_ptr (Tnamed base) (p ,, _base derived base).
 
-    (*
+    (* TODO: no condition on [fld.(mem_type)], which may lack a [size_of] (a
+    flexible array member, or a class cpp2v marks unsupported). Do not restore
+    [type_ptr_size] without first guarding this axiom on
+    [is_Some (size_of σ fld.(mem_type))]: together they refute [type_ptr] at
+    such a class (auto's tests/unsound/fixed_regression_tests/field_type_unsized).
+    [fld] is the first field named [fld.(mem_name)], matching [offset_of]:
+    when cpp2v emits several fields with one name, they all denote the first
+    one's address, so [fld ∈ s_fields st] would be unsound. *)
     Axiom type_ptr_o_field_type_ptr : forall p fld cls st,
       glob_def σ cls = Some (Gstruct st) ->
-      fld ∈ s_fields st →
+      snd <$> list_find (fun m => m.(mem_name) = fld.(mem_name)) st.(s_fields) = Some fld →
          type_ptr (Tnamed cls) p
       ⊢ type_ptr fld.(mem_type) (p ., Field cls fld.(mem_name)). (* TODO field names *)
-      *)
 
     Axiom type_ptr_o_sub : forall p (m n : N) ty,
       (m < n)%N ->
