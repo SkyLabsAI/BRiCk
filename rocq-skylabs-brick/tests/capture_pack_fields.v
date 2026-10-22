@@ -32,3 +32,15 @@ Proof. by vm_compute. Qed.
 
 Goal field_names "copy_pack<...<int, int>>(int, int)::@0" = [Nid "vs"; Nid "vs...1"].
 Proof. by vm_compute. Qed.
+
+(** A record whose fields do not have distinct names is unsupported. *)
+Definition int_member (n : ident) (off : N) : Member :=
+  {| mem_name := Nid n; mem_type := Tint; mem_mutable := false;
+     mem_init := None; mem_layout := {| li_offset := off |} |}.
+
+Goal record_or_dup_fields (Nglobal (Nid "S")) [int_member "a" 0; int_member "b" 32] Gtype = Gtype.
+Proof. by vm_compute. Qed.
+
+Goal if record_or_dup_fields (Nglobal (Nid "S")) [int_member "a" 0; int_member "a" 32] Gtype
+     is Gunsupported _ then True else False.
+Proof. by vm_compute. Qed.
