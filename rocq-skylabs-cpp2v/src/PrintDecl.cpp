@@ -372,7 +372,8 @@ static fmt::Formatter &printAnonymousFieldName(CoqPrinter &print,
             } else {
                 for (auto &i : captures) {
                     if (i.second == &field) {
-                        return print.str(i.first->getName());
+                        return cprint.printCaptureVarName(print, *rd,
+                                                          *i.first);
                     }
                 }
             }
@@ -388,6 +389,36 @@ static fmt::Formatter &printAnonymousFieldName(CoqPrinter &print,
     }
 }
 } // namespace
+
+fmt::Formatter &ClangPrinter::printCaptureVarName(CoqPrinter &print,
+                                                  const CXXRecordDecl &lambda,
+                                                  const ValueDecl &var) {
+    // BRiCk identifies fields by name, so the fields of one closure need
+    // distinct names. A capture pack ([vs...] or [...vs = e]) expands into one
+    // field per element, each capturing a distinct variable spelled [vs]; name
+    // them [vs], [vs...1], ... in field order. "..." cannot occur in an
+    // identifier, so these names cannot clash with other captures.
+    llvm::DenseMap<const ValueDecl *, FieldDecl *> captures;
+    FieldDecl *this_capture;
+    lambda.getCaptureFields(captures, this_capture);
+    auto it = captures.find(&var);
+    always_assert(it != captures.end() && "variable is not captured");
+    const FieldDecl *target = it->second;
+    llvm::DenseMap<const FieldDecl *, const ValueDecl *> field_vars;
+    for (auto &i : captures)
+        field_vars[i.second] = i.first;
+    unsigned offset = 0;
+    for (auto fd : lambda.fields()) {
+        if (fd == target)
+            break;
+        auto other = field_vars.lookup(fd);
+        if (other && other->getIdentifier() == var.getIdentifier())
+            ++offset;
+    }
+    if (!offset)
+        return print.str(var.getName());
+    return print.str((var.getName() + "..." + Twine(offset)).str());
+}
 
 fmt::Formatter &ClangPrinter::printFieldName(CoqPrinter &print,
                                              const FieldDecl &field, loc::loc) {

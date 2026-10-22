@@ -208,6 +208,13 @@ public:
     fmt::Formatter &printFieldName(CoqPrinter &, const clang::FieldDecl &,
                                    loc::loc);
 
+    // Print the (string) name of the closure field capturing [var] in
+    // [lambda]. Elements of a captured pack all share one spelling, so
+    // repeated spellings get a "...N" suffix, as in [printParamName].
+    fmt::Formatter &printCaptureVarName(CoqPrinter &,
+                                        const clang::CXXRecordDecl &lambda,
+                                        const clang::ValueDecl &var);
+
     // Print one Rocq [temp_param].
     fmt::Formatter &printTemplateParam(CoqPrinter &,
                                        const clang::NamedDecl *,

@@ -581,11 +581,11 @@ public:
                 // >> The actual [FieldDecl] might be (is?) anonymous, so we
                 // pull the data from the
                 //    variable that is being captured
-                auto nm = var_decl->getName();
-                always_assert(0 < nm.size());
+                always_assert(0 < var_decl->getName().size());
                 // TODO NAMES: this should never be anonymous, but it
                 // technically could be
-                print.str(nm) << fmt::nbsp;
+                cprint.printCaptureVarName(print, *lambda, *var_decl)
+                    << fmt::nbsp;
                 // The type of the field
                 cprint.printQualType(print, capture->getType(),
                                      loc::of(var_decl));
