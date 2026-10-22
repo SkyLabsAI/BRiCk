@@ -34,19 +34,26 @@ Proof. by rewrite fmap_add_seq Nat.add_0_r. Qed.
 Definition seqN (from count : N) : list N :=
   N.of_nat <$> seq (N.to_nat from) (N.to_nat count).
 #[global] Arguments seqN : simpl never.
+#[global] Hint Opaque seqN : typeclass_instances sl_opacity.
 
 Definition replicateN {A} (count : N) (x : A) : list A :=
   replicate (N.to_nat count) x.
 #[global] Arguments replicateN : simpl never.
+#[global] Hint Opaque replicateN : typeclass_instances sl_opacity.
 #[deprecated(since="2021-05-26",note="use [replicateN].")]
 Abbreviation repeatN := (flip replicateN) (only parsing).
 
 Definition dropN {A} n := drop (A := A) (N.to_nat n).
+#[global] Hint Opaque dropN : typeclass_instances sl_opacity.
 Definition takeN {A} n := take (A := A) (N.to_nat n).
+#[global] Hint Opaque takeN : typeclass_instances sl_opacity.
 Definition lengthN {A} xs := N.of_nat (length (A := A) xs).
+#[global] Hint Opaque lengthN : typeclass_instances sl_opacity.
 Definition resizeN {A} n := resize (A := A) (N.to_nat n).
+#[global] Hint Opaque resizeN : typeclass_instances sl_opacity.
 Definition rotateN {A} n xs :=
   dropN (A := A) (n mod lengthN xs) xs ++ takeN (A := A) (n mod lengthN xs) xs.
+#[global] Hint Opaque rotateN : typeclass_instances sl_opacity.
 
 #[global] Instance list_lookupN {A}: Lookup N A (list A) | 10 :=
   fun i xs => lookup (N.to_nat i) xs.
@@ -168,7 +175,6 @@ Section seqN.
     SetUnfold (start ≤ n < start + len)%N P →
     SetUnfoldElemOf n (seqN start len) P.
   Proof. constructor. rewrite elem_of_seqN. set_solver. Qed.
-  #[global] Typeclasses Opaque seqN.
 
   Lemma Forall_seqN P i n :
     Forall P (seqN i n) ↔ (∀ j : N, i <= j < i + n → P j).
@@ -804,6 +810,7 @@ Section listN.
   Qed.
 
   Definition head_list {A} (xs : list A) := option_list (hd_error xs).
+  #[global] Hint Opaque head_list : typeclass_instances sl_opacity.
 
   Lemma tail_drop xs : tail xs = drop 1 xs.
   Proof. reflexivity. Qed.
@@ -2250,9 +2257,11 @@ Section rangeZ.
       (fun from => [])
       (fun n' rangeZ' from => from :: rangeZ' (from + 1))
       to from.
+  #[global] Hint Opaque rangeZ' : typeclass_instances sl_opacity.
 
   Definition rangeZ (from : Z) (to : Z) : list Z :=
     rangeZ' from (Z.to_N (to - from)).
+  #[global] Hint Opaque rangeZ : typeclass_instances sl_opacity.
 
   Lemma rangeZ_oob from to (Hlt : (to <= from)) : rangeZ from to = [].
   Proof. rewrite /rangeZ Z_to_N_eq_0 //; lia. Qed.
@@ -2401,6 +2410,7 @@ Section sliceZ.
 
   Definition sliceZ {A} (base i j : Z) (xs : list A) : list A :=
     dropN (Z.to_N (i - base)) (takeN (Z.to_N (j - base)) xs).
+  #[global] Hint Opaque sliceZ : typeclass_instances sl_opacity.
 
   Lemma sliceZ_crop_l {A} (base i j : Z) (xs : list A) :
     sliceZ base i j xs = sliceZ base (i `max` base) j xs.
@@ -2733,7 +2743,6 @@ Section sliceZ.
 
 End sliceZ.
 
-#[global] Hint Opaque sliceZ : typeclass_instances sl_opacity.
 
 Section replicateZ_lemmas.
   #[local] Open Scope Z_scope.
