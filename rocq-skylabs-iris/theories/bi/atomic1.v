@@ -23,7 +23,7 @@
 Require Import stdpp.coPset.
 Require Import stdpp.namespaces.
 Require Import iris.bi.lib.fixpoint_mono.
-Require Import iris.proofmode.coq_tactics.
+Require Import iris.proofmode.rocq_tactics.
 Require Import skylabs.iris.extra.proofmode.proofmode.
 Require Import iris.proofmode.reduction.
 Require Import iris.prelude.options.
@@ -632,7 +632,7 @@ Qed.
     proof mode goal [P := atomic1_update Eo Ei α β Φ] into [atomic1_acc Eo
     Ei α P β Φ]. *)
 Section coq_tactic.
-  Import coq_tactics.
+  Import rocq_tactics.
   Context `{BiFUpd PROP} {TA TB : tele}.
   Implicit Types (α : TA → PROP).
   Implicit Types (β Φ : TA → TB → PROP).

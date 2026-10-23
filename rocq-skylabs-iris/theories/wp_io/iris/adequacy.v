@@ -207,7 +207,7 @@ Import uPred.
 Proof.
   iIntros (Hwp ??).
   apply (pure_soundness (PROP:=iPropI Σ)).
-  eapply (step_fupdN_soundness_gen _ HasNoLc (steps_sum num_laters_per_step 0 n)
+  eapply (step_fupdN_soundness _ HasNoLc (steps_sum num_laters_per_step 0 n)
     (steps_sum num_laters_per_step 0 n)).
   iIntros (Hinv) "_".
   iMod Hwp as (stateI Φ fork_post state_interp_mono) "(Hσ & Hwp)".
@@ -262,7 +262,7 @@ Lemma wp_strong_adequacy_gen Σ Λ `{!invGpreS Σ} s es σ1 n κs t2 σ2 φ
 Proof.
   iIntros (Hwp ?).
   apply (pure_soundness (PROP:=iPropI Σ)).
-  eapply (step_fupdN_soundness_gen _ HasNoLc (steps_sum num_laters_per_step 0 n)
+  eapply (step_fupdN_soundness _ HasNoLc (steps_sum num_laters_per_step 0 n)
     (steps_sum num_laters_per_step 0 n)).
   iIntros (Hinv) "_".
   iMod Hwp as (stateI Φ fork_post state_interp_mono) "(Hσ & Hwp & Hφ)".

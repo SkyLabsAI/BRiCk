@@ -566,7 +566,7 @@ End lemmas.
 
 (** ProofMode support for atomic commits *)
 Section proof_mode.
-  Import coq_tactics.
+  Import rocq_tactics.
   Context `{BiFUpd PROP} {TA TB : tele}.
   Implicit Types (α : TA → PROP) (β Φ : TA → TB → PROP).
 
