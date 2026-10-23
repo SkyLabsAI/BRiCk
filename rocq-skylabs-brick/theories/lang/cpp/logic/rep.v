@@ -36,7 +36,7 @@ Section with_cpp.
 
   (* Keeps proofs simple with recent Iris. *)
   #[local] Existing Instance as_fractional_fractional.
-  #[local] Hint Mode AsFractional - - - - : typeclass_instances.
+  #[local] Hint Mode AsFractional - - - - - : typeclass_instances.
 
   #[global] Instance as_Rep_ne n :
     Proper (pointwise_relation _ (dist n) ==> dist n) as_Rep.

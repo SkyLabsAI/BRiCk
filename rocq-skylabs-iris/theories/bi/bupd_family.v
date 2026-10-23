@@ -8,7 +8,7 @@ Require Import skylabs.prelude.finite.
 Require Import skylabs.iris.extra.proofmode.proofmode.
 
 Section with_prop.
-  Context {PROP : bi} `{BiBUpd PROP} .
+  Context {SI : sidx} {PROP : bi} `{!BiBUpd PROP}.
   Context {U T : Type}.
 
   Lemma bupd_family_base `{EqDecision U} (P : U -> T -> PROP) (us : list U)

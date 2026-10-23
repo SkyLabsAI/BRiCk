@@ -16,16 +16,16 @@ Import ChargeNotation.
 
 (** Analogues of [bi_texist] and [bi_tforall], with extra universe
 polymorphism and a slightly different interface. *)
-Fixpoint tbi_exist@{X Z Y} {PROP : bi} {t : tele@{X}}
-  : forall (P : tele_fun@{X Z Y} t PROP), PROP :=
+Fixpoint tbi_exist@{X Z Y} {SI : sidx} {PROP : bi} {t : tele@{X}}
+  : forall (P : tele_fun@{X Z Y} t (fun _ => PROP)), PROP :=
   match t as t0 return ((t0 -t> PROP) → PROP) with
   | [tele] => fun x : PROP => x
   | @TeleS X binder =>
     fun P : (∀ x : X, binder x -t> PROP) => Exists x : X, tbi_exist (P x)
   end.
 
-Fixpoint tbi_forall@{X Z Y} {PROP : bi} {t : tele@{X}}
-  : forall (P : tele_fun@{X Z Y} t PROP), PROP :=
+Fixpoint tbi_forall@{X Z Y} {SI : sidx} {PROP : bi} {t : tele@{X}}
+  : forall (P : tele_fun@{X Z Y} t (fun _ => PROP)), PROP :=
   match t as t0 return ((t0 -t> PROP) → PROP) with
   | [tele] => fun x : PROP => x
   | @TeleS X binder =>
@@ -34,15 +34,15 @@ Fixpoint tbi_forall@{X Z Y} {PROP : bi} {t : tele@{X}}
 
 (** Small improvements to [bi_tforall], [bi_texist] *)
 Section telescopes.
-  Context {PROP : bi} {TT : tele}.
+  Context {SI : sidx} {PROP : bi} {TT : tele}.
 
   (** Enable, e.g., [f_equiv] on proofmode goals [(∀.. x, P) -∗ ∀.. x, Q]. *)
   #[global] Instance bi_tforall_mono' :
-    Proper (pointwise_relation _ (⊢) ==> (⊢)) (@bi_tforall PROP TT).
+    Proper (pointwise_relation _ (⊢) ==> (⊢)) (@bi_tforall SI PROP TT).
   Proof. intros f1 f2 Hf. rewrite !bi_tforall_forall. solve_proper. Qed.
 
   #[global] Instance bi_texist_mono' :
-    Proper (pointwise_relation _ (⊢) ==> (⊢)) (@bi_texist PROP TT).
+    Proper (pointwise_relation _ (⊢) ==> (⊢)) (@bi_texist SI PROP TT).
   Proof. intros f1 f2 Hf. rewrite !bi_texist_exist. solve_proper. Qed.
 
   (** Enable, e.g., [f_equiv] on goals [(∀.. x, P) -∗ ∀.. x, Q]. *)
@@ -50,16 +50,16 @@ Section telescopes.
     Proper (
       pointwise_relation _ (flip (⊢)) ==>
       (flip (⊢))
-    ) (@bi_tforall PROP TT).
+    ) (@bi_tforall SI PROP TT).
   Proof. intros f1 f2 Hf. rewrite !bi_tforall_forall. solve_proper. Qed.
 
   #[global] Instance bi_texist_flip_mono' :
-    Proper (pointwise_relation _ (⊢) ==> (⊢)) (@bi_texist PROP TT).
+    Proper (pointwise_relation _ (⊢) ==> (⊢)) (@bi_texist SI PROP TT).
   Proof. intros f1 f2 Hf. rewrite !bi_texist_exist. solve_proper. Qed.
 End telescopes.
 
 Section tele_fun_quantifiers.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi}.
   Implicit Types t : tele.
 
   Lemma tbi_exist_bi_texist {t} (P : t -t> PROP) : tbi_exist P -|- ∃.. x, tele_app P x.
@@ -68,7 +68,8 @@ Section tele_fun_quantifiers.
   Proof. rewrite tbi_exist_bi_texist. f_equiv=>x. by rewrite tele_app_bind. Qed.
 
   (** Avoid the preceding lemmas which would unduly constrain universe [Y]. *)
-  Lemma tbi_exist_exist@{X Z Y} {t : tele@{X}} (P : tele_fun@{X Z Y} t PROP) :
+  Lemma tbi_exist_exist@{X Z Y} {t : tele@{X}}
+      (P : tele_fun@{X Z Y} t (fun _ => PROP)) :
     tbi_exist P -|- Exists x, tele_app P x.
   Proof.
     induction t as [|B bnd IH]; simpl; split'.
@@ -80,16 +81,19 @@ Section tele_fun_quantifiers.
       rewrite -(bi.exist_intro b) IH. by rewrite -(bi.exist_intro arg).
   Qed.
 
-  Lemma tbi_exist_mono@{X Z Y} {t : tele@{X}} (P1 P2 : tele_fun@{X Z Y} t PROP) :
+  Lemma tbi_exist_mono@{X Z Y} {t : tele@{X}}
+      (P1 P2 : tele_fun@{X Z Y} t (fun _ => PROP)) :
     tele_fun_pointwise@{X Z Y} (⊢) P1 P2 -> tbi_exist P1 ⊢ tbi_exist P2.
   Proof. intros. rewrite !tbi_exist_exist. solve_proper. Qed.
 
-  Lemma tbi_exist_ne@{X Z Y} {t : tele@{X}} n (P1 P2 : tele_fun@{X Z Y} t PROP) :
+  Lemma tbi_exist_ne@{X Z Y} {t : tele@{X}} n
+      (P1 P2 : tele_fun@{X Z Y} t (fun _ => PROP)) :
     tele_fun_pointwise@{X Z Y} (dist n) P1 P2 ->
     dist n (tbi_exist P1) (tbi_exist P2).
   Proof. intros. rewrite !tbi_exist_exist. solve_proper. Qed.
 
-  Lemma tbi_exist_proper@{X Z Y} {t : tele@{X}} (P1 P2 : tele_fun@{X Z Y} t PROP) :
+  Lemma tbi_exist_proper@{X Z Y} {t : tele@{X}}
+      (P1 P2 : tele_fun@{X Z Y} t (fun _ => PROP)) :
     tele_fun_pointwise@{X Z Y} equiv P1 P2 ->
     equiv (tbi_exist P1) (tbi_exist P2).
   Proof. intros. rewrite !tbi_exist_exist. solve_proper. Qed.
@@ -99,7 +103,8 @@ Section tele_fun_quantifiers.
   Lemma bi_tforall_tbi_forall {t} (R : t -> PROP) : (∀.. x, R x) -|- tbi_forall (tele_bind R).
   Proof. rewrite tbi_forall_bi_tforall. f_equiv=>x. by rewrite tele_app_bind. Qed.
 
-  Lemma tbi_forall_forall@{X Z Y} {t : tele@{X}} (P : tele_fun@{X Z Y} t PROP) :
+  Lemma tbi_forall_forall@{X Z Y} {t : tele@{X}}
+      (P : tele_fun@{X Z Y} t (fun _ => PROP)) :
     tbi_forall P -|- Forall x, tele_app P x.
   Proof.
     induction t as [|B bnd IH]; simpl; split'.
@@ -111,42 +116,47 @@ Section tele_fun_quantifiers.
       by rewrite (bi.forall_elim (TargS b ys)).
   Qed.
 
-  Lemma tbi_forall_mono@{X Z Y} {t : tele@{X}} (P1 P2 : tele_fun@{X Z Y} t PROP) :
+  Lemma tbi_forall_mono@{X Z Y} {t : tele@{X}}
+      (P1 P2 : tele_fun@{X Z Y} t (fun _ => PROP)) :
     tele_fun_pointwise@{X Z Y} (⊢) P1 P2 -> tbi_forall P1 ⊢ tbi_forall P2.
   Proof. intros. rewrite !tbi_forall_forall. solve_proper. Qed.
 
-  Lemma tbi_forall_ne@{X Z Y} {t : tele@{X}} n (P1 P2 : tele_fun@{X Z Y} t PROP) :
+  Lemma tbi_forall_ne@{X Z Y} {t : tele@{X}} n
+      (P1 P2 : tele_fun@{X Z Y} t (fun _ => PROP)) :
     tele_fun_pointwise@{X Z Y} (dist n) P1 P2 ->
     dist n (tbi_forall P1) (tbi_forall P2).
   Proof. intros. rewrite !tbi_forall_forall. solve_proper. Qed.
 
-  Lemma tbi_forall_proper@{X Z Y} {t : tele@{X}} (P1 P2 : tele_fun@{X Z Y} t PROP) :
+  Lemma tbi_forall_proper@{X Z Y} {t : tele@{X}}
+      (P1 P2 : tele_fun@{X Z Y} t (fun _ => PROP)) :
     tele_fun_pointwise@{X Z Y} equiv P1 P2 ->
     equiv (tbi_forall P1) (tbi_forall P2).
   Proof. intros. rewrite !tbi_forall_forall. solve_proper. Qed.
 
-  #[global] Instance: Params (@tbi_exist) 2 := {}.
-  #[global] Instance tbi_exist_ne' t : NonExpansive (@tbi_exist PROP t).
+  #[global] Instance: Params (@tbi_exist) 3 := {}.
+  #[global] Instance tbi_exist_ne' t : NonExpansive (@tbi_exist SI PROP t).
   Proof. repeat intro. by apply tbi_exist_ne. Qed.
-  #[global] Instance tbi_exist_proper' t : Proper (equiv ==> equiv) (@tbi_exist PROP t).
+  #[global] Instance tbi_exist_proper' t :
+    Proper (equiv ==> equiv) (@tbi_exist SI PROP t).
   Proof. repeat intro. by apply tbi_exist_proper. Qed.
   #[global] Instance tbi_exist_mono' {t} :
-    Proper (tele_fun_pointwise (⊢) ==> (⊢)) (@tbi_exist PROP t).
+    Proper (tele_fun_pointwise (⊢) ==> (⊢)) (@tbi_exist SI PROP t).
   Proof. repeat intro. by apply tbi_exist_mono. Qed.
   #[global] Instance tbi_exist_flip_mono' {t} :
-    Proper (tele_fun_pointwise (⊢) --> flip (⊢)) (@tbi_exist PROP t).
+    Proper (tele_fun_pointwise (⊢) --> flip (⊢)) (@tbi_exist SI PROP t).
   Proof. repeat intro. by apply tbi_exist_mono. Qed.
 
-  #[global] Instance: Params (@tbi_forall) 2 := {}.
-  #[global] Instance tbi_forall_ne' t : NonExpansive (@tbi_forall PROP t).
+  #[global] Instance: Params (@tbi_forall) 3 := {}.
+  #[global] Instance tbi_forall_ne' t : NonExpansive (@tbi_forall SI PROP t).
   Proof. repeat intro. by apply tbi_forall_ne. Qed.
-  #[global] Instance tbi_forall_proper' t : Proper (equiv ==> equiv) (@tbi_forall PROP t).
+  #[global] Instance tbi_forall_proper' t :
+    Proper (equiv ==> equiv) (@tbi_forall SI PROP t).
   Proof. repeat intro. by apply tbi_forall_proper. Qed.
   #[global] Instance tbi_forall_mono' {t} :
-    Proper (tele_fun_pointwise (⊢) ==> (⊢)) (@tbi_forall PROP t).
+    Proper (tele_fun_pointwise (⊢) ==> (⊢)) (@tbi_forall SI PROP t).
   Proof. repeat intro. by apply tbi_forall_mono. Qed.
   #[global] Instance tbi_forall_flip_mono' {t} :
-    Proper (tele_fun_pointwise (⊢) --> flip (⊢)) (@tbi_forall PROP t).
+    Proper (tele_fun_pointwise (⊢) --> flip (⊢)) (@tbi_forall SI PROP t).
   Proof. repeat intro. by apply tbi_forall_mono. Qed.
 
   Section proofmode.

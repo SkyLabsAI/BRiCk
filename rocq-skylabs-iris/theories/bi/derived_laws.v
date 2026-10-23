@@ -71,14 +71,16 @@ Definition fupd_if {PROP} `{!FUpd PROP} (b : bool) (E1 E2 : coPset) (P : PROP) :
   if b then fupd E1 E2 P else P.
 #[global] Arguments fupd_if {_ _} !_ _ _ _%_I / : assert.
 #[global] Hint Opaque fupd_if : typeclass_instances.
-Notation "|={ E1 , E2 }=>? b P" := (fupd_if b E1 E2 P) : bi_scope.
-Notation "|={ E }=>? b P" := (fupd_if b E E P) : bi_scope.
+Notation "|={ E1 , E2 }=>? b P" := (fupd_if b E1 E2 P)
+  (at level 20, E1, E2 at level 50, b at level 9, P at level 200) : bi_scope.
+Notation "|={ E }=>? b P" := (fupd_if b E E P)
+  (at level 20, E at level 50, b at level 9, P at level 200) : bi_scope.
 
 Module bi.
 Export iris.bi.bi.bi.
 
 Section fupd_if.
-  Context {PROP : bi} `{!BiFUpd PROP}.
+  Context {SI : sidx} {PROP : bi} `{!BiFUpd PROP}.
   Implicit Types (P : PROP).
 
   #[global] Instance: Params (@fupd_if) 5 := {}.
@@ -98,38 +100,44 @@ Section fupd_if.
   #[global] Instance fupd_absorbing b E1 E2 P : Absorbing P -> Absorbing (|={E1,E2}=>?b P).
   Proof. destruct b; cbn; apply _. Qed.
 
-  Lemma fupd_if_intro b E P : P ⊢ |={E}=>?b P.
+  Lemma fupd_if_intro b E P : P ⊢ fupd_if b E E P.
   Proof. destruct b; cbn; auto using fupd_intro. Qed.
 
-  Lemma fupd_if_idemp b E P : (|={E}=>?b |={E}=>?b P) ⊣⊢ |={E}=>?b P.
+  Lemma fupd_if_idemp b E P :
+    fupd_if b E E (fupd_if b E E P) ⊣⊢ fupd_if b E E P.
   Proof. destruct b; cbn; auto using fupd_idemp. Qed.
 
   Lemma fupd_if_mask_subseteq b E1 E2 :
-    E2 ⊆ E1 -> ⊢@{PROP} |={E1,E2}=>?b |={E2,E1}=>?b emp.
+    E2 ⊆ E1 -> ⊢@{PROP} fupd_if b E1 E2 (fupd_if b E2 E1 emp).
   Proof. destruct b; cbn; auto using fupd_mask_subseteq. Qed.
 
   Lemma fupd_if_mask_intro_subseteq b E1 E2 P :
-    E2 ⊆ E1 -> P ⊢ |={E1,E2}=>?b |={E2,E1}=>?b P.
+    E2 ⊆ E1 -> P ⊢ fupd_if b E1 E2 (fupd_if b E2 E1 P).
   Proof. destruct b; cbn; auto using fupd_mask_intro_subseteq. Qed.
 
-  Lemma fupd_if_mono b E1 E2 P Q : (P ⊢ Q) -> (|={E1,E2}=>?b P) ⊢ |={E1,E2}=>?b Q.
+  Lemma fupd_if_mono b E1 E2 P Q :
+    (P ⊢ Q) -> fupd_if b E1 E2 P ⊢ fupd_if b E1 E2 Q.
   Proof. by apply fupd_if_mono'. Qed.
 
-  Lemma fupd_if_trans b E1 E2 E3 P : (|={E1,E2}=>?b |={E2,E3}=>?b P) ⊢ |={E1,E3}=>?b P.
+  Lemma fupd_if_trans b E1 E2 E3 P :
+    fupd_if b E1 E2 (fupd_if b E2 E3 P) ⊢ fupd_if b E1 E3 P.
   Proof. destruct b; cbn; auto using fupd_trans. Qed.
 
-  Lemma fupd_if_frame_r b E1 E2 P R : (|={E1,E2}=>?b P) ∗ R ⊢ |={E1,E2}=>?b P ∗ R.
+  Lemma fupd_if_frame_r b E1 E2 P R :
+    fupd_if b E1 E2 P ∗ R ⊢ fupd_if b E1 E2 (P ∗ R).
   Proof. destruct b; cbn; auto using fupd_frame_r. Qed.
-  Lemma fupd_if_frame_l b E1 E2 P R : (R ∗ |={E1,E2}=>?b P) ⊢ |={E1,E2}=>?b R ∗ P.
+  Lemma fupd_if_frame_l b E1 E2 P R :
+    R ∗ fupd_if b E1 E2 P ⊢ fupd_if b E1 E2 (R ∗ P).
   Proof. destruct b; cbn; auto using fupd_frame_l. Qed.
 
   Lemma fupd_if_elim b E1 E2 E3 P Q :
-    (Q ⊢ |={E2,E3}=>?b P) -> (|={E1,E2}=>?b Q) ⊢ |={E1,E3}=>?b P.
+    (Q ⊢ fupd_if b E2 E3 P) ->
+    fupd_if b E1 E2 Q ⊢ fupd_if b E1 E3 P.
   Proof. destruct b; cbn; auto using fupd_elim. Qed.
 End fupd_if.
 
 Section derived_laws.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi}.
 
   Lemma affinely_pure φ  : <affine> ⌜φ⌝ ⊣⊢@{PROP} [| φ |].
   Proof. by rewrite only_provable_unfold. Qed.
@@ -349,7 +357,7 @@ Section derived_laws.
 End derived_laws.
 
 Section only_provable_derived_laws.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi}.
 
   Lemma exist_only_provable_eq_sep {A P} v:
     P v ⊢@{PROP} ∃ x : A, [| x = v |] ∗ P x.
@@ -398,7 +406,7 @@ Section only_provable_derived_laws.
 End only_provable_derived_laws.
 
 Section embed_derived_laws.
-  Context `{BiEmbed PROP1 PROP2}.
+  Context {SI : sidx} {PROP1 PROP2 : bi} `{!BiEmbed PROP1 PROP2}.
   Local Notation embed := (embed (A:=PROP1) (B:=PROP2)).
 
   Global Instance embed_fractional (P : Qp → PROP1) :

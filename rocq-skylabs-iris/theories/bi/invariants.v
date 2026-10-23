@@ -31,13 +31,13 @@ Require Export iris.base_logic.lib.invariants. (* << export [invGS] *)
 Require skylabs.prelude.tactics.base_dbs.
 Require Import skylabs.iris.extra.proofmode.proofmode.
 
-Set Default Proof Using "Type".
+Set Default Proof Using "Type*".
 Set Suggest Proof Using.
 
 Implicit Types (N : namespace).
 
 Section defs.
-  Context `{!BiFUpd PROP}.
+  Context {SI : sidx} `{!BiFUpd PROP}.
 
   (* Duplicates from Iris, but for general [bi], instead of being tied to [iProp]. *)
   Definition inv_def N (P : PROP) : PROP :=
@@ -48,15 +48,15 @@ Section defs.
   #[global] Hint Opaque inv : sl_opacity.
 
   Section instances.
-    Context `{CON: BiLaterContractive PROP}.
+    Context `{!BiLaterContractive PROP}.
     Global Instance inv_contractive N : Contractive (inv N).
-    Proof using CON. rewrite inv_eq. solve_contractive. Qed.
+    Proof. rewrite inv_eq. solve_contractive. Qed.
 
-    Global Instance inv_ne `{BiLaterContractive PROP} N : NonExpansive (inv N).
-    Proof using CON. apply contractive_ne, _. Qed.
+    Global Instance inv_ne N : NonExpansive (inv N).
+    Proof. apply contractive_ne, _. Qed.
 
     Global Instance inv_proper N : Proper (equiv ==> equiv) (inv N).
-    Proof using CON. apply ne_proper, _. Qed.
+    Proof. apply ne_proper, _. Qed.
   End instances.
 
   Global Instance inv_persistent N P : Persistent (inv N P).
@@ -65,8 +65,8 @@ Section defs.
   Proof. rewrite inv_eq. apply _. Qed.
 End defs.
 
-Arguments inv {_ _} N P%_I.
-#[global] Instance : Params (@inv) 3 := {}.
+Arguments inv {_ _ _} N P%_I.
+#[global] Instance : Params (@inv) 4 := {}.
 
 (* TODO: allocation rules are missing. These rely on the specific model of PROP,
   so the client of this library needs the provide the corresponding model of
@@ -75,7 +75,7 @@ Arguments inv {_ _} N P%_I.
   https://gitlab.mpi-sws.org/iris/iris/-/blob/5bb93f57729a8cc7d0ffeaab769cd24728e51a38/iris/base_logic/lib/invariants.v#L27 *)
 
 Section inv_properties.
-Context `{!BiFUpd PROP}.
+Context {SI : sidx} `{!BiFUpd PROP}.
 
 Implicit Types (P Q : PROP) (E : coPset).
 
@@ -118,7 +118,7 @@ Proof.
   iMod "Hclose" as "_". iMod ("HcloseQ" with "HQ") as "?". by iMod ("HcloseP" with "HP").
 Qed.
 
-Lemma inv_combine_dup_l `{BiAffine PROP} N P Q :
+Lemma inv_combine_dup_l `{!BiAffine PROP} N P Q :
   □ ▷ (P -∗ P ∗ P) -∗
   inv N P -∗ inv N Q -∗ inv N (P ∗ Q).
 Proof.

@@ -107,7 +107,7 @@ Section defs.
 
   (* Unfold definition of internal_eq, siProp model, and [function_spec_dist].
   Everything else can be derived. *)
-  Lemma fs_equiv_unfold P Q `{Sbi PROP} :
+  Lemma fs_equiv_unfold {PROP : bi} P Q `{!Sbi PROP} :
     P ≡ Q ⊣⊢@{PROP}
     ⌜ type_of_spec P = type_of_spec Q ⌝ ∗ P.(fs_spec) ≡ Q.(fs_spec).
   Proof.
@@ -115,7 +115,7 @@ Section defs.
     by siProp.unseal.
   Qed.
 
-  Lemma fs_equivI P Q `{Sbi PROP} :
+  Lemma fs_equivI {PROP : bi} P Q `{!Sbi PROP} :
     P ≡ Q ⊣⊢@{PROP}
     ⌜ type_of_spec P = type_of_spec Q ⌝ ∗ ∀ vs K, P.(fs_spec) vs K ≡ Q.(fs_spec) vs K.
   Proof. rewrite fs_equiv_unfold. by repeat setoid_rewrite discrete_fun_equivI. Qed.
@@ -124,11 +124,11 @@ Section defs.
     P ≡ Q ⊢@{mpredI} [| type_of_spec P = type_of_spec Q |].
   Proof. rewrite fs_equivI. by iIntros "[-> _]". Qed.
 
-  Lemma fs_equivI_spec P Q vs K `{Sbi PROP} :
+  Lemma fs_equivI_spec {PROP : bi} P Q vs K `{!Sbi PROP} :
     P ≡ Q ⊢@{PROP} P.(fs_spec) vs K ≡ Q.(fs_spec) vs K.
   Proof. rewrite fs_equivI. by iIntros "[_ E]". Qed.
 
-  Lemma fs_equivI_intro P Q `{Sbi PROP} :
+  Lemma fs_equivI_intro {PROP : bi} P Q `{!Sbi PROP} :
     type_of_spec P = type_of_spec Q ->
     (∀ vs K, P.(fs_spec) vs K ≡ Q.(fs_spec) vs K) ⊢@{PROP} P ≡ Q.
   Proof. rewrite fs_equivI. by iIntros (->) "$". Qed.

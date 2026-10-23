@@ -8,7 +8,7 @@
 Require Export skylabs.prelude.named_binder.
 Require Import skylabs.iris.extra.proofmode.proofmode.
 
-#[global] Instance from_forall_named_binder {PROP:bi} {A} {name} {id}
+#[global] Instance from_forall_named_binder {SI : sidx} {PROP : bi} {A} {name} {id}
   {Φ : NamedBinder A name -> PROP}
   {Φ' : A -> PROP} :
   IdOfBS name id ->
@@ -16,7 +16,7 @@ Require Import skylabs.iris.extra.proofmode.proofmode.
   FromForall (∀ x : NamedBinder A name, Φ x) Φ' id | 0.
 Proof. move => _ ->. by rewrite /FromForall. Qed.
 
-#[global] Instance into_exist_named_binder {PROP:bi} {A} {name} {id}
+#[global] Instance into_exist_named_binder {SI : sidx} {PROP : bi} {A} {name} {id}
   {Φ : NamedBinder A name -> PROP}
   {Φ' : A -> PROP} :
   IdOfBS name id ->
@@ -27,17 +27,18 @@ Proof. move => _ ->. by rewrite /IntoExist. Qed.
 Module Type Test.
   Tactic Notation "test" ident(name) := (assert (name = ()) by (destruct name; reflexivity)).
 
-  Goal forall {PROP:bi}, ⊢@{PROP} ∀ x : NamedBinder unit "name", False.
+  Goal forall {SI : sidx} {PROP : bi}, ⊢@{PROP} ∀ x : NamedBinder unit "name", False.
   Proof.
-    intros PROP.
+    intros SI PROP.
     (* The name returned in [FromForall] is only honored if we explicitly introduce [(?)] *)
     assert_fails (iIntros; test name).
     assert_succeeds (iIntros (?); test name).
   Abort.
 
-  Goal forall {PROP:bi}, (∃ x : NamedBinder unit "name", False) ⊢@{PROP} False.
+  Goal forall {SI : sidx} {PROP : bi},
+      (∃ x : NamedBinder unit "name", False) ⊢@{PROP} False.
   Proof.
-    intros PROP.
+    intros SI PROP.
     assert_succeeds (iIntros "[% ?]"; test name).
     assert_succeeds (iIntros "H"; iDestruct "H" as (?) "H"; test name).
   Abort.

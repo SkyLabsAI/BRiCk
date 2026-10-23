@@ -415,10 +415,10 @@ Section with_config.
         { rewrite /prim_step /=. exists None.
           by rewrite /= proj_trace_app proj_trace_singleton_tau_eq. }
         iExists x_o_n. iSplitL "Hαo_n". { by iFrame. }
-        rewrite (all_no_extra_later n).
+        rewrite (all_no_extra_later n) !step_fupdN_succ_l.
         iMod "Contn" as "Contn".
         iIntros "!> !>". iMod "Contn". iIntros "!> !> !> !>".
-        iIntros (y_o) "Hβo".
+        rewrite !step_fupdN_0. iIntros (y_o) "Hβo".
 
         iMod ("Contn" $! y_o with "Hβo") as (y_i_o) "(Hβo_n & SIn & WPn & ?)".
 
@@ -500,10 +500,10 @@ Section with_config.
         { rewrite /prim_step /=. exists (Some label_n).
           by rewrite /= proj_trace_app proj_trace_singleton_forward_eq. }
         iExists x_o_n. iSplitL "Hαo_n". { by iFrame. }
-        rewrite (all_no_extra_later n).
+        rewrite (all_no_extra_later n) !step_fupdN_succ_l.
         iMod "Contn" as "Contn".
         iIntros "!> !>". iMod "Contn". iIntros "!> !> !> !>".
-        iIntros (y_o) "Hβo".
+        rewrite !step_fupdN_0. iIntros (y_o) "Hβo".
 
         iMod ("Contn" $! y_o with "Hβo") as (y_i_o) "(Hβo_n & SIn & WPn & ?)".
 
@@ -650,9 +650,12 @@ Section with_config.
         iExists x_o_1. iSplitL "Hαo1". { by iFrame. }
 
         (* trimming laters *)
-        rewrite (all_no_extra_later n1) (all_no_extra_later n2).
+        rewrite (all_no_extra_later n1) (all_no_extra_later n2)
+          !step_fupdN_succ_l.
         iMod "Cont2". iIntros "!> !>". iMod "Cont2". iIntros "!>". iSimpl.
+        iEval (rewrite step_fupdN_0) in "Cont2".
         iMod "Cont1". iIntros "!> !>". iMod "Cont1". iIntros "!>".
+        iEval (rewrite step_fupdN_0) in "Cont1".
 
         iIntros (y_o) "Hβo".
         iMod ("Cont1" with "Hβo") as (y_i_1) "(Hβi1 & SI1 & WP1 & ?)".

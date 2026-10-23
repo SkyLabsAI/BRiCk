@@ -18,7 +18,8 @@ Fixpoint tele_append (t : tele) {struct t}: (t -t> tele) -> tele :=
   end.
 
 Definition tele_fun_pointwise@{X Z Y} {t : tele@{X}} {A : Type@{Z}}
-    (R : A -> A -> Prop) (f g : tele_fun@{X Z Y} t A) : Prop :=
+    (R : A -> A -> Prop)
+    (f g : tele_fun@{X Z Y} t (fun _ => A)) : Prop :=
   forall x, R (tele_app f x) (tele_app g x).
 
 Fixpoint tele_snoc (t : tele) (T : Type) : tele :=
@@ -92,7 +93,7 @@ Fixpoint tele_arg_append {TT1}
       tele_arg (tele_app TT2 args) -> tele_append TT1 TT2
 
   with
-  | TeleO => fun _ _ x => x
+  | TeleO => fun _ 'tt x => x
   | TeleS F => fun _ '(TeleArgCons x xs) args =>
                 TeleArgCons x $ @tele_arg_append (F x) _ xs args
   end.

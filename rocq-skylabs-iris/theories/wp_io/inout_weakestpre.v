@@ -67,7 +67,7 @@ Class inout_irisGS_gen (Λ : language) (PROP : bi) `{FUpd PROP} := InOutIrisG {
 #[local] Existing Instance ctx_irisGS_gen.
 
 Definition wp_pre
-    {Λ} {PROP : bi} `{!FUpd PROP} `{!inout_irisGS_gen Λ PROP}
+    {Λ} {PROP : bi} `{!BiFUpd PROP} `{!inout_irisGS_gen Λ PROP}
     (s : stuckness)
     (wp : coPset -d> expr Λ -d> (val Λ -d> PROP) -d> PROP) :
     coPset -d> expr Λ -d> (val Λ -d> PROP) -d> PROP := λ E e1 Φ,
@@ -312,7 +312,8 @@ Proof.
   revert n Hn. generalize (num_laters_per_step ns)=>n0 n Hn.
   iInduction n as [|n] "IH" forall (n0 Hn).
   - iApply (step_fupdN_wand with "H"). iIntros "H" (y_o) "Hβo".
-    iMod ("H" with "Hβo") as (y_i) "(Hβi & $ & Hwp & $)". iMod "HP".
+    iMod ("H" with "Hβo") as (y_i) "(Hβi & $ & Hwp & $)".
+    iEval (unfold step_fupdN) in "HP". iMod "HP".
     iExists y_i. iFrame "Hβi".
     iModIntro. iApply (wp_strong_mono with "Hwp"); [done|set_solver|].
     iIntros (v) "HΦ". iApply ("HΦ" with "HP").
@@ -420,14 +421,13 @@ Proof.
   rewrite difference_empty_L (comm_L (∪)) -union_difference_L //.
   by iFrame.
 Qed.
-Lemma wp_step_fupd `{BiAffine PROP} s E1 E2 e P Φ :
+Lemma wp_step_fupd `{!BiAffine PROP} s E1 E2 e P Φ :
   TCEq (to_val e) None → E2 ⊆ E1 →
   (|={E1}[E2]▷=> P) -∗ WP e @ s; E2 {{ v, P ={E1}=∗ Φ v }} -∗ WP e @ s; E1 {{ Φ }}.
 Proof.
   iIntros (??) "HR H".
-  iApply (wp_step_fupdN_strong 1 _ E1 E2 with "[-]"); [done|..]. iSplit.
-  - iIntros (????) "?". iMod (fupd_mask_subseteq ∅) as "?"; [set_solver+|].
-    iIntros "!>".
+  iApply (wp_step_fupdN_strong 1 _ E1 E2 with "[-]"); simpl; [done|..]. iSplit.
+  - iIntros (????) "_". iMod (fupd_mask_subseteq ∅) as "_"; [set_solver+|].
     auto with lia.
   - iFrame "H". iMod "HR" as "$". auto.
 Qed.
@@ -511,6 +511,7 @@ Proof.
   iDestruct ("WP" with "[%//]") as (x_o1) "(Hαo1 & WP)".
   iDestruct ("MP" with "[%//] Hαo1") as (x_o2) "[Hαo2 MP]".
   iExists x_o2. iFrame "Hαo2".
+  rewrite !step_fupdN_succ_l.
   iMod "WP". iIntros "!> !>". iMod "WP". iIntros "!>".
   iApply (step_fupdN_wand with "WP"). iIntros "WP".
   iIntros (y_o2) "Hβo2".
@@ -626,6 +627,7 @@ Proof.
   iIntros (e2 σ2 efs STEP).
   iDestruct ("WP" with "[%//]") as (x_o) "(Hαo & WP)".
   iDestruct ("EL" with "[%//] Hαo") as (y_o) "[Hβo EL]".
+  rewrite !step_fupdN_succ_l.
   iMod "WP". iIntros "!> !>". iMod "WP". iIntros "!>".
   iApply (step_fupdN_wand with "WP"). iIntros "WP".
   iMod ("WP" with "Hβo") as (y_i) "(Hβi & $ & WP & WPs)".
