@@ -141,28 +141,28 @@ Module StmtNotations.
          , only printing).
 
   Notation "'for' '(;;)' { body }"
-      := (Sfor None None None body)
+      := (Sfor None None None None body)
          ( in custom CPP_stmt at level 200
          , body custom CPP_stmt at level 200
          , format "'[hv' for  (;;)  { '//'   body '//' } ']'"
          , only printing).
   (* NOTE (JH): init will insert a semicolon since it will be a terminal stmt in realistic ASTs *)
   Notation "'for' ( init ';)' { body }"
-      := (Sfor (Some init) None None body)
+      := (Sfor (Some init) None None None body)
          ( in custom CPP_stmt at level 200
          , init custom CPP_stmt at level 200
          , body custom CPP_stmt at level 200
          , format "'[hv' for  ( init ;)  { '//'   body '//' } ']'"
          , only printing).
   Notation "'for' '(;' cond ';)' { body }"
-      := (Sfor None (Some cond) None body)
+      := (Sfor None None (Some cond) None body)
          ( in custom CPP_stmt at level 200
          , cond custom CPP_expr at level 200
          , body custom CPP_stmt at level 200
          , format "'[hv' for  (;  cond ;)  { '//'   body '//' } ']'"
          , only printing).
   Notation "'for' '(;;' incr ) { body }"
-      := (Sfor None None (Some incr) body)
+      := (Sfor None None None (Some incr) body)
          ( in custom CPP_stmt at level 200
          , incr custom CPP_expr at level 200
          , body custom CPP_stmt at level 200
@@ -170,7 +170,7 @@ Module StmtNotations.
          , only printing).
   (* NOTE (JH): init will insert a semicolon since it will be a terminal stmt in realistic ASTs *)
   Notation "'for' ( init cond ';)' { body }"
-      := (Sfor (Some init) (Some cond) None body)
+      := (Sfor (Some init) None (Some cond) None body)
          ( in custom CPP_stmt at level 200
          , init custom CPP_stmt at level 200
          , cond custom CPP_expr at level 200
@@ -179,7 +179,7 @@ Module StmtNotations.
          , only printing).
   (* NOTE (JH): init will insert a semicolon since it will be a terminal stmt in realistic ASTs *)
   Notation "'for' ( init ; incr ) { body }"
-      := (Sfor (Some init) None (Some incr) body)
+      := (Sfor (Some init) None None (Some incr) body)
          ( in custom CPP_stmt at level 200
          , init custom CPP_stmt at level 200
          , incr custom CPP_expr at level 200
@@ -187,7 +187,7 @@ Module StmtNotations.
          , format "'[hv' for  ( init ;  incr )  { '//'   body '//' } ']'"
          , only printing).
   Notation "'for' (; cond ; incr ) { body }"
-      := (Sfor None (Some cond) (Some incr) body)
+      := (Sfor None None (Some cond) (Some incr) body)
          ( in custom CPP_stmt at level 200
          , cond custom CPP_expr at level 200
          , incr custom CPP_expr at level 200
@@ -196,7 +196,7 @@ Module StmtNotations.
          , only printing).
   (* NOTE (JH): init will insert a semicolon since it will be a terminal stmt in realistic ASTs *)
   Notation "'for' ( init cond ; incr ) { body }"
-      := (Sfor (Some init) (Some cond) (Some incr) body)
+      := (Sfor (Some init) None (Some cond) (Some incr) body)
          ( in custom CPP_stmt at level 200
          , init custom CPP_stmt at level 200
          , cond custom CPP_expr at level 200

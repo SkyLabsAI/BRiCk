@@ -73,16 +73,13 @@ public:
 
     void VisitForStmt(const ForStmt *stmt, CoqPrinter &print,
                       ClangPrinter &cprint, ASTContext &) {
-        // Sfor has no condition-declaration slot. Dropping this declaration
-        // would let references to its variable resolve to an outer namesake.
-        if (stmt->getConditionVariable()) {
-            guard::ctor _{print, "Sunsupported"};
-            print.str("for condition declaration");
-            return;
-        }
         print.ctor("Sfor");
         print.option(stmt->getInit(), [&](const Stmt *v) {
             cprint.printStmt(print, v);
+        });
+        print.space();
+        print.option(stmt->getConditionVariable(), [&](const VarDecl *v) {
+            cprint.printLocalDecl(print, v);
         });
         print.space();
         print.option(stmt->getCond(), [&](const Expr *v) {

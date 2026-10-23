@@ -461,7 +461,11 @@ with Stmt : Set :=
 | Sif_consteval (_ _ : Stmt)
 
 | Swhile  (_ : option VarDecl) (_ : Expr) (_ : Stmt)
-| Sfor    (_ : option Stmt) (_ : option Expr) (_ : option Expr) (_ : Stmt)
+  (** A declaration condition initializes a fresh variable before every test.
+      The variable is in scope for the test, body, and increment. Its lifetime
+      ends before the next initialization or on loop exit. *)
+| Sfor (init : option Stmt) (decl : option VarDecl) (test incr : option Expr)
+       (body : Stmt)
 | Sdo     (_ : Stmt) (_ : Expr)
 
 | Sswitch (_ : option Stmt) (_ : option VarDecl) (_ : Expr) (_ : Stmt)
@@ -1088,8 +1092,9 @@ with is_dependentS (s : Stmt) : bool :=
       is_dependentS thn || is_dependentS els
   | Swhile ovd e b =>
       option.existsb is_dependentVD ovd || is_dependentE e || is_dependentS b
-  | Sfor os oe1 oe2 s =>
-      option.existsb is_dependentS os || option.existsb is_dependentE oe1 || option.existsb is_dependentE oe2 || is_dependentS s
+  | Sfor os ovd oe1 oe2 s =>
+      option.existsb is_dependentS os || option.existsb is_dependentVD ovd ||
+      option.existsb is_dependentE oe1 || option.existsb is_dependentE oe2 || is_dependentS s
   | Sdo b t => is_dependentS b || is_dependentE t
   | Sswitch os ovd e s =>
       option.existsb is_dependentS os ||

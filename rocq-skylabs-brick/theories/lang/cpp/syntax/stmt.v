@@ -31,7 +31,7 @@ Fixpoint no_case (s : Stmt) : bool :=
   | Sif _ _ _ a b
   | Sif_consteval a b => no_case a && no_case b
   | Swhile _ _ s => no_case s
-  | Sfor _ _ _ s => no_case s
+  | Sfor _ _ _ _ s => no_case s
   | Sdo s _ => no_case s
   | Sattr _ s => no_case s
   | Sswitch _ _ _ _ => true
