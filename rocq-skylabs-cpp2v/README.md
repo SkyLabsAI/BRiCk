@@ -67,6 +67,14 @@ arguments `ARGS`.
 dune exec -- cpp2v ${ARGS}
 ```
 
+## Shared host/Docker execution
+
+The package also installs `cpp2v-run` and `cpp2v-toolchain` for running commands
+and generating command adapters against a common host/container environment.
+They support explicit TU translation, compilation, and executable tests. Inline
+`cpp.prog` translation remains host-only. Docker is opt-in; image choices and
+forwarded environment variables remain consumer configuration. See [scripts/README.md](scripts/README.md).
+
 ## Directory layout
 
 Directories `src` and `include` hold the implementation of the `cpp2v`. The

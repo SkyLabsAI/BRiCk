@@ -1,0 +1,5 @@
+(rule
+ (alias runtest)
+ (package rocq-skylabs-cpp2v)
+ (action
+  (run bash %{dep:toolchain.sh} %{bin:cpp2v-run} %{bin:cpp2v-toolchain})))
