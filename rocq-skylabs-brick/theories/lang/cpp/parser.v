@@ -191,7 +191,10 @@ Module Import translation_unit.
   Definition decls (ds : PArray.array t) (info : abi.t) : translation_unit * dup_info :=
     decls' ds ∅ ∅ [] ∅ [] [] $ fun s t ga a asserts dups =>
         pair {|
-            symbols := List.fold_left (fun t '(n, _) => <[n:=conflict n]> t) dups (NM.from_raw s);
+            (* Discard the accumulated AVL insertion proofs before VM
+               reification; canonicalization preserves the underlying tree. *)
+            symbols := NM.map_canon $
+              List.fold_left (fun t '(n, _) => <[n:=conflict n]> t) dups (NM.from_raw s);
             types := NM.from_raw t;
             namespace_aliases := (Listset (sort.sort ga), NM.from_raw $ NM.Raw.map (fun x => Listset $ sort.sort x) a);
             initializer := nil;	(** TODO *)
