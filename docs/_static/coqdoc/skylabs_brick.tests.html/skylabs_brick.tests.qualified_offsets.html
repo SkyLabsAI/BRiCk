@@ -1,0 +1,122 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.qualified_offsets</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.notations</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.code_notations</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics.types</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.model.inductive_pointers</span>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">PTRS_IMPL</span>.<br/>
+<span class="id" title="keyword">Set</span> <span class="id" title="var">Default</span> <span class="id" title="keyword">Proof</span> <span class="id" title="var">Using</span> "Type*".<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">Z_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Top-level and nested qualifiers must identify the same subscript paths. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Lemma</span> <a id="nested_qualifier_offset" class="idref" href="#nested_qualifier_offset"><span class="id" title="lemma">nested_qualifier_offset</span></a> <a id="037d1dbc1a02d6ef6874dcc89df346e1" class="idref" href="#037d1dbc1a02d6ef6874dcc89df346e1"><span class="id" title="binder">σ</span></a> <a id="i:2" class="idref" href="#i:2"><span class="id" title="binder">i</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#037d1dbc1a02d6ef6874dcc89df346e1"><span class="id" title="variable">σ</span></a> "const int* volatile"%<span class="id" title="var">cpp_type</span> <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#i:2"><span class="id" title="variable">i</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#037d1dbc1a02d6ef6874dcc89df346e1"><span class="id" title="variable">σ</span></a> "int*"%<span class="id" title="var">cpp_type</span> <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#i:2"><span class="id" title="variable">i</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">rewrite</span> -(<span class="id" title="lemma">o_sub_erase</span> σ "const int* volatile"%<span class="id" title="var">cpp_type</span> <span class="id" title="var">i</span>). <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Lemma</span> <a id="mixed_qualifier_subscripts" class="idref" href="#mixed_qualifier_subscripts"><span class="id" title="lemma">mixed_qualifier_subscripts</span></a> <a id="baa46ab95945e710a86e84e8dbcf8141" class="idref" href="#baa46ab95945e710a86e84e8dbcf8141"><span class="id" title="binder">σ</span></a> <a id="ty:4" class="idref" href="#ty:4"><span class="id" title="binder">ty</span></a> <a id="i:5" class="idref" href="#i:5"><span class="id" title="binder">i</span></a> <a id="j:6" class="idref" href="#j:6"><span class="id" title="binder">j</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#baa46ab95945e710a86e84e8dbcf8141"><span class="id" title="variable">σ</span></a> (<span class="id" title="abbreviation">Tconst</span> <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#ty:4"><span class="id" title="variable">ty</span></a>) <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#i:5"><span class="id" title="variable">i</span></a> <span class="id" title="notation">,,</span> <span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#baa46ab95945e710a86e84e8dbcf8141"><span class="id" title="variable">σ</span></a> (<span class="id" title="abbreviation">Tvolatile</span> <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#ty:4"><span class="id" title="variable">ty</span></a>) <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#j:6"><span class="id" title="variable">j</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#baa46ab95945e710a86e84e8dbcf8141"><span class="id" title="variable">σ</span></a> <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#ty:4"><span class="id" title="variable">ty</span></a> (<a class="idref" href="skylabs_brick.tests.qualified_offsets.html#i:5"><span class="id" title="variable">i</span></a> <span class="id" title="notation">+</span> <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#j:6"><span class="id" title="variable">j</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> -(<span class="id" title="lemma">o_sub_erase</span> σ (<span class="id" title="abbreviation">Tconst</span> <span class="id" title="var">ty</span>) <span class="id" title="var">i</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;-(<span class="id" title="lemma">o_sub_erase</span> σ (<span class="id" title="abbreviation">Tvolatile</span> <span class="id" title="var">ty</span>) <span class="id" title="var">j</span>) /= <span class="id" title="lemma">o_dot_sub</span> <span class="id" title="lemma">o_sub_erase</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">done</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Erasure does not identify distinct unqualified element types. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Lemma</span> <a id="distinct_integer_offsets" class="idref" href="#distinct_integer_offsets"><span class="id" title="lemma">distinct_integer_offsets</span></a> <a id="8fe0309a395dd0f70ca736ba68316e70" class="idref" href="#8fe0309a395dd0f70ca736ba68316e70"><span class="id" title="binder">σ</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#8fe0309a395dd0f70ca736ba68316e70"><span class="id" title="variable">σ</span></a> "int"%<span class="id" title="var">cpp_type</span> 1 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;&gt;'_x"><span class="id" title="notation">&lt;&gt;</span></a> <span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#8fe0309a395dd0f70ca736ba68316e70"><span class="id" title="variable">σ</span></a> "unsigned int"%<span class="id" title="var">cpp_type</span> 1.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">discriminate</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The logical void result cell has a defined unit size. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Lemma</span> <a id="qualified_void_zero_offset" class="idref" href="#qualified_void_zero_offset"><span class="id" title="lemma">qualified_void_zero_offset</span></a> <a id="adf3bc8341a90edf65bb756c93872ed9" class="idref" href="#adf3bc8341a90edf65bb756c93872ed9"><span class="id" title="binder">σ</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#adf3bc8341a90edf65bb756c93872ed9"><span class="id" title="variable">σ</span></a> "const void"%<span class="id" title="var">cpp_type</span> 0 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">o_id</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Missing layouts still yield invalid offsets, including a zero index. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Lemma</span> <a id="qualified_missing_layout_zero_offset" class="idref" href="#qualified_missing_layout_zero_offset"><span class="id" title="lemma">qualified_missing_layout_zero_offset</span></a> <a id="72e868d13abb05ece78ff9e6f5f88467" class="idref" href="#72e868d13abb05ece78ff9e6f5f88467"><span class="id" title="binder">σ</span></a> <a id="ty:10" class="idref" href="#ty:10"><span class="id" title="binder">ty</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">size_of</span> <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#72e868d13abb05ece78ff9e6f5f88467"><span class="id" title="variable">σ</span></a> <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#ty:10"><span class="id" title="variable">ty</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#72e868d13abb05ece78ff9e6f5f88467"><span class="id" title="variable">σ</span></a> (<span class="id" title="abbreviation">Tconst</span> <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#ty:10"><span class="id" title="variable">ty</span></a>) 0 <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">o_invalid</span> <a class="idref" href="skylabs_brick.tests.qualified_offsets.html#72e868d13abb05ece78ff9e6f5f88467"><span class="id" title="variable">σ</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">Hsz</span>. <span class="id" title="tactic">rewrite</span> /<span class="id" title="definition">o_sub</span> /= <span class="id" title="lemma">size_of_erase_qualifiers</span> <span class="id" title="var">Hsz</span>. <span class="id" title="var">done</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

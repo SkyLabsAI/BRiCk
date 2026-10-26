@@ -1,0 +1,139 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.pointer_addresses</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.notations</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.code_notations</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics.genv</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics.types</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.model.inductive_pointers</span>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">PTRS_IMPL</span>.<br/>
+<span class="id" title="keyword">Set</span> <span class="id" title="var">Default</span> <span class="id" title="keyword">Proof</span> <span class="id" title="var">Using</span> "Type*".<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="addresses" class="idref" href="#addresses"><span class="id" title="section">addresses</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> {<a id="f3538c3b754159506533df89509c6cfe" class="idref" href="#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a> : <span class="id" title="class">genv</span>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="positive_subscript_address" class="idref" href="#positive_subscript_address"><span class="id" title="lemma">positive_subscript_address</span></a> <a id="aid:2" class="idref" href="#aid:2"><span class="id" title="binder">aid</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">ptr_vaddr</span> (<span class="id" title="definition">alloc_ptr</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#aid:2"><span class="id" title="variable">aid</span></a> 8 <span class="id" title="notation">,,</span> <span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a> "unsigned char"%<span class="id" title="var">cpp_type</span> 2) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 10%<span class="id" title="var">N</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="axiom">_dot.unlock</span> /<span class="id" title="projection">DOT_dot</span> /=. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="negative_subscript_address" class="idref" href="#negative_subscript_address"><span class="id" title="lemma">negative_subscript_address</span></a> <a id="aid:3" class="idref" href="#aid:3"><span class="id" title="binder">aid</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">ptr_vaddr</span> (<span class="id" title="definition">alloc_ptr</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#aid:3"><span class="id" title="variable">aid</span></a> 8 <span class="id" title="notation">,,</span> <span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a> "unsigned char"%<span class="id" title="var">cpp_type</span> (-2)) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 6%<span class="id" title="var">N</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="axiom">_dot.unlock</span> /<span class="id" title="projection">DOT_dot</span> /=. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="subscript_underflow" class="idref" href="#subscript_underflow"><span class="id" title="lemma">subscript_underflow</span></a> <a id="aid:4" class="idref" href="#aid:4"><span class="id" title="binder">aid</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">ptr_vaddr</span> (<span class="id" title="definition">alloc_ptr</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#aid:4"><span class="id" title="variable">aid</span></a> 8 <span class="id" title="notation">,,</span> <span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a> "unsigned char"%<span class="id" title="var">cpp_type</span> (-9)) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="axiom">_dot.unlock</span> /<span class="id" title="projection">DOT_dot</span> /=. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Preserve the existing per-segment underflow checks on the stored path. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="intermediate_underflow" class="idref" href="#intermediate_underflow"><span class="id" title="lemma">intermediate_underflow</span></a> <a id="aid:5" class="idref" href="#aid:5"><span class="id" title="binder">aid</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">ptr_vaddr</span> (<span class="id" title="definition">alloc_ptr</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#aid:5"><span class="id" title="variable">aid</span></a> 8 <span class="id" title="notation">,,</span> <span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a> "signed char"%<span class="id" title="var">cpp_type</span> 9<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">,,</span> <span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a> "unsigned char"%<span class="id" title="var">cpp_type</span> (-9)) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="axiom">_dot.unlock</span> /<span class="id" title="projection">DOT_dot</span> /=. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="missing_layout_no_address" class="idref" href="#missing_layout_no_address"><span class="id" title="lemma">missing_layout_no_address</span></a> <a id="p:6" class="idref" href="#p:6"><span class="id" title="binder">p</span></a> <a id="ty:7" class="idref" href="#ty:7"><span class="id" title="binder">ty</span></a> <a id="i:8" class="idref" href="#i:8"><span class="id" title="binder">i</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">size_of</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#ty:7"><span class="id" title="variable">ty</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">ptr_vaddr</span> (<a class="idref" href="skylabs_brick.tests.pointer_addresses.html#p:6"><span class="id" title="variable">p</span></a> <span class="id" title="notation">,,</span> <span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#ty:7"><span class="id" title="variable">ty</span></a> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#i:8"><span class="id" title="variable">i</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">Hsz</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="definition">ptr_vaddr</span> (<span class="id" title="var">p</span> <span class="id" title="notation">,,</span> <span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a> <span class="id" title="var">ty</span> <span class="id" title="var">i</span>)) <span class="id" title="keyword">as</span> [<span class="id" title="var">va</span>|] <span class="id" title="var">eqn</span>:<span class="id" title="var">E</span>; <span class="id" title="var">last</span> <span class="id" title="var">done</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">exfalso</span>. <span class="id" title="var">have</span> <span class="id" title="var">Hp</span> := <span class="id" title="lemma">ptr_vaddr_defined</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a> <span class="id" title="var">_</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#ex_intro"><span class="id" title="constructor">ex_intro</span></a> <span class="id" title="var">_</span> <span class="id" title="var">va</span> <span class="id" title="var">E</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> (<span class="id" title="lemma">ptr_offset_defined_dot</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a>) <span class="id" title="tactic">in</span> <span class="id" title="var">Hp</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">_</span> <span class="id" title="var">Hsub</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">have</span> [<span class="id" title="var">sz</span> <span class="id" title="var">Hsz'</span>] := <span class="id" title="lemma">eval_o_sub_defined</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a> <span class="id" title="var">ty</span> <span class="id" title="var">i</span> <span class="id" title="var">Hsub</span>. <span class="id" title="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+An invalid prefix cannot recover an address by discarding later offsets. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="missing_layout_prefix_no_address" class="idref" href="#missing_layout_prefix_no_address"><span class="id" title="lemma">missing_layout_prefix_no_address</span></a> (<a id="p:9" class="idref" href="#p:9"><span class="id" title="binder">p</span></a> : <span class="id" title="definition">ptr</span>) <a id="ty:10" class="idref" href="#ty:10"><span class="id" title="binder">ty</span></a> <a id="i:11" class="idref" href="#i:11"><span class="id" title="binder">i</span></a> (<a id="o:12" class="idref" href="#o:12"><span class="id" title="binder">o</span></a> : <span class="id" title="definition">offset</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">size_of</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#ty:10"><span class="id" title="variable">ty</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">ptr_vaddr</span> (<a class="idref" href="skylabs_brick.tests.pointer_addresses.html#p:9"><span class="id" title="variable">p</span></a> <span class="id" title="notation">,,</span> <span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#ty:10"><span class="id" title="variable">ty</span></a> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#i:11"><span class="id" title="variable">i</span></a> <span class="id" title="notation">,,</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#o:12"><span class="id" title="variable">o</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">Hsz</span>. <span class="id" title="tactic">destruct</span> (<span class="id" title="definition">ptr_vaddr</span> (<span class="id" title="var">p</span> <span class="id" title="notation">,,</span> <span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a> <span class="id" title="var">ty</span> <span class="id" title="var">i</span> <span class="id" title="notation">,,</span> <span class="id" title="var">o</span>)) <span class="id" title="keyword">as</span> [<span class="id" title="var">va</span>|] <span class="id" title="var">eqn</span>:<span class="id" title="var">E</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">last</span> <span class="id" title="var">done</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">exfalso</span>. <span class="id" title="var">have</span> <span class="id" title="var">Hp</span> := <span class="id" title="lemma">ptr_vaddr_defined</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a> <span class="id" title="var">_</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#ex_intro"><span class="id" title="constructor">ex_intro</span></a> <span class="id" title="var">_</span> <span class="id" title="var">va</span> <span class="id" title="var">E</span>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> (<span class="id" title="lemma">ptr_offset_defined_dot</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a>) <span class="id" title="tactic">in</span> <span class="id" title="var">Hp</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">Hp</span> <span class="id" title="var">_</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> (<span class="id" title="lemma">ptr_offset_defined_dot</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a>) <span class="id" title="tactic">in</span> <span class="id" title="var">Hp</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">_</span> <span class="id" title="var">Hsub</span>].<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">have</span> [<span class="id" title="var">sz</span> <span class="id" title="var">Hsz'</span>] := <span class="id" title="lemma">eval_o_sub_defined</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a> <span class="id" title="var">ty</span> <span class="id" title="var">i</span> <span class="id" title="var">Hsub</span>. <span class="id" title="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The positive-size premise of address injectivity is necessary. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="zero_sized_subscripts_share_address" class="idref" href="#zero_sized_subscripts_share_address"><span class="id" title="lemma">zero_sized_subscripts_share_address</span></a> <a id="aid:13" class="idref" href="#aid:13"><span class="id" title="binder">aid</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">ptr_vaddr</span> (<span class="id" title="definition">alloc_ptr</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#aid:13"><span class="id" title="variable">aid</span></a> 8 <span class="id" title="notation">,,</span> <span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a> "unsigned char[0]"%<span class="id" title="var">cpp_type</span> 1) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 8%<span class="id" title="var">N</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">ptr_vaddr</span> (<span class="id" title="definition">alloc_ptr</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#aid:13"><span class="id" title="variable">aid</span></a> 8 <span class="id" title="notation">,,</span> <span class="id" title="definition">o_sub</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#f3538c3b754159506533df89509c6cfe"><span class="id" title="variable">σ</span></a> "unsigned char[0]"%<span class="id" title="var">cpp_type</span> 2) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 8%<span class="id" title="var">N</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="axiom">_dot.unlock</span> /<span class="id" title="projection">DOT_dot</span> /=. <span class="id" title="tactic">split</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_brick.tests.pointer_addresses.html#addresses"><span class="id" title="section">addresses</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

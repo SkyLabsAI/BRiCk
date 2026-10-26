@@ -1,0 +1,100 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.model2_pointer_countability</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.gmap.html#"><span class="id" title="library">stdpp.gmap</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.model.inductive_pointers2</span>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">inductive_pointers2.PTRS_IMPL</span>.<br/>
+<span class="id" title="keyword">Set</span> <span class="id" title="var">Default</span> <span class="id" title="keyword">Proof</span> <span class="id" title="var">Using</span> "Type*".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Finite maps distinguish absence of a pointer from a null pointer. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Lemma</span> <a id="invalid_null_keys_distinct" class="idref" href="#invalid_null_keys_distinct"><span class="id" title="lemma">invalid_null_keys_distinct</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="null:1" class="idref" href="#null:1"><span class="id" title="binder">null</span></a> := <span class="id" title="constructor">offset_ptr</span> <span class="id" title="constructor">nullptr_</span> <span class="id" title="definition">o_id</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="cells:2" class="idref" href="#cells:2"><span class="id" title="binder">cells</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.gmap.html#gmap"><span class="id" title="record">gmap</span></a> <span class="id" title="definition">ptr</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> := <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#37a2c892720a610d69547926e5ba502d"><span class="id" title="notation">&lt;[</span></a><a class="idref" href="skylabs_brick.tests.model2_pointer_countability.html#null:1"><span class="id" title="variable">null</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#37a2c892720a610d69547926e5ba502d"><span class="id" title="notation">:=</span></a> 2%<span class="id" title="var">nat</span><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#37a2c892720a610d69547926e5ba502d"><span class="id" title="notation">]&gt;</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#37a2c892720a610d69547926e5ba502d"><span class="id" title="notation">{[</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#37a2c892720a610d69547926e5ba502d"><span class="id" title="notation">invalid_ptr_</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#37a2c892720a610d69547926e5ba502d"><span class="id" title="notation">:=</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#37a2c892720a610d69547926e5ba502d"><span class="id" title="notation">1%</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#37a2c892720a610d69547926e5ba502d"><span class="id" title="notation">nat</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#37a2c892720a610d69547926e5ba502d"><span class="id" title="notation">]}</span></a> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.model2_pointer_countability.html#cells:2"><span class="id" title="variable">cells</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <span class="id" title="constructor">invalid_ptr_</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 1%<span class="id" title="var">nat</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <a class="idref" href="skylabs_brick.tests.model2_pointer_countability.html#cells:2"><span class="id" title="variable">cells</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs_brick.tests.model2_pointer_countability.html#null:1"><span class="id" title="variable">null</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 2%<span class="id" title="var">nat</span>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">cbn</span> <span class="id" title="keyword">zeta</span>. <span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">rewrite</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.fin_maps.html#lookup_insert_ne"><span class="id" title="lemma">lookup_insert_ne</span></a>; [<span class="id" title="tactic">apply</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.fin_maps.html#lookup_singleton_eq"><span class="id" title="lemma">lookup_singleton_eq</span></a>|<span class="id" title="tactic">discriminate</span>].<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.fin_maps.html#lookup_insert_eq"><span class="id" title="lemma">lookup_insert_eq</span></a>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Equal numeric addresses do not merge distinct allocations in a map. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Lemma</span> <a id="allocation_provenance_keys_distinct" class="idref" href="#allocation_provenance_keys_distinct"><span class="id" title="lemma">allocation_provenance_keys_distinct</span></a> <a id="aid1:3" class="idref" href="#aid1:3"><span class="id" title="binder">aid1</span></a> <a id="aid2:4" class="idref" href="#aid2:4"><span class="id" title="binder">aid2</span></a> <a id="va:5" class="idref" href="#va:5"><span class="id" title="binder">va</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.model2_pointer_countability.html#aid1:3"><span class="id" title="variable">aid1</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;&gt;'_x"><span class="id" title="notation">&lt;&gt;</span></a> <a class="idref" href="skylabs_brick.tests.model2_pointer_countability.html#aid2:4"><span class="id" title="variable">aid2</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="p1:6" class="idref" href="#p1:6"><span class="id" title="binder">p1</span></a> := <span class="id" title="constructor">offset_ptr</span> (<span class="id" title="constructor">alloc_ptr_</span> <a class="idref" href="skylabs_brick.tests.model2_pointer_countability.html#aid1:3"><span class="id" title="variable">aid1</span></a> <a class="idref" href="skylabs_brick.tests.model2_pointer_countability.html#va:5"><span class="id" title="variable">va</span></a>) <span class="id" title="definition">o_id</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="p2:7" class="idref" href="#p2:7"><span class="id" title="binder">p2</span></a> := <span class="id" title="constructor">offset_ptr</span> (<span class="id" title="constructor">alloc_ptr_</span> <a class="idref" href="skylabs_brick.tests.model2_pointer_countability.html#aid2:4"><span class="id" title="variable">aid2</span></a> <a class="idref" href="skylabs_brick.tests.model2_pointer_countability.html#va:5"><span class="id" title="variable">va</span></a>) <span class="id" title="definition">o_id</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="cells:8" class="idref" href="#cells:8"><span class="id" title="binder">cells</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.gmap.html#gmap"><span class="id" title="record">gmap</span></a> <span class="id" title="definition">ptr</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a> := <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#37a2c892720a610d69547926e5ba502d"><span class="id" title="notation">&lt;[</span></a><a class="idref" href="skylabs_brick.tests.model2_pointer_countability.html#p2:7"><span class="id" title="variable">p2</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#37a2c892720a610d69547926e5ba502d"><span class="id" title="notation">:=</span></a> 2%<span class="id" title="var">nat</span><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#37a2c892720a610d69547926e5ba502d"><span class="id" title="notation">]&gt;</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#37a2c892720a610d69547926e5ba502d"><span class="id" title="notation">{[</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#37a2c892720a610d69547926e5ba502d"><span class="id" title="notation">p1</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#37a2c892720a610d69547926e5ba502d"><span class="id" title="notation">:=</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#37a2c892720a610d69547926e5ba502d"><span class="id" title="notation">1%</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#37a2c892720a610d69547926e5ba502d"><span class="id" title="notation">nat</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#37a2c892720a610d69547926e5ba502d"><span class="id" title="notation">]}</span></a> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.model2_pointer_countability.html#cells:8"><span class="id" title="variable">cells</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs_brick.tests.model2_pointer_countability.html#p1:6"><span class="id" title="variable">p1</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 1%<span class="id" title="var">nat</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <a class="idref" href="skylabs_brick.tests.model2_pointer_countability.html#cells:8"><span class="id" title="variable">cells</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs_brick.tests.model2_pointer_countability.html#p2:7"><span class="id" title="variable">p2</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 2%<span class="id" title="var">nat</span>.<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">Hneq</span>. <span class="id" title="var">cbn</span> <span class="id" title="keyword">zeta</span>. <span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">rewrite</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.fin_maps.html#lookup_insert_ne"><span class="id" title="lemma">lookup_insert_ne</span></a>; <span class="id" title="tactic">first</span> <span class="id" title="tactic">apply</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.fin_maps.html#lookup_singleton_eq"><span class="id" title="lemma">lookup_singleton_eq</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">Hsame</span>. <span class="id" title="tactic">injection</span> <span class="id" title="var">Hsame</span> <span class="id" title="keyword">as</span> <span class="id" title="var">Hsame</span>. <span class="id" title="tactic">congruence</span>.<br/>
+&nbsp;&nbsp;- <span class="id" title="tactic">apply</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.fin_maps.html#lookup_insert_eq"><span class="id" title="lemma">lookup_insert_eq</span></a>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
