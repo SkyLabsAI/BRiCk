@@ -180,6 +180,10 @@ has_arg CUSTOM_TEST_SETTING
 expect_not has_arg NOT_SET_FOR_THIS_TEST
 expect_not has_arg PATH
 expect_status 17 "$env" MOCK_STATUS=17 "$adapter" input.cpp
+# Compiler arguments do not change the selected execution environment.
+expect_status 0 "$adapter" input.cpp -stdlib=libc++
+read_args
+[[ ${argv[0]} == docker ]]
 cp "$adapter" "$tmp/before"
 export MOCK_IMAGE_ID=sha256:second
 "$bash" "$factory" configure --image test-image --platform linux/amd64 --opam > "$config"
@@ -255,30 +259,27 @@ expect_status 0 "$adapter" -c input.cpp -o output.o
 read_args
 has_arg clang++
 
-# Selective mode uses compilation flags for runtime commands, not test arguments.
-export CPP2V_DOCKER_ENABLED=if-libstdc++
-"$bash" "$factory" configure --image test-image > "$config"
+# Explicit native mode also ignores compiler arguments when choosing a backend.
+export CPP2V_DOCKER_ENABLED=n
+"$bash" "$factory" configure > "$config"
 make_adapter
-expect_status 0 "$adapter" input.cpp
-read_args
-[[ ${argv[0]} == cpp2v ]]
-expect_status 0 "$adapter" input.cpp -stdlib=libstdc++
-read_args
-[[ ${argv[0]} == docker ]]
-printf '%s\n' -std=c++20 -stdlib=libstdc++ > "$tmp/flags"
-expect_status 0 "$bash" "$runner" --config "$config" --flags-file "$tmp/flags" -- "$host" -stdlib=libc++
-read_args
-[[ ${argv[0]} == docker ]]
-printf '%s\n' -std=c++20 -stdlib=libc++ > "$tmp/flags"
-expect_status 0 "$bash" "$runner" --config "$config" --flags-file "$tmp/flags" -- "$host" -stdlib=libstdc++
-read_args
-[[ ${argv[0]} == cpp2v ]]
+for flag in -stdlib=libstdc++ -stdlib=libc++; do
+    expect_status 0 "$adapter" input.cpp "$flag"
+    read_args
+    [[ ${argv[0]} == cpp2v ]]
+done
 # Executable lookup must ignore shell builtins with the same name.
 "$bash" "$factory" wrapper --runner "$runner" --config "$config" \
     --host-tool true --container-tool true > "$adapter"
 chmod +x "$adapter"
 expect_status 0 "$adapter"
 expect_status 2 "$env" CPP2V_DOCKER_ENABLED=yes "$bash" "$factory" configure
+# Removed interfaces must fail, including legacy configurations on disk.
+expect_status 2 "$env" CPP2V_DOCKER_ENABLED=if-libstdc++ "$bash" "$factory" configure
+cp "$config" "$tmp/legacy-config"
+printf 'cpp_env_mode=%q\n' if-libstdc++ >> "$tmp/legacy-config"
+expect_status 2 "$bash" "$runner" --config "$tmp/legacy-config" -- "$host"
+expect_status 2 "$bash" "$runner" --config "$config" --flags-file "$tmp/unused-flags" -- "$host"
 expect_status 2 "$bash" "$factory" configure --image
 expect_status 2 "$bash" "$factory" configure --default-image
 expect_status 2 "$bash" "$runner" --config "$tmp/missing" -- "$host"

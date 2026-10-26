@@ -44,7 +44,7 @@ case "$command" in
             esac
         done
         mode=${CPP2V_DOCKER_ENABLED-n}
-        case "$mode" in n|y|if-libstdc++) ;; *) fail "CPP2V_DOCKER_ENABLED must be n, y, or if-libstdc++" ;; esac
+        case "$mode" in n|y) ;; *) fail "CPP2V_DOCKER_ENABLED must be n or y" ;; esac
         # Explicit --image > environment > consumer default, even for empty values.
         if [[ $image_set == n ]]; then image=${CPP2V_DOCKER_IMAGE-$default_image}; fi
         image_ref=$image

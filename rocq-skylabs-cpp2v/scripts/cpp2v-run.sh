@@ -6,19 +6,17 @@ fail() { echo "cpp2v-run: $*" >&2; exit 2; }
 config=
 host_tool=
 container_tool=
-flags_file=
 workspace=
 forward=()
 extra_mounts=()
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --config|--host-tool|--container-tool|--flags-file|--workspace|--env|--mount)
+        --config|--host-tool|--container-tool|--workspace|--env|--mount)
             [[ $# -ge 2 ]] || fail "missing value for $1"
             case "$1" in
                 --config) config=$2 ;;
                 --host-tool) host_tool=$2 ;;
                 --container-tool) container_tool=$2 ;;
-                --flags-file) flags_file=$2 ;;
                 --workspace) workspace=$2 ;;
                 --env)
                     [[ $2 =~ ^[a-zA-Z_][a-zA-Z_0-9]*$ ]] || fail "invalid environment variable: $2"
@@ -50,25 +48,11 @@ else
     shift
 fi
 
-enabled=$cpp_env_mode
-case "$enabled" in
-    n|y) ;;
-    if-libstdc++)
-        enabled=n
-        if [[ -n $flags_file ]]; then
-            [[ -r $flags_file ]] || fail "cannot read flags file: $flags_file"
-            if grep -Fxq -- '-stdlib=libstdc++' "$flags_file"; then enabled=y; fi
-        else
-            for arg in "$@"; do
-                if [[ $arg == -stdlib=libstdc++ ]]; then enabled=y; break; fi
-            done
-        fi
-        ;;
-    *) fail "invalid toolchain mode: $enabled" ;;
+case "$cpp_env_mode" in
+    n) exec "$host_tool" "$@" ;;
+    y) ;;
+    *) fail "invalid toolchain mode: $cpp_env_mode" ;;
 esac
-if [[ $enabled == n ]]; then
-    exec "$host_tool" "$@"
-fi
 
 command -v docker >/dev/null 2>&1 || fail "Docker is required by the selected toolchain"
 [[ -n $cpp_env_image ]] || fail "the selected toolchain has no Docker image"

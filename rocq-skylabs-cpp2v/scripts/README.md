@@ -20,8 +20,9 @@ cpp2v-toolchain configure --default-image IMAGE --platform linux/amd64 --opam > 
 Docker is opt-in. `CPP2V_DOCKER_ENABLED` accepts:
 
 - unset or `n`: use host commands without contacting Docker;
-- `y`: use the selected container image;
-- `if-libstdc++`: use Docker only for arguments containing `-stdlib=libstdc++`.
+- `y`: use the selected container image.
+
+The selected mode applies to every command; compiler flags do not affect it.
 
 Image selection uses this precedence, independent of option order:
 
@@ -117,12 +118,8 @@ Invoke the adapter explicitly, or call the runner directly:
 ```sh
 cpp2v-run --config cpp-environment -- clang++ -c source.cpp -o source.o
 cpp2v-run --config cpp-environment -- python3 check.py
-cpp2v-run --config cpp-environment --flags-file cxx.flags -- ./tests
+cpp2v-run --config cpp-environment -- ./tests
 ```
-
-`--flags-file` selects the runtime in `if-libstdc++` mode using the flags that built
-the program, rather than interpreting test arguments as compiler flags. Otherwise
-arguments after the command select the selective mode.
 
 Add individual environment variables at the call site:
 
