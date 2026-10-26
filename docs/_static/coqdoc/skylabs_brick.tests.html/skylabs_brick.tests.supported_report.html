@@ -1,0 +1,276 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.supported_report</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.bi.errors</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.logic</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax.supported</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab14"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">supported.report</span></span>: one case per status and per failure</h1>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">source</span> <span class="id" title="var">flags</span> "-std=c++20 --target=x86_64-linux-gnu" <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">Bits</span> { <span class="id" title="var">int</span> <span class="id" title="var">a</span> : 3; };<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">HasBits</span> { <span class="id" title="var">Bits</span> <span class="id" title="var">b</span>; };<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">Node</span> { <span class="id" title="var">Node</span> *<span class="id" title="var">next</span>; <span class="id" title="var">Bits</span> *<span class="id" title="var">bits</span>; };<br/>
+<span class="id" title="var">union</span> <span class="id" title="var">U</span> { <span class="id" title="var">int</span> <span class="id" title="var">i</span>; <span class="id" title="var">char</span> <span class="id" title="var">c</span>; };<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">Anon</span> { <span class="id" title="var">union</span> { <span class="id" title="var">int</span> <span class="id" title="var">x</span>; <span class="id" title="var">char</span> <span class="id" title="var">y</span>; }; <span class="id" title="var">Anon</span>() : <span class="id" title="var">x</span>(1) {} };<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">Base</span> { <span class="id" title="var">virtual</span> ~<span class="id" title="var">Base</span>(); };<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">Derived</span> : <span class="id" title="var">Base</span> {};<br/>
+<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">by_value</span>(<span class="id" title="var">Bits</span> <span class="id" title="var">b</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">b.a</span>; }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">by_pointer</span>(<span class="id" title="var">Bits</span> *<span class="id" title="var">b</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">b</span> == <span class="id" title="var">nullptr</span>; }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">through_field</span>(<span class="id" title="var">HasBits</span> *<span class="id" title="var">h</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">h</span>-&gt;<span class="id" title="var">b.a</span>; }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">linked</span>(<span class="id" title="var">Node</span> <span class="id" title="var">n</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">n.next</span> == <span class="id" title="var">nullptr</span>; }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">static_local</span>() { <span class="id" title="var">static</span> <span class="id" title="var">int</span> <span class="id" title="var">x</span> = 0; <span class="id" title="keyword">return</span> <span class="id" title="var">x</span>; }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">calls_static_local</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">static_local</span>(); }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">use_union</span>(<span class="id" title="var">U</span> <span class="id" title="var">u</span>) { <span class="id" title="var">u.c</span> = 1; <span class="id" title="keyword">return</span> <span class="id" title="var">u.i</span>; }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">arrow_union</span>(<span class="id" title="var">U</span> *<span class="id" title="var">u</span>) { <span class="id" title="var">u</span>-&gt;<span class="id" title="var">c</span> = 1; <span class="id" title="keyword">return</span> 0; }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">arrow_bits</span>(<span class="id" title="var">Bits</span> *<span class="id" title="var">b</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">b</span>-&gt;<span class="id" title="var">a</span>; }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">take_bits</span>(<span class="id" title="var">Bits</span> <span class="id" title="var">b</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">b.a</span>; }<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">address_only</span>() { <span class="id" title="tactic">auto</span> <span class="id" title="var">p</span> = &amp;<span class="id" title="var">take_bits</span>; (<span class="id" title="var">void</span>)<span class="id" title="var">p</span>; }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">call_through</span>(<span class="id" title="var">Bits</span> *<span class="id" title="var">b</span>) { <span class="id" title="tactic">auto</span> <span class="id" title="var">p</span> = &amp;<span class="id" title="var">take_bits</span>; <span class="id" title="keyword">return</span> <span class="id" title="var">p</span>( *<span class="id" title="var">b</span>); }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">read_volatile</span>(<span class="id" title="var">volatile</span> <span class="id" title="var">int</span> *<span class="id" title="var">p</span>) { <span class="id" title="keyword">return</span> *<span class="id" title="var">p</span>; }<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">volatile_local</span>() { <span class="id" title="var">volatile</span> <span class="id" title="var">int</span> <span class="id" title="var">x</span> = 0; (<span class="id" title="var">void</span>)<span class="id" title="var">x</span>; }<br/>
+<span class="id" title="var">bool</span> <span class="id" title="var">dyn</span>(<span class="id" title="var">Base</span> *<span class="id" title="var">b</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">dynamic_cast</span>&lt;<span class="id" title="var">Derived</span> *&gt;(<span class="id" title="var">b</span>) != <span class="id" title="var">nullptr</span>; }<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">inline_asm</span>() { <span class="id" title="var">asm</span>("nop"); }<br/>
+<span class="id" title="var">bool</span> <span class="id" title="var">cas_ptr</span>(<span class="id" title="var">int</span> **<span class="id" title="var">p</span>, <span class="id" title="var">int</span> **<span class="id" title="var">e</span>, <span class="id" title="var">int</span> *<span class="id" title="var">d</span>) {<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">return</span> <span class="id" title="var">__atomic_compare_exchange_n</span>(<span class="id" title="var">p</span>, <span class="id" title="var">e</span>, <span class="id" title="var">d</span>, <span class="id" title="var">false</span>, 5, 5);<br/>
+}<br/>
+<span class="id" title="var">bool</span> <span class="id" title="var">cas_int</span>(<span class="id" title="var">int</span> *<span class="id" title="var">p</span>, <span class="id" title="var">int</span> *<span class="id" title="var">e</span>, <span class="id" title="var">int</span> <span class="id" title="var">d</span>) {<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">return</span> <span class="id" title="var">__atomic_compare_exchange_n</span>(<span class="id" title="var">p</span>, <span class="id" title="var">e</span>, <span class="id" title="var">d</span>, <span class="id" title="var">false</span>, 5, 5);<br/>
+}<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">overloaded</span>(<span class="id" title="var">int</span> <span class="id" title="var">x</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">x</span>; }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">overloaded</span>(<span class="id" title="var">long</span> <span class="id" title="var">x</span>) { <span class="id" title="keyword">return</span> (<span class="id" title="var">int</span>)<span class="id" title="var">x</span>; }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">unknown_builtin</span>(<span class="id" title="var">unsigned</span> <span class="id" title="var">x</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">__builtin_popcount</span>(<span class="id" title="var">x</span>); }<br/>
+<span class="id" title="var">long</span> <span class="id" title="var">known_builtin</span>(<span class="id" title="var">long</span> <span class="id" title="var">x</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">__builtin_expect</span>(<span class="id" title="var">x</span>, 0); }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">flat_switch</span>(<span class="id" title="var">int</span> <span class="id" title="var">x</span>) { <span class="id" title="var">switch</span> (<span class="id" title="var">x</span>) { <span class="id" title="tactic">case</span> 0: <span class="id" title="keyword">return</span> 1; <span class="id" title="var">default</span>: <span class="id" title="keyword">return</span> 0; } }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">nested_case</span>(<span class="id" title="var">int</span> <span class="id" title="var">x</span>) { <span class="id" title="var">switch</span> (<span class="id" title="var">x</span>) { <span class="id" title="tactic">case</span> 0: { <span class="id" title="tactic">case</span> 1: <span class="id" title="keyword">return</span> 1; } <span class="id" title="var">default</span>: <span class="id" title="keyword">return</span> 0; } }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">case_after_decl</span>(<span class="id" title="var">int</span> <span class="id" title="var">x</span>) { <span class="id" title="var">switch</span> (<span class="id" title="var">x</span>) { <span class="id" title="tactic">case</span> 0: <span class="id" title="var">int</span> <span class="id" title="var">y</span>; <span class="id" title="var">y</span> = 1; <span class="id" title="keyword">return</span> <span class="id" title="var">y</span>; <span class="id" title="tactic">case</span> 1: <span class="id" title="keyword">return</span> 1; } <span class="id" title="keyword">return</span> 0; }<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <span class="id" title="definition">supported.report.run</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#source"><span class="id" title="definition">source</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="notation">[</span> "by_value(Bits)"<span class="id" title="notation">;</span> "by_pointer(Bits*)"<span class="id" title="notation">;</span> "through_field(HasBits*)"<span class="id" title="notation">;</span> "linked(Node)"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "static_local()"<span class="id" title="notation">;</span> "calls_static_local()"<span class="id" title="notation">;</span> "use_union(U)"<span class="id" title="notation">;</span> "arrow_union(U*)"<span class="id" title="notation">;</span> "arrow_bits(Bits*)"<span class="id" title="notation">;</span> "address_only()"<span class="id" title="notation">;</span> "call_through(Bits*)"<span class="id" title="notation">;</span> "read_volatile(volatile int*)"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "volatile_local()"<span class="id" title="notation">;</span> "dyn(Base*)"<span class="id" title="notation">;</span> "inline_asm()"<span class="id" title="notation">;</span> "cas_ptr(int**, int**, int*)"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "cas_int(int*, int*, int)"<span class="id" title="notation">;</span> "overloaded(int)"<span class="id" title="notation">;</span> "overloaded(long)"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "unknown_builtin(unsigned int)"<span class="id" title="notation">;</span> "known_builtin(long)"<span class="id" title="notation">;</span> "flat_switch(int)"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "nested_case(int)"<span class="id" title="notation">;</span> "case_after_decl(int)"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "Anon::Anon()"<span class="id" title="notation">;</span> "Bits"<span class="id" title="notation">;</span> "HasBits"<span class="id" title="notation">;</span> "Node"<span class="id" title="notation">;</span> "U"<span class="id" title="notation">;</span> "missing()" <span class="id" title="notation">]</span>%<span class="id" title="var">pstring</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">check</span></span> keeps only <span class="inlinecode"><span class="id" title="var">Unsupported</span></span> gaps. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <span class="id" title="definition">supported.check.translation_unit</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#source"><span class="id" title="definition">source</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab15"></a><h1 class="section">The semantics gets stuck where <span class="inlinecode"><span class="id" title="definition">supported</span></span> fails</h1>
+
+
+<div class="paragraph"> </div>
+
+    Statements are cut short: these listings guard against rules being added or
+    removed, not against their exact shape. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Set</span> <span class="id" title="keyword">Printing</span> <span class="id" title="var">Depth</span> 5.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Every <span class="inlinecode"><span class="id" title="abbreviation">UNSUPPORTED</span></span> in the semantics. A new one may need a <span class="inlinecode"><span class="id" title="var">Fail</span></span> in
+    <span class="inlinecode"><span class="id" title="var">supported.v</span></span>. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Search</span> <span class="id" title="abbreviation">UNSUPPORTED</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+No rule: inline assembly, <span class="inlinecode"><span class="id" title="var">dynamic_cast</span></span>, lvalue bitcasts, unsupported casts. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Search</span> <span class="id" title="constructor">Sasm</span> -"_ind" -"_rec" -"_rect" -"_sind".<br/>
+<span class="id" title="keyword">Search</span> <span class="id" title="constructor">Cdynamic</span> -"_ind" -"_rec" -"_rect" -"_sind".<br/>
+<span class="id" title="keyword">Search</span> <span class="id" title="constructor">Clvaluebitcast</span> -"_ind" -"_rec" -"_rect" -"_sind".<br/>
+<span class="id" title="keyword">Search</span> <span class="id" title="constructor">Cunsupported</span> -"_ind" -"_rec" -"_rect" -"_sind".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Nothing establishes <span class="inlinecode"><span class="id" title="axiom">static_initialized</span></span>, which static locals need. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Search</span> <span class="id" title="axiom">static_initialized</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Compare-exchange has rules for integers and booleans only. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Search</span> "compare_exchange".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Changing a union's active member has no rule. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Locate</span> <span class="id" title="var">union_change</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Each remaining <span class="inlinecode"><span class="id" title="var">Gap</span></span> <span class="inlinecode"><span class="id" title="var">Unsupported</span></span> in <span class="inlinecode"><span class="id" title="var">supported.v</span></span> mirrors one of these. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="stuck" class="idref" href="#stuck"><span class="id" title="section">stuck</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{<a id="e339553b58843e8448b6d0529b1893fb" class="idref" href="#e339553b58843e8448b6d0529b1893fb"><span class="id" title="variable">Σ</span></a> : <span class="id" title="class">cpp_logic</span>} {<a id="7fdb43e7bdd3e0ed6621d038f10ec134" class="idref" href="#7fdb43e7bdd3e0ed6621d038f10ec134"><span class="id" title="variable">σ</span></a> : <span class="id" title="class">genv</span>} (<a id="stuck.tu" class="idref" href="#stuck.tu"><span class="id" title="variable">tu</span></a> : <span class="id" title="record">translation_unit</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="constructor">Defaulted</span></span> bodies: methods and constructors, not destructors. <span class="inlinecode"><span class="id" title="var">report</span></span>
+      fails a queried one; others are unused, as cpp2v elaborates used ones. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="defaulted_method" class="idref" href="#defaulted_method"><span class="id" title="definition">defaulted_method</span></a> (<a id="m:6" class="idref" href="#m:6"><span class="id" title="binder">m</span></a> : <span class="id" title="abbreviation">Method</span>) <a id="args:7" class="idref" href="#args:7"><span class="id" title="binder">args</span></a> <a id="Q:8" class="idref" href="#Q:8"><span class="id" title="binder">Q</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.supported_report.html#m:6"><span class="id" title="variable">m</span></a>.(<span class="id" title="projection">m_body</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="constructor">Defaulted</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">wp_method</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#stuck.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#m:6"><span class="id" title="variable">m</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#args:7"><span class="id" title="variable">args</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#Q:8"><span class="id" title="variable">Q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="abbreviation">UNSUPPORTED</span> "wp_method: defaulted methods"%<span class="id" title="var">bs</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="axiom">wp_method.unlock</span> /=. <span class="id" title="tactic">by</span> <span class="id" title="tactic">case</span>: (<span class="id" title="projection">m_body</span> <span class="id" title="var">m</span>) =&gt; [[]|]. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="defaulted_ctor" class="idref" href="#defaulted_ctor"><span class="id" title="definition">defaulted_ctor</span></a> (<a id="c:9" class="idref" href="#c:9"><span class="id" title="binder">c</span></a> : <span class="id" title="abbreviation">Ctor</span>) <a id="args:10" class="idref" href="#args:10"><span class="id" title="binder">args</span></a> <a id="Q:11" class="idref" href="#Q:11"><span class="id" title="binder">Q</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.supported_report.html#c:9"><span class="id" title="variable">c</span></a>.(<span class="id" title="projection">c_body</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="constructor">Defaulted</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">wp_ctor</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#stuck.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#c:9"><span class="id" title="variable">c</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#args:10"><span class="id" title="variable">args</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#Q:11"><span class="id" title="variable">Q</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="abbreviation">UNSUPPORTED</span> "wp_ctor: defaulted constructors"%<span class="id" title="var">bs</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="axiom">wp_ctor.unlock</span> /=. <span class="id" title="tactic">by</span> <span class="id" title="tactic">case</span>: (<span class="id" title="projection">c_body</span> <span class="id" title="var">c</span>) =&gt; [[]|]. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Indirect member initialization (members of anonymous structs/unions). 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="indirect_init" class="idref" href="#indirect_init"><span class="id" title="definition">indirect_init</span></a> <a id="e024d34e0c5146c8d00101c83855eeda" class="idref" href="#e024d34e0c5146c8d00101c83855eeda"><span class="id" title="binder">ρ</span></a> <a id="cls:13" class="idref" href="#cls:13"><span class="id" title="binder">cls</span></a> <a id="this:14" class="idref" href="#this:14"><span class="id" title="binder">this</span></a> (<a id="m:15" class="idref" href="#m:15"><span class="id" title="binder">m</span></a> : <span class="id" title="abbreviation">Member</span>) <a id="ms:16" class="idref" href="#ms:16"><span class="id" title="binder">ms</span></a> <a id="x:17" class="idref" href="#x:17"><span class="id" title="binder">x</span></a> <a id="path:18" class="idref" href="#path:18"><span class="id" title="binder">path</span></a> <a id="f:19" class="idref" href="#f:19"><span class="id" title="binder">f</span></a> <a id="e:20" class="idref" href="#e:20"><span class="id" title="binder">e</span></a> <a id="Q:21" class="idref" href="#Q:21"><span class="id" title="binder">Q</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">wpi_members</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#stuck.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#e024d34e0c5146c8d00101c83855eeda"><span class="id" title="variable">ρ</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#cls:13"><span class="id" title="variable">cls</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#this:14"><span class="id" title="variable">this</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">[{|</span> <span class="id" title="projection">init_path</span> := <span class="id" title="constructor">InitIndirect</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><a class="idref" href="skylabs_brick.tests.supported_report.html#m:15"><span class="id" title="variable">m</span></a>.(<span class="id" title="projection">mem_name</span>)<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#x:17"><span class="id" title="variable">x</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#path:18"><span class="id" title="variable">path</span></a>) <a class="idref" href="skylabs_brick.tests.supported_report.html#f:19"><span class="id" title="variable">f</span></a>; <span class="id" title="projection">init_init</span> := <a class="idref" href="skylabs_brick.tests.supported_report.html#e:20"><span class="id" title="variable">e</span></a> <span class="id" title="notation">|}]</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="skylabs_brick.tests.supported_report.html#m:15"><span class="id" title="variable">m</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#ms:16"><span class="id" title="variable">ms</span></a>) <a class="idref" href="skylabs_brick.tests.supported_report.html#Q:21"><span class="id" title="variable">Q</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#e55eb026c3f0434cd18ddc04e5d7c1ac"><span class="id" title="notation">⊢</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#::bi_scope:'False'"><span class="id" title="notation">False</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">rewrite</span> /= <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.decidable.html#bool_decide_true"><span class="id" title="abbreviation">bool_decide_true</span></a> //. <span class="id" title="tactic">apply</span> <span class="id" title="lemma">UNSUPPORTED_elim</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">switch</span></span> bodies that <span class="inlinecode"><span class="id" title="var">walk.switch_cases</span></span> rejects. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="switch_cases_stuck" class="idref" href="#switch_cases_stuck"><span class="id" title="lemma">switch_cases_stuck</span></a> <a id="Ldef:22" class="idref" href="#Ldef:22"><span class="id" title="binder">Ldef</span></a> <a id="b:23" class="idref" href="#b:23"><span class="id" title="binder">b</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">walk.switch_cases</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#b:23"><span class="id" title="variable">b</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">wp_switch_block</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#Ldef:22"><span class="id" title="variable">Ldef</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#b:23"><span class="id" title="variable">b</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">elim</span>: <span class="id" title="var">b</span> <span class="id" title="var">Ldef</span> =&gt; [//|<span class="id" title="var">s</span> <span class="id" title="var">b</span> <span class="id" title="var">IH</span>] <span class="id" title="var">Ldef</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">s</span>; <span class="id" title="var">cbn</span> [<span class="id" title="definition">walk.switch_cases</span> <span class="id" title="definition">wp_switch_block</span>]; <span class="id" title="tactic">try</span> <span class="id" title="tactic">destruct</span> <span class="id" title="var">Ldef</span>; <span class="id" title="tactic">move</span>=&gt; <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">all</span>: <span class="id" title="tactic">try</span> <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">IH</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">all</span>: <span class="id" title="tactic">try</span> <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> ?<span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">all</span>: <span class="id" title="var">case_match</span> <span class="id" title="var">eqn</span>:<span class="id" title="var">Hc</span>; <span class="id" title="var">last</span> <span class="id" title="var">done</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">all</span>: <span class="id" title="tactic">apply</span> <span class="id" title="var">IH</span>; <span class="id" title="tactic">simpl</span> <span class="id" title="tactic">in</span> *; <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> ?<span class="id" title="var">Hc</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Volatile objects cannot be initialized. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="volatile_default_init" class="idref" href="#volatile_default_init"><span class="id" title="definition">volatile_default_init</span></a> <a id="ty:24" class="idref" href="#ty:24"><span class="id" title="binder">ty</span></a> <a id="p:25" class="idref" href="#p:25"><span class="id" title="binder">p</span></a> <a id="Q:26" class="idref" href="#Q:26"><span class="id" title="binder">Q</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">default_initialize</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#stuck.tu"><span class="id" title="variable">tu</span></a> (<span class="id" title="abbreviation">Tvolatile</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#ty:24"><span class="id" title="variable">ty</span></a>) <a class="idref" href="skylabs_brick.tests.supported_report.html#p:25"><span class="id" title="variable">p</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#Q:26"><span class="id" title="variable">Q</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">-|-</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#7500ef6d8f565186818a5daedd71bf2a"><span class="id" title="notation">|={</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6c0a583aa94fbbce6fcf0f655cf1cbb7"><span class="id" title="notation">⊤</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#7500ef6d8f565186818a5daedd71bf2a"><span class="id" title="notation">}=&gt;</span></a> <span class="id" title="abbreviation">UNSUPPORTED</span> "default initialize volatile"%<span class="id" title="var">pstring</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="axiom">default_initialize.unlock</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#stuck"><span class="id" title="section">stuck</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

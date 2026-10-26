@@ -356,7 +356,7 @@ Template arguments
 
 <div class="paragraph"> </div>
 
-    TODO: <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.core.html#Atemplate_param"><span class="id" title="constructor">Atemplate_param</span></a></span> could be removed if we had a <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.supported.html#check.name"><span class="id" title="definition">name</span></a></span> constructor
+    TODO: <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.core.html#Atemplate_param"><span class="id" title="constructor">Atemplate_param</span></a></span> could be removed if we had a <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.supported.html#walk.name"><span class="id" title="definition">name</span></a></span> constructor
           that could represent a parameter. It's possible that we could capture
           this with <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.core.html#Ndependent"><span class="id" title="constructor">Ndependent</span></a></span> <span class="inlinecode">(<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tparam"><span class="id" title="constructor">Tparam</span></a></span> <span class="inlinecode">&quot;<a class="idref" href="skylabs.lang.cpp.syntax.name_notation.parser.html#internal.with_lang.body.mfold_left.T"><span class="id" title="variable">T</span></a>&quot;)</span>.
           "T" is not a type, but it is a type-level name.
@@ -527,7 +527,7 @@ program because, in part, C++ has no type for references to members.
 <div class="doc">
 NOTE: <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eoffsetof"><span class="id" title="constructor">Eoffsetof</span></a></span> carries a type instead of a name to support
 dependent types.
-Should be <span class="inlinecode"><span class="id" title="var">gn</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.supported.html#check.classname"><span class="id" title="definition">classname</span></a></span>
+Should be <span class="inlinecode"><span class="id" title="var">gn</span></span> <span class="inlinecode">:</span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.supported.html#walk.classname"><span class="id" title="definition">classname</span></a></span>
 
 </div>
 <div class="code">
@@ -893,7 +893,7 @@ The representation of applied template type parameters,
     &gt;&gt;
     This notation effectively has type
     <br/>
-<span class="inlinecode">&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tparam_inst"><span class="id" title="abbreviation">Tparam_inst</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.name_notation.parser.html#internal.ident"><span class="id" title="definition">ident</span></a> -&gt; <a class="idref" href="skylabs.lang.cpp.syntax.mtraverse.html#list"><span class="id" title="section">list</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.supported.html#check.temp_arg"><span class="id" title="definition">temp_arg</span></a> -&gt; <span class="id" title="keyword">type</span>
+<span class="inlinecode">&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tparam_inst"><span class="id" title="abbreviation">Tparam_inst</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.name_notation.parser.html#internal.ident"><span class="id" title="definition">ident</span></a> -&gt; <a class="idref" href="skylabs.lang.cpp.syntax.mtraverse.html#list"><span class="id" title="section">list</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.supported.html#walk.temp_arg"><span class="id" title="definition">temp_arg</span></a> -&gt; <span class="id" title="keyword">type</span>
 <div class="paragraph"> </div>
 
 </span>
