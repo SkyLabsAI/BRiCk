@@ -47,6 +47,51 @@ Definition of_char (from_bits : N) (from_sgn : signed) (to_bits : N) (to_sgn : s
     else n in
   if to_sgn is Signed then to_signed_bits to_bits n else to_unsigned_bits to_bits n.
 
+(** Character-to-character conversion acts on code-unit bits: decode a
+    signed source, then truncate once to the target representation. Unlike
+    [of_char], this operation has no integral target signedness. *)
+Definition char_to_char (from_bits : N) (from_sgn : signed)
+    (to_bits : N) (n : N) : N :=
+  Z.to_N (trim to_bits
+    (if from_sgn is Signed then to_signed_bits from_bits n else n)).
+
+Lemma char_to_char_bounded from_bits from_sgn to_bits n :
+  (char_to_char from_bits from_sgn to_bits n < 2 ^ to_bits)%N.
+Proof.
+  rewrite /char_to_char /trim.
+  generalize (Z_mod_lt
+    (if from_sgn is Signed then to_signed_bits from_bits n else n)
+    (2 ^ to_bits)). lia.
+Qed.
+
+Lemma char_to_char_refl bits sgn n :
+  (n < 2 ^ bits)%N -> char_to_char bits sgn bits n = n.
+Proof.
+  move=> Hn. apply N2Z.inj_lt in Hn.
+  rewrite N2Z.inj_pow in Hn.
+  rewrite /char_to_char.
+  destruct sgn; rewrite ?trim_to_signed_bits_agree /trim Z.mod_small;
+    try lia; by rewrite N2Z.id.
+Qed.
+
+Lemma char_to_char_widen from_bits from_sgn to_bits n :
+  (from_bits <= to_bits)%N ->
+  (n < 2 ^ from_bits)%N ->
+  (from_sgn = Unsigned \/ (n < 2 ^ (Z.of_N from_bits - 1))%Z) ->
+  char_to_char from_bits from_sgn to_bits n = n.
+Proof.
+  move=> Hsz Hn Hsrc.
+  have Hdst : (n < 2 ^ to_bits)%N.
+  { eapply N.lt_le_trans; first exact Hn. apply N.pow_le_mono_r; lia. }
+  apply N2Z.inj_lt in Hdst. rewrite N2Z.inj_pow in Hdst.
+  rewrite /char_to_char.
+  destruct from_sgn.
+  - destruct Hsrc as [Hsrc|Hsrc]; first discriminate.
+    rewrite to_signed_bits_id; last (split; lia).
+    rewrite /trim Z.mod_small; [by rewrite N2Z.id | lia].
+  - rewrite /trim Z.mod_small; [by rewrite N2Z.id | lia].
+Qed.
+
 Definition char_to_Z_for_float (σ : genv) (ct : char_type.t) (n : N) : Z :=
   of_char (char_type.bitsN ct) (signedness_of_char σ ct)
     (int_rank.bitsN int_rank.I128) Signed n.
