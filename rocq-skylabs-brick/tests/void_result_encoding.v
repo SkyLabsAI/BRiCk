@@ -51,10 +51,11 @@ Section with_genv.
     |-- tptsto Tvoid q p VALUES_DEFS_IMPL.Vvoid.
   Proof.
     iIntros "(#T & I & B & V)".
-    iPoseProof "T" as "Tc". iDestruct "Tc" as "(%Hnn & _)".
-    rewrite /tptsto. iSplit; first done. iSplit; first done.
-    iExists (Some a). iFrame "T I". iExists [Rundef].
-    iFrame. by iPureIntro.
+    iApply tptsto_physical_intro; first done.
+    iFrame "T I B V". iSplit.
+    - iPureIntro. by split.
+    - iLeft. iApply has_type_prop_has_type_noptr; first done.
+      iPureIntro. by rewrite VALUES_DEFS_IMPL.has_type_prop_void.
   Qed.
 
   (* Register-only results use ghost cells and retain their value ownership. *)
@@ -63,8 +64,9 @@ Section with_genv.
     |-- tptsto Tvoid q p VALUES_DEFS_IMPL.Vvoid.
   Proof.
     iIntros "(#T & I & V)".
-    iPoseProof "T" as "Tc". iDestruct "Tc" as "(%Hnn & _)".
-    rewrite /tptsto. iSplit; first done. iSplit; first done.
-    iExists None. by iFrame "# ∗".
+    iApply tptsto_ghost_intro; first done.
+    iFrame "T I V".
+    iLeft. iApply has_type_prop_has_type_noptr; first done.
+    iPureIntro. by rewrite VALUES_DEFS_IMPL.has_type_prop_void.
   Qed.
 End with_genv.

@@ -27,6 +27,7 @@ Require Import skylabs.lang.cpp.syntax.
 Require Import skylabs.lang.cpp.semantics.sub_module.
 Require Import skylabs.lang.cpp.semantics.values.
 Require Import skylabs.lang.cpp.model.simple_pointers_utils.
+Require Import skylabs.lang.cpp.model.inductive_pointers.
 Require Import skylabs.lang.cpp.model.inductive_pointers_utils.
 Require Import skylabs.lang.cpp.semantics.ptrs.
 
@@ -1030,6 +1031,27 @@ Module PTRS_IMPL <: PTRS_INTF.
   #[local] Instance root_ptr_eq_dec : EqDecision root_ptr.
   Proof. solve_decision. Defined.
 
+  (** Reuse the first model's existing component assumption rather than adding
+      another axiom for the same root representation. Constructor tags and
+      canonical translation-unit data are preserved in both directions. *)
+  #[local] Instance root_ptr_countable : Countable root_ptr.
+  Proof.
+    apply (inj_countable
+      (fun root : root_ptr => match root with
+         | nullptr_ => inductive_pointers.PTRS_IMPL.nullptr_
+         | global_ptr_ tu name => inductive_pointers.PTRS_IMPL.global_ptr_ tu name
+         | fun_ptr_ tu name => inductive_pointers.PTRS_IMPL.fun_ptr_ tu name
+         | alloc_ptr_ aid va => inductive_pointers.PTRS_IMPL.alloc_ptr_ aid va
+         end)
+      (fun encoded => Some (match encoded with
+         | inductive_pointers.PTRS_IMPL.nullptr_ => nullptr_
+         | inductive_pointers.PTRS_IMPL.global_ptr_ tu name => global_ptr_ tu name
+         | inductive_pointers.PTRS_IMPL.fun_ptr_ tu name => fun_ptr_ tu name
+         | inductive_pointers.PTRS_IMPL.alloc_ptr_ aid va => alloc_ptr_ aid va
+         end))).
+    by intros [|tu name|tu name|aid va].
+  Qed.
+
   Variant ptr_ : Set :=
   | invalid_ptr_
   | offset_ptr (p : root_ptr) (o : offset).
@@ -1037,7 +1059,18 @@ Module PTRS_IMPL <: PTRS_INTF.
   #[global] Instance ptr_eq_dec : EqDecision ptr.
   Proof. solve_decision. Defined.
   #[global] Instance ptr_countable : Countable ptr.
-  Admitted.
+  Proof.
+    apply (inj_countable
+      (fun p : ptr => match p with
+         | invalid_ptr_ => None
+         | offset_ptr root off => Some (root, off)
+         end)
+      (fun encoded => Some (match encoded with
+         | None => invalid_ptr_
+         | Some (root, off) => offset_ptr root off
+         end))).
+    by intros [|root off].
+  Qed.
 
   #[program] Definition __offset_ptr (p : ptr) (o : offset) : ptr :=
     match p with
