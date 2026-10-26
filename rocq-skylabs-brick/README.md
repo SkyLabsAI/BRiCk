@@ -29,18 +29,17 @@ $ dune runtest
 
 ## Repository Layout
 
-- `theories` -- the core Coq development.
-  - `prelude` -- BlueRock's prelude extending [stdpp](https://gitlab.mpi-sws.org/iris/stdpp)
+- `theories` -- the core Rocq development.
   - `lang/cpp` -- the C++ syntax and semantics
     - `syntax` -- the definition of the C++ AST (abstract syntax tree)
     - `semantics` -- core semantic definitions that are independent of separation logic
     - `logic` -- the separation logic weakest pre-condition semantics
     - `parser` -- the environment used to interpret the generated code.
 
-## Coq IDEs
+The prelude extending [stdpp](https://gitlab.mpi-sws.org/iris/stdpp) lives in
+the separate package `rocq-skylabs-prelude` (`../rocq-skylabs-prelude`).
 
-The following command can be used to create a `_CoqProject` file for use by
-Coq IDEs.
-```sh
-$ (cd .. && make _CoqProject)
-```
+## Rocq IDEs
+
+`dune build` generates a `_RocqProject` file next to each theory's `dune` file
+(e.g. `theories/lang/cpp/_RocqProject`) for use by Rocq IDEs.

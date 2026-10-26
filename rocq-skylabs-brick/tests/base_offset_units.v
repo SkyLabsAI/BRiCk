@@ -30,7 +30,7 @@ cpp.prog mi prog cpp:{{
   | _ => None
   end.
 
-(** [B] follows [A], which occupies bytes [0,4): byte offset 4, bit offset 32. *)
+(** [B] follows [A], which occupies bytes 0 to 3: byte offset 4, bit offset 32. *)
 Example mi_base_offsets_are_bits :
   bases mi "C"%cpp_name
   = Some [("A"%cpp_name, {| li_offset := 0 |});

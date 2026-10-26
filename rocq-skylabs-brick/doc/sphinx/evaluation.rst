@@ -7,7 +7,7 @@ Evaluation
 The semantics of C++ programs in |project| are written in `weakest (liberal) pre-condition style <https://en.wikipedia.org/wiki/Predicate_transformer_semantics>`_.
 The general form of these rules is the following:
 
-.. coq:
+.. code-block:: coq
 
    Parameter wp : input_1 -> .. -> input_n -> (output_1 -> ... -> output_n -> PROP) -> PROP
 
@@ -37,6 +37,7 @@ Here |link:skylabs.lang.cpp.logic.wp#FreeTemps.id| represents the identity, char
 `delete ty p` represents that the value at pointer `p` (which should have type `ty`) needs to be destroyed.
 Note that to delete the value, the C++ abstract machine runs the destructor and reclaims the underlying memory.
 Virtual dispatch is *not* used when invoking the destructor.
+`delete_va va p` represents that the variadic arguments `va` (stored at pointer `p`) need to be reclaimed.
 `seq a b` means that the temporaries in `a` must be destroyed *before* the temporaries in `b`.
 `par a b` means that the temporaries in `a` and the temporaries in `b` are destroyed in an interleaved manner [#parallel-destruction]_.
 
@@ -64,7 +65,7 @@ pr-values
 The final value category of C++ (pr-values) is slightly more complex than l-values and x-values.
 The `C++ standard <http://eel.is/c++draft/expr.prop#basic.lval-1.2>`_ describes them as follows:
 
-.. quote:
+.. pull-quote::
 
    A prvalue is an expression whose evaluation initializes an object or
    computes the value of an operand of an operator, as specified by the
@@ -74,7 +75,7 @@ These are characterized by two predicate transformers.
 
 Operands
 ~~~~~~~~~~~
-|link:skylabs.lang.cpp.logic.wp#WPE.wp_operand| is used to evaluate a operand of a primitive operator.
+|link:skylabs.lang.cpp.logic.wp#WPE.with_cpp.wp_operand| is used to evaluate a operand of a primitive operator.
 These operands are *always* primitives, since operators that accept aggregates are de-sugared to functions or methods.
 
 .. literalinclude:: ../../theories/lang/cpp/logic/wp.v
@@ -82,14 +83,14 @@ These operands are *always* primitives, since operators that accept aggregates a
    :end-before: (* END wp_operand *)
    :dedent:
 
-Unlike `wp_init` and `wp_prval`, operands return |link:skylabs.lang.cpp.semantics.value#val|\ s.
+Unlike `wp_init` and `wp_prval`, operands return |link:skylabs.lang.cpp.semantics.values#VAL_MIXIN.val|\ s.
 Because the value returned does not have an identity, there is nothing to destroy, so the `FreeTemps` returned to the continuation destroys only the temporaries created when evaluating the expression.
 
 
 Initializing Aggregates
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-|link:skylabs.lang.cpp.logic.wp#WPE.wp_init| handles initialization of aggregates.
+|link:skylabs.lang.cpp.logic.wp#WPE.with_cpp.wp_init| handles initialization of aggregates.
 The parameter is the following:
 
 .. literalinclude:: ../../theories/lang/cpp/logic/wp.v
@@ -97,9 +98,9 @@ The parameter is the following:
    :end-before: (* END wp_init *)
    :dedent:
 
-`wp_init` takes a |link:skylabs.lang.cpp.semantics.values#PTRS.ptr| that represents the location that the object is being constructed into.
+`wp_init` takes a |link:skylabs.lang.cpp.semantics.ptrs#PTRS.ptr| that represents the location that the object is being constructed into.
 Because of this, the post-condition does not consume a value but only a `FreeTemps` used to destroy temporaries created during the evaluation of the expression.
-To destroy the actual object constructed by `wp_init ty into Q`, use `FreeTemps.delete ty into`.
+To destroy the actual object constructed by `wp_init tu ρ ty p e Q`, use `FreeTemps.delete ty p`.
 
 On top of `wp_init`, we can *define* `wp_prval` by universally quantifying the pointer that is being initialized and passing it to the continuation.
 
