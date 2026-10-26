@@ -243,8 +243,10 @@ public:
         if (decl->isImplicit() and not decl->isLambda())
             return;
         if (not decl->isDependentContext() or templates_) {
-            VisitTagDecl(decl, flags);
-            VisitDeclContext(decl, flags);
+            auto decl_flags =
+                decl->isDependentContext() ? flags.set_template() : flags;
+            VisitTagDecl(decl, decl_flags);
+            VisitDeclContext(decl, decl_flags);
         }
     }
 
@@ -335,11 +337,12 @@ public:
         if (decl->isTemplated() and not templates_)
             return;
 
+        auto decl_flags = decl->isTemplated() ? flags.set_template() : flags;
         if (auto defn = decl->getDefinition()) {
             if (defn == decl)
-                go(decl, flags);
+                go(decl, decl_flags);
         } else if (decl == decl->getCanonicalDecl())
-            go(decl, flags);
+            go(decl, decl_flags);
     }
 
     void VisitVarTemplateDecl(const VarTemplateDecl *decl, Flags flags) {
