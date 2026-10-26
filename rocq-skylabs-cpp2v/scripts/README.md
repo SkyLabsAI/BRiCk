@@ -14,7 +14,7 @@ only when the selected mode actually uses a container.
 ## Configuration
 
 ```sh
-cpp2v-toolchain configure --image IMAGE --platform linux/amd64 --opam > cpp-environment
+cpp2v-toolchain configure --default-image IMAGE --platform linux/amd64 --opam > cpp-environment
 ```
 
 Docker is opt-in. `CPP2V_DOCKER_ENABLED` accepts:
@@ -23,9 +23,19 @@ Docker is opt-in. `CPP2V_DOCKER_ENABLED` accepts:
 - `y`: use the selected container image;
 - `if-libstdc++`: use Docker only for arguments containing `-stdlib=libstdc++`.
 
-`CPP2V_DOCKER_IMAGE` overrides `--image`; `CPP2V_DOCKER_USER` overrides the current
-UID/GID. `--platform` is optional. `--opam` explicitly requests OPAM environment
-initialization inside the image; other images need not have Bash or OPAM.
+Image selection uses this precedence, independent of option order:
+
+1. `--image IMAGE`: an explicit command-line selection.
+2. `CPP2V_DOCKER_IMAGE`: the caller's environment override.
+3. `--default-image IMAGE`: the consumer's fallback.
+
+Repository Dune rules pass `--default-image` so callers can override the image
+without editing build rules. Use `--image` to force a selection even when
+`CPP2V_DOCKER_IMAGE` is set.
+
+`CPP2V_DOCKER_USER` overrides the current UID/GID. `--platform` is optional.
+`--opam` explicitly requests OPAM environment initialization inside the image;
+other images need not have Bash or OPAM.
 
 The generated configuration records a cached image ID for the requested platform
 when available, so TU translation, compilation/linking, and execution use the same
@@ -58,7 +68,7 @@ Generate configuration once per consumer, with environment dependencies declared
   (env_var CPP2V_DOCKER_USER))
  (action
   (with-stdout-to %{target}
-   (run %{bin:cpp2v-toolchain} configure --image IMAGE --opam))))
+   (run %{bin:cpp2v-toolchain} configure --default-image IMAGE --opam))))
 
 (rule
  (target source_cpp.v)

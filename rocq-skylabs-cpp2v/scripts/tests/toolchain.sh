@@ -87,9 +87,47 @@ make_adapter() {
     chmod +x "$adapter"
 }
 
+expect_image() (
+    expected=$1
+    shift
+    "$@" > "$tmp/image-config"
+    cpp_env_image='' cpp_env_image_ref=''
+    # shellcheck source=/dev/null
+    source "$tmp/image-config"
+    if [[ $cpp_env_image != "$expected" || $cpp_env_image_ref != "$expected" ]]; then
+        echo "expected image '$expected', got '$cpp_env_image' (reference '$cpp_env_image_ref')" >&2
+        exit 1
+    fi
+)
+
+# Explicit command-line selection wins over the environment, which wins over
+# the consumer's default, regardless of the order of the two image options.
+expect_image explicit-image "$env" CPP2V_DOCKER_IMAGE=environment-image \
+    "$bash" "$factory" configure --image explicit-image
+expect_image '' "$bash" "$factory" configure
+expect_image default-image "$bash" "$factory" configure --default-image default-image
+expect_image environment-image "$env" CPP2V_DOCKER_IMAGE=environment-image \
+    "$bash" "$factory" configure
+expect_image environment-image "$env" CPP2V_DOCKER_IMAGE=environment-image \
+    "$bash" "$factory" configure --default-image default-image
+expect_image explicit-image "$bash" "$factory" configure --image explicit-image
+expect_image explicit-image "$env" CPP2V_DOCKER_IMAGE=environment-image \
+    "$bash" "$factory" configure --default-image default-image --image explicit-image
+expect_image explicit-image "$env" CPP2V_DOCKER_IMAGE=environment-image \
+    "$bash" "$factory" configure --image explicit-image --default-image default-image
+expect_image last-image "$env" CPP2V_DOCKER_IMAGE=environment-image \
+    "$bash" "$factory" configure --image first-image --image last-image
+# An explicitly empty value is still a selection, not an unset source.
+expect_image '' "$env" CPP2V_DOCKER_IMAGE= \
+    "$bash" "$factory" configure --default-image default-image
+expect_image explicit-image "$env" CPP2V_DOCKER_IMAGE= \
+    "$bash" "$factory" configure --default-image default-image --image explicit-image
+expect_image '' "$env" CPP2V_DOCKER_IMAGE=environment-image \
+    "$bash" "$factory" configure --default-image default-image --image ''
+
 # Native defaults never contact Docker, even with an image override, and use
 # the resolved host command without an install symlink or OPAM fallback.
-CPP2V_DOCKER_IMAGE=other-image "$bash" "$factory" configure --image default-image > "$config"
+CPP2V_DOCKER_IMAGE=other-image "$bash" "$factory" configure --default-image default-image > "$config"
 test ! -e "$INSPECT_LOG"
 make_adapter
 test ! -e "$DUNE_SOURCEROOT/_build/install/default/bin/cpp2v"
@@ -241,5 +279,7 @@ read_args
 chmod +x "$adapter"
 expect_status 0 "$adapter"
 expect_status 2 "$env" CPP2V_DOCKER_ENABLED=yes "$bash" "$factory" configure
+expect_status 2 "$bash" "$factory" configure --image
+expect_status 2 "$bash" "$factory" configure --default-image
 expect_status 2 "$bash" "$runner" --config "$tmp/missing" -- "$host"
 expect_status 2 "$bash" "$runner" --config "$config" --env 'INVALID-NAME' -- "$host"

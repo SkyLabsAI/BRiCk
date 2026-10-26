@@ -22,15 +22,18 @@ command=${1:-}
 case "$command" in
     configure)
         image=
+        image_set=n
+        default_image=
         platform=
         opam=n
         workspace=${DUNE_SOURCEROOT:-$PWD}
         while [[ $# -gt 0 ]]; do
             case "$1" in
-                --image|--platform|--workspace)
+                --image|--default-image|--platform|--workspace)
                     [[ $# -ge 2 ]] || fail "missing value for $1"
                     case "$1" in
-                        --image) image=$2 ;;
+                        --image) image=$2; image_set=y ;;
+                        --default-image) default_image=$2 ;;
                         --platform) platform=$2 ;;
                         --workspace) workspace=$2 ;;
                     esac
@@ -42,7 +45,8 @@ case "$command" in
         done
         mode=${CPP2V_DOCKER_ENABLED-n}
         case "$mode" in n|y|if-libstdc++) ;; *) fail "CPP2V_DOCKER_ENABLED must be n, y, or if-libstdc++" ;; esac
-        image=${CPP2V_DOCKER_IMAGE-$image}
+        # Explicit --image > environment > consumer default, even for empty values.
+        if [[ $image_set == n ]]; then image=${CPP2V_DOCKER_IMAGE-$default_image}; fi
         image_ref=$image
         # Do not contact Docker at all for the default host-backed configuration.
         # Only pin a cached ID when the requested platform is available. Keep
