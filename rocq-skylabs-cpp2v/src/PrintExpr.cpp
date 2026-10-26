@@ -889,7 +889,19 @@ public:
     }
 
     void VisitCharacterLiteral(const CharacterLiteral *lit) {
-        print.ctor("Echar", false) << lit->getValue() << "%N";
+        const auto type = lit->getType();
+        const auto value = llvm::APInt(32, lit->getValue())
+                               .zextOrTrunc(cprint.getContext().getTypeSize(type));
+        if (type->isAnyCharacterType()) {
+            // Clang sign-extends ordinary signed-char literals in its unsigned
+            // storage. Vchar represents the code unit, so discard those high
+            // bits rather than printing an out-of-range character value.
+            print.ctor("Echar", false) << value.getZExtValue() << "%N";
+        } else {
+            // Ordinary multicharacter literals have type int, not char.
+            const llvm::APSInt int_value(value, false);
+            print.ctor("Eint", false) << fmt::Z(int_value);
+        }
         done(lit);
     }
 
