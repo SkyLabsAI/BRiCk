@@ -7,6 +7,7 @@
 #include "Location.hpp"
 #include "Logging.hpp"
 #include "Trace.hpp"
+#include <clang/AST/CurrentSourceLocExprScope.h>
 #include <clang/Basic/Diagnostic.h>
 #include <clang/Basic/Version.inc>
 #include <llvm/ADT/ArrayRef.h>
@@ -97,6 +98,7 @@ private:
     const clang::Decl *decl_{nullptr};
     const bool comment_{false};
     const bool typedefs_;
+    clang::CurrentSourceLocExprScope sourceLocExprScope_;
 
     ClangPrinter(const ClangPrinter &from, const clang::Decl *decl)
         : compiler_(from.compiler_), context_(from.context_),
@@ -140,6 +142,10 @@ public:
     clang::MangleContext &getMangleContext() { return *mangleContext_; }
 
     bool printTypedefs() const { return typedefs_; }
+
+    clang::CurrentSourceLocExprScope &sourceLocExprScope() {
+        return sourceLocExprScope_;
+    }
 
     std::optional<std::pair<const clang::CXXRecordDecl *, clang::Qualifiers>>
     getLambdaClass() const;

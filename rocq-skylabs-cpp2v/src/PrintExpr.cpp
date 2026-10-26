@@ -907,7 +907,8 @@ public:
     void VisitSourceLocExpr(const SourceLocExpr *expr) {
         guard::ctor _{print, "Esource_loc"};
         print.str(expr->getBuiltinStr()) << fmt::nbsp;
-        auto val = expr->EvaluateInContext(cprint.getContext(), nullptr);
+        auto val = expr->EvaluateInContext(
+            cprint.getContext(), cprint.sourceLocExprScope().getDefaultExpr());
         if (expr->isIntType()) {
             print.ctor("Eint");
             print.output() << fmt::Z(val.getInt(), false) << fmt::nbsp;
@@ -1211,6 +1212,9 @@ public:
     }
 
     void VisitCXXDefaultArgExpr(const CXXDefaultArgExpr *expr) {
+        // Match Clang CodeGen: nested defaults retain the outer use site.
+        CurrentSourceLocExprScope::SourceLocExprScopeGuard scope(
+            expr, cprint.sourceLocExprScope());
         print.ctor("Eimplicit");
         cprint.printExpr(print, expr->getExpr(), names);
         print.end_ctor();
@@ -1602,6 +1606,9 @@ public:
     }
 
     void VisitCXXDefaultInitExpr(const CXXDefaultInitExpr *expr) {
+        // Match Clang CodeGen: nested defaults retain the outer use site.
+        CurrentSourceLocExprScope::SourceLocExprScopeGuard scope(
+            expr, cprint.sourceLocExprScope());
         print.ctor("Edefault_init_expr");
         cprint.printExpr(print, expr->getExpr(), names);
         print.end_ctor();
