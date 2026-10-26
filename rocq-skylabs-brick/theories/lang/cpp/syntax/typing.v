@@ -387,3 +387,22 @@ Definition exprtype_of_expr (e : Expr) : ValCat * exprtype :=
   decltype.to_exprtype $ decltype_of_expr e.
 Definition valcat_of (e : Expr) : ValCat := (exprtype_of_expr e).1.
 Definition type_of (e : Expr) : exprtype := (exprtype_of_expr e).2.
+
+(**
+The type of a variable expression, without unfolding [decltype_of_expr].
+[tref QM t] collapses references and merges nested qualifiers before the
+reference is dropped, so this differs from [drop_reference t] on inputs such
+as [Tconst (Tconst Tbool)]. Automation (e.g. auto's [TyOf_var]) relies on
+this equation rather than on reduction, which can unfold too much.
+*)
+Lemma type_of_var x t :
+  type_of (Evar x t) = drop_reference (tref QM t).
+Proof.
+  rewrite /type_of /exprtype_of_expr /decltype_of_expr /=.
+  generalize QM.
+  move=> cv. elim: (tref_ok cv t); try done.
+  move=> q u Href Hqual.
+  rewrite /decltype.to_exprtype /=.
+  rewrite (drop_reference_non_ref (tqualified q u) u) //.
+  by rewrite drop_qualifiers_tqualified drop_qualifiers_unqual.
+Qed.
