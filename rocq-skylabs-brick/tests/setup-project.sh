@@ -1,1 +1,0 @@
-../setup-project.sh
