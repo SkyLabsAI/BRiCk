@@ -61,6 +61,11 @@ Eval vm_compute in supported.report.run source
   ; "nested_case(int)"; "case_after_decl(int)"
   ; "Anon::Anon()"; "Bits"; "HasBits"; "Node"; "U"; "missing()" ]%pstring.
 
+(** [all] reports on every non-template entity, without resolving names. *)
+Eval vm_compute in
+  List.map (fun e => (supported.report.resolved e, supported.report.status e))
+    (supported.report.all source).
+
 (** [check] keeps only [Unsupported] gaps. *)
 Eval vm_compute in supported.check.translation_unit source.
 
