@@ -101,6 +101,9 @@
 <span id="id1"></span><h1>Evaluation<a class="headerlink" href="#evaluation" title="Link to this heading"></a></h1>
 <p>The semantics of C++ programs in BRiCk are written in <a class="reference external" href="https://en.wikipedia.org/wiki/Predicate_transformer_semantics">weakest (liberal) pre-condition style</a>.
 The general form of these rules is the following:</p>
+<div class="highlight-coq notranslate"><div class="highlight"><pre><span></span><span class="kn">Parameter</span> <span class="n">wp</span> <span class="o">:</span> <span class="n">input_1</span> <span class="o">-&gt;</span> <span class="o">..</span> <span class="o">-&gt;</span> <span class="n">input_n</span> <span class="o">-&gt;</span> <span class="o">(</span><span class="n">output_1</span> <span class="o">-&gt;</span> <span class="o">...</span> <span class="o">-&gt;</span> <span class="n">output_n</span> <span class="o">-&gt;</span> <span class="n">PROP</span><span class="o">)</span> <span class="o">-&gt;</span> <span class="n">PROP</span>
+</pre></div>
+</div>
 <p>Note that <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp</span></span></code> is a predicate in our separation logic (the fact that it returns a <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">PROP</span></span></code>).
 Informally you can think of it as capturing the pre-condition to the inputs (one of which is normally an expression) that are sufficient such that the code is safe and if the expression terminates, it terminates in a state in which its outputs satisfy the “continuation” (i.e. the final function argument to <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp</span></span></code>).</p>
 <p>Due to the structure of C++, BRiCk contains a separate weakest pre-condition modality for each syntactic category. These are defined in <a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.html/skylabs.lang.cpp.logic.wp.html">skylabs.lang.cpp.logic.wp</a>.</p>
@@ -126,6 +129,7 @@ In BRiCk we capture the stack of objects to be destroyed using the type <a class
 <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">delete</span></span> <span class="n"><span class="pre">ty</span></span> <span class="n"><span class="pre">p</span></span></code> represents that the value at pointer <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">p</span></span></code> (which should have type <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">ty</span></span></code>) needs to be destroyed.
 Note that to delete the value, the C++ abstract machine runs the destructor and reclaims the underlying memory.
 Virtual dispatch is <em>not</em> used when invoking the destructor.
+<code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">delete_va</span></span> <span class="n"><span class="pre">va</span></span> <span class="n"><span class="pre">p</span></span></code> represents that the variadic arguments <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">va</span></span></code> (stored at pointer <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">p</span></span></code>) need to be reclaimed.
 <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">seq</span></span> <span class="n"><span class="pre">a</span></span> <span class="n"><span class="pre">b</span></span></code> means that the temporaries in <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">a</span></span></code> must be destroyed <em>before</em> the temporaries in <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">b</span></span></code>.
 <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">par</span></span> <span class="n"><span class="pre">a</span></span> <span class="n"><span class="pre">b</span></span></code> means that the temporaries in <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">a</span></span></code> and the temporaries in <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">b</span></span></code> are destroyed in an interleaved manner <a class="footnote-reference brackets" href="#parallel-destruction" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a>.</p>
 <p>The meaning of these constructs is made precise by interpreting the syntax using <a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.html/skylabs.lang.cpp.logic.destroy.html#interp">interp</a>.</p>
@@ -163,22 +167,27 @@ Parameter wp_lval
 <h3>pr-values<a class="headerlink" href="#pr-values" title="Link to this heading"></a></h3>
 <p>The final value category of C++ (pr-values) is slightly more complex than l-values and x-values.
 The <a class="reference external" href="http://eel.is/c++draft/expr.prop#basic.lval-1.2">C++ standard</a> describes them as follows:</p>
+<blockquote class="pull-quote">
+<div><p>A prvalue is an expression whose evaluation initializes an object or
+computes the value of an operand of an operator, as specified by the
+context in which it appears, or an expression that has type cv void.”</p>
+</div></blockquote>
 <p>These are characterized by two predicate transformers.</p>
 <section id="operands">
 <h4>Operands<a class="headerlink" href="#operands" title="Link to this heading"></a></h4>
-<p><a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.html/skylabs.lang.cpp.logic.wp.html#WPE.wp_operand">wp_operand</a> is used to evaluate a operand of a primitive operator.
+<p><a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.html/skylabs.lang.cpp.logic.wp.html#WPE.with_cpp.wp_operand">wp_operand</a> is used to evaluate a operand of a primitive operator.
 These operands are <em>always</em> primitives, since operators that accept aggregates are de-sugared to functions or methods.</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>(* evaluate a prvalue that &quot;computes the value of an operand of an operator&quot;
  *)
 Parameter wp_operand : forall {resolve:genv}, translation_unit -&gt; region -&gt; Expr -&gt; M val.
 </pre></div>
 </div>
-<p>Unlike <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_init</span></span></code> and <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_prval</span></span></code>, operands return <a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.html/skylabs.lang.cpp.semantics.value.html#val">val</a>s.
+<p>Unlike <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_init</span></span></code> and <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_prval</span></span></code>, operands return <a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.html/skylabs.lang.cpp.semantics.values.html#VAL_MIXIN.val">val</a>s.
 Because the value returned does not have an identity, there is nothing to destroy, so the <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">FreeTemps</span></span></code> returned to the continuation destroys only the temporaries created when evaluating the expression.</p>
 </section>
 <section id="initializing-aggregates">
 <h4>Initializing Aggregates<a class="headerlink" href="#initializing-aggregates" title="Link to this heading"></a></h4>
-<p><a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.html/skylabs.lang.cpp.logic.wp.html#WPE.wp_init">wp_init</a> handles initialization of aggregates.
+<p><a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.html/skylabs.lang.cpp.logic.wp.html#WPE.with_cpp.wp_init">wp_init</a> handles initialization of aggregates.
 The parameter is the following:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>(* evaluate a prvalue that &quot;initializes an object&quot;.
 
@@ -225,9 +234,9 @@ Parameter wp_init
                       mpred. (* pre-condition *)
 </pre></div>
 </div>
-<p><code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_init</span></span></code> takes a <a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.html/skylabs.lang.cpp.semantics.values.html#PTRS.ptr">ptr</a> that represents the location that the object is being constructed into.
+<p><code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_init</span></span></code> takes a <a class="reference external" href="_static/coqdoc/skylabs.lang.cpp.html/skylabs.lang.cpp.semantics.ptrs.html#PTRS.ptr">ptr</a> that represents the location that the object is being constructed into.
 Because of this, the post-condition does not consume a value but only a <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">FreeTemps</span></span></code> used to destroy temporaries created during the evaluation of the expression.
-To destroy the actual object constructed by <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_init</span></span> <span class="n"><span class="pre">ty</span></span> <span class="n"><span class="pre">into</span></span> <span class="n"><span class="pre">Q</span></span></code>, use <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">FreeTemps.delete</span></span> <span class="n"><span class="pre">ty</span></span> <span class="n"><span class="pre">into</span></span></code>.</p>
+To destroy the actual object constructed by <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_init</span></span> <span class="n"><span class="pre">tu</span></span> <span class="n"><span class="pre">ρ</span></span> <span class="n"><span class="pre">ty</span></span> <span class="n"><span class="pre">p</span></span> <span class="n"><span class="pre">e</span></span> <span class="n"><span class="pre">Q</span></span></code>, use <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">FreeTemps.delete</span></span> <span class="n"><span class="pre">ty</span></span> <span class="n"><span class="pre">p</span></span></code>.</p>
 <p>On top of <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_init</span></span></code>, we can <em>define</em> <code class="code highlight coq docutils literal notranslate"><span class="n"><span class="pre">wp_prval</span></span></code> by universally quantifying the pointer that is being initialized and passing it to the continuation.</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>Definition wp_prval {resolve:genv} (tu : translation_unit) (ρ : region)
            (e : Expr) (Q : ptr -&gt; FreeTemps -&gt; epred) : mpred :=
