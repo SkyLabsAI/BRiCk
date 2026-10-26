@@ -4,29 +4,59 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 
+Require Import stdpp.fin_maps.
 Require Import skylabs.prelude.base.
 Require Import skylabs.lang.cpp.syntax.core.
+Require Import skylabs.lang.cpp.syntax.stmt.
 Require Import skylabs.lang.cpp.syntax.types.
 Require Import skylabs.lang.cpp.syntax.typing.
 Require Import skylabs.lang.cpp.syntax.translation_unit.
 Require Import skylabs.lang.cpp.syntax.templates.
 Require Import skylabs.lang.cpp.semantics.cast_operator.
+Require skylabs.lang.cpp.syntax.name_notation.parser.
+Require skylabs.lang.cpp.syntax.name_notation.printer.
 
 (** ** Supported Check
 
     This file implements a *light-weight* check on terms to determine if they
-    contain unsupported features. A deeper check can be performed using type
-    checking, see [typed.v](typed.v).
+    use features BRiCk's semantics does not support. It is not a type checker:
+    [typed.v](typed.v) checks that terms are well-typed, including that the
+    shallow [type_of] this file relies on agrees with full typing.
 
+    [walk] traverses a term once and records gaps in the semantics
+    ([Gap Unsupported]: no semantics, proofs get stuck; [Gap Partial]: partial
+    semantics, proofs may get stuck or prove less than the code does), and
+    the names the term needs ([Ref], [Access]). [check] only keeps
+    [Unsupported] gaps; [report] answers per C++ entity.
+
+    [walk] takes an extension [ext], called on every expression, which adds
+    gaps of a proof tool built on the semantics, e.g. a known automation gap
+    (see [skylabs.auto.cpp.supported]). [check] and [report.run] use none.
+
+    Without an extension, each [Gap Unsupported] mirrors a place where the
+    semantics in [logic/] gets stuck: an [UNSUPPORTED] or [ERROR] case, a [False], or a missing [wp]
+    rule. See [tests/supported_report.v].
  *)
 
-Module check.
+Module walk.
+  Variant gap : Set := Unsupported | Partial.
+
+  Variant item : Set :=
+  | Gap (g : gap) (msg : PrimString.string)
+  | Ref (n : name)    (** needs the definition of [n] (type, function, variable) *)
+  | Access (n : name) (** accesses a member of an object of class [n] *).
+
 Section with_monad.
 
-  Definition M := list PrimString.string.
+  Definition M := list item.
   Definition op : M -> M -> M := List.app.
   Definition OK : M := [].
-  Definition FAIL (msg : PrimString.string) : M := msg :: nil.
+  Definition FAIL (msg : PrimString.string) : M := [Gap Unsupported msg].
+  Definition PARTIAL (msg : PrimString.string) : M := [Gap Partial msg].
+  Definition REF (n : name) : M := [Ref n].
+
+  (** Pointers and references do not need the definition of their target. *)
+  Definition no_refs : M -> M := List.filter (fun i => if i is Ref _ then false else true).
 
   #[local] Infix "<+>" := op (at level 30).
   #[local] Notation opt f := (from_option f OK).
@@ -114,6 +144,50 @@ Section with_monad.
     | _ => OK
     end.
 
+  (** Compare-exchange only has rules for integers and booleans
+      (see [logic/atomics.v]). *)
+  Definition check_atomic (op : AtomicOp) (es : list Expr) : M :=
+    if bool_decide (op = "__atomic_compare_exchange_n"%pstring) ||
+       bool_decide (op = "__atomic_compare_exchange"%pstring)
+    then match es with
+         | e :: _ =>
+             match drop_qualifiers (type_of e) with
+             | Tptr t =>
+                 match drop_qualifiers t with
+                 | Tnum _ _ | Tbool => OK
+                 | _ => FAIL "atomic compare-exchange on non-integer values"
+                 end
+             | _ => OK
+             end
+         | [] => OK
+         end
+    else OK.
+
+  (** The builtins with a [wp_builtin] rule (see [logic/builtins.v]). *)
+  Definition known_builtin (b : BuiltinFn) : bool :=
+    bool_decide (b ∈ [ "__builtin_unreachable"; "__builtin_trap"; "__builtin_expect"
+      ; "move"; "forward"; "__builtin_launder"
+      ; "__builtin_ffs"; "__builtin_ffsl"; "__builtin_ffsll"
+      ; "__builtin_ctz"; "__builtin_ctzl"; "__builtin_ctzll"
+      ; "__builtin_clz"; "__builtin_clzl"; "__builtin_clzll"
+      ; "__builtin_bswap16"; "__builtin_bswap32"; "__builtin_bswap64"; "__builtin_bswap128"
+      ]%pstring).
+
+  (** Calls to [b]: a builtin that is only declared is harmless; atomics,
+      for instance, are called through [Eatomic]. *)
+  Definition builtin (b : BuiltinFn) : M :=
+    if known_builtin b then OK else FAIL (PrimString.cat "builtin without semantics: " b).
+
+  (** [wp_switch] needs the [case]s and [default] of a block at its top level,
+      not after a declaration (see [wp_switch_block] in [logic/stmt.v]). *)
+  Fixpoint switch_cases (ls : list Stmt) : bool :=
+    match ls with
+    | (Scase _ | Sdefault) :: ls => switch_cases ls
+    | Sdecl _ :: ls => no_case (Sseq ls)
+    | s :: ls => no_case s && switch_cases ls
+    | [] => true
+    end.
+
   Definition atomic_name (type : type -> M) (an : atomic_name) : M :=
     match an with
     | Nid _ => OK
@@ -156,8 +230,13 @@ Section with_monad.
       temp_param a.1 <+> opt (temp_arg name type expr) a.2.
   End temp_param.
 
+  Context (ext : Expr -> M).
+
+  (* The types in a name (parameters, template arguments) identify it; they
+     are not needed. What a template instance needs comes from its own
+     definition. *)
   Fixpoint name (n : name) : M :=
-    match n with
+    no_refs match n with
     | Ninst n ii => name n <+> lst (temp_arg name type expr) ii
     | Nglobal an => atomic_name type an
     | Nscoped n s => name n <+> atomic_name type s
@@ -178,23 +257,32 @@ Section with_monad.
     | Tresult_parenlist t ts => type t <+> lst type ts
     | Tresult_member t _ => type t
     | Tauto => OK
-    | Tptr t | Tref t | Trv_ref t | Tarray t _ | Tincomplete_array t => type t
+    | Tptr t | Tref t | Trv_ref t => no_refs (type t)
+    | Tarray t _ | Tincomplete_array t => type t
     | Tnum _ _ | Tchar_ _ | Tvoid | Tbool | Tnullptr => OK
     | Tfloat_ ft => check_float_width ft
-    | Tvariable_array t e => type t <+> expr e
-    | Tfunction (FunctionType t ts) => type t <+> lst type ts
-    | Tmember_pointer t1 t2 => type t1 <+> type t2
-    | Tqualified _ t => type t
+    | Tvariable_array t e =>
+        (* Templates also use [Tvariable_array] for dependent sizes. *)
+        (if is_dependentE e then OK else FAIL "variable-length array") <+> type t <+> expr e
+    (* Like a pointee, a function type needs its return and parameter types
+       only well-scoped ([complete_pt_function]); a call needs them complete
+       through the types of its arguments and result. *)
+    | Tfunction (FunctionType t ts) => no_refs (type t <+> lst type ts)
+    | Tmember_pointer t1 t2 => no_refs (type t1 <+> type t2)
+    | Tqualified q t =>
+        (if q_volatile q then PARTIAL "volatile: accesses are modelled as ordinary memory" else OK)
+        <+> type t
     | Tarch _ _ => OK
     | Tdecltype e | Texprtype e => expr e
-    | Tnamed n | Tenum n => name n
+    | Tnamed n | Tenum n => REF n <+> name n
     end
 
   with expr (e : Expr) : M :=
+    ext e <+>
     match e with
     | Evar _ t => type t
     | Eenum_const n _ => name n
-    | Eglobal n t | Eglobal_member n t => name n <+> type t
+    | Eglobal n t | Eglobal_member n t => REF n <+> name n <+> type t
     | Echar _ t | Estring _ t | Eunresolved_string_literal t | Eint _ t => type t
     | Efloat ft _ => check_float_width ft
     | Ebool _ => OK
@@ -217,7 +305,10 @@ Section with_monad.
         if is_float_type (type_of e) || is_float_type t then FAIL "unsupported floating increment/decrement" else OK
     | Eseqand e1 e2 | Eseqor e1 e2 | Ecomma e1 e2 => expr e1 <+> expr e2
     | Ecall e es => expr e <+> lst expr es
-    | Eoperator_call _ _ es => lst expr es
+    | Eoperator_call _ impl es =>
+        match impl with
+        | operator_impl.Func n _ | operator_impl.MFunc n _ _ => REF n
+        end <+> lst expr es
     | Epseudo_destructor _ t e => type t <+> expr e
     | Einitlist es oe t => lst expr es <+> opt expr oe <+> type t
     | Einitlist_union _ oe t => opt expr oe <+> type t
@@ -225,27 +316,32 @@ Section with_monad.
     | Emember_call _ mr e es =>
         match mr with
         | inr e => expr e
-        | inl _ => OK
+        | inl (n, _, _) => REF n
         end <+> expr e <+> lst expr es
     | Enew (n, t) es _ t1 oe1 oe2 =>
-        name n <+> type t <+> lst expr es <+> type t1 <+> opt expr oe1 <+> opt expr oe2
-    | Edelete _ n e t => name n <+> expr e <+> type t
+        REF n <+> name n <+> type t <+> lst expr es <+> type t1 <+> opt expr oe1 <+> opt expr oe2
+    | Edelete _ n e t => REF n <+> name n <+> expr e <+> type t
     | Eexplicit_cast _ t e => type t <+> expr e
     | Ecast c e => cast c <+> expr e <+> check_float_cast_expr c (type_of e)
-    | Emember _ e an _ t => expr e <+> atomic_name type an <+> type t
+    | Emember arrow e an _ t =>
+        (* With [arrow], [e] is a pointer; either way, the class must be defined. *)
+        let obj := drop_qualifiers (type_of e) in
+        let obj := if arrow then (if obj is Tptr t then drop_qualifiers t else obj) else obj in
+        (if obj is Tnamed cls then [Access cls; Ref cls] else OK)
+        <+> expr e <+> atomic_name type an <+> type t
     | Estmt s t => stmt s <+> type t
     | Enull => OK
     | Eopaque_ref _ t => type t
     | Eva_arg e t => expr e <+> type t
-    | Eatomic _ es t => lst expr es <+> type t
+    | Eatomic op es t => lst expr es <+> type t <+> check_atomic op es
     | Eandclean e => expr e
     | Ematerialize_temp e _ => expr e
     | Ethis t => type t
     | Eif e1 e2 e3 t => expr e1 <+> expr e2 <+> expr e3 <+> type t
     | Eif2 _ e1 e2 e3 e4 t => expr e1 <+> expr e2 <+> expr e3 <+> expr e4 <+> type t
     | Elambda nm es => name nm <+> lst expr es
-    | Econstructor nm es t => name nm <+> lst expr es <+> type t
-    | Einherited_constructor nm _ t => name nm <+> type t
+    | Econstructor nm es t => REF nm <+> name nm <+> lst expr es <+> type t
+    | Einherited_constructor nm _ t => REF nm <+> name nm <+> type t
     | Eimplicit e => expr e
     | Emember_ignore _ _ e => expr e
     | Eimplicit_init t => type t
@@ -274,12 +370,17 @@ Section with_monad.
     | Sdo s e => stmt s <+> expr e
     | Sfor os oe1 oe2 s =>
         opt stmt os <+> opt expr oe1 <+> opt expr oe2 <+> stmt s
-    | Sswitch os ovd e s => opt stmt os <+> opt var_decl ovd <+> expr e <+> stmt s
+    | Sswitch os ovd e s =>
+        (if s is Sseq b then
+           if switch_cases b then OK
+           else FAIL "switch: case or default nested in a statement or after a declaration"
+         else OK) <+> opt stmt os <+> opt var_decl ovd <+> expr e <+> stmt s
     | Scase _ => OK
     | Sdefault | Sbreak | Scontinue => OK
     | Sreturn oe => opt expr oe
     | Sexpr e => expr e
-    | Sasm _ _ lpe1 lpe2 _ => lst (expr ∘ snd) lpe1 <+> lst (expr ∘ snd) lpe2
+    | Sasm _ _ lpe1 lpe2 _ =>
+        FAIL "inline assembly" <+> lst (expr ∘ snd) lpe1 <+> lst (expr ∘ snd) lpe2
     | Sattr _ s => stmt s
     | Slabeled _ s => stmt s
     | Sgoto _ => FAIL "goto"
@@ -288,10 +389,11 @@ Section with_monad.
 
   with var_decl (v : VarDecl) : M :=
     match v with
-    | Dvar _ t oe => type t <+> opt expr oe
+    | Dvar _ t oe =>
+        (if q_volatile (decompose_type t).1 then FAIL "volatile object" else OK)
+        <+> type t <+> opt expr oe
     | Ddecompose e _ bds => expr e <+> lst binding_decl bds
-    | Dinit _ n t None => name n <+> type t
-    | Dinit _ n t (Some e) => name n <+> type t <+> expr e
+    | Dinit _ n t oe => FAIL "static local variable" <+> name n <+> type t <+> opt expr oe
     end
 
   with binding_decl (b : BindingDecl) : M :=
@@ -302,15 +404,18 @@ Section with_monad.
 
   with cast (c : Cast) : M :=
     match c with
-    | Cdependent t | Cbitcast t | Clvaluebitcast t | Cnoop t | Cint2ptr t | Cptr2int t
+    | Cdependent t | Cbitcast t | Cnoop t | Cint2ptr t | Cptr2int t
     | Cintegral t
     | Cnull2ptr t | Cnull2memberptr t
-    | Cbuiltin2fun t | Cctor t | Cdynamic t => type t
+    | Cbuiltin2fun t | Cctor t => type t
+    | Clvaluebitcast t => FAIL "lvalue bitcast" <+> type t
+    | Cdynamic t => FAIL "dynamic_cast" <+> type t
     | Cderived2base ts t | Cbase2derived ts t => lst type ts <+> type t
     | Cfloat t | Cint2float t => check_float_cast_target t
     | Cfloat2int t => type t <+> if is_float_type t then FAIL "invalid floating cast target" else OK
     | Cfloat2bool => OK
     | Cl2r_bitcast _ => FAIL "l2r_bitcast"
+    | Cunsupported _ _ => FAIL "unsupported cast"
     | _ => OK
     end.
 
@@ -319,6 +424,9 @@ Section with_monad.
     | Impl s => stmt s
     | Builtin _ => OK
     end.
+  (** clang defines every defaulted member a translation unit uses, with or
+      without cpp2v's elaboration, so a remaining [Defaulted] body belongs to
+      an unused member and only matters when it is queried, see [report]. *)
   Definition or_default {T : Set} (f : T -> M) (o : OrDefault T) : M :=
     match o with
     | Defaulted => OK
@@ -326,7 +434,11 @@ Section with_monad.
     | UserDefined v => f v
     end.
 
-  Definition classname : classname -> M := name.
+  Definition classname (n : classname) : M := REF n <+> name n.
+
+  Definition initializer (i : Initializer) : M :=
+    (if i.(init_path) is InitIndirect _ _ then FAIL "indirect member initialization" else OK)
+    <+> expr i.(init_init).
 
   Definition check_exc_spec {B} (exc : _) (body : option (OrDefault B)) : M :=
     if exc is exception_spec.Unknown
@@ -358,7 +470,7 @@ Section with_monad.
         <+> check_exc_spec m.(m_exception) m.(m_body)
 
     | Oconstructor c =>
-        let check_body '(li, s) := lst (expr ∘ init_init) li <+> stmt s in
+        let check_body '(li, s) := lst initializer li <+> stmt s in
         classname c.(c_class) <+> params c.(c_params)
         <+> opt (or_default check_body) c.(c_body)
         <+> check_exc_spec c.(c_exception) c.(c_body)
@@ -368,10 +480,17 @@ Section with_monad.
         <+> check_exc_spec d.(d_exception) d.(d_body)
     end.
 
+  Definition member (m : Member) : M := type m.(mem_type) <+> opt expr m.(mem_init).
+
   Definition glob_decl (gd : GlobDecl) : M :=
     match gd with
     | Gunsupported msg => FAIL msg
-    | _ => OK
+    | Gtype => OK
+    | Gunion u => lst member u.(u_fields)
+    | Gstruct s => lst (classname ∘ fst) s.(s_bases) <+> lst member s.(s_fields)
+    | Genum t _ => type t
+    | Gconstant t oe => type t <+> opt expr oe
+    | Gtypedef t => type t
     end.
 
   Definition translation_unit (tu : translation_unit) : M :=
@@ -403,4 +522,240 @@ Section with_monad.
     lst symbol (namemap.NM.elements mtu.(msymbols)).
 
 End with_monad.
+
+  (** No extension: the gaps of the semantics only. *)
+  Definition no_ext : Expr -> M := fun _ => OK.
+End walk.
+
+(** [Unsupported] gaps only. *)
+Module check.
+  Definition M := list PrimString.string.
+  Definition OK : M := [].
+  Definition FAIL (msg : PrimString.string) : M := [msg].
+  Definition fails (m : walk.M) : M :=
+    List.flat_map (fun i => if i is walk.Gap walk.Unsupported msg then [msg] else []) m.
+
+  Definition type t : M := fails (walk.type walk.no_ext t).
+  Definition expr e : M := fails (walk.expr walk.no_ext e).
+  Definition obj_value o : M := fails (walk.obj_value walk.no_ext o).
+  Definition glob_decl gd : M := fails (walk.glob_decl walk.no_ext gd).
+  Definition translation_unit tu : M := fails (walk.translation_unit walk.no_ext tu).
+  Definition template_unit mtu : M := fails (walk.template_unit walk.no_ext mtu).
 End check.
+
+(** ** Per-entity report
+
+    [report.run tu roots] resolves each root in [tu] (with the [cpp.spec] name
+    parser) and returns:
+    - [unsupported]: the entity's own [Unsupported] gaps, including those
+      of the builtins it calls;
+    - [partial]: [Partial] gaps in the entity or in the types it needs;
+    - [blocked_by]: the types it needs (transitively, through fields and bases)
+      with [Unsupported] gaps, and these gaps;
+    - [unsupported_refs]: the functions and variables it refers to with
+      [Unsupported] gaps, except builtins. This is one level only: they do
+      not block the entity, whose proof assumes their specs; query them as
+      roots to go further.
+
+    Types reached only through pointers or references are not needed. *)
+Module report.
+  Record entry : Set := mk_entry
+    { input : PrimString.string
+    ; resolved : PrimString.string (** [""] when [status = "missing"] *)
+    ; status : PrimString.string   (** supported | partial | blocked | unsupported | missing *)
+    ; unsupported : list PrimString.string
+    ; partial : list PrimString.string
+    ; blocked_by : list (PrimString.string * list PrimString.string)
+    ; unsupported_refs : list (PrimString.string * list PrimString.string) }.
+
+  Definition print (n : name) : PrimString.string :=
+    default "<unprintable name>"%pstring (printer.print_name n).
+
+  Definition partials (m : walk.M) : list PrimString.string :=
+    List.flat_map (fun i => if i is walk.Gap walk.Partial msg then [msg] else []) m.
+
+  (** [walk.no_refs] discards needs, never gaps. *)
+  Lemma fails_no_refs m : check.fails (walk.no_refs m) = check.fails m.
+  Proof. elim: m => [//|[[] ?|?|?] m IH] /=; by rewrite IH. Qed.
+
+  Lemma partials_no_refs m : partials (walk.no_refs m) = partials m.
+  Proof. elim: m => [//|[[] ?|?|?] m IH] /=; by rewrite IH. Qed.
+
+  (** [n] with its [Unsupported] gaps, if any. *)
+  Definition named (n : name) (m : walk.M) : list (PrimString.string * list PrimString.string) :=
+    if check.fails m is [] then [] else [(print n, check.fails m)].
+
+  Section with_tu.
+    Context (ext : Expr -> walk.M) (tu : translation_unit).
+
+    Definition refs (m : walk.M) : list name :=
+      remove_dups (List.flat_map (fun i => if i is walk.Ref n then [n] else []) m).
+
+    Definition type_refs (m : walk.M) : list name :=
+      List.filter (fun n => bool_decide (is_Some (tu.(types) !! n))) (refs m).
+
+    (** Unions only record their active member, but changing it is not
+        supported (see [union_change] in [logic/layout.v]). *)
+    Definition union_members (m : walk.M) : list PrimString.string :=
+      List.flat_map (fun i =>
+        if i is walk.Access n then
+          if tu.(types) !! n is Some (Gunion _)
+          then ["union member access: changing the active member is not supported"%pstring]
+          else []
+        else []) m.
+
+    (** [wp_method] and [wp_ctor] are stuck on [Defaulted] bodies. *)
+    Definition defaulted (o : ObjValue) : walk.M :=
+      match o with
+      | Omethod m => if m.(m_body) is Some Defaulted then walk.FAIL "defaulted method" else []
+      | Oconstructor c => if c.(c_body) is Some Defaulted then walk.FAIL "defaulted constructor" else []
+      | _ => []
+      end.
+
+    Definition walk_type (n : name) : walk.M :=
+      from_option (walk.glob_decl ext) [] (tu.(types) !! n).
+
+    (** The types that the definition of type [n] needs. *)
+    Definition succs (n : name) : list name := type_refs (walk_type n).
+
+    Definition is_new (seen : list name) (n : name) : bool :=
+      bool_decide (n ∉ seen) && bool_decide (is_Some (tu.(types) !! n)).
+
+    (** The types needed by [todo], transitively. Each round adds at least one
+        type, so one more round than there are types suffices (see
+        [closure_complete]). *)
+    (* ponytail: [seen] is a list, so membership is linear in the closure's
+       size; use a name set if closures get large. *)
+    Fixpoint closure (fuel : nat) (todo : list name) (seen : list name) : list name :=
+      match fuel with
+      | O => seen
+      | S fuel =>
+          match remove_dups (List.filter (is_new seen) todo) with
+          | [] => seen
+          | new => closure fuel (List.flat_map succs new) (new ++ seen)
+          end
+      end.
+
+    Definition closure_fuel : nat := S (length (map_to_list tu.(types))).
+
+    Definition builtin_of (n : name) : option BuiltinFn :=
+      if tu.(symbols) !! n is Some (Ofunction f) then
+        if f.(f_body) is Some (Builtin b) then Some b else None
+      else None.
+
+    (** A builtin has no spec to assume: its gaps are those of its callers. *)
+    Definition with_builtins (m : walk.M) : walk.M :=
+      m ++ List.flat_map (fun r => from_option walk.builtin [] (builtin_of r)) (refs m).
+
+    (** What the entity [n] itself uses. *)
+    Definition own (n : name) : option walk.M :=
+      match tu.(symbols) !! n, tu.(types) !! n with
+      | Some o, _ => Some (with_builtins (defaulted o ++ walk.obj_value ext o))
+      | None, gd => walk.glob_decl ext <$> gd
+      end.
+
+    (** [fuel] is [closure_fuel], computed once by [run]. *)
+    Definition entry_for (fuel : nat) (input : PrimString.string) : entry :=
+      if (n ← parser.parse_name_with tu input; pair n <$> own n) is Some (n, own) then
+        let needed := List.filter (fun t => bool_decide (t <> n)) (closure fuel (type_refs own) []) in
+        let used := own ++ List.flat_map walk_type needed in
+        let unsupported := check.fails own in
+        let blocked_by := List.flat_map (fun t => named t (walk_type t)) needed in
+        let partial := remove_dups (partials used ++ union_members used) in
+        let unsupported_refs :=
+          List.flat_map (fun r =>
+            if bool_decide (r = n) || bool_decide (is_Some (builtin_of r)) then [] else from_option (fun o => named r (walk.obj_value ext o)) [] (tu.(symbols) !! r))
+            (refs own) in
+        let status :=
+          match unsupported, blocked_by, partial with
+          | _ :: _, _, _ => "unsupported"
+          | [], _ :: _, _ => "blocked"
+          | [], [], _ :: _ => "partial"
+          | [], [], [] => "supported"
+          end%pstring
+        in
+        mk_entry input (print n) status unsupported partial blocked_by unsupported_refs
+      else mk_entry input "" "missing" [] [] [] [].
+
+    (** ** [closure] computes the whole closure *)
+
+    Lemma type_refs_types m n : n ∈ type_refs m -> is_Some (tu.(types) !! n).
+    Proof.
+      rewrite /type_refs list_elem_of_In filter_In bool_decide_eq_true. naive_solver.
+    Qed.
+
+    Lemma types_keys n : is_Some (tu.(types) !! n) -> In n (map fst (map_to_list tu.(types))).
+    Proof.
+      move=> [v Hv]. have [xs [ys ->]] := NM.map_to_list_elements n v _ Hv.
+      apply/in_map_iff. exists (n, v). split; first done. apply/in_app_iff. by right; left.
+    Qed.
+
+    Lemma closure_spec fuel todo seen :
+      NoDup seen ->
+      (forall n, n ∈ seen -> is_Some (tu.(types) !! n)) ->
+      (forall n, n ∈ seen -> forall m, m ∈ succs n -> m ∈ seen \/ m ∈ todo) ->
+      length (map_to_list tu.(types)) - length seen < fuel ->
+      let s := closure fuel todo seen in
+      seen ⊆ s /\ NoDup s /\ (forall n, n ∈ s -> is_Some (tu.(types) !! n)) /\
+      (forall n, n ∈ todo -> is_Some (tu.(types) !! n) -> n ∈ s) /\
+      (forall n, n ∈ s -> forall m, m ∈ succs n -> m ∈ s).
+    Proof.
+      elim: fuel todo seen => [|fuel IH] todo seen Hnd Htys Hclosed Hfuel /=; first lia.
+      have Hnew n : n ∈ remove_dups (List.filter (is_new seen) todo) <->
+                    n ∈ todo /\ n ∉ seen /\ is_Some (tu.(types) !! n).
+      { rewrite elem_of_remove_dups list_elem_of_In filter_In -list_elem_of_In /is_new.
+        rewrite andb_true_iff !bool_decide_eq_true. naive_solver. }
+      have Hin n : n ∈ todo -> is_Some (tu.(types) !! n) ->
+                   n ∈ seen \/ n ∈ remove_dups (List.filter (is_new seen) todo).
+      { move=> ??. destruct (decide (n ∈ seen)); [by left|right]. by apply Hnew. }
+      destruct (remove_dups (List.filter (is_new seen) todo)) as [|n0 rest] eqn:Hdups.
+      { split_and!; [done|done|done| |].
+        - move=> n ??. by destruct (Hin n) as [|?%elem_of_nil].
+        - move=> n Hn m Hm. destruct (Hclosed n Hn m Hm) as [|Htodo]; first done.
+          by destruct (Hin m Htodo (type_refs_types _ _ Hm)) as [|?%elem_of_nil]. }
+      set new := n0 :: rest.
+      have Hnew' n : n ∈ new <-> n ∈ todo /\ n ∉ seen /\ is_Some (tu.(types) !! n).
+      { by rewrite -Hnew. }
+      have Hnd' : NoDup (new ++ seen).
+      { apply NoDup_app. split_and!; last done.
+        - rewrite /new -Hdups. apply NoDup_remove_dups.
+        - move=> ? /Hnew'. naive_solver. }
+      have Htys' n : n ∈ new ++ seen -> is_Some (tu.(types) !! n).
+      { rewrite elem_of_app Hnew'. naive_solver. }
+      have Hlen : length (new ++ seen) <= length (map_to_list tu.(types)).
+      { rewrite -(List.length_map fst (map_to_list tu.(types))).
+        apply NoDup_incl_length; first by apply NoDup_ListNoDup.
+        move=> n /list_elem_of_In /Htys'. exact: types_keys. }
+      have := IH (List.flat_map succs new) (new ++ seen) Hnd' Htys'.
+      case.
+      - move=> n. rewrite elem_of_app => -[Hn|Hn] m Hm.
+        + right. rewrite list_elem_of_In in_flat_map. exists n.
+          by rewrite -!list_elem_of_In.
+        + left. rewrite elem_of_app.
+          destruct (Hclosed n Hn m Hm) as [|Htodo]; first by right.
+          destruct (Hin m Htodo (type_refs_types _ _ Hm)); [by right|by left].
+      - rewrite length_app /= in Hlen *. lia.
+      - move=> Hs [? [? [_ ?]]]. split_and!; [set_solver|done|done| |done].
+        move=> n ??. apply Hs. rewrite elem_of_app. destruct (Hin n); [done|done|by right|by left].
+    Qed.
+
+    (** Starting from nothing, [closure_fuel] rounds yield exactly the types
+        needed by [todo], transitively, without duplicates. *)
+    Lemma closure_complete todo :
+      let s := closure closure_fuel todo [] in
+      NoDup s /\ (forall n, n ∈ s -> is_Some (tu.(types) !! n)) /\
+      (forall n, n ∈ todo -> is_Some (tu.(types) !! n) -> n ∈ s) /\
+      (forall n, n ∈ s -> forall m, m ∈ succs n -> m ∈ s).
+    Proof.
+      have := closure_spec closure_fuel todo [].
+      case; [constructor|set_solver|set_solver|rewrite /closure_fuel /=; lia|naive_solver].
+    Qed.
+  End with_tu.
+
+  (** [ext] adds the gaps of a proof tool, see [walk]. *)
+  Definition run_with (ext : Expr -> walk.M) (tu : translation_unit) (roots : list PrimString.string) : list entry :=
+    List.map (entry_for ext tu (closure_fuel tu)) roots.
+
+  Definition run : translation_unit -> list PrimString.string -> list entry :=
+    run_with walk.no_ext.
+End report.

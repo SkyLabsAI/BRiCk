@@ -1,0 +1,345 @@
+     = [{|
+          report.input := "by_value(Bits)";
+          report.resolved := "by_value(Bits)";
+          report.status := "blocked";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by :=
+            [("Bits"%pstring, ["bitfields are not supported"%pstring])];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "by_pointer(Bits*)";
+          report.resolved := "by_pointer(Bits*)";
+          report.status := "supported";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "through_field(HasBits*)";
+          report.resolved := "through_field(HasBits*)";
+          report.status := "blocked";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by :=
+            [("Bits"%pstring, ["bitfields are not supported"%pstring])];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "linked(Node)";
+          report.resolved := "linked(Node)";
+          report.status := "supported";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "static_local()";
+          report.resolved := "static_local()";
+          report.status := "unsupported";
+          report.unsupported := ["static local variable"%pstring];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "calls_static_local()";
+          report.resolved := "calls_static_local()";
+          report.status := "supported";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs :=
+            [("static_local()"%pstring, ["static local variable"%pstring])]
+        |};
+        {|
+          report.input := "use_union(U)";
+          report.resolved := "use_union(U)";
+          report.status := "partial";
+          report.unsupported := [];
+          report.partial :=
+            ["union member access: changing the active member is not supported"%pstring];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "arrow_union(U*)";
+          report.resolved := "arrow_union(U*)";
+          report.status := "partial";
+          report.unsupported := [];
+          report.partial :=
+            ["union member access: changing the active member is not supported"%pstring];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "arrow_bits(Bits*)";
+          report.resolved := "arrow_bits(Bits*)";
+          report.status := "blocked";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by :=
+            [("Bits"%pstring, ["bitfields are not supported"%pstring])];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "address_only()";
+          report.resolved := "address_only()";
+          report.status := "supported";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "call_through(Bits*)";
+          report.resolved := "call_through(Bits*)";
+          report.status := "blocked";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by :=
+            [("Bits"%pstring, ["bitfields are not supported"%pstring])];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "read_volatile(volatile int*)";
+          report.resolved := "read_volatile(volatile int*)";
+          report.status := "partial";
+          report.unsupported := [];
+          report.partial :=
+            ["volatile: accesses are modelled as ordinary memory"%pstring];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "volatile_local()";
+          report.resolved := "volatile_local()";
+          report.status := "unsupported";
+          report.unsupported := ["volatile object"%pstring];
+          report.partial :=
+            ["volatile: accesses are modelled as ordinary memory"%pstring];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "dyn(Base*)";
+          report.resolved := "dyn(Base*)";
+          report.status := "unsupported";
+          report.unsupported := ["dynamic_cast"%pstring];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "inline_asm()";
+          report.resolved := "inline_asm()";
+          report.status := "unsupported";
+          report.unsupported := ["inline assembly"%pstring];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "cas_ptr(int**, int**, int*)";
+          report.resolved := "cas_ptr(int**, int**, int*)";
+          report.status := "unsupported";
+          report.unsupported :=
+            ["atomic compare-exchange on non-integer values"%pstring];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "cas_int(int*, int*, int)";
+          report.resolved := "cas_int(int*, int*, int)";
+          report.status := "supported";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "overloaded(int)";
+          report.resolved := "overloaded(int)";
+          report.status := "supported";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "overloaded(long)";
+          report.resolved := "overloaded(long)";
+          report.status := "supported";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "unknown_builtin(unsigned int)";
+          report.resolved := "unknown_builtin(unsigned int)";
+          report.status := "unsupported";
+          report.unsupported :=
+            ["builtin without semantics: __builtin_popcount"%pstring];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "known_builtin(long)";
+          report.resolved := "known_builtin(long)";
+          report.status := "supported";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "flat_switch(int)";
+          report.resolved := "flat_switch(int)";
+          report.status := "supported";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "nested_case(int)";
+          report.resolved := "nested_case(int)";
+          report.status := "unsupported";
+          report.unsupported :=
+            ["switch: case or default nested in a statement or after a declaration"%pstring];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "case_after_decl(int)";
+          report.resolved := "case_after_decl(int)";
+          report.status := "unsupported";
+          report.unsupported :=
+            ["switch: case or default nested in a statement or after a declaration"%pstring];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "Anon::Anon()";
+          report.resolved := "Anon::Anon()";
+          report.status := "unsupported";
+          report.unsupported := ["indirect member initialization"%pstring];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "Bits";
+          report.resolved := "Bits";
+          report.status := "unsupported";
+          report.unsupported := ["bitfields are not supported"%pstring];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "HasBits";
+          report.resolved := "HasBits";
+          report.status := "blocked";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by :=
+            [("Bits"%pstring, ["bitfields are not supported"%pstring])];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "Node";
+          report.resolved := "Node";
+          report.status := "supported";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "U";
+          report.resolved := "U";
+          report.status := "supported";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "missing()";
+          report.resolved := "";
+          report.status := "missing";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |}]
+     : list report.entry
+     = ["bitfields are not supported"%pstring;
+        "atomic compare-exchange on non-integer values"%pstring;
+        "switch: case or default nested in a statement or after a declaration"%pstring;
+        "dynamic_cast"%pstring; "inline assembly"%pstring;
+        "switch: case or default nested in a statement or after a declaration"%pstring;
+        "static local variable"%pstring; "volatile object"%pstring;
+        "indirect member initialization"%pstring]
+     : check.M
+UNSUPPORTED_affine: Affine3 ...
+UNSUPPORTED_persistent: Persistent3 ...
+UNSUPPORTED_elim': ..., ...
+observe_from_UNSUPPORTED: ..., ...
+UNSUPPORTED_elim: ..., ...
+UNSUPPORTED_from_assumption: ..., ...
+UNSUPPORTED_False: ..., ...
+UNSUPPORTED_sep: ..., ...
+or_UNSUPPORTED: ..., ...
+UNSUPPORTED_or: ..., ...
+and_UNSUPPORTED: ..., ...
+UNSUPPORTED_and: ..., ...
+sep_UNSUPPORTED: ..., ...
+WpInitUnsupported: ..., ...
+WpInitArray: ..., ...
+wp_init_cast_noop: ..., ...
+wp_switch: ..., ...
+wp_delete_obj.unlock: ... = ...
+default_initialize_intro: ..., ...
+wp_method_intro: ..., ...
+wp_method_elim: ..., ...
+wp_method.unlock: ... = ...
+wp_initialize_decomp_spec_ind: ..., ...
+wp_initialize_decomp_spec_sind: ..., ...
+wp_initialize_unqualified.unlock: ... = ...
+wp_initialize_unqualified_elim: ..., ...
+wp_initialize_unqualified_intro: ..., ...
+wp_initialize_elim: ..., ...
+wp_initialize_intro: ..., ...
+default_initialize_elim: ..., ...
+default_initialize_unfold: ..., ...
+default_initialize.unlock: ... = ...
+destroy_val_elim: ..., ...
+destroy_val_unfold: ..., ...
+wp_destroy_val_elim: ..., ...
+wp_destroy_val_unfold: ..., ...
+wp_ctor_intro: ..., ...
+wp_ctor_elim: ..., ...
+wp_ctor.unlock: ... = ...
+init_state_initialized_affine: ..., ...
+init_state_initialized_pers: ..., ...
+init_state_timeless: Timeless5 ...
+init_state_uninitialized_excl: ..., ...
+init_state_initializing_excl: ..., ...
+init_state_agree: ..., ...
+wp_atom_compare_exchange_n_cst_weak_bool: ..., ...
+wp_atom_compare_exchange_n_cst_bool: ..., ...
+wp_atom_compare_exchange_n_cst_weak: ..., ...
+wp_atom_compare_exchange_n_cst: ..., ...
+wp_atom_compare_exchange_cst_weak: ..., ...
+wp_atom_compare_exchange_cst: ..., ...
+No object of basename union_change
