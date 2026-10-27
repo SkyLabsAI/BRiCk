@@ -23,3 +23,9 @@ struct {
     };
   };
 } y;
+
+// Unnamed records whose invented names collide in a namespace.
+namespace collide_ns {
+  struct { int a; } *p3;
+  struct { long a; } *p4;
+}

@@ -188,11 +188,18 @@ Module Import translation_unit.
         f_body := Some (Impl (Sunsupported error_msg))
       |}.
 
+  (** Incompatible type definitions sharing a name are replaced by this, so
+      that no fact about either definition (size, fields, layout, enumerators)
+      is available. *)
+  Definition type_conflict (n : name) : GlobDecl :=
+    Gunsupported ("Name collision on " ++ pretty.print_name n ++ " replaced by this unsupported type")%pstring.
+
   Definition decls (ds : PArray.array t) (info : abi.t) : translation_unit * dup_info :=
     decls' ds ∅ ∅ [] ∅ [] [] $ fun s t ga a asserts dups =>
         pair {|
             symbols := List.fold_left (fun t '(n, _) => <[n:=conflict n]> t) dups (NM.from_raw s);
-            types := NM.from_raw t;
+            types := List.fold_left (fun t '(n, d) =>
+                       if d is inl _ then <[n:=type_conflict n]> t else t) dups (NM.from_raw t);
             namespace_aliases := (Listset (sort.sort ga), NM.from_raw $ NM.Raw.map (fun x => Listset $ sort.sort x) a);
             initializer := nil;	(** TODO *)
             asserts := sort_static_assert.sort asserts;

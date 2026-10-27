@@ -396,6 +396,91 @@ static unsigned getAnonymousIndex(const DeclContext &ctx, const Decl &decl,
     return i;
 }
 
+/*
+Names cpp2v invents for unnamed tag declarations that have neither an
+identifier nor a typedef name for linkage. [FirstDecl] is printed as
+<<Nby_first_decl>>, and [FirstChild] as <<Nrecord_by_field>> or
+<<Nenum_by_enumerator>>; BRiCk maps the latter two to the same
+<<Nfirst_child>> atomic name, so they share a kind here.
+*/
+struct InventedTagName {
+    enum class Kind { FirstDecl, FirstChild } kind;
+    const char *ctor;
+    StringRef name;
+
+    bool sameName(const InventedTagName &other) const {
+        return kind == other.kind && name == other.name;
+    }
+};
+
+static std::optional<InventedTagName> getInventedTagName(const TagDecl &decl) {
+    if (!isAnonymous(decl) || decl.getTypedefNameForAnonDecl())
+        return std::nullopt;
+
+    // this heuristic tries to construct a name using the first declaration
+    // that has that type. For example,
+    //
+    //  struct { } x;
+    //
+    // the name of the struct is essentially [decltype(x)].
+    //
+    // Only the declaration immediately following [decl] is considered.
+    if (auto vd = dyn_cast_or_null<ValueDecl>(decl.getNextDeclInContext())) {
+        auto type = vd->getType().getTypePtr();
+        if (type->getAsTagDecl() == &decl && vd->getIdentifier())
+            return InventedTagName{InventedTagName::Kind::FirstDecl,
+                                   "Nby_first_decl",
+                                   vd->getIdentifier()->getName()};
+    }
+
+    if (auto rd = dyn_cast<RecordDecl>(&decl)) {
+        if (rd->getParent()->isTranslationUnit())
+            return std::nullopt;
+        for (auto i : rd->fields())
+            if (i->getIdentifier())
+                return InventedTagName{InventedTagName::Kind::FirstChild,
+                                       "Nrecord_by_field",
+                                       i->getIdentifier()->getName()};
+    } else if (auto ed = dyn_cast<EnumDecl>(&decl)) {
+        for (auto i : ed->enumerators())
+            if (i->getIdentifier())
+                return InventedTagName{InventedTagName::Kind::FirstChild,
+                                       "Nenum_by_enumerator",
+                                       i->getIdentifier()->getName()};
+    }
+    return std::nullopt;
+}
+
+/*
+Decide whether an unnamed tag declaration shares its invented name with an
+earlier unnamed tag declaration in the same naming context [ctx]. Clang puts
+every local declaration of a function body in the function's declaration
+context, so, for example, two unnamed structs in sibling blocks that each
+declare a variable [x] would otherwise both be named [Nby_first_decl "x"].
+The first declaration keeps its invented name, so translation units without
+such clashes print as before.
+
+Like [getAnonymousIndex], this returns [true] once it reaches [decl], having
+set [clash] if an earlier tag declaration has the same invented name.
+*/
+static bool collidesWithEarlierTag(const DeclContext &ctx, const TagDecl &decl,
+                                   const InventedTagName &name, bool &clash,
+                                   ClangPrinter &cprint) {
+    for (auto d : ctx.decls()) {
+        if (d == &decl)
+            return true;
+        if (auto dctx = dyn_cast<DeclContext>(d))
+            if (isIgnorableContext(*dctx, cprint) &&
+                collidesWithEarlierTag(*dctx, decl, name, clash, cprint))
+                return true;
+        if (auto td = dyn_cast<TagDecl>(d))
+            if (auto other = getInventedTagName(*td))
+                if (other->sameName(name))
+                    clash = true;
+    }
+    return false;
+}
+
 static fmt::Formatter &printUnsupportedTemplateParam(CoqPrinter &print,
                                                      const NamedDecl *pdecl,
                                                      ClangPrinter &cprint,
@@ -923,23 +1008,26 @@ static fmt::Formatter &printAtomicName(const DeclContext &ctx, const Decl &decl,
         return 0;
     };
 
-    auto ident = [&]() -> auto & {
-        if (auto nd = isNamed(decl)) {
-            auto n = duplicate_index(*nd);
-            if (n == -1) {
-                guard::ctor _{print, "Nunsupported"};
-                return print.str("failed to find identifier");
+    auto ident_of = [&](const NamedDecl &nd) -> auto & {
+        auto n = duplicate_index(nd);
+        if (n == -1) {
+            guard::ctor _{print, "Nunsupported"};
+            return print.str("failed to find identifier");
+        } else {
+            guard::ctor _(print, "Nid", false);
+            if (n) {
+                auto t = nd.getNameAsString();
+                t += "'" + std::to_string(n - 1);
+                return print.str(t);
             } else {
-                guard::ctor _(print, "Nid", false);
-                if (n) {
-                    auto t = nd->getNameAsString();
-                    t += "'" + std::to_string(n - 1);
-                    return print.str(t);
-                } else {
-                    return print.str(nd->getName());
-                }
+                return print.str(nd.getName());
             }
         }
+    };
+
+    auto ident = [&]() -> auto & {
+        if (auto nd = isNamed(decl))
+            return ident_of(*nd);
         always_assert(false && "ident for un-named term");
         return unsupported("ident for un-named term");
     };
@@ -954,73 +1042,45 @@ static fmt::Formatter &printAtomicName(const DeclContext &ctx, const Decl &decl,
         } else
             return unsupported(anon_error.value());
     };
-    auto by_first_decl = [&](const TagDecl *decl) {
-        // this heuristic tries to construct a name using the first declaration
-        // that has that type. For example,
-        //
-        //  struct { } x;
-        //
-        // the name of the struct is essentially [decltype(x)].
-        for (auto by_decl = decl->getNextDeclInContext(); by_decl;
-             by_decl = by_decl->getNextDeclInContext()) {
-            if (auto vd = dyn_cast<ValueDecl>(by_decl)) {
-                auto type = vd->getType().getTypePtr();
-                if (type->getAsTagDecl() == decl && vd->getIdentifier()) {
-                    guard::ctor _(print, "Nby_first_decl", false);
-                    print.str(vd->getIdentifier()->getName());
-                    return true;
-                }
-                break;
-            }
-            // This returns [false] if [by_decl] is not a lexical child of
-            // [decl]
-            for (auto i = by_decl->getLexicalDeclContext(); i;
-                 i = i->getParent()) {
-                if (i->isTranslationUnit())
-                    return false;
-            }
-        }
-        return false;
-    };
-
     if (auto td = dyn_cast<TagDecl>(&decl)) {
         if (isNamed(*td)) {
             return ident();
         }
         if (auto type_def = td->getTypedefNameForAnonDecl()) {
-            guard::ctor _(print, "Nid", false);
-            return print.str(type_def->getName());
+            // Agree with the name printed for [type_def] itself, including its
+            // discriminator among same-named local declarations.
+            return ident_of(*type_def);
         }
-        if (by_first_decl(td))
-            return print.output();
-    }
-    if (auto rd = dyn_cast<RecordDecl>(&decl)) {
-        if (rd->getParent()->isTranslationUnit()) {
-            logging::unsupported()
-                << "Anonymous global records without declarations are not "
-                   "supported. These can not be referenced in C++!\n "
-                << fmt::dump(*rd);
-            return unsupported("record");
-        }
-        for (auto i : rd->fields()) {
-            if (i->getIdentifier()) {
-                guard::ctor _(print, "Nrecord_by_field", false);
-                return print.str(i->getIdentifier()->getName());
+        if (auto invented = getInventedTagName(*td)) {
+            // Invented names are not unique: fall back to the anonymous index
+            // for every tag declaration but the first to invent a given name.
+            auto anon_ctx = getNonIgnorableAncestor(*td, cprint);
+            bool clash = false;
+            if (collidesWithEarlierTag(anon_ctx, *td, *invented, clash,
+                                       cprint) &&
+                clash) {
+                guard::ctor _(print, "Nanon", false);
+                return print.output()
+                       << getAnonymousIndex(anon_ctx, decl, cprint);
             }
+            guard::ctor _(print, invented->ctor, false);
+            return print.str(invented->name);
         }
-    } else if (auto ed = dyn_cast<EnumDecl>(&decl)) {
-        for (auto i : ed->enumerators()) {
-            if (i->getIdentifier()) {
-                guard::ctor _(print, "Nenum_by_enumerator", false);
-                return print.str(i->getIdentifier()->getName());
+        if (td->getDeclContext()->isTranslationUnit()) {
+            if (isa<RecordDecl>(td)) {
+                logging::unsupported()
+                    << "Anonymous global records without declarations are not "
+                       "supported. These can not be referenced in C++!\n "
+                    << fmt::dump(*td);
+                return unsupported("record");
+            } else if (isa<EnumDecl>(td)) {
+                logging::unsupported()
+                    << "Unsupported empty enumeration in global "
+                       "context. These can not be "
+                       "referenced in C++!\n"
+                    << fmt::dump(*td);
+                return unsupported("enum");
             }
-        }
-        if (ed->getParent()->isTranslationUnit()) {
-            logging::unsupported() << "Unsupported empty enumeration in global "
-                                      "context. These can not be "
-                                      "referenced in C++!\n"
-                                   << fmt::dump(*ed);
-            return unsupported("enum");
         }
     } else if (auto ns = dyn_cast<NamespaceDecl>(&decl)) {
         if (isNamed(*ns)) {
@@ -1087,8 +1147,16 @@ static fmt::Formatter &printAtomicName(const DeclContext &ctx, const Decl &decl,
         /*
         Enum constant names should not arise in practice (see
         `Eenum_const`). They're supported here for `--test-name`.
+
+        Enumerators are always scoped by their (unique) enumeration name, and
+        are unique within it, so they get no discriminator: references print
+        `Eenum_const <enum> <identifier>` and must find the same name.
         */
-        return ident_or_anon("anonymous enum constant");
+        if (auto nd = isNamed(decl)) {
+            guard::ctor _(print, "Nid", false);
+            return print.str(nd->getName());
+        }
+        return unsupported("anonymous enum constant");
         // TODO: Ndecltype
         // TODO: Nclosure
     case Decl::Kind::Binding:
