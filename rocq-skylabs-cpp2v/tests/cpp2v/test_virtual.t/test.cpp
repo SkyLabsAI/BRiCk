@@ -15,3 +15,19 @@ struct B : public A {
 int call(const A* a) {
     return a->f();
 }
+
+// A pure-virtual re-declaration in the middle of a hierarchy must still
+// record its override, so that dispatch on [A*] reaches [D::g].
+struct C {
+    virtual int g() { return 1; }
+};
+struct D : C {
+    int g() override = 0;
+};
+struct E : D {
+    int g() override { return 3; }
+};
+
+int call_g(C* c) {
+    return c->g();
+}

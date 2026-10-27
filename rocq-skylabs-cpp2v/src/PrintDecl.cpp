@@ -495,7 +495,10 @@ static fmt::Formatter &printStructOverrides(CoqPrinter &print,
     for (auto m : decl.methods()) {
         if (!m)
             fatal(cprint, loc::of(decl), "null method");
-        if (m->isVirtual() and not is_pure_virtual(*m)) {
+        // Pure virtual methods override too: [struct B : A { int f() override = 0; }]
+        // must link [A::f()] to [B::f()] so that [dispatch] can continue
+        // the chain into derived classes that override [B::f()].
+        if (m->isVirtual()) {
             for (auto o : m->overridden_methods()) {
                 print.output() << "(";
                 cprint.printName(print, o, loc::of(m)) << fmt::tuple_sep;
