@@ -29,6 +29,5 @@ Compiling the generated Coq files.
           "Name std::__are_same<?Builtin long double, double>::.__value may denote several types"%pstring;
           "Name std::__is_floating<?Builtin long double>::.__value may denote several types"%pstring;
           "Name std::__is_integer<?Builtin long double>::.__value may denote several types"%pstring;
-          "if consteval"%pstring; "if consteval"%pstring;
-          "unsupported attribute: CXX11NoReturn"%pstring]
+          "if consteval"%pstring; "if consteval"%pstring]
        : supported.check.M

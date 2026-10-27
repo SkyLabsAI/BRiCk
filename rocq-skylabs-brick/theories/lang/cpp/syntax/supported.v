@@ -313,10 +313,11 @@ Section with_monad.
   (* The types in a name (parameters, template arguments) identify it; they
      are not needed. What a template instance needs comes from its own
      definition. *)
-  (** BRiCk does not interpret any attribute yet ([attr.t] only has [Other]);
-      cpp2v does not print the no-op ones. *)
+  (** [attr.Other] attributes have no model (cpp2v does not print the no-op
+      ones); the others are enforced by [wp_func]/[wp_method]. *)
   Definition attr (a : attr.t) : M :=
     match a with
+    | attr.Noreturn | attr.Nonnull _ | attr.Returns_nonnull => OK
     | attr.Other kind _ => FAIL (PrimString.cat "unsupported attribute: " kind)
     end.
 

@@ -1105,9 +1105,15 @@ Module name.
 End name.
 
 Definition attr_compare (a b : attr.t) : comparison :=
+  let tag (a : attr.t) : N :=
+    match a with
+    | attr.Noreturn => 0%N | attr.Nonnull _ => 1%N | attr.Returns_nonnull => 2%N | attr.Other _ _ => 3%N
+    end in
   match a , b with
+  | attr.Nonnull ps , attr.Nonnull ps' => List.compare N.compare ps ps'
   | attr.Other k p , attr.Other k' p' =>
       compare_lex (PrimString.compare k k') $ fun _ => PrimString.compare p p'
+  | _ , _ => N.compare (tag a) (tag b)
   end.
 
 Module type.

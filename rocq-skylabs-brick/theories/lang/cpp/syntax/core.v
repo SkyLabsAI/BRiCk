@@ -201,15 +201,57 @@ Module attr.
   <<__attribute__((section(".cpulocal")))>>), or the empty string for an
   implicit attribute, which has no spelling.
 
-  [supported] reports every [Other] attribute. The program logic does not
-  interpret them yet: it is up
-  to the attributes that get a model to add a constructor here.
+  [supported] reports every [Other] attribute. Attributes with a model have
+  their own constructor; they are promises that the compiler relies on, and
+  the program logic enforces them when verifying a definition ([wp_func],
+  [wp_method]), so that the promise is a proof obligation rather than a
+  silent assumption. cpp2v records them only on functions and methods:
+  - [Noreturn] (<<[[noreturn]]>>, <<__attribute__((noreturn))>>,
+    <<_Noreturn>>): the function never returns normally. Clang deletes the
+    code after a call, so the definition must prove that normal return is
+    unreachable.
+  - [Nonnull params] (<<__attribute__((nonnull(...)))>>, on the function or
+    on a parameter): the listed parameters (0-based indices into the
+    explicit parameter list, i.e. excluding <<this>>) hold non-null
+    pointers. Clang deletes null checks in the callee, so every spec of the
+    function must require the arguments to be non-null, and the body may
+    assume it. cpp2v expands the argument-less spelling to every pointer
+    parameter.
+  - [Returns_nonnull] (<<__attribute__((returns_nonnull))>>): the returned
+    pointer is not null; the definition must prove it.
   *)
   Variant t : Set :=
+  | Noreturn
+  | Nonnull (params : list N)
+  | Returns_nonnull
   | Other (kind : PrimString.string) (pretty : PrimString.string).
   #[global] Instance t_eq_dec : EqDecision t.
   Proof. solve_decision. Defined.
 
+  (** Direct fixpoints rather than [existsb]/[concat], so that they reduce
+      structurally on a concrete list. *)
+  Fixpoint noreturn (attrs : list t) : bool :=
+    match attrs with
+    | [] => false
+    | Noreturn :: _ => true
+    | _ :: attrs => noreturn attrs
+    end.
+  Fixpoint returns_nonnull (attrs : list t) : bool :=
+    match attrs with
+    | [] => false
+    | Returns_nonnull :: _ => true
+    | _ :: attrs => returns_nonnull attrs
+    end.
+  (** The parameters that some [Nonnull] attribute lists. *)
+  Fixpoint nonnull_params (attrs : list t) : list N :=
+    match attrs with
+    | [] => []
+    | Nonnull ps :: attrs => ps ++ nonnull_params attrs
+    | _ :: attrs => nonnull_params attrs
+    end.
+  #[global] Arguments noreturn !attrs /.
+  #[global] Arguments returns_nonnull !attrs /.
+  #[global] Arguments nonnull_params !attrs /.
 End attr.
 
 (** ** Structured names *)
