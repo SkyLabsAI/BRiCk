@@ -794,6 +794,21 @@ static fmt::Formatter &printFunctionParams(CoqPrinter &print,
     });
 }
 
+/// A union's defaulted copy/move constructors and assignment operators
+/// copy the object representation of the source ([class.copy.ctor]/14,
+/// [class.copy.assign]/13). Clang's AST does not express this copy: the
+/// generated body is empty (constructors) or `return *this;` (assignment
+/// operators), because clang's code generator performs the copy at the call
+/// site. Printing that body would make the copy a no-op, so these members
+/// are printed as `Defaulted` and the logic gives them their meaning.
+static bool isDefaultedUnionCopyOrMove(const CXXMethodDecl &decl) {
+    if (!decl.isDefaulted() || !decl.getParent()->isUnion())
+        return false;
+    if (auto d = dyn_cast<CXXConstructorDecl>(&decl))
+        return d->isCopyOrMoveConstructor();
+    return decl.isCopyAssignmentOperator() || decl.isMoveAssignmentOperator();
+}
+
 static llvm::StringRef orDefaultBodyCtorName(const FunctionDecl &decl) {
     return decl.isImplicit() || decl.isDefaulted() ? "CompilerProvided"
                                                    : "UserDefined";
@@ -842,7 +857,9 @@ static fmt::Formatter &printMethod(CoqPrinter &print, const CXXMethodDecl &decl,
     cprint.printCallingConv(print, decl) << fmt::nbsp;
     cprint.printVariadic(print, decl.isVariadic()) << fmt::nbsp;
     cprint.printExceptionSpec(print, decl) << fmt::nbsp;
-    if (auto body = decl.getBody()) {
+    if (isDefaultedUnionCopyOrMove(decl)) {
+        return print.output() << "(Some Defaulted)";
+    } else if (auto body = decl.getBody()) {
         guard::some some(print);
         guard::ctor _(print, orDefaultBodyCtorName(decl));
         return cprint.printStmt(print, body);
@@ -958,7 +975,9 @@ static fmt::Formatter &printConstructor(CoqPrinter &print,
     cprint.printCallingConv(print, decl) << fmt::nbsp;
     cprint.printVariadic(print, decl.isVariadic()) << fmt::nbsp;
     cprint.printExceptionSpec(print, decl) << fmt::nbsp;
-    if (auto body = decl.getBody()) {
+    if (isDefaultedUnionCopyOrMove(decl)) {
+        return print.output() << "(Some Defaulted)";
+    } else if (auto body = decl.getBody()) {
         guard::some s(print);
         guard::ctor od(print, orDefaultBodyCtorName(decl));
         guard::tuple _(print);

@@ -23,6 +23,16 @@ with C++ precedence and dimension order ([#448](https://github.com/SkyLabsAI/BRi
   array type: `int[][3][4]` is valid, while `int[][][4]` is rejected. Pointers
   to unknown-bound arrays, including arrays of such pointers, remain supported.
 
+2026.10.27: cpp2v prints a union's defaulted copy/move constructors and
+copy/move assignment operators as `Defaulted` instead of clang's AST body
+(empty, resp. `return *this;`: clang's code generator performs the copy at the
+call site, so executing that body copied nothing). `wp_ctor` and `wp_method`
+give these members the meaning of copying the object representation
+(`wp_union_copy` in `logic/func.v`): the source's active member and its raw
+bytes (`unionR`, `rawsR`) become the destination's. Proofs about such copies
+must now supply the source as raw bytes (`primR_to_rawsR`) and the destination
+as `anyR` (assignment) or `tblockR` (construction).
+
 2026.10.19: cpp2v puts template patterns reached outside their template (e.g.
 local types in out-of-line member definitions of class templates, or
 out-of-line static data members of class templates) in the template part of
