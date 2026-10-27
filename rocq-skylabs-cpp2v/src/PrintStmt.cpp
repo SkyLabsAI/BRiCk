@@ -276,9 +276,65 @@ public:
         print.end_ctor();
     }
 
+    /*
+     * The automatic variable whose copy or move into the returned object
+     * `return x;` may elide (named return value optimization,
+     * [class.copy.elision]/1.1), or `nullptr`.
+     *
+     * This is the standard's eligibility, which clang's AST does not record:
+     * `ReturnStmt::getNRVOCandidate` and `VarDecl::isNRVOVariable` only mark
+     * the variables clang *decides* to elide (one per scope, so a function
+     * returning either of two locals has neither), and since clang 22 the
+     * `CXXConstructExpr` is no longer `elidable`. The semantics must allow
+     * elision wherever a conforming implementation may perform it, so
+     * `Sreturn_nrvo` is printed for every eligible return; BRiCk then
+     * verifies both executions.
+     */
+    static const VarDecl *nrvo_candidate(const ReturnStmt *stmt,
+                                         ASTContext &ctxt) {
+        auto rv = stmt->getRetValue();
+        if (!rv)
+            return nullptr;
+        auto e = rv->IgnoreParens();
+        if (auto ewc = dyn_cast<ExprWithCleanups>(e))
+            e = ewc->getSubExpr()->IgnoreParens();
+        auto ce = dyn_cast<CXXConstructExpr>(e);
+        if (!ce || ce->getNumArgs() < 1 ||
+            !ce->getConstructor()->isCopyOrMoveConstructor())
+            return nullptr;
+        auto dre = dyn_cast<DeclRefExpr>(ce->getArg(0)->IgnoreParenImpCasts());
+        // A variable of an enclosing function (a lambda capture) is not an
+        // automatic variable of this function.
+        if (!dre || dre->refersToEnclosingVariableOrCapture())
+            return nullptr;
+        auto vd = dyn_cast<VarDecl>(dre->getDecl());
+        if (!vd || !vd->hasLocalStorage() || isa<ParmVarDecl>(vd) ||
+            vd->isExceptionVariable() || vd->getType().isVolatileQualified())
+            return nullptr;
+        // "with the same type (ignoring cv-qualification) as the function
+        // return type": the constructed object is the returned object.
+        if (!ctxt.hasSameUnqualifiedType(vd->getType(), ce->getType()))
+            return nullptr;
+        return vd;
+    }
+
     void VisitReturnStmt(const ReturnStmt *stmt, CoqPrinter &print,
-                         ClangPrinter &cprint, ASTContext &) {
+                         ClangPrinter &cprint, ASTContext &ctxt) {
         if (auto rv = stmt->getRetValue()) {
+            if (auto vd = nrvo_candidate(stmt, ctxt)) {
+                // Clang's own candidate, when it has one, must agree.
+                if (auto cand = stmt->getNRVOCandidate(); cand && cand != vd) {
+                    using namespace logging;
+                    unsupported()
+                        << "NRVO candidate disagreement at "
+                        << cprint.sourceRange(stmt->getSourceRange()) << "\n";
+                }
+                print.ctor("Sreturn_nrvo");
+                print.str(vd->getName()) << fmt::nbsp;
+                cprint.printExpr(print, rv);
+                print.end_ctor();
+                return;
+            }
             print.ctor("Sreturn_val");
             cprint.printExpr(print, rv);
             print.end_ctor();

@@ -1163,7 +1163,7 @@ Module decltype.
         | Sreturn None =>
             let* _ := ask_return >>= require_eq Tvoid in
             mret (∅, None)
-        | Sreturn (Some e) =>
+        | Sreturn (Some e) | Sreturn_nrvo _ e =>
             let* ret := ask_return in
             let* _ := of_expr e >>= can_initialize ret in
             mret (∅, None)
