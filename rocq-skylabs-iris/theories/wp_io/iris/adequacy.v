@@ -102,10 +102,10 @@ Qed.
 Proof.
   revert nt es1 es2 κs κs' σ1 ns σ2 Φs.
   induction n as [|n IH]=> nt es1 es2 κs κs' σ1 ns σ2 Φs.
-  { inversion_clear 1; iIntros "? ?"; iExists 0=> /=.
+  { inversion_clear 1; iIntros "? ?". rewrite step_fupdN_0. iExists 0=> /=.
     rewrite Nat.add_0_r right_id_L. iFrame. by iApply fupd_mask_subseteq. }
   iIntros (Hsteps) "Hσ He". inversion_clear Hsteps as [|?? [t1' σ1']].
-  rewrite -(assoc_L (++)) /= Nat.iter_add -{1}plus_Sn_m /= plus_n_Sm.
+  rewrite -(assoc_L (++)) /= step_fupdN_add -{1}plus_Sn_m /= plus_n_Sm.
   (* rewrite lc_split. iDestruct "Hcred" as "[Hc1 Hc2]". *)
   iDestruct (wptp_step with "Hσ He") as (nt') ">H"; first eauto; simplify_eq.
   iModIntro. iApply step_fupdN_S_fupd. iApply (step_fupdN_wand with "H").
@@ -207,8 +207,8 @@ Import uPred.
 Proof.
   iIntros (Hwp ??).
   apply (pure_soundness (PROP:=iPropI Σ)).
-  eapply (step_fupdN_soundness_gen _ HasNoLc (steps_sum num_laters_per_step 0 n)
-    (steps_sum num_laters_per_step 0 n)).
+  eapply (step_fupdN_soundness HasNoLc (steps_sum num_laters_per_step 0 n)
+    (steps_sum num_laters_per_step 0 n) ⌜not_stuck e2 σ2⌝%I).
   iIntros (Hinv) "_".
   iMod Hwp as (stateI Φ fork_post state_interp_mono) "(Hσ & Hwp)".
   iDestruct (big_sepL2_length with "Hwp") as %Hlen1.
@@ -262,8 +262,8 @@ Lemma wp_strong_adequacy_gen Σ Λ `{!invGpreS Σ} s es σ1 n κs t2 σ2 φ
 Proof.
   iIntros (Hwp ?).
   apply (pure_soundness (PROP:=iPropI Σ)).
-  eapply (step_fupdN_soundness_gen _ HasNoLc (steps_sum num_laters_per_step 0 n)
-    (steps_sum num_laters_per_step 0 n)).
+  eapply (step_fupdN_soundness HasNoLc (steps_sum num_laters_per_step 0 n)
+    (steps_sum num_laters_per_step 0 n) ⌜φ⌝%I).
   iIntros (Hinv) "_".
   iMod Hwp as (stateI Φ fork_post state_interp_mono) "(Hσ & Hwp & Hφ)".
   iDestruct (big_sepL2_length with "Hwp") as %Hlen1.

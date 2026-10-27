@@ -60,8 +60,8 @@ Section observe.
   Context `{!Sbi PROP}.
   Notation HasOwn RA := (HasOwn PROP RA).
   Notation HasOwnValid RA := (HasOwnValid PROP RA).
-  Notation Observe := (@Observe PROP).
-  Notation Observe2 := (@Observe2 PROP).
+  Notation Observe := (@Observe natSI PROP).
+  Notation Observe2 := (@Observe2 natSI PROP).
 
   (** Ensure that none of the following instances are already derivable. *)
   #[local] Ltac GUARD := assert_fails (intros; by apply _).

@@ -6,14 +6,14 @@
 Require Import iris.bi.bi.
 
 (* [siProp] lemmas missing from upstream Iris. *)
-Lemma si_prop_affinely (P : siProp) : <affine> P ⊣⊢@{siProp} P.
+Lemma si_prop_affinely {SI : sidx} (P : siProp) : <affine> P ⊣⊢@{siProp} P.
 Proof. by rewrite /bi_affinely left_id. Qed.
 
-Lemma si_prop_emp : emp ⊣⊢@{siProp} True.
+Lemma si_prop_emp {SI : sidx} : emp ⊣⊢@{siProp} True.
 Proof. done. Qed.
 
 Section with_sbi.
-  Context `{Sbi PROP}.
+  Context {SI : sidx} `{Sbi PROP}.
 
   Lemma si_pure_True : <si_pure> True ⊣⊢@{PROP} True.
   Proof. apply si_pure_pure. Qed.

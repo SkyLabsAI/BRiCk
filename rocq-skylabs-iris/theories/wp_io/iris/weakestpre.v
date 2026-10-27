@@ -47,7 +47,7 @@ Require Export skylabs.iris.extra.wp_io.iris.ghost.
   - The step-taking update can even be used by clients that opt out of
     later credits, e.g. because they use [BiFUpdPlainly]. *)
 Definition wp_pre
-    {Λ} {PROP : bi} `{!FUpd PROP} `{!irisGS_gen Λ PROP}
+    {Λ} {PROP : bi} `{!BiFUpd PROP} `{!irisGS_gen Λ PROP}
     (s : stuckness)
     (wp : coPset -d> expr Λ -d> (val Λ -d> PROP) -d> PROP) :
     coPset -d> expr Λ -d> (val Λ -d> PROP) -d> PROP := λ E e1 Φ,
@@ -263,7 +263,9 @@ Proof.
   iIntros "!>!>". iMod "H". iMod "HP". iModIntro.
   revert n Hn. generalize (num_laters_per_step ns)=>n0 n Hn.
   iInduction n as [|n] "IH" forall (n0 Hn).
-  - iApply (step_fupdN_wand with "H"). iIntros ">($ & Hwp & $)". iMod "HP".
+  - iEval (unfold step_fupdN) in "H".
+    iApply (step_fupdN_wand with "H"). iIntros ">($ & Hwp & $)".
+    iEval (unfold step_fupdN) in "HP". iMod "HP".
     iModIntro. iApply (wp_strong_mono with "Hwp"); [done|set_solver|].
     iIntros (v) "HΦ". iApply ("HΦ" with "HP").
   - destruct n0 as [|n0]; [lia|]=>/=. iMod "HP". iMod "H". iIntros "!> !>".
@@ -362,7 +364,7 @@ Proof.
   rewrite difference_empty_L (comm_L (∪)) -union_difference_L //.
   by iFrame.
 Qed.
-Lemma wp_step_fupd `{BiAffine PROP} s E1 E2 e P Φ :
+Lemma wp_step_fupd `{!BiAffine PROP} s E1 E2 e P Φ :
   TCEq (to_val e) None → E2 ⊆ E1 →
   (|={E1}[E2]▷=> P) -∗ WP e @ s; E2 {{ v, P ={E1}=∗ Φ v }} -∗ WP e @ s; E1 {{ Φ }}.
 Proof.
@@ -371,7 +373,7 @@ Proof.
   - iIntros (????) "?". iMod (fupd_mask_subseteq ∅) as "?"; [set_solver+|].
     iIntros "!>".
     auto with lia.
-  - iFrame "H". iMod "HR" as "$". auto.
+  - iFrame "H". rewrite step_fupdN_1. iMod "HR" as "$". auto.
 Qed.
 
 Section affine.

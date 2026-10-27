@@ -37,6 +37,8 @@ Require Import skylabs.iris.extra.bi.invariants.
 Require Import skylabs.iris.extra.bi.prop_constraints.
 Require Import skylabs.iris.extra.bi.own.
 
+Set Default Proof Using "Type*".
+
 (** * Thread-local NA invariants
 
 As with Iris' non-atomic invariants, these NA invariants implement a
@@ -103,6 +105,7 @@ End defs.
 
 Section props.
   Context `{I : biIndex} {PROP : bi}.
+  Context `{!BiPersistentlyExist PROP}.
   Context `{!Ghostly PROP} `{!BiFUpd PROP}.
   Context `{!HasUsualOwn PROP (naEnableMapFunR I)}.
   Context `{!HasUsualOwn PROP (naEnableMapR I)}.

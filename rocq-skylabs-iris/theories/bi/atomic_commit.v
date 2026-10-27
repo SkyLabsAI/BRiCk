@@ -24,13 +24,13 @@ Require Export iris.bi.bi iris.bi.updates.
 Require Export skylabs.iris.extra.bi.laterable.
 Require Import skylabs.iris.extra.bi.telescopes.
 Require Import skylabs.iris.extra.proofmode.proofmode.
-Set Default Proof Using "Type".
+Set Default Proof Using "Type*".
 
 (** * Atomic commits *)
 (** Atomic commits are atomic updates without abort. *)
 
 Section definition.
-  Context `{BiFUpd PROP} {TA TB : tele}.
+  Context {SI : sidx} `{!BiFUpd PROP} {TA TB : tele}.
   Implicit Types
     (Eo Ei : coPset) (* outer/inner masks *)
     (α : TA → PROP) (* atomic pre-condition *)
@@ -92,12 +92,13 @@ End definition.
 
 (** Seal it *)
 Definition atomic_commit_aux : seal (@atomic_commit_def). Proof. by eexists. Qed.
-Definition atomic_commit `{BiFUpd PROP} {TA TB : tele} := atomic_commit_aux.(unseal) PROP _ TA TB.
+Definition atomic_commit {SI : sidx} `{!BiFUpd PROP} {TA TB : tele} :=
+  atomic_commit_aux.(unseal) SI PROP _ TA TB.
 Definition atomic_commit_eq :
   @atomic_commit = @atomic_commit_def := atomic_commit_aux.(seal_eq).
 
-Arguments commit_acc {PROP _ TA TB} b Eo Ei _ _ _ : simpl never, assert.
-Arguments atomic_commit {PROP _ TA TB} b Eo Ei _ _ _ : simpl never.
+Arguments commit_acc {SI PROP _ TA TB} b Eo Ei _ _ _ : simpl never, assert.
+Arguments atomic_commit {SI PROP _ TA TB} b Eo Ei _ _ _ : simpl never.
 
 (** Notation: Atomic commits *)
 Notation "'AC' '<<' ∀ x1 .. xn , α '>>' @ Eo , Ei '<<' ∃ y1 .. yn , β , 'COMM' Φ '>>'" :=
@@ -355,7 +356,7 @@ Notation "'CACC1' '<<' α '>>' @ Eo , Ei '<<' β , 'COMM' Φ '>>'" :=
 
 (** Lemmas about AC *)
 Section lemmas.
-  Context `{BiFUpd PROP} {TA TB : tele}.
+  Context {SI : sidx} `{!BiFUpd PROP} {TA TB : tele}.
   Implicit Types (α : TA → PROP) (β Φ : TA → TB → PROP).
 
   (* Can't be in the section above as that fixes the parameters *)
@@ -566,8 +567,8 @@ End lemmas.
 
 (** ProofMode support for atomic commits *)
 Section proof_mode.
-  Import coq_tactics.
-  Context `{BiFUpd PROP} {TA TB : tele}.
+  Import rocq_tactics.
+  Context {SI : sidx} `{!BiFUpd PROP} {TA TB : tele}.
   Implicit Types (α : TA → PROP) (β Φ : TA → TB → PROP).
 
   Lemma tac_atomic_commit_intro Γp Γs n b α β Eo Ei Φ :
@@ -594,7 +595,7 @@ Tactic Notation "iCaccIntro" "with" constr(sel) :=
 #[global] Typeclasses Opaque commit_acc atomic_commit.
 
 Section derived.
-  Context `{BiFUpd PROP} {TA TB : tele}.
+  Context {SI : sidx} `{!BiFUpd PROP} {TA TB : tele}.
   Implicit Types (α : TA → PROP) (β Φ : TA → TB → PROP).
 
   (** Framing invariants into an AC mask

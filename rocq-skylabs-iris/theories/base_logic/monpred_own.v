@@ -88,7 +88,7 @@ Section with_PROP.
       HasOwnUnit monPredI A.
     Proof.
       constructor; intros; rewrite /own has_own_monpred_eq /has_own_monpred_def; red.
-      by rewrite -(@embed_emp PROP) -embed_bupd own_unit.
+      by rewrite -(embed_emp (PROP1:=PROP)) -embed_bupd own_unit.
     Qed.
   End with_ucmra.
 End with_PROP.

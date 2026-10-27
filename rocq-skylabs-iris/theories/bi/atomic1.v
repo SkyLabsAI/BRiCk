@@ -23,7 +23,7 @@
 Require Import stdpp.coPset.
 Require Import stdpp.namespaces.
 Require Import iris.bi.lib.fixpoint_mono.
-Require Import iris.proofmode.coq_tactics.
+Require Import iris.proofmode.rocq_tactics.
 Require Import skylabs.iris.extra.proofmode.proofmode.
 Require Import iris.proofmode.reduction.
 Require Import iris.prelude.options.
@@ -37,7 +37,7 @@ Local Tactic Notation "iSplitWith" constr(H) :=
   iApply (bi.and_parallel with H); iSplit; iIntros H.
 
 Section definition.
-  Context `{BiFUpd PROP} {TA TB : tele}.
+  Context {SI : sidx} `{!BiFUpd PROP} {TA TB : tele}.
   Implicit Types
     (Eo Ei : coPset) (* outer/inner masks *)
     (α : TA → PROP) (* atomic pre-condition *)
@@ -161,11 +161,11 @@ End definition.
 (** Seal it *)
 Definition atomic1_update_aux : seal (@atomic1_update_def). Proof. by eexists. Qed.
 Definition atomic1_update := atomic1_update_aux.(unseal).
-Global Arguments atomic1_update {PROP _ TA TB}.
+Global Arguments atomic1_update {SI PROP _ TA TB}.
 Definition atomic1_update_eq : @atomic1_update = _ := atomic1_update_aux.(seal_eq).
 
-Global Arguments atomic1_acc {PROP _ TA TB} Eo Ei _ _ _ _ : simpl never.
-Global Arguments atomic1_update {PROP _ TA TB} Eo Ei _ _ _ : simpl never.
+Global Arguments atomic1_acc {SI PROP _ TA TB} Eo Ei _ _ _ _ : simpl never.
+Global Arguments atomic1_update {SI PROP _ TA TB} Eo Ei _ _ _ : simpl never.
 
 (** Notation: Atomic updates *)
 Notation "'AU1' '<<' ∀ x1 .. xn , α '>>' @ Eo , Ei '<<' ∃ y1 .. yn , β , 'COMM' Φ '>>'" :=
@@ -293,7 +293,7 @@ Notation "'AACC1' '<<' α 'ABORT' P '>>' @ Eo , Ei '<<' β , 'COMM' Φ '>>'" :=
 
 (** Lemmas about AU *)
 Section lemmas.
-  Context `{BiFUpd PROP} {TA TB : tele}.
+  Context {SI : sidx} `{!BiFUpd PROP} {TA TB : tele}.
   Implicit Types (α : TA → PROP) (β Φ : TA → TB → PROP) (P : PROP).
 
   Local Existing Instances atomic1_update_pre_mono atomic_update_pre_mono.
@@ -523,8 +523,8 @@ Section lemmas.
 End lemmas.
 
 (** This adds a few TC instances that are not automatically inferred. *)
-  Section atomic.
-  Context `{BiFUpd PROP} {TA TB : tele}.
+Section atomic.
+  Context {SI : sidx} `{!BiFUpd PROP} {TA TB : tele}.
   Implicit Types (α : TA → PROP).
   Implicit Types (β Φ : TA → TB → PROP).
 
@@ -632,8 +632,8 @@ Qed.
     proof mode goal [P := atomic1_update Eo Ei α β Φ] into [atomic1_acc Eo
     Ei α P β Φ]. *)
 Section coq_tactic.
-  Import coq_tactics.
-  Context `{BiFUpd PROP} {TA TB : tele}.
+  Import rocq_tactics.
+  Context {SI : sidx} `{!BiFUpd PROP} {TA TB : tele}.
   Implicit Types (α : TA → PROP).
   Implicit Types (β Φ : TA → TB → PROP).
 
@@ -676,7 +676,7 @@ Tactic Notation "iAaccIntro1" "with" constr(sel) :=
 #[global] Typeclasses Opaque atomic1_acc atomic1_update.
 
 Section derived.
-  Context `{BiFUpd PROP} {TA TB : tele}.
+  Context {SI : sidx} `{!BiFUpd PROP} {TA TB : tele}.
   Implicit Types (α : TA → PROP) (β Φ : TA → TB → PROP).
 
   (* Framing invariants into an AU/AC inner mask *)

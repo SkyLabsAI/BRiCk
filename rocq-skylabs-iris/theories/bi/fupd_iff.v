@@ -16,10 +16,11 @@ Set Default Proof Using "Type".
 (** We leave [fupd_iff] transparent for the same (poor) reason as
 [bi_wand_iff]. We'd otherwise have to develop a proper theory,
 including proof mode instances. *)
-Definition fupd_iff `{BiFUpd PROP} (E1 E2 : coPset) (P Q : PROP) : PROP :=
+Definition fupd_iff {SI : sidx} {PROP : bi} `{!BiFUpd PROP}
+    (E1 E2 : coPset) (P Q : PROP) : PROP :=
   ((P ={E1,E2}=∗ Q) ∧ (Q ={E2,E1}=∗ P))%I.
-Arguments fupd_iff {_ _} _ _ _%_I _%_I : assert, simpl never.
-#[global] Instance: Params (@fupd_iff) 2 := {}.
+Arguments fupd_iff {_ _ _} _ _ _%_I _%_I : assert, simpl never.
+#[global] Instance: Params (@fupd_iff) 3 := {}.
 
 Notation "P ∗={ E1 , E2 }=∗ Q" := (fupd_iff E1 E2 P Q)
   (at level 99, E1,E2 at level 50, Q at level 200, no associativity,
@@ -36,13 +37,13 @@ Notation "P *={ E }=* Q" := (P ∗={E}=∗ Q)%I
    only parsing) : bi_scope.
 
 Section fupd_iff.
-  Context `{BiFUpd PROP}.
+  Context {SI : sidx} `{!BiFUpd PROP}.
   Implicit Types P Q : PROP.
 
-  Global Instance fupd_iff_ne E1 E2 : NonExpansive2 (@fupd_iff PROP _ E1 E2).
+  Global Instance fupd_iff_ne E1 E2 : NonExpansive2 (@fupd_iff SI PROP _ E1 E2).
   Proof. solve_proper. Qed.
   Global Instance fupd_iff_proper E1 E2 :
-    Proper ((⊣⊢) ==> (⊣⊢) ==> (⊣⊢)) (@fupd_iff PROP _ E1 E2) := ne_proper_2 _.
+    Proper ((⊣⊢) ==> (⊣⊢) ==> (⊣⊢)) (@fupd_iff SI PROP _ E1 E2) := ne_proper_2 _.
 
   Lemma fupd_iff_intro E P Q : P ∗-∗ Q ⊢ (P ∗={E}=∗ Q).
   Proof.
@@ -68,7 +69,7 @@ Section fupd_iff.
 End fupd_iff.
 
 Section monpred.
-  Context {I : biIndex} `{BiFUpd PROP}.
+  Context {I : biIndex} {PROP : bi} `{!BiFUpd PROP}.
   Implicit Types P Q : monPred I PROP.
 
   Global Instance fupd_iff_objective E1 E2 P Q `{!Objective P, !Objective Q} :
@@ -90,7 +91,10 @@ Section monpred.
   Qed.
 End monpred.
 
-Lemma embed_fupd_iff `{BiEmbedFUpd PROP1 PROP2} E1 E2 (P Q : PROP1) :
+Lemma embed_fupd_iff {SI : sidx} {PROP1 PROP2 : bi}
+    `{!BiEmbed PROP1 PROP2, !BiFUpd PROP1, !BiFUpd PROP2,
+      !BiEmbedFUpd PROP1 PROP2}
+    E1 E2 (P Q : PROP1) :
   ⎡P ∗={E1,E2}=∗ Q⎤ ⊣⊢@{PROP2} (⎡P⎤ ∗={E1,E2}=∗ ⎡Q⎤).
 Proof. by rewrite embed_and !embed_wand !embed_fupd. Qed.
 

@@ -67,8 +67,10 @@ Section with_prop.
       the telescope with `tele_arg`.
    *)
   Fixpoint add_withT `{!SpecGen} (t : telescopes.tele) :
-    telescopes.tele_fun t spec_car -> PrimString.string -> dummy_prop -> spec_car :=
-    match t return telescopes.tele_fun t spec_car -> PrimString.string -> dummy_prop -> spec_car with
+    telescopes.tele_fun t (fun _ => spec_car) ->
+    PrimString.string -> dummy_prop -> spec_car :=
+    match t return telescopes.tele_fun t (fun _ => spec_car) ->
+                   PrimString.string -> dummy_prop -> spec_car with
     | telescopes.TeleO => fun spec _ _ => spec
     | telescopes.TeleS f => fun spec n d =>
       add_with (fun x => add_withT (f x) (spec x) n d) n DummyValue
