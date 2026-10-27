@@ -301,6 +301,11 @@ public:
     fmt::Formatter &printExceptionSpec(CoqPrinter &,
                                        const clang::FunctionDecl &);
 
+    /// Print the `list fn_attr.t` of a function: the attributes with a
+    /// semantic effect that the logic enforces (`noreturn`, `nonnull`,
+    /// `returns_nonnull`). Other attributes are not recorded.
+    fmt::Formatter &printFnAttrs(CoqPrinter &, const clang::FunctionDecl &);
+
     unsigned getTypeSize(const clang::BuiltinType *type) const;
 
     // Expressions

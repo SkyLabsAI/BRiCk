@@ -455,7 +455,7 @@ Section with_monad.
     in
     match o with
     | Ovar t ie => type t
-    | Ofunction (Build_Func t args _ _ exc ob) =>
+    | Ofunction (Build_Func t args _ _ exc _ ob) =>
         type t <+> params args <+> opt function_body ob
         <+> if exc is exception_spec.Unknown
             then match ob with
