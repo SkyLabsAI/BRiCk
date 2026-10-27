@@ -283,6 +283,116 @@
           report.unsupported_refs := []
         |}]
      : list report.entry
+     = [("__atomic_compare_exchange_n"%pstring, "supported"%pstring);
+        ("__builtin_expect"%pstring, "supported"%pstring);
+        ("__builtin_popcount"%pstring, "supported"%pstring);
+        ("address_only()"%pstring, "supported"%pstring);
+        ("arrow_bits(Bits*)"%pstring, "blocked"%pstring);
+        ("arrow_union(U*)"%pstring, "partial"%pstring);
+        ("by_pointer(Bits*)"%pstring, "supported"%pstring);
+        ("by_value(Bits)"%pstring, "blocked"%pstring);
+        ("call_through(Bits*)"%pstring, "blocked"%pstring);
+        ("calls_static_local()"%pstring, "supported"%pstring);
+        ("cas_int(int*, int*, int)"%pstring, "supported"%pstring);
+        ("cas_ptr(int**, int**, int*)"%pstring, "unsupported"%pstring);
+        ("case_after_decl(int)"%pstring, "unsupported"%pstring);
+        ("dyn(Base*)"%pstring, "unsupported"%pstring);
+        ("flat_switch(int)"%pstring, "supported"%pstring);
+        ("inline_asm()"%pstring, "unsupported"%pstring);
+        ("known_builtin(long)"%pstring, "supported"%pstring);
+        ("linked(Node)"%pstring, "supported"%pstring);
+        ("nested_case(int)"%pstring, "unsupported"%pstring);
+        ("overloaded(int)"%pstring, "supported"%pstring);
+        ("overloaded(long)"%pstring, "supported"%pstring);
+        ("read_volatile(volatile int*)"%pstring, "partial"%pstring);
+        ("static_local()"%pstring, "unsupported"%pstring);
+        ("take_bits(Bits)"%pstring, "blocked"%pstring);
+        ("through_field(HasBits*)"%pstring, "blocked"%pstring);
+        ("unknown_builtin(unsigned int)"%pstring, "unsupported"%pstring);
+        ("use_union(U)"%pstring, "partial"%pstring);
+        ("volatile_local()"%pstring, "unsupported"%pstring);
+        ("operator new(unsigned long)"%pstring, "supported"%pstring);
+        ("operator new(unsigned long, enum std::align_val_t)"%pstring,
+         "supported"%pstring);
+        ("operator new[](unsigned long)"%pstring, "supported"%pstring);
+        ("operator new[](unsigned long, enum std::align_val_t)"%pstring,
+         "supported"%pstring);
+        ("operator delete(void*)"%pstring, "supported"%pstring);
+        ("operator delete(void*, unsigned long)"%pstring, "supported"%pstring);
+        ("operator delete(void*, unsigned long, enum std::align_val_t)"%pstring,
+         "supported"%pstring);
+        ("operator delete(void*, enum std::align_val_t)"%pstring,
+         "supported"%pstring);
+        ("operator delete[](void*)"%pstring, "supported"%pstring);
+        ("operator delete[](void*, unsigned long)"%pstring,
+         "supported"%pstring);
+        ("operator delete[](void*, unsigned long, enum std::align_val_t)"%pstring,
+         "supported"%pstring);
+        ("operator delete[](void*, enum std::align_val_t)"%pstring,
+         "supported"%pstring);
+        ("static_local()::x"%pstring, "supported"%pstring);
+        ("Anon::Anon()"%pstring, "unsupported"%pstring);
+        ("Base::Base()"%pstring, "unsupported"%pstring);
+        ("Bits::Bits()"%pstring, "unsupported"%pstring);
+        ("Derived::Derived()"%pstring, "unsupported"%pstring);
+        ("HasBits::HasBits()"%pstring, "unsupported"%pstring);
+        ("Node::Node()"%pstring, "unsupported"%pstring);
+        ("U::U()"%pstring, "unsupported"%pstring);
+        ("<unprintable name>"%pstring, "unsupported"%pstring);
+        ("Anon::Anon(const Anon&)"%pstring, "unsupported"%pstring);
+        ("Base::Base(const Base&)"%pstring, "unsupported"%pstring);
+        ("Bits::Bits(const Bits&)"%pstring, "blocked"%pstring);
+        ("Derived::Derived(const Derived&)"%pstring, "unsupported"%pstring);
+        ("HasBits::HasBits(const HasBits&)"%pstring, "unsupported"%pstring);
+        ("Node::Node(const Node&)"%pstring, "unsupported"%pstring);
+        ("U::U(const U&)"%pstring, "unsupported"%pstring);
+        ("<unprintable name>"%pstring, "unsupported"%pstring);
+        ("Anon::Anon(Anon&&)"%pstring, "unsupported"%pstring);
+        ("Bits::Bits(Bits&&)"%pstring, "unsupported"%pstring);
+        ("Derived::Derived(Derived&&)"%pstring, "unsupported"%pstring);
+        ("HasBits::HasBits(HasBits&&)"%pstring, "unsupported"%pstring);
+        ("Node::Node(Node&&)"%pstring, "unsupported"%pstring);
+        ("U::U(U&&)"%pstring, "unsupported"%pstring);
+        ("<unprintable name>"%pstring, "unsupported"%pstring);
+        ("Anon::~Anon()"%pstring, "supported"%pstring);
+        ("Base::~Base()"%pstring, "supported"%pstring);
+        ("Bits::~Bits()"%pstring, "blocked"%pstring);
+        ("Derived::~Derived()"%pstring, "supported"%pstring);
+        ("HasBits::~HasBits()"%pstring, "blocked"%pstring);
+        ("Node::~Node()"%pstring, "supported"%pstring);
+        ("U::~U()"%pstring, "supported"%pstring);
+        ("<unprintable name>"%pstring, "supported"%pstring);
+        ("Anon::operator=(const Anon&)"%pstring, "unsupported"%pstring);
+        ("Base::operator=(const Base&)"%pstring, "unsupported"%pstring);
+        ("Bits::operator=(const Bits&)"%pstring, "unsupported"%pstring);
+        ("Derived::operator=(const Derived&)"%pstring, "unsupported"%pstring);
+        ("HasBits::operator=(const HasBits&)"%pstring, "unsupported"%pstring);
+        ("Node::operator=(const Node&)"%pstring, "unsupported"%pstring);
+        ("U::operator=(const U&)"%pstring, "unsupported"%pstring);
+        ("Anon::.x::operator=(const Anon::.x&)"%pstring,
+         "unsupported"%pstring);
+        ("Anon::operator=(Anon&&)"%pstring, "unsupported"%pstring);
+        ("Bits::operator=(Bits&&)"%pstring, "unsupported"%pstring);
+        ("Derived::operator=(Derived&&)"%pstring, "unsupported"%pstring);
+        ("HasBits::operator=(HasBits&&)"%pstring, "unsupported"%pstring);
+        ("Node::operator=(Node&&)"%pstring, "unsupported"%pstring);
+        ("U::operator=(U&&)"%pstring, "unsupported"%pstring);
+        ("Anon::.x::operator=(Anon::.x&&)"%pstring, "unsupported"%pstring);
+        ("Anon"%pstring, "supported"%pstring);
+        ("Base"%pstring, "supported"%pstring);
+        ("Bits"%pstring, "unsupported"%pstring);
+        ("Derived"%pstring, "supported"%pstring);
+        ("HasBits"%pstring, "blocked"%pstring);
+        ("Node"%pstring, "supported"%pstring);
+        ("U"%pstring, "supported"%pstring);
+        ("__NSConstantString"%pstring, "supported"%pstring);
+        ("__builtin_ms_va_list"%pstring, "supported"%pstring);
+        ("__builtin_va_list"%pstring, "supported"%pstring);
+        ("__int128_t"%pstring, "supported"%pstring);
+        ("__uint128_t"%pstring, "supported"%pstring);
+        ("std::align_val_t"%pstring, "supported"%pstring);
+        ("Anon::.x"%pstring, "supported"%pstring)]
+     : list (string * string)
      = ["bitfields are not supported"%pstring;
         "atomic compare-exchange on non-integer values"%pstring;
         "switch: case or default nested in a statement or after a declaration"%pstring;

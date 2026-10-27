@@ -546,7 +546,8 @@ End check.
 (** ** Per-entity report
 
     [report.run tu roots] resolves each root in [tu] (with the [cpp.spec] name
-    parser) and returns:
+    parser); [report.all tu] takes every non-template entity of [tu]. Each
+    entry gives:
     - [unsupported]: the entity's own [Unsupported] gaps, including those
       of the builtins it calls;
     - [partial]: [Partial] gaps in the entity or in the types it needs;
@@ -654,27 +655,31 @@ Module report.
       | None, gd => walk.glob_decl ext <$> gd
       end.
 
-    (** [fuel] is [closure_fuel], computed once by [run]. *)
+    (** The entry for entity [n], which uses [uses] (see [own]), asked for as
+        [input]. [fuel] is [closure_fuel], computed once by the caller. *)
+    Definition entry_of (fuel : nat) (input : PrimString.string) (n : name) (uses : walk.M) : entry :=
+      let needed := List.filter (fun t => bool_decide (t <> n)) (closure fuel (type_refs uses) []) in
+      let used := uses ++ List.flat_map walk_type needed in
+      let unsupported := check.fails uses in
+      let blocked_by := List.flat_map (fun t => named t (walk_type t)) needed in
+      let partial := remove_dups (partials used ++ union_members used) in
+      let unsupported_refs :=
+        List.flat_map (fun r =>
+          if bool_decide (r = n) || bool_decide (is_Some (builtin_of r)) then [] else from_option (fun o => named r (walk.obj_value ext o)) [] (tu.(symbols) !! r))
+          (refs uses) in
+      let status :=
+        match unsupported, blocked_by, partial with
+        | _ :: _, _, _ => "unsupported"
+        | [], _ :: _, _ => "blocked"
+        | [], [], _ :: _ => "partial"
+        | [], [], [] => "supported"
+        end%pstring
+      in
+      mk_entry input (print n) status unsupported partial blocked_by unsupported_refs.
+
     Definition entry_for (fuel : nat) (input : PrimString.string) : entry :=
-      if (n ← parser.parse_name_with tu input; pair n <$> own n) is Some (n, own) then
-        let needed := List.filter (fun t => bool_decide (t <> n)) (closure fuel (type_refs own) []) in
-        let used := own ++ List.flat_map walk_type needed in
-        let unsupported := check.fails own in
-        let blocked_by := List.flat_map (fun t => named t (walk_type t)) needed in
-        let partial := remove_dups (partials used ++ union_members used) in
-        let unsupported_refs :=
-          List.flat_map (fun r =>
-            if bool_decide (r = n) || bool_decide (is_Some (builtin_of r)) then [] else from_option (fun o => named r (walk.obj_value ext o)) [] (tu.(symbols) !! r))
-            (refs own) in
-        let status :=
-          match unsupported, blocked_by, partial with
-          | _ :: _, _, _ => "unsupported"
-          | [], _ :: _, _ => "blocked"
-          | [], [], _ :: _ => "partial"
-          | [], [], [] => "supported"
-          end%pstring
-        in
-        mk_entry input (print n) status unsupported partial blocked_by unsupported_refs
+      if (n ← parser.parse_name_with tu input; pair n <$> own n) is Some (n, uses) then
+        entry_of fuel input n uses
       else mk_entry input "" "missing" [] [] [] [].
 
     (** ** [closure] computes the whole closure *)
@@ -758,4 +763,15 @@ Module report.
 
   Definition run : translation_unit -> list PrimString.string -> list entry :=
     run_with walk.no_ext.
+
+  (** Every non-template function, variable and type of [tu], named by its
+      [print]ed name. Unlike [run], it parses no names, which dominates [run]'s
+      time on a large translation unit. *)
+  Definition all_with (ext : Expr -> walk.M) (tu : translation_unit) : list entry :=
+    let fuel := closure_fuel tu in
+    let names := List.map fst (NM.elements tu.(symbols)) ++ List.map fst (NM.elements tu.(types)) in
+    List.flat_map (fun n =>
+      from_option (fun uses => [entry_of ext tu fuel (print n) n uses]) [] (own ext tu n)) names.
+
+  Definition all : translation_unit -> list entry := all_with walk.no_ext.
 End report.
