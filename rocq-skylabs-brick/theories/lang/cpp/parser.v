@@ -255,11 +255,19 @@ Definition Dtype (n : globname) : K :=
 Definition Dunsupported (n : globname) (msg : PrimString.string) : K :=
   _types n $ Gunsupported msg.
 
+(** BRiCk identifies a field by its name (see [offset_of]), so a record whose
+    members do not have distinct names is unsupported. [sort.sort] drops
+    duplicates. *)
+Definition record_or_dup_fields (n : globname) (fs : list Member) (r : GlobDecl) : GlobDecl :=
+  let names := List.map (fun m => Nglobal m.(mem_name)) fs in
+  if Nat.eqb (List.length (sort.sort names)) (List.length names) then r
+  else Gunsupported ("Duplicate field names in " ++ pretty.print_name n)%pstring.
+
 Definition Dstruct (n : globname) (f : option Struct) : K :=
-  _types n $ if f is Some f then Gstruct f else Gtype.
+  _types n $ if f is Some f then record_or_dup_fields n f.(s_fields) (Gstruct f) else Gtype.
 
 Definition Dunion (n : globname) (f : option Union) : K :=
-  _types n $ if f is Some f then Gunion f else Gtype.
+  _types n $ if f is Some f then record_or_dup_fields n f.(u_fields) (Gunion f) else Gtype.
 
 Definition Denum (n : globname) (u : type) (cs : list ident) : K :=
   _types n $ Genum u cs.
