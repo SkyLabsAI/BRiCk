@@ -61,6 +61,157 @@ Section Kreturn.
   Qed.
 End Kreturn.
 
+(** ** Function attributes
+
+The attributes in [fn_attr.t] are promises that the compiler relies on.
+They are enforced here, when verifying the definition, so that no caller
+can observe behaviour that the compiler has optimised away:
+- [Knoreturn] replaces [Kreturn] for <<[[noreturn]]>> functions: normal
+  return is unreachable.
+- [Kreturn_nonnull] replaces [Kreturn] for <<returns_nonnull>> functions:
+  the returned pointer is observed to be non-null.
+- [with_nonnull_args] conjoins, for each <<nonnull>> parameter, the
+  observation [nonnull_ob] that its argument object holds a non-null
+  pointer. The conjunction is not separating, so the body keeps every
+  resource and may assume the fact; [func_ok] relates every spec of the
+  function to [wp_func], so the obligation lands on callers.
+
+Argument objects are materialised by the caller with full ownership, so the
+observation is at fraction [1$m]; an existential fraction would not be
+closed by proof automation.
+
+The parameter lookup ([nonnull_ptrs]) goes through [N.to_nat], which does
+not reduce under [simpl]/[cbn] (stdpp marks it [simpl never]), and the
+attribute indices stay [N] (a [nat] literal is exponentially larger).
+[with_nonnull_params] is therefore [simpl never]; proof automation resolves
+it with a hint whose premise computes [nonnull_ptrs] by [vm_compute]
+(see auto's [hints/fn_attrs.v]). [with_nonnull_args] reduces to its body
+by [cbn] when the attribute list has no <<nonnull>> (e.g. for a plain
+<<[[noreturn]]>> function), so only functions with <<nonnull>> parameters
+see the obligation.
+*)
+
+(** [nonnull_ob (ty, p)] observes that the object [p] of pointer type [ty]
+    holds a non-null pointer. *)
+Definition nonnull_ob `{Σ : cpp_logic, σ : genv} (tp : type * ptr) : mpred :=
+  let '(ty, p) := tp in
+  Exists (v : ptr), p |-> primR (erase_qualifiers ty) 1$m (Vptr v) ** [| v <> nullptr |] ** True.
+#[global] Arguments nonnull_ob _ _ _ _ !tp /.
+
+Definition nonnull_obs `{Σ : cpp_logic, σ : genv} (ps : list (type * ptr)) : mpred :=
+  ([∧ list] tp ∈ ps, nonnull_ob tp)%I.
+#[global] Hint Opaque nonnull_obs : typeclass_instances.
+
+(** The parameter types and argument objects named by the indices [idxs],
+    or [None] when an index has no parameter. *)
+Definition nonnull_ptrs (params : list (ident * type)) (args : list ptr) (idxs : list N)
+  : option (list (type * ptr)) :=
+  mapM (fun i => match params !! N.to_nat i , args !! N.to_nat i with
+                 | Some (_, ty) , Some p => Some (ty, p)
+                 | _ , _ => None
+                 end) idxs.
+
+Definition with_nonnull_obs `{Σ : cpp_logic, σ : genv} (ps : list (type * ptr)) (P : mpred) : mpred :=
+  match ps with
+  | [] => P
+  | _ :: _ => (nonnull_obs ps ∧ P)%I
+  end.
+#[global] Arguments with_nonnull_obs _ _ _ _ !ps _ /.
+
+Definition with_nonnull_params `{Σ : cpp_logic, σ : genv} (idxs : list N)
+    (params : list (ident * type)) (args : list ptr) (P : mpred) : mpred :=
+  match nonnull_ptrs params args idxs with
+  | Some ps => with_nonnull_obs ps P
+  | None => ERROR ("with_nonnull_params: no such parameter", idxs)
+  end.
+#[global] Arguments with_nonnull_params : simpl never.
+#[global] Hint Opaque with_nonnull_params : typeclass_instances.
+
+(** [with_nonnull_args attrs params args P] is [P] under the <<nonnull>>
+    observations that [attrs] require; it is [P] itself when [attrs] is empty. *)
+Definition with_nonnull_args `{Σ : cpp_logic, σ : genv} (attrs : list fn_attr.t)
+    (params : list (ident * type)) (args : list ptr) (P : mpred) : mpred :=
+  match fn_attr.nonnull_params attrs with
+  | [] => P
+  | idxs => with_nonnull_params idxs params args P
+  end.
+#[global] Arguments with_nonnull_args _ _ _ _ !attrs _ _ _ /.
+#[global] Hint Opaque with_nonnull_args : typeclass_instances.
+
+Definition Knoreturn `{Σ : cpp_logic} : Kpred := KP (fun _ => False%I).
+#[global] Hint Opaque Knoreturn : typeclass_instances.
+
+Definition Kreturn_nonnull_inner `{Σ : cpp_logic, σ : genv} (ty : type) (Q : ptr -> mpred) (rt : ReturnType) : mpred :=
+  match rt with
+  | ReturnVal p => (nonnull_ob (ty, p) ∧ Q p)%I
+  | _ => Kreturn_inner Q rt
+  end.
+#[global] Arguments Kreturn_nonnull_inner _ _ _ _ _ _ !rt /.
+
+Definition Kreturn_nonnull `{Σ : cpp_logic, σ : genv} (ty : type) (Q : ptr -> mpred) : Kpred :=
+  KP $ Kreturn_nonnull_inner ty Q.
+#[global] Hint Opaque Kreturn_nonnull : typeclass_instances.
+
+(** The return continuation of a function with attributes [attrs] and
+    return type [ty]. It is [Kreturn Q] when [attrs] is empty. *)
+Definition Kreturn_attrs `{Σ : cpp_logic, σ : genv} (attrs : list fn_attr.t) (ty : type) (Q : ptr -> mpred) : Kpred :=
+  match attrs with
+  | [] => Kreturn Q
+  | _ =>
+    if fn_attr.noreturn attrs then Knoreturn
+    else if fn_attr.returns_nonnull attrs then Kreturn_nonnull ty Q
+    else Kreturn Q
+  end.
+#[global] Arguments Kreturn_attrs _ _ _ _ !attrs _ _ /.
+#[global] Hint Opaque Kreturn_attrs : typeclass_instances.
+
+Section fn_attrs.
+  Context `{Σ : cpp_logic, σ : genv}.
+
+  Lemma Knoreturn_elim rt : Knoreturn rt |-- False.
+  Proof. done. Qed.
+
+  Lemma and_frame_r (O P P' : mpred) : (P -* P') |-- (O ∧ P) -* (O ∧ P').
+  Proof.
+    iIntros "HP H". iSplit; first by iDestruct "H" as "[$ _]".
+    iDestruct "H" as "[_ H]". by iApply "HP".
+  Qed.
+
+  Lemma Kreturn_nonnull_frame ty (Q Q' : ptr -> mpred) rt :
+    Forall p, Q p -* Q' p |-- Kreturn_nonnull ty Q rt -* Kreturn_nonnull ty Q' rt.
+  Proof.
+    iIntros "HQ". destruct rt; cbn.
+    all: try by iIntros "[]".
+    1,3: iIntros "H" (p) "V"; iApply "HQ"; by iApply "H".
+    iApply and_frame_r. iApply "HQ".
+  Qed.
+
+  Lemma Kreturn_attrs_frame attrs ty (Q Q' : ptr -> mpred) rt :
+    Forall p, Q p -* Q' p |-- Kreturn_attrs attrs ty Q rt -* Kreturn_attrs attrs ty Q' rt.
+  Proof.
+    rewrite /Kreturn_attrs. destruct attrs; first by apply Kreturn_frame.
+    repeat case_match; auto using Kreturn_frame, Kreturn_nonnull_frame.
+  Qed.
+
+  Lemma with_nonnull_obs_frame ps (P P' : mpred) :
+    (P -* P') |-- with_nonnull_obs ps P -* with_nonnull_obs ps P'.
+  Proof. destruct ps; cbn; first done. apply and_frame_r. Qed.
+
+  Lemma with_nonnull_params_frame idxs params args (P P' : mpred) :
+    (P -* P') |-- with_nonnull_params idxs params args P -* with_nonnull_params idxs params args P'.
+  Proof.
+    rewrite /with_nonnull_params. case_match; last by auto.
+    apply with_nonnull_obs_frame.
+  Qed.
+
+  Lemma with_nonnull_args_frame attrs params args (P P' : mpred) :
+    (P -* P') |-- with_nonnull_args attrs params args P -* with_nonnull_args attrs params args P'.
+  Proof.
+    rewrite /with_nonnull_args. case_match; first done.
+    apply with_nonnull_params_frame.
+  Qed.
+End fn_attrs.
+
 (** ** Weakest precondition of a constructor: Initial construction step. *)
 (**
 Makes [this] and immediate [members] of [cls] strictly valid, to
@@ -439,8 +590,9 @@ place to support `XX_shift` lemmas. This could be fixed.
     match body with
     | Impl body =>
       let ρ vap := Remp None vap f.(f_return) in
+      letI* := with_nonnull_args f.(f_attrs) f.(f_params) args in
       letI* ρ, cleanup := bind_vars tu f.(f_arity) f.(f_params) args ρ in
-      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn $ fun x => |={top}=>?u |> Q x)
+      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn_attrs f.(f_attrs) f.(f_return) $ fun x => |={top}=>?u |> Q x)
     | Builtin builtin =>
       let ts := List.map snd f.(f_params) in
       wp_builtin_func builtin (Tfunction $ @FunctionType _ f.(f_cc) f.(f_arity) f.(f_return) ts) args Q
@@ -467,10 +619,11 @@ Section wp_func.
     intros. rewrite wp_func.unlock. iIntros "HQ".
     case_match; last by auto.
     case_match; last by iApply wp_builtin_func_frame.
+    all: iApply with_nonnull_args_frame.
     all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
     all: iApply wp_frame; [done|]; iIntros (?).
     all: iApply Kcleanup_frame; [done|].
-    all: iApply Kreturn_frame; iIntros (?) "Q".
+    all: iApply Kreturn_attrs_frame; iIntros (?) "Q".
     all: iApply ("HQ" with "Q").
   Qed.
 
@@ -484,10 +637,11 @@ Section wp_func.
     Cbn (Reduce (wp_func' false tu f args Q)) |-- wp_func tu f args Q.
   Proof.
     rewrite wp_func.unlock. repeat case_match; auto.
+    iApply with_nonnull_args_frame.
     iApply bind_vars_frame; [done|]. iIntros (??) "wp !>"; iRevert "wp".
     iApply wp_frame; [done|]. iIntros (?).
     iApply Kcleanup_frame; [done|].
-    iApply Kreturn_frame. auto.
+    iApply Kreturn_attrs_frame. auto.
   Qed.
 
   Lemma wp_func_elim tu f args Q :
@@ -509,8 +663,9 @@ parameters.
     match args with
     | thisp :: rest_vals =>
       let ρ va := Remp (Some thisp) va m.(m_return) in
+      letI* := with_nonnull_args m.(m_attrs) m.(m_params) rest_vals in
       letI* ρ, cleanup := bind_vars tu m.(m_arity) m.(m_params) rest_vals ρ in
-      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn $ fun x => |={top}=>?u |> Q x)
+      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn_attrs m.(m_attrs) m.(m_return) $ fun x => |={top}=>?u |> Q x)
     | _ => ERROR "wp_method: no arguments"
     end
   | Some _ => UNSUPPORTED "wp_method: defaulted methods"
@@ -534,13 +689,14 @@ Section wp_method.
     |-- wp_method tu m args Q -* wp_method tu' m args Q'.
   Proof.
     intros. iIntros "HQ". rewrite wp_method.unlock.
-    destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_body]; cbn.
+    destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_attrs m_body]; cbn.
     destruct m_body as [[|body|body]|]; auto.
     all: destruct args as [|thisp rest_vals]; auto.
+    all: iApply with_nonnull_args_frame.
     all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
     all: iApply wp_frame; [done|]; iIntros (?).
     all: iApply Kcleanup_frame; [done|].
-    all: iApply Kreturn_frame; iIntros (?) "Q".
+    all: iApply Kreturn_attrs_frame; iIntros (?) "Q".
     all: iApply ("HQ" with "Q").
   Qed.
 
@@ -554,13 +710,14 @@ Section wp_method.
     Cbn (Reduce (wp_method' false tu m args Q)) |-- wp_method tu m args Q.
   Proof.
     rewrite wp_method.unlock.
-    destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_body]; cbn.
+    destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_attrs m_body]; cbn.
     destruct m_body as [[|body|body]|]; auto.
     all: destruct args as [|thisp rest_vals]; auto.
+    all: iApply with_nonnull_args_frame.
     all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
     all: iApply wp_frame; [done|]; iIntros (?).
     all: iApply Kcleanup_frame; [done|].
-    all: iApply Kreturn_frame; auto.
+    all: iApply Kreturn_attrs_frame; auto.
   Qed.
 
   Lemma wp_method_elim tu m args Q :

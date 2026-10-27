@@ -9,6 +9,7 @@
 #include "Formatter.hpp"
 #include "Logging.hpp"
 #include <clang/AST/ASTContext.h>
+#include <clang/AST/Attr.h>
 #include <clang/AST/Decl.h>
 #include <clang/AST/DeclCXX.h>
 #include <clang/AST/DeclTemplate.h>
@@ -17,6 +18,8 @@
 #include <clang/AST/TemplateBase.h>
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Sema/Sema.h>
+#include <llvm/ADT/STLExtras.h>
+#include <llvm/ADT/SmallVector.h>
 #include <optional>
 
 using namespace clang;
@@ -443,6 +446,58 @@ llvm::raw_ostream &ClangPrinter::trace(StringRef whence, loc::loc loc) {
     if (loc::can_trace(loc, decl))
         os << " " << loc::trace(loc, getContext(), decl);
     return os << "\n";
+}
+
+fmt::Formatter &ClangPrinter::printFnAttrs(CoqPrinter &print,
+                                           const clang::FunctionDecl &decl) {
+    // `nonnull` parameter indices, 0-based into the explicit parameters
+    // (i.e. excluding `this`), as `ParamIdx::getASTIndex` numbers them.
+    llvm::SmallVector<unsigned, 4> nonnull;
+    // Clang ignores (with a warning) `nonnull` on non-pointer parameters.
+    auto add = [&](unsigned idx) {
+        if (idx < decl.getNumParams() &&
+            decl.getParamDecl(idx)->getType()->isAnyPointerType() &&
+            !llvm::is_contained(nonnull, idx))
+            nonnull.push_back(idx);
+    };
+    for (auto *attr : decl.specific_attrs<NonNullAttr>()) {
+        if (attr->args_size() == 0) {
+            // The argument-less spelling applies to every pointer parameter.
+            for (unsigned i = 0; i < decl.getNumParams(); ++i)
+                add(i);
+        } else {
+            for (auto idx : attr->args())
+                add(idx.getASTIndex());
+        }
+    }
+    for (unsigned i = 0; i < decl.getNumParams(); ++i)
+        if (decl.getParamDecl(i)->hasAttr<NonNullAttr>())
+            add(i);
+    llvm::sort(nonnull);
+
+    bool noreturn = decl.isNoReturn();
+    bool returns_nonnull = decl.hasAttr<ReturnsNonNullAttr>();
+    if (!noreturn && nonnull.empty() && !returns_nonnull)
+        return print.output() << "nil";
+
+    guard::list _(print);
+    if (noreturn) {
+        print.output() << "fn_attr.Noreturn";
+        print.cons();
+    }
+    if (!nonnull.empty()) {
+        {
+            guard::ctor _(print, "fn_attr.Nonnull", false);
+            print.list(nonnull,
+                       [&](unsigned i) { print.output() << i << "%N"; });
+        }
+        print.cons();
+    }
+    if (returns_nonnull) {
+        print.output() << "fn_attr.Returns_nonnull";
+        print.cons();
+    }
+    return print.output();
 }
 
 fmt::Formatter &ClangPrinter::printVariadic(CoqPrinter &print, bool va) const {
