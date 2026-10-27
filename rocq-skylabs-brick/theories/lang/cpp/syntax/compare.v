@@ -2392,6 +2392,7 @@ Module Stmt.
       | Sbreak => 10
       | Scontinue => 11
       | Sreturn _ => 12
+      | Sreturn_nrvo _ _ => 20
       | Sexpr _ => 13
       | Sattr _ _ => 14
       | Sasm _ _ _ _ _ => 15
@@ -2414,6 +2415,7 @@ Module Stmt.
       | 10 => unit
       | 11 => unit
       | 12 => option Expr
+      | 20 => localname * Expr
       | 13 => Expr
       | 14 => list ident * Stmt
       | 15 => PrimString.string * bool * list (ident * Expr) * list (ident * Expr) * list ident
@@ -2436,6 +2438,7 @@ Module Stmt.
       | Sbreak => ()
       | Scontinue => ()
       | Sreturn a => a
+      | Sreturn_nrvo a b => (a,b)
       | Sexpr a => a
       | Sattr a b => (a,b)
       | Sasm a b c d e => (a,b,c,d,e)
@@ -2464,6 +2467,7 @@ Module Stmt.
       | 16 => _compare
       | 17 => _compare
       | 19 => _compare
+      | 20 => _compare
       | _ => _compare
       end.
 
@@ -2483,6 +2487,7 @@ Module Stmt.
       | Sbreak => compare_ctor (Sbreak)
       | Scontinue => compare_ctor (Scontinue)
       | Sreturn a => compare_ctor (Sreturn a)
+      | Sreturn_nrvo a b => compare_ctor (Sreturn_nrvo a b)
       | Sexpr a => compare_ctor (Sexpr a)
       | Sattr a b => compare_ctor (Sattr a b)
       | Sasm a b c d e => compare_ctor (Sasm a b c d e)
