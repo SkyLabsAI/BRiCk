@@ -1,0 +1,121 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.capture_pack_fields</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.cpp</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+BRiCk identifies a field by its name, so the fields of a closure need
+    distinct names. Each element of a capture pack gets its own field, named
+    <span class="inlinecode"><span class="id" title="var">vs</span></span>, <span class="inlinecode"><span class="id" title="var">vs</span>...1</span>, ... in field order. 
+</div>
+<div class="code">
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">source</span> <span class="id" title="var">flags</span> "-std=c++20" <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">template</span>&lt;<span class="id" title="var">int</span>... <span class="id" title="var">Vs</span>&gt;<br/>
+&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">init_pack</span>(<span class="id" title="var">int</span> <span class="id" title="var">x</span>) {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">auto</span> <span class="id" title="var">l</span> = [<span class="id" title="var">x</span>, ...<span class="id" title="var">vs</span> = <span class="id" title="var">Vs</span>]() { <span class="id" title="keyword">return</span> <span class="id" title="var">x</span> + (<span class="id" title="var">vs</span> + ...); };<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">return</span> <span class="id" title="var">l</span>();<br/>
+&nbsp;&nbsp;}<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">template</span>&lt;<span class="id" title="var">class</span>... <span class="id" title="var">T</span>&gt;<br/>
+&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">copy_pack</span>(<span class="id" title="var">T</span>... <span class="id" title="var">vs</span>) {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">auto</span> <span class="id" title="var">l</span> = [<span class="id" title="var">vs</span>...]() { <span class="id" title="keyword">return</span> (<span class="id" title="var">vs</span> + ...); };<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">return</span> <span class="id" title="var">l</span>();<br/>
+&nbsp;&nbsp;}<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">test</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">init_pack</span>&lt;1, 2, 3&gt;(0) + <span class="id" title="var">copy_pack</span>(1, 2); }<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="field_names" class="idref" href="#field_names"><span class="id" title="definition">field_names</span></a> (<a id="cls:1" class="idref" href="#cls:1"><span class="id" title="binder">cls</span></a> : <span class="id" title="inductive">name</span>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="abbreviation">field_name</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs_brick.tests.capture_pack_fields.html#source"><span class="id" title="definition">source</span></a>.(<span class="id" title="projection">types</span>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs_brick.tests.capture_pack_fields.html#cls:1"><span class="id" title="variable">cls</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Gstruct</span> <span class="id" title="var">s</span>) =&gt; <span class="id" title="projection">mem_name</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">&lt;$&gt;</span></a> <span class="id" title="var">s</span>.(<span class="id" title="projection">s_fields</span>)<br/>
+&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <span class="id" title="notation">[]</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">field_names</span></a> "init_pack&lt;...&lt;1, 2, 3&gt;&gt;(int)::@0" <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">=</span></a><br/>
+&nbsp;&nbsp;<a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">[</span></a><a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">Nid</span></a> "x"<a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">;</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">Nid</span></a> "vs"<a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">;</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">Nid</span></a> "vs...1"<a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">;</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">Nid</span></a> "vs...2"<a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">]</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="keyword">vm_compute</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">field_names</span></a> "copy_pack&lt;...&lt;int, int&gt;&gt;(int, int)::@0" <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">=</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">[</span></a><a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">Nid</span></a> "vs"<a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">;</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">Nid</span></a> "vs...1"<a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">]</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="keyword">vm_compute</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+A record whose fields do not have distinct names is unsupported. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="int_member" class="idref" href="#int_member"><span class="id" title="definition">int_member</span></a> (<a id="n:2" class="idref" href="#n:2"><span class="id" title="binder">n</span></a> : <span class="id" title="definition">ident</span>) (<a id="off:3" class="idref" href="#off:3"><span class="id" title="binder">off</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a>) : <span class="id" title="abbreviation">Member</span> :=<br/>
+&nbsp;&nbsp;{| <span class="id" title="projection">mem_name</span> := <span class="id" title="constructor">Nid</span> <a class="idref" href="skylabs_brick.tests.capture_pack_fields.html#n:2"><span class="id" title="variable">n</span></a>; <span class="id" title="projection">mem_type</span> := <span class="id" title="abbreviation">Tint</span>; <span class="id" title="projection">mem_mutable</span> := <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="projection">mem_init</span> := <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>; <span class="id" title="projection">mem_layout</span> := {| <span class="id" title="projection">li_offset</span> := <a class="idref" href="skylabs_brick.tests.capture_pack_fields.html#off:3"><span class="id" title="variable">off</span></a> |} |}.<br/>
+
+<br/>
+<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">record_or_dup_fields</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">(</span></a><a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">Nglobal</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">(</span></a><a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">Nid</span></a> "S"<a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">))</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">[</span></a><a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">int_member</span></a> "a" <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">0;</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">int_member</span></a> "b" <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">32]</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">Gtype</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">=</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">Gtype</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="keyword">vm_compute</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">if</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">record_or_dup_fields</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">(</span></a><a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">Nglobal</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">(</span></a><a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">Nid</span></a> "S"<a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">))</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">[</span></a><a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">int_member</span></a> "a" <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">0;</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">int_member</span></a> "a" <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">32]</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">Gtype</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">is</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">Gunsupported</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">_</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">then</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">True</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">else</span></a> <a id="Unnamed_thm2" class="idref" href="#Unnamed_thm2"><span class="id" title="definition">False</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="keyword">vm_compute</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
