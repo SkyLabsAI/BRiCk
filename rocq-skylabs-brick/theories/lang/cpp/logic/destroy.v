@@ -1240,6 +1240,10 @@ Section temps.
       setoid_rewrite IHi. by setoid_rewrite IHi0. }
   Qed.
 
+  Lemma interp_ids tu n free Q :
+    interp tu (FreeTemps.ids n free) Q -|- interp tu free Q.
+  Proof. apply interp_free, FreeTemps.ids_equiv. Qed.
+
   #[global] Instance: Params (@interp) 5 := {}.
   #[local] Notation PROPER R := (
     ∀ tu,
