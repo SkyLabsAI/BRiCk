@@ -378,6 +378,7 @@ Section with_monad.
     | Scase _ => OK
     | Sdefault | Sbreak | Scontinue => OK
     | Sreturn oe => opt expr oe
+    | Sreturn_nrvo _ e => expr e
     | Sexpr e => expr e
     | Sasm _ _ lpe1 lpe2 _ =>
         FAIL "inline assembly" <+> lst (expr ∘ snd) lpe1 <+> lst (expr ∘ snd) lpe2

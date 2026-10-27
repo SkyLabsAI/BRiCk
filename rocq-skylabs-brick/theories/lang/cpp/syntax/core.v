@@ -476,6 +476,11 @@ with Stmt : Set :=
 | Scontinue
 
 | Sreturn (_ : option Expr)
+| Sreturn_nrvo (x : localname) (_ : Expr)
+  (* ^^ <<return x;>> where [x] names an automatic variable whose copy or move
+     into the returned object may be elided (named return value optimization,
+     <https://eel.is/c++draft/class.copy.elision#1.1>). The expression is the
+     constructor call that an implementation may elide. *)
 
 | Sexpr   (_ : Expr)
 
@@ -1104,6 +1109,7 @@ with is_dependentS (s : Stmt) : bool :=
   | Sbreak
   | Scontinue => false
   | Sreturn oe => option.existsb is_dependentE oe
+  | Sreturn_nrvo _ e => is_dependentE e
   | Sexpr e => is_dependentE e
   | Sattr _ s => is_dependentS s
   | Sasm _ _ ins outs _ =>
