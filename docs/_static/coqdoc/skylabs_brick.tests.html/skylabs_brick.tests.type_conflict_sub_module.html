@@ -1,0 +1,248 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.type_conflict_sub_module</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics.sub_module</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab19"></a><h1 class="section">Appending and prepending code, and <span class="inlinecode"><span class="id" title="library">sub_module</span></span></h1>
+
+
+<div class="paragraph"> </div>
+
+The first cases below use field-based names, without the fallback anonymous
+indices introduced to distinguish collisions within one declaration context.
+For these cases, adding a separate namespace block preserves the original
+module unless it defines an incompatible type under a name already used.
+Incompatible definitions are quarantined as <span class="inlinecode"><span class="id" title="constructor">Gunsupported</span></span> in either order.
+
+<div class="paragraph"> </div>
+
+These examples do not establish a general composition property. In particular,
+fallback indices count across reopened namespace blocks: appending the unrelated
+block in the final example preserves <span class="inlinecode"><span class="id" title="library">sub_module</span></span>, but prepending it renumbers
+an existing type and breaks <span class="inlinecode"><span class="id" title="library">sub_module</span></span>. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">a</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">N</span> { <span class="id" title="keyword">struct</span> { <span class="id" title="var">int</span> <span class="id" title="var">a</span>; } *<span class="id" title="var">p</span>; }<br/>
+}}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab20"></a><h2 class="section">No collision: appending and prepending preserve <span class="inlinecode"><span class="id" title="library">sub_module</span></span></h2>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">a_c</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">N</span> { <span class="id" title="keyword">struct</span> { <span class="id" title="var">int</span> <span class="id" title="var">a</span>; } *<span class="id" title="var">p</span>; }<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">N</span> { <span class="id" title="keyword">struct</span> { <span class="id" title="var">char</span> <span class="id" title="var">c</span>; } *<span class="id" title="var">r</span>; }<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">c_a</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">N</span> { <span class="id" title="keyword">struct</span> { <span class="id" title="var">char</span> <span class="id" title="var">c</span>; } *<span class="id" title="var">r</span>; }<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">N</span> { <span class="id" title="keyword">struct</span> { <span class="id" title="var">int</span> <span class="id" title="var">a</span>; } *<span class="id" title="var">p</span>; }<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="append_unrelated" class="idref" href="#append_unrelated"><span class="id" title="definition">append_unrelated</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.decidable.html#bool_decide"><span class="id" title="definition">bool_decide</span></a> (<span class="id" title="record">sub_module</span> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#a"><span class="id" title="definition">a</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#a_c"><span class="id" title="definition">a_c</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="prepend_unrelated" class="idref" href="#prepend_unrelated"><span class="id" title="definition">prepend_unrelated</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.decidable.html#bool_decide"><span class="id" title="definition">bool_decide</span></a> (<span class="id" title="record">sub_module</span> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#a"><span class="id" title="definition">a</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#c_a"><span class="id" title="definition">c_a</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab21"></a><h2 class="section">Compatible collision: the definitions merge</h2>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">a_a</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">N</span> { <span class="id" title="keyword">struct</span> { <span class="id" title="var">int</span> <span class="id" title="var">a</span>; } *<span class="id" title="var">p</span>; }<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">N</span> { <span class="id" title="keyword">struct</span> { <span class="id" title="var">int</span> <span class="id" title="var">a</span>; } *<span class="id" title="var">p2</span>; }<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="append_compatible" class="idref" href="#append_compatible"><span class="id" title="definition">append_compatible</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.decidable.html#bool_decide"><span class="id" title="definition">bool_decide</span></a> (<span class="id" title="record">sub_module</span> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#a"><span class="id" title="definition">a</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#a_a"><span class="id" title="definition">a_a</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab22"></a><h2 class="section">Incompatible collision: the type is quarantined</h2>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">a_b</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">N</span> { <span class="id" title="keyword">struct</span> { <span class="id" title="var">int</span> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#__cpp_prog"><span class="id" title="section">a</span></a><a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#__cpp_prog"><span class="id" title="section">;</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#__cpp_prog"><span class="id" title="section">}</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#__cpp_prog"><span class="id" title="section">*</span></a><a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#__cpp_prog"><span class="id" title="section">p</span></a><a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#__cpp_prog"><span class="id" title="section">;</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#__cpp_prog"><span class="id" title="section">}</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">N</span> { <span class="id" title="keyword">struct</span> { <span class="id" title="var">long</span> <span class="id" title="var">a</span>; } *<span class="id" title="var">q</span>; }<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">b_a</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">N</span> { <span class="id" title="keyword">struct</span> { <span class="id" title="var">long</span> <span class="id" title="var">a</span>; } *<span class="id" title="var">q</span>; }<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">N</span> { <span class="id" title="keyword">struct</span> { <span class="id" title="var">int</span> <span class="id" title="var">a</span>; } *<span class="id" title="var">p</span>; }<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="is_unsupported" class="idref" href="#is_unsupported"><span class="id" title="definition">is_unsupported</span></a> (<a id="tu:1" class="idref" href="#tu:1"><span class="id" title="binder">tu</span></a> : <span class="id" title="record">translation_unit</span>) (<a id="n:2" class="idref" href="#n:2"><span class="id" title="binder">n</span></a> : <span class="id" title="inductive">name</span>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">if</span> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#tu:1"><span class="id" title="variable">tu</span></a>.(<span class="id" title="projection">types</span>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#n:2"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">is</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Gunsupported</span> <span class="id" title="var">_</span>) <span class="id" title="keyword">then</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a> <span class="id" title="keyword">else</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="append_conflict_unsupported" class="idref" href="#append_conflict_unsupported"><span class="id" title="definition">append_conflict_unsupported</span></a> : <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#is_unsupported"><span class="id" title="definition">is_unsupported</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#a_b"><span class="id" title="definition">a_b</span></a> "N::.a"%<span class="id" title="var">cpp_name</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="prepend_conflict_unsupported" class="idref" href="#prepend_conflict_unsupported"><span class="id" title="definition">prepend_conflict_unsupported</span></a> : <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#is_unsupported"><span class="id" title="definition">is_unsupported</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#b_a"><span class="id" title="definition">b_a</span></a> "N::.a"%<span class="id" title="var">cpp_name</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Neither the appended nor the prepended conflicting definition lets <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#a"><span class="id" title="definition">a</span></a></span>'s
+    facts about <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a>::.<a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#a"><span class="id" title="definition">a</span></a></span> carry over. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="append_conflict" class="idref" href="#append_conflict"><span class="id" title="definition">append_conflict</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.decidable.html#bool_decide"><span class="id" title="definition">bool_decide</span></a> (<span class="id" title="record">sub_module</span> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#a"><span class="id" title="definition">a</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#a_b"><span class="id" title="definition">a_b</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="prepend_conflict" class="idref" href="#prepend_conflict"><span class="id" title="definition">prepend_conflict</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.decidable.html#bool_decide"><span class="id" title="definition">bool_decide</span></a> (<span class="id" title="record">sub_module</span> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#a"><span class="id" title="definition">a</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#b_a"><span class="id" title="definition">b_a</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab23"></a><h2 class="section">Fallback names: prepending can renumber an existing type</h2>
+
+
+<div class="paragraph"> </div>
+
+The two unnamed records in the first block compete for the field-based name
+<span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a>::.<a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#a"><span class="id" title="definition">a</span></a></span>. The second therefore uses its anonymous index, <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a>::@1</span>. Adding an
+unrelated unnamed record before that block changes the index to <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a>::@2</span>, even
+though it occurs in a separate block of the reopened namespace. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">fallback</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">N</span> { <span class="id" title="keyword">struct</span> { <span class="id" title="var">int</span> <span class="id" title="var">a</span>; } *<span class="id" title="var">p</span>; <span class="id" title="keyword">struct</span> { <span class="id" title="var">long</span> <span class="id" title="var">a</span>; } *<span class="id" title="var">q</span>; }<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">fallback_append</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">N</span> { <span class="id" title="keyword">struct</span> { <span class="id" title="var">int</span> <span class="id" title="var">a</span>; } *<span class="id" title="var">p</span>; <span class="id" title="keyword">struct</span> { <span class="id" title="var">long</span> <span class="id" title="var">a</span>; } *<span class="id" title="var">q</span>; }<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">N</span> { <span class="id" title="keyword">struct</span> {} *<span class="id" title="var">seed</span>; }<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">fallback_prepend</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">N</span> { <span class="id" title="keyword">struct</span> {} *<span class="id" title="var">seed</span>; }<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">N</span> { <span class="id" title="keyword">struct</span> { <span class="id" title="var">int</span> <span class="id" title="var">a</span>; } *<span class="id" title="var">p</span>; <span class="id" title="keyword">struct</span> { <span class="id" title="var">long</span> <span class="id" title="var">a</span>; } *<span class="id" title="var">q</span>; }<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="variable_type" class="idref" href="#variable_type"><span class="id" title="definition">variable_type</span></a> (<a id="tu:3" class="idref" href="#tu:3"><span class="id" title="binder">tu</span></a> : <span class="id" title="record">translation_unit</span>) <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#__cpp_prog"><span class="id" title="section">(</span></a><a id="n:4" class="idref" href="#n:4"><span class="id" title="binder">n</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#__cpp_prog"><span class="id" title="section">:</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#__cpp_prog"><span class="id" title="section">name</span></a><a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#__cpp_prog"><span class="id" title="section">)</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <span class="id" title="inductive">type</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">type_of_value</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">&lt;$&gt;</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#tu:3"><span class="id" title="variable">tu</span></a>.(<span class="id" title="projection">symbols</span>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#n:4"><span class="id" title="variable">n</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="fallback_q_type" class="idref" href="#fallback_q_type"><span class="id" title="definition">fallback_q_type</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#variable_type"><span class="id" title="definition">variable_type</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#fallback"><span class="id" title="definition">fallback</span></a> "N::q"%<span class="id" title="var">cpp_name</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> "N::@1*"%<span class="id" title="var">cpp_type</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="fallback_append_q_type" class="idref" href="#fallback_append_q_type"><span class="id" title="definition">fallback_append_q_type</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#variable_type"><span class="id" title="definition">variable_type</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#fallback_append"><span class="id" title="definition">fallback_append</span></a> "N::q"%<span class="id" title="var">cpp_name</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> "N::@1*"%<span class="id" title="var">cpp_type</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="fallback_prepend_q_type" class="idref" href="#fallback_prepend_q_type"><span class="id" title="definition">fallback_prepend_q_type</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#variable_type"><span class="id" title="definition">variable_type</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#fallback_prepend"><span class="id" title="definition">fallback_prepend</span></a> "N::q"%<span class="id" title="var">cpp_name</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> "N::@2*"%<span class="id" title="var">cpp_type</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="append_after_fallback" class="idref" href="#append_after_fallback"><span class="id" title="definition">append_after_fallback</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.decidable.html#bool_decide"><span class="id" title="definition">bool_decide</span></a> (<span class="id" title="record">sub_module</span> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#fallback"><span class="id" title="definition">fallback</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#fallback_append"><span class="id" title="definition">fallback_append</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="prepend_before_fallback" class="idref" href="#prepend_before_fallback"><span class="id" title="definition">prepend_before_fallback</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.decidable.html#bool_decide"><span class="id" title="definition">bool_decide</span></a> (<span class="id" title="record">sub_module</span> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#fallback"><span class="id" title="definition">fallback</span></a> <a class="idref" href="skylabs_brick.tests.type_conflict_sub_module.html#fallback_prepend"><span class="id" title="definition">fallback_prepend</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
