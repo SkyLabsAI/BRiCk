@@ -485,6 +485,13 @@ Module Type CPP_LOGIC
     #[global] Declare Instance provides_storage_valid_obj_ptr : forall storage_ptr obj_ptr aty,
       Observe (valid_ptr obj_ptr) (provides_storage storage_ptr obj_ptr aty).
 
+    (** No object lives at [nullptr], so [nullptr] neither provides storage
+        nor is provided storage. *)
+    #[global] Declare Instance provides_storage_storage_ptr_not_null {storage_ptr obj_ptr aty} :
+      Observe [| storage_ptr <> nullptr |] (provides_storage storage_ptr obj_ptr aty).
+    #[global] Declare Instance provides_storage_obj_ptr_not_null {storage_ptr obj_ptr aty} :
+      Observe [| obj_ptr <> nullptr |] (provides_storage storage_ptr obj_ptr aty).
+
   End with_cpp_logic.
 
     (**
