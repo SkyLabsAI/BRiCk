@@ -45,6 +45,7 @@
                m_cc := CC_C;
                m_arity := Ar_Definite;
                m_exception := exception_spec.Unknown;
+               m_attrs := [];
                m_body := Some Defaulted
              |}))
      : name * option ObjValue
@@ -59,6 +60,7 @@
                m_cc := CC_C;
                m_arity := Ar_Definite;
                m_exception := exception_spec.Unknown;
+               m_attrs := [];
                m_body := Some Defaulted
              |}))
      : name * option ObjValue
@@ -109,6 +111,7 @@
                m_cc := CC_C;
                m_arity := Ar_Definite;
                m_exception := exception_spec.Unknown;
+               m_attrs := [];
                m_body := Some Defaulted
              |}))
      : name * option ObjValue
@@ -123,6 +126,7 @@
                m_cc := CC_C;
                m_arity := Ar_Definite;
                m_exception := exception_spec.Unknown;
+               m_attrs := [];
                m_body := Some Defaulted
              |}))
      : name * option ObjValue
@@ -163,6 +167,7 @@
                m_cc := CC_C;
                m_arity := Ar_Definite;
                m_exception := exception_spec.Unknown;
+               m_attrs := [];
                m_body := Some Defaulted
              |}))
      : name * option ObjValue
@@ -177,6 +182,7 @@
                m_cc := CC_C;
                m_arity := Ar_Definite;
                m_exception := exception_spec.Unknown;
+               m_attrs := [];
                m_body := Some Defaulted
              |}))
      : name * option ObjValue
@@ -219,6 +225,7 @@
                m_cc := CC_C;
                m_arity := Ar_Definite;
                m_exception := exception_spec.Unknown;
+               m_attrs := [];
                m_body := Some Defaulted
              |}))
      : name * option ObjValue
