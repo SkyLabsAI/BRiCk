@@ -447,64 +447,6 @@ llvm::raw_ostream &ClangPrinter::trace(StringRef whence, loc::loc loc) {
     return os << "\n";
 }
 
-/// Attributes without effect on the abstract machine, which cpp2v does not
-/// record. Every other attribute is preserved in the AST, so that a new or
-/// unexpected attribute is not silently dropped: keep this list explicit and
-/// add a kind only after checking that it cannot change behaviour. In
-/// particular `section` (per-CPU data in NOVA), `aligned`, `packed`,
-/// `asm` labels and `internal_linkage` are deliberately absent.
-static bool isNoOpAttr(attr::Kind kind) {
-    switch (kind) {
-    // Diagnostics only.
-    case attr::WarnUnusedResult:
-    case attr::Unused:
-    case attr::Deprecated:
-    case attr::Unavailable:
-    case attr::Format:
-    case attr::FormatArg:
-    case attr::DiagnoseIf:
-    // Code generation and placement hints.
-    case attr::AlwaysInline:
-    case attr::NoInline:
-    case attr::Cold:
-    case attr::Hot:
-    case attr::Flatten:
-    case attr::MinSize:
-    case attr::OptimizeNone:
-    case attr::NoMerge:
-    case attr::Used:
-    // Symbol visibility and import/export.
-    case attr::Visibility:
-    case attr::TypeVisibility:
-    case attr::DLLImport:
-    case attr::DLLExport:
-    case attr::ExcludeFromExplicitInstantiation:
-    case attr::AbiTag:
-    // Instrumentation and debug information.
-    case attr::NoSanitize:
-    case attr::NoStackProtector:
-    case attr::NoDebug:
-    case attr::Annotate:
-    // Already reflected elsewhere in the AST (`override`/`final` keywords;
-    // overload resolution is done by clang).
-    case attr::Override:
-    case attr::Final:
-    case attr::EnableIf:
-    case attr::Overloadable:
-    // Compile-time only.
-    case attr::ConstInit:
-    case attr::Availability:
-    // Implicit markers on builtins and library types.
-    case attr::Builtin:
-    case attr::NoBuiltin:
-    case attr::Owner:
-    case attr::Pointer:
-        return true;
-    default:
-        return false;
-    }
-}
-
 /// The name of an attribute's kind (e.g. `Section`, `Weak`,
 /// `CXX11NoReturn`). Unlike the written name, it exists for implicit
 /// attributes and is the same for every spelling of the attribute.
@@ -518,8 +460,8 @@ static StringRef attrKindName(attr::Kind kind) {
     return "Unknown";
 }
 
-/// Whether to skip attribute `a` of `decl`: no-op attributes, and the
-/// implicit attributes that clang attaches to builtins (e.g. `NoThrow`,
+/// Whether to skip attribute `a` of `decl`: the implicit attributes that
+/// clang attaches to builtins (e.g. `NoThrow`,
 /// `Const` on `__builtin_popcount`) and to implicitly declared functions
 /// (e.g. `ReturnsNonNull`, `AllocSize`, `AllocAlign` on the replaceable
 /// `operator new`). BRiCk models builtins and the replaceable allocation
@@ -531,9 +473,11 @@ static StringRef attrKindName(attr::Kind kind) {
 /// declarations once BRiCk supports these attributes (e.g. `ReturnsNonNull`,
 /// `AllocSize`, `AllocAlign`, `Const`), so that the models are checked
 /// against them instead of trusted.
+///
+/// Every other attribute is printed, including those without effect on the
+/// abstract machine: deciding which attributes are harmless is left to
+/// `supported` in Rocq (`supported.walk.noop_attr`).
 static bool skipAttr(const Decl &decl, const Attr &a) {
-    if (isNoOpAttr(a.getKind()))
-        return true;
     if (a.isImplicit()) {
         if (decl.isImplicit())
             return true;

@@ -297,9 +297,9 @@ public:
     fmt::Formatter &printExceptionSpec(CoqPrinter &,
                                        const clang::FunctionDecl &);
 
-    /// Print the `list attr.t` of a declaration: every attribute except
-    /// those on the no-op list (see `isNoOpAttr`), as
-    /// `attr.Other "<attribute kind>" "<pretty-printed attribute>"`.
+    /// Print the `list attr.t` of a declaration: every attribute (except
+    /// implicit ones on builtins and implicit declarations, see `skipAttr`),
+    /// as `attr.Other "<attribute kind>" "<pretty-printed attribute>"`.
     fmt::Formatter &printAttrs(CoqPrinter &, const clang::Decl &);
 
     unsigned getTypeSize(const clang::BuiltinType *type) const;

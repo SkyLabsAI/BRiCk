@@ -225,10 +225,10 @@ Module attr.
   (**
   The attributes of a declaration, as cpp2v records them.
 
-  cpp2v preserves every attribute except those on an explicit list of
-  attributes without effect on the abstract machine (e.g.
-  <<[[nodiscard]]>>, <<always_inline>>, <<visibility>>), so that a new or
-  unexpected attribute is not silently dropped. Attributes that BRiCk does
+  cpp2v preserves every attribute, so that a new or unexpected attribute is
+  not silently dropped; deciding which attributes are harmless (e.g.
+  <<[[nodiscard]]>>, <<always_inline>>, <<visibility>>) is left to
+  [supported] ([supported.walk.noop_attr]). Attributes that BRiCk does
   not model are recorded as [Other kind pretty], where [kind] is the name of
   clang's attribute kind (e.g. <<Section>> for every spelling of the
   attribute; <<CXX11NoReturn>> and <<NoReturn>> are distinct kinds) and
@@ -236,9 +236,9 @@ Module attr.
   <<__attribute__((section(".cpulocal")))>>), or the empty string for an
   implicit attribute, which has no spelling.
 
-  [supported] reports every [Other] attribute. The program logic does not
-  interpret them yet: it is up to the attributes that get a model to add a
-  constructor here.
+  [supported] reports every [Other] attribute that is not on its list of
+  no-op attributes. The program logic does not interpret them yet: it is up
+  to the attributes that get a model to add a constructor here.
   *)
   Variant t : Set :=
   | Other (kind : PrimString.string) (pretty : PrimString.string).
