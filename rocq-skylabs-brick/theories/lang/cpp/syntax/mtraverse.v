@@ -205,6 +205,7 @@ Module MTraverse.
       | Trealigned n t => Trealigned n <$> traverseT t
       | Tdecltype e => Tdecltype <$> traverseE e
       | Texprtype e => Texprtype <$> traverseE e
+      | Tattributed attrs t => Tattributed attrs <$> traverseT t
       | Tunsupported msg => mret $ Tunsupported msg
       end
 

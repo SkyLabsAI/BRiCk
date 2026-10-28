@@ -185,6 +185,32 @@ Module cast_style.
     Pos.compare (tag a) (tag b).
 End cast_style.
 
+(** ** Attributes *)
+Module attr.
+  (**
+  The attributes of a declaration or a type, as cpp2v records them.
+
+  cpp2v preserves every attribute, so that a new or unexpected attribute is
+  not silently dropped; deciding which attributes are harmless (e.g.
+  <<[[nodiscard]]>>, <<always_inline>>, <<visibility>>) is left to
+  [supported] ([supported.walk.noop_attr]). Attributes that BRiCk does
+  not model are recorded as [Other kind pretty], where [kind] is the name of
+  clang's attribute kind (e.g. <<Section>> for every spelling of the
+  attribute; <<CXX11NoReturn>> and <<NoReturn>> are distinct kinds) and
+  [pretty] the attribute as clang prints it, arguments included (e.g.
+  <<__attribute__((section(".cpulocal")))>>), or the empty string for an
+  implicit attribute, which has no spelling.
+
+  [supported] reports every [Other] attribute that is not on its list of
+  no-op attributes. The program logic does not interpret them yet: it is up
+  to the attributes that get a model to add a constructor here.
+  *)
+  Variant t : Set :=
+  | Other (kind : PrimString.string) (pretty : PrimString.string).
+  #[global] Instance t_eq_dec : EqDecision t.
+  Proof. solve_decision. Defined.
+End attr.
+
 (** ** Structured names *)
 (** Atomic names are effectively path components. *)
 Inductive atomic_name : Set :=
@@ -303,6 +329,10 @@ with type : Set :=
   (* ^^ this is <<decltype(e)>> when <<e>> is a variable reference
      (1) in <https://en.cppreference.com/w/cpp/language/decltype>
    *)
+| Tattributed (attrs : list attr.t) (t : type)
+  (* ^^ [t] with the attributes [attrs] (type attributes, and the attributes
+     of the typedef that names [t]). The program logic treats it as opaque,
+     like [Tunsupported], for now. *)
 | Tunsupported (_ : PrimString.string)
 
 (** ** Expressions *)
@@ -1042,6 +1072,7 @@ with is_dependentT (t : type) : bool :=
   | Tarch _ _ => false
   | Tdecltype e => is_dependentE e
   | Texprtype e => is_dependentE e
+  | Tattributed _ t => is_dependentT t
   | Tunsupported _ => false
   end
 
@@ -1232,6 +1263,7 @@ with has_unsupportedT (t : type) : bool :=
   | Tfloat_ _ => false
   | Tqualified _ t => has_unsupportedT t
   | Trealigned _ t => has_unsupportedT t
+  | Tattributed _ t => has_unsupportedT t
   | Tnullptr
   | Tarch _ _ => false
   | Tdecltype e => has_unsupportedE e

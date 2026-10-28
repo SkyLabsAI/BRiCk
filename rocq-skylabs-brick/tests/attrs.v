@@ -41,13 +41,13 @@ Definition attrs_of (n : name) : option (list attr.t) :=
 
 (* The attribute kinds that [supported] reports. *)
 Definition reported (n : name) : option (list PrimString.string) :=
-  (fun attrs => omap (fun a => match a with attr.Other kind _ =>
+  (fun attrs : list attr.t => omap (fun a => match a with attr.Other kind _ =>
      if supported.walk.noop_attr kind then None else Some kind end) attrs)
   <$> attrs_of n.
 
 (* Every attribute is recorded, including no-op ones... *)
 Example recorded :
-  length <$> (attrs_of <$> ["plain()"; "noops()"; "D::v()"]%cpp_name) =
+  List.map (fun n => option_map (@length attr.t) (attrs_of n)) ["plain()"; "noops()"; "D::v()"]%cpp_name =
   [Some 0; Some 4; Some 2].
 Proof. vm_compute. reflexivity. Qed.
 
