@@ -77,6 +77,8 @@ case "$command" in
     wrapper)
         runner=
         config=
+        config_set=n
+        config_from_argument=n
         host_tool=
         container_tool=
         while [[ $# -gt 0 ]]; do
@@ -85,21 +87,26 @@ case "$command" in
                     [[ $# -ge 2 ]] || fail "missing value for $1"
                     case "$1" in
                         --runner) runner=$2 ;;
-                        --config) config=$2 ;;
+                        --config) config=$2; config_set=y ;;
                         --host-tool) host_tool=$2 ;;
                         --container-tool) container_tool=$2 ;;
                     esac
                     shift 2
                     ;;
+                --config-from-argument) config_from_argument=y; shift ;;
                 *) fail "unknown wrapper option: $1" ;;
             esac
         done
         [[ -n $host_tool ]] || fail "--host-tool is required"
         [[ -n $runner && -x $runner ]] || fail "--runner must name an executable"
-        [[ -n $config && -r $config ]] || fail "--config must name a readable configuration"
+        if [[ $config_from_argument == y ]]; then
+            [[ $config_set == n ]] || fail "--config and --config-from-argument are mutually exclusive"
+        else
+            [[ -n $config && -r $config ]] || fail "--config must name a readable configuration"
+            config=$(absolute_file "$config")
+        fi
         [[ -n $container_tool ]] || fail "--container-tool is required"
         runner=$(absolute_file "$runner")
-        config=$(absolute_file "$config")
         case "$host_tool" in
             */*) host_tool=$(absolute_file "$host_tool") ;;
             *)
@@ -109,11 +116,43 @@ case "$command" in
                 ;;
         esac
         printf '#!/usr/bin/env bash\n# host tool: %s\n' "$(file_hash "$host_tool")"
-        # Invalidate callers when image/configuration or runner code changes.
-        printf '# runner: %s\n# configuration: %s\n' "$(file_hash "$runner")" "$(file_hash "$config")"
-        # shellcheck disable=SC2016 # The adapter expands "$@".
-        printf 'exec %q --config %q --host-tool %q --container-tool %q -- "$@"\n' \
-            "$runner" "$config" "$host_tool" "$container_tool"
+        printf '# runner: %s\n' "$(file_hash "$runner")"
+        if [[ $config_from_argument == n ]]; then
+            printf '# configuration: %s\n' "$(file_hash "$config")"
+            # shellcheck disable=SC2016 # The adapter expands "$@".
+            printf 'exec %q --config %q --host-tool %q --container-tool %q -- "$@"\n' \
+                "$runner" "$config" "$host_tool" "$container_tool"
+        else
+            [[ -f $host_tool && -x $host_tool ]] || fail "--config-from-argument requires an executable host tool"
+            printf 'set -euo pipefail\n'
+            declare -f fail absolute_file file_hash
+            # Installed Rocq resources must not depend on their build checkout
+            # surviving. Relocation may use PATH only for byte-identical tools,
+            # never an untracked replacement or a host fallback for Docker.
+            cat <<'EOF'
+resolve_tool() {
+    local recorded=$1 expected=$2 name=$3 candidate
+    if [[ -f $recorded && -x $recorded && $(file_hash "$recorded") == "$expected" ]]; then
+        printf '%s\n' "$recorded"
+        return
+    fi
+    candidate=$(type -P "$name" || true)
+    if [[ -n $candidate && -f $candidate && -x $candidate && $(file_hash "$candidate") == "$expected" ]]; then
+        absolute_file "$candidate"
+        return
+    fi
+    fail "cannot locate the recorded $name executable (or a byte-identical installed copy)"
+}
+[[ $# -gt 0 ]] || fail "expected a toolchain configuration as the first argument"
+config=$1
+shift
+EOF
+            # The source may be cpp2v-run.sh; its installed command is cpp2v-run.
+            printf 'runner=$(resolve_tool %q %q %q)\n' "$runner" "$(file_hash "$runner")" cpp2v-run
+            printf 'host_tool=$(resolve_tool %q %q %q)\n' "$host_tool" "$(file_hash "$host_tool")" "${host_tool##*/}"
+            # shellcheck disable=SC2016 # Variables are expanded by the adapter.
+            printf 'exec "$runner" --config "$config" --host-tool "$host_tool" --container-tool %q -- "$@"\n' "$container_tool"
+        fi
         ;;
     *) fail "usage: cpp2v-toolchain {configure|wrapper} [options]" ;;
 esac

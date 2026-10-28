@@ -86,11 +86,68 @@ assuming an `_build/install` symlink or OPAM copy exists. Dune tracks the runner
 configuration, and host tool directly. The configuration rule uses `universe` to
 notice image retagging without source changes. Build from the workspace root.
 
-Neither `cpp2v` nor `rocq` is shadowed on PATH. Inline Rocq `cpp.prog` translation
-is **not** containerized: it retains its existing host-toolchain behavior even
-with `CPP2V_DOCKER_ENABLED=y`. Host inline translations may not match Docker TU
-headers. For fully pinned proofs using inline C++, run the whole build in the
-pinned image/devcontainer, with these Docker wrappers disabled.
+Neither `cpp2v` nor `rocq` is shadowed on PATH. Unannotated inline Rocq
+`cpp.prog` quotations retain their existing host-toolchain behavior, even with
+`CPP2V_DOCKER_ENABLED=y`. Opt them into the selected environment explicitly as
+shown below.
+
+## Opt-in inline Rocq quotations
+
+`rocq-skylabs-brick-cpp-prog` provides one shared `cpp2v_inline` command. It
+accepts a configuration path followed by the ordinary cpp2v arguments and
+executes `cpp2v-run`. Each quotation can select a configuration declared as a
+named Rocq extra dependency:
+
+```coq
+Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
+From MyProject Extra Dependency "cpp_environment" as cpp_environment.
+
+#[environment="cpp_environment"]
+cpp.prog source flags "-std=c++20" prog cpp:{{
+  #include <vector>
+  void test() { std::vector<int> v; }
+}}.
+```
+
+The `environment` attribute names the configuration's extra dependency, not a
+filename, PATH command, or choice of native compiler. It is
+supported only on inline quotations, not `cpp.prog ... defns ...`. Without it,
+the old native invocation is unchanged. With it, mode `n` uses the recorded
+native translator and mode `y` uses Docker. Unknown dependency names, invalid
+configurations, missing tools, and Docker errors never silently select a
+different backend. Existing compiler flags and other quotation attributes are
+preserved.
+
+Put the configuration in a Rocq theory's logical directory. If it is generated,
+produce an otherwise empty `.v` dependency anchor in the same rule so Dune builds
+it **before** `rocq dep` scans the theory. For an existing configuration in the
+parent directory, use this once in the theory's `dune` file:
+
+```lisp
+(rule
+ (targets cpp_environment cpp_environment_dependency.v)
+ (deps (:config ../cpp_environment))
+ (action
+  (progn
+   (copy %{config} cpp_environment)
+   (write-file cpp_environment_dependency.v
+    "(* Builds the configuration before rocq dep. *)\n"))))
+```
+
+Keep the anchor included in the theory's modules (`:standard` does this). Other
+theories can share the same resource by listing its owning theory among their
+`theories` dependencies and using its logical name in `From ... Extra Dependency`.
+No consumer-specific inline command or PATH adapter is needed. Editors use the
+same declarations after Dune builds the generated dependencies.
+
+The extra dependency makes the configuration, including its selected image ID,
+a dependency of that `.vo`. The plugin's imported version modules fingerprint
+the native translator, runner, and adapter generator, without making shared
+Rocq caches depend on checkout-specific command paths. Changes therefore
+invalidate inline proofs even when their C++ program is not a standalone TU.
+The command is installed as a Rocq resource. If its recorded build paths no
+longer exist or have changed, it accepts installed
+tools from PATH only when they are byte-identical to the recorded tools.
 
 ## Compilation and arbitrary commands
 
@@ -113,6 +170,14 @@ that compiler to be installed for Docker mode:
 The generator shell-quotes paths and records hashes of the host tool, runner,
 and configuration. `universe` and `sandbox none` ensure recorded absolute paths
 come from the current build tree rather than another checkout's shared cache.
+`wrapper --config-from-argument` generates a shared adapter whose first argument
+is the configuration, rather than capturing `--config` at generation time. The
+two options are mutually exclusive. This form requires an executable host tool
+and verifies the recorded runner/native tool identities on invocation, including
+when relocating an installed adapter. The inline Rocq command uses this form;
+its imported version fingerprint tracks the shared adapter while each quotation
+tracks its own configuration.
+
 Invoke the adapter explicitly, or call the runner directly:
 
 ```sh

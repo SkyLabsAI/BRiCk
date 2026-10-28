@@ -274,6 +274,52 @@ done
 chmod +x "$adapter"
 expect_status 0 "$adapter"
 expect_status 2 "$env" CPP2V_DOCKER_ENABLED=yes "$bash" "$factory" configure
+# One shared adapter accepts a different configuration on each invocation.
+shared_adapter="$tmp/shared-adapter"
+"$bash" "$factory" wrapper --config-from-argument --runner "$runner" \
+    --host-tool "$host" --container-tool cpp2v > "$shared_adapter"
+chmod +x "$shared_adapter"
+expect_status 0 "$shared_adapter" "$config" "${args[@]}"
+printf '%s\0' cpp2v "${args[@]}" > "$tmp/expected"
+cmp "$tmp/expected" "$ARGV_LOG"
+expect_status 23 "$env" MOCK_STATUS=23 "$shared_adapter" "$config" input.cpp
+expect_status 2 "$shared_adapter"
+expect_status 2 "$shared_adapter" "$tmp/missing"
+"$env" CPP2V_DOCKER_ENABLED=y "$bash" "$factory" configure \
+    --image test-image --opam > "$tmp/docker-config"
+expect_status 0 "$shared_adapter" "$tmp/docker-config" "${args[@]}"
+read_args
+has_arg docker
+has_arg sha256:second
+argc=${#argv[@]}
+[[ ${argv[argc-1]} == '' && ${argv[argc-2]} == "${args[1]}" ]]
+expect_status 17 "$env" MOCK_STATUS=17 "$shared_adapter" "$tmp/docker-config" input.cpp
+expect_status 2 "$bash" "$factory" wrapper --config-from-argument --config "$config" \
+    --runner "$runner" --host-tool "$host" --container-tool cpp2v
+expect_status 2 "$bash" "$factory" wrapper --config '' --config-from-argument \
+    --runner "$runner" --host-tool "$host" --container-tool cpp2v
+expect_status 2 "$bash" "$factory" wrapper --config-from-argument \
+    --runner "$runner" --host-tool missing-native-for-shared-adapter --container-tool cpp2v
+
+# Installed shared adapters can outlive their build checkout. Relocation must
+# find the same executables, not silently pick up a different toolchain on PATH.
+mkdir "$tmp/captured tools" "$tmp/relocated tools"
+cp "$runner" "$tmp/captured tools/cpp2v-run.sh"
+cp "$host" "$tmp/captured tools/cpp2v"
+cp "$tmp/captured tools/cpp2v-run.sh" "$tmp/relocated tools/cpp2v-run"
+cp "$tmp/captured tools/cpp2v" "$tmp/relocated tools/cpp2v"
+"$bash" "$factory" wrapper --config-from-argument \
+    --runner "$tmp/captured tools/cpp2v-run.sh" --host-tool "$tmp/captured tools/cpp2v" \
+    --container-tool cpp2v > "$tmp/relocatable-adapter"
+chmod +x "$tmp/relocatable-adapter"
+rm "$tmp/captured tools/"*
+expect_status 0 "$env" PATH="$tmp/relocated tools:$PATH" \
+    "$tmp/relocatable-adapter" "$config" "${args[@]}"
+cmp "$tmp/expected" "$ARGV_LOG"
+printf '# different installed tool\n' >> "$tmp/relocated tools/cpp2v"
+expect_status 2 "$env" PATH="$tmp/relocated tools:$PATH" \
+    "$tmp/relocatable-adapter" "$config" input.cpp
+
 # Removed interfaces must fail, including legacy configurations on disk.
 expect_status 2 "$env" CPP2V_DOCKER_ENABLED=if-libstdc++ "$bash" "$factory" configure
 cp "$config" "$tmp/legacy-config"

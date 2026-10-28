@@ -1,0 +1,26 @@
+(rocq.theory
+ (name skylabs_cpp_prog.tests)
+ (theories Stdlib skylabs.lang.cpp.parser.plugin))
+
+(rule
+ (targets
+  native_environment
+  invalid_environment
+  cpp_environment_dependency.v)
+ (action
+  (progn
+   (with-stdout-to
+    native_environment
+    (run
+     env
+     -u
+     CPP2V_DOCKER_IMAGE
+     -u
+     CPP2V_DOCKER_USER
+     CPP2V_DOCKER_ENABLED=n
+     %{bin:cpp2v-toolchain}
+     configure))
+   (write-file invalid_environment "cpp_env_version=99\n")
+   (write-file
+    cpp_environment_dependency.v
+    "(* Builds configurations before rocq dep scans the test. *)\n"))))
