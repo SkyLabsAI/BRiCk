@@ -25,7 +25,8 @@ Definition with_templates (tu : translation_unit) (mtu : Mtranslation_unit) : tr
     translation_unit.mtypes := mtu.(templates.mtypes);
     translation_unit.maliases := mtu.(templates.maliases);
     translation_unit.minstances := mtu.(templates.minstances);
-    translation_unit.dropped_symbols := tu.(translation_unit.dropped_symbols)
+    translation_unit.dropped_symbols := tu.(translation_unit.dropped_symbols);
+    translation_unit.types_fields_nodup := tu.(translation_unit.types_fields_nodup)
   |}.
 
 Module Import Mtranslation_unit.
