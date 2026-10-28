@@ -806,7 +806,8 @@ Module SimpleCPP.
     (** This is a very simplistic definition of [provides_storage].
     A more useful definition should probably not be persistent. *)
     Definition provides_storage (storage_ptr obj_ptr : ptr) (_ : type) : mpred :=
-      [| same_address storage_ptr obj_ptr |] ** valid_ptr storage_ptr ** valid_ptr obj_ptr.
+      [| same_address storage_ptr obj_ptr |] ** valid_ptr storage_ptr ** valid_ptr obj_ptr **
+      [| storage_ptr <> nullptr |] ** [| obj_ptr <> nullptr |].
     #[global] Instance provides_storage_persistent storage_ptr obj_ptr ty :
       Persistent (provides_storage storage_ptr obj_ptr ty) := _.
     #[global] Instance provides_storage_affine storage_ptr obj_ptr ty :
@@ -820,6 +821,10 @@ Module SimpleCPP.
       Observe (valid_ptr storage_ptr) (provides_storage storage_ptr obj_ptr aty) := _.
     #[global] Instance provides_storage_valid_obj_ptr storage_ptr obj_ptr aty :
       Observe (valid_ptr obj_ptr) (provides_storage storage_ptr obj_ptr aty) := _.
+    #[global] Instance provides_storage_storage_ptr_not_null storage_ptr obj_ptr aty :
+      Observe [| storage_ptr <> nullptr |] (provides_storage storage_ptr obj_ptr aty) := _.
+    #[global] Instance provides_storage_obj_ptr_not_null storage_ptr obj_ptr aty :
+      Observe [| obj_ptr <> nullptr |] (provides_storage storage_ptr obj_ptr aty) := _.
 
     Section with_genv.
 
