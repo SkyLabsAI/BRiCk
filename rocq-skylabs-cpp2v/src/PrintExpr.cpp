@@ -187,6 +187,35 @@ void printDependentMember(ClangPrinter &cprint, CoqPrinter &print,
                                expr->template_arguments(), loc::of(expr));
 }
 
+// Whether the class conversion [ce] steps to a virtual base, or out of a class
+// with one. Clang's path to a virtual base skips the classes in between, and
+// cpp2v emits classes with virtual bases as unsupported (see
+// [supportedRecord]), so neither step can be checked against the bases.
+static bool castLeavesVirtualBaseClass(const CastExpr &ce) {
+    QualType derived;
+    switch (ce.getCastKind()) {
+    case CastKind::CK_DerivedToBase:
+    case CastKind::CK_UncheckedDerivedToBase:
+        derived = ce.getSubExpr()->getType();
+        break;
+    case CastKind::CK_BaseToDerived:
+        derived = ce.getType();
+        break;
+    default:
+        return false;
+    }
+    auto cls = derived->isPointerType() ? derived->getPointeeCXXRecordDecl()
+                                        : derived->getAsCXXRecordDecl();
+    for (auto base : ce.path()) {
+        if (base->isVirtual() ||
+            (cls &&
+             llvm::any_of(cls->bases(), [](auto &b) { return b.isVirtual(); })))
+            return true;
+        cls = base->getType()->getAsCXXRecordDecl();
+    }
+    return false;
+}
+
 /**
  * This class prints an expression (of Coq type [Expr] or [MExpr])
  */
@@ -738,6 +767,16 @@ public:
             printDeclType(ce);
         };
         auto without_type = [&](const char *c) { print.output() << c; };
+
+        if (castLeavesVirtualBaseClass(*ce)) {
+            logging::unsupported()
+                << "unsupported cast through a class with virtual bases"
+                << " (at " << cprint.sourceRange(ce->getSourceRange()) << ")\n";
+            print.ctor("Cunsupported", false);
+            print.str(ce->getCastKindName()) << fmt::nbsp;
+            done(ce, Done::DT);
+            return;
+        }
 
         switch (ce->getCastKind()) {
 #define CASE_NO_TYPE(a, b)                                                     \
