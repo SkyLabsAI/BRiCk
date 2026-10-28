@@ -185,6 +185,7 @@ Module Import translation_unit.
         f_cc := CC_C;
         f_arity := Ar_Definite;
         f_exception := exception_spec.Unknown;
+        f_attrs := [];
         f_body := Some (Impl (Sunsupported error_msg))
       |}.
 
@@ -352,6 +353,7 @@ Definition Oimplicit_copy_assign (n : globname) (is_const : bool) : K :=
                 ; m_cc := CC_C
                 ; m_arity := Ar_Definite
                 ; m_exception := exception_spec.Unknown (* TODO: problematic? *)
+                ; m_attrs := []
                 ; m_body := Some Defaulted |} in
   _symbols (Nscoped n $ Nop function_qualifiers.N OOEqual [arg]) ctor.
 
@@ -365,6 +367,7 @@ Definition Oimplicit_move_assign (n : globname) : K :=
                 ; m_cc := CC_C
                 ; m_arity := Ar_Definite
                 ; m_exception := exception_spec.Unknown (* TODO: problematic? *)
+                ; m_attrs := []
                 ; m_body := Some Defaulted |} in
   _symbols (Nscoped n $ Nop function_qualifiers.N OOEqual [Trv_ref arg]) ctor.
 

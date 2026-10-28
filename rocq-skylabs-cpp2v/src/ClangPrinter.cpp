@@ -9,6 +9,7 @@
 #include "Formatter.hpp"
 #include "Logging.hpp"
 #include <clang/AST/ASTContext.h>
+#include <clang/AST/Attr.h>
 #include <clang/AST/Decl.h>
 #include <clang/AST/DeclCXX.h>
 #include <clang/AST/DeclTemplate.h>
@@ -17,6 +18,7 @@
 #include <clang/AST/TemplateBase.h>
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Sema/Sema.h>
+#include <llvm/ADT/STLExtras.h>
 #include <optional>
 
 using namespace clang;
@@ -443,6 +445,129 @@ llvm::raw_ostream &ClangPrinter::trace(StringRef whence, loc::loc loc) {
     if (loc::can_trace(loc, decl))
         os << " " << loc::trace(loc, getContext(), decl);
     return os << "\n";
+}
+
+/// Attributes without effect on the abstract machine, which cpp2v does not
+/// record. Every other attribute is preserved in the AST, so that a new or
+/// unexpected attribute is not silently dropped: keep this list explicit and
+/// add a kind only after checking that it cannot change behaviour. In
+/// particular `section` (per-CPU data in NOVA), `aligned`, `packed`,
+/// `asm` labels and `internal_linkage` are deliberately absent.
+static bool isNoOpAttr(attr::Kind kind) {
+    switch (kind) {
+    // Diagnostics only.
+    case attr::WarnUnusedResult:
+    case attr::Unused:
+    case attr::Deprecated:
+    case attr::Unavailable:
+    case attr::Format:
+    case attr::FormatArg:
+    case attr::DiagnoseIf:
+    // Code generation and placement hints.
+    case attr::AlwaysInline:
+    case attr::NoInline:
+    case attr::Cold:
+    case attr::Hot:
+    case attr::Flatten:
+    case attr::MinSize:
+    case attr::OptimizeNone:
+    case attr::NoMerge:
+    case attr::Used:
+    // Symbol visibility and import/export.
+    case attr::Visibility:
+    case attr::TypeVisibility:
+    case attr::DLLImport:
+    case attr::DLLExport:
+    case attr::ExcludeFromExplicitInstantiation:
+    case attr::AbiTag:
+    // Instrumentation and debug information.
+    case attr::NoSanitize:
+    case attr::NoStackProtector:
+    case attr::NoDebug:
+    case attr::Annotate:
+    // Already reflected elsewhere in the AST (`override`/`final` keywords;
+    // overload resolution is done by clang).
+    case attr::Override:
+    case attr::Final:
+    case attr::EnableIf:
+    case attr::Overloadable:
+    // Compile-time only.
+    case attr::ConstInit:
+    case attr::Availability:
+    // Implicit markers on builtins and library types.
+    case attr::Builtin:
+    case attr::NoBuiltin:
+    case attr::Owner:
+    case attr::Pointer:
+        return true;
+    default:
+        return false;
+    }
+}
+
+/// The name of an attribute's kind (e.g. `Section`, `Weak`,
+/// `CXX11NoReturn`). Unlike the written name, it exists for implicit
+/// attributes and is the same for every spelling of the attribute.
+static StringRef attrKindName(attr::Kind kind) {
+    switch (kind) {
+#define ATTR(X)                                                                \
+    case attr::X:                                                              \
+        return #X;
+#include "clang/Basic/AttrList.inc"
+    }
+    return "Unknown";
+}
+
+/// Whether to skip attribute `a` of `decl`: no-op attributes, and the
+/// implicit attributes that clang attaches to builtins (e.g. `NoThrow`,
+/// `Const` on `__builtin_popcount`) and to implicitly declared functions
+/// (e.g. `ReturnsNonNull`, `AllocSize`, `AllocAlign` on the replaceable
+/// `operator new`). BRiCk models builtins and the replaceable allocation
+/// functions itself, and those models must already respect the guarantees
+/// that these attributes encode. Explicit attributes on such declarations
+/// are kept.
+///
+/// TODO: revisit skipping implicit attributes on builtins and implicit
+/// declarations once BRiCk supports these attributes (e.g. `ReturnsNonNull`,
+/// `AllocSize`, `AllocAlign`, `Const`), so that the models are checked
+/// against them instead of trusted.
+static bool skipAttr(const Decl &decl, const Attr &a) {
+    if (isNoOpAttr(a.getKind()))
+        return true;
+    if (a.isImplicit()) {
+        if (decl.isImplicit())
+            return true;
+        if (auto fd = dyn_cast<FunctionDecl>(&decl);
+            fd && fd->getBuiltinID() != 0)
+            return true;
+    }
+    return false;
+}
+
+fmt::Formatter &ClangPrinter::printAttrs(CoqPrinter &print,
+                                         const clang::Decl &decl) {
+    auto attrs = llvm::make_filter_range(decl.attrs(), [&](const Attr *a) {
+        return a && !skipAttr(decl, *a);
+    });
+    if (attrs.empty())
+        return print.output() << "nil";
+    guard::list _(print);
+    for (const Attr *a : attrs) {
+        // Implicit attributes (e.g. on builtins) have no source spelling.
+        std::string pretty;
+        if (!a->isImplicit()) {
+            llvm::raw_string_ostream os(pretty);
+            a->printPretty(os, getContext().getPrintingPolicy());
+            os.flush();
+        }
+        {
+            guard::ctor _(print, "attr.Other", false);
+            print.str(attrKindName(a->getKind())) << fmt::nbsp;
+            print.str(StringRef(pretty).trim());
+        }
+        print.cons();
+    }
+    return print.output();
 }
 
 fmt::Formatter &ClangPrinter::printVariadic(CoqPrinter &print, bool va) const {

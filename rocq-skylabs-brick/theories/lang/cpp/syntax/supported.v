@@ -449,14 +449,20 @@ Section with_monad.
     else OK.
 
 
+  (** BRiCk does not interpret any attribute yet ([attr.t] only has [Other]). *)
+  Definition attr (a : attr.t) : M :=
+    match a with
+    | attr.Other name _ => FAIL (PrimString.cat "unsupported attribute: " name)
+    end.
+
   Definition obj_value (o : ObjValue) : M :=
     let params (ps : list (localname * core.type)) : M :=
       lst (type ∘ snd) ps
     in
     match o with
     | Ovar t ie => type t
-    | Ofunction (Build_Func t args _ _ exc ob) =>
-        type t <+> params args <+> opt function_body ob
+    | Ofunction (Build_Func t args _ _ exc attrs ob) =>
+        type t <+> params args <+> lst attr attrs <+> opt function_body ob
         <+> if exc is exception_spec.Unknown
             then match ob with
                  | None => OK
@@ -466,6 +472,7 @@ Section with_monad.
     | Omethod m =>
         type m.(m_return) <+> classname m.(m_class)
         <+> params m.(m_params)
+        <+> lst attr m.(m_attrs)
         <+> opt (or_default stmt) m.(m_body)
         <+> check_exc_spec m.(m_exception) m.(m_body)
 
