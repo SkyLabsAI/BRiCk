@@ -192,8 +192,8 @@ Module attr.
 
   cpp2v preserves every attribute, so that a new or unexpected attribute is
   not silently dropped; deciding which attributes are harmless (e.g.
-  <<[[nodiscard]]>>, <<always_inline>>, <<visibility>>) is left to
-  [supported] ([supported.walk.noop_attr]). Attributes that BRiCk does
+  <<[[nodiscard]]>>, <<always_inline>>, <<visibility>>) is left to Rocq
+  ([noop_kinds] below). Attributes that BRiCk does
   not model are recorded as [Other kind pretty], where [kind] is the name of
   clang's attribute kind (e.g. <<Section>> for every spelling of the
   attribute; <<CXX11NoReturn>> and <<NoReturn>> are distinct kinds) and
@@ -209,6 +209,47 @@ Module attr.
   | Other (kind : PrimString.string) (pretty : PrimString.string).
   #[global] Instance t_eq_dec : EqDecision t.
   Proof. solve_decision. Defined.
+
+  (** Attribute kinds (clang's [attr::Kind] names) without effect on the
+      abstract machine. cpp2v records every attribute; this list decides
+      which ones are harmless, for [supported] and for the parser's
+      [Tattributed] smart constructor, which drops types' no-op attributes. Keep it explicit, and add a kind only after
+      checking that it cannot change behaviour. In particular [Section]
+      (per-CPU data in NOVA), [Aligned], [Packed], [AsmLabel] and
+      [InternalLinkage] are deliberately absent. *)
+  Definition noop_kinds : list PrimString.string :=
+    [ (* Diagnostics only. *)
+      "WarnUnusedResult"; "Unused"; "Deprecated"; "Unavailable"; "Format";
+      "FormatArg"; "DiagnoseIf";
+      (* Code generation and placement hints. *)
+      "AlwaysInline"; "NoInline"; "Cold"; "Hot"; "Flatten"; "MinSize";
+      "OptimizeNone"; "NoMerge"; "Used";
+      (* Symbol visibility and import/export. *)
+      "Visibility"; "TypeVisibility"; "DLLImport"; "DLLExport";
+      "ExcludeFromExplicitInstantiation"; "AbiTag";
+      (* Instrumentation and debug information. *)
+      "NoSanitize"; "NoStackProtector"; "NoDebug"; "Annotate";
+      (* Thread-safety analysis annotations (checked by clang only). *)
+      "AcquireCapability"; "ReleaseCapability"; "RequiresCapability";
+      "TryAcquireCapability"; "AssertCapability"; "LocksExcluded";
+      "LockReturned"; "GuardedBy"; "PtGuardedBy"; "AcquiredBefore";
+      "AcquiredAfter"; "Capability"; "ScopedLockable";
+      "NoThreadSafetyAnalysis";
+      (* Already reflected elsewhere in the AST: the [override]/[final]
+         keywords, and overload resolution done by clang. *)
+      "Override"; "Final"; "EnableIf"; "Overloadable";
+      (* Compile-time only. *)
+      "ConstInit"; "Availability";
+      (* Markers on builtins and library types. *)
+      "Builtin"; "NoBuiltin"; "Owner"; "Pointer" ]%pstring.
+
+  Definition noop_kind (kind : PrimString.string) : bool :=
+    existsb (fun k => if PrimString.compare k kind is Eq then true else false) noop_kinds.
+
+  Definition noop (a : t) : bool :=
+    match a with
+    | Other kind _ => noop_kind kind
+    end.
 End attr.
 
 (** ** Structured names *)
