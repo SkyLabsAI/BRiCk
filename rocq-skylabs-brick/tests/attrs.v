@@ -11,8 +11,8 @@ Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
 
 (** * Attributes on functions and methods ([f_attrs], [m_attrs])
 
-cpp2v preserves every attribute except those on its no-op list; the others
-are [attr.Other], named by clang's attribute kind, which [supported] reports. *)
+cpp2v preserves every attribute as [attr.Other], named by clang's attribute
+kind; [supported] reports those that are not on its no-op list. *)
 
 cpp.prog source flags "-std=c++20 --target=x86_64-linux-gnu" prog cpp:{{
 void plain() {}
@@ -32,23 +32,34 @@ struct D : S {
 };
 }}.
 
-Definition attr_names_of (n : name) : option (list PrimString.string) :=
-  let names := List.map (fun a => match a with attr.Other name _ => name end) in
+Definition attrs_of (n : name) : option (list attr.t) :=
   match source.(symbols) !! n with
-  | Some (Ofunction f) => Some (names f.(f_attrs))
-  | Some (Omethod m) => Some (names m.(m_attrs))
+  | Some (Ofunction f) => Some f.(f_attrs)
+  | Some (Omethod m) => Some m.(m_attrs)
   | _ => None
   end.
 
-(* No attribute, or only no-op ones: nothing is recorded. *)
-Example no_attributes :
-  attr_names_of <$> ["plain()"; "noops()"; "D::v()"]%cpp_name =
-  replicate 3 (Some []).
+(* The attribute kinds that [supported] reports. *)
+Definition reported (n : name) : option (list PrimString.string) :=
+  (fun attrs => omap (fun a => match a with attr.Other kind _ =>
+     if supported.walk.noop_attr kind then None else Some kind end) attrs)
+  <$> attrs_of n.
+
+(* Every attribute is recorded, including no-op ones... *)
+Example recorded :
+  length <$> (attrs_of <$> ["plain()"; "noops()"; "D::v()"]%cpp_name) =
+  [Some 0; Some 4; Some 2].
 Proof. vm_compute. reflexivity. Qed.
 
-(* Everything else is preserved, under clang's attribute kind. *)
-Example preserved :
-  attr_names_of <$> ["in_section()"; "nr()"; "weak_fn()"; "nn(int*)"; "two()"; "S::m()"]%cpp_name =
+(* ... but [supported] accepts the no-op ones ([nodiscard], [always_inline],
+   [cold], [visibility], [override], [final]). *)
+Example noop_not_reported :
+  reported <$> ["plain()"; "noops()"; "D::v()"]%cpp_name = replicate 3 (Some []).
+Proof. vm_compute. reflexivity. Qed.
+
+(* Everything else is reported, under clang's attribute kind. *)
+Example reported_kinds :
+  reported <$> ["in_section()"; "nr()"; "weak_fn()"; "nn(int*)"; "two()"; "S::m()"]%cpp_name =
   Some <$> [["Section"]; ["CXX11NoReturn"]; ["Weak"]; ["NonNull"];
             ["Section"]; ["Section"]]%pstring.
 Proof. vm_compute. reflexivity. Qed.
