@@ -18,6 +18,7 @@ Register translation_unit._skip as skylabs.lang.cpp.parser.translation_unit.skip
 Register abi.t as skylabs.lang.cpp.parser.translation_unit.abi_type.
 Register abi.abi_default as skylabs.lang.cpp.parser.translation_unit.abi_default.
 Register translation_unit.decls as skylabs.lang.cpp.parser.translation_unit.decls.
+Register fields_nodup as skylabs.lang.cpp.parser.translation_unit.fields_nodup.
 
 (* NOTE: This is a hack to get a universe instance *)
 Definition empty_array := PArray.make 0%uint63 parser.translation_unit._skip.
