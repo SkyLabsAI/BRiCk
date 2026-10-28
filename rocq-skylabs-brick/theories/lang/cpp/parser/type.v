@@ -26,4 +26,10 @@ Module ParserType.
 
   Notation Tdecay_type original adjusted := (adjusted) (only parsing).
 
+  (** Attributes on a type (or on the typedef naming it). cpp2v prints every
+      attribute; those on [attr.noop_kinds] are dropped here, so the AST only
+      records attributes that may matter. *)
+  Definition Tattributed (attrs : list attr.t) (t : type) : type :=
+    if forallb attr.noop attrs then t else skylabs.lang.cpp.syntax.core.Tattributed attrs t.
+
 End ParserType.

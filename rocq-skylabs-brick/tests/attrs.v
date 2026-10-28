@@ -30,6 +30,10 @@ struct S {
 struct D : S {
   void v() override final;
 };
+typedef int over_aligned __attribute__((aligned(16)));
+typedef int quiet __attribute__((unused));
+over_aligned g_aligned;
+quiet g_quiet;
 }}.
 
 Definition attrs_of (n : name) : option (list attr.t) :=
@@ -47,7 +51,7 @@ Definition reported (n : name) : option (list PrimString.string) :=
 
 (* Every attribute is recorded, including no-op ones... *)
 Example recorded :
-  List.map (fun n => option_map (@length attr.t) (attrs_of n)) ["plain()"; "noops()"; "D::v()"]%cpp_name =
+  List.map (fun n => option_map (@List.length attr.t) (attrs_of n)) ["plain()"; "noops()"; "D::v()"]%cpp_name =
   [Some 0; Some 4; Some 2].
 Proof. vm_compute. reflexivity. Qed.
 
@@ -76,3 +80,22 @@ Example supported_reports :
   supported.walk.attr (attr.Other "Weak" "__attribute__((weak))") =
   [supported.walk.Gap supported.walk.Unsupported "unsupported attribute: Weak"].
 Proof. reflexivity. Qed.
+
+(** ** Type attributes
+
+A typedef's attributes are kept at each use of the typedef, as
+[Tattributed]; the parser drops no-op ones ([attr.noop_kinds]). *)
+Definition var_type (n : name) : option type :=
+  match source.(symbols) !! n with
+  | Some (Ovar t _) => Some t
+  | _ => None
+  end.
+
+Example typedef_attributes :
+  (fun ot => match ot with
+          | Some (skylabs.lang.cpp.syntax.core.Tattributed [attr.Other k _] Tint) =>
+              if PrimString.compare k "Aligned"%pstring is Eq then 1 else 0
+          | Some Tint => 2
+          | _ => 0
+          end) <$> (var_type <$> ["g_aligned"; "g_quiet"]%cpp_name) = [1; 2].
+Proof. vm_compute. reflexivity. Qed.
