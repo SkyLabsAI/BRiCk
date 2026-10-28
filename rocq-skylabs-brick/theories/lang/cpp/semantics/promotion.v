@@ -194,6 +194,7 @@ Definition promote_integral (tu : translation_unit) (ty : type) : option type :=
   | Tnullptr
   | Tarch _ _ => None
   | Tqualified _ _ => None (* unreachable *)
+  | Tattributed _ _ => None
   | Tunsupported _ => None
   | Tparam _
   | Tresult_param _

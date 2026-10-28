@@ -134,6 +134,7 @@ Section defs.
       | Tfunction _
       | Tarch _ _ => UNSUPPORTED Q
       | Tqualified cv ty' => False (* unreachable *)
+      | Tattributed _ _ => UNSUPPORTED Q
       | Tunsupported _ => False
       | Tparam _ | Tresult_param _
       | Tresult_global _

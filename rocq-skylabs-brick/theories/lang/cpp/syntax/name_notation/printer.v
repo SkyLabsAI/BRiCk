@@ -253,6 +253,7 @@ Section with_lang.
             <*> traverse (T:=eta list) (F:=eta option) (printT true) ft.(ft_params)
         else mfail
     | Tarch _ note => mfail
+    | Tattributed _ _ => mfail
     | Tunsupported note => mfail
     | Tparam nm => mret $ "$" ++ nm
     | _ => mfail

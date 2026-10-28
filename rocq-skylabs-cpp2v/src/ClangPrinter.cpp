@@ -488,6 +488,26 @@ static bool skipAttr(const Decl &decl, const Attr &a) {
     return false;
 }
 
+fmt::Formatter &ClangPrinter::printAttr(CoqPrinter &print, attr::Kind kind,
+                                        const Attr *a) {
+    // Implicit attributes (e.g. on builtins) have no source spelling.
+    std::string pretty;
+    if (a && !a->isImplicit()) {
+        llvm::raw_string_ostream os(pretty);
+        a->printPretty(os, getContext().getPrintingPolicy());
+        os.flush();
+    }
+    guard::ctor _(print, "attr.Other", false);
+    print.str(attrKindName(kind)) << fmt::nbsp;
+    return print.str(StringRef(pretty).trim());
+}
+
+bool ClangPrinter::hasPrintedAttrs(const clang::Decl &decl) {
+    return llvm::any_of(decl.attrs(), [&](const Attr *a) {
+        return a && !skipAttr(decl, *a);
+    });
+}
+
 fmt::Formatter &ClangPrinter::printAttrs(CoqPrinter &print,
                                          const clang::Decl &decl) {
     auto attrs = llvm::make_filter_range(decl.attrs(), [&](const Attr *a) {
@@ -497,18 +517,7 @@ fmt::Formatter &ClangPrinter::printAttrs(CoqPrinter &print,
         return print.output() << "nil";
     guard::list _(print);
     for (const Attr *a : attrs) {
-        // Implicit attributes (e.g. on builtins) have no source spelling.
-        std::string pretty;
-        if (!a->isImplicit()) {
-            llvm::raw_string_ostream os(pretty);
-            a->printPretty(os, getContext().getPrintingPolicy());
-            os.flush();
-        }
-        {
-            guard::ctor _(print, "attr.Other", false);
-            print.str(attrKindName(a->getKind())) << fmt::nbsp;
-            print.str(StringRef(pretty).trim());
-        }
+        printAttr(print, a->getKind(), a);
         print.cons();
     }
     return print.output();

@@ -235,6 +235,49 @@ Section with_monad.
   (* The types in a name (parameters, template arguments) identify it; they
      are not needed. What a template instance needs comes from its own
      definition. *)
+  (** Attribute kinds (clang's [attr::Kind] names) without effect on the
+      abstract machine. cpp2v records every attribute; this list decides
+      which ones are harmless. Keep it explicit, and add a kind only after
+      checking that it cannot change behaviour. In particular [Section]
+      (per-CPU data in NOVA), [Aligned], [Packed], [AsmLabel] and
+      [InternalLinkage] are deliberately absent. *)
+  Definition noop_attrs : list PrimString.string :=
+    [ (* Diagnostics only. *)
+      "WarnUnusedResult"; "Unused"; "Deprecated"; "Unavailable"; "Format";
+      "FormatArg"; "DiagnoseIf";
+      (* Code generation and placement hints. *)
+      "AlwaysInline"; "NoInline"; "Cold"; "Hot"; "Flatten"; "MinSize";
+      "OptimizeNone"; "NoMerge"; "Used";
+      (* Symbol visibility and import/export. *)
+      "Visibility"; "TypeVisibility"; "DLLImport"; "DLLExport";
+      "ExcludeFromExplicitInstantiation"; "AbiTag";
+      (* Instrumentation and debug information. *)
+      "NoSanitize"; "NoStackProtector"; "NoDebug"; "Annotate";
+      (* Thread-safety analysis annotations (checked by clang only). *)
+      "AcquireCapability"; "ReleaseCapability"; "RequiresCapability";
+      "TryAcquireCapability"; "AssertCapability"; "LocksExcluded";
+      "LockReturned"; "GuardedBy"; "PtGuardedBy"; "AcquiredBefore";
+      "AcquiredAfter"; "Capability"; "ScopedLockable";
+      "NoThreadSafetyAnalysis";
+      (* Already reflected elsewhere in the AST: the [override]/[final]
+         keywords, and overload resolution done by clang. *)
+      "Override"; "Final"; "EnableIf"; "Overloadable";
+      (* Compile-time only. *)
+      "ConstInit"; "Availability";
+      (* Markers on builtins and library types. *)
+      "Builtin"; "NoBuiltin"; "Owner"; "Pointer" ]%pstring.
+
+  Definition noop_attr (kind : PrimString.string) : bool :=
+    existsb (fun k => bool_decide (k = kind)) noop_attrs.
+
+  (** BRiCk does not interpret any attribute yet ([attr.t] only has [Other]). *)
+  Definition attr (a : attr.t) : M :=
+    match a with
+    | attr.Other kind _ =>
+        if noop_attr kind then OK
+        else FAIL (PrimString.cat "unsupported attribute: " kind)
+    end.
+
   Fixpoint name (n : name) : M :=
     no_refs match n with
     | Ninst n ii => name n <+> lst (temp_arg name type expr) ii
@@ -247,6 +290,10 @@ Section with_monad.
   with type (t : type) : M :=
     match t with
     | Tunsupported msg => FAIL msg
+    | Tattributed attrs t =>
+        (* The program logic treats attributed types as opaque for now, even
+           when every attribute is on [noop_attrs]. *)
+        lst attr attrs <+> type t <+> PARTIAL "attributed type (opaque to the program logic)"
     | Tparam _
     | Tresult_param _ => OK
     | Tresult_global n => name n
@@ -449,42 +496,6 @@ Section with_monad.
     else OK.
 
 
-  (** Attribute kinds (clang's [attr::Kind] names) without effect on the
-      abstract machine. cpp2v records every attribute; this list decides
-      which ones are harmless. Keep it explicit, and add a kind only after
-      checking that it cannot change behaviour. In particular [Section]
-      (per-CPU data in NOVA), [Aligned], [Packed], [AsmLabel] and
-      [InternalLinkage] are deliberately absent. *)
-  Definition noop_attrs : list PrimString.string :=
-    [ (* Diagnostics only. *)
-      "WarnUnusedResult"; "Unused"; "Deprecated"; "Unavailable"; "Format";
-      "FormatArg"; "DiagnoseIf";
-      (* Code generation and placement hints. *)
-      "AlwaysInline"; "NoInline"; "Cold"; "Hot"; "Flatten"; "MinSize";
-      "OptimizeNone"; "NoMerge"; "Used";
-      (* Symbol visibility and import/export. *)
-      "Visibility"; "TypeVisibility"; "DLLImport"; "DLLExport";
-      "ExcludeFromExplicitInstantiation"; "AbiTag";
-      (* Instrumentation and debug information. *)
-      "NoSanitize"; "NoStackProtector"; "NoDebug"; "Annotate";
-      (* Already reflected elsewhere in the AST: the [override]/[final]
-         keywords, and overload resolution done by clang. *)
-      "Override"; "Final"; "EnableIf"; "Overloadable";
-      (* Compile-time only. *)
-      "ConstInit"; "Availability";
-      (* Markers on builtins and library types. *)
-      "Builtin"; "NoBuiltin"; "Owner"; "Pointer" ]%pstring.
-
-  Definition noop_attr (kind : PrimString.string) : bool :=
-    existsb (fun k => bool_decide (k = kind)) noop_attrs.
-
-  (** BRiCk does not interpret any attribute yet ([attr.t] only has [Other]). *)
-  Definition attr (a : attr.t) : M :=
-    match a with
-    | attr.Other kind _ =>
-        if noop_attr kind then OK
-        else FAIL (PrimString.cat "unsupported attribute: " kind)
-    end.
 
   Definition obj_value (o : ObjValue) : M :=
     let params (ps : list (localname * core.type)) : M :=
