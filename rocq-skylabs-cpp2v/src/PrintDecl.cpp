@@ -917,13 +917,17 @@ static fmt::Formatter &printInitializer(const CXXConstructorDecl &ctor,
     printInitPath(ctor, init, print, cprint) << fmt::nbsp;
     if (print.templates()) {
         guard::ctor _{print, "Einitializing_type"};
-        if (auto fd = init.getAnyMember()) {
-            cprint.printQualType(print, fd->getType(), loc::of(ctor));
-        } else if (auto tsi = init.getTypeSourceInfo()) {
-            // base class or, for a delegating initializer, the class itself
-            cprint.printType(print, *tsi->getType(), loc::of(ctor));
-        }
-        print.output() << fmt::nbsp;
+        auto print_type = [&]() -> fmt::Formatter & {
+            if (auto fd = init.getAnyMember())
+                return cprint.printQualType(print, fd->getType(), loc::of(ctor));
+            if (auto tsi = init.getTypeSourceInfo())
+                // Base class or, for a delegating initializer, the class itself.
+                return cprint.printType(print, *tsi->getType(), loc::of(ctor));
+            guard::ctor _{print, "Tunsupported"};
+            return print.str(
+                "initializer without member or type source information");
+        };
+        print_type() << fmt::nbsp;
         return cprint.printExpr(print, e);
     } else {
         return cprint.printExpr(print, e);
