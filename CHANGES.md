@@ -19,6 +19,9 @@ with C++ precedence and dimension order ([#448](https://github.com/SkyLabsAI/BRi
   five arrays of ten integers. Literals that relied on the previous reversed
   order must reverse their dimensions to preserve their intended type; for
   example, two zero-length byte arrays are now `unsigned char[2][0]`.
+- Omitted array bounds are allowed only for the outermost dimension of each
+  array type: `int[][3][4]` is valid, while `int[][][4]` is rejected. Pointers
+  to unknown-bound arrays, including arrays of such pointers, remain supported.
 
 2026.10.19: cpp2v puts template patterns reached outside their template (e.g.
 local types in out-of-line member definitions of class templates, or

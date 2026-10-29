@@ -10,6 +10,7 @@ Require Import skylabs.upoly.base.
 Require Import skylabs.upoly.upoly.
 Require Import skylabs.lang.cpp.syntax.core.
 Require Import skylabs.lang.cpp.syntax.types.
+Require Import skylabs.lang.cpp.syntax.name_notation.declarator.
 Require Import skylabs.lang.cpp.syntax.pretty.
 
 (* UPSTREAM? *)
@@ -175,6 +176,7 @@ Section with_lang.
      declarator needs parentheses when an array or function suffix follows. *)
   with printTD (is_arg : bool) (decl : PrimString.string) (is_prefix : bool)
     (ty : type) : option PrimString.string :=
+    if negb (valid_array_bounds ty) then mfail else
     let suffix := if is_prefix then parens decl else decl in
     match ty with
     | Tptr t => printTD false ("*" ++ decl) true t

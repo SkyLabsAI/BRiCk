@@ -45,6 +45,8 @@ Definition canonical : list (PrimString.string * name) :=
   ; ("f(int(&)[3])", Nglobal (Nfunction function_qualifiers.N "f" [Tref (Tarray Tint 3)]))
   ; ("f(Msg(&)[3])", Nglobal (Nfunction function_qualifiers.N "f" [Tref (Tarray (Tnamed Msg) 3)]))
   ; ("f(int(&&)[3])", Nglobal (Nfunction function_qualifiers.N "f" [Trv_ref (Tarray Tint 3)]))
+  ; ("f(int(*)[][3][4])", Nglobal (Nfunction function_qualifiers.N "f" [Tptr (Tincomplete_array (Tarray (Tarray Tint 4) 3))]))
+  ; ("f(int(*)[2][3][4])", Nglobal (Nfunction function_qualifiers.N "f" [Tptr (Tarray (Tarray (Tarray Tint 4) 3) 2)]))
   ; ("f(int(*)[3])", Nglobal (Nfunction function_qualifiers.N "f" [Tptr (Tarray Tint 3)]))
   ; ("f(int(&)[3][4])", Nglobal (Nfunction function_qualifiers.N "f" [Tref (Tarray (Tarray Tint 4) 3)]))
   ; ("f(int*(&)[3])", Nglobal (Nfunction function_qualifiers.N "f" [Tref (Tarray (Tptr Tint) 3)]))
@@ -105,9 +107,36 @@ Definition parse_only : list (PrimString.string * name) :=
   ; ("foo_client(int (&) [2], const int*, bool*, int**, char*)", (Nglobal (Nfunction function_qualifiers.N "foo_client" [Tref (Tarray Tint 2); Tptr (Tconst Tint); Tptr Tbool; Tptr (Tptr Tint); Tptr Tchar])) )
   ; ("f(int (&) [3])", Nglobal (Nfunction function_qualifiers.N "f" [Tref (Tarray Tint 3)]))
   ; ("f(int*[3])", Nglobal (Nfunction function_qualifiers.N "f" [Tptr (Tptr Tint)]))
+  ; ("f(int[2][3][4])", Nglobal (Nfunction function_qualifiers.N "f" [Tptr (Tarray (Tarray Tint 4) 3)]))
+  ; ("f(int[][3][4])", Nglobal (Nfunction function_qualifiers.N "f" [Tptr (Tarray (Tarray Tint 4) 3)]))
   ; ("f(int[3][4])", Nglobal (Nfunction function_qualifiers.N "f" [Tptr (Tarray Tint 4)]))
   ]%pstring.
 
 Definition rejected : list PrimString.string :=
   ["f(int[3]&)"; "f(int[3]&&)"; "f(int[3]*)";
+   "f(int[][][4])"; "f(int(*)[][][4])"; "f(int(&)[][][4])";
    "f(int[][3]&)"; "f(int(&)[3]&)"; "f(int(&)[3]*)"]%pstring.
+
+(* These constructor expectations check dimensions and binding independently
+   of the type notation, which uses the parser under test. *)
+Definition array_types : list (PrimString.string * type) :=
+  [ ("int[2][3][4]", Tarray (Tarray (Tarray Tint 4) 3) 2)
+  ; ("int[][3][4]", Tincomplete_array (Tarray (Tarray Tint 4) 3))
+  ; ("int(*)[2][3][4]", Tptr (Tarray (Tarray (Tarray Tint 4) 3) 2))
+  ; ("int(*)[][3][4]", Tptr (Tincomplete_array (Tarray (Tarray Tint 4) 3)))
+  ; ("int(&)[2][3][4]", Tref (Tarray (Tarray (Tarray Tint 4) 3) 2))
+  ; ("int(&)[][3][4]", Tref (Tincomplete_array (Tarray (Tarray Tint 4) 3)))
+  ; ("int*[][3][4]", Tincomplete_array (Tarray (Tarray (Tptr Tint) 4) 3))
+  ; ("int(*[2])[3][4]", Tarray (Tptr (Tarray (Tarray Tint 4) 3)) 2)
+  ; ("int(*)[]", Tptr (Tincomplete_array Tint))
+  ; ("int(*[2])[]", Tarray (Tptr (Tincomplete_array Tint)) 2)
+  ; ("int(*[][3])[4]", Tincomplete_array (Tarray (Tptr (Tarray Tint 4)) 3))
+  ; ("int(* const)[]", Tconst (Tptr (Tincomplete_array Tint)))
+  ; ("const int(*[2])[]", Tarray (Tptr (Tincomplete_array (Tconst Tint))) 2)
+  ]%pstring.
+
+Definition rejected_array_types : list PrimString.string :=
+  [ "int[][][4]"; "int[2][][4]"; "int[2][3][]"
+  ; "int(*)[][][4]"; "int(&)[][][4]"; "int(*[2])[][4][]"
+  ; "const int[2][]"; "int[2][3]*"; "int[2][3]&"
+  ]%pstring.

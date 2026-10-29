@@ -12,6 +12,7 @@ Require Import skylabs.upoly.list.
 Require Import skylabs.prelude.parsec.
 Require Import skylabs.lang.cpp.syntax.core.
 Require Import skylabs.lang.cpp.syntax.types.
+Require Import skylabs.lang.cpp.syntax.name_notation.declarator.
 Require Import Stdlib.Strings.PrimString.
 Require Import skylabs.prelude.pstring.
 Require Import Stdlib.Numbers.Cyclic.Int63.Uint63.
@@ -426,7 +427,8 @@ Module internal.
            build_named_type (name_for_parse Tnamed kw) n)
       in
       let* post := parse_postfix_type in
-      mret $ post (List.fold_right (fun f x => f x) t quals).
+      let ty := post (List.fold_right (fun f x => f x) t quals) in
+      if valid_array_bounds ty then mret ty else mfail.
 
     Fixpoint final_function (nm : name) : option (name * list type * function_qualifiers.t) :=
       match nm with
