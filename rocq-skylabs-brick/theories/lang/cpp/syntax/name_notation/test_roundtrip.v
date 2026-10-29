@@ -29,4 +29,15 @@ Module Type TEST.
 
   Example TEST_parse_print : List.concat ((fun '(b,a) => parse_print a b) <$> (canonical ++ parse_only)) = [].
   Proof. vm_compute. reflexivity. Qed.
+
+  Example TEST_rejected : (parse_name <$> rejected) = repeat None (length rejected).
+  Proof. vm_compute. reflexivity. Qed.
+
+  (* The type notation is implemented by this parser, so use constructors here
+     to check array dimensions and binding independently of that notation. *)
+  Example TEST_array_type : parse_type "int[3][4]"%pstring = Some (Tarray (Tarray Tint 4) 3).
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example TEST_array_type_print : print_type (Tarray (Tarray Tint 4) 3) = Some "int[3][4]"%pstring.
+  Proof. vm_compute. reflexivity. Qed.
 End TEST.

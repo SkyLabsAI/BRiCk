@@ -7,7 +7,9 @@
 Require Import skylabs.lang.cpp.syntax.prelude.
 Require Import skylabs.lang.cpp.syntax.core.
 
-(* parsing the left will produce the righ *and* printing the right will produce the left *)
+(* These tests check the parser and printer themselves, so their expected
+   terms use constructors rather than the notations implemented by them. *)
+(* parsing the left will produce the right *and* printing the right will produce the left *)
 Definition canonical : list (PrimString.string * name) :=
   let Msg : name := Nglobal $ Nid "Msg" in
   [ ("Msg", Msg)
@@ -39,7 +41,18 @@ Definition canonical : list (PrimString.string * name) :=
   ; ("Msg::operator new[]()", (Nscoped Msg (Nop function_qualifiers.N (OONew true) [])) )
   ; ("Msg::operator delete[]()", (Nscoped Msg (Nop function_qualifiers.N (OODelete true) [])) )
   ; ("Msg::operator int()", (Nscoped Msg (Nop_conv function_qualifiers.N Tint)) )
-  ; ("foo_client(int[2]&, const int*, bool*, int**, char*)", (Nglobal (Nfunction function_qualifiers.N "foo_client" [Tref (Tarray Tint 2); Tptr (Tconst Tint); Tptr Tbool; Tptr (Tptr Tint); Tptr Tchar])) )
+  ; ("foo_client(int(&)[2], const int*, bool*, int**, char*)", (Nglobal (Nfunction function_qualifiers.N "foo_client" [Tref (Tarray Tint 2); Tptr (Tconst Tint); Tptr Tbool; Tptr (Tptr Tint); Tptr Tchar])) )
+  ; ("f(int(&)[3])", Nglobal (Nfunction function_qualifiers.N "f" [Tref (Tarray Tint 3)]))
+  ; ("f(Msg(&)[3])", Nglobal (Nfunction function_qualifiers.N "f" [Tref (Tarray (Tnamed Msg) 3)]))
+  ; ("f(int(&&)[3])", Nglobal (Nfunction function_qualifiers.N "f" [Trv_ref (Tarray Tint 3)]))
+  ; ("f(int(*)[3])", Nglobal (Nfunction function_qualifiers.N "f" [Tptr (Tarray Tint 3)]))
+  ; ("f(int(&)[3][4])", Nglobal (Nfunction function_qualifiers.N "f" [Tref (Tarray (Tarray Tint 4) 3)]))
+  ; ("f(int*(&)[3])", Nglobal (Nfunction function_qualifiers.N "f" [Tref (Tarray (Tptr Tint) 3)]))
+  ; ("f(const int(&)[3])", Nglobal (Nfunction function_qualifiers.N "f" [Tref (Tarray (Tconst Tint) 3)]))
+  ; ("f(int(&)[])", Nglobal (Nfunction function_qualifiers.N "f" [Tref (Tincomplete_array Tint)]))
+  ; ("f(int(* const&)[3])", Nglobal (Nfunction function_qualifiers.N "f" [Tref (Tconst (Tptr (Tarray Tint 3)))]))
+  ; ("f(int(&)(int))", Nglobal (Nfunction function_qualifiers.N "f" [Tref (Tfunction (FunctionType Tint [Tint]))]))
+  ; ("f(int(*(&)[3])(int))", Nglobal (Nfunction function_qualifiers.N "f" [Tref (Tarray (Tptr (Tfunction (FunctionType Tint [Tint]))) 3)]))
   ; ("DlistInternal::iterator::operator!=(const DlistInternal::iterator&) const",
                  (Nscoped (Nscoped (Nglobal (Nid "DlistInternal")) (Nid "iterator"))
                     (Nop function_qualifiers.Nc OOExclaimEqual [Tref (Tqualified QC (Tnamed (Nscoped (Nglobal (Nid "DlistInternal")) (Nid "iterator"))))])))
@@ -89,5 +102,12 @@ Definition parse_only : list (PrimString.string * name) :=
                             Tlonglong;
                             Tuint; Tint] in
     ("Msg<unsigned long, long, unsigned long long, long long, unsigned int, int>::Msg()", (Nscoped (Ninst Msg targs) (Nctor [])))
-  ; ("foo_client(int[2]&, const int*, bool*, int**, char*)", (Nglobal (Nfunction function_qualifiers.N "foo_client" [Tref (Tarray Tint 2); Tptr (Tconst Tint); Tptr Tbool; Tptr (Tptr Tint); Tptr Tchar])) )
+  ; ("foo_client(int (&) [2], const int*, bool*, int**, char*)", (Nglobal (Nfunction function_qualifiers.N "foo_client" [Tref (Tarray Tint 2); Tptr (Tconst Tint); Tptr Tbool; Tptr (Tptr Tint); Tptr Tchar])) )
+  ; ("f(int (&) [3])", Nglobal (Nfunction function_qualifiers.N "f" [Tref (Tarray Tint 3)]))
+  ; ("f(int*[3])", Nglobal (Nfunction function_qualifiers.N "f" [Tptr (Tptr Tint)]))
+  ; ("f(int[3][4])", Nglobal (Nfunction function_qualifiers.N "f" [Tptr (Tarray Tint 4)]))
   ]%pstring.
+
+Definition rejected : list PrimString.string :=
+  ["f(int[3]&)"; "f(int[3]&&)"; "f(int[3]*)";
+   "f(int[][3]&)"; "f(int(&)[3]&)"; "f(int(&)[3]*)"]%pstring.
