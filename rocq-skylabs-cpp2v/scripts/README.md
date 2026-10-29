@@ -47,13 +47,21 @@ ID when supported. To pin across builds, supply an immutable image reference.
 Docker errors never silently select the host.
 
 The workspace defaults to `DUNE_SOURCEROOT`, or the current directory outside
-Dune; `--workspace DIR` overrides it. Workspace and working-directory mounts use
-the same absolute paths inside the container. Existing absolute file arguments
-are mounted as well. Use repeatable `--mount DIR` for external include trees or
-external executables. Symlinked directories are mounted from their physical host
-locations at the logical paths used by the command. Relative `--mount` paths are
-resolved from the physical working directory used inside the container. The
-container command itself is never replaced with a mounted host executable.
+Dune; `--workspace DIR` overrides it. The workspace root and working directory
+are canonicalized with `pwd -P`. The primary workspace mount uses that physical
+absolute path on both sides, and the container uses the physical working
+directory. Supplying a workspace through a symlink does not, by itself, create
+a mount at that logical spelling.
+
+Additional mounts preserve logical destinations: directories supplied with
+repeatable `--mount DIR`, and parents of existing absolute file arguments, are
+mounted from their physical host locations at the logical paths used by the
+command. This also applies to aliases inside or pointing at the workspace. If
+an output or include path uses a workspace alias not covered by those automatic
+input mounts, add `--mount /logical/workspace` explicitly. Relative `--mount`
+paths are resolved from the physical working directory used inside the
+container. The container command itself is never replaced with a mounted host
+executable.
 
 ## Explicit Dune TU rules
 

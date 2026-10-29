@@ -6,7 +6,7 @@ runner=$(absolute "$1")
 factory=$(absolute "$2")
 bash=$BASH
 env=$(command -v env)
-tmp=$(mktemp -d)
+tmp=$(cd "$(mktemp -d)" && pwd -P)
 trap 'rm -rf "$tmp"' EXIT
 unset CPP2V_DOCKER_ENABLED CPP2V_DOCKER_IMAGE CPP2V_DOCKER_USER BASH_ENV ENV
 export DUNE_SOURCEROOT="$tmp/workspace with spaces"
@@ -216,6 +216,42 @@ cmp "$tmp/expected" "$INSPECT_ARGV_LOG"
 expect_status 0 "$bash" "$runner" --config "$platform_config" -- /bin/true
 read_args
 has_arg sha256:second
+
+# Workspace roots and working directories use physical paths, even when the
+# configured workspace or the caller's PWD uses a symlink spelling.
+workspace_alias="$tmp/workspace alias"
+workspace_config="$tmp/workspace-config"
+ln -s "$DUNE_SOURCEROOT" "$workspace_alias"
+DUNE_SOURCEROOT="$workspace_alias" "$bash" "$factory" configure \
+    --image test-image > "$workspace_config"
+(
+    cpp_env_workspace=''
+    # shellcheck source=/dev/null
+    source "$workspace_config"
+    [[ $cpp_env_workspace == "$DUNE_SOURCEROOT" ]]
+)
+(
+    cd "$workspace_alias/tu"
+    expect_status 0 "$bash" "$runner" --config "$workspace_config" -- /bin/true
+)
+read_args
+has_arg "$DUNE_SOURCEROOT:$DUNE_SOURCEROOT"
+has_arg "$DUNE_SOURCEROOT/tu"
+expect_not has_arg "$DUNE_SOURCEROOT:$workspace_alias"
+# An explicit mount retains the logical workspace alias in addition to its
+# physical primary mount; the runtime workspace override is canonicalized too.
+expect_status 0 "$bash" "$runner" --config "$workspace_config" \
+    --workspace "$workspace_alias" --mount "$workspace_alias" -- /bin/true
+read_args
+has_arg "$DUNE_SOURCEROOT:$DUNE_SOURCEROOT"
+has_arg "$DUNE_SOURCEROOT:$workspace_alias"
+# Existing absolute input arguments also get their logical parent mounted.
+touch "$DUNE_SOURCEROOT/tu/aliased-input.cpp"
+expect_status 0 "$bash" "$runner" --config "$workspace_config" \
+    -- /bin/true "$workspace_alias/tu/aliased-input.cpp"
+read_args
+has_arg "$DUNE_SOURCEROOT/tu:$workspace_alias/tu"
+has_arg "$workspace_alias/tu/aliased-input.cpp"
 
 # No suffix restrictions: arbitrary absolute inputs, commands, and explicit
 # include directories outside the workspace are mounted at the same paths.
