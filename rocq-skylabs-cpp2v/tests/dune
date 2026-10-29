@@ -1,6 +1,54 @@
+(rule
+ (target cpp_environment)
+ (deps
+  (universe)
+  (env_var CPP2V_DOCKER_ENABLED)
+  (env_var CPP2V_DOCKER_IMAGE)
+  (env_var CPP2V_DOCKER_USER))
+ (action
+  (with-stdout-to
+   %{target}
+   (run
+    %{bin:cpp2v-toolchain}
+    configure
+    --default-image
+    skylabsai/fm-releases:fm-release-nightly
+    --platform
+    linux/amd64
+    --opam))))
+
+(rule
+ (target setup-cpp2v-command.sh)
+ (deps
+  (universe)
+  (sandbox none))
+ (action
+  (with-stdout-to
+   %{target}
+   (progn
+    ; The subshell keeps the adapter's exec from replacing the Cram shell.
+    (echo "cpp2v_command() (\n")
+    (run
+     %{bin:cpp2v-toolchain}
+     wrapper
+     --runner
+     %{bin:cpp2v-run}
+     --config
+     %{dep:cpp_environment}
+     --host-tool
+     %{bin:cpp2v}
+     --container-tool
+     cpp2v)
+    (echo ")\n")))))
+
 (cram
  (applies_to :whole_subtree)
- (setup_scripts setup.sh setup-project.sh setup-cpp2v.sh setup-name-test.sh)
+ (setup_scripts
+  setup.sh
+  setup-project.sh
+  setup-cpp2v-command.sh
+  setup-cpp2v.sh
+  setup-name-test.sh)
  (shell bash)
  (deps
   (package rocq-core)
