@@ -10,6 +10,16 @@ of the release, and introduce a new heading.
 
 ## Since Last Release
 
+2026.10.29: C++ name/type notation now parses and prints array declarators
+with C++ precedence and dimension order ([#448](https://github.com/SkyLabsAI/BRiCk/issues/448),
+[#453](https://github.com/SkyLabsAI/BRiCk/pull/453)).
+- Array references use `int(&)[3]`; the malformed `int[3]&` spelling is rejected.
+  Update affected `%cpp_name` and `%cpp_type` literals to the valid spelling.
+- Multidimensional arrays use outermost-first dimensions: `int[5][10]` means
+  five arrays of ten integers. Literals that relied on the previous reversed
+  order must reverse their dimensions to preserve their intended type; for
+  example, two zero-length byte arrays are now `unsigned char[2][0]`.
+
 2026.10.19: cpp2v puts template patterns reached outside their template (e.g.
 local types in out-of-line member definitions of class templates, or
 out-of-line static data members of class templates) in the template part of
