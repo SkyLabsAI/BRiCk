@@ -1709,7 +1709,9 @@ public:
                     cprint.printExpr(print, *iinit, this->names);
                 } else if (capture.capturesVLAType()) {
                     guard::ctor _{print, "Eunsupported"};
-                    print.str("variable length array capture");
+                    print.str("variable length array capture") << fmt::nbsp;
+                    guard::ctor type{print, "Tunsupported"};
+                    print.str("variable length array capture type");
                 } else {
                     always_assert(false && "unreachable lambda capture type");
                 }
