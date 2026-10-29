@@ -912,8 +912,9 @@ static fmt::Formatter &printInitializer(const CXXConstructorDecl &ctor,
         guard::ctor _{print, "Einitializing_type"};
         if (auto fd = init.getAnyMember()) {
             cprint.printQualType(print, fd->getType(), loc::of(ctor));
-        } else if (auto bc = init.getBaseClass()) {
-            cprint.printType(print, *bc, loc::of(ctor));
+        } else if (auto tsi = init.getTypeSourceInfo()) {
+            // base class or, for a delegating initializer, the class itself
+            cprint.printType(print, *tsi->getType(), loc::of(ctor));
         }
         print.output() << fmt::nbsp;
         return cprint.printExpr(print, e);
