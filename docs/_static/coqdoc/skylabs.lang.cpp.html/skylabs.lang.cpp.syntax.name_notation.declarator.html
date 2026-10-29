@@ -1,0 +1,87 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.syntax.name_notation.declarator</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#"><span class="id" title="library">skylabs.lang.cpp.syntax.core</span></a>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;An&nbsp;omitted&nbsp;bound&nbsp;is&nbsp;allowed&nbsp;only&nbsp;in&nbsp;the&nbsp;outermost&nbsp;dimension&nbsp;of&nbsp;each<br/>
+&nbsp;&nbsp;&nbsp;array&nbsp;type.&nbsp;Pointer&nbsp;declarators&nbsp;can&nbsp;separate&nbsp;distinct&nbsp;array&nbsp;types.&nbsp;*)</span><br/>
+<span class="id" title="keyword">Fixpoint</span> <a id="is_incomplete_array" class="idref" href="#is_incomplete_array"><span class="id" title="definition">is_incomplete_array</span></a> (<a id="ty:1" class="idref" href="#ty:1"><span class="id" title="binder">ty</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.syntax.name_notation.declarator.html#ty:1"><span class="id" title="variable">ty</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tincomplete_array"><span class="id" title="constructor">Tincomplete_array</span></a> <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tqualified"><span class="id" title="constructor">Tqualified</span></a> <span class="id" title="var">_</span> <span class="id" title="var">t</span> =&gt; <a class="idref" href="skylabs.lang.cpp.syntax.name_notation.declarator.html#is_incomplete_array:2"><span class="id" title="definition">is_incomplete_array</span></a> <span class="id" title="var">t</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;Check&nbsp;the&nbsp;declarator&nbsp;spine.&nbsp;Function&nbsp;parameters&nbsp;are&nbsp;checked&nbsp;separately<br/>
+&nbsp;&nbsp;&nbsp;by&nbsp;the&nbsp;recursive&nbsp;parser/printer&nbsp;calls&nbsp;for&nbsp;each&nbsp;parameter&nbsp;type.&nbsp;*)</span><br/>
+<span class="id" title="keyword">Fixpoint</span> <a id="valid_array_bounds" class="idref" href="#valid_array_bounds"><span class="id" title="definition">valid_array_bounds</span></a> (<a id="ty:4" class="idref" href="#ty:4"><span class="id" title="binder">ty</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.syntax.name_notation.declarator.html#ty:4"><span class="id" title="variable">ty</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tarray"><span class="id" title="constructor">Tarray</span></a> <span class="id" title="var">t</span> <span class="id" title="var">_</span> | <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tincomplete_array"><span class="id" title="constructor">Tincomplete_array</span></a> <span class="id" title="var">t</span> | <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tvariable_array"><span class="id" title="constructor">Tvariable_array</span></a> <span class="id" title="var">t</span> <span class="id" title="var">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#negb"><span class="id" title="definition">negb</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.name_notation.declarator.html#is_incomplete_array"><span class="id" title="definition">is_incomplete_array</span></a> <span class="id" title="var">t</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#::bool_scope:x_'&amp;&amp;'_x"><span class="id" title="notation">&amp;&amp;</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.name_notation.declarator.html#valid_array_bounds:5"><span class="id" title="definition">valid_array_bounds</span></a> <span class="id" title="var">t</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tptr"><span class="id" title="constructor">Tptr</span></a> <span class="id" title="var">t</span> | <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tref"><span class="id" title="constructor">Tref</span></a> <span class="id" title="var">t</span> | <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Trv_ref"><span class="id" title="constructor">Trv_ref</span></a> <span class="id" title="var">t</span> | <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tqualified"><span class="id" title="constructor">Tqualified</span></a> <span class="id" title="var">_</span> <span class="id" title="var">t</span> | <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tmember_pointer"><span class="id" title="constructor">Tmember_pointer</span></a> <span class="id" title="var">_</span> <span class="id" title="var">t</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.syntax.name_notation.declarator.html#valid_array_bounds:5"><span class="id" title="definition">valid_array_bounds</span></a> <span class="id" title="var">t</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tfunction"><span class="id" title="constructor">Tfunction</span></a> <span class="id" title="var">ft</span> =&gt; <a class="idref" href="skylabs.lang.cpp.syntax.name_notation.declarator.html#valid_array_bounds:5"><span class="id" title="definition">valid_array_bounds</span></a> <span class="id" title="var">ft</span>.(<a class="idref" href="skylabs.lang.cpp.syntax.core.html#ft_return"><span class="id" title="projection">ft_return</span></a>)<br/>
+&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
