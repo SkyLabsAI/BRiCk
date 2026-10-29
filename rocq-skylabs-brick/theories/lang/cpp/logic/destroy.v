@@ -1012,7 +1012,7 @@ NOTE why not just destroy each object with [Q := emp]?
 Consider destroying 2 objects using destructors that return resources,
 i.e. suppose specifications such as [\post Q].
 
-[interp (par (delete ty a) (delete ty b)) Q] will reduce to
+[interp (par (delete None ty a) (delete None ty b)) Q] will reduce to
 
 <<
   Exists Q1 Q2,
@@ -1032,7 +1032,7 @@ emp] is not provable unless [Q] is affine.
   | FreeTemps.id => |={top}=> Q
   | FreeTemps.seq f g => interp tu f $ interp tu g Q
   | FreeTemps.par f g => |={top}=> Exists Qf Qg, interp tu f Qf ** interp tu g Qg ** (Qf -* Qg -* |={top}=> Q)
-  | FreeTemps.delete ty addr => destroy_val tu ty addr Q
+  | FreeTemps.delete _ ty addr => destroy_val tu ty addr Q
   | FreeTemps.delete_va va addr => |={top}=> addr |-> varargsR va ** Q
   end.
 
@@ -1070,7 +1070,7 @@ Section temps.
     | FreeTemps.id => Q
     | FreeTemps.seq f g => interp tu f (interp tu g Q)
     | FreeTemps.par f g => Exists Qf Qg, interp tu f Qf ** interp tu g Qg ** (Qf -* Qg -* Q)
-    | FreeTemps.delete ty addr => destroy_val tu ty addr Q
+    | FreeTemps.delete _ ty addr => destroy_val tu ty addr Q
     | FreeTemps.delete_va va addr => addr |-> varargsR va ** Q
     end
     |-- interp tu free Q.
@@ -1093,9 +1093,9 @@ Section temps.
     |-- interp tu (f |*| g) Q.
   Proof. by rewrite -interp_intro. Qed.
 
-  Lemma interp_intro_delete tu ty addr Q :
+  Lemma interp_intro_delete tu x ty addr Q :
     destroy_val tu ty addr Q
-    |-- interp tu (FreeTemps.delete ty addr) Q.
+    |-- interp tu (FreeTemps.delete x ty addr) Q.
   Proof. by rewrite -interp_intro. Qed.
 
   Lemma interp_intro_delete_va tu va (addr : ptr) Q :
@@ -1121,8 +1121,8 @@ Section temps.
     |-- |={top}=> Exists Qf Qg, interp tu f Qf ** interp tu g Qg ** (Qf -* Qg -* |={top}=> Q).
   Proof. apply interp_elim. Qed.
 
-  Lemma interp_elim_delete tu ty addr Q :
-    interp tu (FreeTemps.delete ty addr) Q
+  Lemma interp_elim_delete tu x ty addr Q :
+    interp tu (FreeTemps.delete x ty addr) Q
     |-- destroy_val tu ty addr Q.
   Proof. apply interp_elim. Qed.
 

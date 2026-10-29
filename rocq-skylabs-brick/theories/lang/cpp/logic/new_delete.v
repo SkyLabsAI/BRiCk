@@ -724,7 +724,7 @@ Module Type Expr__newdelete.
           let ty := Talign_val_t in
           Exists al, [| align_of obj_type = Some al |] **
           Forall pp : ptr, pp |-> primR ty (cQp.m 1) (Vn al) -*
-          Q (pp :: nil) (FreeTemps.delete ty pp)
+          Q (pp :: nil) (FreeTemps.delete None ty pp)
         else Q nil FreeTemps.id
     in
     letI* args , free := fun (Q : list ptr -> FreeTemps.t -> mpred) =>
@@ -732,7 +732,7 @@ Module Type Expr__newdelete.
       if del_op.2.(delete_operator.size_arg) then
          let ty := Tsize_t in
          Forall pp : ptr, pp |-> primR ty (cQp.m 1) (Vn allocation_size) -*
-         Q (pp :: args) (free >*> FreeTemps.delete ty pp)
+         Q (pp :: args) (free >*> FreeTemps.delete None ty pp)
       else Q args free
     in
     letI* args , free := fun (Q : list ptr -> FreeTemps.t -> mpred) =>
@@ -751,12 +751,12 @@ Module Type Expr__newdelete.
         Forall pp : ptr, pp |-> primR ty (cQp.m 1) (Vptr p) -*
         Forall dd : ptr, dd |-> anyR "std::destroying_delete_t" (cQp.m 1) -*
         Q (pp :: dd :: args)
-          (free >*> FreeTemps.delete Tdestroying_delete_t dd >*>
-           FreeTemps.delete ty pp)
+          (free >*> FreeTemps.delete None Tdestroying_delete_t dd >*>
+           FreeTemps.delete None ty pp)
       else
         let ty := "void*"%cpp_type in
         Forall pp : ptr, pp |-> primR ty (cQp.m 1) (Vptr p) -*
-        Q (pp :: args) (free >*> FreeTemps.delete ty pp)
+        Q (pp :: args) (free >*> FreeTemps.delete None ty pp)
     in
     |> letI* p :=
       let del_ty := delete_operator.type_for del_op.2 in
@@ -892,7 +892,7 @@ Module Type Expr__newdelete.
            K ** Q
            *)
         else
-          letI* := interp (genv_tu σ) (FreeTemps.delete alloc_type obj_ptr) in
+          letI* := interp (genv_tu σ) (FreeTemps.delete None alloc_type obj_ptr) in
           (storage_ptr .[ Tuchar ! -overhead ] |-> blockR (overhead + sz) (cQp.m 1) -*
            (* the <<operator delete>> is invoked with the beginning of the storage pointer *)
            letI* := wp_invoke_delete obj_type del_op (overhead + sz) (storage_ptr .[ Tbyte ! -overhead ]) in

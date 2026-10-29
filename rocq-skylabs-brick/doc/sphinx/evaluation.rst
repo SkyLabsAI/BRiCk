@@ -34,7 +34,8 @@ In |project| we capture the stack of objects to be destroyed using the type |lin
    :dedent:
 
 Here |link:skylabs.lang.cpp.logic.wp#FreeTemps.id| represents the identity, characterizing that nothing needs to be destroyed.
-|link:skylabs.lang.cpp.logic.wp#FreeTemps.delete| `ty p` represents that the value at pointer `p` (which should have type `ty`) needs to be destroyed.
+|link:skylabs.lang.cpp.logic.wp#FreeTemps.delete| `x ty p` represents that the value at pointer `p` (which should have type `ty`) needs to be destroyed.
+When `x` is `Some y`, that value is the local variable `y`: the name lets its destruction be skipped when the variable becomes the returned object through named return value optimization (see |link:skylabs.lang.cpp.logic.stmt#Stmt.Kfree| and |link:skylabs.lang.cpp.logic.stmt#Stmt.wp_return_nrvo|).
 Note that to delete the value, the C++ abstract machine runs the destructor and reclaims the underlying memory.
 Virtual dispatch is *not* used when invoking the destructor.
 |link:skylabs.lang.cpp.logic.wp#FreeTemps.delete_va| `va p` represents that the variadic arguments `va` (stored at pointer `p`) need to be reclaimed.

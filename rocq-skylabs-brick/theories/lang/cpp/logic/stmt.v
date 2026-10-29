@@ -54,14 +54,35 @@ Module Type Stmt.
       by iApply "HQ".
     Qed.
 
-    Definition Kfree (free : FreeTemp) : Kpred -> Kpred :=
-      Kat_exit (interp free).
+    (** [Kfree free Q] destroys [free], the variables of one declaration, on
+        every exit from their scope and then continues as [Q]. The exception
+        is a variable returned with named return value optimization
+        ([ReturnNRVO x p], see [wp_return_nrvo]): it *is* the returned
+        object, so the destruction of the innermost variable named [x] is
+        skipped and the return continues as an ordinary [ReturnVal p]. A
+        declaration of other variables, made after [x] or in a nested block,
+        destroys them as usual and propagates [ReturnNRVO] outward to the
+        declaration of [x]. *)
+    Definition Kfree_inner (free : FreeTemps) (Q : Kpred) (rt : ReturnType) : mpred :=
+      match rt with
+      | ReturnNRVO x p =>
+          match FreeTemps.remove_var x free with
+          | Some free => interp free (Q (ReturnVal p))
+          | None => interp free (Q rt)
+          end
+      | _ => interp free (Q rt)
+      end.
+    #[global] Arguments Kfree_inner _ _ !rt /.
+
+    Definition Kfree (free : FreeTemps) (Q : Kpred) : Kpred :=
+      KP $ Kfree_inner free Q.
+    #[global] Hint Opaque Kfree : typeclass_instances.
 
     Lemma Kfree_frame free Q Q' rt :
-      Q rt -* Q' rt |-- Kfree free Q rt -* Kfree free Q' rt.
+      (Forall rt, Q rt -* Q' rt) |-- Kfree free Q rt -* Kfree free Q' rt.
     Proof.
-      iIntros "X". iApply Kat_exit_frame => //.
-      iIntros (??) "H"; by iApply interp_frame.
+      iIntros "X". destruct rt; cbn; try case_match.
+      all: iApply interp_frame; iApply "X".
     Qed.
 
     (** * Attribute Evaluation *)
@@ -88,7 +109,7 @@ Module Type Stmt.
       : mpred :=
       Forall (addr : ptr),
         let finish frees :=
-            interp frees (k (Rbind x addr ρ) (FreeTemps.delete ty addr))
+            interp frees (k (Rbind x addr ρ) (FreeTemps.delete (Some x) ty addr))
         in
         match init with
         | Some init =>
@@ -120,7 +141,7 @@ Module Type Stmt.
       match ds with
       | nil => k ρ free
       | Bvar x ty init :: ds =>
-          Forall p, wp_initialize ρ_init ty p init (fun free' => wp_destructure ρ_init ds (Rbind x p ρ) k (FreeTemps.delete ty p >*> free' >*> free)%free)
+          Forall p, wp_initialize ρ_init ty p init (fun free' => wp_destructure ρ_init ds (Rbind x p ρ) k (FreeTemps.delete None ty p >*> free' >*> free)%free)
       | Bbind x _ init :: ds =>
           wp_glval tu ρ_init init (fun p free' => wp_destructure ρ_init ds (Rbind x p ρ) k (free' >*> free)%free)
       end.
@@ -180,7 +201,7 @@ Module Type Stmt.
            (* NOTE: [free] is used to deallocate temporaries generated in the execution of [init].
               It should not matter if it is destroyed immediately or after the destructuring occurs.
             *)
-           wp_destructure (Rbind x common_p ρ) ds ρ (fun ρ f => interp free $ k ρ f) (FreeTemps.delete common_type common_p))
+           wp_destructure (Rbind x common_p ρ) ds ρ (fun ρ f => interp free $ k ρ f) (FreeTemps.delete None common_type common_p))
       | Dinit ts nm ty init =>
         let k := k ρ in (* scope does not change *)
         let do_init k :=
@@ -376,8 +397,9 @@ Module Type Stmt.
       iIntros "{W} H". iApply wp_decls_shift. iMod "H"; iModIntro.
       iApply (wp_decls_frame with "[] H"); iIntros (??) ">H !> !> !> !>".
       iApply IH. iMod "H"; iModIntro.
-      iApply (wp_block_frame with "[] H"); iIntros (rt) "H !> /=".
-      rewrite monPred_at_fupd. iApply (interp_shift with "H").
+      iApply (wp_block_frame with "[] H"); iIntros (rt) "H !>".
+      destruct rt; cbn; try case_match.
+      all: rewrite monPred_at_fupd; iApply (interp_shift with "H").
     Qed.
 
     Lemma fupd_wp_block ρ ds Q :
@@ -662,6 +684,33 @@ Module Type Stmt.
           (* NOTE unsound in the presence of exceptions *)
           Forall v, Q (ReturnVal v) -* Q' (ReturnVal v)
         end |-- wp ρ (Sreturn rv) Q -* wp ρ (Sreturn rv) Q'.
+
+    (** <<return x;>> where the copy or move from the automatic variable [x]
+        may be elided (named return value optimization,
+        <https://eel.is/c++draft/class.copy.elision#1.1>): an implementation
+        may construct [x] directly in the returned object, and then neither
+        the constructor in [e] nor the destructor of [x] ever runs. The
+        standard permits but does not require this (clang elides whenever [x]
+        is the only candidate, at every optimization level), so the semantics
+        is non-deterministic and a proof must cover both executions:
+        - the copy or move runs, exactly as in [wp_return];
+        - the copy is elided: [x] is the returned object, and [Kfree] skips
+          its destruction at scope exit (see [ReturnNRVO]).
+        The elisions that C++17 guarantees
+        (<https://eel.is/c++draft/class.copy.elision#1.2>) never appear as
+        constructor calls in the AST, so they need no rule. *)
+    Axiom wp_return_nrvo : forall ρ x e (Q : Kpred),
+          (let rty := get_return_type ρ in
+           Forall p, wp_initialize ρ rty p e (fun frees =>
+                                         interp frees (|> Q (ReturnVal p))))
+          //\\ (|> Q (ReturnNRVO x (_local ρ x)))
+       |-- wp ρ (Sreturn_nrvo x e) Q.
+
+    Axiom wp_return_nrvo_frame : forall ρ x e (Q Q' : Kpred),
+          (* NOTE unsound in the presence of exceptions *)
+          (Forall v, Q (ReturnVal v) -* Q' (ReturnVal v))
+          //\\ (Forall p, Q (ReturnNRVO x p) -* Q' (ReturnNRVO x p))
+        |-- wp ρ (Sreturn_nrvo x e) Q -* wp ρ (Sreturn_nrvo x e) Q'.
 
     (** * <<break>> *)
 
