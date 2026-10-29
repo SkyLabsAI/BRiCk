@@ -363,20 +363,27 @@ static fmt::Formatter &printAnonymousFieldName(CoqPrinter &print,
                                                ClangPrinter &cprint) {
     if (auto rd = dyn_cast<CXXRecordDecl>(field.getParent())) {
         if (rd->isLambda()) {
-            guard::ctor _(print, "field_name.CaptureVar");
             llvm::DenseMap<const ValueDecl *, FieldDecl *> captures;
             FieldDecl *this_capture;
             rd->getCaptureFields(captures, this_capture);
             if (this_capture == &field) {
+                guard::ctor _(print, "field_name.CaptureVar");
                 return print.str("this");
             } else {
                 for (auto &i : captures) {
                     if (i.second == &field) {
+                        guard::ctor _(print, "field_name.CaptureVar");
                         return cprint.printCaptureVarName(print, *rd,
                                                           *i.first);
                     }
                 }
             }
+            // Clang also stores captured VLA bounds in anonymous fields.
+            // They have no captured variable; retain a distinct field name.
+            unsupported(cprint, loc::of(field),
+                        "anonymous lambda capture field");
+            guard::ctor _(print, "field_name.Anon", false);
+            return print.output() << field.getFieldIndex();
         }
     }
     if (auto rec = getTypeAsRecord(field)) {
