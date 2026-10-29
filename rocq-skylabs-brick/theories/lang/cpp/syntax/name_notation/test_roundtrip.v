@@ -29,4 +29,54 @@ Module Type TEST.
 
   Example TEST_parse_print : List.concat ((fun '(b,a) => parse_print a b) <$> (canonical ++ parse_only)) = [].
   Proof. vm_compute. reflexivity. Qed.
+
+  Example TEST_rejected : (parse_name <$> rejected) = repeat None (length rejected).
+  Proof. vm_compute. reflexivity. Qed.
+
+  (* The type notation is implemented by this parser, so use constructors here
+     to check array dimensions and binding independently of that notation. *)
+  Example TEST_array_type : parse_type "int[3][4]"%pstring = Some (Tarray (Tarray Tint 4) 3).
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example TEST_array_type_print : print_type (Tarray (Tarray Tint 4) 3) = Some "int[3][4]"%pstring.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example TEST_uint_array_type :
+    parse_type "unsigned int[5][10]"%pstring = Some (Tarray (Tarray Tuint 10) 5).
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example TEST_uint_array_type_print :
+    print_type (Tarray (Tarray Tuint 10) 5) = Some "unsigned int[5][10]"%pstring.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example TEST_uint_array_type_print_transposed :
+    print_type (Tarray (Tarray Tuint 5) 10) = Some "unsigned int[10][5]"%pstring.
+  Proof. vm_compute. reflexivity. Qed.
+
+  (* The outer array contains two zero-length arrays, not the converse. *)
+  Example TEST_zero_stride_array_type :
+    parse_type "unsigned char[2][0]"%pstring = Some (Tarray (Tarray Tuchar 0) 2).
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example TEST_zero_stride_array_type_print :
+    print_type (Tarray (Tarray Tuchar 0) 2) = Some "unsigned char[2][0]"%pstring.
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example TEST_array_types_parse :
+    (parse_type <$> (fst <$> array_types)) = (Some <$> (snd <$> array_types)).
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example TEST_array_types_print :
+    (print_type <$> (snd <$> array_types)) = (Some <$> (fst <$> array_types)).
+  Proof. vm_compute. reflexivity. Qed.
+
+  Example TEST_array_types_rejected :
+    (parse_type <$> rejected_array_types) = repeat None (length rejected_array_types).
+  Proof. vm_compute. reflexivity. Qed.
+
+  (* Do not emit invalid inner omitted bounds, even through qualifiers. *)
+  Example TEST_inner_incomplete_array_print_rejected :
+    print_type (Tincomplete_array (Tincomplete_array (Tarray Tint 4))) = None /\
+    print_type (Tarray (Tconst (Tincomplete_array Tint)) 2) = None.
+  Proof. vm_compute. split; reflexivity. Qed.
 End TEST.

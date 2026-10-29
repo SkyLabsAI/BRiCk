@@ -24,7 +24,7 @@ Section array_regressions.
   (** Two elements, each a zero-length byte array. *)
   Lemma zero_array_source_typed aid :
     aid <> null_alloc_id -> blocks_own (alloc_ptr aid 8) 0 1 ⊢
-    type_ptr "unsigned char[0][2]"%cpp_type (alloc_ptr aid 8).
+    type_ptr "unsigned char[2][0]"%cpp_type (alloc_ptr aid 8).
   Proof.
     intros Haid. iIntros "#B". rewrite /type_ptr.
     iSplit.
@@ -46,7 +46,7 @@ Section array_regressions.
       iSplit; first (iPureIntro; exists aid; split; done).
       iPureIntro.
       change (raw_path_valid pred.Relaxed (alloc_ptr_ aid 8) 0 1
-        ([] ++ [(o_sub_ "unsigned char[0][2]"%cpp_type 1,0%Z)])).
+        ([] ++ [(o_sub_ "unsigned char[2][0]"%cpp_type 1,0%Z)])).
       apply (raw_path_valid_snoc _ _ _ _ _ _ 0%Z 8%N); try done.
       left; lia.
   Qed.

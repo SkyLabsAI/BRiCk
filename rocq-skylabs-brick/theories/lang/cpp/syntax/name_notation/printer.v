@@ -10,6 +10,7 @@ Require Import skylabs.upoly.base.
 Require Import skylabs.upoly.upoly.
 Require Import skylabs.lang.cpp.syntax.core.
 Require Import skylabs.lang.cpp.syntax.types.
+Require Import skylabs.lang.cpp.syntax.name_notation.declarator.
 Require Import skylabs.lang.cpp.syntax.pretty.
 
 (* UPSTREAM? *)
@@ -148,14 +149,14 @@ Section with_lang.
   #[warnings="-non-full-mutual"]
   Fixpoint printN (inst : PrimString.string) (nm : name) : option PrimString.string :=
     match nm with
-    | Nglobal an => printAN (printT true) None inst an
-    | Ndependent an => (fun b => "typename " ++ b) <$> printT false an
+    | Nglobal an => printAN (printTD true "" false) None inst an
+    | Ndependent an => (fun b => "typename " ++ b) <$> printTD false "" false an
     | Nscoped base n =>
-        (fun b n => b ++ "::" ++ n) <$> printN "" base <*> printAN (printT true) (topName base) inst n
+        (fun b n => b ++ "::" ++ n) <$> printN "" base <*> printAN (printTD true "" false) (topName base) inst n
     | Ninst base i =>
         let fix printTA ta :=
           match ta with
-          | Atype t => printT false t
+          | Atype t => printTD false "" false t
           | Avalue e => printE e
           | Apack ts =>
               ((fun tas => "..." ++ (angles $ sepBy ", " tas)) <$> traverse printTA ts)
@@ -171,7 +172,53 @@ Section with_lang.
     | Nunsupported note => mfail
     end
 
-  with printT (is_arg : bool) (ty : type) : option PrimString.string :=
+  (* Carry the abstract declarator towards the base type. A pointer/reference
+     declarator needs parentheses when an array or function suffix follows. *)
+  with printTD (is_arg : bool) (decl : PrimString.string) (is_prefix : bool)
+    (ty : type) : option PrimString.string :=
+    if negb (valid_array_bounds ty) then mfail else
+    let suffix := if is_prefix then parens decl else decl in
+    match ty with
+    | Tptr t => printTD false ("*" ++ decl) true t
+    | Tref t =>
+        let space := match t with Tref _ | Trv_ref _ => " " | _ => "" end in
+        printTD false (space ++ "&" ++ decl) true t
+    | Trv_ref t =>
+        let space := match t with Tref _ | Trv_ref _ => " " | _ => "" end in
+        printTD false (space ++ "&&" ++ decl) true t
+    | Tmember_pointer cls t =>
+        printTD false "" false cls ≫= fun c =>
+        printTD false (" " ++ c ++ "::*" ++ decl) true t
+    | Tarray t n => if is_arg then mfail else
+        printTD false (suffix ++ "[" ++ showN n ++ "]") false t
+    | Tincomplete_array t => if is_arg then mfail else
+        printTD false (suffix ++ "[]") false t
+    | Tvariable_array t e => if is_arg then mfail else
+        printE e ≫= fun n => printTD false (suffix ++ "[" ++ n ++ "]") false t
+    | Tfunction ft =>
+        let add_dots (ls : list PrimString.string) :=
+          match ft.(ft_arity) with
+          | Ar_Variadic => (ls ++ ["..."])%list
+          | _ => ls
+          end in
+        if ft.(ft_cc) is CC_C then
+          traverse (T:=eta list) (F:=eta option) (printTD true "" false) ft.(ft_params) ≫= fun tas =>
+          let sep := if is_prefix then "," else ", " in
+          printTD true (suffix ++ parens (sepBy sep $ add_dots tas)) false ft.(ft_return)
+        else mfail
+    | Tqualified QM _ => mfail
+    (* Nested qualification nodes cannot round-trip through the parser. *)
+    | Tqualified _ (Tqualified _ _) => mfail
+    | Tqualified cv t =>
+        if is_arg then mfail else
+        let q_ls := ((if q_const cv then ["const"] else []) ++
+                     (if q_volatile cv then ["volatile"] else []))%list in
+        match t with
+        | Tptr _ | Tref _ | Trv_ref _ =>
+            printTD false (" " ++ sepBy " " q_ls ++ decl) is_prefix t
+        | _ => (fun t => sepBy " " (q_ls ++ [t])%list) <$> printTD false decl is_prefix t
+        end
+    | _ => (fun base => base ++ decl) <$>
     match ty with
     | Tint => mret "int"
     | Tuint => mret "unsigned int"
@@ -197,65 +244,16 @@ Section with_lang.
     | Tlongdouble => mret "long double"
     | Tbool => mret "bool"
     | Tnullptr => mret "nullptr_t"
-    | Tptr (Tfunction (@FunctionType _ cc ar ret args)) =>
-        if cc is CC_C then
-          let add_dots (ls : list PrimString.string) :=
-            match ar with
-            | Ar_Variadic => (ls ++ ["..."])%list
-            | _ => ls
-            end
-          in
-          (fun ret args => ret ++ "(*)(" ++ sepBy "," (add_dots args) ++ ")")
-            <$> printT true ret <*> traverse (printT true) args
-        else mfail
-    | Tptr t => postfix "*" <$> printT false t
-    | Tref t =>
-        match t with
-        | Tref _ | Trv_ref _ => postfix " &" <$> printT false t
-        | _ => postfix "&" <$> printT false t
-        end
-    | Trv_ref t =>
-        match t with
-        | Tref _ | Trv_ref _ => postfix " &&" <$> printT false t
-        | _ => postfix "&&" <$> printT false t
-        end
-    | Tmember_pointer cls t => (fun t c => t ++ " " ++ c ++ "::*") <$> printT false t <*> printT false cls
-    | Tqualified QM _ => mfail
-    | Tqualified _q (Tqualified _ _) => mfail
-       (* ^^ we reject sequences of [Tqualified] because it is not invertible *)
-    | Tqualified cv t =>
-        if is_arg then mfail
-        else
-          let q_ls := ((if q_const cv then ["const"] else []) ++
-                      (if q_volatile cv then ["volatile"] else []))%list in
-          match t with
-          | Tptr _ | Tref _ | Trv_ref _ => fun t => sepBy " " $ t :: q_ls
-          | _ => fun t => sepBy " " $ q_ls ++ [t]
-          end%list <$> printT is_arg t
     | Tvoid => mret "void"
-    | Tarray t n => if is_arg then mfail else (fun t => t ++ "[" ++ showN n ++ "]") <$> printT false t
-    | Tincomplete_array t => if is_arg then mfail else postfix "[]" <$> printT false t
-    | Tvariable_array t e => if is_arg then mfail else (fun t n => t ++ "[" ++ n ++ "]") <$> printT false t <*> printE e
     | Tdecltype e => (fun e => "decltype((" ++ e ++ "))") <$> printE e
     | Texprtype e => (fun e => "decltype(" ++ e ++ ")") <$> printE e
     | Tnamed nm => printN "" nm
     | Tenum nm => prefix "enum " <$> printN "" nm
-    | Tfunction ft =>
-        let add_dots (ls : list PrimString.string) :=
-          match ft.(ft_arity) with
-          | Ar_Variadic => (ls ++ ["..."])%list
-          | _ => ls
-          end
-        in
-        if ft.(ft_cc) is CC_C then
-          (fun t tas => t ++ parens (sepBy ", " $ add_dots tas))
-            <$> printT true ft.(ft_return)
-            <*> traverse (T:=eta list) (F:=eta option) (printT true) ft.(ft_params)
-        else mfail
     | Tarch _ note => mfail
     | Tunsupported note => mfail
     | Tparam nm => mret $ "$" ++ nm
     | _ => mfail
+    end
     end
 
   with printE (e : Expr) : option PrimString.string :=
@@ -281,6 +279,9 @@ Section with_lang.
     end.
 
 End with_lang.
+
+Definition printT (is_arg : bool) (ty : type) : option PrimString.string :=
+  printTD is_arg ""%pstring false ty.
 
 Definition print_name (input : name) : option PrimString.string :=
   printN "" input.
@@ -336,7 +337,7 @@ Module Type TESTS.
   Succeed Example _0 : TEST "Msg::operator new[]()" (Nscoped Msg (Nop function_qualifiers.N (OONew true) [])) := eq_refl.
   Succeed Example _0 : TEST "Msg::operator delete[]()" (Nscoped Msg (Nop function_qualifiers.N (OODelete true) [])) := eq_refl.
   Succeed Example _0 : TEST "Msg::operator int()" (Nscoped Msg (Nop_conv function_qualifiers.N Tint)) := eq_refl.
-  Succeed Example _0 : TEST "foo_client(int[2]&, const int*, bool*, int**, char*)" (Nglobal (Nfunction function_qualifiers.N "foo_client" [Tref (Tarray Tint 2); Tptr (Tconst Tint); Tptr Tbool; Tptr (Tptr Tint); Tptr Tchar])) := eq_refl.
+  Succeed Example _0 : TEST "foo_client(int(&)[2], const int*, bool*, int**, char*)" (Nglobal (Nfunction function_qualifiers.N "foo_client" [Tref (Tarray Tint 2); Tptr (Tconst Tint); Tptr Tbool; Tptr (Tptr Tint); Tptr Tchar])) := eq_refl.
   Succeed Example _0 : TEST "DlistInternal::iterator::operator!=(const DlistInternal::iterator&) const"
                  (Nscoped (Nscoped (Nglobal (Nid "DlistInternal")) (Nid "iterator"))
                     (Nop function_qualifiers.Nc OOExclaimEqual [Tref (Tqualified QC (Tnamed (Nscoped (Nglobal (Nid "DlistInternal")) (Nid "iterator"))))])) := eq_refl.
