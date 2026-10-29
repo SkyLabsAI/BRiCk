@@ -106,3 +106,25 @@ llvm_config(cpp2v USE_SHARED ${CPP2V_LLVM_COMPONENTS})
 
 # Link against LLVM/Clang and tocoq libraries
 target_link_libraries(cpp2v PUBLIC ${llvm_libs} clang-cpp tocoq)
+
+# Direct printer tests exercise defensive paths unreachable from valid C++.
+# The harness currently supports Clang 22 only and is never installed.
+option(BUILD_PRINTER_TESTS "Build direct printer regression tests" OFF)
+if(BUILD_PRINTER_TESTS)
+  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/printer-tests")
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/printer-tests/llvm-major.txt"
+    "${LLVM_VERSION_MAJOR}")
+  if(LLVM_VERSION_MAJOR EQUAL 22)
+    add_llvm_executable(cpp2v-fallback-tests
+      PARTIAL_SOURCES_INTENDED
+      src/PrinterFallbackTests.cpp
+    )
+    set_target_properties(cpp2v-fallback-tests PROPERTIES
+      RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/printer-tests")
+    target_compile_features(cpp2v-fallback-tests PRIVATE cxx_std_17)
+    target_compile_options(cpp2v-fallback-tests PRIVATE -fno-rtti)
+    llvm_config(cpp2v-fallback-tests USE_SHARED ${CPP2V_LLVM_COMPONENTS})
+    target_link_libraries(cpp2v-fallback-tests PRIVATE ${llvm_libs} clang-cpp tocoq)
+    add_dependencies(cpp2v cpp2v-fallback-tests)
+  endif()
+endif()
