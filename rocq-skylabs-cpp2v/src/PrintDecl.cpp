@@ -363,20 +363,27 @@ static fmt::Formatter &printAnonymousFieldName(CoqPrinter &print,
                                                ClangPrinter &cprint) {
     if (auto rd = dyn_cast<CXXRecordDecl>(field.getParent())) {
         if (rd->isLambda()) {
-            guard::ctor _(print, "field_name.CaptureVar");
             llvm::DenseMap<const ValueDecl *, FieldDecl *> captures;
             FieldDecl *this_capture;
             rd->getCaptureFields(captures, this_capture);
             if (this_capture == &field) {
+                guard::ctor _(print, "field_name.CaptureVar");
                 return print.str("this");
             } else {
                 for (auto &i : captures) {
                     if (i.second == &field) {
+                        guard::ctor _(print, "field_name.CaptureVar");
                         return cprint.printCaptureVarName(print, *rd,
                                                           *i.first);
                     }
                 }
             }
+            // Clang also stores captured VLA bounds in anonymous fields.
+            // They have no captured variable; retain a distinct field name.
+            unsupported(cprint, loc::of(field),
+                        "anonymous lambda capture field");
+            guard::ctor _(print, "field_name.Anon", false);
+            return print.output() << field.getFieldIndex();
         }
     }
     if (auto rec = getTypeAsRecord(field)) {
@@ -910,13 +917,17 @@ static fmt::Formatter &printInitializer(const CXXConstructorDecl &ctor,
     printInitPath(ctor, init, print, cprint) << fmt::nbsp;
     if (print.templates()) {
         guard::ctor _{print, "Einitializing_type"};
-        if (auto fd = init.getAnyMember()) {
-            cprint.printQualType(print, fd->getType(), loc::of(ctor));
-        } else if (auto tsi = init.getTypeSourceInfo()) {
-            // base class or, for a delegating initializer, the class itself
-            cprint.printType(print, *tsi->getType(), loc::of(ctor));
-        }
-        print.output() << fmt::nbsp;
+        auto print_type = [&]() -> fmt::Formatter & {
+            if (auto fd = init.getAnyMember())
+                return cprint.printQualType(print, fd->getType(), loc::of(ctor));
+            if (auto tsi = init.getTypeSourceInfo())
+                // Base class or, for a delegating initializer, the class itself.
+                return cprint.printType(print, *tsi->getType(), loc::of(ctor));
+            guard::ctor _{print, "Tunsupported"};
+            return print.str(
+                "initializer without member or type source information");
+        };
+        print_type() << fmt::nbsp;
         return cprint.printExpr(print, e);
     } else {
         return cprint.printExpr(print, e);

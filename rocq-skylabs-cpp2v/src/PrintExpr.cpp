@@ -216,6 +216,23 @@ static bool castLeavesVirtualBaseClass(const CastExpr &ce) {
     return false;
 }
 
+fmt::Formatter &ClangPrinter::printDeclType(CoqPrinter &print,
+                                          const Expr *expr) {
+    auto ty = expr->getType();
+    if (ty.isNull())
+        return print.output() << "Tauto";
+    if (expr->isLValue()) {
+        guard::ctor _(print, "Tref", false);
+        printQualType(print, ty, loc::of(expr));
+    } else if (expr->isXValue()) {
+        guard::ctor _(print, "Trv_ref", false);
+        printQualType(print, ty, loc::of(expr));
+    } else {
+        printQualType(print, ty, loc::of(expr));
+    }
+    return print.output();
+}
+
 /**
  * This class prints an expression (of Coq type [Expr] or [MExpr])
  */
@@ -226,25 +243,9 @@ private:
     const ASTContext &ctxt;
     OpaqueNames &names;
 
-    fmt::Formatter &printDeclType(const Expr *expr) {
-        auto ty = expr->getType();
-        if (ty.isNull())
-            return print.output() << "Tauto";
-        if (expr->isLValue()) {
-            guard::ctor _(print, "Tref", false);
-            cprint.printQualType(print, ty, loc::of(expr));
-        } else if (expr->isXValue()) {
-            guard::ctor _(print, "Trv_ref", false);
-            cprint.printQualType(print, ty, loc::of(expr));
-        } else {
-            cprint.printQualType(print, ty, loc::of(expr));
-        }
-        return print.output();
-    }
-
     fmt::Formatter &done(const Expr *expr, Done want = Done::T) {
         if (want == Done::DT) {
-            printDeclType(expr);
+            cprint.printDeclType(print, expr);
         } else {
             if (want & Done::T) {
                 if (expr->getType().isNull())
@@ -659,7 +660,8 @@ public:
                 cprint.printUnqualifiedName(print, *param);
             } else {
                 cprint.printTemplateValueParamRef(
-                    print, param->getDepth(), param->getIndex(), loc::of(expr));
+                    print, param->getDepth(), param->getIndex(), expr,
+                    loc::of(expr));
 #if 0
 				llvm::errs() << "\n";
 				expr->dump();
@@ -764,7 +766,7 @@ public:
     void printCast(const CastExpr *ce) {
         auto with_type = [&](const char *c) {
             guard::ctor _(print, c, false);
-            printDeclType(ce);
+            cprint.printDeclType(print, ce);
         };
         auto without_type = [&](const char *c) { print.output() << c; };
 
@@ -1709,7 +1711,9 @@ public:
                     cprint.printExpr(print, *iinit, this->names);
                 } else if (capture.capturesVLAType()) {
                     guard::ctor _{print, "Eunsupported"};
-                    print.str("variable length array capture");
+                    print.str("variable length array capture") << fmt::nbsp;
+                    guard::ctor type{print, "Tunsupported"};
+                    print.str("variable length array capture type");
                 } else {
                     always_assert(false && "unreachable lambda capture type");
                 }

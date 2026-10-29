@@ -266,9 +266,13 @@ public:
     fmt::Formatter &printTemplateTypeParamRef(CoqPrinter &, unsigned depth,
                                               unsigned index, loc::loc);
     fmt::Formatter &printTemplateValueParamRef(CoqPrinter &, unsigned depth,
-                                               unsigned index, loc::loc);
+                                               unsigned index,
+                                               const clang::Expr *, loc::loc);
 
     // Types
+
+    // Expression type with its value category represented by reference types.
+    fmt::Formatter &printDeclType(CoqPrinter &, const clang::Expr *);
 
     fmt::Formatter &printQualType(CoqPrinter &print, const clang::QualType &qt,
                                   loc::loc loc);
