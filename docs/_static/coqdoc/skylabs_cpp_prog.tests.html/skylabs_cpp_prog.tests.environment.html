@@ -1,0 +1,97 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_cpp_prog.tests.environment</h1>
+
+<div class="code">
+<span class="comment">(*&nbsp;The&nbsp;test&nbsp;deliberately&nbsp;omits&nbsp;-test-mode&nbsp;so&nbsp;failures&nbsp;containing&nbsp;physical<br/>
+&nbsp;&nbsp;&nbsp;environment&nbsp;configuration&nbsp;paths&nbsp;do&nbsp;not&nbsp;make&nbsp;the&nbsp;output&nbsp;checkout-dependent.&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">skylabs_cpp_prog.tests</span> <span class="id" title="var">Extra</span> <span class="id" title="var">Dependency</span> "native_environment" <span class="id" title="keyword">as</span> <span class="id" title="var">native_environment</span>.<br/>
+<span class="id" title="keyword">From</span> <span class="id" title="var">skylabs_cpp_prog.tests</span> <span class="id" title="var">Extra</span> <span class="id" title="var">Dependency</span> "invalid_environment" <span class="id" title="keyword">as</span> <span class="id" title="var">invalid_environment</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;The&nbsp;default&nbsp;invocation&nbsp;is&nbsp;unchanged.&nbsp;*)</span><br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">native_source</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{ <span class="id" title="var">void</span> <span class="id" title="var">native_test</span>() {} }}.<br/>
+<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">native_source</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">=</span></a> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">native_source</span></a>. <span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;Configured&nbsp;native&nbsp;mode&nbsp;uses&nbsp;the&nbsp;shared&nbsp;adapter,&nbsp;with&nbsp;the&nbsp;normal&nbsp;frontend<br/>
+&nbsp;&nbsp;&nbsp;attributes&nbsp;and&nbsp;flags.&nbsp;No&nbsp;Docker&nbsp;daemon&nbsp;or&nbsp;installed-tool&nbsp;symlink&nbsp;is&nbsp;needed.&nbsp;*)</span><br/>
+#[<span class="id" title="var">environment</span>="native_environment", <span class="id" title="var">elaborate</span>, <span class="id" title="var">check_types</span>]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">configured_source</span> <span class="id" title="var">flags</span> "-std=c++20" <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> <span class="id" title="var">S</span> { <span class="id" title="var">int</span> <span class="id" title="var">value</span>; };<br/>
+&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">configured_test</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">S</span>{42}.<span class="id" title="var">value</span>; }<br/>
+}}.<br/>
+<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">configured_source</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">=</span></a> <a id="Unnamed_thm0" class="idref" href="#Unnamed_thm0"><span class="id" title="definition">configured_source</span></a>. <span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;Unknown&nbsp;dependency&nbsp;names&nbsp;and&nbsp;invalid&nbsp;runner&nbsp;configurations&nbsp;must&nbsp;not&nbsp;silently<br/>
+&nbsp;&nbsp;&nbsp;switch&nbsp;back&nbsp;to&nbsp;the&nbsp;native&nbsp;translator.&nbsp;*)</span><br/>
+<span class="id" title="var">Fail</span> #[<span class="id" title="var">environment</span>="not_declared"]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">missing_source</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{ <span class="id" title="var">void</span> <span class="id" title="var">test</span>() {} }}.<br/>
+
+<br/>
+<span class="id" title="var">Fail</span> #[<span class="id" title="var">environment</span>="invalid_environment"]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">invalid_source</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{ <span class="id" title="var">void</span> <span class="id" title="var">test</span>() {} }}.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;The&nbsp;attribute&nbsp;is&nbsp;meaningful&nbsp;only&nbsp;on&nbsp;quotations,&nbsp;not&nbsp;pretranslated&nbsp;ASTs.&nbsp;*)</span><br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">static_control</span> <span class="id" title="var">defns</span> <span class="id" title="definition">skylabs.lang.cpp.parser.translation_unit._skip</span>.<br/>
+<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">static_control</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">=</span></a> <a id="Unnamed_thm1" class="idref" href="#Unnamed_thm1"><span class="id" title="definition">static_control</span></a>. <span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="var">Fail</span> #[<span class="id" title="var">environment</span>="native_environment"]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">static_source</span> <span class="id" title="var">defns</span> <span class="id" title="var">skylabs.lang.cpp.parser.translation_unit._skip</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
