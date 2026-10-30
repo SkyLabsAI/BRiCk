@@ -10,6 +10,7 @@ open Tac2ffi
 open Tac2val
 open Tac2externals
 open Rocq_extra.Extra
+open Structures
 
 let define s =
   define Tac2expr.{ mltac_plugin = "ltac2_extensions"; mltac_tactic = s }
@@ -563,6 +564,12 @@ let _ =
   define "transparent_state_inter"
     (transparent_state @-> transparent_state @-> ret transparent_state)
     TransparentState.inter
+
+(* is_projection (with primitive and non-primitive projections) *)
+let _ =
+  define "is_projection"
+    (constant @-> ret bool)
+    Structure.is_projection
 
 (* case_bt *)
 
