@@ -259,6 +259,42 @@ Section OrDefault_ler.
   #[global] Instance: PreOrder (@OrDefault_ler T _) := {}.
 End OrDefault_ler.
 
+(** [DtorBody_le] is [OrDefault_le] for destructor bodies, except that
+    [Defaulted] is only below [CompilerProvided (Sseq [])].
+
+    clang gives every implicit or defaulted destructor that it defines the
+    empty body (see [Sema::DefineImplicitDestructor]), and [wp_dtor] gives
+    [Defaulted] the semantics of that empty body. A non-empty
+    [CompilerProvided] body would not refine [Defaulted].
+ *)
+Definition DtorBody_le (ae be : exception_spec.t) (a b : OrDefault Stmt) : bool :=
+  match a , b with
+  | Defaulted , CompilerProvided s => bool_decide (ae ⊆ be /\ s = Sseq [])
+  | _ , _ => OrDefault_le ae be a b
+  end.
+Definition DtorBody_ler : relation (exception_spec.t * OrDefault Stmt) :=
+  λ '(ae, a) '(be, b), DtorBody_le ae be a b = true.
+
+Section DtorBody_ler.
+  #[local] Instance DtorBody_le_refl : Reflexive DtorBody_ler.
+  Proof.
+    rewrite /DtorBody_ler/DtorBody_le/OrDefault_le.
+    intros [? od]; destruct od => //=;
+      apply bool_decide_eq_true_2; done.
+  Qed.
+
+  #[local] Instance DtorBody_le_trans : Transitive DtorBody_ler.
+  Proof.
+    rewrite /DtorBody_ler/DtorBody_le/OrDefault_le.
+    intros [? x] [? y] [?z] Hxy Hyz.
+    repeat case_match; subst; try congruence.
+    all: repeat case_bool_decide; intuition (subst; try tauto).
+    all: exfalso; match goal with H : _ ⊆ _ → _ |- _ => apply H end; [etrans; eauto|..]; done.
+  Qed.
+
+  #[global] Instance: PreOrder DtorBody_ler := {}.
+End DtorBody_ler.
+
 (** [ObjVal_le a b] holds when [a] has compatible (but possibly less)
     information than [b].
     For example, [a] might be a declaration while [b] is a compatible
@@ -327,7 +363,7 @@ Definition ObjValue_le (a b : ObjValue) : bool := Eval cbv beta iota zeta delta 
     match dd.(d_body) , dd'.(d_body) with
     | None , _ => true
     | _ , None => false
-    | Some x , Some y => OrDefault_le dd.(d_exception) dd'.(d_exception) x y
+    | Some x , Some y => DtorBody_le dd.(d_exception) dd'.(d_exception) x y
     end
   | _ , _ => false
   end.
@@ -337,7 +373,7 @@ Arguments ObjValue_ler !_ _ /.
 Section ObjValue_ler.
   #[local] Instance ObjValue_le_refl : Reflexive ObjValue_ler.
   Proof.
-    rewrite /ObjValue_ler/ObjValue_le/OrDefault_le => ?; smash.
+    rewrite /ObjValue_ler/ObjValue_le/DtorBody_le/OrDefault_le => ?; smash.
   Qed.
 
   #[local] Instance ObjValue_le_trans : Transitive ObjValue_ler.
@@ -353,11 +389,13 @@ Section ObjValue_ler.
            | H : true = false |- _ => inversion H
            | H : bool_decide _ = true |- _ => apply bool_decide_eq_true_1 in H; subst
            | H : OrDefault_le ?xe ?ye ?x ?y = true |- _ => change (OrDefault_ler (xe,x) (ye,y)) in H
+           | H : DtorBody_le ?xe ?ye ?x ?y = true |- _ => change (DtorBody_ler (xe,x) (ye,y)) in H
            | H : context [ if @bool_decide ?P ?DEC then _ else _ ] |- _ =>
                 destruct (@bool_decide_reflect P DEC); subst
            | H : match ?X with _ => _ end = _ |- _ => destruct X eqn:?
            | |- bool_decide _ = _ => apply bool_decide_eq_true_2
            | |- OrDefault_le ?xe ?ye ?x ?y = true => change (OrDefault_ler (xe,x) (ye,y))
+           | |- DtorBody_le ?xe ?ye ?x ?y = true => change (DtorBody_ler (xe,x) (ye,y))
            | |- context [ bool_decide ?X ] => rewrite (bool_decide_eq_true_2 X); [ | by etrans; eauto ]
            end; try solve [ eauto | etrans; eauto ]).
   Qed.
