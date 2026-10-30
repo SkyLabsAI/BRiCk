@@ -1,0 +1,6 @@
+(install
+ (section bin)
+ (package rocq-skylabs-cpp2v)
+ (files
+  (cpp2v-run.sh as cpp2v-run)
+  (cpp2v-toolchain.sh as cpp2v-toolchain)))

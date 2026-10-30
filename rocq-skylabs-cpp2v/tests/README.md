@@ -65,6 +65,18 @@ the `dune` file placed next to the current `README.md`, it is specified that
 all our tests depend on the `rocq-skylabs-cpp2v` package (among others).
 Hence, for instance, the `cpp2v` binary is in `PATH` in all Cram tests.
 
+The `check_cpp2v`, `check_cpp2v_templates`, and `name_test` helpers (including
+versions variants) use the generated `cpp2v_command` function and the shared
+[cpp2v execution infrastructure](../scripts/README.md). Their printed command
+lines stay unchanged. Translation can run natively or in the selected image;
+Rocq still runs on the host. Docker mode tests the image's translator, so use
+an image containing the version you intend to test. The default image is
+`skylabsai/fm-releases:fm-release-nightly`.
+
+New Cram commands can invoke `cpp2v_command` explicitly to use the same execution
+environment. No PATH command is shadowed: bare `cpp2v` commands, Makefiles, and
+unannotated inline Rocq quotations retain their native behavior.
+
 To create a new Cram test called `new_test`, that (sequentially) runs three
 files `test1.v`, `test2.v` and `test3.v`, you will need to put your three
 files in a new folder `new_test.t`, and add a `new_test.t/run.t` file with

@@ -48,6 +48,10 @@ let attributes =
   in
   map make attrs
 
+let prog_attributes =
+  let open Attributes.Notations in
+  attributes ++ Attributes.payload_attribute ?cat:None ~name:"environment"
+
 let lib_ref t =
   Rocqlib.lib_ref ("skylabs.lang.cpp.parser.translation_unit." ^ t)
 
@@ -330,10 +334,41 @@ let report_cpp2v_result flags stderr (status : Unix.process_status) =
       in
       CErrors.user_err (cpp2v_message flags outcome stderr)
 
-let run_cpp2v flags =
-  match Unix.open_process_args_full "cpp2v" flags (Unix.environment ()) with
+let absolute_path path =
+  if Filename.is_relative path then Filename.concat (Sys.getcwd ()) path else path
+
+let configured_arguments command config flags =
+  Array.append [|command; config|] (Array.sub flags 1 (Array.length flags - 1))
+
+let%test "configured arguments preserve paths, flags and empty arguments" =
+  let command = "/tools with spaces/cpp2v_inline" in
+  let config = "/project with spaces/cpp_environment" in
+  let flags = [|"cpp2v"; "input with spaces.cpp"; "-DVALUE=literal $value"; ""|] in
+  configured_arguments command config flags =
+    [|command; config; "input with spaces.cpp"; "-DVALUE=literal $value"; ""|]
+
+let cpp2v_invocation environment flags =
+  match environment with
+  | None -> ("cpp2v", flags)
+  | Some alias ->
+      let id = Names.Id.of_string alias in
+      let config =
+        try ComExtraDeps.query_extra_dep id with Not_found ->
+          CErrors.user_err Pp.(str "cpp.prog: environment " ++ Names.Id.print id ++
+            str " is not a declared Extra Dependency.")
+      in
+      let from = Libnames.dirpath_of_string "skylabs.lang.cpp.parser.plugin" in
+      let command =
+        Loadpath.find_extra_dep_with_logical_path ~from ~file:"cpp2v_inline" ()
+        |> absolute_path
+      in
+      (command, configured_arguments command (absolute_path config) flags)
+
+let run_cpp2v environment flags =
+  let (command, flags) = cpp2v_invocation environment flags in
+  match Unix.open_process_args_full command flags (Unix.environment ()) with
   | exception Unix.Unix_error(e,_,_) ->
-      CErrors.user_err Pp.(str "Running command `cpp2v` exited with error: "
+      CErrors.user_err Pp.(str "Running command `" ++ str command ++ str "` exited with error: "
         ++ str (Unix.error_message e))
   | (_, _, stderr) as streams ->
   let stderr = In_channel.input_all stderr in
@@ -355,7 +390,7 @@ let load_generated_file file =
   in
   ignore (Vernacinterp.interp ~intern:Vernacinterp.fs_intern ~st command)
 
-let cpp_command_prog (attrs : attrs) name flags prog =
+let cpp_command_prog ((attrs : attrs), environment) name flags prog =
   match Loc.get_current_command_loc () with
   | None ->
       CErrors.user_err Pp.(str "cpp.prog needs a Rocq source file location \
@@ -368,5 +403,5 @@ let cpp_command_prog (attrs : attrs) name flags prog =
       in
       Fun.protect ~finally @@ fun _ ->
       write_cpp cpp_file prog;
-      run_cpp2v (cpp2v_arguments attrs name cpp_file v_file flags);
+      run_cpp2v environment (cpp2v_arguments attrs name cpp_file v_file flags);
       load_generated_file v_file

@@ -4,6 +4,7 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require skylabs.lang.cpp.parser.plugin.cpp2v_version.
+Require skylabs.lang.cpp.parser.plugin.cpp2v_inline_version.
 Require Stdlib.Array.PArray.
 Require Import Stdlib.Numbers.Cyclic.Int63.PrimInt63.
 Require Import skylabs.lang.cpp.parser.

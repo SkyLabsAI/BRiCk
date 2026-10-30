@@ -57,7 +57,7 @@ VERNAC COMMAND EXTEND Cpp CLASSIFIED AS SIDEFF
 END
 
 VERNAC COMMAND EXTEND CppProg CLASSIFIED AS SIDEFF
-| #[ atts = Cpp2v.attributes ]
+| #[ atts = Cpp2v.prog_attributes ]
   [ "cpp.prog" ident(name) cpp_flags(flags) "prog" cpp_string(prog) ] ->
   { Cpp2v.cpp_command_prog atts name flags prog }
 END
