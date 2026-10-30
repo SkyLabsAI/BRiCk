@@ -1,0 +1,98 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.dtor_body_le</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;A&nbsp;<span class="inlinecode"><span class="id" title="var">Defaulted</span></span>&nbsp;destructor&nbsp;is&nbsp;<span class="inlinecode"><span class="id" title="var">ObjValue_le</span></span>&nbsp;the&nbsp;empty&nbsp;body&nbsp;clang&nbsp;defines&nbsp;for<br/>
+&nbsp;&nbsp;&nbsp;it,&nbsp;but&nbsp;not&nbsp;a&nbsp;<span class="inlinecode"><span class="id" title="var">CompilerProvided</span></span>&nbsp;destructor&nbsp;with&nbsp;any&nbsp;other&nbsp;body.&nbsp;*)</span><br/>
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Definition</span> <a id="dtor" class="idref" href="#dtor"><span class="id" title="definition">dtor</span></a> (<a id="body:1" class="idref" href="#body:1"><span class="id" title="binder">body</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> (<span class="id" title="inductive">OrDefault</span> <span class="id" title="inductive">Stmt</span>)) : <span class="id" title="abbreviation">ObjValue</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="constructor">Odestructor</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{| <span class="id" title="projection">d_class</span> := "C"%<span class="id" title="var">cpp_name</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;; <span class="id" title="projection">d_cc</span> := <span class="id" title="constructor">CC_C</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;; <span class="id" title="projection">d_exception</span> := <span class="id" title="constructor">exception_spec.NoThrow</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;; <span class="id" title="projection">d_body</span> := <a class="idref" href="skylabs_brick.tests.dtor_body_le.html#body:1"><span class="id" title="variable">body</span></a> |}.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="defaulted_le_empty" class="idref" href="#defaulted_le_empty"><span class="id" title="definition">defaulted_le_empty</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">ObjValue_le</span> (<a class="idref" href="skylabs_brick.tests.dtor_body_le.html#dtor"><span class="id" title="definition">dtor</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="constructor">Defaulted</span>)) (<a class="idref" href="skylabs_brick.tests.dtor_body_le.html#dtor"><span class="id" title="definition">dtor</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">CompilerProvided</span> (<span class="id" title="constructor">Sseq</span> <span class="id" title="notation">[]</span>)))) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="defaulted_not_le_nonempty" class="idref" href="#defaulted_not_le_nonempty"><span class="id" title="definition">defaulted_not_le_nonempty</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">ObjValue_le</span> (<a class="idref" href="skylabs_brick.tests.dtor_body_le.html#dtor"><span class="id" title="definition">dtor</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="constructor">Defaulted</span>)) (<a class="idref" href="skylabs_brick.tests.dtor_body_le.html#dtor"><span class="id" title="definition">dtor</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">CompilerProvided</span> (<span class="id" title="constructor">Sseq</span> <span class="id" title="notation">[</span><span class="id" title="constructor">Sreturn</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><span class="id" title="notation">]</span>)))) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="defaulted_not_le_user_defined" class="idref" href="#defaulted_not_le_user_defined"><span class="id" title="definition">defaulted_not_le_user_defined</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">ObjValue_le</span> (<a class="idref" href="skylabs_brick.tests.dtor_body_le.html#dtor"><span class="id" title="definition">dtor</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="constructor">Defaulted</span>)) (<a class="idref" href="skylabs_brick.tests.dtor_body_le.html#dtor"><span class="id" title="definition">dtor</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">UserDefined</span> (<span class="id" title="constructor">Sseq</span> <span class="id" title="notation">[]</span>)))) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="empty_not_le_defaulted" class="idref" href="#empty_not_le_defaulted"><span class="id" title="definition">empty_not_le_defaulted</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">ObjValue_le</span> (<a class="idref" href="skylabs_brick.tests.dtor_body_le.html#dtor"><span class="id" title="definition">dtor</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">CompilerProvided</span> (<span class="id" title="constructor">Sseq</span> <span class="id" title="notation">[]</span>)))) (<a class="idref" href="skylabs_brick.tests.dtor_body_le.html#dtor"><span class="id" title="definition">dtor</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="constructor">Defaulted</span>)) <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
