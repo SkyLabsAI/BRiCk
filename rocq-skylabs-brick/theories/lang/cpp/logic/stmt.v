@@ -522,7 +522,9 @@ Module Type Stmt.
     Definition Kpost I Q :=
       KP $ Kpost_inner I Q.
 
-    Definition for_unroll ρ test incr body (Q : Kpred) :=
+    (** One iteration with the condition binding, if any, already in scope. *)
+    Definition for_body_unroll (ρ : region) (test incr : option Expr)
+        (body : Stmt) (Q : Kpred) : mpred :=
       let Kinc :=
         Kpost (match incr with
                | None => Q Normal
@@ -534,50 +536,67 @@ Module Type Stmt.
       | Some test => wp ρ (Sif None None test body Sbreak)
       end Kinc.
 
-    Axiom wp_for_unroll : forall ρ test incr body Q,
-            for_unroll ρ test incr body (Kloop (|> wp ρ (Sfor None test incr body) Q) Q)
-        |-- wp ρ (Sfor None test incr body) Q.
+    (** A condition declaration is initialized for every test. Its binding
+        encloses both body and increment. Normal completion and [continue]
+        run the increment before its cleanup; a false test, [break], or
+        [return] clean it up without incrementing. *)
+    Definition for_unroll (ρ : region) (decl : option VarDecl)
+        (test incr : option Expr) (body : Stmt) (Q : Kpred) : mpred :=
+      match decl with
+      | None => for_body_unroll ρ test incr body Q
+      | Some decl => wp_decl ρ decl (fun ρ' free =>
+          for_body_unroll ρ' test incr body (Kfree free Q))
+      end.
 
-    Theorem wp_for_inv I : forall ρ test incr body Q,
-        I |-- for_unroll ρ test incr body (Kloop (|> I) Q) ->
-        I |-- wp ρ (Sfor None test incr body) Q.
+    Lemma for_body_unroll_frame ρ test incr body Q Q' :
+        (Forall rt, Q rt -* Q' rt) |--
+        for_body_unroll ρ test incr body Q -* for_body_unroll ρ test incr body Q'.
     Proof.
-      intros.
-      iLöb as "IH".
-      iIntros "I".
-      iApply wp_for_unroll.
-      rewrite {2}H /for_unroll.
-      iRevert "I"; case_match; (iApply wp_frame; first reflexivity).
-      all: iIntros (rt); destruct rt; simpl; eauto.
-      all: case_match.
-      all: try (iApply wp_discard_frame; first reflexivity;
-                iIntros (?); iApply interp_frame;
-                iIntros "I !>"; iApply "IH"; eauto).
+      rewrite /for_body_unroll. iIntros "HQ".
+      destruct test; simpl; (iApply wp_frame; first reflexivity).
+      all: iIntros (rt); destruct rt; simpl; try iApply "HQ".
+      all: destruct incr; simpl; last iApply "HQ".
+      all: iApply wp_discard_frame; first reflexivity.
+      all: iIntros (free); iApply interp_frame; iApply "HQ".
+    Qed.
+
+    Lemma for_unroll_frame ρ decl test incr body Q Q' :
+        (Forall rt, Q rt -* Q' rt) |--
+        for_unroll ρ decl test incr body Q -* for_unroll ρ decl test incr body Q'.
+    Proof.
+      rewrite /for_unroll. iIntros "HQ". destruct decl.
+      - iApply wp_decl_frame. iIntros (ρ' free).
+        iApply for_body_unroll_frame. iIntros (rt).
+        iApply Kfree_frame. iApply "HQ".
+      - iApply for_body_unroll_frame. iApply "HQ".
+    Qed.
+
+    Axiom wp_for_unroll : forall ρ decl test incr body Q,
+        for_unroll ρ decl test incr body
+          (Kloop (|> wp ρ (Sfor None decl test incr body) Q) Q)
+        |-- wp ρ (Sfor None decl test incr body) Q.
+
+    Theorem wp_for_inv I : forall ρ decl test incr body Q,
+        I |-- for_unroll ρ decl test incr body (Kloop (|> I) Q) ->
+        I |-- wp ρ (Sfor None decl test incr body) Q.
+    Proof.
+      intros * H. iLöb as "IH". iIntros "I".
+      iApply wp_for_unroll. rewrite {2}H.
+      iRevert "I". iApply for_unroll_frame.
+      iIntros (rt); destruct rt; simpl; eauto.
       all: iIntros "I !>"; iApply "IH"; eauto.
     Qed.
 
-    Lemma wp_for_inv_nolater I : forall ρ test incr body Q,
-        I |-- Unfold for_unroll (for_unroll ρ test incr body (Kloop (|> I) Q)) ->
-        I |-- wp ρ (Sfor None test incr body) Q.
-    Proof.
-      intros.
-      apply wp_for_inv.
-      rewrite {1}H /for_unroll/=.
-      iIntros "X"; iRevert "X".
-      case_match; simpl.
-      all: iApply wp_frame; first reflexivity.
-      all: iIntros (rt); destruct rt; simpl; eauto.
-      all: case_match.
-      all: try (iApply wp_discard_frame; first reflexivity;
-                iIntros (?); iApply interp_frame).
-    Qed.
+    (* for backwards compatibility *)
+    Lemma wp_for_inv_nolater I : forall ρ decl test incr body Q,
+        I |-- Unfold for_unroll (for_unroll ρ decl test incr body (Kloop (|> I) Q)) ->
+        I |-- wp ρ (Sfor None decl test incr body) Q.
+    Proof. intros * H. apply wp_for_inv. exact H. Qed.
 
-    (**
-       `for (init; test; incr) body` desugars to `{ init; for (; test; incr) body }`
-     *)
-    Axiom wp_for_init : forall ρ init test incr b Q,
-            wp ρ (Sseq (init :: Sfor None test incr b :: nil)) Q
-        |-- wp ρ (Sfor (Some init) test incr b) Q.
+    (** The initializer runs once, in the scope enclosing all iterations. *)
+    Axiom wp_for_init : forall ρ init decl test incr body Q,
+        wp ρ (Sseq [init; Sfor None decl test incr body]) Q
+        |-- wp ρ (Sfor (Some init) decl test incr body) Q.
 
     (** * <<do>> *)
 
