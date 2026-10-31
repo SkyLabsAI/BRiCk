@@ -1,0 +1,2 @@
+     = [attr.Other "Section" "__attribute__((section("".cpulocal"")))"]
+     : list attr.t

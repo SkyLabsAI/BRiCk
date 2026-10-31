@@ -237,6 +237,7 @@ Section with_lang.
         (parens $ printT ft.(ft_return) ++ "*") ++
         (parens $ concat $ join_sep ", " $ printT <$> ft.(ft_params))
     | Tarch _ note => "?" ++ note
+    | Tattributed _ t => "[[?]] " ++ printT t
     | Tunsupported note => "?" ++ note
     | Tauto => "auto"
     | Tparam nm => nm

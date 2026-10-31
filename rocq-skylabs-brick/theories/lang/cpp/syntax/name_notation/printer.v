@@ -250,6 +250,7 @@ Section with_lang.
     | Tnamed nm => printN "" nm
     | Tenum nm => prefix "enum " <$> printN "" nm
     | Tarch _ note => mfail
+    | Tattributed _ _ => mfail
     | Tunsupported note => mfail
     | Tparam nm => mret $ "$" ++ nm
     | _ => mfail

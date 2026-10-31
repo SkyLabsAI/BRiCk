@@ -235,6 +235,19 @@ Section with_monad.
   (* The types in a name (parameters, template arguments) identify it; they
      are not needed. What a template instance needs comes from its own
      definition. *)
+  (** Whether [supported] accepts an attribute kind as harmless; see
+      [attr.noop_kinds]. *)
+  Definition noop_attr (kind : PrimString.string) : bool := attr.noop_kind kind.
+
+
+  (** BRiCk does not interpret any attribute yet ([attr.t] only has [Other]). *)
+  Definition attr (a : attr.t) : M :=
+    match a with
+    | attr.Other kind _ =>
+        if noop_attr kind then OK
+        else FAIL (PrimString.cat "unsupported attribute: " kind)
+    end.
+
   Fixpoint name (n : name) : M :=
     no_refs match n with
     | Ninst n ii => name n <+> lst (temp_arg name type expr) ii
@@ -247,6 +260,10 @@ Section with_monad.
   with type (t : type) : M :=
     match t with
     | Tunsupported msg => FAIL msg
+    | Tattributed attrs t =>
+        (* The program logic treats attributed types as opaque for now, even
+           when every attribute is on [noop_attrs]. *)
+        lst attr attrs <+> type t <+> PARTIAL "attributed type (opaque to the program logic)"
     | Tparam _
     | Tresult_param _ => OK
     | Tresult_global n => name n
@@ -449,14 +466,15 @@ Section with_monad.
     else OK.
 
 
+
   Definition obj_value (o : ObjValue) : M :=
     let params (ps : list (localname * core.type)) : M :=
       lst (type ∘ snd) ps
     in
     match o with
     | Ovar t ie => type t
-    | Ofunction (Build_Func t args _ _ exc ob) =>
-        type t <+> params args <+> opt function_body ob
+    | Ofunction (Build_Func t args _ _ exc attrs ob) =>
+        type t <+> params args <+> lst attr attrs <+> opt function_body ob
         <+> if exc is exception_spec.Unknown
             then match ob with
                  | None => OK
@@ -466,6 +484,7 @@ Section with_monad.
     | Omethod m =>
         type m.(m_return) <+> classname m.(m_class)
         <+> params m.(m_params)
+        <+> lst attr m.(m_attrs)
         <+> opt (or_default stmt) m.(m_body)
         <+> check_exc_spec m.(m_exception) m.(m_body)
 

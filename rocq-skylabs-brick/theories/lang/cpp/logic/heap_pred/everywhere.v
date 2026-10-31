@@ -143,6 +143,7 @@ Section with_cpp.
 
       | Tqualified tq ty => typeR (qualify tq q) ty
       | Tfunction _ => False
+      | Tattributed _ _ => False
       | Tunsupported _ => False
       | Tresult_global _
       | Tparam _ | Tresult_param _

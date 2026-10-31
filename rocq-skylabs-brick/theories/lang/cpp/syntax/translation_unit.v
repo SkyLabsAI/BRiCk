@@ -419,6 +419,7 @@ Module template_alias.
         end
     | Tresult_param _ | Tauto | Tnum _ _ | Tchar_ _ | Tvoid
     | Tbool | Tfloat_ _ | Tnullptr | Tarch _ _ | Tunsupported _ => t
+    | Tattributed attrs t => Tattributed attrs (subst_type xs t)
     | Tresult_global n => Tresult_global (subst_name xs n)
     | Tresult_unop o t => Tresult_unop o (subst_type xs t)
     | Tresult_binop o l r =>

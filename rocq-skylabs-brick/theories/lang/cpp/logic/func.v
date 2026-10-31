@@ -534,7 +534,7 @@ Section wp_method.
     |-- wp_method tu m args Q -* wp_method tu' m args Q'.
   Proof.
     intros. iIntros "HQ". rewrite wp_method.unlock.
-    destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_body]; cbn.
+    destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_attrs m_body]; cbn.
     destruct m_body as [[|body|body]|]; auto.
     all: destruct args as [|thisp rest_vals]; auto.
     all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
@@ -554,7 +554,7 @@ Section wp_method.
     Cbn (Reduce (wp_method' false tu m args Q)) |-- wp_method tu m args Q.
   Proof.
     rewrite wp_method.unlock.
-    destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_body]; cbn.
+    destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_attrs m_body]; cbn.
     destruct m_body as [[|body|body]|]; auto.
     all: destruct args as [|thisp rest_vals]; auto.
     all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".

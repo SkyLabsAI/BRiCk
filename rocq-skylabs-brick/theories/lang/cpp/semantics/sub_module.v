@@ -326,6 +326,7 @@ Definition ObjValue_le (a b : ObjValue) : bool := Eval cbv beta iota zeta delta 
                      List.map (fun b => drop_norm b.2) f'.(f_params))
       | Some b , Some b' =>
         bool_decide (f.(f_params) = f'.(f_params)) &&
+        bool_decide (f.(f_attrs) = f'.(f_attrs)) &&
         bool_decide (b = b')
       | _ , None => false
       end
@@ -341,6 +342,7 @@ Definition ObjValue_le (a b : ObjValue) : bool := Eval cbv beta iota zeta delta 
                    List.map (fun b => drop_norm b.2) m'.(m_params))
     | Some b , Some b' =>
       bool_decide (m.(m_params) = m'.(m_params)) &&
+      bool_decide (m.(m_attrs) = m'.(m_attrs)) &&
       OrDefault_le m.(m_exception) m'.(m_exception) b b'
     | _ , None => false
     end

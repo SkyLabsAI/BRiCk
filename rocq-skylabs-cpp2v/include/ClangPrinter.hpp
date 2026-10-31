@@ -8,11 +8,13 @@
 #include "Logging.hpp"
 #include "Trace.hpp"
 #include <clang/AST/CurrentSourceLocExprScope.h>
+#include <clang/Basic/AttrKinds.h>
 #include <clang/Basic/Diagnostic.h>
 #include <clang/Basic/Version.inc>
 #include <llvm/ADT/ArrayRef.h>
 
 namespace clang {
+class Attr;
 class Decl;
 class Stmt;
 class Expr;
@@ -300,6 +302,20 @@ public:
 
     fmt::Formatter &printExceptionSpec(CoqPrinter &,
                                        const clang::FunctionDecl &);
+
+    /// Print the `list attr.t` of a declaration: every attribute (except
+    /// implicit ones on builtins and implicit declarations, see `skipAttr`),
+    /// as `attr.Other "<attribute kind>" "<pretty-printed attribute>"`.
+    fmt::Formatter &printAttrs(CoqPrinter &, const clang::Decl &);
+
+    /// Whether `printAttrs` would print a non-empty list for this
+    /// declaration.
+    bool hasPrintedAttrs(const clang::Decl &);
+
+    /// Print one attribute as an `attr.t`, given its kind and, when it is
+    /// available and explicit, the attribute itself.
+    fmt::Formatter &printAttr(CoqPrinter &, clang::attr::Kind,
+                              const clang::Attr *);
 
     unsigned getTypeSize(const clang::BuiltinType *type) const;
 
