@@ -1514,14 +1514,16 @@ Module SimpleCPP.
     Proof. by rewrite code_own_strict_valid strict_valid_valid. Qed.
     Typeclasses Opaque code_own.
 
+    (** Code assertions are closed under [ObjValue_ler]: [code_at tu f p]
+        holds if [p] runs code described by some [f' ≥ f]. *)
     Definition code_at {_ : genv} (_ : translation_unit) (f : Func) (p : ptr) : mpred :=
-      code_own p (inl (inl (inl f))).
+      Exists f', [| ObjValue_ler (Ofunction f) (Ofunction f') |] ** code_own p (inl (inl (inl f'))).
     Definition method_at {_ : genv} (_ : translation_unit) (m : Method) (p : ptr) : mpred :=
-      code_own p (inl (inl (inr m))).
+      Exists m', [| ObjValue_ler (Omethod m) (Omethod m') |] ** code_own p (inl (inl (inr m'))).
     Definition ctor_at {_ : genv} (_ : translation_unit) (c : Ctor) (p : ptr) : mpred :=
-      code_own p (inl (inr c)).
+      Exists c', [| ObjValue_ler (Oconstructor c) (Oconstructor c') |] ** code_own p (inl (inr c')).
     Definition dtor_at {_ : genv} (_ : translation_unit) (d : Dtor) (p : ptr) : mpred :=
-      code_own p (inr d).
+      Exists d', [| ObjValue_ler (Odestructor d) (Odestructor d') |] ** code_own p (inr d').
 
     Instance code_at_persistent : forall tu f p, Persistent (code_at tu f p) := _.
     Instance code_at_affine : forall tu f p, Affine (code_at tu f p) := _.
@@ -1546,13 +1548,30 @@ Module SimpleCPP.
 
     Section with_genv.
       Lemma code_at_strict_valid tu f p :   code_at tu f p |-- strict_valid_ptr p.
-      Proof. exact: code_own_strict_valid. Qed.
+      Proof. iDestruct 1 as (??) "C". by iApply code_own_strict_valid. Qed.
       Lemma method_at_strict_valid tu f p :   method_at tu f p |-- strict_valid_ptr p.
-      Proof. exact: code_own_strict_valid. Qed.
+      Proof. iDestruct 1 as (??) "C". by iApply code_own_strict_valid. Qed.
       Lemma ctor_at_strict_valid tu f p :   ctor_at tu f p |-- strict_valid_ptr p.
-      Proof. exact: code_own_strict_valid. Qed.
+      Proof. iDestruct 1 as (??) "C". by iApply code_own_strict_valid. Qed.
       Lemma dtor_at_strict_valid tu f p :   dtor_at tu f p |-- strict_valid_ptr p.
-      Proof. exact: code_own_strict_valid. Qed.
+      Proof. iDestruct 1 as (??) "C". by iApply code_own_strict_valid. Qed.
+
+      Lemma code_at_mono tu tu' f f' p :
+        ObjValue_ler (Ofunction f) (Ofunction f') ->
+        code_at tu' f' p |-- code_at tu f p.
+      Proof. iIntros (?). iDestruct 1 as (??) "C". iExists _; iFrame. iPureIntro. by etrans. Qed.
+      Lemma method_at_mono tu tu' m m' p :
+        ObjValue_ler (Omethod m) (Omethod m') ->
+        method_at tu' m' p |-- method_at tu m p.
+      Proof. iIntros (?). iDestruct 1 as (??) "C". iExists _; iFrame. iPureIntro. by etrans. Qed.
+      Lemma ctor_at_mono tu tu' c c' p :
+        ObjValue_ler (Oconstructor c) (Oconstructor c') ->
+        ctor_at tu' c' p |-- ctor_at tu c p.
+      Proof. iIntros (?). iDestruct 1 as (??) "C". iExists _; iFrame. iPureIntro. by etrans. Qed.
+      Lemma dtor_at_mono tu tu' d d' p :
+        ObjValue_ler (Odestructor d) (Odestructor d') ->
+        dtor_at tu' d' p |-- dtor_at tu d p.
+      Proof. iIntros (?). iDestruct 1 as (??) "C". iExists _; iFrame. iPureIntro. by etrans. Qed.
     End with_genv.
 
     (** physical representation of pointers.

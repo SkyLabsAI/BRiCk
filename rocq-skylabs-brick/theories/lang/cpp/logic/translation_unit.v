@@ -166,6 +166,46 @@ Section with_cpp.
     destruct H.
   Qed.
 
+  (** Weakening a symbol to a [ObjValue_ler]-smaller one, possibly from
+      another translation unit. *)
+  Lemma denoteSymbol_weaken tu tu' n o o' :
+    ObjValue_ler o o' ->
+    denoteSymbol tu' n o' |-- denoteSymbol tu n o.
+  Proof.
+    intros Hle.
+    destruct o as [t e|f|m|c|d], o' as [t' e'|f'|m'|c'|d']; try done.
+    { move: Hle => /=. case_bool_decide; last done. by subst. }
+    all: rewrite {2}/denoteSymbol; case_match eqn:Hb;
+      [|by rewrite _at_svalidR; apply denoteSymbol_strict_valid].
+    all: rewrite /denoteSymbol; case_match eqn:Hb';
+      [|by move: Hle => /=; rewrite Hb Hb'; repeat case_match].
+    all: rewrite !_at_as_Rep.
+    - exact: code_at_mono.
+    - exact: method_at_mono.
+    - exact: ctor_at_mono.
+    - exact: dtor_at_mono.
+  Qed.
+
+  (** [denoteModule] is monotone along [sub_module]: a client of [all] can
+      use any [sub] that [all] refines. *)
+  Lemma denoteModule_weaken all sub :
+    sub_module sub all ->
+    denoteModule all |-- denoteModule sub.
+  Proof.
+    intros Hsub.
+    iIntros "#M".
+    iDestruct (denoteModule_models_observe with "M") as %[Hall].
+    rewrite {2}denoteModule_eq/denoteModule_def.
+    iSplit; last first.
+    { iPureIntro. destruct (module_le_spec sub (genv_tu σ)) as [|Hn]; first done.
+      apply Hn. by etrans. }
+    iApply big_sepL_intro. iIntros "!>" (k [n o] Hk) "/=".
+    apply list_elem_of_lookup_2, NM.map_to_list_elements_inv in Hk.
+    destruct (syms_compat _ _ Hsub n o Hk) as (o' & Hk' & Hle).
+    iApply denoteSymbol_weaken; first exact: Hle.
+    by iApply denoteModule_denoteSymbol.
+  Qed.
+
 End with_cpp.
 
 Arguments denoteModule _ : simpl never.

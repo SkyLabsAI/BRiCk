@@ -294,6 +294,18 @@ Module FMapExtra.
       rewrite rev_app_distr /= -app_assoc. by destruct p.
     Qed.
 
+    Lemma map_to_list_elements_inv {A} (k : Key.t) (v : A) (m : Map.t A) :
+      (k, v) ∈ map_to_list m ->
+      m !! k = Some v.
+    Proof.
+      rewrite /lookup/map_to_list/map_fold/map_mapfold.
+      rewrite Map.fold_1 fold_left_cons app_nil_r.
+      rewrite list_elem_of_In -in_rev => H.
+      apply Map.find_1, Map.elements_2, InA_alt.
+      exists (k, v); split; last done.
+      split; [apply Key.eq_refl|done].
+    Qed.
+
     Definition find_any {T} (p : K -> T -> bool) (m : Map.t T) : bool :=
       Map.fold (fun k v (acc : bool) => if acc then true else p k v) m false.
 

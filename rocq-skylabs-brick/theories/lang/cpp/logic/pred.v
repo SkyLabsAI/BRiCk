@@ -41,6 +41,7 @@ Require Import skylabs.lang.cpp.bi.cfractional.
 Require Import skylabs.lang.cpp.syntax.
 Require Import skylabs.lang.cpp.semantics.values.
 Require Import skylabs.lang.cpp.semantics.subtyping.
+Require Import skylabs.lang.cpp.semantics.sub_module.
 
 #[local] Set Printing Coercions.
 
@@ -457,6 +458,28 @@ Module Type CPP_LOGIC
       Axiom dtor_at_strict_valid   : forall f p,   dtor_at f p |-- strict_valid_ptr p.
 
     End with_genv.
+
+    (** Code assertions are closed under [ObjValue_ler]: if [p] runs code
+        described by [f'], it also runs code described by any [f ≤ f'],
+        from any translation unit. This is what lets a client weaken
+        [denoteModule] to a [sub_module] (see [denoteModule_weaken]).
+     *)
+    Section with_cpp_logic.
+      Context `{cpp_logic} {σ}.
+
+      Axiom code_at_mono : forall tu tu' f f' p,
+        ObjValue_ler (Ofunction f) (Ofunction f') ->
+        code_at tu' f' p |-- code_at tu f p.
+      Axiom method_at_mono : forall tu tu' m m' p,
+        ObjValue_ler (Omethod m) (Omethod m') ->
+        method_at tu' m' p |-- method_at tu m p.
+      Axiom ctor_at_mono : forall tu tu' c c' p,
+        ObjValue_ler (Oconstructor c) (Oconstructor c') ->
+        ctor_at tu' c' p |-- ctor_at tu c p.
+      Axiom dtor_at_mono : forall tu tu' d d' p,
+        ObjValue_ler (Odestructor d) (Odestructor d') ->
+        dtor_at tu' d' p |-- dtor_at tu d p.
+    End with_cpp_logic.
 
   Section with_cpp_logic.
     Context `{cpp_logic} {σ}.
