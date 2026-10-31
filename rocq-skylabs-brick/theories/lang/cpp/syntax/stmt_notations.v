@@ -238,6 +238,13 @@ Module StmtNotations.
          , e custom CPP_expr at level 200
          , format "'[' return  e ; ']'"
          , only printing).
+  Notation "'return' e ; '/*' 'nrvo' x '*/'"
+      := (Sreturn_nrvo x e)
+         ( in custom CPP_stmt at level 0
+         , e custom CPP_expr at level 200
+         , x constr at level 0
+         , format "'[' return  e ;  /*  nrvo  x  */ ']'"
+         , only printing).
 
   Notation "e ;"
       := (Sexpr e)

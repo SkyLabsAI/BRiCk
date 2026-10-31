@@ -333,6 +333,7 @@ Module MTraverse.
       | Sbreak => mret Sbreak
       | Scontinue => mret Scontinue
       | Sreturn e => Sreturn <$> traverse (T:=eta option) traverseE e
+      | Sreturn_nrvo x e => Sreturn_nrvo x <$> traverseE e
       | Sexpr e => Sexpr <$> traverseE e
       | Sattr a s => Sattr a <$> traverseS s
       | Sasm code v i o c => Sasm code v <$> traverse (T:=eta list) (fun '(a,b) => pair a <$> traverseE b) i

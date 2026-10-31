@@ -1559,13 +1559,13 @@ Module Type Expr.
     Axiom wp_xval_temp : forall e Q,
         (let ty := type_of e in
          Forall a : ptr,
-         wp_initialize ty a e (fun frees => Q a (FreeTemps.delete ty a >*> frees)))
+         wp_initialize ty a e (fun frees => Q a (FreeTemps.delete None ty a >*> frees)))
         |-- wp_xval (Ematerialize_temp e Xvalue) Q.
 
     Axiom wp_lval_temp : forall e Q,
         (let ty := type_of e in
          Forall a : ptr,
-         wp_initialize ty a e (fun frees => Q a (FreeTemps.delete ty a >*> frees)))
+         wp_initialize ty a e (fun frees => Q a (FreeTemps.delete None ty a >*> frees)))
         |-- wp_lval (Ematerialize_temp e Lvalue) Q.
 
     (** Pseudo destructors arise from calling the destructor on
@@ -2162,7 +2162,7 @@ Module Type Expr.
            wp_initialize tu ρ (type_of common) p common (fun free =>
            let ρ' := Rbind (localname.anon n) p ρ in
            wp_test tu ρ' tst (fun c free'' =>
-             let free := (free'' >*> FreeTemps.delete ty p >*> free)%free in
+             let free := (free'' >*> FreeTemps.delete None ty p >*> free)%free in
              if c
              then wp tu ρ' th (fun v free' => Q v (free' >*> free))
              else wp tu ρ' el (fun v free' => Q v (free' >*> free))))
@@ -2192,7 +2192,7 @@ Module Type Expr.
            wp_initialize tu ρ (type_of common) p common (fun free =>
            let ρ' := Rbind (localname.opaque n) p ρ in
            wp_test tu ρ' tst (fun c free'' =>
-             let free := (free'' >*> FreeTemps.delete ty p >*> free)%free in
+             let free := (free'' >*> FreeTemps.delete None ty p >*> free)%free in
              if c
              then wp_init tu ρ' ty p th (fun free' => Q (free' >*> free))
              else wp_init tu ρ' ty p el (fun free' => Q (free' >*> free))))

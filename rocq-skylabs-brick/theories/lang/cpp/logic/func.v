@@ -41,7 +41,10 @@ Definition Kreturn_inner `{Σ : cpp_logic, σ : genv} (Q : ptr -> mpred) (rt : R
   match rt with
   | Normal | ReturnVoid => Forall p : ptr, p |-> primR Tvoid (cQp.mut 1) Vvoid -* Q p
   | ReturnVal p => Q p
-  | _ => False
+  (* [ReturnNRVO] must have been turned into [ReturnVal] by the [Kfree] of the
+     scope declaring the variable: reaching the function boundary means the
+     returned name was not an automatic variable of this function. *)
+  | Break | Continue | ReturnNRVO _ _ => False
   end.
 #[global] Arguments Kreturn_inner _ _ _ _ _ !rt /.
 
@@ -783,7 +786,7 @@ this.
 Definition Kreturn_void_inner `{Σ : cpp_logic} (P : epred) (rt : ReturnType) : mpred :=
   match rt with
   | Normal | ReturnVoid => P
-  | Break | Continue | ReturnVal _ => False
+  | Break | Continue | ReturnVal _ | ReturnNRVO _ _ => False
   end.
 #[global] Arguments Kreturn_void_inner _ _ _ _ !rt /.
 
@@ -950,7 +953,7 @@ End wp_ctor.
 
 Definition wpd_bases `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
     (cls : globname) (this : ptr) (bases : list globname) (Q : epred) : mpred :=
-  let del_base base := FreeTemps.delete (Tnamed base) (this ,, _base cls base) in
+  let del_base base := FreeTemps.delete None (Tnamed base) (this ,, _base cls base) in
   interp tu (FreeTemps.seqs_rev (List.map del_base bases)) Q.
 
 Section with_cpp.
@@ -965,7 +968,7 @@ End with_cpp.
 
 Definition wpd_members `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
     (cls : globname) (this : ptr) (members : list Member) (Q : epred) : mpred :=
-  let del_member m := FreeTemps.delete m.(mem_type) (this ,, _field (Field cls m.(mem_name))) in
+  let del_member m := FreeTemps.delete None m.(mem_type) (this ,, _field (Field cls m.(mem_name))) in
   interp tu (FreeTemps.seqs_rev (List.map del_member members)) Q.
 
 Section with_cpp.
