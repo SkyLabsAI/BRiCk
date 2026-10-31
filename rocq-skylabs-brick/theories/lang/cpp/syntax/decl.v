@@ -220,6 +220,67 @@ Module exception_spec.
   #[global] Instance: EqDecision t := LeibnizComparison.from_comparison.
 End exception_spec.
 
+(** *** Function attributes *)
+Module fn_attr.
+  (**
+  Function attributes that change the meaning of a function and that the
+  program logic enforces when verifying its definition ([wp_func],
+  [wp_method]). cpp2v records them from the C++ declaration; attributes
+  without semantic effect (e.g. <<[[maybe_unused]]>>) are not recorded.
+
+  Each attribute is a promise that the compiler relies on. Keeping them in
+  the AST turns the promise into a proof obligation instead of a silent
+  assumption:
+  - [Noreturn] (<<[[noreturn]]>>, <<__attribute__((noreturn))>>,
+    <<_Noreturn>>): the function never returns normally. Clang deletes the
+    code after a call, so the definition must prove that normal return is
+    unreachable.
+  - [Nonnull params] (<<__attribute__((nonnull(...)))>>, on the function or
+    on a parameter): the listed parameters (0-based indices into the
+    explicit parameter list, i.e. excluding <<this>>) hold non-null
+    pointers. Clang deletes null checks in the callee, so every spec of the
+    function must require the arguments to be non-null, and the body may
+    assume it. cpp2v expands the argument-less spelling to every pointer
+    parameter.
+  - [Returns_nonnull] (<<__attribute__((returns_nonnull))>>): the returned
+    pointer is not null; the definition must prove it.
+  *)
+  Variant t : Set :=
+  | Noreturn
+  | Nonnull (params : list N)
+  | Returns_nonnull.
+  #[global] Instance: EqDecision t.
+  Proof. solve_decision. Defined.
+  #[global] Instance t_inhabited : Inhabited t := populate Noreturn.
+
+  (** These are direct fixpoints rather than [existsb]/[concat] so that
+      [cbn]/[simpl] reduce them on a concrete list without unfolding any
+      library function (proof automation normalises [wp_func] goals with a
+      restricted reduction). *)
+  Fixpoint noreturn (attrs : list t) : bool :=
+    match attrs with
+    | [] => false
+    | Noreturn :: _ => true
+    | _ :: attrs => noreturn attrs
+    end.
+  Fixpoint returns_nonnull (attrs : list t) : bool :=
+    match attrs with
+    | [] => false
+    | Returns_nonnull :: _ => true
+    | _ :: attrs => returns_nonnull attrs
+    end.
+  (** The parameters that some [Nonnull] attribute lists. *)
+  Fixpoint nonnull_params (attrs : list t) : list N :=
+    match attrs with
+    | [] => []
+    | Nonnull ps :: attrs => ps ++ nonnull_params attrs
+    | _ :: attrs => nonnull_params attrs
+    end.
+  #[global] Arguments noreturn !attrs /.
+  #[global] Arguments returns_nonnull !attrs /.
+  #[global] Arguments nonnull_params !attrs /.
+End fn_attr.
+
 (** *** Functions *)
 Variant FunctionBody' : Set :=
 | Impl (_ : Stmt)
@@ -235,10 +296,11 @@ Record Func' : Set := Build_Func
 ; f_cc     : calling_conv
 ; f_arity  : function_arity
 ; f_exception : exception_spec.t
+; f_attrs  : list fn_attr.t
 ; f_body   : option FunctionBody
 }.
 Notation Func := Func'.
-#[global] Arguments Build_Func _ _ _ _ _ _ : assert.
+#[global] Arguments Build_Func _ _ _ _ _ _ _ : assert.
 #[global] Instance: EqDecision Func.
 Proof. solve_decision. Defined.
 #[global] Instance Func_inhabited : Inhabited Func.
@@ -253,10 +315,11 @@ Record Method' : Set := Build_Method
 ; m_cc      : calling_conv
 ; m_arity   : function_arity
 ; m_exception : exception_spec.t
+; m_attrs   : list fn_attr.t
 ; m_body    : option (OrDefault Stmt)
 }.
 Notation Method := Method'.
-#[global] Arguments Build_Method _ _ _ _ _ _ _ _ : assert.
+#[global] Arguments Build_Method _ _ _ _ _ _ _ _ _ : assert.
 #[global] Instance: EqDecision Method.
 Proof. solve_decision. Defined.
 
@@ -267,6 +330,7 @@ Definition static_method (m : Method)
    ; f_cc := m.(m_cc)
    ; f_arity := m.(m_arity)
    ; f_exception := m.(m_exception)
+   ; f_attrs := m.(m_attrs)
    ; f_body := match m.(m_body) with
                | Some (UserDefined body | CompilerProvided body) => Some (Impl body)
                | _ => None
