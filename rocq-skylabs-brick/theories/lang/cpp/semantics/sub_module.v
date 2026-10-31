@@ -319,7 +319,7 @@ Definition ObjValue_le (a b : ObjValue) : bool := Eval cbv beta iota zeta delta 
   | Ofunction f , Ofunction f' =>
     bool_decide (f.(f_cc) = f'.(f_cc)) &&
     bool_decide (f.(f_arity) = f'.(f_arity)) &&
-    bool_decide (normalize_type f.(f_return) = normalize_type f'.(f_return)) &&
+    bool_decide (f.(f_return) = f'.(f_return)) &&
       match f.(f_body) , f'.(f_body) with
       | None , _ =>
         bool_decide (List.map (fun b => drop_norm b.2) f.(f_params) =
@@ -334,7 +334,7 @@ Definition ObjValue_le (a b : ObjValue) : bool := Eval cbv beta iota zeta delta 
     bool_decide (m.(m_arity) = m'.(m_arity)) &&
     bool_decide (m.(m_class) = m'.(m_class)) &&
     bool_decide (m.(m_this_qual) = m'.(m_this_qual)) &&
-    bool_decide (normalize_type m.(m_return) = normalize_type m'.(m_return)) &&
+    bool_decide (m.(m_return) = m'.(m_return)) &&
     match m.(m_body) , m'.(m_body) with
     | None , _ =>
       bool_decide (List.map (fun b => drop_norm b.2) m.(m_params) =
@@ -714,12 +714,8 @@ Proof.
   destruct a, b; simpl; try congruence;
     repeat first [ case_bool_decide | case_match ]; subst; try congruence; simpl; eauto.
   all: intros; rewrite /type_of_value/=; try congruence.
-  { f_equal. f_equal; eauto using arguments_same. }
-  { f_equal. f_equal; eauto.
-    f_equal; eauto using arguments_same.
-    congruence. }
-  { f_equal. f_equal; eauto.
-    f_equal; eauto using arguments_same. congruence. }
+  all: f_equal; f_equal; try congruence; try solve [eauto using arguments_same].
+  all: f_equal; try congruence; eauto using arguments_same.
 Qed.
 
 (** * Mismatches
