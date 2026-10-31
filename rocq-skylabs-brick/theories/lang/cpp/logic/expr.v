@@ -1843,11 +1843,16 @@ Module Type Expr.
           wp_array_init_fill ety base ls fill sz Q
       |-- wp_init (Tarray ety sz) base (Einitlist ls fill ty) Q.
 
+    (** Value-initializing an array of primitives. Like the scalar cases of
+        [wp_initialize] and [wp_array_init_fill], the elements live at the
+        unqualified element type, with const ownership for const elements. *)
     Axiom wp_init_implicit_init_array : forall sz ety (base : ptr) aty default Q,
         is_array_of aty ety ->
         get_default ety = Some default ->
-        (base |-> type_ptrR (Tarray ety sz) -*
-         base |-> arrayR ety (primR (erase_qualifiers ety) 1$m) (replicateN sz default) -*
+        let cv := take_qualifiers ety in
+        let ety' := erase_qualifiers ety in
+        (base |-> type_ptrR (Tarray ety' sz) -*
+         base |-> arrayR ety' (primR ety' (cQp.mk (q_const cv) 1)) (replicateN sz default) -*
          Q FreeTemps.id)
       |-- wp_init (Tarray ety sz) base (Eimplicit_init aty) Q.
 
