@@ -654,6 +654,19 @@ static fmt::Formatter &printUnion(CoqPrinter &print, const CXXRecordDecl &decl,
     return printSizeAlign(decl, layout, print, cprint);
 }
 
+static fmt::Formatter &printOpaqueRecord(CoqPrinter &print,
+                                         const CXXRecordDecl &decl,
+                                         ClangPrinter &cprint,
+                                         const ASTContext &ctxt) {
+    always_assert(decl.isCompleteDefinition() && !decl.isDependentContext());
+    const auto &layout = ctxt.getASTRecordLayout(&decl);
+
+    guard::ctor _(print, "Build_OpaqueRecord");
+    cprint.printDtorName(print, decl) << fmt::nbsp;
+    printTriviallyDestructible(print, decl, cprint) << fmt::nbsp;
+    return printSizeAlign(decl, &layout, print, cprint);
+}
+
 static fmt::Formatter &printCStruct(CoqPrinter &print, const RecordDecl &decl,
                                     ClangPrinter &cprint,
                                     const ASTContext &ctxt) {
@@ -713,9 +726,10 @@ static fmt::Formatter &printCUnion(CoqPrinter &print, const RecordDecl &decl,
 }
 
 static const char *supportedRecord(const RecordDecl &decl,
-                                   const ASTContext &ctxt) {
+                                   const ASTContext &ctxt,
+                                   bool allowBitFields) {
     for (auto f : decl.fields()) {
-        if (f->isBitField())
+        if (f->isBitField() && !allowBitFields)
             return "bitfields are not supported";
         if (f->isInvalidDecl())
             return "invalid field";
@@ -731,6 +745,11 @@ static const char *supportedRecord(const RecordDecl &decl,
     const auto recordAlign = ctxt.toBits(layout.getAlignment());
     unsigned index = 0;
     for (auto f : decl.fields()) {
+        // Opaque records expose no bitfield cells or offsets. Keep checking
+        // ordinary fields so other unsupported layouts stay unsupported.
+        const auto offset = layout.getFieldOffset(index++);
+        if (f->isBitField())
+            continue;
         // Typedef alignment attributes are erased by the type translation.
         // Reference members are pointer-sized cells, not their referents.
         const auto ty = f->getType()->isReferenceType()
@@ -738,12 +757,29 @@ static const char *supportedRecord(const RecordDecl &decl,
                             : f->getType().getCanonicalType();
         const auto fieldAlign = ctxt.getTypeAlign(ty);
         if (recordAlign % fieldAlign != 0 ||
-            layout.getFieldOffset(index) % fieldAlign != 0)
+            offset % fieldAlign != 0)
             return "under-aligned fields are not supported";
-        ++index;
     }
     return nullptr;
 }
+static const char *supportedRecord(const RecordDecl &decl,
+                                   const ASTContext &ctxt) {
+    return supportedRecord(decl, ctxt, false);
+}
+
+static bool isOpaqueRecord(const CXXRecordDecl &decl, const ASTContext &ctxt) {
+    if (!decl.isCompleteDefinition() || decl.isDependentContext() ||
+        decl.isInvalidDecl() || !(decl.isStruct() || decl.isClass()) ||
+        decl.getNumBases() != 0 || decl.isPolymorphic())
+        return false;
+
+    for (auto f : decl.fields()) {
+        if (f->isBitField())
+            return supportedRecord(decl, ctxt, true) == nullptr;
+    }
+    return false;
+}
+
 static const char *supportedRecord(const CXXRecordDecl &decl,
                                    const ASTContext &ctxt) {
     for (auto base : decl.bases()) {
@@ -772,6 +808,9 @@ static const char *supportedRecord(const CXXRecordDecl &decl,
 
 static const DeclPrinter Dstruct("Dstruct", "Dtemplated_struct", printStruct,
                                  supportedRecord);
+// Dependent records are never opaque; concrete specializations still use
+// Dinstantiation in the separate template output.
+static const DeclPrinter Dopaque_record("Dopaque_record", "", printOpaqueRecord);
 static const DeclPrinter Dunion("Dunion", "Dtemplated_union", printUnion,
                                 supportedRecord);
 static const DeclPrinter Drecord_struct("Dstruct", "Dtemplated_struct",
@@ -1302,6 +1341,8 @@ public:
                          ClangPrinter &cprint, const ASTContext &ctxt) {
         if (ClangPrinter::debug && cprint.trace(Trace::Decl))
             cprint.trace("VisitStructDecl", loc::of(decl));
+        if (isOpaqueRecord(*decl, ctxt))
+            return Dopaque_record.print(*decl, print, cprint, ctxt);
         return printType(Dstruct, *decl, print, cprint, ctxt);
     }
 

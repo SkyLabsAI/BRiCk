@@ -82,6 +82,7 @@ Definition GlobDecl_le (a b : GlobDecl) : bool :=
   | Gtype , Genum _ _
   | Gtype , Gunion _
   | Gtype , Gstruct _
+  | Gtype , Gopaque_record _
   | Gtype , Gunsupported _ => true
   | Gunion _ , Gtype
   | Gstruct _ , Gtype => false
@@ -101,6 +102,8 @@ Definition GlobDecl_le (a b : GlobDecl) : bool :=
   | Gtypedef t , Gtypedef t' =>
     bool_decide (t = t')
   | Gunsupported m , Gunsupported m' => bool_decide (m = m')
+  (* No refinement to a visible record definition without a correspondence. *)
+  | Gopaque_record r , Gopaque_record r' => bool_decide (r = r')
   | _ , _ => false
   end.
 Definition GlobDecl_ler := λ g1 g2, Is_true $ GlobDecl_le g1 g2.
@@ -638,6 +641,20 @@ Proof.
   move=> Hsub /(sub_module_preserves_globdecl Hsub) {Hsub m1 m2} [g2 [->]].
   destruct g2 => //=; smash.
 Qed.
+
+Set Default Goal Selector "!".
+
+Lemma sub_module_preserves_gopaque_record m1 m2 gn r :
+  sub_module m1 m2 ->
+  m1.(types) !! gn = Some (Gopaque_record r) ->
+  m2.(types) !! gn = Some (Gopaque_record r).
+Proof.
+  move=> Hsub /(sub_module_preserves_globdecl Hsub) [g2 [-> Hle]].
+  destruct g2; cbn in Hle; try contradiction.
+  apply bool_decide_unpack in Hle; subst; reflexivity.
+Qed.
+
+Set Default Goal Selector "1".
 
 (* For enums, [names1] and [names2] need not be related, as specified by [GlobDecl_le].
 TODO: https://eel.is/c++draft/basic.def.odr#13 restricts this to anonymous enums. *)

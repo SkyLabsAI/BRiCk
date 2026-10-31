@@ -127,6 +127,7 @@ Section defs.
               | Genum _ _
               | Gconstant _ _
               | Gtypedef _
+              | Gopaque_record _
               | Gunsupported _ => UNSUPPORTED Q
               end
           | None => UNSUPPORTED Q

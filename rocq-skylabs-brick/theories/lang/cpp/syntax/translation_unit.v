@@ -29,7 +29,8 @@ Variant GlobDecl' : Set :=
   | Genum     (_ : type) (_ : list ident) (* *)
   | Gconstant (_ : type) (init : option Expr) (* used for enumerator constants*)
   | Gtypedef  (_ : type)
-  | Gunsupported (_ : PrimString.string).
+  | Gunsupported (_ : PrimString.string)
+  | Gopaque_record (_ : OpaqueRecord).
 Notation GlobDecl := GlobDecl'.
 #[global] Instance: EqDecision GlobDecl.
 Proof. solve_decision. Defined.
@@ -563,6 +564,7 @@ Fixpoint is_trivially_destructible (tu : translation_unit) (ty : type) {struct t
                    match tu.(types) !! nm with
                    | Some (Gunion u) => u.(u_trivially_destructible)
                    | Some (Gstruct s) => s.(s_trivially_destructible)
+                   | Some (Gopaque_record r) => r.(or_trivially_destructible)
                    | _ => false
                    end
                | Tarray ety _ => is_trivially_destructible tu ety
@@ -587,7 +589,8 @@ Section with_type_table.
   Variable te : type_table.
   (*
   To traverse a type definition and compute, say, its list of subobjects,
-  we require that the type is _complete_, as in the usual sense.
+  we require that the type is _complete_, as in the usual sense. Opaque
+  records are compiler-certified complete but do not expose their subobjects.
 
   This definition is adapted from Krebbers'15, Definition 3.3.5, with needed
   adjustments for C++.
@@ -620,6 +623,10 @@ Section with_type_table.
     : complete_decl (Gunion u)
   | complete_enum {t consts} (_ : complete_type t)
     : complete_decl (Genum t consts)
+  (* The compiler has checked the hidden definition; no subobject information
+     can be recovered from this constructor. *)
+  | complete_opaque_record {r : OpaqueRecord}
+    : complete_decl (Gopaque_record r)
   (* No need for typedefs since those are forbidden in `Tnamed`, `Gtype` isn't
   legal, `Gconstant` is illegal and wouldn't make sense. *)
 

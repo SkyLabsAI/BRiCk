@@ -109,6 +109,9 @@ Definition Dtemplated_struct (ps : Mtemp_params) (n : Mname) (f : option MStruct
 Definition Dtemplated_union (ps : Mtemp_params) (n : Mname) (f : option MUnion) : K :=
   _types <[n := Template ps $ if f is Some f then Gunion f else Gtype]>.
 
+Definition Dtemplated_opaque_record (ps : Mtemp_params) (n : Mname) (r : OpaqueRecord) : K :=
+  _types <[n := Template ps $ Gopaque_record r]>.
+
 Definition Dtemplated_enum (ps : Mtemp_params) (n : Mname) (u: Mtype) (cs : list ident) : K :=
   _types <[n := Template ps $ Genum u cs]>.
 

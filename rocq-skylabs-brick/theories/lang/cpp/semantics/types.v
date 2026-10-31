@@ -13,6 +13,7 @@ Definition GlobDecl_size_of (g : GlobDecl) : option N :=
   match g with
   | Gstruct s => Some s.(s_size)
   | Gunion u => Some u.(u_size)
+  | Gopaque_record r => Some r.(or_size)
   | Genum t _ =>
     match drop_qualifiers t with
     | Tchar_ sz => Some $ char_type.bytesN sz
@@ -26,6 +27,7 @@ Definition GlobDecl_align_of (g : GlobDecl) : option N :=
   match g with
   | Gstruct s => Some s.(s_alignment)
   | Gunion u => Some u.(u_alignment)
+  | Gopaque_record r => Some r.(or_alignment)
   | Genum t _ =>
     match drop_qualifiers t with
     | Tchar_ sz => Some $ char_type.bytesN sz
@@ -87,6 +89,7 @@ Proof.
   case_bool_decide; subst; eauto. contradiction.
   case_bool_decide; subst; eauto. contradiction.
   case_bool_decide; subst; eauto. case_match; constructor; eauto. contradiction.
+  case_bool_decide; subst; eauto. contradiction.
 Qed.
 #[global] Instance proper_GlobDecl_align_of: Proper (GlobDecl_ler ==> Roption_leq eq) GlobDecl_align_of.
 Proof.
@@ -95,7 +98,46 @@ Proof.
   case_bool_decide; subst; eauto. contradiction.
   case_bool_decide; subst; eauto. contradiction.
   case_bool_decide; subst; eauto. simpl. case_match; constructor; eauto. contradiction.
+  case_bool_decide; subst; eauto. contradiction.
 Qed.
+
+Set Default Goal Selector "!".
+
+(** Layout queries computed in a translation unit remain valid after linking.
+    Using declaration refinement avoids duplicating cases in downstream tools. *)
+Lemma glob_def_genv_compat_size {σ tu} {Hσ : tu ⊧ σ} nm sz :
+  tu.(types) !! nm >>= GlobDecl_size_of = Some sz ->
+  glob_def σ nm >>= GlobDecl_size_of = Some sz.
+Proof.
+  destruct (tu.(types) !! nm) as [decl|] eqn:Hdecl; cbn; last discriminate.
+  intros Hsize.
+  destruct (sub_module_preserves_globdecl (genv_compat_submodule tu σ Hσ) Hdecl)
+    as [decl' [Hlookup Hle]].
+  rewrite /glob_def Hlookup /=.
+  have Hpreserve := proper_GlobDecl_size_of _ _ Hle.
+  rewrite (Roption_leq_eq_equiv (R := eq)) in Hpreserve.
+  exact (Hpreserve _ Hsize).
+Qed.
+
+Lemma glob_def_genv_compat_valid_align {σ tu} {Hσ : tu ⊧ σ} nm al :
+  tu.(types) !! nm >>= GlobDecl_valid_align_of = Some al ->
+  glob_def σ nm >>= GlobDecl_valid_align_of = Some al.
+Proof.
+  destruct (tu.(types) !! nm) as [decl|] eqn:Hdecl; cbn; last discriminate.
+  intros Halign.
+  apply GlobDecl_valid_align_of_spec in Halign as [sz [Hsize [Halign Hvalid]]].
+  destruct (sub_module_preserves_globdecl (genv_compat_submodule tu σ Hσ) Hdecl)
+    as [decl' [Hlookup Hle]].
+  have Hpreserve_size := proper_GlobDecl_size_of _ _ Hle.
+  have Hpreserve_align := proper_GlobDecl_align_of _ _ Hle.
+  rewrite (Roption_leq_eq_equiv (R := eq)) in Hpreserve_size.
+  rewrite (Roption_leq_eq_equiv (R := eq)) in Hpreserve_align.
+  rewrite /glob_def Hlookup /= /GlobDecl_valid_align_of
+    (Hpreserve_size _ Hsize) (Hpreserve_align _ Halign).
+  by rewrite bool_decide_true.
+Qed.
+
+Set Default Goal Selector "1".
 
 (** * sizeof *)
 (** The size of a C++ object.
@@ -616,9 +658,9 @@ Lemma tu_base_layout_compatible_sound {σ tu} {Hσ : tu ⊧ σ} derived base :
 Proof.
   rewrite /tu_base_layout_compatible.
   destruct (tu.(types) !! derived) as [gd|] eqn:Hd; last discriminate.
-  destruct gd as [| |ds| | | |]; try discriminate.
+  destruct gd as [| |ds| | | | |]; try discriminate.
   destruct (tu.(types) !! base) as [gb|] eqn:Hb; last discriminate.
-  destruct gb as [| |bs| | | |]; try discriminate.
+  destruct gb as [| |bs| | | | |]; try discriminate.
   destruct (parent_offset_tu tu derived base) as [z|] eqn:Hz; last discriminate.
   intros Hcheck. apply bool_decide_eq_true in Hcheck.
   destruct Hcheck as (Hda & Hba & Hdiv & Hdz & Hnonneg & Hstrict & Hbound).
