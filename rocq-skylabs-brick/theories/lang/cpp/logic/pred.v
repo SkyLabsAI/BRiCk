@@ -890,12 +890,12 @@ Module Type VALID_PTR_AXIOMS
     [type_ptr_size] without first guarding this axiom on
     [is_Some (size_of σ fld.(mem_type))]: together they refute [type_ptr] at
     such a class (auto's tests/unsound/fixed_regression_tests/field_type_unsized).
-    [fld] is the first field named [fld.(mem_name)], matching [offset_of]:
-    when cpp2v emits several fields with one name, they all denote the first
-    one's address, so [fld ∈ s_fields st] would be unsound. *)
+    Membership suffices because [types_fields_nodup] makes field names
+    distinct, so [fld] is the field [offset_of] resolves [fld.(mem_name)] to
+    (see [glob_def_struct_elem_of]). *)
     Axiom type_ptr_o_field_type_ptr : forall p fld cls st,
       glob_def σ cls = Some (Gstruct st) ->
-      snd <$> list_find (fun m => m.(mem_name) = fld.(mem_name)) st.(s_fields) = Some fld →
+      fld ∈ s_fields st →
          type_ptr (Tnamed cls) p
       ⊢ type_ptr fld.(mem_type) (p ., Field cls fld.(mem_name)). (* TODO field names *)
 
