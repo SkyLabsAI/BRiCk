@@ -605,11 +605,22 @@ Module report.
           else []
         else []) m.
 
-    (** [wp_method] and [wp_ctor] are stuck on [Defaulted] bodies. *)
+    (** [wp_method] and [wp_ctor] are stuck on [Defaulted] bodies, except
+        for a union's defaulted copy/move operations, which copy the object
+        representation (see [wp_union_copy] in [logic/func.v]). *)
+    Definition union_copy_or_move (cls : name) (params : list (ident * type)) : bool :=
+      bool_decide (length params = 1) &&
+      if tu.(types) !! cls is Some (Gunion _) then true else false.
     Definition defaulted (o : ObjValue) : walk.M :=
       match o with
-      | Omethod m => if m.(m_body) is Some Defaulted then walk.FAIL "defaulted method" else []
-      | Oconstructor c => if c.(c_body) is Some Defaulted then walk.FAIL "defaulted constructor" else []
+      | Omethod m =>
+        if m.(m_body) is Some Defaulted then
+          if union_copy_or_move m.(m_class) m.(m_params) then [] else walk.FAIL "defaulted method"
+        else []
+      | Oconstructor c =>
+        if c.(c_body) is Some Defaulted then
+          if union_copy_or_move c.(c_class) c.(c_params) then [] else walk.FAIL "defaulted constructor"
+        else []
       | _ => []
       end.
 

@@ -98,17 +98,27 @@ Locate union_change.
 Section stuck.
   Context `{Σ : cpp_logic} {σ : genv} (tu : translation_unit).
 
-  (** [Defaulted] bodies: methods and constructors, not destructors. [report]
-      fails a queried one; others are unused, as cpp2v elaborates used ones. *)
-  Example defaulted_method (m : Method) args Q :
+  (** [Defaulted] bodies: methods and constructors of non-union classes, not
+      destructors. [report] fails a queried one; others are unused, as cpp2v
+      elaborates used ones. A union's defaulted copy/move operations have
+      [wp_union_copy] semantics instead. *)
+  Example defaulted_method (m : Method) st args Q :
     m.(m_body) = Some Defaulted ->
+    tu.(types) !! m.(m_class) = Some (Gstruct st) ->
     wp_method tu m args Q = UNSUPPORTED "wp_method: defaulted methods"%bs.
-  Proof. rewrite wp_method.unlock /=. by case: (m_body m) => [[]|]. Qed.
+  Proof.
+    rewrite wp_method.unlock /= => -> ->.
+    by case: args => [|? [|? [|??]]].
+  Qed.
 
-  Example defaulted_ctor (c : Ctor) args Q :
+  Example defaulted_ctor (c : Ctor) st args Q :
     c.(c_body) = Some Defaulted ->
+    tu.(types) !! c.(c_class) = Some (Gstruct st) ->
     wp_ctor tu c args Q = UNSUPPORTED "wp_ctor: defaulted constructors"%bs.
-  Proof. rewrite wp_ctor.unlock /=. by case: (c_body c) => [[]|]. Qed.
+  Proof.
+    rewrite wp_ctor.unlock /= => -> ->.
+    by case: args => [|? [|? [|??]]].
+  Qed.
 
   (** Indirect member initialization (members of anonymous structs/unions). *)
   Example indirect_init ρ cls this (m : Member) ms x path f e Q :
