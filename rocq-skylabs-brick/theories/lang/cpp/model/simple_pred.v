@@ -2409,7 +2409,7 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
 
     Axiom type_ptr_o_field_type_ptr : forall p fld cls (st : Struct),
       glob_def σ cls = Some (Gstruct st) ->
-      snd <$> list_find (fun m => m.(mem_name) = fld.(mem_name)) st.(s_fields) = Some fld →
+      fld ∈ s_fields st →
       type_ptr (Tnamed cls) p ⊢ type_ptr fld.(mem_type) (p .,
         Field cls fld.(mem_name)).
 

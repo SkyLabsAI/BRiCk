@@ -199,6 +199,48 @@ Qed.
 Definition glob_def (σ : genv) (gn : name) : option GlobDecl :=
   σ.(genv_tu).(types) !! gn.
 
+(** Every [translation_unit] carries [types_fields_nodup], so the records of
+    every [genv] have members with distinct names. *)
+Lemma glob_def_struct_nodup σ cls st :
+  glob_def σ cls = Some (Gstruct st) -> NoDup (mem_name <$> st.(s_fields)).
+Proof. apply: fields_nodup_struct. exact: types_fields_nodup. Qed.
+
+Lemma glob_def_union_nodup σ cls u :
+  glob_def σ cls = Some (Gunion u) -> NoDup (mem_name <$> u.(u_fields)).
+Proof. apply: fields_nodup_union. exact: types_fields_nodup. Qed.
+
+(** With distinct names, a member is the first one with its name. *)
+Lemma elem_of_members_list_find (fs : list Member) fld :
+  NoDup (mem_name <$> fs) ->
+  fld ∈ fs <->
+  snd <$> list_find (fun m => m.(mem_name) = fld.(mem_name)) fs = Some fld.
+Proof.
+  move=> Hnd; split.
+  - move=> /list_elem_of_lookup [j Hj].
+    destruct (list_find _ fs) as [[i m]|] eqn:Hf => /=.
+    + move: Hf => /list_find_Some [Hi [Heq _]]. f_equal.
+      have ? : i = j.
+      { apply: (NoDup_lookup _ _ _ (mem_name m) Hnd);
+          by rewrite list_lookup_fmap ?Hi ?Hj /= ?Heq. }
+      subst. congruence.
+    + move: Hf => /list_find_None /Forall_forall Hnone.
+      by case: (Hnone fld (list_elem_of_lookup_2 _ _ _ Hj)).
+  - destruct (list_find _ fs) as [[i m]|] eqn:Hf => //= -[<-].
+    move: Hf => /list_find_Some [Hi _]. exact: list_elem_of_lookup_2.
+Qed.
+
+Lemma glob_def_struct_elem_of σ cls st fld :
+  glob_def σ cls = Some (Gstruct st) ->
+  fld ∈ st.(s_fields) <->
+  snd <$> list_find (fun m => m.(mem_name) = fld.(mem_name)) st.(s_fields) = Some fld.
+Proof. move=> /glob_def_struct_nodup. exact: elem_of_members_list_find. Qed.
+
+Lemma glob_def_union_elem_of σ cls u fld :
+  glob_def σ cls = Some (Gunion u) ->
+  fld ∈ u.(u_fields) <->
+  snd <$> list_find (fun m => m.(mem_name) = fld.(mem_name)) u.(u_fields) = Some fld.
+Proof. move=> /glob_def_union_nodup. exact: elem_of_members_list_find. Qed.
+
 (*
 Lemma glob_def_alt σ gn :
   glob_def σ gn = genv_type_table σ !! gn.

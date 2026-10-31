@@ -4,6 +4,8 @@
  * See the LICENSE-BedRock file in the repository root for details.
  *)
 Require Import stdpp.fin_maps.
+Require Import stdpp.sorting.
+Require Stdlib.Sorting.SetoidList.
 Require Import skylabs.prelude.base.
 Require Import skylabs.prelude.avl.
 Require Import skylabs.prelude.lens.
@@ -13,8 +15,10 @@ Require Import skylabs.lang.cpp.syntax.core.
 Require Import skylabs.lang.cpp.syntax.types.
 Require Import skylabs.lang.cpp.syntax.decl.
 Require Import skylabs.lang.cpp.syntax.namemap.
+Require skylabs.lang.cpp.syntax.compare.
 Require Import skylabs.lang.cpp.syntax.mcore.
 Require Import skylabs.lang.cpp.syntax.abi.
+Require skylabs.lang.cpp.syntax.pretty.
 Export decl.
 
 #[local] Set Primitive Projections.
@@ -280,6 +284,214 @@ Definition Mtype_table : Type := TM.t (template MGlobDecl).
 Definition Malias_table : Type := TM.t (template Mtype).
 Definition Minstance_table : Type := NM.t Mtpreinst.
 
+(** ** Distinct field names *)
+(**
+BRiCk identifies a field by its name (see [offset_of]), so every [Struct] and
+[Union] in a [translation_unit] must have members with distinct names.
+[fields_nodup] checks this by computation, and [translation_unit] carries a
+proof that it holds.
+*)
+
+(** [field_names_nodup] is quadratic on short lists and sorts longer ones:
+    measured under [vm_compute], comparison sorting only pays off above about
+    16 names, while nearly all records in generated translation units have at
+    most 8 fields.
+
+    Both branches test names with [compare] directly rather than with
+    [EqDecision], so the definition of [fields_nodup] (and hence the type of
+    [translation_unit]) does not mention the laws of name comparison; only
+    the soundness lemmas below use them. *)
+#[local] Instance field_name_comparison : Comparison (@compare field_name.t _) :=
+  compare.atomic_name_comparison.
+
+Fixpoint field_names_nodup_quad (l : list field_name.t) : bool :=
+  match l with
+  | [] => true
+  | x :: l =>
+      negb (existsb (fun y => if compare x y is Eq then true else false) l) &&
+      field_names_nodup_quad l
+  end.
+
+Lemma field_names_nodup_quad_sound l : field_names_nodup_quad l = true -> NoDup l.
+Proof.
+  elim: l => [|x l IH] /=; first by constructor.
+  move=> /andb_prop [/negb_true_iff Hx /IH Hl]. constructor; last done.
+  move=> Hin. move: Hx => /not_true_iff_false; apply.
+  apply/existsb_exists. exists x. split; first exact/list_elem_of_In.
+  by rewrite comparison_refl.
+Qed.
+
+#[local] Definition field_name_le (a b : field_name.t) : Prop := compare a b <> Gt.
+#[local] Instance field_name_le_dec : RelDecision field_name_le :=
+  fun a b => decide (compare a b <> Gt).
+
+(** [strictly_increasing x l] checks that [x :: l] is strictly increasing. *)
+Fixpoint strictly_increasing (x : field_name.t) (l : list field_name.t) : bool :=
+  match l with
+  | [] => true
+  | y :: l => if compare x y is Lt then strictly_increasing y l else false
+  end.
+
+Definition field_names_nodup_sort (l : list field_name.t) : bool :=
+  match merge_sort field_name_le l with
+  | [] => true
+  | x :: l => strictly_increasing x l
+  end.
+
+Lemma strictly_increasing_sound x l :
+  strictly_increasing x l = true -> NoDup (x :: l) /\ forall y, y ∈ l -> compare x y = Lt.
+Proof.
+  elim: l x => [|y l IH] x /=.
+  { split; first by apply NoDup_singleton. by move=> ? /elem_of_nil. }
+  case Hxy: (compare x y) => // /IH [Hnd Hlt].
+  have Hall : forall z, z ∈ y :: l -> compare x z = Lt.
+  { move=> z /elem_of_cons [->|/Hlt Hyz]; first done.
+    exact: (compare_trans _ _ _ _ Hxy Hyz). }
+  split; last done. constructor; last done.
+  move=> /Hall. by rewrite comparison_refl.
+Qed.
+
+Lemma field_names_nodup_sort_sound l : field_names_nodup_sort l = true -> NoDup l.
+Proof.
+  rewrite /field_names_nodup_sort => H.
+  rewrite -(merge_sort_Permutation field_name_le l).
+  move: H. case: (merge_sort _ _) => [|x l'] H; first constructor.
+  by case: (strictly_increasing_sound _ _ H).
+Qed.
+
+Definition field_names_nodup (l : list field_name.t) : bool :=
+  if (length l <=? 16)%nat then field_names_nodup_quad l else field_names_nodup_sort l.
+
+Lemma field_names_nodup_sound l : field_names_nodup l = true -> NoDup l.
+Proof.
+  rewrite /field_names_nodup. case: (_ <=? _)%nat.
+  - exact: field_names_nodup_quad_sound.
+  - exact: field_names_nodup_sort_sound.
+Qed.
+
+Definition decl_fields_nodup (d : GlobDecl) : bool :=
+  match d with
+  | Gstruct st => field_names_nodup (mem_name <$> st.(s_fields))
+  | Gunion u => field_names_nodup (mem_name <$> u.(u_fields))
+  | _ => true
+  end.
+
+Definition fields_nodup (te : type_table) : bool :=
+  map_fold (fun _ d b => decl_fields_nodup d && b) true te.
+
+Lemma fields_nodup_alt te :
+  fields_nodup te = forallb (fun kv => decl_fields_nodup kv.2) (NM.elements te).
+Proof.
+  rewrite /fields_nodup /map_fold /NM.map_mapfold NM.fold_1.
+  have Hgen b l :
+    fold_left (fun a (p : name * GlobDecl) => decl_fields_nodup p.2 && a) l b =
+      b && forallb (fun kv => decl_fields_nodup kv.2) l.
+  { elim: l b => [|p l IH] b /=; first by rewrite andb_true_r.
+    by rewrite IH andb_assoc (andb_comm b). }
+  by rewrite Hgen.
+Qed.
+
+Lemma fields_nodup_lookup te n d :
+  fields_nodup te = true -> te !! n = Some d -> decl_fields_nodup d = true.
+Proof.
+  rewrite fields_nodup_alt => /forallb_forall Hall Hlook.
+  have /SetoidList.InA_alt [[k v] [[_ /= Hv] Hin]] := NM.elements_1 (NM.find_2 Hlook).
+  subst v. exact: (Hall (k, d)).
+Qed.
+
+Lemma fields_nodup_intro te :
+  (forall n d, te !! n = Some d -> decl_fields_nodup d = true) -> fields_nodup te = true.
+Proof.
+  rewrite fields_nodup_alt => Hall. apply/forallb_forall => [[k v] Hin] /=.
+  apply: (Hall k). apply: NM.find_1. apply: NM.elements_2.
+  apply/SetoidList.InA_alt. exists (k, v). split; last done.
+  split; first apply NM.Key.eq_refl. done.
+Qed.
+
+Lemma fields_nodup_struct te n st :
+  fields_nodup te = true -> te !! n = Some (Gstruct st) ->
+  NoDup (mem_name <$> st.(s_fields)).
+Proof. move=> H /(fields_nodup_lookup _ _ _ H). exact: field_names_nodup_sound. Qed.
+
+Lemma fields_nodup_union te n u :
+  fields_nodup te = true -> te !! n = Some (Gunion u) ->
+  NoDup (mem_name <$> u.(u_fields)).
+Proof. move=> H /(fields_nodup_lookup _ _ _ H). exact: field_names_nodup_sound. Qed.
+
+(** [sanitize_types te] replaces every record whose field names are not
+    distinct by [Gunsupported]; it is the identity on tables that pass
+    [fields_nodup]. *)
+Definition sanitize_decl (n : name) (d : GlobDecl) : GlobDecl :=
+  if decl_fields_nodup d then d
+  else Gunsupported ("Duplicate field names in " ++ pretty.print_name n)%pstring.
+
+(** Like [NM.mapi sanitize_decl te], but the [bst] proof is opaque and
+    mentions only [te]. [NM.mapi]'s proof mentions [sanitize_decl] itself, and
+    [vm_compute] reads such a proof back by normalizing [sanitize_decl]'s body
+    under its binders, unfolding the checker and the pretty-printer on symbolic
+    arguments; that does not terminate in practice, even for a one-entry table. *)
+Lemma sanitize_types_bst (te : type_table) :
+  NM.Raw.bst (NM.Raw.mapi sanitize_decl (NM.this te)).
+Proof. apply: NM.Raw.Proofs.mapi_bst. exact: NM.is_bst. Qed.
+
+Definition sanitize_types (te : type_table) : type_table :=
+  {| NM.this := NM.Raw.mapi sanitize_decl (NM.this te); NM.is_bst := sanitize_types_bst te |}.
+
+Lemma sanitize_types_find te n :
+  NM.find n (sanitize_types te) = NM.find n (NM.mapi sanitize_decl te).
+Proof. done. Qed.
+
+Lemma sanitize_types_ok te : fields_nodup (sanitize_types te) = true.
+Proof.
+  apply: fields_nodup_intro => n d Hlook.
+  have [d0 Hd0] : NM.In n te.
+  { apply: (NM.mapi_2 (f := sanitize_decl)). exists d. exact: NM.find_2. }
+  have [n0 [_ Hmaps]] := NM.mapi_1 sanitize_decl Hd0.
+  have H := NM.find_1 Hmaps. rewrite -sanitize_types_find in H.
+  have Hlook' : NM.find n (sanitize_types te) = Some d := Hlook.
+  have <- : sanitize_decl n0 d0 = d by congruence.
+  rewrite /sanitize_decl. by case E: (decl_fields_nodup d0); rewrite ?E.
+Qed.
+
+#[global] Arguments sanitize_types : simpl never.
+
+Lemma sanitize_types_lookup te n :
+  sanitize_types te !! n = sanitize_decl n <$> te !! n.
+Proof.
+  rewrite /lookup /NM.map_lookup sanitize_types_find.
+  case Hn: (NM.find n te) => [d|] /=.
+  - have [n0 [/NM.eqL -> Hmaps]] := NM.mapi_1 sanitize_decl (NM.find_2 Hn).
+    exact: NM.find_1.
+  - case Hm: (NM.find n (NM.mapi sanitize_decl te)) => [d|] //.
+    have [d0 Hd0] : NM.In n te.
+    { apply: (NM.mapi_2 (f := sanitize_decl)). exists d. exact: NM.find_2. }
+    move: (NM.find_1 Hd0). congruence.
+Qed.
+
+Lemma sanitize_types_id te :
+  fields_nodup te = true -> forall n, sanitize_types te !! n = te !! n.
+Proof.
+  move=> H n. rewrite sanitize_types_lookup.
+  case Hn: (te !! n) => [d|] //=. rewrite /sanitize_decl.
+  by rewrite (fields_nodup_lookup _ _ _ H Hn).
+Qed.
+
+(** [with_checked_types te k] passes [te] to [k] when it passes
+    [fields_nodup], and [sanitize_types te] otherwise. *)
+Definition with_checked_types {A} (te : type_table)
+    (k : forall te', fields_nodup te' = true -> A) : A :=
+  match fields_nodup te as b return fields_nodup te = b -> A with
+  | true => fun H => k te H
+  | false => fun _ => k (sanitize_types te) (sanitize_types_ok te)
+  end eq_refl.
+
+Lemma with_checked_types_ok {A} te k (H : fields_nodup te = true) :
+  @with_checked_types A te k = k te H.
+Proof.
+  rewrite /with_checked_types. move: (eq_refl (fields_nodup te)).
+  rewrite {2 3}H => H'. by rewrite (proof_irrel H' H).
+Qed.
+
 (** ** Translation units *)
 (**
 A [translation_unit] represents all the statically known
@@ -305,9 +517,98 @@ Record translation_unit : Type := makeTranslationUnit {
   msymbols : Msymbol_table;
   mtypes : Mtype_table;
   maliases : Malias_table;	(* we eschew <<Gtypedef>> for now *)
-  minstances : Minstance_table
+  minstances : Minstance_table;
+
+  types_fields_nodup : fields_nodup types = true
 }.
-#[only(lens)] derive translation_unit.
+(** Lenses. [derive lens] does not support the dependent field
+    [types_fields_nodup]. [_types] stores [sanitize_types] of the new table,
+    which replaces records with duplicate field names by [Gunsupported] and
+    does not otherwise change lookups (see [sanitize_types_lookup]); unlike
+    [with_checked_types], it reduces on tables with symbolic entries. *)
+#[local] Definition tu_lens {A} (view : translation_unit -> A)
+    (set : A -> translation_unit -> translation_unit)
+  : Lens translation_unit translation_unit A A :=
+  {| Lens.view := view; Lens.over f tu := set (f (view tu)) tu |}.
+
+Definition _symbols : Lens translation_unit translation_unit symbol_table symbol_table :=
+  tu_lens symbols (fun x tu =>
+    makeTranslationUnit x tu.(types) tu.(namespace_aliases) tu.(initializer)
+      tu.(asserts) tu.(abi) tu.(msymbols) tu.(mtypes) tu.(maliases)
+      tu.(minstances) tu.(types_fields_nodup)).
+
+Definition _types : Lens translation_unit translation_unit type_table type_table :=
+  tu_lens types (fun x tu =>
+    makeTranslationUnit tu.(symbols) (sanitize_types x) tu.(namespace_aliases)
+      tu.(initializer) tu.(asserts) tu.(abi) tu.(msymbols) tu.(mtypes)
+      tu.(maliases) tu.(minstances) (sanitize_types_ok x)).
+
+Definition _namespace_aliases : Lens translation_unit translation_unit alias_table.t alias_table.t :=
+  tu_lens namespace_aliases (fun x tu =>
+    makeTranslationUnit tu.(symbols) tu.(types) x tu.(initializer)
+      tu.(asserts) tu.(abi) tu.(msymbols) tu.(mtypes) tu.(maliases)
+      tu.(minstances) tu.(types_fields_nodup)).
+
+Definition _initializer : Lens translation_unit translation_unit InitializerBlock InitializerBlock :=
+  tu_lens initializer (fun x tu =>
+    makeTranslationUnit tu.(symbols) tu.(types) tu.(namespace_aliases) x
+      tu.(asserts) tu.(abi) tu.(msymbols) tu.(mtypes) tu.(maliases)
+      tu.(minstances) tu.(types_fields_nodup)).
+
+Definition _asserts : Lens translation_unit translation_unit (list StaticAssert) (list StaticAssert) :=
+  tu_lens asserts (fun x tu =>
+    makeTranslationUnit tu.(symbols) tu.(types) tu.(namespace_aliases)
+      tu.(initializer) x tu.(abi) tu.(msymbols) tu.(mtypes) tu.(maliases)
+      tu.(minstances) tu.(types_fields_nodup)).
+
+Definition _abi : Lens translation_unit translation_unit abi.t abi.t :=
+  tu_lens abi (fun x tu =>
+    makeTranslationUnit tu.(symbols) tu.(types) tu.(namespace_aliases)
+      tu.(initializer) tu.(asserts) x tu.(msymbols) tu.(mtypes) tu.(maliases)
+      tu.(minstances) tu.(types_fields_nodup)).
+
+Definition _msymbols : Lens translation_unit translation_unit Msymbol_table Msymbol_table :=
+  tu_lens msymbols (fun x tu =>
+    makeTranslationUnit tu.(symbols) tu.(types) tu.(namespace_aliases)
+      tu.(initializer) tu.(asserts) tu.(abi) x tu.(mtypes) tu.(maliases)
+      tu.(minstances) tu.(types_fields_nodup)).
+
+Definition _mtypes : Lens translation_unit translation_unit Mtype_table Mtype_table :=
+  tu_lens mtypes (fun x tu =>
+    makeTranslationUnit tu.(symbols) tu.(types) tu.(namespace_aliases)
+      tu.(initializer) tu.(asserts) tu.(abi) tu.(msymbols) x tu.(maliases)
+      tu.(minstances) tu.(types_fields_nodup)).
+
+Definition _maliases : Lens translation_unit translation_unit Malias_table Malias_table :=
+  tu_lens maliases (fun x tu =>
+    makeTranslationUnit tu.(symbols) tu.(types) tu.(namespace_aliases)
+      tu.(initializer) tu.(asserts) tu.(abi) tu.(msymbols) tu.(mtypes) x
+      tu.(minstances) tu.(types_fields_nodup)).
+
+Definition _minstances : Lens translation_unit translation_unit Minstance_table Minstance_table :=
+  tu_lens minstances (fun x tu =>
+    makeTranslationUnit tu.(symbols) tu.(types) tu.(namespace_aliases)
+      tu.(initializer) tu.(asserts) tu.(abi) tu.(msymbols) tu.(mtypes)
+      tu.(maliases) x tu.(types_fields_nodup)).
+
+(** [types_fields_nodup] is a proof of an equation between booleans, so it is
+    irrelevant: translation units with equal data are equal. *)
+Lemma translation_unit_eq (tu1 tu2 : translation_unit) :
+  tu1.(symbols) = tu2.(symbols) ->
+  tu1.(types) = tu2.(types) ->
+  tu1.(namespace_aliases) = tu2.(namespace_aliases) ->
+  tu1.(initializer) = tu2.(initializer) ->
+  tu1.(asserts) = tu2.(asserts) ->
+  tu1.(abi) = tu2.(abi) ->
+  tu1.(msymbols) = tu2.(msymbols) ->
+  tu1.(mtypes) = tu2.(mtypes) ->
+  tu1.(maliases) = tu2.(maliases) ->
+  tu1.(minstances) = tu2.(minstances) ->
+  tu1 = tu2.
+Proof.
+  case: tu1 => ?????????? H1; case: tu2 => ?????????? H2 /=.
+  intros; subst. f_equal. exact: proof_irrel.
+Qed.
 
 Definition byte_order (tu : translation_unit) : endian :=
   tu.(abi).(abi.byte_order).
@@ -317,7 +618,7 @@ Definition language_version (tu : translation_unit) : lang_version.t :=
 
 (** Just for testing *)
 Definition empty_tu (info : abi.t) : translation_unit :=
-  makeTranslationUnit ∅ ∅ ∅ [] [] info ∅ ∅ ∅ ∅.
+  makeTranslationUnit ∅ ∅ ∅ [] [] info ∅ ∅ ∅ ∅ eq_refl.
 #[global] Instance : Empty translation_unit :=
   empty_tu abi.abi_default.
 
@@ -818,8 +1119,9 @@ TODOs for FM-216:
 1. prove [complete_type_table_dec] above with an efficient checker.
 2. add [bool_decide (complete_type_table types = true]) to translation_unit;
    that's automatically proof-irrelevant, and proofs are just cheap [eq_refl].
+   [types_fields_nodup] already follows this pattern for distinct field names.
 3. add any helper lemmas, say for proving equality of [translation_unit] from
-   equality of the relevant componets.
+   equality of the relevant componets ([translation_unit_eq] covers this).
 
 Twist: the "decision procedure" likely requires fuel; find how to adapt the
 above plan. We'll likely end up with a boolean checker proven correct.

@@ -196,10 +196,13 @@ Module Import translation_unit.
 
   Definition decls (ds : PArray.array t) (info : abi.t) : translation_unit * dup_info :=
     decls' ds ∅ ∅ [] ∅ [] [] $ fun s t ga a asserts dups =>
-        pair {|
+        let types := List.fold_left (fun t '(n, d) =>
+                       if d is inl _ then <[n:=type_conflict n]> t else t) dups (NM.from_raw t) in
+        (* Records whose members do not have distinct names become
+           [Gunsupported]: see [with_checked_types]. *)
+        pair (with_checked_types types $ fun types Htypes => {|
             symbols := List.fold_left (fun t '(n, _) => <[n:=conflict n]> t) dups (NM.from_raw s);
-            types := List.fold_left (fun t '(n, d) =>
-                       if d is inl _ then <[n:=type_conflict n]> t else t) dups (NM.from_raw t);
+            types := types;
             namespace_aliases := (Listset (sort.sort ga), NM.from_raw $ NM.Raw.map (fun x => Listset $ sort.sort x) a);
             initializer := nil;	(** TODO *)
             asserts := sort_static_assert.sort asserts;
@@ -207,8 +210,9 @@ Module Import translation_unit.
             msymbols := ∅;
             mtypes := ∅;
             maliases := ∅;
-            minstances := ∅
-          |} dups.
+            minstances := ∅;
+            types_fields_nodup := Htypes
+          |}) dups.
 
   Definition list_decls (ls : list translation_unit.t) :=
     decls $ PArray.of_list _skip ls.
@@ -218,6 +222,21 @@ Module Import translation_unit.
 
     Ltac2 Type exn ::= [DuplicateSymbols (constr)].
 
+    (* [vm_compute] normalizes the proof [types_fields_nodup] to [eq_refl];
+       wrap it in a VM cast so that the kernel checks it with [vm_compute]
+       rather than lazy conversion. *)
+    Ltac2 vm_cast_fields_nodup (tu : constr) : constr :=
+      match Constr.Unsafe.kind tu with
+      | Constr.Unsafe.App h args =>
+          let types := Array.get args 1 in
+          let pf := Array.get args 10 in
+          let ty := '(fields_nodup $types = true) in
+          let args := Array.copy args in
+          Array.set args 10 (Constr.Unsafe.make (Constr.Unsafe.Cast pf Constr.Cast.vm ty));
+          Constr.Unsafe.make (Constr.Unsafe.App h args)
+      | _ => tu
+      end.
+
     (* [check_translation_unit tu]
      *)
     Ltac2 check_translation_unit (tu : preterm) (en : preterm) :=
@@ -226,7 +245,7 @@ Module Import translation_unit.
       let term := Constr.Unsafe.make (Constr.Unsafe.App ('decls) (Array.of_list [tu; info])) in
       let rtu := Std.eval_vm None term in
       lazy_match! rtu with
-      | pair ?tu nil => Std.exact_no_check tu
+      | pair ?tu nil => Std.exact_no_check (vm_cast_fields_nodup tu)
       | pair _ ?dups =>
           let _ := Message.print (Message.concat (Message.of_string "Duplicate symbols found in translation unit: ") (Message.of_constr dups)) in
           Control.throw (DuplicateSymbols dups)
@@ -262,19 +281,11 @@ Definition Dtype (n : globname) : K :=
 Definition Dunsupported (n : globname) (msg : PrimString.string) : K :=
   _types n $ Gunsupported msg.
 
-(** BRiCk identifies a field by its name (see [offset_of]), so a record whose
-    members do not have distinct names is unsupported. [sort.sort] drops
-    duplicates. *)
-Definition record_or_dup_fields (n : globname) (fs : list Member) (r : GlobDecl) : GlobDecl :=
-  let names := List.map (fun m => Nglobal m.(mem_name)) fs in
-  if Nat.eqb (List.length (sort.sort names)) (List.length names) then r
-  else Gunsupported ("Duplicate field names in " ++ pretty.print_name n)%pstring.
-
 Definition Dstruct (n : globname) (f : option Struct) : K :=
-  _types n $ if f is Some f then record_or_dup_fields n f.(s_fields) (Gstruct f) else Gtype.
+  _types n $ if f is Some f then Gstruct f else Gtype.
 
 Definition Dunion (n : globname) (f : option Union) : K :=
-  _types n $ if f is Some f then record_or_dup_fields n f.(u_fields) (Gunion f) else Gtype.
+  _types n $ if f is Some f then Gunion f else Gtype.
 
 Definition Denum (n : globname) (u : type) (cs : list ident) : K :=
   _types n $ Genum u cs.
