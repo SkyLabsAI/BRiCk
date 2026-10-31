@@ -126,6 +126,53 @@ Section comparable.
     by rewrite -(Hi _ _ Hs1 Hs2) (same_address_bool_eq Hs1 Hs2).
   Qed.
 
+  Lemma ptr_comparable_equiv p1 p2 res1 res2 :
+    (is_Some (ptr_vaddr p1) -> is_Some (ptr_vaddr p2) -> res1 = res2) ->
+    ptr_comparable p1 p2 res1 -|- ptr_comparable p1 p2 res2.
+  Proof.
+    rewrite ptr_comparable_eq /ptr_comparable_def !only_provable_wand_forall.
+    intros Heq. f_equiv => -[Hp1 Hp2]. by move: Heq => /(_ Hp1 Hp2) ->.
+  Qed.
+
+  Lemma ptr_ord_comparable_valid ty p1 p2 (p : ptr) (sz : N) (i j : Z) :
+    size_of σ ty = Some sz ->
+    (0 < sz)%N ->
+    p1 = p .[ ty ! i ] ->
+    p2 = p .[ ty ! j ] ->
+    valid_ptr p1 ∗ valid_ptr p2 ⊢
+    ptr_ord_comparable p1 p2 (λ va1 va2, bool_decide (va1 = va2)) (bool_decide (p1 = p2)).
+  Proof.
+    intros; subst.
+    iApply (ptr_ord_comparable_off_off _ _ p) => //.
+    intros va1 va2 Hva1 Hva2. apply bool_decide_ext. split.
+    - intros ->. have -> : i = j.
+      { apply (same_address_o_sub_eq p ty i j sz); [done|lia|].
+        eapply same_address_intro; eassumption. }
+      reflexivity.
+    - intros E. rewrite E in Hva1. congruence.
+  Qed.
+
+  Lemma ptr_comparable_valid ty p1 p2 (p : ptr) (sz : N) (i j : Z) :
+    size_of σ ty = Some sz ->
+    (0 < sz)%N ->
+    p1 = p .[ ty ! i ] ->
+    p2 = p .[ ty ! j ] ->
+    valid_ptr p1 ∗ valid_ptr p2 ⊢
+    ptr_comparable p1 p2 (bool_decide (p1 = p2)).
+  Proof. intros. rewrite -ptr_ord_comparable_comparable. exact: ptr_ord_comparable_valid. Qed.
+
+  Lemma ptr_comparable_valid_idx ty p1 p2 (p : ptr) (sz : N) (i j : Z) :
+    size_of σ ty = Some sz ->
+    (0 < sz)%N ->
+    p1 = p .[ ty ! i ] ->
+    p2 = p .[ ty ! j ] ->
+    valid_ptr p1 ∗ valid_ptr p2 ⊢
+    ptr_comparable p1 p2 (bool_decide (i = j)).
+  Proof.
+    intros. rewrite ptr_comparable_equiv; first exact /ptr_comparable_valid.
+    intros; subst; apply bool_decide_ext. rewrite o_sub_eq_inj //; lia.
+  Qed.
+
   Lemma ptr_comparable_symm p1 p2 res :
     ptr_comparable p1 p2 res ⊢ ptr_comparable p2 p1 res.
   Proof.
