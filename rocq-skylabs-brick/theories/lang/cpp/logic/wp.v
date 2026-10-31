@@ -715,6 +715,7 @@ Section with_cpp.
     ⊢ wp_lval tu ρ e Q.
 
   Axiom wp_lval_models : forall {σ:genv} tu ρ e Q,
+      tu ⊧ σ ->
       denoteModule tu -* wp_lval tu ρ e Q
     ⊢ wp_lval tu ρ e Q.
 
@@ -845,6 +846,7 @@ Section with_cpp.
     ⊢ wp_init tu ρ ty p e Q.
 
   Axiom wp_init_models : forall {σ:genv} tu ty ρ p e Q,
+      tu ⊧ σ ->
       denoteModule tu -* wp_init tu ρ ty p e Q
     ⊢ wp_init tu ρ ty p e Q.
 
@@ -951,6 +953,7 @@ Section with_cpp.
     ⊢ wp_operand (resolve:=σ) tu ρ e Q.
 
   Axiom wp_operand_models : forall {σ:genv} tu ρ e Q,
+      tu ⊧ σ ->
       denoteModule tu -* wp_operand tu ρ e Q
     ⊢ wp_operand tu ρ e Q.
 
@@ -1068,6 +1071,7 @@ Section with_cpp.
     ⊢ wp_xval tu ρ e Q.
 
   Axiom wp_xval_models : forall {σ:genv} tu ρ e Q,
+      tu ⊧ σ ->
       denoteModule tu -* wp_xval tu ρ e Q
     ⊢ wp_xval tu ρ e Q.
 
@@ -1356,6 +1360,7 @@ Section with_cpp.
     ⊢ wp (resolve:=σ) tu ρ s Q.
 
   Axiom wp_models : forall σ tu ρ s Q,
+      tu ⊧ σ ->
       denoteModule tu -* wp tu ρ s Q
     ⊢ wp (resolve:=σ) tu ρ s Q.
 

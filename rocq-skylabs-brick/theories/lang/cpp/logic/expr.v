@@ -243,6 +243,7 @@ Module Type Expr.
           read_decl (_local ρ x) ty (fun p => Q p FreeTemps.id)
       |-- wp_lval (Evar x ty) Q.
     Axiom wp_lval_global : forall ty x Q,
+          [| size_of ty <> Some 0%N |] **
           read_decl (_global x) ty (fun p => Q p FreeTemps.id)
       |-- wp_lval (Eglobal x ty) Q.
 
