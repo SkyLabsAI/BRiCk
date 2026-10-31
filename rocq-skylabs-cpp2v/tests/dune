@@ -57,3 +57,9 @@
   (package rocq-skylabs-brick)
   (package rocq-skylabs-cpp2v)
   (package rocq-skylabs-brick-cpp-prog)))
+
+; Synthetic ASTs in this direct printer harness currently support Clang 22 only.
+(cram
+ (applies_to template_value_fallbacks)
+ (enabled_if (= %{read:../build-dune/printer-tests/llvm-major.txt} 22))
+ (deps ../build-dune/printer-tests/cpp2v-fallback-tests))
