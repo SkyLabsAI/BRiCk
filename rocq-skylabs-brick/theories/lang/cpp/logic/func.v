@@ -537,8 +537,9 @@ be harmless:
 - [dst] gets full ownership of these bytes and of [unionR], which the
   caller paid for with the whole of [dst]'s storage ([anyR] or [tblockR]
   at full fraction); [src] gets back exactly what it lent.
-Self-assignment is not supported: the rule needs separate ownership of
-[src] and [dst], which the full [anyR] of [dst] rules out.
+This rule needs separate ownership of [src] and [dst], which the full
+[anyR] of [dst] rules out when they are the same object; self-assignment
+is [wp_union_self_copy].
 *)
 Definition wp_union_copy `{Σ : cpp_logic, σ : genv} (cls : globname) (un : decl.Union)
     (src dst : ptr) (Q : mpred) : mpred :=
@@ -566,6 +567,49 @@ Section wp_union_copy.
   Qed.
 End wp_union_copy.
 
+(** Self-assignment of a union ([x = x], or [*p = *q] with [p = q]) copies
+the object representation of [p] onto itself, so it changes nothing.
+
+[wp_union_self_copy cls un p Q] requires full ownership of [p]'s object
+representation, active member [i] with bytes [rs], and gives it back
+unchanged.
+
+Soundness. The prover chooses [i], [m] and [rs]:
+- [i] and [m] are fixed by [p]'s [unionR] and [u_fields], and the resources
+  are returned exactly as given, so no choice can change the active member
+  or its bytes.
+- Ownership is full ([1$m]), not just enough to read: the copy writes every
+  byte of the object, and a concurrent read by a holder of another fraction
+  would be a data race even though the written bytes are unchanged. So [rs]
+  is exactly [size_of mty] bytes, as in [wp_union_copy], and [unionR] at
+  full fraction covers the union's remaining bytes (its padding).
+Only assignment uses this rule: a self copy-construction reads the
+storage it is about to initialize.
+*)
+Definition wp_union_self_copy `{Σ : cpp_logic, σ : genv} (cls : globname) (un : decl.Union)
+    (p : ptr) (Q : mpred) : mpred :=
+  Exists (i : nat) (m : Member) (rs : list raw_byte),
+    [| un.(u_fields) !! i = Some m |] **
+    let f := o_field σ (Field cls m.(mem_name)) in
+    let mty := erase_qualifiers m.(mem_type) in
+    [| size_of σ mty = Some (lengthN rs) |] **
+    p |-> unionR cls 1$m (Some i) ** p ,, f |-> rawsR 1$m rs **
+    (p |-> unionR cls 1$m (Some i) -* p ,, f |-> rawsR 1$m rs -* Q).
+#[global] Arguments wp_union_self_copy : simpl never.
+
+Section wp_union_self_copy.
+  Context `{Σ : cpp_logic, σ : genv}.
+
+  Lemma wp_union_self_copy_frame cls un p Q Q' :
+    (Q -* Q') |-- wp_union_self_copy cls un p Q -* wp_union_self_copy cls un p Q'.
+  Proof.
+    rewrite /wp_union_self_copy. iIntros "HQ wp".
+    iDestruct "wp" as (i m rs) "(% & % & U & F & wp)".
+    iExists i, m, rs. iFrame "U F". do 2 (iSplit; first done).
+    iIntros "? ?". iApply "HQ". iApply ("wp" with "[$] [$]").
+  Qed.
+End wp_union_self_copy.
+
 (** ** The weakest precondition of a method *)
 (**
 Note that in the calling convention for methods, the [this] parameter
@@ -586,18 +630,23 @@ parameters.
     end
   | Some Defaulted =>
     (* A union's defaulted copy or move assignment operator (see
-       [wp_union_copy]). It returns a reference to the destination. *)
+       [wp_union_copy] and [wp_union_self_copy]). It returns a reference to
+       the destination. *)
     match args, tu.(types) !! m.(m_class) with
     | [thisp; srcp], Some (Gunion un) =>
       let ty := Tnamed m.(m_class) in
-      thisp |-> anyR ty 1$m **
+      let K : mpred := (|={top}=>?u |> Forall p : ptr, p |-> primR (Tref ty) 1$m (Vref thisp) -* Q p)%I in
+      (thisp |-> anyR ty 1$m **
+       |>
+       (* [srcp] is the (materialized) reference parameter; read it like
+          [read_decl] does. *)
+       (Exists src : ptr,
+         ((Exists q, srcp |-> primR (Tref ty) q (Vref src) ** True) //\\
+          wp_union_copy m.(m_class) un src thisp K))) \\//
+      (* Self-assignment: [srcp] refers to [thisp] itself. *)
       |>
-      (* [srcp] is the (materialized) reference parameter; read it like
-         [read_decl] does. *)
-      (Exists src : ptr,
-        ((Exists q, srcp |-> primR (Tref ty) q (Vref src) ** True) //\\
-         wp_union_copy m.(m_class) un src thisp
-           (|={top}=>?u |> Forall p : ptr, p |-> primR (Tref ty) 1$m (Vref thisp) -* Q p)))
+      ((Exists q, srcp |-> primR (Tref ty) q (Vref thisp) ** True) //\\
+       wp_union_self_copy m.(m_class) un thisp K)
     | _, _ => UNSUPPORTED "wp_method: defaulted methods"
     end
   end.
@@ -626,10 +675,15 @@ Section wp_method.
       destruct (tu.(types) !! m_class) as [[|un| | | | |]|] eqn:Hun;
         try (iIntros "H"; iDestruct (UNSUPPORTED_elim with "H") as "[]").
       erewrite sub_module_preserves_gunion; [|done..].
-      iIntros "[$ wp] !>". iDestruct "wp" as (src) "wp". iExists src.
-      iSplit; first by iDestruct "wp" as "[$ _]". iDestruct "wp" as "[_ wp]".
-      iApply (wp_union_copy_frame with "[HQ] wp").
-      iIntros ">wp !> !> %p R". iApply "HQ". by iApply "wp". }
+      iIntros "[[A wp]|wp]".
+      - iLeft. iFrame "A". iNext. iDestruct "wp" as (src) "wp". iExists src.
+        iSplit; first by iDestruct "wp" as "[$ _]". iDestruct "wp" as "[_ wp]".
+        iApply (wp_union_copy_frame with "[HQ] wp").
+        iIntros ">wp !> !> %p R". iApply "HQ". by iApply "wp".
+      - iRight. iNext.
+        iSplit; first by iDestruct "wp" as "[$ _]". iDestruct "wp" as "[_ wp]".
+        iApply (wp_union_self_copy_frame with "[HQ] wp").
+        iIntros ">wp !> !> %p R". iApply "HQ". by iApply "wp". }
     all: destruct args as [|thisp rest_vals]; auto.
     all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
     all: iApply wp_frame; [done|]; iIntros (?).
@@ -652,10 +706,15 @@ Section wp_method.
     destruct m_body as [[|body|body]|]; auto.
     { destruct args as [|thisp [|srcp [|??]]]; auto.
       case_match; auto. case_match; auto.
-      iIntros "[$ wp] !>". iDestruct "wp" as (src) "wp". iExists src.
-      iSplit; first by iDestruct "wp" as "[$ _]". iDestruct "wp" as "[_ wp]".
-      iApply (wp_union_copy_frame with "[] wp").
-      iIntros "wp !> !> %p R". by iApply "wp". }
+      iIntros "[[A wp]|wp]".
+      - iLeft. iFrame "A". iNext. iDestruct "wp" as (src) "wp". iExists src.
+        iSplit; first by iDestruct "wp" as "[$ _]". iDestruct "wp" as "[_ wp]".
+        iApply (wp_union_copy_frame with "[] wp").
+        iIntros "wp !> !> %p R". by iApply "wp".
+      - iRight. iNext.
+        iSplit; first by iDestruct "wp" as "[$ _]". iDestruct "wp" as "[_ wp]".
+        iApply (wp_union_self_copy_frame with "[] wp").
+        iIntros "wp !> !> %p R". by iApply "wp". }
     all: destruct args as [|thisp rest_vals]; auto.
     all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
     all: iApply wp_frame; [done|]; iIntros (?).
