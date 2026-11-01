@@ -794,6 +794,45 @@ static fmt::Formatter &printFunctionParams(CoqPrinter &print,
     });
 }
 
+/// A union's defaulted copy/move constructors and assignment operators
+/// copy the object representation of the source ([class.copy.ctor]/14,
+/// [class.copy.assign]/13). Clang's AST does not express this copy: the
+/// generated body is empty (constructors) or `return *this;` (assignment
+/// operators), because clang's code generator performs the copy at the call
+/// site. Printing that body would make the copy a no-op, so these members
+/// are printed as `Defaulted` and the logic gives them their meaning.
+static bool isDefaultedUnionCopyOrMove(const CXXMethodDecl &decl) {
+    if (!decl.isDefaulted() || !decl.getParent()->isUnion())
+        return false;
+    if (auto d = dyn_cast<CXXConstructorDecl>(&decl))
+        return d->isCopyOrMoveConstructor();
+    return decl.isCopyAssignmentOperator() || decl.isMoveAssignmentOperator();
+}
+
+/// The logic copies the active member's `sizeof` bytes. A
+/// `[[no_unique_address]]` member may be larger than the union's data
+/// size, and an enclosing object can place other subobjects in the
+/// difference; clang then copies only the data size. Such unions get no
+/// body, so neither the AST's no-op nor the logic's copy applies.
+static bool hasPotentiallyOverlappingField(const CXXMethodDecl &decl) {
+    for (auto f : decl.getParent()->fields())
+        if (f->isPotentiallyOverlapping())
+            return true;
+    return false;
+}
+
+/// Print the body of a union's defaulted copy/move operation.
+static fmt::Formatter &printDefaultedUnionCopyOrMove(CoqPrinter &print,
+                                                     const CXXMethodDecl &decl,
+                                                     ClangPrinter &cprint) {
+    if (hasPotentiallyOverlappingField(decl)) {
+        unsupported(cprint, loc::of(decl),
+                    "copy/move of a union with a [[no_unique_address]] member");
+        return print.none();
+    }
+    return print.output() << "(Some Defaulted)";
+}
+
 static llvm::StringRef orDefaultBodyCtorName(const FunctionDecl &decl) {
     return decl.isImplicit() || decl.isDefaulted() ? "CompilerProvided"
                                                    : "UserDefined";
@@ -842,7 +881,9 @@ static fmt::Formatter &printMethod(CoqPrinter &print, const CXXMethodDecl &decl,
     cprint.printCallingConv(print, decl) << fmt::nbsp;
     cprint.printVariadic(print, decl.isVariadic()) << fmt::nbsp;
     cprint.printExceptionSpec(print, decl) << fmt::nbsp;
-    if (auto body = decl.getBody()) {
+    if (isDefaultedUnionCopyOrMove(decl)) {
+        return printDefaultedUnionCopyOrMove(print, decl, cprint);
+    } else if (auto body = decl.getBody()) {
         guard::some some(print);
         guard::ctor _(print, orDefaultBodyCtorName(decl));
         return cprint.printStmt(print, body);
@@ -958,7 +999,9 @@ static fmt::Formatter &printConstructor(CoqPrinter &print,
     cprint.printCallingConv(print, decl) << fmt::nbsp;
     cprint.printVariadic(print, decl.isVariadic()) << fmt::nbsp;
     cprint.printExceptionSpec(print, decl) << fmt::nbsp;
-    if (auto body = decl.getBody()) {
+    if (isDefaultedUnionCopyOrMove(decl)) {
+        return printDefaultedUnionCopyOrMove(print, decl, cprint);
+    } else if (auto body = decl.getBody()) {
         guard::some s(print);
         guard::ctor od(print, orDefaultBodyCtorName(decl));
         guard::tuple _(print);
