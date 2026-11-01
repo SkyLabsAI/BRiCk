@@ -995,6 +995,7 @@ Module SimpleCPP.
         | Tincomplete_array _
         | Tvariable_array _ _
         | Tnamed _ => False (* not directly encoded in memory *)
+        | Tattributed _ _ => False
         | Tunsupported _ => False
         | Tdecltype _ => False
         | _ => False

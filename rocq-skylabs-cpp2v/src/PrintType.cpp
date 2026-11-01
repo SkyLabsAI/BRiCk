@@ -88,8 +88,19 @@ public:
     IGNORE(PackExpansionType)
     IGNORE(VectorType)
 
+    /// Type attributes are preserved as `Tattributed`, as are the
+    /// attributes of a typedef at each use of the typedef (cpp2v prints the
+    /// underlying type, where the typedef's attributes would vanish).
+    /// Deciding which attributes are harmless is left to Rocq.
     void VisitAttributedType(const AttributedType *type, CoqPrinter &print,
                              ClangPrinter &cprint) {
+        guard::ctor _(print, "Tattributed", false);
+        {
+            guard::list _l(print);
+            cprint.printAttr(print, type->getAttrKind(), type->getAttr());
+            print.cons();
+        }
+        print.output() << fmt::nbsp;
         cprint.printQualType(print, type->getModifiedType(), loc::of(type));
     }
 
@@ -316,6 +327,14 @@ public:
 
     void VisitTypedefType(const TypedefType *type, CoqPrinter &print,
                           ClangPrinter &cprint) {
+        if (auto decl = type->getDecl(); decl && cprint.hasPrintedAttrs(*decl)) {
+            guard::ctor _(print, "Tattributed", false);
+            cprint.printAttrs(print, *decl) << fmt::nbsp;
+            cprint.printQualType(
+                print, decl->getCanonicalDecl()->getUnderlyingType(),
+                loc::of(type));
+            return;
+        }
         if (PRINT_ALIAS) {
             print.ctor("@Talias", false);
             cprint.printName(print, type->getDecl(), loc::of(type));

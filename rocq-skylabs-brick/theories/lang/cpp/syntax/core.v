@@ -185,6 +185,73 @@ Module cast_style.
     Pos.compare (tag a) (tag b).
 End cast_style.
 
+(** ** Attributes *)
+Module attr.
+  (**
+  The attributes of a declaration or a type, as cpp2v records them.
+
+  cpp2v preserves every attribute, so that a new or unexpected attribute is
+  not silently dropped; deciding which attributes are harmless (e.g.
+  <<[[nodiscard]]>>, <<always_inline>>, <<visibility>>) is left to Rocq
+  ([noop_kinds] below). Attributes that BRiCk does
+  not model are recorded as [Other kind pretty], where [kind] is the name of
+  clang's attribute kind (e.g. <<Section>> for every spelling of the
+  attribute; <<CXX11NoReturn>> and <<NoReturn>> are distinct kinds) and
+  [pretty] the attribute as clang prints it, arguments included (e.g.
+  <<__attribute__((section(".cpulocal")))>>), or the empty string for an
+  implicit attribute, which has no spelling.
+
+  [supported] reports every [Other] attribute that is not on its list of
+  no-op attributes. The program logic does not interpret them yet: it is up
+  to the attributes that get a model to add a constructor here.
+  *)
+  Variant t : Set :=
+  | Other (kind : PrimString.string) (pretty : PrimString.string).
+  #[global] Instance t_eq_dec : EqDecision t.
+  Proof. solve_decision. Defined.
+
+  (** Attribute kinds (clang's [attr::Kind] names) without effect on the
+      abstract machine. cpp2v records every attribute; this list decides
+      which ones are harmless, for [supported] and for the parser's
+      [Tattributed] smart constructor, which drops types' no-op attributes. Keep it explicit, and add a kind only after
+      checking that it cannot change behaviour. In particular [Section]
+      (per-CPU data in NOVA), [Aligned], [Packed], [AsmLabel] and
+      [InternalLinkage] are deliberately absent. *)
+  Definition noop_kinds : list PrimString.string :=
+    [ (* Diagnostics only. *)
+      "WarnUnusedResult"; "Unused"; "Deprecated"; "Unavailable"; "Format";
+      "FormatArg"; "DiagnoseIf";
+      (* Code generation and placement hints. *)
+      "AlwaysInline"; "NoInline"; "Cold"; "Hot"; "Flatten"; "MinSize";
+      "OptimizeNone"; "NoMerge"; "Used";
+      (* Symbol visibility and import/export. *)
+      "Visibility"; "TypeVisibility"; "DLLImport"; "DLLExport";
+      "ExcludeFromExplicitInstantiation"; "AbiTag";
+      (* Instrumentation and debug information. *)
+      "NoSanitize"; "NoStackProtector"; "NoDebug"; "Annotate";
+      (* Thread-safety analysis annotations (checked by clang only). *)
+      "AcquireCapability"; "ReleaseCapability"; "RequiresCapability";
+      "TryAcquireCapability"; "AssertCapability"; "LocksExcluded";
+      "LockReturned"; "GuardedBy"; "PtGuardedBy"; "AcquiredBefore";
+      "AcquiredAfter"; "Capability"; "ScopedLockable";
+      "NoThreadSafetyAnalysis";
+      (* Already reflected elsewhere in the AST: the [override]/[final]
+         keywords, and overload resolution done by clang. *)
+      "Override"; "Final"; "EnableIf"; "Overloadable";
+      (* Compile-time only. *)
+      "ConstInit"; "Availability";
+      (* Markers on builtins and library types. *)
+      "Builtin"; "NoBuiltin"; "Owner"; "Pointer" ]%pstring.
+
+  Definition noop_kind (kind : PrimString.string) : bool :=
+    existsb (fun k => if PrimString.compare k kind is Eq then true else false) noop_kinds.
+
+  Definition noop (a : t) : bool :=
+    match a with
+    | Other kind _ => noop_kind kind
+    end.
+End attr.
+
 (** ** Structured names *)
 (** Atomic names are effectively path components. *)
 Inductive atomic_name : Set :=
@@ -298,6 +365,10 @@ with type : Set :=
   (* ^^ this is <<decltype(e)>> when <<e>> is a variable reference
      (1) in <https://en.cppreference.com/w/cpp/language/decltype>
    *)
+| Tattributed (attrs : list attr.t) (t : type)
+  (* ^^ [t] with the attributes [attrs] (type attributes, and the attributes
+     of the typedef that names [t]). The program logic treats it as opaque,
+     like [Tunsupported], for now. *)
 | Tunsupported (_ : PrimString.string)
 
 (** ** Expressions *)
@@ -992,6 +1063,7 @@ with is_dependentT (t : type) : bool :=
   | Tarch _ _ => false
   | Tdecltype e => is_dependentE e
   | Texprtype e => is_dependentE e
+  | Tattributed _ t => is_dependentT t
   | Tunsupported _ => false
   end
 

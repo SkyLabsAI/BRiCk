@@ -558,6 +558,7 @@ Section body.
 
     | Tfunction _ => |={top}=> UNSUPPORTED ("wp_destroy_val: function type", rty)
     | Tarch _ _ => |={top}=> UNSUPPORTED ("wp_destroy_val: arch type", rty)
+    | Tattributed _ _ => |={top}=> UNSUPPORTED ("wp_destroy_val: attributed type", rty)
     | Tunsupported msg => |={top}=> UNSUPPORTED ("wp_destroy_val: unsupported type", msg)
     | _ => |={top}=> UNSUPPORTED ("wp_destroy_val: template type")
     end.

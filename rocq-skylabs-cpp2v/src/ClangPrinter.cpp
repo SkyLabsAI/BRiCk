@@ -9,6 +9,7 @@
 #include "Formatter.hpp"
 #include "Logging.hpp"
 #include <clang/AST/ASTContext.h>
+#include <clang/AST/Attr.h>
 #include <clang/AST/Decl.h>
 #include <clang/AST/DeclCXX.h>
 #include <clang/AST/DeclTemplate.h>
@@ -17,6 +18,7 @@
 #include <clang/AST/TemplateBase.h>
 #include <clang/Frontend/CompilerInstance.h>
 #include <clang/Sema/Sema.h>
+#include <llvm/ADT/STLExtras.h>
 #include <optional>
 
 using namespace clang;
@@ -448,6 +450,82 @@ llvm::raw_ostream &ClangPrinter::trace(StringRef whence, loc::loc loc) {
     if (loc::can_trace(loc, decl))
         os << " " << loc::trace(loc, getContext(), decl);
     return os << "\n";
+}
+
+/// The name of an attribute's kind (e.g. `Section`, `Weak`,
+/// `CXX11NoReturn`). Unlike the written name, it exists for implicit
+/// attributes and is the same for every spelling of the attribute.
+static StringRef attrKindName(attr::Kind kind) {
+    switch (kind) {
+#define ATTR(X)                                                                \
+    case attr::X:                                                              \
+        return #X;
+#include "clang/Basic/AttrList.inc"
+    }
+    return "Unknown";
+}
+
+/// Whether to skip attribute `a` of `decl`: the implicit attributes that
+/// clang attaches to builtins (e.g. `NoThrow`,
+/// `Const` on `__builtin_popcount`) and to implicitly declared functions
+/// (e.g. `ReturnsNonNull`, `AllocSize`, `AllocAlign` on the replaceable
+/// `operator new`). BRiCk models builtins and the replaceable allocation
+/// functions itself, and those models must already respect the guarantees
+/// that these attributes encode. Explicit attributes on such declarations
+/// are kept.
+///
+/// TODO: revisit skipping implicit attributes on builtins and implicit
+/// declarations once BRiCk supports these attributes (e.g. `ReturnsNonNull`,
+/// `AllocSize`, `AllocAlign`, `Const`), so that the models are checked
+/// against them instead of trusted.
+///
+/// Every other attribute is printed, including those without effect on the
+/// abstract machine: deciding which attributes are harmless is left to
+/// `supported` in Rocq (`supported.walk.noop_attr`).
+static bool skipAttr(const Decl &decl, const Attr &a) {
+    if (a.isImplicit()) {
+        if (decl.isImplicit())
+            return true;
+        if (auto fd = dyn_cast<FunctionDecl>(&decl);
+            fd && fd->getBuiltinID() != 0)
+            return true;
+    }
+    return false;
+}
+
+fmt::Formatter &ClangPrinter::printAttr(CoqPrinter &print, attr::Kind kind,
+                                        const Attr *a) {
+    // Implicit attributes (e.g. on builtins) have no source spelling.
+    std::string pretty;
+    if (a && !a->isImplicit()) {
+        llvm::raw_string_ostream os(pretty);
+        a->printPretty(os, getContext().getPrintingPolicy());
+        os.flush();
+    }
+    guard::ctor _(print, "attr.Other", false);
+    print.str(attrKindName(kind)) << fmt::nbsp;
+    return print.str(StringRef(pretty).trim());
+}
+
+bool ClangPrinter::hasPrintedAttrs(const clang::Decl &decl) {
+    return llvm::any_of(decl.attrs(), [&](const Attr *a) {
+        return a && !skipAttr(decl, *a);
+    });
+}
+
+fmt::Formatter &ClangPrinter::printAttrs(CoqPrinter &print,
+                                         const clang::Decl &decl) {
+    auto attrs = llvm::make_filter_range(decl.attrs(), [&](const Attr *a) {
+        return a && !skipAttr(decl, *a);
+    });
+    if (attrs.empty())
+        return print.output() << "nil";
+    guard::list _(print);
+    for (const Attr *a : attrs) {
+        printAttr(print, a->getKind(), a);
+        print.cons();
+    }
+    return print.output();
 }
 
 fmt::Formatter &ClangPrinter::printVariadic(CoqPrinter &print, bool va) const {

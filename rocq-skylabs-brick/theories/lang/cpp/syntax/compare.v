@@ -1102,6 +1102,12 @@ Module name.
   End compare_body.
 End name.
 
+Definition attr_compare (a b : attr.t) : comparison :=
+  match a , b with
+  | attr.Other k p , attr.Other k' p' =>
+      compare_lex (PrimString.compare k k') $ fun _ => PrimString.compare p p'
+  end.
+
 Module type.
   Section compare_body.
     Context (compareN : name -> name -> comparison).
@@ -1202,6 +1208,14 @@ Module type.
       compare_lex (type_qualifiers.compare b1.(box_Tqualified_0) b2.(box_Tqualified_0)) $ fun _ =>
       compareT b1.(box_Tqualified_1) b2.(box_Tqualified_1).
 
+    Record box_Tattributed : Set := Box_Tattributed {
+      box_Tattributed_0 : list attr.t;
+      box_Tattributed_1 : type;
+    }.
+    Definition box_Tattributed_compare (b1 b2 : box_Tattributed) : comparison :=
+      compare_lex (List.compare attr_compare b1.(box_Tattributed_0) b2.(box_Tattributed_0)) $ fun _ =>
+      compareT b1.(box_Tattributed_1) b2.(box_Tattributed_1).
+
     Record box_Tarch : Set := Box_Tarch {
       box_Tarch_0 : option bitsize;
       box_Tarch_1 : PrimString.string;
@@ -1255,6 +1269,7 @@ Module type.
       | 21 => box_Tresult_member_call
       | 22 => box_Tresult_parenlist
       | 23 => box_Tresult_member
+      | 25 => box_Tattributed
       | _ => PrimString.string
       end.
 
@@ -1292,6 +1307,7 @@ Module type.
       | Tresult_parenlist _ _ => inr 22
       | Tresult_member _ _ => inr 23
       | Tunsupported _ => inr 24
+      | Tattributed _ _ => inr 25
       end.
       *)
 
@@ -1329,6 +1345,7 @@ Module type.
       | Tresult_member a b => kp 23 $ Box_Tresult_member a b
       | Tauto => k 3%uint63
       | Tunsupported msg => kp 24 msg
+      | Tattributed a t => kp 25 $ Box_Tattributed a t
       end.
 
     Definition compare_data (p : positive) : car p -> car p -> comparison :=
@@ -1351,6 +1368,7 @@ Module type.
       | 21 => box_Tresult_member_call_compare
       | 22 => box_Tresult_parenlist_compare
       | 23 => box_Tresult_member_compare
+      | 25 => box_Tattributed_compare
       | _ => PrimString.compare
       end.
 

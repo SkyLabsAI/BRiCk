@@ -135,6 +135,7 @@ Fixpoint size_of (resolve : genv) (t : type) : option N :=
   | Tnullptr => Some (pointer_size resolve)
   | Tfloat_ sz => Some (float_type.bytesN sz)
   | Tarch sz _ => bitsize.bytesN <$> sz
+  | Tattributed _ _ => None
   | Tunsupported _ => None
   | Tdecltype _
   | Texprtype _

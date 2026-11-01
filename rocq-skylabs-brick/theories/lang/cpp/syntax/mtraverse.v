@@ -204,6 +204,7 @@ Module MTraverse.
       | Tarch sz t => mret $ Tarch sz t
       | Tdecltype e => Tdecltype <$> traverseE e
       | Texprtype e => Texprtype <$> traverseE e
+      | Tattributed attrs t => Tattributed attrs <$> traverseT t
       | Tunsupported msg => mret $ Tunsupported msg
       end
 
@@ -423,6 +424,7 @@ Module MTraverse.
         <$> traverseT f.(f_return)
         <*> traverse (T:=eta list) (prod.traverse mret traverseT) f.(f_params)
         <*> mret f.(f_cc) <*> mret f.(f_arity) <*> mret f.(f_exception)
+        <*> mret f.(f_attrs)
         <*> traverse (T:=eta option) traverseF_bodyS f.(f_body).
 
     Definition traverseM (f : Method) : F Method :=
@@ -433,6 +435,7 @@ Module MTraverse.
                    <*> mret f.(m_cc)
                    <*> mret f.(m_arity)
                    <*> mret f.(m_exception)
+                   <*> mret f.(m_attrs)
                    <*> traverse (T:=eta option) (traverse (T:=eta OrDefault) traverseS) f.(m_body).
 
     Definition traverseP (i : InitPath) : F InitPath :=
