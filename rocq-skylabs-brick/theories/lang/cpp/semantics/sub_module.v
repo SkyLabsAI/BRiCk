@@ -295,6 +295,44 @@ Section DtorBody_ler.
   #[global] Instance: PreOrder DtorBody_ler := {}.
 End DtorBody_ler.
 
+(** [var_type_le t t'] holds when a variable declared with type [t] may be
+    defined with type [t']. [basic.link] lets array declarations differ in the
+    presence of a major array bound, as in <<extern int a[];>> against
+    <<int a[3];>>; cpp2v puts cv-qualifiers on the element type. The array must
+    not be zero-sized, since [init_validR] only gives those [validR]. *)
+Definition var_type_le (t t' : type) : bool :=
+  match t , t' with
+  | Tincomplete_array e , Tarray e' _ => bool_decide (e = e') && negb (zero_sized_array t')
+  | _ , _ => bool_decide (t = t')
+  end.
+Definition var_type_ler : relation type := λ t t', var_type_le t t' = true.
+
+Section var_type_ler.
+  #[local] Instance var_type_le_refl : Reflexive var_type_ler.
+  Proof. rewrite /var_type_ler/var_type_le => t. case_match; by rewrite ?bool_decide_eq_true_2. Qed.
+
+  #[local] Instance var_type_le_trans : Transitive var_type_ler.
+  Proof.
+    rewrite /var_type_ler/var_type_le => t t' t''.
+    destruct t; try by [intros; repeat (rewrite ->bool_decide_eq_true in *; simplify_eq)];
+      destruct t'; try by [intros; repeat (rewrite ->bool_decide_eq_true in *; simplify_eq)].
+  Qed.
+
+  #[global] Instance: PreOrder var_type_ler := {}.
+End var_type_ler.
+
+Lemma var_type_le_inv t t' :
+  var_type_le t t' = true ->
+  t = t' \/
+  exists e n, t = Tincomplete_array e /\ t' = Tarray e n /\ zero_sized_array t' = false.
+Proof.
+  rewrite /var_type_le => H.
+  destruct t; try by left; apply bool_decide_eq_true_1 in H.
+  destruct t'; try by left; apply bool_decide_eq_true_1 in H.
+  move: H => /andb_prop [/bool_decide_eq_true_1 -> /negb_true_iff Hz].
+  right. by eexists _, _.
+Qed.
+
 (** [ObjVal_le a b] holds when [a] has compatible (but possibly less)
     information than [b].
     For example, [a] might be a declaration while [b] is a compatible
@@ -306,7 +344,7 @@ Definition ObjValue_le (a b : ObjValue) : bool := Eval cbv beta iota zeta delta 
   let drop_norm t := drop_qualifiers $ normalize_type t in
   match a , b with
   | Ovar t oe , Ovar t' oe' =>
-    bool_decide (t = t') &&
+    var_type_le t t' &&
       match oe , oe' with
       | global_init.NoInit , global_init.NoInit => true
       | global_init.ImplicitInit , global_init.ImplicitInit => true
@@ -319,7 +357,7 @@ Definition ObjValue_le (a b : ObjValue) : bool := Eval cbv beta iota zeta delta 
   | Ofunction f , Ofunction f' =>
     bool_decide (f.(f_cc) = f'.(f_cc)) &&
     bool_decide (f.(f_arity) = f'.(f_arity)) &&
-    bool_decide (normalize_type f.(f_return) = normalize_type f'.(f_return)) &&
+    bool_decide (f.(f_return) = f'.(f_return)) &&
       match f.(f_body) , f'.(f_body) with
       | None , _ =>
         bool_decide (List.map (fun b => drop_norm b.2) f.(f_params) =
@@ -334,7 +372,7 @@ Definition ObjValue_le (a b : ObjValue) : bool := Eval cbv beta iota zeta delta 
     bool_decide (m.(m_arity) = m'.(m_arity)) &&
     bool_decide (m.(m_class) = m'.(m_class)) &&
     bool_decide (m.(m_this_qual) = m'.(m_this_qual)) &&
-    bool_decide (normalize_type m.(m_return) = normalize_type m'.(m_return)) &&
+    bool_decide (m.(m_return) = m'.(m_return)) &&
     match m.(m_body) , m'.(m_body) with
     | None , _ =>
       bool_decide (List.map (fun b => drop_norm b.2) m.(m_params) =
@@ -373,7 +411,10 @@ Arguments ObjValue_ler !_ _ /.
 Section ObjValue_ler.
   #[local] Instance ObjValue_le_refl : Reflexive ObjValue_ler.
   Proof.
-    rewrite /ObjValue_ler/ObjValue_le/DtorBody_le/OrDefault_le => ?; smash.
+    rewrite /ObjValue_ler/ObjValue_le/DtorBody_le/OrDefault_le => -[t e||||].
+    { have -> : var_type_le t t = true by change (var_type_ler t t).
+      destruct e => //=. exact: bool_decide_eq_true_2. }
+    all: smash.
   Qed.
 
   #[local] Instance ObjValue_le_trans : Transitive ObjValue_ler.
@@ -390,12 +431,15 @@ Section ObjValue_ler.
            | H : bool_decide _ = true |- _ => apply bool_decide_eq_true_1 in H; subst
            | H : OrDefault_le ?xe ?ye ?x ?y = true |- _ => change (OrDefault_ler (xe,x) (ye,y)) in H
            | H : DtorBody_le ?xe ?ye ?x ?y = true |- _ => change (DtorBody_ler (xe,x) (ye,y)) in H
+           | H : var_type_le ?x ?y = true |- _ => change (var_type_ler x y) in H
            | H : context [ if @bool_decide ?P ?DEC then _ else _ ] |- _ =>
                 destruct (@bool_decide_reflect P DEC); subst
            | H : match ?X with _ => _ end = _ |- _ => destruct X eqn:?
            | |- bool_decide _ = _ => apply bool_decide_eq_true_2
            | |- OrDefault_le ?xe ?ye ?x ?y = true => change (OrDefault_ler (xe,x) (ye,y))
            | |- DtorBody_le ?xe ?ye ?x ?y = true => change (DtorBody_ler (xe,x) (ye,y))
+           | |- context [ var_type_le ?x ?y ] =>
+                rewrite (_ : var_type_le x y = true); [ | by change (var_type_ler x y); etrans; eauto ]
            | |- context [ bool_decide ?X ] => rewrite (bool_decide_eq_true_2 X); [ | by etrans; eauto ]
            end; try solve [ eauto | etrans; eauto ]).
   Qed.
@@ -709,17 +753,20 @@ Proof.
   auto.
 Qed.
 
-Lemma type_of_value_ObjValue_ler a b : ObjValue_ler a b -> type_of_value a = type_of_value b.
+(** Only an array variable declared without its major bound changes type. *)
+Lemma type_of_value_ObjValue_ler a b :
+  ObjValue_ler a b ->
+  type_of_value a = type_of_value b \/
+  exists e n, type_of_value a = Tincomplete_array e /\ type_of_value b = Tarray e n.
 Proof.
-  destruct a, b; simpl; try congruence;
+  destruct a, b; simpl; try congruence.
+  { case/andb_prop => /var_type_le_inv [->|[e [n [-> [-> _]]]]] _; [by left|right].
+    rewrite /type_of_value/=. by eexists _, _. }
+  all: left; simpl; try congruence;
     repeat first [ case_bool_decide | case_match ]; subst; try congruence; simpl; eauto.
   all: intros; rewrite /type_of_value/=; try congruence.
-  { f_equal. f_equal; eauto using arguments_same. }
-  { f_equal. f_equal; eauto.
-    f_equal; eauto using arguments_same.
-    congruence. }
-  { f_equal. f_equal; eauto.
-    f_equal; eauto using arguments_same. congruence. }
+  all: f_equal; f_equal; try congruence; try solve [eauto using arguments_same].
+  all: f_equal; try congruence; eauto using arguments_same.
 Qed.
 
 (** * Mismatches

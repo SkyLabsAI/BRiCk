@@ -174,7 +174,8 @@ Section with_cpp.
   Proof.
     intros Hle.
     destruct o as [t e|f|m|c|d], o' as [t' e'|f'|m'|c'|d']; try done.
-    { move: Hle => /=. case_bool_decide; last done. by subst. }
+    { move: Hle => /= /andb_prop [/var_type_le_inv [->|[? [? [-> [-> Hz]]]]] _]; first done.
+      by rewrite /denoteSymbol/init_validR Hz. }
     all: rewrite {2}/denoteSymbol; case_match eqn:Hb;
       [|by rewrite _at_svalidR; apply denoteSymbol_strict_valid].
     all: rewrite /denoteSymbol; case_match eqn:Hb';

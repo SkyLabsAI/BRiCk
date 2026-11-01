@@ -1,0 +1,16 @@
+     = {|
+         sub_module_mismatch.abi_mismatch := false;
+         sub_module_mismatch.type_mismatches := [];
+         sub_module_mismatch.symbol_mismatches :=
+           [("a"%cpp_name, sub_module_mismatch.Incompatible)];
+         sub_module_mismatch.assert_mismatches := []
+       |}
+     : sub_module_mismatch.t
+     = {|
+         sub_module_mismatch.abi_mismatch := false;
+         sub_module_mismatch.type_mismatches := [];
+         sub_module_mismatch.symbol_mismatches :=
+           [("z"%cpp_name, sub_module_mismatch.Incompatible)];
+         sub_module_mismatch.assert_mismatches := []
+       |}
+     : sub_module_mismatch.t
