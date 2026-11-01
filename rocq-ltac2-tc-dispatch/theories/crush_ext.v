@@ -1,5 +1,7 @@
-Require Ltac2.Ltac2.
+Require Import skylabs.ltac2.extra.extra.
 Require Import skylabs.ltac2.tc_dispatch.lookup.
+
+Import Ltac2.
 
 (**
 [crush_ext] is An extensible version of [crush].
@@ -17,8 +19,8 @@ Module ltac2.
     Import Ltac2.Init.
     Import Ltac2.Notations.
     Ltac2 crush2 () :=
-      let dbs := Some [ident:(crush_ext)] in
-      repeat (ltac2.goal_dispatch_with dbs).
+      let dbs := [Option.get (Std.find_hint_db ident:(crush_ext))] in
+      repeat (goal_dispatch_with dbs).
 End ltac2.
 
 Ltac crush_ext :=
