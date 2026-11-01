@@ -187,7 +187,8 @@ Module delete_operator.
     destruct (symbols tu1 !! nm) eqn:Heq; simpl in *; try congruence.
     destruct H0. edestruct syms_compat. eassumption.
     destruct H0 as [HH Hle]. rewrite HH /=.
-    erewrite <-type_of_value_ObjValue_ler; eauto.
+    destruct (type_of_value_ObjValue_ler _ _ Hle) as [<-|(? & ? & Ha & _)]; first done.
+    by rewrite Ha in H.
   Qed.
 
   #[local]
