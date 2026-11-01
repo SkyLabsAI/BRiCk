@@ -1,0 +1,141 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.sub_module_return_type</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="library">sub_module</span></span> compares return types exactly.
+
+<div class="paragraph"> </div>
+
+    Within one translation unit, clang rejects a declaration and a definition
+    whose return types differ only in cv-qualifiers ("functions that differ
+    only in their return type cannot be overloaded"); across translation
+    units such a pair violates <span class="inlinecode"><span class="id" title="var">basic.link</span></span>.  cpp2v resolves typedefs, so
+    well-formed programs produce identical return types on both sides. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics.sub_module</span>.<br/>
+
+<br/>
+#[<span class="id" title="var">duplicates</span>(<span class="id" title="var">error</span>)]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">decl</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">typedef</span> <span class="id" title="var">const</span> <span class="id" title="var">int</span> <span class="id" title="var">CI</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">CI</span> <span class="id" title="var">f</span>();<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> <span class="id" title="var">S</span> { <span class="id" title="var">const</span> <span class="id" title="var">int</span> <span class="id" title="var">m</span>(); };<br/>
+}}.<br/>
+
+<br/>
+#[<span class="id" title="var">duplicates</span>(<span class="id" title="var">error</span>)]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">def</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">typedef</span> <span class="id" title="var">const</span> <span class="id" title="var">int</span> <span class="id" title="var">CI</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">int</span> <span class="id" title="var">f</span>() { <span class="id" title="keyword">return</span> 0; }<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> <span class="id" title="var">S</span> { <span class="id" title="var">const</span> <span class="id" title="var">int</span> <span class="id" title="var">m</span>() { <span class="id" title="keyword">return</span> 0; } };<br/>
+}}.<br/>
+
+<br/>
+#[<span class="id" title="var">duplicates</span>(<span class="id" title="var">error</span>)]<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">bad</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">typedef</span> <span class="id" title="var">const</span> <span class="id" title="var">int</span> <span class="id" title="var">CI</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">f</span>() { <span class="id" title="keyword">return</span> 0; }<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> <span class="id" title="var">S</span> { <span class="id" title="var">int</span> <span class="id" title="var">m</span>() { <span class="id" title="keyword">return</span> 0; } };<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="decl_sub_module_def" class="idref" href="#decl_sub_module_def"><span class="id" title="definition">decl_sub_module_def</span></a> : <span class="id" title="record">sub_module</span> <a class="idref" href="skylabs_brick.tests.sub_module_return_type.html#decl"><span class="id" title="definition">decl</span></a> <a class="idref" href="skylabs_brick.tests.sub_module_return_type.html#def"><span class="id" title="definition">def</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="lemma">sub_module_mismatch.sound</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">const</span></span> <span class="inlinecode"><span class="id" title="var">int</span></span> against <span class="inlinecode"><span class="id" title="var">int</span></span> is incompatible, for functions and methods. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <span class="id" title="definition">sub_module_mismatch.compute</span> <a class="idref" href="skylabs_brick.tests.sub_module_return_type.html#decl"><span class="id" title="definition">decl</span></a> <a class="idref" href="skylabs_brick.tests.sub_module_return_type.html#bad"><span class="id" title="definition">bad</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="decl_not_sub_module_bad" class="idref" href="#decl_not_sub_module_bad"><span class="id" title="definition">decl_not_sub_module_bad</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#63a68285c81db8f9bc456233bb9ed181"><span class="id" title="notation">~</span></a> <span class="id" title="record">sub_module</span> <a class="idref" href="skylabs_brick.tests.sub_module_return_type.html#decl"><span class="id" title="definition">decl</span></a> <a class="idref" href="skylabs_brick.tests.sub_module_return_type.html#bad"><span class="id" title="definition">bad</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="lemma">sub_module_mismatch.not_sub_module</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">discriminate</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+cpp2v never emits a return type that <span class="inlinecode"><span class="id" title="var">normalize_type</span></span> changes, such as
+    stacked qualifiers.  Two such spellings of one type are distinct. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="ret_fn" class="idref" href="#ret_fn"><span class="id" title="definition">ret_fn</span></a> (<a id="ret:1" class="idref" href="#ret:1"><span class="id" title="binder">ret</span></a> : <span class="id" title="inductive">type</span>) : <span class="id" title="abbreviation">ObjValue</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="constructor">Ofunction</span> (<span class="id" title="constructor">Build_Func</span> <a class="idref" href="skylabs_brick.tests.sub_module_return_type.html#__cpp_prog"><span class="id" title="section">ret</span></a> <a class="idref" href="skylabs_brick.tests.sub_module_return_type.html#__cpp_prog"><span class="id" title="section">nil</span></a> <span class="id" title="constructor">CC_C</span> <span class="id" title="constructor">Ar_Definite</span> <span class="id" title="constructor">exception_spec.MayThrow</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>).<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="stacked_qualifiers_distinct" class="idref" href="#stacked_qualifiers_distinct"><span class="id" title="definition">stacked_qualifiers_distinct</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">ObjValue_le</span> (<a class="idref" href="skylabs_brick.tests.sub_module_return_type.html#ret_fn"><span class="id" title="definition">ret_fn</span></a> (<span class="id" title="constructor">Tqualified</span> <span class="id" title="constructor">QC</span> (<span class="id" title="constructor">Tqualified</span> <span class="id" title="constructor">QV</span> <span class="id" title="abbreviation">Tint</span>))) (<a class="idref" href="skylabs_brick.tests.sub_module_return_type.html#ret_fn"><span class="id" title="definition">ret_fn</span></a> (<span class="id" title="constructor">Tqualified</span> <span class="id" title="constructor">QCV</span> <span class="id" title="abbreviation">Tint</span><a class="idref" href="skylabs_brick.tests.sub_module_return_type.html#__cpp_prog"><span class="id" title="section">))</span></a> <a class="idref" href="skylabs_brick.tests.sub_module_return_type.html#__cpp_prog"><span class="id" title="section">=</span></a> <a class="idref" href="skylabs_brick.tests.sub_module_return_type.html#__cpp_prog"><span class="id" title="section">false</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <a class="idref" href="skylabs_brick.tests.sub_module_return_type.html#__cpp_prog"><span class="id" title="section">vm_compute</span></a>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

@@ -267,7 +267,8 @@ The <code>operator delete</code> that is used when deleting a **complete object*
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#symbols"><span class="id" title="projection">symbols</span></a> <span class="id" title="var">tu1</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <span class="id" title="var">nm</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">Heq</span>; <span class="id" title="tactic">simpl</span> <span class="id" title="tactic">in</span> *; <span class="id" title="tactic">try</span> <span class="id" title="tactic">congruence</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H0</span>. <span class="id" title="var">edestruct</span> <span class="id" title="var">syms_compat</span>. <span class="id" title="var">eassumption</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">H0</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">HH</span> <span class="id" title="var">Hle</span>]. <span class="id" title="tactic">rewrite</span> <span class="id" title="var">HH</span> /=.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">erewrite</span> &lt;-<a class="idref" href="skylabs.lang.cpp.semantics.sub_module.html#type_of_value_ObjValue_ler"><span class="id" title="lemma">type_of_value_ObjValue_ler</span></a>; <span class="id" title="tactic">eauto</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<a class="idref" href="skylabs.lang.cpp.semantics.sub_module.html#type_of_value_ObjValue_ler"><span class="id" title="lemma">type_of_value_ObjValue_ler</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <span class="id" title="var">Hle</span>) <span class="id" title="keyword">as</span> [&lt;-|(? &amp; ? &amp; <span class="id" title="var">Ha</span> &amp; <span class="id" title="var">_</span>)]; <span class="id" title="tactic">first</span> <span class="id" title="var">done</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">Ha</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
@@ -313,34 +314,34 @@ The <code>operator delete</code> that is used when deleting a **complete object*
 </div>
 
 <div class="doc">
-<a id="lab58"></a><h1 class="section">Weakest pre-condition for <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.new_delete.html#Expr__newdelete.with_cpp_logic.with_region.new"><span class="id" title="section">new</span></a></span> and <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.wp.html#FreeTemps.delete"><span class="id" title="constructor">delete</span></a></span> expressions</h1>
+<a id="lab59"></a><h1 class="section">Weakest pre-condition for <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.new_delete.html#Expr__newdelete.with_cpp_logic.with_region.new"><span class="id" title="section">new</span></a></span> and <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.wp.html#FreeTemps.delete"><span class="id" title="constructor">delete</span></a></span> expressions</h1>
 
    *
-<a id="lab59"></a><h1 class="section">The semantics of <code>new</code> and <code>delete</code> expressions (including their array forms)</h1>
+<a id="lab60"></a><h1 class="section">The semantics of <code>new</code> and <code>delete</code> expressions (including their array forms)</h1>
 
-<a id="lab60"></a><h1 class="section">are *very* complex in C++. This is due to a litany of corner cases such as:</h1>
+<a id="lab61"></a><h1 class="section">are *very* complex in C++. This is due to a litany of corner cases such as:</h1>
 
-<a id="lab61"></a><h1 class="section">- the need to pair allocation and de-allocation functions</h1>
+<a id="lab62"></a><h1 class="section">- the need to pair allocation and de-allocation functions</h1>
 
-<a id="lab62"></a><h1 class="section">- the existance of placement <code>new</code></h1>
+<a id="lab63"></a><h1 class="section">- the existance of placement <code>new</code></h1>
 
-<a id="lab63"></a><h1 class="section">- the need to handle alignment as well as size.</h1>
+<a id="lab64"></a><h1 class="section">- the need to handle alignment as well as size.</h1>
 
-<a id="lab64"></a><h1 class="section">- the potential for padding bytes.</h1>
+<a id="lab65"></a><h1 class="section">- the potential for padding bytes.</h1>
 
-<a id="lab65"></a><h1 class="section">- the potential to merge allocations. (BRiCk does not attempt to support this)</h1>
-
-   *
-<a id="lab66"></a><h1 class="section">NOTE It is important that these rules are sound, but less important that</h1>
-
-<a id="lab67"></a><h1 class="section">they are complete. When in doubt, we err on the side of caution and under-specify</h1>
-
-<a id="lab68"></a><h1 class="section">the behavior of various constructs.</h1>
+<a id="lab66"></a><h1 class="section">- the potential to merge allocations. (BRiCk does not attempt to support this)</h1>
 
    *
-<a id="lab69"></a><h1 class="section">If you run into code that requires addditional semantic specification, please file</h1>
+<a id="lab67"></a><h1 class="section">NOTE It is important that these rules are sound, but less important that</h1>
 
-<a id="lab70"></a><h1 class="section">an issue.</h1>
+<a id="lab68"></a><h1 class="section">they are complete. When in doubt, we err on the side of caution and under-specify</h1>
+
+<a id="lab69"></a><h1 class="section">the behavior of various constructs.</h1>
+
+   *
+<a id="lab70"></a><h1 class="section">If you run into code that requires addditional semantic specification, please file</h1>
+
+<a id="lab71"></a><h1 class="section">an issue.</h1>
 
    
 <div class="paragraph"> </div>
@@ -634,14 +635,14 @@ Only the default allocation functions are required to provide
 
 <div class="doc">
 The C++ standard distinguishes placement/non-allocating forms in
-<a id="lab71"></a><h1 class="section">&lt;https://eel.is/c++draft/new.delete.placement1>.</h1>
+<a id="lab72"></a><h1 class="section">&lt;https://eel.is/c++draft/new.delete.placement1>.</h1>
 
          *
-<a id="lab72"></a><h1 class="section">NOTE: placement &lt;new&gt; is more subtle than the rule described here</h1>
+<a id="lab73"></a><h1 class="section">NOTE: placement &lt;new&gt; is more subtle than the rule described here</h1>
 
-<a id="lab73"></a><h1 class="section">because it can be used to construct an object over an existing</h1>
+<a id="lab74"></a><h1 class="section">because it can be used to construct an object over an existing</h1>
 
-<a id="lab74"></a><h1 class="section">object.</h1>
+<a id="lab75"></a><h1 class="section">object.</h1>
 
          
 </div>
@@ -797,7 +798,7 @@ The C++ standard distinguishes placement/non-allocating forms in
 </div>
 
 <div class="doc">
-<a id="lab75"></a><h2 class="section"><code>delete</code> and <code>delete[]</code></h2>
+<a id="lab76"></a><h2 class="section"><code>delete</code> and <code>delete[]</code></h2>
 
 <div class="paragraph"> </div>
 
@@ -1212,9 +1213,9 @@ Invoke the delete operator <code>del_op.1</code> on the pointer <code>p</code> f
 
 <div class="doc">
 <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.new_delete.html#Expr__newdelete.wp_operand_delete_default"><span class="id" title="lemma">wp_operand_delete_default</span></a></span> specializes <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.new_delete.html#Expr__newdelete.delete.with_region.wp_operand_delete"><span class="id" title="variable">wp_operand_delete</span></a></span> for invocations of
-<a id="lab76"></a><h1 class="section">the form <code>delete p;</code> - where <code>p</code> is a non-null pointer to an object whose</h1>
+<a id="lab77"></a><h1 class="section">the form <code>delete p;</code> - where <code>p</code> is a non-null pointer to an object whose</h1>
 
-<a id="lab77"></a><h1 class="section">most-derived destructor is defined in the current translation unit.</h1>
+<a id="lab78"></a><h1 class="section">most-derived destructor is defined in the current translation unit.</h1>
 
         
 </div>
