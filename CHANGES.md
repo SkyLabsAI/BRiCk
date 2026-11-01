@@ -10,6 +10,13 @@ of the release, and introduce a new heading.
 
 ## Since Last Release
 
+2026.11.01: `wp_method` of a union's defaulted copy/move assignment operator
+is now a disjunction: the existing copy (`anyR` of the destination plus
+`wp_union_copy`) or, when the source reference is `this` itself,
+self-assignment (`wp_union_self_copy` in `logic/func.v`), which takes full
+ownership of the union's active member as raw bytes (`unionR`, `rawsR`) and
+gives it back unchanged. Proofs of such copies now pick a disjunct first.
+
 2026.10.29: C++ name/type notation now parses and prints array declarators
 with C++ precedence and dimension order ([#448](https://github.com/SkyLabsAI/BRiCk/issues/448),
 [#453](https://github.com/SkyLabsAI/BRiCk/pull/453)).
