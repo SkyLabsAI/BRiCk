@@ -645,8 +645,10 @@ Module Type Stmt.
     (* the semantics of return is like an initialization
      * expression.
      *)
+    (* [stmt.return]: a <<return>> without operand is allowed in functions
+       returning cv <<void>>. *)
     Axiom wp_return_void : forall ρ Q,
-        get_return_type ρ = Tvoid ->
+        drop_qualifiers (get_return_type ρ) = Tvoid ->
         |> Q ReturnVoid |-- wp ρ (Sreturn None) Q.
 
     Axiom wp_return : forall ρ e (Q : Kpred),

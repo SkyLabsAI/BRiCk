@@ -38,24 +38,33 @@ Proof. iIntros "Q W R". iApply ("Q" with "(W R)"). Qed.
 
 #[local] Remove Hints Ar_Definite CC_C : typeclass_instances.
 
-Definition Kreturn_inner `{Σ : cpp_logic, σ : genv} (Q : ptr -> mpred) (rt : ReturnType) : mpred :=
+(**
+[Kreturn cv Q] is the continuation of the body of a function or method
+whose declared return type has top-level qualifiers [cv].
+
+A function returning cv <<void>> may <<return;>> or fall off the end
+([stmt.return]); the result object then carries the constness of [cv],
+matching the fraction [cQp.mk (q_const cv) 1] that callers receive.
+*)
+Definition Kreturn_inner `{Σ : cpp_logic, σ : genv} (cv : type_qualifiers) (Q : ptr -> mpred) (rt : ReturnType) : mpred :=
   match rt with
-  | Normal | ReturnVoid => Forall p : ptr, p |-> primR Tvoid (cQp.mut 1) Vvoid -* Q p
+  | Normal | ReturnVoid =>
+    Forall p : ptr, p |-> primR Tvoid (cQp.mk (q_const cv) 1) Vvoid -* Q p
   | ReturnVal p => Q p
   | _ => False
   end.
-#[global] Arguments Kreturn_inner _ _ _ _ _ !rt /.
+#[global] Arguments Kreturn_inner _ _ _ _ _ _ !rt /.
 
-Definition Kreturn `{Σ : cpp_logic, σ : genv} (Q : ptr -> mpred) : Kpred :=
-  KP $ Kreturn_inner Q.
+Definition Kreturn `{Σ : cpp_logic, σ : genv} (cv : type_qualifiers) (Q : ptr -> mpred) : Kpred :=
+  KP $ Kreturn_inner cv Q.
 #[global] Hint Opaque Kreturn : typeclass_instances.
 
 Section Kreturn.
   Context `{Σ : cpp_logic, σ : genv}.
 
-  Lemma Kreturn_frame (Q Q' : ptr -> mpred) (rt : ReturnType) :
+  Lemma Kreturn_frame cv (Q Q' : ptr -> mpred) (rt : ReturnType) :
     Forall p, Q p -* Q' p
-                |-- Kreturn Q rt -* Kreturn Q' rt.
+                |-- Kreturn cv Q rt -* Kreturn cv Q' rt.
   Proof.
     iIntros "HQ". destruct rt; cbn; auto.
     all: iIntros "HR" (?) "R"; iApply "HQ"; by iApply "HR".
@@ -441,7 +450,7 @@ place to support `XX_shift` lemmas. This could be fixed.
     | Impl body =>
       let ρ vap := Remp None vap f.(f_return) in
       letI* ρ, cleanup := bind_vars tu f.(f_arity) f.(f_params) args ρ in
-      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn $ fun x => |={top}=>?u |> Q x)
+      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn (take_qualifiers f.(f_return)) $ fun x => |={top}=>?u |> Q x)
     | Builtin builtin =>
       let ts := List.map snd f.(f_params) in
       wp_builtin_func builtin (Tfunction $ @FunctionType _ f.(f_cc) f.(f_arity) f.(f_return) ts) args Q
@@ -581,7 +590,7 @@ parameters.
     | thisp :: rest_vals =>
       let ρ va := Remp (Some thisp) va m.(m_return) in
       letI* ρ, cleanup := bind_vars tu m.(m_arity) m.(m_params) rest_vals ρ in
-      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn $ fun x => |={top}=>?u |> Q x)
+      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn (take_qualifiers m.(m_return)) $ fun x => |={top}=>?u |> Q x)
     | _ => ERROR "wp_method: no arguments"
     end
   | Some Defaulted =>
