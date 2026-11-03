@@ -276,6 +276,9 @@ Definition Dstruct (n : globname) (f : option Struct) : K :=
 Definition Dunion (n : globname) (f : option Union) : K :=
   _types n $ if f is Some f then record_or_dup_fields n f.(u_fields) (Gunion f) else Gtype.
 
+Definition Dopaque_record (n : globname) (r : OpaqueRecord) : K :=
+  _types n $ Gopaque_record r.
+
 Definition Denum (n : globname) (u : type) (cs : list ident) : K :=
   _types n $ Genum u cs.
 
