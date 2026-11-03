@@ -10,6 +10,16 @@ of the release, and introduce a new heading.
 
 ## Since Last Release
 
+2026.11.03: `cpp.prog` drops every symbol, and makes every type
+`Gunsupported`, whose name contains an unsupported atom (`has_unsupportedN`),
+such as `?record` for an unnamed struct or lambda closure at global scope, or
+`Aunsupported` for a floating-point template argument. Such a name may denote
+several entities, and their equal definitions used to merge into one global.
+Proofs about these entities, which were unsound, no longer go through. This includes names
+that mention an unsupported type such as `Tunsupported "Builtin long double"`,
+e.g. functions taking `long double` and libstdc++'s `long double`
+instantiations: `cpp.spec` finds no symbol for them.
+
 2026.10.29: C++ name/type notation now parses and prints array declarators
 with C++ precedence and dimension order ([#448](https://github.com/SkyLabsAI/BRiCk/issues/448),
 [#453](https://github.com/SkyLabsAI/BRiCk/pull/453)).

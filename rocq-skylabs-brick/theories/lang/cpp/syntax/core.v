@@ -1112,3 +1112,185 @@ with is_dependentS (s : Stmt) : bool :=
   | Sgoto _ => false
   | Sunsupported _ => false
   end.
+
+(** ** Names that identify no entity
+
+    cpp2v prints a name it cannot express with an unsupported atom, such as
+    [Nunsupported_atomic "record"] for an unnamed struct at global scope,
+    or [Aunsupported] for a floating-point template argument. Distinct
+    entities can then share one name, so [has_unsupportedN n] says that [n]
+    may not identify a single entity. *)
+Definition atomic_name_has_unsupported (f : type -> bool) (c : atomic_name) : bool :=
+  if c is Nunsupported_atomic _ then true else atomic_name.existsb f c.
+
+Fixpoint has_unsupportedN (n : name) : bool :=
+  match n with
+  | Ninst n xs => has_unsupportedN n || existsb has_unsupportedTA xs
+  | Nglobal c => atomic_name_has_unsupported has_unsupportedT c
+  | Ndependent t => has_unsupportedT t
+  | Nscoped n c => has_unsupportedN n || atomic_name_has_unsupported has_unsupportedT c
+  | Nunsupported _ => true
+  end
+
+with has_unsupportedTA (t : temp_arg) : bool :=
+  match t with
+  | Atype t => has_unsupportedT t
+  | Avalue e => has_unsupportedE e
+  | Apack tas => List.existsb has_unsupportedTA tas
+  | Atemplate nm => has_unsupportedN nm
+  | Atemplate_param _ => false
+  | Aunsupported _ => true
+  end
+
+with has_unsupportedT (t : type) : bool :=
+  match t with
+  | Tparam _
+  | Tresult_param _ => false
+  | Tresult_global n => has_unsupportedN n
+  | Tresult_unop _ t => has_unsupportedT t
+  | Tresult_binop _ t1 t2 => has_unsupportedT t1 || has_unsupportedT t2
+  | Tresult_call n ts => has_unsupportedN n || existsb has_unsupportedT ts
+  | Tresult_member_call n t ts => has_unsupportedN n || has_unsupportedT t || existsb has_unsupportedT ts
+  | Tresult_parenlist t ts => has_unsupportedT t || existsb has_unsupportedT ts
+  | Tresult_member t n => has_unsupportedT t || has_unsupportedN n
+  | Tauto => false
+  | Tptr t
+  | Tref t
+  | Trv_ref t => has_unsupportedT t
+  | Tnum _ _
+  | Tchar_ _
+  | Tvoid => false
+  | Tarray t _
+  | Tincomplete_array t => has_unsupportedT t
+  | Tvariable_array t e => has_unsupportedT t || has_unsupportedE e
+  | Tnamed n
+  | Tenum n => has_unsupportedN n
+  | Tfunction ft => function_type.existsb has_unsupportedT ft
+  | Tbool => false
+  | Tmember_pointer gn t => has_unsupportedT gn || has_unsupportedT t
+  | Tfloat_ _ => false
+  | Tqualified _ t => has_unsupportedT t
+  | Tnullptr
+  | Tarch _ _ => false
+  | Tdecltype e => has_unsupportedE e
+  | Texprtype e => has_unsupportedE e
+  | Tunsupported _ => true
+  end
+
+with has_unsupportedE (e : Expr) : bool :=
+  match e with
+  | Eparam _ => false
+  | Eunresolved_global n => has_unsupportedN n
+  | Eunresolved_sizeof_pack _ t => has_unsupportedT t
+  | Eunresolved_unop _ e => has_unsupportedE e
+  | Eunresolved_binop _ e1 e2 => has_unsupportedE e1 || has_unsupportedE e2
+  | Eunresolved_call n es => has_unsupportedN n || existsb has_unsupportedE es
+  | Eunresolved_member_call n e es => has_unsupportedN n || has_unsupportedE e || existsb has_unsupportedE es
+  | Eunresolved_parenlist ot es
+  | Eunresolved_initlist ot es => option.existsb has_unsupportedT ot || existsb has_unsupportedE es
+  | Eunresolved_member e n => has_unsupportedE e || has_unsupportedN n
+  | Evar _ t => has_unsupportedT t
+  | Eenum_const n _ => has_unsupportedN n
+  | Eglobal n t => has_unsupportedN n || has_unsupportedT t
+  | Eglobal_member n t => has_unsupportedN n || has_unsupportedT t
+  | Echar _ t
+  | Estring _ t
+  | Eunresolved_string_literal t
+  | Eint _ t => has_unsupportedT t
+  | Ebool _
+  | Efloat _ _ => false
+  | Eunop op e t => (if op is Uunsupported _ then true else false) || has_unsupportedE e || has_unsupportedT t
+  | Ebinop op e1 e2 t => (if op is Bunsupported _ then true else false) || has_unsupportedE e1 || has_unsupportedE e2 || has_unsupportedT t
+  | Ederef e t => has_unsupportedE e || has_unsupportedT t
+  | Eaddrof e => has_unsupportedE e
+  | Eassign e1 e2 t => has_unsupportedE e1 || has_unsupportedE e2 || has_unsupportedT t
+  | Eassign_op _ e1 e2 t => has_unsupportedE e1 || has_unsupportedE e2 || has_unsupportedT t
+  | Epreinc e t => has_unsupportedE e || has_unsupportedT t
+  | Epostinc e t => has_unsupportedE e || has_unsupportedT t
+  | Epredec e t => has_unsupportedE e || has_unsupportedT t
+  | Epostdec e t => has_unsupportedE e || has_unsupportedT t
+  | Eseqand e1 e2 => has_unsupportedE e1 || has_unsupportedE e2
+  | Eseqor e1 e2 => has_unsupportedE e1 || has_unsupportedE e2
+  | Ecomma e1 e2 => has_unsupportedE e1 || has_unsupportedE e2
+  | Ecall e es => has_unsupportedE e || existsb has_unsupportedE es
+  | Eexplicit_cast _ t e => has_unsupportedE e || has_unsupportedT t
+  | Ecast c e => (if c is Cunsupported _ _ then true else Cast.existsb has_unsupportedT c) || has_unsupportedE e
+  | Emember _ e f _ t => has_unsupportedE e || atomic_name_has_unsupported has_unsupportedT f || has_unsupportedT t
+  | Emember_ignore _ e e' => has_unsupportedE e || has_unsupportedE e'
+  | Emember_call _ m e es => MethodRef.existsb has_unsupportedN has_unsupportedT has_unsupportedE m || has_unsupportedE e || existsb has_unsupportedE es
+  | Eoperator_call _ i es => operator_impl.existsb has_unsupportedN has_unsupportedT i || existsb has_unsupportedE es
+  | Esubscript e1 e2 t => has_unsupportedE e1 || has_unsupportedE e2 || has_unsupportedT t
+  | Esizeof te t
+  | Ealignof te t => sum.existsb has_unsupportedT has_unsupportedE te || has_unsupportedT t
+  | Eoffsetof gn _ t => has_unsupportedT gn || has_unsupportedT t
+  | Econstructor n es t => has_unsupportedN n || existsb has_unsupportedE es || has_unsupportedT t
+  | Einherited_constructor n _ t => has_unsupportedN n || has_unsupportedT t
+  | Elambda n es => has_unsupportedN n || existsb has_unsupportedE es
+  | Eimplicit e => has_unsupportedE e
+  | Eimplicit_init t => has_unsupportedT t
+  | Eif e1 e2 e3 t => has_unsupportedE e1 || has_unsupportedE e2 || has_unsupportedE e3 || has_unsupportedT t
+  | Eif2 _ e1 e2 e3 e4 t => has_unsupportedE e1 || has_unsupportedE e2 || has_unsupportedE e3 || has_unsupportedE e4 || has_unsupportedT t
+  | Ethis t => has_unsupportedT t
+  | Enull => false
+  | Einitlist es eo t => existsb has_unsupportedE es || option.existsb has_unsupportedE eo || has_unsupportedT t
+  | Einitlist_union f oe t => option.existsb has_unsupportedE oe || has_unsupportedT t
+  | Einitlist_std e t => has_unsupportedE e || has_unsupportedT t
+
+  | Enew p es _ t e1 e2 => has_unsupportedN p.1 || has_unsupportedT p.2 || existsb has_unsupportedE es || has_unsupportedT t || option.existsb has_unsupportedE e1 || option.existsb has_unsupportedE e2
+  | Edelete _ p e t => has_unsupportedN p || has_unsupportedE e || has_unsupportedT t
+  | Eandclean e => has_unsupportedE e
+  | Ematerialize_temp e _ => has_unsupportedE e
+  | Eatomic _ es t => existsb has_unsupportedE es || has_unsupportedT t
+  | Estmt s t => has_unsupportedS s || has_unsupportedT t
+  | Eva_arg e t => has_unsupportedE e || has_unsupportedT t
+  | Epseudo_destructor _ t e => has_unsupportedT t || has_unsupportedE e
+  | Earrayloop_init _ e1 _ _ e2 t => has_unsupportedE e1 || has_unsupportedE e2 || has_unsupportedT t
+  | Earrayloop_index _ t => has_unsupportedT t
+  | Eopaque_ref _ t => has_unsupportedT t
+  | Eunsupported _ _ => true
+  end
+
+with has_unsupportedVD (vd : VarDecl) : bool :=
+  match vd with
+  | Dvar _ t oe => has_unsupportedT t || option.existsb has_unsupportedE oe
+  | Ddecompose e _ lvd => has_unsupportedE e || List.existsb has_unsupportedBD lvd
+  | Dinit _ n t oe => has_unsupportedN n || has_unsupportedT t || option.existsb has_unsupportedE oe
+  end
+
+with has_unsupportedBD (bd : BindingDecl) : bool :=
+  match bd with
+  | Bvar _ t e
+  | Bbind _ t e => has_unsupportedT t || has_unsupportedE e
+  end
+
+with has_unsupportedS (s : Stmt) : bool :=
+  match s with
+  | Sseq ss => List.existsb has_unsupportedS ss
+  | Sdecl ds => List.existsb has_unsupportedVD ds
+  | Sif os ovd e thn els =>
+      option.existsb has_unsupportedS os ||
+      option.existsb has_unsupportedVD ovd || has_unsupportedE e || has_unsupportedS thn || has_unsupportedS els
+  | Sif_consteval thn els =>
+      has_unsupportedS thn || has_unsupportedS els
+  | Swhile ovd e b =>
+      option.existsb has_unsupportedVD ovd || has_unsupportedE e || has_unsupportedS b
+  | Sfor os ovd oe1 oe2 s =>
+      option.existsb has_unsupportedS os || option.existsb has_unsupportedVD ovd ||
+      option.existsb has_unsupportedE oe1 || option.existsb has_unsupportedE oe2 || has_unsupportedS s
+  | Sdo b t => has_unsupportedS b || has_unsupportedE t
+  | Sswitch os ovd e s =>
+      option.existsb has_unsupportedS os ||
+      option.existsb has_unsupportedVD ovd || has_unsupportedE e || has_unsupportedS s
+  | Scase _
+  | Sdefault
+  | Sbreak
+  | Scontinue => false
+  | Sreturn oe => option.existsb has_unsupportedE oe
+  | Sexpr e => has_unsupportedE e
+  | Sattr _ s => has_unsupportedS s
+  | Sasm _ _ ins outs _ =>
+      List.existsb (has_unsupportedE ∘ snd) ins || List.existsb (has_unsupportedE ∘ snd) outs
+  | Slabeled _ s => has_unsupportedS s
+  | Sgoto _ => false
+  | Sunsupported _ => true
+  end.

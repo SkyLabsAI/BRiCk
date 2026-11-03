@@ -100,9 +100,13 @@ Module Import translation_unit.
     else if sub_module.ObjValue_le b a then Some a
          else None.
 
-  (** Constructs a [translation_unit.t] with _one_ symbol, mapping [n] to [v]. *)
+  (** Constructs a [translation_unit.t] with _one_ symbol, mapping [n] to [v].
+      A symbol whose name may not identify one entity ([has_unsupportedN]) is
+      dropped: two such entities would otherwise share one [_global n], and so
+      one address. *)
   Definition _symbols (n : name) (v : ObjValue) : t :=
     fun s t ga a asserts dups k =>
+      if has_unsupportedN n then k s t ga a asserts dups else
       match s !! n with
       | None => k (<[n := v]> s) t ga a asserts dups
       | Some v' => match merge_obj_value v v' with
@@ -115,6 +119,11 @@ Module Import translation_unit.
       Some b
     else if sub_module.GlobDecl_le b a then Some a
          else None.
+
+  (** A type whose name may not identify one entity ([has_unsupportedN]) is
+      replaced by this, so that no fact about it is available. *)
+  Definition unsupported_name (n : name) : GlobDecl :=
+    Gunsupported ("Name " ++ pretty.print_name n ++ " may denote several types")%pstring.
 
   (** Constructs a [translation_unit.t] with _one_ type, mapping [n] to [v]. *)
   Definition _types (n : name) (v : GlobDecl) : t :=
@@ -129,6 +138,7 @@ Module Import translation_unit.
          *)
         k s t ga a asserts dups
       else
+        let v := if has_unsupportedN n then unsupported_name n else v in
         match t !! n with
         | None => k s (<[n := v]> t) ga a asserts dups
         | Some v' => match merge_glob_decl v v' with
