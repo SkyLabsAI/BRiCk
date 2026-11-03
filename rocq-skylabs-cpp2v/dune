@@ -49,7 +49,7 @@
      (run sed "s/ /\\n/g")))))
 
  (rule
-  (targets cpp2v dune.log compile_commands.json)
+  (targets cpp2v (dir printer-tests) dune.log compile_commands.json)
   (deps
    ; This code depends on the LLVM library, to try rebuilding `cpp2v` if LLVM
    ; is upgraded.
@@ -77,7 +77,7 @@
   (package rocq-skylabs-cpp2v)
   (action
    (chdir ..
-    (bash "make -j8 BUILD_DIR=build-dune &> build-dune/dune.log || { cat build-dune/dune.log; exit 1; }"))))
+    (bash "make -j8 BUILD_DIR=build-dune BUILD_ARGS=\"$BUILD_ARGS -DBUILD_PRINTER_TESTS=ON\" &> build-dune/dune.log || { cat build-dune/dune.log; exit 1; }"))))
 
  (install
   (section bin)
