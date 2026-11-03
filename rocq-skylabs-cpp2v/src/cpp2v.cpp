@@ -27,6 +27,10 @@
 #include "Trace.hpp"
 #include "Version.hpp"
 #include "llvm/Support/CommandLine.h"
+#include <cstdlib>
+#include <sstream>
+#include <string>
+#include <vector>
 
 using namespace clang;
 using namespace clang::tooling;
@@ -214,6 +218,42 @@ bool isDarwin() {
     return strcmp(name.sysname, "Darwin") == 0;
 }
 
+std::optional<std::string> getEnv(const char *name) {
+    if (const char *value = std::getenv(name)) {
+        if (*value != '\0') {
+            return std::string(value);
+        }
+    }
+    return {};
+}
+
+std::vector<std::string> splitColonSeparated(const std::string &value) {
+    std::vector<std::string> entries;
+    std::stringstream stream(value);
+    std::string entry;
+    while (std::getline(stream, entry, ':')) {
+        if (!entry.empty()) {
+            entries.push_back(entry);
+        }
+    }
+    return entries;
+}
+
+void addArg(ClangTool &Tool, const std::string &arg, const char *desc) {
+    Tool.appendArgumentsAdjuster(
+        getInsertArgumentAdjuster(std::vector<std::string>{arg},
+                                  ArgumentInsertPosition::BEGIN));
+    logging::log(logging::Level::VERBOSER) << "Using " << desc << ": " << arg
+                                           << "\n";
+}
+
+void addArgs(ClangTool &Tool, const std::vector<std::string> &args,
+             const char *desc) {
+    Tool.appendArgumentsAdjuster(
+        getInsertArgumentAdjuster(args, ArgumentInsertPosition::BEGIN));
+    logging::log(logging::Level::VERBOSER) << "Using " << desc << "\n";
+}
+
 void addOpt(ClangTool &Tool, const char *opt, std::optional<std::string> value,
             const char *desc) {
     if (value.has_value()) {
@@ -227,6 +267,29 @@ void addOpt(ClangTool &Tool, const char *opt, std::optional<std::string> value,
     } else {
         logging::log(logging::Level::VERBOSER)
             << "Could not detect " << desc << ".\n";
+    }
+}
+
+bool hasEnvToolchain() {
+    return getEnv("CPP2V_TARGET").has_value() ||
+           getEnv("CPP2V_SYSROOT").has_value() ||
+           getEnv("CPP2V_GCC_TOOLCHAIN").has_value() ||
+           getEnv("CPP2V_CXX_INCLUDE_DIRS").has_value();
+}
+
+void addEnvToolchainArgs(ClangTool &Tool) {
+    addOpt(Tool, "-resource-dir=", getEnv("CPP2V_RESOURCE_DIR"),
+           "CPP2V_RESOURCE_DIR");
+    addOpt(Tool, "--target=", getEnv("CPP2V_TARGET"), "CPP2V_TARGET");
+    addOpt(Tool, "--sysroot=", getEnv("CPP2V_SYSROOT"), "CPP2V_SYSROOT");
+    addOpt(Tool, "--gcc-toolchain=", getEnv("CPP2V_GCC_TOOLCHAIN"),
+           "CPP2V_GCC_TOOLCHAIN");
+
+    if (auto dirs = getEnv("CPP2V_CXX_INCLUDE_DIRS")) {
+        addArg(Tool, "-nostdinc++", "CPP2V_CXX_INCLUDE_DIRS");
+        for (const auto &dir : splitColonSeparated(*dirs)) {
+            addArgs(Tool, {"-isystem", dir}, "CPP2V_CXX_INCLUDE_DIRS entry");
+        }
     }
 }
 
@@ -257,7 +320,9 @@ int main(int argc, const char **argv) {
     ClangTool Tool(OptionsParser.getCompilations(),
                    OptionsParser.getSourcePathList());
 
-    if (!NoSystem.getValue()) {
+    addEnvToolchainArgs(Tool);
+
+    if (!NoSystem.getValue() && !hasEnvToolchain()) {
         addOpt(Tool, "-resource-dir=", getClangResourceDir(),
                "the system resource directory");
 
