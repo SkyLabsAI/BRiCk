@@ -521,18 +521,19 @@ Section theory.
     Implicit Types (k : K) (v : V).
     Implicit Types (m : gmap K (agreeR V)).
 
-    Lemma gmap_view_auth_validN n m q : ✓{n} gmap_view_auth (DfracOwn q) m ↔ (q ≤ 1)%Qp.
+    Lemma gmap_view_auth_validN n m q :
+      ✓{n} gmap_view_auth (DfracOwn q) m ↔ (q ≤ 1)%Qp ∧ ✓{n} m.
     Proof.
-      rewrite view_auth_dfrac_validN.
-      intuition eauto using gmap_view.gmap_view_rel_unit.
+      by rewrite gmap_view_auth_dfrac_validN.
     Qed.
 
-    Lemma gmap_view_auth_validI m q : ✓ gmap_view_auth (DfracOwn q) m ⊣⊢ [! q ≤ 1 !]%Qp.
+    Lemma gmap_view_auth_validI m q :
+      ✓ gmap_view_auth (DfracOwn q) m ⊣⊢ [! q ≤ 1 !]%Qp ∧ ✓ m.
     Proof. solve_equiv gmap_view_auth_validN. Qed.
 
     Lemma gmap_view_auth_op_validI q1 q2 m1 m2 :
       ✓ (gmap_view_auth (DfracOwn q1) m1 ⋅ gmap_view_auth (DfracOwn q2) m2) ⊣⊢
-        [! q1 + q2 ≤ 1 !]%Qp ∧ m1 ≡ m2.
+        [! q1 + q2 ≤ 1 !]%Qp ∧ m1 ≡ m2 ∧ ✓ m1.
     Proof. solve_equiv gmap_view_auth_dfrac_op_validN. Qed.
 
     Lemma gmap_view_frag_validI k dq v : ✓ gmap_view_frag k dq (to_agree v) ⊣⊢ [! ✓ dq !].
