@@ -437,10 +437,44 @@ fmt::Formatter &ClangPrinter::printFieldName(CoqPrinter &print,
 }
 
 namespace {
+static Expr *fieldInitializer(const FieldDecl &field, ClangPrinter &cprint) {
+    if (auto expr = field.getInClassInitializer())
+        return expr;
+
+    // Clang can leave a specialization's default member initializer unparsed
+    // until it is used. Recover literal integral copy-initializers without
+    // instantiating arbitrary defaults: unused defaults may be ill-formed.
+    if (field.getInClassInitStyle() != ICIS_CopyInit ||
+        !field.getType()->isIntegralType(cprint.getContext()))
+        return nullptr;
+    auto parent = dyn_cast<CXXRecordDecl>(field.getParent());
+    auto pattern = parent ? parent->getTemplateInstantiationPattern() : nullptr;
+    if (!pattern || pattern == parent)
+        return nullptr;
+    auto index = field.getFieldIndex();
+    for (auto patternField : pattern->fields()) {
+        if (patternField->getFieldIndex() != index)
+            continue;
+        auto expr = patternField->getInClassInitializer();
+        if (!expr || (!isa<IntegerLiteral>(expr->IgnoreParens()) &&
+                      !isa<CXXBoolLiteralExpr>(expr->IgnoreParens())))
+            return nullptr;
+        auto converted = cprint.getCompiler().getSema().PerformImplicitConversion(
+            expr, field.getType(),
+#if CLANG_VERSION_MAJOR >= 20
+            AssignmentAction::Initializing);
+#else
+            Sema::AA_Initializing);
+#endif
+        return converted.isInvalid() ? nullptr : converted.get();
+    }
+    return nullptr;
+}
+
 static fmt::Formatter &printFieldInitializer(CoqPrinter &print,
                                              const FieldDecl &field,
                                              ClangPrinter &cprint) {
-    if (auto expr = field.getInClassInitializer()) {
+    if (auto expr = fieldInitializer(field, cprint)) {
         guard::some _(print);
         return cprint.printExpr(print, expr);
     } else
