@@ -4,16 +4,17 @@ Require Import skylabs.lang.cpp.semantics.sub_module.
 
 (** * Appending and prepending code, and [sub_module]
 
-The first cases below use field-based names, without the fallback anonymous
-indices introduced to distinguish collisions within one declaration context.
-For these cases, adding a separate namespace block preserves the original
-module unless it defines an incompatible type under a name already used.
-Incompatible definitions are quarantined as [Gunsupported] in either order.
+cpp2v names an unnamed record after its first named field, unless an earlier
+unnamed record in the same naming context already has that name; it then falls
+back to the record's anonymous index. All blocks of a reopened namespace form
+one naming context, for both the collision check and the index.
 
-These examples do not establish a general composition property. In particular,
-fallback indices count across reopened namespace blocks: appending the unrelated
-block in the final example preserves [sub_module], but prepending it renumbers
-an existing type and breaks [sub_module]. *)
+Appending a namespace block therefore preserves [sub_module]: names in the
+earlier blocks do not depend on later ones. Prepending a block does not, in
+general: a type that collides with one in the new block, or any type named by
+its index, can be renamed.
+
+These examples do not establish a general composition property. *)
 
 cpp.prog a prog cpp:{{
   namespace N { struct { int a; } *p; }
@@ -37,17 +38,15 @@ Proof. vm_compute. reflexivity. Qed.
 Example prepend_unrelated : bool_decide (sub_module a c_a) = true.
 Proof. vm_compute. reflexivity. Qed.
 
-(** ** Compatible collision: the definitions merge *)
+(** ** Colliding definitions get distinct names
+
+Two distinct unnamed records with first field [a] in separate blocks are not
+merged, even when their definitions agree: the later one is [N::@1]. *)
 
 cpp.prog a_a prog cpp:{{
   namespace N { struct { int a; } *p; }
   namespace N { struct { int a; } *p2; }
 }}.
-
-Example append_compatible : bool_decide (sub_module a a_a) = true.
-Proof. vm_compute. reflexivity. Qed.
-
-(** ** Incompatible collision: the type is quarantined *)
 
 cpp.prog a_b prog cpp:{{
   namespace N { struct { int a; } *p; }
@@ -59,18 +58,27 @@ cpp.prog b_a prog cpp:{{
   namespace N { struct { int a; } *p; }
 }}.
 
-Definition is_unsupported (tu : translation_unit) (n : name) : bool :=
-  if tu.(types) !! n is Some (Gunsupported _) then true else false.
+Definition variable_type (tu : translation_unit) (n : name) : option type :=
+  type_of_value <$> tu.(symbols) !! n.
 
-Example append_conflict_unsupported : is_unsupported a_b "N::.a"%cpp_name = true.
+Example compatible_distinct :
+  variable_type a_a "N::p2"%cpp_name = Some "N::@1*"%cpp_type.
 Proof. vm_compute. reflexivity. Qed.
 
-Example prepend_conflict_unsupported : is_unsupported b_a "N::.a"%cpp_name = true.
+Example append_compatible : bool_decide (sub_module a a_a) = true.
 Proof. vm_compute. reflexivity. Qed.
 
-(** Neither the appended nor the prepended conflicting definition lets [a]'s
-    facts about [N::.a] carry over. *)
-Example append_conflict : bool_decide (sub_module a a_b) = false.
+Example append_conflict_distinct :
+  variable_type a_b "N::q"%cpp_name = Some "N::@1*"%cpp_type.
+Proof. vm_compute. reflexivity. Qed.
+
+Example append_conflict : bool_decide (sub_module a a_b) = true.
+Proof. vm_compute. reflexivity. Qed.
+
+(** Prepending the colliding block renames [a]'s record to [N::@1], and gives
+    [N::.a] the other definition. *)
+Example prepend_conflict_renamed :
+  variable_type b_a "N::p"%cpp_name = Some "N::@1*"%cpp_type.
 Proof. vm_compute. reflexivity. Qed.
 
 Example prepend_conflict : bool_decide (sub_module a b_a) = false.
@@ -96,9 +104,6 @@ cpp.prog fallback_prepend prog cpp:{{
   namespace N { struct {} *seed; }
   namespace N { struct { int a; } *p; struct { long a; } *q; }
 }}.
-
-Definition variable_type (tu : translation_unit) (n : name) : option type :=
-  type_of_value <$> tu.(symbols) !! n.
 
 Example fallback_q_type :
   variable_type fallback "N::q"%cpp_name = Some "N::@1*"%cpp_type.
