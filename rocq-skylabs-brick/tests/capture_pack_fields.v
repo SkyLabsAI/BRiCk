@@ -38,9 +38,30 @@ Definition int_member (n : ident) (off : N) : Member :=
   {| mem_name := Nid n; mem_type := Tint; mem_mutable := false;
      mem_init := None; mem_layout := {| li_offset := off |} |}.
 
-Goal record_or_dup_fields (Nglobal (Nid "S")) [int_member "a" 0; int_member "b" 32] Gtype = Gtype.
+Definition S_struct (fs : list Member) : Struct :=
+  Build_Struct [] fs [] [] "S::~S()"%cpp_name true None POD 8 4.
+
+Definition S_decl (fs : list Member) : option GlobDecl :=
+  (fst (parser.translation_unit.list_decls
+          [parser.Dstruct "S" (Some (S_struct fs))] abi.abi_default)).(types) !! "S"%cpp_name.
+
+Goal S_decl [int_member "a" 0; int_member "b" 32] =
+  Some (Gstruct (S_struct [int_member "a" 0; int_member "b" 32])).
 Proof. by vm_compute. Qed.
 
-Goal if record_or_dup_fields (Nglobal (Nid "S")) [int_member "a" 0; int_member "a" 32] Gtype
-     is Gunsupported _ then True else False.
+Goal if S_decl [int_member "a" 0; int_member "a" 32] is Some (Gunsupported _)
+     then True else False.
+Proof. by vm_compute. Qed.
+
+(** Records with more than 16 fields are checked by sorting. *)
+Definition many_members (names : list ident) : list Member :=
+  zip_with int_member names (N.of_nat <$> seq 0 (length names)).
+Definition letters : list ident :=
+  ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"; "i"; "j"; "k"; "l"; "m"; "n"; "o"; "p"; "q"]%pstring.
+
+Goal S_decl (many_members letters) = Some (Gstruct (S_struct (many_members letters))).
+Proof. by vm_compute. Qed.
+
+Goal if S_decl (many_members (letters ++ ["i"%pstring])) is Some (Gunsupported _)
+     then True else False.
 Proof. by vm_compute. Qed.
