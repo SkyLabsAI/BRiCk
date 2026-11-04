@@ -491,6 +491,17 @@ let _ =
   define "pattern_of_constr" (constr @-> eret pattern) @@ fun c env sigma ->
   Patternops.pattern_of_constr env sigma c
 
+
+let _ =
+  define "pattern_to_message" (pattern @-> eret pp) @@
+    fun pat env sigma ->
+    Printer.pr_constr_pattern_env env sigma pat
+
+let _ =
+  define "lpattern_to_message" (pattern @-> eret pp) @@
+    fun pat env sigma ->
+    Printer.pr_lconstr_pattern_env env sigma pat
+
 (* [specialize_products] *)
 let _ =
   let exception Not_a_prod in

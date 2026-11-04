@@ -38,4 +38,5 @@ Module Misc.
 
   Ltac2 @ external pattern_of_constr : constr -> pattern :=
     "ltac2_extensions" "pattern_of_constr".
+
 End Misc.
