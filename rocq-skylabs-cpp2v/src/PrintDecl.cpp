@@ -849,7 +849,8 @@ static fmt::Formatter &printFunction(CoqPrinter &print,
     printFunctionParams(print, decl, cprint) << fmt::nbsp;
     cprint.printCallingConv(print, decl) << fmt::nbsp;
     cprint.printVariadic(print, decl.isVariadic()) << fmt::nbsp;
-    cprint.printExceptionSpec(print, decl) << fmt::line;
+    cprint.printExceptionSpec(print, decl) << fmt::nbsp;
+    cprint.printFnAttrs(print, decl) << fmt::line;
     if (auto body = decl.getBody()) {
         guard::some some(print, false);
         guard::ctor _(print, "Impl", false);
@@ -881,6 +882,7 @@ static fmt::Formatter &printMethod(CoqPrinter &print, const CXXMethodDecl &decl,
     cprint.printCallingConv(print, decl) << fmt::nbsp;
     cprint.printVariadic(print, decl.isVariadic()) << fmt::nbsp;
     cprint.printExceptionSpec(print, decl) << fmt::nbsp;
+    cprint.printFnAttrs(print, decl) << fmt::nbsp;
     if (isDefaultedUnionCopyOrMove(decl)) {
         return printDefaultedUnionCopyOrMove(print, decl, cprint);
     } else if (auto body = decl.getBody()) {
