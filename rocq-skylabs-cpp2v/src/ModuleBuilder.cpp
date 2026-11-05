@@ -5,6 +5,7 @@
  */
 #include "ModuleBuilder.hpp"
 #include "Assert.hpp"
+#include "ClangCompat.hpp"
 #include "CommentScanner.hpp"
 #include "DeclVisitorWithArgs.h"
 #include "Filter.hpp"
@@ -293,7 +294,7 @@ public:
         auto defn = decl->getDefinition();
         if (defn == decl) {
             debug("defn == decl");
-            if (auto c = context_->getRawCommentForDeclNoCache(decl)) {
+            if (auto c = clang_compat::getRawCommentNoCache(*context_, decl)) {
                 this->specs_.add_specification(decl, c, *context_);
             }
 
