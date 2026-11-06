@@ -17,8 +17,8 @@ let of_constr : Constr.t -> Tac2val.valexpr = fun c ->
   Tac2ffi.of_constr (EConstr.of_constr c)
 
 let reference_tag : _ Tac2core.map_tag = Tac2core.register_map ~tag_name:"fmap_reference_tag" (module struct
-    module S = Names.GlobRef.Set_env
-    module M = Names.GlobRef.Map_env
+    module S = Names.GlobRef.Set
+    module M = Names.GlobRef.Map
     let repr = Tac2ffi.reference
     type valmap = Tac2val.valexpr M.t
     let valmap_eq = Util.Refl
@@ -64,10 +64,15 @@ let _ =
 (* [compare] must be kept in sync with whatever is used in [ConstrSet] and [ConstrMap] *)
 let _ =
   define "compare" (valexpr @-> valexpr @-> eret int) @@ fun c1 c2 _ sigma ->
-    Constr.compare (to_constr sigma c1) (to_constr sigma c2)
+    Termops.ConstrData.compare (to_constr sigma c1) (to_constr sigma c2)
+
+module ConstrCmp = struct
+  type t = Constr.t
+  let compare = Termops.ConstrData.compare
+end
 
 module ConstrSet = struct
-  include Set.Make(Constr)
+  include Set.Make(ConstrCmp)
 
   let define s =
     Tac2externals.define Tac2expr.{ mltac_plugin = "sl.ConstrSet"; mltac_tactic = s }
@@ -102,7 +107,7 @@ module ConstrSet = struct
 end
 
 module ConstrMap = struct
-  include Map.Make(Constr)
+  include Map.Make(ConstrCmp)
 
   let define s =
     Tac2externals.define Tac2expr.{ mltac_plugin = "sl.ConstrMap"; mltac_tactic = s }
