@@ -47,6 +47,6 @@
 -w
 -at-level-200-changed
 -w
--missing-proof-command
++missing-proof-command
 -w
 -include-module-type-in-module

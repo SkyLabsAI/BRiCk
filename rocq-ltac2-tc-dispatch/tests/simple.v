@@ -1,7 +1,7 @@
 Require Import skylabs.ltac2.tc_dispatch.lookup.
 
 (* A simple success tactic *)
-Definition solve_true : Ltac2Ref.t. make_ltac2_ref. Qed.
+Definition solve_true : Ltac2Ref.t. Proof. make_ltac2_ref. Qed.
 Ltac2 solve_true () := ltac1:(exact I).
 
 (* Success Instance for True *)
@@ -23,8 +23,8 @@ Inductive Broken : nat -> Prop :=.
 Section BrokenSection.
   Variable X : Prop.
   (* [make_ltac2_ref] checks that the reference does not depend on section variables. *)
-  Definition tac (x : X) : Ltac2Ref.t. Fail make_ltac2_ref. Abort.
-  Definition tac (T : Type) : Ltac2Ref.t. make_ltac2_ref. Qed.
+  Definition tac (x : X) : Ltac2Ref.t. Proof. Fail make_ltac2_ref. Abort.
+  Definition tac (T : Type) : Ltac2Ref.t. Proof. make_ltac2_ref. Qed.
 
   (* Ltac2 [tac] does not exist yet. *)
   Fail #[global] Instance broken_inst : Dispatch (Broken 0) [ltac2 tac] := {}.
