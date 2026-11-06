@@ -42,3 +42,11 @@
 +implicit-create-rewrite-hint-db
 -w
 +implicit-create-hint-db
+-w
+-rewrite-rw
+-w
+-at-level-200-changed
+-w
+-missing-proof-command
+-w
+-include-module-type-in-module
