@@ -663,6 +663,11 @@ Module Constr.
     | _               => false
     end.
 
+  (** [is_proj_ext cnst] checks whether [cnst] is a projection or not. Unlike [is_proj],
+      [is_proj_ext] returns true even for non-primitive records. *)
+  Ltac2 @ external is_proj_ext : constant -> bool :=
+    "ltac2_extensions" "is_projection".
+
   (** [specialize_products ty args] instantiates the first [Array.lenght args]
       [Prod] nodes of type [ty], with the terms in [args]. Weak-head reduction
       is performed at each step, so [c] only needs to be convertible to enough
