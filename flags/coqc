@@ -50,3 +50,9 @@
 +missing-proof-command
 -w
 -include-module-type-in-module
+-w
+-clear-no-such-hyp
+-w
+-inconsistent-scopes
+-w
+-non-boolean-if
