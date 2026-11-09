@@ -544,6 +544,24 @@ let _ =
     Proofview.tclZERO (CErrors.UserError(Pp.str "Not enough products"))
 
 
+(* Monotonic time and instruction counts. *)
+let _ =
+  define "instr" (unit @-> tac int) @@ fun () ->
+  let res = Instr.read_counter () in
+  let res = Result.bind res @@ fun i ->
+    if Int64.compare i (Int64.of_int max_int) > 0 then
+      Result.Error "instruction count bigger than max_int"
+    else
+      Result.Ok (Int64.to_int i)
+  in
+  match res with
+  | Result.Ok v -> Proofview.tclUNIT v
+  | Result.Error e -> Tacticals.tclZEROMSG (Pp.str e)
+
+let _ =
+  define "time" (unit @-> ret int) @@ fun () ->
+  Stdlib_extra.Time.Monotonic.in_mus (Stdlib_extra.Time.Monotonic.now ())
+
 (* Obtain the evar from the current focused goal. *)
 let _ =
   define "goal_evar" (unit @-> tac evar) @@ fun _ ->

@@ -14,6 +14,7 @@ Require Export skylabs.ltac2.extra.internal.compare.
 Require Export skylabs.ltac2.extra.internal.constr.
 Require Export skylabs.ltac2.extra.internal.cps.
 Require Export skylabs.ltac2.extra.internal.control.
+Require Export skylabs.ltac2.extra.Profiling.
 Require Export skylabs.ltac2.extra.internal.coq_option.
 Require Export skylabs.ltac2.extra.internal.env.
 Require Export skylabs.ltac2.extra.internal.fmap.
