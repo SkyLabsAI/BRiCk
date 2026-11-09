@@ -24,6 +24,20 @@ Module Control.
   Ltac2 once_nobacktrack (f : unit -> 'a) : 'a :=
     Control.once (fun () => nobacktrack f).
 
+  (** ** Monotonic time and instruction counts
+
+      Measurements are side effects: proof-state backtracking does not reset
+      the clocks. *)
+
+  (** [mtime ()] returns monotonic wall-clock time in microseconds, based on
+      [mtime] ([CLOCK_MONOTONIC] on Linux). Only differences are meaningful. *)
+  Ltac2 @ external mtime : unit -> int := "ltac2_extensions" "time".
+
+  (** [instr ()] returns the hardware instruction counter used by the
+      vernacular [Instructions] command. It fails with an error message if
+      the counter is unavailable or its value does not fit in an Ltac2 int. *)
+  Ltac2 @ external instr : unit -> int := "ltac2_extensions" "instr".
+
   (** ** Backtrace primitives *)
   Ltac2 Type 'a result_bt := [ Val_bt ('a) | Err_bt (exn, exninfo) ].
   Ltac2 @ external case_bt : (unit -> 'a) -> ('a * (exn -> 'a)) result_bt :=
