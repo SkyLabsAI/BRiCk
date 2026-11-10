@@ -1172,6 +1172,10 @@ Module Type Expr.
            else wp_init ity addr el (fun frees => Q (frees >*> free))))
         |-- wp_init ity addr (Eif tst th el ty) Q.
 
+    Axiom wp_lval_implicit : forall e Q,
+        wp_lval e Q |-- wp_lval (Eimplicit e) Q.
+    Axiom wp_xval_implicit : forall e Q,
+        wp_xval e Q |-- wp_xval (Eimplicit e) Q.
     Axiom wp_operand_implicit : forall e Q,
         wp_operand e Q |-- wp_operand (Eimplicit e) Q.
     Axiom wp_init_implicit : forall ty e p Q,
