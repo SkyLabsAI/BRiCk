@@ -10,6 +10,8 @@ of the release, and introduce a new heading.
 
 ## Since Last Release
 
+2026.11.05: Add Clang 23 support for the `cpp2v` binary.
+
 2026.10.29: C++ name/type notation now parses and prints array declarators
 with C++ precedence and dimension order ([#448](https://github.com/SkyLabsAI/BRiCk/issues/448),
 [#453](https://github.com/SkyLabsAI/BRiCk/pull/453)).
