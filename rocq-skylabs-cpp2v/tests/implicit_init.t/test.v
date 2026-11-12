@@ -10,6 +10,7 @@ Example _inc_in_src : bool_decide (sub_module inc_hpp.source src_cpp.source) = t
   ltac:(check).
 
 Goal True.
+Proof.
   idtac "Success!".
   exact I.
 Qed.

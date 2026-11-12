@@ -13,7 +13,7 @@ Section example.
   Open Scope list_scope.
   Import Lists.List.ListNotations.
 
-  Goal True.
+  Goal True. Proof.
     printf "".
     printf "(** Test 3 - error in arguments *)".
     Fail Ltac2 Eval

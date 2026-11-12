@@ -33,6 +33,7 @@ Example _two_one_one_two : bool_decide (sub_module two_one_cpp.source one_two_cp
   ltac:(vm_compute; reflexivity).
 
 Goal True.
+Proof.
   idtac "Success!".
   exact I.
 Qed.

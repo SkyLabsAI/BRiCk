@@ -109,10 +109,12 @@ This is a really bad model and it'd fail a bunch of sanity checks.
 See comments around [global_ptr] in [simple_pointers.v].
 *)
 
-Definition global_ptr_encode_vaddr (o : obj_name) : vaddr. (*  := Npos (encode o). *) Admitted. (* Countable *)
+Definition global_ptr_encode_vaddr (o : obj_name) : vaddr.
+Proof. (*  exact (Npos (encode o)). *) Admitted. (* Countable *)
 Definition global_ptr_encode_aid (o : obj_name) : alloc_id := MkAllocId (global_ptr_encode_vaddr o).
 
-#[global] Instance global_ptr_encode_vaddr_inj : Inj (=) (=) global_ptr_encode_vaddr. (* := _. *) Admitted. (* countable obj_name *)
+#[global] Instance global_ptr_encode_vaddr_inj : Inj (=) (=) global_ptr_encode_vaddr.
+Proof. (* exact _. *) Admitted. (* countable obj_name *)
 #[global] Instance global_ptr_encode_aid_inj : Inj (=) (=) global_ptr_encode_aid := _.
 
 Lemma global_ptr_encode_vaddr_nonnull o va : va = global_ptr_encode_vaddr o -> va <> 0%N.

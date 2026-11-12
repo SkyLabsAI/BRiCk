@@ -34,6 +34,15 @@ Elpi Accumulate derive Db derive.stdpp.eq_dec.db.
   derivation _ _ (derive "eq_dec" (cl\ cl = []) true).
 }}.
 
+Ltac solve_derive_eq_dec :=
+(* We must use [transparent abstract] to avoid round-tripping the proof
+   term through elpi. The proof term contains n^2 matches, where n is the
+   number of constructors. Some inductive types have over 100
+   constructors. Every one of the >100k match terms receives a fresh
+   relevance variable from elpi and minimizing/restricting those many
+   relevance variables can take >5s. *)
+  transparent_abstract solve_decision.
+
 Elpi Accumulate derive lp:{{
   /* [derive.eqdec.main TyGR Prefix Clauses] creates a global instance
    * of type [EqDecision lp:{{global TyGR}}].
@@ -52,7 +61,7 @@ Elpi Accumulate derive lp:{{
       std.assert-ok! (coq.elaborate-skeleton TyEqDecision _ ETyEqDecision) "[derive.eqdec] [TyEqDecision]",
       std.assert-ok! (coq.typecheck {{ lp:BoEqDecision : lp:ETyEqDecision }} _) "typechecking the [EqDecision t] instance failed",
       coq.ltac.collect-goals BoEqDecision [SealedGoal] [],
-      coq.ltac.open (coq.ltac.call "solve_decision" []) SealedGoal [],
+      coq.ltac.open (coq.ltac.call "solve_derive_eq_dec" []) SealedGoal [],
       coq.env.add-const InstanceName BoEqDecision ETyEqDecision @transparent! C,
       (@global! => coq.TC.declare-instance (const C) 0),
       Clauses = [eqdec-done OrigGR, eqdec OrigGR (const C)],

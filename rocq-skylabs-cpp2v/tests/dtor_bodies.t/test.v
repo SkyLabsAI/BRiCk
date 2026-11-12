@@ -44,6 +44,7 @@ Example _src_dtors_empty : compiler_provided_empty src_cpp.source = true :=
   ltac:(check).
 
 Goal True.
+Proof.
   idtac "Success!".
   exact I.
 Qed.

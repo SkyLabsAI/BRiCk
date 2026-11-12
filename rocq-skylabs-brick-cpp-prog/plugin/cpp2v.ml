@@ -125,7 +125,7 @@ let cpp_command (attrs : attrs) name (abi : Constrexpr.constr_expr option)
     let (abi, ustate) =
       Constrintern.interp_constr ~expected_type env evd abi
     in
-    (abi, Evd.from_ctx ustate)
+    (abi, Evd.from_ustate ustate)
   in
   let (body, evd) =
     let expected_type = Pretyping.OfType e_decl in
@@ -136,7 +136,7 @@ let cpp_command (attrs : attrs) name (abi : Constrexpr.constr_expr option)
       let (body, ustate) =
         Constrintern.interp_constr ~expected_type env evd defn
       in
-      (body :: acc, Evd.from_ctx ustate)
+      (body :: acc, Evd.from_ustate ustate)
     in
     List.fold_left f ([], evd) defns
   in

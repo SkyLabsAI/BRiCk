@@ -35,7 +35,7 @@ Module State_test.
     Option.default [] (Control.State.get_state (myCache)).
   Ltac2 set_ (t : constr list) := Control.State.set_state (myCache) t.
 
-  Goal forall x : nat, True /\ True.
+  Goal forall x : nat, True /\ True. Proof.
     set_ [].
     set_ ('False :: get ()).
     if List.mem Constr.equal 'False (get ()) then () else fail.

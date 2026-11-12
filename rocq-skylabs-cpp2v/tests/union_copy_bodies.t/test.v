@@ -31,6 +31,7 @@ Eval vm_compute in union_member_bodies src_cpp.source "U".
 Eval vm_compute in union_member_bodies src_cpp.source "N".
 
 Goal True.
+Proof.
   idtac "Success!".
   exact I.
 Qed.

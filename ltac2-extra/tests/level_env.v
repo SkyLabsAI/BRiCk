@@ -107,6 +107,7 @@ Module Substitute.
   Qed.
 
   Goal True.
+  Proof.
     intros.
     let e := LevelEnv.empty in
       let e := LevelEnv.add_decl_level e (RelDecl.Def (Binder.make (Some @c) 'nat) '3) in

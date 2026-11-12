@@ -768,11 +768,11 @@ Module Type TESTS.
   Succeed Example _0 : TEST "Msg::operator int() const volatile" (Nscoped Msg (Nop_conv function_qualifiers.Ncv Tint)) := eq_refl.
   Succeed Example _0 : TEST "Msg::operator int() &" (Nscoped Msg (Nop_conv function_qualifiers.Nl Tint)) := eq_refl.
 
-  Succeed Example _0 : TEST "foo_client(int(&)[2], int const*, bool*, int**, char*)" (Nglobal (Nfunction function_qualifiers.N "foo_client" [Tref (Tarray Tint 2); Tptr (Tconst Tint); Tptr Tbool; Tptr (Tptr Tint); Tptr Tchar])) := eq_refl.
+  Succeed Example _0 : TEST ("foo_client(int(&)[2], int const*, bool*, int**, char*" ++ ")")%pstring (Nglobal (Nfunction function_qualifiers.N "foo_client" [Tref (Tarray Tint 2); Tptr (Tconst Tint); Tptr Tbool; Tptr (Tptr Tint); Tptr Tchar])) := eq_refl.
   Succeed Example _0 : TEST "DlistInternal::iterator::operator!=(const DlistInternal::iterator&) const"
                  (Nscoped (Nscoped (Nglobal (Nid "DlistInternal")) (Nid "iterator"))
                     (Nop function_qualifiers.Nc OOExclaimEqual [Tref (Tqualified QC (Tnamed (Nscoped (Nglobal (Nid "DlistInternal")) (Nid "iterator"))))])) := eq_refl.
-  Succeed Example _0 : TEST "intrusive::List_internal::iterator::iterator(intrusive::List_internal::Node*)"
+  Succeed Example _0 : TEST ("intrusive::List_internal::iterator::iterator(intrusive::List_internal::Node*" ++ ")")%pstring
                  (Nscoped (Nscoped (Nscoped (Nglobal (Nid "intrusive")) (Nid "List_internal")) (Nid "iterator"))
                     (Nctor [Tptr (Tnamed (Nscoped (Nscoped (Nglobal (Nid "intrusive")) (Nid "List_internal")) (Nid "Node")))])) := eq_refl.
   Succeed Example _0 : TEST "span<const int, 1ul>::span(const int*, unsigned long)"
@@ -802,16 +802,16 @@ Module Type TESTS.
   Succeed Example _0 : TEST "::f(struct ::foo)" (Nglobal $ Nfunction function_qualifiers.N "f" [Tnamed $ Nglobal $ Nid "foo"]) := eq_refl.
   Succeed Example _0 : TEST "::f(class ::foo)" (Nglobal $ Nfunction function_qualifiers.N "f" [Tnamed $ Nglobal $ Nid "foo"]) := eq_refl.
   Succeed Example _0 : TEST "::f(::foo)" (Nglobal $ Nfunction function_qualifiers.N "f" [Tnamed $ Nglobal $ Nid "foo"]) := eq_refl.
-  Succeed Example _0 : TEST "CpuSet::forall(void (*)(int)) const"
+  Succeed Example _0 : TEST ("CpuSet::forall(void (" ++ "*" ++ ")(int)) const")%pstring
                  (Nscoped (Nglobal (Nid "CpuSet")) (Nfunction function_qualifiers.Nc "forall" [Tptr $ Tfunction (FunctionType Tvoid [Tint])])) := eq_refl.
-  Succeed Example _0 : TEST "CpuSet::forall(void (C::*)(int)) const"
+  Succeed Example _0 : TEST ("CpuSet::forall(void (C::*" ++ ")(int)) const")%pstring
                          (Nscoped (Nglobal (Nid "CpuSet")) (Nfunction function_qualifiers.Nc "forall" [Tmember_pointer (Tnamed (Nglobal $ Nid "C")) $ Tfunction (FunctionType Tvoid [Tint])])) := eq_refl.
 
-  Succeed Example _0 : TEST "CpuSet::forall(void (C::*)(int), ...) const"
+  Succeed Example _0 : TEST ("CpuSet::forall(void (C::*" ++ ")(int), ...) const")%pstring
                          (Nscoped (Nglobal (Nid "CpuSet")) (Nfunction function_qualifiers.Nc "forall" [Tmember_pointer (Tnamed (Nglobal $ Nid "C")) $ Tfunction (FunctionType Tvoid [Tint])])) := eq_refl.
-  Succeed Example _0 : TEST "CpuSet::forall(void (C::*)(int, ...), ...) const"
+  Succeed Example _0 : TEST ("CpuSet::forall(void (C::*" ++ ")(int, ...), ...) const")%pstring
                          (Nscoped (Nglobal (Nid "CpuSet")) (Nfunction function_qualifiers.Nc "forall" [Tmember_pointer (Tnamed (Nglobal $ Nid "C")) $ Tfunction (FunctionType (ft_arity:=Ar_Variadic) Tvoid [Tint])])) := eq_refl.
-  Succeed Example _0 : TEST "Foo::Foo(int Foo::*)" (Nscoped (Nglobal (Nid "Foo")) (Nctor [Tmember_pointer (Tnamed (Nglobal (Nid "Foo"))) Tint])) := eq_refl.
+  Succeed Example _0 : TEST ("Foo::Foo(int Foo::*" ++ ")")%pstring (Nscoped (Nglobal (Nid "Foo")) (Nctor [Tmember_pointer (Tnamed (Nglobal (Nid "Foo"))) Tint])) := eq_refl.
 
   Succeed Example _0 : TEST "foo(unsigned int128, int128)" (Nglobal (Nfunction function_qualifiers.N "foo" [Tuint128_t; Tint128_t])) := eq_refl.
 
@@ -829,10 +829,10 @@ Module Type TESTS.
             [Tnum int_rank.Ilong Unsigned; Tnamed (Ninst (Nscoped (Nglobal (Nid "std")) (Nid "function")) [Atype (Tfunction (FunctionType (ft_arity:=Ar_Variadic) Tvoid [Tlong; Tint]))])])) := eq_refl.
 
   Succeed Example _0 : TEST "foo(int(int))" (Nglobal (Nfunction function_qualifiers.N "foo" [Tfunction (FunctionType Tint [Tint])])) := eq_refl.
-  Succeed Example _0 : TEST "foo(int(*)(int))" (Nglobal (Nfunction function_qualifiers.N "foo" [Tptr $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
-  Succeed Example _0 : TEST "foo(int(const *)(int))" (Nglobal (Nfunction function_qualifiers.N "foo" [Tptr $ Tconst $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
-  Succeed Example _0 : TEST "foo(int(*const)(int))" (Nglobal (Nfunction function_qualifiers.N "foo" [Tptr $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
-  Succeed Example _0 : TEST "foo(int(C::*)(int))" (Nglobal (Nfunction function_qualifiers.N "foo" [Tmember_pointer (Tnamed $ Nglobal (Nid "C")) $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
+  Succeed Example _0 : TEST ("foo(int(" ++ "*" ++ ")(int))")%pstring (Nglobal (Nfunction function_qualifiers.N "foo" [Tptr $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
+  Succeed Example _0 : TEST ("foo(int(const *" ++ ")(int))")%pstring (Nglobal (Nfunction function_qualifiers.N "foo" [Tptr $ Tconst $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
+  Succeed Example _0 : TEST ("foo(int(" ++ "*" ++ "const)(int))")%pstring (Nglobal (Nfunction function_qualifiers.N "foo" [Tptr $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
+  Succeed Example _0 : TEST ("foo(int(C::*" ++ ")(int))")%pstring (Nglobal (Nfunction function_qualifiers.N "foo" [Tmember_pointer (Tnamed $ Nglobal (Nid "C")) $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
 
   Succeed Example _0 : TEST_type "enum E()" (Tfunction (FunctionType (Tenum (Nglobal (Nid "E"))) [])) := eq_refl.
   Succeed Example _0 : TEST_type "enum NS::E()" (Tfunction (FunctionType (Tenum (Nscoped (Nglobal (Nid "NS")) (Nid "E"))) [])) := eq_refl.

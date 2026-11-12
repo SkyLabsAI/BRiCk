@@ -389,7 +389,7 @@ module RelDecl = struct
             LocalDef(id, t, ty)
       in
       let id = Context.Named.Declaration.get_id assum in
-      (EConstr.mkVar id :: subst, Environ.push_named assum env)
+      (EConstr.mkVar id :: subst, Environ.push_named Environ.ProofVar assum env)
     in
     let (subst, env) = List.fold_right add rds ([], env) in
     let goal_ty = EConstr.Vars.substnl subst 0 goal_ty in
@@ -551,7 +551,8 @@ let _ =
   Proofview.tclUNIT (Proofview.Goal.goal g)
 
 let _ = define "is_section_variable" (ident @-> ret bool) @@ fun id ->
-  Termops.is_section_variable (Global.env ()) id (* do not use the local environment or the function will fail! *)
+  Termops.is_section_variable (Global.env ()) id [@warning "-3"]
+  (* do not use the local environment or the function will fail! *)
 
 (* String functions *)
 let err_outofbounds =
@@ -589,14 +590,14 @@ let () =
 
   define "case_bt" (closure @-> tac valexpr) @@ fun f ->
   Proofview.tclCASE (thaw f) >>= begin function
-  | Proofview.Next (x, k) ->
+  | Ok(x, k) ->
     let k = Tac2val.mk_closure arity_one begin fun e ->
       let (e, info) = Tac2ffi.to_exn e in
       set_bt info >>= fun info ->
       k (e, info)
     end in
     Proofview.tclUNIT (Tac2ffi.of_block (0, [| Tac2ffi.of_tuple [| x; Tac2ffi.of_closure k |] |]))
-  | Proofview.Fail e ->
+  | Error(e) ->
     let bt = of_exninfo (snd e) in
     Proofview.tclUNIT (Tac2ffi.of_block (1, [| Tac2ffi.of_exn e; bt |]))
   end
