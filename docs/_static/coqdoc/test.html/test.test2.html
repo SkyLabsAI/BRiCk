@@ -31,12 +31,12 @@
 &nbsp;&nbsp;<span class="id" title="keyword">Import</span> <span class="id" title="module">Lists.List.ListNotations</span>.<br/>
 
 <br/>
-&nbsp;&nbsp;<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">True</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Goal</span> <a id="Unnamed_thm" class="idref" href="#Unnamed_thm"><span class="id" title="definition">True</span></a>. <span class="id" title="keyword">Proof</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">printf</span> "".<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">printf</span> "(** Test 3 - error in arguments *)".<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Fail</span> <span class="id" title="var">Ltac2</span> <span class="id" title="keyword">Eval</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">builder</span> :=<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">builder_a</span> := <span class="id" title="var">unsafe_constr</span> '(<a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">builder_a</span> := <span class="id" title="var">unsafe_constr</span> '(<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#nat"><span class="id" title="inductive">nat</span></a>) <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">builder_b</span> := <span class="id" title="var">build_list</span> <span class="id" title="var">build_nat</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">custom_list_builder</span> <span class="id" title="var">builder_a</span> <span class="id" title="var">builder_b</span> <span class="id" title="tactic">in</span><br/>
 <br/>

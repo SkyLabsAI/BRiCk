@@ -80,6 +80,16 @@
 }}.<br/>
 
 <br/>
+<span class="id" title="keyword">Ltac</span> <span class="id" title="var">solve_derive_eq_dec</span> :=<br/>
+<span class="comment">(*&nbsp;We&nbsp;must&nbsp;use&nbsp;<span class="inlinecode"><span class="id" title="var">transparent</span></span> <span class="inlinecode"><span class="id" title="tactic">abstract</span></span>&nbsp;to&nbsp;avoid&nbsp;round-tripping&nbsp;the&nbsp;proof<br/>
+&nbsp;&nbsp;&nbsp;term&nbsp;through&nbsp;elpi.&nbsp;The&nbsp;proof&nbsp;term&nbsp;contains&nbsp;n^2&nbsp;matches,&nbsp;where&nbsp;n&nbsp;is&nbsp;the<br/>
+&nbsp;&nbsp;&nbsp;number&nbsp;of&nbsp;constructors.&nbsp;Some&nbsp;inductive&nbsp;types&nbsp;have&nbsp;over&nbsp;100<br/>
+&nbsp;&nbsp;&nbsp;constructors.&nbsp;Every&nbsp;one&nbsp;of&nbsp;the&nbsp;&gt;100k&nbsp;match&nbsp;terms&nbsp;receives&nbsp;a&nbsp;fresh<br/>
+&nbsp;&nbsp;&nbsp;relevance&nbsp;variable&nbsp;from&nbsp;elpi&nbsp;and&nbsp;minimizing/restricting&nbsp;those&nbsp;many<br/>
+&nbsp;&nbsp;&nbsp;relevance&nbsp;variables&nbsp;can&nbsp;take&nbsp;&gt;5s.&nbsp;*)</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">transparent_abstract</span> <span class="id" title="var">solve_decision</span>.<br/>
+
+<br/>
 <span class="id" title="var">Elpi</span> <span class="id" title="var">Accumulate</span> <span class="id" title="var">derive</span> <span class="id" title="var">lp</span>:{{<br/>
 &nbsp;&nbsp;/* [<span class="id" title="var">derive.eqdec.main</span> <span class="id" title="var">TyGR</span> <span class="id" title="var">Prefix</span> <span class="id" title="var">Clauses</span>] <span class="id" title="var">creates</span> <span class="id" title="var">a</span> <span class="id" title="var">global</span> <span class="id" title="var">instance</span><br/>
 &nbsp;&nbsp;&nbsp;* <span class="id" title="keyword">of</span> <span class="id" title="keyword">type</span> [<span class="id" title="var">EqDecision</span> <span class="id" title="var">lp</span>:{{<span class="id" title="var">global</span> <span class="id" title="var">TyGR</span>}}].<br/>
@@ -98,7 +108,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.elaborate</span>-<span class="id" title="var">skeleton</span> <span class="id" title="var">TyEqDecision</span> <span class="id" title="var">_</span> <span class="id" title="var">ETyEqDecision</span>) "[derive.eqdec] [TyEqDecision]",<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">std.assert</span>-<span class="id" title="var">ok</span>! (<span class="id" title="var">coq.typecheck</span> {{ <span class="id" title="var">lp</span>:<span class="id" title="var">BoEqDecision</span> : <span class="id" title="var">lp</span>:<span class="id" title="var">ETyEqDecision</span> }} <span class="id" title="var">_</span>) "typechecking the [EqDecision t] instance failed",<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.ltac.collect</span>-<span class="id" title="keyword">goals</span> <span class="id" title="var">BoEqDecision</span> [<span class="id" title="var">SealedGoal</span>] [],<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.ltac.open</span> (<span class="id" title="var">coq.ltac.call</span> "solve_decision" []) <span class="id" title="var">SealedGoal</span> [],<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.ltac.open</span> (<span class="id" title="var">coq.ltac.call</span> "solve_derive_eq_dec" []) <span class="id" title="var">SealedGoal</span> [],<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">coq.env.add</span>-<span class="id" title="var">const</span> <span class="id" title="var">InstanceName</span> <span class="id" title="var">BoEqDecision</span> <span class="id" title="var">ETyEqDecision</span> @<span class="id" title="var">transparent</span>! <span class="id" title="var">C</span>,<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(@<span class="id" title="var">global</span>! =&gt; <span class="id" title="var">coq.TC.declare</span>-<span class="id" title="var">instance</span> (<span class="id" title="var">const</span> <span class="id" title="var">C</span>) 0),<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Clauses</span> = [<span class="id" title="var">eqdec</span>-<span class="id" title="var">done</span> <span class="id" title="var">OrigGR</span>, <span class="id" title="var">eqdec</span> <span class="id" title="var">OrigGR</span> (<span class="id" title="var">const</span> <span class="id" title="var">C</span>)],<br/>

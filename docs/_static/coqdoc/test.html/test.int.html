@@ -33,6 +33,7 @@
 <br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Module</span> <a id="_Tests.Map" class="idref" href="#_Tests.Map"><span class="id" title="module">Map</span></a>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Goal</span> <a id="_Tests.Map.Unnamed_thm" class="idref" href="#_Tests.Map.Unnamed_thm"><span class="id" title="definition">True</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">m</span> := <span class="id" title="var">Int.Map.empty</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">m</span> := <span class="id" title="var">Int.Map.add</span> 1 [] <span class="id" title="var">m</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">m</span> := <span class="id" title="var">Int.Map.add</span> 2 ["test"] <span class="id" title="var">m</span> <span class="id" title="tactic">in</span><br/>
@@ -40,7 +41,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">Some</span> [] =&gt;<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">m</span> := <span class="id" title="var">Int.Map.remove</span> 1 <span class="id" title="var">m</span> <span class="id" title="tactic">in</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">m</span> := <span class="id" title="var">Int.Map.remove</span> 2 <span class="id" title="var">m</span> <span class="id" title="tactic">in</span><br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">Int.Map.is_empty</span> <span class="id" title="var">m</span> <span class="id" title="keyword">then</span> <span class="id" title="tactic">exact</span> <a class="idref" href="http://rocq-prover.org/doc/V9.2/corelib//Corelib.Init.Logic.html#I"><span class="id" title="constructor">I</span></a> <span class="id" title="keyword">else</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">Int.Map.is_empty</span> <span class="id" title="var">m</span> <span class="id" title="keyword">then</span> <span class="id" title="tactic">exact</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#I"><span class="id" title="constructor">I</span></a> <span class="id" title="keyword">else</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.throw</span> (<span class="id" title="var">Invalid_argument</span> <span class="id" title="var">None</span>)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <span class="id" title="var">Control.throw</span> (<span class="id" title="var">Invalid_argument</span> <span class="id" title="var">None</span>)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
