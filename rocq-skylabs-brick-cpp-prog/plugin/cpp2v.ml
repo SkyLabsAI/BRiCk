@@ -104,6 +104,25 @@ let report_duplicates check_duplicates env evd err =
     | Some Ignore | None -> ()
     end
 
+(* [vm_compute] normalizes the proof [types_fields_nodup] of a
+   [makeTranslationUnit] application to [eq_refl]. Wrap it in a VM cast so
+   that the kernel checks it with [vm_compute] rather than lazy conversion. *)
+let vm_cast_fields_nodup evd tu =
+  match EConstr.kind evd tu with
+  | Constr.App (hd, args) when EConstr.isConstruct evd hd && Array.length args = 11 ->
+      let core t = EConstr.mkRef (Rocqlib.lib_ref t, EConstr.EInstance.empty) in
+      let types = args.(1) in
+      let ty =
+        EConstr.mkApp (core "core.eq.type",
+          [| core "core.bool.type";
+             EConstr.mkApp (to_econstr (lib_ref "fields_nodup"), [| types |]);
+             core "core.bool.true" |]) in
+      let args = Array.copy args in
+      args.(10) <- EConstr.mkCast (args.(10), Constr.VMcast, ty);
+      EConstr.mkApp (hd, args)
+  | _ ->
+      CErrors.user_err Pp.(str "cpp.prog: unexpected translation unit shape. Please report!")
+
 let cpp_command (attrs : attrs) name (abi : Constrexpr.constr_expr option)
     (defns : Constrexpr.constr_expr list) =
   (* Create the definition *)
@@ -155,6 +174,7 @@ let cpp_command (attrs : attrs) name (abi : Constrexpr.constr_expr option)
   match EConstr.kind evd body with
   | Constr.App (hd, [|_ ;_ ;body; err|]) when EConstr.isConstruct evd hd ->
       report_duplicates check_duplicates env evd err;
+      let body = vm_cast_fields_nodup evd body in
       let cinfo = Declare.CInfo.make ~name ~typ:None () in
       let info = Declare.Info.make () in
       ignore (Declare.declare_definition ~info ~cinfo ~opaque:false ~body evd)

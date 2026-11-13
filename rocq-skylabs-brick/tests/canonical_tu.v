@@ -13,7 +13,7 @@ Definition symbols_reverse : symbol_table :=
     (<["one::value"%cpp_name := integer_global]> ∅).
 Definition source (syms : symbol_table) : translation_unit :=
   makeTranslationUnit syms (<["one::Record"%cpp_name := Gtype]> ∅)
-    ∅ [] [] abi.abi_default ∅ ∅ ∅ ∅.
+    ∅ [] [] abi.abi_default ∅ ∅ ∅ ∅ eq_refl.
 
 Lemma canonical_namespaces_distinct :
   Canon.tu_to_canon (source symbols_forward) !! "one::value"%cpp_name = Some integer_global /\
