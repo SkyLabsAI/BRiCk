@@ -342,7 +342,7 @@ Module decltype.
         | Einitlist_union _ _ t => mret t
         | Einitlist_std _ t => mret t
         | Enew _ _ _ aty _ _ => mret $ Tptr aty
-        | Edelete _ _ _ _ => mret Tvoid
+        | Edelete _ _ _ _ _ => mret Tvoid
         | Eandclean e => of_expr e
         | Ematerialize_temp e vc => of_materialize_temp e vc
         | Eatomic _ _ t => mret t
