@@ -48,6 +48,7 @@ private:
     std::set<int64_t> queued_;
     std::set<int64_t> traversed_;
     std::vector<Decl *> worklist_;
+    bool has_main_declarations_ = false;
 
     static const Decl *canonical(const Decl *decl) {
         return decl->getCanonicalDecl();
@@ -109,21 +110,56 @@ private:
             return;
 
         select(decl);
-        selectContexts(decl);
-        selectTemplateDependencies(decl);
 
         if (queue) {
             auto key = canonical(decl)->getID();
-            if (queued_.insert(key).second)
-                worklist_.push_back(definition(const_cast<Decl *>(decl)));
+            if (!queued_.insert(key).second)
+                return;
+            worklist_.push_back(definition(const_cast<Decl *>(decl)));
         }
+
+        // Mark the declaration as queued before following dependencies. Clang
+        // 22 can report a variable template specialization as its own
+        // instantiation pattern, and template relationships can contain other
+        // cycles as well.
+        selectContexts(decl);
+        selectTemplateDependencies(decl);
     }
 
     void enqueue(const Decl *decl) { discover(decl, true); }
 
+    void enqueueAllocationFunction(const FunctionDecl *function) {
+        if (!function)
+            return;
+
+        enqueue(function);
+        if (!function->isOverloadedOperator())
+            return;
+
+        auto op = function->getOverloadedOperator();
+        if ((op != OO_Delete && op != OO_Array_Delete) ||
+            !function->isReplaceableGlobalAllocationFunction())
+            return;
+
+        auto context = function->getDeclContext();
+        if (!context->isTranslationUnit())
+            return;
+
+        // Clang may select the sized replaceable global deallocation function
+        // while clients still need the unsized form (and conversely).
+        for (auto decl : context->decls()) {
+            auto overload = dyn_cast<FunctionDecl>(decl);
+            if (overload && overload->isOverloadedOperator() &&
+                overload->getOverloadedOperator() == op &&
+                overload->isReplaceableGlobalAllocationFunction())
+                enqueue(overload);
+        }
+    }
+
     void seedMainFile(const DeclContext *context) {
         for (auto decl : context->decls()) {
             if (isInMainFile(decl)) {
+                has_main_declarations_ = true;
                 if (isa<NamespaceDecl>(decl) || isa<LinkageSpecDecl>(decl))
                     discover(decl, false);
                 else
@@ -150,6 +186,8 @@ public:
                 Visitor::TraverseDecl(definition(decl));
         }
     }
+
+    bool hasMainDeclarations() const { return has_main_declarations_; }
 
     bool contains(const Decl *decl) const {
         return decl &&
@@ -220,13 +258,13 @@ public:
     }
 
     bool VisitCXXNewExpr(CXXNewExpr *expr) {
-        enqueue(expr->getOperatorNew());
-        enqueue(expr->getOperatorDelete());
+        enqueueAllocationFunction(expr->getOperatorNew());
+        enqueueAllocationFunction(expr->getOperatorDelete());
         return true;
     }
 
     bool VisitCXXDeleteExpr(CXXDeleteExpr *expr) {
-        enqueue(expr->getOperatorDelete());
+        enqueueAllocationFunction(expr->getOperatorDelete());
         return true;
     }
 
@@ -236,7 +274,7 @@ public:
     }
 
     bool VisitCXXDestructorDecl(CXXDestructorDecl *decl) {
-        enqueue(decl->getOperatorDelete());
+        enqueueAllocationFunction(decl->getOperatorDelete());
         return true;
     }
 };
@@ -627,9 +665,17 @@ void build_module(clang::TranslationUnitDecl *tu, ::Module &mod, Filter &filter,
                   bool elaborate, bool templates) {
     auto &ctxt = tu->getASTContext();
     ReachableDecls reachable(tu, templates);
-    ReachableFilter reachable_filter(filter, reachable);
-    BuildModule(mod, reachable_filter, templates, &ctxt, specs, ci)
-        .VisitTranslationUnitDecl(tu, {});
+    if (reachable.hasMainDeclarations()) {
+        ReachableFilter reachable_filter(filter, reachable);
+        BuildModule(mod, reachable_filter, templates, &ctxt, specs, ci)
+            .VisitTranslationUnitDecl(tu, {});
+    } else {
+        // Include-only translation units are used to expose header APIs. With
+        // no main-file declarations to seed reachability, retain the original
+        // filter behavior rather than emitting an empty module.
+        BuildModule(mod, filter, templates, &ctxt, specs, ci)
+            .VisitTranslationUnitDecl(tu, {});
+    }
 }
 
 void ::Module::add_assert(const clang::StaticAssertDecl &d) {
