@@ -16,8 +16,7 @@
      : sub_module_mismatch.t
      = {|
          sub_module_mismatch.abi_mismatch := true;
-         sub_module_mismatch.type_mismatches :=
-           [("__builtin_va_list"%cpp_name, sub_module_mismatch.Incompatible)];
+         sub_module_mismatch.type_mismatches := [];
          sub_module_mismatch.symbol_mismatches := [];
          sub_module_mismatch.assert_mismatches := []
        |}

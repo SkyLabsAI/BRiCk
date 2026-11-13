@@ -8,5 +8,5 @@ Compiling the C++ code, use "make Q=" for debugging.
 
 Compiling the generated Coq files.
   $ dune build
-       = ["if consteval"%pstring; "if consteval"%pstring]
+       = []
        : supported.check.M

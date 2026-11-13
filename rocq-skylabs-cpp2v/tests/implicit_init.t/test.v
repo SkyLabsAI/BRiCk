@@ -5,7 +5,7 @@ Require test.src_cpp.
 
 #[local] Ltac check := vm_compute; reflexivity.
 
-(* inc.hpp < one_two.cpp *)
+(* src.cpp uses every declaration from inc.hpp. *)
 Example _inc_in_src : bool_decide (sub_module inc_hpp.source src_cpp.source) = true :=
   ltac:(check).
 
