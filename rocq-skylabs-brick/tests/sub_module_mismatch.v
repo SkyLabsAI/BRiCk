@@ -40,8 +40,8 @@ Proof. apply sub_module_mismatch.sound. vm_compute. reflexivity. Qed.
 
 (** * An ABI mismatch
 
-    The same declaration, compiled for two architectures.  Their ABIs differ,
-    and so do target-specific builtin types such as [__builtin_va_list]. *)
+    The same declaration, compiled for two architectures. Their ABIs differ.
+    Unreferenced target-specific builtin types are pruned from both units. *)
 
 #[duplicates(error)]
 cpp.prog x86 flags "-target x86_64-linux-gnu" prog cpp:{{
