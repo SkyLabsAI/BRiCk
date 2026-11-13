@@ -29,7 +29,7 @@ Definition D_ctor : Ctor :=
 
 Definition not_ctor : Func :=
   Build_Func Tvoid (("self"%pstring, Tptr (Tnamed C_name)) :: ("x"%pstring, Tint) :: nil)
-    CC_C Ar_Definite exception_spec.Unknown None.
+    CC_C Ar_Definite exception_spec.Unknown nil None.
 
 Definition source : translation_unit :=
   Eval vm_compute in
@@ -110,7 +110,7 @@ Definition with_unsupported_stmt : translation_unit :=
   Eval vm_compute in
     fst (parser.translation_unit.list_decls
       (parser.Dfunction (Nglobal (Nfunction function_qualifiers.N "f" nil))
-         (Build_Func Tvoid nil CC_C Ar_Definite exception_spec.NoThrow
+         (Build_Func Tvoid nil CC_C Ar_Definite exception_spec.NoThrow nil
             (Some (Impl (Sseq (Sunsupported "stmt" :: Sreturn None :: nil))))) ::
        nil)
       abi.abi_default).
