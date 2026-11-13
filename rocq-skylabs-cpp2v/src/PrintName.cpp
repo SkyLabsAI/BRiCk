@@ -19,6 +19,7 @@
 #include <clang/Frontend/CompilerInstance.h>
 #include <llvm/ADT/SmallVector.h>
 #include <llvm/Support/ErrorHandling.h>
+#include <algorithm>
 #include <optional>
 
 using namespace clang;
@@ -360,28 +361,34 @@ static bool getAnonymousIndex(const DeclContext &ctx, const Decl &decl,
     return false;
 }
 
-static unsigned getAnonymousIndex(const DeclContext &ctx, const Decl &decl,
-                                  ClangPrinter &cprint) {
-    unsigned i{0};
-    bool found = false;
+// Reopened namespace fragments share one printed scope: return them in source
+// order, so that names invented within that scope are assigned across all of
+// them. Any other context is its own single fragment.
+static llvm::SmallVector<const DeclContext *, 4>
+getNamingFragments(const DeclContext &ctx) {
+    llvm::SmallVector<const DeclContext *, 4> fragments;
     if (auto ns = dyn_cast<NamespaceDecl>(&ctx)) {
-        // Reopened namespace fragments share one printed scope. Count their
-        // anonymous declarations together in source order, rather than
-        // restarting the indices in each fragment.
-        llvm::SmallVector<const NamespaceDecl *, 4> fragments;
         for (auto fragment = ns->getMostRecentDecl(); fragment;
              fragment = fragment->getPreviousDecl())
             fragments.push_back(fragment);
-        for (auto fragment = fragments.rbegin(); fragment != fragments.rend();
-             ++fragment) {
-            if (getAnonymousIndex(**fragment, decl, i, cprint)) {
-                found = true;
-                break;
-            }
-        }
+        std::reverse(fragments.begin(), fragments.end());
     } else {
-        found = getAnonymousIndex(ctx, decl, i, cprint);
+        fragments.push_back(&ctx);
     }
+    return fragments;
+}
+
+static unsigned getAnonymousIndex(const DeclContext &ctx, const Decl &decl,
+                                  ClangPrinter &cprint) {
+    // Count anonymous declarations across all fragments, rather than
+    // restarting the indices in each fragment.
+    unsigned i{0};
+    bool found = false;
+    for (auto fragment : getNamingFragments(ctx))
+        if (getAnonymousIndex(*fragment, decl, i, cprint)) {
+            found = true;
+            break;
+        }
     if (!found) {
         fatal(cprint, loc::of(decl))
             << "could not find anonymous declaration in context\n";
@@ -458,10 +465,12 @@ every local declaration of a function body in the function's declaration
 context, so, for example, two unnamed structs in sibling blocks that each
 declare a variable [x] would otherwise both be named [Nby_first_decl "x"].
 The first declaration keeps its invented name, so translation units without
-such clashes print as before.
+such clashes print as before. All blocks of a reopened namespace form one
+naming context, as for [getAnonymousIndex].
 
-Like [getAnonymousIndex], this returns [true] once it reaches [decl], having
-set [clash] if an earlier tag declaration has the same invented name.
+This overload scans one fragment of [ctx]. Like [getAnonymousIndex], it returns
+[true] once it reaches [decl], having set [clash] if an earlier tag declaration
+has the same invented name.
 */
 static bool collidesWithEarlierTag(const DeclContext &ctx, const TagDecl &decl,
                                    const InventedTagName &name, bool &clash,
@@ -478,6 +487,17 @@ static bool collidesWithEarlierTag(const DeclContext &ctx, const TagDecl &decl,
                 if (other->sameName(name))
                     clash = true;
     }
+    return false;
+}
+
+static bool collidesWithEarlierTag(const DeclContext &ctx, const TagDecl &decl,
+                                   const InventedTagName &name,
+                                   ClangPrinter &cprint) {
+    // Like [getAnonymousIndex], scan every fragment of a reopened namespace.
+    bool clash = false;
+    for (auto fragment : getNamingFragments(ctx))
+        if (collidesWithEarlierTag(*fragment, decl, name, clash, cprint))
+            return clash;
     return false;
 }
 
@@ -1055,10 +1075,7 @@ static fmt::Formatter &printAtomicName(const DeclContext &ctx, const Decl &decl,
             // Invented names are not unique: fall back to the anonymous index
             // for every tag declaration but the first to invent a given name.
             auto anon_ctx = getNonIgnorableAncestor(*td, cprint);
-            bool clash = false;
-            if (collidesWithEarlierTag(anon_ctx, *td, *invented, clash,
-                                       cprint) &&
-                clash) {
+            if (collidesWithEarlierTag(anon_ctx, *td, *invented, cprint)) {
                 guard::ctor _(print, "Nanon", false);
                 return print.output()
                        << getAnonymousIndex(anon_ctx, decl, cprint);
