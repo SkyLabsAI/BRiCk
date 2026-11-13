@@ -39,8 +39,12 @@ Module FreeTemps.
   (* BEGIN FreeTemps.t *)
   Inductive t : Set :=
   | id (* = fun x => x *)
-  | delete (ty : decltype) (p : ptr) (* = delete_val ty p *)
-           (* ^^ this type has qualifiers but is otherwise a runtime type *)
+  | delete (x : option localname) (ty : decltype) (p : ptr) (* = delete_val ty p *)
+           (* ^^ this type has qualifiers but is otherwise a runtime type.
+              [x] names the automatic variable at [p] (see [wp_decl_var]),
+              if any: [Kfree] skips its destruction when named return value
+              optimization makes it the returned object (see [ReturnNRVO]
+              and [remove_var]). *)
   | delete_va (va : list (type * ptr)) (p : ptr)
   | seq (f g : t) (* = fun x => f $ g x *)
   | par (f g : t) (* = fun x => Exists Qf Qg, f Qf ** g Qg ** (Qf -* Qg -* x) *)
@@ -60,7 +64,7 @@ Module FreeTemps.
   | sym l r : l ≡ r -> r ≡ l
   | trans a b c : a ≡ b -> b ≡ c -> a ≡ c
 
-  | delete_ref ty p : delete (Tref ty) p ≡ delete (Trv_ref ty) p
+  | delete_ref x ty p : delete x (Tref ty) p ≡ delete x (Trv_ref ty) p
 
   | seqA x y z : x >*> (y >*> z) ≡ (x >*> y) >*> z
   | seq_id_unitL l : 1 >*> l ≡ l
@@ -124,7 +128,7 @@ Module FreeTemps.
     match free with
     | id => true
     | seq f g | par f g => trivial f && trivial g
-    | delete _ _ | delete_va _ _ => false
+    | delete _ _ _ | delete_va _ _ => false
     end.
 
   Lemma trivial_equiv free : trivial free = true -> free ≡ 1.
@@ -147,6 +151,29 @@ Module FreeTemps.
   element in the list is destructed last.
   *)
   Definition seqs_rev : list t -> t := foldl (fun a b => seq b a) 1.
+
+  (**
+  [remove_var x f] removes the destruction of the innermost automatic
+  variable named [x] from [f], i.e. the first [delete (Some x) _ _] in
+  destruction order, or returns [None] if [f] destroys no such variable.
+  [Kfree] uses it to skip the destructor of a variable that named return
+  value optimization turned into the returned object.
+  *)
+  Fixpoint remove_var (x : localname) (f : t) : option t :=
+    match f with
+    | delete (Some y) _ _ => if bool_decide (x = y) then Some id else None
+    | seq f g =>
+        match remove_var x f with
+        | Some f => Some (seq f g)
+        | None => seq f <$> remove_var x g
+        end
+    | par f g =>
+        match remove_var x f with
+        | Some f => Some (par f g)
+        | None => par f <$> remove_var x g
+        end
+    | id | delete None _ _ | delete_va _ _ => None
+    end.
 End FreeTemps.
 Export FreeTemps.notations.
 Notation FreeTemps := FreeTemps.t.
@@ -165,6 +192,12 @@ Variant ReturnType : Set :=
 | Break
 | Continue
 | ReturnVal (_ : ptr)
+| ReturnNRVO (x : localname) (p : ptr)
+  (* ^^ <<return x;>> with the copy elided (named return value optimization,
+     <https://eel.is/c++draft/class.copy.elision#1.1>): the automatic variable
+     [x], at [p], *is* the returned object, so its destructor must not run at
+     scope exit. [Kfree] turns this into [ReturnVal p] once it has skipped that
+     destruction; see [wp_return_nrvo] in [stmt.v]. *)
 | ReturnVoid
 .
 #[global] Instance ReturnType_ihn : Inhabited ReturnType.
@@ -1268,7 +1301,7 @@ Section with_cpp.
         if is_value_type ty then
           wp_operand tu ρ e (fun _ free => Q free)
         else
-          Forall p, wp_init tu ρ (type_of e) p e (fun frees => Q (FreeTemps.delete ty p >*> frees)%free)
+          Forall p, wp_init tu ρ (type_of e) p e (fun frees => Q (FreeTemps.delete None ty p >*> frees)%free)
       | Xvalue => wp_xval tu ρ e (fun _ => Q)
       end.
 

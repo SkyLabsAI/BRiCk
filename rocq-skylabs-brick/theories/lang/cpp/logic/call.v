@@ -101,7 +101,7 @@ Section with_resolve.
       letI* free := wp_initialize tu ρ ty p e in
       K p (if is_trivially_destructible tu ty
            then free
-           else FreeTemps.delete ty p >*> free)%free.
+           else FreeTemps.delete None ty p >*> free)%free.
   #[global] Arguments wp_arg _ _ _ /.
 
   Lemma wp_arg_frame : forall ty e, |-- wp.WPE.Mframe (wp_arg ty e) (wp_arg ty e).
@@ -115,7 +115,7 @@ Section with_resolve.
   Qed.
 
   Definition early_destroy : list (decltype * ptr) -> list FreeTemps.t :=
-    omap (fun '(ty, p) => if is_trivially_destructible tu ty then Some (FreeTemps.delete ty p) else None).
+    omap (fun '(ty, p) => if is_trivially_destructible tu ty then Some (FreeTemps.delete None ty p) else None).
 
   (**
      [wp_args eo pre ts_ar es] evaluates [pre ++ es] according to the evaluation order [eo].
