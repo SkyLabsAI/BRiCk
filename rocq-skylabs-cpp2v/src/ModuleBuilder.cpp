@@ -13,10 +13,14 @@
 #include "Location.hpp"
 #include "Logging.hpp"
 #include "SpecCollector.hpp"
+#include "Template.hpp"
+#include "clang/AST/ExprCXX.h"
+#include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Basic/Version.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Sema/Sema.h"
 #include <set>
+#include <vector>
 
 using namespace clang;
 
@@ -27,6 +31,232 @@ static void unsupported_decl(raw_ostream &os, const Decl *decl,
 }
 
 using Flags = ::Module::Flags;
+
+namespace {
+
+// Keep declarations written in the main file and the complete declaration
+// subgraphs they reference. Reaching a record deliberately retains all of its
+// members; this is conservative and avoids reproducing the printer's detailed
+// dependency logic here.
+class ReachableDecls : public clang::RecursiveASTVisitor<ReachableDecls> {
+private:
+    using Visitor = clang::RecursiveASTVisitor<ReachableDecls>;
+
+    const SourceManager &source_manager_;
+    const bool templates_;
+    std::set<int64_t> reachable_;
+    std::set<int64_t> queued_;
+    std::set<int64_t> traversed_;
+    std::vector<Decl *> worklist_;
+
+    static const Decl *canonical(const Decl *decl) {
+        return decl->getCanonicalDecl();
+    }
+
+    static Decl *definition(Decl *decl) {
+        if (auto function = dyn_cast<FunctionDecl>(decl)) {
+            if (auto defn = function->getDefinition())
+                return defn;
+        } else if (auto tag = dyn_cast<TagDecl>(decl)) {
+            if (auto defn = tag->getDefinition())
+                return defn;
+        } else if (auto var = dyn_cast<VarDecl>(decl)) {
+            if (auto defn = var->getDefinition())
+                return defn;
+        }
+        return decl;
+    }
+
+    bool isInMainFile(const Decl *decl) const {
+        auto loc = decl->getLocation();
+        if (loc.isInvalid())
+            loc = decl->getBeginLoc();
+        return loc.isValid() && source_manager_.isWrittenInMainFile(
+                                    source_manager_.getExpansionLoc(loc));
+    }
+
+    void select(const Decl *decl) {
+        if (decl)
+            reachable_.insert(canonical(decl)->getID());
+    }
+
+    void selectContexts(const Decl *decl) {
+        for (auto context = decl->getDeclContext();
+             context && !context->isTranslationUnit();
+             context = context->getParent()) {
+            auto owner = dyn_cast<Decl>(context);
+            if (!owner)
+                continue;
+            if (isa<NamespaceDecl>(owner)) {
+                select(owner);
+            } else if (isa<RecordDecl>(owner) || isa<EnumDecl>(owner)) {
+                enqueue(owner);
+            }
+        }
+    }
+
+    void selectTemplateDependencies(const Decl *decl) {
+        if (!templates_)
+            return;
+        if (auto pattern = recoverPattern(*decl))
+            enqueue(pattern);
+        if (auto specialization = recoverSpecialization(*decl))
+            enqueue(&specialization->temp);
+    }
+
+    void discover(const Decl *decl, bool queue) {
+        if (!decl)
+            return;
+
+        select(decl);
+        selectContexts(decl);
+        selectTemplateDependencies(decl);
+
+        if (queue) {
+            auto key = canonical(decl)->getID();
+            if (queued_.insert(key).second)
+                worklist_.push_back(definition(const_cast<Decl *>(decl)));
+        }
+    }
+
+    void enqueue(const Decl *decl) { discover(decl, true); }
+
+    void seedMainFile(const DeclContext *context) {
+        for (auto decl : context->decls()) {
+            if (isInMainFile(decl)) {
+                if (isa<NamespaceDecl>(decl) || isa<LinkageSpecDecl>(decl))
+                    discover(decl, false);
+                else
+                    enqueue(decl);
+            }
+
+            if (auto ns = dyn_cast<NamespaceDecl>(decl)) {
+                seedMainFile(ns);
+            } else if (auto linkage = dyn_cast<LinkageSpecDecl>(decl)) {
+                seedMainFile(linkage);
+            }
+        }
+    }
+
+public:
+    ReachableDecls(TranslationUnitDecl *tu, bool templates)
+        : source_manager_(tu->getASTContext().getSourceManager()),
+          templates_(templates) {
+        seedMainFile(tu);
+        for (size_t i = 0; i < worklist_.size(); ++i) {
+            auto decl = worklist_[i];
+            auto key = canonical(decl)->getID();
+            if (traversed_.insert(key).second)
+                Visitor::TraverseDecl(definition(decl));
+        }
+    }
+
+    bool contains(const Decl *decl) const {
+        return decl &&
+               reachable_.find(canonical(decl)->getID()) != reachable_.end();
+    }
+
+    bool shouldVisitImplicitCode() const { return true; }
+
+    bool VisitDecl(Decl *decl) {
+        discover(decl, false);
+        return true;
+    }
+
+    bool VisitType(Type *type) {
+        if (auto tag = type->getAsTagDecl())
+            enqueue(tag);
+        if (auto typedef_type = dyn_cast<TypedefType>(type))
+            enqueue(typedef_type->getDecl());
+        return true;
+    }
+
+    bool VisitTemplateSpecializationType(TemplateSpecializationType *type) {
+        if (auto decl = type->getTemplateName().getAsTemplateDecl())
+            enqueue(decl);
+        return true;
+    }
+
+    bool VisitRecordDecl(RecordDecl *decl) {
+        for (auto member : decl->decls())
+            enqueue(member);
+        return true;
+    }
+
+    bool VisitDeclRefExpr(DeclRefExpr *expr) {
+        enqueue(expr->getDecl());
+        return true;
+    }
+
+    bool VisitMemberExpr(MemberExpr *expr) {
+        enqueue(expr->getMemberDecl());
+        return true;
+    }
+
+    bool VisitCallExpr(CallExpr *expr) {
+        enqueue(expr->getCalleeDecl());
+        return true;
+    }
+
+    bool VisitOverloadExpr(OverloadExpr *expr) {
+        for (auto decl : expr->decls())
+            enqueue(decl);
+        return true;
+    }
+
+    bool VisitCXXConstructExpr(CXXConstructExpr *expr) {
+        enqueue(expr->getConstructor());
+        return true;
+    }
+
+    bool VisitCXXInheritedCtorInitExpr(CXXInheritedCtorInitExpr *expr) {
+        enqueue(expr->getConstructor());
+        return true;
+    }
+
+    bool VisitCXXMemberCallExpr(CXXMemberCallExpr *expr) {
+        enqueue(expr->getMethodDecl());
+        return true;
+    }
+
+    bool VisitCXXNewExpr(CXXNewExpr *expr) {
+        enqueue(expr->getOperatorNew());
+        enqueue(expr->getOperatorDelete());
+        return true;
+    }
+
+    bool VisitCXXDeleteExpr(CXXDeleteExpr *expr) {
+        enqueue(expr->getOperatorDelete());
+        return true;
+    }
+
+    bool VisitLambdaExpr(LambdaExpr *expr) {
+        enqueue(expr->getLambdaClass());
+        return true;
+    }
+
+    bool VisitCXXDestructorDecl(CXXDestructorDecl *decl) {
+        enqueue(decl->getOperatorDelete());
+        return true;
+    }
+};
+
+class ReachableFilter : public Filter {
+private:
+    Filter &filter_;
+    const ReachableDecls &reachable_;
+
+public:
+    ReachableFilter(Filter &filter, const ReachableDecls &reachable)
+        : filter_(filter), reachable_(reachable) {}
+
+    What shouldInclude(const Decl *decl) override {
+        return reachable_.contains(decl) ? filter_.shouldInclude(decl)
+                                         : What::NOTHING;
+    }
+};
+
+} // namespace
 
 bool EvaluateRequiresClause(const clang::FunctionDecl *FD,
                             clang::Sema &SemaRef) {
@@ -145,14 +375,16 @@ public:
     IGNORE(VarTemplatePartialSpecializationDecl)
 
     void VisitNamespaceAliasDecl(const NamespaceAliasDecl *decl, Flags) {
-        module_.add_namespace_alias(decl);
+        if (filter_.shouldInclude(decl) != Filter::What::NOTHING)
+            module_.add_namespace_alias(decl);
     }
 
     void VisitStaticAssertDecl(const StaticAssertDecl *decl, Flags) {
         // NOTE: This might need some more work because of declarations that
         // have requires clauses; however, these should be in dependent
         // contexts.
-        if (not decl->getDeclContext()->isDependentContext())
+        if (filter_.shouldInclude(decl) != Filter::What::NOTHING &&
+            not decl->getDeclContext()->isDependentContext())
             module_.add_assert(*decl);
     }
 
@@ -359,7 +591,8 @@ public:
         // namespaces can not be located inside of templates
         always_assert(flags.none());
 
-        if (decl->isInlineNamespace()) {
+        if (decl->isInlineNamespace() &&
+            filter_.shouldInclude(decl) != Filter::What::NOTHING) {
             module_.add_inline_namespace(decl);
         }
 
@@ -393,7 +626,9 @@ void build_module(clang::TranslationUnitDecl *tu, ::Module &mod, Filter &filter,
                   SpecCollector &specs, clang::CompilerInstance *ci,
                   bool elaborate, bool templates) {
     auto &ctxt = tu->getASTContext();
-    BuildModule(mod, filter, templates, &ctxt, specs, ci)
+    ReachableDecls reachable(tu, templates);
+    ReachableFilter reachable_filter(filter, reachable);
+    BuildModule(mod, reachable_filter, templates, &ctxt, specs, ci)
         .VisitTranslationUnitDecl(tu, {});
 }
 

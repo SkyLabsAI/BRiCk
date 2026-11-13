@@ -311,25 +311,6 @@
         ("unknown_builtin(unsigned int)"%pstring, "unsupported"%pstring);
         ("use_union(U)"%pstring, "partial"%pstring);
         ("volatile_local()"%pstring, "unsupported"%pstring);
-        ("operator new(unsigned long)"%pstring, "supported"%pstring);
-        ("operator new(unsigned long, enum std::align_val_t)"%pstring,
-         "supported"%pstring);
-        ("operator new[](unsigned long)"%pstring, "supported"%pstring);
-        ("operator new[](unsigned long, enum std::align_val_t)"%pstring,
-         "supported"%pstring);
-        ("operator delete(void*)"%pstring, "supported"%pstring);
-        ("operator delete(void*, unsigned long)"%pstring, "supported"%pstring);
-        ("operator delete(void*, unsigned long, enum std::align_val_t)"%pstring,
-         "supported"%pstring);
-        ("operator delete(void*, enum std::align_val_t)"%pstring,
-         "supported"%pstring);
-        ("operator delete[](void*)"%pstring, "supported"%pstring);
-        ("operator delete[](void*, unsigned long)"%pstring,
-         "supported"%pstring);
-        ("operator delete[](void*, unsigned long, enum std::align_val_t)"%pstring,
-         "supported"%pstring);
-        ("operator delete[](void*, enum std::align_val_t)"%pstring,
-         "supported"%pstring);
         ("static_local()::x"%pstring, "supported"%pstring);
         ("Anon::Anon()"%pstring, "unsupported"%pstring);
         ("Base::Base()"%pstring, "unsupported"%pstring);
@@ -384,12 +365,6 @@
         ("HasBits"%pstring, "blocked"%pstring);
         ("Node"%pstring, "supported"%pstring);
         ("U"%pstring, "supported"%pstring);
-        ("__NSConstantString"%pstring, "supported"%pstring);
-        ("__builtin_ms_va_list"%pstring, "supported"%pstring);
-        ("__builtin_va_list"%pstring, "supported"%pstring);
-        ("__int128_t"%pstring, "supported"%pstring);
-        ("__uint128_t"%pstring, "supported"%pstring);
-        ("std::align_val_t"%pstring, "supported"%pstring);
         ("Anon::.x"%pstring, "supported"%pstring)]
      : list (string * string)
      = ["bitfields are not supported"%pstring;

@@ -7,6 +7,8 @@ Require test.two_one_cpp.
 
 #[local] Ltac check := vm_compute; reflexivity.
 
+(* Both main files use every declaration from both headers. *)
+
 (* inc.hpp < one_two.cpp *)
 Example _one_in_one_two : bool_decide (sub_module inc_hpp.source one_two_cpp.source) = true :=
   ltac:(check).
