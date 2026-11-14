@@ -305,6 +305,10 @@ public:
             os << loc::describe(loc, cprint.getContext());
             print.str(coqmsg) << fmt::nbsp;
             done(expr, Done::DT);
+        } else if (expr->refersToBitField()) {
+            // This also covers assignment/conditional glvalues and structured
+            // bindings, not just direct MemberExpr reads and writes.
+            unsupported_expr(expr, "bitfield access");
         } else {
             ConstStmtVisitor<PrintExpr, void>::Visit(expr);
         }

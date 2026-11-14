@@ -694,7 +694,7 @@ Module internal.
     | None => Unknown
     | Some gd =>
         match gd with
-        | Gunion _ | Gstruct _ => IsStruct
+        | Gunion _ | Gstruct _ | Gopaque_record _ => IsStruct
         | Genum _ _ => IsEnum
         | Gtypedef t => Alias t
         | _ => NoCheck
