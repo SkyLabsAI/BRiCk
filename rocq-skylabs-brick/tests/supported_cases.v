@@ -35,7 +35,8 @@ struct D { ~D() { asm("nop"); } };
 void dtor_local() { D d; }
 
 // a by-value class flowing as a prvalue.
-struct B { int a : 3; };
+struct VB {};
+struct B : virtual VB { int a; };
 B mk();
 void use(B);
 void prvalue() { use(mk()); }

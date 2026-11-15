@@ -183,14 +183,22 @@ template <typename T> struct DeclPrinter {
         return nullptr;
     }
 
+    /* Print an invalid declaration as an opaque one, carrying the error
+       message, and return [true]; or print nothing and return [false]. */
+    using Opaque = bool (*)(CoqPrinter &, const T &, ClangPrinter &,
+                            const ASTContext &, const char *);
+
     const StringRef ctor;
     const StringRef templated_ctor;
     const Valid invalid;
     const Printer<T> print_body;
+    const Opaque print_opaque;
 
     DeclPrinter() = delete;
-    DeclPrinter(StringRef c, StringRef tc, Printer<T> p, Valid v = alwaysValid)
-        : ctor{c}, templated_ctor{tc}, invalid(v), print_body{p} {
+    DeclPrinter(StringRef c, StringRef tc, Printer<T> p, Valid v = alwaysValid,
+                Opaque o = nullptr)
+        : ctor{c}, templated_ctor{tc}, invalid(v), print_body{p},
+          print_opaque{o} {
         always_assert(p != nullptr);
     }
 
@@ -239,6 +247,9 @@ template <typename T> struct DeclPrinter {
         auto printDeclWith = [&]() {
             auto cp = cprint.withDecl(&decl);
             if (auto msg = invalid(box, ctxt)) {
+                if (!print.templates() && print_opaque &&
+                    print_opaque(print, box, cp, ctxt, msg))
+                    return true;
                 guard::ctor _(print, print.templates()
                                          ? "Dtemplated_unsupported"
                                          : "Dunsupported");
@@ -768,12 +779,57 @@ static const char *supportedRecord(const CXXRecordDecl &decl,
     return nullptr;
 }
 
+/// Whether an unsupported record can be exposed as an _opaque_ record:
+/// its body is not printed, only its size, alignment, destructor, and
+/// <<operator delete>>.
+///
+/// This is an allowlist. Records were made unsupported to keep unsound
+/// facts about their bodies out of the logic, and an opaque record must not
+/// bring any back. It qualifies only if the metadata we print is honest
+/// without the body: here, a complete, non-dependent, well-formed record
+/// that has a bit-field and no virtual base. Records with virtual bases
+/// stay unsupported: their size as a base-class subobject differs from
+/// their <<sizeof>>.
+static bool opaqueRecord(const CXXRecordDecl &decl) {
+    if (!decl.isCompleteDefinition() || decl.isDependentContext() ||
+        decl.isInvalidDecl() || decl.getNumVBases() != 0)
+        return false;
+    bool bitfield = false;
+    for (auto f : decl.fields()) {
+        if (!f || f->isInvalidDecl())
+            return false;
+        bitfield |= f->isBitField();
+    }
+    return bitfield;
+}
+
+static bool printOpaqueRecord(CoqPrinter &print, const CXXRecordDecl &decl,
+                              ClangPrinter &cprint, const ASTContext &ctxt,
+                              const char *msg) {
+    if (!opaqueRecord(decl))
+        return false;
+    if (ClangPrinter::debug && cprint.trace(Trace::Decl))
+        cprint.trace("printOpaqueRecord", loc::of(decl));
+
+    const auto &layout = ctxt.getASTRecordLayout(&decl);
+
+    guard::ctor _(print, "Dopaque");
+    cprint.printName(print, decl) << fmt::nbsp;
+    guard::ctor _2(print, "Build_Opaque");
+    printSizeAlign(decl, &layout, print, cprint) << fmt::nbsp;
+    cprint.printDtorName(print, decl) << fmt::nbsp;
+    printTriviallyDestructible(print, decl, cprint) << fmt::nbsp;
+    printDeleteName(print, decl, cprint) << fmt::nbsp;
+    print.str(msg);
+    return true;
+}
+
 } // namespace
 
 static const DeclPrinter Dstruct("Dstruct", "Dtemplated_struct", printStruct,
-                                 supportedRecord);
+                                 supportedRecord, printOpaqueRecord);
 static const DeclPrinter Dunion("Dunion", "Dtemplated_union", printUnion,
-                                supportedRecord);
+                                supportedRecord, printOpaqueRecord);
 static const DeclPrinter Drecord_struct("Dstruct", "Dtemplated_struct",
                                         printCStruct, supportedRecord);
 static const DeclPrinter Drecord_union("Dunion", "Dtemplated_union",
