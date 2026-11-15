@@ -24,6 +24,13 @@ Unsupported declaration
   code needs that type cannot be verified; other functions in the
   translation unit are unaffected.
 
+Opaque record
+  ``cpp2v`` emits ``Dopaque`` for a record whose body it cannot model, keeping
+  its size, alignment, destructor, and :cpp:`operator delete`. Code that only
+  passes, stores, or destroys objects of the type can be verified against
+  specifications of its member functions; code that needs the record's
+  members or bases cannot.
+
 Unsupported syntax
   ``cpp2v`` emits ``Eunsupported``, ``Sunsupported``, ``Tunsupported``, or
   ``Bunsupported``. These have no semantics: a proof that reaches one gets
@@ -55,8 +62,16 @@ Unsupported Features
      - Rejected by ``cpp2v``
      - Any statement kind that ``cpp2v`` has no printer for is fatal.
    * - Bitfields
-     - Unsupported declaration
-     - `BRiCk#307 <https://github.com/SkyLabsAI/BRiCk/issues/307>`_
+     - Opaque record
+     - A record with a bit-field becomes an *opaque boundary* (``Gopaque``):
+       ``cpp2v`` keeps its size, alignment, destructor, and
+       :cpp:`operator delete`, but not its members or bases. Callers can own
+       such an object through an abstract ``Rep``, pass it by value, and
+       destroy it. Accessing its members, verifying its member functions,
+       ``anyR``, changing its :cpp:`const`-ness, and :cpp:`delete` are not
+       supported. Records that also have a virtual base, and C records, remain
+       unsupported declarations.
+       `BRiCk#307 <https://github.com/SkyLabsAI/BRiCk/issues/307>`_
    * - :cpp:`virtual` inheritance (virtual base classes)
      - Unsupported declaration
      - This includes standard types built on it, e.g. :cpp:`std::basic_ostream`.
