@@ -90,7 +90,8 @@ Definition GlobDecl_le (a b : GlobDecl) : bool :=
   | Gtype , Genum _ _
   | Gtype , Gunion _
   | Gtype , Gstruct _
-  | Gtype , Gunsupported _ => true
+  | Gtype , Gunsupported _
+  | Gtype , Gopaque _ => true
   | Gunion _ , Gtype
   | Gstruct _ , Gtype => false
   | Gunion u , Gunion u' =>
@@ -109,6 +110,8 @@ Definition GlobDecl_le (a b : GlobDecl) : bool :=
   | Gtypedef t , Gtypedef t' =>
     bool_decide (t = t')
   | Gunsupported m , Gunsupported m' => bool_decide (m = m')
+  (* An opaque record is only compatible with itself. *)
+  | Gopaque o , Gopaque o' => bool_decide (o = o')
   | _ , _ => false
   end.
 Definition GlobDecl_ler := λ g1 g2, Is_true $ GlobDecl_le g1 g2.
@@ -686,6 +689,15 @@ Lemma sub_module_preserves_gunion m1 m2 gn un :
   sub_module m1 m2 ->
   m1.(types) !! gn = Some (Gunion un) ->
   m2.(types) !! gn = Some (Gunion un).
+Proof.
+  move=> Hsub /(sub_module_preserves_globdecl Hsub) {Hsub m1 m2} [g2 [->]].
+  destruct g2 => //=; smash.
+Qed.
+
+Lemma sub_module_preserves_gopaque m1 m2 gn o :
+  sub_module m1 m2 ->
+  m1.(types) !! gn = Some (Gopaque o) ->
+  m2.(types) !! gn = Some (Gopaque o).
 Proof.
   move=> Hsub /(sub_module_preserves_globdecl Hsub) {Hsub m1 m2} [g2 [->]].
   destruct g2 => //=; smash.
