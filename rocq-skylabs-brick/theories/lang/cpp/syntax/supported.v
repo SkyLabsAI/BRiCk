@@ -574,6 +574,11 @@ Section with_monad.
     match gd with
     | Gunsupported msg => FAIL msg
     | Gtype => OK
+    (* Policy: a translation unit with an opaque record is usable, so this
+       is not an [Unsupported] gap and [check] accepts it. The record's body
+       is not modeled; [o_reason] is the audit trail. *)
+    | Gopaque o =>
+        PARTIAL ("opaque record (" ++ o.(o_reason) ++ "): only its size, alignment, and destruction are modelled")
     | Gunion u => lst member u.(u_fields)
     | Gstruct s => lst (classname ∘ fst) s.(s_bases) <+> lst member s.(s_fields)
     | Genum t _ => type t
@@ -698,6 +703,15 @@ Module report.
           else []
         else []) m.
 
+    (** The members of an opaque record are not modelled. *)
+    Definition opaque_members (m : walk.M) : list PrimString.string :=
+      List.flat_map (fun i =>
+        if i is walk.Access n then
+          if tu.(types) !! n is Some (Gopaque _)
+          then ["member access into an opaque record"%pstring]
+          else []
+        else []) m.
+
     (** [wp_method] and [wp_ctor] are stuck on [Defaulted] bodies, except
         for a union's defaulted copy/move operations, which copy the object
         representation (see [wp_union_copy] in [logic/func.v]). A
@@ -777,7 +791,7 @@ Module report.
     Definition entry_of (fuel : nat) (input : PrimString.string) (n : name) (uses : walk.M) : entry :=
       let needed := List.filter (fun t => bool_decide (t <> n)) (closure fuel (type_refs uses) []) in
       let used := uses ++ List.flat_map walk_type needed in
-      let unsupported := check.fails uses in
+      let unsupported := check.fails uses ++ remove_dups (opaque_members uses) in
       let blocked_by := List.flat_map (fun t => named t (walk_type t)) needed in
       let partial := remove_dups (partials used ++ union_members used) in
       let unsupported_refs :=

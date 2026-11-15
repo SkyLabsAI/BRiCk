@@ -17,11 +17,44 @@ Require Import skylabs.lang.cpp.syntax.mcore.
 Require Import skylabs.lang.cpp.syntax.abi.
 Export decl.
 
+(** An _opaque_ record: a complete C++ class or union whose body BRiCk does
+    not model (e.g. because it contains bit-fields), described only by the
+    metadata that its clients need.
+
+    Unlike [Gunsupported], this records honest layout and destruction
+    metadata, so the type has a size and an alignment, can be passed by
+    value, and can be destroyed by calling its destructor. Unlike [Gstruct]
+    and [Gunion], it records no bases and no members, so nothing that needs
+    the body (member access, [anyR]/[everywhereR], implicit special members,
+    <<const>>-qualification of members, <<virtual>> dispatch, ...) is
+    available. *)
+Record Opaque' : Set := Build_Opaque
+{ o_size : N
+  (* ^ size of the record (including padding) *)
+; o_alignment : N
+  (* ^ alignment of the record *)
+; o_dtor : obj_name
+  (* ^ the name of the destructor; see [s_dtor] *)
+; o_trivially_destructible : bool
+  (* ^ whether objects of the record type are trivially destructible *)
+; o_delete : option obj_name
+  (* ^ name of [operator delete], if it exists.
+     See [s_delete] for more information. *)
+; o_reason : PrimString.string
+  (* ^ why the body is not modeled. This is the audit trail for the record
+     being admitted by [supported.v]; it has no semantic content. *)
+}.
+Notation Opaque := Opaque'.
+#[global] Arguments Build_Opaque _ _ _ _ _ _ : assert.
+#[global] Instance Opaque_eq_dec : EqDecision Opaque.
+Proof. solve_decision. Defined.
+
 #[local] Set Primitive Projections.
 
 #[local] Tactic Notation "solve_decision" := intros; solve_decision.
 
 (** ** Type Declarations *)
+
 Variant GlobDecl' : Set :=
   | Gtype     (* this is a type declaration, but not a definition *)
   | Gunion    (_ : Union) (* union body *)
@@ -29,7 +62,8 @@ Variant GlobDecl' : Set :=
   | Genum     (_ : type) (_ : list ident) (* *)
   | Gconstant (_ : type) (init : option Expr) (* used for enumerator constants*)
   | Gtypedef  (_ : type)
-  | Gunsupported (_ : PrimString.string).
+  | Gunsupported (_ : PrimString.string)
+  | Gopaque   (_ : Opaque) (* complete record whose body is not modeled *).
 Notation GlobDecl := GlobDecl'.
 #[global] Instance: EqDecision GlobDecl.
 Proof. solve_decision. Defined.
@@ -563,6 +597,7 @@ Fixpoint is_trivially_destructible (tu : translation_unit) (ty : type) {struct t
                    match tu.(types) !! nm with
                    | Some (Gunion u) => u.(u_trivially_destructible)
                    | Some (Gstruct s) => s.(s_trivially_destructible)
+                   | Some (Gopaque o) => o.(o_trivially_destructible)
                    | _ => false
                    end
                | Tarray ety _ => is_trivially_destructible tu ety
@@ -620,6 +655,13 @@ Section with_type_table.
     : complete_decl (Gunion u)
   | complete_enum {t consts} (_ : complete_type t)
     : complete_decl (Genum t consts)
+  (* An opaque record is a complete C++ type: <<sizeof>> exists, and objects
+  of the type can be declared, passed, and returned by value. Only _our model_
+  of its body is missing, and no member is recorded whose type we could
+  check. Consumers of [complete_type] must not assume that a complete named
+  type has a [Gstruct] or [Gunion] body. *)
+  | complete_opaque {o}
+    : complete_decl (Gopaque o)
   (* No need for typedefs since those are forbidden in `Tnamed`, `Gtype` isn't
   legal, `Gconstant` is illegal and wouldn't make sense. *)
 

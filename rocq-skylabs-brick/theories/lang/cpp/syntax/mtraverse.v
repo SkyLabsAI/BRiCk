@@ -519,6 +519,13 @@ Module MTraverse.
       | Gconstant t oe => Gconstant <$> traverseT t <*> traverse (T:=eta option) traverseE oe
       | Gtypedef t => Gtypedef <$> traverseT t
       | Gunsupported m => mret $ Gunsupported m
+      | Gopaque o =>
+          Gopaque
+            <$> (Build_Opaque o.(o_size) o.(o_alignment)
+                   <$> traverseN o.(o_dtor)
+                   <*> mret o.(o_trivially_destructible)
+                   <*> traverse (T:=eta option) traverseN o.(o_delete)
+                   <*> mret o.(o_reason))
       end.
 
   End traverse.
