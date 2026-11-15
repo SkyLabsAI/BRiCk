@@ -72,14 +72,6 @@ Section validR.
   (* Lemma _at_offsetR_validR p (o : offset) :
     _at p (_offsetR o validR) -|- valid_ptr (_offset_ptr p o).
   Proof. by rewrite _at_offsetR _at_validR. Qed. *)
-
-  #[global] Instance _offsetR_sub_inv ty i :
-    Observe [| is_Some (size_of resolve ty) |] (_offsetR (_sub ty i) validR).
-  Proof.
-    apply /observe_intro_persistent /Rep_entails_at => p.
-    rewrite _at_offsetR _at_validR _at_only_provable.
-    apply valid_o_sub_size.
-  Qed.
 End validR.
 
 Definition arrR_def `{Σ : cpp_logic} {σ : genv} ty (Rs : list Rep) : Rep :=

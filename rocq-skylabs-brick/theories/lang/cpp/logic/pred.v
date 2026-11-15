@@ -898,9 +898,15 @@ Module Type VALID_PTR_AXIOMS
       strict_valid_ptr (p ,, o_derived σ base derived) |--
       [| directly_derives σ derived base |].
 
-    (* TODO: maybe add a validity of offsets to allow stating this more generally. *)
-    Axiom valid_o_sub_size : forall p ty i vt,
-      _valid_ptr vt (p ,, o_sub σ ty i) |-- [| is_Some (size_of σ ty) |].
+    (** A zero subscript after a field preserves validity, whether it is the
+    identity or (for a [ty] lacking [size_of]) an invalid offset.
+
+    This replaces the former axiom [valid_o_sub_size], concluding
+    [is_Some (size_of σ ty)] from [_valid_ptr vt (p ,, o_sub σ ty i)]: with
+    [type_ptr_valid_plus_one], that implied [type_ptr_size], which is unsound;
+    see the comment on [type_ptr_o_field_type_ptr]. Do not restore it. *)
+    Axiom _valid_ptr_field_sub_0 : ∀ (p : ptr) ty f vt,
+      _valid_ptr vt (p ,, o_field σ f ,, o_sub σ ty 0) |-- _valid_ptr vt (p ,, o_field σ f).
 
     (** Inheritance alone does not constrain untrusted layout metadata. *)
     Axiom type_ptr_o_base : forall derived base p,
@@ -1251,8 +1257,7 @@ Section with_cpp.
     _valid_ptr vt (p ,, o_field σ f ,, o_sub σ ty i) |-- _valid_ptr vt (p ,, o_field σ f).
   Proof.
     iIntros "V". case: (decide (i = 0)%Z) Hle => [-> _|Hne Hle].
-    - iDestruct (valid_o_sub_size with "V") as %?.
-      by rewrite offset_ptr_sub_0.
+    - by rewrite _valid_ptr_field_sub_0.
     - rewrite strict_valid_ptr_field_sub; last by lia.
       case: vt => //. by rewrite strict_valid_valid.
   Qed.
