@@ -5,6 +5,7 @@
  *)
 Require Import skylabs.lang.cpp.parser.
 Require Import skylabs.lang.cpp.syntax.typed.
+Require Import skylabs.lang.cpp.syntax.supported.
 Require Import skylabs.lang.cpp.semantics.genv.
 Require Import skylabs.lang.cpp.semantics.types.
 
@@ -118,4 +119,19 @@ Proof. vm_compute. reflexivity. Qed.
 Example opaque_record_field_type_unavailable :
   trace.runO (typed.decltype.of_expr source
     (Eglobal "Opaque::hidden"%cpp_name "int"%cpp_type)) = None.
+Proof. vm_compute. reflexivity. Qed.
+
+Example opaque_record_support_is_partial :
+  supported.walk.glob_decl supported.walk.no_ext (Gopaque_record metadata) =
+    [supported.walk.Gap supported.walk.Partial
+      "opaque record: field layout and structural initialization/destruction are unavailable"%pstring].
+Proof. reflexivity. Qed.
+
+Example opaque_record_report_is_partial :
+  map supported.report.status (supported.report.run source ["Opaque"%pstring]) =
+    ["partial"%pstring].
+Proof. vm_compute. reflexivity. Qed.
+
+Example opaque_record_pointer_does_not_need_layout :
+  supported.walk.type supported.walk.no_ext "Opaque*"%cpp_type = [].
 Proof. vm_compute. reflexivity. Qed.
