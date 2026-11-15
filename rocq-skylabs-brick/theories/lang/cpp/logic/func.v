@@ -681,7 +681,7 @@ Section wp_method.
     destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_body]; cbn.
     destruct m_body as [[|body|body]|]; auto.
     { destruct args as [|thisp [|srcp [|??]]]; auto.
-      destruct (tu.(types) !! m_class) as [[|un| | | | |]|] eqn:Hun;
+      destruct (tu.(types) !! m_class) as [[|un| | | | | |]|] eqn:Hun;
         try (iIntros "H"; iDestruct (UNSUPPORTED_elim with "H") as "[]").
       erewrite sub_module_preserves_gunion; [|done..].
       iIntros "[[A wp]|wp]".
@@ -1063,6 +1063,9 @@ that implies [type_ptr].
         letI* := Kreturn_void in
         |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -* Q p
 
+      (* This includes [Gopaque]: a constructor initializes the members and
+         bases, which an opaque record does not describe. Constructors of
+         opaque records can be specified and called, but not verified. *)
       | _ => ERROR ("wp_ctor: constructor for non-aggregate", ctor.(c_class))
       end
     | _ => ERROR "wp_ctor: constructor without leading [this] argument"
@@ -1250,6 +1253,10 @@ this resource will be consumed immediately.
           |={top}=>?upd |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -*
           Q p
         )
+      (* This includes [Gopaque]: a destructor destroys the members and
+         bases, which an opaque record does not describe. Destructors of
+         opaque records can be specified and called (see
+         [wp_destroy_named]), but not verified. *)
       | _ => ERROR ("wp_dtor: not a structure or union")
       end%I
     | _ => ERROR "wp_dtor: expected one argument"

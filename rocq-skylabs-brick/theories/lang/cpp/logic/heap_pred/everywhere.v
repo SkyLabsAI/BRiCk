@@ -134,6 +134,9 @@ Section with_cpp.
               struct_defR (fun ty q => rec q ty) nm s q
           | Some (Gunion u) =>
               union_defR (fun ty q => rec q ty) nm u q
+          (* This includes [Gopaque]: [everywhereR] (hence [anyR]) is
+             defined by the members and bases, which an opaque record does
+             not describe. Clients own opaque objects via abstract [Rep]s. *)
           | _ => False
           end
       | Tarray ty n =>
