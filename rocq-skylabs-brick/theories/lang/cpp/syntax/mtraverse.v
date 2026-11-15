@@ -510,6 +510,13 @@ Module MTraverse.
         <*> mret s.(s_size)
         <*> mret s.(s_alignment).
 
+    Definition traverseOpaque (o : Opaque) : F Opaque :=
+      Build_Opaque o.(o_size) o.(o_alignment)
+        <$> traverseN o.(o_dtor)
+        <*> mret o.(o_trivially_destructible)
+        <*> traverse (T:=eta option) traverseN o.(o_delete)
+        <*> mret o.(o_reason).
+
     Definition traverseGD (gd : GlobDecl) : F GlobDecl :=
       match gd with
       | Gtype => mret Gtype
@@ -519,6 +526,7 @@ Module MTraverse.
       | Gconstant t oe => Gconstant <$> traverseT t <*> traverse (T:=eta option) traverseE oe
       | Gtypedef t => Gtypedef <$> traverseT t
       | Gunsupported m => mret $ Gunsupported m
+      | Gopaque o => Gopaque <$> traverseOpaque o
       end.
 
   End traverse.

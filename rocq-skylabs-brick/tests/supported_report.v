@@ -14,6 +14,8 @@ Require Import skylabs.lang.cpp.syntax.supported.
 
 cpp.prog source flags "-std=c++20 --target=x86_64-linux-gnu" prog cpp:{{
 struct Bits { int a : 3; };
+struct VBase {};
+struct Virt : virtual VBase {};
 struct HasBits { Bits b; };
 struct Node { Node *next; Bits *bits; };
 union U { int i; char c; };
@@ -22,6 +24,7 @@ struct Base { virtual ~Base(); };
 struct Derived : Base {};
 
 int by_value(Bits b) { return b.a; }
+int by_value_virt(Virt v) { return 0; }
 int by_pointer(Bits *b) { return b == nullptr; }
 int through_field(HasBits *h) { return h->b.a; }
 int linked(Node n) { return n.next == nullptr; }
@@ -53,7 +56,7 @@ int case_after_decl(int x) { switch (x) { case 0: int y; y = 1; return y; case 1
 }}.
 
 Eval vm_compute in supported.report.run source
-  [ "by_value(Bits)"; "by_pointer(Bits*)"; "through_field(HasBits*)"; "linked(Node)"
+  [ "by_value(Bits)"; "by_value_virt(Virt)"; "by_pointer(Bits*)"; "through_field(HasBits*)"; "linked(Node)"
   ; "static_local()"; "calls_static_local()"; "use_union(U)"; "arrow_union(U*)"; "arrow_bits(Bits*)"; "address_only()"; "call_through(Bits*)"; "read_volatile(volatile int*)"
   ; "volatile_local()"; "dyn(Base*)"; "inline_asm()"; "cas_ptr(int**, int**, int*)"
   ; "cas_int(int*, int*, int)"; "overloaded(int)"; "overloaded(long)"

@@ -262,6 +262,10 @@ Definition Dtype (n : globname) : K :=
 Definition Dunsupported (n : globname) (msg : PrimString.string) : K :=
   _types n $ Gunsupported msg.
 
+(** A complete record whose body cpp2v cannot model; see [Opaque]. *)
+Definition Dopaque (n : globname) (o : Opaque) : K :=
+  _types n $ Gopaque o.
+
 (** BRiCk identifies a field by its name (see [offset_of]), so a record whose
     members do not have distinct names is unsupported. [sort.sort] drops
     duplicates. *)
