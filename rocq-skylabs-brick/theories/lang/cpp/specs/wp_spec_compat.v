@@ -10,7 +10,7 @@ Require Import skylabs.iris.extra.bi.telescopes.
 Require Import skylabs.lang.cpp.logic.entailsN.
 Require Import skylabs.lang.cpp.specs.classy.
 
-Lemma ex_eq {PROP : bi} {T} (a : T) (P : T -> PROP) :
+Lemma ex_eq {SI : sidx} {PROP : bi} {T} (a : T) (P : T -> PROP) :
   (∃ x : T, [| a = x |] ∗ P x) ⊣⊢ P a.
 Proof.
   intros. split'.
@@ -19,7 +19,7 @@ Proof.
     iPureIntro; eauto.
 Qed.
 
-Lemma ex_eq' {PROP : bi} {T} (a : T) (P : T -> PROP) :
+Lemma ex_eq' {SI : sidx} {PROP : bi} {T} (a : T) (P : T -> PROP) :
   (∃ x : T, [| x = a |] ∗ P x) ⊣⊢ P a.
 Proof.
   intros. split'.
@@ -30,7 +30,7 @@ Qed.
 
 
 Section with_prop.
-  Context {PROP : bi} {ARG : Type} {RESULT : Type}.
+  Context {SI : sidx} {PROP : bi} {ARG : Type} {RESULT : Type}.
 
   (** The canonical type of function specifications.
       These are written in weakest pre-condition style which leads to a
@@ -187,12 +187,12 @@ End with_prop.
 #[global,deprecated(since="2022-02-28",note="use [wp_specD_frame].")]
 Notation wpp_frame := (wp_specD_frame) (only parsing).
 
-Arguments WpSpec : clear implicits.
+Arguments WpSpec {SI} PROP ARG RESULT.
 Coercion wp_specD : WpSpec >-> Funclass.
 
 Module Export wpspec_ofe.
 Section wpspec_ofe.
-  Context {PROP : bi} {ARGS RESULT : Type}.
+  Context {SI : sidx} {PROP : bi} {ARGS RESULT : Type}.
   Notation WPP := (WpSpec PROP ARGS RESULT) (only parsing).
   Instance wpspec_equiv : Equiv WPP :=
     fun wpp1 wpp2 => forall x Q, wpp1 x Q ≡ wpp2 x Q.
@@ -207,32 +207,33 @@ End wpspec_ofe.
 Arguments WpSpecO : clear implicits.
 
 (** Relations between WPPs. *)
-Definition wpspec_relation {PROP : bi} (R : relation PROP)
+Definition wpspec_relation {SI : sidx} {PROP : bi} (R : relation PROP)
     {ARGS : Type} {RESULT : Type}
     (wpp2 : WpSpec PROP ARGS RESULT)
     (wpp1 : WpSpec PROP ARGS RESULT) : Prop :=
   (** We use a single [K] rather than pointwise equal [K1], [K2] for
       compatibility with [fs_entails], [fs_impl]. *)
   forall xs K, R (wpp1 xs K) (wpp2 xs K).
-#[global] Instance: Params (@wpspec_relation) 4 := {}.
+#[global] Instance: Params (@wpspec_relation) 5 := {}.
 
 Notation wpspec_entailsN n := (wpspec_relation (entailsN n)) (only parsing).
 Notation wpspec_entails := (wpspec_relation bi_entails) (only parsing).
 Notation wpspec_dist n := (wpspec_relation (flip (dist n))) (only parsing).
 Notation wpspec_equiv := (wpspec_relation (flip equiv)) (only parsing).
 
-Definition wpspec_relation_fupd {PROP : bi} `{BiFUpd PROP} (R : relation PROP)
+Definition wpspec_relation_fupd {SI : sidx} {PROP : bi} `{!BiFUpd PROP}
+    (R : relation PROP)
     {ARGS : Type} {RESULT : Type}
     (wpp2 : WpSpec PROP ARGS RESULT)
     (wpp1 : WpSpec PROP ARGS RESULT) : Prop :=
   (** We use a single [K] rather than pointwise equal [K1], [K2] for
       compatibility with [fs_entails_fupd], [fs_impl_fupd]. *)
   forall xs K, R (wpp1 xs K) (|={top}=> wpp2 xs (λ v, |={top}=> K v))%I.
-#[global] Instance: Params (@wpspec_relation_fupd) 4 := {}.
+#[global] Instance: Params (@wpspec_relation_fupd) 5 := {}.
 
 Notation wpspec_entails_fupd := (wpspec_relation_fupd bi_entails) (only parsing).
 
-Definition wpspec_relationI {PROP : bi}
+Definition wpspec_relationI {SI : sidx} {PROP : bi}
     (R : PROP -> PROP -> PROP)
     {ARGS : Type} {RESULT : Type}
     (R' : (RESULT -> PROP) -> (RESULT -> PROP))
@@ -240,7 +241,7 @@ Definition wpspec_relationI {PROP : bi}
     (wpp1 : WpSpec PROP ARGS RESULT) : PROP :=
   ∀ xs K, R (wpp1 xs K) (wpp2 xs (R' K)).
 
-#[global] Instance: Params (@wpspec_relationI) 5 := {}.
+#[global] Instance: Params (@wpspec_relationI) 6 := {}.
 
 Notation wpspec_wand := (wpspec_relationI bi_wand id) (only parsing).
 Notation wpspec_wand_fupd :=
@@ -250,7 +251,8 @@ Section wpspec_relations.
   Context {ARGS RESULT : Type}.
   Context `{!BiEntailsN PROP} `{!BiFUpd PROP}.
 
-  #[local] Notation wpspec_relation R := (@wpspec_relation PROP R ARGS RESULT).
+  #[local] Notation wpspec_relation R :=
+    (wpspec_relation (PROP:=PROP) (ARGS:=ARGS) (RESULT:=RESULT) R).
 
   #[global] Instance wpspec_relation_refl (R : relation PROP) :
     Reflexive R ->
@@ -809,10 +811,10 @@ Qed.
 Proof. exact : ne_proper. Qed.
 
 #[global] Instance wp_specD_ne {PROP : bi} {A R} n
-  : Proper (dist n ==> eq ==> eq ==> dist n) (@wp_specD PROP A R).
+  : Proper (dist n ==> eq ==> eq ==> dist n) (@wp_specD _ PROP A R).
 Proof. repeat red; intros ?? H ??? ???; subst; by apply H. Qed.
 #[global] Instance wp_specD_proper {PROP : bi} {A R}
-  : Proper (equiv ==> eq ==> eq ==> equiv) (@wp_specD PROP A R).
+  : Proper (equiv ==> eq ==> eq ==> equiv) (@wp_specD _ PROP A R).
 Proof. repeat red; intros ?? H ??? ???; subst; by apply H. Qed.
 
 Lemma add_with_equiv {PROP : bi} {ARG RESULT : Type} : forall T name i (PQ : T -> WpSpec PROP ARG RESULT) args K,

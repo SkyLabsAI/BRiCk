@@ -61,7 +61,7 @@ public:
         add_alias(llvm::dyn_cast<clang::NamedDecl>(ns->getParent()), ns);
     }
     void add_namespace_alias(const clang::NamespaceAliasDecl *ns) {
-        add_alias(ns->getNamespace(), ns->getAliasedNamespace());
+        add_alias(ns, ns->getNamespace());
     }
 
 private:

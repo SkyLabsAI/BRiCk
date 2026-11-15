@@ -363,19 +363,27 @@ static fmt::Formatter &printAnonymousFieldName(CoqPrinter &print,
                                                ClangPrinter &cprint) {
     if (auto rd = dyn_cast<CXXRecordDecl>(field.getParent())) {
         if (rd->isLambda()) {
-            guard::ctor _(print, "field_name.CaptureVar");
             llvm::DenseMap<const ValueDecl *, FieldDecl *> captures;
             FieldDecl *this_capture;
             rd->getCaptureFields(captures, this_capture);
             if (this_capture == &field) {
+                guard::ctor _(print, "field_name.CaptureVar");
                 return print.str("this");
             } else {
                 for (auto &i : captures) {
                     if (i.second == &field) {
-                        return print.str(i.first->getName());
+                        guard::ctor _(print, "field_name.CaptureVar");
+                        return cprint.printCaptureVarName(print, *rd,
+                                                          *i.first);
                     }
                 }
             }
+            // Clang also stores captured VLA bounds in anonymous fields.
+            // They have no captured variable; retain a distinct field name.
+            unsupported(cprint, loc::of(field),
+                        "anonymous lambda capture field");
+            guard::ctor _(print, "field_name.Anon", false);
+            return print.output() << field.getFieldIndex();
         }
     }
     if (auto rec = getTypeAsRecord(field)) {
@@ -388,6 +396,36 @@ static fmt::Formatter &printAnonymousFieldName(CoqPrinter &print,
     }
 }
 } // namespace
+
+fmt::Formatter &ClangPrinter::printCaptureVarName(CoqPrinter &print,
+                                                  const CXXRecordDecl &lambda,
+                                                  const ValueDecl &var) {
+    // BRiCk identifies fields by name, so the fields of one closure need
+    // distinct names. A capture pack ([vs...] or [...vs = e]) expands into one
+    // field per element, each capturing a distinct variable spelled [vs]; name
+    // them [vs], [vs...1], ... in field order. "..." cannot occur in an
+    // identifier, so these names cannot clash with other captures.
+    llvm::DenseMap<const ValueDecl *, FieldDecl *> captures;
+    FieldDecl *this_capture;
+    lambda.getCaptureFields(captures, this_capture);
+    auto it = captures.find(&var);
+    always_assert(it != captures.end() && "variable is not captured");
+    const FieldDecl *target = it->second;
+    llvm::DenseMap<const FieldDecl *, const ValueDecl *> field_vars;
+    for (auto &i : captures)
+        field_vars[i.second] = i.first;
+    unsigned offset = 0;
+    for (auto fd : lambda.fields()) {
+        if (fd == target)
+            break;
+        auto other = field_vars.lookup(fd);
+        if (other && other->getIdentifier() == var.getIdentifier())
+            ++offset;
+    }
+    if (!offset)
+        return print.str(var.getName());
+    return print.str((var.getName() + "..." + Twine(offset)).str());
+}
 
 fmt::Formatter &ClangPrinter::printFieldName(CoqPrinter &print,
                                              const FieldDecl &field, loc::loc) {
@@ -495,7 +533,10 @@ static fmt::Formatter &printStructOverrides(CoqPrinter &print,
     for (auto m : decl.methods()) {
         if (!m)
             fatal(cprint, loc::of(decl), "null method");
-        if (m->isVirtual() and not is_pure_virtual(*m)) {
+        // Pure virtual methods override too: [struct B : A { int f() override = 0; }]
+        // must link [A::f()] to [B::f()] so that [dispatch] can continue
+        // the chain into derived classes that override [B::f()].
+        if (m->isVirtual()) {
             for (auto o : m->overridden_methods()) {
                 print.output() << "(";
                 cprint.printName(print, o, loc::of(m)) << fmt::tuple_sep;
@@ -792,6 +833,45 @@ static fmt::Formatter &printFunctionParams(CoqPrinter &print,
     });
 }
 
+/// A union's defaulted copy/move constructors and assignment operators
+/// copy the object representation of the source ([class.copy.ctor]/14,
+/// [class.copy.assign]/13). Clang's AST does not express this copy: the
+/// generated body is empty (constructors) or `return *this;` (assignment
+/// operators), because clang's code generator performs the copy at the call
+/// site. Printing that body would make the copy a no-op, so these members
+/// are printed as `Defaulted` and the logic gives them their meaning.
+static bool isDefaultedUnionCopyOrMove(const CXXMethodDecl &decl) {
+    if (!decl.isDefaulted() || !decl.getParent()->isUnion())
+        return false;
+    if (auto d = dyn_cast<CXXConstructorDecl>(&decl))
+        return d->isCopyOrMoveConstructor();
+    return decl.isCopyAssignmentOperator() || decl.isMoveAssignmentOperator();
+}
+
+/// The logic copies the active member's `sizeof` bytes. A
+/// `[[no_unique_address]]` member may be larger than the union's data
+/// size, and an enclosing object can place other subobjects in the
+/// difference; clang then copies only the data size. Such unions get no
+/// body, so neither the AST's no-op nor the logic's copy applies.
+static bool hasPotentiallyOverlappingField(const CXXMethodDecl &decl) {
+    for (auto f : decl.getParent()->fields())
+        if (f->isPotentiallyOverlapping())
+            return true;
+    return false;
+}
+
+/// Print the body of a union's defaulted copy/move operation.
+static fmt::Formatter &printDefaultedUnionCopyOrMove(CoqPrinter &print,
+                                                     const CXXMethodDecl &decl,
+                                                     ClangPrinter &cprint) {
+    if (hasPotentiallyOverlappingField(decl)) {
+        unsupported(cprint, loc::of(decl),
+                    "copy/move of a union with a [[no_unique_address]] member");
+        return print.none();
+    }
+    return print.output() << "(Some Defaulted)";
+}
+
 static llvm::StringRef orDefaultBodyCtorName(const FunctionDecl &decl) {
     return decl.isImplicit() || decl.isDefaulted() ? "CompilerProvided"
                                                    : "UserDefined";
@@ -840,7 +920,9 @@ static fmt::Formatter &printMethod(CoqPrinter &print, const CXXMethodDecl &decl,
     cprint.printCallingConv(print, decl) << fmt::nbsp;
     cprint.printVariadic(print, decl.isVariadic()) << fmt::nbsp;
     cprint.printExceptionSpec(print, decl) << fmt::nbsp;
-    if (auto body = decl.getBody()) {
+    if (isDefaultedUnionCopyOrMove(decl)) {
+        return printDefaultedUnionCopyOrMove(print, decl, cprint);
+    } else if (auto body = decl.getBody()) {
         guard::some some(print);
         guard::ctor _(print, orDefaultBodyCtorName(decl));
         return cprint.printStmt(print, body);
@@ -915,12 +997,17 @@ static fmt::Formatter &printInitializer(const CXXConstructorDecl &ctor,
     printInitPath(ctor, init, print, cprint) << fmt::nbsp;
     if (print.templates()) {
         guard::ctor _{print, "Einitializing_type"};
-        if (auto fd = init.getAnyMember()) {
-            cprint.printQualType(print, fd->getType(), loc::of(ctor));
-        } else if (auto bc = init.getBaseClass()) {
-            cprint.printType(print, *bc, loc::of(ctor));
-        }
-        print.output() << fmt::nbsp;
+        auto print_type = [&]() -> fmt::Formatter & {
+            if (auto fd = init.getAnyMember())
+                return cprint.printQualType(print, fd->getType(), loc::of(ctor));
+            if (auto tsi = init.getTypeSourceInfo())
+                // Base class or, for a delegating initializer, the class itself.
+                return cprint.printType(print, *tsi->getType(), loc::of(ctor));
+            guard::ctor _{print, "Tunsupported"};
+            return print.str(
+                "initializer without member or type source information");
+        };
+        print_type() << fmt::nbsp;
         return cprint.printExpr(print, e);
     } else {
         return cprint.printExpr(print, e);
@@ -951,7 +1038,9 @@ static fmt::Formatter &printConstructor(CoqPrinter &print,
     cprint.printCallingConv(print, decl) << fmt::nbsp;
     cprint.printVariadic(print, decl.isVariadic()) << fmt::nbsp;
     cprint.printExceptionSpec(print, decl) << fmt::nbsp;
-    if (auto body = decl.getBody()) {
+    if (isDefaultedUnionCopyOrMove(decl)) {
+        return printDefaultedUnionCopyOrMove(print, decl, cprint);
+    } else if (auto body = decl.getBody()) {
         guard::some s(print);
         guard::ctor od(print, orDefaultBodyCtorName(decl));
         guard::tuple _(print);

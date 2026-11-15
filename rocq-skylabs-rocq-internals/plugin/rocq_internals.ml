@@ -86,13 +86,14 @@ let rec eta_reduce_pat (p : constr_pattern) = match p with
 | PFloat _ | PString _ | PArray _ -> p
 | PExtra e -> Util.Empty.abort e
 
-let decomp_pat p =
+let decomp_pat env p =
   let rec decrec acc = function
     | PApp (f,args) -> decrec (Array.to_list args @ acc) f
     | PProj (p, c) ->
       let hole = PMeta None in
       let params = List.make (Projection.npars p) hole in
-      (PRef (GlobRef.ConstRef (Projection.constant p)), params @ c :: acc)
+      let p = Environ.projection_repr_constant env (Names.Projection.repr p) in
+      (PRef (GlobRef.ConstRef p), params @ c :: acc)
     | c -> (c,acc)
   in
   decrec [] (eta_reduce_pat p)

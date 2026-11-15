@@ -353,7 +353,7 @@ Proof. vm_compute. reflexivity. Qed.
 
 Example value_array_template_alias_should_resolve :
   RESOLVE_VALUE "takes_value_array_alias(ValueArrayAlias<3>&)"
-                "takes_value_array_alias(int[3]&)".
+                "takes_value_array_alias(int(&)[3])".
 Proof. vm_compute. reflexivity. Qed.
 
 Example template_template_alias_should_resolve :

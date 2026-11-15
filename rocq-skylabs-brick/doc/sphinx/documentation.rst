@@ -7,7 +7,7 @@ the following links.
 
 - `skylabs.prelude <./_static/coqdoc/skylabs.prelude.html/toc.html>`__.
 
-- `skylabs.lang <./_static/coqdoc/skylabs.lang.html/toc.html>`__.
+- `skylabs.lang.cpp <./_static/coqdoc/skylabs.lang.cpp.html/toc.html>`__.
 
 - `skylabs.upoly <./_static/coqdoc/skylabs.upoly.html/toc.html>`__.
 

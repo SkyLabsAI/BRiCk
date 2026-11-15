@@ -3,11 +3,11 @@ Query assignments:
 Query assignments:
   T = app
  [global (indc «Ident.Rep»), 
-  fun `dogs` (global (indt «unit»)) c0 \ global (indc «tt»)]
+  fun `dogs:α1` (global (indt «unit»)) c0 \ global (indc «tt»)]
 Query assignments:
   %spill1_196 = dogs
   %spill2_197 = app
  [global (indc «Ident.Rep»), 
-  fun `dogs` (global (indt «unit»)) c0 \ global (indc «tt»)]
+  fun `dogs:α2` (global (indt «unit»)) c0 \ global (indc «tt»)]
 Query assignments:
   O = none

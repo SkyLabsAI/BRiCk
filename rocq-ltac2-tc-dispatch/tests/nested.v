@@ -1,7 +1,7 @@
 Require Import skylabs.ltac2.tc_dispatch.lookup.
 
 Module Import Nested.
-  Definition inside_module : Ltac2Ref.t. make_ltac2_ref. Qed.
+  Definition inside_module : Ltac2Ref.t. Proof. make_ltac2_ref. Qed.
   Import Printf.
   Ltac2 inside_module () :=
     ltac1:(reflexivity).

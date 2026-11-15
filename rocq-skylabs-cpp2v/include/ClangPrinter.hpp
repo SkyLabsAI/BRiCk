@@ -7,6 +7,7 @@
 #include "Location.hpp"
 #include "Logging.hpp"
 #include "Trace.hpp"
+#include <clang/AST/CurrentSourceLocExprScope.h>
 #include <clang/Basic/Diagnostic.h>
 #include <clang/Basic/Version.inc>
 #include <llvm/ADT/ArrayRef.h>
@@ -97,6 +98,7 @@ private:
     const clang::Decl *decl_{nullptr};
     const bool comment_{false};
     const bool typedefs_;
+    clang::CurrentSourceLocExprScope sourceLocExprScope_;
 
     ClangPrinter(const ClangPrinter &from, const clang::Decl *decl)
         : compiler_(from.compiler_), context_(from.context_),
@@ -140,6 +142,10 @@ public:
     clang::MangleContext &getMangleContext() { return *mangleContext_; }
 
     bool printTypedefs() const { return typedefs_; }
+
+    clang::CurrentSourceLocExprScope &sourceLocExprScope() {
+        return sourceLocExprScope_;
+    }
 
     std::optional<std::pair<const clang::CXXRecordDecl *, clang::Qualifiers>>
     getLambdaClass() const;
@@ -202,6 +208,13 @@ public:
     fmt::Formatter &printFieldName(CoqPrinter &, const clang::FieldDecl &,
                                    loc::loc);
 
+    // Print the (string) name of the closure field capturing [var] in
+    // [lambda]. Elements of a captured pack all share one spelling, so
+    // repeated spellings get a "...N" suffix, as in [printParamName].
+    fmt::Formatter &printCaptureVarName(CoqPrinter &,
+                                        const clang::CXXRecordDecl &lambda,
+                                        const clang::ValueDecl &var);
+
     // Print one Rocq [temp_param].
     fmt::Formatter &printTemplateParam(CoqPrinter &,
                                        const clang::NamedDecl *,
@@ -253,9 +266,13 @@ public:
     fmt::Formatter &printTemplateTypeParamRef(CoqPrinter &, unsigned depth,
                                               unsigned index, loc::loc);
     fmt::Formatter &printTemplateValueParamRef(CoqPrinter &, unsigned depth,
-                                               unsigned index, loc::loc);
+                                               unsigned index,
+                                               const clang::Expr *, loc::loc);
 
     // Types
+
+    // Expression type with its value category represented by reference types.
+    fmt::Formatter &printDeclType(CoqPrinter &, const clang::Expr *);
 
     fmt::Formatter &printQualType(CoqPrinter &print, const clang::QualType &qt,
                                   loc::loc loc);

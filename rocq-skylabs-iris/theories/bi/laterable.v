@@ -7,7 +7,7 @@
 Require Export iris.bi.lib.laterable.
 Require Import iris.bi.monpred.
 Require Import skylabs.iris.extra.proofmode.proofmode.
-Set Default Proof Using "Type".
+Set Default Proof Using "Type*".
 
 (** Replace the TC instance [big_sepL_laterable] with a version that
     does not assume [Timeless emp] when the list is empty. *)
@@ -20,7 +20,7 @@ Class ListNonEmpty {A} (l : list A) : Prop := list_non_empty : l ≠ nil.
 Proof. done. Qed.
 
 Section laterable.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi} `{!BiPersistentlyExist PROP}.
   Implicit Types P : PROP.
   Implicit Types Ps : list PROP.
 
@@ -39,7 +39,7 @@ End laterable.
 
 (** Some [Laterable] instances *)
 Section laterable.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi} `{!BiPersistentlyExist PROP}.
   Implicit Types P Q : PROP.
 
   #[global] Instance or_laterable P Q :

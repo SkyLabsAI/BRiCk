@@ -188,11 +188,18 @@ Module Import translation_unit.
         f_body := Some (Impl (Sunsupported error_msg))
       |}.
 
+  (** Incompatible type definitions sharing a name are replaced by this, so
+      that no fact about either definition (size, fields, layout, enumerators)
+      is available. *)
+  Definition type_conflict (n : name) : GlobDecl :=
+    Gunsupported ("Name collision on " ++ pretty.print_name n ++ " replaced by this unsupported type")%pstring.
+
   Definition decls (ds : PArray.array t) (info : abi.t) : translation_unit * dup_info :=
     decls' ds ∅ ∅ [] ∅ [] [] $ fun s t ga a asserts dups =>
         pair {|
             symbols := List.fold_left (fun t '(n, _) => <[n:=conflict n]> t) dups (NM.from_raw s);
-            types := NM.from_raw t;
+            types := List.fold_left (fun t '(n, d) =>
+                       if d is inl _ then <[n:=type_conflict n]> t else t) dups (NM.from_raw t);
             namespace_aliases := (Listset (sort.sort ga), NM.from_raw $ NM.Raw.map (fun x => Listset $ sort.sort x) a);
             initializer := nil;	(** TODO *)
             asserts := sort_static_assert.sort asserts;
@@ -255,11 +262,19 @@ Definition Dtype (n : globname) : K :=
 Definition Dunsupported (n : globname) (msg : PrimString.string) : K :=
   _types n $ Gunsupported msg.
 
+(** BRiCk identifies a field by its name (see [offset_of]), so a record whose
+    members do not have distinct names is unsupported. [sort.sort] drops
+    duplicates. *)
+Definition record_or_dup_fields (n : globname) (fs : list Member) (r : GlobDecl) : GlobDecl :=
+  let names := List.map (fun m => Nglobal m.(mem_name)) fs in
+  if Nat.eqb (List.length (sort.sort names)) (List.length names) then r
+  else Gunsupported ("Duplicate field names in " ++ pretty.print_name n)%pstring.
+
 Definition Dstruct (n : globname) (f : option Struct) : K :=
-  _types n $ if f is Some f then Gstruct f else Gtype.
+  _types n $ if f is Some f then record_or_dup_fields n f.(s_fields) (Gstruct f) else Gtype.
 
 Definition Dunion (n : globname) (f : option Union) : K :=
-  _types n $ if f is Some f then Gunion f else Gtype.
+  _types n $ if f is Some f then record_or_dup_fields n f.(u_fields) (Gunion f) else Gtype.
 
 Definition Dopaque_record (n : globname) (r : OpaqueRecord) : K :=
   _types n $ Gopaque_record r.

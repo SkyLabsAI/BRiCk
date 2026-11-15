@@ -13,37 +13,37 @@ Implicit Types (E : coPset).
 
 (*** Failing Tests *)
 Section failing_tests.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi} `{!BiFUpd PROP}.
   Implicit Types (P Q : PROP).
 
-  Lemma frame_empty_test `{BiFUpd PROP} E1 E1' E3 P :
+  Lemma frame_empty_test E1 E1' E3 P :
     (|={E1,∅}=> P)%I -∗
     (|={E1',E3}=> P)%I.
   Proof.
     iIntros "H". Fail iMod "H".
   Abort.
 
-  Lemma frame_emptier_test `{BiFUpd PROP} E1 E2 P (Hmask : E2 ⊆ E1) :
+  Lemma frame_emptier_test E1 E2 P (Hmask : E2 ⊆ E1) :
     (|={∅}=> P)%I -∗
     (|={E1,E2}=> P)%I.
   Proof.
     iIntros "H". Fail iMod "H".
   Abort.
 
-  Lemma frame_test `{BiFUpd PROP} E1 E1' E2 E3 P :
+  Lemma frame_test E1 E1' E2 E3 P :
     (|={E1,E2}=> P)%I -∗
     (|={E1',E3}=> P)%I.
   Proof.
     iIntros "H". Fail iMod "H".
   Abort.
 
-  Lemma frame_submask `{BiFUpd PROP} E1 E1' P Q (Hmask : E1 ⊆ E1') :
+  Lemma frame_submask E1 E1' P Q (Hmask : E1 ⊆ E1') :
     (|={E1}=> Q) ={E1'}=∗ Q.
   Proof.
     iIntros "H". Fail iMod "H".
   Abort.
 
-  Lemma frame_submasks `{BiFUpd PROP} E1 E1' E2 P Q (Hmask : E1 ⊆ E1') (Hmask' : E1' ⊆ E2):
+  Lemma frame_submasks E1 E1' E2 P Q (Hmask : E1 ⊆ E1') (Hmask' : E1' ⊆ E2):
     (|={E1, E2}=> Q) ={E1', E2}=∗ Q.
   Proof.
     iIntros "H". Fail iMod "H".
@@ -57,12 +57,11 @@ Beware: iMod does NOT backtrack when it fails solving a side condition.
 However, all these instances appear syntactically non-overlapping.
 *)
 Section elim_modal_instances.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi} `{!BiFUpd PROP}.
   Implicit Types P Q R : PROP.
   Import bi.
 
-  #[global] Instance elim_modal_fupd_fupd_submask
-        `{BiFUpd PROP} p E1 E1' P Q :
+  #[global] Instance elim_modal_fupd_fupd_submask p E1 E1' P Q :
     ElimModal (E1 ⊆ E1') p false (|={E1}=> P)%I P
               (|={E1'}=> Q)%I (|={E1'}=> Q)%I | 20.
   Proof.
@@ -72,7 +71,7 @@ Section elim_modal_instances.
   Qed.
 
   #[global] Instance elim_modal_fupd_fupd_mask_frame_empty
-        `{BiFUpd PROP} p E1 E1' E3 P Q :
+        p E1 E1' E3 P Q :
     ElimModal (E1 ⊆ E1') p false (|={E1,∅}=> P)%I P
               (|={E1',E3}=> Q)%I (|={E1'∖E1,E3}=> Q)%I | 30.
   Proof.
@@ -82,7 +81,7 @@ Section elim_modal_instances.
   Qed.
 
   #[global] Instance elim_modal_fupd_fupd_mask_frame_empty_empty
-        `{BiFUpd PROP} p E1 E2 P Q :
+        p E1 E2 P Q :
     ElimModal True p false (|={∅}=> P)%I P
               (|={E1,E2}=> Q)%I (|={E1,E2}=> Q)%I | 20.
   Proof.
@@ -91,7 +90,7 @@ Section elim_modal_instances.
   Qed.
 
   #[global] Instance elim_modal_fupd_fupd_frame
-        `{BiFUpd PROP} p E1 E1' E2 E3 P Q :
+        p E1 E1' E2 E3 P Q :
     ElimModal (E1 ⊆ E1') p false (|={E1,E2}=> P) P
               (|={E1',E3}=> Q) (|={E2 ∪ E1'∖E1,E3}=> Q) | 40.
   Proof.
@@ -101,7 +100,7 @@ Section elim_modal_instances.
   Qed.
 
   #[global] Instance elim_modal_fupd_fupd_submasks
-        `{BiFUpd PROP} p E1 E1' E2 (P Q : PROP) :
+        p E1 E1' E2 (P Q : PROP) :
     ElimModal (E1 ⊆ E1' ⊆ E2) p false (|={E1, E2}=> P)%I P
               (|={E1', E2}=> Q)%I (|={E2}=> Q)%I | 10.
   Proof.
@@ -112,17 +111,17 @@ End elim_modal_instances.
 
 (*** Tests *)
 Section tests.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi} `{!BiFUpd PROP}.
   Implicit Types (P Q : PROP).
 
-  Lemma frame_empty_test `{BiFUpd PROP} E1 E1' E3 P :
+  Lemma frame_empty_test E1 E1' E3 P :
     (|={E1,∅}=> P)%I -∗
     (|={E1',E3}=> P)%I.
   Proof.
     iIntros "H". iMod "H".
   Abort.
 
-  Lemma frame_emptier_test `{BiFUpd PROP} E1 E2 P (Hmask : E2 ⊆ E1) :
+  Lemma frame_emptier_test E1 E2 P (Hmask : E2 ⊆ E1) :
     (|={∅}=> P)%I -∗
     (|={E1,E2}=> P)%I.
   Proof.
@@ -130,14 +129,14 @@ Section tests.
     iApply (fupd_mask_intro E1 E2); [done|].
   Abort.
 
-  Lemma frame_test `{BiFUpd PROP} E1 E1' E2 E3 P :
+  Lemma frame_test E1 E1' E2 E3 P :
     (|={E1,E2}=> P)%I -∗
     (|={E1',E3}=> P)%I.
   Proof.
     iIntros "H". iMod "H".
   Abort.
 
-  Lemma frame_submask `{BiFUpd PROP} E1 E1' P Q (Hmask : E1 ⊆ E1') :
+  Lemma frame_submask E1 E1' P Q (Hmask : E1 ⊆ E1') :
     (|={E1}=> Q) ={E1'}=∗ Q.
   Proof.
     iIntros "H". iMod "H".
@@ -145,7 +144,7 @@ Section tests.
     all: fail.
   Abort.
 
-  Lemma frame_submasks `{BiFUpd PROP} E1 E1' E2 P Q (Hmask : E1 ⊆ E1') (Hmask' : E1' ⊆ E2):
+  Lemma frame_submasks E1 E1' E2 P Q (Hmask : E1 ⊆ E1') (Hmask' : E1' ⊆ E2):
     (|={E1, E2}=> Q) ={E1', E2}=∗ Q.
   Proof.
     iIntros "H". iMod "H".

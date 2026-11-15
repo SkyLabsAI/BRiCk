@@ -31,7 +31,7 @@ name_test_versions() {
 		output="${base}_${ver}_name_test.v"
 		std="-std=c++${ver}"
 		echo "# cpp2v --name-test=${output} ${input} -- ${std}" >&2
-		cpp2v "--name-test=${output}" "${input}" -- "${std}" || status=1
+		cpp2v_command "--name-test=${output}" "${input}" -- "${std}" || status=1
 		echo "# scrub ${output}" >&2
 		scrub "${output}" || status=1
 	done

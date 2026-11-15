@@ -84,8 +84,8 @@ End validR.
 
 Definition arrR_def `{Σ : cpp_logic} {σ : genv} ty (Rs : list Rep) : Rep :=
   .[ ty ! length Rs ] |-> validR ** [| is_Some (size_of σ ty) |] **
-  (* ^ both of these are only relevant for empty arrays, otherwise, they are implied by the
-     following conjunct *)
+  (* ^ [validR] is only relevant for empty arrays, otherwise, it is implied by
+     the following conjunct *)
   [∗ list] i ↦ Ri ∈ Rs, .[ ty ! Z.of_nat i ] |-> (type_ptrR ty ** Ri).
 Definition arrR_aux : seal (@arrR_def). Proof. by eexists. Qed.
 Definition arrR := arrR_aux.(unseal).
@@ -219,18 +219,22 @@ Section arrR.
     { by rewrite !arrR_cons IHxs !_offsetR_sep !_offsetR_succ_sub Nat2Z.inj_succ -!assoc. }
   Qed.
 
-  Lemma arrR_singleton ty R : arrR ty [R] -|- type_ptrR ty ** R.
+  Lemma arrR_singleton ty `{!HasSize ty} R : arrR ty [R] -|- type_ptrR ty ** R.
   Proof.
     rewrite arrR_cons arrR_nil _offsetR_sep _offsetR_only_provable.
     iSplit.
     { iIntros "($ & $ & _ & %)". }
     { iIntros "(#tp & $)". rewrite -type_ptrR_validR_plus_one.
-      iFrame "tp". iApply (observe with "tp"). }
+      by iFrame "tp". }
   Qed.
 
   Lemma arrR_snoc ty xs (y : Rep) :
     arrR ty (xs ++ [y]) -|- arrR ty xs ** .[ ty ! length xs ] |-> (type_ptrR ty ** y).
-  Proof. by rewrite arrR_append arrR_singleton. Qed.
+  Proof.
+    apply: (observe_both (is_Some (size_of σ ty))) => Hsz.
+    have ? : HasSize ty := Hsz.
+    by rewrite arrR_append arrR_singleton.
+  Qed.
 End arrR.
 
 Definition arrayR_def `{Σ : cpp_logic} {X : Type} {σ : genv} ty (P : X → Rep) (xs : list X) : Rep :=
@@ -343,7 +347,7 @@ Section with_array_R.
     by induction l; constructor.
   Qed.
 
-  Lemma arrayR_singleton x : arrayR ty R [x] -|- type_ptrR ty ** R x.
+  Lemma arrayR_singleton `{!HasSize ty} x : arrayR ty R [x] -|- type_ptrR ty ** R x.
   Proof. rewrite arrayR_eq. exact: arrR_singleton. Qed.
 
   Lemma arrayR_snoc xs y :

@@ -10,6 +10,34 @@ of the release, and introduce a new heading.
 
 ## Since Last Release
 
+2026.11.05: Add Clang 23 support for the `cpp2v` binary.
+
+2026.10.29: C++ name/type notation now parses and prints array declarators
+with C++ precedence and dimension order ([#448](https://github.com/SkyLabsAI/BRiCk/issues/448),
+[#453](https://github.com/SkyLabsAI/BRiCk/pull/453)).
+- Array references use `int(&)[3]`; the malformed `int[3]&` spelling is rejected.
+  Update affected `%cpp_name` and `%cpp_type` literals to the valid spelling.
+- Multidimensional arrays use outermost-first dimensions: `int[5][10]` means
+  five arrays of ten integers. Literals that relied on the previous reversed
+  order must reverse their dimensions to preserve their intended type; for
+  example, two zero-length byte arrays are now `unsigned char[2][0]`.
+- Omitted array bounds are allowed only for the outermost dimension of each
+  array type: `int[][3][4]` is valid, while `int[][][4]` is rejected. Pointers
+  to unknown-bound arrays, including arrays of such pointers, remain supported.
+
+2026.10.27: cpp2v prints a union's defaulted copy/move constructors and
+copy/move assignment operators as `Defaulted` instead of clang's AST body
+(empty, resp. `return *this;`: clang's code generator performs the copy at the
+call site, so executing that body copied nothing). `wp_ctor` and `wp_method`
+give these members the meaning of copying the object representation
+(`wp_union_copy` in `logic/func.v`): the source's active member and its raw
+bytes (`unionR`, `rawsR`) become the destination's; the byte list has exactly
+the member's `size_of`. Proofs about such copies must now supply the source as
+raw bytes (`primR_to_rawsR`) and the destination as `anyR` (assignment) or
+`tblockR` (construction). Unions with a `[[no_unique_address]]` member are
+excluded: their copy/move operations get no body, because the member's
+`size_of` can exceed the bytes clang copies.
+
 2026.10.19: cpp2v puts template patterns reached outside their template (e.g.
 local types in out-of-line member definitions of class templates, or
 out-of-line static data members of class templates) in the template part of

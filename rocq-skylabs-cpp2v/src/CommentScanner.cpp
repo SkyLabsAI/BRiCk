@@ -4,6 +4,7 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  */
 #include "CommentScanner.hpp"
+#include "ClangCompat.hpp"
 #include <Formatter.hpp>
 #include <clang/AST/ASTContext.h>
 #include <clang/AST/DeclBase.h>
@@ -14,7 +15,7 @@ using namespace comment;
 
 static SourceLocation getStartSourceLocWithComment(clang::ASTContext *ctxt,
                                                    const Decl *d) {
-    auto comment = ctxt->getRawCommentForDeclNoCache(d);
+    auto comment = clang_compat::getRawCommentNoCache(*ctxt, d);
     return comment ? comment->getBeginLoc() : d->getBeginLoc();
 }
 

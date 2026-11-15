@@ -15,7 +15,7 @@ Require Export skylabs.iris.extra.bi.only_provable.
 Require Export skylabs.iris.extra.bi.derived_laws.
 
 Section with_PROP.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi}.
   Implicit Type (P : PROP).
 
   #[global] Instance IntoPure_mono :
@@ -90,17 +90,19 @@ Section monPred.
   Context {I : biIndex} {PROP : bi}.
   Local Notation monPred := (monPred I PROP).
   Local Notation monPredI := (monPredI I PROP).
-  #[global] Instance monPred_bi_bupd_sbi `{BiBUpdSbi PROP} :
+  #[global] Instance monPred_bi_bupd_sbi
+      `{!BiBUpd PROP, !Sbi PROP, !BiBUpdSbi PROP} :
     BiBUpdSbi monPredI .
   Proof. intros P. split=> /= i. monPred.unseal. apply bupd_si_pure. Qed.
 
-  #[global] Instance monPred_bi_fupd_sbi `{BiFUpdSbi PROP} :
+  #[global] Instance monPred_bi_fupd_sbi
+      `{!BiFUpd PROP, !Sbi PROP, !BiFUpdSbi PROP} :
     BiFUpdSbi monPredI.
   Proof.
     split; rewrite /bi_except_0; monPred.unseal.
     - intros E E' P R. split=>/= i.
       rewrite (bi.forall_elim i) bi.pure_True // bi.True_impl.
-      apply fupd_si_pure_keep_l.
+      apply fupd_keep_si_pure'.
     - intros E P. split=>/= i. apply fupd_si_pure_later.
     - intros E A Φ. split=>/= i. apply fupd_si_pure_forall_2.
   Qed.

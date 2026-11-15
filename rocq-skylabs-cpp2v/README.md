@@ -6,7 +6,7 @@ Code generator for the BRiCk program logic for C++
 The dependencies for the code generator are the following:
 - A C++ compiler
 - The `cmake` tool
-- LLVM 20 to 22 (other versions aren't tested in CI)
+- LLVM 20 to 23 (other versions aren't tested in CI)
 
 ### Native dependencies: Linux (Ubuntu)
 
@@ -15,20 +15,20 @@ Install the dependencies:
 sudo apt install cmake build-essential
 ```
 
-Install LLVM 22 following [these directions](https://apt.llvm.org/):
+Install LLVM 23 following [these directions](https://apt.llvm.org/):
 ```sh
 wget https://apt.llvm.org/llvm.sh
 chmod +x llvm.sh
-sudo ./llvm.sh 22 all
-export PATH=/usr/lib/llvm-22/bin:${PATH}
+sudo ./llvm.sh 23 all
+export PATH=/usr/lib/llvm-23/bin:${PATH}
 ```
 
 ### Native dependencies: OSX
 
-For OSX we recommend clang 22:
+For OSX we recommend clang 23:
 ```sh
-brew install llvm@22 cmake opam
-export PATH=$(brew --prefix llvm@22)/bin:${PATH}
+brew install llvm cmake opam
+export PATH=$(brew --prefix llvm)/bin:${PATH}
 ```
 
 ## Building
@@ -66,6 +66,14 @@ arguments `ARGS`.
 ```
 dune exec -- cpp2v ${ARGS}
 ```
+
+## Shared host/Docker execution
+
+The package also installs `cpp2v-run` and `cpp2v-toolchain` for running commands
+and generating command adapters against a common host/container environment.
+They support explicit TU translation, compilation, and executable tests. Inline
+`cpp.prog` translation remains host-only. Docker is opt-in; image choices and
+forwarded environment variables remain consumer configuration. See [scripts/README.md](scripts/README.md).
 
 ## Directory layout
 

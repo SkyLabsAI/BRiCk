@@ -150,11 +150,11 @@ Section weakly_obj.
     `{!WeaklyObjective P} : WeaklyObjective (□?p P).
   Proof. rewrite /bi_intuitionistically_if. destruct p; apply _. Qed.
 
-  #[global] Instance bupd_weakly_objective `{BiBUpd PROP} P
+  #[global] Instance bupd_weakly_objective `{!BiBUpd PROP} P
     `{!WeaklyObjective P} : WeaklyObjective (|==> P)%I.
   Proof. intros ???. by rewrite !monPred_at_bupd weakly_objective. Qed.
 
-  #[global] Instance fupd_weakly_objective `{BiFUpd PROP} E1 E2 P
+  #[global] Instance fupd_weakly_objective `{!BiFUpd PROP} E1 E2 P
     `{!WeaklyObjective P} : WeaklyObjective (|={E1,E2}=> P)%I.
   Proof. intros ???. by rewrite !monPred_at_fupd weakly_objective. Qed.
 

@@ -1172,6 +1172,10 @@ Module Type Expr.
            else wp_init ity addr el (fun frees => Q (frees >*> free))))
         |-- wp_init ity addr (Eif tst th el ty) Q.
 
+    Axiom wp_lval_implicit : forall e Q,
+        wp_lval e Q |-- wp_lval (Eimplicit e) Q.
+    Axiom wp_xval_implicit : forall e Q,
+        wp_xval e Q |-- wp_xval (Eimplicit e) Q.
     Axiom wp_operand_implicit : forall e Q,
         wp_operand e Q |-- wp_operand (Eimplicit e) Q.
     Axiom wp_init_implicit : forall ty e p Q,
@@ -1736,31 +1740,46 @@ Module Type Expr.
           wp_init ty this (Einitlist es None (Tnamed cls)) Q
       |-- wp_init ty this (Elambda cls es) Q.
 
+    (** [wp_array_init ety base es idx free Q] initializes the elements of
+        the array at [base] starting at index [idx] with the initializers
+        [es], accumulating the temporaries created by the initializers into
+        [free] (the temporaries created so far), and passing all of them to
+        [Q] at the end.
+
+        NOTE: We nest the recursive calls to `wp_array_init` within the
+        continuation of the `wp_initialize` statement to reflect the fact
+        that the C++ Standard introduces sequence-points between all of
+        the elements of an initializer list
+        (c.f. http://eel.is/c++draft/dcl.init.list#4).
+
+        Sequencing does not end the lifetime of temporaries, though: the
+        temporaries created by an element's initializer live until the end
+        of the enclosing full-expression (c.f.
+        http://eel.is/c++draft/class.temporary#4), e.g. the whole
+        init-declarator for <<int arr[2] = { f().x, g() };>>. We therefore
+        thread the temporaries through to the continuation, exactly like
+        [wp_each] does for aggregate class initialization, rather than
+        destroying them (with [interp]) before evaluating the next element.
+     *)
     Fixpoint wp_array_init (ety : type) (base : ptr) (es : list Expr) (idx : Z)
-      (Q : FreeTemps -> mpred) : mpred :=
+      (free : FreeTemps) (Q : FreeTemps -> mpred) : mpred :=
       match es with
       | nil =>
-        Q FreeTemps.id
+        Q free
       | e :: rest =>
-          (* NOTE: We nest the recursive calls to `wp_array_init` within
-               the continuation of the `wp_initialize` statement to
-               reflect the fact that the C++ Standard introduces
-               sequence-points between all of the elements of an
-               initializer list (c.f. http://eel.is/c++draft/dcl.init.list#4)
-           *)
-         letI* free := wp_initialize ety (base .[ erase_qualifiers ety ! idx ]) e in
-         interp free $ wp_array_init ety base rest (Z.succ idx) Q
+         letI* free' := wp_initialize ety (base .[ erase_qualifiers ety ! idx ]) e in
+         wp_array_init ety base rest (Z.succ idx) (free' >*> free) Q
       end.
 
-    Lemma wp_array_init_frame ety base : forall es ix Q Q',
+    Lemma wp_array_init_frame ety base : forall es ix free Q Q',
       (Forall f, Q f -* Q' f)
-      |-- wp_array_init ety base es ix Q -*
-          wp_array_init ety base es ix Q'.
+      |-- wp_array_init ety base es ix free Q -*
+          wp_array_init ety base es ix free Q'.
     Proof.
       induction es; simpl; intros; iIntros "X".
       { iIntros "A"; iApply "X"; iApply "A"; done. }
       { iApply wp_initialize_frame; [done|]. iIntros (?).
-        iApply interp_frame. by iApply IHes. }
+        by iApply IHes. }
     Qed.
 
     Definition fill_initlist (desiredsz : N) (es : list Expr) (f : Expr) : list Expr :=
@@ -1779,9 +1798,9 @@ Module Type Expr.
       | Lt =>
           match f with
           | None => False
-          | Some fill => wp_array_init ety base (fill_initlist sz es fill) 0 Q
+          | Some fill => wp_array_init ety base (fill_initlist sz es fill) 0 FreeTemps.id Q
           end
-      | Eq => wp_array_init ety base es 0 Q
+      | Eq => wp_array_init ety base es 0 FreeTemps.id Q
       (* <http://eel.is/c++draft/dcl.init.general#16.5>
 
          Programs which contain more initializer expressions than
@@ -1828,11 +1847,16 @@ Module Type Expr.
           wp_array_init_fill ety base ls fill sz Q
       |-- wp_init (Tarray ety sz) base (Einitlist ls fill ty) Q.
 
+    (** Value-initializing an array of primitives. Like the scalar cases of
+        [wp_initialize] and [wp_array_init_fill], the elements live at the
+        unqualified element type, with const ownership for const elements. *)
     Axiom wp_init_implicit_init_array : forall sz ety (base : ptr) aty default Q,
         is_array_of aty ety ->
         get_default ety = Some default ->
-        (base |-> type_ptrR (Tarray ety sz) -*
-         base |-> arrayR ety (primR (erase_qualifiers ety) 1$m) (replicateN sz default) -*
+        let cv := take_qualifiers ety in
+        let ety' := erase_qualifiers ety in
+        (base |-> type_ptrR (Tarray ety' sz) -*
+         base |-> arrayR ety' (primR ety' (cQp.mk (q_const cv) 1)) (replicateN sz default) -*
          Q FreeTemps.id)
       |-- wp_init (Tarray ety sz) base (Eimplicit_init aty) Q.
 

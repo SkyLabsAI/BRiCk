@@ -78,6 +78,10 @@ public:
             cprint.printStmt(print, v);
         });
         print.space();
+        print.option(stmt->getConditionVariable(), [&](const VarDecl *v) {
+            cprint.printLocalDecl(print, v);
+        });
+        print.space();
         print.option(stmt->getCond(), [&](const Expr *v) {
             cprint.printExpr(print, v);
         });

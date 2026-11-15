@@ -766,7 +766,7 @@ Section pureR_instances.
   arbitrary modalities doesn't work well with [monPred]. We can
   specialize those to fancy updates (which covers all
   invariant-related [IntoAcc] instances in Iris), but a problem
-  remains. The underlying lemma [coq_tactics.tac_inv_elim] generates
+  remains. The underlying lemma [rocq_tactics.tac_inv_elim] generates
   an entailment involving [monPred] that the tactic [iInv] seems
   unable to handle. *)
 

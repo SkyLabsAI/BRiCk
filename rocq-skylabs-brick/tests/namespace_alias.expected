@@ -1,0 +1,5 @@
+     = [("ab"%cpp_name, {| listset_car := ["a::b"%cpp_name] |});
+        ("g"%cpp_name, {| listset_car := ["detail"%cpp_name] |});
+        ("gg"%cpp_name, {| listset_car := ["detail"%cpp_name] |});
+        ("f()::d"%cpp_name, {| listset_car := ["detail"%cpp_name] |})]
+     : list (NM.key * listset name)

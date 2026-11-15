@@ -60,12 +60,13 @@ module Label = struct
       Printer.pr_global r
 
 
-  let pr (l : t) =
+  let pr env (l : t) =
     let open Pp in
     match l with
     | GRLabel gr -> pr_globref gr
     | ProjLabel gr ->
-      pr_globref (Names.GlobRef.ConstRef (Names.Projection.Repr.constant gr))
+      let c = Environ.projection_repr_constant env gr in
+      pr_globref (Names.GlobRef.ConstRef c)
     | CaseLabel -> str "<match>"
     | Meta o ->
       begin
@@ -360,7 +361,9 @@ let merge_modes = function
     List.iter f ls;
     acc
 
-
+module Modes = struct
+  type t = { modes : Hints.hint_mode array list Names.GlobRef.Map.t }
+end
 
 let go_db clss o_ts db_name =
 
@@ -369,24 +372,25 @@ let go_db clss o_ts db_name =
   let db = Hints.searchtable_map (Names.Id.to_string db_name) in
   let modes = Hints.Hint_db.modes db in
   (* TODO: Unexpected breakage from https://github.com/coq/coq/pull/20201 *)
-  let modes : Hints.hint_mode array list Names.GlobRef.Map.t = Obj.magic modes in
+  let Modes.{modes} = Obj.magic modes in
   let ts =
     match o_ts with
     | Some ts -> ts
     | None -> Hints.Hint_db.transparent_state db
   in
 
+  let env = Global.env () in
   let go_hint modes head hint =
-    match hint_pattern (Global.env()) Evd.empty hint with
+    match hint_pattern env Evd.empty hint with
     | None -> no_pattern_warning hint
     | Some pat ->
-      let res = results_for (Global.env()) (Some ts) (head,hint,modes) pat in
+      let res = results_for env (Some ts) (head,hint,modes) pat in
       results := Names.GlobRef.Map.update head (fun o -> match o with None -> Some res | Some r -> Some (Res.merge res r)) (!results)
   in
   List.iter (fun r ->
       let modes = Names.GlobRef.Map.find_opt r modes in
       let modes = merge_modes modes in
-      let hints = Hints.Hint_db.map_all ~secvars:Names.Id.Pred.empty r db in
+      let hints = Hints.Hint_db.map_all ~secvars:Names.Id.Pred.empty env r db in
       List.iter (go_hint modes r) hints;
       let open Pp in
       let out = Feedback.msg_info in
@@ -396,7 +400,7 @@ let go_db clss o_ts db_name =
         let fn _ elems =
           let f (modes, l, hint) =
             if not (ModeSet.should_ignore modes) then
-              Some (Label.pr l ++ spc ()
+              Some (Label.pr env l ++ spc ()
                     ++ str "(modes " ++ ModeSet.pp modes ++ str ")" ++ spc ()
                     ++ str "in" ++ spc () ++ pr_hint hint)
             else

@@ -12,7 +12,7 @@ type pat = Pattern.constr_pattern
 
 val eta_reduce_pat : pat -> pat
 
-val decomp_pat : pat -> pat * pat list
+val decomp_pat : Environ.env -> pat -> pat * pat list
 
 module Patternops : sig
   val occurn_pattern_meta_closed : int -> Pattern.constr_pattern -> bool

@@ -38,7 +38,8 @@ End enable_absorbing_bi.
 Import bi.
 
 Section with_later_emp.
-  Context {PROP : bi} (Hlater_emp : ▷ emp ⊣⊢@{PROP} emp).
+  Context {SI : sidx} {PROP : bi}.
+  Context (Hlater_emp : ▷ emp ⊣⊢@{PROP} emp).
   Local Set Default Proof Using "Hlater_emp".
   Local Notation "'emp'" := (bi_emp (PROP := PROP)) : bi_scope.
 
@@ -59,7 +60,8 @@ Section with_later_emp.
     Affine (▷ P).
   Proof. intros. by rewrite /Affine (affine P) (affine (▷ emp)). Qed.
 
-  #[local] Lemma persistent_affine_laterable (P : PROP) :
+  #[local] Lemma persistent_affine_laterable
+      `{!BiPersistentlyExist PROP} (P : PROP) :
     Persistent P → Affine P → Laterable P.
   Proof. intros. apply /intuitionistic_laterable /timeless_emp_with_later_emp. Qed.
 End with_later_emp.
@@ -67,7 +69,9 @@ End with_later_emp.
 (* Here, we assume [affinely_sep] as reasonable,
 and derive desirable consequences, such as BiPositive. *)
 Section with_affinely_sep.
-  Context {PROP : bi} (Haffinely_sep : ∀ P Q : PROP, <affine> (P ∗ Q) ⊣⊢ <affine> P ∗ <affine> Q).
+  Context {SI : sidx} {PROP : bi}.
+  Context (Haffinely_sep : ∀ P Q : PROP,
+    <affine> (P ∗ Q) ⊣⊢ <affine> P ∗ <affine> Q).
   Local Set Default Proof Using "Haffinely_sep".
 
   (* Iris proves [affinely_sep] from [BiPositive PROP]; we prove the converse holds *)
@@ -88,7 +92,8 @@ Section uPred_with_later_emp.
   Context (M : ucmra).
   Implicit Type (P : uPredI M).
 
-  Definition later_emp_uPred := @bi.later_emp _ (uPred_affine M).
+  Definition later_emp_uPred : ▷ emp ⊣⊢@{uPredI M} emp :=
+    @bi.later_emp natSI (uPredI M) (uPred_affine M).
 
   #[export] Instance timeless_emp_uPred : Timeless (PROP := uPredI M) emp.
   Proof. apply timeless_emp_with_later_emp, later_emp_uPred. Qed.
@@ -102,13 +107,15 @@ Section uPred_with_later_emp.
 
   #[export] Instance persistent_affine_laterable_upred P :
     Persistent P → Affine P → Laterable P.
-  Proof. apply persistent_affine_laterable, later_emp_uPred. Qed.
+  Proof. intros. apply intuitionistic_laterable; apply _. Qed.
 End uPred_with_later_emp.
 
 (** *** Other instances that we derive from affinity but seem safe. *)
 Section uPred.
   Context (M : ucmra).
-  Definition affinely_sep_uPred := @affinely_sep _ (@bi_affine_positive _ (uPred_affine M)).
+  Definition affinely_sep_uPred :=
+    @affinely_sep natSI (uPredI M)
+      (@bi_affine_positive natSI (uPredI M) (uPred_affine M)).
 
   #[export] Instance bi_positive_uPred : BiPositive (uPredI M).
   Proof. apply bi_positive_with_affinely_sep, affinely_sep_uPred. Qed.
@@ -146,7 +153,7 @@ Section monPred_lift.
   Qed.
 
   #[export] Instance persistent_affine_laterable_monPred_lift P
-    (HT : Timeless (PROP := PROP) emp) :
+    `{!BiPersistentlyExist PROP} (HT : Timeless (PROP := PROP) emp) :
     Persistent P → Affine P → Laterable P.
   Proof. intros. apply: intuitionistic_laterable. Qed.
   (** Liftings for [BiPositive] and [BiEmpForallOnlyProvable] are declared elsewhere. *)
@@ -155,7 +162,7 @@ End monPred_lift.
 #[export] Remove Hints class_instances.from_forall_intuitionistically : typeclass_instances.
 
 Section UPSTREAM_PROP.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi}.
   (* To upstream to Iris. *)
   #[export] Instance from_forall_intuitionistically {A} `{!BiPersistentlyForall PROP}
       P (Φ : A → PROP) name :

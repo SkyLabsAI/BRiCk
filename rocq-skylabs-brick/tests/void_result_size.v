@@ -11,6 +11,11 @@ Require Import skylabs.iris.extra.proofmode.proofmode.
 Section with_cpp.
   Context `{Σ : cpp_logic} {σ : genv}.
 
+  (* BRiCk no longer assumes [type_ptr_size]. Assume it locally to check that
+     the original size contradiction stays refuted. *)
+  Hypothesis type_ptr_size : forall ty p,
+    type_ptr ty p |-- [| is_Some (size_of σ ty) |].
+
   Example void_result_has_one_byte : size_of σ Tvoid = Some 1%N.
   Proof. reflexivity. Qed.
 

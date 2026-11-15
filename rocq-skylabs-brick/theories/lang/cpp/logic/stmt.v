@@ -522,7 +522,9 @@ Module Type Stmt.
     Definition Kpost I Q :=
       KP $ Kpost_inner I Q.
 
-    Definition for_unroll ρ test incr body (Q : Kpred) :=
+    (** One iteration with the condition binding, if any, already in scope. *)
+    Definition for_body_unroll (ρ : region) (test incr : option Expr)
+        (body : Stmt) (Q : Kpred) : mpred :=
       let Kinc :=
         Kpost (match incr with
                | None => Q Normal
@@ -534,50 +536,67 @@ Module Type Stmt.
       | Some test => wp ρ (Sif None None test body Sbreak)
       end Kinc.
 
-    Axiom wp_for_unroll : forall ρ test incr body Q,
-            for_unroll ρ test incr body (Kloop (|> wp ρ (Sfor None test incr body) Q) Q)
-        |-- wp ρ (Sfor None test incr body) Q.
+    (** A condition declaration is initialized for every test. Its binding
+        encloses both body and increment. Normal completion and [continue]
+        run the increment before its cleanup; a false test, [break], or
+        [return] clean it up without incrementing. *)
+    Definition for_unroll (ρ : region) (decl : option VarDecl)
+        (test incr : option Expr) (body : Stmt) (Q : Kpred) : mpred :=
+      match decl with
+      | None => for_body_unroll ρ test incr body Q
+      | Some decl => wp_decl ρ decl (fun ρ' free =>
+          for_body_unroll ρ' test incr body (Kfree free Q))
+      end.
 
-    Theorem wp_for_inv I : forall ρ test incr body Q,
-        I |-- for_unroll ρ test incr body (Kloop (|> I) Q) ->
-        I |-- wp ρ (Sfor None test incr body) Q.
+    Lemma for_body_unroll_frame ρ test incr body Q Q' :
+        (Forall rt, Q rt -* Q' rt) |--
+        for_body_unroll ρ test incr body Q -* for_body_unroll ρ test incr body Q'.
     Proof.
-      intros.
-      iLöb as "IH".
-      iIntros "I".
-      iApply wp_for_unroll.
-      rewrite {2}H /for_unroll.
-      iRevert "I"; case_match; (iApply wp_frame; first reflexivity).
-      all: iIntros (rt); destruct rt; simpl; eauto.
-      all: case_match.
-      all: try (iApply wp_discard_frame; first reflexivity;
-                iIntros (?); iApply interp_frame;
-                iIntros "I !>"; iApply "IH"; eauto).
+      rewrite /for_body_unroll. iIntros "HQ".
+      destruct test; simpl; (iApply wp_frame; first reflexivity).
+      all: iIntros (rt); destruct rt; simpl; try iApply "HQ".
+      all: destruct incr; simpl; last iApply "HQ".
+      all: iApply wp_discard_frame; first reflexivity.
+      all: iIntros (free); iApply interp_frame; iApply "HQ".
+    Qed.
+
+    Lemma for_unroll_frame ρ decl test incr body Q Q' :
+        (Forall rt, Q rt -* Q' rt) |--
+        for_unroll ρ decl test incr body Q -* for_unroll ρ decl test incr body Q'.
+    Proof.
+      rewrite /for_unroll. iIntros "HQ". destruct decl.
+      - iApply wp_decl_frame. iIntros (ρ' free).
+        iApply for_body_unroll_frame. iIntros (rt).
+        iApply Kfree_frame. iApply "HQ".
+      - iApply for_body_unroll_frame. iApply "HQ".
+    Qed.
+
+    Axiom wp_for_unroll : forall ρ decl test incr body Q,
+        for_unroll ρ decl test incr body
+          (Kloop (|> wp ρ (Sfor None decl test incr body) Q) Q)
+        |-- wp ρ (Sfor None decl test incr body) Q.
+
+    Theorem wp_for_inv I : forall ρ decl test incr body Q,
+        I |-- for_unroll ρ decl test incr body (Kloop (|> I) Q) ->
+        I |-- wp ρ (Sfor None decl test incr body) Q.
+    Proof.
+      intros * H. iLöb as "IH". iIntros "I".
+      iApply wp_for_unroll. rewrite {2}H.
+      iRevert "I". iApply for_unroll_frame.
+      iIntros (rt); destruct rt; simpl; eauto.
       all: iIntros "I !>"; iApply "IH"; eauto.
     Qed.
 
-    Lemma wp_for_inv_nolater I : forall ρ test incr body Q,
-        I |-- Unfold for_unroll (for_unroll ρ test incr body (Kloop (|> I) Q)) ->
-        I |-- wp ρ (Sfor None test incr body) Q.
-    Proof.
-      intros.
-      apply wp_for_inv.
-      rewrite {1}H /for_unroll/=.
-      iIntros "X"; iRevert "X".
-      case_match; simpl.
-      all: iApply wp_frame; first reflexivity.
-      all: iIntros (rt); destruct rt; simpl; eauto.
-      all: case_match.
-      all: try (iApply wp_discard_frame; first reflexivity;
-                iIntros (?); iApply interp_frame).
-    Qed.
+    (* for backwards compatibility *)
+    Lemma wp_for_inv_nolater I : forall ρ decl test incr body Q,
+        I |-- Unfold for_unroll (for_unroll ρ decl test incr body (Kloop (|> I) Q)) ->
+        I |-- wp ρ (Sfor None decl test incr body) Q.
+    Proof. intros * H. apply wp_for_inv. exact H. Qed.
 
-    (**
-       `for (init; test; incr) body` desugars to `{ init; for (; test; incr) body }`
-     *)
-    Axiom wp_for_init : forall ρ init test incr b Q,
-            wp ρ (Sseq (init :: Sfor None test incr b :: nil)) Q
-        |-- wp ρ (Sfor (Some init) test incr b) Q.
+    (** The initializer runs once, in the scope enclosing all iterations. *)
+    Axiom wp_for_init : forall ρ init decl test incr body Q,
+        wp ρ (Sseq [init; Sfor None decl test incr body]) Q
+        |-- wp ρ (Sfor (Some init) decl test incr body) Q.
 
     (** * <<do>> *)
 
@@ -626,8 +645,10 @@ Module Type Stmt.
     (* the semantics of return is like an initialization
      * expression.
      *)
+    (* [stmt.return]: a <<return>> without operand is allowed in functions
+       returning cv <<void>>. *)
     Axiom wp_return_void : forall ρ Q,
-        get_return_type ρ = Tvoid ->
+        drop_qualifiers (get_return_type ρ) = Tvoid ->
         |> Q ReturnVoid |-- wp ρ (Sreturn None) Q.
 
     Axiom wp_return : forall ρ e (Q : Kpred),
@@ -665,33 +686,6 @@ Module Type Stmt.
       | Exact i => v = i
       | Range low high => low <= v <= high
       end%Z.
-
-    (* This performs a syntactic check on [s] to ensure that there are no [case] or [default]
-       statements. This is used to avoid missing one of these statements which would compromise
-       the soundness of [wp_switch_block]
-     *)
-    Fixpoint no_case (s : Stmt) : bool :=
-      match s with
-      | Sseq ls => forallb no_case ls
-      | Sdecl _ => true
-      | Sif _ _ _ a b
-      | Sif_consteval a b => no_case a && no_case b
-      | Swhile _ _ s => no_case s
-      | Sfor _ _ _ s => no_case s
-      | Sdo s _ => no_case s
-      | Sattr _ s => no_case s
-      | Sswitch _ _ _ _ => true
-      | Scase _
-      | Sdefault => false
-      | Sbreak
-      | Scontinue
-      | Sreturn _
-      | Sexpr _
-      | Sasm _ _ _ _ _ => true
-      | Slabeled _ s => no_case s
-      | Sgoto _ => true
-      | Sunsupported _ => false
-      end.
 
     Fixpoint get_cases (ls : list Stmt) : list SwitchBranch :=
       match ls with

@@ -201,7 +201,8 @@ Section with_Σ.
     involved. See https://eel.is/c++draft/atomics.types.operations#23.
     However, it is logically atomic w.r.t. the atomic location `p`.
     The points-to of `p` can be provided logically atomically with the AU1, but
-    the points-to's of `new_p` and `ret` are assumed to be provided locally. *)
+    the points-to's of `new_p` and `ret` are assumed to be provided locally.
+    The generic builtin returns void; its old value is written through [ret]. *)
   Axiom wp_atom_exchange_cst :
     forall memorder acc_type p Q new_p q ret new_v,
       [| memorder = _SEQ_CST |] **
@@ -223,7 +224,7 @@ Section with_Σ.
                     is returned by the rule, to prove its post condition Q *)
                   _eqv new_p |-> primR acc_type q new_v **
                   (* ret stores the previous latest value v *)
-                  _eqv ret |-> primR acc_type 1$m v -* Q v) >>
+                  _eqv ret |-> primR acc_type 1$m v -* Q Vundef) >>
       |-- wp_atom' "__atomic_exchange" acc_type [p; memorder; new_p; ret] Q.
 
   (* An SC compare and exchange n. This rule combines the postcondition for both

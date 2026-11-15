@@ -19,7 +19,7 @@ Module ConstrSet_test.
     let f := 'False in
     split; tac t f.
 
-  Goal True /\ True.
+  Goal True /\ True. Proof.
    Succeed test_multi_goal (fun _ _ =>
      let _ := empty in ()
    ).
@@ -69,7 +69,7 @@ Module DecomposeProj_Tests.
     Notation t :=
       ltac:(let t := constr:((TEST 1 1 eq_refl).(H)) in exact t)
       (only parsing).
-    Goal True. test 't. Qed.
+    Goal True. Proof. test 't. Qed.
   End NonPrim.
 
   Module Prim.
@@ -78,12 +78,12 @@ Module DecomposeProj_Tests.
     Notation t1 :=
       ltac:(let t := eval lazy delta [H] in (TEST 1 1 eq_refl).(H) in exact t)
       (only parsing).
-    Goal True. test 't1. Qed.
+    Goal True. Proof. test 't1. Qed.
 
     Notation t2 :=
       ltac:(let t := constr:((TEST 1 1 eq_refl).(H)) in exact t)
       (only parsing).
-    Goal True. test 't2. Qed.
+    Goal True. Proof. test 't2. Qed.
   End Prim.
 End DecomposeProj_Tests.
 
@@ -157,6 +157,7 @@ Module SpecializeProducts_Tests.
   Import Ltac2 Constr.
 
   Goal True.
+  Proof.
     let _ := specialize_products '(forall A : Type, A -> A)
       [| open_constr:(_); open_constr:(_) |] in
     exact I.

@@ -2326,7 +2326,7 @@ Module Stmt.
       | Sif _ _ _ _ _ => 3
       | Sif_consteval _ _ => 19
       | Swhile _ _ _ => 4
-      | Sfor _ _ _ _ => 5
+      | Sfor _ _ _ _ _ => 5
       | Sdo _ _ => 6
       | Sswitch _ _ _ _ => 7
       | Scase _ => 8
@@ -2348,7 +2348,7 @@ Module Stmt.
       | 3 => option Stmt * option VarDecl * Expr * Stmt * Stmt
       | 19 => Stmt * Stmt
       | 4 => option VarDecl * Expr * Stmt
-      | 5 => option Stmt * option Expr * option Expr * Stmt
+      | 5 => option Stmt * option VarDecl * option Expr * option Expr * Stmt
       | 6 => Stmt * Expr
       | 7 => option Stmt * option VarDecl * Expr * Stmt
       | 8 => SwitchBranch
@@ -2370,7 +2370,7 @@ Module Stmt.
       | Sif a b c d e => (a,b,c,d,e)
       | Sif_consteval a b => (a,b)
       | Swhile a b c => (a,b,c)
-      | Sfor a b c d => (a,b,c,d)
+      | Sfor a b c d e => (a,b,c,d,e)
       | Sdo a b => (a,b)
       | Sswitch a b c d => (a,b,c,d)
       | Scase a => a
@@ -2417,7 +2417,7 @@ Module Stmt.
       | Sif a b c d e => compare_ctor (Sif a b c d e)
       | Sif_consteval a b => compare_ctor (Sif_consteval a b)
       | Swhile a b c => compare_ctor (Swhile a b c)
-      | Sfor a b c d => compare_ctor (Sfor a b c d)
+      | Sfor a b c d e => compare_ctor (Sfor a b c d e)
       | Sdo a b => compare_ctor (Sdo a b)
       | Sswitch a b c d => compare_ctor (Sswitch a b c d)
       | Scase a => compare_ctor (Scase a)

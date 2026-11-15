@@ -111,7 +111,7 @@ Section stateI_io.
       | [(Some e, _)] =>
           if Compose.is_input e is true then
             (* only if e is an input *)
-            tele_app (λ Q,
+            tele_app (T:=fun _ => PROP) (λ Q,
               root.committer absA γ_abs {[ ae | R ae e ]} (λ ae, [| R ae e |] ∗ Q ae)%I
             )
           else λ _, emp%I
@@ -122,7 +122,8 @@ Section stateI_io.
       | [(Some e, _)] =>
           λ args1 _,
             if Compose.is_input e is true then
-              tele_app (TT:= [tele _]) (λ Q, ∃ ae, [| R ae e |] ∗ Q ae)%I args1
+              tele_app (TT:= [tele _]) (T:=fun _ => PROP)
+                (λ Q, ∃ ae, [| R ae e |] ∗ Q ae)%I args1
             else emp%I
       | _ => λ _ _, emp%I
       end ;
@@ -141,7 +142,7 @@ Section stateI_io.
       | [(Some e, _)] =>
           if Compose.is_input e is false then
             (* only if e is an output *)
-            tele_app (λ Q, ∃ ae, [| R ae e |] ∗
+            tele_app (T:=fun _ => PROP) (λ Q, ∃ ae, [| R ae e |] ∗
               root.requester absA γ_abs {[ ae' | ae' = ae ]} (λ _, Q))%I
           else
             λ _, emp%I
@@ -152,7 +153,7 @@ Section stateI_io.
       | [(Some e, _)] =>
           λ args1 _,
             if Compose.is_input e is false then
-              tele_app (TT:= [tele _]) (λ Q, Q)%I args1
+              tele_app (TT:= [tele _]) (T:=fun _ => PROP) (λ Q, Q)%I args1
             else emp%I
       | _ => λ _ _, emp%I
       end
@@ -234,8 +235,9 @@ Section wp_io.
       destruct oe as [ev|]; last first.
       { (* TAU step *)
         iDestruct ("WP" $! () with "[//]") as "[? WP]".
-        iDestruct ("WP" with "[%//]") as (?) ">WP". simpl.
-        iIntros "!> !>".
+        iDestruct ("WP" with "[%//]") as (?) "WP".
+        rewrite !step_fupdN_succ_l.
+        iMod "WP". iIntros "!> !>". iMod "WP". iIntros "!>".
         iApply (step_fupdN_wand with "WP").
         iIntros "WP".
         iMod ("WP" with "[//]") as "(? & $ & WP & WPs)".
@@ -257,8 +259,9 @@ Section wp_io.
         iDestruct ("WP" with "[aF]") as "[? WP]".
         { instantiate (1:=[tele_arg _]). rewrite /= Eqin /= /absE /=.
           iExact "aF". }
-        iDestruct ("WP" with "[%//]") as (?)"[? >WP]".
-        iIntros "!> !>".
+        iDestruct ("WP" with "[%//]") as (?) "[? WP]".
+        rewrite !step_fupdN_succ_l.
+        iMod "WP". iIntros "!> !>". iMod "WP". iIntros "!>".
         iApply (step_fupdN_wand with "WP").
         iIntros "WP".
         rewrite /= Eqin.
@@ -288,8 +291,9 @@ Section wp_io.
       - (* OUTPUT step *)
         iDestruct ("WP" with "[]") as "[? WP]".
         { instantiate (1:= [tele_arg (λ _, emp)%I]). by rewrite /= Eqin. }
-        iDestruct ("WP" with "[%//]") as (Q) "[AC >WP]".
-        iIntros "!> !>".
+        iDestruct ("WP" with "[%//]") as (Q) "[AC WP]".
+        rewrite !step_fupdN_succ_l.
+        iMod "WP". iIntros "!> !>". iMod "WP". iIntros "!>".
         iApply (step_fupdN_wand with "WP").
         iIntros "WP".
         rewrite /= Eqin.
@@ -408,8 +412,9 @@ Section wp_io.
       destruct oe as [ev|]; last first.
       { (* TAU step *)
         iDestruct ("WP" $! () with "[//]") as "[? WP]".
-        iDestruct ("WP" with "[%//]") as (?) ">WP". simpl.
-        iIntros "!> !>".
+        iDestruct ("WP" with "[%//]") as (?) "WP".
+        rewrite !step_fupdN_succ_l.
+        iMod "WP". iIntros "!> !>". iMod "WP". iIntros "!>".
         iApply (step_fupdN_wand with "WP").
         iIntros "WP".
         iMod ("WP" with "[//]") as "(? & $ & WP & WPs)".
@@ -437,8 +442,9 @@ Section wp_io.
         iDestruct (root_inv_committer _ _ ev with "INV ha1") as "COM".
         iDestruct ("WP" with "[COM]") as "[? WP]".
         { instantiate (1:=[tele_arg (_)]). rewrite /= Eqin /=. iExact "COM". }
-        iDestruct ("WP" with "[%//]") as (?)"[? >WP]".
-        iIntros "!> !>".
+        iDestruct ("WP" with "[%//]") as (?) "[? WP]".
+        rewrite !step_fupdN_succ_l.
+        iMod "WP". iIntros "!> !>". iMod "WP". iIntros "!>".
         iApply (step_fupdN_wand with "WP").
         iIntros "WP".
         iMod ("WP" with "[//]") as (?) "(Post & $ & WP & WPs)".
@@ -452,8 +458,9 @@ Section wp_io.
       - (* OUTPUT step *)
         iDestruct ("WP" with "[]") as "[? WP]".
         { instantiate (1:= [tele_arg (λ _, emp)%I]). by rewrite /= Eqin. }
-        iDestruct ("WP" with "[%//]") as (?) "[AC >WP]".
-        iIntros "!> !>".
+        iDestruct ("WP" with "[%//]") as (?) "[AC WP]".
+        rewrite !step_fupdN_succ_l.
+        iMod "WP". iIntros "!> !>". iMod "WP". iIntros "!>".
         iApply (step_fupdN_wand with "WP").
         iIntros "WP".
         iMod ("WP" with "[//]") as (?) "(? & $ & WP & WPs)". rewrite /= Eqin.

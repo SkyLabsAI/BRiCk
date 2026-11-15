@@ -58,13 +58,13 @@ _6 =
 
 _6 uses section variables thread_info _Σ.
 _7 =
-\pre |==> True ∗ (|={∅,⊤}=> False) 
+\pre |==> True ∗ |={∅,⊤}=> False 
 \post[Vptr nullptr]
          emp
      : WPP
 
 _7 uses section variables thread_info _Σ Σ.
-_8 = \pre |==> True ∗ (|={∅,⊤}=> False) 
+_8 = \pre |==> True ∗ |={∅,⊤}=> False 
      \post[Vvoid]
               emp
      : WPP

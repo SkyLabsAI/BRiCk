@@ -31,7 +31,7 @@ let target_type : n_args:int -> Tac2expr.type_scheme =
 
 let pr_closed_type : Tac2expr.type_scheme -> Pp.t = fun t ->
   let open Tac2typing_env in
-  let env = Tac2typing_env.empty_env ~strict:true () in
+  let env = Tac2typing_env.empty_env ~strict:true UnivNames.empty_binders () in
   let (n, t) = t in
   let subst = Array.init n (fun _ -> fresh_id env) in
   let substf i = Tac2expr.GTypVar subst.(i) in

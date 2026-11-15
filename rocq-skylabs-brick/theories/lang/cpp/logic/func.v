@@ -23,6 +23,7 @@ Require Import skylabs.lang.cpp.logic.const.
 Require Import skylabs.lang.cpp.logic.initializers.
 Require Import skylabs.lang.cpp.logic.translation_unit.
 Require Import skylabs.lang.cpp.logic.destroy.
+Require Import skylabs.lang.cpp.logic.raw.
 
 (* UPSTREAM. *)
 Lemma wand_frame {PROP : bi} (R Q Q' : PROP) :
@@ -37,24 +38,33 @@ Proof. iIntros "Q W R". iApply ("Q" with "(W R)"). Qed.
 
 #[local] Remove Hints Ar_Definite CC_C : typeclass_instances.
 
-Definition Kreturn_inner `{Σ : cpp_logic, σ : genv} (Q : ptr -> mpred) (rt : ReturnType) : mpred :=
+(**
+[Kreturn cv Q] is the continuation of the body of a function or method
+whose declared return type has top-level qualifiers [cv].
+
+A function returning cv <<void>> may <<return;>> or fall off the end
+([stmt.return]); the result object then carries the constness of [cv],
+matching the fraction [cQp.mk (q_const cv) 1] that callers receive.
+*)
+Definition Kreturn_inner `{Σ : cpp_logic, σ : genv} (cv : type_qualifiers) (Q : ptr -> mpred) (rt : ReturnType) : mpred :=
   match rt with
-  | Normal | ReturnVoid => Forall p : ptr, p |-> primR Tvoid (cQp.mut 1) Vvoid -* Q p
+  | Normal | ReturnVoid =>
+    Forall p : ptr, p |-> primR Tvoid (cQp.mk (q_const cv) 1) Vvoid -* Q p
   | ReturnVal p => Q p
   | _ => False
   end.
-#[global] Arguments Kreturn_inner _ _ _ _ _ !rt /.
+#[global] Arguments Kreturn_inner _ _ _ _ _ _ !rt /.
 
-Definition Kreturn `{Σ : cpp_logic, σ : genv} (Q : ptr -> mpred) : Kpred :=
-  KP $ Kreturn_inner Q.
+Definition Kreturn `{Σ : cpp_logic, σ : genv} (cv : type_qualifiers) (Q : ptr -> mpred) : Kpred :=
+  KP $ Kreturn_inner cv Q.
 #[global] Hint Opaque Kreturn : typeclass_instances.
 
 Section Kreturn.
   Context `{Σ : cpp_logic, σ : genv}.
 
-  Lemma Kreturn_frame (Q Q' : ptr -> mpred) (rt : ReturnType) :
+  Lemma Kreturn_frame cv (Q Q' : ptr -> mpred) (rt : ReturnType) :
     Forall p, Q p -* Q' p
-                |-- Kreturn Q rt -* Kreturn Q' rt.
+                |-- Kreturn cv Q rt -* Kreturn cv Q' rt.
   Proof.
     iIntros "HQ". destruct rt; cbn; auto.
     all: iIntros "HR" (?) "R"; iApply "HQ"; by iApply "HR".
@@ -440,7 +450,7 @@ place to support `XX_shift` lemmas. This could be fixed.
     | Impl body =>
       let ρ vap := Remp None vap f.(f_return) in
       letI* ρ, cleanup := bind_vars tu f.(f_arity) f.(f_params) args ρ in
-      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn $ fun x => |={top}=>?u |> Q x)
+      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn (take_qualifiers f.(f_return)) $ fun x => |={top}=>?u |> Q x)
     | Builtin builtin =>
       let ts := List.map snd f.(f_params) in
       wp_builtin_func builtin (Tfunction $ @FunctionType _ f.(f_cc) f.(f_arity) f.(f_return) ts) args Q
@@ -495,6 +505,76 @@ Section wp_func.
   Proof. by rewrite wp_func.unlock. Qed.
 End wp_func.
 
+(** ** Defaulted copy and move operations of unions
+
+A union's defaulted copy/move constructors and copy/move assignment
+operators copy the object representation of the source into the
+destination (C++23 [class.copy.ctor]/14 and [class.copy.assign]/13).
+Clang's AST does not express this copy: it gives these members an empty
+body (constructors) or <<return *this;>> (assignment operators) because
+clang's code generator performs the copy at the call site. cpp2v
+therefore prints them as [Defaulted], and [wp_union_copy] gives them
+their meaning.
+
+The state of a union object in this logic is [unionR] together with its
+active member (if any). Copying the object representation of [src] into
+[dst] makes [src]'s active member the active member of [dst] and copies
+its bytes. The rule is stated with raw bytes ([rawsR]) because the active
+member can have any trivially copyable type; [primR_to_rawsR] converts
+primitive members to and from raw bytes.
+
+[wp_union_copy cls un src dst Q] requires [src] to be a [cls] object with
+active member [i] whose bytes are [rs] (any fraction), and gives [dst]
+active member [i] with the same bytes (full ownership). The caller
+supplies the memory of [dst] separately: the previous object for
+assignment, or the object's block for construction.
+
+Soundness. The prover chooses [i], [m], [q] and [rs], so each choice must
+be harmless:
+- [i] and [m] are fixed by [src]'s [unionR] and [u_fields].
+- [rs] is exactly [size_of mty] bytes, all owned at [src ,, f]: a shorter
+  list would copy only part of the member, and a longer one would give
+  [dst] ownership of bytes past the copied object that the copy never
+  transfers. The member sits at offset 0 and fits in the union, so these
+  bytes lie inside [dst]'s object.
+- No enclosing object can place another subobject in these bytes. A union
+  that is a [[no_unique_address]] member lends only its tail padding past
+  its data size, and the data size covers each member's [sizeof] unless
+  that member is itself [[no_unique_address]]. cpp2v gives no body to the
+  copy/move operations of unions with such members (it does not record
+  data sizes), so this rule never applies to them.
+- [dst] gets full ownership of these bytes and of [unionR], which the
+  caller paid for with the whole of [dst]'s storage ([anyR] or [tblockR]
+  at full fraction); [src] gets back exactly what it lent.
+Self-assignment is not supported: the rule needs separate ownership of
+[src] and [dst], which the full [anyR] of [dst] rules out.
+*)
+Definition wp_union_copy `{Σ : cpp_logic, σ : genv} (cls : globname) (un : decl.Union)
+    (src dst : ptr) (Q : mpred) : mpred :=
+  Exists (i : nat) (m : Member) (q : cQp.t) (rs : list raw_byte),
+    [| un.(u_fields) !! i = Some m |] **
+    let f := o_field σ (Field cls m.(mem_name)) in
+    let mty := erase_qualifiers m.(mem_type) in
+    [| size_of σ mty = Some (lengthN rs) |] **
+    src |-> unionR cls q (Some i) ** src ,, f |-> rawsR q rs **
+    (src |-> unionR cls q (Some i) -* src ,, f |-> rawsR q rs -*
+     dst |-> unionR cls 1$m (Some i) -* dst ,, f |-> (type_ptrR mty ** rawsR 1$m rs) -*
+     Q).
+#[global] Arguments wp_union_copy : simpl never.
+
+Section wp_union_copy.
+  Context `{Σ : cpp_logic, σ : genv}.
+
+  Lemma wp_union_copy_frame cls un src dst Q Q' :
+    (Q -* Q') |-- wp_union_copy cls un src dst Q -* wp_union_copy cls un src dst Q'.
+  Proof.
+    rewrite /wp_union_copy. iIntros "HQ wp".
+    iDestruct "wp" as (i m q rs) "(% & % & S & F & wp)".
+    iExists i, m, q, rs. iFrame "S F". do 2 (iSplit; first done).
+    iIntros "? ? ? ?". iApply "HQ". iApply ("wp" with "[$] [$] [$] [$]").
+  Qed.
+End wp_union_copy.
+
 (** ** The weakest precondition of a method *)
 (**
 Note that in the calling convention for methods, the [this] parameter
@@ -510,10 +590,25 @@ parameters.
     | thisp :: rest_vals =>
       let ρ va := Remp (Some thisp) va m.(m_return) in
       letI* ρ, cleanup := bind_vars tu m.(m_arity) m.(m_params) rest_vals ρ in
-      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn $ fun x => |={top}=>?u |> Q x)
+      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn (take_qualifiers m.(m_return)) $ fun x => |={top}=>?u |> Q x)
     | _ => ERROR "wp_method: no arguments"
     end
-  | Some _ => UNSUPPORTED "wp_method: defaulted methods"
+  | Some Defaulted =>
+    (* A union's defaulted copy or move assignment operator (see
+       [wp_union_copy]). It returns a reference to the destination. *)
+    match args, tu.(types) !! m.(m_class) with
+    | [thisp; srcp], Some (Gunion un) =>
+      let ty := Tnamed m.(m_class) in
+      thisp |-> anyR ty 1$m **
+      |>
+      (* [srcp] is the (materialized) reference parameter; read it like
+         [read_decl] does. *)
+      (Exists src : ptr,
+        ((Exists q, srcp |-> primR (Tref ty) q (Vref src) ** True) //\\
+         wp_union_copy m.(m_class) un src thisp
+           (|={top}=>?u |> Forall p : ptr, p |-> primR (Tref ty) 1$m (Vref thisp) -* Q p)))
+    | _, _ => UNSUPPORTED "wp_method: defaulted methods"
+    end
   end.
 mlock Definition wp_method `{Σ : cpp_logic, σ : genv} :=
   Cbn (Reduce (wp_method' true)).
@@ -536,6 +631,14 @@ Section wp_method.
     intros. iIntros "HQ". rewrite wp_method.unlock.
     destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_body]; cbn.
     destruct m_body as [[|body|body]|]; auto.
+    { destruct args as [|thisp [|srcp [|??]]]; auto.
+      destruct (tu.(types) !! m_class) as [[|un| | | | |]|] eqn:Hun;
+        try (iIntros "H"; iDestruct (UNSUPPORTED_elim with "H") as "[]").
+      erewrite sub_module_preserves_gunion; [|done..].
+      iIntros "[$ wp] !>". iDestruct "wp" as (src) "wp". iExists src.
+      iSplit; first by iDestruct "wp" as "[$ _]". iDestruct "wp" as "[_ wp]".
+      iApply (wp_union_copy_frame with "[HQ] wp").
+      iIntros ">wp !> !> %p R". iApply "HQ". by iApply "wp". }
     all: destruct args as [|thisp rest_vals]; auto.
     all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
     all: iApply wp_frame; [done|]; iIntros (?).
@@ -556,6 +659,12 @@ Section wp_method.
     rewrite wp_method.unlock.
     destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_body]; cbn.
     destruct m_body as [[|body|body]|]; auto.
+    { destruct args as [|thisp [|srcp [|??]]]; auto.
+      case_match; auto. case_match; auto.
+      iIntros "[$ wp] !>". iDestruct "wp" as (src) "wp". iExists src.
+      iSplit; first by iDestruct "wp" as "[$ _]". iDestruct "wp" as "[_ wp]".
+      iApply (wp_union_copy_frame with "[] wp").
+      iIntros "wp !> !> %p R". by iApply "wp". }
     all: destruct args as [|thisp rest_vals]; auto.
     all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
     all: iApply wp_frame; [done|]; iIntros (?).
@@ -837,7 +946,23 @@ that implies [type_ptr].
     (ctor : Ctor) (args : list ptr) (Q : ptr -> epred) : mpred :=
   match ctor.(c_body) with
   | None => ERROR "wp_ctor: no body"
-  | Some Defaulted => UNSUPPORTED "wp_ctor: defaulted constructors"
+  | Some Defaulted =>
+    (* A union's defaulted copy or move constructor (see [wp_union_copy]).
+       Like every constructor, it requires the *entire* block of memory
+       [tblockR] that the object will use. *)
+    match args, tu.(types) !! ctor.(c_class) with
+    | [thisp; srcp], Some (Gunion un) =>
+      let ty := Tnamed ctor.(c_class) in
+      thisp |-> tblockR ty 1$m **
+      |>
+      (* [srcp] is the (materialized) reference parameter; read it like
+         [read_decl] does. *)
+      (Exists src : ptr,
+        ((Exists q, srcp |-> primR (Tref ty) q (Vref src) ** True) //\\
+         wp_union_copy ctor.(c_class) un src thisp
+           (|={top}=>?u |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -* Q p)))
+    | _, _ => UNSUPPORTED "wp_ctor: defaulted constructors"
+    end
   | Some (UserDefined ib | CompilerProvided ib) =>
     let inits := ib.1 in
     let body := ib.2 in
@@ -911,7 +1036,16 @@ Section wp_ctor.
     Forall p, Q p -* Q' p
     |-- wp_ctor tu c args Q -* wp_ctor tu c args Q'.
   Proof.
-    iIntros "HQ". rewrite wp_ctor.unlock. repeat case_match; auto.
+    iIntros "HQ". rewrite wp_ctor.unlock.
+    destruct c as [c_class c_params c_cc c_arity c_exception c_body]; cbn.
+    destruct c_body as [[|[inits body]|[inits body]]|]; auto.
+    { destruct args as [|thisp [|srcp [|??]]]; auto.
+      case_match; auto. case_match; auto.
+      iIntros "[$ wp] !>". iDestruct "wp" as (src) "wp". iExists src.
+      iSplit; first by iDestruct "wp" as "[$ _]". iDestruct "wp" as "[_ wp]".
+      iApply (wp_union_copy_frame with "[HQ] wp").
+      iIntros ">wp !> !> %p R". iApply "HQ". by iApply "wp". }
+    all: repeat case_match; auto.
     all: iIntros "($ & wp) !>"; iRevert "wp".
     all: iApply bind_vars_frame; [done|]; iIntros (??).
     all: initializer_list_frame.
@@ -931,7 +1065,16 @@ Section wp_ctor.
   Lemma wp_ctor_intro tu c args Q :
     Cbn (Reduce (wp_ctor' false tu c args Q)) |-- wp_ctor tu c args Q.
   Proof.
-    rewrite wp_ctor.unlock. repeat case_match; auto.
+    rewrite wp_ctor.unlock.
+    destruct c as [c_class c_params c_cc c_arity c_exception c_body]; cbn.
+    destruct c_body as [[|[inits body]|[inits body]]|]; auto.
+    { destruct args as [|thisp [|srcp [|??]]]; auto.
+      case_match; auto. case_match; auto.
+      iIntros "[$ wp] !>". iDestruct "wp" as (src) "wp". iExists src.
+      iSplit; first by iDestruct "wp" as "[$ _]". iDestruct "wp" as "[_ wp]".
+      iApply (wp_union_copy_frame with "[] wp").
+      iIntros "wp !> !> %p R". by iApply "wp". }
+    all: repeat case_match; auto.
     all: iIntros "($ & wp) !>"; iRevert "wp".
     all: iApply bind_vars_frame; [done|]; iIntros (??).
     all: initializer_list_frame.

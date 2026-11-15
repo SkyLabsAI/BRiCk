@@ -35,7 +35,8 @@ let decompose_proj (env : Environ.env) (t : Constr.t) : (Structure.t * decomp_pr
   let (h, args) = decompose_app t in
   match kind h, args with
   | Proj (proj, _, recval), [||] ->
-    let t = Structure.find_from_projection env (Names.Projection.constant proj) in
+    let c = Environ.projection_repr_constant env (Names.Projection.repr proj) in
+    let t = Structure.find_from_projection env c in
     Some (t, Prim {proj; recval})
   | Const (proj, inst), _ ->
     begin
@@ -65,7 +66,8 @@ let _ =
             let (h, args) = Constr.decompose_app (EConstr.to_constr ~abort_on_undefined_evars:false sigma term) in
             let (_, inst) = Constr.destConst h in
             let args, recval = decompose_proj_args args in
-            (Names.Projection.constant proj, inst, args, recval)
+            let c = Environ.projection_repr_constant env (Names.Projection.repr proj) in
+            (c, inst, args, recval)
         in
         let proj_index =
           let id = Names.Constant.label proj in

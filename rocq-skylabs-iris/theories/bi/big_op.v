@@ -41,7 +41,7 @@ Section big_op.
 End big_op.
 
 Section big_andL.
-  Context {PROP : bi} {A : Type}.
+  Context {SI : sidx} {PROP : bi} {A : Type}.
 
   Lemma big_andL_frame (xs : list A) (Q Q' : nat → A → PROP) :
     (∀ i v, Q i v -* Q' i v) ⊢
@@ -52,7 +52,7 @@ Section big_andL.
     iApply "IH". iIntros (??). by iApply "W".
   Qed.
 
-  Lemma bupd_big_andL `{BiBUpd PROP} (xs : list A) (P : nat → A → PROP) :
+  Lemma bupd_big_andL `{!BiBUpd PROP} (xs : list A) (P : nat → A → PROP) :
     (|==> [∧ list] i ↦ x ∈ xs, P i x) ⊢
     [∧ list] i ↦ x ∈ xs, |==> P i x.
   Proof.
@@ -60,7 +60,7 @@ Section big_andL.
     rewrite bupd_and; iApply (bi.and_parallel with "Q"); eauto.
   Qed.
 
-  Lemma fupd_big_andL `{BiFUpd PROP} {E1 E2} (xs : list A) (P : nat → A → PROP) :
+  Lemma fupd_big_andL `{!BiFUpd PROP} {E1 E2} (xs : list A) (P : nat → A → PROP) :
     (|={E1, E2}=> [∧ list] i ↦ x ∈ xs, P i x) ⊢
     [∧ list] i ↦ x ∈ xs, |={E1, E2}=> P i x.
   Proof.
@@ -70,7 +70,7 @@ Section big_andL.
 End big_andL.
 
 Section big_sepL.
-  Context {PROP : bi} {A : Type}.
+  Context {SI : sidx} {PROP : bi} {A : Type}.
   Implicit Types xs : list A.
   Implicit Types f : nat → A → PROP.
 
@@ -172,7 +172,7 @@ Section big_sepL.
   Qed.
 
   Lemma bi_opL_sep_and (P : A -> PROP) xs
-    `{BiAffine PROP} `{!Persistent1 P} :
+    `{!BiAffine PROP} `{!Persistent1 P} :
     ([∗ list] x ∈ xs, P x) ⊣⊢ [∧list] x ∈ xs, P x.
   Proof.
     elim: xs => [//= |x xs /= -> ]. { by rewrite bi.True_emp. }
@@ -181,14 +181,16 @@ Section big_sepL.
   Qed.
 End big_sepL.
 
-Lemma big_sepL_mono_elem {PROP : bi} {A : Type} (Φ Ψ : A → PROP) (l : list A):
+Lemma big_sepL_mono_elem {SI : sidx} {PROP : bi} {A : Type}
+    (Φ Ψ : A → PROP) (l : list A):
   (∀ (y : A), y ∈ l -> Φ y ⊢ Ψ y)
   → ([∗ list] y ∈ l, Φ y) ⊢ ([∗ list] y ∈ l, Ψ y).
 Proof.
   intros Hin. apply big_sepL_mono => k y Hl. eapply Hin, list_elem_of_lookup_2, Hl.
 Qed.
 
-Lemma big_sepL_difference_singleton {PROP : bi} `{EqDecision A} (x : A)
+Lemma big_sepL_difference_singleton {SI : sidx} {PROP : bi}
+    `{EqDecision A} (x : A)
     (f : A -> PROP) (l : list A) :
   x ∈ l ->
   NoDup l ->
@@ -198,7 +200,8 @@ Proof.
   by rewrite big_sepL_delete_delete // (list_difference_delete j).
 Qed.
 
-Lemma big_sepL_difference_two {PROP : bi} {A} `{EqDecision A} (f : A -> PROP) l x y:
+Lemma big_sepL_difference_two {SI : sidx} {PROP : bi} {A}
+    `{EqDecision A} (f : A -> PROP) l x y:
   x <> y ->
   x ∈ l ->
   y ∈ l ->
@@ -212,7 +215,8 @@ Proof.
 Qed.
 
 (* This adjusts the initial index, but we pass the same arguments to [P] *)
-Lemma big_sepL_seqN_shift {PROP : bi} (P : N -> PROP) (j : N) {n m : N} :
+Lemma big_sepL_seqN_shift {SI : sidx} {PROP : bi}
+    (P : N -> PROP) (j : N) {n m : N} :
   (j <= n)%N ->
   ([∗list] i ∈ seqN n m, P i) ⊣⊢ [∗list] i ∈ seqN j m, P (n - j + i)%N.
 Proof.
@@ -221,7 +225,8 @@ Proof.
   apply big_sepL_fmap.
 Qed.
 
-Lemma big_sepL_seq_shift {PROP : bi} (P : nat -> PROP) (j : nat) {n m : nat} :
+Lemma big_sepL_seq_shift {SI : sidx} {PROP : bi}
+    (P : nat -> PROP) (j : nat) {n m : nat} :
   j <= n ->
   ([∗list] i ∈ seq n m, P i) ⊣⊢ [∗list] i ∈ seq j m, P (n - j + i).
 Proof.
@@ -230,7 +235,7 @@ Proof.
   apply big_sepL_fmap.
 Qed.
 
-Lemma big_sepM_lookup_acc' {PROP : bi} `{Countable K} {A}
+Lemma big_sepM_lookup_acc' {SI : sidx} {PROP : bi} `{Countable K} {A}
     (Φ : K -> A -> PROP) (m : gmap K A) (i : K) (x : A) :
   m !! i = Some x →
   ([∗ map] k↦y ∈ m, Φ k y)
@@ -243,7 +248,8 @@ Proof.
   by iFrame.
 Qed.
 
-Lemma big_sepM2_lookup_acc' {PROP : bi} `{EqDecision K} `{Countable K} {A B}
+Lemma big_sepM2_lookup_acc' {SI : sidx} {PROP : bi}
+    `{EqDecision K} `{Countable K} {A B}
     (Φ : K -> A -> B -> PROP) (m1 : gmap K A) (m2 : gmap K B) (i : K) (x : A) :
   m1 !! i = Some x →
   ([∗ map] k↦y;z ∈ m1;m2, Φ k y z)
@@ -273,7 +279,7 @@ Overview:
 Notation "P ^^ n" := (P ^^{bi_sep} n) : bi_scope.
 
 Section power.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi}.
   Implicit Types (P : PROP).
   #[local] Notation "(⊢)" := (⊢@{PROP}) (only parsing).
   #[local] Open Scope N_scope.
@@ -342,7 +348,7 @@ End power.
 
 Section zip_with_index.
   Context {A : Type}.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi}.
 
   Implicit Types (x : A) (xs : list A) (i j : nat).
 
@@ -385,7 +391,7 @@ End zip_with_index.
 Section zip_with_indexN_from.
   #[local] Open Scope N_scope.
   Context {A : Type}.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi}.
   Implicit Types (x : A) (xs : list A) (i j : N).
 
   Section big_sepL.

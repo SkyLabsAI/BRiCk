@@ -16,19 +16,20 @@ defined elsewhere. *)
 
 (** [Observe Q P] means we can observe [Q] (persistently) given [P].
 Such observations do not consume [P]. *)
-Class Observe {PROP : bi} (Q P : PROP) := observe : P ⊢ <pers> Q.
-#[global] Instance: Params (@observe) 1 := {}.
-Arguments observe {_} (_ _)%_I {_} : assert.
-Arguments Observe {_} (_ _)%_I : simpl never, assert.
-#[global] Hint Mode Observe + ! ! : typeclass_instances.
+Class Observe {SI : sidx} {PROP : bi} (Q P : PROP) := observe : P ⊢ <pers> Q.
+#[global] Instance: Params (@observe) 2 := {}.
+Arguments observe {_ _} (_ _)%_I {_} : assert.
+Arguments Observe {_ _} (_ _)%_I : simpl never, assert.
+#[global] Hint Mode Observe - + ! ! : typeclass_instances.
 
 (** [Observe Q P1 P2] means we can observe [Q] (persistently) given
 [P1 ** P2]. Such observations do not consume the [P_i]. *)
-Class Observe2 {PROP : bi} (Q P1 P2 : PROP) := observe_2 : P1 ⊢ P2 -∗ <pers> Q.
-#[global] Instance: Params (@observe_2) 1 := {}.
-Arguments observe_2 {_} (_ _ _)%_I {_} : assert.
-Arguments Observe2 {_} (_ _ _)%_I : simpl never, assert.
-#[global] Hint Mode Observe2 + ! ! ! : typeclass_instances.
+Class Observe2 {SI : sidx} {PROP : bi} (Q P1 P2 : PROP) :=
+  observe_2 : P1 ⊢ P2 -∗ <pers> Q.
+#[global] Instance: Params (@observe_2) 2 := {}.
+Arguments observe_2 {_ _} (_ _ _)%_I {_} : assert.
+Arguments Observe2 {_ _} (_ _ _)%_I : simpl never, assert.
+#[global] Hint Mode Observe2 - + ! ! ! : typeclass_instances.
 
 (**
 Do not extend this module. It exists for backwards compatibility.
@@ -49,29 +50,29 @@ Module Export nary.
   Notation LaterAgree5 P := (∀ a, LaterAgree4 (P a)).
 End nary.
 
-#[global] Instance Observe_mono {PROP : bi} :
-  Proper ((⊢) ==> flip (⊢) ==> impl) (@Observe PROP).
+#[global] Instance Observe_mono {SI : sidx} {PROP : bi} :
+  Proper ((⊢) ==> flip (⊢) ==> impl) (@Observe SI PROP).
 Proof. solve_proper. Qed.
-#[global] Instance Observe_flip_mono {PROP : bi} :
-  Proper (flip (⊢) ==> (⊢) ==> flip impl) (@Observe PROP).
+#[global] Instance Observe_flip_mono {SI : sidx} {PROP : bi} :
+  Proper (flip (⊢) ==> (⊢) ==> flip impl) (@Observe SI PROP).
 Proof. solve_proper. Qed.
-#[global] Instance Observe_proper {PROP : bi} :
-  Proper ((≡) ==> (≡) ==> (↔)) (@Observe PROP).
+#[global] Instance Observe_proper {SI : sidx} {PROP : bi} :
+  Proper ((≡) ==> (≡) ==> (↔)) (@Observe SI PROP).
 Proof. solve_proper. Qed.
 
-#[global] Instance Observe2_mono {PROP : bi} :
-  Proper ((⊢) ==> flip (⊢) ==> flip (⊢) ==> impl) (@Observe2 PROP).
+#[global] Instance Observe2_mono {SI : sidx} {PROP : bi} :
+  Proper ((⊢) ==> flip (⊢) ==> flip (⊢) ==> impl) (@Observe2 SI PROP).
 Proof. solve_proper. Qed.
-#[global] Instance Observe2_flip_mono {PROP : bi} :
-  Proper (flip (⊢) ==> (⊢) ==> (⊢) ==> flip impl) (@Observe2 PROP).
+#[global] Instance Observe2_flip_mono {SI : sidx} {PROP : bi} :
+  Proper (flip (⊢) ==> (⊢) ==> (⊢) ==> flip impl) (@Observe2 SI PROP).
 Proof. solve_proper. Qed.
-#[global] Instance Observe2_proper {PROP : bi} :
-  Proper ((≡) ==> (≡) ==> (≡) ==> (↔)) (@Observe2 PROP).
+#[global] Instance Observe2_proper {SI : sidx} {PROP : bi} :
+  Proper ((≡) ==> (≡) ==> (≡) ==> (↔)) (@Observe2 SI PROP).
 Proof. solve_proper. Qed.
 
 (** An example of using [observe] in the IPM *)
 Section example.
-  Context `{PROP : bi}.
+  Context {SI : sidx} {PROP : bi}.
   Context (Q P : PROP) {A} (R : A → PROP) (x y : A).
   Context `{!Observe [| x = y |] P}.
   Context `{!Observe Q (R y)}.
@@ -86,7 +87,7 @@ Section example.
 End example.
 
 Section proof_mode.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi}.
   Implicit Types P Q : PROP.
 
   (** Enable things like [iIntros] and [iDestruct] when the goal is
@@ -126,7 +127,7 @@ Section proof_mode.
 End proof_mode.
 
 Section observe.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi}.
   Implicit Types P Q : PROP.
 
   #[global] Instance Observe_trans : Transitive (Observe (PROP:=PROP)).
@@ -264,7 +265,7 @@ End observe.
 
 (** Instances *)
 Section bi.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi}.
   Implicit Types P Q : PROP.
 
   (*
@@ -466,7 +467,7 @@ Section monpred.
 End monpred.
 
 Section embed.
-  Context `{BiEmbed PROP1 PROP2}.
+  Context {SI : sidx} {PROP1 PROP2 : bi} `{!BiEmbed PROP1 PROP2}.
   Local Notation embed := (embed (A:=PROP1) (B:=PROP2)).
   Implicit Types P Q : PROP1.
 
@@ -484,7 +485,7 @@ End embed.
 
 (** Helpful lemmas. *)
 Section theory.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi}.
   Implicit Types P Q : PROP.
 
   Lemma observe_pure (Q : Prop) P : Observe [! Q !] P ↔ Observe [| Q |] P.
@@ -545,12 +546,12 @@ Motivation: framing [P] might make the goal unprovable, for instance in
 [Observe Q P → P -∗ P ∗ Q]
 
 But after observing [observable P], framing [P] always preserves provability. *)
-mlock Definition observable {PROP : bi} (P : PROP) : PROP :=
+mlock Definition observable {SI : sidx} {PROP : bi} (P : PROP) : PROP :=
   □ (∀ Q : PROP, [| Observe Q P |] -∗ Q).
-#[global] Instance: Params (@observable) 1 := {}.
+#[global] Instance: Params (@observable) 2 := {}.
 
 Section observable_theory.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi}.
   Implicit Types P Q : PROP.
 
   #[global] Instance observable_persistent P : Persistent (observable P).

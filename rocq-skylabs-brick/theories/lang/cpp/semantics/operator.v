@@ -264,48 +264,39 @@ Arguments eval_xor _ {_} _ _ _ _.
     arithmetic types. The result type is always the type of the left-hand-side.
  *)
 
-(* C++14 <= VER < C++20 *)
-(* The value of E1 << E2 is E1 left-shifted E2 bit positions; vacated
-   bits are zero-filled. If E1 has an unsigned type, the value of the
-   result is E1 * 2^E2, reduced modulo one more than the maximum value
-   representable in the result type. Otherwise, if E1 has a signed
-   type and non-negative value, and E1 * 2 ^ E2 is representable in
-   the corresponding unsigned type of the result type, then that
-   value, converted to the result type, is the resulting value;
-   otherwise, the behavior is undefined.  *)
-(* The behavior is undefined if the right operand is negative, or
-   greater than or equal to the length in bits of the promoted left
-   operand.
-In overload resolution against user-defined operators, for every pair of promoted integral types L and R, the following function signatures participate in overload resolution:
+(** Shift counts are always bounded by the width of the promoted left
+    operand. Before C++20, signed left shifts additionally require a
+    nonnegative operand and a product representable in the corresponding
+    unsigned type. We use the two's-complement conversion for that product
+    (the implementation-defined case in C++14/17).
 
-L operator<<(L, R)
-L operator>>(L, R)
-
-NOTE: Shift operators are *not* homogeneous.
-  *)
-
+    Since C++20, left shifts are defined modulo 2^N for both signednesses,
+    and signed right shifts round towards negative infinity. We leave
+    negative signed right shifts unsupported before C++20, where their
+    result is implementation-defined. *)
 Axiom eval_shl : forall ty `{supports_arith ty_by} w sgn (a b : Z),
     arith_as ty = Some (w, sgn) ->
     (0 <= b < int_rank.bitsN w)%Z ->
-    (0 <= a)%Z ->
+    (if lang_version.le lang_version.Cpp20 (language_version tu) then True
+     else match sgn with
+          | Signed => (0 <= a)%Z /\
+              has_type_prop (Vint (Z.shiftl a b)) (Tnum w Unsigned)
+          | Unsigned => True
+          end) ->
     has_type_prop (Vint a) ty ->
     has_type_prop (Vint b) ty_by ->
     let c := match sgn with
-             | Signed => Z.shiftl a b
+             | Signed => to_signed (int_rank.bitsize w) (Z.shiftl a b)
              | Unsigned => trim (int_rank.bitsN w) (Z.shiftl a b)
              end in
     has_type_prop (Vint c) ty ->
     eval_binop_pure Bshl ty ty_by ty (Vint a) (Vint b) (Vint c).
 
-(* C++14 <= VER < C++20: The value of E1 >> E2 is E1 right-shifted E2 bit
-   positions. If E1 has an unsigned type or if E1 has a signed type
-   and a non-negative value, the value of the result is the integral
-   part of the quotient of E1/(2^E2). If E1 has a signed type and a
-   negative value, the resulting value is implementation-defined. *)
 Axiom eval_shr : forall ty `{supports_arith ty_by} w sgn (a b : Z),
     arith_as ty = Some (w, sgn) ->
     (0 <= b < int_rank.bitsN w)%Z ->
-    (0 <= a)%Z ->
+    (if lang_version.le lang_version.Cpp20 (language_version tu) then True
+     else (0 <= a)%Z) ->
     has_type_prop (Vint a) ty ->
     has_type_prop (Vint b) ty_by ->
     let c := match sgn with

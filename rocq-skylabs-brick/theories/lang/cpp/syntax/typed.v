@@ -1148,12 +1148,13 @@ Module decltype.
             let* _ := check_stmt s in
             let* _ := of_expr tst >>= require_testable in (* TODO *)
             mret (∅, None)
-        | Sfor vd otst oincr body =>
-            let* '(ds, _) := from_option check_stmt (mret (monoid.monoid_unit, None)) vd in
-            let* _ :=
-              with_bindings ds $
-                let* _ := from_option (fun e => of_expr e >>= require_testable) (mret tt) $ otst in
-                let* _ := from_option (fun e => let* _ := of_expr e in mret tt) (mret tt) $ oincr in
+        | Sfor init decl tst incr body =>
+            let* '(ds, _) := from_option check_stmt (mret (monoid.monoid_unit, None)) init in
+            let* _ := with_bindings ds $
+              let* cs := from_option check_decl (mret monoid.monoid_unit) decl in
+              with_bindings cs $
+                let* _ := from_option (fun e => of_expr e >>= require_testable) (mret tt) tst in
+                let* _ := from_option (fun e => let* _ := of_expr e in mret tt) (mret tt) incr in
                 check_stmt body
             in mret (∅, None)
         | Sdecl ds =>

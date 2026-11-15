@@ -16,6 +16,7 @@ Module Tests.
   Ltac2 eq ls1 ls2 :=
     (List.for_all2 (fun (a,b) (x,y) => Bool.and (Int.equal a x) (Int.equal b y))) ls1 ls2.
   Goal True.
+  Proof.
     let g1 := of_edges [(1,3); (15,1); (-2,-3)] in
     let g2 := of_edges [(15,1); (-2,-3); (1,3)] in
     if equal g1 g2 then () else throw_invalid! "test failure".

@@ -4,6 +4,7 @@
  * License. See the LICENSE-BedRock file in the repository root for details.
  */
 #pragma once
+#include "ClangCompat.hpp"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/SourceManager.h"
@@ -111,7 +112,7 @@ public:
     FromComment(const clang::ASTContext *_ctxt) : ctxt(_ctxt) {}
 
     virtual What shouldInclude(const clang::Decl *d) {
-        if (auto comment = ctxt->getRawCommentForDeclNoCache(d)) {
+        if (auto comment = clang_compat::getRawCommentNoCache(*ctxt, d)) {
             auto text = comment->getRawText(ctxt->getSourceManager());
             if (llvm::StringRef::npos != text.find("definition")) {
                 return What::DEFINITION;

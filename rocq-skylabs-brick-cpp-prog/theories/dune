@@ -1,4 +1,5 @@
 (include_subdirs qualified)
+
 (rocq.theory
  (name skylabs.lang.cpp.parser.plugin)
  (package rocq-skylabs-brick-cpp-prog)
@@ -25,12 +26,64 @@
   Equations
   Equations.Prop
   Equations.Type
-  elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
+  elpi.apps.NES.elpi
+  elpi.apps.derive
+  elpi.apps.derive.elpi
   elpi.apps.locker.elpi))
 
 (rule
  (target cpp2v_version.v)
- (deps (package rocq-skylabs-cpp2v))
+ (deps
+  (package rocq-skylabs-cpp2v))
  (action
-  (with-stdout-to %{target}
+  (with-stdout-to
+   %{target}
    (run %{bin:bin-hash} --rocq version %{bin:cpp2v}))))
+
+; Shared by all consumers; its first argument selects their configuration.
+
+(rule
+ (target cpp2v_inline)
+ (deps
+  (universe)
+  (sandbox none))
+ (action
+  (progn
+   (with-stdout-to
+    %{target}
+    (run
+     %{bin:cpp2v-toolchain}
+     wrapper
+     --config-from-argument
+     --runner
+     %{bin:cpp2v-run}
+     --host-tool
+     %{bin:cpp2v}
+     --container-tool
+     cpp2v))
+   (run chmod +x %{target}))))
+
+; Build the command before rocq dep. Fingerprint its semantic inputs rather
+; than its checkout-specific paths, preserving shared Rocq caches.
+
+(rule
+ (target cpp2v_inline_version.v)
+ (deps cpp2v_inline)
+ (action
+  (with-stdout-to
+   %{target}
+   (progn
+    (run %{bin:bin-hash} --rocq inline_runner_version %{bin:cpp2v-run})
+    (run
+     %{bin:bin-hash}
+     --rocq
+     inline_factory_version
+     %{bin:cpp2v-toolchain})))))
+
+(install
+ (section libexec_root)
+ (package rocq-skylabs-brick-cpp-prog)
+ (files
+  (cpp2v_inline
+   as
+   coq/user-contrib/skylabs/lang/cpp/parser/plugin/cpp2v_inline)))

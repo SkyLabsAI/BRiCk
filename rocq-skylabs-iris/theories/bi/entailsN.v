@@ -331,7 +331,8 @@ Section theory.
   Proof. repeat intro. by apply wand_monoN. Qed.
 
   (** [bi_persitently] *)
-  Lemma persistently_forall_2N `{BiPersistentlyForall PROP} {A} (P : A → PROP) n :
+  Lemma persistently_forall_2N `{!BiPersistentlyForall PROP}
+      {A} (P : A → PROP) n :
     (∀ a, <pers> P a) ⊢{n} <pers> (∀ a, P a).
   Proof. apply entails_entailsN, persistently_forall_2. Qed.
 

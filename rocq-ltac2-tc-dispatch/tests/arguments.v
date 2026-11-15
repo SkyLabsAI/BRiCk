@@ -7,7 +7,7 @@ Set Default Proof Mode "Classic".
 
 
 Module LengthMismatch.
-  Definition tac_with_args : nat -> Ltac2Ref.t. make_ltac2_ref. Qed.
+  Definition tac_with_args : nat -> Ltac2Ref.t. Proof. make_ltac2_ref. Qed.
   Ltac2 tac_with_args : constr -> constr -> unit -> unit := fun _ _ _ => ().
   Fail Instance missing_args i b : Dispatch (Nat.eqb i 0 = b) [ltac2 tac_with_args i] := {}.
 
@@ -19,7 +19,7 @@ Module LengthMismatch.
     Fail goal_dispatch.
   Abort.
 
-  Definition tac_with_args_fixed : nat -> bool -> Ltac2Ref.t. make_ltac2_ref. Qed.
+  Definition tac_with_args_fixed : nat -> bool -> Ltac2Ref.t. Proof. make_ltac2_ref. Qed.
   Ltac2 tac_with_args_fixed : constr -> constr -> unit -> unit :=
     fun i b () =>
       refine '(@eq_refl _ _ :> (Nat.eqb $i 0 = $b)).
@@ -36,7 +36,7 @@ Module LengthMismatch.
 End LengthMismatch.
 
 Module TypeMismatch.
-  Definition tac_with_args : nat -> Ltac2Ref.t. make_ltac2_ref. Qed.
+  Definition tac_with_args : nat -> Ltac2Ref.t. Proof. make_ltac2_ref. Qed.
   Ltac2 tac_with_args : unit -> unit -> unit := fun _ _ => ().
   Fail Instance missing_args i b : Dispatch (Nat.eqb i 0 = b) [ltac2 tac_with_args i] := {}.
 
@@ -49,7 +49,7 @@ Module TypeMismatch.
   Abort.
 End TypeMismatch.
 
-Definition tac_with_args : nat -> bool -> Ltac2Ref.t. make_ltac2_ref. Qed.
+Definition tac_with_args : nat -> bool -> Ltac2Ref.t. Proof. make_ltac2_ref. Qed.
 Ltac2 tac_with_args : constr -> constr -> unit -> unit :=
   fun i b () =>
     refine '(@eq_refl _ _ :> (Nat.eqb $i 0 = $b)).
@@ -66,7 +66,7 @@ Proof.
   goal_dispatch.
 Qed.
 
-Definition test_reduction : nat -> nat -> Ltac2Ref.t. make_ltac2_ref. Qed.
+Definition test_reduction : nat -> nat -> Ltac2Ref.t. Proof. make_ltac2_ref. Qed.
 Ltac2 test_reduction : constr -> constr -> unit -> unit :=
   fun i j () =>
     Control.assert_true (Bool.neg (Constr.equal i j));

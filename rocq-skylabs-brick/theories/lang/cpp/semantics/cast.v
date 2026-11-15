@@ -99,7 +99,10 @@ Definition conv_int {σ : genv} (tu : translation_unit) (from to : type) (v v' :
       end
   | Tchar_ ct , Tchar_ ct' =>
       match v with
-      | Vchar v => v' = Vchar (to_char (char_type.bitsN ct) Unsigned (char_type.bitsN ct') v)
+      (* [Vchar] stores unsigned code-unit bits. Decode the source's
+         signedness before reducing to the target code-unit width. *)
+      | Vchar v => v' = Vchar (char_to_char (char_type.bitsN ct)
+          (signedness_of_char σ ct) (char_type.bitsN ct') v)
       | _ => False
       end
   | Tenum _ , _
@@ -195,10 +198,8 @@ Section conv_int.
                     ltac:(destruct t; simpl; lia)).
       rewrite /bitsize.min_val/bitsize.max_val.
       destruct sgn, sz; simpl; lia. }
-    { apply has_type_prop_char; eexists; split; eauto.
-      apply has_type_prop_char in H0.
-      destruct H0 as [?[Hinv?]]; inversion Hinv; subst.
-      generalize (to_char_bounded (char_type.bitsN t) Unsigned (char_type.bitsN t0) (Z.of_N x)); eauto. }
+    { apply has_type_prop_char'.
+      split; first apply N.le_0_l. apply char_to_char_bounded. }
     { eapply has_bool_type; case_match; lia. }
     { eapply has_int_type. red; destruct sz, sgn, b => /=; lia. }
     { eapply has_type_prop_char'. destruct t => /=; lia. }

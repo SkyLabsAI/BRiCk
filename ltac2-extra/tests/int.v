@@ -15,6 +15,7 @@ Module Type _Tests.
 
   Module Map.
     Goal True.
+    Proof.
       let m := Int.Map.empty in
       let m := Int.Map.add 1 [] m in
       let m := Int.Map.add 2 ["test"] m in

@@ -369,11 +369,18 @@ fmt::Formatter &ClangPrinter::printTemplateTypeParamRef(CoqPrinter &print,
 fmt::Formatter &ClangPrinter::printTemplateValueParamRef(CoqPrinter &print,
                                                          unsigned depth,
                                                          unsigned index,
+                                                         const Expr *expr,
                                                          loc::loc loc) {
     if (trace(Trace::Name)) {
         trace("printTemplateValueParamRef", loc)
             << " depth=" << depth << " index=" << index << "\n";
     }
+
+    auto unsupportedValue = [&](StringRef message) -> fmt::Formatter & {
+        guard::ctor _{print, "Eunsupported"};
+        print.str(message) << fmt::nbsp;
+        return printDeclType(print, expr);
+    };
 
     auto ref = resolveTemplateParamRef(decl_, depth, index, loc, *this);
     switch (ref.kind) {
@@ -392,19 +399,17 @@ fmt::Formatter &ClangPrinter::printTemplateValueParamRef(CoqPrinter &print,
         case TemplateArgument::ArgKind::Expression:
             return printExpr(print, v.getAsExpr());
         default:
-            return printUnsupportedTemplateArgument(print, "Eunsupported",
-                                                   v.getKind());
+            return unsupportedValue(std::string("TemplateParam ") +
+                                    templateArgumentKindName(v.getKind()));
         }
     }
     case ResolvedTemplateParamRef::Kind::NotFound: {
-        guard::ctor _{print, "Eunsupported"};
-        return print.str("template parameter");
+        return unsupportedValue("template parameter");
     }
     default:
-        return printWrongTemplateParamRefKind(
-            print, "Eunsupported",
-            ResolvedTemplateParamRef::stringOfKind(ref.kind), ref.param, depth,
-            index);
+        return unsupportedValue(
+            std::string(ResolvedTemplateParamRef::stringOfKind(ref.kind)) + " " +
+            templateParamRefName(ref.param, depth, index));
     }
     always_assert(false);
 }

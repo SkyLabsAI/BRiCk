@@ -12,6 +12,7 @@ Require Import skylabs.upoly.list.
 Require Import skylabs.prelude.parsec.
 Require Import skylabs.lang.cpp.syntax.core.
 Require Import skylabs.lang.cpp.syntax.types.
+Require Import skylabs.lang.cpp.syntax.name_notation.declarator.
 Require Import Stdlib.Strings.PrimString.
 Require Import skylabs.prelude.pstring.
 Require Import Stdlib.Numbers.Cyclic.Int63.Uint63.
@@ -332,7 +333,17 @@ Module internal.
         mret (fun ret_ty => Tfunction (FunctionType (ft_arity:=ar) ret_ty args)).
 
       Definition parse_postfix_type : M (type -> type) :=
-        let entry := fix entry fuel :=
+        let pointer :=
+          (spaced "&&" *> mret Trv_ref) <|>
+          (spaced "&" *> mret Tref) <|>
+          (spaced "*" *> mret Tptr) <|>
+          (keyword "const" *> mret (tqualified QC)) <|>
+          (keyword "volatile" *> mret (tqualified QV)) <|>
+          (let* nm := parse_name () in
+           let* _ := spaced "::" in
+           let* _ := spaced "*" in
+           mret (Tmember_pointer (Tnamed nm))) in
+        let suffix :=
           let array_entry :=
             (exact "]" *> mret Tincomplete_array) <|>
               (let* n := decimal in
@@ -342,40 +353,22 @@ Module internal.
                let* _ := exact "]" in
                mret (fun x => Tvariable_array x n))
           in
-          let function_entry :=
-            let qualified :=
-              let* (post : list (type -> type)) :=
-                (star (NEXT fuel entry) : M (list (type -> type))) <* ws <* exact ")" in
-              if post is nil then
-                mret (fun rt => Tfunction (FunctionType rt []))
-              else
-                let post := fold_left (fun t f => f t) post in
-                compose post <$> parse_fun_ty false
-            in
-            qualified <|> parse_fun_ty true
-          in
-          let* _ := ws in
-          (let* _ := exact "&&" in mret Trv_ref) <|>
-            (let* _ := exact "&" in mret Tref) <|>
-            (let* _ := exact "*" in mret Tptr) <|>
-            (let* _ := keyword "const" in mret $ fun x => tqualified QC x) <|>
-            (let* _ := keyword "volatile" in mret $ fun x => tqualified QV x) <|>
-            (exact "[" *> array_entry) <|>
-            (exact "(" *> function_entry) <|>
-            (let* _ := exact "(" in
-             let* nm := parse_name () in
-             let* _ := spaced "::" in
-             let* _ := exact "*" in
-             let* _ := spaced ")" in
-             compose (Tmember_pointer (Tnamed nm)) <$>
-             parse_fun_ty false)
-             <|>
-             (let* nm := parse_name () in
-             let* _ := spaced "::" in
-             let* _ := exact "*" in
-             mret (Tmember_pointer (Tnamed nm)))
+          (ws *> exact "[" *> array_entry <* ws) <|> parse_fun_ty false in
+        (* Suffixes bind more tightly than pointer operators. Parentheses
+           reverse that order: ["int *[3]"] and ["int (*)[3]"] are distinct.
+           A nonempty declarator inside parentheses distinguishes grouping
+           from a function's (possibly empty) parameter list. *)
+        let suffixes := fun (ps : list (type -> type)) => fold_right compose (fun t : type => t) ps in
+        let entry := fix entry (fuel : nat) : M (type -> type) :=
+          (let* p := pointer in
+           let* rest := optional (NEXT fuel entry) in
+           mret (match rest with None => p | Some rest => compose rest p end)) <|>
+          (let* grouped := parens (NEXT fuel entry) in
+           let* post := star suffix in
+           mret (compose grouped (suffixes post))) <|>
+          (suffixes <$> plus suffix)
         in
-        fold_left (fun t f => f t) <$> star (entry 100).
+        (fun rest => match rest with None => (fun t => t) | Some rest => rest end) <$> optional (entry 100).
 
       Definition name_for_parse (def : name -> type) (opt : option ()) (nm : name) : M type :=
         match resolve_name nm return M type with
@@ -434,7 +427,8 @@ Module internal.
            build_named_type (name_for_parse Tnamed kw) n)
       in
       let* post := parse_postfix_type in
-      mret $ post (List.fold_right (fun f x => f x) t quals).
+      let ty := post (List.fold_right (fun f x => f x) t quals) in
+      if valid_array_bounds ty then mret ty else mfail.
 
     Fixpoint final_function (nm : name) : option (name * list type * function_qualifiers.t) :=
       match nm with
@@ -592,7 +586,18 @@ Module internal.
                   mret (args, arity, quals))
       in
       let* a := parse_args in
-      mret (nm, a, template_args)
+      match nm, a with
+      | OpConv t, None =>
+          (* The type parser can consume the conversion operator's [()].
+             Its trailing qualifiers belong to the operator, not the type. *)
+          match as_conv function_qualifiers.N t with
+          | Some (ret, [], q) =>
+              let* quals := parse_qualifiers in
+              mret (OpConv ret, Some ([], Ar_Definite, function_qualifiers.join q quals), template_args)
+          | _ => mfail
+          end
+      | _, _ => mret (nm, a, template_args)
+      end
     .
 
     Definition parse_z : M Z :=
@@ -763,11 +768,11 @@ Module Type TESTS.
   Succeed Example _0 : TEST "Msg::operator int() const volatile" (Nscoped Msg (Nop_conv function_qualifiers.Ncv Tint)) := eq_refl.
   Succeed Example _0 : TEST "Msg::operator int() &" (Nscoped Msg (Nop_conv function_qualifiers.Nl Tint)) := eq_refl.
 
-  Succeed Example _0 : TEST "foo_client(int[2]&, int const*, bool*, int**, char*)" (Nglobal (Nfunction function_qualifiers.N "foo_client" [Tref (Tarray Tint 2); Tptr (Tconst Tint); Tptr Tbool; Tptr (Tptr Tint); Tptr Tchar])) := eq_refl.
+  Succeed Example _0 : TEST ("foo_client(int(&)[2], int const*, bool*, int**, char*" ++ ")")%pstring (Nglobal (Nfunction function_qualifiers.N "foo_client" [Tref (Tarray Tint 2); Tptr (Tconst Tint); Tptr Tbool; Tptr (Tptr Tint); Tptr Tchar])) := eq_refl.
   Succeed Example _0 : TEST "DlistInternal::iterator::operator!=(const DlistInternal::iterator&) const"
                  (Nscoped (Nscoped (Nglobal (Nid "DlistInternal")) (Nid "iterator"))
                     (Nop function_qualifiers.Nc OOExclaimEqual [Tref (Tqualified QC (Tnamed (Nscoped (Nglobal (Nid "DlistInternal")) (Nid "iterator"))))])) := eq_refl.
-  Succeed Example _0 : TEST "intrusive::List_internal::iterator::iterator(intrusive::List_internal::Node*)"
+  Succeed Example _0 : TEST ("intrusive::List_internal::iterator::iterator(intrusive::List_internal::Node*" ++ ")")%pstring
                  (Nscoped (Nscoped (Nscoped (Nglobal (Nid "intrusive")) (Nid "List_internal")) (Nid "iterator"))
                     (Nctor [Tptr (Tnamed (Nscoped (Nscoped (Nglobal (Nid "intrusive")) (Nid "List_internal")) (Nid "Node")))])) := eq_refl.
   Succeed Example _0 : TEST "span<const int, 1ul>::span(const int*, unsigned long)"
@@ -797,16 +802,16 @@ Module Type TESTS.
   Succeed Example _0 : TEST "::f(struct ::foo)" (Nglobal $ Nfunction function_qualifiers.N "f" [Tnamed $ Nglobal $ Nid "foo"]) := eq_refl.
   Succeed Example _0 : TEST "::f(class ::foo)" (Nglobal $ Nfunction function_qualifiers.N "f" [Tnamed $ Nglobal $ Nid "foo"]) := eq_refl.
   Succeed Example _0 : TEST "::f(::foo)" (Nglobal $ Nfunction function_qualifiers.N "f" [Tnamed $ Nglobal $ Nid "foo"]) := eq_refl.
-  Succeed Example _0 : TEST "CpuSet::forall(void (*)(int)) const"
+  Succeed Example _0 : TEST ("CpuSet::forall(void (" ++ "*" ++ ")(int)) const")%pstring
                  (Nscoped (Nglobal (Nid "CpuSet")) (Nfunction function_qualifiers.Nc "forall" [Tptr $ Tfunction (FunctionType Tvoid [Tint])])) := eq_refl.
-  Succeed Example _0 : TEST "CpuSet::forall(void (C::*)(int)) const"
+  Succeed Example _0 : TEST ("CpuSet::forall(void (C::*" ++ ")(int)) const")%pstring
                          (Nscoped (Nglobal (Nid "CpuSet")) (Nfunction function_qualifiers.Nc "forall" [Tmember_pointer (Tnamed (Nglobal $ Nid "C")) $ Tfunction (FunctionType Tvoid [Tint])])) := eq_refl.
 
-  Succeed Example _0 : TEST "CpuSet::forall(void (C::*)(int), ...) const"
+  Succeed Example _0 : TEST ("CpuSet::forall(void (C::*" ++ ")(int), ...) const")%pstring
                          (Nscoped (Nglobal (Nid "CpuSet")) (Nfunction function_qualifiers.Nc "forall" [Tmember_pointer (Tnamed (Nglobal $ Nid "C")) $ Tfunction (FunctionType Tvoid [Tint])])) := eq_refl.
-  Succeed Example _0 : TEST "CpuSet::forall(void (C::*)(int, ...), ...) const"
+  Succeed Example _0 : TEST ("CpuSet::forall(void (C::*" ++ ")(int, ...), ...) const")%pstring
                          (Nscoped (Nglobal (Nid "CpuSet")) (Nfunction function_qualifiers.Nc "forall" [Tmember_pointer (Tnamed (Nglobal $ Nid "C")) $ Tfunction (FunctionType (ft_arity:=Ar_Variadic) Tvoid [Tint])])) := eq_refl.
-  Succeed Example _0 : TEST "Foo::Foo(int Foo::*)" (Nscoped (Nglobal (Nid "Foo")) (Nctor [Tmember_pointer (Tnamed (Nglobal (Nid "Foo"))) Tint])) := eq_refl.
+  Succeed Example _0 : TEST ("Foo::Foo(int Foo::*" ++ ")")%pstring (Nscoped (Nglobal (Nid "Foo")) (Nctor [Tmember_pointer (Tnamed (Nglobal (Nid "Foo"))) Tint])) := eq_refl.
 
   Succeed Example _0 : TEST "foo(unsigned int128, int128)" (Nglobal (Nfunction function_qualifiers.N "foo" [Tuint128_t; Tint128_t])) := eq_refl.
 
@@ -824,10 +829,10 @@ Module Type TESTS.
             [Tnum int_rank.Ilong Unsigned; Tnamed (Ninst (Nscoped (Nglobal (Nid "std")) (Nid "function")) [Atype (Tfunction (FunctionType (ft_arity:=Ar_Variadic) Tvoid [Tlong; Tint]))])])) := eq_refl.
 
   Succeed Example _0 : TEST "foo(int(int))" (Nglobal (Nfunction function_qualifiers.N "foo" [Tfunction (FunctionType Tint [Tint])])) := eq_refl.
-  Succeed Example _0 : TEST "foo(int(*)(int))" (Nglobal (Nfunction function_qualifiers.N "foo" [Tptr $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
-  Succeed Example _0 : TEST "foo(int(const *)(int))" (Nglobal (Nfunction function_qualifiers.N "foo" [Tptr $ Tconst $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
-  Succeed Example _0 : TEST "foo(int(*const)(int))" (Nglobal (Nfunction function_qualifiers.N "foo" [Tptr $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
-  Succeed Example _0 : TEST "foo(int(C::*)(int))" (Nglobal (Nfunction function_qualifiers.N "foo" [Tmember_pointer (Tnamed $ Nglobal (Nid "C")) $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
+  Succeed Example _0 : TEST ("foo(int(" ++ "*" ++ ")(int))")%pstring (Nglobal (Nfunction function_qualifiers.N "foo" [Tptr $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
+  Succeed Example _0 : TEST ("foo(int(const *" ++ ")(int))")%pstring (Nglobal (Nfunction function_qualifiers.N "foo" [Tptr $ Tconst $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
+  Succeed Example _0 : TEST ("foo(int(" ++ "*" ++ "const)(int))")%pstring (Nglobal (Nfunction function_qualifiers.N "foo" [Tptr $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
+  Succeed Example _0 : TEST ("foo(int(C::*" ++ ")(int))")%pstring (Nglobal (Nfunction function_qualifiers.N "foo" [Tmember_pointer (Tnamed $ Nglobal (Nid "C")) $ Tfunction (FunctionType Tint [Tint])])) := eq_refl.
 
   Succeed Example _0 : TEST_type "enum E()" (Tfunction (FunctionType (Tenum (Nglobal (Nid "E"))) [])) := eq_refl.
   Succeed Example _0 : TEST_type "enum NS::E()" (Tfunction (FunctionType (Tenum (Nscoped (Nglobal (Nid "NS")) (Nid "E"))) [])) := eq_refl.

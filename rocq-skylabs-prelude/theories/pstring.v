@@ -20,6 +20,7 @@ Module Tmp.
   #[local] Ltac ZifyBool.elim_bool_cstr ::= exact Tmp.
 
   Goal tmp.
+  Proof.
     Zify.zify_post_hook.
   Qed.
 End Tmp.

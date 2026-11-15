@@ -96,6 +96,45 @@ Module FreeTemps.
   Definition pars : list t -> t := foldr par 1.
 
   (**
+  [ids n free] is the [FreeTemps] accumulated by [n] successive
+  initializations that create no temporaries (e.g. [n] elements of an
+  array of scalars), each sequenced before [free]:
+  [1 >*> (1 >*> ... (1 >*> free))]. It is equivalent to [free] ([ids_equiv]).
+  *)
+  Definition ids (n : N) (free : t) : t := N.iter n (seq 1) free.
+  #[global] Arguments ids : simpl never.
+
+  Lemma ids_0 free : ids 0 free = free.
+  Proof. done. Qed.
+  Lemma ids_succ n free : ids (N.succ n) free = 1 >*> ids n free.
+  Proof. apply N.iter_succ. Qed.
+  Lemma ids_succ_r n free : ids (N.succ n) free = ids n (1 >*> free).
+  Proof. apply N.iter_succ_r. Qed.
+  Lemma ids_equiv n free : ids n free ≡ free.
+  Proof.
+    induction n as [|n IH] using N.peano_ind; first done.
+    by rewrite ids_succ IH left_id.
+  Qed.
+
+  (**
+  [trivial free] holds when [free] destroys nothing: it is built from
+  [1], [>*>] and [|*|] only. Such a [free] is equivalent to [1].
+  *)
+  Fixpoint trivial (free : t) : bool :=
+    match free with
+    | id => true
+    | seq f g | par f g => trivial f && trivial g
+    | delete _ _ | delete_va _ _ => false
+    end.
+
+  Lemma trivial_equiv free : trivial free = true -> free ≡ 1.
+  Proof.
+    induction free; simpl; try done.
+    - move/andb_prop => [/IHfree1 -> /IHfree2 ->]. by rewrite left_id.
+    - move/andb_prop => [/IHfree1 -> /IHfree2 ->]. by rewrite left_id.
+  Qed.
+
+  (**
   [seqs ls] is the [FreeTemp] representing the destruction of each
   element in [ls] sequentially from left-to-right, i.e. the first
   element in the list is run first.

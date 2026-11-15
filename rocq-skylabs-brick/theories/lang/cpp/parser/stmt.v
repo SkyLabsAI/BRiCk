@@ -14,5 +14,5 @@ Section stmt.
   Definition Sforeach (range ibegin iend : Stmt)
     (init : option Stmt) (cond : option Expr) (inc : option Expr)
     (decl body : Stmt) : Stmt :=
-    Sseq (option_list init ++ [range; ibegin; iend; Sfor None cond inc (Sseq [decl; body])]).
+    Sseq (option_list init ++ [range; ibegin; iend; Sfor None None cond inc (Sseq [decl; body])]).
 End stmt.

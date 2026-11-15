@@ -88,12 +88,14 @@ Section with_cpp.
   Lemma _field_validR f : _offsetR (_field f) validR |-- validR.
   Proof. apply off_validR => p. apply _valid_ptr_field. Qed.
 
+  (*
   #[global] Instance type_ptrR_size_observe ty :
     Observe [| is_Some (size_of σ ty) |] (type_ptrR ty).
   Proof.
     apply observe_only_provable_at => p.
     rewrite _at_type_ptrR. apply _.
   Qed.
+  *)
 
 End with_cpp.
 

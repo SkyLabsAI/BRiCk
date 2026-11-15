@@ -49,7 +49,7 @@ Example: Elpi AddPred my.db my.predicate \"i:(list string)\" \"o:prop\".
     parse-string Args Pred \ Args \
     parse-sig Args Sig \ Args \ std.do! [
       (Args = [], !; usage), 
-      std.assert! (@global! => coq.elpi.add-predicate Db _ Pred Sig) "Elpi.Db.AddPred"
+      std.assert! (@global! => coq.elpi.add-predicate ff Db _ Pred Sig) "Elpi.Db.AddPred"
     ]
   ].
 }}.

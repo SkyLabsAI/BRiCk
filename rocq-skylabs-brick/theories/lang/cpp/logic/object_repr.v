@@ -454,24 +454,19 @@ Section primR_transport.
   Context `{Σ : cpp_logic} {σ : genv}.
 
   Lemma _at_primR_ptr_congP_transport p p' ty q v :
+    is_Some (size_of σ ty) ->
     ptr_congP σ p p' ** type_ptr ty p' |-- p |-> primR ty q v -* p' |-> primR ty q v.
   Proof.
-    iIntros "#[cong tptr'] prim".
-    iDestruct (type_ptr_size with "tptr'") as "%Hsz"; destruct Hsz as [sz Hsz].
+    rewrite primR_to_rawsR !_at_exists.
+    iIntros ([sz Hsz]) "#[cong tptr'] [%rs prim]"; iExists rs.
     iDestruct (type_ptr_raw_type_ptrs with "tptr'") as "raw_tptrs"; eauto.
     rewrite raw_type_ptrs_eq/raw_type_ptrs_def.
-    iDestruct "raw_tptrs" as (sz') "[%Hsz' tptrs]".
-    rewrite Hsz' in Hsz; inversion Hsz; subst.
-    rewrite primR_to_rawsR !_at_exists.
-    iDestruct "prim" as (rs) "H"; iExists rs.
+    iDestruct "raw_tptrs" as (sz') "[%Hsz' tptrs]"; simplify_eq.
     rewrite !_at_sep !_at_only_provable !_at_type_ptrR.
-    iDestruct "H" as "(%raw_bytes & _ & raws)"; iFrame "#%".
-    pose proof (raw_bytes_of_val_sizeof raw_bytes) as Hlen.
-    rewrite Hlen in Hsz'; inversion Hsz'; subst.
+    iDestruct "prim" as (Hraw_bytes) "(_ & raws)"; iFrame "#%".
+    have ? := raw_bytes_of_val_sizeof Hraw_bytes; simplify_eq.
     rewrite lengthN_fold.
-    iRevert "raws".
-    iApply _at_rawsR_ptr_congP_transport.
-    by iFrame "#".
+    iApply (_at_rawsR_ptr_congP_transport with "[$] raws").
   Qed.
 End primR_transport.
 

@@ -13,7 +13,7 @@ Section example.
   Open Scope list_scope.
   Import Lists.List.ListNotations.
 
-  Goal True.
+  Goal True. Proof.
     printf "(** Test 1 - no errors *)".
     Ltac2 Eval
     let builder :=

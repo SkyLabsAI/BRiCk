@@ -187,6 +187,52 @@ void printDependentMember(ClangPrinter &cprint, CoqPrinter &print,
                                expr->template_arguments(), loc::of(expr));
 }
 
+// Whether the class conversion [ce] steps to a virtual base, or out of a class
+// with one. Clang's path to a virtual base skips the classes in between, and
+// cpp2v emits classes with virtual bases as unsupported (see
+// [supportedRecord]), so neither step can be checked against the bases.
+static bool castLeavesVirtualBaseClass(const CastExpr &ce) {
+    QualType derived;
+    switch (ce.getCastKind()) {
+    case CastKind::CK_DerivedToBase:
+    case CastKind::CK_UncheckedDerivedToBase:
+        derived = ce.getSubExpr()->getType();
+        break;
+    case CastKind::CK_BaseToDerived:
+        derived = ce.getType();
+        break;
+    default:
+        return false;
+    }
+    auto cls = derived->isPointerType() ? derived->getPointeeCXXRecordDecl()
+                                        : derived->getAsCXXRecordDecl();
+    for (auto base : ce.path()) {
+        if (base->isVirtual() ||
+            (cls &&
+             llvm::any_of(cls->bases(), [](auto &b) { return b.isVirtual(); })))
+            return true;
+        cls = base->getType()->getAsCXXRecordDecl();
+    }
+    return false;
+}
+
+fmt::Formatter &ClangPrinter::printDeclType(CoqPrinter &print,
+                                          const Expr *expr) {
+    auto ty = expr->getType();
+    if (ty.isNull())
+        return print.output() << "Tauto";
+    if (expr->isLValue()) {
+        guard::ctor _(print, "Tref", false);
+        printQualType(print, ty, loc::of(expr));
+    } else if (expr->isXValue()) {
+        guard::ctor _(print, "Trv_ref", false);
+        printQualType(print, ty, loc::of(expr));
+    } else {
+        printQualType(print, ty, loc::of(expr));
+    }
+    return print.output();
+}
+
 /**
  * This class prints an expression (of Coq type [Expr] or [MExpr])
  */
@@ -197,25 +243,9 @@ private:
     const ASTContext &ctxt;
     OpaqueNames &names;
 
-    fmt::Formatter &printDeclType(const Expr *expr) {
-        auto ty = expr->getType();
-        if (ty.isNull())
-            return print.output() << "Tauto";
-        if (expr->isLValue()) {
-            guard::ctor _(print, "Tref", false);
-            cprint.printQualType(print, ty, loc::of(expr));
-        } else if (expr->isXValue()) {
-            guard::ctor _(print, "Trv_ref", false);
-            cprint.printQualType(print, ty, loc::of(expr));
-        } else {
-            cprint.printQualType(print, ty, loc::of(expr));
-        }
-        return print.output();
-    }
-
     fmt::Formatter &done(const Expr *expr, Done want = Done::T) {
         if (want == Done::DT) {
-            printDeclType(expr);
+            cprint.printDeclType(print, expr);
         } else {
             if (want & Done::T) {
                 if (expr->getType().isNull())
@@ -585,11 +615,11 @@ public:
                 // >> The actual [FieldDecl] might be (is?) anonymous, so we
                 // pull the data from the
                 //    variable that is being captured
-                auto nm = var_decl->getName();
-                always_assert(0 < nm.size());
+                always_assert(0 < var_decl->getName().size());
                 // TODO NAMES: this should never be anonymous, but it
                 // technically could be
-                print.str(nm) << fmt::nbsp;
+                cprint.printCaptureVarName(print, *lambda, *var_decl)
+                    << fmt::nbsp;
                 // The type of the field
                 cprint.printQualType(print, capture->getType(),
                                      loc::of(var_decl));
@@ -634,7 +664,8 @@ public:
                 cprint.printUnqualifiedName(print, *param);
             } else {
                 cprint.printTemplateValueParamRef(
-                    print, param->getDepth(), param->getIndex(), loc::of(expr));
+                    print, param->getDepth(), param->getIndex(), expr,
+                    loc::of(expr));
 #if 0
 				llvm::errs() << "\n";
 				expr->dump();
@@ -739,9 +770,19 @@ public:
     void printCast(const CastExpr *ce) {
         auto with_type = [&](const char *c) {
             guard::ctor _(print, c, false);
-            printDeclType(ce);
+            cprint.printDeclType(print, ce);
         };
         auto without_type = [&](const char *c) { print.output() << c; };
+
+        if (castLeavesVirtualBaseClass(*ce)) {
+            logging::unsupported()
+                << "unsupported cast through a class with virtual bases"
+                << " (at " << cprint.sourceRange(ce->getSourceRange()) << ")\n";
+            print.ctor("Cunsupported", false);
+            print.str(ce->getCastKindName()) << fmt::nbsp;
+            done(ce, Done::DT);
+            return;
+        }
 
         switch (ce->getCastKind()) {
 #define CASE_NO_TYPE(a, b)                                                     \
@@ -885,18 +926,27 @@ public:
 
     void VisitIntegerLiteral(const IntegerLiteral *lit) {
         print.ctor("Eint", false);
-        SmallString<32> s;
-        if (lit->getType()->isSignedIntegerOrEnumerationType()) {
-            lit->getValue().toStringSigned(s);
-        } else {
-            lit->getValue().toStringUnsigned(s);
-        }
-        print.output() << s << "%Z";
+        llvm::APSInt value(
+            lit->getValue(),
+            !lit->getType()->isSignedIntegerOrEnumerationType());
+        print.output() << fmt::Z(value);
         done(lit);
     }
 
     void VisitCharacterLiteral(const CharacterLiteral *lit) {
-        print.ctor("Echar", false) << lit->getValue() << "%N";
+        const auto type = lit->getType();
+        const auto value = llvm::APInt(32, lit->getValue())
+                               .zextOrTrunc(cprint.getContext().getTypeSize(type));
+        if (type->isAnyCharacterType()) {
+            // Clang sign-extends ordinary signed-char literals in its unsigned
+            // storage. Vchar represents the code unit, so discard those high
+            // bits rather than printing an out-of-range character value.
+            print.ctor("Echar", false) << value.getZExtValue() << "%N";
+        } else {
+            // Ordinary multicharacter literals have type int, not char.
+            const llvm::APSInt int_value(value, false);
+            print.ctor("Eint", false) << fmt::Z(int_value);
+        }
         done(lit);
     }
 
@@ -914,7 +964,8 @@ public:
     void VisitSourceLocExpr(const SourceLocExpr *expr) {
         guard::ctor _{print, "Esource_loc"};
         print.str(expr->getBuiltinStr()) << fmt::nbsp;
-        auto val = expr->EvaluateInContext(cprint.getContext(), nullptr);
+        auto val = expr->EvaluateInContext(
+            cprint.getContext(), cprint.sourceLocExprScope().getDefaultExpr());
         if (expr->isIntType()) {
             print.ctor("Eint");
             print.output() << fmt::Z(val.getInt(), false) << fmt::nbsp;
@@ -1218,6 +1269,9 @@ public:
     }
 
     void VisitCXXDefaultArgExpr(const CXXDefaultArgExpr *expr) {
+        // Match Clang CodeGen: nested defaults retain the outer use site.
+        CurrentSourceLocExprScope::SourceLocExprScopeGuard scope(
+            expr, cprint.sourceLocExprScope());
         print.ctor("Eimplicit");
         cprint.printExpr(print, expr->getExpr(), names);
         print.end_ctor();
@@ -1609,6 +1663,9 @@ public:
     }
 
     void VisitCXXDefaultInitExpr(const CXXDefaultInitExpr *expr) {
+        // Match Clang CodeGen: nested defaults retain the outer use site.
+        CurrentSourceLocExprScope::SourceLocExprScopeGuard scope(
+            expr, cprint.sourceLocExprScope());
         print.ctor("Edefault_init_expr");
         cprint.printExpr(print, expr->getExpr(), names);
         print.end_ctor();
@@ -1658,7 +1715,9 @@ public:
                     cprint.printExpr(print, *iinit, this->names);
                 } else if (capture.capturesVLAType()) {
                     guard::ctor _{print, "Eunsupported"};
-                    print.str("variable length array capture");
+                    print.str("variable length array capture") << fmt::nbsp;
+                    guard::ctor type{print, "Tunsupported"};
+                    print.str("variable length array capture type");
                 } else {
                     always_assert(false && "unreachable lambda capture type");
                 }

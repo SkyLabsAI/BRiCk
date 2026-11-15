@@ -67,7 +67,7 @@ end = struct
         assert (data1.dev = data2.dev);
         Some(data1)
       in
-      state := IMap.union merge !state s
+      Summary.Ref.(state := IMap.union merge !state s)
     in
     let load_function _ = cache_function in
     let classify_function _ = Keep in
@@ -75,7 +75,7 @@ end = struct
     declare_object
       {default with cache_function; load_function; classify_function}
 
-  let get () = !state
+  let get () = Summary.Ref.(!state)
   let set s = Lib.add_leaf (declare_state s)
 end
 
@@ -228,7 +228,8 @@ let define_flag_value : string -> int -> unit = fun id hash ->
 type notation = {
   flag: string;
   with_level: bool;
-  data: Ltac2_plugin.Tac2entries.notation_interpretation_data
+  data: (Libnames.qualid option, Ltac2_plugin.Tac2expr.raw_tacexpr)
+           Ltac2_plugin.Tac2entries.notation_interpretation_data
 }
 
 type interp_data = {
@@ -283,7 +284,8 @@ let define_notation : with_level:bool -> string -> int -> notation =
     in
     CAst.make Tac2expr.(CTacApp(log_msg, args))
   in
-  let data = Tac2entries.register_notation [] tokens (None, None) body in
+  let target = Tac2syn.{target_entry = None; target_level = None; target_scope = None} in
+  let data = Tac2entries.register_notation [] tokens target body in
   {flag=id; with_level; data}
 
 let define_notation_interpretation {flag; with_level; data} =

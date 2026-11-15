@@ -325,7 +325,7 @@ Module MTraverse.
       | Sif i d e sif selse => Sif <$> traverse (T:=eta option) traverseS i <*> traverse (T:=eta option) traverseD d <*> traverseE e <*> traverseS sif <*> traverseS selse
       | Sif_consteval sif selse => Sif_consteval <$> traverseS sif <*> traverseS selse
       | Swhile d e s => Swhile <$> traverse (T:=eta option) traverseD d <*> traverseE e <*> traverseS s
-      | Sfor i g c s => Sfor <$> traverse (T:=eta option) traverseS i <*> traverse (T:=eta option) traverseE g <*> traverse (T:=eta option) traverseE c <*> traverseS s
+      | Sfor i d g c s => Sfor <$> traverse (T:=eta option) traverseS i <*> traverse (T:=eta option) traverseD d <*> traverse (T:=eta option) traverseE g <*> traverse (T:=eta option) traverseE c <*> traverseS s
       | Sdo s e => Sdo <$> traverseS s <*> traverseE e
       | Sswitch i d e s => Sswitch <$> traverse (T:=eta option) traverseS i <*> traverse (T:=eta option) traverseD d <*> traverseE e <*> traverseS s
       | Scase br => mret $ Scase br

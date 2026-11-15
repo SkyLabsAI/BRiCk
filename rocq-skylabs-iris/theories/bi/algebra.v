@@ -56,7 +56,7 @@ Section theory.
   Context `{!Sbi PROP}.
   Notation "P ⊣⊢ Q" := (P ⊣⊢@{PROP} Q).
   Notation "P ⊢ Q" := (P ⊢@{PROP} Q).
-  #[local] Arguments siProp_holds !_ _ / : assert.
+  #[local] Arguments siProp_holds _ !_ _ / : assert.
 
   #[local] Tactic Notation "solve_entails'" tactic1(tac) :=
     sbi_unfold; intros n; by tac.
@@ -249,35 +249,41 @@ Section theory.
     Proof. unfold_leibniz. by rewrite view_auth_dfrac_op_invI discrete_eq. Qed.
 
     Lemma view_auth_frac_validI_1 relI q a :
-      (∀ n, rel n a ε → siProp_holds relI n) → ✓ (●V{# q} a) ⊢ [! q ≤ 1 !]%Qp ∧ <si_pure> relI.
+      (∀ n, rel (nat_to_sidx n) a ε → siProp_holds relI n) →
+      ✓ (●V{# q} a) ⊢ [! q ≤ 1 !]%Qp ∧ <si_pure> relI.
     Proof. intros. lift view_auth_dfrac_validN. Qed.
     Lemma view_auth_frac_validI_2 relI q a :
-      (∀ n, siProp_holds relI n → rel n a ε) → [! q ≤ 1 !]%Qp ∧ <si_pure> relI ⊢ ✓ (●V{# q} a).
+      (∀ n, siProp_holds relI n → rel (nat_to_sidx n) a ε) →
+      [! q ≤ 1 !]%Qp ∧ <si_pure> relI ⊢ ✓ (●V{# q} a).
     Proof. intros. lift view_auth_dfrac_validN. Qed.
     Lemma view_auth_frac_validI relI q a :
-      (∀ n, rel n a ε ↔ siProp_holds relI n) → ✓ (●V{# q} a) ⊣⊢ [! q ≤ 1 !]%Qp ∧ <si_pure> relI.
+      (∀ n, rel (nat_to_sidx n) a ε ↔ siProp_holds relI n) →
+      ✓ (●V{# q} a) ⊣⊢ [! q ≤ 1 !]%Qp ∧ <si_pure> relI.
     Proof. combine view_auth_frac_validI_1, view_auth_frac_validI_2. Qed.
 
     Lemma view_auth_validI_1 relI a :
-      (∀ n, rel n a ε → siProp_holds relI n) → ✓ (●V a) ⊢ <si_pure> relI.
+      (∀ n, rel (nat_to_sidx n) a ε → siProp_holds relI n) →
+      ✓ (●V a) ⊢ <si_pure> relI.
     Proof. intros. lift view_auth_validN. Qed.
     Lemma view_auth_validI_2 relI a :
-      (∀ n, siProp_holds relI n → rel n a ε) → <si_pure> relI ⊢ ✓ (●V a).
+      (∀ n, siProp_holds relI n → rel (nat_to_sidx n) a ε) →
+      <si_pure> relI ⊢ ✓ (●V a).
     Proof. intros. lift view_auth_validN. Qed.
     Lemma view_auth_validI relI a :
-      (∀ n, rel n a ε ↔ siProp_holds relI n) → ✓ (●V a) ⊣⊢ <si_pure> relI.
+      (∀ n, rel (nat_to_sidx n) a ε ↔ siProp_holds relI n) →
+      ✓ (●V a) ⊣⊢ <si_pure> relI.
     Proof. combine view_auth_validI_1, view_auth_validI_2. Qed.
 
     Lemma view_auth_frac_op_validI_1 relI q1 q2 a1 a2 :
-      (∀ n, rel n a1 ε → siProp_holds relI n) →
+      (∀ n, rel (nat_to_sidx n) a1 ε → siProp_holds relI n) →
       ✓ (●V{# q1} a1 ⋅ ●V{# q2} a2) ⊢ [! q1 + q2 ≤ 1 !]%Qp ∧ a1 ≡ a2 ∧ <si_pure> relI.
     Proof. intros. lift view_auth_dfrac_op_validN. Qed.
     Lemma view_auth_frac_op_validI_2 relI q1 q2 a1 a2 :
-      (∀ n, siProp_holds relI n → rel n a1 ε) →
+      (∀ n, siProp_holds relI n → rel (nat_to_sidx n) a1 ε) →
       [! q1 + q2 ≤ 1 !]%Qp ∧ a1 ≡ a2 ∧ <si_pure> relI ⊢ ✓ (●V{# q1} a1 ⋅ ●V{# q2} a2).
     Proof. intros. lift view_auth_dfrac_op_validN. Qed.
     Lemma view_auth_frac_op_validI relI q1 q2 a1 a2 :
-      (∀ n, rel n a1 ε ↔ siProp_holds relI n) →
+      (∀ n, rel (nat_to_sidx n) a1 ε ↔ siProp_holds relI n) →
       ✓ (●V{# q1} a1 ⋅ ●V{# q2} a2) ⊣⊢ [! q1 + q2 ≤ 1 !]%Qp ∧ a1 ≡ a2 ∧ <si_pure> relI.
     Proof. combine view_auth_frac_op_validI_1, view_auth_frac_op_validI_2. Qed.
 
@@ -285,33 +291,42 @@ Section theory.
     Proof. solve_equiv view_auth_op_validN. Qed.
 
     Lemma view_frag_validI_1 relI b :
-      (∀ n a, rel n a b → siProp_holds relI n) → ✓ (◯V b) ⊢ <si_pure> relI.
+      (∀ n a, rel (nat_to_sidx n) a b → siProp_holds relI n) →
+      ✓ (◯V b) ⊢ <si_pure> relI.
     Proof. intros. lift view_frag_validN. Qed.
     Lemma view_frag_validI_2 relI b :
-      (∀ n, siProp_holds relI n → ∃ a, rel n a b) → <si_pure> relI ⊢ ✓ (◯V b).
+      (∀ n, siProp_holds relI n → ∃ a, rel (nat_to_sidx n) a b) →
+      <si_pure> relI ⊢ ✓ (◯V b).
     Proof. intros. lift view_frag_validN. Qed.
     Lemma view_frag_validI relI b :
-      (∀ n, siProp_holds relI n ↔ ∃ a, rel n a b) → ✓ (◯V b) ⊣⊢ <si_pure> relI.
+      (∀ n, siProp_holds relI n ↔ ∃ a, rel (nat_to_sidx n) a b) →
+      ✓ (◯V b) ⊣⊢ <si_pure> relI.
     Proof. combine view_frag_validI_1, view_frag_validI_2. Qed.
 
     Lemma view_both_frac_validI_1 relI q a b :
-      (∀ n, rel n a b → siProp_holds relI n) → ✓ (●V{# q} a ⋅ ◯V b) ⊢ [! q ≤ 1 !]%Qp ∧ <si_pure> relI.
+      (∀ n, rel (nat_to_sidx n) a b → siProp_holds relI n) →
+      ✓ (●V{# q} a ⋅ ◯V b) ⊢ [! q ≤ 1 !]%Qp ∧ <si_pure> relI.
     Proof. intros. lift view_both_dfrac_validN. Qed.
     Lemma view_both_frac_validI_2 relI q a b :
-      (∀ n, siProp_holds relI n → rel n a b) → [! q ≤ 1 !]%Qp ∧ <si_pure> relI ⊢ ✓ (●V{# q} a ⋅ ◯V b).
+      (∀ n, siProp_holds relI n → rel (nat_to_sidx n) a b) →
+      [! q ≤ 1 !]%Qp ∧ <si_pure> relI ⊢ ✓ (●V{# q} a ⋅ ◯V b).
     Proof. intros. lift view_both_dfrac_validN. Qed.
     Lemma view_both_frac_validI relI q a b :
-      (∀ n, rel n a b ↔ siProp_holds relI n) → ✓ (●V{# q} a ⋅ ◯V b) ⊣⊢ [! q ≤ 1 !]%Qp ∧ <si_pure> relI.
+      (∀ n, rel (nat_to_sidx n) a b ↔ siProp_holds relI n) →
+      ✓ (●V{# q} a ⋅ ◯V b) ⊣⊢ [! q ≤ 1 !]%Qp ∧ <si_pure> relI.
     Proof. combine view_both_frac_validI_1, view_both_frac_validI_2. Qed.
 
     Lemma view_both_validI_1 relI a b :
-      (∀ n, rel n a b → siProp_holds relI n) → ✓ (●V a ⋅ ◯V b) ⊢ <si_pure> relI.
+      (∀ n, rel (nat_to_sidx n) a b → siProp_holds relI n) →
+      ✓ (●V a ⋅ ◯V b) ⊢ <si_pure> relI.
     Proof. intros. lift view_both_validN. Qed.
     Lemma view_both_validI_2 relI a b :
-      (∀ n, siProp_holds relI n → rel n a b) → <si_pure> relI ⊢ ✓ (●V a ⋅ ◯V b).
+      (∀ n, siProp_holds relI n → rel (nat_to_sidx n) a b) →
+      <si_pure> relI ⊢ ✓ (●V a ⋅ ◯V b).
     Proof. intros. lift view_both_validN. Qed.
     Lemma view_both_validI relI a b :
-      (∀ n, rel n a b ↔ siProp_holds relI n) → ✓ (●V a ⋅ ◯V b) ⊣⊢ <si_pure> relI.
+      (∀ n, rel (nat_to_sidx n) a b ↔ siProp_holds relI n) →
+      ✓ (●V a ⋅ ◯V b) ⊣⊢ <si_pure> relI.
     Proof. combine view_both_validI_1, view_both_validI_2. Qed.
 
     Lemma view_auth_dfrac_includedI dq1 dq2 a1 a2 b :
@@ -349,7 +364,8 @@ Section theory.
     Implicit Types x y : auth A.
 
     #[local] Lemma auth_view_rel_auth n a :
-      view_rel_holds auth_view_rel n a ε ↔ siProp_holds (siProp_cmra_valid a) n.
+      view_rel_holds auth_view_rel (nat_to_sidx n) a ε ↔
+      siProp_holds (siProp_cmra_valid a) n.
     Proof.
       siProp.unseal; split.
       - by destruct 1.

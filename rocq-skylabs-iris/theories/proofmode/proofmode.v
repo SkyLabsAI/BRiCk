@@ -11,7 +11,7 @@ Require Export iris.proofmode.proofmode.
 #[global] Remove Hints class_instances_frame.frame_bupd : typeclass_instances.
 #[global] Remove Hints class_instances_frame.frame_fupd : typeclass_instances.
 Section class_instances_frame.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi}.
   Implicit Types P Q R : PROP.
   #[global] Instance frame_bupd `{!BiBUpd PROP} p R P Q :
     (FrameInstantiateExistDisabled → Frame p R P Q) →
@@ -47,7 +47,7 @@ Ltac _iFrameAnySpatial ::=
 
 (** Missing instances for [bi_intuitionistically_if], i.e. [□?b _]. *)
 Section class_instances_intuitionistically_if.
-  Context {PROP : bi}.
+  Context {SI : sidx} {PROP : bi}.
   Implicit Types P Q R : PROP.
 
   #[global] Instance persistent_intuitionistically_if b P:
@@ -72,7 +72,7 @@ Section class_instances_intuitionistically_if.
     IntoPure P φ → IntoPure (□?b P) φ.
   Proof. destruct b => //=. apply _. Qed.
 
-  #[global] Instance into_sep_intuitionistically_if `{BiPositive PROP} b P Q1 Q2:
+  #[global] Instance into_sep_intuitionistically_if `{!BiPositive PROP} b P Q1 Q2:
     IntoSep P Q1 Q2 → IntoSep (□?b P) (□?b Q1) (□?b Q2).
   Proof. case: b => //=; apply _. Qed.
 

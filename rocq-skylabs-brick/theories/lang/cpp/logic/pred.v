@@ -41,6 +41,7 @@ Require Import skylabs.lang.cpp.bi.cfractional.
 Require Import skylabs.lang.cpp.syntax.
 Require Import skylabs.lang.cpp.semantics.values.
 Require Import skylabs.lang.cpp.semantics.subtyping.
+Require Import skylabs.lang.cpp.semantics.sub_module.
 
 #[local] Set Printing Coercions.
 
@@ -458,6 +459,28 @@ Module Type CPP_LOGIC
 
     End with_genv.
 
+    (** Code assertions are closed under [ObjValue_ler]: if [p] runs code
+        described by [f'], it also runs code described by any [f ≤ f'],
+        from any translation unit. This is what lets a client weaken
+        [denoteModule] to a [sub_module] (see [denoteModule_weaken]).
+     *)
+    Section with_cpp_logic.
+      Context `{cpp_logic} {σ}.
+
+      Axiom code_at_mono : forall tu tu' f f' p,
+        ObjValue_ler (Ofunction f) (Ofunction f') ->
+        code_at tu' f' p |-- code_at tu f p.
+      Axiom method_at_mono : forall tu tu' m m' p,
+        ObjValue_ler (Omethod m) (Omethod m') ->
+        method_at tu' m' p |-- method_at tu m p.
+      Axiom ctor_at_mono : forall tu tu' c c' p,
+        ObjValue_ler (Oconstructor c) (Oconstructor c') ->
+        ctor_at tu' c' p |-- ctor_at tu c p.
+      Axiom dtor_at_mono : forall tu tu' d d' p,
+        ObjValue_ler (Odestructor d) (Odestructor d') ->
+        dtor_at tu' d' p |-- dtor_at tu d p.
+    End with_cpp_logic.
+
   Section with_cpp_logic.
     Context `{cpp_logic} {σ}.
 
@@ -484,6 +507,13 @@ Module Type CPP_LOGIC
       Observe (valid_ptr storage_ptr) (provides_storage storage_ptr obj_ptr aty).
     #[global] Declare Instance provides_storage_valid_obj_ptr : forall storage_ptr obj_ptr aty,
       Observe (valid_ptr obj_ptr) (provides_storage storage_ptr obj_ptr aty).
+
+    (** No object lives at [nullptr], so [nullptr] neither provides storage
+        nor is provided storage. *)
+    #[global] Declare Instance provides_storage_storage_ptr_not_null {storage_ptr obj_ptr aty} :
+      Observe [| storage_ptr <> nullptr |] (provides_storage storage_ptr obj_ptr aty).
+    #[global] Declare Instance provides_storage_obj_ptr_not_null {storage_ptr obj_ptr aty} :
+      Observe [| obj_ptr <> nullptr |] (provides_storage storage_ptr obj_ptr aty).
 
   End with_cpp_logic.
 
@@ -554,13 +584,14 @@ Module Type CPP_LOGIC
     #[global] Declare Instance tptsto_type_ptr : forall ty q p v,
       Observe (type_ptr ty p) (tptsto ty q p v).
 
-    (* All objects in the C++ abstract machine have a size
-
-       NOTE to support un-sized objects, we can simply say that the [sizeof] operator
-            in C++ is only a conservative approximation of the true size of an object.
+    (* All objects in the C++ abstract machine have a size;
+       but [size_of] is an approximation to that size and sometimes it is not
+       (yet) defined for some objects.
      *)
+    (*
     Axiom type_ptr_size : forall ty p,
-        type_ptr ty p |-- [| is_Some (size_of σ ty) |].
+      type_ptr ty p |-- [| is_Some (size_of σ ty) |].
+    *)
 
     (**
     Recall that [type_ptr] and [strict_valid_ptr] don't include
@@ -877,13 +908,19 @@ Module Type VALID_PTR_AXIOMS
       base_layout_compatible σ derived base ->
       type_ptr (Tnamed derived) p ⊢ type_ptr (Tnamed base) (p ,, _base derived base).
 
-    (*
+    (* TODO: no condition on [fld.(mem_type)], which may lack a [size_of] (a
+    flexible array member, or a class cpp2v marks unsupported). Do not restore
+    [type_ptr_size] without first guarding this axiom on
+    [is_Some (size_of σ fld.(mem_type))]: together they refute [type_ptr] at
+    such a class (auto's tests/unsound/fixed_regression_tests/field_type_unsized).
+    [fld] is the first field named [fld.(mem_name)], matching [offset_of]:
+    when cpp2v emits several fields with one name, they all denote the first
+    one's address, so [fld ∈ s_fields st] would be unsound. *)
     Axiom type_ptr_o_field_type_ptr : forall p fld cls st,
       glob_def σ cls = Some (Gstruct st) ->
-      fld ∈ s_fields st →
+      snd <$> list_find (fun m => m.(mem_name) = fld.(mem_name)) st.(s_fields) = Some fld →
          type_ptr (Tnamed cls) p
       ⊢ type_ptr fld.(mem_type) (p ., Field cls fld.(mem_name)). (* TODO field names *)
-      *)
 
     Axiom type_ptr_o_sub : forall p (m n : N) ty,
       (m < n)%N ->
@@ -1051,27 +1088,6 @@ Section with_cpp.
   #[global] Instance type_ptr_observe_nonnull ty p :
     Observe [| p <> nullptr |] (type_ptr ty p).
   Proof. rewrite type_ptr_nonnull. refine _. Qed.
-
-  #[global] Instance provides_storage_preserves_nullptr {storage_ptr obj_ptr aty} :
-    Observe [| storage_ptr = nullptr <-> obj_ptr = nullptr |] (provides_storage storage_ptr obj_ptr aty).
-  Proof.
-    apply observe_intro_only_provable; iIntros "PS".
-    iDestruct (provides_storage_same_address with "PS") as %Hsm.
-    iDestruct (provides_storage_valid_obj_ptr with "PS") as "#VO".
-    iDestruct (provides_storage_valid_storage_ptr with "PS") as "#VS {PS}".
-    iDestruct (same_address_eq_null with "VO") as %[HeqO _].
-    iDestruct (same_address_eq_null with "VS") as %[HeqS _].
-    iIntros "!%"; split; intros ->.
-    - apply HeqO, symmetry, Hsm.
-    - apply HeqS, Hsm.
-  Qed.
-
-  #[global] Instance provides_storage_preserves_nonnull {storage_ptr obj_ptr aty} :
-    Observe [| storage_ptr <> nullptr <-> obj_ptr <> nullptr |] (provides_storage storage_ptr obj_ptr aty).
-  Proof.
-    apply observe_intro_only_provable. iIntros "PS".
-    by iDestruct (provides_storage_preserves_nullptr with "PS") as "#-> {PS}".
-  Qed.
 
   #[global] Instance pinned_ptr_unique va va' p :
     Observe2 [| va = va' |] (pinned_ptr va p) (pinned_ptr va' p).
@@ -1346,9 +1362,11 @@ Section with_cpp.
     apply type_ptr_valid.
   Qed.
 
+  (*
   #[global] Instance type_ptr_size_observe ty p :
     Observe [| is_Some (size_of σ ty) |] (type_ptr ty p).
   Proof. rewrite type_ptr_size. apply _. Qed.
+  *)
 
   #[global] Instance valid_ptr_sub_0 (p : ptr) ty :
     HasSize ty ->

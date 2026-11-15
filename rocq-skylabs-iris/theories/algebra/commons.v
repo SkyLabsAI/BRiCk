@@ -6,6 +6,7 @@
 
 Require Import iris.algebra.excl.
 Require Import iris.algebra.frac.
+Require Import iris.algebra.dfrac.
 Require Import iris.algebra.numbers.
 Require Import iris.algebra.lib.mono_nat.
 
@@ -25,7 +26,7 @@ Module br.
 
     ; frac_inG : inG Σ fracR
 
-    ; cinv_inG : inG Σ (prodR (optionR (exclR unitO)) (optionR fracR))
+    ; cinv_inG : inG Σ (prodR (optionR (exclR unitO)) (optionR dfracR))
 
     ; nat_inG : inG Σ natR
     ; mono_nat_inG : inG Σ mono_natR
@@ -48,7 +49,7 @@ Module br.
 
     ; GFunctor fracR
 
-    ; GFunctor (prodR (optionR (exclR unitO)) (optionR fracR))
+    ; GFunctor (prodR (optionR (exclR unitO)) (optionR dfracR))
 
     ; GFunctor natR
     ; GFunctor mono_natR
