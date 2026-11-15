@@ -215,9 +215,9 @@ Lemma tu_base_layout_compatible_sound {σ tu} {Hσ : tu ⊧ σ} derived base :
 Proof.
   rewrite /tu_base_layout_compatible.
   destruct (tu.(types) !! derived) as [gd|] eqn:Hd; last discriminate.
-  destruct gd as [| |ds| | | |]; try discriminate.
+  destruct gd as [| |ds| | | | |]; try discriminate.
   destruct (tu.(types) !! base) as [gb|] eqn:Hb; last discriminate.
-  destruct gb as [| |bs| | | |]; try discriminate.
+  destruct gb as [| |bs| | | | |]; try discriminate.
   destruct (parent_offset_tu tu derived base) as [z|] eqn:Hz; last discriminate.
   intros Hcheck. apply bool_decide_eq_true in Hcheck.
   destruct Hcheck as (Hda & Hba & Hdiv & Hdz & Hnonneg & Hstrict & Hbound).
