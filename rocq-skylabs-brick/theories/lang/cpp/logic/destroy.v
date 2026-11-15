@@ -357,6 +357,15 @@ End dtor.
     destructor.
     *)
     wp_destructor tu (Tnamed cls) (_global u.(u_dtor)) this Q
+  | Some (Gopaque o) =>
+    (*
+    The body of an opaque record is not modeled, but destroying it
+    only needs the name of its destructor. As with unions, the call is
+    direct: we do not know whether the destructor is [virtual], and
+    [wp_destroy_named] never dispatches. The destructor is called via
+    its specification; [wp_dtor] does not give it a body.
+    *)
+    wp_destructor tu (Tnamed cls) (_global o.(o_dtor)) this Q
   | _ => |={top}=> ERROR ("wp_destroy_named: cannot resolve", cls)
   end.
 
@@ -408,6 +417,7 @@ Section named.
     match tu.(types) !! cls with
     | Some (Gstruct s) => wp_destructor tu (Tnamed cls) (_global s.(s_dtor)) this Q
     | Some (Gunion u) => wp_destructor tu (Tnamed cls) (_global u.(u_dtor)) this Q
+    | Some (Gopaque o) => wp_destructor tu (Tnamed cls) (_global o.(o_dtor)) this Q
     | _ => False
     end.
 
@@ -428,6 +438,12 @@ Section named.
     |-- wp_destroy_named tu cls this Q.
   Proof. by rewrite -wp_destroy_named_intro=>->. Qed.
 
+  Lemma wp_destroy_named_intro_opaque tu cls o this Q :
+    tu.(types) !! cls = Some (Gopaque o) ->
+    wp_destructor tu (Tnamed cls) (_global o.(o_dtor)) this Q
+    |-- wp_destroy_named tu cls this Q.
+  Proof. by rewrite -wp_destroy_named_intro=>->. Qed.
+
   Lemma wp_destroy_named_elim tu cls this Q :
     wp_destroy_named tu cls this Q
     |-- Reduce (wp_destroy_named_body tu cls this Q).
@@ -443,6 +459,12 @@ Section named.
     tu.(types) !! cls = Some (Gunion u) ->
     wp_destroy_named tu cls this Q
     |-- wp_destructor tu (Tnamed cls) (_global u.(u_dtor)) this Q.
+  Proof. by rewrite wp_destroy_named_elim=>->. Qed.
+
+  Lemma wp_destroy_named_elim_opaque tu cls o this Q :
+    tu.(types) !! cls = Some (Gopaque o) ->
+    wp_destroy_named tu cls this Q
+    |-- wp_destructor tu (Tnamed cls) (_global o.(o_dtor)) this Q.
   Proof. by rewrite wp_destroy_named_elim=>->. Qed.
 
   #[global] Instance: Params (@wp_destroy_named) 7 := {}.

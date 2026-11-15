@@ -128,6 +128,10 @@ Section defs.
               | Gconstant _ _
               | Gtypedef _
               | Gunsupported _ => UNSUPPORTED Q
+              (* Changing the <<const>>-ness of an object changes that of its
+                 (non-<<mutable>>) members and bases, which an opaque record
+                 does not describe. *)
+              | Gopaque _ => UNSUPPORTED Q
               end
           | None => UNSUPPORTED Q
           end
