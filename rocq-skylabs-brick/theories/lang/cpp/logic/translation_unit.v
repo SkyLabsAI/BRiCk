@@ -31,37 +31,37 @@ Section with_cpp.
   Proof. intros; rewrite /init_validR; case_match; apply _. Qed.
   #[global] Instance init_validR_affine : Affine1 init_validR := _.
 
-  Definition denoteSymbol (tu : translation_unit) (n : obj_name) (o : ObjValue) : mpred :=
+  Definition denoteSymbol (n : obj_name) (o : ObjValue) : mpred :=
     _global n |->
         match o with
         | Ovar t e => init_validR t
         | Ofunction f =>
           match f.(f_body) with
           | None => svalidR
-          | Some body => as_Rep (code_at tu f)
+          | Some body => as_Rep (code_at f)
           end
         | Omethod m =>
           match m.(m_body) with
           | None => svalidR
-          | Some body => as_Rep (method_at tu m)
+          | Some body => as_Rep (method_at m)
           end
         | Oconstructor c =>
           match c.(c_body) with
           | None => svalidR
-          | Some body => as_Rep (ctor_at tu c)
+          | Some body => as_Rep (ctor_at c)
           end
         | Odestructor d =>
           match d.(d_body) with
           | None => svalidR
-          | Some body => as_Rep (dtor_at tu d)
+          | Some body => as_Rep (dtor_at d)
           end
         end.
   #[global] Hint Opaque denoteSymbol : sl_opacity.
 
-  #[global] Instance denoteSymbol_persistent {tu n o} : Persistent (denoteSymbol tu n o).
+  #[global] Instance denoteSymbol_persistent {n o} : Persistent (denoteSymbol n o).
   Proof. rewrite /denoteSymbol; repeat case_match; apply _. Qed.
 
-  #[global] Instance denoteSymbol_affine {tu n o} : Affine (denoteSymbol tu n o) := _.
+  #[global] Instance denoteSymbol_affine {n o} : Affine (denoteSymbol n o) := _.
 
   (** [is_strict_valid o] states that if the declaration [o] occurs in a
       translation unit, the pointer to it is guaranteed to be strictly valid.
@@ -72,9 +72,9 @@ Section with_cpp.
     | _ => true
     end.
 
-  Lemma denoteSymbol_strict_valid tu n o :
+  Lemma denoteSymbol_strict_valid n o :
     is_strict_valid o ->
-    denoteSymbol tu n o |-- strict_valid_ptr (_global n).
+    denoteSymbol n o |-- strict_valid_ptr (_global n).
   Proof.
     rewrite /denoteSymbol/init_validR/is_strict_valid; destruct o.
     { rewrite -_at_svalidR. by destruct zero_sized_array. }
@@ -83,8 +83,8 @@ Section with_cpp.
       code_at_strict_valid, method_at_strict_valid, ctor_at_strict_valid, dtor_at_strict_valid.
   Qed.
 
-  Lemma denoteSymbol_valid tu n o :
-    denoteSymbol tu n o |-- valid_ptr (_global n).
+  Lemma denoteSymbol_valid n o :
+    denoteSymbol n o |-- valid_ptr (_global n).
   Proof.
     destruct (is_strict_valid o) eqn:Hs.
     { by rewrite denoteSymbol_strict_valid ?Hs // strict_valid_valid. }
@@ -110,7 +110,7 @@ Section with_cpp.
         end.
 
   Definition denoteModule_def (tu : translation_unit) : mpred :=
-    ([∗list] sv ∈ map_to_list tu.(symbols), denoteSymbol tu sv.1 sv.2) **
+    ([∗list] sv ∈ map_to_list tu.(symbols), denoteSymbol sv.1 sv.2) **
     [| module_le tu σ.(genv_tu) |].
   Definition denoteModule_aux : seal (@denoteModule_def). Proof. by eexists. Qed.
   Definition denoteModule := denoteModule_aux.(unseal).
@@ -130,7 +130,7 @@ Section with_cpp.
 
   Lemma denoteModule_denoteSymbol n m o :
     m.(symbols) !! n = Some o ->
-    denoteModule m |-- denoteSymbol m n o.
+    denoteModule m |-- denoteSymbol n o.
   Proof.
     rewrite denoteModule_eq/denoteModule_def.
     iIntros (Hlookup) "[M _]".
@@ -166,11 +166,10 @@ Section with_cpp.
     destruct H.
   Qed.
 
-  (** Weakening a symbol to a [ObjValue_ler]-smaller one, possibly from
-      another translation unit. *)
-  Lemma denoteSymbol_weaken tu tu' n o o' :
+  (** Weakening a symbol to a [ObjValue_ler]-smaller one. *)
+  Lemma denoteSymbol_weaken n o o' :
     ObjValue_ler o o' ->
-    denoteSymbol tu' n o' |-- denoteSymbol tu n o.
+    denoteSymbol n o' |-- denoteSymbol n o.
   Proof.
     intros Hle.
     destruct o as [t e|f|m|c|d], o' as [t' e'|f'|m'|c'|d']; try done.
