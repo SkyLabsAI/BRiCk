@@ -820,7 +820,8 @@ static bool printOpaqueRecord(CoqPrinter &print, const CXXRecordDecl &decl,
     cprint.printDtorName(print, decl) << fmt::nbsp;
     printTriviallyDestructible(print, decl, cprint) << fmt::nbsp;
     printDeleteName(print, decl, cprint) << fmt::nbsp;
-    print.str(msg);
+    print.str(msg) << fmt::nbsp;
+    print.output() << "nil";
     return true;
 }
 

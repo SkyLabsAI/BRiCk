@@ -782,6 +782,10 @@ Module decltype.
             (* TODO NAMES TYPING: [Emember false Xvalue] is an [Xvalue] *)
             let* edt := of_expr e >>= arrow_deref_get arrow in
             of_member edt mut t
+        | Ebitfield arrow e _ t =>
+            (* typed like [Emember arrow e (Nid _) false t] *)
+            let* edt := of_expr e >>= arrow_deref_get arrow in
+            of_member edt false t
         | Emember_ignore arrow eobj e =>
             let* _ := of_expr eobj >>= if arrow then require_ptr else mret in
             of_expr e

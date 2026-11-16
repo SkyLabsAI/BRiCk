@@ -36,7 +36,8 @@ Definition Bits_opaque : Opaque :=
    ; o_dtor := "Bits::~Bits()"
    ; o_trivially_destructible := true
    ; o_delete := None
-   ; o_reason := "bitfields are not supported" |}.
+   ; o_reason := "bitfields are not supported"
+   ; o_bitfields := [] |}.
 
 Example opaque_record_entry :
   source.(types) !! "Bits"%cpp_name = Some (Gopaque Bits_opaque).

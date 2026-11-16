@@ -316,6 +316,7 @@ Module decltype.
             mret (cast_result t)
         | Ecast c e => of_expr e >>= fun t => of_cast t c
         | Emember arrow e _ mut t => of_member arrow e mut t
+        | Ebitfield arrow e _ t => of_member arrow e false t
         | Emember_ignore arrow eobj e => of_expr e
         | Emember_call _ f _ _ => of_member_call f
         | Eoperator_call _ f _ => from_operator_impl f
@@ -387,6 +388,32 @@ Definition exprtype_of_expr (e : Expr) : ValCat * exprtype :=
   decltype.to_exprtype $ decltype_of_expr e.
 Definition valcat_of (e : Expr) : ValCat := (exprtype_of_expr e).1.
 Definition type_of (e : Expr) : exprtype := (exprtype_of_expr e).2.
+
+(**
+[is_bitfield e] holds when [e] may denote a bit-field: [e] is a bit-field
+access [Ebitfield], or a parent that yields its glvalue operand (the right
+operand of a comma, the left operand of an assignment or compound
+assignment, the operand of a pre-increment or pre-decrement) on such an
+expression, or a conditional with such an arm.
+
+This follows when C++ says that the result of an expression is a bit-field
+(<https://eel.is/c++draft/expr.cond#5>, <https://eel.is/c++draft/expr.comma#1>,
+<https://eel.is/c++draft/expr.ass#1>, <https://eel.is/c++draft/expr.pre.incr#1>).
+Parentheses are not represented in the AST. A conditional with a bit-field
+arm may still denote an ordinary object when the other arm is taken, so the
+semantics of such expressions decides dynamically (see [wp_bitfield_glval]).
+*)
+Fixpoint is_bitfield (e : Expr) : bool :=
+  match e with
+  | Ebitfield _ _ _ _ => true
+  | Ecomma _ e
+  | Eassign e _ _
+  | Eassign_op _ e _ _
+  | Epreinc e _
+  | Epredec e _ => is_bitfield e
+  | Eif _ e1 e2 _ => is_bitfield e1 || is_bitfield e2
+  | _ => false
+  end.
 
 (**
 The type of a variable expression, without unfolding [decltype_of_expr].

@@ -323,6 +323,21 @@ Module ExprNotations.
          , format "'[' e . fld ']'"
          , only printing).
 
+  Notation "e . fld"
+      := (Ebitfield false e fld _)
+         ( in custom CPP_expr at level 20
+         , e custom CPP_expr at level 200
+         , fld constr
+         , format "'[' e . fld ']'"
+         , only printing).
+  Notation "e -> fld"
+      := (Ebitfield true e fld _)
+         ( in custom CPP_expr at level 20
+         , e custom CPP_expr at level 200
+         , fld constr
+         , format "'[' e -> fld ']'"
+         , only printing).
+
   (* NOTE (JH): [Emember_call (inr ...) ...] doesn't seem to be used so we don't
      include a notation for it.
    *)

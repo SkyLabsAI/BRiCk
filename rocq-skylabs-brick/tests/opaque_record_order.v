@@ -19,7 +19,7 @@ Require Import skylabs.lang.cpp.semantics.
     mention [GlobDecl_le]: they are pairs that such an order would relate. *)
 
 Definition opaque (reason : PrimString.string) : Opaque :=
-  Build_Opaque 4 4 "C::~C()" true None reason.
+  Build_Opaque 4 4 "C::~C()" true None reason [].
 
 (** A struct with the metadata of [opaque _], and a member whose type is not
     declared. Type tables are not checked for completeness
