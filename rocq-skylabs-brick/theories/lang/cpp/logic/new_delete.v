@@ -443,7 +443,7 @@ Module Type Expr__newdelete.
             (let implicit_args := new_implicits pass_align alloc_sz alloc_al in
              letI* _, vs, ifree, free :=
                wp_args evaluation_order.nd [] targs (implicit_args ++ new_args) in
-             |> letI* res := wp_fptr tu.(types) nfty (_global new_fn.1) vs in
+             |> letI* res := wp_fptr nfty (_global new_fn.1) vs in
                 letI* := interp tu ifree in
                 letI* storage_val := operand_receive (Tptr Tvoid) res in
                 Exists storage_ptr : ptr,
@@ -496,7 +496,7 @@ Module Type Expr__newdelete.
                (Exists size_loc storage_loc,
                  [| vs = [size_loc; storage_loc] |] **
                  storage_loc |-> primR (Tptr Tvoid) 1$m (Vptr storage_ptr) ** True) //\\
-               (|> letI* res := wp_fptr tu.(types) nfty (_global new_fn.1) vs in
+               (|> letI* res := wp_fptr nfty (_global new_fn.1) vs in
                  letI* := interp tu ifree in
                  res |-> primR (Tptr Tvoid) 1$m (Vptr storage_ptr) **
                  (* ^^ this line requires the function to return the passed pointer.
@@ -575,7 +575,7 @@ Module Type Expr__newdelete.
                       new_implicits pass_align (overhead_sz + alloc_sz) alloc_al in
                   letI* _, vs, ifree, free' :=
                       wp_args evaluation_order.nd [] targs (implicit_args ++ new_args) in
-                  |> letI* res := wp_fptr tu.(types) nfty (_global new_fn.1) vs in
+                  |> letI* res := wp_fptr nfty (_global new_fn.1) vs in
                      letI* := interp tu ifree in
                      letI* storage_val := operand_receive "void*" res in
                      Exists (storage_base : ptr),
@@ -761,7 +761,7 @@ Module Type Expr__newdelete.
     in
     |> letI* p :=
       let del_ty := delete_operator.type_for del_op.2 in
-      wp_fptr (genv_tu σ).(types) del_ty (_global del_op.1) args in
+      wp_fptr del_ty (_global del_op.1) args in
     letI* := interp (genv_tu σ) free in
     letI* _ := operand_receive "void" p in
     Q.

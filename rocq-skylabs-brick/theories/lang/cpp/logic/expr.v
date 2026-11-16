@@ -83,9 +83,6 @@ Module Type Expr.
     #[local] Notation wp_glval := (wp_glval tu ρ).
     #[local] Notation wp_args := (wp_args tu ρ).
     #[local] Notation interp := (interp tu).
-    (* TODO Fix these *)
-    #[local] Notation wp_fptr := (wp_fptr resolve.(genv_tu).(types)).
-    #[local] Notation wp_mfptr := (wp_mfptr resolve.(genv_tu).(types)).
 
     #[local] Notation size_of := (@size_of resolve) (only parsing).
 
