@@ -378,12 +378,13 @@ Section with_monad.
         | inl t => type t
         end <+> type t
     | Eoffsetof t1 _ t2 => FAIL "offsetof" <+> type t1 <+> type t2
-    | Eassign e1 e2 t => expr e1 <+> expr e2 <+> type t
-    | Eassign_op op e1 e2 t => expr e1 <+> expr e2 <+> type t <+> check_binop op (type_of e1) (type_of e2) t
-    | Epreinc e t | Epostinc e t | Epredec e t | Epostdec e t =>
+    | Eassign e1 e2 t | Ebf_assign e1 e2 t => expr e1 <+> expr e2 <+> type t
+    | Eassign_op op e1 e2 t | Ebf_assign_op op e1 e2 t => expr e1 <+> expr e2 <+> type t <+> check_binop op (type_of e1) (type_of e2) t
+    | Epreinc e t | Epostinc e t | Epredec e t | Epostdec e t
+    | Ebf_preinc e t | Ebf_postinc e t | Ebf_predec e t | Ebf_postdec e t =>
         expr e <+> type t <+>
         if is_float_type (type_of e) || is_float_type t then FAIL "unsupported floating increment/decrement" else OK
-    | Eseqand e1 e2 | Eseqor e1 e2 | Ecomma e1 e2 => expr e1 <+> expr e2
+    | Eseqand e1 e2 | Eseqor e1 e2 | Ecomma e1 e2 | Ebf_comma e1 e2 => expr e1 <+> expr e2
     | Ecall f es => prvalue_class e <+> expr f <+> lst expr es
     | Eoperator_call _ impl es =>
         prvalue_class e <+>
@@ -430,12 +431,12 @@ Section with_monad.
     | Eandclean e => expr e
     | Ematerialize_temp e _ => dtor_of (type_of e) <+> expr e
     | Ethis t => type t
-    | Eif e1 e2 e3 t => expr e1 <+> expr e2 <+> expr e3 <+> type t
+    | Eif e1 e2 e3 t | Ebf_if e1 e2 e3 t => expr e1 <+> expr e2 <+> expr e3 <+> type t
     | Eif2 _ e1 e2 e3 e4 t => expr e1 <+> expr e2 <+> expr e3 <+> expr e4 <+> type t
     | Elambda nm es => name nm <+> lst expr es
     | Econstructor nm es t => REF nm <+> name nm <+> lst expr es <+> type t
     | Einherited_constructor nm _ t => REF nm <+> name nm <+> type t
-    | Eimplicit e => expr e
+    | Eimplicit e | Ebf_glvalue e => expr e
     | Emember_ignore _ _ e => expr e
     | Eimplicit_init t => type t
     | Eparam _ => OK

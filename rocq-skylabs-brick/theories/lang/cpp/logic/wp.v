@@ -1359,30 +1359,33 @@ Section with_cpp.
       rules more concisely. The value category used to evaluate the expression
       is computed from the expression using [valcat_of].
 
-      A glvalue that may denote a bit-field ([is_bitfield]) has no
-      pointer, so it is evaluated with [wp_bitfield_glval] instead. Prvalues
-      are never tested: only glvalues denote bit-fields. Discarding
-      a glvalue does not access it (no lvalue-to-rvalue conversion), so no
-      resource is needed.
+      A bit-field glvalue has no pointer, so an expression whose head
+      constructor is one of the nodes for bit-field glvalues ([is_bf_glvalue])
+      is evaluated with [wp_bitfield_glval] instead. The test does not look
+      below the head: cpp2v gives every parent whose result is a bit-field
+      its own node. Discarding a glvalue does not access it (no
+      lvalue-to-rvalue conversion), so no resource is needed.
+
+      [Ebf_glvalue e] only occurs as an arm of a bit-field conditional, but
+      [is_bf_glvalue] includes it, so that the test is exactly the domain of
+      [wp_bitfield_glval]; under its rule, discarding it evaluates [e] like
+      [wp_glval] does.
    *)
   Section wp_discard.
     Context {σ : genv} (tu : translation_unit).
     Variable (ρ : region).
 
     Definition wp_discard (e : Expr) (Q : FreeTemps -> mpred) : mpred :=
+      if is_bf_glvalue e then wp_bitfield_glval tu ρ e (fun _ => Q) else
       match valcat_of e with
-      | Lvalue =>
-        if is_bitfield e then wp_bitfield_glval tu ρ e (fun _ => Q)
-        else wp_lval tu ρ e (fun _ => Q)
+      | Lvalue => wp_lval tu ρ e (fun _ => Q)
       | Prvalue =>
         let ty := type_of e in
         if is_value_type ty then
           wp_operand tu ρ e (fun _ free => Q free)
         else
           Forall p, wp_init tu ρ (type_of e) p e (fun frees => Q (FreeTemps.delete ty p >*> frees)%free)
-      | Xvalue =>
-        if is_bitfield e then wp_bitfield_glval tu ρ e (fun _ => Q)
-        else wp_xval tu ρ e (fun _ => Q)
+      | Xvalue => wp_xval tu ρ e (fun _ => Q)
       end.
 
     Lemma fupd_wp_discard e Q :
@@ -1396,8 +1399,8 @@ Section with_cpp.
     Proof.
       rewrite /wp_discard. repeat case_match;
         auto using wp_lval_fupd, wp_xval_fupd, wp_operand_fupd.
-      all: first [ exact: (wp_bitfield_glval_fupd _ _ _ (fun _ => Q))
-                 | f_equiv; intro; auto using wp_init_fupd ].
+      - exact: (wp_bitfield_glval_fupd _ _ _ (fun _ => Q)).
+      - f_equiv; intro; auto using wp_init_fupd.
     Qed.
 
     (* proof mode *)
@@ -1428,12 +1431,12 @@ Section with_cpp.
     Forall f, k1 f -* k2 f |-- wp_discard tu1 ρ e k1 -* wp_discard tu2 ρ e k2.
   Proof.
     rewrite /wp_discard.
+    destruct (is_bf_glvalue e).
+    { intros. rewrite -wp_bitfield_glval_frame; eauto.
+      iIntros "h" (v f) "x"; iApply "h"; iFrame. }
     destruct (valcat_of e) => /=.
-    - intros. destruct (is_bitfield e).
-      + rewrite -wp_bitfield_glval_frame; eauto.
-        iIntros "h" (v f) "x"; iApply "h"; iFrame.
-      + rewrite -wp_lval_frame; eauto.
-        iIntros "h" (v f) "x"; iApply "h"; iFrame.
+    - intros. rewrite -wp_lval_frame; eauto.
+      iIntros "h" (v f) "x"; iApply "h"; iFrame.
     - intros. case_match.
       + iIntros "h"; iApply wp_operand_frame; eauto.
         iIntros (??); iApply "h".
@@ -1441,11 +1444,8 @@ Section with_cpp.
         iSpecialize ("b" $! p).
         iRevert "b"; iApply wp_init_frame; eauto.
         iIntros (?); iApply "a".
-    - intros. destruct (is_bitfield e).
-      + rewrite -wp_bitfield_glval_frame; eauto.
-        iIntros "h" (v f) "x"; iApply "h"; iFrame.
-      + rewrite -wp_xval_frame; eauto.
-        iIntros "h" (v f) "x"; iApply "h"; iFrame.
+    - intros. rewrite -wp_xval_frame; eauto.
+      iIntros "h" (v f) "x"; iApply "h"; iFrame.
   Qed.
 
   #[global] Instance wp_discard_mono σ :

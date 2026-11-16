@@ -494,7 +494,8 @@ Module decltype.
         | Cdependent t
         | Cbitcast t
         | Clvaluebitcast t => mret t
-        | Cl2r =>
+        | Cl2r
+        | Cl2r_bitfield =>
             let* et := requireGL base in
             (* let* _ := requirePR dt >>= require_eq (drop_qualifiers et) in *)
             mret $ drop_qualifiers et
@@ -716,14 +717,16 @@ Module decltype.
         | Eaddrof e =>
             let* t := of_expr e >>= requireGL in
             mret $ Tptr t
-        | Eassign le re t =>
+        | Eassign le re t
+        | Ebf_assign le re t =>
             let* lt := of_expr le >>= requireL in
             let* rt := of_expr re >>= requireR in
             let* _ := not_const lt in
             let* _ := require_eq (drop_qualifiers lt) rt in
             let* _ := require_eq lt t in
             mret $ Tref lt
-        | Eassign_op op le re t =>
+        | Eassign_op op le re t
+        | Ebf_assign_op op le re t =>
             (* TODO (NAMES): i still need to check that the operation is permitted at this type *)
             let* lt := of_expr le >>= requireL in
             let* rt := of_expr re >>= requireR in
@@ -732,13 +735,17 @@ Module decltype.
             mret $ Tref lt
 
         | Epreinc e t
-        | Epredec e t =>
+        | Epredec e t
+        | Ebf_preinc e t
+        | Ebf_predec e t =>
             let* lt := of_expr e >>= requireL in
             let* _ := require_eq lt t in (* TODO: redundant type *)
             let* _ := supports_inc_dec lt in
             mret $ Tref lt
         | Epostinc e t
-        | Epostdec e t =>
+        | Epostdec e t
+        | Ebf_postinc e t
+        | Ebf_postdec e t =>
             let* lt := of_expr e >>= requireL in
             let* _ := require_eq lt t in (* TODO: redundant type *)
             let* _ := supports_inc_dec lt in
@@ -749,7 +756,8 @@ Module decltype.
             let* _ := of_expr le >>= require_testable in
             let* _ := of_expr re >>= require_testable in
             mret Tbool
-        | Ecomma e1 e2 =>
+        | Ecomma e1 e2
+        | Ebf_comma e1 e2 =>
             let* _ := of_expr e1 in
             of_expr e2
         | Ecall f es =>
@@ -786,6 +794,7 @@ Module decltype.
             (* typed like [Emember arrow e (Nid _) false t] *)
             let* edt := of_expr e >>= arrow_deref_get arrow in
             of_member edt false t
+        | Ebf_glvalue e => of_expr e
         | Emember_ignore arrow eobj e =>
             let* _ := of_expr eobj >>= if arrow then require_ptr else mret in
             of_expr e
@@ -891,7 +900,8 @@ Module decltype.
 
             let* _ := requirePR t in
             mret t
-        | Eif tst thn els t =>
+        | Eif tst thn els t
+        | Ebf_if tst thn els t =>
             let* _ := of_expr tst >>= require_testable in
             let* tthn := of_expr thn >>= require_eq t in
             let* tels := of_expr els >>= require_eq t in

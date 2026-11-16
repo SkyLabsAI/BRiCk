@@ -111,7 +111,8 @@ Module decltype.
         | Cdependent t
         | Cbitcast t
         | Clvaluebitcast t => mret t
-        | Cl2r => drop_qualifiers <$> requireGL base
+        | Cl2r
+        | Cl2r_bitfield => drop_qualifiers <$> requireGL base
         | Cl2r_bitcast t => mret t
         | Cnoop t => mret t
         | Carray2ptr =>
@@ -308,6 +309,14 @@ Module decltype.
         | Epostinc _ t => mret t
         | Epredec _ t => mret $ Tref t
         | Epostdec _ t => mret t
+        | Ebf_assign _ _ t
+        | Ebf_assign_op _ _ _ t
+        | Ebf_preinc _ t
+        | Ebf_predec _ t => mret $ Tref t
+        | Ebf_postinc _ t
+        | Ebf_postdec _ t => mret t
+        | Ebf_comma _ e2 => of_expr e2
+        | Ebf_glvalue e => of_expr e
         | Eseqand _ _
         | Eseqor _ _ => mret Tbool
         | Ecomma _ e2 => of_expr e2
@@ -336,6 +345,7 @@ Module decltype.
           *)
           mret t
         | Eif _ _ _ t
+        | Ebf_if _ _ _ t
         | Eif2 _ _ _ _ _ t => mret t
         | Ethis t => mret t
         | Enull => mret Tnullptr
@@ -390,28 +400,27 @@ Definition valcat_of (e : Expr) : ValCat := (exprtype_of_expr e).1.
 Definition type_of (e : Expr) : exprtype := (exprtype_of_expr e).2.
 
 (**
-[is_bitfield e] holds when [e] may denote a bit-field: [e] is a bit-field
-access [Ebitfield], or a parent that yields its glvalue operand (the right
-operand of a comma, the left operand of an assignment or compound
-assignment, the operand of a pre-increment or pre-decrement) on such an
-expression, or a conditional with such an arm.
+[is_bf_glvalue e] holds when the head constructor of [e] is one of the nodes
+for bit-field glvalues: [Ebitfield], [Ebf_comma], [Ebf_if], [Ebf_assign],
+[Ebf_assign_op], [Ebf_preinc], [Ebf_predec], and [Ebf_glvalue]. These are
+exactly the nodes evaluated by [wp_bitfield_glval] rather than by [wp_lval]
+or [wp_xval] (see ../logic/wp.v). The test is not recursive: cpp2v marks
+every parent whose result is a bit-field with its own node.
 
-This follows when C++ says that the result of an expression is a bit-field
-(<https://eel.is/c++draft/expr.cond#5>, <https://eel.is/c++draft/expr.comma#1>,
-<https://eel.is/c++draft/expr.ass#1>, <https://eel.is/c++draft/expr.pre.incr#1>).
-Parentheses are not represented in the AST. A conditional with a bit-field
-arm may still denote an ordinary object when the other arm is taken, so the
-semantics of such expressions decides dynamically (see [wp_bitfield_glval]).
+[Ebf_glvalue e] only occurs as an arm of [Ebf_if]; we include it so that
+the test agrees with the domain of [wp_bitfield_glval], under which it
+evaluates [e] like [wp_glval].
 *)
-Fixpoint is_bitfield (e : Expr) : bool :=
+Definition is_bf_glvalue (e : Expr) : bool :=
   match e with
-  | Ebitfield _ _ _ _ => true
-  | Ecomma _ e
-  | Eassign e _ _
-  | Eassign_op _ e _ _
-  | Epreinc e _
-  | Epredec e _ => is_bitfield e
-  | Eif _ e1 e2 _ => is_bitfield e1 || is_bitfield e2
+  | Ebitfield _ _ _ _
+  | Ebf_glvalue _
+  | Ebf_comma _ _
+  | Ebf_if _ _ _ _
+  | Ebf_assign _ _ _
+  | Ebf_assign_op _ _ _ _
+  | Ebf_preinc _ _
+  | Ebf_predec _ _ => true
   | _ => false
   end.
 

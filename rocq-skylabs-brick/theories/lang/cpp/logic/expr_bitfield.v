@@ -16,7 +16,7 @@
     - the embedding of ordinary glvalues, with no designator;
     - rules for the parents whose result is a bit-field when their glvalue
       operand is: comma, conditional, assignment, compound assignment,
-      pre-increment and pre-decrement ([is_bitfield] follows the same ones);
+      pre-increment and pre-decrement (compare [is_bf_glvalue]);
     - for the consumers of such glvalues, the lvalue-to-rvalue conversion,
       post-increment and post-decrement, a rule next to the existing one.
       Discarded-value expressions use [wp_bitfield_glval] directly (see

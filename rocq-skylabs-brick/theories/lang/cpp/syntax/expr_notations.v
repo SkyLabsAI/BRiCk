@@ -239,6 +239,54 @@ Module ExprNotations.
          , format "'[' e -- ']'"
          , only printing).
 
+  (* The nodes for bit-field glvalues print like the nodes they mirror. *)
+  Notation "v = e"
+      := (Ebf_assign v e _)
+         ( in custom CPP_expr at level 160
+         , e custom CPP_expr at level 200
+         , v custom CPP_expr at level 200
+         , format "'[hv  ' v  =  '/' e ']'"
+         , only printing).
+  Notation "v >>= e"
+      := (Ebf_assign_op Bshr v e _)
+         ( in custom CPP_expr at level 159
+         , e custom CPP_expr at level 200
+         , v custom CPP_expr at level 200
+         , format "'[hv  ' v  >>=  '/' e ']'"
+         , only printing).
+  Notation "v bop = e"
+      := (Ebf_assign_op bop v e _)
+         ( in custom CPP_expr at level 160
+         , e custom CPP_expr at level 200
+         , v custom CPP_expr at level 200
+         , bop custom CPP_expr at level 0
+         , format "'[hv  ' v  bop =  '/' e ']'"
+         , only printing).
+  Notation "++ e"
+      := (Ebf_preinc e _)
+         ( in custom CPP_expr at level 30
+         , e custom CPP_expr at level 200
+         , format "'[' ++ e ']'"
+         , only printing).
+  Notation "e ++"
+      := (Ebf_postinc e _)
+         ( in custom CPP_expr at level 30
+         , e custom CPP_expr at level 200
+         , format "'[' e ++ ']'"
+         , only printing).
+  Notation "-- e"
+      := (Ebf_predec e _)
+         ( in custom CPP_expr at level 30
+         , e custom CPP_expr at level 200
+         , format "'[' -- e ']'"
+         , only printing).
+  Notation "e --"
+      := (Ebf_postdec e _)
+         ( in custom CPP_expr at level 30
+         , e custom CPP_expr at level 200
+         , format "'[' e -- ']'"
+         , only printing).
+
   Notation "'(' e1 && e2 ')'"
       := (Eseqand e1 e2)
          ( in custom CPP_expr at level 140
@@ -257,6 +305,13 @@ Module ExprNotations.
 
   Notation "'{:comma:' e1 , e2 ':}'"
       := (Ecomma e1 e2)
+         ( in custom CPP_expr at level 170
+         , e1 custom CPP_expr at level 200
+         , e2 custom CPP_expr at level 200
+         , format "'[hv   ' {:comma: e1 ,  e2 :} ']'"
+         , only printing).
+  Notation "'{:comma:' e1 , e2 ':}'"
+      := (Ebf_comma e1 e2)
          ( in custom CPP_expr at level 170
          , e1 custom CPP_expr at level 200
          , e2 custom CPP_expr at level 200
@@ -425,6 +480,11 @@ Module ExprNotations.
          ( in custom CPP_expr at level 0
          , e custom CPP_expr at level 200
          , only printing).
+  Notation "e"
+      := (Ebf_glvalue e)
+         ( in custom CPP_expr at level 0
+         , e custom CPP_expr at level 200
+         , only printing).
   Notation "ty '{{VALUE' 'INIT}}'"
       := (Eimplicit_init ty)
          ( in custom CPP_expr at level 0
@@ -434,6 +494,14 @@ Module ExprNotations.
 
   Notation "c ? t : e"
       := (Eif c t e _ _)
+         ( in custom CPP_expr at level 160
+         , c custom CPP_expr at level 200
+         , t custom CPP_expr at level 200
+         , e custom CPP_expr at level 200
+         , format "'[hv   ' c  '/' ?  t  '/' :  e ']'"
+         , only printing).
+  Notation "c ? t : e"
+      := (Ebf_if c t e _)
          ( in custom CPP_expr at level 160
          , c custom CPP_expr at level 200
          , t custom CPP_expr at level 200
