@@ -21,6 +21,8 @@
 #include <clang/AST/Type.h>
 #include <clang/Basic/Version.inc>
 #include <optional>
+#include <utility>
+#include <vector>
 
 using namespace clang;
 
@@ -803,6 +805,117 @@ static bool opaqueRecord(const CXXRecordDecl &decl) {
     return bitfield;
 }
 
+static unsigned bitWidth(const FieldDecl &field, const ASTContext &ctxt) {
+#if 20 <= CLANG_VERSION_MAJOR
+    return field.getBitWidthValue();
+#else
+    return field.getBitWidthValue(ctxt);
+#endif
+}
+
+/// Whether BRiCk models accesses to the named bit-field [field]: it is not
+/// `mutable` (a `mutable` field would share its memory location with
+/// `const` ones), it has a possibly cv-qualified standard signed or
+/// unsigned integer type, and it is no wider than that type (wider
+/// bit-fields have padding bits). This excludes `bool`, enumerations,
+/// extended integer types, plain `char` (whose values BRiCk represents with
+/// [Vchar], not [Vint]) and the other character types.
+static bool supportedBitField(const FieldDecl &field, const ASTContext &ctxt) {
+    if (field.isMutable())
+        return false;
+    auto bt = field.getType().getCanonicalType()->getAs<BuiltinType>();
+    if (!bt)
+        return false;
+    switch (bt->getKind()) {
+    case BuiltinType::SChar:
+    case BuiltinType::UChar:
+    case BuiltinType::Short:
+    case BuiltinType::UShort:
+    case BuiltinType::Int:
+    case BuiltinType::UInt:
+    case BuiltinType::Long:
+    case BuiltinType::ULong:
+    case BuiltinType::LongLong:
+    case BuiltinType::ULongLong:
+        return bitWidth(field, ctxt) <= ctxt.getTypeSize(field.getType());
+    default:
+        return false;
+    }
+}
+
+/// Print [o_bitfields]: the supported bit-fields of [decl], each with its
+/// [BitfieldInfo] (see syntax/translation_unit.v).
+///
+/// A memory location ("run") is a maximal sequence of adjacent bit-fields of
+/// nonzero width ([intro.memory]/3); a zero-width bit-field or any other
+/// member ends it. Unnamed bit-fields belong to their run but get no entry.
+/// A run is named after its first named bit-field, and gets entries only if
+/// all of its named bit-fields are supported (see [supportedBitField]).
+///
+/// Bit-fields of unions get no entries. Neither does a run that starts the
+/// record when the record has a non-empty base: whether it continues a run
+/// of the base is not settled here, so we leave it out.
+static fmt::Formatter &printBitFields(CoqPrinter &print,
+                                      const CXXRecordDecl &decl,
+                                      ClangPrinter &cprint,
+                                      const ASTContext &ctxt) {
+    // (field, first named field of its run)
+    std::vector<std::pair<const FieldDecl *, const FieldDecl *>> entries;
+    if (!decl.isUnion()) {
+        bool afterBase = false;
+        for (auto base : decl.bases()) {
+            auto rd = base.getType()->getAsCXXRecordDecl();
+            if (!rd || !rd->isEmpty())
+                afterBase = true;
+        }
+
+        std::vector<const FieldDecl *> run;
+        bool runSupported = true;
+        auto endRun = [&]() {
+            if (runSupported) {
+                const FieldDecl *head = nullptr;
+                for (auto f : run) {
+                    if (!f->getIdentifier())
+                        continue;
+                    if (!head)
+                        head = f;
+                    entries.emplace_back(f, head);
+                }
+            }
+            run.clear();
+            runSupported = true;
+        };
+
+        bool first = true;
+        for (auto f : decl.fields()) {
+            if (f->isBitField() && bitWidth(*f, ctxt) != 0) {
+                if (run.empty() && first && afterBase)
+                    runSupported = false;
+                if (f->getIdentifier() && !supportedBitField(*f, ctxt))
+                    runSupported = false;
+                run.push_back(f);
+            } else {
+                endRun();
+            }
+            first = false;
+        }
+        endRun();
+    }
+
+    return print.list(entries, [&](auto entry) {
+        auto field = entry.first;
+        guard::tuple _(print);
+        print.str(field->getName()) << fmt::tuple_sep;
+        guard::ctor _2(print, "Build_BitfieldInfo", false);
+        print.str(entry.second->getName()) << fmt::nbsp;
+        print.output() << bitWidth(*field, ctxt) << fmt::nbsp
+                       << (field->getType()->isSignedIntegerType() ? "Signed"
+                                                                   : "Unsigned")
+                       << fmt::nbsp;
+        cprint.printQualType(print, field->getType(), loc::of(field));
+    });
+}
+
 static bool printOpaqueRecord(CoqPrinter &print, const CXXRecordDecl &decl,
                               ClangPrinter &cprint, const ASTContext &ctxt,
                               const char *msg) {
@@ -821,7 +934,7 @@ static bool printOpaqueRecord(CoqPrinter &print, const CXXRecordDecl &decl,
     printTriviallyDestructible(print, decl, cprint) << fmt::nbsp;
     printDeleteName(print, decl, cprint) << fmt::nbsp;
     print.str(msg) << fmt::nbsp;
-    print.output() << "nil";
+    printBitFields(print, decl, cprint, ctxt);
     return true;
 }
 

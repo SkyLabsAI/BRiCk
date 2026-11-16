@@ -37,7 +37,9 @@ Definition Bits_opaque : Opaque :=
    ; o_trivially_destructible := true
    ; o_delete := None
    ; o_reason := "bitfields are not supported"
-   ; o_bitfields := [] |}.
+   ; o_bitfields :=
+       [("block_"%pstring, Build_BitfieldInfo "block_" 40 Unsigned "unsigned long");
+        ("tx_"%pstring, Build_BitfieldInfo "block_" 24 Unsigned "unsigned long")] |}.
 
 Example opaque_record_entry :
   source.(types) !! "Bits"%cpp_name = Some (Gopaque Bits_opaque).

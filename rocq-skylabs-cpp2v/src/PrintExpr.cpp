@@ -1108,6 +1108,17 @@ public:
         auto member = expr->getMemberDecl();
         auto base = expr->getBase();
 
+        // A bit-field has no address, so its accesses are [Ebitfield], never
+        // [Emember], whatever the record (see [Ebitfield] in syntax/core.v).
+        if (auto fd = dyn_cast<FieldDecl>(member); fd && fd->isBitField()) {
+            guard::ctor _{print, "Ebitfield"};
+            print.boolean(expr->isArrow()) << fmt::nbsp;
+            cprint.printExpr(print, base, names) << fmt::nbsp;
+            print.str(fd->getName()) << fmt::nbsp;
+            cprint.printQualType(print, member->getType(), loc::of(member));
+            return;
+        }
+
         print.ctor("Emember");
         print.boolean(expr->isArrow()) << fmt::nbsp;
 
