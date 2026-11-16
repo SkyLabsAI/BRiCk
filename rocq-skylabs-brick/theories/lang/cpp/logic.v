@@ -7,6 +7,7 @@ Require Export skylabs.lang.cpp.semantics.
 Require Export skylabs.lang.cpp.logic.pred.
 Require Export skylabs.lang.cpp.logic.path_pred.
 Require Export skylabs.lang.cpp.logic.heap_pred.
+Require Export skylabs.lang.cpp.logic.bitfield.
 Require Export skylabs.lang.cpp.logic.rep_proofmode.
 Require Export skylabs.lang.cpp.logic.cptr.
 Require Export skylabs.lang.cpp.logic.wp.
