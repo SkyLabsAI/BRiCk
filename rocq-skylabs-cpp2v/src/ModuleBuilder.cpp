@@ -34,10 +34,11 @@ using Flags = ::Module::Flags;
 
 namespace {
 
-// Keep declarations written in the main file and the complete declaration
-// subgraphs they reference. Reaching a record deliberately retains all of its
-// members; this is conservative and avoids reproducing the printer's detailed
-// dependency logic here.
+// Keep declarations written in the main file, explicit instantiations anywhere
+// in the translation unit, and the complete declaration subgraphs they
+// reference. Reaching a record deliberately retains all of its members; this is
+// conservative and avoids reproducing the printer's detailed dependency logic
+// here.
 class ReachableDecls : public clang::RecursiveASTVisitor<ReachableDecls> {
 private:
     using Visitor = clang::RecursiveASTVisitor<ReachableDecls>;
@@ -47,6 +48,7 @@ private:
     std::set<int64_t> reachable_;
     std::set<int64_t> queued_;
     std::set<int64_t> traversed_;
+    std::set<const DeclContext *> scanned_instantiation_contexts_;
     std::vector<Decl *> worklist_;
     bool has_main_declarations_ = false;
 
@@ -66,6 +68,28 @@ private:
                 return defn;
         }
         return decl;
+    }
+
+    static bool isExplicitInstantiation(TemplateSpecializationKind kind) {
+        return kind == TSK_ExplicitInstantiationDeclaration ||
+               kind == TSK_ExplicitInstantiationDefinition;
+    }
+
+    static const Decl *explicitInstantiationRoot(const Decl *decl) {
+#if CLANG_VERSION_MAJOR >= 23
+        if (auto instantiation = dyn_cast<ExplicitInstantiationDecl>(decl))
+            return instantiation->getSpecialization();
+#endif
+        TemplateSpecializationKind kind = TSK_Undeclared;
+        if (auto function = dyn_cast<FunctionDecl>(decl))
+            kind = function->getTemplateSpecializationKind();
+        else if (auto variable = dyn_cast<VarDecl>(decl))
+            kind = variable->getTemplateSpecializationKind();
+        else if (auto record = dyn_cast<CXXRecordDecl>(decl))
+            kind = record->getTemplateSpecializationKind();
+        else if (auto enumeration = dyn_cast<EnumDecl>(decl))
+            kind = enumeration->getTemplateSpecializationKind();
+        return isExplicitInstantiation(kind) ? decl : nullptr;
     }
 
     bool isInMainFile(const Decl *decl) const {
@@ -156,14 +180,51 @@ private:
         }
     }
 
+    void seedExplicitInstantiation(const Decl *decl) {
+        if (auto root = explicitInstantiationRoot(decl))
+            enqueue(root);
+    }
+
+    void seedExplicitInstantiations(const DeclContext *context) {
+        if (!scanned_instantiation_contexts_.insert(context).second)
+            return;
+
+        for (auto decl : context->decls()) {
+            seedExplicitInstantiation(decl);
+
+            if (auto class_template = dyn_cast<ClassTemplateDecl>(decl)) {
+                seedExplicitInstantiations(class_template->getTemplatedDecl());
+                for (auto specialization : class_template->specializations()) {
+                    seedExplicitInstantiation(specialization);
+                    seedExplicitInstantiations(specialization);
+                }
+            } else if (auto function_template =
+                           dyn_cast<FunctionTemplateDecl>(decl)) {
+                for (auto specialization : function_template->specializations())
+                    seedExplicitInstantiation(specialization);
+            } else if (auto variable_template =
+                           dyn_cast<VarTemplateDecl>(decl)) {
+                for (auto specialization : variable_template->specializations())
+                    seedExplicitInstantiation(specialization);
+            } else if (auto nested = dyn_cast<DeclContext>(decl)) {
+                if (isa<NamespaceDecl>(decl) || isa<LinkageSpecDecl>(decl) ||
+                    isa<RecordDecl>(decl))
+                    seedExplicitInstantiations(nested);
+            }
+        }
+    }
+
     void seedMainFile(const DeclContext *context) {
         for (auto decl : context->decls()) {
             if (isInMainFile(decl)) {
                 has_main_declarations_ = true;
-                if (isa<NamespaceDecl>(decl) || isa<LinkageSpecDecl>(decl))
-                    discover(decl, false);
+                auto root = explicitInstantiationRoot(decl);
+                if (!root)
+                    root = decl;
+                if (isa<NamespaceDecl>(root) || isa<LinkageSpecDecl>(root))
+                    discover(root, false);
                 else
-                    enqueue(decl);
+                    enqueue(root);
             }
 
             if (auto ns = dyn_cast<NamespaceDecl>(decl)) {
@@ -179,6 +240,9 @@ public:
         : source_manager_(tu->getASTContext().getSourceManager()),
           templates_(templates) {
         seedMainFile(tu);
+        // Explicit instantiation directives can occur in included headers and
+        // are semantic roots of the translation unit regardless of location.
+        seedExplicitInstantiations(tu);
         for (size_t i = 0; i < worklist_.size(); ++i) {
             auto decl = worklist_[i];
             auto key = canonical(decl)->getID();
