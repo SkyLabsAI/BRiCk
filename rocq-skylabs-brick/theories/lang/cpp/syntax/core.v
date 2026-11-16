@@ -368,6 +368,14 @@ program because, in part, C++ has no type for references to members.
 | Eexplicit_cast (c : cast_style.t) (_ : type) (e : Expr)
 | Ecast (c : Cast) (e : Expr)
 | Emember (arrow : bool) (obj : Expr) (f : atomic_name) (mut : bool) (t : type)
+(**
+[Ebitfield arrow obj f t] is the access <<obj.f>> (<<obj->f>> if [arrow]) to
+the bit-field [f] of declared type [t]. cpp2v emits it, rather than
+[Emember], for every bit-field access. Static typing treats it like
+[Emember arrow obj (Nid f) false t], but no rule gives it a pointer: see
+[wp_bitfield_glval] in ../logic/wp.v.
+*)
+| Ebitfield (arrow : bool) (obj : Expr) (f : ident) (t : type)
 | Emember_ignore (arrow : bool) (obj : Expr) (res : Expr)
 | Emember_call (arrow : bool) (method : MethodRef_ name type Expr) (obj : Expr) (args : list Expr)
 | Eoperator_call (_ : OverloadableOperator) (_ : operator_impl.t name type) (_ : list Expr)
@@ -1034,6 +1042,7 @@ with is_dependentE (e : Expr) : bool :=
   | Eexplicit_cast _ t e => is_dependentE e || is_dependentT t
   | Ecast c e => Cast.existsb is_dependentT c || is_dependentE e
   | Emember _ e f _ t => is_dependentE e || atomic_name.existsb is_dependentT f || is_dependentT t
+  | Ebitfield _ e _ t => is_dependentE e || is_dependentT t
   | Emember_ignore _ e e' => is_dependentE e || is_dependentE e'
   | Emember_call _ m e es => MethodRef.existsb is_dependentN is_dependentT is_dependentE m || is_dependentE e || existsb is_dependentE es
   | Eoperator_call _ i es => operator_impl.existsb is_dependentN is_dependentT i || existsb is_dependentE es

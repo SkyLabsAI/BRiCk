@@ -21,6 +21,29 @@ Export decl.
 
 #[local] Tactic Notation "solve_decision" := intros; solve_decision.
 
+(** A bit-field of an opaque record, as far as its accesses need to know.
+
+    A _memory location_ is a maximal sequence of adjacent bit-fields of
+    nonzero width (<https://eel.is/c++draft/intro.memory#3>); we call it a
+    _run_ and name it after its first named bit-field. Ownership of the bits
+    of a run is not split by field: see [bitfieldsR] in ../logic/bitfield.v.
+
+    cpp2v only describes bit-fields that BRiCk supports (see [o_bitfields]);
+    every access to any other bit-field is stuck. *)
+Record BitfieldInfo : Set := Build_BitfieldInfo
+{ bf_run : ident
+  (* ^ the name of the memory location: the first named bit-field of the run *)
+; bf_width : N
+  (* ^ the width of the bit-field; nonzero *)
+; bf_signed : signed
+  (* ^ the signedness of the declared type *)
+; bf_type : type
+  (* ^ the declared type, e.g. [Tint] *)
+}.
+#[global] Arguments Build_BitfieldInfo _ _ _ _ : assert.
+#[global] Instance BitfieldInfo_eq_dec : EqDecision BitfieldInfo.
+Proof. solve_decision. Defined.
+
 (** An _opaque_ record: a complete C++ class or union whose body BRiCk does
     not model (e.g. because it contains bit-fields), described only by the
     metadata that its clients need.
@@ -47,9 +70,16 @@ Record Opaque' : Set := Build_Opaque
 ; o_reason : PrimString.string
   (* ^ why the body is not modeled. This is the audit trail for the record
      being admitted by [supported.v]; it has no semantic content. *)
+; o_bitfields : list (ident * BitfieldInfo)
+  (* ^ the _supported_ bit-fields of the record, by name. cpp2v lists a
+     bit-field only if the record is a class (not a union) and every named
+     bit-field of its run is not <<mutable>>, is no wider than its type, and
+     has a (possibly cv-qualified) standard signed or unsigned integer type:
+     not <<bool>>, plain <<char>> or another character type, or an
+     enumeration. Accesses to all other bit-fields are stuck. *)
 }.
 Notation Opaque := Opaque'.
-#[global] Arguments Build_Opaque _ _ _ _ _ _ : assert.
+#[global] Arguments Build_Opaque _ _ _ _ _ _ _ : assert.
 #[global] Instance Opaque_eq_dec : EqDecision Opaque.
 Proof. solve_decision. Defined.
 
@@ -342,6 +372,16 @@ Record translation_unit : Type := makeTranslationUnit {
   minstances : Minstance_table
 }.
 #[only(lens)] derive translation_unit.
+
+(** [bitfield_lookup tu cls f] is the description of the bit-field [f] of
+    class [cls], if [cls] is an opaque record and [f] one of its supported
+    bit-fields. *)
+Definition bitfield_lookup (tu : translation_unit) (cls : globname) (f : ident)
+    : option BitfieldInfo :=
+  match tu.(types) !! cls with
+  | Some (Gopaque o) => snd <$> List.find (fun '(g, _) => bool_decide (g = f)) o.(o_bitfields)
+  | _ => None
+  end.
 
 Definition byte_order (tu : translation_unit) : endian :=
   tu.(abi).(abi.byte_order).

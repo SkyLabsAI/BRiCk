@@ -1601,6 +1601,18 @@ Module Expr.
       compare_lex (Bool.compare b1.(box_Emember_3) b2.(box_Emember_3)) $ fun _ =>
       compareT b1.(box_Emember_4) b2.(box_Emember_4).
 
+    Record box_Ebitfield : Set := Box_Ebitfield {
+      box_Ebitfield_0 : bool ;
+      box_Ebitfield_1 : Expr;
+      box_Ebitfield_2 : ident;
+      box_Ebitfield_3 : type;
+    }.
+    Definition box_Ebitfield_compare (b1 b2 : box_Ebitfield) : comparison :=
+      compare_lex (Bool.compare b1.(box_Ebitfield_0) b2.(box_Ebitfield_0)) $ fun _ =>
+      compare_lex (compareE b1.(box_Ebitfield_1) b2.(box_Ebitfield_1)) $ fun _ =>
+      compare_lex (PrimString.compare b1.(box_Ebitfield_2) b2.(box_Ebitfield_2)) $ fun _ =>
+      compareT b1.(box_Ebitfield_3) b2.(box_Ebitfield_3).
+
     Record box_Emember_ignore : Set := Box_Emember_ignore {
       box_Emember_ignore_0 : bool ;
       box_Emember_ignore_1 : Expr;
@@ -1868,6 +1880,7 @@ Module Expr.
       | Eexplicit_cast _ _ _ => 59
       | Ecast _ _ => 30
       | Emember _ _ _ _ _ => 31
+      | Ebitfield _ _ _ _ => 69
       | Emember_ignore _ _ _ => 62
       | Emember_call _ _ _ _ => 32
       | Eoperator_call _ _ _ => 33
@@ -1965,6 +1978,7 @@ Module Expr.
       | 66 => box_Eunresolved_sizeof_pack
       | 67 => box_Einherited_constructor
       | 68 => box_Einitlist_std
+      | 69 => box_Ebitfield
       | _ => box_Eunsupported
       end.
     Definition data (e : Expr) : car (tag e) :=
@@ -2006,6 +2020,7 @@ Module Expr.
       | Ecall e es => Box_Ecall e es
       | Ecast c e => Box_Ecast c e
       | Emember arrow e x b t => Box_Emember arrow e x b t
+      | Ebitfield arrow e f t => Box_Ebitfield arrow e f t
       | Emember_ignore arrow e n => Box_Emember_ignore arrow e n
       | Emember_call arrow m e es => Box_Emember_call arrow m e es
       | Eoperator_call oo oi es => Box_Eoperator_call oo oi es
@@ -2101,6 +2116,7 @@ Module Expr.
       | 66 => box_Eunresolved_sizeof_pack_compare
       | 67 => box_Einherited_constructor_compare
       | 68 => box_Einitlist_std_compare
+      | 69 => box_Ebitfield_compare
       | _ => box_Eunsupported_compare
       end.
 
@@ -2156,6 +2172,7 @@ Module Expr.
 
       | Ecast c e => COMP (Ecast c e)
       | Emember arr e x b t => COMP (Emember arr e x b t)
+      | Ebitfield arr e f t => COMP (Ebitfield arr e f t)
       | Emember_ignore arr e n => COMP (Emember_ignore arr e n)
       | Emember_call arr m e es => COMP (Emember_call arr m e es)
       | Eoperator_call oo oi es => COMP (Eoperator_call oo oi es)

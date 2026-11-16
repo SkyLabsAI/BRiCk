@@ -253,6 +253,7 @@ Module MTraverse.
 
       | Ecast c e => Ecast <$> traverseC c <*> traverseE e
       | Emember arrow e f mut t => Emember arrow <$> traverseE e <*> atomic_name.traverse traverseT f <*> mret mut <*> traverseT t
+      | Ebitfield arrow e f t => Ebitfield arrow <$> traverseE e <*> mret f <*> traverseT t
       | Emember_ignore arrow eobj e => Emember_ignore arrow <$> traverseE eobj <*> traverseE e
       | Emember_call arrow m o es => Emember_call arrow <$> MethodRef.traverse traverseN traverseT traverseE m <*> traverseE o <*> traverse (T:=eta list) traverseE es
       | Eoperator_call oo oi es => Eoperator_call oo <$> operator_impl.traverse traverseN traverseT oi <*> traverse (T:=eta list) traverseE es
@@ -515,7 +516,8 @@ Module MTraverse.
         <$> traverseN o.(o_dtor)
         <*> mret o.(o_trivially_destructible)
         <*> traverse (T:=eta option) traverseN o.(o_delete)
-        <*> mret o.(o_reason).
+        <*> mret o.(o_reason)
+        <*> mret o.(o_bitfields).
 
     Definition traverseGD (gd : GlobDecl) : F GlobDecl :=
       match gd with

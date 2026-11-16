@@ -413,6 +413,15 @@ Section with_monad.
         let obj := if arrow then (if obj is Tptr t then drop_qualifiers t else obj) else obj in
         (if obj is Tnamed cls then [Access cls; Ref cls] else OK)
         <+> expr e <+> atomic_name type an <+> type t
+    | Ebitfield arrow e _ t =>
+        (* Only the bit-fields that cpp2v lists in [o_bitfields] have a
+           semantics; accesses to the others are stuck. The record is opaque,
+           so this is not an [Access] (see [opaque_members]). *)
+        let obj := drop_qualifiers (type_of e) in
+        let obj := if arrow then (if obj is Tptr t then drop_qualifiers t else obj) else obj in
+        (if obj is Tnamed cls then REF cls else OK)
+        <+> PARTIAL "bit-field access: only integer bit-fields of classes are modelled"
+        <+> expr e <+> type t
     | Estmt s t => FAIL "statement expression" <+> stmt s <+> type t
     | Enull => OK
     | Eopaque_ref _ t => type t

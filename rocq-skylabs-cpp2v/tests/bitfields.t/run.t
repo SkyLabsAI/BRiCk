@@ -15,7 +15,8 @@ Compiling the generated Coq files.
                 o_dtor := "C::~C()";
                 o_trivially_destructible := true;
                 o_delete := None;
-                o_reason := "bitfields are not supported"
+                o_reason := "bitfields are not supported";
+                o_bitfields := []
               |})
        : option GlobDecl
        = []

@@ -300,6 +300,7 @@ Fixpoint to_unresolved_name (e : MExpr) : Mname :=
   | Ecall _ _ => Nunsupported "Ecall"
   | Ecast _ _ => Nunsupported "Ecast"
   | core.Emember _ _ _ _ _ => Nunsupported "Emember"
+  | Ebitfield _ _ _ _ => Nunsupported "Ebitfield"
   | Emember_ignore _ _ _ => Nunsupported "Emember_ignore"
   | core.Emember_call _ _ _ _ => Nunsupported "Emember_call"
   | core.Eoperator_call _ _ _ => Nunsupported "Eoperator_call"
