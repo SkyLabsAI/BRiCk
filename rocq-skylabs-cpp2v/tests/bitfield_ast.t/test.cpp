@@ -71,6 +71,8 @@ void plain(int &x, int &y, bool c) {
     ++(x = 3);
     y++;
 }
+// Decrements, and a read through parentheses, which are transparent.
+int decs(S &s) { --s.a; s.b--; return (s.a); }
 // The bit-field is only an operand here, not the result.
 int operand_only(S &s, int &x, bool c) { return (s.a, x) + (c ? s.a + 0 : x); }
 // In a template, a type-dependent assignment keeps its ordinary node; the

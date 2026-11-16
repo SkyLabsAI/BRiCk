@@ -98,56 +98,58 @@ Compiling the generated Coq files.
            (Sseq
               [Sreturn
                  (Some
-                    (Ecast Cl2r
+                    (Ecast Cl2r_bitfield
                        (Ebitfield false (Evar "s" "const S&") "a" "int")))])
        : option Stmt
        = Some
            (Sseq
               [Sreturn
                  (Some
-                    (Ecast Cl2r
+                    (Ecast Cl2r_bitfield
                        (Ebitfield true (Ecast Cl2r (Evar "p" "const S*")) "u"
                           "unsigned int")))])
        : option Stmt
        = Some
            (Sseq
               [Sexpr
-                 (Eassign (Ebitfield false (Evar "s" "S&") "a" "int")
+                 (Ebf_assign (Ebitfield false (Evar "s" "S&") "a" "int")
                     (Ecast Cl2r (Evar "v" "int")) "int")])
        : option Stmt
        = Some
            (Sseq
               [Sexpr
-                 (Eassign_op Badd (Ebitfield false (Evar "s" "S&") "b" "int")
+                 (Ebf_assign_op Badd
+                    (Ebitfield false (Evar "s" "S&") "b" "int") 
                     (Eint 3 "int") "int")])
        : option Stmt
        = Some
            (Sseq
               [Sreturn
                  (Some
-                    (Ecast Cl2r
-                       (Epreinc (Ebitfield false (Evar "s" "S&") "a" "int")
+                    (Ecast Cl2r_bitfield
+                       (Ebf_preinc (Ebitfield false (Evar "s" "S&") "a" "int")
                           "int")))])
        : option Stmt
        = Some
            (Sseq
               [Sreturn
                  (Some
-                    (Epostinc (Ebitfield false (Evar "s" "S&") "a" "int") "int"))])
+                    (Ebf_postinc (Ebitfield false (Evar "s" "S&") "a" "int")
+                       "int"))])
        : option Stmt
        = Some
            (Sseq
               [Sexpr
-                 (Eassign
-                    (Ecomma (Evar "x" "int")
+                 (Ebf_assign
+                    (Ebf_comma (Evar "x" "int")
                        (Ebitfield false (Evar "s" "S&") "a" "int"))
                     (Eint 1 "int") "int")])
        : option Stmt
        = Some
            (Sseq
               [Sexpr
-                 (Eassign
-                    (Eassign (Ebitfield false (Evar "s" "S&") "a" "int")
+                 (Ebf_assign
+                    (Ebf_assign (Ebitfield false (Evar "s" "S&") "a" "int")
                        (Eint 1 "int") "int")
                     (Eint 2 "int") "int")])
        : option Stmt
@@ -155,18 +157,18 @@ Compiling the generated Coq files.
            (Sseq
               [Sreturn
                  (Some
-                    (Ecast Cl2r
-                       (Eif (Ecast Cl2r (Evar "c" "bool"))
+                    (Ecast Cl2r_bitfield
+                       (Ebf_if (Ecast Cl2r (Evar "c" "bool"))
                           (Ebitfield false (Evar "s" "S&") "a" "int")
-                          (Evar "x" "int&") "int&")))])
+                          (Ebf_glvalue (Evar "x" "int&")) "int&")))])
        : option Stmt
        = Some
            (Sseq
               [Sexpr
-                 (Eassign
-                    (Eif (Ecast Cl2r (Evar "c" "bool"))
+                 (Ebf_assign
+                    (Ebf_if (Ecast Cl2r (Evar "c" "bool"))
                        (Ebitfield false (Evar "s" "S&") "a" "int")
-                       (Evar "x" "int&") "int&")
+                       (Ebf_glvalue (Evar "x" "int&")) "int&")
                     (Eint 9 "int") "int")])
        : option Stmt
        = Some (Sseq [Sexpr (Ebitfield false (Evar "s" "S&") "a" "int")])
@@ -177,13 +179,13 @@ Compiling the generated Coq files.
                  (Some
                     (Ebinop Badd
                        (Ebinop Badd
-                          (Ecast Cl2r
+                          (Ecast Cl2r_bitfield
                              (Ebitfield false (Evar "b" "Bad&") "x" "int"))
-                          (Ecast Cl2r
+                          (Ecast Cl2r_bitfield
                              (Ebitfield false (Evar "b" "Bad&") "m" "int"))
                           "int")
                        (Ecast (Cintegral "int")
-                          (Ecast Cl2r
+                          (Ecast Cl2r_bitfield
                              (Ebitfield false (Evar "b" "Bad&") "ok"
                                 "unsigned int")))
                        "int"))])
@@ -192,7 +194,7 @@ Compiling the generated Coq files.
            (Sseq
               [Sreturn
                  (Some
-                    (Ecast Cl2r
+                    (Ecast Cl2r_bitfield
                        (Ebitfield false (Evar "u" "U&") "lo" "unsigned int")))])
        : option Stmt
        = []

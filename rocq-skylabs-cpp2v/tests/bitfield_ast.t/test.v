@@ -62,13 +62,13 @@ Section expected.
   #[local] Open Scope cpp_type_scope.
   #[local] Open Scope pstring_scope.
 
-  #[local] Notation s_a := (Ebitfield false (Evar "s" "S&") "a" "int").
-  #[local] Notation s_b := (Ebitfield false (Evar "s" "S&") "b" "int").
-  #[local] Notation x := (Evar "x" "int&").
-  #[local] Notation y := (Evar "y" "int&").
-  #[local] Notation rd e := (Ecast Cl2r e).
-  #[local] Notation i n := (Eint n "int").
-  #[local] Notation is_body f s := (body_of f = Some (Sseq s)) (only parsing).
+  #[local] Abbreviation s_a := (Ebitfield false (Evar "s" "S&") "a" "int").
+  #[local] Abbreviation s_b := (Ebitfield false (Evar "s" "S&") "b" "int").
+  #[local] Abbreviation x := (Evar "x" "int&").
+  #[local] Abbreviation y := (Evar "y" "int&").
+  #[local] Abbreviation rd e := (Ecast Cl2r e).
+  #[local] Abbreviation i n := (Eint n "int").
+  #[local] Abbreviation is_body f s := (body_of f = Some (Sseq s)) (only parsing).
 
   Goal is_body "rd(const S&)"
     [Sreturn (Some (Ecast Cl2r_bitfield (Ebitfield false (Evar "s" "const S&") "a" "int")))].
@@ -141,6 +141,12 @@ Section expected.
   Goal is_body "post_cond(S&, int&, bool)"
     [Sexpr (Ebf_postinc
        (Ebf_if (rd (Evar "c" "bool")) s_a (Ebf_glvalue x) "int&") "int")].
+  Proof. vm_compute. reflexivity. Qed.
+
+  Goal is_body "decs(S&)"
+    [Sexpr (Ebf_predec s_a "int");
+     Sexpr (Ebf_postdec s_b "int");
+     Sreturn (Some (Ecast Cl2r_bitfield s_a))].
   Proof. vm_compute. reflexivity. Qed.
 
   (** Ordinary glvalues are untouched. *)
