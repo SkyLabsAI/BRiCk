@@ -49,3 +49,116 @@ Eval vm_compute in body_of "rd_union(U&)".
 
 (** Every bit-field access is partially supported; nothing is unsupported. *)
 Eval vm_compute in supported.check.translation_unit test_cpp.source.
+
+(** * Separate nodes for bit-field glvalues
+
+    Written before the implementation. Each bit-field glvalue is one of
+    [Ebitfield], [Ebf_comma], [Ebf_if], [Ebf_assign], [Ebf_assign_op],
+    [Ebf_preinc], [Ebf_predec], or, as an arm of [Ebf_if] only,
+    [Ebf_glvalue e] for an ordinary glvalue [e]. Their consumers are
+    [Cl2r_bitfield], [Ebf_postinc] and [Ebf_postdec], and the standard nodes
+    that discard a value. Nothing else changes. *)
+Section expected.
+  #[local] Open Scope cpp_type_scope.
+  #[local] Open Scope pstring_scope.
+
+  #[local] Notation s_a := (Ebitfield false (Evar "s" "S&") "a" "int").
+  #[local] Notation s_b := (Ebitfield false (Evar "s" "S&") "b" "int").
+  #[local] Notation x := (Evar "x" "int&").
+  #[local] Notation y := (Evar "y" "int&").
+  #[local] Notation rd e := (Ecast Cl2r e).
+  #[local] Notation i n := (Eint n "int").
+  #[local] Notation is_body f s := (body_of f = Some (Sseq s)) (only parsing).
+
+  Goal is_body "rd(const S&)"
+    [Sreturn (Some (Ecast Cl2r_bitfield (Ebitfield false (Evar "s" "const S&") "a" "int")))].
+  Proof. vm_compute. reflexivity. Qed.
+
+  Goal is_body "wr(S&, int)"
+    [Sexpr (Ebf_assign s_a (rd (Evar "v" "int")) "int")].
+  Proof. vm_compute. reflexivity. Qed.
+
+  Goal is_body "compound(S&)"
+    [Sexpr (Ebf_assign_op Badd s_b (i 3) "int")].
+  Proof. vm_compute. reflexivity. Qed.
+
+  Goal is_body "pre_inc(S&)"
+    [Sreturn (Some (Ecast Cl2r_bitfield (Ebf_preinc s_a "int")))].
+  Proof. vm_compute. reflexivity. Qed.
+
+  Goal is_body "post_inc(S&)"
+    [Sreturn (Some (Ebf_postinc s_a "int"))].
+  Proof. vm_compute. reflexivity. Qed.
+
+  Goal is_body "comma_wr(S&, int)"
+    [Sexpr (Ebf_assign (Ebf_comma (Evar "x" "int") s_a) (i 1) "int")].
+  Proof. vm_compute. reflexivity. Qed.
+
+  Goal is_body "assign_assign(S&)"
+    [Sexpr (Ebf_assign (Ebf_assign s_a (i 1) "int") (i 2) "int")].
+  Proof. vm_compute. reflexivity. Qed.
+
+  (** A mixed conditional: the ordinary arm is embedded explicitly. *)
+  Goal is_body "cond_rd(S&, int&, bool)"
+    [Sreturn (Some (Ecast Cl2r_bitfield
+       (Ebf_if (rd (Evar "c" "bool")) s_a (Ebf_glvalue x) "int&")))].
+  Proof. vm_compute. reflexivity. Qed.
+
+  Goal is_body "cond_wr(S&, int&, bool)"
+    [Sexpr (Ebf_assign
+       (Ebf_if (rd (Evar "c" "bool")) s_a (Ebf_glvalue x) "int&") (i 9) "int")].
+  Proof. vm_compute. reflexivity. Qed.
+
+  (** A discarded bit-field glvalue needs no consumer node. *)
+  Goal is_body "discard(S&)" [Sexpr s_a].
+  Proof. vm_compute. reflexivity. Qed.
+
+  Goal is_body "discard2(S&, int&)"
+    [Sexpr (Ebf_assign s_a (i 1) "int"); Sexpr (Ebf_comma x s_b)].
+  Proof. vm_compute. reflexivity. Qed.
+
+  (** Nesting: comma inside a conditional inside a conditional. *)
+  Goal is_body "nest_wr(S&, int&, int&, bool, bool)"
+    [Sexpr (Ebf_assign
+       (Ebf_if (rd (Evar "c1" "bool"))
+          (Ebf_comma x s_a)
+          (Ebf_if (rd (Evar "c2" "bool")) (Ebf_glvalue y) s_b "int&")
+          "int&")
+       (i 1) "int")].
+  Proof. vm_compute. reflexivity. Qed.
+
+  Goal is_body "nest_rd(S&, int&, bool)"
+    [Sreturn (Some (Ecast Cl2r_bitfield
+       (Ebf_comma x
+          (Ebf_if (rd (Evar "c" "bool")) (Ebf_assign s_a (i 1) "int") (Ebf_glvalue x) "int&"))))].
+  Proof. vm_compute. reflexivity. Qed.
+
+  Goal is_body "nest_inc(S&, int&)"
+    [Sexpr (Ebf_preinc
+       (Ebf_comma x (Ebf_assign_op Badd (Ebf_preinc s_a "int") (i 1) "int")) "int")].
+  Proof. vm_compute. reflexivity. Qed.
+
+  Goal is_body "post_cond(S&, int&, bool)"
+    [Sexpr (Ebf_postinc
+       (Ebf_if (rd (Evar "c" "bool")) s_a (Ebf_glvalue x) "int&") "int")].
+  Proof. vm_compute. reflexivity. Qed.
+
+  (** Ordinary glvalues are untouched. *)
+  Goal is_body "plain(int&, int&, bool)"
+    [Sexpr (Eassign (Eif (rd (Evar "c" "bool")) x y "int&") (i 1) "int");
+     Sexpr (Eassign (Ecomma x y) (i 2) "int");
+     Sexpr (Epreinc (Eassign x (i 3) "int") "int");
+     Sexpr (Epostinc y "int")].
+  Proof. vm_compute. reflexivity. Qed.
+
+  (** A bit-field that is only an operand does not make its parent one:
+      [(s.a, x)] is an ordinary comma, and the conditional has prvalue arms. *)
+  Goal is_body "operand_only(S&, int&, bool)"
+    [Sreturn (Some (Ebinop Badd
+       (rd (Ecomma s_a x))
+       (Eif (rd (Evar "c" "bool"))
+          (Ebinop Badd (Ecast Cl2r_bitfield s_a) (i 0) "int")
+          (rd x) "int")
+       "int"))].
+  Proof. vm_compute. reflexivity. Qed.
+End expected.

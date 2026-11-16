@@ -51,3 +51,28 @@ void cond_wr(S &s, int &x, bool c) { (c ? s.a : x) = 9; }
 void discard(S &s) { s.a; }
 int rd_bad(Bad &b) { return b.x + b.m + b.ok; }
 unsigned rd_union(U &u) { return u.lo; }
+
+// Nesting. Every parent and consumer of a bit-field glvalue has its own
+// node, and these nest to any depth; ordinary glvalues keep the standard
+// nodes, also next to bit-field ones.
+void nest_wr(S &s, int &x, int &y, bool c1, bool c2) {
+    (c1 ? (x, s.a) : (c2 ? y : s.b)) = 1;
+}
+int nest_rd(S &s, int &x, bool c) { return (x, c ? (s.a = 1) : x); }
+void nest_inc(S &s, int &x) { ++(x, (++s.a += 1)); }
+void post_cond(S &s, int &x, bool c) { (c ? s.a : x)++; }
+void discard2(S &s, int &x) {
+    s.a = 1;
+    (x, s.b);
+}
+void plain(int &x, int &y, bool c) {
+    (c ? x : y) = 1;
+    (x, y) = 2;
+    ++(x = 3);
+    y++;
+}
+// The bit-field is only an operand here, not the result.
+int operand_only(S &s, int &x, bool c) { return (s.a, x) + (c ? s.a + 0 : x); }
+// In a template, a type-dependent assignment keeps its ordinary node; the
+// increment is not dependent.
+template<class X> void tmpl(S &s, X x) { s.a = x; s.a += x; ++s.a; }
