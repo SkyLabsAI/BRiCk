@@ -271,6 +271,17 @@ Definition _this (ρ : region) : ptr :=
   end.
 Arguments _this !_ / : assert.
 
+(** [bf_designator] designates the bit-field [bfd_field] of an object of
+    class [bfd_cls], described by [bfd_info] (see [bitfield_lookup]). It is
+    what a bit-field glvalue denotes besides the pointer to the object: see
+    [wp_bitfield_glval]. *)
+Record bf_designator : Set := Build_bf_designator
+{ bfd_cls : globname
+; bfd_field : ident
+; bfd_info : BitfieldInfo }.
+#[global] Instance bf_designator_eq_dec : EqDecision bf_designator.
+Proof. solve_decision. Defined.
+
 Module WPE.
 Section with_cpp.
   Context `{Σ : cpp_logic}.
@@ -784,6 +795,98 @@ Section with_cpp.
     Qed.
   End wp_lval.
 
+  (** ** Glvalues that may denote bit-fields *)
+  (* BEGIN wp_bitfield_glval *)
+  (** [wp_bitfield_glval tu ρ e Q] evaluates the glvalue [e], which may denote
+      a bit-field, and passes [Q] what it denotes:
+      - [(p, Some d)]: the bit-field [d] of the object at [p];
+      - [(p, None)]: the ordinary object at [p], as [wp_glval] would.
+
+      A bit-field has no address, so this judgment never yields a pointer to
+      one, and [wp_lval], [wp_xval] and [wp_glval] have no rule for
+      bit-fields. Whether [e] denotes a bit-field can depend on the
+      evaluation, e.g. for <<c ? s.bf : x>>, hence the [option].
+
+      Its rules are in [expr_bitfield.v]. Unlike [wp_lval], it has no
+      [well_typed] axiom: its result is not a reference to the type of [e]. *)
+  Parameter wp_bitfield_glval
+    : forall {resolve:genv}, translation_unit -> region -> Expr -> M (ptr * option bf_designator).
+  (* END wp_bitfield_glval *)
+
+  Axiom wp_bitfield_glval_shift : forall {σ:genv} tu ρ e Q,
+      (|={top}=> wp_bitfield_glval tu ρ e (fun v free => |={top}=> Q v free))
+    ⊢ wp_bitfield_glval tu ρ e Q.
+
+  Axiom wp_bitfield_glval_models : forall {σ:genv} tu ρ e Q,
+      denoteModule tu -* wp_bitfield_glval tu ρ e Q
+    ⊢ wp_bitfield_glval tu ρ e Q.
+
+  Axiom wp_bitfield_glval_frame :
+    forall σ tu1 tu2 ρ e k1 k2,
+      sub_module tu1 tu2 ->
+      Forall v f, k1 v f -* k2 v f |-- @wp_bitfield_glval σ tu1 ρ e k1 -* @wp_bitfield_glval σ tu2 ρ e k2.
+
+  Section wp_bitfield_glval_proper.
+    Context {σ : genv}.
+
+    #[local] Notation PROPER M R :=
+      (Proper (M ==> eq ==> eq ==> pointwise_relation _ (pointwise_relation _ R) ==> R) (@wp_bitfield_glval σ)) (only parsing).
+
+    #[global] Declare Instance wp_bitfield_glval_ne : forall n, PROPER eq (dist n).
+
+    #[global] Instance wp_bitfield_glval_mono : PROPER sub_module (⊢).
+    Proof.
+      repeat red. intros; subst.
+      iIntros "X". iRevert "X".
+      iApply wp_bitfield_glval_frame; eauto.
+      iIntros (v). iIntros (f). iApply H2.
+    Qed.
+
+    #[global] Instance wp_bitfield_glval_flip_mono : PROPER (flip sub_module) (flip (⊢)).
+    Proof. repeat intro. red. apply: wp_bitfield_glval_mono; eauto. Qed.
+
+    #[global] Instance wp_bitfield_glval_proper : PROPER eq (⊣⊢).
+    Proof.
+      do 12 intro; subst.
+      split'; apply wp_bitfield_glval_mono; try done.
+      all: by move => ??; rewrite H2.
+    Qed.
+  End wp_bitfield_glval_proper.
+
+  Section wp_bitfield_glval.
+    Context {σ : genv} (tu : translation_unit) (ρ : region) (e : Expr).
+    #[local] Notation WP := (wp_bitfield_glval tu ρ e) (only parsing).
+    Implicit Types P : mpred.
+    Implicit Types Q : ptr * option bf_designator → FreeTemps → epred.
+
+    Lemma wp_bitfield_glval_wand Q1 Q2 : WP Q1 |-- (∀ v f, Q1 v f -* Q2 v f) -* WP Q2.
+    Proof. iIntros "Hwp HK". by iApply (wp_bitfield_glval_frame with "HK Hwp"). Qed.
+    Lemma fupd_wp_bitfield_glval Q : (|={top}=> WP Q) |-- WP Q.
+    Proof.
+      rewrite -{2}wp_bitfield_glval_shift. apply fupd_elim. rewrite -fupd_intro.
+      iIntros "Hwp". iApply (wp_bitfield_glval_wand with "Hwp"). auto.
+    Qed.
+    Lemma wp_bitfield_glval_fupd Q : WP (λ v f, |={top}=> Q v f) |-- WP Q.
+    Proof. iIntros "Hwp". by iApply (wp_bitfield_glval_shift with "[$Hwp]"). Qed.
+
+    (* proof mode *)
+    #[global] Instance elim_modal_fupd_wp_bitfield_glval p P Q :
+      ElimModal True p false (|={top}=> P) P (WP Q) (WP Q).
+    Proof.
+      rewrite /ElimModal. rewrite bi.intuitionistically_if_elim/=.
+      by rewrite fupd_frame_r bi.wand_elim_r fupd_wp_bitfield_glval.
+    Qed.
+    #[global] Instance elim_modal_bupd_wp_bitfield_glval p P Q :
+      ElimModal True p false (|==> P) P (WP Q) (WP Q).
+    Proof.
+      rewrite /ElimModal (bupd_fupd top). exact: elim_modal_fupd_wp_bitfield_glval.
+    Qed.
+    #[global] Instance add_modal_fupd_wp_bitfield_glval P Q : AddModal (|={top}=> P) P (WP Q).
+    Proof.
+      rewrite/AddModal. by rewrite fupd_frame_r bi.wand_elim_r fupd_wp_bitfield_glval.
+    Qed.
+  End wp_bitfield_glval.
+
   (** * prvalue *)
   (*
    * there are two distinct weakest pre-conditions for this corresponding to the
@@ -1255,6 +1358,12 @@ Section with_cpp.
       The definition [wp_discard] captures this and allows us to express some
       rules more concisely. The value category used to evaluate the expression
       is computed from the expression using [valcat_of].
+
+      A glvalue that may denote a bit-field ([is_bitfield]) has no
+      pointer, so it is evaluated with [wp_bitfield_glval] instead. Prvalues
+      are never tested: only glvalues denote bit-fields. Discarding
+      a glvalue does not access it (no lvalue-to-rvalue conversion), so no
+      resource is needed.
    *)
   Section wp_discard.
     Context {σ : genv} (tu : translation_unit).
@@ -1262,14 +1371,18 @@ Section with_cpp.
 
     Definition wp_discard (e : Expr) (Q : FreeTemps -> mpred) : mpred :=
       match valcat_of e with
-      | Lvalue => wp_lval tu ρ e (fun _ => Q)
+      | Lvalue =>
+        if is_bitfield e then wp_bitfield_glval tu ρ e (fun _ => Q)
+        else wp_lval tu ρ e (fun _ => Q)
       | Prvalue =>
         let ty := type_of e in
         if is_value_type ty then
           wp_operand tu ρ e (fun _ free => Q free)
         else
           Forall p, wp_init tu ρ (type_of e) p e (fun frees => Q (FreeTemps.delete ty p >*> frees)%free)
-      | Xvalue => wp_xval tu ρ e (fun _ => Q)
+      | Xvalue =>
+        if is_bitfield e then wp_bitfield_glval tu ρ e (fun _ => Q)
+        else wp_xval tu ρ e (fun _ => Q)
       end.
 
     Lemma fupd_wp_discard e Q :
@@ -1283,7 +1396,8 @@ Section with_cpp.
     Proof.
       rewrite /wp_discard. repeat case_match;
         auto using wp_lval_fupd, wp_xval_fupd, wp_operand_fupd.
-      f_equiv; intro; auto using wp_init_fupd.
+      all: first [ exact: (wp_bitfield_glval_fupd _ _ _ (fun _ => Q))
+                 | f_equiv; intro; auto using wp_init_fupd ].
     Qed.
 
     (* proof mode *)
@@ -1315,8 +1429,11 @@ Section with_cpp.
   Proof.
     rewrite /wp_discard.
     destruct (valcat_of e) => /=.
-    - intros. rewrite -wp_lval_frame; eauto.
-      iIntros "h" (v f) "x"; iApply "h"; iFrame.
+    - intros. destruct (is_bitfield e).
+      + rewrite -wp_bitfield_glval_frame; eauto.
+        iIntros "h" (v f) "x"; iApply "h"; iFrame.
+      + rewrite -wp_lval_frame; eauto.
+        iIntros "h" (v f) "x"; iApply "h"; iFrame.
     - intros. case_match.
       + iIntros "h"; iApply wp_operand_frame; eauto.
         iIntros (??); iApply "h".
@@ -1324,8 +1441,11 @@ Section with_cpp.
         iSpecialize ("b" $! p).
         iRevert "b"; iApply wp_init_frame; eauto.
         iIntros (?); iApply "a".
-    - intros. rewrite -wp_xval_frame; eauto.
-      iIntros "h" (v f) "x"; iApply "h"; iFrame.
+    - intros. destruct (is_bitfield e).
+      + rewrite -wp_bitfield_glval_frame; eauto.
+        iIntros "h" (v f) "x"; iApply "h"; iFrame.
+      + rewrite -wp_xval_frame; eauto.
+        iIntros "h" (v f) "x"; iApply "h"; iFrame.
   Qed.
 
   #[global] Instance wp_discard_mono σ :
@@ -1571,6 +1691,7 @@ End with_cpp.
 (** Forbid rewriting in the [`{Σ : cpp_logic, σ : genv}] arguments.
 Keep in sync with [Proper] instances. *)
 #[global] Instance: Params (@wp_lval) 4 := {}.
+#[global] Instance: Params (@wp_bitfield_glval) 4 := {}.
 #[global] Instance: Params (@wp_init) 4 := {}.
 #[global] Instance: Params (@wp_prval) 4 := {}.
 #[global] Instance: Params (@wp_operand) 4 := {}.
