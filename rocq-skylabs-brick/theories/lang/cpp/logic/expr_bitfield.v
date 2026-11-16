@@ -6,25 +6,28 @@
 (** * Semantics of expressions on bit-fields
 
     A bit-field has no address, so no rule of [wp_lval], [wp_xval] or
-    [wp_glval] applies to a bit-field access [Ebitfield]. Glvalues that may
-    denote a bit-field are evaluated by [wp_bitfield_glval] (see ../logic/wp.v),
-    which yields the pointer to the enclosing object and, for a bit-field,
-    a [bf_designator].
+    [wp_glval] applies to a bit-field glvalue. Bit-field glvalues have their
+    own nodes (see [Ebf_glvalue] in ../syntax/core.v), which are evaluated by
+    [wp_bitfield_glval] (see ../logic/wp.v): it yields the pointer to the
+    enclosing object and, for a bit-field, a [bf_designator].
 
-    The rules are:
+    The rules are stated on those nodes only, so the head constructor of an
+    expression determines which rules apply:
     - the leaf rule for [Ebitfield];
-    - the embedding of ordinary glvalues, with no designator;
-    - rules for the parents whose result is a bit-field when their glvalue
-      operand is: comma, conditional, assignment, compound assignment,
-      pre-increment and pre-decrement (compare [is_bf_glvalue]);
-    - for the consumers of such glvalues, the lvalue-to-rvalue conversion,
-      post-increment and post-decrement, a rule next to the existing one.
+    - [Ebf_glvalue], the ordinary arm of a bit-field conditional, with no
+      designator;
+    - [Ebf_comma], [Ebf_if], [Ebf_assign], [Ebf_assign_op], [Ebf_preinc] and
+      [Ebf_predec], which evaluate their glvalue operand with
+      [wp_bitfield_glval];
+    - the consumers [Cl2r_bitfield], [Ebf_postinc] and [Ebf_postdec].
       Discarded-value expressions use [wp_bitfield_glval] directly (see
-      [wp_discard]).
+      [wp_discard] and [is_bf_glvalue]).
 
     Each rule evaluates its operands exactly like the existing rule for the
-    same construct, and its access to an ordinary object ([None]) is exactly
-    the existing one. Existing rules are unchanged. *)
+    construct it mirrors, and its access to an ordinary object ([None]) is
+    exactly the existing one. Existing rules are unchanged, and no rule of
+    [wp_lval], [wp_xval], [wp_operand] or [wp_init] applies to the new
+    glvalue nodes. *)
 Require Import skylabs.prelude.base.
 Require Import skylabs.iris.extra.proofmode.proofmode.
 Require Import skylabs.iris.extra.bi.errors.
@@ -146,6 +149,8 @@ Section access.
 End access.
 
 Module Type Expr__bitfield.
+  (* Needed for [Unfold wp_test] *)
+  #[local] Arguments wp_test [_ _ _ _] _ _ _.
 
   Section with_resolve.
     Context `{Σ : cpp_logic} {resolve:genv}.
@@ -153,10 +158,10 @@ Module Type Expr__bitfield.
 
     #[local] Notation wp_glval := (wp_glval tu ρ).
     #[local] Notation wp_operand := (wp_operand tu ρ).
+    #[local] Notation wp_test := (wp_test tu ρ).
     #[local] Notation wp_discard := (wp_discard tu ρ).
     #[local] Notation wp_bitfield_glval := (wp_bitfield_glval tu ρ).
     #[local] Notation read_arrow := (read_arrow tu ρ).
-    #[local] Notation wp_cond := (wp_cond tu ρ).
     #[local] Notation inc_dec_op := (inc_dec_op tu).
     #[local] Notation bf_update := (bf_update tu).
 
@@ -171,20 +176,26 @@ Module Type Expr__bitfield.
            Q (base, Some (Build_bf_designator cls f info)) free)
       |-- wp_bitfield_glval (Ebitfield arrow a f ty) Q.
 
-    (** Every glvalue that [wp_glval] evaluates denotes an ordinary object. *)
-    Axiom wp_bitfield_glval_glval : forall e Q,
+    (** An ordinary glvalue as an arm of a bit-field conditional: it denotes
+        an ordinary object. *)
+    Axiom wp_bitfield_glval_glvalue : forall e Q,
         wp_glval e (fun p free => Q (p, None) free)
-      |-- wp_bitfield_glval e Q.
+      |-- wp_bitfield_glval (Ebf_glvalue e) Q.
 
     (** <<e1, e2>>: compare [wp_lval_comma]. *)
     Axiom wp_bitfield_glval_comma : forall e1 e2 Q,
         wp_discard e1 (fun free1 => wp_bitfield_glval e2 (fun r free2 => Q r (free2 >*> free1)))
-      |-- wp_bitfield_glval (Ecomma e1 e2) Q.
+      |-- wp_bitfield_glval (Ebf_comma e1 e2) Q.
 
     (** <<c ? e1 : e2>>: compare [wp_lval_condition]. Each arm is evaluated
         by [wp_bitfield_glval], so the result may designate a bit-field or
         not, depending on [c]. *)
-    Axiom wp_bitfield_glval_condition : Reduce (wp_cond wp_bitfield_glval).
+    Axiom wp_bitfield_glval_condition : forall ty tst th el Q,
+        Unfold WPE.wp_test (wp_test tst (fun c free =>
+           if c
+           then wp_bitfield_glval th (fun v free' => Q v (free' >*> free))
+           else wp_bitfield_glval el (fun v free' => Q v (free' >*> free))))
+      |-- wp_bitfield_glval (Ebf_if tst th el ty) Q.
 
     (** <<l = r>>: compare [wp_lval_assign]. The result designates [l]. *)
     Axiom wp_bitfield_glval_assign : forall ty l r Q,
@@ -192,7 +203,7 @@ Module Type Expr__bitfield.
            eval2 (evaluation_order.order_of (language_version tu) OOEqual)
              (wp_bitfield_glval l) (wp_operand r) in
          bf_write (erase_qualifiers ty) lr rv (Q lr free))
-      |-- wp_bitfield_glval (Eassign l r ty) Q.
+      |-- wp_bitfield_glval (Ebf_assign l r ty) Q.
 
     (** <<l op= r>>: compare [wp_lval_bop_assign]. *)
     Axiom wp_bitfield_glval_bop_assign : forall ty o oo l r Q,
@@ -210,7 +221,7 @@ Module Type Expr__bitfield.
             bf_update (type_of l) (erase_qualifiers ty) lr lv storedv (Q lr free)
         | _ => False%I
         end
-      |-- wp_bitfield_glval (Eassign_op o l r ty) Q.
+      |-- wp_bitfield_glval (Ebf_assign_op o l r ty) Q.
 
     (** Pre-increment and pre-decrement: compare [pre_op]. *)
     Definition bf_pre_op (b : BinOp) (ty : type) (e : Expr)
@@ -222,19 +233,20 @@ Module Type Expr__bitfield.
 
     (** <<++e>>: compare [wp_lval_preinc]. *)
     Axiom wp_bitfield_glval_preinc : forall e ty Q,
-        bf_pre_op Badd ty e Q |-- wp_bitfield_glval (Epreinc e ty) Q.
+        bf_pre_op Badd ty e Q |-- wp_bitfield_glval (Ebf_preinc e ty) Q.
 
     (** <<--e>>: compare [wp_lval_predec]. *)
     Axiom wp_bitfield_glval_predec : forall e ty Q,
-        bf_pre_op Bsub ty e Q |-- wp_bitfield_glval (Epredec e ty) Q.
+        bf_pre_op Bsub ty e Q |-- wp_bitfield_glval (Ebf_predec e ty) Q.
 
     (** ** Consumers *)
 
-    (** The lvalue-to-rvalue conversion: compare [wp_operand_cast_l2r]. *)
+    (** The lvalue-to-rvalue conversion of a bit-field glvalue: compare
+        [wp_operand_cast_l2r]. *)
     Axiom wp_operand_cast_l2r_bitfield : forall e Q,
         (letI* r, free := wp_bitfield_glval e in
          bf_read (erase_qualifiers $ type_of e) r (fun v => Q v free))
-      |-- wp_operand (Ecast Cl2r e) Q.
+      |-- wp_operand (Ecast Cl2r_bitfield e) Q.
 
     (** Post-increment and post-decrement: compare [post_op]. The value is
         the old one. *)
@@ -247,11 +259,11 @@ Module Type Expr__bitfield.
 
     (** <<e++>>: compare [wp_operand_postinc]. *)
     Axiom wp_operand_postinc_bitfield : forall e ty Q,
-        bf_post_op Badd ty e Q |-- wp_operand (Epostinc e ty) Q.
+        bf_post_op Badd ty e Q |-- wp_operand (Ebf_postinc e ty) Q.
 
     (** <<e-->>: compare [wp_operand_postdec]. *)
     Axiom wp_operand_postdec_bitfield : forall e ty Q,
-        bf_post_op Bsub ty e Q |-- wp_operand (Epostdec e ty) Q.
+        bf_post_op Bsub ty e Q |-- wp_operand (Ebf_postdec e ty) Q.
 
   End with_resolve.
 End Expr__bitfield.
