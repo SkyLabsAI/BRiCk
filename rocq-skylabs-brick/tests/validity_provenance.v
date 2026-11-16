@@ -100,15 +100,6 @@ Section concrete_model.
     - left; lia.
   Qed.
 
-  Lemma missing_layout_subscript_invalid vt p ty i :
-    size_of σ ty = None ->
-    _valid_ptr vt (p ,, o_sub σ ty i) ⊢ False.
-  Proof.
-    intros Hsz. iIntros "H".
-    iDestruct (VALID_PTR.valid_o_sub_size with "H") as %Hsz'.
-    rewrite Hsz in Hsz'. destruct Hsz' as [? Hsz']; discriminate.
-  Qed.
-
   Lemma missing_base_offset_invalid p base derived :
     parent_offset σ derived base = None ->
     _valid_ptr pred.Strict (p ,, o_base σ derived base) ⊢ False.

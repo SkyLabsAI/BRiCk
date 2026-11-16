@@ -2408,13 +2408,16 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
     (* Axiom strict_valid_ptr_field : ∀ p f,
       strict_valid_ptr (p ,, o_field σ f) |-- strict_valid_ptr p. *)
 
-    Lemma valid_o_sub_size : forall p ty i vt,
-      _valid_ptr vt (p ,, o_sub σ ty i) |-- [| is_Some (size_of σ ty) |].
+    (** Zero subscripts with a defined offset are the identity, and valid
+        pointers have defined offsets. *)
+    Lemma _valid_ptr_field_sub_0 : ∀ p ty f vt,
+      _valid_ptr vt (p ,, o_field σ f ,, o_sub σ ty 0) |-- _valid_ptr vt (p ,, o_field σ f).
     Proof.
-      intros p ty i vt. iIntros "H".
+      intros p ty f vt. iIntros "H".
       iDestruct (_valid_ptr_offset_defined with "H") as %Hpath.
-      iPureIntro. apply (ptr_offset_defined_dot σ) in Hpath as [_ Hsub].
-      exact (eval_o_sub_defined σ ty i Hsub).
+      apply (ptr_offset_defined_dot σ) in Hpath as [_ Hsub].
+      have Hsz := eval_o_sub_defined σ ty 0 Hsub.
+      by rewrite o_sub_0 // offset_ptr_id.
     Qed.
 
 
