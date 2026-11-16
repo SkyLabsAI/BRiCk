@@ -14,6 +14,7 @@ Require Import skylabs.lang.cpp.syntax.supported.
 
 cpp.prog source flags "-std=c++20 --target=x86_64-linux-gnu" prog cpp:{{
 struct Bits { int a : 3; };
+struct Mixed { int a : 3; int p; };
 struct VBase {};
 struct Virt : virtual VBase {};
 struct HasBits { Bits b; };
@@ -33,6 +34,7 @@ int calls_static_local() { return static_local(); }
 int use_union(U u) { u.c = 1; return u.i; }
 int arrow_union(U *u) { u->c = 1; return 0; }
 int arrow_bits(Bits *b) { return b->a; }
+int plain_member(Mixed *m) { return m->p; }
 int take_bits(Bits b) { return b.a; }
 void address_only() { auto p = &take_bits; (void)p; }
 int call_through(Bits *b) { auto p = &take_bits; return p( *b); }
@@ -57,7 +59,7 @@ int case_after_decl(int x) { switch (x) { case 0: int y; y = 1; return y; case 1
 
 Eval vm_compute in supported.report.run source
   [ "by_value(Bits)"; "by_value_virt(Virt)"; "by_pointer(Bits*)"; "through_field(HasBits*)"; "linked(Node)"
-  ; "static_local()"; "calls_static_local()"; "use_union(U)"; "arrow_union(U*)"; "arrow_bits(Bits*)"; "address_only()"; "call_through(Bits*)"; "read_volatile(volatile int*)"
+  ; "static_local()"; "calls_static_local()"; "use_union(U)"; "arrow_union(U*)"; "arrow_bits(Bits*)"; "plain_member(Mixed*)"; "address_only()"; "call_through(Bits*)"; "read_volatile(volatile int*)"
   ; "volatile_local()"; "dyn(Base*)"; "inline_asm()"; "cas_ptr(int**, int**, int*)"
   ; "cas_int(int*, int*, int)"; "overloaded(int)"; "overloaded(long)"
   ; "unknown_builtin(unsigned int)"; "known_builtin(long)"; "flat_switch(int)"

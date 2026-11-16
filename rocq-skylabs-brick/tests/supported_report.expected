@@ -1,11 +1,11 @@
      = [{|
           report.input := "by_value(Bits)";
           report.resolved := "by_value(Bits)";
-          report.status := "unsupported";
-          report.unsupported :=
-            ["member access into an opaque record"%pstring];
+          report.status := "partial";
+          report.unsupported := [];
           report.partial :=
-            ["opaque record (bitfields are not supported): only its size, alignment, and destruction are modelled"%pstring];
+            ["bit-field access: only integer bit-fields of classes are modelled"%pstring;
+             "opaque record (bitfields are not supported): only its size, alignment, and destruction are modelled"%pstring];
           report.blocked_by := [];
           report.unsupported_refs := []
         |};
@@ -32,11 +32,11 @@
         {|
           report.input := "through_field(HasBits*)";
           report.resolved := "through_field(HasBits*)";
-          report.status := "unsupported";
-          report.unsupported :=
-            ["member access into an opaque record"%pstring];
+          report.status := "partial";
+          report.unsupported := [];
           report.partial :=
-            ["opaque record (bitfields are not supported): only its size, alignment, and destruction are modelled"%pstring];
+            ["bit-field access: only integer bit-fields of classes are modelled"%pstring;
+             "opaque record (bitfields are not supported): only its size, alignment, and destruction are modelled"%pstring];
           report.blocked_by := [];
           report.unsupported_refs := []
         |};
@@ -91,6 +91,17 @@
         {|
           report.input := "arrow_bits(Bits*)";
           report.resolved := "arrow_bits(Bits*)";
+          report.status := "partial";
+          report.unsupported := [];
+          report.partial :=
+            ["bit-field access: only integer bit-fields of classes are modelled"%pstring;
+             "opaque record (bitfields are not supported): only its size, alignment, and destruction are modelled"%pstring];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
+          report.input := "plain_member(Mixed*)";
+          report.resolved := "plain_member(Mixed*)";
           report.status := "unsupported";
           report.unsupported :=
             ["member access into an opaque record"%pstring];
@@ -302,10 +313,10 @@
         ("__builtin_expect"%pstring, "supported"%pstring);
         ("__builtin_popcount"%pstring, "supported"%pstring);
         ("address_only()"%pstring, "supported"%pstring);
-        ("arrow_bits(Bits*)"%pstring, "unsupported"%pstring);
+        ("arrow_bits(Bits*)"%pstring, "partial"%pstring);
         ("arrow_union(U*)"%pstring, "partial"%pstring);
         ("by_pointer(Bits*)"%pstring, "supported"%pstring);
-        ("by_value(Bits)"%pstring, "unsupported"%pstring);
+        ("by_value(Bits)"%pstring, "partial"%pstring);
         ("by_value_virt(Virt)"%pstring, "blocked"%pstring);
         ("call_through(Bits*)"%pstring, "partial"%pstring);
         ("calls_static_local()"%pstring, "supported"%pstring);
@@ -320,10 +331,11 @@
         ("nested_case(int)"%pstring, "unsupported"%pstring);
         ("overloaded(int)"%pstring, "supported"%pstring);
         ("overloaded(long)"%pstring, "supported"%pstring);
+        ("plain_member(Mixed*)"%pstring, "unsupported"%pstring);
         ("read_volatile(volatile int*)"%pstring, "partial"%pstring);
         ("static_local()"%pstring, "unsupported"%pstring);
-        ("take_bits(Bits)"%pstring, "unsupported"%pstring);
-        ("through_field(HasBits*)"%pstring, "unsupported"%pstring);
+        ("take_bits(Bits)"%pstring, "partial"%pstring);
+        ("through_field(HasBits*)"%pstring, "partial"%pstring);
         ("unknown_builtin(unsigned int)"%pstring, "unsupported"%pstring);
         ("use_union(U)"%pstring, "partial"%pstring);
         ("volatile_local()"%pstring, "unsupported"%pstring);
@@ -352,6 +364,7 @@
         ("Bits::Bits()"%pstring, "partial"%pstring);
         ("Derived::Derived()"%pstring, "partial"%pstring);
         ("HasBits::HasBits()"%pstring, "partial"%pstring);
+        ("Mixed::Mixed()"%pstring, "partial"%pstring);
         ("Node::Node()"%pstring, "partial"%pstring);
         ("U::U()"%pstring, "partial"%pstring);
         ("VBase::VBase()"%pstring, "partial"%pstring);
@@ -359,9 +372,10 @@
         ("Anon::.x::<ctor>()"%pstring, "partial"%pstring);
         ("Anon::Anon(const Anon&)"%pstring, "partial"%pstring);
         ("Base::Base(const Base&)"%pstring, "partial"%pstring);
-        ("Bits::Bits(const Bits&)"%pstring, "unsupported"%pstring);
+        ("Bits::Bits(const Bits&)"%pstring, "partial"%pstring);
         ("Derived::Derived(const Derived&)"%pstring, "partial"%pstring);
         ("HasBits::HasBits(const HasBits&)"%pstring, "partial"%pstring);
+        ("Mixed::Mixed(const Mixed&)"%pstring, "partial"%pstring);
         ("Node::Node(const Node&)"%pstring, "partial"%pstring);
         ("U::U(const U&)"%pstring, "supported"%pstring);
         ("VBase::VBase(const VBase&)"%pstring, "partial"%pstring);
@@ -371,6 +385,7 @@
         ("Bits::Bits(Bits&&)"%pstring, "partial"%pstring);
         ("Derived::Derived(Derived&&)"%pstring, "partial"%pstring);
         ("HasBits::HasBits(HasBits&&)"%pstring, "partial"%pstring);
+        ("Mixed::Mixed(Mixed&&)"%pstring, "partial"%pstring);
         ("Node::Node(Node&&)"%pstring, "partial"%pstring);
         ("U::U(U&&)"%pstring, "supported"%pstring);
         ("VBase::VBase(VBase&&)"%pstring, "partial"%pstring);
@@ -381,6 +396,7 @@
         ("Bits::~Bits()"%pstring, "partial"%pstring);
         ("Derived::~Derived()"%pstring, "supported"%pstring);
         ("HasBits::~HasBits()"%pstring, "partial"%pstring);
+        ("Mixed::~Mixed()"%pstring, "partial"%pstring);
         ("Node::~Node()"%pstring, "supported"%pstring);
         ("U::~U()"%pstring, "supported"%pstring);
         ("VBase::~VBase()"%pstring, "supported"%pstring);
@@ -391,6 +407,7 @@
         ("Bits::operator=(const Bits&)"%pstring, "partial"%pstring);
         ("Derived::operator=(const Derived&)"%pstring, "partial"%pstring);
         ("HasBits::operator=(const HasBits&)"%pstring, "partial"%pstring);
+        ("Mixed::operator=(const Mixed&)"%pstring, "partial"%pstring);
         ("Node::operator=(const Node&)"%pstring, "partial"%pstring);
         ("U::operator=(const U&)"%pstring, "supported"%pstring);
         ("VBase::operator=(const VBase&)"%pstring, "partial"%pstring);
@@ -400,6 +417,7 @@
         ("Bits::operator=(Bits&&)"%pstring, "partial"%pstring);
         ("Derived::operator=(Derived&&)"%pstring, "partial"%pstring);
         ("HasBits::operator=(HasBits&&)"%pstring, "partial"%pstring);
+        ("Mixed::operator=(Mixed&&)"%pstring, "partial"%pstring);
         ("Node::operator=(Node&&)"%pstring, "partial"%pstring);
         ("U::operator=(U&&)"%pstring, "supported"%pstring);
         ("VBase::operator=(VBase&&)"%pstring, "partial"%pstring);
@@ -410,6 +428,7 @@
         ("Bits"%pstring, "partial"%pstring);
         ("Derived"%pstring, "supported"%pstring);
         ("HasBits"%pstring, "partial"%pstring);
+        ("Mixed"%pstring, "partial"%pstring);
         ("Node"%pstring, "supported"%pstring);
         ("U"%pstring, "supported"%pstring);
         ("VBase"%pstring, "supported"%pstring);
