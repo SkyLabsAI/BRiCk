@@ -93,7 +93,8 @@ Variant GlobDecl' : Set :=
   | Gconstant (_ : type) (init : option Expr) (* used for enumerator constants*)
   | Gtypedef  (_ : type)
   | Gunsupported (_ : PrimString.string)
-  | Gopaque   (_ : Opaque) (* complete record whose body is not modeled *).
+  | Gopaque   (_ : Opaque) (* complete record whose body is not modeled *)
+  | Gvstruct  (_ : VStruct) (* body of a struct with virtual base classes *).
 Notation GlobDecl := GlobDecl'.
 #[global] Instance: EqDecision GlobDecl.
 Proof. solve_decision. Defined.
@@ -728,6 +729,14 @@ Section with_type_table.
   type has a [Gstruct] or [Gunion] body. *)
   | complete_opaque {o}
     : complete_decl (Gopaque o)
+  (* A class with virtual bases is complete when its non-virtual part and
+  its virtual bases are. Consumers of [complete_type] must not assume that
+  a complete class type has a [Gstruct] body. *)
+  | complete_VStruct {vs : VStruct}
+              (_ : forall (b : name) li, In (b, li) vs.(vs_struct).(s_bases) -> complete_type (Tnamed b))
+              (_ : forall (b : name) li, In (b, li) vs.(vs_vbases) -> complete_type (Tnamed b))
+              (_ : forall m, In m vs.(vs_struct).(s_fields) -> complete_type m.(mem_type))
+    : complete_decl (Gvstruct vs)
   (* No need for typedefs since those are forbidden in `Tnamed`, `Gtype` isn't
   legal, `Gconstant` is illegal and wouldn't make sense. *)
 

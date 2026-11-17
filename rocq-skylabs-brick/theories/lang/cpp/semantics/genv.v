@@ -221,6 +221,11 @@ Lemma glob_def_genv_compat_opaque {σ gn tu} {Hσ : tu ⊧ σ} o
   glob_def σ gn = Some (Gopaque o).
 Proof. move: Hσ Hl => /genv_compat_submodule. apply: sub_module_preserves_gopaque. Qed.
 
+Lemma glob_def_genv_compat_vstruct {σ gn tu} {Hσ : tu ⊧ σ} vs
+  (Hl : tu.(types) !! gn = Some (Gvstruct vs)) :
+  glob_def σ gn = Some (Gvstruct vs).
+Proof. move: Hσ Hl => /genv_compat_submodule. apply: sub_module_preserves_gvstruct. Qed.
+
 Lemma glob_def_genv_compat_enum {σ gn tu} {Hσ : tu ⊧ σ} ty brs
   (Hl : tu.(types) !! gn = Some (Genum ty brs)) :
   exists brs', glob_def σ gn = Some (Genum ty brs').

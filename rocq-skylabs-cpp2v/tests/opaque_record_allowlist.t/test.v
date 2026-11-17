@@ -8,9 +8,11 @@ Example trivial_abi_unsupported :
     Some (Gunsupported "trivial_abi classes are not supported").
 Proof. vm_compute. reflexivity. Qed.
 
+(* Virtual bases are supported (as [Gvstruct]), but the bit-field is not:
+   the class stays unsupported rather than becoming an opaque record. *)
 Example virtual_base_unsupported :
   types test_cpp.source !! "VirtualBase"%cpp_name =
-    Some (Gunsupported "virtual base classes are not supported").
+    Some (Gunsupported "bitfields are not supported").
 Proof. vm_compute. reflexivity. Qed.
 
 (* Opaque records still expose size, alignment and lifetime metadata when

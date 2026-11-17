@@ -550,6 +550,12 @@ Module MTraverse.
       | Gtypedef t => Gtypedef <$> traverseT t
       | Gunsupported m => mret $ Gunsupported m
       | Gopaque o => Gopaque <$> traverseOpaque o
+      | Gvstruct vs =>
+          Gvstruct
+            <$> (Build_VStruct
+                   <$> traverseStruct vs.(vs_struct)
+                   <*> traverse (T:=eta list) (prod.traverse traverseCN mret) vs.(vs_vbases)
+                   <*> mret vs.(vs_nv_alignment))
       end.
 
   End traverse.

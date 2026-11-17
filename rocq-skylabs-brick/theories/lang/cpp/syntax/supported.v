@@ -657,6 +657,13 @@ Section with_monad.
         PARTIAL ("opaque record (" ++ o.(o_reason) ++ "): only its size, alignment, and destruction are modelled")
     | Gunion u => lst member u.(u_fields)
     | Gstruct s => lst (classname ∘ fst) s.(s_bases) <+> lst member s.(s_fields)
+    | Gvstruct vs =>
+        (* Policy: a class with virtual bases is usable, but several of its
+           behaviors are not modelled, so this is [Partial]. *)
+        PARTIAL "class with virtual bases: conversions to its virtual bases, virtual functions, and const objects are not modelled"
+        <+> lst (classname ∘ fst) vs.(vs_struct).(s_bases)
+        <+> lst (classname ∘ fst) vs.(vs_vbases)
+        <+> lst member vs.(vs_struct).(s_fields)
     | Genum t _ => type t
     | Gconstant t oe => type t <+> opt expr oe
     | Gtypedef t => type t
