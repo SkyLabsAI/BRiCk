@@ -1426,10 +1426,18 @@ Section with_cpp.
   #[global] Declare Instance wp_fptr_ne :
     `{forall n, Proper (pointwise_relation _ (dist n) ==> dist n) (@wp_fptr σ ft addr ls)}.
 
+  (* [wp_fptr] holds only at function types, up to an update.
+
+     The update on the right is needed for consistency: [fupd_spec] lets
+     [wp_fptr] absorb an update on the left, so without it the two axioms
+     derive [(|={top}=> False) |-- False]. That entailment fails in Iris's
+     model of fancy updates, where [ownE top |-- |={top}=> False] although
+     [ownE top] is satisfiable.
+   *)
   Axiom wp_fptr_complete_type : forall {σ : genv} ft a ls Q,
       wp_fptr ft a ls Q
-      |-- wp_fptr ft a ls Q **
-          [| exists cc ar tret targs, ft = Tfunction (@FunctionType _ cc ar tret targs) |].
+      |-- |={top}=> (wp_fptr ft a ls Q **
+          [| exists cc ar tret targs, ft = Tfunction (@FunctionType _ cc ar tret targs) |]).
 
   (* A type is callable against a type table if all of its arguments and return
      type are [complete_type]s.
