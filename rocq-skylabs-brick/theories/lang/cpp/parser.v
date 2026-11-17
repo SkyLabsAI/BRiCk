@@ -277,6 +277,10 @@ Definition record_or_dup_fields (n : globname) (fs : list Member) (r : GlobDecl)
 Definition Dstruct (n : globname) (f : option Struct) : K :=
   _types n $ if f is Some f then record_or_dup_fields n f.(s_fields) (Gstruct f) else Gtype.
 
+(** A struct with virtual base classes; see [VStruct]. *)
+Definition Dvstruct (n : globname) (vs : VStruct) : K :=
+  _types n $ record_or_dup_fields n vs.(vs_struct).(s_fields) (Gvstruct vs).
+
 Definition Dunion (n : globname) (f : option Union) : K :=
   _types n $ if f is Some f then record_or_dup_fields n f.(u_fields) (Gunion f) else Gtype.
 

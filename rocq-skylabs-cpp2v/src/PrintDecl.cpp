@@ -482,18 +482,24 @@ static fmt::Formatter &printFields(const RecordDecl &decl,
     return print.output();
 }
 
+/// Print the direct base classes of `decl` with their offsets. With
+/// `skip_virtual`, print only the non-virtual ones (see `printVStruct`).
 static fmt::Formatter &printStructBases(const CXXRecordDecl &decl,
                                         const ASTRecordLayout *layout,
                                         CoqPrinter &print,
-                                        ClangPrinter &cprint) {
-    return print.list(decl.bases(), [&](CXXBaseSpecifier base) {
+                                        ClangPrinter &cprint,
+                                        bool skip_virtual = false) {
+    return print.list_filter(decl.bases(), [&](CXXBaseSpecifier base) {
         auto fatal = [&](StringRef msg) NORETURN {
             auto loc = loc::refine(loc::of(decl), base.getTypeSourceInfo());
             ::fatal(cprint, loc, msg);
         };
 
-        if (base.isVirtual())
+        if (base.isVirtual()) {
+            if (skip_virtual)
+                return false;
             fatal("virtual base classes are not supported");
+        }
 
         auto type = base.getType().getTypePtrOrNull();
         if (!type)
@@ -505,14 +511,15 @@ static fmt::Formatter &printStructBases(const CXXRecordDecl &decl,
             auto li = layout ? cprint.getContext().toBits(
                                    layout->getBaseClassOffset(record))
                              : 0;
-            return printLayoutInfo(print, li);
+            printLayoutInfo(print, li);
         } else {
             {
                 guard::ctor _2(print, "Ndependent'");
                 cprint.printType(print, type, loc::of(decl)) << fmt::nbsp;
             }
-            return printLayoutInfo(print, 0);
+            printLayoutInfo(print, 0);
         }
+        return true;
     });
 }
 
@@ -640,6 +647,48 @@ static fmt::Formatter &printStruct(CoqPrinter &print, const CXXRecordDecl &decl,
     return printSizeAlign(decl, layout, print, cprint);
 }
 
+/// A class with virtual bases (direct or indirect): its non-virtual part as
+/// a `Build_Struct`, then all its virtual bases in initialization order with
+/// their offsets in a complete object, then the alignment of the
+/// non-virtual part. See `VStruct` in `syntax/decl.v`.
+static fmt::Formatter &printVStruct(CoqPrinter &print,
+                                    const CXXRecordDecl &decl,
+                                    ClangPrinter &cprint,
+                                    const ASTContext &ctxt) {
+    if (ClangPrinter::debug && cprint.trace(Trace::Decl))
+        cprint.trace("printVStruct", loc::of(decl));
+    always_assert(decl.isCompleteDefinition() && !decl.isDependentContext() &&
+                  decl.getNumVBases() > 0);
+
+    const auto layout = &ctxt.getASTRecordLayout(&decl);
+
+    guard::ctor _(print, "Build_VStruct");
+    {
+        guard::ctor _s(print, "Build_Struct");
+        printStructBases(decl, layout, print, cprint, true) << fmt::line;
+        printFields(decl, layout, print, cprint) << fmt::nbsp;
+        printStructVirtuals(print, decl, cprint) << fmt::nbsp;
+        printStructOverrides(print, decl, cprint) << fmt::nbsp;
+        cprint.printDtorName(print, decl) << fmt::nbsp;
+        printTriviallyDestructible(print, decl, cprint) << fmt::nbsp;
+        printDeleteName(print, decl, cprint) << fmt::line;
+        printLayoutType(print, decl, cprint) << fmt::nbsp;
+        printSizeAlign(decl, layout, print, cprint);
+    }
+    print.output() << fmt::line;
+    // [vbases()] lists every virtual base once, in initialization order
+    // (depth-first, left-to-right).
+    print.list(decl.vbases(), [&](CXXBaseSpecifier base) {
+        auto record = base.getType()->getAsCXXRecordDecl();
+        always_assert(record && "virtual base is not a class");
+        guard::ctor _b(print, "mkBase");
+        cprint.printName(print, record, loc::of(decl)) << fmt::nbsp;
+        printLayoutInfo(print,
+                        ctxt.toBits(layout->getVBaseClassOffset(record)));
+    }) << fmt::nbsp;
+    return print.output() << layout->getNonVirtualAlignment().getQuantity();
+}
+
 static fmt::Formatter &printUnion(CoqPrinter &print, const CXXRecordDecl &decl,
                                   ClangPrinter &cprint,
                                   const ASTContext &ctxt) {
@@ -757,20 +806,35 @@ static const char *supportedRecord(const RecordDecl &decl,
     }
     return nullptr;
 }
-static const char *supportedRecord(const CXXRecordDecl &decl,
-                                   const ASTContext &ctxt) {
-    for (auto base : decl.bases()) {
-        if (base.isVirtual())
-            return "virtual base classes are not supported";
-    }
+/// Whether `decl` is emitted as a `Dvstruct` (see `printVStruct`): a
+/// complete, non-dependent class with a virtual base, direct or indirect.
+static bool hasVirtualBases(const CXXRecordDecl &decl) {
+    return decl.isCompleteDefinition() && !decl.isDependentContext() &&
+           decl.getNumVBases() > 0;
+}
+
+/// `allow_virtual` selects the checks for `Dvstruct`; a class with virtual
+/// bases is otherwise unsupported (e.g. while it is still dependent).
+static const char *supportedCXXRecord(const CXXRecordDecl &decl,
+                                      const ASTContext &ctxt,
+                                      bool allow_virtual) {
+    if (!allow_virtual)
+        for (auto base : decl.bases()) {
+            if (base.isVirtual())
+                return "virtual base classes are not supported";
+        }
     if (auto msg = supportedRecord(static_cast<const RecordDecl &>(decl), ctxt))
         return msg;
     if (!decl.isCompleteDefinition() || decl.isDependentContext())
         return nullptr;
+    if (!allow_virtual && decl.getNumVBases() > 0)
+        return "virtual base classes are not supported";
 
     const auto &layout = ctxt.getASTRecordLayout(&decl);
     const auto recordAlign = ctxt.toBits(layout.getAlignment());
     for (auto base : decl.bases()) {
+        if (base.isVirtual())
+            continue;
         const auto baseAlign =
             ctxt.getTypeAlign(base.getType().getCanonicalType());
         const auto offset = ctxt.toBits(
@@ -778,7 +842,23 @@ static const char *supportedRecord(const CXXRecordDecl &decl,
         if (recordAlign % baseAlign != 0 || offset % baseAlign != 0)
             return "under-aligned base classes are not supported";
     }
+    for (auto base : decl.vbases()) {
+        const auto baseAlign =
+            ctxt.getTypeAlign(base.getType().getCanonicalType());
+        const auto offset = ctxt.toBits(
+            layout.getVBaseClassOffset(base.getType()->getAsCXXRecordDecl()));
+        if (recordAlign % baseAlign != 0 || offset % baseAlign != 0)
+            return "under-aligned base classes are not supported";
+    }
     return nullptr;
+}
+static const char *supportedRecord(const CXXRecordDecl &decl,
+                                   const ASTContext &ctxt) {
+    return supportedCXXRecord(decl, ctxt, false);
+}
+static const char *supportedVRecord(const CXXRecordDecl &decl,
+                                    const ASTContext &ctxt) {
+    return supportedCXXRecord(decl, ctxt, true);
 }
 
 /// Whether an unsupported record can be exposed as an _opaque_ record:
@@ -942,6 +1022,9 @@ static bool printOpaqueRecord(CoqPrinter &print, const CXXRecordDecl &decl,
 
 static const DeclPrinter Dstruct("Dstruct", "Dtemplated_struct", printStruct,
                                  supportedRecord, printOpaqueRecord);
+// There is no templated form: a dependent class is never a [Dvstruct].
+static const DeclPrinter Dvstruct("Dvstruct", "Dtemplated_unsupported",
+                                  printVStruct, supportedVRecord);
 static const DeclPrinter Dunion("Dunion", "Dtemplated_union", printUnion,
                                 supportedRecord, printOpaqueRecord);
 static const DeclPrinter Drecord_struct("Dstruct", "Dtemplated_struct",
@@ -1514,6 +1597,8 @@ public:
                          ClangPrinter &cprint, const ASTContext &ctxt) {
         if (ClangPrinter::debug && cprint.trace(Trace::Decl))
             cprint.trace("VisitStructDecl", loc::of(decl));
+        if (!print.templates() && hasVirtualBases(*decl))
+            return printType(Dvstruct, *decl, print, cprint, ctxt);
         return printType(Dstruct, *decl, print, cprint, ctxt);
     }
 
