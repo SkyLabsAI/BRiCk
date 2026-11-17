@@ -59,7 +59,37 @@ Minor extensions to <span class="inlinecode"><span class="id" title="var">Ltac2.
 </div>
 
 <div class="doc">
-<a id="lab11"></a><h2 class="section">Backtrace primitives</h2>
+<a id="lab11"></a><h2 class="section">Monotonic time and instruction counts</h2>
+
+
+<div class="paragraph"> </div>
+
+      Measurements are side effects: proof-state backtracking does not reset
+      the clocks. 
+<div class="paragraph"> </div>
+
+ <span class="inlinecode"><span class="id" title="var">mtime</span></span> <span class="inlinecode">()</span> returns monotonic wall-clock time in microseconds, based on
+      <span class="inlinecode"><span class="id" title="var">mtime</span></span> (<span class="inlinecode"><span class="id" title="var">CLOCK_MONOTONIC</span></span> on Linux). Only differences are meaningful. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">mtime</span> : <span class="id" title="var">unit</span> -&gt; <span class="id" title="var">int</span> := "ltac2_extensions" "time".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">instr</span></span> <span class="inlinecode">()</span> returns the hardware instruction counter used by the
+      vernacular <span class="inlinecode"><span class="id" title="var">Instructions</span></span> command. It fails with an error message if
+      the counter is unavailable or its value does not fit in an Ltac2 int. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">instr</span> : <span class="id" title="var">unit</span> -&gt; <span class="id" title="var">int</span> := "ltac2_extensions" "instr".<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab12"></a><h2 class="section">Backtrace primitives</h2>
 
 </div>
 <div class="code">
@@ -71,7 +101,7 @@ Minor extensions to <span class="inlinecode"><span class="id" title="var">Ltac2.
 </div>
 
 <div class="doc">
-<a id="lab12"></a><h2 class="section">Running side-effecting computations</h2>
+<a id="lab13"></a><h2 class="section">Running side-effecting computations</h2>
 
 <div class="paragraph"> </div>
 
@@ -87,7 +117,7 @@ Minor extensions to <span class="inlinecode"><span class="id" title="var">Ltac2.
 </div>
 
 <div class="doc">
-<a id="lab13"></a><h2 class="section">Proof state</h2>
+<a id="lab14"></a><h2 class="section">Proof state</h2>
 
 <div class="paragraph"> </div>
 
@@ -130,7 +160,7 @@ Minor extensions to <span class="inlinecode"><span class="id" title="var">Ltac2.
 </div>
 
 <div class="doc">
-<a id="lab14"></a><h2 class="section">Goal inspection</h2>
+<a id="lab15"></a><h2 class="section">Goal inspection</h2>
 
 </div>
 <div class="code">
@@ -240,7 +270,7 @@ This is a variant of <span class="inlinecode"><span class="id" title="var">first
 </div>
 
 <div class="doc">
-<a id="lab15"></a><h2 class="section">Goal evar</h2>
+<a id="lab16"></a><h2 class="section">Goal evar</h2>
 
 </div>
 <div class="code">
@@ -253,7 +283,7 @@ This is a variant of <span class="inlinecode"><span class="id" title="var">first
 </div>
 
 <div class="doc">
-<a id="lab16"></a><h2 class="section">Throws</h2>
+<a id="lab17"></a><h2 class="section">Throws</h2>
 
 <div class="paragraph"> </div>
 

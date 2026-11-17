@@ -1,0 +1,114 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<link href="coqdoc.css" rel="stylesheet" type="text/css" />
+<title>skylabs.ltac2.extra.Profiling</title>
+</head>
+
+<body>
+
+<div id="page">
+
+<div id="header">
+</div>
+
+<div id="main">
+
+<h1 class="libtitle">Library skylabs.ltac2.extra.Profiling</h1>
+
+<div class="code">
+
+<br/>
+</div>
+
+<div class="doc">
+Measurement combinators over <span class="inlinecode"><span class="id" title="var">Control.mtime</span></span> and <span class="inlinecode"><span class="id" title="var">Control.instr</span></span>. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.ltac2.extra.internal.control.html#"><span class="id" title="library">skylabs.ltac2.extra.internal.control</span></a>.<br/>
+<span class="id" title="keyword">Import</span> <span class="id" title="module">Ltac2</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">between</span></span> <span class="inlinecode"><span class="id" title="keyword">before</span></span> <span class="inlinecode"><span class="id" title="keyword">after</span></span> <span class="inlinecode"><span class="id" title="var">diff</span></span> <span class="inlinecode"><span class="id" title="var">f</span></span> samples <span class="inlinecode"><span class="id" title="var">f</span></span> and each resumption of its
+    backtracking continuation separately. Each successful result carries only
+    that execution's measurement, excluding earlier executions and caller work
+    between results. Callers may sum these measurements if desired. Failures
+    are forwarded without running the after hook. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">rec</span> <span class="id" title="var">between</span><br/>
+&nbsp;&nbsp;(<span class="id" title="keyword">before</span> : <span class="id" title="var">unit</span> -&gt; '<span class="id" title="var">bef</span>)<br/>
+&nbsp;&nbsp;(<span class="id" title="keyword">after</span> : <span class="id" title="var">unit</span> -&gt; '<span class="id" title="var">aft</span>)<br/>
+&nbsp;&nbsp;(<span class="id" title="var">diff</span> : '<span class="id" title="var">aft</span> -&gt; '<span class="id" title="var">bef</span> -&gt; '<span class="id" title="var">dif</span>) (<span class="id" title="var">f</span> : <span class="id" title="var">unit</span> -&gt; '<span class="id" title="var">a</span>) : ('<span class="id" title="var">dif</span> * '<span class="id" title="var">a</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">start</span> := <span class="id" title="keyword">before</span> () <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">Control.case</span> <span class="id" title="var">f</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">Val</span> (<span class="id" title="var">v</span>, <span class="id" title="var">handler</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="keyword">delta</span> := <span class="id" title="var">diff</span> (<span class="id" title="keyword">after</span> ()) <span class="id" title="var">start</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">Control.plus</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="keyword">fun</span> () =&gt; (<span class="id" title="keyword">delta</span>, <span class="id" title="var">v</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="keyword">fun</span> <span class="id" title="var">e</span> =&gt; <span class="id" title="var">between</span> <span class="id" title="keyword">before</span> <span class="id" title="keyword">after</span> <span class="id" title="var">diff</span> (<span class="id" title="keyword">fun</span> () =&gt; <span class="id" title="var">handler</span> <span class="id" title="var">e</span>))<br/>
+&nbsp;&nbsp;| <span class="id" title="var">Err</span> <span class="id" title="var">e</span> =&gt; <span class="id" title="var">Control.zero</span> <span class="id" title="var">e</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">with_mtime</span> (<span class="id" title="var">f</span> : <span class="id" title="var">unit</span> -&gt; '<span class="id" title="var">a</span>) : (<span class="id" title="var">int</span> * '<span class="id" title="var">a</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">between</span> <span class="id" title="var">Control.mtime</span> <span class="id" title="var">Control.mtime</span> <span class="id" title="var">Int.sub</span> <span class="id" title="var">f</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">with_instr</span> (<span class="id" title="var">f</span> : <span class="id" title="var">unit</span> -&gt; '<span class="id" title="var">a</span>) : (<span class="id" title="var">int</span> * '<span class="id" title="var">a</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="var">between</span> <span class="id" title="var">Control.instr</span> <span class="id" title="var">Control.instr</span> <span class="id" title="var">Int.sub</span> <span class="id" title="var">f</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac2</span> <span class="id" title="keyword">Type</span> <span class="id" title="var">measurement</span> := { <span class="id" title="var">mtime</span> : <span class="id" title="var">int</span>; <span class="id" title="var">instr</span> : <span class="id" title="var">int</span> }.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Component-wise addition and subtraction using Ltac2 integer arithmetic. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">add</span> (<span class="id" title="var">x</span> : <span class="id" title="var">measurement</span>) (<span class="id" title="var">y</span> : <span class="id" title="var">measurement</span>) : <span class="id" title="var">measurement</span> :=<br/>
+&nbsp;&nbsp;{ <span class="id" title="var">mtime</span> := <span class="id" title="var">Int.add</span> (<span class="id" title="var">x</span>.(<span class="id" title="var">mtime</span>)) (<span class="id" title="var">y</span>.(<span class="id" title="var">mtime</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">instr</span> := <span class="id" title="var">Int.add</span> (<span class="id" title="var">x</span>.(<span class="id" title="var">instr</span>)) (<span class="id" title="var">y</span>.(<span class="id" title="var">instr</span>)) }.<br/>
+
+<br/>
+<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">sub</span> (<span class="id" title="var">x</span> : <span class="id" title="var">measurement</span>) (<span class="id" title="var">y</span> : <span class="id" title="var">measurement</span>) : <span class="id" title="var">measurement</span> :=<br/>
+&nbsp;&nbsp;{ <span class="id" title="var">mtime</span> := <span class="id" title="var">Int.sub</span> (<span class="id" title="var">x</span>.(<span class="id" title="var">mtime</span>)) (<span class="id" title="var">y</span>.(<span class="id" title="var">mtime</span>));<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">instr</span> := <span class="id" title="var">Int.sub</span> (<span class="id" title="var">x</span>.(<span class="id" title="var">instr</span>)) (<span class="id" title="var">y</span>.(<span class="id" title="var">instr</span>)) }.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">with_msmt</span></span> <span class="inlinecode"><span class="id" title="var">f</span></span> measures both monotonic microseconds and instructions.
+    The time readings surround the instruction readings, keeping clock
+    sampling outside the instruction interval. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Ltac2</span> <span class="id" title="var">with_msmt</span> (<span class="id" title="var">f</span> : <span class="id" title="var">unit</span> -&gt; '<span class="id" title="var">a</span>) : (<span class="id" title="var">measurement</span> * '<span class="id" title="var">a</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="keyword">before</span> () :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">mtime</span> := <span class="id" title="var">Control.mtime</span> () <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="var">mtime</span>; <span class="id" title="var">instr</span> := <span class="id" title="var">Control.instr</span> () }<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="keyword">after</span> () :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">let</span> <span class="id" title="var">instr</span> := <span class="id" title="var">Control.instr</span> () <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;{ <span class="id" title="var">mtime</span> := <span class="id" title="var">Control.mtime</span> (); <span class="id" title="var">instr</span> }<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="var">between</span> <span class="id" title="keyword">before</span> <span class="id" title="keyword">after</span> <span class="id" title="var">sub</span> <span class="id" title="var">f</span>.<br/>
+</div>
+</div>
+
+<div id="footer">
+<hr/><a href="index.html">Index</a><hr/>This page has been generated by <a href="http://rocq-prover.org/">coqdoc</a>
+</div>
+
+</div>
+
+</body>
+</html>
