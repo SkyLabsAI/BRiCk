@@ -414,22 +414,17 @@ Module Type CPP_LOGIC
       require an extra side-condition that the code is loaded.
      *)
     Parameter code_at : forall `{cpp_logic} {σ},
-      translation_unit -> Func -> ptr -> mpred.
+      Func -> ptr -> mpred.
     Parameter method_at : forall `{cpp_logic} {σ},
-      translation_unit -> Method -> ptr -> mpred.
+      Method -> ptr -> mpred.
     Parameter ctor_at : forall `{cpp_logic} {σ},
-      translation_unit -> Ctor -> ptr -> mpred.
+      Ctor -> ptr -> mpred.
     Parameter dtor_at : forall `{cpp_logic} {σ},
-      translation_unit -> Dtor -> ptr -> mpred.
+      Dtor -> ptr -> mpred.
 
 
     Section with_genv.
-      Context `{cpp_logic} {σ} (tu : translation_unit).
-
-      #[local] Notation code_at := (code_at tu) (only parsing).
-      #[local] Notation method_at := (method_at tu) (only parsing).
-      #[local] Notation ctor_at := (ctor_at tu) (only parsing).
-      #[local] Notation dtor_at := (dtor_at tu) (only parsing).
+      Context `{cpp_logic} {σ}.
 
       #[global] Declare Instance code_at_persistent : forall f p, Persistent (code_at f p).
       #[global] Declare Instance code_at_affine : forall f p, Affine (code_at f p).
@@ -460,25 +455,25 @@ Module Type CPP_LOGIC
     End with_genv.
 
     (** Code assertions are closed under [ObjValue_ler]: if [p] runs code
-        described by [f'], it also runs code described by any [f ≤ f'],
-        from any translation unit. This is what lets a client weaken
-        [denoteModule] to a [sub_module] (see [denoteModule_weaken]).
+        described by [f'], it also runs code described by any [f ≤ f'].
+        This is what lets a client weaken [denoteModule] to a [sub_module]
+        (see [denoteModule_weaken]).
      *)
     Section with_cpp_logic.
       Context `{cpp_logic} {σ}.
 
-      Axiom code_at_mono : forall tu tu' f f' p,
+      Axiom code_at_mono : forall f f' p,
         ObjValue_ler (Ofunction f) (Ofunction f') ->
-        code_at tu' f' p |-- code_at tu f p.
-      Axiom method_at_mono : forall tu tu' m m' p,
+        code_at f' p |-- code_at f p.
+      Axiom method_at_mono : forall m m' p,
         ObjValue_ler (Omethod m) (Omethod m') ->
-        method_at tu' m' p |-- method_at tu m p.
-      Axiom ctor_at_mono : forall tu tu' c c' p,
+        method_at m' p |-- method_at m p.
+      Axiom ctor_at_mono : forall c c' p,
         ObjValue_ler (Oconstructor c) (Oconstructor c') ->
-        ctor_at tu' c' p |-- ctor_at tu c p.
-      Axiom dtor_at_mono : forall tu tu' d d' p,
+        ctor_at c' p |-- ctor_at c p.
+      Axiom dtor_at_mono : forall d d' p,
         ObjValue_ler (Odestructor d) (Odestructor d') ->
-        dtor_at tu' d' p |-- dtor_at tu d p.
+        dtor_at d' p |-- dtor_at d p.
     End with_cpp_logic.
 
   Section with_cpp_logic.
@@ -940,15 +935,15 @@ Export L.
 Declare Module Export VALID_PTR : VALID_PTR_AXIOMS PTRS_INTF_AXIOM VALUES_INTF_AXIOM LC L.
 
 Section valid_ptr_code.
-  Context `{cpp_logic} {σ} (tu : translation_unit).
+  Context `{cpp_logic} {σ}.
 
-  Lemma code_at_valid   : forall f p,   code_at tu f p |-- valid_ptr p.
+  Lemma code_at_valid   : forall f p,   code_at f p |-- valid_ptr p.
   Proof. intros. rewrite code_at_strict_valid; apply strict_valid_valid. Qed.
-  Lemma method_at_valid : forall f p, method_at tu f p |-- valid_ptr p.
+  Lemma method_at_valid : forall f p, method_at f p |-- valid_ptr p.
   Proof. intros. rewrite method_at_strict_valid; apply strict_valid_valid. Qed.
-  Lemma ctor_at_valid   : forall f p,   ctor_at tu f p |-- valid_ptr p.
+  Lemma ctor_at_valid   : forall f p,   ctor_at f p |-- valid_ptr p.
   Proof. intros. rewrite ctor_at_strict_valid; apply strict_valid_valid. Qed.
-  Lemma dtor_at_valid   : forall f p,   dtor_at tu f p |-- valid_ptr p.
+  Lemma dtor_at_valid   : forall f p,   dtor_at f p |-- valid_ptr p.
   Proof. intros. rewrite dtor_at_strict_valid; apply strict_valid_valid. Qed.
 End valid_ptr_code.
 

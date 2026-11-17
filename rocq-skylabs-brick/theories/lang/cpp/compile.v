@@ -27,30 +27,29 @@ Section with_Σ.
 
       The code at [p] was compiled against the program described by [σ], so
       these axioms only hold for translation units [tu] that agree with it
-      ([tu ⊧ σ]). [code_at] itself does not constrain [tu] (see
-      [code_at_mono]); without this premise, a [tu] whose type table
-      disagrees with [σ] (e.g. naming a different destructor for a class)
-      would make [wp_func tu f] describe code other than what runs at [p].
+      ([tu ⊧ σ]). Without this premise, a [tu] whose type table disagrees
+      with [σ] (e.g. naming a different destructor for a class) would make
+      [wp_func tu f] describe code other than what runs at [p].
    *)
   Axiom code_at_ok : tu ⊧ σ -> forall (f : Func) p,
-      code_at tu f p
+      code_at f p
       |-- Forall ls Q, wp_func tu f ls Q -*
-                       wp_fptr (Σ:=Σ) tu.(types) (type_of_value (Ofunction f)) p ls Q.
+                       wp_fptr (Σ:=Σ) (type_of_value (Ofunction f)) p ls Q.
 
   Axiom method_at_ok : tu ⊧ σ -> forall (m : Method) p,
-      method_at tu m p
+      method_at m p
       |-- Forall ls Q, wp_method tu m ls Q -*
-                       wp_fptr (Σ:=Σ) tu.(types) (type_of_value (Omethod m)) p ls Q.
+                       wp_fptr (Σ:=Σ) (type_of_value (Omethod m)) p ls Q.
 
   Axiom ctor_at_ok : tu ⊧ σ -> forall (c : Ctor) p,
-      ctor_at tu c p
+      ctor_at c p
       |-- Forall ls Q, wp_ctor tu c ls Q -*
-                       wp_fptr tu.(types) (type_of_value (Oconstructor c)) p ls Q.
+                       wp_fptr (type_of_value (Oconstructor c)) p ls Q.
 
   Axiom dtor_at_ok : tu ⊧ σ -> forall (d : Dtor) p,
-      dtor_at tu d p
+      dtor_at d p
       |-- Forall ls Q, wp_dtor tu d ls Q -*
-                       wp_fptr tu.(types) (type_of_value (Odestructor d)) p ls Q.
+                       wp_fptr (type_of_value (Odestructor d)) p ls Q.
   (* END COMPILE SNIPPET *)
 
 End with_Σ.

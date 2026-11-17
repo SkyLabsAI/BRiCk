@@ -240,7 +240,7 @@ invoking the destructor [dtor] for type [ty] on [this].
   destructors to have C calling convention. Arguments [this :: nil] is
   correct for member functions taking no arguments.
   *)
-  letI* p := wp_mfptr tu.(types) ty (Tfunction $ FunctionType Tvoid nil) dtor (this :: nil) in
+  letI* p := wp_mfptr ty (Tfunction $ FunctionType Tvoid nil) dtor (this :: nil) in
   (**
   We inline [operand_receive] (which could be hoisted and shared).
   *)
@@ -305,7 +305,7 @@ Section dtor.
     Q -* Q' |-- wp_destructor tu ty dtor this Q -* wp_destructor tu' ty dtor this Q'.
   Proof.
     intros. wp_destructor_unfold. iIntros "HQ".
-    iApply wp_mfptr_frame_fupd_strong; first by auto.
+    iApply wp_mfptr_frame_fupd.
     iIntros "%p (%v & V & B & Q)". iExists v. iFrame "V B". by iApply "HQ".
   Qed.
 

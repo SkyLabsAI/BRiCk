@@ -1514,63 +1514,63 @@ Module SimpleCPP.
     Proof. by rewrite code_own_strict_valid strict_valid_valid. Qed.
     Typeclasses Opaque code_own.
 
-    (** Code assertions are closed under [ObjValue_ler]: [code_at tu f p]
+    (** Code assertions are closed under [ObjValue_ler]: [code_at f p]
         holds if [p] runs code described by some [f' ≥ f]. *)
-    Definition code_at {_ : genv} (_ : translation_unit) (f : Func) (p : ptr) : mpred :=
+    Definition code_at {_ : genv} (f : Func) (p : ptr) : mpred :=
       Exists f', [| ObjValue_ler (Ofunction f) (Ofunction f') |] ** code_own p (inl (inl (inl f'))).
-    Definition method_at {_ : genv} (_ : translation_unit) (m : Method) (p : ptr) : mpred :=
+    Definition method_at {_ : genv} (m : Method) (p : ptr) : mpred :=
       Exists m', [| ObjValue_ler (Omethod m) (Omethod m') |] ** code_own p (inl (inl (inr m'))).
-    Definition ctor_at {_ : genv} (_ : translation_unit) (c : Ctor) (p : ptr) : mpred :=
+    Definition ctor_at {_ : genv} (c : Ctor) (p : ptr) : mpred :=
       Exists c', [| ObjValue_ler (Oconstructor c) (Oconstructor c') |] ** code_own p (inl (inr c')).
-    Definition dtor_at {_ : genv} (_ : translation_unit) (d : Dtor) (p : ptr) : mpred :=
+    Definition dtor_at {_ : genv} (d : Dtor) (p : ptr) : mpred :=
       Exists d', [| ObjValue_ler (Odestructor d) (Odestructor d') |] ** code_own p (inr d').
 
-    Instance code_at_persistent : forall tu f p, Persistent (code_at tu f p) := _.
-    Instance code_at_affine : forall tu f p, Affine (code_at tu f p) := _.
-    Instance code_at_timeless : forall tu f p, Timeless (code_at tu f p) := _.
+    Instance code_at_persistent : forall f p, Persistent (code_at f p) := _.
+    Instance code_at_affine : forall f p, Affine (code_at f p) := _.
+    Instance code_at_timeless : forall f p, Timeless (code_at f p) := _.
 
-    Instance method_at_persistent : forall tu f p, Persistent (method_at tu f p) := _.
-    Instance method_at_affine : forall tu f p, Affine (method_at tu f p) := _.
-    Instance method_at_timeless : forall tu f p, Timeless (method_at tu f p) := _.
+    Instance method_at_persistent : forall f p, Persistent (method_at f p) := _.
+    Instance method_at_affine : forall f p, Affine (method_at f p) := _.
+    Instance method_at_timeless : forall f p, Timeless (method_at f p) := _.
 
-    Instance ctor_at_persistent : forall tu f p, Persistent (ctor_at tu f p) := _.
-    Instance ctor_at_affine : forall tu f p, Affine (ctor_at tu f p) := _.
-    Instance ctor_at_timeless : forall tu f p, Timeless (ctor_at tu f p) := _.
+    Instance ctor_at_persistent : forall f p, Persistent (ctor_at f p) := _.
+    Instance ctor_at_affine : forall f p, Affine (ctor_at f p) := _.
+    Instance ctor_at_timeless : forall f p, Timeless (ctor_at f p) := _.
 
-    Instance dtor_at_persistent : forall tu f p, Persistent (dtor_at tu f p) := _.
-    Instance dtor_at_affine : forall tu f p, Affine (dtor_at tu f p) := _.
-    Instance dtor_at_timeless : forall tu f p, Timeless (dtor_at tu f p) := _.
+    Instance dtor_at_persistent : forall f p, Persistent (dtor_at f p) := _.
+    Instance dtor_at_affine : forall f p, Affine (dtor_at f p) := _.
+    Instance dtor_at_timeless : forall f p, Timeless (dtor_at f p) := _.
 
-    Axiom code_at_live   : forall tu f p,   code_at tu f p |-- live_ptr p.
-    Axiom method_at_live : forall tu f p, method_at tu f p |-- live_ptr p.
-    Axiom ctor_at_live   : forall tu f p,   ctor_at tu f p |-- live_ptr p.
-    Axiom dtor_at_live   : forall tu f p,   dtor_at tu f p |-- live_ptr p.
+    Axiom code_at_live   : forall f p, code_at f p |-- live_ptr p.
+    Axiom method_at_live : forall f p, method_at f p |-- live_ptr p.
+    Axiom ctor_at_live   : forall f p, ctor_at f p |-- live_ptr p.
+    Axiom dtor_at_live   : forall f p, dtor_at f p |-- live_ptr p.
 
     Section with_genv.
-      Lemma code_at_strict_valid tu f p :   code_at tu f p |-- strict_valid_ptr p.
+      Lemma code_at_strict_valid f p : code_at f p |-- strict_valid_ptr p.
       Proof. iDestruct 1 as (??) "C". by iApply code_own_strict_valid. Qed.
-      Lemma method_at_strict_valid tu f p :   method_at tu f p |-- strict_valid_ptr p.
+      Lemma method_at_strict_valid f p : method_at f p |-- strict_valid_ptr p.
       Proof. iDestruct 1 as (??) "C". by iApply code_own_strict_valid. Qed.
-      Lemma ctor_at_strict_valid tu f p :   ctor_at tu f p |-- strict_valid_ptr p.
+      Lemma ctor_at_strict_valid f p : ctor_at f p |-- strict_valid_ptr p.
       Proof. iDestruct 1 as (??) "C". by iApply code_own_strict_valid. Qed.
-      Lemma dtor_at_strict_valid tu f p :   dtor_at tu f p |-- strict_valid_ptr p.
+      Lemma dtor_at_strict_valid f p : dtor_at f p |-- strict_valid_ptr p.
       Proof. iDestruct 1 as (??) "C". by iApply code_own_strict_valid. Qed.
 
-      Lemma code_at_mono tu tu' f f' p :
+      Lemma code_at_mono f f' p :
         ObjValue_ler (Ofunction f) (Ofunction f') ->
-        code_at tu' f' p |-- code_at tu f p.
+        code_at f' p |-- code_at f p.
       Proof. iIntros (?). iDestruct 1 as (??) "C". iExists _; iFrame. iPureIntro. by etrans. Qed.
-      Lemma method_at_mono tu tu' m m' p :
+      Lemma method_at_mono m m' p :
         ObjValue_ler (Omethod m) (Omethod m') ->
-        method_at tu' m' p |-- method_at tu m p.
+        method_at m' p |-- method_at m p.
       Proof. iIntros (?). iDestruct 1 as (??) "C". iExists _; iFrame. iPureIntro. by etrans. Qed.
-      Lemma ctor_at_mono tu tu' c c' p :
+      Lemma ctor_at_mono c c' p :
         ObjValue_ler (Oconstructor c) (Oconstructor c') ->
-        ctor_at tu' c' p |-- ctor_at tu c p.
+        ctor_at c' p |-- ctor_at c p.
       Proof. iIntros (?). iDestruct 1 as (??) "C". iExists _; iFrame. iPureIntro. by etrans. Qed.
-      Lemma dtor_at_mono tu tu' d d' p :
+      Lemma dtor_at_mono d d' p :
         ObjValue_ler (Odestructor d) (Odestructor d') ->
-        dtor_at tu' d' p |-- dtor_at tu d p.
+        dtor_at d' p |-- dtor_at d p.
       Proof. iIntros (?). iDestruct 1 as (??) "C". iExists _; iFrame. iPureIntro. by etrans. Qed.
     End with_genv.
 
