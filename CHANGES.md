@@ -33,6 +33,21 @@ self-assignment (`wp_union_self_copy` in `logic/func.v`), which takes full
 ownership of the union's active member as raw bytes (`unionR`, `rawsR`) and
 gives it back unchanged. Proofs of such copies now pick a disjunct first.
 
+2026.11.17: Classes with virtual base classes are no longer `Gunsupported`.
+- `GlobDecl` has a new constructor `Gvstruct (_ : VStruct)`; cpp2v emits
+  `Dvstruct` for a complete, non-dependent class with a (direct or indirect)
+  virtual base. Exhaustive matches on `GlobDecl` need a new case.
+- `wp_init_constructor` and `wp_init_inherited_constructor` now match on
+  `glob_def σ cls`: the existing premise applies to `Gstruct`, `Gunion` and
+  `Gopaque`, a `Gvstruct` goes through `wp_init_complete_vstruct`, and
+  anything else is an `ERROR`. Previously, constructing an object of a class without a size
+  (e.g. `Gunsupported`) was vacuously provable. Clients of these axioms must
+  show which kind of class they construct: `wp_init_constructor_plain` and
+  `wp_init_inherited_constructor_plain` take the old premise for a class that
+  `is_plain_class` in the translation unit.
+- New: `vbase_ptr`, `vbaseR`, `nv_tblockR`, and the `Gvstruct` cases of
+  `wp_ctor`, `wp_dtor`, and `wp_destroy_named`.
+
 2026.11.05: Add Clang 23 support for the `cpp2v` binary.
 
 2026.10.29: C++ name/type notation now parses and prints array declarators
