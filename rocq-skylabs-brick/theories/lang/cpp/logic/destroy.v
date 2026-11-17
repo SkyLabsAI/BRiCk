@@ -331,6 +331,150 @@ Section dtor.
   Proof. solve_shift_fupd wp_destructor_shift. Qed.
 End dtor.
 
+(** ** Destroying objects of classes with virtual bases *)
+
+(**
+[wp_base_destructor cls dtor this Q] invokes the destructor [dtor] of
+[cls], a class with virtual bases, on the object at [this].
+
+Such a destructor only destroys the _non-virtual part_ of the object
+(see [wp_dtor]): the virtual bases belong to the most-derived object,
+which destroys them last (see [wp_destroy_vstruct]). Accordingly, the
+destructor returns the storage of the non-virtual part only.
+*)
+Definition wp_base_destructor `{Σ : cpp_logic, σ : genv}
+    (cls : globname) (dtor : ptr) (this : ptr) (Q : epred) : mpred :=
+  letI* p := wp_mfptr (Tnamed cls) (Tfunction $ FunctionType Tvoid nil) dtor (this :: nil) in
+  Exists v, p |-> primR Tvoid 1$m v **
+  this |-> nv_tblockR cls 1$m **
+  Q.
+
+(**
+[wpd_vbases tu cls this vbases Q] destroys the virtual bases [vbases]
+of the complete object of class [cls] at [this], in list order.
+
+The location of each virtual base comes from [vbase_ptr]. A virtual
+base that itself has virtual bases is destroyed as a base-class
+subobject: its own virtual bases are in [vbases] too.
+*)
+Definition wpd_vbases `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
+    (cls : globname) (this : ptr) :=
+  fix wpd_vbases (vbases : list globname) (Q : epred) : mpred :=
+  match vbases with
+  | nil => Q
+  | vb :: vbases =>
+    Exists pvb, vbase_ptr cls vb this pvb **
+    match tu.(types) !! vb with
+    | Some (Gstruct s) =>
+      wp_destructor tu (Tnamed vb) (_global s.(s_dtor)) pvb (wpd_vbases vbases Q)
+    | Some (Gvstruct vs) =>
+      wp_base_destructor vb (_global vs.(vs_struct).(s_dtor)) pvb (wpd_vbases vbases Q)
+    | _ => ERROR ("wpd_vbases: virtual base is not a class", vb)
+    end
+  end.
+
+(**
+[wp_destroy_vstruct tu cls vs this Q] destroys the _complete_ object
+of class [cls] (with virtual bases) at [this]: its destructor destroys
+the non-virtual part, then the virtual bases are destroyed in the
+reverse order of their initialization. See
+https://eel.is/c++draft/class.dtor#14
+*)
+Definition wp_destroy_vstruct `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
+    (cls : globname) (vs : VStruct) (this : ptr) (Q : epred) : mpred :=
+  letI* := wp_base_destructor cls (_global vs.(vs_struct).(s_dtor)) this in
+  wpd_vbases tu cls this (rev (fst <$> vs.(vs_vbases))) Q.
+
+#[local] Hint Resolve ERROR_elim UNSUPPORTED_elim : core.
+
+Section vstruct.
+  Context `{Σ : cpp_logic, σ : genv}.
+  Implicit Types (Q : epred).
+
+  Lemma wp_base_destructor_frame_fupd cls dtor this Q Q' :
+    (Q -* |={top}=> Q')
+    |-- wp_base_destructor cls dtor this Q -* wp_base_destructor cls dtor this Q'.
+  Proof.
+    iIntros "HQ". iApply wp_mfptr_frame_fupd.
+    iIntros "%p (%v & V & B & Q)". iMod ("HQ" with "Q") as "Q".
+    iExists v. by iFrame.
+  Qed.
+
+  Lemma wp_base_destructor_frame cls dtor this Q Q' :
+    Q -* Q' |-- wp_base_destructor cls dtor this Q -* wp_base_destructor cls dtor this Q'.
+  Proof.
+    iIntros "HQ". iApply wp_base_destructor_frame_fupd.
+    iIntros "Q !>". by iApply "HQ".
+  Qed.
+
+  Lemma wp_base_destructor_shift cls dtor this Q :
+    (|={top}=> wp_base_destructor cls dtor this (|={top}=> Q))
+    |-- wp_base_destructor cls dtor this Q.
+  Proof.
+    iIntros "wp". iApply wp_mfptr_shift. iMod "wp". iModIntro.
+    iApply (wp_mfptr_frame with "[] wp").
+    iIntros (p) "(%v & V & B & >Q) !>". iExists v. by iFrame.
+  Qed.
+
+  Lemma wpd_vbases_frame tu tu' cls this vbases Q Q' :
+    sub_module tu tu' ->
+    Q -* Q' |-- wpd_vbases tu cls this vbases Q -* wpd_vbases tu' cls this vbases Q'.
+  Proof.
+    intros Htu. elim: vbases Q Q' => [|vb vbases IH] Q Q' /=; first by iIntros "$".
+    iIntros "HQ (%pvb & V & wp)". iExists pvb. iFrame "V".
+    destruct (tu.(types) !! vb) as [[]|] eqn:Hvb.
+    all: try by iDestruct (ERROR_elim with "wp") as "[]".
+    - rewrite (sub_module_preserves_gstruct _ _ _ _ Htu Hvb).
+      iApply (wp_destructor_frame with "[HQ] wp"); first done. by iApply IH.
+    - rewrite (sub_module_preserves_gvstruct _ _ _ _ Htu Hvb).
+      iApply (wp_base_destructor_frame with "[HQ] wp"). by iApply IH.
+  Qed.
+
+  Lemma wpd_vbases_fupd tu cls this vbases Q :
+    wpd_vbases tu cls this vbases (|={top}=> Q)
+    |-- |={top}=> wpd_vbases tu cls this vbases Q.
+  Proof.
+    elim: vbases => [|vb vbases IH] /=; first done.
+    iIntros "(%pvb & V & wp) !>". iExists pvb. iFrame "V".
+    destruct (tu.(types) !! vb) as [[]|].
+    all: try by iDestruct (ERROR_elim with "wp") as "[]".
+    - iApply wp_destructor_fupd. iApply (wp_destructor_frame with "[] wp"); first done.
+      iApply IH.
+    - iApply (wp_base_destructor_frame_fupd with "[] wp"). iApply IH.
+  Qed.
+
+  Lemma wp_destroy_vstruct_frame tu tu' cls vs this Q Q' :
+    sub_module tu tu' ->
+    Q -* Q' |-- wp_destroy_vstruct tu cls vs this Q -* wp_destroy_vstruct tu' cls vs this Q'.
+  Proof.
+    intros. iIntros "HQ". iApply wp_base_destructor_frame.
+    by iApply wpd_vbases_frame.
+  Qed.
+
+  Lemma wp_destroy_vstruct_shift tu cls vs this Q :
+    (|={top}=> wp_destroy_vstruct tu cls vs this (|={top}=> Q))
+    |-- wp_destroy_vstruct tu cls vs this Q.
+  Proof.
+    iIntros "wp". iApply wp_base_destructor_shift. iMod "wp". iModIntro.
+    iApply (wp_base_destructor_frame with "[] wp"). iApply wpd_vbases_fupd.
+  Qed.
+
+  Lemma fupd_wp_destroy_vstruct tu cls vs this Q :
+    (|={top}=> wp_destroy_vstruct tu cls vs this Q)
+    |-- wp_destroy_vstruct tu cls vs this Q.
+  Proof.
+    iIntros "wp". iApply wp_destroy_vstruct_shift. iMod "wp". iModIntro.
+    iApply (wp_destroy_vstruct_frame with "[] wp"); first done. by iIntros "$".
+  Qed.
+
+  #[global] Instance wp_destroy_vstruct_mono tu cls vs this :
+    Proper (bi_entails ==> bi_entails) (wp_destroy_vstruct tu cls vs this).
+  Proof.
+    intros Q Q' HQ. iIntros "wp".
+    iApply (wp_destroy_vstruct_frame with "[] wp"); first done. iApply HQ.
+  Qed.
+End vstruct.
+
 (** ** Destroying structures and unions *)
 
 #[local] Definition wp_destroy_named_body `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
@@ -366,6 +510,15 @@ End dtor.
     its specification; [wp_dtor] does not give it a body.
     *)
     wp_destructor tu (Tnamed cls) (_global o.(o_dtor)) this Q
+  | Some (Gvstruct vs) =>
+    (*
+    [wp_destroy_named] destroys complete objects (and base-class
+    subobjects of classes without virtual bases), so here the virtual
+    bases are destroyed too. A base-class subobject of a class with
+    virtual bases is destroyed with [wp_base_destructor] instead (see
+    [wp_dtor]).
+    *)
+    wp_destroy_vstruct tu cls vs this Q
   | _ => |={top}=> ERROR ("wp_destroy_named: cannot resolve", cls)
   end.
 
@@ -418,6 +571,7 @@ Section named.
     | Some (Gstruct s) => wp_destructor tu (Tnamed cls) (_global s.(s_dtor)) this Q
     | Some (Gunion u) => wp_destructor tu (Tnamed cls) (_global u.(u_dtor)) this Q
     | Some (Gopaque o) => wp_destructor tu (Tnamed cls) (_global o.(o_dtor)) this Q
+    | Some (Gvstruct vs) => wp_destroy_vstruct tu cls vs this Q
     | _ => False
     end.
 
@@ -485,12 +639,13 @@ Section named.
   Proof.
     intros Htu. move: (Htu)=>/types_compat Htt. wp_destroy_named_unfold.
     destruct (_ !! _) as [v1|] eqn:Hv1; last first.
-    { case_match; auto. case_match; eauto using fupd_wp_destructor. }
+    { case_match; auto.
+      case_match; eauto using fupd_wp_destructor, fupd_wp_destroy_vstruct. }
     destruct (Htt cls _ Hv1) as (v2 & Heq & Hle). rewrite Heq; clear Heq.
     destruct v1, v2; try done.
-    all: try solve [ eauto using fupd_wp_destructor ].
+    all: try solve [ eauto using fupd_wp_destructor, fupd_wp_destroy_vstruct ].
     all: cbn in Hle; case_bool_decide; [subst|done].
-    all: by apply wp_destructor_frame.
+    all: first [ by apply wp_destructor_frame | by apply wp_destroy_vstruct_frame ].
   Qed.
 
   Lemma wp_destroy_named_shift tu cls this Q :
@@ -498,7 +653,8 @@ Section named.
     |-- wp_destroy_named tu cls this Q.
   Proof.
     wp_destroy_named_unfold.
-    destruct (_ !! _) as [[] |]; auto using wp_destructor_shift.
+    destruct (_ !! _) as [[] |];
+      auto using wp_destructor_shift, wp_destroy_vstruct_shift.
   Qed.
 
   Lemma fupd_wp_destroy_named tu cls this Q :

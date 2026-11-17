@@ -1723,8 +1723,21 @@ Module Type Expr.
       | _ => None
       end.
 
+    (** [wp_init] constructs complete objects, and base-class subobjects
+        of classes without virtual bases.
+
+        For a class with virtual bases, a complete object needs more than
+        a call to the constructor, which only constructs the non-virtual
+        part: the virtual bases are constructed first (see
+        [wp_init_complete_vstruct]). We consult the global environment
+        [resolve] rather than [tu] for this, because a translation unit that
+        only declares [cls] must not fall back to the plain call. *)
     Axiom wp_init_constructor : forall cls ty cv (this : ptr) cnd es Q,
       decompose_type ty = (cv, Tnamed cls) ->
+        match glob_def resolve cls with
+        | Some (Gvstruct vs) =>
+          wp_init_complete_vstruct tu ρ cls vs cv this cnd es Q
+        | _ =>
         (* NOTE because the AST does not include the types of the arguments of
            the constructor, we have to look up the type in the environment.
          *)
@@ -1747,10 +1760,15 @@ Module Type Expr.
              end
            | _ => ERROR ("Constructor not found.", cnd)
            end
+        end
       |-- wp_init ty this (Econstructor cnd es ty) Q.
 
     Axiom wp_init_inherited_constructor : forall cls ty cv (this : ptr) cnd vars Q,
       decompose_type ty = (cv, Tnamed cls) ->
+        match glob_def resolve cls with
+        | Some (Gvstruct _) =>
+          UNSUPPORTED ("inherited constructor of a class with virtual bases", cnd)
+        | _ =>
         (* NOTE because the AST does not include the types of the arguments of
            the constructor, we have to look up the type in the environment.
          *)
@@ -1771,6 +1789,7 @@ Module Type Expr.
              end
            | _ => ERROR ("Constructor not found.", cnd)
            end
+        end
       |-- wp_init ty this (Einherited_constructor cnd vars ty) Q.
 
     Axiom wp_init_lambda : forall ty cls (this : ptr) es Q,
