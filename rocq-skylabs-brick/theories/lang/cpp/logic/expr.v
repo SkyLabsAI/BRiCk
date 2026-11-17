@@ -1731,13 +1731,18 @@ Module Type Expr.
         part: the virtual bases are constructed first (see
         [wp_init_complete_vstruct]). We consult the global environment
         [resolve] rather than [tu] for this, because a translation unit that
-        only declares [cls] must not fall back to the plain call. *)
+        only declares [cls] must not fall back to the plain call.
+
+        The class must have a size: a body, or an opaque record.
+        Otherwise [tblockR] below would describe no storage (the class has
+        no size), which would make the rule vacuous instead of stuck: the
+        constructor would never be called and [Q] would never be proved. *)
     Axiom wp_init_constructor : forall cls ty cv (this : ptr) cnd es Q,
       decompose_type ty = (cv, Tnamed cls) ->
         match glob_def resolve cls with
         | Some (Gvstruct vs) =>
           wp_init_complete_vstruct tu ρ cls vs cv this cnd es Q
-        | _ =>
+        | Some (Gstruct _ | Gunion _ | Gopaque _) =>
         (* NOTE because the AST does not include the types of the arguments of
            the constructor, we have to look up the type in the environment.
          *)
@@ -1760,6 +1765,7 @@ Module Type Expr.
              end
            | _ => ERROR ("Constructor not found.", cnd)
            end
+        | _ => ERROR ("Constructor of a class without a body.", cls)
         end
       |-- wp_init ty this (Econstructor cnd es ty) Q.
 
@@ -1768,7 +1774,7 @@ Module Type Expr.
         match glob_def resolve cls with
         | Some (Gvstruct _) =>
           UNSUPPORTED ("inherited constructor of a class with virtual bases", cnd)
-        | _ =>
+        | Some (Gstruct _ | Gunion _ | Gopaque _) =>
         (* NOTE because the AST does not include the types of the arguments of
            the constructor, we have to look up the type in the environment.
          *)
@@ -1789,8 +1795,80 @@ Module Type Expr.
              end
            | _ => ERROR ("Constructor not found.", cnd)
            end
+        | _ => ERROR ("Constructor of a class without a body.", cls)
         end
       |-- wp_init ty this (Einherited_constructor cnd vars ty) Q.
+
+    (** [is_plain_class cls] holds when [tu] gives [cls] a size and no
+        virtual bases: a struct, a union, or an opaque record. Clients use the following lemmas, which decide the
+        class kind from [tu] rather than from the [genv]. *)
+    Definition is_plain_class (cls : globname) : bool :=
+      match tu.(types) !! cls with
+      | Some (Gstruct _ | Gunion _ | Gopaque _) => true
+      | _ => false
+      end.
+
+    Lemma wp_init_constructor_plain : forall cls ty cv (this : ptr) cnd es Q,
+      decompose_type ty = (cv, Tnamed cls) ->
+      is_plain_class cls = true ->
+           match type_of_ctor tu cnd with
+           | Some ctor_type =>
+             match marg_types ctor_type with
+             | Some arg_types =>
+                letI* _, argps, ifree, free := wp_args evaluation_order.nd nil arg_types es in
+                |> (this |-> tblockR (Tnamed cls) 1$m -*
+                   letI* resultp := wp_fptr ctor_type (_global cnd) (this :: argps) in
+                   letI* := interp ifree in
+                    resultp |-> primR Tvoid 1$m Vvoid **
+                    let Q := Q free in
+                    if q_const cv
+                    then wp_make_const tu this (Tnamed cls) Q
+                    else Q)
+             | _ => False
+             end
+           | _ => ERROR ("Constructor not found.", cnd)
+           end
+      |-- wp_init ty this (Econstructor cnd es ty) Q.
+    Proof.
+      intros * Hty Hcls. rewrite -wp_init_models. iIntros "P #M".
+      iDestruct (observe [| tu ⊧ resolve |] with "M") as %Hσ.
+      iApply wp_init_constructor; first done.
+      rewrite /is_plain_class in Hcls.
+      destruct (tu.(types) !! cls) as [[]|] eqn:Hg; rewrite Hg in Hcls; try done.
+      - by rewrite (glob_def_genv_compat_union (Hσ:=Hσ) _ Hg).
+      - by rewrite (glob_def_genv_compat_struct (Hσ:=Hσ) _ Hg).
+      - by rewrite (glob_def_genv_compat_opaque (Hσ:=Hσ) _ Hg).
+    Qed.
+
+    Lemma wp_init_inherited_constructor_plain : forall cls ty cv (this : ptr) cnd vars Q,
+      decompose_type ty = (cv, Tnamed cls) ->
+      is_plain_class cls = true ->
+           match type_of_ctor tu cnd with
+           | Some ctor_type =>
+             match marg_types ctor_type with
+             | Some arg_types =>
+                |> (this |-> tblockR (Tnamed cls) 1$m -*
+                   letI* resultp := wp_fptr ctor_type (_global cnd) (this :: List.map (_local ρ) vars) in
+                    resultp |-> primR Tvoid 1$m Vvoid **
+                    let Q := Q FreeTemps.id in
+                    if q_const cv
+                    then wp_make_const tu this (Tnamed cls) Q
+                    else Q)
+             | _ => False
+             end
+           | _ => ERROR ("Constructor not found.", cnd)
+           end
+      |-- wp_init ty this (Einherited_constructor cnd vars ty) Q.
+    Proof.
+      intros * Hty Hcls. rewrite -wp_init_models. iIntros "P #M".
+      iDestruct (observe [| tu ⊧ resolve |] with "M") as %Hσ.
+      iApply wp_init_inherited_constructor; first done.
+      rewrite /is_plain_class in Hcls.
+      destruct (tu.(types) !! cls) as [[]|] eqn:Hg; rewrite Hg in Hcls; try done.
+      - by rewrite (glob_def_genv_compat_union (Hσ:=Hσ) _ Hg).
+      - by rewrite (glob_def_genv_compat_struct (Hσ:=Hσ) _ Hg).
+      - by rewrite (glob_def_genv_compat_opaque (Hσ:=Hσ) _ Hg).
+    Qed.
 
     Axiom wp_init_lambda : forall ty cls (this : ptr) es Q,
           wp_init ty this (Einitlist es None (Tnamed cls)) Q
