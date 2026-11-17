@@ -236,6 +236,7 @@ Section with_lang.
     | Tfunction ft =>
         (parens $ printT ft.(ft_return) ++ "*") ++
         (parens $ concat $ join_sep ", " $ printT <$> ft.(ft_params))
+    | Tvector t _ _ => "__vector(" ++ printT t ++ ")"
     | Tarch _ note => "?" ++ note
     | Tunsupported note => "?" ++ note
     | Tauto => "auto"

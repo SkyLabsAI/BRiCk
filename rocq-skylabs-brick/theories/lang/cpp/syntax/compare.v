@@ -1212,6 +1212,16 @@ Module type.
       compare_lex (option.compare bitsize.compare b1.(box_Tarch_0) b2.(box_Tarch_0)) $ fun _ =>
       PrimString.compare b1.(box_Tarch_1) b2.(box_Tarch_1).
 
+    Record box_Tvector : Set := Box_Tvector {
+      box_Tvector_0 : type;
+      box_Tvector_1 : N;
+      box_Tvector_2 : N;
+    }.
+    Definition box_Tvector_compare (b1 b2 : box_Tvector) : comparison :=
+      compare_lex (compareT b1.(box_Tvector_0) b2.(box_Tvector_0)) $ fun _ =>
+      compare_lex (N.compare b1.(box_Tvector_1) b2.(box_Tvector_1)) $ fun _ =>
+      N.compare b1.(box_Tvector_2) b2.(box_Tvector_2).
+
     Import PrimInt63.
 
     Definition prim_tagFT (ft : float_type.t) : PrimInt63.int :=
@@ -1257,7 +1267,8 @@ Module type.
       | 21 => box_Tresult_member_call
       | 22 => box_Tresult_parenlist
       | 23 => box_Tresult_member
-      | _ => PrimString.string
+      | 24 => PrimString.string
+      | _ => box_Tvector
       end.
 
     (*
@@ -1331,6 +1342,7 @@ Module type.
       | Tresult_member a b => kp 23 $ Box_Tresult_member a b
       | Tauto => k 3%uint63
       | Tunsupported msg => kp 24 msg
+      | Tvector t n al => kp 25 $ Box_Tvector t n al
       end.
 
     Definition compare_data (p : positive) : car p -> car p -> comparison :=
@@ -1353,7 +1365,8 @@ Module type.
       | 21 => box_Tresult_member_call_compare
       | 22 => box_Tresult_parenlist_compare
       | 23 => box_Tresult_member_compare
-      | _ => PrimString.compare
+      | 24 => PrimString.compare
+      | _ => box_Tvector_compare
       end.
 
     Definition compare_body' (a b : positive) (av : car a) : car b -> comparison :=

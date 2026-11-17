@@ -287,6 +287,7 @@ with type : Set :=
 | Tbool
 | Tmember_pointer (gn : (* classname *)type) (t : type)
 | Tfloat_ (_ : float_type.t)
+| Tvector (elem : type) (num_elems : N) (align : N)
 | Tqualified (q : type_qualifiers) (t : type)
 | Tnullptr
 | Tarch (osz : option bitsize) (name : PrimString.string)
@@ -1031,6 +1032,7 @@ with is_dependentT (t : type) : bool :=
   | Tbool => false
   | Tmember_pointer gn t => is_dependentT gn || is_dependentT t
   | Tfloat_ _ => false
+  | Tvector t _ _ => is_dependentT t
   | Tqualified _ t => is_dependentT t
   | Tnullptr
   | Tarch _ _ => false

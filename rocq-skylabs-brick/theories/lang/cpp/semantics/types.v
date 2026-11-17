@@ -136,6 +136,7 @@ Fixpoint size_of (resolve : genv) (t : type) : option N :=
   | Tqualified _ t => size_of resolve t
   | Tnullptr => Some (pointer_size resolve)
   | Tfloat_ sz => Some (float_type.bytesN sz)
+  | Tvector t n _ => N.mul n <$> size_of resolve t
   | Tarch sz _ => bitsize.bytesN <$> sz
   | Tunsupported _ => None
   | Tdecltype _
@@ -191,6 +192,7 @@ Proof.
     case: (types (genv_tu x) !! gn); simpl; try constructor.
     move => ? /(_ _ eq_refl) [g2 [-> HH]] * /=.
     exact: proper_GlobDecl_size_of.
+  - by destruct IHt; constructor; subst.
   - by destruct osz; constructor.
 Qed.
 
@@ -289,6 +291,15 @@ Qed.
   SizeOf ty a ->
   TCEq (n * a)%N b ->
   SizeOf (Tarray ty n) b.
+Proof.
+  rewrite /SizeOf TCEq_eq=>Hty <-.
+  cbn. by rewrite Hty.
+Qed.
+
+#[global] Instance vector_size_of {σ : genv} ty a n al b :
+  SizeOf ty a ->
+  TCEq (n * a)%N b ->
+  SizeOf (Tvector ty n al) b.
 Proof.
   rewrite /SizeOf TCEq_eq=>Hty <-.
   cbn. by rewrite Hty.
@@ -536,6 +547,13 @@ Section with_genv.
 
   Axiom align_of_erase_qualifiers : ∀ t,
       align_of (erase_qualifiers t) = align_of t.
+
+  Axiom align_of_vector : forall (elem : type) (n al sz : N),
+      size_of σ (Tvector elem n al) = Some sz ->
+      (0 < sz)%N ->
+      (exists k, al = N.pow 2 k) ->
+      (al | sz)%N ->
+      align_of (Tvector elem n al) = Some al.
 
   Lemma align_of_char : align_of Tchar = Some 1%N.
   Proof.

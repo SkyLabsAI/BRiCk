@@ -917,6 +917,62 @@ Module SimpleCPP.
         exact: _Z_to_bytes_inj_2.
       Qed.
 
+      Definition pure_encodes_vector (elem : type) (n al : N) (v : val) (vs : list runtime_val) : Prop :=
+        match size_of σ (Tvector elem n al) with
+        | Some sz =>
+          (0 < sz)%N /\
+          match v with
+          | Vvec bs =>
+              N.of_nat (length bs) = sz /\
+              List.Forall (fun b => (b < 256)%N) bs /\
+              vs = Rval <$> bs
+          | Vundef => vs = repeat Rundef (N.to_nat sz)
+          | _ => False
+          end
+        | None => False
+        end.
+      #[local] Arguments pure_encodes_vector : simpl never.
+
+      Definition pure_encodes_vector_len (elem : type) (n al : N) : nat :=
+        match size_of σ (Tvector elem n al) with
+        | Some sz => if decide (0 < sz)%N then N.to_nat sz else 1
+        | None => 1
+        end.
+      #[local] Arguments pure_encodes_vector_len : simpl never.
+
+      Lemma length_pure_encodes_vector elem n al v vs :
+        pure_encodes_vector elem n al v vs ->
+        length vs = pure_encodes_vector_len elem n al.
+      Proof.
+        rewrite /pure_encodes_vector /pure_encodes_vector_len.
+        destruct (size_of σ (Tvector elem n al)) as [sz|] => //.
+        intros [Hpos Hv]. case_decide => //.
+        destruct v => //; destruct_and?; subst.
+        - by rewrite length_fmap Nat2N.id.
+        - by rewrite repeat_length.
+      Qed.
+
+      Lemma pure_encodes_vector_len_pos elem n al :
+        pure_encodes_vector_len elem n al > 0.
+      Proof.
+        rewrite /pure_encodes_vector_len.
+        destruct (size_of σ (Tvector elem n al)); [case_decide; lia | lia].
+      Qed.
+
+      Lemma pure_encodes_vector_agree elem n al v1 v2 vs :
+        pure_encodes_vector elem n al v1 vs ->
+        pure_encodes_vector elem n al v2 vs ->
+        v1 = v2.
+      Proof.
+        rewrite /pure_encodes_vector.
+        destruct (size_of σ (Tvector elem n al)) as [sz|] => //.
+        intros [Hpos Hv1] [_ Hv2].
+        destruct v1, v2 => //; destruct_and?; subst.
+        - f_equal. apply (inj (fmap Rval)). congruence.
+        - destruct l as [|? ?]; [simpl in *; lia | destruct (N.to_nat _); simpl in *; discriminate].
+        - destruct l as [|? ?]; [simpl in *; lia | destruct (N.to_nat _); simpl in *; discriminate].
+      Qed.
+
       Definition pure_encodes (t : type) (v : val) (vs : list runtime_val) : Prop :=
         match erase_qualifiers t with
         | Tnum sz sgn =>
@@ -968,6 +1024,7 @@ Module SimpleCPP.
           | Vundef => pure_encodes_undef (float_type.bitsize ft) vs
           | _ => False
           end
+        | Tvector elem n al => pure_encodes_vector elem n al v vs
         | Tarch _ _ => False
         | Tptr _ =>
           match v with
@@ -1009,7 +1066,7 @@ Module SimpleCPP.
       #[local] Hint Resolve length_Z_to_bytes : core.
       #[local] Hint Resolve length_aptr : core.
       #[local] Hint Resolve length_cptr : core.
-      #[local] Hint Resolve length_pure_encodes_undef : core.
+      #[local] Hint Resolve length_pure_encodes_undef length_pure_encodes_vector : core.
 
       Lemma length_encodes t v vs :
         pure_encodes t v vs ->
@@ -1018,6 +1075,7 @@ Module SimpleCPP.
                       | Tnum sz _ => int_rank.bytesNat sz
                       | Tchar_ ct => N.to_nat (char_type.bytesN ct)
                       | Tfloat_ ft => bitsize.bytesNat (float_type.bitsize ft)
+                      | Tvector elem n al => pure_encodes_vector_len elem n al
 
                       | Tmember_pointer _ _ => bitsize.bytesNat (member_pointer_bitsize σ)
                       | Tnullptr | Tptr _
@@ -1045,7 +1103,7 @@ Module SimpleCPP.
         length vs > 0.
       Proof.
         move=> /length_encodes ->. have ?: 1 > 0 by exact: le_n.
-        induction t; simpl; try solve [ lia | exact: bytesNat_pos ].
+        induction t; simpl; try solve [ lia | exact: bytesNat_pos | exact: pure_encodes_vector_len_pos ].
         all: first [ destruct sz | destruct t ]; compute; lia.
       Qed.
 
@@ -1084,7 +1142,8 @@ Module SimpleCPP.
           edestruct pure_encodes_undef_Z_to_bytes |
           f_equal; apply N2Z.inj; exact: Z_to_bytes_inj |
           f_equal; apply float_value.to_bits_inj; exact: Z_to_bytes_inj |
-          f_equiv; exact: Z_to_bytes_inj ].
+          f_equiv; exact: Z_to_bytes_inj |
+          eapply pure_encodes_vector_agree; eassumption ].
       Qed.
 
       #[global] Instance encodes_consistent t v1 v2 vs1 vs2 :

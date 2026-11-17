@@ -349,6 +349,11 @@ Section with_monad.
     | Tqualified q t =>
         (if q_volatile q then PARTIAL "volatile: accesses are modelled as ordinary memory" else OK)
         <+> type t
+    | Tvector t n al =>
+        (if (is_dependentT t || is_vector_elem_type t) &&
+            bool_decide (n <> 0)%N && bool_decide (al <> 0)%N
+         then OK
+         else FAIL "unsupported vector type") <+> no_refs (type t)
     | Tarch _ _ => OK
     | Tdecltype e | Texprtype e => expr e
     | Tnamed n | Tenum n => REF n <+> name n

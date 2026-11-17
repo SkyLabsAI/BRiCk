@@ -191,6 +191,7 @@ Definition promote_integral (tu : translation_unit) (ty : type) : option type :=
   | Tfunction _
   | Tmember_pointer _ _
   | Tfloat_ _
+  | Tvector _ _ _
   | Tnullptr
   | Tarch _ _ => None
   | Tqualified _ _ => None (* unreachable *)

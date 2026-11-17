@@ -127,6 +127,7 @@ Section with_cpp.
       | Trv_ref _
       | Tenum _
       | Tmember_pointer _ _
+      | Tvector _ _ _
       | Tarch _ _ => R q t
       | Tnamed nm =>
           match tu.(types) !! nm with

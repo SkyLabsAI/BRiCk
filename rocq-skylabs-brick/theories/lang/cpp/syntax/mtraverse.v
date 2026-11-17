@@ -200,6 +200,7 @@ Module MTraverse.
       | Tbool => mret Tbool
       | Tmember_pointer gn t => Tmember_pointer <$> traverseT gn <*> traverseT t
       | Tfloat_ t => mret $ Tfloat_ t
+      | Tvector t n al => (fun t' => Tvector t' n al) <$> traverseT t
       | Tnullptr => mret Tnullptr
       | Tarch sz t => mret $ Tarch sz t
       | Tdecltype e => Tdecltype <$> traverseE e

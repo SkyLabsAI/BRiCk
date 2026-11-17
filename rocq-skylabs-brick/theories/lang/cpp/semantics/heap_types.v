@@ -21,6 +21,7 @@ Fixpoint is_Rtype (s : type) : bool :=
   | Tnullptr
   | Tchar_ _
   | Tfloat_ _ => true
+  | Tvector t _ _ => is_Rtype t
   | Tptr t | Tref t | Trv_ref t => is_Rtype t
   | Tincomplete_array _
   | Tvariable_array _ _ => false
