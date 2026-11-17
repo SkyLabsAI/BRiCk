@@ -1779,6 +1779,24 @@ Module SimpleCPP.
       by apply singleton_update, cmra_update_exclusive.
     Qed.
 
+    (* As for [mdc_path], this isn't accurate, but it is sufficient to show
+       that the laws are instantiatable: nothing in [CPP_LOGIC] introduces
+       [vbase_ptr]. *)
+    Definition vbase_ptr {_ : genv} (cls vbase : globname) (p pvb : ptr) : mpred :=
+      (* [valid_ptr nullptr] only makes the definition depend on the logic,
+         as its signature requires. *)
+      [| pvb = p |] ** valid_ptr nullptr.
+
+    Instance vbase_ptr_persistent cls vbase p pvb :
+      Persistent (vbase_ptr cls vbase p pvb) := _.
+    Instance vbase_ptr_affine cls vbase p pvb :
+      Affine (vbase_ptr cls vbase p pvb) := _.
+    Instance vbase_ptr_timeless cls vbase p pvb :
+      Timeless (vbase_ptr cls vbase p pvb) := _.
+    Instance vbase_ptr_functional cls vbase p pvb1 pvb2 :
+      Observe2 [| pvb1 = pvb2 |] (vbase_ptr cls vbase p pvb1) (vbase_ptr cls vbase p pvb2).
+    Proof. rewrite /vbase_ptr. iIntros "[-> _] [-> _]". auto. Qed.
+
     Definition tptsto (t : type) (q : cQp.t) (p : ptr) (v : val) : mpred :=
       [| p <> nullptr |] ** [| is_heap_type t |] **
       Exists (oa : option addr),

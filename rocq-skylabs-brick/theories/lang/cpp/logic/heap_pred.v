@@ -29,6 +29,7 @@ Require Export skylabs.lang.cpp.logic.heap_pred.simple.
 Require Export skylabs.lang.cpp.logic.heap_pred.tptsto.
 Require Export skylabs.lang.cpp.logic.heap_pred.uninit.
 Require Export skylabs.lang.cpp.logic.heap_pred.valid.
+Require Export skylabs.lang.cpp.logic.heap_pred.vbase.
 
 #[local] Set Printing Coercions.
 

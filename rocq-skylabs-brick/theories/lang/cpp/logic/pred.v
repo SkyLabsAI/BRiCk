@@ -408,6 +408,54 @@ Module Type CPP_LOGIC
 
   End with_cpp_logic.
 
+    (** [vbase_ptr cls vbase p pvb] states that the <<virtual>> base class
+        [vbase] of the object of class [cls] at [p] is located at [pvb].
+
+        [p] may be a complete object or a base-class subobject. The location
+        of a virtual base is not a function of [cls] and [p]: it depends on
+        the most-derived object that [p] is part of. For example, with
+        <<
+        struct VB { int v; };
+        struct L : virtual VB { int l; };
+        struct R : virtual VB { int r; };
+        struct G : L, R { };
+        >>
+        and a complete <<G>> at [g], all of
+        [[
+        vbase_ptr "::G" "::VB" g pvb
+        vbase_ptr "::L" "::VB" (g ,, _base "::G" "::L") pvb
+        vbase_ptr "::R" "::VB" (g ,, _base "::G" "::R") pvb
+        ]]
+        hold for the same [pvb], which is not where the <<VB>> of a
+        complete <<L>> at the same address would be.
+
+        This knowledge is fixed when storage is laid out for the
+        most-derived object and never changes afterwards (unlike
+        [mdc_path], which changes during construction and destruction), so
+        it is persistent. It is not a pure fact about pointers, and no law
+        here introduces it: only the rules that create a complete object
+        do (see [wp_init_complete_vstruct] in [func.v]).
+
+        Implementations use this ownership to represent the virtual-base
+        offsets stored in virtual tables. *)
+    Parameter vbase_ptr : forall `{cpp_logic} {σ}
+        (cls vbase : globname) (p pvb : ptr), mpred.
+
+  Section with_cpp_logic.
+    Context `{cpp_logic} {σ}.
+
+    #[global] Declare Instance vbase_ptr_persistent cls vbase p pvb :
+      Persistent (vbase_ptr cls vbase p pvb).
+    #[global] Declare Instance vbase_ptr_affine cls vbase p pvb :
+      Affine (vbase_ptr cls vbase p pvb).
+    #[global] Declare Instance vbase_ptr_timeless cls vbase p pvb :
+      Timeless (vbase_ptr cls vbase p pvb).
+    (** A (sub)object has each virtual base at one location. *)
+    #[global] Declare Instance vbase_ptr_functional cls vbase p pvb1 pvb2 :
+      Observe2 [| pvb1 = pvb2 |] (vbase_ptr cls vbase p pvb1) (vbase_ptr cls vbase p pvb2).
+
+  End with_cpp_logic.
+
     (** the pointer points to the code
 
       note that in the presence of code-loading, function calls will
