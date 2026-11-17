@@ -23,6 +23,7 @@ Require Import skylabs.lang.cpp.logic.const.
 Require Import skylabs.lang.cpp.logic.initializers.
 Require Import skylabs.lang.cpp.logic.translation_unit.
 Require Import skylabs.lang.cpp.logic.destroy.
+Require Import skylabs.lang.cpp.logic.call.
 Require Import skylabs.lang.cpp.logic.raw.
 
 (* UPSTREAM. *)
@@ -1046,6 +1047,413 @@ Section with_cpp.
   Qed.
 End with_cpp.
 
+(** ** Constructing objects of classes with virtual bases
+
+A class [C] with virtual bases (see [VStruct]) is constructed in two
+steps (https://eel.is/c++draft/class.base.init#13):
+
+1. _only_ when [C] is the most-derived class, its virtual bases are
+   initialized, with the initializers of the constructor of [C];
+2. then its non-virtual bases and its fields are initialized and the
+   body of the constructor runs.
+
+A constructor has one body and one specification, which describe step
+2 only: [wp_ctor] takes the storage of the non-virtual part
+([nv_tblockR]) and never initializes a virtual base. The
+specification of such a constructor typically takes the [Rep]s of the
+(already constructed) virtual bases as a pre-condition and returns
+the full [Rep] of the class.
+
+Step 1 belongs to whoever constructs a complete object:
+[wp_init_complete_vstruct] below. Base-class subobjects are
+constructed with [wp_base_ctor_call], which skips it.
+
+The location of each virtual base is fixed by step 1, which
+introduces the [vbase_ptr] facts of the complete object; initializing
+a base-class subobject derives the facts of that subobject from those
+of the class being constructed ([vbase_facts_down]).
+
+We do not yet update object identities ([wp_init_identity]) across
+virtual bases, so these rules only apply when no class in the
+hierarchy has a virtual function ([no_vtables]); there is then no
+identity to update.
+*)
+
+(**
+[no_vtables tu fuel cls] holds if no class in the hierarchy of [cls]
+(itself, its bases and its virtual bases, transitively) has a vtable.
+*)
+Fixpoint no_vtables (tu : translation_unit) (fuel : nat) (cls : globname) : bool :=
+  match fuel with
+  | 0 => false
+  | S fuel =>
+    match tu.(types) !! cls with
+    | Some (Gstruct st) =>
+      negb (has_vtable st) &&
+      forallb (fun b => no_vtables tu fuel b.1) st.(s_bases)
+    | Some (Gvstruct vs) =>
+      negb (has_vtable vs.(vs_struct)) &&
+      forallb (fun b => no_vtables tu fuel b.1) vs.(vs_struct).(s_bases) &&
+      forallb (fun b => no_vtables tu fuel b.1) vs.(vs_vbases)
+    | _ => false
+    end
+  end.
+
+(** The hierarchy of [cls] has no vtable (the number of global entries
+bounds its height, as in [derivationsR]). *)
+Definition tu_no_vtables (tu : translation_unit) (cls : globname) : bool :=
+  no_vtables tu (NM.cardinal tu.(types)) cls.
+
+(**
+Layout metadata is untrusted (see [valid_alignment]), and the rules
+below hand out storage according to it, so they check it first: a
+rule that handed out contradictory storage would be vacuous.
+
+[vstruct_nv_ok vs] validates the non-virtual part: its alignment is a
+power of two that divides the alignment of a complete object, and it
+is not larger than a complete object.
+*)
+Definition vstruct_nv_ok (vs : VStruct) : bool :=
+  bool_decide (valid_alignment vs.(vs_struct).(s_alignment) vs.(vs_nv_alignment)) &&
+  bool_decide (vs.(vs_nv_size) <= vs.(vs_struct).(s_size))%N.
+
+(** The storage that a virtual base [b] occupies: all of it for an
+ordinary class, only the non-virtual part for a class that has
+virtual bases itself. *)
+Definition vbase_extent (tu : translation_unit) (b : globname) : option Z :=
+  match tu.(types) !! b with
+  | Some (Gstruct s) => Some (Z.of_N s.(s_size))
+  | Some (Gvstruct vs) => Some (Z.of_N vs.(vs_nv_size))
+  | _ => None
+  end.
+
+Fixpoint extents_disjoint (xs : list (Z * Z)) : bool :=
+  match xs with
+  | nil => true
+  | x :: xs =>
+    forallb (fun y => bool_decide (x.1 + x.2 <= y.1)%Z || bool_decide (y.1 + y.2 <= x.1)%Z) xs &&
+    extents_disjoint xs
+  end.
+
+(**
+[vstruct_layout_ok tu vs] validates the layout of a complete object:
+the non-virtual part is valid, the virtual bases are distinct, and
+their storage lies after the non-virtual part, inside the object,
+without overlap. An implementation may overlap virtual bases (e.g.
+an empty one, or one placed in the tail padding of another); complete
+objects of such classes are not supported.
+*)
+Definition vstruct_layout_ok (tu : translation_unit) (vs : VStruct) : bool :=
+  vstruct_nv_ok vs &&
+  bool_decide (NoDup (List.map fst vs.(vs_vbases))) &&
+  match
+    mapM (fun b => (fun e => (b.2.(li_offset) / 8, e)%Z) <$> vbase_extent tu b.1) vs.(vs_vbases)
+  with
+  | Some exts =>
+    forallb (fun x =>
+      bool_decide (Z.of_N vs.(vs_nv_size) <= x.1)%Z &&
+      bool_decide (x.1 + x.2 <= Z.of_N vs.(vs_struct).(s_size))%Z) exts &&
+    extents_disjoint exts
+  | None => false
+  end.
+
+(**
+[ctor_fun_type tu cnd cls] is the type of the constructor [cnd] of
+class [cls], with the types of its arguments (without [this]).
+*)
+Definition ctor_fun_type (tu : translation_unit) (cnd : obj_name) (cls : globname)
+    : option (functype * (list decltype * function_arity)) :=
+  match tu.(symbols) !! cnd with
+  | Some (Oconstructor ctor as v) =>
+    if bool_decide (ctor.(c_class) = cls) then
+      let ty := type_of_value v in
+      match ty with
+      | Tfunction {| ft_arity := ar ; ft_params := _ :: args |} => Some (ty, (args, ar))
+      | _ => None
+      end
+    else None
+  | _ => None
+  end.
+
+(**
+[wp_base_ctor_call tu ρ cls this e Q] runs the constructor call [e]
+on the non-virtual part of an object of class [cls] (with virtual
+bases) at [this]. Compare [wp_init_constructor] in [expr.v].
+*)
+Definition wp_base_ctor_call `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (ρ : region)
+    (cls : globname) (this : ptr) :=
+  fix wp_base_ctor_call (e : Expr) (Q : FreeTemps -> epred) : mpred :=
+  match e with
+  | Econstructor cnd es _ =>
+    match ctor_fun_type tu cnd cls , glob_def σ cls with
+    | Some (ctor_type, arg_types) , Some (Gvstruct vs) =>
+      if vstruct_nv_ok vs then
+        (letI* _, argps, ifree, free := wp_args tu ρ evaluation_order.nd nil arg_types es in
+        |> (this |-> nv_tblockR cls 1$m -*
+            letI* resultp := wp_fptr ctor_type (_global cnd) (this :: argps) in
+            letI* := interp tu ifree in
+            (* in the semantics, constructors return [void] *)
+            resultp |-> primR Tvoid 1$m Vvoid **
+            Q free))%I
+      else ERROR ("wp_base_ctor_call: invalid layout", cls)
+    | _ , _ => ERROR ("wp_base_ctor_call: constructor not found", cnd)
+    end
+  | Eandclean e =>
+    (* as [wp_init_clean] *)
+    wp_base_ctor_call e (fun frees => interp tu frees $ Q FreeTemps.id)
+  | _ => UNSUPPORTED ("wp_base_ctor_call: initializer for a class with virtual bases", e)
+  end.
+
+(**
+[vbase_facts_down cls base this vbases Q] derives the locations of the
+virtual bases [vbases] of the [base] subobject of the object of class
+[cls] at [this] from those of [cls]: they are the same.
+*)
+Definition vbase_facts_down `{Σ : cpp_logic, σ : genv} (cls base : globname) (this : ptr) :=
+  fix vbase_facts_down (vbases : list globname) (Q : mpred) : mpred :=
+  match vbases with
+  | nil => Q
+  | vb :: vbases =>
+    Exists pvb, vbase_ptr cls vb this pvb **
+    (vbase_ptr base vb (this ,, _base cls base) pvb -* vbase_facts_down vbases Q)
+  end.
+
+(**
+Initialization of the direct non-virtual bases of a class with virtual
+bases, in the initializer list. A base that has virtual bases itself
+is initialized as a base-class subobject.
+*)
+Definition wpi_nv_bases `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
+    (ρ : region) (cls : globname) (this : ptr) (inits : list Initializer) :=
+  fix wpi_nv_bases (bases : list globname) (Q : epred) : mpred :=
+  match bases with
+  | nil => Q
+  | b :: bases =>
+    match List.filter (fun i => bool_decide (i.(init_path) = InitBase b)) inits with
+    | nil =>
+      ERROR ("wpi_nv_bases: missing base class initializer: ", cls)
+    | i :: nil =>
+      match tu.(types) !! b with
+      | Some (Gstruct _) =>
+        wpi tu ρ cls this (Tnamed b) i (wpi_nv_bases bases Q)
+      | Some (Gvstruct bvs) =>
+        let pb := this ,, _base cls b in
+        (letI* := vbase_facts_down cls b this (List.map fst bvs.(vs_vbases)) in
+         letI* free := wp_base_ctor_call tu ρ b pb i.(init_init) in
+         letI* := interp tu free in
+         wpi_nv_bases bases Q)%I
+      | _ => ERROR ("wpi_nv_bases: base is not a class: ", cls, b)
+      end
+    | _ :: _ :: _ =>
+      ERROR ("wpi_nv_bases: multiple initializers for base: ", cls, b)
+    end
+  end.
+
+Definition wp_vstruct_initializer_list `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
+    (vs : VStruct) (ρ : region) (cls : globname) (this : ptr)
+    (inits : list Initializer) (Q : epred) : mpred :=
+  if tu_no_vtables tu cls then
+    match List.find (fun i => bool_decide (i.(init_path) = InitThis)) inits with
+    | Some {| init_init := e |} =>
+      match inits with
+      | _ :: nil =>
+        (* this is a delegating constructor: the target constructs the
+           non-virtual part, too. *)
+        wp_base_ctor_call tu ρ cls this e (fun frees => interp tu frees Q)
+      | _ =>
+        ERROR "wp_vstruct_initializer_list: delegating constructor has other initializers"
+      end
+    | None =>
+      let s := vs.(vs_struct) in
+      (**
+      Provide strict validity for the members, initialize the
+      non-virtual bases, then the members. The initializers for
+      virtual bases are not run here.
+      *)
+      this |-> svalid_members cls ((fun m => (m.(mem_name), m.(mem_type))) <$> s.(s_fields)) -*
+      wpi_nv_bases tu ρ cls this inits (List.map fst s.(s_bases))
+        (wpi_members tu ρ cls this inits s.(s_fields) Q)
+    end
+  else
+    UNSUPPORTED ("constructor of a class with virtual bases and virtual functions", cls).
+
+(**
+[vbase_facts tu cls this vps] are the locations of the virtual bases
+of a _complete_ object of class [cls] at [this]; [vps] pairs each
+virtual base with its location. A virtual base that has virtual bases
+of its own finds them at the same locations.
+*)
+Definition vbase_facts `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
+    (cls : globname) (this : ptr) (vps : list (globname * ptr)) : mpred :=
+  [** list] vp ∈ vps,
+    vbase_ptr cls vp.1 this vp.2 **
+    match tu.(types) !! vp.1 with
+    | Some (Gvstruct vvs) =>
+      [** list] w ∈ vvs.(vs_vbases),
+        match List.find (fun wp => bool_decide (wp.1 = w.1)) vps with
+        | Some wp => vbase_ptr vp.1 w.1 vp.2 wp.2
+        | None => emp
+        end
+    | _ => emp
+    end.
+
+(**
+Initialization of the virtual bases [vps] of a complete object, with
+the initializers [inits] of its constructor.
+*)
+Definition wpi_vbases `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
+    (ρ : region) (cls : globname) (inits : list Initializer) :=
+  fix wpi_vbases (vps : list (globname * ptr)) (Q : epred) : mpred :=
+  match vps with
+  | nil => Q
+  | vp :: vps =>
+    match List.filter (fun i => bool_decide (i.(init_path) = InitBase vp.1)) inits with
+    | nil =>
+      ERROR ("wpi_vbases: missing virtual base class initializer: ", cls, vp.1)
+    | i :: nil =>
+      match tu.(types) !! vp.1 with
+      | Some (Gstruct _) =>
+        (letI* free := wp_initialize tu ρ (Tnamed vp.1) vp.2 i.(init_init) in
+         letI* := interp tu free in
+         wpi_vbases vps Q)%I
+      | Some (Gvstruct _) =>
+        (letI* free := wp_base_ctor_call tu ρ vp.1 vp.2 i.(init_init) in
+         letI* := interp tu free in
+         wpi_vbases vps Q)%I
+      | _ => ERROR ("wpi_vbases: virtual base is not a class: ", cls, vp.1)
+      end
+    | _ :: _ :: _ =>
+      ERROR ("wpi_vbases: multiple initializers for virtual base: ", cls, vp.1)
+    end
+  end.
+
+(**
+[wp_init_complete_vstruct tu ρ cls vs cv this cnd es Q] constructs a
+_complete_ object of class [cls] (with virtual bases) at [this], by
+calling the constructor [cnd] on the arguments [es].
+
+After evaluating the arguments, the abstract machine picks the
+locations [pvbs] of the virtual bases, initializes each of them with
+the initializer that the constructor [cnd] has for it, and only then
+calls [cnd], which constructs the non-virtual part.
+
+The initializers of the virtual bases belong to [cnd], so this rule
+needs its definition: it does not apply to a constructor that is only
+declared in [tu]. They are evaluated in the environment of [cnd],
+i.e. with its parameters bound to the arguments exactly as [wp_ctor]
+binds them (<<const>> parameters are <<const>>); the parameters are
+then released so that [cnd] can bind them again.
+
+NOTE: a delegating constructor leaves the virtual bases to its target
+(whose arguments it evaluates first); this is not supported yet.
+*)
+Definition wp_init_complete_vstruct `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
+    (ρ : region) (cls : globname) (vs : VStruct) (cv : type_qualifiers) (this : ptr)
+    (cnd : obj_name) (es : list Expr) (Q : FreeTemps -> epred) : mpred :=
+  match tu.(symbols) !! cnd , ctor_fun_type tu cnd cls with
+  | Some (Oconstructor ctor) , Some (ctor_type, arg_types) =>
+    match ctor.(c_body) with
+    | Some (UserDefined ib | CompilerProvided ib) =>
+      let inits := ib.1 in
+      if negb (vstruct_layout_ok tu vs) then
+        UNSUPPORTED ("complete object with virtual bases: unsupported layout", cls)
+      else if existsb (fun i => bool_decide (i.(init_path) = InitThis)) inits then
+        UNSUPPORTED ("delegating constructor for a complete object with virtual bases", cnd)
+      else
+        (letI* _, argps, ifree, free := wp_args tu ρ evaluation_order.nd nil arg_types es in
+        |> Forall pvbs : list ptr,
+        [| length pvbs = length vs.(vs_vbases) |] -*
+        let vps := zip (List.map fst vs.(vs_vbases)) pvbs in
+        vbase_facts tu cls this vps -*
+        let ρ' vap := Remp (Some this) vap Tvoid in
+        letI* ρ', consts := bind_vars tu ctor.(c_arity) ctor.(c_params) argps ρ' in
+        letI* := wpi_vbases tu ρ' cls inits vps in
+        letI* := wp_make_mutables tu consts in
+        this |-> nv_tblockR cls 1$m -*
+        letI* resultp := wp_fptr ctor_type (_global cnd) (this :: argps) in
+        letI* := interp tu ifree in
+        (* in the semantics, constructors return [void] *)
+        resultp |-> primR Tvoid 1$m Vvoid **
+        let Q := Q free in
+        if q_const cv
+        then wp_make_const tu this (Tnamed cls) Q
+        else Q)%I
+    | _ =>
+      UNSUPPORTED ("complete object with virtual bases: its constructor has no body here", cnd)
+    end
+  | _ , _ => ERROR ("Constructor not found.", cnd)
+  end.
+
+Section with_cpp.
+  Context `{Σ : cpp_logic, σ : genv}.
+  Implicit Types (p : ptr) (Q : epred).
+
+  Lemma wp_base_ctor_call_frame tu ρ cls this e (Q Q' : FreeTemps -> epred) :
+    (Forall free, Q free -* Q' free)
+    |-- wp_base_ctor_call tu ρ cls this e Q -* wp_base_ctor_call tu ρ cls this e Q'.
+  Proof.
+    move: Q Q'. induction e => Q Q'; cbn; try by iIntros "_ $".
+    - case_match; last by iIntros "_ $". case_match.
+      destruct (glob_def σ cls) as [[]|]; try by iIntros "_ $".
+      case_match; last by iIntros "_ $".
+      iIntros "HQ". iApply (wp_args_frame with "[] [HQ]"); first done.
+      iIntros (????) "wp !> B". iSpecialize ("wp" with "B"). iRevert "wp".
+      iApply wp_fptr_frame. iIntros (?). iApply interp_frame.
+      iIntros "[$ Q]". by iApply "HQ".
+    - iIntros "HQ". iApply IHe. iIntros (?). iApply interp_frame. iApply "HQ".
+  Qed.
+
+  Lemma vbase_facts_down_frame cls base this vbases (Q Q' : mpred) :
+    Q -* Q'
+    |-- vbase_facts_down cls base this vbases Q -* vbase_facts_down cls base this vbases Q'.
+  Proof.
+    elim: vbases => [|vb vbases IH] /=; first by iIntros "$".
+    iIntros "HQ (%pvb & $ & wp) V". iApply (IH with "HQ"). by iApply "wp".
+  Qed.
+
+  Lemma wpi_nv_bases_frame tu ρ cls p inits bases Q Q' :
+    Q -* Q'
+    |-- wpi_nv_bases tu ρ cls p inits bases Q -* wpi_nv_bases tu ρ cls p inits bases Q'.
+  Proof.
+    move: Q Q'. induction bases; intros; first by iIntros "$".
+    rewrite /wpi_nv_bases-/(wpi_nv_bases _ _ _ _ _).
+    destruct (List.filter _ _) as [|i [|??]]; [by iIntros "_ $"| |by iIntros "_ $"].
+    destruct (_ !! _) as [[]|]; try by iIntros "_ $".
+    - iIntros "HQ". iApply wpi_frame; [done|]. by iApply IHbases.
+    - iIntros "HQ". iApply vbase_facts_down_frame.
+      iApply wp_base_ctor_call_frame. iIntros (?).
+      iApply interp_frame. by iApply IHbases.
+  Qed.
+
+  Lemma wp_vstruct_initializer_list_frame tu vs ρ cls p inits Q Q' :
+    Q -* Q'
+    |-- wp_vstruct_initializer_list tu vs ρ cls p inits Q -*
+        wp_vstruct_initializer_list tu vs ρ cls p inits Q'.
+  Proof.
+    rewrite /wp_vstruct_initializer_list. case_match; last by iIntros "_ $".
+    case_match.
+    { repeat (case_match; try by iIntros "_ $"). iIntros "HQ".
+      iApply wp_base_ctor_call_frame. iIntros (?). by iApply interp_frame. }
+    { iIntros "HQ". iApply wand_frame.
+      iApply wpi_nv_bases_frame.
+      by iApply wpi_members_frame. }
+  Qed.
+
+  Lemma wpi_vbases_frame tu ρ cls inits vps Q Q' :
+    Q -* Q'
+    |-- wpi_vbases tu ρ cls inits vps Q -* wpi_vbases tu ρ cls inits vps Q'.
+  Proof.
+    move: Q Q'. induction vps; intros; first by iIntros "$".
+    rewrite /wpi_vbases-/(wpi_vbases _ _ _ _).
+    destruct (List.filter _ _) as [|i [|??]]; [by iIntros "_ $"| |by iIntros "_ $"].
+    destruct (_ !! _) as [[]|]; try by iIntros "_ $".
+    - iIntros "HQ". iApply wp_initialize_frame; [done|]. iIntros (?).
+      iApply interp_frame. by iApply IHvps.
+    - iIntros "HQ". iApply wp_base_ctor_call_frame. iIntros (?).
+      iApply interp_frame. by iApply IHvps.
+  Qed.
+End with_cpp.
+
 Definition wp_union_initializer_list `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
     (u : decl.Union) (ρ : region) (cls : globname) (this : ptr)
     (inits : list Initializer) (Q : epred) : mpred :=
@@ -1199,6 +1607,26 @@ that implies [type_ptr].
         letI* := Kreturn_void in
         |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -* Q p
 
+      | Some (Gvstruct vs) =>
+        (*
+        this is a structure with virtual bases.
+
+        The constructor only constructs the non-virtual part of the
+        object, so it only takes the block of memory [nv_tblockR] of
+        that part. The virtual bases are constructed beforehand by
+        whoever constructs the complete object (see
+        [wp_init_complete_vstruct]).
+        *)
+        thisp |-> nv_tblockR ctor.(c_class) 1$m **
+        |>
+        let ρ vap := Remp (Some thisp) vap Tvoid in
+        letI* ρ, cleanup := bind_vars tu ctor.(c_arity) ctor.(c_params) rest_vals ρ in
+        letI* := wp_vstruct_initializer_list tu vs ρ ctor.(c_class) thisp inits in
+        letI* := wp tu ρ body in
+        letI* := Kcleanup tu cleanup in
+        letI* := Kreturn_void in
+        |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -* Q p
+
       (* This includes [Gopaque]: a constructor initializes the members and
          bases, which an opaque record does not describe. Constructors of
          opaque records can be specified and called, but not verified. *)
@@ -1223,6 +1651,7 @@ Section wp_ctor.
   #[local] Ltac initializer_list_frame :=
     lazymatch goal with
     | |- context [wp_struct_initializer_list] => iApply wp_struct_initializer_list_frame
+    | |- context [wp_vstruct_initializer_list] => iApply wp_vstruct_initializer_list_frame
     | |- context [wp_union_initializer_list] => iApply wp_union_initializer_list_frame; [done|]
     end.
 
@@ -1347,6 +1776,46 @@ Section with_cpp.
 End with_cpp.
 
 (**
+Destruction of the direct non-virtual bases [bases] (in list order)
+of a class with virtual bases. A base that has virtual bases itself is
+destroyed as a base-class subobject ([wp_base_destructor]): its
+virtual bases belong to the most-derived object. As in
+[wpi_nv_bases], such a base finds its virtual bases where the class
+being destroyed does ([vbase_facts_down]).
+*)
+Definition wpd_nv_bases `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
+    (cls : globname) (this : ptr) :=
+  fix wpd_nv_bases (bases : list globname) (Q : epred) : mpred :=
+  match bases with
+  | nil => Q
+  | b :: bases =>
+    match tu.(types) !! b with
+    | Some (Gstruct _) =>
+      interp tu (FreeTemps.delete None (Tnamed b) (this ,, _base cls b)) (wpd_nv_bases bases Q)
+    | Some (Gvstruct bvs) =>
+      vbase_facts_down cls b this (List.map fst bvs.(vs_vbases))
+        (wp_base_destructor b (_global bvs.(vs_struct).(s_dtor)) (this ,, _base cls b)
+           (wpd_nv_bases bases Q))
+    | _ => ERROR ("wpd_nv_bases: base is not a class: ", cls, b)
+    end
+  end.
+
+Section with_cpp.
+  Context `{Σ : cpp_logic, σ : genv}.
+  Implicit Types (Q : epred).
+
+  Lemma wpd_nv_bases_frame tu cls this bases Q Q' :
+    Q -* Q' |-- wpd_nv_bases tu cls this bases Q -* wpd_nv_bases tu cls this bases Q'.
+  Proof.
+    elim: bases => [|b bases IH] /=; first by iIntros "$".
+    destruct (_ !! _) as [[]|]; try by iIntros "_ $".
+    - iIntros "HQ". iApply interp_frame. by iApply IH.
+    - iIntros "HQ". iApply vbase_facts_down_frame.
+      iApply wp_base_destructor_frame. by iApply IH.
+  Qed.
+End with_cpp.
+
+(**
 [wp_dtor tu dtor args Q] defines the semantics of the destructor
 [dtor] when applied to [args] with post-condition [Q].
 
@@ -1421,6 +1890,27 @@ this resource will be consumed immediately.
           |={top}=>?upd |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -*
           Q p
         )
+      | Some (Gvstruct vs) =>
+        (*
+        this is a structure with virtual bases.
+
+        The destructor destroys the non-virtual part of the object
+        only (fields, then non-virtual bases, in reverse order) and
+        returns the memory of that part. The virtual bases are
+        destroyed afterwards by whoever destroys the complete object
+        (see [wp_destroy_vstruct]).
+
+        As for constructors, object identities across virtual bases
+        are not modeled yet, hence the [tu_no_vtables] side-condition.
+        *)
+        letI* := wp_body in
+        [| tu_no_vtables tu dtor.(d_class) |] **
+        let* := wpd_members tu dtor.(d_class) thisp vs.(vs_struct).(s_fields) in
+        let* := wpd_nv_bases tu dtor.(d_class) thisp (rev (List.map fst vs.(vs_struct).(s_bases))) in
+        thisp |-> nv_tblockR dtor.(d_class) 1$m -*
+        |={top}=>?upd |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -*
+        Q p
+
       (* This includes [Gopaque]: a destructor destroys the members and
          bases, which an opaque record does not describe. Destructors of
          opaque records can be specified and called (see
@@ -1448,13 +1938,14 @@ Section wp_dtor.
     iIntros "HQ". rewrite wp_dtor.unlock.
     repeat case_match; auto.
     all: iIntros "wp !>"; iRevert "wp".
-    1,4: iIntros ">wp !> !>"; iMod "wp"; iModIntro; iRevert "wp".
+    1,4,7: iIntros ">wp !> !>"; iMod "wp"; iModIntro; iRevert "wp".
     all: try (iApply wp_frame; [done|]; iIntros (?)).
     all: iApply Kreturn_void_frame.
     all: iIntros "($ & wp)"; iRevert "wp".
     all: try (iApply wpd_members_frame; [done|]).
     all: try (iApply wp_revert_identity_frame =>//).
     all: try (iApply wpd_bases_frame; [done|]).
+    all: try iApply wpd_nv_bases_frame.
     all: iIntros "HR R"; iMod ("HR" with "R") as "HR"; iIntros "!> !> % R".
     all: iApply "HQ".
     all: iApply ("HR" with "R").
@@ -1471,13 +1962,14 @@ Section wp_dtor.
   Proof.
     rewrite wp_dtor.unlock. repeat case_match; auto.
     all: iIntros "wp !>"; iRevert "wp".
-    1,4: iIntros "wp !> !> !>"; iRevert "wp".
+    1,4,7: iIntros "wp !> !> !>"; iRevert "wp".
     all: try (iApply wp_frame; [done|]; iIntros (?)).
     all: iApply Kreturn_void_frame.
     all: iIntros "($ & wp)"; iRevert "wp".
     all: try (iApply wpd_members_frame; [done|]).
     all: try (iApply wp_revert_identity_frame =>//).
     all: try (iApply wpd_bases_frame; [done|]).
+    all: try iApply wpd_nv_bases_frame.
     all: iIntros "HR R !>"; iSpecialize ("HR" with "R"); iIntros "!> % R".
     all: iApply ("HR" with "R").
   Qed.
