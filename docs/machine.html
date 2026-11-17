@@ -103,30 +103,29 @@ The relevant definitions can be found in <a class="reference external" href="_st
 
       The code at [p] was compiled against the program described by [σ], so
       these axioms only hold for translation units [tu] that agree with it
-      ([tu ⊧ σ]). [code_at] itself does not constrain [tu] (see
-      [code_at_mono]); without this premise, a [tu] whose type table
-      disagrees with [σ] (e.g. naming a different destructor for a class)
-      would make [wp_func tu f] describe code other than what runs at [p].
+      ([tu ⊧ σ]). Without this premise, a [tu] whose type table disagrees
+      with [σ] (e.g. naming a different destructor for a class) would make
+      [wp_func tu f] describe code other than what runs at [p].
    *)
   Axiom code_at_ok : tu ⊧ σ -&gt; forall (f : Func) p,
-      code_at tu f p
+      code_at f p
       |-- Forall ls Q, wp_func tu f ls Q -*
-                       wp_fptr (Σ:=Σ) tu.(types) (type_of_value (Ofunction f)) p ls Q.
+                       wp_fptr (Σ:=Σ) (type_of_value (Ofunction f)) p ls Q.
 
   Axiom method_at_ok : tu ⊧ σ -&gt; forall (m : Method) p,
-      method_at tu m p
+      method_at m p
       |-- Forall ls Q, wp_method tu m ls Q -*
-                       wp_fptr (Σ:=Σ) tu.(types) (type_of_value (Omethod m)) p ls Q.
+                       wp_fptr (Σ:=Σ) (type_of_value (Omethod m)) p ls Q.
 
   Axiom ctor_at_ok : tu ⊧ σ -&gt; forall (c : Ctor) p,
-      ctor_at tu c p
+      ctor_at c p
       |-- Forall ls Q, wp_ctor tu c ls Q -*
-                       wp_fptr tu.(types) (type_of_value (Oconstructor c)) p ls Q.
+                       wp_fptr (type_of_value (Oconstructor c)) p ls Q.
 
   Axiom dtor_at_ok : tu ⊧ σ -&gt; forall (d : Dtor) p,
-      dtor_at tu d p
+      dtor_at d p
       |-- Forall ls Q, wp_dtor tu d ls Q -*
-                       wp_fptr tu.(types) (type_of_value (Odestructor d)) p ls Q.
+                       wp_fptr (type_of_value (Odestructor d)) p ls Q.
 </pre></div>
 </div>
 <p>This approach effectively casts C++ as a stylized way to write machine code; however, it is more than simply macros.
