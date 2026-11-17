@@ -687,7 +687,7 @@ Section wp_method.
     destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_attrs m_body]; cbn.
     destruct m_body as [[|body|body]|]; auto.
     { destruct args as [|thisp [|srcp [|??]]]; auto.
-      destruct (tu.(types) !! m_class) as [[|un| | | | | |]|] eqn:Hun;
+      destruct (tu.(types) !! m_class) as [[|un| | | | | | |]|] eqn:Hun;
         try (iIntros "H"; iDestruct (UNSUPPORTED_elim with "H") as "[]").
       erewrite sub_module_preserves_gunion; [|done..].
       iIntros "[[A wp]|wp]".

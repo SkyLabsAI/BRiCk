@@ -2180,9 +2180,21 @@ public:
     }
 
     void VisitCXXMemberCallExpr(const CXXMemberCallExpr *expr) {
-        print.ctor("Emember_call");
         auto callee = expr->getCallee()->IgnoreParens();
         auto method = expr->getMethodDecl();
+        // An explicit destructor call destroys a complete object, virtual
+        // bases included. BRiCk's destructor of a class with virtual bases
+        // only destroys the non-virtual part (see [wp_dtor]), and a member
+        // call would invoke exactly that.
+        if (auto dtor = dyn_cast_or_null<CXXDestructorDecl>(method)) {
+            auto cls = dtor->getParent();
+            if (cls && cls->isCompleteDefinition() &&
+                !cls->isDependentContext() && cls->getNumVBases() > 0)
+                return unsupported_expr(
+                    expr, "explicit destructor call for a class with "
+                          "virtual bases");
+        }
+        print.ctor("Emember_call");
         if (auto me = dyn_cast<MemberExpr>(callee)) {
             print.output() << fmt::BOOL(me->isArrow()) << fmt::nbsp;
 

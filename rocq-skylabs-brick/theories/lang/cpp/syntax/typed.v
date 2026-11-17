@@ -446,10 +446,19 @@ Module decltype.
 
       Fixpoint check_list' (from : name) (ts : list exprtype) (result : name) : M () :=
         let* (gd : GlobDecl) := global from in
-        match gd with
-        | Gstruct st =>
+        (* A class with virtual bases only converts (statically) to its
+           non-virtual bases. *)
+        let bases :=
+          match gd with
+          | Gstruct st => Some st.(s_bases)
+          | Gvstruct vs => Some vs.(vs_struct).(s_bases)
+          | _ => None
+          end
+        in
+        match bases with
+        | Some bases =>
             let check nm :=
-              List.existsb (fun '(b, _) => bool_decide (type_of_classname b = Tnamed nm)) st.(s_bases)
+              List.existsb (fun '(b, _) => bool_decide (type_of_classname b = Tnamed nm)) bases
             in
             match ts with
             | nil =>
@@ -613,6 +622,7 @@ Module decltype.
                 let* gd := global cls in
                 match gd with
                 | Gstruct st => field_type fld st.(s_fields)
+                | Gvstruct vs => field_type fld vs.(vs_struct).(s_fields)
                 | Gunion un => field_type fld un.(u_fields)
                 | _ => throw ("global scope is not an aggregate "%bs, cls, gd)
                 end
