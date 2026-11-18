@@ -69,34 +69,6 @@ Section with_cpp.
     by iDestruct (observe [| _ ≤ 1 |]%Qp with "P") as %?.
   Qed.
 
-  (* [tblockR ty] is a [blockR] that is the size of [ty] and properly aligned.
-   * it is a convenient short-hand since it happens frequently, but there is nothing
-   * special about it.
-   *)
-  Definition tblockR (ty : Rtype) (q : cQp.t) : Rep :=
-    match size_of σ ty , align_of ty with
-    | Some sz , Some al => blockR sz q ** alignedR al
-    | _ , _  => False
-    end.
-
-  #[global] Instance tblockR_timeless ty q :
-    Timeless (tblockR ty q).
-  Proof. rewrite/tblockR. case_match; apply _. Qed.
-  #[global] Instance tblockR_cfractional ty :
-    CFractional (tblockR ty).
-  Proof.
-    rewrite/tblockR. do 2!(case_match; last by apply _).
-    apply _.
-  Qed.
-  #[global] Instance tblockR_as_cfractional ty : AsCFractional0 (tblockR ty).
-  Proof. solve_as_cfrac. Qed.
-  #[global] Instance tblockR_observe_frac_valid ty n :
-    SizeOf ty n -> TCLt (0 ?= n)%N ->
-    CFracValid0 (tblockR ty).
-  Proof.
-    rewrite/tblockR=>-> ?. case_match; solve_cfrac_valid.
-  Qed.
-
   #[global] Instance blockR_nonnull n q :
     TCLt (0 ?= n)%N -> Observe nonnullR (blockR n q).
   Proof.
@@ -118,17 +90,78 @@ Section with_cpp.
       apply _. }
   Qed.
 
-  #[global] Instance tblockR_nonnull n ty q :
-    SizeOf ty n -> TCLt (0 ?= n)%N ->
-    Observe nonnullR (tblockR ty q).
-  Proof.
-    intros Heq ?. rewrite/tblockR {}Heq.
-    case_match; by apply _.
-  Qed.
-
-  #[global] Instance tblockR_valid_ptr ty q : Observe validR (tblockR ty q).
-  Proof.
-    rewrite /tblockR. case_match; refine _.
-    case_match; refine _.
-  Qed.
 End with_cpp.
+
+(** * Typed storage
+
+[tblockR ty q] is [q] ownership of the storage that an object of type [ty]
+occupies, before construction or after destruction, wherever that object
+sits. Constructors consume it and destructors return it.
+
+[tblockR] is abstract, not a definition, because the storage an object owns
+depends on its position for class types. A potentially-overlapping
+subobject, i.e. a base class subobject or a <<[[no_unique_address]]>> member
+(<https://eel.is/c++draft/intro.object#7>), need not own its tail padding:
+the ABI may place another member there. So the storage of a class object
+may be smaller than [size_of σ ty], and a destructor cannot hand back
+[size_of σ ty] bytes. The axioms below describe [tblockR] as [blockR] only
+for types that contain no class: for class types, nothing relates [tblockR]
+to [size_of]. An array element is never potentially overlapping, but its
+storage is still described by its element type's [tblockR].
+
+A definition could only replace this [Parameter] once the logic knows each
+class's data size, which cpp2v does not record. The full-size definition
+used before ([blockR sz q ** alignedR al]) satisfies all of these axioms. *)
+Parameter tblockR : forall `{Σ : cpp_logic} {σ : genv} (ty : Rtype) (q : cQp.t), Rep.
+
+(** Types whose [tblockR] is plain bytes: types that contain no class and
+    are not arrays. Arrays are described element-wise by [tblockR_array_unfold]. *)
+Fixpoint tblockR_raw_type (ty : type) : bool :=
+  match ty with
+  | Tnamed _ | Tarray _ _ => false
+  | Tqualified _ t => tblockR_raw_type t
+  | _ => true
+  end.
+
+Section tblockR.
+  Context `{Σ : cpp_logic} {σ : genv}.
+
+  (** The storage of a type without classes: [size_of σ ty] bytes, aligned. *)
+  Definition tblockR_raw (ty : Rtype) (q : cQp.t) : Rep :=
+    match size_of σ ty , align_of ty with
+    | Some sz , Some al => blockR sz q ** alignedR al
+    | _ , _  => False
+    end.
+
+  Axiom tblockR_raw_eq : forall ty q,
+    tblockR_raw_type ty ->
+    tblockR ty q -|- tblockR_raw ty q.
+
+  (** Array storage is its elements' storage at byte offsets, together with
+      the validity of the end pointer and the array's alignment. Unsized
+      element types have no storage. *)
+  Axiom tblockR_array_unfold : forall t n q,
+    tblockR (Tarray t n) q -|-
+    match size_of σ t with
+    | Some sz =>
+        aligned_ofR t **
+        .[ Tbyte ! Z.of_N (n * sz) ] |-> validR **
+        [∗list] i ∈ seq 0 (N.to_nat n),
+          .[ Tbyte ! Z.of_N (N.of_nat i * sz) ] |-> tblockR t q
+    | None => False
+    end.
+
+  Axiom tblockR_timeless : forall ty q, Timeless (tblockR ty q).
+  Axiom tblockR_cfractional : forall ty, CFractional (tblockR ty).
+  Axiom tblockR_observe_frac_valid : forall ty n,
+    SizeOf ty n -> TCLt (0 ?= n)%N -> CFracValid0 (tblockR ty).
+  Axiom tblockR_nonnull : forall n ty q,
+    SizeOf ty n -> TCLt (0 ?= n)%N -> Observe nonnullR (tblockR ty q).
+  Axiom tblockR_valid_ptr : forall ty q, Observe validR (tblockR ty q).
+
+  #[global] Existing Instances tblockR_timeless tblockR_cfractional
+    tblockR_observe_frac_valid tblockR_nonnull tblockR_valid_ptr.
+
+  #[global] Instance tblockR_as_cfractional ty : AsCFractional0 (tblockR ty).
+  Proof. solve_as_cfrac. Qed.
+End tblockR.
