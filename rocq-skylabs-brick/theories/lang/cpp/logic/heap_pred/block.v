@@ -106,20 +106,21 @@ the ABI may place another member there. So the storage of a class object
 may be smaller than [size_of σ ty], and a destructor cannot hand back
 [size_of σ ty] bytes. The axioms below describe [tblockR] as [blockR] only
 for types that contain no class: for class types, nothing relates [tblockR]
-to [size_of]. An array element is never potentially overlapping, but its
-storage is still described by its element type's [tblockR].
+to [size_of]. An array element is never potentially overlapping, but an
+array of classes is still described by its elements' [tblockR].
 
 A definition could only replace this [Parameter] once the logic knows each
 class's data size, which cpp2v does not record. The full-size definition
 used before ([blockR sz q ** alignedR al]) satisfies all of these axioms. *)
 Parameter tblockR : forall `{Σ : cpp_logic} {σ : genv} (ty : Rtype) (q : cQp.t), Rep.
 
-(** Types whose [tblockR] is plain bytes: types that contain no class and
-    are not arrays. Arrays are described element-wise by [tblockR_array_unfold]. *)
+(** Types whose [tblockR] is plain bytes: types that contain no class,
+    looking through arrays and qualifiers. Arrays of classes are described
+    element-wise by [tblockR_array_unfold]. *)
 Fixpoint tblockR_raw_type (ty : type) : bool :=
   match ty with
-  | Tnamed _ | Tarray _ _ => false
-  | Tqualified _ t => tblockR_raw_type t
+  | Tnamed _ => false
+  | Tarray t _ | Tqualified _ t => tblockR_raw_type t
   | _ => true
   end.
 
