@@ -114,6 +114,14 @@ gives it back unchanged. Proofs of such copies now pick a disjunct first.
   `is_plain_class` in the translation unit.
 - New: `vbase_ptr`, `vbaseR`, `nv_tblockR`, and the `Gvstruct` cases of
   `wp_ctor`, `wp_dtor`, and `wp_destroy_named`.
+- `nv_tblockR`, the storage of the non-virtual part, is abstract like
+  `tblockR` at class types, so the logic does not need the size of the
+  non-virtual part; `VStruct` records only its alignment.
+- Complete objects of such classes are constructed and destroyed only when
+  `vstruct_layout_ok` accepts their layout: the data of the virtual bases
+  and of the non-virtual part must be pairwise disjoint, but each may
+  overlap the tail padding of another (e.g. empty virtual bases, or a
+  virtual base in the tail padding of a base class).
 
 2026.11.05: Add Clang 23 support for the `cpp2v` binary.
 
