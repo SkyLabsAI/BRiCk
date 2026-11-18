@@ -621,6 +621,89 @@ fmt::Formatter &ClangPrinter::printQualType(CoqPrinter &print,
         fatal(print, *this, loc, "unexpected null type in printQualType");
 }
 
+uint64_t modelTypeAlign(const ASTContext &ctxt, const QualType &qt) {
+    auto ty = qt.getCanonicalType();
+    if (auto array = ctxt.getAsArrayType(ty))
+        ty = ctxt.getBaseElementType(array).getCanonicalType();
+    if (ty->isReferenceType())
+        ty = ctxt.VoidPtrTy;
+    if (auto et = ty->getAs<EnumType>()) {
+        auto ut = et->getDecl()->getIntegerType();
+        if (!ut.isNull())
+            ty = ut.getCanonicalType();
+    }
+    // [UNSAFE_align_is_size_int], [UNSAFE_align_is_size_char] and
+    // [UNSAFE_align_is_size_ptr] equate the alignment of integers, characters
+    // and pointers with their size, which some targets (e.g. i386 for
+    // <<long long>>) do not.
+    if (auto bt = ty->getAs<BuiltinType>()) {
+        // BRiCk sizes [Tlong] by its rank, as 64 bits, whatever the target.
+        if (bt->getKind() == BuiltinType::Long ||
+            bt->getKind() == BuiltinType::ULong)
+            return 64;
+    }
+    // Only types BRiCk prints as [Tnum], [Tchar_] or [Tptr] (not, e.g.,
+    // [_BitInt], which it does not support).
+    if ((ty->isBuiltinType() && ty->isIntegerType()) || ty->isPointerType())
+        return ctxt.getTypeSize(ty);
+    return ctxt.getTypeAlign(ty);
+}
+
+fmt::Formatter &ClangPrinter::printVarType(CoqPrinter &print,
+                                           const VarDecl &decl) {
+    const auto &ctxt = getContext();
+    const auto ty = decl.getType();
+    if (!ty->isDependentType() && !ty->isReferenceType()) {
+        const auto canon = ty.getCanonicalType();
+        auto elem = canon;
+        if (auto array = ctxt.getAsArrayType(elem))
+            elem = ctxt.getBaseElementType(array).getCanonicalType();
+        const auto align = ctxt.toBits(ctxt.getDeclAlign(&decl));
+        if (!elem->isIncompleteType() && align < modelTypeAlign(ctxt, elem)) {
+            // [printRealignedQualType] handles scalars and constant arrays.
+            if (elem->isScalarType() && !canon->isIncompleteType() &&
+                !canon->isVariablyModifiedType())
+                return printRealignedQualType(
+                    print, ty, ctxt.toCharUnitsFromBits(align).getQuantity(),
+                    loc::of(decl));
+            // BRiCk would type the object at its natural alignment.
+            guard::ctor _(print, "Tunsupported", false);
+            print.str("under-aligned variable");
+            return print.output();
+        }
+    }
+    return printQualType(print, ty, loc::of(decl));
+}
+
+fmt::Formatter &ClangPrinter::printRealignedQualType(CoqPrinter &print,
+                                                     const QualType &qt,
+                                                     uint64_t align,
+                                                     loc::loc loc) {
+    if (trace(Trace::Type))
+        trace("printRealignedQualType", loc::of(qt));
+    const auto canon = qt.getCanonicalType();
+    // This moves qualifiers of the array type to its element type.
+    if (auto array = getContext().getAsConstantArrayType(canon)) {
+        print.ctor("Tarray", false);
+        printRealignedQualType(print, array->getElementType(), align, loc);
+        print.output() << fmt::nbsp << array->getSize().getLimitedValue();
+        return print.end_ctor();
+    }
+    const bool is_const = canon.isConstQualified();
+    const bool is_volatile = canon.isVolatileQualified();
+    if (is_const || is_volatile)
+        print.ctor(is_const ? (is_volatile ? "Qconst_volatile" : "Qconst")
+                            : "Qvolatile",
+                   false);
+    print.ctor("Trealigned", false);
+    print.output() << align << fmt::nbsp;
+    printType(print, canon.getTypePtr(), loc);
+    print.end_ctor();
+    if (is_const || is_volatile)
+        print.end_ctor();
+    return print.output();
+}
+
 fmt::Formatter &ClangPrinter::printQualTypeOption(CoqPrinter &print,
                                                   const QualType &qt,
                                                   loc::loc loc) {

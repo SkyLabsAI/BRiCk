@@ -437,7 +437,41 @@ public:
         }
     }
 
+    // An assignment to an under-aligned field, stored at the field's
+    // [Trealigned] type; only when its result is discarded (see
+    // [ClangPrinter::realignedAccess]).
+    bool printRealignedAssign(const BinaryOperator *expr) {
+        if (expr->getOpcode() != BinaryOperatorKind::BO_Assign)
+            return false;
+        auto align = realignedMember(expr->getLHS());
+        if (!align)
+            return false;
+        if (cprint.discardedExpr != expr) {
+            print.ctor("Eunsupported");
+            print.output() << "\"use of an assignment to an under-aligned "
+                              "field\""
+                           << fmt::nbsp;
+            done(expr, Done::DT);
+            return true;
+        }
+        auto lhs = expr->getLHS()->IgnoreParens();
+        print.ctor("Eassign");
+        cprint.realignedAccess = lhs;
+        cprint.printExpr(print, expr->getLHS(), names);
+        cprint.realignedAccess = nullptr;
+        print.output() << fmt::nbsp;
+        cprint.printExpr(print, expr->getRHS(), names);
+        print.output() << fmt::nbsp;
+        cprint.printRealignedQualType(
+            print, cast<MemberExpr>(lhs)->getMemberDecl()->getType(), *align,
+            loc::of(expr));
+        print.end_ctor();
+        return true;
+    }
+
     void VisitBinaryOperator(const BinaryOperator *expr) {
+        if (printRealignedAssign(expr))
+            return;
         // A comma whose result is a bit-field glvalue, and an assignment or
         // compound assignment to one, have their own nodes (see [Ebf_comma]
         // in syntax/core.v). Clang tracks bit-field glvalues as the object
@@ -963,6 +997,23 @@ public:
             return;
         }
 
+        if (expr->getCastKind() == CastKind::CK_LValueToRValue &&
+            realignedMember(expr->getSubExpr())) {
+            // Read the under-aligned object, then retype the value at the
+            // expression's type: [wp_operand_cast_noop] makes the prover show
+            // that the value has that type.
+            guard::ctor noop(print, "Ecast");
+            print.ctor("Cnoop", false);
+            cprint.printQualType(print, expr->getType(), loc::of(expr));
+            print.end_ctor() << fmt::nbsp;
+            guard::ctor l2r(print, "Ecast");
+            print.output() << "Cl2r" << fmt::nbsp;
+            cprint.realignedAccess = expr->getSubExpr()->IgnoreParens();
+            cprint.printExpr(print, expr->getSubExpr(), names);
+            cprint.realignedAccess = nullptr;
+            return;
+        }
+
         guard::ctor _(print, "Ecast");
         printCast(expr);
         print.output() << fmt::nbsp;
@@ -1152,6 +1203,17 @@ public:
         done(lit, Done::NONE);
     }
 
+    // The alignment of the under-aligned field that [e] accesses, if any.
+    std::optional<uint64_t> realignedMember(const Expr *e) {
+        auto me = dyn_cast<MemberExpr>(e->IgnoreParens());
+        if (!me)
+            return std::nullopt;
+        auto fd = dyn_cast<FieldDecl>(me->getMemberDecl());
+        if (!fd)
+            return std::nullopt;
+        return realignedFieldAlign(cprint.getContext(), *fd);
+    }
+
     void VisitMemberExpr(const MemberExpr *expr) {
         auto member = expr->getMemberDecl();
         auto base = expr->getBase();
@@ -1164,6 +1226,18 @@ public:
             cprint.printExpr(print, base, names) << fmt::nbsp;
             print.str(fd->getName()) << fmt::nbsp;
             cprint.printQualType(print, member->getType(), loc::of(member));
+            return;
+        }
+
+        std::optional<uint64_t> realigned;
+        if (auto fd = dyn_cast<FieldDecl>(member))
+            realigned = realignedFieldAlign(cprint.getContext(), *fd);
+        if (realigned && cprint.realignedAccess != expr) {
+            // See [ClangPrinter::realignedAccess].
+            print.ctor("Eunsupported");
+            print.output() << "\"access to an under-aligned field\""
+                           << fmt::nbsp;
+            done(expr, Done::DT);
             return;
         }
 
@@ -1185,7 +1259,11 @@ public:
             // remove [const]
             //    if the field is [mutable], and then use the type of the field.
 
-            cprint.printQualType(print, member->getType(), loc::of(member));
+            if (realigned)
+                cprint.printRealignedQualType(print, member->getType(),
+                                              *realigned, loc::of(member));
+            else
+                cprint.printQualType(print, member->getType(), loc::of(member));
         } else if (auto ed = dyn_cast<EnumConstantDecl>(member)) {
             guard::ctor _{print, "Enum", false};
             cprint.printName(print, *ed);
@@ -1507,6 +1585,37 @@ public:
         print.output() << "Enull" << fmt::nbsp;
     }
 
+    // Clang's value of [alignof(T)] or [alignof(e)] when it differs from the
+    // alignment BRiCk's [align_of] gives the type cpp2v prints (see
+    // [modelTypeAlign]): alignment attributes on typedefs and enums (and on
+    // declarations, for GNU [alignof(e)]) do not survive the type
+    // translation. Such an [alignof] is printed as Clang's constant instead.
+    std::optional<llvm::APSInt>
+    attributedAlignOf(const UnaryExprOrTypeTraitExpr &expr) {
+        if (expr.getKind() != UnaryExprOrTypeTrait::UETT_AlignOf ||
+            expr.isValueDependent() || expr.isTypeDependent())
+            return std::nullopt;
+        auto &ctxt = cprint.getContext();
+        auto ty = expr.isArgumentType() ? expr.getArgumentType()
+                                        : expr.getArgumentExpr()->getType();
+        // [alignof(T&)] is the alignment of [T], and [alignof(T[])] or
+        // [alignof(T[n])] that of [T].
+        if (auto ref = ty->getAs<ReferenceType>())
+            ty = ref->getPointeeType();
+        ty = ty.getCanonicalType();
+        if (auto array = ctxt.getAsArrayType(ty))
+            ty = ctxt.getBaseElementType(array).getCanonicalType();
+        if (ty->isDependentType() || ty->isIncompleteType() ||
+            ty->isFunctionType())
+            return std::nullopt;
+        auto value = expr.EvaluateKnownConstInt(ctxt);
+        const auto model =
+            ctxt.toCharUnitsFromBits(modelTypeAlign(ctxt, ty)).getQuantity();
+        if (value == model)
+            return std::nullopt;
+        return value;
+    }
+
     void VisitUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *expr) {
         auto do_arg = [&]() {
             if (expr->isArgumentType()) {
@@ -1527,6 +1636,11 @@ public:
 
         switch (expr->getKind()) {
         case UnaryExprOrTypeTrait::UETT_AlignOf: {
+            if (auto value = attributedAlignOf(*expr)) {
+                print.ctor("Eint", false) << fmt::Z(*value);
+                done(expr);
+                break;
+            }
             print.ctor("Ealignof", false);
             do_arg();
             done(expr);
