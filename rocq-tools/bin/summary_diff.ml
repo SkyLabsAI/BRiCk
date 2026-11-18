@@ -169,6 +169,9 @@ let bt_make_diff : instr_count by_type -> instr_count by_type -> diff by_type =
   let bt_other = make_diff ic_ref.bt_other ic_new.bt_other in
   { bt_total; bt_cpp2v; bt_other }
 
+(** Whether a file has data on both sides, or only on one side. *)
+type presence = Common | Appeared | Disappeared
+
 type analysis = {
   total_ref : instr_count by_type;
   total_new : instr_count by_type;
@@ -177,7 +180,7 @@ type analysis = {
   total_disappeared : diff;
   num_appeared : int;
   total_appeared : diff;
-  per_file : (string * (bool * (instr_count * instr_count * diff))) list;
+  per_file : (string * (presence * (instr_count * instr_count * diff))) list;
 }
 
 let pp_analysis : Format.formatter -> analysis -> unit = fun ff analysis ->
@@ -225,16 +228,16 @@ let analyse : excluded:string list -> ref_data:string -> new_data:string list
   let num_disappeared = S.cardinal disappeared in
   let num_appeared = S.cardinal appeared in
   (* Compute the performance diffs. *)
-  let combined : (bool * (instr_count * instr_count * diff)) M.t =
+  let combined : (presence * (instr_count * instr_count * diff)) M.t =
     let make_diff i_ref i = (i_ref, i, make_diff i_ref i) in
     let filter _ data =
       match (data.Data.instr_ref, data.Data.instr) with
       (* We have data on both side. *)
-      | (Some(i_ref), Some(i)) -> Some(true, make_diff i_ref i)
+      | (Some(i_ref), Some(i)) -> Some(Common, make_diff i_ref i)
       (* We have data in the reference only, file disappeared. *)
-      | (Some(i_ref), None   ) -> Some(false, make_diff i_ref i_ref)
+      | (Some(i_ref), None   ) -> Some(Disappeared, make_diff i_ref i_ref)
       (* We have new data only, file appeared. *)
-      | (None       , Some(i)) -> Some(false, make_diff i i)
+      | (None       , Some(i)) -> Some(Appeared, make_diff i i)
       (* Unreachable case. *)
       | (None       , None   ) -> assert false
     in
@@ -244,8 +247,9 @@ let analyse : excluded:string list -> ref_data:string -> new_data:string list
   let (total_ref, full_ref, total_new, full_new) =
     let fn fname (b, (d1,d2,_)) (acc1,acc2,acc3,acc4) =
       match b with
-      | false -> (acc1, bt_add fname acc2 d1, acc3, bt_add fname acc4 d2)
-      | true  -> (bt_add fname acc1 d1, bt_add fname acc2 d1, bt_add fname acc3 d2, bt_add fname acc4 d2)
+      | Appeared | Disappeared ->
+          (acc1, bt_add fname acc2 d1, acc3, bt_add fname acc4 d2)
+      | Common -> (bt_add fname acc1 d1, bt_add fname acc2 d1, bt_add fname acc3 d2, bt_add fname acc4 d2)
     in
     M.fold fn combined (bt_zero, bt_zero, bt_zero, bt_zero)
   in
@@ -346,19 +350,42 @@ let print_md_data ?(mode : [`Github | `Gitlab] option = None) analysis =
     | Some(url) ->
         Printf.sprintf "[%s](%s/%s.html)" k url (Filename.chop_extension k)
   in
-  let fn (k, (_, (n0, n1, (d, diff)))) =
-    let instr_diff = float_of_int d /. 1000000000.0 in
+  let to_g n = float_of_int n /. 1000000000.0 in
+  (* Files with data on both sides. *)
+  let print_common (k, (_, (n0, n1, (d, diff)))) =
+    let instr_diff = to_g d in
     let relevant =
       abs_float diff >= !relevant_threshold &&
       abs_float instr_diff >= !instr_threshold
     in
     if !show_everything || relevant then
-      let n0 = float_of_int n0 /. 1000000000.0 in
-      let n1 = float_of_int n1 /. 1000000000.0 in
       info ("| " ^^ color diff ^^ " | %8.1f | %8.1f | %+8.1f | %s\n")
-        diff n0 n1 instr_diff (add_url k)
+        diff (to_g n0) (to_g n1) instr_diff (add_url k)
   in
-  List.iter fn analysis.per_file;
+  (* Files with data on one side only: their whole instruction count is the
+     change, and there is no meaningful relative difference. *)
+  let print_one_sided (k, (presence, (n, _, _))) =
+    let n = to_g n in
+    if !show_everything || n >= !instr_threshold then
+      match presence with
+      | Appeared ->
+          info "|      new |        - | %8.1f | %+8.1f | %s\n" n n (add_url k)
+      | Disappeared ->
+          info "|     gone | %8.1f |        - | %+8.1f | %s\n" n (-. n) k
+      | Common -> assert false
+  in
+  let (common, one_sided) =
+    List.partition (fun (_, (p, _)) -> p = Common) analysis.per_file
+  in
+  let (appeared, disappeared) =
+    List.partition (fun (_, (p, _)) -> p = Appeared) one_sided
+  in
+  let by_count (_, (_, (n1, _, _))) (_, (_, (n2, _, _))) = compare n1 n2 in
+  (* Biggest removals first, biggest additions last, like the sorting of the
+     common files by relative difference. *)
+  List.iter print_one_sided (List.rev (List.stable_sort by_count disappeared));
+  List.iter print_common common;
+  List.iter print_one_sided (List.stable_sort by_count appeared);
   if mode != None then
     info "|          |          |          |          |          \n";
   print_md_summary ~mode analysis
