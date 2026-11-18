@@ -10,6 +10,8 @@ Compiling the generated Coq files.
        = ("AddrLabelExpr"%pstring
           :: "AddrLabelExpr"%pstring
              :: "unsupported statement: IndirectGotoStmt"%pstring
-                :: "unsupported statement: CoroutineBodyStmt"%pstring
-                   :: "template parameter pack"%pstring :: nil)%list
+                :: "label"%pstring
+                   :: "label"%pstring
+                      :: "unsupported statement: CoroutineBodyStmt"%pstring
+                         :: "template parameter pack"%pstring :: nil)%list
        : check.M

@@ -1,0 +1,156 @@
+     = [("va(__va_list_tag*)"%pstring, "unsupported"%pstring,
+         ["va_arg"%pstring], [], [], []);
+        ("get_tls()"%pstring, "unsupported"%pstring,
+         ["thread_local variable"%pstring], [], [], []);
+        ("load_sc(int*)"%pstring, "supported"%pstring, [], [], [], []);
+        ("load_relaxed(int*)"%pstring, "unsupported"%pstring,
+         ["atomic: only seq_cst memory order has rules"%pstring], [], [], []);
+        ("load_order(int*, int)"%pstring, "partial"%pstring, [],
+         ["atomic: memory order is not a literal; only seq_cst has rules"%pstring],
+         [], []);
+        ("test_and_set(bool*)"%pstring, "unsupported"%pstring,
+         ["atomic operation without semantics: __atomic_test_and_set"%pstring],
+         [], [], []);
+        ("fetch_max(int*)"%pstring, "unsupported"%pstring,
+         ["atomic operation without semantics: __atomic_fetch_max"%pstring],
+         [], [], []);
+        ("generic_store(int*, int*)"%pstring, "unsupported"%pstring,
+         ["atomic operation without semantics: __atomic_store"%pstring], [],
+         [], []);
+        ("dtor_local()"%pstring, "supported"%pstring, [], [], [],
+         [("D::~D()"%pstring, ["inline assembly"%pstring])]);
+        ("prvalue()"%pstring, "blocked"%pstring, [], [], ["B"%pstring], []);
+        ("ext(int)"%pstring, "supported"%pstring, [], [], [], []);
+        ("calls_setjmp()"%pstring, "unsupported"%pstring,
+         ["returns twice (setjmp family)"%pstring],
+         ["library builtin _setjmp: needs a spec (brick-libcpp or black-box)"%pstring],
+         [], []);
+        ("dot_member(S&, int S::*)"%pstring, "unsupported"%pstring,
+         ["pointer-to-member access"%pstring], [], [], []);
+        ("arrow_member(S*, int S::*)"%pstring, "unsupported"%pstring,
+         ["pointer-to-member access"%pstring], [], [], []);
+        ("call_member(S&, int( S::*)())"%pstring, "unsupported"%pstring,
+         ["call through a pointer to member function"%pstring], [], [], []);
+        ("stmt_expr()"%pstring, "unsupported"%pstring,
+         ["statement expression"%pstring], [], [], []);
+        ("off()"%pstring, "unsupported"%pstring, ["offsetof"%pstring], [],
+         [], []);
+        ("label_only()"%pstring, "unsupported"%pstring, ["label"%pstring],
+         [], [], []);
+        ("fam(M*)"%pstring, "blocked"%pstring, [], [], ["M"%pstring], []);
+        ("braceless(int)"%pstring, "supported"%pstring, [], [], [], []);
+        ("lib_memcpy(char*, const char*)"%pstring, "partial"%pstring, [],
+         ["library builtin memcpy: needs a spec (brick-libcpp or black-box)"%pstring],
+         [], []);
+        ("lib_strlen(const char*)"%pstring, "partial"%pstring, [],
+         ["library builtin strlen: needs a spec (brick-libcpp or black-box)"%pstring],
+         [], []);
+        ("direct_memcpy(char*, const char*)"%pstring, "unsupported"%pstring,
+         ["builtin without semantics: __builtin_memcpy"%pstring], [], [], []);
+        ("direct_undeclared(const char*, const char*)"%pstring,
+         "unsupported"%pstring,
+         ["builtin without semantics: __builtin_strcmp"%pstring], [], [], []);
+        ("P::P(const P&)"%pstring, "partial"%pstring, [],
+         ["not elaborated: no verdict (cpp2v did not elaborate this defaulted member)"%pstring],
+         [], []);
+        (""%pstring, "missing"%pstring, [], [], [], []);
+        ("ns_get(NS*)"%pstring, "supported"%pstring, [], [], [], []);
+        ("sizeof_expr(S&)"%pstring, "supported"%pstring, [], [], [], [])]
+     : list
+         (string * string * list string * list string * list string *
+          list (string * list string))
+     = [("__atomic_fetch_max"%pstring, "supported"%pstring);
+        ("__atomic_load_n"%pstring, "supported"%pstring);
+        ("__atomic_store"%pstring, "supported"%pstring);
+        ("__atomic_test_and_set"%pstring, "supported"%pstring);
+        ("__builtin_memcpy"%pstring, "supported"%pstring);
+        ("__builtin_strcmp"%pstring, "supported"%pstring);
+        ("_setjmp"%pstring, "supported"%pstring);
+        ("jb"%pstring, "supported"%pstring);
+        ("memcpy"%pstring, "supported"%pstring);
+        ("strlen"%pstring, "supported"%pstring);
+        ("tls"%pstring, "supported"%pstring);
+        ("arrow_member(S*, int S::*)"%pstring, "unsupported"%pstring);
+        ("braceless(int)"%pstring, "supported"%pstring);
+        ("call_member(S&, int( S::*)())"%pstring, "unsupported"%pstring);
+        ("calls_setjmp()"%pstring, "unsupported"%pstring);
+        ("direct_memcpy(char*, const char*)"%pstring, "unsupported"%pstring);
+        ("direct_undeclared(const char*, const char*)"%pstring,
+         "unsupported"%pstring);
+        ("dot_member(S&, int S::*)"%pstring, "unsupported"%pstring);
+        ("dtor_local()"%pstring, "supported"%pstring);
+        ("ext(int)"%pstring, "supported"%pstring);
+        ("fam(M*)"%pstring, "blocked"%pstring);
+        ("fetch_max(int*)"%pstring, "unsupported"%pstring);
+        ("generic_store(int*, int*)"%pstring, "unsupported"%pstring);
+        ("get_tls()"%pstring, "unsupported"%pstring);
+        ("label_only()"%pstring, "unsupported"%pstring);
+        ("lib_memcpy(char*, const char*)"%pstring, "partial"%pstring);
+        ("lib_strlen(const char*)"%pstring, "partial"%pstring);
+        ("load_order(int*, int)"%pstring, "partial"%pstring);
+        ("load_relaxed(int*)"%pstring, "unsupported"%pstring);
+        ("load_sc(int*)"%pstring, "supported"%pstring);
+        ("long_double_ptr(?Builtin long double*)"%pstring,
+         "unsupported"%pstring);
+        ("mk()"%pstring, "blocked"%pstring);
+        ("ns_get(NS*)"%pstring, "supported"%pstring);
+        ("off()"%pstring, "unsupported"%pstring);
+        ("prvalue()"%pstring, "blocked"%pstring);
+        ("sizeof_expr(S&)"%pstring, "supported"%pstring);
+        ("stmt_expr()"%pstring, "unsupported"%pstring);
+        ("test_and_set(bool*)"%pstring, "unsupported"%pstring);
+        ("use(B)"%pstring, "blocked"%pstring);
+        ("va(__va_list_tag*)"%pstring, "unsupported"%pstring);
+        ("S::m()"%pstring, "supported"%pstring);
+        ("NS::get() const"%pstring, "supported"%pstring);
+        ("B::B()"%pstring, "blocked"%pstring);
+        ("D::D()"%pstring, "supported"%pstring);
+        ("M::M()"%pstring, "blocked"%pstring);
+        ("NS::NS()"%pstring, "partial"%pstring);
+        ("O::O()"%pstring, "partial"%pstring);
+        ("P::P()"%pstring, "supported"%pstring);
+        ("S::S()"%pstring, "partial"%pstring);
+        ("B::B(const B&)"%pstring, "blocked"%pstring);
+        ("D::D(const D&)"%pstring, "partial"%pstring);
+        ("M::M(const M&)"%pstring, "blocked"%pstring);
+        ("NS::NS(const NS&)"%pstring, "partial"%pstring);
+        ("O::O(const O&)"%pstring, "partial"%pstring);
+        ("P::P(const P&)"%pstring, "partial"%pstring);
+        ("S::S(const S&)"%pstring, "partial"%pstring);
+        ("B::B(B&&)"%pstring, "blocked"%pstring);
+        ("M::M(M&&)"%pstring, "blocked"%pstring);
+        ("NS::NS(NS&&)"%pstring, "partial"%pstring);
+        ("O::O(O&&)"%pstring, "partial"%pstring);
+        ("S::S(S&&)"%pstring, "partial"%pstring);
+        ("B::~B()"%pstring, "blocked"%pstring);
+        ("D::~D()"%pstring, "unsupported"%pstring);
+        ("M::~M()"%pstring, "blocked"%pstring);
+        ("NS::~NS()"%pstring, "supported"%pstring);
+        ("O::~O()"%pstring, "supported"%pstring);
+        ("P::~P()"%pstring, "supported"%pstring);
+        ("S::~S()"%pstring, "supported"%pstring);
+        ("B::operator=(const B&)"%pstring, "blocked"%pstring);
+        ("D::operator=(const D&)"%pstring, "partial"%pstring);
+        ("M::operator=(const M&)"%pstring, "blocked"%pstring);
+        ("NS::operator=(const NS&)"%pstring, "partial"%pstring);
+        ("O::operator=(const O&)"%pstring, "partial"%pstring);
+        ("S::operator=(const S&)"%pstring, "partial"%pstring);
+        ("B::operator=(B&&)"%pstring, "blocked"%pstring);
+        ("M::operator=(M&&)"%pstring, "blocked"%pstring);
+        ("NS::operator=(NS&&)"%pstring, "partial"%pstring);
+        ("O::operator=(O&&)"%pstring, "partial"%pstring);
+        ("S::operator=(S&&)"%pstring, "partial"%pstring);
+        ("B"%pstring, "unsupported"%pstring);
+        ("D"%pstring, "supported"%pstring);
+        ("M"%pstring, "unsupported"%pstring);
+        ("NS"%pstring, "supported"%pstring);
+        ("O"%pstring, "supported"%pstring);
+        ("P"%pstring, "supported"%pstring);
+        ("S"%pstring, "supported"%pstring);
+        ("__NSConstantString"%pstring, "supported"%pstring);
+        ("__builtin_ms_va_list"%pstring, "supported"%pstring);
+        ("__builtin_va_list"%pstring, "supported"%pstring);
+        ("__int128_t"%pstring, "supported"%pstring);
+        ("__uint128_t"%pstring, "supported"%pstring);
+        ("jmp_buf_t"%pstring, "supported"%pstring)]
+     : list (string * string)
