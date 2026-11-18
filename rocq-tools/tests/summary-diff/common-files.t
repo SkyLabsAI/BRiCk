@@ -13,7 +13,9 @@
   $ rocq-perf.summary-diff --no-colors --instr-threshold 0 --markdown base.csv job.csv
   | Relative | Master   | MR       | Change   | Filename
   |---------:|---------:|---------:|---------:|----------
+  |     gone |      2.0 |        - |     -2.0 | gone
   |  +50.00% |     10.0 |     15.0 |     +5.0 | common
+  |      new |        - |      3.0 |     +3.0 | new
   |  +50.00% |     12.0 |     18.0 |     +6.0 | total
   |  -13.33% |      2.0 |        - |     -2.0 | ├ disappeared files (1)
   |  +15.00% |        - |      3.0 |     +3.0 | ├ newly appeared files (1)
