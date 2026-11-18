@@ -99,9 +99,9 @@ Section stuck.
   Context `{Σ : cpp_logic} {σ : genv} (tu : translation_unit).
 
   (** [Defaulted] bodies: methods and constructors of non-union classes, not
-      destructors. [report] fails a queried one; others are unused, as cpp2v
-      elaborates used ones. A union's defaulted copy/move operations have
-      [wp_union_copy] semantics instead. *)
+      destructors. They are unused, as clang defines used ones, so [report]
+      gives them no verdict ("not elaborated"). A union's defaulted copy/move
+      operations have [wp_union_copy] semantics instead. *)
   Example defaulted_method (m : Method) st args Q :
     m.(m_body) = Some Defaulted ->
     tu.(types) !! m.(m_class) = Some (Gstruct st) ->

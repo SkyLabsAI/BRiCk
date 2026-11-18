@@ -15,6 +15,7 @@ Require Import skylabs.lang.cpp.syntax.templates.
 Require Import skylabs.lang.cpp.semantics.cast_operator.
 Require skylabs.lang.cpp.syntax.name_notation.parser.
 Require skylabs.lang.cpp.syntax.name_notation.printer.
+Require skylabs.lang.cpp.syntax.pretty.
 
 (** ** Supported Check
 
@@ -44,7 +45,8 @@ Module walk.
   Variant item : Set :=
   | Gap (g : gap) (msg : PrimString.string)
   | Ref (n : name)    (** needs the definition of [n] (type, function, variable) *)
-  | Access (n : name) (** accesses a member of an object of class [n] *).
+  | Access (n : name) (** accesses a member of an object of class [n] *)
+  | Bcall (n : name)  (** calls builtin [n] directly ([Cbuiltin2fun]) *).
 
 Section with_monad.
 
@@ -115,6 +117,7 @@ Section with_monad.
   Definition check_binop (op : BinOp) (lhsT rhsT resT : type) : M :=
     (match op with
      | Bunsupported msg => FAIL msg
+     | Bdotp | Bdotip => FAIL "pointer-to-member access"
      | _ => OK
      end) <+>
     if is_float_type lhsT || is_float_type rhsT || is_float_type resT then
@@ -144,12 +147,45 @@ Section with_monad.
     | _ => OK
     end.
 
-  (** Compare-exchange only has rules for integers and booleans
-      (see [logic/atomics.v]). *)
+  (** The atomic operations with a rule (see [logic/atomics.v]). *)
+  Definition atomic_with_rule (op : AtomicOp) : bool :=
+    bool_decide (op ∈ [ "__atomic_load_n"; "__atomic_store_n"
+      ; "__atomic_exchange_n"; "__atomic_exchange"
+      ; "__atomic_compare_exchange_n"; "__atomic_compare_exchange"
+      ; "__atomic_fetch_add"; "__atomic_fetch_sub"; "__atomic_fetch_and"
+      ; "__atomic_fetch_xor"; "__atomic_fetch_or"; "__atomic_fetch_nand"
+      ; "__atomic_add_fetch"; "__atomic_sub_fetch"; "__atomic_and_fetch"
+      ; "__atomic_xor_fetch"; "__atomic_or_fetch"; "__atomic_nand_fetch"
+      ]%pstring).
+
+  Fixpoint strip_casts (e : Expr) : Expr :=
+    match e with
+    | Ecast _ e | Eexplicit_cast _ _ e | Eimplicit e => strip_casts e
+    | _ => e
+    end.
+
+  (** Every rule needs [__ATOMIC_SEQ_CST] (5). A non-literal order (e.g. a
+      parameter of <<std::atomic>>'s methods) is decided by the caller. *)
+  Definition check_memorder (e : Expr) : M :=
+    match strip_casts e with
+    | Eint n _ =>
+        if bool_decide (n = 5%Z) then OK
+        else FAIL "atomic: only seq_cst memory order has rules"
+    | _ => PARTIAL "atomic: memory order is not a literal; only seq_cst has rules"
+    end.
+
+  (** Compare-exchange only has rules for integers and booleans. *)
   Definition check_atomic (op : AtomicOp) (es : list Expr) : M :=
+    if negb (atomic_with_rule op) then
+      FAIL (PrimString.cat "atomic operation without semantics: " op)
+    else
+    (* The operands are, in this order: the pointer, the order, the value,
+       the failure order (compare-exchange), ... *)
+    opt check_memorder (nth_error es 1) <+>
     if bool_decide (op = "__atomic_compare_exchange_n"%pstring) ||
        bool_decide (op = "__atomic_compare_exchange"%pstring)
-    then match es with
+    then opt check_memorder (nth_error es 3) <+>
+         match es with
          | e :: _ =>
              match drop_qualifiers (type_of e) with
              | Tptr t =>
@@ -173,10 +209,51 @@ Section with_monad.
       ; "__builtin_bswap16"; "__builtin_bswap32"; "__builtin_bswap64"; "__builtin_bswap128"
       ]%pstring).
 
-  (** Calls to [b]: a builtin that is only declared is harmless; atomics,
-      for instance, are called through [Eatomic]. *)
+  (** Direct calls to [b] (through [Cbuiltin2fun]): a builtin that is only
+      declared is harmless; atomics, for instance, are called through
+      [Eatomic]. *)
   Definition builtin (b : BuiltinFn) : M :=
     if known_builtin b then OK else FAIL (PrimString.cat "builtin without semantics: " b).
+
+  (** Ordinary calls to a library function that clang treats as builtin [b]
+      (e.g. <<memcpy>>, <<strlen>>): the caller assumes its spec, as for any
+      callee without a definition. *)
+  Definition library_builtin (b : BuiltinFn) : M :=
+    if known_builtin b then OK
+    else PARTIAL (PrimString.cat (PrimString.cat "library builtin " b)
+      ": needs a spec (brick-libcpp or black-box)").
+
+  (** Functions that return twice. A spec cannot describe the second return. *)
+  Definition returns_twice (n : name) : bool :=
+    match n with
+    | Nglobal (Nid f) | Nglobal (Nfunction _ f _) =>
+        bool_decide (f ∈ [ "setjmp"; "_setjmp"; "__setjmp"; "sigsetjmp"; "__sigsetjmp"
+          ; "savectx"; "vfork"; "getcontext"; "__builtin_setjmp" ]%pstring)
+    | _ => false
+    end.
+
+  (** A prvalue of class type needs its class (e.g. to allocate the result
+      of a call). *)
+  Definition prvalue_class (e : Expr) : M :=
+    if valcat_of e is Prvalue then
+      if drop_qualifiers (type_of e) is Tnamed n then REF n else OK
+    else OK.
+
+  (** The definition a type needs, without walking it. *)
+  Fixpoint type_ref (t : type) : M :=
+    match t with
+    | Tnamed n | Tenum n => REF n
+    | Tqualified _ t | Tarray t _ => type_ref t
+    | _ => OK
+    end.
+
+  (** An object of class type is destroyed by its destructor. *)
+  Definition dtor_of (t : type) : M :=
+    match drop_qualifiers (decompose_type t).2 with
+    | Tnamed n => REF (Nscoped n Ndtor)
+    | Tarray t _ => if drop_qualifiers t is Tnamed n then REF (Nscoped n Ndtor) else OK
+    | _ => OK
+    end.
 
   (** [wp_switch] needs the [case]s and [default] of a block at its top level,
       not after a declaration (see [wp_switch_block] in [logic/stmt.v]). *)
@@ -282,7 +359,9 @@ Section with_monad.
     match e with
     | Evar _ t => type t
     | Eenum_const n _ => name n
-    | Eglobal n t | Eglobal_member n t => REF n <+> name n <+> type t
+    | Eglobal n t | Eglobal_member n t =>
+        (if returns_twice n then FAIL "returns twice (setjmp family)" else OK)
+        <+> REF n <+> name n <+> type t
     | Echar _ t | Estring _ t | Eunresolved_string_literal t | Eint _ t => type t
     | Efloat ft _ => check_float_width ft
     | Ebool _ => OK
@@ -293,19 +372,21 @@ Section with_monad.
     | Esubscript e1 e2 t => expr e1 <+> expr e2 <+> type t
     | Esizeof et t
     | Ealignof et t =>
+        (* The operand is not evaluated: only its type matters. *)
         match et with
-        | inr e => expr e
+        | inr e => type_ref (type_of e)
         | inl t => type t
         end <+> type t
-    | Eoffsetof t1 _ t2 => type t1 <+> type t2
+    | Eoffsetof t1 _ t2 => FAIL "offsetof" <+> type t1 <+> type t2
     | Eassign e1 e2 t => expr e1 <+> expr e2 <+> type t
     | Eassign_op op e1 e2 t => expr e1 <+> expr e2 <+> type t <+> check_binop op (type_of e1) (type_of e2) t
     | Epreinc e t | Epostinc e t | Epredec e t | Epostdec e t =>
         expr e <+> type t <+>
         if is_float_type (type_of e) || is_float_type t then FAIL "unsupported floating increment/decrement" else OK
     | Eseqand e1 e2 | Eseqor e1 e2 | Ecomma e1 e2 => expr e1 <+> expr e2
-    | Ecall e es => expr e <+> lst expr es
+    | Ecall f es => prvalue_class e <+> expr f <+> lst expr es
     | Eoperator_call _ impl es =>
+        prvalue_class e <+>
         match impl with
         | operator_impl.Func n _ | operator_impl.MFunc n _ _ => REF n
         end <+> lst expr es
@@ -313,29 +394,32 @@ Section with_monad.
     | Einitlist es oe t => lst expr es <+> opt expr oe <+> type t
     | Einitlist_union _ oe t => opt expr oe <+> type t
     | Einitlist_std e t => expr e <+> type t
-    | Emember_call _ mr e es =>
+    | Emember_call _ mr obj es =>
+        prvalue_class e <+>
         match mr with
-        | inr e => expr e
+        | inr f => FAIL "call through a pointer to member function" <+> expr f
         | inl (n, _, _) => REF n
-        end <+> expr e <+> lst expr es
+        end <+> expr obj <+> lst expr es
     | Enew (n, t) es _ t1 oe1 oe2 =>
         REF n <+> name n <+> type t <+> lst expr es <+> type t1 <+> opt expr oe1 <+> opt expr oe2
     | Edelete _ n e t => REF n <+> name n <+> expr e <+> type t
     | Eexplicit_cast _ t e => type t <+> expr e
-    | Ecast c e => cast c <+> expr e <+> check_float_cast_expr c (type_of e)
+    | Ecast c e =>
+        (if c is Cbuiltin2fun _ then if e is Eglobal n _ then [Bcall n] else OK else OK)
+        <+> cast c <+> expr e <+> check_float_cast_expr c (type_of e)
     | Emember arrow e an _ t =>
         (* With [arrow], [e] is a pointer; either way, the class must be defined. *)
         let obj := drop_qualifiers (type_of e) in
         let obj := if arrow then (if obj is Tptr t then drop_qualifiers t else obj) else obj in
         (if obj is Tnamed cls then [Access cls; Ref cls] else OK)
         <+> expr e <+> atomic_name type an <+> type t
-    | Estmt s t => stmt s <+> type t
+    | Estmt s t => FAIL "statement expression" <+> stmt s <+> type t
     | Enull => OK
     | Eopaque_ref _ t => type t
-    | Eva_arg e t => expr e <+> type t
+    | Eva_arg e t => FAIL "va_arg" <+> expr e <+> type t
     | Eatomic op es t => lst expr es <+> type t <+> check_atomic op es
     | Eandclean e => expr e
-    | Ematerialize_temp e _ => expr e
+    | Ematerialize_temp e _ => dtor_of (type_of e) <+> expr e
     | Ethis t => type t
     | Eif e1 e2 e3 t => expr e1 <+> expr e2 <+> expr e3 <+> type t
     | Eif2 _ e1 e2 e3 e4 t => expr e1 <+> expr e2 <+> expr e3 <+> expr e4 <+> type t
@@ -382,7 +466,7 @@ Section with_monad.
     | Sasm _ _ lpe1 lpe2 _ =>
         FAIL "inline assembly" <+> lst (expr ∘ snd) lpe1 <+> lst (expr ∘ snd) lpe2
     | Sattr _ s => stmt s
-    | Slabeled _ s => stmt s
+    | Slabeled _ s => FAIL "label" <+> stmt s
     | Sgoto _ => FAIL "goto"
     | Sunsupported msg => FAIL msg
     end
@@ -391,7 +475,7 @@ Section with_monad.
     match v with
     | Dvar _ t oe =>
         (if q_volatile (decompose_type t).1 then FAIL "volatile object" else OK)
-        <+> type t <+> opt expr oe
+        <+> dtor_of t <+> type t <+> opt expr oe
     | Ddecompose e _ bds => expr e <+> lst binding_decl bds
     | Dinit _ n t oe => FAIL "static local variable" <+> name n <+> type t <+> opt expr oe
     end
@@ -480,7 +564,11 @@ Section with_monad.
         <+> check_exc_spec d.(d_exception) d.(d_body)
     end.
 
-  Definition member (m : Member) : M := type m.(mem_type) <+> opt expr m.(mem_init).
+  (** A default member initializer is walked where it is used: in the
+      constructors and aggregate initializations that use it. *)
+  Definition member (m : Member) : M :=
+    (if drop_qualifiers m.(mem_type) is Tincomplete_array _ then FAIL "flexible array member" else OK)
+    <+> type m.(mem_type).
 
   Definition glob_decl (gd : GlobDecl) : M :=
     match gd with
@@ -549,8 +637,10 @@ End check.
     parser); [report.all tu] takes every non-template entity of [tu]. Each
     entry gives:
     - [unsupported]: the entity's own [Unsupported] gaps, including those
-      of the builtins it calls;
-    - [partial]: [Partial] gaps in the entity or in the types it needs;
+      of the builtins it calls directly;
+    - [partial]: [Partial] gaps in the entity or in the types it needs, and
+      why there is no verdict (["... no verdict ..."]) for a member that
+      cpp2v did not elaborate;
     - [blocked_by]: the types it needs (transitively, through fields and bases)
       with [Unsupported] gaps, and these gaps;
     - [unsupported_refs]: the functions and variables it refers to with
@@ -569,18 +659,21 @@ Module report.
     ; blocked_by : list (PrimString.string * list PrimString.string)
     ; unsupported_refs : list (PrimString.string * list PrimString.string) }.
 
+  (** A name the [cpp.spec] printer cannot print (e.g. one with an
+      unsupported type) falls back to the human-readable printer, which marks
+      unsupported parts with [?]. *)
   Definition print (n : name) : PrimString.string :=
-    default "<unprintable name>"%pstring (printer.print_name n).
+    default (pretty.print_name n) (printer.print_name n).
 
   Definition partials (m : walk.M) : list PrimString.string :=
     List.flat_map (fun i => if i is walk.Gap walk.Partial msg then [msg] else []) m.
 
   (** [walk.no_refs] discards needs, never gaps. *)
   Lemma fails_no_refs m : check.fails (walk.no_refs m) = check.fails m.
-  Proof. elim: m => [//|[[] ?|?|?] m IH] /=; by rewrite IH. Qed.
+  Proof. elim: m => [//|[[] ?|?|?|?] m IH] /=; by rewrite IH. Qed.
 
   Lemma partials_no_refs m : partials (walk.no_refs m) = partials m.
-  Proof. elim: m => [//|[[] ?|?|?] m IH] /=; by rewrite IH. Qed.
+  Proof. elim: m => [//|[[] ?|?|?|?] m IH] /=; by rewrite IH. Qed.
 
   (** [n] with its [Unsupported] gaps, if any. *)
   Definition named (n : name) (m : walk.M) : list (PrimString.string * list PrimString.string) :=
@@ -607,19 +700,24 @@ Module report.
 
     (** [wp_method] and [wp_ctor] are stuck on [Defaulted] bodies, except
         for a union's defaulted copy/move operations, which copy the object
-        representation (see [wp_union_copy] in [logic/func.v]). *)
+        representation (see [wp_union_copy] in [logic/func.v]). A
+        [Defaulted] body is one cpp2v did not elaborate: clang defines the
+        members a translation unit uses (see [walk.or_default]), so its
+        definition and verdict are those of a translation unit that uses it. *)
     Definition union_copy_or_move (cls : name) (params : list (ident * type)) : bool :=
       bool_decide (length params = 1) &&
       if tu.(types) !! cls is Some (Gunion _) then true else false.
+    Definition not_elaborated : walk.M :=
+      walk.PARTIAL "not elaborated: no verdict (cpp2v did not elaborate this defaulted member)".
     Definition defaulted (o : ObjValue) : walk.M :=
       match o with
       | Omethod m =>
         if m.(m_body) is Some Defaulted then
-          if union_copy_or_move m.(m_class) m.(m_params) then [] else walk.FAIL "defaulted method"
+          if union_copy_or_move m.(m_class) m.(m_params) then [] else not_elaborated
         else []
       | Oconstructor c =>
         if c.(c_body) is Some Defaulted then
-          if union_copy_or_move c.(c_class) c.(c_params) then [] else walk.FAIL "defaulted constructor"
+          if union_copy_or_move c.(c_class) c.(c_params) then [] else not_elaborated
         else []
       | _ => []
       end.
@@ -655,9 +753,17 @@ Module report.
         if f.(f_body) is Some (Builtin b) then Some b else None
       else None.
 
-    (** A builtin has no spec to assume: its gaps are those of its callers. *)
+    Definition direct_builtins (m : walk.M) : list name :=
+      List.flat_map (fun i => if i is walk.Bcall n then [n] else []) m.
+
+    (** A builtin called directly has no spec to assume: its gaps are those
+        of its callers. A library function that clang treats as a builtin
+        is called like any other function. *)
     Definition with_builtins (m : walk.M) : walk.M :=
-      m ++ List.flat_map (fun r => from_option walk.builtin [] (builtin_of r)) (refs m).
+      let direct := direct_builtins m in
+      m ++ List.flat_map (fun r =>
+        from_option (if bool_decide (r ∈ direct) then walk.builtin else walk.library_builtin) []
+          (builtin_of r)) (refs m).
 
     (** What the entity [n] itself uses. *)
     Definition own (n : name) : option walk.M :=
@@ -777,7 +883,8 @@ Module report.
 
   (** Every non-template function, variable and type of [tu], named by its
       [print]ed name. Unlike [run], it parses no names, which dominates [run]'s
-      time on a large translation unit. *)
+      time on a large translation unit. Template patterns are left out: each
+      instance has its own entry. *)
   Definition all_with (ext : Expr -> walk.M) (tu : translation_unit) : list entry :=
     let fuel := closure_fuel tu in
     let names := List.map fst (NM.elements tu.(symbols)) ++ List.map fst (NM.elements tu.(types)) in
