@@ -36,14 +36,17 @@ public:
                          ASTContext &>::Visit(stmt, print, cprint, ctxt);
     }
 
+    // Statements without a printer (e.g. coroutines, computed `goto`, MS
+    // `asm`, SEH) become [Sunsupported], so that the rest of the translation
+    // unit is still available.
     void VisitStmt(const Stmt *stmt, CoqPrinter &print, ClangPrinter &cprint,
-                   ASTContext &ctxt) {
-        using namespace logging;
-        fatal() << "unsupported statement " << stmt->getStmtClassName()
-                << " at "
-                << stmt->getSourceRange().printToString(ctxt.getSourceManager())
-                << "\n";
-        die();
+                   ASTContext &) {
+        cprint.error_prefix(logging::unsupported(), loc::of(stmt))
+            << "warning: unsupported statement " << stmt->getStmtClassName()
+            << "\n";
+        guard::ctor _{print, "Sunsupported"};
+        print.str(std::string("unsupported statement: ") +
+                  stmt->getStmtClassName());
     }
 
     void VisitDeclStmt(const DeclStmt *stmt, CoqPrinter &print,

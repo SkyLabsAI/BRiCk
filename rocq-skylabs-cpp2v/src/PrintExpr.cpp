@@ -675,6 +675,15 @@ public:
 								 /*well_known*/ true);
 #endif
             }
+        } else if (auto vd = dyn_cast<VarDecl>(var_decl);
+                   vd && vd->getTLSKind() != VarDecl::TLS_None) {
+            // BRiCk has no thread-local storage: printing the variable as an
+            // ordinary global would model one object shared by all threads.
+            cprint.error_prefix(logging::unsupported(), loc::of(expr))
+                << "warning: unsupported thread_local variable\n";
+            print.ctor("Eunsupported", false);
+            print.str("thread_local variable") << fmt::nbsp;
+            done(expr, Done::DT);
         } else {
             // expr->dump();
             // var_decl->dump();

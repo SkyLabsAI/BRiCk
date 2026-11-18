@@ -1,0 +1,45 @@
+// Statements cpp2v has no printer for become [Sunsupported].
+
+// Computed goto (GNU).
+int computed_goto(int i) {
+  void *labels[] = {&&a, &&b};
+  goto *labels[i];
+a:
+  return 1;
+b:
+  return 2;
+}
+
+// Coroutines, with a minimal <coroutine>.
+namespace std {
+template <class R, class... Args> struct coroutine_traits {
+  using promise_type = typename R::promise_type;
+};
+template <class P = void> struct coroutine_handle {
+  static coroutine_handle from_address(void *) noexcept { return {}; }
+  void *address() const noexcept { return nullptr; }
+  operator coroutine_handle<void>() const noexcept;
+};
+template <> struct coroutine_handle<void> {
+  static coroutine_handle from_address(void *) noexcept { return {}; }
+  void *address() const noexcept { return nullptr; }
+};
+} // namespace std
+
+struct suspend_never {
+  bool await_ready() const noexcept { return true; }
+  void await_suspend(std::coroutine_handle<>) const noexcept {}
+  void await_resume() const noexcept {}
+};
+struct task {
+  struct promise_type {
+    task get_return_object() { return {}; }
+    suspend_never initial_suspend() { return {}; }
+    suspend_never final_suspend() noexcept { return {}; }
+    void return_void() {}
+    void unhandled_exception() {}
+  };
+};
+task coro() { co_return; }
+
+int fine() { return 0; }
