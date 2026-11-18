@@ -137,6 +137,20 @@ Notation Struct := Struct'.
 #[global] Instance Struct_eq_dec : EqDecision Struct.
 Proof. solve_decision. Defined.
 
+(** Compiler-provided metadata for a complete record whose definition is hidden.
+    This exposes neither fields nor bases, virtual dispatch, or deletion policy. *)
+Record OpaqueRecord : Set := Build_OpaqueRecord
+{ or_dtor : obj_name
+; or_trivially_destructible : bool
+; or_size : N
+  (* ^ size in bytes, including padding *)
+; or_alignment : N
+  (* ^ alignment in bytes *)
+}.
+#[global] Arguments Build_OpaqueRecord _ _ _ _ : assert.
+#[global] Instance OpaqueRecord_eq_dec : EqDecision OpaqueRecord.
+Proof. solve_decision. Defined.
+
 (** [has_vtable s] determines whether [s] has any <<virtual>> methods
     (or bases). Having a vtable is *not* a transitive property.
     A class that only inherits <<virtual>> methods does not have a

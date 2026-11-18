@@ -357,6 +357,10 @@ End dtor.
     destructor.
     *)
     wp_destructor tu (Tnamed cls) (_global u.(u_dtor)) this Q
+  | Some (Gopaque_record r) =>
+    (* Hidden fields are handled by the destructor's specification, not by
+       structural traversal. Opaque records exported here have no virtuals. *)
+    wp_destructor tu (Tnamed cls) (_global r.(or_dtor)) this Q
   | _ => |={top}=> ERROR ("wp_destroy_named: cannot resolve", cls)
   end.
 
@@ -408,6 +412,7 @@ Section named.
     match tu.(types) !! cls with
     | Some (Gstruct s) => wp_destructor tu (Tnamed cls) (_global s.(s_dtor)) this Q
     | Some (Gunion u) => wp_destructor tu (Tnamed cls) (_global u.(u_dtor)) this Q
+    | Some (Gopaque_record r) => wp_destructor tu (Tnamed cls) (_global r.(or_dtor)) this Q
     | _ => False
     end.
 
@@ -432,6 +437,18 @@ Section named.
     wp_destroy_named tu cls this Q
     |-- Reduce (wp_destroy_named_body tu cls this Q).
   Proof. by wp_destroy_named_unfold. Qed.
+
+  Lemma wp_destroy_named_intro_opaque_record tu cls r this Q :
+    tu.(types) !! cls = Some (Gopaque_record r) ->
+    wp_destructor tu (Tnamed cls) (_global r.(or_dtor)) this Q
+    |-- wp_destroy_named tu cls this Q.
+  Proof. by rewrite -wp_destroy_named_intro=>->. Qed.
+
+  Lemma wp_destroy_named_elim_opaque_record tu cls r this Q :
+    tu.(types) !! cls = Some (Gopaque_record r) ->
+    wp_destroy_named tu cls this Q
+    |-- wp_destructor tu (Tnamed cls) (_global r.(or_dtor)) this Q.
+  Proof. by rewrite wp_destroy_named_elim=>->. Qed.
 
   Lemma wp_destroy_named_elim_struct tu cls s this Q :
     tu.(types) !! cls = Some (Gstruct s) ->

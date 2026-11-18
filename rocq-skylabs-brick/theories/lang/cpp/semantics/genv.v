@@ -216,6 +216,18 @@ Lemma glob_def_genv_compat_union {σ gn tu} {Hσ : tu ⊧ σ} st
   glob_def σ gn = Some (Gunion st).
 Proof. move: Hσ Hl => /genv_compat_submodule. apply: sub_module_preserves_gunion. Qed.
 
+Set Default Goal Selector "!".
+
+Lemma glob_def_genv_compat_opaque_record {σ gn tu} {Hσ : tu ⊧ σ} r
+  (Hl : tu.(types) !! gn = Some (Gopaque_record r)) :
+  glob_def σ gn = Some (Gopaque_record r).
+Proof.
+  move: Hσ Hl => /genv_compat_submodule.
+  apply: sub_module_preserves_gopaque_record.
+Qed.
+
+Set Default Goal Selector "1".
+
 Lemma glob_def_genv_compat_enum {σ gn tu} {Hσ : tu ⊧ σ} ty brs
   (Hl : tu.(types) !! gn = Some (Genum ty brs)) :
   exists brs', glob_def σ gn = Some (Genum ty brs').

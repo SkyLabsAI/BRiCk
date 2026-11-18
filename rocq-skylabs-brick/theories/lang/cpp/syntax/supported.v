@@ -485,6 +485,8 @@ Section with_monad.
   Definition glob_decl (gd : GlobDecl) : M :=
     match gd with
     | Gunsupported msg => FAIL msg
+    | Gopaque_record _ =>
+        PARTIAL "opaque record: field layout and structural initialization/destruction are unavailable"
     | Gtype => OK
     | Gunion u => lst member u.(u_fields)
     | Gstruct s => lst (classname ∘ fst) s.(s_bases) <+> lst member s.(s_fields)
