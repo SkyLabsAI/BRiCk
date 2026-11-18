@@ -188,6 +188,11 @@ Module Type CPP_LOGIC
       Axiom has_type_erase_qualifiers : ∀ ty v,
         has_type v ty -|- has_type v (erase_qualifiers ty).
 
+      (** An under-aligned object holds the values of its underlying type.
+          (The alignment is a property of the object, not of its values.) *)
+      Axiom has_type_realigned : ∀ n ty v,
+        has_type v (Trealigned n ty) -|- has_type v ty.
+
       (* Internal statements: *)
       Axiom has_type_nullptr' : ∀ p,
         has_type (Vptr p) Tnullptr -|- [| p = nullptr |].

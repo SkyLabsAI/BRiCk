@@ -127,7 +127,8 @@ Section with_cpp.
       | Trv_ref _
       | Tenum _
       | Tmember_pointer _ _
-      | Tarch _ _ => R q t
+      | Tarch _ _
+      | Trealigned _ _ => R q t
       | Tnamed nm =>
           match tu.(types) !! nm with
           | Some (Gstruct s) =>

@@ -557,6 +557,9 @@ Module Type HAS_TYPE (Import P : PTRS) (Import R : RAW_BYTES) (Import V : VAL_MI
         has_type_prop v (Tptr ty) <-> exists p, v = Vptr p.
     Axiom has_type_prop_erase_qualifiers : forall v ty,
         has_type_prop v ty <-> has_type_prop v (erase_qualifiers ty).
+    (** An under-aligned object holds the values of its underlying type. *)
+    Axiom has_type_prop_realigned : forall v n ty,
+        has_type_prop v (Trealigned n ty) <-> has_type_prop v ty.
     Axiom has_type_prop_nullptr : forall v,
         has_type_prop v Tnullptr <-> v = Vptr nullptr.
     Axiom has_type_prop_ref : forall v ty,

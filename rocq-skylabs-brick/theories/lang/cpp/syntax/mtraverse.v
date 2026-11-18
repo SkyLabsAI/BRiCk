@@ -202,6 +202,7 @@ Module MTraverse.
       | Tfloat_ t => mret $ Tfloat_ t
       | Tnullptr => mret Tnullptr
       | Tarch sz t => mret $ Tarch sz t
+      | Trealigned n t => Trealigned n <$> traverseT t
       | Tdecltype e => Tdecltype <$> traverseE e
       | Texprtype e => Texprtype <$> traverseE e
       | Tunsupported msg => mret $ Tunsupported msg

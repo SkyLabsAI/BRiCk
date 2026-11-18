@@ -134,6 +134,7 @@ Fixpoint size_of (resolve : genv) (t : type) : option N :=
   | Tbool => Some 1
   | Tmember_pointer _ _ => Some (member_pointer_size resolve)
   | Tqualified _ t => size_of resolve t
+  | Trealigned _ t => size_of resolve t
   | Tnullptr => Some (pointer_size resolve)
   | Tfloat_ sz => Some (float_type.bytesN sz)
   | Tarch sz _ => bitsize.bytesN <$> sz
@@ -518,6 +519,19 @@ Section with_genv.
     move=>/align_of_size_of' [al [? [? /N.Lcm0.mod_divide ?]]].
     eauto.
   Qed.
+
+  (** An under-aligned object, such as a field of a packed record, has the
+      alignment its type states. cpp2v emits [Trealigned n t] for a field, or a
+      variable, that Clang aligns to only [n] bytes, less than BRiCk assumes
+      for the scalar type [t], so [n] is a power of two dividing the size of
+      [t]. The premise keeps the axiom consistent with [align_of_size_of']:
+      an over-aligned type such as <<typedef int X __attribute__((aligned(16)))>>
+      (size 4, alignment 16) gets no alignment from it, and cpp2v prints
+      <<alignof>> of such a type as Clang's constant instead. *)
+  Axiom align_of_realigned : forall n t sz,
+      size_of σ t = Some sz ->
+      valid_alignment sz n ->
+      align_of (Trealigned n t) = Some n.
 
   (* Validated alignments of named types are recorded in the translation unit.
      Missing layout metadata (e.g. [Gtype] or [Gunsupported]) does not mean
