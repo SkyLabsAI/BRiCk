@@ -1,0 +1,195 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.supported_cases</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax.supported</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab14"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">supported.report</span></span>: false positives and false negatives</h1>
+
+
+<div class="paragraph"> </div>
+
+    One minimal case per kind of gap the report checks.
+    <span class="inlinecode"><span class="id" title="var">supported_report.v</span></span> covers each status; this file pins down the verdict
+    on code whose verdict used to be wrong. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">source</span> <span class="id" title="var">flags</span> "-std=c++20 --target=x86_64-linux-gnu" <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+// <span class="id" title="keyword">no</span> <span class="id" title="var">rule</span> <span class="id" title="keyword">for</span> [<span class="id" title="var">va_arg</span>].<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">va</span>(<span class="id" title="var">__builtin_va_list</span> <span class="id" title="var">ap</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">__builtin_va_arg</span>(<span class="id" title="var">ap</span>, <span class="id" title="var">int</span>); }<br/>
+<br/>
+// <span class="id" title="var">thread</span>-<span class="id" title="var">local</span> <span class="id" title="var">storage</span> (<span class="id" title="var">cpp2v</span> <span class="id" title="var">prints</span> <span class="id" title="var">uses</span> <span class="id" title="keyword">as</span> [<span class="id" title="var">Eunsupported</span>]).<br/>
+<span class="id" title="var">thread_local</span> <span class="id" title="var">int</span> <span class="id" title="var">tls</span>;<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">get_tls</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">tls</span>; }<br/>
+<br/>
+// <span class="id" title="var">only</span> [<span class="id" title="var">seq_cst</span>] <span class="id" title="var">atomics</span> <span class="id" title="keyword">with</span> <span class="id" title="var">a</span> <span class="id" title="var">rule</span> <span class="id" title="var">are</span> <span class="id" title="var">supported</span>.<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">load_sc</span>(<span class="id" title="var">int</span> *<span class="id" title="var">p</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">__atomic_load_n</span>(<span class="id" title="var">p</span>, 5); }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">load_relaxed</span>(<span class="id" title="var">int</span> *<span class="id" title="var">p</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">__atomic_load_n</span>(<span class="id" title="var">p</span>, 0); }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">load_order</span>(<span class="id" title="var">int</span> *<span class="id" title="var">p</span>, <span class="id" title="var">int</span> <span class="id" title="var">mo</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">__atomic_load_n</span>(<span class="id" title="var">p</span>, <span class="id" title="var">mo</span>); }<br/>
+<span class="id" title="var">bool</span> <span class="id" title="var">test_and_set</span>(<span class="id" title="var">bool</span> *<span class="id" title="var">p</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">__atomic_test_and_set</span>(<span class="id" title="var">p</span>, 5); }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">fetch_max</span>(<span class="id" title="var">int</span> *<span class="id" title="var">p</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">__atomic_fetch_max</span>(<span class="id" title="var">p</span>, 1, 5); }<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">generic_store</span>(<span class="id" title="var">int</span> *<span class="id" title="var">p</span>, <span class="id" title="var">int</span> *<span class="id" title="var">v</span>) { <span class="id" title="var">__atomic_store</span>(<span class="id" title="var">p</span>, <span class="id" title="var">v</span>, 5); }<br/>
+<br/>
+// <span class="id" title="var">implicit</span> <span class="id" title="var">destructor</span> <span class="id" title="var">calls</span>.<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">D</span> { ~<span class="id" title="var">D</span>() { <span class="id" title="var">asm</span>("nop"); } };<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">dtor_local</span>() { <span class="id" title="var">D</span> <span class="id" title="var">d</span>; }<br/>
+<br/>
+// <span class="id" title="var">a</span> <span class="id" title="tactic">by</span>-<span class="id" title="var">value</span> <span class="id" title="var">class</span> <span class="id" title="var">flowing</span> <span class="id" title="keyword">as</span> <span class="id" title="var">a</span> <span class="id" title="var">prvalue</span>.<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">B</span> { <span class="id" title="var">int</span> <span class="id" title="var">a</span> : 3; };<br/>
+<span class="id" title="var">B</span> <span class="id" title="var">mk</span>();<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">use</span>(<span class="id" title="var">B</span>);<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">prvalue</span>() { <span class="id" title="var">use</span>(<span class="id" title="var">mk</span>()); }<br/>
+<br/>
+// <span class="id" title="var">declaration</span> <span class="id" title="var">only</span>.<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">ext</span>(<span class="id" title="var">int</span>);<br/>
+<br/>
+// [<span class="id" title="var">setjmp</span>] <span class="id" title="var">returns</span> <span class="id" title="var">twice</span>.<br/>
+<span class="id" title="var">typedef</span> <span class="id" title="var">long</span> <span class="id" title="var">jmp_buf_t</span>[8];<br/>
+<span class="id" title="var">extern</span> "C" <span class="id" title="var">int</span> <span class="id" title="var">_setjmp</span>(<span class="id" title="var">jmp_buf_t</span>);<br/>
+<span class="id" title="var">jmp_buf_t</span> <span class="id" title="var">jb</span>;<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">calls_setjmp</span>() { <span class="id" title="keyword">if</span> (<span class="id" title="var">_setjmp</span>(<span class="id" title="var">jb</span>)) <span class="id" title="keyword">return</span> 1; <span class="id" title="keyword">return</span> 0; }<br/>
+<br/>
+// <span class="id" title="var">pointers</span> <span class="id" title="var">to</span> <span class="id" title="var">members</span>.<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">S</span> { <span class="id" title="var">int</span> <span class="id" title="var">x</span>; <span class="id" title="var">int</span> <span class="id" title="var">m</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">x</span>; } };<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">dot_member</span>(<span class="id" title="var">S</span> &amp;<span class="id" title="var">s</span>, <span class="id" title="var">int</span> <span class="id" title="var">S</span>::*<span class="id" title="var">pm</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">s</span>.*<span class="id" title="var">pm</span>; }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">arrow_member</span>(<span class="id" title="var">S</span> *<span class="id" title="var">s</span>, <span class="id" title="var">int</span> <span class="id" title="var">S</span>::*<span class="id" title="var">pm</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">s</span>-&gt;*<span class="id" title="var">pm</span>; }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">call_member</span>(<span class="id" title="var">S</span> &amp;<span class="id" title="var">s</span>, <span class="id" title="var">int</span> (<span class="id" title="var">S</span>::*<span class="id" title="var">pm</span>)()) { <span class="id" title="keyword">return</span> (<span class="id" title="var">s</span>.*<span class="id" title="var">pm</span>)(); }<br/>
+<br/>
+// <span class="id" title="var">statement</span> <span class="id" title="var">expressions</span>.<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">stmt_expr</span>() { <span class="id" title="keyword">return</span> ({ <span class="id" title="var">int</span> <span class="id" title="var">x</span> = 1; <span class="id" title="var">x</span>; }); }<br/>
+<br/>
+// [<span class="id" title="var">offsetof</span>].<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">O</span> { <span class="id" title="var">int</span> <span class="id" title="var">a</span>; <span class="id" title="var">int</span> <span class="id" title="var">b</span>; };<br/>
+<span class="id" title="var">unsigned</span> <span class="id" title="var">long</span> <span class="id" title="var">off</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">__builtin_offsetof</span>(<span class="id" title="var">O</span>, <span class="id" title="var">b</span>); }<br/>
+<br/>
+// <span class="id" title="var">a</span> <span class="id" title="var">label</span> <span class="id" title="var">without</span> <span class="id" title="var">a</span> [<span class="id" title="var">goto</span>].<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">label_only</span>() { <span class="id" title="var">L</span>: ; }<br/>
+<br/>
+// <span class="id" title="var">flexible</span> <span class="id" title="var">array</span> <span class="id" title="var">members</span>.<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">M</span> { <span class="id" title="var">int</span> <span class="id" title="var">n</span>; <span class="id" title="var">int</span> <span class="id" title="var">d</span>[]; };<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">fam</span>(<span class="id" title="var">M</span> *<span class="id" title="var">m</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">m</span>-&gt;<span class="id" title="var">d</span>[0]; }<br/>
+<br/>
+// <span class="id" title="var">a</span> [<span class="id" title="var">switch</span>] <span class="id" title="var">body</span> <span class="id" title="var">that</span> <span class="id" title="keyword">is</span> <span class="id" title="var">not</span> <span class="id" title="var">a</span> <span class="id" title="var">block</span>.<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">braceless</span>(<span class="id" title="var">int</span> <span class="id" title="var">x</span>) { <span class="id" title="var">switch</span> (<span class="id" title="var">x</span>) <span class="id" title="tactic">case</span> 1: <span class="id" title="keyword">return</span> 1; <span class="id" title="keyword">return</span> 0; }<br/>
+<br/>
+// <span class="id" title="var">library</span> <span class="id" title="var">builtins</span> <span class="id" title="var">called</span> <span class="id" title="keyword">as</span> <span class="id" title="var">ordinary</span> <span class="id" title="var">functions</span>, <span class="id" title="var">and</span> <span class="id" title="var">a</span> <span class="id" title="var">direct</span> <span class="id" title="var">builtin</span>.<br/>
+<span class="id" title="var">extern</span> "C" <span class="id" title="var">void</span> *<span class="id" title="var">memcpy</span>(<span class="id" title="var">void</span> *, <span class="id" title="var">const</span> <span class="id" title="var">void</span> *, <span class="id" title="var">unsigned</span> <span class="id" title="var">long</span>);<br/>
+<span class="id" title="var">extern</span> "C" <span class="id" title="var">unsigned</span> <span class="id" title="var">long</span> <span class="id" title="var">strlen</span>(<span class="id" title="var">const</span> <span class="id" title="var">char</span> *);<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">lib_memcpy</span>(<span class="id" title="var">char</span> *<span class="id" title="var">d</span>, <span class="id" title="var">const</span> <span class="id" title="var">char</span> *<span class="id" title="var">s</span>) { <span class="id" title="var">memcpy</span>(<span class="id" title="var">d</span>, <span class="id" title="var">s</span>, 4); }<br/>
+<span class="id" title="var">unsigned</span> <span class="id" title="var">long</span> <span class="id" title="var">lib_strlen</span>(<span class="id" title="var">const</span> <span class="id" title="var">char</span> *<span class="id" title="var">s</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">strlen</span>(<span class="id" title="var">s</span>); }<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">direct_memcpy</span>(<span class="id" title="var">char</span> *<span class="id" title="var">d</span>, <span class="id" title="var">const</span> <span class="id" title="var">char</span> *<span class="id" title="var">s</span>) { <span class="id" title="var">__builtin_memcpy</span>(<span class="id" title="var">d</span>, <span class="id" title="var">s</span>, 4); }<br/>
+// <span class="id" title="var">Direct</span> <span class="id" title="var">builtin</span> <span class="id" title="var">calls</span> <span class="id" title="var">remain</span> <span class="id" title="var">unsupported</span> <span class="id" title="var">when</span> <span class="id" title="var">they</span> <span class="id" title="var">have</span> <span class="id" title="keyword">no</span> <span class="id" title="var">semantics</span>.<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">direct_undeclared</span>(<span class="id" title="var">const</span> <span class="id" title="var">char</span> *<span class="id" title="var">a</span>, <span class="id" title="var">const</span> <span class="id" title="var">char</span> *<span class="id" title="var">b</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">__builtin_strcmp</span>(<span class="id" title="var">a</span>, <span class="id" title="var">b</span>); }<br/>
+<br/>
+// <span class="id" title="var">an</span> <span class="id" title="var">unused</span> <span class="id" title="var">defaulted</span> <span class="id" title="var">member</span> <span class="id" title="var">that</span> <span class="id" title="var">cpp2v</span> <span class="id" title="var">does</span> <span class="id" title="var">not</span> <span class="id" title="var">elaborate</span>.<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">P</span> { <span class="id" title="var">P</span>() {} <span class="id" title="var">P</span>(<span class="id" title="var">const</span> <span class="id" title="var">P</span> &amp;) = <span class="id" title="var">default</span>; <span class="id" title="var">int</span> <span class="id" title="var">x</span>; };<br/>
+<br/>
+// <span class="id" title="var">an</span> <span class="id" title="var">unsupported</span> <span class="id" title="keyword">type</span> <span class="id" title="var">behind</span> <span class="id" title="var">a</span> <span class="id" title="var">pointer</span>.<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">long_double_ptr</span>(<span class="id" title="var">long</span> <span class="id" title="var">double</span> *<span class="id" title="var">p</span>) { (<span class="id" title="var">void</span>)<span class="id" title="var">p</span>; }<br/>
+<br/>
+// <span class="id" title="var">a</span> <span class="id" title="var">default</span> <span class="id" title="var">member</span> <span class="id" title="var">initializer</span> <span class="id" title="var">without</span> <span class="id" title="var">semantics</span>.<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">NS</span> { <span class="id" title="var">int</span> <span class="id" title="var">v</span> = 0 ? 1 : <span class="id" title="var">throw</span> 0; <span class="id" title="var">int</span> <span class="id" title="var">get</span>() <span class="id" title="var">const</span> { <span class="id" title="keyword">return</span> 42; } };<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">ns_get</span>(<span class="id" title="var">NS</span> *<span class="id" title="var">n</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">n</span>-&gt;<span class="id" title="var">get</span>(); }<br/>
+<br/>
+// <span class="id" title="var">unevaluated</span> <span class="id" title="var">operands</span>.<br/>
+<span class="id" title="var">unsigned</span> <span class="id" title="var">long</span> <span class="id" title="var">sizeof_expr</span>(<span class="id" title="var">S</span> &amp;<span class="id" title="var">s</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">sizeof</span>(<span class="id" title="var">s</span>.*(&amp;<span class="id" title="var">S</span>::<span class="id" title="var">x</span>)); }<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="show" class="idref" href="#show"><span class="id" title="definition">show</span></a> (<a id="e:1" class="idref" href="#e:1"><span class="id" title="binder">e</span></a> : <span class="id" title="record">supported.report.entry</span>) :=<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="projection">supported.report.resolved</span> <a class="idref" href="skylabs_brick.tests.supported_cases.html#e:1"><span class="id" title="variable">e</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="projection">supported.report.status</span> <a class="idref" href="skylabs_brick.tests.supported_cases.html#e:1"><span class="id" title="variable">e</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a><br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="projection">supported.report.unsupported</span> <a class="idref" href="skylabs_brick.tests.supported_cases.html#e:1"><span class="id" title="variable">e</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="projection">supported.report.partial</span> <a class="idref" href="skylabs_brick.tests.supported_cases.html#e:1"><span class="id" title="variable">e</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a><br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">List.map</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#fst"><span class="id" title="definition">fst</span></a> (<span class="id" title="projection">supported.report.blocked_by</span> <a class="idref" href="skylabs_brick.tests.supported_cases.html#e:1"><span class="id" title="variable">e</span></a>)<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a><br/>
+&nbsp;&nbsp;&nbsp;<span class="id" title="projection">supported.report.unsupported_refs</span> <a class="idref" href="skylabs_brick.tests.supported_cases.html#e:1"><span class="id" title="variable">e</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <span class="id" title="abbreviation">List.map</span> <a class="idref" href="skylabs_brick.tests.supported_cases.html#show"><span class="id" title="definition">show</span></a> (<span class="id" title="definition">supported.report.run</span> <a class="idref" href="skylabs_brick.tests.supported_cases.html#source"><span class="id" title="definition">source</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="notation">[</span> "va(__builtin_va_list)"<span class="id" title="notation">;</span> "get_tls()"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "load_sc(int*)"<span class="id" title="notation">;</span> "load_relaxed(int*)"<span class="id" title="notation">;</span> "load_order(int*, int)"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "test_and_set(bool*)"<span class="id" title="notation">;</span> "fetch_max(int*)"<span class="id" title="notation">;</span> "generic_store(int*, int*)"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "dtor_local()"<span class="id" title="notation">;</span> "prvalue()"<span class="id" title="notation">;</span> "ext(int)"<span class="id" title="notation">;</span> "calls_setjmp()"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "dot_member(S&amp;, int S::*)"<span class="id" title="notation">;</span> "arrow_member(S*, int S::*)"<span class="id" title="notation">;</span> "call_member(S&amp;, int (S::*)())"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "stmt_expr()"<span class="id" title="notation">;</span> "off()"<span class="id" title="notation">;</span> "label_only()"<span class="id" title="notation">;</span> "fam(M*)"<span class="id" title="notation">;</span> "braceless(int)"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "lib_memcpy(char*, const char*)"<span class="id" title="notation">;</span> "lib_strlen(const char*)"<span class="id" title="notation">;</span> "direct_memcpy(char*, const char*)"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "direct_undeclared(const char*, const char*)"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "P::P(const P&amp;)"<span class="id" title="notation">;</span> "long_double_ptr(long double*)"<span class="id" title="notation">;</span> "ns_get(NS*)"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "sizeof_expr(S&amp;)" <span class="id" title="notation">]</span>%<span class="id" title="var">pstring</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Every non-template entity. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="abbreviation">List.map</span> (<span class="id" title="keyword">fun</span> <a id="e:2" class="idref" href="#e:2"><span class="id" title="binder">e</span></a> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a><span class="id" title="projection">supported.report.resolved</span> <a class="idref" href="skylabs_brick.tests.supported_cases.html#e:2"><span class="id" title="variable">e</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="projection">supported.report.status</span> <a class="idref" href="skylabs_brick.tests.supported_cases.html#e:2"><span class="id" title="variable">e</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="definition">supported.report.all</span> <a class="idref" href="skylabs_brick.tests.supported_cases.html#source"><span class="id" title="definition">source</span></a>).<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

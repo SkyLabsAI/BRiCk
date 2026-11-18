@@ -54,7 +54,7 @@
 </div>
 
 <div class="doc">
-<a id="lab14"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">supported.report</span></span>: one case per status and per failure</h1>
+<a id="lab15"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">supported.report</span></span>: one case per status and per failure</h1>
 
 </div>
 <div class="code">
@@ -134,7 +134,7 @@
 </div>
 
 <div class="doc">
-<a id="lab15"></a><h1 class="section">The semantics gets stuck where <span class="inlinecode"><span class="id" title="definition">supported</span></span> fails</h1>
+<a id="lab16"></a><h1 class="section">The semantics gets stuck where <span class="inlinecode"><span class="id" title="definition">supported</span></span> fails</h1>
 
 
 <div class="paragraph"> </div>
@@ -209,9 +209,9 @@ Each remaining <span class="inlinecode"><span class="id" title="var">Gap</span><
 
 <div class="doc">
 <span class="inlinecode"><span class="id" title="constructor">Defaulted</span></span> bodies: methods and constructors of non-union classes, not
-      destructors. <span class="inlinecode"><span class="id" title="var">report</span></span> fails a queried one; others are unused, as cpp2v
-      elaborates used ones. A union's defaulted copy/move operations have
-      <span class="inlinecode"><span class="id" title="var">wp_union_copy</span></span> semantics instead. 
+      destructors. They are unused, as clang defines used ones, so <span class="inlinecode"><span class="id" title="var">report</span></span>
+      gives them no verdict ("not elaborated"). A union's defaulted copy/move
+      operations have <span class="inlinecode"><span class="id" title="var">wp_union_copy</span></span> semantics instead. 
 </div>
 <div class="code">
 &nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="defaulted_method" class="idref" href="#defaulted_method"><span class="id" title="definition">defaulted_method</span></a> (<a id="m:7" class="idref" href="#m:7"><span class="id" title="binder">m</span></a> : <span class="id" title="abbreviation">Method</span>) <a id="st:8" class="idref" href="#st:8"><span class="id" title="binder">st</span></a> <a id="args:9" class="idref" href="#args:9"><span class="id" title="binder">args</span></a> <a id="Q:10" class="idref" href="#Q:10"><span class="id" title="binder">Q</span></a> :<br/>
