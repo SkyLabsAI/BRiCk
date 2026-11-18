@@ -22,6 +22,7 @@ Require Import skylabs.iris.extra.bi.errors.
 Require Import skylabs.lang.cpp.logic.
 Require Import skylabs.lang.cpp.logic.func.
 Require Import skylabs.lang.cpp.logic.call.
+Require Import skylabs.lang.cpp.logic.vstruct_layout.
 Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
 
 cpp.prog source prog cpp:{{{
@@ -218,9 +219,6 @@ struct Decl : virtual VB { Decl(); };
 // a virtual function in the hierarchy
 struct PV { virtual void f() {} };
 struct Poly : virtual PV { Poly() {} };
-// an empty virtual base shares its address with the non-virtual part
-struct E {};
-struct Empty : virtual E { Empty() {} };
 }}}.
 
 (** The rules for constructors and destructors require a hierarchy
@@ -228,11 +226,9 @@ struct Empty : virtual E { Empty() {} };
 Example poly_no : tu_no_vtables stuck "Poly" = false := eq_refl.
 Example diamond_ok : tu_no_vtables source "G" = true := eq_refl.
 
-(** Complete objects need a layout in which the virtual bases do not
-    overlap anything. *)
+(** Complete objects need a layout that [vstruct_layout_ok] accepts. *)
 Definition layout_ok (tu : translation_unit) (cls : globname) : bool :=
-  if tu.(types) !! cls is Some (Gvstruct vs) then vstruct_layout_ok tu vs else false.
-Example empty_no : layout_ok stuck "Empty" = false := eq_refl.
+  if tu.(types) !! cls is Some (Gvstruct vs) then vstruct_layout_ok tu cls vs else false.
 Example diamond_layout_ok : layout_ok source "G" = true := eq_refl.
 
 Section stuck.
@@ -248,3 +244,168 @@ Section stuck.
     apply UNSUPPORTED_elim.
   Qed.
 End stuck.
+
+(** ** Overlapping layouts
+
+    The data of the pieces of a complete object (the virtual bases, then
+    the non-virtual part) must be pairwise disjoint, but a piece may
+    overlap the padding of another. The layouts below are clang's
+    (x86-64). *)
+
+cpp.prog overlap prog cpp:{{{
+struct E {};
+struct E2 {};
+// [E] sits at offset 0, inside the non-virtual part.
+struct Empty : virtual E { int x; Empty() {} };
+// [E] and [E2] both sit at offset 0.
+struct Two : virtual E, virtual E2 { int m; Two() {} };
+struct V1 { long a; char c; V1() {} };
+struct V2 { char d; };
+// [V2] sits at offset 17, in the tail padding of [V1] (offsets 8 to 24).
+struct Tail : virtual V1, virtual V2 { Tail() {} };
+struct B { long a; char c; B() {} };
+struct V { char v; };
+// [V] sits at offset 18, in the tail padding of the base [B] (offsets 8
+// to 24), whose storage is handed out after [V] is constructed: that
+// storage does not cover [B]'s tail padding.
+struct NvTail : B, virtual V { char g; NvTail() {} };
+// [I] has no data but its vptr, which it shares with [Prim] at offset 0.
+struct I { virtual ~I() {} };
+struct Prim : virtual I { int x; Prim() {} };
+struct X5 { char x; };
+// The data of the non-virtual part of [W] is its vptr and [w]: offsets
+// 0 to 9.
+struct W : virtual X5 { char w; W() {} };
+struct V3 { char d; };
+// [W] at offset 8, [X5] at 17, [V3] at 18.
+struct Outer : virtual W, virtual V3 { Outer() {} };
+}}}.
+
+Example empty_ok : layout_ok overlap "Empty" = true := eq_refl.
+Example two_ok : layout_ok overlap "Two" = true := eq_refl.
+Example tail_ok : layout_ok overlap "Tail" = true := eq_refl.
+Example nv_tail_ok : layout_ok overlap "NvTail" = true := eq_refl.
+Example prim_no : layout_ok overlap "Prim" = false := eq_refl.
+
+(** Layout metadata is untrusted: a complete object whose alignment is
+    not valid for its size is rejected (its [align_of] would be unknown,
+    while its pieces claim alignment). *)
+Example bad_alignment_no :
+  if overlap.(types) !! "Empty"%cpp_name is Some (Gvstruct vs) then
+    vstruct_layout_ok overlap "Empty"
+      {| vs_struct := {| s_bases := vs.(vs_struct).(s_bases); s_fields := vs.(vs_struct).(s_fields);
+                         s_virtuals := vs.(vs_struct).(s_virtuals); s_overrides := vs.(vs_struct).(s_overrides);
+                         s_dtor := vs.(vs_struct).(s_dtor);
+                         s_trivially_destructible := vs.(vs_struct).(s_trivially_destructible);
+                         s_delete := vs.(vs_struct).(s_delete); s_layout := vs.(vs_struct).(s_layout);
+                         s_size := vs.(vs_struct).(s_size); s_alignment := 0 |};
+         vs_vbases := vs.(vs_vbases); vs_nv_alignment := vs.(vs_nv_alignment) |} = false
+  else False := eq_refl.
+
+Definition vs_with (vs : VStruct) (vbases : list (classname * LayoutInfo)) : VStruct :=
+  {| vs_struct := vs.(vs_struct); vs_vbases := vbases;
+     vs_nv_alignment := vs.(vs_nv_alignment) |}.
+
+(** A virtual base without virtual bases needs room for its whole size,
+    which its [type_ptr] covers once it is constructed, even when it has
+    no data: [E] cannot sit at the end of [Empty]. *)
+Example empty_at_end_no :
+  match overlap.(types) !! "Empty"%cpp_name with
+  | Some (Gvstruct e) =>
+    vstruct_layout_ok overlap "Empty"
+      (vs_with e [("E"%cpp_name, {| li_offset := 8 * Z.of_N e.(vs_struct).(s_size) |})]) = false
+  | _ => False
+  end.
+Proof. vm_compute. reflexivity. Qed.
+
+(** A piece may start right after the data of another, but not inside it:
+    with [V3] moved from offset 18 to 17 ([X5] moving to 18), [V3] still
+    avoids [W]'s data (offsets 8 to 17 of [Outer]); at offset 16 it would
+    overlap [w]. *)
+Example outer_data_boundary :
+  match overlap.(types) !! "Outer"%cpp_name with
+  | Some (Gvstruct o) =>
+    let edit x5 v3 := vs_with o [("X5"%cpp_name, {| li_offset := x5 |});
+                                 ("W"%cpp_name, {| li_offset := 64 |});
+                                 ("V3"%cpp_name, {| li_offset := v3 |})] in
+    [vstruct_layout_ok overlap "Outer" o;
+     vstruct_layout_ok overlap "Outer" (edit 144 136);
+     vstruct_layout_ok overlap "Outer" (edit 144 128)] = [true; true; false]
+  | _ => False
+  end.
+Proof. vm_compute. reflexivity. Qed.
+
+Section overlap.
+  Context `{Σ : cpp_logic} {σ : genv}.
+  Hypothesis Hσ : overlap ⊧ σ.
+
+  (** An empty virtual base sits at offset 0, inside the storage of the
+      non-virtual part: a complete [Empty] can still be constructed and
+      destroyed, because [E] has no data. *)
+  Definition ER (q : cQp.t) : Rep := structR "E" q.
+  Definition EmptyR (q : cQp.t) : Rep :=
+    _field "Empty::x" |-> uninitR Tint q ** vbaseR "Empty" "E" (ER q).
+
+  Definition E_ctor_spec : mpred :=
+    □ Forall (this : ptr) (Q : ptr -> epred),
+      this |-> tblockR (Tnamed "E") 1$m **
+      (Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -* this |-> ER 1$m -* Q p)
+      -* wp_fptr (type_of_value (Oconstructor
+            (Build_Ctor "E" nil CC_C Ar_Definite exception_spec.NoThrow None)))
+           (_global "E::E()") [this] Q.
+
+  Lemma Empty_complete_ok ρ (e : ptr) (Q : FreeTemps -> epred) :
+    E_ctor_spec **
+    ctor_spec "Empty" "Empty::Empty()" (vbaseR "Empty" "E" (ER 1$m)) (EmptyR 1$m) **
+    (e |-> EmptyR 1$m -* Q FreeTemps.id)
+    |-- wp_init overlap ρ (Tnamed "Empty") e (Econstructor "Empty::Empty()" [] (Tnamed "Empty")) Q.
+  Proof using Hσ.
+    iIntros "(#SE & #SEm & HQ)".
+    iApply wp_init_constructor; first done.
+    erewrite glob_def_genv_compat_vstruct; last by vm_compute.
+    rewrite /wp_init_complete_vstruct /ctor_fun_type /=.
+    rewrite /wp_args /= /nd_seqs /= /wp.WPE.Mret.
+    iIntros "!>" (pvbs Hlen) "F".
+    destruct pvbs as [|pvb [|??]]; try done. cbn.
+    repeat (case_bool_decide; try congruence).
+    iDestruct "F" as "[[#V _] _]".
+    rewrite wp_initialize_unqualified.unlock /=.
+    (* 1. the empty virtual base, at the start of the object *)
+    iApply wp_init_constructor; first done.
+    erewrite glob_def_genv_compat_struct; last by vm_compute.
+    rewrite /type_of_ctor /=.
+    rewrite /wp_args /= /nd_seqs /= /wp.WPE.Mret.
+    iIntros "!> BE". iApply "SE". iFrame "BE".
+    iIntros (p) "Hp E".
+    rewrite /= !interp_unfold /=. iModIntro. iFrame "Hp". iModIntro.
+    (* 2. the constructor, on the non-virtual part, which overlaps [E] *)
+    iIntros "BEm". iApply "SEm". iFrame "BEm".
+    iSplitL "E". { iApply (vbaseR_intro with "V E"). }
+    iIntros (p') "Hp' Em". iModIntro. iFrame "Hp'". by iApply "HQ".
+  Qed.
+
+  Definition E_dtor_spec : mpred :=
+    □ Forall (this : ptr) (Q : ptr -> epred),
+      this |-> ER 1$m **
+      (Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -*
+         this |-> tblockR (Tnamed "E") 1$m -* Q p)
+      -* wp_fptr (dtor_type "E") (_global "E::~E()") [this] Q.
+
+  Lemma Empty_destroy_ok (e : ptr) (Q : epred) :
+    E_dtor_spec **
+    dtor_spec "Empty" "Empty::~Empty()" (EmptyR 1$m) (vbaseR "Empty" "E" (ER 1$m)) **
+    e |-> EmptyR 1$m ** Q
+    |-- wp_destroy_named overlap "Empty" e Q.
+  Proof.
+    iIntros "(#SE & #SEm & Em & Q)".
+    iApply wp_destroy_named_intro. cbn.
+    rewrite /wp_destroy_vstruct /wp_base_destructor /wp_mfptr /=.
+    iApply "SEm". iFrame "Em".
+    iIntros (p) "Hp BEm E". iExists Vvoid. iFrame "Hp BEm".
+    iDestruct (_at_vbaseR with "E") as (pvb) "[#V E]".
+    iExists pvb. iFrame "V".
+    iApply wp_destructor_intro. rewrite /wp_mfptr /=.
+    iApply "SE". iFrame "E".
+    iIntros (p') "Hp' BE". iExists Vvoid. iFrame.
+  Qed.
+End overlap.

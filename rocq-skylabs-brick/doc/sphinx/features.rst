@@ -78,7 +78,9 @@ Unsupported Features
        non-virtual bases have offsets, and clients can write ``Rep``\ s for
        it (``vbaseR``). Constructors and destructors can be verified, and
        complete objects created and destroyed, when no class in the
-       hierarchy has a :cpp:`virtual` function. Conversions to or from a
+       hierarchy has a :cpp:`virtual` function and no virtual base
+       overlaps the data of another subobject (overlapping padding, as
+       empty virtual bases do, is fine). Conversions to or from a
        virtual base, :cpp:`virtual` dispatch, :cpp:`delete`,
        :cpp:`const` objects, and explicit destructor calls are not
        supported. This includes standard types built on it, e.g.

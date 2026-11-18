@@ -17,6 +17,7 @@ Require Import skylabs.lang.cpp.logic.const.
 Require Import skylabs.lang.cpp.logic.dispatch.
 Require Import skylabs.lang.cpp.logic.layout.
 Require Import skylabs.lang.cpp.logic.arr.
+Require Import skylabs.lang.cpp.logic.vstruct_layout.
 
 #[local] Set Printing Coercions.
 #[local] Infix "|--" := bi_entails.
@@ -382,8 +383,12 @@ https://eel.is/c++draft/class.dtor#14
 *)
 Definition wp_destroy_vstruct `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
     (cls : globname) (vs : VStruct) (this : ptr) (Q : epred) : mpred :=
-  letI* := wp_base_destructor cls (_global vs.(vs_struct).(s_dtor)) this in
-  wpd_vbases tu cls this (rev (fst <$> vs.(vs_vbases))) Q.
+  (* Like construction, destruction hands out storage for each piece
+     while the pieces constructed before it are alive. *)
+  if vstruct_layout_ok tu cls vs then
+    (letI* := wp_base_destructor cls (_global vs.(vs_struct).(s_dtor)) this in
+    wpd_vbases tu cls this (rev (fst <$> vs.(vs_vbases))) Q)%I
+  else |={top}=> UNSUPPORTED ("destroying a complete object with virtual bases: unsupported layout", cls).
 
 #[local] Hint Resolve ERROR_elim UNSUPPORTED_elim : core.
 
@@ -447,14 +452,20 @@ Section vstruct.
     sub_module tu tu' ->
     Q -* Q' |-- wp_destroy_vstruct tu cls vs this Q -* wp_destroy_vstruct tu' cls vs this Q'.
   Proof.
-    intros. iIntros "HQ". iApply wp_base_destructor_frame.
-    by iApply wpd_vbases_frame.
+    intros Hsub. rewrite /wp_destroy_vstruct.
+    destruct (vstruct_layout_ok tu cls vs) eqn:Hok.
+    - rewrite (vstruct_layout_ok_sub Hsub _ _ Hok).
+      iIntros "HQ". iApply wp_base_destructor_frame. by iApply wpd_vbases_frame.
+    - iIntros "_ wp". destruct (vstruct_layout_ok tu' cls vs); last by iExact "wp".
+      iApply wp_base_destructor_shift. iMod "wp".
+      by iDestruct (UNSUPPORTED_elim with "wp") as "[]".
   Qed.
 
   Lemma wp_destroy_vstruct_shift tu cls vs this Q :
     (|={top}=> wp_destroy_vstruct tu cls vs this (|={top}=> Q))
     |-- wp_destroy_vstruct tu cls vs this Q.
   Proof.
+    rewrite /wp_destroy_vstruct. destruct (vstruct_layout_ok tu cls vs); last by iIntros ">$".
     iIntros "wp". iApply wp_base_destructor_shift. iMod "wp". iModIntro.
     iApply (wp_base_destructor_frame with "[] wp"). iApply wpd_vbases_fupd.
   Qed.

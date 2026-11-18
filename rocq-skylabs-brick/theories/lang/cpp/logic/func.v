@@ -23,6 +23,7 @@ Require Import skylabs.lang.cpp.logic.const.
 Require Import skylabs.lang.cpp.logic.initializers.
 Require Import skylabs.lang.cpp.logic.translation_unit.
 Require Import skylabs.lang.cpp.logic.destroy.
+Require Import skylabs.lang.cpp.logic.vstruct_layout.
 Require Import skylabs.lang.cpp.logic.call.
 Require Import skylabs.lang.cpp.logic.raw.
 
@@ -972,59 +973,6 @@ Definition tu_no_vtables (tu : translation_unit) (cls : globname) : bool :=
   no_vtables tu (NM.cardinal tu.(types)) cls.
 
 (**
-Layout metadata is untrusted (see [valid_alignment]), and the rules
-below hand out storage according to it, so they check it first: a
-rule that handed out contradictory storage would be vacuous.
-
-[vstruct_nv_ok vs] validates the non-virtual part: its alignment is a
-power of two that divides the alignment of a complete object, and it
-is not larger than a complete object.
-*)
-Definition vstruct_nv_ok (vs : VStruct) : bool :=
-  bool_decide (valid_alignment vs.(vs_struct).(s_alignment) vs.(vs_nv_alignment)) &&
-  bool_decide (vs.(vs_nv_size) <= vs.(vs_struct).(s_size))%N.
-
-(** The storage that a virtual base [b] occupies: all of it for an
-ordinary class, only the non-virtual part for a class that has
-virtual bases itself. *)
-Definition vbase_extent (tu : translation_unit) (b : globname) : option Z :=
-  match tu.(types) !! b with
-  | Some (Gstruct s) => Some (Z.of_N s.(s_size))
-  | Some (Gvstruct vs) => Some (Z.of_N vs.(vs_nv_size))
-  | _ => None
-  end.
-
-Fixpoint extents_disjoint (xs : list (Z * Z)) : bool :=
-  match xs with
-  | nil => true
-  | x :: xs =>
-    forallb (fun y => bool_decide (x.1 + x.2 <= y.1)%Z || bool_decide (y.1 + y.2 <= x.1)%Z) xs &&
-    extents_disjoint xs
-  end.
-
-(**
-[vstruct_layout_ok tu vs] validates the layout of a complete object:
-the non-virtual part is valid, the virtual bases are distinct, and
-their storage lies after the non-virtual part, inside the object,
-without overlap. An implementation may overlap virtual bases (e.g.
-an empty one, or one placed in the tail padding of another); complete
-objects of such classes are not supported.
-*)
-Definition vstruct_layout_ok (tu : translation_unit) (vs : VStruct) : bool :=
-  vstruct_nv_ok vs &&
-  bool_decide (NoDup (List.map fst vs.(vs_vbases))) &&
-  match
-    mapM (fun b => (fun e => (b.2.(li_offset) / 8, e)%Z) <$> vbase_extent tu b.1) vs.(vs_vbases)
-  with
-  | Some exts =>
-    forallb (fun x =>
-      bool_decide (Z.of_N vs.(vs_nv_size) <= x.1)%Z &&
-      bool_decide (x.1 + x.2 <= Z.of_N vs.(vs_struct).(s_size))%Z) exts &&
-    extents_disjoint exts
-  | None => false
-  end.
-
-(**
 [ctor_fun_type tu cnd cls] is the type of the constructor [cnd] of
 class [cls], with the types of its arguments (without [this]).
 *)
@@ -1222,7 +1170,7 @@ Definition wp_init_complete_vstruct `{Σ : cpp_logic, σ : genv} (tu : translati
     match ctor.(c_body) with
     | Some (UserDefined ib | CompilerProvided ib) =>
       let inits := ib.1 in
-      if negb (vstruct_layout_ok tu vs) then
+      if negb (vstruct_layout_ok tu cls vs) then
         UNSUPPORTED ("complete object with virtual bases: unsupported layout", cls)
       else if existsb (fun i => bool_decide (i.(init_path) = InitThis)) inits then
         UNSUPPORTED ("delegating constructor for a complete object with virtual bases", cnd)
