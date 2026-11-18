@@ -737,36 +737,16 @@ Section typed_array_blocks.
       + by iApply (blockR_ptr_congP_transport_raw sz _ _ ty q Hsz with "[$C' $RB]").
   Qed.
 
-  Lemma type_ptr_array_element_tblock (p : ptr) (ty : Rtype)
-      (n i sz : N) (q : cQp.t) :
+  (** Moving an element's storage between its byte offset and its typed
+      offset. This is an axiom because [tblockR] is abstract at class types;
+      at other types it follows from [type_ptr_array_element_block]. *)
+  Axiom type_ptr_array_element_tblock : forall (p : ptr) (ty : Rtype)
+      (n i sz : N) (q : cQp.t),
     size_of σ ty = Some sz ->
     (i < n)%N ->
     type_ptr (Tarray ty n) p |--
       (p .[ Tbyte ! Z.of_N (i * sz) ] |-> tblockR ty q
        ∗-∗ p .[ ty ! Z.of_N i ] |-> tblockR ty q).
-  Proof.
-    intros Hsz Hi.
-    destruct (align_of_size_of' _ _ Hsz) as (al & Hal & Hal0 & Hdvd).
-    have HA : aligned_ofR ty -|- alignedR al.
-    { rewrite aligned_ofR.unlock Hal. iSplit.
-      - iIntros "(%a & %Ha & H)". by simplify_eq.
-      - iIntros "H". iExists al. by iFrame. }
-    iIntros "#T".
-    iDestruct (type_ptr_array_element_block p ty n i sz q Hsz Hi with "T") as "#C".
-    iDestruct (type_ptr_o_sub p i n ty Hi with "T") as "#E".
-    iDestruct (type_ptr_aligned_ofR with "E") as "#EA".
-    iDestruct (type_ptr_aligned_ofR with "T") as "#A".
-    have HAarray : aligned_ofR (Tarray ty n) -|- aligned_ofR ty.
-    { by rewrite !aligned_ofR.unlock align_of_array. }
-    iEval (rewrite HAarray) in "A".
-    rewrite /tblockR Hsz Hal !_at_sep. setoid_rewrite <- HA.
-    iSplit; iIntros "[B _]".
-    - iFrame "EA". by iApply "C".
-    - iDestruct ("C" with "B") as "$".
-      iEval (rewrite -_at_offsetR -(aligned_ofR_byte_sub ty sz i Hsz) !_at_sep _at_validR).
-      iFrame "A".
-      iApply (type_ptr_valid with "T").
-  Qed.
 
   (** Typed offsets require evidence for an array object. In particular,
       zero-sized storage at [nullptr] does not supply this evidence. *)

@@ -128,14 +128,7 @@ Section with_Σ.
     size_of σ t = Some sz ->
     tblockR (Tarray t 0) q -|- validR ** aligned_ofR t.
   Proof.
-    move=> Hsz.
-    rewrite /tblockR /= Hsz /= align_of_array aligned_ofR.unlock.
-    case: (align_of_size_of' _ _ Hsz) => al [Hal _].
-    rewrite Hal blockR_eq /blockR_def /= _offsetR_sub_0 ?right_id //.
-    iSplit.
-    - iIntros "[$ A]". iExists al. by iFrame.
-    - iIntros "[$ A]". iDestruct "A" as (a) "[%Ha A]".
-      by simplify_eq.
+    move=> Hsz. rewrite tblockR_array_unfold Hsz /= _offsetR_sub_0 // right_id comm //.
   Qed.
 
   (** Splitting retains both byte ownership and validity of the split point. *)
@@ -227,26 +220,6 @@ Section with_Σ.
         .[ Tbyte ! Z.of_N (n * sz) ] |-> validR **
         [∗list] i ∈ seq 0 (N.to_nat n),
            .[ Tbyte ! Z.of_N (N.of_nat i * sz) ] |-> tblockR t q.
-  Proof.
-    intros Hsz.
-    destruct (align_of_size_of' _ _ Hsz) as (al & Hal & Hal0 & Hdvd).
-    have HA : aligned_ofR t -|- alignedR al.
-    { rewrite aligned_ofR.unlock Hal. iSplit.
-      - iIntros "(%a & %Ha & H)". by simplify_eq.
-      - iIntros "H". iExists al. by iFrame. }
-    rewrite /tblockR /= Hsz /= align_of_array Hal.
-    have HC := blockR_chunks (N.to_nat n) sz q. rewrite N2Nat.id in HC.
-    setoid_rewrite <- HA.
-    iSplit.
-    - iIntros "(B & #A)".
-      iDestruct (observe validR with "B") as "#Vp".
-      iEval (rewrite HC) in "B". iDestruct "B" as "[E B]". iFrame "A E".
-      iApply (big_sepL_impl with "B").
-      iIntros "!>" (k i Hi) "$".
-      iApply (aligned_ofR_byte_sub t sz (N.of_nat i) Hsz). by iFrame "A Vp".
-    - rewrite HC. iIntros "(#A & E & B)". iFrame "A E".
-      iApply (big_sepL_impl with "B"). iIntros "!>" (k i Hi) "B".
-      rewrite _offsetR_sep. iDestruct "B" as "[$ _]".
-  Qed.
+  Proof. move=> Hsz. by rewrite tblockR_array_unfold Hsz. Qed.
 
 End with_Σ.

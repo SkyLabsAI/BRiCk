@@ -45,7 +45,7 @@ Section with_cpp.
   (* A zero length must not make an unsized element type admissible. *)
   Example empty_array_unsized q :
     tblockR (Tarray (Tfunction (FunctionType Tvoid nil)) 0) q -|- False.
-  Proof. by rewrite /tblockR. Qed.
+  Proof. by rewrite tblockR_array_unfold. Qed.
 
   (* A non-affine frame and all three chunks survive in both directions. *)
   Example three_ushort_cells (q : cQp.t) (P : Rep) :
@@ -89,10 +89,18 @@ Section with_cpp.
   Example zero_stride_null_storage (q : cQp.t) :
     emp |-- nullptr |-> tblockR (Tarray (Tarray Tbyte 0) 1) q.
   Proof.
-    rewrite /tblockR /= !align_of_array align_of_uchar.
-    rewrite blockR_eq /blockR_def /= _offsetR_sub_0 // right_id.
-    rewrite _at_sep _at_validR _at_alignedR.
-    iIntros "_". iSplit; [iApply valid_ptr_nullptr | iPureIntro; apply aligned_ptr_min].
+    rewrite (tblockR_array_better (Tarray Tbyte 0) 1 q 0) //=.
+    rewrite !_offsetR_sub_0 // right_id (tblockR_array_zero Tbyte q 1) //.
+    have HA : aligned_ofR (Tarray Tbyte 0) -|- aligned_ofR Tbyte.
+    { by rewrite !aligned_ofR.unlock align_of_array. }
+    rewrite HA !_at_sep !_at_validR.
+    iIntros "_".
+    iAssert (nullptr |-> aligned_ofR Tbyte)%I as "#A".
+    { rewrite aligned_ofR.unlock _at_exists. iExists 1%N.
+      rewrite _at_sep _at_only_provable _at_alignedR.
+      iSplit; iPureIntro; [apply align_of_uchar | apply aligned_ptr_min]. }
+    iPoseProof valid_ptr_nullptr as "#V".
+    iFrame "#".
   Qed.
   Example three_typed_ushort_cells (p : ptr) (q : cQp.t) (P : mpred) :
     type_ptr (Tarray "unsigned short" 3) p |--
