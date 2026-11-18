@@ -106,3 +106,42 @@ long is 32 bits and long long is 4-byte aligned.
   $ cpp2v -o target.v target.cpp -- -std=c++17 --target=x86_64-windows-msvc 2>&1 | grep -o 'cpp2v does not support.*'
   cpp2v does not support this target: BRiCk assumes that long has size and alignment 64 bits
   [1]
+
+Clang loads and stores through a pointer or reference to an over-aligned type
+with that type's alignment, and its optimizer relies on it (with
+X32 *p = q, it folds the test of whether p is 32-aligned to true), while
+BRiCk, given the erased type, would only require q to be int-aligned. Clang
+takes that alignment from a typedef attribute even for arrays and incomplete
+types, through implicit derived-to-base conversions, and from the declaration
+a variable is accessed through. So these are unsupported, in source order:
+the accesses in deref_over, index_over, store_over (the assignment) and
+arrow_over, the builtin call in copy_over, the access in arr_over, the
+builtin call in void_over, the accesses in redecl_over, extern_over and
+gnu_over, the member access in base_over, the call in vcall_over, the use of
+the captured parameter in capture_over, the access in weak_over, the
+conversion in vbase_over and the delete in delete_over. The accesses after
+them are supported: Clang allocates variables (defined at their declared
+alignment) and temporaries, and lays out records, and BRiCk takes record
+alignment from Clang. C++ requires every definition of a variable declared
+with alignas to repeat it, so an extern alignas declaration is trusted.
+
+  $ check_cpp2v over.cpp
+  cpp2v -v -check-types -o over_17_cpp.v over.cpp -- -std=c++17 2>&1 | sed 's/^ *[0-9]* | //'
+  rocq c -w -notation-overridden -w -notation-incompatible-prefix over_17_cpp.v
+  $ tr -s ' \n' ' ' < over_17_cpp.v | grep -o -E 'Eunsupported "[^"]*"'
+  Eunsupported "UnaryOperator"
+  Eunsupported "ArraySubscriptExpr"
+  Eunsupported "BinaryOperator"
+  Eunsupported "MemberExpr"
+  Eunsupported "CallExpr"
+  Eunsupported "ParenExpr"
+  Eunsupported "CallExpr"
+  Eunsupported "DeclRefExpr"
+  Eunsupported "DeclRefExpr"
+  Eunsupported "DeclRefExpr"
+  Eunsupported "MemberExpr"
+  Eunsupported "CXXMemberCallExpr"
+  Eunsupported "MemberExpr"
+  Eunsupported "DeclRefExpr"
+  Eunsupported "ImplicitCastExpr"
+  Eunsupported "CXXDeleteExpr"
