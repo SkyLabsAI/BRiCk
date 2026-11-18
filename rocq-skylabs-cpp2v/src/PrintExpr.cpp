@@ -1713,10 +1713,32 @@ public:
         this->Visit(expr->getReplacement());
     }
 
+    // An aligned allocation or deallocation function receives Clang's
+    // alignment of the allocated type, while BRiCk passes [align_of] of the
+    // type cpp2v prints, which lacks alignment attributes on typedefs (see
+    // [modelTypeAlign]). Such a call is unsupported rather than modelled with
+    // the wrong argument.
+    bool attributedAlignedAllocation(QualType ty, bool aligned) {
+        if (!aligned || ty.isNull() || ty->isDependentType() ||
+            ty->isIncompleteType())
+            return false;
+        auto &ctxt = cprint.getContext();
+        auto elem = ty;
+        if (auto array = ctxt.getAsArrayType(elem))
+            elem = ctxt.getBaseElementType(array);
+        return ctxt.getTypeAlign(elem) != modelTypeAlign(ctxt, elem);
+    }
+
     void VisitCXXNewExpr(const CXXNewExpr *expr) {
         auto new_fn = expr->getOperatorNew();
         if (not new_fn) {
             unsupported_expr(expr, "dependent call to new");
+            return;
+        }
+        if (attributedAlignedAllocation(expr->getAllocatedType(),
+                                        expr->passAlignment())) {
+            unsupported_expr(expr, "aligned new of a type with an alignment "
+                                   "attribute");
             return;
         }
 
@@ -1762,6 +1784,17 @@ public:
     }
 
     void VisitCXXDeleteExpr(const CXXDeleteExpr *expr) {
+        if (auto op = expr->getOperatorDelete()) {
+            bool aligned = false;
+            for (auto param : op->parameters())
+                aligned |= param->getType()->isAlignValT();
+            if (attributedAlignedAllocation(expr->getDestroyedType(),
+                                            aligned)) {
+                unsupported_expr(expr, "aligned delete of a type with an "
+                                       "alignment attribute");
+                return;
+            }
+        }
         if (expr->getOperatorDelete()) {
             print.ctor("Edelete");
             print.output() << fmt::BOOL(expr->isArrayForm()) << fmt::nbsp;

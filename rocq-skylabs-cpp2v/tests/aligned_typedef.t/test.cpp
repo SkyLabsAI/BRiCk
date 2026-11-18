@@ -67,3 +67,10 @@ int *addr_i(P *p) { return &p->i; }
 int &ref_i(P *p) { return p->i; }
 void inc_i(P *p) { p->i += 1; }
 int chain_i(P *p) { return p->i = 3; }
+
+// Clang passes the alignment of an over-aligned type (32 here) to an aligned
+// allocation function; BRiCk would pass that of int, so these are unsupported.
+typedef int X32 __attribute__((aligned(32)));
+X32 *new_over() { return new X32; }
+void delete_over(X32 *p) { delete p; }
+int *new_plain() { return new int; }

@@ -48,13 +48,14 @@ Under-aligned fields of class type are still unsupported. (The counts
 include member expressions, which carry the field's type.) A variable of an
 under-aligned typedef type gets the same wrapper (an over-aligned one does
 not need it), or an unsupported type when the wrapper cannot express it. A
-function with an under-aligned parameter is unsupported.
+function with an under-aligned parameter is unsupported. E stands for the
+enumeration type, which older Clangs print through a shared type name.
 
-  $ grep -o -E '\(Q[a-z_]+ \(Trealigned [0-9]+ (\([^()]*\)|[^() ]+)\)\)|\(Tarray \(Trealigned [0-9]+ (\([^()]*\)|[^() ]+)\) [0-9]+\)|\(Trealigned [0-9]+ (\([^()]*\)|[^() ]+)\)' test_17_cpp.v | sort | uniq -c
+  $ grep -o -E '\(Q[a-z_]+ \(Trealigned [0-9]+ (\([^()]*\)|[^() ]+)\)\)|\(Tarray \(Trealigned [0-9]+ (\([^()]*\)|[^() ]+)\) [0-9]+\)|\(Trealigned [0-9]+ (\([^()]*\)|[^() ]+)\)' test_17_cpp.v | sed -E 's/\(Tenum n[0-9]+\)/E/; s/ t[0-9]+\)/ E)/' | sort | uniq -c
         3 (Qconst (Trealigned 1 Tshort))
         1 (Tarray (Trealigned 1 Tulonglong) 2)
         1 (Tarray (Trealigned 1 Tushort) 1)
-        9 (Trealigned 1 (Tenum n30))
+        9 (Trealigned 1 E)
         6 (Trealigned 1 Tint)
        11 (Trealigned 1 Tushort)
         9 (Trealigned 2 Tint)
@@ -84,6 +85,16 @@ type.
         1 (Ecast (Cnoop Tint) (Ecast Cl2r (Emember true (Ecast Cl2r (Evar "p" t_)) (Field (field_name.Id "i") false (Trealigned 1 Tint)))))
         5 Eunsupported "access to an under-aligned field"
         1 Eunsupported "use of an assignment to an under-aligned field"
+
+An aligned allocation or deallocation function receives Clang's alignment of
+the allocated type, which BRiCk would compute from the erased type, so a new
+or delete of a type with an alignment attribute that needs one is
+unsupported; an ordinary new is unchanged.
+
+  $ tr -s ' \n' ' ' < test_17_cpp.v | grep -o -E 'Eunsupported "CXX(New|Delete)Expr"|Enew \(' | sort | uniq -c
+        1 Enew (
+        1 Eunsupported "CXXDeleteExpr"
+        1 Eunsupported "CXXNewExpr"
 
 BRiCk fixes integer sizes and equates the alignment of integers and pointers
 with their size, so cpp2v rejects targets that disagree, such as i386, where
