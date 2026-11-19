@@ -967,7 +967,8 @@ public:
 
     static void print_string_type(const Expr *expr, CoqPrinter &print,
                                   ClangPrinter &cprint) {
-        if (auto at = dyn_cast<ArrayType>(expr->getType().getTypePtr())) {
+        // The type may be sugared, e.g. <<typedef char B[4]; B b = "abc";>>.
+        if (auto at = expr->getType()->getAsArrayTypeUnsafe()) {
             print.output() << fmt::nbsp;
             cprint.printType(print, at->getElementType().getTypePtr(),
                              loc::of(expr));
