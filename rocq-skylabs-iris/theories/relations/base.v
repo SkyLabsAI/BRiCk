@@ -1,0 +1,140 @@
+Require Import ExtLib.Data.HList.
+Require Import iris.bi.bi.
+Require Import iris.proofmode.tactics.
+Require Import skylabs.iris.extra.bi.only_provable.
+
+Declare Scope bi_relation_scope.
+Delimit Scope bi_relation_scope with bi_relation.
+
+Module bi.
+Section with_prop.
+  Context {PROP : bi}.
+
+  Definition bi_relation (T : Type) : Type := T -> T -> PROP.
+
+  Bind Scope bi_relation_scope with bi_relation.
+
+
+  (* analog of [Basics.impl] *)
+  Definition wand : bi_relation PROP := fun P Q => (P -∗ Q)%I.
+  (* analog of [Basics.iff] *)
+  Definition iff : bi_relation PROP := fun P Q => (P ∗-∗ Q)%I.
+
+  Definition flip {T} (r : bi_relation T) : bi_relation T := fun P Q => r Q P.
+  Definition pure {T} (rel : relation T) : bi_relation T := fun l r => [| rel l r |]%I.
+
+  Definition respectful {T U} (r1 : bi_relation T) (r2 : bi_relation U) : bi_relation (T -> U) :=
+    λ P Q, (∀ x y, r1 x y -∗ r2 (P x) (Q y))%I.
+  Notation "r1 ==> r2" := (respectful r1%bi_relation r2%bi_relation) (at level 55) : bi_relation_scope.
+
+  Definition pointwise {T U} (r : bi_relation U) : bi_relation (T -> U) :=
+    λ P Q, (∀ x : T, r (P x) (Q x))%I.
+  Definition tpointwise {TT : tele} {U} (r : bi_relation U) : bi_relation (TT -t> U) :=
+    λ P Q, (∀.. x : TT, r (tele_app P x) (tele_app Q x))%I.
+
+  Definition BiProperI {T : Type} (rel : bi_relation T) (v : T) : PROP :=
+    rel v v.
+  Class BiProper {T : Type} (rel : bi_relation T) (v : T) : Prop :=
+    _bi_proper : ⊢ BiProperI rel v.
+
+  (* Some examples of instances *)
+  #[global]
+  Instance forall_proper {T} : BiProper (pointwise wand ==> wand) (@bi_forall PROP T).
+  Proof.
+    red. iIntros (P Q) "X Y". iIntros (x). iApply "X". iStopProof. apply bi.forall_elim.
+  Qed.
+  #[global]
+  Instance tforall_proper {T} : BiProper (pointwise wand ==> wand) (@bi_tforall PROP T).
+  Proof.
+    red. iIntros (P Q) "X Y". iIntros (x). iApply "X". iStopProof.
+    rewrite bi_tforall_forall. apply bi.forall_elim.
+  Qed.
+
+  (* NOTE: this doesn't embody framing *)
+  Lemma compose_bi_properI {T U V} (f : T -> U) (g : U -> V) (rT : bi_relation T) (rU : bi_relation U)
+    (rV : bi_relation V) :
+      BiProper ((rT ==> rU) ==> (rU ==> rV) ==> rT ==> rV) (fun f g x => g (f x)).
+  Proof.
+    rewrite /BiProper/respectful; intros.
+    iIntros (??) "A"; iIntros (??) "B". iIntros (??) "C".
+    iApply "B". iApply "A". done.
+  Qed.
+
+  Lemma compose_bi_proper {T U V} (f : T -> U) (g : U -> V) (rT : bi_relation T) (rU : bi_relation U)
+                          (rV : bi_relation V)
+    : BiProper (respectful rT rU) f -> BiProper (respectful rU rV) g ->
+      BiProper (respectful rT rV) (fun x => g (f x)).
+  Proof.
+    rewrite /BiProper/respectful; intros.
+    iIntros (??) "A". iApply H0. iApply H. done.
+  Qed.
+
+  Lemma use_proper_1 {T : Type} {f : T -> PROP} (r1 : bi_relation T) (r2 : bi_relation PROP)
+    (_ : BiProper (respectful r1 r2) f) :
+    forall x y, ⊢ r1 x y -∗ r2 (f x) (f y).
+  Proof.
+    intros. iIntros "X". red in H. unfold respectful in H. iDestruct (H with "X") as "$".
+  Qed.
+
+  Fixpoint arrows (ts : list Type) (r : Type) : Type :=
+    match ts with
+    | nil => r
+    | t :: ts => t -> arrows ts r
+    end.
+
+  Fixpoint applys (ts : list Type) (t : Type) : arrows ts t -> hlist (fun x => x) ts -> t :=
+    match ts as ts return arrows ts t -> hlist _ ts -> t with
+    | nil => fun f _ => f
+    | x :: xs => fun f zs => applys _ _ (f (hlist_hd zs)) (hlist_tl zs)
+    end.
+
+  Fixpoint respectfuls {ts : list Type} {T : Type} (R : bi_relation T) :
+    hlist bi_relation ts -> bi_relation (arrows ts T) :=
+    match ts as ts return hlist _ ts -> bi_relation (arrows ts _) with
+    | nil => fun _ => R
+    | t :: ts => fun Rs => respectful (hlist_hd Rs) (respectfuls R $ hlist_tl Rs)
+    end.
+
+  Fixpoint pairs_foralls (Ts : list Type) : forall (K : hlist (fun x => x) Ts -> hlist (fun x => x) Ts -> Prop), Prop :=
+    match Ts as Ts return (hlist _ Ts -> hlist _ Ts -> _) -> Prop with
+    | nil => fun K => K Hnil Hnil
+    | T :: Ts =>fun K => ∀ (x : T) (y : T), pairs_foralls Ts (fun xs ys => K (Hcons x xs) (Hcons y ys))
+    end.
+
+  Lemma pairs_foralls_proper Ts :
+    Proper (pointwise_relation _ (pointwise_relation _ Basics.impl) ==> Basics.impl) (pairs_foralls Ts).
+  Proof.
+    induction Ts.
+    { repeat red; intros. apply H. assumption. }
+    { do 3 red; simpl; intros.
+      red in H. do 3 red in IHTs. generalize (H0 x0 y0). apply IHTs.
+      red. red; simpl. intros. apply H. }
+  Qed.
+
+  (* TODO: this can be generalized *)
+  Fixpoint args {ts : list Type} : hlist (fun x => x) ts -> hlist (fun x => x) ts -> hlist bi_relation ts -> PROP :=
+    match ts as ts return hlist _ ts -> hlist _ ts -> hlist bi_relation ts -> PROP with
+    | nil => fun _ _ _ => emp
+    | t :: ts => fun xs ys rs => hlist_hd rs (hlist_hd xs) (hlist_hd ys) ∗ args (hlist_tl xs) (hlist_tl ys) (hlist_tl rs)
+    end%I.
+
+  Lemma use_proper_tele {Ts : list Type} {T} (R : bi_relation T) : forall (Rs : hlist bi_relation Ts)
+    (fx fy : arrows Ts T),
+      pairs_foralls Ts (λ xs ys, args xs ys Rs ⊢ (respectfuls R Rs) fx fy -∗ R (applys _ _ fx xs) (applys _ _ fy ys)).
+  Proof.
+    induction Ts; simpl; intros.
+    { iIntros "_ H"; iApply "H". }
+    { generalize (IHTs (hlist_tl Rs) (fx x) (fy y)).
+      apply pairs_foralls_proper.
+      do 2 intro. red.
+      intros H.
+      iIntros "[H1 H2] H".
+      rewrite H.
+      iApply "H2". iApply "H". done. }
+  Qed.
+
+End with_prop.
+
+#[global] Bind Scope bi_relation_scope with bi_relation.
+
+End bi.
