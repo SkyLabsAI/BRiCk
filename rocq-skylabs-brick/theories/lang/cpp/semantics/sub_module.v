@@ -260,16 +260,15 @@ Section OrDefault_ler.
 End OrDefault_ler.
 
 (** [DtorBody_le] is [OrDefault_le] for destructor bodies, except that
-    [Defaulted] is only below [CompilerProvided (Sseq [])].
+    [Defaulted] is not below [CompilerProvided].
 
-    clang gives every implicit or defaulted destructor that it defines the
-    empty body (see [Sema::DefineImplicitDestructor]), and [wp_dtor] gives
-    [Defaulted] the semantics of that empty body. A non-empty
-    [CompilerProvided] body would not refine [Defaulted].
+    cpp2v prints every implicit or defaulted destructor as [Defaulted], also
+    where clang defines it, and rejects one whose body clang did not leave
+    empty. A [CompilerProvided] body need not refine [Defaulted].
  *)
 Definition DtorBody_le (ae be : exception_spec.t) (a b : OrDefault Stmt) : bool :=
   match a , b with
-  | Defaulted , CompilerProvided s => bool_decide (ae ⊆ be /\ s = Sseq [])
+  | Defaulted , CompilerProvided _ => false
   | _ , _ => OrDefault_le ae be a b
   end.
 Definition DtorBody_ler : relation (exception_spec.t * OrDefault Stmt) :=
