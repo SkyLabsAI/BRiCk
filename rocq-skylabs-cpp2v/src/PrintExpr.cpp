@@ -18,6 +18,7 @@
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/Builtins.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Version.inc"
 #include "llvm/ADT/APFloat.h"
 #include <clang/AST/OperationKinds.h>
@@ -315,6 +316,15 @@ public:
             done(expr, Done::DT);
         } else if (auto why = overAlignedAccess(expr)) {
             unsupported_expr(expr, *why);
+        } else if (expr->isPRValue() && !expr->getType().isNull() &&
+                   !expr->getType()->isScalarType() &&
+                   underAligned(expr->getType())) {
+            // Clang initializes a class or array prvalue of an under-aligned
+            // type in a slot allocated at that type's alignment when the
+            // context does not provide one (e.g. <<U();>> or <<make();>>,
+            // with no [MaterializeTemporaryExpr]), while BRiCk initializes
+            // an object of the erased type, naturally aligned.
+            unsupported_expr(expr, "under-aligned prvalue");
         } else {
             ConstStmtVisitor<PrintExpr, void>::Visit(expr);
         }
@@ -356,6 +366,22 @@ public:
         if (ty.isNull() || ty->isDependentType())
             return false;
         return clangNaturalAlign(ty) > modelAlign(ty);
+    }
+
+    // Whether Clang may allocate an object of type [ty] less aligned than
+    // BRiCk assumes: Clang allocates temporaries at the alignment of their
+    // type, typedef sugar included ([CodeGenFunction::CreateMemTemp]), which
+    // an alignment attribute on a typedef can lower, as for
+    // <<typedef S U __attribute__((aligned(1)))>>.
+    bool underAligned(QualType ty) {
+        if (ty.isNull() || ty->isDependentType())
+            return false;
+        auto elem = ctxt.getBaseElementType(ty);
+        if (elem->isIncompleteType() || elem->isDependentType() ||
+            elem->isPlaceholderType() || elem->isUndeducedType() ||
+            elem->isSizelessType() || elem->isFunctionType())
+            return false;
+        return ctxt.getTypeAlign(ty) < modelAlign(ty);
     }
 
     // Clang takes the alignment of an access from the static type of the
@@ -1986,6 +2012,16 @@ public:
                                    "attribute");
             return;
         }
+        // Without an alignment argument, the storage is only aligned to
+        // <<__STDCPP_DEFAULT_NEW_ALIGNMENT__>>, and Clang omits the argument
+        // for an under-aligned typedef of an over-aligned class, while BRiCk
+        // constructs the object at the erased type, naturally aligned.
+        if (!expr->passAlignment() && underAligned(expr->getAllocatedType()) &&
+            modelAlign(expr->getAllocatedType()) >
+                cprint.getContext().getTargetInfo().getNewAlign()) {
+            unsupported_expr(expr, "new of an under-aligned type");
+            return;
+        }
 
         print.ctor("Enew");
 
@@ -2037,6 +2073,16 @@ public:
                                             aligned)) {
                 unsupported_expr(expr, "aligned delete of a type with an "
                                        "alignment attribute");
+                return;
+            }
+            // As for [VisitCXXNewExpr]: Clang picks a deallocation function
+            // without an alignment argument for such a type, unlike the one
+            // that allocated an object of the erased type.
+            auto ty = expr->getDestroyedType();
+            if (!aligned && underAligned(ty) &&
+                modelAlign(ty) >
+                    cprint.getContext().getTargetInfo().getNewAlign()) {
+                unsupported_expr(expr, "delete of an under-aligned type");
                 return;
             }
         }
@@ -2091,6 +2137,11 @@ public:
             // BRiCk does not currently support scope-extruded temporaries
             return unsupported_expr(expr, "scope-extruded temporary");
         }
+        // Clang allocates the temporary at the alignment of its type (e.g.
+        // only 1 for <<f(U{7})>>), while BRiCk materializes it at the erased
+        // type, naturally aligned.
+        if (underAligned(expr->getType()))
+            return unsupported_expr(expr, "under-aligned temporary");
 
         guard::ctor _{print, "Ematerialize_temp"};
         cprint.printExpr(print, expr->getSubExpr(), names) << fmt::nbsp;

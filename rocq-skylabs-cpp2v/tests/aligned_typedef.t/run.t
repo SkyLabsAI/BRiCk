@@ -145,3 +145,93 @@ with alignas to repeat it, so an extern alignas declaration is trusted.
   Eunsupported "DeclRefExpr"
   Eunsupported "ImplicitCastExpr"
   Eunsupported "CXXDeleteExpr"
+
+An alignment attribute on a typedef can also lower the alignment, below the
+alignment BRiCk assumes for the erased type. Clang allocates temporaries of
+such a type at the typedef's alignment, so they are unsupported (also for
+scalars, where Clang happens to use the natural alignment), and so are
+class and array prvalues of such a type, which Clang initializes in a slot at
+the typedef's alignment when their context provides none (e.g. when they are
+discarded, with no MaterializeTemporaryExpr). Without an alignment argument,
+new only guarantees the default new alignment, so a plain new or delete of
+such a type whose erased type needs more is unsupported.
+
+  $ check_cpp2v under.cpp
+  cpp2v -v -check-types -o under_17_cpp.v under.cpp -- -std=c++17 2>&1 | sed 's/^ *[0-9]* | //'
+  $TESTCASE_ROOT/under.cpp:18:39: warning: passing 1-byte aligned argument to 32-byte aligned parameter 'this' of 'S' may result in an unaligned pointer access
+  unsigned long temp_rec() { return low(U{7}); }
+                                        ^
+  $TESTCASE_ROOT/under.cpp:20:30: warning: passing 1-byte aligned argument to 4-byte aligned parameter 1 of 'take' may result in an unaligned pointer access
+  int temp_int() { return take(I1(5)); }
+                               ^
+  $TESTCASE_ROOT/under.cpp:21:27: warning: passing 1-byte aligned argument to 32-byte aligned parameter 'this' of 'S' may result in an unaligned pointer access
+  U *new_rec() { return new U; }
+                            ^
+  $TESTCASE_ROOT/under.cpp:27:23: warning: passing 1-byte aligned argument to 32-byte aligned parameter 'this' of 'S' may result in an unaligned pointer access
+  void discard_ctor() { U(); }
+                        ^
+  $TESTCASE_ROOT/under.cpp:28:31: warning: passing 1-byte aligned argument to 32-byte aligned parameter 'this' of 'S' may result in an unaligned pointer access
+  void discard_comma() { (void)(U(), 0); }
+                                ^
+  5 warnings generated.
+  rocq c -w -notation-overridden -w -notation-incompatible-prefix under_17_cpp.v
+  $ tr -s ' \n' ' ' < under_17_cpp.v | grep -o -E 'Eunsupported "[^"]*"'
+  Eunsupported "MaterializeTemporaryExpr"
+  Eunsupported "MaterializeTemporaryExpr"
+  Eunsupported "MaterializeTemporaryExpr"
+  Eunsupported "CXXNewExpr"
+  Eunsupported "CXXDeleteExpr"
+  Eunsupported "CallExpr"
+  Eunsupported "CXXTemporaryObjectExpr"
+  Eunsupported "CXXTemporaryObjectExpr"
+  Eunsupported "ConditionalOperator"
+
+Every way to pack a record goes through Clang's layout, so they all give the
+same wrappers: the attribute on one field, the C++11 attribute spelling, a
+pragma without push (reset by an empty pragma), a member's alignas capped by
+a pragma, a packed array field, and the command-line flag. A packed field of
+class type is unsupported, while its own type is laid out normally. The
+fields in order, with their types and offsets in bits:
+
+  $ cpp2v -o ways.v ways.cpp -- -std=c++17 2>&1 | grep -o 'error: .*'
+  [1]
+  $ grep -o -E 'mkMember \(field_name.Id "[a-z]+"\) (\([^()]*(\([^()]*\))?[^()]*\)|T[a-z]+) false None|Build_LayoutInfo [0-9]+|Dunsupported n[0-9]+ "[^"]*"' ways.v | sed -E 's/Dunsupported n[0-9]+/Dunsupported/'
+  mkMember (field_name.Id "c") Tchar false None
+  Build_LayoutInfo 0
+  mkMember (field_name.Id "i") (Trealigned 1 Tint) false None
+  Build_LayoutInfo 8
+  mkMember (field_name.Id "c") Tchar false None
+  Build_LayoutInfo 0
+  mkMember (field_name.Id "i") (Trealigned 1 Tint) false None
+  Build_LayoutInfo 8
+  mkMember (field_name.Id "c") Tchar false None
+  Build_LayoutInfo 0
+  mkMember (field_name.Id "i") (Trealigned 1 Tint) false None
+  Build_LayoutInfo 8
+  mkMember (field_name.Id "c") Tchar false None
+  Build_LayoutInfo 0
+  mkMember (field_name.Id "i") Tint false None
+  Build_LayoutInfo 32
+  mkMember (field_name.Id "c") Tchar false None
+  Build_LayoutInfo 0
+  mkMember (field_name.Id "l") (Trealigned 2 Tlong) false None
+  Build_LayoutInfo 16
+  mkMember (field_name.Id "i") (Trealigned 2 Tint) false None
+  Build_LayoutInfo 80
+  mkMember (field_name.Id "c") Tchar false None
+  Build_LayoutInfo 0
+  mkMember (field_name.Id "a") (Tarray (Trealigned 1 Tshort) 3) false None
+  Build_LayoutInfo 8
+  Dunsupported "under-aligned fields of class type are not supported"
+  mkMember (field_name.Id "d") Tchar false None
+  Build_LayoutInfo 0
+  mkMember (field_name.Id "j") Tint false None
+  Build_LayoutInfo 32
+
+  $ cpp2v -o flag.v flag.cpp -- -std=c++17 -fpack-struct=1 2>&1 | grep -o 'error: .*'
+  [1]
+  $ grep -o -E 'mkMember \(field_name.Id "[a-z]+"\) (\([^()]*(\([^()]*\))?[^()]*\)|T[a-z]+) false None|Build_LayoutInfo [0-9]+' flag.v
+  mkMember (field_name.Id "c") Tchar false None
+  Build_LayoutInfo 0
+  mkMember (field_name.Id "i") (Trealigned 1 Tint) false None
+  Build_LayoutInfo 8
