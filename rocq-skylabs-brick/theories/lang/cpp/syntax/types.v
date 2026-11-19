@@ -1175,6 +1175,8 @@ Definition is_array_type (ty : type) : bool :=
 
 The implementation is defensive and removes nested references even if they
 should not exist. This might be unnecessary.
+
+Informally equivalent to https://cppreference.com/cpp/types/remove_reference.
 *)
 Fixpoint drop_reference (t : type) : exprtype :=
   match drop_qualifiers t with
