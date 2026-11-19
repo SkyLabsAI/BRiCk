@@ -17,7 +17,15 @@ Require Import skylabs.lang.cpp.syntax.
 (** * Sub-module
 
     [sub_module a b] states that the [translation_unit] [a] is included
-    in the [translation_unit] [b].
+    in the [translation_unit] [b]: each declaration of [a] has a compatible
+    one in [b], with at least as much information (see [GlobDecl_le] and
+    [ObjValue_le]).
+
+    The motivating case is <<#include>>: if the source of [b] includes the
+    source of [a], then [sub_module a b] is meant to hold. That is the
+    intent behind these orders, and it is not proved or tested here. The
+    relation does not require an <<#include>>: it only compares the two
+    translation units' contents.
  *)
 
 
