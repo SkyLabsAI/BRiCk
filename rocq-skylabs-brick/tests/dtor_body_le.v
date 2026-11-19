@@ -7,8 +7,9 @@ Require Import skylabs.prelude.base.
 Require Import skylabs.lang.cpp.syntax.
 Require Import skylabs.lang.cpp.semantics.
 
-(* A [Defaulted] destructor is [ObjValue_le] the empty body clang defines for
-   it, but not a [CompilerProvided] destructor with any other body. *)
+(* A [Defaulted] destructor is [ObjValue_le] only a [Defaulted] one: cpp2v
+   prints implicit and defaulted destructors as [Defaulted] even where clang
+   defines them, so [Defaulted] need not refine any [CompilerProvided] body. *)
 
 #[local] Definition dtor (body : option (OrDefault Stmt)) : ObjValue :=
   Odestructor
@@ -17,8 +18,12 @@ Require Import skylabs.lang.cpp.semantics.
      ; d_exception := exception_spec.NoThrow
      ; d_body := body |}.
 
-Example defaulted_le_empty :
-  ObjValue_le (dtor (Some Defaulted)) (dtor (Some (CompilerProvided (Sseq [])))) = true.
+Example defaulted_le_defaulted :
+  ObjValue_le (dtor (Some Defaulted)) (dtor (Some Defaulted)) = true.
+Proof. vm_compute. reflexivity. Qed.
+
+Example defaulted_not_le_empty :
+  ObjValue_le (dtor (Some Defaulted)) (dtor (Some (CompilerProvided (Sseq [])))) = false.
 Proof. vm_compute. reflexivity. Qed.
 
 Example defaulted_not_le_nonempty :

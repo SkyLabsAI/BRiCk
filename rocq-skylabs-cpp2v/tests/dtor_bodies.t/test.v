@@ -20,27 +20,27 @@ Eval vm_compute in dtor_bodies inc_noelab_hpp.source.
 Eval vm_compute in dtor_bodies src_cpp.source.
 
 (** [sub_module] relates the unelaborated header's [Defaulted] destructors to
-    the source file's [CompilerProvided] ones. *)
+    the source file's, which cpp2v also prints as [Defaulted]. *)
 Example _inc_in_src : bool_decide (sub_module inc_hpp.source src_cpp.source) = true :=
   ltac:(check).
 Example _inc_noelab_in_src :
   bool_decide (sub_module inc_noelab_hpp.source src_cpp.source) = true :=
   ltac:(check).
 
-(** Every [CompilerProvided] destructor body is empty: clang's
-    [Sema::DefineImplicitDestructor] sets the body to an empty [CompoundStmt]
-    and leaves member and base destruction to code generation. [wp_dtor] destroys
-    members and bases after the body in every case, so an empty body behaves
-    like [Defaulted]; [code_at_ok] relies on this when a [Defaulted]
-    destructor is weakened to a [CompilerProvided] one. *)
-Definition compiler_provided_empty (tu : translation_unit) : bool :=
+(** No destructor is [CompilerProvided]: clang's
+    [Sema::DefineImplicitDestructor] gives implicit and defaulted destructors
+    an empty [CompoundStmt], and cpp2v prints those as [Defaulted] (and any
+    other body as unsupported). *)
+Definition no_compiler_provided (tu : translation_unit) : bool :=
   forallb (fun '(_, b) =>
     match b with
-    | Some (CompilerProvided s) => bool_decide (s = Sseq [])
+    | Some (CompilerProvided _) => false
     | _ => true
     end) (dtor_bodies tu).
 
-Example _src_dtors_empty : compiler_provided_empty src_cpp.source = true :=
+Example _inc_no_compiler_provided : no_compiler_provided inc_hpp.source = true :=
+  ltac:(check).
+Example _src_no_compiler_provided : no_compiler_provided src_cpp.source = true :=
   ltac:(check).
 
 Goal True.
