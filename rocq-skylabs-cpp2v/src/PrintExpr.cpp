@@ -1622,9 +1622,11 @@ public:
     }
 
     void VisitExprWithCleanups(const ExprWithCleanups *expr) {
-        // NOTE candidate for removal
-        // our semantics cleans everything, so we don't need to
-        // mark this explicitly.
+        // This node cannot be dropped: the semantics relies on it to
+        // destroy temporaries in initializers of static locals and
+        // structured bindings, and in default member initializers used
+        // by aggregate initialization. See the comment on
+        // [wp_lval_clean] in <<logic/expr.v>>.
         print.ctor("Eandclean");
         if (ClangPrinter::debug && cprint.trace(Trace::Expr)) {
             auto &os = llvm::errs();
