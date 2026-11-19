@@ -188,44 +188,55 @@ public:
         return true;
     }
 
-    void VisitCaseStmt(const CaseStmt *stmt, CoqPrinter &print,
+    // Print [stmt] as items of an [Sseq] list, each followed by a cons:
+    // [Scase]/[Sdefault] are markers within that list, not statements.
+    void printListItem(const Stmt *stmt, CoqPrinter &print,
                        ClangPrinter &cprint, ASTContext &ctxt) {
-        llvm::APSInt lo, hi;
-        auto rhs = stmt->getRHS();
-        if (!constexprEvalInt(*stmt->getLHS(), ctxt, lo) ||
-            (rhs && !constexprEvalInt(*rhs, ctxt, hi))) {
-            // not evaluatable
-            guard::ctor _{print, "Sunsupported"};
-            print.str("unsupported (dependent) case label");
-        } else if (rhs) {
-            // evaluatable range
-            guard::ctor _{print, "Scase"};
-            guard::ctor __(print, "Range");
-            print.output() << lo << fmt::nbsp << hi;
+        if (auto cs = dyn_cast_or_null<CaseStmt>(stmt)) {
+            llvm::APSInt lo, hi;
+            auto rhs = cs->getRHS();
+            if (!constexprEvalInt(*cs->getLHS(), ctxt, lo) ||
+                (rhs && !constexprEvalInt(*rhs, ctxt, hi))) {
+                // not evaluatable
+                guard::ctor _{print, "Sunsupported"};
+                print.str("unsupported (dependent) case label");
+            } else if (rhs) {
+                // evaluatable range
+                guard::ctor _{print, "Scase"};
+                guard::ctor __(print, "Range");
+                print.output() << lo << fmt::nbsp << hi;
+            } else {
+                // evaluatable simple case
+                guard::ctor _{print, "Scase"};
+                guard::ctor __(print, "Exact");
+                print.output() << lo;
+            }
+            print.cons();
+            printListItem(cs->getSubStmt(), print, cprint, ctxt);
+        } else if (auto ds = dyn_cast_or_null<DefaultStmt>(stmt)) {
+            print.output() << "Sdefault";
+            print.cons();
+            if (ds->getSubStmt())
+                printListItem(ds->getSubStmt(), print, cprint, ctxt);
         } else {
-            // evaluatable simple case
-            guard::ctor _{print, "Scase"};
-            guard::ctor __(print, "Exact");
-            print.output() << lo;
+            cprint.printStmt(print, stmt);
+            print.cons();
         }
-
-        print.cons();
-
-        cprint.printStmt(print, stmt->getSubStmt());
     }
 
-    void VisitDefaultStmt(const DefaultStmt *stmt, CoqPrinter &print,
-                          ClangPrinter &cprint, ASTContext &) {
-        print.output() << "Sdefault";
-
-        if (stmt->getSubStmt()) {
-            print.cons();
-            cprint.printStmt(print, stmt->getSubStmt());
-        }
+    // A label outside a statement list, e.g. <<if (c) case 1: s;>> (Duff's
+    // device, state machines). Wrap it in a block so that the term is a
+    // [Stmt]; [supported] rejects such a [switch] (case nested in a
+    // statement).
+    void VisitSwitchCase(const SwitchCase *stmt, CoqPrinter &print,
+                         ClangPrinter &cprint, ASTContext &ctxt) {
+        guard::ctor _{print, "Sseq"};
+        guard::list __{print};
+        printListItem(stmt, print, cprint, ctxt);
     }
 
     void VisitSwitchStmt(const SwitchStmt *stmt, CoqPrinter &print,
-                         ClangPrinter &cprint, ASTContext &) {
+                         ClangPrinter &cprint, ASTContext &ctxt) {
         print.ctor("Sswitch");
         if (auto v = stmt->getInit()) {
             print.some();
@@ -266,8 +277,7 @@ public:
         } else {
             guard::ctor _{print, "Sseq"};
             guard::list __{print};
-            cprint.printStmt(print, stmt->getBody());
-            print.cons();
+            printListItem(stmt->getBody(), print, cprint, ctxt);
         }
         print.end_ctor();
     }
@@ -291,13 +301,11 @@ public:
     }
 
     void VisitCompoundStmt(const CompoundStmt *stmt, CoqPrinter &print,
-                           ClangPrinter &cprint, ASTContext &) {
+                           ClangPrinter &cprint, ASTContext &ctxt) {
         print.ctor("Sseq");
         print.begin_list();
-        for (auto i : stmt->body()) {
-            cprint.printStmt(print, i);
-            print.cons();
-        }
+        for (auto i : stmt->body())
+            printListItem(i, print, cprint, ctxt);
         print.end_list();
         print.end_ctor();
     }
