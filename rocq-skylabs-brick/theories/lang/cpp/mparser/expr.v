@@ -319,7 +319,7 @@ Fixpoint to_unresolved_name (e : MExpr) : Mname :=
   | Einitlist_union _ _ _ => Nunsupported "Einitlist_union"
   | Einitlist_std _ _ => Nunsupported "Einitlist_std"
   | Enew _ _ _ _ _ _ => Nunsupported "Enew"
-  | Edelete _ _ _ _ => Nunsupported "Edelete"
+  | Edelete _ _ _ _ _ => Nunsupported "Edelete"
   | Eatomic _ _ _ => Nunsupported "Eatomic"
   | Estmt _ _ => Nunsupported "Estmt"
   | Eva_arg _ _ => Nunsupported "Eva_arg"
@@ -334,7 +334,7 @@ Definition Eunresolved_call (callee : MExpr) (args : list MExpr) : MExpr :=
   core.Eunresolved_call (to_unresolved_name callee) args.
 
 (** TODO: Add this as a constructor. *)
-Definition Eunresolved_delete (array : bool) (arg : MExpr) : MExpr :=
+Definition Eunresolved_delete (array global : bool) (arg : MExpr) : MExpr :=
   Eunsupported "unresolved delete" Tvoid.
 
 (** ** Template-only derived variable declarations emitted by cpp2v *)

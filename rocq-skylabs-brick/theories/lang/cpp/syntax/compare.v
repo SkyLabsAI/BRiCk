@@ -1753,12 +1753,14 @@ Module Expr.
 
     Record box_Edelete : Set := Box_Edelete {
       box_Edelete_0 : bool;
+      box_Edelete_g : bool;
       box_Edelete_1 : name;
       box_Edelete_2 : Expr;
       box_Edelete_3 : type;
     }.
     Definition box_Edelete_compare (b1 b2 : box_Edelete) : comparison :=
       compare_lex (Bool.compare b1.(box_Edelete_0) b2.(box_Edelete_0)) $ fun _ =>
+      compare_lex (Bool.compare b1.(box_Edelete_g) b2.(box_Edelete_g)) $ fun _ =>
       compare_lex (compareN b1.(box_Edelete_1) b2.(box_Edelete_1)) $ fun _ =>
       compare_lex (compareE b1.(box_Edelete_2) b2.(box_Edelete_2)) $ fun _ =>
       compareT b1.(box_Edelete_3) b2.(box_Edelete_3).
@@ -1888,7 +1890,7 @@ Module Expr.
       | Einitlist_union _ _ _ => 60
       | Einitlist_std _ _ => 68
       | Enew _ _ _ _ _ _ => 46
-      | Edelete _ _ _ _ => 47
+      | Edelete _ _ _ _ _ => 47
       | Eandclean _ => 48
       | Ematerialize_temp _ _ => 49
       | Eatomic _ _ _ => 50
@@ -2026,7 +2028,7 @@ Module Expr.
       | Einitlist_union es i t => Box_Einitlist_union es i t
       | Einitlist_std e t => Box_Einitlist_std e t
       | Enew fn es a ty sz i => Box_Enew fn es a ty sz i
-      | Edelete a fn e t => Box_Edelete a fn e t
+      | Edelete a g fn e t => Box_Edelete a g fn e t
       | Eandclean e => e
       | Ematerialize_temp e vc => Box_Ematerialize_temp e vc
       | Eatomic op es t => Box_Eatomic op es t
@@ -2181,7 +2183,7 @@ Module Expr.
       | Einitlist_std e t => COMP (Einitlist_std e t)
 
       | Enew fn es a ty sz i => COMP (Enew fn es a ty sz i)
-      | Edelete a fn e t => COMP (Edelete a fn e t)
+      | Edelete a g fn e t => COMP (Edelete a g fn e t)
       | Eandclean e => COMP (Eandclean e)
       | Ematerialize_temp e vc => COMP (Ematerialize_temp e vc)
 
