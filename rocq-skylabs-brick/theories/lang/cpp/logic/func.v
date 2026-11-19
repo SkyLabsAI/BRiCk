@@ -1145,9 +1145,14 @@ this resource will be consumed immediately.
         The function consumes a step
         *)
         |>
+        (* A [Defaulted] destructor has the empty body that clang gives
+           implicit and defaulted destructors (see
+           [Sema::DefineImplicitDestructor]); cpp2v prints those as
+           [Defaulted]. Like [Sseq []] (see [wp_block]), it takes a step.
+           Members and bases are destroyed below. *)
         let* :=
           match body with
-          | Defaulted => fun k : Kpred => |={top}=>?upd k Normal
+          | Defaulted => fun k : Kpred => |={top}=>?upd |> |={top}=>?upd k Normal
           | CompilerProvided body
           | UserDefined body => wp tu (Remp (Some thisp) None Tvoid) body
           end%I
@@ -1214,7 +1219,7 @@ Section wp_dtor.
     iIntros "HQ". rewrite wp_dtor.unlock.
     repeat case_match; auto.
     all: iIntros "wp !>"; iRevert "wp".
-    1,4: iIntros ">wp !>"; iRevert "wp".
+    1,4: iIntros ">wp !> !>"; iMod "wp"; iModIntro; iRevert "wp".
     all: try (iApply wp_frame; [done|]; iIntros (?)).
     all: iApply Kreturn_void_frame.
     all: iIntros "($ & wp)"; iRevert "wp".
@@ -1237,7 +1242,7 @@ Section wp_dtor.
   Proof.
     rewrite wp_dtor.unlock. repeat case_match; auto.
     all: iIntros "wp !>"; iRevert "wp".
-    1,4: rewrite -fupd_intro.
+    1,4: iIntros "wp !> !> !>"; iRevert "wp".
     all: try (iApply wp_frame; [done|]; iIntros (?)).
     all: iApply Kreturn_void_frame.
     all: iIntros "($ & wp)"; iRevert "wp".
