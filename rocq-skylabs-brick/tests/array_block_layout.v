@@ -112,7 +112,7 @@ Section with_cpp.
       p .["unsigned short" ! 2] |-> tblockR "unsigned short" q) ** P).
   Proof.
     iIntros "#T".
-    iDestruct (tblockR_array_typed p "unsigned short" 3 2 q eq_refl with "T") as "#C".
+    iDestruct (tblockR_array_typed p "unsigned short" 3 2 q ltac:(done) eq_refl with "T") as "#C".
     iEval (rewrite /= !_offsetR_sub_0 ?right_id //) in "C".
     iEval (rewrite !_at_sep !_at_offsetR) in "C".
     iSplit; iIntros "[B $]"; by iApply "C".
@@ -127,7 +127,7 @@ Section with_cpp.
        .[Tarray Tbyte 0 ! 1] |-> tblockR (Tarray Tbyte 0) q)).
   Proof.
     iIntros "#T".
-    iDestruct (tblockR_array_typed p (Tarray Tbyte 0) 2 0 q eq_refl with "T") as "C".
+    iDestruct (tblockR_array_typed p (Tarray Tbyte 0) 2 0 q ltac:(done) eq_refl with "T") as "C".
     by iEval (rewrite /= !_offsetR_sub_0 ?right_id //) in "C".
   Qed.
 
