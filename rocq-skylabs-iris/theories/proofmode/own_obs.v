@@ -655,7 +655,7 @@ Section observe.
       Observe [| q ≤ 1 |]%Qp (own g (gmap_view_auth (DfracOwn q) m)).
     Proof.
       GUARD. apply observe_pure, own_obs.
-      by rewrite gmap_view_auth_validI.
+      rewrite gmap_view_auth_validI. by iIntros "[% _]".
     Qed.
     #[global] Instance own_gmap_view_auth_valid_2 g q1 q2 m1 m2 :
       Observe2 [| q1 + q2 ≤ 1 |]%Qp
