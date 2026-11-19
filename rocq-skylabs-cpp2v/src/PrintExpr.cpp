@@ -160,6 +160,14 @@ fmt::Formatter &ClangPrinter::printValueDeclExpr(CoqPrinter &print,
         } else {
             printUnqualifiedName(print, *decl);
         }
+    } else if (isa<TemplateParamObjectDecl>(decl)) {
+        // ponytail: the object is not emitted. Its symbol (e.g.
+        // <<_ZTAXtl1PLi3EEE>>) keeps <<f<P{3}>>> and <<f<P{4}>>> apart.
+        std::string symbol;
+        llvm::raw_string_ostream os{symbol};
+        getMangleContext().mangleName(GlobalDecl(decl), os);
+        print.ctor("Eunsupported", false);
+        print.str(symbol);
     } else {
         print.ctor("Eglobal", false);
         withDecl(decl).printName(print, *decl);
@@ -595,8 +603,9 @@ public:
         }
         if (expr->refersToEnclosingVariableOrCapture()) {
             auto maybe_lambda = cprint.getLambdaClass();
-            always_assert(maybe_lambda.has_value() &&
-                          "lambda class must be non-null during capture");
+            // E.g. a lambda's default argument, printed at the call site.
+            if (!maybe_lambda)
+                return unsupported_expr(expr, "capture outside its lambda");
             auto &[lambda, cv] = maybe_lambda.value();
             if (auto capture = getCaptureField(lambda, expr->getDecl())) {
 
@@ -898,7 +907,8 @@ public:
         // know of to get the type of a builtin. what this does is get the type
         // of the expression that contains the builtin.
         if (expr->getCastKind() == CastKind::CK_BuiltinFnToFnPtr) {
-            auto ref = dyn_cast<DeclRefExpr>(expr->getSubExpr());
+            auto ref =
+                dyn_cast<DeclRefExpr>(expr->getSubExpr()->IgnoreParens());
             always_assert(ref && "builtin function to function pointer must be "
                                  "applied to a literal variable");
             always_assert(is_builtin(ref->getDecl()));
@@ -978,7 +988,10 @@ public:
         } else {
             // this is actually an LValue
             auto base = val.getLValueBase();
-            always_assert(base.is<const Expr *>());
+            // E.g. <<__builtin_source_location()>> points to a global object
+            // clang makes up.
+            if (!base.is<const Expr *>())
+                return unsupported_expr(expr, "source location object");
             cprint.printExpr(print, base.get<const Expr *>(), names);
         }
     }
@@ -1412,7 +1425,9 @@ public:
         if (auto maybe_lambda = cprint.getLambdaClass()) {
             auto &[lambda, cv] = maybe_lambda.value();
             auto capture = getCaptureThis(lambda);
-            always_assert(capture && "captured variable is not captured");
+            // E.g. <<sizeof(this)>> needs no capture.
+            if (!capture)
+                return unsupported_expr(expr, "uncaptured this in lambda");
 
             print.ctor("Ecapture_this", false);
             // The qualifiers on the <<operator()>> method
