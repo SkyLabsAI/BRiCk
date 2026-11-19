@@ -72,8 +72,10 @@ Deliberately not trusted:
   in auto.
 - `struct_to_raw`, which views a whole class object as bytes, is disabled (`logic/layout.v`, see
   [BRiCk#310](https://github.com/SkyLabsAI/BRiCk/issues/310)).
-- `eval_o_base` is commented out (`semantics/ptrs.v`). Any rule giving base offsets or base sizes
-  must use `nvsize` and `dsize`, not `s_size`.
+- `eval_o_base` is commented out (`semantics/ptrs.v`) because it conflicts with the disabled
+  `implicit_destruct_struct` and `struct_to_raw`, which let a base claim `sizeof` bytes. It does not
+  depend on sizes itself: base offsets come from clang (`getBaseClassOffset`), and `o_base` is not
+  used for virtual bases.
 
 ## What would let class objects be bytes again
 
