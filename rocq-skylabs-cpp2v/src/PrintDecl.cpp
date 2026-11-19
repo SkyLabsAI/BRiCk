@@ -1054,9 +1054,8 @@ static fmt::Formatter &printVar(CoqPrinter &print, const VarDecl &decl,
 
     // TODO handling of [constexpr] needs to be improved.
     cprint.printQualType(print, decl.getType(), loc::of(decl)) << fmt::nbsp;
-    if (decl.hasExternalStorage()) {
-        always_assert(!decl.getInit() &&
-                      "external variable with an initializer");
+    // <<extern const int x = 1;>> is a definition, handled below.
+    if (decl.hasExternalStorage() && !decl.getInit()) {
         return print.output() << "global_init.Extern";
     } else if (dyn_cast<FunctionDecl>(decl.getDeclContext())) {
         return print.output() << "global_init.Delayed";
