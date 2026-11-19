@@ -169,8 +169,8 @@ the ABI may place another member there. So the storage of a class object
 may be smaller than [size_of σ ty], and a destructor cannot hand back
 [size_of σ ty] bytes. The axioms below describe [tblockR] as [blockR] only
 for types that contain no class: for class types, nothing relates [tblockR]
-to [size_of]. An array element is never potentially overlapping, but its
-storage is still described by its element type's [tblockR].
+to [size_of]. An array element is never potentially overlapping, but an
+array of classes is still described by its elements' [tblockR].
 
 A definition could only replace this [Parameter] once the logic knows each
 class's data size, which cpp2v does not record. The full-size definition
@@ -183,14 +183,15 @@ used before ([blockR sz q ** alignedR al]) satisfies all of these axioms.
 </div>
 
 <div class="doc">
-Types whose <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.heap_pred.block.html#tblockR"><span class="id" title="section">tblockR</span></a></span> is plain bytes: types that contain no class and
-    are not arrays. Arrays are described element-wise by <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.heap_pred.block.html#tblockR.tblockR_array_unfold"><span class="id" title="variable">tblockR_array_unfold</span></a></span>. 
+Types whose <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.heap_pred.block.html#tblockR"><span class="id" title="section">tblockR</span></a></span> is plain bytes: types that contain no class,
+    looking through arrays and qualifiers. Arrays of classes are described
+    element-wise by <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.heap_pred.block.html#tblockR.tblockR_array_unfold"><span class="id" title="variable">tblockR_array_unfold</span></a></span>. 
 </div>
 <div class="code">
 <span class="id" title="keyword">Fixpoint</span> <a id="tblockR_raw_type" class="idref" href="#tblockR_raw_type"><span class="id" title="definition">tblockR_raw_type</span></a> (<a id="ty:30" class="idref" href="#ty:30"><span class="id" title="binder">ty</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.logic.heap_pred.block.html#ty:30"><span class="id" title="variable">ty</span></a> <span class="id" title="keyword">with</span><br/>
-&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tnamed"><span class="id" title="constructor">Tnamed</span></a> <span class="id" title="var">_</span> | <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tarray"><span class="id" title="constructor">Tarray</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
-&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tqualified"><span class="id" title="constructor">Tqualified</span></a> <span class="id" title="var">_</span> <span class="id" title="var">t</span> =&gt; <a class="idref" href="skylabs.lang.cpp.logic.heap_pred.block.html#tblockR_raw_type:31"><span class="id" title="definition">tblockR_raw_type</span></a> <span class="id" title="var">t</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tnamed"><span class="id" title="constructor">Tnamed</span></a> <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tarray"><span class="id" title="constructor">Tarray</span></a> <span class="id" title="var">t</span> <span class="id" title="var">_</span> | <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tqualified"><span class="id" title="constructor">Tqualified</span></a> <span class="id" title="var">_</span> <span class="id" title="var">t</span> =&gt; <a class="idref" href="skylabs.lang.cpp.logic.heap_pred.block.html#tblockR_raw_type:31"><span class="id" title="definition">tblockR_raw_type</span></a> <span class="id" title="var">t</span><br/>
 &nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><br/>
 &nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
 
