@@ -65,7 +65,17 @@ TODO rename <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.sem
 <div class="paragraph"> </div>
 
     <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.semantics.sub_module.html#sub_module"><span class="id" title="section">sub_module</span></a></span> <span class="inlinecode"><span class="id" title="var">a</span></span> <span class="inlinecode"><span class="id" title="var">b</span></span> states that the <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#translation_unit"><span class="id" title="record">translation_unit</span></a></span> <span class="inlinecode"><span class="id" title="var">a</span></span> is included
-    in the <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#translation_unit"><span class="id" title="record">translation_unit</span></a></span> <span class="inlinecode"><span class="id" title="var">b</span></span>.
+    in the <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#translation_unit"><span class="id" title="record">translation_unit</span></a></span> <span class="inlinecode"><span class="id" title="var">b</span></span>: each declaration of <span class="inlinecode"><span class="id" title="var">a</span></span> has a compatible
+    one in <span class="inlinecode"><span class="id" title="var">b</span></span>, with at least as much information (see <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.semantics.sub_module.html#GlobDecl_le"><span class="id" title="definition">GlobDecl_le</span></a></span> and
+    <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.semantics.sub_module.html#ObjValue_le"><span class="id" title="definition">ObjValue_le</span></a></span>).
+
+<div class="paragraph"> </div>
+
+    The motivating case is <code>#include</code>: if the source of <span class="inlinecode"><span class="id" title="var">b</span></span> includes the
+    source of <span class="inlinecode"><span class="id" title="var">a</span></span>, then <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.semantics.sub_module.html#sub_module"><span class="id" title="section">sub_module</span></a></span> <span class="inlinecode"><span class="id" title="var">a</span></span> <span class="inlinecode"><span class="id" title="var">b</span></span> is meant to hold. That is the
+    intent behind these orders, and it is not proved or tested here. The
+    relation does not require an <code>#include</code>: it only compares the two
+    translation units' contents.
  
 </div>
 <div class="code">
