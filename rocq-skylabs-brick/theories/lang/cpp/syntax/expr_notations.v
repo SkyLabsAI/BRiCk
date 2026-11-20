@@ -485,6 +485,11 @@ Module ExprNotations.
          ( in custom CPP_expr at level 0
          , e custom CPP_expr at level 200
          , only printing).
+  Notation "e"
+      := (Ebf_andclean e)
+         ( in custom CPP_expr at level 0
+         , e custom CPP_expr at level 200
+         , only printing).
   Notation "ty '{{VALUE' 'INIT}}'"
       := (Eimplicit_init ty)
          ( in custom CPP_expr at level 0

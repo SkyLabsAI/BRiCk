@@ -14,6 +14,7 @@
     The rules are stated on those nodes only, so the head constructor of an
     expression determines which rules apply:
     - the leaf rule for [Ebitfield];
+    - [Ebf_andclean], the cleanup of the temporaries of a full-expression;
     - [Ebf_glvalue], the ordinary arm of a bit-field conditional, with no
       designator;
     - [Ebf_comma], [Ebf_if], [Ebf_assign], [Ebf_assign_op], [Ebf_preinc] and
@@ -37,6 +38,7 @@ Require Import skylabs.lang.cpp.logic.pred.
 Require Import skylabs.lang.cpp.logic.path_pred.
 Require Import skylabs.lang.cpp.logic.heap_pred.
 Require Import skylabs.lang.cpp.logic.operator.
+Require Import skylabs.lang.cpp.logic.destroy.
 Require Import skylabs.lang.cpp.logic.wp.
 Require Import skylabs.lang.cpp.logic.expr.
 Require Import skylabs.lang.cpp.logic.bitfield.
@@ -164,6 +166,7 @@ Module Type Expr__bitfield.
     #[local] Notation read_arrow := (read_arrow tu ρ).
     #[local] Notation inc_dec_op := (inc_dec_op tu).
     #[local] Notation bf_update := (bf_update tu).
+    #[local] Notation interp := (interp tu).
 
     (** The leaf: <<a.f>> (<<a->f>> if [arrow]) for a bit-field [f] that the
         translation unit describes. It designates [f] of the object [a]
@@ -181,6 +184,13 @@ Module Type Expr__bitfield.
     Axiom wp_bitfield_glval_glvalue : forall e Q,
         wp_glval e (fun p free => Q (p, None) free)
       |-- wp_bitfield_glval (Ebf_glvalue e) Q.
+
+    (** The cleanup of the temporaries of a full-expression whose result is
+        a bit-field glvalue, as in the discarded <<s.a = f().v;>>: compare
+        [wp_lval_clean]. *)
+    Axiom wp_bitfield_glval_clean : forall e Q,
+        wp_bitfield_glval e (fun r frees => interp frees $ Q r FreeTemps.id)
+      |-- wp_bitfield_glval (Ebf_andclean e) Q.
 
     (** <<e1, e2>>: compare [wp_lval_comma]. *)
     Axiom wp_bitfield_glval_comma : forall e1 e2 Q,

@@ -1682,7 +1682,10 @@ public:
         // NOTE candidate for removal
         // our semantics cleans everything, so we don't need to
         // mark this explicitly.
-        print.ctor("Eandclean");
+        // A full-expression whose result is a bit-field glvalue has its own
+        // node (see [Ebf_andclean] in syntax/core.v).
+        print.ctor(expr->getSubExpr()->refersToBitField() ? "Ebf_andclean"
+                                                          : "Eandclean");
         if (ClangPrinter::debug && cprint.trace(Trace::Expr)) {
             auto &os = llvm::errs();
             os << "and_clean objects: " << expr->getNumObjects() << "\n";

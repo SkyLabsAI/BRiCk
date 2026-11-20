@@ -390,6 +390,8 @@ of an expression is a bit-field (<https://eel.is/c++draft/expr.cond#5>,
   [Epredec] when their result is a bit-field glvalue;
 - [Ebf_glvalue e] is an arm [e] of an [Ebf_if] that is an ordinary glvalue;
   it occurs nowhere else;
+- [Ebf_andclean e] is [Eandclean e], the cleanup of the temporaries of a
+  full-expression, when [e] is a bit-field glvalue;
 - [Ebf_postinc] and [Ebf_postdec] are [Epostinc] and [Epostdec] on a
   bit-field glvalue, and [Cl2r_bitfield] is [Cl2r] on one.
 
@@ -397,6 +399,7 @@ Static typing treats each node like the standard node it mirrors, and
 [Ebf_glvalue e] like [e].
 *)
 | Ebf_glvalue (e : Expr)
+| Ebf_andclean (e : Expr)
 | Ebf_comma (e1 e2 : Expr)
 | Ebf_if (e1 e2 e3 : Expr) (t : type)
 | Ebf_assign (e1 e2 : Expr) (t : type)
@@ -1075,6 +1078,7 @@ with is_dependentE (e : Expr) : bool :=
   | Emember _ e f _ t => is_dependentE e || atomic_name.existsb is_dependentT f || is_dependentT t
   | Ebitfield _ e _ t => is_dependentE e || is_dependentT t
   | Ebf_glvalue e => is_dependentE e
+  | Ebf_andclean e => is_dependentE e
   | Ebf_comma e1 e2 => is_dependentE e1 || is_dependentE e2
   | Ebf_if e1 e2 e3 t => is_dependentE e1 || is_dependentE e2 || is_dependentE e3 || is_dependentT t
   | Ebf_assign e1 e2 t => is_dependentE e1 || is_dependentE e2 || is_dependentT t

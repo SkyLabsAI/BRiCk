@@ -1884,6 +1884,7 @@ Module Expr.
       | Emember _ _ _ _ _ => 31
       | Ebitfield _ _ _ _ => 69
       | Ebf_glvalue _ => 70
+      | Ebf_andclean _ => 79
       | Ebf_comma _ _ => 71
       | Ebf_if _ _ _ _ => 72
       | Ebf_assign _ _ _ => 73
@@ -1990,7 +1991,7 @@ Module Expr.
       | 67 => box_Einherited_constructor
       | 68 => box_Einitlist_std
       | 69 => box_Ebitfield
-      | 70 => Expr
+      | 70 | 79 => Expr
       | 71 => box_Eseqand
       | 72 => box_Eif
       | 73 => box_Eassign
@@ -2039,6 +2040,7 @@ Module Expr.
       | Emember arrow e x b t => Box_Emember arrow e x b t
       | Ebitfield arrow e f t => Box_Ebitfield arrow e f t
       | Ebf_glvalue e => e
+      | Ebf_andclean e => e
       | Ebf_comma l r => Box_Eseqand l r
       | Ebf_if c l r t => Box_Eif c l r t
       | Ebf_assign l r t => Box_Eassign l r t
@@ -2143,7 +2145,7 @@ Module Expr.
       | 67 => box_Einherited_constructor_compare
       | 68 => box_Einitlist_std_compare
       | 69 => box_Ebitfield_compare
-      | 70 => compareE
+      | 70 | 79 => compareE
       | 71 => box_Eseqand_compare
       | 72 => box_Eif_compare
       | 73 => box_Eassign_compare
@@ -2206,6 +2208,7 @@ Module Expr.
       | Emember arr e x b t => COMP (Emember arr e x b t)
       | Ebitfield arr e f t => COMP (Ebitfield arr e f t)
       | Ebf_glvalue e => COMP (Ebf_glvalue e)
+      | Ebf_andclean e => COMP (Ebf_andclean e)
       | Ebf_comma l r => COMP (Ebf_comma l r)
       | Ebf_if c l r t => COMP (Ebf_if c l r t)
       | Ebf_assign l r t => COMP (Ebf_assign l r t)
