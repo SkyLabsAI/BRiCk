@@ -17,7 +17,11 @@ short cell(const H *h) { return h->m[1][0]; }
 H make() { return H{1, 2, {3, 4}, {{5, 6}, {7, 8}}}; }
 H zero() { return H{}; }
 H copy(const H &h) { return h; }
-// Still unsupported: addresses, references, decays and uses of an update.
+// At the natural type, through a checked cast: addresses, references, decays
+// and other uses of an update. A pointer conversion of an address checks the
+// target type instead.
+void *vaddr(H *h) { return &h->len; }
+char *caddr(H *h) { return (char *)&h->w; }
 unsigned int *addr(H *h) { return &h->len; }
 unsigned int &ref(H *h) { return h->len; }
 unsigned short *decay(H *h) { return h->w; }

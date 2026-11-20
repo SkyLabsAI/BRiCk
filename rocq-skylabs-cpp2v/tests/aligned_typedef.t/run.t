@@ -57,7 +57,7 @@ enumeration type, which older Clangs print through a shared type name.
         7 (Tarray (Trealigned 1 Tulonglong) 2)
         1 (Tarray (Trealigned 1 Tushort) 1)
         9 (Trealigned 1 E)
-       10 (Trealigned 1 Tint)
+       12 (Trealigned 1 Tint)
         1 (Trealigned 1 Tulonglong)
        11 (Trealigned 1 Tushort)
         9 (Trealigned 2 Tint)
@@ -79,13 +79,11 @@ A read of a packed field reads its Trealigned object and retypes the value
 with a no-op cast, whose rule asks the prover to show the value has the new
 type; an assignment stores at the Trealigned type, and so does a compound
 assignment (below). Taking the address of a packed field and binding a
-reference to it are unsupported, as Clang types them at the naturally aligned
-type.
+reference to it go through checked casts (below).
 
   $ tr -s ' \n' ' ' < test_17_cpp.v | sed -E 's/ t[0-9]+\)/ t_)/g' | grep -o -E 'Eunsupported "[^"]*under-aligned field"|\(Eassign \(Emember true \(Ecast Cl2r \(Evar "p" t_\)\) \(Field \(field_name.Id "i"\) false \(Trealigned 1 Tint\)\)\) \(Eint 5%Z Tint\) \(Trealigned 1 Tint\)\)|\(Ecast \(Cnoop Tint\) \(Ecast Cl2r \(Emember true \(Ecast Cl2r \(Evar "p" t_\)\) \(Field \(field_name.Id "i"\) false \(Trealigned 1 Tint\)\)\)\)\)' | sort | uniq -c
         1 (Eassign (Emember true (Ecast Cl2r (Evar "p" t_)) (Field (field_name.Id "i") false (Trealigned 1 Tint))) (Eint 5%Z Tint) (Trealigned 1 Tint))
         1 (Ecast (Cnoop Tint) (Ecast Cl2r (Emember true (Ecast Cl2r (Evar "p" t_)) (Field (field_name.Id "i") false (Trealigned 1 Tint)))))
-        2 Eunsupported "access to an under-aligned field"
 
 An aligned allocation or deallocation function receives Clang's alignment of
 the allocated type, which BRiCk would compute from the erased type, so a new
@@ -242,12 +240,19 @@ increments are printed at the field's Trealigned type (BRiCk computes them at
 the underlying type), and the operands of void casts, for increments and
 commas count as discarded. Elements of a packed array field are accessed at
 their Trealigned type, and the initializers of such a field (aggregate, value
-initialization, copy loops) have Trealigned element types. Addresses,
-references, decays and other uses of an update stay unsupported.
+initialization, copy loops) have Trealigned element types.
+
+Elsewhere Clang uses a packed object at its natural type (binding a reference,
+a decay, the address of an update): cpp2v prints a no-op cast to that type,
+whose rule asks the prover to show the natural alignment Clang assumes. The
+address of a packed object points to its Trealigned type; a pointer cast
+converting it (to void* or char* here, also in the implicit assignment
+operators' memcpy) checks the target type's alignment instead, and otherwise a
+no-op cast to the pointer type does.
 
   $ check_cpp2v updates.cpp
   cpp2v -v -check-types -o updates_17_cpp.v updates.cpp -- -std=c++17 2>&1 | sed 's/^ *[0-9]* | //'
-  $TESTCASE_ROOT/updates.cpp:21:36: warning: taking address of packed member 'len' of class or structure 'H' may result in an unaligned pointer value
+  $TESTCASE_ROOT/updates.cpp:25:36: warning: taking address of packed member 'len' of class or structure 'H' may result in an unaligned pointer value
   unsigned int *addr(H *h) { return &h->len; }
                                      ^~~~~~
   1 warning generated.
@@ -259,11 +264,15 @@ references, decays and other uses of an update stay unsupported.
         4 Eimplicit_init
         6 Einitlist
         2 Epostinc
-        3 Epreinc
-       11 Esubscript
-        1 Eunsupported "access to an element of an under-aligned array"
-       11 Eunsupported "access to an under-aligned field"
-        1 Eunsupported "use of an increment or decrement of an under-aligned field"
-       22 Trealigned 1 Tshort
-       21 Trealigned 1 Tuint
-       18 Trealigned 1 Tushort
+        4 Epreinc
+       12 Esubscript
+       28 Trealigned 1 Tshort
+       26 Trealigned 1 Tuint
+       24 Trealigned 1 Tushort
+  $ tr -s ' \n' ' ' < updates_17_cpp.v | grep -o -E 'Ecast \(Cnoop \(T(ref|rv_ref) [^ ()]+\)\) \(E[a-z_]+|Ecast \(Cnoop [^ ()]+\) \(Eaddrof|Ecast \(Cbitcast [^ ()]+\) \(Eaddrof|Ecstyle_cast \(Cbitcast [^ ()]+\) [^ ()]+ \(Eaddrof' | sed -E 's/ t[0-9]+/ t_/g' | sort | uniq -c
+        9 Ecast (Cbitcast t_) (Eaddrof
+        1 Ecast (Cnoop (Tref Tuint)) (Emember
+        1 Ecast (Cnoop (Tref t_)) (Emember
+        1 Ecast (Cnoop (Tref t_)) (Esubscript
+        2 Ecast (Cnoop t_) (Eaddrof
+        1 Ecstyle_cast (Cbitcast t_) t_ (Eaddrof

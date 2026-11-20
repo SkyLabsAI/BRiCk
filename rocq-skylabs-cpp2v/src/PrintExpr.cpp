@@ -735,11 +735,7 @@ public:
             return false;
         auto obj = realignedObject(expr->getLHS());
         if (cprint.discardedExpr != expr && cprint.realignedAccess != expr) {
-            print.ctor("Eunsupported");
-            print.output() << "\"use of an assignment to an under-aligned "
-                              "field\""
-                           << fmt::nbsp;
-            done(expr, Done::DT);
+            printCheckedRealigned(expr);
             return true;
         }
         auto lhs = expr->getLHS()->IgnoreParens();
@@ -790,11 +786,7 @@ public:
             return false;
         if (expr->isPrefix() && cprint.discardedExpr != expr &&
             cprint.realignedAccess != expr) {
-            print.ctor("Eunsupported");
-            print.output() << "\"use of an increment or decrement of an "
-                              "under-aligned field\""
-                           << fmt::nbsp;
-            done(expr, Done::DT);
+            printCheckedRealigned(expr);
             return true;
         }
         switch (expr->getOpcode()) {
@@ -948,6 +940,31 @@ public:
         }
         case UnaryOperatorKind::UO_AddrOf: {
             auto e = expr->getSubExpr();
+            if (realignedGLValue(e)) {
+                // The address of an under-aligned object points to its
+                // [Trealigned] type. A pointer cast converting it checks the
+                // target type's alignment; otherwise a checked no-op cast to
+                // the expression's type does ([wp_operand_cast_noop]).
+                const bool converted = cprint.realignedAddr == expr;
+                cprint.realignedAddr = nullptr;
+                if (!converted) {
+                    print.ctor("Ecast");
+                    print.ctor("Cnoop", false);
+                    cprint.printQualType(print, expr->getType(),
+                                         loc::of(expr));
+                    print.end_ctor() << fmt::nbsp;
+                }
+                {
+                    guard::ctor _{print, "Eaddrof"};
+                    auto saved = cprint.realignedAccess;
+                    cprint.realignedAccess = e->IgnoreParens();
+                    cprint.printExpr(print, e, names);
+                    cprint.realignedAccess = saved;
+                }
+                if (!converted)
+                    print.end_ctor();
+                return;
+            }
             if (auto dre = dyn_cast<DeclRefExpr>(e)) {
                 auto decl = dre->getDecl();
                 if (is_class_member(decl)) {
@@ -1330,8 +1347,10 @@ public:
         print.output() << fmt::nbsp;
         if (expr->getCastKind() == CastKind::CK_ToVoid)
             printDiscarded(expr->getSubExpr());
-        else
+        else {
+            noteRealignedAddr(expr);
             cprint.printExpr(print, expr->getSubExpr(), names);
+        }
         print.end_ctor();
     }
 
@@ -1386,8 +1405,24 @@ public:
         print.output() << fmt::nbsp;
         if (expr->getCastKind() == CastKind::CK_ToVoid)
             printDiscarded(expr->getSubExpr());
-        else
+        else {
+            noteRealignedAddr(expr);
             cprint.printExpr(print, expr->getSubExpr(), names);
+        }
+    }
+
+    // A pointer conversion of the address of an under-aligned object (see
+    // [ClangPrinter::realignedAddr]).
+    void noteRealignedAddr(const CastExpr *expr) {
+        if (expr->getCastKind() != CastKind::CK_BitCast &&
+            expr->getCastKind() != CastKind::CK_NoOp)
+            return;
+        if (!expr->getType()->isPointerType())
+            return;
+        auto uo = dyn_cast<UnaryOperator>(expr->getSubExpr()->IgnoreParens());
+        if (uo && uo->getOpcode() == UnaryOperatorKind::UO_AddrOf &&
+            realignedGLValue(uo->getSubExpr()))
+            cprint.realignedAddr = uo;
     }
 
     void VisitCastExpr(const CastExpr *expr) {
@@ -1573,6 +1608,29 @@ public:
         done(lit, Done::NONE);
     }
 
+    // Whether [e] is a glvalue for an under-aligned object, accessed at its
+    // [Trealigned] type where its context allows it.
+    bool realignedGLValue(const Expr *e) {
+        return realignedObject(e) || realignedArray(e) || realignedUpdate(e);
+    }
+
+    // Prints the glvalue [e] for an under-aligned object, used at its
+    // naturally aligned type: a no-op cast to that type, whose rule
+    // ([wp_lval_cast_noop]) asks the prover to show that the object is
+    // naturally aligned, as Clang assumes (e.g. for a reference bound to it).
+    void printCheckedRealigned(const Expr *e) {
+        guard::ctor _(print, "Ecast");
+        print.ctor("Cnoop", false);
+        print.ctor(e->isXValue() ? "Trv_ref" : "Tref", false);
+        cprint.printQualType(print, e->getType(), loc::of(e));
+        print.end_ctor();
+        print.end_ctor() << fmt::nbsp;
+        auto saved = cprint.realignedAccess;
+        cprint.realignedAccess = e->IgnoreParens();
+        cprint.printExpr(print, e, names);
+        cprint.realignedAccess = saved;
+    }
+
     // Prints [e], whose value its context discards (see
     // [ClangPrinter::realignedAccess]).
     void printDiscarded(const Expr *e) {
@@ -1684,10 +1742,7 @@ public:
             realigned = realignedFieldAlign(cprint.getContext(), *fd);
         if (realigned && cprint.realignedAccess != expr) {
             // See [ClangPrinter::realignedAccess].
-            print.ctor("Eunsupported");
-            print.output() << "\"access to an under-aligned field\""
-                           << fmt::nbsp;
-            done(expr, Done::DT);
+            printCheckedRealigned(expr);
             return;
         }
 
@@ -1771,11 +1826,7 @@ public:
             // row would be a pointer that BRiCk assumes naturally aligned),
             // and typed with [Trealigned].
             if (cprint.realignedAccess != expr->IgnoreParens()) {
-                print.ctor("Eunsupported");
-                print.output() << "\"access to an element of an under-aligned "
-                                  "array\""
-                               << fmt::nbsp;
-                done(expr, Done::DT);
+                printCheckedRealigned(expr);
                 return;
             }
             auto array = subscriptArray(expr);
