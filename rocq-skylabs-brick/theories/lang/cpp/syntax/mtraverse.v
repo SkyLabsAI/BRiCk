@@ -255,6 +255,7 @@ Module MTraverse.
       | Emember arrow e f mut t => Emember arrow <$> traverseE e <*> atomic_name.traverse traverseT f <*> mret mut <*> traverseT t
       | Ebitfield arrow e f t => Ebitfield arrow <$> traverseE e <*> mret f <*> traverseT t
       | Ebf_glvalue e => Ebf_glvalue <$> traverseE e
+      | Ebf_andclean e => Ebf_andclean <$> traverseE e
       | Ebf_comma e1 e2 => Ebf_comma <$> traverseE e1 <*> traverseE e2
       | Ebf_if a b c t => Ebf_if <$> traverseE a <*> traverseE b <*> traverseE c <*> traverseT t
       | Ebf_assign e1 e2 t => Ebf_assign <$> traverseE e1 <*> traverseE e2 <*> ET (traverseT t)
