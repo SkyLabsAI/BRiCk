@@ -40,6 +40,7 @@ Fixpoint no_case (s : Stmt) : bool :=
   | Sbreak
   | Scontinue
   | Sreturn _
+  | Sreturn_nrvo _ _
   | Sexpr _
   | Sasm _ _ _ _ _ => true
   | Slabeled _ s => no_case s
