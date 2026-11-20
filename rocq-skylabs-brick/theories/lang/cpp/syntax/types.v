@@ -1252,6 +1252,23 @@ Fixpoint unrealign (t : type) : type :=
   | _ => t
   end.
 
+(** [unrealign_head t] drops a [Trealigned] wrapper at the head of [t], under
+    qualifiers: the type at which BRiCk computes with the value of an object
+    of type [t] (an under-aligned object holds the values of its underlying
+    type). Unlike [unrealign], it does not look into array types. *)
+Fixpoint unrealign_head (t : type) : type :=
+  match t with
+  | Trealigned _ t => t
+  | Tqualified q t => Tqualified q (unrealign_head t)
+  | _ => t
+  end.
+
+Lemma unrealign_head_arithmetic t : is_arithmetic t -> unrealign_head t = t.
+Proof. rewrite /is_arithmetic. induction t => //= H. by rewrite IHt. Qed.
+
+Lemma unrealign_head_pointer t : is_pointer t -> unrealign_head t = t.
+Proof. rewrite /is_pointer. induction t => //= H. by rewrite IHt. Qed.
+
 Definition heap_type : Set := type.
 Definition is_heap_type (t : type) : bool :=
      bool_decide (t = erase_qualifiers t)
