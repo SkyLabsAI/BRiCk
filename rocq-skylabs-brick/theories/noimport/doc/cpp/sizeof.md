@@ -48,7 +48,8 @@ Normative anchors (current working draft):
   sharing an address with a subobject of a *different* type. clang reports `dsize == 1` for an empty
   struct, so `dsize == sizeof` does not by itself mean that the class owns its byte.
 - **Virtual bases**: `sizeof(B)` counts the virtual bases of `B`, but a `B` base subobject does not contain them.
-  It owns at most the non-virtual size (`nvsize`, clang `getNonVirtualSize`).
+  It owns at most the non-virtual size (`nvsize`, clang `getNonVirtualSize`). It can also be less aligned
+  than `alignof(B)`: see [`alignof.md`](alignof.md).
 
 So a class owns `sizeof` bytes at *every* position only when `dsize == sizeof`, the class is not empty,
 and, if it has virtual bases, `nvsize == sizeof`. cpp2v emits none of these facts today. It records only

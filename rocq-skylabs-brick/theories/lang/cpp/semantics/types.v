@@ -14,6 +14,7 @@ Definition GlobDecl_size_of (g : GlobDecl) : option N :=
   | Gstruct s => Some s.(s_size)
   | Gunion u => Some u.(u_size)
   | Gopaque o => Some o.(o_size)
+  | Gvstruct vs => Some vs.(vs_struct).(s_size)
   | Genum t _ =>
     match drop_qualifiers t with
     | Tchar_ sz => Some $ char_type.bytesN sz
@@ -28,6 +29,7 @@ Definition GlobDecl_align_of (g : GlobDecl) : option N :=
   | Gstruct s => Some s.(s_alignment)
   | Gunion u => Some u.(u_alignment)
   | Gopaque o => Some o.(o_alignment)
+  | Gvstruct vs => Some vs.(vs_struct).(s_alignment)
   | Genum t _ =>
     match drop_qualifiers t with
     | Tchar_ sz => Some $ char_type.bytesN sz
@@ -88,7 +90,9 @@ Proof.
   do 2 case_match; subst; try contradiction; try constructor.
   case_bool_decide; subst; eauto. contradiction.
   case_bool_decide; subst; eauto. contradiction.
-  case_bool_decide; subst; eauto. case_match; constructor; eauto. contradiction.  case_bool_decide; subst; eauto. contradiction.
+  case_bool_decide; subst; eauto. case_match; constructor; eauto. contradiction.
+  case_bool_decide; subst; eauto. contradiction.
+  case_bool_decide; subst; eauto. contradiction.
 Qed.
 #[global] Instance proper_GlobDecl_align_of: Proper (GlobDecl_ler ==> Roption_leq eq) GlobDecl_align_of.
 Proof.
@@ -96,7 +100,9 @@ Proof.
   do 2 case_match; subst; try contradiction; try constructor.
   case_bool_decide; subst; eauto. contradiction.
   case_bool_decide; subst; eauto. contradiction.
-  case_bool_decide; subst; eauto. simpl. case_match; constructor; eauto. contradiction.  case_bool_decide; subst; eauto. contradiction.
+  case_bool_decide; subst; eauto. simpl. case_match; constructor; eauto. contradiction.
+  case_bool_decide; subst; eauto. contradiction.
+  case_bool_decide; subst; eauto. contradiction.
 Qed.
 
 (** * sizeof *)
@@ -435,6 +441,10 @@ Definition offset_of (σ : genv) (t : globname) (f : atomic_name) : option Z :=
     find_assoc_list f (List.map (fun m => (m.(mem_name),m.(mem_layout).(li_offset) / 8)) s.(s_fields))
   | Some (Gunion u) =>
     find_assoc_list f (List.map (fun m => (m.(mem_name),m.(mem_layout).(li_offset) / 8)) u.(u_fields))
+  (* The fields of a class with virtual bases live in its non-virtual part,
+     at offsets that do not depend on the most-derived class. *)
+  | Some (Gvstruct vs) =>
+    find_assoc_list f (List.map (fun m => (m.(mem_name),m.(mem_layout).(li_offset) / 8)) vs.(vs_struct).(s_fields))
   | _ => None
   end.
 
@@ -449,11 +459,16 @@ Proof.
   destruct gd => //; intros H.
   - erewrite (glob_def_genv_compat_union (Hσ := Hcompat)); eauto.
   - erewrite (glob_def_genv_compat_struct (Hσ := Hcompat)); eauto.
+  - erewrite (glob_def_genv_compat_vstruct (Hσ := Hcompat)); eauto.
 Qed.
 
 Definition parent_offset_tu (tu : translation_unit) (derived : name) (base : name) : option Z :=
   match tu.(types) !! derived with
   | Some (Gstruct s) => find_assoc_list base (List.map (fun '(s,l) => (s,l.(li_offset) / 8)) s.(s_bases))
+  (* Only the direct _non-virtual_ bases of a class with virtual bases have
+     a static offset; the virtual bases are deliberately absent here. *)
+  | Some (Gvstruct vs) =>
+    find_assoc_list base (List.map (fun '(s,l) => (s,l.(li_offset) / 8)) vs.(vs_struct).(s_bases))
   | _ => None
   end.
 (* We hide whether [genv_tu] exists. *)
@@ -477,7 +492,8 @@ Lemma parent_offset_genv_compat {σ tu derived base z} {Hσ : tu ⊧ σ} :
 Proof.
   rewrite parent_offset.unlock /parent_offset_tu -/(glob_def σ derived).
   case E: (tu.(types) !! derived) => [ gd //= | // ]; destruct gd => //.
-  by erewrite glob_def_genv_compat_struct.
+  - by erewrite glob_def_genv_compat_struct.
+  - by erewrite glob_def_genv_compat_vstruct.
 Qed.
 
 (** Base layout is likewise preserved independently of the pointer model. *)
@@ -642,9 +658,9 @@ Lemma tu_base_layout_compatible_sound {σ tu} {Hσ : tu ⊧ σ} derived base :
 Proof.
   rewrite /tu_base_layout_compatible.
   destruct (tu.(types) !! derived) as [gd|] eqn:Hd; last discriminate.
-  destruct gd as [| |ds| | | | |]; try discriminate.
+  destruct gd as [| |ds| | | | | |]; try discriminate.
   destruct (tu.(types) !! base) as [gb|] eqn:Hb; last discriminate.
-  destruct gb as [| |bs| | | | |]; try discriminate.
+  destruct gb as [| |bs| | | | | |]; try discriminate.
   destruct (parent_offset_tu tu derived base) as [z|] eqn:Hz; last discriminate.
   intros Hcheck. apply bool_decide_eq_true in Hcheck.
   destruct Hcheck as (Hda & Hba & Hdiv & Hdz & Hnonneg & Hstrict & Hbound).
