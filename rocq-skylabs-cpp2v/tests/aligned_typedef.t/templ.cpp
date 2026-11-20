@@ -15,3 +15,16 @@ void use(S &s) {
     (void)s.get(0);
     set_free(s, 3.0f);
 }
+
+// Updates, from templates.
+struct __attribute__((packed)) P {
+    char c;
+    unsigned int n;
+};
+template <typename T> void bump(P &p, T k) {
+    p.n += 1;
+    p.n += k;
+    ++p.n;
+    p.n--;
+}
+void use_p(P &p) { bump(p, 2); }

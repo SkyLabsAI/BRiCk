@@ -105,6 +105,19 @@ read (in get). The instantiations come first, then the templates.
   Ecast (Cnoop Tfloat) (Ecast Cl2r (Emember true (Ethis
   "v") false (Trealigned 1 Tfloat))) (Evar "r" (Tref (Qconst (Tparam "T")))) None
 
+So do updates (in bump), whose operators also take an optional type in
+templates.
+
+  $ tr -s ' \n' ' ' < templ_17_cpp.v | sed -E 's/ t[0-9]+\)/ t_)/g' | grep -o -E '"n"\) false \(Trealigned 1 Tuint\)\)\) (\(Ecast \(Cintegral Tuint\) \((Eint 1%Z Tint|Ecast Cl2r \(Evar "k" Tint\))\)\) |\(Evar "k" \(Tparam "T"\)\) )?(None|\(Some (\(Trealigned 1 Tuint\)|Tuint)\)|\(Trealigned 1 Tuint\)|Tuint)'
+  "n") false (Trealigned 1 Tuint))) (Ecast (Cintegral Tuint) (Eint 1%Z Tint)) (Trealigned 1 Tuint)
+  "n") false (Trealigned 1 Tuint))) (Ecast (Cintegral Tuint) (Ecast Cl2r (Evar "k" Tint))) (Trealigned 1 Tuint)
+  "n") false (Trealigned 1 Tuint))) (Trealigned 1 Tuint)
+  "n") false (Trealigned 1 Tuint))) Tuint
+  "n") false (Trealigned 1 Tuint))) (Ecast (Cintegral Tuint) (Eint 1%Z Tint)) (Some (Trealigned 1 Tuint))
+  "n") false (Trealigned 1 Tuint))) (Evar "k" (Tparam "T")) None
+  "n") false (Trealigned 1 Tuint))) (Some (Trealigned 1 Tuint))
+  "n") false (Trealigned 1 Tuint))) (Some Tuint)
+
 An aligned allocation or deallocation function receives Clang's alignment of
 the allocated type, which BRiCk would compute from the erased type, so a new
 or delete of a type with an alignment attribute that needs one is
