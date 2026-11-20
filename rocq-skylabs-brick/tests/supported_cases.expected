@@ -90,8 +90,6 @@
         ("load_order(int*, int)"%pstring, "partial"%pstring);
         ("load_relaxed(int*)"%pstring, "unsupported"%pstring);
         ("load_sc(int*)"%pstring, "supported"%pstring);
-        ("long_double_ptr(?Builtin long double*)"%pstring,
-         "unsupported"%pstring);
         ("mk()"%pstring, "blocked"%pstring);
         ("ns_get(NS*)"%pstring, "supported"%pstring);
         ("off()"%pstring, "unsupported"%pstring);
