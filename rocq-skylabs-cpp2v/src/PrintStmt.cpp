@@ -396,9 +396,10 @@ public:
 
     void VisitCXXTryStmt(const CXXTryStmt *stmt, CoqPrinter &print,
                          ClangPrinter &cprint, ASTContext &) {
-        print.ctor("Sunsupported");
-        print.str("try");
-        print.end_ctor();
+        // Under BRiCk's non-throwing semantics (where throw expressions have
+        // no WP rule), a verified try-block never throws, so the catch
+        // handlers are unreachable and lowering to the try-block is sound.
+        cprint.printStmt(print, stmt->getTryBlock());
     }
 };
 
