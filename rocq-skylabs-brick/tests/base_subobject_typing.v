@@ -24,7 +24,7 @@ Definition bad_base_env : genv :=
   {| genv_tu := makeTranslationUnit ∅
        {[ "Base"%cpp_name := Gstruct bad_base_struct;
           "Derived"%cpp_name := Gstruct bad_derived_struct ]}
-       ∅ [] [] abi.abi_default ∅ ∅ ∅ ∅;
+       ∅ [] [] abi.abi_default ∅ ∅ ∅ ∅ eq_refl;
      member_pointer_bitsize := bitsize.W64 |}.
 
 Lemma bad_base_derives : @class_derives bad_base_env "Derived" ["Base"%cpp_name].
@@ -121,7 +121,7 @@ Definition base_fixture_env (z : Z) (dsz dal bsz bal : N) : genv :=
           "Derived"%cpp_name := Gstruct
           (Build_Struct [("Base"%cpp_name, {| li_offset := 8*z |})]
             [] [] [] "Derived::~Derived()"%cpp_name true None POD dsz dal) ]}
-       ∅ [] [] abi.abi_default ∅ ∅ ∅ ∅;
+       ∅ [] [] abi.abi_default ∅ ∅ ∅ ∅ eq_refl;
      member_pointer_bitsize := bitsize.W64 |}.
 
 Definition ordinary_base_env : genv := base_fixture_env 2 4 1 1 1.
