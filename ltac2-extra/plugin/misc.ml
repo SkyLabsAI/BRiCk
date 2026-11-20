@@ -218,17 +218,18 @@ let _ =
   define "entirely_closed" (constr @-> eret bool) @@ fun c env sigma ->
   let exception Fail in
   let rec go j c =
+    match EConstr.destRef sigma c with
+    | (gr, _) -> Names.Id.Set.iter go_var @@ Environ.vars_of_global env gr
+    | exception Constr.DestKO ->
     match EConstr.kind sigma c with
     | Rel(i)  -> if i > j then raise Fail
-    | Var(n)  ->
-        begin
-          match Environ.named_body n env with
-          | None    -> raise Fail
-          | Some(b) -> go j (EConstr.of_constr b)
-          | exception Not_found -> raise Fail
-        end
     | Evar(_) -> raise Fail
     | _       -> EConstr.iter_with_binders sigma Stdlib.succ go j c
+  and go_var n =
+    match Environ.named_body n env with
+    | None    -> raise Fail
+    | Some(b) -> go 0 (EConstr.of_constr b)
+    | exception Not_found -> raise Fail
   in
   try go 0 c; true with Fail -> false
 

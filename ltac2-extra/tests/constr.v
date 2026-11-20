@@ -163,3 +163,73 @@ Module SpecializeProducts_Tests.
     exact I.
   Abort.
 End SpecializeProducts_Tests.
+
+Module EntirelyClosed_Tests.
+  Import Ltac2.
+
+  Ltac2 assert_closed c := Control.assert_true (Constr.entirely_closed c).
+  Ltac2 assert_open c :=
+    if Constr.entirely_closed c then Control.assert_true false else ().
+
+  Module OpenDependencies.
+    Section Test.
+      Variable n : nat.
+      Let alias : nat := n.
+
+      Definition transparent_value : nat := alias.
+      Definition opaque_value : nat.
+      Proof. exact n. Qed.
+
+      Inductive section_ind : Type :=
+      | SectionCtor : n = n -> section_ind.
+
+      Goal True.
+      Proof.
+        assert_open 'n.
+        assert_open 'alias.
+        assert_open 'transparent_value.
+        assert_open 'opaque_value.
+        assert_open 'section_ind.
+        assert_open 'SectionCtor.
+        assert_open '(fun _ : unit => transparent_value).
+        exact I.
+      Qed.
+    End Test.
+  End OpenDependencies.
+
+  Module ClosedDependencies.
+    Section Test.
+      Let value : nat := 0.
+      Let alias : nat := value.
+
+      Definition transparent_value : nat := alias.
+      Definition opaque_value : nat.
+      Proof. exact alias. Qed.
+
+      Inductive section_ind : Type :=
+      | SectionCtor : alias = alias -> section_ind.
+
+      Goal True.
+      Proof.
+        assert_closed 'value.
+        assert_closed 'alias.
+        assert_closed 'transparent_value.
+        assert_closed 'opaque_value.
+        assert_closed 'section_ind.
+        assert_closed 'SectionCtor.
+        assert_closed '(fun _ : unit => transparent_value).
+        exact I.
+      Qed.
+    End Test.
+  End ClosedDependencies.
+
+  (* Discharge removes the implicit dependencies from global references. *)
+  Goal True.
+  Proof.
+    assert_closed 'OpenDependencies.transparent_value.
+    assert_closed 'OpenDependencies.opaque_value.
+    assert_closed 'OpenDependencies.section_ind.
+    assert_closed 'OpenDependencies.SectionCtor.
+    exact I.
+  Qed.
+End EntirelyClosed_Tests.
