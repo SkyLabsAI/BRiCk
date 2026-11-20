@@ -8,6 +8,7 @@
 #include "CommentScanner.hpp"
 #include "CoqPrinter.hpp"
 #include "Filter.hpp"
+#include "FromClang.hpp"
 #include "ModuleBuilder.hpp"
 #include "PrePrint.hpp"
 #include "SpecCollector.hpp"
@@ -328,6 +329,7 @@ void ToCoqConsumer::toCoqModule(clang::ASTContext *ctxt,
     bool templates = templates_file_.has_value() ||
                      (output_file_.has_value() && output_templates_) ||
                      name_test_file_.has_value();
+    DeclareLibFunctions(decl, compiler_->getSema());
     build_module(decl, mod, filter, specs, compiler_, elaborate_, templates);
 
     auto parser = [&](CoqPrinter &print) -> auto & {

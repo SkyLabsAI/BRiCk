@@ -8,6 +8,7 @@
 #include "ClangPrinter.hpp"
 #include "CoqPrinter.hpp"
 #include "Formatter.hpp"
+#include "FromClang.hpp"
 #include "Logging.hpp"
 #include "OpaqueNames.hpp"
 #include "clang/AST/ASTContext.h"
@@ -946,6 +947,18 @@ public:
             always_assert(ref && "builtin function to function pointer must be "
                                  "applied to a literal variable");
             always_assert(is_builtin(ref->getDecl()));
+            // A library builtin (`__builtin_memcpy`) is a call to the
+            // library function (`memcpy`), which [DeclareLibFunctions]
+            // declared if the translation unit did not.
+            if (auto fd = libFunctionDecl(
+                    cprint.getContext(),
+                    cast<FunctionDecl>(ref->getDecl())->getBuiltinID())) {
+                guard::ctor _(print, "Ecast");
+                print.output() << "Cfun2ptr" << fmt::nbsp;
+                cprint.printValueDeclExpr(print, fd, names);
+                return;
+            }
+
             print.ctor("Ebuiltin", false);
             // assume that this is a builtin
             cprint.printName(print, ref->getDecl(), loc::of(ref)) << fmt::nbsp;
