@@ -351,7 +351,7 @@ Section with_monad.
         <+> type t
     | Tarch _ _ => OK
     | Trealigned _ t =>
-        PARTIAL "under-aligned object: only reads, assignments used as statements, initialization and destruction are modelled"
+        PARTIAL "under-aligned object: uses at its natural type need a proof of natural alignment"
         <+> type t
     | Tdecltype e | Texprtype e => expr e
     | Tnamed n | Tenum n => REF n <+> name n

@@ -1201,6 +1201,11 @@ static fmt::Formatter &printInitializer(const CXXConstructorDecl &ctor,
         };
         print_type() << fmt::nbsp;
         return cprint.printExpr(print, e);
+    } else if (auto fd = init.getMember()) {
+        // An under-aligned array field (see [ClangPrinter::realignedInit]).
+        return cprint.printFieldInit(
+            print, e, fd->getType(),
+            realignedFieldAlign(cprint.getContext(), *fd));
     } else {
         return cprint.printExpr(print, e);
     }

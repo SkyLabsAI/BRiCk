@@ -742,13 +742,17 @@ Module decltype.
         | Ebf_predec e t =>
             let* lt := of_expr e >>= requireL in
             let* _ := require_eq lt t in (* TODO: redundant type *)
-            let* _ := supports_inc_dec lt in
+            (* An under-aligned object is updated at its underlying type. *)
+            let* _ := supports_inc_dec (unrealign_head lt) in
             mret $ Tref lt
         | Epostinc e t
         | Epostdec e t
         | Ebf_postinc e t
         | Ebf_postdec e t =>
             let* lt := of_expr e >>= requireL in
+            (* The result is a value of the underlying type of an
+               under-aligned object. *)
+            let lt := unrealign_head lt in
             let* _ := require_eq lt t in (* TODO: redundant type *)
             let* _ := supports_inc_dec lt in
             mret lt

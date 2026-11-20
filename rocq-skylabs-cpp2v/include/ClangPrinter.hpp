@@ -121,13 +121,34 @@ private:
           comment_{from.comment_}, typedefs_{from.typedefs_} {}
 
 public:
-    // An under-aligned field may only be accessed by an lvalue-to-rvalue
-    // conversion or by an assignment whose result is discarded: elsewhere
-    // Clang types the access at the field's naturally aligned type (e.g. when
-    // binding a reference or taking its address). The printer for such a
-    // context records the access it allows, or the discarded expression.
+    // An under-aligned object (a field of a packed record, or an element of
+    // one) is accessed at its [Trealigned] type by an lvalue-to-rvalue
+    // conversion, a postfix increment or decrement, an assignment, compound
+    // assignment or prefix increment or decrement whose result is discarded
+    // or read by such a conversion, a subscript, or the address-of operator.
+    // The printer for such a context records the access it allows, or the
+    // discarded expression. Elsewhere (e.g. when binding a reference) Clang
+    // uses the object at its naturally aligned type, which cpp2v prints as a
+    // checked no-op cast to that type: its rule asks the prover to show that
+    // the object is naturally aligned, as Clang assumes.
     const clang::Expr *realignedAccess{nullptr};
     const clang::Expr *discardedExpr{nullptr};
+    // The address of an under-aligned object that a pointer cast converts:
+    // the cast's rule checks the alignment of the target type, so the
+    // address keeps its [Trealigned] pointee type (see [VisitUnaryOperator]).
+    const clang::Expr *realignedAddr{nullptr};
+    // The initializer of an under-aligned array field (an initializer list,
+    // an implicit value initialization or an array copy loop), and the
+    // field's alignment: its type is printed with [Trealigned] elements, so
+    // that BRiCk's array initialization rules see the field's element type.
+    const clang::Expr *realignedInit{nullptr};
+    uint64_t realignedInitAlign{0};
+
+    // Prints [e], the initializer of an object of type [ty] that is only
+    // [align]-aligned when [align] is set and [ty] is an array type.
+    fmt::Formatter &printFieldInit(CoqPrinter &print, const clang::Expr *e,
+                                   const clang::QualType &ty,
+                                   std::optional<uint64_t> align);
 
 public:
     // Silence some warnings until we can improve our diagnostics
