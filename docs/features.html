@@ -111,6 +111,12 @@ verified.</p>
 code needs that type cannot be verified; other functions in the
 translation unit are unaffected.</p>
 </dd>
+<dt>Opaque record</dt><dd><p><code class="docutils literal notranslate"><span class="pre">cpp2v</span></code> emits <code class="docutils literal notranslate"><span class="pre">Dopaque</span></code> for a record whose body it cannot model, keeping
+its size, alignment, destructor, and <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">operator</span><span class="w"> </span><span class="k">delete</span></code>. Code that only
+passes, stores, or destroys objects of the type can be verified against
+specifications of its member functions; code that needs the record’s
+members or bases cannot.</p>
+</dd>
 <dt>Unsupported syntax</dt><dd><p><code class="docutils literal notranslate"><span class="pre">cpp2v</span></code> emits <code class="docutils literal notranslate"><span class="pre">Eunsupported</span></code>, <code class="docutils literal notranslate"><span class="pre">Sunsupported</span></code>, <code class="docutils literal notranslate"><span class="pre">Tunsupported</span></code>, or
 <code class="docutils literal notranslate"><span class="pre">Bunsupported</span></code>. These have no semantics: a proof that reaches one gets
 stuck.</p>
@@ -146,8 +152,16 @@ assembly, SEH (<code class="docutils literal notranslate"><span class="pre">__tr
 <td><p>Any statement kind that <code class="docutils literal notranslate"><span class="pre">cpp2v</span></code> has no printer for is fatal.</p></td>
 </tr>
 <tr class="row-odd"><td><p>Bitfields</p></td>
-<td><p>Unsupported declaration</p></td>
-<td><p><a class="reference external" href="https://github.com/SkyLabsAI/BRiCk/issues/307">BRiCk#307</a></p></td>
+<td><p>Opaque record</p></td>
+<td><p>A record with a bit-field becomes an <em>opaque boundary</em> (<code class="docutils literal notranslate"><span class="pre">Gopaque</span></code>):
+<code class="docutils literal notranslate"><span class="pre">cpp2v</span></code> keeps its size, alignment, destructor, and
+<code class="code highlight cpp docutils literal highlight-cpp"><span class="k">operator</span><span class="w"> </span><span class="k">delete</span></code>, but not its members or bases. Callers can own
+such an object through an abstract <code class="docutils literal notranslate"><span class="pre">Rep</span></code>, pass it by value, and
+destroy it. Accessing its members, verifying its member functions,
+<code class="docutils literal notranslate"><span class="pre">anyR</span></code>, changing its <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">const</span></code>-ness, and <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">delete</span></code> are not
+supported. Records that also have a virtual base, and C records, remain
+unsupported declarations.
+<a class="reference external" href="https://github.com/SkyLabsAI/BRiCk/issues/307">BRiCk#307</a></p></td>
 </tr>
 <tr class="row-even"><td><p><code class="code highlight cpp docutils literal highlight-cpp"><span class="k">virtual</span></code> inheritance (virtual base classes)</p></td>
 <td><p>Unsupported declaration</p></td>

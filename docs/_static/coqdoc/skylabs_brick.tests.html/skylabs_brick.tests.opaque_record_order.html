@@ -1,0 +1,179 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.opaque_record_order</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab15"></a><h1 class="section">Why an opaque record is not below a struct in <span class="inlinecode"><span class="id" title="definition">GlobDecl_le</span></span></h1>
+
+
+<div class="paragraph"> </div>
+
+    <span class="inlinecode"><span class="id" title="definition">GlobDecl_le</span></span> relates <span class="inlinecode"><span class="id" title="constructor">Gopaque</span></span> <span class="inlinecode"><span class="id" title="var">o</span></span> only to itself. One could also put it
+    below a <span class="inlinecode"><span class="id" title="constructor">Gstruct</span></span> with the same size, alignment, destructor, and
+    <code>operator delete</code>, so that a translation unit seeing the record as
+    opaque links with one that sees its body.
+
+<div class="paragraph"> </div>
+
+    <span class="inlinecode"><span class="id" title="var">complete_type_respects_sub_table</span></span> and <span class="inlinecode"><span class="id" title="var">GlobDecl_ler_join</span></span> hold today
+    only because that order is absent. The counterexamples below do not
+    mention <span class="inlinecode"><span class="id" title="definition">GlobDecl_le</span></span>: they are pairs that such an order would relate. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="opaque" class="idref" href="#opaque"><span class="id" title="definition">opaque</span></a> (<a id="reason:1" class="idref" href="#reason:1"><span class="id" title="binder">reason</span></a> : <span class="id" title="var">PrimString.string</span>) : <span class="id" title="abbreviation">Opaque</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="constructor">Build_Opaque</span> 4 4 "C::~C()" <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <a class="idref" href="skylabs_brick.tests.opaque_record_order.html#reason:1"><span class="id" title="variable">reason</span></a> <span class="id" title="notation">[]</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+A struct with the metadata of <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.opaque_record_order.html#opaque"><span class="id" title="definition">opaque</span></a></span> <span class="inlinecode"><span class="id" title="var">_</span></span>, and a member whose type is not
+    declared. Type tables are not checked for completeness
+    (<span class="inlinecode"><span class="id" title="var">complete_type_table</span></span> is not part of <span class="inlinecode"><span class="id" title="record">translation_unit</span></span>), so nothing
+    rules this struct out. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="body" class="idref" href="#body"><span class="id" title="definition">body</span></a> : <span class="id" title="abbreviation">Struct</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="constructor">Build_Struct</span> <span class="id" title="notation">[]</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">[</span><span class="id" title="constructor">mkMember</span> (<span class="id" title="constructor">Nid</span> "m") (<span class="id" title="constructor">Tnamed</span> "Missing") <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> {| <span class="id" title="projection">li_offset</span> := 0 |}<span class="id" title="notation">]</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">[]</span> <span class="id" title="notation">[]</span> "C::~C()" <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="constructor">POD</span> 4 4.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="opaque_table" class="idref" href="#opaque_table"><span class="id" title="definition">opaque_table</span></a> : <span class="id" title="definition">type_table</span> := <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#48d4c2b6ed36ec2eb2fe40dfec8e1392"><span class="id" title="notation">{[</span></a> "C"%<span class="id" title="var">cpp_name</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#48d4c2b6ed36ec2eb2fe40dfec8e1392"><span class="id" title="notation">:=</span></a> <span class="id" title="constructor">Gopaque</span> (<a class="idref" href="skylabs_brick.tests.opaque_record_order.html#opaque"><span class="id" title="definition">opaque</span></a> "r") <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#48d4c2b6ed36ec2eb2fe40dfec8e1392"><span class="id" title="notation">]}</span></a>.<br/>
+<span class="id" title="keyword">Definition</span> <a id="body_table" class="idref" href="#body_table"><span class="id" title="definition">body_table</span></a> : <span class="id" title="definition">type_table</span> := <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#48d4c2b6ed36ec2eb2fe40dfec8e1392"><span class="id" title="notation">{[</span></a> "C"%<span class="id" title="var">cpp_name</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#48d4c2b6ed36ec2eb2fe40dfec8e1392"><span class="id" title="notation">:=</span></a> <span class="id" title="constructor">Gstruct</span> <a class="idref" href="skylabs_brick.tests.opaque_record_order.html#body"><span class="id" title="definition">body</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#48d4c2b6ed36ec2eb2fe40dfec8e1392"><span class="id" title="notation">]}</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab16"></a><h2 class="section"><span class="inlinecode"><span class="id" title="inductive">complete_type</span></span> would not be monotone</h2>
+
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="opaque_complete" class="idref" href="#opaque_complete"><span class="id" title="definition">opaque_complete</span></a> : <span class="id" title="inductive">complete_type</span> <a class="idref" href="skylabs_brick.tests.opaque_record_order.html#opaque_table"><span class="id" title="definition">opaque_table</span></a> "C".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">econstructor</span>; [<span class="id" title="keyword">vm_compute</span>|<span class="id" title="tactic">constructor</span>]. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="body_incomplete" class="idref" href="#body_incomplete"><span class="id" title="definition">body_incomplete</span></a> : <span class="id" title="notation">¬</span> <span class="id" title="inductive">complete_type</span> <a class="idref" href="skylabs_brick.tests.opaque_record_order.html#body_table"><span class="id" title="definition">body_table</span></a> "C".<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="var">have</span> <span class="id" title="var">Hmissing</span> : <span class="id" title="notation">¬</span> <span class="id" title="inductive">complete_type</span> <a class="idref" href="skylabs_brick.tests.opaque_record_order.html#body_table"><span class="id" title="definition">body_table</span></a> "Missing".<br/>
+&nbsp;&nbsp;{ <span class="id" title="tactic">intros</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">inversion</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">subst</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">first</span> [ <span class="id" title="tactic">by</span> <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span> <span class="id" title="var">Hl</span> : <span class="id" title="var">_</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <span class="id" title="var">_</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">_</span> |- <span class="id" title="var">_</span> =&gt; <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <span class="id" title="var">Hl</span> <span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="tactic">by</span> <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span> <span class="id" title="var">Hb</span> : <span class="id" title="inductive">complete_basic_type</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> |- <span class="id" title="var">_</span> =&gt; <span class="id" title="tactic">inversion</span> <span class="id" title="var">Hb</span> <span class="id" title="keyword">end</span> ]. }<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">inversion</span> <span class="id" title="var">H</span>; <span class="id" title="tactic">subst</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">last</span> <span class="id" title="tactic">by</span> <span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span> <span class="id" title="var">Hb</span> : <span class="id" title="inductive">complete_basic_type</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> |- <span class="id" title="var">_</span> =&gt; <span class="id" title="tactic">inversion</span> <span class="id" title="var">Hb</span> <span class="id" title="keyword">end</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">Hl</span> : <span class="id" title="var">_</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <span class="id" title="var">_</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> ?<span class="id" title="var">d</span>, <span class="id" title="var">Hd</span> : <span class="id" title="inductive">complete_decl</span> <span class="id" title="var">_</span> ?<span class="id" title="var">d</span> |- <span class="id" title="var">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <span class="id" title="var">Hl</span>; <span class="id" title="tactic">injection</span> <span class="id" title="var">Hl</span> <span class="id" title="keyword">as</span> &lt;-; <span class="id" title="tactic">inversion</span> <span class="id" title="var">Hd</span>; <span class="id" title="tactic">subst</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="keyword">goal</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">Hf</span> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a id="m:2" class="idref" href="#m:2"><span class="id" title="binder"><span id="m:3" class="id">m</span></span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">,</span></a> <span class="id" title="definition">In</span> <a class="idref" href="skylabs_brick.tests.opaque_record_order.html#m:2"><span class="id" title="variable">m</span></a> <span class="id" title="var">_</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="var">_</span> |- <span class="id" title="var">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">apply</span> <span class="id" title="var">Hmissing</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">Hf</span> (<span class="id" title="constructor">mkMember</span> (<span class="id" title="constructor">Nid</span> "m") (<span class="id" title="constructor">Tnamed</span> "Missing") <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> {| <span class="id" title="projection">li_offset</span> := 0 |}))<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">left</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The metadata that the order would compare agrees, so it would give
+    <span class="inlinecode"><span class="id" title="var">type_table_le</span></span> <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.opaque_record_order.html#opaque_table"><span class="id" title="definition">opaque_table</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.opaque_record_order.html#body_table"><span class="id" title="definition">body_table</span></a></span>; with the two facts above, that
+    contradicts <span class="inlinecode"><span class="id" title="var">complete_type_respects_sub_table</span></span>. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="metadata_agrees" class="idref" href="#metadata_agrees"><span class="id" title="definition">metadata_agrees</span></a> :<br/>
+&nbsp;&nbsp;(<a class="idref" href="skylabs_brick.tests.opaque_record_order.html#opaque"><span class="id" title="definition">opaque</span></a> "r").(<span class="id" title="projection">o_size</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs_brick.tests.opaque_record_order.html#body"><span class="id" title="definition">body</span></a>.(<span class="id" title="projection">s_size</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;(<a class="idref" href="skylabs_brick.tests.opaque_record_order.html#opaque"><span class="id" title="definition">opaque</span></a> "r").(<span class="id" title="projection">o_alignment</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs_brick.tests.opaque_record_order.html#body"><span class="id" title="definition">body</span></a>.(<span class="id" title="projection">s_alignment</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;(<a class="idref" href="skylabs_brick.tests.opaque_record_order.html#opaque"><span class="id" title="definition">opaque</span></a> "r").(<span class="id" title="projection">o_dtor</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs_brick.tests.opaque_record_order.html#body"><span class="id" title="definition">body</span></a>.(<span class="id" title="projection">s_dtor</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;(<a class="idref" href="skylabs_brick.tests.opaque_record_order.html#opaque"><span class="id" title="definition">opaque</span></a> "r").(<span class="id" title="projection">o_trivially_destructible</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs_brick.tests.opaque_record_order.html#body"><span class="id" title="definition">body</span></a>.(<span class="id" title="projection">s_trivially_destructible</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;(<a class="idref" href="skylabs_brick.tests.opaque_record_order.html#opaque"><span class="id" title="definition">opaque</span></a> "r").(<span class="id" title="projection">o_delete</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs_brick.tests.opaque_record_order.html#body"><span class="id" title="definition">body</span></a>.(<span class="id" title="projection">s_delete</span>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab17"></a><h2 class="section"><span class="inlinecode"><span class="id" title="var">GlobDecl_ler_join</span></span> would fail</h2>
+
+<div class="paragraph"> </div>
+
+ Two opaque records that differ only in <span class="inlinecode"><span class="id" title="projection">o_reason</span></span> would both be below
+    <span class="inlinecode"><span class="id" title="constructor">Gstruct</span></span> <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.opaque_record_order.html#body"><span class="id" title="definition">body</span></a></span>, but they are not comparable. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="opaque_reasons_incomparable" class="idref" href="#opaque_reasons_incomparable"><span class="id" title="definition">opaque_reasons_incomparable</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">GlobDecl_le</span> (<span class="id" title="constructor">Gopaque</span> (<a class="idref" href="skylabs_brick.tests.opaque_record_order.html#opaque"><span class="id" title="definition">opaque</span></a> "r1")) (<span class="id" title="constructor">Gopaque</span> (<a class="idref" href="skylabs_brick.tests.opaque_record_order.html#opaque"><span class="id" title="definition">opaque</span></a> "r2")) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="definition">GlobDecl_le</span> (<span class="id" title="constructor">Gopaque</span> (<a class="idref" href="skylabs_brick.tests.opaque_record_order.html#opaque"><span class="id" title="definition">opaque</span></a> "r2")) (<span class="id" title="constructor">Gopaque</span> (<a class="idref" href="skylabs_brick.tests.opaque_record_order.html#opaque"><span class="id" title="definition">opaque</span></a> "r1")) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="keyword">vm_compute</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

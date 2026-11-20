@@ -52,7 +52,7 @@
 </div>
 
 <div class="doc">
-<a id="lab14"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">supported.report</span></span>: false positives and false negatives</h1>
+<a id="lab20"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">supported.report</span></span>: false positives and false negatives</h1>
 
 
 <div class="paragraph"> </div>
@@ -85,7 +85,8 @@
 <span class="id" title="var">void</span> <span class="id" title="var">dtor_local</span>() { <span class="id" title="var">D</span> <span class="id" title="var">d</span>; }<br/>
 <br/>
 // <span class="id" title="var">a</span> <span class="id" title="tactic">by</span>-<span class="id" title="var">value</span> <span class="id" title="var">class</span> <span class="id" title="var">flowing</span> <span class="id" title="keyword">as</span> <span class="id" title="var">a</span> <span class="id" title="var">prvalue</span>.<br/>
-<span class="id" title="keyword">struct</span> <span class="id" title="var">B</span> { <span class="id" title="var">int</span> <span class="id" title="var">a</span> : 3; };<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">VB</span> {};<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">B</span> : <span class="id" title="var">virtual</span> <span class="id" title="var">VB</span> { <span class="id" title="var">int</span> <span class="id" title="var">a</span>; };<br/>
 <span class="id" title="var">B</span> <span class="id" title="var">mk</span>();<br/>
 <span class="id" title="var">void</span> <span class="id" title="var">use</span>(<span class="id" title="var">B</span>);<br/>
 <span class="id" title="var">void</span> <span class="id" title="var">prvalue</span>() { <span class="id" title="var">use</span>(<span class="id" title="var">mk</span>()); }<br/>

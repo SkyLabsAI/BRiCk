@@ -1,0 +1,246 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.opaque_record</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.bi.errors</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.logic</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax.supported</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab12"></a><h1 class="section">Opaque records (SkyLabsAI/BRiCk307)</h1>
+
+
+<div class="paragraph"> </div>
+
+    cpp2v cannot model the body of a record with bit-fields. Rather than
+    <span class="inlinecode"><span class="id" title="constructor">Gunsupported</span></span>, which has no size and is not a complete type, it
+    emits a <span class="inlinecode"><span class="id" title="constructor">Gopaque</span></span> carrying the record's size, alignment,
+    destructor, and <code>operator delete</code>. Callers can then own such an object
+    through an abstract <span class="inlinecode"><span class="id" title="definition">Rep</span></span>, pass it by value, and destroy it; its members
+    stay out of reach. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">source</span> <span class="id" title="var">flags</span> "-std=c++20 --target=x86_64-linux-gnu" <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">class</span> <span class="id" title="var">Bits</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unsigned</span> <span class="id" title="var">long</span> <span class="id" title="var">block_</span> : 40;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">unsigned</span> <span class="id" title="var">long</span> <span class="id" title="var">tx_</span> : 24;<br/>
+&nbsp;&nbsp;<span class="id" title="var">public</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">bool</span> <span class="id" title="var">operator</span>==(<span class="id" title="var">Bits</span> <span class="id" title="var">that</span>) <span class="id" title="var">const</span>;<br/>
+&nbsp;&nbsp;};<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> <span class="id" title="var">HasBits</span> { <span class="id" title="var">int</span> <span class="id" title="var">x</span>; <span class="id" title="var">Bits</span> <span class="id" title="var">b</span>; };<br/>
+&nbsp;&nbsp;<span class="id" title="var">bool</span> <span class="id" title="var">same</span>(<span class="id" title="var">Bits</span> <span class="id" title="var">a</span>, <span class="id" title="var">Bits</span> <span class="id" title="var">b</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">a</span> == <span class="id" title="var">b</span>; }<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="Bits_opaque" class="idref" href="#Bits_opaque"><span class="id" title="definition">Bits_opaque</span></a> : <span class="id" title="abbreviation">Opaque</span> :=<br/>
+&nbsp;&nbsp;{| <span class="id" title="projection">o_size</span> := 8<br/>
+&nbsp;&nbsp;&nbsp;; <span class="id" title="projection">o_alignment</span> := 8<br/>
+&nbsp;&nbsp;&nbsp;; <span class="id" title="projection">o_dtor</span> := "Bits::~Bits()"<br/>
+&nbsp;&nbsp;&nbsp;; <span class="id" title="projection">o_trivially_destructible</span> := <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><br/>
+&nbsp;&nbsp;&nbsp;; <span class="id" title="projection">o_delete</span> := <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;&nbsp;; <span class="id" title="projection">o_reason</span> := "bitfields are not supported"<br/>
+&nbsp;&nbsp;&nbsp;; <span class="id" title="projection">o_bitfields</span> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">[</span><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a>"block_"%<span class="id" title="var">pstring</span><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="constructor">Build_BitfieldInfo</span> "block_" 40 <span class="id" title="constructor">Unsigned</span> "unsigned long"<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><span class="id" title="notation">;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a>"tx_"%<span class="id" title="var">pstring</span><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="constructor">Build_BitfieldInfo</span> "block_" 24 <span class="id" title="constructor">Unsigned</span> "unsigned long"<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><span class="id" title="notation">]</span> |}.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="opaque_record_entry" class="idref" href="#opaque_record_entry"><span class="id" title="definition">opaque_record_entry</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.opaque_record.html#source"><span class="id" title="definition">source</span></a>.(<span class="id" title="projection">types</span>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> "Bits"%<span class="id" title="var">cpp_name</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Gopaque</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#Bits_opaque"><span class="id" title="definition">Bits_opaque</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab13"></a><h2 class="section">What an opaque record provides</h2>
+
+<div class="paragraph"> </div>
+
+ The policy of <span class="inlinecode"><span class="id" title="var">supported.v</span></span>: the translation unit is usable. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="opaque_record_supported" class="idref" href="#opaque_record_supported"><span class="id" title="definition">opaque_record_supported</span></a> : <span class="id" title="definition">check.translation_unit</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#source"><span class="id" title="definition">source</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="notation">[]</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The C++ type is complete, so it can be passed by value. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="opaque_record_complete" class="idref" href="#opaque_record_complete"><span class="id" title="definition">opaque_record_complete</span></a> : <span class="id" title="inductive">complete_type</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#source"><span class="id" title="definition">source</span></a>.(<span class="id" title="projection">types</span>) "Bits".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">econstructor</span>; [<span class="id" title="tactic">exact</span>: <a class="idref" href="skylabs_brick.tests.opaque_record.html#opaque_record_entry"><span class="id" title="definition">opaque_record_entry</span></a>|<span class="id" title="tactic">constructor</span>]. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="opaque_record_callable" class="idref" href="#opaque_record_callable"><span class="id" title="definition">opaque_record_callable</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">callable_type</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#source"><span class="id" title="definition">source</span></a>.(<span class="id" title="projection">types</span>) "bool (Bits, Bits)".<br/>
+<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">split</span>; <span class="id" title="tactic">first</span> <span class="id" title="tactic">by</span> <span class="id" title="tactic">repeat</span> <span class="id" title="tactic">constructor</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="tactic">do</span> 2 (<span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">first</span> <span class="id" title="tactic">exact</span>: <a class="idref" href="skylabs_brick.tests.opaque_record.html#opaque_record_complete"><span class="id" title="definition">opaque_record_complete</span></a>). <span class="id" title="tactic">constructor</span>.<br/>
+<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="opaque_record_trivially_destructible" class="idref" href="#opaque_record_trivially_destructible"><span class="id" title="definition">opaque_record_trivially_destructible</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">is_trivially_destructible</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#source"><span class="id" title="definition">source</span></a> "Bits" <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+An enclosing record is an ordinary struct, laid out around the opaque
+    member. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="opaque_member_enclosing_size" class="idref" href="#opaque_member_enclosing_size"><span class="id" title="definition">opaque_member_enclosing_size</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="notation">(</span><a class="idref" href="skylabs_brick.tests.opaque_record.html#source"><span class="id" title="definition">source</span></a>.(<span class="id" title="projection">types</span>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> "HasBits"%<span class="id" title="var">cpp_name</span><span class="id" title="notation">)</span> <span class="id" title="notation">≫=</span> <span class="id" title="definition">GlobDecl_size_of</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 16%<span class="id" title="var">N</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="with_Sigma" class="idref" href="#with_Sigma"><span class="id" title="section">with_Sigma</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{<a id="with_Sigma.Sigma" class="idref" href="#with_Sigma.Sigma"><span class="id" title="variable">Sigma</span></a> : <span class="id" title="class">cpp_logic</span>} {<a id="with_Sigma.CU" class="idref" href="#with_Sigma.CU"><span class="id" title="variable">CU</span></a> : <span class="id" title="class">genv</span>} {<a id="with_Sigma.MODd" class="idref" href="#with_Sigma.MODd"><span class="id" title="variable">MODd</span></a> : <a class="idref" href="skylabs_brick.tests.opaque_record.html#source"><span class="id" title="definition">source</span></a> <span class="id" title="notation">⊧</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#CU:4"><span class="id" title="variable">CU</span></a>}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Every compatible runtime environment keeps the same metadata. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="runtime_record_entry" class="idref" href="#runtime_record_entry"><span class="id" title="lemma">runtime_record_entry</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">glob_def</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#with_Sigma.CU"><span class="id" title="variable">CU</span></a> "Bits" <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Gopaque</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#Bits_opaque"><span class="id" title="definition">Bits_opaque</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span> <span class="id" title="keyword">using</span> <span class="id" title="var">MODd</span>. <span class="id" title="tactic">exact</span>: <span class="id" title="lemma">glob_def_genv_compat_opaque</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#opaque_record_entry"><span class="id" title="definition">opaque_record_entry</span></a>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="runtime_record_size" class="idref" href="#runtime_record_size"><span class="id" title="lemma">runtime_record_size</span></a> : <span class="id" title="definition">size_of</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#with_Sigma.CU"><span class="id" title="variable">CU</span></a> "Bits" <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 8%<span class="id" title="var">N</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span> <span class="id" title="keyword">using</span> <span class="id" title="var">MODd</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> /= <a class="idref" href="skylabs_brick.tests.opaque_record.html#runtime_record_entry"><span class="id" title="lemma">runtime_record_entry</span></a>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="runtime_record_align" class="idref" href="#runtime_record_align"><span class="id" title="lemma">runtime_record_align</span></a> : <span class="id" title="axiom">align_of</span> "Bits" <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 8%<span class="id" title="var">N</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span> <span class="id" title="keyword">using</span> <span class="id" title="var">MODd</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> (<span class="id" title="lemma">align_of_genv_compat_opaque</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#source"><span class="id" title="definition">source</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#with_Sigma.MODd"><span class="id" title="variable">MODd</span></a> <a class="idref" href="skylabs_brick.tests.opaque_record.html#opaque_record_entry"><span class="id" title="definition">opaque_record_entry</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The type has a size, so <span class="inlinecode"><span class="id" title="axiom">type_ptr</span></span> <span class="inlinecode">&quot;<span class="id" title="var">Bits</span>&quot;</span> <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.wp_notation.html#WpTestDefns.with_args.p"><span class="id" title="variable">p</span></a></span> would stay consistent
+      even with the former axiom <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.void_result_size.html#with_cpp.type_ptr_size"><span class="id" title="variable">type_ptr_size</span></a></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="opaque_record_has_size" class="idref" href="#opaque_record_has_size"><span class="id" title="lemma">opaque_record_has_size</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#is_Some"><span class="id" title="definition">is_Some</span></a> (<span class="id" title="definition">size_of</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#with_Sigma.CU"><span class="id" title="variable">CU</span></a> "Bits").<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span> <span class="id" title="keyword">using</span> <span class="id" title="var">MODd</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#runtime_record_size"><span class="id" title="lemma">runtime_record_size</span></a>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Destruction calls the recorded destructor, via its specification. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="opaque_record_destroy" class="idref" href="#opaque_record_destroy"><span class="id" title="lemma">opaque_record_destroy</span></a> (<a id="p:6" class="idref" href="#p:6"><span class="id" title="binder">p</span></a> : <span class="id" title="axiom">ptr</span>) (<a id="Q:7" class="idref" href="#Q:7"><span class="id" title="binder">Q</span></a> : <span class="id" title="definition">epred</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">wp_destroy_named</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#source"><span class="id" title="definition">source</span></a> "Bits" <a class="idref" href="skylabs_brick.tests.opaque_record.html#p:6"><span class="id" title="variable">p</span></a> <a class="idref" href="skylabs_brick.tests.opaque_record.html#Q:7"><span class="id" title="variable">Q</span></a> <span class="id" title="notation">-|-</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">wp_destructor</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#source"><span class="id" title="definition">source</span></a> "Bits" (<span class="id" title="definition">_global</span> "Bits::~Bits()") <a class="idref" href="skylabs_brick.tests.opaque_record.html#p:6"><span class="id" title="variable">p</span></a> <a class="idref" href="skylabs_brick.tests.opaque_record.html#Q:7"><span class="id" title="variable">Q</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span> <span class="id" title="keyword">using</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">split'</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">exact</span>: <span class="id" title="lemma">wp_destroy_named_elim_opaque</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#opaque_record_entry"><span class="id" title="definition">opaque_record_entry</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">exact</span>: <span class="id" title="lemma">wp_destroy_named_intro_opaque</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#opaque_record_entry"><span class="id" title="definition">opaque_record_entry</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab14"></a><h2 class="section">What an opaque record withholds</h2>
+
+<div class="paragraph"> </div>
+
+ No member has an offset, so no member can be accessed. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="opaque_record_no_offset" class="idref" href="#opaque_record_no_offset"><span class="id" title="lemma">opaque_record_no_offset</span></a> (<a id="f:8" class="idref" href="#f:8"><span class="id" title="binder">f</span></a> : <span class="id" title="inductive">atomic_name</span>) : <span class="id" title="definition">offset_of</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#with_Sigma.CU"><span class="id" title="variable">CU</span></a> "Bits" <a class="idref" href="skylabs_brick.tests.opaque_record.html#f:8"><span class="id" title="variable">f</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span> <span class="id" title="keyword">using</span> <span class="id" title="var">MODd</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> /<span class="id" title="definition">offset_of</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#runtime_record_entry"><span class="id" title="lemma">runtime_record_entry</span></a>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#with_Sigma"><span class="id" title="section">with_Sigma</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The body is needed to change <code>const</code>-ness and to select a destructor
+    for <code>delete</code>; both stay unsupported. An opaque record is also not
+    compatible with a struct carrying the same metadata (see <span class="inlinecode"><span class="id" title="definition">GlobDecl_le</span></span>). 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="opaque_record_not_below_struct" class="idref" href="#opaque_record_not_below_struct"><span class="id" title="definition">opaque_record_not_below_struct</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">GlobDecl_le</span> (<span class="id" title="constructor">Gopaque</span> <a class="idref" href="skylabs_brick.tests.opaque_record.html#Bits_opaque"><span class="id" title="definition">Bits_opaque</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="constructor">Gstruct</span> (<span class="id" title="constructor">Build_Struct</span> <span class="id" title="notation">[]</span> <span class="id" title="notation">[]</span> <span class="id" title="notation">[]</span> <span class="id" title="notation">[]</span> "Bits::~Bits()" <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="constructor">POD</span> 8 8)) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

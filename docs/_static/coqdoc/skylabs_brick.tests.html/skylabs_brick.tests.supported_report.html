@@ -54,7 +54,7 @@
 </div>
 
 <div class="doc">
-<a id="lab15"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">supported.report</span></span>: one case per status and per failure</h1>
+<a id="lab21"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">supported.report</span></span>: one case per status and per failure</h1>
 
 </div>
 <div class="code">
@@ -62,6 +62,9 @@
 <br/>
 <span class="id" title="var">cpp.prog</span> <span class="id" title="var">source</span> <span class="id" title="var">flags</span> "-std=c++20 --target=x86_64-linux-gnu" <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
 <span class="id" title="keyword">struct</span> <span class="id" title="var">Bits</span> { <span class="id" title="var">int</span> <span class="id" title="var">a</span> : 3; };<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">Mixed</span> { <span class="id" title="var">int</span> <span class="id" title="var">a</span> : 3; <span class="id" title="var">int</span> <span class="id" title="var">p</span>; };<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">VBase</span> {};<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">Virt</span> : <span class="id" title="var">virtual</span> <span class="id" title="var">VBase</span> {};<br/>
 <span class="id" title="keyword">struct</span> <span class="id" title="var">HasBits</span> { <span class="id" title="var">Bits</span> <span class="id" title="var">b</span>; };<br/>
 <span class="id" title="keyword">struct</span> <span class="id" title="var">Node</span> { <span class="id" title="var">Node</span> *<span class="id" title="var">next</span>; <span class="id" title="var">Bits</span> *<span class="id" title="var">bits</span>; };<br/>
 <span class="id" title="var">union</span> <span class="id" title="var">U</span> { <span class="id" title="var">int</span> <span class="id" title="var">i</span>; <span class="id" title="var">char</span> <span class="id" title="var">c</span>; };<br/>
@@ -70,6 +73,7 @@
 <span class="id" title="keyword">struct</span> <span class="id" title="var">Derived</span> : <span class="id" title="var">Base</span> {};<br/>
 <br/>
 <span class="id" title="var">int</span> <span class="id" title="var">by_value</span>(<span class="id" title="var">Bits</span> <span class="id" title="var">b</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">b.a</span>; }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">by_value_virt</span>(<span class="id" title="var">Virt</span> <span class="id" title="var">v</span>) { <span class="id" title="keyword">return</span> 0; }<br/>
 <span class="id" title="var">int</span> <span class="id" title="var">by_pointer</span>(<span class="id" title="var">Bits</span> *<span class="id" title="var">b</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">b</span> == <span class="id" title="var">nullptr</span>; }<br/>
 <span class="id" title="var">int</span> <span class="id" title="var">through_field</span>(<span class="id" title="var">HasBits</span> *<span class="id" title="var">h</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">h</span>-&gt;<span class="id" title="var">b.a</span>; }<br/>
 <span class="id" title="var">int</span> <span class="id" title="var">linked</span>(<span class="id" title="var">Node</span> <span class="id" title="var">n</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">n.next</span> == <span class="id" title="var">nullptr</span>; }<br/>
@@ -78,6 +82,7 @@
 <span class="id" title="var">int</span> <span class="id" title="var">use_union</span>(<span class="id" title="var">U</span> <span class="id" title="var">u</span>) { <span class="id" title="var">u.c</span> = 1; <span class="id" title="keyword">return</span> <span class="id" title="var">u.i</span>; }<br/>
 <span class="id" title="var">int</span> <span class="id" title="var">arrow_union</span>(<span class="id" title="var">U</span> *<span class="id" title="var">u</span>) { <span class="id" title="var">u</span>-&gt;<span class="id" title="var">c</span> = 1; <span class="id" title="keyword">return</span> 0; }<br/>
 <span class="id" title="var">int</span> <span class="id" title="var">arrow_bits</span>(<span class="id" title="var">Bits</span> *<span class="id" title="var">b</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">b</span>-&gt;<span class="id" title="var">a</span>; }<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">plain_member</span>(<span class="id" title="var">Mixed</span> *<span class="id" title="var">m</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">m</span>-&gt;<span class="id" title="var">p</span>; }<br/>
 <span class="id" title="var">int</span> <span class="id" title="var">take_bits</span>(<span class="id" title="var">Bits</span> <span class="id" title="var">b</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">b.a</span>; }<br/>
 <span class="id" title="var">void</span> <span class="id" title="var">address_only</span>() { <span class="id" title="tactic">auto</span> <span class="id" title="var">p</span> = &amp;<span class="id" title="var">take_bits</span>; (<span class="id" title="var">void</span>)<span class="id" title="var">p</span>; }<br/>
 <span class="id" title="var">int</span> <span class="id" title="var">call_through</span>(<span class="id" title="var">Bits</span> *<span class="id" title="var">b</span>) { <span class="id" title="tactic">auto</span> <span class="id" title="var">p</span> = &amp;<span class="id" title="var">take_bits</span>; <span class="id" title="keyword">return</span> <span class="id" title="var">p</span>( *<span class="id" title="var">b</span>); }<br/>
@@ -102,8 +107,8 @@
 
 <br/>
 <span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <span class="id" title="definition">supported.report.run</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#source"><span class="id" title="definition">source</span></a><br/>
-&nbsp;&nbsp;<span class="id" title="notation">[</span> "by_value(Bits)"<span class="id" title="notation">;</span> "by_pointer(Bits*)"<span class="id" title="notation">;</span> "through_field(HasBits*)"<span class="id" title="notation">;</span> "linked(Node)"<br/>
-&nbsp;&nbsp;<span class="id" title="notation">;</span> "static_local()"<span class="id" title="notation">;</span> "calls_static_local()"<span class="id" title="notation">;</span> "use_union(U)"<span class="id" title="notation">;</span> "arrow_union(U*)"<span class="id" title="notation">;</span> "arrow_bits(Bits*)"<span class="id" title="notation">;</span> "address_only()"<span class="id" title="notation">;</span> "call_through(Bits*)"<span class="id" title="notation">;</span> "read_volatile(volatile int*)"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">[</span> "by_value(Bits)"<span class="id" title="notation">;</span> "by_value_virt(Virt)"<span class="id" title="notation">;</span> "by_pointer(Bits*)"<span class="id" title="notation">;</span> "through_field(HasBits*)"<span class="id" title="notation">;</span> "linked(Node)"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "static_local()"<span class="id" title="notation">;</span> "calls_static_local()"<span class="id" title="notation">;</span> "use_union(U)"<span class="id" title="notation">;</span> "arrow_union(U*)"<span class="id" title="notation">;</span> "arrow_bits(Bits*)"<span class="id" title="notation">;</span> "plain_member(Mixed*)"<span class="id" title="notation">;</span> "address_only()"<span class="id" title="notation">;</span> "call_through(Bits*)"<span class="id" title="notation">;</span> "read_volatile(volatile int*)"<br/>
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "volatile_local()"<span class="id" title="notation">;</span> "dyn(Base*)"<span class="id" title="notation">;</span> "inline_asm()"<span class="id" title="notation">;</span> "cas_ptr(int**, int**, int*)"<br/>
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "cas_int(int*, int*, int)"<span class="id" title="notation">;</span> "overloaded(int)"<span class="id" title="notation">;</span> "overloaded(long)"<br/>
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "unknown_builtin(unsigned int)"<span class="id" title="notation">;</span> "known_builtin(long)"<span class="id" title="notation">;</span> "flat_switch(int)"<br/>
@@ -134,7 +139,7 @@
 </div>
 
 <div class="doc">
-<a id="lab16"></a><h1 class="section">The semantics gets stuck where <span class="inlinecode"><span class="id" title="definition">supported</span></span> fails</h1>
+<a id="lab22"></a><h1 class="section">The semantics gets stuck where <span class="inlinecode"><span class="id" title="definition">supported</span></span> fails</h1>
 
 
 <div class="paragraph"> </div>
