@@ -122,7 +122,9 @@ private:
 
 public:
     // An under-aligned field may only be accessed by an lvalue-to-rvalue
-    // conversion or by an assignment whose result is discarded: elsewhere
+    // conversion, a postfix increment or decrement, or an assignment,
+    // compound assignment or prefix increment or decrement whose result is
+    // discarded or read by such a conversion: elsewhere
     // Clang types the access at the field's naturally aligned type (e.g. when
     // binding a reference or taking its address). The printer for such a
     // context records the access it allows, or the discarded expression.

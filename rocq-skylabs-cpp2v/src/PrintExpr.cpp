@@ -708,16 +708,15 @@ public:
         }
     }
 
-    // An assignment to an under-aligned field, stored at the field's
-    // [Trealigned] type; only when its result is discarded (see
-    // [ClangPrinter::realignedAccess]).
+    // An assignment or compound assignment to an under-aligned field, which
+    // accesses it at the field's [Trealigned] type (BRiCk computes a compound
+    // assignment at the underlying type); only when its result is discarded
+    // or read (see [ClangPrinter::realignedAccess]).
     bool printRealignedAssign(const BinaryOperator *expr) {
-        if (expr->getOpcode() != BinaryOperatorKind::BO_Assign)
+        if (!realignedAssign(expr))
             return false;
         auto align = realignedMember(expr->getLHS());
-        if (!align)
-            return false;
-        if (cprint.discardedExpr != expr) {
+        if (cprint.discardedExpr != expr && cprint.realignedAccess != expr) {
             print.ctor("Eunsupported");
             print.output() << "\"use of an assignment to an under-aligned "
                               "field\""
@@ -726,7 +725,29 @@ public:
             return true;
         }
         auto lhs = expr->getLHS()->IgnoreParens();
-        print.ctor("Eassign");
+        if (expr->isCompoundAssignmentOp()) {
+            print.ctor("Eassign_op");
+            switch (expr->getOpcode()) {
+#define ACASE(k, v)                                                            \
+    case BinaryOperatorKind::BO_##k##Assign:                                   \
+        print.output() << #v << fmt::nbsp;                                     \
+        break;
+                ACASE(Add, Badd)
+                ACASE(And, Band)
+                ACASE(Div, Bdiv)
+                ACASE(Mul, Bmul)
+                ACASE(Or, Bor)
+                ACASE(Rem, Bmod)
+                ACASE(Shl, Bshl)
+                ACASE(Shr, Bshr)
+                ACASE(Sub, Bsub)
+                ACASE(Xor, Bxor)
+#undef ACASE
+            default:
+                always_assert(false && "unknown compound assignment");
+            }
+        } else
+            print.ctor("Eassign");
         cprint.realignedAccess = lhs;
         cprint.printExpr(print, expr->getLHS(), names);
         cprint.realignedAccess = nullptr;
@@ -736,6 +757,54 @@ public:
         cprint.printRealignedQualType(
             print, cast<MemberExpr>(lhs)->getMemberDecl()->getType(), *align,
             loc::of(expr));
+        print.end_ctor();
+        return true;
+    }
+
+    // An increment or decrement of an under-aligned field, which accesses it
+    // at the field's [Trealigned] type (BRiCk computes at the underlying
+    // type). A prefix one is a glvalue, like an assignment; a postfix one is
+    // a prvalue of the field's underlying type.
+    bool printRealignedIncDec(const UnaryOperator *expr) {
+        if (!expr->isIncrementDecrementOp())
+            return false;
+        auto align = realignedMember(expr->getSubExpr());
+        if (!align)
+            return false;
+        if (expr->isPrefix() && cprint.discardedExpr != expr &&
+            cprint.realignedAccess != expr) {
+            print.ctor("Eunsupported");
+            print.output() << "\"use of an increment or decrement of an "
+                              "under-aligned field\""
+                           << fmt::nbsp;
+            done(expr, Done::DT);
+            return true;
+        }
+        switch (expr->getOpcode()) {
+        case UnaryOperatorKind::UO_PostInc:
+            print.ctor("Epostinc");
+            break;
+        case UnaryOperatorKind::UO_PreInc:
+            print.ctor("Epreinc");
+            break;
+        case UnaryOperatorKind::UO_PostDec:
+            print.ctor("Epostdec");
+            break;
+        default:
+            print.ctor("Epredec");
+            break;
+        }
+        auto sub = expr->getSubExpr()->IgnoreParens();
+        cprint.realignedAccess = sub;
+        cprint.printExpr(print, expr->getSubExpr(), names);
+        cprint.realignedAccess = nullptr;
+        print.output() << fmt::nbsp;
+        if (expr->isPrefix())
+            cprint.printRealignedQualType(
+                print, cast<MemberExpr>(sub)->getMemberDecl()->getType(),
+                *align, loc::of(expr));
+        else
+            cprint.printQualType(print, expr->getType(), loc::of(expr));
         print.end_ctor();
         return true;
     }
@@ -766,9 +835,13 @@ public:
         switch (expr->getOpcode()) {
         case BinaryOperatorKind::BO_Comma:
             print.ctor(bitfield ? "Ebf_comma" : "Ecomma");
-            cprint.printExpr(print, expr->getLHS());
+            printDiscarded(expr->getLHS());
             print.output() << fmt::nbsp;
-            cprint.printExpr(print, expr->getRHS());
+            // The right operand of a discarded comma is discarded too.
+            if (cprint.discardedExpr == expr)
+                printDiscarded(expr->getRHS());
+            else
+                cprint.printExpr(print, expr->getRHS());
             print.end_ctor(); // no type information
             return;
         case BinaryOperatorKind::BO_LAnd:
@@ -841,6 +914,8 @@ public:
     }
 
     void VisitUnaryOperator(const UnaryOperator *expr) {
+        if (printRealignedIncDec(expr))
+            return;
         // A pre-increment or pre-decrement whose result is a bit-field
         // glvalue, and a post-increment or post-decrement of a bit-field
         // glvalue, have their own nodes (see [Ebf_preinc] in syntax/core.v).
@@ -1237,7 +1312,10 @@ public:
         print.output() << fmt::nbsp;
         cprint.printQualType(print, expr->getTypeAsWritten(), loc::of(expr));
         print.output() << fmt::nbsp;
-        cprint.printExpr(print, expr->getSubExpr(), names);
+        if (expr->getCastKind() == CastKind::CK_ToVoid)
+            printDiscarded(expr->getSubExpr());
+        else
+            cprint.printExpr(print, expr->getSubExpr(), names);
         print.end_ctor();
     }
 
@@ -1269,10 +1347,12 @@ public:
         }
 
         if (expr->getCastKind() == CastKind::CK_LValueToRValue &&
-            realignedMember(expr->getSubExpr())) {
-            // Read the under-aligned object, then retype the value at the
-            // expression's type: [wp_operand_cast_noop] makes the prover show
-            // that the value has that type.
+            (realignedMember(expr->getSubExpr()) ||
+             realignedUpdate(expr->getSubExpr()))) {
+            // Read the under-aligned object (a field, or the result of an
+            // update of one), then retype the value at the expression's
+            // type: [wp_operand_cast_noop] makes the prover show that the
+            // value has that type.
             guard::ctor noop(print, "Ecast");
             print.ctor("Cnoop", false);
             cprint.printQualType(print, expr->getType(), loc::of(expr));
@@ -1288,7 +1368,10 @@ public:
         guard::ctor _(print, "Ecast");
         printCast(expr);
         print.output() << fmt::nbsp;
-        cprint.printExpr(print, expr->getSubExpr(), names);
+        if (expr->getCastKind() == CastKind::CK_ToVoid)
+            printDiscarded(expr->getSubExpr());
+        else
+            cprint.printExpr(print, expr->getSubExpr(), names);
     }
 
     void VisitCastExpr(const CastExpr *expr) {
@@ -1472,6 +1555,32 @@ public:
         print.ctor("Efloat_of_bits", false);
         print.output() << ft << fmt::nbsp << bits << "%Z" << fmt::nbsp;
         done(lit, Done::NONE);
+    }
+
+    // Prints [e], whose value its context discards (see
+    // [ClangPrinter::realignedAccess]).
+    void printDiscarded(const Expr *e) {
+        auto saved = cprint.discardedExpr;
+        cprint.discardedExpr = e->IgnoreParens();
+        cprint.printExpr(print, e, names);
+        cprint.discardedExpr = saved;
+    }
+
+    // Whether [e] is an assignment or compound assignment to an
+    // under-aligned field.
+    bool realignedAssign(const Expr *e) {
+        auto bo = dyn_cast<BinaryOperator>(e->IgnoreParens());
+        return bo && bo->isAssignmentOp() && realignedMember(bo->getLHS());
+    }
+
+    // Whether [e] is a glvalue for an under-aligned field computed by an
+    // assignment, a compound assignment, or a prefix increment or decrement.
+    bool realignedUpdate(const Expr *e) {
+        if (realignedAssign(e))
+            return true;
+        auto uo = dyn_cast<UnaryOperator>(e->IgnoreParens());
+        return uo && uo->isPrefix() && uo->isIncrementDecrementOp() &&
+               realignedMember(uo->getSubExpr());
     }
 
     // The alignment of the under-aligned field that [e] accesses, if any.
