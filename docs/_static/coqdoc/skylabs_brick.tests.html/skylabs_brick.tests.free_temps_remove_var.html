@@ -1,0 +1,190 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.free_temps_remove_var</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.logic.wp</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab3"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">FreeTemps.remove_var</span></span></h1>
+
+
+<div class="paragraph"> </div>
+
+<span class="inlinecode"><span class="id" title="var">Kfree</span></span> uses <span class="inlinecode"><span class="id" title="var">FreeTemps.remove_var</span></span> <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.wp_notation.html#WpTestDefns.with_args.free"><span class="id" title="variable">free</span></a></span> when a function returns the local
+<span class="inlinecode"><a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a></span> by named return value optimization (<span class="inlinecode"><span class="id" title="var">ReturnNRVO</span></span> <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.wp_notation.html#WpTestDefns.with_args.p"><span class="id" title="variable">p</span></a></span>): <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a></span> has become the
+returned object, so its destruction must be skipped while every other
+destruction in <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.wp_notation.html#WpTestDefns.with_args.free"><span class="id" title="variable">free</span></a></span> still runs. 
+</div>
+<div class="code">
+
+<br/>
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">free_scope</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="remove_var" class="idref" href="#remove_var"><span class="id" title="section">remove_var</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Variables</span> (<a id="remove_var.p" class="idref" href="#remove_var.p"><span class="id" title="variable">p</span></a> <a id="remove_var.q" class="idref" href="#remove_var.q"><span class="id" title="variable">q</span></a> <a id="remove_var.r" class="idref" href="#remove_var.r"><span class="id" title="variable">r</span></a> : <span class="id" title="axiom">ptr</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Notation</span> <a id="x" class="idref" href="#x"><span class="id" title="abbreviation">x</span></a> := "x"%<span class="id" title="var">pstring</span>.<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Notation</span> <a id="y" class="idref" href="#y"><span class="id" title="abbreviation">y</span></a> := "y"%<span class="id" title="var">pstring</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Destroying <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a></span> becomes a no-op. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="remove_var_delete" class="idref" href="#remove_var_delete"><span class="id" title="definition">remove_var_delete</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">FreeTemps.remove_var</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a> (<span class="id" title="constructor">FreeTemps.delete</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a>) <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.p"><span class="id" title="variable">p</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> 1.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a></span> means <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.wp_notation.html#WpTestDefns.with_args.free"><span class="id" title="variable">free</span></a></span> does not destroy <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a></span>: the destruction of another
+      variable, of a temporary (no name), of variadic arguments, or nothing at
+      all. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="remove_var_other_var" class="idref" href="#remove_var_other_var"><span class="id" title="definition">remove_var_other_var</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">FreeTemps.remove_var</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a> (<span class="id" title="constructor">FreeTemps.delete</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#y"><span class="id" title="abbreviation">y</span></a>) <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.p"><span class="id" title="variable">p</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="remove_var_temporary" class="idref" href="#remove_var_temporary"><span class="id" title="definition">remove_var_temporary</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">FreeTemps.remove_var</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a> (<span class="id" title="constructor">FreeTemps.delete</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.p"><span class="id" title="variable">p</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="remove_var_va" class="idref" href="#remove_var_va"><span class="id" title="definition">remove_var_va</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">FreeTemps.remove_var</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a> (<span class="id" title="constructor">FreeTemps.delete_va</span> <span class="id" title="notation">[]</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.p"><span class="id" title="variable">p</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="remove_var_id" class="idref" href="#remove_var_id"><span class="id" title="definition">remove_var_id</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">FreeTemps.remove_var</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a> 1 <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The shape <span class="inlinecode"><span class="id" title="var">wp_decl_var</span></span> produces for a block declaring only <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="remove_var_decl" class="idref" href="#remove_var_decl"><span class="id" title="definition">remove_var_decl</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">FreeTemps.remove_var</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a> (1 <span class="id" title="notation">&gt;*&gt;</span> <span class="id" title="constructor">FreeTemps.delete</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a>) <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.p"><span class="id" title="variable">p</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (1 <span class="id" title="notation">&gt;*&gt;</span> 1).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Only the destruction of <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a></span> goes; the order of the others is kept. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="remove_var_seq_right" class="idref" href="#remove_var_seq_right"><span class="id" title="definition">remove_var_seq_right</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">FreeTemps.remove_var</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="constructor">FreeTemps.delete</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#y"><span class="id" title="abbreviation">y</span></a>) <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.q"><span class="id" title="variable">q</span></a> <span class="id" title="notation">&gt;*&gt;</span> <span class="id" title="constructor">FreeTemps.delete</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a>) <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.p"><span class="id" title="variable">p</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">FreeTemps.delete</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#y"><span class="id" title="abbreviation">y</span></a>) <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.q"><span class="id" title="variable">q</span></a> <span class="id" title="notation">&gt;*&gt;</span> 1).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="remove_var_seq_left" class="idref" href="#remove_var_seq_left"><span class="id" title="definition">remove_var_seq_left</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">FreeTemps.remove_var</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="constructor">FreeTemps.delete</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a>) <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.p"><span class="id" title="variable">p</span></a> <span class="id" title="notation">&gt;*&gt;</span> <span class="id" title="constructor">FreeTemps.delete</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.r"><span class="id" title="variable">r</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (1 <span class="id" title="notation">&gt;*&gt;</span> <span class="id" title="constructor">FreeTemps.delete</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.r"><span class="id" title="variable">r</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="remove_var_par" class="idref" href="#remove_var_par"><span class="id" title="definition">remove_var_par</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">FreeTemps.remove_var</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="constructor">FreeTemps.delete</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.r"><span class="id" title="variable">r</span></a> <span class="id" title="notation">|*|</span> <span class="id" title="constructor">FreeTemps.delete</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a>) <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.p"><span class="id" title="variable">p</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">FreeTemps.delete</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.r"><span class="id" title="variable">r</span></a> <span class="id" title="notation">|*|</span> 1).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+A temporary at <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a></span>'s address is not <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a></span>: matching is by name only. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="remove_var_by_name" class="idref" href="#remove_var_by_name"><span class="id" title="definition">remove_var_by_name</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">FreeTemps.remove_var</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="constructor">FreeTemps.delete</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.p"><span class="id" title="variable">p</span></a> <span class="id" title="notation">&gt;*&gt;</span> <span class="id" title="constructor">FreeTemps.delete</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a>) <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.p"><span class="id" title="variable">p</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">FreeTemps.delete</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.p"><span class="id" title="variable">p</span></a> <span class="id" title="notation">&gt;*&gt;</span> 1).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+With two destructions named <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a></span> (an inner <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a></span> shadowing an outer one),
+      only the first, the innermost, is removed. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="remove_var_first_only" class="idref" href="#remove_var_first_only"><span class="id" title="definition">remove_var_first_only</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">FreeTemps.remove_var</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="constructor">FreeTemps.delete</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a>) <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.p"><span class="id" title="variable">p</span></a> <span class="id" title="notation">&gt;*&gt;</span> <span class="id" title="constructor">FreeTemps.delete</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a>) <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.q"><span class="id" title="variable">q</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (1 <span class="id" title="notation">&gt;*&gt;</span> <span class="id" title="constructor">FreeTemps.delete</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a>) <span class="id" title="abbreviation">Tint</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.q"><span class="id" title="variable">q</span></a>).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var"><span class="id" title="section">remove_var</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
