@@ -155,6 +155,9 @@ Module delete_operator.
         with_delete tu $ stdpp.option.default default_delete s.(s_delete)
     | Some (Gunion u) =>
         with_delete tu $ stdpp.option.default default_delete u.(u_delete)
+    | Some (Gopaque o) =>
+        (* Selecting <<operator delete>> does not need the record's body. *)
+        with_delete tu $ stdpp.option.default default_delete o.(o_delete)
     | Some (Genum _ _) =>
         with_delete tu default_delete
     | _ => None
@@ -204,6 +207,7 @@ Module delete_operator.
     { erewrite sub_module_preserves_gstruct; eauto using with_delete_sub_module. }
     { edestruct sub_module_preserves_genum; eauto.
       rewrite H1. eauto using with_delete_sub_module. }
+    { erewrite sub_module_preserves_gopaque; eauto using with_delete_sub_module. }
   Qed.
 
   Lemma delete_for_submodule {tu1 tu2 op cls result} :
@@ -653,6 +657,9 @@ Module Type Expr__newdelete.
         Q obj_ptr' (erase_qualifiers ty)
       | Some (Genum _ _) =>
         Q obj_ptr' (erase_qualifiers ty)
+      (* [Gopaque] is deliberately unsupported: an opaque record does not
+         say whether its destructor is <<virtual>>, so we cannot tell
+         whether <<delete>> must dispatch. *)
       | _                => False
       end
     | Tarray _ _

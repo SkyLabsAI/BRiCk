@@ -253,6 +253,16 @@ Module MTraverse.
 
       | Ecast c e => Ecast <$> traverseC c <*> traverseE e
       | Emember arrow e f mut t => Emember arrow <$> traverseE e <*> atomic_name.traverse traverseT f <*> mret mut <*> traverseT t
+      | Ebitfield arrow e f t => Ebitfield arrow <$> traverseE e <*> mret f <*> traverseT t
+      | Ebf_glvalue e => Ebf_glvalue <$> traverseE e
+      | Ebf_comma e1 e2 => Ebf_comma <$> traverseE e1 <*> traverseE e2
+      | Ebf_if a b c t => Ebf_if <$> traverseE a <*> traverseE b <*> traverseE c <*> traverseT t
+      | Ebf_assign e1 e2 t => Ebf_assign <$> traverseE e1 <*> traverseE e2 <*> ET (traverseT t)
+      | Ebf_assign_op o e1 e2 t => Ebf_assign_op o <$> traverseE e1 <*> traverseE e2 <*> ET (traverseT t)
+      | Ebf_preinc e t => Ebf_preinc <$> traverseE e <*> ET (traverseT t)
+      | Ebf_predec e t => Ebf_predec <$> traverseE e <*> ET (traverseT t)
+      | Ebf_postinc e t => Ebf_postinc <$> traverseE e <*> ET (traverseT t)
+      | Ebf_postdec e t => Ebf_postdec <$> traverseE e <*> ET (traverseT t)
       | Emember_ignore arrow eobj e => Emember_ignore arrow <$> traverseE eobj <*> traverseE e
       | Emember_call arrow m o es => Emember_call arrow <$> MethodRef.traverse traverseN traverseT traverseE m <*> traverseE o <*> traverse (T:=eta list) traverseE es
       | Eoperator_call oo oi es => Eoperator_call oo <$> operator_impl.traverse traverseN traverseT oi <*> traverse (T:=eta list) traverseE es
@@ -353,6 +363,7 @@ Module MTraverse.
       | Clvaluebitcast t => Clvaluebitcast <$> traverseT t
       | Cl2r => mret Cl2r
       | Cl2r_bitcast t => Cl2r_bitcast <$> traverseT t
+      | Cl2r_bitfield => mret Cl2r_bitfield
 
       | Cnoop t => Cnoop <$> traverseT t
       | Carray2ptr => mret Carray2ptr
@@ -510,6 +521,14 @@ Module MTraverse.
         <*> mret s.(s_size)
         <*> mret s.(s_alignment).
 
+    Definition traverseOpaque (o : Opaque) : F Opaque :=
+      Build_Opaque o.(o_size) o.(o_alignment)
+        <$> traverseN o.(o_dtor)
+        <*> mret o.(o_trivially_destructible)
+        <*> traverse (T:=eta option) traverseN o.(o_delete)
+        <*> mret o.(o_reason)
+        <*> mret o.(o_bitfields).
+
     Definition traverseGD (gd : GlobDecl) : F GlobDecl :=
       match gd with
       | Gtype => mret Gtype
@@ -519,6 +538,7 @@ Module MTraverse.
       | Gconstant t oe => Gconstant <$> traverseT t <*> traverse (T:=eta option) traverseE oe
       | Gtypedef t => Gtypedef <$> traverseT t
       | Gunsupported m => mret $ Gunsupported m
+      | Gopaque o => Gopaque <$> traverseOpaque o
       end.
 
   End traverse.

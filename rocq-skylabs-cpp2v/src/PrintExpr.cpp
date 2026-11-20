@@ -438,15 +438,29 @@ public:
     }
 
     void VisitBinaryOperator(const BinaryOperator *expr) {
+        // A comma whose result is a bit-field glvalue, and an assignment or
+        // compound assignment to one, have their own nodes (see [Ebf_comma]
+        // in syntax/core.v). Clang tracks bit-field glvalues as the object
+        // kind of the node. Assignments test their left operand: in C++ the
+        // result is a bit-field exactly when the operand is, but in C the
+        // result is a prvalue while the operand is still a bit-field.
+        const bool bitfield = expr->refersToBitField();
+        // A type-dependent assignment (in a template) keeps the ordinary
+        // node: it is unresolved, and its operand need not be a bit-field
+        // once instantiated.
+        const bool lhs_bitfield = expr->isAssignmentOp() &&
+                                  !expr->isTypeDependent() &&
+                                  expr->getLHS()->refersToBitField();
 #define ACASE(k, v)                                                            \
     case BinaryOperatorKind::BO_##k##Assign:                                   \
-        print.ctor("Eassign_op") << #v << fmt::nbsp;                           \
+        print.ctor(lhs_bitfield ? "Ebf_assign_op" : "Eassign_op")                  \
+            << #v << fmt::nbsp;                                                \
         break;
         [[maybe_unused]] auto dependent =
             print.templates() && expr->getType()->isDependentType();
         switch (expr->getOpcode()) {
         case BinaryOperatorKind::BO_Comma:
-            print.ctor("Ecomma");
+            print.ctor(bitfield ? "Ebf_comma" : "Ecomma");
             cprint.printExpr(print, expr->getLHS());
             print.output() << fmt::nbsp;
             cprint.printExpr(print, expr->getRHS());
@@ -467,7 +481,7 @@ public:
             print.end_ctor(); // no type information
             return;
         case BinaryOperatorKind::BO_Assign:
-            print.ctor("Eassign");
+            print.ctor(lhs_bitfield ? "Ebf_assign" : "Eassign");
             break;
             ACASE(Add, Badd)
             ACASE(And, Band)
@@ -489,7 +503,9 @@ public:
         cprint.printExpr(print, expr->getLHS(), names);
         print.output() << fmt::nbsp;
         cprint.printExpr(print, expr->getRHS(), names);
-        done(expr, print.templates() ? Done::O : Done::T);
+        // In templates, the bit-field nodes are not wrapped by the
+        // [mparser], so they carry their type like outside templates.
+        done(expr, print.templates() && !lhs_bitfield ? Done::O : Done::T);
     }
 
     void printUnaryOperator(const UnaryOperator *expr) {
@@ -520,6 +536,14 @@ public:
     }
 
     void VisitUnaryOperator(const UnaryOperator *expr) {
+        // A pre-increment or pre-decrement whose result is a bit-field
+        // glvalue, and a post-increment or post-decrement of a bit-field
+        // glvalue, have their own nodes (see [Ebf_preinc] in syntax/core.v).
+        bool bitfield = false;
+        // As for assignments: a type-dependent operator keeps its ordinary
+        // node.
+        const bool operand_bitfield = !expr->isTypeDependent() &&
+                                      expr->getSubExpr()->refersToBitField();
         switch (expr->getOpcode()) {
         case UnaryOperatorKind::UO_Extension: {
             guard::ctor _{print, "Eextension"};
@@ -546,16 +570,20 @@ public:
             print.ctor("Ederef");
             break;
         case UnaryOperatorKind::UO_PostInc:
-            print.ctor("Epostinc");
+            bitfield = operand_bitfield;
+            print.ctor(bitfield ? "Ebf_postinc" : "Epostinc");
             break;
         case UnaryOperatorKind::UO_PreInc:
-            print.ctor("Epreinc");
+            bitfield = operand_bitfield;
+            print.ctor(bitfield ? "Ebf_preinc" : "Epreinc");
             break;
         case UnaryOperatorKind::UO_PostDec:
-            print.ctor("Epostdec");
+            bitfield = operand_bitfield;
+            print.ctor(bitfield ? "Ebf_postdec" : "Epostdec");
             break;
         case UnaryOperatorKind::UO_PreDec:
-            print.ctor("Epredec");
+            bitfield = operand_bitfield;
+            print.ctor(bitfield ? "Ebf_predec" : "Epredec");
             break;
         default:
             print.ctor("Eunop");
@@ -563,7 +591,8 @@ public:
             print.output() << fmt::nbsp;
         }
         cprint.printExpr(print, expr->getSubExpr(), names);
-        done(expr, print.templates() ? Done::O : Done::T);
+        // See [VisitBinaryOperator] for the type in templates.
+        done(expr, print.templates() && !bitfield ? Done::O : Done::T);
     }
 
     static const FieldDecl *getCaptureField(const CXXRecordDecl *lambda,
@@ -809,7 +838,12 @@ public:
         break;
             CASE_WITH_TYPE(BitCast, Cbitcast)
             CASE_WITH_TYPE(LValueBitCast, Clvaluebitcast)
-            CASE_NO_TYPE(LValueToRValue, Cl2r)
+        // The lvalue-to-rvalue conversion of a bit-field glvalue has its own
+        // cast (see [Cl2r_bitfield] in syntax/core.v).
+        case CastKind::CK_LValueToRValue:
+            without_type(ce->getSubExpr()->refersToBitField() ? "Cl2r_bitfield"
+                                                              : "Cl2r");
+            break;
             CASE_WITH_TYPE(LValueToRValueBitCast, Cl2r_bitcast)
             CASE_WITH_TYPE(NoOp, Cnoop)
             CASE_NO_TYPE(ArrayToPointerDecay, Carray2ptr)
@@ -1122,6 +1156,17 @@ public:
         auto member = expr->getMemberDecl();
         auto base = expr->getBase();
 
+        // A bit-field has no address, so its accesses are [Ebitfield], never
+        // [Emember], whatever the record (see [Ebitfield] in syntax/core.v).
+        if (auto fd = dyn_cast<FieldDecl>(member); fd && fd->isBitField()) {
+            guard::ctor _{print, "Ebitfield"};
+            print.boolean(expr->isArrow()) << fmt::nbsp;
+            cprint.printExpr(print, base, names) << fmt::nbsp;
+            print.str(fd->getName()) << fmt::nbsp;
+            cprint.printQualType(print, member->getType(), loc::of(member));
+            return;
+        }
+
         print.ctor("Emember");
         print.boolean(expr->isArrow()) << fmt::nbsp;
 
@@ -1297,12 +1342,24 @@ public:
     }
 
     void VisitConditionalOperator(const ConditionalOperator *expr) {
-        print.ctor("Eif");
+        // A conditional whose result is a bit-field glvalue has its own node
+        // (see [Ebf_if] in syntax/core.v). Such a conditional is a bit-field
+        // as soon as one arm is ([expr.cond]/5), so each arm that is not one
+        // is an ordinary glvalue, which we mark with [Ebf_glvalue].
+        const bool bitfield = expr->refersToBitField();
+        auto arm = [&](const Expr *e) {
+            print.output() << fmt::nbsp;
+            if (bitfield && !e->refersToBitField()) {
+                guard::ctor _{print, "Ebf_glvalue"};
+                cprint.printExpr(print, e, names);
+            } else {
+                cprint.printExpr(print, e, names);
+            }
+        };
+        print.ctor(bitfield ? "Ebf_if" : "Eif");
         cprint.printExpr(print, expr->getCond(), names);
-        print.output() << fmt::nbsp;
-        cprint.printExpr(print, expr->getTrueExpr(), names);
-        print.output() << fmt::nbsp;
-        cprint.printExpr(print, expr->getFalseExpr(), names);
+        arm(expr->getTrueExpr());
+        arm(expr->getFalseExpr());
         done(expr, Done::DT);
     }
 

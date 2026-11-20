@@ -21,6 +21,8 @@
 #include <clang/AST/Type.h>
 #include <clang/Basic/Version.inc>
 #include <optional>
+#include <utility>
+#include <vector>
 
 using namespace clang;
 
@@ -183,14 +185,22 @@ template <typename T> struct DeclPrinter {
         return nullptr;
     }
 
+    /* Print an invalid declaration as an opaque one, carrying the error
+       message, and return [true]; or print nothing and return [false]. */
+    using Opaque = bool (*)(CoqPrinter &, const T &, ClangPrinter &,
+                            const ASTContext &, const char *);
+
     const StringRef ctor;
     const StringRef templated_ctor;
     const Valid invalid;
     const Printer<T> print_body;
+    const Opaque print_opaque;
 
     DeclPrinter() = delete;
-    DeclPrinter(StringRef c, StringRef tc, Printer<T> p, Valid v = alwaysValid)
-        : ctor{c}, templated_ctor{tc}, invalid(v), print_body{p} {
+    DeclPrinter(StringRef c, StringRef tc, Printer<T> p, Valid v = alwaysValid,
+                Opaque o = nullptr)
+        : ctor{c}, templated_ctor{tc}, invalid(v), print_body{p},
+          print_opaque{o} {
         always_assert(p != nullptr);
     }
 
@@ -239,6 +249,9 @@ template <typename T> struct DeclPrinter {
         auto printDeclWith = [&]() {
             auto cp = cprint.withDecl(&decl);
             if (auto msg = invalid(box, ctxt)) {
+                if (!print.templates() && print_opaque &&
+                    print_opaque(print, box, cp, ctxt, msg))
+                    return true;
                 guard::ctor _(print, print.templates()
                                          ? "Dtemplated_unsupported"
                                          : "Dunsupported");
@@ -768,12 +781,169 @@ static const char *supportedRecord(const CXXRecordDecl &decl,
     return nullptr;
 }
 
+/// Whether an unsupported record can be exposed as an _opaque_ record:
+/// its body is not printed, only its size, alignment, destructor, and
+/// <<operator delete>>.
+///
+/// This is an allowlist. Records were made unsupported to keep unsound
+/// facts about their bodies out of the logic, and an opaque record must not
+/// bring any back. It qualifies only if the metadata we print is honest
+/// without the body: here, a complete, non-dependent, well-formed record
+/// that has a bit-field and no virtual base. Records with virtual bases
+/// stay unsupported: their size as a base-class subobject differs from
+/// their <<sizeof>>.
+static bool opaqueRecord(const CXXRecordDecl &decl) {
+    if (!decl.isCompleteDefinition() || decl.isDependentContext() ||
+        decl.isInvalidDecl() || decl.getNumVBases() != 0)
+        return false;
+    bool bitfield = false;
+    for (auto f : decl.fields()) {
+        if (!f || f->isInvalidDecl())
+            return false;
+        bitfield |= f->isBitField();
+    }
+    return bitfield;
+}
+
+static unsigned bitWidth(const FieldDecl &field, const ASTContext &ctxt) {
+#if 20 <= CLANG_VERSION_MAJOR
+    return field.getBitWidthValue();
+#else
+    return field.getBitWidthValue(ctxt);
+#endif
+}
+
+/// Whether BRiCk models accesses to the named bit-field [field]: it is not
+/// `mutable` (a `mutable` field would share its memory location with
+/// `const` ones), it has a possibly cv-qualified standard signed or
+/// unsigned integer type, and it is no wider than that type (wider
+/// bit-fields have padding bits). This excludes `bool`, enumerations,
+/// extended integer types, plain `char` (whose values BRiCk represents with
+/// [Vchar], not [Vint]) and the other character types.
+static bool supportedBitField(const FieldDecl &field, const ASTContext &ctxt) {
+    if (field.isMutable())
+        return false;
+    auto bt = field.getType().getCanonicalType()->getAs<BuiltinType>();
+    if (!bt)
+        return false;
+    switch (bt->getKind()) {
+    case BuiltinType::SChar:
+    case BuiltinType::UChar:
+    case BuiltinType::Short:
+    case BuiltinType::UShort:
+    case BuiltinType::Int:
+    case BuiltinType::UInt:
+    case BuiltinType::Long:
+    case BuiltinType::ULong:
+    case BuiltinType::LongLong:
+    case BuiltinType::ULongLong:
+        return bitWidth(field, ctxt) <= ctxt.getTypeSize(field.getType());
+    default:
+        return false;
+    }
+}
+
+/// Print [o_bitfields]: the supported bit-fields of [decl], each with its
+/// [BitfieldInfo] (see syntax/translation_unit.v).
+///
+/// A memory location ("run") is a maximal sequence of adjacent bit-fields of
+/// nonzero width ([intro.memory]/3); a zero-width bit-field or any other
+/// member ends it. Unnamed bit-fields belong to their run but get no entry.
+/// A run is named after its first named bit-field, and gets entries only if
+/// all of its named bit-fields are supported (see [supportedBitField]).
+///
+/// Bit-fields of unions get no entries. Neither does a run that starts the
+/// record when the record has a non-empty base: whether it continues a run
+/// of the base is not settled here, so we leave it out.
+static fmt::Formatter &printBitFields(CoqPrinter &print,
+                                      const CXXRecordDecl &decl,
+                                      ClangPrinter &cprint,
+                                      const ASTContext &ctxt) {
+    // (field, first named field of its run)
+    std::vector<std::pair<const FieldDecl *, const FieldDecl *>> entries;
+    if (!decl.isUnion()) {
+        bool afterBase = false;
+        for (auto base : decl.bases()) {
+            auto rd = base.getType()->getAsCXXRecordDecl();
+            if (!rd || !rd->isEmpty())
+                afterBase = true;
+        }
+
+        std::vector<const FieldDecl *> run;
+        bool runSupported = true;
+        auto endRun = [&]() {
+            if (runSupported) {
+                const FieldDecl *head = nullptr;
+                for (auto f : run) {
+                    if (!f->getIdentifier())
+                        continue;
+                    if (!head)
+                        head = f;
+                    entries.emplace_back(f, head);
+                }
+            }
+            run.clear();
+            runSupported = true;
+        };
+
+        bool first = true;
+        for (auto f : decl.fields()) {
+            if (f->isBitField() && bitWidth(*f, ctxt) != 0) {
+                if (run.empty() && first && afterBase)
+                    runSupported = false;
+                if (f->getIdentifier() && !supportedBitField(*f, ctxt))
+                    runSupported = false;
+                run.push_back(f);
+            } else {
+                endRun();
+            }
+            first = false;
+        }
+        endRun();
+    }
+
+    return print.list(entries, [&](auto entry) {
+        auto field = entry.first;
+        guard::tuple _(print);
+        print.str(field->getName()) << fmt::tuple_sep;
+        guard::ctor _2(print, "Build_BitfieldInfo", false);
+        print.str(entry.second->getName()) << fmt::nbsp;
+        print.output() << bitWidth(*field, ctxt) << fmt::nbsp
+                       << (field->getType()->isSignedIntegerType() ? "Signed"
+                                                                   : "Unsigned")
+                       << fmt::nbsp;
+        cprint.printQualType(print, field->getType(), loc::of(field));
+    });
+}
+
+static bool printOpaqueRecord(CoqPrinter &print, const CXXRecordDecl &decl,
+                              ClangPrinter &cprint, const ASTContext &ctxt,
+                              const char *msg) {
+    if (!opaqueRecord(decl))
+        return false;
+    if (ClangPrinter::debug && cprint.trace(Trace::Decl))
+        cprint.trace("printOpaqueRecord", loc::of(decl));
+
+    const auto &layout = ctxt.getASTRecordLayout(&decl);
+
+    guard::ctor _(print, "Dopaque");
+    cprint.printName(print, decl) << fmt::nbsp;
+    guard::ctor _2(print, "Build_Opaque");
+    printSizeAlign(decl, &layout, print, cprint) << fmt::nbsp;
+    cprint.printDtorName(print, decl) << fmt::nbsp;
+    printTriviallyDestructible(print, decl, cprint) << fmt::nbsp;
+    printDeleteName(print, decl, cprint) << fmt::nbsp;
+    print.str(msg) << fmt::nbsp;
+    printBitFields(print, decl, cprint, ctxt);
+    return true;
+}
+
 } // namespace
 
 static const DeclPrinter Dstruct("Dstruct", "Dtemplated_struct", printStruct,
-                                 supportedRecord);
+                                 supportedRecord, printOpaqueRecord);
 static const DeclPrinter Dunion("Dunion", "Dtemplated_union", printUnion,
-                                supportedRecord);
+                                supportedRecord, printOpaqueRecord);
 static const DeclPrinter Drecord_struct("Dstruct", "Dtemplated_struct",
                                         printCStruct, supportedRecord);
 static const DeclPrinter Drecord_union("Dunion", "Dtemplated_union",

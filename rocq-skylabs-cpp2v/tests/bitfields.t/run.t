@@ -7,5 +7,31 @@ Compiling the C++ code, use "make Q=" for debugging.
 
 Compiling the generated Coq files.
   $ dune build
-       = ("bitfields are not supported"%pstring :: nil)%list
+       = Some
+           (Gopaque
+              {|
+                o_size := 4;
+                o_alignment := 4;
+                o_dtor := "C::~C()";
+                o_trivially_destructible := true;
+                o_delete := None;
+                o_reason := "bitfields are not supported";
+                o_bitfields :=
+                  [("foo"%pstring,
+                    {|
+                      bf_run := "foo";
+                      bf_width := 3;
+                      bf_signed := Signed;
+                      bf_type := "int"
+                    |});
+                   ("bar"%pstring,
+                    {|
+                      bf_run := "foo";
+                      bf_width := 4;
+                      bf_signed := Signed;
+                      bf_type := "int"
+                    |})]
+              |})
+       : option GlobDecl
+       = []
        : check.M

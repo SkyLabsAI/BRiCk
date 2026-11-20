@@ -13,6 +13,7 @@ Definition GlobDecl_size_of (g : GlobDecl) : option N :=
   match g with
   | Gstruct s => Some s.(s_size)
   | Gunion u => Some u.(u_size)
+  | Gopaque o => Some o.(o_size)
   | Genum t _ =>
     match drop_qualifiers t with
     | Tchar_ sz => Some $ char_type.bytesN sz
@@ -26,6 +27,7 @@ Definition GlobDecl_align_of (g : GlobDecl) : option N :=
   match g with
   | Gstruct s => Some s.(s_alignment)
   | Gunion u => Some u.(u_alignment)
+  | Gopaque o => Some o.(o_alignment)
   | Genum t _ =>
     match drop_qualifiers t with
     | Tchar_ sz => Some $ char_type.bytesN sz
@@ -86,7 +88,7 @@ Proof.
   do 2 case_match; subst; try contradiction; try constructor.
   case_bool_decide; subst; eauto. contradiction.
   case_bool_decide; subst; eauto. contradiction.
-  case_bool_decide; subst; eauto. case_match; constructor; eauto. contradiction.
+  case_bool_decide; subst; eauto. case_match; constructor; eauto. contradiction.  case_bool_decide; subst; eauto. contradiction.
 Qed.
 #[global] Instance proper_GlobDecl_align_of: Proper (GlobDecl_ler ==> Roption_leq eq) GlobDecl_align_of.
 Proof.
@@ -94,7 +96,7 @@ Proof.
   do 2 case_match; subst; try contradiction; try constructor.
   case_bool_decide; subst; eauto. contradiction.
   case_bool_decide; subst; eauto. contradiction.
-  case_bool_decide; subst; eauto. simpl. case_match; constructor; eauto. contradiction.
+  case_bool_decide; subst; eauto. simpl. case_match; constructor; eauto. contradiction.  case_bool_decide; subst; eauto. contradiction.
 Qed.
 
 (** * sizeof *)
@@ -309,6 +311,17 @@ Qed.
   SizeOf (Tnamed gn) n.
 Proof.
   rewrite /SizeOf !TCEq_eq=>? /glob_def_genv_compat_union Htu <-.
+  cbn. by rewrite Htu.
+Qed.
+
+(** An opaque record has a size even though its body is not modeled. *)
+#[global] Instance named_opaque_size_of tu σ gn o n :
+  genv_compat tu σ ->
+  TCEq (tu.(types) !! gn) (Some (Gopaque o)) ->
+  TCEq o.(o_size) n ->
+  SizeOf (Tnamed gn) n.
+Proof.
+  rewrite /SizeOf !TCEq_eq=>? /glob_def_genv_compat_opaque Htu <-.
   cbn. by rewrite Htu.
 Qed.
 
@@ -574,6 +587,19 @@ Section with_genv.
     by rewrite bool_decide_true.
   Qed.
 
+  (** As for a struct, an opaque record's alignment is only trusted once
+      validated against its size. *)
+  Lemma align_of_genv_compat_opaque tu gn o
+        (Hσ : tu ⊧ σ)
+        (Hl : tu.(types) !! gn = Some (Gopaque o)) :
+    valid_alignment o.(o_size) o.(o_alignment) ->
+    align_of (Tnamed gn) = GlobDecl_align_of (Gopaque o).
+  Proof.
+    intros Hvalid. apply align_of_named.
+    rewrite (glob_def_genv_compat_opaque o Hl) /GlobDecl_valid_align_of /=.
+    by rewrite bool_decide_true.
+  Qed.
+
   Lemma align_of_genv_leq σ1 σ2 ty align :
     @align_of σ1 ty = Some align ->
     genv_leq σ1 σ2 ->
@@ -616,9 +642,9 @@ Lemma tu_base_layout_compatible_sound {σ tu} {Hσ : tu ⊧ σ} derived base :
 Proof.
   rewrite /tu_base_layout_compatible.
   destruct (tu.(types) !! derived) as [gd|] eqn:Hd; last discriminate.
-  destruct gd as [| |ds| | | |]; try discriminate.
+  destruct gd as [| |ds| | | | |]; try discriminate.
   destruct (tu.(types) !! base) as [gb|] eqn:Hb; last discriminate.
-  destruct gb as [| |bs| | | |]; try discriminate.
+  destruct gb as [| |bs| | | | |]; try discriminate.
   destruct (parent_offset_tu tu derived base) as [z|] eqn:Hz; last discriminate.
   intros Hcheck. apply bool_decide_eq_true in Hcheck.
   destruct Hcheck as (Hda & Hba & Hdiv & Hdz & Hnonneg & Hstrict & Hbound).

@@ -10,6 +10,22 @@ of the release, and introduce a new heading.
 
 ## Since Last Release
 
+2026.11.19: Records with bit-fields become *opaque records*
+([#307](https://github.com/SkyLabsAI/BRiCk/issues/307)).
+- `GlobDecl` has a new constructor `Gopaque (_ : Opaque)`, and the parser a new
+  declaration `Dopaque`. An `Opaque` carries the record's size, alignment,
+  destructor, trivial destructibility, `operator delete`, and the reason its
+  body is not modeled, but no members or bases. Exhaustive matches on
+  `GlobDecl` need a new case.
+- cpp2v emits `Dopaque` instead of `Dunsupported` for a complete C++ record
+  with a bit-field and no virtual base. Such a type has a `size_of` and an
+  `align_of`, is a `complete_type`, and is destroyed by calling its destructor;
+  previously it had no size, was not a complete type, and could
+  not be passed by value or destroyed.
+- `supported.check` accepts a translation unit with an opaque record.
+  `supported.report` lists it as a `partial` gap, and member access into it as
+  `unsupported`.
+
 2026.11.19: `wp_method` of a union's defaulted copy/move assignment operator
 is now a disjunction: the existing copy (`anyR` of the destination plus
 `wp_union_copy`) or, when the source reference is `this` itself,

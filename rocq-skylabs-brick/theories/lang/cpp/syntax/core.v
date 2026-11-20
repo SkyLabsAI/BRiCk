@@ -368,6 +368,43 @@ program because, in part, C++ has no type for references to members.
 | Eexplicit_cast (c : cast_style.t) (_ : type) (e : Expr)
 | Ecast (c : Cast) (e : Expr)
 | Emember (arrow : bool) (obj : Expr) (f : atomic_name) (mut : bool) (t : type)
+(**
+[Ebitfield arrow obj f t] is the access <<obj.f>> (<<obj->f>> if [arrow]) to
+the bit-field [f] of declared type [t]. cpp2v emits it, rather than
+[Emember], for every bit-field access. Static typing treats it like
+[Emember arrow obj (Nid f) false t], but no rule gives it a pointer: see
+[wp_bitfield_glval] in ../logic/wp.v.
+*)
+| Ebitfield (arrow : bool) (obj : Expr) (f : ident) (t : type)
+(**
+Bit-field glvalues and their consumers have their own nodes, so that the
+semantics can tell them apart by their head constructor (see
+[wp_bitfield_glval] in ../logic/wp.v). cpp2v emits them following Clang
+(<<Expr::refersToBitField()>>), which follows when C++ says that the result
+of an expression is a bit-field (<https://eel.is/c++draft/expr.cond#5>,
+<https://eel.is/c++draft/expr.comma#1>, <https://eel.is/c++draft/expr.ass#1>,
+<https://eel.is/c++draft/expr.pre.incr#1>):
+
+- [Ebf_comma], [Ebf_if], [Ebf_assign], [Ebf_assign_op], [Ebf_preinc] and
+  [Ebf_predec] are [Ecomma], [Eif], [Eassign], [Eassign_op], [Epreinc] and
+  [Epredec] when their result is a bit-field glvalue;
+- [Ebf_glvalue e] is an arm [e] of an [Ebf_if] that is an ordinary glvalue;
+  it occurs nowhere else;
+- [Ebf_postinc] and [Ebf_postdec] are [Epostinc] and [Epostdec] on a
+  bit-field glvalue, and [Cl2r_bitfield] is [Cl2r] on one.
+
+Static typing treats each node like the standard node it mirrors, and
+[Ebf_glvalue e] like [e].
+*)
+| Ebf_glvalue (e : Expr)
+| Ebf_comma (e1 e2 : Expr)
+| Ebf_if (e1 e2 e3 : Expr) (t : type)
+| Ebf_assign (e1 e2 : Expr) (t : type)
+| Ebf_assign_op (op : BinOp) (e1 e2 : Expr) (t : type)
+| Ebf_preinc (e : Expr) (t : type)
+| Ebf_predec (e : Expr) (t : type)
+| Ebf_postinc (e : Expr) (t : type)
+| Ebf_postdec (e : Expr) (t : type)
 | Emember_ignore (arrow : bool) (obj : Expr) (res : Expr)
 | Emember_call (arrow : bool) (method : MethodRef_ name type Expr) (obj : Expr) (args : list Expr)
 | Eoperator_call (_ : OverloadableOperator) (_ : operator_impl.t name type) (_ : list Expr)
@@ -507,6 +544,7 @@ with Cast : Set :=
 | Clvaluebitcast	(_ : type) (** TODO (FM-3431): Drop this constructor? *)
 | Cl2r
 | Cl2r_bitcast (_ : type)
+| Cl2r_bitfield (** [Cl2r] on a bit-field glvalue: see [Ebf_glvalue] *)
 | Cnoop (_ : type)
 | Carray2ptr
 | Cfun2ptr
@@ -748,6 +786,7 @@ Module Cast.
     | Clvaluebitcast t => T t
     | Cl2r => false
     | Cl2r_bitcast t => T t
+    | Cl2r_bitfield => false
     | Cnoop t => T t
     | Carray2ptr
     | Cfun2ptr => false
@@ -1034,6 +1073,16 @@ with is_dependentE (e : Expr) : bool :=
   | Eexplicit_cast _ t e => is_dependentE e || is_dependentT t
   | Ecast c e => Cast.existsb is_dependentT c || is_dependentE e
   | Emember _ e f _ t => is_dependentE e || atomic_name.existsb is_dependentT f || is_dependentT t
+  | Ebitfield _ e _ t => is_dependentE e || is_dependentT t
+  | Ebf_glvalue e => is_dependentE e
+  | Ebf_comma e1 e2 => is_dependentE e1 || is_dependentE e2
+  | Ebf_if e1 e2 e3 t => is_dependentE e1 || is_dependentE e2 || is_dependentE e3 || is_dependentT t
+  | Ebf_assign e1 e2 t => is_dependentE e1 || is_dependentE e2 || is_dependentT t
+  | Ebf_assign_op _ e1 e2 t => is_dependentE e1 || is_dependentE e2 || is_dependentT t
+  | Ebf_preinc e t => is_dependentE e || is_dependentT t
+  | Ebf_predec e t => is_dependentE e || is_dependentT t
+  | Ebf_postinc e t => is_dependentE e || is_dependentT t
+  | Ebf_postdec e t => is_dependentE e || is_dependentT t
   | Emember_ignore _ e e' => is_dependentE e || is_dependentE e'
   | Emember_call _ m e es => MethodRef.existsb is_dependentN is_dependentT is_dependentE m || is_dependentE e || existsb is_dependentE es
   | Eoperator_call _ i es => operator_impl.existsb is_dependentN is_dependentT i || existsb is_dependentE es

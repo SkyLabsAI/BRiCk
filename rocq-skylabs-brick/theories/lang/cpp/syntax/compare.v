@@ -906,6 +906,7 @@ Module Cast.
       | Clvaluebitcast _ => 3
       | Cl2r => 4
       | Cl2r_bitcast _ => 23
+      | Cl2r_bitfield => 28
       | Cnoop _ => 5
       | Carray2ptr => 6
       | Cfun2ptr => 7
@@ -936,7 +937,7 @@ Module Cast.
       | 5 => type
       | 6 | 7 => unit
       | 8 | 9 => type
-      | 10 | 12 | 27 => unit
+      | 10 | 12 | 27 | 28 => unit
       | 11 | 13 | 14 | 15 | 16 => type
       | 17 => unit
       | 18 => type
@@ -983,7 +984,7 @@ Module Cast.
       | 5 => compareT
       | 6 | 7 => compare_unit
       | 8 | 9 => compareT
-      | 10 | 12 | 27 => compare_unit
+      | 10 | 12 | 27 | 28 => compare_unit
       | 11 | 13 | 14 | 15 | 16 => compareT
       | 17 => compare_unit
       | 18 => compareT
@@ -1008,6 +1009,7 @@ Module Cast.
       | Clvaluebitcast t => COMP (Clvaluebitcast t : Cast)
       | Cl2r => COMP (Cl2r : Cast)
       | Cl2r_bitcast t => COMP (Cl2r_bitcast t : Cast)
+      | Cl2r_bitfield => compare_tag (Reduce (TAG Cl2r_bitfield))
       | Cnoop t => COMP (Cnoop t : Cast)
       | Carray2ptr => compare_tag (Reduce (TAG Carray2ptr))
       | Cfun2ptr => compare_tag (Reduce (TAG Cfun2ptr))
@@ -1601,6 +1603,18 @@ Module Expr.
       compare_lex (Bool.compare b1.(box_Emember_3) b2.(box_Emember_3)) $ fun _ =>
       compareT b1.(box_Emember_4) b2.(box_Emember_4).
 
+    Record box_Ebitfield : Set := Box_Ebitfield {
+      box_Ebitfield_0 : bool ;
+      box_Ebitfield_1 : Expr;
+      box_Ebitfield_2 : ident;
+      box_Ebitfield_3 : type;
+    }.
+    Definition box_Ebitfield_compare (b1 b2 : box_Ebitfield) : comparison :=
+      compare_lex (Bool.compare b1.(box_Ebitfield_0) b2.(box_Ebitfield_0)) $ fun _ =>
+      compare_lex (compareE b1.(box_Ebitfield_1) b2.(box_Ebitfield_1)) $ fun _ =>
+      compare_lex (PrimString.compare b1.(box_Ebitfield_2) b2.(box_Ebitfield_2)) $ fun _ =>
+      compareT b1.(box_Ebitfield_3) b2.(box_Ebitfield_3).
+
     Record box_Emember_ignore : Set := Box_Emember_ignore {
       box_Emember_ignore_0 : bool ;
       box_Emember_ignore_1 : Expr;
@@ -1868,6 +1882,16 @@ Module Expr.
       | Eexplicit_cast _ _ _ => 59
       | Ecast _ _ => 30
       | Emember _ _ _ _ _ => 31
+      | Ebitfield _ _ _ _ => 69
+      | Ebf_glvalue _ => 70
+      | Ebf_comma _ _ => 71
+      | Ebf_if _ _ _ _ => 72
+      | Ebf_assign _ _ _ => 73
+      | Ebf_assign_op _ _ _ _ => 74
+      | Ebf_preinc _ _ => 75
+      | Ebf_predec _ _ => 76
+      | Ebf_postinc _ _ => 77
+      | Ebf_postdec _ _ => 78
       | Emember_ignore _ _ _ => 62
       | Emember_call _ _ _ _ => 32
       | Eoperator_call _ _ _ => 33
@@ -1965,6 +1989,13 @@ Module Expr.
       | 66 => box_Eunresolved_sizeof_pack
       | 67 => box_Einherited_constructor
       | 68 => box_Einitlist_std
+      | 69 => box_Ebitfield
+      | 70 => Expr
+      | 71 => box_Eseqand
+      | 72 => box_Eif
+      | 73 => box_Eassign
+      | 74 => box_Ebinop
+      | 75 | 76 | 77 | 78 => box_Ederef
       | _ => box_Eunsupported
       end.
     Definition data (e : Expr) : car (tag e) :=
@@ -2006,6 +2037,16 @@ Module Expr.
       | Ecall e es => Box_Ecall e es
       | Ecast c e => Box_Ecast c e
       | Emember arrow e x b t => Box_Emember arrow e x b t
+      | Ebitfield arrow e f t => Box_Ebitfield arrow e f t
+      | Ebf_glvalue e => e
+      | Ebf_comma l r => Box_Eseqand l r
+      | Ebf_if c l r t => Box_Eif c l r t
+      | Ebf_assign l r t => Box_Eassign l r t
+      | Ebf_assign_op op l r t => Box_Ebinop op l r t
+      | Ebf_preinc e t
+      | Ebf_predec e t
+      | Ebf_postinc e t
+      | Ebf_postdec e t => Box_Ederef e t
       | Emember_ignore arrow e n => Box_Emember_ignore arrow e n
       | Emember_call arrow m e es => Box_Emember_call arrow m e es
       | Eoperator_call oo oi es => Box_Eoperator_call oo oi es
@@ -2101,6 +2142,13 @@ Module Expr.
       | 66 => box_Eunresolved_sizeof_pack_compare
       | 67 => box_Einherited_constructor_compare
       | 68 => box_Einitlist_std_compare
+      | 69 => box_Ebitfield_compare
+      | 70 => compareE
+      | 71 => box_Eseqand_compare
+      | 72 => box_Eif_compare
+      | 73 => box_Eassign_compare
+      | 74 => box_Ebinop_compare
+      | 75 | 76 | 77 | 78 => box_Ederef_compare
       | _ => box_Eunsupported_compare
       end.
 
@@ -2156,6 +2204,16 @@ Module Expr.
 
       | Ecast c e => COMP (Ecast c e)
       | Emember arr e x b t => COMP (Emember arr e x b t)
+      | Ebitfield arr e f t => COMP (Ebitfield arr e f t)
+      | Ebf_glvalue e => COMP (Ebf_glvalue e)
+      | Ebf_comma l r => COMP (Ebf_comma l r)
+      | Ebf_if c l r t => COMP (Ebf_if c l r t)
+      | Ebf_assign l r t => COMP (Ebf_assign l r t)
+      | Ebf_assign_op op l r t => COMP (Ebf_assign_op op l r t)
+      | Ebf_preinc e t => COMP (Ebf_preinc e t)
+      | Ebf_predec e t => COMP (Ebf_predec e t)
+      | Ebf_postinc e t => COMP (Ebf_postinc e t)
+      | Ebf_postdec e t => COMP (Ebf_postdec e t)
       | Emember_ignore arr e n => COMP (Emember_ignore arr e n)
       | Emember_call arr m e es => COMP (Emember_call arr m e es)
       | Eoperator_call oo oi es => COMP (Eoperator_call oo oi es)

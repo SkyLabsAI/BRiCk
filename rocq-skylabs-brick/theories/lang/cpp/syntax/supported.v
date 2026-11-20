@@ -378,12 +378,13 @@ Section with_monad.
         | inl t => type t
         end <+> type t
     | Eoffsetof t1 _ t2 => FAIL "offsetof" <+> type t1 <+> type t2
-    | Eassign e1 e2 t => expr e1 <+> expr e2 <+> type t
-    | Eassign_op op e1 e2 t => expr e1 <+> expr e2 <+> type t <+> check_binop op (type_of e1) (type_of e2) t
-    | Epreinc e t | Epostinc e t | Epredec e t | Epostdec e t =>
+    | Eassign e1 e2 t | Ebf_assign e1 e2 t => expr e1 <+> expr e2 <+> type t
+    | Eassign_op op e1 e2 t | Ebf_assign_op op e1 e2 t => expr e1 <+> expr e2 <+> type t <+> check_binop op (type_of e1) (type_of e2) t
+    | Epreinc e t | Epostinc e t | Epredec e t | Epostdec e t
+    | Ebf_preinc e t | Ebf_postinc e t | Ebf_predec e t | Ebf_postdec e t =>
         expr e <+> type t <+>
         if is_float_type (type_of e) || is_float_type t then FAIL "unsupported floating increment/decrement" else OK
-    | Eseqand e1 e2 | Eseqor e1 e2 | Ecomma e1 e2 => expr e1 <+> expr e2
+    | Eseqand e1 e2 | Eseqor e1 e2 | Ecomma e1 e2 | Ebf_comma e1 e2 => expr e1 <+> expr e2
     | Ecall f es => prvalue_class e <+> expr f <+> lst expr es
     | Eoperator_call _ impl es =>
         prvalue_class e <+>
@@ -413,6 +414,15 @@ Section with_monad.
         let obj := if arrow then (if obj is Tptr t then drop_qualifiers t else obj) else obj in
         (if obj is Tnamed cls then [Access cls; Ref cls] else OK)
         <+> expr e <+> atomic_name type an <+> type t
+    | Ebitfield arrow e _ t =>
+        (* Only the bit-fields that cpp2v lists in [o_bitfields] have a
+           semantics; accesses to the others are stuck. The record is opaque,
+           so this is not an [Access] (see [opaque_members]). *)
+        let obj := drop_qualifiers (type_of e) in
+        let obj := if arrow then (if obj is Tptr t then drop_qualifiers t else obj) else obj in
+        (if obj is Tnamed cls then REF cls else OK)
+        <+> PARTIAL "bit-field access: only integer bit-fields of classes are modelled"
+        <+> expr e <+> type t
     | Estmt s t => FAIL "statement expression" <+> stmt s <+> type t
     | Enull => OK
     | Eopaque_ref _ t => type t
@@ -421,12 +431,12 @@ Section with_monad.
     | Eandclean e => expr e
     | Ematerialize_temp e _ => dtor_of (type_of e) <+> expr e
     | Ethis t => type t
-    | Eif e1 e2 e3 t => expr e1 <+> expr e2 <+> expr e3 <+> type t
+    | Eif e1 e2 e3 t | Ebf_if e1 e2 e3 t => expr e1 <+> expr e2 <+> expr e3 <+> type t
     | Eif2 _ e1 e2 e3 e4 t => expr e1 <+> expr e2 <+> expr e3 <+> expr e4 <+> type t
     | Elambda nm es => name nm <+> lst expr es
     | Econstructor nm es t => REF nm <+> name nm <+> lst expr es <+> type t
     | Einherited_constructor nm _ t => REF nm <+> name nm <+> type t
-    | Eimplicit e => expr e
+    | Eimplicit e | Ebf_glvalue e => expr e
     | Emember_ignore _ _ e => expr e
     | Eimplicit_init t => type t
     | Eparam _ => OK
@@ -574,6 +584,11 @@ Section with_monad.
     match gd with
     | Gunsupported msg => FAIL msg
     | Gtype => OK
+    (* Policy: a translation unit with an opaque record is usable, so this
+       is not an [Unsupported] gap and [check] accepts it. The record's body
+       is not modeled; [o_reason] is the audit trail. *)
+    | Gopaque o =>
+        PARTIAL ("opaque record (" ++ o.(o_reason) ++ "): only its size, alignment, and destruction are modelled")
     | Gunion u => lst member u.(u_fields)
     | Gstruct s => lst (classname ∘ fst) s.(s_bases) <+> lst member s.(s_fields)
     | Genum t _ => type t
@@ -698,6 +713,15 @@ Module report.
           else []
         else []) m.
 
+    (** The members of an opaque record are not modelled. *)
+    Definition opaque_members (m : walk.M) : list PrimString.string :=
+      List.flat_map (fun i =>
+        if i is walk.Access n then
+          if tu.(types) !! n is Some (Gopaque _)
+          then ["member access into an opaque record"%pstring]
+          else []
+        else []) m.
+
     (** [wp_method] and [wp_ctor] are stuck on [Defaulted] bodies, except
         for a union's defaulted copy/move operations, which copy the object
         representation (see [wp_union_copy] in [logic/func.v]). A
@@ -777,7 +801,7 @@ Module report.
     Definition entry_of (fuel : nat) (input : PrimString.string) (n : name) (uses : walk.M) : entry :=
       let needed := List.filter (fun t => bool_decide (t <> n)) (closure fuel (type_refs uses) []) in
       let used := uses ++ List.flat_map walk_type needed in
-      let unsupported := check.fails uses in
+      let unsupported := check.fails uses ++ remove_dups (opaque_members uses) in
       let blocked_by := List.flat_map (fun t => named t (walk_type t)) needed in
       let partial := remove_dups (partials used ++ union_members used) in
       let unsupported_refs :=

@@ -111,7 +111,8 @@ Module decltype.
         | Cdependent t
         | Cbitcast t
         | Clvaluebitcast t => mret t
-        | Cl2r => drop_qualifiers <$> requireGL base
+        | Cl2r
+        | Cl2r_bitfield => drop_qualifiers <$> requireGL base
         | Cl2r_bitcast t => mret t
         | Cnoop t => mret t
         | Carray2ptr =>
@@ -308,6 +309,14 @@ Module decltype.
         | Epostinc _ t => mret t
         | Epredec _ t => mret $ Tref t
         | Epostdec _ t => mret t
+        | Ebf_assign _ _ t
+        | Ebf_assign_op _ _ _ t
+        | Ebf_preinc _ t
+        | Ebf_predec _ t => mret $ Tref t
+        | Ebf_postinc _ t
+        | Ebf_postdec _ t => mret t
+        | Ebf_comma _ e2 => of_expr e2
+        | Ebf_glvalue e => of_expr e
         | Eseqand _ _
         | Eseqor _ _ => mret Tbool
         | Ecomma _ e2 => of_expr e2
@@ -316,6 +325,7 @@ Module decltype.
             mret (cast_result t)
         | Ecast c e => of_expr e >>= fun t => of_cast t c
         | Emember arrow e _ mut t => of_member arrow e mut t
+        | Ebitfield arrow e _ t => of_member arrow e false t
         | Emember_ignore arrow eobj e => of_expr e
         | Emember_call _ f _ _ => of_member_call f
         | Eoperator_call _ f _ => from_operator_impl f
@@ -335,6 +345,7 @@ Module decltype.
           *)
           mret t
         | Eif _ _ _ t
+        | Ebf_if _ _ _ t
         | Eif2 _ _ _ _ _ t => mret t
         | Ethis t => mret t
         | Enull => mret Tnullptr
@@ -387,6 +398,31 @@ Definition exprtype_of_expr (e : Expr) : ValCat * exprtype :=
   decltype.to_exprtype $ decltype_of_expr e.
 Definition valcat_of (e : Expr) : ValCat := (exprtype_of_expr e).1.
 Definition type_of (e : Expr) : exprtype := (exprtype_of_expr e).2.
+
+(**
+[is_bf_glvalue e] holds when the head constructor of [e] is one of the nodes
+for bit-field glvalues: [Ebitfield], [Ebf_comma], [Ebf_if], [Ebf_assign],
+[Ebf_assign_op], [Ebf_preinc], [Ebf_predec], and [Ebf_glvalue]. These are
+exactly the nodes evaluated by [wp_bitfield_glval] rather than by [wp_lval]
+or [wp_xval] (see ../logic/wp.v). The test is not recursive: cpp2v marks
+every parent whose result is a bit-field with its own node.
+
+[Ebf_glvalue e] only occurs as an arm of [Ebf_if]; we include it so that
+the test agrees with the domain of [wp_bitfield_glval], under which it
+evaluates [e] like [wp_glval].
+*)
+Definition is_bf_glvalue (e : Expr) : bool :=
+  match e with
+  | Ebitfield _ _ _ _
+  | Ebf_glvalue _
+  | Ebf_comma _ _
+  | Ebf_if _ _ _ _
+  | Ebf_assign _ _ _
+  | Ebf_assign_op _ _ _ _
+  | Ebf_preinc _ _
+  | Ebf_predec _ _ => true
+  | _ => false
+  end.
 
 (**
 The type of a variable expression, without unfolding [decltype_of_expr].
