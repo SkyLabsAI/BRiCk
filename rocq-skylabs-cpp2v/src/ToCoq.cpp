@@ -181,8 +181,42 @@ static const char *toCoqLangVersion(const clang::LangOptions &lang) {
     logging::die();
 }
 
+// BRiCk fixes the size of each integer rank (e.g. [Tlong] is 64 bits) and,
+// through [UNSAFE_align_is_size_int] and [UNSAFE_align_is_size_ptr], equates
+// the alignment of integers and pointers with their size. Record layouts and
+// alignments that cpp2v takes from Clang are only consistent with BRiCk on
+// targets that agree (e.g. x86_64 and aarch64 Linux, but not i386 or
+// Windows).
+static void checkTargetLayout(const clang::ASTContext &ctxt) {
+    const struct {
+        clang::QualType ty;
+        uint64_t bits;
+        const char *name;
+    } ints[] = {{ctxt.ShortTy, 16, "short"},
+                {ctxt.IntTy, 32, "int"},
+                {ctxt.LongTy, 64, "long"},
+                {ctxt.LongLongTy, 64, "long long"}};
+    for (const auto &i : ints) {
+        if (ctxt.getTypeSize(i.ty) != i.bits ||
+            ctxt.getTypeAlign(i.ty) != i.bits) {
+            logging::fatal()
+                << "cpp2v does not support this target: BRiCk "
+                   "assumes that "
+                << i.name << " has size and alignment " << i.bits << " bits\n";
+            logging::die();
+        }
+    }
+    const auto ptr = ctxt.VoidPtrTy;
+    if (ctxt.getTypeAlign(ptr) != ctxt.getTypeSize(ptr)) {
+        logging::fatal() << "cpp2v does not support this target: BRiCk "
+                            "assumes that pointers are aligned to their size\n";
+        logging::die();
+    }
+}
+
 static fmt::Formatter &printAbi(fmt::Formatter &out,
                                 const clang::ASTContext &ctxt) {
+    checkTargetLayout(ctxt);
     const auto &target = ctxt.getTargetInfo();
     return out << "(abi.mkT " << toCoqIntRank(target.getUIntPtrType())
                << fmt::nbsp << toCoqSigned(ctxt.getLangOpts().CharIsSigned)

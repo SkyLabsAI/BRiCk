@@ -507,6 +507,7 @@ Module template_alias.
     | Tref t => tref QM (subst_type xs t)
     | Trv_ref t => trv_ref QM (subst_type xs t)
     | Tqualified q t => tqualified q (subst_type xs t)
+    | Trealigned n t => Trealigned n (subst_type xs t)
     | Tptr t => Tptr (subst_type xs t)
     | Tarray t n => Tarray (subst_type xs t) n (* BUG: qualifier normalization on arrays? *)
     | Tincomplete_array t => Tincomplete_array (subst_type xs t)
@@ -641,6 +642,7 @@ Fixpoint is_trivially_destructible (tu : translation_unit) (ty : type) {struct t
                    | _ => false
                    end
                | Tarray ety _ => is_trivially_destructible tu ety
+               | Trealigned _ ety => is_trivially_destructible tu ety
                | _ => false
                end) ty.
 
@@ -722,6 +724,8 @@ Section with_type_table.
   with complete_pointee_type : type -> Prop :=
   | complete_pt_qualified {q t} (_ : complete_pointee_type t)
     : complete_pointee_type (Tqualified q t)
+  | complete_pt_realigned {n t} (_ : complete_type t) (_ : not_ref_type t)
+    : complete_pointee_type (Trealigned n t)
   (*
     Pointers to array are only legal if the array is complete, at least
     in C, since they cannot actually be indexed or created.
@@ -767,6 +771,8 @@ Section with_type_table.
   with complete_type : type -> Prop :=
   | complete_qualified {q t} (_ : complete_type t)
     : complete_type (Tqualified q t)
+  | complete_realigned {n t} (_ : complete_type t) (_ : not_ref_type t)
+    : complete_type (Trealigned n t)
   (* Reference types. This setup forbids references to references. *)
   | complete_ref {t} : complete_pointee_type t -> complete_type (Tref t)
   | complete_rv_ref {t} : complete_pointee_type t -> complete_type (Trv_ref t)

@@ -236,6 +236,7 @@ Section with_lang.
     | Tfunction ft =>
         (parens $ printT ft.(ft_return) ++ "*") ++
         (parens $ concat $ join_sep ", " $ printT <$> ft.(ft_params))
+    | Trealigned n t => printT t ++ " __attribute__((aligned(" ++ showN n ++ ")))"
     | Tarch _ note => "?" ++ note
     | Tunsupported note => "?" ++ note
     | Tauto => "auto"

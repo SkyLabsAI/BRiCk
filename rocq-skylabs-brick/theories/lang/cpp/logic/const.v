@@ -68,6 +68,7 @@ Section defs.
       | Tenum _
       | Tmember_pointer _ _
       | Tfloat_ _
+      | Trealigned _ _
       | Tvoid =>
         let rty := erase_qualifiers rty in
         Exists v, addr |-> tptstoR rty from v ** (addr |-> tptstoR rty to v -* Q)

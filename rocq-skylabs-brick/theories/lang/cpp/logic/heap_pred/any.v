@@ -160,6 +160,13 @@ Section with_cpp.
       iExists v; iStopProof. f_equiv.
       rewrite /is_heap_type in H.
       case_bool_decide; auto. exfalso; done. }
+    { (* realigned *)
+      iIntros (??) "H".
+      iDestruct (observe [| is_heap_type _ |] with "H") as "%H".
+      rewrite anyR.unlock everywhereR_unfold/primitiveR/=.
+      iExists v; iStopProof. f_equiv.
+      rewrite /is_heap_type in H.
+      case_bool_decide; auto. exfalso; done. }
   Qed.
 
   Lemma anyR_tptstoR_val : ∀ t q,

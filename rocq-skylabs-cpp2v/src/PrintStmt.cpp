@@ -285,7 +285,11 @@ public:
     void VisitExpr(const Expr *expr, CoqPrinter &print, ClangPrinter &cprint,
                    ASTContext &) {
         print.ctor("Sexpr");
+        // See [ClangPrinter::realignedAccess].
+        auto saved = cprint.discardedExpr;
+        cprint.discardedExpr = expr->IgnoreParens();
         cprint.printExpr(print, expr);
+        cprint.discardedExpr = saved;
         print.end_ctor();
     }
 

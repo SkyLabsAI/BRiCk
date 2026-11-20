@@ -288,6 +288,11 @@ with type : Set :=
 | Tmember_pointer (gn : (* classname *)type) (t : type)
 | Tfloat_ (_ : float_type.t)
 | Tqualified (q : type_qualifiers) (t : type)
+| Trealigned (align : N) (t : type)
+  (* ^^ an object of type [t] whose address is only known to be [align]-byte
+     aligned, e.g. a field of a packed record. Its size and value
+     representation are those of [t]. cpp2v puts it around array element types
+     and inside qualifiers. *)
 | Tnullptr
 | Tarch (osz : option bitsize) (name : PrimString.string)
 | Tdecltype (_ : Expr)
@@ -1032,6 +1037,7 @@ with is_dependentT (t : type) : bool :=
   | Tmember_pointer gn t => is_dependentT gn || is_dependentT t
   | Tfloat_ _ => false
   | Tqualified _ t => is_dependentT t
+  | Trealigned _ t => is_dependentT t
   | Tnullptr
   | Tarch _ _ => false
   | Tdecltype e => is_dependentE e

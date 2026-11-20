@@ -192,7 +192,8 @@ Definition promote_integral (tu : translation_unit) (ty : type) : option type :=
   | Tmember_pointer _ _
   | Tfloat_ _
   | Tnullptr
-  | Tarch _ _ => None
+  | Tarch _ _
+  | Trealigned _ _ => None (* only object types are realigned *)
   | Tqualified _ _ => None (* unreachable *)
   | Tunsupported _ => None
   | Tparam _

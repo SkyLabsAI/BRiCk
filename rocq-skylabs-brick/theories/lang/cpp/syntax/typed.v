@@ -673,7 +673,7 @@ Module decltype.
         | Eglobal nm ty =>
             let* from_env := type_of_global_or_field nm in
             trace ("from_env = "%bs, from_env) $
-            let* _ := require_eq from_env (normalize_type ty) in
+            let* _ := require_eq (unrealign from_env) (normalize_type ty) in
             mret $ tref QM (normalize_type ty)
         | Eglobal_member nm ty =>
             match nm with
@@ -722,7 +722,9 @@ Module decltype.
             let* lt := of_expr le >>= requireL in
             let* rt := of_expr re >>= requireR in
             let* _ := not_const lt in
-            let* _ := require_eq (drop_qualifiers lt) rt in
+            (* An assignment to an under-aligned object stores a value of its
+               underlying type. *)
+            let* _ := require_eq (unrealign (drop_qualifiers lt)) rt in
             let* _ := require_eq lt t in
             mret $ Tref lt
         | Eassign_op op le re t
@@ -1077,6 +1079,8 @@ Module decltype.
         trace d
         match d with
         | Dvar lname ty oinit =>
+            (* An under-aligned variable is named at its underlying type. *)
+            let ty := unrealign ty in
             let* _ :=
               match oinit with
               | None => mret tt
@@ -1091,6 +1095,7 @@ Module decltype.
             let* (bindings : list bindings) := with_var v t $ traverse (T:=eta list) check_binding ds in
             mret $ big_op bindings
         | Dinit _ nm ty oinit =>
+            let ty := unrealign ty in
             let* _ :=
               match oinit with
               | None => mret tt

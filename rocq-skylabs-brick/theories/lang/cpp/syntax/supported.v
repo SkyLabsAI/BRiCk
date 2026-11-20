@@ -350,6 +350,9 @@ Section with_monad.
         (if q_volatile q then PARTIAL "volatile: accesses are modelled as ordinary memory" else OK)
         <+> type t
     | Tarch _ _ => OK
+    | Trealigned _ t =>
+        PARTIAL "under-aligned object: only reads, assignments used as statements, initialization and destruction are modelled"
+        <+> type t
     | Tdecltype e | Texprtype e => expr e
     | Tnamed n | Tenum n => REF n <+> name n
     end
