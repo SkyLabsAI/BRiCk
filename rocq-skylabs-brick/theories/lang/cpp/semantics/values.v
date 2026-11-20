@@ -199,6 +199,8 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
     | Tbool => Some (Vbool false)
     | Tnullptr => Some (Vptr nullptr)
     | Tqualified _ t => get_default t
+    (* An under-aligned object holds the values of its underlying type. *)
+    | Trealigned _ t => get_default t
     | _ => None
     end.
 End VAL_MIXIN.

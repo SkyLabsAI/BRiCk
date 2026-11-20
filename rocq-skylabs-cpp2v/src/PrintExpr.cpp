@@ -260,7 +260,13 @@ private:
                 if (expr->getType().isNull())
                     return print.output() << "Tauto";
                 print.output() << fmt::nbsp;
-                cprint.printQualType(print, expr->getType(), loc::of(expr));
+                if (cprint.realignedInit == expr)
+                    cprint.printRealignedQualType(print, expr->getType(),
+                                                  cprint.realignedInitAlign,
+                                                  loc::of(expr));
+                else
+                    cprint.printQualType(print, expr->getType(),
+                                         loc::of(expr));
             }
             if (want & Done::O) {
                 print.output() << fmt::nbsp;
@@ -269,6 +275,18 @@ private:
             }
         }
         return print.end_ctor();
+    }
+
+    // An initializer under the wrappers that print as their subexpression.
+    static const Expr *initCore(const Expr *e) {
+        for (;;) {
+            if (auto d = dyn_cast<CXXDefaultInitExpr>(e))
+                e = d->getExpr();
+            else if (auto c = dyn_cast<ConstantExpr>(e))
+                e = c->getSubExpr();
+            else
+                return e;
+        }
     }
 
 public:
@@ -732,7 +750,7 @@ public:
     bool printRealignedAssign(const BinaryOperator *expr) {
         if (!realignedAssign(expr))
             return false;
-        auto align = realignedMember(expr->getLHS());
+        auto obj = realignedObject(expr->getLHS());
         if (cprint.discardedExpr != expr && cprint.realignedAccess != expr) {
             print.ctor("Eunsupported");
             print.output() << "\"use of an assignment to an under-aligned "
@@ -771,8 +789,7 @@ public:
         print.output() << fmt::nbsp;
         cprint.printExpr(print, expr->getRHS(), names);
         print.output() << fmt::nbsp;
-        printRealignedResult(
-            expr, cast<MemberExpr>(lhs)->getMemberDecl()->getType(), *align);
+        printRealignedResult(expr, obj->type, obj->align);
         print.end_ctor();
         return true;
     }
@@ -784,8 +801,8 @@ public:
     bool printRealignedIncDec(const UnaryOperator *expr) {
         if (!expr->isIncrementDecrementOp())
             return false;
-        auto align = realignedMember(expr->getSubExpr());
-        if (!align)
+        auto obj = realignedObject(expr->getSubExpr());
+        if (!obj)
             return false;
         if (expr->isPrefix() && cprint.discardedExpr != expr &&
             cprint.realignedAccess != expr) {
@@ -816,8 +833,7 @@ public:
         cprint.realignedAccess = nullptr;
         print.output() << fmt::nbsp;
         if (expr->isPrefix())
-            printRealignedResult(
-                expr, cast<MemberExpr>(sub)->getMemberDecl()->getType(), *align);
+            printRealignedResult(expr, obj->type, obj->align);
         else if (print.templates())
             cprint.printQualTypeOption(print, expr->getType(), loc::of(expr));
         else
@@ -1364,7 +1380,7 @@ public:
         }
 
         if (expr->getCastKind() == CastKind::CK_LValueToRValue &&
-            (realignedMember(expr->getSubExpr()) ||
+            (realignedObject(expr->getSubExpr()) ||
              realignedUpdate(expr->getSubExpr()))) {
             // Read the under-aligned object (a field, or the result of an
             // update of one), then retype the value at the expression's
@@ -1587,7 +1603,7 @@ public:
     // under-aligned field.
     bool realignedAssign(const Expr *e) {
         auto bo = dyn_cast<BinaryOperator>(e->IgnoreParens());
-        return bo && bo->isAssignmentOp() && realignedMember(bo->getLHS());
+        return bo && bo->isAssignmentOp() && realignedObject(bo->getLHS());
     }
 
     // Whether [e] is a glvalue for an under-aligned field computed by an
@@ -1597,7 +1613,61 @@ public:
             return true;
         auto uo = dyn_cast<UnaryOperator>(e->IgnoreParens());
         return uo && uo->isPrefix() && uo->isIncrementDecrementOp() &&
-               realignedMember(uo->getSubExpr());
+               realignedObject(uo->getSubExpr());
+    }
+
+    // An under-aligned object that a glvalue [e] designates: a scalar field
+    // of a packed record, or an element of an under-aligned array field.
+    // [type] is the object's type, which cpp2v prints wrapped in
+    // [Trealigned align].
+    struct Realigned {
+        uint64_t align;
+        QualType type;
+    };
+    std::optional<Realigned> realignedObject(const Expr *e) {
+        e = e->IgnoreParens();
+        if (auto me = dyn_cast<MemberExpr>(e)) {
+            if (me->getType()->isArrayType())
+                return std::nullopt;
+            if (auto align = realignedMember(me))
+                return Realigned{*align, me->getMemberDecl()->getType()};
+            return std::nullopt;
+        }
+        if (auto ase = dyn_cast<ArraySubscriptExpr>(e)) {
+            if (ase->getType()->isArrayType())
+                return std::nullopt;
+            if (auto align = realignedArray(subscriptArray(ase)))
+                return Realigned{*align, ase->getType()};
+        }
+        return std::nullopt;
+    }
+
+    // The array operand of a subscript, without its array-to-pointer decay
+    // (see [VisitArraySubscriptExpr]).
+    static const Expr *subscriptArray(const ArraySubscriptExpr *ase) {
+        auto base = ase->getBase()->IgnoreParens();
+        if (auto ce = dyn_cast<ImplicitCastExpr>(base))
+            if (ce->getCastKind() == CastKind::CK_ArrayToPointerDecay)
+                return ce->getSubExpr()->IgnoreParens();
+        return nullptr;
+    }
+
+    // The alignment of the elements of an under-aligned array glvalue [e]:
+    // an array field of a packed record, an array element of one, or an
+    // opaque value bound to one (an array copy loop's source).
+    std::optional<uint64_t> realignedArray(const Expr *e) {
+        if (!e)
+            return std::nullopt;
+        e = e->IgnoreParens();
+        if (!e->getType()->isArrayType() || !e->isGLValue())
+            return std::nullopt;
+        if (auto ove = dyn_cast<OpaqueValueExpr>(e))
+            return realignedArray(ove->getSourceExpr());
+        if (auto me = dyn_cast<MemberExpr>(e))
+            return realignedMember(me);
+        if (auto ase = dyn_cast<ArraySubscriptExpr>(e))
+            return realignedArray(subscriptArray(ase));
+        return std::nullopt;
     }
 
     // The alignment of the under-aligned field that [e] accesses, if any.
@@ -1710,6 +1780,42 @@ public:
             }
             return expr;
         };
+
+        if (auto align = realignedArray(subscriptArray(expr))) {
+            // An element (or row) of an under-aligned array: allowed where
+            // an under-aligned field is (see [ClangPrinter::realignedAccess];
+            // a row only as the array of another subscript, since a decayed
+            // row would be a pointer that BRiCk assumes naturally aligned),
+            // and typed with [Trealigned].
+            if (cprint.realignedAccess != expr->IgnoreParens()) {
+                print.ctor("Eunsupported");
+                print.output() << "\"access to an element of an under-aligned "
+                                  "array\""
+                               << fmt::nbsp;
+                done(expr, Done::DT);
+                return;
+            }
+            auto array = subscriptArray(expr);
+            print.ctor("Esubscript");
+            cprint.realignedAccess = array;
+            if (expr->getBase()->IgnoreParens() == expr->getLHS()->IgnoreParens()) {
+                cprint.printExpr(print, array, names);
+                cprint.realignedAccess = nullptr;
+                print.output() << fmt::nbsp;
+                cprint.printExpr(print, under_cast(expr->getRHS()), names);
+            } else {
+                cprint.realignedAccess = nullptr;
+                cprint.printExpr(print, under_cast(expr->getLHS()), names);
+                print.output() << fmt::nbsp;
+                cprint.realignedAccess = array;
+                cprint.printExpr(print, array, names);
+                cprint.realignedAccess = nullptr;
+            }
+            print.output() << fmt::nbsp;
+            printRealignedResult(expr, expr->getType(), *align);
+            print.end_ctor();
+            return;
+        }
 
         print.ctor("Esubscript");
         cprint.printExpr(print, under_cast(expr->getLHS()), names);
@@ -1922,19 +2028,53 @@ public:
         } else {
             print.ctor("Einitlist");
 
-            print.list(expr->inits(), [&](auto i) {
+            // The context for the initializers of under-aligned array
+            // fields, or of the rows of an under-aligned array.
+            const Expr *self = cprint.realignedInit;
+            const uint64_t selfAlign = cprint.realignedInitAlign;
+            const bool realignedRows =
+                self == expr && expr->getType()->isArrayType() &&
+                ctxt.getAsArrayType(expr->getType())
+                    ->getElementType()
+                    ->isArrayType();
+            std::vector<std::optional<uint64_t>> fieldAligns;
+            if (auto rd = expr->getType()->getAsRecordDecl()) {
+                if (auto crd = dyn_cast<CXXRecordDecl>(rd))
+                    fieldAligns.resize(crd->getNumBases());
+                for (auto f : rd->fields())
+                    if (!f->isUnnamedBitField())
+                        fieldAligns.push_back(
+                            f->getType()->isArrayType()
+                                ? realignedFieldAlign(ctxt, *f)
+                                : std::nullopt);
+            }
+            unsigned index = 0;
+            auto printInit = [&](const Expr *i) {
+                std::optional<uint64_t> align;
+                if (realignedRows)
+                    align = selfAlign;
+                else if (index < fieldAligns.size())
+                    align = fieldAligns[index];
+                ++index;
+                cprint.realignedInit = align ? initCore(i) : nullptr;
+                cprint.realignedInitAlign = align ? *align : 0;
                 cprint.printExpr(print, i, names);
-            }) << fmt::nbsp;
+            };
+            print.list(expr->inits(), printInit) << fmt::nbsp;
 
             if (expr->getArrayFiller()) {
                 print.some();
-                cprint.printExpr(print, expr->getArrayFiller(), names);
+                index = fieldAligns.size(); // fillers are array elements
+                printInit(expr->getArrayFiller());
                 print.end_ctor();
             } else {
                 print.none();
             }
 
+            cprint.realignedInit = self;
+            cprint.realignedInitAlign = selfAlign;
             done(expr);
+            cprint.realignedInit = nullptr;
         }
     }
 
@@ -2295,6 +2435,26 @@ public:
 
     void VisitOpaqueValueExpr(const OpaqueValueExpr *expr) {
         print.ctor("Eopaque_ref") << names.find(expr);
+        if (auto align = realignedArray(expr)) {
+            // Bound to an under-aligned array (see [VisitArrayInitLoopExpr]).
+            // As [printQualType] does, the qualifiers of the elements are
+            // printed around the array type.
+            Qualifiers quals;
+            auto unqual = ctxt.getUnqualifiedArrayType(
+                expr->getType().getCanonicalType(), quals);
+            const bool c = quals.hasConst(), v = quals.hasVolatile();
+            print.ctor(expr->isLValue() ? "Tref" : "Trv_ref", false);
+            if (c || v)
+                print.ctor(c ? (v ? "Qconst_volatile" : "Qconst") : "Qvolatile",
+                           false);
+            cprint.printRealignedQualType(print, unqual, *align,
+                                          loc::of(expr));
+            if (c || v)
+                print.end_ctor();
+            print.end_ctor();
+            print.end_ctor();
+            return;
+        }
         done(expr, Done::DT);
     }
 
@@ -2464,13 +2624,28 @@ public:
 
         // this is the source array which we are initializing
         auto src = expr->getCommonExpr()->getSourceExpr();
+        // An under-aligned source array is only read element by element, at
+        // its [Trealigned] element type (see [realignedArray]).
+        if (realignedArray(src))
+            cprint.realignedAccess = src->IgnoreParens();
         cprint.printExpr(print, src, names);
+        cprint.realignedAccess = nullptr;
 
         // this is the expression that is evaluated
         names.inc_index_count();
         print.output() << names.index_count() << fmt::nbsp
                        << expr->getArraySize() << fmt::nbsp;
+        // The rows of an under-aligned array are initialized by an inner
+        // loop with the same element alignment.
+        const Expr *self = cprint.realignedInit;
+        const uint64_t selfAlign = cprint.realignedInitAlign;
+        cprint.realignedInit =
+            self == expr && isa<ArrayInitLoopExpr>(initCore(expr->getSubExpr()))
+                ? initCore(expr->getSubExpr())
+                : nullptr;
         cprint.printExpr(print, expr->getSubExpr(), names);
+        cprint.realignedInit = self;
+        cprint.realignedInitAlign = selfAlign;
         names.dec_index_count();
         names.free(
             expr->getCommonExpr()); // index goes out of scope at this point
@@ -2483,6 +2658,33 @@ public:
         done(expr);
     }
 };
+
+fmt::Formatter &ClangPrinter::printFieldInit(CoqPrinter &print,
+                                             const clang::Expr *e,
+                                             const clang::QualType &ty,
+                                             std::optional<uint64_t> align) {
+    auto saved = realignedInit;
+    auto savedAlign = realignedInitAlign;
+    if (align && ty->isArrayType()) {
+        auto core = e;
+        for (;;) {
+            if (auto d = dyn_cast<CXXDefaultInitExpr>(core))
+                core = d->getExpr();
+            else if (auto c = dyn_cast<ConstantExpr>(core))
+                core = c->getSubExpr();
+            else if (auto c = dyn_cast<ExprWithCleanups>(core))
+                core = c->getSubExpr();
+            else
+                break;
+        }
+        realignedInit = core;
+        realignedInitAlign = *align;
+    }
+    printExpr(print, e);
+    realignedInit = saved;
+    realignedInitAlign = savedAlign;
+    return print.output();
+}
 
 fmt::Formatter &ClangPrinter::printExpr(CoqPrinter &print,
                                         const clang::Expr *expr,

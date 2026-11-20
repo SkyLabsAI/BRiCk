@@ -130,6 +130,18 @@ public:
     // context records the access it allows, or the discarded expression.
     const clang::Expr *realignedAccess{nullptr};
     const clang::Expr *discardedExpr{nullptr};
+    // The initializer of an under-aligned array field (an initializer list,
+    // an implicit value initialization or an array copy loop), and the
+    // field's alignment: its type is printed with [Trealigned] elements, so
+    // that BRiCk's array initialization rules see the field's element type.
+    const clang::Expr *realignedInit{nullptr};
+    uint64_t realignedInitAlign{0};
+
+    // Prints [e], the initializer of an object of type [ty] that is only
+    // [align]-aligned when [align] is set and [ty] is an array type.
+    fmt::Formatter &printFieldInit(CoqPrinter &print, const clang::Expr *e,
+                                   const clang::QualType &ty,
+                                   std::optional<uint64_t> align);
 
 public:
     // Silence some warnings until we can improve our diagnostics

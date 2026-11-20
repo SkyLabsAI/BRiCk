@@ -11,7 +11,7 @@ covers reference types and GNU alignof of a variable.
   $TESTCASE_ROOT/test.cpp:57:5: warning: passing 1-byte aligned argument to 4-byte aligned parameter 'this' of 'S2' may result in an unaligned pointer access
   US2 g_rec;
       ^
-  $TESTCASE_ROOT/test.cpp:66:29: warning: taking address of packed member 'i' of class or structure 'P' may result in an unaligned pointer value
+  $TESTCASE_ROOT/test.cpp:67:29: warning: taking address of packed member 'i' of class or structure 'P' may result in an unaligned pointer value
   int *addr_i(P *p) { return &p->i; }
                               ^~~~
   3 warnings generated.
@@ -53,10 +53,12 @@ enumeration type, which older Clangs print through a shared type name.
 
   $ grep -o -E '\(Q[a-z_]+ \(Trealigned [0-9]+ (\([^()]*\)|[^() ]+)\)\)|\(Tarray \(Trealigned [0-9]+ (\([^()]*\)|[^() ]+)\) [0-9]+\)|\(Trealigned [0-9]+ (\([^()]*\)|[^() ]+)\)' test_17_cpp.v | sed -E 's/\(Tenum n[0-9]+\)/E/; s/ t[0-9]+\)/ E)/' | sort | uniq -c
         3 (Qconst (Trealigned 1 Tshort))
-        1 (Tarray (Trealigned 1 Tulonglong) 2)
+        1 (Qconst (Trealigned 1 Tulonglong))
+        7 (Tarray (Trealigned 1 Tulonglong) 2)
         1 (Tarray (Trealigned 1 Tushort) 1)
         9 (Trealigned 1 E)
-        6 (Trealigned 1 Tint)
+       10 (Trealigned 1 Tint)
+        1 (Trealigned 1 Tulonglong)
        11 (Trealigned 1 Tushort)
         9 (Trealigned 2 Tint)
   $ grep -o -E '"[^"]*not supported"|"under-aligned variable"' test_17_cpp.v
@@ -75,16 +77,15 @@ alignment, so such a type cannot be an array element.
 
 A read of a packed field reads its Trealigned object and retypes the value
 with a no-op cast, whose rule asks the prover to show the value has the new
-type; an assignment used as a statement stores at the Trealigned type. Other
-uses (address-of, reference binding, compound assignment, using the value of
-an assignment) are unsupported, as Clang types them at the naturally aligned
+type; an assignment stores at the Trealigned type, and so does a compound
+assignment (below). Taking the address of a packed field and binding a
+reference to it are unsupported, as Clang types them at the naturally aligned
 type.
 
   $ tr -s ' \n' ' ' < test_17_cpp.v | sed -E 's/ t[0-9]+\)/ t_)/g' | grep -o -E 'Eunsupported "[^"]*under-aligned field"|\(Eassign \(Emember true \(Ecast Cl2r \(Evar "p" t_\)\) \(Field \(field_name.Id "i"\) false \(Trealigned 1 Tint\)\)\) \(Eint 5%Z Tint\) \(Trealigned 1 Tint\)\)|\(Ecast \(Cnoop Tint\) \(Ecast Cl2r \(Emember true \(Ecast Cl2r \(Evar "p" t_\)\) \(Field \(field_name.Id "i"\) false \(Trealigned 1 Tint\)\)\)\)\)' | sort | uniq -c
         1 (Eassign (Emember true (Ecast Cl2r (Evar "p" t_)) (Field (field_name.Id "i") false (Trealigned 1 Tint))) (Eint 5%Z Tint) (Trealigned 1 Tint))
         1 (Ecast (Cnoop Tint) (Ecast Cl2r (Emember true (Ecast Cl2r (Evar "p" t_)) (Field (field_name.Id "i") false (Trealigned 1 Tint)))))
-        5 Eunsupported "access to an under-aligned field"
-        1 Eunsupported "use of an assignment to an under-aligned field"
+        2 Eunsupported "access to an under-aligned field"
 
 The same accesses from templates of a record that is not a template, where
 an assignment takes an optional type: a type-dependent one (in set and
@@ -105,14 +106,15 @@ read (in get). The instantiations come first, then the templates.
   Ecast (Cnoop Tfloat) (Ecast Cl2r (Emember true (Ethis
   "v") false (Trealigned 1 Tfloat))) (Evar "r" (Tref (Qconst (Tparam "T")))) None
 
-So do updates (in bump), whose operators also take an optional type in
-templates.
+So do updates (in bump) and elements of packed arrays (in word), whose
+operators also take an optional type in templates.
 
-  $ tr -s ' \n' ' ' < templ_17_cpp.v | sed -E 's/ t[0-9]+\)/ t_)/g' | grep -o -E '"n"\) false \(Trealigned 1 Tuint\)\)\) (\(Ecast \(Cintegral Tuint\) \((Eint 1%Z Tint|Ecast Cl2r \(Evar "k" Tint\))\)\) |\(Evar "k" \(Tparam "T"\)\) )?(None|\(Some (\(Trealigned 1 Tuint\)|Tuint)\)|\(Trealigned 1 Tuint\)|Tuint)'
+  $ tr -s ' \n' ' ' < templ_17_cpp.v | sed -E 's/ t[0-9]+\)/ t_)/g' | grep -o -E '"n"\) false \(Trealigned 1 Tuint\)\)\) (\(Ecast \(Cintegral Tuint\) \((Eint 1%Z Tint|Ecast Cl2r \(Evar "k" Tint\))\)\) |\(Evar "k" \(Tparam "T"\)\) )?(None|\(Some (\(Trealigned 1 Tuint\)|Tuint)\)|\(Trealigned 1 Tuint\)|Tuint)|"w"\) false \(Tarray \(Trealigned 1 Tushort\) 2\)\)\) \(Eint 1%Z Tint\) (\(Some )?\(Qconst \(Trealigned 1 Tushort\)\)'
   "n") false (Trealigned 1 Tuint))) (Ecast (Cintegral Tuint) (Eint 1%Z Tint)) (Trealigned 1 Tuint)
   "n") false (Trealigned 1 Tuint))) (Ecast (Cintegral Tuint) (Ecast Cl2r (Evar "k" Tint))) (Trealigned 1 Tuint)
   "n") false (Trealigned 1 Tuint))) (Trealigned 1 Tuint)
   "n") false (Trealigned 1 Tuint))) Tuint
+  "w") false (Tarray (Trealigned 1 Tushort) 2))) (Eint 1%Z Tint) (Qconst (Trealigned 1 Tushort))
   "n") false (Trealigned 1 Tuint))) (Ecast (Cintegral Tuint) (Eint 1%Z Tint)) (Some (Trealigned 1 Tuint))
   "n") false (Trealigned 1 Tuint))) (Evar "k" (Tparam "T")) None
   "n") false (Trealigned 1 Tuint))) (Some (Trealigned 1 Tuint))
@@ -267,3 +269,34 @@ fields in order, with their types and offsets in bits:
   Build_LayoutInfo 0
   mkMember (field_name.Id "i") (Trealigned 1 Tint) false None
   Build_LayoutInfo 8
+
+Updates of packed fields: an assignment can be read, compound assignments and
+increments are printed at the field's Trealigned type (BRiCk computes them at
+the underlying type), and the operands of void casts, for increments and
+commas count as discarded. Elements of a packed array field are accessed at
+their Trealigned type, and the initializers of such a field (aggregate, value
+initialization, copy loops) have Trealigned element types. Addresses,
+references, decays and other uses of an update stay unsupported.
+
+  $ check_cpp2v updates.cpp
+  cpp2v -v -check-types -o updates_17_cpp.v updates.cpp -- -std=c++17 2>&1 | sed 's/^ *[0-9]* | //'
+  $TESTCASE_ROOT/updates.cpp:21:36: warning: taking address of packed member 'len' of class or structure 'H' may result in an unaligned pointer value
+  unsigned int *addr(H *h) { return &h->len; }
+                                     ^~~~~~
+  1 warning generated.
+  rocq c -w -notation-overridden -w -notation-incompatible-prefix updates_17_cpp.v
+  $ grep -o -E 'E(assign|assign_op [A-Za-z]+|preinc|postinc|subscript|arrayloop_init|initlist|implicit_init)\b|Trealigned [0-9]+ [A-Za-z]+|Eunsupported "[^"]*"' updates_17_cpp.v | sort | uniq -c
+        6 Earrayloop_init
+        7 Eassign
+        1 Eassign_op Badd
+        4 Eimplicit_init
+        6 Einitlist
+        2 Epostinc
+        3 Epreinc
+       11 Esubscript
+        1 Eunsupported "access to an element of an under-aligned array"
+       11 Eunsupported "access to an under-aligned field"
+        1 Eunsupported "use of an increment or decrement of an under-aligned field"
+       22 Trealigned 1 Tshort
+       21 Trealigned 1 Tuint
+       18 Trealigned 1 Tushort
