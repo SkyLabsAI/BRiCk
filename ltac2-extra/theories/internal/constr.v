@@ -25,9 +25,11 @@ Module Constr.
   Export Ltac2.Constr.
 
   (** [entirely_closed c] indicates whether [c] is free of: undefined evars,
-      unbound rels, named evars without a bode, named variables whose body is
-      not [entirely_closed]. Note that opaque and transparent constants are
-      considered [entirely_closed]. *)
+      unbound rels, named evars without a body, named variables without a body,
+      named variables whose body is not [entirely_closed]. Opaque and
+      transparent constants are checked for dependencies on not
+      [entirely_closed] section variables but are otherwise considered
+      [entirely_closed]. *)
   Ltac2 @ external entirely_closed : constr -> bool :=
     "ltac2_extensions" "entirely_closed".
 
