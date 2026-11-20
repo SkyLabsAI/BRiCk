@@ -570,6 +570,7 @@ Section body.
     | Tnum _ _
     | Tchar_ _
     | Tfloat_ _
+    | Tvector _ _ _
     | Tenum _
     | Tbool
     | Tnullptr
@@ -844,6 +845,7 @@ Section val_array.
       | Tnum _ _
       | Tchar_ _
       | Tfloat_ _
+      | Tvector _ _ _
       | Tenum _
       | Tbool
       | Tnullptr

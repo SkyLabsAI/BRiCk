@@ -351,7 +351,8 @@ Module decltype.
         | Tbool
         | Tnullptr
         | Tchar_ _
-        | Tfloat_ _ => mret ()
+        | Tfloat_ _
+        | Tvector _ _ _ => mret ()
         | _ => mfail
         end.
 

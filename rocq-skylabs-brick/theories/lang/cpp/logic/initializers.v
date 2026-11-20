@@ -103,6 +103,7 @@ Definition default_initialize_body `{Σ : cpp_logic, σ : genv}
   | Tptr _
   | Tbool
   | Tfloat_ _
+  | Tvector _ _ _
   | Tnullptr
   | Tenum _ =>
     let rty := erase_qualifiers ty in
@@ -397,6 +398,7 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
     | Tchar_ _
     | Tenum _
     | Tfloat_ _
+    | Tvector _ _ _
     | Tnullptr =>
       letI* v, free := wp_operand tu ρ init in
       let qf := cQp.mk (q_const cv) 1 in

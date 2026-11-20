@@ -87,6 +87,7 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
      *)
   | Vfloat (ft : float_type.t) (_ : float_type.car ft)
     (* ^ floating point values, indexed by their C++ floating-point format. *)
+  | Vvec (_ : list N)
   | Vptr (_ : ptr)
   | Vraw (_ : raw_byte)
   | Vundef
@@ -103,6 +104,8 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
   #[global] Instance Vptr_inj : Inj (=) (=) Vptr.
   Proof. by move=> ?? []. Qed.
   #[global] Instance Vraw_inj : Inj (=) (=) Vraw.
+  Proof. by move=> ?? []. Qed.
+  #[global] Instance Vvec_inj : Inj (=) (=) Vvec.
   Proof. by move=> ?? []. Qed.
   #[global] Instance Vmember_ptr_inj : Inj2 (=) (=) (=) Vmember_ptr.
   Proof. by move=> ???? []. Qed.
@@ -125,6 +128,7 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
       | left Hf => cast_if (decide (eq_rect _ float_type.car x _ Hf = x'))
       | right _ => right _
       end
+    | Vvec bs, Vvec bs' => cast_if (decide (bs = bs'))
     | Vptr p, Vptr p' => cast_if (decide (p = p'))
     | Vraw r, Vraw r' => cast_if (decide (r = r'))
     | Vundef, Vundef => left _
@@ -171,7 +175,7 @@ Module Type VAL_MIXIN (Import P : PTRS) (Import R : RAW_BYTES).
     | Vfloat f v => Some (float_value.is_true v)
     | Vptr p => Some (bool_decide (p <> nullptr))
     | Vchar n => Some (bool_decide (n <> 0%N))
-    | Vundef | Vraw _ => None
+    | Vundef | Vraw _ | Vvec _ => None
     | Vmember_ptr _ p => Some (bool_decide (p <> None))
     end.
   #[global] Arguments is_true !_.
@@ -422,6 +426,14 @@ Module Type RAW_BYTES_MIXIN
     apply (val_related_not_raw (Vfloat f z1) (Vfloat f z2) ty); done.
   Qed.
 
+  Lemma val_related_Vvec {σ} ty bs1 bs2 :
+    val_related ty (Vvec bs1) (Vvec bs2) -> bs1 = bs2.
+  Proof.
+    intros Hrel.
+    apply Vvec_inj.
+    apply (val_related_not_raw (Vvec bs1) (Vvec bs2) ty); done.
+  Qed.
+
   (*
   NOTE: This stronger property holds because pointers do not have a
   raw representation. (That's future work.).
@@ -588,6 +600,14 @@ Module Type HAS_TYPE (Import P : PTRS) (Import R : RAW_BYTES) (Import V : VAL_MI
     Axiom has_type_prop_float : forall f v,
         has_type_prop v (Tfloat_ f) <-> exists z : float_type.car f, v = Vfloat f z.
 
+    Axiom has_type_prop_vector : forall elem n al v,
+        has_type_prop v (Tvector elem n al) <->
+        exists bs : list N,
+          v = Vvec bs /\
+          (0 < length bs)%nat /\
+          size_of σ (Tvector elem n al) = Some (N.of_nat (length bs)) /\
+          Forall (fun b => (b < 256)%N) bs.
+
     (* NOTE: even if an enumeration's underlying type is <<unsigned char>> (which contains
        raw values), raw values are not well typed at the enumeration type. *)
     Axiom has_type_prop_enum : forall v nm,
@@ -656,6 +676,13 @@ Module Type HAS_TYPE_MIXIN (Import P : PTRS) (Import R : RAW_BYTES) (Import V : 
     Lemma has_float_type f z :
       has_type_prop (Vfloat f z) (Tfloat_ f).
     Proof. rewrite has_type_prop_float; eauto. Qed.
+
+    Lemma has_vector_type elem n al bs :
+      (0 < length bs)%nat ->
+      size_of σ (Tvector elem n al) = Some (N.of_nat (length bs)) ->
+      Forall (fun b => (b < 256)%N) bs ->
+      has_type_prop (Vvec bs) (Tvector elem n al).
+    Proof. intros. rewrite has_type_prop_vector. exists bs. repeat split; assumption. Qed.
 
     Lemma has_type_prop_drop_qualifiers :
       forall v ty, has_type_prop v ty <-> has_type_prop v (drop_qualifiers ty).

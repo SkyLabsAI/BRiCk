@@ -286,6 +286,13 @@ static fmt::Formatter &printTypedef(CoqPrinter &print,
                                     const ASTContext &ctxt) {
     if (ClangPrinter::debug && cprint.trace(Trace::Decl))
         cprint.trace("printTypedef", loc::of(decl));
+    if (!decl.getUnderlyingType()->isDependentType() &&
+        ctxt.getCanonicalType(decl.getUnderlyingType())
+            .getQualifiers().empty() &&
+        decl.getUnderlyingType()->getAs<VectorType>() != nullptr) {
+        return cprint.printQualType(print, ctxt.getTypeDeclType(&decl),
+                                    loc::of(decl));
+    }
     return cprint.printQualType(print, decl.getUnderlyingType(), loc::of(decl));
 }
 } // namespace

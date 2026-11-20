@@ -493,6 +493,7 @@ Module template_alias.
         end
     | Tresult_param _ | Tauto | Tnum _ _ | Tchar_ _ | Tvoid
     | Tbool | Tfloat_ _ | Tnullptr | Tarch _ _ | Tunsupported _ => t
+    | Tvector t n al => Tvector (subst_type xs t) n al
     | Tresult_global n => Tresult_global (subst_name xs n)
     | Tresult_unop o t => Tresult_unop o (subst_type xs t)
     | Tresult_binop o l r =>
@@ -632,6 +633,7 @@ Fixpoint is_trivially_destructible (tu : translation_unit) (ty : type) {struct t
                | Tenum _
                | Tmember_pointer _ _
                | Tfloat_ _
+               | Tvector _ _ _
                | Tnullptr => true
                | Tnamed nm =>
                    match tu.(types) !! nm with
@@ -657,6 +659,12 @@ Fixpoint ref_to_type (t : type) : option type :=
 
 (* Not a reference type *)
 Notation not_ref_type t := (ref_to_type t = None).
+
+Definition is_vector_elem_type (t : type) : bool :=
+  match t with
+  | Tnum _ _ | Tchar_ _ | Tfloat_ _ => true
+  | _ => false
+  end.
 
 Section with_type_table.
   Variable te : type_table.
@@ -708,6 +716,7 @@ Section with_type_table.
   (* Basic types. This excludes references (as checked by [complete_basic_type_not_ref]). *)
   with complete_basic_type : type -> Prop :=
   | complete_float sz : complete_basic_type (Tfloat_ sz)
+  | complete_vector elem n al : is_vector_elem_type elem = true -> (n <> 0)%N -> (al <> 0)%N -> complete_basic_type (Tvector elem n al)
   | complete_int sgn sz : complete_basic_type (Tnum sgn sz)
   | complete_bool : complete_basic_type Tbool
   | complete_nullptr : complete_basic_type Tnullptr

@@ -86,7 +86,32 @@ public:
 
     IGNORE(BlockPointerType)
     IGNORE(PackExpansionType)
-    IGNORE(VectorType)
+    static void printVectorTypeWithAlign(const VectorType *type,
+                                         uint64_t align_bytes,
+                                         CoqPrinter &print,
+                                         ClangPrinter &cprint, loc::loc loc) {
+        if (type->isDependentType() || align_bytes == 0 ||
+            type->getNumElements() == 0) {
+            unsupported_type(print, cprint, type, /*well_known*/ true);
+            return;
+        }
+        print.ctor("Tvector", false);
+        cprint.printQualType(print, type->getElementType(), loc);
+        print.output() << fmt::nbsp << type->getNumElements() << fmt::nbsp
+                       << align_bytes;
+        print.end_ctor();
+    }
+
+    void VisitVectorType(const VectorType *type, CoqPrinter &print,
+                         ClangPrinter &cprint) {
+        if (type->isDependentType()) {
+            unsupported_type(print, cprint, type, /*well_known*/ true);
+            return;
+        }
+        auto align =
+            cprint.getContext().getTypeAlignInChars(type).getQuantity();
+        printVectorTypeWithAlign(type, align, print, cprint, loc::of(type));
+    }
 
     void VisitAttributedType(const AttributedType *type, CoqPrinter &print,
                              ClangPrinter &cprint) {
@@ -316,6 +341,29 @@ public:
 
     void VisitTypedefType(const TypedefType *type, CoqPrinter &print,
                           ClangPrinter &cprint) {
+        auto underlying =
+            type->getDecl()->getCanonicalDecl()->getUnderlyingType();
+        if (!type->isDependentType() &&
+            cprint.getContext()
+                .getCanonicalType(underlying)
+                .getQualifiers().empty()) {
+            if (const auto *vt = type->getAs<VectorType>()) {
+                auto align = cprint.getContext()
+                                 .getTypeAlignInChars(QualType(type, 0))
+                                 .getQuantity();
+                if (PRINT_ALIAS) {
+                    print.ctor("@Talias", false);
+                    cprint.printName(print, type->getDecl(), loc::of(type));
+                    printVectorTypeWithAlign(vt, align, print, cprint,
+                                             loc::of(type));
+                    print.end_ctor();
+                } else {
+                    printVectorTypeWithAlign(vt, align, print, cprint,
+                                             loc::of(type));
+                }
+                return;
+            }
+        }
         if (PRINT_ALIAS) {
             print.ctor("@Talias", false);
             cprint.printName(print, type->getDecl(), loc::of(type));

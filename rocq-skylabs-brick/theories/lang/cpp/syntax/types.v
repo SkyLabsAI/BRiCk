@@ -436,6 +436,7 @@ Fixpoint erase_qualifiers (t : type) : type :=
   | Tbool
   | Tvoid
   | Tfloat_ _
+  | Tvector _ _ _
   | Tnamed _
   | Tenum _ => t
   | Tarray t sz => Tarray (erase_qualifiers t) sz
@@ -534,6 +535,9 @@ Lemma drop_qualifiers_Tmember_pointer : forall [ty cls ty'],
 Proof. induction ty; simpl; intros; try congruence; eauto. Qed.
 Lemma drop_qualifiers_Tfloat : forall [ty sz],
     drop_qualifiers ty = Tfloat_ sz -> erase_qualifiers ty = Tfloat_ sz.
+Proof. induction ty; simpl; intros; try congruence; eauto. Qed.
+Lemma drop_qualifiers_Tvector : forall [ty elem n al],
+    drop_qualifiers ty = Tvector elem n al -> erase_qualifiers ty = Tvector elem n al.
 Proof. induction ty; simpl; intros; try congruence; eauto. Qed.
 (* Omit Tqualified on purpose *)
 Lemma drop_qualifiers_Tnullptr : forall [ty],
@@ -827,6 +831,7 @@ Fixpoint normalize_type' (cv : type_qualifiers) (t : type) : type :=
   | Tenum _
   | Tnullptr
   | Tfloat_ _
+  | Tvector _ _ _
   | Tarch _ _ => tqualified cv t
   | Tunsupported _ => tqualified cv t
   | Tparam _
@@ -958,6 +963,7 @@ Definition is_scalar_type (ty : type) : bool :=
   | Tnullptr | Tptr _
   | Tmember_pointer _ _
   | Tfloat_ _
+  | Tvector _ _ _
   | Tchar_ _
   | Tbool
   | Tnum _ _ | Tenum _ => true
@@ -988,6 +994,7 @@ Definition is_value_type (t : type) : bool :=
   | Tptr _
   | Tnullptr
   | Tfloat_ _
+  | Tvector _ _ _
   | Tmember_pointer _ _
   (**
   NOTE: In C++ the the underlying type of an enumeration must be an
