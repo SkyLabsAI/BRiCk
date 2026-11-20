@@ -100,6 +100,31 @@ Proof.
 Qed.
 
 (** * sizeof *)
+
+(** The alignment that [Trealigned] states for an object of type [t], looking
+    through qualifiers and array layers: an array has the alignment of its
+    element type. *)
+Fixpoint realigned_head (t : type) : option N :=
+  match t with
+  | Tqualified _ t
+  | Tarray t _
+  | Tincomplete_array t
+  | Tvariable_array t _ => realigned_head t
+  | Trealigned n _ => Some n
+  | _ => None
+  end.
+
+(** [realign_ok t sz] holds if [sz], the size of [t], is a multiple of the
+    alignment that [t] states through [Trealigned]. Types with no such
+    alignment, which is every type without [Trealigned], satisfy it
+    trivially, so it computes to [true] on concrete types. An over-aligned
+    type such as [Trealigned 32 Tint] (size 4) does not satisfy it. *)
+Definition realign_ok (t : type) (sz : N) : bool :=
+  match realigned_head t with
+  | Some a => bool_decide ((a | sz)%N)
+  | None => true
+  end.
+
 (** The size of a C++ object.
     This is *not* the same as the semantics of the <<sizeof()>> operator
     because <<sizeof(int&)>> is actually <<sizeof(int)>> whereas
@@ -125,7 +150,14 @@ Fixpoint size_of (resolve : genv) (t : type) : option N :=
   | Tnum sz _ => Some (int_rank.bytesN sz)
   | Tchar_ ct => Some (char_type.bytesN ct)
   | Tvoid => Some 1
-  | Tarray t n => N.mul n <$> size_of resolve t
+  | Tarray t n =>
+    (* Clang rejects arrays whose element size is not a multiple of the
+       element's (over-)alignment, e.g. an array of
+       [Trealigned 32 Tint]. *)
+    match size_of resolve t with
+    | Some sz => if realign_ok t sz then Some (N.mul n sz) else None
+    | None => None
+    end
   | Tincomplete_array _ => None
   | Tvariable_array _ _ => None
   | Tnamed nm => glob_def resolve nm ≫= GlobDecl_size_of
@@ -166,7 +198,10 @@ Proof.
   intros ?? Hle ? t ->; induction t; simpl; (try constructor) => //.
   all: try exact: pointer_size_proper.
   all: try exact: member_pointer_size_proper.
-  - by destruct IHt; constructor; subst.
+  - move: IHt. rewrite /=.
+    case: (size_of x t) => [a|]; case: (size_of y t) => [b|] H; inversion H; subst;
+      try by constructor.
+    case_match; constructor; done.
 (*  - rewrite /glob_def.
     generalize (types_compat _ _ (tu_le Hle) gn).
     destruct (types (genv_tu x) !! gn) eqn:Heq; simpl.
@@ -195,6 +230,30 @@ Proof.
   - by destruct osz; constructor.
 Qed.
 
+(** [RealignOk σ ty] says that [ty]'s size, if any, is a multiple of the
+    alignment [ty] states through [Trealigned]. It excludes over-aligned types
+    such as [Trealigned 32 Tint]. Pointer arithmetic on [ty] requires it:
+    offsetting an [n]-aligned pointer by whole elements preserves the alignment
+    only if [n] divides the element size. Like [HasSize], it is solved by
+    instances; it holds trivially for every type without [Trealigned]
+    (looking through qualifiers and arrays), whatever its size. *)
+Class RealignOk {σ : genv} (ty : type) : Prop :=
+  realign_ok_spec : forall sz, size_of σ ty = Some sz -> realign_ok ty sz = true.
+#[global] Hint Mode RealignOk - + : typeclass_instances.
+Lemma realign_ok_of σ ty `{!@RealignOk σ ty} sz :
+  size_of σ ty = Some sz -> realign_ok ty sz = true.
+Proof. intros. by apply realign_ok_spec. Qed.
+
+#[global] Instance RealignOk_not_realigned {σ} ty
+  (H : TCEq (realigned_head ty) None) : @RealignOk σ ty.
+Proof.
+  have E := proj1 (TCEq_eq _ _) H. rewrite /RealignOk /realign_ok => sz _. by rewrite E.
+Qed.
+
+Lemma RealignOk_of_ok σ ty sz :
+  size_of σ ty = Some sz -> realign_ok ty sz = true -> @RealignOk σ ty.
+Proof. intros H1 H2 sz' H3. rewrite H1 in H3. by injection H3 as <-. Qed.
+
 Theorem size_of_int : forall {c : genv} s w,
     @size_of c (Tnum w s) = Some (int_rank.bytesN w).
 Proof. reflexivity. Qed.
@@ -222,33 +281,48 @@ Proof. reflexivity. Qed.
 Theorem size_of_qualified : forall {c : genv} t q,
     @size_of c t = @size_of c (Tqualified q t).
 Proof. reflexivity. Qed.
-Theorem size_of_array_0 : forall {c : genv} t sz,
+Theorem size_of_array_0 : forall {c : genv} t sz `{!@RealignOk c t},
     @size_of c t = Some sz ->
     @size_of c (Tarray t 0) = Some 0%N.
-Proof. intros; simpl. by rewrite H. Qed.
+Proof. intros c t sz HR H. simpl. by rewrite H (realign_ok_of c t sz H). Qed.
 
+(** An array has a size only if its element's size is a multiple of the
+    element's stated alignment ([realign_ok]); this is vacuous unless the
+    element type is [Trealigned]. *)
 Theorem size_of_array_shatter : forall {c : genv} ty n sz,
     @size_of c (Tarray ty n) = Some sz <-> exists sz', (sz = n * sz')%N /\ @size_of c ty = Some sz' /\ @size_of c (Tarray ty n) = Some (n * sz')%N.
 Proof.
-  simpl. intros. destruct (size_of c ty) => /=; split; intros H.
-  - inversion H; subst; eauto.
-  - by destruct H as [? [? [H1 H2]]]; inversion H1; inversion H2; subst.
+  simpl. intros. destruct (size_of c ty) as [s|] => /=; split; intros H.
+  - destruct (realign_ok ty s); inversion H; subst; eauto.
+  - destruct H as [? [-> [H1 H2]]]; injection H1 as <-. exact H2.
   - by inversion H.
   - by destruct H as [? [? [? ?]]]; discriminate.
 Qed.
 
-Theorem size_of_array_pos : forall {c : genv} t n sz,
+Theorem size_of_array_realign_ok : forall {c : genv} ty n sz,
+    @size_of c (Tarray ty n) = Some sz ->
+    exists sz', @size_of c ty = Some sz' /\ realign_ok ty sz' = true.
+Proof.
+  simpl. intros c ty n sz H. destruct (size_of c ty) as [s|]; last done.
+  destruct (realign_ok ty s) eqn:E; last done. by exists s.
+Qed.
+
+Theorem size_of_array_pos : forall {c : genv} t n sz `{!@RealignOk c t},
     (0 < n)%N ->
     @size_of c t = Some sz <-> @size_of c (Tarray t n) = Some (n * sz)%N.
 Proof.
-  simpl. intros. destruct (size_of c t) => /=; split; try congruence.
-  inversion 1. f_equal. apply N.mul_cancel_l in H2.  auto. lia.
+  intros c t n sz HR Hn.
+  simpl. destruct (size_of c t) as [s|] eqn:E; split; try congruence.
+  - intros H. inversion H; subst. by rewrite (realign_ok_of c t _ E).
+  - destruct (realign_ok t s); try congruence.
+    inversion 1. f_equal. apply N.mul_cancel_l in H1.  auto. lia.
 Qed.
 
-Theorem size_of_array : forall {c : genv} t n sz,
-    @size_of c t = Some sz -> @size_of c (Tarray t n) = Some (n * sz)%N.
+Theorem size_of_array : forall {c : genv} t n sz `{!@RealignOk c t},
+    @size_of c t = Some sz ->
+    @size_of c (Tarray t n) = Some (n * sz)%N.
 Proof.
-  simpl. intros. destruct (size_of c t) => /=; try congruence.
+  intros c t n sz HR H. simpl. by rewrite H (realign_ok_of c t sz H).
 Qed.
 
 Lemma size_of_Tmut : forall {c} t,
@@ -267,9 +341,46 @@ Lemma size_of_genv_compat tu σ gn st
   size_of σ (Tnamed gn) = GlobDecl_size_of (Gstruct st).
 Proof. by rewrite /= (glob_def_genv_compat_struct st Hl). Qed.
 
+Lemma realigned_head_erase_qualifiers ty :
+  realigned_head (erase_qualifiers ty) = realigned_head ty.
+Proof. induction ty => //=. Qed.
+Lemma realign_ok_erase_qualifiers ty sz :
+  realign_ok (erase_qualifiers ty) sz = realign_ok ty sz.
+Proof. by rewrite /realign_ok realigned_head_erase_qualifiers. Qed.
+
 Lemma size_of_erase_qualifiers σ ty :
   size_of σ (erase_qualifiers ty) = size_of σ ty.
-Proof. induction ty => //=. by rewrite IHty. Qed.
+Proof.
+  induction ty => //=.
+  rewrite IHty. case: (size_of σ ty) => [sz|] //.
+  by rewrite realign_ok_erase_qualifiers.
+Qed.
+
+#[global] Instance RealignOk_erase_qualifiers {σ} ty :
+  @RealignOk σ ty -> @RealignOk σ (erase_qualifiers ty).
+Proof.
+  rewrite /RealignOk => H sz.
+  by rewrite size_of_erase_qualifiers realign_ok_erase_qualifiers => /H.
+Qed.
+
+#[global] Instance RealignOk_qualified {σ} q ty :
+  @RealignOk σ ty -> @RealignOk σ (Tqualified q ty).
+Proof. by rewrite /RealignOk /realign_ok. Qed.
+
+#[global] Instance RealignOk_array {σ} ty n :
+  @RealignOk σ ty -> @RealignOk σ (Tarray ty n).
+Proof.
+  move=> H sz /size_of_array_shatter [sz' [-> [Hsz' _]]].
+  have Hok := H _ Hsz'. move: Hok. rewrite /realign_ok /=.
+  case: (realigned_head ty) => [a|] //.
+  move=> /bool_decide_eq_true ?. apply bool_decide_eq_true. by apply N.divide_mul_r.
+Qed.
+
+#[global] Instance RealignOk_incomplete_array {σ} ty : @RealignOk σ (Tincomplete_array ty).
+Proof. by move=> sz. Qed.
+#[global] Instance RealignOk_variable_array {σ} ty e : @RealignOk σ (Tvariable_array ty e).
+Proof. by move=> sz. Qed.
+
 Lemma size_of_drop_qualifiers σ ty :
   size_of σ (drop_qualifiers ty) = size_of σ ty.
 Proof. by induction ty. Qed.
@@ -288,11 +399,21 @@ Qed.
 
 #[global] Instance array_size_of {σ : genv} ty a n b :
   SizeOf ty a ->
+  RealignOk ty ->
   TCEq (n * a)%N b ->
   SizeOf (Tarray ty n) b.
 Proof.
-  rewrite /SizeOf TCEq_eq=>Hty <-.
-  cbn. by rewrite Hty.
+  rewrite /SizeOf TCEq_eq=>Hty HR <-.
+  cbn. by rewrite Hty (HR _ Hty).
+Qed.
+
+(** An explicit alignment that divides the size, e.g. a packed field. *)
+#[global] Instance RealignOk_realigned {σ} n ty sz :
+  SizeOf ty sz -> TCEq (bool_decide (n | sz)%N) true ->
+  @RealignOk σ (Trealigned n ty).
+Proof.
+  move=> Hsz /(proj1 (TCEq_eq _ _)) H sz' /=. rewrite Hsz => -[<-].
+  by rewrite /realign_ok /= H.
 Qed.
 
 #[global] Instance named_struct_size_of tu σ gn st n :
@@ -505,32 +626,44 @@ Section with_genv.
    *)
   Axiom align_of_power_of_two : forall t al, align_of t = Some al -> exists n, al = N.pow 2 n.
 
-  (** If [size_of] is defined, [align_of] must divide [size_of]. *)
-  Axiom align_of_size_of' : forall (t : type) sz,
+  (** If [size_of] is defined, [align_of] exists and is nonzero. *)
+  Axiom align_of_size_of_some : forall (t : type) sz,
+      size_of σ t = Some sz ->
+      (exists al, align_of t = Some al /\ al <> 0)%N.
+
+  (** If [size_of] is defined, [align_of] must divide [size_of], except for
+      over-aligned types: [RealignOk t] excludes a [Trealigned n u] (under
+      qualifiers and arrays) whose alignment [n] does not divide the size.
+      [RealignOk] is solved by instances, so calls on concrete types need no
+      extra argument.
+      For instance, <<typedef int X __attribute__((aligned(32)))>> has size 4
+      and alignment 32. The side condition computes to [true] on concrete
+      types without [Trealigned]. *)
+  Axiom align_of_size_of' : forall (t : type) sz `{!@RealignOk σ t},
       size_of σ t = Some sz ->
       (exists al, align_of t = Some al /\ al <> 0 /\ (al | sz))%N.
 
-  Lemma align_of_size_of (t : type) sz :
+  Lemma align_of_size_of (t : type) sz `{!@RealignOk σ t} :
       size_of σ t = Some sz ->
       exists al, align_of t = Some al /\
             (* size is a multiple of alignment *)
             (sz mod al = 0)%N.
   Proof.
-    move=>/align_of_size_of' [al [? [? /N.Lcm0.mod_divide ?]]].
-    eauto.
+    move=>H1. destruct (align_of_size_of' _ _ H1) as [al [? [? ?]]].
+    exists al. split; first done. by apply N.Lcm0.mod_divide.
   Qed.
 
-  (** An under-aligned object, such as a field of a packed record, has the
-      alignment its type states. cpp2v emits [Trealigned n t] for a field, or a
-      variable, that Clang aligns to only [n] bytes, less than BRiCk assumes
-      for the scalar type [t], so [n] is a power of two dividing the size of
-      [t]. The premise keeps the axiom consistent with [align_of_size_of']:
-      an over-aligned type such as <<typedef int X __attribute__((aligned(16)))>>
-      (size 4, alignment 16) gets no alignment from it, and cpp2v prints
-      <<alignof>> of such a type as Clang's constant instead. *)
+  (** An object of type [Trealigned n t], such as a field of a packed record
+      or an over-aligned variable, has the alignment its type states. cpp2v
+      emits [Trealigned n t] for a field, or a variable, that Clang aligns to
+      [n] bytes, which can be less than BRiCk assumes for [t] (packed) or
+      more (<<typedef int X __attribute__((aligned(32)))>>). So [n] is only
+      required to be a power of two. If [n] does not divide the size of [t],
+      then arrays of this type have no size ([size_of]), and [align_of_size_of']
+      does not apply. *)
   Axiom align_of_realigned : forall n t sz,
       size_of σ t = Some sz ->
-      valid_alignment sz n ->
+      n = (2 ^ N.log2 n)%N ->
       align_of (Trealigned n t) = Some n.
 
   (* Validated alignments of named types are recorded in the translation unit.

@@ -219,6 +219,9 @@ Section raw_type_ptrs.
         iApply (big_sepL_submseteq with "tptrs").
         apply sublist_submseteq.
         apply seqN_sublist; first by done.
+        destruct (size_of_array_realign_ok _ _ _ Hsz_array) as (sz' & Hsz' & Hok).
+        rewrite Hsz in Hsz'; injection Hsz' as <-.
+        pose proof (RealignOk_of_ok σ ty sz Hsz Hok) as HR.
         erewrite size_of_array in Hsz_array; eauto; inversion Hsz_array.
         rewrite N.add_0_l -N.mul_succ_r N.mul_comm.
         apply N.mul_le_mono_r.
@@ -422,10 +425,11 @@ Section raw_type_ptrs.
     Lemma raw_type_ptrs_big_array :
       forall (p : ptr) (ty : type) (cnt sz : N),
         size_of σ ty = Some sz ->
+        realign_ok ty sz = true ->
             raw_type_ptrs (Tarray ty cnt) p
         -|- [∗list] i ∈ seqN 0 cnt, raw_type_ptrs ty (p .[ Tbyte ! Z.of_N (i * sz) ]).
     Proof.
-      intros p ty cnt sz Hsz.
+      intros p ty cnt sz Hsz Hok.
       pose proof (raw_type_ptrs_array_aux ty cnt p 0 sz Hsz) as Haux.
       split'; iIntros "P";
         rewrite offset_ptr_sub_0 // in Haux;
@@ -437,7 +441,8 @@ Section raw_type_ptrs.
         iApply big_sepL_mono; last by iFrame.
         intros k y Hk=> /=.
         by rewrite raw_type_ptrs_eq/raw_type_ptrs_def N.add_0_l.
-      - pose proof (size_of_array ty cnt sz Hsz).
+      - pose proof (RealignOk_of_ok σ ty sz Hsz Hok) as HR.
+        pose proof (size_of_array ty cnt sz Hsz).
         iExists (cnt * sz)%N; iFrame "%".
         iApply Haux.
         iApply big_sepL_mono; last by iFrame.
@@ -703,19 +708,20 @@ Section typed_array_blocks.
   Lemma type_ptr_array_element_block (p : ptr) (ty : Rtype)
       (n i sz : N) (q : cQp.t) :
     size_of σ ty = Some sz ->
+    realign_ok ty sz = true ->
     (i < n)%N ->
     type_ptr (Tarray ty n) p |--
       (p .[ Tbyte ! Z.of_N (i * sz) ] |-> blockR sz q
        ∗-∗ p .[ ty ! Z.of_N i ] |-> blockR sz q).
   Proof.
-    intros Hsz Hi. iIntros "#T".
+    intros Hsz Hok Hi. iIntros "#T".
     iDestruct (type_ptr_o_sub p i n ty Hi with "T") as "#E".
     destruct (N.eq_dec sz 0%N) as [->|Hnz].
     - rewrite N.mul_0_r !offset_ptr_sub_0 // blockR_eq /blockR_def /=.
       rewrite !_offsetR_sub_0 // !right_id !_at_validR.
       iSplit; iIntros "_"; by iApply type_ptr_valid.
     - have Harray : size_of σ (Tarray ty n) = Some (n * sz)%N.
-      { by rewrite /= Hsz /=. }
+      { by rewrite /= Hsz Hok /=. }
       iDestruct (type_ptr_raw_type_ptrs with "T") as "#RA"; first by eexists.
       iDestruct (type_ptr_raw_type_ptrs with "E") as "#RT"; first by eexists.
       iDestruct (raw_type_ptrs_Tarray_elem i p ty n sz ltac:(lia) Hsz Hi with "RA") as "#RB".
@@ -743,19 +749,21 @@ Section typed_array_blocks.
       (n i sz : N) (q : cQp.t) :
     tblockR_raw_type ty ->
     size_of σ ty = Some sz ->
+    realign_ok ty sz = true ->
     (i < n)%N ->
     type_ptr (Tarray ty n) p |--
       (p .[ Tbyte ! Z.of_N (i * sz) ] |-> tblockR ty q
        ∗-∗ p .[ ty ! Z.of_N i ] |-> tblockR ty q).
   Proof.
-    intros Hraw Hsz Hi.
+    intros Hraw Hsz Hok Hi.
+    iIntros "#T".
+    pose proof (RealignOk_of_ok σ ty sz Hsz Hok) as HR.
     destruct (align_of_size_of' _ _ Hsz) as (al & Hal & Hal0 & Hdvd).
     have HA : aligned_ofR ty -|- alignedR al.
     { rewrite aligned_ofR.unlock Hal. iSplit.
       - iIntros "(%a & %Ha & H)". by simplify_eq.
       - iIntros "H". iExists al. by iFrame. }
-    iIntros "#T".
-    iDestruct (type_ptr_array_element_block p ty n i sz q Hsz Hi with "T") as "#C".
+    iDestruct (type_ptr_array_element_block p ty n i sz q Hsz Hok Hi with "T") as "#C".
     iDestruct (type_ptr_o_sub p i n ty Hi with "T") as "#E".
     iDestruct (type_ptr_aligned_ofR with "E") as "#EA".
     iDestruct (type_ptr_aligned_ofR with "T") as "#A".
@@ -766,7 +774,7 @@ Section typed_array_blocks.
     iSplit; iIntros "[B _]".
     - iFrame "EA". by iApply "C".
     - iDestruct ("C" with "B") as "$".
-      iEval (rewrite -_at_offsetR -(aligned_ofR_byte_sub ty sz i Hsz) !_at_sep _at_validR).
+      iEval (rewrite -_at_offsetR -(aligned_ofR_byte_sub ty sz i Hsz Hok) !_at_sep _at_validR).
       iFrame "A".
       iApply (type_ptr_valid with "T").
   Qed.
@@ -776,6 +784,7 @@ Section typed_array_blocks.
   Lemma tblockR_array_typed (p : ptr) (ty : Rtype) (n sz : N) (q : cQp.t) :
     tblockR_raw_type ty ->
     size_of σ ty = Some sz ->
+    realign_ok ty sz = true ->
     type_ptr (Tarray ty n) p |--
       (p |-> tblockR (Tarray ty n) q ∗-∗
        p |-> (aligned_ofR ty **
@@ -783,25 +792,27 @@ Section typed_array_blocks.
          [∗list] i ∈ seq 0 (N.to_nat n),
            .[ ty ! Z.of_nat i ] |-> tblockR ty q)).
   Proof.
-    intros Hraw Hsz. rewrite (tblockR_array_better ty n q sz Hsz).
+    intros Hraw Hsz Hok.
+    iIntros "#T".
+    rewrite (tblockR_array_better ty n q sz Hsz Hok).
     rewrite !_at_sep !_at_offsetR !_at_big_sepL.
     setoid_rewrite _at_offsetR.
-    iIntros "#T". iSplit.
+    iSplit.
     - iIntros "(A & _ & B)". iFrame "A". iSplit.
       + rewrite _at_validR. by iApply (type_ptr_array_end p ty n ltac:(eauto) with "T").
       + iApply (big_sepL_impl with "B"). iIntros "!>" (k i Hi) "B".
         have Hin : (N.of_nat i < n)%N.
         { apply lookup_seq in Hi. lia. }
-        iDestruct (type_ptr_array_element_tblock p ty n (N.of_nat i) sz q Hraw Hsz Hin with "T") as "C".
+        iDestruct (type_ptr_array_element_tblock p ty n (N.of_nat i) sz q Hraw Hsz Hok Hin with "T") as "C".
         have HiZ : Z.of_N (N.of_nat i) = Z.of_nat i by lia.
         iEval (rewrite HiZ) in "C". by iApply "C".
     - iIntros "(A & _ & B)". iFrame "A". iSplit.
       + rewrite _at_validR. iApply (type_ptr_byte_end p (Tarray ty n) (n * sz)%N with "T").
-        by rewrite /= Hsz /=.
+        by rewrite /= Hsz Hok /=.
       + iApply (big_sepL_impl with "B"). iIntros "!>" (k i Hi) "B".
         have Hin : (N.of_nat i < n)%N.
         { apply lookup_seq in Hi. lia. }
-        iDestruct (type_ptr_array_element_tblock p ty n (N.of_nat i) sz q Hraw Hsz Hin with "T") as "C".
+        iDestruct (type_ptr_array_element_tblock p ty n (N.of_nat i) sz q Hraw Hsz Hok Hin with "T") as "C".
         have HiZ : Z.of_N (N.of_nat i) = Z.of_nat i by lia.
         iEval (rewrite HiZ) in "C". by iApply "C".
   Qed.

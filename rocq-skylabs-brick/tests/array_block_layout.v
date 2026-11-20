@@ -24,22 +24,25 @@ Section with_cpp.
   (* The direct proof from tblockR does not use either general decomposition. *)
   Example empty_array_layout t q sz :
     size_of σ t = Some sz ->
+    realign_ok t sz = true ->
     tblockR (Tarray t 0) q -|- validR ** aligned_ofR t.
   Proof. apply tblockR_array_zero. Qed.
 
   Example empty_array_byte_decomposition t q sz :
     size_of σ t = Some sz ->
+    realign_ok t sz = true ->
     tblockR (Tarray t 0) q -|- aligned_ofR t ** validR.
   Proof.
-    move=> Hsz. rewrite (tblockR_array_better t 0 q sz) //=.
+    move=> Hsz Hok. rewrite (tblockR_array_better t 0 q sz) //=.
     by rewrite _offsetR_sub_0 ?right_id.
   Qed.
 
   Example empty_array_typed_decomposition t q sz :
     size_of σ t = Some sz ->
+    realign_ok t sz = true ->
     tblockR (Tarray t 0) q -|- aligned_ofR t ** validR.
   Proof.
-    move=> Hsz. by rewrite (tblockR_array_zero t q sz Hsz) comm.
+    move=> Hsz Hok. by rewrite (tblockR_array_zero t q sz Hsz Hok) comm.
   Qed.
 
   (* A zero length must not make an unsized element type admissible. *)
@@ -112,7 +115,7 @@ Section with_cpp.
       p .["unsigned short" ! 2] |-> tblockR "unsigned short" q) ** P).
   Proof.
     iIntros "#T".
-    iDestruct (tblockR_array_typed p "unsigned short" 3 2 q ltac:(done) eq_refl with "T") as "#C".
+    iDestruct (tblockR_array_typed p "unsigned short" 3 2 q ltac:(done) eq_refl eq_refl with "T") as "#C".
     iEval (rewrite /= !_offsetR_sub_0 ?right_id //) in "C".
     iEval (rewrite !_at_sep !_at_offsetR) in "C".
     iSplit; iIntros "[B $]"; by iApply "C".
@@ -127,7 +130,7 @@ Section with_cpp.
        .[Tarray Tbyte 0 ! 1] |-> tblockR (Tarray Tbyte 0) q)).
   Proof.
     iIntros "#T".
-    iDestruct (tblockR_array_typed p (Tarray Tbyte 0) 2 0 q ltac:(done) eq_refl with "T") as "C".
+    iDestruct (tblockR_array_typed p (Tarray Tbyte 0) 2 0 q ltac:(done) eq_refl eq_refl with "T") as "C".
     by iEval (rewrite /= !_offsetR_sub_0 ?right_id //) in "C".
   Qed.
 
@@ -152,24 +155,24 @@ Section alignment_source_validity.
   Context `{Σ : cpp_logic} {σ : genv}.
 
   Lemma byte_alignment_without_source_validity (p : ptr) (t : Rtype) (sz i : N)
-      (Hsz : size_of σ t = Some sz) :
+      (Hsz : size_of σ t = Some sz) (Hok : realign_ok t sz = true) :
     p |-> aligned_ofR t ** p .[ Tbyte ! Z.of_N (i * sz) ] |-> validR
     |-- p .[ Tbyte ! Z.of_N (i * sz) ] |-> aligned_ofR t.
   Proof.
     iIntros "[A D]".
-    iEval (rewrite -_at_offsetR -(aligned_ofR_byte_sub t sz i Hsz)
+    iEval (rewrite -_at_offsetR -(aligned_ofR_byte_sub t sz i Hsz Hok)
       !_at_sep _at_validR).
     Fail solve [iFrame].
   Abort.
 
   Example byte_alignment_with_source_validity (p : ptr) (t : Rtype) (sz i : N)
-      (Hsz : size_of σ t = Some sz) :
+      (Hsz : size_of σ t = Some sz) (Hok : realign_ok t sz = true) :
     p |-> aligned_ofR t ** valid_ptr p **
     p .[ Tbyte ! Z.of_N (i * sz) ] |-> validR
     |-- p .[ Tbyte ! Z.of_N (i * sz) ] |-> aligned_ofR t.
   Proof.
     iIntros "(A & V & D)".
-    iEval (rewrite -_at_offsetR -(aligned_ofR_byte_sub t sz i Hsz)
+    iEval (rewrite -_at_offsetR -(aligned_ofR_byte_sub t sz i Hsz Hok)
       !_at_sep _at_validR).
     by iFrame.
   Qed.

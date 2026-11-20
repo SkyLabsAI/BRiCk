@@ -1715,7 +1715,7 @@ Module SimpleCPP.
           (erase_qualifiers elem) n d (n+i) (Z.of_N esz * i) z0
           Hpath E0 (proj1 Hrange) Hb).
       Qed.
-      Lemma aligned_ptr_ty_subscript resolve p ty sz i :
+      Lemma aligned_ptr_ty_subscript resolve p ty sz i `{!@RealignOk resolve ty} :
         size_of resolve ty = Some sz ->
         @aligned_ptr_ty resolve ty p ->
         is_Some (@ptr_vaddr resolve p) ->
@@ -1762,7 +1762,7 @@ Module SimpleCPP.
       destruct Halp as [[a [Ha Hda']]|Hnone]; last congruence.
       have Ea : a = va by congruence. subst a.
       have Hdva : (bal | va)%N := N.divide_trans _ _ _ Hdiv Hda'.
-      destruct (align_of_size_of' (Tnamed base) bsz Hbs) as (al & Habal & Hnz & _).
+      destruct (align_of_size_of_some (Tnamed base) bsz Hbs) as (al & Habal & Hnz).
       have Eal : al = bal by congruence. subst al.
       have Hdiv' : (Z.of_N bal | Z.of_N va')%Z.
       { rewrite Hsum. apply Z.divide_add_r; [exact: N2Z_inj_divide|exact Hdz]. }
@@ -2484,6 +2484,8 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
       iDestruct (type_ptr_size with "T") as %(total & Htotal).
       destruct (proj1 (size_of_array_shatter ty n total) Htotal)
         as (esz & -> & Hes & Harray).
+      destruct (size_of_array_realign_ok _ _ _ Htotal) as (esz' & Hes' & Hok).
+      rewrite Hes in Hes'. injection Hes' as <-.
       iDestruct (type_ptr_subscript_valid (Tarray ty n) p (n*esz)%N ty esz
         (Z.of_N m) pred.Strict Harray Hes ltac:(rewrite N2Z.inj_mul; nia)
         ltac:(intros _; destruct (decide (esz=0%N));
@@ -2495,7 +2497,8 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
       rewrite /aligned_ptr_ty align_of_array in Hal.
       iDestruct (type_ptr_strict_valid with "T") as "V0".
       iDestruct (_valid_ptr_vaddr (resolve:=σ) with "V0") as %Hva.
-      have Hal' := aligned_ptr_ty_subscript σ p ty esz (Z.of_N m) Hes Hal Hva.
+      pose proof (RealignOk_of_ok σ ty esz Hes Hok) as HR.
+      pose proof (aligned_ptr_ty_subscript σ p ty esz (Z.of_N m) Hes Hal Hva) as Hal'.
       iDestruct (strict_valid_ptr_nonnull_alloc_id with "Vi") as %(aid & Haid & Hneq).
       rewrite /type_ptr. iSplit.
       { iPureIntro. intros E. rewrite E ptr_alloc_id_nullptr in Haid.
