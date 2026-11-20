@@ -1184,6 +1184,23 @@ static fmt::Formatter &printConstructor(CoqPrinter &print,
     }
 }
 
+/// clang gives every implicit or defaulted destructor that it defines an
+/// empty body (see `Sema::DefineImplicitDestructor`), leaving the
+/// destruction of members and bases to code generation. Such destructors are
+/// printed as `Defaulted`, whose semantics destroys members and bases, so the
+/// logic need not relate `Defaulted` declarations to `CompilerProvided`
+/// definitions. Any other body is unexpected and unsupported.
+static fmt::Formatter &printCompilerProvidedDtorBody(CoqPrinter &print,
+                                                     const CXXDestructorDecl &decl,
+                                                     const Stmt &body,
+                                                     ClangPrinter &cprint) {
+    if (auto cs = dyn_cast<CompoundStmt>(&body); cs && cs->body_empty())
+        return print.output() << "(Some Defaulted)";
+    unsupported(cprint, loc::of(decl),
+                "compiler-provided destructor with a non-empty body");
+    return print.none();
+}
+
 static fmt::Formatter &printDestructor(CoqPrinter &print,
                                        const CXXDestructorDecl &decl,
                                        ClangPrinter &cprint,
@@ -1196,8 +1213,10 @@ static fmt::Formatter &printDestructor(CoqPrinter &print,
     cprint.printCallingConv(print, decl) << fmt::nbsp;
     cprint.printExceptionSpec(print, decl) << fmt::nbsp;
     if (auto body = decl.getBody()) {
+        if (decl.isImplicit() || decl.isDefaulted())
+            return printCompilerProvidedDtorBody(print, decl, *body, cprint);
         guard::some some(print);
-        guard::ctor _(print, orDefaultBodyCtorName(decl));
+        guard::ctor _(print, "UserDefined");
         return cprint.printStmt(print, body);
     } else if (decl.isDefaulted() || isImplicitSpecialMethod(decl)) {
         return print.output() << "(Some Defaulted)";
