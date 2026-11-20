@@ -49,7 +49,7 @@ Proof. apply sub_module_mismatch.not_sub_module. vm_compute. discriminate. Qed.
 (** cpp2v never emits a return type that [normalize_type] changes, such as
     stacked qualifiers.  Two such spellings of one type are distinct. *)
 Definition ret_fn (ret : type) : ObjValue :=
-  Ofunction (Build_Func ret nil CC_C Ar_Definite exception_spec.MayThrow None).
+  Ofunction (Build_Func ret nil CC_C Ar_Definite exception_spec.MayThrow nil None).
 
 Example stacked_qualifiers_distinct :
   ObjValue_le (ret_fn (Tqualified QC (Tqualified QV Tint))) (ret_fn (Tqualified QCV Tint)) = false.
