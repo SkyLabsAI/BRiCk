@@ -45,9 +45,11 @@ Minor extensions to <span class="inlinecode"><span class="id" title="var">Ltac2.
 
 <div class="doc">
 <span class="inlinecode"><span class="id" title="var">entirely_closed</span></span> <span class="inlinecode"><span class="id" title="var">c</span></span> indicates whether <span class="inlinecode"><span class="id" title="var">c</span></span> is free of: undefined evars,
-      unbound rels, named evars without a bode, named variables whose body is
-      not <span class="inlinecode"><span class="id" title="var">entirely_closed</span></span>. Note that opaque and transparent constants are
-      considered <span class="inlinecode"><span class="id" title="var">entirely_closed</span></span>. 
+      unbound rels, named evars without a body, named variables without a body,
+      named variables whose body is not <span class="inlinecode"><span class="id" title="var">entirely_closed</span></span>. Opaque and
+      transparent constants are checked for dependencies on not
+      <span class="inlinecode"><span class="id" title="var">entirely_closed</span></span> section variables but are otherwise considered
+      <span class="inlinecode"><span class="id" title="var">entirely_closed</span></span>. 
 </div>
 <div class="code">
 &nbsp;&nbsp;<span class="id" title="keyword">Ltac2</span> @ <span class="id" title="var">external</span> <span class="id" title="var">entirely_closed</span> : <span class="id" title="keyword">constr</span> -&gt; <span class="id" title="var">bool</span> :=<br/>
