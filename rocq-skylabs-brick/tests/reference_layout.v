@@ -30,14 +30,14 @@ Section with_genv.
   Example lvalue_reference_alignment ty :
     is_Some (@align_of σ (Tref ty)).
   Proof.
-    destruct (align_of_size_of' (Tref ty) _ (size_of_ref ty)) as [al [Hal _]].
+    destruct (align_of_size_of_some (Tref ty) _ (size_of_ref ty)) as [al [Hal _]].
     by exists al.
   Qed.
 
   Example rvalue_reference_alignment ty :
     is_Some (@align_of σ (Trv_ref ty)).
   Proof.
-    destruct (align_of_size_of' (Trv_ref ty) _ (size_of_rv_ref ty)) as [al [Hal _]].
+    destruct (align_of_size_of_some (Trv_ref ty) _ (size_of_rv_ref ty)) as [al [Hal _]].
     by exists al.
   Qed.
 End with_genv.

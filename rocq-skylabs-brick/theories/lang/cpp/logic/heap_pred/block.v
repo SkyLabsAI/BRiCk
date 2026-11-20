@@ -140,15 +140,19 @@ Section tblockR.
 
   (** Array storage is its elements' storage at byte offsets, together with
       the validity of the end pointer and the array's alignment. Unsized
-      element types have no storage. *)
+      element types have no storage, and neither do arrays whose element size
+      is not a multiple of the element's stated alignment ([realign_ok]):
+      those have no [size_of]. *)
   Axiom tblockR_array_unfold : forall t n q,
     tblockR (Tarray t n) q -|-
     match size_of σ t with
     | Some sz =>
+        if realign_ok t sz then
         aligned_ofR t **
         .[ Tbyte ! Z.of_N (n * sz) ] |-> validR **
         [∗list] i ∈ seq 0 (N.to_nat n),
           .[ Tbyte ! Z.of_N (N.of_nat i * sz) ] |-> tblockR t q
+        else False
     | None => False
     end.
 

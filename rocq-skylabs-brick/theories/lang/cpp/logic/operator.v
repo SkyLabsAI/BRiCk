@@ -230,12 +230,14 @@ End comparable.
 
     [alignof(T)] divides [sizeof(T)] ([align_of_size_of']), so offsetting a
     valid [ty]-aligned pointer by whole [ty] elements preserves [ty]-alignment.
+    This needs [RealignOk]: an over-aligned [ty] such as [Trealigned 32 Tint]
+    has size 4 and alignment 32, so stepping by one element loses alignment.
     Alignment does not require the result to be valid. The typing rules below
     separately require result validity to rule out running off the object. *)
 Section aligned_sub.
   Context `{cpp_logic} {σ}.
 
-  Lemma aligned_ptr_ty_sub (p : ptr) (n : Z) ty :
+  Lemma aligned_ptr_ty_sub (p : ptr) (n : Z) ty `{!@RealignOk σ ty} :
     is_Some (size_of σ ty) ->
     [| aligned_ptr_ty ty p |] ∗ valid_ptr p
     ⊢ [| aligned_ptr_ty ty (p ,, _sub ty n) |].
@@ -266,7 +268,7 @@ Section aligned_sub.
   Qed.
 
   (** Hence the [has_type] the result needs. *)
-  Lemma has_type_ptr_sub (p : ptr) (n : Z) ty :
+  Lemma has_type_ptr_sub (p : ptr) (n : Z) ty `{!@RealignOk σ ty} :
     is_Some (size_of σ ty) ->
     has_type (Vptr p) (Tptr ty) ∗ valid_ptr (p ,, _sub ty n)
     ⊢ has_type (Vptr (p ,, _sub ty n)) (Tptr ty).
@@ -278,7 +280,7 @@ Section aligned_sub.
 
   (** [eval_ptr_int_op] offsets by the qualifier-erased type while still typing
       the result at [ty]; [aligned_ptr_ty_erase_qualifiers] reconciles the two. *)
-  Lemma has_type_ptr_sub_erase (p : ptr) (n : Z) ty :
+  Lemma has_type_ptr_sub_erase (p : ptr) (n : Z) ty `{!@RealignOk σ ty} :
     is_Some (size_of σ ty) ->
     has_type (Vptr p) (Tptr ty) ∗ valid_ptr (p ,, _sub (erase_qualifiers ty) n)
     ⊢ has_type (Vptr (p ,, _sub (erase_qualifiers ty) n)) (Tptr ty).
@@ -354,6 +356,7 @@ Section skeletons.
   Definition eval_ptr_int_op (E : EVAL) tu (bo : BinOp) (f : Z -> Z) : Prop :=
     forall w s p1 p2 o ty,
       is_Some (size_of σ ty) ->
+      @RealignOk σ ty ->
       p2 = p1 ,, _sub (erase_qualifiers ty) (f o) ->
       has_type (Vptr p1) (Tptr ty) ∗ has_type (Vint o) (Tnum w s) ∗
       valid_ptr p2 ⊢
@@ -364,6 +367,7 @@ Section skeletons.
   Definition eval_int_ptr_op (E : EVAL) tu (bo : BinOp) (f : Z -> Z) : Prop :=
     forall w s p1 p2 o ty,
       is_Some (size_of σ ty) ->
+      @RealignOk σ ty ->
       p2 = p1 ,, _sub (erase_qualifiers ty) (f o) ->
       has_type (Vint o) (Tnum w s) ∗ has_type (Vptr p1) (Tptr ty) ∗
       valid_ptr p2 ⊢

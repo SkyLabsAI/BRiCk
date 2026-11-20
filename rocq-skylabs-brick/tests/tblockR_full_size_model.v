@@ -29,20 +29,24 @@ Section with_cpp.
     fullR (Tarray t n) q -|-
     match size_of σ t with
     | Some sz =>
+        if realign_ok t sz then
         aligned_ofR t **
         .[ Tbyte ! Z.of_N (n * sz) ] |-> validR **
         [∗list] i ∈ seq 0 (N.to_nat n),
           .[ Tbyte ! Z.of_N (N.of_nat i * sz) ] |-> fullR t q
+        else False
     | None => False
     end.
   Proof.
     destruct (size_of σ t) as [sz|] eqn:Hsz; last by rewrite /tblockR_raw /= Hsz.
+    destruct (realign_ok t sz) eqn:Hok; last by rewrite /tblockR_raw /= Hsz Hok.
+    pose proof (RealignOk_of_ok σ t sz Hsz Hok) as HR.
     destruct (align_of_size_of' _ _ Hsz) as (al & Hal & Hal0 & Hdvd).
     have HA : aligned_ofR t -|- alignedR al.
     { rewrite aligned_ofR.unlock Hal. iSplit.
       - iIntros "(%a & %Ha & H)". by simplify_eq.
       - iIntros "H". iExists al. by iFrame. }
-    rewrite /tblockR_raw /= Hsz /= align_of_array Hal.
+    rewrite /tblockR_raw /= Hsz Hok /= align_of_array Hal.
     have HC := blockR_chunks (N.to_nat n) sz q. rewrite N2Nat.id in HC.
     setoid_rewrite <- HA.
     iSplit.
@@ -51,7 +55,7 @@ Section with_cpp.
       iEval (rewrite HC) in "B". iDestruct "B" as "[E B]". iFrame "A E".
       iApply (big_sepL_impl with "B").
       iIntros "!>" (k i Hi) "$".
-      iApply (aligned_ofR_byte_sub t sz (N.of_nat i) Hsz). by iFrame "A Vp".
+      iApply (aligned_ofR_byte_sub t sz (N.of_nat i) Hsz Hok). by iFrame "A Vp".
     - rewrite HC. iIntros "(#A & E & B)". iFrame "A E".
       iApply (big_sepL_impl with "B"). iIntros "!>" (k i Hi) "B".
       rewrite _offsetR_sep. iDestruct "B" as "[$ _]".
