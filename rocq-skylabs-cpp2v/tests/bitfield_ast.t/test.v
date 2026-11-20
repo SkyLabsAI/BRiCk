@@ -168,3 +168,5 @@ Section expected.
        "int"))].
   Proof. vm_compute. reflexivity. Qed.
 End expected.
+Eval vm_compute in body_of "cleanup(S&)".
+Eval vm_compute in body_of "cleanup_rd(S&)".

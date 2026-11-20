@@ -78,3 +78,13 @@ int operand_only(S &s, int &x, bool c) { return (s.a, x) + (c ? s.a + 0 : x); }
 // In a template, a type-dependent assignment keeps its ordinary node; the
 // increment is not dependent.
 template<class X> void tmpl(S &s, X x) { s.a = x; s.a += x; ++s.a; }
+// A full-expression that destroys a temporary: the cleanup has its own node
+// when its result is a bit-field glvalue, and is ordinary under a
+// conversion.
+struct Tmp {
+    ~Tmp();
+    int v;
+};
+Tmp mk_tmp();
+void cleanup(S &s) { s.a = mk_tmp().v; }
+int cleanup_rd(S &s) { return s.a = mk_tmp().v; }

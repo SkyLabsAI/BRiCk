@@ -317,6 +317,7 @@ Module decltype.
         | Ebf_postdec _ t => mret t
         | Ebf_comma _ e2 => of_expr e2
         | Ebf_glvalue e => of_expr e
+        | Ebf_andclean e => of_expr e
         | Eseqand _ _
         | Eseqor _ _ => mret Tbool
         | Ecomma _ e2 => of_expr e2
@@ -402,10 +403,11 @@ Definition type_of (e : Expr) : exprtype := (exprtype_of_expr e).2.
 (**
 [is_bf_glvalue e] holds when the head constructor of [e] is one of the nodes
 for bit-field glvalues: [Ebitfield], [Ebf_comma], [Ebf_if], [Ebf_assign],
-[Ebf_assign_op], [Ebf_preinc], [Ebf_predec], and [Ebf_glvalue]. These are
-exactly the nodes evaluated by [wp_bitfield_glval] rather than by [wp_lval]
-or [wp_xval] (see ../logic/wp.v). The test is not recursive: cpp2v marks
-every parent whose result is a bit-field with its own node.
+[Ebf_assign_op], [Ebf_preinc], [Ebf_predec], [Ebf_andclean], and
+[Ebf_glvalue]. These are exactly the nodes evaluated by [wp_bitfield_glval]
+rather than by [wp_lval] or [wp_xval] (see ../logic/wp.v). The test is not
+recursive: cpp2v marks every parent whose result is a bit-field with its own
+node.
 
 [Ebf_glvalue e] only occurs as an arm of [Ebf_if]; we include it so that
 the test agrees with the domain of [wp_bitfield_glval], under which it
@@ -415,6 +417,7 @@ Definition is_bf_glvalue (e : Expr) : bool :=
   match e with
   | Ebitfield _ _ _ _
   | Ebf_glvalue _
+  | Ebf_andclean _
   | Ebf_comma _ _
   | Ebf_if _ _ _ _
   | Ebf_assign _ _ _

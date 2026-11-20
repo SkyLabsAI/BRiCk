@@ -801,6 +801,7 @@ Module decltype.
             let* edt := of_expr e >>= arrow_deref_get arrow in
             of_member edt false t
         | Ebf_glvalue e => of_expr e
+        | Ebf_andclean e => of_expr e
         | Emember_ignore arrow eobj e =>
             let* _ := of_expr eobj >>= if arrow then require_ptr else mret in
             of_expr e

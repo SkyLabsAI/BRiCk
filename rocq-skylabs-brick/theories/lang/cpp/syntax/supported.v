@@ -439,7 +439,7 @@ Section with_monad.
     | Elambda nm es => name nm <+> lst expr es
     | Econstructor nm es t => REF nm <+> name nm <+> lst expr es <+> type t
     | Einherited_constructor nm _ t => REF nm <+> name nm <+> type t
-    | Eimplicit e | Ebf_glvalue e => expr e
+    | Eimplicit e | Ebf_glvalue e | Ebf_andclean e => expr e
     | Emember_ignore _ _ e => expr e
     | Eimplicit_init t => type t
     | Eparam _ => OK

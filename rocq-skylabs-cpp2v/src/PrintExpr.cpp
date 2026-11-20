@@ -2441,7 +2441,10 @@ public:
         // structured bindings, and in default member initializers used
         // by aggregate initialization. See the comment on
         // [wp_lval_clean] in <<logic/expr.v>>.
-        print.ctor("Eandclean");
+        // A full-expression whose result is a bit-field glvalue has its own
+        // node (see [Ebf_andclean] in syntax/core.v).
+        print.ctor(expr->getSubExpr()->refersToBitField() ? "Ebf_andclean"
+                                                          : "Eandclean");
         if (ClangPrinter::debug && cprint.trace(Trace::Expr)) {
             auto &os = llvm::errs();
             os << "and_clean objects: " << expr->getNumObjects() << "\n";
