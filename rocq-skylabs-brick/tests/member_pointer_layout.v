@@ -37,7 +37,7 @@ Section with_genv.
   Example member_pointer_alignment cls ty :
     is_Some (@align_of σ (Tmember_pointer cls ty)).
   Proof.
-    destruct (align_of_size_of' _ _ (size_of_member_pointer cls ty)) as [al [Hal _]].
+    destruct (align_of_size_of_some _ _ (size_of_member_pointer cls ty)) as [al [Hal _]].
     by exists al.
   Qed.
 End with_genv.

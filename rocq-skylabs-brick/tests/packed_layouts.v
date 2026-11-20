@@ -135,6 +135,26 @@ Proof. vm_compute. reflexivity. Qed.
 Lemma align_of_realigned_int {σ : genv} : align_of (Trealigned 1 Tint) = Some 1%N.
 Proof. by apply: (align_of_realigned _ _ 4). Qed.
 
+(* [Trealigned] can also over-align: [int] has size 4, yet can sit at 32. *)
+Lemma align_of_realigned_overaligned_int {σ : genv} :
+  align_of (Trealigned 32 Tint) = Some 32%N.
+Proof. by apply: (align_of_realigned _ _ 4). Qed.
+
+(* Clang rejects arrays whose element size is not a multiple of the element
+   alignment, so such arrays have no size (even under qualifiers). *)
+Example overaligned_array_has_no_size {σ : genv} :
+  size_of σ (Tarray (Trealigned 32 Tint) 2) = None.
+Proof. reflexivity. Qed.
+Example qualified_overaligned_array_has_no_size {σ : genv} :
+  size_of σ (Tarray (Tconst (Trealigned 32 Tint)) 2) = None.
+Proof. reflexivity. Qed.
+Example underaligned_array_size {σ : genv} :
+  size_of σ (Tarray (Trealigned 1 Tint) 2) = Some 8%N.
+Proof. reflexivity. Qed.
+(* A single over-aligned object keeps its size. *)
+Example overaligned_size {σ : genv} : size_of σ (Trealigned 32 Tint) = Some 4%N.
+Proof. reflexivity. Qed.
+
 Example reject_base_layout :
   (fun n => source.(types) !! n) <$>
     ["BadDerived"; "BadDerivedTypedef"]%cpp_name =
@@ -152,3 +172,23 @@ Proof. vm_compute. reflexivity. Qed.
 Example reference_storage_size :
   source.(types) !! "References"%cpp_name ≫= GlobDecl_size_of = Some 16%N.
 Proof. vm_compute. reflexivity. Qed.
+
+(* [RealignOk] is found by instance search on concrete types, and fails
+   quickly on an abstract one. *)
+Section realign_ok_instances.
+  Context {σ : genv}.
+  Example realign_ok_named : @RealignOk σ "Ordinary"%cpp_type := _.
+  Example realign_ok_ptr : @RealignOk σ (Tptr (Trealigned 32 Tint)) := _.
+  Example realign_ok_qualified : @RealignOk σ (Tconst "Ordinary"%cpp_type) := _.
+  Example realign_ok_array : @RealignOk σ (Tarray Tint 3) := _.
+  Example realign_ok_array_named : @RealignOk σ (Tarray "Ordinary"%cpp_type 3) := _.
+  Example realign_ok_underaligned : @RealignOk σ (Tarray (Trealigned 1 Tint) 3) := _.
+  Example realign_ok_erase : @RealignOk σ (erase_qualifiers (Tconst (Tarray Tint 2))) := _.
+  Example realign_ok_overaligned_scalar_fails :
+    @RealignOk σ (Trealigned 32 Tint) -> False.
+  Proof.
+    intros H. have := H 4%N eq_refl. vm_compute. done.
+  Qed.
+  Example realign_ok_abstract_fails (ty : type) : True.
+  Proof. Fail Timeout 5 assert (@RealignOk σ ty) by apply _. done. Qed.
+End realign_ok_instances.
