@@ -128,6 +128,7 @@ Definition default_initialize_body `{Σ : cpp_logic, σ : genv}
     if q_volatile q then UNSUPPORTED "default initialize volatile"
     else if q_const q then ERROR "default initialize const"
     else default_initialize ty p Q
+  | Tattributed _ _ => UNSUPPORTED "default initialize: attributed type"
   | Tunsupported msg => UNSUPPORTED msg
   | Tdecltype _ => ERROR "default initialization requires a runtime type, got 'decltype(())'"
   | Texprtype _ => ERROR "default initialization requires a runtime type, got 'decltype()'"
@@ -442,6 +443,7 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
 
     | Tqualified _ ty => |={top}=>?u False (* unreachable *)
     | Tarch _ _ => UNSUPPORTED (initializing_type ty init)
+    | Tattributed _ _ => UNSUPPORTED (initializing_type ty init)
     | Tunsupported _ => UNSUPPORTED (initializing_type ty init)
     | Tdecltype _ =>  UNSUPPORTED (initializing_type ty init)
     | Texprtype _ =>  UNSUPPORTED (initializing_type ty init)
@@ -902,7 +904,7 @@ Section wp_initialize.
   | WpInitUnsupported cv ty' : match ty' with
                         | Tfunction _ | Tarch _ _
                         | Tincomplete_array _ | Tvariable_array _ _
-                        | Tunsupported _ | Tdecltype _ | Texprtype _
+                        | Tattributed _ _ | Tunsupported _ | Tdecltype _ | Texprtype _
                         | Tparam _ | Tresult_param _ | Tresult_global _
                         | Tresult_unop _ _ | Tresult_binop _ _ _
                         | Tresult_call _ _ | Tresult_member_call _ _ _
