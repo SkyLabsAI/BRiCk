@@ -53,6 +53,17 @@
         ("P::P(const P&)"%pstring, "partial"%pstring, [],
          ["not elaborated: no verdict (cpp2v did not elaborate this defaulted member)"%pstring],
          [], []);
+        ("long_double_ptr(?Builtin long double*)"%pstring,
+         "unsupported"%pstring,
+         ["name may denote several entities (it contains an unsupported part): cpp.prog dropped it"%pstring],
+         [], [], []);
+        ("anon_ptr(?record*)"%pstring, "unsupported"%pstring,
+         ["name may denote several entities (it contains an unsupported part): cpp.prog dropped it"%pstring],
+         [], [], []);
+        ("long_double_ptr(?Builtin long double*)"%pstring,
+         "unsupported"%pstring,
+         ["name may denote several entities (it contains an unsupported part): cpp.prog dropped it"%pstring],
+         [], [], []);
         (""%pstring, "missing"%pstring, [], [], [], []);
         ("ns_get(NS*)"%pstring, "supported"%pstring, [], [], [], []);
         ("sizeof_expr(S&)"%pstring, "supported"%pstring, [], [], [], [])]
@@ -66,6 +77,7 @@
         ("__builtin_memcpy"%pstring, "supported"%pstring);
         ("__builtin_strcmp"%pstring, "supported"%pstring);
         ("_setjmp"%pstring, "supported"%pstring);
+        ("anon_p"%pstring, "unsupported"%pstring);
         ("jb"%pstring, "supported"%pstring);
         ("memcpy"%pstring, "supported"%pstring);
         ("strlen"%pstring, "supported"%pstring);
@@ -157,5 +169,15 @@
         ("__builtin_va_list"%pstring, "supported"%pstring);
         ("__int128_t"%pstring, "supported"%pstring);
         ("__uint128_t"%pstring, "supported"%pstring);
-        ("jmp_buf_t"%pstring, "supported"%pstring)]
+        ("jmp_buf_t"%pstring, "supported"%pstring);
+        ("?record"%pstring, "unsupported"%pstring);
+        ("anon_ptr(?record*)"%pstring, "unsupported"%pstring);
+        ("long_double_ptr(?Builtin long double*)"%pstring,
+         "unsupported"%pstring);
+        ("?record::<ctor>()"%pstring, "unsupported"%pstring);
+        ("?record::<ctor>(?record const&)"%pstring, "unsupported"%pstring);
+        ("?record::<ctor>(?record&&)"%pstring, "unsupported"%pstring);
+        ("?record::<dtor>"%pstring, "unsupported"%pstring);
+        ("?record::operator=(?record const&)"%pstring, "unsupported"%pstring);
+        ("?record::operator=(?record&&)"%pstring, "unsupported"%pstring)]
      : list (string * string)
