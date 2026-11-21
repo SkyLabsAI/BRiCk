@@ -64,6 +64,7 @@ module =
     {|
       TM.this := NM.Raw.Leaf mcore.tpreinst;
       TM.is_bst := internal.NameMap.Raw.Proofs.empty_bst mcore.tpreinst
-    |}
+    |};
+  dropped_symbols := []
 |}
      : translation_unit
