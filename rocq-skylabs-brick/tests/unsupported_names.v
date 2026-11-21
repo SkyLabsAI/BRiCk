@@ -41,3 +41,10 @@ Proof. vm_compute. reflexivity. Qed.
 Example ordinary_symbols_kept :
   is_Some (tu.(symbols) !! "r"%cpp_name) /\ is_Some (tu.(symbols) !! "t"%cpp_name).
 Proof. split; vm_compute; eexists; reflexivity. Qed.
+
+(** [decls] records each dropped symbol once, in [dropped_symbols]:
+    [v<?record*>] (for both [r] and [s]) and [w<?>] (for both [t] and [u]). *)
+Example dropped_symbols_recorded :
+  List.forallb has_unsupportedN tu.(dropped_symbols) = true /\
+  length tu.(dropped_symbols) = 2.
+Proof. split; vm_compute; reflexivity. Qed.
