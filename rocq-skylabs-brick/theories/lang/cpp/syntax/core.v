@@ -1231,6 +1231,7 @@ with has_unsupportedT (t : type) : bool :=
   | Tmember_pointer gn t => has_unsupportedT gn || has_unsupportedT t
   | Tfloat_ _ => false
   | Tqualified _ t => has_unsupportedT t
+  | Trealigned _ t => has_unsupportedT t
   | Tnullptr
   | Tarch _ _ => false
   | Tdecltype e => has_unsupportedE e
