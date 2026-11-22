@@ -296,6 +296,13 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
       letI* v, free := wp_operand tu ρ init in
       let qf := cQp.mk (q_const cv) 1 in
       addr |-&gt; tptsto_fuzzyR (erase_qualifiers ty) qf v -* |={top}=&gt;?u Q free
+    | Trealigned _ _ =&gt;
+      (* Only an under-aligned object of a value type is a heap object. *)
+      if is_value_type ty then
+        letI* v, free := wp_operand tu ρ init in
+        let qf := cQp.mk (q_const cv) 1 in
+        addr |-&gt; tptsto_fuzzyR (erase_qualifiers ty) qf v -* |={top}=&gt;?u Q free
+      else UNSUPPORTED (initializing_type ty init)
 
       (* non-primitives are handled via prvalue-initialization semantics *)
     | Tarray _ len =&gt;
