@@ -1,5 +1,5 @@
-(lang dune 3.22)
-(using rocq 0.12)
+(lang dune 3.26)
+(using rocq 0.15)
 (name rocq-skylabs-brick)
 
 (generate_opam_files)
@@ -31,6 +31,7 @@
  (synopsis "Frontend and program logic for C++")
  (depends
   rocq-upoly
+  ltac2-extra
   rocq-iris
   rocq-lens
   rocq-lens-elpi

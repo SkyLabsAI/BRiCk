@@ -2,34 +2,35 @@
 
 (rocq.theory
  (name skylabs.lang.cpp.parser.plugin)
+ (public_name rocq-skylabs-brick-cpp-prog)
  (package rocq-skylabs-brick-cpp-prog)
  (plugins rocq-skylabs-brick-cpp-prog.plugin)
  (generate_project_file)
  (theories
-  skylabs.lang.cpp
-  Stdlib
+  rocq-skylabs-brick
+  rocq-stdlib
   ; transitive dependencies
-  stdpp
-  skylabs.upoly
-  elpi
-  elpi_elpi
-  elpi.apps.locker
-  elpi.apps.NES
-  Lens
-  Lens.Elpi
-  Ltac2
-  skylabs.ltac2.extra
-  skylabs.prelude
-  iris
-  Flocq
-  skylabs.iris.extra
-  Equations
-  Equations.Prop
-  Equations.Type
-  elpi.apps.NES.elpi
-  elpi.apps.derive
-  elpi.apps.derive.elpi
-  elpi.apps.locker.elpi))
+  rocq-stdpp
+  rocq-upoly
+  rocq-elpi
+  rocq-elpi.files
+  rocq-elpi.apps.locker
+  rocq-elpi.apps.NES
+  rocq-lens
+  rocq-lens-elpi
+  rocq-core.ltac2
+  ltac2-extra
+  rocq-skylabs-prelude
+  rocq-iris
+  rocq-flocq
+  rocq-skylabs-iris
+  rocq-equations.core
+  rocq-equations.prop
+  rocq-equations.type
+  rocq-elpi.apps.NES.files
+  rocq-elpi.apps.derive
+  rocq-elpi.apps.derive.files
+  rocq-elpi.apps.locker.files))
 
 (rule
  (target cpp2v_version.v)
@@ -44,9 +45,6 @@
 
 (rule
  (target cpp2v_inline)
- (deps
-  (universe)
-  (sandbox none))
  (action
   (progn
    (with-stdout-to

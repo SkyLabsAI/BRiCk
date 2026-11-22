@@ -1,5 +1,15 @@
 CHECK_CPP2V_ROCQC_ARGS="-w -notation-overridden -w -notation-incompatible-prefix"
 
+rocq() {
+    if [ "$1" = c ]; then
+        shift
+        command rocq c -I "${OCAMLPATH%%:*}" \
+            -package rocq-skylabs-brick-cpp-prog "$@"
+    else
+        command rocq "$@"
+    fi
+}
+
 sayDo() {
     echo "$@"
     eval "$*"

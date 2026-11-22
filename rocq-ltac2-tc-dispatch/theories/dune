@@ -1,12 +1,13 @@
 (include_subdirs qualified)
 (rocq.theory
  (name skylabs.ltac2.tc_dispatch)
+ (public_name ltac2-tc-dispatch)
  (package ltac2-tc-dispatch)
  (generate_project_file)
  (theories
-  Ltac2
-  Stdlib
-  skylabs.ltac2.extra
-  skylabs.ltac2.logger
+  rocq-core.ltac2
+  rocq-stdlib
+  ltac2-extra
+  ltac2-logger
  )
  (plugins ltac2-tc-dispatch.plugin))

@@ -23,8 +23,9 @@ license: "LicenseRef-BedRock"
 homepage: "https://github.com/SkyLabsAI/BRiCk"
 bug-reports: "https://github.com/SkyLabsAI/BRiCk/issues"
 depends: [
-  "dune" {>= "3.22"}
+  "dune" {>= "3.26"}
   "rocq-upoly"
+  "ltac2-extra"
   "rocq-iris"
   "rocq-lens"
   "rocq-lens-elpi"

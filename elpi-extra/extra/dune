@@ -2,17 +2,18 @@
 
 (rocq.theory
  (name skylabs.elpi.extra)
+ (public_name elpi-extra)
  (package elpi-extra)
  (generate_project_file)
  (theories
-  Stdlib
-  elpi
-  elpi_elpi
-  elpi.apps.NES
-  Ltac2
-  skylabs.ltac2.extra
+  rocq-stdlib
+  rocq-elpi
+  rocq-elpi.files
+  rocq-elpi.apps.NES
+  rocq-core.ltac2
+  ltac2-extra
   ; transitive dependencies
-  elpi.apps.NES.elpi
+  rocq-elpi.apps.NES.files
  ))
 
 (rule

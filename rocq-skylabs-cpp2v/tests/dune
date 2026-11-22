@@ -21,22 +21,20 @@
 
 (rule
  (target setup-cpp2v-command.sh)
- (deps
-  (universe)
-  (sandbox none))
  (action
   (with-stdout-to
    %{target}
    (progn
     ; The subshell keeps the adapter's exec from replacing the Cram shell.
-    (echo "cpp2v_command() (\n")
+    (echo "cpp2v_command() (\nconfig=$(mktemp)\ntrap 'rm -f \"$config\"' EXIT\ncat > \"$config\" <<'EOF'\n")
+    (cat %{dep:cpp_environment})
+    (echo "EOF\nset -- \"$config\" \"$@\"\n")
     (run
      %{bin:cpp2v-toolchain}
      wrapper
+     --config-from-argument
      --runner
      %{bin:cpp2v-run}
-     --config
-     %{dep:cpp_environment}
      --host-tool
      %{bin:cpp2v}
      --container-tool
@@ -55,7 +53,17 @@
  (deps
   (package rocq-core)
   (package rocq-stdlib)
+  (package rocq-stdpp)
+  (package rocq-iris)
+  (package rocq-elpi)
+  (package rocq-equations)
+  (package rocq-flocq)
   (package rocq-upoly)
+  (package rocq-skylabs-prelude)
+  (package rocq-skylabs-iris)
+  (package ltac2-extra)
+  (package rocq-lens)
+  (package rocq-lens-elpi)
   (package rocq-skylabs-brick)
   (package rocq-skylabs-cpp2v)
   (package rocq-skylabs-brick-cpp-prog)))

@@ -1,13 +1,14 @@
 (rocq.theory
  (name Lens.Elpi)
+ (public_name rocq-lens-elpi)
  (generate_project_file)
  (theories
-  Lens
-  elpi
-  elpi_elpi
-  elpi.apps.derive
+  rocq-lens
+  rocq-elpi
+  rocq-elpi.files
+  rocq-elpi.apps.derive
   ; transitive dependencies
-  elpi.apps.derive.elpi
+  rocq-elpi.apps.derive.files
  )
  (package rocq-lens-elpi))
 

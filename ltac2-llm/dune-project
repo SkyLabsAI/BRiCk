@@ -1,5 +1,5 @@
-(lang dune 3.22)
-(using rocq 0.12)
+(lang dune 3.26)
+(using rocq 0.15)
 (name ltac2-extra)
 
 (generate_opam_files)

@@ -3,5 +3,5 @@
  (name attrs_tests)
  (generate_project_file)
  (theories
-  Stdlib
-  attrs))
+  rocq-stdlib
+  rocq-attrs))

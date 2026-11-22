@@ -22,14 +22,14 @@ cat > dune <<EOF
 (rocq.theory
  (name test)
  (theories
-  Stdlib stdpp iris elpi elpi_elpi Ltac2
-  Flocq
-  skylabs.upoly skylabs.prelude skylabs.iris.extra skylabs.ltac2.extra skylabs.lang.cpp
-  skylabs.lang.cpp.parser.plugin Lens Lens.Elpi))
+  rocq-stdlib rocq-stdpp rocq-iris rocq-elpi rocq-elpi.files
+  rocq-core.ltac2 rocq-flocq rocq-upoly rocq-skylabs-prelude
+  rocq-skylabs-iris ltac2-extra rocq-skylabs-brick
+  rocq-skylabs-brick-cpp-prog rocq-lens rocq-lens-elpi))
 EOF
 
 cat > dune-project <<EOF
-(lang dune 3.22)
-(using rocq 0.12)
+(lang dune 3.26)
+(using rocq 0.15)
 EOF
 }

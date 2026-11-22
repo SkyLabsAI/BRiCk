@@ -3,14 +3,15 @@
  (name skylabs.noimport)
  (generate_project_file)
  (theories
-  skylabs.prelude
-  skylabs.iris.extra
-  skylabs.lang.cpp
-  iris
-  stdpp
+  rocq-skylabs-prelude
+  rocq-skylabs-iris
+  rocq-skylabs-brick
+  rocq-iris
+  rocq-stdpp
   ; transitive dependencies
-  Equations Equations.Prop Equations.Type Flocq Lens Lens.Elpi Ltac2 Stdlib elpi
-  elpi.apps.NES elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
-  elpi.apps.locker elpi.apps.locker.elpi elpi_elpi skylabs.ltac2.extra
-  skylabs.upoly
+  rocq-equations.core rocq-equations.prop rocq-equations.type rocq-flocq
+  rocq-lens rocq-lens-elpi rocq-core.ltac2 rocq-stdlib rocq-elpi
+  rocq-elpi.apps.NES rocq-elpi.apps.NES.files rocq-elpi.apps.derive
+  rocq-elpi.apps.derive.files rocq-elpi.apps.locker
+  rocq-elpi.apps.locker.files rocq-elpi.files ltac2-extra rocq-upoly
  ))

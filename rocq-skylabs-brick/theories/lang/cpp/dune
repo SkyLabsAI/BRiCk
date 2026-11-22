@@ -1,27 +1,30 @@
 (include_subdirs qualified)
 (rocq.theory
  (name skylabs.lang.cpp)
+ (public_name rocq-skylabs-brick)
  (package rocq-skylabs-brick)
  (generate_project_file)
  (theories
-  Stdlib
-  stdpp
-  skylabs.upoly
-  elpi
-  elpi_elpi
-  elpi.apps.locker
-  elpi.apps.NES
-  Lens
-  Lens.Elpi
-  Ltac2
-  skylabs.ltac2.extra
-  skylabs.prelude
-  iris
-  Flocq
-  skylabs.iris.extra
-  Equations
-  Equations.Prop
-  Equations.Type
+  rocq-stdlib
+  rocq-stdpp
+  rocq-upoly
+  rocq-elpi
+  rocq-elpi.files
+  rocq-elpi.apps.locker
+  rocq-elpi.apps.NES
+  rocq-lens
+  rocq-lens-elpi
+  rocq-core.ltac2
+  ltac2-extra
+  rocq-skylabs-prelude
+  rocq-iris
+  rocq-flocq
+  rocq-skylabs-iris
+  rocq-equations.core
+  rocq-equations.prop
+  rocq-equations.type
   ; transitive dependencies
-  elpi.apps.NES.elpi elpi.apps.derive elpi.apps.derive.elpi
-  elpi.apps.locker.elpi))
+  rocq-elpi.apps.NES.files
+  rocq-elpi.apps.derive
+  rocq-elpi.apps.derive.files
+  rocq-elpi.apps.locker.files))

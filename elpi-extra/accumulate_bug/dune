@@ -4,9 +4,9 @@
  (name accumulate_bug)
  (generate_project_file)
  (theories
-  elpi
+  rocq-elpi
   ; transitive dependencies
-  elpi_elpi
+  rocq-elpi.files
  ))
 
 (rule

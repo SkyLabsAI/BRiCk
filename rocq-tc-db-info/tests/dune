@@ -3,4 +3,4 @@
  (name tc_db_info_tests)
  (generate_project_file)
  (flags (:standard -test-mode))
- (theories Ltac2 tc_db_info))
+ (theories rocq-core.ltac2 rocq-tc-db-info))

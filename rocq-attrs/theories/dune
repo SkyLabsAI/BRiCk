@@ -1,7 +1,8 @@
 (include_subdirs qualified)
 (rocq.theory
  (name attrs)
+ (public_name rocq-attrs)
  (package rocq-attrs)
  (generate_project_file)
  (plugins rocq-attrs.params)
- (theories Stdlib))
+ (theories rocq-stdlib))

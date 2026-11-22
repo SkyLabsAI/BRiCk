@@ -3,9 +3,9 @@
  (name skylabs_tests.ltac2.tc_dispatch)
  (generate_project_file)
  (theories
-  Stdlib
-  skylabs.ltac2.extra
-  skylabs.ltac2.tc_dispatch
+  rocq-stdlib
+  ltac2-extra
+  ltac2-tc-dispatch
   ; transitive dependencies
-  Ltac2 skylabs.ltac2.logger
+  rocq-core.ltac2 ltac2-logger
  ))

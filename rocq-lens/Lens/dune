@@ -1,4 +1,5 @@
 (rocq.theory
  (name Lens)
+ (public_name rocq-lens)
  (package rocq-lens)
  (generate_project_file))

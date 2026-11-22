@@ -1,6 +1,6 @@
 (rocq.theory
  (name skylabs_cpp_prog.tests)
- (theories Stdlib skylabs.lang.cpp.parser.plugin))
+ (theories rocq-stdlib rocq-skylabs-brick-cpp-prog))
 
 (rule
  (targets

@@ -4,6 +4,8 @@
  (generate_project_file)
  (flags (:standard -test-mode))
  (theories
-  Stdlib stdpp skylabs.upoly elpi elpi_elpi elpi.apps.locker elpi.apps.NES
-  Lens Lens.Elpi Ltac2 skylabs.ltac2.extra elpi.apps.NES.elpi elpi.apps.derive
-  elpi.apps.derive.elpi elpi.apps.locker.elpi skylabs.prelude))
+  rocq-stdlib rocq-stdpp rocq-upoly rocq-elpi rocq-elpi.files
+  rocq-elpi.apps.locker rocq-elpi.apps.NES rocq-lens rocq-lens-elpi
+  rocq-core.ltac2 ltac2-extra rocq-elpi.apps.NES.files
+  rocq-elpi.apps.derive rocq-elpi.apps.derive.files
+  rocq-elpi.apps.locker.files rocq-skylabs-prelude))

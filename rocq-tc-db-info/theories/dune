@@ -1,9 +1,10 @@
 (include_subdirs qualified)
 (rocq.theory
  (name tc_db_info)
+ (public_name rocq-tc-db-info)
  (package rocq-tc-db-info)
  (generate_project_file)
  (theories
-  Ltac2
+  rocq-core.ltac2
  )
  (plugins rocq-tc-db-info.plugin))
