@@ -18,6 +18,7 @@ mkdir -p "$tmp/bin" "$DUNE_SOURCEROOT/tu" "$tmp/built tools & quote'"
 host="$tmp/built tools & quote'/cpp2v"
 cat > "$host" <<'EOF'
 #!/usr/bin/env bash
+[[ ${CPP2V_RUN_ACTIVE:-} == 1 ]] || exit 98
 printf '%s\0' "${0##*/}" "$@" > "$ARGV_LOG"
 exit "${MOCK_STATUS:-0}"
 EOF
@@ -159,6 +160,7 @@ make_adapter
 expect_status 0 "$adapter" "${args[@]}"
 read_args
 has_arg sha256:first
+has_arg CPP2V_RUN_ACTIVE=1
 has_arg "$DUNE_SOURCEROOT:$DUNE_SOURCEROOT"
 has_arg "$PWD"
 has_arg linux/amd64
@@ -366,3 +368,12 @@ expect_status 2 "$bash" "$factory" configure --image
 expect_status 2 "$bash" "$factory" configure --default-image
 expect_status 2 "$bash" "$runner" --config "$tmp/missing" -- "$host"
 expect_status 2 "$bash" "$runner" --config "$config" --env 'INVALID-NAME' -- "$host"
+
+# The runner owns the marker even when a caller requests forwarding it.
+export CPP2V_DOCKER_ENABLED=y
+"$bash" "$factory" configure --image test-image > "$config"
+expect_status 0 "$env" CPP2V_RUN_ACTIVE=0 "$bash" "$runner" \
+    --config "$config" --env CPP2V_RUN_ACTIVE -- /bin/true
+read_args
+has_arg CPP2V_RUN_ACTIVE=1
+expect_not has_arg CPP2V_RUN_ACTIVE

@@ -49,7 +49,7 @@ else
 fi
 
 case "$cpp_env_mode" in
-    n) exec "$host_tool" "$@" ;;
+    n) export CPP2V_RUN_ACTIVE=1; exec "$host_tool" "$@" ;;
     y) ;;
     *) fail "invalid toolchain mode: $cpp_env_mode" ;;
 esac
@@ -60,7 +60,7 @@ workspace=${workspace:-$cpp_env_workspace}
 [[ -d $workspace ]] || fail "workspace does not exist: $workspace"
 workspace=$(cd "$workspace" && pwd -P)
 cwd=$(pwd -P)
-args=(run --rm --user "$cpp_env_user" --env HOME=/tmp
+args=(run --rm --user "$cpp_env_user" --env HOME=/tmp --env CPP2V_RUN_ACTIVE=1
       --volume "$workspace:$workspace" --workdir "$cwd")
 if [[ -n $cpp_env_platform ]]; then args+=(--platform "$cpp_env_platform"); fi
 mounted=("$workspace")
@@ -94,7 +94,9 @@ for path in "$@"; do
 done
 if [[ ${#forward[@]} -gt 0 ]]; then
     for var in "${forward[@]}"; do
-        if printenv "$var" >/dev/null; then args+=(--env "$var"); fi
+        if [[ $var != CPP2V_RUN_ACTIVE ]] && printenv "$var" >/dev/null; then
+            args+=(--env "$var")
+        fi
     done
 fi
 
