@@ -11,8 +11,9 @@ Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
 
 (** * Attributes on functions and methods ([f_attrs], [m_attrs])
 
-cpp2v preserves every attribute as [attr.Other], named by clang's attribute
-kind; [supported] reports those that are not on its no-op list. *)
+cpp2v preserves every attribute that may have an effect as [attr.Other],
+named by clang's attribute kind, and drops the no-op ones; [supported]
+reports each preserved attribute. *)
 
 cpp.prog source flags "-std=c++20 --target=x86_64-linux-gnu" prog cpp:{{
 void plain() {}
@@ -45,25 +46,18 @@ Definition attrs_of (n : name) : option (list attr.t) :=
   | _ => None
   end.
 
-(* The attribute kinds that [supported] reports. *)
+(* The attribute kinds that [supported] reports: all recorded ones. *)
 Definition reported (n : name) : option (list PrimString.string) :=
-  (fun attrs : list attr.t => omap (fun a => match a with attr.Other kind _ =>
-     if supported.walk.noop_attr kind then None else Some kind end) attrs)
+  (fun attrs : list attr.t => (fun a => match a with attr.Other kind _ => kind end) <$> attrs)
   <$> attrs_of n.
 
-(* Every attribute is recorded, including no-op ones... *)
-Example recorded :
-  List.map (fun n => option_map (@List.length attr.t) (attrs_of n)) ["plain()"; "noops()"; "D::v()"]%cpp_name =
-  [Some 0; Some 4; Some 2].
-Proof. vm_compute. reflexivity. Qed.
-
-(* ... but [supported] accepts the no-op ones ([nodiscard], [always_inline],
-   [cold], [visibility], [override], [final]). *)
-Example noop_not_reported :
+(* No-op attributes ([nodiscard], [always_inline], [cold], [visibility],
+   [override], [final]) are not recorded. *)
+Example noop_not_recorded :
   reported <$> ["plain()"; "noops()"; "D::v()"]%cpp_name = replicate 3 (Some []).
 Proof. vm_compute. reflexivity. Qed.
 
-(* Everything else is reported, under clang's attribute kind. *)
+(* Every other attribute is recorded, under clang's attribute kind. *)
 Example reported_kinds :
   reported <$> ["in_section()"; "nr()"; "weak_fn()"; "nn(int*)"; "two()"; "S::m()"]%cpp_name =
   Some <$> [["Section"]; ["CXX11NoReturn"]; ["Weak"]; ["NonNull"];
@@ -86,8 +80,8 @@ Proof. reflexivity. Qed.
 (** ** Type attributes
 
 A typedef's attributes are kept at each use of the typedef, as
-[Tattributed]; the parser drops no-op ones ([attr.noop_kinds]). cpp2v
-does not print [aligned] on a type: it accounts for alignment itself. *)
+[Tattributed], except the no-op ones and [aligned], which cpp2v accounts
+for itself. *)
 Definition var_type (n : name) : option type :=
   match source.(symbols) !! n with
   | Some (Ovar t _) => Some t

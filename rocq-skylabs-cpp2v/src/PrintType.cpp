@@ -91,11 +91,12 @@ public:
     /// Type attributes are preserved as `Tattributed`, as are the
     /// attributes of a typedef at each use of the typedef (cpp2v prints the
     /// underlying type, where the typedef's attributes would vanish).
-    /// Deciding which attributes are harmless is left to Rocq, except for
-    /// `aligned`, which cpp2v accounts for itself (see `skipAttr`).
+    /// No-op attributes are not printed (`ClangPrinter::isNoOpAttr`), nor
+    /// is `aligned`, which cpp2v accounts for itself (see `skipAttr`).
     void VisitAttributedType(const AttributedType *type, CoqPrinter &print,
                              ClangPrinter &cprint) {
-        if (type->getAttrKind() == attr::Aligned) {
+        if (type->getAttrKind() == attr::Aligned ||
+            ClangPrinter::isNoOpAttr(type->getAttrKind())) {
             cprint.printQualType(print, type->getModifiedType(),
                                  loc::of(type));
             return;

@@ -338,13 +338,18 @@ public:
     fmt::Formatter &printExceptionSpec(CoqPrinter &,
                                        const clang::FunctionDecl &);
 
-    /// Print the `list attr.t` of a declaration: every attribute (except
-    /// implicit ones on builtins and implicit declarations, see `skipAttr`),
+    /// Print the `list attr.t` of a declaration: every attribute except
+    /// no-op ones and implicit ones on builtins and implicit declarations
+    /// (see `skipAttr`),
     /// as `attr.Other "<attribute kind>" "<pretty-printed attribute>"`.
     /// With `onType`, the attributes are those of a typedef at a use of
     /// the typedef, and `aligned` is skipped (see `skipAttr`).
     fmt::Formatter &printAttrs(CoqPrinter &, const clang::Decl &,
                                bool onType = false);
+
+    /// Whether an attribute kind has no effect on the abstract machine;
+    /// cpp2v does not print those.
+    static bool isNoOpAttr(clang::attr::Kind);
 
     /// Whether `printAttrs` would print a non-empty list for this
     /// declaration.

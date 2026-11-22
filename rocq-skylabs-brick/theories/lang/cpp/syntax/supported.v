@@ -312,17 +312,11 @@ Section with_monad.
   (* The types in a name (parameters, template arguments) identify it; they
      are not needed. What a template instance needs comes from its own
      definition. *)
-  (** Whether [supported] accepts an attribute kind as harmless; see
-      [attr.noop_kinds]. *)
-  Definition noop_attr (kind : PrimString.string) : bool := attr.noop_kind kind.
-
-
-  (** BRiCk does not interpret any attribute yet ([attr.t] only has [Other]). *)
+  (** BRiCk does not interpret any attribute yet ([attr.t] only has [Other]);
+      cpp2v does not print the no-op ones. *)
   Definition attr (a : attr.t) : M :=
     match a with
-    | attr.Other kind _ =>
-        if noop_attr kind then OK
-        else FAIL (PrimString.cat "unsupported attribute: " kind)
+    | attr.Other kind _ => FAIL (PrimString.cat "unsupported attribute: " kind)
     end.
 
   Fixpoint name (n : name) : M :=
@@ -338,8 +332,7 @@ Section with_monad.
     match t with
     | Tunsupported msg => FAIL msg
     | Tattributed attrs t =>
-        (* The program logic treats attributed types as opaque for now, even
-           when every attribute is on [noop_attrs]. *)
+        (* The program logic treats attributed types as opaque for now. *)
         lst attr attrs <+> type t <+> PARTIAL "attributed type (opaque to the program logic)"
     | Tparam _
     | Tresult_param _ => OK
