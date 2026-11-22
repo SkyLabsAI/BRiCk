@@ -10,6 +10,16 @@ of the release, and introduce a new heading.
 
 ## Since Last Release
 
+2026.11.21: `translation_unit` has a new field `dropped_symbols : list name`,
+the names of the symbols that `cpp.prog` dropped (see below). `sub_module`
+ignores it. Code that calls `makeTranslationUnit` positionally needs an extra
+argument, usually `[]`. `supported.report.all` lists each dropped symbol as
+"unsupported", with the gap "name may denote several entities", and
+`supported.report.run` gives that verdict, rather than "missing", to a root
+that resolves to a dropped symbol: by its printed name (as `all` prints it),
+or by parsing to a name that agrees with it outside its unsupported parts
+(e.g. `f(long double*)` for `f(?Builtin long double*)`).
+
 2026.11.20: parser.v drops every symbol, and makes every type
 `Gunsupported`, whose name contains an unsupported atom (`has_unsupportedN`),
 such as `?record` for an unnamed struct or lambda closure at global scope, or

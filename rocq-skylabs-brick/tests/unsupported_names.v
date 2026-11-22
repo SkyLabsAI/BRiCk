@@ -41,3 +41,15 @@ Proof. vm_compute. reflexivity. Qed.
 Example ordinary_symbols_kept :
   is_Some (tu.(symbols) !! "r"%cpp_name) /\ is_Some (tu.(symbols) !! "t"%cpp_name).
 Proof. split; vm_compute; eexists; reflexivity. Qed.
+
+(** [decls] records each dropped symbol once, in [dropped_symbols]: among
+    them [v<?record*>] (for both [r] and [s]) and [w<?>] (for both [t] and
+    [u]). Depending on the clang version, the implicit members of the unnamed
+    structs ([?record::<ctor>()] and so on) are dropped too. *)
+Example dropped_symbols_recorded :
+  let ds := tu.(dropped_symbols) in
+  List.forallb has_unsupportedN ds &&
+  bool_decide (NoDup ds) &&
+  bool_decide (Ninst (Nglobal (Nid "v")) [Atype (Tptr (Tnamed (Nglobal (Nunsupported_atomic "record"))))] ∈ ds) &&
+  bool_decide (Ninst (Nglobal (Nid "w")) [Aunsupported "<unknown>"] ∈ ds) = true.
+Proof. vm_compute. reflexivity. Qed.

@@ -369,7 +369,13 @@ Record translation_unit : Type := makeTranslationUnit {
   msymbols : Msymbol_table;
   mtypes : Mtype_table;
   maliases : Malias_table;	(* we eschew <<Gtypedef>> for now *)
-  minstances : Minstance_table
+  minstances : Minstance_table;
+
+  (** The symbols that [cpp.prog] dropped because their names may denote
+      several entities ([has_unsupportedN]): no fact about them is available,
+      and [supported.report] lists them as unsupported. [sub_module] ignores
+      this field, which is empty for most translation units. *)
+  dropped_symbols : list name
 }.
 #[only(lens)] derive translation_unit.
 
@@ -391,7 +397,7 @@ Definition language_version (tu : translation_unit) : lang_version.t :=
 
 (** Just for testing *)
 Definition empty_tu (info : abi.t) : translation_unit :=
-  makeTranslationUnit ∅ ∅ ∅ [] [] info ∅ ∅ ∅ ∅.
+  makeTranslationUnit ∅ ∅ ∅ [] [] info ∅ ∅ ∅ ∅ [].
 #[global] Instance : Empty translation_unit :=
   empty_tu abi.abi_default.
 

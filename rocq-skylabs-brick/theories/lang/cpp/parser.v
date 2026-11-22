@@ -88,10 +88,14 @@ Module Import translation_unit.
   #[global] Instance raw_structured_insert : forall {T}, Insert globname T (NM.Raw.t T) := _.
 
   Definition dup_info := list (name * (GlobDecl + ObjValue)).
+  (** The accumulator of [t]: duplicates as in [dup_info], and [(n, None)] for
+      a symbol [n] that [_symbols] dropped. Sharing one accumulator keeps [t]
+      as cheap as before when nothing is dropped. *)
+  Definition dup_acc := list (name * option (GlobDecl + ObjValue)).
   (** This representation is isomorphic to [translation_unit * list name] as shown by [decls]. *)
   Definition t : Type :=
-    raw_symbol_table -> raw_type_table -> list name -> raw_alias_table -> list StaticAssert -> dup_info ->
-    (raw_symbol_table -> raw_type_table -> list name -> raw_alias_table -> list StaticAssert -> dup_info -> translation_unit * dup_info) ->
+    raw_symbol_table -> raw_type_table -> list name -> raw_alias_table -> list StaticAssert -> dup_acc ->
+    (raw_symbol_table -> raw_type_table -> list name -> raw_alias_table -> list StaticAssert -> dup_acc -> translation_unit * dup_info) ->
     translation_unit * dup_info.
 
   Definition merge_obj_value (a b : ObjValue) : option ObjValue :=
@@ -103,15 +107,15 @@ Module Import translation_unit.
   (** Constructs a [translation_unit.t] with _one_ symbol, mapping [n] to [v].
       A symbol whose name may not identify one entity ([has_unsupportedN]) is
       dropped: two such entities would otherwise share one [_global n], and so
-      one address. *)
+      one address. [decls] records it in [dropped_symbols]. *)
   Definition _symbols (n : name) (v : ObjValue) : t :=
     fun s t ga a asserts dups k =>
-      if has_unsupportedN n then k s t ga a asserts dups else
+      if has_unsupportedN n then k s t ga a asserts ((n, None) :: dups) else
       match s !! n with
       | None => k (<[n := v]> s) t ga a asserts dups
       | Some v' => match merge_obj_value v v' with
                   | Some v => k (<[n:=v]> s) t ga a asserts dups
-                  | None => k s t ga a asserts ((n, inr v) :: (n, inr v') :: dups)
+                  | None => k s t ga a asserts ((n, Some (inr v)) :: (n, Some (inr v')) :: dups)
                   end
       end.
   Definition merge_glob_decl (a b : GlobDecl) : option GlobDecl :=
@@ -143,7 +147,7 @@ Module Import translation_unit.
         | None => k s (<[n := v]> t) ga a asserts dups
         | Some v' => match merge_glob_decl v v' with
                     | Some v => k s (<[n:=v]> t) ga a asserts dups
-                    | None => k s t ga a asserts ((n, inl v) :: (n, inl v') :: dups)
+                    | None => k s t ga a asserts ((n, Some (inl v)) :: (n, Some (inl v')) :: dups)
                     end
         end.
 
@@ -205,7 +209,11 @@ Module Import translation_unit.
     Gunsupported ("Name collision on " ++ pretty.print_name n ++ " replaced by this unsupported type")%pstring.
 
   Definition decls (ds : PArray.array t) (info : abi.t) : translation_unit * dup_info :=
-    decls' ds ∅ ∅ [] ∅ [] [] $ fun s t ga a asserts dups =>
+    decls' ds ∅ ∅ [] ∅ [] [] $ fun s t ga a asserts acc =>
+        let dups : dup_info :=
+          List.fold_right (fun '(n, d) r => if d is Some d then (n, d) :: r else r) [] acc in
+        let dropped :=
+          List.fold_right (fun '(n, d) r => if d is None then n :: r else r) [] acc in
         pair {|
             symbols := List.fold_left (fun t '(n, _) => <[n:=conflict n]> t) dups (NM.from_raw s);
             types := List.fold_left (fun t '(n, d) =>
@@ -217,7 +225,8 @@ Module Import translation_unit.
             msymbols := ∅;
             mtypes := ∅;
             maliases := ∅;
-            minstances := ∅
+            minstances := ∅;
+            dropped_symbols := sort.sort dropped
           |} dups.
 
   Definition list_decls (ls : list translation_unit.t) :=

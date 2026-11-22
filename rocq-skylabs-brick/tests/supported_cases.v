@@ -12,7 +12,10 @@ Require Import skylabs.lang.cpp.syntax.supported.
 
     One minimal case per kind of gap the report checks.
     [supported_report.v] covers each status; this file pins down the verdict
-    on code whose verdict used to be wrong. *)
+    on code whose verdict used to be wrong. A root that resolves to a symbol
+    that [cpp.prog] dropped, by its printed name or up to its unsupported
+    parts, is "unsupported"; a root that only resembles one, such as
+    [long_double_ptr(long double&)], stays "missing". *)
 
 cpp.prog source flags "-std=c++20 --target=x86_64-linux-gnu" prog cpp:{{
 // no rule for [va_arg].
@@ -88,6 +91,10 @@ struct P { P() {} P(const P &) = default; int x; };
 // an unsupported type behind a pointer.
 void long_double_ptr(long double *p) { (void)p; }
 
+// a parameter of an unnamed struct type: the name mentions [?record].
+struct { int a; } *anon_p;
+void anon_ptr(decltype(anon_p) p) { (void)p; }
+
 // a default member initializer without semantics.
 struct NS { int v = 0 ? 1 : throw 0; int get() const { return 42; } };
 int ns_get(NS *n) { return n->get(); }
@@ -111,7 +118,8 @@ Eval vm_compute in List.map show (supported.report.run source
   ; "stmt_expr()"; "off()"; "label_only()"; "fam(M*)"; "braceless(int)"
   ; "lib_memcpy(char*, const char*)"; "lib_strlen(const char*)"; "direct_memcpy(char*, const char*)"
   ; "direct_undeclared(const char*, const char*)"
-  ; "P::P(const P&)"; "long_double_ptr(long double*)"; "ns_get(NS*)"
+  ; "P::P(const P&)"; "long_double_ptr(long double*)"; "anon_ptr(?record*)"
+  ; "long_double_ptr(?Builtin long double*)"; "long_double_ptr(long double&)"; "ns_get(NS*)"
   ; "sizeof_expr(S&)" ]%pstring).
 
 (** Every non-template entity. *)

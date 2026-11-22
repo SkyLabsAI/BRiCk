@@ -698,8 +698,84 @@ Module report.
   Definition named (n : name) (m : walk.M) : list (PrimString.string * list PrimString.string) :=
     if check.fails m is [] then [] else [(print n, check.fails m)].
 
+  (** ** Dropped symbols
+
+      [cpp.prog] drops every symbol whose name may denote several entities
+      ([has_unsupportedN]), and records its name in [dropped_symbols]. Each
+      gets the verdict "unsupported", since no fact about it is available. *)
+  Definition dropped_gap : PrimString.string :=
+    "name may denote several entities (it contains an unsupported part): cpp.prog dropped it".
+
+  Definition dropped_entry (input : PrimString.string) (n : name) : entry :=
+    mk_entry input (print n) "unsupported" [dropped_gap] [] [] [].
+
+  (** The name parser produces no unsupported part, so a root resolves to the
+      dropped name [d] when it agrees with [d] outside [d]'s unsupported parts:
+      [matchesN d n]. Other unsupported shapes match only equal names, and
+      thus no parsed name. *)
+  Fixpoint forallb2 {A B} (f : A -> B -> bool) (xs : list A) (ys : list B) : bool :=
+    match xs, ys with
+    | [], [] => true
+    | x :: xs, y :: ys => f x y && forallb2 f xs ys
+    | _, _ => false
+    end.
+
+  Definition matchesA (matchesT : type -> type -> bool) (d c : atomic_name) : bool :=
+    match d, c with
+    | Nunsupported_atomic _, _ => true
+    | Nfunction q i ts, Nfunction q' i' ts' =>
+        bool_decide (q = q') && bool_decide (i = i') && forallb2 matchesT ts ts'
+    | Nctor ts, Nctor ts' => forallb2 matchesT ts ts'
+    | Nop q o ts, Nop q' o' ts' =>
+        bool_decide (q = q') && bool_decide (o = o') && forallb2 matchesT ts ts'
+    | Nop_conv q t, Nop_conv q' t' => bool_decide (q = q') && matchesT t t'
+    | Nop_lit i ts, Nop_lit i' ts' => bool_decide (i = i') && forallb2 matchesT ts ts'
+    | _, _ => bool_decide (d = c)
+    end.
+
+  Fixpoint matchesN (d n : name) {struct d} : bool :=
+    match d, n with
+    | Nunsupported _, _ => true
+    | Ninst d xs, Ninst n ys => matchesN d n && forallb2 matchesTA xs ys
+    | Nglobal c, Nglobal c' => matchesA matchesT c c'
+    | Nscoped d c, Nscoped n c' => matchesN d n && matchesA matchesT c c'
+    | Ndependent d, Ndependent t => matchesT d t
+    | _, _ => false
+    end
+  with matchesTA (d a : temp_arg) {struct d} : bool :=
+    match d, a with
+    | Aunsupported _, _ => true
+    | Atype d, Atype t => matchesT d t
+    | Apack ds, Apack xs => forallb2 matchesTA ds xs
+    | Atemplate d, Atemplate n => matchesN d n
+    | _, _ => bool_decide (d = a)
+    end
+  with matchesT (d t : type) {struct d} : bool :=
+    match d, t with
+    | Tunsupported _, _ => true
+    | Tptr d, Tptr t
+    | Tref d, Tref t
+    | Trv_ref d, Trv_ref t
+    | Tincomplete_array d, Tincomplete_array t => matchesT d t
+    | Tarray d k, Tarray t k' => bool_decide (k = k') && matchesT d t
+    | Tqualified q d, Tqualified q' t => bool_decide (q = q') && matchesT d t
+    | Tnamed d, Tnamed n
+    | Tenum d, Tenum n => matchesN d n
+    | Tmember_pointer dc d, Tmember_pointer c t => matchesT dc c && matchesT d t
+    | Tfunction (@FunctionType _ cc ar d ds), Tfunction (@FunctionType _ cc' ar' t ts) =>
+        bool_decide (cc = cc') && bool_decide (ar = ar') &&
+        matchesT d t && forallb2 matchesT ds ts
+    | _, _ => bool_decide (d = t)
+    end.
+
   Section with_tu.
     Context (ext : Expr -> walk.M) (tu : translation_unit).
+
+    (** The dropped symbol that [input], parsed as [parsed], names: by its
+        [print]ed name, which [all] lists, or by [matchesN]. *)
+    Definition find_dropped (input : PrimString.string) (parsed : option name) : option name :=
+      List.find (fun d => bool_decide (print d = input) ||
+                         from_option (matchesN d) false parsed) tu.(dropped_symbols).
 
     Definition refs (m : walk.M) : list name :=
       remove_dups (List.flat_map (fun i => if i is walk.Ref n then [n] else []) m).
@@ -823,8 +899,10 @@ Module report.
       mk_entry input (print n) status unsupported partial blocked_by unsupported_refs.
 
     Definition entry_for (fuel : nat) (input : PrimString.string) : entry :=
-      if (n ← parser.parse_name_with tu input; pair n <$> own n) is Some (n, uses) then
+      let parsed := parser.parse_name_with tu input in
+      if (n ← parsed; pair n <$> own n) is Some (n, uses) then
         entry_of fuel input n uses
+      else if find_dropped input parsed is Some d then dropped_entry input d
       else mk_entry input "" "missing" [] [] [] [].
 
     (** ** [closure] computes the whole closure *)
@@ -912,12 +990,14 @@ Module report.
   (** Every non-template function, variable and type of [tu], named by its
       [print]ed name. Unlike [run], it parses no names, which dominates [run]'s
       time on a large translation unit. Template patterns are left out: each
-      instance has its own entry. *)
+      instance has its own entry. The symbols that [cpp.prog] dropped are
+      unsupported (see [dropped_entry]). *)
   Definition all_with (ext : Expr -> walk.M) (tu : translation_unit) : list entry :=
     let fuel := closure_fuel tu in
     let names := List.map fst (NM.elements tu.(symbols)) ++ List.map fst (NM.elements tu.(types)) in
     List.flat_map (fun n =>
-      from_option (fun uses => [entry_of ext tu fuel (print n) n uses]) [] (own ext tu n)) names.
+      from_option (fun uses => [entry_of ext tu fuel (print n) n uses]) [] (own ext tu n)) names ++
+    List.map (fun n => dropped_entry (print n) n) tu.(dropped_symbols).
 
   Definition all : translation_unit -> list entry := all_with walk.no_ext.
 End report.
