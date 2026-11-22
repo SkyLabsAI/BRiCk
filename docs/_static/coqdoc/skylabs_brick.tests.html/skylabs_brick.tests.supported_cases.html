@@ -59,7 +59,10 @@
 
     One minimal case per kind of gap the report checks.
     <span class="inlinecode"><span class="id" title="var">supported_report.v</span></span> covers each status; this file pins down the verdict
-    on code whose verdict used to be wrong. 
+    on code whose verdict used to be wrong. A root that resolves to a symbol
+    that <span class="inlinecode"><span class="id" title="var">cpp.prog</span></span> dropped, by its printed name or up to its unsupported
+    parts, is "unsupported"; a root that only resembles one, such as
+    <span class="inlinecode"><span class="id" title="var">long_double_ptr</span>(<span class="id" title="var">long</span></span> <span class="inlinecode"><span class="id" title="var">double</span>&amp;)</span>, stays "missing". 
 </div>
 <div class="code">
 
@@ -138,6 +141,10 @@
 // <span class="id" title="var">an</span> <span class="id" title="var">unsupported</span> <span class="id" title="keyword">type</span> <span class="id" title="var">behind</span> <span class="id" title="var">a</span> <span class="id" title="var">pointer</span>.<br/>
 <span class="id" title="var">void</span> <span class="id" title="var">long_double_ptr</span>(<span class="id" title="var">long</span> <span class="id" title="var">double</span> *<span class="id" title="var">p</span>) { (<span class="id" title="var">void</span>)<span class="id" title="var">p</span>; }<br/>
 <br/>
+// <span class="id" title="var">a</span> <span class="id" title="var">parameter</span> <span class="id" title="keyword">of</span> <span class="id" title="var">an</span> <span class="id" title="var">unnamed</span> <span class="id" title="keyword">struct</span> <span class="id" title="keyword">type</span>: <span class="id" title="var">the</span> <span class="id" title="var">name</span> <span class="id" title="var">mentions</span> [?<span class="id" title="var">record</span>].<br/>
+<span class="id" title="keyword">struct</span> { <span class="id" title="var">int</span> <span class="id" title="var">a</span>; } *<span class="id" title="var">anon_p</span>;<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">anon_ptr</span>(<span class="id" title="var">decltype</span>(<span class="id" title="var">anon_p</span>) <span class="id" title="var">p</span>) { (<span class="id" title="var">void</span>)<span class="id" title="var">p</span>; }<br/>
+<br/>
 // <span class="id" title="var">a</span> <span class="id" title="var">default</span> <span class="id" title="var">member</span> <span class="id" title="var">initializer</span> <span class="id" title="var">without</span> <span class="id" title="var">semantics</span>.<br/>
 <span class="id" title="keyword">struct</span> <span class="id" title="var">NS</span> { <span class="id" title="var">int</span> <span class="id" title="var">v</span> = 0 ? 1 : <span class="id" title="var">throw</span> 0; <span class="id" title="var">int</span> <span class="id" title="var">get</span>() <span class="id" title="var">const</span> { <span class="id" title="keyword">return</span> 42; } };<br/>
 <span class="id" title="var">int</span> <span class="id" title="var">ns_get</span>(<span class="id" title="var">NS</span> *<span class="id" title="var">n</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">n</span>-&gt;<span class="id" title="var">get</span>(); }<br/>
@@ -163,7 +170,8 @@
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "stmt_expr()"<span class="id" title="notation">;</span> "off()"<span class="id" title="notation">;</span> "label_only()"<span class="id" title="notation">;</span> "fam(M*)"<span class="id" title="notation">;</span> "braceless(int)"<br/>
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "lib_memcpy(char*, const char*)"<span class="id" title="notation">;</span> "lib_strlen(const char*)"<span class="id" title="notation">;</span> "direct_memcpy(char*, const char*)"<br/>
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "direct_undeclared(const char*, const char*)"<br/>
-&nbsp;&nbsp;<span class="id" title="notation">;</span> "P::P(const P&amp;)"<span class="id" title="notation">;</span> "long_double_ptr(long double*)"<span class="id" title="notation">;</span> "ns_get(NS*)"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "P::P(const P&amp;)"<span class="id" title="notation">;</span> "long_double_ptr(long double*)"<span class="id" title="notation">;</span> "anon_ptr(?record*)"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "long_double_ptr(?Builtin long double*)"<span class="id" title="notation">;</span> "long_double_ptr(long double&amp;)"<span class="id" title="notation">;</span> "ns_get(NS*)"<br/>
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "sizeof_expr(S&amp;)" <span class="id" title="notation">]</span>%<span class="id" title="var">pstring</span>).<br/>
 
 <br/>

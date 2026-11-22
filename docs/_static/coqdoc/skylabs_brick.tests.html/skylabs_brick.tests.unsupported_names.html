@@ -1,0 +1,143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.unsupported_names</h1>
+
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.fin_maps.html#"><span class="id" title="library">stdpp.fin_maps</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab32"></a><h1 class="section">Names that may denote several entities</h1>
+
+
+<div class="paragraph"> </div>
+
+cpp2v prints some names with an unsupported atom: an unnamed struct at global
+scope is <span class="inlinecode">?<span class="id" title="var">record</span></span>, and a floating-point template argument is
+<span class="inlinecode"><span class="id" title="constructor">Aunsupported</span></span> <span class="inlinecode">&quot;&lt;<span class="id" title="var">unknown</span>&gt;&quot;</span>. Distinct entities can then share one name, and
+equal definitions would merge, so <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.wp_notation.html#WpTestDefns.with_args.v"><span class="id" title="variable">v</span></a>&lt;<span class="id" title="var">decltype</span>(<a class="idref" href="skylabs_brick.tests.wp_notation.html#WpTestDefns.with_args.p"><span class="id" title="variable">p</span></a>)&gt;</span> and <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.wp_notation.html#WpTestDefns.with_args.v"><span class="id" title="variable">v</span></a>&lt;<span class="id" title="var">decltype</span>(<a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp.q"><span class="id" title="variable">q</span></a>)&gt;</span> below
+would be one global. <span class="inlinecode"><span class="id" title="var">cpp.prog</span></span> therefore drops every symbol whose name
+contains an unsupported atom (<span class="inlinecode"><span class="id" title="definition">has_unsupportedN</span></span>), and makes every such type
+<span class="inlinecode"><span class="id" title="constructor">Gunsupported</span></span>. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">tu</span> <span class="id" title="var">flags</span> "-std=c++20" <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> { <span class="id" title="var">int</span> <span class="id" title="var">a</span>; } *<span class="id" title="var">p</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> { <span class="id" title="var">int</span> <span class="id" title="var">a</span>; } *<span class="id" title="var">q</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">template</span> &lt;<span class="id" title="var">class</span> <span class="id" title="var">T</span>&gt; <span class="id" title="var">char</span> <span class="id" title="var">v</span> = 0;<br/>
+&nbsp;&nbsp;<span class="id" title="var">template</span> &lt;<span class="id" title="var">double</span> <span class="id" title="var">D</span>&gt; <span class="id" title="var">char</span> <span class="id" title="var">w</span> = 0;<br/>
+&nbsp;&nbsp;<span class="id" title="var">char</span> *<span class="id" title="var">r</span> = &amp;<span class="id" title="var">v</span>&lt;<span class="id" title="var">decltype</span>(<span class="id" title="var">p</span>)&gt;;<br/>
+&nbsp;&nbsp;<span class="id" title="var">char</span> *<span class="id" title="var">s</span> = &amp;<span class="id" title="var">v</span>&lt;<span class="id" title="var">decltype</span>(<span class="id" title="var">q</span>)&gt;;<br/>
+&nbsp;&nbsp;<span class="id" title="var">char</span> *<span class="id" title="var">t</span> = &amp;<span class="id" title="var">w</span>&lt;1.0&gt;;<br/>
+&nbsp;&nbsp;<span class="id" title="var">char</span> *<span class="id" title="var">u</span> = &amp;<span class="id" title="var">w</span>&lt;2.0&gt;;<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="no_unsupported_symbol" class="idref" href="#no_unsupported_symbol"><span class="id" title="definition">no_unsupported_symbol</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">List.existsb</span> (<span class="id" title="keyword">fun</span> <a id="kv:1" class="idref" href="#kv:1"><span class="id" title="binder">kv</span></a> =&gt; <span class="id" title="definition">has_unsupportedN</span> <a class="idref" href="skylabs_brick.tests.unsupported_names.html#kv:1"><span class="id" title="variable">kv</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#:::x_'.1'"><span class="id" title="notation">.1</span></a>) (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.fin_maps.html#map_to_list"><span class="id" title="definition">map_to_list</span></a> <a class="idref" href="skylabs_brick.tests.unsupported_names.html#tu"><span class="id" title="definition">tu</span></a>.(<span class="id" title="projection">symbols</span>)) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The types named <span class="inlinecode">?<span class="id" title="var">record</span></span> are there, but unsupported. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="unsupported_type_present" class="idref" href="#unsupported_type_present"><span class="id" title="definition">unsupported_type_present</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">List.existsb</span> (<span class="id" title="keyword">fun</span> <a id="kv:2" class="idref" href="#kv:2"><span class="id" title="binder">kv</span></a> =&gt; <span class="id" title="definition">has_unsupportedN</span> <a class="idref" href="skylabs_brick.tests.unsupported_names.html#kv:2"><span class="id" title="variable">kv</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#:::x_'.1'"><span class="id" title="notation">.1</span></a>) (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.fin_maps.html#map_to_list"><span class="id" title="definition">map_to_list</span></a> <a class="idref" href="skylabs_brick.tests.unsupported_names.html#tu"><span class="id" title="definition">tu</span></a>.(<span class="id" title="projection">types</span>)) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="unsupported_types_quarantined" class="idref" href="#unsupported_types_quarantined"><span class="id" title="definition">unsupported_types_quarantined</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">List.forallb</span> (<span class="id" title="keyword">fun</span> <a id="kv:3" class="idref" href="#kv:3"><span class="id" title="binder">kv</span></a> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#negb"><span class="id" title="definition">negb</span></a> (<span class="id" title="definition">has_unsupportedN</span> <a class="idref" href="skylabs_brick.tests.unsupported_names.html#kv:3"><span class="id" title="variable">kv</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#:::x_'.1'"><span class="id" title="notation">.1</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#081ff67d3116402bb680e8692aa39185"><span class="id" title="notation">||</span></a> <span class="id" title="keyword">if</span> <a class="idref" href="skylabs_brick.tests.unsupported_names.html#kv:3"><span class="id" title="variable">kv</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#:::x_'.2'"><span class="id" title="notation">.2</span></a> <span class="id" title="keyword">is</span> <span class="id" title="constructor">Gunsupported</span> <span class="id" title="var">_</span> <span class="id" title="keyword">then</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a> <span class="id" title="keyword">else</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.fin_maps.html#map_to_list"><span class="id" title="definition">map_to_list</span></a> <a class="idref" href="skylabs_brick.tests.unsupported_names.html#tu"><span class="id" title="definition">tu</span></a>.(<span class="id" title="projection">types</span>)) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Symbols with ordinary names are kept. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="ordinary_symbols_kept" class="idref" href="#ordinary_symbols_kept"><span class="id" title="definition">ordinary_symbols_kept</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#is_Some"><span class="id" title="definition">is_Some</span></a> (<a class="idref" href="skylabs_brick.tests.unsupported_names.html#tu"><span class="id" title="definition">tu</span></a>.(<span class="id" title="projection">symbols</span>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> "r"%<span class="id" title="var">cpp_name</span>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#is_Some"><span class="id" title="definition">is_Some</span></a> (<a class="idref" href="skylabs_brick.tests.unsupported_names.html#tu"><span class="id" title="definition">tu</span></a>.(<span class="id" title="projection">symbols</span>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> "t"%<span class="id" title="var">cpp_name</span>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">split</span>; <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">eexists</span>; <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><span class="id" title="var">decls</span></span> records each dropped symbol once, in <span class="inlinecode"><span class="id" title="projection">dropped_symbols</span></span>: among
+    them <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.wp_notation.html#WpTestDefns.with_args.v"><span class="id" title="variable">v</span></a>&lt;?<span class="id" title="var">record</span>*&gt;</span> (for both <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#remove_var.r"><span class="id" title="variable">r</span></a></span> and <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.wp_notation.html#WpTestDefns.s"><span class="id" title="abbreviation">s</span></a></span>) and <span class="inlinecode"><span class="id" title="var">w</span>&lt;?&gt;</span> (for both <span class="inlinecode"><span class="id" title="record">t</span></span> and
+    <span class="inlinecode"><span class="id" title="var">u</span></span>). Depending on the clang version, the implicit members of the unnamed
+    structs (<span class="inlinecode">?<span class="id" title="var">record</span>::&lt;<span class="id" title="var">ctor</span>&gt;()</span> and so on) are dropped too. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="dropped_symbols_recorded" class="idref" href="#dropped_symbols_recorded"><span class="id" title="definition">dropped_symbols_recorded</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">let</span> <a id="ds:4" class="idref" href="#ds:4"><span class="id" title="binder">ds</span></a> := <a class="idref" href="skylabs_brick.tests.unsupported_names.html#tu"><span class="id" title="definition">tu</span></a>.(<span class="id" title="projection">dropped_symbols</span>) <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="definition">List.forallb</span> <span class="id" title="definition">has_unsupportedN</span> <a class="idref" href="skylabs_brick.tests.unsupported_names.html#ds:4"><span class="id" title="variable">ds</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#::bool_scope:x_'&amp;&amp;'_x"><span class="id" title="notation">&amp;&amp;</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.decidable.html#bool_decide"><span class="id" title="definition">bool_decide</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#NoDup"><span class="id" title="inductive">NoDup</span></a> <a class="idref" href="skylabs_brick.tests.unsupported_names.html#ds:4"><span class="id" title="variable">ds</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#::bool_scope:x_'&amp;&amp;'_x"><span class="id" title="notation">&amp;&amp;</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.decidable.html#bool_decide"><span class="id" title="definition">bool_decide</span></a> (<span class="id" title="constructor">Ninst</span> (<span class="id" title="constructor">Nglobal</span> (<span class="id" title="constructor">Nid</span> "v")) <span class="id" title="notation">[</span><span class="id" title="constructor">Atype</span> (<span class="id" title="constructor">Tptr</span> (<span class="id" title="constructor">Tnamed</span> (<span class="id" title="constructor">Nglobal</span> (<span class="id" title="constructor">Nunsupported_atomic</span> "record"))))<span class="id" title="notation">]</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2a78afea1eeed082be084d2a55e1605c"><span class="id" title="notation">∈</span></a> <a class="idref" href="skylabs_brick.tests.unsupported_names.html#ds:4"><span class="id" title="variable">ds</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#::bool_scope:x_'&amp;&amp;'_x"><span class="id" title="notation">&amp;&amp;</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.decidable.html#bool_decide"><span class="id" title="definition">bool_decide</span></a> (<span class="id" title="constructor">Ninst</span> (<span class="id" title="constructor">Nglobal</span> (<span class="id" title="constructor">Nid</span> "w")) <span class="id" title="notation">[</span><span class="id" title="constructor">Aunsupported</span> "&lt;unknown&gt;"<span class="id" title="notation">]</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2a78afea1eeed082be084d2a55e1605c"><span class="id" title="notation">∈</span></a> <a class="idref" href="skylabs_brick.tests.unsupported_names.html#ds:4"><span class="id" title="variable">ds</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
