@@ -917,8 +917,20 @@ Module SimpleCPP.
         exact: _Z_to_bytes_inj_2.
       Qed.
 
-      Definition pure_encodes (t : type) (v : val) (vs : list runtime_val) : Prop :=
+      (** The type whose encoding [t] uses: an under-aligned object is encoded
+          like an object of its underlying type. *)
+      Definition encoding_type (t : type) : type :=
         match erase_qualifiers t with
+        | Trealigned _ t => t
+        | t => t
+        end.
+
+      Lemma encoding_type_erase_qualifiers t :
+        encoding_type (erase_qualifiers t) = encoding_type t.
+      Proof. by rewrite /encoding_type erase_qualifiers_idemp. Qed.
+
+      Definition pure_encodes (t : type) (v : val) (vs : list runtime_val) : Prop :=
+        match encoding_type t with
         | Tnum sz sgn =>
           match v with
           | Vint v =>
@@ -1013,7 +1025,7 @@ Module SimpleCPP.
 
       Lemma length_encodes t v vs :
         pure_encodes t v vs ->
-          length vs = match erase_qualifiers t with
+          length vs = match encoding_type t with
                       | Tvoid | Tbool => 1
                       | Tnum sz _ => int_rank.bytesNat sz
                       | Tchar_ ct => N.to_nat (char_type.bytesN ct)
@@ -1028,7 +1040,7 @@ Module SimpleCPP.
                       end.
       Proof.
         rewrite /pure_encodes => ?.
-        destruct (erase_qualifiers _) => //;
+        destruct (encoding_type _) => //;
           destruct v => //; destruct_and? => //;
           repeat case_decide => //;
            simplify_eq; eauto.
@@ -1045,8 +1057,11 @@ Module SimpleCPP.
         length vs > 0.
       Proof.
         move=> /length_encodes ->. have ?: 1 > 0 by exact: le_n.
-        induction t; simpl; try solve [ lia | exact: bytesNat_pos ].
-        all: first [ destruct sz | destruct t ]; compute; lia.
+        case: (encoding_type t) => *; simpl; try solve [ lia | exact: bytesNat_pos ].
+        all: lazymatch goal with
+             | |- context [int_rank.bytesNat ?x] => destruct x
+             | |- context [char_type.bytesN ?x] => destruct x
+             end; compute; lia.
       Qed.
 
       #[global] Instance Inj_aptr: Inj eq eq aptr.
@@ -1077,7 +1092,7 @@ Module SimpleCPP.
       Proof.
         apply: observe_2_intro_persistent; rewrite /encodes /pure_encodes;
           iIntros (H1 H2) "!%".
-        destruct (erase_qualifiers t) eqn:? =>//=; intros;
+        destruct (encoding_type t) eqn:? =>//=; intros;
           repeat (try (case_decide || case_match); destruct_and?; simplify_eq => //);
         by [
           edestruct cptr_ne_aptr | edestruct pure_encodes_undef_aptr |
@@ -1269,11 +1284,28 @@ Module SimpleCPP.
       rewrite zero_size_array_erase_qualifiers. done.
     Qed.
 
+    (** [value_type ty] drops the qualifiers and [Trealigned] wrappers
+        around [ty]: an under-aligned object holds the values of its
+        underlying type. *)
+    Fixpoint value_type (ty : type) : type :=
+      match ty with
+      | Tqualified _ ty | Trealigned _ ty => value_type ty
+      | _ => ty
+      end.
+
+    Lemma value_type_erase_qualifiers ty :
+      value_type (erase_qualifiers ty) = erase_qualifiers (value_type ty).
+    Proof. induction ty; simpl; eauto. Qed.
+
+    Lemma value_type_unqual ty (q : type_qualifiers) t :
+      value_type ty <> Tqualified q t.
+    Proof. induction ty; simpl; eauto; discriminate. Qed.
+
     Definition has_type {σ : genv} (v : val) (ty : type) : mpred :=
       [| has_type_prop v ty |] **
       match v with
       | Vptr p =>
-        match drop_qualifiers ty with
+        match value_type ty with
         | Tptr ty =>
           valid_ptr p ** [| aligned_ptr_ty ty p |]
         | Tref ty | Trv_ref ty =>
@@ -1281,7 +1313,7 @@ Module SimpleCPP.
         | Tnullptr => [| p = nullptr |]
         | _ => emp
         end
-      | _ => [| nonptr_prim_type ty |]
+      | _ => [| nonptr_prim_type (value_type ty) |]
       end.
 
     Definition reference_to (ty : type) (p : ptr) : mpred :=
@@ -1309,29 +1341,38 @@ Module SimpleCPP.
         has_type v ty |-- [| has_type_prop v ty |].
       Proof. iIntros "[$ _]". Qed.
 
+      Lemma nonptr_prim_type_value_type ty :
+        nonptr_prim_type ty -> nonptr_prim_type (value_type ty).
+      Proof. induction ty; done. Qed.
+
       Lemma has_type_prop_has_type_noptr v ty :
         nonptr_prim_type ty ->
         [| has_type_prop v ty |] |-- has_type v ty.
       Proof.
-        rewrite /has_type /nonptr_prim_type; intros.
-        iIntros "$".
-        destruct v => //. by case_match.
+        intros Hprim%nonptr_prim_type_value_type.
+        rewrite /has_type. iIntros "$".
+        destruct v; try by iPureIntro.
+        move: Hprim. by case: (value_type ty).
       Qed.
 
       Lemma has_type_erase_qualifiers ty v :
         has_type v ty -|- has_type v (erase_qualifiers ty).
       Proof.
-        rewrite /has_type has_type_prop_erase_qualifiers drop_erase_qualifiers.
+        rewrite /has_type has_type_prop_erase_qualifiers.
+        rewrite value_type_erase_qualifiers.
         f_equiv.
-        rewrite -nonptr_prim_type_erase_qualifiers.
-        case_match; eauto.
-        rewrite -erase_drop_qualifiers.
-        case_match; simpl; eauto.
-        all: try f_equiv.
+        have Hq := value_type_unqual ty.
+        destruct v; rewrite -?nonptr_prim_type_erase_qualifiers //.
+        move: Hq. case: (value_type ty) => //=.
+        all: intros; try f_equiv.
         all: try rewrite aligned_ptr_ty_erase_qualifiers; auto.
         all: try apply strict_valid_if_not_empty_array_erase.
-        exfalso; by eapply unqual_drop_qualifiers.
+        by exfalso; eapply Hq.
       Qed.
+
+      Lemma has_type_realigned n ty v :
+        has_type v (Trealigned n ty) -|- has_type v ty.
+      Proof. by rewrite /has_type /= has_type_prop_realigned. Qed.
 
       Lemma has_type_nullptr' p :
         has_type (Vptr p) Tnullptr -|- [| p = nullptr |].

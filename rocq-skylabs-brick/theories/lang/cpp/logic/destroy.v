@@ -575,6 +575,7 @@ Section body.
     | Tnullptr
     | Tptr _
     | Tmember_pointer _ _
+    | Trealigned _ _
     | Tvoid =>
       wp_destroy_prim tu cv rty this Q
 
@@ -849,6 +850,7 @@ Section val_array.
       | Tnullptr
       | Tptr _
       | Tmember_pointer _ _
+      | Trealigned _ _
       | Tvoid =>
         wp_destroy_prim tu cv rty this Q
       | Tincomplete_array _ => False

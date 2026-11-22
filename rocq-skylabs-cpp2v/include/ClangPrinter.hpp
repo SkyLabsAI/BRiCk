@@ -11,6 +11,7 @@
 #include <clang/Basic/Diagnostic.h>
 #include <clang/Basic/Version.inc>
 #include <llvm/ADT/ArrayRef.h>
+#include <optional>
 
 namespace clang {
 class Decl;
@@ -22,6 +23,7 @@ class FunctionDecl;
 enum OverloadedOperatorKind : int;
 class TranslationUnitDecl;
 class ParmVarDecl;
+class VarDecl;
 class Type;
 class BuiltinType;
 class DecltypeType;
@@ -89,6 +91,19 @@ struct OpaqueNames;
 
 bool is_dependent(const clang::Expr *);
 
+// The alignment, in bits, that BRiCk's [align_of] gives the type cpp2v
+// prints for [qt]: alignment attributes on typedefs and enums are erased, an
+// enumeration is aligned like its underlying type, an array like its elements,
+// a reference is a pointer-sized cell, and integers, characters and pointers
+// are aligned to their size.
+uint64_t modelTypeAlign(const clang::ASTContext &ctxt,
+                        const clang::QualType &qt);
+
+// The alignment, in bytes, of a field that cpp2v prints with a [Trealigned]
+// type, if [field] is one.
+std::optional<uint64_t> realignedFieldAlign(const clang::ASTContext &ctxt,
+                                            const clang::FieldDecl &field);
+
 class ClangPrinter {
 private:
     const clang::CompilerInstance *compiler_;
@@ -104,6 +119,15 @@ private:
         : compiler_(from.compiler_), context_(from.context_),
           mangleContext_(from.mangleContext_), trace_(from.trace_), decl_{decl},
           comment_{from.comment_}, typedefs_{from.typedefs_} {}
+
+public:
+    // An under-aligned field may only be accessed by an lvalue-to-rvalue
+    // conversion or by an assignment whose result is discarded: elsewhere
+    // Clang types the access at the field's naturally aligned type (e.g. when
+    // binding a reference or taking its address). The printer for such a
+    // context records the access it allows, or the discarded expression.
+    const clang::Expr *realignedAccess{nullptr};
+    const clang::Expr *discardedExpr{nullptr};
 
 public:
     // Silence some warnings until we can improve our diagnostics
@@ -279,6 +303,17 @@ public:
     fmt::Formatter &printQualTypeOption(CoqPrinter &print,
                                         const clang::QualType &qt,
                                         loc::loc loc);
+    // Print the canonical type of [qt] with its innermost array element type
+    // wrapped as [Trealigned align _], [align] in bytes. Qualifiers of the
+    // element type go outside the wrapper.
+    // Print the type of the variable [decl], wrapping its scalar element type
+    // in [Trealigned] when Clang aligns the variable less than BRiCk assumes
+    // for that type (e.g. a variable of a typedef with
+    // <<__attribute__((aligned(1)))>>).
+    fmt::Formatter &printVarType(CoqPrinter &print, const clang::VarDecl &decl);
+    fmt::Formatter &printRealignedQualType(CoqPrinter &print,
+                                           const clang::QualType &qt,
+                                           uint64_t align, loc::loc loc);
     // TODO: Deprecate
     fmt::Formatter &printType(CoqPrinter &print, const clang::Type &type,
                               loc::loc loc);

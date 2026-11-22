@@ -172,6 +172,7 @@ function type."
 (* | Tfunction_proper cc ar : Proper (equiv ==> equiv ==> equiv) (@Tfunction cc ar) *)
 | Tmember_pointer_proper gn : Proper (equiv ==> equiv) (Tmember_pointer gn)
 | Tqualified_proper q : Proper (equiv ==> equiv) (Tqualified q)
+| Trealigned_proper n : Proper (equiv ==> equiv) (Trealigned n)
 .
 #[global] Existing Instances
   type_equiv
@@ -181,6 +182,7 @@ function type."
   Tarray_proper
   Tmember_pointer_proper
   Tqualified_proper
+  Trealigned_proper
 .
 #[global] Instance type_equivalence : Equivalence (≡@{type}) :=
   Build_Equivalence _ type_equiv_refl type_equiv_sym type_equiv_trans.
@@ -444,6 +446,7 @@ Fixpoint erase_qualifiers (t : type) : type :=
   | Tfunction ft => Tfunction $ FunctionType (ft_cc:=ft.(ft_cc)) (ft_arity:=ft.(ft_arity)) (erase_qualifiers ft.(ft_return)) (List.map erase_qualifiers ft.(ft_params))
   | Tmember_pointer cls t => Tmember_pointer cls (erase_qualifiers t)
   | Tqualified _ t => erase_qualifiers t
+  | Trealigned n t => Trealigned n (erase_qualifiers t)
   | Tnullptr => Tnullptr
   | Tarch sz nm => Tarch sz nm
   | Tunsupported msg => Tunsupported msg
@@ -819,6 +822,7 @@ Fixpoint normalize_type' (cv : type_qualifiers) (t : type) : type :=
       (List.map (fun t => to_arg_type $ normalize_type' QM t) ft.(ft_params))
   | Tmember_pointer gn t => Tmember_pointer gn (normalize_type t)
   | Tqualified q t => normalize_type' (merge_tq cv q) t
+  | Trealigned n t => tqualified cv $ Trealigned n (normalize_type t)
   | Tnum _ _
   | Tchar_ _
   | Tbool
@@ -858,7 +862,9 @@ Proof.
       rewrite to_arg_type_normalize_type'_idempotent.
       by rewrite to_arg_type_idempotent. }
     { intros; rewrite normalize_type'_idempotent.
-      by rewrite assoc_L. } }
+      by rewrite assoc_L. }
+    { destruct cv1, cv2; simpl; f_equal; try first [ apply normalize_type'_idempotent
+                                                  | f_equal; apply normalize_type'_idempotent ]. } }
   { destruct ty; simpl; try solve [ destruct cv; clear; eauto ].
     all: try by destruct cv; rewrite /=/to_arg_type/=/qual_norm/=; rewrite normalize_type'_idempotent.
     all: try by rewrite /=/to_arg_type/=/qual_norm/=; rewrite normalize_type'_idempotent.
@@ -982,6 +988,13 @@ that [Tvoid] is a value type and not a scalar type.
  *)
 Definition is_value_type (t : type) : bool :=
   match drop_qualifiers t with
+  | Trealigned _ t =>
+      (** An under-aligned object holds a value of its underlying type. *)
+      match drop_qualifiers t with
+      | Tnum _ _ | Tchar_ _ | Tbool | Tptr _ | Tnullptr | Tfloat_ _
+      | Tmember_pointer _ _ | Tenum _ => true
+      | _ => false
+      end
   | Tnum _ _
   | Tchar_ _
   | Tbool
@@ -1000,7 +1013,7 @@ Definition is_value_type (t : type) : bool :=
 
 Lemma is_value_type_erase_qualifiers ty :
   is_value_type (erase_qualifiers ty) = is_value_type ty.
-Proof. induction ty; cbn; auto. Qed.
+Proof. induction ty; cbn; auto. (* [Trealigned] *) induction ty; cbn; auto. Qed.
 Lemma is_value_type_drop_qualifiers ty :
   is_value_type (drop_qualifiers ty) = is_value_type ty.
 Proof. induction ty; cbn; auto. Qed.
@@ -1227,6 +1240,18 @@ Qed.
     - <<volatile int* p = nullptr>> -- [tptsto "int*" 1$m _ nullptr]
     - <<int&& r = ..>>              -- [tptsto "int&" 1$m _ _]
  *)
+(** [unrealign t] drops the [Trealigned] wrapper of [t]'s element type,
+    giving the type of an expression that names an object of type [t]: Clang
+    types such an expression at the underlying type. *)
+Fixpoint unrealign (t : type) : type :=
+  match t with
+  | Trealigned _ t => t
+  | Tqualified q t => Tqualified q (unrealign t)
+  | Tarray t n => Tarray (unrealign t) n
+  | Tincomplete_array t => Tincomplete_array (unrealign t)
+  | _ => t
+  end.
+
 Definition heap_type : Set := type.
 Definition is_heap_type (t : type) : bool :=
      bool_decide (t = erase_qualifiers t)

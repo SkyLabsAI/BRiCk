@@ -70,8 +70,7 @@ public:
             print.str(decl->getNameAsString()) << fmt::nbsp;
         }
 
-        auto declty = decl->getType();
-        cprint.printQualType(print, declty, loc::of(decl));
+        cprint.printVarType(print, *decl);
         print.output() << fmt::nbsp;
 
         if (auto init = decl->getInit()) {
@@ -118,8 +117,7 @@ public:
             if (auto *var = b->getHoldingVar()) {
                 guard::ctor _{print, "Bvar"};
                 print.str(var->getName()) << fmt::nbsp;
-                auto declty = var->getType();
-                cprint.printQualType(print, declty, loc::of(decl)) << fmt::nbsp;
+                cprint.printVarType(print, *var) << fmt::nbsp;
 
                 auto init = var->getInit();
                 always_assert(init &&

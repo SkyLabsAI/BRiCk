@@ -460,6 +460,50 @@ static fmt::Formatter &printFieldInitializer(CoqPrinter &print,
         return print.none();
 }
 
+// A field whose address the record layout aligns less than its type needs.
+struct UnderAlignedField {
+    // The largest power of two, in bits, dividing both the record's
+    // alignment and the field's offset: the alignment the layout guarantees.
+    uint64_t align;
+    // The canonical field type with all constant array layers stripped.
+    QualType elem;
+};
+
+// The field [index] of a record with layout [layout] is under-aligned when
+// the alignment the layout guarantees for its address is smaller than the
+// alignment BRiCk assumes for its innermost array element type (see
+// [modelTypeAlign]).
+static std::optional<UnderAlignedField>
+underAlignedField(const FieldDecl &field, unsigned index,
+                  const ASTRecordLayout &layout, const ASTContext &ctxt) {
+    const uint64_t recordAlign = ctxt.toBits(layout.getAlignment());
+    const uint64_t offset = layout.getFieldOffset(index);
+    const uint64_t align =
+        offset == 0 ? recordAlign : std::min(recordAlign, offset & -offset);
+    auto elem = field.getType().getCanonicalType();
+    while (auto array = ctxt.getAsConstantArrayType(elem))
+        elem = array->getElementType().getCanonicalType();
+    // The alignment BRiCk assumes for an object of the printed type.
+    const auto natural = modelTypeAlign(ctxt, elem);
+    if (natural <= align)
+        return std::nullopt;
+    return UnderAlignedField{align, elem};
+}
+
+// Whether BRiCk can represent an under-aligned field of this element type,
+// by wrapping it in [Trealigned].
+static const char *unsupportedUnderAligned(const UnderAlignedField &f);
+
+static const char *unsupportedUnderAligned(const UnderAlignedField &f) {
+    if (f.elem->isReferenceType())
+        return "under-aligned reference members are not supported";
+    if (f.elem->isScalarType())
+        return nullptr;
+    if (f.elem->isRecordType())
+        return "under-aligned fields of class type are not supported";
+    return "under-aligned fields of this type are not supported";
+}
+
 static fmt::Formatter &printFields(const RecordDecl &decl,
                                    const ASTRecordLayout *layout,
                                    CoqPrinter &print, ClangPrinter &cprint) {
@@ -472,8 +516,18 @@ static fmt::Formatter &printFields(const RecordDecl &decl,
 
         guard::ctor _(print, "mkMember", i != 0);
         cprint.printFieldName(print, *field, loc::of(field)) << fmt::nbsp;
-        cprint.printQualType(print, field->getType(), loc::of(field))
-            << fmt::nbsp;
+        auto &ctxt = cprint.getContext();
+        auto under =
+            layout ? underAlignedField(*field, i, *layout, ctxt) : std::nullopt;
+        if (under) {
+            if (auto msg = unsupportedUnderAligned(*under))
+                fatal(cprint, loc::of(field), msg);
+            auto align = ctxt.toCharUnitsFromBits(under->align).getQuantity();
+            cprint.printRealignedQualType(print, field->getType(), align,
+                                          loc::of(field));
+        } else
+            cprint.printQualType(print, field->getType(), loc::of(field));
+        print.output() << fmt::nbsp;
         print.boolean(field->isMutable()) << fmt::nbsp;
         printFieldInitializer(print, *field, cprint) << fmt::nbsp;
         auto li = layout ? layout->getFieldOffset(i++) : 0;
@@ -736,23 +790,17 @@ static const char *supportedRecord(const RecordDecl &decl,
     if (!decl.isCompleteDefinition() || decl.isDependentContext())
         return nullptr;
 
-    // BRiCk's typed object pointers imply natural type alignment. A packed
-    // field needs a different access contract, which is not modeled yet.
-    // Check the layout rather than the attribute: byte-only packed records
-    // and explicitly aligned packed fields can still be represented.
+    // BRiCk's typed object pointers imply natural type alignment, so
+    // under-aligned (e.g., packed) fields are printed with [Trealigned],
+    // which BRiCk supports for scalar element types only. Check the layout
+    // rather than the attribute: byte-only packed records and explicitly
+    // aligned packed fields need no wrapper.
     const auto &layout = ctxt.getASTRecordLayout(&decl);
-    const auto recordAlign = ctxt.toBits(layout.getAlignment());
     unsigned index = 0;
     for (auto f : decl.fields()) {
-        // Typedef alignment attributes are erased by the type translation.
-        // Reference members are pointer-sized cells, not their referents.
-        const auto ty = f->getType()->isReferenceType()
-                            ? ctxt.VoidPtrTy
-                            : f->getType().getCanonicalType();
-        const auto fieldAlign = ctxt.getTypeAlign(ty);
-        if (recordAlign % fieldAlign != 0 ||
-            layout.getFieldOffset(index) % fieldAlign != 0)
-            return "under-aligned fields are not supported";
+        if (auto under = underAlignedField(*f, index, layout, ctxt))
+            if (auto msg = unsupportedUnderAligned(*under))
+                return msg;
         ++index;
     }
     return nullptr;
@@ -939,6 +987,19 @@ static bool printOpaqueRecord(CoqPrinter &print, const CXXRecordDecl &decl,
 }
 
 } // namespace
+
+std::optional<uint64_t> realignedFieldAlign(const ASTContext &ctxt,
+                                            const FieldDecl &field) {
+    auto rd = field.getParent();
+    if (!rd || !rd->isCompleteDefinition() || rd->isDependentContext() ||
+        rd->isInvalidDecl() || field.isBitField())
+        return std::nullopt;
+    const auto &layout = ctxt.getASTRecordLayout(rd);
+    auto under = underAlignedField(field, field.getFieldIndex(), layout, ctxt);
+    if (!under || unsupportedUnderAligned(*under))
+        return std::nullopt;
+    return ctxt.toCharUnitsFromBits(under->align).getQuantity();
+}
 
 static const DeclPrinter Dstruct("Dstruct", "Dtemplated_struct", printStruct,
                                  supportedRecord, printOpaqueRecord);
@@ -1207,11 +1268,29 @@ static fmt::Formatter &printDestructor(CoqPrinter &print,
 }
 } // namespace
 
+// Clang may place a parameter of an under-aligned typedef type at an address
+// aligned only to the typedef (<<alloca i32, align 1>> at -O0), while BRiCk
+// types the parameter object at the erased type, which is naturally aligned.
+template <typename T>
+static const char *supportedFunction(const T &decl, const ASTContext &ctxt) {
+    for (auto param : decl.parameters()) {
+        const auto ty = param->getType();
+        if (ty->isDependentType() || ty->isIncompleteType())
+            continue;
+        if (ctxt.toBits(ctxt.getDeclAlign(param)) < modelTypeAlign(ctxt, ty))
+            return "under-aligned parameters are not supported";
+    }
+    return nullptr;
+}
+
 static const DeclPrinter Dfunction("Dfunction", "Dtemplated_function",
-                                   printFunction);
-static const DeclPrinter Dmethod("Dmethod", "Dtemplated_method", printMethod);
+                                   printFunction,
+                                   supportedFunction<FunctionDecl>);
+static const DeclPrinter Dmethod("Dmethod", "Dtemplated_method", printMethod,
+                                 supportedFunction<CXXMethodDecl>);
 static const DeclPrinter Dconstructor("Dconstructor", "Dtemplated_constructor",
-                                      printConstructor);
+                                      printConstructor,
+                                      supportedFunction<CXXConstructorDecl>);
 static const DeclPrinter Ddestructor("Ddestructor", "Dtemplated_destructor",
                                      printDestructor);
 
@@ -1223,7 +1302,7 @@ static fmt::Formatter &printVar(CoqPrinter &print, const VarDecl &decl,
         cprint.trace("printVar", loc::of(decl));
 
     // TODO handling of [constexpr] needs to be improved.
-    cprint.printQualType(print, decl.getType(), loc::of(decl)) << fmt::nbsp;
+    cprint.printVarType(print, decl) << fmt::nbsp;
     // <<extern const int x = 1;>> is a definition, handled below.
     if (decl.hasExternalStorage() && !decl.getInit()) {
         return print.output() << "global_init.Extern";

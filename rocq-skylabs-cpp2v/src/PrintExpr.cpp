@@ -18,6 +18,7 @@
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/Builtins.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Version.inc"
 #include "llvm/ADT/APFloat.h"
 #include <clang/AST/OperationKinds.h>
@@ -313,9 +314,279 @@ public:
             os << loc::describe(loc, cprint.getContext());
             print.str(coqmsg) << fmt::nbsp;
             done(expr, Done::DT);
+        } else if (auto why = overAlignedAccess(expr)) {
+            unsupported_expr(expr, *why);
+        } else if (expr->isPRValue() && !expr->getType().isNull() &&
+                   !expr->getType()->isScalarType() &&
+                   underAligned(expr->getType())) {
+            // Clang initializes a class or array prvalue of an under-aligned
+            // type in a slot allocated at that type's alignment when the
+            // context does not provide one (e.g. <<U();>> or <<make();>>,
+            // with no [MaterializeTemporaryExpr]), while BRiCk initializes
+            // an object of the erased type, naturally aligned.
+            unsupported_expr(expr, "under-aligned prvalue");
         } else {
             ConstStmtVisitor<PrintExpr, void>::Visit(expr);
         }
+    }
+
+    // The alignment, in bits, that BRiCk assumes for objects of type [ty],
+    // the type cpp2v prints (see [modelTypeAlign]); a byte for types without
+    // a layout, such as incomplete types.
+    uint64_t modelAlign(QualType ty) {
+        auto elem = ctxt.getBaseElementType(ty);
+        if (elem->isIncompleteType() || elem->isDependentType() ||
+            elem->isPlaceholderType() || elem->isUndeducedType() ||
+            elem->isSizelessType() || elem->isFunctionType())
+            return ctxt.getCharWidth();
+        return modelTypeAlign(ctxt, ty);
+    }
+
+    // The alignment, in bits, that Clang's code generation assumes for an
+    // object of type [ty] accessed through a pointer or reference
+    // ([CodeGenModule::getNaturalTypeAlignment]): that of the outermost
+    // typedef carrying an alignment attribute, even for an incomplete or
+    // array type, and otherwise that of the base element type.
+    uint64_t clangNaturalAlign(QualType ty) {
+        if (auto tt = ty->getAs<TypedefType>())
+            if (auto align = tt->getDecl()->getMaxAlignment())
+                return align;
+        auto elem = ctxt.getBaseElementType(ty);
+        if (elem->isIncompleteType() || elem->isDependentType() ||
+            elem->isPlaceholderType() || elem->isUndeducedType() ||
+            elem->isSizelessType() || elem->isFunctionType())
+            return ctxt.getCharWidth();
+        return ctxt.getTypeAlign(elem);
+    }
+
+    // Whether Clang assumes objects of type [ty] are more aligned than BRiCk
+    // does, as for <<typedef int X32 __attribute__((aligned(32)))>>, which
+    // cpp2v prints as [Tint].
+    bool overAligned(QualType ty) {
+        if (ty.isNull() || ty->isDependentType())
+            return false;
+        return clangNaturalAlign(ty) > modelAlign(ty);
+    }
+
+    // Whether Clang may allocate an object of type [ty] less aligned than
+    // BRiCk assumes: Clang allocates temporaries at the alignment of their
+    // type, typedef sugar included ([CodeGenFunction::CreateMemTemp]), which
+    // an alignment attribute on a typedef can lower, as for
+    // <<typedef S U __attribute__((aligned(1)))>>.
+    bool underAligned(QualType ty) {
+        if (ty.isNull() || ty->isDependentType())
+            return false;
+        auto elem = ctxt.getBaseElementType(ty);
+        if (elem->isIncompleteType() || elem->isDependentType() ||
+            elem->isPlaceholderType() || elem->isUndeducedType() ||
+            elem->isSizelessType() || elem->isFunctionType())
+            return false;
+        return ctxt.getTypeAlign(ty) < modelAlign(ty);
+    }
+
+    // Clang takes the alignment of an access from the static type of the
+    // pointer or reference it goes through, typedef sugar included: through
+    // an <<X32*>> it loads and stores with alignment 32, and the optimizer
+    // relies on that. Since <<X32*>> and <<int*>> are the same type, a
+    // program can reach such an access from any <<int*>> without a cast.
+    // BRiCk only requires the alignment of [Tint], so it would accept
+    // programs that Clang miscompiles. [overAlignedAccess] finds such
+    // accesses, which are printed as unsupported.
+    //
+    // A local variable used in its own function, or a variable defined in
+    // this translation unit (strongly, not as an alias) at least as aligned
+    // as the declaration used, has the alignment Clang assumes, since Clang
+    // allocates it. (A by-value parameter or a named return value lives at
+    // the ABI's alignment instead; Clang only trusts that, not the declared
+    // one, in its own function.) So does a field, at
+    // the alignment of its record (which BRiCk takes from Clang's layout), and
+    // a temporary. An assignment, a parenthesized or conditional glvalue, a
+    // base-class subobject and a structured binding have the alignment of
+    // the glvalue they designate.
+    std::optional<StringRef> unsafeVar(const VarDecl *vd, bool captured) {
+        if (vd->getType()->isReferenceType())
+            return overAligned(vd->getType()->getPointeeType())
+                       ? std::optional<StringRef>(
+                             "access through a reference to an over-aligned "
+                             "type")
+                       : std::nullopt;
+        // C++ requires every definition of a variable declared with an
+        // <<alignas>> to specify the same alignment ([dcl.align]/6), so only
+        // the alignment from GNU attributes and typedefs needs a definition
+        // here.
+        auto untrusted = clangNaturalAlign(vd->getType());
+        // ([AlignedAttr::getAlignment] only reads the context.)
+        auto &mctxt = const_cast<ASTContext &>(ctxt);
+        for (auto *attr : vd->specific_attrs<AlignedAttr>())
+            if (!attr->isAlignas() && !attr->isAlignmentDependent())
+                untrusted =
+                    std::max<uint64_t>(untrusted, attr->getAlignment(mctxt));
+        if (untrusted <= modelAlign(vd->getType()))
+            return std::nullopt;
+        auto need = ctxt.toBits(ctxt.getDeclAlign(vd));
+        if (vd->hasLocalStorage())
+            return captured ? std::optional<StringRef>(
+                                  "use of a captured variable of an "
+                                  "over-aligned type")
+                            : std::nullopt;
+        // An alias or a weak definition is a definition for Clang, but the
+        // storage may be that of another definition.
+        auto def = vd->getDefinition();
+        if (def && !def->hasAttr<AliasAttr>() && !def->isWeak() &&
+            !def->hasAttr<SelectAnyAttr>() &&
+            ctxt.toBits(ctxt.getDeclAlign(def)) >= need)
+            return std::nullopt;
+        return "access to a variable declared more aligned than its "
+               "definition";
+    }
+
+    std::optional<StringRef> unsafeGlvalue(const Expr *expr) {
+        if (expr->isTypeDependent() || expr->isValueDependent())
+            return std::nullopt;
+        expr = expr->IgnoreParens();
+        if (isa<MaterializeTemporaryExpr, CompoundLiteralExpr>(expr))
+            return std::nullopt;
+        if (auto co = dyn_cast<AbstractConditionalOperator>(expr)) {
+            if (auto why = unsafeGlvalue(co->getTrueExpr()))
+                return why;
+            return unsafeGlvalue(co->getFalseExpr());
+        }
+        if (auto bo = dyn_cast<BinaryOperator>(expr)) {
+            if (bo->isAssignmentOp())
+                return unsafeGlvalue(bo->getLHS());
+            if (bo->isCommaOp())
+                return unsafeGlvalue(bo->getRHS());
+        }
+        if (auto uo = dyn_cast<UnaryOperator>(expr);
+            uo && uo->isIncrementDecrementOp())
+            return unsafeGlvalue(uo->getSubExpr());
+        if (auto ce = dyn_cast<CastExpr>(expr)) {
+            switch (ce->getCastKind()) {
+            case CK_NoOp:
+            case CK_DerivedToBase:
+            case CK_UncheckedDerivedToBase:
+                return unsafeGlvalue(ce->getSubExpr());
+            default:
+                break;
+            }
+        }
+        if (auto dre = dyn_cast<DeclRefExpr>(expr)) {
+            if (auto vd = dyn_cast<VarDecl>(dre->getDecl()))
+                return unsafeVar(vd, dre->refersToEnclosingVariableOrCapture());
+            if (auto bd = dyn_cast<BindingDecl>(dre->getDecl()))
+                if (auto binding = bd->getBinding())
+                    return unsafeGlvalue(binding);
+        } else if (auto me = dyn_cast<MemberExpr>(expr)) {
+            auto member = me->getMemberDecl();
+            if (auto vd = dyn_cast<VarDecl>(member))
+                return unsafeVar(vd, false);
+            if (auto fd = dyn_cast<FieldDecl>(member)) {
+                if (fd->getType()->isReferenceType())
+                    return overAligned(fd->getType()->getPointeeType())
+                               ? std::optional<StringRef>(
+                                     "access through a reference to an "
+                                     "over-aligned type")
+                               : std::nullopt;
+                if (!me->isArrow())
+                    return unsafeGlvalue(me->getBase());
+                if (unsafePointer(me->getBase()))
+                    return "member access through a pointer to an "
+                           "over-aligned type";
+                return std::nullopt;
+            }
+        }
+        if (overAligned(expr->getType()))
+            return "access through an over-aligned type";
+        return std::nullopt;
+    }
+
+    // Whether Clang derives an alignment larger than BRiCk's for the object
+    // a pointer [e] points to ([CodeGenFunction::EmitPointerWithAlignment]):
+    // from the object of <<&e>>, or from the static pointee type, looking
+    // through implicit conversions such as derived-to-base ones. (An
+    // explicit cast resets the alignment to that of its type.)
+    bool unsafePointer(const Expr *e) {
+        while (e) {
+            e = e->IgnoreParens();
+            if (auto uo = dyn_cast<UnaryOperator>(e);
+                uo && uo->getOpcode() == UO_AddrOf)
+                return unsafeGlvalue(uo->getSubExpr()).has_value();
+            if (auto pt = e->getType()->getAs<PointerType>();
+                pt && overAligned(pt->getPointeeType()))
+                return true;
+            auto ice = dyn_cast<ImplicitCastExpr>(e);
+            if (!ice)
+                return false;
+            switch (ice->getCastKind()) {
+            case CK_NoOp:
+            case CK_BitCast:
+            case CK_DerivedToBase:
+            case CK_UncheckedDerivedToBase:
+                e = ice->getSubExpr();
+                break;
+            default:
+                return false;
+            }
+        }
+        return false;
+    }
+
+    std::optional<StringRef> overAlignedAccess(const Expr *expr) {
+        if (expr->isTypeDependent() || expr->isValueDependent())
+            return std::nullopt;
+        if (expr->isGLValue())
+            if (auto why = unsafeGlvalue(expr))
+                return why;
+        auto overAlignedArg = [&](auto args) {
+            return std::any_of(args.begin(), args.end(),
+                               [&](const Expr *a) { return unsafePointer(a); });
+        };
+        // A member call through a pointer: Clang takes the alignment of the
+        // object (e.g. for a virtual call's vtable load, or the copy of a
+        // trivial assignment) from the pointer.
+        if (auto me = dyn_cast<MemberExpr>(expr);
+            me && me->isArrow() && unsafePointer(me->getBase()))
+            return "member access through a pointer to an over-aligned type";
+        if (auto mce = dyn_cast<CXXMemberCallExpr>(expr))
+            if (auto me =
+                    dyn_cast<MemberExpr>(mce->getCallee()->IgnoreParens());
+                me && me->isArrow() && unsafePointer(me->getBase()))
+                return "member call through a pointer to an over-aligned type";
+        if (auto dc = dyn_cast<CXXDynamicCastExpr>(expr);
+            dc && unsafePointer(dc->getSubExpr()))
+            return "dynamic_cast of a pointer to an over-aligned type";
+        if (auto ce = dyn_cast<CallExpr>(expr);
+            ce && ce->getBuiltinCallee() && overAlignedArg(ce->arguments()))
+            return "builtin call on a pointer to an over-aligned type";
+        if (auto ae = dyn_cast<AtomicExpr>(expr);
+            ae && overAlignedArg(
+                      llvm::ArrayRef(ae->getSubExprs(), ae->getNumSubExprs())))
+            return "atomic operation on a pointer to an over-aligned type";
+        // A conversion to a virtual base loads the base's offset through the
+        // pointer.
+        if (auto ce = dyn_cast<CastExpr>(expr);
+            ce &&
+            (ce->getCastKind() == CK_DerivedToBase ||
+             ce->getCastKind() == CK_UncheckedDerivedToBase) &&
+            ce->getType()->isPointerType() &&
+            std::any_of(
+                ce->path_begin(), ce->path_end(),
+                [](const CXXBaseSpecifier *b) { return b->isVirtual(); }) &&
+            unsafePointer(ce->getSubExpr()))
+            return "conversion of a pointer to an over-aligned type to a "
+                   "virtual base";
+        // A delete expression loads the vtable of a polymorphic object, or
+        // the array cookie, at the alignment of the destroyed type.
+        if (auto de = dyn_cast<CXXDeleteExpr>(expr);
+            de && (overAligned(de->getDestroyedType()) ||
+                   unsafePointer(de->getArgument())))
+            return "delete of an over-aligned type";
+        // Clang initializes the object of a new expression, including a
+        // placement new, at the alignment of the allocated type.
+        if (auto ne = dyn_cast<CXXNewExpr>(expr);
+            ne && overAligned(ne->getAllocatedType()))
+            return "new of an over-aligned type";
+        return std::nullopt;
     }
 
     void VisitExpr(const Expr *expr) { unsupported_expr(expr); }
@@ -437,7 +708,41 @@ public:
         }
     }
 
+    // An assignment to an under-aligned field, stored at the field's
+    // [Trealigned] type; only when its result is discarded (see
+    // [ClangPrinter::realignedAccess]).
+    bool printRealignedAssign(const BinaryOperator *expr) {
+        if (expr->getOpcode() != BinaryOperatorKind::BO_Assign)
+            return false;
+        auto align = realignedMember(expr->getLHS());
+        if (!align)
+            return false;
+        if (cprint.discardedExpr != expr) {
+            print.ctor("Eunsupported");
+            print.output() << "\"use of an assignment to an under-aligned "
+                              "field\""
+                           << fmt::nbsp;
+            done(expr, Done::DT);
+            return true;
+        }
+        auto lhs = expr->getLHS()->IgnoreParens();
+        print.ctor("Eassign");
+        cprint.realignedAccess = lhs;
+        cprint.printExpr(print, expr->getLHS(), names);
+        cprint.realignedAccess = nullptr;
+        print.output() << fmt::nbsp;
+        cprint.printExpr(print, expr->getRHS(), names);
+        print.output() << fmt::nbsp;
+        cprint.printRealignedQualType(
+            print, cast<MemberExpr>(lhs)->getMemberDecl()->getType(), *align,
+            loc::of(expr));
+        print.end_ctor();
+        return true;
+    }
+
     void VisitBinaryOperator(const BinaryOperator *expr) {
+        if (printRealignedAssign(expr))
+            return;
         // A comma whose result is a bit-field glvalue, and an assignment or
         // compound assignment to one, have their own nodes (see [Ebf_comma]
         // in syntax/core.v). Clang tracks bit-field glvalues as the object
@@ -963,6 +1268,23 @@ public:
             return;
         }
 
+        if (expr->getCastKind() == CastKind::CK_LValueToRValue &&
+            realignedMember(expr->getSubExpr())) {
+            // Read the under-aligned object, then retype the value at the
+            // expression's type: [wp_operand_cast_noop] makes the prover show
+            // that the value has that type.
+            guard::ctor noop(print, "Ecast");
+            print.ctor("Cnoop", false);
+            cprint.printQualType(print, expr->getType(), loc::of(expr));
+            print.end_ctor() << fmt::nbsp;
+            guard::ctor l2r(print, "Ecast");
+            print.output() << "Cl2r" << fmt::nbsp;
+            cprint.realignedAccess = expr->getSubExpr()->IgnoreParens();
+            cprint.printExpr(print, expr->getSubExpr(), names);
+            cprint.realignedAccess = nullptr;
+            return;
+        }
+
         guard::ctor _(print, "Ecast");
         printCast(expr);
         print.output() << fmt::nbsp;
@@ -1152,6 +1474,17 @@ public:
         done(lit, Done::NONE);
     }
 
+    // The alignment of the under-aligned field that [e] accesses, if any.
+    std::optional<uint64_t> realignedMember(const Expr *e) {
+        auto me = dyn_cast<MemberExpr>(e->IgnoreParens());
+        if (!me)
+            return std::nullopt;
+        auto fd = dyn_cast<FieldDecl>(me->getMemberDecl());
+        if (!fd)
+            return std::nullopt;
+        return realignedFieldAlign(cprint.getContext(), *fd);
+    }
+
     void VisitMemberExpr(const MemberExpr *expr) {
         auto member = expr->getMemberDecl();
         auto base = expr->getBase();
@@ -1164,6 +1497,18 @@ public:
             cprint.printExpr(print, base, names) << fmt::nbsp;
             print.str(fd->getName()) << fmt::nbsp;
             cprint.printQualType(print, member->getType(), loc::of(member));
+            return;
+        }
+
+        std::optional<uint64_t> realigned;
+        if (auto fd = dyn_cast<FieldDecl>(member))
+            realigned = realignedFieldAlign(cprint.getContext(), *fd);
+        if (realigned && cprint.realignedAccess != expr) {
+            // See [ClangPrinter::realignedAccess].
+            print.ctor("Eunsupported");
+            print.output() << "\"access to an under-aligned field\""
+                           << fmt::nbsp;
+            done(expr, Done::DT);
             return;
         }
 
@@ -1185,7 +1530,11 @@ public:
             // remove [const]
             //    if the field is [mutable], and then use the type of the field.
 
-            cprint.printQualType(print, member->getType(), loc::of(member));
+            if (realigned)
+                cprint.printRealignedQualType(print, member->getType(),
+                                              *realigned, loc::of(member));
+            else
+                cprint.printQualType(print, member->getType(), loc::of(member));
         } else if (auto ed = dyn_cast<EnumConstantDecl>(member)) {
             guard::ctor _{print, "Enum", false};
             cprint.printName(print, *ed);
@@ -1507,6 +1856,37 @@ public:
         print.output() << "Enull" << fmt::nbsp;
     }
 
+    // Clang's value of [alignof(T)] or [alignof(e)] when it differs from the
+    // alignment BRiCk's [align_of] gives the type cpp2v prints (see
+    // [modelTypeAlign]): alignment attributes on typedefs and enums (and on
+    // declarations, for GNU [alignof(e)]) do not survive the type
+    // translation. Such an [alignof] is printed as Clang's constant instead.
+    std::optional<llvm::APSInt>
+    attributedAlignOf(const UnaryExprOrTypeTraitExpr &expr) {
+        if (expr.getKind() != UnaryExprOrTypeTrait::UETT_AlignOf ||
+            expr.isValueDependent() || expr.isTypeDependent())
+            return std::nullopt;
+        auto &ctxt = cprint.getContext();
+        auto ty = expr.isArgumentType() ? expr.getArgumentType()
+                                        : expr.getArgumentExpr()->getType();
+        // [alignof(T&)] is the alignment of [T], and [alignof(T[])] or
+        // [alignof(T[n])] that of [T].
+        if (auto ref = ty->getAs<ReferenceType>())
+            ty = ref->getPointeeType();
+        ty = ty.getCanonicalType();
+        if (auto array = ctxt.getAsArrayType(ty))
+            ty = ctxt.getBaseElementType(array).getCanonicalType();
+        if (ty->isDependentType() || ty->isIncompleteType() ||
+            ty->isFunctionType())
+            return std::nullopt;
+        auto value = expr.EvaluateKnownConstInt(ctxt);
+        const auto model =
+            ctxt.toCharUnitsFromBits(modelTypeAlign(ctxt, ty)).getQuantity();
+        if (value == model)
+            return std::nullopt;
+        return value;
+    }
+
     void VisitUnaryExprOrTypeTraitExpr(const UnaryExprOrTypeTraitExpr *expr) {
         auto do_arg = [&]() {
             if (expr->isArgumentType()) {
@@ -1527,6 +1907,11 @@ public:
 
         switch (expr->getKind()) {
         case UnaryExprOrTypeTrait::UETT_AlignOf: {
+            if (auto value = attributedAlignOf(*expr)) {
+                print.ctor("Eint", false) << fmt::Z(*value);
+                done(expr);
+                break;
+            }
             print.ctor("Ealignof", false);
             do_arg();
             done(expr);
@@ -1599,10 +1984,42 @@ public:
         this->Visit(expr->getReplacement());
     }
 
+    // An aligned allocation or deallocation function receives Clang's
+    // alignment of the allocated type, while BRiCk passes [align_of] of the
+    // type cpp2v prints, which lacks alignment attributes on typedefs (see
+    // [modelTypeAlign]). Such a call is unsupported rather than modelled with
+    // the wrong argument.
+    bool attributedAlignedAllocation(QualType ty, bool aligned) {
+        if (!aligned || ty.isNull() || ty->isDependentType() ||
+            ty->isIncompleteType())
+            return false;
+        auto &ctxt = cprint.getContext();
+        auto elem = ty;
+        if (auto array = ctxt.getAsArrayType(elem))
+            elem = ctxt.getBaseElementType(array);
+        return ctxt.getTypeAlign(elem) != modelTypeAlign(ctxt, elem);
+    }
+
     void VisitCXXNewExpr(const CXXNewExpr *expr) {
         auto new_fn = expr->getOperatorNew();
         if (not new_fn) {
             unsupported_expr(expr, "dependent call to new");
+            return;
+        }
+        if (attributedAlignedAllocation(expr->getAllocatedType(),
+                                        expr->passAlignment())) {
+            unsupported_expr(expr, "aligned new of a type with an alignment "
+                                   "attribute");
+            return;
+        }
+        // Without an alignment argument, the storage is only aligned to
+        // <<__STDCPP_DEFAULT_NEW_ALIGNMENT__>>, and Clang omits the argument
+        // for an under-aligned typedef of an over-aligned class, while BRiCk
+        // constructs the object at the erased type, naturally aligned.
+        if (!expr->passAlignment() && underAligned(expr->getAllocatedType()) &&
+            modelAlign(expr->getAllocatedType()) >
+                cprint.getContext().getTargetInfo().getNewAlign()) {
+            unsupported_expr(expr, "new of an under-aligned type");
             return;
         }
 
@@ -1648,6 +2065,27 @@ public:
     }
 
     void VisitCXXDeleteExpr(const CXXDeleteExpr *expr) {
+        if (auto op = expr->getOperatorDelete()) {
+            bool aligned = false;
+            for (auto param : op->parameters())
+                aligned |= param->getType()->isAlignValT();
+            if (attributedAlignedAllocation(expr->getDestroyedType(),
+                                            aligned)) {
+                unsupported_expr(expr, "aligned delete of a type with an "
+                                       "alignment attribute");
+                return;
+            }
+            // As for [VisitCXXNewExpr]: Clang picks a deallocation function
+            // without an alignment argument for such a type, unlike the one
+            // that allocated an object of the erased type.
+            auto ty = expr->getDestroyedType();
+            if (!aligned && underAligned(ty) &&
+                modelAlign(ty) >
+                    cprint.getContext().getTargetInfo().getNewAlign()) {
+                unsupported_expr(expr, "delete of an under-aligned type");
+                return;
+            }
+        }
         if (expr->getOperatorDelete()) {
             print.ctor("Edelete");
             print.output() << fmt::BOOL(expr->isArrayForm()) << fmt::nbsp;
@@ -1699,6 +2137,11 @@ public:
             // BRiCk does not currently support scope-extruded temporaries
             return unsupported_expr(expr, "scope-extruded temporary");
         }
+        // Clang allocates the temporary at the alignment of its type (e.g.
+        // only 1 for <<f(U{7})>>), while BRiCk materializes it at the erased
+        // type, naturally aligned.
+        if (underAligned(expr->getType()))
+            return unsupported_expr(expr, "under-aligned temporary");
 
         guard::ctor _{print, "Ematerialize_temp"};
         cprint.printExpr(print, expr->getSubExpr(), names) << fmt::nbsp;

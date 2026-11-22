@@ -107,6 +107,12 @@ Definition default_initialize_body `{Σ : cpp_logic, σ : genv}
   | Tenum _ =>
     let rty := erase_qualifiers ty in
     p |-> uninitR rty 1$m -* |={top}=>?u Q FreeTemps.id
+  | Trealigned _ _ =>
+    (* Only an under-aligned object of a value type is a heap object. *)
+    if is_value_type ty then
+      let rty := erase_qualifiers ty in
+      p |-> uninitR rty 1$m -* |={top}=>?u Q FreeTemps.id
+    else UNSUPPORTED "default initialization of an under-aligned object of this type"
 
   | Tarray ety sz =>
     if bool_decide (0 < sz)%N then
@@ -223,6 +229,10 @@ Section default_initialize.
       case_match; eauto.
       case_match; first by iMod "wp"; iExFalso; rewrite ERROR_elim.
       iApply (IHty with "HQ wp"). }
+    { (* realigned *)
+      case_match.
+      - by iIntros "R"; iMod ("wp" with "R") as "Q"; iApply ("HQ" with "Q").
+      - by iMod "wp"; iExFalso; rewrite ?UNSUPPORTED_elim. }
   Qed.
 
   Lemma default_initialize_array_frame tu tu' ty sz Q Q' (p : ptr) :
@@ -246,6 +256,9 @@ Section default_initialize.
       iIntros ">$". }
     { (* qualifiers *)
       do 2 (case_match; auto using fupd_elim, fupd_intro). }
+    { (* realigned *)
+      case_match; last by auto using fupd_elim, fupd_intro.
+      by iIntros ">HQ R"; iMod ("HQ" with "R"). }
   Qed.
 
   Lemma default_initialize_array_shift tu ty sz p Q :
@@ -319,6 +332,10 @@ Section default_initialize.
     { (* qualifiers *)
       destruct (q_volatile q); auto using fupd_intro.
       destruct (q_const q); auto using fupd_intro. }
+    { (* realigned *)
+      repeat case_match;
+        first [ by iIntros "HQ R"; iApply ("HQ" with "R")
+              | by auto using fupd_intro ]. }
   Qed.
   Lemma default_initialize_elim tu ty (p : ptr) Q :
     default_initialize tu ty p Q
@@ -401,6 +418,13 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
       letI* v, free := wp_operand tu ρ init in
       let qf := cQp.mk (q_const cv) 1 in
       addr |-> tptsto_fuzzyR (erase_qualifiers ty) qf v -* |={top}=>?u Q free
+    | Trealigned _ _ =>
+      (* Only an under-aligned object of a value type is a heap object. *)
+      if is_value_type ty then
+        letI* v, free := wp_operand tu ρ init in
+        let qf := cQp.mk (q_const cv) 1 in
+        addr |-> tptsto_fuzzyR (erase_qualifiers ty) qf v -* |={top}=>?u Q free
+      else UNSUPPORTED (initializing_type ty init)
 
       (* non-primitives are handled via prvalue-initialization semantics *)
     | Tarray _ len =>
@@ -474,6 +498,11 @@ Proof.
   rewrite wp_initialize_unqualified.unlock.
   case_match; eauto.
   case_match; subst; eauto.
+  (* [Trealigned]: the unsupported branch is unchanged. *)
+  all: try lazymatch goal with
+       | |- context [if is_value_type (Trealigned _ _) then _ else _] =>
+           case_match; [|done]
+       end.
   all: try (iApply wp_operand_frame; [ done | ];
     iIntros (??) "X Y";
     iDestruct (observe (reference_to _ _) with "Y") as "#?";
@@ -608,6 +637,8 @@ Section wp_initialize.
     intros Hty ??. rewrite -wp_initialize_unqualified_intro.
     case_match; eauto.
     destruct ty; try solve [ inversion H0 | eauto ].
+    (* realigned *)
+    all: try (move: H0; case: (is_value_type (Trealigned _ _)) => // _).
     (* void *)
     iIntros "wp /=".
     iApply wp_operand_well_typed.
@@ -623,6 +654,8 @@ Section wp_initialize.
   Proof.
     intros. rewrite wp_initialize_unqualified_elim.
     case_match; eauto. destruct ty; try done.
+    (* realigned *)
+    all: try (move: H0; case: (is_value_type (Trealigned _ _)) => // _).
     (* void *)
     iIntros "wp".
     iApply (wp_operand_wand with "wp"). iIntros (v f) "(-> & HQ) R".
@@ -860,6 +893,20 @@ Section wp_initialize.
                                let qf := cQp.mk (q_const cv) 1 in
                                addr |-> tptsto_fuzzyR (erase_qualifiers ty) qf v -* Q free
                            )
+  | WpInitRealignedUnsupported cv n ty' : (cv, Trealigned n ty') = decompose_type ty ->
+                         ~~q_volatile cv ->
+                         is_value_type (Trealigned n ty') = false ->
+                         wp_initialize_decomp_spec tu ρ ty addr init Q (
+                             UNSUPPORTED (initializing_type (Trealigned n ty') init)
+                           )
+  | WpInitRealigned cv n ty' : (cv, Trealigned n ty') = decompose_type ty ->
+                         ~~q_volatile cv ->
+                         is_value_type (Trealigned n ty') = true ->
+                         wp_initialize_decomp_spec tu ρ ty addr init Q (
+                             letI* v, free := wp_operand tu ρ init in
+                               let qf := cQp.mk (q_const cv) 1 in
+                               addr |-> tptsto_fuzzyR (erase_qualifiers ty) qf v -* Q free
+                           )
   | WpInitRef cv ty' : (cv, Tref ty') = decompose_type ty ->
                       ~~q_volatile cv ->
                       wp_initialize_decomp_spec tu ρ ty addr init Q (
@@ -935,7 +982,10 @@ Section wp_initialize.
     all: have Herase := erase_qualifiers_decompose_type ty.
     all: rewrite Hdec /= in Herase.
     all: rewrite -Herase.
-    all: eapply WpInitScalar; [|exact Hdeq|exact Hnv]; done.
+    all: first [ eapply WpInitScalar; [|exact Hdeq|exact Hnv]; done
+               | case Hv: (is_value_type (Trealigned _ _));
+                 [ eapply WpInitRealigned; [exact Hdeq|exact Hnv|exact Hv]
+                 | eapply WpInitRealignedUnsupported; [exact Hdeq|exact Hnv|exact Hv] ] ].
   Qed.
 
   (** [wpi] *)
