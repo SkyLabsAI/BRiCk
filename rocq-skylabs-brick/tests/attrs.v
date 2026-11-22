@@ -86,7 +86,8 @@ Proof. reflexivity. Qed.
 (** ** Type attributes
 
 A typedef's attributes are kept at each use of the typedef, as
-[Tattributed]; the parser drops no-op ones ([attr.noop_kinds]). *)
+[Tattributed]; the parser drops no-op ones ([attr.noop_kinds]). cpp2v
+does not print [aligned] on a type: it accounts for alignment itself. *)
 Definition var_type (n : name) : option type :=
   match source.(symbols) !! n with
   | Some (Ovar t _) => Some t
@@ -100,5 +101,5 @@ Example typedef_attributes :
               else if PrimString.compare k "MayAlias"%pstring is Eq then 3 else 0
           | Some Tint => 2
           | _ => 0
-          end) <$> (var_type <$> ["g_aligned"; "g_quiet"; "g_mixed"]%cpp_name) = [1; 2; 3].
+          end) <$> (var_type <$> ["g_aligned"; "g_quiet"; "g_mixed"]%cpp_name) = [2; 2; 3].
 Proof. vm_compute. reflexivity. Qed.

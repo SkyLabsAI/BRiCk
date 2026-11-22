@@ -341,11 +341,14 @@ public:
     /// Print the `list attr.t` of a declaration: every attribute (except
     /// implicit ones on builtins and implicit declarations, see `skipAttr`),
     /// as `attr.Other "<attribute kind>" "<pretty-printed attribute>"`.
-    fmt::Formatter &printAttrs(CoqPrinter &, const clang::Decl &);
+    /// With `onType`, the attributes are those of a typedef at a use of
+    /// the typedef, and `aligned` is skipped (see `skipAttr`).
+    fmt::Formatter &printAttrs(CoqPrinter &, const clang::Decl &,
+                               bool onType = false);
 
     /// Whether `printAttrs` would print a non-empty list for this
     /// declaration.
-    bool hasPrintedAttrs(const clang::Decl &);
+    bool hasPrintedAttrs(const clang::Decl &, bool onType = false);
 
     /// Print one attribute as an `attr.t`, given its kind and, when it is
     /// available and explicit, the attribute itself.

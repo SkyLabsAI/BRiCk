@@ -216,7 +216,8 @@ Module attr.
       [Tattributed] smart constructor, which drops types' no-op attributes. Keep it explicit, and add a kind only after
       checking that it cannot change behaviour. In particular [Section]
       (per-CPU data in NOVA), [Aligned], [Packed], [AsmLabel] and
-      [InternalLinkage] are deliberately absent. *)
+      [InternalLinkage] are deliberately absent. On a type, cpp2v does not
+      print [Aligned]: it accounts for a type's alignment itself. *)
   Definition noop_kinds : list PrimString.string :=
     [ (* Diagnostics only. *)
       "WarnUnusedResult"; "Unused"; "Deprecated"; "Unavailable"; "Format";

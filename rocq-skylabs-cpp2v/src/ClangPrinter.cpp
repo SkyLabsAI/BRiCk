@@ -479,10 +479,17 @@ static StringRef attrKindName(attr::Kind kind) {
 /// `AllocSize`, `AllocAlign`, `Const`), so that the models are checked
 /// against them instead of trusted.
 ///
+/// On a type (`onType`), `aligned` is skipped too: cpp2v accounts for a
+/// type's alignment itself, by `Trealigned` objects, Clang's constant for
+/// `alignof`, and unsupported accesses through over-aligned types and
+/// aligned allocation, all on the underlying type it prints.
+///
 /// Every other attribute is printed, including those without effect on the
 /// abstract machine: deciding which attributes are harmless is left to
 /// `supported` in Rocq (`supported.walk.noop_attr`).
-static bool skipAttr(const Decl &decl, const Attr &a) {
+static bool skipAttr(const Decl &decl, const Attr &a, bool onType) {
+    if (onType && a.getKind() == attr::Aligned)
+        return true;
     if (a.isImplicit()) {
         if (decl.isImplicit())
             return true;
@@ -507,16 +514,17 @@ fmt::Formatter &ClangPrinter::printAttr(CoqPrinter &print, attr::Kind kind,
     return print.str(StringRef(pretty).trim());
 }
 
-bool ClangPrinter::hasPrintedAttrs(const clang::Decl &decl) {
+bool ClangPrinter::hasPrintedAttrs(const clang::Decl &decl, bool onType) {
     return llvm::any_of(decl.attrs(), [&](const Attr *a) {
-        return a && !skipAttr(decl, *a);
+        return a && !skipAttr(decl, *a, onType);
     });
 }
 
 fmt::Formatter &ClangPrinter::printAttrs(CoqPrinter &print,
-                                         const clang::Decl &decl) {
+                                         const clang::Decl &decl,
+                                         bool onType) {
     auto attrs = llvm::make_filter_range(decl.attrs(), [&](const Attr *a) {
-        return a && !skipAttr(decl, *a);
+        return a && !skipAttr(decl, *a, onType);
     });
     if (attrs.empty())
         return print.output() << "nil";
