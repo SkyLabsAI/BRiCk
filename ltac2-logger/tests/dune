@@ -3,4 +3,6 @@
  (name ltac2_logger.tests)
  (generate_project_file)
  (flags (:standard -test-mode))
- (theories rocq-stdlib rocq-core.ltac2 ltac2-extra ltac2-logger))
+ (theories
+  rocq-core.ltac2
+  ltac2-logger))

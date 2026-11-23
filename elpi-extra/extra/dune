@@ -8,13 +8,9 @@
  (theories
   rocq-stdlib
   rocq-elpi
-  rocq-elpi.files
   rocq-elpi.apps.NES
-  rocq-core.ltac2
   ltac2-extra
-  ; transitive dependencies
-  rocq-elpi.apps.NES.files
- ))
+  rocq-elpi.apps.NES.files))
 
 (rule
  (target dummy.v)

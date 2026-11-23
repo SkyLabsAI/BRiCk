@@ -4,10 +4,8 @@
  (generate_project_file)
  (flags (:standard -test-mode))
  (theories
-  rocq-stdlib
   rocq-stdpp
   rocq-elpi
-  rocq-elpi.files
   rocq-elpi.apps.derive
   rocq-lens
   rocq-lens-elpi))

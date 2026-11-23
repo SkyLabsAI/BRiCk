@@ -1,6 +1,6 @@
 (rocq.theory
  (name skylabs_cpp_prog.tests)
- (theories rocq-stdlib rocq-skylabs-brick-cpp-prog))
+ (theories rocq-skylabs-brick-cpp-prog))
 
 (rule
  (targets

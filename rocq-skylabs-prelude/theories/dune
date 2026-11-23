@@ -9,19 +9,13 @@
   rocq-stdpp
   rocq-upoly
   rocq-elpi
-  rocq-elpi.files
   rocq-elpi.apps.locker
   rocq-elpi.apps.NES
   rocq-lens
   rocq-lens-elpi
   rocq-core.ltac2
   ltac2-extra
-  ; transitive dependencies
-  rocq-elpi.apps.NES.files
-  rocq-elpi.apps.derive
-  rocq-elpi.apps.derive.files
-  rocq-elpi.apps.locker.files
- ))
+  rocq-elpi.apps.derive))
 
 ; Copy dependencies --- typically Elpi files needed for `From ⋯ Extra
 ; Dependency` --- into dune's build directory. Arrange for the dummy

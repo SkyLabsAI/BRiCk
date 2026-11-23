@@ -4,5 +4,5 @@
  (public_name ltac2-logger)
  (package ltac2-logger)
  (generate_project_file)
- (theories rocq-core.ltac2 ltac2-extra rocq-stdlib)
+ (theories ltac2-extra)
  (plugins ltac2-logger.plugin))

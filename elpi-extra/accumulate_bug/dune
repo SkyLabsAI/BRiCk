@@ -3,11 +3,7 @@
 (rocq.theory
  (name accumulate_bug)
  (generate_project_file)
- (theories
-  rocq-elpi
-  ; transitive dependencies
-  rocq-elpi.files
- ))
+ (theories rocq-elpi))
 
 (rule
  (target dummy.v)

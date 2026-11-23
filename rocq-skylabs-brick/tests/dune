@@ -5,58 +5,15 @@
  (modules :standard \ cpp_prog_inline)
  (theories
   rocq-stdlib
-  rocq-lens
-  rocq-lens-elpi
   rocq-iris
   rocq-stdpp
-  rocq-elpi
-  rocq-elpi.files
-  rocq-core.ltac2
-  rocq-upoly
   rocq-skylabs-prelude
   rocq-skylabs-iris
-  ltac2-extra
   rocq-skylabs-brick
-  rocq-skylabs-brick-cpp-prog
-  ; transitive dependencies
-  rocq-equations.core
-  rocq-equations.prop
-  rocq-equations.type
-  rocq-flocq
-  rocq-elpi.apps.NES
-  rocq-elpi.apps.NES.files
-  rocq-elpi.apps.derive
-  rocq-elpi.apps.derive.files
-  rocq-elpi.apps.locker
-  rocq-elpi.apps.locker.files))
+  rocq-skylabs-brick-cpp-prog))
 
 (rocq.theory
  (name skylabs_brick.tests.flaky_error_message)
  (flags :standard -output-directory .)
  (modules cpp_prog_inline)
- (theories
-  rocq-stdlib
-  rocq-lens
-  rocq-lens-elpi
-  rocq-iris
-  rocq-stdpp
-  rocq-elpi
-  rocq-elpi.files
-  rocq-core.ltac2
-  rocq-upoly
-  rocq-skylabs-prelude
-  rocq-skylabs-iris
-  ltac2-extra
-  rocq-skylabs-brick
-  rocq-skylabs-brick-cpp-prog
-  ; transitive dependencies
-  rocq-equations.core
-  rocq-equations.prop
-  rocq-equations.type
-  rocq-flocq
-  rocq-elpi.apps.NES
-  rocq-elpi.apps.NES.files
-  rocq-elpi.apps.derive
-  rocq-elpi.apps.derive.files
-  rocq-elpi.apps.locker
-  rocq-elpi.apps.locker.files))
+ (theories rocq-skylabs-brick-cpp-prog))

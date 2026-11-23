@@ -2,16 +2,4 @@
 (rocq.theory
  (name skylabs.noimport)
  (generate_project_file)
- (theories
-  rocq-skylabs-prelude
-  rocq-skylabs-iris
-  rocq-skylabs-brick
-  rocq-iris
-  rocq-stdpp
-  ; transitive dependencies
-  rocq-equations.core rocq-equations.prop rocq-equations.type rocq-flocq
-  rocq-lens rocq-lens-elpi rocq-core.ltac2 rocq-stdlib rocq-elpi
-  rocq-elpi.apps.NES rocq-elpi.apps.NES.files rocq-elpi.apps.derive
-  rocq-elpi.apps.derive.files rocq-elpi.apps.locker
-  rocq-elpi.apps.locker.files rocq-elpi.files ltac2-extra rocq-upoly
- ))
+ (theories rocq-skylabs-brick))

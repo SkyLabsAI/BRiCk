@@ -5,11 +5,8 @@
  (generate_project_file)
  (theories
   elpi-extra
-  ; transitive dependencies
-  rocq-core.ltac2 rocq-stdlib rocq-elpi rocq-elpi.apps.NES
-  rocq-elpi.apps.NES.files rocq-elpi.files
-  ltac2-extra
- ))
+  rocq-stdlib
+  ltac2-extra))
 
 (rule
  (target dummy.v)

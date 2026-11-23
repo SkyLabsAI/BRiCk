@@ -2,6 +2,4 @@
 (rocq.theory
  (name attrs_tests)
  (generate_project_file)
- (theories
-  rocq-stdlib
-  rocq-attrs))
+ (theories rocq-attrs))

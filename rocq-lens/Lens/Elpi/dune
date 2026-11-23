@@ -5,11 +5,8 @@
  (theories
   rocq-lens
   rocq-elpi
-  rocq-elpi.files
   rocq-elpi.apps.derive
-  ; transitive dependencies
-  rocq-elpi.apps.derive.files
- )
+  rocq-elpi.apps.derive.files)
  (package rocq-lens-elpi))
 
 ; Hack to ensure the rocq-elpi package is avalable. *)
