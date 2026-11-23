@@ -1,12 +1,14 @@
 ; Wrapper for "rocq" that records data into the ".glob" file.
+
 (executable
  (name rocq_perf)
  (public_name rocq-perf)
  (modules rocq_perf)
  (package rocq-tools)
- (libraries rocq_tools camlzip rocq-runtime.kernel))
+ (libraries rocq_tools camlzip))
 
 ; Program generating an HTML performance diff.
+
 (executable
  (name html_diff)
  (public_name rocq-perf.html-diff)
@@ -15,6 +17,7 @@
  (libraries yojson rocq_tools))
 
 ; Program generating an index for HTML performance diffs.
+
 (executable
  (name html_index)
  (public_name rocq-perf.html-index)
@@ -23,6 +26,7 @@
  (libraries rocq_tools))
 
 ; Program turning "rocq -profile" profiling data into our custom data format.
+
 (executable
  (name analyse)
  (public_name rocq-perf.analyse)
@@ -31,6 +35,7 @@
  (libraries yojson rocq_tools))
 
 ; Debugging tool: adding noise to profiling data.
+
 (executable
  (name add_noise)
  (public_name rocq-perf.add-noise)
@@ -39,6 +44,7 @@
  (libraries rocq_tools camlzip))
 
 ; Program generating a whole-project performance diff summary from CSV files.
+
 (executable
  (name summary_diff)
  (public_name rocq-perf.summary-diff)
@@ -46,6 +52,7 @@
  (package rocq-tools))
 
 ; Program gathering hint data from logs or hint data files.
+
 (executable
  (name gather_hint_data)
  (public_name rocq-perf.gather-hint-data)
@@ -54,6 +61,7 @@
  (libraries rocq_tools))
 
 ; Program extracting span data from full hint/span data.
+
 (executable
  (name span_data)
  (public_name rocq-perf.span-data)
@@ -62,6 +70,7 @@
  (libraries rocq_tools))
 
 ; Program diffing hint data.
+
 (executable
  (name hint_data_diff)
  (public_name rocq-perf.hint-data-diff)
@@ -70,6 +79,7 @@
  (libraries rocq_tools))
 
 ; Glob file "file system" utility.
+
 (executable
  (name glob_fs)
  (public_name globfs)
@@ -78,6 +88,7 @@
  (libraries rocq_tools))
 
 ; Build a GitLab code quality report.
+
 (executable
  (name code_quality_report)
  (public_name rocq-perf.code-quality-report)
@@ -86,6 +97,7 @@
  (libraries rocq_tools str yojson))
 
 ; Diff two code quality reports
+
 (executable
  (name code_quality_diff)
  (public_name rocq-perf.code-quality-diff)
@@ -94,6 +106,7 @@
  (libraries rocq_tools str yojson))
 
 ; Extract instruction counts per command type.
+
 (executable
  (name cmd_data)
  (public_name rocq-perf.cmd-data)
@@ -102,6 +115,7 @@
  (libraries rocq_tools str))
 
 ; Generate a perf script file from a JSON log.
+
 (executable
  (name perf_script)
  (public_name rocq-perf.perf-script)
@@ -110,6 +124,7 @@
  (libraries rocq_tools yojson))
 
 ; Generate an OCaml, Rocq, or shell file holding the hash of a binary.
+
 (executable
  (name bin_hash)
  (public_name bin-hash)

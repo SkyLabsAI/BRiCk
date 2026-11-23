@@ -13,24 +13,24 @@ Data Gathering
 --------------
 
 To set up data gathering, one must tell dune to use our `rocq-perf` wrapper in
-the place of plain `rocq`. This is achieved by setting up an `env` stanza like
-the following, assuming the package is installed.
+the place of plain `rocq`. This is achieved using the `wrapper` field of the
+Rocq environment. Assuming the package is installed:
 ```
 (env
  (...
-  (binaries
-   (rocq-perf as rocq)
+  (rocq
+   (wrapper %{bin:rocq-perf})
    ...)
   ...)
  ...)
 ```
-If the package is not installed, but simply in the dune workspace, you need to
-rely on relative paths to the executable instead. For instance:
+If the package is not installed, but simply in the dune workspace, use a
+relative path to the executable instead. For instance:
 ```
 (env
  (sl_timing ; profile with timing enabled
-  (binaries
-   (.../rocq-tools/bin/rocq_perf.exe as rocq)
+  (rocq
+   (wrapper .../rocq-tools/bin/rocq_perf.exe)
    ...)
   ; Other flags
   ...)
@@ -39,6 +39,8 @@ rely on relative paths to the executable instead. For instance:
   ...)
  ...)
 ```
+Dune passes the actual `rocq` executable to `rocq-perf` as its first argument,
+so the wrapper does not need to locate it through `PATH` or the install tree.
 With this setup, the compilation of your project will now additionally collect
 several pieces of data, which are all embedded into `.glob` files:
 - Per-command performance data captured using Rocq's profiling mechanism, with

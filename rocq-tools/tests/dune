@@ -3,6 +3,7 @@
  (shell bash)
  (deps
   (package rocq-core)
+  (package rocq-runtime)
   (package rocq-stdlib)
   (package rocq-tools)))
 

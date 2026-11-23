@@ -32,7 +32,7 @@ Running rocq
 
 Running our rocq wrapper
 
-  $ rocq-perf compile -color on small.v
+  $ rocq-perf "$(command -v rocq)" compile -color on small.v
   $ rocq-perf compile -color on medium.v
   $ rocq-perf compile -color on large.v
   $ rocq-perf compile -color on huge.v

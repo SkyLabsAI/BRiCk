@@ -18,8 +18,6 @@
 open Rocq_tools
 open Rocq_tools.Extra
 
-let _ = ignore CClosure.norm_term
-
 let _ =
   try
     ignore (Unix.getenv "IN_ROCQ_PERF");
@@ -47,20 +45,28 @@ type files = {
   output : string;
 }
 
-let rocq_command : args:string list -> string =
-  let (cmd, leading_args) =
-    match Sys.getenv_opt "DUNE_SOURCEROOT" with
-    | None       -> ("rocq", [])
-    | Some(root) ->
-    let rocq_bin = Filename.concat root "_build/install/default/bin/rocq" in
-    if Sys.file_exists rocq_bin then
-      (rocq_bin, [])
-    else
-      ("opam", ["exec"; "--"; "rocq"])
-  in
-  fun ~args -> Filename.quote_command cmd (leading_args @ args)
+let (rocq_bin, args) =
+  let args = List.tl (Array.to_list Sys.argv) in
+  match args with
+  | rocq_bin :: args
+      when List.mem (Filename.basename rocq_bin) ["rocq"; "rocq.exe"] ->
+      (rocq_bin, args)
+  | args ->
+      let (cmd, leading_args) =
+        match Sys.getenv_opt "DUNE_SOURCEROOT" with
+        | None       -> ("rocq", [])
+        | Some(root) ->
+        let rocq_bin = Filename.concat root "_build/install/default/bin/rocq" in
+        if Sys.file_exists rocq_bin then
+          (rocq_bin, [])
+        else
+          ("opam", ["exec"; "--"; "rocq"])
+      in
+      (cmd, leading_args @ args)
 
-let default args = (rocq_command ~args, None)
+let rocq_command args = Filename.quote_command rocq_bin args
+
+let default args = (rocq_command args, None)
 
 let compile args =
   if List.mem "-profile" args then
@@ -87,7 +93,7 @@ let compile args =
         []
       in
       let cmd =
-        rocq_command ~args:("compile" :: "-profile" :: files.perf :: args)
+        rocq_command ("compile" :: "-profile" :: files.perf :: args)
       in
       let cmd = String.concat " " (env @ [cmd]) in
       let cmd =
@@ -101,7 +107,6 @@ let compile args =
   | _       -> panic "Error: multiple \".v\" files given."
 
 let (cmd, files) =
-  let args = List.tl (Array.to_list Sys.argv) in
   match args with
   | "compile" :: args | "c" :: args -> compile args
   | _ -> default args
