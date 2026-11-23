@@ -702,4 +702,125 @@ Module literal_string.
     by rewrite N.mod_small.
   Qed.
 
+  (** * Compact source form of string literals
+
+      cpp2v does not print [t] values as [of_list_N] applied to a list of
+      characters: parsing and elaborating such lists needs stack and time
+      proportional to the literal (and [of_list_N] is quadratic). It prints
+      either [Build_t "<bytes>" bpc] directly, or [decode bpc segs] where
+      [segs] is a short list of [segment]s whose decoded bytes concatenate to
+      the literal's bytes. (Primitive array syntax would allow longer
+      sequences, but it cannot be parsed when list notations are imported.) [decode] is evaluated (by [vm_compute]) when the
+      translation unit is defined, so stored terms are plain [Build_t] values.
+
+      cpp2v guarantees that [decode bpc segs = of_list_N chars], i.e. [bpc] is
+      [bpc_of_list_N chars].
+
+      All decoders below build their output by divide and conquer, so each
+      output byte is copied O(log n) times. *)
+  Variant segment : Set :=
+  (** One byte per character, taken as is. *)
+  | Verbatim (s : PrimString.string)
+  (** One byte per character; each byte [b] stands for [(b - k) mod 256]. *)
+  | Shifted (k : N) (s : PrimString.string)
+  (** Base64 (RFC 4648, padded) of bytes that are already encoded with the
+      literal's [bytes_per_char]. *)
+  | Base64 (s : PrimString.string).
+
+  Module decoder.
+    #[local] Open Scope uint63_scope.
+    #[local] Open Scope pstring_scope.
+
+    (** [build_range fuel leaf lo hi] is [leaf lo ++ ... ++ leaf (hi - 1)],
+        concatenated as a balanced tree. *)
+    Fixpoint build_range (fuel : nat) (leaf : int -> PrimString.string)
+        (lo hi : int) : PrimString.string :=
+      match fuel with
+      | O => ""
+      | S fuel =>
+          if hi <=? lo then ""
+          else if hi - lo =? 1 then leaf lo
+          else
+            let mid := lo + (hi - lo) / 2 in
+            build_range fuel leaf lo mid ++ build_range fuel leaf mid hi
+      end.
+
+    (** Strings have fewer than 2^24 bytes, so a depth of 64 is never
+        exhausted. *)
+    Definition build (n : int) (leaf : int -> PrimString.string) : PrimString.string :=
+      build_range 64 leaf 0 n.
+
+    Definition zeros (bpc : int) : PrimString.string :=
+      PrimString.make (bpc - 1) 0.
+
+    Definition verbatim (bpc : int) (s : PrimString.string) : PrimString.string :=
+      if bpc =? 1 then s
+      else
+        let pad := zeros bpc in
+        build (PrimString.length s) (fun i => pad ++ PrimString.make 1 (PrimString.get s i)).
+
+    Definition shifted (bpc k : int) (s : PrimString.string) : PrimString.string :=
+      let pad := zeros bpc in
+      build (PrimString.length s)
+        (fun i => pad ++ PrimString.make 1 ((PrimString.get s i - k) land 255)).
+
+    Definition base64_value (c : PrimString.char63) : int :=
+      if c =? 43 then 62                (* + *)
+      else if c =? 47 then 63           (* / *)
+      else if c =? 61 then 0            (* = (padding) *)
+      else if c <? 58 then c + 4        (* 0-9 *)
+      else if c <? 91 then c - 65       (* A-Z *)
+      else c - 71.                      (* a-z *)
+
+    Definition base64 (s : PrimString.string) : PrimString.string :=
+      build (PrimString.length s / 4) (fun j =>
+        let i := 4 * j in
+        let c2 := PrimString.get s (i + 2) in
+        let c3 := PrimString.get s (i + 3) in
+        let v :=
+          (base64_value (PrimString.get s i) << 18) lor
+          (base64_value (PrimString.get s (i + 1)) << 12) lor
+          (base64_value c2 << 6) lor base64_value c3 in
+        let b0 := PrimString.make 1 (v >> 16) in
+        if c2 =? 61 then b0
+        else
+          let b1 := PrimString.make 1 ((v >> 8) land 255) in
+          if c3 =? 61 then b0 ++ b1
+          else b0 ++ b1 ++ PrimString.make 1 (v land 255)).
+
+    Definition segment (bpc : int) (seg : segment) : PrimString.string :=
+      match seg with
+      | Verbatim s => verbatim bpc s
+      | Shifted k s => shifted bpc (of_Z (Z.of_N k)) s
+      | Base64 s => base64 s
+      end.
+
+    (** Concatenates adjacent pairs. *)
+    Fixpoint pairs (ss : list PrimString.string) : list PrimString.string :=
+      match ss with
+      | s1 :: s2 :: ss => (s1 ++ s2) :: pairs ss
+      | _ => ss
+      end.
+
+    (** [join ss] concatenates [ss] as a balanced tree: each round halves the
+        number of strings. 64 rounds suffice for any list that fits in
+        memory; the fallback only keeps the function total. *)
+    Definition join (ss : list PrimString.string) : PrimString.string :=
+      (fix go (fuel : nat) (ss : list PrimString.string) :=
+         match ss with
+         | [] => ""
+         | [s] => s
+         | _ =>
+             match fuel with
+             | O => foldr PrimString.cat "" ss
+             | S fuel => go fuel (pairs ss)
+             end
+         end) 64%nat ss.
+  End decoder.
+
+  Definition decode (bpc : N) (segs : list segment) : t :=
+    let ibpc := of_Z (Z.of_N bpc) in
+    {| bytes := decoder.join (map (decoder.segment ibpc) segs);
+       bytes_per_char := bpc |}.
+
 End literal_string.

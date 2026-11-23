@@ -21,11 +21,226 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/Version.inc"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/Support/Base64.h"
+#include "llvm/Support/ConvertUTF.h"
 #include <clang/AST/OperationKinds.h>
 #include <optional>
 
 using namespace clang;
 using namespace fmt;
+
+// Printing of string literals as [literal_string.t] values.
+//
+// Long literals must not be printed as one term per character: Rocq needs
+// stack and time proportional to the nesting depth of such terms. We print
+// either a single primitive string, <<literal_string.Build_t "..." bpc>>,
+// or <<literal_string.decode bpc (seg :: ... :: nil)>>, a short list of
+// segments that Rocq decodes and concatenates (see [literal_string.segment] in
+// rocq-skylabs-brick). Primitive array syntax would allow longer lists, but
+// Rocq cannot parse it while list notations are imported.
+//
+// The printed term always equals <<literal_string.of_list_N chars>>; in
+// particular, [bpc] is computed exactly as [literal_string.bpc_of_list_N].
+namespace string_literal {
+// [Pstring.max_length_int] in the Rocq kernel.
+constexpr uint64_t max_bytes = 16777211;
+// Bytes per base64 segment; its encoding (1 MiB) stays below [max_bytes].
+constexpr size_t base64_chunk_bytes = 3 << 18;
+// Runs of at least [merge_run] consecutive segments, each shorter than
+// [short_segment] characters, are encoded as a single base64 segment.
+constexpr size_t short_segment = 8;
+constexpr size_t merge_run = 8;
+// The most segments printed; the list nests this deep. Literals that would
+// need more are printed as base64 only.
+constexpr size_t max_segments = 256;
+// The printable ASCII range that shifted segments are mapped to.
+constexpr uint32_t shift_lo = 0x20, shift_hi = 0x7e;
+
+/// The fewest bytes that can hold every character, and at least 1.
+/// Mirrors [literal_string.bpc_of_list_N].
+static unsigned bytes_per_char(llvm::ArrayRef<uint32_t> chars) {
+    uint32_t max = 1;
+    for (auto c : chars)
+        max = std::max(max, c);
+    unsigned bits = 0;
+    for (; max != 0; max >>= 1)
+        ++bits;
+    return (bits + 7) / 8;
+}
+
+enum class Kind { Verbatim, Shifted, Base64 };
+
+struct Segment {
+    Kind kind;
+    size_t begin, end; // character range [begin, end)
+    uint32_t lo = 0, hi = 0; // character range of a shifted segment
+};
+
+/// Characters printed as is in any literal: printable ASCII, tab and newline.
+static bool plain(uint32_t c) {
+    return (0x20 <= c && c <= 0x7e) || c == '\t' || c == '\n';
+}
+
+/// Number of characters, starting at [i], that form one valid UTF-8 sequence
+/// of a printable, non-ASCII code point, or 0. Only for [bpc = 1].
+static size_t utf8_sequence(llvm::ArrayRef<uint32_t> chars, size_t i) {
+    if (chars[i] < 0x80)
+        return 0;
+    auto n = llvm::getNumBytesForUTF8(static_cast<llvm::UTF8>(chars[i]));
+    if (n < 2 || n > 4 || i + n > chars.size())
+        return 0;
+    llvm::UTF8 seq[4];
+    for (unsigned j = 0; j < n; ++j)
+        seq[j] = static_cast<llvm::UTF8>(chars[i + j]);
+    if (!llvm::isLegalUTF8Sequence(seq, seq + n))
+        return 0;
+    // Exclude C1 control characters (U+0080 to U+009F).
+    if (seq[0] == 0xc2 && seq[1] < 0xa0)
+        return 0;
+    return n;
+}
+
+static std::vector<Segment> segments(llvm::ArrayRef<uint32_t> chars,
+                                     unsigned bpc) {
+    std::vector<Segment> segs;
+    auto add = [&](Kind kind, size_t begin, size_t end) {
+        if (!segs.empty() && segs.back().kind == kind &&
+            segs.back().end == begin && kind != Kind::Shifted) {
+            segs.back().end = end;
+        } else {
+            segs.push_back(Segment{kind, begin, end});
+        }
+    };
+    for (size_t i = 0; i < chars.size();) {
+        const uint32_t c = chars[i];
+        if (plain(c)) {
+            add(Kind::Verbatim, i, i + 1);
+            ++i;
+        } else if (size_t n = bpc == 1 ? utf8_sequence(chars, i) : 0) {
+            add(Kind::Verbatim, i, i + n);
+            i += n;
+        } else if (c < 0x100) {
+            // Extend the shifted run while it fits the printable range.
+            if (!segs.empty() && segs.back().kind == Kind::Shifted &&
+                segs.back().end == i) {
+                auto &last = segs.back();
+                const uint32_t lo = std::min(last.lo, c);
+                const uint32_t hi = std::max(last.hi, c);
+                if (hi - lo <= shift_hi - shift_lo) {
+                    last.lo = lo;
+                    last.hi = hi;
+                    last.end = i + 1;
+                    ++i;
+                    continue;
+                }
+            }
+            segs.push_back(Segment{Kind::Shifted, i, i + 1, c, c});
+            ++i;
+        } else {
+            add(Kind::Base64, i, i + 1);
+            ++i;
+        }
+    }
+
+    // Replace long runs of short segments (e.g. binary data) by base64.
+    std::vector<Segment> merged;
+    for (size_t i = 0; i < segs.size();) {
+        size_t j = i;
+        while (j < segs.size() && segs[j].end - segs[j].begin < short_segment)
+            ++j;
+        if (j - i >= merge_run) {
+            Segment seg{Kind::Base64, segs[i].begin, segs[j - 1].end};
+            if (!merged.empty() && merged.back().kind == Kind::Base64)
+                merged.back().end = seg.end;
+            else
+                merged.push_back(seg);
+            i = j;
+        } else {
+            auto push = [&](const Segment &seg) {
+                if (seg.kind == Kind::Base64 && !merged.empty() &&
+                    merged.back().kind == Kind::Base64 &&
+                    merged.back().end == seg.begin)
+                    merged.back().end = seg.end;
+                else
+                    merged.push_back(seg);
+            };
+            for (; i < j; ++i)
+                push(segs[i]);
+            if (i < segs.size())
+                push(segs[i++]);
+        }
+    }
+
+    // Bound the number of segments regardless of the input. (Base64 chunks
+    // of at most [max_bytes] bytes number at most 22.)
+    if (merged.size() > max_segments)
+        merged = {Segment{Kind::Base64, 0, chars.size()}};
+
+    // Keep each base64 string below Rocq's string length limit.
+    std::vector<Segment> result;
+    const size_t chunk = std::max<size_t>(1, base64_chunk_bytes / bpc);
+    for (auto &seg : merged) {
+        if (seg.kind != Kind::Base64) {
+            result.push_back(seg);
+            continue;
+        }
+        for (size_t b = seg.begin; b < seg.end; b += chunk)
+            result.push_back(
+                Segment{Kind::Base64, b, std::min(seg.end, b + chunk)});
+    }
+    return result;
+}
+
+static void print_segment(CoqPrinter &print, llvm::ArrayRef<uint32_t> chars,
+                          unsigned bpc, const Segment &seg) {
+    std::string bytes;
+    switch (seg.kind) {
+    case Kind::Verbatim:
+        for (size_t i = seg.begin; i < seg.end; ++i)
+            bytes.push_back(static_cast<char>(chars[i]));
+        print.output() << "(literal_string.Verbatim" << fmt::nbsp;
+        break;
+    case Kind::Shifted: {
+        const uint32_t k = (shift_lo - seg.lo) & 0xff;
+        for (size_t i = seg.begin; i < seg.end; ++i)
+            bytes.push_back(static_cast<char>((chars[i] + k) & 0xff));
+        print.output() << "(literal_string.Shifted " << k << "%N"
+                       << fmt::nbsp;
+        break;
+    }
+    case Kind::Base64: {
+        std::string raw;
+        for (size_t i = seg.begin; i < seg.end; ++i)
+            for (unsigned j = bpc; j-- > 0;)
+                raw.push_back(static_cast<char>((chars[i] >> (8 * j)) & 0xff));
+        bytes = llvm::encodeBase64(raw);
+        print.output() << "(literal_string.Base64" << fmt::nbsp;
+        break;
+    }
+    }
+    print.str(bytes) << ")";
+}
+
+/// Print [chars] as a [literal_string.t] with [bpc] bytes per character.
+static void print(CoqPrinter &print, llvm::ArrayRef<uint32_t> chars,
+                  unsigned bpc) {
+    auto segs = segments(chars, bpc);
+    if (bpc == 1 &&
+        (segs.empty() || (segs.size() == 1 && segs[0].kind == Kind::Verbatim))) {
+        std::string bytes(chars.begin(), chars.end());
+        print.output() << "(literal_string.Build_t" << fmt::nbsp;
+        print.str(bytes) << " 1%N)";
+        return;
+    }
+    print.output() << "(literal_string.decode " << bpc << "%N" << fmt::nbsp;
+    print.begin_list();
+    for (auto &seg : segs) {
+        print_segment(print, chars, bpc, seg);
+        print.cons();
+    }
+    print.end_list() << ")";
+}
+} // namespace string_literal
 
 enum Done : unsigned {
     NONE = 0,
@@ -1353,53 +1568,32 @@ public:
         }
     }
 
-    void VisitStringLiteral(const StringLiteral *lit) {
-        print.ctor("Estring", false);
-        // We get the string literal in bytes, but we need to encode it
-        // as unsigned characters (not necessarily `char`) using the
-        // internal character representation of BRiCk.
-        auto bytes = lit->getBytes();
-        const unsigned width = lit->getCharByteWidth();
-        print.begin_list();
-#if 18 <= CLANG_VERSION_MAJOR
-        namespace endianNS = llvm;
-#else
-        namespace endianNS = llvm::support;
-#endif
-        for (unsigned i = 0, len = lit->getByteLength(); i < len;) {
-            unsigned long long byte = 0;
-            // TODO confirm that this is correct
-            if (endianNS::endianness::native == endianNS::endianness::big) {
-                for (unsigned j = 0; j < width; ++j) {
-                    byte = (byte << 8) | static_cast<unsigned char>(bytes[i++]);
-                }
-            } else {
-                for (unsigned j = 0; j < width; ++j) {
-                    byte = (byte << 8) |
-                           static_cast<unsigned char>(bytes[i + width - j - 1]);
-                }
-                i += width;
-            }
-            print.output() << byte << "%N";
-            print.cons();
-        }
-        print.end_list();
+    /// Prints <<Estring s t>> for the string literal [lit] whose type is
+    /// that of [expr] (they differ for predefined expressions).
+    void print_string_literal(const StringLiteral *lit, const Expr *expr) {
+        std::vector<uint32_t> chars;
+        chars.reserve(lit->getLength());
+        for (unsigned i = 0, len = lit->getLength(); i < len; ++i)
+            chars.push_back(lit->getCodeUnit(i));
+        const unsigned bpc = string_literal::bytes_per_char(chars);
+        if (uint64_t(chars.size()) * bpc > string_literal::max_bytes)
+            return unsupported_expr(
+                expr, "string literal exceeds Rocq's maximum string length");
+        guard::ctor _{print, "Estring", false};
         // NOTE: the trailing `\0` is added by the semantics
-        print_string_type(lit, print, cprint);
-        print.end_ctor();
+        string_literal::print(print, chars, bpc);
+        print_string_type(expr, print, cprint);
+    }
+
+    void VisitStringLiteral(const StringLiteral *lit) {
+        print_string_literal(lit, lit);
     }
 
     void VisitPredefinedExpr(const PredefinedExpr *expr) {
-        // [PredefinedExpr] constructs a [string] which is always ascii
         if (auto name = expr->getFunctionName()) {
-            guard::ctor _{print, "Estring"};
-            {
-                guard::ctor __{print, "BS.string_to_bytes"};
-                print.str(name->getString());
-            }
             always_assert(!expr->getType()->isDependentType() &&
                           "dependent type of predefined expr");
-            print_string_type(expr, print, cprint);
+            print_string_literal(name, expr);
         } else {
             guard::ctor _{print, "Eunresolved_string_literal"};
             print.output() << "Tchar";

@@ -78,7 +78,7 @@ Module ExprNotations.
       into the AST and which can serve as an anchor for a [String Notation].
    *)
   Notation "STRING# bytes"
-      := (Estring bytes%list _)
+      := (Estring bytes _)
          ( in custom CPP_expr at level 0
          , bytes constr
          , format "'[' STRING# bytes ']'"
