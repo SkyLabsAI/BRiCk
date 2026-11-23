@@ -126,9 +126,10 @@ Section with_Σ.
       defined element size also rules out arrays of unsized types. *)
   Lemma tblockR_array_zero t q sz :
     size_of σ t = Some sz ->
+    realign_ok t sz = true ->
     tblockR (Tarray t 0) q -|- validR ** aligned_ofR t.
   Proof.
-    move=> Hsz. rewrite tblockR_array_unfold Hsz /= _offsetR_sub_0 // right_id comm //.
+    move=> Hsz Hok. rewrite tblockR_array_unfold Hsz Hok /= _offsetR_sub_0 // right_id comm //.
   Qed.
 
   (** Splitting retains both byte ownership and validity of the split point. *)
@@ -181,11 +182,13 @@ Section with_Σ.
       callers retain source validity from storage or containing-array typing. *)
   Lemma aligned_ofR_byte_sub (t : Rtype) (sz i : N) :
     size_of σ t = Some sz ->
+    realign_ok t sz = true ->
     aligned_ofR t ** validR
     |-- .[ Tbyte ! Z.of_N (i * sz) ] |-> aligned_ofR t.
   Proof.
-    intros Hsz. apply Rep_entails_at => p.
+    intros Hsz Hok. apply Rep_entails_at => p.
     rewrite !_at_sep !_at_offsetR !_at_validR !aligned_ofR_aligned_ptr_ty.
+    pose proof (RealignOk_of_ok σ t sz Hsz Hok) as HR.
     destruct (align_of_size_of' _ _ Hsz) as (al & Hal & Hal0 & Hdvd).
     iIntros "(%Hp & V)".
     destruct (ptr_vaddr (p .[ Tbyte ! Z.of_N (i * sz) ])) as [va'|] eqn:Hva'.
@@ -215,11 +218,12 @@ Section with_Σ.
       no elements to supply it. *)
   Lemma tblockR_array_better t n q sz :
         size_of σ t = Some sz ->
+        realign_ok t sz = true ->
         tblockR (Tarray t n) q
     -|- aligned_ofR t **
         .[ Tbyte ! Z.of_N (n * sz) ] |-> validR **
         [∗list] i ∈ seq 0 (N.to_nat n),
            .[ Tbyte ! Z.of_N (N.of_nat i * sz) ] |-> tblockR t q.
-  Proof. move=> Hsz. by rewrite tblockR_array_unfold Hsz. Qed.
+  Proof. move=> Hsz Hok. by rewrite tblockR_array_unfold Hsz Hok. Qed.
 
 End with_Σ.

@@ -1,0 +1,7 @@
+File "./fmdeps/BRiCk/rocq-skylabs-brick/tests/packed_layouts.v", line 193, characters 59-60:
+The command has indeed failed with message:
+Cannot infer this placeholder of type "RealignOk ty" (no type class instance
+found) in environment:
+σ : genv
+ty : type
+

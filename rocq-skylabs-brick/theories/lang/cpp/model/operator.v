@@ -186,7 +186,7 @@ Module EVAL_BINOP_IMPURE_MODEL <: EVAL_BINOP_IMPURE.
     Lemma eval_ptr_int_add :
       Unfold (@eval_ptr_int_op) (eval_ptr_int_op EBI tu Badd (fun x => x)).
     Proof.
-      intros w s p1 p2 o ty Hsz ->. apply intro_ok.
+      intros w s p1 p2 o ty Hsz HR ->. apply intro_ok.
       { right; left. eexists _, _, _, _, _. naive_solver. }
       iIntros "(#T & #$ & #V)". iFrame "T".
       by iApply (has_type_ptr_sub_erase p1 o ty Hsz); iFrame "T V".
@@ -195,7 +195,7 @@ Module EVAL_BINOP_IMPURE_MODEL <: EVAL_BINOP_IMPURE.
     Lemma eval_int_ptr_add :
       Unfold (@eval_int_ptr_op) (eval_int_ptr_op EBI tu Badd (fun x => x)).
     Proof.
-      intros w s p1 p2 o ty Hsz ->. apply intro_ok.
+      intros w s p1 p2 o ty Hsz HR ->. apply intro_ok.
       { right; right; left. eexists _, _, _, _, _. naive_solver. }
       iIntros "(#$ & #T & #V)". iFrame "T".
       by iApply (has_type_ptr_sub_erase p1 o ty Hsz); iFrame "T V".
@@ -204,7 +204,7 @@ Module EVAL_BINOP_IMPURE_MODEL <: EVAL_BINOP_IMPURE.
     Lemma eval_ptr_int_sub :
       Unfold (@eval_ptr_int_op) (eval_ptr_int_op EBI tu Bsub Z.opp).
     Proof.
-      intros w s p1 p2 o ty Hsz ->. apply intro_ok.
+      intros w s p1 p2 o ty Hsz HR ->. apply intro_ok.
       { right; left. eexists _, _, _, _, _. naive_solver. }
       iIntros "(#T & #$ & #V)". iFrame "T".
       by iApply (has_type_ptr_sub_erase p1 (- o) ty Hsz); iFrame "T V".

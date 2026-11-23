@@ -70,7 +70,7 @@ Section alignment_without_validity.
     iSplit; last by iApply valid_ptr_nullptr.
     iPureIntro.
     destruct Hsize as [sz Hsz].
-    destruct (align_of_size_of' _ _ Hsz) as (al & Hal & _).
+    destruct (align_of_size_of_some _ _ Hsz) as (al & Hal & _).
     exists al. split; first done.
     left. exists 0%N. split; first exact ptr_vaddr_nullptr.
     apply N.divide_0_r.
