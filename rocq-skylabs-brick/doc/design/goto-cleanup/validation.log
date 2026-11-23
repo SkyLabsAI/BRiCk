@@ -1,0 +1,46 @@
+Recorded native validation; diagnostic paths normalized to repository-relative paths.
+
+C compiler:
+Debian clang version 22.1.8 (1~deb13u4)
+Target: x86_64-pc-linux-gnu
+Thread model: posix
+InstalledDir: /usr/lib/llvm-22/bin
+C++ compiler:
+Debian clang version 22.1.8 (1~deb13u4)
+Target: x86_64-pc-linux-gnu
+Thread model: posix
+InstalledDir: /usr/lib/llvm-22/bin
+original as C++: expected initialization diagnostic
+rocq-skylabs-brick/doc/design/goto-cleanup/examples/original.c:14:9: error: cannot jump from this goto statement to its label
+   14 |         goto res1_fail;
+      |         ^
+rocq-skylabs-brick/doc/design/goto-cleanup/examples/original.c:16:14: note: jump bypasses variable initialization
+   16 |     handle_t res2 = getResource();
+      |              ^
+1 error generated.
+
+resource_ladder.cpp -O0
+resource ladder: 16 choices, all 3 versions match return and trace
+same_scope.cpp -O0
+same-scope RAII and clamp: original/lowered results agree
+counterexamples.cpp -O0
+cleanup: original=7 naive=1
+shadow: original=1 naive=2
+continuation(true): original=1 naive=3
+forward_inside_loop=3
+resource_ladder.cpp -O2
+resource ladder: 16 choices, all 3 versions match return and trace
+same_scope.cpp -O2
+same-scope RAII and clamp: original/lowered results agree
+counterexamples.cpp -O2
+cleanup: original=7 naive=1
+shadow: original=1 naive=2
+continuation(true): original=1 naive=3
+forward_inside_loop=3
+stages=1 source_return_count=1 expanded_return_count=2 expanded_bytes=50
+stages=2 source_return_count=1 expanded_return_count=4 expanded_bytes=132
+stages=4 source_return_count=1 expanded_return_count=16 expanded_bytes=624
+stages=8 source_return_count=1 expanded_return_count=256 expanded_bytes=10464
+stages=12 source_return_count=1 expanded_return_count=4096 expanded_bytes=170976
+8 stages: all 256 inputs agree
+PASS: native design checks only; no Rocq proof or normalizer was tested.
