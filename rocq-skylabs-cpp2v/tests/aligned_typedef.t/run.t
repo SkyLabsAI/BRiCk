@@ -86,6 +86,25 @@ type.
         5 Eunsupported "access to an under-aligned field"
         1 Eunsupported "use of an assignment to an under-aligned field"
 
+The same accesses from templates of a record that is not a template, where
+an assignment takes an optional type: a type-dependent one (in set and
+set_free) has none, so the mparser keeps it unresolved, and the other (in
+set_float) stores at the Trealigned type, as outside templates; so does a
+read (in get). The instantiations come first, then the templates.
+
+  $ check_cpp2v templ.cpp
+  cpp2v -v -check-types -o templ_17_cpp.v templ.cpp -- -std=c++17 2>&1 | sed 's/^ *[0-9]* | //'
+  rocq c -w -notation-overridden -w -notation-incompatible-prefix templ_17_cpp.v
+  $ tr -s ' \n' ' ' < templ_17_cpp.v | sed -E 's/ t[0-9]+\)/ t_)/g' | grep -o -E '"v"\) false \(Trealigned 1 Tfloat\)\)\) (\(Ecast Cl2r \(Evar "[rf]" [^()]+\)\)|\(Evar "r" \(Tref \(Qconst \(Tparam "T"\)\)\)\)) (None|\(Some \(Trealigned 1 Tfloat\)\)|\(Trealigned 1 Tfloat\))|Ecast \(Cnoop Tfloat\) \(Ecast Cl2r \(Emember true \(Ethis'
+  "v") false (Trealigned 1 Tfloat))) (Ecast Cl2r (Evar "r" t_)) (Trealigned 1 Tfloat)
+  "v") false (Trealigned 1 Tfloat))) (Ecast Cl2r (Evar "f" Tfloat)) (Trealigned 1 Tfloat)
+  Ecast (Cnoop Tfloat) (Ecast Cl2r (Emember true (Ethis
+  "v") false (Trealigned 1 Tfloat))) (Ecast Cl2r (Evar "r" t_)) (Trealigned 1 Tfloat)
+  "v") false (Trealigned 1 Tfloat))) (Evar "r" (Tref (Qconst (Tparam "T")))) None
+  "v") false (Trealigned 1 Tfloat))) (Ecast Cl2r (Evar "f" Tfloat)) (Some (Trealigned 1 Tfloat))
+  Ecast (Cnoop Tfloat) (Ecast Cl2r (Emember true (Ethis
+  "v") false (Trealigned 1 Tfloat))) (Evar "r" (Tref (Qconst (Tparam "T")))) None
+
 An aligned allocation or deallocation function receives Clang's alignment of
 the allocated type, which BRiCk would compute from the erased type, so a new
 or delete of a type with an alignment attribute that needs one is
