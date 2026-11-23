@@ -238,6 +238,7 @@ Section with_lang.
         (parens $ concat $ join_sep ", " $ printT <$> ft.(ft_params))
     | Trealigned n t => printT t ++ " __attribute__((aligned(" ++ showN n ++ ")))"
     | Tarch _ note => "?" ++ note
+    | Tattributed _ t => "[[?]] " ++ printT t
     | Tunsupported note => "?" ++ note
     | Tauto => "auto"
     | Tparam nm => nm

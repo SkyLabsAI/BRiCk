@@ -456,9 +456,10 @@ llvm::raw_ostream &ClangPrinter::trace(StringRef whence, loc::loc loc) {
 /// record. Every other attribute is preserved in the AST, so that a new or
 /// unexpected attribute is not silently dropped: keep this list explicit and
 /// add a kind only after checking that it cannot change behaviour. In
-/// particular `section` (per-CPU data in NOVA), `aligned`, `packed`,
-/// `asm` labels and `internal_linkage` are deliberately absent.
-static bool isNoOpAttr(attr::Kind kind) {
+/// particular `section` (per-CPU data in NOVA), `aligned` (except on types,
+/// see `skipAttr`), `packed`, `asm` labels and `internal_linkage` are
+/// deliberately absent.
+bool ClangPrinter::isNoOpAttr(attr::Kind kind) {
     switch (kind) {
     // Diagnostics only.
     case attr::WarnUnusedResult:
@@ -490,6 +491,21 @@ static bool isNoOpAttr(attr::Kind kind) {
     case attr::NoStackProtector:
     case attr::NoDebug:
     case attr::Annotate:
+    // Thread-safety analysis annotations (checked by clang only).
+    case attr::AcquireCapability:
+    case attr::ReleaseCapability:
+    case attr::RequiresCapability:
+    case attr::TryAcquireCapability:
+    case attr::AssertCapability:
+    case attr::LocksExcluded:
+    case attr::LockReturned:
+    case attr::GuardedBy:
+    case attr::PtGuardedBy:
+    case attr::AcquiredBefore:
+    case attr::AcquiredAfter:
+    case attr::Capability:
+    case attr::ScopedLockable:
+    case attr::NoThreadSafetyAnalysis:
     // Already reflected elsewhere in the AST (`override`/`final` keywords;
     // overload resolution is done by clang).
     case attr::Override:
@@ -499,7 +515,7 @@ static bool isNoOpAttr(attr::Kind kind) {
     // Compile-time only.
     case attr::ConstInit:
     case attr::Availability:
-    // Implicit markers on builtins and library types.
+    // Markers on builtins and library types.
     case attr::Builtin:
     case attr::NoBuiltin:
     case attr::Owner:
@@ -523,8 +539,9 @@ static StringRef attrKindName(attr::Kind kind) {
     return "Unknown";
 }
 
-/// Whether to skip attribute `a` of `decl`: no-op attributes, and the
-/// implicit attributes that clang attaches to builtins (e.g. `NoThrow`,
+/// Whether to skip attribute `a` of `decl`: no-op attributes
+/// (`isNoOpAttr`), and the implicit attributes that
+/// clang attaches to builtins (e.g. `NoThrow`,
 /// `Const` on `__builtin_popcount`) and to implicitly declared functions
 /// (e.g. `ReturnsNonNull`, `AllocSize`, `AllocAlign` on the replaceable
 /// `operator new`). BRiCk models builtins and the replaceable allocation
@@ -536,8 +553,15 @@ static StringRef attrKindName(attr::Kind kind) {
 /// declarations once BRiCk supports these attributes (e.g. `ReturnsNonNull`,
 /// `AllocSize`, `AllocAlign`, `Const`), so that the models are checked
 /// against them instead of trusted.
-static bool skipAttr(const Decl &decl, const Attr &a) {
-    if (isNoOpAttr(a.getKind()))
+///
+/// On a type (`onType`), `aligned` is skipped too: cpp2v accounts for a
+/// type's alignment itself, by `Trealigned` objects, Clang's constant for
+/// `alignof`, and unsupported accesses through over-aligned types and
+/// aligned allocation, all on the underlying type it prints.
+static bool skipAttr(const Decl &decl, const Attr &a, bool onType) {
+    if (ClangPrinter::isNoOpAttr(a.getKind()))
+        return true;
+    if (onType && a.getKind() == attr::Aligned)
         return true;
     if (a.isImplicit()) {
         if (decl.isImplicit())
@@ -549,27 +573,37 @@ static bool skipAttr(const Decl &decl, const Attr &a) {
     return false;
 }
 
+fmt::Formatter &ClangPrinter::printAttr(CoqPrinter &print, attr::Kind kind,
+                                        const Attr *a) {
+    // Implicit attributes (e.g. on builtins) have no source spelling.
+    std::string pretty;
+    if (a && !a->isImplicit()) {
+        llvm::raw_string_ostream os(pretty);
+        a->printPretty(os, getContext().getPrintingPolicy());
+        os.flush();
+    }
+    guard::ctor _(print, "attr.Other", false);
+    print.str(attrKindName(kind)) << fmt::nbsp;
+    return print.str(StringRef(pretty).trim());
+}
+
+bool ClangPrinter::hasPrintedAttrs(const clang::Decl &decl, bool onType) {
+    return llvm::any_of(decl.attrs(), [&](const Attr *a) {
+        return a && !skipAttr(decl, *a, onType);
+    });
+}
+
 fmt::Formatter &ClangPrinter::printAttrs(CoqPrinter &print,
-                                         const clang::Decl &decl) {
+                                         const clang::Decl &decl,
+                                         bool onType) {
     auto attrs = llvm::make_filter_range(decl.attrs(), [&](const Attr *a) {
-        return a && !skipAttr(decl, *a);
+        return a && !skipAttr(decl, *a, onType);
     });
     if (attrs.empty())
         return print.output() << "nil";
     guard::list _(print);
     for (const Attr *a : attrs) {
-        // Implicit attributes (e.g. on builtins) have no source spelling.
-        std::string pretty;
-        if (!a->isImplicit()) {
-            llvm::raw_string_ostream os(pretty);
-            a->printPretty(os, getContext().getPrintingPolicy());
-            os.flush();
-        }
-        {
-            guard::ctor _(print, "attr.Other", false);
-            print.str(attrKindName(a->getKind())) << fmt::nbsp;
-            print.str(StringRef(pretty).trim());
-        }
+        printAttr(print, a->getKind(), a);
         print.cons();
     }
     return print.output();

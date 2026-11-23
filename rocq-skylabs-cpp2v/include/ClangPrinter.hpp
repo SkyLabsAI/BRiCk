@@ -8,12 +8,14 @@
 #include "Logging.hpp"
 #include "Trace.hpp"
 #include <clang/AST/CurrentSourceLocExprScope.h>
+#include <clang/Basic/AttrKinds.h>
 #include <clang/Basic/Diagnostic.h>
 #include <clang/Basic/Version.inc>
 #include <llvm/ADT/ArrayRef.h>
 #include <optional>
 
 namespace clang {
+class Attr;
 class Decl;
 class Stmt;
 class Expr;
@@ -358,9 +360,26 @@ public:
                                        const clang::FunctionDecl &);
 
     /// Print the `list attr.t` of a declaration: every attribute except
-    /// those on the no-op list (see `isNoOpAttr`), as
-    /// `attr.Other "<attribute kind>" "<pretty-printed attribute>"`.
-    fmt::Formatter &printAttrs(CoqPrinter &, const clang::Decl &);
+    /// no-op ones and implicit ones on builtins and implicit declarations
+    /// (see `skipAttr`),
+    /// as `attr.Other "<attribute kind>" "<pretty-printed attribute>"`.
+    /// With `onType`, the attributes are those of a typedef at a use of
+    /// the typedef, and `aligned` is skipped (see `skipAttr`).
+    fmt::Formatter &printAttrs(CoqPrinter &, const clang::Decl &,
+                               bool onType = false);
+
+    /// Whether an attribute kind has no effect on the abstract machine;
+    /// cpp2v does not print those.
+    static bool isNoOpAttr(clang::attr::Kind);
+
+    /// Whether `printAttrs` would print a non-empty list for this
+    /// declaration.
+    bool hasPrintedAttrs(const clang::Decl &, bool onType = false);
+
+    /// Print one attribute as an `attr.t`, given its kind and, when it is
+    /// available and explicit, the attribute itself.
+    fmt::Formatter &printAttr(CoqPrinter &, clang::attr::Kind,
+                              const clang::Attr *);
 
     unsigned getTypeSize(const clang::BuiltinType *type) const;
 

@@ -312,6 +312,13 @@ Section with_monad.
   (* The types in a name (parameters, template arguments) identify it; they
      are not needed. What a template instance needs comes from its own
      definition. *)
+  (** BRiCk does not interpret any attribute yet ([attr.t] only has [Other]);
+      cpp2v does not print the no-op ones. *)
+  Definition attr (a : attr.t) : M :=
+    match a with
+    | attr.Other kind _ => FAIL (PrimString.cat "unsupported attribute: " kind)
+    end.
+
   Fixpoint name (n : name) : M :=
     no_refs match n with
     | Ninst n ii => name n <+> lst (temp_arg name type expr) ii
@@ -324,6 +331,9 @@ Section with_monad.
   with type (t : type) : M :=
     match t with
     | Tunsupported msg => FAIL msg
+    | Tattributed attrs t =>
+        (* The program logic treats attributed types as opaque for now. *)
+        lst attr attrs <+> type t <+> PARTIAL "attributed type (opaque to the program logic)"
     | Tparam _
     | Tresult_param _ => OK
     | Tresult_global n => name n
@@ -546,12 +556,6 @@ Section with_monad.
          end
     else OK.
 
-
-  (** BRiCk does not interpret any attribute yet ([attr.t] only has [Other]). *)
-  Definition attr (a : attr.t) : M :=
-    match a with
-    | attr.Other name _ => FAIL (PrimString.cat "unsupported attribute: " name)
-    end.
 
   Definition obj_value (o : ObjValue) : M :=
     let params (ps : list (localname * core.type)) : M :=

@@ -220,32 +220,6 @@ Module exception_spec.
   #[global] Instance: EqDecision t := LeibnizComparison.from_comparison.
 End exception_spec.
 
-(** *** Attributes *)
-Module attr.
-  (**
-  The attributes of a declaration, as cpp2v records them.
-
-  cpp2v preserves every attribute except those on an explicit list of
-  attributes without effect on the abstract machine (e.g.
-  <<[[nodiscard]]>>, <<always_inline>>, <<visibility>>), so that a new or
-  unexpected attribute is not silently dropped. Attributes that BRiCk does
-  not model are recorded as [Other kind pretty], where [kind] is the name of
-  clang's attribute kind (e.g. <<Section>> for every spelling of the
-  attribute; <<CXX11NoReturn>> and <<NoReturn>> are distinct kinds) and
-  [pretty] the attribute as clang prints it, arguments included (e.g.
-  <<__attribute__((section(".cpulocal")))>>), or the empty string for an
-  implicit attribute, which has no spelling.
-
-  [supported] reports every [Other] attribute. The program logic does not
-  interpret them yet: it is up to the attributes that get a model to add a
-  constructor here.
-  *)
-  Variant t : Set :=
-  | Other (kind : PrimString.string) (pretty : PrimString.string).
-  #[global] Instance: EqDecision t.
-  Proof. solve_decision. Defined.
-End attr.
-
 (** *** Functions *)
 Variant FunctionBody' : Set :=
 | Impl (_ : Stmt)

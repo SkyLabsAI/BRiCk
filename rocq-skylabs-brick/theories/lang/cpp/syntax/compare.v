@@ -1104,6 +1104,12 @@ Module name.
   End compare_body.
 End name.
 
+Definition attr_compare (a b : attr.t) : comparison :=
+  match a , b with
+  | attr.Other k p , attr.Other k' p' =>
+      compare_lex (PrimString.compare k k') $ fun _ => PrimString.compare p p'
+  end.
+
 Module type.
   Section compare_body.
     Context (compareN : name -> name -> comparison).
@@ -1211,6 +1217,13 @@ Module type.
     Definition box_Trealigned_compare (b1 b2 : box_Trealigned) : comparison :=
       compare_lex (N.compare b1.(box_Trealigned_0) b2.(box_Trealigned_0)) $ fun _ =>
       compareT b1.(box_Trealigned_1) b2.(box_Trealigned_1).
+    Record box_Tattributed : Set := Box_Tattributed {
+      box_Tattributed_0 : list attr.t;
+      box_Tattributed_1 : type;
+    }.
+    Definition box_Tattributed_compare (b1 b2 : box_Tattributed) : comparison :=
+      compare_lex (List.compare attr_compare b1.(box_Tattributed_0) b2.(box_Tattributed_0)) $ fun _ =>
+      compareT b1.(box_Tattributed_1) b2.(box_Tattributed_1).
 
     Record box_Tarch : Set := Box_Tarch {
       box_Tarch_0 : option bitsize;
@@ -1266,6 +1279,7 @@ Module type.
       | 22 => box_Tresult_parenlist
       | 23 => box_Tresult_member
       | 25 => box_Trealigned
+      | 26 => box_Tattributed
       | _ => PrimString.string
       end.
 
@@ -1303,6 +1317,8 @@ Module type.
       | Tresult_parenlist _ _ => inr 22
       | Tresult_member _ _ => inr 23
       | Tunsupported _ => inr 24
+      | Trealigned _ _ => inr 25
+      | Tattributed _ _ => inr 26
       end.
       *)
 
@@ -1341,6 +1357,7 @@ Module type.
       | Tauto => k 3%uint63
       | Tunsupported msg => kp 24 msg
       | Trealigned n t => kp 25 $ Box_Trealigned n t
+      | Tattributed a t => kp 26 $ Box_Tattributed a t
       end.
 
     Definition compare_data (p : positive) : car p -> car p -> comparison :=
@@ -1364,6 +1381,7 @@ Module type.
       | 22 => box_Tresult_parenlist_compare
       | 23 => box_Tresult_member_compare
       | 25 => box_Trealigned_compare
+      | 26 => box_Tattributed_compare
       | _ => PrimString.compare
       end.
 
