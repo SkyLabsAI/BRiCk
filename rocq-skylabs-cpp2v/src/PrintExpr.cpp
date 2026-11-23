@@ -733,9 +733,25 @@ public:
         print.output() << fmt::nbsp;
         cprint.printExpr(print, expr->getRHS(), names);
         print.output() << fmt::nbsp;
-        cprint.printRealignedQualType(
-            print, cast<MemberExpr>(lhs)->getMemberDecl()->getType(), *align,
-            loc::of(expr));
+        auto printType = [&] {
+            cprint.printRealignedQualType(
+                print, cast<MemberExpr>(lhs)->getMemberDecl()->getType(),
+                *align, loc::of(expr));
+        };
+        // In templates, the [mparser]'s [Eassign] takes an optional type, as
+        // in [VisitBinaryOperator]. A type-dependent assignment gets none, so
+        // the [mparser] keeps it unresolved, like other dependent
+        // assignments; otherwise its type is the field's, as outside
+        // templates.
+        if (!print.templates()) {
+            printType();
+        } else if (expr->isTypeDependent()) {
+            print.none();
+        } else {
+            print.some();
+            printType();
+            print.end_ctor();
+        }
         print.end_ctor();
         return true;
     }
