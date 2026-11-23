@@ -47,8 +47,7 @@ Section comparable.
     (forall va1 va2, ptr_vaddr p1 = Some va1 -> ptr_vaddr p2 = Some va2 -> f va1 va2 = res) ->
     valid_ptr p1 ∗ valid_ptr p2 ⊢ ptr_ord_comparable p1 p2 f res.
   Proof.
-    intros -> -> Hres.
-    iIntros "#[V1 V2]". iFrame (Hres) "V1 V2" => {Hres}; rewrite !valid_ptr_alloc_id.
+    iIntros (-> -> Hres) "#[V1 V2]". iFrame (Hres) "V1 V2" => {Hres}; rewrite !valid_ptr_alloc_id.
     iRevert "V1 V2"; iIntros "!%".
     exact: same_alloc_offset_2.
   Qed.
@@ -242,9 +241,8 @@ Section aligned_sub.
     [| aligned_ptr_ty ty p |] ∗ valid_ptr p
     ⊢ [| aligned_ptr_ty ty (p ,, _sub ty n) |].
   Proof.
-    intros [sz Hsz].
+    iIntros ([sz Hsz]) "[%Hp V]".
     destruct (align_of_size_of' _ _ Hsz) as (al & Hal & Hal0 & Hdvd).
-    iIntros "[%Hp V]".
     destruct (ptr_vaddr (p ,, _sub ty n)) as [va'|] eqn:Hva'.
     2: { iPureIntro. exists al. split; first done. by right. }
     iDestruct (offset_inv_pinned_ptr_pure (_sub ty n) (Z.of_N sz * n) va' p
@@ -273,8 +271,8 @@ Section aligned_sub.
     has_type (Vptr p) (Tptr ty) ∗ valid_ptr (p ,, _sub ty n)
     ⊢ has_type (Vptr (p ,, _sub ty n)) (Tptr ty).
   Proof.
-    intros Hsz. rewrite !has_type_ptr'.
-    iIntros "[[#Vp #A] #V]". iFrame "V".
+    rewrite !has_type_ptr'.
+    iIntros (Hsz) "[[#Vp #A] #V]". iFrame "V".
     by iApply (aligned_ptr_ty_sub p n ty Hsz); iFrame "A Vp".
   Qed.
 
@@ -285,11 +283,10 @@ Section aligned_sub.
     has_type (Vptr p) (Tptr ty) ∗ valid_ptr (p ,, _sub (erase_qualifiers ty) n)
     ⊢ has_type (Vptr (p ,, _sub (erase_qualifiers ty) n)) (Tptr ty).
   Proof.
-    intros Hsz.
+    rewrite !has_type_ptr'.
+    iIntros (Hsz) "[[#Vp %A] #V]". iFrame "V".
     have Hsz' : is_Some (size_of σ (erase_qualifiers ty)).
     { by rewrite (size_of_erase_qualifiers σ ty). }
-    rewrite !has_type_ptr'.
-    iIntros "[[#Vp %A] #V]". iFrame "V".
     iAssert [| aligned_ptr_ty (erase_qualifiers ty) (p ,, _sub (erase_qualifiers ty) n) |]%I
       as %A'.
     { iApply (aligned_ptr_ty_sub p n (erase_qualifiers ty) Hsz'). iFrame "Vp".
@@ -455,7 +452,7 @@ Section derived.
     has_type (Vptr vp) (Tptr ty) ∗ has_type (Vptr nullptr) (Tptr ty)
     ⊢ Unfold (@eval_ptr_eq_cmp_op) (eval_ptr_eq_cmp_op EBI tu Beq ty vp nullptr res).
   Proof.
-    intros Hres. rewrite -eval_ptr_eq. iIntros "#[Hv Hn]". iFrame "Hv Hn".
+    rewrite -eval_ptr_eq. iIntros (Hres) "#[Hv Hn]". iFrame "Hv Hn".
     iApply (nullptr_ptr_comparable Hres). by iApply (has_type_ptr_valid with "Hv").
   Qed.
 
@@ -464,7 +461,7 @@ Section derived.
     has_type (Vptr nullptr) (Tptr ty) ∗ has_type (Vptr vp) (Tptr ty)
     ⊢ Unfold (@eval_ptr_eq_cmp_op) (eval_ptr_eq_cmp_op EBI tu Beq ty nullptr vp res).
   Proof.
-    intros Hres. rewrite -eval_ptr_eq. iIntros "#[Hn Hv]". iFrame "Hn Hv".
+    rewrite -eval_ptr_eq. iIntros (Hres) "#[Hn Hv]". iFrame "Hn Hv".
     rewrite -ptr_comparable_symm.
     iApply (nullptr_ptr_comparable Hres). by iApply (has_type_ptr_valid with "Hv").
   Qed.
@@ -473,8 +470,8 @@ Section derived.
     has_type (Vptr p) (Tptr ty)
     ⊢ Unfold (@eval_ptr_eq_cmp_op) (eval_ptr_eq_cmp_op EBI tu Beq ty p p true).
   Proof.
-    rewrite -eval_ptr_eq. iIntros "#Hp". iFrame "Hp".
-    iApply self_ptr_comparable. by iApply (has_type_ptr_valid with "Hp").
+    rewrite -eval_ptr_eq. iIntros "#$".
+    iApply self_ptr_comparable. by iApply has_type_ptr_valid.
   Qed.
 End derived.
 
