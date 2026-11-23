@@ -40,7 +40,9 @@ Section comparable.
     [| forall va1 va2, ptr_vaddr p1 = Some va1 -> ptr_vaddr p2 = Some va2 -> f va1 va2 = res |] ∗
     valid_ptr p1 ∗ valid_ptr p2.
 
-  (* Two pointers into the same object are [ptr_ord_comparable]. *)
+  (** Two pointers into the same object are [ptr_ord_comparable]. The caller
+      shows the result from the addresses, without help from this lemma; see
+      [ptr_ord_comparable_off_off_eval] for a side condition on offsets. *)
   Lemma ptr_ord_comparable_off_off o1 o2 base p1 p2 f res :
     p1 = base ,, o1 ->
     p2 = base ,, o2 ->
@@ -52,13 +54,59 @@ Section comparable.
     exact: same_alloc_offset_2.
   Qed.
 
-  Lemma ptr_ord_comparable_off o1 base p1 f res :
+  (** Two offsets [p1] and [p2] of a pointer [base] are [ptr_ord_comparable].
+      In the side condition on [f], [va] ranges over the address of [base], so
+      that [p1] and [p2] are at [va + z1] and [va + z2].
+
+      Relating the addresses needs [valid_ptr base]: the validity of [p1] alone
+      does not give [base] an address (see [offset_inv_pinned_ptr_pure]). *)
+  Lemma ptr_ord_comparable_off_off_eval o1 o2 z1 z2 base p1 p2 f res :
     p1 = base ,, o1 ->
-    (forall va1 va2, ptr_vaddr p1 = Some va1 -> ptr_vaddr base = Some va2 -> f va1 va2 = res) ->
-    valid_ptr p1 ∗ valid_ptr base ⊢ ptr_ord_comparable p1 base f res.
+    p2 = base ,, o2 ->
+    eval_offset σ o1 = Some z1 ->
+    eval_offset σ o2 = Some z2 ->
+    (forall va : Z, 0 <= va -> 0 <= va + z1 -> 0 <= va + z2 ->
+      f (Z.to_N (va + z1)) (Z.to_N (va + z2)) = res)%Z ->
+    valid_ptr base ∗ valid_ptr p1 ∗ valid_ptr p2 ⊢ ptr_ord_comparable p1 p2 f res.
   Proof.
-    intros -> Hres. eapply (ptr_ord_comparable_off_off o1 o_id base) => //.
-    by rewrite offset_ptr_id.
+    iIntros (-> -> Ho1 Ho2 Hres) "#(V & V1 & V2)".
+    (* The validity of the three pointers fixes the two addresses. *)
+    iAssert ⌜forall va1 va2, ptr_vaddr (base ,, o1) = Some va1 ->
+      ptr_vaddr (base ,, o2) = Some va2 -> f va1 va2 = res⌝%I as %Hf; last first.
+    { iApply (ptr_ord_comparable_off_off o1 o2 base); [done..|iFrame "V1 V2"]. }
+    destruct (ptr_vaddr (base ,, o1)) as [va1|] eqn:Hva1; last by iPureIntro.
+    iDestruct (offset_inv_pinned_ptr_pure _ _ _ _ Ho1 Hva1 with "V") as %[Hle Hva].
+    iDestruct (offset_pinned_ptr_pure Ho1 Hva with "V1") as %[Hle1 Hva1'].
+    iDestruct (offset_pinned_ptr_pure Ho2 Hva with "V2") as %[Hle2 Hva2].
+    iPureIntro. intros ? va2 [= <-]. rewrite Hva2 => -[<-].
+    rewrite Hva1 in Hva1'. case: Hva1' => {1}->.
+    apply Hres => //. lia.
+  Qed.
+
+  (** Two pointers into one array of a positive-size type have their addresses
+      ordered as their indices are. Hence a comparison [f] that is determined
+      by the order of its arguments is determined by the order of the indices. *)
+  Lemma ptr_ord_comparable_valid_idx ty p1 p2 (p : ptr) (sz : N) (i j : Z) f res :
+    size_of σ ty = Some sz ->
+    (0 < sz)%N ->
+    p1 = p .[ ty ! i ] ->
+    p2 = p .[ ty ! j ] ->
+    (forall va1 va2 : vaddr, (va1 ?= va2)%N = (i ?= j)%Z -> f va1 va2 = res) ->
+    valid_ptr p1 ∗ valid_ptr p2 ⊢ ptr_ord_comparable p1 p2 f res.
+  Proof.
+    iIntros (Hsz Hpos -> -> Hres) "#[V1 V2]".
+    (* Both are offsets of the first, which is valid. *)
+    iApply (ptr_ord_comparable_off_off_eval (.[ ty ! 0 ]) (.[ ty ! j - i ])
+      (Z.of_N sz * 0) (Z.of_N sz * (j - i)) (p .[ ty ! i ])); last iFrame "V1 V2".
+    - by rewrite offset_ptr_sub_0.
+    - rewrite o_sub_sub. f_equal. f_equal. lia.
+    - exact: eval_o_sub'.
+    - exact: eval_o_sub'.
+    - intros va ???. apply Hres. rewrite Z2N.inj_compare //.
+      destruct (Z.compare_spec i j) as [->|Hlt|Hgt].
+      + rewrite Z.sub_diag. exact: Z.compare_refl.
+      + apply Z.compare_lt_iff. nia.
+      + apply Z.compare_gt_iff. nia.
   Qed.
 
   (** Skeleton for [Beq] and [Bneq] axioms on pointers.
