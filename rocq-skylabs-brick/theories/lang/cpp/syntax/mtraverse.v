@@ -321,6 +321,9 @@ Module MTraverse.
       | Ddecompose e id ds =>
           Ddecompose <$> traverseE e <*> mret id
             <*> traverse (T:=eta list) traverseB ds
+
+      | Dvla_bounds es =>
+          Dvla_bounds <$> traverse (T:=eta list) traverseE es
       end
 
     with traverseB (d : BindingDecl) : F BindingDecl :=

@@ -1110,6 +1110,9 @@ Module decltype.
               end
             in
             mret monoid.monoid_unit
+        | Dvla_bounds es =>
+            let* _ := traverse (T:=eta list) (fun e => of_expr e >>= requirePR) es in
+            mret monoid.monoid_unit
         end.
 
     End var_decl.
