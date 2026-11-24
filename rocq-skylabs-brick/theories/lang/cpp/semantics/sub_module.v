@@ -616,6 +616,24 @@ Section sub_module.
 End sub_module.
 #[global] Instance: RewriteRelation sub_module := {}.
 
+Lemma ObjValue_le_is_definition v v' :
+  ObjValue_le v v' = true ->
+  ObjValue_is_definition v = true -> ObjValue_is_definition v' = true.
+Proof.
+  destruct v, v'; cbn => //; repeat case_match; naive_solver.
+Qed.
+
+(** A symbol that a translation unit defines is defined by every translation
+    unit it is linked into. *)
+Lemma sub_module_defines_symbol a b o :
+  sub_module a b -> defines_symbol a o = true -> defines_symbol b o = true.
+Proof.
+  rewrite /defines_symbol => -[_ Hsyms _ _].
+  case Ha: (a.(symbols) !! o) => [v|//] Hdef.
+  have [v' [-> Hle]] := Hsyms _ _ Ha.
+  exact: ObjValue_le_is_definition Hle Hdef.
+Qed.
+
 (** * Decidability
 
     [sub_module] is decidable

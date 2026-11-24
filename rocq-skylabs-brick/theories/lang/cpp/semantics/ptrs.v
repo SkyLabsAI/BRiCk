@@ -160,7 +160,11 @@ Module Type PTRS.
      since loading the same translation unit twice can give different
      addresses. *)
 
-  Axiom global_ptr_nonnull : forall tu o, global_ptr tu o <> nullptr.
+  (** The address of a symbol that [tu] defines is not null. A symbol that
+      is only declared need not be defined anywhere if it is weak, and the
+      linker then resolves it to address 0. *)
+  Axiom global_ptr_nonnull : forall tu o,
+    defines_symbol tu o = true -> global_ptr tu o <> nullptr.
 
   (** * Pointer offsets.
       Offsets represent paths between objects and subobjects.
@@ -265,7 +269,8 @@ Module Type PTRS.
   Axiom ptr_alloc_id_offset : forall {p o},
     is_Some (ptr_alloc_id (p ,, o)) ->
     ptr_alloc_id (p ,, o) = ptr_alloc_id p.
-  Axiom global_ptr_nonnull_aid : forall tu o, ptr_alloc_id (global_ptr tu o) <> Some null_alloc_id.
+  Axiom global_ptr_nonnull_aid : forall tu o,
+    defines_symbol tu o = true -> ptr_alloc_id (global_ptr tu o) <> Some null_alloc_id.
 
   (** Map pointers to the address they represent,
       (<https://eel.is/c++draft/basic.compound#def:represents_the_address>).
@@ -289,7 +294,8 @@ Module Type PTRS.
      *)
     Axiom ptr_vaddr_nullptr : ptr_vaddr nullptr = Some 0%N.
 
-    Axiom global_ptr_nonnull_addr : forall tu o, ptr_vaddr (global_ptr tu o) <> Some 0%N.
+    Axiom global_ptr_nonnull_addr : forall tu o,
+      defines_symbol tu o = true -> ptr_vaddr (global_ptr tu o) <> Some 0%N.
 
     #[global] Declare Instance global_ptr_inj : forall tu, Inj (=) (=) (global_ptr tu).
     #[global] Declare Instance global_ptr_addr_inj : forall tu, Inj (=) (=) (λ o, ptr_vaddr (global_ptr tu o)).

@@ -82,6 +82,13 @@ Eval vm_compute in body_of "cleanup()".
    those to the defined [weak_def] and [hook_def] and to [strong] are not. *)
 Eval vm_compute in body_of "weak(C)".
 
+(* [global_ptr_nonnull] applies only to symbols that the translation unit
+   defines, so not to the undefined weak [weak_var] and [hook]. *)
+Example defined_symbols :
+  defines_symbol source <$> ["weak_var"; "hook()"; "weak_def"; "hook_def()"; "strong"]%cpp_name =
+  [false; false; true; true; true].
+Proof. vm_compute. reflexivity. Qed.
+
 Example trivial_abi_unsupported :
   source.(types) !! "T"%cpp_name = Some (Gunsupported "trivial_abi classes are not supported").
 Proof. vm_compute. reflexivity. Qed.

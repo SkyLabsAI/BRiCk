@@ -10,6 +10,13 @@ of the release, and introduce a new heading.
 
 ## Since Last Release
 
+2026.11.24: `global_ptr_nonnull`, `global_ptr_nonnull_aid` and
+`global_ptr_nonnull_addr` (and `_global_nonnull`) now require
+`defines_symbol tu o = true`: the translation unit defines the symbol, rather
+than only declaring it. An undefined weak symbol is at address 0. The new
+`_global_nonnull_defined` takes the definition from a `tu ⊧ σ`, by
+`sub_module_defines_symbol`.
+
 2026.11.24: cpp2v prints three constructs whose attributes BRiCk does not
 model as unsupported, instead of dropping the attribute: a statement that
 declares a local variable with `__attribute__((cleanup(f)))` is
