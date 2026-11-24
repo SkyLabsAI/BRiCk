@@ -47,3 +47,17 @@ Fixpoint no_case (s : Stmt) : bool :=
   | Sgoto _ => true
   | Sunsupported _ => false
   end.
+
+(** [stmt_decl s] is [Some ds] when [s] is the declaration statement
+    [Sdecl ds], possibly labeled or with attributes. This is the single
+    notion of declaration statement: [wp_switch_block] treats such a statement
+    as a barrier that no [case] may follow, since the variables it declares
+    would be missing from the scope that follows. *)
+Fixpoint stmt_decl (s : Stmt) : option (list VarDecl) :=
+  match s with
+  | Sdecl ds => Some ds
+  | Slabeled _ s | Sattr _ s => stmt_decl s
+  | _ => None
+  end.
+
+Definition is_decl (s : Stmt) : bool := if stmt_decl s is Some _ then true else false.

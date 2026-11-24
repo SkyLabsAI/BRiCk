@@ -80,6 +80,14 @@ int local_label() {
 struct M { int n; int d[]; };
 int fam(M *m) { return m->d[0]; }
 
+// a labeled declaration in a [switch] body: [case 0] skips it, and the
+// assignment is to the inner [x] (the result is 7).
+int labeled_decl_switch() {
+  int x = 7;
+  switch (0) { SKIP: int x; case 0: x = 8; }
+  return x;
+}
+
 // a [switch] body that is not a block.
 int braceless(int x) { switch (x) case 1: return 1; return 0; }
 
@@ -122,7 +130,7 @@ Eval vm_compute in List.map show (supported.report.run source
   ; "test_and_set(bool*)"; "fetch_max(int*)"; "generic_store(int*, int*)"
   ; "dtor_local()"; "prvalue()"; "ext(int)"; "calls_setjmp()"
   ; "dot_member(S&, int S::*)"; "arrow_member(S*, int S::*)"; "call_member(S&, int (S::*)())"
-  ; "stmt_expr()"; "off()"; "label_only()"; "local_label()"; "fam(M*)"; "braceless(int)"
+  ; "stmt_expr()"; "off()"; "label_only()"; "local_label()"; "labeled_decl_switch()"; "fam(M*)"; "braceless(int)"
   ; "lib_memcpy(char*, const char*)"; "lib_strlen(const char*)"; "direct_memcpy(char*, const char*)"
   ; "direct_undeclared(const char*, const char*)"
   ; "P::P(const P&)"; "long_double_ptr(long double*)"; "anon_ptr(?record*)"

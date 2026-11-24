@@ -781,16 +781,11 @@ Module Type Stmt.
         | Some def =>
           (fun x => (def, ls) :: x) <$> wp_switch_block None ls
         end
-      | Sdecl _ :: ls' =>
-        (* NOTE this check ensures that we never case past a declaration which
-           could be problematic from a soundness point of view.
-         *)
-        if no_case (Sseq ls') then
-          wp_switch_block Ldef ls'
-        else
-          None
       | s :: ls' =>
-        if no_case s then
+        (* NOTE for a declaration, labeled or not, this check ensures that we
+           never case past it, which could be problematic from a soundness
+           point of view. *)
+        if (if is_decl s then no_case (Sseq ls') else no_case s) then
           wp_switch_block Ldef ls'
         else
           None

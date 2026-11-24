@@ -140,10 +140,19 @@ Section stuck.
     elim: b Ldef => [//|s b IH] Ldef.
     destruct s; cbn [walk.switch_cases wp_switch_block]; try destruct Ldef; move=> H.
     all: try by rewrite IH.
-    all: try by rewrite ?H.
-    all: case_match eqn:Hc; last done.
-    all: apply IH; simpl in *; by rewrite ?Hc in H.
+    all: try done.
+    all: move: H; case: (is_decl _) => H; first by rewrite H.
+    all: move: H; case: (no_case _) => //= H; by apply IH.
   Qed.
+
+  (** A labeled or attributed declaration is a declaration: no [case] may
+      follow it, as for a bare one. *)
+  Example switch_labeled_decl Ldef l ds sb ss :
+    wp_switch_block Ldef (Slabeled l (Sdecl ds) :: Scase sb :: ss) = None.
+  Proof. done. Qed.
+  Example switch_attributed_decl Ldef attrs ds sb ss :
+    wp_switch_block Ldef (Sattr attrs (Sdecl ds) :: Scase sb :: ss) = None.
+  Proof. done. Qed.
 
   (** Volatile objects cannot be initialized. *)
   Example volatile_default_init ty p Q :

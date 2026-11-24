@@ -256,12 +256,12 @@ Section with_monad.
     end.
 
   (** [wp_switch] needs the [case]s and [default] of a block at its top level,
-      not after a declaration (see [wp_switch_block] in [logic/stmt.v]). *)
+      not after a declaration, labeled or not (see [wp_switch_block] in
+      [logic/stmt.v]). *)
   Fixpoint switch_cases (ls : list Stmt) : bool :=
     match ls with
     | (Scase _ | Sdefault) :: ls => switch_cases ls
-    | Sdecl _ :: ls => no_case (Sseq ls)
-    | s :: ls => no_case s && switch_cases ls
+    | s :: ls => if is_decl s then no_case (Sseq ls) else no_case s && switch_cases ls
     | [] => true
     end.
 
