@@ -67,3 +67,11 @@ Definition members (tu : translation_unit)
             then Some (n, (d.1, take 1 d.2)) else None)
     (map_to_list tu.(symbols)).
 Eval vm_compute in members test_cpp.source.
+
+(* Variables, and the unsupported declarations and expressions. *)
+Eval vm_compute in bodies 3
+  [ "var_ptr"; "var_declarators"; "var_static"; "var_vla"; "var_ptr_td"
+  ; "var_auto" ]%pstring test_cpp.source.
+Eval vm_compute in bodies 3
+  [ "var_typeof"; "var_unsequenced"; "var_cond"; "cast" ]%pstring
+  test_cpp.source.

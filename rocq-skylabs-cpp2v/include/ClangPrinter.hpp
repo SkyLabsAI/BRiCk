@@ -402,8 +402,10 @@ public:
 
     fmt::Formatter &printStmt(CoqPrinter &, const clang::Stmt *s);
 
-    // true if printed
-    bool printLocalDecl(CoqPrinter &, const clang::Decl *d);
+    // true if printed. [vla_bounds_printed]: the caller printed the array
+    // bounds that the declaration of a variable evaluates (see [VlaBounds]).
+    bool printLocalDecl(CoqPrinter &, const clang::Decl *d,
+                        bool vla_bounds_printed = false);
 
     // Variably modified types (GNU variable-length arrays in C++)
 
@@ -421,6 +423,10 @@ public:
     /// Add the bounds that a declaration of type [type] evaluates.
     static void vlaBounds(clang::QualType type, VlaBounds &,
                           const clang::ASTContext &);
+
+    /// The bounds that the declaration of the variable [decl] evaluates,
+    /// before its initializer. None for a variable-length array itself.
+    static VlaBounds varVlaBounds(const clang::VarDecl &decl);
 
     /// The bounds that a call of [decl] evaluates on entry, for its
     /// parameters.

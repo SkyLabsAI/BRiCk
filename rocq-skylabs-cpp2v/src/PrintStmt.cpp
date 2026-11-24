@@ -33,8 +33,29 @@ public:
             print.str("empty statement");
             return;
         }
+        if (variablyModifiedConditionVar(stmt))
+            return unsupportedStmt(
+                stmt, print, cprint,
+                "condition variable of a variably modified type");
         ConstStmtVisitor<PrintStmt, void, CoqPrinter &, ClangPrinter &,
                          ASTContext &>::Visit(stmt, print, cprint, ctxt);
+    }
+
+    // Clang evaluates the array bounds of a variably modified type where a
+    // variable of that type is declared, also for a condition variable
+    // (`if (int (*p)[n++] = q)`). A condition is a single declaration, with
+    // no place for the bounds, so the statement is unsupported.
+    static bool variablyModifiedConditionVar(const Stmt *stmt) {
+        const VarDecl *var = nullptr;
+        if (auto s = dyn_cast<IfStmt>(stmt))
+            var = s->getConditionVariable();
+        else if (auto s = dyn_cast<SwitchStmt>(stmt))
+            var = s->getConditionVariable();
+        else if (auto s = dyn_cast<WhileStmt>(stmt))
+            var = s->getConditionVariable();
+        else if (auto s = dyn_cast<ForStmt>(stmt))
+            var = s->getConditionVariable();
+        return var && !ClangPrinter::varVlaBounds(*var).empty();
     }
 
     // Statements without a printer (e.g. coroutines, computed `goto`, MS
@@ -112,12 +133,16 @@ public:
 
     // A typedef or alias declaration of a variably modified type (GNU VLA
     // extension) evaluates the array bounds when it is reached:
-    // `typedef int A[(x = 1)];` assigns to `x`.
+    // `typedef int A[(x = 1)];` assigns to `x`. So does the declaration of
+    // a variable of such a type, before its initializer and also when the
+    // variable is a static local: `int (*p)[(x = 1)] = nullptr;`.
     static ClangPrinter::VlaBounds declVlaBounds(const Decl *d) {
         ClangPrinter::VlaBounds vla;
         if (auto td = dyn_cast<TypedefNameDecl>(d))
             ClangPrinter::vlaBounds(td->getUnderlyingType(), vla,
                                     d->getASTContext());
+        else if (auto vd = dyn_cast<VarDecl>(d))
+            vla = ClangPrinter::varVlaBounds(*vd);
         return vla;
     }
 
@@ -140,12 +165,15 @@ public:
         print.ctor("Sdecl");
         print.begin_list();
         for (auto d : stmt->decls()) {
+            // The bounds come first: a variable evaluates them before its
+            // initializer.
             auto vla = declVlaBounds(d);
             if (!vla.bounds.empty()) {
                 cprint.printVlaBounds(print, vla.bounds);
                 print.cons();
             }
-            bool printed = cprint.printLocalDecl(print, d);
+            bool printed =
+                cprint.printLocalDecl(print, d, /*vla_bounds_printed*/ true);
             always_assert(printed == printedLocalDecl(d) &&
                           "printedLocalDecl out of sync with printLocalDecl");
             if (printed)
@@ -736,6 +764,16 @@ void ClangPrinter::vlaBounds(QualType type, VlaBounds &vla,
         if (vla.bounds[i]->HasSideEffects(ctxt))
             vla.unsupported = "variably modified type: unsequenced array "
                               "bounds with a side effect";
+}
+
+// A variable-length array itself (`int a[n];`) is printed as before, without
+// its bounds: the logic cannot initialize an object of type
+// [Tvariable_array].
+ClangPrinter::VlaBounds ClangPrinter::varVlaBounds(const VarDecl &decl) {
+    VlaBounds vla;
+    if (!decl.getType().isNull() && !decl.getType()->isVariableArrayType())
+        vlaBounds(decl.getType(), vla, decl.getASTContext());
+    return vla;
 }
 
 // This follows `CodeGenFunction::StartFunction`, which emits the types of

@@ -1,8 +1,9 @@
 Clang evaluates the array bounds of a variably modified type where the type
-is declared. For a typedef, an alias declaration and the parameters of a
-function, cpp2v prints them as a [Dvla_bounds] declaration, and prints the
-forms it does not model as unsupported. Diagnostics are not shown, since
-their text varies with the clang version.
+is declared. For a typedef, an alias declaration, a variable and the
+parameters of a function, cpp2v prints them as a [Dvla_bounds] declaration,
+and prints the forms it does not model, and the other declarations and
+expressions that evaluate a bound, as unsupported. Diagnostics are not
+shown, since their text varies with the clang version.
   $ setup_project
 
   $ make 2> /dev/null
@@ -123,3 +124,126 @@ their text varies with the clang version.
             [Sunsupported
                "implicit function with a parameter of a variably modified type"]))]
        : list (name * (list Initializer * list Stmt))
+       = [("var_ptr"%pstring,
+           [Sdecl
+              [Dvla_bounds [Ecast Cl2r (Evar "a" "int")];
+               Dvar "p"
+                 (Tptr (Tvariable_array "int" (Ecast Cl2r (Evar "a" "int"))))
+                 (Some
+                    (Ecast
+                       (Cnull2ptr
+                          (Tptr
+                             (Tvariable_array "int"
+                                (Ecast Cl2r (Evar "a" "int")))))
+                       Enull))]]);
+          ("var_declarators"%pstring,
+           [Sdecl
+              [Dvla_bounds [Epostinc (Evar "a" "int") "int"];
+               Dvar "p"
+                 (Tptr
+                    (Tvariable_array "int" (Epostinc (Evar "a" "int") "int")))
+                 (Some
+                    (Ecast
+                       (Cnull2ptr
+                          (Tptr
+                             (Tvariable_array "int"
+                                (Epostinc (Evar "a" "int") "int"))))
+                       Enull));
+               Dvla_bounds [Epostinc (Evar "a" "int") "int"];
+               Dvar "q"
+                 (Tptr
+                    (Tvariable_array "int" (Epostinc (Evar "a" "int") "int")))
+                 (Some
+                    (Ecast
+                       (Cnull2ptr
+                          (Tptr
+                             (Tvariable_array "int"
+                                (Epostinc (Evar "a" "int") "int"))))
+                       Enull))]]);
+          ("var_static"%pstring,
+           [Sdecl
+              [Dvla_bounds [Ecast Cl2r (Evar "a" "int")];
+               Dinit true "var_static(int)::p"
+                 (Tptr (Tvariable_array "int" (Ecast Cl2r (Evar "a" "int"))))
+                 None]]);
+          ("var_vla"%pstring,
+           [Sdecl
+              [Dvar "v" (Tvariable_array "int" (Ecast Cl2r (Evar "a" "int")))
+                 None]]);
+          ("var_ptr_td"%pstring,
+           [Sdecl [Dvla_bounds [Ecast Cl2r (Evar "a" "int")]];
+            Sdecl
+              [Dvar "p"
+                 (Tptr (Tvariable_array "int" (Ecast Cl2r (Evar "a" "int"))))
+                 (Some
+                    (Ecast
+                       (Cnull2ptr
+                          (Tptr
+                             (Tvariable_array "int"
+                                (Ecast Cl2r (Evar "a" "int")))))
+                       Enull))];
+            Sexpr
+              (Eexplicit_cast cast_style.c "void"
+                 (Ecast C2void
+                    (Eexplicit_cast cast_style.c
+                       (Tptr
+                          (Tvariable_array "int" (Ecast Cl2r (Evar "a" "int"))))
+                       (Ecast
+                          (Cnoop
+                             (Tptr
+                                (Tvariable_array "int"
+                                   (Ecast Cl2r (Evar "a" "int")))))
+                          (Ecast Cl2r
+                             (Evar "p"
+                                (Tptr
+                                   (Tvariable_array "int"
+                                      (Ecast Cl2r (Evar "a" "int"))))))))))]);
+          ("var_auto"%pstring,
+           [Sdecl [Dvla_bounds [Ecast Cl2r (Evar "a" "int")]];
+            Sdecl
+              [Dvar "p"
+                 (Tptr (Tvariable_array "int" (Ecast Cl2r (Evar "a" "int"))))
+                 (Some
+                    (Ecast
+                       (Cnull2ptr
+                          (Tptr
+                             (Tvariable_array "int"
+                                (Ecast Cl2r (Evar "a" "int")))))
+                       Enull))];
+            Sdecl
+              [Dvar "q"
+                 (Tptr (Tvariable_array "int" (Ecast Cl2r (Evar "a" "int"))))
+                 (Some
+                    (Ecast Cl2r
+                       (Evar "p"
+                          (Tptr
+                             (Tvariable_array "int"
+                                (Ecast Cl2r (Evar "a" "int")))))))]])]
+       : list (ident * list Stmt)
+       = [("var_typeof"%pstring,
+           [Sdecl [Dvla_bounds [Ecast Cl2r (Evar "a" "int")]];
+            Sdecl
+              [Dvar "p"
+                 (Tptr (Tvariable_array "int" (Ecast Cl2r (Evar "a" "int"))))
+                 (Some
+                    (Ecast
+                       (Cnull2ptr
+                          (Tptr
+                             (Tvariable_array "int"
+                                (Ecast Cl2r (Evar "a" "int")))))
+                       Enull))];
+            Sunsupported "variably modified type: unsupported TypeOfExpr type"]);
+          ("var_unsequenced"%pstring,
+           [Sunsupported
+              "variably modified type: unsequenced array bounds with a side effect"]);
+          ("var_cond"%pstring,
+           [Sunsupported "condition variable of a variably modified type";
+            Sreturn (Some (Eint 0 "int"))]);
+          ("cast"%pstring,
+           [Sexpr
+              (Eexplicit_cast cast_style.c "void"
+                 (Ecast C2void
+                    (Eunsupported "CStyleCastExpr"
+                       (Tptr
+                          (Tvariable_array "int" (Ecast Cl2r (Evar "a" "int")))))))])]
+       : list (ident * list Stmt)

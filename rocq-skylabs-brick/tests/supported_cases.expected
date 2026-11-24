@@ -82,7 +82,10 @@
         (""%pstring, "missing"%pstring, [], [], [], []);
         ("ns_get(NS*)"%pstring, "supported"%pstring, [], [], [], []);
         ("sizeof_expr(S&)"%pstring, "supported"%pstring, [], [], [], []);
-        ("vla_typedef()"%pstring, "supported"%pstring, [], [], [], [])]
+        ("vla_typedef()"%pstring, "supported"%pstring, [], [], [], []);
+        ("vla_condition()"%pstring, "unsupported"%pstring,
+         ["condition variable of a variably modified type"%pstring], [], [],
+         [])]
      : list
          (string * string * list string * list string * list string *
           list (string * list string))
@@ -132,6 +135,7 @@
         ("test_and_set(bool*)"%pstring, "unsupported"%pstring);
         ("use(B)"%pstring, "blocked"%pstring);
         ("va(__va_list_tag*)"%pstring, "unsupported"%pstring);
+        ("vla_condition()"%pstring, "unsupported"%pstring);
         ("vla_typedef()"%pstring, "supported"%pstring);
         ("S::m()"%pstring, "supported"%pstring);
         ("NS::get() const"%pstring, "supported"%pstring);

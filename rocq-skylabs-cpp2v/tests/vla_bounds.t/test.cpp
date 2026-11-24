@@ -63,3 +63,21 @@ int lam() {
 int (*lam_fp())(int, int *) {
   return [](int n, int a[n]) { return n; };
 }
+
+// Variables: the bounds are evaluated before the initializer, for each
+// declarator in order, and each time a static local is reached.
+void var_ptr(int a) { int (*p)[a] = nullptr; }
+void var_declarators(int a) { int (*p)[a++] = nullptr, (*q)[a++] = nullptr; }
+void var_static(int a) { static int (*p)[a]; }
+// A variable-length array is printed without its bound, as a variable that
+// the logic cannot initialize.
+void var_vla(int a) { int v[a]; }
+// A pointer to a variably modified typedef evaluates nothing, and neither
+// does a variable whose type is deduced.
+void var_ptr_td(int a) { typedef int A[a]; A *p = nullptr; (void)(A *)p; }
+void var_auto(int a) { typedef int A[a]; A *p = nullptr; auto q = p; }
+// Unsupported: other forms of bounds, a condition variable, and a cast.
+void var_typeof(int a) { typedef int A[a]; A *p = nullptr; __typeof__(p) q = p; }
+void var_unsequenced(int a) { int (*p)[a++][a] = nullptr; }
+int var_cond(int a) { if (int (*p)[a] = nullptr) return 1; return 0; }
+void cast(int a, void *q) { (void)(int (*)[a])q; }

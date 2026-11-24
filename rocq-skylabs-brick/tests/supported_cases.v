@@ -138,6 +138,10 @@ unsigned long sizeof_expr(S &s) { return sizeof(s.*(&S::x)); }
 // a typedef of a variably modified type: its bound is evaluated (the
 // result is 1), which cpp2v prints as a declaration.
 int vla_typedef() { int x = 0; typedef int A[(x = 1)]; return x; }
+
+// a condition variable of a variably modified type evaluates its bound
+// too (the result is 1), and a condition has no place for the bound.
+int vla_condition() { int x = 0; if (int ( *p)[(x = 1)] = nullptr) return 7; return x; }
 }}.
 
 Definition show (e : supported.report.entry) :=
@@ -157,7 +161,7 @@ Eval vm_compute in List.map show (supported.report.run source
   ; "direct_undeclared(const char*, const char*)"
   ; "P::P(const P&)"; "long_double_ptr(long double*)"; "anon_ptr(?record*)"
   ; "long_double_ptr(?Builtin long double*)"; "long_double_ptr(long double&)"; "ns_get(NS*)"
-  ; "sizeof_expr(S&)"; "vla_typedef()" ]%pstring).
+  ; "sizeof_expr(S&)"; "vla_typedef()"; "vla_condition()" ]%pstring).
 
 (** Every non-template entity. *)
 Eval vm_compute in

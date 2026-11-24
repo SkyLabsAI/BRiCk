@@ -18,7 +18,11 @@ a typedef or alias declaration of such a type (`typedef int A[n];`) and, as
 the first statement of the body, for the parameters of a function
 (`int f(int n, int a[n])`); it used to drop these bounds. Code that matches on
 `VarDecl` needs a case, and proofs of such functions get the obligation
-`0 < n` for each bound.
+`0 < n` for each bound. The declaration of a local variable of such a type
+(`int (*p)[n];`) is preceded by a `Dvla_bounds` in its `Sdecl`. A condition
+variable of, and an explicit cast to, a variably modified type whose bounds
+are evaluated there are printed as unsupported. Variable-length arrays
+themselves (`int a[n];`) are printed as before.
 
 2026.11.21: `translation_unit` has a new field `dropped_symbols : list name`,
 the names of the symbols that `cpp.prog` dropped (see below). `sub_module`
