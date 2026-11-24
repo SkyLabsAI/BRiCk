@@ -16,10 +16,10 @@ Import PTRS_IMPL VALUES_DEFS_IMPL SimpleCPP address_sums BaseLayoutChecks.
 Set Default Proof Using "Type*".
 
 Definition bad_base_struct : Struct :=
-  Build_Struct [] [] [] [] "Base::~Base()"%cpp_name true None POD 1 1.
+  Build_Struct [] [] [] [] "Base::~Base()"%cpp_name true None POD 1 1 [].
 Definition bad_derived_struct : Struct :=
   Build_Struct [("Base"%cpp_name, {| li_offset := 16 |})]
-    [] [] [] "Derived::~Derived()"%cpp_name true None POD 1 1.
+    [] [] [] "Derived::~Derived()"%cpp_name true None POD 1 1 [].
 Definition bad_base_env : genv :=
   {| genv_tu := makeTranslationUnit ∅
        {[ "Base"%cpp_name := Gstruct bad_base_struct;
@@ -117,10 +117,10 @@ Proof. vm_compute. reflexivity. Qed.
 Definition base_fixture_env (z : Z) (dsz dal bsz bal : N) : genv :=
   {| genv_tu := makeTranslationUnit ∅
        {[ "Base"%cpp_name := Gstruct
-          (Build_Struct [] [] [] [] "Base::~Base()"%cpp_name true None POD bsz bal);
+          (Build_Struct [] [] [] [] "Base::~Base()"%cpp_name true None POD bsz bal []);
           "Derived"%cpp_name := Gstruct
           (Build_Struct [("Base"%cpp_name, {| li_offset := 8*z |})]
-            [] [] [] "Derived::~Derived()"%cpp_name true None POD dsz dal) ]}
+            [] [] [] "Derived::~Derived()"%cpp_name true None POD dsz dal []) ]}
        ∅ [] [] abi.abi_default ∅ ∅ ∅ ∅ [];
      member_pointer_bitsize := bitsize.W64 |}.
 

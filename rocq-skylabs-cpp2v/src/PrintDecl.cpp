@@ -570,6 +570,16 @@ static fmt::Formatter &printFields(const RecordDecl &decl,
     return print.output();
 }
 
+// Print the name of the class named by a base specifier.
+static fmt::Formatter &printBaseName(const CXXRecordDecl &decl,
+                                     const clang::Type *type,
+                                     CoqPrinter &print, ClangPrinter &cprint) {
+    if (auto record = type->getAsCXXRecordDecl())
+        return cprint.printName(print, record, loc::of(type));
+    guard::ctor _(print, "Ndependent'");
+    return cprint.printType(print, type, loc::of(decl));
+}
+
 static fmt::Formatter &printStructBases(const CXXRecordDecl &decl,
                                         const ASTRecordLayout *layout,
                                         CoqPrinter &print,
@@ -588,19 +598,27 @@ static fmt::Formatter &printStructBases(const CXXRecordDecl &decl,
             fatal("null base class");
 
         guard::ctor _(print, "mkBase");
-        if (auto record = type->getAsCXXRecordDecl()) {
-            cprint.printName(print, record, loc::of(type)) << fmt::nbsp;
-            auto li = layout ? cprint.getContext().toBits(
-                                   layout->getBaseClassOffset(record))
-                             : 0;
-            return printLayoutInfo(print, li);
-        } else {
-            {
-                guard::ctor _2(print, "Ndependent'");
-                cprint.printType(print, type, loc::of(decl)) << fmt::nbsp;
-            }
-            return printLayoutInfo(print, 0);
-        }
+        printBaseName(decl, type, print, cprint) << fmt::nbsp;
+        auto record = type->getAsCXXRecordDecl();
+        auto li = layout && record ? cprint.getContext().toBits(
+                                         layout->getBaseClassOffset(record))
+                                   : 0;
+        return printLayoutInfo(print, li);
+    });
+}
+
+// The direct bases inherited `private` or `protected` ([s_nonpublic_bases]).
+static fmt::Formatter &printStructNonPublicBases(const CXXRecordDecl &decl,
+                                                 CoqPrinter &print,
+                                                 ClangPrinter &cprint) {
+    return print.list_filter(decl.bases(), [&](CXXBaseSpecifier base) {
+        if (base.getAccessSpecifier() == AS_public)
+            return false;
+        auto type = base.getType().getTypePtrOrNull();
+        if (!type)
+            fatal(cprint, loc::of(decl), "null base class");
+        printBaseName(decl, type, print, cprint);
+        return true;
     });
 }
 
@@ -725,7 +743,8 @@ static fmt::Formatter &printStruct(CoqPrinter &print, const CXXRecordDecl &decl,
     printTriviallyDestructible(print, decl, cprint) << fmt::nbsp;
     printDeleteName(print, decl, cprint) << fmt::line;
     printLayoutType(print, decl, cprint) << fmt::nbsp;
-    return printSizeAlign(decl, layout, print, cprint);
+    printSizeAlign(decl, layout, print, cprint) << fmt::line;
+    return printStructNonPublicBases(decl, print, cprint);
 }
 
 static fmt::Formatter &printUnion(CoqPrinter &print, const CXXRecordDecl &decl,
@@ -783,7 +802,8 @@ static fmt::Formatter &printCStruct(CoqPrinter &print, const RecordDecl &decl,
     print.boolean(true) << fmt::nbsp;
     print.none() << fmt::line;
     print.output() << "POD" << fmt::nbsp;
-    return printSizeAlign(decl, layout, print, cprint);
+    printSizeAlign(decl, layout, print, cprint) << fmt::nbsp;
+    return print.output() << "nil";
 }
 
 static fmt::Formatter &printCUnion(CoqPrinter &print, const RecordDecl &decl,

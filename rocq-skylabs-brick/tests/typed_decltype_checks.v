@@ -15,10 +15,10 @@ Definition missing_global : name := Nglobal (Nid "missing").
 Definition C_struct : Struct :=
   Build_Struct nil
     (mkMember (Nid "f") Tint false None {| li_offset := 0 |} :: nil)
-    nil nil (Nscoped C_name Ndtor) true None POD 4 4.
+    nil nil (Nscoped C_name Ndtor) true None POD 4 4 nil.
 
 Definition D_struct : Struct :=
-  Build_Struct nil nil nil nil (Nscoped D_name Ndtor) true None POD 1 1.
+  Build_Struct nil nil nil nil (Nscoped D_name Ndtor) true None POD 1 1 nil.
 
 Definition C_ctor : Ctor :=
   Build_Ctor C_name (("x"%pstring, Tint) :: nil) CC_C Ar_Definite

@@ -528,7 +528,8 @@ Module MTraverse.
         <*> traverse (T:=eta option) traverseN s.(s_delete)
         <*> mret s.(s_layout)
         <*> mret s.(s_size)
-        <*> mret s.(s_alignment).
+        <*> mret s.(s_alignment)
+        <*> traverse (T:=eta list) traverseCN s.(s_nonpublic_bases).
 
     Definition traverseOpaque (o : Opaque) : F Opaque :=
       Build_Opaque o.(o_size) o.(o_alignment)

@@ -28,7 +28,7 @@ Definition opaque (reason : PrimString.string) : Opaque :=
 Definition body : Struct :=
   Build_Struct []
     [mkMember (Nid "m") (Tnamed "Missing") false None {| li_offset := 0 |}]
-    [] [] "C::~C()" true None POD 4 4.
+    [] [] "C::~C()" true None POD 4 4 [].
 
 Definition opaque_table : type_table := {[ "C"%cpp_name := Gopaque (opaque "r") ]}.
 Definition body_table : type_table := {[ "C"%cpp_name := Gstruct body ]}.
