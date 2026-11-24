@@ -54,6 +54,17 @@ Section comparable.
     exact: same_alloc_offset_2.
   Qed.
 
+  (** A valid pointer is [ptr_ord_comparable] with itself, for any comparison
+      [f] that is determined on equal addresses. *)
+  Lemma ptr_ord_comparable_self p f res :
+    (forall va, f va va = res) ->
+    valid_ptr p ⊢ ptr_ord_comparable p p f res.
+  Proof.
+    iIntros (Hres) "#V".
+    iDestruct (same_alloc_refl with "V") as "$"; iFrame "V"; iIntros "!%".
+    intros; simplify_eq. exact: Hres.
+  Qed.
+
   (** Two offsets [p1] and [p2] of a pointer [base] are [ptr_ord_comparable].
       In the side condition on [f], [va] ranges over the address of [base], so
       that [p1] and [p2] are at [va + z1] and [va + z2].
@@ -181,22 +192,19 @@ Section comparable.
     intros Heq. f_equiv => -[Hp1 Hp2]. by move: Heq => /(_ Hp1 Hp2) ->.
   Qed.
 
-  Lemma ptr_ord_comparable_valid ty p1 p2 (p : ptr) (sz : N) (i j : Z) :
+  (** Equality of two pointers into one array of a positive-size type is
+      equality of their indices. *)
+  Lemma ptr_comparable_valid_idx ty p1 p2 (p : ptr) (sz : N) (i j : Z) :
     size_of σ ty = Some sz ->
     (0 < sz)%N ->
     p1 = p .[ ty ! i ] ->
     p2 = p .[ ty ! j ] ->
     valid_ptr p1 ∗ valid_ptr p2 ⊢
-    ptr_ord_comparable p1 p2 (λ va1 va2, bool_decide (va1 = va2)) (bool_decide (p1 = p2)).
+    ptr_comparable p1 p2 (bool_decide (i = j)).
   Proof.
-    intros; subst.
-    iApply (ptr_ord_comparable_off_off _ _ p) => //.
-    intros va1 va2 Hva1 Hva2. apply bool_decide_ext. split.
-    - intros ->. have -> : i = j.
-      { apply (same_address_o_sub_eq p ty i j sz); [done|lia|].
-        eapply same_address_intro; eassumption. }
-      reflexivity.
-    - intros E. rewrite E in Hva1. congruence.
+    intros. rewrite -ptr_ord_comparable_comparable.
+    apply: ptr_ord_comparable_valid_idx => // va1 va2 Hcmp.
+    apply bool_decide_ext. rewrite -N.compare_eq_iff Hcmp. exact: Z.compare_eq_iff.
   Qed.
 
   Lemma ptr_comparable_valid ty p1 p2 (p : ptr) (sz : N) (i j : Z) :
@@ -206,17 +214,8 @@ Section comparable.
     p2 = p .[ ty ! j ] ->
     valid_ptr p1 ∗ valid_ptr p2 ⊢
     ptr_comparable p1 p2 (bool_decide (p1 = p2)).
-  Proof. intros. rewrite -ptr_ord_comparable_comparable. exact: ptr_ord_comparable_valid. Qed.
-
-  Lemma ptr_comparable_valid_idx ty p1 p2 (p : ptr) (sz : N) (i j : Z) :
-    size_of σ ty = Some sz ->
-    (0 < sz)%N ->
-    p1 = p .[ ty ! i ] ->
-    p2 = p .[ ty ! j ] ->
-    valid_ptr p1 ∗ valid_ptr p2 ⊢
-    ptr_comparable p1 p2 (bool_decide (i = j)).
   Proof.
-    intros. rewrite ptr_comparable_equiv; first exact /ptr_comparable_valid.
+    intros. rewrite ptr_comparable_equiv; first exact: ptr_comparable_valid_idx.
     intros; subst; apply bool_decide_ext. rewrite o_sub_eq_inj //; lia.
   Qed.
 
@@ -247,9 +246,8 @@ Section comparable.
   Lemma self_ptr_comparable p :
     valid_ptr p ⊢ ptr_comparable p p true.
   Proof.
-    rewrite -ptr_ord_comparable_comparable /ptr_ord_comparable; iIntros "#V".
-    iDestruct (same_alloc_refl with "V") as "$"; iFrame "V"; iIntros "!%".
-    intros; simplify_eq. exact: bool_decide_true.
+    rewrite -ptr_ord_comparable_comparable. apply: ptr_ord_comparable_self => va.
+    exact: bool_decide_true.
   Qed.
 
   Lemma ptr_comparable_off_off o1 o2 base p1 p2 res :
