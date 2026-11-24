@@ -22,6 +22,8 @@
         ("prvalue()"%pstring, "partial"%pstring, [],
          ["class with virtual bases: conversions to its virtual bases, virtual functions, and const objects are not modelled"%pstring],
          [], []);
+        ("to_nonvirtual_base(LN&)"%pstring, "supported"%pstring, [], [], [],
+         []);
         ("ext(int)"%pstring, "supported"%pstring, [], [], [], []);
         ("calls_setjmp()"%pstring, "unsupported"%pstring,
          ["returns twice (setjmp family)"%pstring],
@@ -135,6 +137,7 @@
         ("sizeof_expr(S&)"%pstring, "supported"%pstring);
         ("stmt_expr()"%pstring, "unsupported"%pstring);
         ("test_and_set(bool*)"%pstring, "unsupported"%pstring);
+        ("to_nonvirtual_base(LN&)"%pstring, "supported"%pstring);
         ("use(B)"%pstring, "partial"%pstring);
         ("va(__va_list_tag*)"%pstring, "unsupported"%pstring);
         ("vla_condition()"%pstring, "unsupported"%pstring);
@@ -143,7 +146,9 @@
         ("NS::get() const"%pstring, "supported"%pstring);
         ("B::B()"%pstring, "partial"%pstring);
         ("D::D()"%pstring, "supported"%pstring);
+        ("LN::LN()"%pstring, "partial"%pstring);
         ("M::M()"%pstring, "blocked"%pstring);
+        ("NB::NB()"%pstring, "partial"%pstring);
         ("NS::NS()"%pstring, "partial"%pstring);
         ("O::O()"%pstring, "partial"%pstring);
         ("P::P()"%pstring, "supported"%pstring);
@@ -151,21 +156,27 @@
         ("VB::VB()"%pstring, "partial"%pstring);
         ("B::B(const B&)"%pstring, "partial"%pstring);
         ("D::D(const D&)"%pstring, "partial"%pstring);
+        ("LN::LN(const LN&)"%pstring, "partial"%pstring);
         ("M::M(const M&)"%pstring, "blocked"%pstring);
+        ("NB::NB(const NB&)"%pstring, "partial"%pstring);
         ("NS::NS(const NS&)"%pstring, "partial"%pstring);
         ("O::O(const O&)"%pstring, "partial"%pstring);
         ("P::P(const P&)"%pstring, "partial"%pstring);
         ("S::S(const S&)"%pstring, "partial"%pstring);
         ("VB::VB(const VB&)"%pstring, "partial"%pstring);
         ("B::B(B&&)"%pstring, "partial"%pstring);
+        ("LN::LN(LN&&)"%pstring, "partial"%pstring);
         ("M::M(M&&)"%pstring, "blocked"%pstring);
+        ("NB::NB(NB&&)"%pstring, "partial"%pstring);
         ("NS::NS(NS&&)"%pstring, "partial"%pstring);
         ("O::O(O&&)"%pstring, "partial"%pstring);
         ("S::S(S&&)"%pstring, "partial"%pstring);
         ("VB::VB(VB&&)"%pstring, "partial"%pstring);
         ("B::~B()"%pstring, "partial"%pstring);
         ("D::~D()"%pstring, "unsupported"%pstring);
+        ("LN::~LN()"%pstring, "partial"%pstring);
         ("M::~M()"%pstring, "blocked"%pstring);
+        ("NB::~NB()"%pstring, "supported"%pstring);
         ("NS::~NS()"%pstring, "supported"%pstring);
         ("O::~O()"%pstring, "supported"%pstring);
         ("P::~P()"%pstring, "supported"%pstring);
@@ -173,19 +184,25 @@
         ("VB::~VB()"%pstring, "supported"%pstring);
         ("B::operator=(const B&)"%pstring, "partial"%pstring);
         ("D::operator=(const D&)"%pstring, "partial"%pstring);
+        ("LN::operator=(const LN&)"%pstring, "partial"%pstring);
         ("M::operator=(const M&)"%pstring, "blocked"%pstring);
+        ("NB::operator=(const NB&)"%pstring, "partial"%pstring);
         ("NS::operator=(const NS&)"%pstring, "partial"%pstring);
         ("O::operator=(const O&)"%pstring, "partial"%pstring);
         ("S::operator=(const S&)"%pstring, "partial"%pstring);
         ("VB::operator=(const VB&)"%pstring, "partial"%pstring);
         ("B::operator=(B&&)"%pstring, "partial"%pstring);
+        ("LN::operator=(LN&&)"%pstring, "partial"%pstring);
         ("M::operator=(M&&)"%pstring, "blocked"%pstring);
+        ("NB::operator=(NB&&)"%pstring, "partial"%pstring);
         ("NS::operator=(NS&&)"%pstring, "partial"%pstring);
         ("O::operator=(O&&)"%pstring, "partial"%pstring);
         ("S::operator=(S&&)"%pstring, "partial"%pstring);
         ("VB::operator=(VB&&)"%pstring, "partial"%pstring);
         ("B"%pstring, "partial"%pstring); ("D"%pstring, "supported"%pstring);
+        ("LN"%pstring, "partial"%pstring);
         ("M"%pstring, "unsupported"%pstring);
+        ("NB"%pstring, "supported"%pstring);
         ("NS"%pstring, "supported"%pstring);
         ("O"%pstring, "supported"%pstring);
         ("P"%pstring, "supported"%pstring);

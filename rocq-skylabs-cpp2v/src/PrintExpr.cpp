@@ -411,33 +411,26 @@ void printDependentMember(ClangPrinter &cprint, CoqPrinter &print,
                                expr->template_arguments(), loc::of(expr));
 }
 
-// Whether the class conversion [ce] steps to a virtual base, or out of a class
-// with one. Clang's path to a virtual base skips the classes in between, and
-// cpp2v emits classes with virtual bases as unsupported (see
-// [supportedRecord]), so neither step can be checked against the bases.
-static bool castLeavesVirtualBaseClass(const CastExpr &ce) {
-    QualType derived;
+// Whether the class conversion [ce] takes a step to a virtual base.
+//
+// Clang's path for such a conversion starts at the last virtual step and
+// skips the classes before it, so the path does not say where the virtual
+// base is. A path whose steps all go to non-virtual bases is complete, and
+// each step has a static offset, also out of a class with virtual bases
+// (whose non-virtual bases are in [vs_struct] of its [Dvstruct]).
+// A base-to-derived conversion never takes a virtual step: the base may not be
+// a virtual base, nor a base of one (https://eel.is/c++draft/expr.static.cast).
+static bool castTakesVirtualStep(const CastExpr &ce) {
     switch (ce.getCastKind()) {
     case CastKind::CK_DerivedToBase:
     case CastKind::CK_UncheckedDerivedToBase:
-        derived = ce.getSubExpr()->getType();
-        break;
     case CastKind::CK_BaseToDerived:
-        derived = ce.getType();
-        break;
+        return llvm::any_of(ce.path(), [](const CXXBaseSpecifier *b) {
+            return b->isVirtual();
+        });
     default:
         return false;
     }
-    auto cls = derived->isPointerType() ? derived->getPointeeCXXRecordDecl()
-                                        : derived->getAsCXXRecordDecl();
-    for (auto base : ce.path()) {
-        if (base->isVirtual() ||
-            (cls &&
-             llvm::any_of(cls->bases(), [](auto &b) { return b.isVirtual(); })))
-            return true;
-        cls = base->getType()->getAsCXXRecordDecl();
-    }
-    return false;
 }
 
 fmt::Formatter &ClangPrinter::printDeclType(CoqPrinter &print,
@@ -1650,9 +1643,9 @@ public:
         };
         auto without_type = [&](const char *c) { print.output() << c; };
 
-        if (castLeavesVirtualBaseClass(*ce)) {
+        if (castTakesVirtualStep(*ce)) {
             logging::unsupported()
-                << "unsupported cast through a class with virtual bases"
+                << "unsupported cast to a virtual base"
                 << " (at " << cprint.sourceRange(ce->getSourceRange()) << ")\n";
             print.ctor("Cunsupported", false);
             print.str(ce->getCastKindName()) << fmt::nbsp;
