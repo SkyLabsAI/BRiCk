@@ -65,8 +65,9 @@ Section comparable.
     p2 = base ,, o2 ->
     eval_offset σ o1 = Some z1 ->
     eval_offset σ o2 = Some z2 ->
-    (forall va : Z, 0 <= va -> 0 <= va + z1 -> 0 <= va + z2 ->
-      f (Z.to_N (va + z1)) (Z.to_N (va + z2)) = res)%Z ->
+    (forall va va1 va2 : N,
+      Z.of_N va1 = Z.of_N va + z1 -> Z.of_N va2 = Z.of_N va + z2 ->
+      f va1 va2 = res)%Z ->
     valid_ptr base ∗ valid_ptr p1 ∗ valid_ptr p2 ⊢ ptr_ord_comparable p1 p2 f res.
   Proof.
     iIntros (-> -> Ho1 Ho2 Hres) "#(V & V1 & V2)".
@@ -76,11 +77,9 @@ Section comparable.
     { iApply (ptr_ord_comparable_off_off o1 o2 base); [done..|iFrame "V1 V2"]. }
     destruct (ptr_vaddr (base ,, o1)) as [va1|] eqn:Hva1; last by iPureIntro.
     iDestruct (offset_inv_pinned_ptr_pure _ _ _ _ Ho1 Hva1 with "V") as %[Hle Hva].
-    iDestruct (offset_pinned_ptr_pure Ho1 Hva with "V1") as %[Hle1 Hva1'].
     iDestruct (offset_pinned_ptr_pure Ho2 Hva with "V2") as %[Hle2 Hva2].
     iPureIntro. intros ? va2 [= <-]. rewrite Hva2 => -[<-].
-    rewrite Hva1 in Hva1'. case: Hva1' => {1}->.
-    apply Hres => //. lia.
+    apply (Hres (Z.to_N (va1 - z1))); lia.
   Qed.
 
   (** Two pointers into one array of a positive-size type have their addresses
@@ -105,7 +104,7 @@ Section comparable.
     { by rewrite offset_ptr_sub_0. }
     { rewrite o_sub_sub. f_equal. f_equal. lia. }
     1-2: exact: eval_o_sub'.
-    intros va ???. apply Hres. rewrite Z2N.inj_compare //.
+    intros * Hva1 Hva2. apply Hres. rewrite -N2Z.inj_compare Hva1 Hva2.
     rewrite Z.add_compare_mono_l -Zmult_compare_compat_l; last lia.
     by rewrite [(0 ?= _)%Z]Z.compare_antisym -Z.compare_sub -Z.compare_antisym.
   Qed.
