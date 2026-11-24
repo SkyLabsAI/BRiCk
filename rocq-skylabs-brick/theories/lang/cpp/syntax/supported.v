@@ -532,7 +532,7 @@ Section with_monad.
        [derivationR] (no virtual members of its own). *)
     | Cdynamic t => type t
     | Clvaluebitcast t => FAIL "lvalue bitcast" <+> type t
-    | Cderived2base ts t | Cbase2derived ts t => lst type ts <+> type t
+    | Cderived2base ts t | Cbase2derived ts t | Cderived2vbase ts t => lst type ts <+> type t
     | Cfloat t | Cint2float t => check_float_cast_target t
     | Cfloat2int t => type t <+> if is_float_type t then FAIL "invalid floating cast target" else OK
     | Cfloat2bool => OK
@@ -660,7 +660,7 @@ Section with_monad.
     | Gvstruct vs =>
         (* Policy: a class with virtual bases is usable, but several of its
            behaviors are not modelled, so this is [Partial]. *)
-        PARTIAL "class with virtual bases: conversions to its virtual bases, virtual functions, and const objects are not modelled"
+        PARTIAL "class with virtual bases: virtual functions and const objects are not modelled"
         <+> lst (classname ∘ fst) vs.(vs_struct).(s_bases)
         <+> lst (classname ∘ fst) vs.(vs_vbases)
         <+> lst member vs.(vs_struct).(s_fields)

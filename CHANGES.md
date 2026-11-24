@@ -14,6 +14,13 @@ of the release, and introduce a new heading.
 `Dunsupported`, instead of exposing them as opaque records. Their argument
 lifetime is unsupported even when their field layout is hidden.
 
+2026.11.24: `Cast` has a new constructor `Cderived2vbase (path : list type)
+(END : type)`, a derived-to-base conversion whose first step goes to a virtual
+base class (see `syntax/core.v`). cpp2v prints it for conversions to a virtual
+base, which were `Cunsupported`; conversions to non-virtual bases of a class
+with virtual bases are now `Cderived2base`/`Cbase2derived`. Exhaustive matches
+on `Cast` need a new case.
+
 2026.11.24: `global_ptr_nonnull`, `global_ptr_nonnull_aid` and
 `global_ptr_nonnull_addr` (and `_global_nonnull`) now require
 `defines_symbol tu o = true`: the translation unit defines the symbol, rather

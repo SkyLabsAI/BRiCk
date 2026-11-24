@@ -381,6 +381,7 @@ Module MTraverse.
       | Cptr2bool => mret Cptr2bool
       | Cderived2base path t => Cderived2base <$> traverse (T:=eta list) traverseT path <*> traverseT t
       | Cbase2derived path t => Cbase2derived <$> traverse (T:=eta list) traverseT path <*> traverseT t
+      | Cderived2vbase path t => Cderived2vbase <$> traverse (T:=eta list) traverseT path <*> traverseT t
       | Cintegral t => Cintegral <$> traverseT t
       | Cint2bool => mret Cint2bool
       | Cfloat2bool => mret Cfloat2bool

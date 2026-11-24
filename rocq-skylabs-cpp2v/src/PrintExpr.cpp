@@ -411,23 +411,29 @@ void printDependentMember(ClangPrinter &cprint, CoqPrinter &print,
                                expr->template_arguments(), loc::of(expr));
 }
 
-// Whether the class conversion [ce] takes a step to a virtual base.
+// Whether the class conversion [ce] takes a step to a virtual base that
+// BRiCk cannot express.
 //
-// Clang's path for such a conversion starts at the last virtual step and
-// skips the classes before it, so the path does not say where the virtual
-// base is. A path whose steps all go to non-virtual bases is complete, and
-// each step has a static offset, also out of a class with virtual bases
-// (whose non-virtual bases are in [vs_struct] of its [Dvstruct]).
-// A base-to-derived conversion never takes a virtual step: the base may not be
-// a virtual base, nor a base of one (https://eel.is/c++draft/expr.static.cast).
-static bool castTakesVirtualStep(const CastExpr &ce) {
+// Clang's path for a conversion starts at the last virtual step and skips the
+// classes before it. A derived-to-base path that starts with its only
+// virtual step is printed as [Cderived2vbase]: that step goes from the source
+// class to one of its (direct or indirect) virtual bases, and the other steps
+// go to non-virtual bases. A path whose steps all go to non-virtual bases is
+// complete, and each step has a static offset, also out of a class with
+// virtual bases (whose non-virtual bases are in [vs_struct] of its
+// [Dvstruct]). A base-to-derived conversion never takes a virtual step: the
+// base may not be a virtual base, nor a base of one
+// (https://eel.is/c++draft/expr.static.cast).
+static bool castTakesUnsupportedVirtualStep(const CastExpr &ce) {
+    auto isVirtual = [](const CXXBaseSpecifier *b) { return b->isVirtual(); };
+    auto path = ce.path();
     switch (ce.getCastKind()) {
     case CastKind::CK_DerivedToBase:
     case CastKind::CK_UncheckedDerivedToBase:
+        return !ce.path_empty() &&
+               llvm::any_of(llvm::drop_begin(path), isVirtual);
     case CastKind::CK_BaseToDerived:
-        return llvm::any_of(ce.path(), [](const CXXBaseSpecifier *b) {
-            return b->isVirtual();
-        });
+        return llvm::any_of(path, isVirtual);
     default:
         return false;
     }
@@ -1643,7 +1649,7 @@ public:
         };
         auto without_type = [&](const char *c) { print.output() << c; };
 
-        if (castTakesVirtualStep(*ce)) {
+        if (castTakesUnsupportedVirtualStep(*ce)) {
             logging::unsupported()
                 << "unsupported cast to a virtual base"
                 << " (at " << cprint.sourceRange(ce->getSourceRange()) << ")\n";
@@ -1705,7 +1711,11 @@ public:
 
         case CastKind::CK_DerivedToBase:
         case CastKind::CK_UncheckedDerivedToBase: {
-            print.ctor("Cderived2base");
+            // A first step to a virtual base (see
+            // [castTakesUnsupportedVirtualStep]).
+            print.ctor(!ce->path_empty() && (*ce->path_begin())->isVirtual()
+                           ? "Cderived2vbase"
+                           : "Cderived2base");
             // note that [path] does *not* include the type of the argument
             print.list_range(ce->path().begin(), ce->path().end() - 1,
                              [&](auto i) {

@@ -1230,6 +1230,79 @@ Module Type Expr.
       end
       |-- wp_xval (Ecast (Cdynamic (Trv_ref ty)) e) Q.
 
+    (** * [Cderived2vbase]
+        casts from a derived class to a base class through a _virtual_
+        base class [vbase], the first class of [path ++ [base]]: the
+        result is at the location of the [vbase] subobject of the
+        object, then at the static offsets of the remaining
+        (non-virtual) steps.
+
+        The location of a virtual base depends on the most-derived
+        object, and the program reads it at run time (from the vtable,
+        in the Itanium ABI). [vbase_ptr derived vbase addr pvb] is that
+        knowledge, so the rules ask for it and return [pvb]; it is part
+        of the object's [Rep] (see [vbaseR]).
+
+        [vbase_ptr] is persistent, so it does not show that the object
+        is still alive. Like the rules for [Cderived2base], these rules
+        do not check the lifetime of the object, although the program
+        reads its vtable pointer
+        (https://eel.is/c++draft/basic.life: such a conversion of an
+        object outside its lifetime is undefined).
+
+        A null pointer converts to a null pointer, without reading
+        anything (https://eel.is/c++draft/conv.ptr). *)
+    Axiom wp_lval_cast_derived2vbase : forall e ty path Q,
+      match drop_qualifiers (type_of e), drop_qualifiers ty with
+      | Tnamed derived , Tnamed base =>
+          match path_names (path ++ [Tnamed base]) with
+          | Some (vbase :: rest) =>
+            wp_glval e (fun addr free =>
+              Exists pvb, vbase_ptr derived vbase addr pvb **
+              let addr' := pvb ,, derived_to_base vbase rest in
+              reference_to ty addr' ** Q addr' free)
+          | _ => False
+          end
+      | _, _ => False
+      end
+      |-- wp_lval (Ecast (Cderived2vbase path (Tref ty)) e) Q.
+
+    Axiom wp_xval_cast_derived2vbase : forall e ty path Q,
+      match drop_qualifiers (type_of e), drop_qualifiers ty with
+      | Tnamed derived , Tnamed base =>
+          match path_names (path ++ [Tnamed base]) with
+          | Some (vbase :: rest) =>
+            wp_glval e (fun addr free =>
+              Exists pvb, vbase_ptr derived vbase addr pvb **
+              let addr' := pvb ,, derived_to_base vbase rest in
+              reference_to ty addr' ** Q addr' free)
+          | _ => False
+          end
+      | _, _ => False
+      end
+      |-- wp_xval (Ecast (Cderived2vbase path (Trv_ref ty)) e) Q.
+
+    Axiom wp_operand_cast_derived2vbase : forall e ty path Q,
+      match drop_qualifiers <$> unptr (type_of e), drop_qualifiers ty with
+      | Some (Tnamed derived) , Tnamed base =>
+          match path_names (path ++ [Tnamed base]) with
+          | Some (vbase :: rest) =>
+            wp_operand e (fun v free =>
+              match v with
+              | Vptr addr =>
+                if bool_decide (addr = nullptr) then Q (Vptr nullptr) free
+                else
+                  Exists pvb, vbase_ptr derived vbase addr pvb **
+                  let addr' := pvb ,, derived_to_base vbase rest in
+                  has_type (Vptr addr') (Tptr ty) ** Q (Vptr addr') free
+              | _ => False
+              end)
+          | _ => False
+          end
+      | _, _ => False
+      end
+      |-- wp_operand (Ecast (Cderived2vbase path (Tptr ty)) e) Q.
+
     (** the ternary operator [_ ? _ : _] has the value category
      * of the "then" and "else" expressions (which must be the same).
      * We express this with 4 rules, one for each of [wp_lval],
