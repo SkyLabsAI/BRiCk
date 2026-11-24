@@ -15,7 +15,7 @@
           report.status := "partial";
           report.unsupported := [];
           report.partial :=
-            ["class with virtual bases: conversions to its virtual bases, virtual functions, and const objects are not modelled"%pstring];
+            ["class with virtual bases: virtual functions and const objects are not modelled"%pstring];
           report.blocked_by := [];
           report.unsupported_refs := []
         |};

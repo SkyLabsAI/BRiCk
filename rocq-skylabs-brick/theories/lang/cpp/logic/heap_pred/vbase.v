@@ -144,4 +144,4 @@ Section with_cpp.
   Qed.
 End with_cpp.
 
-#[global] Hint Opaque nv_tblockR vbaseR : typeclass_instances.
+#[global] Hint Opaque nv_tblockR vbaseR : typeclass_instances sl_opacity.

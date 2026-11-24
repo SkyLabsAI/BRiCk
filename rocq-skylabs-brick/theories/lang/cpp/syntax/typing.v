@@ -131,7 +131,8 @@ Module decltype.
         | Cptr2int t => mret t
         | Cptr2bool => mret Tbool
         | Cderived2base _ ty
-        | Cbase2derived _ ty => mret ty
+        | Cbase2derived _ ty
+        | Cderived2vbase _ ty => mret ty
         | Cintegral t => mret t
         | Cint2bool => mret Tbool
         | Cfloat2bool => mret Tbool
