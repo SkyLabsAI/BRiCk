@@ -49,8 +49,38 @@ public:
                   stmt->getStmtClassName());
     }
 
+    // Labels are printed by name ([Slabeled], [Sgoto]), and the logic
+    // assumes that a name identifies one label in a function. A GNU local
+    // label (<<__label__ L;>>) breaks that assumption: an inner [L] can shadow
+    // an outer [L] of the same function. The rejection that counts is the one
+    // of the `__label__` declaration statement, which opens the label's block.
+    // The tests of [isGnuLocal] on label statements and `goto`s are
+    // best-effort, for a better message: clang does not report the labels of
+    // a template instantiation as local. The support report's check that no
+    // function body defines a label name twice is the backstop.
+    static constexpr const char *gnu_local_label =
+        "GNU local label (__label__)";
+
+    static bool isGnuLocalLabel(const LabelDecl *decl) {
+        return decl != nullptr && decl->isGnuLocal();
+    }
+
+    void unsupportedGnuLocalLabel(const Stmt *stmt, CoqPrinter &print,
+                                  ClangPrinter &cprint) {
+        cprint.error_prefix(logging::unsupported(), loc::of(stmt))
+            << "warning: unsupported " << gnu_local_label << "\n";
+        guard::ctor _{print, "Sunsupported"};
+        print.str(gnu_local_label);
+    }
+
     void VisitDeclStmt(const DeclStmt *stmt, CoqPrinter &print,
                        ClangPrinter &cprint, ASTContext &) {
+        for (auto d : stmt->decls()) {
+            if (isa<LabelDecl>(d)) {
+                unsupportedGnuLocalLabel(stmt, print, cprint);
+                return;
+            }
+        }
         print.ctor("Sdecl");
         print.begin_list();
         for (auto d : stmt->decls()) {
@@ -449,6 +479,10 @@ public:
 
     void VisitLabelStmt(const LabelStmt *stmt, CoqPrinter &print,
                         ClangPrinter &cprint, ASTContext &) {
+        if (isGnuLocalLabel(stmt->getDecl())) {
+            unsupportedGnuLocalLabel(stmt, print, cprint);
+            return;
+        }
         print.ctor("Slabeled");
         print.str(stmt->getDecl()->getNameAsString()) << fmt::nbsp;
         cprint.printStmt(print, stmt->getSubStmt());
@@ -457,6 +491,10 @@ public:
 
     void VisitGotoStmt(const GotoStmt *stmt, CoqPrinter &print,
                        ClangPrinter &cprint, ASTContext &) {
+        if (isGnuLocalLabel(stmt->getLabel())) {
+            unsupportedGnuLocalLabel(stmt, print, cprint);
+            return;
+        }
         print.ctor("Sgoto");
         print.str(stmt->getLabel()->getNameAsString());
         print.end_ctor();

@@ -69,6 +69,13 @@ unsigned long off() { return __builtin_offsetof(O, b); }
 // a label without a [goto].
 void label_only() { L: ; }
 
+// a GNU local label: label names are not unique in the function, and the
+// [goto] in the inner block targets the inner [L] (the result is 1).
+int local_label() {
+  { __label__ L; goto L; int x; L: return 1; }
+  L: return 2;
+}
+
 // flexible array members.
 struct M { int n; int d[]; };
 int fam(M *m) { return m->d[0]; }
@@ -115,7 +122,7 @@ Eval vm_compute in List.map show (supported.report.run source
   ; "test_and_set(bool*)"; "fetch_max(int*)"; "generic_store(int*, int*)"
   ; "dtor_local()"; "prvalue()"; "ext(int)"; "calls_setjmp()"
   ; "dot_member(S&, int S::*)"; "arrow_member(S*, int S::*)"; "call_member(S&, int (S::*)())"
-  ; "stmt_expr()"; "off()"; "label_only()"; "fam(M*)"; "braceless(int)"
+  ; "stmt_expr()"; "off()"; "label_only()"; "local_label()"; "fam(M*)"; "braceless(int)"
   ; "lib_memcpy(char*, const char*)"; "lib_strlen(const char*)"; "direct_memcpy(char*, const char*)"
   ; "direct_undeclared(const char*, const char*)"
   ; "P::P(const P&)"; "long_double_ptr(long double*)"; "anon_ptr(?record*)"

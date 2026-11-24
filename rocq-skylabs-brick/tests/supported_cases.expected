@@ -37,6 +37,11 @@
          [], []);
         ("label_only()"%pstring, "unsupported"%pstring, ["label"%pstring],
          [], [], []);
+        ("local_label()"%pstring, "unsupported"%pstring,
+         ["GNU local label (__label__)"%pstring;
+          "GNU local label (__label__)"%pstring;
+          "GNU local label (__label__)"%pstring; "label"%pstring],
+         [], [], []);
         ("fam(M*)"%pstring, "blocked"%pstring, [], [], ["M"%pstring], []);
         ("braceless(int)"%pstring, "supported"%pstring, [], [], [], []);
         ("lib_memcpy(char*, const char*)"%pstring, "partial"%pstring, [],
@@ -102,6 +107,7 @@
         ("load_order(int*, int)"%pstring, "partial"%pstring);
         ("load_relaxed(int*)"%pstring, "unsupported"%pstring);
         ("load_sc(int*)"%pstring, "supported"%pstring);
+        ("local_label()"%pstring, "unsupported"%pstring);
         ("mk()"%pstring, "blocked"%pstring);
         ("ns_get(NS*)"%pstring, "supported"%pstring);
         ("off()"%pstring, "unsupported"%pstring);
