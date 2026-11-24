@@ -37,7 +37,7 @@ cpp_env_version='' cpp_env_mode='' cpp_env_image='' cpp_env_workspace=''
 cpp_env_user='' cpp_env_platform='' cpp_env_opam=''
 # shellcheck disable=SC1090
 source "$config"
-[[ ${cpp_env_version:-} == 1 ]] || fail "unsupported toolchain configuration"
+[[ ${cpp_env_version:-} == 2 ]] || fail "unsupported toolchain configuration"
 
 if [[ -n $host_tool ]]; then
     container_tool=${container_tool:-${host_tool##*/}}
@@ -56,9 +56,27 @@ esac
 
 command -v docker >/dev/null 2>&1 || fail "Docker is required by the selected toolchain"
 [[ -n $cpp_env_image ]] || fail "the selected toolchain has no Docker image"
-workspace=${workspace:-$cpp_env_workspace}
+if [[ -z $workspace ]]; then
+    workspace=$cpp_env_workspace
+    # A recorded relative workspace is anchored at the physical directory of
+    # the configuration file (after following symlinks to it, e.g. from a
+    # sandbox), never at the caller's working directory.
+    if [[ $workspace != /* ]]; then
+        config_file=$config
+        while [[ -L $config_file ]]; do
+            target=$(readlink "$config_file")
+            case "$target" in
+                /*) config_file=$target ;;
+                *) config_file=$(dirname "$config_file")/$target ;;
+            esac
+        done
+        config_dir=$(cd -P "$(dirname "$config_file")" && pwd -P)
+        workspace=$config_dir/$workspace
+    fi
+fi
 [[ -d $workspace ]] || fail "workspace does not exist: $workspace"
-workspace=$(cd "$workspace" && pwd -P)
+# -P resolves '..' physically, matching how configure computed the path.
+workspace=$(cd -P "$workspace" && pwd -P)
 cwd=$(pwd -P)
 args=(run --rm --user "$cpp_env_user" --env HOME=/tmp
       --volume "$workspace:$workspace" --workdir "$cwd")

@@ -3,6 +3,7 @@
 `rocq-skylabs-cpp2v` installs two companion tools:
 
 - `cpp2v-toolchain configure` records the selected execution environment.
+- `cpp2v-toolchain copy` copies a configuration to another directory.
 - `cpp2v-toolchain wrapper` generates a thin executable adapter.
 - `cpp2v-run` executes arbitrary commands using that environment.
 
@@ -14,7 +15,7 @@ only when the selected mode actually uses a container.
 ## Configuration
 
 ```sh
-cpp2v-toolchain configure --default-image IMAGE --platform linux/amd64 --opam > cpp-environment
+cpp2v-toolchain configure --default-image IMAGE --platform linux/amd64 --opam --output cpp-environment
 ```
 
 Docker is opt-in. `CPP2V_DOCKER_ENABLED` accepts:
@@ -48,7 +49,23 @@ Docker errors never silently select the host.
 
 The workspace defaults to `DUNE_SOURCEROOT`, or the current directory outside
 Dune; `--workspace DIR` overrides it. The workspace root and working directory
-are canonicalized with `pwd -P`. The primary workspace mount uses that physical
+are canonicalized with `pwd -P`.
+
+With `--output FILE`, the workspace is recorded **relative to the physical
+directory containing `FILE`**, so a checkout can move as long as its directory
+layout is preserved. `cpp2v-run` resolves it from the configuration's physical
+location (following symlinks to the file, e.g. from a Dune sandbox), never from
+the caller's working directory. Generate the file at its final location: a Dune
+rule using `--output` needs `(sandbox none)`. Without `--output` (standard
+output), the configuration's location is unknown and the workspace is recorded
+as an absolute path.
+
+`cpp2v-toolchain copy SOURCE DESTINATION` copies a configuration, preserving
+its selected mode, image ID, and platform, and rebases a relative workspace so
+that it identifies the same root from `DESTINATION`'s directory. Both paths
+are taken as given (a symlink at `SOURCE` is not followed), so only their
+relative position matters and the copy needs no special sandboxing. Absolute
+workspaces are copied unchanged. The primary workspace mount uses that physical
 absolute path on both sides, and the container uses the physical working
 directory. Supplying a workspace through a symlink does not, by itself, create
 a mount at that logical spelling.
@@ -72,12 +89,13 @@ Generate configuration once per consumer, with environment dependencies declared
  (target cpp-environment)
  (deps
   (universe)
+  (sandbox none)
   (env_var CPP2V_DOCKER_ENABLED)
   (env_var CPP2V_DOCKER_IMAGE)
   (env_var CPP2V_DOCKER_USER))
  (action
-  (with-stdout-to %{target}
-   (run %{bin:cpp2v-toolchain} configure --default-image IMAGE --opam))))
+  (run %{bin:cpp2v-toolchain} configure --output %{target}
+   --default-image IMAGE --opam)))
 
 (rule
  (target source_cpp.v)
@@ -126,20 +144,24 @@ configurations, missing tools, and Docker errors never silently select a
 different backend. Existing compiler flags and other quotation attributes are
 preserved.
 
-Put the configuration in a Rocq theory's logical directory. If it is generated,
-produce an otherwise empty `.v` dependency anchor in the same rule so Dune builds
-it **before** `rocq dep` scans the theory. For an existing configuration in the
-parent directory, use this once in the theory's `dune` file:
+Put the configuration in a Rocq theory's logical directory, with an otherwise
+empty `.v` dependency anchor that depends on it, so Dune builds it **before**
+`rocq dep` scans the theory. For an existing configuration in the parent
+directory, use this once in the theory's `dune` file. `cpp2v-toolchain copy`
+(not Dune's `copy`) rebases the relative workspace for the new directory:
 
 ```lisp
 (rule
- (targets cpp_environment cpp_environment_dependency.v)
+ (target cpp_environment)
  (deps (:config ../cpp_environment))
+ (action (run %{bin:cpp2v-toolchain} copy %{config} %{target})))
+
+(rule
+ (target cpp_environment_dependency.v)
+ (deps cpp_environment)
  (action
-  (progn
-   (copy %{config} cpp_environment)
-   (write-file cpp_environment_dependency.v
-    "(* Builds the configuration before rocq dep. *)\n"))))
+  (write-file %{target}
+   "(* Builds the configuration before rocq dep. *)\n")))
 ```
 
 Keep the anchor included in the theory's modules (`:standard` does this). Other

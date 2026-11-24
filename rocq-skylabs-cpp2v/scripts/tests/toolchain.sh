@@ -253,6 +253,96 @@ read_args
 has_arg "$DUNE_SOURCEROOT/tu:$workspace_alias/tu"
 has_arg "$workspace_alias/tu/aliased-input.cpp"
 
+# With --output, the workspace is recorded relative to the configuration's
+# directory and made absolute (physically) only for the Docker mount.
+workspace_of() (
+    cpp_env_workspace=''
+    # shellcheck source=/dev/null
+    source "$1"
+    printf '%s\n' "$cpp_env_workspace"
+)
+build_dir="$DUNE_SOURCEROOT/_build/default/parent dir"
+mkdir -p "$build_dir/child dir/grand child" "$tmp/elsewhere"
+relative_config="$build_dir/cpp_environment"
+"$bash" "$factory" configure --image test-image --output "$relative_config"
+[[ $(workspace_of "$relative_config") == ../../.. ]]
+expect_status 0 "$bash" "$runner" --config "$relative_config" -- /bin/true
+read_args
+has_arg "$DUNE_SOURCEROOT:$DUNE_SOURCEROOT"
+# The caller's working directory does not affect resolution.
+(
+    cd "$tmp"
+    expect_status 0 "$bash" "$runner" --config "$relative_config" -- /bin/true
+)
+read_args
+has_arg "$DUNE_SOURCEROOT:$DUNE_SOURCEROOT"
+# A symlinked --output directory records the physical relation.
+ln -s "$build_dir" "$tmp/build alias"
+"$bash" "$factory" configure --image test-image --output "$tmp/build alias/aliased_environment"
+[[ $(workspace_of "$build_dir/aliased_environment") == ../../.. ]]
+expect_status 2 "$bash" "$factory" configure --output "$tmp/missing dir/cpp_environment"
+
+# copy rebases the relative workspace for the destination; nothing else changes.
+copied_config="$build_dir/child dir/grand child/cpp_environment"
+"$bash" "$factory" copy "$relative_config" "$copied_config"
+[[ $(workspace_of "$copied_config") == ../../../../.. ]]
+grep -v '^cpp_env_workspace=' "$relative_config" > "$tmp/expected"
+grep -v '^cpp_env_workspace=' "$copied_config" > "$tmp/actual"
+cmp "$tmp/expected" "$tmp/actual"
+expect_status 0 "$bash" "$runner" --config "$copied_config" -- /bin/true
+read_args
+has_arg "$DUNE_SOURCEROOT:$DUNE_SOURCEROOT"
+# Copies may also move up, sideways, and out of the workspace entirely.
+"$bash" "$factory" copy "$copied_config" "$DUNE_SOURCEROOT/cpp_environment"
+[[ $(workspace_of "$DUNE_SOURCEROOT/cpp_environment") == . ]]
+"$bash" "$factory" copy "$relative_config" "$tmp/elsewhere/cpp_environment"
+[[ $(workspace_of "$tmp/elsewhere/cpp_environment") == "../${DUNE_SOURCEROOT##*/}" ]]
+# Copying onto itself is the identity.
+cp "$copied_config" "$tmp/before"
+"$bash" "$factory" copy "$copied_config" "$copied_config"
+cmp "$tmp/before" "$copied_config"
+# The runner resolves a symlinked configuration (e.g. in a Dune sandbox) from
+# its target.
+ln -s "$relative_config" "$tmp/elsewhere/config link"
+expect_status 0 "$bash" "$runner" --config "$tmp/elsewhere/config link" -- /bin/true
+read_args
+has_arg "$DUNE_SOURCEROOT:$DUNE_SOURCEROOT"
+# copy takes both paths as given, so a sandbox whose dependency is a symlink
+# into the build tree yields the same result as the unsandboxed copy.
+sandbox="$tmp/sandbox/default/parent dir"
+mkdir -p "$sandbox/child dir/grand child"
+ln -s "$relative_config" "$sandbox/cpp_environment"
+"$bash" "$factory" copy "$sandbox/cpp_environment" "$sandbox/child dir/grand child/cpp_environment"
+cmp "$copied_config" "$sandbox/child dir/grand child/cpp_environment"
+# A symlink in the configuration's own directory is equivalent to the file.
+ln -s cpp_environment "$build_dir/same-dir link"
+"$bash" "$factory" copy "$build_dir/same-dir link" "$build_dir/child dir/via-link"
+[[ $(workspace_of "$build_dir/child dir/via-link") == ../../../.. ]]
+# Absolute workspaces (standard output) are copied unchanged.
+"$bash" "$factory" copy "$workspace_config" "$build_dir/absolute_environment"
+cmp "$workspace_config" "$build_dir/absolute_environment"
+# The checkout can move as long as its layout is preserved.
+cp -R "$DUNE_SOURCEROOT" "$tmp/moved workspace"
+(
+    cd "$tmp/moved workspace/tu"
+    expect_status 0 "$bash" "$runner" \
+        --config "$tmp/moved workspace/_build/default/parent dir/child dir/grand child/cpp_environment" \
+        -- /bin/true
+)
+read_args
+has_arg "$tmp/moved workspace:$tmp/moved workspace"
+expect_not has_arg "$DUNE_SOURCEROOT:$DUNE_SOURCEROOT"
+rm -rf "$tmp/moved workspace"
+# A relative workspace that no longer exists is an error, not the caller's PWD.
+printf 'cpp_env_workspace=%q\n' '../missing workspace' >> "$tmp/elsewhere/cpp_environment"
+expect_status 2 "$bash" "$runner" --config "$tmp/elsewhere/cpp_environment" -- /bin/true
+# Invalid copy invocations fail.
+expect_status 2 "$bash" "$factory" copy "$relative_config"
+expect_status 2 "$bash" "$factory" copy "$tmp/missing" "$tmp/elsewhere/out"
+expect_status 2 "$bash" "$factory" copy "$relative_config" "$tmp/missing dir/out"
+printf 'cpp_env_version=1\ncpp_env_workspace=/\n' > "$tmp/legacy-version"
+expect_status 2 "$bash" "$factory" copy "$tmp/legacy-version" "$tmp/elsewhere/out"
+
 # No suffix restrictions: arbitrary absolute inputs, commands, and explicit
 # include directories outside the workspace are mounted at the same paths.
 mkdir "$tmp/external inputs" "$tmp/include tree"

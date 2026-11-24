@@ -1,21 +1,23 @@
+; Unsandboxed: the recorded workspace is relative to this file's final location.
 (rule
  (target cpp_environment)
  (deps
   (universe)
+  (sandbox none)
   (env_var CPP2V_DOCKER_ENABLED)
   (env_var CPP2V_DOCKER_IMAGE)
   (env_var CPP2V_DOCKER_USER))
  (action
-  (with-stdout-to
+  (run
+   %{bin:cpp2v-toolchain}
+   configure
+   --output
    %{target}
-   (run
-    %{bin:cpp2v-toolchain}
-    configure
-    --default-image
-    skylabsai/fm-releases:fm-release-nightly
-    --platform
-    linux/amd64
-    --opam))))
+   --default-image
+   skylabsai/fm-releases:fm-release-nightly
+   --platform
+   linux/amd64
+   --opam)))
 
 (rule
  (target setup-cpp2v-command.sh)
