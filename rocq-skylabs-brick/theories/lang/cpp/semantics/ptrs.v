@@ -248,6 +248,13 @@ Module Type PTRS.
   Axiom o_dot_sub : ∀ {σ} i j ty,
     (o_sub _ ty i) ,, (o_sub _ ty j) = o_sub _ ty (i + j).
 
+  (** [Trealigned] changes the alignment of a type but not its size
+      ([size_of]), so subscripts ignore it: on an <<X32*>> with
+      <<typedef int X32 __attribute__((aligned(32)))>>, <<p + 1>> moves by
+      [sizeof(int)], as on an <<int*>>. *)
+  Axiom o_sub_realigned : ∀ {σ} n ty i,
+    o_sub σ (Trealigned n ty) i = o_sub σ ty i.
+
   (* We're ignoring virtual inheritance here, since we have no plans to
   support it for now, but this might hold there too. *)
   Axiom o_base_derived : forall σ p base derived,
