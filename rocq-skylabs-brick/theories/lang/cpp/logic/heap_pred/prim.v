@@ -376,4 +376,37 @@ Section with_cpp.
     rewrite tptsto_fuzzyR_intro. apply primR_intro_non_raw.
   Qed.
 
+  (** ** [Trealigned]: one lemma per layer, see [tptsto_fuzzyR_realigned]. *)
+  Lemma initializedR_realigned n ty q v :
+    aligned_ofR ty ** initializedR (Trealigned n ty) q v -|-
+    (aligned_ofR (Trealigned n ty) ** [| is_heap_type (Trealigned n ty) |]) **
+      initializedR ty q v.
+  Proof.
+    rewrite initializedR.unlock has_type_realigned. iSplit.
+    - iIntros "(A & #H & F)".
+      iDestruct (bi.equiv_entails_1_1 _ _ (tptsto_fuzzyR_realigned n ty q v) with "[$A $F]")
+        as "[[A %] F]".
+      by iFrame "∗#%".
+    - iIntros "([A %] & #H & F)".
+      iDestruct (bi.equiv_entails_1_2 _ _ (tptsto_fuzzyR_realigned n ty q v) with "[$A $F]")
+        as "[A F]"; first by iPureIntro.
+      by iFrame "∗#".
+  Qed.
+
+  Lemma primR_realigned n ty q v :
+    aligned_ofR ty ** primR (Trealigned n ty) q v -|-
+    (aligned_ofR (Trealigned n ty) ** [| is_heap_type (Trealigned n ty) |]) **
+      primR ty q v.
+  Proof.
+    rewrite primR.unlock. iSplit.
+    - iIntros "(A & % & I)".
+      iDestruct (bi.equiv_entails_1_1 _ _ (initializedR_realigned n ty q v) with "[$A $I]")
+        as "[[A %] I]".
+      by iFrame "∗%".
+    - iIntros "([A %] & % & I)".
+      iDestruct (bi.equiv_entails_1_2 _ _ (initializedR_realigned n ty q v) with "[$A $I]")
+        as "[A I]"; first by iPureIntro.
+      by iFrame "∗%".
+  Qed.
+
 End with_cpp.
