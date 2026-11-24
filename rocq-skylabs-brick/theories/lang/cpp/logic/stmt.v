@@ -199,7 +199,10 @@ Module Type Stmt.
          *)
         wp_initialize ρ common_type common_p init (fun free =>
            (* NOTE: [free] is used to deallocate temporaries generated in the execution of [init].
-              It should not matter if it is destroyed immediately or after the destructuring occurs.
+              They are destroyed after the destructuring occurs, as in
+              <https://eel.is/c++draft/class.temporary#10>. In practice
+              [free] is empty, because cpp2v wraps [init] in [Eandclean],
+              which destroys them before the destructuring.
             *)
            wp_destructure (Rbind x common_p ρ) ds ρ (fun ρ f => interp free $ k ρ f) (FreeTemps.delete None common_type common_p))
       | Dinit ts nm ty init =>

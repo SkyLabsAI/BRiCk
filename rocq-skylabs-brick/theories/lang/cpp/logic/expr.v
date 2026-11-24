@@ -1537,9 +1537,42 @@ Module Type Expr.
        Therefore, we destroy temporaries created when evaluating [e]
        before running the continuation.
 
-       NOTE: We follow C++'s AST rules for destroying temporaries appropriately
-       so these nodes should effectively be no-ops, though there are certain
-       places in the AST that has odd evaluation semantics
+       These nodes are not no-ops. Many rules destroy temporaries at the
+       end of a full-expression
+       (<https://eel.is/c++draft/class.temporary#4>) on their own, e.g.
+       [wp_expr], [wp_decl_var], [wp_return], [wpi] and the rules for
+       conditions; there, [Eandclean] is redundant. Other rules rely on it:
+
+       - [wp_decl] passes the temporaries of a [Dinit] initializer (a
+         static or thread-local variable) to its continuation, which
+         keeps them until the end of the enclosing block.
+       - [wp_decl] destroys the temporaries of a [Ddecompose] initializer
+         only after the bindings are initialized.
+       - Clang keeps an [ExprWithCleanups] on each default member
+         initializer, and cpp2v prints it at each use
+         ([Edefault_init_expr] is the identity). In an aggregate
+         initialization, [Eandclean] is therefore nested in the
+         [Einitlist], without being a full-expression, and the
+         temporaries of one member are destroyed before the next member
+         is initialized.
+
+         This matches the code Clang generates and differs from the
+         standard, where these temporaries live until the end of the
+         enclosing full-expression
+         (<https://eel.is/c++draft/intro.execution#3.5>, CWG1343). GCC
+         follows the standard. See
+         <https://github.com/llvm/llvm-project/issues/65282> and
+         <https://github.com/SkyLabsAI/BRiCk/issues/501>.
+
+       Default arguments do not have this problem: Clang drops the
+       [ExprWithCleanups] of a default argument at its use, so its
+       temporaries are destroyed by the caller's full-expression.
+
+       These rules destroy every temporary of [e], which is wrong for
+       temporaries whose lifetime is extended
+       (<https://eel.is/c++draft/class.temporary#6>). They are sound only
+       because cpp2v emits [Eunsupported] for those; supporting lifetime
+       extension requires revisiting them.
      *)
     Axiom wp_lval_clean : forall e Q,
           wp_lval e (fun p frees => interp frees $ Q p FreeTemps.id)
