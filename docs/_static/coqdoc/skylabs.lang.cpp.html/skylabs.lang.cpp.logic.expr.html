@@ -2008,10 +2008,43 @@ temporary expressions
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Therefore,&nbsp;we&nbsp;destroy&nbsp;temporaries&nbsp;created&nbsp;when&nbsp;evaluating&nbsp;<span class="inlinecode"><span class="id" title="var">e</span></span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;before&nbsp;running&nbsp;the&nbsp;continuation.<br/>
 <br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;NOTE:&nbsp;We&nbsp;follow&nbsp;C++'s&nbsp;AST&nbsp;rules&nbsp;for&nbsp;destroying&nbsp;temporaries&nbsp;appropriately<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;so&nbsp;these&nbsp;nodes&nbsp;should&nbsp;effectively&nbsp;be&nbsp;no-ops,&nbsp;though&nbsp;there&nbsp;are&nbsp;certain<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;places&nbsp;in&nbsp;the&nbsp;AST&nbsp;that&nbsp;has&nbsp;odd&nbsp;evaluation&nbsp;semantics<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;These&nbsp;nodes&nbsp;are&nbsp;not&nbsp;no-ops.&nbsp;Many&nbsp;rules&nbsp;destroy&nbsp;temporaries&nbsp;at&nbsp;the<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;end&nbsp;of&nbsp;a&nbsp;full-expression<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(&lt;https://eel.is/c++draft/class.temporary4>) on their own, e.g.
+       [wp_expr], [wp_decl_var], [wp_return], [wpi] and the rules for
+       conditions; there, [Eandclean] is redundant. Other rules rely on it:
+
+       - [wp_decl] passes the temporaries of a [Dinit] initializer (a
+         static or thread-local variable) to its continuation, which
+         keeps them until the end of the enclosing block.
+       - [wp_decl] destroys the temporaries of a [Ddecompose] initializer
+         only after the bindings are initialized.
+       - Clang keeps an [ExprWithCleanups] on each default member
+         initializer, and cpp2v prints it at each use
+         ([Edefault_init_expr] is the identity). In an aggregate
+         initialization, [Eandclean] is therefore nested in the
+         [Einitlist], without being a full-expression, and the
+         temporaries of one member are destroyed before the next member
+         is initialized.
+
+         This matches the code Clang generates and differs from the
+         standard, where these temporaries live until the end of the
+         enclosing full-expression
+         (<https://eel.is/c++draft/intro.execution3.5&gt;,&nbsp;CWG1343).&nbsp;GCC<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;follows&nbsp;the&nbsp;standard.&nbsp;See<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;https://github.com/llvm/llvm-project/issues/65282&gt;&nbsp;and<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;https://github.com/SkyLabsAI/BRiCk/issues/501&gt;.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Default&nbsp;arguments&nbsp;do&nbsp;not&nbsp;have&nbsp;this&nbsp;problem:&nbsp;Clang&nbsp;drops&nbsp;the<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="inlinecode"><span class="id" title="var">ExprWithCleanups</span></span>&nbsp;of&nbsp;a&nbsp;default&nbsp;argument&nbsp;at&nbsp;its&nbsp;use,&nbsp;so&nbsp;its<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;temporaries&nbsp;are&nbsp;destroyed&nbsp;by&nbsp;the&nbsp;caller's&nbsp;full-expression.<br/>
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;These&nbsp;rules&nbsp;destroy&nbsp;every&nbsp;temporary&nbsp;of&nbsp;<span class="inlinecode"><span class="id" title="var">e</span></span>,&nbsp;which&nbsp;is&nbsp;wrong&nbsp;for<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;temporaries&nbsp;whose&nbsp;lifetime&nbsp;is&nbsp;extended<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(&lt;https://eel.is/c++draft/class.temporary6>). They are sound only
+       because cpp2v emits [Eunsupported] for those; supporting lifetime
+       extension requires revisiting them.
+     *)</span><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Axiom</span> <a id="Expr.with_resolve.wp_lval_clean" class="idref" href="#Expr.with_resolve.wp_lval_clean"><span class="id" title="variable">wp_lval_clean</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a id="e:1037" class="idref" href="#e:1037"><span class="id" title="binder">e</span></a> <a id="Q:1038" class="idref" href="#Q:1038"><span class="id" title="binder">Q</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">,</span></a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.logic.expr.html#Expr.wp_lval"><span class="id" title="abbreviation">wp_lval</span></a> <a class="idref" href="skylabs.lang.cpp.logic.expr.html#e:1037"><span class="id" title="variable">e</span></a> (<span class="id" title="keyword">fun</span> <a id="p:1039" class="idref" href="#p:1039"><span class="id" title="binder">p</span></a> <a id="frees:1040" class="idref" href="#frees:1040"><span class="id" title="binder">frees</span></a> =&gt; <a class="idref" href="skylabs.lang.cpp.logic.expr.html#Expr.interp"><span class="id" title="abbreviation">interp</span></a> <a class="idref" href="skylabs.lang.cpp.logic.expr.html#frees:1040"><span class="id" title="variable">frees</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#547692780023ef044153bc0c4f871ef7"><span class="id" title="notation">$</span></a> <a class="idref" href="skylabs.lang.cpp.logic.expr.html#Q:1038"><span class="id" title="variable">Q</span></a> <a class="idref" href="skylabs.lang.cpp.logic.expr.html#p:1039"><span class="id" title="variable">p</span></a> <a class="idref" href="skylabs.lang.cpp.logic.wp.html#FreeTemps.id"><span class="id" title="constructor">FreeTemps.id</span></a>)<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <a class="idref" href="skylabs.lang.cpp.logic.expr.html#Expr.wp_lval"><span class="id" title="abbreviation">wp_lval</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eandclean"><span class="id" title="constructor">Eandclean</span></a> <a class="idref" href="skylabs.lang.cpp.logic.expr.html#e:1037"><span class="id" title="variable">e</span></a>) <a class="idref" href="skylabs.lang.cpp.logic.expr.html#Q:1038"><span class="id" title="variable">Q</span></a>.<br/>
