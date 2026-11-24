@@ -49,6 +49,16 @@ public:
                   stmt->getStmtClassName());
     }
 
+    // A statement cpp2v has a printer for but cannot print faithfully: the
+    // printer would drop part of its meaning.
+    void unsupportedStmt(const Stmt *stmt, CoqPrinter &print,
+                         ClangPrinter &cprint, const std::string &msg) {
+        cprint.error_prefix(logging::unsupported(), loc::of(stmt))
+            << "warning: unsupported " << msg << "\n";
+        guard::ctor _{print, "Sunsupported"};
+        print.str(msg);
+    }
+
     // Labels are printed by name ([Slabeled], [Sgoto]), and the logic
     // assumes that a name identifies one label in a function. A GNU local
     // label (<<__label__ L;>>) breaks that assumption: an inner [L] can shadow
@@ -67,10 +77,7 @@ public:
 
     void unsupportedGnuLocalLabel(const Stmt *stmt, CoqPrinter &print,
                                   ClangPrinter &cprint) {
-        cprint.error_prefix(logging::unsupported(), loc::of(stmt))
-            << "warning: unsupported " << gnu_local_label << "\n";
-        guard::ctor _{print, "Sunsupported"};
-        print.str(gnu_local_label);
+        unsupportedStmt(stmt, print, cprint, gnu_local_label);
     }
 
     void VisitDeclStmt(const DeclStmt *stmt, CoqPrinter &print,
@@ -177,13 +184,32 @@ public:
         print.end_ctor();
     }
 
+    // Named loops (C2y N3355, clang 22 `-fnamed-loops`): `break L;` and
+    // `continue L;` target the loop labeled `L`, not the innermost one, and
+    // [Sbreak]/[Scontinue] cannot say so. See SkyLabsAI/BRiCk#540.
+    static bool hasLoopLabel(const Stmt *stmt) {
+#if CLANG_VERSION_MAJOR >= 22
+        if (auto lc = dyn_cast<LoopControlStmt>(stmt))
+            return lc->hasLabelTarget();
+#endif
+        return false;
+    }
+
     void VisitBreakStmt(const BreakStmt *stmt, CoqPrinter &print,
                         ClangPrinter &cprint, ASTContext &) {
+        if (hasLoopLabel(stmt))
+            return unsupportedStmt(
+                stmt, print, cprint,
+                "named break (break label;), see SkyLabsAI/BRiCk#540");
         print.output() << "Sbreak";
     }
 
     void VisitContinueStmt(const ContinueStmt *stmt, CoqPrinter &print,
                            ClangPrinter &cprint, ASTContext &) {
+        if (hasLoopLabel(stmt))
+            return unsupportedStmt(
+                stmt, print, cprint,
+                "named continue (continue label;), see SkyLabsAI/BRiCk#540");
         print.output() << "Scontinue";
     }
 
