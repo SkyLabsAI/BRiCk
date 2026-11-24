@@ -1,0 +1,241 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.new_delete</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+</div>
+
+<div class="doc">
+Tests for the new/delete semantics in <span class="inlinecode"><span class="id" title="library">skylabs.lang.cpp.logic.new_delete</span></span>. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.proofmode.proofmode</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.logic</span>.<br/>
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">source</span> <span class="id" title="var">flags</span> "-std=c++23 --target=x86_64-linux-gnu" <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+// <span class="id" title="var">The</span> <span class="id" title="var">global</span> <span class="id" title="var">allocation</span> <span class="id" title="var">and</span> <span class="id" title="var">deallocation</span> <span class="id" title="var">functions</span> <span class="id" title="var">are</span> <span class="id" title="var">implicitly</span> <span class="id" title="var">declared</span><br/>
+// <span class="id" title="tactic">in</span> <span class="id" title="var">every</span> <span class="id" title="var">translation</span> <span class="id" title="var">unit</span> (<span class="id" title="var">https</span>://<span class="id" title="var">eel.is</span>/<span class="id" title="var">c</span>++<span class="id" title="var">draft</span>/<span class="id" title="var">basic.stc.dynamic.general</span>#2);<br/>
+// <span class="id" title="var">the</span> <span class="id" title="var">uses</span> <span class="id" title="var">below</span> <span class="id" title="var">make</span> <span class="id" title="var">cpp2v</span> <span class="id" title="var">emit</span> <span class="id" title="var">them</span>. <span class="id" title="var">Declaring</span> [<span class="id" title="var">std</span>::<span class="id" title="var">align_val_t</span>] <span class="id" title="var">ourselves</span><br/>
+// <span class="id" title="var">would</span> <span class="id" title="var">be</span> <span class="id" title="var">undefined</span> <span class="id" title="var">behavior</span> (<span class="id" title="var">https</span>://<span class="id" title="var">eel.is</span>/<span class="id" title="var">c</span>++<span class="id" title="var">draft</span>/<span class="id" title="var">namespace.std</span>#1).<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">alignas</span>(64) <span class="id" title="var">A</span> { <span class="id" title="var">int</span> <span class="id" title="var">x</span>; };<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">test_global_new</span>() { <span class="id" title="var">delete</span> <span class="id" title="var">new</span> <span class="id" title="var">int</span>(0); }<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">test_aligned_new</span>() { <span class="id" title="var">delete</span> <span class="id" title="var">new</span> <span class="id" title="var">A</span>{0}; }<br/>
+<br/>
+// <span class="id" title="var">A</span> <span class="id" title="var">class</span>-<span class="id" title="var">specific</span> <span class="id" title="var">allocation</span> <span class="id" title="var">function</span>.<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">D</span> {<br/>
+&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">x</span>;<br/>
+&nbsp;&nbsp;<span class="id" title="var">static</span> <span class="id" title="var">void</span>* <span class="id" title="var">operator</span> <span class="id" title="var">new</span>(<span class="id" title="var">unsigned</span> <span class="id" title="var">long</span> <span class="id" title="var">sz</span>);<br/>
+&nbsp;&nbsp;<span class="id" title="var">static</span> <span class="id" title="var">void</span> <span class="id" title="var">operator</span> <span class="id" title="var">delete</span>(<span class="id" title="var">void</span>* <span class="id" title="var">p</span>);<br/>
+};<br/>
+<br/>
+// <span class="id" title="var">A</span> <span class="id" title="var">class</span>-<span class="id" title="var">specific</span> <span class="id" title="var">sized</span> <span class="id" title="var">deallocation</span> <span class="id" title="var">function</span>.<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">E</span> {<br/>
+&nbsp;&nbsp;<span class="id" title="var">static</span> <span class="id" title="var">void</span> <span class="id" title="var">operator</span> <span class="id" title="var">delete</span>(<span class="id" title="var">void</span>* <span class="id" title="var">p</span>, <span class="id" title="var">unsigned</span> <span class="id" title="var">long</span> <span class="id" title="var">sz</span>);<br/>
+};<br/>
+<br/>
+// <span class="id" title="var">A</span> <span class="id" title="var">virtual</span> <span class="id" title="var">destructor</span> <span class="id" title="var">whose</span> <span class="id" title="var">deleting</span> <span class="id" title="var">destructor</span> <span class="id" title="var">calls</span> <span class="id" title="var">a</span> <span class="id" title="var">member</span> <span class="id" title="var">deallocation</span><br/>
+// <span class="id" title="var">function</span>.<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">S</span> {<br/>
+&nbsp;&nbsp;<span class="id" title="var">virtual</span> ~<span class="id" title="var">S</span>() { }<br/>
+&nbsp;&nbsp;<span class="id" title="var">static</span> <span class="id" title="var">void</span> <span class="id" title="var">operator</span> <span class="id" title="var">delete</span>(<span class="id" title="var">void</span>* <span class="id" title="var">p</span>) { }<br/>
+};<br/>
+<br/>
+// <span class="id" title="var">A</span> <span class="id" title="var">virtual</span> <span class="id" title="var">destructor</span> <span class="id" title="var">without</span> <span class="id" title="var">a</span> <span class="id" title="var">member</span> <span class="id" title="var">deallocation</span> <span class="id" title="var">function</span>.<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">B</span> {<br/>
+&nbsp;&nbsp;<span class="id" title="var">virtual</span> ~<span class="id" title="var">B</span>() { }<br/>
+};<br/>
+<br/>
+// <span class="id" title="var">A</span> <span class="id" title="var">class</span> <span class="id" title="var">whose</span> (<span class="id" title="var">implicit</span>, <span class="id" title="var">virtual</span>) <span class="id" title="var">destructor</span> <span class="id" title="var">selects</span> <span class="id" title="var">a</span> <span class="id" title="var">member</span> <span class="id" title="var">deallocation</span><br/>
+// <span class="id" title="var">function</span> <span class="id" title="var">that</span> <span class="id" title="var">its</span> <span class="id" title="var">base</span> [<span class="id" title="var">B</span>] <span class="id" title="var">does</span> <span class="id" title="var">not</span> <span class="id" title="var">have</span>.<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">V</span> : <span class="id" title="var">B</span> {<br/>
+&nbsp;&nbsp;<span class="id" title="var">static</span> <span class="id" title="var">void</span> <span class="id" title="var">operator</span> <span class="id" title="var">delete</span>(<span class="id" title="var">void</span>* <span class="id" title="var">p</span>) { }<br/>
+};<br/>
+<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">test_new</span>() { <span class="id" title="var">delete</span> <span class="id" title="var">new</span> <span class="id" title="var">D</span>{0}; }<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">test_global_delete</span>(<span class="id" title="var">S</span>* <span class="id" title="var">p</span>) { ::<span class="id" title="var">delete</span> <span class="id" title="var">p</span>; }<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">test_delete</span>(<span class="id" title="var">S</span>* <span class="id" title="var">p</span>) { <span class="id" title="var">delete</span> <span class="id" title="var">p</span>; }<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">test_delete_base</span>(<span class="id" title="var">B</span>* <span class="id" title="var">p</span>) { <span class="id" title="var">delete</span> <span class="id" title="var">p</span>; }<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">test_new_v</span>() { <span class="id" title="var">delete</span> <span class="id" title="var">new</span> <span class="id" title="var">V</span>; }<br/>
+}}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab14"></a><h2 class="section">Alignment required of the storage returned by an allocation function</h2>
+
+
+<div class="paragraph"> </div>
+
+    Only the global allocation functions without an alignment parameter must
+    return storage aligned to <code>__STDCPP_DEFAULT_NEW_ALIGNMENT__</code>
+    (&lt;https://eel.is/c++draft/cpp.predefined1.8>); other allocation functions
+    need only align for the allocated type
+    (<https://eel.is/c++draft/basic.stc.dynamic.allocation3&gt;). 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="global_new_alignment" class="idref" href="#global_new_alignment"><span class="id" title="definition">global_new_alignment</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="abbreviation">new_storage_alignment</span> <a class="idref" href="skylabs_brick.tests.new_delete.html#source"><span class="id" title="definition">source</span></a> "operator new(unsigned long)" 4%<span class="id" title="var">N</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">STDCPP_DEFAULT_NEW_ALIGNMENT</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="class_new_alignment" class="idref" href="#class_new_alignment"><span class="id" title="definition">class_new_alignment</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="abbreviation">new_storage_alignment</span> <a class="idref" href="skylabs_brick.tests.new_delete.html#source"><span class="id" title="definition">source</span></a> "D::operator new(unsigned long)" 4%<span class="id" title="var">N</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 4%<span class="id" title="var">N</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="aligned_new_alignment" class="idref" href="#aligned_new_alignment"><span class="id" title="definition">aligned_new_alignment</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="abbreviation">new_storage_alignment</span> <a class="idref" href="skylabs_brick.tests.new_delete.html#source"><span class="id" title="definition">source</span></a> "operator new(unsigned long, enum std::align_val_t)" 64%<span class="id" title="var">N</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> 64%<span class="id" title="var">N</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab15"></a><h2 class="section">Deallocation function of a delete-expression</h2>
+
+
+<div class="paragraph"> </div>
+
+    A <code>::delete</code> calls the function found by global lookup
+    (&lt;https://eel.is/c++draft/expr.delete8>), while a plain <<delete>> of an
+    object with a virtual destructor calls the function selected at the
+    definition of the dynamic type's destructor
+    (<https://eel.is/c++draft/expr.delete8.1&gt;,
+    &lt;https://eel.is/c++draft/class.dtor15>). Both expressions record the same
+    global function when the static type has no member deallocation function,
+    so [Edelete] records whether <<::>> was written. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="delete_for_global_delete" class="idref" href="#delete_for_global_delete"><span class="id" title="definition">delete_for_global_delete</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">delete_operator.delete_for</span> <a class="idref" href="skylabs_brick.tests.new_delete.html#source"><span class="id" title="definition">source</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a> "operator delete(void*, unsigned long)" "S" <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a>"operator delete(void*, unsigned long)"%<span class="id" title="var">cpp_name</span><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="constructor">delete_operator.mk</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="delete_for_member_delete" class="idref" href="#delete_for_member_delete"><span class="id" title="definition">delete_for_member_delete</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">delete_operator.delete_for</span> <a class="idref" href="skylabs_brick.tests.new_delete.html#source"><span class="id" title="definition">source</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> "S::operator delete(void*)" "S" <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a>"S::operator delete(void*)"%<span class="id" title="var">cpp_name</span><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="constructor">delete_operator.mk</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<code>delete p</code> with <code>p : B*</code> pointing to a <code>V</code>: the expression's lookup
+    in <code>B</code> finds the global function, but <code>V</code>'s destructor selects
+    <code>V::operator delete</code>. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="delete_for_dynamic_member_delete" class="idref" href="#delete_for_dynamic_member_delete"><span class="id" title="definition">delete_for_dynamic_member_delete</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">delete_operator.delete_for</span> <a class="idref" href="skylabs_brick.tests.new_delete.html#source"><span class="id" title="definition">source</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> "operator delete(void*, unsigned long)" "V" <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a>"V::operator delete(void*)"%<span class="id" title="var">cpp_name</span><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="constructor">delete_operator.mk</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="delete_for_virtual_without_member" class="idref" href="#delete_for_virtual_without_member"><span class="id" title="definition">delete_for_virtual_without_member</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#is_Some"><span class="id" title="definition">is_Some</span></a> (<span class="id" title="definition">delete_operator.delete_for</span> <a class="idref" href="skylabs_brick.tests.new_delete.html#source"><span class="id" title="definition">source</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> "operator delete(void*)" "B").<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">eexists</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab16"></a><h2 class="section">Deleting <code>nullptr</code></h2>
+
+
+<div class="paragraph"> </div>
+
+    The deallocation function may be called on <code>nullptr</code>
+    (&lt;https://eel.is/c++draft/expr.delete6>), and the size argument a sized
+    deallocation function would receive is not fixed, so the call must be safe
+    for every size. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Section</span> <a id="with_cpp" class="idref" href="#with_cpp"><span class="id" title="section">with_cpp</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{<a id="43a705d40096ef54c52f70536b49dc5b" class="idref" href="#43a705d40096ef54c52f70536b49dc5b"><span class="id" title="variable">Σ</span></a> : <span class="id" title="class">cpp_logic</span>} {<a id="0b1d3f605c206c3f68b5282befa8ad5b" class="idref" href="#0b1d3f605c206c3f68b5282befa8ad5b"><span class="id" title="variable">σ</span></a> : <span class="id" title="class">genv</span>} `{<a id="with_cpp.MOD" class="idref" href="#with_cpp.MOD"><span class="id" title="variable">MOD</span></a> : <a class="idref" href="skylabs_brick.tests.new_delete.html#source"><span class="id" title="definition">source</span></a> <span class="id" title="notation">⊧</span> <a class="idref" href="skylabs_brick.tests.new_delete.html#cd01c1f8eba18116122f50d6eb622af2"><span class="id" title="variable">σ</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="wp_delete_null_any_size" class="idref" href="#wp_delete_null_any_size"><span class="id" title="lemma">wp_delete_null_any_size</span></a> <a id="Q:6" class="idref" href="#Q:6"><span class="id" title="binder">Q</span></a> (<a id="sz:7" class="idref" href="#sz:7"><span class="id" title="binder">sz</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Numbers.BinNums.html#N"><span class="id" title="inductive">N</span></a>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">wp_delete_null</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a> "E::operator delete(void*, unsigned long)" "E" <a class="idref" href="skylabs_brick.tests.new_delete.html#Q:6"><span class="id" title="variable">Q</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#e55eb026c3f0434cd18ddc04e5d7c1ac"><span class="id" title="notation">⊢</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">wp_invoke_delete</span> "E"<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a>"E::operator delete(void*, unsigned long)"%<span class="id" title="var">cpp_name</span><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a> <span class="id" title="constructor">delete_operator.mk</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.new_delete.html#sz:7"><span class="id" title="variable">sz</span></a> <span class="id" title="axiom">nullptr</span> <a class="idref" href="skylabs_brick.tests.new_delete.html#Q:6"><span class="id" title="variable">Q</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span> <span class="id" title="keyword">using</span> <span class="id" title="var">MOD</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="axiom">wp_delete_null.unlock</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="comment">(*&nbsp;All&nbsp;arguments&nbsp;explicit:&nbsp;<span class="inlinecode"><span class="id" title="keyword">vm_compute</span></span>&nbsp;must&nbsp;only&nbsp;run&nbsp;on&nbsp;the&nbsp;closed<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="inlinecode"><span class="id" title="var">delete_for</span></span> <span class="inlinecode"><span class="id" title="var">source</span></span> <span class="inlinecode">...</span>.&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<span class="id" title="lemma">delete_operator.delete_for_submodule</span> (<span class="id" title="var">tu1</span> := <a class="idref" href="skylabs_brick.tests.new_delete.html#source"><span class="id" title="definition">source</span></a>) (<span class="id" title="var">global</span> := <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">op</span> := "E::operator delete(void*, unsigned long)") (<span class="id" title="var">cls</span> := "E")<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="var">result</span> := <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">(</span></a>"E::operator delete(void*, unsigned long)"%<span class="id" title="var">cpp_name</span><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">,</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="constructor">delete_operator.mk</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#e6756e10c36f149b18b4a8741ed83079"><span class="id" title="notation">)</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">ltac</span>:(<span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">reflexivity</span>) (<span class="id" title="lemma">genv_compat_submodule</span> <span class="id" title="var">_</span> <span class="id" title="var">_</span> <a class="idref" href="skylabs_brick.tests.new_delete.html#with_cpp.MOD"><span class="id" title="variable">MOD</span></a>)).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iIntros</span> "[H _]". <span class="id" title="var">iApply</span> "H".<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_brick.tests.new_delete.html#with_cpp"><span class="id" title="section">with_cpp</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
