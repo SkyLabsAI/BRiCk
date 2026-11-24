@@ -140,10 +140,19 @@ Section stuck.
     elim: b Ldef => [//|s b IH] Ldef.
     destruct s; cbn [walk.switch_cases wp_switch_block]; try destruct Ldef; move=> H.
     all: try by rewrite IH.
-    all: try by rewrite ?H.
-    all: case_match eqn:Hc; last done.
-    all: apply IH; simpl in *; by rewrite ?Hc in H.
+    all: try done.
+    all: move: H; case: (is_decl _) => H; first by rewrite H.
+    all: move: H; case: (no_case _) => //= H; by apply IH.
   Qed.
+
+  (** A labeled or attributed declaration is a declaration: no [case] may
+      follow it, as for a bare one. *)
+  Example switch_labeled_decl Ldef l ds sb ss :
+    wp_switch_block Ldef (Slabeled l (Sdecl ds) :: Scase sb :: ss) = None.
+  Proof. done. Qed.
+  Example switch_attributed_decl Ldef attrs ds sb ss :
+    wp_switch_block Ldef (Sattr attrs (Sdecl ds) :: Scase sb :: ss) = None.
+  Proof. done. Qed.
 
   (** Volatile objects cannot be initialized. *)
   Example volatile_default_init ty p Q :
@@ -151,3 +160,25 @@ Section stuck.
     -|- |={⊤}=> UNSUPPORTED "default initialize volatile"%pstring.
   Proof. by rewrite default_initialize.unlock. Qed.
 End stuck.
+
+(** * Label names are unique in a function body
+
+    The logic finds the target of a [goto] by the label's name, so the
+    support report rejects a body that defines a label name twice, at any
+    depth; several labels on one statement count separately. *)
+#[local] Open Scope pstring_scope.
+
+Example labels_unique_nested e :
+  walk.labels_unique
+    (Sseq [ Slabeled "L" (Sseq [])
+          ; Sif None None e (Sseq [Slabeled "M" (Slabeled "L" Sbreak)]) (Sseq []) ])
+  = walk.FAIL "duplicate label: L".
+Proof. by vm_compute. Qed.
+Example labels_unique_same_stmt :
+  walk.labels_unique (Slabeled "L" (Slabeled "L" Sbreak)) = walk.FAIL "duplicate label: L".
+Proof. by vm_compute. Qed.
+Example labels_unique_distinct e :
+  walk.labels_unique
+    (Slabeled "L" (Slabeled "M" (Swhile None e (Sseq [Slabeled "N" Sbreak]))))
+  = walk.OK.
+Proof. by vm_compute. Qed.

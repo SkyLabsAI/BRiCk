@@ -35,7 +35,22 @@
          ["statement expression"%pstring], [], [], []);
         ("off()"%pstring, "unsupported"%pstring, ["offsetof"%pstring], [],
          [], []);
-        ("label_only()"%pstring, "unsupported"%pstring, ["label"%pstring],
+        ("label_only()"%pstring, "supported"%pstring, [], [], [], []);
+        ("local_label()"%pstring, "unsupported"%pstring,
+         ["GNU local label (__label__)"%pstring;
+          "GNU local label (__label__)"%pstring;
+          "GNU local label (__label__)"%pstring],
+         [], [], []);
+        ("local_label_only()"%pstring, "unsupported"%pstring,
+         ["GNU local label (__label__)"%pstring;
+          "GNU local label (__label__)"%pstring;
+          "GNU local label (__label__)"%pstring],
+         [], [], []);
+        ("local_label_tmpl<int>(int)"%pstring, "unsupported"%pstring,
+         ["GNU local label (__label__)"%pstring; "duplicate label: L"%pstring],
+         [], [], []);
+        ("labeled_decl_switch()"%pstring, "unsupported"%pstring,
+         ["switch: case or default nested in a statement or after a declaration"%pstring],
          [], [], []);
         ("fam(M*)"%pstring, "blocked"%pstring, [], [], ["M"%pstring], []);
         ("braceless(int)"%pstring, "supported"%pstring, [], [], [], []);
@@ -70,7 +85,8 @@
      : list
          (string * string * list string * list string * list string *
           list (string * list string))
-     = [("__atomic_fetch_max"%pstring, "supported"%pstring);
+     = [("local_label_tmpl<int>(int)"%pstring, "unsupported"%pstring);
+        ("__atomic_fetch_max"%pstring, "supported"%pstring);
         ("__atomic_load_n"%pstring, "supported"%pstring);
         ("__atomic_store"%pstring, "supported"%pstring);
         ("__atomic_test_and_set"%pstring, "supported"%pstring);
@@ -84,6 +100,7 @@
         ("tls"%pstring, "supported"%pstring);
         ("arrow_member(S*, int S::*)"%pstring, "unsupported"%pstring);
         ("braceless(int)"%pstring, "supported"%pstring);
+        ("call_local_label_tmpl()"%pstring, "supported"%pstring);
         ("call_member(S&, int( S::*)())"%pstring, "unsupported"%pstring);
         ("calls_setjmp()"%pstring, "unsupported"%pstring);
         ("direct_memcpy(char*, const char*)"%pstring, "unsupported"%pstring);
@@ -96,12 +113,15 @@
         ("fetch_max(int*)"%pstring, "unsupported"%pstring);
         ("generic_store(int*, int*)"%pstring, "unsupported"%pstring);
         ("get_tls()"%pstring, "unsupported"%pstring);
-        ("label_only()"%pstring, "unsupported"%pstring);
+        ("label_only()"%pstring, "supported"%pstring);
+        ("labeled_decl_switch()"%pstring, "unsupported"%pstring);
         ("lib_memcpy(char*, const char*)"%pstring, "partial"%pstring);
         ("lib_strlen(const char*)"%pstring, "partial"%pstring);
         ("load_order(int*, int)"%pstring, "partial"%pstring);
         ("load_relaxed(int*)"%pstring, "unsupported"%pstring);
         ("load_sc(int*)"%pstring, "supported"%pstring);
+        ("local_label()"%pstring, "unsupported"%pstring);
+        ("local_label_only()"%pstring, "unsupported"%pstring);
         ("mk()"%pstring, "blocked"%pstring);
         ("ns_get(NS*)"%pstring, "supported"%pstring);
         ("off()"%pstring, "unsupported"%pstring);

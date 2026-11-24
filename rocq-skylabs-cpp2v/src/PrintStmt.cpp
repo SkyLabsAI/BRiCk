@@ -49,12 +49,85 @@ public:
                   stmt->getStmtClassName());
     }
 
+    // A statement cpp2v has a printer for but cannot print faithfully: the
+    // printer would drop part of its meaning.
+    void unsupportedStmt(const Stmt *stmt, CoqPrinter &print,
+                         ClangPrinter &cprint, const std::string &msg) {
+        cprint.error_prefix(logging::unsupported(), loc::of(stmt))
+            << "warning: unsupported " << msg << "\n";
+        guard::ctor _{print, "Sunsupported"};
+        print.str(msg);
+    }
+
+    // Labels are printed by name ([Slabeled], [Sgoto]), and the logic
+    // assumes that a name identifies one label in a function. A GNU local
+    // label (<<__label__ L;>>) breaks that assumption: an inner [L] can shadow
+    // an outer [L] of the same function. The rejection that counts is the one
+    // of the `__label__` declaration statement, which opens the label's block.
+    // The tests of [isGnuLocal] on label statements and `goto`s are
+    // best-effort, for a better message: clang does not report the labels of
+    // a template instantiation as local. The support report's check that no
+    // function body defines a label name twice is the backstop.
+    static constexpr const char *gnu_local_label =
+        "GNU local label (__label__)";
+
+    static bool isGnuLocalLabel(const LabelDecl *decl) {
+        return decl != nullptr && decl->isGnuLocal();
+    }
+
+    void unsupportedGnuLocalLabel(const Stmt *stmt, CoqPrinter &print,
+                                  ClangPrinter &cprint) {
+        unsupportedStmt(stmt, print, cprint, gnu_local_label);
+    }
+
+    // The local declarations [printLocalDecl] prints: variables, including
+    // static locals, and structured bindings.
+    static bool printedLocalDecl(const Decl *d) {
+        if (d->isInvalidDecl() || isa<DecompositionDecl>(d))
+            return true;
+        return d->getKind() == Decl::Var &&
+               !cast<VarDecl>(d)->hasExternalStorage();
+    }
+
+    // The local declarations that have no runtime effect, so that leaving
+    // them out of the [Sdecl] loses nothing: they only introduce names
+    // that the printed code refers to by their resolved meaning.
+    static bool localDeclWithoutEffect(const Decl *d) {
+        // `extern int x;` refers to a variable defined elsewhere.
+        if (auto vd = dyn_cast<VarDecl>(d))
+            return d->getKind() == Decl::Var && vd->hasExternalStorage();
+        return isa<TypedefNameDecl,          // typedef, alias declaration
+                   TagDecl,                  // local class or enumeration
+                   StaticAssertDecl,         // checked at compile time
+                   UsingDecl, UsingEnumDecl, // name lookup only
+                   UsingDirectiveDecl, NamespaceAliasDecl,
+                   UnresolvedUsingValueDecl, // dependent using-declarations
+                   UnresolvedUsingTypenameDecl,
+                   FunctionDecl,             // block-scope function prototype
+                   EmptyDecl>(d);
+    }
+
+    // Fail closed: any other local declaration (e.g. OpenMP `threadprivate`,
+    // `declare reduction`, `allocate`) would be dropped from the [Sdecl]
+    // together with its meaning, so the statement is unsupported instead.
     void VisitDeclStmt(const DeclStmt *stmt, CoqPrinter &print,
                        ClangPrinter &cprint, ASTContext &) {
+        for (auto d : stmt->decls()) {
+            if (isa<LabelDecl>(d))
+                return unsupportedGnuLocalLabel(stmt, print, cprint);
+            if (!printedLocalDecl(d) && !localDeclWithoutEffect(d))
+                return unsupportedStmt(
+                    stmt, print, cprint,
+                    std::string("unsupported local declaration: ") +
+                        d->getDeclKindName());
+        }
         print.ctor("Sdecl");
         print.begin_list();
         for (auto d : stmt->decls()) {
-            if (cprint.printLocalDecl(print, d))
+            bool printed = cprint.printLocalDecl(print, d);
+            always_assert(printed == printedLocalDecl(d) &&
+                          "printedLocalDecl out of sync with printLocalDecl");
+            if (printed)
                 print.cons();
         }
         print.end_list();
@@ -147,13 +220,32 @@ public:
         print.end_ctor();
     }
 
+    // Named loops (C2y N3355, clang 22 `-fnamed-loops`): `break L;` and
+    // `continue L;` target the loop labeled `L`, not the innermost one, and
+    // [Sbreak]/[Scontinue] cannot say so. See SkyLabsAI/BRiCk#540.
+    static bool hasLoopLabel(const Stmt *stmt) {
+#if CLANG_VERSION_MAJOR >= 22
+        if (auto lc = dyn_cast<LoopControlStmt>(stmt))
+            return lc->hasLabelTarget();
+#endif
+        return false;
+    }
+
     void VisitBreakStmt(const BreakStmt *stmt, CoqPrinter &print,
                         ClangPrinter &cprint, ASTContext &) {
+        if (hasLoopLabel(stmt))
+            return unsupportedStmt(
+                stmt, print, cprint,
+                "named break (break label;), see SkyLabsAI/BRiCk#540");
         print.output() << "Sbreak";
     }
 
     void VisitContinueStmt(const ContinueStmt *stmt, CoqPrinter &print,
                            ClangPrinter &cprint, ASTContext &) {
+        if (hasLoopLabel(stmt))
+            return unsupportedStmt(
+                stmt, print, cprint,
+                "named continue (continue label;), see SkyLabsAI/BRiCk#540");
         print.output() << "Scontinue";
     }
 
@@ -385,6 +477,10 @@ public:
 
     void VisitGCCAsmStmt(const GCCAsmStmt *stmt, CoqPrinter &print,
                          ClangPrinter &cprint, ASTContext &) {
+        // `asm goto` may jump to one of its labels, which [Sasm] cannot
+        // express.
+        if (stmt->isAsmGoto())
+            return unsupportedStmt(stmt, print, cprint, "asm goto");
         // todo(gmm): more to do here to support assembly
         print.ctor("Sasm");
 #if CLANG_VERSION_MAJOR > 20
@@ -449,6 +545,10 @@ public:
 
     void VisitLabelStmt(const LabelStmt *stmt, CoqPrinter &print,
                         ClangPrinter &cprint, ASTContext &) {
+        if (isGnuLocalLabel(stmt->getDecl())) {
+            unsupportedGnuLocalLabel(stmt, print, cprint);
+            return;
+        }
         print.ctor("Slabeled");
         print.str(stmt->getDecl()->getNameAsString()) << fmt::nbsp;
         cprint.printStmt(print, stmt->getSubStmt());
@@ -457,6 +557,10 @@ public:
 
     void VisitGotoStmt(const GotoStmt *stmt, CoqPrinter &print,
                        ClangPrinter &cprint, ASTContext &) {
+        if (isGnuLocalLabel(stmt->getLabel())) {
+            unsupportedGnuLocalLabel(stmt, print, cprint);
+            return;
+        }
         print.ctor("Sgoto");
         print.str(stmt->getLabel()->getNameAsString());
         print.end_ctor();

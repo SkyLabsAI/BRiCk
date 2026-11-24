@@ -104,9 +104,13 @@ Unsupported Features
    * - Unknown cast kinds, non-default calling conventions
      - Unsupported syntax
      -
-   * - Labeled statements and :cpp:`goto`
+   * - :cpp:`goto` backward, into a nested statement, or past a
+       declaration (even a vacuously initialized one)
      - No semantics
-     -
+     - Forward :cpp:`goto` to a later statement of the same or an enclosing
+       block is supported (``Kblock`` in ``logic/stmt.v``); other jumps reach
+       the function boundary as ``Goto l``, which is ``False``.
+       `BRiCk#515 <https://github.com/SkyLabsAI/BRiCk/issues/515>`_
    * - :cpp:`if consteval`
      - No semantics
      -
