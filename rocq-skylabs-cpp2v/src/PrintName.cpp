@@ -1320,12 +1320,19 @@ fmt::Formatter &ClangPrinter::printName(CoqPrinter &print, const Decl &decl,
                                         bool full) {
     if (trace(Trace::Name))
         trace("printName", loc::of(decl));
+    // Names erase the alignment of typedefs (see [eraseAlignment]).
     if (full) {
         auto temp = withDecl(&decl);
+        temp.eraseAlignment = true;
         return structured::printName(print, decl, temp);
-    } else
-        return structured::printAtomicName(*(decl.getDeclContext()), decl,
-                                           print, *this);
+    } else {
+        const bool erase = eraseAlignment;
+        eraseAlignment = true;
+        structured::printAtomicName(*(decl.getDeclContext()), decl, print,
+                                    *this);
+        eraseAlignment = erase;
+        return print.output();
+    }
 }
 
 fmt::Formatter &ClangPrinter::printName(CoqPrinter &print, const Decl *p,

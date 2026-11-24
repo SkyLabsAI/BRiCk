@@ -59,6 +59,8 @@ static std::string getTemplateTemplateParamName(
         .str();
 }
 
+static bool mentionsRealigned(const ASTContext &ctxt, QualType t);
+
 class PrintType
     : public TypeVisitor<PrintType, void, CoqPrinter &, ClangPrinter &> {
 private:
@@ -68,7 +70,11 @@ public:
     static PrintType printer;
 
     void Visit(const Type *type, CoqPrinter &print, ClangPrinter &cprint) {
-        if (not print.reference(type))
+        // The shared definition of a type that prints with [Trealigned] keeps
+        // it, while a name erases it.
+        if ((cprint.eraseAlignment &&
+             mentionsRealigned(cprint.getContext(), QualType(type, 0))) ||
+            not print.reference(type))
             TypeVisitor<PrintType, void, CoqPrinter &, ClangPrinter &>::Visit(
                 type, print, cprint);
     }
@@ -332,17 +338,54 @@ public:
         print.end_ctor();
     }
 
+    /// A use of a scalar typedef with an alignment attribute has the
+    /// typedef's alignment, which Clang assumes for accesses through it: it
+    /// prints as [Trealigned] of the underlying type when that alignment
+    /// differs from BRiCk's for the underlying type ([typedefAlign]). The
+    /// underlying type is printed without its own typedefs at the head, whose
+    /// alignment the attribute overrides, and with its qualifiers outside.
+    void printAlignedTypedef(const TypedefType *type, uint64_t align,
+                             CoqPrinter &print, ClangPrinter &cprint) {
+        auto &ctxt = cprint.getContext();
+        auto under = type->getDecl()->getCanonicalDecl()->getUnderlyingType();
+        auto head = under->getUnqualifiedDesugaredType();
+        auto canon = under.getCanonicalType();
+        const bool is_const = canon.isConstQualified();
+        const bool is_volatile = canon.isVolatileQualified();
+        if (is_const || is_volatile)
+            print.ctor(is_const ? (is_volatile ? "Qconst_volatile" : "Qconst")
+                                : "Qvolatile",
+                       false);
+        const bool realigned = align != modelTypeAlign(ctxt, QualType(head, 0));
+        if (realigned)
+            print.ctor("Trealigned", false)
+                << ctxt.toCharUnitsFromBits(align).getQuantity() << fmt::nbsp;
+        cprint.printType(print, head, loc::of(type));
+        if (realigned)
+            print.end_ctor();
+        if (is_const || is_volatile)
+            print.end_ctor();
+    }
+
     void VisitTypedefType(const TypedefType *type, CoqPrinter &print,
                           ClangPrinter &cprint) {
+        auto align = cprint.eraseAlignment
+                         ? std::nullopt
+                         : typedefAlign(cprint.getContext(), type);
         if (auto decl = type->getDecl();
             decl && cprint.hasPrintedAttrs(*decl, /*onType*/ true)) {
             guard::ctor _(print, "Tattributed", false);
             cprint.printAttrs(print, *decl, /*onType*/ true) << fmt::nbsp;
-            cprint.printQualType(
-                print, decl->getCanonicalDecl()->getUnderlyingType(),
-                loc::of(type));
+            if (align)
+                printAlignedTypedef(type, *align, print, cprint);
+            else
+                cprint.printQualType(
+                    print, decl->getCanonicalDecl()->getUnderlyingType(),
+                    loc::of(type));
             return;
         }
+        if (align)
+            return printAlignedTypedef(type, *align, print, cprint);
         if (PRINT_ALIAS) {
             print.ctor("@Talias", false);
             cprint.printName(print, type->getDecl(), loc::of(type));
@@ -364,7 +407,7 @@ public:
         cprint.printCallingConv(print, type->getCallConv(), loc::of(type))
             << fmt::nbsp;
         cprint.printVariadic(print, type->isVariadic()) << fmt::nbsp;
-        cprint.printQualType(print, type->getReturnType(), loc::of(type))
+        cprint.printValueQualType(print, type->getReturnType(), loc::of(type))
             << fmt::nbsp;
         print.list(type->param_types(), [&](QualType i) {
             // Note that we do not need to print top-level qualifiers on
@@ -654,7 +697,186 @@ fmt::Formatter &ClangPrinter::printQualType(CoqPrinter &print,
         fatal(print, *this, loc, "unexpected null type in printQualType");
 }
 
+std::optional<uint64_t> typedefAlign(const ASTContext &ctxt,
+                                     const TypedefType *type) {
+    auto decl = type->getDecl();
+    if (!decl || !decl->hasAttr<AlignedAttr>() || type->isDependentType())
+        return std::nullopt;
+    auto under = decl->getCanonicalDecl()->getUnderlyingType();
+    if (under.isNull() || !under.getCanonicalType()->isScalarType())
+        return std::nullopt;
+    return ctxt.getTypeAlign(QualType(type, 0));
+}
+
+// The type that [PrintType] prints in place of the sugar type [ty], if [ty]
+// is sugar it looks through (other than a typedef): [modelTypeAlign] follows
+// the same steps, to find the typedef whose alignment cpp2v prints. Keep it
+// in sync with the visitors of [PrintType].
+static QualType printedSugarStep(const Type *ty) {
+    if (auto t = dyn_cast<ParenType>(ty))
+        return t->getInnerType();
+#if CLANG_VERSION_MAJOR < 22
+    if (auto t = dyn_cast<ElaboratedType>(ty))
+        return t->getNamedType();
+#endif
+    if (auto t = dyn_cast<SubstTemplateTypeParmType>(ty))
+        return t->getReplacementType();
+    if (auto t = dyn_cast<TemplateSpecializationType>(ty)) {
+        if (t->isTypeAlias())
+            return t->getAliasedType();
+        return t->isSugared() ? t->desugar() : QualType();
+    }
+    if (auto t = dyn_cast<DecltypeType>(ty))
+        return t->isSugared() ? t->desugar() : QualType();
+    if (auto t = dyn_cast<TypeOfExprType>(ty))
+        return t->isSugared() ? t->desugar() : QualType();
+    if (auto t = dyn_cast<MacroQualifiedType>(ty))
+        return t->getModifiedType();
+    if (auto t = dyn_cast<UsingType>(ty))
+#if CLANG_VERSION_MAJOR >= 22
+        return t->desugar();
+#else
+        return t->getUnderlyingType();
+#endif
+#if CLANG_VERSION_MAJOR >= 22
+    if (auto t = dyn_cast<PredefinedSugarType>(ty))
+        return t->desugar();
+#endif
+    if (auto t = dyn_cast<AttributedType>(ty))
+        return t->getModifiedType();
+    if (auto t = dyn_cast<DeducedType>(ty))
+        return t->isDeduced() ? t->getDeducedType() : QualType();
+    return QualType();
+}
+
+// The typedef with an alignment attribute at the head of [qt], as printed
+// (see [typedefAlign]), with its alignment.
+static std::optional<std::pair<const TypedefType *, uint64_t>>
+alignedTypedefHead(const ASTContext &ctxt, QualType t) {
+    while (!t.isNull()) {
+        if (auto tt = dyn_cast<TypedefType>(t.getTypePtr())) {
+            if (auto align = typedefAlign(ctxt, tt))
+                return std::make_pair(tt, *align);
+            t = tt->getDecl()->getCanonicalDecl()->getUnderlyingType();
+            continue;
+        }
+        t = printedSugarStep(t.getTypePtr());
+    }
+    return std::nullopt;
+}
+
+// The type that an aligned typedef prints as, without its alignment: its
+// underlying type, without the typedefs at its head.
+static const Type *alignedTypedefUnderlying(const TypedefType *tt) {
+    return tt->getDecl()
+        ->getCanonicalDecl()
+        ->getUnderlyingType()
+        ->getUnqualifiedDesugaredType();
+}
+
+bool realignedTypedefHead(const ASTContext &ctxt, const QualType &qt) {
+    auto head = alignedTypedefHead(ctxt, qt);
+    return head && head->second != modelTypeAlign(ctxt,
+                                                  QualType(alignedTypedefUnderlying(
+                                                               head->first),
+                                                           0));
+}
+
+// The alignments that cpp2v prints below the head of [t] (with [head]) or
+// from its head (without): those of the realigned typedefs at the heads of
+// its pointees, referents, array elements and member pointees, or 0.
+static void realignSignature(const ASTContext &ctxt, QualType t, bool head,
+                             std::vector<uint64_t> &sig) {
+    if (t.isNull())
+        return;
+    if (!head) {
+        auto h = alignedTypedefHead(ctxt, t);
+        sig.push_back(
+            h && h->second != modelTypeAlign(ctxt,
+                                             QualType(alignedTypedefUnderlying(
+                                                          h->first),
+                                                      0))
+                ? h->second
+                : 0);
+    }
+    if (auto rt = t->getAs<ReferenceType>())
+        return realignSignature(ctxt, rt->getPointeeType(), false, sig);
+    if (auto pt = t->getAs<PointerType>())
+        return realignSignature(ctxt, pt->getPointeeType(), false, sig);
+    if (auto mp = t->getAs<MemberPointerType>())
+        return realignSignature(ctxt, mp->getPointeeType(), false, sig);
+    if (auto at = ctxt.getAsArrayType(t))
+        return realignSignature(ctxt, at->getElementType(), false, sig);
+}
+
+// Whether cpp2v prints [t] with a [Trealigned] type from a typedef anywhere
+// (see [realignSignature]), including in function types.
+static bool mentionsRealigned(const ASTContext &ctxt, QualType t) {
+    if (t.isNull())
+        return false;
+    if (realignedTypedefHead(ctxt, t))
+        return true;
+    if (auto rt = t->getAs<ReferenceType>())
+        return mentionsRealigned(ctxt, rt->getPointeeType());
+    if (auto pt = t->getAs<PointerType>())
+        return mentionsRealigned(ctxt, pt->getPointeeType());
+    if (auto mp = t->getAs<MemberPointerType>())
+        return mentionsRealigned(ctxt, mp->getPointeeType());
+    if (auto at = ctxt.getAsArrayType(t))
+        return mentionsRealigned(ctxt, at->getElementType());
+    if (auto ft = t->getAs<FunctionProtoType>()) {
+        if (mentionsRealigned(ctxt, ft->getReturnType()))
+            return true;
+        for (auto p : ft->getParamTypes())
+            if (mentionsRealigned(ctxt, p))
+                return true;
+    }
+    return false;
+}
+
+bool realignedDiffer(const ASTContext &ctxt, QualType a, QualType b,
+                     bool head) {
+    std::vector<uint64_t> sa, sb;
+    realignSignature(ctxt, a, head, sa);
+    realignSignature(ctxt, b, head, sb);
+    return sa != sb;
+}
+
+fmt::Formatter &ClangPrinter::printValueQualType(CoqPrinter &print,
+                                                 const QualType &qt,
+                                                 loc::loc loc) {
+    auto head = alignedTypedefHead(getContext(), qt);
+    if (!head)
+        return printQualType(print, qt, loc);
+    auto canon = qt.getCanonicalType();
+    const bool is_const = canon.isConstQualified();
+    const bool is_volatile = canon.isVolatileQualified();
+    if (is_const || is_volatile)
+        print.ctor(is_const ? (is_volatile ? "Qconst_volatile" : "Qconst")
+                            : "Qvolatile",
+                   false);
+    printType(print, alignedTypedefUnderlying(head->first), loc);
+    if (is_const || is_volatile)
+        print.end_ctor();
+    return print.output();
+}
+
 uint64_t modelTypeAlign(const ASTContext &ctxt, const QualType &qt) {
+    // A typedef with an alignment attribute, as printed (see [typedefAlign]),
+    // in the element type.
+    for (QualType t = qt; !t.isNull();) {
+        if (auto array = ctxt.getAsArrayType(t)) {
+            t = array->getElementType();
+            continue;
+        }
+        if (auto tt = dyn_cast<TypedefType>(t.getTypePtr())) {
+            if (auto align = typedefAlign(ctxt, tt))
+                return *align;
+            t = tt->getDecl()->getCanonicalDecl()->getUnderlyingType();
+            continue;
+        }
+        t = printedSugarStep(t.getTypePtr());
+    }
     auto ty = qt.getCanonicalType();
     if (auto array = ctxt.getAsArrayType(ty))
         ty = ctxt.getBaseElementType(array).getCanonicalType();
@@ -692,7 +914,7 @@ fmt::Formatter &ClangPrinter::printVarType(CoqPrinter &print,
         if (auto array = ctxt.getAsArrayType(elem))
             elem = ctxt.getBaseElementType(array).getCanonicalType();
         const auto align = ctxt.toBits(ctxt.getDeclAlign(&decl));
-        if (!elem->isIncompleteType() && align < modelTypeAlign(ctxt, elem)) {
+        if (!elem->isIncompleteType() && align < modelTypeAlign(ctxt, ty)) {
             // [printRealignedQualType] handles scalars and constant arrays.
             if (elem->isScalarType() && !canon->isIncompleteType() &&
                 !canon->isVariablyModifiedType())
