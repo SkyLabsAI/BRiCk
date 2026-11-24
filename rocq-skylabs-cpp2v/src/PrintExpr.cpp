@@ -452,9 +452,46 @@ fmt::Formatter &ClangPrinter::printDeclType(CoqPrinter &print,
         guard::ctor _(print, "Trv_ref", false);
         printQualType(print, ty, loc::of(expr));
     } else {
-        printQualType(print, ty, loc::of(expr));
+        printValueQualType(print, ty, loc::of(expr));
     }
     return print.output();
+}
+
+fmt::Formatter &ClangPrinter::printExprAt(CoqPrinter &print, const Expr *e,
+                                          const QualType &dest,
+                                          OpaqueNames &names) {
+    auto &ctxt = getContext();
+    bool convert = false;
+    if (e && !dest.isNull() && !e->isTypeDependent() &&
+        !dest->isDependentType() && !e->getType().isNull()) {
+        if (auto rt = dest->getAs<ReferenceType>()) {
+            auto obj = rt->getPointeeType();
+            convert = e->isGLValue() &&
+                      ctxt.hasSameUnqualifiedType(e->getType(), obj) &&
+                      realignedDiffer(ctxt, e->getType(), obj, false);
+        } else {
+            convert = e->isPRValue() &&
+                      ctxt.hasSameUnqualifiedType(e->getType(), dest) &&
+                      realignedDiffer(ctxt, e->getType(), dest, true);
+        }
+    }
+    if (!convert)
+        return printExpr(print, e, names);
+    guard::ctor _(print, "Ecast");
+    print.ctor("Cnoop", false);
+    if (auto rt = dest->getAs<ReferenceType>()) {
+        guard::ctor _r(print, e->isXValue() ? "Trv_ref" : "Tref", false);
+        printQualType(print, rt->getPointeeType(), loc::of(e));
+    } else
+        printValueQualType(print, dest, loc::of(e));
+    print.end_ctor() << fmt::nbsp;
+    return printExpr(print, e, names);
+}
+
+fmt::Formatter &ClangPrinter::printExprAt(CoqPrinter &print, const Expr *e,
+                                          const QualType &dest) {
+    OpaqueNames names;
+    return printExprAt(print, e, dest, names);
 }
 
 /**
@@ -479,6 +516,9 @@ private:
                     cprint.printRealignedQualType(print, expr->getType(),
                                                   cprint.realignedInitAlign,
                                                   loc::of(expr));
+                else if (expr->isPRValue())
+                    cprint.printValueQualType(print, expr->getType(),
+                                              loc::of(expr));
                 else
                     cprint.printQualType(print, expr->getType(),
                                          loc::of(expr));
@@ -708,7 +748,10 @@ public:
             if (!attr->isAlignas() && !attr->isAlignmentDependent())
                 untrusted =
                     std::max<uint64_t>(untrusted, attr->getAlignment(mctxt));
-        if (untrusted <= modelAlign(vd->getType()))
+        // cpp2v prints the variable at an aligned typedef's alignment (see
+        // [typedefAlign]), so BRiCk would assume the object is that aligned:
+        // only a definition here, which Clang allocates, guarantees it.
+        if (untrusted <= modelAlign(vd->getType().getCanonicalType()))
             return std::nullopt;
         auto need = ctxt.toBits(ctxt.getDeclAlign(vd));
         if (vd->hasLocalStorage())
@@ -1174,7 +1217,12 @@ public:
 #undef ACASE
         cprint.printExpr(print, expr->getLHS(), names);
         print.output() << fmt::nbsp;
-        cprint.printExpr(print, expr->getRHS(), names);
+        // An assignment stores its right operand in its left one.
+        if (expr->getOpcode() == BinaryOperatorKind::BO_Assign)
+            cprint.printExprAt(print, expr->getRHS(), expr->getLHS()->getType(),
+                               names);
+        else
+            cprint.printExpr(print, expr->getRHS(), names);
         // In templates, the bit-field nodes are not wrapped by the
         // [mparser], so they carry their type like outside templates.
         done(expr, print.templates() && !lhs_bitfield ? Done::O : Done::T);
@@ -1447,6 +1495,33 @@ public:
                id == Builtin::BI__builtin_assume;
     }
 
+    // The prototype of a function, a pointer to one, or a member pointer to
+    // one, if any.
+    static const FunctionProtoType *protoOf(QualType t) {
+        if (t.isNull())
+            return nullptr;
+        if (auto pt = t->getAs<PointerType>())
+            t = pt->getPointeeType();
+        else if (auto mp = t->getAs<MemberPointerType>())
+            t = mp->getPointeeType();
+        return t->getAs<FunctionProtoType>();
+    }
+
+    // Prints the arguments of a call, each at the type of its parameter (see
+    // [ClangPrinter::printExprAt]). The argument at index [-first] is that of
+    // the first parameter: a member operator's object argument has none.
+    template <typename Args>
+    void printArgs(Args args, const FunctionProtoType *proto, int first = 0) {
+        int i = first;
+        print.list(args, [&](auto a) {
+            QualType dest;
+            if (proto && i >= 0 && unsigned(i) < proto->getNumParams())
+                dest = proto->getParamType(i);
+            ++i;
+            cprint.printExprAt(print, a, dest, names);
+        });
+    }
+
     void VisitCallExpr(const CallExpr *expr) {
         auto callee = expr->getCallee();
         if (auto pd = dyn_cast<CXXPseudoDestructorExpr>(callee)) {
@@ -1481,8 +1556,8 @@ public:
             print.ctor("Ecall");
             cprint.printExpr(print, expr->getCallee(), names);
             print.output() << fmt::line;
-            print.list(expr->arguments(),
-                       [&](auto i) { cprint.printExpr(print, i, names); });
+            printArgs(expr->arguments(),
+                      protoOf(fd ? fd->getType() : callee->getType()));
             done(expr, Done::NONE);
         }
     }
@@ -1514,8 +1589,8 @@ public:
                            << fmt::nbsp;
             cprint.printQualType(print, method->getType(), loc::of(method));
             print.output() << fmt::nbsp;
-            print.list(expr->arguments(),
-                       [&](auto i) { cprint.printExpr(print, i, names); });
+            printArgs(expr->arguments(), protoOf(method->getType()),
+                      method->isStatic() ? 0 : -1);
         } else if (auto function = dyn_cast<FunctionDecl>(callee)) {
             guard::ctor _{print, "Eoperator_call"};
             cprint.printOverloadableOperator(print, expr->getOperator(),
@@ -1526,8 +1601,7 @@ public:
             print.output() << fmt::nbsp;
             cprint.printQualType(print, function->getType(), loc::of(function));
             print.output() << fmt::nbsp;
-            print.list(expr->arguments(),
-                       [&](auto i) { cprint.printExpr(print, i, names); });
+            printArgs(expr->arguments(), protoOf(function->getType()));
         } else {
             print.ctor("Eunsupported");
             print.str("unsupported operator call");
@@ -1655,7 +1729,12 @@ public:
 
         printCast(expr);
         print.output() << fmt::nbsp;
-        cprint.printQualType(print, expr->getTypeAsWritten(), loc::of(expr));
+        if (expr->isPRValue())
+            cprint.printValueQualType(print, expr->getTypeAsWritten(),
+                                      loc::of(expr));
+        else
+            cprint.printQualType(print, expr->getTypeAsWritten(),
+                                 loc::of(expr));
         print.output() << fmt::nbsp;
         if (expr->getCastKind() == CastKind::CK_ToVoid)
             printDiscarded(expr->getSubExpr());
@@ -1695,14 +1774,16 @@ public:
 
         if (expr->getCastKind() == CastKind::CK_LValueToRValue &&
             (realignedObject(expr->getSubExpr()) ||
-             realignedUpdate(expr->getSubExpr()))) {
-            // Read the under-aligned object (a field, or the result of an
-            // update of one), then retype the value at the expression's
-            // type: [wp_operand_cast_noop] makes the prover show that the
-            // value has that type.
+             realignedUpdate(expr->getSubExpr()) ||
+             realignedTypedefHead(ctxt, expr->getSubExpr()->getType()))) {
+            // Read the realigned object (a packed field, the result of an
+            // update of one, or an object of a realigned typedef type), then
+            // retype the value at the expression's type, as a value:
+            // [wp_operand_cast_noop] makes the prover show that the value
+            // has that type.
             guard::ctor noop(print, "Ecast");
             print.ctor("Cnoop", false);
-            cprint.printQualType(print, expr->getType(), loc::of(expr));
+            cprint.printValueQualType(print, expr->getType(), loc::of(expr));
             print.end_ctor() << fmt::nbsp;
             guard::ctor l2r(print, "Ecast");
             print.output() << "Cl2r" << fmt::nbsp;
@@ -2153,8 +2234,7 @@ public:
         print.ctor("Econstructor");
         cprint.printName(print, expr->getConstructor(), loc::of(expr));
         print.output() << fmt::nbsp;
-        print.list(expr->arguments(),
-                   [&](auto i) { cprint.printExpr(print, i, names); });
+        printArgs(expr->arguments(), protoOf(expr->getConstructor()->getType()));
         done(expr);
     }
 
@@ -2225,8 +2305,10 @@ public:
             always_assert(false && "no method and not a binary operator");
         }
         print.output() << fmt::nbsp;
-        print.list(expr->arguments(),
-                   [&](auto i) { cprint.printExpr(print, i, names); });
+        auto proto = method ? protoOf(method->getType()) : nullptr;
+        if (auto bo = dyn_cast<BinaryOperator>(callee); !proto && bo)
+            proto = protoOf(bo->getRHS()->getType());
+        printArgs(expr->arguments(), proto);
 #if 0
         print.output() << fmt::nbsp << fmt::lparen;
         for (auto i : expr->arguments()) {
@@ -2253,13 +2335,24 @@ public:
         // as soon as one arm is ([expr.cond]/5), so each arm that is not one
         // is an ordinary glvalue, which we mark with [Ebf_glvalue].
         const bool bitfield = expr->refersToBitField();
+        // Each arm is converted to the conditional's type, as a glvalue
+        // (a reference) or a value (see [ClangPrinter::printExprAt]).
+        QualType dest = expr->getType();
+        if (!dest.isNull() && !dest->isDependentType()) {
+            if (expr->isLValue())
+                dest = ctxt.getLValueReferenceType(dest);
+            else if (expr->isXValue())
+                dest = ctxt.getRValueReferenceType(dest);
+        }
         auto arm = [&](const Expr *e) {
             print.output() << fmt::nbsp;
             if (bitfield && !e->refersToBitField()) {
                 guard::ctor _{print, "Ebf_glvalue"};
                 cprint.printExpr(print, e, names);
-            } else {
+            } else if (bitfield) {
                 cprint.printExpr(print, e, names);
+            } else {
+                cprint.printExprAt(print, e, dest, names);
             }
         };
         print.ctor(bitfield ? "Ebf_if" : "Eif");
@@ -2363,15 +2456,27 @@ public:
                     ->getElementType()
                     ->isArrayType();
             std::vector<std::optional<uint64_t>> fieldAligns;
+            // The types the initializers initialize (see
+            // [ClangPrinter::printExprAt]): of the bases and fields, then of
+            // the elements.
+            std::vector<QualType> fieldTypes;
+            QualType elemType;
+            if (auto at = ctxt.getAsArrayType(expr->getType()))
+                elemType = at->getElementType();
             if (auto rd = expr->getType()->getAsRecordDecl()) {
-                if (auto crd = dyn_cast<CXXRecordDecl>(rd))
+                if (auto crd = dyn_cast<CXXRecordDecl>(rd)) {
                     fieldAligns.resize(crd->getNumBases());
+                    for (auto &b : crd->bases())
+                        fieldTypes.push_back(b.getType());
+                }
                 for (auto f : rd->fields())
-                    if (!f->isUnnamedBitField())
+                    if (!f->isUnnamedBitField()) {
                         fieldAligns.push_back(
                             f->getType()->isArrayType()
                                 ? realignedFieldAlign(ctxt, *f)
                                 : std::nullopt);
+                        fieldTypes.push_back(f->getType());
+                    }
             }
             unsigned index = 0;
             auto printInit = [&](const Expr *i) {
@@ -2380,10 +2485,15 @@ public:
                     align = selfAlign;
                 else if (index < fieldAligns.size())
                     align = fieldAligns[index];
+                QualType dest =
+                    index < fieldTypes.size() ? fieldTypes[index] : elemType;
                 ++index;
                 cprint.realignedInit = align ? initCore(i) : nullptr;
                 cprint.realignedInitAlign = align ? *align : 0;
-                cprint.printExpr(print, i, names);
+                if (align)
+                    cprint.printExpr(print, i, names);
+                else
+                    cprint.printExprAt(print, i, dest, names);
             };
             print.list(expr->inits(), printInit) << fmt::nbsp;
 
@@ -2448,10 +2558,11 @@ public:
     }
 
     // Clang's value of [alignof(T)] or [alignof(e)] when it differs from the
-    // alignment BRiCk's [align_of] gives the type cpp2v prints (see
-    // [modelTypeAlign]): alignment attributes on typedefs and enums (and on
-    // declarations, for GNU [alignof(e)]) do not survive the type
-    // translation. Such an [alignof] is printed as Clang's constant instead.
+    // alignment BRiCk's [align_of] gives [T] without its alignment
+    // attributes: those on enums, non-scalar typedefs (and declarations, for
+    // GNU [alignof(e)]) do not survive the type translation. Such an
+    // [alignof] is printed as Clang's constant instead, as is one of a
+    // scalar typedef, whose [Trealigned] type would give the same value.
     std::optional<llvm::APSInt>
     attributedAlignOf(const UnaryExprOrTypeTraitExpr &expr) {
         if (expr.getKind() != UnaryExprOrTypeTrait::UETT_AlignOf ||
@@ -2577,9 +2688,9 @@ public:
 
     // An aligned allocation or deallocation function receives Clang's
     // alignment of the allocated type, while BRiCk passes [align_of] of the
-    // type cpp2v prints, which lacks alignment attributes on typedefs (see
-    // [modelTypeAlign]). Such a call is unsupported rather than modelled with
-    // the wrong argument.
+    // type cpp2v prints, which only has the alignment attributes of scalar
+    // typedefs (see [modelTypeAlign]). Such a call is unsupported rather than
+    // modelled with the wrong argument.
     bool attributedAlignedAllocation(QualType ty, bool aligned) {
         if (!aligned || ty.isNull() || ty->isDependentType() ||
             ty->isIncompleteType())
@@ -2622,9 +2733,11 @@ public:
         cprint.printQualType(print, new_fn->getType(), loc::of(new_fn));
         print.end_tuple() << fmt::nbsp;
 
-        print.list(expr->placement_arguments(), [&](auto arg) {
-            cprint.printExpr(print, arg, names);
-        }) << fmt::nbsp;
+        // The placement arguments follow the size and, if passed, the
+        // alignment.
+        printArgs(expr->placement_arguments(), protoOf(new_fn->getType()),
+                  expr->passAlignment() ? 2 : 1);
+        print.output() << fmt::nbsp;
 
         if (new_fn->isReservedGlobalPlacementOperator()) {
             always_assert(expr->getNumPlacementArgs() == 1 &&
@@ -2650,7 +2763,11 @@ public:
 
         print.output() << fmt::nbsp;
 
-        printOptionalExpr(print, expr->getInitializer(), cprint, names);
+        if (auto init = expr->getInitializer()) {
+            guard::some _{print};
+            cprint.printExprAt(print, init, expr->getAllocatedType(), names);
+        } else
+            print.none();
 
         print.end_ctor();
     }
@@ -2736,9 +2853,15 @@ public:
             return unsupported_expr(expr, "scope-extruded temporary");
         }
         // Clang allocates the temporary at the alignment of its type (e.g.
-        // only 1 for <<f(U{7})>>), while BRiCk materializes it at the erased
-        // type, naturally aligned.
-        if (underAligned(expr->getType()))
+        // only 1 for <<f(U{7})>>, or <<f(I1(5))>> with an under-aligned
+        // typedef I1 of int), while BRiCk materializes it at the type of
+        // the value, which has no alignment (see
+        // [ClangPrinter::printValueQualType]), naturally aligned.
+        if (underAligned(expr->getType()) ||
+            (!expr->getType()->isDependentType() &&
+             !expr->getType()->isIncompleteType() &&
+             ctxt.getTypeAlign(expr->getType()) <
+                 modelAlign(expr->getType().getCanonicalType())))
             return unsupported_expr(expr, "under-aligned temporary");
 
         guard::ctor _{print, "Ematerialize_temp"};
@@ -3008,7 +3131,7 @@ fmt::Formatter &ClangPrinter::printFieldInit(CoqPrinter &print,
         realignedInit = core;
         realignedInitAlign = *align;
     }
-    printExpr(print, e);
+    printExprAt(print, e, ty);
     realignedInit = saved;
     realignedInitAlign = savedAlign;
     return print.output();

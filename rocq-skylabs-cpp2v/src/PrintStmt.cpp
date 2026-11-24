@@ -571,7 +571,11 @@ public:
                 return;
             }
             print.ctor("Sreturn_val");
-            cprint.printExpr(print, rv);
+            // The value initializes the returned object.
+            QualType ret;
+            if (auto fd = cprint.getFunction())
+                ret = fd->getReturnType();
+            cprint.printExprAt(print, rv, ret);
             print.end_ctor();
         } else {
             print.output() << "Sreturn_void";
