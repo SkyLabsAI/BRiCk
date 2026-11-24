@@ -60,8 +60,9 @@ Definition Kreturn_inner `{Σ : cpp_logic, σ : genv} (ty : type) (Q : ptr -> mp
      scope declaring the variable: reaching the function boundary means the
      returned name was not an automatic variable of this function. *)
   | Break | Continue | ReturnNRVO _ _ => False
-  (* A [goto] whose label no enclosing block found (see [Kblock]): backward,
-     into a nested statement, or past a declaration. *)
+  (* A [goto] whose label no enclosing block found (see [Kblock] and
+     [Klabels]): into a nested statement, forward past a declaration, or
+     back in a <<switch>> body to before the <<case>> that was entered. *)
   | Goto _ => False
   end.
 #[global] Arguments Kreturn_inner _ _ _ _ _ _ !rt /.

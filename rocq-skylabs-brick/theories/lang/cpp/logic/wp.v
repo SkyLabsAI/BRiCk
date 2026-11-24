@@ -204,7 +204,9 @@ Variant ReturnType : Set :=
      the statements that follow the one exiting with [Goto l], up to the next
      declaration, and resumes there (see [wp_block] in [stmt.v]); otherwise
      [Goto l] leaves the block like [return], destroying its locals in
-     [Kfree]. Reaching the function boundary is [False]. *)
+     [Kfree]. A block that has gone past the statement labeled [l] continues
+     [Goto l] as the block from that statement, run again (see [Klabels] in
+     [stmt.v]). Reaching the function boundary is [False]. *)
 .
 #[global] Instance ReturnType_ihn : Inhabited ReturnType.
 Proof. repeat constructor. Qed.
