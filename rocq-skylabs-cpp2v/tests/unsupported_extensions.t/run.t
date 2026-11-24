@@ -6,11 +6,20 @@ text varies with the clang version.
 
   $ make > make.log 2>&1
 
+MS compatibility accepts a jump past an initialized declaration, with a warning.
+  $ grep -c 'Microsoft extension' make.log
+  1
+
 Named loops: [named.sh] checks that `break outer;` and `continue outer;` print
 as [Sunsupported] and that a plain `break` does not. The flag `-fnamed-loops`
 exists from clang 22; before, the check is vacuous.
   $ sh named.sh
   named loops: ok
+
+The support report does not look into pointee types, so the [__unaligned]
+qualifier is checked in the generated AST.
+  $ grep -q 'Tunsupported "[^"]*__unaligned' ms_cpp.v && echo '__unaligned: Tunsupported'
+  __unaligned: Tunsupported
 
   $ dune build
        = ("asm goto"%pstring
@@ -38,4 +47,13 @@ exists from clang 22; before, the check is vacuous.
                                         :: "unsupported local declaration: OMPThreadPrivate"%pstring
                                            :: "thread_local variable"%pstring
                                               :: nil)%list
+       : check.M
+       = ("CallExpr"%pstring
+          :: "CallExpr"%pstring
+             :: "goto"%pstring
+                :: "label"%pstring
+                   :: "CallExpr"%pstring
+                      :: "PseudoObjectExpr"%pstring
+                         :: "PseudoObjectExpr"%pstring
+                            :: "CXXUuidofExpr"%pstring :: nil)%list
        : check.M

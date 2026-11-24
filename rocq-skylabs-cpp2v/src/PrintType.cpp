@@ -626,6 +626,12 @@ fmt::Formatter &ClangPrinter::printQualType(CoqPrinter &print,
     if (trace(Trace::Type))
         trace("printQualType", loc::of(qt));
     if (auto p = qt.getTypePtrOrNull()) {
+        // MS `__unaligned` lifts the alignment requirement of accesses, which
+        // the printed type would drop.
+        if (qt.getQualifiers().hasUnaligned()) {
+            unsupported(print, *this, loc, "__unaligned qualifier");
+            return print.output();
+        }
         if (qt.isLocalConstQualified()) {
             if (qt.isVolatileQualified()) {
                 print.ctor("Qconst_volatile", false);
