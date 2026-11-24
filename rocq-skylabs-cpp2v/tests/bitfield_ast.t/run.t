@@ -199,3 +199,37 @@ Compiling the generated Coq files.
        : option Stmt
        = []
        : check.M
+       = Some
+           (Sseq
+              [Sexpr
+                 (Ebf_andclean
+                    (Ebf_assign (Ebitfield false (Evar "s" "S&") "a" "int")
+                       (Ecast Cl2r
+                          (Emember false
+                             (Ematerialize_temp
+                                (Ecall
+                                   (Ecast Cfun2ptr (Eglobal "mk_tmp()" "Tmp()"))
+                                   [])
+                                Xvalue)
+                             (Nid "v") false "int"))
+                       "int"))])
+       : option Stmt
+       = Some
+           (Sseq
+              [Sreturn
+                 (Some
+                    (Eandclean
+                       (Ecast Cl2r_bitfield
+                          (Ebf_assign
+                             (Ebitfield false (Evar "s" "S&") "a" "int")
+                             (Ecast Cl2r
+                                (Emember false
+                                   (Ematerialize_temp
+                                      (Ecall
+                                         (Ecast Cfun2ptr
+                                            (Eglobal "mk_tmp()" "Tmp()"))
+                                         [])
+                                      Xvalue)
+                                   (Nid "v") false "int"))
+                             "int"))))])
+       : option Stmt

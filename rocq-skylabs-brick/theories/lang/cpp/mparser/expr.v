@@ -302,6 +302,7 @@ Fixpoint to_unresolved_name (e : MExpr) : Mname :=
   | core.Emember _ _ _ _ _ => Nunsupported "Emember"
   | Ebitfield _ _ _ _ => Nunsupported "Ebitfield"
   | Ebf_glvalue _ => Nunsupported "Ebf_glvalue"
+  | Ebf_andclean _ => Nunsupported "Ebf_andclean"
   | Ebf_comma _ _ => Nunsupported "Ebf_comma"
   | Ebf_if _ _ _ _ => Nunsupported "Ebf_if"
   | Ebf_assign _ _ _ => Nunsupported "Ebf_assign"
