@@ -433,6 +433,10 @@ std::string ClangPrinter::sourceRange(const SourceRange sr) const {
 
 const Decl *ClangPrinter::getDecl() const { return decl_; }
 
+const FunctionDecl *ClangPrinter::getFunction() const {
+    return dyn_cast_or_null<FunctionDecl>(decl_);
+}
+
 llvm::raw_ostream &ClangPrinter::debug_dump(loc::loc loc) {
     return logging::debug() << loc::dump(loc, getContext(), getDecl());
 }

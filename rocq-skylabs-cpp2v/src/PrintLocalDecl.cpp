@@ -92,7 +92,7 @@ public:
 
         if (auto init = decl->getInit()) {
             print.some();
-            cprint.printExpr(print, init, names);
+            cprint.printExprAt(print, init, decl->getType(), names);
             print.end_ctor();
         } else {
             print.none();
@@ -139,7 +139,7 @@ public:
                 auto init = var->getInit();
                 always_assert(init &&
                               "binding variables must have initializers");
-                cprint.printExpr(print, init, names);
+                cprint.printExprAt(print, init, var->getType(), names);
             } else {
                 // If there is no holding variable, then there is no allocation
                 // here.
