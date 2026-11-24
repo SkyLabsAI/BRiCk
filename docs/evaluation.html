@@ -344,6 +344,7 @@ Definition wp_initialize_unqualified_body `{Σ : cpp_logic, σ : genv}
 
     | Tqualified _ ty =&gt; |={top}=&gt;?u False (* unreachable *)
     | Tarch _ _ =&gt; UNSUPPORTED (initializing_type ty init)
+    | Tattributed _ _ =&gt; UNSUPPORTED (initializing_type ty init)
     | Tunsupported _ =&gt; UNSUPPORTED (initializing_type ty init)
     | Tdecltype _ =&gt;  UNSUPPORTED (initializing_type ty init)
     | Texprtype _ =&gt;  UNSUPPORTED (initializing_type ty init)

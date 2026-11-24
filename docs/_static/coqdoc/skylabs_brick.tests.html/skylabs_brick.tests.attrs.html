@@ -1,0 +1,183 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.attrs</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax.supported</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab2"></a><h1 class="section">Attributes on functions and methods (<span class="inlinecode"><span class="id" title="projection">f_attrs</span></span>, <span class="inlinecode"><span class="id" title="projection">m_attrs</span></span>)</h1>
+
+
+<div class="paragraph"> </div>
+
+cpp2v preserves every attribute that may have an effect as <span class="inlinecode"><span class="id" title="var">attr.Other</span></span>,
+named by clang's attribute kind, and drops the no-op ones; <span class="inlinecode"><span class="id" title="library">supported</span></span>
+reports each preserved attribute. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">source</span> <span class="id" title="var">flags</span> "-std=c++20 --target=x86_64-linux-gnu" <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">plain</span>() {}<br/>
+[[<span class="id" title="var">nodiscard</span>]] <span class="id" title="var">__attribute__</span>((<span class="id" title="var">always_inline</span>, <span class="id" title="var">cold</span>, <span class="id" title="var">visibility</span>("hidden"))) <span class="id" title="var">inline</span> <span class="id" title="var">int</span> <span class="id" title="var">noops</span>() { <span class="id" title="keyword">return</span> 0; }<br/>
+<span class="id" title="var">__attribute__</span>((<span class="id" title="var">section</span>(".cpulocal"))) <span class="id" title="var">void</span> <span class="id" title="var">in_section</span>() {}<br/>
+[[<span class="id" title="var">noreturn</span>]] <span class="id" title="var">void</span> <span class="id" title="var">nr</span>();<br/>
+<span class="id" title="var">__attribute__</span>((<span class="id" title="var">weak</span>)) <span class="id" title="var">void</span> <span class="id" title="var">weak_fn</span>() {}<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">nn</span>(<span class="id" title="var">int</span> *<span class="id" title="var">p</span>) <span class="id" title="var">__attribute__</span>((<span class="id" title="var">nonnull</span>(1)));<br/>
+<span class="id" title="var">void</span> <span class="id" title="var">two</span>() <span class="id" title="var">__attribute__</span>((<span class="id" title="var">cold</span>, <span class="id" title="var">section</span>(".text.two")));<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">S</span> {<br/>
+&nbsp;&nbsp;<span class="id" title="var">void</span> <span class="id" title="var">m</span>() <span class="id" title="var">__attribute__</span>((<span class="id" title="var">section</span>(".text.m")));<br/>
+&nbsp;&nbsp;<span class="id" title="var">virtual</span> <span class="id" title="var">void</span> <span class="id" title="var">v</span>();<br/>
+&nbsp;&nbsp;<span class="id" title="var">void</span> <span class="id" title="var">v2</span>() <span class="id" title="var">const</span>;<br/>
+};<br/>
+<span class="id" title="keyword">struct</span> <span class="id" title="var">D</span> : <span class="id" title="var">S</span> {<br/>
+&nbsp;&nbsp;<span class="id" title="var">void</span> <span class="id" title="var">v</span>() <span class="id" title="var">override</span> <span class="id" title="var">final</span>;<br/>
+};<br/>
+<span class="id" title="var">typedef</span> <span class="id" title="var">int</span> <span class="id" title="var">over_aligned</span> <span class="id" title="var">__attribute__</span>((<span class="id" title="var">aligned</span>(16)));<br/>
+<span class="id" title="var">typedef</span> <span class="id" title="var">int</span> <span class="id" title="var">quiet</span> <span class="id" title="var">__attribute__</span>((<span class="id" title="var">unused</span>));<br/>
+<span class="id" title="var">over_aligned</span> <span class="id" title="var">g_aligned</span>;<br/>
+<span class="id" title="var">quiet</span> <span class="id" title="var">g_quiet</span>;<br/>
+<span class="id" title="var">typedef</span> <span class="id" title="var">int</span> <span class="id" title="var">mixed</span> <span class="id" title="var">__attribute__</span>((<span class="id" title="var">unused</span>, <span class="id" title="var">may_alias</span>));<br/>
+<span class="id" title="var">mixed</span> <span class="id" title="var">g_mixed</span>;<br/>
+}}.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="attrs_of" class="idref" href="#attrs_of"><span class="id" title="definition">attrs_of</span></a> (<a id="n:1" class="idref" href="#n:1"><span class="id" title="binder">n</span></a> : <span class="id" title="inductive">name</span>) : <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="inductive">attr.t</span>) :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs_brick.tests.attrs.html#source"><span class="id" title="definition">source</span></a>.(<span class="id" title="projection">symbols</span>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs_brick.tests.attrs.html#n:1"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Ofunction</span> <span class="id" title="var">f</span>) =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">f</span>.(<span class="id" title="projection">f_attrs</span>)<br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Omethod</span> <span class="id" title="var">m</span>) =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">m</span>.(<span class="id" title="projection">m_attrs</span>)<br/>
+&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;The&nbsp;attribute&nbsp;kinds&nbsp;that&nbsp;<span class="inlinecode"><span class="id" title="var">supported</span></span>&nbsp;reports:&nbsp;all&nbsp;recorded&nbsp;ones.&nbsp;*)</span><br/>
+<span class="id" title="keyword">Definition</span> <a id="reported" class="idref" href="#reported"><span class="id" title="definition">reported</span></a> (<a id="n:2" class="idref" href="#n:2"><span class="id" title="binder">n</span></a> : <span class="id" title="inductive">name</span>) : <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="var">PrimString.string</span>) :=<br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">(</span></a><span class="id" title="keyword">fun</span> <a id="attrs:3" class="idref" href="#attrs:3"><span class="id" title="binder">attrs</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#list"><span class="id" title="inductive">list</span></a> <span class="id" title="inductive">attr.t</span> =&gt; <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">(</span></a><span class="id" title="keyword">fun</span> <a id="a:4" class="idref" href="#a:4"><span class="id" title="binder">a</span></a> =&gt; <span class="id" title="keyword">match</span> <a class="idref" href="skylabs_brick.tests.attrs.html#a:4"><span class="id" title="variable">a</span></a> <span class="id" title="keyword">with</span> <span class="id" title="constructor">attr.Other</span> <span class="id" title="var">kind</span> <span class="id" title="var">_</span> =&gt; <span class="id" title="var">kind</span> <span class="id" title="keyword">end</span><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">)</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">&lt;$&gt;</span></a> <a class="idref" href="skylabs_brick.tests.attrs.html#attrs:3"><span class="id" title="variable">attrs</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">&lt;$&gt;</span></a> <a class="idref" href="skylabs_brick.tests.attrs.html#attrs_of"><span class="id" title="definition">attrs_of</span></a> <a class="idref" href="skylabs_brick.tests.attrs.html#n:2"><span class="id" title="variable">n</span></a>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;No-op&nbsp;attributes&nbsp;(<span class="inlinecode"><span class="id" title="var">nodiscard</span></span>,&nbsp;<span class="inlinecode"><span class="id" title="var">always_inline</span></span>,&nbsp;<span class="inlinecode"><span class="id" title="var">cold</span></span>,&nbsp;<span class="inlinecode"><span class="id" title="var">visibility</span></span>,<br/>
+&nbsp;&nbsp;&nbsp;<span class="inlinecode"><span class="id" title="var">override</span></span>,&nbsp;<span class="inlinecode"><span class="id" title="var">final</span></span>)&nbsp;are&nbsp;not&nbsp;recorded.&nbsp;*)</span><br/>
+<span class="id" title="keyword">Example</span> <a id="noop_not_recorded" class="idref" href="#noop_not_recorded"><span class="id" title="definition">noop_not_recorded</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.attrs.html#reported"><span class="id" title="definition">reported</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">&lt;$&gt;</span></a> <span class="id" title="notation">[</span>"plain()"<span class="id" title="notation">;</span> "noops()"<span class="id" title="notation">;</span> "D::v()"<span class="id" title="notation">]</span>%<span class="id" title="var">cpp_name</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.list_basics.html#list.replicate"><span class="id" title="definition">replicate</span></a> 3 (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="notation">[]</span>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;Every&nbsp;other&nbsp;attribute&nbsp;is&nbsp;recorded,&nbsp;under&nbsp;clang's&nbsp;attribute&nbsp;kind.&nbsp;*)</span><br/>
+<span class="id" title="keyword">Example</span> <a id="reported_kinds" class="idref" href="#reported_kinds"><span class="id" title="definition">reported_kinds</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.attrs.html#reported"><span class="id" title="definition">reported</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">&lt;$&gt;</span></a> <span class="id" title="notation">[</span>"in_section()"<span class="id" title="notation">;</span> "nr()"<span class="id" title="notation">;</span> "weak_fn()"<span class="id" title="notation">;</span> "nn(int*)"<span class="id" title="notation">;</span> "two()"<span class="id" title="notation">;</span> "S::m()"<span class="id" title="notation">]</span>%<span class="id" title="var">cpp_name</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">&lt;$&gt;</span></a> <span class="id" title="notation">[</span><span class="id" title="notation">[</span>"Section"<span class="id" title="notation">]</span><span class="id" title="notation">;</span> <span class="id" title="notation">[</span>"CXX11NoReturn"<span class="id" title="notation">]</span><span class="id" title="notation">;</span> <span class="id" title="notation">[</span>"Weak"<span class="id" title="notation">]</span><span class="id" title="notation">;</span> <span class="id" title="notation">[</span>"NonNull"<span class="id" title="notation">]</span><span class="id" title="notation">;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">[</span>"Section"<span class="id" title="notation">]</span><span class="id" title="notation">;</span> <span class="id" title="notation">[</span>"Section"<span class="id" title="notation">]</span><span class="id" title="notation">]</span>%<span class="id" title="var">pstring</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;The&nbsp;pretty-printed&nbsp;form&nbsp;keeps&nbsp;the&nbsp;arguments.&nbsp;*)</span><br/>
+<span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs_brick.tests.attrs.html#source"><span class="id" title="definition">source</span></a>.(<span class="id" title="projection">symbols</span>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> "in_section()"%<span class="id" title="var">cpp_name</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Ofunction</span> <span class="id" title="var">f</span>) =&gt; <span class="id" title="var">f</span>.(<span class="id" title="projection">f_attrs</span>)<br/>
+&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <span class="id" title="notation">[]</span><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="comment">(*&nbsp;<span class="inlinecode"><span class="id" title="var">supported</span></span>&nbsp;reports&nbsp;each&nbsp;preserved&nbsp;attribute.&nbsp;*)</span><br/>
+<span class="id" title="keyword">Example</span> <a id="supported_reports" class="idref" href="#supported_reports"><span class="id" title="definition">supported_reports</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">supported.walk.attr</span> (<span class="id" title="constructor">attr.Other</span> "Weak" "__attribute__((weak))") <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="notation">[</span><span class="id" title="constructor">supported.walk.Gap</span> <span class="id" title="constructor">supported.walk.Unsupported</span> "unsupported attribute: Weak"<span class="id" title="notation">]</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab3"></a><h2 class="section">Type attributes</h2>
+
+
+<div class="paragraph"> </div>
+
+A typedef's attributes are kept at each use of the typedef, as
+<span class="inlinecode"><span class="id" title="constructor">Tattributed</span></span>, except the no-op ones and <span class="inlinecode"><span class="id" title="var">aligned</span></span>, which cpp2v accounts
+for itself. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="var_type" class="idref" href="#var_type"><span class="id" title="definition">var_type</span></a> (<a id="n:6" class="idref" href="#n:6"><span class="id" title="binder">n</span></a> : <span class="id" title="inductive">name</span>) : <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <span class="id" title="inductive">type</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs_brick.tests.attrs.html#source"><span class="id" title="definition">source</span></a>.(<span class="id" title="projection">symbols</span>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs_brick.tests.attrs.html#n:6"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Ovar</span> <span class="id" title="var">t</span> <span class="id" title="var">_</span>) =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">t</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="typedef_attributes" class="idref" href="#typedef_attributes"><span class="id" title="definition">typedef_attributes</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">(</span></a><span class="id" title="keyword">fun</span> <a id="ot:7" class="idref" href="#ot:7"><span class="id" title="binder">ot</span></a> =&gt; <span class="id" title="keyword">match</span> <a class="idref" href="skylabs_brick.tests.attrs.html#ot:7"><span class="id" title="variable">ot</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">skylabs.lang.cpp.syntax.core.Tattributed</span> <span class="id" title="notation">[</span><span class="id" title="constructor">attr.Other</span> <span class="id" title="var">k</span> <span class="id" title="var">_</span><span class="id" title="notation">]</span> <span class="id" title="abbreviation">Tint</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> <span class="id" title="var">PrimString.compare</span> <span class="id" title="var">k</span> "Aligned"%<span class="id" title="var">pstring</span> <span class="id" title="keyword">is</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Eq"><span class="id" title="constructor">Eq</span></a> <span class="id" title="keyword">then</span> 1<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">else</span> <span class="id" title="keyword">if</span> <span class="id" title="var">PrimString.compare</span> <span class="id" title="var">k</span> "MayAlias"%<span class="id" title="var">pstring</span> <span class="id" title="keyword">is</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Eq"><span class="id" title="constructor">Eq</span></a> <span class="id" title="keyword">then</span> 3 <span class="id" title="keyword">else</span> 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="abbreviation">Tint</span> =&gt; 2<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; 0<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">)</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">&lt;$&gt;</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">(</span></a><a class="idref" href="skylabs_brick.tests.attrs.html#var_type"><span class="id" title="definition">var_type</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">&lt;$&gt;</span></a> <span class="id" title="notation">[</span>"g_aligned"<span class="id" title="notation">;</span> "g_quiet"<span class="id" title="notation">;</span> "g_mixed"<span class="id" title="notation">]</span>%<span class="id" title="var">cpp_name</span><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">)</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="notation">[</span>2<span class="id" title="notation">;</span> 2<span class="id" title="notation">;</span> 3<span class="id" title="notation">]</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
