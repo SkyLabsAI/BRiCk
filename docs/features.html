@@ -203,9 +203,13 @@ specifications</p></td>
 <td><p>Unsupported syntax</p></td>
 <td></td>
 </tr>
-<tr class="row-even"><td><p>Labeled statements and <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">goto</span></code></p></td>
+<tr class="row-even"><td><p><code class="code highlight cpp docutils literal highlight-cpp"><span class="k">goto</span></code> backward, into a nested statement, or past a
+declaration (even a vacuously initialized one)</p></td>
 <td><p>No semantics</p></td>
-<td></td>
+<td><p>Forward <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">goto</span></code> to a later statement of the same or an enclosing
+block is supported (<code class="docutils literal notranslate"><span class="pre">Kblock</span></code> in <code class="docutils literal notranslate"><span class="pre">logic/stmt.v</span></code>); other jumps reach
+the function boundary as <code class="docutils literal notranslate"><span class="pre">Goto</span> <span class="pre">l</span></code>, which is <code class="docutils literal notranslate"><span class="pre">False</span></code>.
+<a class="reference external" href="https://github.com/SkyLabsAI/BRiCk/issues/515">BRiCk#515</a></p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="code highlight cpp docutils literal highlight-cpp"><span class="k">if</span><span class="w"> </span><span class="k">consteval</span></code></p></td>
 <td><p>No semantics</p></td>

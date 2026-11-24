@@ -54,7 +54,7 @@
 </div>
 
 <div class="doc">
-<a id="lab28"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">supported.report</span></span>: one case per status and per failure</h1>
+<a id="lab29"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">supported.report</span></span>: one case per status and per failure</h1>
 
 </div>
 <div class="code">
@@ -139,7 +139,7 @@
 </div>
 
 <div class="doc">
-<a id="lab29"></a><h1 class="section">The semantics gets stuck where <span class="inlinecode"><span class="id" title="library">supported</span></span> fails</h1>
+<a id="lab30"></a><h1 class="section">The semantics gets stuck where <span class="inlinecode"><span class="id" title="library">supported</span></span> fails</h1>
 
 
 <div class="paragraph"> </div>
@@ -265,10 +265,25 @@ Indirect member initialization (members of anonymous structs/unions).
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">elim</span>: <span class="id" title="var">b</span> <span class="id" title="var">Ldef</span> =&gt; [//|<span class="id" title="var">s</span> <span class="id" title="var">b</span> <span class="id" title="var">IH</span>] <span class="id" title="var">Ldef</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">s</span>; <span class="id" title="var">cbn</span> [<span class="id" title="definition">walk.switch_cases</span> <span class="id" title="definition">wp_switch_block</span>]; <span class="id" title="tactic">try</span> <span class="id" title="tactic">destruct</span> <span class="id" title="var">Ldef</span>; <span class="id" title="tactic">move</span>=&gt; <span class="id" title="var">H</span>.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">all</span>: <span class="id" title="tactic">try</span> <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">IH</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">all</span>: <span class="id" title="tactic">try</span> <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> ?<span class="id" title="var">H</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">all</span>: <span class="id" title="var">case_match</span> <span class="id" title="var">eqn</span>:<span class="id" title="var">Hc</span>; <span class="id" title="var">last</span> <span class="id" title="var">done</span>.<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">all</span>: <span class="id" title="tactic">apply</span> <span class="id" title="var">IH</span>; <span class="id" title="tactic">simpl</span> <span class="id" title="tactic">in</span> *; <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> ?<span class="id" title="var">Hc</span> <span class="id" title="tactic">in</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">all</span>: <span class="id" title="tactic">try</span> <span class="id" title="var">done</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">all</span>: <span class="id" title="tactic">move</span>: <span class="id" title="var">H</span>; <span class="id" title="tactic">case</span>: (<span class="id" title="definition">is_decl</span> <span class="id" title="var">_</span>) =&gt; <span class="id" title="var">H</span>; <span class="id" title="tactic">first</span> <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">all</span>: <span class="id" title="tactic">move</span>: <span class="id" title="var">H</span>; <span class="id" title="tactic">case</span>: (<span class="id" title="definition">no_case</span> <span class="id" title="var">_</span>) =&gt; //= <span class="id" title="var">H</span>; <span class="id" title="tactic">by</span> <span class="id" title="tactic">apply</span> <span class="id" title="var">IH</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+A labeled or attributed declaration is a declaration: no <span class="inlinecode"><span class="id" title="tactic">case</span></span> may
+      follow it, as for a bare one. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="switch_labeled_decl" class="idref" href="#switch_labeled_decl"><span class="id" title="definition">switch_labeled_decl</span></a> <a id="Ldef:27" class="idref" href="#Ldef:27"><span class="id" title="binder">Ldef</span></a> <a id="l:28" class="idref" href="#l:28"><span class="id" title="binder">l</span></a> <a id="ds:29" class="idref" href="#ds:29"><span class="id" title="binder">ds</span></a> <a id="sb:30" class="idref" href="#sb:30"><span class="id" title="binder">sb</span></a> <a id="ss:31" class="idref" href="#ss:31"><span class="id" title="binder">ss</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">wp_switch_block</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#Ldef:27"><span class="id" title="variable">Ldef</span></a> (<span class="id" title="constructor">Slabeled</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#l:28"><span class="id" title="variable">l</span></a> (<span class="id" title="constructor">Sdecl</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#ds:29"><span class="id" title="variable">ds</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <span class="id" title="constructor">Scase</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#sb:30"><span class="id" title="variable">sb</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#ss:31"><span class="id" title="variable">ss</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="switch_attributed_decl" class="idref" href="#switch_attributed_decl"><span class="id" title="definition">switch_attributed_decl</span></a> <a id="Ldef:32" class="idref" href="#Ldef:32"><span class="id" title="binder">Ldef</span></a> <a id="attrs:33" class="idref" href="#attrs:33"><span class="id" title="binder">attrs</span></a> <a id="ds:34" class="idref" href="#ds:34"><span class="id" title="binder">ds</span></a> <a id="sb:35" class="idref" href="#sb:35"><span class="id" title="binder">sb</span></a> <a id="ss:36" class="idref" href="#ss:36"><span class="id" title="binder">ss</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">wp_switch_block</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#Ldef:32"><span class="id" title="variable">Ldef</span></a> (<span class="id" title="constructor">Sattr</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#attrs:33"><span class="id" title="variable">attrs</span></a> (<span class="id" title="constructor">Sdecl</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#ds:34"><span class="id" title="variable">ds</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <span class="id" title="constructor">Scase</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#sb:35"><span class="id" title="variable">sb</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#ss:36"><span class="id" title="variable">ss</span></a>) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
 
 <br/>
 </div>
@@ -277,11 +292,43 @@ Indirect member initialization (members of anonymous structs/unions).
 Volatile objects cannot be initialized. 
 </div>
 <div class="code">
-&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="volatile_default_init" class="idref" href="#volatile_default_init"><span class="id" title="definition">volatile_default_init</span></a> <a id="ty:27" class="idref" href="#ty:27"><span class="id" title="binder">ty</span></a> <a id="p:28" class="idref" href="#p:28"><span class="id" title="binder">p</span></a> <a id="Q:29" class="idref" href="#Q:29"><span class="id" title="binder">Q</span></a> :<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">default_initialize</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#stuck.tu"><span class="id" title="variable">tu</span></a> (<span class="id" title="abbreviation">Tvolatile</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#ty:27"><span class="id" title="variable">ty</span></a>) <a class="idref" href="skylabs_brick.tests.supported_report.html#p:28"><span class="id" title="variable">p</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#Q:29"><span class="id" title="variable">Q</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="volatile_default_init" class="idref" href="#volatile_default_init"><span class="id" title="definition">volatile_default_init</span></a> <a id="ty:37" class="idref" href="#ty:37"><span class="id" title="binder">ty</span></a> <a id="p:38" class="idref" href="#p:38"><span class="id" title="binder">p</span></a> <a id="Q:39" class="idref" href="#Q:39"><span class="id" title="binder">Q</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">default_initialize</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#stuck.tu"><span class="id" title="variable">tu</span></a> (<span class="id" title="abbreviation">Tvolatile</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#ty:37"><span class="id" title="variable">ty</span></a>) <a class="idref" href="skylabs_brick.tests.supported_report.html#p:38"><span class="id" title="variable">p</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#Q:39"><span class="id" title="variable">Q</span></a><br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">-|-</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#7500ef6d8f565186818a5daedd71bf2a"><span class="id" title="notation">|={</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#6c0a583aa94fbbce6fcf0f655cf1cbb7"><span class="id" title="notation">⊤</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.updates.html#7500ef6d8f565186818a5daedd71bf2a"><span class="id" title="notation">}=&gt;</span></a> <span class="id" title="abbreviation">UNSUPPORTED</span> "default initialize volatile"%<span class="id" title="var">pstring</span>.<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="axiom">default_initialize.unlock</span>. <span class="id" title="keyword">Qed</span>.<br/>
 <span class="id" title="keyword">End</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#stuck"><span class="id" title="section">stuck</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab31"></a><h1 class="section">Label names are unique in a function body</h1>
+
+
+<div class="paragraph"> </div>
+
+    The logic finds the target of a <span class="inlinecode"><span class="id" title="var">goto</span></span> by the label's name, so the
+    support report rejects a body that defines a label name twice, at any
+    depth; several labels on one statement count separately. 
+</div>
+<div class="code">
+#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">pstring_scope</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="labels_unique_nested" class="idref" href="#labels_unique_nested"><span class="id" title="definition">labels_unique_nested</span></a> <a id="e:40" class="idref" href="#e:40"><span class="id" title="binder">e</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">walk.labels_unique</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="constructor">Sseq</span> <span class="id" title="notation">[</span> <span class="id" title="constructor">Slabeled</span> "L" (<span class="id" title="constructor">Sseq</span> <span class="id" title="notation">[]</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">;</span> <span class="id" title="constructor">Sif</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#e:40"><span class="id" title="variable">e</span></a> (<span class="id" title="constructor">Sseq</span> <span class="id" title="notation">[</span><span class="id" title="constructor">Slabeled</span> "M" (<span class="id" title="constructor">Slabeled</span> "L" <span class="id" title="constructor">Sbreak</span>)<span class="id" title="notation">]</span>) (<span class="id" title="constructor">Sseq</span> <span class="id" title="notation">[]</span>) <span class="id" title="notation">]</span>)<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">walk.FAIL</span> "duplicate label: L".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="keyword">vm_compute</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">Example</span> <a id="labels_unique_same_stmt" class="idref" href="#labels_unique_same_stmt"><span class="id" title="definition">labels_unique_same_stmt</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">walk.labels_unique</span> (<span class="id" title="constructor">Slabeled</span> "L" (<span class="id" title="constructor">Slabeled</span> "L" <span class="id" title="constructor">Sbreak</span>)) <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">walk.FAIL</span> "duplicate label: L".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="keyword">vm_compute</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">Example</span> <a id="labels_unique_distinct" class="idref" href="#labels_unique_distinct"><span class="id" title="definition">labels_unique_distinct</span></a> <a id="e:41" class="idref" href="#e:41"><span class="id" title="binder">e</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">walk.labels_unique</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="constructor">Slabeled</span> "L" (<span class="id" title="constructor">Slabeled</span> "M" (<span class="id" title="constructor">Swhile</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a> <a class="idref" href="skylabs_brick.tests.supported_report.html#e:41"><span class="id" title="variable">e</span></a> (<span class="id" title="constructor">Sseq</span> <span class="id" title="notation">[</span><span class="id" title="constructor">Slabeled</span> "N" <span class="id" title="constructor">Sbreak</span><span class="id" title="notation">]</span>))))<br/>
+&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="definition">walk.OK</span>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="keyword">vm_compute</span>. <span class="id" title="keyword">Qed</span>.<br/>
 </div>
 <!--
 -- Copyright (c) 2020 BlueRock Security, Inc.

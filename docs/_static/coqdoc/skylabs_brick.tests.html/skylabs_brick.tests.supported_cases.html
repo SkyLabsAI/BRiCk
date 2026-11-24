@@ -52,7 +52,7 @@
 </div>
 
 <div class="doc">
-<a id="lab27"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">supported.report</span></span>: false positives and false negatives</h1>
+<a id="lab28"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">supported.report</span></span>: false positives and false negatives</h1>
 
 
 <div class="paragraph"> </div>
@@ -119,9 +119,42 @@
 // <span class="id" title="var">a</span> <span class="id" title="var">label</span> <span class="id" title="var">without</span> <span class="id" title="var">a</span> [<span class="id" title="var">goto</span>].<br/>
 <span class="id" title="var">void</span> <span class="id" title="var">label_only</span>() { <span class="id" title="var">L</span>: ; }<br/>
 <br/>
+// <span class="id" title="var">a</span> <span class="id" title="var">GNU</span> <span class="id" title="var">local</span> <span class="id" title="var">label</span>: <span class="id" title="var">label</span> <span class="id" title="var">names</span> <span class="id" title="var">are</span> <span class="id" title="var">not</span> <span class="id" title="var">unique</span> <span class="id" title="tactic">in</span> <span class="id" title="var">the</span> <span class="id" title="var">function</span>, <span class="id" title="var">and</span> <span class="id" title="var">the</span><br/>
+// [<span class="id" title="var">goto</span>] <span class="id" title="tactic">in</span> <span class="id" title="var">the</span> <span class="id" title="var">inner</span> <span class="id" title="var">block</span> <span class="id" title="var">targets</span> <span class="id" title="var">the</span> <span class="id" title="var">inner</span> [<span class="id" title="var">L</span>] (<span class="id" title="var">the</span> <span class="id" title="var">result</span> <span class="id" title="keyword">is</span> 1).<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">local_label</span>() {<br/>
+&nbsp;&nbsp;{ <span class="id" title="var">__label__</span> <span class="id" title="var">L</span>; <span class="id" title="var">goto</span> <span class="id" title="var">L</span>; <span class="id" title="var">int</span> <span class="id" title="var">x</span>; <span class="id" title="var">L</span>: <span class="id" title="keyword">return</span> 1; }<br/>
+&nbsp;&nbsp;<span class="id" title="var">L</span>: <span class="id" title="keyword">return</span> 2;<br/>
+}<br/>
+<br/>
 // <span class="id" title="var">flexible</span> <span class="id" title="var">array</span> <span class="id" title="var">members</span>.<br/>
 <span class="id" title="keyword">struct</span> <span class="id" title="var">M</span> { <span class="id" title="var">int</span> <span class="id" title="var">n</span>; <span class="id" title="var">int</span> <span class="id" title="var">d</span>[]; };<br/>
 <span class="id" title="var">int</span> <span class="id" title="var">fam</span>(<span class="id" title="var">M</span> *<span class="id" title="var">m</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">m</span>-&gt;<span class="id" title="var">d</span>[0]; }<br/>
+<br/>
+// <span class="id" title="var">a</span> <span class="id" title="var">GNU</span> <span class="id" title="var">local</span> <span class="id" title="var">label</span> <span class="id" title="var">without</span> <span class="id" title="var">an</span> <span class="id" title="var">outer</span> <span class="id" title="var">label</span> <span class="id" title="keyword">of</span> <span class="id" title="var">the</span> <span class="id" title="var">same</span> <span class="id" title="var">name</span>: <span class="id" title="var">unsupported</span><br/>
+// <span class="id" title="keyword">for</span> <span class="id" title="var">the</span> <span class="id" title="var">declaration</span>, <span class="id" title="var">but</span> <span class="id" title="var">its</span> <span class="id" title="var">names</span> <span class="id" title="var">are</span> <span class="id" title="var">unique</span>.<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">local_label_only</span>() {<br/>
+&nbsp;&nbsp;{ <span class="id" title="var">__label__</span> <span class="id" title="var">M</span>; <span class="id" title="var">goto</span> <span class="id" title="var">M</span>; <span class="id" title="var">M</span>: <span class="id" title="keyword">return</span> 1; }<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">return</span> 2;<br/>
+}<br/>
+<br/>
+// <span class="id" title="var">a</span> <span class="id" title="var">GNU</span> <span class="id" title="var">local</span> <span class="id" title="var">label</span> <span class="id" title="tactic">in</span> <span class="id" title="var">a</span> <span class="id" title="var">template</span>: <span class="id" title="var">clang</span> <span class="id" title="var">does</span> <span class="id" title="var">not</span> <span class="id" title="var">mark</span> <span class="id" title="var">the</span> <span class="id" title="var">instantiated</span><br/>
+// <span class="id" title="var">labels</span> <span class="id" title="keyword">as</span> <span class="id" title="var">local</span>, <span class="id" title="var">so</span> <span class="id" title="var">cpp2v</span> <span class="id" title="var">prints</span> <span class="id" title="var">both</span> [<span class="id" title="var">L</span>]<span class="id" title="var">s</span>, <span class="id" title="var">and</span> <span class="id" title="var">the</span> <span class="id" title="var">report</span> <span class="id" title="var">finds</span> <span class="id" title="var">the</span><br/>
+// <span class="id" title="var">duplicate</span>.<br/>
+<span class="id" title="var">template</span>&lt;<span class="id" title="var">class</span> <span class="id" title="var">T</span>&gt; <span class="id" title="var">int</span> <span class="id" title="var">local_label_tmpl</span>(<span class="id" title="var">T</span> <span class="id" title="var">c</span>) {<br/>
+&nbsp;&nbsp;{ <span class="id" title="var">__label__</span> <span class="id" title="var">L</span>; <span class="id" title="var">int</span> <span class="id" title="var">n</span> = 0;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">L</span>: <span class="id" title="keyword">if</span> (<span class="id" title="var">n</span>++) <span class="id" title="keyword">return</span> 1;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">if</span> (<span class="id" title="var">c</span>) <span class="id" title="var">goto</span> <span class="id" title="var">L</span>; }<br/>
+&nbsp;&nbsp;<span class="id" title="var">L</span>: <span class="id" title="keyword">return</span> 2;<br/>
+}<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">call_local_label_tmpl</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">local_label_tmpl</span>&lt;<span class="id" title="var">int</span>&gt;(1); }<br/>
+<br/>
+// <span class="id" title="var">a</span> <span class="id" title="var">labeled</span> <span class="id" title="var">declaration</span> <span class="id" title="tactic">in</span> <span class="id" title="var">a</span> [<span class="id" title="var">switch</span>] <span class="id" title="var">body</span>: [<span class="id" title="tactic">case</span> 0] <span class="id" title="var">skips</span> <span class="id" title="var">it</span>, <span class="id" title="var">and</span> <span class="id" title="var">the</span><br/>
+// <span class="id" title="var">assignment</span> <span class="id" title="keyword">is</span> <span class="id" title="var">to</span> <span class="id" title="var">the</span> <span class="id" title="var">inner</span> [<span class="id" title="var">x</span>] (<span class="id" title="var">the</span> <span class="id" title="var">result</span> <span class="id" title="keyword">is</span> 7).<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">labeled_decl_switch</span>() {<br/>
+&nbsp;&nbsp;<span class="id" title="var">int</span> <span class="id" title="var">x</span> = 7;<br/>
+&nbsp;&nbsp;<span class="id" title="var">switch</span> (0) { <span class="id" title="var">SKIP</span>: <span class="id" title="var">int</span> <span class="id" title="var">x</span>; <span class="id" title="tactic">case</span> 0: <span class="id" title="var">x</span> = 8; }<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">return</span> <span class="id" title="var">x</span>;<br/>
+}<br/>
 <br/>
 // <span class="id" title="var">a</span> [<span class="id" title="var">switch</span>] <span class="id" title="var">body</span> <span class="id" title="var">that</span> <span class="id" title="keyword">is</span> <span class="id" title="var">not</span> <span class="id" title="var">a</span> <span class="id" title="var">block</span>.<br/>
 <span class="id" title="var">int</span> <span class="id" title="var">braceless</span>(<span class="id" title="var">int</span> <span class="id" title="var">x</span>) { <span class="id" title="var">switch</span> (<span class="id" title="var">x</span>) <span class="id" title="tactic">case</span> 1: <span class="id" title="keyword">return</span> 1; <span class="id" title="keyword">return</span> 0; }<br/>
@@ -167,7 +200,7 @@
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "test_and_set(bool*)"<span class="id" title="notation">;</span> "fetch_max(int*)"<span class="id" title="notation">;</span> "generic_store(int*, int*)"<br/>
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "dtor_local()"<span class="id" title="notation">;</span> "prvalue()"<span class="id" title="notation">;</span> "ext(int)"<span class="id" title="notation">;</span> "calls_setjmp()"<br/>
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "dot_member(S&amp;, int S::*)"<span class="id" title="notation">;</span> "arrow_member(S*, int S::*)"<span class="id" title="notation">;</span> "call_member(S&amp;, int (S::*)())"<br/>
-&nbsp;&nbsp;<span class="id" title="notation">;</span> "stmt_expr()"<span class="id" title="notation">;</span> "off()"<span class="id" title="notation">;</span> "label_only()"<span class="id" title="notation">;</span> "fam(M*)"<span class="id" title="notation">;</span> "braceless(int)"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "stmt_expr()"<span class="id" title="notation">;</span> "off()"<span class="id" title="notation">;</span> "label_only()"<span class="id" title="notation">;</span> "local_label()"<span class="id" title="notation">;</span> "local_label_only()"<span class="id" title="notation">;</span> "local_label_tmpl&lt;int&gt;(int)"<span class="id" title="notation">;</span> "labeled_decl_switch()"<span class="id" title="notation">;</span> "fam(M*)"<span class="id" title="notation">;</span> "braceless(int)"<br/>
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "lib_memcpy(char*, const char*)"<span class="id" title="notation">;</span> "lib_strlen(const char*)"<span class="id" title="notation">;</span> "direct_memcpy(char*, const char*)"<br/>
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "direct_undeclared(const char*, const char*)"<br/>
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "P::P(const P&amp;)"<span class="id" title="notation">;</span> "long_double_ptr(long double*)"<span class="id" title="notation">;</span> "anon_ptr(?record*)"<br/>
