@@ -40,26 +40,73 @@ Section comparable.
     [| forall va1 va2, ptr_vaddr p1 = Some va1 -> ptr_vaddr p2 = Some va2 -> f va1 va2 = res |] ∗
     valid_ptr p1 ∗ valid_ptr p2.
 
-  (* Two pointers into the same object are [ptr_ord_comparable]. *)
+  (** Two pointers into the same object are [ptr_ord_comparable]. The caller
+      shows the result from the addresses, without help from this lemma; see
+      [ptr_ord_comparable_off_off_eval] for a side condition on offsets. *)
   Lemma ptr_ord_comparable_off_off o1 o2 base p1 p2 f res :
     p1 = base ,, o1 ->
     p2 = base ,, o2 ->
     (forall va1 va2, ptr_vaddr p1 = Some va1 -> ptr_vaddr p2 = Some va2 -> f va1 va2 = res) ->
     valid_ptr p1 ∗ valid_ptr p2 ⊢ ptr_ord_comparable p1 p2 f res.
   Proof.
-    intros -> -> Hres.
-    iIntros "#[V1 V2]". iFrame (Hres) "V1 V2" => {Hres}; rewrite !valid_ptr_alloc_id.
+    iIntros (-> -> Hres) "#[V1 V2]". iFrame (Hres) "V1 V2" => {Hres}; rewrite !valid_ptr_alloc_id.
     iRevert "V1 V2"; iIntros "!%".
     exact: same_alloc_offset_2.
   Qed.
 
-  Lemma ptr_ord_comparable_off o1 base p1 f res :
+  (** Two offsets [p1] and [p2] of a pointer [base] are [ptr_ord_comparable].
+      In the side condition on [f], [va] ranges over the address of [base], so
+      that [p1] and [p2] are at [va + z1] and [va + z2].
+
+      Relating the addresses needs [valid_ptr base]: the validity of [p1] alone
+      does not give [base] an address (see [offset_inv_pinned_ptr_pure]). *)
+  Lemma ptr_ord_comparable_off_off_eval o1 o2 z1 z2 base p1 p2 f res :
     p1 = base ,, o1 ->
-    (forall va1 va2, ptr_vaddr p1 = Some va1 -> ptr_vaddr base = Some va2 -> f va1 va2 = res) ->
-    valid_ptr p1 ∗ valid_ptr base ⊢ ptr_ord_comparable p1 base f res.
+    p2 = base ,, o2 ->
+    eval_offset σ o1 = Some z1 ->
+    eval_offset σ o2 = Some z2 ->
+    (forall va va1 va2 : N,
+      Z.of_N va1 = Z.of_N va + z1 -> Z.of_N va2 = Z.of_N va + z2 ->
+      f va1 va2 = res)%Z ->
+    valid_ptr base ∗ valid_ptr p1 ∗ valid_ptr p2 ⊢ ptr_ord_comparable p1 p2 f res.
   Proof.
-    intros -> Hres. eapply (ptr_ord_comparable_off_off o1 o_id base) => //.
-    by rewrite offset_ptr_id.
+    iIntros (-> -> Ho1 Ho2 Hres) "#(V & V1 & V2)".
+    (* The validity of the three pointers fixes the two addresses. *)
+    iAssert ⌜forall va1 va2, ptr_vaddr (base ,, o1) = Some va1 ->
+      ptr_vaddr (base ,, o2) = Some va2 -> f va1 va2 = res⌝%I as %Hf; last first.
+    { iApply (ptr_ord_comparable_off_off o1 o2 base); [done..|iFrame "V1 V2"]. }
+    destruct (ptr_vaddr (base ,, o1)) as [va1|] eqn:Hva1; last by iPureIntro.
+    iDestruct (offset_inv_pinned_ptr_pure _ _ _ _ Ho1 Hva1 with "V") as %[Hle Hva].
+    iDestruct (offset_pinned_ptr_pure Ho2 Hva with "V2") as %[Hle2 Hva2].
+    iPureIntro. intros ? va2 [= <-]. rewrite Hva2 => -[<-].
+    apply (Hres (Z.to_N (va1 - z1))); lia.
+  Qed.
+
+  (** Two pointers into one array of a positive-size type have their addresses
+      ordered as their indices are. Hence a comparison [f] that is determined
+      by the order of its arguments is determined by the order of the indices. *)
+  Lemma ptr_ord_comparable_valid_idx ty p1 p2 (p : ptr) (sz : N) (i j : Z) f res :
+    size_of σ ty = Some sz ->
+    (0 < sz)%N ->
+    p1 = p .[ ty ! i ] ->
+    p2 = p .[ ty ! j ] ->
+    (forall va1 va2 : vaddr, (va1 ?= va2)%N = (i ?= j)%Z -> f va1 va2 = res) ->
+    valid_ptr p1 ∗ valid_ptr p2 ⊢ ptr_ord_comparable p1 p2 f res.
+  Proof.
+    iIntros (Hsz Hpos -> -> Hres) "#[V1 V2]".
+    (*
+    iApply (ptr_ord_comparable_off_off_eval (.[ ty ! i ]) (.[ ty ! j ])
+      (Z.of_N sz * i) (Z.of_N sz * j) p).
+    ^^ Would require [valid_ptr p] as well.
+    *)
+    iApply (ptr_ord_comparable_off_off_eval (.[ ty ! 0 ]) (.[ ty ! j - i ])
+      (Z.of_N sz * 0) (Z.of_N sz * (j - i)) (p .[ ty ! i ])); last iFrame "V1 V2".
+    { by rewrite offset_ptr_sub_0. }
+    { rewrite o_sub_sub. f_equal. f_equal. lia. }
+    1-2: exact: eval_o_sub'.
+    intros * Hva1 Hva2. apply Hres. rewrite -N2Z.inj_compare Hva1 Hva2.
+    rewrite Z.add_compare_mono_l -Zmult_compare_compat_l; last lia.
+    by rewrite [(0 ?= _)%Z]Z.compare_antisym -Z.compare_sub -Z.compare_antisym.
   Qed.
 
   (** Skeleton for [Beq] and [Bneq] axioms on pointers.
@@ -242,9 +289,8 @@ Section aligned_sub.
     [| aligned_ptr_ty ty p |] ∗ valid_ptr p
     ⊢ [| aligned_ptr_ty ty (p ,, _sub ty n) |].
   Proof.
-    intros [sz Hsz].
+    iIntros ([sz Hsz]) "[%Hp V]".
     destruct (align_of_size_of' _ _ Hsz) as (al & Hal & Hal0 & Hdvd).
-    iIntros "[%Hp V]".
     destruct (ptr_vaddr (p ,, _sub ty n)) as [va'|] eqn:Hva'.
     2: { iPureIntro. exists al. split; first done. by right. }
     iDestruct (offset_inv_pinned_ptr_pure (_sub ty n) (Z.of_N sz * n) va' p
@@ -273,8 +319,8 @@ Section aligned_sub.
     has_type (Vptr p) (Tptr ty) ∗ valid_ptr (p ,, _sub ty n)
     ⊢ has_type (Vptr (p ,, _sub ty n)) (Tptr ty).
   Proof.
-    intros Hsz. rewrite !has_type_ptr'.
-    iIntros "[[#Vp #A] #V]". iFrame "V".
+    rewrite !has_type_ptr'.
+    iIntros (Hsz) "[[#Vp #A] #V]". iFrame "V".
     by iApply (aligned_ptr_ty_sub p n ty Hsz); iFrame "A Vp".
   Qed.
 
@@ -285,11 +331,10 @@ Section aligned_sub.
     has_type (Vptr p) (Tptr ty) ∗ valid_ptr (p ,, _sub (erase_qualifiers ty) n)
     ⊢ has_type (Vptr (p ,, _sub (erase_qualifiers ty) n)) (Tptr ty).
   Proof.
-    intros Hsz.
+    rewrite !has_type_ptr'.
+    iIntros (Hsz) "[[#Vp %A] #V]". iFrame "V".
     have Hsz' : is_Some (size_of σ (erase_qualifiers ty)).
     { by rewrite (size_of_erase_qualifiers σ ty). }
-    rewrite !has_type_ptr'.
-    iIntros "[[#Vp %A] #V]". iFrame "V".
     iAssert [| aligned_ptr_ty (erase_qualifiers ty) (p ,, _sub (erase_qualifiers ty) n) |]%I
       as %A'.
     { iApply (aligned_ptr_ty_sub p n (erase_qualifiers ty) Hsz'). iFrame "Vp".
@@ -455,7 +500,7 @@ Section derived.
     has_type (Vptr vp) (Tptr ty) ∗ has_type (Vptr nullptr) (Tptr ty)
     ⊢ Unfold (@eval_ptr_eq_cmp_op) (eval_ptr_eq_cmp_op EBI tu Beq ty vp nullptr res).
   Proof.
-    intros Hres. rewrite -eval_ptr_eq. iIntros "#[Hv Hn]". iFrame "Hv Hn".
+    rewrite -eval_ptr_eq. iIntros (Hres) "#[Hv Hn]". iFrame "Hv Hn".
     iApply (nullptr_ptr_comparable Hres). by iApply (has_type_ptr_valid with "Hv").
   Qed.
 
@@ -464,7 +509,7 @@ Section derived.
     has_type (Vptr nullptr) (Tptr ty) ∗ has_type (Vptr vp) (Tptr ty)
     ⊢ Unfold (@eval_ptr_eq_cmp_op) (eval_ptr_eq_cmp_op EBI tu Beq ty nullptr vp res).
   Proof.
-    intros Hres. rewrite -eval_ptr_eq. iIntros "#[Hn Hv]". iFrame "Hn Hv".
+    rewrite -eval_ptr_eq. iIntros (Hres) "#[Hn Hv]". iFrame "Hn Hv".
     rewrite -ptr_comparable_symm.
     iApply (nullptr_ptr_comparable Hres). by iApply (has_type_ptr_valid with "Hv").
   Qed.
@@ -473,8 +518,8 @@ Section derived.
     has_type (Vptr p) (Tptr ty)
     ⊢ Unfold (@eval_ptr_eq_cmp_op) (eval_ptr_eq_cmp_op EBI tu Beq ty p p true).
   Proof.
-    rewrite -eval_ptr_eq. iIntros "#Hp". iFrame "Hp".
-    iApply self_ptr_comparable. by iApply (has_type_ptr_valid with "Hp").
+    rewrite -eval_ptr_eq. iIntros "#$".
+    iApply self_ptr_comparable. by iApply has_type_ptr_valid.
   Qed.
 End derived.
 
