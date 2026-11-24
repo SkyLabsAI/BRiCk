@@ -7,18 +7,16 @@ Compiling the C++ code, use "make Q=" for debugging.
 
 Compiling the generated Coq files.
   $ dune build
-       = [("T::~T()"%cpp_name, Some (CompilerProvided (Sseq [])));
-          ("M::~M()"%cpp_name, None);
-          ("B::~B()"%cpp_name, Some (CompilerProvided (Sseq [])));
-          ("A::~A()"%cpp_name, Some (CompilerProvided (Sseq [])))]
+       = [("T::~T()"%cpp_name, Some Defaulted); ("M::~M()"%cpp_name, None);
+          ("B::~B()"%cpp_name, Some Defaulted);
+          ("A::~A()"%cpp_name, Some Defaulted)]
        : list (obj_name * option (OrDefault Stmt))
        = [("T::~T()"%cpp_name, Some Defaulted); ("M::~M()"%cpp_name, None);
           ("B::~B()"%cpp_name, Some Defaulted);
           ("A::~A()"%cpp_name, Some Defaulted)]
        : list (obj_name * option (OrDefault Stmt))
-       = [("T::~T()"%cpp_name, Some (CompilerProvided (Sseq [])));
-          ("M::~M()"%cpp_name, None);
-          ("B::~B()"%cpp_name, Some (CompilerProvided (Sseq [])));
-          ("A::~A()"%cpp_name, Some (CompilerProvided (Sseq [])))]
+       = [("T::~T()"%cpp_name, Some Defaulted); ("M::~M()"%cpp_name, None);
+          ("B::~B()"%cpp_name, Some Defaulted);
+          ("A::~A()"%cpp_name, Some Defaulted)]
        : list (obj_name * option (OrDefault Stmt))
   Success!
