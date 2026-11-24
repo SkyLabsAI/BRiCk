@@ -873,6 +873,14 @@ Module decltype.
               end
             in
             const Tsize_t <$> guard (t = Tsize_t)
+        | Etypeid te t =>
+            let* _ :=
+              match te with
+              | inl _ => mret ()
+              | inr e => const () <$> (of_expr e >>= requireGL)
+              end
+            in
+            mret $ Tref t
         | Eoffsetof _ _ t => mret t
         | Econstructor f es t =>
             let* cls := is_constructor f in

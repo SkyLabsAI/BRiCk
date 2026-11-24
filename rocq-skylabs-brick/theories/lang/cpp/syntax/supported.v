@@ -391,6 +391,13 @@ Section with_monad.
         | inr e => type_ref (type_of e)
         | inl t => type t
         end <+> type t
+    | Etypeid et t =>
+        (* The semantics of [typeid] is not yet specified, but its syntax is
+           supported. Only a polymorphic glvalue operand ([inr]) is evaluated. *)
+        match et with
+        | inr e => expr e
+        | inl t => type t
+        end <+> type t
     | Eoffsetof t1 _ t2 => FAIL "offsetof" <+> type t1 <+> type t2
     | Eassign e1 e2 t | Ebf_assign e1 e2 t => expr e1 <+> expr e2 <+> type t
     | Eassign_op op e1 e2 t | Ebf_assign_op op e1 e2 t => expr e1 <+> expr e2 <+> type t <+> check_binop op (type_of e1) (type_of e2) t

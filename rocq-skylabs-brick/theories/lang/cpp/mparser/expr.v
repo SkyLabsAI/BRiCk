@@ -317,6 +317,7 @@ Fixpoint to_unresolved_name (e : MExpr) : Mname :=
   | core.Esubscript _ _ _ => Nunsupported "Esubscript"
   | Esizeof _ _ => Nunsupported "Esizeof"
   | Ealignof _ _ => Nunsupported "Ealignof"
+  | Etypeid _ _ => Nunsupported "Etypeid"
   | Eoffsetof _ _ _ => Nunsupported "Eoffsetof"
   | Econstructor _ _ _ => Nunsupported "Econstructor"
   | Einherited_constructor _ _ _ => Nunsupported "Einherited_constructor"

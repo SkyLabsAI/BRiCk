@@ -453,6 +453,19 @@ Module ExprNotations.
          , format "'[' alignof(expr:  e ) ']'"
          , only printing).
 
+  Notation "'typeid(ty:' ty )"
+      := (Etypeid (inl ty) _)
+         ( in custom CPP_expr at level 200
+         , ty custom CPP_type at level 200
+         , format "'[' typeid(ty:  ty ) ']'"
+         , only printing).
+  Notation "'typeid(expr:' e )"
+      := (Etypeid (inr e) _)
+         ( in custom CPP_expr at level 200
+         , e custom CPP_expr at level 200
+         , format "'[' typeid(expr:  e ) ']'"
+         , only printing).
+
   Notation "'offsetof(' cls , fld ')'"
       := (Eoffsetof cls fld _)
          ( in custom CPP_expr at level 200

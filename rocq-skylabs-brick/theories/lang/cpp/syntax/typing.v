@@ -302,6 +302,7 @@ Module decltype.
         | Eunop _ _ t => mret t
         | Ebinop op l _ t => of_binop op l t
         | Ederef _ t => mret $ Tref t
+        | Etypeid _ t => mret $ Tref t
         | Eaddrof e => of_addrof e
         | Eassign _ _ t
         | Eassign_op _ _ _ t
