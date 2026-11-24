@@ -80,18 +80,54 @@ public:
         unsupportedStmt(stmt, print, cprint, gnu_local_label);
     }
 
+    // The local declarations [printLocalDecl] prints: variables, including
+    // static locals, and structured bindings.
+    static bool printedLocalDecl(const Decl *d) {
+        if (d->isInvalidDecl() || isa<DecompositionDecl>(d))
+            return true;
+        return d->getKind() == Decl::Var &&
+               !cast<VarDecl>(d)->hasExternalStorage();
+    }
+
+    // The local declarations that have no runtime effect, so that leaving
+    // them out of the [Sdecl] loses nothing: they only introduce names
+    // that the printed code refers to by their resolved meaning.
+    static bool localDeclWithoutEffect(const Decl *d) {
+        // `extern int x;` refers to a variable defined elsewhere.
+        if (auto vd = dyn_cast<VarDecl>(d))
+            return d->getKind() == Decl::Var && vd->hasExternalStorage();
+        return isa<TypedefNameDecl,          // typedef, alias declaration
+                   TagDecl,                  // local class or enumeration
+                   StaticAssertDecl,         // checked at compile time
+                   UsingDecl, UsingEnumDecl, // name lookup only
+                   UsingDirectiveDecl, NamespaceAliasDecl,
+                   UnresolvedUsingValueDecl, // dependent using-declarations
+                   UnresolvedUsingTypenameDecl,
+                   FunctionDecl,             // block-scope function prototype
+                   EmptyDecl>(d);
+    }
+
+    // Fail closed: any other local declaration (e.g. OpenMP `threadprivate`,
+    // `declare reduction`, `allocate`) would be dropped from the [Sdecl]
+    // together with its meaning, so the statement is unsupported instead.
     void VisitDeclStmt(const DeclStmt *stmt, CoqPrinter &print,
                        ClangPrinter &cprint, ASTContext &) {
         for (auto d : stmt->decls()) {
-            if (isa<LabelDecl>(d)) {
-                unsupportedGnuLocalLabel(stmt, print, cprint);
-                return;
-            }
+            if (isa<LabelDecl>(d))
+                return unsupportedGnuLocalLabel(stmt, print, cprint);
+            if (!printedLocalDecl(d) && !localDeclWithoutEffect(d))
+                return unsupportedStmt(
+                    stmt, print, cprint,
+                    std::string("unsupported local declaration: ") +
+                        d->getDeclKindName());
         }
         print.ctor("Sdecl");
         print.begin_list();
         for (auto d : stmt->decls()) {
-            if (cprint.printLocalDecl(print, d))
+            bool printed = cprint.printLocalDecl(print, d);
+            always_assert(printed == printedLocalDecl(d) &&
+                          "printedLocalDecl out of sync with printLocalDecl");
+            if (printed)
                 print.cons();
         }
         print.end_list();

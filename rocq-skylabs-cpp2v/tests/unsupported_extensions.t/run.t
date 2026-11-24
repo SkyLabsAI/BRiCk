@@ -22,3 +22,20 @@ exists from clang 22; before, the check is vacuous.
                 :: "unsupported statement: CoroutineBodyStmt"%pstring
                    :: "template parameter pack"%pstring :: nil)%list
        : check.M
+       = nil
+       : check.M
+       = ("unsupported local declaration: OMPAllocate"%pstring
+          :: "unsupported statement: OMPAtomicDirective"%pstring
+             :: "unsupported statement: OMPParallelForDirective"%pstring
+                :: "unsupported statement: OMPCriticalDirective"%pstring
+                   :: "unsupported local declaration: OMPDeclareReduction"%pstring
+                      :: "unsupported statement: OMPParallelForDirective"%pstring
+                         :: "unsupported statement: OMPParallelDirective"%pstring
+                            :: "unsupported statement: OMPParallelSectionsDirective"%pstring
+                               :: "unsupported statement: OMPSimdDirective"%pstring
+                                  :: "unsupported statement: OMPTaskDirective"%pstring
+                                     :: "static local variable"%pstring
+                                        :: "unsupported local declaration: OMPThreadPrivate"%pstring
+                                           :: "thread_local variable"%pstring
+                                              :: nil)%list
+       : check.M
