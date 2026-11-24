@@ -10,6 +10,16 @@ of the release, and introduce a new heading.
 
 ## Since Last Release
 
+2026.11.24: `VarDecl` has a new constructor `Dvla_bounds (bounds : list Expr)`:
+a declaration of a variably modified type (GNU variable-length arrays in C++)
+that declares no object. It evaluates the array bounds in order, and each must
+be greater than zero (`wp_vla_bounds` in `logic/stmt.v`). cpp2v prints it for
+a typedef or alias declaration of such a type (`typedef int A[n];`) and, as
+the first statement of the body, for the parameters of a function
+(`int f(int n, int a[n])`); it used to drop these bounds. Code that matches on
+`VarDecl` needs a case, and proofs of such functions get the obligation
+`0 < n` for each bound.
+
 2026.11.21: `translation_unit` has a new field `dropped_symbols : list name`,
 the names of the symbols that `cpp.prog` dropped (see below). `sub_module`
 ignores it. Code that calls `makeTranslationUnit` positionally needs an extra

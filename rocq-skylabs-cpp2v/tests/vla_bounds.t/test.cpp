@@ -35,3 +35,31 @@ void td_triv() { typedef int A[mk().n]; }
 void td_dflt() { typedef int A[dflt()]; }
 // The bounds of one declarator are unsequenced.
 void td_unsequenced(int a) { typedef int A[a++][a]; }
+
+// Parameters: the bounds are evaluated on entry, in parameter order.
+int p_one(int n, int a[n]) { return n; }
+int p_order(int n, int a[n++], int b[n++]) { return n; }
+int p_2d(int n, int m, int a[n][m]) { return n; }
+int p_ptr(int n, int (*a)[n]) { return n; }
+int p_unnamed(int n, int[n]) { return n; }
+// Nothing to evaluate.
+int p_fn(int n, int f(int a[n])) { return n; }
+int p_decl(int n, int a[n]);
+// Unsupported forms.
+int p_tmp(int n, int a[Tmp(n).n]) { return n; }
+int p_try(int n, int a[n]) try { return n; } catch (...) { return 0; }
+int p_unsequenced(int n, int a[n++][n]) { return n; }
+struct M {
+  int v;
+  int m(int n, int a[n]) { return n; }
+  static int sm(int n, int a[n]) { return n; }
+  M(int n, int a[n]) : v(n) { v = 0; }
+};
+int lam() {
+  int x[4];
+  auto l = [](int n, int a[n]) { return n; };
+  return l(4, x);
+}
+int (*lam_fp())(int, int *) {
+  return [](int n, int a[n]) { return n; };
+}

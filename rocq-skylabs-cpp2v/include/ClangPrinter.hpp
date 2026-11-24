@@ -422,9 +422,19 @@ public:
     static void vlaBounds(clang::QualType type, VlaBounds &,
                           const clang::ASTContext &);
 
+    /// The bounds that a call of [decl] evaluates on entry, for its
+    /// parameters.
+    static VlaBounds paramVlaBounds(const clang::FunctionDecl &decl);
+
     /// Print the [Dvla_bounds] declaration of [bounds].
     fmt::Formatter &printVlaBounds(CoqPrinter &,
                                    const std::vector<const clang::Expr *> &);
+
+    /// Print the body of the function definition [decl], preceded by the
+    /// evaluation of the bounds of its parameter types.
+    fmt::Formatter &printFunctionBody(CoqPrinter &,
+                                      const clang::FunctionDecl &decl,
+                                      const clang::Stmt *body);
 
     // Declarations
 

@@ -155,6 +155,43 @@ public:
         print.end_ctor();
     }
 
+    // The body of a function definition whose parameter types have array
+    // bounds to evaluate (see [ClangPrinter::paramVlaBounds]). Clang
+    // evaluates them on entry, in parameter order: before the member
+    // initializers of a constructor and outside a function-try-block. The
+    // logic can only run them as the first statement of a body that is a
+    // block, so other definitions are unsupported.
+    void printBodyWithParamBounds(const FunctionDecl &decl, const Stmt *body,
+                                  const ClangPrinter::VlaBounds &vla,
+                                  CoqPrinter &print, ClangPrinter &cprint,
+                                  ASTContext &ctxt) {
+        auto block = dyn_cast<CompoundStmt>(body);
+        auto why = vla.unsupported;
+        if (!why && isa<CXXConstructorDecl>(decl))
+            why = "constructor with a parameter of a variably modified type";
+        else if (!why && decl.isImplicit())
+            why = "implicit function with a parameter of a variably "
+                  "modified type";
+        else if (!why && !block)
+            why = "function body that is not a block, with a parameter of a "
+                  "variably modified type";
+        if (!block)
+            return unsupportedStmt(body, print, cprint, *why);
+        guard::ctor _{print, "Sseq"};
+        guard::list __{print};
+        if (why) {
+            unsupportedStmt(body, print, cprint, *why);
+        } else {
+            guard::ctor _{print, "Sdecl"};
+            guard::list __{print};
+            cprint.printVlaBounds(print, vla.bounds);
+            print.cons();
+        }
+        print.cons();
+        for (auto i : block->body())
+            printListItem(i, print, cprint, ctxt);
+    }
+
     void VisitWhileStmt(const WhileStmt *stmt, CoqPrinter &print,
                         ClangPrinter &cprint, ASTContext &) {
         print.ctor("Swhile");
@@ -701,6 +738,18 @@ void ClangPrinter::vlaBounds(QualType type, VlaBounds &vla,
                               "bounds with a side effect";
 }
 
+// This follows `CodeGenFunction::StartFunction`, which emits the types of
+// the parameters as written, in order.
+ClangPrinter::VlaBounds ClangPrinter::paramVlaBounds(const FunctionDecl &decl) {
+    VlaBounds vla;
+    for (auto param : decl.parameters()) {
+        vlaBounds(param->getOriginalType(), vla, decl.getASTContext());
+        if (vla.unsupported)
+            break;
+    }
+    return vla;
+}
+
 fmt::Formatter &
 ClangPrinter::printVlaBounds(CoqPrinter &print,
                              const std::vector<const Expr *> &bounds) {
@@ -710,5 +759,18 @@ ClangPrinter::printVlaBounds(CoqPrinter &print,
         printExpr(print, bound);
         print.cons();
     }
+    return print.output();
+}
+
+fmt::Formatter &ClangPrinter::printFunctionBody(CoqPrinter &print,
+                                                const FunctionDecl &decl,
+                                                const Stmt *body) {
+    auto vla = paramVlaBounds(decl);
+    if (vla.empty())
+        return printStmt(print, body);
+    __attribute__((unused)) auto depth = print.output().get_depth();
+    PrintStmt::printer.printBodyWithParamBounds(decl, body, vla, print, *this,
+                                                *this->context_);
+    always_assert(depth == print.output().get_depth());
     return print.output();
 }

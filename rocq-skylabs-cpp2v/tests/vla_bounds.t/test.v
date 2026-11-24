@@ -44,3 +44,26 @@ Eval vm_compute in bodies 4
   [ "td_typeof"; "td_typeof_expr"; "td_decltype"; "td_fn_ret"; "td_atomic"
   ; "td_memptr"; "td_tmp"; "td_triv"; "td_dflt"; "td_unsequenced" ]%pstring
   test_cpp.source.
+
+(* Parameters: the first statement of the body. *)
+Eval vm_compute in bodies 1
+  [ "p_one"; "p_order"; "p_2d"; "p_ptr"; "p_unnamed"; "p_fn"; "p_tmp"
+  ; "p_try"; "p_unsequenced" ]%pstring test_cpp.source.
+
+(* Member functions, constructors and lambdas whose parameters have bounds:
+   the member initializers and the first statement. *)
+Definition vla_related (s : Stmt) : bool :=
+  match s with
+  | Sdecl (Dvla_bounds _ :: _) | Sunsupported _ => true
+  | _ => false
+  end.
+Definition members (tu : translation_unit)
+    : list (name * (list Initializer * list Stmt)) :=
+  omap (fun '(n, o) =>
+          if global_function n is Some _ then None
+          else
+            d ← definition o;
+            if existsb vla_related (take 1 d.2)
+            then Some (n, (d.1, take 1 d.2)) else None)
+    (map_to_list tu.(symbols)).
+Eval vm_compute in members test_cpp.source.

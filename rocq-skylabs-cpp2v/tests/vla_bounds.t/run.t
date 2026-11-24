@@ -1,8 +1,8 @@
 Clang evaluates the array bounds of a variably modified type where the type
-is declared. For a typedef or an alias declaration, cpp2v prints them as a
-[Dvla_bounds] declaration, and prints the forms it does not model as
-unsupported. Diagnostics are not shown, since their text varies with the
-clang version.
+is declared. For a typedef, an alias declaration and the parameters of a
+function, cpp2v prints them as a [Dvla_bounds] declaration, and prints the
+forms it does not model as unsupported. Diagnostics are not shown, since
+their text varies with the clang version.
   $ setup_project
 
   $ make 2> /dev/null
@@ -77,3 +77,49 @@ clang version.
            [Sunsupported
               "variably modified type: unsequenced array bounds with a side effect"])]
        : list (ident * list Stmt)
+       = [("p_one"%pstring, [Sdecl [Dvla_bounds [Ecast Cl2r (Evar "n" "int")]]]);
+          ("p_order"%pstring,
+           [Sdecl
+              [Dvla_bounds
+                 [Epostinc (Evar "n" "int") "int";
+                  Epostinc (Evar "n" "int") "int"]]]);
+          ("p_2d"%pstring,
+           [Sdecl
+              [Dvla_bounds
+                 [Ecast Cl2r (Evar "n" "int"); Ecast Cl2r (Evar "m" "int")]]]);
+          ("p_ptr"%pstring, [Sdecl [Dvla_bounds [Ecast Cl2r (Evar "n" "int")]]]);
+          ("p_unnamed"%pstring,
+           [Sdecl [Dvla_bounds [Ecast Cl2r (Evar "n" "int")]]]);
+          ("p_fn"%pstring, [Sreturn (Some (Ecast Cl2r (Evar "n" "int")))]);
+          ("p_tmp"%pstring,
+           [Sunsupported "variably modified type: array bound with a temporary"]);
+          ("p_try"%pstring,
+           [Sunsupported
+              "function body that is not a block, with a parameter of a variably modified type"]);
+          ("p_unsequenced"%pstring,
+           [Sunsupported
+              "variably modified type: unsequenced array bounds with a side effect"])]
+       : list (ident * list Stmt)
+       = [("lam_fp()::@0::operator()(int, int*) const"%cpp_name,
+           ([], [Sdecl [Dvla_bounds [Ecast Cl2r (Evar "n" "int")]]]));
+          ("lam()::@0::operator()(int, int*) const"%cpp_name,
+           ([], [Sdecl [Dvla_bounds [Ecast Cl2r (Evar "n" "int")]]]));
+          ("M::M(int, int*)"%cpp_name,
+           ([{|
+               init_path := InitField (Nid "v");
+               init_init :=
+                 Eunsupported
+                   "member initializer of a constructor with a parameter of a variably modified type"
+                   "int"
+             |}],
+            [Sunsupported
+               "constructor with a parameter of a variably modified type"]));
+          ("M::sm(int, int*)"%cpp_name,
+           ([], [Sdecl [Dvla_bounds [Ecast Cl2r (Evar "n" "int")]]]));
+          ("M::m(int, int*)"%cpp_name,
+           ([], [Sdecl [Dvla_bounds [Ecast Cl2r (Evar "n" "int")]]]));
+          ("lam_fp()::@0::__invoke(int, int*)"%cpp_name,
+           ([],
+            [Sunsupported
+               "implicit function with a parameter of a variably modified type"]))]
+       : list (name * (list Initializer * list Stmt))
