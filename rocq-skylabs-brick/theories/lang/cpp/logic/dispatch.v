@@ -135,6 +135,27 @@ Section with_cpp.
         False
       end).
 
+  (** [with_mdc this cls Q] reads, without consuming it, the path [mdc] that
+      [this |-> derivationR cls mdc q] records for the [cls] object at [this],
+      and continues as [Q mdc]. [mdc] is not empty: it runs from the class of
+      the most-derived object to [cls]; during construction or destruction it
+      starts instead at the class whose constructor or destructor runs, as
+      [class.cdtor] prescribes for virtual calls, <<typeid>> and
+      <<dynamic_cast>>. [resolve_virtual] reads [derivationR] the same way.
+   *)
+  Definition with_mdc {σ : genv} (this : ptr) (cls : globname)
+      (Q : list globname -> mpred) : mpred :=
+    Exists mdc : list globname,
+      (Exists q, this |-> derivationR cls mdc q ** [| mdc <> nil |] ** True) //\\ Q mdc.
+
+  Lemma with_mdc_frame {σ : genv} (this : ptr) (cls : globname) (Q Q' : list globname -> mpred) :
+    Forall mdc, Q mdc -* Q' mdc |-- with_mdc this cls Q -* with_mdc this cls Q'.
+  Proof.
+    rewrite /with_mdc. iIntros "X Y". iDestruct "Y" as (mdc) "Y".
+    iExists mdc. iSplit; first by iDestruct "Y" as "[$ _]".
+    iDestruct "Y" as "[_ Y]". by iApply "X".
+  Qed.
+
   Lemma resolve_virtual_frame {σ : genv} (cls : globname) (this : ptr) f
     (Q Q' : ptr → globname → ptr → mpredI) :
         Forall (a : ptr) (b : globname) (c : ptr), Q a b c -* Q' a b c

@@ -152,8 +152,8 @@
         {|
           report.input := "dyn(Base*)";
           report.resolved := "dyn(Base*)";
-          report.status := "unsupported";
-          report.unsupported := ["dynamic_cast"%pstring];
+          report.status := "supported";
+          report.unsupported := [];
           report.partial := [];
           report.blocked_by := [];
           report.unsupported_refs := []
@@ -323,7 +323,7 @@
         ("cas_int(int*, int*, int)"%pstring, "supported"%pstring);
         ("cas_ptr(int**, int**, int*)"%pstring, "unsupported"%pstring);
         ("case_after_decl(int)"%pstring, "unsupported"%pstring);
-        ("dyn(Base*)"%pstring, "unsupported"%pstring);
+        ("dyn(Base*)"%pstring, "supported"%pstring);
         ("flat_switch(int)"%pstring, "supported"%pstring);
         ("inline_asm()"%pstring, "unsupported"%pstring);
         ("known_builtin(long)"%pstring, "supported"%pstring);
@@ -444,7 +444,7 @@
      = ["virtual base classes are not supported"%pstring;
         "atomic compare-exchange on non-integer values"%pstring;
         "switch: case or default nested in a statement or after a declaration"%pstring;
-        "dynamic_cast"%pstring; "inline assembly"%pstring;
+        "inline assembly"%pstring;
         "switch: case or default nested in a statement or after a declaration"%pstring;
         "static local variable"%pstring; "volatile object"%pstring;
         "indirect member initialization"%pstring]

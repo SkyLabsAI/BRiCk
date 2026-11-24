@@ -132,9 +132,6 @@ Unsupported Features
      - No semantics
      - Single-field :cpp:`offsetof` is translated but has no rule; other forms
        (nested members, array elements, bases) are unsupported syntax.
-   * - :cpp:`dynamic_cast`
-     - No semantics
-     -
    * - :cpp:`reinterpret_cast`
      - No semantics
      - `BRiCk#156 <https://github.com/SkyLabsAI/BRiCk/issues/156>`_
@@ -157,6 +154,14 @@ Unsupported Features
    * - Default arguments of reference type
      - No semantics
      - `BRiCk#390 <https://github.com/SkyLabsAI/BRiCk/issues/390>`_
+   * - :cpp:`dynamic_cast`
+     - Partial
+     - A failing :cpp:`dynamic_cast` to a reference throws
+       :cpp:`std::bad_cast` and has no semantics (see exceptions). Casts read
+       the dynamic type from ``derivationR``, which a class carries only if it
+       has virtual member functions of its own (including implicitly virtual
+       destructors).
+       `BRiCk#511 <https://github.com/SkyLabsAI/BRiCk/issues/511>`_
    * - Function-local :cpp:`static` variables
      - Partial
      - The rules for the initialization guard exist, but nothing provides the

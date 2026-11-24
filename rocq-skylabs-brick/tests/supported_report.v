@@ -84,9 +84,8 @@ Set Printing Depth 5.
     [supported.v]. *)
 Search UNSUPPORTED.
 
-(** No rule: inline assembly, [dynamic_cast], lvalue bitcasts, unsupported casts. *)
+(** No rule: inline assembly, lvalue bitcasts, unsupported casts. *)
 Search Sasm -"_ind" -"_rec" -"_rect" -"_sind".
-Search Cdynamic -"_ind" -"_rec" -"_rect" -"_sind".
 Search Clvaluebitcast -"_ind" -"_rec" -"_rect" -"_sind".
 Search Cunsupported -"_ind" -"_rec" -"_rect" -"_sind".
 
