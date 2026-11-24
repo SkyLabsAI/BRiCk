@@ -392,8 +392,10 @@ Section with_monad.
         | inl t => type t
         end <+> type t
     | Etypeid et t =>
-        (* The semantics of [typeid] is not yet specified, but its syntax is
-           supported. Only a polymorphic glvalue operand ([inr]) is evaluated. *)
+        (* Only a polymorphic glvalue operand ([inr]) is evaluated.
+           Supported, but the rules (../logic/typeid.v) are stuck on a null
+           glvalue (<<bad_typeid>>), on a class without [derivationR] (no
+           virtual members of its own), and on types outside [typeid_ok]. *)
         match et with
         | inr e => expr e
         | inl t => type t

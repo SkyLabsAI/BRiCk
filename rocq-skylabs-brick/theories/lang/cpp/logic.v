@@ -18,6 +18,7 @@ Require Export skylabs.lang.cpp.logic.operator.
 Require Export skylabs.lang.cpp.logic.new_delete.
 Require Export skylabs.lang.cpp.logic.expr.
 Require Export skylabs.lang.cpp.logic.dynamic_cast.
+Require Export skylabs.lang.cpp.logic.typeid.
 Require Export skylabs.lang.cpp.logic.expr_bitfield.
 Require Export skylabs.lang.cpp.logic.stmt.
 Require Export skylabs.lang.cpp.logic.initializers.

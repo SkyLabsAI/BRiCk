@@ -41,6 +41,8 @@ int call_through(Bits *b) { auto p = &take_bits; return p( *b); }
 int read_volatile(volatile int *p) { return *p; }
 void volatile_local() { volatile int x = 0; (void)x; }
 bool dyn(Base *b) { return dynamic_cast<Derived *>(b) != nullptr; }
+namespace std { class type_info { public: virtual ~type_info(); bool operator==(const type_info&) const noexcept; }; }
+bool same_type(Base &x, Base &y) { return typeid(x) == typeid(y); }
 void inline_asm() { asm("nop"); }
 bool cas_ptr(int **p, int **e, int *d) {
   return __atomic_compare_exchange_n(p, e, d, false, 5, 5);
@@ -60,7 +62,7 @@ int case_after_decl(int x) { switch (x) { case 0: int y; y = 1; return y; case 1
 Eval vm_compute in supported.report.run source
   [ "by_value(Bits)"; "by_value_virt(Virt)"; "by_pointer(Bits*)"; "through_field(HasBits*)"; "linked(Node)"
   ; "static_local()"; "calls_static_local()"; "use_union(U)"; "arrow_union(U*)"; "arrow_bits(Bits*)"; "plain_member(Mixed*)"; "address_only()"; "call_through(Bits*)"; "read_volatile(volatile int*)"
-  ; "volatile_local()"; "dyn(Base*)"; "inline_asm()"; "cas_ptr(int**, int**, int*)"
+  ; "volatile_local()"; "dyn(Base*)"; "same_type(Base&, Base&)"; "inline_asm()"; "cas_ptr(int**, int**, int*)"
   ; "cas_int(int*, int*, int)"; "overloaded(int)"; "overloaded(long)"
   ; "unknown_builtin(unsigned int)"; "known_builtin(long)"; "flat_switch(int)"
   ; "nested_case(int)"; "case_after_decl(int)"

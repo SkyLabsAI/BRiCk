@@ -159,6 +159,15 @@
           report.unsupported_refs := []
         |};
         {|
+          report.input := "same_type(Base&, Base&)";
+          report.resolved := "same_type(Base&, Base&)";
+          report.status := "supported";
+          report.unsupported := [];
+          report.partial := [];
+          report.blocked_by := [];
+          report.unsupported_refs := []
+        |};
+        {|
           report.input := "inline_asm()";
           report.resolved := "inline_asm()";
           report.status := "unsupported";
@@ -333,6 +342,7 @@
         ("overloaded(long)"%pstring, "supported"%pstring);
         ("plain_member(Mixed*)"%pstring, "unsupported"%pstring);
         ("read_volatile(volatile int*)"%pstring, "partial"%pstring);
+        ("same_type(Base&, Base&)"%pstring, "supported"%pstring);
         ("static_local()"%pstring, "unsupported"%pstring);
         ("take_bits(Bits)"%pstring, "partial"%pstring);
         ("through_field(HasBits*)"%pstring, "partial"%pstring);
@@ -369,6 +379,7 @@
         ("U::U()"%pstring, "partial"%pstring);
         ("VBase::VBase()"%pstring, "partial"%pstring);
         ("Virt::Virt()"%pstring, "blocked"%pstring);
+        ("std::type_info::type_info()"%pstring, "partial"%pstring);
         ("Anon::.x::<ctor>()"%pstring, "partial"%pstring);
         ("Anon::Anon(const Anon&)"%pstring, "partial"%pstring);
         ("Base::Base(const Base&)"%pstring, "partial"%pstring);
@@ -380,6 +391,8 @@
         ("U::U(const U&)"%pstring, "supported"%pstring);
         ("VBase::VBase(const VBase&)"%pstring, "partial"%pstring);
         ("Virt::Virt(const Virt&)"%pstring, "blocked"%pstring);
+        ("std::type_info::type_info(const std::type_info&)"%pstring,
+         "partial"%pstring);
         ("Anon::.x::<ctor>(Anon::.x const&)"%pstring, "supported"%pstring);
         ("Anon::Anon(Anon&&)"%pstring, "partial"%pstring);
         ("Bits::Bits(Bits&&)"%pstring, "partial"%pstring);
@@ -401,6 +414,7 @@
         ("U::~U()"%pstring, "supported"%pstring);
         ("VBase::~VBase()"%pstring, "supported"%pstring);
         ("Virt::~Virt()"%pstring, "blocked"%pstring);
+        ("std::type_info::~type_info()"%pstring, "supported"%pstring);
         ("Anon::.x::<dtor>"%pstring, "supported"%pstring);
         ("Anon::operator=(const Anon&)"%pstring, "partial"%pstring);
         ("Base::operator=(const Base&)"%pstring, "partial"%pstring);
@@ -412,6 +426,8 @@
         ("U::operator=(const U&)"%pstring, "supported"%pstring);
         ("VBase::operator=(const VBase&)"%pstring, "partial"%pstring);
         ("Virt::operator=(const Virt&)"%pstring, "blocked"%pstring);
+        ("std::type_info::operator=(const std::type_info&)"%pstring,
+         "partial"%pstring);
         ("Anon::.x::operator=(const Anon::.x&)"%pstring, "supported"%pstring);
         ("Anon::operator=(Anon&&)"%pstring, "partial"%pstring);
         ("Bits::operator=(Bits&&)"%pstring, "partial"%pstring);
@@ -423,6 +439,8 @@
         ("VBase::operator=(VBase&&)"%pstring, "partial"%pstring);
         ("Virt::operator=(Virt&&)"%pstring, "blocked"%pstring);
         ("Anon::.x::operator=(Anon::.x&&)"%pstring, "supported"%pstring);
+        ("std::type_info::operator==(const std::type_info&) const"%pstring,
+         "supported"%pstring);
         ("Anon"%pstring, "supported"%pstring);
         ("Base"%pstring, "supported"%pstring);
         ("Bits"%pstring, "partial"%pstring);
@@ -439,6 +457,7 @@
         ("__int128_t"%pstring, "supported"%pstring);
         ("__uint128_t"%pstring, "supported"%pstring);
         ("std::align_val_t"%pstring, "supported"%pstring);
+        ("std::type_info"%pstring, "supported"%pstring);
         ("Anon::.x"%pstring, "supported"%pstring)]
      : list (string * string)
      = ["virtual base classes are not supported"%pstring;
