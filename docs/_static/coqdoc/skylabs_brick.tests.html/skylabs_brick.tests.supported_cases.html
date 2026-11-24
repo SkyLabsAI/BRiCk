@@ -67,7 +67,7 @@
 <div class="code">
 
 <br/>
-<span class="id" title="var">cpp.prog</span> <span class="id" title="var">source</span> <span class="id" title="var">flags</span> "-std=c++20 --target=x86_64-linux-gnu" <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">source</span> <span class="id" title="var">flags</span> "-std=c++20 --target=x86_64-linux-gnu -Wno-vla-cxx-extension" <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
 // <span class="id" title="keyword">no</span> <span class="id" title="var">rule</span> <span class="id" title="keyword">for</span> [<span class="id" title="var">va_arg</span>].<br/>
 <span class="id" title="var">int</span> <span class="id" title="var">va</span>(<span class="id" title="var">__builtin_va_list</span> <span class="id" title="var">ap</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">__builtin_va_arg</span>(<span class="id" title="var">ap</span>, <span class="id" title="var">int</span>); }<br/>
 <br/>
@@ -184,6 +184,14 @@
 <br/>
 // <span class="id" title="var">unevaluated</span> <span class="id" title="var">operands</span>.<br/>
 <span class="id" title="var">unsigned</span> <span class="id" title="var">long</span> <span class="id" title="var">sizeof_expr</span>(<span class="id" title="var">S</span> &amp;<span class="id" title="var">s</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">sizeof</span>(<span class="id" title="var">s</span>.*(&amp;<span class="id" title="var">S</span>::<span class="id" title="var">x</span>)); }<br/>
+<br/>
+// <span class="id" title="var">a</span> <span class="id" title="var">typedef</span> <span class="id" title="keyword">of</span> <span class="id" title="var">a</span> <span class="id" title="var">variably</span> <span class="id" title="var">modified</span> <span class="id" title="keyword">type</span>: <span class="id" title="var">its</span> <span class="id" title="var">bound</span> <span class="id" title="keyword">is</span> <span class="id" title="var">evaluated</span> (<span class="id" title="var">the</span><br/>
+// <span class="id" title="var">result</span> <span class="id" title="keyword">is</span> 1), <span class="id" title="var">which</span> <span class="id" title="var">cpp2v</span> <span class="id" title="var">prints</span> <span class="id" title="keyword">as</span> <span class="id" title="var">a</span> <span class="id" title="var">declaration</span>.<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">vla_typedef</span>() { <span class="id" title="var">int</span> <span class="id" title="var">x</span> = 0; <span class="id" title="var">typedef</span> <span class="id" title="var">int</span> <span class="id" title="var">A</span>[(<span class="id" title="var">x</span> = 1)]; <span class="id" title="keyword">return</span> <span class="id" title="var">x</span>; }<br/>
+<br/>
+// <span class="id" title="var">a</span> <span class="id" title="var">condition</span> <span class="id" title="var">variable</span> <span class="id" title="keyword">of</span> <span class="id" title="var">a</span> <span class="id" title="var">variably</span> <span class="id" title="var">modified</span> <span class="id" title="keyword">type</span> <span class="id" title="var">evaluates</span> <span class="id" title="var">its</span> <span class="id" title="var">bound</span><br/>
+// <span class="id" title="var">too</span> (<span class="id" title="var">the</span> <span class="id" title="var">result</span> <span class="id" title="keyword">is</span> 1), <span class="id" title="var">and</span> <span class="id" title="var">a</span> <span class="id" title="var">condition</span> <span class="id" title="var">has</span> <span class="id" title="keyword">no</span> <span class="id" title="var">place</span> <span class="id" title="keyword">for</span> <span class="id" title="var">the</span> <span class="id" title="var">bound</span>.<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">vla_condition</span>() { <span class="id" title="var">int</span> <span class="id" title="var">x</span> = 0; <span class="id" title="keyword">if</span> (<span class="id" title="var">int</span> ( *<span class="id" title="var">p</span>)[(<span class="id" title="var">x</span> = 1)] = <span class="id" title="var">nullptr</span>) <span class="id" title="keyword">return</span> 7; <span class="id" title="keyword">return</span> <span class="id" title="var">x</span>; }<br/>
 }}.<br/>
 
 <br/>
@@ -205,7 +213,7 @@
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "direct_undeclared(const char*, const char*)"<br/>
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "P::P(const P&amp;)"<span class="id" title="notation">;</span> "long_double_ptr(long double*)"<span class="id" title="notation">;</span> "anon_ptr(?record*)"<br/>
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "long_double_ptr(?Builtin long double*)"<span class="id" title="notation">;</span> "long_double_ptr(long double&amp;)"<span class="id" title="notation">;</span> "ns_get(NS*)"<br/>
-&nbsp;&nbsp;<span class="id" title="notation">;</span> "sizeof_expr(S&amp;)" <span class="id" title="notation">]</span>%<span class="id" title="var">pstring</span>).<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "sizeof_expr(S&amp;)"<span class="id" title="notation">;</span> "vla_typedef()"<span class="id" title="notation">;</span> "vla_condition()" <span class="id" title="notation">]</span>%<span class="id" title="var">pstring</span>).<br/>
 
 <br/>
 </div>

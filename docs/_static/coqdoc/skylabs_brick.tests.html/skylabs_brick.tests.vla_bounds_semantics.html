@@ -1,0 +1,172 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.vla_bounds_semantics</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.proofmode.proofmode</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.logic</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab40"></a><h1 class="section">Declarations of variably modified types: <span class="inlinecode"><span class="id" title="constructor">Dvla_bounds</span></span></h1>
+
+
+<div class="paragraph"> </div>
+
+Derived consequences of <span class="inlinecode"><span class="id" title="definition">wp_decl</span></span> for <span class="inlinecode"><span class="id" title="constructor">Dvla_bounds</span></span>: the bounds are
+evaluated in order, each must be greater than zero, and the declaration
+binds no name and creates no object. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="with_cpp" class="idref" href="#with_cpp"><span class="id" title="section">with_cpp</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{<a id="43a705d40096ef54c52f70536b49dc5b" class="idref" href="#43a705d40096ef54c52f70536b49dc5b"><span class="id" title="variable">Σ</span></a> : <span class="id" title="class">cpp_logic</span>} {<a id="0b1d3f605c206c3f68b5282befa8ad5b" class="idref" href="#0b1d3f605c206c3f68b5282befa8ad5b"><span class="id" title="variable">σ</span></a> : <span class="id" title="class">genv</span>} (<a id="with_cpp.tu" class="idref" href="#with_cpp.tu"><span class="id" title="variable">tu</span></a> : <span class="id" title="record">translation_unit</span>).<br/>
+
+<br/>
+&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Open</span> <span class="id" title="keyword">Scope</span> <span class="id" title="var">Z_scope</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Without bounds the declaration does nothing: the region is unchanged
+      and nothing is left to destroy. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="wp_decl_vla_bounds_nil" class="idref" href="#wp_decl_vla_bounds_nil"><span class="id" title="lemma">wp_decl_vla_bounds_nil</span></a> <a id="bdd17f9af07f3df53e7d7a68964f1315" class="idref" href="#bdd17f9af07f3df53e7d7a68964f1315"><span class="id" title="binder">ρ</span></a> (<a id="k:7" class="idref" href="#k:7"><span class="id" title="binder">k</span></a> : <span class="id" title="inductive">region</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="abbreviation">FreeTemps</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">epred</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">wp_decl</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#bdd17f9af07f3df53e7d7a68964f1315"><span class="id" title="variable">ρ</span></a> (<span class="id" title="constructor">Dvla_bounds</span> <span class="id" title="notation">[]</span>) <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#k:7"><span class="id" title="variable">k</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#k:7"><span class="id" title="variable">k</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#bdd17f9af07f3df53e7d7a68964f1315"><span class="id" title="variable">ρ</span></a> <span class="id" title="constructor">FreeTemps.id</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The first bound is evaluated as an operand and its temporaries are
+      destroyed; its value is an integer greater than zero. The other
+      bounds follow, in the same region. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="wp_decl_vla_bounds_cons" class="idref" href="#wp_decl_vla_bounds_cons"><span class="id" title="lemma">wp_decl_vla_bounds_cons</span></a> <a id="912f528bcc2a3307968970578885417a" class="idref" href="#912f528bcc2a3307968970578885417a"><span class="id" title="binder">ρ</span></a> <a id="e:9" class="idref" href="#e:9"><span class="id" title="binder">e</span></a> <a id="es:10" class="idref" href="#es:10"><span class="id" title="binder">es</span></a> (<a id="k:11" class="idref" href="#k:11"><span class="id" title="binder">k</span></a> : <span class="id" title="inductive">region</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="abbreviation">FreeTemps</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">epred</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">wp_decl</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#912f528bcc2a3307968970578885417a"><span class="id" title="variable">ρ</span></a> (<span class="id" title="constructor">Dvla_bounds</span> (<a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#e:9"><span class="id" title="variable">e</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#es:10"><span class="id" title="variable">es</span></a>)) <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#k:11"><span class="id" title="variable">k</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="axiom">wp_operand</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#912f528bcc2a3307968970578885417a"><span class="id" title="variable">ρ</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#e:9"><span class="id" title="variable">e</span></a> (<span class="id" title="keyword">fun</span> <a id="v:12" class="idref" href="#v:12"><span class="id" title="binder">v</span></a> <a id="free:13" class="idref" href="#free:13"><span class="id" title="binder">free</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">interp</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#free:13"><span class="id" title="variable">free</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<span class="id" title="notation">Exists</span> <a id="n:14" class="idref" href="#n:14"><span class="id" title="binder">n</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a><span class="id" title="notation">,</span> <span class="id" title="notation">[|</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#v:12"><span class="id" title="variable">v</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="constructor">Vint</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#n:14"><span class="id" title="variable">n</span></a> <span class="id" title="notation">|]</span> <span class="id" title="notation">**</span> <span class="id" title="notation">[|</span> 0 <span class="id" title="notation">&lt;</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#n:14"><span class="id" title="variable">n</span></a> <span class="id" title="notation">|]</span> <span class="id" title="notation">**</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">wp_decl</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#912f528bcc2a3307968970578885417a"><span class="id" title="variable">ρ</span></a> (<span class="id" title="constructor">Dvla_bounds</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#es:10"><span class="id" title="variable">es</span></a>) <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#k:11"><span class="id" title="variable">k</span></a>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+A literal bound, as in <code>typedef int A[3][n];</code>: clang prints the
+      constant bound of an array of variable-length arrays too. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="wp_decl_vla_bounds_int" class="idref" href="#wp_decl_vla_bounds_int"><span class="id" title="lemma">wp_decl_vla_bounds_int</span></a> <a id="c16b7012a6c600a956fcfe9f6cb4626c" class="idref" href="#c16b7012a6c600a956fcfe9f6cb4626c"><span class="id" title="binder">ρ</span></a> <a id="n:16" class="idref" href="#n:16"><span class="id" title="binder">n</span></a> <a id="es:17" class="idref" href="#es:17"><span class="id" title="binder">es</span></a> (<a id="k:18" class="idref" href="#k:18"><span class="id" title="binder">k</span></a> : <span class="id" title="inductive">region</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="abbreviation">FreeTemps</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">epred</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="axiom">has_type_prop</span> (<span class="id" title="constructor">Vint</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#n:16"><span class="id" title="variable">n</span></a>) <span class="id" title="abbreviation">Tint</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> 0 <span class="id" title="notation">&lt;</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#n:16"><span class="id" title="variable">n</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">wp_decl</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#c16b7012a6c600a956fcfe9f6cb4626c"><span class="id" title="variable">ρ</span></a> (<span class="id" title="constructor">Dvla_bounds</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#es:17"><span class="id" title="variable">es</span></a>) <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#k:18"><span class="id" title="variable">k</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <span class="id" title="definition">wp_decl</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#c16b7012a6c600a956fcfe9f6cb4626c"><span class="id" title="variable">ρ</span></a> (<span class="id" title="constructor">Dvla_bounds</span> (<span class="id" title="constructor">Eint</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#n:16"><span class="id" title="variable">n</span></a> <span class="id" title="abbreviation">Tint</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#es:17"><span class="id" title="variable">es</span></a>)) <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#k:18"><span class="id" title="variable">k</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">intros</span> <span class="id" title="var">Hty</span> <span class="id" title="var">Hn</span>. <span class="id" title="tactic">rewrite</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#wp_decl_vla_bounds_cons"><span class="id" title="lemma">wp_decl_vla_bounds_cons</span></a> -<span class="id" title="axiom">wp_operand_int</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iIntros</span> "H". <span class="id" title="var">iSplit</span>; <span class="id" title="tactic">first</span> <span class="id" title="var">done</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iApply</span> <span class="id" title="lemma">interp_intro_id</span>. <span class="id" title="var">iExists</span> <span class="id" title="var">n</span>. <span class="id" title="tactic">by</span> <span class="id" title="var">iFrame</span> "H".<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+A bound that is not greater than zero has no behavior: the
+      declaration yields any postcondition only from <span class="inlinecode"><span class="id" title="var">False</span></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="wp_decl_vla_bounds_positive" class="idref" href="#wp_decl_vla_bounds_positive"><span class="id" title="lemma">wp_decl_vla_bounds_positive</span></a> <a id="ae40d588688470bd12bac261352e8063" class="idref" href="#ae40d588688470bd12bac261352e8063"><span class="id" title="binder">ρ</span></a> <a id="e:20" class="idref" href="#e:20"><span class="id" title="binder">e</span></a> <a id="es:21" class="idref" href="#es:21"><span class="id" title="binder">es</span></a> (<a id="k:22" class="idref" href="#k:22"><span class="id" title="binder">k</span></a> : <span class="id" title="inductive">region</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="abbreviation">FreeTemps</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">epred</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">wp_decl</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#ae40d588688470bd12bac261352e8063"><span class="id" title="variable">ρ</span></a> (<span class="id" title="constructor">Dvla_bounds</span> (<a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#e:20"><span class="id" title="variable">e</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#es:21"><span class="id" title="variable">es</span></a>)) <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#k:22"><span class="id" title="variable">k</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <span class="id" title="axiom">wp_operand</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#ae40d588688470bd12bac261352e8063"><span class="id" title="variable">ρ</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#e:20"><span class="id" title="variable">e</span></a> (<span class="id" title="keyword">fun</span> <a id="v:23" class="idref" href="#v:23"><span class="id" title="binder">v</span></a> <a id="free:24" class="idref" href="#free:24"><span class="id" title="binder">free</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">interp</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#free:24"><span class="id" title="variable">free</span></a> (<span class="id" title="notation">Exists</span> <a id="n:25" class="idref" href="#n:25"><span class="id" title="binder">n</span></a> : <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Numbers.BinNums.html#Z"><span class="id" title="inductive">Z</span></a><span class="id" title="notation">,</span> <span class="id" title="notation">[|</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#v:23"><span class="id" title="variable">v</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="constructor">Vint</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#n:25"><span class="id" title="variable">n</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#ba2b0e492d2b4675a0acf3ea92aabadd"><span class="id" title="notation">/\</span></a> 0 <span class="id" title="notation">&lt;</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#n:25"><span class="id" title="variable">n</span></a> <span class="id" title="notation">|]</span> <span class="id" title="notation">**</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#::bi_scope:'True'"><span class="id" title="notation">True</span></a>)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#wp_decl_vla_bounds_cons"><span class="id" title="lemma">wp_decl_vla_bounds_cons</span></a>. <span class="id" title="var">iApply</span> <span class="id" title="axiom">wp_operand_frame</span>; <span class="id" title="tactic">first</span> <span class="id" title="var">done</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iIntros</span> (<span class="id" title="var">v</span> <span class="id" title="var">free</span>). <span class="id" title="var">iApply</span> <span class="id" title="lemma">interp_frame</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iIntros</span> "(%n &amp; % &amp; % &amp; _)". <span class="id" title="var">iExists</span> <span class="id" title="var">n</span>. <span class="id" title="tactic">by</span> <span class="id" title="var">iSplit</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+In a block, the declaration runs the rest of the block in the same
+      region, and leaves nothing to destroy at the end of the scope. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="wp_block_vla_bounds" class="idref" href="#wp_block_vla_bounds"><span class="id" title="lemma">wp_block_vla_bounds</span></a> <a id="5887ff30c3475dc86b5d5aeb60b7c453" class="idref" href="#5887ff30c3475dc86b5d5aeb60b7c453"><span class="id" title="binder">ρ</span></a> <a id="es:27" class="idref" href="#es:27"><span class="id" title="binder">es</span></a> <a id="ss:28" class="idref" href="#ss:28"><span class="id" title="binder">ss</span></a> <a id="Q:29" class="idref" href="#Q:29"><span class="id" title="binder">Q</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#1ab064278224e8da215d0768a08713fe"><span class="id" title="notation">▷</span></a> <span class="id" title="definition">wp_vla_bounds</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#5887ff30c3475dc86b5d5aeb60b7c453"><span class="id" title="variable">ρ</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#es:27"><span class="id" title="variable">es</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#1ab064278224e8da215d0768a08713fe"><span class="id" title="notation">▷</span></a> <span class="id" title="definition">wp_block</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#5887ff30c3475dc86b5d5aeb60b7c453"><span class="id" title="variable">ρ</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#ss:28"><span class="id" title="variable">ss</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#Q:29"><span class="id" title="variable">Q</span></a>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <span class="id" title="definition">wp_block</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#with_cpp.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#5887ff30c3475dc86b5d5aeb60b7c453"><span class="id" title="variable">ρ</span></a> (<span class="id" title="constructor">Sdecl</span> <span class="id" title="notation">[</span><span class="id" title="constructor">Dvla_bounds</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#es:27"><span class="id" title="variable">es</span></a><span class="id" title="notation">]</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#ss:28"><span class="id" title="variable">ss</span></a>) <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#Q:29"><span class="id" title="variable">Q</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> (<span class="id" title="lemma">wp_block_unfold</span> <span class="id" title="var">_</span> ρ (<span class="id" title="constructor">Sdecl</span> <span class="id" title="var">_</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <span class="id" title="var">_</span>)) /= <span class="id" title="definition">wp_decls_eq</span> /=.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iIntros</span> "H !&gt; !&gt;". <span class="id" title="var">iApply</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">(</span></a><span class="id" title="lemma">wp_vla_bounds_frame</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">with</span></a> "[] H"<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">)</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iIntros</span> "H !&gt; !&gt; !&gt; !&gt;".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iApply</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">(</span></a><span class="id" title="lemma">wp_block_frame</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">with</span></a> "[] H"<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">)</span></a>. <span class="id" title="var">iIntros</span> (<span class="id" title="var">rt</span>) "H".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> <span class="id" title="var">rt</span>; <span class="id" title="var">cbn</span>; <span class="id" title="var">iApply</span> <span class="id" title="lemma">interp_intro_seq</span>; <span class="id" title="tactic">by</span> <span class="id" title="tactic">do</span> 2 <span class="id" title="var">iApply</span> <span class="id" title="lemma">interp_intro_id</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_brick.tests.vla_bounds_semantics.html#with_cpp"><span class="id" title="section">with_cpp</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

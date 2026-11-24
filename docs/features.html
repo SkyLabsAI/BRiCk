@@ -180,7 +180,12 @@ are supported.</p></td>
 </tr>
 <tr class="row-odd"><td><p>Variable-length arrays</p></td>
 <td><p>Unsupported syntax</p></td>
-<td><p>Their initialization has no semantics. <a class="reference external" href="https://github.com/SkyLabsAI/BRiCk/issues/59">BRiCk#59</a></p></td>
+<td><p>Their initialization has no semantics. The array bounds of typedefs,
+variables and function parameters of variably modified types are
+evaluated where the type is declared and must be greater than zero
+(<code class="docutils literal notranslate"><span class="pre">Dvla_bounds</span></code>). Condition variables of, and casts to, such types
+are unsupported.
+<a class="reference external" href="https://github.com/SkyLabsAI/BRiCk/issues/59">BRiCk#59</a></p></td>
 </tr>
 <tr class="row-even"><td><p>Exceptions: <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">throw</span></code>, <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">try</span></code>, <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">typeid</span></code>, dynamic exception
 specifications</p></td>
