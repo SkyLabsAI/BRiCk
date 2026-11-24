@@ -449,6 +449,7 @@ Fixpoint erase_qualifiers (t : type) : type :=
   | Trealigned n t => Trealigned n (erase_qualifiers t)
   | Tnullptr => Tnullptr
   | Tarch sz nm => Tarch sz nm
+  | Tattributed attrs t => Tattributed attrs (erase_qualifiers t)
   | Tunsupported msg => Tunsupported msg
   | Tparam _
   | Tresult_param _
@@ -832,6 +833,7 @@ Fixpoint normalize_type' (cv : type_qualifiers) (t : type) : type :=
   | Tnullptr
   | Tfloat_ _
   | Tarch _ _ => tqualified cv t
+  | Tattributed _ _ => tqualified cv t (* opaque, like [Tunsupported] *)
   | Tunsupported _ => tqualified cv t
   | Tparam _
   | Tresult_param _

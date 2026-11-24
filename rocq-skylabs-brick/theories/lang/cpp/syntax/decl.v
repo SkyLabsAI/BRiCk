@@ -235,10 +235,11 @@ Record Func' : Set := Build_Func
 ; f_cc     : calling_conv
 ; f_arity  : function_arity
 ; f_exception : exception_spec.t
+; f_attrs  : list attr.t
 ; f_body   : option FunctionBody
 }.
 Notation Func := Func'.
-#[global] Arguments Build_Func _ _ _ _ _ _ : assert.
+#[global] Arguments Build_Func _ _ _ _ _ _ _ : assert.
 #[global] Instance: EqDecision Func.
 Proof. solve_decision. Defined.
 #[global] Instance Func_inhabited : Inhabited Func.
@@ -253,10 +254,11 @@ Record Method' : Set := Build_Method
 ; m_cc      : calling_conv
 ; m_arity   : function_arity
 ; m_exception : exception_spec.t
+; m_attrs   : list attr.t
 ; m_body    : option (OrDefault Stmt)
 }.
 Notation Method := Method'.
-#[global] Arguments Build_Method _ _ _ _ _ _ _ _ : assert.
+#[global] Arguments Build_Method _ _ _ _ _ _ _ _ _ : assert.
 #[global] Instance: EqDecision Method.
 Proof. solve_decision. Defined.
 
@@ -267,6 +269,7 @@ Definition static_method (m : Method)
    ; f_cc := m.(m_cc)
    ; f_arity := m.(m_arity)
    ; f_exception := m.(m_exception)
+   ; f_attrs := m.(m_attrs)
    ; f_body := match m.(m_body) with
                | Some (UserDefined body | CompilerProvided body) => Some (Impl body)
                | _ => None
