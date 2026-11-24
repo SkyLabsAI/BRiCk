@@ -95,18 +95,19 @@ Section comparable.
     valid_ptr p1 ∗ valid_ptr p2 ⊢ ptr_ord_comparable p1 p2 f res.
   Proof.
     iIntros (Hsz Hpos -> -> Hres) "#[V1 V2]".
-    (* Both are offsets of the first, which is valid. *)
+    (*
+    iApply (ptr_ord_comparable_off_off_eval (.[ ty ! i ]) (.[ ty ! j ])
+      (Z.of_N sz * i) (Z.of_N sz * j) p).
+    ^^ Would require [valid_ptr p] as well.
+    *)
     iApply (ptr_ord_comparable_off_off_eval (.[ ty ! 0 ]) (.[ ty ! j - i ])
       (Z.of_N sz * 0) (Z.of_N sz * (j - i)) (p .[ ty ! i ])); last iFrame "V1 V2".
-    - by rewrite offset_ptr_sub_0.
-    - rewrite o_sub_sub. f_equal. f_equal. lia.
-    - exact: eval_o_sub'.
-    - exact: eval_o_sub'.
-    - intros va ???. apply Hres. rewrite Z2N.inj_compare //.
-      destruct (Z.compare_spec i j) as [->|Hlt|Hgt].
-      + rewrite Z.sub_diag. exact: Z.compare_refl.
-      + apply Z.compare_lt_iff. nia.
-      + apply Z.compare_gt_iff. nia.
+    { by rewrite offset_ptr_sub_0. }
+    { rewrite o_sub_sub. f_equal. f_equal. lia. }
+    1-2: exact: eval_o_sub'.
+    intros va ???. apply Hres. rewrite Z2N.inj_compare //.
+    rewrite Z.add_compare_mono_l -Zmult_compare_compat_l; last lia.
+    by rewrite [(0 ?= _)%Z]Z.compare_antisym -Z.compare_sub -Z.compare_antisym.
   Qed.
 
   (** Skeleton for [Beq] and [Bneq] axioms on pointers.
