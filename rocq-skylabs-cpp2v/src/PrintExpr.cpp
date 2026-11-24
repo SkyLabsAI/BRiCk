@@ -1391,14 +1391,16 @@ public:
 
     // The arguments of these builtins are not evaluated, but [Ecall] would
     // evaluate them: those clang marks unevaluated (`__builtin_constant_p`),
-    // MS `__noop` (code generation drops its arguments), and MS `__assume`,
-    // whose argument is only assumed.
+    // MS `__noop` (code generation drops its arguments), and
+    // `__builtin_assume` and MS `__assume`, whose argument is only assumed:
+    // the behaviour is undefined unless it holds.
     bool unevaluatedArgsBuiltin(const FunctionDecl &fd) {
         auto id = fd.getBuiltinID();
         if (id == Builtin::ID::NotBuiltin)
             return false;
         return cprint.getContext().BuiltinInfo.isUnevaluated(id) ||
-               id == Builtin::BI__noop || id == Builtin::BI__assume;
+               id == Builtin::BI__noop || id == Builtin::BI__assume ||
+               id == Builtin::BI__builtin_assume;
     }
 
     void VisitCallExpr(const CallExpr *expr) {
@@ -1424,7 +1426,13 @@ public:
                        [&](auto i) { cprint.printExpr(print, i, names); });
         } else if (auto fd = expr->getDirectCallee();
                    fd && unevaluatedArgsBuiltin(*fd)) {
-            unsupported_expr(expr, "builtin whose arguments are not evaluated");
+            auto msg = "builtin whose arguments are not evaluated: " +
+                       fd->getNameAsString();
+            cprint.error_prefix(logging::unsupported(), loc::of(expr))
+                << "warning: unsupported " << msg << "\n";
+            print.ctor("Eunsupported", false);
+            print.str(msg) << fmt::nbsp;
+            done(expr, Done::DT);
         } else {
             print.ctor("Ecall");
             cprint.printExpr(print, expr->getCallee(), names);
