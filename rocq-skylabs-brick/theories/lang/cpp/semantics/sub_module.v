@@ -236,6 +236,23 @@ Qed.
 
 (** ** Inclusion of [ObjValue] *)
 
+(** [Defaulted ≤ CompilerProvided x] relates a declaration printed without
+    elaboration (for instance in a header) to the definition that clang
+    generates for it. [code_at] and its variants are closed under this order
+    (see [code_at_mono]), so the [compile.v] axioms are sound only if the
+    semantics of [Defaulted] refines that of every [CompilerProvided x] above
+    it. For methods and constructors:
+
+    - Outside a union's copy and move operations, the semantics of a
+      [Defaulted] body is [UNSUPPORTED], which is [False], so it refines
+      anything.
+    - A union's copy and move operations copy the object representation,
+      whether their body is [Defaulted] or [CompilerProvided]: like clang's
+      code generator, [wp_method] and [wp_ctor] ignore clang's body for them
+      (see [wp_union_copy] in [logic/func.v]), so both bodies have the same
+      semantics.
+
+    Destructors use [DtorBody_le] instead. *)
 Definition OrDefault_le {T : Set} `{EqDecision T} (ae be : exception_spec.t) (a b : OrDefault T) : bool :=
   match a , b with
   | Defaulted , Defaulted => bool_decide (ae ⊆ be)
