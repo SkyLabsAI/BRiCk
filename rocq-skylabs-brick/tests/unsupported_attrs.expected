@@ -1,0 +1,39 @@
+     = Some
+         (Sseq
+            [Sdecl [Dvar "flag" "int" (Some (Eint 0 "int"))];
+             Sseq [Sunsupported "variable with a cleanup attribute"];
+             Sunsupported "variable with a cleanup attribute";
+             Sfor (Some (Sunsupported "variable with a cleanup attribute"))
+               None None None (Sseq [Sbreak]);
+             Sdecl [Dvar "plain" "int*" (Some (Eaddrof (Evar "flag" "int")))]])
+     : option Stmt
+     = Some
+         (Sseq
+            [Sexpr
+               (Eexplicit_cast cast_style.c "void"
+                  (Ecast C2void (Eaddrof (Eunsupported "DeclRefExpr" "int&"))));
+             Sexpr
+               (Eexplicit_cast cast_style.c "void"
+                  (Ecast C2void (Eaddrof (Eglobal "weak_def" "int"))));
+             Sif None None
+               (Ecast Cptr2bool
+                  (Ecast Cfun2ptr (Eunsupported "DeclRefExpr" "void(&)()")))
+               (Sexpr
+                  (Ecall
+                     (Ecast Cfun2ptr (Eunsupported "DeclRefExpr" "void(&)()"))
+                     []))
+               (Sseq []);
+             Sexpr
+               (Ecall (Ecast Cfun2ptr (Eglobal "hook_def()" "void()")) []);
+             Sexpr
+               (Eexplicit_cast cast_style.c "void"
+                  (Ecast C2void (Eaddrof (Eunsupported "DeclRefExpr" "int&"))));
+             Sexpr (Eunsupported "CXXMemberCallExpr" "void");
+             Sexpr
+               (Eexplicit_cast cast_style.c "void"
+                  (Ecast C2void
+                     (Eunsupported "UnaryOperator" "void( C::*)()")));
+             Sexpr
+               (Eexplicit_cast cast_style.c "void"
+                  (Ecast C2void (Eaddrof (Eglobal "strong" "int"))))])
+     : option Stmt
