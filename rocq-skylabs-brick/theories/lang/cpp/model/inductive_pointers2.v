@@ -1216,7 +1216,10 @@ Module PTRS_IMPL <: PTRS_INTF.
     by move=> [ty H].
   Qed.
 
+  (** [Trealigned] does not change the size, so subscripts ignore it
+      ([o_sub_realigned]). *)
   Program Definition o_sub (σ : genv) ty z : offset :=
+    let ty := strip_realigned ty in
     if decide (z = 0)%Z then
       o_id
     else
@@ -1291,31 +1294,35 @@ Module PTRS_IMPL <: PTRS_INTF.
     }
   Qed.
 
+  Lemma o_sub_realigned σ n ty z :
+    o_sub σ (Trealigned n ty) z = o_sub σ ty z.
+  Proof. apply (sig_eq_pi _). rewrite /o_sub /=. by case_decide. Qed.
+
   Lemma o_dot_sub :
     ∀ σ i j ty,
       o_sub σ ty i ,, o_sub σ ty j = o_sub σ ty (i + j).
   Proof.
     UNFOLD_dot.
     move=> σ i j ty.
-    rewrite /__o_dot /o_sub /o_id.
+    rewrite /__o_dot /o_sub /o_id /=.
     repeat case_match; subst;
     try lia; apply (sig_eq_pi roff_canon); simpl.
     { by simp normalize. }
     { simp normalize. by destruct j. }
     { simp normalize. by destruct i. }
     {
-      change [o_sub_ ty i; o_sub_ ty j]
-      with  ([o_sub_ ty i; o_sub_ ty j] ++ []).
-      rewrite (norm_eager _ [o_sub_ ty (i + j)]).
+      change [o_sub_ (strip_realigned ty) i; o_sub_ (strip_realigned ty) j]
+      with  ([o_sub_ (strip_realigned ty) i; o_sub_ (strip_realigned ty) j] ++ []).
+      rewrite (norm_eager _ [o_sub_ (strip_realigned ty) (i + j)]).
       2: constructor.
       rewrite e (norm_eager _ []).
       2: constructor.
       simpl. by simp normalize.
     }
     {
-      change [o_sub_ ty i; o_sub_ ty j]
-      with  ([o_sub_ ty i; o_sub_ ty j] ++ []).
-      rewrite (norm_eager _ [o_sub_ ty (i + j)]).
+      change [o_sub_ (strip_realigned ty) i; o_sub_ (strip_realigned ty) j]
+      with  ([o_sub_ (strip_realigned ty) i; o_sub_ (strip_realigned ty) j] ++ []).
+      rewrite (norm_eager _ [o_sub_ (strip_realigned ty) (i + j)]).
       2: constructor. simpl.
       destruct (i + j); done.
     }
@@ -1381,7 +1388,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     case_match; subst; simpl.
     { by rewrite right_absorb_L. }
     {
-      by rewrite /o_sub_off Hsome /= right_id_L comm_L.
+      by rewrite /o_sub_off size_of_strip_realigned Hsome /= right_id_L comm_L.
     }
   Qed.
 

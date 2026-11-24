@@ -387,11 +387,20 @@ Module Type RAW_BYTES_MIXIN
   | Vqual t ty v1 v2 :
     val_related ty v1 v2 ->
     val_related (Tqualified t ty) v1 v2
+  | Vrealigned n ty v1 v2 :
+    val_related ty v1 v2 ->
+    val_related (Trealigned n ty) v1 v2
   | Vraw_uint8 raw z (Hraw : raw_bytes_of_val σ Tbyte (Vint z) [raw]) :
     val_related Tbyte (Vraw raw) (Vint z)
   | Vuint8_raw z raw (Hraw : raw_bytes_of_val σ Tbyte (Vint z) [raw]) :
     val_related Tbyte (Vint z) (Vraw raw).
   #[local] Hint Constructors val_related : core.
+
+  (** [Trealigned] does not change the values of a type
+      ([has_type_prop_realigned]), nor how they relate. *)
+  Lemma val_related_realigned {σ} n ty v1 v2 :
+    val_related (Trealigned n ty) v1 v2 <-> val_related ty v1 v2.
+  Proof. split; [inversion 1; subst; eauto|eauto]. Qed.
 
   Lemma val_related_not_raw {σ} v1 v2 ty :
     ~~ is_raw v1 -> ~~ is_raw v2 ->
@@ -467,6 +476,7 @@ Module Type RAW_BYTES_MIXIN
     { induction 1; auto. }
     intros v1 v2. induction 1.
     { done. }
+    { inversion 1; simplify_eq; auto. }
     { inversion 1; simplify_eq; auto. }
     { inversion 1; simplify_eq; auto.
       have [->] := raw_bytes_of_val_unique_encoding Hraw Hraw0. auto. }
@@ -745,5 +755,6 @@ Proof.
   induction 1.
   { done. }
   { by rewrite -!has_type_prop_qual_iff. }
+  { by rewrite !has_type_prop_realigned. }
   all: by rewrite has_type_prop_raw_bytes_of_val.
 Qed.

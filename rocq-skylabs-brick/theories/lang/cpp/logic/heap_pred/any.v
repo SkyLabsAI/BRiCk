@@ -5,6 +5,7 @@
  *)
 Require Import skylabs.lang.cpp.logic.heap_pred.prelude.
 Require Import skylabs.lang.cpp.logic.heap_pred.valid.
+Require Import skylabs.lang.cpp.logic.heap_pred.simple.
 Require Import skylabs.lang.cpp.logic.heap_pred.everywhere.
 Require Import skylabs.lang.cpp.logic.heap_pred.tptsto.
 Require Import skylabs.lang.cpp.logic.heap_pred.prim.
@@ -243,6 +244,37 @@ Section with_cpp.
     rewrite -tptstoR_anyR_val. eauto.
   Qed.
 
+
+  (** For an unqualified value type, [anyR] owns some value. *)
+  Lemma anyR_heap_value t q :
+    is_heap_type t -> is_value_type t ->
+    anyR t q -|- Exists v, tptstoR t q v.
+  Proof.
+    move=> Hh Hv.
+    have Hu : ~~ is_qualified t.
+    { destruct t => //. exfalso. exact: heap_type_not_qualified Hh. }
+    have He : erase_qualifiers t = t.
+    { move: Hh. rewrite /is_heap_type. by case_bool_decide. }
+    iSplit.
+    - rewrite anyR_tptstoR_val // decompose_type_unqual //= He qualify_mut. by iIntros "$".
+    - iIntros "[%v H]". by rewrite tptstoR_anyR_val.
+  Qed.
+
+  (** [anyR] through [Trealigned]; see [tptstoR_realigned]. Unlike
+      [tptstoR], [anyR] does not observe [is_heap_type], hence the premise. *)
+  Lemma anyR_realigned n ty q :
+    is_heap_type (Trealigned n ty) ->
+    aligned_ofR ty ** anyR (Trealigned n ty) q -|-
+    aligned_ofR (Trealigned n ty) ** anyR ty q.
+  Proof.
+    move=> Hh. have [Hh' [Hv _]] := is_heap_type_realigned _ _ Hh.
+    have HvR : is_value_type (Trealigned n ty).
+    { move: Hh. rewrite /is_heap_type /=. by case_bool_decide; rewrite ?orb_false_r. }
+    rewrite !anyR_heap_value // !bi.sep_exist_l. f_equiv=> v.
+    rewrite tptstoR_realigned. iSplit.
+    - by iIntros "[[$ _] $]".
+    - iIntros "[$ $]". by iPureIntro.
+  Qed.
 
   Lemma tptstoR_anyR_ref t q v :
     tptstoR (Tref t) q v |-- anyR (Tref t) q.

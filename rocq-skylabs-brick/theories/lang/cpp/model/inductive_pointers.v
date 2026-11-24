@@ -254,8 +254,16 @@ Module PTRS_IMPL <: PTRS_INTF.
     mkOffset σ (o_derived_ base derived) I.
   (** Qualifiers do not distinguish subscript paths: [type_ptr_erase] requires
       their one-past pointers to share the same representation as well. *)
+  (** The element type that a subscript records: neither qualifiers nor
+      [Trealigned] change the size, so neither distinguishes subscript
+      paths ([o_sub_erase], [o_sub_realigned]). *)
+  Definition sub_type (ty : type) : type := strip_realigned (erase_qualifiers ty).
+
+  Lemma size_of_sub_type σ ty : size_of σ (sub_type ty) = size_of σ ty.
+  Proof. by rewrite /sub_type size_of_strip_realigned size_of_erase_qualifiers. Qed.
+
   #[program] Definition o_sub σ ty z : offset :=
-    let ty := erase_qualifiers ty in
+    let ty := sub_type ty in
     if decide (z = 0)%Z
     then
       match size_of σ ty with
@@ -270,8 +278,12 @@ Module PTRS_IMPL <: PTRS_INTF.
     o_sub σ (erase_qualifiers ty) z = o_sub σ ty z.
   Proof.
     apply (sig_eq_pi _).
-    rewrite /o_sub /= erase_qualifiers_idemp. by case_decide.
+    rewrite /o_sub /sub_type /= erase_qualifiers_idemp. by case_decide.
   Qed.
+
+  Lemma o_sub_realigned σ n ty z :
+    o_sub σ (Trealigned n ty) z = o_sub σ ty z.
+  Proof. apply (sig_eq_pi _). rewrite /o_sub /sub_type /=. by case_decide. Qed.
 
   Lemma last_last_equiv {X} d {xs : list X} : default d (last xs) = List.last xs d.
   Proof. elim: xs => // x1 xs /= <-. by case_match. Qed.
@@ -353,7 +365,7 @@ Module PTRS_IMPL <: PTRS_INTF.
   Proof.
     move=> E. rewrite (comm_L _ _ i) /o_sub/eval_offset/eval_raw_offset /=.
     rewrite /mkOffset /mk_offset_seg/=/o_sub_off/=.
-    case_decide; subst; rewrite /= size_of_erase_qualifiers {}E //=.
+    case_decide; subst; rewrite /= size_of_sub_type {}E //=.
     by rewrite right_id_L.
   Qed.
 
@@ -875,7 +887,7 @@ Module PTRS_IMPL <: PTRS_INTF.
   Proof.
     rewrite /o_sub; case_decide;
       rewrite /eval_offset /eval_raw_offset /= /mkOffset /mk_offset_seg /=
-        /o_sub_off size_of_erase_qualifiers;
+        /o_sub_off size_of_sub_type;
       destruct (size_of σ ty); naive_solver.
   Qed.
 
@@ -945,14 +957,14 @@ Module PTRS_IMPL <: PTRS_INTF.
     size_of σ ty = Some sz -> i <> 0 ->
     proj1_sig ((o ,, o_field σ f) ,, o_sub σ ty i) =
       proj1_sig (o ,, o_field σ f) ++
-        [(o_sub_ (erase_qualifiers ty) i, Z.of_N sz * i)].
+        [(o_sub_ (sub_type ty) i, Z.of_N sz * i)].
   Proof.
     intros Ho Hf Hsz Hi.
     have Hfield := offset_field_raw σ o f z Ho Hf.
     rewrite _dot.unlock /DOT_dot /= in Hfield |- *.
     rewrite Hfield /raw_offset_merge /o_sub.
     case_decide; first contradiction.
-    rewrite /mkOffset /mk_offset_seg /= /o_sub_off size_of_erase_qualifiers Hsz /=.
+    rewrite /mkOffset /mk_offset_seg /= /o_sub_off size_of_sub_type Hsz /=.
     rewrite -app_assoc /= raw_offset_collapse_field_app; last exact Ho.
     rewrite (proj2_sig o) /= /offset_seg_cons decide_False; last naive_solver.
     by rewrite -app_assoc /= (Z.mul_comm i).
@@ -1247,13 +1259,13 @@ Module PTRS_IMPL <: PTRS_INTF.
   #[local] Lemma o_sub_raw_collapse σ ty i sz :
     size_of σ ty = Some sz ->
     proj1_sig (o_sub σ ty i) =
-      raw_offset_collapse [(o_sub_ (erase_qualifiers ty) i, Z.of_N sz * i)].
+      raw_offset_collapse [(o_sub_ (sub_type ty) i, Z.of_N sz * i)].
   Proof.
     intros Hsz. rewrite /o_sub.
     case_decide.
-    - subst i. rewrite size_of_erase_qualifiers Hsz /= /offset_seg_cons /=.
+    - subst i. rewrite size_of_sub_type Hsz /= /offset_seg_cons /=.
       by rewrite Z.mul_0_r.
-    - rewrite /mkOffset /mk_offset_seg /= /o_sub_off size_of_erase_qualifiers Hsz /=.
+    - rewrite /mkOffset /mk_offset_seg /= /o_sub_off size_of_sub_type Hsz /=.
       rewrite /offset_seg_cons decide_False; last naive_solver.
       by rewrite Z.mul_comm.
   Qed.
@@ -1266,14 +1278,14 @@ Module PTRS_IMPL <: PTRS_INTF.
     exists prefix n z,
       raw_offset_collapse prefix = prefix /\
       is_Some (eval_raw_offset prefix) /\
-      subscript_separated (erase_qualifiers ty) prefix /\
+      subscript_separated (sub_type ty) prefix /\
       forall i,
         proj1_sig (off ,, o_sub σ ty i) =
           prefix ++ raw_offset_collapse
-            [(o_sub_ (erase_qualifiers ty) (n+i), (z + Z.of_N sz * i)%Z)].
+            [(o_sub_ (sub_type ty) (n+i), (z + Z.of_N sz * i)%Z)].
   Proof.
     intros Hdef Hsz.
-    destruct (raw_offset_subscript_decompose (proj1_sig off) (erase_qualifiers ty)
+    destruct (raw_offset_subscript_decompose (proj1_sig off) (sub_type ty)
       (proj2_sig off) Hdef) as (prefix & n & z & Hwf & Hpre & Hsep & E).
     exists prefix, n, z. repeat split; try assumption.
     intros i. rewrite _dot.unlock /DOT_dot /= /raw_offset_merge.
@@ -1388,7 +1400,7 @@ Module PTRS_IMPL <: PTRS_INTF.
     is_Some (size_of σ ty) ->
     o_sub σ ty 0 = o_id.
   Proof.
-    rewrite /o_sub; case_decide=>//. rewrite size_of_erase_qualifiers.
+    rewrite /o_sub; case_decide=>//. rewrite size_of_sub_type.
     by intros [sz ->].
   Qed.
 
