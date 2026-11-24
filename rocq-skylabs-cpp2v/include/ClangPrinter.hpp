@@ -13,6 +13,8 @@
 #include <clang/Basic/Version.inc>
 #include <llvm/ADT/ArrayRef.h>
 #include <optional>
+#include <string>
+#include <vector>
 
 namespace clang {
 class Attr;
@@ -402,6 +404,27 @@ public:
 
     // true if printed
     bool printLocalDecl(CoqPrinter &, const clang::Decl *d);
+
+    // Variably modified types (GNU variable-length arrays in C++)
+
+    /// The array bounds that clang evaluates where a variably modified type
+    /// is declared, as `CodeGenFunction::EmitVariablyModifiedType` does.
+    struct VlaBounds {
+        /// The bounds, in evaluation order.
+        std::vector<const clang::Expr *> bounds;
+        /// Why cpp2v cannot print the evaluation, if it cannot.
+        std::optional<std::string> unsupported;
+
+        bool empty() const { return bounds.empty() && !unsupported; }
+    };
+
+    /// Add the bounds that a declaration of type [type] evaluates.
+    static void vlaBounds(clang::QualType type, VlaBounds &,
+                          const clang::ASTContext &);
+
+    /// Print the [Dvla_bounds] declaration of [bounds].
+    fmt::Formatter &printVlaBounds(CoqPrinter &,
+                                   const std::vector<const clang::Expr *> &);
 
     // Declarations
 
