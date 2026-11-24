@@ -13,3 +13,12 @@ exists from clang 22; before, the check is vacuous.
   named loops: ok
 
   $ dune build
+       = ("asm goto"%pstring
+          :: "label"%pstring :: "inline assembly"%pstring :: nil)%list
+       : check.M
+       = ("unsupported statement: CoroutineBodyStmt"%pstring
+          :: "unsupported statement: CoroutineBodyStmt"%pstring
+             :: "unsupported statement: CoroutineBodyStmt"%pstring
+                :: "unsupported statement: CoroutineBodyStmt"%pstring
+                   :: "template parameter pack"%pstring :: nil)%list
+       : check.M

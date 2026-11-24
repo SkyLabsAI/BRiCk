@@ -441,6 +441,10 @@ public:
 
     void VisitGCCAsmStmt(const GCCAsmStmt *stmt, CoqPrinter &print,
                          ClangPrinter &cprint, ASTContext &) {
+        // `asm goto` may jump to one of its labels, which [Sasm] cannot
+        // express.
+        if (stmt->isAsmGoto())
+            return unsupportedStmt(stmt, print, cprint, "asm goto");
         // todo(gmm): more to do here to support assembly
         print.ctor("Sasm");
 #if CLANG_VERSION_MAJOR > 20
