@@ -15,3 +15,23 @@ void use(S &s) {
     (void)s.get(0);
     set_free(s, 3.0f);
 }
+
+// Updates and elements, from templates.
+struct __attribute__((packed)) P {
+    char c;
+    unsigned int n;
+    unsigned short w[2];
+};
+template <typename T> void bump(P &p, T k) {
+    p.n += 1;
+    p.n += k;
+    ++p.n;
+    p.n--;
+}
+template <typename T> unsigned short word(const P &p, T i) {
+    return p.w[1] + p.w[i];
+}
+void use_p(P &p) {
+    bump(p, 2);
+    (void)word(p, 0);
+}

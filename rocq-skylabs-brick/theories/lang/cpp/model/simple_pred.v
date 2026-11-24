@@ -1715,7 +1715,7 @@ Module SimpleCPP.
           (erase_qualifiers elem) n d (n+i) (Z.of_N esz * i) z0
           Hpath E0 (proj1 Hrange) Hb).
       Qed.
-      Lemma aligned_ptr_ty_subscript resolve p ty sz i `{!@RealignOk resolve ty} :
+      Lemma aligned_ptr_ty_subscript resolve p ty sz i `{!RealignOk ty} :
         size_of resolve ty = Some sz ->
         @aligned_ptr_ty resolve ty p ->
         is_Some (@ptr_vaddr resolve p) ->

@@ -29,7 +29,7 @@ Require Import skylabs.lang.cpp.semantics.values.
   iRevert "∗"; iIntros;
   iFrame "#∗".
 
-Lemma size_of_array_0_Some σ ty `{!@RealignOk σ ty} :
+Lemma size_of_array_0_Some σ ty `{!RealignOk ty} :
   is_Some (size_of σ ty) → size_of σ (Tarray ty 0) = Some 0%N.
 Proof. move=>[]sz Hsz /=. by rewrite Hsz (realign_ok_of σ ty sz Hsz). Qed.
 #[local] Hint Resolve size_of_array_0_Some : core.
@@ -40,7 +40,7 @@ Proof. by move=>/= ->. Qed.
 
 Section simpl_never.
   #[local] Arguments N.mul : simpl never.
-  Lemma size_of_array_1 σ ty `{!@RealignOk σ ty} :
+  Lemma size_of_array_1 σ ty `{!RealignOk ty} :
     size_of σ (Tarray ty 1) = size_of σ ty.
   Proof.
     simpl. destruct (size_of σ ty) as [s|] eqn:E => //=.

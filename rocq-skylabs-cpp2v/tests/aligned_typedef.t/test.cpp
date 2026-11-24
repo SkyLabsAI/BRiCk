@@ -59,8 +59,9 @@ extern u16a g_inc[];
 // Structured bindings hold an under-aligned variable.
 int bind() { u16a arr[1] = {3}; auto [x] = arr; return x; }
 
-// Accesses to a packed field: reads and assignments used as statements are
-// printed at the field's Trealigned type; other uses are unsupported.
+// Accesses to a packed field: reads, assignments and compound assignments are
+// printed at the field's Trealigned type; addresses and references go through
+// checked casts to the natural type.
 int read_i(P *p) { return p->i; }
 void write_i(P *p) { p->i = 5; }
 int *addr_i(P *p) { return &p->i; }

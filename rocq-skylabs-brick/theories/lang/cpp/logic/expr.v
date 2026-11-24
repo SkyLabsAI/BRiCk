@@ -507,6 +507,10 @@ Module Type Expr.
 
        NOTE: This function assumes that [ty1] is the LHS and that the result will
              that type.
+
+       [pre_op] and [post_op] compute on an under-aligned object
+       ([Trealigned n t]) at its underlying type [t] ([unrealign_head]), and access
+       it at its own type.
      *)
     Definition inc_dec_op (op : BinOp) (ty : type) (v : val) : val -> mpred :=
       if is_arithmetic ty then
@@ -526,7 +530,7 @@ Module Type Expr.
     Definition pre_op (b : BinOp) (ty : type) (e : Expr) (Q : ptr -> FreeTemps.t -> mpred) : mpred :=
       let ety := erase_qualifiers $ type_of e in
       wp_lval e (fun a free => Exists v v',
-                   (inc_dec_op b ety v v' ** True) //\\
+                   (inc_dec_op b (unrealign_head ety) v v' ** True) //\\
                    (a |-> primR ety 1$m v **
                       (a |-> primR ety 1$m v' -* Q a free))).
 
@@ -545,7 +549,7 @@ Module Type Expr.
     Definition post_op (b : BinOp) (ty : type) (e : Expr) (Q : val -> FreeTemps.t -> mpred) : mpred :=
       let ety := erase_qualifiers $ type_of e in
       wp_lval e (fun a free => Exists v v',
-                   (inc_dec_op b ety v v' ** True) //\\
+                   (inc_dec_op b (unrealign_head ety) v v' ** True) //\\
                    (a |-> primR ety 1$m v **
                       (a |-> primR ety 1$m v' -* Q v free))).
 
@@ -642,19 +646,22 @@ Module Type Expr.
            (la |-> tptstoR (erase_qualifiers ty) 1$m rv -* Q la free))
         |-- wp_lval (Eassign l r ty) Q.
 
+    (** The computation of a compound assignment to an under-aligned object
+        ([Trealigned n t]) happens at its underlying type [t] ([unrealign_head]);
+        the object is accessed at its own type. *)
     Axiom wp_lval_bop_assign : forall ty o oo l r Q,
             to_operator_equal o = Some oo ->
-            match convert_type_op tu o (type_of l) (type_of r) with
+            match convert_type_op tu o (unrealign_head (type_of l)) (type_of r) with
             | Some (tl, tr, resultT) =>
               letI* '(la, rv), free :=
                 eval2 (evaluation_order.order_of (language_version tu) oo) (wp_lval l) (wp_operand r) in
               Exists lv clv resv storedv,
                     ((* cast and perform the computation *)
-                      [| convert tu (type_of l) tl lv clv |] **
+                      [| convert tu (unrealign_head (type_of l)) tl lv clv |] **
                       [| (* ensured by the AST *) tr = type_of r |] **
                       eval_binop tu o tl tr resultT clv rv resv **
                         (* convert the value back to the target type so it can be stored *)
-                        [| convert tu resultT ty resv storedv |] ** True) //\\
+                        [| convert tu resultT (unrealign_head ty) resv storedv |] ** True) //\\
                     (la |-> primR (erase_qualifiers ty) 1$m lv **
                       (la |-> primR (erase_qualifiers ty) 1$m storedv -* Q la free))
             | _ => False%I

@@ -1453,6 +1453,14 @@ Section has_type.
     by rewrite -has_type_erase_qualifiers.
   Qed.
 
+  Lemma has_type_unrealign_head v ty :
+    has_type v (unrealign_head ty) -|- has_type v ty.
+  Proof.
+    induction ty => //=.
+    - by rewrite -!has_type_qual_iff.
+    - by rewrite has_type_realigned.
+  Qed.
+
   Lemma has_type_val_related ty v1 v2 :
     val_related ty v1 v2 ->
     has_type v1 ty -|- has_type v2 ty.

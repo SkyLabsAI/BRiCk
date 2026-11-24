@@ -284,7 +284,7 @@ End comparable.
 Section aligned_sub.
   Context `{cpp_logic} {σ}.
 
-  Lemma aligned_ptr_ty_sub (p : ptr) (n : Z) ty `{!@RealignOk σ ty} :
+  Lemma aligned_ptr_ty_sub (p : ptr) (n : Z) ty `{!RealignOk ty} :
     is_Some (size_of σ ty) ->
     [| aligned_ptr_ty ty p |] ∗ valid_ptr p
     ⊢ [| aligned_ptr_ty ty (p ,, _sub ty n) |].
@@ -314,7 +314,7 @@ Section aligned_sub.
   Qed.
 
   (** Hence the [has_type] the result needs. *)
-  Lemma has_type_ptr_sub (p : ptr) (n : Z) ty `{!@RealignOk σ ty} :
+  Lemma has_type_ptr_sub (p : ptr) (n : Z) ty `{!RealignOk ty} :
     is_Some (size_of σ ty) ->
     has_type (Vptr p) (Tptr ty) ∗ valid_ptr (p ,, _sub ty n)
     ⊢ has_type (Vptr (p ,, _sub ty n)) (Tptr ty).
@@ -326,7 +326,7 @@ Section aligned_sub.
 
   (** [eval_ptr_int_op] offsets by the qualifier-erased type while still typing
       the result at [ty]; [aligned_ptr_ty_erase_qualifiers] reconciles the two. *)
-  Lemma has_type_ptr_sub_erase (p : ptr) (n : Z) ty `{!@RealignOk σ ty} :
+  Lemma has_type_ptr_sub_erase (p : ptr) (n : Z) ty `{!RealignOk ty} :
     is_Some (size_of σ ty) ->
     has_type (Vptr p) (Tptr ty) ∗ valid_ptr (p ,, _sub (erase_qualifiers ty) n)
     ⊢ has_type (Vptr (p ,, _sub (erase_qualifiers ty) n)) (Tptr ty).
@@ -401,7 +401,7 @@ Section skeletons.
   Definition eval_ptr_int_op (E : EVAL) tu (bo : BinOp) (f : Z -> Z) : Prop :=
     forall w s p1 p2 o ty,
       is_Some (size_of σ ty) ->
-      @RealignOk σ ty ->
+      RealignOk ty ->
       p2 = p1 ,, _sub (erase_qualifiers ty) (f o) ->
       has_type (Vptr p1) (Tptr ty) ∗ has_type (Vint o) (Tnum w s) ∗
       valid_ptr p2 ⊢
@@ -412,7 +412,7 @@ Section skeletons.
   Definition eval_int_ptr_op (E : EVAL) tu (bo : BinOp) (f : Z -> Z) : Prop :=
     forall w s p1 p2 o ty,
       is_Some (size_of σ ty) ->
-      @RealignOk σ ty ->
+      RealignOk ty ->
       p2 = p1 ,, _sub (erase_qualifiers ty) (f o) ->
       has_type (Vint o) (Tnum w s) ∗ has_type (Vptr p1) (Tptr ty) ∗
       valid_ptr p2 ⊢

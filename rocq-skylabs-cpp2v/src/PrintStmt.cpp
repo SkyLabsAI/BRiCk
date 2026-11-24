@@ -90,7 +90,11 @@ public:
         });
         print.space();
         print.option(stmt->getInc(), [&](const Expr *v) {
+            // See [ClangPrinter::realignedAccess].
+            auto saved = cprint.discardedExpr;
+            cprint.discardedExpr = v->IgnoreParens();
             cprint.printExpr(print, v);
+            cprint.discardedExpr = saved;
         });
         print.space();
         cprint.printStmt(print, stmt->getBody());
@@ -121,7 +125,11 @@ public:
         });
         print.space();
         print.option(stmt->getInc(), [&](const Expr *v) {
+            // See [ClangPrinter::realignedAccess].
+            auto saved = cprint.discardedExpr;
+            cprint.discardedExpr = v->IgnoreParens();
             cprint.printExpr(print, v);
+            cprint.discardedExpr = saved;
         });
         print.space();
         cprint.printStmt(print, stmt->getLoopVarStmt());
