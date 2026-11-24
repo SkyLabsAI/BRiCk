@@ -15,13 +15,16 @@ using namespace clang;
 
 class PrintLocalDecl : public ConstDeclVisitorArgs<PrintLocalDecl, bool> {
 public:
-    PrintLocalDecl(CoqPrinter &print, ClangPrinter &cprint, OpaqueNames &names)
-        : print(print), cprint(cprint), names(names) {}
+    PrintLocalDecl(CoqPrinter &print, ClangPrinter &cprint, OpaqueNames &names,
+                   bool vla_bounds_printed)
+        : print(print), cprint(cprint), names(names),
+          vla_bounds_printed(vla_bounds_printed) {}
 
 private:
     CoqPrinter &print;
     ClangPrinter &cprint;
     OpaqueNames &names;
+    bool vla_bounds_printed;
 
     CXXDestructorDecl *get_dtor(QualType qt) {
         if (auto rd = qt->getAsCXXRecordDecl()) {
@@ -42,6 +45,20 @@ private:
         } else {
             print.none();
         }
+    }
+
+    // Clang evaluates the array bounds of a variably modified type where a
+    // variable of that type is declared, and [Dvar] and [Dinit] have no
+    // place for them. A declaration statement prints them as a
+    // [Dvla_bounds] before the variable ([bounds_printed]). This is the
+    // backstop for a variable whose bounds nothing printed: the holding
+    // variable of a structured binding, and a condition variable, although
+    // [PrintStmt] prints the statement of such a condition as unsupported.
+    fmt::Formatter &printVarType(const VarDecl &decl, bool bounds_printed) {
+        if (bounds_printed || ClangPrinter::varVlaBounds(decl).empty())
+            return cprint.printVarType(print, decl);
+        guard::ctor _(print, "Tunsupported", false);
+        return print.str("variable of a variably modified type");
     }
 
 public:
@@ -70,7 +87,7 @@ public:
             print.str(decl->getNameAsString()) << fmt::nbsp;
         }
 
-        cprint.printVarType(print, *decl);
+        printVarType(*decl, vla_bounds_printed);
         print.output() << fmt::nbsp;
 
         if (auto init = decl->getInit()) {
@@ -117,7 +134,7 @@ public:
             if (auto *var = b->getHoldingVar()) {
                 guard::ctor _{print, "Bvar"};
                 print.str(var->getName()) << fmt::nbsp;
-                cprint.printVarType(print, *var) << fmt::nbsp;
+                printVarType(*var, false) << fmt::nbsp;
 
                 auto init = var->getInit();
                 always_assert(init &&
@@ -141,9 +158,10 @@ public:
     }
 };
 
-bool ClangPrinter::printLocalDecl(CoqPrinter &print, const clang::Decl *decl) {
+bool ClangPrinter::printLocalDecl(CoqPrinter &print, const clang::Decl *decl,
+                                  bool vla_bounds_printed) {
     if (trace(Trace::Local))
         trace("printLocalDecl", loc::of(decl));
     OpaqueNames names;
-    return PrintLocalDecl{print, *this, names}.Visit(decl);
+    return PrintLocalDecl{print, *this, names, vla_bounds_printed}.Visit(decl);
 }

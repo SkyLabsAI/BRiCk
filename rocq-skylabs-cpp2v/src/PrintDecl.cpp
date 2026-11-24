@@ -1085,7 +1085,7 @@ static fmt::Formatter &printFunction(CoqPrinter &print,
     if (auto body = decl.getBody()) {
         guard::some some(print, false);
         guard::ctor _(print, "Impl", false);
-        return cprint.printStmt(print, body);
+        return cprint.printFunctionBody(print, decl, body);
     } else if (decl.getBuiltinID() != Builtin::ID::NotBuiltin) {
         guard::some some(print, false);
         guard::ctor _(print, "Builtin", false);
@@ -1119,7 +1119,7 @@ static fmt::Formatter &printMethod(CoqPrinter &print, const CXXMethodDecl &decl,
     } else if (auto body = decl.getBody()) {
         guard::some some(print);
         guard::ctor _(print, orDefaultBodyCtorName(decl));
-        return cprint.printStmt(print, body);
+        return cprint.printFunctionBody(print, decl, body);
     } else if (decl.isDefaulted() || isImplicitSpecialMethod(decl)) {
         return print.output() << "(Some Defaulted)";
     } else {
@@ -1180,15 +1180,28 @@ static fmt::Formatter &printInitPath(const CXXConstructorDecl &decl,
         fatal("initializer path of unknown type");
 }
 
+/// A constructor whose parameter types have array bounds to evaluate (see
+/// `ClangPrinter::paramVlaBounds`): clang evaluates them before the member
+/// initializers, where the logic has no place for them, so the initializers
+/// are unsupported, like the body (see `ClangPrinter::printFunctionBody`).
+static constexpr const char *vla_param_ctor_init =
+    "member initializer of a constructor with a parameter of a variably "
+    "modified type";
+
 static fmt::Formatter &printInitializer(const CXXConstructorDecl &ctor,
                                         const CXXCtorInitializer &init,
-                                        CoqPrinter &print,
-                                        ClangPrinter &cprint) {
+                                        CoqPrinter &print, ClangPrinter &cprint,
+                                        bool vla_params) {
     auto e = init.getInit();
     if (!e)
         fatal(cprint, loc::of(ctor), "initializer without expression");
     guard::ctor _(print, "Build_Initializer");
     printInitPath(ctor, init, print, cprint) << fmt::nbsp;
+    if (vla_params) {
+        guard::ctor _{print, "Eunsupported"};
+        print.str(vla_param_ctor_init) << fmt::nbsp;
+        return cprint.printQualType(print, e->getType(), loc::of(ctor));
+    }
     if (print.templates()) {
         guard::ctor _{print, "Einitializing_type"};
         auto print_type = [&]() -> fmt::Formatter & {
@@ -1217,9 +1230,10 @@ static fmt::Formatter &printInitializerList(CoqPrinter &print,
                                             const CXXConstructorDecl &decl,
                                             ClangPrinter &cprint) {
     // The order here is corrrect with respect to initalization order.
+    bool vla_params = !ClangPrinter::paramVlaBounds(decl).empty();
     return print.list(decl.inits(), [&](auto init) {
         if (init)
-            printInitializer(decl, *init, print, cprint);
+            printInitializer(decl, *init, print, cprint, vla_params);
         else
             fatal(cprint, loc::of(decl), "null initializer");
     });
@@ -1244,7 +1258,7 @@ static fmt::Formatter &printConstructor(CoqPrinter &print,
         guard::ctor od(print, orDefaultBodyCtorName(decl));
         guard::tuple _(print);
         printInitializerList(print, decl, cprint) << fmt::tuple_sep;
-        return cprint.printStmt(print, body);
+        return cprint.printFunctionBody(print, decl, body);
     } else if (decl.isDefaulted() || isImplicitSpecialMethod(decl)) {
         return print.output() << "(Some Defaulted)";
     } else {

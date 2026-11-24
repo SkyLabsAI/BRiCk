@@ -503,6 +503,7 @@ Section with_monad.
         <+> dtor_of t <+> type t <+> opt expr oe
     | Ddecompose e _ bds => expr e <+> lst binding_decl bds
     | Dinit _ n t oe => FAIL "static local variable" <+> name n <+> type t <+> opt expr oe
+    | Dvla_bounds es => lst expr es
     end
 
   with binding_decl (b : BindingDecl) : M :=

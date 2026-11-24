@@ -13,6 +13,8 @@
 #include <clang/Basic/Version.inc>
 #include <llvm/ADT/ArrayRef.h>
 #include <optional>
+#include <string>
+#include <vector>
 
 namespace clang {
 class Attr;
@@ -400,8 +402,45 @@ public:
 
     fmt::Formatter &printStmt(CoqPrinter &, const clang::Stmt *s);
 
-    // true if printed
-    bool printLocalDecl(CoqPrinter &, const clang::Decl *d);
+    // true if printed. [vla_bounds_printed]: the caller printed the array
+    // bounds that the declaration of a variable evaluates (see [VlaBounds]).
+    bool printLocalDecl(CoqPrinter &, const clang::Decl *d,
+                        bool vla_bounds_printed = false);
+
+    // Variably modified types (GNU variable-length arrays in C++)
+
+    /// The array bounds that clang evaluates where a variably modified type
+    /// is declared, as `CodeGenFunction::EmitVariablyModifiedType` does.
+    struct VlaBounds {
+        /// The bounds, in evaluation order.
+        std::vector<const clang::Expr *> bounds;
+        /// Why cpp2v cannot print the evaluation, if it cannot.
+        std::optional<std::string> unsupported;
+
+        bool empty() const { return bounds.empty() && !unsupported; }
+    };
+
+    /// Add the bounds that a declaration of type [type] evaluates.
+    static void vlaBounds(clang::QualType type, VlaBounds &,
+                          const clang::ASTContext &);
+
+    /// The bounds that the declaration of the variable [decl] evaluates,
+    /// before its initializer. None for a variable-length array itself.
+    static VlaBounds varVlaBounds(const clang::VarDecl &decl);
+
+    /// The bounds that a call of [decl] evaluates on entry, for its
+    /// parameters.
+    static VlaBounds paramVlaBounds(const clang::FunctionDecl &decl);
+
+    /// Print the [Dvla_bounds] declaration of [bounds].
+    fmt::Formatter &printVlaBounds(CoqPrinter &,
+                                   const std::vector<const clang::Expr *> &);
+
+    /// Print the body of the function definition [decl], preceded by the
+    /// evaluation of the bounds of its parameter types.
+    fmt::Formatter &printFunctionBody(CoqPrinter &,
+                                      const clang::FunctionDecl &decl,
+                                      const clang::Stmt *body);
 
     // Declarations
 

@@ -186,6 +186,31 @@ Module Type Stmt.
     #[global] Declare Instance init_state_agree nm : Agree1 (static_initialized nm).
 
 
+    (** [wp_vla_bounds ρ es P] evaluates [es], the array bounds of a
+        variably modified type, in order, and then continues as [P]. Each
+        bound is evaluated as a full-expression, and its value must be an
+        integer greater than zero: otherwise the behavior is undefined (C11
+        6.7.6.2p5). *)
+    Fixpoint wp_vla_bounds (ρ : region) (es : list Expr) (P : mpred) : mpred :=
+      match es with
+      | nil => P
+      | e :: es =>
+          letI* v, free := wp_operand tu ρ e in
+          interp free $
+            Exists n : Z, [| v = Vint n |] ** [| (0 < n)%Z |] **
+            wp_vla_bounds ρ es P
+      end.
+
+    Lemma wp_vla_bounds_frame ρ es (P P' : mpred) :
+      (P -* P') |-- wp_vla_bounds ρ es P -* wp_vla_bounds ρ es P'.
+    Proof.
+      elim: es => [|e es IH] /=; first by iIntros "H".
+      iIntros "HP". iApply wp_operand_frame; first done.
+      iIntros (v free). iApply interp_frame.
+      iIntros "(%n & % & % & H)". iExists n. do 2 (iSplit; first done).
+      by iApply (IH with "HP").
+    Qed.
+
     Definition wp_decl (ρ : region) (d : VarDecl) (k : region -> FreeTemps -> epred) : mpred :=
       match d with
       | Dvar x ty init => wp_decl_var ρ x ty init k
@@ -243,6 +268,9 @@ Module Type Stmt.
           if i is uninitialized then
             do_init $ fun free => static_initialized nm initialized -* k free
           else k FreeTemps.id
+      | Dvla_bounds es =>
+        (* no name is bound, and no object is created *)
+        wp_vla_bounds ρ es (k ρ FreeTemps.id)
       end%I.
 
     Lemma wp_decl_frame : forall ds ρ m m',
@@ -274,6 +302,7 @@ Module Type Stmt.
             first [ iApply wp_initialize_frame
                   | iApply default_initialize_frame ] => //;
             iIntros (?) "X Y"; iApply "F"; iApply "X"; done. } }
+      { iIntros "F". iApply wp_vla_bounds_frame. iApply "F". }
     Qed.
 
     (* [wp_decls ρ_init ds ρ K] evalutes the declarations in [ds]

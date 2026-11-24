@@ -86,7 +86,12 @@ Unsupported Features
      - Pack *arguments* and :cpp:`sizeof...` are supported.
    * - Variable-length arrays
      - Unsupported syntax
-     - Their initialization has no semantics. `BRiCk#59 <https://github.com/SkyLabsAI/BRiCk/issues/59>`_
+     - Their initialization has no semantics. The array bounds of typedefs,
+       variables and function parameters of variably modified types are
+       evaluated where the type is declared and must be greater than zero
+       (``Dvla_bounds``). Condition variables of, and casts to, such types
+       are unsupported.
+       `BRiCk#59 <https://github.com/SkyLabsAI/BRiCk/issues/59>`_
    * - Exceptions: :cpp:`throw`, :cpp:`try`, :cpp:`typeid`, dynamic exception
        specifications
      - Unsupported syntax

@@ -11,6 +11,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/Mangle.h"
+#include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/Version.inc"
@@ -32,8 +33,29 @@ public:
             print.str("empty statement");
             return;
         }
+        if (variablyModifiedConditionVar(stmt))
+            return unsupportedStmt(
+                stmt, print, cprint,
+                "condition variable of a variably modified type");
         ConstStmtVisitor<PrintStmt, void, CoqPrinter &, ClangPrinter &,
                          ASTContext &>::Visit(stmt, print, cprint, ctxt);
+    }
+
+    // Clang evaluates the array bounds of a variably modified type where a
+    // variable of that type is declared, also for a condition variable
+    // (`if (int (*p)[n++] = q)`). A condition is a single declaration, with
+    // no place for the bounds, so the statement is unsupported.
+    static bool variablyModifiedConditionVar(const Stmt *stmt) {
+        const VarDecl *var = nullptr;
+        if (auto s = dyn_cast<IfStmt>(stmt))
+            var = s->getConditionVariable();
+        else if (auto s = dyn_cast<SwitchStmt>(stmt))
+            var = s->getConditionVariable();
+        else if (auto s = dyn_cast<WhileStmt>(stmt))
+            var = s->getConditionVariable();
+        else if (auto s = dyn_cast<ForStmt>(stmt))
+            var = s->getConditionVariable();
+        return var && !ClangPrinter::varVlaBounds(*var).empty();
     }
 
     // Statements without a printer (e.g. coroutines, computed `goto`, MS
@@ -91,7 +113,9 @@ public:
 
     // The local declarations that have no runtime effect, so that leaving
     // them out of the [Sdecl] loses nothing: they only introduce names
-    // that the printed code refers to by their resolved meaning.
+    // that the printed code refers to by their resolved meaning. A typedef
+    // is one of them up to the array bounds of a variably modified type,
+    // which [VisitDeclStmt] prints (see [declVlaBounds]).
     static bool localDeclWithoutEffect(const Decl *d) {
         // `extern int x;` refers to a variable defined elsewhere.
         if (auto vd = dyn_cast<VarDecl>(d))
@@ -107,6 +131,21 @@ public:
                    EmptyDecl>(d);
     }
 
+    // A typedef or alias declaration of a variably modified type (GNU VLA
+    // extension) evaluates the array bounds when it is reached:
+    // `typedef int A[(x = 1)];` assigns to `x`. So does the declaration of
+    // a variable of such a type, before its initializer and also when the
+    // variable is a static local: `int (*p)[(x = 1)] = nullptr;`.
+    static ClangPrinter::VlaBounds declVlaBounds(const Decl *d) {
+        ClangPrinter::VlaBounds vla;
+        if (auto td = dyn_cast<TypedefNameDecl>(d))
+            ClangPrinter::vlaBounds(td->getUnderlyingType(), vla,
+                                    d->getASTContext());
+        else if (auto vd = dyn_cast<VarDecl>(d))
+            vla = ClangPrinter::varVlaBounds(*vd);
+        return vla;
+    }
+
     // Fail closed: any other local declaration (e.g. OpenMP `threadprivate`,
     // `declare reduction`, `allocate`) would be dropped from the [Sdecl]
     // together with its meaning, so the statement is unsupported instead.
@@ -115,6 +154,8 @@ public:
         for (auto d : stmt->decls()) {
             if (isa<LabelDecl>(d))
                 return unsupportedGnuLocalLabel(stmt, print, cprint);
+            if (auto why = declVlaBounds(d).unsupported)
+                return unsupportedStmt(stmt, print, cprint, *why);
             if (!printedLocalDecl(d) && !localDeclWithoutEffect(d))
                 return unsupportedStmt(
                     stmt, print, cprint,
@@ -124,7 +165,15 @@ public:
         print.ctor("Sdecl");
         print.begin_list();
         for (auto d : stmt->decls()) {
-            bool printed = cprint.printLocalDecl(print, d);
+            // The bounds come first: a variable evaluates them before its
+            // initializer.
+            auto vla = declVlaBounds(d);
+            if (!vla.bounds.empty()) {
+                cprint.printVlaBounds(print, vla.bounds);
+                print.cons();
+            }
+            bool printed =
+                cprint.printLocalDecl(print, d, /*vla_bounds_printed*/ true);
             always_assert(printed == printedLocalDecl(d) &&
                           "printedLocalDecl out of sync with printLocalDecl");
             if (printed)
@@ -132,6 +181,43 @@ public:
         }
         print.end_list();
         print.end_ctor();
+    }
+
+    // The body of a function definition whose parameter types have array
+    // bounds to evaluate (see [ClangPrinter::paramVlaBounds]). Clang
+    // evaluates them on entry, in parameter order: before the member
+    // initializers of a constructor and outside a function-try-block. The
+    // logic can only run them as the first statement of a body that is a
+    // block, so other definitions are unsupported.
+    void printBodyWithParamBounds(const FunctionDecl &decl, const Stmt *body,
+                                  const ClangPrinter::VlaBounds &vla,
+                                  CoqPrinter &print, ClangPrinter &cprint,
+                                  ASTContext &ctxt) {
+        auto block = dyn_cast<CompoundStmt>(body);
+        auto why = vla.unsupported;
+        if (!why && isa<CXXConstructorDecl>(decl))
+            why = "constructor with a parameter of a variably modified type";
+        else if (!why && decl.isImplicit())
+            why = "implicit function with a parameter of a variably "
+                  "modified type";
+        else if (!why && !block)
+            why = "function body that is not a block, with a parameter of a "
+                  "variably modified type";
+        if (!block)
+            return unsupportedStmt(body, print, cprint, *why);
+        guard::ctor _{print, "Sseq"};
+        guard::list __{print};
+        if (why) {
+            unsupportedStmt(body, print, cprint, *why);
+        } else {
+            guard::ctor _{print, "Sdecl"};
+            guard::list __{print};
+            cprint.printVlaBounds(print, vla.bounds);
+            print.cons();
+        }
+        print.cons();
+        for (auto i : block->body())
+            printListItem(i, print, cprint, ctxt);
     }
 
     void VisitWhileStmt(const WhileStmt *stmt, CoqPrinter &print,
@@ -582,6 +668,147 @@ fmt::Formatter &ClangPrinter::printStmt(CoqPrinter &print,
         trace("printStmt", loc::of(stmt));
     __attribute__((unused)) auto depth = print.output().get_depth();
     PrintStmt::printer.Visit(stmt, print, *this, *this->context_);
+    always_assert(depth == print.output().get_depth());
+    return print.output();
+}
+
+// Clang destroys the temporaries of an array bound at the end of the
+// enclosing scope, since the bound is not a full-expression, while the
+// logic destroys them after the bound. Bounds that may create temporaries
+// are therefore not printed.
+static bool boundMayCreateTemporary(const Expr *bound) {
+    struct Finder : RecursiveASTVisitor<Finder> {
+        bool found{false};
+        bool VisitStmt(Stmt *s) {
+            found = found ||
+                    isa<CXXBindTemporaryExpr, MaterializeTemporaryExpr,
+                        ExprWithCleanups, CXXDefaultArgExpr,
+                        CXXDefaultInitExpr, LambdaExpr, StmtExpr,
+                        CompoundLiteralExpr>(s);
+            return !found;
+        }
+    } finder;
+    finder.TraverseStmt(const_cast<Expr *>(bound));
+    return finder.found;
+}
+
+// This follows `CodeGenFunction::EmitVariablyModifiedType`, which walks
+// from the outermost type inward and evaluates the bound of each
+// variable-length array once. The type of another typedef ends the walk:
+// its bounds were evaluated at its own declaration. Clang also walks
+// through other types (e.g. `typeof`, pointers to members, function
+// types, `_Atomic`); those are unsupported here.
+static void walkVlaBounds(QualType type, ClangPrinter::VlaBounds &vla) {
+    while (!type.isNull() && type->isVariablyModifiedType()) {
+        auto ty = type.getTypePtr();
+        switch (ty->getTypeClass()) {
+        case Type::Pointer:
+            type = cast<PointerType>(ty)->getPointeeType();
+            break;
+        case Type::LValueReference:
+        case Type::RValueReference:
+            type = cast<ReferenceType>(ty)->getPointeeType();
+            break;
+        case Type::ConstantArray:
+        case Type::IncompleteArray:
+            type = cast<ArrayType>(ty)->getElementType();
+            break;
+        case Type::VariableArray: {
+            auto vat = cast<VariableArrayType>(ty);
+            auto bound = vat->getSizeExpr();
+            if (!bound) {
+                vla.unsupported =
+                    "variably modified type: array of unspecified bound";
+                return;
+            }
+            if (boundMayCreateTemporary(bound)) {
+                vla.unsupported =
+                    "variably modified type: array bound with a temporary";
+                return;
+            }
+            vla.bounds.push_back(bound);
+            type = vat->getElementType();
+            break;
+        }
+        case Type::Paren:
+            type = cast<ParenType>(ty)->getInnerType();
+            break;
+#if CLANG_VERSION_MAJOR < 22
+        case Type::Elaborated:
+            type = cast<ElaboratedType>(ty)->getNamedType();
+            break;
+#endif
+        case Type::Typedef:
+            return;
+        default:
+            vla.unsupported =
+                std::string("variably modified type: unsupported ") +
+                ty->getTypeClassName() + " type";
+            return;
+        }
+    }
+}
+
+// The bounds of one type belong to one declarator, and C does not sequence
+// their evaluations (C11 6.7.6p3 makes the full declarator the sequence
+// point): `typedef int A[n++][n];` is undefined. Clang evaluates them from
+// the outside in, but the logic must not rely on that order, so several
+// bounds are printed only if none has a side effect.
+void ClangPrinter::vlaBounds(QualType type, VlaBounds &vla,
+                             const ASTContext &ctxt) {
+    auto first = vla.bounds.size();
+    walkVlaBounds(type, vla);
+    if (vla.unsupported || vla.bounds.size() - first < 2)
+        return;
+    for (auto i = first; i < vla.bounds.size(); i++)
+        if (vla.bounds[i]->HasSideEffects(ctxt))
+            vla.unsupported = "variably modified type: unsequenced array "
+                              "bounds with a side effect";
+}
+
+// A variable-length array itself (`int a[n];`) is printed as before, without
+// its bounds: the logic cannot initialize an object of type
+// [Tvariable_array].
+ClangPrinter::VlaBounds ClangPrinter::varVlaBounds(const VarDecl &decl) {
+    VlaBounds vla;
+    if (!decl.getType().isNull() && !decl.getType()->isVariableArrayType())
+        vlaBounds(decl.getType(), vla, decl.getASTContext());
+    return vla;
+}
+
+// This follows `CodeGenFunction::StartFunction`, which emits the types of
+// the parameters as written, in order.
+ClangPrinter::VlaBounds ClangPrinter::paramVlaBounds(const FunctionDecl &decl) {
+    VlaBounds vla;
+    for (auto param : decl.parameters()) {
+        vlaBounds(param->getOriginalType(), vla, decl.getASTContext());
+        if (vla.unsupported)
+            break;
+    }
+    return vla;
+}
+
+fmt::Formatter &
+ClangPrinter::printVlaBounds(CoqPrinter &print,
+                             const std::vector<const Expr *> &bounds) {
+    guard::ctor _{print, "Dvla_bounds"};
+    guard::list __{print};
+    for (auto bound : bounds) {
+        printExpr(print, bound);
+        print.cons();
+    }
+    return print.output();
+}
+
+fmt::Formatter &ClangPrinter::printFunctionBody(CoqPrinter &print,
+                                                const FunctionDecl &decl,
+                                                const Stmt *body) {
+    auto vla = paramVlaBounds(decl);
+    if (vla.empty())
+        return printStmt(print, body);
+    __attribute__((unused)) auto depth = print.output().get_depth();
+    PrintStmt::printer.printBodyWithParamBounds(decl, body, vla, print, *this,
+                                                *this->context_);
     always_assert(depth == print.output().get_depth());
     return print.output();
 }

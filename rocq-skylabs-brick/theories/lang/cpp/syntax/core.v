@@ -580,6 +580,16 @@ with VarDecl : Set :=
 | Ddecompose (_ : Expr) (anon_var : ident) (_ : list BindingDecl)
   (* initialization of a function-local [static]. See https://eel.is/c++draft/stmt.dcl#3 *)
 | Dinit (thread_safe : bool) (name : name) (_ : type) (init : option Expr)
+| Dvla_bounds (bounds : list Expr)
+  (* ^^ the evaluation of the array bounds of a variably modified type (GNU
+     variable-length arrays in C++) where the type is declared: by a
+     <<typedef>> or alias declaration such as <<typedef int A[n];>>, by
+     the parameters of a function, such as <<int a[n]>>, at the start of
+     its body, or by a variable whose type is, say, a pointer to a
+     variable-length array, before the variable itself. [bounds] are the
+     array bounds that the declaration evaluates: it evaluates them in
+     order and binds no name, and each bound must be greater than zero
+     (C11 6.7.6.2p5). *)
 
 with BindingDecl : Set :=
 | Bvar (name : localname) (_ : type) (init : Expr)
@@ -1173,6 +1183,7 @@ with is_dependentVD (vd : VarDecl) : bool :=
   | Dvar _ t oe => is_dependentT t || option.existsb is_dependentE oe
   | Ddecompose e _ lvd => is_dependentE e || List.existsb is_dependentBD lvd
   | Dinit _ n t oe => is_dependentN n || is_dependentT t || option.existsb is_dependentE oe
+  | Dvla_bounds es => List.existsb is_dependentE es
   end
 
 with is_dependentBD (bd : BindingDecl) : bool :=
@@ -1369,6 +1380,7 @@ with has_unsupportedVD (vd : VarDecl) : bool :=
   | Dvar _ t oe => has_unsupportedT t || option.existsb has_unsupportedE oe
   | Ddecompose e _ lvd => has_unsupportedE e || List.existsb has_unsupportedBD lvd
   | Dinit _ n t oe => has_unsupportedN n || has_unsupportedT t || option.existsb has_unsupportedE oe
+  | Dvla_bounds es => List.existsb has_unsupportedE es
   end
 
 with has_unsupportedBD (bd : BindingDecl) : bool :=

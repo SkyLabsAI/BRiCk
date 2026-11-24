@@ -535,6 +535,17 @@ public:
         done(expr, Done::DT);
     }
 
+    // Clang evaluates the array bounds of a variably modified type named by
+    // an explicit cast, e.g. `(int (*)[n++])p`
+    // (`CodeGenModule::EmitExplicitCastExprType`), and a cast has no place
+    // for them.
+    bool variablyModifiedCast(const Expr *expr) {
+        ClangPrinter::VlaBounds vla;
+        if (auto cast = dyn_cast<ExplicitCastExpr>(expr))
+            ClangPrinter::vlaBounds(cast->getType(), vla, ctxt);
+        return !vla.empty();
+    }
+
     void Visit(const Expr *expr) {
         if (expr == nullptr) [[unlikely]] {
             guard::ctor _{print, "Eunsupported"};
@@ -549,6 +560,8 @@ public:
             done(expr, Done::DT);
         } else if (auto why = overAlignedAccess(expr)) {
             unsupported_expr(expr, *why);
+        } else if (variablyModifiedCast(expr)) {
+            unsupported_expr(expr, "cast to a variably modified type");
         } else if (expr->isPRValue() && !expr->getType().isNull() &&
                    !expr->getType()->isScalarType() &&
                    underAligned(expr->getType())) {

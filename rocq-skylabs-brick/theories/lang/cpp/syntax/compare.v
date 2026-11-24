@@ -2316,23 +2316,27 @@ Module VarDecl.
       | Dvar _ _ _ => 1
       | Ddecompose _ _ _ => 2
       | Dinit _ _ _ _ => 3
+      | Dvla_bounds _ => 4
       end.
     Definition car (vd : positive) : Set :=
       match vd return Set with
       | 1 => localname * type * option Expr
       | 2 => Expr * ident * list BindingDecl
-      | _ => bool * name * type * option Expr
+      | 3 => bool * name * type * option Expr
+      | _ => list Expr
       end%type.
     Definition data (vd : VarDecl) : car (tag vd) :=
       match vd with
       | Dvar a b c => (a, b, c)
       | Ddecompose a b c => (a, b, c)
       | Dinit a b c d => (a, b, c, d)
+      | Dvla_bounds a => a
       end.
     Definition compare_data (k : positive) : car k -> car k -> comparison :=
       match k as k return car k -> car k -> comparison with
       | 1 => _compare
       | 2 => _compare
+      | 3 => _compare
       | _ => _compare
       end.
 
@@ -2342,6 +2346,7 @@ Module VarDecl.
       | Dvar a b c => compare_ctor (Dvar a b c)
       | Ddecompose a b c => compare_ctor (Ddecompose a b c)
       | Dinit a b c d => compare_ctor (Dinit a b c d)
+      | Dvla_bounds a => compare_ctor (Dvla_bounds a)
       end.
   End compare_body.
 End VarDecl.
