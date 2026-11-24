@@ -22,8 +22,7 @@ qualifier is checked in the generated AST.
   __unaligned: Tunsupported
 
   $ dune build
-       = ("asm goto"%pstring
-          :: "label"%pstring :: "inline assembly"%pstring :: nil)%list
+       = ("asm goto"%pstring :: "inline assembly"%pstring :: nil)%list
        : check.M
        = ("unsupported statement: CoroutineBodyStmt"%pstring
           :: "unsupported statement: CoroutineBodyStmt"%pstring
@@ -50,10 +49,8 @@ qualifier is checked in the generated AST.
        : check.M
        = ("CallExpr"%pstring
           :: "CallExpr"%pstring
-             :: "goto"%pstring
-                :: "label"%pstring
-                   :: "CallExpr"%pstring
-                      :: "PseudoObjectExpr"%pstring
-                         :: "PseudoObjectExpr"%pstring
-                            :: "CXXUuidofExpr"%pstring :: nil)%list
+             :: "CallExpr"%pstring
+                :: "PseudoObjectExpr"%pstring
+                   :: "PseudoObjectExpr"%pstring
+                      :: "CXXUuidofExpr"%pstring :: nil)%list
        : check.M

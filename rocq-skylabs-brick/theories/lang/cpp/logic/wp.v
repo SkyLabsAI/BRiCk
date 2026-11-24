@@ -199,6 +199,12 @@ Variant ReturnType : Set :=
      scope exit. [Kfree] turns this into [ReturnVal p] once it has skipped that
      destruction; see [wp_return_nrvo] in [stmt.v]. *)
 | ReturnVoid
+| Goto (l : ident)
+  (* ^^ <<goto l;>> on its way to the label [l]. Each block looks for [l] among
+     the statements that follow the one exiting with [Goto l], up to the next
+     declaration, and resumes there (see [wp_block] in [stmt.v]); otherwise
+     [Goto l] leaves the block like [return], destroying its locals in
+     [Kfree]. Reaching the function boundary is [False]. *)
 .
 #[global] Instance ReturnType_ihn : Inhabited ReturnType.
 Proof. repeat constructor. Qed.

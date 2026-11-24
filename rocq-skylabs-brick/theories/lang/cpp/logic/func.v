@@ -55,6 +55,9 @@ Definition Kreturn_inner `{Σ : cpp_logic, σ : genv} (cv : type_qualifiers) (Q 
      scope declaring the variable: reaching the function boundary means the
      returned name was not an automatic variable of this function. *)
   | Break | Continue | ReturnNRVO _ _ => False
+  (* A [goto] whose label no enclosing block found (see [Kblock]): backward,
+     into a nested statement, or past a declaration. *)
+  | Goto _ => False
   end.
 #[global] Arguments Kreturn_inner _ _ _ _ _ _ !rt /.
 
@@ -954,7 +957,7 @@ this.
 Definition Kreturn_void_inner `{Σ : cpp_logic} (P : epred) (rt : ReturnType) : mpred :=
   match rt with
   | Normal | ReturnVoid => P
-  | Break | Continue | ReturnVal _ | ReturnNRVO _ _ => False
+  | Break | Continue | ReturnVal _ | ReturnNRVO _ _ | Goto _ => False
   end.
 #[global] Arguments Kreturn_void_inner _ _ _ _ !rt /.
 

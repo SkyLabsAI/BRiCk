@@ -80,6 +80,24 @@ int local_label() {
 struct M { int n; int d[]; };
 int fam(M *m) { return m->d[0]; }
 
+// a GNU local label without an outer label of the same name: unsupported
+// for the declaration, but its names are unique.
+int local_label_only() {
+  { __label__ M; goto M; M: return 1; }
+  return 2;
+}
+
+// a GNU local label in a template: clang does not mark the instantiated
+// labels as local, so cpp2v prints both [L]s, and the report finds the
+// duplicate.
+template<class T> int local_label_tmpl(T c) {
+  { __label__ L; int n = 0;
+    L: if (n++) return 1;
+    if (c) goto L; }
+  L: return 2;
+}
+int call_local_label_tmpl() { return local_label_tmpl<int>(1); }
+
 // a labeled declaration in a [switch] body: [case 0] skips it, and the
 // assignment is to the inner [x] (the result is 7).
 int labeled_decl_switch() {
@@ -130,7 +148,7 @@ Eval vm_compute in List.map show (supported.report.run source
   ; "test_and_set(bool*)"; "fetch_max(int*)"; "generic_store(int*, int*)"
   ; "dtor_local()"; "prvalue()"; "ext(int)"; "calls_setjmp()"
   ; "dot_member(S&, int S::*)"; "arrow_member(S*, int S::*)"; "call_member(S&, int (S::*)())"
-  ; "stmt_expr()"; "off()"; "label_only()"; "local_label()"; "labeled_decl_switch()"; "fam(M*)"; "braceless(int)"
+  ; "stmt_expr()"; "off()"; "label_only()"; "local_label()"; "local_label_only()"; "local_label_tmpl<int>(int)"; "labeled_decl_switch()"; "fam(M*)"; "braceless(int)"
   ; "lib_memcpy(char*, const char*)"; "lib_strlen(const char*)"; "direct_memcpy(char*, const char*)"
   ; "direct_undeclared(const char*, const char*)"
   ; "P::P(const P&)"; "long_double_ptr(long double*)"; "anon_ptr(?record*)"

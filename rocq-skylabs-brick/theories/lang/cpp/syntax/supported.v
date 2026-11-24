@@ -5,6 +5,7 @@
  *)
 
 Require Import stdpp.fin_maps.
+Require Import stdpp.gmap.
 Require Import skylabs.prelude.base.
 Require Import skylabs.lang.cpp.syntax.core.
 Require Import skylabs.lang.cpp.syntax.stmt.
@@ -490,8 +491,8 @@ Section with_monad.
     | Sasm _ _ lpe1 lpe2 _ =>
         FAIL "inline assembly" <+> lst (expr ∘ snd) lpe1 <+> lst (expr ∘ snd) lpe2
     | Sattr _ s => stmt s
-    | Slabeled _ s => FAIL "label" <+> stmt s
-    | Sgoto _ => FAIL "goto"
+    | Slabeled _ s => stmt s
+    | Sgoto _ => OK
     | Sunsupported msg => FAIL msg
     end
 
@@ -527,9 +528,46 @@ Section with_monad.
     | _ => OK
     end.
 
+  (** [stmt_labels s acc]: the labels defined in [s], at any depth, before
+      [acc]; several labels on one statement count separately. Expressions
+      are not entered: a lambda body is a separate function, checked on its
+      own, and a statement expression ([Estmt]) is already unsupported. *)
+  Fixpoint stmt_labels (s : Stmt) (acc : list ident) : list ident :=
+    let opt_labels (os : option Stmt) acc :=
+      match os with Some s => stmt_labels s acc | None => acc end in
+    match s with
+    | Sseq ss => foldr stmt_labels acc ss
+    | Sif os _ _ thn els => opt_labels os (stmt_labels thn (stmt_labels els acc))
+    | Sif_consteval thn els => stmt_labels thn (stmt_labels els acc)
+    | Swhile _ _ b | Sdo b _ | Sattr _ b => stmt_labels b acc
+    | Sfor os _ _ _ b | Sswitch os _ _ b => opt_labels os (stmt_labels b acc)
+    | Slabeled l b => l :: stmt_labels b acc
+    | _ => acc
+    end.
+
+  (** The first label of [ls] that occurs earlier in [ls] or in [seen]. *)
+  Fixpoint first_duplicate (seen : gset ident) (ls : list ident) : option ident :=
+    match ls with
+    | [] => None
+    | l :: ls => if decide (l ∈ seen) then Some l else first_duplicate ({[l]} ∪ seen) ls
+    end.
+
+  (** The logic finds the target of a [goto] by the label's name
+      ([find_label] in [logic/stmt.v]), so a function body must not define a
+      label name twice. Standard C++ guarantees it ([stmt.label]/1); GNU
+      local labels ([__label__]) do not, and cpp2v cannot always tell them
+      apart (it does not see the instantiations of a local label as local). *)
+  Definition labels_unique (s : Stmt) : M :=
+    if first_duplicate ∅ (stmt_labels s []) is Some l
+    then FAIL (PrimString.cat "duplicate label: " l)
+    else OK.
+
+  (** A function body. *)
+  Definition body_stmt (s : Stmt) : M := stmt s <+> labels_unique s.
+
   Definition function_body (b : FunctionBody) : M :=
     match b with
-    | Impl s => stmt s
+    | Impl s => body_stmt s
     | Builtin _ => OK
     end.
   (** clang defines every defaulted member a translation unit uses, with or
@@ -575,17 +613,17 @@ Section with_monad.
         type m.(m_return) <+> classname m.(m_class)
         <+> params m.(m_params)
         <+> lst attr m.(m_attrs)
-        <+> opt (or_default stmt) m.(m_body)
+        <+> opt (or_default body_stmt) m.(m_body)
         <+> check_exc_spec m.(m_exception) m.(m_body)
 
     | Oconstructor c =>
-        let check_body '(li, s) := lst initializer li <+> stmt s in
+        let check_body '(li, s) := lst initializer li <+> body_stmt s in
         classname c.(c_class) <+> params c.(c_params)
         <+> opt (or_default check_body) c.(c_body)
         <+> check_exc_spec c.(c_exception) c.(c_body)
 
     | Odestructor d =>
-        classname d.(d_class) <+> opt (or_default stmt) d.(d_body)
+        classname d.(d_class) <+> opt (or_default body_stmt) d.(d_body)
         <+> check_exc_spec d.(d_exception) d.(d_body)
     end.
 

@@ -160,3 +160,25 @@ Section stuck.
     -|- |={⊤}=> UNSUPPORTED "default initialize volatile"%pstring.
   Proof. by rewrite default_initialize.unlock. Qed.
 End stuck.
+
+(** * Label names are unique in a function body
+
+    The logic finds the target of a [goto] by the label's name, so the
+    support report rejects a body that defines a label name twice, at any
+    depth; several labels on one statement count separately. *)
+#[local] Open Scope pstring_scope.
+
+Example labels_unique_nested e :
+  walk.labels_unique
+    (Sseq [ Slabeled "L" (Sseq [])
+          ; Sif None None e (Sseq [Slabeled "M" (Slabeled "L" Sbreak)]) (Sseq []) ])
+  = walk.FAIL "duplicate label: L".
+Proof. by vm_compute. Qed.
+Example labels_unique_same_stmt :
+  walk.labels_unique (Slabeled "L" (Slabeled "L" Sbreak)) = walk.FAIL "duplicate label: L".
+Proof. by vm_compute. Qed.
+Example labels_unique_distinct e :
+  walk.labels_unique
+    (Slabeled "L" (Slabeled "M" (Swhile None e (Sseq [Slabeled "N" Sbreak]))))
+  = walk.OK.
+Proof. by vm_compute. Qed.
