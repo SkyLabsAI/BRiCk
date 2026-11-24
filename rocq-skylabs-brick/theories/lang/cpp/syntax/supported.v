@@ -406,7 +406,7 @@ Section with_monad.
         end <+> expr obj <+> lst expr es
     | Enew (n, t) es _ t1 oe1 oe2 =>
         REF n <+> name n <+> type t <+> lst expr es <+> type t1 <+> opt expr oe1 <+> opt expr oe2
-    | Edelete _ n e t => REF n <+> name n <+> expr e <+> type t
+    | Edelete _ _ n e t => REF n <+> name n <+> expr e <+> type t
     | Eexplicit_cast _ t e => type t <+> expr e
     | Ecast c e =>
         (if c is Cbuiltin2fun _ then if e is Eglobal n _ then [Bcall n] else OK else OK)
