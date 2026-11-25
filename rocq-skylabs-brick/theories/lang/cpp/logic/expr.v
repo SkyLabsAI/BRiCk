@@ -1153,11 +1153,9 @@ Module Type Expr.
       |-- wp_operand (Ecast (Cbase2derived path (Tptr ty)) e) Q.
 
     (** * [Cderived2vbase]
-        casts from a derived class to a base class through a _virtual_
-        base class [vbase], the first class of [path ++ [base]]: the
-        result is at the location of the [vbase] subobject of the
-        object, then at the static offsets of the remaining
-        (non-virtual) steps.
+        casts from a derived class to one of its _virtual_ base classes
+        [vbase] (a conversion to a base of [vbase] is a [Cderived2base]
+        of this cast).
 
         The location of a virtual base depends on the most-derived
         object, and the program reads it at run time through the
@@ -1170,62 +1168,45 @@ Module Type Expr.
 
         A null pointer converts to a null pointer, without reading
         anything (https://eel.is/c++draft/conv.ptr). *)
-    Axiom wp_lval_cast_derived2vbase : forall e ty path Q,
+    Axiom wp_lval_cast_derived2vbase : forall e ty Q,
       match drop_qualifiers (type_of e), drop_qualifiers ty with
-      | Tnamed derived , Tnamed base =>
-          match path_names (path ++ [Tnamed base]) with
-          | Some (vbase :: rest) =>
-            wp_glval e (fun addr free =>
-              Exists pvb q, vbase_ptr derived vbase addr pvb **
-              addr |-> vptrR derived q **
-              (addr |-> vptrR derived q -*
-               let addr' := pvb ,, derived_to_base vbase rest in
-               reference_to ty addr' ** Q addr' free))
-          | _ => False
-          end
-      | _, _ => False
+      | Tnamed derived , Tnamed vbase =>
+          wp_glval e (fun addr free =>
+            Exists pvb q, vbase_ptr derived vbase addr pvb **
+            addr |-> vptrR derived q **
+            (addr |-> vptrR derived q -* reference_to ty pvb ** Q pvb free))
+      | _, _ => ERROR ("Cderived2vbase: not between classes", type_of e, ty)
       end
-      |-- wp_lval (Ecast (Cderived2vbase path (Tref ty)) e) Q.
+      |-- wp_lval (Ecast (Cderived2vbase (Tref ty)) e) Q.
 
-    Axiom wp_xval_cast_derived2vbase : forall e ty path Q,
+    Axiom wp_xval_cast_derived2vbase : forall e ty Q,
       match drop_qualifiers (type_of e), drop_qualifiers ty with
-      | Tnamed derived , Tnamed base =>
-          match path_names (path ++ [Tnamed base]) with
-          | Some (vbase :: rest) =>
-            wp_glval e (fun addr free =>
-              Exists pvb q, vbase_ptr derived vbase addr pvb **
-              addr |-> vptrR derived q **
-              (addr |-> vptrR derived q -*
-               let addr' := pvb ,, derived_to_base vbase rest in
-               reference_to ty addr' ** Q addr' free))
-          | _ => False
-          end
-      | _, _ => False
+      | Tnamed derived , Tnamed vbase =>
+          wp_glval e (fun addr free =>
+            Exists pvb q, vbase_ptr derived vbase addr pvb **
+            addr |-> vptrR derived q **
+            (addr |-> vptrR derived q -* reference_to ty pvb ** Q pvb free))
+      | _, _ => ERROR ("Cderived2vbase: not between classes", type_of e, ty)
       end
-      |-- wp_xval (Ecast (Cderived2vbase path (Trv_ref ty)) e) Q.
+      |-- wp_xval (Ecast (Cderived2vbase (Trv_ref ty)) e) Q.
 
-    Axiom wp_operand_cast_derived2vbase : forall e ty path Q,
+    Axiom wp_operand_cast_derived2vbase : forall e ty Q,
       match drop_qualifiers <$> unptr (type_of e), drop_qualifiers ty with
-      | Some (Tnamed derived) , Tnamed base =>
-          match path_names (path ++ [Tnamed base]) with
-          | Some (vbase :: rest) =>
-            wp_operand e (fun v free =>
-              match v with
-              | Vptr addr =>
-                if bool_decide (addr = nullptr) then Q (Vptr nullptr) free
-                else
-                  Exists pvb q, vbase_ptr derived vbase addr pvb **
-                  addr |-> vptrR derived q **
-                  (addr |-> vptrR derived q -*
-                   let addr' := pvb ,, derived_to_base vbase rest in
-                   has_type (Vptr addr') (Tptr ty) ** Q (Vptr addr') free)
-              | _ => False
-              end)
-          | _ => False
-          end
-      | _, _ => False
+      | Some (Tnamed derived) , Tnamed vbase =>
+          wp_operand e (fun v free =>
+            match v with
+            | Vptr addr =>
+              if bool_decide (addr = nullptr) then Q (Vptr nullptr) free
+              else
+                Exists pvb q, vbase_ptr derived vbase addr pvb **
+                addr |-> vptrR derived q **
+                (addr |-> vptrR derived q -*
+                 has_type (Vptr pvb) (Tptr ty) ** Q (Vptr pvb) free)
+            | _ => ERROR ("Cderived2vbase: not a pointer", v)
+            end)
+      | _, _ => ERROR ("Cderived2vbase: not between classes", type_of e, ty)
       end
-      |-- wp_operand (Ecast (Cderived2vbase path (Tptr ty)) e) Q.
+      |-- wp_operand (Ecast (Cderived2vbase (Tptr ty)) e) Q.
 
     (** the ternary operator [_ ? _ : _] has the value category
      * of the "then" and "else" expressions (which must be the same).

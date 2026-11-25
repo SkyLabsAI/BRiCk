@@ -520,7 +520,8 @@ Section with_monad.
     | Cbuiltin2fun t | Cctor t => type t
     | Clvaluebitcast t => FAIL "lvalue bitcast" <+> type t
     | Cdynamic t => FAIL "dynamic_cast" <+> type t
-    | Cderived2base ts t | Cbase2derived ts t | Cderived2vbase ts t => lst type ts <+> type t
+    | Cderived2base ts t | Cbase2derived ts t => lst type ts <+> type t
+    | Cderived2vbase t => type t
     | Cfloat t | Cint2float t => check_float_cast_target t
     | Cfloat2int t => type t <+> if is_float_type t then FAIL "invalid floating cast target" else OK
     | Cfloat2bool => OK

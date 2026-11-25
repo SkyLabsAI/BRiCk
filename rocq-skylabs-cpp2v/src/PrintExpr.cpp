@@ -415,10 +415,12 @@ void printDependentMember(ClangPrinter &cprint, CoqPrinter &print,
 // BRiCk cannot express.
 //
 // Clang's path for a conversion starts at the last virtual step and skips the
-// classes before it. A derived-to-base path that starts with its only
-// virtual step is printed as [Cderived2vbase]: that step goes from the source
-// class to one of its (direct or indirect) virtual bases, and the other steps
-// go to non-virtual bases. A path whose steps all go to non-virtual bases is
+// classes before it. A derived-to-base path whose only virtual step is its
+// first is printed as a [Cderived2vbase] for that step, from the source class
+// to one of its (direct or indirect) virtual bases, and a [Cderived2base] for
+// the other steps, to non-virtual bases (see [castStartsWithVirtualStep]). Clang
+// never builds another path with a virtual step, so the [Cunsupported] for it
+// is a guard. A path whose steps all go to non-virtual bases is
 // complete, and each step has a static offset, also out of a class with
 // virtual bases (whose non-virtual bases are in [vs_struct] of its
 // [Dvstruct]). A base-to-derived conversion never takes a virtual step: the
@@ -437,6 +439,16 @@ static bool castTakesUnsupportedVirtualStep(const CastExpr &ce) {
     default:
         return false;
     }
+}
+
+// Whether the derived-to-base conversion [ce] starts with a step to a virtual
+// base. cpp2v prints that step alone, as a [Cderived2vbase] whose result is
+// the virtual base; the remaining (non-virtual) steps, if any, are an
+// ordinary [Cderived2base] around it.
+static bool castStartsWithVirtualStep(const CastExpr &ce) {
+    return (ce.getCastKind() == CastKind::CK_DerivedToBase ||
+            ce.getCastKind() == CastKind::CK_UncheckedDerivedToBase) &&
+           !ce.path_empty() && (*ce.path_begin())->isVirtual();
 }
 
 fmt::Formatter &ClangPrinter::printDeclType(CoqPrinter &print,
@@ -1603,13 +1615,20 @@ public:
 
         case CastKind::CK_DerivedToBase:
         case CastKind::CK_UncheckedDerivedToBase: {
-            // A first step to a virtual base (see
-            // [castTakesUnsupportedVirtualStep]).
-            print.ctor(!ce->path_empty() && (*ce->path_begin())->isVirtual()
-                           ? "Cderived2vbase"
-                           : "Cderived2base");
+            // A first step to a virtual base is printed alone, by
+            // [printVirtualStep]: here, either that step is the whole path,
+            // or this cast is the rest of the path, from the virtual base.
+            auto begin = ce->path().begin();
+            if (castStartsWithVirtualStep(*ce)) {
+                if (ce->path_size() == 1) {
+                    with_type("Cderived2vbase");
+                    break;
+                }
+                ++begin;
+            }
+            print.ctor("Cderived2base");
             // note that [path] does *not* include the type of the argument
-            print.list_range(ce->path().begin(), ce->path().end() - 1,
+            print.list_range(begin, ce->path().end() - 1,
                              [&](auto i) {
                                  auto t = i->getType().getTypePtrOrNull();
                                  always_assert(t &&
@@ -1664,7 +1683,7 @@ public:
             printDiscarded(expr->getSubExpr());
         else {
             noteRealignedAddr(expr);
-            cprint.printExpr(print, expr->getSubExpr(), names);
+            printCastOperand(expr);
         }
         print.end_ctor();
     }
@@ -1722,8 +1741,43 @@ public:
             printDiscarded(expr->getSubExpr());
         else {
             noteRealignedAddr(expr);
-            cprint.printExpr(print, expr->getSubExpr(), names);
+            printCastOperand(expr);
         }
+    }
+
+    // The operand of the cast [ce]. When [ce] starts with a step to a virtual
+    // base and goes on to non-virtual bases, [printCast] prints the
+    // non-virtual steps, and the virtual step is a cast of the operand (see
+    // [castStartsWithVirtualStep]).
+    void printCastOperand(const CastExpr *ce) {
+        if (!castStartsWithVirtualStep(*ce) || ce->path_size() == 1 ||
+            castTakesUnsupportedVirtualStep(*ce)) {
+            cprint.printExpr(print, ce->getSubExpr(), names);
+            return;
+        }
+        // The virtual base, with the qualifiers of the result, at the value
+        // category of [ce].
+        auto &ctx = cprint.getContext();
+        auto vbase = (*ce->path_begin())->getType().getUnqualifiedType();
+        auto ty = ce->getType();
+        guard::ctor cast(print, "Ecast");
+        {
+            guard::ctor c(print, "Cderived2vbase", false);
+            if (ty->isPointerType()) {
+                auto quals = ty->getPointeeType().getQualifiers();
+                cprint.printQualType(
+                    print, ctx.getPointerType(ctx.getQualifiedType(vbase, quals)),
+                    loc::of(ce));
+            } else {
+                guard::ctor ref(print, ce->isLValue() ? "Tref" : "Trv_ref",
+                                false);
+                cprint.printQualType(
+                    print, ctx.getQualifiedType(vbase, ty.getQualifiers()),
+                    loc::of(ce));
+            }
+        }
+        print.output() << fmt::nbsp;
+        cprint.printExpr(print, ce->getSubExpr(), names);
     }
 
     // A pointer conversion of the address of an under-aligned object (see

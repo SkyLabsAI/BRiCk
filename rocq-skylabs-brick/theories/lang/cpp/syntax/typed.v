@@ -486,29 +486,17 @@ Module decltype.
             throw ("cast does not start and end on named types "%bs, from, result)
         end.
 
-      (** [check_vlist from ts result] checks the path of a
-          [Cderived2vbase] cast: the first class of [ts ++ [result]] is a
-          virtual base class of [from], and the rest of the path goes to
-          non-virtual bases. *)
-      Definition check_vlist (from : exprtype) (ts : list exprtype) (result : exprtype) : M () :=
+      (** [check_vbase from result]: [result] is a virtual base class of
+          [from] (see [Cderived2vbase]). *)
+      Definition check_vbase (from : exprtype) (result : exprtype) : M () :=
         match drop_qualifiers from , drop_qualifiers result with
         | Tnamed fc , Tnamed rc =>
             let* (gd : GlobDecl) := global fc in
             match gd with
             | Gvstruct vs =>
-                let is_vbase nm :=
-                  List.existsb (fun '(b, _) => bool_decide (type_of_classname b = Tnamed nm)) vs.(vs_vbases)
-                in
-                match ts with
-                | nil =>
-                    if is_vbase rc then mret tt
-                    else throw ("invalid virtual base class "%bs, fc, rc)
-                | Tnamed vb :: ts =>
-                    if is_vbase vb then check_list' vb ts rc
-                    else throw ("invalid virtual base class "%bs, fc, vb)
-                | t :: _ =>
-                    throw ("invalid class in chain "%bs, t)
-                end
+                if List.existsb (fun '(b, _) => bool_decide (type_of_classname b = Tnamed rc)) vs.(vs_vbases)
+                then mret tt
+                else throw ("invalid virtual base class "%bs, fc, rc)
             | _ =>
                 throw ("not a class with virtual bases "%bs, fc)
             end
@@ -580,12 +568,12 @@ Module decltype.
                          let* _ := check_list rt ls bt in
                          mret $ vc_to_type rvc $ tqualified cv rt) t
 
-        | Cderived2vbase ls t =>
+        | Cderived2vbase t =>
             let* '(bvc, bt) := gl_or_ptr base in
             qual_norm (fun cv t =>
                          let* '(rvc, rt) := gl_or_ptr t in
                          let* _ := guard (bvc = rvc \/ (bvc = Lvalue /\ rvc = Xvalue)) in
-                         let* _ := check_vlist bt ls rt in
+                         let* _ := check_vbase bt rt in
                          mret $ vc_to_type rvc $ tqualified cv rt) t
 
         | Cintegral t => mret t

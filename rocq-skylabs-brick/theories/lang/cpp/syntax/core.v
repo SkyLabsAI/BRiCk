@@ -626,7 +626,7 @@ with Cast : Set :=
 | Cdynamic     (to : type)
 | Cderived2base (path : list type) (END : type)
 | Cbase2derived (path : list type) (END : type)
-| Cderived2vbase (path : list type) (END : type)
+| Cderived2vbase (END : type)
 (* If the sub-expression has type <START> then the arguments of
    [Cderived2base] and [Cbase2derived] contain the path between
    <START> and <END> from derived class to base class.
@@ -642,19 +642,19 @@ with Cast : Set :=
      A cast from <<A>> to <<D>> will be [Cbase2derived ["C";"B"] "D"].
      - <<A>> comes from the type of the sub-expression.
 
-   [Cderived2vbase path END] is a derived-to-base cast whose first step
-   goes to a _virtual_ base class: the first class of [path ++ [END]],
-   which is a (direct or indirect) virtual base class of <START>. The
-   other steps go to non-virtual bases. The path omits the classes
-   between <START> and that virtual base. For example, with
+   [Cderived2vbase END] is a derived-to-base cast to <END>, a (direct
+   or indirect) _virtual_ base class of <START>. A conversion to a base
+   of a virtual base is a [Cderived2base] of a [Cderived2vbase]. For
+   example, with
      ```c++
      class A {};
      class V : public A {};
      class L : public virtual V {};
      class M : public L {};
      ```
-     A cast from <<M>> to <<A>> will be [Cderived2vbase ["V"] "A"], and
-     a cast from <<M>> to <<V>> will be [Cderived2vbase [] "V"].
+     A cast from <<M>> to <<V>> will be [Cderived2vbase "V"], and a
+     cast from <<M>> to <<A>> will be [Cderived2base [] "A"] of
+     [Cderived2vbase "V"].
  *)
 | Cunsupported (_ : bs) (_ : type)
 .
@@ -867,8 +867,8 @@ Module Cast.
     | Cptr2int t => T t
     | Cptr2bool => false
     | Cderived2base path t
-    | Cbase2derived path t
-    | Cderived2vbase path t => List.existsb T path || T t
+    | Cbase2derived path t => List.existsb T path || T t
+    | Cderived2vbase t => T t
     | Cintegral t => T t
     | Cint2bool => false
     | Cfloat2bool => false
