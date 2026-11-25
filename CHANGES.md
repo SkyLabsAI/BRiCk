@@ -14,11 +14,12 @@ of the release, and introduce a new heading.
 `Dunsupported`, instead of exposing them as opaque records. Their argument
 lifetime is unsupported even when their field layout is hidden.
 
-2026.11.24: `Cast` has a new constructor `Cderived2vbase (path : list type)
-(END : type)`, a derived-to-base conversion whose first step goes to a virtual
-base class (see `syntax/core.v`). cpp2v prints it for conversions to a virtual
-base, which were `Cunsupported`; conversions to non-virtual bases of a class
-with virtual bases are now `Cderived2base`/`Cbase2derived`. Exhaustive matches
+2026.11.24: `Cast` has a new constructor `Cderived2vbase (END : type)`, a
+derived-to-base conversion to a virtual base class (see `syntax/core.v`). cpp2v
+prints it for conversions to a virtual base, which were `Cunsupported`; a
+conversion to a base of a virtual base is a `Cderived2base` of a
+`Cderived2vbase`, and conversions to non-virtual bases of a class with virtual
+bases are now `Cderived2base`/`Cbase2derived`. Exhaustive matches
 on `Cast` need a new case. The rules for `Cderived2vbase` read the vtable
 pointer, owned through the new `vptrR cls q`: a constructor of a class with
 virtual bases gets `this |-> vptrR cls 1` after initializing its non-virtual

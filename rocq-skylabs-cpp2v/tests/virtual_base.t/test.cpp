@@ -31,3 +31,10 @@ void copy_nonvirtual() { P d(1); P e(d); NB &b = e; P &p = static_cast<P &>(b); 
 // A non-virtual base of a class that also has a virtual base.
 struct X : virtual VB, NB { X(int x) : VB(x), NB(x) {} };
 void convert_mixed(X &x) { NB &b = x; X &y = static_cast<X &>(b); }
+
+// A base of a virtual base: a virtual step, then a non-virtual one.
+struct A0 { int a; };
+struct VA : A0 { };
+struct LA : virtual VA { };
+A0 &to_base_of_vbase(LA &x) { return x; }
+const A0 *to_base_of_vbase_ptr(const LA *x) { return x; }
