@@ -10,6 +10,10 @@ of the release, and introduce a new heading.
 
 ## Since Last Release
 
+2026.11.25: cpp2v keeps `[[clang::trivial_abi]]` classes with bit-fields
+`Dunsupported`, instead of exposing them as opaque records. Their argument
+lifetime is unsupported even when their field layout is hidden.
+
 2026.11.24: `global_ptr_nonnull`, `global_ptr_nonnull_aid` and
 `global_ptr_nonnull_addr` (and `_global_nonnull`) now require
 `defines_symbol tu o = true`: the translation unit defines the symbol, rather
