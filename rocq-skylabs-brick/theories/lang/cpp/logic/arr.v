@@ -493,6 +493,14 @@ Section with_array_R.
   Qed.
 End with_array_R.
 
+Section with_array_fmap.
+  Context `{Σ : cpp_logic, resolve : genv}.
+
+  Lemma arrayR_fmap {X Y} ty (R : X -> Rep) (f : Y -> X) (ys : list Y) :
+    arrayR ty R (f <$> ys) -|- arrayR ty (fun y => R (f y)) ys.
+  Proof. by rewrite arrayR_eq /arrayR_def -list_fmap_compose. Qed.
+End with_array_fmap.
+
 Section with_array_Rs.
   Context `{Σ : cpp_logic, resolve : genv} {X : Type} {ty : Rtype}.
 

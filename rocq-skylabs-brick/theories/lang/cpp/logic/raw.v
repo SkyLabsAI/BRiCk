@@ -46,22 +46,76 @@ Definition decodes {σ : genv} (endianness : endian) (sgn : signed) (l : list N)
   List.Forall (fun v => has_type_prop (Vn v) Tbyte) l /\
   _Z_from_bytes endianness sgn l = z.
 
-Definition decodes_uint {σ : genv} (l : list N) (z : Z) : Prop :=
-  Reduce (decodes (genv_byte_order σ) Unsigned l z).
+(** [decodes_int sgn l z]: the bytes [l] encode [z] as an integer of
+    signedness [sgn] in the byte order of the target. *)
+Definition decodes_int {σ : genv} (sgn : signed) (l : list N) (z : Z) : Prop :=
+  Reduce (decodes (genv_byte_order σ) sgn l z).
+Notation decodes_uint := (decodes_int Unsigned).
 
 (*
 TODO (JH): Determine if we can axiomatize a more specific property and
 use it to derive this reasoning principle.
 *)
-Axiom decode_uint_anyR : ∀ `{Σ : cpp_logic, σ : genv} q sz,
-  anyR (Tnum sz Unsigned) q -|-
-  anyR (Tarray Tuchar (int_rank.bytesN sz)) q ** type_ptrR (Tnum sz Unsigned).
+Axiom decode_int_anyR : ∀ `{Σ : cpp_logic, σ : genv} q sz sgn,
+  anyR (Tnum sz sgn) q -|-
+  anyR (Tarray Tuchar (int_rank.bytesN sz)) q ** type_ptrR (Tnum sz sgn).
 (* ^^ should be proven *)
 
+Lemma decode_uint_anyR : ∀ `{Σ : cpp_logic, σ : genv} q sz,
+  anyR (Tnum sz Unsigned) q -|-
+  anyR (Tarray Tuchar (int_rank.bytesN sz)) q ** type_ptrR (Tnum sz Unsigned).
+Proof. intros. apply decode_int_anyR. Qed.
+
 (* JH: TODO: Determine what new axioms we should add here. *)
-Axiom raw_byte_of_int_eq : ∀ {σ : genv} sz x rs,
+Axiom raw_byte_of_uint_eq : ∀ {σ : genv} sz x rs,
   raw_bytes_of_val σ (Tnum sz Unsigned) (Vint x) rs <->
   ∃ l, decodes_uint l x /\ raw_int_byte <$> l = rs /\ length l = N.to_nat (int_rank.bytesN sz).
+
+(** C++20 [basic.fundamental]/3: for each value [z] of a signed integer
+    type, the congruent value of the corresponding unsigned type modulo 2^N
+    has the same value representation, so every bit pattern is a value. *)
+Axiom raw_bytes_of_val_signed_unsigned : ∀ {σ : genv} sz z rs,
+  raw_bytes_of_val σ (Tnum sz Signed) (Vint z) rs <->
+  int_rank.bound sz Signed z /\
+  raw_bytes_of_val σ (Tnum sz Unsigned) (Vint (to_unsigned_bits (int_rank.bitsN sz) z)) rs.
+
+Lemma raw_byte_of_int_eq {σ : genv} sz sgn x rs :
+  raw_bytes_of_val σ (Tnum sz sgn) (Vint x) rs <->
+  ∃ l, decodes_int sgn l x /\ raw_int_byte <$> l = rs /\ length l = N.to_nat (int_rank.bytesN sz).
+Proof.
+  destruct sgn; last apply raw_byte_of_uint_eq.
+  have Hbits : (8 * int_rank.bytesN sz)%N = int_rank.bitsN sz by destruct sz.
+  rewrite raw_bytes_of_val_signed_unsigned raw_byte_of_uint_eq.
+  split.
+  - intros (Hbound & l & [Htyped Hdecode] & Hrs & Hlen).
+    exists l. split; last by auto.
+    split; first done.
+    rewrite _Z_from_bytes_signed Hlen N2Nat.id Hbits Hdecode.
+    apply to_signed_unsigned_bits_roundtrip;
+      destruct sz; rewrite /bitsize.bound /bitsize.min_val /bitsize.max_val /bits_min_val /bits_max_val in Hbound; simpl in *; lia.
+  - intros (l & [Htyped Hdecode] & Hrs & Hlen).
+    have Hbound : int_rank.bound sz Signed x.
+    { have HlenN : lengthN l = int_rank.bytesN sz by rewrite /lengthN Hlen N2Nat.id.
+      have H := _Z_from_bytes_has_type_prop (genv_byte_order σ) sz Signed l HlenN.
+      apply (proj2 (has_int_type sz Signed x)). by rewrite -Hdecode. }
+    split; first done. exists l. split; last by auto.
+    split; first done.
+    rewrite _Z_from_bytes_signed Hlen N2Nat.id Hbits in Hdecode.
+    rewrite -Hdecode trim_to_signed_bits_agree.
+    symmetry. apply to_unsigned_bits_id.
+    have H := _Z_from_bytes_Unsigned_bound (genv_byte_order σ) l.
+    rewrite Hlen in H. destruct sz; simpl in *; lia.
+Qed.
+
+Lemma raw_bytes_of_val_int_zeros {σ : genv} sz sgn :
+  raw_bytes_of_val σ (Tnum sz sgn) (Vint 0)
+    (replicate (N.to_nat (int_rank.bytesN sz)) (raw_int_byte 0)).
+Proof.
+  rewrite raw_byte_of_int_eq. exists (replicate (N.to_nat (int_rank.bytesN sz)) 0%N).
+  split; last (split; [by rewrite fmap_replicate | by rewrite length_replicate]).
+  split; first (apply Forall_forall; intros n; rewrite elem_of_replicate; intros [-> _]; apply has_type_byte_bound; lia).
+  rewrite -repeat_replicate; apply _Z_from_bytes_0s.
+Qed.
 
 Lemma raw_bytes_of_val_byte {σ : genv} (n : N) rs :
   has_type_prop (Vn n) Tbyte ->
@@ -268,34 +322,36 @@ Section with_Σ.
   Qed.
 
   (** TODO: determine whether this is correct with respect to pointers *)
-  Lemma decode_uint_primR q sz (x : Z) :
-    primR (Tnum sz Unsigned) q (Vint x) -|-
+  Lemma decode_int_primR q sz sgn (x : Z) :
+    primR (Tnum sz sgn) q (Vint x) -|-
       Exists (rs : list raw_byte) (l : list N),
       (**
       Reconsider: We may only need one list and [raw_bytes_of_val σ
-      (Tnum sz Unsigned) (Vint x) rs]
+      (Tnum sz sgn) (Vint x) rs]
       *)
+      [| decodes_int sgn l x |] **
+      [| raw_int_byte <$> l = rs |] **
+      [| length l = N.to_nat (int_rank.bytesN sz) |] **
+      type_ptrR (Tnum sz sgn) **
+      arrayR Tbyte (fun c => primR Tbyte q (Vint c)) (Z.of_N <$> l).
+  Proof.
+    rewrite primR_to_rawsR. f_equiv=>rs. rewrite raw_byte_of_int_eq. split'.
+    - iIntros "(%Hraw & T & Rs)". destruct Hraw as (l & Hdec & <- & Hlen).
+      iExists l. iFrame (Hdec Hlen) "T". iSplit; first done.
+      by rewrite arrayR_fmap -(rawsR_int_bytes q l (proj1 Hdec)).
+    - iIntros "(%l & %Hdec & <- & %Hlen & #T & Rs)". iFrame "T". iSplit; first eauto.
+      by rewrite arrayR_fmap -(rawsR_int_bytes q l (proj1 Hdec)).
+  Qed.
+
+  Lemma decode_uint_primR q sz (x : Z) :
+    primR (Tnum sz Unsigned) q (Vint x) -|-
+      Exists (rs : list raw_byte) (l : list N),
       [| decodes_uint l x |] **
       [| raw_int_byte <$> l = rs |] **
       [| length l = N.to_nat (int_rank.bytesN sz) |] **
       type_ptrR (Tnum sz Unsigned) **
       arrayR Tbyte (fun c => primR Tbyte q (Vint c)) (Z.of_N <$> l).
-  Proof.
-    rewrite primR_to_rawsR. f_equiv=>rs. rewrite raw_byte_of_int_eq. split'.
-    - iIntros "(%Hraw & T & Rs)". destruct Hraw as (l & Hdec & Hrs & Hlen).
-      iExists l. iFrame (Hdec Hrs Hlen) "T".
-      rewrite -{}Hrs /rawsR arrayR_eq/arrayR_def. rewrite arrR_mono//.
-      decompose_Forall. apply Forall_forall=>b Hb /=.
-      rewrite raw_int_byte_primR//.
-      have Htyped := proj1 Hdec.
-      rewrite Forall_forall in Htyped. exact: Htyped Hb.
-    - iIntros "(%l & %Hdec & %Hrs & %Hlen & #T & Rs)". iFrame "T".
-      iSplit; eauto. rewrite -{}Hrs /rawsR arrayR_eq/arrayR_def. rewrite arrR_mono//.
-      decompose_Forall. apply Forall_forall=>b Hb /=.
-      rewrite raw_int_byte_primR//.
-      have Htyped := proj1 Hdec.
-      rewrite Forall_forall in Htyped. exact: Htyped Hb.
-  Qed.
+  Proof. apply decode_int_primR. Qed.
 
 End with_Σ.
 
@@ -311,7 +367,7 @@ Module Endian.
     Proof.
       move=> endianness sz l v Hsz [Hbyte Hdecode].
       rewrite /decodes in Hdecode.
-      rewrite /decodes_uint/to_end/to_little_end/to_big_end.
+      rewrite /decodes_int/to_end/to_little_end/to_big_end.
       split; first assumption.
       repeat case_match; eauto;
         rewrite z_to_bytes._Z_from_bytes_eq/z_to_bytes._Z_from_bytes_def;
