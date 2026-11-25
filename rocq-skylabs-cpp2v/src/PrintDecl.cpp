@@ -877,12 +877,16 @@ static const char *supportedRecord(const CXXRecordDecl &decl,
 /// facts about their bodies out of the logic, and an opaque record must not
 /// bring any back. It qualifies only if the metadata we print is honest
 /// without the body: here, a complete, non-dependent, well-formed record
-/// that has a bit-field and no virtual base. Records with virtual bases
-/// stay unsupported: their size as a base-class subobject differs from
-/// their <<sizeof>>.
+/// that has a bit-field, no virtual base, and no <<trivial_abi>> attribute.
+/// Records with virtual bases stay unsupported: their size as a base-class
+/// subobject differs from their <<sizeof>>. <<trivial_abi>> stays unsupported
+/// because it changes argument lifetime even when the body is hidden (see
+/// [supportedRecord]). Under-aligned fields and bases may stay opaque:
+/// their unsupported layout is hidden by the opaque record.
 static bool opaqueRecord(const CXXRecordDecl &decl) {
     if (!decl.isCompleteDefinition() || decl.isDependentContext() ||
-        decl.isInvalidDecl() || decl.getNumVBases() != 0)
+        decl.isInvalidDecl() || decl.getNumVBases() != 0 ||
+        decl.hasAttr<TrivialABIAttr>())
         return false;
     bool bitfield = false;
     for (auto f : decl.fields()) {
