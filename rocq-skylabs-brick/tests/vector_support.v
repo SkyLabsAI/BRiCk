@@ -70,3 +70,27 @@ Proof. discriminate. Qed.
 Example support_rejects_struct_elem_vector :
   check.type (Tvector (Tnamed "Foo") 4 16) <> check.OK.
 Proof. discriminate. Qed.
+
+Example support_rejects_overaligned_vector :
+  check.type (Tvector Tint 4 32) <> check.OK.
+Proof. discriminate. Qed.
+
+Example support_rejects_non_pow2_align_vector :
+  check.type (Tvector Tint 4 3) <> check.OK.
+Proof. discriminate. Qed.
+
+Example align_of_const_cu32 {σ : genv} :
+  align_of (σ:=σ) (Tconst (Tvector Tlonglong 4 32)) = Some 32%N.
+Proof.
+  rewrite -align_of_erase_qualifiers /=.
+  apply (align_of_vector Tlonglong 4 32 32);
+    [reflexivity | lia | exists 5%N; reflexivity | exists 1%N; lia].
+Qed.
+
+Example align_of_const_cv1 {σ : genv} :
+  align_of (σ:=σ) (Tconst (Tvector Tlonglong 4 1)) = Some 1%N.
+Proof.
+  rewrite -align_of_erase_qualifiers /=.
+  apply (align_of_vector Tlonglong 4 1 32);
+    [reflexivity | lia | exists 0%N; reflexivity | exists 32%N; lia].
+Qed.

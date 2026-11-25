@@ -98,12 +98,14 @@ private:
     const clang::Decl *decl_{nullptr};
     const bool comment_{false};
     const bool typedefs_;
+    bool canonical_vector_align_{false};
     clang::CurrentSourceLocExprScope sourceLocExprScope_;
 
     ClangPrinter(const ClangPrinter &from, const clang::Decl *decl)
         : compiler_(from.compiler_), context_(from.context_),
           mangleContext_(from.mangleContext_), trace_(from.trace_), decl_{decl},
-          comment_{from.comment_}, typedefs_{from.typedefs_} {}
+          comment_{from.comment_}, typedefs_{from.typedefs_},
+          canonical_vector_align_{from.canonical_vector_align_} {}
 
 public:
     // Silence some warnings until we can improve our diagnostics
@@ -142,6 +144,20 @@ public:
     clang::MangleContext &getMangleContext() { return *mangleContext_; }
 
     bool printTypedefs() const { return typedefs_; }
+
+    bool canonicalVectorAlign() const { return canonical_vector_align_; }
+
+    struct CanonicalVectorAlignScope {
+        ClangPrinter &printer;
+        bool saved;
+        explicit CanonicalVectorAlignScope(ClangPrinter &p)
+            : printer(p), saved(p.canonical_vector_align_) {
+            printer.canonical_vector_align_ = true;
+        }
+        ~CanonicalVectorAlignScope() {
+            printer.canonical_vector_align_ = saved;
+        }
+    };
 
     clang::CurrentSourceLocExprScope &sourceLocExprScope() {
         return sourceLocExprScope_;

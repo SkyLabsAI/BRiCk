@@ -751,6 +751,7 @@ static fmt::Formatter &printTemplateArg(CoqPrinter &print,
     switch (kind) {
     case TemplateArgument::ArgKind::Type: {
         guard::ctor _(print, "Atype", false);
+        ClangPrinter::CanonicalVectorAlignScope _align_scope(cprint);
         return cprint.printQualType(print, arg.getAsType(), loc);
     }
     case TemplateArgument::ArgKind::Expression:
@@ -899,6 +900,7 @@ static fmt::Formatter &printFunctionParamTypes(CoqPrinter &print,
     if (ClangPrinter::debug && cprint.trace(Trace::Name))
         cprint.trace("printFunctionParamTypes", loc::of(decl));
     auto loc = loc::of(decl);
+    ClangPrinter::CanonicalVectorAlignScope _align_scope(cprint);
     return print.list(decl.parameters(), [&](auto *param) {
         cprint.printQualType(print, param->getType(), loc);
     });
@@ -957,6 +959,7 @@ static fmt::Formatter &printFunctionName(CoqPrinter &print,
         always_assert(decl.getNumParams() == 0);
         guard::ctor _(print, "Nop_conv", false);
         printFunctionQualifiers(print, decl, cprint) << fmt::nbsp;
+        ClangPrinter::CanonicalVectorAlignScope _align_scope(cprint);
         return cprint.printQualType(print, name.getCXXNameType(),
                                     loc::of(decl));
     }
@@ -1482,6 +1485,7 @@ fmt::Formatter &printDeclarationName(CoqPrinter &print,
     case DeclarationName::NameKind::CXXConversionFunctionName: {
         guard::ctor _(print, "Nop_conv", false);
         print.output() << "function_qualifiers.N" << fmt::nbsp;
+        ClangPrinter::CanonicalVectorAlignScope _align_scope(cprint);
         cprint.printQualType(print, name.getCXXNameType(), loc::none);
         break;
     }

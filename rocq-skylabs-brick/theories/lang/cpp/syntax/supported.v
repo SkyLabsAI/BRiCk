@@ -350,8 +350,16 @@ Section with_monad.
         (if q_volatile q then PARTIAL "volatile: accesses are modelled as ordinary memory" else OK)
         <+> type t
     | Tvector t n al =>
-        (if (is_dependentT t || is_vector_elem_type t) &&
-            bool_decide (n <> 0)%N && bool_decide (al <> 0)%N
+        let layout_ok :=
+          if is_dependentT t then true
+          else
+            match vector_elem_size t with
+            | Some esz => bool_decide ((n * esz) mod al = 0)%N
+            | None => false
+            end in
+        (if bool_decide (n <> 0)%N &&
+            bool_decide (al <> 0 /\ N.land al (al - 1) = 0)%N &&
+            layout_ok
          then OK
          else FAIL "unsupported vector type") <+> no_refs (type t)
     | Tarch _ _ => OK

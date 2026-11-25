@@ -177,6 +177,12 @@ fmt::Formatter &ClangPrinter::printValueDeclExpr(CoqPrinter &print,
         auto hv = bd->getHoldingVar();
         printQualType(print, hv ? hv->getType() : decl->getType(),
                       loc::of(decl));
+    } else if (auto fd = dyn_cast<FunctionDecl>(decl)) {
+        const FunctionDecl *target = fd->getDefinition();
+        if (!target) {
+            target = fd->getFirstDecl();
+        }
+        printQualType(print, target->getType(), loc::of(decl));
     } else {
         printQualType(print, decl->getType(), loc::of(decl));
     }

@@ -67,8 +67,113 @@ private:
 public:
     static PrintType printer;
 
+    static bool containsNonCanonicalVectorAlign(const Type *type,
+                                                const ASTContext &ctxt) {
+        if (!type || type->isDependentType()) {
+            return false;
+        }
+        if (const auto *td = dyn_cast<TypedefType>(type)) {
+            QualType canon = ctxt.getCanonicalType(QualType(td, 0));
+            if (const auto *vt = dyn_cast<VectorType>(canon.getTypePtr())) {
+                return ctxt.getTypeAlignInChars(QualType(td, 0)) !=
+                       ctxt.getTypeAlignInChars(vt);
+            }
+            return containsNonCanonicalVectorAlign(
+                td->desugar().getTypePtrOrNull(), ctxt);
+        }
+        if (const auto *pt = dyn_cast<PointerType>(type)) {
+            return containsNonCanonicalVectorAlign(
+                pt->getPointeeType().getTypePtrOrNull(), ctxt);
+        }
+        if (const auto *rt = dyn_cast<ReferenceType>(type)) {
+            return containsNonCanonicalVectorAlign(
+                rt->getPointeeType().getTypePtrOrNull(), ctxt);
+        }
+        if (const auto *at = dyn_cast<ArrayType>(type)) {
+            return containsNonCanonicalVectorAlign(
+                at->getElementType().getTypePtrOrNull(), ctxt);
+        }
+        if (const auto *ft = dyn_cast<FunctionType>(type)) {
+            if (containsNonCanonicalVectorAlign(
+                    ft->getReturnType().getTypePtrOrNull(), ctxt)) {
+                return true;
+            }
+            if (const auto *fpt = dyn_cast<FunctionProtoType>(ft)) {
+                for (QualType pt : fpt->getParamTypes()) {
+                    if (containsNonCanonicalVectorAlign(pt.getTypePtrOrNull(),
+                                                        ctxt)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        if (const auto *mp = dyn_cast<MemberPointerType>(type)) {
+            return containsNonCanonicalVectorAlign(
+                mp->getPointeeType().getTypePtrOrNull(), ctxt);
+        }
+        if (const auto *paren = dyn_cast<ParenType>(type)) {
+            return containsNonCanonicalVectorAlign(
+                paren->getInnerType().getTypePtrOrNull(), ctxt);
+        }
+        if (const auto *attr = dyn_cast<AttributedType>(type)) {
+            return containsNonCanonicalVectorAlign(
+                attr->getModifiedType().getTypePtrOrNull(), ctxt);
+        }
+        if (const auto *adj = dyn_cast<AdjustedType>(type)) {
+            return containsNonCanonicalVectorAlign(
+                adj->getAdjustedType().getTypePtrOrNull(), ctxt);
+        }
+        if (const auto *sub = dyn_cast<SubstTemplateTypeParmType>(type)) {
+            return containsNonCanonicalVectorAlign(
+                sub->getReplacementType().getTypePtrOrNull(), ctxt);
+        }
+        if (const auto *ut = dyn_cast<UsingType>(type)) {
+            return containsNonCanonicalVectorAlign(
+                ut->desugar().getTypePtrOrNull(), ctxt);
+        }
+        if (const auto *tst = dyn_cast<TemplateSpecializationType>(type)) {
+            if (tst->isTypeAlias()) {
+                return containsNonCanonicalVectorAlign(
+                    tst->getAliasedType().getTypePtrOrNull(), ctxt);
+            }
+            if (tst->isSugared()) {
+                return containsNonCanonicalVectorAlign(
+                    tst->desugar().getTypePtrOrNull(), ctxt);
+            }
+            return false;
+        }
+        if (const auto *dt = dyn_cast<DeducedType>(type)) {
+            return containsNonCanonicalVectorAlign(
+                dt->getDeducedType().getTypePtrOrNull(), ctxt);
+        }
+        if (const auto *dlt = dyn_cast<DecltypeType>(type)) {
+            return containsNonCanonicalVectorAlign(
+                dlt->getUnderlyingType().getTypePtrOrNull(), ctxt);
+        }
+        if (const auto *tot = dyn_cast<TypeOfType>(type)) {
+            return containsNonCanonicalVectorAlign(
+                tot->getUnmodifiedType().getTypePtrOrNull(), ctxt);
+        }
+#if CLANG_VERSION_MAJOR < 22
+        if (const auto *et = dyn_cast<ElaboratedType>(type)) {
+            return containsNonCanonicalVectorAlign(
+                et->getNamedType().getTypePtrOrNull(), ctxt);
+        }
+#else
+        if (const auto *ps = dyn_cast<PredefinedSugarType>(type)) {
+            return containsNonCanonicalVectorAlign(
+                ps->desugar().getTypePtrOrNull(), ctxt);
+        }
+#endif
+        return false;
+    }
+
     void Visit(const Type *type, CoqPrinter &print, ClangPrinter &cprint) {
-        if (not print.reference(type))
+        bool bypass_cache =
+            cprint.canonicalVectorAlign() &&
+            containsNonCanonicalVectorAlign(type, cprint.getContext());
+        if (bypass_cache || not print.reference(type))
             TypeVisitor<PrintType, void, CoqPrinter &, ClangPrinter &>::Visit(
                 type, print, cprint);
     }
@@ -86,12 +191,48 @@ public:
 
     IGNORE(BlockPointerType)
     IGNORE(PackExpansionType)
+    static bool isSupportedVectorLayout(const VectorType *type,
+                                        uint64_t align_bytes,
+                                        const ASTContext &ctxt) {
+        if (type->isDependentType() || align_bytes == 0 ||
+            type->getNumElements() == 0) {
+            return false;
+        }
+        // Only plain GNU vector_size vectors (not ExtVectorType or
+        // target-specific vector kinds) have the canonical Tvector identity.
+        if (type->getTypeClass() != Type::Vector ||
+            type->getVectorKind() != VectorKind::Generic) {
+            return false;
+        }
+        QualType elem = type->getElementType();
+        if (elem->isDependentType() || elem->isIncompleteType()) {
+            return false;
+        }
+        uint64_t elem_bytes = ctxt.getTypeSizeInChars(elem).getQuantity();
+        uint64_t size_bytes = ctxt.getTypeSizeInChars(type).getQuantity();
+        // Reject padded vectors where sizeof(vec) != num_elems * sizeof(elem).
+        if (elem_bytes == 0 ||
+            size_bytes != type->getNumElements() * elem_bytes) {
+            return false;
+        }
+        // Canonical vector alignment must equal sizeof(vec) (matching
+        // dealias canonicalization) and effective alignment must be a power of
+        // two dividing sizeof(vec) to satisfy align_of_size_of' and
+        // align_of_vector.
+        uint64_t canon_align = ctxt.getTypeAlignInChars(type).getQuantity();
+        if (canon_align != size_bytes ||
+            (align_bytes & (align_bytes - 1)) != 0 ||
+            size_bytes % align_bytes != 0) {
+            return false;
+        }
+        return true;
+    }
+
     static void printVectorTypeWithAlign(const VectorType *type,
                                          uint64_t align_bytes,
                                          CoqPrinter &print,
                                          ClangPrinter &cprint, loc::loc loc) {
-        if (type->isDependentType() || align_bytes == 0 ||
-            type->getNumElements() == 0) {
+        if (!isSupportedVectorLayout(type, align_bytes, cprint.getContext())) {
             unsupported_type(print, cprint, type, /*well_known*/ true);
             return;
         }
@@ -341,27 +482,50 @@ public:
 
     void VisitTypedefType(const TypedefType *type, CoqPrinter &print,
                           ClangPrinter &cprint) {
-        auto underlying =
-            type->getDecl()->getCanonicalDecl()->getUnderlyingType();
-        if (!type->isDependentType() &&
-            cprint.getContext()
-                .getCanonicalType(underlying)
-                .getQualifiers().empty()) {
-            if (const auto *vt = type->getAs<VectorType>()) {
-                auto align = cprint.getContext()
-                                 .getTypeAlignInChars(QualType(type, 0))
-                                 .getQuantity();
-                if (PRINT_ALIAS) {
-                    print.ctor("@Talias", false);
-                    cprint.printName(print, type->getDecl(), loc::of(type));
-                    printVectorTypeWithAlign(vt, align, print, cprint,
-                                             loc::of(type));
-                    print.end_ctor();
-                } else {
-                    printVectorTypeWithAlign(vt, align, print, cprint,
-                                             loc::of(type));
+        if (!type->isDependentType()) {
+            auto &ctxt = cprint.getContext();
+            QualType canon = ctxt.getCanonicalType(QualType(type, 0));
+            if (const auto *vt = dyn_cast<VectorType>(canon.getTypePtr())) {
+                Qualifiers extra_quals = canon.getQualifiers();
+                extra_quals.removeConst();
+                extra_quals.removeVolatile();
+                if (extra_quals.empty()) {
+                    uint64_t align =
+                        cprint.canonicalVectorAlign()
+                            ? ctxt.getTypeAlignInChars(vt).getQuantity()
+                            : ctxt.getTypeAlignInChars(QualType(type, 0))
+                                  .getQuantity();
+                    auto emit_vec = [&]() {
+                        if (!isSupportedVectorLayout(vt, align, ctxt)) {
+                            unsupported_type(print, cprint, type,
+                                             /*well_known*/ true);
+                            return;
+                        }
+                        bool is_const = canon.isConstQualified();
+                        bool is_volatile = canon.isVolatileQualified();
+                        if (is_const && is_volatile) {
+                            print.ctor("Qconst_volatile", false);
+                        } else if (is_const) {
+                            print.ctor("Qconst", false);
+                        } else if (is_volatile) {
+                            print.ctor("Qvolatile", false);
+                        }
+                        printVectorTypeWithAlign(vt, align, print, cprint,
+                                                 loc::of(type));
+                        if (is_const || is_volatile) {
+                            print.end_ctor();
+                        }
+                    };
+                    if (PRINT_ALIAS) {
+                        print.ctor("@Talias", false);
+                        cprint.printName(print, type->getDecl(), loc::of(type));
+                        emit_vec();
+                        print.end_ctor();
+                    } else {
+                        emit_vec();
+                    }
+                    return;
                 }
-                return;
             }
         }
         if (PRINT_ALIAS) {

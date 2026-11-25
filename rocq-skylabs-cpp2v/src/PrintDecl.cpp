@@ -287,8 +287,6 @@ static fmt::Formatter &printTypedef(CoqPrinter &print,
     if (ClangPrinter::debug && cprint.trace(Trace::Decl))
         cprint.trace("printTypedef", loc::of(decl));
     if (!decl.getUnderlyingType()->isDependentType() &&
-        ctxt.getCanonicalType(decl.getUnderlyingType())
-            .getQualifiers().empty() &&
         decl.getUnderlyingType()->getAs<VectorType>() != nullptr) {
         return cprint.printQualType(print, ctxt.getTypeDeclType(&decl),
                                     loc::of(decl));

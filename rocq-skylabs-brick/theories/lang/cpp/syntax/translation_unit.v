@@ -660,10 +660,18 @@ Fixpoint ref_to_type (t : type) : option type :=
 (* Not a reference type *)
 Notation not_ref_type t := (ref_to_type t = None).
 
-Definition is_vector_elem_type (t : type) : bool :=
+Definition vector_elem_size (t : type) : option N :=
   match t with
-  | Tnum _ _ | Tchar_ _ | Tfloat_ _ => true
-  | _ => false
+  | Tnum sz _ => Some (int_rank.bytesN sz)
+  | Tchar_ ct => Some (char_type.bytesN ct)
+  | Tfloat_ sz => Some (float_type.bytesN sz)
+  | _ => None
+  end.
+
+Definition is_vector_elem_type (t : type) : bool :=
+  match vector_elem_size t with
+  | Some _ => true
+  | None => false
   end.
 
 Section with_type_table.

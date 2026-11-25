@@ -381,18 +381,37 @@ Module decltype.
       Succeed Example _0 : bool_decide (tq_le QM QC) := I.
       (* END upstream *)
 
+      (* Vector typedef alignment overrides do not change C++ type identity. *)
+      Fixpoint erase_vector_align (t : type) : type :=
+        match t with
+        | Tptr t => Tptr (erase_vector_align t)
+        | Tref t => Tref (erase_vector_align t)
+        | Trv_ref t => Trv_ref (erase_vector_align t)
+        | Tarray t n => Tarray (erase_vector_align t) n
+        | Tincomplete_array t => Tincomplete_array (erase_vector_align t)
+        | Tvariable_array t e => Tvariable_array (erase_vector_align t) e
+        | Tfunction ft =>
+            Tfunction $ FunctionType (ft_cc:=ft.(ft_cc)) (ft_arity:=ft.(ft_arity))
+              (erase_vector_align ft.(ft_return))
+              (List.map erase_vector_align ft.(ft_params))
+        | Tmember_pointer gn t => Tmember_pointer gn (erase_vector_align t)
+        | Tqualified q t => Tqualified q (erase_vector_align t)
+        | Tvector elem n _ => Tvector (erase_vector_align elem) n 0
+        | _ => t
+        end.
+
       Definition can_initialize (dt : decltype) (t : decltype) : M unit :=
         let ref_conv dt t :=
           qual_norm (fun dq dt => qual_norm (fun q t =>
                                     let* _ := guard (tq_le q dq) in
-                                    let* _ := guard (dt = t) in
+                                    let* _ := guard (erase_vector_align dt = erase_vector_align t) in
                                     mret ()
             ) t) dt
         in
         let ptr_conv dt t :=
               qual_norm (fun dq dt => qual_norm (fun q t =>
                                                 let* _ := guard (tq_le q dq) in
-                                                let* _ := guard (dt = t \/ dt = Tvoid) in
+                                                let* _ := guard (erase_vector_align dt = erase_vector_align t \/ dt = Tvoid) in
                                                 mret ()
                                      ) t) dt
         in
@@ -412,7 +431,7 @@ Module decltype.
           | Tptr dt , Tptr t =>
               ptr_conv dt t
           | dt , t =>
-              let* _ := guard (dt = t) in mret ()
+              let* _ := guard (erase_vector_align dt = erase_vector_align t) in mret ()
           end.
 
       Fixpoint check_args (ar : function_arity) (ts : list decltype) (tes : list decltype) : M unit :=
@@ -674,7 +693,7 @@ Module decltype.
         | Eglobal nm ty =>
             let* from_env := type_of_global_or_field nm in
             trace ("from_env = "%bs, from_env) $
-            let* _ := require_eq from_env (normalize_type ty) in
+            let* _ := require_eq (erase_vector_align from_env) (erase_vector_align (normalize_type ty)) in
             mret $ tref QM (normalize_type ty)
         | Eglobal_member nm ty =>
             match nm with
