@@ -39,17 +39,22 @@ Proof. iIntros "Q W R". iApply ("Q" with "(W R)"). Qed.
 #[local] Remove Hints Ar_Definite CC_C : typeclass_instances.
 
 (**
-[Kreturn cv Q] is the continuation of the body of a function or method
-whose declared return type has top-level qualifiers [cv].
+[Kreturn ty Q] is the continuation of the body of a function or method
+whose declared return type is [ty].
 
 A function returning cv <<void>> may <<return;>> or fall off the end
 ([stmt.return]); the result object then carries the constness of [cv],
 matching the fraction [cQp.mk (q_const cv) 1] that callers receive.
+Normal completion of a non-void function is undefined behavior. The frontend
+makes the implicit <<return 0;>> at the end of <<main>> explicit.
 *)
-Definition Kreturn_inner `{Σ : cpp_logic, σ : genv} (cv : type_qualifiers) (Q : ptr -> mpred) (rt : ReturnType) : mpred :=
+Definition Kreturn_inner `{Σ : cpp_logic, σ : genv} (ty : type) (Q : ptr -> mpred) (rt : ReturnType) : mpred :=
   match rt with
   | Normal | ReturnVoid =>
-    Forall p : ptr, p |-> primR Tvoid (cQp.mk (q_const cv) 1) Vvoid -* Q p
+    match drop_qualifiers ty with
+    | Tvoid => Forall p : ptr, p |-> primR Tvoid (cQp.mk (q_const (take_qualifiers ty)) 1) Vvoid -* Q p
+    | _ => ERROR "Kreturn: normal completion of a non-void function"
+    end
   | ReturnVal p => Q p
   (* [ReturnNRVO] must have been turned into [ReturnVal] by the [Kfree] of the
      scope declaring the variable: reaching the function boundary means the
@@ -61,18 +66,18 @@ Definition Kreturn_inner `{Σ : cpp_logic, σ : genv} (cv : type_qualifiers) (Q 
   end.
 #[global] Arguments Kreturn_inner _ _ _ _ _ _ !rt /.
 
-Definition Kreturn `{Σ : cpp_logic, σ : genv} (cv : type_qualifiers) (Q : ptr -> mpred) : Kpred :=
-  KP $ Kreturn_inner cv Q.
+Definition Kreturn `{Σ : cpp_logic, σ : genv} (ty : type) (Q : ptr -> mpred) : Kpred :=
+  KP $ Kreturn_inner ty Q.
 #[global] Hint Opaque Kreturn : typeclass_instances.
 
 Section Kreturn.
   Context `{Σ : cpp_logic, σ : genv}.
 
-  Lemma Kreturn_frame cv (Q Q' : ptr -> mpred) (rt : ReturnType) :
+  Lemma Kreturn_frame ty (Q Q' : ptr -> mpred) (rt : ReturnType) :
     Forall p, Q p -* Q' p
-                |-- Kreturn cv Q rt -* Kreturn cv Q' rt.
+                |-- Kreturn ty Q rt -* Kreturn ty Q' rt.
   Proof.
-    iIntros "HQ". destruct rt; cbn; auto.
+    iIntros "HQ". destruct rt; cbn; try case_match; auto.
     all: iIntros "HR" (?) "R"; iApply "HQ"; by iApply "HR".
   Qed.
 End Kreturn.
@@ -456,7 +461,7 @@ place to support `XX_shift` lemmas. This could be fixed.
     | Impl body =>
       let ρ vap := Remp None vap f.(f_return) in
       letI* ρ, cleanup := bind_vars tu f.(f_arity) f.(f_params) args ρ in
-      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn (take_qualifiers f.(f_return)) $ fun x => |={top}=>?u |> Q x)
+      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn f.(f_return) $ fun x => |={top}=>?u |> Q x)
     | Builtin builtin =>
       let ts := List.map snd f.(f_params) in
       wp_builtin_func builtin (Tfunction $ @FunctionType _ f.(f_cc) f.(f_arity) f.(f_return) ts) args Q
@@ -640,7 +645,7 @@ parameters.
     | thisp :: rest_vals =>
       let ρ va := Remp (Some thisp) va m.(m_return) in
       letI* ρ, cleanup := bind_vars tu m.(m_arity) m.(m_params) rest_vals ρ in
-      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn (take_qualifiers m.(m_return)) $ fun x => |={top}=>?u |> Q x)
+      |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn m.(m_return) $ fun x => |={top}=>?u |> Q x)
     | _ => ERROR "wp_method: no arguments"
     end
   | Some Defaulted =>
