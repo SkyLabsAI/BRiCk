@@ -1172,7 +1172,7 @@ Module PTRS_IMPL <: PTRS_INTF.
 
   Lemma global_ptr_nonnull :
     ∀ tu o,
-      global_ptr tu o ≠ nullptr.
+      defines_symbol tu o = true -> global_ptr tu o ≠ nullptr.
   Proof.
     by done.
   Qed.
@@ -1718,9 +1718,9 @@ Module PTRS_IMPL <: PTRS_INTF.
   Qed.
 
   Lemma global_ptr_nonnull_addr :
-    ∀ σ tu o, @ptr_vaddr σ (global_ptr tu o) <> Some 0%N.
+    ∀ σ tu o, defines_symbol tu o = true -> @ptr_vaddr σ (global_ptr tu o) <> Some 0%N.
   Proof.
-    intros σ tu o.
+    intros σ tu o _.
     rewrite /ptr_vaddr /global_ptr /eval_offset /=.
     intros Heq. inversion Heq as [Hzero].
     exact (global_ptr_encode_vaddr_nonnull o _ eq_refl Hzero).
@@ -1728,8 +1728,8 @@ Module PTRS_IMPL <: PTRS_INTF.
 
   Lemma global_ptr_nonnull_aid :
     ∀ tu o,
-      ptr_alloc_id (global_ptr tu o) <> Some null_alloc_id.
-  Proof. intros tu o [= H]. exact (global_ptr_encode_vaddr_nonnull o _ eq_refl H). Qed.
+      defines_symbol tu o = true -> ptr_alloc_id (global_ptr tu o) <> Some null_alloc_id.
+  Proof. intros tu o _ [= H]. exact (global_ptr_encode_vaddr_nonnull o _ eq_refl H). Qed.
 
   Lemma global_ptr_inj :
     ∀ tu, Inj (=) (=) (global_ptr tu).

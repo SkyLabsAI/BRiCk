@@ -811,6 +811,12 @@ static const char *supportedRecord(const CXXRecordDecl &decl,
         if (base.isVirtual())
             return "virtual base classes are not supported";
     }
+    // `[[clang::trivial_abi]]` makes the callee destroy a by-value parameter
+    // before it returns, and lets the object move between caller and callee
+    // as its bytes, while BRiCk's `wp_arg` constructs the argument in place
+    // and destroys it at the end of the caller's full-expression.
+    if (decl.hasAttr<TrivialABIAttr>())
+        return "trivial_abi classes are not supported";
     if (auto msg = supportedRecord(static_cast<const RecordDecl &>(decl), ctxt))
         return msg;
     if (!decl.isCompleteDefinition() || decl.isDependentContext())

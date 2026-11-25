@@ -516,6 +516,45 @@ public:
         logging::die();
     }
 
+    /// Whether `decl` is a weak symbol (`weak`, `weakref` or `weak_import`)
+    /// that this translation unit does not define. The linker resolves an
+    /// undefined weak symbol to address 0 when no other object defines it,
+    /// while BRiCk's `global_ptr_nonnull` makes every global's address
+    /// non-null. A weak symbol defined here has a non-null address.
+    static bool isUndefinedWeak(const ValueDecl *decl) {
+        if (!decl)
+            return false;
+        auto weak = [](const Decl *d) {
+            return d->hasAttr<WeakAttr>() || d->hasAttr<WeakRefAttr>() ||
+                   d->isWeakImported();
+        };
+        if (auto vd = dyn_cast<VarDecl>(decl)) {
+            if (!vd->hasGlobalStorage() || vd->isStaticLocal())
+                return false;
+            return llvm::any_of(vd->redecls(), weak) &&
+                   (vd->hasAttr<WeakRefAttr>() ||
+                    vd->hasDefinition() == VarDecl::DeclarationOnly);
+        }
+        if (auto fd = dyn_cast<FunctionDecl>(decl))
+            return llvm::any_of(fd->redecls(), weak) &&
+                   (fd->hasAttr<WeakRefAttr>() || !fd->isDefined());
+        return false;
+    }
+
+    /// Whether `expr` names an undefined weak symbol: a variable, function or
+    /// static member, a method, or a constructor.
+    static bool refersToUndefinedWeak(const Expr &expr) {
+        if (auto dre = dyn_cast<DeclRefExpr>(&expr))
+            return isUndefinedWeak(dre->getDecl());
+        if (auto me = dyn_cast<MemberExpr>(&expr))
+            return isUndefinedWeak(me->getMemberDecl());
+        if (auto ce = dyn_cast<CXXConstructExpr>(&expr))
+            return isUndefinedWeak(ce->getConstructor());
+        if (auto mc = dyn_cast<CXXMemberCallExpr>(&expr))
+            return isUndefinedWeak(mc->getMethodDecl());
+        return false;
+    }
+
     void unsupported_expr(const Expr *expr,
                           std::optional<StringRef> msg = std::nullopt,
                           bool well_known = false) {
@@ -558,6 +597,8 @@ public:
             os << loc::describe(loc, cprint.getContext());
             print.str(coqmsg) << fmt::nbsp;
             done(expr, Done::DT);
+        } else if (refersToUndefinedWeak(*expr)) {
+            unsupported_expr(expr, "reference to an undefined weak symbol");
         } else if (auto why = overAlignedAccess(expr)) {
             unsupported_expr(expr, *why);
         } else if (variablyModifiedCast(expr)) {
@@ -1213,6 +1254,9 @@ public:
             if (auto dre = dyn_cast<DeclRefExpr>(e)) {
                 auto decl = dre->getDecl();
                 if (is_class_member(decl)) {
+                    if (isUndefinedWeak(decl))
+                        return unsupported_expr(
+                            expr, "pointer to an undefined weak member");
                     guard::ctor _(print, "Eglobal_member");
                     cprint.printName(print, decl, loc::of(expr));
                     print.output() << fmt::nbsp;

@@ -40,8 +40,18 @@ Section with_Σ.
   #[global] Instance _global_inj {resolve : genv} : Inj (=) (=) (_global resolve).
   Proof. rewrite _global_eq. apply _. Qed.
 
-  Lemma _global_nonnull resolve n : _global resolve n <> nullptr.
+  Lemma _global_nonnull resolve n :
+    defines_symbol resolve.(genv_tu) n = true -> _global resolve n <> nullptr.
   Proof. rewrite _global_eq /_global_def. apply global_ptr_nonnull. Qed.
+
+  (** A symbol defined by a translation unit linked into the program has a
+      non-null address. *)
+  Lemma _global_nonnull_defined {tu resolve} `{!tu ⊧ resolve} n :
+    defines_symbol tu n = true -> _global resolve n <> nullptr.
+  Proof.
+    intros. apply _global_nonnull.
+    by apply: (sub_module_defines_symbol tu); first apply genv_compat_submodule.
+  Qed.
 End with_Σ.
 
 Arguments _global {resolve} _ : rename.

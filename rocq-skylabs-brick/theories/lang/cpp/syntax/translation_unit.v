@@ -395,6 +395,23 @@ Definition byte_order (tu : translation_unit) : endian :=
 Definition language_version (tu : translation_unit) : lang_version.t :=
   tu.(abi).(abi.lang_version).
 
+(** Whether [v] is a definition rather than only a declaration: an [extern]
+    variable, or a function, method, constructor or destructor without a
+    body, is only declared. *)
+Definition ObjValue_is_definition (v : ObjValue) : bool :=
+  match v with
+  | Ovar _ global_init.Extern => false
+  | Ovar _ _ => true
+  | Ofunction f => if f.(f_body) is Some _ then true else false
+  | Omethod m => if m.(m_body) is Some _ then true else false
+  | Oconstructor c => if c.(c_body) is Some _ then true else false
+  | Odestructor d => if d.(d_body) is Some _ then true else false
+  end.
+
+(** Whether [tu] defines the symbol [o], rather than only declaring it. *)
+Definition defines_symbol (tu : translation_unit) (o : obj_name) : bool :=
+  if tu.(symbols) !! o is Some v then ObjValue_is_definition v else false.
+
 (** Just for testing *)
 Definition empty_tu (info : abi.t) : translation_unit :=
   makeTranslationUnit ∅ ∅ ∅ [] [] info ∅ ∅ ∅ ∅ [].

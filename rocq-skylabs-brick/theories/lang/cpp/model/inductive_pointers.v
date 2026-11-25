@@ -736,7 +736,8 @@ Module PTRS_IMPL <: PTRS_INTF.
     lift_root_ptr (global_ptr_ (canonical_tu.tu_to_canon tu) o).
   Definition alloc_ptr a oid := lift_root_ptr (alloc_ptr_ a oid).
 
-  Lemma global_ptr_nonnull tu o : global_ptr tu o <> nullptr.
+  Lemma global_ptr_nonnull tu o :
+    defines_symbol tu o = true -> global_ptr tu o <> nullptr.
   Proof. done. Qed.
 
   #[global] Instance global_ptr_inj tu : Inj (=) (=) (global_ptr tu) := _.
@@ -753,14 +754,18 @@ Module PTRS_IMPL <: PTRS_INTF.
       ptr_alloc_id (global_ptr tu o) = Some (global_ptr_encode_aid o).
     Proof. done. Qed.
 
-    Lemma global_ptr_nonnull_addr tu o : ptr_vaddr (global_ptr tu o) <> Some 0%N.
+    Lemma global_ptr_nonnull_addr tu o :
+      defines_symbol tu o = true -> ptr_vaddr (global_ptr tu o) <> Some 0%N.
     Proof.
+      intros _.
       rewrite ptr_vaddr_global_ptr.
       intros [= H].
       exact (global_ptr_encode_vaddr_nonnull o _ eq_refl H).
     Qed.
-    Lemma global_ptr_nonnull_aid tu o : ptr_alloc_id (global_ptr tu o) <> Some null_alloc_id.
+    Lemma global_ptr_nonnull_aid tu o :
+      defines_symbol tu o = true -> ptr_alloc_id (global_ptr tu o) <> Some null_alloc_id.
     Proof.
+      intros _.
       rewrite ptr_alloc_id_global_ptr.
       intros [= H].
       exact (global_ptr_encode_vaddr_nonnull o _ eq_refl H).

@@ -26,6 +26,31 @@ private:
 public:
     static PrintStmt printer;
 
+    /// Whether `stmt` declares a local variable with
+    /// `__attribute__((cleanup(f)))`, which calls `f(&var)` when the variable
+    /// goes out of scope. BRiCk has no such scope-exit call, so the whole
+    /// statement is unsupported rather than printed without the call.
+    static bool declaresCleanupVar(const Stmt &stmt) {
+        auto cleanup = [](const VarDecl *vd) {
+            return vd && vd->hasAttr<CleanupAttr>();
+        };
+        if (auto ds = dyn_cast<DeclStmt>(&stmt))
+            return llvm::any_of(ds->decls(), [&](const Decl *d) {
+                return cleanup(dyn_cast<VarDecl>(d));
+            });
+        if (auto s = dyn_cast<IfStmt>(&stmt))
+            return cleanup(s->getConditionVariable());
+        if (auto s = dyn_cast<WhileStmt>(&stmt))
+            return cleanup(s->getConditionVariable());
+        if (auto s = dyn_cast<ForStmt>(&stmt))
+            return cleanup(s->getConditionVariable());
+        if (auto s = dyn_cast<SwitchStmt>(&stmt))
+            return cleanup(s->getConditionVariable());
+        if (auto s = dyn_cast<CXXForRangeStmt>(&stmt))
+            return cleanup(s->getLoopVariable());
+        return false;
+    }
+
     void Visit(const Stmt *stmt, CoqPrinter &print, ClangPrinter &cprint,
                ASTContext &ctxt) {
         if (stmt == nullptr) [[unlikely]] {
@@ -37,6 +62,13 @@ public:
             return unsupportedStmt(
                 stmt, print, cprint,
                 "condition variable of a variably modified type");
+        if (declaresCleanupVar(*stmt)) {
+            cprint.error_prefix(logging::unsupported(), loc::of(stmt))
+                << "warning: unsupported cleanup attribute\n";
+            guard::ctor _{print, "Sunsupported"};
+            print.str("variable with a cleanup attribute");
+            return;
+        }
         ConstStmtVisitor<PrintStmt, void, CoqPrinter &, ClangPrinter &,
                          ASTContext &>::Visit(stmt, print, cprint, ctxt);
     }

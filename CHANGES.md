@@ -10,6 +10,23 @@ of the release, and introduce a new heading.
 
 ## Since Last Release
 
+2026.11.24: `global_ptr_nonnull`, `global_ptr_nonnull_aid` and
+`global_ptr_nonnull_addr` (and `_global_nonnull`) now require
+`defines_symbol tu o = true`: the translation unit defines the symbol, rather
+than only declaring it. An undefined weak symbol is at address 0. The new
+`_global_nonnull_defined` takes the definition from a `tu ⊧ σ`, by
+`sub_module_defines_symbol`.
+
+2026.11.24: cpp2v prints three constructs whose attributes BRiCk does not
+model as unsupported, instead of dropping the attribute: a statement that
+declares a local variable with `__attribute__((cleanup(f)))` is
+`Sunsupported`; a reference to a `weak`, `weakref` or `weak_import` variable
+or function that the translation unit does not define is `Eunsupported` (the
+linker may resolve it to address 0, while `global_ptr_nonnull` makes every
+global non-null); and a `[[clang::trivial_abi]]` class is `Dunsupported`
+(its callee destroys by-value parameters). Proofs about such code no longer
+go through.
+
 2026.11.24: `VarDecl` has a new constructor `Dvla_bounds (bounds : list Expr)`:
 a declaration of a variably modified type (GNU variable-length arrays in C++)
 that declares no object. It evaluates the array bounds in order, and each must
