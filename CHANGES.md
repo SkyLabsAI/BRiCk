@@ -24,6 +24,18 @@ variable of, and an explicit cast to, a variably modified type whose bounds
 are evaluated there are printed as unsupported. Variable-length arrays
 themselves (`int a[n];`) are printed as before.
 
+2026.11.24: cpp2v prints C++ assumptions as unsupported: `[[assume(e)]];`
+(also `__attribute__((assume(e)));`) as `Sunsupported`, and `__builtin_assume(e)`
+as `Eunsupported`. The attribute forms used to print as `Sattr ["assume"] Sskip`,
+which the logic skips, although a false assumption is undefined behaviour.
+Proofs about such code, which were unsound, no longer go through. More
+generally, a statement prints as `Sattr` only when all its attributes are
+hints or diagnostics (`likely`, `fallthrough`, loop hints, ...); any other
+statement attribute makes the statement `Sunsupported`. That includes
+`#pragma clang loop vectorize(assume_safety)` and `[[clang::musttail]]`
+(`__attribute__((musttail))`), which ends the lifetime of the caller's locals
+before the call; code that uses `musttail` must drop it to be verified.
+
 2026.11.21: `translation_unit` has a new field `dropped_symbols : list name`,
 the names of the symbols that `cpp.prog` dropped (see below). `sub_module`
 ignores it. Code that calls `makeTranslationUnit` positionally needs an extra

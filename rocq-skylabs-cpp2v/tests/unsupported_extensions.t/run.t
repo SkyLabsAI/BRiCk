@@ -21,8 +21,26 @@ qualifier is checked in the generated AST.
   $ grep -q 'Tunsupported "[^"]*__unaligned' ms_cpp.v && echo '__unaligned: Tunsupported'
   __unaligned: Tunsupported
 
+Assumptions, in each spelling, and the other statement attributes that are
+promises to the compiler print unsupported (the second list below), while
+statement attributes that are only hints stay [Sattr].
+  $ grep -o 'Sattr ("[a-z_]*"' assume_cpp.v | sort -u
+  Sattr ("fallthrough"
+  Sattr ("likely"
+  Sattr ("loop"
+  Sattr ("noinline"
+  Sattr ("nomerge"
+  Sattr ("unlikely"
+  Sattr ("unroll"
+
   $ dune build
        = ("asm goto"%pstring :: "inline assembly"%pstring :: nil)%list
+       : check.M
+       = ("statement attribute: assume"%pstring
+          :: "builtin whose arguments are not evaluated: __builtin_assume"%pstring
+             :: "statement attribute: assume"%pstring
+                :: "loop hint: assume_safety"%pstring
+                   :: "statement attribute: musttail"%pstring :: nil)%list
        : check.M
        = ("unsupported statement: CoroutineBodyStmt"%pstring
           :: "unsupported statement: CoroutineBodyStmt"%pstring
@@ -47,9 +65,9 @@ qualifier is checked in the generated AST.
                                            :: "thread_local variable"%pstring
                                               :: nil)%list
        : check.M
-       = ("CallExpr"%pstring
-          :: "CallExpr"%pstring
-             :: "CallExpr"%pstring
+       = ("builtin whose arguments are not evaluated: __builtin_constant_p"%pstring
+          :: "builtin whose arguments are not evaluated: __assume"%pstring
+             :: "builtin whose arguments are not evaluated: __noop"%pstring
                 :: "PseudoObjectExpr"%pstring
                    :: "PseudoObjectExpr"%pstring
                       :: "CXXUuidofExpr"%pstring :: nil)%list

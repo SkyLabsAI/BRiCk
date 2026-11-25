@@ -612,9 +612,45 @@ public:
         print.end_ctor();
     }
 
+    // [Sattr] keeps only the names of a statement's attributes, and the
+    // logic skips them ([wp_attr]). That is faithful for hints and
+    // diagnostics, which do not change what a program does. This returns
+    // why attribute [a] is not one of those, if so.
+    //
+    // Fail closed: an attribute that is not listed here is unsupported.
+    // Among those are the promises that the compiler optimizes on:
+    // - `[[assume(e)]]`, also spelled `__attribute__((assume(e)))`: the
+    //   behaviour is undefined unless [e] holds, and [e] is not evaluated.
+    // - `#pragma clang loop vectorize(assume_safety)`: the loop has no
+    //   loop-carried memory dependency.
+    // - `[[clang::musttail]]`: the lifetime of the caller's locals ends
+    //   before the call, so passing their address is undefined.
+    static std::optional<std::string> unsupportedStmtAttr(const Attr *a) {
+        switch (a->getKind()) {
+        case attr::Likely:
+        case attr::Unlikely:
+        case attr::FallThrough:
+        case attr::CodeAlign:
+        case attr::Suppress:
+            return std::nullopt;
+        case attr::LoopHint:
+            if (cast<LoopHintAttr>(a)->getState() == LoopHintAttr::AssumeSafety)
+                return "loop hint: assume_safety";
+            return std::nullopt;
+        default:
+            // `noinline`, `always_inline`, `nomerge`, `annotate`.
+            if (ClangPrinter::isNoOpAttr(a->getKind()))
+                return std::nullopt;
+            return std::string("statement attribute: ") + a->getSpelling();
+        }
+    }
+
     void VisitAttributedStmt(const clang::AttributedStmt *stmt,
                              CoqPrinter &print, ClangPrinter &cprint,
                              ASTContext &) {
+        for (auto a : stmt->getAttrs())
+            if (auto why = unsupportedStmtAttr(a))
+                return unsupportedStmt(stmt, print, cprint, *why);
 
         print.ctor("Sattr");
         print.begin_list();
