@@ -20,7 +20,7 @@ Running rocq
   $ rocq compile -color on large.v
   $ rocq compile -color on huge.v
   $ rocq compile -color on medium_variation.v
-  $ rocq compile -color on err_out.v 2>&1
+  $ rocq compile -color on -package rocq-core.ltac2 err_out.v 2>&1
   File "./err_out.v", line 3, characters 6-20:
   Warning: Unused variable: x. [ltac2-unused-variable,ltac2,default]
   nat : Set
@@ -33,11 +33,11 @@ Running rocq
 Running our rocq wrapper
 
   $ rocq-perf "$(command -v rocq)" compile -color on small.v
-  $ rocq-perf compile -color on medium.v
-  $ rocq-perf compile -color on large.v
-  $ rocq-perf compile -color on huge.v
-  $ rocq-perf compile -color on medium_variation.v
-  $ rocq-perf compile -color on err_out.v > out.txt 2> err.txt
+  $ rocq-perf "$(command -v rocq)" compile -color on medium.v
+  $ rocq-perf "$(command -v rocq)" compile -color on large.v
+  $ rocq-perf "$(command -v rocq)" compile -color on huge.v
+  $ rocq-perf "$(command -v rocq)" compile -color on medium_variation.v
+  $ rocq-perf "$(command -v rocq)" compile -color on -package rocq-core.ltac2 err_out.v > out.txt 2> err.txt
   $ cat out.txt
   nat : Set
   
