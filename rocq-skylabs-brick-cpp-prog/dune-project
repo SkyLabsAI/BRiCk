@@ -25,6 +25,7 @@
  (name rocq-skylabs-brick-cpp-prog)
  (synopsis "Rocq plugin providin access to BRiCk's cpp2v frontend")
  (depends
+  ocamlfind
   rocq-skylabs-brick
   rocq-skylabs-cpp2v
   rocq-tools))

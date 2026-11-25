@@ -347,9 +347,22 @@ let%test "configured arguments preserve paths, flags and empty arguments" =
   configured_arguments command config flags =
     [|command; config; "input with spaces.cpp"; "-DVALUE=literal $value"; ""|]
 
+let package_command name =
+  try
+    let package = Findlib.package_directory "rocq-skylabs-brick-cpp-prog" in
+    let command = Filename.concat package name in
+    if Sys.file_exists command then Some command else None
+  with Findlib.No_such_package _ -> None
+
 let cpp2v_invocation environment flags =
   match environment with
-  | None -> ("cpp2v", flags)
+  | None ->
+      let command =
+        match package_command "cpp2v" with
+        | Some command -> command
+        | None -> "cpp2v"
+      in
+      (command, flags)
   | Some alias ->
       let id = Names.Id.of_string alias in
       let config =
@@ -357,10 +370,13 @@ let cpp2v_invocation environment flags =
           CErrors.user_err Pp.(str "cpp.prog: environment " ++ Names.Id.print id ++
             str " is not a declared Extra Dependency.")
       in
-      let from = Libnames.dirpath_of_string "skylabs.lang.cpp.parser.plugin" in
       let command =
-        Loadpath.find_extra_dep_with_logical_path ~from ~file:"cpp2v_inline" ()
-        |> absolute_path
+        match package_command "cpp2v_inline" with
+        | Some command -> command
+        | None ->
+            let from = Libnames.dirpath_of_string "skylabs.lang.cpp.parser.plugin" in
+            Loadpath.find_extra_dep_with_logical_path ~from ~file:"cpp2v_inline" ()
+            |> absolute_path
       in
       (command, configured_arguments command (absolute_path config) flags)
 

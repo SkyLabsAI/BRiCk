@@ -6,9 +6,7 @@
  (package rocq-skylabs-brick-cpp-prog)
  (plugins rocq-skylabs-brick-cpp-prog.plugin)
  (generate_project_file)
- (theories
-  rocq-skylabs-brick
-  rocq-stdlib))
+ (theories rocq-skylabs-brick rocq-stdlib))
 
 (rule
  (target cpp2v_version.v)
@@ -19,6 +17,20 @@
    %{target}
    (run %{bin:bin-hash} --rocq version %{bin:cpp2v}))))
 
+(rule
+ (target cpp2v)
+ (action
+  (progn
+   (copy %{bin:cpp2v} %{target})
+   (run chmod +x %{target}))))
+
+(rule
+ (target cpp2v-run)
+ (action
+  (progn
+   (copy %{bin:cpp2v-run} %{target})
+   (run chmod +x %{target}))))
+
 ; Shared by all consumers; its first argument selects their configuration.
 
 (rule
@@ -27,17 +39,14 @@
   (progn
    (with-stdout-to
     %{target}
-    (run
-     %{bin:cpp2v-toolchain}
-     wrapper
-     --config-from-argument
-     --runner
-     %{bin:cpp2v-run}
-     --host-tool
-     %{bin:cpp2v}
-     --container-tool
-     cpp2v))
+    (echo
+     "#!/bin/sh\nset -eu\ndir=$(CDPATH= cd -- \"$(dirname -- \"$0\")\" && pwd -P)\nif [ \"$#\" -eq 0 ]; then\n  echo 'cpp2v_inline: expected a toolchain configuration' >&2\n  exit 2\nfi\nconfig=$1\nshift\nexec \"$dir/cpp2v-run\" --config \"$config\" --host-tool \"$dir/cpp2v\" --container-tool cpp2v -- \"$@\"\n"))
    (run chmod +x %{target}))))
+
+(install
+ (section libexec)
+ (package rocq-skylabs-brick-cpp-prog)
+ (files cpp2v cpp2v-run cpp2v_inline))
 
 ; Build the command before rocq dep. Fingerprint its semantic inputs rather
 ; than its checkout-specific paths, preserving shared Rocq caches.
@@ -50,16 +59,14 @@
    %{target}
    (progn
     (run %{bin:bin-hash} --rocq inline_runner_version %{bin:cpp2v-run})
-    (run
-     %{bin:bin-hash}
-     --rocq
-     inline_factory_version
-     %{bin:cpp2v-toolchain})))))
+    (run %{bin:bin-hash} --rocq inline_command_version %{dep:cpp2v_inline})))))
 
 (install
  (section libexec_root)
  (package rocq-skylabs-brick-cpp-prog)
  (files
+  (cpp2v as coq/user-contrib/skylabs/lang/cpp/parser/plugin/cpp2v)
+  (cpp2v-run as coq/user-contrib/skylabs/lang/cpp/parser/plugin/cpp2v-run)
   (cpp2v_inline
    as
    coq/user-contrib/skylabs/lang/cpp/parser/plugin/cpp2v_inline)))

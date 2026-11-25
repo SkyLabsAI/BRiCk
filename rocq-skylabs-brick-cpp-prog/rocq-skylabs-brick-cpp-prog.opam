@@ -19,6 +19,7 @@ homepage: "https://github.com/SkyLabsAI/BRiCk"
 bug-reports: "https://github.com/SkyLabsAI/BRiCk/issues"
 depends: [
   "dune" {>= "3.26"}
+  "ocamlfind"
   "rocq-skylabs-brick"
   "rocq-skylabs-cpp2v"
   "rocq-tools"
