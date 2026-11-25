@@ -1110,6 +1110,14 @@ Section FromToBytes.
   End FromBytes_external.
 
   Section FromBytesFacts_external.
+    Lemma _Z_from_bytes_signed endianness bytes :
+      _Z_from_bytes endianness Signed bytes =
+      to_signed_bits (8 * N.of_nat (length bytes)) (_Z_from_bytes endianness Unsigned bytes).
+    Proof.
+      rewrite !_Z_from_bytes_eq /_Z_from_bytes_def /_Z_from_bytes_le.
+      destruct endianness; simpl; by rewrite ?length_rev.
+    Qed.
+
     Lemma _Z_from_bytes_nil:
       forall endianness sgn,
         _Z_from_bytes endianness sgn [] = 0%Z.
