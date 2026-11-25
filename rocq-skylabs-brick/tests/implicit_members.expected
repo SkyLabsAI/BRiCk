@@ -72,7 +72,7 @@
                c_params := [];
                c_cc := CC_C;
                c_arity := Ar_Definite;
-               c_exception := exception_spec.NoThrow;
+               c_exception := exception_spec.Unknown;
                c_body := Some Defaulted
              |}))
      : name * option ObjValue

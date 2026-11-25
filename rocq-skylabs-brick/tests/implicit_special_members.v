@@ -120,13 +120,11 @@ Proof. vm_compute. reflexivity. Qed.
     corresponding member of [T]'s subobject [N] is user-declared (here,
     explicitly defaulted).  Otherwise it is left to a placeholder.  So each
     header below has, for each of [T]'s copy members, either clang's declaration
-    (exception specification [NoThrow]) or a placeholder ([Unknown]), and
-    comparing headers compares the two.  [N]'s own copy members are [NoThrow] in
-    all of them.
-
-    The [= false] examples hold only because a placeholder's exception
-    specification over-approximates as [Unknown]: [NoThrow] is not [⊆ Unknown].
-    They would flip if placeholders carried a precise specification. *)
+    or a placeholder, and comparing headers compares the two.  Nothing in a
+    header uses these members, so clang never needs their exception
+    specifications and cpp2v prints them as [Unknown], the placeholder's
+    specification (BRiCk#507).  So each header is a [sub_module] of every
+    other. *)
 
 (* both of N's copy members user-declared: both of T's declared eagerly *)
 #[duplicates(error)]
@@ -201,11 +199,11 @@ Example const_copy_ctor_header_sub_module_const_header :
   bool_decide (sub_module const_copy_ctor_header const_header) = true.
 Proof. vm_compute. reflexivity. Qed.
 
-(* T's eagerly declared copy assignment is [NoThrow]; the placeholder is [Unknown] *)
+(* T's eagerly declared copy assignment is unused, so [Unknown] like the placeholder *)
 Eval vm_compute in sub_module_mismatch.compute const_header const_copy_ctor_header.
 
-Example const_header_not_sub_module_const_copy_ctor_header :
-  bool_decide (sub_module const_header const_copy_ctor_header) = false.
+Example const_header_sub_module_const_copy_ctor_header :
+  bool_decide (sub_module const_header const_copy_ctor_header) = true.
 Proof. vm_compute. reflexivity. Qed.
 
 Example const_copy_ctor_use_sub_module_const_use :
@@ -251,20 +249,20 @@ Example const_copy_assignment_header_sub_module_const_header :
 Proof. vm_compute. reflexivity. Qed.
 
 (* Each header has a placeholder for one of T's copy members where the other has
-   clang's eager declaration *)
+   clang's eager declaration; both are [Unknown] *)
 Eval vm_compute in sub_module_mismatch.compute const_copy_assignment_header const_copy_ctor_header.
 Eval vm_compute in sub_module_mismatch.compute const_copy_ctor_header const_copy_assignment_header.
 
-Example neither_sub_module_const_copy_assignment_header_and_const_copy_ctor_header :
-  bool_decide (sub_module const_copy_assignment_header const_copy_ctor_header) = false /\
-  bool_decide (sub_module const_copy_ctor_header const_copy_assignment_header) = false.
+Example both_sub_module_const_copy_assignment_header_and_const_copy_ctor_header :
+  bool_decide (sub_module const_copy_assignment_header const_copy_ctor_header) = true /\
+  bool_decide (sub_module const_copy_ctor_header const_copy_assignment_header) = true.
 Proof. vm_compute. split; reflexivity. Qed.
 
-(* T's eagerly declared copy ctor is [NoThrow]; the placeholder is [Unknown] *)
+(* T's eagerly declared copy ctor is unused, so [Unknown] like the placeholder *)
 Eval vm_compute in sub_module_mismatch.compute const_header const_copy_assignment_header.
 
-Example const_header_not_sub_module_const_copy_assignment_header :
-  bool_decide (sub_module const_header const_copy_assignment_header) = false.
+Example const_header_sub_module_const_copy_assignment_header :
+  bool_decide (sub_module const_header const_copy_assignment_header) = true.
 Proof. vm_compute. reflexivity. Qed.
 
 Example const_copy_assignment_use_sub_module_const_use :

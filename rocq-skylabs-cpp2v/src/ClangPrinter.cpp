@@ -684,25 +684,27 @@ ClangPrinter::printExceptionSpec(CoqPrinter &print,
         case EST_NoexceptTrue:
             return print.output() << NO_THROW;
 
-            // TODO: The remaining cases are instances where clang has not
-            // resolved the exception specification yet. This information
-            // can be filled in via the [Sema] object, in particular:
-            // - sema.EvaluateImplicitExceptionSpec,
-            // - sema.ResolveExceptionSpec
+            // The remaining cases are instances where clang has not
+            // resolved the exception specification yet.
 
         case EST_DependentNoexcept:
             [[fallthrough]];
         case EST_Unevaluated: {
+            // [except.spec]p13: the exception specification of a defaulted
+            // function (or an inheriting constructor) is evaluated only when
+            // needed, and clang resolves it on every use. Forcing it for an
+            // unused one can instantiate an ill-formed default member
+            // initializer or subobject constructor and reject a valid
+            // translation unit (BRiCk#507), so it stays unknown, like an
+            // uninstantiated noexcept-specifier.
+            // Clang also leaves the specification of user-declared
+            // destructors unevaluated; those are still resolved, since an
+            // unknown specification is only supported on defaulted bodies.
+            auto ctor = dyn_cast<CXXConstructorDecl>(&decl);
+            if (decl.isDefaulted() || (ctor && ctor->isInheritingConstructor()))
+                return print.output() << UNKNOWN;
             auto &sema = this->getCompiler().getSema();
             fpt = sema.ResolveExceptionSpec(decl.getLocation(), fpt);
-            // if (decl.isImplicit()) {
-            // 	sema.EvaluateImplicitExceptionSpec(
-            // 		decl.getLocation(), const_cast<FunctionDecl *>(&decl));
-            // } else {
-            // sema.ResolveExceptionSpec(
-            // 	decl.getLocation(),
-            // 	decl.getFunctionType()->getAs<FunctionProtoType>());
-            // }
             break;
         }
 
