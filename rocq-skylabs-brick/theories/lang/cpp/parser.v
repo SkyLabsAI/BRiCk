@@ -216,7 +216,10 @@ Module Import translation_unit.
         let dropped :=
           List.fold_right (fun '(n, d) r => if d is None then n :: r else r) [] acc in
         pair {|
-            symbols := List.fold_left (fun t '(n, _) => <[n:=conflict n]> t) dups (NM.from_raw s);
+            (* Discard the accumulated AVL insertion proofs before VM
+               reification; canonicalization preserves the underlying tree. *)
+            symbols := NM.map_canon $
+              List.fold_left (fun t '(n, _) => <[n:=conflict n]> t) dups (NM.from_raw s);
             types := List.fold_left (fun t '(n, d) =>
                        if d is inl _ then <[n:=type_conflict n]> t else t) dups (NM.from_raw t);
             namespace_aliases := (Listset (sort.sort ga), NM.from_raw $ NM.Raw.map (fun x => Listset $ sort.sort x) a);
