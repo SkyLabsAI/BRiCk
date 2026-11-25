@@ -873,11 +873,32 @@ fmt::Formatter &ClangPrinter::printFunctionBody(CoqPrinter &print,
                                                 const FunctionDecl &decl,
                                                 const Stmt *body) {
     auto vla = paramVlaBounds(decl);
-    if (vla.empty())
-        return printStmt(print, body);
-    __attribute__((unused)) auto depth = print.output().get_depth();
-    PrintStmt::printer.printBodyWithParamBounds(decl, body, vla, print, *this,
-                                                *this->context_);
-    always_assert(depth == print.output().get_depth());
+    auto printBody = [&]() -> fmt::Formatter & {
+        if (vla.empty())
+            return printStmt(print, body);
+        __attribute__((unused)) auto depth = print.output().get_depth();
+        PrintStmt::printer.printBodyWithParamBounds(decl, body, vla, print, *this,
+                                                    *this->context_);
+        always_assert(depth == print.output().get_depth());
+        return print.output();
+    };
+    auto block = dyn_cast<CompoundStmt>(body);
+    if (!decl.isMain() ||
+        (block && !block->body_empty() && isa<ReturnStmt>(block->body_back())))
+        return printBody();
+
+    // [basic.start.main]: flowing off main is equivalent to returning zero.
+    // Keep the body in its own scope, so its locals are destroyed on exit.
+    guard::ctor seq{print, "Sseq"};
+    guard::list stmts{print};
+    printBody();
+    print.cons();
+    {
+        guard::ctor ret{print, "Sreturn_val"};
+        guard::ctor zero{print, "Eint"};
+        print.output() << "0%Z" << fmt::nbsp;
+        printQualType(print, decl.getReturnType(), loc::of(decl));
+    }
+    print.cons();
     return print.output();
 }
