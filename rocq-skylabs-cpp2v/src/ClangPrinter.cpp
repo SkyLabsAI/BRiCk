@@ -17,7 +17,6 @@
 #include <clang/AST/Mangle.h>
 #include <clang/AST/TemplateBase.h>
 #include <clang/Frontend/CompilerInstance.h>
-#include <clang/Sema/Sema.h>
 #include <llvm/ADT/STLExtras.h>
 #include <optional>
 
@@ -619,7 +618,6 @@ ClangPrinter::printExceptionSpec(CoqPrinter &print,
     static constexpr auto NO_THROW = "exception_spec.NoThrow";
     static constexpr auto MAY_THROW = "exception_spec.MayThrow";
     static constexpr auto UNKNOWN = "exception_spec.Unknown";
-    int retries = 0;
     auto fpt = decl.getFunctionType()->getAs<FunctionProtoType>();
 
     auto defaults_to_noexcept = [&]() {
@@ -636,92 +634,84 @@ ClangPrinter::printExceptionSpec(CoqPrinter &print,
         return false;
     };
 
-    while (fpt && retries++ <= 1) {
-        if constexpr (ClangPrinter::debug) {
-            llvm::errs() << decl.getQualifiedNameAsString() << "@"
-                         << (void *)(&decl) << " exception info "
-                         << fpt->getExceptionSpecType() << "\n";
-        }
+    if (!fpt)
+        return print.output() << UNKNOWN;
 
-        switch (fpt->getExceptionSpecType()) {
-        case EST_Dynamic: {
-            // This is incorrect
-            logging::unsupported() << "UNSUPPORTED: throws() at "
-                                   << decl.getLocation().printToString(
-                                          compiler_->getSourceManager())
-                                   << ".\n";
+    if constexpr (ClangPrinter::debug) {
+        llvm::errs() << decl.getQualifiedNameAsString() << "@"
+                     << (void *)(&decl) << " exception info "
+                     << fpt->getExceptionSpecType() << "\n";
+    }
+
+    switch (fpt->getExceptionSpecType()) {
+    case EST_Dynamic: {
+        // This is incorrect
+        logging::unsupported()
+            << "UNSUPPORTED: throws() at "
+            << decl.getLocation().printToString(compiler_->getSourceManager())
+            << ".\n";
+        return print.output() << UNKNOWN;
+    }
+
+    case EST_None: {
+        // In C++, certain functions are implicitly declared no-throw, e.g.
+        // default constructors.
+        // For concrete functions, [EST_BasicNoexcept] is used to track
+        // these, but this not the case for templates.
+        // To make the decision robust we use [UNKNOWN] when we are in
+        // a dependent context for these functions
+        if (decl.isDependentContext() && defaults_to_noexcept()) {
             return print.output() << UNKNOWN;
         }
+    }
+        [[fallthrough]];
+    case EST_MSAny:
+        [[fallthrough]];
+    case EST_NoexceptFalse:
+        return print.output() << MAY_THROW;
 
-        case EST_None: {
-            // In C++, certain functions are implicitly declared no-throw, e.g.
-            // default constructors.
-            // For concrete functions, [EST_BasicNoexcept] is used to track
-            // these, but this not the case for templates.
-            // To make the decision robust we use [UNKNOWN] when we are in
-            // a dependent context for these functions
-            if (decl.isDependentContext() && defaults_to_noexcept()) {
-                return print.output() << UNKNOWN;
-            }
-        }
-            [[fallthrough]];
-        case EST_MSAny:
-            [[fallthrough]];
-        case EST_NoexceptFalse:
-            return print.output() << MAY_THROW;
+    case EST_DynamicNone: // throw(), not enforced
+        [[fallthrough]];
+    case EST_NoThrow: // __declspec(nothrow); throwing exceptions from such
+                      // functions is UB.
+        // -
+        // https://learn.microsoft.com/en-us/cpp/cpp/nothrow-cpp?view=msvc-170
+        // - https://archive.is/frXcn /
+        // https://devblogs.microsoft.com/oldnewthing/20180928-00/?p=99855
+        [[fallthrough]];
+    case EST_BasicNoexcept:
+        [[fallthrough]];
+    case EST_NoexceptTrue:
+        return print.output() << NO_THROW;
 
-        case EST_DynamicNone: // throw(), not enforced
-            [[fallthrough]];
-        case EST_NoThrow: // __declspec(nothrow); throwing exceptions from such
-                          // functions is UB.
-            // -
-            // https://learn.microsoft.com/en-us/cpp/cpp/nothrow-cpp?view=msvc-170
-            // - https://archive.is/frXcn /
-            // https://devblogs.microsoft.com/oldnewthing/20180928-00/?p=99855
-            [[fallthrough]];
-        case EST_BasicNoexcept:
-            [[fallthrough]];
-        case EST_NoexceptTrue:
-            return print.output() << NO_THROW;
+    case EST_DependentNoexcept:
+        [[fallthrough]];
+    case EST_Unparsed:
+        return print.output() << UNKNOWN;
 
-            // The remaining cases are instances where clang has not
-            // resolved the exception specification yet.
-
-        case EST_DependentNoexcept:
-            [[fallthrough]];
-        case EST_Unevaluated: {
-            // [except.spec]p13: the exception specification of a defaulted
-            // function (or an inheriting constructor) is evaluated only when
-            // needed, and clang resolves it on every use. Forcing it for an
-            // unused one can instantiate an ill-formed default member
-            // initializer or subobject constructor and reject a valid
-            // translation unit (BRiCk#507), so it stays unknown, like an
-            // uninstantiated noexcept-specifier.
-            // Clang also leaves the specification of user-declared
-            // destructors unevaluated; those are still resolved, since an
-            // unknown specification is only supported on defaulted bodies.
-            auto ctor = dyn_cast<CXXConstructorDecl>(&decl);
-            if (decl.isDefaulted() || (ctor && ctor->isInheritingConstructor()))
-                return print.output() << UNKNOWN;
-            auto &sema = this->getCompiler().getSema();
-            fpt = sema.ResolveExceptionSpec(decl.getLocation(), fpt);
-            break;
-        }
-
-        case EST_Uninstantiated:
-            break;
-
-        case EST_Unparsed:
-            return print.output() << UNKNOWN;
-        }
-    };
-    logging::log(logging::Level::VERBOSER)
-        << "Unresolved exception specification on "
-        << decl.getQualifiedNameAsString()
-        << " (clang value = " << decl.getExceptionSpecType() << ")"
-        << "\n";
-
-    return print.output() << UNKNOWN;
+    case EST_Unevaluated:
+        [[fallthrough]];
+    case EST_Uninstantiated:
+        // Clang defers the exception specification of defaulted and
+        // implicit special members, defaulted comparisons, inheriting
+        // constructors and destructors without a noexcept-specifier
+        // (EST_Unevaluated), and the noexcept-specifier of a specialization
+        // of a templated function (EST_Uninstantiated), until it is needed
+        // ([except.spec]p13, [temp.inst]). Clang resolves it whenever it is
+        // needed, in particular for every function that is defined, used or
+        // selected by overload resolution. So an unresolved specification
+        // here is one that this translation unit does not need, and cpp2v
+        // must not resolve it (e.g. with `Sema::ResolveExceptionSpec`):
+        // that can instantiate an ill-formed default member initializer or
+        // noexcept-specifier and reject a valid translation unit
+        // (BRiCk#507).
+        logging::log(logging::Level::VERBOSER)
+            << "Unresolved exception specification on "
+            << decl.getQualifiedNameAsString()
+            << " (clang value = " << fpt->getExceptionSpecType() << ")\n";
+        return print.output() << UNKNOWN;
+    }
+    llvm_unreachable("unexpected exception specification kind");
 }
 
 fmt::Formatter &ClangPrinter::printCallingConv(CoqPrinter &print,
