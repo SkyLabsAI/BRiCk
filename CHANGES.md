@@ -19,7 +19,12 @@ lifetime is unsupported even when their field layout is hidden.
 base class (see `syntax/core.v`). cpp2v prints it for conversions to a virtual
 base, which were `Cunsupported`; conversions to non-virtual bases of a class
 with virtual bases are now `Cderived2base`/`Cbase2derived`. Exhaustive matches
-on `Cast` need a new case.
+on `Cast` need a new case. The rules for `Cderived2vbase` read the vtable
+pointer, owned through the new `vptrR cls q`: a constructor of a class with
+virtual bases gets `this |-> vptrR cls 1` after initializing its non-virtual
+bases, and its destructor gives it back, so such specifications return it in
+their postcondition (destructors: take it in their precondition), as part of
+the `Rep` of the non-virtual part.
 
 2026.11.24: `global_ptr_nonnull`, `global_ptr_nonnull_aid` and
 `global_ptr_nonnull_addr` (and `_global_nonnull`) now require
