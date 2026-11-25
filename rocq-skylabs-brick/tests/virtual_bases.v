@@ -38,9 +38,15 @@ Section with_cpp.
   Hypothesis Hσ : source ⊧ σ.
 
   Definition VBR (q : cQp.t) : Rep := _field "VB::v" |-> uninitR Tint q.
-  Definition LR (q : cQp.t) : Rep := vbaseR "L" "VB" (VBR q).
-  Definition RR (q : cQp.t) : Rep := vbaseR "R" "VB" (VBR q).
-  Definition G_pre (q : cQp.t) : Rep := _field "G::g" |-> uninitR Tint q.
+  (** A pre-[Rep] owns the vtable pointer ([vptrR]); for [G], also
+      those of its non-virtual bases [L] and [R]. *)
+  Definition L_pre (q : cQp.t) : Rep := vptrR "L" q.
+  Definition LR (q : cQp.t) : Rep := L_pre q ** vbaseR "L" "VB" (VBR q).
+  Definition R_pre (q : cQp.t) : Rep := vptrR "R" q.
+  Definition RR (q : cQp.t) : Rep := R_pre q ** vbaseR "R" "VB" (VBR q).
+  Definition G_pre (q : cQp.t) : Rep :=
+    _base "G" "L" |-> L_pre q ** _base "G" "R" |-> R_pre q **
+    vptrR "G" q ** _field "G::g" |-> uninitR Tint q.
   Definition GR (q : cQp.t) : Rep := G_pre q ** vbaseR "G" "VB" (VBR q).
 
   (** A full [Rep] is fractional, although it hides where the virtual
@@ -48,7 +54,7 @@ Section with_cpp.
   #[local] Instance VBR_cfractional : CFractional VBR.
   Proof. rewrite /VBR. apply _. Qed.
   #[local] Instance GR_cfractional : CFractional GR.
-  Proof. rewrite /GR /G_pre. apply _. Qed.
+  Proof. rewrite /GR /G_pre /L_pre /R_pre. apply _. Qed.
 
   (* The single specification of a constructor: it borrows the virtual base. *)
   Definition ctor_spec (cls : globname) (cnd : obj_name) (pre post : Rep) : mpred :=
@@ -80,23 +86,25 @@ Section with_cpp.
     rewrite /wp_args /= /nd_seqs /= /wp.WPE.Mret.
     iIntros "!> BL". iApply "SL". iFrame "BL".
     iSplitL "VB". { iApply (vbaseR_intro with "VL VB"). }
-    iIntros (p) "Hp L".
+    iIntros (p) "Hp L". rewrite /LR _at_sep. iDestruct "L" as "[TL L]".
     rewrite /= !interp_unfold /=. iModIntro. iFrame "Hp". iModIntro.
     (* Take the virtual base back, and lend it to [R]. *)
     iDestruct (vbaseR_elim with "VL L") as "VB".
     iExists pvb. iFrame "V". iIntros "#VR !> BR". iApply "SR". iFrame "BR".
     iSplitL "VB". { iApply (vbaseR_intro with "VR VB"). }
-    iIntros (p') "Hp' R".
+    iIntros (p') "Hp' R". rewrite /RR _at_sep. iDestruct "R" as "[TR R]".
     iModIntro. iFrame "Hp'". iModIntro.
     iDestruct (vbaseR_elim with "VR R") as "VB".
+    (* the vtable pointer of [G] is installed after its bases *)
+    iIntros "TG".
     (* the field of [G] *)
     default_initialize_unfold. cbn.
     iIntros "Hg !>". rewrite interp_unfold /=. iModIntro.
     (* the body *)
     iApply wp_seq. rewrite wp_block_unfold. iIntros "!> !> !>". cbn.
     iIntros "!> %p0 Hp0". iApply ("HQ" with "Hp0").
-    rewrite /GR /G_pre _at_sep _at_offsetR. iFrame "Hg".
-    iApply (vbaseR_intro with "V VB").
+    rewrite /GR _at_sep. iSplitR "VB"; last by iApply (vbaseR_intro with "V VB").
+    rewrite /G_pre !_at_sep !_at_offsetR. iFrame "TL TR TG Hg".
   Qed.
 
   (* The single specification of a destructor: it returns the virtual base. *)
@@ -121,7 +129,7 @@ Section with_cpp.
     intros [= <-]. iIntros "(#SL & #SR & G & HQ)".
     iApply wp_dtor_intro. cbn.
     iModIntro. iSplit; first done.
-    rewrite /GR /G_pre _at_sep _at_offsetR. iDestruct "G" as "[Hg VB]".
+    rewrite /GR /G_pre !_at_sep !_at_offsetR. iDestruct "G" as "((TL & TR & TG & Hg) & VB)".
     iDestruct (_at_vbaseR with "VB") as (pvb) "[#V VB]".
     rewrite /wpd_members /= !interp_unfold /=.
     (* the field of [G] *)
@@ -132,14 +140,17 @@ Section with_cpp.
     (* [R], then [L]: each borrows the virtual base of [G]. *)
     iExists pvb. iFrame "V". iIntros "!> #VR".
     rewrite /wp_base_destructor /wp_mfptr.
-    iApply "SR". iSplitL "VB". { iApply (vbaseR_intro with "VR VB"). }
+    iApply "SR". iSplitL "VB TR".
+    { rewrite /RR _at_sep. iFrame "TR". iApply (vbaseR_intro with "VR VB"). }
     iIntros (p) "Hp BR VB". iExists Vvoid. iFrame "Hp BR".
     iDestruct (vbaseR_elim with "VR VB") as "VB".
     iExists pvb. iFrame "V". iIntros "#VL".
-    iApply "SL". iSplitL "VB". { iApply (vbaseR_intro with "VL VB"). }
+    iApply "SL". iSplitL "VB TL".
+    { rewrite /LR _at_sep. iFrame "TL". iApply (vbaseR_intro with "VL VB"). }
     iIntros (p') "Hp' BL VB". iExists Vvoid. iFrame "Hp' BL".
     iDestruct (vbaseR_elim with "VL VB") as "VB".
-    iIntros "BG !> %p0 Hp0". iApply ("HQ" with "Hp0 BG").
+    (* the vtable pointer of [G] goes back with its memory *)
+    iFrame "TG". iIntros "BG !> %p0 Hp0". iApply ("HQ" with "Hp0 BG").
     iApply (vbaseR_intro with "V VB").
   Qed.
 

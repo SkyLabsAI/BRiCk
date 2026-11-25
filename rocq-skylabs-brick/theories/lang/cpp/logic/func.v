@@ -1085,12 +1085,13 @@ Definition wp_vstruct_initializer_list `{Σ : cpp_logic, σ : genv} (tu : transl
       let s := vs.(vs_struct) in
       (**
       Provide strict validity for the members, initialize the
-      non-virtual bases, then the members. The initializers for
-      virtual bases are not run here.
+      non-virtual bases, install the vtable pointer ([vptrR]), then
+      initialize the members. The initializers for virtual bases are
+      not run here.
       *)
       this |-> svalid_members cls ((fun m => (m.(mem_name), m.(mem_type))) <$> s.(s_fields)) -*
       wpi_nv_bases tu ρ cls this inits (List.map fst s.(s_bases))
-        (wpi_members tu ρ cls this inits s.(s_fields) Q)
+        (this |-> vptrR cls 1$m -* wpi_members tu ρ cls this inits s.(s_fields) Q)
     end
   else
     UNSUPPORTED ("constructor of a class with virtual bases and virtual functions", cls).
@@ -1253,7 +1254,7 @@ Section with_cpp.
     { repeat (case_match; try by iIntros "_ $"). iIntros "HQ".
       iApply wp_base_ctor_call_frame. iIntros (?). by iApply interp_frame. }
     { iIntros "HQ". iApply wand_frame.
-      iApply wpi_nv_bases_frame.
+      iApply wpi_nv_bases_frame. iApply wand_frame.
       by iApply wpi_members_frame. }
   Qed.
 
@@ -1689,7 +1690,8 @@ this resource will be consumed immediately.
         only (fields, then non-virtual bases, in reverse order) and
         returns the memory of that part. The virtual bases are
         destroyed afterwards by whoever destroys the complete object
-        (see [wp_destroy_vstruct]).
+        (see [wp_destroy_vstruct]). It takes back the vtable pointer
+        ([vptrR]) with the memory.
 
         As for constructors, object identities across virtual bases
         are not modeled yet, hence the [tu_no_vtables] side-condition.
@@ -1698,9 +1700,10 @@ this resource will be consumed immediately.
         [| tu_no_vtables tu dtor.(d_class) |] **
         let* := wpd_members tu dtor.(d_class) thisp vs.(vs_struct).(s_fields) in
         let* := wpd_nv_bases tu dtor.(d_class) thisp (rev (List.map fst vs.(vs_struct).(s_bases))) in
-        thisp |-> nv_tblockR dtor.(d_class) 1$m -*
-        |={top}=>?upd |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -*
-        Q p
+        thisp |-> vptrR dtor.(d_class) 1$m **
+        (thisp |-> nv_tblockR dtor.(d_class) 1$m -*
+         |={top}=>?upd |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -*
+         Q p)
 
       (* This includes [Gopaque]: a destructor destroys the members and
          bases, which an opaque record does not describe. Destructors of
@@ -1737,6 +1740,7 @@ Section wp_dtor.
     all: try (iApply wp_revert_identity_frame =>//).
     all: try (iApply wpd_bases_frame; [done|]).
     all: try iApply wpd_nv_bases_frame.
+    all: try (iIntros "[$ HR]"; iRevert "HR").
     all: iIntros "HR R"; iMod ("HR" with "R") as "HR"; iIntros "!> !> % R".
     all: iApply "HQ".
     all: iApply ("HR" with "R").
@@ -1761,6 +1765,7 @@ Section wp_dtor.
     all: try (iApply wp_revert_identity_frame =>//).
     all: try (iApply wpd_bases_frame; [done|]).
     all: try iApply wpd_nv_bases_frame.
+    all: try (iIntros "[$ HR]"; iRevert "HR").
     all: iIntros "HR R !>"; iSpecialize ("HR" with "R"); iIntros "!> % R".
     all: iApply ("HR" with "R").
   Qed.

@@ -60,8 +60,29 @@ Implicit Types (σ : genv) (p : ptr) (o : offset).
     axioms below. *)
 Parameter nv_tblockR : forall `{Σ : cpp_logic} {σ : genv} (cls : globname) (q : cQp.t), Rep.
 
+(** [vptrR cls q] is [q] ownership of the vtable pointer of the [cls]
+    (sub)object it is applied to, once that pointer is installed: a
+    constructor of [cls] gets it after initializing the non-virtual bases
+    (see [wp_vstruct_initializer_list]) and its destructor gives it back
+    (see [wp_dtor]). It belongs in the [Rep] of the non-virtual part,
+    next to the fields.
+
+    A conversion to a virtual base reads this pointer to find the virtual
+    base (see [wp_lval_cast_derived2vbase]), so it needs a fraction of
+    [vptrR]. [vbase_ptr] says where the virtual base is, but it is
+    persistent: it holds before the pointer is installed and after the
+    object is destroyed. *)
+Parameter vptrR : forall `{Σ : cpp_logic} {σ : genv} (cls : globname) (q : cQp.t), Rep.
+
 Section with_cpp.
   Context `{Σ : cpp_logic} {σ : genv}.
+
+  Axiom vptrR_timeless : forall cls q, Timeless (vptrR cls q).
+  Axiom vptrR_cfractional : forall cls, CFractional (vptrR cls).
+  #[global] Existing Instances vptrR_timeless vptrR_cfractional.
+
+  #[global] Instance vptrR_as_cfractional cls : AsCFractional0 (vptrR cls).
+  Proof. solve_as_cfrac. Qed.
 
   Axiom nv_tblockR_timeless : forall cls q, Timeless (nv_tblockR cls q).
   Axiom nv_tblockR_cfractional : forall cls, CFractional (nv_tblockR cls).
@@ -144,4 +165,4 @@ Section with_cpp.
   Qed.
 End with_cpp.
 
-#[global] Hint Opaque nv_tblockR vbaseR : typeclass_instances sl_opacity.
+#[global] Hint Opaque nv_tblockR vptrR vbaseR : typeclass_instances sl_opacity.

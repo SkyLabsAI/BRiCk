@@ -1160,17 +1160,13 @@ Module Type Expr.
         (non-virtual) steps.
 
         The location of a virtual base depends on the most-derived
-        object, and the program reads it at run time (from the vtable,
-        in the Itanium ABI). [vbase_ptr derived vbase addr pvb] is that
-        knowledge, so the rules ask for it and return [pvb]; it is part
-        of the object's [Rep] (see [vbaseR]).
-
-        [vbase_ptr] is persistent, so it does not show that the object
-        is still alive. Like the rules for [Cderived2base], these rules
-        do not check the lifetime of the object, although the program
-        reads its vtable pointer
-        (https://eel.is/c++draft/basic.life: such a conversion of an
-        object outside its lifetime is undefined).
+        object, and the program reads it at run time through the
+        object's vtable pointer (in the Itanium ABI). So the rules ask
+        for a fraction of [vptrR derived], which a constructor gets only
+        once that pointer is installed and a destructor gives back, and
+        for [vbase_ptr derived vbase addr pvb], the location itself
+        (persistent, and part of the object's [Rep]; see [vbaseR]). They
+        return [pvb] and the fraction.
 
         A null pointer converts to a null pointer, without reading
         anything (https://eel.is/c++draft/conv.ptr). *)
@@ -1180,9 +1176,11 @@ Module Type Expr.
           match path_names (path ++ [Tnamed base]) with
           | Some (vbase :: rest) =>
             wp_glval e (fun addr free =>
-              Exists pvb, vbase_ptr derived vbase addr pvb **
-              let addr' := pvb ,, derived_to_base vbase rest in
-              reference_to ty addr' ** Q addr' free)
+              Exists pvb q, vbase_ptr derived vbase addr pvb **
+              addr |-> vptrR derived q **
+              (addr |-> vptrR derived q -*
+               let addr' := pvb ,, derived_to_base vbase rest in
+               reference_to ty addr' ** Q addr' free))
           | _ => False
           end
       | _, _ => False
@@ -1195,9 +1193,11 @@ Module Type Expr.
           match path_names (path ++ [Tnamed base]) with
           | Some (vbase :: rest) =>
             wp_glval e (fun addr free =>
-              Exists pvb, vbase_ptr derived vbase addr pvb **
-              let addr' := pvb ,, derived_to_base vbase rest in
-              reference_to ty addr' ** Q addr' free)
+              Exists pvb q, vbase_ptr derived vbase addr pvb **
+              addr |-> vptrR derived q **
+              (addr |-> vptrR derived q -*
+               let addr' := pvb ,, derived_to_base vbase rest in
+               reference_to ty addr' ** Q addr' free))
           | _ => False
           end
       | _, _ => False
@@ -1214,9 +1214,11 @@ Module Type Expr.
               | Vptr addr =>
                 if bool_decide (addr = nullptr) then Q (Vptr nullptr) free
                 else
-                  Exists pvb, vbase_ptr derived vbase addr pvb **
-                  let addr' := pvb ,, derived_to_base vbase rest in
-                  has_type (Vptr addr') (Tptr ty) ** Q (Vptr addr') free
+                  Exists pvb q, vbase_ptr derived vbase addr pvb **
+                  addr |-> vptrR derived q **
+                  (addr |-> vptrR derived q -*
+                   let addr' := pvb ,, derived_to_base vbase rest in
+                   has_type (Vptr addr') (Tptr ty) ** Q (Vptr addr') free)
               | _ => False
               end)
           | _ => False
