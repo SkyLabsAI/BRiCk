@@ -357,12 +357,7 @@ let package_command name =
 let cpp2v_invocation environment flags =
   match environment with
   | None ->
-      let command =
-        match package_command "cpp2v" with
-        | Some command -> command
-        | None -> "cpp2v"
-      in
-      (command, flags)
+      ("cpp2v", flags)
   | Some alias ->
       let id = Names.Id.of_string alias in
       let config =

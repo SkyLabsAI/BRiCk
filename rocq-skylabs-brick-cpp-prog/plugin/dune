@@ -6,6 +6,7 @@
  (inline_tests)
  (preprocess
   (pps ppx_inline_test))
+ (runtime_deps %{bin:cpp2v})
  (libraries base findlib rocq-runtime.vernac rocq-runtime.plugins.ltac))
 
 (rocq.pp
