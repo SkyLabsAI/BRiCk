@@ -110,7 +110,7 @@
                c_params := [("#0"%pstring, "N&"%cpp_type)];
                c_cc := CC_C;
                c_arity := Ar_Definite;
-               c_exception := exception_spec.NoThrow;
+               c_exception := exception_spec.Unknown;
                c_body := Some Defaulted
              |}))
      : name * option ObjValue
@@ -124,7 +124,7 @@
                m_params := [("#0"%pstring, "N&"%cpp_type)];
                m_cc := CC_C;
                m_arity := Ar_Definite;
-               m_exception := exception_spec.NoThrow;
+               m_exception := exception_spec.Unknown;
                m_attrs := [];
                m_body := Some Defaulted
              |}))
@@ -164,7 +164,7 @@
                c_params := [("#0"%pstring, "const N&"%cpp_type)];
                c_cc := CC_C;
                c_arity := Ar_Definite;
-               c_exception := exception_spec.NoThrow;
+               c_exception := exception_spec.Unknown;
                c_body := Some Defaulted
              |}))
      : name * option ObjValue
@@ -176,126 +176,9 @@
                m_class := "N";
                m_this_qual := QM;
                m_params := [("#0"%pstring, "const N&"%cpp_type)];
-               m_cc := CC_C;
-               m_arity := Ar_Definite;
-               m_exception := exception_spec.NoThrow;
-               m_attrs := [];
-               m_body := Some Defaulted
-             |}))
-     : name * option ObjValue
-     = ("T::T(const T&)"%cpp_name,
-        Some
-          (Oconstructor
-             {|
-               c_class := "T";
-               c_params := [("#0"%pstring, "const T&"%cpp_type)];
-               c_cc := CC_C;
-               c_arity := Ar_Definite;
-               c_exception := exception_spec.NoThrow;
-               c_body := Some Defaulted
-             |}))
-     : name * option ObjValue
-     = ("T::operator=(const T&)"%cpp_name,
-        Some
-          (Omethod
-             {|
-               m_return := "T&";
-               m_class := "T";
-               m_this_qual := QM;
-               m_params := [("#0"%pstring, "const T&"%cpp_type)];
-               m_cc := CC_C;
-               m_arity := Ar_Definite;
-               m_exception := exception_spec.NoThrow;
-               m_attrs := [];
-               m_body := Some Defaulted
-             |}))
-     : name * option ObjValue
-     = ("N::N(const N&)"%cpp_name,
-        Some
-          (Oconstructor
-             {|
-               c_class := "N";
-               c_params := [("#0"%pstring, "const N&"%cpp_type)];
-               c_cc := CC_C;
-               c_arity := Ar_Definite;
-               c_exception := exception_spec.NoThrow;
-               c_body := Some Defaulted
-             |}))
-     : name * option ObjValue
-     = ("N::operator=(const N&)"%cpp_name,
-        Some
-          (Omethod
-             {|
-               m_return := "N&";
-               m_class := "N";
-               m_this_qual := QM;
-               m_params := [("#0"%pstring, "const N&"%cpp_type)];
-               m_cc := CC_C;
-               m_arity := Ar_Definite;
-               m_exception := exception_spec.NoThrow;
-               m_attrs := [];
-               m_body := Some Defaulted
-             |}))
-     : name * option ObjValue
-     = ("T::T(const T&)"%cpp_name,
-        Some
-          (Oconstructor
-             {|
-               c_class := "T";
-               c_params := [("#0"%pstring, "const T&"%cpp_type)];
-               c_cc := CC_C;
-               c_arity := Ar_Definite;
-               c_exception := exception_spec.NoThrow;
-               c_body := Some Defaulted
-             |}))
-     : name * option ObjValue
-     = ("T::operator=(const T&)"%cpp_name,
-        Some
-          (Omethod
-             {|
-               m_return := "T&";
-               m_class := "T";
-               m_this_qual := QM;
-               m_params := [("#0"%pstring, "const T&"%cpp_type)];
                m_cc := CC_C;
                m_arity := Ar_Definite;
                m_exception := exception_spec.Unknown;
-               m_attrs := [];
-               m_body := Some Defaulted
-             |}))
-     : name * option ObjValue
-     = {|
-         sub_module_mismatch.abi_mismatch := false;
-         sub_module_mismatch.type_mismatches := [];
-         sub_module_mismatch.symbol_mismatches :=
-           [("T::operator=(const T&)"%cpp_name,
-             sub_module_mismatch.Incompatible)];
-         sub_module_mismatch.assert_mismatches := []
-       |}
-     : sub_module_mismatch.t
-     = ("N::N(const N&)"%cpp_name,
-        Some
-          (Oconstructor
-             {|
-               c_class := "N";
-               c_params := [("#0"%pstring, "const N&"%cpp_type)];
-               c_cc := CC_C;
-               c_arity := Ar_Definite;
-               c_exception := exception_spec.NoThrow;
-               c_body := Some Defaulted
-             |}))
-     : name * option ObjValue
-     = ("N::operator=(const N&)"%cpp_name,
-        Some
-          (Omethod
-             {|
-               m_return := "N&";
-               m_class := "N";
-               m_this_qual := QM;
-               m_params := [("#0"%pstring, "const N&"%cpp_type)];
-               m_cc := CC_C;
-               m_arity := Ar_Definite;
-               m_exception := exception_spec.NoThrow;
                m_attrs := [];
                m_body := Some Defaulted
              |}))
@@ -322,7 +205,61 @@
                m_params := [("#0"%pstring, "const T&"%cpp_type)];
                m_cc := CC_C;
                m_arity := Ar_Definite;
-               m_exception := exception_spec.NoThrow;
+               m_exception := exception_spec.Unknown;
+               m_attrs := [];
+               m_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("N::N(const N&)"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "N";
+               c_params := [("#0"%pstring, "const N&"%cpp_type)];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.Unknown;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("N::operator=(const N&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "N&";
+               m_class := "N";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "const N&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.Unknown;
+               m_attrs := [];
+               m_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("T::T(const T&)"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "T";
+               c_params := [("#0"%pstring, "const T&"%cpp_type)];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.Unknown;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("T::operator=(const T&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "T&";
+               m_class := "T";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "const T&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.Unknown;
                m_attrs := [];
                m_body := Some Defaulted
              |}))
@@ -330,25 +267,82 @@
      = {|
          sub_module_mismatch.abi_mismatch := false;
          sub_module_mismatch.type_mismatches := [];
-         sub_module_mismatch.symbol_mismatches :=
-           [("T::operator=(const T&)"%cpp_name,
-             sub_module_mismatch.Incompatible)];
+         sub_module_mismatch.symbol_mismatches := [];
+         sub_module_mismatch.assert_mismatches := []
+       |}
+     : sub_module_mismatch.t
+     = ("N::N(const N&)"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "N";
+               c_params := [("#0"%pstring, "const N&"%cpp_type)];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.Unknown;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("N::operator=(const N&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "N&";
+               m_class := "N";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "const N&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.Unknown;
+               m_attrs := [];
+               m_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("T::T(const T&)"%cpp_name,
+        Some
+          (Oconstructor
+             {|
+               c_class := "T";
+               c_params := [("#0"%pstring, "const T&"%cpp_type)];
+               c_cc := CC_C;
+               c_arity := Ar_Definite;
+               c_exception := exception_spec.Unknown;
+               c_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = ("T::operator=(const T&)"%cpp_name,
+        Some
+          (Omethod
+             {|
+               m_return := "T&";
+               m_class := "T";
+               m_this_qual := QM;
+               m_params := [("#0"%pstring, "const T&"%cpp_type)];
+               m_cc := CC_C;
+               m_arity := Ar_Definite;
+               m_exception := exception_spec.Unknown;
+               m_attrs := [];
+               m_body := Some Defaulted
+             |}))
+     : name * option ObjValue
+     = {|
+         sub_module_mismatch.abi_mismatch := false;
+         sub_module_mismatch.type_mismatches := [];
+         sub_module_mismatch.symbol_mismatches := [];
          sub_module_mismatch.assert_mismatches := []
        |}
      : sub_module_mismatch.t
      = {|
          sub_module_mismatch.abi_mismatch := false;
          sub_module_mismatch.type_mismatches := [];
-         sub_module_mismatch.symbol_mismatches :=
-           [("T::T(const T&)"%cpp_name, sub_module_mismatch.Incompatible)];
+         sub_module_mismatch.symbol_mismatches := [];
          sub_module_mismatch.assert_mismatches := []
        |}
      : sub_module_mismatch.t
      = {|
          sub_module_mismatch.abi_mismatch := false;
          sub_module_mismatch.type_mismatches := [];
-         sub_module_mismatch.symbol_mismatches :=
-           [("T::T(const T&)"%cpp_name, sub_module_mismatch.Incompatible)];
+         sub_module_mismatch.symbol_mismatches := [];
          sub_module_mismatch.assert_mismatches := []
        |}
      : sub_module_mismatch.t
@@ -360,7 +354,7 @@
                c_params := [("#0"%pstring, "C&"%cpp_type)];
                c_cc := CC_C;
                c_arity := Ar_Definite;
-               c_exception := exception_spec.NoThrow;
+               c_exception := exception_spec.Unknown;
                c_body := Some Defaulted
              |}))
      : name * option ObjValue
@@ -374,7 +368,7 @@
                m_params := [("#0"%pstring, "C&"%cpp_type)];
                m_cc := CC_C;
                m_arity := Ar_Definite;
-               m_exception := exception_spec.NoThrow;
+               m_exception := exception_spec.Unknown;
                m_attrs := [];
                m_body := Some Defaulted
              |}))
