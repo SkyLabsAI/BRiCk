@@ -39,6 +39,7 @@ The one <<VB>> is owned once, by whichever class is the most derived.
 
 Require Import skylabs.lang.cpp.logic.heap_pred.prelude.
 Require Import skylabs.lang.cpp.logic.heap_pred.valid.
+Require Import skylabs.lang.cpp.logic.heap_pred.null.
 Require Import skylabs.lang.cpp.logic.heap_pred.simple.
 Require Import skylabs.lang.cpp.logic.heap_pred.block.
 
@@ -88,6 +89,16 @@ Section with_cpp.
 
   #[global] Instance vptrR_as_cfractional cls : AsCFractional0 (vptrR cls).
   Proof. solve_as_cfrac. Qed.
+
+  (** An installed vtable pointer lies inside an object, so the object
+      is not at [nullptr]. With this, a class's [Rep] that holds [vptrR]
+      shows that a pointer to the class is not null. *)
+  Axiom vptrR_nonnull : forall cls q, Observe nonnullR (vptrR cls q).
+  #[global] Existing Instance vptrR_nonnull.
+
+  #[global] Instance _at_vptrR_nonnull p cls q :
+    Observe [| p <> nullptr |] (p |-> vptrR cls q).
+  Proof. rewrite -_at_nonnullR. apply _. Qed.
 
   Axiom nv_tblockR_timeless : forall cls q, Timeless (nv_tblockR cls q).
   Axiom nv_tblockR_cfractional : forall cls, CFractional (nv_tblockR cls).
