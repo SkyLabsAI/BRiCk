@@ -1,0 +1,129 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.specs.type_info</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+</div>
+
+<div class="doc">
+<a id="lab199"></a><h1 class="section">A specification of <code>std::type_info::operator==</code></h1>
+
+
+<div class="paragraph"> </div>
+
+    An assumed specification of the library function, for clients to link
+    (for instance <code>cpp.spec "std::type_info::operator==(const std::type_info&amp;) const"
+</code>    with (\this this \exact type_info_eq_wpp this)&gt;&gt; with auto). It is not an
+    axiom: a client that uses it assumes it of its library.
+
+<div class="paragraph"> </div>
+
+    <code>bool operator==(const type_info&amp; rhs) const noexcept;</code> returns whether
+    both objects represent the same type
+    (&lt;https://eel.is/c++draft/type.info2>). Comparing [type]s is sound
+    because the <<typeid>> rules only give [type_infoR ty] for [ty] in
+    [typeid_ok], where cpp2v prints each C++ type in one way and distinct
+    C++ types differently (see ../logic/typeid.v).
+
+    C++20 rewrites <<a != b>> to <<!(a == b)>>; the C++17 member
+    <<operator!=>> has the dual specification.
+ 
+</div>
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.html#"><span class="id" title="library">skylabs.lang.cpp.syntax</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.semantics.html#"><span class="id" title="library">skylabs.lang.cpp.semantics</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.logic.html#"><span class="id" title="library">skylabs.lang.cpp.logic</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.specs.html#"><span class="id" title="library">skylabs.lang.cpp.specs</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="with_cpp" class="idref" href="#with_cpp"><span class="id" title="section">with_cpp</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{<a id="43a705d40096ef54c52f70536b49dc5b" class="idref" href="#43a705d40096ef54c52f70536b49dc5b"><span class="id" title="variable">Σ</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#LC.cpp_logic"><span class="id" title="class">cpp_logic</span></a>} {<a id="0b1d3f605c206c3f68b5282befa8ad5b" class="idref" href="#0b1d3f605c206c3f68b5282befa8ad5b"><span class="id" title="variable">σ</span></a> : <a class="idref" href="skylabs.lang.cpp.semantics.genv.html#genv"><span class="id" title="class">genv</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="type_info_eq_wpp" class="idref" href="#type_info_eq_wpp"><span class="id" title="definition">type_info_eq_wpp</span></a> (<a id="this:5" class="idref" href="#this:5"><span class="id" title="binder">this</span></a> : <a class="idref" href="skylabs.lang.cpp.semantics.values.html#PTRS_INTF_AXIOM.ptr"><span class="id" title="axiom">ptr</span></a>) : <a class="idref" href="skylabs.lang.cpp.specs.cpp_specs.html#WpSpec_cpp_val"><span class="id" title="abbreviation">WpSpec_cpp_val</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.specs.classy.html#778693f32570cea78f677cac05e9187a"><span class="id" title="notation">\</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#778693f32570cea78f677cac05e9187a"><span class="id" title="notation">arg</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#778693f32570cea78f677cac05e9187a"><span class="id" title="notation">{</span></a><a id="rhs:6" class="idref" href="#rhs:6"><span class="id" title="binder">rhs</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#778693f32570cea78f677cac05e9187a"><span class="id" title="notation">}</span></a> "" <a class="idref" href="skylabs.lang.cpp.specs.classy.html#778693f32570cea78f677cac05e9187a"><span class="id" title="notation">(</span></a><a class="idref" href="skylabs.lang.cpp.semantics.values.html#VALUES_INTF_AXIOM.Vref"><span class="id" title="abbreviation">Vref</span></a> <a class="idref" href="skylabs.lang.cpp.specs.type_info.html#rhs:6"><span class="id" title="variable">rhs</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#778693f32570cea78f677cac05e9187a"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.specs.classy.html#f135a79d5105b4bd1758864fa7656d47"><span class="id" title="notation">\</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#f135a79d5105b4bd1758864fa7656d47"><span class="id" title="notation">prepost</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#f135a79d5105b4bd1758864fa7656d47"><span class="id" title="notation">{</span></a><a id="t1:7" class="idref" href="#t1:7"><span class="id" title="binder">t1</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#f135a79d5105b4bd1758864fa7656d47"><span class="id" title="notation">}</span></a> <a class="idref" href="skylabs.lang.cpp.specs.type_info.html#this:5"><span class="id" title="variable">this</span></a> <a class="idref" href="skylabs.lang.cpp.logic.rep_defs.html#62731479375849aa261b6fbaae1406e9"><span class="id" title="notation">|-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#E__typeid.type_infoR"><span class="id" title="axiom">type_infoR</span></a> <a class="idref" href="skylabs.lang.cpp.specs.type_info.html#t1:7"><span class="id" title="variable">t1</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.specs.classy.html#f135a79d5105b4bd1758864fa7656d47"><span class="id" title="notation">\</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#f135a79d5105b4bd1758864fa7656d47"><span class="id" title="notation">prepost</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#f135a79d5105b4bd1758864fa7656d47"><span class="id" title="notation">{</span></a><a id="t2:8" class="idref" href="#t2:8"><span class="id" title="binder">t2</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#f135a79d5105b4bd1758864fa7656d47"><span class="id" title="notation">}</span></a> <a class="idref" href="skylabs.lang.cpp.specs.type_info.html#rhs:6"><span class="id" title="variable">rhs</span></a> <a class="idref" href="skylabs.lang.cpp.logic.rep_defs.html#62731479375849aa261b6fbaae1406e9"><span class="id" title="notation">|-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#E__typeid.type_infoR"><span class="id" title="axiom">type_infoR</span></a> <a class="idref" href="skylabs.lang.cpp.specs.type_info.html#t2:8"><span class="id" title="variable">t2</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.specs.classy.html#247c356b879d37f0e93ea2cd507a5e06"><span class="id" title="notation">\</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#247c356b879d37f0e93ea2cd507a5e06"><span class="id" title="notation">post</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#247c356b879d37f0e93ea2cd507a5e06"><span class="id" title="notation">[</span></a><a class="idref" href="skylabs.lang.cpp.semantics.values.html#VALUES_INTF_AXIOM.Vbool"><span class="id" title="definition">Vbool</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.decidable.html#bool_decide"><span class="id" title="definition">bool_decide</span></a> (<a class="idref" href="skylabs.lang.cpp.specs.type_info.html#t1:7"><span class="id" title="variable">t1</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs.lang.cpp.specs.type_info.html#t2:8"><span class="id" title="variable">t2</span></a>))<a class="idref" href="skylabs.lang.cpp.specs.classy.html#247c356b879d37f0e93ea2cd507a5e06"><span class="id" title="notation">]</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#::bi_scope:'emp'"><span class="id" title="notation">emp</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="type_info_eq_spec" class="idref" href="#type_info_eq_spec"><span class="id" title="definition">type_info_eq_spec</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.cptr.html#function_spec"><span class="id" title="record">function_spec</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.specs.functions.html#SMethod"><span class="id" title="definition">SMethod</span></a> "std::type_info" <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#QC"><span class="id" title="constructor">QC</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tbool"><span class="id" title="constructor">Tbool</span></a> <span class="id" title="notation">[</span>"const std::type_info&amp;"%<span class="id" title="var">cpp_type</span><span class="id" title="notation">]</span> (<span class="id" title="keyword">fun</span> <a id="this:9" class="idref" href="#this:9"><span class="id" title="binder">this</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.specs.elaborate.html#cpp_spec"><span class="id" title="definition">cpp_spec</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tbool"><span class="id" title="constructor">Tbool</span></a> <span class="id" title="notation">[</span>"const std::type_info&amp;"%<span class="id" title="var">cpp_type</span><span class="id" title="notation">]</span> (<a class="idref" href="skylabs.lang.cpp.specs.type_info.html#type_info_eq_wpp"><span class="id" title="definition">type_info_eq_wpp</span></a> <a class="idref" href="skylabs.lang.cpp.specs.type_info.html#this:9"><span class="id" title="variable">this</span></a>)).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<code>bool operator!=(const type_info&amp; rhs) const noexcept;</code> (C++17) 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="type_info_neq_wpp" class="idref" href="#type_info_neq_wpp"><span class="id" title="definition">type_info_neq_wpp</span></a> (<a id="this:10" class="idref" href="#this:10"><span class="id" title="binder">this</span></a> : <a class="idref" href="skylabs.lang.cpp.semantics.values.html#PTRS_INTF_AXIOM.ptr"><span class="id" title="axiom">ptr</span></a>) : <a class="idref" href="skylabs.lang.cpp.specs.cpp_specs.html#WpSpec_cpp_val"><span class="id" title="abbreviation">WpSpec_cpp_val</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.specs.classy.html#778693f32570cea78f677cac05e9187a"><span class="id" title="notation">\</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#778693f32570cea78f677cac05e9187a"><span class="id" title="notation">arg</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#778693f32570cea78f677cac05e9187a"><span class="id" title="notation">{</span></a><a id="rhs:11" class="idref" href="#rhs:11"><span class="id" title="binder">rhs</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#778693f32570cea78f677cac05e9187a"><span class="id" title="notation">}</span></a> "" <a class="idref" href="skylabs.lang.cpp.specs.classy.html#778693f32570cea78f677cac05e9187a"><span class="id" title="notation">(</span></a><a class="idref" href="skylabs.lang.cpp.semantics.values.html#VALUES_INTF_AXIOM.Vref"><span class="id" title="abbreviation">Vref</span></a> <a class="idref" href="skylabs.lang.cpp.specs.type_info.html#rhs:11"><span class="id" title="variable">rhs</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#778693f32570cea78f677cac05e9187a"><span class="id" title="notation">)</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.specs.classy.html#f135a79d5105b4bd1758864fa7656d47"><span class="id" title="notation">\</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#f135a79d5105b4bd1758864fa7656d47"><span class="id" title="notation">prepost</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#f135a79d5105b4bd1758864fa7656d47"><span class="id" title="notation">{</span></a><a id="t1:12" class="idref" href="#t1:12"><span class="id" title="binder">t1</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#f135a79d5105b4bd1758864fa7656d47"><span class="id" title="notation">}</span></a> <a class="idref" href="skylabs.lang.cpp.specs.type_info.html#this:10"><span class="id" title="variable">this</span></a> <a class="idref" href="skylabs.lang.cpp.logic.rep_defs.html#62731479375849aa261b6fbaae1406e9"><span class="id" title="notation">|-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#E__typeid.type_infoR"><span class="id" title="axiom">type_infoR</span></a> <a class="idref" href="skylabs.lang.cpp.specs.type_info.html#t1:12"><span class="id" title="variable">t1</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.specs.classy.html#f135a79d5105b4bd1758864fa7656d47"><span class="id" title="notation">\</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#f135a79d5105b4bd1758864fa7656d47"><span class="id" title="notation">prepost</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#f135a79d5105b4bd1758864fa7656d47"><span class="id" title="notation">{</span></a><a id="t2:13" class="idref" href="#t2:13"><span class="id" title="binder">t2</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#f135a79d5105b4bd1758864fa7656d47"><span class="id" title="notation">}</span></a> <a class="idref" href="skylabs.lang.cpp.specs.type_info.html#rhs:11"><span class="id" title="variable">rhs</span></a> <a class="idref" href="skylabs.lang.cpp.logic.rep_defs.html#62731479375849aa261b6fbaae1406e9"><span class="id" title="notation">|-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#E__typeid.type_infoR"><span class="id" title="axiom">type_infoR</span></a> <a class="idref" href="skylabs.lang.cpp.specs.type_info.html#t2:13"><span class="id" title="variable">t2</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.specs.classy.html#247c356b879d37f0e93ea2cd507a5e06"><span class="id" title="notation">\</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#247c356b879d37f0e93ea2cd507a5e06"><span class="id" title="notation">post</span></a><a class="idref" href="skylabs.lang.cpp.specs.classy.html#247c356b879d37f0e93ea2cd507a5e06"><span class="id" title="notation">[</span></a><a class="idref" href="skylabs.lang.cpp.semantics.values.html#VALUES_INTF_AXIOM.Vbool"><span class="id" title="definition">Vbool</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.decidable.html#bool_decide"><span class="id" title="definition">bool_decide</span></a> (<a class="idref" href="skylabs.lang.cpp.specs.type_info.html#t1:12"><span class="id" title="variable">t1</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;&gt;'_x"><span class="id" title="notation">&lt;&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.specs.type_info.html#t2:13"><span class="id" title="variable">t2</span></a>))<a class="idref" href="skylabs.lang.cpp.specs.classy.html#247c356b879d37f0e93ea2cd507a5e06"><span class="id" title="notation">]</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#::bi_scope:'emp'"><span class="id" title="notation">emp</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Definition</span> <a id="type_info_neq_spec" class="idref" href="#type_info_neq_spec"><span class="id" title="definition">type_info_neq_spec</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.cptr.html#function_spec"><span class="id" title="record">function_spec</span></a> :=<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.specs.functions.html#SMethod"><span class="id" title="definition">SMethod</span></a> "std::type_info" <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#QC"><span class="id" title="constructor">QC</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tbool"><span class="id" title="constructor">Tbool</span></a> <span class="id" title="notation">[</span>"const std::type_info&amp;"%<span class="id" title="var">cpp_type</span><span class="id" title="notation">]</span> (<span class="id" title="keyword">fun</span> <a id="this:14" class="idref" href="#this:14"><span class="id" title="binder">this</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.specs.elaborate.html#cpp_spec"><span class="id" title="definition">cpp_spec</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tbool"><span class="id" title="constructor">Tbool</span></a> <span class="id" title="notation">[</span>"const std::type_info&amp;"%<span class="id" title="var">cpp_type</span><span class="id" title="notation">]</span> (<a class="idref" href="skylabs.lang.cpp.specs.type_info.html#type_info_neq_wpp"><span class="id" title="definition">type_info_neq_wpp</span></a> <a class="idref" href="skylabs.lang.cpp.specs.type_info.html#this:14"><span class="id" title="variable">this</span></a>)).<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.specs.type_info.html#with_cpp"><span class="id" title="section">with_cpp</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

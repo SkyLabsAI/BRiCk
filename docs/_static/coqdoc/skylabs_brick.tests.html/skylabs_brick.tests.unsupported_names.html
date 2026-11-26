@@ -46,14 +46,14 @@
 </div>
 
 <div class="doc">
-<a id="lab40"></a><h1 class="section">Names that may denote several entities</h1>
+<a id="lab48"></a><h1 class="section">Names that may denote several entities</h1>
 
 
 <div class="paragraph"> </div>
 
 cpp2v prints some names with an unsupported atom: an unnamed struct at global
 scope is <span class="inlinecode">?<span class="id" title="var">record</span></span>, and a floating-point template argument is
-<span class="inlinecode"><span class="id" title="constructor">Aunsupported</span></span> <span class="inlinecode">&quot;&lt;<span class="id" title="var">unknown</span>&gt;&quot;</span>. Distinct entities can then share one name, and
+<span class="inlinecode"><span class="id" title="constructor">Aunsupported</span></span> <span class="inlinecode">&quot;&lt;<a class="idref" href="skylabs_brick.tests.dynamic_cast_semantics.html#unknown"><span class="id" title="definition">unknown</span></a>&gt;&quot;</span>. Distinct entities can then share one name, and
 equal definitions would merge, so <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.wp_notation.html#WpTestDefns.with_args.v"><span class="id" title="variable">v</span></a>&lt;<span class="id" title="var">decltype</span>(<a class="idref" href="skylabs_brick.tests.wp_notation.html#WpTestDefns.with_args.p"><span class="id" title="variable">p</span></a>)&gt;</span> and <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.wp_notation.html#WpTestDefns.with_args.v"><span class="id" title="variable">v</span></a>&lt;<span class="id" title="var">decltype</span>(<a class="idref" href="skylabs_brick.tests.instances.html#with_cpp.Qp.q"><span class="id" title="variable">q</span></a>)&gt;</span> below
 would be one global. <span class="inlinecode"><span class="id" title="var">cpp.prog</span></span> therefore drops every symbol whose name
 contains an unsupported atom (<span class="inlinecode"><span class="id" title="definition">has_unsupportedN</span></span>), and makes every such type

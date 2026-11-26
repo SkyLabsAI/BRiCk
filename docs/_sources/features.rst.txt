@@ -92,7 +92,7 @@ Unsupported Features
        (``Dvla_bounds``). Condition variables of, and casts to, such types
        are unsupported.
        `BRiCk#59 <https://github.com/SkyLabsAI/BRiCk/issues/59>`_
-   * - Exceptions: :cpp:`throw`, :cpp:`try`, :cpp:`typeid`, dynamic exception
+   * - Exceptions: :cpp:`throw`, :cpp:`try`, dynamic exception
        specifications
      - Unsupported syntax
      - |project| additionally *assumes* that function calls do not throw.
@@ -132,9 +132,6 @@ Unsupported Features
      - No semantics
      - Single-field :cpp:`offsetof` is translated but has no rule; other forms
        (nested members, array elements, bases) are unsupported syntax.
-   * - :cpp:`dynamic_cast`
-     - No semantics
-     -
    * - :cpp:`reinterpret_cast`
      - No semantics
      - `BRiCk#156 <https://github.com/SkyLabsAI/BRiCk/issues/156>`_
@@ -157,6 +154,27 @@ Unsupported Features
    * - Default arguments of reference type
      - No semantics
      - `BRiCk#390 <https://github.com/SkyLabsAI/BRiCk/issues/390>`_
+   * - :cpp:`dynamic_cast`, :cpp:`typeid`
+     - Partial
+     - ``supported`` accepts both, but their rules are stuck (sound but
+       incomplete) on:
+
+       * a failing :cpp:`dynamic_cast` to a reference, which throws
+         :cpp:`std::bad_cast`, and :cpp:`typeid` of a null glvalue (such as
+         :cpp:`typeid(*p)` for a null :cpp:`p`), which throws
+         :cpp:`std::bad_typeid` (see exceptions);
+       * operands whose class has no virtual member functions of its own
+         (including implicitly virtual overriders and destructors): casts
+         and :cpp:`typeid` of a polymorphic object read its dynamic type
+         from ``derivationR``, which only such classes carry;
+       * :cpp:`typeid` of a type outside ``typeid_ok``
+         (``logic/typeid.v``), for instance function and member pointer
+         types, and classes in anonymous namespaces or local to functions.
+
+       :cpp:`std::type_info::operator==` has an assumed specification
+       (``specs/type_info.v``) for clients to link.
+       `BRiCk#511 <https://github.com/SkyLabsAI/BRiCk/issues/511>`_,
+       `BRiCk#512 <https://github.com/SkyLabsAI/BRiCk/issues/512>`_
    * - Function-local :cpp:`static` variables
      - Partial
      - The rules for the initialization guard exist, but nothing provides the

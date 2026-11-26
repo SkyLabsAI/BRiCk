@@ -1,0 +1,266 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.typeid_semantics</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.proofmode.proofmode</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.cpp</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.logic.dispatch</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.specs.type_info</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab45"></a><h1 class="section">Semantics of <code>typeid</code></h1>
+
+
+<div class="paragraph"> </div>
+
+    The rule for a polymorphic operand used by hand, the name of
+    <code>std::type_info::operator==</code>, and the types that <span class="inlinecode"><span class="id" title="definition">typeid_ok</span></span> accepts.
+    The <code>std::type_info</code> declaration stands in for <code>typeinfo</code>. 
+</div>
+<div class="code">
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">source</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">std</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">class</span> <span class="id" title="var">type_info</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">public</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">virtual</span> ~<span class="id" title="var">type_info</span>();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">bool</span> <span class="id" title="var">operator</span>==(<span class="id" title="var">const</span> <span class="id" title="var">type_info</span>&amp;) <span class="id" title="var">const</span> <span class="id" title="var">noexcept</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;};<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> <span class="id" title="var">B</span> { <span class="id" title="var">virtual</span> ~<span class="id" title="var">B</span>() {} };<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> <span class="id" title="var">D</span> : <span class="id" title="var">B</span> {};<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">bool</span> <span class="id" title="var">same_type</span>(<span class="id" title="var">B</span>&amp; <span class="id" title="var">x</span>, <span class="id" title="var">B</span>&amp; <span class="id" title="var">y</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">x</span>) == <span class="id" title="var">typeid</span>(<span class="id" title="var">y</span>); }<br/>
+&nbsp;&nbsp;<span class="id" title="var">bool</span> <span class="id" title="var">static_type</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">int</span>) == <span class="id" title="var">typeid</span>(<span class="id" title="var">const</span> <span class="id" title="var">int</span>&amp;); }<br/>
+}}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The name of <code>operator==</code> that <span class="inlinecode"><span class="id" title="var">type_info_eq_spec</span></span> specifies. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="type_info_eq_name" class="idref" href="#type_info_eq_name"><span class="id" title="definition">type_info_eq_name</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#is_Some"><span class="id" title="definition">is_Some</span></a> (<a class="idref" href="skylabs_brick.tests.typeid_semantics.html#source"><span class="id" title="definition">source</span></a>.(<span class="id" title="projection">symbols</span>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> "std::type_info::operator==(const std::type_info&amp;) const"%<span class="id" title="var">cpp_name</span>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">eexists</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="rules" class="idref" href="#rules"><span class="id" title="section">rules</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{<a id="46d4b81335c9d28804dace193ae9e17f" class="idref" href="#46d4b81335c9d28804dace193ae9e17f"><span class="id" title="variable">Σ</span></a> : <span class="id" title="class">cpp_logic</span>} {<a id="5c7a2b430c8d0921ba86aaec5b5221d5" class="idref" href="#5c7a2b430c8d0921ba86aaec5b5221d5"><span class="id" title="variable">σ</span></a> : <span class="id" title="class">genv</span>} (<a id="rules.tu" class="idref" href="#rules.tu"><span class="id" title="variable">tu</span></a> : <span class="id" title="record">translation_unit</span>) (<a id="f04f5f5da8ac6d75ee664dcd7d671a12" class="idref" href="#f04f5f5da8ac6d75ee664dcd7d671a12"><span class="id" title="variable">ρ</span></a> : <span class="id" title="inductive">region</span>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<code>typeid(x)</code> for an lvalue <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.free_temps_remove_var.html#x"><span class="id" title="abbreviation">x</span></a></span> of the <span class="inlinecode"><span class="id" title="var">B</span></span> subobject of a <span class="inlinecode"><span class="id" title="var">D</span></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="wp_typeid_dynamic" class="idref" href="#wp_typeid_dynamic"><span class="id" title="lemma">wp_typeid_dynamic</span></a> <a id="e:7" class="idref" href="#e:7"><span class="id" title="binder">e</span></a> <a id="t:8" class="idref" href="#t:8"><span class="id" title="binder">t</span></a> (<a id="p:9" class="idref" href="#p:9"><span class="id" title="binder">p</span></a> : <span class="id" title="axiom">ptr</span>) <a id="q:10" class="idref" href="#q:10"><span class="id" title="binder">q</span></a> <a id="Q:11" class="idref" href="#Q:11"><span class="id" title="binder">Q</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">type_of</span> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#e:7"><span class="id" title="variable">e</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="constructor">Tnamed</span> "B" <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">valcat_of</span> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#e:7"><span class="id" title="variable">e</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <span class="id" title="constructor">Lvalue</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="axiom">wp_lval</span> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#rules.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#f04f5f5da8ac6d75ee664dcd7d671a12"><span class="id" title="variable">ρ</span></a> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#e:7"><span class="id" title="variable">e</span></a> (<span class="id" title="keyword">fun</span> <a id="p':12" class="idref" href="#p':12"><span class="id" title="binder">p'</span></a> <a id="free:13" class="idref" href="#free:13"><span class="id" title="binder">free</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">[|</span> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#p':12"><span class="id" title="variable">p'</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#p:9"><span class="id" title="variable">p</span></a> <span class="id" title="notation">|]</span> <span class="id" title="notation">**</span> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#p:9"><span class="id" title="variable">p</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">derivationR</span> "B" <span class="id" title="notation">[</span>"D"<span class="id" title="notation">;</span> "B"<span class="id" title="notation">]</span>%<span class="id" title="var">cpp_name</span> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#q:10"><span class="id" title="variable">q</span></a> <span class="id" title="notation">**</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">(</span><a class="idref" href="skylabs_brick.tests.typeid_semantics.html#p:9"><span class="id" title="variable">p</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">derivationR</span> "B" <span class="id" title="notation">[</span>"D"<span class="id" title="notation">;</span> "B"<span class="id" title="notation">]</span>%<span class="id" title="var">cpp_name</span> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#q:10"><span class="id" title="variable">q</span></a> <span class="id" title="notation">-*</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">Forall</span> <a id="ti:14" class="idref" href="#ti:14"><span class="id" title="binder">ti</span></a> : <span class="id" title="axiom">ptr</span><span class="id" title="notation">,</span> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#ti:14"><span class="id" title="variable">ti</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="axiom">type_infoR</span> (<span class="id" title="constructor">Tnamed</span> "D") <span class="id" title="notation">-*</span> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#Q:11"><span class="id" title="variable">Q</span></a> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#ti:14"><span class="id" title="variable">ti</span></a> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#free:13"><span class="id" title="variable">free</span></a><span class="id" title="notation">)</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <span class="id" title="axiom">wp_lval</span> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#rules.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#f04f5f5da8ac6d75ee664dcd7d671a12"><span class="id" title="variable">ρ</span></a> (<span class="id" title="constructor">Etypeid</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#inr"><span class="id" title="constructor">inr</span></a> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#e:7"><span class="id" title="variable">e</span></a>) <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#t:8"><span class="id" title="variable">t</span></a>) <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#Q:11"><span class="id" title="variable">Q</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">move</span>=&gt; <span class="id" title="var">He</span> <span class="id" title="var">Hvc</span>. <span class="id" title="tactic">rewrite</span> -<span class="id" title="axiom">wp_lval_typeid_expr</span> <span class="id" title="var">He</span> /= /<span class="id" title="definition">wp_glval</span> <span class="id" title="var">Hvc</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iIntros</span> "wp". <span class="id" title="var">iApply</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">(</span></a><span class="id" title="lemma">wp_lval_wand</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">with</span></a> "wp"<a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.proofmode.ltac_tactics.html#c65a9d4b357f2165cc71fe44c81db669"><span class="id" title="notation">)</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iIntros</span> (<span class="id" title="var">p'</span> <span class="id" title="var">free</span>) "(-&gt; &amp; D &amp; HQ)". <span class="id" title="var">iExists</span> <span class="id" title="notation">[</span>"D"<span class="id" title="notation">;</span> "B"<span class="id" title="notation">]</span>%<span class="id" title="var">cpp_name</span>. <span class="id" title="var">iSplit</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="var">iExists</span> <span class="id" title="var">q</span>. <span class="id" title="var">iFrame</span> "D". <span class="id" title="tactic">by</span> <span class="id" title="var">iSplit</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">by</span> <span class="id" title="var">iApply</span> "HQ".<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#rules"><span class="id" title="section">rules</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab46"></a><h2 class="section"><span class="inlinecode"><span class="id" title="definition">typeid_ok</span></span> on the types cpp2v prints</h2>
+
+</div>
+<div class="code">
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">ops</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">std</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">class</span> <span class="id" title="var">type_info</span> {<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">public</span>:<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">virtual</span> ~<span class="id" title="var">type_info</span>();<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">bool</span> <span class="id" title="var">operator</span>==(<span class="id" title="var">const</span> <span class="id" title="var">type_info</span>&amp;) <span class="id" title="var">const</span> <span class="id" title="var">noexcept</span>;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;};<br/>
+&nbsp;&nbsp;}<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> <span class="id" title="var">B</span> { <span class="id" title="var">virtual</span> ~<span class="id" title="var">B</span>() {} };<br/>
+&nbsp;&nbsp;<span class="id" title="var">enum</span> <span class="id" title="var">class</span> <span class="id" title="var">Col</span> { <span class="id" title="tactic">red</span> };<br/>
+&nbsp;&nbsp;<span class="id" title="var">enum</span> <span class="id" title="var">Plain</span> { <span class="id" title="var">p0</span> };<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> <span class="id" title="var">ns</span> { <span class="id" title="keyword">struct</span> <span class="id" title="var">In</span> { <span class="id" title="keyword">struct</span> <span class="id" title="var">Nested</span> {}; }; }<br/>
+&nbsp;&nbsp;<span class="id" title="var">template</span>&lt;<span class="id" title="var">typename</span> <span class="id" title="var">T</span>, <span class="id" title="var">int</span> <span class="id" title="var">N</span>&gt; <span class="id" title="keyword">struct</span> <span class="id" title="var">Tm</span> {};<br/>
+&nbsp;&nbsp;<span class="id" title="var">template</span>&lt;<span class="id" title="var">Col</span> <span class="id" title="var">c</span>&gt; <span class="id" title="keyword">struct</span> <span class="id" title="var">Tc</span> {};<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">struct</span> <span class="id" title="var">S</span> { <span class="id" title="var">void</span> <span class="id" title="var">g</span>() <span class="id" title="var">const</span>; <span class="id" title="var">void</span> <span class="id" title="var">h</span>(); };<br/>
+&nbsp;&nbsp;<span class="id" title="var">namespace</span> { <span class="id" title="keyword">struct</span> <span class="id" title="var">Anon</span> {}; }<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">std</span>::<span class="id" title="var">type_info</span>&amp; <span class="id" title="var">ok_int</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">int</span>); }<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">std</span>::<span class="id" title="var">type_info</span>&amp; <span class="id" title="var">ok_void</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">void</span>); }<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">std</span>::<span class="id" title="var">type_info</span>&amp; <span class="id" title="var">ok_nullptr</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">decltype</span>(<span class="id" title="var">nullptr</span>)); }<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">std</span>::<span class="id" title="var">type_info</span>&amp; <span class="id" title="var">ok_class</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">B</span>); }<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">std</span>::<span class="id" title="var">type_info</span>&amp; <span class="id" title="var">ok_enum</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">Col</span>); }<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">std</span>::<span class="id" title="var">type_info</span>&amp; <span class="id" title="var">ok_plain_enum</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">Plain</span>); }<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">std</span>::<span class="id" title="var">type_info</span>&amp; <span class="id" title="var">ok_nested</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">ns</span>::<span class="id" title="var">In</span>::<span class="id" title="var">Nested</span>); }<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">std</span>::<span class="id" title="var">type_info</span>&amp; <span class="id" title="var">ok_ptr</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">const</span> <span class="id" title="var">volatile</span> <span class="id" title="var">B</span>* <span class="id" title="var">const</span>); }<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">std</span>::<span class="id" title="var">type_info</span>&amp; <span class="id" title="var">ok_ptr_ptr</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">const</span> <span class="id" title="var">char</span>* <span class="id" title="var">const</span>*); }<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">std</span>::<span class="id" title="var">type_info</span>&amp; <span class="id" title="var">ok_array</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">const</span> <span class="id" title="var">int</span>[2][3]); }<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">std</span>::<span class="id" title="var">type_info</span>&amp; <span class="id" title="var">ok_inst</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">Tm</span>&lt;<span class="id" title="var">const</span> <span class="id" title="var">int</span>*, 3&gt;); }<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">std</span>::<span class="id" title="var">type_info</span>&amp; <span class="id" title="var">ok_inst_enum</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">Tc</span>&lt;<span class="id" title="var">Col</span>::<span class="id" title="tactic">red</span>&gt;); }<br/>
+<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">std</span>::<span class="id" title="var">type_info</span>&amp; <span class="id" title="var">ko_fun_ptr</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">void</span>( * )()); }<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">std</span>::<span class="id" title="var">type_info</span>&amp; <span class="id" title="var">ko_noexcept_fun_ptr</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">void</span>( * )() <span class="id" title="var">noexcept</span>); }<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">std</span>::<span class="id" title="var">type_info</span>&amp; <span class="id" title="var">ko_const_method</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(&amp;<span class="id" title="var">S</span>::<span class="id" title="var">g</span>); }<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">std</span>::<span class="id" title="var">type_info</span>&amp; <span class="id" title="var">ko_method</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(&amp;<span class="id" title="var">S</span>::<span class="id" title="var">h</span>); }<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">std</span>::<span class="id" title="var">type_info</span>&amp; <span class="id" title="var">ko_inst_fun</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">Tm</span>&lt;<span class="id" title="var">void</span>(), 0&gt;); }<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">std</span>::<span class="id" title="var">type_info</span>&amp; <span class="id" title="var">ko_anon</span>() { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">Anon</span>); }<br/>
+&nbsp;&nbsp;<span class="id" title="var">const</span> <span class="id" title="var">std</span>::<span class="id" title="var">type_info</span>&amp; <span class="id" title="var">ko_local</span>() { <span class="id" title="keyword">struct</span> <span class="id" title="var">L</span> {}; <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">L</span>); }<br/>
+}}.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The operand of the <code>typeid</code> that the function <span class="inlinecode"><a class="idref" href="skylabs_brick.tests.type_notation.html#TestTypeNotations.n"><span class="id" title="variable">n</span></a></span> returns. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Definition</span> <a id="typeid_operand" class="idref" href="#typeid_operand"><span class="id" title="definition">typeid_operand</span></a> (<a id="tu:15" class="idref" href="#tu:15"><span class="id" title="binder">tu</span></a> : <span class="id" title="record">translation_unit</span>) (<a id="n:16" class="idref" href="#n:16"><span class="id" title="binder">n</span></a> : <span class="id" title="inductive">name</span>) : <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <span class="id" title="inductive">type</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#tu:15"><span class="id" title="variable">tu</span></a>.(<span class="id" title="projection">symbols</span>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#n:16"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Ofunction</span> <span class="id" title="var">f</span>) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <span class="id" title="var">f</span>.(<span class="id" title="projection">f_body</span>) <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Impl</span> (<span class="id" title="constructor">Sseq</span> <span class="id" title="var">ss</span>)) =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.list_basics.html#list.last"><span class="id" title="definition">last</span></a> <span class="id" title="var">ss</span> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Sreturn</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Etypeid</span> (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#inl"><span class="id" title="constructor">inl</span></a> <span class="id" title="var">ty</span>) <span class="id" title="var">_</span>))) =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <span class="id" title="var">ty</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="typeid_ok_of" class="idref" href="#typeid_ok_of"><span class="id" title="definition">typeid_ok_of</span></a> (<a id="tu:17" class="idref" href="#tu:17"><span class="id" title="binder">tu</span></a> : <span class="id" title="record">translation_unit</span>) (<a id="n:18" class="idref" href="#n:18"><span class="id" title="binder">n</span></a> : <span class="id" title="inductive">name</span>) : <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="definition">typeid_ok</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">&lt;$&gt;</span></a> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#typeid_operand"><span class="id" title="definition">typeid_operand</span></a> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#tu:17"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#n:18"><span class="id" title="variable">n</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="typeid_ok_accepts" class="idref" href="#typeid_ok_accepts"><span class="id" title="definition">typeid_ok_accepts</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.typeid_semantics.html#typeid_ok_of"><span class="id" title="definition">typeid_ok_of</span></a> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#ops"><span class="id" title="definition">ops</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">&lt;$&gt;</span></a> <span class="id" title="notation">[</span>"ok_int()"<span class="id" title="notation">;</span> "ok_void()"<span class="id" title="notation">;</span> "ok_nullptr()"<span class="id" title="notation">;</span> "ok_class()"<span class="id" title="notation">;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"ok_enum()"<span class="id" title="notation">;</span> "ok_plain_enum()"<span class="id" title="notation">;</span> "ok_nested()"<span class="id" title="notation">;</span> "ok_ptr()"<span class="id" title="notation">;</span> "ok_ptr_ptr()"<span class="id" title="notation">;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"ok_array()"<span class="id" title="notation">;</span> "ok_inst()"<span class="id" title="notation">;</span> "ok_inst_enum()"<span class="id" title="notation">]</span>%<span class="id" title="var">cpp_name</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.list_basics.html#list.replicate"><span class="id" title="definition">replicate</span></a> 12 (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The types of the review counterexamples: function types (cpp2v drops
+    <code>noexcept</code>, and <code>&amp;S::g</code> and <code>&amp;S::h</code> print the same type), names
+    under an anonymous namespace, and local classes. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="typeid_ok_rejects" class="idref" href="#typeid_ok_rejects"><span class="id" title="definition">typeid_ok_rejects</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.typeid_semantics.html#typeid_ok_of"><span class="id" title="definition">typeid_ok_of</span></a> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#ops"><span class="id" title="definition">ops</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">&lt;$&gt;</span></a> <span class="id" title="notation">[</span>"ko_fun_ptr()"<span class="id" title="notation">;</span> "ko_noexcept_fun_ptr()"<span class="id" title="notation">;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"ko_const_method()"<span class="id" title="notation">;</span> "ko_method()"<span class="id" title="notation">;</span> "ko_inst_fun()"<span class="id" title="notation">;</span> "ko_anon()"<span class="id" title="notation">;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;"ko_local()"<span class="id" title="notation">]</span>%<span class="id" title="var">cpp_name</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.list_basics.html#list.replicate"><span class="id" title="definition">replicate</span></a> 7 (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+The printed types of <code>void( * )()</code> and <code>void( * )() noexcept</code> are
+    equal, as are those of <code>&amp;S::g</code> and <code>&amp;S::h</code>: <span class="inlinecode"><span class="id" title="definition">typeid_ok</span></span> must reject
+    them. 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="typeid_noexcept_printed_alike" class="idref" href="#typeid_noexcept_printed_alike"><span class="id" title="definition">typeid_noexcept_printed_alike</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.typeid_semantics.html#typeid_operand"><span class="id" title="definition">typeid_operand</span></a> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#ops"><span class="id" title="definition">ops</span></a> "ko_fun_ptr()" <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#typeid_operand"><span class="id" title="definition">typeid_operand</span></a> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#ops"><span class="id" title="definition">ops</span></a> "ko_noexcept_fun_ptr()".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">Example</span> <a id="typeid_method_quals_printed_alike" class="idref" href="#typeid_method_quals_printed_alike"><span class="id" title="definition">typeid_method_quals_printed_alike</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.typeid_semantics.html#typeid_operand"><span class="id" title="definition">typeid_operand</span></a> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#ops"><span class="id" title="definition">ops</span></a> "ko_const_method()" <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#typeid_operand"><span class="id" title="definition">typeid_operand</span></a> <a class="idref" href="skylabs_brick.tests.typeid_semantics.html#ops"><span class="id" title="definition">ops</span></a> "ko_method()".<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+Types that cpp2v never prints as <code>typeid</code> operands: references and
+    top-level cv-qualifiers (it removes them), and cv-qualified array
+    elements and arrays under pointers (it puts cv on the elements). 
+</div>
+<div class="code">
+<span class="id" title="keyword">Example</span> <a id="typeid_ok_rejects_unprinted" class="idref" href="#typeid_ok_rejects_unprinted"><span class="id" title="definition">typeid_ok_rejects_unprinted</span></a> :<br/>
+&nbsp;&nbsp;<span class="id" title="definition">typeid_ok</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#2eea06883886179dcc86cdc5a1870594"><span class="id" title="notation">&lt;$&gt;</span></a> <span class="id" title="notation">[</span><span class="id" title="constructor">Tqualified</span> <span class="id" title="constructor">QC</span> <span class="id" title="abbreviation">Tint</span><span class="id" title="notation">;</span> <span class="id" title="constructor">Tqualified</span> <span class="id" title="constructor">QM</span> <span class="id" title="abbreviation">Tint</span><span class="id" title="notation">;</span> <span class="id" title="constructor">Tref</span> <span class="id" title="abbreviation">Tint</span><span class="id" title="notation">;</span> <span class="id" title="constructor">Trv_ref</span> <span class="id" title="abbreviation">Tint</span><span class="id" title="notation">;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="constructor">Tarray</span> (<span class="id" title="constructor">Tqualified</span> <span class="id" title="constructor">QC</span> <span class="id" title="abbreviation">Tint</span>) 2<span class="id" title="notation">;</span> <span class="id" title="constructor">Tptr</span> (<span class="id" title="constructor">Tqualified</span> <span class="id" title="constructor">QM</span> <span class="id" title="abbreviation">Tint</span>)<span class="id" title="notation">;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="constructor">Tptr</span> (<span class="id" title="constructor">Tqualified</span> <span class="id" title="constructor">QC</span> (<span class="id" title="constructor">Tqualified</span> <span class="id" title="constructor">QV</span> <span class="id" title="abbreviation">Tint</span>))<span class="id" title="notation">;</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="constructor">Tptr</span> (<span class="id" title="constructor">Tqualified</span> <span class="id" title="constructor">QC</span> (<span class="id" title="constructor">Tarray</span> <span class="id" title="abbreviation">Tint</span> 2))<span class="id" title="notation">]</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.list_basics.html#list.replicate"><span class="id" title="definition">replicate</span></a> 8 <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a>.<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

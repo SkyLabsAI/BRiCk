@@ -1,0 +1,271 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs.lang.cpp.logic.typeid</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+</div>
+
+<div class="doc">
+<a id="lab120"></a><h1 class="section">Semantics of <code>typeid</code> (<span class="inlinecode"><span class="id" title="var">expr.typeid</span></span>)</h1>
+
+
+<div class="paragraph"> </div>
+
+    <code>typeid</code> is an lvalue of type <code>const std::type_info</code>
+    (&lt;https://eel.is/c++draft/expr.typeid1>). cpp2v prints its operand as
+    [inl ty] when the result is fixed at compile time (a type, or an
+    unevaluated expression), with [ty] canonical and free of references and
+    top-level cv-qualifiers ([expr.typeid]/5-7), and as [inr e] for a glvalue
+    [e] of polymorphic class type ([expr.typeid]/4), whose dynamic type is
+    read from [derivationR] (see [with_mdc]).
+
+    <<typeid>> of a null polymorphic glvalue throws <<std::bad_typeid>>
+    ([expr.typeid]/3); that case has no rule, as no [derivationR] exists for
+    it. Both rules are stuck on types outside [typeid_ok].
+
+    [specs/type_info.v] specifies <<std::type_info::operator==>>.
+ 
+</div>
+<div class="code">
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.proofmode.proofmode</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.syntax.html#"><span class="id" title="library">skylabs.lang.cpp.syntax</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.semantics.html#"><span class="id" title="library">skylabs.lang.cpp.semantics</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.logic.pred.html#"><span class="id" title="library">skylabs.lang.cpp.logic.pred</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.logic.heap_pred.html#"><span class="id" title="library">skylabs.lang.cpp.logic.heap_pred</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.logic.wp.html#"><span class="id" title="library">skylabs.lang.cpp.logic.wp</span></a>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <a class="idref" href="skylabs.lang.cpp.logic.dispatch.html#"><span class="id" title="library">skylabs.lang.cpp.logic.dispatch</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<a id="lab121"></a><h2 class="section">The types that <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.typeid.html#Expr__typeid.type_infoR"><span class="id" title="axiom">type_infoR</span></a></span> identifies</h2>
+
+
+<div class="paragraph"> </div>
+
+    <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.typeid.html#Expr__typeid.type_infoR"><span class="id" title="axiom">type_infoR</span></a></span> identifies types by syntactic equality on <span class="inlinecode"><span class="id" title="keyword">type</span></span> (see the
+    <code>std::type_info::operator==</code> spec in <span class="inlinecode"><span class="id" title="library">specs</span>/<span class="id" title="var">type_info.v</span></span>). That is
+    sound only on C++ types that cpp2v prints in exactly one way (the
+    canonical form, never a reference or top-level cv-qualified type), and
+    that no other C++ type prints like, in any translation unit.
+
+<div class="paragraph"> </div>
+
+    <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.typeid.html#typeid_ok"><span class="id" title="definition">typeid_ok</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.with_cpp.wp_init.ty"><span class="id" title="variable">ty</span></a></span> is a conservative allowlist of such printed types: both
+    <code>typeid</code> rules are stuck on other types. It accepts
+<ul class="doclist">
+<li> builtin arithmetic, character, <span class="inlinecode"><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a></span>, <span class="inlinecode"><span class="id" title="var">void</span></span> and <code>std::nullptr_t</code>
+      types;
+
+</li>
+<li> classes and enumerations whose name is built only from identifiers
+      (<span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.core.html#Nid"><span class="id" title="constructor">Nid</span></a></span>) of namespaces and classes, possibly instantiating templates
+      with arguments that are themselves accepted types, or integer
+      constants of integral or accepted enumeration type;
+
+</li>
+<li> pointers to accepted types, which may be <code>const</code> and/or
+      <code>volatile</code> unless they are arrays;
+
+</li>
+<li> arrays of accepted types (hence with unqualified elements).
+
+</li>
+</ul>
+
+<div class="paragraph"> </div>
+
+    It rejects, among others, the following types, where printing is not
+    injective or not canonical:
+<ul class="doclist">
+<li> function types, anywhere: cpp2v drops exception specifications, and
+      <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.core.html#function_type_"><span class="id" title="record">function_type_</span></a></span> has no cv- or ref-qualifiers for member functions, so
+      <code>typeid(void( * )() noexcept)</code> and <code>typeid(void( * )())</code> would print
+      the same, as would the types of <code>&amp;S::g</code> and <code>&amp;S::h</code> for a
+      <code>const</code> member function <code>g</code> and a non-<code>const</code> <code>h</code>;
+
+</li>
+<li> member pointers;
+
+</li>
+<li> names under an anonymous namespace (<span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.core.html#Nanonymous"><span class="id" title="constructor">Nanonymous</span></a></span>), which print alike
+      in every translation unit; names of local classes, which are scoped by
+      their function's name (<span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.core.html#Nfunction"><span class="id" title="constructor">Nfunction</span></a></span>), that a <code>static</code> function in
+      another translation unit may share; unnamed classes and enumerations
+      (<span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.core.html#Nanon"><span class="id" title="constructor">Nanon</span></a></span>, <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.core.html#Nfirst_decl"><span class="id" title="constructor">Nfirst_decl</span></a></span>, <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.core.html#Nfirst_child"><span class="id" title="constructor">Nfirst_child</span></a></span>); and other names such as
+      <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.core.html#Ndependent"><span class="id" title="constructor">Ndependent</span></a></span> or <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.syntax.core.html#Nunsupported"><span class="id" title="constructor">Nunsupported</span></a></span>;
+
+</li>
+<li> references and top-level cv-qualifiers (<span class="inlinecode"><span class="id" title="var">expr.typeid</span></span>/6-7): cpp2v
+      removes them, so a hand-built <code>Etypeid (inl (Tqualified QC Tint))</code>
+      would compare unequal to <code>typeid(int)</code>;
+
+</li>
+<li> dependent, unsupported, attributed, realigned and architecture-specific
+      types, and any other type constructor. 
+
+</li>
+</ul>
+</div>
+<div class="code">
+<span class="id" title="keyword">Fixpoint</span> <a id="typeid_ok" class="idref" href="#typeid_ok"><span class="id" title="definition">typeid_ok</span></a> (<a id="ty:1" class="idref" href="#ty:1"><span class="id" title="binder">ty</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#ty:1"><span class="id" title="variable">ty</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tnum"><span class="id" title="constructor">Tnum</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> | <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tchar_"><span class="id" title="constructor">Tchar_</span></a> <span class="id" title="var">_</span> | <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tbool"><span class="id" title="constructor">Tbool</span></a> | <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tvoid"><span class="id" title="constructor">Tvoid</span></a> | <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tnullptr"><span class="id" title="constructor">Tnullptr</span></a> | <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tfloat_"><span class="id" title="constructor">Tfloat_</span></a> <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tnamed"><span class="id" title="constructor">Tnamed</span></a> <span class="id" title="var">n</span> | <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tenum"><span class="id" title="constructor">Tenum</span></a> <span class="id" title="var">n</span> =&gt; <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#typeid_ok_name:5"><span class="id" title="definition">typeid_ok_name</span></a> <span class="id" title="var">n</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tptr"><span class="id" title="constructor">Tptr</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tqualified"><span class="id" title="constructor">Tqualified</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.preliminary.html#QM"><span class="id" title="constructor">QM</span></a> <span class="id" title="var">_</span>) =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tptr"><span class="id" title="constructor">Tptr</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tqualified"><span class="id" title="constructor">Tqualified</span></a> <span class="id" title="var">_</span> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tarray"><span class="id" title="constructor">Tarray</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span>)) =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tptr"><span class="id" title="constructor">Tptr</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tqualified"><span class="id" title="constructor">Tqualified</span></a> <span class="id" title="var">_</span> <span class="id" title="var">t</span>) | <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tptr"><span class="id" title="constructor">Tptr</span></a> <span class="id" title="var">t</span> =&gt; <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#typeid_ok:4"><span class="id" title="definition">typeid_ok</span></a> <span class="id" title="var">t</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tarray"><span class="id" title="constructor">Tarray</span></a> <span class="id" title="var">t</span> <span class="id" title="var">_</span> =&gt; <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#typeid_ok:4"><span class="id" title="definition">typeid_ok</span></a> <span class="id" title="var">t</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+<span class="id" title="keyword">with</span> <a id="typeid_ok_name" class="idref" href="#typeid_ok_name"><span class="id" title="definition">typeid_ok_name</span></a> (<a id="n:2" class="idref" href="#n:2"><span class="id" title="binder">n</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#name"><span class="id" title="inductive">name</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#n:2"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Nglobal"><span class="id" title="constructor">Nglobal</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Nid"><span class="id" title="constructor">Nid</span></a> <span class="id" title="var">_</span>) =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Nscoped"><span class="id" title="constructor">Nscoped</span></a> <span class="id" title="var">n</span> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Nid"><span class="id" title="constructor">Nid</span></a> <span class="id" title="var">_</span>) =&gt; <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#typeid_ok_name:5"><span class="id" title="definition">typeid_ok_name</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#n:2"><span class="id" title="variable">n</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Ninst"><span class="id" title="constructor">Ninst</span></a> <span class="id" title="var">n</span> <span class="id" title="var">args</span> =&gt; <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#typeid_ok_name:5"><span class="id" title="definition">typeid_ok_name</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#n:2"><span class="id" title="variable">n</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#::bool_scope:x_'&amp;&amp;'_x"><span class="id" title="notation">&amp;&amp;</span></a> <span class="id" title="definition">forallb</span> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#typeid_ok_arg:6"><span class="id" title="definition">typeid_ok_arg</span></a> <span class="id" title="var">args</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+<span class="id" title="keyword">with</span> <a id="typeid_ok_arg" class="idref" href="#typeid_ok_arg"><span class="id" title="definition">typeid_ok_arg</span></a> (<a id="a:3" class="idref" href="#a:3"><span class="id" title="binder">a</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.core.html#temp_arg"><span class="id" title="inductive">temp_arg</span></a>) : <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#bool"><span class="id" title="inductive">bool</span></a> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#a:3"><span class="id" title="variable">a</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Atype"><span class="id" title="constructor">Atype</span></a> <span class="id" title="var">t</span> =&gt; <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#typeid_ok:4"><span class="id" title="definition">typeid_ok</span></a> <span class="id" title="var">t</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Avalue"><span class="id" title="constructor">Avalue</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eint"><span class="id" title="constructor">Eint</span></a> <span class="id" title="var">_</span> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tnum"><span class="id" title="constructor">Tnum</span></a> <span class="id" title="var">_</span> <span class="id" title="var">_</span> | <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tchar_"><span class="id" title="constructor">Tchar_</span></a> <span class="id" title="var">_</span> | <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tbool"><span class="id" title="constructor">Tbool</span></a>)) =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#true"><span class="id" title="constructor">true</span></a><br/>
+&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Avalue"><span class="id" title="constructor">Avalue</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Eint"><span class="id" title="constructor">Eint</span></a> <span class="id" title="var">_</span> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tenum"><span class="id" title="constructor">Tenum</span></a> <span class="id" title="var">n</span>)) =&gt; <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#typeid_ok_name:5"><span class="id" title="definition">typeid_ok_name</span></a> <span class="id" title="var">n</span><br/>
+&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#false"><span class="id" title="constructor">false</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Module</span> <span class="id" title="keyword">Type</span> <a id="Expr__typeid" class="idref" href="#Expr__typeid"><span class="id" title="module">Expr__typeid</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+<span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.heap_pred.prim.html#with_cpp.TEST.p"><span class="id" title="variable">p</span></a></span> <span class="inlinecode">|-&gt;</span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.typeid.html#Expr__typeid.type_infoR"><span class="id" title="axiom">type_infoR</span></a></span> <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.with_cpp.wp_init.ty"><span class="id" title="variable">ty</span></a></span>: <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.heap_pred.prim.html#with_cpp.TEST.p"><span class="id" title="variable">p</span></a></span> is a <code>std::type_info</code> object that
+      represents the type <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.with_cpp.wp_init.ty"><span class="id" title="variable">ty</span></a></span>. <code>std::type_info</code> objects have static storage
+      duration and are never modified, hence <span class="inlinecode"><a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.derived_connectives.html#Persistent"><span class="id" title="class">Persistent</span></a></span>. Several objects may
+      represent the same type (<span class="inlinecode"><span class="id" title="var">expr.typeid</span></span>/1 does not promise one object
+      per type). 
+</div>
+<div class="code">
+&nbsp;&nbsp;<span class="id" title="keyword">Parameter</span> <a id="Expr__typeid.type_infoR" class="idref" href="#Expr__typeid.type_infoR"><span class="id" title="axiom">type_infoR</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">`{</span></a><a id="6065d52c95091350a1253a1d7148d2c7" class="idref" href="#6065d52c95091350a1253a1d7148d2c7"><span class="id" title="binder">Σ</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#LC.cpp_logic"><span class="id" title="class">cpp_logic</span></a>} {<a id="8520583ae5f9101ee6510faa5e82ff2f" class="idref" href="#8520583ae5f9101ee6510faa5e82ff2f"><span class="id" title="binder">σ</span></a> : <a class="idref" href="skylabs.lang.cpp.semantics.genv.html#genv"><span class="id" title="class">genv</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">},</span></a> <a class="idref" href="skylabs.lang.cpp.syntax.core.html#type"><span class="id" title="inductive">type</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.logic.rep_defs.html#Rep"><span class="id" title="definition">Rep</span></a>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Section</span> <a id="Expr__typeid.with_resolve" class="idref" href="#Expr__typeid.with_resolve"><span class="id" title="section">with_resolve</span></a>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{<a id="2e3039318268fb05435f1842a72a8b88" class="idref" href="#2e3039318268fb05435f1842a72a8b88"><span class="id" title="variable">Σ</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.mpred.html#LC.cpp_logic"><span class="id" title="class">cpp_logic</span></a>} {<a id="Expr__typeid.with_resolve.resolve" class="idref" href="#Expr__typeid.with_resolve.resolve"><span class="id" title="variable">resolve</span></a> : <a class="idref" href="skylabs.lang.cpp.semantics.genv.html#genv"><span class="id" title="class">genv</span></a>}.<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Declare</span> <span class="id" title="keyword">Instance</span> <a id="Expr__typeid.type_infoR_persistent" class="idref" href="#Expr__typeid.type_infoR_persistent"><span class="id" title="instance">type_infoR_persistent</span></a> <a id="ty:20" class="idref" href="#ty:20"><span class="id" title="binder">ty</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.derived_connectives.html#Persistent"><span class="id" title="class">Persistent</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.typeid.html#Expr__typeid.type_infoR"><span class="id" title="axiom">type_infoR</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#ty:20"><span class="id" title="variable">ty</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">global</span>] <span class="id" title="var">Declare</span> <span class="id" title="keyword">Instance</span> <a id="Expr__typeid.type_infoR_affine" class="idref" href="#Expr__typeid.type_infoR_affine"><span class="id" title="instance">type_infoR_affine</span></a> <a id="ty:21" class="idref" href="#ty:21"><span class="id" title="binder">ty</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.derived_connectives.html#Affine"><span class="id" title="class">Affine</span></a> (<a class="idref" href="skylabs.lang.cpp.logic.typeid.html#Expr__typeid.type_infoR"><span class="id" title="axiom">type_infoR</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#ty:21"><span class="id" title="variable">ty</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Variables</span> (<a id="Expr__typeid.with_resolve.tu" class="idref" href="#Expr__typeid.with_resolve.tu"><span class="id" title="variable">tu</span></a> : <a class="idref" href="skylabs.lang.cpp.syntax.translation_unit.html#translation_unit"><span class="id" title="record">translation_unit</span></a>) (<a id="f8f2f1280ae93cf73bb83bec09f8b647" class="idref" href="#f8f2f1280ae93cf73bb83bec09f8b647"><span class="id" title="variable">ρ</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.wp.html#region"><span class="id" title="inductive">region</span></a>).<br/>
+
+<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Notation</span> <a id="Expr__typeid.wp_lval" class="idref" href="#Expr__typeid.wp_lval"><span class="id" title="abbreviation">wp_lval</span></a> := (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.wp_lval"><span class="id" title="axiom">wp_lval</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#Expr__typeid.with_resolve.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#f8f2f1280ae93cf73bb83bec09f8b647"><span class="id" title="variable">ρ</span></a>).<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;#[<span class="id" title="var">local</span>] <span class="id" title="keyword">Notation</span> <a id="Expr__typeid.wp_glval" class="idref" href="#Expr__typeid.wp_glval"><span class="id" title="abbreviation">wp_glval</span></a> := (<a class="idref" href="skylabs.lang.cpp.logic.wp.html#WPE.wp_glval"><span class="id" title="definition">wp_glval</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#Expr__typeid.with_resolve.tu"><span class="id" title="variable">tu</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#f8f2f1280ae93cf73bb83bec09f8b647"><span class="id" title="variable">ρ</span></a>).<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+A type, or an expression that is not evaluated (<span class="inlinecode"><span class="id" title="var">expr.typeid</span></span>/5-7).
+        The rule is stuck on types outside <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.typeid.html#typeid_ok"><span class="id" title="definition">typeid_ok</span></a></span>. 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Axiom</span> <a id="Expr__typeid.with_resolve.wp_lval_typeid_type" class="idref" href="#Expr__typeid.with_resolve.wp_lval_typeid_type"><span class="id" title="variable">wp_lval_typeid_type</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a id="ty:26" class="idref" href="#ty:26"><span class="id" title="binder">ty</span></a> <a id="t:27" class="idref" href="#t:27"><span class="id" title="binder">t</span></a> <a id="Q:28" class="idref" href="#Q:28"><span class="id" title="binder">Q</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">,</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">(</span><a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#typeid_ok"><span class="id" title="definition">typeid_ok</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#ty:26"><span class="id" title="variable">ty</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a> <span class="id" title="notation">Forall</span> <a id="p:29" class="idref" href="#p:29"><span class="id" title="binder">p</span></a> : <a class="idref" href="skylabs.lang.cpp.semantics.values.html#PTRS_INTF_AXIOM.ptr"><span class="id" title="axiom">ptr</span></a><span class="id" title="notation">,</span> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#p:29"><span class="id" title="variable">p</span></a> <a class="idref" href="skylabs.lang.cpp.logic.rep_defs.html#62731479375849aa261b6fbaae1406e9"><span class="id" title="notation">|-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#Expr__typeid.type_infoR"><span class="id" title="axiom">type_infoR</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#ty:26"><span class="id" title="variable">ty</span></a> <span class="id" title="notation">-*</span> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#Q:28"><span class="id" title="variable">Q</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#p:29"><span class="id" title="variable">p</span></a> <a class="idref" href="skylabs.lang.cpp.logic.wp.html#FreeTemps.id"><span class="id" title="constructor">FreeTemps.id</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#::bi_scope:'False'"><span class="id" title="notation">False</span></a><span class="id" title="notation">)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#Expr__typeid.wp_lval"><span class="id" title="abbreviation">wp_lval</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Etypeid"><span class="id" title="constructor">Etypeid</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#inl"><span class="id" title="constructor">inl</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#ty:26"><span class="id" title="variable">ty</span></a>) <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#t:27"><span class="id" title="variable">t</span></a>) <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#Q:28"><span class="id" title="variable">Q</span></a>.<br/>
+
+<br/>
+</div>
+
+<div class="doc">
+A glvalue of polymorphic class type (<span class="inlinecode"><span class="id" title="var">expr.typeid</span></span>/4): the type of the
+        most-derived object, if it is in <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.typeid.html#typeid_ok"><span class="id" title="definition">typeid_ok</span></a></span> (for instance, not a
+        local class). 
+</div>
+<div class="code">
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">Axiom</span> <a id="Expr__typeid.with_resolve.wp_lval_typeid_expr" class="idref" href="#Expr__typeid.with_resolve.wp_lval_typeid_expr"><span class="id" title="variable">wp_lval_typeid_expr</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">forall</span></a> <a id="e:32" class="idref" href="#e:32"><span class="id" title="binder">e</span></a> <a id="t:33" class="idref" href="#t:33"><span class="id" title="binder">t</span></a> <a id="Q:34" class="idref" href="#Q:34"><span class="id" title="binder">Q</span></a><a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#a46514f7419edb3d22453078cf7c9fb7"><span class="id" title="notation">,</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.syntax.types.html#drop_qualifiers"><span class="id" title="definition">drop_qualifiers</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.typing.html#type_of"><span class="id" title="definition">type_of</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#e:32"><span class="id" title="variable">e</span></a>) <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tnamed"><span class="id" title="constructor">Tnamed</span></a> <span class="id" title="var">cls</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.logic.typeid.html#Expr__typeid.wp_glval"><span class="id" title="abbreviation">wp_glval</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#e:32"><span class="id" title="variable">e</span></a> (<span class="id" title="keyword">fun</span> <a id="p:35" class="idref" href="#p:35"><span class="id" title="binder">p</span></a> <a id="free:36" class="idref" href="#free:36"><span class="id" title="binder">free</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="skylabs.lang.cpp.logic.dispatch.html#with_mdc"><span class="id" title="definition">with_mdc</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#p:35"><span class="id" title="variable">p</span></a> <span class="id" title="var">cls</span> (<span class="id" title="keyword">fun</span> <a id="mdc:37" class="idref" href="#mdc:37"><span class="id" title="binder">mdc</span></a> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#mdc:37"><span class="id" title="variable">mdc</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">most_derived</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#::list_scope:x_'::'_x"><span class="id" title="notation">::</span></a> <span class="id" title="var">_</span> =&gt;<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">if</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#typeid_ok"><span class="id" title="definition">typeid_ok</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tnamed"><span class="id" title="constructor">Tnamed</span></a> <span class="id" title="var">most_derived</span>)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">then</span></a> <span class="id" title="notation">Forall</span> <a id="ti:39" class="idref" href="#ti:39"><span class="id" title="binder">ti</span></a> : <a class="idref" href="skylabs.lang.cpp.semantics.values.html#PTRS_INTF_AXIOM.ptr"><span class="id" title="axiom">ptr</span></a><span class="id" title="notation">,</span> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#ti:39"><span class="id" title="variable">ti</span></a> <a class="idref" href="skylabs.lang.cpp.logic.rep_defs.html#62731479375849aa261b6fbaae1406e9"><span class="id" title="notation">|-&gt;</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#Expr__typeid.type_infoR"><span class="id" title="axiom">type_infoR</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Tnamed"><span class="id" title="constructor">Tnamed</span></a> <span class="id" title="var">most_derived</span>) <span class="id" title="notation">-*</span> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#Q:34"><span class="id" title="variable">Q</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#ti:39"><span class="id" title="variable">ti</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#free:36"><span class="id" title="variable">free</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.ssr.ssreflect.html#::general_if_scope:'if'_x_'then'_x_'else'_x"><span class="id" title="notation">else</span></a> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#::bi_scope:'False'"><span class="id" title="notation">False</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="notation">[]</span> =&gt; <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#::bi_scope:'False'"><span class="id" title="notation">False</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span>))<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#::bi_scope:'False'"><span class="id" title="notation">False</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="keyword">end</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="notation">|--</span> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#Expr__typeid.wp_lval"><span class="id" title="abbreviation">wp_lval</span></a> (<a class="idref" href="skylabs.lang.cpp.syntax.core.html#Etypeid"><span class="id" title="constructor">Etypeid</span></a> (<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#inr"><span class="id" title="constructor">inr</span></a> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#e:32"><span class="id" title="variable">e</span></a>) <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#t:33"><span class="id" title="variable">t</span></a>) <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#Q:34"><span class="id" title="variable">Q</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#Expr__typeid.with_resolve"><span class="id" title="section">with_resolve</span></a>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#Expr__typeid"><span class="id" title="module">Expr__typeid</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Declare Module</span> <a id="E__typeid" class="idref" href="#E__typeid"><span class="id" title="module">E__typeid</span></a> : <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#Expr__typeid"><span class="id" title="module">Expr__typeid</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Export</span> <a class="idref" href="skylabs.lang.cpp.logic.typeid.html#E__typeid"><span class="id" title="module">E__typeid</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

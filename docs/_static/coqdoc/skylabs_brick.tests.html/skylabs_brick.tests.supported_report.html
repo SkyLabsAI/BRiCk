@@ -54,7 +54,7 @@
 </div>
 
 <div class="doc">
-<a id="lab29"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">supported.report</span></span>: one case per status and per failure</h1>
+<a id="lab35"></a><h1 class="section"><span class="inlinecode"><span class="id" title="var">supported.report</span></span>: one case per status and per failure</h1>
 
 </div>
 <div class="code">
@@ -89,6 +89,8 @@
 <span class="id" title="var">int</span> <span class="id" title="var">read_volatile</span>(<span class="id" title="var">volatile</span> <span class="id" title="var">int</span> *<span class="id" title="var">p</span>) { <span class="id" title="keyword">return</span> *<span class="id" title="var">p</span>; }<br/>
 <span class="id" title="var">void</span> <span class="id" title="var">volatile_local</span>() { <span class="id" title="var">volatile</span> <span class="id" title="var">int</span> <span class="id" title="var">x</span> = 0; (<span class="id" title="var">void</span>)<span class="id" title="var">x</span>; }<br/>
 <span class="id" title="var">bool</span> <span class="id" title="var">dyn</span>(<span class="id" title="var">Base</span> *<span class="id" title="var">b</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">dynamic_cast</span>&lt;<span class="id" title="var">Derived</span> *&gt;(<span class="id" title="var">b</span>) != <span class="id" title="var">nullptr</span>; }<br/>
+<span class="id" title="var">namespace</span> <span class="id" title="var">std</span> { <span class="id" title="var">class</span> <span class="id" title="var">type_info</span> { <span class="id" title="var">public</span>: <span class="id" title="var">virtual</span> ~<span class="id" title="var">type_info</span>(); <span class="id" title="var">bool</span> <span class="id" title="var">operator</span>==(<span class="id" title="var">const</span> <span class="id" title="var">type_info</span>&amp;) <span class="id" title="var">const</span> <span class="id" title="var">noexcept</span>; }; }<br/>
+<span class="id" title="var">bool</span> <span class="id" title="var">same_type</span>(<span class="id" title="var">Base</span> &amp;<span class="id" title="var">x</span>, <span class="id" title="var">Base</span> &amp;<span class="id" title="var">y</span>) { <span class="id" title="keyword">return</span> <span class="id" title="var">typeid</span>(<span class="id" title="var">x</span>) == <span class="id" title="var">typeid</span>(<span class="id" title="var">y</span>); }<br/>
 <span class="id" title="var">void</span> <span class="id" title="var">inline_asm</span>() { <span class="id" title="var">asm</span>("nop"); }<br/>
 <span class="id" title="var">bool</span> <span class="id" title="var">cas_ptr</span>(<span class="id" title="var">int</span> **<span class="id" title="var">p</span>, <span class="id" title="var">int</span> **<span class="id" title="var">e</span>, <span class="id" title="var">int</span> *<span class="id" title="var">d</span>) {<br/>
 &nbsp;&nbsp;<span class="id" title="keyword">return</span> <span class="id" title="var">__atomic_compare_exchange_n</span>(<span class="id" title="var">p</span>, <span class="id" title="var">e</span>, <span class="id" title="var">d</span>, <span class="id" title="var">false</span>, 5, 5);<br/>
@@ -109,7 +111,7 @@
 <span class="id" title="keyword">Eval</span> <span class="id" title="keyword">vm_compute</span> <span class="id" title="tactic">in</span> <span class="id" title="definition">supported.report.run</span> <a class="idref" href="skylabs_brick.tests.supported_report.html#source"><span class="id" title="definition">source</span></a><br/>
 &nbsp;&nbsp;<span class="id" title="notation">[</span> "by_value(Bits)"<span class="id" title="notation">;</span> "by_value_virt(Virt)"<span class="id" title="notation">;</span> "by_pointer(Bits*)"<span class="id" title="notation">;</span> "through_field(HasBits*)"<span class="id" title="notation">;</span> "linked(Node)"<br/>
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "static_local()"<span class="id" title="notation">;</span> "calls_static_local()"<span class="id" title="notation">;</span> "use_union(U)"<span class="id" title="notation">;</span> "arrow_union(U*)"<span class="id" title="notation">;</span> "arrow_bits(Bits*)"<span class="id" title="notation">;</span> "plain_member(Mixed*)"<span class="id" title="notation">;</span> "address_only()"<span class="id" title="notation">;</span> "call_through(Bits*)"<span class="id" title="notation">;</span> "read_volatile(volatile int*)"<br/>
-&nbsp;&nbsp;<span class="id" title="notation">;</span> "volatile_local()"<span class="id" title="notation">;</span> "dyn(Base*)"<span class="id" title="notation">;</span> "inline_asm()"<span class="id" title="notation">;</span> "cas_ptr(int**, int**, int*)"<br/>
+&nbsp;&nbsp;<span class="id" title="notation">;</span> "volatile_local()"<span class="id" title="notation">;</span> "dyn(Base*)"<span class="id" title="notation">;</span> "same_type(Base&amp;, Base&amp;)"<span class="id" title="notation">;</span> "inline_asm()"<span class="id" title="notation">;</span> "cas_ptr(int**, int**, int*)"<br/>
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "cas_int(int*, int*, int)"<span class="id" title="notation">;</span> "overloaded(int)"<span class="id" title="notation">;</span> "overloaded(long)"<br/>
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "unknown_builtin(unsigned int)"<span class="id" title="notation">;</span> "known_builtin(long)"<span class="id" title="notation">;</span> "flat_switch(int)"<br/>
 &nbsp;&nbsp;<span class="id" title="notation">;</span> "nested_case(int)"<span class="id" title="notation">;</span> "case_after_decl(int)"<br/>
@@ -139,7 +141,7 @@
 </div>
 
 <div class="doc">
-<a id="lab30"></a><h1 class="section">The semantics gets stuck where <span class="inlinecode"><span class="id" title="library">supported</span></span> fails</h1>
+<a id="lab36"></a><h1 class="section">The semantics gets stuck where <span class="inlinecode"><span class="id" title="library">supported</span></span> fails</h1>
 
 
 <div class="paragraph"> </div>
@@ -164,11 +166,10 @@ Every <span class="inlinecode"><span class="id" title="abbreviation">UNSUPPORTED
 </div>
 
 <div class="doc">
-No rule: inline assembly, <span class="inlinecode"><span class="id" title="var">dynamic_cast</span></span>, lvalue bitcasts, unsupported casts. 
+No rule: inline assembly, lvalue bitcasts, unsupported casts. 
 </div>
 <div class="code">
 <span class="id" title="keyword">Search</span> <span class="id" title="constructor">Sasm</span> -"_ind" -"_rec" -"_rect" -"_sind".<br/>
-<span class="id" title="keyword">Search</span> <span class="id" title="constructor">Cdynamic</span> -"_ind" -"_rec" -"_rect" -"_sind".<br/>
 <span class="id" title="keyword">Search</span> <span class="id" title="constructor">Clvaluebitcast</span> -"_ind" -"_rec" -"_rect" -"_sind".<br/>
 <span class="id" title="keyword">Search</span> <span class="id" title="constructor">Cunsupported</span> -"_ind" -"_rec" -"_rect" -"_sind".<br/>
 
@@ -302,7 +303,7 @@ Volatile objects cannot be initialized.
 </div>
 
 <div class="doc">
-<a id="lab31"></a><h1 class="section">Label names are unique in a function body</h1>
+<a id="lab37"></a><h1 class="section">Label names are unique in a function body</h1>
 
 
 <div class="paragraph"> </div>

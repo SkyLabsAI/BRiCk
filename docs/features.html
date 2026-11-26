@@ -187,7 +187,7 @@ evaluated where the type is declared and must be greater than zero
 are unsupported.
 <a class="reference external" href="https://github.com/SkyLabsAI/BRiCk/issues/59">BRiCk#59</a></p></td>
 </tr>
-<tr class="row-even"><td><p>Exceptions: <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">throw</span></code>, <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">try</span></code>, <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">typeid</span></code>, dynamic exception
+<tr class="row-even"><td><p>Exceptions: <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">throw</span></code>, <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">try</span></code>, dynamic exception
 specifications</p></td>
 <td><p>Unsupported syntax</p></td>
 <td><p>BRiCk additionally <em>assumes</em> that function calls do not throw.
@@ -237,37 +237,56 @@ the function boundary as <code class="docutils literal notranslate"><span class=
 <td><p>Single-field <code class="code highlight cpp docutils literal highlight-cpp"><span class="n">offsetof</span></code> is translated but has no rule; other forms
 (nested members, array elements, bases) are unsupported syntax.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="code highlight cpp docutils literal highlight-cpp"><span class="k">dynamic_cast</span></code></p></td>
-<td><p>No semantics</p></td>
-<td></td>
-</tr>
-<tr class="row-odd"><td><p><code class="code highlight cpp docutils literal highlight-cpp"><span class="k">reinterpret_cast</span></code></p></td>
+<tr class="row-even"><td><p><code class="code highlight cpp docutils literal highlight-cpp"><span class="k">reinterpret_cast</span></code></p></td>
 <td><p>No semantics</p></td>
 <td><p><a class="reference external" href="https://github.com/SkyLabsAI/BRiCk/issues/156">BRiCk#156</a></p></td>
 </tr>
-<tr class="row-even"><td><p>Member pointer operators (<code class="code highlight cpp docutils literal highlight-cpp"><span class="p">.</span><span class="o">*</span></code>, <code class="code highlight cpp docutils literal highlight-cpp"><span class="o">-&gt;*</span></code>) and calls through
+<tr class="row-odd"><td><p>Member pointer operators (<code class="code highlight cpp docutils literal highlight-cpp"><span class="p">.</span><span class="o">*</span></code>, <code class="code highlight cpp docutils literal highlight-cpp"><span class="o">-&gt;*</span></code>) and calls through
 member function pointers</p></td>
 <td><p>No semantics</p></td>
 <td><p>Member pointer <em>types</em> have a layout, and null member pointers can be
 created. Default-initializing a member pointer is an error.</p></td>
 </tr>
-<tr class="row-odd"><td><p>Explicitly defaulted constructors and methods that <code class="docutils literal notranslate"><span class="pre">cpp2v</span></code> does not
+<tr class="row-even"><td><p>Explicitly defaulted constructors and methods that <code class="docutils literal notranslate"><span class="pre">cpp2v</span></code> does not
 elaborate</p></td>
 <td><p>No semantics</p></td>
 <td><p>Implicit and defaulted members that Clang elaborates are supported.</p></td>
 </tr>
-<tr class="row-even"><td><p>Initializing members of anonymous structs or unions in a constructor
+<tr class="row-odd"><td><p>Initializing members of anonymous structs or unions in a constructor
 initializer list; indirect or self initialization of unions</p></td>
 <td><p>No semantics</p></td>
 <td></td>
 </tr>
-<tr class="row-odd"><td><p>Destroying <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">operator</span><span class="w"> </span><span class="k">delete</span></code></p></td>
+<tr class="row-even"><td><p>Destroying <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">operator</span><span class="w"> </span><span class="k">delete</span></code></p></td>
 <td><p>No semantics</p></td>
 <td></td>
 </tr>
-<tr class="row-even"><td><p>Default arguments of reference type</p></td>
+<tr class="row-odd"><td><p>Default arguments of reference type</p></td>
 <td><p>No semantics</p></td>
 <td><p><a class="reference external" href="https://github.com/SkyLabsAI/BRiCk/issues/390">BRiCk#390</a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="code highlight cpp docutils literal highlight-cpp"><span class="k">dynamic_cast</span></code>, <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">typeid</span></code></p></td>
+<td><p>Partial</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">supported</span></code> accepts both, but their rules are stuck (sound but
+incomplete) on:</p>
+<ul class="simple">
+<li><p>a failing <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">dynamic_cast</span></code> to a reference, which throws
+<code class="code highlight cpp docutils literal highlight-cpp"><span class="n">std</span><span class="o">::</span><span class="n">bad_cast</span></code>, and <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">typeid</span></code> of a null glvalue (such as
+<code class="code highlight cpp docutils literal highlight-cpp"><span class="k">typeid</span><span class="p">(</span><span class="o">*</span><span class="n">p</span><span class="p">)</span></code> for a null <code class="code highlight cpp docutils literal highlight-cpp"><span class="n">p</span></code>), which throws
+<code class="code highlight cpp docutils literal highlight-cpp"><span class="n">std</span><span class="o">::</span><span class="n">bad_typeid</span></code> (see exceptions);</p></li>
+<li><p>operands whose class has no virtual member functions of its own
+(including implicitly virtual overriders and destructors): casts
+and <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">typeid</span></code> of a polymorphic object read its dynamic type
+from <code class="docutils literal notranslate"><span class="pre">derivationR</span></code>, which only such classes carry;</p></li>
+<li><p><code class="code highlight cpp docutils literal highlight-cpp"><span class="k">typeid</span></code> of a type outside <code class="docutils literal notranslate"><span class="pre">typeid_ok</span></code>
+(<code class="docutils literal notranslate"><span class="pre">logic/typeid.v</span></code>), for instance function and member pointer
+types, and classes in anonymous namespaces or local to functions.</p></li>
+</ul>
+<p><code class="code highlight cpp docutils literal highlight-cpp"><span class="n">std</span><span class="o">::</span><span class="n">type_info</span><span class="o">::</span><span class="k">operator</span><span class="o">==</span></code> has an assumed specification
+(<code class="docutils literal notranslate"><span class="pre">specs/type_info.v</span></code>) for clients to link.
+<a class="reference external" href="https://github.com/SkyLabsAI/BRiCk/issues/511">BRiCk#511</a>,
+<a class="reference external" href="https://github.com/SkyLabsAI/BRiCk/issues/512">BRiCk#512</a></p>
+</td>
 </tr>
 <tr class="row-odd"><td><p>Function-local <code class="code highlight cpp docutils literal highlight-cpp"><span class="k">static</span></code> variables</p></td>
 <td><p>Partial</p></td>
