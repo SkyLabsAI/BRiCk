@@ -359,21 +359,42 @@ Module Type Stmt.
 
     (** ** Labels and <<goto>>
 
-        A <<goto l;>> exits its statement with [Goto l] (see [wp_goto]). Each
-        block that receives [Goto l] from one of its statements looks for a
-        statement labeled [l] among the statements that follow it, stopping at
-        the next declaration ([find_label]): if it finds one, execution
-        resumes there, in the same scope and with the same continuation;
-        otherwise [Goto l] leaves the block, whose [Kfree] continuations
-        destroy its automatic variables, as for <<return>>.
+        A <<goto l;>> exits its statement with [Goto l] (see [wp_goto]).
+
+        Forward. Each block that receives [Goto l] from one of its statements
+        looks for a statement labeled [l] among the statements that follow
+        it, stopping at the next declaration ([jump_to]): if it finds one,
+        execution resumes there, in the same scope; otherwise [Goto l]
+        leaves the block, whose [Kfree] continuations destroy its automatic
+        variables, as for <<return>>.
+
+        Backward. A block also remembers the labeled statements it has gone
+        past, whether it ran them or a forward jump skipped them: its
+        continuation sends a [Goto l] for a label [l] of such a statement to
+        the block from that statement on, run again with the continuation it
+        had there ([Klabels]). This is an unrolling rule, like
+        [wp_while_unroll]; the rule with an invariant for the label,
+        [wp_block_label_inv], is derived from it by Löb induction. The
+        [Goto l] reaches that continuation from the statements after the
+        label, from statements nested in them, and from the scope of the
+        declarations after the label, through the [Kfree] of each one: the
+        variables destroyed are exactly those active at the <<goto>> and not
+        at the label (<https://eel.is/c++draft/stmt.dcl#2>), and a
+        declaration between the label and the <<goto>> is run again when
+        control reaches it.
 
         This covers jumps forward to a later statement of the same block or
-        of an enclosing block that do not skip a declaration
-        (<https://eel.is/c++draft/stmt.dcl#2>: the variables destroyed are
-        exactly those active at the <<goto>> and not at the label). Backward
-        jumps, jumps into a nested statement, and jumps past a declaration
-        reach the function boundary, where [Goto] is [False]. A labeled
-        declaration is a declaration ([stmt_decl]) and can be a target.
+        of an enclosing block that do not skip a declaration, and jumps
+        backward to a statement of the same block or of an enclosing one.
+        Jumps into a nested statement and jumps forward past a declaration
+        reach the function boundary, where [Goto] is [False]; so does a jump
+        backward in a <<switch>> body to a label before the <<case>> that
+        was entered, since the body is run from that <<case>> on
+        ([wp_switch]). A labeled declaration is a declaration ([stmt_decl])
+        and can be a target in both directions.
+
+        As for loops, these rules are for partial correctness:
+        <<l: goto l;>> satisfies any postcondition.
 
         Labels are identified by their names: the rules assume that a
         function body defines each label name once, so that the label found
@@ -429,17 +450,125 @@ Module Type Stmt.
       destruct (is_decl s) => //. move=> /IH /=. lia.
     Qed.
 
+    (** [head_labels s]: the labels of the statement [s], outermost first. *)
+    Fixpoint head_labels (s : Stmt) : list ident :=
+      match s with
+      | Slabeled l s => l :: head_labels s
+      | _ => nil
+      end.
+
+    Definition is_label (l : ident) (ls : list ident) : bool :=
+      existsb (fun l' => bool_decide (l = l')) ls.
+
+    Lemma has_label_head_labels l s : has_label l s = is_label l (head_labels s).
+    Proof. induction s => //=. by rewrite IHs. Qed.
+
+    (** [Klabel ls P Q]: a <<goto>> to one of the labels [ls] continues as
+        [P]; every other exit continues as [Q]. *)
+    Definition Klabel_inner (ls : list ident) (P : mpred) (Q : Kpred) (rt : ReturnType) : mpred :=
+      match rt with
+      | Goto l => if is_label l ls then P else Q rt
+      | rt => Q rt
+      end.
+    #[global] Arguments Klabel_inner _ _ _ !rt /.
+
+    Definition Klabel (ls : list ident) (P : mpred) (Q : Kpred) : Kpred :=
+      KP $ Klabel_inner ls P Q.
+    #[global] Hint Opaque Klabel : typeclass_instances.
+
+    Lemma Klabel_frame ls (P P' : mpred) (Q Q' : Kpred) rt :
+      (P -* P') //\\ (Forall rt : ReturnType, Q rt -* Q' rt) |--
+      Klabel ls P Q rt -* Klabel ls P' Q' rt.
+    Proof.
+      destruct rt; cbn; try by rewrite bi.and_elim_r; iIntros "H"; iApply "H".
+      case: (is_label l ls); first by rewrite bi.and_elim_l.
+      rewrite bi.and_elim_r; iIntros "H"; iApply "H".
+    Qed.
+
+    (** [Kagain ls B Q] is [Klabel ls (B Q) Q]: a <<goto>> to one of [ls]
+        runs [B], the block from the statement labeled [ls] on, again, with
+        the continuation [Q] that the block had at that statement. *)
+    Definition Kagain (ls : list ident) (B : Kpred -> mpred) (Q : Kpred) : Kpred :=
+      KP $ Klabel_inner ls (B Q) Q.
+    #[global] Hint Opaque Kagain : typeclass_instances.
+
+    Lemma Kagain_eq ls (B : Kpred -> mpred) Q : Kagain ls B Q = Klabel ls (B Q) Q.
+    Proof. done. Qed.
+
+    (** [Klabels B s Q] is the continuation of a block that has gone past
+        its statement [s], where [B] runs the block from [s] on and [Q] is
+        the continuation the block had at [s]: the labels of [s], if any,
+        have become targets ([Kagain]). *)
+    Definition Klabels (B : Kpred -> mpred) (s : Stmt) (Q : Kpred) : Kpred :=
+      match head_labels s with
+      | nil => Q
+      | ls => Kagain ls B Q
+      end.
+
+    Lemma Klabels_frame (B B' : Kpred -> mpred) s (Q Q' : Kpred) rt :
+      (B Q -* B' Q') //\\ (Forall rt : ReturnType, Q rt -* Q' rt) |--
+      Klabels B s Q rt -* Klabels B' s Q' rt.
+    Proof.
+      rewrite /Klabels. destruct (head_labels s) as [|l ls].
+      - rewrite bi.and_elim_r. iIntros "H"; iApply "H".
+      - rewrite !Kagain_eq. apply Klabel_frame.
+    Qed.
+
+    (** [jump_to B l ss k] is where a <<goto l>> continues when the
+        statements [ss] follow it in its block, and [B ss' k'] runs the
+        statements [ss'] of that block: at the first statement of [ss]
+        labeled [l], provided no declaration ([is_decl], labeled or not)
+        comes before it. The labels of the statements that the jump skips
+        become targets for later jumps, as if the statements had been run
+        ([Klabels]). *)
+    Definition jump_to (B : list Stmt -> Kpred -> mpred) (l : ident)
+        : list Stmt -> Kpred -> option mpred :=
+      fix go ss k :=
+      match ss with
+      | nil => None
+      | s :: ss' =>
+          if has_label l s then Some (B ss k)
+          else if is_decl s then None else go ss' (Klabels (B ss) s k)
+      end.
+
+    Lemma jump_to_cons (B : list Stmt -> Kpred -> mpred) l s ss k :
+      jump_to B l (s :: ss) k =
+      if has_label l s then Some (B (s :: ss) k)
+      else if is_decl s then None else jump_to B l ss (Klabels (B (s :: ss)) s k).
+    Proof. done. Qed.
+
+    (** [skipped B l ss k]: the continuation at the statement labeled [l],
+        after a jump from before [ss]. *)
+    Fixpoint skipped (B : list Stmt -> Kpred -> mpred) (l : ident) (ss : list Stmt)
+        (k : Kpred) : Kpred :=
+      match ss with
+      | nil => k
+      | s :: ss' =>
+          if has_label l s then k else skipped B l ss' (Klabels (B ss) s k)
+      end.
+
+    Lemma jump_to_find (B : list Stmt -> Kpred -> mpred) l ss k :
+      jump_to B l ss k = (fun ss' => B ss' (skipped B l ss k)) <$> find_label id l ss.
+    Proof.
+      elim: ss k => [|s ss IH] k //. rewrite jump_to_cons find_label_cons. cbn [skipped].
+      destruct (has_label l s) => //. destruct (is_decl s) => //.
+    Qed.
+
+    Lemma skipped_here (B : list Stmt -> Kpred -> mpred) l s ss k :
+      skipped B l (Slabeled l s :: ss) k = k.
+    Proof. by rewrite /= bool_decide_true. Qed.
+
     (** [Kblock B ss k] continues a statement followed by [ss] in a block;
-        [B ss' k] runs the statements [ss'] of that block (it is
+        [B ss' k'] runs the statements [ss'] of that block (it is
         [wp_block ρ]). Normal completion runs [ss]; [Goto l] runs the suffix
-        of [ss] labeled [l], if any. *)
-    Definition Kblock_inner (next : Kpred -> mpred) (jump : ident -> option (Kpred -> mpred))
+        of [ss] labeled [l], if any ([jump_to]). *)
+    Definition Kblock_inner (next : mpred) (jump : ident -> option mpred)
         (k : Kpred) (rt : ReturnType) : mpred :=
       match rt with
-      | Normal => next k
+      | Normal => next
       | Goto l =>
           match jump l with
-          | Some P => P k
+          | Some P => P
           | None => k rt
           end
       | rt => k rt
@@ -447,32 +576,56 @@ Module Type Stmt.
     #[global] Arguments Kblock_inner _ _ _ !rt /.
 
     Definition Kblock (B : list Stmt -> Kpred -> mpred) (ss : list Stmt) (k : Kpred) : Kpred :=
-      KP $ Kblock_inner (B ss) (fun l => find_label B l ss) k.
+      KP $ Kblock_inner (B ss k) (fun l => jump_to B l ss k) k.
     #[global] Hint Opaque Kblock : typeclass_instances.
 
+    Lemma skipped_frame (B1 B2 : list Stmt -> Kpred -> mpred) l (ss0 ss : list Stmt)
+        (k1 k2 : Kpred) :
+      length ss <= length ss0 ->
+      □ (Forall ss' (k1 k2 : Kpred), [| length ss' <= length ss0 |] -*
+         (Forall rt : ReturnType, k1 rt -* k2 rt) -* B1 ss' k1 -* B2 ss' k2) |--
+      (Forall rt : ReturnType, k1 rt -* k2 rt) -*
+      Forall rt : ReturnType, skipped B1 l ss k1 rt -* skipped B2 l ss k2 rt.
+    Proof.
+      elim: ss k1 k2 => [|s ss IH] k1 k2 Hlen; first by iIntros "_ H".
+      cbn [skipped]. iIntros "#HB Hk". destruct (has_label l s); first iExact "Hk".
+      iApply (IH with "HB"); first by cbn in Hlen; lia.
+      iIntros (rt). iApply Klabels_frame.
+      iSplit; [iApply ("HB" with "[//]")|]; iExact "Hk".
+    Qed.
+
     Lemma Kblock_frame (B1 B2 : list Stmt -> Kpred -> mpred) ss (k1 k2 : Kpred) rt :
-      (Forall ss', [| length ss' <= length ss |] -*
+      □ (Forall ss' (k1 k2 : Kpred), [| length ss' <= length ss |] -*
          (Forall rt : ReturnType, k1 rt -* k2 rt) -* B1 ss' k1 -* B2 ss' k2) |--
       (Forall rt : ReturnType, k1 rt -* k2 rt) -*
       Kblock B1 ss k1 rt -* Kblock B2 ss k2 rt.
     Proof.
-      iIntros "HB Hk". destruct rt; cbn; try iExact "Hk".
-      - iApply ("HB" $! ss with "[%] Hk"). lia.
-      - rewrite (find_label_fmap B1) (find_label_fmap B2).
+      iIntros "#HB Hk". destruct rt; cbn; try iExact "Hk".
+      - by iApply ("HB" with "[//] Hk").
+      - rewrite !jump_to_find.
         destruct (find_label id l ss) as [ss'|] eqn:Hf; cbn; last iExact "Hk".
-        iApply ("HB" $! ss' with "[%] Hk"). exact: find_label_length.
+        iApply ("HB" $! ss' with "[%]"); first exact: find_label_length.
+        by iApply (skipped_frame with "HB Hk").
     Qed.
 
     Lemma Kblock_normal B ss k : Kblock B ss k Normal = B ss k.
     Proof. done. Qed.
 
+    Lemma Kblock_goto_jump B ss k l :
+      Kblock B ss k (Goto l) =
+      match jump_to B l ss k with
+      | Some P => P
+      | None => k (Goto l)
+      end.
+    Proof. done. Qed.
+
     Lemma Kblock_goto B ss k l :
       Kblock B ss k (Goto l) =
       match find_label id l ss with
-      | Some ss' => B ss' k
+      | Some ss' => B ss' (skipped B l ss k)
       | None => k (Goto l)
       end.
-    Proof. rewrite /Kblock /KP /= find_label_fmap. by case: (find_label id l ss). Qed.
+    Proof. rewrite /Kblock /KP /= jump_to_find. by case: (find_label id l ss). Qed.
 
     Lemma find_label_here l s ss :
       find_label id l (Slabeled l s :: ss) = Some (Slabeled l s :: ss).
@@ -481,48 +634,77 @@ Module Type Stmt.
     Fixpoint wp_block_def (ρ : region) (ss : list Stmt) (Q : Kpred) : mpred :=
       match ss with
       | nil => |={top}=> |> |={top}=> Q Normal
-      | s :: ss =>
+      | s :: ss' =>
+        (* From [s] on, a <<goto>> to a label of [s] runs this block, [ss],
+           again. The block cannot refer to itself at [ss], so it does so
+           through [wp_seq], as [wp_while_unroll] names its loop. *)
+        let Q := Klabels (wp ρ (Sseq ss)) s Q in
         (* A declaration, labeled or not ([stmt_decl]), scopes the rest of the
            block. *)
         match stmt_decl s with
         | Some ds =>
           wp_decls ρ ds (funI ρ free =>
-                           |={top}=> |> |={top}=> wp_block_def ρ ss (Kfree free Q))
+                           |={top}=> |> |={top}=> wp_block_def ρ ss' (Kfree free Q))
         | None =>
           |={top}=> |> |={top}=> wp ρ s
-            (* [Kblock (wp_block_def ρ) ss (|={top}=> Q)], with [find_label]
+            (* [Kblock (wp_block_def ρ) ss' (|={top}=> Q)], with [jump_to]
                inlined so that the recursive calls are on subterms of [ss]. *)
-            (KP $ Kblock_inner (wp_block_def ρ ss)
+            (KP $ Kblock_inner (wp_block_def ρ ss' (|={top}=> Q))
                (fun l =>
-                  (fix go ss :=
+                  (fix go ss k :=
                    match ss with
                    | nil => None
                    | s :: ss' =>
-                       if has_label l s then Some (wp_block_def ρ ss)
-                       else if is_decl s then None else go ss'
-                   end) ss)
+                       if has_label l s then Some (wp_block_def ρ ss k)
+                       else if is_decl s then None
+                       else go ss' (Klabels (wp_block_def ρ ss) s k)
+                   end) ss' (|={top}=> Q))
                (|={top}=> Q))
         end
-      end.
+      end%I.
     Definition wp_block_aux : seal (@wp_block_def). Proof. by eexists. Qed.
     Definition wp_block := wp_block_aux.(unseal).
     Definition wp_block_eq : @wp_block = _ := wp_block_aux.(seal_eq).
+
+    (** [wp_block_head ρ s ss Q]: the statement [s], then the rest [ss] of
+        its block. *)
+    Definition wp_block_head (ρ : region) (s : Stmt) (ss : list Stmt) (Q : Kpred) : mpred :=
+      match stmt_decl s with
+      | Some ds =>
+        wp_decls ρ ds (funI ρ free =>
+                         |={top}=> |> |={top}=> wp_block ρ ss (Kfree free Q))
+      | None =>
+        |={top}=> |> |={top}=> wp ρ s (Kblock (wp_block ρ) ss (|={top}=> Q))
+      end%I.
 
     (* Show [wp_block] satisfies the fixpoint equation. *)
     Lemma wp_block_unfold (ρ : region) (ss : list Stmt) (Q : Kpred) :
       wp_block ρ ss Q =
       (match ss with
       | nil => |={top}=> |> |={top}=> Q Normal
-      | s :: ss =>
-        match stmt_decl s with
-        | Some ds =>
-          wp_decls ρ ds (funI ρ free =>
-                           |={top}=> |> |={top}=> wp_block ρ ss (Kfree free Q))
-        | None =>
-          |={top}=> |> |={top}=> wp ρ s (Kblock (wp_block ρ) ss (|={top}=> Q))
-        end
+      | s :: ss' => wp_block_head ρ s ss' (Klabels (wp ρ (Sseq ss)) s Q)
       end)%I.
-    Proof. rewrite !wp_block_eq; by destruct ss. Qed.
+    Proof. rewrite /wp_block_head !wp_block_eq; by destruct ss. Qed.
+
+    #[local] Lemma wp_block_head_frame_aux ρ s ss Q Q' :
+      (forall ss' ρ Q Q', length ss' <= length ss ->
+         (Forall rt, Q rt -* Q' rt) |-- wp_block ρ ss' Q -* wp_block ρ ss' Q') ->
+      (Forall rt, Q rt -* Q' rt) |-- wp_block_head ρ s ss Q -* wp_block_head ρ s ss Q'.
+    Proof.
+      intros IH. rewrite /wp_block_head. iIntros "X". destruct (stmt_decl s) as [ds|].
+      - iApply wp_decls_frame.
+        iIntros (??) ">H !> !>". iMod "H"; iModIntro.
+        iApply (IH with "[X] H"); first done. iIntros (?).
+        iApply Kfree_frame. iApply "X".
+      - iIntros ">H !> !>". iMod "H"; iModIntro.
+        iApply (wp_frame with "[X] H"); first by reflexivity.
+        iAssert (Forall rt, (|={⊤}=> Q) rt -* (|={⊤}=> Q') rt)%I with "[X]" as "X". {
+          setoid_rewrite monPred_at_fupd.
+          iIntros (?) ">H !>". by iApply "X".
+        }
+        iIntros (rt). iApply (Kblock_frame with "[] X").
+        iIntros "!>" (ss' k1 k2 Hss') "X H". by iApply (IH with "X H").
+    Qed.
 
     Lemma wp_block_frame : forall ss ρ (Q Q' : Kpred),
         (Forall rt, Q rt -* Q' rt)
@@ -535,49 +717,71 @@ Module Type Stmt.
         rewrite !wp_block_unfold.
         by iIntros "Hcnt HQ"; iMod "HQ"; iApply "Hcnt".
       }
-      cbn in Hn.
-      assert ((Forall rt, Q rt -* Q' rt) |--
-        (|={⊤}▷=> wp ρ s (Kblock (wp_block ρ) ss (|={⊤}=> Q))) -*
-        (|={⊤}▷=> wp ρ s (Kblock (wp_block ρ) ss (|={⊤}=> Q')))) as Himpl.
-      { iIntros "X >H !> !>". iMod "H"; iModIntro.
+      cbn in Hn. rewrite !wp_block_unfold. iIntros "X".
+      iApply wp_block_head_frame_aux.
+      { intros ss' ??? Hle. apply (IH (length ss')); [lia|done]. }
+      iIntros (rt). iApply Klabels_frame.
+      iSplit; [iApply wp_frame; first reflexivity|]; iExact "X".
+    Qed.
+
+    Lemma wp_block_head_frame ρ s ss (Q Q' : Kpred) :
+      (Forall rt, Q rt -* Q' rt) |-- wp_block_head ρ s ss Q -* wp_block_head ρ s ss Q'.
+    Proof. apply wp_block_head_frame_aux. intros. apply wp_block_frame. Qed.
+
+    (** As [wp_block_head_frame], when the continuations are only related
+        later: a block takes a step before each of its statements. *)
+    Lemma wp_block_head_later_frame ρ s ss (Q Q' : Kpred) :
+      ▷ (Forall rt, Q rt -* Q' rt) |-- wp_block_head ρ s ss Q -* wp_block_head ρ s ss Q'.
+    Proof.
+      rewrite /wp_block_head. iIntros "X". destruct (stmt_decl s) as [ds|].
+      - iApply wp_decls_frame. iIntros (??) ">H !> !>". iMod "H"; iModIntro.
+        iApply (wp_block_frame with "[X] H"). iIntros (?).
+        iApply Kfree_frame. iApply "X".
+      - iIntros ">H !> !>". iMod "H"; iModIntro.
         iApply (wp_frame with "[X] H"); first by reflexivity.
-        iAssert (Forall rt, (|={⊤}=> Q) rt -* (|={⊤}=> Q') rt)%I with "[X]" as "X". {
-          setoid_rewrite monPred_at_fupd.
-          iIntros (?) ">H !>". by iApply "X".
-        }
-        iIntros (rt). iApply (Kblock_frame with "[] X").
-        iIntros (ss' Hss') "X H".
-        iApply (IH (length ss') ltac:(lia) ss' eq_refl with "X H"). }
-      rewrite !wp_block_unfold; cbv iota beta.
-      iIntros "X"; destruct (stmt_decl s) as [ds|]; last by iApply (Himpl with "X").
-      iApply wp_decls_frame.
-      iIntros (??) ">H !> !>". iMod "H"; iModIntro.
-      iApply (IH (length ss) ltac:(lia) ss eq_refl with "[X] H"). iIntros (?).
-      iApply Kfree_frame. iApply "X".
+        iIntros (rt). iApply (Kblock_frame with "[] [X]").
+        + iIntros "!>" (????). iApply wp_block_frame.
+        + iIntros (?). rewrite !monPred_at_fupd. iIntros ">H !>". by iApply "X".
+    Qed.
+
+    #[local] Lemma wp_block_head_shift_aux ρ s ss (Q : Kpred) :
+      (forall ρ Q, (|={top}=> wp_block ρ ss (|={top}=> Q)) |-- wp_block ρ ss Q) ->
+      (|={top}=> wp_block_head ρ s ss (|={top}=> Q)) |-- wp_block_head ρ s ss Q.
+    Proof.
+      intros IH. rewrite /wp_block_head. destruct (stmt_decl s) as [ds|].
+      - iIntros "H". iApply wp_decls_shift. iMod "H"; iModIntro.
+        iApply (wp_decls_frame with "[] H"); iIntros (??) ">H !> !> !> !>".
+        iApply IH. iMod "H"; iModIntro.
+        iApply (wp_block_frame with "[] H"); iIntros (rt) "H !>".
+        destruct rt; cbn; try case_match.
+        all: rewrite monPred_at_fupd; iApply (interp_shift with "H").
+      - iIntros ">>H !> !> !>". iMod "H". iApply (wp_frame with "[] H"). done.
+        iIntros (?) "H".
+        iApply (Kblock_frame with "[] [] H").
+        { iIntros "!>" (????). iApply wp_block_frame. }
+        iIntros (?) "H". by rewrite fupd_idemp.
+    Qed.
+
+    #[local] Lemma Klabels_fupd ρ ss s (Q : Kpred) rt :
+      Klabels (wp ρ (Sseq ss)) s (|={top}=> Q) rt |--
+      (|={top}=> Klabels (wp ρ (Sseq ss)) s Q) rt.
+    Proof.
+      rewrite /Klabels. destruct (head_labels s) as [|l ls]; first done.
+      rewrite monPred_at_fupd.
+      destruct rt; cbn -[is_label]; rewrite ?monPred_at_fupd //.
+      case: (is_label _ _); rewrite ?monPred_at_fupd //.
+      iIntros "H !>". by iApply wp_fupd.
     Qed.
 
     Lemma wp_block_shift ρ ds (Q : Kpred) :
       (|={top}=> wp_block ρ ds (|={top}=> Q)) |--
       wp_block ρ ds Q.
     Proof.
-      elim: ds ρ Q => [|d ds IH] ρ Q /=; rewrite !wp_block_unfold /=.
-      - iIntros ">>H !> !> /=". by iMod "H" as ">$".
-      - iAssert (
-        (|={⊤}=> |={⊤}▷=> wp ρ d (Kblock (wp_block ρ) ds (|={⊤}=> |={⊤}=> Q))) -∗
-        |={⊤}▷=> wp ρ d (Kblock (wp_block ρ) ds (|={⊤}=> Q)))%I as "W". {
-          iIntros ">>H !> !> !>". iMod "H". iApply (wp_frame with "[] H"). done.
-          iIntros (?) "H".
-          iApply (Kblock_frame with "[] [] H").
-          { iIntros (??). iApply wp_block_frame. }
-          iIntros (?) "H". by rewrite fupd_idemp.
-      }
-      destruct (stmt_decl d) as [ds'|]; last by iExact "W".
-      iIntros "{W} H". iApply wp_decls_shift. iMod "H"; iModIntro.
-      iApply (wp_decls_frame with "[] H"); iIntros (??) ">H !> !> !> !>".
-      iApply IH. iMod "H"; iModIntro.
-      iApply (wp_block_frame with "[] H"); iIntros (rt) "H !>".
-      destruct rt; cbn; try case_match.
-      all: rewrite monPred_at_fupd; iApply (interp_shift with "H").
+      elim: ds ρ Q => [|d ds IH] ρ Q; rewrite !wp_block_unfold.
+      { iIntros ">>H !> !> /=". by iMod "H" as ">$". }
+      iIntros "H". iApply wp_block_head_shift_aux; first done.
+      iMod "H"; iModIntro. iApply (wp_block_head_frame with "[] H").
+      iIntros (rt). iApply Klabels_fupd.
     Qed.
 
     Lemma fupd_wp_block ρ ds Q :
@@ -630,6 +834,57 @@ Module Type Stmt.
 
     Axiom wp_seq : forall ρ Q ss,
         wp_block ρ ss Q |-- wp ρ (Sseq ss) Q.
+
+    (** ** Derived rules for a labeled statement heading a block
+
+        [s] is labeled and heads a block; [ss] follows it. In each rule, a
+        <<goto>> to a label of [s] from [s] or from what follows it
+        continues as the first argument of [Klabel]. *)
+
+    (** Unrolling: the jump runs the block from [s] again. *)
+    Lemma wp_block_label_unroll ρ s ss Q :
+      head_labels s <> nil ->
+      wp_block_head ρ s ss (Klabel (head_labels s) (wp_block ρ (s :: ss) Q) Q)
+      |-- wp_block ρ (s :: ss) Q.
+    Proof.
+      intros Hls.
+      trans (wp_block_head ρ s ss (Klabels (wp ρ (Sseq (s :: ss))) s Q));
+        last by rewrite wp_block_unfold.
+      rewrite /Klabels. destruct (head_labels s) as [|l ls]; first done.
+      rewrite Kagain_eq. iIntros "H". iApply (wp_block_head_frame with "[] H").
+      iIntros (rt). iApply Klabel_frame. iSplit; last by iIntros (?) "$".
+      iApply wp_seq.
+    Qed.
+
+    (** No jump comes back. *)
+    Lemma wp_block_label_once ρ s ss Q :
+      head_labels s <> nil ->
+      wp_block_head ρ s ss (Klabel (head_labels s) False Q)
+      |-- wp_block ρ (s :: ss) Q.
+    Proof.
+      intros Hls. rewrite -wp_block_label_unroll //.
+      iIntros "H". iApply (wp_block_head_frame with "[] H").
+      iIntros (rt). iApply Klabel_frame. iSplit; last by iIntros (?) "$".
+      by iIntros "[]".
+    Qed.
+
+    (** The invariant rule, by Löb induction, as [wp_while_inv] for
+        <<while>>: [P] holds on reaching [s], and the jump has to
+        re-establish it. The later that the induction needs comes from the
+        step a block takes before each statement
+        ([wp_block_head_later_frame]) and, for the user, from [wp_goto]. *)
+    Lemma wp_block_label_inv (P : mpred) ρ s ss Q :
+      head_labels s <> nil ->
+      P ** □ (P -* wp_block_head ρ s ss (Klabel (head_labels s) P Q))
+      |-- wp_block ρ (s :: ss) Q.
+    Proof.
+      intros Hls. iIntros "[P #H]".
+      iAssert (□ (P -* wp_block ρ (s :: ss) Q))%I with "[]" as "#PW"; last by iApply "PW".
+      iLöb as "IH". iIntros "!> P". iApply wp_block_label_unroll; first done.
+      iApply (wp_block_head_later_frame with "[] (H P)").
+      iIntros "!>" (rt). iApply Klabel_frame. iSplit; last by iIntros (?) "$".
+      iApply "IH".
+    Qed.
 
     (** * <<if>> *)
 

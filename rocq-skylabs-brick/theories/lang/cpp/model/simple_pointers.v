@@ -189,6 +189,10 @@ Module SIMPLE_PTRS_IMPL <: PTRS_INTF.
     o_sub σ ty 0 = o_id.
   Proof. rewrite /o_sub /o_sub_off => -[? ->] //=. Qed.
 
+  Lemma o_sub_realigned {σ : genv} n ty i :
+    o_sub σ (Trealigned n ty) i = o_sub σ ty i.
+  Proof. reflexivity. Qed.
+
   Lemma o_dot_sub {σ : genv} i j ty :
     o_dot (o_sub _ ty i) (o_sub _ ty j) = o_sub _ ty (i + j).
   Proof.

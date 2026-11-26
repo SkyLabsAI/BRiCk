@@ -76,9 +76,9 @@ Section concrete_model.
     intros Hsz.
     have Heq : o_sub σ ty 0 = o_sub σ ty 1.
     { apply (sig_eq_pi _).
-      rewrite /o_sub /= size_of_erase_qualifiers Hsz.
+      rewrite /o_sub /= size_of_sub_type Hsz.
       rewrite /mkOffset /mk_offset_seg /= /simple_pointers_utils.o_sub_off.
-      by rewrite size_of_erase_qualifiers Hsz. }
+      by rewrite size_of_sub_type Hsz. }
     rewrite Heq. apply VALID_PTR._valid_ptr_nullptr_sub_false. lia.
   Qed.
 

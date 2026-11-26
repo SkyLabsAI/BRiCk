@@ -24,7 +24,7 @@ unsigned long a_e8() { return alignof(E8); }
 unsigned long a_e1() { return alignof(E1); }
 
 // The size of X is not a multiple of its alignment, so stepping an X* by
-// one element leaves a pointer that is not aligned for X. BRiCk sees an int*.
+// one element leaves a pointer that is not aligned for X: BRiCk rejects it.
 X *step(X *p) { return p + 1; }
 
 struct __attribute__((packed)) P {
@@ -49,7 +49,7 @@ u16a g_under;
 X g_over;
 unsigned short local_under() { char c = 0; u16a x = 1; (void)c; return x; }
 
-// Parameters of an under-aligned type: the function is unsupported.
+// Parameters of an under-aligned scalar type have its Trealigned type.
 unsigned short param_under(char c, u16a p) { (void)c; return p; }
 // Under-aligned variables BRiCk cannot type: unsupported types.
 struct S2 { int x; };
@@ -70,7 +70,7 @@ void inc_i(P *p) { p->i += 1; }
 int chain_i(P *p) { return p->i = 3; }
 
 // Clang passes the alignment of an over-aligned type (32 here) to an aligned
-// allocation function; BRiCk would pass that of int, so these are unsupported.
+// allocation function, and so does BRiCk, from the type Trealigned 32 Tint.
 typedef int X32 __attribute__((aligned(32)));
 X32 *new_over() { return new X32; }
 void delete_over(X32 *p) { delete p; }
