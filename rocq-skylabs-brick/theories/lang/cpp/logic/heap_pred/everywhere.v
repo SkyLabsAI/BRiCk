@@ -240,8 +240,7 @@ Section with_cpp.
           eapply _offsetR_cfractional.
           red. intros. rewrite mut_type_plus. rewrite Trec.
           erewrite (mut_type_plus_2 _ q1 _).
-          erewrite (mut_type_plus_2 _ q2 _). reflexivity. }
-        { case_match; refine _. eapply derivationR_cfractional. } } }
+          erewrite (mut_type_plus_2 _ q2 _). reflexivity. } } }
       { intro. intros.
         rewrite qualify_plus. apply IHty. }
     Qed.
