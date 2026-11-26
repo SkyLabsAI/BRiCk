@@ -2027,11 +2027,23 @@ Module Type Expr.
           wp_each ps (free' >*> free) Q
       end.
 
+    (** Like [wp_each] for the bases of [cls], each followed by
+        [wp_unsettle_identity], as in [wpi_bases]. *)
+    Fixpoint wp_each_base (cls : globname) (this : ptr) (bs : list (globname * Expr))
+        (free : FreeTemps.t) (Q : FreeTemps.t -> epred) : mpred :=
+      match bs with
+      | nil => Q free
+      | (b, e) :: bs =>
+          let* free' := wp_initialize (Tnamed b) (this ,, _base cls b) e in
+          wp_unsettle_identity (this ,, _base cls b) tu b
+            (wp_each_base cls this bs (free' >*> free) Q)
+      end.
+
     Definition wp_struct_initlist (cls : globname) (s : Struct) (es : list Expr) (this : ptr)
       (Q : FreeTemps.t -> epred) : mpred :=
       (if bool_decide (length es = length s.(s_bases) + length s.(s_fields)) then
          let* free :=
-           wp_each ((fun '(b, e) => (this ,, _base cls b.1, Tnamed b.1, e)) <$> combine s.(s_bases) es) FreeTemps.id in
+           wp_each_base cls this ((fun '(b, e) => (b.1, e)) <$> combine s.(s_bases) es) FreeTemps.id in
          let* := wp_init_identity this tu cls in
          let* free :=
            wp_each ((fun '(m, e) => (this ., (Field cls m.(mem_name)), m.(mem_type), e)) <$> (combine s.(s_fields) $ skipn (length s.(s_bases)) es)) free in

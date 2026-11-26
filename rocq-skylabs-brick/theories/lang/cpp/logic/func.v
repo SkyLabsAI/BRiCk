@@ -104,20 +104,32 @@ End svalid_members.
 
 (** ** Aggregate identity *)
 (**
+[settle_path settled path] is the path of an identity token: [path] for a
+settled token, and [nil] for an unsettled one.  A token with the empty path
+gives virtual dispatch nothing to dispatch on ([resolve_virtual] requires a
+non-empty path), so an unsettled subobject supports conversions but no virtual
+calls.  [struct_defR] holds such tokens before construction, and
+[mdc_path_forget] produces them.
+*)
+Definition settle_path (settled : bool) (path : list globname) : list globname :=
+  if settled then path else nil.
+
+(**
 Part of [derivationsR path cls], but indexed by fuel [f].
 
 TODO: Replace this with a version that is built by well-founded
 recursion.
 *)
 #[local]
-Definition derivationsR' `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (q : cQp.t) :=
+Definition derivationsR' `{Σ : cpp_logic, σ : genv} (tu : translation_unit) (q : cQp.t)
+    (settled : bool) :=
   fix derivationsR' (f : nat) (include_base : bool) (cls : globname) (path : list globname) : Rep :=
   match f with
   | 0 => ERROR "derivationsR: no fuel"
   | S f =>
     match tu.(types) !! cls with
     | Some (Gstruct st) =>
-      (if include_base && has_vtable st then derivationR cls path q else emp) **
+      (if include_base && has_vtable st then derivationR cls (settle_path settled path) q else emp) **
       [** list] b ∈ st.(s_bases),
       let base := b.1 in
       _base cls base |-> derivationsR' f true base (path ++ [base])
@@ -155,15 +167,29 @@ Definition derivationsR `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
   derivation tree.
   *)
   let size := NM.cardinal σ.(genv_tu).(types) in
-  derivationsR' tu q size include_base cls path.
+  derivationsR' tu q true size include_base cls path.
+
+(**
+[this |-> unsettledR tu include_base cls q] is the identity tokens of the
+[this] object (of type [cls]) and of its bases, all *unsettled*: each has the
+empty path (see [settle_path]), so no virtual call through them is possible.
+A base subobject is in this state after its own constructor returns and
+before the enclosing constructor sets the identity of the whole object
+([wp_init_identity]), and in a destructor from the end of the member
+destruction until right before that base's destructor ([wp_settle_identity]).
+*)
+Definition unsettledR `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
+    (include_base : bool) (cls : globname) (q : cQp.t) : Rep :=
+  let size := NM.cardinal σ.(genv_tu).(types) in
+  derivationsR' tu q false size include_base cls [].
 
 Section derivationsR.
   Context `{Σ : cpp_logic, σ : genv}.
 
-  Lemma derivationsR'_sub_module tu tu' q f include_base cls path :
+  Lemma derivationsR'_sub_module tu tu' q settled f include_base cls path :
     sub_module tu tu' ->
-    derivationsR' tu q f include_base cls path
-    |-- derivationsR' tu' q f include_base cls path.
+    derivationsR' tu q settled f include_base cls path
+    |-- derivationsR' tu' q settled f include_base cls path.
   Proof.
     intros Hsub%types_compat.
     move: include_base cls path. induction f; intros; cbn; first done.
@@ -205,10 +231,10 @@ Section derivationsR.
   Qed.
 
   Lemma derivationsR'_ok tu tu' (sub : sub_module tu tu') :
-    forall f f' mdc (p : ptr) cls include_base q,
+    forall settled f f' mdc (p : ptr) cls include_base q,
     f <= f' ->
-        p |-> derivationsR' tu q f include_base cls mdc
-    |-- p |-> derivationsR' tu' q f' include_base cls mdc ** [| supports_with_fuel tu cls f |].
+        p |-> derivationsR' tu q settled f include_base cls mdc
+    |-- p |-> derivationsR' tu' q settled f' include_base cls mdc ** [| supports_with_fuel tu cls f |].
   Proof.
     induction f; rewrite /derivationsR' /=; intros; try iIntros "[]".
     destruct f'; try lia.
@@ -236,11 +262,17 @@ Section derivationsR.
     |-- p |-> derivationsR tu' include_base cls mdc q ** [| supports_with_fuel tu cls (NM.cardinal (types $ genv_tu σ)) |].
   Proof. intros; by apply derivationsR'_ok; eauto. Qed.
 
+  Lemma unsettledR_ok tu tu' (sub : sub_module tu tu') :
+    forall (p : ptr) cls include_base q,
+        p |-> unsettledR tu include_base cls q
+    |-- p |-> unsettledR tu' include_base cls q ** [| supports_with_fuel tu cls (NM.cardinal (types $ genv_tu σ)) |].
+  Proof. intros; by apply derivationsR'_ok; eauto. Qed.
+
   Lemma derivationsR'_ok_supports tu tu' (sub : sub_module tu tu') :
     forall cls f, supports_with_fuel tu cls f ->
-             forall f' mdc (p : ptr) include_base q, f <= f' ->
-        p |-> derivationsR' tu q f include_base cls mdc
-    -|- p |-> derivationsR' tu' q f' include_base cls mdc.
+             forall settled f' mdc (p : ptr) include_base q, f <= f' ->
+        p |-> derivationsR' tu q settled f include_base cls mdc
+    -|- p |-> derivationsR' tu' q settled f' include_base cls mdc.
   Proof.
     refine (fix rec cls f X {struct X} :=
               match X with
@@ -266,6 +298,17 @@ Section derivationsR.
     eapply derivationsR'_ok_supports; eauto.
   Qed.
 
+  Lemma unsettledR_ok_supports tu tu' (sub : sub_module tu tu') :
+    forall cls, supports_with_fuel tu cls (NM.cardinal (types (genv_tu σ))) ->
+             forall (p : ptr) include_base q,
+        p |-> unsettledR tu include_base cls q
+    -|- p |-> unsettledR tu' include_base cls q.
+  Proof.
+    intros.
+    rewrite /unsettledR.
+    eapply derivationsR'_ok_supports; eauto.
+  Qed.
+
 End derivationsR.
 
 (* conveniences for the common pattern *)
@@ -273,16 +316,74 @@ Notation init_derivationR cls path q :=
   (derivationR cls%_cpp_name (path%_cpp_name ++ [cls%_cpp_name]) q).
 
 (**
-[wp_init_identity this tu cls Q] updates the identities of [this] by
-updating the [derivationR] of all base classes (transitively) and
-producing the new identity for "this".
+The identity of an object of class [cls] goes through these states:
+
+- During construction, each base constructor returns its base's identity
+  settled with that base as most-derived class.  [wp_unsettle_identity]
+  makes it unsettled right away, and [wp_init_identity] settles the identity
+  of the whole object only after all bases are initialized.  In between, a
+  virtual call through an already-built base is undefined: from the
+  constructor's own ctor-initializer ([class.base.init]/18), or from a later
+  base's constructor, of which the earlier base is no base
+  ([class.cdtor]/4).  Compilers disagree there: Clang writes the derived
+  class's vptrs before a base initializer that mentions [this], GCC after
+  all bases.  So the rules allow no dispatch.
+- During destruction, the members are destroyed with the identity settled
+  for [cls] ([class.cdtor]/4 makes calls from member destructors dispatch in
+  [cls]).  Then [wp_revert_identity] unsettles every base, and right before
+  each base's destructor [wp_settle_identity] settles that base's identity
+  with the base as most-derived class.  A call through a base whose
+  destructor has not started yet, from the destructor of another base, is
+  undefined ([class.cdtor]/4).
+
+Unsettled tokens still witness the subobjects for conversions, which need no
+identity.
+*)
+
+(**
+[wp_init_identity this tu cls Q] sets the identity of [this] (of class
+[cls]) and of all its bases (transitively), which must be unsettled, to
+[cls] as most-derived class.
 *)
 Definition wp_init_identity `{Σ : cpp_logic, σ : genv} (p : ptr) (tu : translation_unit)
     (cls : globname) (Q : mpred) : mpred :=
-  p |-> derivationsR tu false cls [] 1$m **
+  p |-> unsettledR tu false cls 1$m **
   (p |-> derivationsR tu true cls [cls] 1$m -* Q).
 
-Section wp_init_identity.
+(**
+[wp_unsettle_identity this tu b Q] runs right after the constructor of the
+base subobject [this] (of class [b]) returns: it takes the identity that
+constructor established, with [b] as most-derived class, and makes it
+unsettled.
+*)
+Definition wp_unsettle_identity `{Σ : cpp_logic, σ : genv} (p : ptr) (tu : translation_unit)
+    (b : globname) (Q : mpred) : mpred :=
+  p |-> derivationsR tu true b [b] 1$m **
+  (p |-> unsettledR tu true b 1$m -* Q).
+
+(**
+[wp_revert_identity this tu cls Q] runs in the destructor of [this] (of
+class [cls]) after the members are destroyed: it takes the identity of
+[this] and of its bases, with [cls] as most-derived class, drops [cls]'s own
+token, and leaves the bases unsettled.
+*)
+Definition wp_revert_identity `{Σ : cpp_logic, σ : genv} (p : ptr) (tu : translation_unit)
+    (cls : globname) (Q : mpred) : mpred :=
+  p |-> derivationsR tu true cls [cls] 1$m **
+  (p |-> unsettledR tu false cls 1$m -* Q).
+
+(**
+[wp_settle_identity this tu b Q] runs in a destructor right before the
+destructor of the base subobject [this] (of class [b]): it settles the
+identity of [this] and its bases with [b] as most-derived class, which is
+what [b]'s destructor expects.
+*)
+Definition wp_settle_identity `{Σ : cpp_logic, σ : genv} (p : ptr) (tu : translation_unit)
+    (b : globname) (Q : mpred) : mpred :=
+  p |-> unsettledR tu true b 1$m **
+  (p |-> derivationsR tu true b [b] 1$m -* Q).
+
+Section with_cpp.
   Context `{Σ : cpp_logic, σ : genv}.
   Implicit Types (p : ptr) (Q : mpred).
 
@@ -292,28 +393,25 @@ Section wp_init_identity.
   Proof.
     rewrite /wp_init_identity.
     iIntros (sub) "Q [X Y]".
-    iDestruct (derivationsR_ok with "X") as "[X %]"; eauto.
+    iDestruct (unsettledR_ok with "X") as "[X %]"; eauto.
     iFrame.
     iIntros "X". iApply "Q".
     iApply "Y".
     iApply derivationsR_ok_supports; eauto.
   Qed.
-End wp_init_identity.
 
-(**
-[wp_revert_identity this tu cls Q] updates the identities of [this] by
-taking the [identity] of this class and transitively updating the
-[identity] of all base classes to remove [cls] as the most derived
-class.
-*)
-Definition wp_revert_identity `{Σ : cpp_logic, σ : genv} (p : ptr) (tu : translation_unit)
-    (cls : globname) (Q : mpred) : mpred :=
-  p |-> derivationsR tu true cls [cls] 1$m **
-  (p |-> derivationsR tu false cls [] 1$m -* Q).
-
-Section with_cpp.
-  Context `{Σ : cpp_logic, σ : genv}.
-  Implicit Types (p : ptr) (Q : mpred).
+  Lemma wp_unsettle_identity_frame p tu tu' cls Q Q' :
+    sub_module tu tu' ->
+    Q' -* Q |-- wp_unsettle_identity p tu cls Q' -* wp_unsettle_identity p tu' cls Q.
+  Proof.
+    rewrite /wp_unsettle_identity.
+    iIntros (sub) "Q [X Y]".
+    iDestruct (derivationsR_ok with "X") as "[X %]"; eauto.
+    iFrame.
+    iIntros "X". iApply "Q".
+    iApply "Y".
+    iApply unsettledR_ok_supports; eauto.
+  Qed.
 
   Lemma wp_revert_identity_frame p tu tu' cls Q Q' :
     sub_module tu tu' ->
@@ -325,16 +423,39 @@ Section with_cpp.
     iFrame.
     iIntros "X". iApply "Q".
     iApply "Y".
+    iApply unsettledR_ok_supports; eauto.
+  Qed.
+
+  Lemma wp_settle_identity_frame p tu tu' cls Q Q' :
+    sub_module tu tu' ->
+    Q' -* Q |-- wp_settle_identity p tu cls Q' -* wp_settle_identity p tu' cls Q.
+  Proof.
+    rewrite /wp_settle_identity.
+    iIntros (sub) "Q [X Y]".
+    iDestruct (unsettledR_ok with "X") as "[X %]"; eauto.
+    iFrame.
+    iIntros "X". iApply "Q".
+    iApply "Y".
     iApply derivationsR_ok_supports; eauto.
   Qed.
 
-  (** sanity chect that initialization and revert are inverses *)
+  (** sanity check that initialization and revert are inverses *)
   Lemma wp_init_revert p tu cls Q :
-    let REQ := p |-> derivationsR tu false cls [] 1$m in
+    let REQ := p |-> unsettledR tu false cls 1$m in
     REQ ** Q
     |-- wp_init_identity p tu cls (wp_revert_identity p tu cls (REQ ** Q)).
   Proof.
     rewrite /wp_revert_identity/wp_init_identity.
+    iIntros "[$ $] $ $".
+  Qed.
+
+  (** and so are unsettling and settling a base *)
+  Lemma wp_unsettle_settle p tu b Q :
+    let REQ := p |-> derivationsR tu true b [b] 1$m in
+    REQ ** Q
+    |-- wp_unsettle_identity p tu b (wp_settle_identity p tu b (REQ ** Q)).
+  Proof.
+    rewrite /wp_unsettle_identity/wp_settle_identity.
     iIntros "[$ $] $ $".
   Qed.
 End with_cpp.
@@ -838,8 +959,10 @@ Definition wpi_bases `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
       *)
       ERROR ("wpi_bases: missing base class initializer: ", cls)
     | i :: nil =>
-      (* there is an initializer for this class *)
-      wpi tu ρ cls this (Tnamed b) i (wpi_bases bases Q)
+      (* there is an initializer for this class; once it returns, the base's
+         identity is unsettled until [wp_init_identity] *)
+      wpi tu ρ cls this (Tnamed b) i
+        (wp_unsettle_identity (this ,, _base cls b) tu b (wpi_bases bases Q))
     | _ :: _ :: _ =>
       (* there are multiple initializers for this, so we fail *)
       ERROR ("wpi_bases: multiple initializers for base: ", cls, b)
@@ -859,6 +982,7 @@ Section with_cpp.
     rewrite/wpi_bases-/(wpi_bases _ _ _ _ _).
     do 2!(case_match; auto). iIntros "?".
     iApply wpi_frame; [done|].
+    iApply wp_unsettle_identity_frame; [done|].
     by iApply IHbases.
   Qed.
 End with_cpp.
@@ -1164,19 +1288,46 @@ End wp_ctor.
 
 (** ** Weakest precondition of a destructor *)
 
+(**
+[wpd_base tu cls this b Q] destroys the base subobject [this ,, _base cls b]:
+it settles that base's identity with [b] as most-derived class, which [b]'s
+destructor expects, and only then destroys it.
+*)
+Definition wpd_base `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
+    (cls : globname) (this : ptr) (b : globname) (Q : epred) : mpred :=
+  let base := this ,, _base cls b in
+  wp_settle_identity base tu b (interp tu (FreeTemps.delete None (Tnamed b) base) Q).
+
+(** [wpd_bases tu cls this bases Q] destroys the [bases] in reverse order. *)
 Definition wpd_bases `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
-    (cls : globname) (this : ptr) (bases : list globname) (Q : epred) : mpred :=
-  let del_base base := FreeTemps.delete None (Tnamed base) (this ,, _base cls base) in
-  interp tu (FreeTemps.seqs_rev (List.map del_base bases)) Q.
+    (cls : globname) (this : ptr) : list globname -> epred -> mpred :=
+  fix wpd_bases (bases : list globname) (Q : epred) : mpred :=
+  match bases with
+  | nil => Q
+  | b :: bases => wpd_bases bases (wpd_base tu cls this b Q)
+  end.
 
 Section with_cpp.
   Context `{Σ : cpp_logic, σ : genv}.
   Implicit Types (Q : epred).
 
+  Lemma wpd_base_frame tu tu' cls this b Q Q' :
+    sub_module tu tu' ->
+    Q -* Q' |-- wpd_base tu cls this b Q -* wpd_base tu' cls this b Q'.
+  Proof.
+    intros. rewrite /wpd_base. iIntros "HQ".
+    iApply wp_settle_identity_frame; [done|].
+    by iApply interp_frame_strong.
+  Qed.
+
   Lemma wpd_bases_frame tu tu' cls this bases Q Q' :
     sub_module tu tu' ->
     Q -* Q' |-- wpd_bases tu cls this bases Q -* wpd_bases tu' cls this bases Q'.
-  Proof. apply interp_frame_strong. Qed.
+  Proof.
+    intros. move: Q Q'. induction bases as [|b bases IH]; intros; cbn.
+    { by iIntros "HQ". }
+    iIntros "HQ". iApply IH. by iApply wpd_base_frame.
+  Qed.
 End with_cpp.
 
 Definition wpd_members `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
