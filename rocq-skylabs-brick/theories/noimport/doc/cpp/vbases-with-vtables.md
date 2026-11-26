@@ -499,6 +499,29 @@ right before its own destructor. That is stricter than "the bases not yet destro
 undefined ([class.cdtor]/4). Stage 1 should keep the same choice for `Gvstruct`, or justify a
 different one.
 
+**Residual window: a base initializer's temporaries.** Stage 0 still hands out a settled token in
+one window where the call is undefined. `wpi` (`logic/initializers.v`) destroys the temporaries of a
+base's mem-initializer (`interp tu free`) *before* its continuation, and that continuation is
+`wp_unsettle_identity`. So while those temporaries are destroyed, the base that was just built is
+still settled with itself as most-derived class, and a call through it dispatches in that phase. For
+`C : B1x, B2` with `B1x : B1`, where a temporary in `B1x`'s mem-initializer calls `b1->f()` on `C`'s
+`B1` from its destructor, the rules give `B1x`'s overrider.
+- The call is undefined: it runs in `C`'s ctor-initializer before the base mem-initializers have
+  completed ([class.base.init]/18). It is also outside the temporary's own object, so the cdtor rule
+  does not make it defined.
+- Clang and GCC agree with the rules today: at `-O0` and `-O2` both call `B1x`'s overrider (measured
+  by the fresh-context review of SkyLabsAI/BRiCk#564). They write `C`'s vptrs either before a base
+  initializer (Clang, when it mentions `this`, and then the base's own constructor overwrites them)
+  or after all bases (GCC), never between a base's constructor and the end of its mem-initializer.
+- That agreement is a property of today's compilers, not of the language. A conforming compiler may
+  write `C`'s vptrs right after each base constructor returns, and the gate counts any compiler. The
+  rules would then dispatch to `B1x`'s overrider where compiled code reaches `C`'s. This is not a
+  gate pass today, but it rests on implementation behaviour the standard leaves free.
+- The fix is cheap: in base initializers, run `wp_unsettle_identity` right after the constructor
+  returns and before the temporaries are destroyed. It loses no defined call. Any call on a subobject
+  of `C` in that window is undefined by [class.base.init]/18, and calls on the temporary itself or on
+  unrelated objects need no token of `C`. See open question 6.
+
 - **A: early vptr write in `Gstruct` constructors.**
   - The program: `B1` saves `g_b1 = this` and has `virtual int f()` returning 1; `C : B1, B2`
     overrides `f` to return 2; `C() : B2(g_b1->f(), this)`; then `if (c.x == 1) for(;;);`.
@@ -570,3 +593,9 @@ to `Gstruct`. They are independent of virtual bases.
    more spec burden), or an observation law on `vptrR` (one axiom)?
 5. **Tokens for `Gstruct` classes** that only inherit virtual functions (no `has_vtable`): add
    them now, or keep the current set until dispatch on such classes is needed?
+6. **Unsettle before a base initializer's temporaries are destroyed?** Stage 0 unsettles a base
+   after its mem-initializer's temporaries are gone, so they are destroyed with the base settled
+   for itself, a window where calls are undefined but today's compilers agree with the rules
+   ("Residual window" above). Moving `wp_unsettle_identity` before `interp tu free` for base
+   initializers closes it at no cost to defined code. Should that be a follow-up to stage 0, or wait
+   for stage 1's `wp_set_identity` rules?
