@@ -64,7 +64,7 @@ Section with_cpp.
     ▷ wp_vla_bounds tu ρ es (▷ wp_block tu ρ ss Q)
     |-- wp_block tu ρ (Sdecl [Dvla_bounds es] :: ss) Q.
   Proof.
-    rewrite (wp_block_unfold _ ρ (Sdecl _ :: _)) /= wp_decls_eq /=.
+    rewrite (wp_block_unfold _ ρ (Sdecl _ :: _)) /= /wp_block_head /= wp_decls_eq /=.
     iIntros "H !> !>". iApply (wp_vla_bounds_frame with "[] H").
     iIntros "H !> !> !> !>".
     iApply (wp_block_frame with "[] H"). iIntros (rt) "H".
