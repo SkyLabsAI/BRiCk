@@ -190,30 +190,30 @@ that compiler to be installed for Docker mode:
 ```lisp
 (rule
  (target cxx-tool)
- (deps (universe) (sandbox none))
+ (deps (universe))
  (action
   (progn
    (with-stdout-to %{target}
     (run %{bin:cpp2v-toolchain} wrapper
-     --runner %{bin:cpp2v-run} --config %{dep:cpp-environment}
+     --runner %{bin:cpp2v-run} --config-from-argument
      --host-tool clang++ --container-tool clang++))
    (run chmod +x %{target}))))
 ```
 
-The generator shell-quotes paths and records hashes of the host tool, runner,
-and configuration. `universe` and `sandbox none` ensure recorded absolute paths
-come from the current build tree rather than another checkout's shared cache.
-`wrapper --config-from-argument` generates a shared adapter whose first argument
-is the configuration, rather than capturing `--config` at generation time. The
-two options are mutually exclusive. This form requires an executable host tool
-and verifies the recorded runner/native tool identities on invocation, including
-when relocating an installed adapter. The inline Rocq command uses this form;
-its imported version fingerprint tracks the shared adapter while each quotation
-tracks its own configuration.
+The generator shell-quotes paths and records hashes of the host tool and runner.
+`universe` ensures their identities are refreshed rather than taken from a
+shared cache. `wrapper --config-from-argument` generates a shared adapter whose
+first argument is the configuration, rather than capturing a sandbox-local
+`--config` path at generation time. It resolves recorded tools directly when
+available, or accepts byte-identical installed tools from `PATH` after sandbox
+or installation relocation. This form requires an executable host tool. The
+inline Rocq command uses it; its imported version fingerprint tracks the shared
+adapter while each quotation tracks its own configuration.
 
 Invoke the adapter explicitly, or call the runner directly:
 
 ```sh
+./cxx-tool cpp-environment -c source.cpp -o source.o
 cpp2v-run --config cpp-environment -- clang++ -c source.cpp -o source.o
 cpp2v-run --config cpp-environment -- python3 check.py
 cpp2v-run --config cpp-environment -- ./tests

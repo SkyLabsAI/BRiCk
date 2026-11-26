@@ -9,17 +9,19 @@
   cpp_environment_dependency.v)
  (action
   (progn
-   (with-stdout-to
-    native_environment
-    (run
-     env
-     -u
-     CPP2V_DOCKER_IMAGE
-     -u
-     CPP2V_DOCKER_USER
-     CPP2V_DOCKER_ENABLED=n
-     %{bin:cpp2v-toolchain}
-     configure))
+   (run
+    env
+    -u
+    CPP2V_DOCKER_IMAGE
+    -u
+    CPP2V_DOCKER_USER
+    CPP2V_DOCKER_ENABLED=n
+    %{bin:cpp2v-toolchain}
+    configure
+    --workspace
+    %{workspace_root}/../..
+    --output
+    native_environment)
    (write-file invalid_environment "cpp_env_version=99\n")
    (write-file
     cpp_environment_dependency.v
