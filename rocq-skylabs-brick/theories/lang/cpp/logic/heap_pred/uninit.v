@@ -6,6 +6,7 @@
 Require Import skylabs.lang.cpp.logic.heap_pred.prelude.
 Require Import skylabs.lang.cpp.logic.heap_pred.valid.
 Require Import skylabs.lang.cpp.logic.heap_pred.null.
+Require Import skylabs.lang.cpp.logic.heap_pred.simple.
 Require Import skylabs.lang.cpp.logic.heap_pred.tptsto.
 
 #[local] Set Printing Coercions.
@@ -62,5 +63,12 @@ Section with_cpp.
   Proof.
     rewrite uninitR_tptstoR tptstoR_nonnull _at_pers _at_nonnullR. eauto.
   Qed.
+
+  (** [uninitR] through [Trealigned]; see [tptstoR_realigned]. *)
+  Lemma uninitR_realigned n ty q :
+    aligned_ofR ty ** uninitR (Trealigned n ty) q -|-
+    (aligned_ofR (Trealigned n ty) ** [| is_heap_type (Trealigned n ty) |]) **
+      uninitR ty q.
+  Proof. rewrite uninitR.unlock. apply tptstoR_realigned. Qed.
 
 End with_cpp.

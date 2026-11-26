@@ -18,6 +18,7 @@
 
 namespace clang {
 class Attr;
+class TypedefType;
 class Decl;
 class Stmt;
 class Expr;
@@ -103,6 +104,25 @@ bool is_dependent(const clang::Expr *);
 uint64_t modelTypeAlign(const clang::ASTContext &ctxt,
                         const clang::QualType &qt);
 
+// The alignment, in bits, of a use of typedef [type] that cpp2v prints
+// itself, if any: that of a scalar typedef with an alignment attribute, such
+// as <<typedef int X32 __attribute__((aligned(32)))>>. cpp2v prints such a
+// use as [Trealigned] of the underlying type when the alignment differs from
+// BRiCk's for that type (see [modelTypeAlign]), and as the underlying type
+// otherwise.
+std::optional<uint64_t> typedefAlign(const clang::ASTContext &ctxt,
+                                     const clang::TypedefType *type);
+
+// Whether cpp2v prints [qt] as [Trealigned] at its head: a typedef with an
+// alignment attribute that differs from BRiCk's for its underlying type.
+bool realignedTypedefHead(const clang::ASTContext &ctxt,
+                          const clang::QualType &qt);
+
+// Whether cpp2v prints different alignments in [a] and [b], two types that
+// Clang considers the same: below their heads with [head], or from them.
+bool realignedDiffer(const clang::ASTContext &ctxt, clang::QualType a,
+                     clang::QualType b, bool head);
+
 // The alignment, in bytes, of a field that cpp2v prints with a [Trealigned]
 // type, if [field] is one.
 std::optional<uint64_t> realignedFieldAlign(const clang::ASTContext &ctxt,
@@ -122,7 +142,8 @@ private:
     ClangPrinter(const ClangPrinter &from, const clang::Decl *decl)
         : compiler_(from.compiler_), context_(from.context_),
           mangleContext_(from.mangleContext_), trace_(from.trace_), decl_{decl},
-          comment_{from.comment_}, typedefs_{from.typedefs_} {}
+          comment_{from.comment_}, typedefs_{from.typedefs_},
+          eraseAlignment{from.eraseAlignment} {}
 
 public:
     // An under-aligned object (a field of a packed record, or an element of
@@ -147,6 +168,11 @@ public:
     // that BRiCk's array initialization rules see the field's element type.
     const clang::Expr *realignedInit{nullptr};
     uint64_t realignedInitAlign{0};
+
+    // Set while printing a name: C++ identifies types that differ only in
+    // the alignment of a typedef (<<X32*>> and <<int*>>), so names print
+    // them without [Trealigned].
+    bool eraseAlignment{false};
 
     // Prints [e], the initializer of an object of type [ty] that is only
     // [align]-aligned when [align] is set and [ty] is an array type.
@@ -184,6 +210,10 @@ private:
                                     loc::loc);
 
 public:
+    /// The function being printed (see [withDecl]), if any: the enclosing
+    /// function of the statements of its body.
+    const clang::FunctionDecl *getFunction() const;
+
     clang::ASTContext &getContext() { return *context_; }
 
     const clang::CompilerInstance &getCompiler() { return *compiler_; }
@@ -322,6 +352,28 @@ public:
 
     // Expression type with its value category represented by reference types.
     fmt::Formatter &printDeclType(CoqPrinter &, const clang::Expr *);
+
+    /// Print [qt] as the type of a value: without the [Trealigned] that a
+    /// realigned typedef at its head would print (see [typedefAlign]), since
+    /// alignment is a property of objects. Types under [qt], such as the
+    /// pointee of a pointer, keep theirs.
+    fmt::Formatter &printValueQualType(CoqPrinter &print,
+                                       const clang::QualType &qt, loc::loc loc);
+
+    /// Print [e], which initializes an object or binds a reference of type
+    /// [dest] (a variable, a parameter, a returned object, an assigned
+    /// object, an element, a member), converted to [dest] where the types
+    /// differ only by the alignments cpp2v prints (see [typedefAlign]).
+    /// Clang has no node for such a conversion, since the types are the
+    /// same, but in BRiCk they are not: a pointer to an [int] is not a
+    /// pointer to a [Trealigned 32 Tint]. The conversion is a [Cnoop], whose
+    /// rule makes the prover show that the value has the new type, or that
+    /// the referenced object has the new alignment.
+    fmt::Formatter &printExprAt(CoqPrinter &print, const clang::Expr *e,
+                                const clang::QualType &dest,
+                                OpaqueNames &names);
+    fmt::Formatter &printExprAt(CoqPrinter &print, const clang::Expr *e,
+                                const clang::QualType &dest);
 
     fmt::Formatter &printQualType(CoqPrinter &print, const clang::QualType &qt,
                                   loc::loc loc);

@@ -380,6 +380,19 @@ Module decltype.
       Succeed Example _0 : bool_decide (tq_le QM QC) := I.
       (* END upstream *)
 
+      (** [Trealigned] at the head of a type only states the alignment of
+          an object, not its values ([has_type_realigned]): a value of type
+          [t] initializes an object of type [Trealigned n t], and a
+          variable may be named at a type that differs only so. A pointer
+          whose pointee differs by its alignment needs a conversion, which
+          cpp2v prints as [Cnoop] (with no Clang node for it), since the
+          pointer types have different values ([has_type]). *)
+      Definition same_but_alignment (dt t : type) : Prop :=
+        unrealign_head dt = unrealign_head t.
+      #[local] Instance same_but_alignment_dec dt t :
+        Decision (same_but_alignment dt t).
+      Proof. rewrite /same_but_alignment. apply _. Defined.
+
       Definition can_initialize (dt : decltype) (t : decltype) : M unit :=
         let ref_conv dt t :=
           qual_norm (fun dq dt => qual_norm (fun q t =>
@@ -411,7 +424,7 @@ Module decltype.
           | Tptr dt , Tptr t =>
               ptr_conv dt t
           | dt , t =>
-              let* _ := guard (dt = t) in mret ()
+              let* _ := guard (same_but_alignment dt t) in mret ()
           end.
 
       Fixpoint check_args (ar : function_arity) (ts : list decltype) (tes : list decltype) : M unit :=
@@ -673,7 +686,11 @@ Module decltype.
         | Eglobal nm ty =>
             let* from_env := type_of_global_or_field nm in
             trace ("from_env = "%bs, from_env) $
-            let* _ := require_eq (unrealign from_env) (normalize_type ty) in
+            (* A redeclaration may name the variable at a type that differs
+               only by its alignment ([same_but_alignment]). *)
+            let* _ := if bool_decide (same_but_alignment from_env (normalize_type ty))
+                      then mret ()
+                      else require_eq from_env (normalize_type ty) in
             mret $ tref QM (normalize_type ty)
         | Eglobal_member nm ty =>
             match nm with
@@ -1092,8 +1109,6 @@ Module decltype.
         trace d
         match d with
         | Dvar lname ty oinit =>
-            (* An under-aligned variable is named at its underlying type. *)
-            let ty := unrealign ty in
             let* _ :=
               match oinit with
               | None => mret tt
@@ -1108,7 +1123,6 @@ Module decltype.
             let* (bindings : list bindings) := with_var v t $ traverse (T:=eta list) check_binding ds in
             mret $ big_op bindings
         | Dinit _ nm ty oinit =>
-            let ty := unrealign ty in
             let* _ :=
               match oinit with
               | None => mret tt

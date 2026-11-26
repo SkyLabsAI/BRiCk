@@ -1265,6 +1265,15 @@ Fixpoint unrealign_head (t : type) : type :=
   | _ => t
   end.
 
+(** [strip_realigned t] drops every [Trealigned] wrapper at the head of [t]
+    (not under qualifiers). [Trealigned] does not change the size of a type,
+    so subscript offsets do not distinguish it ([o_sub_realigned]). *)
+Fixpoint strip_realigned (t : type) : type :=
+  match t with
+  | Trealigned _ t => strip_realigned t
+  | _ => t
+  end.
+
 Lemma unrealign_head_arithmetic t : is_arithmetic t -> unrealign_head t = t.
 Proof. rewrite /is_arithmetic. induction t => //= H. by rewrite IHt. Qed.
 
@@ -1292,6 +1301,20 @@ Definition to_heap_type (t : type) : heap_type :=
 Lemma to_heap_type_qualified cv t :
   to_heap_type (Tqualified cv t) = to_heap_type t.
 Proof. done. Qed.
+
+(** A heap object of type [Trealigned n t] has an unqualified scalar type
+    [t], itself a heap type. *)
+Lemma is_heap_type_realigned n t :
+  is_heap_type (Trealigned n t) ->
+  is_heap_type t /\ is_value_type t /\ erase_qualifiers t = t /\
+  (if t is Trealigned _ _ then False else True).
+Proof.
+  rewrite /is_heap_type /=. case_bool_decide as E => //=. injection E as E.
+  rewrite orb_false_r /is_value_type /= => H.
+  destruct t; simpl in *; try done;
+    try solve [exfalso; eapply unqual_erase_qualifiers; eauto];
+    rewrite -?E ?bool_decide_true //.
+Qed.
 
 Lemma heap_type_not_qualified cv t : is_heap_type (Tqualified cv t) -> False.
 Proof.

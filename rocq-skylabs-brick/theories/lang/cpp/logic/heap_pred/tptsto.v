@@ -6,6 +6,7 @@
 Require Import skylabs.lang.cpp.logic.heap_pred.prelude.
 Require Import skylabs.lang.cpp.logic.heap_pred.valid.
 Require Import skylabs.lang.cpp.logic.heap_pred.null.
+Require Import skylabs.lang.cpp.logic.heap_pred.simple.
 
 #[local] Set Printing Coercions.
 Implicit Types (σ : genv) (p : ptr) (o : offset).
@@ -193,5 +194,38 @@ Section tptstoR.
   #[global] Instance tptsto_fuzzyR_heap_type ty q v :
     Observe [| is_heap_type ty |] (tptsto_fuzzyR ty q v).
   Proof. rewrite tptsto_fuzzyR.unlock. refine _. Qed.
+
+  (** ** [Trealigned]
+
+      An object of type [ty] is one of type [Trealigned n ty] when its
+      address has both alignments ([tptsto_realigned]). Each lemma below
+      lifts this through one layer of definitions, from the layer below. *)
+  Lemma tptstoR_realigned n ty q v :
+    aligned_ofR ty ** tptstoR (Trealigned n ty) q v -|-
+    (aligned_ofR (Trealigned n ty) ** [| is_heap_type (Trealigned n ty) |]) **
+      tptstoR ty q v.
+  Proof.
+    apply Rep_equiv_at => p.
+    rewrite !_at_sep _at_only_provable !aligned_ofR_aligned_ptr_ty !_at_tptstoR.
+    rewrite tptsto_realigned.
+    by iSplit; [iIntros "[[% %] $]" | iIntros "[[% %] $]"]; iPureIntro.
+  Qed.
+
+  Lemma tptsto_fuzzyR_realigned n ty q v :
+    aligned_ofR ty ** tptsto_fuzzyR (Trealigned n ty) q v -|-
+    (aligned_ofR (Trealigned n ty) ** [| is_heap_type (Trealigned n ty) |]) **
+      tptsto_fuzzyR ty q v.
+  Proof.
+    rewrite tptsto_fuzzyR.unlock !bi.sep_exist_l. f_equiv=> v'.
+    rewrite val_related_realigned. iSplit.
+    - iIntros "(A & % & T)".
+      iDestruct (bi.equiv_entails_1_1 _ _ (tptstoR_realigned n ty q v') with "[$A $T]")
+        as "[[A %] T]".
+      by iFrame "∗%".
+    - iIntros "([A %] & % & T)".
+      iDestruct (bi.equiv_entails_1_2 _ _ (tptstoR_realigned n ty q v') with "[$A $T]")
+        as "[A T]"; first by iPureIntro.
+      by iFrame "∗%".
+  Qed.
 
 End tptstoR.

@@ -2,8 +2,8 @@ typedef int X32 __attribute__((aligned(32)));
 
 // Clang loads and stores through a pointer or reference to an over-aligned
 // type with that type's alignment, and the optimizer relies on it, while X32*
-// and int* are the same type. Such accesses, member accesses through such a
-// pointer and builtin calls on one are unsupported.
+// and int* are the same type: BRiCk checks conversions to X32*, but member
+// accesses through a pointer to an over-aligned class are unsupported.
 struct S3 { int a; int b; };
 typedef S3 S64 __attribute__((aligned(64)));
 int deref_over(int *q) { X32 *p = q; return *p; }

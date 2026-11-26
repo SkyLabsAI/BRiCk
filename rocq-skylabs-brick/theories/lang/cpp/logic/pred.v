@@ -293,6 +293,17 @@ Module Type CPP_LOGIC
     Axiom tptsto_nonnull : forall {σ} ty q a,
       tptsto ty q nullptr a |-- False.
 
+    (** The points-to of [Trealigned n ty] is that of [ty] when the pointer
+        has both alignments, as for [type_ptr_realigned]. For instance, an
+        <<int>> can be read through a 32-aligned <<X32*>>, with
+        <<typedef int X32 __attribute__((aligned(32)))>>, and a variable of
+        type <<X32>> through an <<int*>>. [is_heap_type (Trealigned n ty)]
+        restricts [ty] to the scalar types [Trealigned] can wrap. *)
+    Axiom tptsto_realigned : forall {σ} n ty q p v,
+      [| aligned_ptr_ty ty p |] ** tptsto (Trealigned n ty) q p v -|-
+      [| aligned_ptr_ty (Trealigned n ty) p /\ is_heap_type (Trealigned n ty) |] **
+        tptsto ty q p v.
+
     #[global] Declare Instance tptsto_timeless : Timeless4 tptsto.
     #[global] Declare Instance tptsto_cfractional {σ} ty : CFractional2 (tptsto ty).
 
@@ -577,6 +588,15 @@ Module Type CPP_LOGIC
 
     Axiom type_ptr_aligned_pure : forall ty p,
       type_ptr ty p |-- [| aligned_ptr_ty ty p |].
+
+    (** [Trealigned n ty] only changes the alignment of [ty]: not its size
+        ([size_of], [o_sub_realigned]) nor its values ([has_type_realigned]).
+        So a pointer to an object of type [ty] that also has the alignment of
+        [Trealigned n ty] points to an object of type [Trealigned n ty], and
+        back. *)
+    Axiom type_ptr_realigned : forall n ty p,
+      [| aligned_ptr_ty ty p |] ** type_ptr (Trealigned n ty) p -|-
+      [| aligned_ptr_ty (Trealigned n ty) p |] ** type_ptr ty p.
 
     Axiom type_ptr_off_nonnull : forall ty p o,
       type_ptr ty (p ,, o) |-- [| p <> nullptr |].
@@ -1468,6 +1488,7 @@ Section has_type.
     induction 1.
     { done. }
     { by rewrite -!has_type_qual_iff. }
+    { by rewrite !has_type_realigned. }
     all: by rewrite !has_type_nonptr ?has_type_prop_raw_bytes_of_val.
   Qed.
 
@@ -1493,6 +1514,10 @@ Section has_type.
     by rewrite !has_type_or_undef_unfold -!has_type_qual_iff.
   Qed.
 
+  Lemma has_type_or_undef_realigned n t v :
+    has_type_or_undef v (Trealigned n t) -|- has_type_or_undef v t.
+  Proof. by rewrite !has_type_or_undef_unfold has_type_realigned. Qed.
+
   Lemma has_type_or_undef_val_related ty v1 v2 :
     val_related ty v1 v2 ->
     has_type_or_undef v1 ty |-- has_type_or_undef v2 ty.
@@ -1500,6 +1525,7 @@ Section has_type.
     induction 1.
     { done. }
     { by rewrite -!has_type_or_undef_qual_iff. }
+    { by rewrite !has_type_or_undef_realigned. }
     all: rewrite !has_type_or_undef_nonundef//.
     all: by rewrite !has_type_nonptr// has_type_prop_raw_bytes_of_val.
   Qed.
