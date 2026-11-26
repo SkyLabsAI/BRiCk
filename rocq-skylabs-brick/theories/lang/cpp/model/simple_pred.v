@@ -1713,7 +1713,7 @@ Module SimpleCPP.
         rewrite _dot.unlock /DOT_dot /= in E.
         rewrite Ezero in Hpath, E0. rewrite E.
         exact (raw_path_valid_subscript_increase vt root l h prefix
-          (erase_qualifiers elem) n d (n+i) (Z.of_N esz * i) z0
+          (sub_type elem) n d (n+i) (Z.of_N esz * i) z0
           Hpath E0 (proj1 Hrange) Hb).
       Qed.
       Lemma aligned_ptr_ty_subscript resolve p ty sz i `{!RealignOk ty} :
@@ -1783,6 +1783,14 @@ Module SimpleCPP.
       type_ptr ty p |-- [| aligned_ptr_ty ty p |].
     Proof. iDestruct 1 as "(_ & $ & _)". Qed.
 
+    Lemma type_ptr_realigned n ty p :
+      [| aligned_ptr_ty ty p |] ** type_ptr (Trealigned n ty) p -|-
+      [| aligned_ptr_ty (Trealigned n ty) p |] ** type_ptr ty p.
+    Proof.
+      rewrite /type_ptr o_sub_realigned. cbn [size_of].
+      by iSplit; iIntros "(% & % & % & % & $ & $)".
+    Qed.
+
     Lemma type_ptr_size ty p : type_ptr ty p |-- [| is_Some (size_of σ ty) |].
     Proof. iDestruct 1 as "(_ & _ & % & _)"; eauto. Qed.
 
@@ -1850,6 +1858,40 @@ Module SimpleCPP.
     Theorem tptsto_nonnull ty q a :
       tptsto ty q nullptr a |-- False.
     Proof. rewrite tptsto_nonnull_obs. iDestruct 1 as "[]". Qed.
+
+    #[local] Lemma oaddr_encodes_realigned n ty q oa p v :
+      is_heap_type (Trealigned n ty) ->
+      oaddr_encodes (Trealigned n ty) q oa p v -|- oaddr_encodes ty q oa p v.
+    Proof.
+      move=> /is_heap_type_realigned [_ [_ [E Hr]]].
+      have Henc : encoding_type (Trealigned n ty) = encoding_type ty.
+      { rewrite /encoding_type /= E. by destruct ty. }
+      by rewrite /oaddr_encodes /addr_encodes /encodes /pure_encodes Henc.
+    Qed.
+
+    Lemma tptsto_realigned n ty q p v :
+      [| aligned_ptr_ty ty p |] ** tptsto (Trealigned n ty) q p v -|-
+      [| aligned_ptr_ty (Trealigned n ty) p /\ is_heap_type (Trealigned n ty) |] **
+        tptsto ty q p v.
+    Proof.
+      rewrite /tptsto. iSplit.
+      - iIntros "(%Hal & %Hnn & %Hh & %oa & T & M & E & H)".
+        have [Hht _] := is_heap_type_realigned _ _ Hh.
+        iDestruct (bi.equiv_entails_1_1 _ _ (type_ptr_realigned n ty p) with "[$T]")
+          as "[%Hal' T]"; first by iPureIntro.
+        iRevert "E H".
+        rewrite oaddr_encodes_realigned // /has_type_or_undef has_type_realigned.
+        iIntros "E H".
+        iSplitR; first by iPureIntro. iSplitR; first by iPureIntro.
+        iSplitR; first by iPureIntro. iExists oa. iFrame.
+      - iIntros "([%Hal' %Hh] & %Hnn & %Hht & %oa & T & M & E & H)".
+        iDestruct (bi.equiv_entails_1_2 _ _ (type_ptr_realigned n ty p) with "[$T]")
+          as "[%Hal T]"; first by iPureIntro.
+        iSplitR; first by iPureIntro. iSplitR; first by iPureIntro.
+        iSplitR; first by iPureIntro. iExists oa.
+        rewrite oaddr_encodes_realigned // /has_type_or_undef has_type_realigned.
+        iFrame.
+    Qed.
 
     (* Relies on [oaddr_encodes_fractional] *)
     #[global] Instance tptsto_cfractional ty : CFractional2 (tptsto ty) := _.
@@ -2022,7 +2064,7 @@ Module SimpleCPP.
         rewrite _dot.unlock /DOT_dot /= in E.
         rewrite (E i) in Hpi. rewrite (E k) in Hpk. rewrite (E j).
         exact (raw_path_valid_subscript_interpolate vt1 vt2 vt root l h
-          prefix (erase_qualifiers ty) n d sz i j k Hijk Hpos Hpi Hpk).
+          prefix (sub_type ty) n d sz i j k Hijk Hpos Hpi Hpk).
     Qed.
 
     Lemma strict_valid_ptr_sub_guarded : ∀ (i j k : Z) p ty vt1 vt2,
@@ -2358,7 +2400,7 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
         rewrite /= /raw_offset_merge /o_sub in Heq.
         move: Heq. case_decide; first contradiction.
         rewrite /= /mkOffset /mk_offset_seg /= /simple_pointers_utils.o_sub_off.
-        destruct (size_of σ (erase_qualifiers ty)); simpl.
+        destruct (size_of σ (sub_type ty)); simpl.
         + repeat case_decide; try discriminate; naive_solver.
         + discriminate.
       - have Hroot := ptr_alloc_id_offset (p:=nullptr) (o:=o_sub σ ty i)
@@ -2416,7 +2458,7 @@ Module VALID_PTR : VALID_PTR_AXIOMS PTRS_IMPL VALUES_DEFS_IMPL L L.
       iRight. iExists l, h. iFrame "B". iSplit; first done.
       iPureIntro. rewrite Hraw in Hpath.
       apply (raw_path_valid_strict_prefix vt root l h _
-        [(o_sub_ (erase_qualifiers ty) i, Z.of_N sz * i)%Z]);
+        [(o_sub_ (sub_type ty) i, Z.of_N sz * i)%Z]);
         [discriminate|exact Hpath].
     Qed.
 

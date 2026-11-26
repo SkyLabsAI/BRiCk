@@ -35,5 +35,5 @@ Proof. done. Qed.
 Lemma qualified_missing_layout_zero_offset σ ty :
   size_of σ ty = None -> o_sub σ (Tconst ty) 0 = o_invalid σ.
 Proof.
-  intros Hsz. rewrite /o_sub /= size_of_erase_qualifiers Hsz. done.
+  intros Hsz. rewrite /o_sub /sub_type /= size_of_strip_realigned size_of_erase_qualifiers Hsz. done.
 Qed.

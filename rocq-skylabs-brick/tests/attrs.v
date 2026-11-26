@@ -81,7 +81,8 @@ Proof. reflexivity. Qed.
 
 A typedef's attributes are kept at each use of the typedef, as
 [Tattributed], except the no-op ones and [aligned], which cpp2v accounts
-for itself. *)
+for itself: a use of a scalar typedef whose alignment differs from its
+underlying type's is [Trealigned]. *)
 Definition var_type (n : name) : option type :=
   match source.(symbols) !! n with
   | Some (Ovar t _) => Some t
@@ -94,6 +95,7 @@ Example typedef_attributes :
               if PrimString.compare k "Aligned"%pstring is Eq then 1
               else if PrimString.compare k "MayAlias"%pstring is Eq then 3 else 0
           | Some Tint => 2
+          | Some (Trealigned 16 Tint) => 4
           | _ => 0
-          end) <$> (var_type <$> ["g_aligned"; "g_quiet"; "g_mixed"]%cpp_name) = [2; 2; 3].
+          end) <$> (var_type <$> ["g_aligned"; "g_quiet"; "g_mixed"]%cpp_name) = [4; 2; 3].
 Proof. vm_compute. reflexivity. Qed.

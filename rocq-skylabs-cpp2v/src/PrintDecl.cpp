@@ -1139,7 +1139,7 @@ static fmt::Formatter &printFunction(CoqPrinter &print,
     if (ClangPrinter::debug && cprint.trace(Trace::Decl))
         cprint.trace("printFunction", loc::of(decl));
     guard::ctor _(print, "Build_Func");
-    cprint.printQualType(print, decl.getReturnType(), loc::of(decl))
+    cprint.printValueQualType(print, decl.getReturnType(), loc::of(decl))
         << fmt::line;
     printFunctionParams(print, decl, cprint) << fmt::nbsp;
     cprint.printCallingConv(print, decl) << fmt::nbsp;
@@ -1168,7 +1168,7 @@ static fmt::Formatter &printMethod(CoqPrinter &print, const CXXMethodDecl &decl,
     print.output() << fmt::BOOL(decl.isStatic()) << fmt::nbsp;
 
     guard::ctor _(print, "Build_Method");
-    cprint.printQualType(print, decl.getReturnType(), loc::of(decl))
+    cprint.printValueQualType(print, decl.getReturnType(), loc::of(decl))
         << fmt::nbsp;
     printClassName(print, decl.getParent(), cprint, loc::of(decl)) << fmt::nbsp;
     cprint.printQualifier(print, decl.isConst(), decl.isVolatile())
@@ -1373,8 +1373,9 @@ static fmt::Formatter &printDestructor(CoqPrinter &print,
 } // namespace
 
 // Clang may place a parameter of an under-aligned typedef type at an address
-// aligned only to the typedef (<<alloca i32, align 1>> at -O0), while BRiCk
-// types the parameter object at the erased type, which is naturally aligned.
+// aligned only to the typedef (<<alloca i32, align 1>> at -O0). cpp2v prints a
+// scalar typedef's alignment (see [typedefAlign]), so only other types, whose
+// parameter objects BRiCk would type naturally aligned, are rejected.
 template <typename T>
 static const char *supportedFunction(const T &decl, const ASTContext &ctxt) {
     for (auto param : decl.parameters()) {
@@ -1383,6 +1384,13 @@ static const char *supportedFunction(const T &decl, const ASTContext &ctxt) {
             continue;
         if (ctxt.toBits(ctxt.getDeclAlign(param)) < modelTypeAlign(ctxt, ty))
             return "under-aligned parameters are not supported";
+        // A by-value parameter lives at the ABI's alignment, which Clang
+        // trusts in its function rather than that of an over-aligned typedef
+        // (see [unsafeVar]), while BRiCk would type the parameter object at
+        // the typedef's alignment.
+        if (modelTypeAlign(ctxt, ty) >
+            modelTypeAlign(ctxt, ty.getCanonicalType()))
+            return "parameters of over-aligned types are not supported";
     }
     return nullptr;
 }
@@ -1414,7 +1422,7 @@ static fmt::Formatter &printVar(CoqPrinter &print, const VarDecl &decl,
         return print.output() << "global_init.Delayed";
     } else if (auto e = decl.getInit()) {
         guard::ctor _(print, "global_init.Init");
-        return cprint.printExpr(print, e);
+        return cprint.printExprAt(print, e, decl.getType());
     } else if (decl.getTemplateSpecializationKind() ==
                TemplateSpecializationKind::TSK_ImplicitInstantiation) {
         return print.output() << "global_init.ImplicitInit";

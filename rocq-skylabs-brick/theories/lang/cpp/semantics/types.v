@@ -349,6 +349,10 @@ Lemma realign_ok_erase_qualifiers ty sz :
   realign_ok (erase_qualifiers ty) sz = realign_ok ty sz.
 Proof. by rewrite /realign_ok realigned_head_erase_qualifiers. Qed.
 
+Lemma size_of_strip_realigned σ ty :
+  size_of σ (strip_realigned ty) = size_of σ ty.
+Proof. induction ty => //=. Qed.
+
 Lemma size_of_erase_qualifiers σ ty :
   size_of σ (erase_qualifiers ty) = size_of σ ty.
 Proof.

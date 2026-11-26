@@ -1,7 +1,9 @@
-cpp2v erases a typedef to its underlying type, losing an alignment attribute.
-Where Clang's alignof of a type differs from that of the type cpp2v prints,
-cpp2v prints Clang's constant instead of an alignof expression; this also
-covers reference types and GNU alignof of a variable.
+cpp2v prints a use of a scalar typedef with an alignment attribute as
+Trealigned of its underlying type when the alignments differ, and the
+typedef's declaration as its underlying type. Where Clang's alignof of a type
+differs from that of the type without its alignment attributes, cpp2v prints
+Clang's constant instead of an alignof expression; this also covers reference
+types and GNU alignof of a variable.
 
   $ check_cpp2v test.cpp
   cpp2v -v -check-types -o test_17_cpp.v test.cpp -- -std=c++17 2>&1 | sed 's/^ *[0-9]* | //'
@@ -24,19 +26,19 @@ covers reference types and GNU alignof of a variable.
 The function bodies in order (a_over, a_under, a_ref, a_plain, s_over, a_var,
 a_inc, a_e8, a_e1), then the two static assertions.
 
-  $ grep -o -E '(Eint [0-9]+%Z|E(alignof|sizeof)[a-z_]* \([^)]*\)) Tulong' test_17_cpp.v
+  $ grep -o -E '(Eint [0-9]+%Z|E(alignof|sizeof)[a-z_]* \(([^()]|\([^()]*\))*\)) Tulong' test_17_cpp.v
   Eint 16%Z Tulong
   Eint 1%Z Tulong
   Eint 16%Z Tulong
   Ealignof (inl Tint) Tulong
-  Esizeof (inl Tint) Tulong
+  Esizeof (inl (Trealigned 16 Tint)) Tulong
   Eint 16%Z Tulong
   Eint 4%Z Tulong
   Eint 8%Z Tulong
   Eint 1%Z Tulong
-  Esizeof (inl Tint) Tulong
+  Esizeof (inl (Trealigned 16 Tint)) Tulong
   Eint 16%Z Tulong
-  Esizeof (inl Tushort) Tulong
+  Esizeof (inl (Trealigned 1 Tushort)) Tulong
   Eint 1%Z Tulong
 
 A field placed below the alignment of its type, by a packed attribute, a
@@ -45,27 +47,28 @@ element type, with the alignment the layout guarantees. The comparison uses
 the alignment BRiCk assumes, which for an enumeration is that of its
 underlying type: E1 at offset 1 is wrapped, E8 at offset 4 is not.
 Under-aligned fields of class type are still unsupported. (The counts
-include member expressions, which carry the field's type.) A variable of an
-under-aligned typedef type gets the same wrapper (an over-aligned one does
-not need it), or an unsupported type when the wrapper cannot express it. A
-function with an under-aligned parameter is unsupported. E stands for the
-enumeration type, which older Clangs print through a shared type name.
+include member expressions, which carry the field's type.) Variables,
+parameters and expressions of a scalar aligned typedef type have its
+Trealigned type, under- or over-aligned (X is 16-aligned, X32 32-aligned and
+L4 4-aligned), except values, which have no alignment; a variable of an
+under-aligned typedef of a class type has an unsupported type. E stands for
+the enumeration type, which older Clangs print through a shared type name.
 
   $ grep -o -E '\(Q[a-z_]+ \(Trealigned [0-9]+ (\([^()]*\)|[^() ]+)\)\)|\(Tarray \(Trealigned [0-9]+ (\([^()]*\)|[^() ]+)\) [0-9]+\)|\(Trealigned [0-9]+ (\([^()]*\)|[^() ]+)\)' test_17_cpp.v | sed -E 's/\(Tenum n[0-9]+\)/E/; s/ t[0-9]+\)/ E)/' | sort | uniq -c
         3 (Qconst (Trealigned 1 Tshort))
         1 (Qconst (Trealigned 1 Tulonglong))
         7 (Tarray (Trealigned 1 Tulonglong) 2)
-        1 (Tarray (Trealigned 1 Tushort) 1)
+        6 (Tarray (Trealigned 1 Tushort) 1)
         9 (Trealigned 1 E)
        12 (Trealigned 1 Tint)
         1 (Trealigned 1 Tulonglong)
-       11 (Trealigned 1 Tushort)
+       20 (Trealigned 1 Tushort)
+        5 (Trealigned 16 Tint)
         9 (Trealigned 2 Tint)
+        3 (Trealigned 32 Tint)
+        1 (Trealigned 4 Tlonglong)
   $ grep -o -E '"[^"]*not supported"|"under-aligned variable"' test_17_cpp.v
-  "under-aligned variable"
   "under-aligned fields of class type are not supported"
-  "under-aligned parameters are not supported"
-  "under-aligned variable"
   "under-aligned variable"
 
 Clang rejects an array whose element size is not a multiple of the element
@@ -120,14 +123,12 @@ operators also take an optional type in templates.
   "w") false (Tarray (Trealigned 1 Tushort) 2))) (Eint 1%Z Tint) (Some (Qconst (Trealigned 1 Tushort))
 
 An aligned allocation or deallocation function receives Clang's alignment of
-the allocated type, which BRiCk would compute from the erased type, so a new
-or delete of a type with an alignment attribute that needs one is
-unsupported; an ordinary new is unchanged.
+the allocated type, which BRiCk computes from the type cpp2v prints: a new or
+delete of a scalar typedef with an alignment attribute is supported, since its
+Trealigned type has that alignment.
 
   $ tr -s ' \n' ' ' < test_17_cpp.v | grep -o -E 'Eunsupported "CXX(New|Delete)Expr"|Enew \(' | sort | uniq -c
-        1 Enew (
-        1 Eunsupported "CXXDeleteExpr"
-        1 Eunsupported "CXXNewExpr"
+        2 Enew (
 
 BRiCk fixes integer sizes and equates the alignment of integers and pointers
 with their size, so cpp2v rejects targets that disagree, such as i386, where
@@ -142,31 +143,30 @@ long is 32 bits and long long is 4-byte aligned.
 
 Clang loads and stores through a pointer or reference to an over-aligned type
 with that type's alignment, and its optimizer relies on it (with
-X32 *p = q, it folds the test of whether p is 32-aligned to true), while
-BRiCk, given the erased type, would only require q to be int-aligned. Clang
-takes that alignment from a typedef attribute even for arrays and incomplete
-types, through implicit derived-to-base conversions, and from the declaration
-a variable is accessed through. So these are unsupported, in source order:
-the accesses in deref_over, index_over, store_over (the assignment) and
-arrow_over, the builtin call in copy_over, the access in arr_over, the
-builtin call in void_over, the accesses in redecl_over, extern_over and
-gnu_over, the member access in base_over, the call in vcall_over, the use of
-the captured parameter in capture_over, the access in weak_over, the
-conversion in vbase_over and the delete in delete_over. The accesses after
-them are supported: Clang allocates variables (defined at their declared
-alignment) and temporaries, and lays out records, and BRiCk takes record
-alignment from Clang. C++ requires every definition of a variable declared
-with alignas to repeat it, so an extern alignas declaration is trusted.
+X32 *p = q, it folds the test of whether p is 32-aligned to true). For a
+scalar typedef, the pointer's type is a pointer to Trealigned 32 Tint, and the
+conversion from q, which Clang does not print, is a checked no-op cast: BRiCk
+requires q to be 32-aligned, so the accesses in deref_over, index_over and
+store_over and the builtin call in copy_over are supported. Otherwise, Clang
+takes that alignment from a typedef attribute even for classes, arrays and
+incomplete types, through implicit derived-to-base conversions, and from the
+declaration a variable is accessed through, which BRiCk would trust without
+a definition here that Clang allocates. So these are unsupported, in source
+order: the access in arrow_over, the access in arr_over, the builtin call in
+void_over, the accesses in redecl_over, extern_over and gnu_over, the member
+access in base_over, the call in vcall_over, the use of the captured parameter
+in capture_over, the access in weak_over, the conversion in vbase_over and the
+delete in delete_over. The accesses after them are supported: Clang allocates
+variables (defined at their declared alignment) and temporaries, and lays out
+records, and BRiCk takes record alignment from Clang. C++ requires every
+definition of a variable declared with alignas to repeat it, so an extern
+alignas declaration is trusted.
 
   $ check_cpp2v over.cpp
   cpp2v -v -check-types -o over_17_cpp.v over.cpp -- -std=c++17 2>&1 | sed 's/^ *[0-9]* | //'
   rocq c -w -notation-overridden -w -notation-incompatible-prefix over_17_cpp.v
   $ tr -s ' \n' ' ' < over_17_cpp.v | grep -o -E 'Eunsupported "[^"]*"'
-  Eunsupported "UnaryOperator"
-  Eunsupported "ArraySubscriptExpr"
-  Eunsupported "BinaryOperator"
   Eunsupported "MemberExpr"
-  Eunsupported "CallExpr"
   Eunsupported "ParenExpr"
   Eunsupported "CallExpr"
   Eunsupported "DeclRefExpr"
@@ -178,6 +178,13 @@ with alignas to repeat it, so an extern alignas declaration is trusted.
   Eunsupported "DeclRefExpr"
   Eunsupported "ImplicitCastExpr"
   Eunsupported "CXXDeleteExpr"
+
+C++ identifies types that differ only in the alignment of a typedef, such as
+X32* and int*, so a function's name erases the alignment of its parameter
+types.
+
+  $ grep -o '"index_over" ((Tptr Tint) :: nil)' over_17_cpp.v
+  "index_over" ((Tptr Tint) :: nil)
 
 An alignment attribute on a typedef can also lower the alignment, below the
 alignment BRiCk assumes for the erased type. Clang allocates temporaries of
