@@ -55,10 +55,13 @@ With `--output FILE`, the workspace is recorded **relative to the physical
 directory containing `FILE`**, so a checkout can move as long as its directory
 layout is preserved. `cpp2v-run` resolves it from the configuration's physical
 location (following symlinks to the file, e.g. from a Dune sandbox), never from
-the caller's working directory. Generate the file at its final location: a Dune
-rule using `--output` needs `(sandbox none)`. Without `--output` (standard
-output), the configuration's location is unknown and the workspace is recorded
-as an absolute path.
+the caller's working directory. The relation between the workspace and output
+must be the same while generating and consuming the file. In a normal in-tree
+Dune build, `--workspace %{workspace_root}/../..` preserves this relation across
+the sandbox and final build tree. This assumes that the build directory is a
+direct child of the source workspace. Without `--output` (standard output), the
+configuration's location is unknown and the workspace is recorded as an
+absolute path.
 
 `cpp2v-toolchain copy SOURCE DESTINATION` copies a configuration, preserving
 its selected mode, image ID, and platform, and rebases a relative workspace so
@@ -89,12 +92,12 @@ Generate configuration once per consumer, with environment dependencies declared
  (target cpp-environment)
  (deps
   (universe)
-  (sandbox none)
   (env_var CPP2V_DOCKER_ENABLED)
   (env_var CPP2V_DOCKER_IMAGE)
   (env_var CPP2V_DOCKER_USER))
  (action
-  (run %{bin:cpp2v-toolchain} configure --output %{target}
+  (run %{bin:cpp2v-toolchain} configure
+   --workspace %{workspace_root}/../.. --output %{target}
    --default-image IMAGE --opam)))
 
 (rule

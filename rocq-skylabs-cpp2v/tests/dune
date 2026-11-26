@@ -1,9 +1,10 @@
-; Unsandboxed: the recorded workspace is relative to this file's final location.
+; The build directory is directly below the source workspace, so the relation
+; between the target and this workspace path is unchanged by sandboxing.
+
 (rule
  (target cpp_environment)
  (deps
   (universe)
-  (sandbox none)
   (env_var CPP2V_DOCKER_ENABLED)
   (env_var CPP2V_DOCKER_IMAGE)
   (env_var CPP2V_DOCKER_USER))
@@ -11,6 +12,8 @@
   (run
    %{bin:cpp2v-toolchain}
    configure
+   --workspace
+   %{workspace_root}/../..
    --output
    %{target}
    --default-image
@@ -26,9 +29,12 @@
    %{target}
    (progn
     ; The subshell keeps the adapter's exec from replacing the Cram shell.
-    (echo "cpp2v_command() (\nconfig=$(mktemp)\ntrap 'rm -f \"$config\"' EXIT\ncat > \"$config\" <<'EOF'\n")
+    (echo
+     "cpp2v_command() (\nconfig=$(mktemp)\ntrap 'rm -f \"$config\"' EXIT\ncat > \"$config\" <<'EOF'\n")
     (cat %{dep:cpp_environment})
-    (echo "EOF\nset -- \"$config\" \"$@\"\n")
+    ; The temporary file has a different anchor from the embedded configuration.
+    (echo
+     "EOF\nprintf 'cpp_env_workspace=%q\\n' \"$DUNE_SOURCEROOT\" >> \"$config\"\nset -- \"$config\" \"$@\"\n")
     (run
      %{bin:cpp2v-toolchain}
      wrapper
@@ -70,6 +76,7 @@
 
 ; Issue #510: a 1,000,000-byte string literal. The source is generated so
 ; that the literal is not checked in.
+
 (rule
  (target long_string_literal.cpp)
  (action
