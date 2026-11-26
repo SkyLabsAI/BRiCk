@@ -294,7 +294,9 @@ Definitions for the semantics
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;the&nbsp;statements&nbsp;that&nbsp;follow&nbsp;the&nbsp;one&nbsp;exiting&nbsp;with&nbsp;<span class="inlinecode"><span class="id" title="var">Goto</span></span> <span class="inlinecode"><span class="id" title="var">l</span></span>,&nbsp;up&nbsp;to&nbsp;the&nbsp;next<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;declaration,&nbsp;and&nbsp;resumes&nbsp;there&nbsp;(see&nbsp;<span class="inlinecode"><span class="id" title="var">wp_block</span></span>&nbsp;in&nbsp;<span class="inlinecode"><span class="id" title="var">stmt.v</span></span>);&nbsp;otherwise<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="inlinecode"><span class="id" title="var">Goto</span></span> <span class="inlinecode"><span class="id" title="var">l</span></span>&nbsp;leaves&nbsp;the&nbsp;block&nbsp;like&nbsp;<span class="inlinecode"><span class="id" title="keyword">return</span></span>,&nbsp;destroying&nbsp;its&nbsp;locals&nbsp;in<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="inlinecode"><span class="id" title="var">Kfree</span></span>.&nbsp;Reaching&nbsp;the&nbsp;function&nbsp;boundary&nbsp;is&nbsp;<span class="inlinecode"><span class="id" title="var">False</span></span>.&nbsp;*)</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="inlinecode"><span class="id" title="var">Kfree</span></span>.&nbsp;A&nbsp;block&nbsp;that&nbsp;has&nbsp;gone&nbsp;past&nbsp;the&nbsp;statement&nbsp;labeled&nbsp;<span class="inlinecode"><span class="id" title="var">l</span></span>&nbsp;continues<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="inlinecode"><span class="id" title="var">Goto</span></span> <span class="inlinecode"><span class="id" title="var">l</span></span>&nbsp;as&nbsp;the&nbsp;block&nbsp;from&nbsp;that&nbsp;statement,&nbsp;run&nbsp;again&nbsp;(see&nbsp;<span class="inlinecode"><span class="id" title="var">Klabels</span></span>&nbsp;in<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="inlinecode"><span class="id" title="var">stmt.v</span></span>).&nbsp;Reaching&nbsp;the&nbsp;function&nbsp;boundary&nbsp;is&nbsp;<span class="inlinecode"><span class="id" title="var">False</span></span>.&nbsp;*)</span><br/>
 .<br/>
 #[<span class="id" title="var">global</span>] <span class="id" title="keyword">Instance</span> <a id="ReturnType_ihn" class="idref" href="#ReturnType_ihn"><span class="id" title="instance">ReturnType_ihn</span></a> : <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#Inhabited"><span class="id" title="class">Inhabited</span></a> <a class="idref" href="skylabs.lang.cpp.logic.wp.html#ReturnType"><span class="id" title="inductive">ReturnType</span></a>.<br/>
 <span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">repeat</span> <span class="id" title="tactic">constructor</span>. <span class="id" title="keyword">Qed</span>.<br/>
@@ -354,7 +356,7 @@ existentials.<br/>
 </div>
 
 <div class="doc">
-<a id="lab122"></a><h1 class="section">Regions</h1>
+<a id="lab123"></a><h1 class="section">Regions</h1>
 
     To model the stack frame in separation logic, we use a notion of regions
     that are threaded through the semantics.
@@ -526,7 +528,7 @@ This relation is <i>weaker</i> because it requires the argument to respect <span
 </div>
 
 <div class="doc">
-<a id="lab123"></a><h3 class="section">Indeterminately sequenced computations</h3>
+<a id="lab124"></a><h3 class="section">Indeterminately sequenced computations</h3>
 
       Note that <span class="inlinecode"><span class="id" title="var">FreeTemps.t</span></span> is sequenced in reverse order of construction
       to encode the stack discipline guaranteed by C++.
@@ -708,7 +710,7 @@ This relation is <i>weaker</i> because it requires the argument to respect <span
 </div>
 
 <div class="doc">
-<a id="lab124"></a><h3 class="section">sequencing of monadic compuations</h3>
+<a id="lab125"></a><h3 class="section">sequencing of monadic compuations</h3>
 
 </div>
 <div class="code">
@@ -758,7 +760,7 @@ This relation is <i>weaker</i> because it requires the argument to respect <span
 </div>
 
 <div class="doc">
-<a id="lab125"></a><h3 class="section">interleaving of monadic values</h3>
+<a id="lab126"></a><h3 class="section">interleaving of monadic values</h3>
 
 
 <div class="paragraph"> </div>
@@ -831,7 +833,7 @@ lifting <span class="inlinecode"><a class="idref" href="skylabs.lang.cpp.logic.w
 </div>
 
 <div class="doc">
-<a id="lab126"></a><h3 class="section">evaluation by a scheme</h3>
+<a id="lab127"></a><h3 class="section">evaluation by a scheme</h3>
 
 <div class="paragraph"> </div>
 
@@ -1069,7 +1071,7 @@ lvalues
 </div>
 
 <div class="doc">
-<a id="lab127"></a><h2 class="section">Glvalues that may denote bit-fields</h2>
+<a id="lab128"></a><h2 class="section">Glvalues that may denote bit-fields</h2>
 
 </div>
 <div class="code">
@@ -1195,7 +1197,7 @@ lvalues
 </div>
 
 <div class="doc">
-<a id="lab128"></a><h1 class="section">prvalue</h1>
+<a id="lab129"></a><h1 class="section">prvalue</h1>
 
 </div>
 <div class="code">
@@ -1491,7 +1493,7 @@ C++ evaluation semantics guarantees that all expressions of type <span class="in
 </div>
 
 <div class="doc">
-<a id="lab129"></a><h2 class="section">boolean operands</h2>
+<a id="lab130"></a><h2 class="section">boolean operands</h2>
 
 <div class="paragraph"> </div>
 
@@ -1528,7 +1530,7 @@ C++ evaluation semantics guarantees that all expressions of type <span class="in
 </div>
 
 <div class="doc">
-<a id="lab130"></a><h1 class="section">xvalues</h1>
+<a id="lab131"></a><h1 class="section">xvalues</h1>
 
 </div>
 <div class="code">
@@ -1909,7 +1911,7 @@ Discarded values.
 </div>
 
 <div class="doc">
-<a id="lab131"></a><h1 class="section">Statements</h1>
+<a id="lab132"></a><h1 class="section">Statements</h1>
 
 </div>
 <div class="code">
