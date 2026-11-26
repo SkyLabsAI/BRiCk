@@ -30,6 +30,10 @@ Require Import skylabs.lang.cpp.logic.dynamic_cast.
 Require Import skylabs.lang.cpp.logic.func.
 Require Import skylabs.iris.extra.bi.errors.
 
+#[local] Arguments ERROR {_ _} _%_bs.
+#[local] Arguments UNSUPPORTED {_ _} _%_bs.
+#[local] Arguments UNREACHABLE {_ _} _%_bs.
+
 (**
 [std_initlist_ctor_available tu cls aety] holds when [cls] declares the
 constructor that [wp_init_initlist_std] reduces [Einitlist_std] to.
@@ -1173,9 +1177,9 @@ Module Type Expr.
               match dyncast mdc target with
               | Some (Some off) => Q (Vptr (p ,, off)) free
               | Some None => Q (Vptr nullptr) free
-              | None => False
+              | None => UNSUPPORTED ("dynamic_cast: undetermined result", mdc, target)
               end))
-      | _, _ => False
+      | _, _ => ERROR "dynamic_cast: not a cast between pointers to classes"
       end
       |-- wp_operand (Ecast (Cdynamic (Tptr ty)) e) Q.
 
@@ -1189,15 +1193,15 @@ Module Type Expr.
             else with_mdc p src (fun mdc =>
               match mdc with
               | most_derived :: path => Q (Vptr (p ,, base_to_derived most_derived path)) free
-              | [] => False
+              | [] => UNREACHABLE "dynamic_cast: empty most-derived path"
               end))
-      | _, _ => False
+      | _, _ => ERROR "dynamic_cast: not a cast from a pointer to a class to a pointer to void"
       end
       |-- wp_operand (Ecast (Cdynamic (Tptr ty)) e) Q.
 
     (** To a reference. A failing cast throws <<std::bad_cast>>
-        ([expr.dynamic.cast]/10), and exceptions are not supported: there is no
-        rule for it. *)
+        ([expr.dynamic.cast]/10), and exceptions are not supported: that case
+        is [UNSUPPORTED]. *)
     Axiom wp_lval_cast_dynamic_ref : forall e ty Q,
       match drop_qualifiers (type_of e), drop_qualifiers ty with
       | Tnamed src, Tnamed target =>
@@ -1205,9 +1209,10 @@ Module Type Expr.
             with_mdc p src (fun mdc =>
               match dyncast mdc target with
               | Some (Some off) => Q (p ,, off) free
-              | _ => False
+              | Some None => UNSUPPORTED ("dynamic_cast: failing cast to a reference throws std::bad_cast", mdc, target)
+              | None => UNSUPPORTED ("dynamic_cast: undetermined result", mdc, target)
               end))
-      | _, _ => False
+      | _, _ => ERROR "dynamic_cast: not a cast between glvalues of class type"
       end
       |-- wp_lval (Ecast (Cdynamic (Tref ty)) e) Q.
 
@@ -1218,9 +1223,10 @@ Module Type Expr.
             with_mdc p src (fun mdc =>
               match dyncast mdc target with
               | Some (Some off) => Q (p ,, off) free
-              | _ => False
+              | Some None => UNSUPPORTED ("dynamic_cast: failing cast to a reference throws std::bad_cast", mdc, target)
+              | None => UNSUPPORTED ("dynamic_cast: undetermined result", mdc, target)
               end))
-      | _, _ => False
+      | _, _ => ERROR "dynamic_cast: not a cast between glvalues of class type"
       end
       |-- wp_xval (Ecast (Cdynamic (Trv_ref ty)) e) Q.
 
