@@ -1930,6 +1930,7 @@ Module Expr.
       | Esubscript _ _ _ => 34
       | Esizeof _ _ => 35
       | Ealignof _ _ => 36
+      | Etypeid _ _ => 80
       | Eoffsetof _ _ _ => 37
       | Econstructor _ _ _ => 38
       | Einherited_constructor _ _ _ => 67
@@ -1989,7 +1990,7 @@ Module Expr.
       | 32 => box_Emember_call
       | 33 => box_Eoperator_call
       | 34 => box_Eassign
-      | 35 | 36 => box_Esizeof
+      | 35 | 36 | 80 => box_Esizeof
       | 37 => box_Eoffsetof
       | 38 => box_Econstructor
       | 39 => Expr
@@ -2085,7 +2086,8 @@ Module Expr.
       | Eoperator_call oo oi es => Box_Eoperator_call oo oi es
       | Esubscript l r t => Box_Eassign l r t
       | Esizeof a t
-      | Ealignof a t => Box_Esizeof a t
+      | Ealignof a t
+      | Etypeid a t => Box_Esizeof a t
       | Eoffsetof cls m t => Box_Eoffsetof cls m t
       | Econstructor cls es t => Box_Econstructor cls es t
       | Einherited_constructor cls args t => Box_Einherited_constructor cls args t
@@ -2143,7 +2145,7 @@ Module Expr.
       | 32 => box_Emember_call_compare
       | 33 => box_Eoperator_call_compare
       | 34 => box_Eassign_compare
-      | 35 | 36 => box_Esizeof_compare
+      | 35 | 36 | 80 => box_Esizeof_compare
       | 37 => box_Eoffsetof_compare
       | 38 => box_Econstructor_compare
       | 39 => compareE
@@ -2255,6 +2257,7 @@ Module Expr.
 
       | Esizeof a t => COMP (Esizeof a t)
       | Ealignof a t => COMP (Ealignof a t)
+      | Etypeid a t => COMP (Etypeid a t)
       | Eoffsetof cls m t => COMP (Eoffsetof cls m t)
       | Econstructor cls es t => COMP (Econstructor cls es t)
       | Einherited_constructor cls args t => COMP (Einherited_constructor cls args t)

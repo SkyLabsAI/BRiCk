@@ -1,0 +1,92 @@
+     = Some
+         (Eexplicit_cast cast_style.dynamic "D*"
+            (Ecast (Cdynamic "D*") (Ecast Cl2r (Evar "b" "B*"))))
+     : option Expr
+     = Some
+         (Eexplicit_cast cast_style.dynamic "D&"
+            (Ecast (Cdynamic "D&") (Evar "b" "B&")))
+     : option Expr
+     = Some
+         (Eexplicit_cast cast_style.dynamic "void*"
+            (Ecast (Cdynamic "void*") (Ecast Cl2r (Evar "b" "B*"))))
+     : option Expr
+     = Some
+         (Eexplicit_cast cast_style.dynamic "B*"
+            (Ecast (Cderived2base [] "B*") (Ecast Cl2r (Evar "d" "D*"))))
+     : option Expr
+     = Some (Etypeid (inl "int"%cpp_type) "const std::type_info")
+     : option Expr
+     = Some (Etypeid (inl "int"%cpp_type) "const std::type_info")
+     : option Expr
+     = Some (Etypeid (inl "int"%cpp_type) "const std::type_info")
+     : option Expr
+     = Some (Etypeid (inl "int"%cpp_type) "const std::type_info")
+     : option Expr
+     = Some (Etypeid (inl "E"%cpp_type) "const std::type_info")
+     : option Expr
+     = Some
+         (Etypeid (inr (Ederef (Ecast Cl2r (Evar "b" "B*")) "B"))
+            "const std::type_info")
+     : option Expr
+     = Some (Etypeid (inr (Evar "x" "B&")) "const std::type_info")
+     : option Expr
+     = Some
+         (Gstruct
+            {|
+              s_bases := [("B"%cpp_name, {| li_offset := 0 |})];
+              s_fields :=
+                [{|
+                   mem_name := Nid "x";
+                   mem_type := "int";
+                   mem_mutable := false;
+                   mem_init := Some (Eint 0 "int");
+                   mem_layout := {| li_offset := 64 |}
+                 |}];
+              s_virtuals := [("D::~D()"%cpp_name, Some "D::~D()"%cpp_name)];
+              s_overrides := [("B::~B()"%cpp_name, "D::~D()"%cpp_name)];
+              s_dtor := "D::~D()";
+              s_trivially_destructible := false;
+              s_delete := None;
+              s_layout := Unspecified;
+              s_size := 16;
+              s_alignment := 8;
+              s_nonpublic_bases := []
+            |})
+     : option GlobDecl
+     = Some
+         (Gstruct
+            {|
+              s_bases :=
+                [("A1"%cpp_name, {| li_offset := 0 |});
+                 ("A2"%cpp_name, {| li_offset := 0 |});
+                 ("A3"%cpp_name, {| li_offset := 0 |})];
+              s_fields := [];
+              s_virtuals := [];
+              s_overrides := [];
+              s_dtor := "P::~P()";
+              s_trivially_destructible := true;
+              s_delete := None;
+              s_layout := Standard;
+              s_size := 1;
+              s_alignment := 1;
+              s_nonpublic_bases := ["A1"%cpp_name; "A2"%cpp_name]
+            |})
+     : option GlobDecl
+     = Some
+         (Gstruct
+            {|
+              s_bases :=
+                [("A1"%cpp_name, {| li_offset := 0 |});
+                 ("A2"%cpp_name, {| li_offset := 0 |})];
+              s_fields := [];
+              s_virtuals := [];
+              s_overrides := [];
+              s_dtor := "Q::~Q()";
+              s_trivially_destructible := true;
+              s_delete := None;
+              s_layout := Standard;
+              s_size := 1;
+              s_alignment := 1;
+              s_nonpublic_bases := ["A1"%cpp_name]
+            |})
+     : option GlobDecl

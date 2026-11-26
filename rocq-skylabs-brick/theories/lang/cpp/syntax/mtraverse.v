@@ -272,6 +272,7 @@ Module MTraverse.
       | Esubscript e1 e2 t => Esubscript <$> traverseE e1 <*> traverseE e2 <*> ET (traverseT t)
       | Esizeof et t => Esizeof <$> sum_traverse traverseT traverseE et <*> ET (traverseT t)
       | Ealignof et t => Ealignof <$> sum_traverse traverseT traverseE et <*> ET (traverseT t)
+      | Etypeid et t => Etypeid <$> sum_traverse traverseT traverseE et <*> ET (traverseT t)
       | Eoffsetof gn f t => Eoffsetof <$> traverseT gn <*> mret f <*> ET (traverseT t)
       | Econstructor n es t => Econstructor <$> traverseN n <*> traverse (T:=eta list) traverseE es <*> ET (traverseT t)
       | Einherited_constructor n args t => Einherited_constructor <$> traverseN n <*> mret args <*> ET (traverseT t)
@@ -528,7 +529,8 @@ Module MTraverse.
         <*> traverse (T:=eta option) traverseN s.(s_delete)
         <*> mret s.(s_layout)
         <*> mret s.(s_size)
-        <*> mret s.(s_alignment).
+        <*> mret s.(s_alignment)
+        <*> traverse (T:=eta list) traverseCN s.(s_nonpublic_bases).
 
     Definition traverseOpaque (o : Opaque) : F Opaque :=
       Build_Opaque o.(o_size) o.(o_alignment)

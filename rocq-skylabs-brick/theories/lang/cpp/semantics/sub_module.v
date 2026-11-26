@@ -234,6 +234,29 @@ Next Obligation.
   do 2 red in H2. rewrite H in H2. assumption.
 Qed.
 
+(** A smaller table has no more entries. Fuel bounded by [NM.cardinal] (as in
+    [derivationsR] or [dyncast]) therefore suffices for a larger table too. *)
+Lemma type_table_le_cardinal te1 te2 :
+  type_table_le te1 te2 -> NM.cardinal te1 <= NM.cardinal te2.
+Proof.
+  move=> Hle. rewrite !NM.cardinal_1 -(length_map fst (NM.elements te1))
+    -(length_map fst (NM.elements te2)).
+  apply NoDup_incl_length.
+  - have := NM.elements_3w te1.
+    elim: (NM.elements te1) => [|[k v] kvs IH] /= Hnd; first by constructor.
+    inversion Hnd as [|?? Hnin Hnd']; subst. constructor; last exact: IH.
+    move=> /in_map_iff [[k' v'] [/= ? Hin]]; subst k'. apply: Hnin.
+    apply SetoidList.InA_alt. exists (k, v'). split; last done. exact: NM.Key.eq_refl.
+  - move=> k /in_map_iff [[k' v] [/= <- Hin]].
+    have Hfind : te1 !! k' = Some v.
+    { apply NM.find_1, NM.elements_2, SetoidList.InA_alt.
+      exists (k', v). split; last done. split; [exact: NM.Key.eq_refl|done]. }
+    have [gv' [Hfind' _]] := Hle k' v Hfind.
+    apply NM.find_2, NM.elements_1, SetoidList.InA_alt in Hfind'.
+    destruct Hfind' as [[k'' v''] [[Hk _] Hin']]. apply NM.eqL in Hk. simpl in Hk. subst k''.
+    apply in_map_iff. by exists (k', v'').
+Qed.
+
 (** ** Inclusion of [ObjValue] *)
 
 Definition OrDefault_le {T : Set} `{EqDecision T} (ae be : exception_spec.t) (a b : OrDefault T) : bool :=

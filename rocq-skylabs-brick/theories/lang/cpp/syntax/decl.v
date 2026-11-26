@@ -131,9 +131,16 @@ Record Struct' : Set := Build_Struct
   (* ^ size of the structure (including padding) *)
 ; s_alignment : N
   (* ^ alignment of the structure *)
+(* The access of base classes is not implementation-dependent; it comes last
+   only to keep the fields above in their established order. *)
+; s_nonpublic_bases : list classname
+  (* ^ direct bases inherited <<private>> or <<protected>>; any base not
+     listed is public. Bases are non-virtual (cpp2v rejects virtual bases),
+     and a class cannot name the same direct base twice ([class.mi]/3).
+     <<dynamic_cast>> needs this to tell public bases apart ([expr.dynamic.cast]/9). *)
 }.
 Notation Struct := Struct'.
-#[global] Arguments Build_Struct _ _ _ _ _ _ _ _ _ _ : assert.
+#[global] Arguments Build_Struct _ _ _ _ _ _ _ _ _ _ _ : assert.
 #[global] Instance Struct_eq_dec : EqDecision Struct.
 Proof. solve_decision. Defined.
 

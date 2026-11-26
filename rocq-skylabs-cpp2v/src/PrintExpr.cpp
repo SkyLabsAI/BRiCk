@@ -885,7 +885,41 @@ public:
 
     // Unsupported
     IGNORE(CXXThrowExpr)
-    IGNORE(CXXTypeidExpr)
+
+    // <<typeid(op)>> ([expr.typeid]) prints as [Etypeid op t] with [t] the
+    // type of the result (<<const std::type_info>>).
+    // - A potentially-evaluated operand (a glvalue of polymorphic class type,
+    //   [expr.typeid]/4) prints as [inr e]. So does an expression operand
+    //   whose type is dependent, since its polymorphism is not yet known.
+    // - Any other operand prints as [inl ty]: for a type operand, the type;
+    //   for an unevaluated expression operand, its static type. Either way
+    //   [ty] is canonical, with references and top-level (and array element)
+    //   cv-qualifiers removed ([expr.typeid]/5-7), so that two [typeid]s of
+    //   the same type carry syntactically equal types.
+    void VisitCXXTypeidExpr(const CXXTypeidExpr *expr) {
+        auto print_type = [&](QualType ty) {
+            ty = ty.getNonReferenceType().getCanonicalType();
+            ty = ctxt.getUnqualifiedArrayType(ty).getCanonicalType();
+            print.ctor("inl", false);
+            cprint.printQualType(print, ty, loc::of(expr));
+            print.output() << fmt::rparen;
+        };
+
+        print.ctor("Etypeid", false);
+        if (expr->isTypeOperand()) {
+            print_type(expr->getTypeOperand(ctxt));
+        } else {
+            auto op = expr->getExprOperand();
+            if (expr->isPotentiallyEvaluated() || op->isTypeDependent()) {
+                print.ctor("inr", false);
+                cprint.printExpr(print, op, names);
+                print.output() << fmt::rparen;
+            } else {
+                print_type(op->getType());
+            }
+        }
+        done(expr);
+    }
 
     void VisitStmtExpr(const StmtExpr *expr) {
         guard::ctor _{print, "Estmt"};

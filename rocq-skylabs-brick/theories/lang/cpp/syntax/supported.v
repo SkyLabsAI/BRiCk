@@ -391,6 +391,15 @@ Section with_monad.
         | inr e => type_ref (type_of e)
         | inl t => type t
         end <+> type t
+    | Etypeid et t =>
+        (* Only a polymorphic glvalue operand ([inr]) is evaluated.
+           Supported, but the rules (../logic/typeid.v) are stuck on a null
+           glvalue (<<bad_typeid>>), on a class without [derivationR] (no
+           virtual members of its own), and on types outside [typeid_ok]. *)
+        match et with
+        | inr e => expr e
+        | inl t => type t
+        end <+> type t
     | Eoffsetof t1 _ t2 => FAIL "offsetof" <+> type t1 <+> type t2
     | Eassign e1 e2 t | Ebf_assign e1 e2 t => expr e1 <+> expr e2 <+> type t
     | Eassign_op op e1 e2 t | Ebf_assign_op op e1 e2 t => expr e1 <+> expr e2 <+> type t <+> check_binop op (type_of e1) (type_of e2) t
@@ -518,8 +527,11 @@ Section with_monad.
     | Cintegral t
     | Cnull2ptr t | Cnull2memberptr t
     | Cbuiltin2fun t | Cctor t => type t
+    (* Supported, but the rules (../logic/expr.v) are stuck on a failing
+       cast to a reference (<<bad_cast>>) and on a class without
+       [derivationR] (no virtual members of its own). *)
+    | Cdynamic t => type t
     | Clvaluebitcast t => FAIL "lvalue bitcast" <+> type t
-    | Cdynamic t => FAIL "dynamic_cast" <+> type t
     | Cderived2base ts t | Cbase2derived ts t => lst type ts <+> type t
     | Cfloat t | Cint2float t => check_float_cast_target t
     | Cfloat2int t => type t <+> if is_float_type t then FAIL "invalid floating cast target" else OK

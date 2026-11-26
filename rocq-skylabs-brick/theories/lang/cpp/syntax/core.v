@@ -451,6 +451,19 @@ Static typing treats each node like the standard node it mirrors, and
 | Esizeof (_ : type + Expr) (t : type)
 | Ealignof (_ : type + Expr) (t : type)
 (**
+[Etypeid op t] is <<typeid(op)>> ([expr.typeid]); [t] is the type of the
+result, the lvalue <<const std::type_info>>.
+
+- [inl ty] is a type operand, or an expression operand that is not
+  potentially evaluated. For the latter, cpp2v prints the static type of the
+  expression instead. In both cases, cpp2v prints the canonical type with
+  references and top-level cv-qualifiers removed ([expr.typeid]/5–7), so
+  that two <<typeid>>s of the same type carry syntactically equal types.
+- [inr e] is only used for a potentially-evaluated operand, i.e. a glvalue
+  of polymorphic class type ([expr.typeid]/4).
+*)
+| Etypeid (_ : type + Expr) (t : type)
+(**
 NOTE: [Eoffsetof] carries a type instead of a name to support
 dependent types.
 Should be [gn : classname]
@@ -1149,7 +1162,8 @@ with is_dependentE (e : Expr) : bool :=
   | Eoperator_call _ i es => operator_impl.existsb is_dependentN is_dependentT i || existsb is_dependentE es
   | Esubscript e1 e2 t => is_dependentE e1 || is_dependentE e2 || is_dependentT t
   | Esizeof te t
-  | Ealignof te t => sum.existsb is_dependentT is_dependentE te || is_dependentT t
+  | Ealignof te t
+  | Etypeid te t => sum.existsb is_dependentT is_dependentE te || is_dependentT t
   | Eoffsetof gn _ t => is_dependentT gn || is_dependentT t
   | Econstructor n es t => is_dependentN n || existsb is_dependentE es || is_dependentT t
   | Einherited_constructor n _ t => is_dependentN n || is_dependentT t
@@ -1346,7 +1360,8 @@ with has_unsupportedE (e : Expr) : bool :=
   | Eoperator_call _ i es => operator_impl.existsb has_unsupportedN has_unsupportedT i || existsb has_unsupportedE es
   | Esubscript e1 e2 t => has_unsupportedE e1 || has_unsupportedE e2 || has_unsupportedT t
   | Esizeof te t
-  | Ealignof te t => sum.existsb has_unsupportedT has_unsupportedE te || has_unsupportedT t
+  | Ealignof te t
+  | Etypeid te t => sum.existsb has_unsupportedT has_unsupportedE te || has_unsupportedT t
   | Eoffsetof gn _ t => has_unsupportedT gn || has_unsupportedT t
   | Econstructor n es t => has_unsupportedN n || existsb has_unsupportedE es || has_unsupportedT t
   | Einherited_constructor n _ t => has_unsupportedN n || has_unsupportedT t

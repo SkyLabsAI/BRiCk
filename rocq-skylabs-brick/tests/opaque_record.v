@@ -115,5 +115,5 @@ End with_Sigma.
     compatible with a struct carrying the same metadata (see [GlobDecl_le]). *)
 Example opaque_record_not_below_struct :
   GlobDecl_le (Gopaque Bits_opaque)
-    (Gstruct (Build_Struct [] [] [] [] "Bits::~Bits()" true None POD 8 8)) = false.
+    (Gstruct (Build_Struct [] [] [] [] "Bits::~Bits()" true None POD 8 8 [])) = false.
 Proof. reflexivity. Qed.
