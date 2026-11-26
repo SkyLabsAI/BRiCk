@@ -1,0 +1,127 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.flow_off_end</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.proofmode.proofmode</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.bi.errors</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.logic</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="with_cpp" class="idref" href="#with_cpp"><span class="id" title="section">with_cpp</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{<a id="43a705d40096ef54c52f70536b49dc5b" class="idref" href="#43a705d40096ef54c52f70536b49dc5b"><span class="id" title="variable">Σ</span></a> : <span class="id" title="class">cpp_logic</span>} {<a id="0b1d3f605c206c3f68b5282befa8ad5b" class="idref" href="#0b1d3f605c206c3f68b5282befa8ad5b"><span class="id" title="variable">σ</span></a> : <span class="id" title="class">genv</span>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Lemma</span> <a id="Kreturn_nonvoid" class="idref" href="#Kreturn_nonvoid"><span class="id" title="lemma">Kreturn_nonvoid</span></a> <a id="ty:5" class="idref" href="#ty:5"><span class="id" title="binder">ty</span></a> (<a id="Q:6" class="idref" href="#Q:6"><span class="id" title="binder">Q</span></a> : <span class="id" title="axiom">ptr</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">mpred</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">drop_qualifiers</span> <a class="idref" href="skylabs_brick.tests.flow_off_end.html#ty:5"><span class="id" title="variable">ty</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#::type_scope:x_'&lt;&gt;'_x"><span class="id" title="notation">&lt;&gt;</span></a> <span class="id" title="constructor">Tvoid</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">Kreturn</span> <a class="idref" href="skylabs_brick.tests.flow_off_end.html#ty:5"><span class="id" title="variable">ty</span></a> <a class="idref" href="skylabs_brick.tests.flow_off_end.html#Q:6"><span class="id" title="variable">Q</span></a> <span class="id" title="constructor">Normal</span> <span class="id" title="notation">|--</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#::bi_scope:'False'"><span class="id" title="notation">False</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">move</span>=&gt; <span class="id" title="var">H</span>. <span class="id" title="tactic">rewrite</span> /<span class="id" title="definition">Kreturn</span> /=.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="definition">drop_qualifiers</span> <span class="id" title="var">ty</span>) <span class="id" title="var">eqn</span>:<span class="id" title="var">E</span>; <span class="id" title="var">cbn</span>; <span class="id" title="tactic">try</span> <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">ERROR_elim</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">by</span> <span class="id" title="var">exfalso</span>; <span class="id" title="tactic">apply</span> <span class="id" title="var">H</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="Kreturn_int" class="idref" href="#Kreturn_int"><span class="id" title="definition">Kreturn_int</span></a> (<a id="Q:7" class="idref" href="#Q:7"><span class="id" title="binder">Q</span></a> : <span class="id" title="axiom">ptr</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">mpred</span>) : <span class="id" title="definition">Kreturn</span> "int" <a class="idref" href="skylabs_brick.tests.flow_off_end.html#Q:7"><span class="id" title="variable">Q</span></a> <span class="id" title="constructor">Normal</span> <span class="id" title="notation">|--</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#::bi_scope:'False'"><span class="id" title="notation">False</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> /<span class="id" title="definition">Kreturn</span> /= <span class="id" title="lemma">ERROR_elim</span>. <span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="Kreturn_class" class="idref" href="#Kreturn_class"><span class="id" title="definition">Kreturn_class</span></a> (<a id="Q:8" class="idref" href="#Q:8"><span class="id" title="binder">Q</span></a> : <span class="id" title="axiom">ptr</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">mpred</span>) : <span class="id" title="definition">Kreturn</span> "S" <a class="idref" href="skylabs_brick.tests.flow_off_end.html#Q:8"><span class="id" title="variable">Q</span></a> <span class="id" title="constructor">Normal</span> <span class="id" title="notation">|--</span> <a class="idref" href="https://plv.mpi-sws.org/coqdoc/iris//iris.bi.interface.html#::bi_scope:'False'"><span class="id" title="notation">False</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">by</span> <span class="id" title="tactic">rewrite</span> /<span class="id" title="definition">Kreturn</span> /= <span class="id" title="lemma">ERROR_elim</span>. <span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="Kreturn_void_normal" class="idref" href="#Kreturn_void_normal"><span class="id" title="definition">Kreturn_void_normal</span></a> (<a id="Q:9" class="idref" href="#Q:9"><span class="id" title="binder">Q</span></a> : <span class="id" title="axiom">ptr</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">mpred</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Kreturn</span> "void" <a class="idref" href="skylabs_brick.tests.flow_off_end.html#Q:9"><span class="id" title="variable">Q</span></a> <span class="id" title="constructor">Normal</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> (<span class="id" title="notation">Forall</span> <a id="p:10" class="idref" href="#p:10"><span class="id" title="binder">p</span></a> : <span class="id" title="axiom">ptr</span><span class="id" title="notation">,</span> <a class="idref" href="skylabs_brick.tests.flow_off_end.html#p:10"><span class="id" title="variable">p</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">primR</span> "void" 1<span class="id" title="notation">$</span><span class="id" title="notation">m</span> <span class="id" title="definition">Vvoid</span> <span class="id" title="notation">-*</span> <a class="idref" href="skylabs_brick.tests.flow_off_end.html#Q:9"><span class="id" title="variable">Q</span></a> <a class="idref" href="skylabs_brick.tests.flow_off_end.html#p:10"><span class="id" title="variable">p</span></a>)%<span class="id" title="var">I</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="Kreturn_const_void_normal" class="idref" href="#Kreturn_const_void_normal"><span class="id" title="definition">Kreturn_const_void_normal</span></a> (<a id="Q:11" class="idref" href="#Q:11"><span class="id" title="binder">Q</span></a> : <span class="id" title="axiom">ptr</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Notations.html#::type_scope:x_'-&gt;'_x"><span class="id" title="notation">-&gt;</span></a> <span class="id" title="definition">mpred</span>) :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">Kreturn</span> "const void" <a class="idref" href="skylabs_brick.tests.flow_off_end.html#Q:11"><span class="id" title="variable">Q</span></a> <span class="id" title="constructor">Normal</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> (<span class="id" title="notation">Forall</span> <a id="p:12" class="idref" href="#p:12"><span class="id" title="binder">p</span></a> : <span class="id" title="axiom">ptr</span><span class="id" title="notation">,</span> <a class="idref" href="skylabs_brick.tests.flow_off_end.html#p:12"><span class="id" title="variable">p</span></a> <span class="id" title="notation">|-&gt;</span> <span class="id" title="abbreviation">primR</span> "void" 1<span class="id" title="notation">$</span><span class="id" title="notation">c</span> <span class="id" title="definition">Vvoid</span> <span class="id" title="notation">-*</span> <a class="idref" href="skylabs_brick.tests.flow_off_end.html#Q:11"><span class="id" title="variable">Q</span></a> <a class="idref" href="skylabs_brick.tests.flow_off_end.html#p:12"><span class="id" title="variable">p</span></a>)%<span class="id" title="var">I</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_brick.tests.flow_off_end.html#with_cpp"><span class="id" title="section">with_cpp</span></a>.<br/>
+
+<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.parser.plugin.cpp2v</span>.<br/>
+
+<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">implicit_main</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{<br/>
+<span class="id" title="var">int</span> <span class="id" title="var">main</span>() {}<br/>
+<span class="id" title="var">namespace</span> <span class="id" title="var">other</span> <a class="idref" href="skylabs_brick.tests.flow_off_end.html#__cpp_prog"><span class="id" title="section">{</span></a> <a class="idref" href="skylabs_brick.tests.flow_off_end.html#__cpp_prog"><span class="id" title="section">int</span></a> <a class="idref" href="skylabs_brick.tests.flow_off_end.html#__cpp_prog"><span class="id" title="section">main</span></a>() {} }<br/>
+}}.<br/>
+<span class="id" title="var">cpp.prog</span> <span class="id" title="var">explicit_main</span> <span class="id" title="var">prog</span> <span class="id" title="var">cpp</span>:{{ <span class="id" title="var">int</span> <span class="id" title="var">main</span>() { <span class="id" title="keyword">return</span> 7; } }}.<br/>
+
+<br/>
+<span class="id" title="keyword">Definition</span> <a id="function_body" class="idref" href="#function_body"><span class="id" title="definition">function_body</span></a> (<a id="tu:13" class="idref" href="#tu:13"><span class="id" title="binder">tu</span></a> : <span class="id" title="record">translation_unit</span>) (<a id="n:14" class="idref" href="#n:14"><span class="id" title="binder">n</span></a> : <span class="id" title="inductive">name</span>) : <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#option"><span class="id" title="inductive">option</span></a> <span class="id" title="abbreviation">FunctionBody</span> :=<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">match</span> <a class="idref" href="skylabs_brick.tests.flow_off_end.html#tu:13"><span class="id" title="variable">tu</span></a>.(<span class="id" title="projection">symbols</span>) <a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.base.html#4fa0a1d38759705f0ddcbbfc0f886b59"><span class="id" title="notation">!!</span></a> <a class="idref" href="skylabs_brick.tests.flow_off_end.html#n:14"><span class="id" title="variable">n</span></a> <span class="id" title="keyword">with</span><br/>
+&nbsp;&nbsp;| <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Ofunction</span> <span class="id" title="var">f</span>) =&gt; <span class="id" title="var">f</span>.(<span class="id" title="projection">f_body</span>)<br/>
+&nbsp;&nbsp;| <span class="id" title="var">_</span> =&gt; <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#None"><span class="id" title="constructor">None</span></a><br/>
+&nbsp;&nbsp;<span class="id" title="keyword">end</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="main_implicit_return" class="idref" href="#main_implicit_return"><span class="id" title="definition">main_implicit_return</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.flow_off_end.html#function_body"><span class="id" title="definition">function_body</span></a> <a class="idref" href="skylabs_brick.tests.flow_off_end.html#implicit_main"><span class="id" title="definition">implicit_main</span></a> "main()"%<span class="id" title="var">cpp_name</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Impl</span> (<span class="id" title="constructor">Sseq</span> <span class="id" title="notation">[</span><span class="id" title="constructor">Sseq</span> <span class="id" title="notation">[]</span><span class="id" title="notation">;</span> <span class="id" title="definition">Sreturn_val</span> (<span class="id" title="constructor">Eint</span> 0 "int")<span class="id" title="notation">]</span>)).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="other_main_has_no_implicit_return" class="idref" href="#other_main_has_no_implicit_return"><span class="id" title="definition">other_main_has_no_implicit_return</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.flow_off_end.html#function_body"><span class="id" title="definition">function_body</span></a> <a class="idref" href="skylabs_brick.tests.flow_off_end.html#implicit_main"><span class="id" title="definition">implicit_main</span></a> "other::main()"%<span class="id" title="var">cpp_name</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Impl</span> (<span class="id" title="constructor">Sseq</span> <span class="id" title="notation">[]</span>)).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Example</span> <a id="main_explicit_return" class="idref" href="#main_explicit_return"><span class="id" title="definition">main_explicit_return</span></a> :<br/>
+&nbsp;&nbsp;<a class="idref" href="skylabs_brick.tests.flow_off_end.html#function_body"><span class="id" title="definition">function_body</span></a> <a class="idref" href="skylabs_brick.tests.flow_off_end.html#explicit_main"><span class="id" title="definition">explicit_main</span></a> "main()"%<span class="id" title="var">cpp_name</span> <a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Logic.html#6cd0f7b28b6092304087c7049437bb1a"><span class="id" title="notation">=</span></a><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<a class="idref" href="http://rocq-prover.org/doc/V9.4+alpha/corelib//Corelib.Init.Datatypes.html#Some"><span class="id" title="constructor">Some</span></a> (<span class="id" title="constructor">Impl</span> (<span class="id" title="constructor">Sseq</span> <span class="id" title="notation">[</span><span class="id" title="definition">Sreturn_val</span> (<span class="id" title="constructor">Eint</span> 7 "int")<span class="id" title="notation">]</span>)).<br/>
+<span class="id" title="keyword">Proof</span>. <span class="id" title="keyword">vm_compute</span>. <span class="id" title="tactic">reflexivity</span>. <span class="id" title="keyword">Qed</span>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>

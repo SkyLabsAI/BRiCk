@@ -1,0 +1,106 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<link href="../../css/coqdocjs/coqdoc.css" rel="stylesheet" type="text/css" />
+<link href="../../css/coqdocjs/coqdocjs.css" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="../../js/coqdocjs/config.js"></script>
+<script type="text/javascript" src="../../js/coqdocjs/coqdocjs.js"></script>
+</head>
+
+<body onload="document.getElementById('content').focus()">
+  <div id="header">
+    <span class="left">
+      <span class="modulename"> <script> document.write(document.title) </script> </span>
+    </span>
+
+    <span class="button" id="toggle-proofs"></span>
+
+    <!-- NOTE: These are displayed right to left on the page -->
+    <span class="right">
+      <a href="./indexpage.html"> Index for the theory </a>
+      <a href="./toc.html"> Table of contents for the theory </a>
+      <a href="../../../index.html"> Toplevel </a>
+    </span>
+</div>
+    <div id="content" tabindex="-1" onblur="document.getElementById('content').focus()">
+    <div id="main">
+<h1 class="libtitle">skylabs_brick.tests.signed_integer_bytes</h1>
+
+<div class="code">
+<span class="comment">(*<br/>
+&nbsp;*&nbsp;Copyright&nbsp;(c)&nbsp;2026&nbsp;SkyLabs&nbsp;AI,&nbsp;Inc.<br/>
+&nbsp;*&nbsp;This&nbsp;software&nbsp;is&nbsp;distributed&nbsp;under&nbsp;the&nbsp;terms&nbsp;of&nbsp;the&nbsp;BedRock&nbsp;Open-Source&nbsp;License.<br/>
+&nbsp;*&nbsp;See&nbsp;the&nbsp;LICENSE-BedRock&nbsp;file&nbsp;in&nbsp;the&nbsp;repository&nbsp;root&nbsp;for&nbsp;details.<br/>
+&nbsp;*)</span><br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.base</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.prelude.arith.z_to_bytes</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.iris.extra.proofmode.proofmode</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.syntax</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.semantics</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.logic.heap_pred</span>.<br/>
+<span class="id" title="keyword">Require</span> <span class="id" title="keyword">Import</span> <span class="id" title="library">skylabs.lang.cpp.logic.raw</span>.<br/>
+
+<br/>
+<span class="id" title="keyword">Section</span> <a id="tests" class="idref" href="#tests"><span class="id" title="section">tests</span></a>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Context</span> `{<a id="1cde66f381aff8f7a165036f9126fae4" class="idref" href="#1cde66f381aff8f7a165036f9126fae4"><span class="id" title="variable">Σ</span></a> : <span class="id" title="class">cpp_logic</span>} {<a id="f2dad3beb7d14e9c1f3513bdaa4a8dfc" class="idref" href="#f2dad3beb7d14e9c1f3513bdaa4a8dfc"><span class="id" title="variable">σ</span></a> : <span class="id" title="class">genv</span>}.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="signed_zero" class="idref" href="#signed_zero"><span class="id" title="definition">signed_zero</span></a> <a id="sz:5" class="idref" href="#sz:5"><span class="id" title="binder">sz</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="axiom">raw_bytes_of_val</span> <a class="idref" href="skylabs_brick.tests.signed_integer_bytes.html#f2dad3beb7d14e9c1f3513bdaa4a8dfc"><span class="id" title="variable">σ</span></a> (<span class="id" title="constructor">Tnum</span> <a class="idref" href="skylabs_brick.tests.signed_integer_bytes.html#sz:5"><span class="id" title="variable">sz</span></a> <span class="id" title="constructor">Signed</span>) (<span class="id" title="constructor">Vint</span> 0)<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.list_basics.html#list.replicate"><span class="id" title="definition">replicate</span></a> (<span class="id" title="definition">N.to_nat</span> (<span class="id" title="definition">int_rank.bytesN</span> <a class="idref" href="skylabs_brick.tests.signed_integer_bytes.html#sz:5"><span class="id" title="variable">sz</span></a>)) (<span class="id" title="axiom">raw_int_byte</span> 0)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">apply</span> <span class="id" title="lemma">raw_bytes_of_val_int_zeros</span>. <span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="short_minus_one" class="idref" href="#short_minus_one"><span class="id" title="definition">short_minus_one</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="axiom">raw_bytes_of_val</span> <a class="idref" href="skylabs_brick.tests.signed_integer_bytes.html#f2dad3beb7d14e9c1f3513bdaa4a8dfc"><span class="id" title="variable">σ</span></a> "short"%<span class="id" title="var">cpp_type</span> (<span class="id" title="constructor">Vint</span> (-1)) (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.list_basics.html#list.replicate"><span class="id" title="definition">replicate</span></a> 2 (<span class="id" title="axiom">raw_int_byte</span> 255)).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="lemma">raw_byte_of_int_eq</span>. <span class="id" title="tactic">exists</span> <span class="id" title="notation">[</span>255%<span class="id" title="var">N</span><span class="id" title="notation">;</span> 255%<span class="id" title="var">N</span><span class="id" title="notation">]</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">split</span>; <span class="id" title="var">last</span> <span class="id" title="var">done</span>. <span class="id" title="tactic">split</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">repeat</span> <span class="id" title="tactic">constructor</span>; <span class="id" title="tactic">apply</span> <span class="id" title="lemma">has_type_byte_bound</span>; <span class="id" title="var">lia</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;- <span class="id" title="tactic">rewrite</span> <span class="id" title="definition">_Z_from_bytes_eq</span> /<span class="id" title="definition">_Z_from_bytes_def</span> /<span class="id" title="definition">_Z_from_bytes_le</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">destruct</span> (<span class="id" title="definition">genv_byte_order</span> <a class="idref" href="skylabs_brick.tests.signed_integer_bytes.html#f2dad3beb7d14e9c1f3513bdaa4a8dfc"><span class="id" title="variable">σ</span></a>); <span class="id" title="keyword">vm_compute</span>; <span class="id" title="tactic">reflexivity</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="short_zero_from_bytes" class="idref" href="#short_zero_from_bytes"><span class="id" title="definition">short_zero_from_bytes</span></a> <a id="q:6" class="idref" href="#q:6"><span class="id" title="binder">q</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="definition">type_ptrR</span> "short"%<span class="id" title="var">cpp_type</span> <span class="id" title="notation">**</span> <span class="id" title="definition">rawsR</span> <a class="idref" href="skylabs_brick.tests.signed_integer_bytes.html#q:6"><span class="id" title="variable">q</span></a> (<a class="idref" href="https://plv.mpi-sws.org/coqdoc/stdpp//stdpp.list_basics.html#list.replicate"><span class="id" title="definition">replicate</span></a> 2 (<span class="id" title="axiom">raw_int_byte</span> 0)) <span class="id" title="notation">|--</span><br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">primR</span> "short"%<span class="id" title="var">cpp_type</span> <a class="idref" href="skylabs_brick.tests.signed_integer_bytes.html#q:6"><span class="id" title="variable">q</span></a> (<span class="id" title="constructor">Vint</span> 0).<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>.<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="tactic">rewrite</span> <span class="id" title="axiom">primR_to_rawsR</span>. <span class="id" title="var">iIntros</span> "(T &amp; R)".<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="var">iExists</span> <span class="id" title="var">_</span>. <span class="id" title="var">iFrame</span>. <span class="id" title="var">iPureIntro</span>. <span class="id" title="tactic">apply</span> <span class="id" title="lemma">raw_bytes_of_val_int_zeros</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Qed</span>.<br/>
+
+<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Example</span> <a id="split_short" class="idref" href="#split_short"><span class="id" title="definition">split_short</span></a> <a id="q:7" class="idref" href="#q:7"><span class="id" title="binder">q</span></a> :<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="id" title="abbreviation">anyR</span> "short"%<span class="id" title="var">cpp_type</span> <a class="idref" href="skylabs_brick.tests.signed_integer_bytes.html#q:7"><span class="id" title="variable">q</span></a> <span class="id" title="notation">|--</span> <span class="id" title="abbreviation">anyR</span> "unsigned char[2]"%<span class="id" title="var">cpp_type</span> <a class="idref" href="skylabs_brick.tests.signed_integer_bytes.html#q:7"><span class="id" title="variable">q</span></a> <span class="id" title="notation">**</span> <span class="id" title="definition">type_ptrR</span> "short"%<span class="id" title="var">cpp_type</span>.<br/>
+&nbsp;&nbsp;<span class="id" title="keyword">Proof</span>. <span class="id" title="tactic">rewrite</span> <span class="id" title="axiom">decode_int_anyR</span>. <span class="id" title="var">done</span>. <span class="id" title="keyword">Qed</span>.<br/>
+<span class="id" title="keyword">End</span> <a class="idref" href="skylabs_brick.tests.signed_integer_bytes.html#tests"><span class="id" title="section">tests</span></a>.<br/>
+</div>
+<!--
+-- Copyright (c) 2020 BlueRock Security, Inc.
+-- This software is distributed under the terms of the BedRock Open-Source License.
+-- See the LICENSE-BedRock file in the repository root for details.
+-->
+
+<!--
+-- SPDX-LIcense-Identifier:BSD-2-Clause
+-->
+</div>
+<div id="footer">
+  Generated by <a href="http://coq.inria.fr/">coqdoc</a> and improved with <a href="https://github.com/tebbi/coqdocjs">CoqdocJS</a>
+</div>
+</div>
+</body>
+
+</html>
