@@ -18,6 +18,7 @@
 #include <clang/AST/TemplateBase.h>
 #include <clang/Frontend/CompilerInstance.h>
 #include <llvm/ADT/STLExtras.h>
+#include <llvm/ADT/SmallVector.h>
 #include <optional>
 
 using namespace clang;
@@ -592,16 +593,109 @@ bool ClangPrinter::hasPrintedAttrs(const clang::Decl &decl, bool onType) {
     });
 }
 
+/// Function attributes with a model in `attr.t`.
+static bool isModelledFnAttr(attr::Kind kind) {
+    switch (kind) {
+    case attr::NoReturn:
+    case attr::CXX11NoReturn:
+    case attr::C11NoReturn:
+    case attr::NonNull:
+    case attr::ReturnsNonNull:
+        return true;
+    default:
+        return false;
+    }
+}
+
 fmt::Formatter &ClangPrinter::printAttrs(CoqPrinter &print,
                                          const clang::Decl &decl,
                                          bool onType) {
-    auto attrs = llvm::make_filter_range(decl.attrs(), [&](const Attr *a) {
+    // Modelled attributes are only recorded on functions and methods.
+    auto fd = onType ? nullptr : dyn_cast<FunctionDecl>(&decl);
+    auto kept = [&](const Attr *a) {
         return a && !skipAttr(decl, *a, onType);
+    };
+
+    // `nonnull` parameter indices, 0-based into the explicit parameters
+    // (i.e. excluding `this`), as `ParamIdx::getASTIndex` numbers them.
+    llvm::SmallVector<unsigned, 4> nonnull;
+    bool noreturn = false, returns_nonnull = false;
+    if (fd) {
+        // Clang ignores (with a warning) `nonnull` on non-pointer parameters.
+        auto add = [&](unsigned idx) {
+            if (idx < fd->getNumParams() &&
+                fd->getParamDecl(idx)->getType()->isAnyPointerType() &&
+                !llvm::is_contained(nonnull, idx))
+                nonnull.push_back(idx);
+        };
+        for (const Attr *a : decl.attrs()) {
+            if (!kept(a))
+                continue;
+            switch (a->getKind()) {
+            case attr::NoReturn:
+            case attr::CXX11NoReturn:
+            case attr::C11NoReturn:
+                noreturn = true;
+                break;
+            case attr::ReturnsNonNull:
+                returns_nonnull = true;
+                break;
+            case attr::NonNull: {
+                auto nn = cast<NonNullAttr>(a);
+                if (nn->args_size() == 0) {
+                    // The argument-less spelling applies to every pointer
+                    // parameter.
+                    for (unsigned i = 0; i < fd->getNumParams(); ++i)
+                        add(i);
+                } else {
+                    for (auto idx : nn->args())
+                        add(idx.getASTIndex());
+                }
+                break;
+            }
+            default:
+                break;
+            }
+        }
+        for (unsigned i = 0; i < fd->getNumParams(); ++i)
+            if (auto a = fd->getParamDecl(i)->getAttr<NonNullAttr>();
+                a && (!a->isImplicit() ||
+                      (!fd->isImplicit() && fd->getBuiltinID() == 0)))
+                add(i);
+        llvm::sort(nonnull);
+        // `noreturn` can also come from the function type (e.g. a
+        // declaration through a typedef of a `noreturn` function type);
+        // as for attributes, not on builtins and implicit declarations.
+        if (auto ft = fd->getType()->getAs<FunctionType>();
+            ft && ft->getNoReturnAttr() && !fd->isImplicit() &&
+            fd->getBuiltinID() == 0)
+            noreturn = true;
+    }
+
+    auto others = llvm::make_filter_range(decl.attrs(), [&](const Attr *a) {
+        return kept(a) && !(fd && isModelledFnAttr(a->getKind()));
     });
-    if (attrs.empty())
+    if (!noreturn && nonnull.empty() && !returns_nonnull && others.empty())
         return print.output() << "nil";
+
     guard::list _(print);
-    for (const Attr *a : attrs) {
+    if (noreturn) {
+        print.output() << "attr.Noreturn";
+        print.cons();
+    }
+    if (!nonnull.empty()) {
+        {
+            guard::ctor _(print, "attr.Nonnull", false);
+            print.list(nonnull,
+                       [&](unsigned i) { print.output() << i << "%N"; });
+        }
+        print.cons();
+    }
+    if (returns_nonnull) {
+        print.output() << "attr.Returns_nonnull";
+        print.cons();
+    }
+    for (const Attr *a : others) {
         printAttr(print, a->getKind(), a);
         print.cons();
     }

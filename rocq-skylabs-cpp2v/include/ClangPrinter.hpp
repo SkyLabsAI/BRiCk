@@ -363,8 +363,11 @@ public:
 
     /// Print the `list attr.t` of a declaration: every attribute except
     /// no-op ones and implicit ones on builtins and implicit declarations
-    /// (see `skipAttr`),
-    /// as `attr.Other "<attribute kind>" "<pretty-printed attribute>"`.
+    /// (see `skipAttr`). On a function, the modelled attributes
+    /// (`noreturn`, `nonnull`, including on parameters, and
+    /// `returns_nonnull`) are printed as `attr.Noreturn`, `attr.Nonnull`
+    /// and `attr.Returns_nonnull`; every other attribute as
+    /// `attr.Other "<attribute kind>" "<pretty-printed attribute>"`.
     /// With `onType`, the attributes are those of a typedef at a use of
     /// the typedef, and `aligned` is skipped (see `skipAttr`).
     fmt::Formatter &printAttrs(CoqPrinter &, const clang::Decl &,

@@ -11,9 +11,10 @@ Require Import skylabs.lang.cpp.parser.plugin.cpp2v.
 
 (** * Attributes on functions and methods ([f_attrs], [m_attrs])
 
-cpp2v preserves every attribute that may have an effect as [attr.Other],
-named by clang's attribute kind, and drops the no-op ones; [supported]
-reports each preserved attribute. *)
+cpp2v preserves every attribute that may have an effect and drops the
+no-op ones. Modelled attributes ([noreturn], [nonnull], [returns_nonnull])
+get their own constructor (see [tests/fn_attrs.v]); the others are
+[attr.Other], named by clang's attribute kind, which [supported] reports. *)
 
 cpp.prog source flags "-std=c++20 --target=x86_64-linux-gnu" prog cpp:{{
 void plain() {}
@@ -46,9 +47,10 @@ Definition attrs_of (n : name) : option (list attr.t) :=
   | _ => None
   end.
 
-(* The attribute kinds that [supported] reports: all recorded ones. *)
+(* The attribute kinds that [supported] reports: the [Other] ones. *)
 Definition reported (n : name) : option (list PrimString.string) :=
-  (fun attrs : list attr.t => (fun a => match a with attr.Other kind _ => kind end) <$> attrs)
+  (fun attrs : list attr.t =>
+     omap (fun a => match a with attr.Other kind _ => Some kind | _ => None end) attrs)
   <$> attrs_of n.
 
 (* No-op attributes ([nodiscard], [always_inline], [cold], [visibility],
@@ -57,10 +59,11 @@ Example noop_not_recorded :
   reported <$> ["plain()"; "noops()"; "D::v()"]%cpp_name = replicate 3 (Some []).
 Proof. vm_compute. reflexivity. Qed.
 
-(* Every other attribute is recorded, under clang's attribute kind. *)
+(* Every other attribute is recorded, under clang's attribute kind; the
+   modelled ones (here [noreturn] and [nonnull]) are not [Other]. *)
 Example reported_kinds :
   reported <$> ["in_section()"; "nr()"; "weak_fn()"; "nn(int*)"; "two()"; "S::m()"]%cpp_name =
-  Some <$> [["Section"]; ["CXX11NoReturn"]; ["Weak"]; ["NonNull"];
+  Some <$> [["Section"]; []; ["Weak"]; [];
             ["Section"]; ["Section"]]%pstring.
 Proof. vm_compute. reflexivity. Qed.
 
@@ -71,7 +74,11 @@ Eval vm_compute in
   | _ => []
   end.
 
-(* [supported] reports each preserved attribute. *)
+(* [supported] reports each [Other] attribute, and accepts modelled ones. *)
+Example supported_accepts_modelled :
+  supported.walk.attr attr.Noreturn = [].
+Proof. reflexivity. Qed.
+
 Example supported_reports :
   supported.walk.attr (attr.Other "Weak" "__attribute__((weak))") =
   [supported.walk.Gap supported.walk.Unsupported "unsupported attribute: Weak"].
